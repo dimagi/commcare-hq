@@ -104,7 +104,8 @@ def project_info(request, domain, template="appstore/project_info.html"):
         "images": images,
         "audio": audio,
         "sortables": facets_sortables,
-        "url_base": reverse('appstore')
+        "url_base": reverse('appstore'),
+        'display_import': True if request.couch_user.get_domains() else False
     })
 
 def parse_args_for_es(request):
@@ -263,6 +264,10 @@ def approve_app(request, domain):
 @require_previewer # remove for production
 def import_app(request, domain):
     user = request.couch_user
+    if not user.eula.signed:
+        messages.error(request, 'You must agree to our eula to download an app')
+        return project_info(request, domain)
+
     from_project = Domain.get_by_name(domain)
 
     if request.method == 'POST' and from_project.is_snapshot:
@@ -286,6 +291,10 @@ def import_app(request, domain):
 #@login_and_domain_required
 @require_previewer # remove for production
 def copy_snapshot(request, domain):
+    if not request.couch_user.eula.signed:
+        messages.error(request, 'You must agree to our eula to download an app')
+        return project_info(request, domain)
+
     dom = Domain.get_by_name(domain)
     if request.method == "POST" and dom.is_snapshot:
         args = {'domain_name': request.POST['new_project_name'], 'eula_confirmed': True}

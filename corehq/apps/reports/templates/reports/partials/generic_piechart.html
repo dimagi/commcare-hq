@@ -1,3 +1,4 @@
+{% load i18n %}
 {% with chartdiv|default:"pieplaceholder" as chartdiv %}
     {% with hoverdiv|default:"piehoverplaceholder" as hoverdiv %}
     <script type="text/javascript">
@@ -58,7 +59,7 @@
     </script>
     <div class="hq-graphic-report">
         <div id="{{ hoverdiv }}" class="well">
-            {% if chart_data %}Hover over a slice below for more information.{% else %}No data is available. Please submit more forms!{% endif %}
+            {% if chart_data %}{% trans "Hover over a slice below for more information." %}{% else %}{% trans "No data is available. Please submit more forms!" %}{% endif %}
         </div>
         <div id="{{ chartdiv }}" class="hq-graph" style="width:{{graph_width|default:300}}px; height:{{graph_height|default:300}}px;"></div>
     </div>

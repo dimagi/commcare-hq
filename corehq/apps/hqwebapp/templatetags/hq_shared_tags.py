@@ -4,6 +4,7 @@ from django import template
 from django.conf import settings
 from django.core.urlresolvers import reverse
 from django.utils.safestring import mark_safe
+from django.utils.translation import ugettext as _
 from corehq.apps.domain.models import Domain
 from dimagi.utils.web import json_handler
 
@@ -129,11 +130,11 @@ def list_my_domains(request):
 
 @register.simple_tag
 def commcare_user():
-    return settings.COMMCARE_USER_TERM
+    return _(settings.COMMCARE_USER_TERM)
 
 @register.simple_tag
 def hq_web_user():
-    return settings.WEB_USER_TERM
+    return _(settings.WEB_USER_TERM)
 
 @register.simple_tag
 def is_url_active(request, matching_string=""):

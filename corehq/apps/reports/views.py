@@ -6,7 +6,7 @@ from corehq.apps.reports.standard import inspect, export, ProjectReport
 from corehq.apps.reports.standard.export import DeidExportReport
 from corehq.apps.reports.export import ApplicationBulkExportHelper, CustomBulkExportHelper
 from corehq.apps.reports.models import (ReportConfig, ReportNotification,
-    FormExportSchema, HQGroupExportConfiguration)
+    FormExportSchema, HQGroupExportConfiguration, UnsupportedScheduledReportError)
 from corehq.apps.users.decorators import require_permission
 from corehq.apps.users.export import export_users
 from corehq.apps.users.models import Permissions
@@ -84,6 +84,7 @@ def default(request, domain, template="reports/reports_home.html"):
             show=user.can_view_reports() or user.get_viewable_reports(),
             slug=None,
             is_async=True,
+            app_slug="reports",
             section_name=ProjectReport.section_name,
             show_subsection_navigation=adm_utils.show_adm_nav(domain, request)
         ),
@@ -634,12 +635,15 @@ def get_scheduled_report_response(couch_user, domain, scheduled_report_id):
     notification = ReportNotification.get(scheduled_report_id)
 
     report_outputs = []
-    for config in notification.configs:
-        report_outputs.append({
-            'title': config.full_name,
-            'url': config.url,
-            'content': config.get_report_content()
-        })
+    try:
+        for config in notification.configs:
+            report_outputs.append({
+                'title': config.full_name,
+                'url': config.url,
+                'content': config.get_report_content()
+            })
+    except UnsupportedScheduledReportError:
+        pass
     
     return render_to_response(request, "reports/report_email.html", {
         "reports": report_outputs,
