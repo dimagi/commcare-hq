@@ -24,6 +24,7 @@ from corehq.apps.reports.views import datespan_default
 from corehq.apps.hqmedia import utils
 from corehq.apps.app_manager.models import Application
 from django.shortcuts import redirect
+from django.utils.translation import ugettext as _
 import rawes
 
 PER_PAGE = 9
@@ -268,7 +269,7 @@ def import_app(request, domain):
     if request.method == 'POST' and from_project.is_snapshot:
         to_project_name = request.POST['project']
         if not user.is_member_of(to_project_name):
-            messages.error(request, "You don't belong to that project")
+            messages.error(request, _("You don't belong to that project"))
             return project_info(request, domain)
 
         for app in from_project.full_applications():
@@ -276,7 +277,7 @@ def import_app(request, domain):
 
         from_project.downloads += 1
         from_project.save()
-        messages.success(request, "Application successfully imported!")
+        messages.success(request, _("Application successfully imported!"))
         return HttpResponseRedirect(reverse('view_app', args=[to_project_name, new_doc.id]))
     else:
         return project_info(request, domain)
@@ -297,14 +298,14 @@ def copy_snapshot(request, domain):
                 return project_info(request, domain)
 
             if new_domain is None:
-                messages.error(request, "A project by that name already exists")
+                messages.error(request, _("A project by that name already exists"))
                 return project_info(request, domain)
             dom.downloads += 1
             dom.save()
-            messages.success(request, "Project copied successfully!")
+            messages.success(request, _("Project copied successfully!"))
             return redirect("domain_project_settings", new_domain.name)
         else:
-            messages.error(request, "You must specify a name for the new project")
+            messages.error(request, _("You must specify a name for the new project"))
             return project_info(request, domain)
 
 
