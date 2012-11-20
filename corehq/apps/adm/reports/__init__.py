@@ -21,7 +21,7 @@ class ADMSectionView(GenericReportView):
     # adm-specific stuff
     adm_slug = None
     
-    def __init__(self, request, base_context=None, *args, **kwargs):
+    def __init__(self, request, base_context=None, domain=None, **kwargs):
         self.adm_sections = dict(REPORT_SECTION_OPTIONS)
         if self.adm_slug not in self.adm_sections:
             raise ValueError("The adm_slug provided, %s, is not in the list of valid ADM report section slugs: %s." %
@@ -29,7 +29,7 @@ class ADMSectionView(GenericReportView):
             )
         self.subreport_slug = kwargs.get("subreport_slug")
 
-        super(ADMSectionView, self).__init__(request, base_context, *args, **kwargs)
+        super(ADMSectionView, self).__init__(request, base_context, domain=domain, **kwargs)
         self.context['report'].update(sub_slug=self.subreport_slug)
         if self.subreport_data:
             self.name = mark_safe("""%s <small>%s</small>""" %\
@@ -73,6 +73,7 @@ class DefaultReportADMSectionView(GenericTabularReport, ADMSectionView, ProjectR
     @property
     @memoized
     def subreport_data(self):
+        print self.domain, self.subreport_slug, self.adm_slug
         default_subreport = ADMReport.get_default(self.subreport_slug, domain=self.domain,
                 section=self.adm_slug, wrap=False)
         if default_subreport is None:
@@ -105,11 +106,13 @@ class DefaultReportADMSectionView(GenericTabularReport, ADMSectionView, ProjectR
 
     @property
     def headers(self):
+        if self.subreport_slug is None:
+            raise ValueError("Cannot render this report. A subreport_slug is required.")
         header = DataTablesHeader(DataTablesColumn(_("FLW Name")))
         for col in self.adm_report.columns:
             sort_type = DTSortType.NUMERIC if hasattr(col, 'returns_numerical') and col.returns_numerical else None
             help_text = _(col.description) if col.description else None
-            header.add_column(DataTablesColumn(_(col.name), sort_type=DTSortType.NUMERIC, help_text=help_text))
+            header.add_column(DataTablesColumn(_(col.name), sort_type=sort_type, help_text=help_text))
         header.custom_sort = self.adm_report.default_sort_params
         return header
 
