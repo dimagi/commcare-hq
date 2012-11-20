@@ -26,8 +26,6 @@ class BasicTestTestCase(CloudCareTestCase):
         name = self.random_string()
         self.find_question('Enter your name').set_value(name)
         self.submit_form()
-        
-        self.open_form('Update Case')
         self.assertNotIn(name, self.get_open_case_names())
 
     def test_new_case(self):
@@ -50,7 +48,6 @@ class BasicTestTestCase(CloudCareTestCase):
         self.enter_update_case(name)
         self.find_question('Select an eye colour').set_value(color_disp)
         self.submit_form()
-
         self.assertEqual(color_val, self.get_case_details(name)['Eye Colour'])
 
     def test_close_case(self):
@@ -59,5 +56,4 @@ class BasicTestTestCase(CloudCareTestCase):
         self.enter_close_case(name)
         self.find_question('Reason for Closing').set_value('foo')
         self.submit_form()
-        self.open_form('Update Case')
         self.assertNotIn(name, self.get_open_case_names())
