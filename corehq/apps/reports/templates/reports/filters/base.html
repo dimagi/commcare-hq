@@ -2,6 +2,11 @@
 <div class="controls">
     {% block filter_content %}
     {% endblock %}
+    {% if help_text %}
+    <div class="help-block">
+        {{ help_text }}
+    </div>
+    {% endif %}
 </div>
 {% block filter_js %}
 {% endblock %}
