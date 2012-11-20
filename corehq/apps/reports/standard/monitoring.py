@@ -419,7 +419,7 @@ class DailyFormStatsReport(WorkerMonitoringReportTable, DatespanMixin):
         total_row = [0]*(2+len(date_map))
 
         for result in results:
-            _tmp, date = result['key']
+            _tmp, _domain, date = result['key']
             date = dateutil.parser.parse(date)
             tz_offset = self.timezone.localize(self.datespan.enddate).strftime("%z")
             date = date + datetime.timedelta(hours=int(tz_offset[0:3]), minutes=int(tz_offset[0]+tz_offset[3:5]))
