@@ -264,7 +264,7 @@ def approve_app(request, domain):
 @require_previewer # remove for production
 def import_app(request, domain):
     user = request.couch_user
-    if not user.eula.signed:
+    if not user.is_eula_signed():
         messages.error(request, 'You must agree to our eula to download an app')
         return project_info(request, domain)
 
@@ -291,7 +291,7 @@ def import_app(request, domain):
 #@login_and_domain_required
 @require_previewer # remove for production
 def copy_snapshot(request, domain):
-    if not request.couch_user.eula.signed:
+    if not request.couch_user.is_eula_signed():
         messages.error(request, 'You must agree to our eula to download an app')
         return project_info(request, domain)
 
