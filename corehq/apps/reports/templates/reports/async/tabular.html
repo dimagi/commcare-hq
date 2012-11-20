@@ -104,7 +104,9 @@
         {% endif %}
 
         $(function() {
-            $('.header-popover').tooltip({
+
+            $('.header-popover').popout({
+                trigger: 'hover',
                 placement: 'bottom',
             });
         });
