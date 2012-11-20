@@ -72,7 +72,8 @@ def default(request, domain, template="reports/reports_home.html"):
         raise Http404
 
     configs = ReportConfig.by_domain_and_owner(domain, user._id).all()
-    scheduled_reports = ReportNotification.by_domain_and_owner(domain, user._id).all()
+    scheduled_reports = [s for s in ReportNotification.by_domain_and_owner(domain, user._id).all()
+                         if not hasattr(s, 'report_slug') or s.report_slug != 'admin_domains']
 
     context = dict(
         couch_user=request.couch_user,
