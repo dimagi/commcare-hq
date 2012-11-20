@@ -1735,7 +1735,8 @@ def emulator(req, domain, app_id, template="app_manager/emulator.html"):
     return render_to_response(req, template, {
         'domain': domain,
         'app': app,
-        'build_path': build_path
+        'build_path': build_path,
+        'url_base': get_url_base()
     })
 
 def emulator_commcare_jar(req, domain, app_id):
