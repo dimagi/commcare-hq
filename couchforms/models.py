@@ -14,7 +14,7 @@ from couchdbkit.resource import ResourceNotFound
 import logging
 import hashlib
 from copy import copy
-from couchforms.signals import submission_error_received
+from couchforms.signals import submission_error_received, xform_archived
 from dimagi.utils.mixins import UnicodeMixIn
 from couchforms.const import ATTACHMENT_NAME
 
@@ -155,6 +155,11 @@ class XFormInstance(Document, UnicodeMixIn, ComputedDocumentMixin):
             to_return[key] = self.xpath('form/' + key)
         return to_return
 
+    def archive(self):
+        self.doc_type = "XFormArchived"
+        self.save()
+        xform_archived.send(sender="couchforms", xform=self)
+
 class XFormError(XFormInstance):
     """
     Instances that have errors go here.
@@ -192,6 +197,17 @@ class XFormDeprecated(XFormError):
         # we can't use super because XFormError also sets the doc type
         XFormInstance.save(self, *args, **kwargs)
         # should raise a signal saying that this thing got deprecated
+
+class XFormArchived(XFormError):
+    """
+    Archived forms don't show up in reports
+    """
+    archived_date = DateTimeProperty(default=datetime.datetime.utcnow)
+
+    def save(self, *args, **kwargs):
+        # force set the doc type and call the right superclass
+        self["doc_type"] = "XFormArchived"
+        XFormInstance.save(self, *args, **kwargs)
 
 class SubmissionErrorLog(XFormError):
     """
