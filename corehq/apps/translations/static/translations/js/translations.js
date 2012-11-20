@@ -24,6 +24,8 @@ var mk_translation_ui = function (spec) {
                 }).css({cursor: 'pointer'}).attr('title', "Delete Translation");
                 
                 this.$add = $('<div class="ui-icon"/>').addClass(COMMCAREHQ.icons.ADD).click(function () {
+                    // remove any trailing whitespace from the input box
+                    that.key.val($.trim(that.key.val()));
                     if (that.key.val() && !translation_ui.translations[that.key.val()]) {
                         translation_ui.addTranslation(that);
                         translation_ui.appendAdder();
