@@ -97,7 +97,7 @@ class GenericReportView(object):
     is_admin_report = False
     
     
-    def __init__(self, request, base_context=None, domain=None):
+    def __init__(self, request, base_context=None, domain=None, **kwargs):
         if not self.name or not self.section_name or self.slug is None or not self.dispatcher:
             raise NotImplementedError("Missing a required parameter: (name: %(name)s, section_name: %(section_name)s,"
             " slug: %(slug)s, dispatcher: %(dispatcher)s" % dict(
@@ -590,12 +590,12 @@ class GenericReportView(object):
 
     @classmethod
     def get_url(cls, domain=None, render_as=None, **kwargs):
-        render_as = render_as or 'view'
         if render_as is not None and render_as not in cls.dispatcher.allowed_renderings():
-            raise ValueError('The type parameter is not one of the following allowed values: %s' %
+            raise ValueError('The render_as parameter is not one of the following allowed values: %s' %
                              ', '.join(cls.dispatcher.allowed_renderings()))
         url_args = [domain] if domain is not None else []
-        url_args.append(render_as+'/')
+        if render_as is not None:
+            url_args.append(render_as+'/')
         return reverse(cls.dispatcher.name(), args=url_args+[cls.slug])
 
     @classmethod
