@@ -69,7 +69,7 @@ class IndicatorSelectNav(BiharSummaryReport, IndicatorConfigMixIn):
             return format_html(u'<a href="{next}">{val}</a>',
                 val=list_prompt(i, indicator_set.name),
                 next=url_and_params(
-                    SubCenterSelectionReport.get_url(self.domain, 
+                    SubCenterSelectionReport.get_url(domain=self.domain,
                                                      render_as=self.render_next),
                     params
             ))
@@ -132,7 +132,7 @@ class IndicatorClientSelectNav(GroupReferenceMixIn, BiharSummaryReport, Indicato
             return format_html(u'<a href="{next}">{val}</a>',
                 val=list_prompt(i, indicator.name),
                 next=url_and_params(
-                    IndicatorClientList.get_url(self.domain, 
+                    IndicatorClientList.get_url(domain=self.domain,
                                                 render_as=self.render_next),
                     params
                 ))
