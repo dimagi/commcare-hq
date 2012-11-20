@@ -46,7 +46,7 @@ class FormErrorReport(DeploymentsReport, DatespanMixin):
 #                self._users.append(temp_user)
         rows = []
         query_string = self.request.META['QUERY_STRING']
-        child_report_url = DeviceLogDetailsReport.get_url(self.domain)
+        child_report_url = DeviceLogDetailsReport.get_url(domain=self.domain)
         for user in self.users:
             key = [self.domain, "errors_only", user.get('raw_username')]
             data = get_db().view("phonelog/devicelog_data",
@@ -163,12 +163,12 @@ class DeviceLogDetailsReport(PhonelogReport):
         if self.errors_only:
             breadcrumbs = dict(
                 title=FormErrorReport.name,
-                link=FormErrorReport.get_url(self.domain)
+                link=FormErrorReport.get_url(domain=self.domain)
             )
         elif self.goto_key:
             breadcrumbs = dict(
                 title=self.name,
-                link=self.get_url(self.domain)
+                link=self.get_url(domain=self.domain)
             )
         return breadcrumbs
 
@@ -248,7 +248,7 @@ class DeviceLogDetailsReport(PhonelogReport):
 
             username = entry.get('user','unknown')
             username_fmt = '<a href="%(url)s">%(username)s</a>' % {
-                "url": "%s?%s=%s&%s" % (self.get_url(self.domain),
+                "url": "%s?%s=%s&%s" % (self.get_url(domain=self.domain),
                                         DeviceLogUsersField.slug,
                                         username,
                                         user_query),
@@ -264,7 +264,7 @@ class DeviceLogDetailsReport(PhonelogReport):
             goto_key = [self.domain, "tag_username", log_tag, username, item['key'][-1]]
 
             log_tag_format = '<a href="%(url)s" class="%(classes)s"%(extra_params)s data-datatable-tooltip="right" data-datatable-tooltip-text="%(tooltip)s">%(text)s</a>' % {
-                "url": "%s?goto=%s" % (self.get_url(self.domain), html.escape(json.dumps(goto_key))),
+                "url": "%s?goto=%s" % (self.get_url(domain=self.domain), html.escape(json.dumps(goto_key))),
                 "classes": " ".join(tag_classes),
                 "text": log_tag,
                 "extra_params": ' data-datatable-highlight-closest="tr"' if goto_key == matching_key else '',
@@ -273,7 +273,7 @@ class DeviceLogDetailsReport(PhonelogReport):
 
             device = entry.get('device_id','')
             device_fmt = '<a href="%(url)s">%(device)s</a>' % {
-                "url": "%s?%s=%s&%s" % (self.get_url(self.domain),
+                "url": "%s?%s=%s&%s" % (self.get_url(domain=self.domain),
                                         DeviceLogDevicesField.slug,
                                         device,
                                         device_query),
