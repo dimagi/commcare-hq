@@ -25,7 +25,6 @@ class ImportCases(DataInterface):
         )
 
     @classmethod
-    def show_in_navigation(cls, request, *args, **kwargs):
+    def show_in_navigation(cls, request, domain=None):
         user = request.couch_user
-        domain = kwargs.get('domain')
         return user.is_superuser or user.is_previewer() or domain == 'khayelitsha'

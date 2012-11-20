@@ -67,7 +67,7 @@ def excel_config(request, domain):
             error_type = "file"
     
     #TODO show bad/invalid file error on this page
-    return HttpResponseRedirect(base.ImportCases.get_url(domain) + "?error=" + error_type)
+    return HttpResponseRedirect(base.ImportCases.get_url(domain=domain) + "?error=" + error_type)
       
 @require_can_edit_data
 def excel_fields(request, domain):
@@ -159,7 +159,7 @@ def excel_commit(request, domain):
     spreadsheet = ExcelFile(filename, named_columns)
 
     if filename is None or spreadsheet is None:
-        return HttpResponseRedirect(base.ImportCases.get_url(domain) + "?error=cache")
+        return HttpResponseRedirect(base.ImportCases.get_url(domain=domain) + "?error=cache")
     
     columns = spreadsheet.get_header_columns()        
     

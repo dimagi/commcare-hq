@@ -49,9 +49,9 @@ class ADMSectionView(GenericReportView):
         return reverse('default_adm_report', args=[self.request.project])
 
     @classmethod
-    def get_url(cls, *args, **kwargs):
+    def get_url(cls, domain=None, render_as=None, **kwargs):
         subreport = kwargs.get('subreport')
-        url = super(ADMSectionView, cls).get_url(*args, **kwargs)
+        url = super(ADMSectionView, cls).get_url(domain=domain, render_as=render_as, **kwargs)
         return "%s%s" % (url, "%s/" % subreport if subreport else "")
 
 
@@ -163,7 +163,7 @@ class DefaultReportADMSectionView(GenericTabularReport, ADMSectionView, ProjectR
                 <a href="%(url)s" title="%(description)s">%(name)s</a>
                 </li>""" % dict(
                     active_class=' class="active"' if current_slug == report_slug else "",
-                    url=cls.get_url(domain, subreport=report_slug),
+                    url=cls.get_url(domain=domain, subreport=report_slug),
                     description=entry.get('description', ''),
                     name=entry.get('name', 'Untitled Report')
                 ))

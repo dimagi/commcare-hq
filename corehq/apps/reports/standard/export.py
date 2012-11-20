@@ -244,8 +244,7 @@ class DeidExportReport(FormExportReportBase):
     report_template_path = 'reports/reportdata/form_deid_export.html'
 
     @classmethod
-    def show_in_navigation(cls, request, *args, **kwargs):
-        domain = kwargs.get('domain')
+    def show_in_navigation(cls, request, domain=None):
         startkey = json.dumps([domain, ""])[:-3]
         return SavedExportSchema.view("couchexport/saved_export_schemas",
             startkey=startkey,
