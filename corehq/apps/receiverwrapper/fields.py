@@ -14,12 +14,13 @@ class SubmissionErrorType(object):
     DUPLICATE = 2
     OVERWRITTEN = 3
     UNKNOWN_ERROR = 4
+    ARCHIVED = 5
     
-    doc_types = ["XFormInstance", "XFormError", "XFormDuplicate", "XFormDeprecated", "SubmissionErrorLog"]
-    human_readable = ["Normal Form", "Form with Errors", "Duplicate Form", "Overwritten Form", "Generic Error"]
+    doc_types = ["XFormInstance", "XFormError", "XFormDuplicate", "XFormDeprecated", "SubmissionErrorLog", "XFormArchived"]
+    human_readable = ["Normal Form", "Form with Errors", "Duplicate Form", "Overwritten Form", "Generic Error", "Archived Form"]
     
-    error_defaults = [False, True, False, False, True]
-    success_defaults = [True, False, False, False, False]
+    error_defaults = [False, True, False, False, True, False]
+    success_defaults = [True, False, False, False, False, False]
 
     @classmethod
     def display_name_by_doc_type(cls, doc_type):
