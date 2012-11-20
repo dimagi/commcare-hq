@@ -97,7 +97,7 @@ class GenericReportView(object):
     is_admin_report = False
     
     
-    def __init__(self, request, base_context=None, *args, **kwargs):
+    def __init__(self, request, base_context=None, domain=None):
         if not self.name or not self.section_name or self.slug is None or not self.dispatcher:
             raise NotImplementedError("Missing a required parameter: (name: %(name)s, section_name: %(section_name)s,"
             " slug: %(slug)s, dispatcher: %(dispatcher)s" % dict(
@@ -113,7 +113,7 @@ class GenericReportView(object):
 
         self.request = request
         self.request_params = json_request(self.request.GET)
-        self.domain = kwargs.get('domain')
+        self.domain = domain
         self.context = base_context or {}
         self._update_initial_context()
 
@@ -440,7 +440,7 @@ class GenericReportView(object):
             show_filters=self.fields or not self.hide_filters,
             breadcrumbs=self.breadcrumbs,
             default_url=self.default_report_url,
-            url=self.get_url(*url_args),
+            url=self.get_url(domain=self.domain),
             title=self.name
         )
         if hasattr(self, 'datespan'):
@@ -589,18 +589,17 @@ class GenericReportView(object):
         return HttpResponse("Clearing cache")
 
     @classmethod
-    def get_url(cls, *args, **kwargs):
-        type = kwargs.get('render_as')
-        reverse_args = list(args)
-        if type:
-            if type is not None and type not in cls.dispatcher.allowed_renderings():
-                raise ValueError('The type parameter is not one of the following allowed values: %s' %
-                                 ', '.join(cls.dispatcher.allowed_renderings()))
-            reverse_args.append(type+'/')
-        return reverse(cls.dispatcher.name(), args=reverse_args+[cls.slug])
+    def get_url(cls, domain=None, render_as=None, **kwargs):
+        render_as = render_as or 'view'
+        if render_as is not None and render_as not in cls.dispatcher.allowed_renderings():
+            raise ValueError('The type parameter is not one of the following allowed values: %s' %
+                             ', '.join(cls.dispatcher.allowed_renderings()))
+        url_args = [domain] if domain is not None else []
+        url_args.append(render_as+'/')
+        return reverse(cls.dispatcher.name(), args=url_args+[cls.slug])
 
     @classmethod
-    def show_in_navigation(cls, request, *args, **kwargs):
+    def show_in_navigation(cls, request, domain=None):
         return True
 
 
@@ -696,8 +695,7 @@ class GenericTabularReport(GenericReportView):
 
     @property
     def pagination_source(self):
-        args = [self.domain] if self.domain else []
-        return self.get_url(*args, **dict(render_as='json'))
+        return self.get_url(domain=self.domain, render_as='json')
 
     _pagination = None
     @property
