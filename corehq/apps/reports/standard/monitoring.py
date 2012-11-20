@@ -9,6 +9,7 @@ import pytz
 import sys
 from corehq.apps.domain.models import Domain
 from corehq.apps.reports import util
+from corehq.apps.reports.filters.forms import CompletionOrSubmissionTimeFilter
 from corehq.apps.reports.standard import CouchCachedReportMixin, ProjectReportParametersMixin, \
     DatespanMixin, ProjectReport, DATE_FORMAT
 from corehq.apps.reports.calc import entrytimes
@@ -45,7 +46,7 @@ class WorkerMonitoringReportTable(GenericTabularReport, ProjectReport, ProjectRe
         user_link_template = '<a href="%(link)s?individual=%(user_id)s">%(username)s</a>'
         from corehq.apps.reports.standard.inspect import CaseListReport
         user_link = user_link_template % {"link": "%s%s" % (get_url_base(),
-                                                            CaseListReport.get_url(self.domain)),
+                                                            CaseListReport.get_url(domain=self.domain)),
                                           "user_id": user.get('user_id'),
                                           "username": user.get('username_in_report')}
         return self.table_cell(user.get('raw_username'), user_link)
@@ -251,128 +252,6 @@ class CaseActivityReport(WorkerMonitoringReportTable):
         ).one() or 0
 
 
-class CaseActivityReportCahed(WorkerMonitoringReportTable, CouchCachedReportMixin):
-    """
-        User    Last 30 Days    Last 60 Days    Last 90 Days   Active Clients              Inactive Clients
-        danny   5 (25%)         10 (50%)        20 (100%)       17                          6
-        (name)  (modified_since(x)/[active + closed_since(x)])  (open & modified_since(120)) (open & !modified_since(120))
-    """
-    name = ugettext_noop('Case Activity')
-    slug = 'case_activity_cached' #change to case_activity when ready to deploy
-    fields = ['corehq.apps.reports.fields.FilterUsersField',
-              'corehq.apps.reports.fields.CaseTypeField',
-              'corehq.apps.reports.fields.GroupField']
-
-    _default_landmarks = [30, 60, 90]
-    _landmarks = None
-    @property
-    def landmarks(self):
-        if self._landmarks is None:
-            landmarks_param = self.request_params.get('landmarks')
-            landmarks_param = landmarks_param if isinstance(landmarks_param, list) else []
-            landmarks_param = [param for param in landmarks_param if isinstance(param, int)]
-            if landmarks_param:
-                for landmark in landmarks_param:
-                    if landmark not in self.cached_report.landmark_data:
-                        self.cached_report.update_landmarks(landmarks=landmarks_param)
-                        self.cached_report.save()
-                        break
-            self._landmarks = landmarks_param if landmarks_param else self._default_landmarks
-        return self._landmarks
-
-    _default_milestone = 120
-    _milestone = None
-    @property
-    def milestone(self):
-        if self._milestone is None:
-            milestone_param = self.request_params.get('milestone')
-            milestone_param = milestone_param if isinstance(milestone_param, int) else None
-            if milestone_param:
-                if milestone_param not in self.cached_report.active_cases or\
-                   milestone_param not in self.cached_report.inactive_cases:
-                    self.cached_report.update_status(milestone=milestone_param)
-                    self.cached_report.save()
-            self._milestone = milestone_param if milestone_param else self._default_milestone
-        return self._milestone
-
-    @property
-    def headers(self):
-        headers = DataTablesHeader(DataTablesColumn(_("User")))
-        for landmark in self.landmarks:
-            headers.add_column(DataTablesColumn(_("Last %s Days") % landmark if landmark else _("Ever"),
-                sort_type=DTSortType.NUMERIC,
-                help_text=_('Number of cases modified or closed in the last %s days') % landmark))
-        headers.add_column(DataTablesColumn(_("Active Cases"),
-            sort_type=DTSortType.NUMERIC,
-            help_text=_('Number of cases modified in the last %s days that are still open') % self.milestone))
-        headers.add_column(DataTablesColumn("Closed Cases",
-            sort_type=DTSortType.NUMERIC,
-            help_text=_('Number of cases closed in the last %s days') % self.milestone))
-        headers.add_column(DataTablesColumn(_("Inactive Cases"),
-            sort_type=DTSortType.NUMERIC,
-            help_text=_("Number of cases that are open but haven't been touched in the last %s days") % self.milestone))
-        return headers
-
-    @property
-    def rows(self):
-        rows = []
-        # TODO: cleanup...case type should be None, but not sure how that affects other rports
-
-        case_type = self.case_type if self.case_type else None
-
-        def _format_val(value, total):
-            try:
-                display = '%d (%d%%)' % (value, value * 100. / total)
-            except ZeroDivisionError:
-                display = '%d' % value
-            return display
-
-        case_key =  self.cached_report.case_key(case_type)
-
-        landmark_data = [self.cached_report.landmark_data.get(case_key,
-                {}).get(self.cached_report.day_key(landmark), {}) for landmark in self.landmarks]
-        active_data = self.cached_report.active_cases.get(case_key,
-                {}).get(self.cached_report.day_key(self.milestone), {})
-        closed_data = self.cached_report.closed_cases.get(case_key,
-                {}).get(self.cached_report.day_key(self.milestone), {})
-        inactive_data = self.cached_report.inactive_cases.get(case_key,
-                {}).get(self.cached_report.day_key(self.milestone), {})
-
-        for user in self.users:
-            row = [self.get_user_link(user)]
-            user_id = user.get('user_id')
-            total_active = active_data.get(user_id, 0)
-            total_closed = closed_data.get(user_id, 0)
-            total_inactive = inactive_data.get(user_id, 0)
-            total = total_active + total_closed
-            for ld in landmark_data:
-                value = ld.get(user_id, 0)
-                row.append(self.table_cell(value, _format_val(value, total)))
-            row.append(self.table_cell(total_active))
-            row.append(self.table_cell(total_closed))
-            row.append(self.table_cell(total_inactive))
-            rows.append(row)
-
-        
-        total_row = [_("All Users")]
-        for i in range(1, len(self.landmarks)+4):
-            total_row.append(sum([row[i].get('sort_key', 0) for row in rows]))
-        grand_total = sum(total_row[-3:-1])
-        for i, val in enumerate(total_row[1:-3]):
-            total_row[1+i] = self.table_cell(val, _format_val(val, grand_total))
-        self.total_row = total_row
-
-        return rows
-
-    def fetch_cached_report(self):
-        report = CaseActivityReportCache.get_by_domain(self.domain).first()
-        recreate = self.request.GET.get('recreate')
-        if not report or recreate == 'yes':
-            logging.info("Building new Case Activity report for project %s" % self.domain)
-            report = CaseActivityReportCache.build_report(self.domain_object)
-        return report
-
-
 class SubmissionsByFormReport(WorkerMonitoringReportTable, DatespanMixin):
     name = ugettext_noop("Submissions By Form")
     slug = "submissions_by_form"
@@ -484,27 +363,33 @@ class SubmissionsByFormReport(WorkerMonitoringReportTable, DatespanMixin):
         return counts
 
 
-class DailyReport(WorkerMonitoringReportTable, DatespanMixin):
-    # overrides
-    fix_left_col = True
-    fields = ['corehq.apps.reports.fields.FilterUsersField',
-              'corehq.apps.reports.fields.GroupField',
-              'corehq.apps.reports.fields.DatespanField']
+class DailyFormStatsReport(WorkerMonitoringReportTable, DatespanMixin):
+    slug = "daily_form_stats"
+    name = "Daily Form Statistics"
 
-    # new class properties
-    dates_in_utc = True
-    by_submission_time=True
+    fields = ['corehq.apps.reports.fields.FilterUsersField',
+                'corehq.apps.reports.fields.GroupField',
+                'corehq.apps.reports.filters.forms.CompletionOrSubmissionTimeFilter',
+                'corehq.apps.reports.fields.DatespanField']
+
+    fix_left_col = True
     emailable = True
 
-    _dates = None
+    # todo: redirect daily_completions and daily_submissions to this report
+    # todo: get mike to handle deleted reports gracefully
+
     @property
+    @memoized
     def dates(self):
-        if self._dates is None:
-            date_list = [self.datespan.startdate]
-            while date_list[-1] < self.datespan.enddate:
-                date_list.append(date_list[-1] + datetime.timedelta(days=1))
-            self._dates = date_list
-        return self._dates
+        date_list = [self.datespan.startdate]
+        while date_list[-1] < self.datespan.enddate:
+            date_list.append(date_list[-1] + datetime.timedelta(days=1))
+        return date_list
+
+    @property
+    def by_submission_time(self):
+        value = CompletionOrSubmissionTimeFilter.get_value(self.request, self.domain)
+        return value == 'submission'
 
     @property
     def headers(self):
@@ -516,16 +401,16 @@ class DailyReport(WorkerMonitoringReportTable, DatespanMixin):
 
     @property
     def rows(self):
-        if self.dates_in_utc:
-            _dates = [tz_utils.adjust_datetime_to_timezone(date, self.timezone.zone, pytz.utc.zone) for date in self.dates]
-        else:
-            _dates = self.dates
+#        if self.dates_in_utc:
+#            _dates = [tz_utils.adjust_datetime_to_timezone(date, self.timezone.zone, pytz.utc.zone) for date in self.dates]
+#        else:
+#            _dates = self.dates
 
         key = make_form_couch_key(self.domain, by_submission_time=self.by_submission_time)
         results = get_db().view("reports_forms/all_forms",
             reduce=False,
-            startkey=key+[self.datespan.startdate_param_utc if self.dates_in_utc else self.datespan.startdate_param],
-            endkey=key+[self.datespan.enddate_param_utc if self.dates_in_utc else self.datespan.enddate_param]
+            startkey=key+[self.datespan.startdate_param_utc if self.by_submission_time else self.datespan.startdate_param],
+            endkey=key+[self.datespan.enddate_param_utc if self.by_submission_time else self.datespan.enddate_param]
         ).all()
 
         user_map = dict([(user.get('user_id'), i) for (i, user) in enumerate(self.users)])
@@ -561,26 +446,12 @@ class DailyReport(WorkerMonitoringReportTable, DatespanMixin):
         return rows
 
 
-class DailySubmissionsReport(DailyReport):
-    name = ugettext_noop("Daily Form Submissions")
-    slug = "daily_submissions"
-
-
-class DailyFormCompletionsReport(DailyReport):
-    name = ugettext_noop("Daily Form Completions")
-    slug = "daily_completions"
-
-    by_submission_time=False
-    dates_in_utc = False
-
-
-class FormCompletionTrendsReport(WorkerMonitoringReportTable, DatespanMixin):
-    name = ugettext_noop("Form Completion Trends")
+class FormCompletionTimeReport(WorkerMonitoringReportTable, DatespanMixin):
+    name = ugettext_noop("Form Completion Time")
     slug = "completion_times"
     fields = ['corehq.apps.reports.fields.FilterUsersField',
-              'corehq.apps.reports.fields.SelectFormField',
-              'corehq.apps.reports.filters.forms.FormsByApplicationFilter',
               'corehq.apps.reports.fields.GroupField',
+              'corehq.apps.reports.filters.forms.FormsByApplicationFilter',
               'corehq.apps.reports.fields.DatespanField']
 
     @property
@@ -738,8 +609,9 @@ class FormCompletionVsSubmissionTrendsReport(WorkerMonitoringReportTable, Datesp
 
 
 class SubmissionTimesReport(WorkerMonitoringChart):
-    name = ugettext_noop("Submission Times")
-    slug = "submit_time_punchcard"
+    name = ugettext_noop("Worker Activity Times")
+    slug = "worker_activity_times"
+    # todo redirect from submit_time_punchcard
 
     report_partial_path = "reports/partials/punchcard.html"
     show_time_notice = True
