@@ -646,18 +646,16 @@ class CouchUser(Document, DjangoUserMixin, UnicodeMixIn):
         return _get_default(self.phone_numbers)
     phone_number = default_phone_number
 
-    @property
-    def phone_numbers_extended(self):
+    def phone_numbers_extended(self, active_user=None):
         # TODO: what about web users... do we not want to verify phone numbers
         # for them too? if so, CommCareMobileContactMixin should be on CouchUser,
         # not CommCareUser
 
         # hack to work around the above issue
-        if hasattr(self, 'get_verified_numbers'):
-            verified = self.get_verified_numbers(True)
-        else:
-            verified = {}
+        if not isinstance(self, CommCareMobileContactMixin):
+            return [{'number': phone, 'status': 'unverified', 'contact': None} for phone in self.phone_numbers]
 
+        verified = self.get_verified_numbers(True)
         def extend_phone(phone):
             extended_info = {}
             contact = verified.get(phone)
@@ -685,8 +683,11 @@ class CouchUser(Document, DjangoUserMixin, UnicodeMixIn):
                             'user': ('user_account', 'couch_user_id'),
                             'case': ('case_details', 'case_id'),
                         }[doc_type]
-                        extended_info['dup_url'] = reverse(url_ref, kwargs={'domain': duplicate.domain, doc_id_param: duplicate.owner_id})
-                    except:
+                        dup_url = reverse(url_ref, kwargs={'domain': duplicate.domain, doc_id_param: duplicate.owner_id})
+
+                        if active_user is None or active_user.is_member_of(duplicate.domain):
+                            extended_info['dup_url'] = dup_url
+                    except Exception, e:
                         pass
 
             extended_info.update({'number': phone, 'status': status, 'contact': contact})

@@ -152,7 +152,7 @@
 
             <div class="form form-horizontal">
                 <fieldset>
-                    {% for phone in couch_user.phone_numbers_extended %}
+                    {% for phone in phone_numbers_extended %}
                         {% if forloop.first %}<legend>Registered Phone Numbers</legend>{% endif %}
                         <div class="control-group">
                             <label class="control-label">+{{ phone.number }}
@@ -170,18 +170,21 @@
                             <div class="controls">
                                 {% ifnotequal couch_user.doc_type "WebUser" %}
 
-                                {% ifequal phone.status "unverified" %}
+                                  {% ifequal phone.status "unverified" %}
                                 <form method="post" action="{% url verify_phone_number domain couch_user.couch_id %}?phone_number={{phone.number|urlencode}}" style="display: inline;">
                                     <button type="submit" title="Send a verification SMS to this phone. When the user replies to this SMS, the phone number will be verified." class="btn btn-primary"><i class="icon icon-signal icon-white"></i> Verify</button>
                                 </form>
-                                {% endifequal %}
-                                {% endifnotequal %}
-                                {% ifequal phone.status "pending" %}
-                                <a title="Re-send the verification SMS to this phone" class="btn btn-primary" data-toggle="modal" href="#reverify_{{phone.number|urlencode}}"><i class="icon icon-signal icon-white"></i> Verify (retry)</a>
-                                {% endifequal %}
-                                {% ifequal phone.status "duplicate" %}
+                                  {% endifequal %}
+
+                                  {% ifequal phone.status "duplicate" %}
                                 <a title="You cannot verify this phone because it is already being used elsewhere" class="btn btn-primary disabled"><i class="icon icon-signal icon-white"></i> Verify</a>
-                                {% endifequal %}
+                                  {% endifequal %}
+
+                                  {% ifequal phone.status "pending" %}
+                                <a title="Re-send the verification SMS to this phone" class="btn btn-primary" data-toggle="modal" href="#reverify_{{phone.number|urlencode}}"><i class="icon icon-signal icon-white"></i> Verify (retry)</a>
+                                  {% endifequal %}
+
+                                {% endifnotequal %}
 
                                 <a class="btn btn-danger" data-toggle="modal" href="#delete_{{phone.number|urlencode}}"><i class="icon icon-remove icon-white"></i> Delete</a>
                             </div>
@@ -271,7 +274,7 @@
             </form>
         </div>
     {% endfor %}
-    {% for phone in couch_user.phone_numbers_extended %}{% ifequal phone.status "pending" %}
+    {% for phone in phone_numbers_extended %}{% ifequal phone.status "pending" %}
         <div id="reverify_{{phone.number|urlencode}}" class="modal hide fade">
             <div class="modal-header">
                 <a class="close" data-dismiss="modal">&times;</a>
