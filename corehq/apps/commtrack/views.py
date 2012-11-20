@@ -21,7 +21,7 @@ def bootstrap(request, domain):
 @require_superuser
 def location_import(request, domain):
     if request.method == "POST":
-        messages = import_locations.import_locations(domain, request.FILES['locs'])
+        messages = list(import_locations.import_locations(domain, request.FILES['locs']))
         return HttpResponse('results:\n\n' + '\n'.join(messages), 'text/plain')
 
     return HttpResponse("""

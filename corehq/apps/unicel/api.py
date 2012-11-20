@@ -34,7 +34,7 @@ class OutboundParams(object):
 UNICODE_PARAMS = [("udhi", 0),
                   ("dcs", 8)]
 
-DATE_FORMAT = "%m/%d/%Y %H:%M:%S %p"
+DATE_FORMAT = "%m/%d/%y %I:%M:%S %p"
 
 def _check_environ():
     if not hasattr(settings, "UNICEL_CONFIG") \
@@ -57,9 +57,18 @@ def create_from_request(request, delay=True):
     sender = request.REQUEST[InboundParams.SENDER]
     message = request.REQUEST[InboundParams.MESSAGE]
     timestamp = request.REQUEST.get(InboundParams.TIMESTAMP, "")
+
+    if len(sender) == 10:
+        # add india country code
+        sender = '91' + sender
+
     # parse date or default to current utc time
-    actual_timestamp = datetime.strptime(timestamp, DATE_FORMAT) \
-                            if timestamp else None
+    actual_timestamp = None
+    if timestamp:
+        try:
+            actual_timestamp = datetime.strptime(timestamp, DATE_FORMAT)
+        except ValueError:
+            logging.warning('could not parse unicel inbound timestamp [%s]' % timestamp)
     
     # not sure yet if this check is valid
     is_unicode = request.REQUEST.get(InboundParams.UDHI, "") == "1"
