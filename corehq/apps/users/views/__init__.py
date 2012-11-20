@@ -280,6 +280,8 @@ def account(request, domain, couch_user_id, template="users/account.html"):
         })
         # scheduled reports tab
     context.update({
+        'phone_numbers_extended': couch_user.phone_numbers_extended(request.couch_user),
+
         # for commcare-accounts tab
         # "other_commcare_accounts": other_commcare_accounts,
     })
