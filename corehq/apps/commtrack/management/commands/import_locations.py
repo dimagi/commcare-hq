@@ -1,7 +1,38 @@
-import csv
+from django.core.management.base import BaseCommand, CommandError
+from optparse import make_option
 from corehq.apps.locations.models import Location
+from corehq.apps.domain.models import Domain
 from corehq.apps.commtrack.helpers import make_supply_point
 from dimagi.utils.couch.database import get_db
+import csv
+
+class Command(BaseCommand):
+    args = 'domain locations.csv'
+    help = 'Import locations from csv file'
+
+    def handle(self, *args, **options):
+        try:
+            domain_name = args[0]
+        except IndexError:
+            self.stderr.write('domain required\n')
+            return
+
+        try:
+            path = args[1]
+        except IndexError:
+            self.stderr.write('csv file required\n')
+            return
+
+        self.stdout.write('importing locations from [%s] into domain [%s]\n' % (path, domain_name))
+
+        domain = Domain.get_by_name(domain_name)
+        if domain is None:
+            self.stderr.write('Can\'t find domain\n')
+            return
+
+        with open(path) as f:
+            for m in import_locations(domain_name, f):
+                self.stdout.write(m + '\n')
 
 def import_locations(domain, f):
     data = list(csv.DictReader(f))
