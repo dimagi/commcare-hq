@@ -17,6 +17,7 @@ class BaseReportFilter(object):
     template = None
     label = None
     css_class = "span4"
+    help_text = None
 
     def __init__(self, request, domain=None, timezone=pytz.utc, parent_report=None):
         if self.slug is None:
@@ -54,6 +55,7 @@ class BaseReportFilter(object):
             'label': self.label,
             'css_id': 'report_filter_%s' % self.slug,
             'css_class': self.css_class,
+            'help_text': self.help_text,
         })
         filter_context = self.filter_context
         if not (filter_context, dict):
@@ -84,14 +86,14 @@ class BaseSingleOptionFilter(BaseReportFilter):
     @property
     @memoized
     def selected(self):
-        return self.get_value(self.request) or ""
+        return self.get_value(self.request, self.domain) or ""
 
     @property
     def filter_context(self):
         options = self.options
         if not isinstance(options, list) and not isinstance(options[0], tuple) and not len(options[0]) == 2:
             raise ValueError("options must return a list of option tuples [('value','text')].")
-        options = [dict(val=o[0], text=o[1]) for o in options]
+        options = [dict(val=o[0], text=o[1]) for o in self.options]
         return {
             'select': {
                 'options': options,
@@ -99,6 +101,18 @@ class BaseSingleOptionFilter(BaseReportFilter):
                 'selected': self.selected,
             }
         }
+
+    @classmethod
+    def get_value(cls, request, domain):
+        value = super(BaseSingleOptionFilter, cls).get_value(request, domain)
+        if isinstance(cls, cls):
+            instance = cls
+        else:
+            instance = cls(request, domain)
+        valid_options = [op[0] for op in instance.options]
+        if value in valid_options:
+            return value
+        return None
 
 
 class BaseSingleOptionTypeaheadFilter(BaseSingleOptionFilter):
