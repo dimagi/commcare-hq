@@ -248,3 +248,21 @@ ko.bindingHandlers.visibleFade = {
         }
     }
 };
+
+ko.bindingHandlers.starred = {
+    init: function (element) {
+        $(element).addClass('star');
+    },
+    update: function (element, valueAccessor) {
+        var value = ko.utils.unwrapObservable(valueAccessor()),
+            $element = $(element);
+        $element.addClass('star');
+        if (value) {
+            $element.addClass('star-true');
+            $element.removeClass('star-false');
+        } else {
+            $element.addClass('star-false');
+            $element.removeClass('star-true');
+        }
+    }
+};

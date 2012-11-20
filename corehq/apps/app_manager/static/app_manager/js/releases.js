@@ -43,6 +43,29 @@ function ReleasesMain(o) {
             }
         });
     };
+    self.toggleRelease = function (savedApp) {
+        var is_released = $(this).data('is-released');
+        var saved_app_id = $(this).data('saved-app-id');
+        if (savedApp.is_released() !== 'pending') {
+            var url = self.url('release');
+            var that = this;
+            $.ajax({
+                url: url,
+                type: 'post',
+                dataType: 'json',
+                data: {ajax: true},
+                beforeSend: function () {
+                    setIsReleased(that, 'pending');
+                },
+                success: function (data) {
+                    setIsReleased(that, data.is_released);
+                },
+                error: function () {
+                    setIsReleased(that, 'error');
+                }
+            });
+        }
+    }
     self.deleteSavedApp = function (savedApp) {
         $.post(self.url('delete'), {saved_app: savedApp.id}, function () {
             self.savedApps.remove(savedApp);

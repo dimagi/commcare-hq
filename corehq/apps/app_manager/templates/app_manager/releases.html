@@ -14,15 +14,6 @@
 <script>
     $(function () {
         {% if edit %}
-        var URLS = {
-            set_is_released: function (saved_app_id, is_released) {
-                return(
-                    is_released
-                    ? '{% url unrelease_build domain app.id '___' %}'
-                    : '{% url release_build domain app.id '___' %}'
-                ).replace('___', saved_app_id);
-            }
-        };
         function setIsReleased(element, is_released) {
             if (is_released === undefined) {
                 is_released = $(element).data('is-released');
@@ -72,32 +63,6 @@
                 row.addClass(LATEST);
             });
         }
-        $('.build-is-released [data-is-released]').each(function () {
-            setIsReleased(this);
-        }).click(function (e) {
-            e.preventDefault();
-            var is_released = $(this).data('is-released');
-            var saved_app_id = $(this).data('saved-app-id');
-            if (is_released !== 'pending') {
-                var url = URLS.set_is_released(saved_app_id, is_released);
-                var that = this;
-                $.ajax({
-                    url: url,
-                    type: 'post',
-                    dataType: 'json',
-                    data: {ajax: true},
-                    beforeSend: function () {
-                        setIsReleased(that, 'pending');
-                    },
-                    success: function (data) {
-                        setIsReleased(that, data.is_released);
-                    },
-                    error: function () {
-                        setIsReleased(that, 'error');
-                    }
-                });
-            }
-        });
         {% endif %}
         $('#build-errors').each(function () {
             var specialMessage = $('span', this)[0];
@@ -120,7 +85,8 @@
             jad: '{% url corehq.apps.app_manager.views.download_jad domain '___' %}',
             jar: '{% url corehq.apps.app_manager.views.download_jar domain '___' %}',
             odk: '{% url corehq.apps.app_manager.views.odk_install domain '___' %}',
-            source: '{% url download_index domain '___' %}'
+            source: '{% url download_index domain '___' %}',
+            release: '{% url release_build domain app.id '___' %}'
         };
         var o = {
             users_cannot_share: {{ users_cannot_share|JSON }},
@@ -151,18 +117,18 @@
     .nowrap {
         white-space: nowrap;
     }
-    .build-is-released .star{
+    .star{
         min-width: 20px;
         min-height: 20px;
         background-repeat: no-repeat;
     }
-    .build-is-released .starred {
+    .star.star-true {
         background-image: url("{% static 'app_manager/img/star-filled.svg' %}");
     }
-    .build-is-released .unstarred {
+    .star.star-false {
         background-image: url("{% static 'app_manager/img/star-empty.svg' %}");
     }
-    .build-is-released .star-error:after {
+    .star.star-error:after {
         content: "Error";
     }
 </style>

@@ -51,7 +51,7 @@
                 <h6 data-bind="visible: !build_comment()">{% trans "(No Comment)" %}</h6>
             </td>
             <td class="build-is-released">
-                <div class="star" data-bind="css: {'starred': is_released, 'unstarred': !is_released(), 'data-saved-app-id': id}"></div>
+                <div data-bind="starred: is_released, click: $root.toggleRelease"></div>
             </td>
         </tr>
     </tbody>
