@@ -161,15 +161,27 @@ class SnapshotSettingsForm(SnapshotSettingsMixin):
         cleaned_data = self.cleaned_data
         sm = cleaned_data["share_multimedia"]
         license = cleaned_data["license"]
+        apps = self._get_apps_to_publish()
 
-        if sm and license not in self.dom.most_restrictive_licenses:
-            license_choices = [LICENSES[l] for l in self.dom.most_restrictive_licenses]
+        if sm and license not in self.dom.most_restrictive_licenses(apps_to_check=apps):
+            license_choices = [LICENSES[l] for l in self.dom.most_restrictive_licenses(apps_to_check=apps)]
             msg = render_to_string('domain/partials/restrictive_license.html', {'licenses': license_choices})
             self._errors["license"] = self.error_class([msg])
 
             del cleaned_data["license"]
 
         return cleaned_data
+
+    def _get_apps_to_publish(self):
+        app_ids = []
+        for d, val in self.data.iteritems():
+            d = d.split('-')
+            if len(d) < 2:
+                continue
+            if d[1] == 'publish' and val == 'on':
+                app_ids.append(d[0])
+
+        return app_ids
 
 ########################################################################################################
 

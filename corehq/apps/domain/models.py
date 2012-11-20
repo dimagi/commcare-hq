@@ -566,17 +566,24 @@ class Domain(Document, HQBillingDomainMixin, SnapshotMixin):
             db.delete_doc(doc['doc'])
         super(Domain, self).delete()
 
-    def all_media(self):
+    def all_media(self, from_apps=None):
         from corehq.apps.hqmedia.models import CommCareMultimedia
+        if from_apps:
+            media = []
+            apps = [app for app in self.full_applications() if app.get_id in from_apps]
+            for app in apps:
+                for _, m in app.get_media_documents():
+                    media.append(m)
+            return media
+
         return CommCareMultimedia.view('hqmedia/by_domain', key=self.name, include_docs=True).all()
 
-    @property
-    def most_restrictive_licenses(self):
+    def most_restrictive_licenses(self, apps_to_check=None):
         from corehq.apps.hqmedia.utils import most_restrictive
         if self.is_snapshot:
-            licenses = [m.license['type'] for m in self.copied_from.all_media()]
+            licenses = [m.license['type'] for m in self.copied_from.all_media(from_apps=apps_to_check)]
         else:
-            licenses = [m.license['type'] for m in self.all_media()]
+            licenses = [m.license['type'] for m in self.all_media(from_apps=apps_to_check)]
         return most_restrictive(licenses)
 
     @classmethod
