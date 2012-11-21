@@ -113,6 +113,11 @@
 {#        This version: {{ project.copies|length }};#}
         <!-- All versions: -->{{ project.downloads }}
     </dd>
+    {% if project.multimedia_included and project.has_media %}
+        <dd>
+            <a class="btn" style="margin-top: .4em" href="{% url media_files project %}">{% trans "Browse Multimedia" %}</a>
+        </dd>
+    {% endif %}
 </dl>
 <hr />
     <div id="application-accordion">
