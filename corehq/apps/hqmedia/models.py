@@ -4,12 +4,14 @@ from datetime import datetime
 import hashlib
 from couchdbkit.exceptions import ResourceConflict, ResourceNotFound
 from couchdbkit.ext.django.schema import *
+from django.contrib import messages
 from django.core.urlresolvers import reverse
 import magic
 from hutch.models import AuxMedia, AttachmentImage, MediaAttachmentManager
 from corehq.apps import domain
 from corehq.apps.domain.models import LICENSES
 from dimagi.utils.couch.database import get_db
+from django.utils.translation import ugettext as _
 
 class HQMediaType(object):
     IMAGE = 0
@@ -268,7 +270,7 @@ class HQMediaMixin(Document):
                 media = None
             yield form_path, media
 
-    def get_template_map(self, sorted_files):
+    def get_template_map(self, sorted_files, req=None):
         product = []
         missing_refs = 0
         multimedia_map = self.multimedia_map
@@ -283,6 +285,11 @@ class HQMediaMixin(Document):
                 missing_refs += 1
             except AttributeError:
                 pass
+            except UnicodeEncodeError:
+                if req:
+                    messages.error(req, _("This application has unsupported text in it's audio label field ")) #what should this say
+                else:
+                    pass
         return product, missing_refs
 
     def clean_mapping(self, user=None):
