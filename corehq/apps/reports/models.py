@@ -283,7 +283,7 @@ class ReportConfig(Document):
         if self.report is None:
             return _("Deleted Report")
         else:
-            return self.report.name
+            return _(self.report.name)
 
     @property
     def full_name(self):
