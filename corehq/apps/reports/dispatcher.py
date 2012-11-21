@@ -1,5 +1,7 @@
 from django.conf import settings
 from django.http import HttpResponseNotFound, Http404
+from django.template.loader import render_to_string
+from django.utils.safestring import mark_safe
 from django.views.generic.base import View
 from corehq.apps.domain.decorators import login_and_domain_required, cls_login_and_domain_required, cls_to_view
 from dimagi.utils.decorators.datespan import datespan_in_request
@@ -147,14 +149,13 @@ class ReportDispatcher(View):
         request = context.get('request')
         domain = context.get('domain') or getattr(request, 'domain', None)
 
-        report_nav = list()
+        nav_context = []
         dispatcher = cls()
         current_slug = dispatcher._slug_alias(context.get('report',{}).get('slug',''))
 
         reports = dispatcher.get_reports(domain)
         for key, models in reports.items():
-            section = list()
-            section_header = '<li class="nav-header">%s</li>' % escape(_(key))
+            section = []
             for model in models:
                 if not dispatcher.permissions_check(model, request, domain=domain):
                     continue
@@ -164,19 +165,22 @@ class ReportDispatcher(View):
                         section.extend(report.override_navigation_list(context))
                     else:
                         selected_report = bool(report.slug == current_slug)
-                        section.append("""<li class="%(css_class)s"><a href="%(link)s" title="%(link_title)s">
-                        %(icon)s%(title)s
-                        </a></li>""" % dict(
-                            css_class="active" if selected_report else "",
-                            link=report.get_url(domain=domain),
-                            link_title=_(report.description) if report.description else "",
-                            icon='<i class="icon%s %s"></i> ' % ("-white" if selected_report else "", report.icon) if report.icon else "",
-                            title=_(report.name) if report.name else ""
-                        ))
+                        section.append({
+                            'is_report': True,
+                            'is_active': selected_report,
+                            'url': report.get_url(domain=domain),
+                            'description': report.description,
+                            'icon': report.icon,
+                            'title': report.name,
+                        })
             if section:
-                report_nav.append(section_header)
-                report_nav.extend(section)
-        return "\n".join(report_nav)
+                nav_context.append({
+                    'header': _(key),
+                })
+                nav_context.extend(section)
+        return mark_safe(render_to_string("reports/standard/partials/navigation_items.html", {
+            'navs': nav_context
+        }))
 
     @classmethod
     def url_pattern(cls):

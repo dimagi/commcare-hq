@@ -148,28 +148,28 @@ class DefaultReportADMSectionView(GenericTabularReport, ADMSectionView, ProjectR
         current_slug = context.get('report', {}).get('sub_slug')
         domain = context.get('domain')
 
-        subreport_nav = list()
+        subreport_context = []
         subreports = ADMReport.get_default_subreports(domain, cls.adm_slug)
 
         if not subreports:
-            return ["""<li><span class="label">
-            <i class="icon-white icon-info-sign"></i> No ADM Reports Configured</span>
-            </li>"""]
+            subreport_context.append({
+                'warning_label': 'No ADM Reports Configured',
+            })
+            return subreport_context
 
         for report in subreports:
             key = report.get("key", [])
             entry = report.get("value", {})
             report_slug = key[-2]
             if cls.show_subreport_in_navigation(report_slug):
-                subreport_nav.append("""<li%(active_class)s>
-                <a href="%(url)s" title="%(description)s">%(name)s</a>
-                </li>""" % dict(
-                    active_class=' class="active"' if current_slug == report_slug else "",
-                    url=cls.get_url(domain=domain, subreport=report_slug),
-                    description=entry.get('description', ''),
-                    name=entry.get('name', 'Untitled Report')
-                ))
-        return subreport_nav
+                subreport_context.append({
+                    'is_report': True,
+                    'is_active': current_slug == report_slug,
+                    'url': cls.get_url(domain=domain, subreport=report_slug),
+                    'description': entry.get('description', ''),
+                    'title': entry.get('name', 'Untitled Report'),
+                })
+        return subreport_context
 
     @classmethod
     def show_subreport_in_navigation(cls, subreport_slug):
