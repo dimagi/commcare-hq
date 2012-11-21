@@ -1478,6 +1478,9 @@ class PublicUser(FakeUser):
         assert(domain == self.domain)
         return super(PublicUser, self).get_role(domain)
 
+    def is_eula_signed(self):
+        return True # hack for public domain so eula modal doesn't keep popping up
+    
 class InvalidUser(FakeUser):
     """
     Public users have read-only access to certain domains
