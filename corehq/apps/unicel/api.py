@@ -5,6 +5,7 @@ from corehq.apps.sms.api import incoming
 from django.conf import settings
 from urllib2 import urlopen
 from urllib import urlencode
+import pytz
 
 API_ID = "UNICEL"
 
@@ -14,7 +15,7 @@ class InboundParams(object):
     """
     A constant-defining class for incoming sms params
     """
-    SENDER = "sender"
+    SENDER = "send"
     MESSAGE = "msg"
     TIMESTAMP = "stime"
     UDHI = "udhi"
@@ -24,7 +25,7 @@ class OutboundParams(object):
     """
     A constant-defining class for outbound sms params
     """
-    SENDER = "sender"
+    SENDER = "send"
     MESSAGE = "msg"
     USERNAME = "uname"
     PASSWORD = "pass"
@@ -34,7 +35,7 @@ class OutboundParams(object):
 UNICODE_PARAMS = [("udhi", 0),
                   ("dcs", 8)]
 
-DATE_FORMAT = "%m/%d/%Y %H:%M:%S %p"
+DATE_FORMAT = "%m/%d/%y %I:%M:%S %p"
 
 def _check_environ():
     if not hasattr(settings, "UNICEL_CONFIG") \
@@ -57,9 +58,19 @@ def create_from_request(request, delay=True):
     sender = request.REQUEST[InboundParams.SENDER]
     message = request.REQUEST[InboundParams.MESSAGE]
     timestamp = request.REQUEST.get(InboundParams.TIMESTAMP, "")
+
+    if len(sender) == 10:
+        # add india country code
+        sender = '91' + sender
+
     # parse date or default to current utc time
-    actual_timestamp = datetime.strptime(timestamp, DATE_FORMAT) \
-                            if timestamp else None
+    actual_timestamp = None
+    if timestamp:
+        try:
+            actual_timestamp = datetime.strptime(timestamp, DATE_FORMAT)
+            actual_timestamp = pytz.timezone('Asia/Kolkata').localize(actual_timestamp).astimezone(pytz.utc)
+        except Exception, e:
+            logging.warning('could not parse unicel inbound timestamp [%s]' % timestamp)
     
     # not sure yet if this check is valid
     is_unicode = request.REQUEST.get(InboundParams.UDHI, "") == "1"

@@ -1344,7 +1344,7 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
 
     def _create_custom_app_strings(self, lang):
         def trans(d):
-            return clean_trans(d, langs).strip()
+            return clean_trans(d, langs)
         id_strings = IdStrings()
         langs = [lang] + self.langs
         yield id_strings.homescreen_title(), self.name

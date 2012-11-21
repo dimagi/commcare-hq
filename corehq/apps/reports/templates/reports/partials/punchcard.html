@@ -1,10 +1,11 @@
+{% load i18n %}
 <div class="hq-graphic-report">
 {% if chart_url %}
 <div class="hq-graph">
-    <h2>Submission Times (Hour vs. Weekday)</h2>
+    <h2>{% trans "Submission Times" %} ({% trans "Hour vs. Weekday" %})</h2>
     <img src="{{chart_url}}" />
 </div>
 {% else %}
-<div class="alert">No data available.</div>
+<div class="alert">{% trans "No data available." %}</div>
 {% endif %}
 </div>

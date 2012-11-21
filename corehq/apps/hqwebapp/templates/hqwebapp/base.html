@@ -234,7 +234,7 @@
                 </form>
             </div>
         {% block modals %}
-            {% if request.couch_user and not request.couch_user.eula.signed and not request.couch_user.is_superuser %}
+            {% if request.couch_user and not request.couch_user.is_eula_signed %}
                 <div class="modal hide fade" id="eulaModal">
                     <div class="modal-header">
                         <a class="close" data-dismiss="modal">&times;</a>
@@ -268,7 +268,7 @@
         {% endblock %}
 
         {% block js-inline %}
-            {% if request.couch_user and not request.couch_user.eula.signed and not request.couch_user.is_superuser %}
+            {% if request.couch_user and not request.couch_user.is_eula_signed %}
                 {% url eula as eula_url %}
                 {% include 'hqstyle/partials/load_into_modal.html' with modal_id="eulaModal" load_from=eula_url %}
                 <script type="text/javascript">

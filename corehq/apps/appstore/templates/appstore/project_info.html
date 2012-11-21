@@ -111,7 +111,7 @@
     <dt>{% trans 'Downloads' %}</dt>
     <dd>
 {#        This version: {{ project.copies|length }};#}
-        <!-- All versions: -->{{ project.copies_of_parent|length }}
+        <!-- All versions: -->{{ project.downloads }}
     </dd>
 </dl>
 <hr />
@@ -168,8 +168,11 @@
                         {% if error_message %}
                             <span class="help-inline">{{ error_message }}</span>
                         {% endif %}
-                        <a class="btn btn-primary" data-form="new-project-form" data-toggle="modal" data-target="#licenseAgreement" href="#licenseAgreement">{% trans "Create New Project" %}</a> {% trans "or" %}
-                        <a class="btn" id="import-app-button">{% trans "Import to Existing Project" %}</a>
+                        <a class="btn btn-primary" data-form="new-project-form" data-toggle="modal" data-target="#licenseAgreement" href="#licenseAgreement">{% trans "Create New Project" %}</a>
+                        {% if display_import %}
+                            {% trans "or" %}
+                            <a class="btn" id="import-app-button">{% trans "Import to Existing Project" %}</a>
+                        {% endif %}
                     </div>
                 {% else %}
                     {% trans "Please" %} <a href="{% url login %}">{% trans "sign in" %}</a> {% trans "or" %} <a href="{% url registration_new_user %}">{% trans "register" %}</a> {% trans "to download an app from Exchange" %}

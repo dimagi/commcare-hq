@@ -373,6 +373,15 @@ def create_snapshot(request, domain):
                  'app_forms': app_forms,
                  'autocomplete_fields': ('project_type', 'phone_model', 'user_type', 'city', 'country', 'region')})
 
+        current_user = CouchUser.from_django_user(request.user)
+        if not current_user.is_eula_signed():
+            messages.error(request, 'You must agree to our eula to publish a project to Exchange')
+            return render_to_response(request, 'domain/create_snapshot.html',
+                {'domain': domain.name,
+                 'form': form,
+                 'app_forms': app_forms,
+                 'autocomplete_fields': ('project_type', 'phone_model', 'user_type', 'city', 'country', 'region')})
+
         if not form.is_valid():
             return render_to_response(request, 'domain/create_snapshot.html',
                     {'domain': domain.name,
@@ -414,7 +423,6 @@ def create_snapshot(request, domain):
         else:
             new_domain.published = False
 
-        current_user = CouchUser.from_django_user(request.user)
         new_domain.cda.signed = True
         new_domain.cda.date = datetime.datetime.utcnow()
         new_domain.cda.type = 'Content Distribution Agreement'

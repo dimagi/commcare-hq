@@ -186,15 +186,16 @@ class CaseActivityReport(WorkerMonitoringReportTable):
 
     @property
     def headers(self):
-        headers = DataTablesHeader(DataTablesColumn("Users"))
+        headers = DataTablesHeader(DataTablesColumn(_("Users")))
         for landmark in self.landmarks:
-            headers.add_column(DataTablesColumn("Last %s Days" % landmark.days if landmark else "Ever",
+            headers.add_column(DataTablesColumn(
+                _("Last %s Days") % landmark.days if landmark else _("Ever"),
                 sort_type=DTSortType.NUMERIC,
                 help_text=_('Number of cases modified (or closed) in the last %s days') % landmark.days))
-        headers.add_column(DataTablesColumn("Active Cases",
+        headers.add_column(DataTablesColumn(_("Active Cases"),
             sort_type=DTSortType.NUMERIC,
             help_text=_('Number of cases modified in the last %s days that are still open') % self.milestone.days))
-        headers.add_column(DataTablesColumn("Inactive Cases",
+        headers.add_column(DataTablesColumn(_("Inactive Cases"),
             sort_type=DTSortType.NUMERIC,
             help_text=_("Number of cases that are open but haven't been touched in the last %s days") % self.milestone.days))
         return headers

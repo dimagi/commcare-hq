@@ -31,7 +31,7 @@ from corehq.apps.domain.utils import normalize_domain_name
 from corehq.apps.domain.models import LicenseAgreement
 from corehq.apps.users.util import normalize_username, user_data_from_registration_form, format_username, raw_username, cc_user_domain
 from corehq.apps.users.xml import group_fixture
-from corehq.apps.sms.mixin import CommCareMobileContactMixin
+from corehq.apps.sms.mixin import CommCareMobileContactMixin, VerifiedNumber, PhoneNumberInUseException
 from couchforms.models import XFormInstance
 
 from dimagi.utils.couch.database import get_db
@@ -646,25 +646,52 @@ class CouchUser(Document, DjangoUserMixin, UnicodeMixIn):
         return _get_default(self.phone_numbers)
     phone_number = default_phone_number
 
-    @property
-    def phone_numbers_extended(self):
+    def phone_numbers_extended(self, active_user=None):
         # TODO: what about web users... do we not want to verify phone numbers
         # for them too? if so, CommCareMobileContactMixin should be on CouchUser,
         # not CommCareUser
 
         # hack to work around the above issue
-        if hasattr(self, 'get_verified_numbers'):
-            verified = self.get_verified_numbers(True)
-        else:
-            verified = {}
+        if not isinstance(self, CommCareMobileContactMixin):
+            return [{'number': phone, 'status': 'unverified', 'contact': None} for phone in self.phone_numbers]
 
+        verified = self.get_verified_numbers(True)
         def extend_phone(phone):
+            extended_info = {}
             contact = verified.get(phone)
             if contact:
                 status = 'verified' if contact.verified else 'pending'
             else:
-                status = 'unverified'
-            return {'number': phone, 'status': status, 'contact': contact}
+                try:
+                    self.verify_unique_number(phone)
+                    status = 'unverified'
+                except PhoneNumberInUseException:
+                    status = 'duplicate'
+
+                    duplicate = VerifiedNumber.by_phone(phone, include_pending=True)
+                    assert duplicate is not None, 'expected duplicate VerifiedNumber entry'
+
+                    # TODO seems like this could be a useful utility function? where to put it...
+                    try:
+                        doc_type = {
+                            'CouchUser': 'user',
+                            'CommCareUser': 'user',
+                            'CommCareCase': 'case',
+                            'CommConnectCase': 'case',
+                        }[duplicate.owner_doc_type]
+                        url_ref, doc_id_param = {
+                            'user': ('user_account', 'couch_user_id'),
+                            'case': ('case_details', 'case_id'),
+                        }[doc_type]
+                        dup_url = reverse(url_ref, kwargs={'domain': duplicate.domain, doc_id_param: duplicate.owner_id})
+
+                        if active_user is None or active_user.is_member_of(duplicate.domain):
+                            extended_info['dup_url'] = dup_url
+                    except Exception, e:
+                        pass
+
+            extended_info.update({'number': phone, 'status': status, 'contact': contact})
+            return extended_info
         return [extend_phone(phone) for phone in self.phone_numbers]
 
 
@@ -899,6 +926,9 @@ class CouchUser(Document, DjangoUserMixin, UnicodeMixIn):
 
     def is_deleted(self):
         return self.base_doc.endswith(DELETED_SUFFIX)
+
+    def is_eula_signed(self):
+        return self.eula.signed or self.is_superuser
 
     def get_viewable_reports(self, domain=None, name=True):
         try:

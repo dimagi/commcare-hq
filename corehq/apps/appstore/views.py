@@ -24,6 +24,7 @@ from corehq.apps.reports.views import datespan_default
 from corehq.apps.hqmedia import utils
 from corehq.apps.app_manager.models import Application
 from django.shortcuts import redirect
+from django.utils.translation import ugettext as _
 import rawes
 
 PER_PAGE = 9
@@ -104,7 +105,8 @@ def project_info(request, domain, template="appstore/project_info.html"):
         "images": images,
         "audio": audio,
         "sortables": facets_sortables,
-        "url_base": reverse('appstore')
+        "url_base": reverse('appstore'),
+        'display_import': True if request.couch_user.get_domains() else False
     })
 
 def parse_args_for_es(request):
@@ -263,6 +265,10 @@ def approve_app(request, domain):
 @require_previewer # remove for production
 def import_app(request, domain):
     user = request.couch_user
+    if not user.is_eula_signed():
+        messages.error(request, 'You must agree to our eula to download an app')
+        return project_info(request, domain)
+
     from_project = Domain.get_by_name(domain)
 
     if request.method == 'POST' and from_project.is_snapshot:
@@ -272,13 +278,15 @@ def import_app(request, domain):
 
         to_project_name = request.POST['project']
         if not user.is_member_of(to_project_name):
-            messages.error(request, "You don't belong to that project")
+            messages.error(request, _("You don't belong to that project"))
             return project_info(request, domain)
 
         for app in from_project.full_applications():
             new_doc = from_project.copy_component(app['doc_type'], app.get_id, to_project_name, user)
 
-        messages.info(request, "Application successfully imported!")
+        from_project.downloads += 1
+        from_project.save()
+        messages.success(request, _("Application successfully imported!"))
         return HttpResponseRedirect(reverse('view_app', args=[to_project_name, new_doc.id]))
     else:
         return project_info(request, domain)
@@ -286,6 +294,10 @@ def import_app(request, domain):
 #@login_and_domain_required
 @require_previewer # remove for production
 def copy_snapshot(request, domain):
+    if not request.couch_user.is_eula_signed():
+        messages.error(request, 'You must agree to our eula to download an app')
+        return project_info(request, domain)
+
     dom = Domain.get_by_name(domain)
     if request.method == "POST" and dom.is_snapshot:
         args = {'domain_name': request.POST['new_project_name'], 'eula_confirmed': True}
@@ -303,12 +315,14 @@ def copy_snapshot(request, domain):
                 return project_info(request, domain)
 
             if new_domain is None:
-                messages.error(request, "A project by that name already exists")
+                messages.error(request, _("A project by that name already exists"))
                 return project_info(request, domain)
-            messages.success(request, "Project copied successfully!")
+            dom.downloads += 1
+            dom.save()
+            messages.success(request, _("Project copied successfully!"))
             return redirect("domain_project_settings", new_domain.name)
         else:
-            messages.error(request, "You must specify a name for the new project")
+            messages.error(request, _("You must specify a name for the new project"))
             return project_info(request, domain)
 
 

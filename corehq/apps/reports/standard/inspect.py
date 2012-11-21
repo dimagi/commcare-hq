@@ -54,10 +54,10 @@ class SubmitHistory(ProjectInspectionReport):
 
     @property
     def headers(self):
-        headers = DataTablesHeader(DataTablesColumn("View Form"),
-            DataTablesColumn("Username"),
-            DataTablesColumn("Submit Time"),
-            DataTablesColumn("Form"))
+        headers = DataTablesHeader(DataTablesColumn(_("View Form")),
+            DataTablesColumn(_("Username")),
+            DataTablesColumn(_("Submit Time")),
+            DataTablesColumn(_("Form")))
         headers.no_sort = True
         return headers
 
@@ -88,7 +88,10 @@ class SubmitHistory(ProjectInspectionReport):
         return rows
 
     def _form_data_link(self, instance_id):
-        return "<a class='ajax_dialog' href='%s'>View Form</a>" % reverse('render_form_data', args=[self.domain, instance_id])
+        return "<a class='ajax_dialog' href='%(url)s'>%(text)s</a>" % {
+            "url": reverse('render_form_data', args=[self.domain, instance_id]),
+            "text": _("View Form")
+        }
 
 
 class CaseListFilter(CouchFilter):

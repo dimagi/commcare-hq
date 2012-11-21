@@ -236,8 +236,8 @@
     {% endblock %}
     {% if search_query %}
         <li>
-            Searching for "{{ search_query }}"
-            <a href="{% urlencode request.path request.GET without "search" %}" style="font-size: 60%;">(cancel)</a>
+            {% trans "Searching for" %} "{{ search_query }}"
+            <a href="{% urlencode request.path request.GET without "search" %}" style="font-size: 60%;">{% trans "(cancel)" %}</a>
             {% if sort_by %}
                 <span class="divider">&gt;</span>
             {% endif %}
@@ -252,10 +252,10 @@
         </li>
     {% endif %}
     {% if sort_by  == 'best' %}
-    <li>Highest Rated</li>
+    <li>{% trans "Highest Rated" %}</li>
     {% endif %}
     {% if sort_by == 'hits' %}
-    <li>Most Downloaded</li>
+    <li>{% trans "Most Downloaded" %}</li>
     {% endif %}
 
 </ul>
@@ -277,9 +277,9 @@
     {% block view-tabs %}
     <div class="tabbable" style="padding-top: 15px;">
         <ul class="nav nav-pills">
-            <li{% if not sort_by %} class="active"{% endif %}><a href="{% urlencode request.path request.GET without "sort_by" %}">Newest</a></li>
-            <li{% if sort_by == 'best' %} class="active"{% endif %}><a href="{% urlencode request.path request.GET with "sort_by" as "best" %}">Highest Rated</a></li>
-            <li{% if sort_by == 'hits' %} class="active"{% endif %}><a href="{% urlencode request.path request.GET with "sort_by" as "hits" %}">Most Downloaded</a></li>
+            <li{% if not sort_by %} class="active"{% endif %}><a href="{% urlencode request.path request.GET without "sort_by" %}">{% trans "Newest" %}</a></li>
+            <li{% if sort_by == 'best' %} class="active"{% endif %}><a href="{% urlencode request.path request.GET with "sort_by" as "best" %}">{% trans "Highest Rated" %}</a></li>
+            <li{% if sort_by == 'hits' %} class="active"{% endif %}><a href="{% urlencode request.path request.GET with "sort_by" as "hits" %}">{% trans "Most Downloaded" %}</a></li>
         </ul>
     </div>
     {% endblock %}
@@ -305,20 +305,22 @@
                             </div>
                         {% endif %}
                     </a>
-                    <p style="margin-top: .5em;">Last updated: {{ app.snapshot_time|date:"N j, Y" }}</p>
-                    <a class="btn" href="{% url project_info app.name %}">View &raquo;</a>
+                    <p style="margin-top: .5em;">{% trans "Last updated" %}: {{ app.snapshot_time|date:"N j, Y" }}</p>
+                    <a class="btn" href="{% url project_info app.name %}">{% trans "View" %} &raquo;</a>
                     {% if user.is_superuser %}
                         {% if app.is_approved %}
-                            <a class="btn btn-danger" href="{% url approve_appstore_app app.name %}?approve=false">Unapprove</a>
+                            <a class="btn btn-danger" href="{% url approve_appstore_app app.name %}?approve=false">{% trans "Unapprove" %}</a>
                         {% else %}
-                            <a class="btn btn-success" href="{% url approve_appstore_app app.name %}?approve=true">Approve</a>
+                            <a class="btn btn-success" href="{% url approve_appstore_app app.name %}?approve=true">{% trans "Approve" %}</a>
                         {% endif %}
                     {% endif %}
                 </div>
                 <div class="span7">
                     <h3>
-                        {{ app.title }}
-                        <small style="display: block;">By
+                        <a href="{% url project_info app.name %}">
+                            {{ app.title }}
+                        </a>
+                        <small style="display: block;">{% trans "By" %}
                             {% if app.organization %}
                                 {{ app.organization_doc.title }}
                             {% else %}
@@ -338,7 +340,7 @@
                             {% endif %}
                         {% endif %}
                     {% endfor %}
-                    <h6>{{ app.copies_of_parent|length }} download{{ app.copies_of_parent|length|pluralize }}</h6>
+                    <h6>{{ app.downloads }} download{{ app.copies_of_parent|length|pluralize }}</h6>
                     {% if app.short_description %}
                         <p>{{ app.short_description }}</p>
                     {% endif %}
@@ -347,7 +349,7 @@
         </div>
     </div>
 {% empty %}
-    No results were found for your query.
+    {% trans "No results were found for your query" %}.
 {% endfor %}
 {% endblock %}
 </div>
@@ -356,12 +358,12 @@
     <ul class="pager span10">
         {% if page > 1 %}
         <li class="previous">
-            <a href="{% urlencode request.path request.GET with "page" as prev_page %}">&larr; Previous</a>
+            <a href="{% urlencode request.path request.GET with "page" as prev_page %}">&larr; {% trans "Previous" %}</a>
         </li>
         {% endif %}
         {% if more_pages %}
         <li class="next">
-            <a href="{% urlencode request.path request.GET with "page" as next_page %}">Next &rarr;</a>
+            <a href="{% urlencode request.path request.GET with "page" as next_page %}">{% trans "Next" %} &rarr;</a>
         </li>
         {% endif %}
     </ul>

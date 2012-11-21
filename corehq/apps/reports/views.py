@@ -6,7 +6,7 @@ from corehq.apps.reports.standard import inspect, export, ProjectReport
 from corehq.apps.reports.standard.export import DeidExportReport
 from corehq.apps.reports.export import ApplicationBulkExportHelper, CustomBulkExportHelper
 from corehq.apps.reports.models import (ReportConfig, ReportNotification,
-    FormExportSchema, HQGroupExportConfiguration)
+    FormExportSchema, HQGroupExportConfiguration, UnsupportedScheduledReportError)
 from corehq.apps.users.decorators import require_permission
 from corehq.apps.users.export import export_users
 from corehq.apps.users.models import Permissions
@@ -72,7 +72,8 @@ def default(request, domain, template="reports/reports_home.html"):
         raise Http404
 
     configs = ReportConfig.by_domain_and_owner(domain, user._id).all()
-    scheduled_reports = ReportNotification.by_domain_and_owner(domain, user._id).all()
+    scheduled_reports = [s for s in ReportNotification.by_domain_and_owner(domain, user._id).all()
+                         if not hasattr(s, 'report_slug') or s.report_slug != 'admin_domains']
 
     context = dict(
         couch_user=request.couch_user,
@@ -84,6 +85,7 @@ def default(request, domain, template="reports/reports_home.html"):
             show=user.can_view_reports() or user.get_viewable_reports(),
             slug=None,
             is_async=True,
+            app_slug="reports",
             section_name=ProjectReport.section_name,
             show_subsection_navigation=adm_utils.show_adm_nav(domain, request)
         ),
@@ -520,7 +522,6 @@ def edit_scheduled_report(request, domain, scheduled_report_id=None,
         'form': None,
         'domain': domain,
         'report': {
-            'title': 'New Scheduled Report',
             'show': request.couch_user.can_view_reports() or request.couch_user.get_viewable_reports(),
             'slug': None,
             'default_url': reverse('reports_home', args=(domain,)),
@@ -575,7 +576,12 @@ def edit_scheduled_report(request, domain, scheduled_report_id=None,
         return HttpResponseRedirect(reverse('reports_home', args=(domain,)))
 
     context['form'] = form
-    context['form_action'] = "Create a new" if is_new else "Edit"
+    if is_new:
+        context['form_action'] = "Create a new"
+        context['report']['title'] = "New Scheduled Report"
+    else:
+        context['form_action'] = "Edit"
+        context['report']['title'] = "Edit Scheduled Report"
 
     return render_to_response(request, template, context)
 
@@ -630,12 +636,15 @@ def get_scheduled_report_response(couch_user, domain, scheduled_report_id):
     notification = ReportNotification.get(scheduled_report_id)
 
     report_outputs = []
-    for config in notification.configs:
-        report_outputs.append({
-            'title': config.full_name,
-            'url': config.url,
-            'content': config.get_report_content()
-        })
+    try:
+        for config in notification.configs:
+            report_outputs.append({
+                'title': config.full_name,
+                'url': config.url,
+                'content': config.get_report_content()
+            })
+    except UnsupportedScheduledReportError:
+        pass
     
     return render_to_response(request, "reports/report_email.html", {
         "reports": report_outputs,

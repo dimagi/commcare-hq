@@ -24,6 +24,9 @@ class Group(UndoableDocument):
     case_sharing = BooleanProperty()
     reporting = BooleanProperty(default=True)
 
+    # custom data can live here
+    metadata = DictProperty()
+
     def add_user(self, couch_user_id):
         if not isinstance(couch_user_id, basestring):
             couch_user_id = couch_user_id.user_id
