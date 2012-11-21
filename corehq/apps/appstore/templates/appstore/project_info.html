@@ -113,6 +113,11 @@
 {#        This version: {{ project.copies|length }};#}
         <!-- All versions: -->{{ project.downloads }}
     </dd>
+    {% if project.multimedia_included and project.has_media %}
+        <dd>
+            <a class="btn" style="margin-top: .4em" href="{% url media_files project %}">{% trans "Browse Multimedia" %}</a>
+        </dd>
+    {% endif %}
 </dl>
 <hr />
     <div id="application-accordion">
@@ -283,6 +288,10 @@
     </div>
     <div class="modal-body">
         {{ project.title }} {% trans 'is licensed under ' %}<a target="_blank" href="http://creativecommons.org/licenses/#licenses">{{ project.get_license_display }}</a>
+        {% if project.multimedia_included and project.has_media %}
+            <br /><br />
+            {% trans "Please view the" %} <a target="_blank" href="{% url media_files project %}">{% trans "licenses for this app's media files" %}</a>
+        {% endif %}
     </div>
     <div class="modal-footer">
         <div style="text-align: left; line-height: 2em;">

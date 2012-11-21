@@ -169,6 +169,7 @@ def uploaded(request, domain, app_id):
 
         license=request.POST.get('license', "")
         author=request.POST.get('author', "")
+        att_notes = request.POST.get('attribution-notes', "")
 
         if content_type in utils.ZIP_MIMETYPES:
             zip = zipfile.ZipFile(uploaded_file)
@@ -178,7 +179,8 @@ def uploaded(request, domain, app_id):
             matched_images, matched_audio, unknown_files, errors = matcher.match_zipped(zip,
                                                                                         replace_existing_media=replace_existing,
                                                                                         license=license,
-                                                                                        author=author)
+                                                                                        author=author,
+                                                                                        attribution_notes=att_notes)
             response = {"unknown": unknown_files,
                         "images": matched_images,
                         "audio": matched_audio,
@@ -196,7 +198,8 @@ def uploaded(request, domain, app_id):
                                                                 shared=request.POST.get('shared', False),
                                                                 tags=tags,
                                                                 license=license,
-                                                                author=author)
+                                                                author=author,
+                                                                attribution_notes=att_notes)
             response = {"match_found": match_found,
                         file_type: match_map,
                         "file": True}
