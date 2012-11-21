@@ -1,13 +1,13 @@
 from django.template.loader import render_to_string
 from django.utils.safestring import mark_safe
-from corehq.apps.reports.display import FormType
 from corehq.apps.reports.filters.base import BaseDrilldownOptionFilter, BaseSingleOptionFilter
-# For translations
-from django.utils.translation import ugettext as _
-from django.utils.translation import ugettext_noop
 from corehq.apps.reports.util import all_xmlns_in_domain, all_application_forms, get_duplicate_xmlns
 from dimagi.utils.couch.database import get_db
 from dimagi.utils.decorators.memoized import memoized
+
+# For translations
+from django.utils.translation import ugettext as _
+from django.utils.translation import ugettext_noop
 
 
 class FormsByApplicationFilter(BaseDrilldownOptionFilter):
@@ -42,7 +42,6 @@ class FormsByApplicationFilter(BaseDrilldownOptionFilter):
     @property
     def final_notifications(self):
         notifications = {}
-        show_deleted_message = False
         for xmlns, app_map in self.duplicate_form_info.items():
             active_dupes = []
             deleted_dupes = []
@@ -148,6 +147,11 @@ class FormsByApplicationFilter(BaseDrilldownOptionFilter):
             (_('Module'), _("Select a Module") if cls.use_only_last else _("Show Forms from all Modules in selected Application"), 'module_id'),
             (_('Form'), _("Select a Form") if cls.use_only_last else _("Show all Forms in selected Module"), 'xmlns'),
         ]
+
+
+class SingleFormByApplicationFilter(FormsByApplicationFilter):
+    label = ugettext_noop("Choose a Form")
+    use_only_last = True
 
 
 class CompletionOrSubmissionTimeFilter(BaseSingleOptionFilter):

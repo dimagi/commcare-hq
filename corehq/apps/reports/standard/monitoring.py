@@ -376,7 +376,6 @@ class DailyFormStatsReport(WorkerMonitoringReportTable, DatespanMixin):
     fix_left_col = True
     emailable = True
 
-    # todo: redirect daily_completions and daily_submissions to this report
     # todo: get mike to handle deleted reports gracefully
 
     @property
@@ -612,7 +611,6 @@ class FormCompletionVsSubmissionTrendsReport(WorkerMonitoringReportTable, Datesp
 class SubmissionTimesReport(WorkerMonitoringChart):
     name = ugettext_noop("Worker Activity Times")
     slug = "worker_activity_times"
-    # todo redirect from submit_time_punchcard
 
     report_partial_path = "reports/partials/punchcard.html"
     show_time_notice = True
