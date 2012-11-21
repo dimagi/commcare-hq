@@ -168,10 +168,10 @@
                         {% if error_message %}
                             <span class="help-inline">{{ error_message }}</span>
                         {% endif %}
-                        <a class="btn btn-primary" data-form="new-project-form" data-toggle="modal" data-target="#licenseAgreement" href="#licenseAgreement">{% trans "Create New Project" %}</a>
+                        <a class="btn btn-primary" data-form="new-project-form" data-toggle="modal" data-target="#licenseAgreement" href="#licenseAgreement">{% trans "Download As New Project" %}</a>
                         {% if display_import %}
                             {% trans "or" %}
-                            <a class="btn" id="import-app-button">{% trans "Import to Existing Project" %}</a>
+                            <a class="btn" id="import-app-button">{% trans "Download to Existing Project" %}</a>
                         {% endif %}
                     </div>
                 {% else %}
@@ -286,7 +286,7 @@
     </div>
     <div class="modal-footer">
         <div style="text-align: left; line-height: 2em;">
-            {% trans "I have read and agree to terms of this license." %}
+            {% trans "I have read and agree to the terms of this license." %}
         </div>
         <a id="agree-button" data-form="" href="#" class="btn btn-primary">{% trans "Agree" %}</a>
         <a href="#" data-dismiss="modal" class="btn">{% trans "Disagree" %}</a>
