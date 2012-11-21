@@ -287,7 +287,7 @@ class HQMediaMixin(Document):
                 pass
             except UnicodeEncodeError:
                 if req:
-                    messages.error(req, _("This application has unsupported text in it's audio label field ")) #what should this say
+                    messages.error(req, _("This application has unsupported text in one of it's media file label fields ")) #what should this say
                 else:
                     pass
         return product, missing_refs
