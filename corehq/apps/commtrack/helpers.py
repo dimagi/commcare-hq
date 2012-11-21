@@ -49,7 +49,7 @@ def make_psi_config(domain):
     c = CommtrackConfig(
         domain=domain,
         multiaction_enabled=True,
-        multiaction_keyword='p',
+        multiaction_keyword='s',
         actions = [
             CommtrackActionConfig(
                 action_type='stockedoutfor',
@@ -63,14 +63,14 @@ def make_psi_config(domain):
             ),
             CommtrackActionConfig(
                 action_type='stockonhand',
-                keyword='b', # 'B'alance
-                caption='Stock on Hand'
+                keyword='b',
+                caption='Balance'
             ),
             CommtrackActionConfig(
                 action_type='receipts',
-                keyword='s',
                 name='sales',
-                caption='Sales'
+                keyword='p',
+                caption='Placements'
             ),
         ]
     )
