@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timedelta
 from django.test import TestCase
 from django.test.client import Client
 from corehq.apps.sms.models import SMSLog, INCOMING
@@ -7,6 +7,8 @@ from corehq.apps.unicel.api import InboundParams, DATE_FORMAT
 import json
 
 class IncomingPostTest(TestCase):
+
+    INDIA_TZ_OFFSET = timedelta(hours=5.5)
 
     def setUp(self):
         self.domain = 'mockdomain'
@@ -36,7 +38,7 @@ class IncomingPostTest(TestCase):
         self.assertEqual(200, response.status_code)
         self.assertEqual(self.message_ascii, log.text)
         self.assertEqual(INCOMING, log.direction)
-        self.assertEqual(log.date.strftime(DATE_FORMAT),
+        self.assertEqual((log.date + self.INDIA_TZ_OFFSET).strftime(DATE_FORMAT),
                          fake_post[InboundParams.TIMESTAMP])
 
 
@@ -51,7 +53,7 @@ class IncomingPostTest(TestCase):
         self.assertEqual(self.message_utf_hex.decode("hex").decode("utf_16_be"),
                         log.text)
         self.assertEqual(INCOMING, log.direction)
-        self.assertEqual(log.date.strftime(DATE_FORMAT),
+        self.assertEqual((log.date + self.INDIA_TZ_OFFSET).strftime(DATE_FORMAT),
                          fake_post[InboundParams.TIMESTAMP])
 
 def post(data):
