@@ -1,0 +1,10 @@
+{% load i18n %}
+<div class="well">
+    {% if report.description %}
+        <h4>{% trans 'How can I use this report?' %}</h4>
+        <p>{{ report.description }}</p>
+    {% endif %}
+
+    <h4>{% trans "Why can't I see any data?" %}</h4>
+    <p>{% trans "Please choose your filters above to see report data." %}</p>
+</div>

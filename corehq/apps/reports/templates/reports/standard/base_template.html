@@ -41,6 +41,11 @@
             });
             asyncHQReport.init();
         {% endif %}
+
+        $('.report-description-popover').popover({
+            placement: 'right',
+            trigger: 'hover',
+        });
     </script>
 {% endblock %}
 

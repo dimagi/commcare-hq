@@ -3,21 +3,16 @@ import datetime
 import logging
 import dateutil
 from django.core.urlresolvers import reverse
-from django.http import Http404
-from django.conf import settings
 import pytz
 import sys
-from corehq.apps.domain.models import Domain
 from corehq.apps.reports import util
 from corehq.apps.reports.filters.forms import CompletionOrSubmissionTimeFilter
-from corehq.apps.reports.standard import CouchCachedReportMixin, ProjectReportParametersMixin, \
-    DatespanMixin, ProjectReport, DATE_FORMAT
+from corehq.apps.reports.standard import ProjectReportParametersMixin, DatespanMixin, ProjectReport, DATE_FORMAT
 from corehq.apps.reports.calc import entrytimes
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn, DTSortType
 from corehq.apps.reports.decorators import cache_report
 from corehq.apps.reports.display import xmlns_to_name, FormType
 from corehq.apps.reports.generic import GenericTabularReport
-from corehq.apps.reports.models import CaseActivityReportCache
 from corehq.apps.reports.util import make_form_couch_key
 from couchforms.models import XFormInstance
 from dimagi.utils.couch.database import get_db
@@ -255,11 +250,17 @@ class CaseActivityReport(WorkerMonitoringReportTable):
 class SubmissionsByFormReport(WorkerMonitoringReportTable, DatespanMixin):
     name = ugettext_noop("Submissions By Form")
     slug = "submissions_by_form"
-    fields = ['corehq.apps.reports.fields.FilterUsersField',
-                'corehq.apps.reports.fields.GroupField',
-                'corehq.apps.reports.fields.DatespanField']
+    fields = [
+        'corehq.apps.reports.fields.FilterUsersField',
+        'corehq.apps.reports.fields.GroupField',
+        'corehq.apps.reports.filters.forms.FormsByApplicationFilter',
+        'corehq.apps.reports.fields.DatespanField'
+    ]
     fix_left_col = True
     emailable = True
+
+    description = _("This report shows the number of submissions received for each form per mobile worker"
+                    " during the selected date range.")
 
     _form_types = None
     @property

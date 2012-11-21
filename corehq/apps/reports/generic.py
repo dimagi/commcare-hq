@@ -69,9 +69,8 @@ class GenericReportView(object):
     # Code can expect `fields` to be an iterable even when empty (never None)
     fields = ()
 
-
     # not required
-    description = None  # string. description of the report. Currently not being used.
+    description = None  # description of the report
     report_template_path = None
     report_partial_path = None
 
