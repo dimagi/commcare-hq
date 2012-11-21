@@ -14,12 +14,22 @@
         <tr class="build" data-bind="css: {
             'build-released': is_released(),
             'build-unreleased': !is_released(),
-            'build-latest-release': id() == '{{ latest_release.id }}'
+            'build-latest-release': id() === $root.latestReleaseId()
         }">
             <td data-bind="if: edit">
-                <a href="#" data-bind="openModal: 'delete-build-modal-template'">
+                <a href="#" data-bind="
+                    openModal: 'delete-build-modal-template',
+                    visible: !_deleteState()
+                ">
                     <span class="icon icon-remove"></span>
                 </a>
+                <div class="pending" data-bind="
+                    visible: _deleteState() == 'pending'
+                "></div>
+
+                <div class="icon icon-exclamation-sign" data-bind="
+                    visible: _deleteState() == 'error'
+                "></div>
             </td>
             <td class="nowrap" data-bind="text: version"></td>
             <td class="nowrap" data-bind="text: built_on_date"></td>
@@ -171,21 +181,25 @@
                                     </li>
                                 </ul>
                                 <div class="tab-content">
-                                    <div id="{{ saved_app.id }}_sms_j2me" class="tab-pane active">
-                                        {% if saved_app.short_url %}
+                                    <div id="{{ saved_app.id }}_sms_j2me" class="tab-pane active" data-bind="
+                                        attr: {id: id() + '_sms_j2me'}
+                                    ">
+                                        <div data-bind="visible: short_url">
                                             <form method="post" action="{% url corehq.apps.sms.views.send_to_recipients domain %}">
                                                 <label>Send to: </label>
-                                                <input type="text" name="recipients" class="sms-autocomplete" value="{{ app.recipients }}"/>
+                                                <input type="text" name="recipients" class="sms-autocomplete" value=""/>
                                                 <br />
-                                                <textarea name="message">Update to CommCare: {{ saved_app.short_url }} ("{{ app.short_name }}" v.{{ saved_app.version }})</textarea>
+                                                <textarea name="message">Update to CommCare: <!--ko
+                                                    text: short_url--><!--/ko
+                                                    --> ("{{ app.short_name }}" v.{{ saved_app.version }})</textarea>
                                                 <br />
                                                 <input type="submit" class="btn" value="Send"/>
                                             </form>
-                                        {% else %}
+                                        </div><div data-bind="visible: !short_url()">
                                             <span class="label label-important">
-                              No URL was found for this app, try rebuilding.
-                            </span>
-                                        {% endif %}
+                                              No URL was found for this app, try rebuilding.
+                                            </span>
+                                        </div>
                                     </div>
 
                                     <div id="{{ saved_app.id }}_sms_odk" class="tab-pane">
@@ -200,8 +214,8 @@
                                             </form>
                                         {% else %}
                                             <span class="label label-important">
-                              No URL was found for this app, try rebuilding.
-                            </span>
+                                              No URL was found for this app, try rebuilding.
+                                            </span>
                                         {% endif %}
                                     </div>
                                 </div>

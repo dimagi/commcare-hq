@@ -257,12 +257,11 @@ ko.bindingHandlers.starred = {
         var value = ko.utils.unwrapObservable(valueAccessor()),
             $element = $(element);
         $element.addClass('star');
-        if (value) {
-            $element.addClass('star-true');
-            $element.removeClass('star-false');
-        } else {
-            $element.addClass('star-false');
-            $element.removeClass('star-true');
-        }
+
+        $element.removeClass('star-false');
+        $element.removeClass('star-true');
+        $element.removeClass('star-pending');
+        $element.removeClass('star-error');
+        $element.addClass('star-' + value);
     }
 };

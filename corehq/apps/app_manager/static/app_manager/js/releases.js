@@ -1,6 +1,6 @@
 function SavedApp(o) {
     var self = ko.mapping.fromJS(o);
-    $.each(['comment_user_name'], function (i, attr) {
+    $.each(['comment_user_name', '_deleteState'], function (i, attr) {
         self[attr] = self[attr] || ko.observable();
     });
     return self;
@@ -22,6 +22,14 @@ function ReleasesMain(o) {
         }
         return template;
     };
+    self.latestReleaseId = ko.computed(function () {
+        for (var i = 0; i < self.savedApps().length; i++) {
+            var savedApp = self.savedApps()[i];
+            if (savedApp.is_released()) {
+                return savedApp.id();
+            }
+        }
+    });
     self.getMoreSavedApps = function () {
         $.ajax({
             url: self.url('fetch'),
@@ -44,31 +52,39 @@ function ReleasesMain(o) {
         });
     };
     self.toggleRelease = function (savedApp) {
-        var is_released = $(this).data('is-released');
-        var saved_app_id = $(this).data('saved-app-id');
+        var is_released = savedApp.is_released();
+        var saved_app_id = savedApp.id();
         if (savedApp.is_released() !== 'pending') {
-            var url = self.url('release');
+            var url = self.url('release', saved_app_id);
             var that = this;
             $.ajax({
                 url: url,
                 type: 'post',
                 dataType: 'json',
-                data: {ajax: true},
+                data: {ajax: true, is_released: !is_released},
                 beforeSend: function () {
-                    setIsReleased(that, 'pending');
+                    savedApp.is_released('pending');
                 },
                 success: function (data) {
-                    setIsReleased(that, data.is_released);
+                    savedApp.is_released(data.is_released);
                 },
                 error: function () {
-                    setIsReleased(that, 'error');
+                    savedApp.is_released('error');
                 }
             });
         }
-    }
+    };
     self.deleteSavedApp = function (savedApp) {
+        savedApp._deleteState('pending');
         $.post(self.url('delete'), {saved_app: savedApp.id}, function () {
             self.savedApps.remove(savedApp);
+            savedApp._deleteState(false);
+        }).error(function () {
+            savedApp._deleteState('error');
+            alert(
+                "Sorry, that didn't go through. Please reload your page " +
+                "and try again"
+            );
         });
     };
     // init

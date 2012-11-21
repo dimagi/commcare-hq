@@ -13,57 +13,6 @@
 {% block js-inline %}{{ block.super }}
 <script>
     $(function () {
-        {% if edit %}
-        function setIsReleased(element, is_released) {
-            if (is_released === undefined) {
-                is_released = $(element).data('is-released');
-            } else {
-                $(element).data('is-released', is_released);
-                $(element).attr('data-is-released', is_released);
-            }
-            function destroyPopover(element) {
-                var p = $(element).data('popover');
-                if (p) {
-                    if (p.$tip) {
-                        p.$tip.remove();
-                    }
-                    $(element).data('popover', null);
-                }
-            }
-            destroyPopover(element);
-            var row = $(element).parents('tr');
-            if (is_released === true) {
-                $(element).popover({
-                    placement: 'left',
-                    title: 'Retract Build',
-                    content: (
-                            "We recommend caution when retracting a build. Although " +
-                                    "this build will no longer be considered when a CommCare application searches for updates, " +
-                                    "it will not be purged from phones onto which it has already been downloaded."
-                            )
-                });
-                row.removeClass('build-unreleased');
-                row.addClass('build-released');
-            } else if (is_released === false) {
-                $(element).popover({
-                    placement: 'left',
-                    title: 'Release Build',
-                    content: (
-                            "Once you've fully tested an application, you can star it to mark it as released. " +
-                                    "When a CommCare application searches for updates, only starred builds will be considered."
-                            )
-                });
-                row.removeClass('build-released');
-                row.addClass('build-unreleased');
-            }
-            var LATEST = 'build-latest-release';
-            $('.' + LATEST).removeClass(LATEST);
-            $('.build-is-released [data-is-released="true"]').first().each(function () {
-                var row = $(this).parents('tr');
-                row.addClass(LATEST);
-            });
-        }
-        {% endif %}
         $('#build-errors').each(function () {
             var specialMessage = $('span', this)[0];
             var defaultMessage = $('span', this)[1];
@@ -95,6 +44,33 @@
         var el = $('#releases-table');
         ko.applyBindings(new ReleasesMain(o), el.get(0));
         el.show();
+        {# This currently doesn't work because of a bootstrap update, #}
+        {# but no one's asked for it back so it doesn't seem urgent. #}
+        {% comment %}
+        {% if edit %}
+            $(document).popover({
+                placement: 'left',
+                title: 'Release Build',
+                selector: '.star-false',
+                trigger: 'hover',
+                content: (
+                        "Once you've fully tested an application, you can star it to mark it as released. " +
+                                "When a CommCare application searches for updates, only starred builds will be considered."
+                        )
+            });
+            $(document).popover({
+                placement: 'left',
+                title: 'Retract Build',
+                selector: '.star-true',
+                trigger: 'hover',
+                content: (
+                        "We recommend caution when retracting a build. Although " +
+                                "this build will no longer be considered when a CommCare application searches for updates, " +
+                                "it will not be purged from phones onto which it has already been downloaded."
+                        )
+            });
+        {% endif %}
+        {% endcomment %}
     });
 </script>
 {% endblock %}
@@ -117,9 +93,9 @@
     .nowrap {
         white-space: nowrap;
     }
-    .star{
-        min-width: 20px;
-        min-height: 20px;
+    .star, .pending {
+        width: 20px;
+        height: 20px;
         background-repeat: no-repeat;
     }
     .star.star-true {
@@ -127,6 +103,11 @@
     }
     .star.star-false {
         background-image: url("{% static 'app_manager/img/star-empty.svg' %}");
+    }
+    .pending, .star-pending {
+        background-image: url("{% static 'hqwebapp/img/ajax-loader.gif' %}");
+        background-size: 80%;
+        background-position: center;
     }
     .star.star-error:after {
         content: "Error";

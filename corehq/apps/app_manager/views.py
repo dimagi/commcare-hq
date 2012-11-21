@@ -471,7 +471,7 @@ def release_manager(request, domain, app_id, template='app_manager/releases.html
 @require_POST
 @require_can_edit_apps
 def release_build(request, domain, app_id, saved_app_id):
-    is_released=request.POST.get('is_released')
+    is_released = request.POST.get('is_released') == 'true'
     ajax = request.POST.get('ajax') == 'true'
     saved_app = get_app(domain, saved_app_id)
     if saved_app.copy_of != app_id:
