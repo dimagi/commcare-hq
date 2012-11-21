@@ -13,6 +13,7 @@ from corehq.apps.smsforms.app import _get_responses, start_session
 from corehq.apps.app_manager.models import get_app, Form
 from casexml.apps.case.models import CommCareCase
 from touchforms.formplayer.api import current_question
+from dateutil.parser import parse
 
 def send_sms(domain, id, phone_number, text):
     """
@@ -184,6 +185,12 @@ def incoming(phone_number, text, backend_api, timestamp=None, domain_scope=None)
 
     return msg
 
+def format_choices(choices_list):
+    choices = {}
+    for idx, choice in enumerate(choices_list):
+        choices[choice.strip().upper()] = idx + 1
+    return choices
+
 def form_session_handler(v, text):
     # Circular Import
     from corehq.apps.reminders.models import SurveyKeyword
@@ -230,29 +237,106 @@ def form_session_handler(v, text):
         resp = current_question(session.session_id)
         event = resp.event
         valid = False
-        error_msg = None
-            
-        # Validate select questions
+        text = text.strip()
+        upper_text = text.upper()
+        
+        # Validate select
         if event.datatype == "select":
+            # Try to match on phrase (i.e., "Yes" or "No")
+            choices = format_choices(event._dict["choices"])
+            if upper_text in choices:
+                text = str(choices[upper_text])
+                valid = True
+            else:
+                try:
+                    answer = int(text)
+                    if answer >= 1 and answer <= len(event._dict["choices"]):
+                        valid = True
+                except ValueError:
+                    pass
+        
+        # Validate multiselect
+        elif event.datatype == "multiselect":
+            choices = format_choices(event._dict["choices"])
+            max_index = len(event._dict["choices"])
+            proposed_answers = text.split()
+            final_answers = {}
+            
             try:
-                answer = int(text.strip())
-                if answer >= 1 and answer <= len(event._dict["choices"]):
-                    valid = True
+                if event._dict.get("required", True):
+                    assert len(proposed_answers) > 0
+                for answer in proposed_answers:
+                    upper_answer = answer.upper()
+                    if upper_answer in choices:
+                        final_answers[str(choices[upper_answer])] = ""
+                    else:
+                        int_answer = int(answer)
+                        assert int_answer >= 1 and int_answer <= max_index
+                        final_answers[str(int_answer)] = ""
+                text = " ".join(final_answers.keys())
+                valid = True
             except Exception:
                 pass
-            if not valid:
-                error_msg = "Invalid Response. " + event.text_prompt
-            
-        # For now, anything else passes
+        
+        # Validate int
+        elif event.datatype == "int":
+            try:
+                answer = int(text)
+                valid = True
+            except ValueError:
+                pass
+        
+        # Validate float
+        elif event.datatype == "float":
+            try:
+                answer = float(text)
+                valid = True
+            except ValueError:
+                pass
+        
+        # Validate longint
+        elif event.datatype == "longint":
+            try:
+                answer = long(text)
+                valid = True
+            except ValueError:
+                pass
+        
+        # Validate date (Format: YYYYMMDD)
+        elif event.datatype == "date":
+            try:
+                assert len(text) == 8
+                int(text)
+                text = text[0:4] + "-" + text[4:6] + "-" + text[6:]
+                parse(text)
+                valid = True
+            except Exception:
+                pass
+        
+        # Validate time (Format: HHMM, 24-hour)
+        elif event.datatype == "time":
+            try:
+                assert len(text) == 4
+                hour = int(text[0:2])
+                minute = int(text[2:])
+                assert hour >= 0 and hour <= 23
+                assert minute >= 0 and minute <= 59
+                text = "%s:%s" % (hour, minute)
+                valid = True
+            except Exception:
+                pass
+        
+        # Other question types pass
         else:
             valid = True
-            
+        
         if valid:
             responses = _get_responses(v.domain, v.owner_id, text)
             if len(responses) > 0:
                 response_text = format_message_list(responses)
                 send_sms_to_verified_number(v, response_text)
         else:
+            error_msg = "Invalid Response. " + event.text_prompt
             send_sms_to_verified_number(v, error_msg)
         
     # Try to match the text against a keyword to start a survey
