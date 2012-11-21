@@ -34,10 +34,12 @@ class SeleniumWrapper(object):
 
     """
 
-    def __init__(self, browser_name, base_url, *args, **kwargs):
+    def __init__(self, browser_name=None, base_url='', element=None, *args, **kwargs):
         self.base_url = base_url
-        self.browser_name = browser_name.capitalize()
-        self.driver = getattr(webdriver, self.browser_name)(*args, **kwargs)
+        if element:
+            self.driver = element
+        else:
+            self.driver = getattr(webdriver, browser_name.capitalize())(*args, **kwargs)
 
     def get(self, path):
         return self.driver.get(self.base_url + path)
