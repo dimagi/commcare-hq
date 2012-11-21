@@ -1,5 +1,6 @@
 from django.conf import settings
-from django.http import HttpResponseNotFound, Http404
+from django.core.urlresolvers import reverse
+from django.http import HttpResponseNotFound, Http404, HttpResponseRedirect
 from django.template.loader import render_to_string
 from django.utils.safestring import mark_safe
 from django.views.generic.base import View
@@ -97,17 +98,29 @@ class ReportDispatcher(View):
 
         return None
 
+    def _redirect_slug(self, slug):
+        return self.slug_aliases.get(slug) is not None
+
     def _slug_alias(self, slug):
-        return self.slug_aliases.get('slug') or slug
+        return self.slug_aliases.get(slug)
         
     def dispatch(self, request, *args, **kwargs):
         if not self.validate_report_map(request):
             return HttpResponseNotFound("Sorry, no reports have been configured yet.")
 
-        current_slug = self._slug_alias(kwargs.get('report_slug'))
+        current_slug = kwargs.get('report_slug')
         render_as = kwargs.get('render_as') or 'view'
         domain = kwargs.get('domain') or getattr(request, 'domain', None)
+
+        if self._redirect_slug(current_slug):
+            new_args = [domain] if domain else []
+            if render_as != 'view':
+                new_args.append(render_as)
+            new_args.append(self._slug_alias(current_slug))
+            return HttpResponseRedirect(reverse(self.name(), args=new_args))
+
         report_kwargs = kwargs.copy()
+
         if domain:
             del report_kwargs['domain']
         del report_kwargs['report_slug']
@@ -151,7 +164,7 @@ class ReportDispatcher(View):
 
         nav_context = []
         dispatcher = cls()
-        current_slug = dispatcher._slug_alias(context.get('report',{}).get('slug',''))
+        current_slug = context.get('report',{}).get('slug','')
 
         reports = dispatcher.get_reports(domain)
         for key, models in reports.items():
@@ -192,6 +205,14 @@ cls_to_view_login_and_domain = cls_to_view(additional_decorator=login_and_domain
 class ProjectReportDispatcher(ReportDispatcher):
     prefix = 'project_report' # string. ex: project, custom, billing, interface, admin
     map_name = 'PROJECT_REPORT_MAP'
+
+    @property
+    def slug_aliases(self):
+        return {
+            'daily_completions': 'daily_form_stats',
+            'daily_submissions': 'daily_form_stats',
+            'submit_time_punchcard': 'worker_activity_times',
+        }
 
     @cls_to_view_login_and_domain
     @datespan_default
