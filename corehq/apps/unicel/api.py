@@ -5,6 +5,7 @@ from corehq.apps.sms.api import incoming
 from django.conf import settings
 from urllib2 import urlopen
 from urllib import urlencode
+import pytz
 
 API_ID = "UNICEL"
 
@@ -24,7 +25,7 @@ class OutboundParams(object):
     """
     A constant-defining class for outbound sms params
     """
-    SENDER = "sender"
+    SENDER = "send"
     MESSAGE = "msg"
     USERNAME = "uname"
     PASSWORD = "pass"
@@ -67,7 +68,8 @@ def create_from_request(request, delay=True):
     if timestamp:
         try:
             actual_timestamp = datetime.strptime(timestamp, DATE_FORMAT)
-        except ValueError:
+            actual_timestamp = pytz.timezone('Asia/Kolkata').localize(actual_timestamp).astimezone(pytz.utc)
+        except Exception, e:
             logging.warning('could not parse unicel inbound timestamp [%s]' % timestamp)
     
     # not sure yet if this check is valid
