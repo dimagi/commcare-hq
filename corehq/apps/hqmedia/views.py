@@ -12,7 +12,6 @@ from corehq.apps.hqmedia import utils
 from corehq.apps.app_manager.models import get_app
 from dimagi.utils.web import render_to_response
 from corehq.apps.hqmedia.models import CommCareImage, CommCareAudio
-from lib.django_rest_interface.resource import reverse
 
 X_PROGRESS_ERROR = 'Server Error: You must provide X-Progress-ID header or query param.'
 
