@@ -288,6 +288,10 @@
     </div>
     <div class="modal-body">
         {{ project.title }} {% trans 'is licensed under ' %}<a target="_blank" href="http://creativecommons.org/licenses/#licenses">{{ project.get_license_display }}</a>
+        {% if project.multimedia_included and project.has_media %}
+            <br /><br />
+            {% trans "Please view the" %} <a target="_blank" href="{% url media_files project %}">{% trans "licenses for this app's media files" %}</a>
+        {% endif %}
     </div>
     <div class="modal-footer">
         <div style="text-align: left; line-height: 2em;">
