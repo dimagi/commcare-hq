@@ -540,8 +540,8 @@ def view_generic(req, domain, app_id=None, module_id=None, form_id=None, is_user
             multimedia_images, missing_image_refs = [], 0
             multimedia_audio, missing_audio_refs = [], 0
         else:
-            multimedia_images, missing_image_refs = app.get_template_map(images)
-            multimedia_audio, missing_audio_refs = app.get_template_map(audio)
+            multimedia_images, missing_image_refs = app.get_template_map(images, req=req)
+            multimedia_audio, missing_audio_refs = app.get_template_map(audio, req=req)
         context.update({
             'missing_image_refs': missing_image_refs,
             'missing_audio_refs': missing_audio_refs,
@@ -1735,7 +1735,8 @@ def emulator(req, domain, app_id, template="app_manager/emulator.html"):
     return render_to_response(req, template, {
         'domain': domain,
         'app': app,
-        'build_path': build_path
+        'build_path': build_path,
+        'url_base': get_url_base()
     })
 
 def emulator_commcare_jar(req, domain, app_id):

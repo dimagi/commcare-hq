@@ -11,7 +11,7 @@ import random
 PRODUCTS = [
     ('PSI kit', 'k'),
     ('non-PSI kit', 'nk'),
-    ('ORS', 'o'),
+    ('ORS', 'x'),
     ('Zinc', 'z'),
 ]
 

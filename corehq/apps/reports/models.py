@@ -408,7 +408,7 @@ class ReportNotification(Document):
                 include_docs=True).all()
             configs = [c for c in configs if not hasattr(c, 'deleted')]
         elif self.report_slug == 'admin_domains':
-            raise UnsupportedScheduledReportError("admin_domains is no longer"
+            raise UnsupportedScheduledReportError("admin_domains is no longer "
                 "supported as a schedulable report for the time being")
         else:
             # create a new ReportConfig object, useful for its methods and

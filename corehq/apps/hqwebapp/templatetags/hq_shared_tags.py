@@ -13,7 +13,6 @@ register = template.Library()
 
 @register.filter
 def JSON(obj):
-
     return mark_safe(json.dumps(obj, default=json_handler))
 
 @register.filter

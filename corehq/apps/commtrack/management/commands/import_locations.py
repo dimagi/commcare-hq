@@ -1,18 +1,46 @@
-import csv
+from django.core.management.base import BaseCommand, CommandError
+from optparse import make_option
 from corehq.apps.locations.models import Location
+from corehq.apps.domain.models import Domain
 from corehq.apps.commtrack.helpers import make_supply_point
 from dimagi.utils.couch.database import get_db
+import csv
+
+class Command(BaseCommand):
+    args = 'domain locations.csv'
+    help = 'Import locations from csv file'
+
+    def handle(self, *args, **options):
+        try:
+            domain_name = args[0]
+        except IndexError:
+            self.stderr.write('domain required\n')
+            return
+
+        try:
+            path = args[1]
+        except IndexError:
+            self.stderr.write('csv file required\n')
+            return
+
+        self.stdout.write('importing locations from [%s] into domain [%s]\n' % (path, domain_name))
+
+        domain = Domain.get_by_name(domain_name)
+        if domain is None:
+            self.stderr.write('Can\'t find domain\n')
+            return
+
+        with open(path) as f:
+            for m in import_locations(domain_name, f):
+                self.stdout.write(m + '\n')
 
 def import_locations(domain, f):
     data = list(csv.DictReader(f))
-    messages = []
     for loc in data:
-        messages.extend(import_location(domain, loc))
-    return messages
+        for m in import_location(domain, loc):
+            yield m
 
 def import_location(domain, loc):
-    messages = []
-
     def _loc(*args, **kwargs):
         return make_loc(domain, *args, **kwargs)
 
@@ -33,31 +61,31 @@ def import_location(domain, loc):
         child = get_by_name(anc_name, anc_type, parent)
         if not child:
             child = _loc(name=anc_name, location_type=anc_type, parent=parent)
-            messages.append('created %s %s' % (anc_type, anc_name))
+            yield 'created %s %s' % (anc_type, anc_name)
         parent = child
 
     name = loc['outlet_name']
     # check if outlet already exists
     outlet = get_by_name(name, 'outlet', parent)
     if outlet:
-        messages.append('outlet %s exists; skipping...' % name)
-    else:
-        outlet_props = dict(loc)
-        for k in ('outlet_name', 'outlet_code'):
-            del outlet_props[k]
+        yield 'outlet %s exists; skipping...' % name
+        return
 
-        # check that sms code for outlet is unique
-        code = loc['outlet_code'].lower()
-        if get_db().view('commtrack/locations_by_code',
-                         key=[domain, code],
-                         include_docs=True).one():
-            messages.append('code %s for outlet %s already in use! outlet NOT created' % (code, name))
-        else:
-            outlet = _loc(name=name, location_type='outlet', parent=parent, **outlet_props)
-            make_supply_point(domain, outlet, code)
-            messages.append('created outlet %s' % name)
+    outlet_props = dict(loc)
+    for k in ('outlet_name', 'outlet_code'):
+        del outlet_props[k]
 
-    return messages
+    # check that sms code for outlet is unique
+    code = loc['outlet_code'].lower()
+    if get_db().view('commtrack/locations_by_code',
+                     key=[domain, code],
+                     include_docs=True).one():
+        yield 'code %s for outlet %s already in use! outlet NOT created' % (code, name)
+        return
+
+    outlet = _loc(name=name, location_type='outlet', parent=parent, **outlet_props)
+    make_supply_point(domain, outlet, code)
+    yield 'created outlet %s' % name
 
 def make_loc(domain, *args, **kwargs):
     loc = Location(domain=domain, *args, **kwargs)

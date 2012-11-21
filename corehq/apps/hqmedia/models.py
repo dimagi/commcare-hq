@@ -4,12 +4,14 @@ from datetime import datetime
 import hashlib
 from couchdbkit.exceptions import ResourceConflict, ResourceNotFound
 from couchdbkit.ext.django.schema import *
+from django.contrib import messages
 from django.core.urlresolvers import reverse
 import magic
 from hutch.models import AuxMedia, AttachmentImage, MediaAttachmentManager
 from corehq.apps import domain
 from corehq.apps.domain.models import LICENSES
 from dimagi.utils.couch.database import get_db
+from django.utils.translation import ugettext as _
 
 class HQMediaType(object):
     IMAGE = 0
@@ -21,6 +23,7 @@ class HQMediaLicense(DocumentSchema):
     author = StringProperty()
     organization = StringProperty()
     type = StringProperty(choices=LICENSES)
+    attribution_notes = StringProperty()
 
     @property
     def display_name(self):
@@ -178,15 +181,17 @@ class CommCareMultimedia(Document):
     def license(self):
         return self.licenses[0] if self.licenses else None
 
-    def update_or_add_license(self, domain, type="", author="", org=""):
+    def update_or_add_license(self, domain, type="", author="", attribution_notes="", org=""):
         for license in self.licenses:
             if license.domain == domain:
                 license.type = type or license.type
                 license.author = author or license.author
                 license.organization = org or license.organization
+                license.attribution_notes = attribution_notes or license.attribution_notes
                 break
         else:
-            license = HQMediaLicense(domain=domain, type=type, author=author, organization=org)
+            license = HQMediaLicense(   domain=domain, type=type, author=author,
+                                        attribution_notes=attribution_notes, organization=org)
             self.licenses.append(license)
 
         self.save()
@@ -268,7 +273,7 @@ class HQMediaMixin(Document):
                 media = None
             yield form_path, media
 
-    def get_template_map(self, sorted_files):
+    def get_template_map(self, sorted_files, req=None):
         product = []
         missing_refs = 0
         multimedia_map = self.multimedia_map
@@ -283,6 +288,11 @@ class HQMediaMixin(Document):
                 missing_refs += 1
             except AttributeError:
                 pass
+            except UnicodeEncodeError:
+                if req:
+                    messages.error(req, _("This application has unsupported text in one of it's media file label fields ")) #what should this say
+                else:
+                    pass
         return product, missing_refs
 
     def clean_mapping(self, user=None):

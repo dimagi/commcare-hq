@@ -32,7 +32,7 @@
             modalClass: '.hqm-modal-image',
             mediaType: 'hquimage_',
             swfLocation: '{% static 'hqmedia/yui/uploader/uploader.swf' %}',
-            uploadFormParams: ['license', 'author']
+            uploadFormParams: ['license', 'author', 'attribution-notes']
         });
         hqimage_uploader.render();
 
@@ -49,7 +49,7 @@
             modalClass: '.hqm-modal-audio',
             mediaType: 'hquaudio_',
             swfLocation: '{% static 'hqmedia/yui/uploader/uploader.swf' %}',
-            uploadFormParams: ['license', 'author']
+            uploadFormParams: ['license', 'author', 'attribution-notes']
         });
         hqaudio_uploader.render();
     </script>
