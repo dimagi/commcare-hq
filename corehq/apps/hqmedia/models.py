@@ -270,7 +270,7 @@ class HQMediaMixin(Document):
 
     def get_media_documents(self):
         for form_path, map_item in self.multimedia_map.items():
-            media = eval(map_item.media_type)
+            media = CommCareMultimedia.get_doc_class(map_item.media_type)
             try:
                 media = media.get(map_item.multimedia_id)
             except ResourceNotFound:
