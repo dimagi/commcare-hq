@@ -84,9 +84,6 @@ class CommCareMultimedia(Document):
         self.save()
 
     def add_domain(self, domain, owner=None, **kwargs):
-        print owner
-        print self.owners
-        print self.valid_domains
 
         if len(self.owners) == 0:
             # this is intended to simulate migration--if it happens that a media file somehow gets no more owners
@@ -195,6 +192,13 @@ class CommCareMultimedia(Document):
             self.licenses.append(license)
 
         self.save()
+
+    @classmethod
+    def get_doc_class(self, doc_type):
+        return {
+            'CommCareImage': CommCareImage,
+            'CommCareAudio': CommCareAudio
+        }[doc_type]
 
 class CommCareImage(CommCareMultimedia):
 
