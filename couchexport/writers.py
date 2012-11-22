@@ -61,7 +61,10 @@ class ExportWriter(object):
             row = table[0]
             # make sure we trim the headers
             with UniqueHeaderGenerator(max_column_size) as g:
-                row.data = [g.next_unique(header) for header in row.data]
+                try:
+                    row.data = [g.next_unique(header) for header in row.data]
+                except AttributeError:
+                    row = [g.next_unique(header) for header in row]
             self._init_table(table_name, table_name_truncated)
             self._write_row(table_name, row)
 
@@ -70,15 +73,20 @@ class ExportWriter(object):
         Given a document that's been parsed into the appropriate
         rows, write those rows to the resulting files.
         """
-        assert(self._isopen)
+        assert self._isopen
         for table_name, table in document_table:
             for i, row in enumerate(table):
                 if skip_first and i is 0:
                     continue
                 # update the primary component of the ID to match
                 # how many docs we've seen
-                if row.has_id():
+                try:
+                    row_has_id = row.has_id()
+                except AttributeError:
+                    row_has_id = False
+                if row_has_id:
                     row.id = (self._current_primary_id,) + tuple(row.id[1:])
+
                 self._write_row(table_name, row)
         
         self._current_primary_id += 1
@@ -104,6 +112,18 @@ class ExportWriter(object):
     def _close(self):
         raise NotImplementedError
 
+    @classmethod
+    def get_data(cls, row):
+        """
+        Get around the fact that row can be either an iterable or
+        a FormattedRow
+
+        """
+        try:
+            return row.get_data()
+        except AttributeError:
+            return row
+
 class CsvExportWriter(ExportWriter):
     
     def _init(self):
@@ -122,8 +142,8 @@ class CsvExportWriter(ExportWriter):
     def _write_row(self, sheet_index, row):
         def _encode_if_needed(val):
             return val.encode("utf8") if isinstance(val, unicode) else val
-        
-        row = map(_encode_if_needed, row.get_data())
+
+        row = map(_encode_if_needed, self.get_data(row))
         writer = self.tables[sheet_index]
         writer.writerow(row)
         
@@ -165,7 +185,7 @@ class Excel2007ExportWriter(ExportWriter):
         # NOTE: don't touch this. changing anything like formatting in the
         # row by referencing the cells will cause huge memory issues.
         # see: http://packages.python.org/openpyxl/optimized.html
-        sheet.append([unicode(v) for v in row.get_data()])
+        sheet.append([unicode(v) for v in self.get_data(row)])
         
     def _close(self):
         """
@@ -197,7 +217,7 @@ class Excel2003ExportWriter(ExportWriter):
         row_index = self.table_indices[sheet_index]
         sheet = self.tables[sheet_index]
         # have to deal with primary ids
-        for i, val in enumerate(row.get_data()):
+        for i, val in enumerate(self.get_data(row)):
             sheet.write(row_index,i,unicode(val))
         self.table_indices[sheet_index] = row_index + 1
     
@@ -220,7 +240,7 @@ class InMemoryExportWriter(ExportWriter):
     def _write_row(self, sheet_index, row):
         table = self.tables[sheet_index]
         # have to deal with primary ids
-        row_data = [val for val in row.get_data()]
+        row_data = [val for val in self.get_data(row)]
         table.append(row_data)
         
     def _close(self):                
