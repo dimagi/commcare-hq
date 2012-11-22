@@ -36,20 +36,40 @@ class Excel2007DictReader(object):
         for row in rows:
             yield dict(zip(self.fieldnames, [to_string(cell.internal_value) for cell in row]))
 
-class WorksheetJSONReader(object):
-    def __init__(self, worksheet):
-        self.headers = []
-        self.worksheet = worksheet
+class IteratorJSONReader(object):
+    """
+    >>> def normalize(it):
+    ...     r = []
+    ...     for row in IteratorJSONReader(it):
+    ...         r.append(sorted(row.items()))
+    ...     return r
+    >>> normalize([])
+    []
+    >>> normalize([['A', 'B', 'C'], ['1', '2', '3']])
+    [[('A', '1'), ('B', '2'), ('C', '3')]]
+    >>> normalize([['A', 'data: key', 'user 1', 'user 2', 'is-ok?'],
+    ...     ['1', '2', '3', '4', 'yes']])
+    [[('A', '1'), ('data', {'key': '2'}), ('is-ok', True), ('user', ['3', '4'])]]
+    """
+
+    def __init__(self, rows):
+        # you can only call __iter__ once
+        self._rows = iter(rows)
         try:
-            rows = self.worksheet.iter_rows().next()
+            self.headers = list(self._rows.next())
         except StopIteration:
-            rows = []
-        for cell in rows:
-            if cell.internal_value is None:
-                break
-            else:
-                self.headers.append(cell.internal_value)
+            self.headers = []
         self.fieldnames = self.get_fieldnames()
+
+    def row_to_json(self, row):
+        obj = {}
+        for value, header in zip(row, self.headers):
+            self.set_field_value(obj, header, value)
+        return obj
+
+    def __iter__(self):
+        for row in self._rows:
+            yield self.row_to_json(row)
 
     def get_fieldnames(self):
         obj = {}
@@ -87,7 +107,7 @@ class WorksheetJSONReader(object):
 
             if not obj.has_key(field):
                 obj[field] = []
-            if value is not None:
+            if value not in (None, ''):
                 obj[field].append(value)
             return
 
@@ -108,7 +128,7 @@ class WorksheetJSONReader(object):
                     'false': False,
                     '': False,
                     None: False,
-                    }[value]
+                }[value]
             except AttributeError:
                 raise Exception('Values for %s must be: "yes" or "no" (or empty = "no")')
 
@@ -119,22 +139,26 @@ class WorksheetJSONReader(object):
 
         obj[field] = value
 
-    def row_to_json(self, row):
-        obj = {}
-
-        for cell, header in zip(row, self.headers):
-            cell_value = cell.internal_value
-            self.set_field_value(obj, header, cell_value)
-        return obj
-
-    def __iter__(self):
-        rows = self.worksheet.iter_rows()
-        # skip header row
-        rows.next()
-        for row in rows:
-            if not filter(lambda cell: cell.internal_value, row):
+class WorksheetJSONReader(IteratorJSONReader):
+    def __init__(self, worksheet):
+        width = 0
+        self.worksheet = worksheet
+        try:
+            header_row = self.worksheet.iter_rows().next()
+        except StopIteration:
+            header_row = []
+        for cell in header_row:
+            if cell.internal_value is None:
                 break
-            yield self.row_to_json(row)
+            else:
+                width += 1
+        def iterator():
+            for row in self.worksheet.iter_rows():
+                cell_values = [cell.internal_value for cell in row[:width]]
+                if not any(cell_values):
+                    break
+                yield cell_values
+        super(WorksheetJSONReader, self).__init__(iterator())
 
 class WorkbookJSONReader(object):
     def __init__(self, f):
@@ -165,3 +189,39 @@ class WorkbookJSONReader(object):
             return self.worksheets[index]
         else:
             return self.worksheets[0]
+
+# Utils for writing
+
+
+
+def flatten_json_to_path(obj, path=()):
+    if isinstance(obj, dict):
+        for key, value in obj.items():
+            for item in flatten_json_to_path(value, path + (key,)):
+                yield item
+    elif isinstance(obj, list):
+        for key, value in enumerate(obj):
+            for item in flatten_json_to_path(value, path + (key,)):
+                yield item
+    else:
+        yield (path, obj)
+
+def format_header(path, value):
+    # pretty sure making a string-builder would be slower than concatenation
+    s = path[0]
+    for p in path[1:]:
+        if isinstance(p, basestring):
+            s += ': %s' % p
+        elif isinstance(p, int):
+            s += ' %s' % (p + 1)
+    if isinstance(value, bool):
+        s += '?'
+        value = 'yes' if value else 'no'
+    return s, value
+
+def flatten_json(obj):
+    for key, value in flatten_json_to_path(obj):
+        yield format_header(key, value)
+
+def json_to_headers(obj):
+    return [key for key, value in sorted(flatten_json(obj))]
