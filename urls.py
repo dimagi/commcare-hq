@@ -86,6 +86,11 @@ urlpatterns = patterns('',
     url(r'^eula/$', 'django.views.generic.simple.direct_to_template', {'template': 'eula.html'}, name='eula'),
 ) + patterns('', *LOCAL_APP_URLS)
 
+# django rosetta support if configured
+if 'rosetta' in settings.INSTALLED_APPS:
+    urlpatterns += patterns('',
+        url(r'^rosetta/', include('rosetta.urls')),
+    )
 
 #django-staticfiles static/ url mapper
 if settings.DEBUG:
