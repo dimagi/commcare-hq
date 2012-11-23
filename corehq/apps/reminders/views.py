@@ -279,6 +279,10 @@ def add_survey(request, domain, survey_id=None):
             send_automatically = form.cleaned_data.get("send_automatically")
             send_followup = form.cleaned_data.get("send_followup")
             
+            sample_data = {}
+            for sample in samples:
+                sample_data[sample["sample_id"]] = sample
+            
             if send_followup:
                 timeout_intervals = [int(followup["interval"]) * 1440 for followup in followups]
             else:
@@ -311,7 +315,8 @@ def add_survey(request, domain, survey_id=None):
                                     schedule_length = 1,
                                     event_interpretation = EVENT_AS_SCHEDULE,
                                     max_iteration_count = 1,
-                                    sample_id = sample["sample_id"]
+                                    sample_id = sample["sample_id"],
+                                    survey_incentive = sample["incentive"],
                                 )
                                 handler.save()
                                 wave.reminder_definitions[sample["sample_id"]] = handler._id
@@ -379,6 +384,7 @@ def add_survey(request, domain, survey_id=None):
                     for sample_id, handler_id in wave.reminder_definitions.items():
                         handler = CaseReminderHandler.get(handler_id)
                         handler.events[0].callback_timeout_intervals = timeout_intervals
+                        handler.survey_incentive = sample_data[sample_id]["incentive"]
                         handler.save()
                 
                 # Create additional reminder definitions as necessary
@@ -403,7 +409,8 @@ def add_survey(request, domain, survey_id=None):
                                 schedule_length = 1,
                                 event_interpretation = EVENT_AS_SCHEDULE,
                                 max_iteration_count = 1,
-                                sample_id = sample_id
+                                sample_id = sample_id,
+                                survey_incentive = sample_data[sample_id]["incentive"],
                             )
                             handler.save()
                             wave.reminder_definitions[sample_id] = handler._id

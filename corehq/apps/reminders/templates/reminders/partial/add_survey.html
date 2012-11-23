@@ -116,6 +116,7 @@
         var td2 = document.createElement("TD");
         var td3 = document.createElement("TD");
         var td4 = document.createElement("TD");
+        var td5 = document.createElement("TD");
         var select1 = document.createElement("SELECT");
         select1.setAttribute("name", "sample." + current_sample_num + ".sample_id");
         {% for s in sample_list %}
@@ -140,6 +141,9 @@
         option.innerHTML = "{{ user.raw_username }}";
         select3.appendChild(option);
         {% endfor %}
+        var input1 = document.createElement("INPUT");
+        input1.setAttribute("type", "text");
+        input1.setAttribute("name", "sample." + current_sample_num + ".incentive");
         var button = document.createElement("SPAN");
         button.setAttribute("class", "btn btn-danger");
         button.innerHTML = '<i class="icon icon-white icon-remove"></i> Remove';
@@ -151,10 +155,12 @@
         tr.appendChild(td2);
         tr.appendChild(td3);
         tr.appendChild(td4);
+        tr.appendChild(td5);
         td1.appendChild(select1);
         td2.appendChild(select2);
         td3.appendChild(select3);
-        td4.appendChild(button);
+        td4.appendChild(input1);
+        td5.appendChild(button);
         //
         return tr;
     }
@@ -306,6 +312,7 @@
                     <th>Sample</th>
                     <th>Method of Communication</th>
                     <th>CATI Operator</th>
+                    <th>Incentive</th>
                     <th></th>
                 </tr>
             </thead>
@@ -333,6 +340,9 @@
                             {% endfor %}
                         </select>
                     </td>
+                    <td>
+                        <input type="text" name="sample.0.incentive" />
+                    </td>
                     <td></td>
                 </tr>
                 {% else %}
@@ -358,6 +368,9 @@
                                 <option value="{{ user.get_id }}" {% if sample.cati_operator == user.get_id %}selected="selected"{% endif %}>{{ user.raw_username }}</option>
                             {% endfor %}
                         </select>
+                    </td>
+                    <td>
+                        <input type="text" name="sample.{{ forloop.counter0 }}.incentive" value="{{ sample.incentive|default:"" }}" />
                     </td>
                     <td>{% if forloop.counter0 > 0 %}<span class="btn btn-danger" onClick="remove_record(this);"><i class="icon icon-white icon-remove"></i> Remove</span>{% endif %}</td>
                 </tr>

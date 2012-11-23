@@ -260,6 +260,7 @@ class CaseReminderHandler(Document):
     # If this is True, on the last survey timeout, instead of resending the current question, 
     # it will submit the form for the recipient with whatever is completed up to that point.
     submit_partial_forms = BooleanProperty(default=False)
+    survey_incentive = StringProperty()
     
     # start condition
     start_condition_type = StringProperty(choices=START_CONDITION_TYPES, default=CASE_CRITERIA)
@@ -551,10 +552,11 @@ class CaseReminderHandler(Document):
                         app = form.get_app()
                         module = form.get_module()
                     except Exception as e:
-                        print e
-                        print "ERROR: Could not load survey form for handler " + reminder.handler_id + ", event " + str(reminder.current_event_sequence_num)
+                        logging.exception("ERROR: Could not load survey form for handler " + reminder.handler_id + ", event " + str(reminder.current_event_sequence_num))
                         return False
                     session, responses = start_session(reminder.domain, recipient, app, module, form, recipient.get_id)
+                    session.survey_incentive = self.survey_incentive
+                    session.save()
                     reminder.xforms_session_ids.append(session.session_id)
                     
                     # Send out first message
