@@ -17,8 +17,10 @@ from lxml import etree
 from corehq.apps.users.models import WebUser
 from couchforms.util import post_xform_to_couch
 from pact.management.commands import PactMigrateCommand
-from pact.management.commands.constants import PACT_DOMAIN
 from pact.management.commands.utils import get_user_id_map
+from pact.enums import PACT_DOMAIN
+
+
 from receiver.util import spoof_submission
 
 from gevent.pool import Pool

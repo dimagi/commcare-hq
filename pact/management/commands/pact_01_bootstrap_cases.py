@@ -2,6 +2,7 @@
 #recreate submissions to import as new cases to
 from StringIO import StringIO
 from django.test.client import RequestFactory
+import gevent
 import simplejson
 import urllib2
 from datetime import datetime
@@ -14,7 +15,8 @@ import getpass
 from lxml import etree
 from corehq.apps.users.models import WebUser
 from pact.management.commands import PactMigrateCommand
-from pact.management.commands.constants import PACT_DOMAIN, PACT_URL, PACT_HP_GROUP_ID, PACT_HP_GROUPNAME, POOL_SIZE, PACT_CASE_TYPE
+from pact.management.commands.constants import PACT_URL, POOL_SIZE
+from pact.enums import PACT_DOMAIN, PACT_HP_GROUP_ID, PACT_CASE_TYPE
 from pact.management.commands.utils import get_user_id_map, base_create_block, purge_case
 
 from gevent.pool import Pool
@@ -102,8 +104,7 @@ class Command(PactMigrateCommand):
         successful_form_received.disconnect(create_form_repeat_records)
         successful_form_received.disconnect(create_short_form_repeat_records)
         case_post_save.disconnect(create_case_repeat_records)
-        print "successful_form_received signals truncated: %d" % len(
-            successful_form_received.receivers)
+        print "successful_form_received signals truncated: %d" % len(successful_form_received.receivers)
 
     def handle(self, **options):
         domain_obj = Domain.get_by_name(PACT_DOMAIN)
@@ -178,7 +179,7 @@ class Command(PactMigrateCommand):
                 if update_node is not None:
                     type_node = update_node.find(taglist[2])
                     if type_node is not None:
-                        print "Got type node!"
+#                        print "Got type node!"
                         if type_node.text != PACT_CASE_TYPE:
                             orig_text = type_node.text
                             type_node.text = PACT_CASE_TYPE
@@ -228,7 +229,7 @@ class Command(PactMigrateCommand):
         owner_id = PACT_HP_GROUP_ID
 
         #make new blank case
-        new_block = base_create_block(pact_id, case_id, user_id, name, case_type, owner_id)
+        new_block = base_create_block(pact_id, case_id, user_id, name, case_type, owner_id, case_json['demographics'])
 
         opened_date = datetime.strptime(case_json['opened_on'], '%Y-%m-%dT%H:%M:%SZ')
         res = self.submit_case_create_block(opened_date, new_block)

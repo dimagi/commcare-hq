@@ -1,6 +1,3 @@
-import getpass
-import pdb
-import urllib2
 from django.contrib.auth.models import User
 from django.core.management.base import NoArgsCommand
 import simplejson
@@ -10,7 +7,7 @@ from corehq.apps.users.models import CouchUser, CommCareUser
 from corehq.apps.groups.models import Group
 from localsettings import PACT_CHWS
 from pact.management.commands import PactMigrateCommand
-from pact.management.commands.constants import PACT_DOMAIN, PACT_HP_GROUP_ID, PACT_HP_GROUPNAME, RETRY_LIMIT
+from pact.enums import PACT_DOMAIN, PACT_HP_GROUP_ID, PACT_HP_GROUPNAME
 from pact.management.commands.constants import  PACT_URL
 
 

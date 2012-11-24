@@ -1,6 +1,6 @@
 from casexml.apps.case.models import CommCareCase
 from corehq.apps.users.models import WebUser, CommCareUser
-from pact.management.commands.constants import PACT_DOMAIN
+from pact.enums import PACT_DOMAIN
 
 
 def get_user_id_map():
@@ -37,12 +37,19 @@ def purge_case(case_id):
     print "case purged"
 
 
-def base_create_block(pact_id, case_id, user_id, name, type, owner_id):
+def base_create_block(pact_id, case_id, user_id, name, type, owner_id, demographics):
     """
     Skeleton case to send to HQ
     """
-    return """
-    <case xmlns="http://commcarehq.org/case/transaction/v2" case_id="%(case_id)s" user_id="%(user_id)s">
+
+    def make_demographics(demogs):
+        yield "<update>"
+        for k,v in demogs.items():
+            if v != "" and v is not None:
+                yield "<%(tag)s>%(val)s</%(tag)s>" % {'tag': k, 'val': v}
+        yield "</update>"
+
+    return """<case xmlns="http://commcarehq.org/case/transaction/v2" case_id="%(case_id)s" user_id="%(user_id)s">
         <create>
             <case_type>%(case_type)s</case_type>
             <case_name>%(case_name)s</case_name>
@@ -50,6 +57,7 @@ def base_create_block(pact_id, case_id, user_id, name, type, owner_id):
             <external_id>%(pact_id)s</external_id>
             <pactid>%(pact_id)s</pactid>
         </create>
+        %(demographics_block)s
     </case>
     """ % {
             "case_id": case_id,
@@ -58,4 +66,7 @@ def base_create_block(pact_id, case_id, user_id, name, type, owner_id):
             "case_name": name,
             "owner_id": owner_id,
             "pact_id": pact_id,
+            'demographics_block': ''.join(make_demographics(demographics))
             }
+
+

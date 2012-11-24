@@ -1,28 +1,18 @@
 #OTA restore from pact
 #recreate submissions to import as new cases to
-import pdb
-import urllib2
 from datetime import datetime
-import uuid
 from gevent.pool import Pool
 import simplejson
 
 from django.core.management.base import NoArgsCommand
-from casexml.apps.case.tests import CaseBlock
 from corehq.apps.domain.models import Domain
 import sys
-import getpass
-from lxml import etree
-from corehq.apps.users.models import WebUser
-from couchforms.util import post_xform_to_couch
 from dimagi.utils.parsing import ISO_FORMAT
 from localsettings import PACT_URL
 from pact.management.commands import PactMigrateCommand
-from pact.management.commands.constants import PACT_DOMAIN, POOL_SIZE
-from pact.management.commands.utils import get_user_id_map
-from receiver.util import spoof_submission
+from pact.management.commands.constants import  POOL_SIZE
+from pact.enums import PACT_DOMAIN
 from casexml.apps.case.models import CommCareCase
-from couchdbkit.exceptions import ResourceNotFound
 
 
 class Command(PactMigrateCommand):

@@ -5,7 +5,8 @@ import urllib2
 from django.core.management.base import NoArgsCommand
 from django.test.client import RequestFactory
 from restkit import Resource
-from pact.management.commands.constants import RETRY_LIMIT, PACT_DOMAIN
+from pact.management.commands.constants import RETRY_LIMIT
+from pact.enums import PACT_DOMAIN
 from corehq.apps.receiverwrapper import views as rcv_views
 
 

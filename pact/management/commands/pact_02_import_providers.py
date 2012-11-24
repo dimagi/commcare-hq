@@ -1,11 +1,11 @@
 from django.core.management.base import NoArgsCommand
 from django.test.client import RequestFactory
-from openpyxl.worksheet import Worksheet
 import os
 import simplejson
 from corehq.apps.fixtures.views import UploadItemLists
 from pact.management.commands import PactMigrateCommand
-from pact.management.commands.constants import  PACT_URL, PACT_DOMAIN
+from pact.management.commands.constants import PACT_URL
+from pact.enums import PACT_DOMAIN
 from openpyxl.workbook import Workbook
 import tempfile
 

@@ -22,11 +22,15 @@ class PactHandler(XFormPillowHandler):
         xmlns = doc_dict['xmlns']
         print "get custom mapping: %s" % xmlns
         if xmlns == "http://dev.commcarehq.org/pact/dots_form":
+            mapping['dynamic'] = True
+            mapping['properties']['form']['dynamic'] = True
             mapping['properties']['form']['properties']['encounter_date'] = {
                 "type": "date",
                 "format": formats_string
             }
         if xmlns == "http://dev.commcarehq.org/pact/progress_note":
+            mapping['dynamic'] = True
+            mapping['properties']['form']['dynamic'] = True
             mapping['properties']['form']['properties']['note'] = {
                 'properties': {
                     'encounter_date': {
@@ -56,6 +60,8 @@ class PactHandler(XFormPillowHandler):
             #convert all bw dicts to array, even singletons (dict)
             #turn "" to null
             #check test_date and ref_date for blanks, convert to None
+            mapping['dynamic'] = True
+            mapping['properties']['form']['dynamic'] = True
             mapping['properties']['form']['properties']['results'] = {
                 "dynamic": "true",
                 "properties": {
@@ -70,7 +76,6 @@ class PactHandler(XFormPillowHandler):
                     }
                 }
             }
-            pass
         print "returning mapping"
         return mapping
 
@@ -86,11 +91,12 @@ class PactHandler(XFormPillowHandler):
             #old and new check
             date_modified_keys = ['date_modified', '@date_modified']
 
-            for k in date_modified_keys:
-                if doc_dict['form']['case'].has_key(k):
-                    if doc_dict['form']['case'][k] == "":
+            for datemod_key in date_modified_keys:
+                if doc_dict['form']['case'].has_key(datemod_key):
+                    if doc_dict['form']['case'][datemod_key] == "":
+#                        print "try to fix null date modified: %s: %s" % (doc_dict['_id'], doc_dict['form']['case'][datemod_key])
                     #                        print "fixing null date modified: %s" % doc_dict['_id']
-                        doc_dict['form']['case'][k] = None
+                        doc_dict['form']['case'][datemod_key] = None
 
             if doc_dict['form']['meta'].get('timeEnd', None) == "":
                 doc_dict['form']['meta']['timeEnd'] = None
@@ -113,33 +119,38 @@ class PactHandler(XFormPillowHandler):
                     doc_dict['form']['question'] = {}
                     #                    print "fixing blank dots.form.question"
 
-            if doc_dict['xmlns'] == "http://dev.commcarehq.org/pact/progress_note":
-                bw_main = doc_dict['form']['note'].get('bwresults', None)
-                if isinstance(bw_main, str):
-                    doc_dict['form']['note']['bwresults'] = None
-                elif isinstance(bw_main, dict):
-                    bw_results = doc_dict['form']['note']['bwresults'].get('bw', None)
-                    if isinstance(bw_results, dict):
-                        #single instance, make it a list
-                        print "fixing single pn bloodwork: %s" % doc_dict['_id']
-                        doc_dict['form']['note']['bwresults']['bw'] = [bw_results]
-                    elif isinstance(bw_results, str):
-                        print "fixing null pn bloodwork: %s #%s#" % (doc_dict['_id'], bw_results)
-                        doc_dict['form']['note']['bwresults']['bw'] = None
 
-                        #dots blank case update (it's dynamic)
-                        #bw results blank, it's dynamic
-            if doc_dict['xmlns'] == "http://dev.commcarehq.org/pact/bloodwork":
-                bw_main = doc_dict['form'].get('results', None)
+            def bw_fixer(bw_key, subdict):
+                bw_main = subdict.get(bw_key, None)
                 if isinstance(bw_main, str):
-                    doc_dict['form']['results'] = None
+                    subdict[bw_key] = None
                 elif isinstance(bw_main, dict):
-                    bw_results = doc_dict['form']['results'].get('bw', None)
+                    bw_results = subdict[bw_key].get('bw', None)
                     if isinstance(bw_results, dict):
-                        print "fixing single bw bloodwork: %s" % doc_dict['_id']
                         #single instance, make it a list
-                        doc_dict['form']['results']['bw'] = [bw_results]
+                        print "fixing single %s bloodwork: %s" % (bw_key, doc_dict['_id'])
+                        subdict[bw_key]['bw'] = [bw_results]
                     elif isinstance(bw_results, str):
-                        print "fixing null bw bloodwork: %s #%s#" % (doc_dict['_id'], bw_results)
-                        doc_dict['form']['results']['bw'] = None
+                        print "fixing null %s bloodwork: %s #%s#" % (bw_key, doc_dict['_id'], bw_results)
+                        subdict[bw_key]['bw'] = None
+
+                #after fixing bw's to an array, check all test_dates
+                if isinstance(subdict.get(bw_key, None), dict):
+                    if subdict.get(bw_key, {}).has_key('bw'):
+                        for ix, test in enumerate(subdict[bw_key]['bw']):
+                            if test['test_date'] == "":
+                                print "fixing blank test_date in bw %s" % doc_dict['_id']
+                                subdict[bw_key]['bw'][ix]['test_date'] = None
+
+
+
+            if doc_dict['xmlns'] == "http://dev.commcarehq.org/pact/progress_note":
+                bw_fixer('bwresults', doc_dict['form']['note'])
+
+            if doc_dict['xmlns'] == "http://dev.commcarehq.org/pact/bloodwork":
+                bw_fixer('results', doc_dict['form'])
+
+
+
+
         return doc_dict
