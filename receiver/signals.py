@@ -1,5 +1,8 @@
 from django.dispatch import Signal
 
+
+#Signal definitions
+
 class Certainty(object):
     """
     How certain you are.  See the certainty property of the receiver 
@@ -47,3 +50,5 @@ class ReceiverResult(object):
     
 form_received = Signal(providing_args=["posted"])
 successful_form_received = Signal(providing_args=["posted"])
+
+
