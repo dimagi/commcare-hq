@@ -23,6 +23,7 @@ class HQMediaLicense(DocumentSchema):
     author = StringProperty()
     organization = StringProperty()
     type = StringProperty(choices=LICENSES)
+    attribution_notes = StringProperty()
 
     @property
     def display_name(self):
@@ -83,9 +84,6 @@ class CommCareMultimedia(Document):
         self.save()
 
     def add_domain(self, domain, owner=None, **kwargs):
-        print owner
-        print self.owners
-        print self.valid_domains
 
         if len(self.owners) == 0:
             # this is intended to simulate migration--if it happens that a media file somehow gets no more owners
@@ -180,18 +178,27 @@ class CommCareMultimedia(Document):
     def license(self):
         return self.licenses[0] if self.licenses else None
 
-    def update_or_add_license(self, domain, type="", author="", org=""):
+    def update_or_add_license(self, domain, type="", author="", attribution_notes="", org=""):
         for license in self.licenses:
             if license.domain == domain:
                 license.type = type or license.type
                 license.author = author or license.author
                 license.organization = org or license.organization
+                license.attribution_notes = attribution_notes or license.attribution_notes
                 break
         else:
-            license = HQMediaLicense(domain=domain, type=type, author=author, organization=org)
+            license = HQMediaLicense(   domain=domain, type=type, author=author,
+                                        attribution_notes=attribution_notes, organization=org)
             self.licenses.append(license)
 
         self.save()
+
+    @classmethod
+    def get_doc_class(self, doc_type):
+        return {
+            'CommCareImage': CommCareImage,
+            'CommCareAudio': CommCareAudio
+        }[doc_type]
 
 class CommCareImage(CommCareMultimedia):
 
@@ -263,7 +270,7 @@ class HQMediaMixin(Document):
 
     def get_media_documents(self):
         for form_path, map_item in self.multimedia_map.items():
-            media = eval(map_item.media_type)
+            media = CommCareMultimedia.get_doc_class(map_item.media_type)
             try:
                 media = media.get(map_item.multimedia_id)
             except ResourceNotFound:

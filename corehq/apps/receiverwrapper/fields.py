@@ -1,5 +1,7 @@
 from corehq.apps.reports.models import HQToggle
 from corehq.apps.reports.fields import ReportField
+from django.utils.translation import ugettext as _
+from django.utils.translation import ugettext_noop
 
 class SubmitToggle(HQToggle):
     
@@ -14,12 +16,18 @@ class SubmissionErrorType(object):
     DUPLICATE = 2
     OVERWRITTEN = 3
     UNKNOWN_ERROR = 4
+    ARCHIVED = 5
     
-    doc_types = ["XFormInstance", "XFormError", "XFormDuplicate", "XFormDeprecated", "SubmissionErrorLog"]
-    human_readable = ["Normal Form", "Form with Errors", "Duplicate Form", "Overwritten Form", "Generic Error"]
+    doc_types = ["XFormInstance", "XFormError", "XFormDuplicate", "XFormDeprecated", "SubmissionErrorLog", "XFormArchived"]
+    human_readable = [ugettext_noop("Normal Form"),
+                      ugettext_noop("Form with Errors"),
+                      ugettext_noop("Duplicate Form"),
+                      ugettext_noop("Overwritten Form"),
+                      ugettext_noop("Generic Error"),
+                      ugettext_noop("Archived Form")]
     
-    error_defaults = [False, True, False, False, True]
-    success_defaults = [True, False, False, False, False]
+    error_defaults = [False, True, False, False, True, False]
+    success_defaults = [True, False, False, False, False, False]
 
     @classmethod
     def display_name_by_doc_type(cls, doc_type):

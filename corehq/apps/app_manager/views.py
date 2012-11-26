@@ -56,6 +56,7 @@ from collections import defaultdict
 from couchdbkit.resource import ResourceNotFound
 from corehq.apps.app_manager.decorators import safe_download
 from xml.dom.minidom import parseString
+from corehq.apps.hqmedia.models import CommCareMultimedia
 
 try:
     from lxml.etree import XMLSyntaxError
@@ -1636,8 +1637,8 @@ def download_multimedia_zip(req, domain, app_id):
     errors = []
     for form_path, media_item in app.multimedia_map.items():
         try:
-            media = eval(media_item.media_type)
-            media = media.get(media_item.multimedia_id)
+            media_cls = CommCareMultimedia.get_doc_class(media_item.media_type)
+            media = media_cls.get(media_item.multimedia_id)
             data, content_type = media.get_display_file()
             path = form_path.replace(utils.MULTIMEDIA_PREFIX, "")
             if not isinstance(data, unicode):

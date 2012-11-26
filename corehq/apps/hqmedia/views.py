@@ -12,7 +12,6 @@ from corehq.apps.hqmedia import utils
 from corehq.apps.app_manager.models import get_app
 from dimagi.utils.web import render_to_response
 from corehq.apps.hqmedia.models import CommCareImage, CommCareAudio
-from lib.django_rest_interface.resource import reverse
 
 X_PROGRESS_ERROR = 'Server Error: You must provide X-Progress-ID header or query param.'
 
@@ -169,6 +168,7 @@ def uploaded(request, domain, app_id):
 
         license=request.POST.get('license', "")
         author=request.POST.get('author', "")
+        att_notes = request.POST.get('attribution-notes', "")
 
         if content_type in utils.ZIP_MIMETYPES:
             zip = zipfile.ZipFile(uploaded_file)
@@ -178,7 +178,8 @@ def uploaded(request, domain, app_id):
             matched_images, matched_audio, unknown_files, errors = matcher.match_zipped(zip,
                                                                                         replace_existing_media=replace_existing,
                                                                                         license=license,
-                                                                                        author=author)
+                                                                                        author=author,
+                                                                                        attribution_notes=att_notes)
             response = {"unknown": unknown_files,
                         "images": matched_images,
                         "audio": matched_audio,
@@ -196,7 +197,8 @@ def uploaded(request, domain, app_id):
                                                                 shared=request.POST.get('shared', False),
                                                                 tags=tags,
                                                                 license=license,
-                                                                author=author)
+                                                                author=author,
+                                                                attribution_notes=att_notes)
             response = {"match_found": match_found,
                         file_type: match_map,
                         "file": True}

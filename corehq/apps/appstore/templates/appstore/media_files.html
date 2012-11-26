@@ -1,0 +1,53 @@
+{% extends "appstore/appstore_base.html" %}
+{% load hq_shared_tags %}
+{% load hqstyle_tags %}
+{% load i18n %}
+
+{% block js-inline %}{{ block.super }}
+    <script>
+        // remove gray sidebar
+        $(function () {
+            $('.hq-double-col').removeClass('hq-double-col');
+        });
+    </script>
+{% endblock %}
+
+{% block sidebar %}
+{% endblock %}
+
+{% block breadcrumb %}
+    <li>{{ project.title }}'s {% trans "Multimedia Files" %}</li>
+{% endblock %}
+
+{% block main_column %}
+    {% if project.multimedia_included %}
+        {% for media in project.all_media %}
+            <dl class="dl-horizontal">
+                {% if media.license.type %}
+                    <dt>{% trans "License" %}</dt>
+                    <dd><a href="http://creativecommons.org/licenses/#licenses">{{ media.license.display_name }}</a></dd>
+                {% endif %}
+                {% if media.license.author %}
+                    <dt>{% trans "Author" %}</dt>
+                    <dd>{{ media.license.author }}</dd>
+                {% endif %}
+                {% if media.license.organization %}
+                    <dt>{% trans "Organization" %}</dt>
+                    <dd>{{ media.license.organization }}</dd>
+                {% endif %}
+                {% if media.license.attribution_notes %}
+                    <dt>{% trans "Attribution Notes" %}</dt>
+                    <dd>{{ media.license.attribution_notes }}</dd>
+                {% endif %}
+                <dd>
+                    <a class="btn" style="margin-top: .4em;" href="{{ media.url }}">{% trans "Preview" %}</a>
+                </dd>
+            </dl>
+            <hr />
+        {% empty %}
+            {% trans "This app contains no multimedia files" %}
+        {% endfor %}
+    {% else %}
+        {% trans "This app doesn't share it's multimedia files" %}
+    {% endif %}
+{% endblock %}
