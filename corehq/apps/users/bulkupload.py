@@ -1,3 +1,4 @@
+from StringIO import StringIO
 from couchdbkit.exceptions import MultipleResultsFound
 from django.contrib import messages
 from corehq.apps.groups.models import Group
@@ -5,9 +6,13 @@ from corehq.apps.users.util import normalize_username, raw_username
 from corehq.apps.users.models import CommCareUser
 from django.db.utils import DatabaseError
 from django.db import transaction
+from couchexport.writers import Excel2007ExportWriter
+from dimagi.utils.decorators.memoized import memoized
+from dimagi.utils.decorators.profile import profile
+from dimagi.utils.excel import flatten_json, json_to_headers
 
-required_headers = set(['username', 'password'])
-allowed_headers = set(['phone-number', 'user_id', 'name', 'group', 'data']) | required_headers
+required_headers = set(['username'])
+allowed_headers = set(['password', 'phone-number', 'user_id', 'name', 'group', 'data']) | required_headers
 
     
 def check_headers(user_specs):
@@ -62,7 +67,7 @@ def create_or_update_users_and_groups(domain, user_specs, group_specs):
     group_memoizer = GroupMemoizer(domain)
     ret = {"errors": [], "rows": []}
     for row in group_specs:
-        group_name, case_sharing, reporting = row['name'], row['case-sharing'], row['reporting']
+        group_name, case_sharing, reporting, data = row['name'], row.get('case-sharing'), row.get('reporting'), row.get('data')
         try:
             group = group_memoizer.get_or_create_group(group_name)
         except MultipleResultsFound:
@@ -70,6 +75,7 @@ def create_or_update_users_and_groups(domain, user_specs, group_specs):
         else:
             group.case_sharing = case_sharing
             group.reporting = reporting
+            group.metadata = data
     usernames = set()
     user_ids = set()
 
@@ -86,8 +92,10 @@ def create_or_update_users_and_groups(domain, user_specs, group_specs):
                 username = normalize_username(username, domain)
             except TypeError:
                 username = None
-            status_row = {'username': raw_username(username) if username else None}
-            status_row['row'] = row
+            status_row = {
+                'username': raw_username(username) if username else None,
+                'row': row,
+            }
             if username in usernames or user_id in user_ids:
                 status_row['flag'] = 'repeat'
             elif not username and not user_id:
@@ -147,4 +155,99 @@ def create_or_update_users_and_groups(domain, user_specs, group_specs):
         group_memoizer.save_all()
     
     return ret
-    
+
+class UsersDumpHelper(object):
+
+    def __init__(self):
+        self.groups = {}
+
+    def get_group(self, id):
+        if not self.groups.has_key(id):
+            self.groups[id] = Group.get(id)
+        return self.groups[id]
+
+    def get_group_name(self, id):
+        return self.get_group(id).name
+
+    def get_all_groups(self):
+        for group in self.groups.values():
+            yield group
+
+def dump_users_and_groups(response, domain):
+
+    file = StringIO()
+    writer = Excel2007ExportWriter()
+
+    users = CommCareUser.by_domain(domain)
+    user_data_keys = set()
+    user_groups_length = 0
+    user_dicts = []
+    group_data_keys = set()
+    group_dicts = []
+    helper = UsersDumpHelper()
+
+    for user in users:
+        data = user.user_data
+        group_names = map(
+            helper.get_group_name,
+            Group.by_user(user, wrap=False)
+        )
+        # exclude password and user_id
+        user_dicts.append({
+            'data': data,
+            'group': group_names,
+            'name': user.full_name,
+            'phone-number': user.phone_number,
+            'username': user.raw_username,
+        })
+        user_data_keys.update(user.user_data.keys())
+        user_groups_length = max(user_groups_length, len(group_names))
+
+    for group in helper.get_all_groups():
+        group_dicts.append({
+            'name': group.name,
+            'case-sharing': group.case_sharing,
+            'reporting': group.reporting,
+            'data': group.metadata,
+        })
+        group_data_keys.update(group.metadata.keys())
+
+
+    user_headers = ['username', 'name', 'phone-number']
+    user_headers.extend(json_to_headers(
+        {'data': dict([(key, None) for key in user_data_keys])}
+    ))
+    user_headers.extend(json_to_headers(
+        {'group': range(1, user_groups_length + 1)}
+    ))
+
+    group_headers = ['name', 'case-sharing?', 'reporting?']
+    group_headers.extend(json_to_headers(
+        {'data': dict([(key, None) for key in group_data_keys])}
+    ))
+
+    writer.open(
+        header_table=[
+            ('users', [user_headers]),
+            ('groups', [group_headers]),
+        ],
+        file=file,
+    )
+
+    def get_user_rows():
+        for user_dict in user_dicts:
+            row = dict(flatten_json(user_dict))
+            yield [row.get(header) or '' for header in user_headers]
+
+    def get_group_rows():
+        for group_dict in group_dicts:
+            row = dict(flatten_json(group_dict))
+            yield [row.get(header) or '' for header in group_headers]
+
+    writer.write([
+        ('users', get_user_rows()),
+        ('groups', get_group_rows()),
+    ])
+
+    writer.close()
+    response.write(file.getvalue())

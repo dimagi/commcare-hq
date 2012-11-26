@@ -1,4 +1,5 @@
-<div class="control-label">License</div>
+{% load i18n %}
+<div class="control-label">{% trans "License" %}</div>
 <div class="controls">
     <select name="license">
         <option value="cc-nc">Creative Commons Attribution, Non-Commercial</option>
@@ -11,7 +12,11 @@
     </select>
 </div>
 <br />
-<div class="control-label">Author</div>
+<div class="control-label">{% trans "Author" %}</div>
 <div class="controls">
-    <input type="text" name="author" placeholder="Enter the name of the author" />
+    <input type="text" name="author" placeholder="{% trans "Enter the name of the author" %}" />
+</div>
+<div class="control-label">{% trans "Attribution Notes" %}</div>
+<div class="controls">
+    <textarea name="attribution-notes" rows="2"></textarea>
 </div>

@@ -58,7 +58,7 @@
                    data-exporttype="form"
                    data-dlocation='{% url export_custom_data domain export.get_id %}'
                    data-bind="click: requestDownload"
-                   class="dl-export btn btn-primary"><i class="icon-download-alt icon-white"></i> {% trans "Download" %}x</a>
+                   class="dl-export btn btn-primary"><i class="icon-download-alt icon-white"></i> {% trans "Download" %}</a>
             </td>
             <td class="form-inline">
                 {% ifequal export.default_format custom_bulk_export_format %}

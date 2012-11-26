@@ -4,7 +4,7 @@ import magic
 from django.conf import settings
 from couchdbkit.exceptions import ResourceNotFound
 from django.contrib.sites.models import Site
-from django.http import HttpResponse, Http404
+from django.http import HttpResponse, Http404, HttpResponseRedirect
 from django.utils import simplejson
 from django.views.decorators.http import require_POST
 import zipfile
@@ -116,6 +116,28 @@ def media_map(request, domain, app_id):
         "missing_audio_refs": missing_audio_refs
     })
 
+def media_from_path(request, domain, app_id, file_path):
+    app = get_app(domain, app_id)
+    sorted_images, sorted_audio, has_error = utils.get_sorted_multimedia_refs(app)
+
+    images, _ = app.get_template_map(sorted_images)
+    audio, _ = app.get_template_map(sorted_audio)
+
+    for i in images:
+        i['type'] = 'CommCareImage'
+
+    for a in audio:
+        a['type'] = 'CommCareAudio'
+
+    media = images + audio
+    for m in media:
+        if m['path'][10:] == file_path: # [10:] is to remove the 'jr://file/'
+            if m.get('m_id', ""):
+                return download_media(request, m['type'], m['m_id'])
+            else:
+                raise Http404('No Media Found')
+    raise Http404('No Media Found')
+
 @require_can_edit_apps
 def upload(request, domain, app_id):
     app = get_app(domain, app_id)
@@ -146,6 +168,7 @@ def uploaded(request, domain, app_id):
 
         license=request.POST.get('license', "")
         author=request.POST.get('author', "")
+        att_notes = request.POST.get('attribution-notes', "")
 
         if content_type in utils.ZIP_MIMETYPES:
             zip = zipfile.ZipFile(uploaded_file)
@@ -155,7 +178,8 @@ def uploaded(request, domain, app_id):
             matched_images, matched_audio, unknown_files, errors = matcher.match_zipped(zip,
                                                                                         replace_existing_media=replace_existing,
                                                                                         license=license,
-                                                                                        author=author)
+                                                                                        author=author,
+                                                                                        attribution_notes=att_notes)
             response = {"unknown": unknown_files,
                         "images": matched_images,
                         "audio": matched_audio,
@@ -173,7 +197,8 @@ def uploaded(request, domain, app_id):
                                                                 shared=request.POST.get('shared', False),
                                                                 tags=tags,
                                                                 license=license,
-                                                                author=author)
+                                                                author=author,
+                                                                attribution_notes=att_notes)
             response = {"match_found": match_found,
                         file_type: match_map,
                         "file": True}

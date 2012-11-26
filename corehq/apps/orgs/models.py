@@ -1,7 +1,4 @@
 from couchdbkit.ext.django.schema import *
-from corehq import util
-from django import forms
-from django.db import models
 from corehq.apps.users.models import AuthorizableMixin, WebUser
 from dimagi.utils.couch.undo import UndoableDocument, DeleteDocRecord
 

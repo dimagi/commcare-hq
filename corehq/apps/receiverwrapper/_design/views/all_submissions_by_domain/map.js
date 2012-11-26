@@ -1,6 +1,6 @@
 function(doc) {
-    var relevant_doc_types = [ "XFormInstance", "XFormError", "XFormDuplicate", 
-                               "XFormDeprecated", "SubmissionErrorLog"];
+    var relevant_doc_types = [ "XFormInstance", "XFormError", "XFormDuplicate",
+                               "XFormDeprecated", "SubmissionErrorLog", "XFormArchived"];
     if (relevant_doc_types.indexOf(doc.doc_type) !== -1) {
         // HACK: use the problem field to convert things to errors 
         // when emitting

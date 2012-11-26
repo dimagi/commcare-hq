@@ -270,11 +270,20 @@ class ReportConfig(Document):
     @property
     @memoized
     def report(self):
+        """
+        Returns None if no report is found for that report slug, which happens
+        when a report is no longer available.  All callers should handle this
+        case.
+
+        """
         return self._dispatcher.get_report(self.domain, self.report_slug)
 
     @property
     def report_name(self):
-        return _(self.report.name)
+        if self.report is None:
+            return _("Deleted Report")
+        else:
+            return _(self.report.name)
 
     @property
     def full_name(self):
@@ -305,10 +314,11 @@ class ReportConfig(Document):
         Get the report's HTML content as rendered by the static view format.
 
         """
-        report_class = self.report.__module__ + '.' + self.report.__name__
-        if not self.owner.can_view_report(self.domain, report_class):
-            raise Exception("User %s can't view report %s" % (self.owner_id,
-                                                              report_class))
+        if self.report is None:
+            return _("The report used to create this scheduled report is no"
+                     " longer available on CommCare HQ.  Please delete this"
+                     " scheduled report and create a new one using an available"
+                     " report.")
 
         from django.http import HttpRequest, QueryDict
         request = HttpRequest()
@@ -398,7 +408,7 @@ class ReportNotification(Document):
                 include_docs=True).all()
             configs = [c for c in configs if not hasattr(c, 'deleted')]
         elif self.report_slug == 'admin_domains':
-            raise UnsupportedScheduledReportError("admin_domains is no longer"
+            raise UnsupportedScheduledReportError("admin_domains is no longer "
                 "supported as a schedulable report for the time being")
         else:
             # create a new ReportConfig object, useful for its methods and
