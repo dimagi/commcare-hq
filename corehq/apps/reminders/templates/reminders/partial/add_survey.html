@@ -33,6 +33,7 @@
 <script type="text/javascript">
     $(function() {
         $("input[name$='.date']").datepicker({dateFormat : "yy-mm-dd"});
+        $("input[name$='.end_date']").datepicker({dateFormat : "yy-mm-dd"});
     });
 </script>
 
@@ -43,6 +44,7 @@
     function add_record(element_id, record) {
         document.getElementById(element_id).appendChild(record);
         $("#"+element_id+" input[name$='.date']:last").datepicker({dateFormat : "yy-mm-dd"});
+        $("#"+element_id+" input[name$='.end_date']:last").datepicker({dateFormat : "yy-mm-dd"});
     }
     
     function remove_record(ref) {
@@ -58,12 +60,16 @@
         var td2 = document.createElement("TD");
         var td3 = document.createElement("TD");
         var td4 = document.createElement("TD");
+        var td5 = document.createElement("TD");
         var input1 = document.createElement("INPUT");
         input1.setAttribute("type", "text");
         input1.setAttribute("name", "wave." + current_wave_num + ".date");
         var input2 = document.createElement("INPUT");
         input2.setAttribute("type", "text");
         input2.setAttribute("name", "wave." + current_wave_num + ".time");
+        var input3 = document.createElement("INPUT");
+        input3.setAttribute("type", "text");
+        input3.setAttribute("name", "wave." + current_wave_num + ".end_date");
         var select1 = document.createElement("SELECT");
         select1.setAttribute("name", "wave." + current_wave_num + ".form_id");
         {% for f in form_list %}
@@ -83,10 +89,12 @@
         tr.appendChild(td2);
         tr.appendChild(td3);
         tr.appendChild(td4);
+        tr.appendChild(td5);
         td1.appendChild(input1);
         td2.appendChild(input2);
-        td3.appendChild(select1);
-        td4.appendChild(button);
+        td3.appendChild(input3);
+        td4.appendChild(select1);
+        td5.appendChild(button);
         //
         return tr;
     }
@@ -228,8 +236,9 @@
         <input type="hidden" name="send_automatically" value="on" />
         <table id="wave_table" class="table table-bordered">
             <thead>
-                <th>Date</th>
-                <th>Time</th>
+                <th>Start Date</th>
+                <th>Start Time</th>
+                <th>End Date</th>
                 <th>Questionnaire</th>
                 <th></th>
             </thead>
@@ -238,6 +247,7 @@
                 <tr>
                     <td><input type="text" name="wave.0.date" /></td>
                     <td><input type="text" name="wave.0.time" /></td>
+                    <td><input type="text" name="wave.0.end_date" /></td>
                     <td>
                         <select name="wave.0.form_id">
                             {% for f in form_list %}
@@ -252,6 +262,7 @@
                 <tr>
                     <td>{% if wave.ignore %}{{ wave.date }}{% endif %}<input type="{% if wave.ignore %}hidden{% else %}text{% endif %}" name="wave.{{ forloop.counter0 }}.date" value="{{ wave.date }}" /></td>
                     <td>{% if wave.ignore %}{{ wave.time }}{% endif %}<input type="{% if wave.ignore %}hidden{% else %}text{% endif %}" name="wave.{{ forloop.counter0 }}.time" value="{{ wave.time }}" /></td>
+                    <td>{% if wave.ignore %}{{ wave.end_date }}{% endif %}<input type="{% if wave.ignore %}hidden{% else %}text{% endif %}" name="wave.{{ forloop.counter0 }}.end_date" value="{{ wave.end_date }}" /></td>
                     <td>
                         {% if wave.ignore %}
                         <input type="hidden" name="wave.{{ forloop.counter0 }}.ignore" value="1" />
@@ -280,7 +291,7 @@
     <br />
     {{ form.followups.errors }}
     <div class="form-block">
-        <input type="checkbox" id="send_followup" name="send_followup" {% if form.send_followup.value %}value="on" checked="checked"{% endif %} /> Send follow-up(s) for incomplete SMS Questionnaires
+        <input {% if started %}type="hidden"{% else %}type="checkbox"{% endif %} id="send_followup" name="send_followup" {% if form.send_followup.value %}value="on" checked="checked"{% endif %} />{% if started and not form.send_followup.value %}DO NOT{% endif %} Send follow-up(s) for incomplete SMS Questionnaires
         <br />
         <br />
         <table id="followup_table" style="display: {% if form.send_followup.value %}block{% else %}none{% endif %};">
@@ -292,17 +303,20 @@
                 {% else %}
                 {% for followup in form.followups.value %}
                 <tr>
-                    <td>Send follow-up <input type="text" name="followup.{{ forloop.counter0 }}.interval" class="tiny" value="{{ followup.interval }}" /> day(s) after {% if forloop.counter0 > 0 %}next{% else %}first{% endif %} message</td>
-                    <td>{% if forloop.counter0 > 0 %}<span class="btn btn-danger" onClick="remove_record(this);"><i class="icon icon-white icon-remove"></i> Remove</span>{% endif %}</td>
+                    <td>Send follow-up <input {% if started %}type="hidden"{% else %}type="text"{% endif %} name="followup.{{ forloop.counter0 }}.interval" class="tiny" value="{{ followup.interval }}" />{% if started %}{{ followup.interval }}{% endif %} day(s) after {% if forloop.counter0 > 0 %}next{% else %}first{% endif %} message</td>
+                    <td>{% if forloop.counter0 > 0 and not started %}<span class="btn btn-danger" onClick="remove_record(this);"><i class="icon icon-white icon-remove"></i> Remove</span>{% endif %}</td>
                 </tr>
                 {% endfor %}
                 {% endif %}
             </tbody>
         </table>
         <br />
+        {% if not started %}
         <span class="btn btn-success" onClick="add_record('followup_tbody', create_followup_record());"><i class="icon icon-white icon-plus"></i> Add Follow-up</span>
+        {% endif %}
     </div>
     <br />
+    {{ form.samples.errors }}
     <h4>Samples</h4>
     <br />
     <div class="form-block">
@@ -349,36 +363,56 @@
                 {% for sample in form.samples.value %}
                 <tr>
                     <td>
+                        {% if started %}
+                        <input type="hidden" name="sample.{{ forloop.counter0 }}.sample_id" value="{{ sample.sample_id }}" />
+                        {% for s in sample_list %}
+                            {% if sample.sample_id == s.code %}{{ s.name }}{% endif %}
+                        {% endfor %}
+                        {% else %}
                         <select name="sample.{{ forloop.counter0 }}.sample_id">
                             {% for s in sample_list %}
                                 <option value="{{ s.code }}" {% if sample.sample_id == s.code %}selected="selected"{% endif %}>{{ s.name }}</option>
                             {% endfor %}
                         </select>
+                        {% endif %}
                     </td>
                     <td>
+                        {% if started %}
+                        <input type="hidden" name="sample.{{ forloop.counter0 }}.method" value="{{ sample.method }}" />{{ sample.method }}
+                        {% else %}
                         <select name="sample.{{ forloop.counter0 }}.method">
                             {% for method in method_list %}
                                 <option value="{{ method }}" {% if sample.method == method %}selected="selected"{% endif %}>{{ method }}</option>
                             {% endfor %}
                         </select>
+                        {% endif %}
                     </td>
                     <td>
+                        {% if started %}
+                        <input type="hidden" name="sample.{{ forloop.counter0 }}.cati_operator" value="{{ sample.cati_operator }}" />
+                        {% for user in user_list %}
+                            {% if sample.cati_operator == user.get_id %}{{ user.raw_username }}{% endif %}
+                        {% endfor %}
+                        {% else %}
                         <select name="sample.{{ forloop.counter0 }}.cati_operator">
                             {% for user in user_list %}
                                 <option value="{{ user.get_id }}" {% if sample.cati_operator == user.get_id %}selected="selected"{% endif %}>{{ user.raw_username }}</option>
                             {% endfor %}
                         </select>
+                        {% endif %}
                     </td>
                     <td>
-                        <input type="text" name="sample.{{ forloop.counter0 }}.incentive" value="{{ sample.incentive|default:"" }}" />
+                        <input {% if started %}type="hidden"{% else %}type="text"{% endif %} name="sample.{{ forloop.counter0 }}.incentive" value="{{ sample.incentive|default:"" }}" />{% if started %}{{ sample.incentive }}{% endif %}
                     </td>
-                    <td>{% if forloop.counter0 > 0 %}<span class="btn btn-danger" onClick="remove_record(this);"><i class="icon icon-white icon-remove"></i> Remove</span>{% endif %}</td>
+                    <td>{% if forloop.counter0 > 0 and not started %}<span class="btn btn-danger" onClick="remove_record(this);"><i class="icon icon-white icon-remove"></i> Remove</span>{% endif %}</td>
                 </tr>
                 {% endfor %}
                 {% endif %}
             </tbody>
         </table>
+        {% if not started %}
         <span class="btn btn-success" onClick="add_record('sample_tbody', create_sample_record());"><i class="icon icon-white icon-plus"></i> Add Sample</span>
+        {% endif %}
     </div>
     <br />
     <input type="submit" class="btn btn-primary" value="Submit" />

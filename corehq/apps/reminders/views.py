@@ -288,10 +288,13 @@ def add_survey(request, domain, survey_id=None):
             else:
                 timeout_intervals = []
             
+            timeout_duration = sum(timeout_intervals) / 1440
+            final_timeout = lambda wave : [((wave.end_date - wave.date).days - timeout_duration) * 1440]
+            
             if survey is None:
                 wave_list = []
                 for wave in waves:
-                    wave_list.append(SurveyWave(date=parse(wave["date"]).date(), time=parse(wave["time"]).time(), form_id=wave["form_id"], reminder_definitions={}))
+                    wave_list.append(SurveyWave(date=parse(wave["date"]).date(), time=parse(wave["time"]).time(), end_date=parse(wave["end_date"]).date(), form_id=wave["form_id"], reminder_definitions={}))
                 
                 if send_automatically:
                     for wave in wave_list:
@@ -299,7 +302,7 @@ def add_survey(request, domain, survey_id=None):
                             if sample["method"] == "SMS":
                                 handler = CaseReminderHandler(
                                     domain = domain,
-                                    nickname = "",
+                                    nickname = "Survey '%s'" % name,
                                     default_lang = "en",
                                     method = "survey",
                                     recipient = RECIPIENT_SURVEY_SAMPLE,
@@ -310,13 +313,14 @@ def add_survey(request, domain, survey_id=None):
                                         day_num = 0,
                                         fire_time = wave.time,
                                         form_unique_id = wave.form_id,
-                                        callback_timeout_intervals = timeout_intervals
+                                        callback_timeout_intervals = timeout_intervals + final_timeout(wave),
                                     )],
                                     schedule_length = 1,
                                     event_interpretation = EVENT_AS_SCHEDULE,
                                     max_iteration_count = 1,
                                     sample_id = sample["sample_id"],
                                     survey_incentive = sample["incentive"],
+                                    submit_partial_forms = True,
                                 )
                                 handler.save()
                                 wave.reminder_definitions[sample["sample_id"]] = handler._id
@@ -341,6 +345,7 @@ def add_survey(request, domain, survey_id=None):
                         parsed_date = parse(wave_json["date"]).date()
                         parsed_time = parse(wave_json["time"]).time()
                         if parsed_date == wave.date and parsed_time == wave.time and wave_json["form_id"] == wave.form_id:
+                            wave.end_date = parse(wave_json["end_date"]).date()
                             survey.waves.append(wave)
                             unchanged_wave_json.append(wave_json)
                             continue
@@ -362,6 +367,7 @@ def add_survey(request, domain, survey_id=None):
                     survey.waves.append(SurveyWave(
                         date=parse(wave_json["date"]).date(),
                         time=parse(wave_json["time"]).time(),
+                        end_date=parse(wave_json["end_date"]).date(),
                         form_id=wave_json["form_id"],
                         reminder_definitions={},
                     ))
@@ -383,7 +389,8 @@ def add_survey(request, domain, survey_id=None):
                 for wave in survey.waves:
                     for sample_id, handler_id in wave.reminder_definitions.items():
                         handler = CaseReminderHandler.get(handler_id)
-                        handler.events[0].callback_timeout_intervals = timeout_intervals
+                        handler.events[0].callback_timeout_intervals = timeout_intervals + final_timeout(wave)
+                        handler.nickname = "Survey '%s'" % name
                         handler.survey_incentive = sample_data[sample_id]["incentive"]
                         handler.save()
                 
@@ -393,7 +400,7 @@ def add_survey(request, domain, survey_id=None):
                         if sample_id not in wave.reminder_definitions:
                             handler = CaseReminderHandler(
                                 domain = domain,
-                                nickname = "",
+                                nickname = "Survey '%s'" % name,
                                 default_lang = "en",
                                 method = "survey",
                                 recipient = RECIPIENT_SURVEY_SAMPLE,
@@ -404,13 +411,14 @@ def add_survey(request, domain, survey_id=None):
                                     day_num = 0,
                                     fire_time = wave.time,
                                     form_unique_id = wave.form_id,
-                                    callback_timeout_intervals = timeout_intervals
+                                    callback_timeout_intervals = timeout_intervals + final_timeout(wave),
                                 )],
                                 schedule_length = 1,
                                 event_interpretation = EVENT_AS_SCHEDULE,
                                 max_iteration_count = 1,
                                 sample_id = sample_id,
                                 survey_incentive = sample_data[sample_id]["incentive"],
+                                submit_partial_forms = True,
                             )
                             handler.save()
                             wave.reminder_definitions[sample_id] = handler._id
@@ -432,6 +440,7 @@ def add_survey(request, domain, survey_id=None):
             return HttpResponseRedirect(reverse("survey_list", args=[domain]))
     else:
         initial = {}
+        started = False
         if survey is not None:
             waves = []
             samples = [SurveySample.get(sample["sample_id"]) for sample in survey.samples]
@@ -442,11 +451,13 @@ def add_survey(request, domain, survey_id=None):
                     "form_id" : wave.form_id,
                     "time" : str(wave.time),
                     "ignore" : False,
+                    "end_date" : str(wave.end_date),
                 }
                 
                 for sample in samples:
                     if CaseReminderHandler.timestamp_to_utc(sample, datetime.combine(wave.date, wave.time)) < utcnow:
                         wave_json["ignore"] = True
+                        started = True
                         break
                 
                 waves.append(wave_json)
@@ -473,6 +484,7 @@ def add_survey(request, domain, survey_id=None):
         "sample_list" : sample_list,
         "method_list" : SURVEY_METHOD_LIST,
         "user_list" : CommCareUser.by_domain(domain),
+        "started" : started,
     }
     return render_to_response(request, "reminders/partial/add_survey.html", context)
 

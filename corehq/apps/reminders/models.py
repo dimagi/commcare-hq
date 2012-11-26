@@ -971,6 +971,7 @@ class SurveySample(Document):
 class SurveyWave(DocumentSchema):
     date = DateProperty()
     time = TimeProperty()
+    end_date = DateProperty()
     form_id = StringProperty()
     reminder_definitions = DictProperty() # Dictionary of SurveySample._id : CaseReminderHandler._id
 
