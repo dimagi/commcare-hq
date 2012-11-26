@@ -142,9 +142,9 @@ class BaseDrilldownOptionFilter(BaseReportFilter):
         selected = []
         for label in self.rendered_labels:
             value = self._get_label_value(self.request, label)
-            if not value:
+            if not value['value']:
                 break
-            selected.append(value)
+            selected.append(value['value'])
         return selected
 
     @property
@@ -225,17 +225,22 @@ class BaseDrilldownOptionFilter(BaseReportFilter):
 
     @classmethod
     def _get_label_value(cls, request, label):
-        return request.GET.get('%s_%s' % (cls.slug, str(label[2])))
+        slug = str(label[2])
+        val = request.GET.get('%s_%s' % (cls.slug, str(label[2])))
+        return {
+            'slug': slug,
+            'value': val,
+        }
 
     @classmethod
     def get_value(cls, request, domain):
-        values = {}
+        values = []
         instance = cls(request, domain)
         for label in instance.rendered_labels:
             value = cls._get_label_value(request, label)
-            if not value:
+            if not value['value']:
                 break
-            values[str(label[2])] = value
-        return values
+            values.append(value)
+        return values, instance
 
 

@@ -90,15 +90,16 @@ def all_application_forms(domain):
         })
     return app_forms, xmlns_used
 
-def get_duplicate_xmlns(domain):
+def get_app_xmlns(domain, duplicates_only=False):
     key = ["xmlns", domain]
     data = get_db().view('reports_forms/by_app_info',
         group=True,
         startkey=key,
         endkey=key+[{}]
     ).all()
-    return [d['key'][-1] for d in data if d['value'] > 1]
-
+    if duplicates_only:
+        return [d['key'][-1] for d in data if d['value']]
+    return [d['key'][-1] for d in data]
 
 def user_list(domain):
     #todo cleanup

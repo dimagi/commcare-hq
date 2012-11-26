@@ -26,7 +26,6 @@ var DrilldownOptionFilterControl = function (options) {
 
         var current_index = _.indexOf(_.pluck(current_options, 'val'), current_selection);
         for (var l = trigger_level+1; l < self.controls().length; l++) {
-            self.controls()[l].selected(undefined);
             if (current_index >= 0 && l === trigger_level+1) {
                 var next_options = current_options[current_index].next;
                 self.controls()[trigger_level+1].control_options(next_options);
@@ -66,8 +65,9 @@ var DrilldownOption = function (select, drilldown_map) {
     self.is_visible = ko.computed(function () {
         return !!(self.control_options().length);
     });
-    self.show_alert = ko.computed(function () {
-        return !self.is_visible();
+
+    self.show_next_drilldown = ko.computed(function () {
+        return !(self.control_options().length);
     });
 };
 

@@ -263,12 +263,16 @@ class GenericReportView(object):
     @property
     @memoized
     def filter_classes(self):
+        # todo messy...fix eventually
         filters = []
         fields = self.override_fields
         if not fields:
             fields = self.fields
         for field in fields or []:
-            klass = to_function(field)
+            if isinstance(field, basestring):
+                klass = to_function(field)
+            else:
+                klass = field
             filters.append(klass(self.request, self.domain, self.timezone))
         return filters
 

@@ -3,6 +3,7 @@ function (doc) {
         && doc.copy_of === null) {
         // all xforms bound to an application at some point in time
         var is_deleted = doc.doc_type === 'Application-Deleted';
+        var status = (is_deleted) ? "deleted" : "active";
 
         for (var m = 0; m < doc.modules.length; m++) {
             var module = doc.modules[m];
@@ -27,10 +28,10 @@ function (doc) {
                         is_deleted: is_deleted
                     };
                     emit(["xmlns", doc.domain, form.xmlns], value);
-                    emit(["app", doc.domain, value.app.id], value);
-                    emit(["app xmlns", doc.domain, value.app.id, form.xmlns], value);
-                    emit(["app module", doc.domain, value.app.id, value.module.id], value);
+                    emit(["status xmlns", doc.domain, status, form.xmlns], value);
+
                     emit(["app module form", doc.domain, value.app.id, value.module.id, value.form.id], value);
+                    emit(["status app module form", doc.domain, status, value.app.id, value.module.id, value.form.id], value);
                 }
             }
             if (doc.user_registration) {
@@ -55,10 +56,10 @@ function (doc) {
                         is_deleted: is_deleted
                     };
                     emit(["xmlns", doc.domain, reg_form.xmlns], reg_value);
-                    emit(["app", doc.domain, reg_value.app.id], reg_value);
-                    emit(["app xmlns", doc.domain, reg_value.app.id], reg_value);
-                    emit(["app module", doc.domain, reg_value.app.id, reg_value.module.id], reg_value);
+                    emit(["status xmlns", doc.domain, status, reg_form.xmlns], reg_value);
+
                     emit(["app module form", doc.domain, reg_value.app.id, reg_value.module.id, reg_value.form.id], reg_value);
+                    emit(["status app module form", doc.domain, status, reg_value.app.id, reg_value.module.id, reg_value.form.id], reg_value);
                 }
             }
         }

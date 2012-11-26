@@ -83,10 +83,10 @@ class ReportDispatcher(View):
         """
         return self.report_map
 
-    
+
     def get_report(self, domain, report_slug):
         """
-        Returns the report class for a configured slug, or None if no 
+        Returns the report class for a configured slug, or None if no
         report is found.
         """
         reports = self.get_reports(domain)
@@ -103,7 +103,7 @@ class ReportDispatcher(View):
 
     def _slug_alias(self, slug):
         return self.slug_aliases.get(slug)
-        
+
     def dispatch(self, request, *args, **kwargs):
         if not self.validate_report_map(request):
             return HttpResponseNotFound("Sorry, no reports have been configured yet.")
@@ -148,7 +148,7 @@ class ReportDispatcher(View):
         return "(?P<render_as>[{renderings}]+)".format(
             renderings="|".join("(%s)" % r for r in cls.allowed_renderings())
         )
-    
+
     @classmethod
     def pattern(cls):
         return r'^({renderings}/)?(?P<report_slug>[\w_]+)/$'.format(renderings=cls._rendering_pattern())

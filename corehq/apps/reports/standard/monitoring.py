@@ -6,7 +6,7 @@ from django.core.urlresolvers import reverse
 import pytz
 import sys
 from corehq.apps.reports import util
-from corehq.apps.reports.filters.forms import CompletionOrSubmissionTimeFilter
+from corehq.apps.reports.filters.forms import CompletionOrSubmissionTimeFilter, FormsByApplicationFilter, SingleFormByApplicationFilter
 from corehq.apps.reports.standard import ProjectReportParametersMixin, DatespanMixin, ProjectReport, DATE_FORMAT
 from corehq.apps.reports.calc import entrytimes
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn, DTSortType
@@ -263,106 +263,62 @@ class SubmissionsByFormReport(WorkerMonitoringReportTable, DatespanMixin):
     description = _("This report shows the number of submissions received for each form per mobile worker"
                     " during the selected date range.")
 
-    _form_types = None
-    @property
-    def form_types(self):
-        if self._form_types is None:
-            form_types = self._get_form_types()
-            self._form_types = form_types if form_types else set()
-        return self._form_types
-
     @property
     @memoized
-    def all_submissions(self):
+    def all_relevant_xmlns(self):
+        filtered_xmlns = FormsByApplicationFilter.get_all_xmlns(self.request, self.domain)
         key = make_form_couch_key(self.domain)
-        return XFormInstance.view('reports_forms/all_forms',
+        data = get_db().view('reports_forms/all_forms',
+            reduce=False,
             startkey=key+[self.datespan.startdate_param_utc],
             endkey=key+[self.datespan.enddate_param_utc],
-            include_docs=True,
-            reduce=False
-        )
+        ).all()
+        all_xmlns = set([d['value']['xmlns'] for d in data])
+        relevant_xmlns = all_xmlns.intersection(set(filtered_xmlns.keys()))
+        return dict([(k, filtered_xmlns[k]) for k in relevant_xmlns])
 
     @property
     def headers(self):
-        form_names = [xmlns_to_name(*id_tuple) for id_tuple in self.form_types]
-        form_names = [name.replace("/", " / ") if name is not None else _('(No name)') for name in form_names]
-        if self.form_types:
-            # this fails if form_names, form_types is [], []
-            form_names, self._form_types = zip(*sorted(zip(form_names, self.form_types)))
-
         headers = DataTablesHeader(DataTablesColumn(_("User"), span=3))
-        for name in list(form_names):
-            headers.add_column(DataTablesColumn(name, sort_type=DTSortType.NUMERIC))
-        headers.add_column(DataTablesColumn(_("All Forms"), sort_type=DTSortType.NUMERIC))
+        if not self.all_relevant_xmlns:
+            headers.add_column(DataTablesColumn(_("No submissions were found for selected forms within this date range."),
+                sortable=False))
+        else:
+            for xmlns, info in self.all_relevant_xmlns.items():
+                help_text = "Note: This Form's ID is not unique among your applications." if info['is_dupe'] else None
+                headers.add_column(DataTablesColumn(info['name'], sort_type=DTSortType.NUMERIC, help_text=help_text))
+            headers.add_column(DataTablesColumn(_("All Forms"), sort_type=DTSortType.NUMERIC))
         return headers
 
     @property
     def rows(self):
-        counts = self._get_form_counts()
         rows = []
-        totals_by_form = defaultdict(int)
+        totals = [0]*(len(self.all_relevant_xmlns)+1)
         for user in self.users:
             row = []
-            for form_type in self.form_types:
-                try:
-                    count = counts[user.get('user_id')][form_type]
-                    row.append(count)
-                    totals_by_form[form_type] += count
-                except Exception:
-                    row.append(0)
-            row_sum = sum(row)
-            rows.append([self.get_user_link(user)] + \
-                        [self.table_cell(row_data) for row_data in row] + \
-                        [self.table_cell(row_sum, "<strong>%s</strong>" % row_sum)])
-
-        totals_by_form = [totals_by_form[form_type] for form_type in self.form_types]
-        self.total_row = [_("All Users")] + \
-                         ["%s" % t for t in totals_by_form] + \
-                         ["<strong>%s</strong>" % sum(totals_by_form)]
+            if self.all_relevant_xmlns:
+                for xmlns in self.all_relevant_xmlns.keys():
+                    row.append(self._get_num_submissions(user.get('user_id'), xmlns))
+                row_sum = sum(row)
+                row = [self.get_user_link(user)] + \
+                    [self.table_cell(row_data) for row_data in row] + \
+                    [self.table_cell(row_sum, "<strong>%s</strong>" % row_sum)]
+                totals = [totals[i]+col.get('sort_key') for i, col in enumerate(row[1:])]
+                rows.append(row)
+            else:
+                rows.append([self.get_user_link(user), '--'])
+        if self.all_relevant_xmlns:
+            self.total_row = [_("All Users")] + totals
         return rows
 
-    def _get_form_types(self):
-        form_types = set()
-        for submission in self.all_submissions:
-            try:
-                xmlns = submission['xmlns']
-            except KeyError:
-                xmlns = None
-
-            try:
-                app_id = submission['app_id']
-            except Exception:
-                app_id = None
-
-            if self.user_ids:
-                try:
-                    userID = submission['form']['meta']['userID']
-                except Exception:
-                    pass
-                else:
-                    if userID in self.user_ids:
-                        form_types.add(FormType(self.domain, xmlns, app_id).get_id_tuple())
-            else:
-                form_types.add(FormType(self.domain, xmlns, app_id).get_id_tuple())
-
-        return sorted(form_types)
-
-    def _get_form_counts(self):
-        counts = defaultdict(lambda: defaultdict(int))
-        for sub in self.all_submissions:
-            try:
-                app_id = sub['app_id']
-            except Exception:
-                app_id = None
-            try:
-                userID = sub['form']['meta']['userID']
-            except Exception:
-                # if a form don't even have a userID, don't even bother tryin'
-                pass
-            else:
-                if userID in self.user_ids:
-                    counts[userID][FormType(self.domain, sub['xmlns'], app_id).get_id_tuple()] += 1
-        return counts
+    def _get_num_submissions(self, user_id, xmlns):
+        key = make_form_couch_key(self.domain, user_id=user_id, xmlns=xmlns)
+        data = get_db().view('reports_forms/all_forms',
+            reduce=True,
+            startkey=key+[self.datespan.startdate_param_utc],
+            endkey=key+[self.datespan.enddate_param_utc],
+        ).first()
+        return data['value'] if data else 0
 
 
 class DailyFormStatsReport(WorkerMonitoringReportTable, DatespanMixin):
@@ -452,11 +408,18 @@ class FormCompletionTimeReport(WorkerMonitoringReportTable, DatespanMixin):
     slug = "completion_times"
     fields = ['corehq.apps.reports.fields.FilterUsersField',
               'corehq.apps.reports.fields.GroupField',
-              'corehq.apps.reports.filters.forms.FormsByApplicationFilter',
+              'corehq.apps.reports.filters.forms.SingleFormByApplicationFilter',
               'corehq.apps.reports.fields.DatespanField']
 
     @property
+    @memoized
+    def selected_xmlns(self):
+        return SingleFormByApplicationFilter.get_value(self.request, self.domain)
+
+    @property
     def headers(self):
+        if self.selected_xmlns is None:
+            return DataTablesHeader(DataTablesColumn(_("No Form Selected"), sortable=False))
         return DataTablesHeader(DataTablesColumn(_("User")),
             DataTablesColumn(_("Average duration")),
             DataTablesColumn(_("Shortest")),
@@ -465,9 +428,9 @@ class FormCompletionTimeReport(WorkerMonitoringReportTable, DatespanMixin):
 
     @property
     def rows(self):
-        form = self.request_params.get('form', '')
         rows = []
-        if not form:
+        if self.selected_xmlns is None:
+            rows.append([_("You must select a form to view data.")])
             return rows
 
         totalsum = totalcount = 0
@@ -481,7 +444,7 @@ class FormCompletionTimeReport(WorkerMonitoringReportTable, DatespanMixin):
         globalmin = sys.maxint
         globalmax = 0
         for user in self.users:
-            datadict = entrytimes.get_user_data(self.domain, user.get('user_id'), form, self.datespan)
+            datadict = entrytimes.get_user_data(self.domain, user.get('user_id'), self.selected_xmlns, self.datespan)
             rows.append([self.get_user_link(user),
                          to_minutes(float(datadict["sum"]), float(datadict["count"])),
                          to_minutes(datadict["min"]),
