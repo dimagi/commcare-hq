@@ -7,22 +7,33 @@ class memoized(object):
     (not reevaluated).
     """
     def __init__(self, func):
-       self.func = func
-       self.cache = {}
+        self.func = func
+        self.cache = {}
+
     def __call__(self, *args):
-       try:
-          return self.cache[args]
-       except KeyError:
-          value = self.func(*args)
-          self.cache[args] = value
-          return value
-       except TypeError:
-          # uncachable -- for instance, passing a list as an argument.
-          # Better to not cache than to blow up entirely.
-          return self.func(*args)
+        return self.call(None, self.cache, *args)
+
+    def call(self, obj, cache, *args):
+        try:
+            return cache[args]
+        except KeyError:
+            if obj:
+                value = self.func(obj, *args)
+            else:
+                value = self.func(*args)
+            cache[args] = value
+            return value
+
     def __repr__(self):
-       """Return the function's docstring."""
-       return self.func.__doc__
+        """Return the function's docstring."""
+        return self.func.__doc__
+
     def __get__(self, obj, objtype):
-       """Support instance methods."""
-       return functools.partial(self.__call__, obj)
+        """Support instance methods."""
+        cache_attr = '_%s_cache' % self.func.__name__
+        try:
+            cache = getattr(obj, cache_attr)
+        except AttributeError:
+            cache = {}
+            setattr(obj, cache_attr, cache)
+        return functools.partial(self.call, obj, cache)
