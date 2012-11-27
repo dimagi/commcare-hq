@@ -134,10 +134,8 @@ CRISPY_TEMPLATE_PACK = 'bootstrap'
 
 HQ_APPS = (
     'django_digest',
-    'django_rest_interface',
-    'django_granular_permissions',
-    'django_tables',
     'django_user_registration',
+    'rosetta',
     'auditcare',
     'djangocouch',
     'djangocouchuser',
@@ -566,13 +564,12 @@ APPSTORE_INTERFACE_MAP = {
 
 PROJECT_REPORT_MAP = {
     "Monitor Workers" : [
-        'corehq.apps.reports.standard.monitoring.CaseActivityReport',
+        'corehq.apps.reports.standard.monitoring.DailyFormStatsReport',
         'corehq.apps.reports.standard.monitoring.SubmissionsByFormReport',
-        'corehq.apps.reports.standard.monitoring.DailySubmissionsReport',
-        'corehq.apps.reports.standard.monitoring.DailyFormCompletionsReport',
-        'corehq.apps.reports.standard.monitoring.FormCompletionTrendsReport',
+        'corehq.apps.reports.standard.monitoring.FormCompletionTimeReport',
+        'corehq.apps.reports.standard.monitoring.CaseActivityReport',
         'corehq.apps.reports.standard.monitoring.FormCompletionVsSubmissionTrendsReport',
-        'corehq.apps.reports.standard.monitoring.SubmissionTimesReport',
+        'corehq.apps.reports.standard.monitoring.WorkerActivityTimes',
         'corehq.apps.reports.standard.monitoring.SubmitDistributionReport',
     ],
     "Inspect Data" : [
