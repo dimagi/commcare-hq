@@ -271,15 +271,22 @@ class Domain(Document, HQBillingDomainMixin, SnapshotMixin):
                                     startkey=[self.name],
                                     endkey=[self.name, {}]).all()
 
-    def full_applications(self):
+    def full_applications(self, include_builds=True):
         from corehq.apps.app_manager.models import Application, RemoteApp
         WRAPPERS = {'Application': Application, 'RemoteApp': RemoteApp}
         def wrap_application(a):
             return WRAPPERS[a['doc']['doc_type']].wrap(a['doc'])
 
+        if include_builds:
+            startkey = [self.name]
+            endkey = [self.name, {}]
+        else:
+            startkey = [self.name, None]
+            endkey = [self.name, None, {}]
+
         return get_db().view('app_manager/applications',
-            startkey=[self.name],
-            endkey=[self.name, {}],
+            startkey=startkey,
+            endkey=endkey,
             include_docs=True,
             wrapper=wrap_application).all()
 
