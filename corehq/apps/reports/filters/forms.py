@@ -14,6 +14,7 @@ class FormsByApplicationFilter(BaseDrilldownOptionFilter):
     slug = "form"
     label = ugettext_noop("Filter Forms")
     css_class = "span5"
+    drilldown_empty_text = _("You don't have any applications set up, so there are no forms to choose from. Please create an application!")
 
     @property
     def display_lang(self):

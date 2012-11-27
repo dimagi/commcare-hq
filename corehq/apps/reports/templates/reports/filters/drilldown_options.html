@@ -2,6 +2,9 @@
 {% load hq_shared_tags %}
 {% load i18n %}
 {% block filter_content %}
+{% if is_empty %}
+<div class="alert alert-info">{{ empty_text }}</div>
+{% else %}
 <div id="{{ css_id }}" class="well" style="padding-bottom: 0;">
     <div data-bind="foreach: controls">
         <div class="control-group"
@@ -28,6 +31,7 @@
     </div>
     <div class="alert alert-info" data-bind="fadeVisible: notification.is_visible, html: notification.message"></div>
  </div>
+ {% endif %}
 {% endblock %}
 {% block filter_js %}
 <script type="text/javascript" src="{% static 'reports/ko/report_filter.drilldown_options.js' %}"></script>

@@ -136,6 +136,7 @@ class BaseDrilldownOptionFilter(BaseReportFilter):
     """
     template = "reports/filters/drilldown_options.html"
     use_only_last = False
+    drilldown_empty_text = ugettext_noop("No Data Available")
 
     @property
     def selected(self):
@@ -170,6 +171,8 @@ class BaseDrilldownOptionFilter(BaseReportFilter):
             'selected': self.selected,
             'use_last': self.use_only_last,
             'notifications': self.final_notifications,
+            'empty_text': self.drilldown_empty_text,
+            'is_empty': not bool(self.drilldown_map),
         }
 
     @property
