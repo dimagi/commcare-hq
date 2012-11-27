@@ -76,15 +76,28 @@ class XFormPillow(AliasedElasticPillow):
     #for simplicity, the handlers are managed on the domain level
     handler_domain_map = {}
 
+    nodomain_check = {}
+
     #type level mapping
     default_xform_mapping = {
         "date_detection": False,
         "date_formats": date_format_arr, #for parsing the explicitly defined dates
         'ignore_malformed': True,
+        'dynamic': False,
         "_meta": {
             "created": '', #record keeping on the index.
         },
         "properties": {
+            "domain": {
+                "type": "multi_field",
+                "fields": {
+                    "domain": {"type": "string", "index": "analyzed"},
+                    "exact": {"type": "string", "index": "not_analyzed"}
+                    #exact is full text string match - hyphens get parsed in standard
+                    # analyzer
+                    # in queries you can access by domain.exact
+                }
+            },
             "xmlns": {
                 "type": "multi_field",
                 "fields": {
@@ -100,8 +113,10 @@ class XFormPillow(AliasedElasticPillow):
                 "format": formats_string
             },
             'form': {
+                'dynamic': False,
                 'properties': {
                     'case': {
+                        'dynamic': False,
                         'properties': {
                             'date_modified': {
                                 "type": "date",
@@ -120,9 +135,10 @@ class XFormPillow(AliasedElasticPillow):
                             "case_id": {"type": "string", "index": "not_analyzed"},
                             "user_id": {"type": "string", "index": "not_analyzed"},
                             "xmlns": {"type": "string", "index": "not_analyzed"},
-                            }
+                        }
                     },
                     'meta': {
+                        'dynamic': False,
                         'properties': {
                             "timeStart": {
                                 "type": "date",
@@ -138,22 +154,22 @@ class XFormPillow(AliasedElasticPillow):
                             "username": {"type": "string", "index": "not_analyzed"}
                         }
                     },
-                    },
                 },
-            }
+            },
+        }
     }
 
 
     def __init__(self, **kwargs):
         super(XFormPillow, self).__init__(**kwargs)
 
-        for full_str in getattr(settings,'XFORM_PILLOW_HANDLERS', []):
+        for full_str in getattr(settings, 'XFORM_PILLOW_HANDLERS', []):
             comps = full_str.split('.')
             handler_class_str = comps[-1]
             mod_str = '.'.join(comps[0:-1])
-            mod = __import__(mod_str, {},{},[handler_class_str])
+            mod = __import__(mod_str, {}, {}, [handler_class_str])
             if hasattr(mod, handler_class_str):
-                handler_class  = getattr(mod, handler_class_str)
+                handler_class = getattr(mod, handler_class_str)
                 self.xform_handlers.append(handler_class())
         self.handler_domain_map = dict((x.domain, x) for x in self.xform_handlers)
 
@@ -164,23 +180,42 @@ class XFormPillow(AliasedElasticPillow):
         """
         if not hasattr(self, '_calc_meta'):
             self._calc_meta = hashlib.md5(simplejson.dumps(
-                self.get_mapping_from_type({'domain': 'default', 'type': 'default'}))).hexdigest()
+                self.get_mapping_from_type({'_id': 'default', 'domain': 'default', 'type': 'default'}))).hexdigest()
         return self._calc_meta
 
-    def get_type_string(self, doc_dict):
+    def get_domain(self, doc_dict):
         domain = doc_dict.get('domain', None)
+
+        if domain is None:
+            if not self.nodomain_check.has_key(doc_dict['_id']):
+                #if there's no domain, then this instance doesn't have all the signals/post processing done, skip and wait
+                self.nodomain_check[doc_dict['_id']] = 0
+            self.nodomain_check[doc_dict['_id']] += 1
+            return None
+        else:
+            if self.nodomain_check.has_key(doc_dict['_id']):
+#                print "no domain, but fixed %s [%s] %d" % (doc_dict['_id'], doc_dict['xmlns'], self.nodomain_check[doc_dict['_id']])
+                pass
+            return domain
+
+
+    def get_type_string(self, doc_dict):
+        domain = self.get_domain(doc_dict)
         if domain is None:
             domain = "nodomain"
+
         ui_version = doc_dict.get('form', {}).get('@uiVersion', 'XXX')
         version = doc_dict.get('form', {}).get('@version', 'XXX')
         xmlns = doc_dict.get('xmlns', 'http://noxmlns')
-        return "%(type)s.%(domain)s.%(xmlns_suffix)s.u%(ui_version)s-v%(version)s" % {
+        ret =  "%(type)s.%(domain)s.%(xmlns_suffix)s.u%(ui_version)s-v%(version)s" % {
             'type': self.es_type,
             'domain': domain.lower(),
             'xmlns_suffix': xmlns.split('/')[-1],
             'ui_version': ui_version,
             'version': version
         }
+#        print ret
+        return ret
 
     def get_mapping_from_type(self, doc_dict):
         """
@@ -209,15 +244,18 @@ class XFormPillow(AliasedElasticPillow):
         Override the elastic transport to go to the index + the type being a string between the
         domain and case type
         """
+        if self.get_domain(doc_dict) is None:
+            #no domain, skipping
+            return
+
         try:
             es = self.get_es()
-
             if not self.type_exists(doc_dict):
                 #if type is never seen, apply mapping for said type
                 type_mapping = self.get_mapping_from_type(doc_dict)
                 type_mapping[self.get_type_string(doc_dict)]['_meta']['created'] = datetime.isoformat(datetime.utcnow())
                 mapping_res = es.put("%s/%s/_mapping" % (self.es_index, self.get_type_string(doc_dict)), data=type_mapping)
-                print mapping_res
+                print "Mapping set: [%s] %s" % (self.get_type_string(doc_dict), mapping_res)
                 #this server confirm is a modest overhead but it tells us whether or not the type
                 # is successfully mapped into the index.
                 #0.19 mapping - retrieve the mapping to confirm that it's been seen
@@ -240,13 +278,13 @@ class XFormPillow(AliasedElasticPillow):
                 res = es.put(doc_path, data=doc_dict)
                 if res.get('status', 0) == 400:
                     print "xform error: %s\n%s" % (doc_dict['_id'], simplejson.dumps(res, indent=4))
-                    #                    logging.error("Pillowtop Error [%s]:\n%s\n\tDoc id: %s\n\t%s" % (self.get_name(),
-                    #                                                                           res.get('error',
-                    #                                                                               "No error message"),
-                    #                                                                           doc_dict['_id'],
-                    #                                                                           doc_dict.keys()))
+#                    #                    logging.error("Pillowtop Error [%s]:\n%s\n\tDoc id: %s\n\t%s" % (self.get_name(),
+#                    #                                                                           res.get('error',
+#                    #                                                                               "No error message"),
+#                    #                                                                           doc_dict['_id'],
+#                    #                                                                           doc_dict.keys()))
         except Exception, ex:
             print 'xforms [%s] error: %s' % (doc_dict['_id'], ex)
             traceback.print_exc(file=sys.stdout)
-#            logging.error("PillowTop [%s]: transporting change data doc_id: %s to elasticsearch error: %s", (self.get_name(), doc_dict['_id'], ex))
+            #            logging.error("PillowTop [%s]: transporting change data doc_id: %s to elasticsearch error: %s", (self.get_name(), doc_dict['_id'], ex))
             return None
