@@ -29,7 +29,7 @@
         }
 
         function number_fix(num) {
-            if (num !== undefined) {
+            if (num !== null) {
                 if (num.toFixed) {
                     return num.toFixed(2)
                 }
@@ -91,7 +91,6 @@
             self.getCeleryTasks = function () {
                 $.getJSON("{% url system_ajax %}?api=celerymon_poll", function (allData) {
                             var mappedTasks = $.map(allData, function (item) {
-                                console.log(item)
                                 return new CeleryTaskModel(item)
                             });
                             self.celery_tasks(mappedTasks);
