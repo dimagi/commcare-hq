@@ -465,15 +465,26 @@ def delete_custom_export(req, domain, export_id):
 @login_and_domain_required
 @require_POST
 def add_config(request, domain=None):
+    # todo: refactor this into a django form
     from datetime import datetime
-    
+    user_id = request.couch_user._id
+
     POST = json.loads(request.raw_post_data)
     if 'name' not in POST or not POST['name']:
         return HttpResponseBadRequest()
+    
+    user_configs = ReportConfig.by_domain_and_owner(domain, user_id).all()
+    if not POST.get('_id') and POST['name'] in [c.name for c in user_configs]:
+        return HttpResponseBadRequest()
 
     to_date = lambda s: datetime.strptime(s, '%Y-%m-%d').date() if s else s
-    POST['start_date'] = to_date(POST['start_date'])
-    POST['end_date'] = to_date(POST['end_date'])
+    try:
+        POST['start_date'] = to_date(POST['start_date'])
+        POST['end_date'] = to_date(POST['end_date'])
+    except ValueError:
+        # invalidly formatted date input
+        return HttpResponseBadRequest()
+
     date_range = POST.get('date_range')
     if date_range == 'last7':
         POST['days'] = 7
@@ -489,10 +500,11 @@ def add_config(request, domain=None):
     config = ReportConfig.get_or_create(POST.get('_id', None))
 
     if config.owner_id:
-        assert config.owner_id == request.couch_user._id
+        # in case a user maliciously tries to edit another user's config
+        assert config.owner_id == user_id
     else:
         config.domain = domain
-        config.owner_id = request.couch_user._id
+        config.owner_id = user_id
 
     for field in config.properties().keys():
         if field in POST:
