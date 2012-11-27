@@ -121,6 +121,12 @@
             </div>
         {% endif %}
     </div>
+    {% if report.special_notice %}
+    <div class="alert alert-info" style="margin-bottom: 2px">
+        <h4>{% trans 'Notice' %}</h4>
+        <p>{{ report.special_notice }}</p>
+    </div>
+    {% endif %}
     <div id="report-content">
         {% if not report.is_async and report.slug %}
             {% block reportcontent %}

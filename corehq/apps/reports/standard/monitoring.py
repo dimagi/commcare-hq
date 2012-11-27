@@ -5,14 +5,16 @@ import dateutil
 from django.core.urlresolvers import reverse
 from django.http import Http404
 from django.conf import settings
+from django.utils.safestring import mark_safe
 import pytz
 import sys
 from corehq.apps.domain.models import Domain
+from corehq.apps.groups.models import Group
 from corehq.apps.reports import util
 from corehq.apps.reports.standard import CouchCachedReportMixin, ProjectReportParametersMixin, \
     DatespanMixin, ProjectReport, DATE_FORMAT
 from corehq.apps.reports.calc import entrytimes
-from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn, DTSortType
+from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn, DTSortType, DataTablesColumnGroup
 from corehq.apps.reports.decorators import cache_report
 from corehq.apps.reports.display import xmlns_to_name, FormType
 from corehq.apps.reports.generic import GenericTabularReport
@@ -85,12 +87,17 @@ class CaseActivityReport(WorkerMonitoringReportTable):
     all_users = None
     display_data = ['percent']
     emailable = True
+    special_notice = _("This report currently does not support case sharing. "
+                       "There might be inconsistencies in case totals if the user is part of a case sharing group. "
+                       "We are working to correct this shortly.")
+
 
     class Row(object):
         def __init__(self, report, user):
             self.report = report
             self.user = user
 
+        @memoized
         def active_count(self):
             """Open clients seen in the last 120 days"""
             return self.report.get_number_cases(
@@ -100,6 +107,7 @@ class CaseActivityReport(WorkerMonitoringReportTable):
                 closed=False,
             )
 
+        @memoized
         def inactive_count(self):
             """Open clients not seen in the last 120 days"""
             return self.report.get_number_cases(
@@ -149,38 +157,23 @@ class CaseActivityReport(WorkerMonitoringReportTable):
             return self._header
 
     _default_landmarks = [30, 60, 90]
-    _landmarks = None
     @property
+    @memoized
     def landmarks(self):
-        if self._landmarks is None:
-            landmarks_param = self.request_params.get('landmarks')
-            landmarks_param = landmarks_param if isinstance(landmarks_param, list) else []
-            landmarks_param = [param for param in landmarks_param if isinstance(param, int)]
-            if landmarks_param:
-                for landmark in landmarks_param:
-                    if landmark not in self.cached_report.landmark_data:
-                        self.cached_report.update_landmarks(landmarks=landmarks_param)
-                        self.cached_report.save()
-                        break
-            self._landmarks = landmarks_param if landmarks_param else self._default_landmarks
-            self._landmarks = [datetime.timedelta(days=l) for l in self._landmarks]
-        return self._landmarks
+        landmarks_param = self.request_params.get('landmarks')
+        landmarks_param = landmarks_param if isinstance(landmarks_param, list) else []
+        landmarks_param = [param for param in landmarks_param if isinstance(param, int)]
+        landmarks = landmarks_param if landmarks_param else self._default_landmarks
+        return [datetime.timedelta(days=l) for l in landmarks]
 
     _default_milestone = 120
-    _milestone = None
     @property
+    @memoized
     def milestone(self):
-        if self._milestone is None:
-            milestone_param = self.request_params.get('milestone')
-            milestone_param = milestone_param if isinstance(milestone_param, int) else None
-            if milestone_param:
-                if milestone_param not in self.cached_report.active_cases or\
-                   milestone_param not in self.cached_report.inactive_cases:
-                    self.cached_report.update_status(milestone=milestone_param)
-                    self.cached_report.save()
-            self._milestone = milestone_param if milestone_param else self._default_milestone
-            self._milestone = datetime.timedelta(days=self._milestone)
-        return self._milestone
+        milestone_param = self.request_params.get('milestone')
+        milestone_param = milestone_param if isinstance(milestone_param, int) else None
+        milestone = milestone_param if milestone_param else self._default_milestone
+        return datetime.timedelta(days=milestone)
 
     @property
     @memoized
@@ -189,43 +182,60 @@ class CaseActivityReport(WorkerMonitoringReportTable):
 
     @property
     def headers(self):
-        headers = DataTablesHeader(DataTablesColumn(_("Users")))
+        columns = [DataTablesColumn(_("Users"))]
         for landmark in self.landmarks:
-            headers.add_column(DataTablesColumn(
-                _("Last %s Days") % landmark.days if landmark else _("Ever"),
-                sort_type=DTSortType.NUMERIC,
-                help_text=_('Number of cases modified (or closed) in the last %s days') % landmark.days))
-        headers.add_column(DataTablesColumn(_("Active Cases"),
+            num_cases = DataTablesColumn(_("# Modified or Closed"), sort_type=DTSortType.NUMERIC,
+                help_text=_("The number of cases that have been modified between %d days ago and today." % landmark.days)
+            )
+            proportion = DataTablesColumn(_("Proportion"), sort_type=DTSortType.NUMERIC,
+                help_text=_("The number of modified cases / (#active + #closed cases).")
+            )
+            columns.append(DataTablesColumnGroup(_("Cases in Last %s Days") % landmark.days if landmark else _("Ever"),
+                num_cases,
+                proportion
+            ))
+        columns.append(DataTablesColumn(_("# Active Cases"),
             sort_type=DTSortType.NUMERIC,
             help_text=_('Number of cases modified in the last %s days that are still open') % self.milestone.days))
-        headers.add_column(DataTablesColumn(_("Inactive Cases"),
+        columns.append(DataTablesColumn(_("# Inactive Cases"),
             sort_type=DTSortType.NUMERIC,
             help_text=_("Number of cases that are open but haven't been touched in the last %s days") % self.milestone.days))
-        return headers
+        return DataTablesHeader(*columns)
 
     @property
     def rows(self):
         rows = [self.Row(self, user) for user in self.users]
+
         total_row = self.TotalRow(rows, _("All Users"))
 
         def format_row(row):
             cells = [row.header()]
+
             def add_numeric_cell(text, value=None):
                 if value is None:
-                    value = int(text)
+                    try:
+                        value = int(text)
+                    except ValueError:
+                        value = text
                 cells.append(util.format_datatables_data(text=text, sort_key=value))
+
             for landmark in self.landmarks:
                 value = row.modified_count(self.utc_now - landmark)
                 total = row.active_count() + row.closed_count(self.utc_now - landmark)
 
                 try:
-                    display = '%d (%d%%)' % (value, value * 100. / total)
+                    p_val = float(value) * 100. / float(total)
+                    proportion = '%.f%%' % p_val
                 except ZeroDivisionError:
-                    display = '%d' % value
-                add_numeric_cell(display, value)
+                    p_val = None
+                    proportion = '--'
+                add_numeric_cell(value, value)
+                add_numeric_cell(proportion, p_val)
+
             add_numeric_cell(row.active_count())
             add_numeric_cell(row.inactive_count())
             return cells
+
         self.total_row = format_row(total_row)
         return map(format_row, rows)
 
@@ -249,128 +259,6 @@ class CaseActivityReport(WorkerMonitoringReportTable):
             group_level=0,
             wrapper=lambda row: row['value']
         ).one() or 0
-
-
-class CaseActivityReportCahed(WorkerMonitoringReportTable, CouchCachedReportMixin):
-    """
-        User    Last 30 Days    Last 60 Days    Last 90 Days   Active Clients              Inactive Clients
-        danny   5 (25%)         10 (50%)        20 (100%)       17                          6
-        (name)  (modified_since(x)/[active + closed_since(x)])  (open & modified_since(120)) (open & !modified_since(120))
-    """
-    name = ugettext_noop('Case Activity')
-    slug = 'case_activity_cached' #change to case_activity when ready to deploy
-    fields = ['corehq.apps.reports.fields.FilterUsersField',
-              'corehq.apps.reports.fields.CaseTypeField',
-              'corehq.apps.reports.fields.GroupField']
-
-    _default_landmarks = [30, 60, 90]
-    _landmarks = None
-    @property
-    def landmarks(self):
-        if self._landmarks is None:
-            landmarks_param = self.request_params.get('landmarks')
-            landmarks_param = landmarks_param if isinstance(landmarks_param, list) else []
-            landmarks_param = [param for param in landmarks_param if isinstance(param, int)]
-            if landmarks_param:
-                for landmark in landmarks_param:
-                    if landmark not in self.cached_report.landmark_data:
-                        self.cached_report.update_landmarks(landmarks=landmarks_param)
-                        self.cached_report.save()
-                        break
-            self._landmarks = landmarks_param if landmarks_param else self._default_landmarks
-        return self._landmarks
-
-    _default_milestone = 120
-    _milestone = None
-    @property
-    def milestone(self):
-        if self._milestone is None:
-            milestone_param = self.request_params.get('milestone')
-            milestone_param = milestone_param if isinstance(milestone_param, int) else None
-            if milestone_param:
-                if milestone_param not in self.cached_report.active_cases or\
-                   milestone_param not in self.cached_report.inactive_cases:
-                    self.cached_report.update_status(milestone=milestone_param)
-                    self.cached_report.save()
-            self._milestone = milestone_param if milestone_param else self._default_milestone
-        return self._milestone
-
-    @property
-    def headers(self):
-        headers = DataTablesHeader(DataTablesColumn(_("User")))
-        for landmark in self.landmarks:
-            headers.add_column(DataTablesColumn(_("Last %s Days") % landmark if landmark else _("Ever"),
-                sort_type=DTSortType.NUMERIC,
-                help_text=_('Number of cases modified or closed in the last %s days') % landmark))
-        headers.add_column(DataTablesColumn(_("Active Cases"),
-            sort_type=DTSortType.NUMERIC,
-            help_text=_('Number of cases modified in the last %s days that are still open') % self.milestone))
-        headers.add_column(DataTablesColumn("Closed Cases",
-            sort_type=DTSortType.NUMERIC,
-            help_text=_('Number of cases closed in the last %s days') % self.milestone))
-        headers.add_column(DataTablesColumn(_("Inactive Cases"),
-            sort_type=DTSortType.NUMERIC,
-            help_text=_("Number of cases that are open but haven't been touched in the last %s days") % self.milestone))
-        return headers
-
-    @property
-    def rows(self):
-        rows = []
-        # TODO: cleanup...case type should be None, but not sure how that affects other rports
-
-        case_type = self.case_type if self.case_type else None
-
-        def _format_val(value, total):
-            try:
-                display = '%d (%d%%)' % (value, value * 100. / total)
-            except ZeroDivisionError:
-                display = '%d' % value
-            return display
-
-        case_key =  self.cached_report.case_key(case_type)
-
-        landmark_data = [self.cached_report.landmark_data.get(case_key,
-                {}).get(self.cached_report.day_key(landmark), {}) for landmark in self.landmarks]
-        active_data = self.cached_report.active_cases.get(case_key,
-                {}).get(self.cached_report.day_key(self.milestone), {})
-        closed_data = self.cached_report.closed_cases.get(case_key,
-                {}).get(self.cached_report.day_key(self.milestone), {})
-        inactive_data = self.cached_report.inactive_cases.get(case_key,
-                {}).get(self.cached_report.day_key(self.milestone), {})
-
-        for user in self.users:
-            row = [self.get_user_link(user)]
-            user_id = user.get('user_id')
-            total_active = active_data.get(user_id, 0)
-            total_closed = closed_data.get(user_id, 0)
-            total_inactive = inactive_data.get(user_id, 0)
-            total = total_active + total_closed
-            for ld in landmark_data:
-                value = ld.get(user_id, 0)
-                row.append(self.table_cell(value, _format_val(value, total)))
-            row.append(self.table_cell(total_active))
-            row.append(self.table_cell(total_closed))
-            row.append(self.table_cell(total_inactive))
-            rows.append(row)
-
-        
-        total_row = [_("All Users")]
-        for i in range(1, len(self.landmarks)+4):
-            total_row.append(sum([row[i].get('sort_key', 0) for row in rows]))
-        grand_total = sum(total_row[-3:-1])
-        for i, val in enumerate(total_row[1:-3]):
-            total_row[1+i] = self.table_cell(val, _format_val(val, grand_total))
-        self.total_row = total_row
-
-        return rows
-
-    def fetch_cached_report(self):
-        report = CaseActivityReportCache.get_by_domain(self.domain).first()
-        recreate = self.request.GET.get('recreate')
-        if not report or recreate == 'yes':
-            logging.info("Building new Case Activity report for project %s" % self.domain)
-            report = CaseActivityReportCache.build_report(self.domain_object)
-        return report
 
 
 class SubmissionsByFormReport(WorkerMonitoringReportTable, DatespanMixin):
