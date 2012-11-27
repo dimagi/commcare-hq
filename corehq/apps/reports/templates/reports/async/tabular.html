@@ -5,10 +5,8 @@
 
 {% block reportcontent %}
 {% if report.needs_filters %}
-    <div class="well">
-        <p>{% trans "Please choose your filters above to see report data." %}</p>
-    </div>
-{% else %}        
+    {% include 'reports/standard/partials/description.html' %}
+{% else %}
     <table class="table table-striped datatable" {% if pagination.filter %} data-filter="true"{% endif %}>
         <thead>
         {%  if report_table.headers.complex %}
@@ -104,8 +102,8 @@
         {% endif %}
 
         $(function() {
-            $('.dataTables_scrollHead').css('overflow', 'visible');
-            $('.header-popover').tooltip({
+            $('.header-popover').popout({
+                trigger: 'hover',
                 placement: 'bottom',
             });
         });

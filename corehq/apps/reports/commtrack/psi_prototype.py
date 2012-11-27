@@ -14,8 +14,8 @@ from datetime import datetime, date, timedelta
 class CommtrackReportMixin(ProjectReport, ProjectReportParametersMixin):
 
     @classmethod
-    def show_in_navigation(cls, request, *args, **kwargs):
-        domain = Domain.get_by_name(kwargs['domain'])
+    def show_in_navigation(cls, request, domain=None):
+        domain = Domain.get_by_name(domain)
         return domain.commtrack_enabled
     
     @property

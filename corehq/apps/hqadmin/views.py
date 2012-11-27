@@ -6,6 +6,7 @@ from django.core.urlresolvers import reverse
 from corehq.apps.builds.models import CommCareBuildConfig, BuildSpec
 from corehq.apps.domain.models import Domain
 from corehq.apps.reports.datatables import DataTablesColumn, DataTablesHeader, DTSortType
+from corehq.apps.reports.util import make_form_couch_key
 from corehq.apps.sms.models import SMSLog
 from corehq.apps.users.models import  CommCareUser
 from couchforms.models import XFormInstance
@@ -65,9 +66,14 @@ def _all_domain_stats():
             'CommCareUser': commcare_counts
         }[doc_type][domain] = value
 
-    form_counts.update(dict([(row["key"][0], row["value"]) for row in \
-                             get_db().view("reports/all_submissions", 
-                                           group=True,group_level=1).all()]))
+    key = make_form_couch_key(None)
+    form_counts.update(dict([(row["key"][1], row["value"]) for row in \
+                                get_db().view("reports_forms/all_forms",
+                                    group=True,
+                                    group_level=2,
+                                    startkey=key,
+                                    endkey=key+[{}]
+                             ).all()]))
     
     case_counts.update(dict([(row["key"][0], row["value"]) for row in \
                              get_db().view("hqcase/types_by_domain", 
@@ -112,7 +118,11 @@ def active_users(request):
     number_threshold = 15
     date_threshold_days_ago = 90
     date_threshold = json_format_datetime(datetime.utcnow() - timedelta(days=date_threshold_days_ago))
-    for line in get_db().view("reports/submit_history", group_level=2):
+    key = make_form_couch_key(None, user_id="")
+    for line in get_db().view("reports_forms/all_forms",
+        startkey=key,
+        endkey=key+[{}],
+        group_level=3):
         if line['value'] >= number_threshold:
             keys.append(line["key"])
 
@@ -126,8 +136,11 @@ def active_users(request):
         except Exception:
             return False
 
-    for domain, user_id in keys:
-        if get_db().view("reports/submit_history", reduce=False, startkey=[domain, user_id, date_threshold], limit=1):
+    for time_type, domain, user_id in keys:
+        if get_db().view("reports_forms/all_forms",
+            reduce=False,
+            startkey=[time_type, domain, user_id, date_threshold],
+            limit=1):
             if True or is_valid_user_id(user_id):
                 final_count[domain] += 1
 
@@ -262,16 +275,17 @@ def _cacheable_domain_activity_report(request):
         domain['users'] = dict([(user.user_id, {'raw_username': user.raw_username}) for user in CommCareUser.by_domain(domain['name'])])
         if not domain['users']:
             continue
-        forms = [r['value'] for r in get_db().view('reports/all_submissions',
+        key = make_form_couch_key(domain['name'])
+        forms = [r['value'] for r in get_db().view('reports_forms/all_forms',
             reduce=False,
-            startkey=[domain['name'], json_format_datetime(dates[-1])],
-            endkey=[domain['name'], json_format_datetime(now)],
+            startkey=key+[json_format_datetime(dates[-1])],
+            endkey=key+[json_format_datetime(now)],
         ).all()]
         domain['user_sets'] = [dict() for landmark in landmarks]
 
         for form in forms:
             user_id = form.get('user_id')
-            time = string_to_datetime(form['time']).replace(tzinfo = None)
+            time = string_to_datetime(form['submission_time']).replace(tzinfo = None)
             if user_id in domain['users']:
                 for i, date in enumerate(dates):
                     if time > date:
@@ -352,8 +366,8 @@ def submissions_errors(request, template="hqadmin/submissions_errors_report.html
         ).all()
         num_active_users = data[0].get('value', 0) if data else 0
 
-        key = [domain.name]
-        data = get_db().view('reports/all_submissions',
+        key = make_form_couch_key(domain.name)
+        data = get_db().view('reports_forms/all_forms',
             startkey=key+[datespan.startdate_param_utc],
             endkey=key+[datespan.enddate_param_utc, {}],
             reduce=True

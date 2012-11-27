@@ -149,7 +149,7 @@ def export_data(req, domain):
         messages.error(req, "Sorry, there was no data found for the tag '%s'." % export_tag)
         next = req.GET.get("next", "")
         if not next:
-            next = export.ExcelExportReport.get_url(domain)
+            next = export.ExcelExportReport.get_url(domain=domain)
         return HttpResponseRedirect(next)
 
 @require_form_export_permission
@@ -343,7 +343,7 @@ def _export_default_or_custom_data(request, domain, export_id=None, bulk_export=
         )
     else:
         if not next:
-            next = export.ExcelExportReport.get_url(domain)
+            next = export.ExcelExportReport.get_url(domain=domain)
         resp = export_object.download_data(format, filter=filter)
         if resp:
             return resp
@@ -391,7 +391,7 @@ def custom_export(req, domain):
         messages.warning(req, "<strong>No data found for that form "
                       "(%s).</strong> Submit some data before creating an export!" % \
                       xmlns_to_name(domain, export_tag[1], app_id=None), extra_tags="html")
-        return HttpResponseRedirect(export.ExcelExportReport.get_url(domain))
+        return HttpResponseRedirect(export.ExcelExportReport.get_url(domain=domain))
 
 @require_form_export_permission
 @login_and_domain_required
@@ -458,9 +458,9 @@ def delete_custom_export(req, domain, export_id):
     saved_export.delete()
     messages.success(req, "Custom export was deleted.")
     if type == "form":
-        return HttpResponseRedirect(export.ExcelExportReport.get_url(domain))
+        return HttpResponseRedirect(export.ExcelExportReport.get_url(domain=domain))
     else:
-        return HttpResponseRedirect(export.CaseExportReport.get_url(domain))
+        return HttpResponseRedirect(export.CaseExportReport.get_url(domain=domain))
 
 @login_and_domain_required
 @require_POST
@@ -674,7 +674,7 @@ def case_details(request, domain, case_id):
     
     if case == None or case.doc_type != "CommCareCase" or case.domain != domain:
         messages.info(request, "Sorry, we couldn't find that case. If you think this is a mistake plase report an issue.")
-        return HttpResponseRedirect(inspect.CaseListReport.get_url(domain))
+        return HttpResponseRedirect(inspect.CaseListReport.get_url(domain=domain))
 
     report_name = 'Details for Case "%s"' % case.name
     form_lookups = dict((form.get_id,
