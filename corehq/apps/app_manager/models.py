@@ -3,7 +3,6 @@ from collections import defaultdict
 from datetime import datetime
 import types
 from django.core.cache import cache
-from django.utils.decorators import method_decorator
 from django.utils.encoding import force_unicode
 from django.utils.safestring import mark_safe
 import re
@@ -33,13 +32,11 @@ from dimagi.utils.couch.undo import DeleteRecord, DELETED_SUFFIX
 from dimagi.utils.web import get_url_base, parse_int
 from copy import deepcopy
 from corehq.apps.domain.models import Domain, cached_property
-import hashlib
 from django.template.loader import render_to_string
 from urllib2 import urlopen
 from urlparse import urljoin
 from corehq.apps.domain.decorators import login_and_domain_required
 import langcodes
-import util
 
 
 import random
@@ -1344,7 +1341,7 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
 
     def _create_custom_app_strings(self, lang):
         def trans(d):
-            return clean_trans(d, langs).strip()
+            return clean_trans(d, langs)
         id_strings = IdStrings()
         langs = [lang] + self.langs
         yield id_strings.homescreen_title(), self.name

@@ -57,7 +57,6 @@ MIDDLEWARE_CLASSES = (
     'django.middleware.common.CommonMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
-    'corehq.util.threadlocals.ThreadLocals',
     'corehq.apps.domain.middleware.DomainMiddleware',
     'django_digest.middleware.HttpDigestMiddleware',
 )
@@ -90,10 +89,7 @@ DEFAULT_APPS = (
 )
 
 HQ_APPS = (    
-    'django_rest_interface',
     'django_digest',
-    'django_granular_permissions',
-    'django_tables',
     'django_user_registration',
     'corehq.apps.domain',
     'corehq.apps.receiver',

@@ -181,7 +181,8 @@ class HQMediaMatcher():
                         media.add_domain(self.domain, owner=True)
                         media.update_or_add_license(self.domain,
                                                     type=kwargs.get('license', ''),
-                                                    author=kwargs.get('author', ''))
+                                                    author=kwargs.get('author', ''),
+                                                    attribution_notes=kwargs.get('attribution_notes', ''))
                         self.app.create_mapping(media, form_path)
                         match_map = HQMediaMapItem.format_match_map(form_path, media.doc_type, media._id, path)
                         if is_image:
@@ -228,7 +229,10 @@ class HQMediaMatcher():
                     username=self.username,
                     replace_attachment=replace_existing_media)
                 media.add_domain(self.domain, owner=True, **kwargs)
-                media.update_or_add_license(self.domain, type=kwargs.get('license', ''), author=kwargs.get('author', ''))
+                media.update_or_add_license(self.domain,
+                                            type=kwargs.get('license', ''),
+                                            author=kwargs.get('author', ''),
+                                            attribution_notes=kwargs.get('attribution_notes', ''))
                 self.app.create_mapping(media, form_path)
 
                 return True, HQMediaMapItem.format_match_map(form_path, media.doc_type, media._id, filename), errors

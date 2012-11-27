@@ -4,7 +4,6 @@ from corehq.apps import receiverwrapper
 from django.core.urlresolvers import reverse
 from django.http import HttpResponseRedirect, HttpResponse, Http404
 
-from django_tables import tables
 from django.shortcuts import redirect
 
 from corehq.apps.domain.decorators import REDIRECT_FIELD_NAME, login_required_late_eval_of_LOGIN_URL, login_and_domain_required, domain_admin_required, require_previewer
@@ -22,7 +21,6 @@ from django.contrib import messages
 from django.views.decorators.http import require_POST
 import json
 from dimagi.utils.post import simple_post
-from corehq.apps.app_manager.models import get_app
 import cStringIO
 from PIL import Image
 
@@ -65,22 +63,6 @@ def select( request,
 
     return render_to_response(request, domain_select_template, vals)
 
-########################################################################################################
-
-########################################################################################################
-
-class UserTable(tables.Table):
-    id = tables.Column(verbose_name="Id")
-    username = tables.Column(verbose_name="Username")
-    first_name = tables.Column(verbose_name="First name")
-    last_name = tables.Column(verbose_name="Last name")
-    is_active_auth = tables.Column(verbose_name="Active in system")
-    is_active_member = tables.Column(verbose_name="Active in domain")
-    is_domain_admin = tables.Column(verbose_name="Domain admin")
-    last_login = tables.Column(verbose_name="Most recent login")
-    invite_status = tables.Column(verbose_name="Invite status")
-
-########################################################################################################
 
 ########################################################################################################
 
@@ -374,7 +356,7 @@ def create_snapshot(request, domain):
                  'autocomplete_fields': ('project_type', 'phone_model', 'user_type', 'city', 'country', 'region')})
 
         current_user = CouchUser.from_django_user(request.user)
-        if not current_user.eula.signed:
+        if not current_user.is_eula_signed():
             messages.error(request, 'You must agree to our eula to publish a project to Exchange')
             return render_to_response(request, 'domain/create_snapshot.html',
                 {'domain': domain.name,
@@ -399,7 +381,7 @@ def create_snapshot(request, domain):
 
                 # set the license of every multimedia file that doesn't yet have a license set
                 if not m_file.license:
-                    m_file.update_or_add_license(domain, type=new_license)
+                    m_file.update_or_add_license(domain.name, type=new_license)
 
                 m_file.save()
 

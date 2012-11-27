@@ -16,7 +16,7 @@ def handle(verified_contact, text):
         return False
 
     try:
-        data = StockReport(domain).parse(text)
+        data = StockReport(domain).parse(text.lower())
         if not data:
             return False
         logger.debug(data)
@@ -55,7 +55,7 @@ class StockReport(object):
         
             _tx = self.single_action_transactions(action, args)
 
-        elif self.C.multiaction_enabled and (args[0] == self.C.multiaction_keyword or self.C.multiaction_keyword is None):
+        elif self.C.multiaction_enabled and (self.C.multiaction_keyword is None or args[0] == self.C.multiaction_keyword.lower()):
             # multiple action sms
             if self.C.multiaction_keyword:
                 args = args[1:]

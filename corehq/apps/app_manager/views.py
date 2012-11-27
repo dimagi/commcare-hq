@@ -56,6 +56,7 @@ from collections import defaultdict
 from couchdbkit.resource import ResourceNotFound
 from corehq.apps.app_manager.decorators import safe_download
 from xml.dom.minidom import parseString
+from corehq.apps.hqmedia.models import CommCareMultimedia
 
 try:
     from lxml.etree import XMLSyntaxError
@@ -540,8 +541,8 @@ def view_generic(req, domain, app_id=None, module_id=None, form_id=None, is_user
             multimedia_images, missing_image_refs = [], 0
             multimedia_audio, missing_audio_refs = [], 0
         else:
-            multimedia_images, missing_image_refs = app.get_template_map(images)
-            multimedia_audio, missing_audio_refs = app.get_template_map(audio)
+            multimedia_images, missing_image_refs = app.get_template_map(images, req=req)
+            multimedia_audio, missing_audio_refs = app.get_template_map(audio, req=req)
         context.update({
             'missing_image_refs': missing_image_refs,
             'missing_audio_refs': missing_audio_refs,
@@ -1636,8 +1637,8 @@ def download_multimedia_zip(req, domain, app_id):
     errors = []
     for form_path, media_item in app.multimedia_map.items():
         try:
-            media = eval(media_item.media_type)
-            media = media.get(media_item.multimedia_id)
+            media_cls = CommCareMultimedia.get_doc_class(media_item.media_type)
+            media = media_cls.get(media_item.multimedia_id)
             data, content_type = media.get_display_file()
             path = form_path.replace(utils.MULTIMEDIA_PREFIX, "")
             if not isinstance(data, unicode):
@@ -1735,7 +1736,8 @@ def emulator(req, domain, app_id, template="app_manager/emulator.html"):
     return render_to_response(req, template, {
         'domain': domain,
         'app': app,
-        'build_path': build_path
+        'build_path': build_path,
+        'url_base': get_url_base()
     })
 
 def emulator_commcare_jar(req, domain, app_id):

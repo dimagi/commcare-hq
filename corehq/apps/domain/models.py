@@ -41,7 +41,7 @@ class DomainMigrations(DocumentSchema):
             domain.save()
 
 LICENSES = {
-    'public': 'Public Domain',
+#    'public': 'Public Domain', # public domain license is no longer being supported
     'cc': 'Creative Commons Attribution',
     'cc-sa': 'Creative Commons Attribution, Share Alike',
     'cc-nd': 'Creative Commons Attribution, No Derivatives',
@@ -162,11 +162,11 @@ class Domain(Document, HQBillingDomainMixin, SnapshotMixin):
     is_approved = BooleanProperty(default=False)
     snapshot_time = DateTimeProperty()
     published = BooleanProperty(default=False)
-    license = StringProperty(choices=LICENSES, default='public')
+    license = StringProperty(choices=LICENSES, default='cc')
     title = StringProperty()
     cda = SchemaProperty(LicenseAgreement)
     multimedia_included = BooleanProperty(default=True)
-
+    downloads = IntegerProperty(default=0)
     author = StringProperty()
     phone_model = StringProperty()
     attribution_notes = StringProperty()
@@ -192,6 +192,11 @@ class Domain(Document, HQBillingDomainMixin, SnapshotMixin):
             if original_doc:
                 data['copy_history'] = [original_doc._id]
                 del data['original_doc']
+                should_save = True
+        # for domains that have a public domain license
+        if data.has_key("license"):
+            if data.get("license", None) == "public":
+                data["license"] = "cc"
                 should_save = True
         self = super(Domain, cls).wrap(data)
         if self.get_id:
@@ -266,15 +271,22 @@ class Domain(Document, HQBillingDomainMixin, SnapshotMixin):
                                     startkey=[self.name],
                                     endkey=[self.name, {}]).all()
 
-    def full_applications(self):
+    def full_applications(self, include_builds=True):
         from corehq.apps.app_manager.models import Application, RemoteApp
         WRAPPERS = {'Application': Application, 'RemoteApp': RemoteApp}
         def wrap_application(a):
             return WRAPPERS[a['doc']['doc_type']].wrap(a['doc'])
 
+        if include_builds:
+            startkey = [self.name]
+            endkey = [self.name, {}]
+        else:
+            startkey = [self.name, None]
+            endkey = [self.name, None, {}]
+
         return get_db().view('app_manager/applications',
-            startkey=[self.name],
-            endkey=[self.name, {}],
+            startkey=startkey,
+            endkey=endkey,
             include_docs=True,
             wrapper=wrap_application).all()
 
@@ -566,17 +578,22 @@ class Domain(Document, HQBillingDomainMixin, SnapshotMixin):
             db.delete_doc(doc['doc'])
         super(Domain, self).delete()
 
-    def all_media(self):
+    def all_media(self, from_apps=None):
         from corehq.apps.hqmedia.models import CommCareMultimedia
-        return CommCareMultimedia.view('hqmedia/by_domain', key=self.name, include_docs=True).all()
+        dom_with_media = self if not self.is_snapshot else self.copied_from
+        if from_apps:
+            media = []
+            apps = [app for app in dom_with_media.full_applications() if app.get_id in from_apps]
+            for app in apps:
+                for _, m in app.get_media_documents():
+                    media.append(m)
+            return media
 
-    @property
-    def most_restrictive_licenses(self):
+        return CommCareMultimedia.view('hqmedia/by_domain', key=dom_with_media.name, include_docs=True).all()
+
+    def most_restrictive_licenses(self, apps_to_check=None):
         from corehq.apps.hqmedia.utils import most_restrictive
-        if self.is_snapshot:
-            licenses = [m.license['type'] for m in self.copied_from.all_media()]
-        else:
-            licenses = [m.license['type'] for m in self.all_media()]
+        licenses = [m.license['type'] for m in self.all_media(from_apps=apps_to_check)]
         return most_restrictive(licenses)
 
     @classmethod

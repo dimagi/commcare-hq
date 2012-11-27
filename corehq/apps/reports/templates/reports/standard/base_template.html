@@ -2,6 +2,7 @@
 {% load hq_shared_tags %}
 {% load i18n %}
 {% block js %}{{ block.super }}
+    {% block reports-js %}
     {% include "imports/datatables.html" %}
     <script src="{% static 'reports/javascripts/config.dataTables.bootstrap.js' %}"></script>
     {% include "imports/flot.html" %}
@@ -13,9 +14,11 @@
     <script src="{% static 'reports/javascripts/datepicker.js' %}"></script>
     <script src="{% static 'reports/javascripts/reports.config.js' %}"></script>
     <script src="{% static 'reports/javascripts/reports.async.js' %}"></script>
+    {% endblock %}
 {% endblock %}
 
 {% block js-inline %}{{ block.super }}
+{% block reports-js-inline %}
     <script type="text/javascript">
         var standardHQReport = new HQReport({
             domain: '{{ domain }}',
@@ -43,10 +46,13 @@
         {% endif %}
     </script>
 {% endblock %}
+{% endblock %}
 
 {% block head %}
     {{ block.super }}
+    {% block reports-css %}
     <link rel="stylesheet" href="{% static 'hqwebapp/javascripts/jquery-ui-datepicker/datepicker-theme/jquery-ui-1.8.17.custom.css' %}" />
+    {% endblock %}
 {% endblock %}
 
 {% block title %} - Report: {{ report.title|default:"Project Reports"|safe }}{% endblock %}

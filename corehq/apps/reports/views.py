@@ -48,6 +48,8 @@ from corehq.apps.groups.models import Group
 from corehq.apps.adm import utils as adm_utils
 from soil import DownloadBase
 from soil.tasks import prepare_download
+from django.utils.translation import ugettext as _
+from django.utils.safestring import mark_safe
 
 DATE_FORMAT = "%Y-%m-%d"
 
@@ -72,7 +74,8 @@ def default(request, domain, template="reports/reports_home.html"):
         raise Http404
 
     configs = ReportConfig.by_domain_and_owner(domain, user._id).all()
-    scheduled_reports = ReportNotification.by_domain_and_owner(domain, user._id).all()
+    scheduled_reports = [s for s in ReportNotification.by_domain_and_owner(domain, user._id).all()
+                         if not hasattr(s, 'report_slug') or s.report_slug != 'admin_domains']
 
     context = dict(
         couch_user=request.couch_user,
@@ -462,15 +465,26 @@ def delete_custom_export(req, domain, export_id):
 @login_and_domain_required
 @require_POST
 def add_config(request, domain=None):
+    # todo: refactor this into a django form
     from datetime import datetime
-    
+    user_id = request.couch_user._id
+
     POST = json.loads(request.raw_post_data)
     if 'name' not in POST or not POST['name']:
         return HttpResponseBadRequest()
+    
+    user_configs = ReportConfig.by_domain_and_owner(domain, user_id).all()
+    if not POST.get('_id') and POST['name'] in [c.name for c in user_configs]:
+        return HttpResponseBadRequest()
 
     to_date = lambda s: datetime.strptime(s, '%Y-%m-%d').date() if s else s
-    POST['start_date'] = to_date(POST['start_date'])
-    POST['end_date'] = to_date(POST['end_date'])
+    try:
+        POST['start_date'] = to_date(POST['start_date'])
+        POST['end_date'] = to_date(POST['end_date'])
+    except ValueError:
+        # invalidly formatted date input
+        return HttpResponseBadRequest()
+
     date_range = POST.get('date_range')
     if date_range == 'last7':
         POST['days'] = 7
@@ -486,10 +500,11 @@ def add_config(request, domain=None):
     config = ReportConfig.get_or_create(POST.get('_id', None))
 
     if config.owner_id:
-        assert config.owner_id == request.couch_user._id
+        # in case a user maliciously tries to edit another user's config
+        assert config.owner_id == user_id
     else:
         config.domain = domain
-        config.owner_id = request.couch_user._id
+        config.owner_id = user_id
 
     for field in config.properties().keys():
         if field in POST:
@@ -768,12 +783,16 @@ def form_data(request, domain, instance_id):
         form_name = instance.get_form["@name"]
     except KeyError:
         form_name = "Untitled Form"
+    is_archived = instance.doc_type == "XFormArchived"
+    if is_archived:
+        messages.info(request, _("This form is archived. To restore it, click 'Restore this form' at the bottom of the page."))
     return render_to_response(request, "reports/reportdata/form_data.html",
                               dict(domain=domain,
                                    instance=instance,
                                    cases=cases,
                                    timezone=timezone,
                                    slug=inspect.SubmitHistory.slug,
+                                   is_archived=is_archived,
                                    form_data=dict(name=form_name,
                                                   modified=instance.received_on)))
 
@@ -793,8 +812,44 @@ def download_attachment(request, domain, instance_id, attachment):
     assert(domain == instance.domain)
     return couchforms_views.download_attachment(request, instance_id, attachment)
 
-# Weekly submissions by xmlns
+@require_form_view_permission
+@require_permission(Permissions.edit_data)
+@require_POST
+def archive_form(request, domain, instance_id):
+    instance = XFormInstance.get(instance_id)
+    assert instance.domain == domain
+    if instance.doc_type == "XFormInstance": 
+        instance.archive()
+        notif_msg = _("Form was successfully archived.")
+    elif instance.doc_type == "XFormArchived":
+        notif_msg = _("Form was already archived.")
+    else:
+        notif_msg = _("Can't archive documents of type %(s). How did you get here??") % instance.doc_type
+    
+    params = {
+        "notif": notif_msg,
+        "undo": _("Undo"),
+        "url": reverse('render_form_data', args=[domain, instance_id])
+    }
+    msg_template = '%(notif)s <a href="%(url)s">%(undo)s</a>' if instance.doc_type == "XFormArchived" else '%(notif)s'
+    msg = msg_template % params
+    messages.success(request, mark_safe(msg), extra_tags='html')
+    return HttpResponseRedirect(inspect.SubmitHistory.get_url(domain))
 
+@require_form_view_permission
+@require_permission(Permissions.edit_data)
+def unarchive_form(request, domain, instance_id):
+    instance = XFormInstance.get(instance_id)
+    assert instance.domain == domain
+    if instance.doc_type == "XFormArchived":
+        instance.doc_type = "XFormInstance"
+        instance.save()
+    else:
+        assert instance.doc_type == "XFormInstance"
+    messages.success(request, _("Form was successfully restored."))
+    return HttpResponseRedirect(reverse('render_form_data', args=[domain, instance_id]))
+    
+# Weekly submissions by xmlns
 def mk_date_range(start=None, end=None, ago=timedelta(days=7), iso=False):
     if isinstance(end, basestring):
         end = parse_date(end)
