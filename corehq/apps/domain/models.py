@@ -41,7 +41,7 @@ class DomainMigrations(DocumentSchema):
             domain.save()
 
 LICENSES = {
-    'public': 'Public Domain',
+#    'public': 'Public Domain', # public domain license is no longer being supported
     'cc': 'Creative Commons Attribution',
     'cc-sa': 'Creative Commons Attribution, Share Alike',
     'cc-nd': 'Creative Commons Attribution, No Derivatives',
@@ -162,12 +162,11 @@ class Domain(Document, HQBillingDomainMixin, SnapshotMixin):
     is_approved = BooleanProperty(default=False)
     snapshot_time = DateTimeProperty()
     published = BooleanProperty(default=False)
-    license = StringProperty(choices=LICENSES, default='public')
+    license = StringProperty(choices=LICENSES, default='cc')
     title = StringProperty()
     cda = SchemaProperty(LicenseAgreement)
     multimedia_included = BooleanProperty(default=True)
     downloads = IntegerProperty(default=0)
-
     author = StringProperty()
     phone_model = StringProperty()
     attribution_notes = StringProperty()
@@ -193,6 +192,11 @@ class Domain(Document, HQBillingDomainMixin, SnapshotMixin):
             if original_doc:
                 data['copy_history'] = [original_doc._id]
                 del data['original_doc']
+                should_save = True
+        # for domains that have a public domain license
+        if data.has_key("license"):
+            if data.get("license", None) == "public":
+                data["license"] = "cc"
                 should_save = True
         self = super(Domain, cls).wrap(data)
         if self.get_id:
