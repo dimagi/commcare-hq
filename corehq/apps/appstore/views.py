@@ -5,6 +5,7 @@ import logging
 from urllib import urlencode
 from django.core.urlresolvers import reverse
 from django.http import Http404, HttpResponseRedirect, HttpResponse
+from django.template.loader import render_to_string
 from restkit.errors import RequestFailed
 from corehq.apps.appstore.forms import AddReviewForm
 from corehq.apps.appstore.models import Review
@@ -287,7 +288,7 @@ def import_app(request, domain):
 
         from_project.downloads += 1
         from_project.save()
-        messages.success(request, _("Application successfully imported!"))
+        messages.success(request, render_to_string("partials/view_wiki.html", {"pre": _("Application successfully imported!")}))
         return HttpResponseRedirect(reverse('view_app', args=[to_project_name, new_doc.id]))
     else:
         return project_info(request, domain)
@@ -320,8 +321,9 @@ def copy_snapshot(request, domain):
                 return project_info(request, domain)
             dom.downloads += 1
             dom.save()
-            messages.success(request, _("Project copied successfully!"))
-            return redirect("domain_project_settings", new_domain.name)
+            messages.success(request, render_to_string("partials/view_wiki.html", {"pre": _("Project copied successfully!")}))
+            return HttpResponseRedirect(reverse('view_app',
+                args=[new_domain.name, new_domain.full_applications()[0].get_id]))
         else:
             messages.error(request, _("You must specify a name for the new project"))
             return project_info(request, domain)
