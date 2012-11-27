@@ -5,7 +5,7 @@
 <script src="{% static 'reports/ko/saved_reports.js' %}"></script>
 {% endblock %}
 
-{% block js-inline %}{{ block.super }}
+{% block reports-js-inline %}{{ block.super }}
     <script type="text/javascript">
         $(function() {
             var defaultConfig = {{ default_config|JSON }};
