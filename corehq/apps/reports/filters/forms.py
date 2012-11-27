@@ -129,7 +129,6 @@ class FormsByApplicationFilter(BaseDrilldownOptionFilter):
             app_name = "%s [Deleted]" % app_name
         return "%s > %s > %s" % (app_name, module_name, form_name)
 
-    @memoized
     def _get_lang_value(self, app_langs, obj):
         if isinstance(obj, basestring):
             return obj
