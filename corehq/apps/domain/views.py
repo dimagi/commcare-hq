@@ -381,7 +381,7 @@ def create_snapshot(request, domain):
 
                 # set the license of every multimedia file that doesn't yet have a license set
                 if not m_file.license:
-                    m_file.update_or_add_license(domain, type=new_license)
+                    m_file.update_or_add_license(domain.name, type=new_license)
 
                 m_file.save()
 

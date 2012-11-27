@@ -1,5 +1,6 @@
 {% extends "users/users_base.html" %}
 {% load hq_shared_tags %}
+{% load i18n %}
 {% block js %} {{ block.super }}
 {% endblock %}
 {% block js-inline %} {{ block.super }}
@@ -29,13 +30,13 @@
     <p>
         <ol>
             <li>
-                Download your current user data: <a href="{% url download_commcare_users domain %}">users.xlsx</a>
+                {% trans "Download your current user data: " %}<a href="{% url download_commcare_users domain %}">{% trans "users.xlsx" %}</a>
             </li>
             <li>
-                Updated it with the changes you want to make
+                {% trans "Updated it with the changes you want to make" %}
             </li>
             <li>
-                Use the form below to upload your completed file.
+                {% trans "Use the form below to upload your completed file" %}
             </li>
         </ol>
     </p>
