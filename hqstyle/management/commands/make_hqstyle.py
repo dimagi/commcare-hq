@@ -36,6 +36,7 @@ class Command(BaseCommand):
         "combobox",
         "multi-typeahead",
         "hoverdropdown",
+        "popout",
     ]
 
     hq_bootstrap_src = "submodules/hqstyle-src/hq-bootstrap"
