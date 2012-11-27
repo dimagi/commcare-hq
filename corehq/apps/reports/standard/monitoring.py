@@ -31,10 +31,7 @@ def cache_report():
 
 monitoring_report_cacher = cache_report()
 
-class WorkerMonitoringReportTable(GenericTabularReport, ProjectReport, ProjectReportParametersMixin):
-    """
-        # todo doc.
-    """
+class WorkerMonitoringReportTableBase(GenericTabularReport, ProjectReport, ProjectReportParametersMixin):
     exportable = True
 
     def get_user_link(self, user):
@@ -49,25 +46,44 @@ class WorkerMonitoringReportTable(GenericTabularReport, ProjectReport, ProjectRe
     @property
     @monitoring_report_cacher
     def report_context(self):
-        return super(WorkerMonitoringReportTable, self).report_context
+        return super(WorkerMonitoringReportTableBase, self).report_context
 
     @property
     @monitoring_report_cacher
     def export_table(self):
-        return super(WorkerMonitoringReportTable, self).export_table
+        return super(WorkerMonitoringReportTableBase, self).export_table
 
 
-class WorkerMonitoringChart(ProjectReport, ProjectReportParametersMixin):
+class MultiFormDrilldownMixin(object):
     """
-        #todo doc
+        This is a useful mixin when you use FormsByApplicationFilter.
     """
-    fields = ['corehq.apps.reports.fields.FilterUsersField',
-              'corehq.apps.reports.fields.SelectMobileWorkerField']
-    flush_layout = True
-    report_template_path = "reports/async/basic.html"
+    @property
+    @memoized
+    def all_relevant_xmlns(self):
+        filtered_xmlns = FormsByApplicationFilter.get_all_xmlns(self.request, self.domain)
+        key = make_form_couch_key(self.domain)
+        data = get_db().view('reports_forms/all_forms',
+            reduce=False,
+            startkey=key+[self.datespan.startdate_param_utc],
+            endkey=key+[self.datespan.enddate_param_utc],
+        ).all()
+        all_xmlns = set([d['value']['xmlns'] for d in data])
+        relevant_xmlns = all_xmlns.intersection(set(filtered_xmlns.keys()))
+        return dict([(k, filtered_xmlns[k]) for k in relevant_xmlns])
 
 
-class CaseActivityReport(WorkerMonitoringReportTable):
+class CompletionOrSubmissionTimeMixin(object):
+    """
+        Use this when you use CompletionOrSubmissionTimeFilter.
+    """
+    @property
+    def by_submission_time(self):
+        value = CompletionOrSubmissionTimeFilter.get_value(self.request, self.domain)
+        return value == 'submission'
+
+
+class CaseActivityReport(WorkerMonitoringReportTableBase):
     """
     todo move this to the cached version when ready
     User    Last 30 Days    Last 60 Days    Last 90 Days   Active Clients              Inactive Clients
@@ -248,7 +264,7 @@ class CaseActivityReport(WorkerMonitoringReportTable):
         ).one() or 0
 
 
-class SubmissionsByFormReport(WorkerMonitoringReportTable, DatespanMixin):
+class SubmissionsByFormReport(WorkerMonitoringReportTableBase, MultiFormDrilldownMixin, DatespanMixin):
     name = ugettext_noop("Submissions By Form")
     slug = "submissions_by_form"
     fields = [
@@ -262,20 +278,6 @@ class SubmissionsByFormReport(WorkerMonitoringReportTable, DatespanMixin):
 
     description = _("This report shows the number of submissions received for each form per mobile worker"
                     " during the selected date range.")
-
-    @property
-    @memoized
-    def all_relevant_xmlns(self):
-        filtered_xmlns = FormsByApplicationFilter.get_all_xmlns(self.request, self.domain)
-        key = make_form_couch_key(self.domain)
-        data = get_db().view('reports_forms/all_forms',
-            reduce=False,
-            startkey=key+[self.datespan.startdate_param_utc],
-            endkey=key+[self.datespan.enddate_param_utc],
-        ).all()
-        all_xmlns = set([d['value']['xmlns'] for d in data])
-        relevant_xmlns = all_xmlns.intersection(set(filtered_xmlns.keys()))
-        return dict([(k, filtered_xmlns[k]) for k in relevant_xmlns])
 
     @property
     def headers(self):
@@ -321,7 +323,7 @@ class SubmissionsByFormReport(WorkerMonitoringReportTable, DatespanMixin):
         return data['value'] if data else 0
 
 
-class DailyFormStatsReport(WorkerMonitoringReportTable, DatespanMixin):
+class DailyFormStatsReport(WorkerMonitoringReportTableBase, CompletionOrSubmissionTimeMixin, DatespanMixin):
     slug = "daily_form_stats"
     name = "Daily Form Statistics"
 
@@ -344,11 +346,6 @@ class DailyFormStatsReport(WorkerMonitoringReportTable, DatespanMixin):
         return date_list
 
     @property
-    def by_submission_time(self):
-        value = CompletionOrSubmissionTimeFilter.get_value(self.request, self.domain)
-        return value == 'submission'
-
-    @property
     def headers(self):
         headers = DataTablesHeader(DataTablesColumn(_("Username"), span=3))
         for d in self.dates:
@@ -358,11 +355,6 @@ class DailyFormStatsReport(WorkerMonitoringReportTable, DatespanMixin):
 
     @property
     def rows(self):
-#        if self.dates_in_utc:
-#            _dates = [tz_utils.adjust_datetime_to_timezone(date, self.timezone.zone, pytz.utc.zone) for date in self.dates]
-#        else:
-#            _dates = self.dates
-
         key = make_form_couch_key(self.domain, by_submission_time=self.by_submission_time)
         results = get_db().view("reports_forms/all_forms",
             reduce=False,
@@ -403,7 +395,7 @@ class DailyFormStatsReport(WorkerMonitoringReportTable, DatespanMixin):
         return rows
 
 
-class FormCompletionTimeReport(WorkerMonitoringReportTable, DatespanMixin):
+class FormCompletionTimeReport(WorkerMonitoringReportTableBase, DatespanMixin):
     name = ugettext_noop("Form Completion Time")
     slug = "completion_times"
     fields = ['corehq.apps.reports.fields.FilterUsersField',
@@ -436,10 +428,12 @@ class FormCompletionTimeReport(WorkerMonitoringReportTable, DatespanMixin):
         totalsum = totalcount = 0
         def to_minutes(val_in_ms, d=None):
             if val_in_ms is None or d == 0:
-                return None
+                return "--"
             elif d:
                 val_in_ms /= d
-            return datetime.timedelta(seconds=int((val_in_ms + 500)/1000))
+            duration = datetime.timedelta(seconds=int((val_in_ms + 500)/1000))
+            text = "%s minute%s" % (duration.minute, "s" if duration.minute != 1 else "")
+            return text
 
         globalmin = sys.maxint
         globalmax = 0
@@ -467,13 +461,13 @@ class FormCompletionTimeReport(WorkerMonitoringReportTable, DatespanMixin):
         return rows
 
 
-class FormCompletionVsSubmissionTrendsReport(WorkerMonitoringReportTable, DatespanMixin):
+class FormCompletionVsSubmissionTrendsReport(WorkerMonitoringReportTableBase, DatespanMixin):
     name = ugettext_noop("Form Completion vs. Submission Trends")
     slug = "completion_vs_submission"
     
     fields = ['corehq.apps.reports.fields.FilterUsersField',
-              'corehq.apps.reports.fields.SelectAllFormField',
               'corehq.apps.reports.fields.GroupField',
+              'corehq.apps.reports.fields.SelectAllFormField',
               'corehq.apps.reports.fields.SelectMobileWorkerField',
               'corehq.apps.reports.fields.DatespanField']
 
@@ -571,40 +565,55 @@ class FormCompletionVsSubmissionTrendsReport(WorkerMonitoringReportTable, Datesp
         return '<a class="btn" href="%s">View Form</a>' % reverse('render_form_data', args=[self.domain, instance_id])
 
 
+class WorkerMonitoringChartBase(ProjectReport, ProjectReportParametersMixin):
+    fields = ['corehq.apps.reports.fields.FilterUsersField',
+              'corehq.apps.reports.fields.SelectMobileWorkerField']
+    flush_layout = True
+    report_template_path = "reports/async/basic.html"
 
-class SubmissionTimesReport(WorkerMonitoringChart):
+
+class WorkerActivityTimes(WorkerMonitoringChartBase,
+    MultiFormDrilldownMixin, CompletionOrSubmissionTimeMixin, DatespanMixin):
     name = ugettext_noop("Worker Activity Times")
     slug = "worker_activity_times"
 
+    fields = [
+        'corehq.apps.reports.fields.FilterUsersField',
+        'corehq.apps.reports.fields.GroupField',
+        'corehq.apps.reports.filters.forms.FormsByApplicationFilter',
+        'corehq.apps.reports.filters.forms.CompletionOrSubmissionTimeFilter',
+        'corehq.apps.reports.fields.DatespanField']
+
     report_partial_path = "reports/partials/punchcard.html"
-    show_time_notice = True
+
+    @property
+    @memoized
+    def activity_times(self):
+        all_times = []
+        for user in self.users:
+            for xmlns in self.all_relevant_xmlns:
+                key = make_form_couch_key(self.domain, user_id=user.get('user_id'),
+                   xmlns=xmlns, by_submission_time=self.by_submission_time)
+                data = get_db().view("reports_forms/all_forms",
+                    reduce=False,
+                    startkey=key+[self.datespan.startdate_param_utc],
+                    endkey=key+[self.datespan.enddate_param_utc],
+                ).all()
+                all_times.extend([dateutil.parser.parse(d['key'][-1]) for d in data])
+        if self.by_submission_time:
+            # completion time is assumed to be in the phone's timezone until we can send proper timezone info
+            all_times = [tz_utils.adjust_datetime_to_timezone(t,  pytz.utc.zone, self.timezone.zone) for t in all_times]
+        return [(t.weekday(), t.hour) for t in all_times]
 
     @property
     @monitoring_report_cacher
     def report_context(self):
-        data = defaultdict(int)
-        for user in self.users:
-            startkey = [self.domain, user.get('user_id')]
-            endkey = [self.domain, user.get('user_id'), {}]
-            view = get_db().view("formtrends/form_time_by_user",
-                startkey=startkey,
-                endkey=endkey,
-                group=True)
-
-            for row in view:
-                _, _, day, hour = row["key"]
-
-                if hour is not None and day is not None:
-                    #adjust to timezone
-                    now = datetime.datetime.utcnow()
-                    report_time = datetime.datetime(now.year, now.month, now.day, hour, tzinfo=pytz.utc)
-                    report_time = tz_utils.adjust_datetime_to_timezone(report_time, pytz.utc.zone, self.timezone.zone)
-                    hour = report_time.hour
-                    day += report_time.day - now.day
-
-                    data[(day, hour)] += row["value"]
+        chart_data = defaultdict(int)
+        for time in self.activity_times:
+            chart_data[time] += 1
         return dict(
-            chart_url=self.generate_chart(data),
+            chart_url=self.generate_chart(chart_data),
+            no_data=not self.activity_times,
             timezone=self.timezone,
         )
 
@@ -618,10 +627,7 @@ class SubmissionTimesReport(WorkerMonitoringChart):
         try:
             from pygooglechart import ScatterChart
         except ImportError:
-            raise Exception("""Aw shucks, someone forgot to install the google chart library
-on this machine and the report needs it. To get it, run
-easy_install pygooglechart.  Until you do that this won't work.
-""")
+            raise Exception("WorkerActivityTimes requires pygooglechart.")
 
         chart = ScatterChart(width, height, x_range=(-1, 24), y_range=(-1, 7))
 
@@ -654,7 +660,7 @@ easy_install pygooglechart.  Until you do that this won't work.
         return chart.get_url() + '&chds=-1,24,-1,7,0,20'
 
 
-class SubmitDistributionReport(WorkerMonitoringChart):
+class SubmitDistributionReport(WorkerMonitoringChartBase):
     name = ugettext_noop("Submit Distribution")
     slug = "submit_distribution"
 
