@@ -683,6 +683,18 @@ CUSTOM_REPORT_MAP = {
             "bihar.reports.indicators.reports.IndicatorClientList",
             "bihar.reports.indicators.reports.IndicatorCharts",
         ]
+    },
+    "pact": {
+        "PACT Reports": [
+            "pact.reports.patient_list.PatientDashboardReport",
+            #"pact.reports.patient.PactPatientReport",
+            "pact.reports.dot.PactDOTReport",
+            "pact.reports.patient.PactPatientInfoReport",
+            "pact.reports.CHWListReport",
+            "pact.reports.CHWVisitsReport",
+#            "pact.reports.DOTReport",
+#            "pact.reports.PactExports",
+        ]
     }
     #    "test": [
     #        'corehq.apps.reports.deid.FormDeidExport',
