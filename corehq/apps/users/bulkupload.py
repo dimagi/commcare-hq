@@ -170,8 +170,8 @@ class UsersDumpHelper(object):
         return self.get_group(id).name
 
     def get_all_groups(self):
-        for group in self.groups.values():
-            yield group
+        # sort in memory
+        return sorted(self.groups.values(), key=lambda group: group.name)
 
 def dump_users_and_groups(response, domain):
 
