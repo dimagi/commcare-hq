@@ -152,7 +152,7 @@ class BaseDrilldownOptionFilter(BaseReportFilter):
         """
             Modify the default set of labels here.
         """
-        return self.labels()
+        return self.get_labels()
 
     @property
     def filter_context(self):
@@ -212,7 +212,7 @@ class BaseDrilldownOptionFilter(BaseReportFilter):
             }
 
     @classmethod
-    def labels(cls):
+    def get_labels(cls):
         """
             Returns a list of ('label', default text/caption', 'slug') tuples.
             ex: [
@@ -221,7 +221,7 @@ class BaseDrilldownOptionFilter(BaseReportFilter):
                 ('Form', 'Select Form...', 'form')
             ]
         """
-        raise NotImplementedError("label_hierarchy must be implemented")
+        raise NotImplementedError("get_labels must be implemented")
 
     @classmethod
     def _get_label_value(cls, request, label):

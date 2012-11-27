@@ -13,7 +13,7 @@ from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn, D
 from corehq.apps.reports.decorators import cache_report
 from corehq.apps.reports.display import xmlns_to_name, FormType
 from corehq.apps.reports.generic import GenericTabularReport
-from corehq.apps.reports.util import make_form_couch_key
+from corehq.apps.reports.util import make_form_couch_key, friendly_timedelta
 from couchforms.models import XFormInstance
 from dimagi.utils.couch.database import get_db
 from dimagi.utils.decorators.memoized import memoized
@@ -432,8 +432,7 @@ class FormCompletionTimeReport(WorkerMonitoringReportTableBase, DatespanMixin):
             elif d:
                 val_in_ms /= d
             duration = datetime.timedelta(seconds=int((val_in_ms + 500)/1000))
-            text = "%s minute%s" % (duration.minute, "s" if duration.minute != 1 else "")
-            return text
+            return friendly_timedelta(duration)
 
         globalmin = sys.maxint
         globalmax = 0

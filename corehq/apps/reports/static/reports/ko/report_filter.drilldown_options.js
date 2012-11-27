@@ -7,7 +7,7 @@ var DrilldownOptionFilterControl = function (options) {
     }));
 
     self.init = function () {
-        for (var op in options.selected) {
+        for (var op; op < options.selected.length; op++) {
             self.controls()[op].selected(options.selected[op]);
             self.updateNextDrilldown(self.controls()[op].level);
         }

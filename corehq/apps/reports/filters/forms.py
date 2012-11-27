@@ -62,7 +62,7 @@ class FormsByApplicationFilter(BaseDrilldownOptionFilter):
 
     @property
     def rendered_labels(self):
-        labels = self.labels()
+        labels = self.get_labels()
         if self.drilldown_map and self.drilldown_map[0].get('val') == 'active':
             labels = [
                 (_('Form Type'), _("Select a Form Type") if self.use_only_last else _("Show all Forms"), 'status'),
@@ -146,7 +146,7 @@ class FormsByApplicationFilter(BaseDrilldownOptionFilter):
         return list(all_xmlns.difference(app_xmlns))
 
     @classmethod
-    def labels(cls):
+    def get_labels(cls):
         return [
             (_('Application'), _("Select an Application") if cls.use_only_last else _("Show Forms in all Applications"), 'app'),
             (_('Module'), _("Select a Module") if cls.use_only_last else _("Show Forms from all Modules in selected Application"), 'module'),

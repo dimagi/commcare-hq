@@ -366,3 +366,18 @@ def format_relative_date(date, tz=pytz.utc):
     else:
         dtext = "%s days ago" % dtime.days
     return format_datatables_data(dtext, dtime.days)
+
+def friendly_timedelta(td):
+    hours, remainder = divmod(td.seconds, 3600)
+    minutes, seconds = divmod(remainder, 60)
+    parts = [
+        ("day", td.days),
+        ("hour", hours),
+        ("minute", minutes),
+        ("second", seconds),
+    ]
+    text = []
+    for t in parts:
+        if t[1]:
+            text.append("%d %s%s" % (t[1], t[0], "s" if t[1] != 1 else ""))
+    return ", ".join(text)
