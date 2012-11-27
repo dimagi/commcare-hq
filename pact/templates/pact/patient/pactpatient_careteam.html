@@ -1,0 +1,50 @@
+{% extends "pact/patient/pactpatient_base.html" %}
+{% block patient-tab-container %}
+    <table id="tbl_network" class="table table-bordered table-striped">
+        <thead>
+        <tr>
+            <th>Name</th>
+            <th>Relationship</th>
+            <th></th>
+        </tr>
+        </thead>
+        <tbody>
+        {% for prr in patient_careteam %}
+            <tr>
+                <td>
+                    <a href="{% url view_actor prr.actor.doc_id '' %}">{{ prr.actor.actordoc.first_name }} {{ prr.actor.actordoc.last_name }}</a>
+                </td>
+                <td>
+                    {{ prr.role.display }}
+                </td>
+                <td>
+                    <a href="javascript:unlink_patient_provider('{{ patient_doc.get_id }}','{{ prr.actor.id }}')"
+                       style="float:right;">
+                        Remove
+                    </a>
+                </td>
+            </tr>
+        {% endfor %}
+
+        {% for connection in connections %}
+            <tr>
+                <td>
+                    <a href="{% url view_actor connection.actor.doc_id %}">{{ connection.actor.actordoc.first_name }} {{ connection.actor.actordoc.last_name }}</a>
+                </td>
+                <td>{{ connection.role.display }}</td>
+                <td>For
+                    patient {{ connection.content.couchdoc.first_name }} {{ connection.content.couchdoc.last_name }}</td>
+                <td>
+                    <a href="javascript:unlink_patient_provider('{{ patient_doc.get_id }}','{{ connection.actor.id }}')"
+                       style="float:right;">
+                        Remove
+                    </a>
+                </td>
+            </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+                    <a class="btn"
+                   href="{% url pt_new_or_link_provider patient_doc.get_id %}">
+                    <i class="icon-plus"></i> Add Provider </a>
+{% endblock %}

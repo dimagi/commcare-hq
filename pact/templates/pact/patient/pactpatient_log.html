@@ -1,0 +1,38 @@
+{% extends "pact/patient/pactpatient_base.html" %}
+{% block extrahead %}
+    <script>
+        $(document).ready(
+                function () {
+                    //$("#tbl_issues").tablesorter({ sortList:[ [0, 0] ], });
+                    $("#tbl_issues").tablesorter();
+                    $("abbr.timeago").timeago();
+                }
+        );</script>
+
+{% endblock extrahead %}
+{% block patient-tab-container %}
+    <div class="span12">
+
+                {% with narratives=history_logs.change_narratives %}
+                {% if narratives %}
+                <h3>Patient Progress Changes</h3>
+                {% for rc in narratives %}
+                    <div class="span10">
+                    {{ rc.revision.event_date}} by: {{ rc.revision.user }}
+                    </div>
+                    <div class="span10 offset1">
+                    <dl>
+                        {% for c  in rc.changes %}
+                         <dt>{{ c.0 }}</dt>
+                            <dd>from {{ c.1.0 }} to {{ c.1.1 }}</dd>
+                        {% endfor %}
+                    </dl>
+                    </div>
+
+                {% endfor %}
+                {% else %}
+                    No major changes
+                {% endif %}
+            {% endwith %}
+    </div>
+{% endblock %}

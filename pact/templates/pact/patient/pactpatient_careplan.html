@@ -1,0 +1,55 @@
+{% extends "pact/patient/pactpatient_base.html" %}
+{% block patient-tab-container %}
+    <div class="row">
+        <div class="span3">
+            <div class="well">
+                <h3>Care Plans</h3>
+                <ul class="nav nav-pills nav-stacked">
+                    {% for plan in careplans %}
+                        <li {% if selected_plan.get_id == plan.get_id %}class="active"{% endif %}><a href="{{ request.path }}?plan={{ plan.get_id }}" >{{ plan.title }}</a></li>
+                    {% endfor %}
+                </ul>
+                <a href="{% url manage_patient_careplan patient_doc.get_id %}" class="btn"><i class="icon-edit"></i> Manage Care Plan</a>
+            </div>
+        </div>
+        <div class="span9">
+
+            {% if selected_plan %}
+                <h3>{{ selected_plan.title }}</h3>
+                <p>{{ selected_plan.description }}</p>
+                <table class="table table-striped"
+                    <thead>
+                    <tr>
+                        <th>Plan Item</th>
+                        <th>Status</th>
+                        <th>Issues</th>
+                        <th>Due</th>
+                    </tr>
+                    </thead>
+                    {% for item in selected_plan.plan_items %}
+                        <tr>
+                            <td>
+                                <strong>{{ item.title }}</strong><br>
+                                {{ item.description }}
+                            </td>
+                            <td>
+                                {{ item.status }}
+                            </td>
+                            <td>
+                                {{ item.issue_container }}
+                            </td>
+                            <td>
+                                {% if item.due_date %}
+                                {{ item.due_date }}
+                                {% else %}
+
+                                {% endif %}
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </table>
+            {% endif %}
+
+        </div>
+    </div>
+{% endblock %}

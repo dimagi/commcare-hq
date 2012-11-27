@@ -1,0 +1,132 @@
+{% extends "pact/patient/pactpatient_base.html" %}
+{% load i18n %}
+{% block patient-tab-container %}
+    <div>
+        <div>
+            <div class="commit-group-heading">
+                <h4>Information
+                    <div style="float:right;">
+                        <small>
+{#                            <a href="javascript:ajax_get_form('{% url ajax_patient_form_get %}', '{{ patient_doc.get_id }}', 'ptedit', 'patienteditform');"> Edit</a>#}
+                        </small>
+                    </div>
+                </h4>
+            </div>
+            <div class="commit-group">
+                <div id="patienteditform"></div>
+                <table class="table">
+
+                    <tr>
+                        <th>DOB</th>
+                        <td>{{ patient_doc.dob|date:"m/d/Y" }} ({{ patient_doc.dob|timesince }})</td>
+                        <th>Gender</th>
+                        <td>{{ patient_doc.get_gender_display}}</td>
+                        <th>SSN</th>
+                        <td>{{ patient_doc.ssn }}</td>
+
+                    </tr>
+
+                    <tr>
+                        <th class="span3">Race</th>
+                        <td>{{ patient_doc.get_race_display}}</td>
+                        <th class="span3">Latino</th>
+                        <td>{% if  patient_doc.is_latino %}
+                            Yes
+                        {% else %}
+                            No
+                        {% endif %}
+                        </td>
+                        <th class="span3">Language</th>
+                        <td>{{ patient_doc.preferred_language|title }}</td>
+                    </tr>
+                    <tr>
+                        <th>Primary HP</th>
+                        <td>{{ patient_doc.primary_hp }} </td>
+                        <th>HP Status</th>
+                        <td>{{ patient_doc.get_hp_status_display }} </td>
+                        <th>DOT Status</th>
+                        <td>{{ patient_doc.get_dot_status_display }} </td>
+                    </tr>
+                    <tr>
+                        <th>ART Regimen</th>
+                        <td>{{ patient_doc.get_artregimen_display }}</td>
+
+                        <th>Non ART Regimen</th>
+                        <td>{{ patient_doc.get_nonartregimen_display }}</td>
+                    </tr>
+                
+                
+                    <tr>
+                        <th class="span3">MassHealth Expiration</th>
+                        <td>{{ patient_doc.mass_health_expiration }}
+                            - {{ patient_doc.mass_health_expiration|timeuntil }}</td>
+                        <th>HIV Care Clinic</th>
+                        <td>{{ patient_doc.hiv_care_clinic }}</td>
+                    </tr>
+                    <tr>
+                        <th>Additional Notes</th>
+                        <td colspan="5">{{ patient_doc.patient_notes|safe|linebreaksbr }}</td>
+                    </tr>
+                </table>
+            </div>
+        </div>
+    </div>
+    <br>
+    <div class="commit-group-heading">
+        <h4>Contact Information</h4>
+    </div>
+    <div class="commit-group">
+        <table class="table">
+            <tr>
+                <th class="span3">
+                    Address(es)<br>
+                </th>
+                <td>
+                    <div id="addressform"></div>
+                    {% for patient_address in patient_doc.addresses %}
+                        <div class="ptprofile_address">
+                            {% if patient_address.type %}
+                                <strong>{{ patient_address.type|title }}</strong><br>
+                            {% endif %}
+                            {{ patient_address.address }}<br>
+{#                            <a href="javascript:ajax_get_form('{{ patient_doc.get_id }}', 'address', {{ forloop.counter0 }})">Change</a>#}
+{#                            &nbsp;#}
+{#                            <a href="javascript:rm_phone_addr('{{ patient_doc.get_id }}', 'address', {{ forloop.counter0 }})">Remove</a>#}
+                        </div>
+                    {% endfor %}
+                    <div style="float:right;">
+{#                        <a class="btn" href="javascript:ajax_get_form('{% url ajax_patient_form_get %}', '{{ patient_doc.get_id }}','address', 'addressform');"> <i class="icon-plus"></i> Add Address</a>#}
+                    </div>
+                </td>
+            </tr>
+
+            <tr>
+                <th class="span3">
+                    Phone(s)
+                </th>
+                <td>
+                    <div id="phoneform"></div>
+                    {% for phone in patient_doc.phones %}
+                        <div class="ptprofile_phone">
+                            {% if phone.type %}
+                                <strong>{{ phone.type|title }}</strong> &nbsp;<br>
+                            {% endif %}
+                            {{ phone.number }}<br>
+{#                            <a href="javascript:ajax_get_form('{% url ajax_patient_form_get %}', '{{ patient_doc.get_id }}', 'phone', 'phoneform', {{ forloop.counter0 }})">Change</a>#}
+                            &nbsp;
+{#                            <a href="javascript:rm_phone_addr('{{ patient_doc.get_id }}', 'phone', {{ forloop.counter0 }})">Remove</a>#}
+                        </div>
+                    {% endfor %}
+                    <div style="float:right;">
+{#                        <a class="btn" href="javascript:ajax_get_form('{%url ajax_patient_form_get%}', '{{ patient_doc.get_id }}','phone', 'phoneform');"> <i class="icon-plus"></i> Add Phone </a>#}
+                    </div>
+                </td>
+            </tr>
+
+        </table>
+    </div>
+
+    <small>
+        <em>{% trans "Last Modified" %}: {{ patient_doc.date_modified|timesince }} ago</em>
+    </small>
+{% endblock %}

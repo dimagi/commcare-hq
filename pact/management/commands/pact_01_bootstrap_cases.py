@@ -13,7 +13,7 @@ from corehq.apps.domain.models import Domain
 import sys
 import getpass
 from lxml import etree
-from corehq.apps.users.models import WebUser
+from corehq.apps.users.models import WebUser, CommCareUser
 from pact.management.commands import PactMigrateCommand
 from pact.management.commands.constants import PACT_URL, POOL_SIZE
 from pact.enums import PACT_DOMAIN, PACT_HP_GROUP_ID, PACT_CASE_TYPE
@@ -44,9 +44,9 @@ class Command(PactMigrateCommand):
             timeend = datetime.utcnow()
 
         if webuser is None:
-            if WebUser.get_by_username('pactimporter') is None:
+            if CommCareUser.get_by_username('pactimporter@pact.commcarehq.org') is None:
                 raise Exception("Pact importer user not created")
-            webuser = WebUser.get_by_username('pactimporter')
+            webuser = CommCareUser.get_by_username('pactimporter@pact.commcarehq.org')
 
         if instance_id is None:
             instance_id = uuid.uuid4().hex
@@ -226,10 +226,17 @@ class Command(PactMigrateCommand):
         name = case_json['name']
         case_type = 'cc_path_client' # case_json['type']
         user_id = self.old_id_map.get(case_json['user_id'], None)
+        ccuser = CommCareUser.get_by_username("%s@pact.commcarehq.org" % case_json['primary_hp'])
         owner_id = PACT_HP_GROUP_ID
+        if ccuser is not None:
+            primary_hp = ccuser._id
+        else:
+            primary_hp = None
+
+       # self.old_id_map.get(case_json['primary_hp']) #PACT_HP_GROUP_ID
 
         #make new blank case
-        new_block = base_create_block(pact_id, case_id, user_id, name, case_type, owner_id, case_json['demographics'])
+        new_block = base_create_block(pact_id, case_id, user_id, name, case_type, owner_id, primary_hp, case_json['demographics'])
 
         opened_date = datetime.strptime(case_json['opened_on'], '%Y-%m-%dT%H:%M:%SZ')
         res = self.submit_case_create_block(opened_date, new_block)

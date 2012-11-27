@@ -14,6 +14,7 @@ def get_user_id_map():
     return old_id_map
 
 
+
 def purge_case(case_id):
     """
     Delete a case based upon the case id
@@ -37,7 +38,7 @@ def purge_case(case_id):
     print "case purged"
 
 
-def base_create_block(pact_id, case_id, user_id, name, type, owner_id, demographics):
+def base_create_block(pact_id, case_id, user_id, name, type, owner_id, primary_hp, demographics):
     """
     Skeleton case to send to HQ
     """
@@ -54,6 +55,7 @@ def base_create_block(pact_id, case_id, user_id, name, type, owner_id, demograph
             <case_type>%(case_type)s</case_type>
             <case_name>%(case_name)s</case_name>
             <owner_id>%(owner_id)s</owner_id>
+            <primary_hp>%(primary_hp)s</primary_hp>
             <external_id>%(pact_id)s</external_id>
             <pactid>%(pact_id)s</pactid>
         </create>
@@ -66,6 +68,7 @@ def base_create_block(pact_id, case_id, user_id, name, type, owner_id, demograph
             "case_name": name,
             "owner_id": owner_id,
             "pact_id": pact_id,
+            "primary_hp": primary_hp,
             'demographics_block': ''.join(make_demographics(demographics))
             }
 

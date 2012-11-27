@@ -1,112 +1,97 @@
-from corehq.apps.hqcase.paginator import CasePaginator
-from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
-from corehq.apps.reports.fields import SelectMobileWorkerField
+from datetime import datetime
+from django.http import Http404
+from casexml.apps.case.models import CommCareCase
+from corehq.apps.reports.dispatcher import ProjectReportDispatcher, CustomProjectReportDispatcher
 from corehq.apps.reports.standard import CustomProjectReport
-from corehq.apps.reports.standard.inspect import CaseListReport, CaseDisplay, CaseListMixin
-
-from couchdbkit.resource import RequestFailed
 from dimagi.utils.decorators.memoized import memoized
+from pact.models import CDotWeeklySchedule, PactPatientCase
+from pact.reports import PactPatientDispatcher, PactPatientReportMixin, PatientNavigationReport
 
 
 
-class PactCaseListMixin(CaseListMixin):
+class PactPatientInfoReport(PactPatientReportMixin, CustomProjectReport):
+#    name = "Patient Info"
+    slug = "patient"
+    description = "some patient"
 
-    @property
+#    asynchronous=False
+
+
+    def prepare_schedule(self, patient_doc, context):
+        #patient_doc is the case doc
+        computed = patient_doc['computed_']
+
+        def get_current(x):
+            if x.deprecated:
+                return False
+            if x.ended is None and x.started < datetime.utcnow():
+                return True
+            if x.ended < datetime.utcnow():
+                return False
+
+            print "made it to the end somehow..."
+            print '\n'.join(x.weekly_arr)
+            return False
+
+        if computed.has_key('pact_weekly_schedule'):
+            schedule_arr = [CDotWeeklySchedule.wrap(x) for x in computed['pact_weekly_schedule']]
+
+            past = filter(lambda x: x.ended is not None and x.ended < datetime.utcnow(), schedule_arr)
+            current = filter(get_current, schedule_arr)
+            future = filter(lambda x: x.deprecated and x.started > datetime.utcnow(), schedule_arr)
+
+#            print '\n'.join([x.weekly_arr() for x in current])
+            past.reverse()
+            print current
+            if len(current) > 1:
+                for x in current:
+                    print '\n'.join(x.weekly_arr())
+
+            context['current_schedule'] = current[0]
+            context['past_schedules'] = past
+            context['future_schedules'] = future
+
+
     @memoized
-    def case_results(self):
-        return CasePaginator(
-            domain=self.domain,
-            params=self.pagination,
-            case_type=self.case_type,
-            owner_ids=self.case_owners,
-            user_ids=self.user_ids,
-            status=self.case_status
-        ).results()
-
-    def CaseDisplay(self, case):
-        return PactCaseDisplay(self, case)
-    pass
-
-class PatientDashboardReport(CaseListReport, PactCaseListMixin, CustomProjectReport):
-    name = "Patient List"
-    slug = "pactpatient_list"
-    hide_filters = True
-
-#    asynchronous = False
-    @property
-    def headers(self):
-        headers = DataTablesHeader(
-            DataTablesColumn("PACT ID"),
-            DataTablesColumn("Name"),
-            DataTablesColumn("Primary HP"),
-            DataTablesColumn("Opened Date"),
-            DataTablesColumn("Last Encounter"),
-            DataTablesColumn("Encounter Date"),
-            DataTablesColumn("HP Status"),
-            DataTablesColumn("DOT Status"),
-            DataTablesColumn("Last BW"),
-            DataTablesColumn("Submissions"),
-        )
-#        headers.no_sort = True
-        if not self.individual:
-            self.name = "%s for %s" % (self.name, SelectMobileWorkerField.get_default_text(self.user_filter))
-
-        return headers
-
+    def get_case(self):
+        self._case_doc = PactPatientCase.get(self.request.GET['patient_id'])
+        return self._case_doc
 
     @property
-    def rows(self):
-        rows = []
-        def _format_row(row):
-            case = self.get_case(row)
-            display = self.CaseDisplay(case)
-
-            return [
-                display.pact_id,
-                display.case_link,
-                display.owner_display, #primary hp
-                display.opened_on,
-                "some encounter",
-                display.modified_on,
-                display.hp_status,
-                display.dot_status,
-                display.closed_display,
-                "last bw",
-                display.num_submissions,
-
-            ]
-
-        try:
-            for item in self.case_results['rows']:
-                row = _format_row(item)
-                if row is not None:
-                    rows.append(row)
-        except RequestFailed:
-            pass
-
-        return rows
-
-
-class PactCaseDisplay(CaseDisplay):
-
-    @property
-    def pact_id(self):
-        return self.case.external_id
-
-    @property
-    def hp_status(self):
-        if hasattr(self.case, 'hp_status'):
-            return self.case.hp_status
+    def name(self):
+        if hasattr(self, 'request'):
+            if self.request.GET.get('patient_id', None) is not None:
+                case = self.get_case()
+                return "Patient Info :: %s" % case.name
         else:
-            return "no status"
+            return "Patient Info"
 
     @property
-    def dot_status(self):
-        if hasattr(self.case, 'dot_status'):
-            return self.case.dot_status
+    def report_context(self):
+        patient_doc = self.get_case()
+        view_mode = self.request.GET.get('view', 'info')
+        ret = {'patient_doc': patient_doc}
+        ret['pt_root_url'] = PactPatientInfoReport.get_url(*[self.request.domain]) + "?patient_id=%s" % self.request.GET['patient_id']
+        ret['view_mode'] = view_mode
+        print ret
+
+        if view_mode == 'info':
+            self.report_template_path = "pact/patient/pactpatient_info.html"
+        elif view_mode == 'submissions':
+            self.report_template_path = "pact/patient/pactpatient_submissions.html"
+        elif view_mode == 'schedule':
+            self.prepare_schedule(patient_doc, ret)
+            self.report_template_path = "pact/patient/pactpatient_schedule.html"
         else:
-            return "no status"
+            raise Http404
+        return ret
 
-    @property
-    def num_submissions(self):
-        return len(self.case.actions)
+
+    @classmethod
+    def get_foo(cls, *args, **kwargs):
+        print "get url"
+        patient_case_id = kwargs.get('pt_case_id')
+        url = super(PactPatientInfoReport, cls).get_url(*args, **kwargs)
+        print url
+        print patient_case_id
+        return "%s%s" % (url, "%s/" % patient_case_id if patient_case_id else "")

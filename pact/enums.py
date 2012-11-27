@@ -1,4 +1,5 @@
 from django.conf import settings
+import itertools
 
 PACT_DOMAIN = settings.PACT_DOMAIN
 PACT_HP_GROUPNAME = settings.PACT_HP_GROUPNAME
@@ -12,9 +13,11 @@ GENDER_CHOICES = (
     ('f', 'Female'),
     ('u', 'Undefined'),
     )
+GENDER_CHOICES_DICT = dict(x for x in GENDER_CHOICES)
 
 REGIMEN_CHOICES = (
     ('None', '-- No Regimen --'),
+    (None, '-- No Regimen --'),
     ('QD', 'QD - Once a day'),
     ('BID', 'BID - Twice a day'),
     ('QD-AM', 'QD - Once a day (Morning)'),
@@ -23,6 +26,8 @@ REGIMEN_CHOICES = (
     ('QID', 'QID - Four times a day'),
     )
 
+#old deprecated
+#REGIMEN_CHOICES_DICT = dict(x for x in REGIMEN_CHOICES)
 
 #http://confluence.dimagi.com/display/pactsbir/Technical+Specs
 DAY_SLOTS_BY_TIME = {
@@ -31,6 +36,7 @@ DAY_SLOTS_BY_TIME = {
     'evening': 2,
     'bedtime': 3,
     }
+
 
 DAY_SLOTS_BY_IDX = {
     0: 'Morning',
@@ -46,6 +52,7 @@ PACT_HP_CHOICES = (
     ('HP3', 'Health Promoter 3 (HP-3)'),
     ('Discharged', 'Discharged'),
     )
+PACT_HP_CHOICES_DICT = dict(x for x in PACT_HP_CHOICES)
 
 PACT_DOT_CHOICES = (
     ('DOT', 'DOT - Directly Observed Therapy (old)'),
@@ -55,10 +62,11 @@ PACT_DOT_CHOICES = (
     ('DOT1', 'Directly Observed Therapy 1 (DOT-1)'),
     ('', 'No DOT'),
     )
+PACT_DOT_CHOICES_DICT = dict(x for x in PACT_DOT_CHOICES)
 
 
 PACT_REGIMEN_CHOICES = (
-    ('None',[('', '-- None --')]),
+    ('None',[('', '-- None --'),]),
     ('QD - Once a day', [
         ('morning', 'Morning'),
         ('noon', 'Noon'),
@@ -87,7 +95,8 @@ PACT_REGIMEN_CHOICES = (
         ]),
     )
 
-
+PACT_REGIMEN_CHOICES_DICT = dict((x[0], dict(y for y in x[1])) for x in PACT_REGIMEN_CHOICES)
+PACT_REGIMEN_CHOICES_FLAT_DICT = dict(x for x in itertools.chain(*[q[1] for q in PACT_REGIMEN_CHOICES]))
 
 PACT_RACE_CHOICES = (
     ('white', 'White'),
@@ -97,6 +106,7 @@ PACT_RACE_CHOICES = (
     ('more-than-one', 'More than one race'),
     ('unknown', 'Unknown or not reported'),
     )
+PACT_RACE_CHOICES_DICT = dict(x for x in PACT_RACE_CHOICES)
 
 PACT_LANGUAGE_CHOICES = (
     ('english', 'English'),
@@ -104,6 +114,9 @@ PACT_LANGUAGE_CHOICES = (
     ('haitian_creole', 'Haitian Creole'),
     ('portugese', 'Portugese'),
     )
+
+PACT_LANGUAGE_CHOICES_DICT = dict(x for x in PACT_LANGUAGE_CHOICES)
+
 PACT_HIV_CLINIC_CHOICES = (
     ("brigham_and_womens_hospital", "Brigham and Women's Hospital"),
     ("massachusetts_general_hospital", "Massachusetts General Hospital"),
@@ -129,5 +142,6 @@ PACT_HIV_CLINIC_CHOICES = (
     ("st_elizabeths_medical_center", "St. Elizabeth's Medical Center"),
     ("uphams_corner_health_center", "Upham's Corner Health Center"),
     ("boston_medical_center", "Boston Medical Center"),
-
     )
+PACT_HIV_CLINIC_CHOICES_DICT = dict(x for x in PACT_HIV_CLINIC_CHOICES)
+

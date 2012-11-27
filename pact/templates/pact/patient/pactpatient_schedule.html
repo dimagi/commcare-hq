@@ -1,0 +1,11 @@
+{% extends "pact/patient/pactpatient_base.html" %}
+{% load i18n %}
+{% block patient-tab-container %}
+    {% include "pact/patient/partials/dots_schedule_weekly_view.html" %}
+    <div id="scheduleform"></div>
+        <div style="float:right;">
+        <a class="btn" href="javascript:ajax_get_form('', '{{ patient_doc.get_id }}','schedule', 'scheduleform');">
+            <i class="icon-plus"></i> Add Schedule
+        </a>
+    </div>
+{% endblock %}

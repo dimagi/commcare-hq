@@ -1,0 +1,42 @@
+{% extends "pact/patient/pactpatient_base.html" %}
+{% block extrahead %}
+    {{ block.super }}
+    <script>
+        $(document).ready(
+                function () {
+                    //$("#tbl_issues").tablesorter({ sortList:[ [0, 0] ], });
+                    $("#tbl_issues").tablesorter();
+                    $("abbr.timeago").timeago();
+                }
+        );</script>
+    <link type="text/css" rel="stylesheet" href="{{ STATIC_URL }}dotsview/stylesheets/dots.css"/>
+
+{% endblock extrahead %}
+{% block patient-tab-container %}
+    <a id="legendpop" href="#" class="btn btn-info" rel="popover" data-content='<strong>Obs. Method</strong><br>
+            <img src="{{ STATIC_URL }}dotsview/icons/plus.png">&nbsp;Direct<br>
+            <img src="{{ STATIC_URL }}dotsview/icons/bucket.png">&nbsp;Pillbox<br>
+            <img src="{{ STATIC_URL }}dotsview/icons/minus.png">&nbsp;Self Report<br>
+            <img src="{{ STATIC_URL }}dotsview/icons/warning.png">&nbsp;Conflict<br>
+            <img src="{{ STATIC_URL }}dotsview/icons/info.png">&nbsp;Notes<br>
+            <hr>
+            <strong>Pillbox</strong><br>
+            <img src="{{ STATIC_URL }}dotsview/icons/check.jpg">&nbsp; Empty<br>
+            <img src="{{ STATIC_URL }}dotsview/icons/exclamation-point.jpg">&nbsp;Partial<br>
+            <img src="{{ STATIC_URL }}dotsview/icons/x-mark.png">&nbsp; Full<br> ' data-original-title="Report Legend">Legend</a>
+    <script>
+        $(function ()
+        {
+            $('#legendpop').popover(
+                    {
+                        html:true,
+                    }
+            );
+        });
+    </script>
+    <br>
+        <div class="row-fluid">
+
+            {{ calendar }}
+    </div>
+{% endblock %}

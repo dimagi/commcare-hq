@@ -11,6 +11,15 @@ from pact.enums import PACT_DOMAIN, PACT_HP_GROUP_ID, PACT_HP_GROUPNAME
 from pact.management.commands.constants import  PACT_URL
 
 
+def purge_pact_users():
+    all_pact_users = CouchUser.view('users/by_domain', startkey=['active', PACT_DOMAIN], endkey=['inactive', PACT_DOMAIN, {}], include_docs=True, reduce=False).all()
+    for u in all_pact_users:
+        if u.username == 'pactimporter@pact.commcarehq.org':
+            continue
+        print "purging user id: %s" % u['_id']
+        CouchUser.get_db().delete_doc(u)
+
+
 def get_or_create_pact_group():
     print "### Get or create pact hp group"
     group = Group.view("groups/by_name", key=[PACT_DOMAIN, PACT_HP_GROUPNAME],  include_docs=True).first()
@@ -37,7 +46,7 @@ class Command(PactMigrateCommand):
     def handle_noargs(self, **options):
 
         self.get_credentials()
-
+        purge_pact_users()
         pact_hp_group = get_or_create_pact_group()
         print "#### Getting actors json from server"
         actors_json = simplejson.loads(self.get_url(PACT_URL + 'hqmigration/actors/'))
@@ -59,21 +68,25 @@ class Command(PactMigrateCommand):
             #this is nasty because the deserializer only does objects in an array vs just a
             # single instance, so we're loading json, then wrapping it into an array to the
             # django deserializer
-            username = json_user['fields']['username'].lower()
-            if username not in PACT_CHWS.keys():
+            orig_username = json_user['fields']['username'].lower()
+            if orig_username not in PACT_CHWS.keys():
                 print "# skipping %s" % json_user['pk']
                 continue
 
-            if username =='admin':
+            if orig_username =='admin':
                 print "# skipping admin"
                 continue
 
+            #alter the json before deserializing
+            cc_username = "%s@pact.commcarehq.org" % orig_username
+            json_user['fields']['username'] = cc_username
+
             djuser = list(serializers.deserialize('json', simplejson.dumps([json_user])))[0]
             old_user_id = json_user['pk']
-            djuser.object.username = djuser.object.username.lower()
+#            djuser.object.username = djuser.object.username.lower()
 
-            if actor_username_map.has_key(username):
-                actor = actor_username_map[username]
+            if actor_username_map.has_key(orig_username):
+                actor = actor_username_map[orig_username]
                 #for the actors now, walk their properties and add them to the WebUser
                 if actor['doc_type'] != 'CHWActor':
                     actor = None
@@ -81,10 +94,10 @@ class Command(PactMigrateCommand):
                 actor = None
 
 
-            print "pact user: %s " % username
+            print "pact user: %s " % orig_username
             print "\tuser email: %s" % djuser.object.email
             is_new = False
-            if User.objects.filter(username=username).count() == 0:
+            if User.objects.filter(username=cc_username).count() == 0:
                 djuser.object.id = None
                 print "\tSaving new to DB"
                 djuser.object.save()
@@ -93,13 +106,13 @@ class Command(PactMigrateCommand):
                 print "\tUpdating..."
                 del json_user['fields']['groups']
                 del json_user['fields']['user_permissions']
-                User.objects.filter(username=username).update(**json_user['fields'])
-            saved_user = User.objects.get(username=username)
-            print "\tDjango user %s saved to HQ database" % username
+                User.objects.filter(username=cc_username).update(**json_user['fields'])
+            saved_user = User.objects.get(username=cc_username)
+            print "\tDjango user %s saved to HQ database as %s" % (orig_username, cc_username)
 
 
             print "\tRecreating Couch User"
-            couchusers = CouchUser.get_db().view('users/by_username', key=username,  include_docs=True).all()
+            couchusers = CouchUser.get_db().view('users/by_username', key=cc_username,  include_docs=True).all()
             if len(couchusers) > 0:
                 couchuser = couchusers[0]['doc']
                 print "\t\tCouch User deleted - recreating"
@@ -122,8 +135,8 @@ class Command(PactMigrateCommand):
             pact_hp_group.add_user(cc_user._id)
 
             print "\tsyncing actor properties to web user"
-            if actor_username_map.has_key(username):
-                actor = actor_username_map[username]
+            if actor_username_map.has_key(orig_username):
+                actor = actor_username_map[orig_username]
                 #for the actors now, walk their properties and add them to the WebUser
                 if actor['doc_type'] == 'CHWActor':
                     print "\tchw actor found, updating phone number"

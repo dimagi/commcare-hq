@@ -1,0 +1,51 @@
+{% extends "reports/async/default.html" %}
+{% load i18n %}
+
+{% block reportcontent %}
+{#    {% block extrahead %}#}
+{#    {% endblock extrahead %}#}
+
+    {% block pactpatient_header %}
+            <div>
+                {% block patient_hat %}
+                {% endblock patient_hat %}
+            </div>
+    {% endblock pactpatient_header %}
+
+    {% block patient_content %}
+        <div class="span11">
+            {% block patient-content-tabs %}
+                <ul class="nav nav-pills">
+                    {% block patient-tab-controller %}
+                        <li {% if view_mode == "info" %}class="active"{% endif %}>
+                            <a href="{{ pt_root_url }}" data-toggle="tab">{% trans "Info" %}</a></li>
+
+                        <li {% if view_mode == "schedule" %}class="active"{% endif %}>
+                            <a href="{{ pt_root_url }}&view=schedule" data-toggle="tab">{% trans "Schedule" %}</a>
+                        </li>
+                        {% if patient_doc.is_dot_patient %}
+                             <li {% if view_mode == "dots" %}class="active"{% endif %}>
+                                <a href="{{ pt_root_url }}?view=dots" data-toggle="tab">{% trans "DOT Adherence" %}</a>
+                             </li>
+                        {% endif %}
+                        <li {% if view_mode == "submissions" %}class="active"{% endif %}>
+                            <a href="{{ pt_root_url }}&view=submissions" data-toggle="tab">{% trans "Submissions" %}</a></li>
+
+                        <li {% if view_mode == "careteam" %}class="active"{% endif %}>
+                            <a href="{{ pt_root_url }}&view=careteam" data-toggle="tab">{% trans "Careteam" %}</a>
+                        </li>
+
+{#                        <li {% if view_mode == "careplan" %}class="active"{% endif %}>#}
+{#                            <a href="{% url view_pactpatient patient_doc.get_id 'careplan' %}" data-toggle="tab">{% trans "Care Plan" %}</a>#}
+{#                        </li>#}
+{#                        <li {% if view_mode == "log" %}class="active"{% endif %}>#}
+{#                            <a href="{% url view_pactpatient patient_doc.get_id 'log' %}" data-toggle="tab">{% trans "Change Log" %}</a>#}
+{#                        </li>#}
+                    {% endblock patient-tab-controller %}
+                </ul>
+                {% block patient-tab-container %}
+                {% endblock patient-tab-container %}
+            {% endblock patient-content-tabs %}
+        </div>
+    {% endblock patient_content %}
+{% endblock reportcontent %}

@@ -30,7 +30,7 @@ class Command(PactMigrateCommand):
         if len(case_json.get('weekly_schedule', [])) > 0:
             print "updating schedule for %s" % case_json['_id']
             hqcase['computed_']['pact_weekly_schedule'] = case_json['weekly_schedule']
-            hqcase['computed_modified_on'] = datetime.utcnow().strftime(ISO_FORMAT)
+            hqcase['computed_modified_on_'] = datetime.utcnow()
             hqcase.save()
 
 
