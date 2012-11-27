@@ -98,6 +98,7 @@ def project_info(request, domain, template="appstore/project_info.html"):
 
     return render_to_response(request, template, {
         "project": dom,
+        "applications": dom.full_applications(include_builds=False),
         "form": form,
         "reviews": reviews,
         "average_rating": average_rating,
@@ -281,7 +282,7 @@ def import_app(request, domain):
             messages.error(request, _("You don't belong to that project"))
             return project_info(request, domain)
 
-        for app in from_project.full_applications():
+        for app in from_project.full_applications(include_builds=False):
             new_doc = from_project.copy_component(app['doc_type'], app.get_id, to_project_name, user)
 
         from_project.downloads += 1
