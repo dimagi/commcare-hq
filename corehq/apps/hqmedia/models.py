@@ -44,6 +44,7 @@ class CommCareMultimedia(Document):
 
     @classmethod
     def wrap(cls, data):
+        should_save = False
         if data.get('tags') == []:
             data['tags'] = {}
         if not data.get('owners'):
@@ -54,7 +55,16 @@ class CommCareMultimedia(Document):
             migrated = [HQMediaLicense(domain=domain, type=type)._doc \
                         for domain, type in data["licenses"].items()]
             data['licenses'] = migrated
-        return super(CommCareMultimedia, cls).wrap(data)
+        if data["licenses"][0].get("type", "") == "public": # deprecating support for public domain license
+            data["licenses"][0]["type"] = "cc"
+            should_save = True
+
+        self = super(CommCareMultimedia, cls).wrap(data)
+
+        if should_save:
+            self.save()
+
+        return self
 
     def attach_data(self, data, upload_path=None, username=None, attachment_id=None,
                     media_meta=None, replace_attachment=False):
