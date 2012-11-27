@@ -465,6 +465,7 @@ def delete_custom_export(req, domain, export_id):
 @login_and_domain_required
 @require_POST
 def add_config(request, domain=None):
+    # todo: refactor this into a django form
     from datetime import datetime
     
     POST = json.loads(request.raw_post_data)
@@ -472,8 +473,13 @@ def add_config(request, domain=None):
         return HttpResponseBadRequest()
 
     to_date = lambda s: datetime.strptime(s, '%Y-%m-%d').date() if s else s
-    POST['start_date'] = to_date(POST['start_date'])
-    POST['end_date'] = to_date(POST['end_date'])
+    try:
+        POST['start_date'] = to_date(POST['start_date'])
+        POST['end_date'] = to_date(POST['end_date'])
+    except ValueError:
+        # invalidly formatted date input
+        return HttpResponseBadRequest()
+
     date_range = POST.get('date_range')
     if date_range == 'last7':
         POST['days'] = 7
