@@ -1,4 +1,7 @@
+import gevent
 from couchforms.models import XFormInstance
+from gevent import monkey
+monkey.patch_all()
 from restkit.session import set_session
 set_session("gevent")
 
@@ -39,26 +42,32 @@ def run():
         'sms/verified_number_by_suffix',
         'translations/popularity',
         'users/admins_by_domain',
+        'reportconfig/weekly_notifications',
     ]
 
     def do_prime(view_name):
         print "priming %s" % view_name
         try:
             db = XFormInstance.get_db()
-            db.view(view_name, limit=2).all()
+            db.view(view_name, limit=0).all()
         except:
             print "Got an exception but ignoring"
 
-    from gevent import monkey; monkey.patch_all()
     from gevent.pool import Pool
     import time
     pool = Pool(12)
     while True:
         for view in views:
+            print "Loop %s" % view
             g = pool.spawn(do_prime, view)
-        pool.join()
-        print "Finished priming views, waiting 30 seconds"
-        time.sleep(30)
+#            if pool.full():
+#                print "\tPool full, waiting"
+#                gevent.sleep(1)
+#            else:
+#                print "\tnot full, bottom of loop"
+
+#        print "Finished priming views, waiting 30 seconds"
+#        time.sleep(5)
 
     print "done!"
 
