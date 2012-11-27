@@ -8,6 +8,7 @@ import pytz
 from casexml.apps.case.models import CommCareCase
 from corehq.apps.indicators.models import CaseIndicatorDefinition, FormDataInCaseIndicatorDefinition,\
     PopulateRelatedCasesWithIndicatorDefinitionMixin, CaseDataInFormIndicatorDefinition, CouchViewIndicatorDefinition, DynamicIndicatorDefinition
+from corehq.apps.reports.util import make_form_couch_key
 from couchforms.models import XFormInstance
 from dimagi.utils.couch.database import get_db
 from dimagi.utils.dates import DateSpan
@@ -47,11 +48,8 @@ class MVPDaysSinceLastTransmission(DynamicIndicatorDefinition):
             enddate = datespan.enddate_utc
         else:
             enddate = datetime.datetime.utcnow()
-        couch_view = "reports/submit_history" if user_id else "reports/all_submissions"
-        key = [self.domain]
-        if user_id:
-            key.append(user_id)
-        results = get_db().view(couch_view,
+        key = make_form_couch_key(self.domain, user_id=user_id)
+        results = get_db().view("reports_forms/all_forms",
             reduce=False,
             include_docs=False,
             descending=True,
