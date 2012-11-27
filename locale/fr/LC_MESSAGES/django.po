@@ -6,131 +6,126 @@
 #, fuzzy
 msgid ""
 msgstr ""
-"Project-Id-Version: PACKAGE VERSION\n"
-"Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2012-11-19 16:53-0500\n"
-"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
-"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
-"Language-Team: LANGUAGE <LL@li.org>\n"
-"MIME-Version: 1.0\n"
-"Content-Type: text/plain; charset=UTF-8\n"
-"Content-Transfer-Encoding: 8bit\n"
-"Plural-Forms: nplurals=2; plural=(n > 1)\n"
+"Project-Id-Version: CCHQ reports\n"
+"Language: fr\n"
+"Plural-Forms: nplurals=2; plural=(n > 1);\n"
+"MIME-Version:1.0\n"
+"Content-Type:text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding:8bit\n"
+"X-Generator:POEditor.com\n"
 
 #: .\submodules\auditcare-src\auditcare\forms.py:14
-msgid ""
-"Please enter a correct username and password. Note that both fields are case-"
-"sensitive."
-msgstr ""
+msgid "Please enter a correct username and password. Note that both fields are case-sensitive."
+msgstr "Veuillez saisir un nom d'utilisateur et un mot de passe corrects. Notez que les deux champs sont sensibles à la casse."
 
 #: .\submodules\auditcare-src\auditcare\forms.py:16
 msgid "This account is inactive."
-msgstr ""
+msgstr "Ce compte est inactif."
 
 #: .\submodules\auditcare-src\auditcare\templates\auditcare\audit_views.html.py:5
 #: .\submodules\auditcare-src\auditcare\templates\auditcare\index.html.py:5
 msgid "Audit Viewer"
-msgstr ""
+msgstr "Afficheur d'audit"
 
 #: .\submodules\auditcare-src\auditcare\templates\auditcare\model_changes.html.py:5
 #: .\submodules\auditcare-src\auditcare\templates\auditcare\model_instance_history.html.py:5
 #: .\submodules\auditcare-src\auditcare\templates\auditcare\single_model_changes.html.py:5
 #: .\submodules\auditcare-src\auditcare\templates\auditcare\partials\model_property_change.html.py:5
 msgid "Audited Model Changes"
-msgstr ""
+msgstr "Modifications du modèle audité"
 
 #: .\submodules\bihar-reports\bihar\reports\__init__.py:4
 #: .\submodules\core-hq-src\corehq\apps\reports\standard\monitoring.py:198
 #: .\submodules\core-hq-src\corehq\apps\reports\standard\monitoring.py:305
 msgid "Active Cases"
-msgstr ""
+msgstr "Cas actifs"
 
 #: .\submodules\bihar-reports\bihar\reports\__init__.py:5
 msgid "Total Cases"
-msgstr ""
+msgstr "Nombre total de cas"
 
 #: .\submodules\bihar-reports\bihar\reports\__init__.py:6
 msgid "Total Form Submissions"
-msgstr ""
+msgstr "Nombre total de soumissions de formulaires"
 
 #: .\submodules\bihar-reports\bihar\reports\__init__.py:7
 msgid "Days Since Last Submission"
-msgstr ""
+msgstr "Nombre de jours depuis la dernière soumission"
 
 #: .\submodules\bihar-reports\bihar\reports\__init__.py:8
 msgid "Clients Visited"
-msgstr ""
+msgstr "Clients visités"
 
 #: .\submodules\bihar-reports\bihar\reports\__init__.py:9
 msgid "Inactive Clients"
-msgstr ""
+msgstr "Clients inactifs"
 
 #: .\submodules\bihar-reports\bihar\reports\supervisor.py:137
 msgid "Select Subcenter"
-msgstr ""
+msgstr "Sélectionner un centre secondaire"
 
 #: .\submodules\bihar-reports\bihar\reports\supervisor.py:139
 msgid "Subcenter selection report"
-msgstr ""
+msgstr "Rapport de sélection de centres secondaires"
 
 #: .\submodules\bihar-reports\bihar\reports\supervisor.py:141
 #: .\submodules\bihar-reports\bihar\reports\indicators\reports.py:91
 msgid "Team Name"
-msgstr ""
+msgstr "Nom de l'équipe"
 
 #: .\submodules\bihar-reports\bihar\reports\supervisor.py:174
 #: .\submodules\bihar-reports\bihar\templates\bihar\summary_tabular.html.py:6
 #: .\submodules\bihar-reports\bihar\templates\bihar\tabular.html.py:5
 msgid "Main Menu"
-msgstr ""
+msgstr "Menu principal"
 
 #: .\submodules\bihar-reports\bihar\reports\supervisor.py:176
 msgid "Main navigation"
-msgstr ""
+msgstr "Navigation principale"
 
 #: .\submodules\bihar-reports\bihar\reports\supervisor.py:192
 msgid "Worker Rank Table"
-msgstr ""
+msgstr "Tableau de classification des rangs des travailleurs"
 
 #: .\submodules\bihar-reports\bihar\reports\supervisor.py:217
 msgid "Due List"
-msgstr ""
+msgstr "Échéancier"
 
 #: .\submodules\bihar-reports\bihar\reports\supervisor.py:221
 msgid "Tools"
-msgstr ""
+msgstr "Outils"
 
 #: .\submodules\bihar-reports\bihar\reports\indicators\__init__.py:9
 msgid "Home Visit Information"
-msgstr ""
+msgstr "Renseignements concernant les visites à domicile"
 
 #: .\submodules\bihar-reports\bihar\reports\indicators\__init__.py:14
 msgid "BP (2nd Tri) Visits in last 30 days (Done/Due)"
-msgstr ""
+msgstr "Visite du plan pour l'accouchement (2e trimestre) durant les 30 derniers jours (fait/en attente)"
 
 #: .\submodules\bihar-reports\bihar\reports\indicators\__init__.py:19
 msgid "BP (3rd Tri) Visits in last 30 days (Done/Due)"
-msgstr ""
+msgstr "Visite du plan pour l'accouchement (3e trimestre) durant les 30 derniers jours (fait/en attente)"
 
 #: .\submodules\bihar-reports\bihar\reports\indicators\__init__.py:24
 msgid "PNC Visits  in last 30 days (Done/Due)"
-msgstr ""
+msgstr "Visites de soins postnataux durant les 30 derniers jours (fait/en attente)"
 
 #: .\submodules\bihar-reports\bihar\reports\indicators\__init__.py:29
 msgid "EBF Visits in last 30 days (Done/Due)"
-msgstr ""
+msgstr "Visites AME durant les 30 derniers jours (fait/en attente)"
 
 #: .\submodules\bihar-reports\bihar\reports\indicators\__init__.py:34
 msgid "CF Visits in last 30 days (Done/Due)"
-msgstr ""
+msgstr "Visites AC durant les 30 derniers jours (fait/en attente)"
 
 #: .\submodules\bihar-reports\bihar\reports\indicators\__init__.py:41
 msgid "All woman due for delivery in next 30 days"
-msgstr ""
+msgstr "Toutes les femmes devant accoucher durant les 30 prochains jours"
 
 #: .\submodules\bihar-reports\bihar\reports\indicators\__init__.py:48
 msgid "Pregnant woman who delivered in last 30 days"
-msgstr ""
+msgstr "Femmes enceintes ayant accouché durant les 30 derniers jours"
 
 #: .\submodules\bihar-reports\bihar\reports\indicators\__init__.py:52
 #: .\submodules\bihar-reports\bihar\reports\indicators\__init__.py:149
@@ -145,171 +140,167 @@ msgstr "Nom"
 #: .\submodules\bihar-reports\bihar\reports\indicators\__init__.py:52
 #: .\submodules\bihar-reports\bihar\reports\indicators\__init__.py:149
 msgid "Husband's Name"
-msgstr ""
+msgstr "Nom du mari"
 
 #: .\submodules\bihar-reports\bihar\reports\indicators\__init__.py:52
 msgid "ADD"
-msgstr ""
+msgstr "DRA"
 
 #: .\submodules\bihar-reports\bihar\reports\indicators\__init__.py:56
 msgid "Pregnant woman registered in last 30 days"
-msgstr ""
+msgstr "Femmes enceintes enregistrées durant les 30 derniers jours"
 
 #: .\submodules\bihar-reports\bihar\reports\indicators\__init__.py:63
-msgid ""
-"Pregnant woman not given BP counselling (of pregnant woman registered in "
-"last 30 days)"
-msgstr ""
+msgid "Pregnant woman not given BP counselling (of pregnant woman registered in last 30 days)"
+msgstr "Femmes enceintes n'ayant pas reçu de conseil de plan pour l'accouchement (femmes enceintes inscrites durant les 30 derniers jours)"
 
 #: .\submodules\bihar-reports\bihar\reports\indicators\__init__.py:70
-msgid ""
-"Pregnant woman not received IFA tablets (of pregnant woman registered in "
-"last 30 days)"
-msgstr ""
+msgid "Pregnant woman not received IFA tablets (of pregnant woman registered in last 30 days)"
+msgstr "Femmes enceintes n'ayant pas reçu de tablettes de fer et d'acide foliques (femmes enceintes inscrites durant les 30 derniers jours)"
 
 #: .\submodules\bihar-reports\bihar\reports\indicators\__init__.py:149
 msgid "EDD"
-msgstr ""
+msgstr "Date présumée d'accouchement"
 
 #: .\submodules\bihar-reports\bihar\reports\indicators\reports.py:44
 msgid "Indicator Options"
-msgstr ""
+msgstr "Options d'indicateur"
 
 #: .\submodules\bihar-reports\bihar\reports\indicators\reports.py:46
 msgid "Indicator navigation"
-msgstr ""
+msgstr "Navigation de l'indicateur"
 
 #: .\submodules\bihar-reports\bihar\reports\indicators\reports.py:56
 msgid "Select Indicator Category"
-msgstr ""
+msgstr "Sélectionner la catégorie de l'indicateur"
 
 #: .\submodules\bihar-reports\bihar\reports\indicators\reports.py:81
 msgid "Indicators"
-msgstr ""
+msgstr "Indicateurs"
 
 #: .\submodules\bihar-reports\bihar\reports\indicators\reports.py:106
 msgid "Charts"
-msgstr ""
+msgstr "Diagrammes"
 
 #: .\submodules\bihar-reports\bihar\reports\indicators\reports.py:111
 msgid "Select Client List"
-msgstr ""
+msgstr "Sélectionner la liste des clients"
 
 #: .\submodules\bihar-reports\bihar\reports\indicators\reports.py:146
 msgid "Client List"
-msgstr ""
+msgstr "Liste des clients"
 
 #: .\submodules\core-hq-src\corehq\apps\adm\reports\__init__.py:15
 #: .\submodules\core-hq-src\corehq\apps\adm\reports\__init__.py:60
 #: .\submodules\core-hq-src\corehq\apps\reports\templates\reports\base_template.html.py:49
 msgid "Active Data Management"
-msgstr ""
+msgstr "Gestion des données actives"
 
 #: .\submodules\core-hq-src\corehq\apps\adm\reports\__init__.py:37
 msgid "ADM Report"
-msgstr ""
+msgstr "Rapport de gestion de données actives"
 
 #: .\submodules\core-hq-src\corehq\apps\adm\reports\__init__.py:108
 msgid "FLW Name"
-msgstr ""
+msgstr "Nom des travailleurs de première ligne"
 
 #: .\submodules\core-hq-src\corehq\apps\app_manager\templates\app_manager\apps_base.html.py:171
 #: .\submodules\core-hq-src\corehq\apps\hqwebapp\models.py:133
 msgid "Blank Application"
-msgstr ""
+msgstr "Application vierge"
 
 #: .\submodules\core-hq-src\corehq\apps\app_manager\templates\app_manager\apps_base.html.py:175
 msgid "Remote App (Advanced Users Only)"
-msgstr ""
+msgstr "Application à distance"
 
 #: .\submodules\core-hq-src\corehq\apps\app_manager\templates\app_manager\apps_base.html.py:179
 #: .\submodules\core-hq-src\corehq\apps\hqwebapp\models.py:138
 msgid "Visit CommCare Exchange to copy existing app..."
-msgstr ""
+msgstr "Visitez CommCare Exchange pour copier les applications existantes..."
 
 #: .\submodules\core-hq-src\corehq\apps\app_manager\templates\app_manager\apps_base.html.py:189
 msgid "Go to: "
-msgstr ""
+msgstr "Aller à : "
 
 #: .\submodules\core-hq-src\corehq\apps\appstore\templates\appstore\deployment_info.html.py:31
 #: .\submodules\core-hq-src\corehq\apps\appstore\templates\appstore\project_info.html.py:81
 #: .\submodules\core-hq-src\corehq\apps\reports\templates\reports\base_template.html.py:112
 #: .\submodules\core-hq-src\corehq\apps\reports\templates\reports\reports_home.html.py:36
 msgid "Description"
-msgstr ""
+msgstr "Description"
 
 #: .\submodules\core-hq-src\corehq\apps\appstore\templates\appstore\deployment_info.html.py:53
 #: .\submodules\core-hq-src\corehq\apps\appstore\templates\appstore\project_info.html.py:101
 #: .\submodules\core-hq-src\corehq\apps\domain\templates\domain\admin\project_settings.html.py:74
 msgid "Languages"
-msgstr ""
+msgstr "Langues"
 
 #: .\submodules\core-hq-src\corehq\apps\appstore\templates\appstore\project_info.html.py:61
 msgid "by"
-msgstr ""
+msgstr "par"
 
 #: .\submodules\core-hq-src\corehq\apps\appstore\templates\appstore\project_info.html.py:71
 msgid "Ratings"
-msgstr ""
+msgstr "Classements"
 
 #: .\submodules\core-hq-src\corehq\apps\appstore\templates\appstore\project_info.html.py:86
 #: .\submodules\core-hq-src\corehq\apps\appstore\templates\appstore\project_info.html.py:94
 #: .\submodules\core-hq-src\corehq\apps\appstore\templates\appstore\project_info.html.py:106
 msgid "None"
-msgstr ""
+msgstr "Aucun"
 
 #: .\submodules\core-hq-src\corehq\apps\appstore\templates\appstore\project_info.html.py:89
 #: .\submodules\core-hq-src\corehq\apps\reports\fields.py:251
 msgid "Category"
-msgstr ""
+msgstr "Catégorie"
 
 #: .\submodules\core-hq-src\corehq\apps\appstore\templates\appstore\project_info.html.py:97
 #: .\submodules\core-hq-src\corehq\apps\domain\templates\domain\partials\project_version_display.html.py:24
 msgid "Published on"
-msgstr ""
+msgstr "Publié le"
 
 #: .\submodules\core-hq-src\corehq\apps\appstore\templates\appstore\project_info.html.py:109
 #: .\submodules\core-hq-src\corehq\apps\domain\templates\domain\partials\project_version_display.html.py:26
 #: .\submodules\core-hq-src\corehq\apps\reports\fields.py:266
 msgid "License"
-msgstr ""
+msgstr "Licence"
 
 #: .\submodules\core-hq-src\corehq\apps\appstore\templates\appstore\project_info.html.py:111
 msgid "Downloads"
-msgstr ""
+msgstr "Téléchargements"
 
 #: .\submodules\core-hq-src\corehq\apps\appstore\templates\appstore\project_info.html.py:123
 msgid "Media"
-msgstr ""
+msgstr "Média"
 
 #: .\submodules\core-hq-src\corehq\apps\appstore\templates\appstore\project_info.html.py:129
 #: .\submodules\core-hq-src\corehq\apps\builds\templates\builds\all.html.py:8
 msgid "Version"
-msgstr ""
+msgstr "Version"
 
 #: .\submodules\core-hq-src\corehq\apps\appstore\templates\appstore\project_info.html.py:132
 msgid "User type"
-msgstr ""
+msgstr "Type d'utilisateur"
 
 #: .\submodules\core-hq-src\corehq\apps\appstore\templates\appstore\project_info.html.py:136
 msgid "Phone model"
-msgstr ""
+msgstr "Modèle de téléphone"
 
 #: .\submodules\core-hq-src\corehq\apps\appstore\templates\appstore\project_info.html.py:140
 msgid "Short Description"
-msgstr ""
+msgstr "Description courte"
 
 #: .\submodules\core-hq-src\corehq\apps\appstore\templates\appstore\project_info.html.py:146
 msgid "Long Description"
-msgstr ""
+msgstr "Description longue"
 
 #: .\submodules\core-hq-src\corehq\apps\appstore\templates\appstore\project_info.html.py:152
 msgid "Attribution notes"
-msgstr ""
+msgstr "Notes d'attribution"
 
 #: .\submodules\core-hq-src\corehq\apps\appstore\templates\appstore\project_info.html.py:155
 msgid "Application Summary"
-msgstr ""
+msgstr "Résumé de l'application"
 
 #: .\submodules\core-hq-src\corehq\apps\appstore\templates\appstore\project_info.html.py:163
 #: .\submodules\core-hq-src\corehq\apps\reports\templates\reports\partials\bulk_export_notice.html.py:4
@@ -322,210 +313,209 @@ msgstr ""
 #: .\submodules\core-hq-src\corehq\apps\reports\templates\reports\reportdata\excel_export_data.html.py:169
 #: .\submodules\core-hq-src\corehq\apps\reports\templates\reports\reportdata\excel_export_data.html.py:282
 msgid "Download"
-msgstr ""
+msgstr "Télécharger"
 
 #: .\submodules\core-hq-src\corehq\apps\appstore\templates\appstore\project_info.html.py:167
 #: .\submodules\core-hq-src\corehq\apps\domain\templates\domain\copy_snapshot.html.py:16
 msgid "New project name"
-msgstr ""
+msgstr "Nom du nouveau projet"
 
 #: .\submodules\core-hq-src\corehq\apps\appstore\templates\appstore\project_info.html.py:171
 msgid "Create New Project"
-msgstr ""
+msgstr "Créer un nouveau projet"
 
 #: .\submodules\core-hq-src\corehq\apps\appstore\templates\appstore\project_info.html.py:171
 #: .\submodules\core-hq-src\corehq\apps\appstore\templates\appstore\project_info.html.py:175
 msgid "or"
-msgstr ""
+msgstr "ou"
 
 #: .\submodules\core-hq-src\corehq\apps\appstore\templates\appstore\project_info.html.py:172
 msgid "Import to Existing Project"
-msgstr ""
+msgstr "Importer dans le projet existant"
 
 #: .\submodules\core-hq-src\corehq\apps\appstore\templates\appstore\project_info.html.py:175
 msgid "Please"
-msgstr ""
+msgstr "Veuillez"
 
 #: .\submodules\core-hq-src\corehq\apps\appstore\templates\appstore\project_info.html.py:175
 msgid "sign in"
-msgstr ""
+msgstr "se connecter"
 
 #: .\submodules\core-hq-src\corehq\apps\appstore\templates\appstore\project_info.html.py:175
 msgid "register"
-msgstr ""
+msgstr "s'inscrire"
 
 #: .\submodules\core-hq-src\corehq\apps\appstore\templates\appstore\project_info.html.py:175
 msgid "to download an app from Exchange"
-msgstr ""
+msgstr "pour télécharger une application de Exchange"
 
 #: .\submodules\core-hq-src\corehq\apps\appstore\templates\appstore\project_info.html.py:194
 msgid "Reviews of"
-msgstr ""
+msgstr "Avis sur"
 
 #: .\submodules\core-hq-src\corehq\apps\appstore\templates\appstore\project_info.html.py:197
 msgid "Write a Review"
-msgstr ""
+msgstr "Donnez votre avis"
 
 #: .\submodules\core-hq-src\corehq\apps\appstore\templates\appstore\project_info.html.py:213
 msgid "on"
-msgstr ""
+msgstr "sur"
 
 #: .\submodules\core-hq-src\corehq\apps\appstore\templates\appstore\project_info.html.py:225
 msgid "Write a review for "
-msgstr ""
+msgstr "Donnez votre avis pour "
 
 #: .\submodules\core-hq-src\corehq\apps\appstore\templates\appstore\project_info.html.py:230
 msgid "Review This App"
-msgstr ""
+msgstr "Donnez votre avis sur cette application"
 
 #: .\submodules\core-hq-src\corehq\apps\appstore\templates\appstore\project_info.html.py:237
 msgid "Rating"
-msgstr ""
+msgstr "Classement"
 
 #: .\submodules\core-hq-src\corehq\apps\appstore\templates\appstore\project_info.html.py:269
 msgid "Cancel"
-msgstr ""
+msgstr "Annuler"
 
 #: .\submodules\core-hq-src\corehq\apps\appstore\templates\appstore\project_info.html.py:270
 msgid "Post"
-msgstr ""
+msgstr "Publier"
 
 #: .\submodules\core-hq-src\corehq\apps\appstore\templates\appstore\project_info.html.py:279
 msgid "You're about to download "
-msgstr ""
+msgstr "Vous êtes sur le point de télécharger "
 
 #: .\submodules\core-hq-src\corehq\apps\appstore\templates\appstore\project_info.html.py:282
 msgid "is licensed under "
-msgstr ""
+msgstr "est distribué sous la licence "
 
 #: .\submodules\core-hq-src\corehq\apps\appstore\templates\appstore\project_info.html.py:286
 msgid "I have read and agree to terms of this license."
-msgstr ""
+msgstr "J'ai lu et j'accepte les termes de cette licence."
 
 #: .\submodules\core-hq-src\corehq\apps\appstore\templates\appstore\project_info.html.py:288
 msgid "Agree"
-msgstr ""
+msgstr "Accepter"
 
 #: .\submodules\core-hq-src\corehq\apps\appstore\templates\appstore\project_info.html.py:289
 msgid "Disagree"
-msgstr ""
+msgstr "Refuser"
 
 #: .\submodules\core-hq-src\corehq\apps\builds\templates\builds\all.html.py:7
 msgid "Build Number"
-msgstr ""
+msgstr "Numéro de version"
 
 #: .\submodules\core-hq-src\corehq\apps\builds\templates\builds\all.html.py:9
 msgid "Time"
-msgstr ""
+msgstr "Durée"
 
 #: .\submodules\core-hq-src\corehq\apps\cloudcare\templates\cloudcare\cloudcare_home.html.py:98
 msgid "Loading"
-msgstr ""
+msgstr "Chargement"
 
 #: .\submodules\core-hq-src\corehq\apps\commtrack\stockreport.py:55
 msgid "product"
-msgstr ""
+msgstr "produit"
 
 #: .\submodules\core-hq-src\corehq\apps\commtrack\stockreport.py:56
 msgid "product_entry"
-msgstr ""
+msgstr "product_entry"
 
 #: .\submodules\core-hq-src\corehq\apps\commtrack\stockreport.py:57
 msgid "action"
-msgstr ""
+msgstr "activité"
 
 #: .\submodules\core-hq-src\corehq\apps\commtrack\stockreport.py:58
 msgid "value"
-msgstr ""
+msgstr "valeur"
 
 #: .\submodules\core-hq-src\corehq\apps\commtrack\stockreport.py:80
 msgid "transaction"
-msgstr ""
+msgstr "transaction"
 
 #: .\submodules\core-hq-src\corehq\apps\data_interfaces\interfaces.py:15
 #: .\submodules\core-hq-src\corehq\apps\hqwebapp\models.py:94
 msgid "Manage Data"
-msgstr "Gérer les Données"
+msgstr "Gérer les données"
 
 #: .\submodules\core-hq-src\corehq\apps\data_interfaces\interfaces.py:26
 msgid "Reassign Cases"
-msgstr ""
+msgstr "Réaffecter les cas"
 
 #: .\submodules\core-hq-src\corehq\apps\domain\templates\domain\admin\project_settings.html.py:82
 #: .\submodules\core-hq-src\corehq\apps\hqwebapp\models.py:104
 msgid "Applications"
-msgstr ""
+msgstr "Applications"
 
 #: .\submodules\core-hq-src\corehq\apps\domain\templates\domain\admin\repeater_row.html.py:5
 msgid "Stop Forwarding"
-msgstr ""
+msgstr "Arrêter de transférer"
 
 #: .\submodules\core-hq-src\corehq\apps\domain\templates\domain\partials\project_version_display.html.py:28
 #: .\submodules\core-hq-src\corehq\apps\reports\standard\inspect.py:337
 msgid "Status"
-msgstr ""
+msgstr "Statut"
 
 #: .\submodules\core-hq-src\corehq\apps\domain\templates\login_and_password\password_reset_email.html.py:3
 msgid "You're receiving this email because you requested a password reset"
-msgstr ""
+msgstr "Vous recevez cet email, car vous avez demandé un nouveau mot de passe"
 
 #: .\submodules\core-hq-src\corehq\apps\domain\templates\login_and_password\password_reset_email.html.py:4
-#, python-format
 msgid "for your user account at %(site_name)s"
-msgstr ""
+msgstr "pour votre compte d'utilisateur chez % (site_name) s"
 
 #: .\submodules\core-hq-src\corehq\apps\domain\templates\login_and_password\password_reset_email.html.py:6
 msgid "Please go to the following page and choose a new password:"
-msgstr ""
+msgstr "Veuillez aller à la page suivante et choisir un nouveau mot de passe :"
 
 #: .\submodules\core-hq-src\corehq\apps\domain\templates\login_and_password\password_reset_email.html.py:10
 msgid "Your username, in case you've forgotten:"
-msgstr ""
+msgstr "Votre nom d'utilisateur, au cas où vous l'auriez oublié :"
 
 #: .\submodules\core-hq-src\corehq\apps\domain\templates\login_and_password\password_reset_email.html.py:12
 msgid "Your domains, in case you've forgotten:"
-msgstr ""
+msgstr "Vos domaines, au cas où vous les auriez oubliés :"
 
 #: .\submodules\core-hq-src\corehq\apps\domain\templates\login_and_password\password_reset_email.html.py:14
 msgid "Thank you for using CommCare HQ."
-msgstr ""
+msgstr "Merci d'utiliser CommCare HQ."
 
 #: .\submodules\core-hq-src\corehq\apps\domain\templates\login_and_password\password_reset_email.html.py:15
 msgid "--The CommCare HQ Team"
-msgstr ""
+msgstr "-- L'équipe CommCare HQ"
 
 #: .\submodules\core-hq-src\corehq\apps\groups\templates\groups\groups.html.py:24
 #: .\submodules\core-hq-src\corehq\apps\groups\templates\groups\groups.html.py:59
 msgid "Group Name"
-msgstr ""
+msgstr "Nom du groupe"
 
 #: .\submodules\core-hq-src\corehq\apps\groups\templates\groups\groups.html.py:25
 #: .\submodules\core-hq-src\corehq\apps\groups\templates\groups\groups.html.py:60
 #: .\submodules\core-hq-src\corehq\apps\users\templates\users\partial\domain_accounts.html.py:7
 msgid "Action"
-msgstr ""
+msgstr "Action"
 
 #: .\submodules\core-hq-src\corehq\apps\groups\templates\groups\groups.html.py:33
 msgid "Leave Group"
-msgstr ""
+msgstr "Quitter le groupe"
 
 #: .\submodules\core-hq-src\corehq\apps\hqadmin\templates\hqadmin\commcare_version.html.py:23
 #: .\submodules\core-hq-src\corehq\apps\prescriptions\templates\prescriptions\all.html.py:6
 msgid "Domain"
-msgstr ""
+msgstr "Domaine"
 
 #: .\submodules\core-hq-src\corehq\apps\hqadmin\templates\hqadmin\commcare_version.html.py:24
 #: .\submodules\core-hq-src\corehq\apps\reports\fields.py:219
 #: .\submodules\core-hq-src\corehq\apps\reports\templates\reports\reportdata\excel_export_data.html.py:165
 msgid "Application"
-msgstr ""
+msgstr "Application"
 
 #: .\submodules\core-hq-src\corehq\apps\hqwebapp\forms.py:9
 #: .\submodules\core-hq-src\corehq\apps\users\forms.py:91
 #: .\submodules\core-hq-src\corehq\apps\users\templates\users\web_users.html.py:79
 #: .\submodules\core-hq-src\corehq\apps\users\templates\users\web_users.html.py:121
 msgid "E-mail"
-msgstr ""
+msgstr "E-mail"
 
 #: .\submodules\core-hq-src\corehq\apps\hqwebapp\forms.py:16
 #: .\submodules\core-hq-src\corehq\apps\receiverwrapper\reports.py:58
@@ -537,7 +527,7 @@ msgstr ""
 #: .\submodules\core-hq-src\lib\django_user_registration\forms.py:35
 #: .\submodules\phonelog\phonelog\reports.py:28
 msgid "Username"
-msgstr ""
+msgstr "Utilisateur"
 
 #: .\submodules\core-hq-src\corehq\apps\hqwebapp\models.py:74
 #: .\submodules\core-hq-src\corehq\apps\hqwebapp\models.py:206
@@ -546,76 +536,76 @@ msgstr "Rapports"
 
 #: .\submodules\core-hq-src\corehq\apps\hqwebapp\models.py:84
 msgid "Project Info"
-msgstr ""
+msgstr "Informations du projet"
 
 #: .\submodules\core-hq-src\corehq\apps\hqwebapp\models.py:122
 msgid "My Applications"
-msgstr ""
+msgstr "Mes applications"
 
 #: .\submodules\core-hq-src\corehq\apps\hqwebapp\models.py:134
 msgid "RemoteApp (Advanced Users Only)"
-msgstr ""
+msgstr "RemoteApp (utilisateurs avancés seulement)"
 
 #: .\submodules\core-hq-src\corehq\apps\hqwebapp\models.py:141
 msgid "New Application..."
-msgstr ""
+msgstr "Nouvelle application..."
 
 #: .\submodules\core-hq-src\corehq\apps\hqwebapp\models.py:162
 msgid "CloudCare"
-msgstr ""
+msgstr "CloudCare"
 
 #: .\submodules\core-hq-src\corehq\apps\hqwebapp\models.py:172
 msgid "Messages"
-msgstr ""
+msgstr "Message"
 
 #: .\submodules\core-hq-src\corehq\apps\hqwebapp\models.py:182
 msgid "Settings & Users"
-msgstr ""
+msgstr "Paramètres et utilisateurs"
 
 #: .\submodules\core-hq-src\corehq\apps\hqwebapp\models.py:198
 msgid "Admin"
-msgstr ""
+msgstr "Administration"
 
 #: .\submodules\core-hq-src\corehq\apps\hqwebapp\models.py:207
 msgid "Admin Reports"
-msgstr ""
+msgstr "Rapports d'administration"
 
 #: .\submodules\core-hq-src\corehq\apps\hqwebapp\models.py:208
 msgid "System Info"
-msgstr ""
+msgstr "Informations système"
 
 #: .\submodules\core-hq-src\corehq\apps\hqwebapp\models.py:209
 msgid "Management"
-msgstr ""
+msgstr "Gestion"
 
 #: .\submodules\core-hq-src\corehq\apps\hqwebapp\models.py:210
 msgid "ADM Reports & Columns"
-msgstr ""
+msgstr "Rapports de gestion de données actives et colonnes"
 
 #: .\submodules\core-hq-src\corehq\apps\hqwebapp\models.py:216
 msgid "Billing"
-msgstr ""
+msgstr "Facturation"
 
 #: .\submodules\core-hq-src\corehq\apps\hqwebapp\models.py:222
 msgid "Django Admin"
-msgstr ""
+msgstr "Administration Django"
 
 #: .\submodules\core-hq-src\corehq\apps\hqwebapp\templates\hqwebapp\dashboard.html.py:5
 msgid "My Dashboard"
-msgstr ""
+msgstr "Mon tableau de bord"
 
 #: .\submodules\core-hq-src\corehq\apps\hqwebapp\templates\hqwebapp\dashboard.html.py:8
 msgid "Activity Dashboard"
-msgstr ""
+msgstr "Tableau de bord d'activité"
 
 #: .\submodules\core-hq-src\corehq\apps\hqwebapp\templates\hqwebapp\dashboard.html.py:16
 #: .\submodules\core-hq-src\corehq\apps\hqwebapp\templates\hqwebapp\dashboard.html.py:21
 msgid "Forms Submitted"
-msgstr ""
+msgstr "Formulaires envoyés"
 
 #: .\submodules\core-hq-src\corehq\apps\hqwebapp\templates\hqwebapp\no_permission.html.py:4
 msgid "You do not have domain permissions."
-msgstr ""
+msgstr "Vous n'avez pas les permissions de domaine."
 
 #: .\submodules\core-hq-src\corehq\apps\prescriptions\templates\prescriptions\all.html.py:4
 #: .\submodules\core-hq-src\corehq\apps\reports\templates\reports\reports_home.html.py:111
@@ -624,19 +614,19 @@ msgstr ""
 #: .\submodules\core-hq-src\corehq\apps\reports\templates\reports\reportdata\case_export_data.html.py:57
 #: .\submodules\core-hq-src\corehq\apps\reports\templates\reports\reportdata\case_export_data.html.py:73
 msgid "Edit"
-msgstr ""
+msgstr "Éditer"
 
 #: .\submodules\core-hq-src\corehq\apps\prescriptions\templates\prescriptions\all.html.py:5
 msgid "Type"
-msgstr ""
+msgstr "Type"
 
 #: .\submodules\core-hq-src\corehq\apps\prescriptions\templates\prescriptions\all.html.py:7
 msgid "Start"
-msgstr ""
+msgstr "Démarrer"
 
 #: .\submodules\core-hq-src\corehq\apps\prescriptions\templates\prescriptions\all.html.py:8
 msgid "End"
-msgstr ""
+msgstr "Fin"
 
 #: .\submodules\core-hq-src\corehq\apps\prescriptions\templates\prescriptions\all.html.py:9
 #: .\submodules\core-hq-src\corehq\apps\reports\templates\reports\reports_home.html.py:127
@@ -645,81 +635,76 @@ msgstr ""
 #: .\submodules\core-hq-src\corehq\apps\reports\templates\reports\reportdata\case_export_data.html.py:59
 #: .\submodules\core-hq-src\corehq\apps\reports\templates\reports\reportdata\case_export_data.html.py:81
 msgid "Delete"
-msgstr ""
+msgstr "Supprimer"
 
 #: .\submodules\core-hq-src\corehq\apps\receiverwrapper\reports.py:47
 msgid "Raw Forms, Errors & Duplicates"
-msgstr ""
+msgstr "Formulaires à l'état brut, erreurs et doublons"
 
 #: .\submodules\core-hq-src\corehq\apps\receiverwrapper\reports.py:57
 #: .\submodules\core-hq-src\corehq\apps\receiverwrapper\reports.py:113
 #: .\submodules\core-hq-src\corehq\apps\reports\standard\inspect.py:57
 #: .\submodules\core-hq-src\corehq\apps\reports\standard\inspect.py:93
 msgid "View Form"
-msgstr ""
+msgstr "Afficher le formulaire"
 
 #: .\submodules\core-hq-src\corehq\apps\receiverwrapper\reports.py:59
 #: .\submodules\core-hq-src\corehq\apps\reports\standard\inspect.py:59
 msgid "Submit Time"
-msgstr ""
+msgstr "Envoyer l'heure"
 
 #: .\submodules\core-hq-src\corehq\apps\receiverwrapper\reports.py:60
 #: .\submodules\core-hq-src\corehq\apps\reports\fields.py:196
 msgid "Form Type"
-msgstr "Type de Formulaire"
+msgstr "Type de formulaire"
 
 #: .\submodules\core-hq-src\corehq\apps\receiverwrapper\reports.py:61
-#, fuzzy
 msgid "Error Type"
-msgstr "Type de Formulaire"
+msgstr "Type d'erreur"
 
 #: .\submodules\core-hq-src\corehq\apps\receiverwrapper\reports.py:62
 msgid "Error Message"
-msgstr ""
+msgstr "Message d'erreur"
 
 #: .\submodules\core-hq-src\corehq\apps\receiverwrapper\reports.py:103
 msgid "No Error"
-msgstr ""
+msgstr "Aucune erreur"
 
 #: .\submodules\core-hq-src\corehq\apps\receiverwrapper\reports.py:104
-#, fuzzy
 msgid "No User"
-msgstr "Utilisateurs"
+msgstr "Aucun utilisateur"
 
 #: .\submodules\core-hq-src\corehq\apps\receiverwrapper\reports.py:105
 msgid "Unknown Form"
-msgstr ""
+msgstr "Formulaire inconnu"
 
 #: .\submodules\core-hq-src\corehq\apps\reports\__init__.py:8
 msgid "Monitor Workers"
-msgstr "Travailleurs du Moniteur"
+msgstr "Contrôler les travailleurs"
 
 #: .\submodules\core-hq-src\corehq\apps\reports\__init__.py:9
-#, fuzzy
 msgid "Inspect Data"
-msgstr "Gérer les Données"
+msgstr "Inspecter les données"
 
 #: .\submodules\core-hq-src\corehq\apps\reports\__init__.py:10
-#, fuzzy
 msgid "Raw Data"
-msgstr "Gérer les Données"
+msgstr "Données brutes"
 
 #: .\submodules\core-hq-src\corehq\apps\reports\__init__.py:11
-#, fuzzy
 msgid "Manage Deployments"
-msgstr "Gérer les Données"
+msgstr "Gérer les déploiements"
 
 #: .\submodules\core-hq-src\corehq\apps\reports\__init__.py:12
 msgid "Commtrack"
-msgstr ""
+msgstr "Commtrack"
 
 #: .\submodules\core-hq-src\corehq\apps\reports\fields.py:52
 msgid "Generic Select"
-msgstr ""
+msgstr "Sélectionner le générique"
 
 #: .\submodules\core-hq-src\corehq\apps\reports\fields.py:53
 msgid "Select Something..."
-msgstr ""
+msgstr "Sélectionnez quelque chose..."
 
 #: .\submodules\core-hq-src\corehq\apps\reports\fields.py:95
 #: .\submodules\core-hq-src\corehq\apps\reports\templates\reports\fields\select_mobile_worker.html.py:7
@@ -728,226 +713,219 @@ msgstr "Groupe"
 
 #: .\submodules\core-hq-src\corehq\apps\reports\fields.py:96
 msgid "Everybody"
-msgstr ""
+msgstr "Tout le monde"
 
 #: .\submodules\core-hq-src\corehq\apps\reports\fields.py:105
 msgid "Reporting Group"
-msgstr ""
+msgstr "Groupe de reporting"
 
 #: .\submodules\core-hq-src\corehq\apps\reports\fields.py:106
 msgid "All Groups"
-msgstr ""
+msgstr "Tous les groupes"
 
 #: .\submodules\core-hq-src\corehq\apps\reports\fields.py:150
 #: .\submodules\core-hq-src\corehq\apps\reports\standard\inspect.py:331
 #: .\submodules\core-hq-src\corehq\apps\reports\templates\reports\fields\case_type.html.py:2
 #: .\submodules\core-hq-src\corehq\apps\reports\templates\reports\reportdata\case_export_data.html.py:99
 msgid "Case Type"
-msgstr ""
+msgstr "Type de cas"
 
 #: .\submodules\core-hq-src\corehq\apps\reports\fields.py:159
 msgid "All Case Types"
-msgstr ""
+msgstr "Tous les types de cas"
 
 #: .\submodules\core-hq-src\corehq\apps\reports\fields.py:199
 msgid "Select a Form"
-msgstr ""
+msgstr "Sélectionnez un formulaire"
 
 #: .\submodules\core-hq-src\corehq\apps\reports\fields.py:206
 msgid "Show All Forms"
-msgstr ""
+msgstr "Afficher tous les formulaires"
 
 #: .\submodules\core-hq-src\corehq\apps\reports\fields.py:210
 msgid "Opened / Closed"
-msgstr ""
+msgstr "Ouvert/fermé"
 
 #: .\submodules\core-hq-src\corehq\apps\reports\fields.py:214
 msgid "Only Open"
-msgstr ""
+msgstr "Ouvert seulement"
 
 #: .\submodules\core-hq-src\corehq\apps\reports\fields.py:215
 msgid "Only Closed"
-msgstr ""
+msgstr "Fermé seulement"
 
 #: .\submodules\core-hq-src\corehq\apps\reports\fields.py:222
 msgid "Select Application [Latest Build Version]"
-msgstr ""
+msgstr "Sélectionnez une application [dernière version]"
 
 #: .\submodules\core-hq-src\corehq\apps\reports\fields.py:230
-#, python-format
 msgid "%(name)s [up to build %(version)s]"
-msgstr ""
+msgstr "%(name)s [jusqu'à %(version)s versions]"
 
 #: .\submodules\core-hq-src\corehq\apps\reports\fields.py:239
 msgid "Organization"
-msgstr ""
+msgstr "Organisation"
 
 #: .\submodules\core-hq-src\corehq\apps\reports\fields.py:242
 msgid "All Organizations"
-msgstr ""
+msgstr "Toutes les organisations"
 
 #: .\submodules\core-hq-src\corehq\apps\reports\fields.py:254
 msgid "All Categories"
-msgstr ""
+msgstr "Toutes les catégories"
 
 #: .\submodules\core-hq-src\corehq\apps\reports\fields.py:269
 msgid "All Licenses"
-msgstr ""
+msgstr "Toutes les licences"
 
 #: .\submodules\core-hq-src\corehq\apps\reports\fields.py:278
 msgid "Region"
-msgstr ""
+msgstr "Région"
 
 #: .\submodules\core-hq-src\corehq\apps\reports\fields.py:281
 msgid "All Regions"
-msgstr ""
+msgstr "Toutes les régions"
 
 #: .\submodules\core-hq-src\corehq\apps\reports\fields.py:295
 #: .\submodules\core-hq-src\corehq\apps\reports\fields.py:337
 msgid "Select Mobile Worker"
-msgstr "Sélectionnez Travailleur Mobile"
+msgstr "Sélectionnez un travailleur mobile"
 
 #: .\submodules\core-hq-src\corehq\apps\reports\fields.py:296
-#, fuzzy
 msgid "All Mobile Workers"
-msgstr "Travailleurs du Moniteur"
+msgstr "Tous les travailleurs mobiles"
 
 #: .\submodules\core-hq-src\corehq\apps\reports\fields.py:319
-#, python-format
 msgid "%s & Others"
-msgstr ""
+msgstr "% S et autres"
 
 #: .\submodules\core-hq-src\corehq\apps\reports\fields.py:323
 msgid "Select Case Owner"
-msgstr ""
+msgstr "Sélectionnez le propriétaire de cas"
 
 #: .\submodules\core-hq-src\corehq\apps\reports\fields.py:324
 msgid "All Case Owners"
-msgstr ""
+msgstr "Tous les propriétaires de cas"
 
 #: .\submodules\core-hq-src\corehq\apps\reports\fields.py:339
 msgid "Showing All Mobile Workers..."
-msgstr ""
+msgstr "Affichage de tous les travailleurs mobiles..."
 
 #: .\submodules\core-hq-src\corehq\apps\reports\fields.py:352
-#, python-format
 msgid "Only %s Mobile Workers"
-msgstr ""
+msgstr "Seulement %s travailleurs mobiles"
 
 #: .\submodules\core-hq-src\corehq\apps\reports\fields.py:368
 #: .\submodules\core-hq-src\corehq\apps\reports\templates\reports\reports_home.html.py:37
 msgid "Date Range"
-msgstr "Plage de Dates"
+msgstr "Plage de dates"
 
 #: .\submodules\core-hq-src\corehq\apps\reports\fields.py:382
 msgid "Location"
-msgstr ""
+msgstr "Emplacement"
 
 #: .\submodules\core-hq-src\corehq\apps\reports\fields.py:447
 msgid "Filter Logs by Username"
-msgstr ""
+msgstr "Filtrer les journaux par nom d'utilisateur"
 
 #: .\submodules\core-hq-src\corehq\apps\reports\fields.py:452
 msgid "Filter Logs by Device"
-msgstr ""
+msgstr "Filtrer les journaux par périphérique"
 
 #: .\submodules\core-hq-src\corehq\apps\reports\models.py:29
 msgid "demo_user"
-msgstr ""
+msgstr "demo_user"
 
 #: .\submodules\core-hq-src\corehq\apps\reports\models.py:30
 msgid "admin"
-msgstr ""
+msgstr "administrateur"
 
 #: .\submodules\core-hq-src\corehq\apps\reports\models.py:31
 msgid "Unknown Users"
-msgstr ""
+msgstr "Utilisateurs inconnus"
 
 #: .\submodules\core-hq-src\corehq\apps\reports\standard\__init__.py:16
 #: .\submodules\core-hq-src\corehq\apps\reports\templates\reports\base_template.html.py:48
 msgid "Project Reports"
-msgstr "Rapports de Projets"
+msgstr "Rapports de projet"
 
 #: .\submodules\core-hq-src\corehq\apps\reports\standard\deployments.py:18
 msgid "Application Status"
-msgstr ""
+msgstr "État de l'application"
 
 #: .\submodules\core-hq-src\corehq\apps\reports\standard\deployments.py:27
 msgid "Last Seen"
-msgstr ""
+msgstr "Dernière visite"
 
 #: .\submodules\core-hq-src\corehq\apps\reports\standard\deployments.py:28
 msgid "CommCare Version"
-msgstr ""
+msgstr "Version de CommCare"
 
 #: .\submodules\core-hq-src\corehq\apps\reports\standard\deployments.py:29
 msgid "Application [Deployed Build]"
-msgstr ""
+msgstr "Application [Version installée]"
 
 #: .\submodules\core-hq-src\corehq\apps\reports\standard\deployments.py:35
 msgid "unknown"
-msgstr ""
+msgstr "inconnu"
 
 #: .\submodules\core-hq-src\corehq\apps\reports\standard\deployments.py:37
 msgid "Never"
-msgstr ""
+msgstr "Jamais"
 
 #: .\submodules\core-hq-src\corehq\apps\reports\standard\deployments.py:62
 msgid "2.0 Remote"
-msgstr ""
+msgstr "2.0 à distance"
 
 #: .\submodules\core-hq-src\corehq\apps\reports\standard\inspect.py:52
 msgid "Submit History"
-msgstr ""
+msgstr "Envoyer l'historique"
 
 #: .\submodules\core-hq-src\corehq\apps\reports\standard\inspect.py:60
 #: .\submodules\core-hq-src\corehq\apps\reports\templates\reports\reportdata\excel_export_data.html.py:167
-#, fuzzy
 msgid "Form"
-msgstr "Type de Formulaire"
+msgstr "Formulaire"
 
 #: .\submodules\core-hq-src\corehq\apps\reports\standard\inspect.py:143
-#, python-format
 msgid "Unknown [%s]"
-msgstr ""
+msgstr "Inconnu [%s]"
 
 #: .\submodules\core-hq-src\corehq\apps\reports\standard\inspect.py:231
 msgid "No data"
-msgstr ""
+msgstr "Aucune donnée"
 
 #: .\submodules\core-hq-src\corehq\apps\reports\standard\inspect.py:312
 msgid "Case List"
-msgstr ""
+msgstr "Liste des cas"
 
 #: .\submodules\core-hq-src\corehq\apps\reports\standard\inspect.py:333
 msgid "Owner"
-msgstr ""
+msgstr "Propriétaire"
 
 #: .\submodules\core-hq-src\corehq\apps\reports\standard\inspect.py:334
 msgid "Created Date"
-msgstr ""
+msgstr "Date de création"
 
 #: .\submodules\core-hq-src\corehq\apps\reports\standard\inspect.py:335
 msgid "Created By"
-msgstr ""
+msgstr "Créé par "
 
 #: .\submodules\core-hq-src\corehq\apps\reports\standard\inspect.py:336
 msgid "Modified Date"
-msgstr ""
+msgstr "Date de modification"
 
 #: .\submodules\core-hq-src\corehq\apps\reports\standard\inspect.py:341
-#, python-format
 msgid "%(report_name)s for %(worker_type)s"
-msgstr ""
+msgstr "%(report_name)s for %(worker_type)s"
 
 #: .\submodules\core-hq-src\corehq\apps\reports\standard\inspect.py:451
 msgid "Maps"
-msgstr ""
+msgstr "Cartes"
 
 #: .\submodules\core-hq-src\corehq\apps\reports\standard\monitoring.py:80
 #: .\submodules\core-hq-src\corehq\apps\reports\standard\monitoring.py:260
 msgid "Case Activity"
-msgstr "Activité Cas"
+msgstr "Activité du cas"
 
 #: .\submodules\core-hq-src\corehq\apps\reports\standard\monitoring.py:192
 msgid "Users"
@@ -955,173 +933,165 @@ msgstr "Utilisateurs"
 
 #: .\submodules\core-hq-src\corehq\apps\reports\standard\monitoring.py:195
 #: .\submodules\core-hq-src\corehq\apps\reports\standard\monitoring.py:302
-#, python-format
 msgid "Last %s Days"
-msgstr ""
+msgstr "%s derniers jours"
 
 #: .\submodules\core-hq-src\corehq\apps\reports\standard\monitoring.py:195
 #: .\submodules\core-hq-src\corehq\apps\reports\standard\monitoring.py:302
 msgid "Ever"
-msgstr ""
+msgstr "Toujours"
 
 #: .\submodules\core-hq-src\corehq\apps\reports\standard\monitoring.py:197
-#, python-format
 msgid "Number of cases modified (or closed) in the last %s days"
-msgstr ""
+msgstr "Nombre de cas modifiés (ou fermés) durant les %s derniers jours"
 
 #: .\submodules\core-hq-src\corehq\apps\reports\standard\monitoring.py:200
 #: .\submodules\core-hq-src\corehq\apps\reports\standard\monitoring.py:307
-#, python-format
 msgid "Number of cases modified in the last %s days that are still open"
-msgstr ""
+msgstr "Nombre de cas modifiés durant les %s derniers jours qui sont encore ouverts"
 
 #: .\submodules\core-hq-src\corehq\apps\reports\standard\monitoring.py:201
 #: .\submodules\core-hq-src\corehq\apps\reports\standard\monitoring.py:311
 msgid "Inactive Cases"
-msgstr ""
+msgstr "Cas inactifs"
 
 #: .\submodules\core-hq-src\corehq\apps\reports\standard\monitoring.py:203
 #: .\submodules\core-hq-src\corehq\apps\reports\standard\monitoring.py:313
-#, python-format
-msgid ""
-"Number of cases that are open but haven't been touched in the last %s days"
-msgstr ""
+msgid "Number of cases that are open but haven't been touched in the last %s days"
+msgstr "Nombre de cas qui sont ouverts mais qui n'ont pas été touchés de durant les  %s derniers jours"
 
 #: .\submodules\core-hq-src\corehq\apps\reports\standard\monitoring.py:209
 #: .\submodules\core-hq-src\corehq\apps\reports\standard\monitoring.py:357
 #: .\submodules\core-hq-src\corehq\apps\reports\standard\monitoring.py:439
 #: .\submodules\core-hq-src\corehq\apps\reports\standard\monitoring.py:558
 msgid "All Users"
-msgstr ""
+msgstr "Tous les utilisateurs"
 
 #: .\submodules\core-hq-src\corehq\apps\reports\standard\monitoring.py:300
 #: .\submodules\core-hq-src\corehq\apps\reports\standard\monitoring.py:413
 #: .\submodules\core-hq-src\corehq\apps\reports\standard\monitoring.py:591
 #: .\submodules\core-hq-src\corehq\apps\reports\standard\monitoring.py:650
 msgid "User"
-msgstr ""
+msgstr "Utilisateur"
 
 #: .\submodules\core-hq-src\corehq\apps\reports\standard\monitoring.py:304
-#, python-format
 msgid "Number of cases modified or closed in the last %s days"
-msgstr ""
+msgstr "Nombre de cas modifiés ou fermés durant les %s derniers jours"
 
 #: .\submodules\core-hq-src\corehq\apps\reports\standard\monitoring.py:310
-#, python-format
 msgid "Number of cases closed in the last %s days"
-msgstr ""
+msgstr "Nombre de cas fermés durant les %s derniers jours"
 
 #: .\submodules\core-hq-src\corehq\apps\reports\standard\monitoring.py:377
 msgid "Submissions By Form"
-msgstr ""
+msgstr "Soumissions par formulaire"
 
 #: .\submodules\core-hq-src\corehq\apps\reports\standard\monitoring.py:408
 msgid "(No name)"
-msgstr ""
+msgstr "(Sans nom)"
 
 #: .\submodules\core-hq-src\corehq\apps\reports\standard\monitoring.py:416
 msgid "All Forms"
-msgstr ""
+msgstr "Tous les formulaires"
 
 #: .\submodules\core-hq-src\corehq\apps\reports\standard\monitoring.py:515
 msgid "Total"
-msgstr ""
+msgstr "Total"
 
 #: .\submodules\core-hq-src\corehq\apps\reports\standard\monitoring.py:567
 msgid "Daily Form Submissions"
-msgstr ""
+msgstr "Soumissions quotidiennes de formulaires"
 
 #: .\submodules\core-hq-src\corehq\apps\reports\standard\monitoring.py:574
 msgid "Daily Form Completions"
-msgstr ""
+msgstr "Saisies quotidiennes des formulaires"
 
 #: .\submodules\core-hq-src\corehq\apps\reports\standard\monitoring.py:582
 msgid "Form Completion Trends"
-msgstr ""
+msgstr "Tendances de remplissage des formulaires"
 
 #: .\submodules\core-hq-src\corehq\apps\reports\standard\monitoring.py:592
 msgid "Average duration"
-msgstr ""
+msgstr "Durée moyenne"
 
 #: .\submodules\core-hq-src\corehq\apps\reports\standard\monitoring.py:593
 msgid "Shortest"
-msgstr ""
+msgstr "Plus courte"
 
 #: .\submodules\core-hq-src\corehq\apps\reports\standard\monitoring.py:594
 msgid "Longest"
-msgstr ""
+msgstr "Plus longue"
 
 #: .\submodules\core-hq-src\corehq\apps\reports\standard\monitoring.py:595
 msgid "No. of Forms"
-msgstr ""
+msgstr "Nombre de formulaires"
 
 #: .\submodules\core-hq-src\corehq\apps\reports\standard\monitoring.py:639
 msgid "Form Completion vs. Submission Trends"
-msgstr ""
+msgstr "Remplissage de formulaires en fonction des tendances de soumission"
 
 #: .\submodules\core-hq-src\corehq\apps\reports\standard\monitoring.py:651
 msgid "Completion Time"
-msgstr ""
+msgstr "Temps de remplissage"
 
 #: .\submodules\core-hq-src\corehq\apps\reports\standard\monitoring.py:652
 msgid "Submission Time"
-msgstr ""
+msgstr "Temps de soumission"
 
 #: .\submodules\core-hq-src\corehq\apps\reports\standard\monitoring.py:653
 #: .\submodules\core-hq-src\corehq\apps\reports\templates\reports\reports_home.html.py:117
 msgid "View"
-msgstr ""
+msgstr "Affichage"
 
 #: .\submodules\core-hq-src\corehq\apps\reports\standard\monitoring.py:654
 msgid "Difference"
-msgstr ""
+msgstr "Différence"
 
 #: .\submodules\core-hq-src\corehq\apps\reports\standard\monitoring.py:699
 msgid "Average"
-msgstr ""
+msgstr "Moyenne"
 
 #: .\submodules\core-hq-src\corehq\apps\reports\standard\monitoring.py:718
 msgid "day"
-msgstr ""
+msgstr "jour"
 
 #: .\submodules\core-hq-src\corehq\apps\reports\standard\monitoring.py:718
 msgid "hour"
-msgstr ""
+msgstr "heure"
 
 #: .\submodules\core-hq-src\corehq\apps\reports\standard\monitoring.py:718
 msgid "minute"
-msgstr ""
+msgstr "minute"
 
 #: .\submodules\core-hq-src\corehq\apps\reports\standard\monitoring.py:718
 msgid "second"
-msgstr ""
+msgstr "seconde"
 
 #: .\submodules\core-hq-src\corehq\apps\reports\standard\monitoring.py:730
 msgid "submitted before completed [strange]"
-msgstr ""
+msgstr "envoyé avant la saisie complète [étrange]"
 
 #: .\submodules\core-hq-src\corehq\apps\reports\standard\monitoring.py:744
 #: .\submodules\core-hq-src\corehq\apps\reports\templates\reports\partials\punchcard.html.py:5
 msgid "Submission Times"
-msgstr ""
+msgstr "Temps de soumission"
 
 #: .\submodules\core-hq-src\corehq\apps\reports\standard\monitoring.py:826
 msgid "Submit Distribution"
-msgstr ""
+msgstr "Envoyer la distribution"
 
 #: .\submodules\core-hq-src\corehq\apps\reports\standard\monitoring.py:848
-#, python-format
 msgid "(%(amt)s) submissions of %(form)s"
-msgstr ""
+msgstr "(%(amt)s) soumissions de %(form)s"
 
 #: .\submodules\core-hq-src\corehq\apps\reports\templates\reports\base_template.html.py:60
 msgid "Generating Report..."
-msgstr ""
+msgstr "Génération du rapport..."
 
 #: .\submodules\core-hq-src\corehq\apps\reports\templates\reports\base_template.html.py:61
 #: .\submodules\core-hq-src\corehq\apps\reports\templates\reports\base_template.html.py:62
 msgid "Apply"
-msgstr ""
+msgstr "Appliquer"
 
 #: .\submodules\core-hq-src\corehq\apps\reports\templates\reports\base_template.html.py:67
 msgid "Favorites"
@@ -1129,662 +1099,628 @@ msgstr "Favoris"
 
 #: .\submodules\core-hq-src\corehq\apps\reports\templates\reports\base_template.html.py:72
 msgid "You don't have any favorites"
-msgstr ""
+msgstr "Vous n'avez pas de favoris"
 
 #: .\submodules\core-hq-src\corehq\apps\reports\templates\reports\base_template.html.py:85
 msgid "Save"
-msgstr ""
+msgstr "Enregistrer"
 
 #: .\submodules\core-hq-src\corehq\apps\reports\templates\reports\base_template.html.py:90
 msgid "Email Supported"
-msgstr ""
+msgstr "E-mail pris en charge"
 
 #: .\submodules\core-hq-src\corehq\apps\reports\templates\reports\base_template.html.py:120
 msgid "Default Date Range"
-msgstr ""
+msgstr "Plage de dates par défaut"
 
 #: .\submodules\core-hq-src\corehq\apps\reports\templates\reports\base_template.html.py:123
 msgid "Last 7 days"
-msgstr ""
+msgstr "7 derniers jours"
 
 #: .\submodules\core-hq-src\corehq\apps\reports\templates\reports\base_template.html.py:124
 msgid "Last 30 days"
-msgstr ""
+msgstr "30 derniers jours"
 
 #: .\submodules\core-hq-src\corehq\apps\reports\templates\reports\base_template.html.py:125
 msgid "Days ago"
-msgstr ""
+msgstr "jours"
 
 #: .\submodules\core-hq-src\corehq\apps\reports\templates\reports\base_template.html.py:126
 msgid "Since a date"
-msgstr ""
+msgstr "Depuis une date"
 
 #: .\submodules\core-hq-src\corehq\apps\reports\templates\reports\base_template.html.py:127
 msgid "From a date to a date"
-msgstr ""
+msgstr "Depuis une date à une autre"
 
 #: .\submodules\core-hq-src\corehq\apps\reports\templates\reports\base_template.html.py:132
 msgid "Number of Days"
-msgstr ""
+msgstr "Nombre de jours"
 
 #: .\submodules\core-hq-src\corehq\apps\reports\templates\reports\base_template.html.py:138
 msgid "Begin Date"
-msgstr ""
+msgstr "Date de début"
 
 #: .\submodules\core-hq-src\corehq\apps\reports\templates\reports\base_template.html.py:142
 #: .\submodules\core-hq-src\corehq\apps\reports\templates\reports\base_template.html.py:151
 msgid "YYYY-MM-DD"
-msgstr ""
+msgstr "AAAA-MM-JJ"
 
 #: .\submodules\core-hq-src\corehq\apps\reports\templates\reports\base_template.html.py:147
 msgid "End Date"
-msgstr ""
+msgstr "Date de fin"
 
 #: .\submodules\core-hq-src\corehq\apps\reports\templates\reports\reports_home.html.py:20
-#, fuzzy
 msgid "My Saved Reports"
-msgstr "Rapports"
+msgstr "Mes rapports enregistrés"
 
 #: .\submodules\core-hq-src\corehq\apps\reports\templates\reports\reports_home.html.py:21
 msgid "My Scheduled Reports"
-msgstr ""
+msgstr "Mes rapports planifiés"
 
 #: .\submodules\core-hq-src\corehq\apps\reports\templates\reports\reports_home.html.py:27
-msgid ""
-"You don't have any saved reports.  You can store your favorite filters in a "
-"saved report and then easily navigate to that report with the filters "
-"already applied.  Saved reports can also be sent by email on a recurring "
-"basis."
-msgstr ""
+msgid "You don't have any saved reports.  You can store your favorite filters in a saved report and then easily navigate to that report with the filters already applied.  Saved reports can also be sent by email on a recurring basis."
+msgstr "Vous n'avez enregistré aucun rapport.  Vous pouvez stocker vos filtres préférés dans un rapport enregistré, puis naviguer facilement vers ce rapport avec les filtres déjà appliqués.  Les rapports enregistrés peuvent également être envoyés par courriel sur une base récurrente."
 
 #: .\submodules\core-hq-src\corehq\apps\reports\templates\reports\reports_home.html.py:29
-msgid ""
-"To create a new saved report, navigate to a report, select the filters you "
-"want to save, and click \\"
-msgstr ""
+msgid "To create a new saved report, navigate to a report, select the filters you want to save, and click \\"
+msgstr "Pour créer un nouveau rapport enregistré, accédez à un rapport, sélectionnez les filtres que vous souhaitez enregistrer, puis cliquez sur  \\"
 
 #: .\submodules\core-hq-src\corehq\apps\reports\templates\reports\reports_home.html.py:34
-#, fuzzy
 msgid "Report"
-msgstr "Rapports"
+msgstr "Rapport"
 
 #: .\submodules\core-hq-src\corehq\apps\reports\templates\reports\reports_home.html.py:35
 msgid "Saved Report Name"
-msgstr ""
+msgstr "Nom du rapport enregistré"
 
 #: .\submodules\core-hq-src\corehq\apps\reports\templates\reports\reports_home.html.py:68
 msgid "Saved Reports"
-msgstr ""
+msgstr "Rapports enregistrés"
 
 #: .\submodules\core-hq-src\corehq\apps\reports\templates\reports\reports_home.html.py:69
 msgid "Day and Time"
-msgstr ""
+msgstr "Date et heure"
 
 #: .\submodules\core-hq-src\corehq\apps\reports\templates\reports\reports_home.html.py:70
 msgid "Recipients"
-msgstr ""
+msgstr "Destinataires"
 
 #: .\submodules\core-hq-src\corehq\apps\reports\templates\reports\reports_home.html.py:71
 msgid "Actions"
-msgstr ""
+msgstr "Actions"
 
 #: .\submodules\core-hq-src\corehq\apps\reports\templates\reports\reports_home.html.py:121
 msgid "Send Test"
-msgstr ""
+msgstr "Test d'envoi"
 
 #: .\submodules\core-hq-src\corehq\apps\reports\templates\reports\reports_home.html.py:134
 msgid "Stop sending report?"
-msgstr ""
+msgstr "Arrêter d'envoyer le rapport ?"
 
 #: .\submodules\core-hq-src\corehq\apps\reports\templates\reports\reports_home.html.py:138
 msgid "Are you sure you want to stop sending this report?"
-msgstr ""
+msgstr "Êtes-vous sûr de vouloir arrêter d'envoyer de ce rapport?"
 
 #: .\submodules\core-hq-src\corehq\apps\reports\templates\reports\reports_home.html.py:142
 msgid "Stop Sending"
-msgstr ""
+msgstr "Arrêter d'envoyer"
 
 #: .\submodules\core-hq-src\corehq\apps\reports\templates\reports\reports_home.html.py:156
-msgid ""
-"You don't have any scheduled reports.  You can create a scheduled report "
-"based on a saved report to have a report delivered by email on a regular "
-"basis."
-msgstr ""
+msgid "You don't have any scheduled reports.  You can create a scheduled report based on a saved report to have a report delivered by email on a regular basis."
+msgstr "Vous n'avez planifié aucun rapport.  Vous pouvez créer un rapport planifié en vous basant sur un rapport enregistré afin d'envoyer un rapport régulièrement par courriel."
 
 #: .\submodules\core-hq-src\corehq\apps\reports\templates\reports\async\default.html.py:9
-#, fuzzy
 msgid "Loading Report"
-msgstr "Rapports"
+msgstr "Chargement du rapport"
 
 #: .\submodules\core-hq-src\corehq\apps\reports\templates\reports\async\filters.html.py:4
-#, fuzzy
 msgid "Report Filters"
-msgstr "Rapports"
+msgstr "Filtres du rapport"
 
 #: .\submodules\core-hq-src\corehq\apps\reports\templates\reports\async\tabular.html.py:9
 msgid "Please choose your filters above to see report data."
-msgstr ""
+msgstr "Veuillez choisir vos filtres ci-dessus pour voir les données de rapport."
 
 #: .\submodules\core-hq-src\corehq\apps\reports\templates\reports\async\tabular.html.py:35
 msgid "Fetching additional data, please wait..."
-msgstr ""
+msgstr "Obtention de données supplémentaires, veuillez patienter..."
 
 #: .\submodules\core-hq-src\corehq\apps\reports\templates\reports\dialogs\delete_custom_export_dialog.html.py:5
 msgid "Delete Export for"
-msgstr ""
+msgstr "Supprimer l'exportation pour"
 
 #: .\submodules\core-hq-src\corehq\apps\reports\templates\reports\dialogs\delete_custom_export_dialog.html.py:9
 msgid "Are you sure you want to delete this export?"
-msgstr ""
+msgstr "Voulez-vous vraiment supprimer cette exportation ?"
 
 #: .\submodules\core-hq-src\corehq\apps\reports\templates\reports\dialogs\delete_custom_export_dialog.html.py:13
 #: .\submodules\core-hq-src\corehq\apps\reports\templates\reports\partials\export_download_modal.html.py:15
 msgid "Close"
-msgstr ""
+msgstr "Fermer"
 
 #: .\submodules\core-hq-src\corehq\apps\reports\templates\reports\fields\case_type.html.py:6
 msgid "ugettext_noop"
-msgstr ""
+msgstr "ugettext_noop"
 
 #: .\submodules\core-hq-src\corehq\apps\reports\templates\reports\fields\case_type.html.py:6
 #: .\submodules\core-hq-src\corehq\apps\reports\templates\reports\fields\case_type.html.py:9
 msgid "open"
-msgstr ""
+msgstr "ouvrir"
 
 #: .\submodules\core-hq-src\corehq\apps\reports\templates\reports\fields\datespan.html.py:4
 msgid "From"
-msgstr ""
+msgstr "De"
 
 #: .\submodules\core-hq-src\corehq\apps\reports\templates\reports\fields\datespan.html.py:6
 msgid "To"
-msgstr ""
+msgstr "À "
 
 #: .\submodules\core-hq-src\corehq\apps\reports\templates\reports\fields\datespan.html.py:9
 msgid "This report's timezone is in"
-msgstr ""
+msgstr "Le fuseau horaire de ce rapport est"
 
 #: .\submodules\core-hq-src\corehq\apps\reports\templates\reports\fields\datespan.html.py:9
 msgid "Showing"
-msgstr ""
+msgstr "Affichage"
 
 #: .\submodules\core-hq-src\corehq\apps\reports\templates\reports\fields\filter_users.html.py:3
 msgid "User Type"
-msgstr ""
+msgstr "Type d'utilisateur"
 
 #: .\submodules\core-hq-src\corehq\apps\reports\templates\reports\fields\filter_users.html.py:20
 msgid "Only"
-msgstr ""
+msgstr "Seulement"
 
 #: .\submodules\core-hq-src\corehq\apps\reports\templates\reports\partials\bulk_export_notice.html.py:5
 msgid "Bulk Download of"
-msgstr ""
+msgstr "Téléchargement de masse de"
 
 #: .\submodules\core-hq-src\corehq\apps\reports\templates\reports\partials\export_download_modal.html.py:6
 msgid "Downloading Export Data for"
-msgstr ""
+msgstr "Téléchargement des données d'exportation pour"
 
 #: .\submodules\core-hq-src\corehq\apps\reports\templates\reports\partials\export_download_modal.html.py:10
 msgid "Processing data, please wait"
-msgstr ""
+msgstr "Traitement des données en cours, veuillez patienter"
 
 #: .\submodules\core-hq-src\corehq\apps\reports\templates\reports\partials\form_name.html.py:3
 msgid "User Registration"
-msgstr ""
+msgstr "Enregistrement d'utilisateur"
 
 #: .\submodules\core-hq-src\corehq\apps\reports\templates\reports\partials\generic_piechart.html.py:62
 msgid "Hover over a slice below for more information."
-msgstr ""
+msgstr "Descendre un peu plus bas pour plus d'informations."
 
 #: .\submodules\core-hq-src\corehq\apps\reports\templates\reports\partials\generic_piechart.html.py:62
 msgid "No data is available. Please submit more forms!"
-msgstr ""
+msgstr "Aucune donnée n'est disponible. Veuillez envoyer plus de formulaires"
 
 #: .\submodules\core-hq-src\corehq\apps\reports\templates\reports\partials\hqexport_group_table.html.py:6
 msgid "File"
-msgstr ""
+msgstr "Fichier"
 
 #: .\submodules\core-hq-src\corehq\apps\reports\templates\reports\partials\hqexport_group_table.html.py:7
 msgid "Last Updated"
-msgstr ""
+msgstr "Dernière mise à jour"
 
 #: .\submodules\core-hq-src\corehq\apps\reports\templates\reports\partials\hqexport_group_table.html.py:8
 msgid "Size"
-msgstr ""
+msgstr "Taille"
 
 #: .\submodules\core-hq-src\corehq\apps\reports\templates\reports\partials\hqexport_group_table.html.py:20
 #: .\submodules\core-hq-src\corehq\apps\reports\templates\reports\partials\hqexport_group_table.html.py:21
 msgid "N/A"
-msgstr ""
+msgstr "Non applicable"
 
 #: .\submodules\core-hq-src\corehq\apps\reports\templates\reports\partials\punchcard.html.py:5
 msgid "Hour vs. Weekday"
-msgstr ""
+msgstr "Heures en fonction des jours de la semaine"
 
 #: .\submodules\core-hq-src\corehq\apps\reports\templates\reports\partials\punchcard.html.py:9
 msgid "No data available."
-msgstr ""
+msgstr "Aucune donnée n'est disponible."
 
 #: .\submodules\core-hq-src\corehq\apps\reports\templates\reports\partials\saved_custom_exports.html.py:6
 #: .\submodules\core-hq-src\corehq\apps\reports\templates\reports\reportdata\case_export_data.html.py:56
 msgid "Preview"
-msgstr ""
+msgstr "Aperçu"
 
 #: .\submodules\core-hq-src\corehq\apps\reports\templates\reports\partials\saved_custom_exports.html.py:12
 msgid "Add to Custom Bulk Export"
-msgstr ""
+msgstr "Ajouter à l'exportation en bloc personnalisée"
 
 #: .\submodules\core-hq-src\corehq\apps\reports\templates\reports\partials\saved_custom_exports.html.py:14
 #: .\submodules\core-hq-src\corehq\apps\reports\templates\reports\reportdata\excel_export_data.html.py:174
 msgid "Select"
-msgstr ""
+msgstr "Sélectionner"
 
 #: .\submodules\core-hq-src\corehq\apps\reports\templates\reports\partials\saved_custom_exports.html.py:15
 #: .\submodules\core-hq-src\corehq\apps\reports\templates\reports\reportdata\case_export_data.html.py:36
 #: .\submodules\core-hq-src\corehq\apps\reports\templates\reports\reportdata\excel_export_data.html.py:175
 msgid "all"
-msgstr ""
+msgstr "tous"
 
 #: .\submodules\core-hq-src\corehq\apps\reports\templates\reports\partials\saved_custom_exports.html.py:16
 #: .\submodules\core-hq-src\corehq\apps\reports\templates\reports\reportdata\excel_export_data.html.py:176
 msgid "none"
-msgstr ""
+msgstr "aucun"
 
 #: .\submodules\core-hq-src\corehq\apps\reports\templates\reports\partials\saved_custom_exports.html.py:29
 msgid "de-identified"
-msgstr ""
+msgstr "annulation de l'identification"
 
 #: .\submodules\core-hq-src\corehq\apps\reports\templates\reports\partials\saved_custom_exports.html.py:31
 msgid "Sheet Name"
-msgstr ""
+msgstr "Nom de feuille"
 
 #: .\submodules\core-hq-src\corehq\apps\reports\templates\reports\partials\saved_custom_exports.html.py:37
 msgid "duplicate"
-msgstr ""
+msgstr "doublon"
 
 #: .\submodules\core-hq-src\corehq\apps\reports\templates\reports\partials\saved_custom_exports.html.py:43
 #: .\submodules\core-hq-src\corehq\apps\reports\templates\reports\reportdata\case_export_data.html.py:68
 msgid "HTML Preview"
-msgstr ""
+msgstr "Aperçu HTML"
 
 #: .\submodules\core-hq-src\corehq\apps\reports\templates\reports\partials\saved_custom_exports.html.py:67
 #: .\submodules\core-hq-src\corehq\apps\reports\templates\reports\reportdata\excel_export_data.html.py:296
 msgid "Bulk Export"
-msgstr ""
+msgstr "Exportation en bloc"
 
 #: .\submodules\core-hq-src\corehq\apps\reports\templates\reports\partials\saved_custom_exports.html.py:70
 #: .\submodules\core-hq-src\corehq\apps\reports\templates\reports\reportdata\excel_export_data.html.py:299
 msgid "Not Available"
-msgstr ""
+msgstr "Non disponible"
 
 #: .\submodules\core-hq-src\corehq\apps\reports\templates\reports\reportdata\case_export_data.html.py:35
 msgid "all open"
-msgstr ""
+msgstr "tous ouverts"
 
 #: .\submodules\core-hq-src\corehq\apps\reports\templates\reports\reportdata\case_export_data.html.py:37
 msgid "cases, all referrals, and all CHW users."
-msgstr ""
+msgstr "cas, toutes les références et tous les utilisateurs RC"
 
 #: .\submodules\core-hq-src\corehq\apps\reports\templates\reports\reportdata\case_export_data.html.py:49
 #: .\submodules\core-hq-src\corehq\apps\reports\templates\reports\reportdata\excel_export_data.html.py:146
-#, fuzzy
 msgid "Saved Custom Exports"
-msgstr "Rapports"
+msgstr "Exportations personnalisées enregistrées"
 
 #: .\submodules\core-hq-src\corehq\apps\reports\templates\reports\reportdata\case_export_data.html.py:90
 #: .\submodules\core-hq-src\corehq\apps\reports\templates\reports\reportdata\excel_export_data.html.py:152
 msgid "No Custom Exports yet!"
-msgstr ""
+msgstr "Aucune exportation personnalisée pour le moment !"
 
 #: .\submodules\core-hq-src\corehq\apps\reports\templates\reports\reportdata\case_export_data.html.py:90
 #: .\submodules\core-hq-src\corehq\apps\reports\templates\reports\reportdata\excel_export_data.html.py:152
 msgid "Click \"Create Custom Export\" on a form below to make one."
-msgstr ""
+msgstr "Cliquez sur « créer une exportation personnalisée » sur un formulaire ci-dessous pour en créer une."
 
 #: .\submodules\core-hq-src\corehq\apps\reports\templates\reports\reportdata\case_export_data.html.py:95
 msgid "Export cases"
-msgstr ""
+msgstr "Exporter des cas"
 
 #: .\submodules\core-hq-src\corehq\apps\reports\templates\reports\reportdata\case_export_data.html.py:100
 #: .\submodules\core-hq-src\corehq\apps\reports\templates\reports\reportdata\excel_export_data.html.py:168
 msgid "Custom Export"
-msgstr ""
+msgstr "Exportation personnalisée"
 
 #: .\submodules\core-hq-src\corehq\apps\reports\templates\reports\reportdata\case_export_data.html.py:111
 msgid "Unknown Case"
-msgstr ""
+msgstr "Cas inconnu"
 
 #: .\submodules\core-hq-src\corehq\apps\reports\templates\reports\reportdata\case_export_data.html.py:117
 #: .\submodules\core-hq-src\corehq\apps\reports\templates\reports\reportdata\excel_export_data.html.py:271
 msgid "Create Custom Export"
-msgstr ""
+msgstr "Créer une exportation personnalisée"
 
 #: .\submodules\core-hq-src\corehq\apps\reports\templates\reports\reportdata\excel_export_data.html.py:91
 msgid "All users over all time"
-msgstr ""
+msgstr "Tous les utilisateurs pendant toutes les heures"
 
 #: .\submodules\core-hq-src\corehq\apps\reports\templates\reports\reportdata\excel_export_data.html.py:92
 msgid "This number includes submissions that may not match your filter."
-msgstr ""
+msgstr "Ce nombre inclut les soumissions qui ne correspondent pas à votre filtre."
 
 #: .\submodules\core-hq-src\corehq\apps\reports\templates\reports\reportdata\excel_export_data.html.py:97
 msgid "Uncategorized Submissions"
-msgstr ""
+msgstr "Envois sans catégorie"
 
 #: .\submodules\core-hq-src\corehq\apps\reports\templates\reports\reportdata\excel_export_data.html.py:98
-msgid ""
-"It looks like this data should be categorized with one of your forms but is "
-"showing up separately. We strongly recommend that you Report an Issue with "
-"the button below."
-msgstr ""
+msgid "It looks like this data should be categorized with one of your forms but is showing up separately. We strongly recommend that you Report an Issue with the button below."
+msgstr "Il semblerait que ces données devraient être classés avec l'un de vos formulaires, mais qu'elle s'affiche séparément. Nous vous recommandons fortement de signaler un problème avec le bouton ci-dessous."
 
 #: .\submodules\core-hq-src\corehq\apps\reports\templates\reports\reportdata\excel_export_data.html.py:104
-msgid ""
-"Excel sheet names are limited to a maximum of 31 characters. This will be "
-"this custom export's sheet name in your bulk custom export."
-msgstr ""
+msgid "Excel sheet names are limited to a maximum of 31 characters. This will be this custom export's sheet name in your bulk custom export."
+msgstr "Les noms des feuilles de calcul Excel sont limités à un maximum de 31 caractères. Ce sera le nom de cette feuille d'exportation personnalisée dans votre exportation en bloc personnalisée."
 
 #: .\submodules\core-hq-src\corehq\apps\reports\templates\reports\reportdata\excel_export_data.html.py:108
 msgid "What is Custom Bulk Export?"
-msgstr ""
+msgstr "Qu'est-ce que l'exportation en bloc personnalisée ?"
 
 #: .\submodules\core-hq-src\corehq\apps\reports\templates\reports\reportdata\excel_export_data.html.py:109
-msgid ""
-"Custom Bulk Export creates a single Excel file with each export as a "
-"separate sheet inside that file."
-msgstr ""
+msgid "Custom Bulk Export creates a single Excel file with each export as a separate sheet inside that file."
+msgstr "L'exportation en bloc personnalisée crée un fichier Excel unique  où chaque feuille de calcul représente une exportation."
 
 #: .\submodules\core-hq-src\corehq\apps\reports\templates\reports\reportdata\excel_export_data.html.py:110
 msgid "NOTE: Excel 2007+ is currently the only bulk export format supported."
-msgstr ""
+msgstr "REMARQUE : Excel 2007+  est actuellement le seul format d'exportation en bloc pris en charge."
 
 #: .\submodules\core-hq-src\corehq\apps\reports\templates\reports\reportdata\excel_export_data.html.py:124
 msgid "Duplicate Sheet Name"
-msgstr ""
+msgstr "Nom de feuille dupliqué"
 
 #: .\submodules\core-hq-src\corehq\apps\reports\templates\reports\reportdata\excel_export_data.html.py:125
-msgid ""
-"This sheet name is a duplicate of another. Custom exports with duplicate "
-"sheet names will not be included in the Bulk Custom Export. Change the sheet "
-"name to resolve this issue."
-msgstr ""
+msgid "This sheet name is a duplicate of another. Custom exports with duplicate sheet names will not be included in the Bulk Custom Export. Change the sheet name to resolve this issue."
+msgstr "Ce nom de feuille est un doublon d'un autre nom. Les exportations personnalisées avec des noms de feuille en double ne seront pas inclus dans l'exportation personnalisée en bloc. Modifier le nom de la feuille pour résoudre ce problème."
 
 #: .\submodules\core-hq-src\corehq\apps\reports\templates\reports\reportdata\excel_export_data.html.py:130
 msgid "Format Not Available"
-msgstr ""
+msgstr "Format non disponible"
 
 #: .\submodules\core-hq-src\corehq\apps\reports\templates\reports\reportdata\excel_export_data.html.py:131
 msgid "Custom Bulk Export does not support this format at the time."
-msgstr ""
+msgstr "L'exportation en bloc personnalisée ne prend pas en charge ce format à l'heure actuelle."
 
 #: .\submodules\core-hq-src\corehq\apps\reports\templates\reports\reportdata\excel_export_data.html.py:160
 msgid "Export full forms"
-msgstr ""
+msgstr "Exporter des formulaires complets"
 
 #: .\submodules\core-hq-src\corehq\apps\reports\templates\reports\reportdata\excel_export_data.html.py:166
 msgid "Module"
-msgstr ""
+msgstr "Module"
 
 #: .\submodules\core-hq-src\corehq\apps\reports\templates\reports\reportdata\excel_export_data.html.py:170
 msgid "Total Submissions"
-msgstr ""
+msgstr "Nombre total de soumissions"
 
 #: .\submodules\core-hq-src\corehq\apps\reports\templates\reports\reportdata\excel_export_data.html.py:172
 msgid "Add to Bulk Export"
-msgstr ""
+msgstr "Ajouter à l'exportation en bloc"
 
 #: .\submodules\core-hq-src\corehq\apps\reports\templates\reports\reportdata\excel_export_data.html.py:189
 #: .\submodules\core-hq-src\corehq\apps\reports\templates\reports\reportdata\excel_export_data.html.py:248
 msgid "deleted"
-msgstr ""
+msgstr "supprimé"
 
 #: .\submodules\core-hq-src\corehq\apps\reports\templates\reports\reportdata\excel_export_data.html.py:191
-#, fuzzy
 msgid "Restore"
-msgstr "Rapports"
+msgstr "Restaurer"
 
 #: .\submodules\core-hq-src\corehq\apps\reports\templates\reports\reportdata\excel_export_data.html.py:195
 msgid "No Application"
-msgstr ""
+msgstr "Aucune application"
 
 #: .\submodules\core-hq-src\corehq\apps\reports\templates\reports\reportdata\excel_export_data.html.py:219
 msgid "Mislabeled"
-msgstr ""
+msgstr "Mal étiqueté"
 
 #: .\submodules\core-hq-src\corehq\apps\reports\templates\reports\reportdata\excel_export_data.html.py:225
 #: .\submodules\core-hq-src\corehq\apps\reports\templates\reports\reportdata\excel_export_data.html.py:256
 msgid "Fix"
-msgstr ""
+msgstr "Corriger"
 
 #: .\submodules\core-hq-src\corehq\apps\reports\templates\reports\reportdata\excel_export_data.html.py:232
-msgid ""
-"These submissions are tagged as if they belong to an application that "
-"doesn't exist."
-msgstr ""
+msgid "These submissions are tagged as if they belong to an application that doesn't exist."
+msgstr "Ces soumissions sont étiquetés comme appartenant à une application qui n'existe pas."
 
 #: .\submodules\core-hq-src\corehq\apps\reports\templates\reports\reportdata\excel_export_data.html.py:236
 msgid "These submissions could belong to one of the following forms:"
-msgstr ""
+msgstr "Ces soumissions pourraient appartenir à l'un des formulaires suivants :"
 
 #: .\submodules\core-hq-src\corehq\apps\reports\templates\reports\reportdata\excel_export_data.html.py:256
 msgid "Select this option"
-msgstr ""
+msgstr "Sélectionner cette option"
 
 #: .\submodules\core-hq-src\corehq\apps\reports\templates\reports\reportdata\excel_export_data.html.py:265
 msgid "No suggestions"
-msgstr ""
+msgstr "Aucune suggestion"
 
 #: .\submodules\core-hq-src\corehq\apps\reports\templates\reports\reportdata\excel_export_data.html.py:284
 msgid "No Forms"
-msgstr ""
+msgstr "Aucun formulaire"
 
 #: .\submodules\core-hq-src\corehq\apps\reports\templates\reports\reportdata\excel_export_data.html.py:309
-#, fuzzy
 msgid "Saved Export Files"
-msgstr "Rapports"
+msgstr "Fichiers d'exportation enregistrés"
 
 #: .\submodules\core-hq-src\corehq\apps\reports\templates\reports\reportdata\excel_export_data.html.py:317
 msgid "Export all Forms' Metadata"
-msgstr ""
+msgstr "Exporter les métadonnées de tous les formulaires"
 
 #: .\submodules\core-hq-src\corehq\apps\reports\templates\reports\reportdata\excel_export_data.html.py:320
-msgid ""
-"Export basic data for all forms in this domain. Note that this export does "
-"not support the filters above."
-msgstr ""
+msgid "Export basic data for all forms in this domain. Note that this export does not support the filters above."
+msgstr "Exporter les données de bases de tous les formulaires dans ce domaine. Notez que cette exportation ne prend pas en charge les filtres ci-dessus."
 
 #: .\submodules\core-hq-src\corehq\apps\userhack\admin.py:14
 msgid "Required. 128 characters or fewer. Letters, digits and @/./+/-/_ only."
-msgstr ""
+msgstr "Nécessaire. 128 caractères ou moins. Lettres, chiffres et @/./+/-/_  seulement."
 
 #: .\submodules\core-hq-src\corehq\apps\userhack\admin.py:15
 msgid "This value may contain only letters, numbers and @/./+/-/_ characters."
-msgstr ""
+msgstr "Cette valeur ne peut contenir que des lettres, des chiffres et @/./+/-/_ seulement."
 
 #: .\submodules\core-hq-src\corehq\apps\users\forms.py:32
 msgid "Please enter a valid two or three digit language code."
-msgstr ""
+msgstr "Veuillez entrer un identifiant valide de deux ou trois caractères admis."
 
 #: .\submodules\core-hq-src\corehq\apps\users\forms.py:146
 msgid "Username contains invalid characters."
-msgstr ""
+msgstr "Le nom d'utilisateur contient des caractères non valides."
 
 #: .\submodules\core-hq-src\corehq\apps\users\templates\users\web_users.html.py:80
 #: .\submodules\core-hq-src\corehq\apps\users\templates\users\web_users.html.py:122
 msgid "Role"
-msgstr ""
+msgstr "Rôle"
 
 #: .\submodules\core-hq-src\corehq\apps\users\templates\users\web_users.html.py:82
 msgid "Phone Numbers"
-msgstr ""
+msgstr "Numéros de téléphone"
 
 #: .\submodules\core-hq-src\corehq\apps\users\templates\users\web_users.html.py:83
 msgid "Remove"
-msgstr ""
+msgstr "Supprimer"
 
 #: .\submodules\core-hq-src\corehq\apps\users\templates\users\web_users.html.py:123
 #: .\submodules\phonelog\phonelog\reports.py:98
 msgid "Date"
-msgstr ""
+msgstr "Date"
 
 #: .\submodules\core-hq-src\corehq\apps\users\templates\users\mobile\users_list.html.py:140
 msgid "Full Name"
-msgstr ""
+msgstr "Nom complet"
 
 #: .\submodules\core-hq-src\corehq\apps\users\templates\users\mobile\users_list.html.py:141
 msgid "Date Registered"
-msgstr ""
+msgstr "Date d'inscription"
 
 #: .\submodules\core-hq-src\corehq\apps\users\templates\users\mobile\users_list.html.py:142
 msgid "Phone"
-msgstr ""
+msgstr "Téléphone"
 
 #: .\submodules\core-hq-src\corehq\apps\users\templates\users\mobile\users_list.html.py:143
 msgid "Forms"
-msgstr ""
+msgstr "Formulaires"
 
 #: .\submodules\core-hq-src\corehq\apps\users\templates\users\mobile\users_list.html.py:144
 msgid "Cases"
-msgstr ""
+msgstr "Cas"
 
 #: .\submodules\core-hq-src\corehq\apps\users\templates\users\mobile\users_list.html.py:147
 msgid "Case Sharing"
-msgstr ""
+msgstr "Partage de cas"
 
 #: .\submodules\core-hq-src\corehq\apps\users\templates\users\mobile\users_list.html.py:151
 msgid "More..."
-msgstr ""
+msgstr "Plus..."
 
 #: .\submodules\core-hq-src\corehq\apps\users\templates\users\mobile\users_list.html.py:155
 msgid "Archive"
-msgstr ""
+msgstr "Archives"
 
 #: .\submodules\core-hq-src\corehq\apps\users\templates\users\partial\domain_accounts.html.py:6
 msgid "Project Name"
-msgstr ""
+msgstr "Nom du projet"
 
 #: .\submodules\core-hq-src\lib\django_rest_interface\authentication.py:49
 #: .\submodules\core-hq-src\lib\django_rest_interface\authentication.py:93
 #: .\submodules\core-hq-src\lib\django_rest_interface\authentication.py:219
 msgid "Restricted Access"
-msgstr ""
+msgstr "Accès limité"
 
 #: .\submodules\core-hq-src\lib\django_rest_interface\model_resource.py:241
 msgid "Object successfully deleted."
-msgstr ""
+msgstr "Objet supprimé avec succès."
 
 #: .\submodules\core-hq-src\lib\django_rest_interface\resource.py:136
 msgid "Authorization Required"
-msgstr ""
+msgstr "Autorisation nécessaire"
 
 #: .\submodules\core-hq-src\lib\django_user_registration\admin.py:23
 msgid "Activate users"
-msgstr ""
+msgstr "Activer les utilisateurs"
 
 #: .\submodules\core-hq-src\lib\django_user_registration\admin.py:43
 msgid "Re-send activation emails"
-msgstr ""
+msgstr "Renvoyer l'e-mail d'activation"
 
 #: .\submodules\core-hq-src\lib\django_user_registration\forms.py:36
 msgid "This value must contain only letters, numbers and underscores."
-msgstr ""
+msgstr "Cette valeur ne doit contenir que des lettres, des chiffres et des caractères de soulignement."
 
 #: .\submodules\core-hq-src\lib\django_user_registration\forms.py:39
 msgid "Email address"
-msgstr ""
+msgstr "Adresse électronique"
 
 #: .\submodules\core-hq-src\lib\django_user_registration\forms.py:41
 msgid "Password"
-msgstr ""
+msgstr "Mot de passe"
 
 #: .\submodules\core-hq-src\lib\django_user_registration\forms.py:43
 msgid "Password (again)"
-msgstr ""
+msgstr "Mot de passe (à nouveau)"
 
 #: .\submodules\core-hq-src\lib\django_user_registration\forms.py:55
 msgid "A user with that username already exists."
-msgstr ""
+msgstr "Un utilisateur avec ce nom d'utilisateur existe déjà."
 
 #: .\submodules\core-hq-src\lib\django_user_registration\forms.py:67
 msgid "The two password fields didn't match."
-msgstr ""
+msgstr "Les deux champs de mot de passe ne correspondent pas."
 
 #: .\submodules\core-hq-src\lib\django_user_registration\forms.py:78
 msgid "I have read and agree to the Terms of Service"
-msgstr ""
+msgstr "J'ai lu et j'accepte les conditions d'utilisation"
 
 #: .\submodules\core-hq-src\lib\django_user_registration\forms.py:79
 msgid "You must agree to the terms to register"
-msgstr ""
+msgstr "Vous devez accepter les conditions pour pouvoir vous enregistrer"
 
 #: .\submodules\core-hq-src\lib\django_user_registration\forms.py:95
-msgid ""
-"This email address is already in use. Please supply a different email "
-"address."
-msgstr ""
+msgid "This email address is already in use. Please supply a different email address."
+msgstr "Cette adresse email est déjà utilisée. Veuillez fournir une autre adresse électronique."
 
 #: .\submodules\core-hq-src\lib\django_user_registration\forms.py:122
-msgid ""
-"Registration using free email addresses is prohibited. Please supply a "
-"different email address."
-msgstr ""
+msgid "Registration using free email addresses is prohibited. Please supply a different email address."
+msgstr "L'enregistrement à l'aide des adresses électroniques gratuites est interdit. Veuillez fournir une autre adresse électronique."
 
 #: .\submodules\core-hq-src\lib\django_user_registration\models.py:168
 msgid "user"
-msgstr ""
+msgstr "utilisateur"
 
 #: .\submodules\core-hq-src\lib\django_user_registration\models.py:169
 msgid "activation key"
-msgstr ""
+msgstr "clé d'activation"
 
 #: .\submodules\core-hq-src\lib\django_user_registration\models.py:174
 msgid "registration profile"
-msgstr ""
+msgstr "profil d'enregistrement"
 
 #: .\submodules\core-hq-src\lib\django_user_registration\models.py:175
 msgid "registration profiles"
-msgstr ""
+msgstr "profils d'enregistrement"
 
 #: .\submodules\pathfinder-reports\pathfinder\templates\pathfinder-reports\hbc.html.py:5
 msgid "Home-Based Care Monthly Report"
-msgstr ""
+msgstr "Rapport mensuel sur les soins à domicile"
 
 #: .\submodules\phonelog\phonelog\reports.py:20
 msgid "Errors & Warnings Summary"
-msgstr ""
+msgstr " Résumé des erreurs et des avertissements"
 
 #: .\submodules\phonelog\phonelog\reports.py:29
 msgid "Number of Forms"
-msgstr ""
+msgstr "Nombre de formulaires"
 
 #: .\submodules\phonelog\phonelog\reports.py:30
 msgid "Number of Warnings"
-msgstr ""
+msgstr "Nombre d'avertissements"
 
 #: .\submodules\phonelog\phonelog\reports.py:31
 msgid "Number of Errors"
-msgstr ""
+msgstr "Nombre d'erreurs"
 
 #: .\submodules\phonelog\phonelog\reports.py:79
 msgid "Device Log Details"
-msgstr ""
+msgstr "Détails du journal du périphérique"
 
 #: .\submodules\phonelog\phonelog\reports.py:99
-#, fuzzy
 msgid "Log Type"
-msgstr "Type de Formulaire"
+msgstr "Type de journal"
 
 #: .\submodules\phonelog\phonelog\reports.py:100
 msgid "Logged in Username"
-msgstr ""
+msgstr "Nom d'utilisateur connecté"
 
 #: .\submodules\phonelog\phonelog\reports.py:101
 msgid "Device ID"
-msgstr ""
+msgstr "ID de périphérique"
 
 #: .\submodules\phonelog\phonelog\reports.py:102
 msgid "Message"
-msgstr ""
+msgstr "Message"
 
 #: .\submodules\phonelog\phonelog\reports.py:103
 msgid "App Version"
-msgstr ""
+msgstr "Version de l'application"
+

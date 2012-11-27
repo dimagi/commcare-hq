@@ -134,10 +134,8 @@ CRISPY_TEMPLATE_PACK = 'bootstrap'
 
 HQ_APPS = (
     'django_digest',
-    'django_rest_interface',
-    'django_granular_permissions',
-    'django_tables',
     'django_user_registration',
+    'rosetta',
     'auditcare',
     'djangocouch',
     'djangocouchuser',
