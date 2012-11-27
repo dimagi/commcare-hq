@@ -25,12 +25,20 @@
                 $("#reportFilters").css('overflow', 'visible');
             }
 
-            $("#reportFilters").on('shown', function() {
-                $(this).css('overflow', 'visible');
+            /* Toggle #reportFilters overflow visibility depending on whether
+              it's collapsed or not.  Storing the modal ID is a hack to get
+              around unwanted interaction between bootstrap and knockout. */
+            var reportConfigModalId = 'report-config-modal';
+            $("#reportFilters").on('shown', function(event) {
+                if (event.target.id !== reportConfigModalId) {
+                    $(this).css('overflow', 'visible');
+                }
             });
 
-            $("#reportFilters").on('hide', function() {
-                $(this).css('overflow', 'hidden');
+            $("#reportFilters").on('hide', function(event) {
+                if (event.target.id !== reportConfigModalId) {
+                    $(this).css('overflow', 'hidden');
+                }
             });
 
             $('#email-enabled').tooltip({
