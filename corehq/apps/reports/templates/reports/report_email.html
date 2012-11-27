@@ -16,15 +16,25 @@ td.null-entry {
 </style>
 </head>
 <body>
+    {% if email %}
+    <p>
+        This is a scheduled report from <a href="{{ DNS_name }}">CommCareHQ</a> for the project '{{ domain }}'.
+    </p>
+    {% endif %}
+
     {% for report in reports %}
     <div class="pagebreak">
         <h2><a href="{{ DNS_name }}{{ report.url }}">{{ report.title }}</a></h2>
         {{ report.content|safe }}
-        {% endfor %}
     </div>
+    {% endfor %}
 
     {% if email %}
-    <hr />
-    <p>You are receiving this automated report email from <a href="{{ DNS_name }}">CommCareHQ</a>. You can modify these settings by visiting <a href="{{ DNS_name }}{% url user_account domain couch_user %}">Account Settings</a>.</p>
+    <br><hr />
+    <p>You are receiving this automated email from <a href="{{ DNS_name }}">CommCareHQ</a>
+    because the user {{ owner_name }} added you as a recipient of their report.
+    If you would no longer like to receive this report, please ask them to
+    remove you.
+    </p> 
     {% endif %}
 </body>
