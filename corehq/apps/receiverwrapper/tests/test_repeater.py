@@ -123,3 +123,14 @@ class RepeaterTest(TestCase):
         for repeat_record in repeat_records:
             self.assertEqual(repeat_record.succeeded, True)
             self.assertEqual(repeat_record.next_check, None)
+
+class RepeaterLockTest(TestCase):
+
+    def testLocks(self):
+        r = RepeatRecord()
+        r.save()
+        r2 = RepeatRecord.get(r._id)
+        self.assertTrue(r.acquire_lock(datetime.utcnow()))
+        self.assertFalse(r2.acquire_lock(datetime.utcnow()))
+        r.release_lock()
+        self.assertTrue(r.acquire_lock(datetime.utcnow()))

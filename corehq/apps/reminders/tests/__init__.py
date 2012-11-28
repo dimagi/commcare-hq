@@ -6,6 +6,7 @@ from corehq.apps.users.models import CouchUser, CommCareUser
 from corehq.apps.sms.models import CallLog, EventLog, MISSED_EXPECTED_CALLBACK
 from corehq.apps.sms.mixin import VerifiedNumber
 from dimagi.utils.parsing import json_format_datetime
+from dimagi.utils.couch import LOCK_EXPIRATION
 
 class ReminderTestCase(TestCase):
     """
