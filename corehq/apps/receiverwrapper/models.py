@@ -1,7 +1,6 @@
 from casexml.apps.case.models import CommCareCase
 from casexml.apps.case.xml import V2, LEGAL_VERSIONS
 from couchforms.models import XFormInstance
-from dimagi.utils.couch.database import get_db
 from dimagi.utils.parsing import json_format_datetime
 from couchdbkit.ext.django.schema import *
 from dimagi.utils.mixins import UnicodeMixIn
