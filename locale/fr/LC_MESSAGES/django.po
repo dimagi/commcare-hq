@@ -1333,7 +1333,7 @@ msgid ""
 "This report currently does not support case sharing. There might be "
 "inconsistencies in case totals if the user is part of a case sharing group. "
 "We are working to correct this shortly."
-msgstr "#"
+msgstr ""
 
 #: submodules/core-hq-src/corehq/apps/reports/standard/monitoring.py:184
 msgid "Users"
@@ -1348,16 +1348,15 @@ msgstr "Date de modification"
 #, python-format
 msgid ""
 "The number of cases that have been modified between %d days ago and today."
-msgstr "#"
-"%d"
+msgstr ""
 
 #: submodules/core-hq-src/corehq/apps/reports/standard/monitoring.py:189
 msgid "Proportion"
-msgstr "#"
+msgstr ""
 
 #: submodules/core-hq-src/corehq/apps/reports/standard/monitoring.py:190
 msgid "The number of modified cases / (#active + #closed cases)."
-msgstr "#"
+msgstr ""
 
 #: submodules/core-hq-src/corehq/apps/reports/standard/monitoring.py:192
 #, fuzzy, python-format
@@ -1369,9 +1368,8 @@ msgid "Ever"
 msgstr "Toujours"
 
 #: submodules/core-hq-src/corehq/apps/reports/standard/monitoring.py:196
-#, fuzzy
 msgid "# Active Cases"
-msgstr "Cas actifs"
+msgstr "# Cas actifs"
 
 #: submodules/core-hq-src/corehq/apps/reports/standard/monitoring.py:198
 #, python-format
@@ -1380,9 +1378,8 @@ msgstr ""
 "Nombre de cas modifiés durant les %s derniers jours qui sont encore ouverts"
 
 #: submodules/core-hq-src/corehq/apps/reports/standard/monitoring.py:199
-#, fuzzy
 msgid "# Inactive Cases"
-msgstr "Cas inactifs"
+msgstr "# Cas inactifs"
 
 #: submodules/core-hq-src/corehq/apps/reports/standard/monitoring.py:201
 #, python-format
