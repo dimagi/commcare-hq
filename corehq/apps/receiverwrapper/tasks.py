@@ -35,21 +35,12 @@ def run_only_once(fn):
     return _fn
 
 @periodic_task(run_every=timedelta(minutes=1))
-@run_only_once
 def check_repeaters():
     now = datetime.utcnow()
-
+    
     repeat_records = RepeatRecord.all(due_before=now)
-
     for repeat_record in repeat_records:
-        try:
+        if repeat_record.acquire_lock():
             repeat_record.fire()
-        except AttributeError:
-            logging.exception("Error firing repeat record %s" % repeat_record.get_id)
-            raise
-
-        try:
             repeat_record.save()
-        except ResourceConflict:
-            logging.error("ResourceConflict with repeat_record %s: %s" % (repeat_record.get_id, repeat_record.to_json()))
-            raise
+            repeat_record.release_lock()
