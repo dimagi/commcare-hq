@@ -124,7 +124,12 @@
         {% for app in applications %}
             <div id="application-{{ app.id }}">
                 <dl class="dl-horizontal">
-                    <dd><h4>{{ app.name }}</h4></dd>
+                    <dd>
+                        <h4 style="display: inline-block;">{{ app.name }}</h4>
+                        <a href="{% url emulator project app.id %}?exchange=true" style="margin-left: 1.2em" target="_blank" class="btn btn-primary">
+                            {% trans "Preview this app" %}
+                        </a>
+                   </dd>
                     <dt>{% trans 'Media' %}</dt>
                     <dd>
                         {{ app.has_media|yesno:"Yes,No" }}
