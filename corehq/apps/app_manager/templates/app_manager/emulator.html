@@ -45,9 +45,11 @@
 {% endblock %}
 {% block content %}
     <div id="main_container">
-        <div id="emu-back">
-            <a href="{% url release_manager domain app.id %}">Back to Release Manager</a>
-        </div>
+        {% block emu_back %}
+            <div id="emu-back">
+                <a href="{% url release_manager domain app.id %}">Back to Release Manager</a>
+            </div>
+        {% endblock %}
         <div id="emu-warning">
             <span class="caution">Caution</span>: Will make <strong>real</strong> submissions: will modify cases, register users, etc.
         </div>

@@ -126,7 +126,7 @@
                 <dl class="dl-horizontal">
                     <dd>
                         <h4 style="display: inline-block;">{{ app.name }}</h4>
-                        <a href="{% url emulator project app.id %}" style="margin-left: 1.2em" target="_blank" class="btn btn-primary">
+                        <a href="{% url emulator project app.id %}?exchange=true" style="margin-left: 1.2em" target="_blank" class="btn btn-primary">
                             {% trans "Preview this app" %}
                         </a>
                    </dd>
