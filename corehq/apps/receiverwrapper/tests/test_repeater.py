@@ -127,7 +127,7 @@ class RepeaterTest(TestCase):
 class RepeaterLockTest(TestCase):
 
     def testLocks(self):
-        r = RepeatRecord()
+        r = RepeatRecord(domain='test')
         r.save()
         r2 = RepeatRecord.get(r._id)
         self.assertTrue(r.acquire_lock(datetime.utcnow()))
