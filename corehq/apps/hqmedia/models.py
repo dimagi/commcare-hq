@@ -55,9 +55,12 @@ class CommCareMultimedia(Document):
             migrated = [HQMediaLicense(domain=domain, type=type)._doc \
                         for domain, type in data["licenses"].items()]
             data['licenses'] = migrated
-        if data["licenses"][0].get("type", "") == "public": # deprecating support for public domain license
-            data["licenses"][0]["type"] = "cc"
-            should_save = True
+
+        # deprecating support for public domain license
+        if isinstance(data.get("licenses", ""), list) and len(data["licenses"]) > 0:
+            if data["licenses"][0].get("type", "") == "public":
+                data["licenses"][0]["type"] = "cc"
+                should_save = True
 
         self = super(CommCareMultimedia, cls).wrap(data)
 
