@@ -25,6 +25,12 @@ class HQMediaLicense(DocumentSchema):
     type = StringProperty(choices=LICENSES)
     attribution_notes = StringProperty()
 
+    def __init__(self, _d=None, **properties):
+        # another place we have to lazy migrate
+        if properties and properties.get('type', '') == 'public':
+            properties['type'] = 'cc'
+        super(HQMediaLicense, self).__init__(_d, **properties)
+    
     @property
     def display_name(self):
         return LICENSES.get(self.type, "Improper License")
