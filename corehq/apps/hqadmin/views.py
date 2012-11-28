@@ -42,10 +42,7 @@ datespan_default = datespan_in_request(
 
 
 def get_hqadmin_base_context(request):
-    try:
-        domain = request.user.selected_domain.name
-    except AttributeError:
-        domain = None
+    domain = None
 
     return {
         "domain": domain,

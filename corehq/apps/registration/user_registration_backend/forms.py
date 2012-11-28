@@ -22,16 +22,7 @@ class _BaseForm(object):
 
 ########################################################################################################
 
-class UserEmailOnlyRegistrationRequestForm(_BaseForm, forms.Form):    
-    email =  forms.EmailField(label="User's email address", 
-                              max_length=User._meta.get_field('email').max_length)    
-    
-    def clean_username(self):
-        data = self.cleaned_data['email'].strip()        
-        return data
-        
-########################################################################################################
-        
+
 class AdminInvitesUserForm(RoleForm, _BaseForm, forms.Form):
     from corehq.apps.users.models import OldRoles
     # As above. Need email now; still don't need domain. Don't need TOS. Do need the is_active flag,

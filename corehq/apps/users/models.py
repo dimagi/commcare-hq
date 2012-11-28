@@ -1327,7 +1327,6 @@ class CommCareUser(CouchUser, CommCareMobileContactMixin):
                 raise Exception("unexpected role_qualified_id: %r" % role_qualified_id)
 
 class WebUser(CouchUser, AuthorizableMixin):
-    betahack = BooleanProperty(default=False)
     teams = StringListProperty()
 
     #do sync and create still work?
