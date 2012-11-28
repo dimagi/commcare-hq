@@ -57,7 +57,7 @@ class CommCareMultimedia(Document):
             data['licenses'] = migrated
 
         # deprecating support for public domain license
-        if isinstance(data.get("licenses", ""), list) and len(data.get("licenses", [])) > 0:
+        if isinstance(data.get("licenses", ""), list) and len(data["licenses"]) > 0:
             if data["licenses"][0].get("type", "") == "public":
                 data["licenses"][0]["type"] = "cc"
                 should_save = True
