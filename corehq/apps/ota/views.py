@@ -1,10 +1,11 @@
 from corehq.apps.users.models import CouchUser
 from django_digest.decorators import *
 from casexml.apps.phone.restore import generate_restore_response
+from corehq.apps.domain.decorators import login_or_digest
 
 
 
-@httpdigest
+@login_or_digest
 def restore(request, domain):
     """
     We override restore because we have to supply our own 
