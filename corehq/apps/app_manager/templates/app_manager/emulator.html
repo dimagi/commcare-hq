@@ -47,11 +47,11 @@
     <div id="main_container">
         {% block emu_back %}
             <div id="emu-back">
-                <a href="{% url release_manager domain app.id %}">Back to Release Manager</a>
+                <a href="{% url release_manager domain app.id %}">{% trans "Back to Release Manager" %}</a>
             </div>
         {% endblock %}
         <div id="emu-warning">
-            <span class="caution">Caution</span>: Will make <strong>real</strong> submissions: will modify cases, register users, etc.
+            <span class="caution">{% trans "Caution" %}</span>: {% trans "Will make" %} <strong>{% trans "real" %}</strong>{% trans " submissions: will modify cases, register users, etc." %}
         </div>
         <applet code="org.microemu.applet.Main"
                 width="226" height="471">
@@ -65,10 +65,10 @@
             {% endif %}
         </applet>
         <div id="emu-info">
-            <p>This might take a few minutes.</p>
-            <p>(Even after the loading bar has filled!)</p>
+            <p>{% trans "This might take a few minutes." %}</p>
+            <p>{% trans "(Even after the loading bar has filled!)" %}</p>
             <p class="disclaimer">
-                Behavior may differ from phone.
+                {% trans "Behavior may differ from phone." %}
             </p>
         </div>
     </div>
