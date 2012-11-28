@@ -1,4 +1,5 @@
 {% extends base_template %}
+{% load i18n %}
 {% block js %}{{ block.super }}
     <script>
         $(function(){
@@ -45,11 +46,13 @@
 {% endblock %}
 {% block content %}
     <div id="main_container">
-        <div id="emu-back">
-            <a href="{% url release_manager domain app.id %}">Back to Release Manager</a>
-        </div>
+        {% block emu_back %}
+            <div id="emu-back">
+                <a href="{% url release_manager domain app.id %}">{% trans "Back to Release Manager" %}</a>
+            </div>
+        {% endblock %}
         <div id="emu-warning">
-            <span class="caution">Caution</span>: Will make <strong>real</strong> submissions: will modify cases, register users, etc.
+            <span class="caution">{% trans "Caution" %}</span>: {% trans "Will make" %} <strong>{% trans "real" %}</strong>{% trans " submissions: will modify cases, register users, etc." %}
         </div>
         <applet code="org.microemu.applet.Main"
                 width="226" height="471">
@@ -57,15 +60,16 @@
             <param name="archive" value="./CommCare.jar" />
             <param name="midlet" value="org.commcare.midlet.CommCareMidlet" />
             <param name="Profile" value="jr://resource/profile.xml" />
+            <param name="FileRootTranslator" value="{{ url_base }}{% url emulator_root_url domain app.get_id %}"/>
             {% if app.admin_password %}
                 <param name="JavaRosa-Admin-Password" value="{{ app.admin_password }}" />
             {% endif %}
         </applet>
         <div id="emu-info">
-            <p>This might take a few minutes.</p>
-            <p>(Even after the loading bar has filled!)</p>
+            <p>{% trans "This might take a few minutes." %}</p>
+            <p>{% trans "(Even after the loading bar has filled!)" %}</p>
             <p class="disclaimer">
-                Behavior may differ from phone.
+                {% trans "Behavior may differ from phone." %}
             </p>
         </div>
     </div>

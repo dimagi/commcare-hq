@@ -280,6 +280,8 @@ def account(request, domain, couch_user_id, template="users/account.html"):
         })
         # scheduled reports tab
     context.update({
+        'phone_numbers_extended': couch_user.phone_numbers_extended(request.couch_user),
+
         # for commcare-accounts tab
         # "other_commcare_accounts": other_commcare_accounts,
     })
@@ -515,13 +517,6 @@ def _handle_user_form(request, domain, couch_user=None):
 def test_httpdigest(request, domain):
     return HttpResponse("ok")
 
-
-
-@login_and_domain_required
-def test_autocomplete(request, domain, template="users/test_autocomplete.html"):
-    context = _users_context(request, domain)
-    context.update(get_sms_autocomplete_context(request, domain))
-    return render_to_response(request, template, context)
 
 @Prescription.require('user-domain-transfer')
 @login_and_domain_required

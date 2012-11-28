@@ -1,16 +1,22 @@
 from corehq.apps.sms import api
-from corehq.apps.sms import util
-from corehq.apps.sms.mixin import VerifiedNumber, CommCareMobileContactMixin
+from corehq.apps.sms.mixin import VerifiedNumber, CommCareMobileContactMixin, MobileBackend
 from corehq.apps.users.models import CommCareUser
+from corehq.apps.sms import util
 
-OUTGOING = "Welcome to CommCareHQ! Is this phone used by %(name)s? If yes, reply '123' to enable SMS features for CommCareHQ on this phone."""
+OUTGOING = "Welcome to CommCareHQ! Is this phone used by %(name)s? If yes, reply '123'%(replyto)s to start using SMS with CommCareHQ."
 CONFIRM = "Thank you. This phone has been verified for using SMS with CommCareHQ"
 
 def send_verification(domain, user, phone_number):
-    message = OUTGOING % {'name': user.username.split('@')[0]}
+    module = MobileBackend.auto_load(phone_number, domain).backend_module
+    reply_phone = getattr(module, 'receive_phone_number', lambda: None)()
+
+    message = OUTGOING % {
+        'name': user.username.split('@')[0],
+        'replyto': ' to %s' % util.clean_phone_number(reply_phone) if reply_phone else '',
+    }
     api.send_sms(domain, user._id, phone_number, message)
 
-def process_verification(phone_number, text):
+def process_verification(phone_number, text, backend_id=None):
     v = VerifiedNumber.by_phone(phone_number, True)
     if not v:
         return
@@ -18,7 +24,10 @@ def process_verification(phone_number, text):
     if not verification_response_ok(text):
         return
     
-    backend = util.get_outbound_sms_backend(phone_number, v.domain)
+    if backend_id:
+        backend = MobileBackend.load(backend_id)
+    else:
+        backend = MobileBackend.auto_load(phone_number, v.domain)
 
     # i don't know how to dynamically instantiate this object, which may be any number of doc types...
     #owner = CommCareMobileContactMixin.get(v.owner_id)

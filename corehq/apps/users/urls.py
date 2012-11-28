@@ -32,7 +32,6 @@ urlpatterns = patterns('corehq.apps.users.views',
     url(r'^httpdigest/?$', 'test_httpdigest'),
     #url(r'my_groups/?$', 'my_groups', name='my_groups'),
 
-    url(r'^test_autocomplete/$', 'test_autocomplete'),
     url(r'^user_domain_transfer/(?P<prescription_id>[\w-]+)/$', 'user_domain_transfer', name='user_domain_transfer'),
     url(r'^audit_logs/$', 'audit_logs', name='user_audit_logs')
 ) + \
@@ -45,7 +44,7 @@ patterns("corehq.apps.users.views.mobile.users",
     url(r'^commcare/delete/(?P<user_id>[\w-]+)/$', 'delete_commcare_user', name='delete_commcare_user'),
     url(r'^commcare/restore/(?P<user_id>[\w-]+)/$', 'restore_commcare_user', name='restore_commcare_user'),
     url(r'^commcare/upload/$', UploadCommCareUsers.as_view(), name='upload_commcare_users'),
-    url(r'^commcare/upload-example/$', 'upload_commcare_users_example', name='upload_commcare_users_example'),
+    url(r'^commcare/download/$', 'download_commcare_users', name='download_commcare_users'),
     url(r'^commcare/set_group/$', 'set_commcare_user_group', name='set_commcare_user_group'),
     url(r'^add_commcare_account/$',
         'add_commcare_account',

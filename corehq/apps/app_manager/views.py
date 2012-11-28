@@ -1,18 +1,15 @@
 from StringIO import StringIO
 import logging
-import tempfile
 import uuid
-from wsgiref.util import FileWrapper
 import zipfile
 from corehq.apps.app_manager.const import APP_V1
 from corehq.apps.app_manager.success_message import SuccessMessage
 from corehq.apps.domain.models import Domain
-from corehq.apps.reports.templatetags.timezone_tags import utc_to_timezone
 from couchexport.export import FormattedRow
 from couchexport.models import Format
 from couchexport.writers import Excel2007ExportWriter
 from dimagi.utils.couch.database import get_db
-from dimagi.utils.couch.resource_conflict import repeat, retry_resource
+from dimagi.utils.couch.resource_conflict import retry_resource
 from django.utils import simplejson
 from django.utils.http import urlencode as django_urlencode
 import os
@@ -20,15 +17,13 @@ import re
 
 from couchdbkit.exceptions import ResourceConflict
 from django.http import HttpResponse, Http404, HttpResponseBadRequest, HttpResponseForbidden, HttpResponseServerError
-import sys
 from unidecode import unidecode
 from corehq.apps.hqmedia import utils
 from corehq.apps.app_manager.xform import XFormError, XFormValidationError, CaseError,\
     XForm, parse_xml
-from corehq.apps.builds.models import CommCareBuildConfig, BuildSpec, BuildRecord
+from corehq.apps.builds.models import CommCareBuildConfig, BuildSpec
 from corehq.apps.hqmedia import upload
 from corehq.apps.sms.views import get_sms_autocomplete_context
-from corehq.apps.translations.models import TranslationMixin
 from corehq.apps.users.decorators import require_permission
 from corehq.apps.users.models import Permissions, CommCareUser
 from dimagi.utils.logging import notify_exception
@@ -39,13 +34,12 @@ from dimagi.utils.web import render_to_response, json_response, json_request
 from corehq.apps.app_manager.forms import NewXFormForm, NewModuleForm
 from corehq.apps.hqmedia.forms import HQMediaZipUploadForm, HQMediaFileUploadForm
 from corehq.apps.reports import util as report_utils
-from corehq.apps.hqmedia.models import CommCareMultimedia, CommCareImage, CommCareAudio
 
 from corehq.apps.domain.decorators import login_and_domain_required, login_or_digest
 
 from django.http import HttpResponseRedirect
-from django.core.urlresolvers import reverse, resolve, get_resolver, RegexURLResolver
-from corehq.apps.app_manager.models import RemoteApp, Application, VersionedDoc, get_app, DetailColumn, Form, FormAction, FormActionCondition, FormActions,\
+from django.core.urlresolvers import reverse, RegexURLResolver
+from corehq.apps.app_manager.models import Application, get_app, DetailColumn, Form, FormActions,\
     BuildErrors, AppError, load_case_reserved_words, ApplicationBase, DeleteFormRecord, DeleteModuleRecord, DeleteApplicationRecord, EXAMPLE_DOMAIN, str_to_cls, validate_lang, SavedAppBuild
 
 from corehq.apps.app_manager.models import DETAIL_TYPES, import_app as import_app_util
@@ -56,20 +50,16 @@ from django.conf import settings
 from dimagi.utils.web import get_url_base
 
 import json
-from dimagi.utils.make_uuid import random_hex
 import urllib
 import urlparse
-import re
 from collections import defaultdict
 from couchdbkit.resource import ResourceNotFound
 from corehq.apps.app_manager.decorators import safe_download
-from django.utils.datastructures import SortedDict
 from xml.dom.minidom import parseString
-from formtranslate import api
+from corehq.apps.hqmedia.models import CommCareMultimedia
 
 try:
     from lxml.etree import XMLSyntaxError
-    from lxml.etree import parse as lxml_parse
 except ImportError:
     logging.error("lxml not installed! apps won't work properly!!")
 from django.contrib import messages
@@ -564,8 +554,8 @@ def view_generic(req, domain, app_id=None, module_id=None, form_id=None, is_user
             multimedia_images, missing_image_refs = [], 0
             multimedia_audio, missing_audio_refs = [], 0
         else:
-            multimedia_images, missing_image_refs = app.get_template_map(images)
-            multimedia_audio, missing_audio_refs = app.get_template_map(audio)
+            multimedia_images, missing_image_refs = app.get_template_map(images, req=req)
+            multimedia_audio, missing_audio_refs = app.get_template_map(audio, req=req)
         context.update({
             'missing_image_refs': missing_image_refs,
             'missing_audio_refs': missing_audio_refs,
@@ -1660,8 +1650,8 @@ def download_multimedia_zip(req, domain, app_id):
     errors = []
     for form_path, media_item in app.multimedia_map.items():
         try:
-            media = eval(media_item.media_type)
-            media = media.get(media_item.multimedia_id)
+            media_cls = CommCareMultimedia.get_doc_class(media_item.media_type)
+            media = media_cls.get(media_item.multimedia_id)
             data, content_type = media.get_display_file()
             path = form_path.replace(utils.MULTIMEDIA_PREFIX, "")
             if not isinstance(data, unicode):
@@ -1746,8 +1736,7 @@ def download_raw_jar(req, domain, app_id):
     response['Content-Type'] = "application/java-archive"
     return response
 
-@login_and_domain_required
-def emulator(req, domain, app_id, template="app_manager/emulator.html"):
+def emulator_page(req, domain, app_id, template):
     copied_app = app = get_app(domain, app_id)
     if app.copy_of:
         app = get_app(domain, app.copy_of)
@@ -1759,8 +1748,20 @@ def emulator(req, domain, app_id, template="app_manager/emulator.html"):
     return render_to_response(req, template, {
         'domain': domain,
         'app': app,
-        'build_path': build_path
+        'build_path': build_path,
+        'url_base': get_url_base()
     })
+
+@login_and_domain_required
+def emulator(req, domain, app_id, template="app_manager/emulator.html"):
+    return emulator_page(req, domain, app_id, template)
+
+def emulator_handler(req, domain, app_id):
+    exchange = req.GET.get("exchange", '')
+    if exchange:
+        return emulator_page(req, domain, app_id, template="app_manager/exchange_emulator.html")
+    else:
+        return emulator(req, domain, app_id)
 
 def emulator_commcare_jar(req, domain, app_id):
     response = HttpResponse(

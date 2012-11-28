@@ -137,7 +137,6 @@
 
 {% block content %}
     <input type="hidden" name="edit_mode" value="{% if edit %}true{% else %}false{% endif %}" />
-    {% comment %}{% include "sms/partials/sms_autocomplete.html" %}{% endcomment %}
     <div id="main_container">
 
         {% if app %}
@@ -237,7 +236,7 @@
                 </div>
             {% endif %}
         </div>
-        <div>
+        <div id="app-content">
             {% block app-content %}
             {% endblock %}
         </div>
@@ -261,4 +260,3 @@
             </div>
         {% endif %}
     </div>
-{% endblock %}

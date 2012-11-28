@@ -135,8 +135,6 @@ def data_item_groups(request, domain, data_type_id, data_item_id, group_id):
     assert(group.doc_type == Group._doc_type)
     assert(group.domain == domain)
 
-    print request.method
-
     if request.method == 'POST':
         data_item.add_group(group)
         return json_response({})
@@ -157,8 +155,6 @@ def data_item_users(request, domain, data_type_id, data_item_id, user_id):
     assert(data_item.data_type_id == data_type_id)
     assert(user.doc_type == CommCareUser._doc_type)
     assert(user.domain == domain)
-
-    print request.method
 
     if request.method == 'POST':
         data_item.add_user(user)
@@ -211,14 +207,6 @@ class UploadItemLists(TemplateView):
             return HttpResponseBadRequest("Workbook does not have a sheet called 'types'")
 
         for dt in data_types:
-            print "DataType"
-            print dt
-
-            for di in workbook.get_worksheet(title=dt['tag']):
-                print "DataItem"
-                print di
-
-        for dt in data_types:
             data_type = FixtureDataType(
                 domain=self.domain,
                 name=dt['name'],
@@ -228,7 +216,6 @@ class UploadItemLists(TemplateView):
             data_type.save()
             data_items = workbook.get_worksheet(data_type.tag)
             for di in data_items:
-                print di
                 data_item = FixtureDataItem(
                     domain=self.domain,
                     data_type_id=data_type.get_id,

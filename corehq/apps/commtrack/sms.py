@@ -16,7 +16,7 @@ def handle(verified_contact, text):
         return False
 
     try:
-        data = StockReport(domain).parse(text)
+        data = StockReport(domain).parse(text.lower())
         if not data:
             return False
         logger.debug(data)
@@ -55,7 +55,7 @@ class StockReport(object):
         
             _tx = self.single_action_transactions(action, args)
 
-        elif self.C.multiaction_enabled and (args[0] == self.C.multiaction_keyword or self.C.multiaction_keyword is None):
+        elif self.C.multiaction_enabled and (self.C.multiaction_keyword is None or args[0] == self.C.multiaction_keyword.lower()):
             # multiple action sms
             if self.C.multiaction_keyword:
                 args = args[1:]
@@ -152,6 +152,7 @@ class StockReport(object):
             
     def location_from_code(self, loc_code):
         """return the supply point case referenced by loc_code"""
+        loc_code = loc_code.lower()
         loc = get_db().view('commtrack/locations_by_code',
                             key=[self.domain.name, loc_code],
                             include_docs=True).first()
@@ -161,6 +162,7 @@ class StockReport(object):
 
     def product_from_code(self, prod_code):
         """return the product doc referenced by prod_code"""
+        prod_code = prod_code.lower()
         p = Product.get_by_code(self.domain.name, prod_code)
         if p is None:
             raise RuntimeError('invalid product code')

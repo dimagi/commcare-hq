@@ -23,7 +23,7 @@
                 onSuccess: showUploadStats,
                 swfLocation: '{% static 'hqmedia/yui/uploader/uploader.swf' %}',
                 uploadParams: {replace_existing: false},
-                uploadFormParams: ['license', 'author']
+                uploadFormParams: ['license', 'author', 'attribution-notes']
             });
             uploader.render();
 

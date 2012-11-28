@@ -17,6 +17,8 @@ from corehq.apps.reports.dispatcher import (ProjectReportDispatcher,
 from corehq.apps.adm.dispatcher import ADMSectionDispatcher
 import json
 import calendar
+from django.utils.translation import ugettext as _
+from django.utils.translation import ugettext_noop
 
 class HQUserType(object):
     REGISTERED = 0
@@ -24,9 +26,9 @@ class HQUserType(object):
     ADMIN = 2
     UNKNOWN = 3
     human_readable = [settings.COMMCARE_USER_TERM,
-                      "demo_user",
-                      "admin",
-                      "Unknown Users"]
+                      ugettext_noop("demo_user"),
+                      ugettext_noop("admin"),
+                      ugettext_noop("Unknown Users")]
     toggle_defaults = [True, False, False, False]
 
     @classmethod
@@ -61,7 +63,7 @@ class HQToggle(object):
 class HQUserToggle(HQToggle):
     
     def __init__(self, type, show):
-        name = HQUserType.human_readable[type]
+        name = _(HQUserType.human_readable[type])
         super(HQUserToggle, self).__init__(type, show, name)
 
 
@@ -152,9 +154,10 @@ class ReportConfig(Document):
 
     @classmethod
     def by_domain_and_owner(cls, domain, owner_id, report_slug=None, include_docs=True):
-        key = [domain, owner_id]
-        if report_slug:
-            key.append(report_slug)
+        if report_slug is not None:
+            key = ["name slug", domain, owner_id, report_slug]
+        else:
+            key = ["name", domain, owner_id]
 
         return cls.view('reportconfig/configs_by_domain',
             reduce=False,
@@ -267,11 +270,20 @@ class ReportConfig(Document):
     @property
     @memoized
     def report(self):
+        """
+        Returns None if no report is found for that report slug, which happens
+        when a report is no longer available.  All callers should handle this
+        case.
+
+        """
         return self._dispatcher.get_report(self.domain, self.report_slug)
 
     @property
     def report_name(self):
-        return self.report.name
+        if self.report is None:
+            return _("Deleted Report")
+        else:
+            return _(self.report.name)
 
     @property
     def full_name(self):
@@ -302,10 +314,11 @@ class ReportConfig(Document):
         Get the report's HTML content as rendered by the static view format.
 
         """
-        report_class = self.report.__module__ + '.' + self.report.__name__
-        if not self.owner.can_view_report(self.domain, report_class):
-            raise Exception("User %s can't view report %s" % (self.owner_id,
-                                                              report_class))
+        if self.report is None:
+            return _("The report used to create this scheduled report is no"
+                     " longer available on CommCare HQ.  Please delete this"
+                     " scheduled report and create a new one using an available"
+                     " report.")
 
         from django.http import HttpRequest, QueryDict
         request = HttpRequest()
@@ -395,7 +408,7 @@ class ReportNotification(Document):
                 include_docs=True).all()
             configs = [c for c in configs if not hasattr(c, 'deleted')]
         elif self.report_slug == 'admin_domains':
-            raise UnsupportedScheduledReportError("admin_domains is no longer"
+            raise UnsupportedScheduledReportError("admin_domains is no longer "
                 "supported as a schedulable report for the time being")
         else:
             # create a new ReportConfig object, useful for its methods and
@@ -439,9 +452,9 @@ class ReportNotification(Document):
             self.delete()
             return
 
-        title = "Scheduled report from CommCare HQ for %s" % self.domain
-        body = get_scheduled_report_response(self.owner, self.domain,
-                                             self._id).content
+        title = "Scheduled report from CommCare HQ"
+        body = get_scheduled_report_response(
+            self.owner, self.domain, self._id).content
 
         for email in self.all_recipient_emails:
             send_HTML_email(title, email, body)
