@@ -108,7 +108,7 @@ class Group(UndoableDocument):
         return cls.view('groups/by_name', key=[domain, name], include_docs=True).one()
 
     @classmethod
-    def by_user(cls, user, wrap=True):
+    def by_user(cls, user, wrap=True, include_names=False):
         try:
             user_id = user.user_id
         except AttributeError:
@@ -116,6 +116,8 @@ class Group(UndoableDocument):
         results = cls.view('groups/by_user', key=user_id, include_docs=wrap)
         if wrap:
             return results
+        if include_names:
+            return [dict(group_id=r['id'], name=r['value'][1]) for r in results]
         else:
             return [r['id'] for r in results]
 
