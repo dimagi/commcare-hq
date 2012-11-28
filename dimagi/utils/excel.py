@@ -227,4 +227,13 @@ def flatten_json(obj):
         yield format_header(key, value)
 
 def json_to_headers(obj):
-    return [key for key, value in sorted(flatten_json(obj))]
+    return [key for key, value in sorted(flatten_json(obj), key=lambda t: alphanumeric_sort_key(t[0]))]
+
+def alphanumeric_sort_key(key):
+    """
+    Sort the given iterable in the way that humans expect.
+    Thanks to http://stackoverflow.com/a/2669120/240553
+    """
+    import re
+    convert = lambda text: int(text) if text.isdigit() else text
+    return [convert(c) for c in re.split('([0-9]+)', key)]
