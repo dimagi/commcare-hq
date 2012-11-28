@@ -9,7 +9,7 @@ from django.db import transaction
 from couchexport.writers import Excel2007ExportWriter
 from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.decorators.profile import profile
-from dimagi.utils.excel import flatten_json, json_to_headers
+from dimagi.utils.excel import flatten_json, json_to_headers, alphanumeric_sort_key
 
 required_headers = set(['username'])
 allowed_headers = set(['password', 'phone-number', 'user_id', 'name', 'group', 'data']) | required_headers
@@ -170,8 +170,8 @@ class UsersDumpHelper(object):
         return self.get_group(id).name
 
     def get_all_groups(self):
-        for group in self.groups.values():
-            yield group
+        # sort in memory
+        return sorted(self.groups.values(), key=lambda group: group.name)
 
 def dump_users_and_groups(response, domain):
 
@@ -188,10 +188,10 @@ def dump_users_and_groups(response, domain):
 
     for user in users:
         data = user.user_data
-        group_names = map(
+        group_names = sorted(map(
             helper.get_group_name,
             Group.by_user(user, wrap=False)
-        )
+        ), key=alphanumeric_sort_key)
         # exclude password and user_id
         user_dicts.append({
             'data': data,

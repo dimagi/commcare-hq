@@ -452,9 +452,9 @@ class ReportNotification(Document):
             self.delete()
             return
 
-        title = "Scheduled report from CommCare HQ for %s" % self.domain
-        body = get_scheduled_report_response(self.owner, self.domain,
-                                             self._id).content
+        title = "Scheduled report from CommCare HQ"
+        body = get_scheduled_report_response(
+            self.owner, self.domain, self._id).content
 
         for email in self.all_recipient_emails:
             send_HTML_email(title, email, body)

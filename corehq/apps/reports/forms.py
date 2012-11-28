@@ -9,9 +9,8 @@ class ScheduledReportForm(forms.Form):
     config_ids = forms.MultipleChoiceField(
         label="Saved report(s)",
         validators=[MinLengthValidator(1)],
-        help_text='You can use Ctrl-Click to select multiple items.<br/>Note:'
-                    ' not all built-in reports support email delivery, so'
-                    ' some of your saved reports may not appear in this list')
+        help_text='Note: not all built-in reports support email delivery, so'
+                  ' some of your saved reports may not appear in this list')
 
     day_of_week = forms.TypedChoiceField(
         label='Day',

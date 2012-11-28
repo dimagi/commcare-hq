@@ -22,8 +22,8 @@ from couchdbkit.exceptions import ResourceConflict
 from corehq.apps.sms.util import create_task, close_task
 from corehq.apps.smsforms.app import submit_unfinished_form
 from corehq.apps.ivr.api import initiate_outbound_call
+from dimagi.utils.couch import LockableMixIn
 
-LOCK_EXPIRATION = timedelta(hours = 1)
 
 METHOD_CHOICES = ["sms", "email", "test", "callback", "callback_test", "survey", "ivr_survey"]
 
@@ -832,7 +832,7 @@ class CaseReminderHandler(Document):
     def deleted(self):
         return self.doc_type != 'CaseReminderHandler'
 
-class CaseReminder(Document):
+class CaseReminder(Document, LockableMixIn):
     """
     Where the CaseReminderHandler is the rule and schedule for sending out reminders,
     a CaseReminder is an instance of that rule as it is being applied to a specific
@@ -856,23 +856,6 @@ class CaseReminder(Document):
     start_condition_datetime = DateTimeProperty()   # The date and time matching the case property specified by the CaseReminderHandler.start_condition
     sample_id = StringProperty()
     xforms_session_ids = ListProperty(StringProperty)
-    lock_date = DateTimeProperty()
-    
-    # Returns True if the lock was acquired by the calling thread, False if another thread acquired it first
-    def acquire_lock(self, now):
-        if (self.lock_date is None) or (now > (self.lock_date + LOCK_EXPIRATION)):
-            try:
-                self.lock_date = now
-                self.save()
-                return True
-            except ResourceConflict:
-                return False
-        else:
-            return False
-    
-    def release_lock(self):
-        self.lock_date = None
-        self.save()
     
     @property
     def handler(self):
