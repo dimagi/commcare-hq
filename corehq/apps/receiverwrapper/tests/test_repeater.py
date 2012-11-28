@@ -137,4 +137,4 @@ class RepeaterLockTest(TestCase):
         r.release_lock()
         r4 = RepeatRecord.get(r._id)
         self.assertTrue(r4.acquire_lock(datetime.utcnow()))
-        self.fail('o')
+        
