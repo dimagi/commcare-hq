@@ -11,14 +11,13 @@ import sys
 from corehq.apps.domain.models import Domain
 from corehq.apps.groups.models import Group
 from corehq.apps.reports import util
-from corehq.apps.reports.standard import CouchCachedReportMixin, ProjectReportParametersMixin, \
+from corehq.apps.reports.standard import ProjectReportParametersMixin, \
     DatespanMixin, ProjectReport, DATE_FORMAT
 from corehq.apps.reports.calc import entrytimes
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn, DTSortType, DataTablesColumnGroup
 from corehq.apps.reports.decorators import cache_report
 from corehq.apps.reports.display import xmlns_to_name, FormType
 from corehq.apps.reports.generic import GenericTabularReport
-from corehq.apps.reports.models import CaseActivityReportCache
 from couchforms.models import XFormInstance
 from dimagi.utils.couch.database import get_db
 from dimagi.utils.decorators.memoized import memoized
@@ -87,7 +86,7 @@ class CaseActivityReport(WorkerMonitoringReportTable):
     all_users = None
     display_data = ['percent']
     emailable = True
-    special_notice = _("This report currently does not support case sharing. "
+    special_notice = ugettext_noop("This report currently does not support case sharing. "
                        "There might be inconsistencies in case totals if the user is part of a case sharing group. "
                        "We are working to correct this shortly.")
 
