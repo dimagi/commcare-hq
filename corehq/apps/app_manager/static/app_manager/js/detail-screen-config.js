@@ -138,6 +138,9 @@ var DetailScreenConfig = (function () {
                 {label: DetailScreenConfig.message.TIME_AGO_INTERVAL.MONTHS, value: DetailScreenConfig.TIME_AGO.month},
                 {label: DetailScreenConfig.message.TIME_AGO_INTERVAL.WEEKS, value: DetailScreenConfig.TIME_AGO.week},
                 {label: DetailScreenConfig.message.TIME_AGO_INTERVAL.DAYS, value: DetailScreenConfig.TIME_AGO.day},
+                {label: DetailScreenConfig.message.TIME_AGO_INTERVAL.DAYS_UNTIL, value: -DetailScreenConfig.TIME_AGO.day},
+                {label: DetailScreenConfig.message.TIME_AGO_INTERVAL.WEEKS_UNTIL, value: -DetailScreenConfig.TIME_AGO.week},
+                {label: DetailScreenConfig.message.TIME_AGO_INTERVAL.MONTHS_UNTIL, value: -DetailScreenConfig.TIME_AGO.month},
             ]).val(this.original.time_ago_interval.toString());
             this.time_ago_extra.ui.prepend($('<span/>').text(DetailScreenConfig.message.TIME_AGO_EXTRA_LABEL));
 
@@ -626,13 +629,16 @@ var DetailScreenConfig = (function () {
 
         PLAIN_FORMAT: 'Plain',
         DATE_FORMAT: 'Date',
-        TIME_AGO_FORMAT: 'Time Since Date',
-        TIME_AGO_EXTRA_LABEL: ' in ',
+        TIME_AGO_FORMAT: 'Time Since or Until Date',
+        TIME_AGO_EXTRA_LABEL: ' measuring ',
         TIME_AGO_INTERVAL: {
-            YEARS: 'Years',
-            MONTHS: 'Months',
-            WEEKS: 'Weeks',
-            DAYS: 'Days'
+            YEARS: 'Years since date',
+            MONTHS: 'Months since date',
+            WEEKS: 'Weeks since date',
+            DAYS: 'Days since date',
+            DAYS_UNTIL: 'Days until date',
+            WEEKS_UNTIL: 'Weeks until date',
+            MONTHS_UNTIL: 'Months until date'
         },
         PHONE_FORMAT: 'Phone Number',
         ENUM_FORMAT: 'ID Mapping',
