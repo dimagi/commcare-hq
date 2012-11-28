@@ -68,8 +68,11 @@ class IteratorJSONReader(object):
         return obj
 
     def __iter__(self):
-        for row in self._rows:
-            yield self.row_to_json(row)
+        try:
+            for row in self._rows:
+                yield self.row_to_json(row)
+        finally:
+            del self._rows
 
     def get_fieldnames(self):
         obj = {}
