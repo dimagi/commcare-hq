@@ -8,7 +8,6 @@ from couchforms.models import XFormInstance
 from django.core.urlresolvers import reverse
 from django.test import TestCase
 from django.test.client import Client
-from couchdbkit.exceptions import ResourceNotFound
 
 case_id = "ABC123CASEID"
 instance_id = "XKVB636DFYL38FNX3D38WV5EH"
@@ -77,12 +76,7 @@ class RepeaterTest(TestCase):
         XFormInstance.get(instance_id).delete()
         repeat_records = RepeatRecord.all()
         for repeat_record in repeat_records:
-            try:
-                repeat_record.delete()
-            except ResourceNotFound:
-                # the above view can return the same object
-                # multiple times
-                pass
+            repeat_record.delete()
 
 
     def test_repeater(self):
@@ -133,7 +127,7 @@ class RepeaterTest(TestCase):
 class RepeaterLockTest(TestCase):
 
     def testLocks(self):
-        r = RepeatRecord()
+        r = RepeatRecord(domain='test')
         r.save()
         r2 = RepeatRecord.get(r._id)
         self.assertTrue(r.acquire_lock(datetime.utcnow()))
