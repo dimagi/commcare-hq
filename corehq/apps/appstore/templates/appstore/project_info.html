@@ -71,7 +71,7 @@
             {% trans "Ratings" %}: <span class="badge badge-info">{{ num_ratings }}</span>
         </h3>
             {% if average_rating %}
-                {% include "partials/five_stars.html" with rating_name=average_rating rating=average_rating %}
+                {% include "appstore/partials/five_stars.html" with rating_name=average_rating rating=average_rating %}
             {% endif %}
     <br/>
     </div>
@@ -214,7 +214,7 @@
             </div>
             <div class="span6">
                 <div>
-                    {% include "partials/five_stars.html" with rating_name=review.get_id rating=review.rating class="pi-stars" %}
+                    {% include "appstore/partials/five_stars.html" with rating_name=review.get_id rating=review.rating class="pi-stars" %}
                     <h4 style="display: inline-block; vertical-align: bottom;">{{ review.title }}</h4>
                 </div>
                 <div>{{ review.info }}</div>
