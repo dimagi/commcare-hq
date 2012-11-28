@@ -24,7 +24,6 @@ def default(request, domain):
 @reminders_permission
 def list_reminders(request, domain, template="reminders/partial/list_reminders.html"):
     handlers = CaseReminderHandler.get_handlers(domain=domain).all()
-    print handlers
     return render_to_response(request, template, {
         'domain': domain,
         'reminder_handlers': handlers
@@ -61,7 +60,6 @@ def add_reminder(request, domain, handler_id=None, template="reminders/partial/a
                )
             ]
             handler.save()
-            print handler.events[0].message
             return HttpResponseRedirect(reverse('list_reminders', args=[domain]))
     elif handler:
         initial = {}
@@ -503,11 +501,13 @@ def add_sample(request, domain, sample_id=None):
         sample = SurveySample.get(sample_id)
     
     if request.method == "POST":
-        form = SurveySampleForm(request.POST)
+        form = SurveySampleForm(request.POST, request.FILES)
         if form.is_valid():
             name            = form.cleaned_data.get("name")
             sample_contacts = form.cleaned_data.get("sample_contacts")
             time_zone       = form.cleaned_data.get("time_zone")
+            use_contact_upload_file = form.cleaned_data.get("use_contact_upload_file")
+            contact_upload_file = form.cleaned_data.get("contact_upload_file")
             
             if sample is None:
                 sample = SurveySample (
@@ -519,39 +519,55 @@ def add_sample(request, domain, sample_id=None):
                 sample.name = name
                 sample.time_zone = time_zone.zone
             
+            errors = []
+            
             phone_numbers = []
-            for contact in sample_contacts:
-                phone_numbers.append(contact["phone_number"])
+            if use_contact_upload_file == "Y":
+                for contact in contact_upload_file:
+                    phone_numbers.append(contact["phone_number"])
+            else:
+                for contact in sample_contacts:
+                    phone_numbers.append(contact["phone_number"])
             
             existing_number_entries = VerifiedNumber.view('sms/verified_number_by_number',
                                             keys=phone_numbers,
                                             include_docs=True
                                        ).all()
             
-            existing_numbers = [v.phone_number for v in existing_number_entries]
-            nonexisting_numbers = list(set(phone_numbers).difference(existing_numbers))
+            for entry in existing_number_entries:
+                if entry.domain != domain or entry.owner_doc_type != "CommCareCase":
+                    errors.append("Cannot use phone number %s" % entry.phone_number)
             
-            id_range = DomainCounter.increment(domain, "survey_contact_id", len(nonexisting_numbers))
-            ids = iter(range(id_range[0], id_range[1] + 1))
-            for phone_number in nonexisting_numbers:
-                register_sms_contact(domain, "participant", str(ids.next()), request.couch_user.get_id, phone_number, contact_phone_number_is_verified="1", contact_backend_id="MOBILE_BACKEND_TROPO_US", language_code="en", time_zone=time_zone.zone)
-            
-            newly_registered_entries = VerifiedNumber.view('sms/verified_number_by_number',
-                                            keys=nonexisting_numbers,
-                                            include_docs=True
-                                       ).all()
-            
-            sample.contacts = [v.owner_id for v in existing_number_entries] + [v.owner_id for v in newly_registered_entries]
-            
-            sample.save()
-            
-            # Update delegation tasks for surveys using this sample
-            surveys = Survey.view("reminders/sample_to_survey", key=[domain, sample._id, "CATI"], include_docs=True).all()
-            for survey in surveys:
-                survey.update_delegation_tasks(request.couch_user.get_id)
-                survey.save()
-            
-            return HttpResponseRedirect(reverse("sample_list", args=[domain]))
+            if len(errors) > 0:
+                if use_contact_upload_file == "Y":
+                    form._errors["contact_upload_file"] = form.error_class(errors)
+                else:
+                    form._errors["sample_contacts"] = form.error_class(errors)
+            else:
+                existing_numbers = [v.phone_number for v in existing_number_entries]
+                nonexisting_numbers = list(set(phone_numbers).difference(existing_numbers))
+                
+                id_range = DomainCounter.increment(domain, "survey_contact_id", len(nonexisting_numbers))
+                ids = iter(range(id_range[0], id_range[1] + 1))
+                for phone_number in nonexisting_numbers:
+                    register_sms_contact(domain, "participant", str(ids.next()), request.couch_user.get_id, phone_number, contact_phone_number_is_verified="1", contact_backend_id="MOBILE_BACKEND_TROPO_US", language_code="en", time_zone=time_zone.zone)
+                
+                newly_registered_entries = VerifiedNumber.view('sms/verified_number_by_number',
+                                                keys=nonexisting_numbers,
+                                                include_docs=True
+                                           ).all()
+                
+                sample.contacts = [v.owner_id for v in existing_number_entries] + [v.owner_id for v in newly_registered_entries]
+                
+                sample.save()
+                
+                # Update delegation tasks for surveys using this sample
+                surveys = Survey.view("reminders/sample_to_survey", key=[domain, sample._id, "CATI"], include_docs=True).all()
+                for survey in surveys:
+                    survey.update_delegation_tasks(request.couch_user.get_id)
+                    survey.save()
+                
+                return HttpResponseRedirect(reverse("sample_list", args=[domain]))
     else:
         initial = {}
         if sample is not None:

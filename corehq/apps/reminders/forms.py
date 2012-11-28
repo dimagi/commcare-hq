@@ -10,6 +10,13 @@ from .models import REPEAT_SCHEDULE_INDEFINITELY, CaseReminderEvent, RECIPIENT_U
 from dimagi.utils.parsing import string_to_datetime
 from dimagi.utils.timezones.forms import TimeZoneChoiceField
 from dateutil.parser import parse
+from dimagi.utils.excel import WorkbookJSONReader
+from openpyxl.shared.exc import InvalidFileException
+
+YES_OR_NO = (
+    ("Y","Yes"),
+    ("N","No"),
+)
 
 METHOD_CHOICES = (
     ('sms', 'SMS'),
@@ -573,17 +580,45 @@ class SurveySampleForm(Form):
     name = CharField()
     sample_contacts = RecordListField(input_name="sample_contact")
     time_zone = TimeZoneChoiceField()
+    use_contact_upload_file = ChoiceField(choices=YES_OR_NO)
+    contact_upload_file = FileField(required=False)
     
     def clean_sample_contacts(self):
         value = self.cleaned_data["sample_contacts"]
         if len(value) == 0:
-            raise ValidationError("Please add at least one contact.");
+            raise ValidationError("Please add at least one contact.")
         for contact in value:
             try:
                 contact["phone_number"] = str(int(contact["phone_number"]))
             except ValueError:
                 raise ValidationError("Phone numbers must consist only of numbers and must be in international format.")
         return value
-
-
+    
+    def clean_contact_upload_file(self):
+        value = self.cleaned_data.get("contact_upload_file", None)
+        if self.cleaned_data.get("use_contact_upload_file", "N") == "Y":
+            if value is None:
+                raise ValidationError("Please choose a file.")
+            
+            try:
+                workbook = WorkbookJSONReader(value)
+            except InvalidFileException:
+                raise ValidationError("Invalid format. Please convert to Excel 2007 or higher (.xlsx) and try again.")
+            
+            try:
+                worksheet = workbook.get_worksheet()
+            except IndexError:
+                raise ValidationError("Workbook has no worksheets.")
+            
+            contacts = []
+            for row in worksheet:
+                if "PhoneNumber" not in row:
+                    raise ValidationError("Column 'PhoneNumber' not found.")
+                try:
+                    contacts.append({"phone_number" : str(int(row.get("PhoneNumber")))})
+                except ValueError:
+                    raise ValidationError("Phone numbers must consist only of numbers and must be in international format.")
+            return contacts
+        else:
+            return None
 
