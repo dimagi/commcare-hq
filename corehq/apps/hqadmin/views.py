@@ -1,6 +1,7 @@
 from datetime import timedelta, datetime
 import json
 from copy import deepcopy
+import logging
 from django.http import HttpResponseRedirect, HttpResponse
 from django.core.urlresolvers import reverse
 from corehq.apps.builds.models import CommCareBuildConfig, BuildSpec
@@ -526,16 +527,19 @@ def system_ajax(request):
         pass
 
     if celerymon_url != '':
-        cresource = Resource(celerymon_url)
+        cresource = Resource(celerymon_url, timeout=3)
         if type == "celerymon_poll":
             #inefficient way to just get everything in one fell swoop
             #first, get all task types:
+            ret = []
             try:
                 t = cresource.get("api/task/name/").body_string()
+                task_names = json.loads(t)
             except Exception, ex:
+                task_names = []
                 t = {}
-            task_names = json.loads(t)
-            ret = []
+                logging.error("Error with getting celerymon: %s" % ex)
+
             for tname in task_names:
                 taskinfo_raw = json.loads(cresource.get('api/task/name/%s' % (tname), params_dict={'limit': task_limit}).body_string())
                 for traw in taskinfo_raw:
@@ -594,7 +598,10 @@ def system_info(request):
         couchlog_resource = Resource("http://%s/" % (settings.COUCH_SERVER_ROOT))
     else:
         couchlog_resource = Resource("http://%s:%s@%s/" % (settings.COUCH_USERNAME, settings.COUCH_PASSWORD, settings.COUCH_SERVER_ROOT))
-    context['couch_log'] = couchlog_resource.get('_log', params_dict={'bytes': 2000 }).body_string()
+    try:
+        context['couch_log'] = couchlog_resource.get('_log', params_dict={'bytes': 2000 }).body_string()
+    except Exception, ex:
+        context['couch_log'] = "unable to open couch log: %s" % ex
 
     #redis status
     redis_status = ""
@@ -624,7 +631,7 @@ def system_info(request):
         mq_management_url = amqp_parts[0].replace('5672', '55672')
         vhost = amqp_parts[1]
         try:
-            mq = Resource('http://%s' % mq_management_url)
+            mq = Resource('http://%s' % mq_management_url, timeout=2)
             vhost_dict = json.loads(mq.get('api/vhosts').body_string())
             mq_status = "Offline"
             for d in vhost_dict:

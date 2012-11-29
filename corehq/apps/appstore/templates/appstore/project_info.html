@@ -71,7 +71,7 @@
             {% trans "Ratings" %}: <span class="badge badge-info">{{ num_ratings }}</span>
         </h3>
             {% if average_rating %}
-                {% include "partials/five_stars.html" with rating_name=average_rating rating=average_rating %}
+                {% include "appstore/partials/five_stars.html" with rating_name=average_rating rating=average_rating %}
             {% endif %}
     <br/>
     </div>
@@ -124,7 +124,12 @@
         {% for app in applications %}
             <div id="application-{{ app.id }}">
                 <dl class="dl-horizontal">
-                    <dd><h4>{{ app.name }}</h4></dd>
+                    <dd>
+                        <h4 style="display: inline-block;">{{ app.name }}</h4>
+                        <a href="{% url emulator project app.id %}?exchange=true" style="margin-left: 1.2em" target="_blank" class="btn btn-primary">
+                            {% trans "Preview this app" %}
+                        </a>
+                   </dd>
                     <dt>{% trans 'Media' %}</dt>
                     <dd>
                         {{ app.has_media|yesno:"Yes,No" }}
@@ -214,7 +219,7 @@
             </div>
             <div class="span6">
                 <div>
-                    {% include "partials/five_stars.html" with rating_name=review.get_id rating=review.rating class="pi-stars" %}
+                    {% include "appstore/partials/five_stars.html" with rating_name=review.get_id rating=review.rating class="pi-stars" %}
                     <h4 style="display: inline-block; vertical-align: bottom;">{{ review.title }}</h4>
                 </div>
                 <div>{{ review.info }}</div>

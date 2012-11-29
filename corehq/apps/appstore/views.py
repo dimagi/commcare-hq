@@ -288,7 +288,7 @@ def import_app(request, domain):
 
         from_project.downloads += 1
         from_project.save()
-        messages.success(request, render_to_string("partials/view_wiki.html", {"pre": _("Application successfully imported!")}))
+        messages.success(request, render_to_string("appstore/partials/view_wiki.html", {"pre": _("Application successfully imported!")}), extra_tags="html")
         return HttpResponseRedirect(reverse('view_app', args=[to_project_name, new_doc.id]))
     else:
         return project_info(request, domain)
@@ -321,7 +321,7 @@ def copy_snapshot(request, domain):
                 return project_info(request, domain)
             dom.downloads += 1
             dom.save()
-            messages.success(request, render_to_string("partials/view_wiki.html", {"pre": _("Project copied successfully!")}))
+            messages.success(request, render_to_string("appstore/partials/view_wiki.html", {"pre": _("Project copied successfully!")}), extra_tags="html")
             return HttpResponseRedirect(reverse('view_app',
                 args=[new_domain.name, new_domain.full_applications()[0].get_id]))
         else:

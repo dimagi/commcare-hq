@@ -214,13 +214,13 @@
 {% endblock %}
 
 {% block sidebar %}
-    {% include 'partials/sidebar.html' with display_ua='true' %}
+    {% include 'appstore/partials/sidebar.html' with display_ua='true' %}
 {% endblock %}
 
 {% block tabs %}
     {% url appstore as search_url %}
     <ul class="nav">
-        {% include 'partials/search_input.html' with search_name="search" search_for="apps..." %}
+        {% include 'appstore/partials/search_input.html' with search_name="search" search_for="apps..." %}
     </ul>
 {% endblock %}
 
@@ -335,7 +335,7 @@
                         {% if rating_name == app.name %}
                             {% if average_rating %}
                                 <span id="rating_container">
-                                {% include "partials/five_stars.html" with rating_name=rating_name rating=average_rating %}
+                                {% include "appstore/partials/five_stars.html" with rating_name=rating_name rating=average_rating %}
                             </span>
                             {% endif %}
                         {% endif %}

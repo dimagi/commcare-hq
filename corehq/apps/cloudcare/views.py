@@ -6,7 +6,8 @@ from corehq.apps.cloudcare.touchforms_api import DELEGATION_STUB_CASE_TYPE
 from corehq.apps.domain.decorators import login_and_domain_required, login_or_digest_ex, domain_admin_required
 from corehq.apps.groups.models import Group
 from corehq.apps.users.models import CouchUser, CommCareUser
-from dimagi.utils.web import render_to_response, json_response, json_handler
+from dimagi.utils.web import render_to_response, json_response, json_handler,\
+    get_url_base
 from django.http import HttpResponseRedirect, HttpResponse, HttpResponseBadRequest, Http404
 from corehq.apps.app_manager.models import Application, ApplicationBase
 import json
@@ -73,13 +74,12 @@ def app_list(request, domain, urlPath):
 @login_and_domain_required
 def form_context(request, domain, app_id, module_id, form_id):
     app = Application.get(app_id)
-    module = app.get_module(module_id)
-    form = module.get_form(form_id)
+    form_url = "%s%s" % (get_url_base(), reverse('download_xform', args=[domain, app_id, module_id, form_id]))
     case_id = request.GET.get('case_id')
     delegation = request.GET.get('task-list') == 'true'
     return json_response(
         touchforms_api.get_full_context(domain, request.couch_user, 
-                                        app, module, form, case_id, delegation=delegation))
+                                        app, form_url, case_id, delegation=delegation))
         
 @login_and_domain_required
 def case_list(request, domain):

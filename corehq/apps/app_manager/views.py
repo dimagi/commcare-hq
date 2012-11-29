@@ -1723,8 +1723,7 @@ def download_raw_jar(req, domain, app_id):
     response['Content-Type'] = "application/java-archive"
     return response
 
-@login_and_domain_required
-def emulator(req, domain, app_id, template="app_manager/emulator.html"):
+def emulator_page(req, domain, app_id, template):
     copied_app = app = get_app(domain, app_id)
     if app.copy_of:
         app = get_app(domain, app.copy_of)
@@ -1739,6 +1738,17 @@ def emulator(req, domain, app_id, template="app_manager/emulator.html"):
         'build_path': build_path,
         'url_base': get_url_base()
     })
+
+@login_and_domain_required
+def emulator(req, domain, app_id, template="app_manager/emulator.html"):
+    return emulator_page(req, domain, app_id, template)
+
+def emulator_handler(req, domain, app_id):
+    exchange = req.GET.get("exchange", '')
+    if exchange:
+        return emulator_page(req, domain, app_id, template="app_manager/exchange_emulator.html")
+    else:
+        return emulator(req, domain, app_id)
 
 def emulator_commcare_jar(req, domain, app_id):
     response = HttpResponse(

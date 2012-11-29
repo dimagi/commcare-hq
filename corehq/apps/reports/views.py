@@ -637,7 +637,8 @@ def send_test_scheduled_report(request, domain, scheduled_report_id):
     return HttpResponseRedirect(reverse("reports_home", args=(domain,)))
 
 
-def get_scheduled_report_response(couch_user, domain, scheduled_report_id):
+def get_scheduled_report_response(couch_user, domain, scheduled_report_id,
+                                  email=True):
     from dimagi.utils.web import get_url_base
     from django.http import HttpRequest
     
@@ -665,13 +666,15 @@ def get_scheduled_report_response(couch_user, domain, scheduled_report_id):
         "domain": notification.domain,
         "couch_user": notification.owner._id,
         "DNS_name": get_url_base(),
+        "owner_name": couch_user.full_name or couch_user.get_email(),
+        "email": email
     })
 
 @login_and_domain_required
 @permission_required("is_superuser")
 def view_scheduled_report(request, domain, scheduled_report_id):
-    return get_scheduled_report_response(request.couch_user, domain,
-            scheduled_report_id)
+    return get_scheduled_report_response(
+        request.couch_user, domain, scheduled_report_id, email=False)
 
 @require_case_view_permission
 @login_and_domain_required
