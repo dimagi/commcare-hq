@@ -19,7 +19,7 @@ from corehq.apps.reminders.util import get_form_name
 from touchforms.formplayer.api import current_question
 from corehq.apps.sms.mixin import VerifiedNumber
 from couchdbkit.exceptions import ResourceConflict
-from corehq.apps.sms.util import create_task, close_task
+from corehq.apps.sms.util import create_task, close_task, update_task
 from corehq.apps.smsforms.app import submit_unfinished_form
 from corehq.apps.ivr.api import initiate_outbound_call
 from dimagi.utils.couch import LockableMixIn
@@ -957,6 +957,14 @@ class SurveyWave(DocumentSchema):
     end_date = DateProperty()
     form_id = StringProperty()
     reminder_definitions = DictProperty() # Dictionary of SurveySample._id : CaseReminderHandler._id
+    delegation_tasks = DictProperty() # Dictionary of {sample id : {contact id : delegation task id, ...}, ...}
+    
+    def has_started(self, parent_survey_ref):
+        samples = [SurveySample.get(sample["sample_id"]) for sample in parent_survey_ref.samples]
+        for sample in samples:
+            if CaseReminderHandler.timestamp_to_utc(sample, datetime.combine(self.date, self.time)) <= datetime.utcnow():
+                return True
+        return False
 
 class Survey(Document):
     domain = StringProperty()
@@ -976,36 +984,86 @@ class Survey(Document):
             include_docs=True
         ).all()
     
+    def has_started(self):
+        for wave in self.waves:
+            if wave.has_started(self):
+                return True
+        return False
+    
     def update_delegation_tasks(self, submitting_user_id):
-        tasks_to_keep = {}
         utcnow = datetime.utcnow()
         
-        # Keep unchanged tasks and create new tasks as needed
+        # Get info about each CATI sample and the instance of that sample used for this survey
+        cati_sample_data = {}
+        for sample_json in self.samples:
+            if sample_json["method"] == "CATI":
+                sample_id = sample_json["sample_id"]
+                cati_sample_data[sample_id] = {
+                    "sample_object" : SurveySample.get(sample_id),
+                    "incentive" : sample_json["incentive"],
+                    "cati_operator" : sample_json["cati_operator"],
+                }
+        
         for wave in self.waves:
-            form_unique_id = wave.form_id
-            for sample in self.samples:
-                if sample["method"] == "CATI":
-                    owner_id = sample["cati_operator"]
-                    s = SurveySample.get(sample["sample_id"])
-                    task_activation_datetime = CaseReminderHandler.timestamp_to_utc(s, datetime.combine(wave.date, wave.time))
-                    if task_activation_datetime >= utcnow:
-                        for case_id in s.contacts:
-                            key = "|".join([json_format_datetime(task_activation_datetime), case_id, form_unique_id, owner_id])
-                            if key in self.delegation_tasks:
-                                tasks_to_keep[key] = self.delegation_tasks[key]
-                            else:
-                                case = CommCareCase.get(case_id)
-                                tasks_to_keep[key] = create_task(case, submitting_user_id, owner_id, form_unique_id, task_activation_datetime)
-        
-        # Close tasks that are no longer valid
-        for key, value in self.delegation_tasks.items():
-            if key not in tasks_to_keep:
-                data = key.split("|")
-                if string_to_datetime(data[0]).replace(tzinfo=None) < utcnow:
-                    tasks_to_keep[key] = value
+            if wave.has_started(self):
+                continue
+            
+            # Close any tasks for samples that are no longer used, and for contacts that are no longer in the samples
+            for sample_id, tasks in wave.delegation_tasks.items():
+                if sample_id not in cati_sample_data:
+                    for case_id, delegation_case_id in tasks.items():
+                        close_task(self.domain, delegation_case_id, submitting_user_id)
+                    del wave.delegation_tasks[sample_id]
                 else:
-                    close_task(self.domain, value, submitting_user_id)
-        
-        self.delegation_tasks = tasks_to_keep
+                    for case_id in list(set(tasks.keys()).difference(cati_sample_data[sample_id]["sample_object"].contacts)):
+                        close_task(self.domain, tasks[case_id], submitting_user_id)
+                        del wave.delegation_tasks[sample_id][case_id]
+            
+            # Update / Create tasks for existing / new contacts
+            for sample_id, sample_data in cati_sample_data.items():
+                task_activation_datetime = CaseReminderHandler.timestamp_to_utc(sample_data["sample_object"], datetime.combine(wave.date, wave.time))
+                task_deactivation_datetime = CaseReminderHandler.timestamp_to_utc(sample_data["sample_object"], datetime.combine(wave.end_date, wave.time))
+                if sample_id not in wave.delegation_tasks:
+                    wave.delegation_tasks[sample_id] = {}
+                    for case_id in sample_data["sample_object"].contacts:
+                        wave.delegation_tasks[sample_id][case_id] = create_task(
+                            CommCareCase.get(case_id), 
+                            submitting_user_id, 
+                            sample_data["cati_operator"], 
+                            wave.form_id, 
+                            task_activation_datetime,
+                            task_deactivation_datetime,
+                            sample_data["incentive"]
+                        )
+                else:
+                    for case_id in sample_data["sample_object"].contacts:
+                        delegation_case_id = wave.delegation_tasks[sample_id].get(case_id, None)
+                        if delegation_case_id is None:
+                            wave.delegation_tasks[sample_id][case_id] = create_task(
+                                CommCareCase.get(case_id), 
+                                submitting_user_id, 
+                                sample_data["cati_operator"], 
+                                wave.form_id, 
+                                task_activation_datetime, 
+                                task_deactivation_datetime,
+                                sample_data["incentive"]
+                            )
+                        else:
+                            delegation_case = CommCareCase.get(delegation_case_id)
+                            if (delegation_case.owner_id != sample_data["cati_operator"] or
+                            delegation_case.get_case_property("start_date") != task_activation_datetime or
+                            delegation_case.get_case_property("end_date") != task_deactivation_datetime or
+                            delegation_case.get_case_property("form_id") != wave.form_id):
+                                update_task(
+                                    self.domain, 
+                                    delegation_case_id, 
+                                    submitting_user_id, 
+                                    sample_data["cati_operator"], 
+                                    wave.form_id, 
+                                    task_activation_datetime, 
+                                    task_deactivation_datetime,
+                                    sample_data["incentive"]
+                                )
+
 
 from .signals import *

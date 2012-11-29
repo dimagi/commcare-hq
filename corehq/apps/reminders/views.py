@@ -14,6 +14,7 @@ from corehq.apps.sms.util import register_sms_contact
 from corehq.apps.domain.models import DomainCounter
 from casexml.apps.case.models import CommCareCase
 from dateutil.parser import parse
+from corehq.apps.sms.util import close_task
 
 reminders_permission = require_permission(Permissions.edit_data)
 
@@ -264,6 +265,8 @@ def delete_keyword(request, domain, keyword_id):
 @reminders_permission
 def add_survey(request, domain, survey_id=None):
     survey = None
+    started = False
+    
     if survey_id is not None:
         survey = Survey.get(survey_id)
     
@@ -292,7 +295,14 @@ def add_survey(request, domain, survey_id=None):
             if survey is None:
                 wave_list = []
                 for wave in waves:
-                    wave_list.append(SurveyWave(date=parse(wave["date"]).date(), time=parse(wave["time"]).time(), end_date=parse(wave["end_date"]).date(), form_id=wave["form_id"], reminder_definitions={}))
+                    wave_list.append(SurveyWave(
+                        date=parse(wave["date"]).date(),
+                        time=parse(wave["time"]).time(),
+                        end_date=parse(wave["end_date"]).date(),
+                        form_id=wave["form_id"],
+                        reminder_definitions={},
+                        delegation_tasks={},
+                    ))
                 
                 if send_automatically:
                     for wave in wave_list:
@@ -354,11 +364,14 @@ def add_survey(request, domain, survey_id=None):
                 for wave_json in unchanged_wave_json:
                     waves.remove(wave_json)
                 
-                # Retire reminder definitions for old waves
+                # Retire reminder definitions / close delegation tasks for old waves
                 for wave in current_waves:
                     for sample_id, handler_id in wave.reminder_definitions.items():
                         handler = CaseReminderHandler.get(handler_id)
                         handler.retire()
+                    for sample_id, delegation_data in wave.delegation_tasks.items():
+                        for case_id, delegation_case_id in delegation_data.items():
+                            close_task(domain, delegation_case_id, request.couch_user.get_id)
                 
                 # Add in new waves
                 for wave_json in waves:
@@ -368,6 +381,7 @@ def add_survey(request, domain, survey_id=None):
                         end_date=parse(wave_json["end_date"]).date(),
                         form_id=wave_json["form_id"],
                         reminder_definitions={},
+                        delegation_tasks={},
                     ))
                 
                 # Retire reminder definitions that are no longer needed
@@ -428,7 +442,7 @@ def add_survey(request, domain, survey_id=None):
                 survey.send_automatically = send_automatically
                 survey.send_followup = send_followup
             
-            # Sort the questionnaire waves by date and time (for display purposes only)
+            # Sort the questionnaire waves by date and time
             survey.waves = sorted(survey.waves, key = lambda wave : datetime.combine(wave.date, wave.time))
             
             # Create / Close delegation tasks as necessary for samples with method "CATI"
@@ -438,8 +452,8 @@ def add_survey(request, domain, survey_id=None):
             return HttpResponseRedirect(reverse("survey_list", args=[domain]))
     else:
         initial = {}
-        started = False
         if survey is not None:
+            started = survey.has_started()
             waves = []
             samples = [SurveySample.get(sample["sample_id"]) for sample in survey.samples]
             utcnow = datetime.utcnow()
@@ -448,15 +462,9 @@ def add_survey(request, domain, survey_id=None):
                     "date" : str(wave.date),
                     "form_id" : wave.form_id,
                     "time" : str(wave.time),
-                    "ignore" : False,
+                    "ignore" : wave.has_started(survey),
                     "end_date" : str(wave.end_date),
                 }
-                
-                for sample in samples:
-                    if CaseReminderHandler.timestamp_to_utc(sample, datetime.combine(wave.date, wave.time)) < utcnow:
-                        wave_json["ignore"] = True
-                        started = True
-                        break
                 
                 waves.append(wave_json)
             

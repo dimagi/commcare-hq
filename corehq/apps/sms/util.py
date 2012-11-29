@@ -84,7 +84,7 @@ def register_sms_contact(domain, case_type, case_name, user_id, contact_phone_nu
     submit_xml(domain, "sms/xml/register_contact.xml", context)
     return case_id
 
-def create_task(parent_case, submitting_user_id, task_owner_id, form_unique_id, task_activation_datetime):
+def create_task(parent_case, submitting_user_id, task_owner_id, form_unique_id, task_activation_datetime, task_deactivation_datetime, incentive):
     utcnow = str(datetime.datetime.utcnow())
     subcase_guid = str(uuid.uuid3(uuid.NAMESPACE_URL, utcnow))
     context = {
@@ -94,10 +94,25 @@ def create_task(parent_case, submitting_user_id, task_owner_id, form_unique_id, 
         "task_owner_id" : task_owner_id,
         "form_unique_id" : form_unique_id,
         "task_activation_date" : json_format_datetime(task_activation_datetime),
+        "task_deactivation_date" : json_format_datetime(task_deactivation_datetime),
         "parent" : parent_case,
+        "incentive" : incentive,
     }
     submit_xml(parent_case.domain, "sms/xml/create_task.xml", context)
     return subcase_guid
+
+def update_task(domain, subcase_guid, submitting_user_id, task_owner_id, form_unique_id, task_activation_datetime, task_deactivation_datetime, incentive):
+    context = {
+        "subcase_guid" : subcase_guid,
+        "user_id" : submitting_user_id,
+        "date_modified" : json_format_datetime(datetime.datetime.utcnow()),
+        "task_owner_id" : task_owner_id,
+        "form_unique_id" : form_unique_id,
+        "task_activation_date" : json_format_datetime(task_activation_datetime),
+        "task_deactivation_date" : json_format_datetime(task_deactivation_datetime),
+        "incentive" : incentive,
+    }
+    submit_xml(domain, "sms/xml/update_task.xml", context)
 
 def close_task(domain, subcase_guid, submitting_user_id):
     context = {
