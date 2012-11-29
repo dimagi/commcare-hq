@@ -393,7 +393,7 @@ def es_deployments_query(params, facets=[], terms=['is_approved', 'sort_by', 'se
 
 def media_files(request, domain, template="appstore/media_files.html"):
     dom = Domain.get_by_name(domain)
-    if not dom or not dom.is_snapshot or (not dom.is_approved and not request.couch_user.is_domain_admin(domain)):
+    if not dom or not dom.is_snapshot or (not dom.is_approved and not request.couch_user.is_domain_admin(dom.copied_from.name)):
         raise Http404()
 
     return render_to_response(request, template, {
