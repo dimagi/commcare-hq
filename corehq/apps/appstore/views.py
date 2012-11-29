@@ -289,7 +289,8 @@ def import_app(request, domain):
 
 #@login_and_domain_required
 def copy_snapshot(request, domain):
-    if not request.couch_user.is_eula_signed():
+    user = request.couch_user
+    if not user.is_eula_signed():
         messages.error(request, 'You must agree to our eula to download an app')
         return project_info(request, domain)
 
@@ -304,7 +305,7 @@ def copy_snapshot(request, domain):
                 return project_info(request, domain)
 
             if form.is_valid():
-                new_domain = dom.save_copy(form.clean_domain_name(), user=request.couch_user)
+                new_domain = dom.save_copy(form.clean_domain_name(), user=user)
             else:
                 messages.error(request, form.errors)
                 return project_info(request, domain)
