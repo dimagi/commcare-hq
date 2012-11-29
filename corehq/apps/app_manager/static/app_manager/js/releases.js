@@ -15,6 +15,7 @@ function ReleasesMain(o) {
     self.doneFetching = ko.observable(false);
     self.nextVersionToFetch = null;
     self.fetchLimit = 5;
+    self.deployAnyway = {};
     self.url = function (name) {
         var template = self.options.urls[name];
         for (var i = 1; i < arguments.length; i++) {
@@ -39,9 +40,11 @@ function ReleasesMain(o) {
                 limit: self.fetchLimit
             }
         }).success(function (savedApps) {
-            var i;
+            var i, savedApp;
             for (i = 0; i < savedApps.length; i++) {
-                self.savedApps.push(SavedApp(savedApps[i]));
+                savedApp = SavedApp(savedApps[i]);
+                self.savedApps.push(savedApp);
+                self.deployAnyway[savedApp.id()] = ko.observable(false);
             }
             if (i) {
                 self.nextVersionToFetch = savedApps[i-1].version - 1;

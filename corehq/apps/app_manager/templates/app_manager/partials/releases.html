@@ -1,4 +1,5 @@
 {% load i18n %}
+
 <table class="table">
     <tr>
         <th colspan="2">Version</th>
@@ -88,7 +89,7 @@
         <h3>Deploying version <span data-bind="text: version"></span></h3>
     </div>
     <div class="modal-body">
-        <div data-bind="visible: case_sharing && $root.users_cannot_share.length">
+        <div data-bind="visible: case_sharing() && $root.users_cannot_share.length">
             <p>
                 <span class="label label-important">Warning!</span>
                 The following users cannot use this case sharing app because they have either more or less than one group.
@@ -96,44 +97,31 @@
                 so that they all belong to exactly one group.
             </p>
             <ul data-bind="foreach: $root.users_cannot_share">
-                <li data-bind="text: raw_username"></li>
+                <li data-bind="text: username"></li>
             </ul>
             <p>
                 <a href="{% url commcare_users domain %}?cannot_share=true" class="btn">Edit mobile users</a>
-                <a href="#{{ saved_app.id }}_accordion" class="btn showAccordionButton">Deploy anyway</a>
+                <a class="btn" data-bind="click: function () {return $root.deployAnyway[id()](true);}">Deploy anyway</a>
             </p>
         </div>
-        <div class="accordion{% if saved_app.case_sharing and users_cannot_share|length > 0 %} hide {% endif %}" id="{{ saved_app.id }}_accordion">
+        <div class="accordion" data-bind="bootstrapCollapse: true,
+            visible: $root.deployAnyway[id()]() || !(case_sharing() && $root.users_cannot_share.length)
+        ">
             <div class="accordion-group">
                 <div class="accordion-heading">
-                    {% if saved_app.cloudcare_enabled %}
-                        <a class="accordion-toggle" data-toggle="collapse" data-parent="#{{ saved_app.id }}_accordion" href="#{{ saved_app.id }}_preview">
-                            {% trans 'Preview' %}
-                        </a>
-                    {% else %}
-                        <a class="accordion-toggle" data-bind="attr: {href: $root.url('emulator', id)}">
-                            {% trans 'Preview in emulator' %}
-                        </a>
-                    {% endif %}
-                </div>
-                <div id="{{ saved_app.id }}_preview" class="accordion-body collapse">
-                    <div class="accordion-inner">
-                        <p>
-                            Preview in <a data-bind="attr: {href: $root.url('emulator', id)}">the emulator</a>
-                            or in
-                            <a data-bind="attr: {href: $root.url('cloudcare', id)}">CloudCare</a>
-                        </p>
-                    </div>
+                    <a class="accordion-toggle" data-bind="attr: {href: $root.url('emulator', id)}">
+                        {% trans 'Preview in Emulator' %}
+                    </a>
                 </div>
             </div>
 
             <div class="accordion-group">
                 <div class="accordion-heading">
-                    <a class="accordion-toggle" data-toggle="collapse" data-parent="#{{ saved_app.id }}_accordion" href="#{{ saved_app.id }}_j2me">
-                        Download to J2ME
+                    <a class="accordion-toggle">
+                        {% trans "Download to J2ME" %}
                     </a>
                 </div>
-                <div id="{{ saved_app.id }}_j2me" class="accordion-body collapse">
+                <div class="accordion-body collapse">
                     <div class="accordion-inner">
                         <ol>
                             <li>
@@ -163,46 +151,44 @@
 
             <div class="accordion-group">
                 <div class="accordion-heading">
-                    <a class="accordion-toggle" data-toggle="collapse" data-parent="#{{ saved_app.id }}_accordion" href="#{{ saved_app.id }}_sms">
+                    <a class="accordion-toggle">
                         Send to phone via SMS
                     </a>
                 </div>
 
-                <div id="{{ saved_app.id }}_sms" class="accordion-body collapse">
+                <div class="accordion-body collapse">
                     <div class="accordion-inner">
                         <div class="tab-pane" id="pills-basic">
                             <div class="tabbable">
                                 <ul class="nav nav-pills">
                                     <li class="active">
-                                        <a href="#{{ saved_app.id }}_sms_j2me" data-toggle="tab">Send J2ME app</a>
+                                        <a>Send J2ME app</a>
                                     </li>
                                     <li>
-                                        <a href="#{{ saved_app.id }}_sms_odk" data-toggle="tab">Send CommCare ODK app (Android)</a>
+                                        <a>Send CommCare ODK app (Android)</a>
                                     </li>
                                 </ul>
                                 <div class="tab-content">
-                                    <div id="{{ saved_app.id }}_sms_j2me" class="tab-pane active" data-bind="
-                                        attr: {id: id() + '_sms_j2me'}
-                                    ">
+                                    <div class="tab-pane active">
                                         <div data-bind="visible: short_url">
                                             <form method="post" action="{% url corehq.apps.sms.views.send_to_recipients domain %}">
                                                 <label>Send to: </label>
                                                 <input type="text" name="recipients" class="sms-autocomplete" value=""/>
                                                 <br />
-                                                <textarea name="message">Update to CommCare: <!--ko
-                                                    text: short_url--><!--/ko
-                                                    --> ("{{ app.short_name }}" v.{{ saved_app.version }})</textarea>
+                                                <textarea name="message" data-bind="text: 'Update to CommCare: ' +
+                                                    short_url() + ' (&quot;' + short_name() + '&quot; v. ' + version() + ')'"></textarea>
                                                 <br />
                                                 <input type="submit" class="btn" value="Send"/>
                                             </form>
-                                        </div><div data-bind="visible: !short_url()">
+                                        </div>
+                                        <div data-bind="visible: !short_url()">
                                             <span class="label label-important">
                                               No URL was found for this app, try rebuilding.
                                             </span>
                                         </div>
                                     </div>
 
-                                    <div id="{{ saved_app.id }}_sms_odk" class="tab-pane">
+                                    <div class="tab-pane">
                                         {% if saved_app.short_odk_url %}
                                             <form method="post" action="{% url corehq.apps.sms.views.send_to_recipients domain %}">
                                                 <label>Send to: </label>

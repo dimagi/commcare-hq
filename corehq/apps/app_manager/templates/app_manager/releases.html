@@ -20,11 +20,6 @@
                 $(defaultMessage).hide();
             }
         });
-        $('.showAccordionButton').click(function(e) {
-            $($(this).attr('href')).slideDown();
-            $(this).parent().hide();
-            return false;
-        });
         // init releases
         var urls = {
             fetch: '{% url paginate_releases domain app.id %}',

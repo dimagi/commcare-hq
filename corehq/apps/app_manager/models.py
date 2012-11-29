@@ -1246,6 +1246,7 @@ class SavedAppBuild(ApplicationBase):
             'built_on_time': utc_to_timezone(data['built_on'], timezone, "%H:%M %Z"),
             'build_label': self.built_with.get_label(),
             'jar_path': self.get_jar_path(),
+            'short_name': self.short_name
         })
         if data['comment_from']:
             comment_user = CouchUser.get(data['comment_from'])
