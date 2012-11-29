@@ -9,6 +9,7 @@ from couchdbkit.ext.django.schema import Document, StringProperty,\
 from django.utils.safestring import mark_safe
 from corehq.apps.appstore.models import Review, SnapshotMixin
 from dimagi.utils.html import format_html
+from dimagi.utils.logging import notify_exception
 from dimagi.utils.timezones import fields as tz_fields
 from dimagi.utils.couch.database import get_db
 from itertools import chain
@@ -188,8 +189,9 @@ class Domain(Document, HQBillingDomainMixin, SnapshotMixin):
         # for domains that still use original_doc
         should_save = False
         if data.has_key('original_doc'):
-            original_doc = Domain.get_by_name(data.get('original_doc', None))
+            original_doc = data['original_doc']
             if original_doc:
+                original_doc = Domain.get_by_name(data['original_doc'])
                 data['copy_history'] = [original_doc._id]
                 del data['original_doc']
                 should_save = True
@@ -343,6 +345,22 @@ class Domain(Document, HQBillingDomainMixin, SnapshotMixin):
 
     @classmethod
     def get_by_name(cls, name):
+        if not name:
+            # get_by_name should never be called with name as None (or '', etc)
+            # I fixed the code in such a way that if I raise a ValueError
+            # all tests pass and basic pages load,
+            # but in order not to break anything in the wild,
+            # I'm opting to notify by email if/when this happens
+            # but fall back to the previous behavior of returning None
+            try:
+                raise ValueError('%r is not a valid domain name' % name)
+            except ValueError:
+                if settings.DEBUG:
+                    raise
+                else:
+                    notify_exception(None, '%r is not a valid domain name' % name)
+                    return None
+
         result = cls.view("domain/domains",
                             key=name,
                             reduce=False,
