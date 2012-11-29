@@ -3,13 +3,14 @@ from datetime import datetime
 import json
 import logging
 from urllib import urlencode
+from django.contrib.auth.decorators import login_required
 from django.core.urlresolvers import reverse
 from django.http import Http404, HttpResponseRedirect, HttpResponse
 from django.template.loader import render_to_string
 from restkit.errors import RequestFailed
 from corehq.apps.appstore.forms import AddReviewForm
 from corehq.apps.appstore.models import Review
-from corehq.apps.domain.decorators import login_and_domain_required
+from corehq.apps.domain.decorators import login_and_domain_required, require_superuser
 from corehq.apps.hqmedia.utils import most_restrictive
 from corehq.apps.registration.forms import DomainRegistrationForm
 from corehq.apps.users.models import Permissions
@@ -41,6 +42,7 @@ def rewrite_url(request, path):
 def inverse_dict(d):
     return dict([(v, k) for k, v in d.iteritems()])
 
+@login_required
 def project_info(request, domain, template="appstore/project_info.html"):
     dom = Domain.get_by_name(domain)
     if not dom or not dom.is_snapshot or (not dom.is_approved and not request.couch_user.is_domain_admin(dom.copied_from.name)):
@@ -155,6 +157,7 @@ def generate_sortables_from_facets(results, params=None, mapping={}):
 
     return sortable
 
+@login_required
 def appstore(request, template="appstore/appstore_base.html"):
     params, _ = parse_args_for_es(request)
     params = dict([(SNAPSHOT_MAPPING.get(p, p), params[p]) for p in params])
@@ -258,6 +261,7 @@ def appstore_default(request):
     from corehq.apps.appstore.dispatcher import AppstoreDispatcher
     return HttpResponseRedirect(reverse(AppstoreDispatcher.name(), args=['advanced']))
 
+@require_superuser
 def approve_app(request, domain):
     domain = Domain.get_by_name(domain)
     if request.GET.get('approve') == 'true':
@@ -269,7 +273,7 @@ def approve_app(request, domain):
     meta = request.META
     return HttpResponseRedirect(request.META.get('HTTP_REFERER') or reverse('appstore'))
 
-
+@login_and_domain_required
 def import_app(request, domain):
     user = request.couch_user
     if not user.is_eula_signed():
@@ -298,7 +302,7 @@ def import_app(request, domain):
     else:
         return project_info(request, domain)
 
-#@login_and_domain_required
+@login_required
 def copy_snapshot(request, domain):
     user = request.couch_user
     if not user.is_eula_signed():
@@ -342,6 +346,7 @@ def project_image(request, domain):
     else:
         raise Http404()
 
+@login_required
 def deployment_info(request, domain, template="appstore/deployment_info.html"):
     dom = Domain.get_by_name(domain)
     if not dom or not dom.deployment.public:
@@ -356,6 +361,7 @@ def deployment_info(request, domain, template="appstore/deployment_info.html"):
                                                   'url_base': reverse('deployments'),
                                                   'sortables': facets_sortables})
 
+@login_required
 def deployments(request, template="appstore/deployments.html"):
     params, _ = parse_args_for_es(request)
     params = dict([(DEPLOYMENT_MAPPING.get(p, p), params[p]) for p in params])
@@ -385,7 +391,11 @@ def deployments_api(request):
     results = es_deployments_query(params, facets)
     return HttpResponse(json.dumps(results), mimetype="application/json")
 
-def es_deployments_query(params, facets=[], terms=['is_approved', 'sort_by', 'search'], sort_by="snapshot_time"):
+def es_deployments_query(params, facets=None, terms=None, sort_by="snapshot_time"):
+    if terms is None:
+        terms = ['is_approved', 'sort_by', 'search']
+    if facets is None:
+        facets = []
     q = {"query":   {"bool": {"must":
                                   [{"match": {'doc_type': "Domain"}},
                                    {"term": {"deployment.public": True}}]}}}
@@ -402,6 +412,7 @@ def es_deployments_query(params, facets=[], terms=['is_approved', 'sort_by', 'se
         })
     return es_query(params, facets, terms, q)
 
+@login_required
 def media_files(request, domain, template="appstore/media_files.html"):
     dom = Domain.get_by_name(domain)
     if not dom or not dom.is_snapshot or (not dom.is_approved and not request.couch_user.is_domain_admin(dom.copied_from.name)):
