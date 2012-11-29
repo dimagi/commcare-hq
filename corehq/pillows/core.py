@@ -17,6 +17,7 @@ date_format_arr = ["yyyy-MM-dd",
                    #                      'date_optional_time',
                    "yyyy-MM-dd'T'HH:mm:ssZZ",
                    "yyyy-MM-dd'T'HH:mm:ss.SSSSSS",
+                   "yyyy-MM-dd'T'HH:mm:ss.SSSSSS'Z'",
                    "yyyy-MM-dd'T'HH:mm:ss'Z'",
                    "yyyy-MM-dd'T'HH:mm:ssZ",
                    "yyyy-MM-dd'T'HH:mm:ssZZ'Z'",
@@ -29,8 +30,6 @@ date_format_arr = ["yyyy-MM-dd",
 #elasticsearch Illegal pattern component: t
 #no builtin types for || joins
 formats_string = '||'.join(date_format_arr)
-print formats_string
-
 
 class AuditcarePillow(LogstashMonitoringPillow):
     endpoint_host = settings.LOGSTASH_HOST
