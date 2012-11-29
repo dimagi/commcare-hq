@@ -190,11 +190,12 @@ class Domain(Document, HQBillingDomainMixin, SnapshotMixin):
         should_save = False
         if data.has_key('original_doc'):
             original_doc = data['original_doc']
+            del data['original_doc']
+            should_save = True
             if original_doc:
                 original_doc = Domain.get_by_name(data['original_doc'])
                 data['copy_history'] = [original_doc._id]
-                del data['original_doc']
-                should_save = True
+
         # for domains that have a public domain license
         if data.has_key("license"):
             if data.get("license", None) == "public":
