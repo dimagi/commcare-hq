@@ -14,6 +14,7 @@ from dimagi.utils.dates import DateSpan
 
 class MVP(object):
     NAMESPACE = "mvp_indicators"
+    # todo: add mvp-sauri back in here
     DOMAINS = ["mvp-potou"]
     VISIT_FORMS = dict(
         pregnancy_visit='http://openrosa.org/formdesigner/185A7E63-0ECD-4D9A-8357-6FD770B6F065',
