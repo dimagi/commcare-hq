@@ -635,7 +635,7 @@ class Domain(Document, HQBillingDomainMixin, SnapshotMixin):
     @classmethod
     def hit_sort(cls, domains, page):
         domains = list(domains)
-        domains = sorted(domains, key=lambda domain: len(domain.copies_of_parent()), reverse=True)
+        domains = sorted(domains, key=lambda domain: domain.downloads, reverse=True)
         return domains[((page-1)*9):((page)*9)]
 
     @classmethod
