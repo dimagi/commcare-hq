@@ -974,7 +974,6 @@ class Survey(Document):
     samples = ListProperty(DictProperty)
     send_automatically = BooleanProperty()
     send_followup = BooleanProperty()
-    delegation_tasks = DictProperty() # Each task represented by a key-value pair of "<start_date>|<parent_case_id>|<form_unique_id>|<owner_id>" : "<subcase_id>"
     
     @classmethod
     def get_all(cls, domain):
