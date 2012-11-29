@@ -1,8 +1,9 @@
 import pdb
+import random
 import traceback
 from corehq.pillows.core import date_format_arr, formats_string
 import sys
-from pillowtop.listener import AliasedElasticPillow
+from pillowtop.listener import AliasedElasticPillow, CHECKPOINT_FREQUENCY
 import hashlib
 import simplejson
 from couchforms.models import XFormInstance
@@ -10,6 +11,7 @@ from pillowtop.listener import ElasticPillow
 import logging
 from django.conf import settings
 from datetime import datetime
+
 
 
 class StrippedXformPillow(ElasticPillow):
@@ -67,7 +69,6 @@ class XFormPillow(AliasedElasticPillow):
     es_alias = "xforms"
     es_type = "xform"
 
-    seen_types = {}
     es_meta = {
         "date_formats": date_format_arr
     }
@@ -207,6 +208,8 @@ class XFormPillow(AliasedElasticPillow):
         ui_version = doc_dict.get('form', {}).get('@uiVersion', 'XXX')
         version = doc_dict.get('form', {}).get('@version', 'XXX')
         xmlns = doc_dict.get('xmlns', 'http://noxmlns')
+        if xmlns is None:
+            xmlns = 'http://noxmlns'
         ret =  "%(type)s.%(domain)s.%(xmlns_suffix)s.u%(ui_version)s-v%(version)s" % {
             'type': self.es_type,
             'domain': domain.lower(),
@@ -238,53 +241,21 @@ class XFormPillow(AliasedElasticPillow):
             self.get_type_string(doc_dict): mapping
         }
 
-
-    def change_transport(self, doc_dict):
-        """
-        Override the elastic transport to go to the index + the type being a string between the
-        domain and case type
-        """
+    def change_transform(self, doc_dict):
         if self.get_domain(doc_dict) is None:
-            #no domain, skipping
-            return
-
-        try:
-            es = self.get_es()
-            if not self.type_exists(doc_dict):
-                #if type is never seen, apply mapping for said type
-                type_mapping = self.get_mapping_from_type(doc_dict)
-                type_mapping[self.get_type_string(doc_dict)]['_meta']['created'] = datetime.isoformat(datetime.utcnow())
-                mapping_res = es.put("%s/%s/_mapping" % (self.es_index, self.get_type_string(doc_dict)), data=type_mapping)
-                print "Mapping set: [%s] %s" % (self.get_type_string(doc_dict), mapping_res)
-                #this server confirm is a modest overhead but it tells us whether or not the type
-                # is successfully mapped into the index.
-                #0.19 mapping - retrieve the mapping to confirm that it's been seen
-                #print "Setting mapping for: %s" % self.get_type_string(doc_dict)
-                self.seen_types = es.get('%s/_mapping' % self.es_index)[self.es_index]
-
-            doc_path = self.get_doc_path_typed(doc_dict)
-
-            if self.allow_updates:
-                can_put = True
-            else:
-                can_put = not self.doc_exists(doc_dict['_id'])
-
-            if can_put:
-                #final check, check the handlers
-                if doc_dict.get('domain', None) is not None:
-                    if self.handler_domain_map.has_key(doc_dict['domain']):
-                        doc_dict = self.handler_domain_map[doc_dict['domain']].handle_transform(doc_dict)
-
-                res = es.put(doc_path, data=doc_dict)
-                if res.get('status', 0) == 400:
-                    print "xform error: %s\n%s" % (doc_dict['_id'], simplejson.dumps(res, indent=4))
-#                    #                    logging.error("Pillowtop Error [%s]:\n%s\n\tDoc id: %s\n\t%s" % (self.get_name(),
-#                    #                                                                           res.get('error',
-#                    #                                                                               "No error message"),
-#                    #                                                                           doc_dict['_id'],
-#                    #                                                                           doc_dict.keys()))
-        except Exception, ex:
-            print 'xforms [%s] error: %s' % (doc_dict['_id'], ex)
-            traceback.print_exc(file=sys.stdout)
-            #            logging.error("PillowTop [%s]: transporting change data doc_id: %s to elasticsearch error: %s", (self.get_name(), doc_dict['_id'], ex))
             return None
+        else:
+            # universal xform handler for timeStart
+            # to address a touchforms issue
+            if doc_dict['form'].has_key('meta'):
+                if doc_dict['form']['meta'].get('timeEnd', None) == "":
+                    doc_dict['form']['meta']['timeEnd'] = None
+                if doc_dict['form']['meta'].get('timeStart', None) == "":
+                    doc_dict['form']['meta']['timeStart'] = None
+
+            if self.handler_domain_map.has_key(doc_dict['domain']):
+                doc_dict = self.handler_domain_map[doc_dict['domain']].handle_transform(doc_dict)
+            return doc_dict
+
+
+

@@ -14,7 +14,6 @@ class CasePillow(AliasedElasticPillow):
     es_index_prefix = "hqcases"
     es_alias = "hqcases"
     es_type = "case"
-    seen_types = {}
     es_meta = {}
 
     def calc_meta(self):
@@ -130,46 +129,3 @@ class CasePillow(AliasedElasticPillow):
             'case_type': case_type.lower(),
             }
 
-    def change_transport(self, doc_dict):
-        """
-        Override the elastic transport to go to the index + the type being a string between the
-        domain and case type
-        """
-        try:
-            es = self.get_es()
-
-            if not self.type_exists(doc_dict):
-                #if type is never seen, apply mapping for said type
-                type_mapping = self.get_mapping_from_type(doc_dict)
-                #update metadata
-                type_mapping[self.get_type_string(doc_dict)]['_meta'][
-                'created'] = datetime.isoformat(datetime.utcnow())
-                es.put("%s/%s/_mapping" % (self.es_index, self.get_type_string(doc_dict)),
-                    data=type_mapping)
-                #this server confirm is a modest overhead but it tells us whether or not the type
-                # is successfully mapped into the index.
-                #0.19 mapping - retrieve the mapping to confirm that it's been seen
-                #print "Setting mapping for: %s" % self.get_type_string(doc_dict)
-                self.seen_types = es.get('%s/_mapping' % self.es_index)[self.es_index]
-
-            doc_path = self.get_doc_path_typed(doc_dict)
-
-            if self.allow_updates:
-                can_put = True
-            else:
-                can_put = not self.doc_exists(doc_dict['_id'])
-
-            if can_put:
-                res = es.put(doc_path, data=doc_dict)
-                if res.get('status', 0) == 400:
-                    logging.error(
-                        "Pillowtop Error [%s]:\n%s\n\tDoc id: %s\n\t%s" % (self.get_name(),
-                                                                           res.get('error',
-                                                                               "No error message"),
-                                                                           doc_dict['_id'],
-                                                                           doc_dict.keys()))
-        except Exception, ex:
-            logging.error(
-                "PillowTop [%s]: transporting change data doc_id: %s to elasticsearch error: %s",
-                (self.get_name(), doc_dict['_id'], ex))
-            return None
