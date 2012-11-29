@@ -7,7 +7,7 @@ from django.http import HttpResponseRedirect, HttpResponse, Http404
 from django.shortcuts import redirect
 
 from corehq.apps.domain.decorators import REDIRECT_FIELD_NAME, login_required_late_eval_of_LOGIN_URL, login_and_domain_required, domain_admin_required
-from corehq.apps.domain.forms import DomainSelectionForm, DomainGlobalSettingsForm,\
+from corehq.apps.domain.forms import DomainGlobalSettingsForm,\
     DomainMetadataForm, SnapshotSettingsForm, SnapshotApplicationForm, DomainDeploymentForm
 from corehq.apps.domain.models import Domain, LICENSES
 from corehq.apps.domain.utils import get_domained_url, normalize_domain_name
