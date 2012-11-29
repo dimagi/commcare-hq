@@ -20,6 +20,7 @@ class XFormsSession(Document):
     user_id = StringProperty()
     app_id = StringProperty()
     submission_id = StringProperty()
+    survey_incentive = StringProperty()
     
     def __unicode__(self):
         return 'Form %(form)s in domain %(domain)s. Last modified: %(mod)s' % \
