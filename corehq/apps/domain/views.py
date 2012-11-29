@@ -23,6 +23,7 @@ import json
 from dimagi.utils.post import simple_post
 import cStringIO
 from PIL import Image
+from django.utils.translation import ugettext as _
 
 
 # Domain not required here - we could be selecting it for the first time. See notes domain.decorators
@@ -460,9 +461,9 @@ def create_snapshot(request, domain):
                      'form': form,
                      #'latest_applications': latest_applications,
                      'app_forms': app_forms,
-                     'error_message': 'Snapshot creation failed; please try again'})
+                     'error_message': _('Version creation failed; please try again')})
 
-        messages.success(request, "Created snapshot. The snapshot will be posted to CommCare Exchange pending approval by admins.")
+        messages.success(request, _("Created a new version of your app. This version will be posted to CommCare Exchange pending approval by admins."))
         return redirect('domain_snapshot_settings', domain.name)
 
 @require_previewer # remove for production
