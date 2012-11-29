@@ -333,15 +333,31 @@ class CustomDomainMembership(DomainMembership):
         self.custom_role.domain = self.domain
         self.custom_role.permissions.set(permission, value, data)
 
+class IsMemberOfMixin(DocumentSchema):
+    @memoized
+    def _is_member_of(self, domain):
+        return self.is_global_admin() or domain in self.get_domains()
 
+    def is_member_of(self, domain_qs):
+        """
+        takes either a domain name or a domain object and returns whether the user is part of that domain
+        either natively or through a team
+        """
 
-class AuthorizableMixin(DocumentSchema):
-    domains = StringListProperty()
-    domain_memberships = SchemaListProperty(DomainMembership)
+        try:
+            domain = domain_qs.name
+        except Exception:
+            domain = domain_qs
+        return self._is_member_of(domain)
+
 
     def is_global_admin(self):
         # subclasses to override if they want this functionality
         return False
+
+class AuthorizableMixin(IsMemberOfMixin):
+    domains = StringListProperty()
+    domain_memberships = SchemaListProperty(DomainMembership)
 
     def get_domain_membership(self, domain):
         domain_membership = None
@@ -434,12 +450,6 @@ class AuthorizableMixin(DocumentSchema):
         else:
             return False
 
-    def is_member_of(self, domain_qs):
-        try:
-            return self.is_global_admin() or domain_qs.name in self.get_domains()
-        except Exception:
-            return self.is_global_admin() or domain_qs in self.get_domains()
-
     def get_role(self, domain=None):
         """
         Get the role object for this user
@@ -476,8 +486,6 @@ class AuthorizableMixin(DocumentSchema):
             raise Exception("role_qualified_id is %r" % role_qualified_id)
 
     def role_label(self, domain=None):
-#        import pdb
-#        pdb.set_trace()
         if not domain:
             try:
                 domain = self.current_domain
@@ -547,7 +555,7 @@ class DjangoUserMixin(DocumentSchema):
         dummy.password = self.password
         return dummy.check_password(password)
 
-class CouchUser(Document, DjangoUserMixin, UnicodeMixIn):
+class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, UnicodeMixIn):
     """
     A user (for web and commcare)
     """
@@ -841,19 +849,6 @@ class CouchUser(Document, DjangoUserMixin, UnicodeMixIn):
             return cls.wrap_correctly(result['doc'])
         else:
             return None
-
-    def is_global_admin(self):
-        return False
-
-    def is_member_of(self, domain_qs):
-        """
-        takes either a domain name or a domain object and returns whether the user is part of that domain
-        either natively or through a team
-        """
-        try:
-            return domain_qs.name in self.get_domains() or self.is_global_admin()
-        except Exception:
-            return domain_qs in self.get_domains() or self.is_global_admin()
 
     @classmethod
     def get_by_user_id(cls, userID, domain=None):
@@ -1386,6 +1381,7 @@ class WebUser(CouchUser, AuthorizableMixin):
                         domains.append(domain)
         return domains
 
+    @memoized
     def has_permission(self, domain, permission, data=None):
         # is_admin is the same as having all the permissions set
         from corehq.apps.orgs.models import Team
@@ -1490,7 +1486,10 @@ class PublicUser(FakeUser):
 
     def is_eula_signed(self):
         return True # hack for public domain so eula modal doesn't keep popping up
-    
+
+    def get_domains(self):
+        return []
+
 class InvalidUser(FakeUser):
     """
     Public users have read-only access to certain domains
