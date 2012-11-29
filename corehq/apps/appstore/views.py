@@ -158,7 +158,8 @@ def generate_sortables_from_facets(results, params=None, mapping={}):
 def appstore(request, template="appstore/appstore_base.html"):
     params, _ = parse_args_for_es(request)
     params = dict([(SNAPSHOT_MAPPING.get(p, p), params[p]) for p in params])
-    page = int(params.pop('page', 1))
+    page = params.pop('page', 1)
+    page = int(page[0] if isinstance(page, list) else page)
     results = es_snapshot_query(params, SNAPSHOT_FACETS)
     d_results = [Domain.wrap(res['_source']) for res in results.get('hits', {}).get('hits', [])]
 
@@ -195,7 +196,13 @@ def appstore_api(request):
     results = es_snapshot_query(params, facets)
     return HttpResponse(json.dumps(results), mimetype="application/json")
 
-def es_query(params, facets=[], terms=[], q={}):
+def es_query(params, facets=None, terms=None, q=None):
+    if terms is None:
+        terms = []
+    if q is None:
+        q = {}
+
+    q["size"] = 9999
     q["filter"] = q.get("filter", {})
     q["filter"]["and"] = q["filter"].get("and", [])
     for attr in params:
@@ -211,7 +218,7 @@ def es_query(params, facets=[], terms=[], q={}):
     if facets:
         q["facets"] = {}
         for facet in facets:
-            q["facets"][facet] = {"terms": {"field": facet}}
+            q["facets"][facet] = {"terms": {"field": facet, "size": 9999}}
             q["facets"][facet].update(facet_filter(facet))
 
     if not q['filter']['and']:
@@ -222,7 +229,11 @@ def es_query(params, facets=[], terms=[], q={}):
     ret_data = es.get(es_url, data=q)
     return ret_data
 
-def es_snapshot_query(params, facets=[], terms=['is_approved', 'sort_by', 'search'], sort_by="snapshot_time"):
+def es_snapshot_query(params, facets=None, terms=None, sort_by="snapshot_time"):
+    if terms is None:
+        terms = ['is_approved', 'sort_by', 'search']
+    if facets is None:
+        facets = []
     q = {"sort": {sort_by: {"order" : "desc"} },
          "query":   {"bool": {"must":
                                   [{"match": {'doc_type': "Domain"}},
