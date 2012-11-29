@@ -1,13 +1,11 @@
 import logging
-import restkit
-from restkit.resource import Resource
+from datetime import datetime
 import hashlib
 import simplejson
 from gevent import socket
 import rawes
 import gevent
 from django.conf import settings
-import logging
 from dimagi.utils.decorators.memoized import memoized
 requests_log = logging.getLogger("requests")
 requests_log.setLevel(logging.ERROR)
@@ -22,8 +20,14 @@ else:
 CHECKPOINT_FREQUENCY = 100
 WAIT_HEARTBEAT = 10000
 
+def ms_from_timedelta(td):
+    """
+    Given a timedelta object, returns a float representing milliseconds
+    """
+    return (td.seconds * 1000) + (td.microseconds / 1000.0)
+
 def old_changes(pillow):
-    from couchdbkit import Server, Consumer
+    from couchdbkit import  Consumer
     c = Consumer(pillow.couch_db, backend='gevent')
     while True:
         try:
@@ -110,11 +114,14 @@ class BasicPillow(object):
             self.set_checkpoint(change)
 
 
-        t = self.change_trigger(change)
-        if t is not None:
-            tr = self.change_transform(t)
-            if tr is not None:
-                self.change_transport(tr)
+        try:
+            t = self.change_trigger(change)
+            if t is not None:
+                tr = self.change_transform(t)
+                if tr is not None:
+                    self.change_transport(tr)
+        except Exception, ex:
+            logging.error("Error on change: %s, %s" % (change['id'], ex))
 
 
     def change_trigger(self, changes_dict):
@@ -247,6 +254,7 @@ class AliasedElasticPillow(ElasticPillow):
     def __init__(self, **kwargs):
         super(AliasedElasticPillow, self).__init__(**kwargs)
         self.seen_types = self.get_index_mapping()
+        logging.info("Pillowtop [%s] Retrieved mapping from ES" % self.get_name())
 
 
     def calc_meta(self):
@@ -307,6 +315,63 @@ class AliasedElasticPillow(ElasticPillow):
         if not hasattr(self, '_calc_meta'):
             self._calc_meta = hashlib.md5(simplejson.dumps(self.es_meta)).hexdigest()
         return self._calc_meta
+
+    def get_mapping_from_type(self, doc_dict):
+        raise NotImplementedError("This must be implemented in this subclass!")
+
+    def change_transport(self, doc_dict):
+        """
+        Override the elastic transport to go to the index + the type being a string between the
+        domain and case type
+        """
+#        start = datetime.utcnow()
+        try:
+            es = self.get_es()
+
+            if not self.type_exists(doc_dict):
+                #if type is never seen, apply mapping for said type
+                type_mapping = self.get_mapping_from_type(doc_dict)
+                #update metadata
+                type_mapping[self.get_type_string(doc_dict)]['_meta']['created'] = datetime.isoformat(datetime.utcnow())
+                mapping_res = es.put("%s/%s/_mapping" % (self.es_index, self.get_type_string(doc_dict)), data=type_mapping)
+                if mapping_res.get('ok', False) and mapping_res.get('acknowledged', False):
+                    #API confirms OK, trust it.
+                    logging.info("Mapping set: [%s] %s" % (self.get_type_string(doc_dict), mapping_res))
+                    #manually update in memory dict
+                    self.seen_types[self.get_type_string(doc_dict)] = {}
+                else:
+                    # 0.19 mapping - retrieve the mapping to confirm that it's been seen
+                    #something didn't go right, get mapping manually
+                    #this server confirm is an overhead but it tells us whether or not the type for real
+                    logging.error("[%s] %s: Mapping error: %s" % (self.get_name(), doc_dict['_id'], mapping_res))
+                    self.seen_types = es.get('%s/_mapping' % self.es_index)[self.es_index]
+
+#            got_type = datetime.utcnow()
+            doc_path = self.get_doc_path_typed(doc_dict)
+
+            if self.allow_updates:
+                can_put = True
+            else:
+                can_put = not self.doc_exists(doc_dict['_id'])
+
+            if can_put:
+                res = es.put(doc_path, data=doc_dict)
+#                did_put = datetime.utcnow()
+                if res.get('status', 0) == 400:
+                    logging.error(
+                        "Pillowtop Error [%(case_type)s]:\n%(es_message)s\n\tDoc id: %(doc_id)s\n\t%(doc_keys)s" % dict(
+                            case_type=self.get_name(),
+                            es_message=res.get('error', "No error message"),
+                            doc_id=doc_dict['_id'],
+                            doc_keys=doc_dict.keys()))
+
+#                print "%s [%s]" % (self.get_type_string(doc_dict), doc_dict['_id'])
+#                print "\tget_type: %d ms" % ms_from_timedelta(got_type-start)
+#                print "\ttype_to_submit: %d ms" % ms_from_timedelta(did_put-got_type)
+
+        except Exception, ex:
+            logging.error("PillowTop [%s]: transporting change data doc_id: %s to elasticsearch error: %s", (self.get_name(), doc_dict['_id'], ex))
+            return None
 
     @property
     def es_index(self):
