@@ -130,6 +130,8 @@ class Command(LabelCommand):
 
             self.create_form_alias_indicators(CHILD_CLOSE_FORM_QUESTION_IDS,
                 MVP.VISIT_FORMS.get('child_visit'), domain, shared_args, shared_kwargs)
+            self.create_form_alias_indicators(CHILD_VISIT_QUESTION_IDS,
+                MVP.VISIT_FORMS.get('child_visit'), domain, shared_args, shared_kwargs)
             self.create_form_alias_indicators(HOUSEHOLD_VISIT_QUESTION_IDS,
                 MVP.VISIT_FORMS.get('household_visit'), domain, shared_args, shared_kwargs)
             self.create_form_alias_indicators(PREGNANCY_VISIT_QUESTION_IDS,
