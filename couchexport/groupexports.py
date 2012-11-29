@@ -1,10 +1,11 @@
-from couchexport.models import GroupExportConfiguration, SavedBasicExport
+from couchexport.models import GroupExportConfiguration, SavedBasicExport,\
+    SavedExportSchema
 from couchdbkit.exceptions import ResourceNotFound
 from couchexport.export import export
 from datetime import datetime
 import os
 import json
-import tempfile
+from couchexport.tasks import Temp
 
 def export_for_group(export_id, output_dir):
     try:
@@ -12,26 +13,21 @@ def export_for_group(export_id, output_dir):
     except ResourceNotFound:
         raise Exception("Couldn't find an export with id %s" % export_id)
     
-    for export_config in config.full_exports:
-        # special case couch storage
+    for config, schema in config.all_exports:
+        tmp, _ = schema.get_export_files(format=config.format)
+        payload = Temp(tmp).payload
         if output_dir == "couch":
-            fd, path = tempfile.mkstemp()
-            with os.fdopen(fd, 'wb') as f:
-                export(export_config.index, f, format=export_config.format)
-            # got the file, now rewrite it to couch
             saved = SavedBasicExport.view("couchexport/saved_exports", 
-                                          key=json.dumps(export_config.index),
+                                          key=json.dumps(config.index),
                                           include_docs=True,
                                           reduce=False).one()
             if not saved: 
-                saved = SavedBasicExport(configuration=export_config)
+                saved = SavedBasicExport(configuration=config)
                 saved.save()
-            with open(path, "rb") as f:
-                saved.put_attachment(f.read(), export_config.filename)
-                saved.last_updated = datetime.utcnow()
-                saved.save()
-            os.remove(path)
+        
+            saved.put_attachment(payload, config.filename)
+            saved.last_updated = datetime.utcnow()
+            saved.save()
         else:
-            with open(os.path.join(output_dir, export_config.filename), "wb") as f:
-                export(export_config.index, f, format=export_config.format)
-    
+            with open(os.path.join(output_dir, config.filename), "wb") as f:
+                f.write(payload)
