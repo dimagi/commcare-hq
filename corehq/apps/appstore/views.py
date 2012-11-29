@@ -43,7 +43,7 @@ def inverse_dict(d):
 
 def project_info(request, domain, template="appstore/project_info.html"):
     dom = Domain.get_by_name(domain)
-    if not dom or not dom.is_snapshot or (not dom.is_approved and not request.couch_user.is_domain_admin(domain)):
+    if not dom or not dom.is_snapshot or (not dom.is_approved and not request.couch_user.is_domain_admin(dom.copied_from.name)):
         raise Http404()
 
     if request.method == "POST" and dom.copied_from.name not in request.couch_user.get_domains():
