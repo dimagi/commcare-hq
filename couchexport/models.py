@@ -473,6 +473,18 @@ class SavedExportSchema(BaseSavedExportSchema, UnicodeMixIn):
         tmp, _ = self.get_export_files(format, previous_export, filter)
         return export_response(tmp, tmp.format, self.name)
 
+    def to_export_config(self):
+        """
+        Return an ExportConfiguration object that represents this.
+        """
+        # confusingly, the index isn't the actual index property,
+        # but is the index appended with the id to this document.
+        # this is to avoid conflicts among multiple exports
+        index = "%s-%s" % (self.index, self._id) if isinstance(self.index, basestring) else \
+            self.index + [self._id] # self.index required to be a string or list
+        return ExportConfiguration(index=index, name=self.name,
+                                   format=self.default_format)
+
     class sheet_name(object):
         """replaces: `sheet_name = StringProperty()`: store in tables[0].display instead"""
 
@@ -495,7 +507,7 @@ class ExportConfiguration(DocumentSchema):
     @property
     def filename(self):
         return "%s.%s" % (self.name, Format.from_format(self.format).extension)
-    
+
 class GroupExportConfiguration(Document):
     """
     An export configuration allows you to setup a collection of exports
@@ -514,9 +526,42 @@ class GroupExportConfiguration(Document):
                                         key=json.dumps(export_config.index),
                                         include_docs=True,
                                         reduce=False).one()) \
-                 for export_config in self.full_exports]
+                 for export_config in self.all_configs]
         return self._saved_exports
-    
+
+    @property
+    def all_configs(self):
+        """
+        Return an iterator of config-like objects that include the
+        main configs + the custom export configs.
+        """
+        for full in self.full_exports:
+            yield full
+        for custom in self.custom_export_ids:
+            custom_export = SavedExportSchema.get(custom)
+            yield custom_export.to_export_config()
+
+    @property
+    def all_export_schemas(self):
+        """
+        Return an iterator of ExportSchema-like objects that include the 
+        main configs + the custom export configs.
+        """
+        for full in self.full_exports:
+            yield FakeSavedExportSchema(index=full.index)
+        for custom in self.custom_export_ids:
+            custom_export = SavedExportSchema.get(custom)
+            yield custom_export
+
+    @property
+    def all_exports(self):
+        """
+        Returns an iterator of tuples consisting of the export config
+        and an ExportSchema-like document that can be used to get at
+        the data.
+        """
+        return zip(self.all_configs, self.all_export_schemas)
+
 class SavedBasicExport(Document):
     """
     A cache of an export that lives in couch.
