@@ -281,7 +281,7 @@ def form_session_handler(v, text):
         # Validate int
         elif event.datatype == "int":
             try:
-                answer = int(text)
+                int(text)
                 valid = True
             except ValueError:
                 pass
@@ -289,7 +289,7 @@ def form_session_handler(v, text):
         # Validate float
         elif event.datatype == "float":
             try:
-                answer = float(text)
+                float(text)
                 valid = True
             except ValueError:
                 pass
@@ -297,7 +297,7 @@ def form_session_handler(v, text):
         # Validate longint
         elif event.datatype == "longint":
             try:
-                answer = long(text)
+                long(text)
                 valid = True
             except ValueError:
                 pass
