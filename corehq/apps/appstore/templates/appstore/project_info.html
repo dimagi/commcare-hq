@@ -240,7 +240,7 @@
 <div id="add_review_modal" class="modal hide fade">
     <div class="modal-header">
         <a class="close" data-dismiss="modal">&times;</a>
-        <h3>{% trans 'Write a review for ' %}{{ project.copied_from.display_name }}</h3>
+        <h3>{% trans 'Write a review for ' %}{{ project.title }}</h3>
     </div>
     <form class="form-horizontal" method="post" action="{% url project_info project %}">
         <div class="modal-body">
