@@ -604,7 +604,7 @@ class Domain(Document, HQBillingDomainMixin, SnapshotMixin):
 
     def most_restrictive_licenses(self, apps_to_check=None):
         from corehq.apps.hqmedia.utils import most_restrictive
-        licenses = [m.license['type'] for m in self.all_media(from_apps=apps_to_check)]
+        licenses = [m.license['type'] for m in self.all_media(from_apps=apps_to_check) if m.license]
         return most_restrictive(licenses)
 
     @classmethod
