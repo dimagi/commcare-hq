@@ -10,6 +10,7 @@ from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.mixins import UnicodeMixIn
 from dimagi.utils.couch.database import get_db
 from soil import DownloadBase
+from couchdbkit.exceptions import ResourceNotFound
 
 class Format(object):
     """
@@ -517,6 +518,25 @@ class GroupExportConfiguration(Document):
     full_exports = SchemaListProperty(ExportConfiguration)
     custom_export_ids = StringListProperty()
     
+    def get_custom_exports(self):
+        for custom in list(self.custom_export_ids):
+            custom_export = self._get_custom(custom)
+            if custom_export:
+                yield custom_export
+
+    def _get_custom(self, custom_id):
+        """
+        Get a custom export, or delete it's reference if not found
+        """
+        try:
+            return SavedExportSchema.get(custom_id)
+        except ResourceNotFound:
+            try:
+                self.custom_export_ids.remove(custom_id)
+                self.save()
+            except ValueError:
+                pass
+
     @property
     def saved_exports(self):
         if not hasattr(self, "_saved_exports"):
@@ -537,9 +557,8 @@ class GroupExportConfiguration(Document):
         """
         for full in self.full_exports:
             yield full
-        for custom in self.custom_export_ids:
-            custom_export = SavedExportSchema.get(custom)
-            yield custom_export.to_export_config()
+        for custom in self.get_custom_exports():
+            yield custom.to_export_config()
 
     @property
     def all_export_schemas(self):
@@ -549,9 +568,8 @@ class GroupExportConfiguration(Document):
         """
         for full in self.full_exports:
             yield FakeSavedExportSchema(index=full.index)
-        for custom in self.custom_export_ids:
-            custom_export = SavedExportSchema.get(custom)
-            yield custom_export
+        for custom in self.get_custom_exports():
+            yield custom
 
     @property
     def all_exports(self):
