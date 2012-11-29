@@ -10,6 +10,13 @@ from .models import REPEAT_SCHEDULE_INDEFINITELY, CaseReminderEvent, RECIPIENT_U
 from dimagi.utils.parsing import string_to_datetime
 from dimagi.utils.timezones.forms import TimeZoneChoiceField
 from dateutil.parser import parse
+from dimagi.utils.excel import WorkbookJSONReader
+from openpyxl.shared.exc import InvalidFileException
+
+YES_OR_NO = (
+    ("Y","Yes"),
+    ("N","No"),
+)
 
 METHOD_CHOICES = (
     ('sms', 'SMS'),
@@ -488,10 +495,14 @@ class SurveyForm(Form):
     def clean_waves(self):
         value = self.cleaned_data["waves"]
         datetimes = {}
-        samples = [SurveySample.get(sample["sample_id"]) for sample in self.cleaned_data["samples"]]
+        samples = [SurveySample.get(sample["sample_id"]) for sample in self.cleaned_data.get("samples",[])]
         utcnow = datetime.utcnow()
+        followups = [int(followup["interval"]) for followup in self.cleaned_data.get("followups", [])]
+        followup_duration = sum(followups)
+        start_end_intervals = []
         for wave_json in value:
             validate_date(wave_json["date"])
+            validate_date(wave_json["end_date"])
             validate_time(wave_json["time"])
             
             # Convert the datetime to a string and compare it against the other datetimes
@@ -504,6 +515,17 @@ class SurveyForm(Form):
                 raise ValidationError("Two waves cannot be scheduled at the same date and time.")
             datetimes[datetime_string] = True
             
+            # Validate end date
+            end_date = parse(wave_json["end_date"]).date()
+            end_datetime = datetime.combine(end_date, time)
+            days_between = (end_date - date).days
+            if days_between < 1:
+                raise ValidationError("End date must come after start date.")
+            if days_between <= followup_duration:
+                raise ValidationError("End date must come after all followups.")
+            
+            start_end_intervals.append((d8time, end_datetime))
+            
             if wave_json["form_id"] == "--choose--":
                 raise ValidationError("Please choose a questionnaire.")
             
@@ -512,6 +534,17 @@ class SurveyForm(Form):
                 for sample in samples:
                     if CaseReminderHandler.timestamp_to_utc(sample, d8time) < utcnow:
                         raise ValidationError("Waves cannot be scheduled in the past.")
+        
+        # Ensure wave start and end dates do not overlap
+        start_end_intervals.sort(key = lambda t : t[0])
+        i = 0
+        last_end = None
+        for start_end in start_end_intervals:
+            if i > 0 and (start_end[0] - last_end).days < 1:
+                raise ValidationError("Waves must be scheduled at least one day apart.")
+            i += 1
+            last_end = start_end[1]
+        
         return value
     
     def clean_followups(self):
@@ -531,6 +564,11 @@ class SurveyForm(Form):
     
     def clean_samples(self):
         value = self.cleaned_data["samples"]
+        for sample_json in value:
+            if sample_json["sample_id"] == "--choose--":
+                raise ValidationError("Please choose a sample.")
+            if sample_json.get("cati_operator", None) is None and sample_json["method"] == "CATI":
+                raise ValidationError("Please create a mobile worker to use as a CATI Operator.")
         return value
 
     def clean(self):
@@ -542,17 +580,56 @@ class SurveySampleForm(Form):
     name = CharField()
     sample_contacts = RecordListField(input_name="sample_contact")
     time_zone = TimeZoneChoiceField()
+    use_contact_upload_file = ChoiceField(choices=YES_OR_NO)
+    contact_upload_file = FileField(required=False)
     
     def clean_sample_contacts(self):
         value = self.cleaned_data["sample_contacts"]
         if len(value) == 0:
-            raise ValidationError("Please add at least one contact.");
+            raise ValidationError("Please add at least one contact.")
         for contact in value:
             try:
                 contact["phone_number"] = str(int(contact["phone_number"]))
             except ValueError:
-                raise ValidationError("Phone numbers must consist only of numbers and must be in international format.")
+                raise ValidationError("Phone numbers must consist only of digits and must be in international format.")
         return value
+    
+    def clean_contact_upload_file(self):
+        value = self.cleaned_data.get("contact_upload_file", None)
+        if self.cleaned_data.get("use_contact_upload_file", "N") == "Y":
+            if value is None:
+                raise ValidationError("Please choose a file.")
+            
+            try:
+                workbook = WorkbookJSONReader(value)
+            except InvalidFileException:
+                raise ValidationError("Invalid format. Please convert to Excel 2007 or higher (.xlsx) and try again.")
+            
+            try:
+                worksheet = workbook.get_worksheet()
+            except IndexError:
+                raise ValidationError("Workbook has no worksheets.")
+            
+            contacts = []
+            for row in worksheet:
+                if "PhoneNumber" not in row:
+                    raise ValidationError("Column 'PhoneNumber' not found.")
+                try:
+                    contacts.append({"phone_number" : str(int(row.get("PhoneNumber")))})
+                except ValueError:
+                    raise ValidationError("Phone numbers must consist only of digits and must be in international format.")
+            return contacts
+        else:
+            return None
 
-
+class EditContactForm(Form):
+    phone_number = CharField()
+    
+    def clean_phone_number(self):
+        value = self.cleaned_data.get("phone_number")
+        try:
+            value = str(int(value))
+        except ValueError:
+            raise ValidationError("Phone numbers must consist only of digits and must be in international format.")
+        return value
 

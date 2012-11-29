@@ -40,7 +40,7 @@ def check_repeaters():
     
     repeat_records = RepeatRecord.all(due_before=now)
     for repeat_record in repeat_records:
-        if repeat_record.acquire_lock():
+        if repeat_record.acquire_lock(now):
             repeat_record.fire()
             repeat_record.save()
             repeat_record.release_lock()

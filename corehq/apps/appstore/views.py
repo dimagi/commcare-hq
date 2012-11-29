@@ -3,13 +3,14 @@ from datetime import datetime
 import json
 import logging
 from urllib import urlencode
+from django.contrib.auth.decorators import login_required
 from django.core.urlresolvers import reverse
 from django.http import Http404, HttpResponseRedirect, HttpResponse
 from django.template.loader import render_to_string
 from restkit.errors import RequestFailed
 from corehq.apps.appstore.forms import AddReviewForm
 from corehq.apps.appstore.models import Review
-from corehq.apps.domain.decorators import require_previewer, login_and_domain_required
+from corehq.apps.domain.decorators import login_and_domain_required, require_superuser
 from corehq.apps.hqmedia.utils import most_restrictive
 from corehq.apps.registration.forms import DomainRegistrationForm
 from corehq.apps.users.models import Permissions
@@ -41,10 +42,10 @@ def rewrite_url(request, path):
 def inverse_dict(d):
     return dict([(v, k) for k, v in d.iteritems()])
 
-@require_previewer # remove for production
+@login_required
 def project_info(request, domain, template="appstore/project_info.html"):
     dom = Domain.get_by_name(domain)
-    if not dom or not dom.is_snapshot or (not dom.is_approved and not request.couch_user.is_domain_admin(domain)):
+    if not dom or not dom.is_snapshot or (not dom.is_approved and not request.couch_user.is_domain_admin(dom.copied_from.name)):
         raise Http404()
 
     if request.method == "POST" and dom.copied_from.name not in request.couch_user.get_domains():
@@ -156,11 +157,12 @@ def generate_sortables_from_facets(results, params=None, mapping={}):
 
     return sortable
 
-@require_previewer # remove for production
+@login_required
 def appstore(request, template="appstore/appstore_base.html"):
     params, _ = parse_args_for_es(request)
     params = dict([(SNAPSHOT_MAPPING.get(p, p), params[p]) for p in params])
-    page = int(params.pop('page', 1))
+    page = params.pop('page', 1)
+    page = int(page[0] if isinstance(page, list) else page)
     results = es_snapshot_query(params, SNAPSHOT_FACETS)
     d_results = [Domain.wrap(res['_source']) for res in results.get('hits', {}).get('hits', [])]
 
@@ -191,14 +193,19 @@ def appstore(request, template="appstore/appstore_base.html"):
         search_query = params.get('search', [""])[0])
     return render_to_response(request, template, vals)
 
-@require_previewer # remove for production
 def appstore_api(request):
     params, facets = parse_args_for_es(request)
     params = dict([(SNAPSHOT_MAPPING.get(p, p), params[p]) for p in params])
     results = es_snapshot_query(params, facets)
     return HttpResponse(json.dumps(results), mimetype="application/json")
 
-def es_query(params, facets=[], terms=[], q={}):
+def es_query(params, facets=None, terms=None, q=None):
+    if terms is None:
+        terms = []
+    if q is None:
+        q = {}
+
+    q["size"] = 9999
     q["filter"] = q.get("filter", {})
     q["filter"]["and"] = q["filter"].get("and", [])
     for attr in params:
@@ -214,7 +221,7 @@ def es_query(params, facets=[], terms=[], q={}):
     if facets:
         q["facets"] = {}
         for facet in facets:
-            q["facets"][facet] = {"terms": {"field": facet}}
+            q["facets"][facet] = {"terms": {"field": facet, "size": 9999}}
             q["facets"][facet].update(facet_filter(facet))
 
     if not q['filter']['and']:
@@ -225,7 +232,11 @@ def es_query(params, facets=[], terms=[], q={}):
     ret_data = es.get(es_url, data=q)
     return ret_data
 
-def es_snapshot_query(params, facets=[], terms=['is_approved', 'sort_by', 'search'], sort_by="snapshot_time"):
+def es_snapshot_query(params, facets=None, terms=None, sort_by="snapshot_time"):
+    if terms is None:
+        terms = ['is_approved', 'sort_by', 'search']
+    if facets is None:
+        facets = []
     q = {"sort": {sort_by: {"order" : "desc"} },
          "query":   {"bool": {"must":
                                   [{"match": {'doc_type': "Domain"}},
@@ -246,12 +257,11 @@ def es_snapshot_query(params, facets=[], terms=['is_approved', 'sort_by', 'searc
 
     return es_query(params, facets, terms, q)
 
-@require_previewer
 def appstore_default(request):
     from corehq.apps.appstore.dispatcher import AppstoreDispatcher
     return HttpResponseRedirect(reverse(AppstoreDispatcher.name(), args=['advanced']))
 
-@require_previewer # remove for production
+@require_superuser
 def approve_app(request, domain):
     domain = Domain.get_by_name(domain)
     if request.GET.get('approve') == 'true':
@@ -263,8 +273,7 @@ def approve_app(request, domain):
     meta = request.META
     return HttpResponseRedirect(request.META.get('HTTP_REFERER') or reverse('appstore'))
 
-
-@require_previewer # remove for production
+@login_required
 def import_app(request, domain):
     user = request.couch_user
     if not user.is_eula_signed():
@@ -293,10 +302,10 @@ def import_app(request, domain):
     else:
         return project_info(request, domain)
 
-#@login_and_domain_required
-@require_previewer # remove for production
+@login_required
 def copy_snapshot(request, domain):
-    if not request.couch_user.is_eula_signed():
+    user = request.couch_user
+    if not user.is_eula_signed():
         messages.error(request, 'You must agree to our eula to download an app')
         return project_info(request, domain)
 
@@ -311,7 +320,7 @@ def copy_snapshot(request, domain):
                 return project_info(request, domain)
 
             if form.is_valid():
-                new_domain = dom.save_copy(form.clean_domain_name(), user=request.couch_user)
+                new_domain = dom.save_copy(form.clean_domain_name(), user=user)
             else:
                 messages.error(request, form.errors)
                 return project_info(request, domain)
@@ -329,7 +338,6 @@ def copy_snapshot(request, domain):
             return project_info(request, domain)
 
 
-@require_previewer # remove for production
 def project_image(request, domain):
     project = Domain.get_by_name(domain)
     if project.image_path:
@@ -338,7 +346,7 @@ def project_image(request, domain):
     else:
         raise Http404()
 
-@require_previewer # remove for production
+@login_required
 def deployment_info(request, domain, template="appstore/deployment_info.html"):
     dom = Domain.get_by_name(domain)
     if not dom or not dom.deployment.public:
@@ -353,7 +361,7 @@ def deployment_info(request, domain, template="appstore/deployment_info.html"):
                                                   'url_base': reverse('deployments'),
                                                   'sortables': facets_sortables})
 
-@require_previewer # remove for production
+@login_required
 def deployments(request, template="appstore/deployments.html"):
     params, _ = parse_args_for_es(request)
     params = dict([(DEPLOYMENT_MAPPING.get(p, p), params[p]) for p in params])
@@ -377,14 +385,17 @@ def deployments(request, template="appstore/deployments.html"):
              'search_query': params.get('search', [""])[0]}
     return render_to_response(request, template, vals)
 
-@require_previewer # remove for production
 def deployments_api(request):
     params, facets = parse_args_for_es(request)
     params = dict([(DEPLOYMENT_MAPPING.get(p, p), params[p]) for p in params])
     results = es_deployments_query(params, facets)
     return HttpResponse(json.dumps(results), mimetype="application/json")
 
-def es_deployments_query(params, facets=[], terms=['is_approved', 'sort_by', 'search'], sort_by="snapshot_time"):
+def es_deployments_query(params, facets=None, terms=None, sort_by="snapshot_time"):
+    if terms is None:
+        terms = ['is_approved', 'sort_by', 'search']
+    if facets is None:
+        facets = []
     q = {"query":   {"bool": {"must":
                                   [{"match": {'doc_type': "Domain"}},
                                    {"term": {"deployment.public": True}}]}}}
@@ -401,9 +412,10 @@ def es_deployments_query(params, facets=[], terms=['is_approved', 'sort_by', 'se
         })
     return es_query(params, facets, terms, q)
 
+@login_required
 def media_files(request, domain, template="appstore/media_files.html"):
     dom = Domain.get_by_name(domain)
-    if not dom or not dom.is_snapshot or (not dom.is_approved and not request.couch_user.is_domain_admin(domain)):
+    if not dom or not dom.is_snapshot or (not dom.is_approved and not request.couch_user.is_domain_admin(dom.copied_from.name)):
         raise Http404()
 
     return render_to_response(request, template, {

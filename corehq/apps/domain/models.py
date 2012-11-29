@@ -9,6 +9,7 @@ from couchdbkit.ext.django.schema import Document, StringProperty,\
 from django.utils.safestring import mark_safe
 from corehq.apps.appstore.models import Review, SnapshotMixin
 from dimagi.utils.html import format_html
+from dimagi.utils.logging import notify_exception
 from dimagi.utils.timezones import fields as tz_fields
 from dimagi.utils.couch.database import get_db
 from itertools import chain
@@ -188,11 +189,13 @@ class Domain(Document, HQBillingDomainMixin, SnapshotMixin):
         # for domains that still use original_doc
         should_save = False
         if data.has_key('original_doc'):
-            original_doc = Domain.get_by_name(data.get('original_doc', None))
+            original_doc = data['original_doc']
+            del data['original_doc']
+            should_save = True
             if original_doc:
+                original_doc = Domain.get_by_name(data['original_doc'])
                 data['copy_history'] = [original_doc._id]
-                del data['original_doc']
-                should_save = True
+
         # for domains that have a public domain license
         if data.has_key("license"):
             if data.get("license", None) == "public":
@@ -343,6 +346,22 @@ class Domain(Document, HQBillingDomainMixin, SnapshotMixin):
 
     @classmethod
     def get_by_name(cls, name):
+        if not name:
+            # get_by_name should never be called with name as None (or '', etc)
+            # I fixed the code in such a way that if I raise a ValueError
+            # all tests pass and basic pages load,
+            # but in order not to break anything in the wild,
+            # I'm opting to notify by email if/when this happens
+            # but fall back to the previous behavior of returning None
+            try:
+                raise ValueError('%r is not a valid domain name' % name)
+            except ValueError:
+                if settings.DEBUG:
+                    raise
+                else:
+                    notify_exception(None, '%r is not a valid domain name' % name)
+                    return None
+
         result = cls.view("domain/domains",
                             key=name,
                             reduce=False,
@@ -435,7 +454,7 @@ class Domain(Document, HQBillingDomainMixin, SnapshotMixin):
         new_domain.save()
 
         if user:
-            user.add_domain_membership(new_domain_name)
+            user.add_domain_membership(new_domain_name, is_admin=True)
             user.save()
 
         return new_domain
@@ -578,22 +597,33 @@ class Domain(Document, HQBillingDomainMixin, SnapshotMixin):
             db.delete_doc(doc['doc'])
         super(Domain, self).delete()
 
-    def all_media(self, from_apps=None):
+    def all_media(self, from_apps=None): #todo add documentation or refactor
         from corehq.apps.hqmedia.models import CommCareMultimedia
         dom_with_media = self if not self.is_snapshot else self.copied_from
+
+        if self.is_snapshot:
+            app_ids = [app.copied_from.get_id for app in self.full_applications()]
+            if from_apps:
+                from_apps = set([a_id for a_id in app_ids if a_id in from_apps])
+            else:
+                from_apps = app_ids
+
         if from_apps:
             media = []
+            media_ids = set()
             apps = [app for app in dom_with_media.full_applications() if app.get_id in from_apps]
             for app in apps:
                 for _, m in app.get_media_documents():
-                    media.append(m)
+                    if m.get_id not in media_ids:
+                        media.append(m)
+                        media_ids.add(m.get_id)
             return media
 
         return CommCareMultimedia.view('hqmedia/by_domain', key=dom_with_media.name, include_docs=True).all()
 
     def most_restrictive_licenses(self, apps_to_check=None):
         from corehq.apps.hqmedia.utils import most_restrictive
-        licenses = [m.license['type'] for m in self.all_media(from_apps=apps_to_check)]
+        licenses = [m.license['type'] for m in self.all_media(from_apps=apps_to_check) if m.license]
         return most_restrictive(licenses)
 
     @classmethod
@@ -624,7 +654,7 @@ class Domain(Document, HQBillingDomainMixin, SnapshotMixin):
     @classmethod
     def hit_sort(cls, domains, page):
         domains = list(domains)
-        domains = sorted(domains, key=lambda domain: len(domain.copies_of_parent()), reverse=True)
+        domains = sorted(domains, key=lambda domain: domain.downloads, reverse=True)
         return domains[((page-1)*9):((page)*9)]
 
     @classmethod
