@@ -48,13 +48,13 @@
 
 <div class="container-fluid">
 <div class="page-header row-fluid" style="border-bottom: 0; margin-bottom: 0;">
-<div class="span2" style="text-align: center;">
-    {% if project.image_path %}
-        <img class="app-pic" src="{% url appstore_project_image project.name %}" />
-    {% else %}
-        <img class="app-pic opacity65" src="{% static 'hqstyle/img/no-image-available.png' %}" />
-    {% endif %}
-</div>
+    <div class="span2" style="text-align: center;">
+        {% if project.image_path %}
+            <img class="app-pic" src="{% url appstore_project_image project.name %}" />
+        {% else %}
+            <img class="app-pic opacity65" src="{% static 'hqstyle/img/no-image-available.png' %}" />
+        {% endif %}
+    </div>
     <div class="span7">
         <h1>
             {{ project.title }}
@@ -77,6 +77,9 @@
     </div>
 </div>
 </div>
+
+<div class="row">
+<div class="span10">
 <dl class="dl-horizontal">
     <dt>{% trans 'Description' %}</dt>
     <dd>
@@ -204,7 +207,7 @@
 
     <hr/>
     <div>
-        <h3>{% trans "Reviews of" %} {{ project.copied_from.display_name }}</h3>
+        <h3>{% trans "Reviews of" %} {{ project.title }}</h3>
         {% if project.copied_from.name not in request.couch_user.get_domains and project.published %}
             <div>
                 <a href="#add_review_modal" data-toggle="modal" class="btn btn-inverse">{% trans "Write a Review" %}</a>
@@ -227,6 +230,8 @@
             </div>
         </div>
     {% endfor %}
+</div>
+</div>
 {% endblock %}
 
 
