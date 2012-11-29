@@ -273,7 +273,7 @@ def approve_app(request, domain):
     meta = request.META
     return HttpResponseRedirect(request.META.get('HTTP_REFERER') or reverse('appstore'))
 
-@login_and_domain_required
+@login_required
 def import_app(request, domain):
     user = request.couch_user
     if not user.is_eula_signed():
