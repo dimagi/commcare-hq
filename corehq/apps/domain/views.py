@@ -373,7 +373,8 @@ def create_snapshot(request, domain):
 
         new_license = request.POST['license']
         if request.POST.get('share_multimedia', False):
-            media = domain.all_media()
+            app_ids = form._get_apps_to_publish()
+            media = domain.all_media(from_apps=app_ids)
             for m_file in media:
                 if domain.name not in m_file.shared_by:
                     m_file.shared_by.append(domain.name)
