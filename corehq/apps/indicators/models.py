@@ -6,6 +6,7 @@ from couchdbkit.schema.base import DocumentSchema
 import datetime
 from couchdbkit.schema.properties import LazyDict
 from django.utils.safestring import mark_safe
+import numpy
 from casexml.apps.case.models import CommCareCase
 from couchforms.models import XFormInstance
 from dimagi.utils.couch.database import get_db
@@ -374,6 +375,62 @@ class CouchViewIndicatorDefinition(DynamicIndicatorDefinition):
                 value=month_value
             ))
         return retrospective
+
+class UnGroupableCouchViewIndicatorDefinitionBase(CouchViewIndicatorDefinition):
+    """
+        Use this base for all CouchViewIndicatorDefinitions that have views which are not simply
+        counted during the monthly retrospective.
+    """
+
+    @property
+    def use_datespans_in_retrospective(self):
+        return True
+
+    def get_value(self, user_id=None, datespan=None):
+        raise NotImplementedError("You must override the parent's get_value. "
+                                  "Reduce / group will not work here.")
+
+
+class CountUniqueEmitsCouchViewIndicatorDefinition(UnGroupableCouchViewIndicatorDefinitionBase):
+    """
+        Use this indicator to count the # of unique emitted values.
+    """
+
+    def get_value(self, user_id=None, datespan=None):
+        results = self.get_couch_results(user_id, datespan)
+        all_emitted_values = [r['value'] for r in results]
+        all_emitted_values = set(all_emitted_values)
+        return len(all_emitted_values)
+
+
+class MedianEmittedValueCouchViewIndicatorDefinition(UnGroupableCouchViewIndicatorDefinitionBase):
+    """
+        Get the median value of what is emitted. Assumes that emits are numbers.
+    """
+
+    def get_value(self, user_id=None, datespan=None):
+        results = self.get_couch_results(user_id, datespan)
+        values = [item.get('value', 0) for item in results if item.get('value')]
+        return numpy.median(values) if values else 0
+
+
+class SumLastUniqueEmitedValueCouchViewIndicatorDefinition(UnGroupableCouchViewIndicatorDefinitionBase):
+    """
+        Expects an emitted value formatted like:
+        {
+            _id: "<unique id string>",
+            value: <number>,
+        }
+        It then finds the sum of all the last emitted unique values.
+    """
+
+    def get_value(self, user_id=None, datespan=None):
+        results = self.get_couch_results(user_id, datespan)
+        unique_values = {}
+        for item in results:
+            if item.get('value'):
+                unique_values[item['value']['_id']] = item['value']['value']
+        return sum(unique_values.values())
 
 
 class CombinedCouchViewIndicatorDefinition(DynamicIndicatorDefinition):
