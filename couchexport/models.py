@@ -518,8 +518,11 @@ class GroupExportConfiguration(Document):
     full_exports = SchemaListProperty(ExportConfiguration)
     custom_export_ids = StringListProperty()
     
-    def _get_custom_export_ids_copy(self):
-        return list(self.custom_export_ids)
+    def get_custom_exports(self):
+        for custom in list(self.custom_export_ids):
+            custom_export = self._get_custom(custom)
+            if custom_export:
+                yield custom_export
 
     def _get_custom(self, custom_id):
         """
@@ -554,10 +557,8 @@ class GroupExportConfiguration(Document):
         """
         for full in self.full_exports:
             yield full
-        for custom in self._get_custom_export_ids_copy():
-            custom_export = self._get_custom(custom)
-            if custom_export:
-                yield custom_export.to_export_config()
+        for custom in self.get_custom_exports():
+            yield custom.to_export_config()
 
     @property
     def all_export_schemas(self):
@@ -567,10 +568,8 @@ class GroupExportConfiguration(Document):
         """
         for full in self.full_exports:
             yield FakeSavedExportSchema(index=full.index)
-        for custom in self._get_custom_export_ids_copy():
-            custom_export = self._get_custom(custom)
-            if custom_export:
-                yield custom_export
+        for custom in self.get_custom_exports():
+            yield custom
 
     @property
     def all_exports(self):
