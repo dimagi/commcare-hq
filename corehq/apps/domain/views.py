@@ -6,7 +6,7 @@ from django.http import HttpResponseRedirect, HttpResponse, Http404
 
 from django.shortcuts import redirect
 
-from corehq.apps.domain.decorators import REDIRECT_FIELD_NAME, login_required_late_eval_of_LOGIN_URL, login_and_domain_required, domain_admin_required, require_previewer
+from corehq.apps.domain.decorators import REDIRECT_FIELD_NAME, login_required_late_eval_of_LOGIN_URL, login_and_domain_required, domain_admin_required
 from corehq.apps.domain.forms import DomainSelectionForm, DomainGlobalSettingsForm,\
     DomainMetadataForm, SnapshotSettingsForm, SnapshotApplicationForm, DomainDeploymentForm
 from corehq.apps.domain.models import Domain, LICENSES
@@ -272,7 +272,6 @@ def autocomplete_fields(request, field):
     results = Domain.field_by_prefix(field, prefix)
     return HttpResponse(json.dumps(results))
 
-@require_previewer # remove for production
 @domain_admin_required
 def snapshot_settings(request, domain):
     domain = Domain.get_by_name(domain)
@@ -280,7 +279,6 @@ def snapshot_settings(request, domain):
     return render_to_response(request, 'domain/snapshot_settings.html',
                 {'domain': domain.name, 'snapshots': list(snapshots), 'published_snapshot': domain.published_snapshot()})
 
-@require_previewer # remove for production
 @domain_admin_required
 def create_snapshot(request, domain):
     domain = Domain.get_by_name(domain)
@@ -467,7 +465,6 @@ def create_snapshot(request, domain):
         messages.success(request, _("Created a new version of your app. This version will be posted to CommCare Exchange pending approval by admins."))
         return redirect('domain_snapshot_settings', domain.name)
 
-@require_previewer # remove for production
 @domain_admin_required
 def set_published_snapshot(request, domain, snapshot_name=''):
     domain = request.project

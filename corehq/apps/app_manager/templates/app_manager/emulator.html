@@ -46,14 +46,14 @@
 {% endblock %}
 {% block content %}
     <div id="main_container">
-        {% block emu_back %}
+        {% block emu_top %}
             <div id="emu-back">
                 <a href="{% url release_manager domain app.id %}">{% trans "Back to Release Manager" %}</a>
             </div>
-        {% endblock %}
         <div id="emu-warning">
             <span class="caution">{% trans "Caution" %}</span>: {% trans "Will make" %} <strong>{% trans "real" %}</strong>{% trans " submissions: will modify cases, register users, etc." %}
         </div>
+        {% endblock %}
         <applet code="org.microemu.applet.Main"
                 width="226" height="471">
             <param name="cache_archive" value="{{ build_path }}microemu-javase-applet.jar,{{ build_path }}microemulator.jar,{{ build_path }}microemu-jsr-75.jar,{{ build_path }}cldcapi11.jar,{{ build_path }}midpapi20.jar,{{ build_path }}microemu-nokiaui.jar" />

@@ -454,7 +454,7 @@ class Domain(Document, HQBillingDomainMixin, SnapshotMixin):
         new_domain.save()
 
         if user:
-            user.add_domain_membership(new_domain_name)
+            user.add_domain_membership(new_domain_name, is_admin=True)
             user.save()
 
         return new_domain
@@ -623,7 +623,7 @@ class Domain(Document, HQBillingDomainMixin, SnapshotMixin):
 
     def most_restrictive_licenses(self, apps_to_check=None):
         from corehq.apps.hqmedia.utils import most_restrictive
-        licenses = [m.license['type'] for m in self.all_media(from_apps=apps_to_check)]
+        licenses = [m.license['type'] for m in self.all_media(from_apps=apps_to_check) if m.license]
         return most_restrictive(licenses)
 
     @classmethod
@@ -654,7 +654,7 @@ class Domain(Document, HQBillingDomainMixin, SnapshotMixin):
     @classmethod
     def hit_sort(cls, domains, page):
         domains = list(domains)
-        domains = sorted(domains, key=lambda domain: len(domain.copies_of_parent()), reverse=True)
+        domains = sorted(domains, key=lambda domain: domain.downloads, reverse=True)
         return domains[((page-1)*9):((page)*9)]
 
     @classmethod
