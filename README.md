@@ -39,6 +39,8 @@ The following are necessary for the basic function of CommCare HQ.
 + **postgres** - [Download postgres here](http://www.enterprisedb.com/products-services-training/pgdownload)
 + **couchdb** - Version 1.0 or greater required - [View installation instructions here](http://wiki.apache.org/couchdb/Installation)
 + **elasticsearch** - [Download](http://www.elasticsearch.org/download/) - and requisite requirements (java)
++ You may need to take some manual steps before running the pip install:
+  + For PIL (Python Image Library) on Ubuntu: http://obroll.com/install-python-pil-python-image-library-on-ubuntu-11-10-oneiric/
 
 Note on couchdb installation: Using aptitude or apt-get may not install the latest version. See other installation options if version < 1.0 is installed by using this method.
 
