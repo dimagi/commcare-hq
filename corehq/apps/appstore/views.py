@@ -9,7 +9,7 @@ from django.template.loader import render_to_string
 from restkit.errors import RequestFailed
 from corehq.apps.appstore.forms import AddReviewForm
 from corehq.apps.appstore.models import Review
-from corehq.apps.domain.decorators import require_previewer, login_and_domain_required
+from corehq.apps.domain.decorators import login_and_domain_required
 from corehq.apps.hqmedia.utils import most_restrictive
 from corehq.apps.registration.forms import DomainRegistrationForm
 from corehq.apps.users.models import Permissions
@@ -41,7 +41,6 @@ def rewrite_url(request, path):
 def inverse_dict(d):
     return dict([(v, k) for k, v in d.iteritems()])
 
-@require_previewer # remove for production
 def project_info(request, domain, template="appstore/project_info.html"):
     dom = Domain.get_by_name(domain)
     if not dom or not dom.is_snapshot or (not dom.is_approved and not request.couch_user.is_domain_admin(domain)):
@@ -156,7 +155,6 @@ def generate_sortables_from_facets(results, params=None, mapping={}):
 
     return sortable
 
-@require_previewer # remove for production
 def appstore(request, template="appstore/appstore_base.html"):
     params, _ = parse_args_for_es(request)
     params = dict([(SNAPSHOT_MAPPING.get(p, p), params[p]) for p in params])
@@ -191,7 +189,6 @@ def appstore(request, template="appstore/appstore_base.html"):
         search_query = params.get('search', [""])[0])
     return render_to_response(request, template, vals)
 
-@require_previewer # remove for production
 def appstore_api(request):
     params, facets = parse_args_for_es(request)
     params = dict([(SNAPSHOT_MAPPING.get(p, p), params[p]) for p in params])
@@ -246,12 +243,10 @@ def es_snapshot_query(params, facets=[], terms=['is_approved', 'sort_by', 'searc
 
     return es_query(params, facets, terms, q)
 
-@require_previewer
 def appstore_default(request):
     from corehq.apps.appstore.dispatcher import AppstoreDispatcher
     return HttpResponseRedirect(reverse(AppstoreDispatcher.name(), args=['advanced']))
 
-@require_previewer # remove for production
 def approve_app(request, domain):
     domain = Domain.get_by_name(domain)
     if request.GET.get('approve') == 'true':
@@ -264,7 +259,6 @@ def approve_app(request, domain):
     return HttpResponseRedirect(request.META.get('HTTP_REFERER') or reverse('appstore'))
 
 
-@require_previewer # remove for production
 def import_app(request, domain):
     user = request.couch_user
     if not user.is_eula_signed():
@@ -294,7 +288,6 @@ def import_app(request, domain):
         return project_info(request, domain)
 
 #@login_and_domain_required
-@require_previewer # remove for production
 def copy_snapshot(request, domain):
     if not request.couch_user.is_eula_signed():
         messages.error(request, 'You must agree to our eula to download an app')
@@ -329,7 +322,6 @@ def copy_snapshot(request, domain):
             return project_info(request, domain)
 
 
-@require_previewer # remove for production
 def project_image(request, domain):
     project = Domain.get_by_name(domain)
     if project.image_path:
@@ -338,7 +330,6 @@ def project_image(request, domain):
     else:
         raise Http404()
 
-@require_previewer # remove for production
 def deployment_info(request, domain, template="appstore/deployment_info.html"):
     dom = Domain.get_by_name(domain)
     if not dom or not dom.deployment.public:
@@ -353,7 +344,6 @@ def deployment_info(request, domain, template="appstore/deployment_info.html"):
                                                   'url_base': reverse('deployments'),
                                                   'sortables': facets_sortables})
 
-@require_previewer # remove for production
 def deployments(request, template="appstore/deployments.html"):
     params, _ = parse_args_for_es(request)
     params = dict([(DEPLOYMENT_MAPPING.get(p, p), params[p]) for p in params])
@@ -377,7 +367,6 @@ def deployments(request, template="appstore/deployments.html"):
              'search_query': params.get('search', [""])[0]}
     return render_to_response(request, template, vals)
 
-@require_previewer # remove for production
 def deployments_api(request):
     params, facets = parse_args_for_es(request)
     params = dict([(DEPLOYMENT_MAPPING.get(p, p), params[p]) for p in params])
