@@ -84,6 +84,19 @@ def register_sms_contact(domain, case_type, case_name, user_id, contact_phone_nu
     submit_xml(domain, "sms/xml/register_contact.xml", context)
     return case_id
 
+def update_contact(domain, case_id, user_id, contact_phone_number=None, contact_phone_number_is_verified=None, contact_backend_id=None, language_code=None, time_zone=None):
+    context = {
+        "case_id" : case_id,
+        "date_modified" : json_format_datetime(datetime.datetime.utcnow()),
+        "user_id" : user_id,
+        "contact_phone_number" : contact_phone_number,
+        "contact_phone_number_is_verified" : contact_phone_number_is_verified,
+        "contact_backend_id" : contact_backend_id,
+        "language_code" : language_code,
+        "time_zone" : time_zone
+    }
+    submit_xml(domain, "sms/xml/update_contact.xml", context)
+
 def create_task(parent_case, submitting_user_id, task_owner_id, form_unique_id, task_activation_datetime, task_deactivation_datetime, incentive):
     utcnow = str(datetime.datetime.utcnow())
     subcase_guid = str(uuid.uuid3(uuid.NAMESPACE_URL, utcnow))

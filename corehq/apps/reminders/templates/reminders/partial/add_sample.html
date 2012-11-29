@@ -145,7 +145,13 @@
                     {% for contact in form.sample_contacts.value %}
                     <tr>
                         <td>{{ contact.id }}<input type="hidden" name="sample_contact.{{ forloop.counter0 }}.id" value="{{ contact.id }}" /></td>
-                        <td><input name="sample_contact.{{ forloop.counter0 }}.phone_number" type="text" value="{{ contact.phone_number }}" /></td>
+                        <td>
+                            {% if contact.case_id %}
+                            <a href="{% url edit_contact domain sample_id contact.case_id %}">{{ contact.phone_number }}</a>
+                            <input name="sample_contact.{{ forloop.counter0 }}.case_id" type="hidden" value="{{ contact.case_id }}" />
+                            {% endif %}
+                            <input name="sample_contact.{{ forloop.counter0 }}.phone_number" type="{% if contact.case_id %}hidden{% else %}text{% endif %}" value="{{ contact.phone_number }}" />
+                        </td>
                         <td><span class="btn btn-danger" onClick="remove_contact_record(this);"><i class="icon icon-white icon-remove"></i> Remove</span></td>
                     </tr>
                     {% endfor %}

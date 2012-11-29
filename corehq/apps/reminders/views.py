@@ -2,7 +2,7 @@ from datetime import timedelta, datetime, time
 import json
 from django.core.urlresolvers import reverse
 from django.http import HttpResponseRedirect, Http404, HttpResponse, HttpResponseBadRequest
-from corehq.apps.reminders.forms import CaseReminderForm, ComplexCaseReminderForm, SurveyForm, SurveySampleForm
+from corehq.apps.reminders.forms import CaseReminderForm, ComplexCaseReminderForm, SurveyForm, SurveySampleForm, EditContactForm
 from corehq.apps.reminders.models import CaseReminderHandler, CaseReminderEvent, REPEAT_SCHEDULE_INDEFINITELY, EVENT_AS_OFFSET, EVENT_AS_SCHEDULE, SurveyKeyword, Survey, SurveySample, SURVEY_METHOD_LIST, SurveyWave, ON_DATETIME, RECIPIENT_SURVEY_SAMPLE
 from corehq.apps.users.decorators import require_permission
 from corehq.apps.users.models import CouchUser, CommCareUser, Permissions
@@ -10,7 +10,7 @@ from dimagi.utils.web import render_to_response
 from .models import UI_SIMPLE_FIXED, UI_COMPLEX
 from .util import get_form_list, get_sample_list
 from corehq.apps.sms.mixin import VerifiedNumber
-from corehq.apps.sms.util import register_sms_contact
+from corehq.apps.sms.util import register_sms_contact, update_contact
 from corehq.apps.domain.models import DomainCounter
 from casexml.apps.case.models import CommCareCase
 from dateutil.parser import parse
@@ -584,7 +584,7 @@ def add_sample(request, domain, sample_id=None):
             contact_info = []
             for case_id in sample.contacts:
                 case = CommCareCase.get(case_id)
-                contact_info.append({"id":case.name, "phone_number":case.contact_phone_number})
+                contact_info.append({"id":case.name, "phone_number":case.contact_phone_number, "case_id" : case_id})
             initial["sample_contacts"] = contact_info
         form = SurveySampleForm(initial=initial)
     
@@ -602,4 +602,36 @@ def sample_list(request, domain):
         "samples" : SurveySample.get_all(domain)
     }
     return render_to_response(request, "reminders/partial/sample_list.html", context)
+
+@reminders_permission
+def edit_contact(request, domain, sample_id, case_id):
+    case = CommCareCase.get(case_id)
+    if case.domain != domain:
+        raise Http404
+    if request.method == "POST":
+        form = EditContactForm(request.POST)
+        if form.is_valid():
+            phone_number = form.cleaned_data.get("phone_number")
+            vn = VerifiedNumber.view('sms/verified_number_by_number',
+                                        key=phone_number,
+                                        include_docs=True,
+                                    ).one()
+            if vn is not None and vn.owner_id != case_id:
+                form._errors["phone_number"] = form.error_class(["Phone number is already in use."])
+            else:
+                update_contact(domain, case_id, request.couch_user.get_id, contact_phone_number=phone_number)
+                return HttpResponseRedirect(reverse("edit_sample", args=[domain, sample_id]))
+    else:
+        initial = {
+            "phone_number" : case.get_case_property("contact_phone_number"),
+        }
+        form = EditContactForm(initial=initial)
+    
+    context = {
+        "domain" : domain,
+        "case" : case,
+        "form" : form,
+    }
+    return render_to_response(request, "reminders/partial/edit_contact.html", context)
+
 

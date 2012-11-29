@@ -591,7 +591,7 @@ class SurveySampleForm(Form):
             try:
                 contact["phone_number"] = str(int(contact["phone_number"]))
             except ValueError:
-                raise ValidationError("Phone numbers must consist only of numbers and must be in international format.")
+                raise ValidationError("Phone numbers must consist only of digits and must be in international format.")
         return value
     
     def clean_contact_upload_file(self):
@@ -617,8 +617,19 @@ class SurveySampleForm(Form):
                 try:
                     contacts.append({"phone_number" : str(int(row.get("PhoneNumber")))})
                 except ValueError:
-                    raise ValidationError("Phone numbers must consist only of numbers and must be in international format.")
+                    raise ValidationError("Phone numbers must consist only of digits and must be in international format.")
             return contacts
         else:
             return None
+
+class EditContactForm(Form):
+    phone_number = CharField()
+    
+    def clean_phone_number(self):
+        value = self.cleaned_data.get("phone_number")
+        try:
+            value = str(int(value))
+        except ValueError:
+            raise ValidationError("Phone numbers must consist only of digits and must be in international format.")
+        return value
 
