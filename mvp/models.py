@@ -14,7 +14,7 @@ from dimagi.utils.dates import DateSpan
 
 class MVP(object):
     NAMESPACE = "mvp_indicators"
-    DOMAINS = ["mvp-sauri", "mvp-potou"]
+    DOMAINS = ["mvp-potou"]
     VISIT_FORMS = dict(
         pregnancy_visit='http://openrosa.org/formdesigner/185A7E63-0ECD-4D9A-8357-6FD770B6F065',
         child_visit='http://openrosa.org/formdesigner/B9CEFDCD-8068-425F-BA67-7DC897030A5A',
@@ -68,18 +68,6 @@ class MVPDaysSinceLastTransmission(DynamicIndicatorDefinition):
         except Exception:
             pass
         return None
-
-
-class MVPReturnMedianCouchViewIndicatorDefinition(MVPCouchViewIndicatorDefinition):
-
-    @property
-    def use_datespans_in_retrospective(self):
-        return True
-
-    def get_value(self, user_id=None, datespan=None):
-        results = self.get_couch_results(user_id, datespan)
-        values = [item.get('value', 0) for item in results if item.get('value')]
-        return numpy.median(values) if values else 0
 
 
 class MVPActiveCasesCouchViewIndicatorDefinition(MVPCouchViewIndicatorDefinition):
