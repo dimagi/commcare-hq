@@ -4,6 +4,7 @@ from django.contrib.auth.admin import UserAdmin
 from django.contrib.auth.forms import UserChangeForm
 from django import forms
 from django.utils.translation import ugettext_lazy as _
+from django_digest.models import UserNonce, PartialDigest
 
 
 class HackedUserChangeForm(UserChangeForm):
@@ -29,3 +30,13 @@ class HackedUserAdmin(UserAdmin):
     
 admin.site.unregister(User)
 admin.site.register(User, HackedUserAdmin)
+
+class DDUserNonceAdmin(admin.ModelAdmin):
+    list_display = ('user', 'nonce', 'count', 'last_used_at')
+
+class DDPartialDigestAdmin(admin.ModelAdmin):
+    list_display = ('user', 'partial_digest', 'confirmed')
+    search_fields = ('login',)
+
+admin.site.register(UserNonce, DDUserNonceAdmin)
+admin.site.register(PartialDigest, DDPartialDigestAdmin)
