@@ -1,5 +1,6 @@
 # See http://wiki.python.org/moin/PythonDecoratorLibrary#Memoize
 import functools
+import inspect
 
 class memoized(object):
     """Decorator. Caches a function's return value each time it is called.
@@ -8,6 +9,7 @@ class memoized(object):
     """
     def __init__(self, func):
         self.func = func
+        self.argspec = inspect.getargspec(self.func)
         self.cache = {}
 
     def __call__(self, *args, **kwargs):
@@ -43,8 +45,7 @@ class memoized(object):
         Take a function and the arguments you'd call it with
         and return a tuple
         """
-        import inspect
-        arg_names, args_name, kwargs_name, ___ = inspect.getargspec(self.func)
+        arg_names, args_name, kwargs_name, ___ = self.argspec
         values = inspect.getcallargs(self.func, *args, **kwargs)
         in_order = [values[arg_name] for arg_name in arg_names]
         if args_name:
