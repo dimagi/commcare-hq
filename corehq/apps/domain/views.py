@@ -6,8 +6,8 @@ from django.http import HttpResponseRedirect, HttpResponse, Http404
 
 from django.shortcuts import redirect
 
-from corehq.apps.domain.decorators import REDIRECT_FIELD_NAME, login_required_late_eval_of_LOGIN_URL, login_and_domain_required, domain_admin_required, require_previewer
-from corehq.apps.domain.forms import DomainSelectionForm, DomainGlobalSettingsForm,\
+from corehq.apps.domain.decorators import REDIRECT_FIELD_NAME, login_required_late_eval_of_LOGIN_URL, login_and_domain_required, domain_admin_required
+from corehq.apps.domain.forms import DomainGlobalSettingsForm,\
     DomainMetadataForm, SnapshotSettingsForm, SnapshotApplicationForm, DomainDeploymentForm
 from corehq.apps.domain.models import Domain, LICENSES
 from corehq.apps.domain.utils import get_domained_url, normalize_domain_name
@@ -23,6 +23,7 @@ import json
 from dimagi.utils.post import simple_post
 import cStringIO
 from PIL import Image
+from django.utils.translation import ugettext as _
 
 
 # Domain not required here - we could be selecting it for the first time. See notes domain.decorators
@@ -30,38 +31,13 @@ from PIL import Image
 from lib.django_user_registration.models import RegistrationProfile
 
 @login_required_late_eval_of_LOGIN_URL
-def select( request,
-            redirect_field_name = REDIRECT_FIELD_NAME,
-            domain_select_template = 'domain/select.html' ):
+def select(request, domain_select_template='domain/select.html'):
 
     domains_for_user = Domain.active_for_user(request.user)
     if not domains_for_user:
         return redirect('registration_domain')
 
-    redirect_to = request.REQUEST.get(redirect_field_name, '')
-    if request.method == 'POST': # If the form has been submitted...
-        form = DomainSelectionForm(domain_list=domains_for_user,
-                                   data=request.POST) # A form bound to the POST data
-
-        if form.is_valid():
-            # We've just checked the submitted data against a freshly-retrieved set of domains
-            # associated with the user. It's safe to set the domain in the sesssion (and we'll
-            # check again on views validated with the domain-checking decorator)
-            form.save(request) # Needs request because it saves domain in session
-
-            #  Weak attempt to give user a good UX - make sure redirect_to isn't garbage.
-            domain = form.cleaned_data['domain_list'].name
-            if not redirect_to or '//' in redirect_to or ' ' in redirect_to:
-                redirect_to = reverse('domain_homepage', args=[domain])
-            return HttpResponseRedirect(redirect_to) # Redirect after POST
-    else:
-        # An unbound form
-        form = DomainSelectionForm( domain_list=domains_for_user )
-
-    vals = dict( next = redirect_to,
-                 form = form )
-
-    return render_to_response(request, domain_select_template, vals)
+    return render_to_response(request, domain_select_template, {})
 
 
 ########################################################################################################
@@ -271,15 +247,13 @@ def autocomplete_fields(request, field):
     results = Domain.field_by_prefix(field, prefix)
     return HttpResponse(json.dumps(results))
 
-@require_previewer # remove for production
 @domain_admin_required
 def snapshot_settings(request, domain):
     domain = Domain.get_by_name(domain)
     snapshots = domain.snapshots()
     return render_to_response(request, 'domain/snapshot_settings.html',
-                {'domain': domain.name, 'snapshots': list(snapshots), 'published_snapshot': domain.published_snapshot()})
+                {"project": domain, 'domain': domain.name, 'snapshots': list(snapshots), 'published_snapshot': domain.published_snapshot()})
 
-@require_previewer # remove for production
 @domain_admin_required
 def create_snapshot(request, domain):
     domain = Domain.get_by_name(domain)
@@ -365,6 +339,7 @@ def create_snapshot(request, domain):
                  'autocomplete_fields': ('project_type', 'phone_model', 'user_type', 'city', 'country', 'region')})
 
         if not form.is_valid():
+            messages.error(request, _("There are some problems with your form. Please address these issues and try again."))
             return render_to_response(request, 'domain/create_snapshot.html',
                     {'domain': domain.name,
                      'form': form,
@@ -374,7 +349,8 @@ def create_snapshot(request, domain):
 
         new_license = request.POST['license']
         if request.POST.get('share_multimedia', False):
-            media = domain.all_media()
+            app_ids = form._get_apps_to_publish()
+            media = domain.all_media(from_apps=app_ids)
             for m_file in media:
                 if domain.name not in m_file.shared_by:
                     m_file.shared_by.append(domain.name)
@@ -396,7 +372,8 @@ def create_snapshot(request, domain):
         new_domain.multimedia_included = request.POST.get('share_multimedia', '') == 'on'
 
         new_domain.is_approved = False
-        if request.POST.get('publish_on_submit', False):
+        publish_on_submit = request.POST.get('publish_on_submit', False)
+        if publish_on_submit:
             for snapshot in domain.snapshots():
                 if snapshot.published and snapshot._id != new_domain._id:
                     snapshot.published = False
@@ -460,12 +437,14 @@ def create_snapshot(request, domain):
                      'form': form,
                      #'latest_applications': latest_applications,
                      'app_forms': app_forms,
-                     'error_message': 'Snapshot creation failed; please try again'})
+                     'error_message': _('Version creation failed; please try again')})
 
-        messages.success(request, "Created snapshot. The snapshot will be posted to CommCare Exchange pending approval by admins.")
+        if publish_on_submit:
+            messages.success(request, _("Created a new version of your app. This version will be posted to CommCare Exchange pending approval by admins."))
+        else:
+            messages.success(request, _("Created a new version of your app."))
         return redirect('domain_snapshot_settings', domain.name)
 
-@require_previewer # remove for production
 @domain_admin_required
 def set_published_snapshot(request, domain, snapshot_name=''):
     domain = request.project

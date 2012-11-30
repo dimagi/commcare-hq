@@ -72,7 +72,6 @@ def most_restrictive(licenses):
     given a list of licenses, this function returns the list of licenses that are as restrictive or more restrictive
     than each of the input licenses
     '<' == less restrictive
-    pd < cc
     cc < cc-nd, cc-nc, cc-sa
     cc-nd < cc-nc-nd
     cc-nc < cc-nc-sa
@@ -99,7 +98,7 @@ def most_restrictive(licenses):
         return ['cc-nc-nd', 'cc-nc-sa', 'cc-nd', 'cc-sa']
     if 'cc' in licenses:
         return ['cc-nc-nd', 'cc-nc-sa', 'cc-nd', 'cc-nc', 'cc-sa', 'cc']
-    return ['cc-nc-nd', 'cc-nc-sa', 'cc-nd', 'cc-nc', 'cc-sa', 'cc', 'public']
+    return ['cc-nc-nd', 'cc-nc-sa', 'cc-nd', 'cc-nc', 'cc-sa', 'cc']
 
 class HQMediaMatcher():
     image_paths = {}

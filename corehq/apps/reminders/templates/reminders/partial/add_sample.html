@@ -43,6 +43,10 @@
         var td1 = document.createElement("TD");
         var td2 = document.createElement("TD");
         var td3 = document.createElement("TD");
+        var input1 = document.createElement("INPUT");
+        input1.setAttribute("type", "hidden");
+        input1.setAttribute("name", "sample_contact." + current_sample_contact_num + ".id");
+        input1.setAttribute("value", "< auto-generate >");
         var input2 = document.createElement("INPUT");
         input2.setAttribute("type", "text");
         input2.setAttribute("name", "sample_contact." + current_sample_contact_num + ".phone_number");
@@ -57,6 +61,7 @@
         tr.appendChild(td2);
         tr.appendChild(td3);
         td1.innerHTML = "&lt; auto-generate &gt;";
+        td1.appendChild(input1);
         td2.appendChild(input2);
         td3.appendChild(button);
         //
@@ -72,13 +77,30 @@
     {% else %}
     var current_sample_contact_num = {{ form.sample_contacts.value|length }};
     {% endif %}
+    
+    function upload_option_changed() {
+        if($("input[name=use_contact_upload_file]:checked").val() == "Y") {
+            $("#enter_contacts_div").hide();
+            $("#upload_file_div").show();
+        } else {
+            $("#enter_contacts_div").show();
+            $("#upload_file_div").hide();
+        }
+    }
+    
+    $(function() {
+        $("[name=use_contact_upload_file]").click(function() {
+            upload_option_changed();
+        });
+        upload_option_changed();
+    });
 </script>
 
 {% endblock %}
 
 {% block survey_content %}
 <br />
-<form id="sample_form" action="" method="post">
+<form id="sample_form" action="" method="post" enctype="multipart/form-data">
     <table id="sample_info">
         <tbody>
             {% if form.name.errors %}
@@ -99,9 +121,11 @@
     </table>
     <br />
     <h4>Contacts</h4>
-    <br />
-    {{ form.sample_contacts.errors }}
-    <div class="form-block">
+    NOTE: Phone numbers must consist only of digits and must be in international format (country code and number).<br /><br />
+    <input type="radio" name="use_contact_upload_file" value="Y" {% if form.use_contact_upload_file.value == "Y" %}checked="checked"{% endif %} /> Upload a list of phone numbers <br />
+    <input type="radio" name="use_contact_upload_file" value="N" {% if form.use_contact_upload_file.value != "Y" %}checked="checked"{% endif %} /> Enter each phone number below <br /><br />
+    <div class="form-block" id="enter_contacts_div">
+        {{ form.sample_contacts.errors }}
         <table id="sample" class="table table-bordered">
             <thead>
                 <tr>
@@ -120,8 +144,14 @@
                 {% else %}
                     {% for contact in form.sample_contacts.value %}
                     <tr>
-                        <td>{{ contact.id }}</td>
-                        <td><input name="sample_contact.{{ forloop.counter0 }}.phone_number" type="text" value="{{ contact.phone_number }}" /></td>
+                        <td>{{ contact.id }}<input type="hidden" name="sample_contact.{{ forloop.counter0 }}.id" value="{{ contact.id }}" /></td>
+                        <td>
+                            {% if contact.case_id %}
+                            <a href="{% url edit_contact domain sample_id contact.case_id %}">{{ contact.phone_number }}</a>
+                            <input name="sample_contact.{{ forloop.counter0 }}.case_id" type="hidden" value="{{ contact.case_id }}" />
+                            {% endif %}
+                            <input name="sample_contact.{{ forloop.counter0 }}.phone_number" type="{% if contact.case_id %}hidden{% else %}text{% endif %}" value="{{ contact.phone_number }}" />
+                        </td>
                         <td><span class="btn btn-danger" onClick="remove_contact_record(this);"><i class="icon icon-white icon-remove"></i> Remove</span></td>
                     </tr>
                     {% endfor %}
@@ -131,6 +161,10 @@
         <br />
         <span class="btn btn-success" onClick="add_contact_record();"><i class="icon icon-white icon-plus"></i> Add Contact</span>
         <br />
+    </div>
+    <div class="form-block" id="upload_file_div">
+    {{ form.contact_upload_file.errors }}
+    Choose an Excel file (*.xlsx): {{ form.contact_upload_file }}
     </div>
     <br />
     <input type="submit" class="btn btn-primary" value="Submit" />

@@ -5,7 +5,7 @@ from __future__ import absolute_import
 
 from datetime import datetime
 import logging
-from couchdbkit import ResourceConflict
+from couchdbkit import ResourceConflict, NoResultFound
 import re
 from django.utils import html, safestring
 from restkit.errors import NoMoreData
@@ -812,12 +812,23 @@ class CouchUser(Document, DjangoUserMixin, UnicodeMixIn):
 
     @classmethod
     def get_by_username(cls, username):
+        def get(stale, raise_if_none):
+            result = cls.get_db().view('users/by_username',
+                key=username,
+                include_docs=True,
+                stale=stale
+            )
+            return result.one(except_all=raise_if_none)
         try:
-            result = get_db().view('users/by_username', key=username, include_docs=True)
-            result = result.one()
+            result = get(stale='update_after', raise_if_none=True)
+            if result['doc'] is None or result['doc']['username'] != username:
+                raise NoResultFound
         except NoMoreData:
             logging.exception('called get_by_username(%r) and it failed pretty bad' % username)
             raise
+        except NoResultFound:
+            result = get(stale=None, raise_if_none=False)
+
         if result:
             return cls.wrap_correctly(result['doc'])
         else:
@@ -825,7 +836,7 @@ class CouchUser(Document, DjangoUserMixin, UnicodeMixIn):
 
     @classmethod
     def get_by_default_phone(cls, phone_number):
-        result = get_db().view('users/by_default_phone', key=phone_number, include_docs=True).one()
+        result = cls.get_db().view('users/by_default_phone', key=phone_number, include_docs=True).one()
         if result:
             return cls.wrap_correctly(result['doc'])
         else:
@@ -852,7 +863,7 @@ class CouchUser(Document, DjangoUserMixin, UnicodeMixIn):
 
         """
         try:
-            couch_user = cls.wrap_correctly(get_db().get(userID))
+            couch_user = cls.wrap_correctly(cls.get_db().get(userID))
         except ResourceNotFound:
             return None
         if couch_user.doc_type != cls.__name__ and cls.__name__ != "CouchUser":
@@ -900,7 +911,7 @@ class CouchUser(Document, DjangoUserMixin, UnicodeMixIn):
 
     def save(self, **params):
         # test no username conflict
-        by_username = get_db().view('users/by_username', key=self.username).one()
+        by_username = self.get_db().view('users/by_username', key=self.username).one()
         if by_username and by_username['id'] != self._id:
             raise self.Inconsistent("CouchUser with username %s already exists" % self.username)
 
@@ -1327,7 +1338,6 @@ class CommCareUser(CouchUser, CommCareMobileContactMixin):
                 raise Exception("unexpected role_qualified_id: %r" % role_qualified_id)
 
 class WebUser(CouchUser, AuthorizableMixin):
-    betahack = BooleanProperty(default=False)
     teams = StringListProperty()
 
     #do sync and create still work?

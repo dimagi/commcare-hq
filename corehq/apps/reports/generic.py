@@ -94,6 +94,7 @@ class GenericReportView(object):
     show_timezone_notice = False
     show_time_notice = False
     is_admin_report = False
+    special_notice = None
     
     
     def __init__(self, request, base_context=None, domain=None, **kwargs):
@@ -416,6 +417,7 @@ class GenericReportView(object):
                 show=self.request.couch_user.can_view_reports() or self.request.couch_user.get_viewable_reports(),
                 is_emailable=self.emailable,
                 is_admin=self.is_admin_report,   # todo is this necessary???
+                special_notice=self.special_notice,
             ),
             current_config_id=current_config_id,
             default_config=default_config,
@@ -469,7 +471,7 @@ class GenericReportView(object):
             report_base=self.template_async_base
         )
         self.context['report'].update(
-            title=self.rendered_report_title    # overriding the default title
+            title=self.rendered_report_title,    # overriding the default title
         )
         self.context.update(self._validate_context_dict(self.report_context))
 
