@@ -277,7 +277,7 @@ def snapshot_settings(request, domain):
     domain = Domain.get_by_name(domain)
     snapshots = domain.snapshots()
     return render_to_response(request, 'domain/snapshot_settings.html',
-                {'domain': domain.name, 'snapshots': list(snapshots), 'published_snapshot': domain.published_snapshot()})
+                {"project": domain, 'domain': domain.name, 'snapshots': list(snapshots), 'published_snapshot': domain.published_snapshot()})
 
 @domain_admin_required
 def create_snapshot(request, domain):
