@@ -107,6 +107,8 @@
                             </div>
                         </nav>
                     {% else %}
+                        {% block extra_tabs %}
+                        {% endblock %}
                         <nav>
                             <div class="btn-toolbar pull-right">
                                 <a href="{% url login %}" class="btn btn-primary">Sign In</a>
