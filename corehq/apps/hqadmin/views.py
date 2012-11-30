@@ -42,10 +42,8 @@ datespan_default = datespan_in_request(
 
 
 def get_hqadmin_base_context(request):
-    domain = None
-
     return {
-        "domain": domain,
+        "domain": None,
     }
 
 def _all_domain_stats():
