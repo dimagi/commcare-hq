@@ -33,15 +33,14 @@ class CustomProjectReport(ProjectReport):
     emailable = True
 
 class CommCareUserMemoizer(object):
-    def __init__(self):
-        self._get_by_user_id_cache = {}
-        self._by_domain_cache = {}
 
     @memoized
     def by_domain(self, domain):
         users = CommCareUser.by_domain(domain)
         for user in users:
-            self._get_by_user_id_cache[(self, user.user_id)] = user
+            # put users in the cache for get_by_user_id
+            # so that function never has to touch the database
+            self.get_by_user_id.get_cache(self)[(self, user.user_id)] = user
         return users
 
     @memoized
