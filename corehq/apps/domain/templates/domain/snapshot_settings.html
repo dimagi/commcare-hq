@@ -159,7 +159,7 @@
     {% if project.is_copy %}
         <div class="alert alert-info">
             <a href="#" class="close" data-dismiss="alert">×</a>
-            <h4>This project was originally copied from <a href="{% url project_info project.copied_from.name %}">a {{ project.copied_from.display_name }}</a></h4>
+            <h4>This project was originally copied from <a href="{% url project_info project.copied_from.name %}">{{ project.copied_from.title }}</a></h4>
         </div>
     {% endif %}
 </form>
