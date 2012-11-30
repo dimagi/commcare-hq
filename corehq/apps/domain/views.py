@@ -364,6 +364,7 @@ def create_snapshot(request, domain):
                  'autocomplete_fields': ('project_type', 'phone_model', 'user_type', 'city', 'country', 'region')})
 
         if not form.is_valid():
+            messages.error(request, _("There are some problems with your form. Please address these issues and try again."))
             return render_to_response(request, 'domain/create_snapshot.html',
                     {'domain': domain.name,
                      'form': form,
