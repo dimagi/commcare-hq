@@ -42,10 +42,16 @@ def rewrite_url(request, path):
 def inverse_dict(d):
     return dict([(v, k) for k, v in d.iteritems()])
 
-@login_required
+def can_view_app(req, dom):
+    if not dom or not dom.is_snapshot:
+        return False
+    if not dom.is_approved and (not getattr(req, "couch_user", "") or not req.couch_user.is_domain_admin(dom.copied_from.name)):
+        return False
+    return True
+
 def project_info(request, domain, template="appstore/project_info.html"):
     dom = Domain.get_by_name(domain)
-    if not dom or not dom.is_snapshot or (not dom.is_approved and not request.couch_user.is_domain_admin(dom.copied_from.name)):
+    if not can_view_app(request, dom):
         raise Http404()
 
     if request.method == "POST" and dom.copied_from.name not in request.couch_user.get_domains():
@@ -109,7 +115,7 @@ def project_info(request, domain, template="appstore/project_info.html"):
         "audio": audio,
         "sortables": facets_sortables,
         "url_base": reverse('appstore'),
-        'display_import': True if request.couch_user.get_domains() else False
+        'display_import': True if getattr(request, "couch_user", "") and request.couch_user.get_domains() else False
     })
 
 def parse_args_for_es(request):
@@ -157,7 +163,6 @@ def generate_sortables_from_facets(results, params=None, mapping={}):
 
     return sortable
 
-@login_required
 def appstore(request, template="appstore/appstore_base.html"):
     params, _ = parse_args_for_es(request)
     params = dict([(SNAPSHOT_MAPPING.get(p, p), params[p]) for p in params])
@@ -412,10 +417,9 @@ def es_deployments_query(params, facets=None, terms=None, sort_by="snapshot_time
         })
     return es_query(params, facets, terms, q)
 
-@login_required
 def media_files(request, domain, template="appstore/media_files.html"):
     dom = Domain.get_by_name(domain)
-    if not dom or not dom.is_snapshot or (not dom.is_approved and not request.couch_user.is_domain_admin(dom.copied_from.name)):
+    if not can_view_app(request, dom):
         raise Http404()
 
     return render_to_response(request, template, {
