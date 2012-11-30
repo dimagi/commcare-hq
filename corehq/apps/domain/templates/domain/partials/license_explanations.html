@@ -1,3 +1,4 @@
+{% load i18n %}
 <a data-toggle="modal" href="#license-explanations">More information about licenses...</a>
 <div class="modal hide fade" id="license-explanations">
     <div class="modal-header">
@@ -10,8 +11,8 @@
             Creative Commons offers several ways for copyright holders to offer their media to the public free of charge.
             Depending on the license you choose, you can restrict the use of your copyrighted materials to require
             attribution, restrict modification, and restrict commercial use.
-            <a target="_blank" href="http://creativecommons.org/choose/">Use the Creative Commons website</a> to choose a Creative
-            Commons license.
+            <a target="_blank" href="http://creativecommons.org/choose/">{% trans "Use the Creative Commons website" %}</a>
+            {% trans "to choose a Creative Commons license." %}
         </p>
     </div>
     <div class="modal-footer">
