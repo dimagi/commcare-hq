@@ -7,7 +7,7 @@ from django.http import HttpResponseRedirect, HttpResponse, Http404
 from django.shortcuts import redirect
 
 from corehq.apps.domain.decorators import REDIRECT_FIELD_NAME, login_required_late_eval_of_LOGIN_URL, login_and_domain_required, domain_admin_required
-from corehq.apps.domain.forms import DomainSelectionForm, DomainGlobalSettingsForm,\
+from corehq.apps.domain.forms import DomainGlobalSettingsForm,\
     DomainMetadataForm, SnapshotSettingsForm, SnapshotApplicationForm, DomainDeploymentForm
 from corehq.apps.domain.models import Domain, LICENSES
 from corehq.apps.domain.utils import get_domained_url, normalize_domain_name
@@ -31,38 +31,13 @@ from django.utils.translation import ugettext as _
 from lib.django_user_registration.models import RegistrationProfile
 
 @login_required_late_eval_of_LOGIN_URL
-def select( request,
-            redirect_field_name = REDIRECT_FIELD_NAME,
-            domain_select_template = 'domain/select.html' ):
+def select(request, domain_select_template='domain/select.html'):
 
     domains_for_user = Domain.active_for_user(request.user)
     if not domains_for_user:
         return redirect('registration_domain')
 
-    redirect_to = request.REQUEST.get(redirect_field_name, '')
-    if request.method == 'POST': # If the form has been submitted...
-        form = DomainSelectionForm(domain_list=domains_for_user,
-                                   data=request.POST) # A form bound to the POST data
-
-        if form.is_valid():
-            # We've just checked the submitted data against a freshly-retrieved set of domains
-            # associated with the user. It's safe to set the domain in the sesssion (and we'll
-            # check again on views validated with the domain-checking decorator)
-            form.save(request) # Needs request because it saves domain in session
-
-            #  Weak attempt to give user a good UX - make sure redirect_to isn't garbage.
-            domain = form.cleaned_data['domain_list'].name
-            if not redirect_to or '//' in redirect_to or ' ' in redirect_to:
-                redirect_to = reverse('domain_homepage', args=[domain])
-            return HttpResponseRedirect(redirect_to) # Redirect after POST
-    else:
-        # An unbound form
-        form = DomainSelectionForm( domain_list=domains_for_user )
-
-    vals = dict( next = redirect_to,
-                 form = form )
-
-    return render_to_response(request, domain_select_template, vals)
+    return render_to_response(request, domain_select_template, {})
 
 
 ########################################################################################################
