@@ -1,36 +1,17 @@
+{#{% extends "pact/chw/pact_chw_profile_base.html" %}#}
 {% extends "reports/async/tabular.html" %}
 {% load hq_shared_tags %}
 {% load report_tags %}
 {% load i18n %}
 {% block reportcontent %}
-    <ul class="nav nav-pills">
-        {% block patient-tab-controller %}
-            <li {% if view_mode == "info" %}class="active"{% endif %}>
-                <a href="{{ pt_root_url }}" >{% trans "Info" %}</a></li>
-
-            <li {% if view_mode == "schedule" %}class="active"{% endif %}>
-                <a href="{{ pt_root_url }}&view=schedule" >{% trans "Schedule" %}</a>
-            </li>
-            {% if patient_doc.is_dot_patient %}
-                <li {% if view_mode == "dots" %}class="active"{% endif %}>
-                    <a href="{{ pt_root_url }}?view=dots" >{% trans "DOT Adherence" %}</a>
-                </li>
-            {% endif %}
-            <li {% if view_mode == "submissions" %}class="active"{% endif %}>
-                <a href="{{ pt_root_url }}&view=submissions" >{% trans "Submissions" %}</a></li>
-
-            <li {% if view_mode == "careteam" %}class="active"{% endif %}>
-                <a href="{{ pt_root_url }}&view=careteam" >{% trans "Careteam" %}</a>
-            </li>
-
-            {#                        <li {% if view_mode == "careplan" %}class="active"{% endif %}>#}
-            {#                            <a href="{% url view_pactpatient patient_doc.get_id 'careplan' %}" data-toggle="tab">{% trans "Care Plan" %}</a>#}
-            {#                        </li>#}
-            {#                        <li {% if view_mode == "log" %}class="active"{% endif %}>#}
-            {#                            <a href="{% url view_pactpatient patient_doc.get_id 'log' %}" data-toggle="tab">{% trans "Change Log" %}</a>#}
-            {#                        </li>#}
-        {% endblock patient-tab-controller %}
-    </ul>
+            <ul class="nav nav-pills">
+            <li {% if view_mode == "info" %}class="active"{% endif %}><a href="{{ chw_root_url }}&view=info">{% trans "Info" %}</a></li>
+            <li {% if view_mode == "submissions" %}class="active"{% endif %}><a href="{{ chw_root_url }}&view=submissions">{% trans "Submissions" %}</a></li>
+            <li {% if view_mode == "patients" %}class="active"{% endif %}><a href="{{ chw_root_url }}&view=patients">{% trans "Patients" %}</a></li>
+            <li {% if view_mode == "schedule" %}class="active"{% endif %}><a href="{{ chw_root_url }}&view=schedule">{% trans "Visit Schedule" %}</a></li>
+            <li {% if view_mode == "supervision" %}class="active"{% endif %}><a href="{{ chw_root_url }}&view=supervision">{% trans "Supervision" %}</a></li>
+        </ul>
+    <h1>Foo</h1>
     {{ block.super }}
 {% endblock reportcontent %}
 

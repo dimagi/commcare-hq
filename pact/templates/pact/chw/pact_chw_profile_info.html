@@ -1,0 +1,27 @@
+{% extends "pact/chw/pact_chw_profile_base.html" %}
+{% load i18n %}
+
+{% block actor-tab-container %}
+    <div class="span6">
+        <table class="actor_details">
+            <tr>
+                <td class="span2">{% trans "Name" %}</td>
+                <td class="span3">{{ user_doc.first_name }} {{ user_doc.last_name }}</td>
+            </tr>
+            <tr>
+                <td>{% trans "Username" %}</td>
+                <td>{{ user_doc.username }}</td>
+            </tr>
+            <tr>
+                <td>{% trans "Phone" %}</td>
+                <td>{{ user_doc.phone_number }}</td>
+            </tr>
+            <tr>
+                <td>{% trans "Email" %}</td>
+                <td>{{ user_doc.email }}</td>
+            </tr>
+        </table>
+    </div>
+
+{% endblock actor-tab-container %}
+

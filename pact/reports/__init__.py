@@ -25,14 +25,15 @@ class PactPatientDispatcher(CustomProjectReportDispatcher):
 #        return base.format(renderings=cls._rendering_pattern())
 
 
-class PactPatientReportMixin(object):
+class PactDrilldownReportMixin(object):
     # this is everything that's shared amongst the Bihar supervision reports
     # this class is an amalgamation of random behavior and is just
     # for convenience
 
-    report_template_path = "pact/patient/pactpatient_info.html"
+    report_template_path = ""
 
     hide_filters = True
+    filters = []
     flush_layout = True
     #    mobile_enabled = True
     fields = []
@@ -44,13 +45,13 @@ class PactPatientReportMixin(object):
     @classmethod
     def show_in_navigation(cls, request, *args, **kwargs):
         return False
+#
+#    @property
+#    def report_context(self):
+#        raise NotImplementedError("Todo")
 
-    @property
-    def report_context(self):
-        raise NotImplementedError("Todo")
 
-
-class PatientNavigationReport(PactPatientReportMixin, CustomProjectReport):
+class PatientNavigationReport(PactDrilldownReportMixin, CustomProjectReport):
 #    dispatcher = PactPatientDispatcher
 
     @property

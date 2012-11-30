@@ -1,0 +1,113 @@
+{% extends "pact/patient/pactpatient_base.html" %}
+{% block js-inline %}
+    {{ block.super }}
+    <script type="text/javascript">
+        function format_date(datestring) {
+            if (datestring === null) {
+                return "";
+            } else {
+                return datestring;
+            }
+            //parse nad format the date timestamps - seconds since epoch into date object
+            var date = new Date(datestring * 1000);
+            // hours part from the timestamp
+            var hours = date.getHours();
+            // minutes part from the timestamp
+            var minutes = date.getMinutes();
+            // seconds part from the timestamp
+            var seconds = date.getSeconds();
+            if (seconds < 10) {
+                var second_str = "0"+ seconds;
+            } else {
+                var second_str = seconds;
+            }
+
+            var year = date.getFullYear();
+            var month = date.getMonth() + 1;
+            var day = date.getDate();
+
+            return  year + '/' + month + '/' + day + ' ' + hours + ':' + minutes + ':' +  second_str;
+
+        }
+
+        function get_encounter_date(xform_data) {
+            if (xform_data.form["#type"] == "progress_note") {
+                return xform_data["form"]["note"]["encounter_date"];
+            }
+
+            if (xform_data.form["#type"] == "dots_form") {
+                return xform_data["form"]["encounter_date"];
+            }
+            else {
+                return null;
+            }
+
+        }
+
+
+        //XForm Submissions Model
+        function XFormSubmissionModel(data) {
+            this.form_name = ko.observable(data.form["#type"]);
+            this.uuid = ko.observable(data["id"]);
+            this.encounter_date = ko.observable(format_date(get_encounter_date(data)));
+            this.received_on = ko.observable(format_date(data.received_on));
+            this.timeStart = ko.observable(format_date(data.form.meta.timeStart));
+            this.chw = ko.observable(format_date(data.form.meta.username));
+        }
+        function XFormSubmissionViewModel() {
+            // Data
+            var self = this;
+            self.getXForms = function () {
+                $.getJSON("{% url api_dispatch_list domain=domain api_name="v0.1" resource_name="form"%}?qs=(form.case.case_id:{{ patient_doc.get_id }} OR form.case.@case_id:{{ patient_doc.get_id }})", function (allData) {
+                            var mappedXForms = $.map(allData["objects"], function (item) {
+                                console.log(item);
+                                return new XFormSubmissionModel(item);
+                            });
+                            self.xforms(mappedXForms);
+                        }
+                );
+            };
+            self.xforms = ko.observableArray(self.getXForms());
+            self.refresh = function () {
+                self.getXForms();
+            }
+        }
+
+        var xformViewModel = new XFormSubmissionViewModel();
+        $(function () {
+            ko.applyBindings(xformViewModel, $("#xforms_block")[0]);
+        });
+    </script>
+
+{% endblock js-inline %}
+{% block extrahead %}
+{% endblock extrahead %}
+{% block patient-tab-container %}
+    <div class="row-fluid" id="celeryblock">
+        <h3>Submissions</h3>
+        <table class="table table-striped">
+        <thead>
+        <tr>
+            <th class="span3">Form</th>
+            <th class="span3">Encounter Date</th>
+            <th class="span3">Created Date</th>
+            <th class="span3">Received Date</th>
+            <th class="span3">CHW</th>
+            <th></th>
+        </tr>
+        </thead>
+        <tbody data-bind="foreach: xforms">
+            <tr>
+                <td data-bind="text: form_name"></td>
+                <td data-bind="text: encounter_date"></td>
+                <td data-bind="text: timeStart"></td>
+                <td data-bind="text: received_on"></td>
+                <td data-bind="text: chw"></td>
+                <td data-bind="text: uuid"></td>
+{#                <td>View</td>#}
+            </tr>
+        </tbody>
+        </table>
+    </div>
+
+{% endblock %}

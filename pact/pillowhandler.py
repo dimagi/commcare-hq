@@ -4,8 +4,18 @@ from corehq.pillows.xform import XFormPillowHandler
 class PactHandler(XFormPillowHandler):
     domain = "pact"
 
+
+    xmlns_mapping = {}
+
+    def __init__(self, *args, **kwargs):
+        self.xmlns_mapping = {
+        "http://dev.commcarehq.org/pact/dots_form": self.dots_handler,
+        "http://dev.commcarehq.org/pact/progress_note": self.pn_handler,
+        "http://dev.commcarehq.org/pact/bloodwork": self.bw_handler
+    }
+
     def has_custom_mapping(self, doc_dict):
-        xmlns = doc_dict['xmlns']
+        xmlns = doc_dict.get('xmlns', None)
         if doc_dict['domain'] == 'pact':
             return True
 
@@ -18,64 +28,67 @@ class PactHandler(XFormPillowHandler):
 
         return False
 
-    def get_custom_mapping(self, doc_dict, mapping=None):
-        xmlns = doc_dict['xmlns']
-        print "get custom mapping: %s" % xmlns
-        if xmlns == "http://dev.commcarehq.org/pact/dots_form":
-            mapping['dynamic'] = True
-            mapping['properties']['form']['dynamic'] = True
-            mapping['properties']['form']['properties']['encounter_date'] = {
-                "type": "date",
-                "format": formats_string
-            }
-        if xmlns == "http://dev.commcarehq.org/pact/progress_note":
-            mapping['dynamic'] = True
-            mapping['properties']['form']['dynamic'] = True
-            mapping['properties']['form']['properties']['note'] = {
-                'properties': {
-                    'encounter_date': {
-                        "type": "date",
-                        "format": formats_string
-                    },
-                    "bwresults": {
-                        "dynamic": "true",
-                        "properties": {
-                            "bw": {
-                                "dynamic": "true",
-                                "properties": {
-                                    "test_date": {
-                                        "type": "date",
-                                        "format": formats_string
-                                    },
-                                }
+    def dots_handler(self, doc_dict, mapping):
+        mapping['dynamic'] = True
+        mapping['properties']['form']['dynamic'] = True
+        mapping['properties']['form']['properties']['encounter_date'] = {
+            "type": "date",
+            "format": formats_string
+        }
+
+    def pn_handler(self, doc_dict, mapping):
+        mapping['dynamic'] = True
+        mapping['properties']['form']['dynamic'] = True
+        mapping['properties']['form']['properties']['note'] = {
+            'properties': {
+                'encounter_date': {
+                    "type": "date",
+                    "format": formats_string
+                },
+                "bwresults": {
+                    "dynamic": "true",
+                    "properties": {
+                        "bw": {
+                            "dynamic": "true",
+                            "properties": {
+                                "test_date": {
+                                    "type": "date",
+                                    "format": formats_string
+                                },
                             }
                         }
-                    },
-                }
+                    }
+                },
             }
-            #                [{"bw": {"tests": "vl cd", "vl": "11400", "test_date": "2011-07-29", "cd": {"cdper": "", "cdcnt": "118"}}}, {"referral": {"ref_type": "medical", "ref_date": "2011-07-28"}}]
-
-        if xmlns == "http://dev.commcarehq.org/pact/bloodwork":
-        #                [{"bw": {"tests": "vl cd", "vl": "11400", "test_date": "2011-07-29", "cd": {"cdper": "", "cdcnt": "118"}}}, {"referral": {"ref_type": "medical", "ref_date": "2011-07-28"}}]
-            #convert all bw dicts to array, even singletons (dict)
-            #turn "" to null
-            #check test_date and ref_date for blanks, convert to None
-            mapping['dynamic'] = True
-            mapping['properties']['form']['dynamic'] = True
-            mapping['properties']['form']['properties']['results'] = {
-                "dynamic": "true",
-                "properties": {
-                    "bw": {
-                        "dynamic": "true",
-                        "properties": {
-                            "test_date": {
-                                "type": "date",
-                                "format": formats_string
-                            },
-                        }
+        }
+    def bw_handler(self,doc_dict, mapping):
+        #convert all bw dicts to array, even singletons (dict)
+        #turn "" to null
+        #check test_date and ref_date for blanks, convert to None
+        mapping['dynamic'] = True
+        mapping['properties']['form']['dynamic'] = True
+        mapping['properties']['form']['properties']['results'] = {
+            "dynamic": "true",
+            "properties": {
+                "bw": {
+                    "dynamic": "true",
+                    "properties": {
+                        "test_date": {
+                            "type": "date",
+                            "format": formats_string
+                        },
                     }
                 }
             }
+        }
+
+    def get_custom_mapping(self, doc_dict, mapping=None):
+        xmlns = doc_dict.get('xmlns', None)
+        print "get custom mapping: %s" % xmlns
+        handler_func = self.xmlns_mapping.get(xmlns, None)
+        if handler_func is not None:
+            handler_func(doc_dict, mapping)
+            print "handled"
         print "returning mapping"
         return mapping
 
