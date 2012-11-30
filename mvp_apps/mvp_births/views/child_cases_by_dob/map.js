@@ -8,23 +8,6 @@ function(doc) {
 
         indicator_keys.push("dob");
 
-        if (indicators.referral_type) {
-            var visits = indicators.referral_type.value,
-                seven_days_old = false;
-            for (var i in visits) {
-                var visit_doc = visits[i];
-                var visit_end =  new Date(visit_doc.timeEnd);
-                var visit_ms = visit_end.getTime() - birth_date.getTime();
-
-                if (visit_ms <= seven_days_ms) {
-                    seven_days_old = true;
-                }
-            }
-            if (seven_days_old) {
-                indicator_keys.push("newborn_visit");
-            }
-        }
-
         emit_standard(doc, birth_date, indicator_keys, [doc._id]);
     }
 }

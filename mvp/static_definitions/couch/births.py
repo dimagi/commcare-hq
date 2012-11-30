@@ -2,11 +2,10 @@ BIRTH_INDICATORS = dict(
     app="mvp_births",
     indicators=dict(
         child_cases_by_dob=dict(
-            newborn_visit=dict(
-                description="No. of newborns receiving first CHW check-up within 7 days of birth during the time period",
-                title="# Newborns checked within 7 days of birth",
-                indicator_key="newborn_visit",
-                startdate_shift=-7,
+            num_newborns=dict(
+                description="No. of newborns",
+                title="# Newborns",
+                indicator_key="dob",
             )
         ),
         child_registrations=dict(

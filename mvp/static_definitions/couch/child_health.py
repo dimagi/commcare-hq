@@ -1,5 +1,7 @@
+APP_NAME = "mvp_child_health"
+
 CHILD_HEALTH_INDICATORS = dict(
-    app="mvp_child_health",
+    app=APP_NAME,
     indicators=dict(
         child_muac=dict(
             child_muac_wasting=dict(
@@ -18,23 +20,6 @@ CHILD_HEALTH_INDICATORS = dict(
                             " MUAC readings during the time period",
                 title="# Under5s receiving on-time MUAC (90 days)",
                 indicator_key="routine_muac"
-            )
-        ),
-        under1_child_health=dict(
-            under1_check_up=dict(
-                description="No. of children Under-1 receiving on-time scheduled check-ups during the time period",
-                title="# Under-1 receiving check-ups",
-                indicator_key="under1"
-            ),
-            under6month_visit=dict(
-                description="No. of children receiving visit who were under 6 months",
-                title="# Under-6-Month Visits",
-                indicator_key="under6months"
-            ),
-            under6month_exclusive_breastfeeding_visit=dict(
-                description="No. of children under 6 months reported as exclusively breast-fed during visit",
-                title="# Under-6-Months reported as exclusively breast-fed during visit",
-                indicator_key="under6months exclusive_breastfeeding"
             )
         ),
         under5_child_health=dict(
@@ -117,6 +102,31 @@ CHILD_HEALTH_INDICATORS = dict(
                 title="# Under-5 who attended follow-up at facility, referred for complicated fever",
                 indicator_key="under5_complicated_fever facility_followup"
             )
+        ),
+    )
+)
+
+# The following indicators use CountUniqueEmitsCouchViewIndicatorDefinition
+
+COUNT_UNIQUE_CHILD_HEALTH_INDICATORS = dict(
+    app=APP_NAME,
+    indicators=dict(
+        under1_child_health=dict(
+            under6month_exclusive_breastfeeding=dict(
+                description="No. of children under 6 months reported as exclusively breast-fed during visit",
+                title="# Under-6-Months reported as exclusively breast-fed during visit",
+                indicator_key="under6months_exclusive_breastfeeding",
+            ),
+            under6month_visits=dict(
+                description="No. of children receiving visit who were under 6 months",
+                title="# Under-6-Month Visits",
+                indicator_key="under6months",
+            ),
+            under1_visit=dict(
+                description="No. of children Under-1 receiving on-time scheduled check-ups during the time period",
+                title="# Under-1 receiving check-ups",
+                indicator_key="under1"
+            ),
         ),
     )
 )

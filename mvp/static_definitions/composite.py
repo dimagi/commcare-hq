@@ -54,7 +54,7 @@ COMPOSITE_INDICATORS = dict(
     under1_check_ups_proportion=dict(
         description="Proportion of children Under-1 receiving on-time scheduled check-ups during the time period",
         title="% Under-1 receiving check-ups",
-        numerator_slug="under1_check_up",
+        numerator_slug="under1_visit",
         denominator_slug="num_under1",
     ),
     under5_fever_rdt_negative_medicated_proportion=dict(
@@ -80,10 +80,11 @@ COMPOSITE_INDICATORS = dict(
         denominator_slug="num_children"
     ),
     under6month_exclusive_breastfeeding_proportion=dict(
-        description="Proportion of children under 6 months reported as exclusively breast-fed during visit",
-        title="% Under-6-Months reported as exclusively breast-fed during visit",
-        numerator_slug="under1_check_up",
-        denominator_slug="num_under1",
+        description="Proportion of children under 6 months reported as exclusively breast-fed at last " \
+                    "visit during the time period",
+        title="% Under-6-Months reported as exclusively breast-fed",
+        numerator_slug="under6month_exclusive_breastfeeding",
+        denominator_slug="under6month_visits",
     ),
     low_birth_weight_proportion=dict(
         description="Proportion of low birth weight (<2.5 kg) babies born during the time period",
@@ -134,10 +135,10 @@ COMPOSITE_INDICATORS = dict(
         denominator_slug="num_urgent_referrals"
     ),
     newborn_visit_proportion=dict(
-        description=" Proportion of newborns receiving first CHW check-up within 7 days"\
-                    " of birth during the time period",
+        description=" Proportion of newborns receiving first CHW check-up within 7 days of " \
+                    "birth during the time period",
         title="% Newborns checked within 7 days of birth",
-        numerator_slug="newborn_visit",
+        numerator_slug="first_newborn_visit_at_7days",
         denominator_slug="num_newborns"
     ),
     pregnancy_visit_danger_sign_referral_proportion=dict(

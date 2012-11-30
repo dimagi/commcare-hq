@@ -26,7 +26,7 @@ function (doc) {
                     indicator_emit["closed gam"] = [doc._id];
                 }
                 emit_dates_dob["closed_on"] = closed_on_date;
-                emit_dates_opened["closed_on"] =closed_on_date;
+                emit_dates_opened["closed_on"] = closed_on_date;
             } else {
                 indicator_emit_dob["open dob"] = [doc._id];
                 if (is_gam_case) {

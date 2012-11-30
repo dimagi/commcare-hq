@@ -1,5 +1,19 @@
-# Indicators below use MVPActiveCasesCouchViewIndicatorDefinition
+APP_NAME = "mvp_chw_visits_by_case"
 
+CHW_VISIT_INDICATORS_BY_CASE = dict(
+    app=APP_NAME,
+    indicators=dict(
+        child_cases_by_status=dict(
+            num_newborns=dict(
+                description="No. of newborns",
+                title="# Newborns",
+                indicator_key="dob",
+            ),
+        )
+    )
+)
+
+# Indicators below use MVPActiveCasesCouchViewIndicatorDefinition
 ACTIVE_CASES_CHW_VISIT_INDICATORS = dict(
     app="mvp_chw_visits_by_case",
     indicators=dict(
@@ -17,12 +31,6 @@ ACTIVE_CASES_CHW_VISIT_INDICATORS = dict(
                 indicator_key="dob",
                 fixed_datespan_days=7,
                 startdate_shift=-31,
-            ),
-            num_newborns=dict(
-                description="No. of newborns",
-                title="# Newborns",
-                indicator_key="dob",
-                startdate_shift=-7,
             ),
             num_children=dict(
                 description="No. of children",

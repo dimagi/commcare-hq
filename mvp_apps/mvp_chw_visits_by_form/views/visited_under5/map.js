@@ -17,6 +17,9 @@ function(doc) {
                     // This under5 child is also neonate
                     indicator_entries["neonate"] = case_id;
                 }
+                if (age_in_days <= 7) {
+                    indicator_entries["7days"] = case_id;
+                }
             }
         }
         emit_special(doc, visit_date, indicator_entries, []);

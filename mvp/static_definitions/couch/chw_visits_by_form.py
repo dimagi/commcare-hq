@@ -48,7 +48,12 @@ CHW_VISIT_INDICATORS = dict(
                 title="# Newborns Visited in Last 7 Days",
                 indicator_key="neonate",
                 fixed_datespan_days=7
-            )
+            ),
+            first_newborn_visit_at_7days=dict(
+                description="No. of newborns visited 7 days after birth",
+                title="# Newborns visited 7 days after birth",
+                indicator_key="7days"
+            ),
         ),
     )
 )
