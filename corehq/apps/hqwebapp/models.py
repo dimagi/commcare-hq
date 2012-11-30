@@ -225,3 +225,25 @@ class AdminReportsMenuItem(DropdownMenuItem):
     @classmethod
     def is_viewable(cls, request, domain):
         return request.couch_user.is_superuser
+
+
+class ExchangeMenuItem(DropdownMenuItem):
+    title = ugettext_noop("Exchange")
+    view = "corehq.apps.appstore.views.appstore"
+    css_id = "exchange_tab"
+
+    @property
+    @memoized
+    def submenu_items(self):
+        submenu_context = None
+        if self.domain and self.request.couch_user.is_domain_admin(self.domain):
+            submenu_context = [
+                self._format_submenu_context(_("CommCare Exchange"), url=reverse("appstore")),
+                self._format_submenu_context(_("Publish this project"),
+                    url=reverse("domain_snapshot_settings", args=[self.domain]))
+            ]
+        return submenu_context
+
+    @classmethod
+    def is_viewable(cls, request, domain):
+        return True
