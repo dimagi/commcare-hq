@@ -64,7 +64,7 @@
         {% for snapshot in snapshots %}
         <tr>
             <td><a class="btn btn-primary" href="{% url project_info snapshot.name %}">View</a></td>
-            <td>{{ snapshot.snapshot_time }}</a></td>
+            <td>{{ snapshot.snapshot_time }}</td>
             <td>{{ snapshot.get_license_display }}</td>
             {% if snapshot.published %}
             <td>
@@ -155,6 +155,13 @@
     </fieldset>
 
     <div class="form-actions"><button type="submit" class="btn btn-primary">Publish a new version of your project</button></div>
+
+    {% if project.is_copy %}
+        <div class="alert alert-info">
+            <a href="#" class="close" data-dismiss="alert">×</a>
+            <h4>{% trans "This project was originally copied from " %}<a href="{% url project_info project.copied_from.name %}">{{ project.copied_from.title }}</a></h4>
+        </div>
+    {% endif %}
 </form>
 {% endblock %}>
 

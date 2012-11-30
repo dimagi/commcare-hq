@@ -277,7 +277,7 @@ def snapshot_settings(request, domain):
     domain = Domain.get_by_name(domain)
     snapshots = domain.snapshots()
     return render_to_response(request, 'domain/snapshot_settings.html',
-                {'domain': domain.name, 'snapshots': list(snapshots), 'published_snapshot': domain.published_snapshot()})
+                {"project": domain, 'domain': domain.name, 'snapshots': list(snapshots), 'published_snapshot': domain.published_snapshot()})
 
 @domain_admin_required
 def create_snapshot(request, domain):
@@ -364,6 +364,7 @@ def create_snapshot(request, domain):
                  'autocomplete_fields': ('project_type', 'phone_model', 'user_type', 'city', 'country', 'region')})
 
         if not form.is_valid():
+            messages.error(request, _("There are some problems with your form. Please address these issues and try again."))
             return render_to_response(request, 'domain/create_snapshot.html',
                     {'domain': domain.name,
                      'form': form,
@@ -396,7 +397,8 @@ def create_snapshot(request, domain):
         new_domain.multimedia_included = request.POST.get('share_multimedia', '') == 'on'
 
         new_domain.is_approved = False
-        if request.POST.get('publish_on_submit', False):
+        publish_on_submit = request.POST.get('publish_on_submit', False)
+        if publish_on_submit:
             for snapshot in domain.snapshots():
                 if snapshot.published and snapshot._id != new_domain._id:
                     snapshot.published = False
@@ -462,7 +464,10 @@ def create_snapshot(request, domain):
                      'app_forms': app_forms,
                      'error_message': _('Version creation failed; please try again')})
 
-        messages.success(request, _("Created a new version of your app. This version will be posted to CommCare Exchange pending approval by admins."))
+        if publish_on_submit:
+            messages.success(request, _("Created a new version of your app. This version will be posted to CommCare Exchange pending approval by admins."))
+        else:
+            messages.success(request, _("Created a new version of your app."))
         return redirect('domain_snapshot_settings', domain.name)
 
 @domain_admin_required
