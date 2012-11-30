@@ -1,6 +1,7 @@
 from corehq.apps.api.resources import v0_1, v0_2, v0_3
 from django.conf.urls.defaults import *
 from tastypie.api import Api
+from corehq.apps.api.xform_es import XFormES
 from dimagi.utils.decorators import inline
 
 API_LIST = (
@@ -16,7 +17,7 @@ def api_url_patterns():
         for R in resources:
             api.register(R())
         yield (r'^', include(api.urls))
+    yield url(r'^v0.1/xform_es/$', XFormES.as_view())
 
 urlpatterns = patterns('',
-    *api_url_patterns
-)
+    *api_url_patterns)
