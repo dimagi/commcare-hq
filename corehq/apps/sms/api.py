@@ -265,3 +265,7 @@ def form_session_handler(v, text):
     # should the error responses instead be handler by some generic error/fallback
     # handler
     return True
+
+def fallback_handler(v, text):
+    send_sms_to_verified_number(v, 'could not understand your message. please check keyword.')
+    return True
