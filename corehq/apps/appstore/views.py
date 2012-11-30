@@ -150,9 +150,17 @@ def generate_sortables_from_facets(results, params=None, mapping={}):
         return "?%s" % urlencode(updated_params, True)
 
     def generate_facet_dict(f_name, ft):
+        ccs = {
+            'cc': 'CC BY',
+            'cc-sa': 'CC BY-SA',
+            'cc-nd': 'CC BY-ND',
+            'cc-nc': 'CC BY-NC',
+            'cc-nc-sa': 'CC BY-NC-SA',
+            'cc-nc-nd': 'CC BY-NC-ND',
+            }
         license = (f_name == 'license')
         return {'url': generate_query_string(f_name, ft["term"]),
-                'name': ft["term"] if not license else LICENSES.get(ft["term"]),
+                'name': ft["term"] if not license else ccs.get(ft["term"]),
                 'count': ft["count"],
                 'active': ft["term"] in params.get(f_name, "")}
 
@@ -164,6 +172,9 @@ def generate_sortables_from_facets(results, params=None, mapping={}):
     return sortable
 
 def appstore(request, template="appstore/appstore_base.html"):
+    include_unapproved = True if request.GET.get('is_approved', "") == "false" else False
+    if include_unapproved and not request.user.is_superuser:
+        raise Http404()
     params, _ = parse_args_for_es(request)
     params = dict([(SNAPSHOT_MAPPING.get(p, p), params[p]) for p in params])
     page = params.pop('page', 1)
@@ -184,7 +195,6 @@ def appstore(request, template="appstore/appstore_base.html"):
     more_pages = False if len(d_results) <= page*10 else True
 
     facets_sortables = generate_sortables_from_facets(results, params, inverse_dict(SNAPSHOT_MAPPING))
-    include_unapproved = True if request.GET.get('is_approved', "") == "false" else False
     vals = dict(apps=d_results[(page-1)*10:page*10],
         page=page,
         prev_page=(page-1),
