@@ -150,9 +150,17 @@ def generate_sortables_from_facets(results, params=None, mapping={}):
         return "?%s" % urlencode(updated_params, True)
 
     def generate_facet_dict(f_name, ft):
+        ccs = {
+            'cc': 'CC BY',
+            'cc-sa': 'CC BY-SA',
+            'cc-nd': 'CC BY-ND',
+            'cc-nc': 'CC BY-NC',
+            'cc-nc-sa': 'CC BY-NC-SA',
+            'cc-nc-nd': 'CC BY-NC-ND',
+            }
         license = (f_name == 'license')
         return {'url': generate_query_string(f_name, ft["term"]),
-                'name': ft["term"] if not license else LICENSES.get(ft["term"]),
+                'name': ft["term"] if not license else ccs.get(ft["term"]),
                 'count': ft["count"],
                 'active': ft["term"] in params.get(f_name, "")}
 
