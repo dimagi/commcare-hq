@@ -86,7 +86,6 @@ MIDDLEWARE_CLASSES = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'corehq.middleware.OpenRosaMiddleware',
-    'corehq.apps.domain.middleware.DomainMiddleware',
     'corehq.apps.users.middleware.UsersMiddleware',
     'casexml.apps.phone.middleware.SyncTokenMiddleware',
     'auditcare.middleware.AuditMiddleware',
@@ -227,6 +226,7 @@ MENU_ITEMS = (
     "corehq.apps.hqwebapp.models.MessagesMenuItem",
     "corehq.apps.hqwebapp.models.ProjectSettingsMenuItem",
     "corehq.apps.hqwebapp.models.AdminReportsMenuItem",
+    "corehq.apps.hqwebapp.models.ExchangeMenuItem",
 )
 
 # after login, django redirects to this URL
