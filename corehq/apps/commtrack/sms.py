@@ -43,7 +43,7 @@ class StockReport(object):
         """take in a text and return the parsed stock transactions"""
         args = text.split()
 
-        if args[0] in self.C.keywords().values():
+        if args[0] in self.C.keywords():
             # single action sms
             # TODO: support single-action by product, as well as by action?
             action = self.C.keywords()[args[0]]
@@ -70,9 +70,13 @@ class StockReport(object):
             # initial keyword not recognized; delegate to another handler
             return None
 
+        tx = list(_tx)
+        if not tx:
+            raise RuntimeError('stock report doesn\'t have any transactions')
+
         return {
             'location': location,
-            'transactions': list(_tx),
+            'transactions': tx,
         }
 
     def single_action_transactions(self, action, args):
@@ -83,7 +87,7 @@ class StockReport(object):
                     yield mk_tx(self.product_from_code(prod_code), action, 0)
                 return
             else:
-                raise RuntimeError('value not allowed')
+                raise RuntimeError('can\'t include a quantity for stock-out action')
             
         grouping_allowed = (action == 'stockedoutfor')
 
@@ -93,19 +97,24 @@ class StockReport(object):
                 products.append(self.product_from_code(arg))
             else:
                 if not products:
-                    raise RuntimeError('no product specified')
+                    raise RuntimeError('quantity "%s" doesn\'t have a product' % arg)
                 if len(products) > 1 and not grouping_allowed:
-                    raise RuntimeError('missing a value')
+                    raise RuntimeError('missing quantity for product "%s"' % products[-1].code)
 
-                value = int(arg)
+                try:
+                    value = int(arg)
+                except:
+                    raise RuntimeError('could not understand product quantity "%s"' % arg)
+
                 for p in products:
                     yield mk_tx(p, action, value)
                 products = []
         if products:
-            raise RuntimeError('missing a value')
+            raise RuntimeError('missing quantity for product "%s"' % products[-1].code)
 
     def multiple_action_transactions(self, args):
         action = None
+        action_code = None
         product = None
 
         _args = iter(args)
@@ -118,13 +127,14 @@ class StockReport(object):
                 keyword = next()
             except StopIteration:
                 if not found_product_for_action:
-                    raise RuntimeError('product expected')
+                    raise RuntimeError('product expected for action "%s"' % action_code)
                 break
 
             try:
-                action = self.C.keywords(multi=True)[keyword]
+                old_action_code = action_code
+                action, action_code = self.C.keywords(multi=True)[keyword], keyword
                 if not found_product_for_action:
-                    raise RuntimeError('product expected')
+                    raise RuntimeError('product expected for action "%s"' % old_action_code)
                 found_product_for_action = False
                 continue
             except KeyError:
@@ -136,18 +146,20 @@ class StockReport(object):
             except:
                 product = None
             if product:
-                if action == 'stockout':
+                if not action:
+                    raise RuntimeError('need to specify an action before product')
+                elif action == 'stockout':
                     value = 0
                 else:
                     try:
                         value = int(next())
                     except (ValueError, StopIteration):
-                        raise RuntimeError('value expected')
+                        raise RuntimeError('quantity expected for product "%s"' % product.code)
 
                 yield mk_tx(product, action, value)
                 continue
 
-            raise RuntimeError('do not recognize keyword')
+            raise RuntimeError('do not recognize keyword "%s"' % keyword)
 
             
     def location_from_code(self, loc_code):
@@ -157,7 +169,7 @@ class StockReport(object):
                             key=[self.domain.name, loc_code],
                             include_docs=True).first()
         if loc is None:
-            raise RuntimeError('invalid location code')
+            raise RuntimeError('invalid location code "%s"' % loc_code)
         return CommCareCase.get(loc['id'])
 
     def product_from_code(self, prod_code):
@@ -165,7 +177,7 @@ class StockReport(object):
         prod_code = prod_code.lower()
         p = Product.get_by_code(self.domain.name, prod_code)
         if p is None:
-            raise RuntimeError('invalid product code')
+            raise RuntimeError('invalid product code "%s"' % prod_code)
         return p
 
 def mk_tx(product, action, value):
