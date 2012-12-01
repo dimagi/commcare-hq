@@ -5,6 +5,7 @@ from couchexport.shortcuts import export_data_shared
 from couchexport.models import GroupExportConfiguration, SavedBasicExport, FakeSavedExportSchema
 from django.shortcuts import render_to_response
 from django.template.context import RequestContext
+import unicodedata
 
 def _export_tag_or_bust(request):
     export_tag = request.GET.get("export_tag", "")
@@ -58,5 +59,8 @@ def download_saved_export(request, export_id):
     attach = export._attachments[export.configuration.filename]
     response = HttpResponse(mimetype=attach["content_type"])
     response.write(export.fetch_attachment(export.configuration.filename))
-    response['Content-Disposition'] = 'attachment; filename=%s' % export.configuration.filename
+    # ht: http://stackoverflow.com/questions/1207457/convert-unicode-to-string-in-python-containing-extra-symbols
+    normalized_filename = unicodedata.normalize('NFKD', export.configuration.filename).encode('ascii','ignore')
+    response['Content-Disposition'] = 'attachment; filename=%s' % normalized_filename
+
     return response
