@@ -1,11 +1,13 @@
 from corehq.apps.domain.models import Domain
 from corehq.apps.commtrack.models import *
 from casexml.apps.case.models import CommCareCase
+from corehq.apps.locations.models import Location
 from corehq.apps.commtrack import stockreport
 from dimagi.utils.couch.database import get_db
 from corehq.apps.sms.api import send_sms_to_verified_number
 from lxml import etree
 import logging
+from dimagi.utils.couch.loosechange import map_reduce
 
 logger = logging.getLogger('commtrack.sms')
 
@@ -23,6 +25,8 @@ def handle(verified_contact, text):
     except Exception, e:
         send_sms_to_verified_number(verified_contact, 'problem with stock report: %s' % str(e))
         return True
+
+    send_confirmation(verified_contact, data)
 
     inst_xml = to_instance(verified_contact, data)
     logger.debug(inst_xml)
@@ -223,3 +227,30 @@ def to_instance(v, data):
     )
 
     return etree.tostring(root, encoding='utf-8', pretty_print=True)
+
+def truncate(text, maxlen, ellipsis='...'):
+    if len(text) > maxlen:
+        return text[:maxlen-len(ellipsis)] + ellipsis
+    else:
+        return text
+
+def send_confirmation(v, data):
+    C = CommtrackConfig.for_domain(v.domain)
+
+    location_name = Location.get(data['location'].location_[-1]).name
+
+    action_to_code = dict((v, k) for k, v in C.keywords().iteritems())
+    tx_by_action = map_reduce(lambda tx: [(tx['action'],)], data=data['transactions'], include_docs=True)
+    def summarize_action(action, txs):
+        def fragment(tx):
+            quantity = tx['value'] if tx['value'] is not None else ''
+            return '%s%s' % (tx['product'].code.lower(), quantity)
+        return '%s %s' % (action_to_code[action].upper(), ' '.join(sorted(fragment(tx) for tx in txs)))
+
+    msg = 'received stock report for %s(%s) %s' % (
+        truncate(location_name, 15),
+        data['location'].site_code,
+        ' '.join(sorted(summarize_action(a, txs) for a, txs in tx_by_action.iteritems()))
+    )
+
+    send_sms_to_verified_number(v, msg)
