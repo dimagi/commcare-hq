@@ -8,6 +8,7 @@ from couchdbkit.schema.properties import LazyDict
 from django.utils.safestring import mark_safe
 import numpy
 from casexml.apps.case.models import CommCareCase
+from corehq.apps.indicators.utils import format_datespan_by_case_status
 from couchforms.models import XFormInstance
 from dimagi.utils.couch.database import get_db
 from dimagi.utils.dates import DateSpan, add_months, months_between
@@ -431,6 +432,32 @@ class SumLastUniqueEmitedValueCouchViewIndicatorDefinition(UnGroupableCouchViewI
             if item.get('value'):
                 unique_values[item['value']['_id']] = item['value']['value']
         return sum(unique_values.values())
+
+
+class ActiveCasesCouchViewIndicatorDefinition(UnGroupableCouchViewIndicatorDefinitionBase):
+    """
+        Returns # active cases.
+    """
+    case_type = StringProperty()
+
+    def _get_cases_by_status(self, status, user_id, datespan):
+        key_prefix = [status]
+        if self.indicator_key:
+            key_prefix.append(self.indicator_key)
+        key = self._get_results_key(user_id=user_id)
+        if self.case_type:
+            key = key[0:2] + [self.case_type] + key[2:]
+        key[-1] = " ".join(key_prefix)
+        datespan_by_status = format_datespan_by_case_status(datespan, status)
+        return self._get_results_with_key(key, user_id=user_id, datespan=datespan_by_status)
+
+    def get_value(self, user_id=None, datespan=None):
+        opened_on_cases = self._get_cases_by_status("opened_on", user_id, datespan)
+        closed_on_cases = self._get_cases_by_status("closed_on", user_id, datespan)
+        open_ids = set([r['id'] for r in opened_on_cases])
+        closed_ids = set([r['id'] for r in closed_on_cases])
+        all_cases = open_ids.union(closed_ids)
+        return len(all_cases)
 
 
 class CombinedCouchViewIndicatorDefinition(DynamicIndicatorDefinition):
