@@ -384,7 +384,7 @@ def create_snapshot(request, domain):
         new_domain.save()
 
         if publish_on_submit:
-            publish_snapshot(request, domain, published_snapshot=new_domain)
+            _publish_snapshot(request, domain, published_snapshot=new_domain)
         else:
             new_domain.published = False
             new_domain.save()
@@ -436,12 +436,13 @@ def create_snapshot(request, domain):
             messages.success(request, _("Created a new version of your app."))
         return redirect('domain_snapshot_settings', domain.name)
 
-def publish_snapshot(request, domain, published_snapshot=None):
+def _publish_snapshot(request, domain, published_snapshot=None):
     snapshots = domain.snapshots()
     for snapshot in snapshots:
         if snapshot.published:
             snapshot.published = False
-            snapshot.save()
+            if not published_snapshot or snapshot.name != published_snapshot.name:
+                snapshot.save()
     if published_snapshot:
         if published_snapshot.copied_from.name != domain.name:
             messages.error(request, "Invalid snapshot")
@@ -466,9 +467,9 @@ def set_published_snapshot(request, domain, snapshot_name=''):
     if request.method == 'POST':
         if snapshot_name != '':
             published_snapshot = Domain.get_by_name(snapshot_name)
-            publish_snapshot(request, domain, published_snapshot=published_snapshot)
+            _publish_snapshot(request, domain, published_snapshot=published_snapshot)
         else:
-            publish_snapshot(request, domain)
+            _publish_snapshot(request, domain)
     return redirect('domain_snapshot_settings', domain.name)
 
 @domain_admin_required
