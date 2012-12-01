@@ -55,7 +55,7 @@ COMPOSITE_INDICATORS = dict(
         description="Proportion of children Under-1 receiving on-time scheduled check-ups during the time period",
         title="% Under-1 receiving check-ups",
         numerator_slug="under1_visit",
-        denominator_slug="num_under1",
+        denominator_slug="num_active_under1",
     ),
     under5_fever_rdt_negative_medicated_proportion=dict(
         description="Proportion of Under-5s with negative RDT result who received antimalarial/ADT medication",
@@ -134,11 +134,11 @@ COMPOSITE_INDICATORS = dict(
         numerator_slug="urgent_referral_followups",
         denominator_slug="num_urgent_referrals"
     ),
-    newborn_visit_proportion=dict(
+    newborn_7day_visit_proportion=dict(
         description=" Proportion of newborns receiving first CHW check-up within 7 days of " \
                     "birth during the time period",
         title="% Newborns checked within 7 days of birth",
-        numerator_slug="first_newborn_visit_at_7days",
+        numerator_slug="newborn_visit_by_7days",
         denominator_slug="num_newborns"
     ),
     pregnancy_visit_danger_sign_referral_proportion=dict(
@@ -169,16 +169,16 @@ COMPOSITE_INDICATORS = dict(
     ),
 
     # Maternal Health
-    family_planning_households=dict(
-        description="Proportion of households reporting use of modern family planning method at"\
-                    " last visit this time period",
+    family_planning_proportion=dict(
+        description="Proportion of women 15-49 years old reporting use of " \
+                    "modern family planning method at last visit this time period",
         title="% women 15-49 years old reporting use of modern family planning method",
         numerator_slug="household_num_fp",
         denominator_slug="household_num_ec"
     ),
     anc4_proportion=dict(
-        description="Proportion of Pregnant women reporting at least four (4) Antenatal Care visit "\
-                    "by 8 months of gestation this time period",
+        description="Proportion of Pregnant women reporting at least four (4) Antenatal Care " \
+                    "visit by 8 months of gestation this time period",
         title="% of Pregnant receiving 4 ANC visits to facility by 8 months gestation",
         numerator_slug="edd_soon_anc4",
         denominator_slug="edd_soon_visit"

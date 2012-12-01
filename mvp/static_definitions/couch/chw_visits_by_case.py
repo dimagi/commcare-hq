@@ -45,12 +45,6 @@ ACTIVE_CASES_CHW_VISIT_INDICATORS = dict(
                 indicator_key="dob",
                 startdate_shift=-1826, # <60 months (5 years)
             ),
-            num_under1=dict(
-                description="No. of Children Under 1",
-                title="# Under-1s",
-                indicator_key="dob",
-                startdate_shift=-365, # 1 year
-            ),
             num_active_gam=dict(
                 description="No. of Active GAM Cases",
                 title="# Active GAM Cases",

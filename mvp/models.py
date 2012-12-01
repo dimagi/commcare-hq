@@ -1,12 +1,10 @@
 import datetime
-import copy
-from couchdbkit.ext.django.schema import IntegerProperty
+from couchdbkit.ext.django.schema import IntegerProperty, BooleanProperty
 import dateutil
 import pytz
-from corehq.apps.indicators.models import CouchViewIndicatorDefinition, DynamicIndicatorDefinition
+from corehq.apps.indicators.models import CouchViewIndicatorDefinition, DynamicIndicatorDefinition, ActiveCasesCouchViewIndicatorDefinition
 from dimagi.utils.couch.database import get_db
 from dimagi.utils.dates import DateSpan
-from mvp.utils import format_datespan_by_case_status
 
 class MVP(object):
     NAMESPACE = "mvp_indicators"
@@ -157,41 +155,38 @@ class MVPActiveCasesCouchViewIndicatorDefinition(MVPCouchViewIndicatorDefinition
         return self.get_couch_results(user_id, datespan)
 
 
-class MVPActiveChildCasesByAgeIndicatorDefinition(MVPCouchViewIndicatorDefinition):
+class MVPChildCasesByAgeIndicatorDefinition(ActiveCasesCouchViewIndicatorDefinition):
     """
         Returns the number of child cases that were active within the datespan provided and have a date of birth
         that is less than the age provided by days in age.
     """
     age_in_days = IntegerProperty()
-
-    @property
-    def use_datespans_in_retrospective(self):
-        return True
+    filter_by_active = BooleanProperty(default=True)
 
     def _get_cases_by_status(self, status, user_id, datespan):
-        key_prefix = [status]
-        if self.indicator_key:
-            key_prefix.append(self.indicator_key)
-        key = self._get_results_key(user_id=user_id)
-        key[-1] = " ".join(key_prefix)
-        datespan_by_status = format_datespan_by_case_status(datespan, status)
-        results = self._get_results_with_key(key, user_id=user_id, datespan=datespan_by_status)
+        results = super(MVPChildCasesByAgeIndicatorDefinition, self)._get_cases_by_status(status, user_id, datespan)
+        return self._filter_by_age(results, datespan)
+
+    def _filter_by_age(self, results, datespan):
         valid_case_ids = []
         for item in results:
             if item.get('value'):
                 try:
                     date_of_birth = dateutil.parser.parse(item['value'])
                     td = datespan.enddate = date_of_birth
-                    # todo compare against total seconds here.
                     if td.days < self.age_in_days:
                         valid_case_ids.append(item['id'])
                 except Exception:
                     print "date of birth could not be parsed"
         return set(valid_case_ids)
 
+
     def get_value(self, user_id=None, datespan=None):
-        opened_on_cases = self._get_cases_by_status("opened_on", user_id, datespan)
-        closed_on_cases = self._get_cases_by_status("closed_on", user_id, datespan)
-        # todo is this correct? check
-        all_cases = opened_on_cases.union(closed_on_cases)
+        if self.filter_by_active:
+            opened_on_cases = self._get_cases_by_status("opened_on", user_id, datespan)
+            closed_on_cases = self._get_cases_by_status("closed_on", user_id, datespan)
+            all_cases = opened_on_cases.union(closed_on_cases)
+        else:
+            results = self.get_couch_results(user_id, datespan)
+            all_cases = self._filter_by_age(results, datespan)
         return len(all_cases)

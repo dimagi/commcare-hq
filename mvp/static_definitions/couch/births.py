@@ -1,5 +1,7 @@
+APP_NAME = "mvp_births"
+
 BIRTH_INDICATORS = dict(
-    app="mvp_births",
+    app=APP_NAME,
     indicators=dict(
         child_cases_by_dob=dict(
             num_newborns=dict(
@@ -30,5 +32,29 @@ BIRTH_INDICATORS = dict(
                 indicator_key="birth_weight"
             ),
         ),
+    )
+)
+
+# These indicators use MVPChildCasesByAgeIndicatorDefinition
+
+ACTIVE_CHILD_CASES_BY_AGE_INDICATORS = dict(
+    app=APP_NAME,
+    indicators=dict(
+        #todo rename to by_status
+        child_cases_bs=dict(
+            num_active_under1=dict(
+                description="No. of children Under 1 year of age.",
+                title="# Under-1s",
+                indicator_key="",
+                age_in_days=365,
+            ),
+            num_births_recorded=dict(
+                description="Number of births recorded during the time period.",
+                title="# Births",
+                age_in_days=31,
+                filter_by_active=False,
+                indicator_key="opened_on"
+            ),
+        )
     )
 )

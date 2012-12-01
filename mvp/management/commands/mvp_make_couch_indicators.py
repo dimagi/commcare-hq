@@ -1,15 +1,15 @@
 from django.core.management.base import LabelCommand
 from corehq.apps.indicators.models import (DynamicIndicatorDefinition, CouchViewIndicatorDefinition,
-                                           CombinedCouchViewIndicatorDefinition, MedianEmittedValueCouchViewIndicatorDefinition, SumLastUniqueEmitedValueCouchViewIndicatorDefinition)
+                                           CombinedCouchViewIndicatorDefinition, MedianEmittedValueCouchViewIndicatorDefinition, SumLastUniqueEmitedValueCouchViewIndicatorDefinition, CountUniqueEmitsCouchViewIndicatorDefinition)
 from mvp.models import (MVP, MVPActiveCasesCouchViewIndicatorDefinition, MVPDaysSinceLastTransmission)
 
 from mvp.static_definitions.composite import COMPOSITE_INDICATORS
 
 from mvp.static_definitions.couch.births import BIRTH_INDICATORS
-from mvp.static_definitions.couch.child_health import CHILD_HEALTH_INDICATORS
+from mvp.static_definitions.couch.child_health import CHILD_HEALTH_INDICATORS, COUNT_UNIQUE_CHILD_HEALTH_INDICATORS
 from mvp.static_definitions.couch.chw_referrals import MEDIAN_CHW_REFERRAL_INDICATORS, CHW_REFERRAL_INDICATORS
 from mvp.static_definitions.couch.chw_visits_by_case import ACTIVE_CASES_CHW_VISIT_INDICATORS
-from mvp.static_definitions.couch.chw_visits_by_form import CHW_VISIT_INDICATORS
+from mvp.static_definitions.couch.chw_visits import CHW_VISIT_INDICATORS
 from mvp.static_definitions.couch.deaths import DEATH_INDICATORS
 from mvp.static_definitions.couch.maternal_health import (MATERNAL_HEALTH_INDICATORS,
                                                           SUM_LAST_UNIQUE_MATERNAL_HEALTH_INDICATORS)
@@ -29,6 +29,10 @@ MEDIAN_INDICATORS = [
 
 ACTIVE_CASES_INDICATORS = [
     ACTIVE_CASES_CHW_VISIT_INDICATORS
+]
+
+COUNT_UNIQUE_INDICATORS = [
+    COUNT_UNIQUE_CHILD_HEALTH_INDICATORS,
 ]
 
 SUM_LAST_UNIQUE_INICATORS = [
@@ -69,6 +73,10 @@ class Command(LabelCommand):
 
             self.create_indicators_of_type(MedianEmittedValueCouchViewIndicatorDefinition,
                 MEDIAN_INDICATORS,
+                shared_args, shared_kwargs)
+
+            self.create_indicators_of_type(CountUniqueEmitsCouchViewIndicatorDefinition,
+                COUNT_UNIQUE_INDICATORS,
                 shared_args, shared_kwargs)
 
             self.create_indicators_of_type(SumLastUniqueEmitedValueCouchViewIndicatorDefinition,

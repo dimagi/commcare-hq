@@ -111,7 +111,7 @@ CHILD_HEALTH_INDICATORS = dict(
 COUNT_UNIQUE_CHILD_HEALTH_INDICATORS = dict(
     app=APP_NAME,
     indicators=dict(
-        under1_child_health=dict(
+        child_health_visits_by_case_id=dict(
             under6month_exclusive_breastfeeding=dict(
                 description="No. of children under 6 months reported as exclusively breast-fed during visit",
                 title="# Under-6-Months reported as exclusively breast-fed during visit",
@@ -125,7 +125,12 @@ COUNT_UNIQUE_CHILD_HEALTH_INDICATORS = dict(
             under1_visit=dict(
                 description="No. of children Under-1 receiving on-time scheduled check-ups during the time period",
                 title="# Under-1 receiving check-ups",
-                indicator_key="under1"
+                indicator_key="under1",
+            ),
+            newborn_visit_by_7days=dict(
+                description="No. of newborns visited 7 days after birth",
+                title="# Newborns visited 7 days after birth",
+                indicator_key="7days_old",
             ),
         ),
     )

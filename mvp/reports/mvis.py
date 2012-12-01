@@ -91,7 +91,7 @@ class HealthCoordinatorReport(MVPIndicatorReport):
                     "pregnant_routine_visit_past30days",
                     "neonate_routine_visit_past7days",
                     "urgent_referrals_proportion",
-                    "newborn_visit_proportion",
+                    "newborn_7day_visit_proportion",
                 ]
             ),
             dict(
@@ -103,7 +103,7 @@ class HealthCoordinatorReport(MVPIndicatorReport):
             dict(
                 category_title="Maternal",
                 indicator_slugs=[
-                    "family_planning_households",
+                    "family_planning_proportion",
                     "anc4_proportion",
                     "facility_births_proportion",
                     "pregnant_routine_checkup_proportion",
