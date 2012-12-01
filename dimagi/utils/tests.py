@@ -1,5 +1,7 @@
 from excel import IteratorJSONReader
+from decorators.memoized import Memoized
 
 __test__ = {
-    'jsonreader': IteratorJSONReader
+    'jsonreader': IteratorJSONReader,
+    'memoized': Memoized,
 }
