@@ -574,10 +574,10 @@ def view_generic(req, domain, app_id=None, module_id=None, form_id=None, is_user
     if app:
         if True:
             # decided to do Application and RemoteApp the same way; might change later
-            versions = ['1.0', '2.0']
             commcare_build_options = {}
-            for version in versions:
-                options = CommCareBuildConfig.fetch().get_menu(version)
+            build_config = CommCareBuildConfig.fetch()
+            for version in ['1.0', '2.0']:
+                options = build_config.get_menu(version)
                 options_labels = list()
                 options_builds = list()
                 for option in options:

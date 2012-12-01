@@ -6,6 +6,7 @@ from django.core.urlresolvers import reverse
 from django.utils.safestring import mark_safe
 from django.utils.translation import ugettext as _
 from corehq.apps.domain.models import Domain
+from dimagi.utils.logging import notify_exception
 from dimagi.utils.web import json_handler
 
 
@@ -96,7 +97,15 @@ def domains_for_user(request, selected_domain=None):
         lst.append('<li><a href="%s">Back to My Projects...</a></li>' % reverse("domain_select"))
         lst.append('<li class="divider"></li>')
     else:
-        domain_list = Domain.active_for_user(request.user)
+        try:
+            domain_list = Domain.active_for_user(request.couch_user)
+        except Exception:
+            if settings.DEBUG:
+                raise
+            else:
+                domain_list = Domain.active_for_user(request.user)
+                notify_exception(request)
+
         if len(domain_list) > 0:
             lst.append('<li class="nav-header">My Projects</li>')
             for domain in domain_list:
