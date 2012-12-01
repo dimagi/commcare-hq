@@ -329,7 +329,7 @@ def create_snapshot(request, domain):
                  'app_forms': app_forms,
                  'autocomplete_fields': ('project_type', 'phone_model', 'user_type', 'city', 'country', 'region')})
 
-        current_user = CouchUser.from_django_user(request.user)
+        current_user = request.couch_user
         if not current_user.is_eula_signed():
             messages.error(request, 'You must agree to our eula to publish a project to Exchange')
             return render_to_response(request, 'domain/create_snapshot.html',
@@ -373,21 +373,6 @@ def create_snapshot(request, domain):
 
         new_domain.is_approved = False
         publish_on_submit = request.POST.get('publish_on_submit', False)
-        if publish_on_submit:
-            for snapshot in domain.snapshots():
-                if snapshot.published and snapshot._id != new_domain._id:
-                    snapshot.published = False
-                    snapshot.save()
-            new_domain.published = True
-        else:
-            new_domain.published = False
-
-        new_domain.cda.signed = True
-        new_domain.cda.date = datetime.datetime.utcnow()
-        new_domain.cda.type = 'Content Distribution Agreement'
-        if current_user:
-            new_domain.cda.user_id = current_user.get_id
-        new_domain.cda.user_ip = get_ip(request)
 
         image = form.cleaned_data['image']
         if image:
@@ -397,6 +382,12 @@ def create_snapshot(request, domain):
             new_domain.image_path = old.image_path
             new_domain.image_type = old.image_type
         new_domain.save()
+
+        if publish_on_submit:
+            publish_snapshot(request, domain, published_snapshot=new_domain)
+        else:
+            new_domain.published = False
+            new_domain.save()
 
         if image:
             im = Image.open(image)
@@ -445,21 +436,39 @@ def create_snapshot(request, domain):
             messages.success(request, _("Created a new version of your app."))
         return redirect('domain_snapshot_settings', domain.name)
 
+def publish_snapshot(request, domain, published_snapshot=None):
+    snapshots = domain.snapshots()
+    for snapshot in snapshots:
+        if snapshot.published:
+            snapshot.published = False
+            snapshot.save()
+    if published_snapshot:
+        if published_snapshot.copied_from.name != domain.name:
+            messages.error(request, "Invalid snapshot")
+            return False
+
+        # cda stuff. In order to publish a snapshot, a user must have agreed to this
+        published_snapshot.cda.signed = True
+        published_snapshot.cda.date = datetime.datetime.utcnow()
+        published_snapshot.cda.type = 'Content Distribution Agreement'
+        if request.couch_user:
+            published_snapshot.cda.user_id = request.couch_user.get_id
+        published_snapshot.cda.user_ip = get_ip(request)
+
+        published_snapshot.published = True
+        published_snapshot.save()
+    return True
+
 @domain_admin_required
 def set_published_snapshot(request, domain, snapshot_name=''):
     domain = request.project
     snapshots = domain.snapshots()
     if request.method == 'POST':
-        for snapshot in snapshots:
-            if snapshot.published:
-                snapshot.published = False
-                snapshot.save()
         if snapshot_name != '':
             published_snapshot = Domain.get_by_name(snapshot_name)
-            if published_snapshot.copied_from.name != domain.name:
-                messages.error(request, "Invalid snapshot")
-            published_snapshot.published = True
-            published_snapshot.save()
+            publish_snapshot(request, domain, published_snapshot=published_snapshot)
+        else:
+            publish_snapshot(request, domain)
     return redirect('domain_snapshot_settings', domain.name)
 
 @domain_admin_required
