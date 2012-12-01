@@ -5,7 +5,6 @@ from django import forms
 from django.forms.fields import ChoiceField, CharField, BooleanField
 from django.utils.encoding import smart_str
 
-from corehq.apps.domain.middleware import _SESSION_KEY_SELECTED_DOMAIN
 from corehq.apps.domain.models import LICENSES
 
 from corehq.apps.users.models import WebUser
