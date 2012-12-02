@@ -248,8 +248,8 @@ def send_confirmation(v, data):
         return '%s %s' % (action_to_code[action].upper(), ' '.join(sorted(fragment(tx) for tx in txs)))
 
     msg = 'received stock report for %s(%s) %s' % (
-        truncate(location_name, 15),
         data['location'].site_code,
+        truncate(location_name, 20),
         ' '.join(sorted(summarize_action(a, txs) for a, txs in tx_by_action.iteritems()))
     )
 
