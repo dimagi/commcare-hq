@@ -984,6 +984,10 @@ class CommCareUser(CouchUser, CommCareMobileContactMixin):
     user_data = DictProperty()
     role_id = StringProperty()
 
+    def is_domain_admin(self, domain=None):
+        # cloudcare workaround
+        return False
+
     def sync_from_old_couch_user(self, old_couch_user):
         super(CommCareUser, self).sync_from_old_couch_user(old_couch_user)
         self.domain                 = normalize_domain_name(old_couch_user.default_account.domain)
