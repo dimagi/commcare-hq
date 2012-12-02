@@ -1,7 +1,6 @@
 # See http://wiki.python.org/moin/PythonDecoratorLibrary#Memoize
 import functools
-import inspect
-import types
+from inspect import getargspec
 
 def memoized(fn):
     m = Memoized(fn)
@@ -81,7 +80,7 @@ class Memoized(object):
     """
     def __init__(self, func):
         self.func = func
-        self.argspec = inspect.getargspec(self.func)
+        self.argspec = getargspec(self.func)
         if self.argspec.args and self.argspec.args[0] == 'self':
             self.is_method = True
         else:
