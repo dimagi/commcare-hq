@@ -1,6 +1,7 @@
 # See http://wiki.python.org/moin/PythonDecoratorLibrary#Memoize
 import functools
-from inspect import getargspec
+from inspect import getargspec, ismethod
+import sys
 
 def memoized(fn):
     m = Memoized(fn)
@@ -70,9 +71,9 @@ class Memoized(object):
     (5, 10, (), {})
     >>> p.complicated_method(5)
     (5, 10, (), {})
-    >>> p.complicated_method(1, 2, 3, 4, 5, pi=3.14)
+    >>> p.complicated_method(1, 2, 3, 4, 5, foo='bar')
     Calling complicated method
-    (1, 2, (3, 4, 5), {'pi': 3.14})
+    (1, 2, (3, 4, 5), {'foo': 'bar'})
     >>> q = Person("Danny", "Roberts")
     >>> q.get_full_name()
     Computing full name
