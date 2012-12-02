@@ -3,6 +3,7 @@ import json
 import logging
 from couchdbkit.exceptions import ResourceConflict
 from django.conf import settings
+from django.contrib.auth.models import AnonymousUser
 from django.db import models
 from couchdbkit.ext.django.schema import Document, StringProperty,\
     BooleanProperty, DateTimeProperty, IntegerProperty, DocumentSchema, SchemaProperty, DictProperty, ListProperty
@@ -210,8 +211,7 @@ class Domain(Document, HQBillingDomainMixin, SnapshotMixin):
 
     @staticmethod
     def active_for_user(user, is_active=True):
-        if not hasattr(user,'get_profile'):
-            # this had better be an anonymous user
+        if isinstance(user, AnonymousUser):
             return []
         from corehq.apps.users.models import CouchUser
         if isinstance(user, CouchUser):
