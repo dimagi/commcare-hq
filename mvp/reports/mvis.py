@@ -106,7 +106,7 @@ class HealthCoordinatorReport(MVPIndicatorReport):
                     "family_planning_proportion",
                     "anc4_proportion",
                     "facility_births_proportion",
-                    "pregnant_routine_checkup_proportion",
+                    "pregnant_routine_checkup_proportion_6weeks",
                 ]
             ),
             dict(

@@ -42,7 +42,7 @@ ACTIVE_CHILD_CASES_BY_AGE_INDICATORS = dict(
     indicators=dict(
         #todo rename to by_status
         child_cases_bs=dict(
-            num_active_under1=dict(
+            under1_cases=dict(
                 description="No. of children Under 1 year of age.",
                 title="# Under-1s",
                 indicator_key="",
@@ -55,6 +55,19 @@ ACTIVE_CHILD_CASES_BY_AGE_INDICATORS = dict(
                 filter_by_active=False,
                 indicator_key="opened_on"
             ),
+            num_active_under5=dict(
+                description="No. of Under-5 Children during this timespan",
+                title="# Under-5s",
+                age_in_days=1827,
+                indicator_key="",
+            ),
+            under5_cases_30days=dict(
+                description="No. of Under-5 Children during this timespan",
+                title="# Under-5s",
+                age_in_days=1827,
+                indicator_key="",
+                fixed_datespan_days=30,
+            )
         )
     )
 )

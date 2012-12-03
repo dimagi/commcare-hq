@@ -3,6 +3,7 @@ function(doc) {
     if( isChildVisitForm(doc) ||
         isPregnancyVisitForm(doc) ||
         isHomeVisitForm(doc)) {
+
         var indicators = get_indicators(doc),
             meta = doc.form.meta,
             case_id = get_case_id(doc);
@@ -15,14 +16,25 @@ function(doc) {
             // birthdate found, is child under 5?
             var age_in_years = get_age_from_dob(indicators.child_dob.value, visit_date);
             if (age_in_years < 5) {
-                indicator_entries['under5'] = case_id;
-                var age_in_days = age_in_years*365;
-                if (age_in_days < 31) {
-                    // This under5 child is also neonate
-                    indicator_entries["neonate"] = case_id;
-                }
-                if (age_in_days <= 7) {
-                    indicator_entries["7days"] = case_id;
+                indicator_entries['child under5'] = case_id;
+                if (age_in_years < 1) {
+                    indicator_entries['child under1'] = case_id;
+
+                    var age_in_days = age_in_years*365;
+                    if (age_in_days < 180) {
+                        indicator_entries['child under6mo'] = case_id;
+                        if (indicators.exclusive_breastfeeding
+                            && indicators.exclusive_breastfeeding.value === 'yes') {
+                            indicator_entries['child under6mo_ex_breast'] = case_id;
+                        }
+                    }
+                    if (age_in_days < 31) {
+                        // This under5 child is also neonate
+                        indicator_entries["child neonate"] = case_id;
+                    }
+                    if (age_in_days <= 7) {
+                        indicator_entries["child 7days"] = case_id;
+                    }
                 }
             }
         }

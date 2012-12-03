@@ -54,8 +54,8 @@ COMPOSITE_INDICATORS = dict(
     under1_check_ups_proportion=dict(
         description="Proportion of children Under-1 receiving on-time scheduled check-ups during the time period",
         title="% Under-1 receiving check-ups",
-        numerator_slug="under1_visit",
-        denominator_slug="num_active_under1",
+        numerator_slug="under1_visits",
+        denominator_slug="under1_cases",
     ),
     under5_fever_rdt_negative_medicated_proportion=dict(
         description="Proportion of Under-5s with negative RDT result who received antimalarial/ADT medication",
@@ -77,7 +77,7 @@ COMPOSITE_INDICATORS = dict(
                     "readings during the time period",
         title="% Under-5s receiving on-time MUAC (90 days)",
         numerator_slug="child_muac_routine",
-        denominator_slug="num_children"
+        denominator_slug="num_active_under5"
     ),
     under6month_exclusive_breastfeeding_proportion=dict(
         description="Proportion of children under 6 months reported as exclusively breast-fed at last " \
@@ -97,33 +97,32 @@ COMPOSITE_INDICATORS = dict(
     households_routine_visit_past90days=dict(
         description="Proportion of Households receiving on-time routine visit within last 90 DAYS",
         title="% of HHs receiving visit in last 90 DAYS",
-        numerator_slug="visited_households_past90days",
-        denominator_slug="num_active_households_past90days"
+        numerator_slug="household_visits_90days",
+        denominator_slug="household_cases_90days"
     ),
     households_routine_visit_past30days=dict(
         description="Proportion of Households receiving on-time routine visit within last 30 DAYS",
         title="% of HHs receiving visit in last 30 DAYS",
-        numerator_slug="visited_households_past30days",
-        denominator_slug="num_active_households_past30days"
+        numerator_slug="household_visits_30days",
+        denominator_slug="household_cases_30days"
     ),
     under5_routine_visit_past30days=dict(
-        description="Proportion of Households with an UNDER-5 CHILD receiving on-time routine visit"\
-                    " within last 30 DAYS",
-        title="% of HHs w/ Under-5 Child receiving visit in last 30 DAYS",
-        numerator_slug="under5_visited_past30days",
-        denominator_slug="num_under5_past30days"
+        description="Proportion of UNDER-5 CHILDREN receiving on-time routine visit within last 30 DAYS",
+        title="% of UNDER-5 CHILDREN receiving on-time routine visit within last 30 DAYS",
+        numerator_slug="under5_visits_30days",
+        denominator_slug="under5_cases_30days"
     ),
     pregnant_routine_visit_past30days=dict(
-        description="Proportion of Households with a PREGNANT WOMAN receiving on-time routine visit "\
-                    "within last 30 DAYS",
-        title="% of HHs with a PREGNANT WOMAN receiving visit in last 30 DAYS",
-        numerator_slug="pregnant_visited_past30days",
-        denominator_slug="num_active_pregnancies_past30days"
+        description="Proportion of PREGNANT WOMEN receiving on-time routine visit within last 30 DAYS",
+        title="% of PREGNANT WOMEN receiving on-time routine visit within last 30 DAYS",
+        numerator_slug="pregnancy_visits_30days",
+        denominator_slug="pregnancy_cases_30days"
     ),
     neonate_routine_visit_past7days=dict(
-        description="Proportion of Households with a NEONATE (NEWBORN LESS THAN 30 DAYS OLD) receiving on-time"\
+        description="Proportion of NEONATES (NEWBORN LESS THAN 30 DAYS OLD) receiving on-time" \
                     " routine visit within last 7 DAYS",
-        title="% of HHs with a NEONATE receiving visit in last 30 DAYS",
+        title="% of NEONATES (NEWBORN LESS THAN 30 DAYS OLD) receiving on-time routine visit " \
+              "within last 7 DAYS",
         numerator_slug="neonate_visited_past7days",
         denominator_slug="num_neonate_past7days"
     ),
@@ -138,7 +137,7 @@ COMPOSITE_INDICATORS = dict(
         description=" Proportion of newborns receiving first CHW check-up within 7 days of " \
                     "birth during the time period",
         title="% Newborns checked within 7 days of birth",
-        numerator_slug="newborn_visit_by_7days",
+        numerator_slug="newborn_visits",
         denominator_slug="num_newborns"
     ),
     pregnancy_visit_danger_sign_referral_proportion=dict(
@@ -189,10 +188,10 @@ COMPOSITE_INDICATORS = dict(
         numerator_slug="num_births_registered_in_facility",
         denominator_slug="num_births_registered"
     ),
-    pregnant_routine_checkup_proportion=dict(
+    pregnant_routine_checkup_proportion_6weeks=dict(
         description="Proportion of Pregnant women receiving on-time routine check-up (every 6 weeks)",
         title="% Pregnant receiving CHW visit in last 6 weeks",
         numerator_slug="pregnant_visited_past6weeks",
-        denominator_slug="num_active_pregnancies",
+        denominator_slug="pregnancy_cases_6weeks",
     ),
 )

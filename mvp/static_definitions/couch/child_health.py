@@ -95,43 +95,14 @@ CHILD_HEALTH_INDICATORS = dict(
                 indicator_key="under5_complicated_fever referred"
             )
         ),
-        under5_follow_up=dict(
+        child_case_indicators=dict(
             under5_complicated_fever_facility_followup=dict(
                 description="No. of children who attended follow-up at facility after being referred"\
                             " for complicated fever",
                 title="# Under-5 who attended follow-up at facility, referred for complicated fever",
                 indicator_key="under5_complicated_fever facility_followup"
-            )
-        ),
-    )
-)
+            ),
 
-# The following indicators use CountUniqueEmitsCouchViewIndicatorDefinition
-
-COUNT_UNIQUE_CHILD_HEALTH_INDICATORS = dict(
-    app=APP_NAME,
-    indicators=dict(
-        child_health_visits_by_case_id=dict(
-            under6month_exclusive_breastfeeding=dict(
-                description="No. of children under 6 months reported as exclusively breast-fed during visit",
-                title="# Under-6-Months reported as exclusively breast-fed during visit",
-                indicator_key="under6months_exclusive_breastfeeding",
-            ),
-            under6month_visits=dict(
-                description="No. of children receiving visit who were under 6 months",
-                title="# Under-6-Month Visits",
-                indicator_key="under6months",
-            ),
-            under1_visit=dict(
-                description="No. of children Under-1 receiving on-time scheduled check-ups during the time period",
-                title="# Under-1 receiving check-ups",
-                indicator_key="under1",
-            ),
-            newborn_visit_by_7days=dict(
-                description="No. of newborns visited 7 days after birth",
-                title="# Newborns visited 7 days after birth",
-                indicator_key="7days_old",
-            ),
         ),
     )
 )

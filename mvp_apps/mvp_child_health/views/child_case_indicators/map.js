@@ -2,6 +2,8 @@ function (doc) {
     // !code util/mvp.js
     if (isChildCase(doc)) {
         var indicators = get_indicators(doc);
+
+        // danger signs
         if (indicators.immediate_danger_sign && indicators.immediate_danger_sign.value
             && indicators.visit_hospital && indicators.visit_hospital.value) {
             var danger_signs = indicators.immediate_danger_sign.value,
