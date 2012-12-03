@@ -5,6 +5,7 @@ from bihar.reports.supervisor import BiharNavReport, MockEmptyReport, \
 from copy import copy
 from corehq.apps.reports.generic import GenericTabularReport
 from corehq.apps.reports.standard import CustomProjectReport
+from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.html import format_html
 from django.utils.translation import ugettext as _, ugettext_noop
 
@@ -91,6 +92,7 @@ class IndicatorSummaryReport(GroupReferenceMixIn, BiharSummaryReport, IndicatorS
         return [_("Team Name")] + [_(i.name) for i in self.summary_indicators]
     
     @property
+    @memoized
     def data(self):
         return [self.group.name] + \
                [self.get_indicator_value(i) for i in self.summary_indicators]

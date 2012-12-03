@@ -4,7 +4,7 @@ def any_action_property(action, props):
         if p in action.updated_unknown_properties and action.updated_unknown_properties[p]:
             return True
     return False
-    
+
 def visit_is(action, visit_type):
     """
     for a given action returns whether it's a visit of the type

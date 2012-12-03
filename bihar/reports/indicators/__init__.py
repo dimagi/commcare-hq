@@ -91,7 +91,34 @@ INDICATOR_SETS = [
             ]
         }
     },
-#    {"slug": "pregnancy", "name": _("Pregnancy Outcome") },
+    {
+        "slug": "pregnancy",
+        "name": _("Pregnancy Outcome Information"),
+        "indicators": {
+            "summary": [
+                {
+                    "slug": "hd",
+                    "name": _("Home Deliveries visited in 24 hours of Birth (Total Number HD24HR/TNHD)"),
+                    "calculation_function": "bihar.reports.indicators.calculations.hd_day"
+                },
+                {
+                    "slug": "idv",
+                    "name": _("Institutional Deliveries visited in 24 hours of Birth (Total Number ID24HR/TNI)"),
+                    "calculation_function": "bihar.reports.indicators.calculations.id_day"
+                },
+                {
+                    "slug": "idnb",
+                    "name": _("Institutional deliveries not breastfed within one hour (Total NumberBF/Total Number ID24HR)"),
+                },
+            ],
+            "client_list": [
+                {
+                    "slug": "delivered_in_last_30",
+                    "name": _("Pregnant woman who delivered in last 30 days (REPEAT FROM HOME VISIT INFO))"),
+                },
+            ],
+        }
+    }
 #    {"slug": "postpartum", "name": _("Post-Partum Complications") },
 #    {"slug": "newborn", "name": _("Weak Newborn") },
 #    {"slug": "familyplanning", "name": _("Family Planning") },
