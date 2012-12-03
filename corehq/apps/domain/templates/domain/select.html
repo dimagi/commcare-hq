@@ -16,17 +16,13 @@
         <aside class="well">
             <h3>Have a new idea?</h3>
             <a class="btn btn-primary" href="{% url registration_domain %}">Create a Blank Project</a>
-            {% if request.couch_user.is_previewer %}
             <div>or</div>
             <a class="btn btn-primary" href="{% url appstore %}">Copy from CommCare Exchange</a>
-            {% endif %}
         </aside>
         <aside class="well">
             <h3>Need ideas?</h3>
             <p>Visit the <a href="/a/public/">CommCare HQ Example Project</a>
-                {% if request.couch_user.is_previewer %}
                 or go to <a href="{% url appstore %}">CommCare Exchange</a>.
-                {% endif %}
             </p>
         </aside>
     </div>

@@ -168,11 +168,9 @@
                                     <input type="hidden" name="type" value="RemoteApp" />
                                     <a href="#" class="submit">{% trans 'Remote App (Advanced Users Only)' %}</a>
                                 </li>
-                                {% if request.couch_user.is_previewer %}
                                 <li>
                                     <a href="{% url appstore %}">{% trans 'Visit CommCare Exchange to copy existing app...' %}</a>
                                 </li>
-                                {% endif %}
                             </ul>
                         </div>
                     </div>
@@ -253,9 +251,7 @@
                     {% else %}
                     There are no applications at this time
                     {% endif %}
-                    {% if request.couch_user.is_previewer %}
-                        or <a href="{% url appstore %}">copy an existing app from CommCare Exchange</a>.
-                    {% endif %}
+                    or <a href="{% url appstore %}">copy an existing app from CommCare Exchange</a>.
                 </form>
             </div>
         {% endif %}

@@ -209,6 +209,8 @@ def domain_admin_required_ex( redirect_page_name = None ):
         redirect_page_name = getattr(settings, 'DOMAIN_NOT_ADMIN_REDIRECT_PAGE_NAME', 'homepage')                                                                                                 
     def _outer( view_func ): 
         def _inner(request, domain, *args, **kwargs):
+            if not hasattr(request, 'couch_user'):
+                raise Http404
             if not request.couch_user.is_web_user():
                 raise Http404
             domain_name, domain = load_domain(request, domain)

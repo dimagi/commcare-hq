@@ -64,7 +64,7 @@
         {% for snapshot in snapshots %}
         <tr>
             <td><a class="btn btn-primary" href="{% url project_info snapshot.name %}">View</a></td>
-            <td>{{ snapshot.snapshot_time }}</a></td>
+            <td>{{ snapshot.snapshot_time }}</td>
             <td>{{ snapshot.get_license_display }}</td>
             {% if snapshot.published %}
             <td>
@@ -99,8 +99,8 @@
         </legend>
         <div class="alert alert-info">
             <a href="#" class="close" data-dismiss="alert">×</a>
-            <h3>You are about to publish your project using the following builds:</h3>
-            <p>Your project will be published using the latest starred builds, or, if no builds are starred, from the latest build overall.</p>
+            <h3>{% trans "You can publish your project using any of the following builds:" %}</h3>
+            <p>{% trans "Your project can be published using the latest starred builds, or, if no builds are starred, from the latest build overall." %}</p>
         </div>
         <div>
             <table class="table table-striped">
@@ -154,7 +154,14 @@
         </div>
     </fieldset>
 
-    <div class="form-actions"><button type="submit" class="btn btn-primary">Publish a new version of your project</button></div>
+    <div class="form-actions"><button type="submit" class="btn btn-primary">{% trans "Create a new version of your project to publish" %}</button></div>
+
+    {% if project.is_copy %}
+        <div class="alert alert-info">
+            <a href="#" class="close" data-dismiss="alert">×</a>
+            <h4>{% trans "This project was originally copied from " %}<a href="{% url project_info project.copied_from.name %}">{{ project.copied_from.title }}</a></h4>
+        </div>
+    {% endif %}
 </form>
 {% endblock %}>
 

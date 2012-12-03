@@ -23,6 +23,13 @@
     {% if project.multimedia_included %}
         {% for media in project.all_media %}
             <dl class="dl-horizontal">
+                <dd>
+                    {% ifequal media.doc_type "CommCareImage" %}
+                        <img class="app-pic" src="{{ media.url }}" />
+                    {% else %}
+                        <a class="btn" style="margin-top: .4em;" target="_blank" href="{{ media.url }}">{% trans "Preview" %}</a>
+                    {% endifequal %}
+                </dd>
                 {% if media.license.type %}
                     <dt>{% trans "License" %}</dt>
                     <dd><a href="http://creativecommons.org/licenses/#licenses">{{ media.license.display_name }}</a></dd>
@@ -39,9 +46,6 @@
                     <dt>{% trans "Attribution Notes" %}</dt>
                     <dd>{{ media.license.attribution_notes }}</dd>
                 {% endif %}
-                <dd>
-                    <a class="btn" style="margin-top: .4em;" href="{{ media.url }}">{% trans "Preview" %}</a>
-                </dd>
             </dl>
             <hr />
         {% empty %}
