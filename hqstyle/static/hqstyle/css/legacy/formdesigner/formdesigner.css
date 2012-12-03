@@ -421,7 +421,7 @@
   font-weight: bold;
   line-height: 1em;
 }
-.hq-oldstyle #fd-props-content fieldset div .widget {
+.hq-oldstyle #fd-props-content fieldset div.widget {
   clear: both;
   margin-bottom: .3em;
 }
@@ -431,7 +431,9 @@
   padding-top: .4em;
 }
 .hq-oldstyle #fd-props-content fieldset input[type="text"],
-.hq-oldstyle #fd-props-content fieldset select {
+.hq-oldstyle #fd-props-content fieldset select,
+.hq-oldstyle #fd-props-content fieldset .btn-toolbar {
+  display: inline;
   width: 380px;
   float: right;
   margin: .5em 10px .5em 0;
