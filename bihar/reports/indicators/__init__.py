@@ -104,6 +104,7 @@ INDICATOR_SETS = [
                 {
                     "slug": "idv",
                     "name": _("Institutional Deliveries visited in 24 hours of Birth (Total Number ID24HR/TNI)"),
+                    "calculation_function": "bihar.reports.indicators.calculations.id_day"
                 },
                 {
                     "slug": "idnb",
