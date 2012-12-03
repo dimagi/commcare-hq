@@ -16,15 +16,13 @@
                         {% endif %}
                         {% if error.type == "no ref detail" %}
                             Module
-                            <a href="{% url view_module domain app.id error.module.id %}">
-                                {{ error.module.name|trans:langs }}</a>
+                            <a href="{% url view_module domain app.id error.module.id %}">{{ error.module.name|trans:langs }}</a>
                             uses referrals but doesn't have
                             detail screens configured for referrals.
                         {% endif %}
                         {% if error.type == "no case detail" %}
                             Module
-                            <a href="{% url view_module domain app.id error.module.id %}">
-                                {{ error.module.name|trans:langs }}</a>
+                            <a href="{% url view_module domain app.id error.module.id %}">{{ error.module.name|trans:langs }}</a>
                             uses cases but doesn't have
                             detail screens configured for cases.
                         {% endif %}
