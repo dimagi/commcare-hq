@@ -213,6 +213,9 @@ HQ_APPS = (
     'pathindia',
 )
 
+TEST_APPS = (
+    'dimagi.utils',
+)
 REFLEXIVE_URL_BASE = "localhost:8000"
 
 INSTALLED_APPS = DEFAULT_APPS + HQ_APPS
