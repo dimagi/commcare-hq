@@ -415,7 +415,7 @@ class MedianEmittedValueCouchViewIndicatorDefinition(UnGroupableCouchViewIndicat
         return numpy.median(values) if values else 0
 
 
-class SumLastUniqueEmitedValueCouchViewIndicatorDefinition(UnGroupableCouchViewIndicatorDefinitionBase):
+class SumLastUniqueEmittedValueCouchViewIndicatorDefinition(UnGroupableCouchViewIndicatorDefinitionBase):
     """
         Expects an emitted value formatted like:
         {
