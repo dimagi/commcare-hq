@@ -246,4 +246,4 @@ class ExchangeMenuItem(DropdownMenuItem):
 
     @classmethod
     def is_viewable(cls, request, domain):
-        return True
+        return not getattr(request, 'couch_user', False) or not request.couch_user.is_commcare_user()
