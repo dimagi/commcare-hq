@@ -7,7 +7,7 @@ from dimagi.utils.mixins import UnicodeMixIn
 from datetime import datetime, timedelta
 from dimagi.utils.post import simple_post
 import json
-from dimagi.utils.parsing import json_format_datetime
+from dimagi.utils.couch import LockableMixIn
 
 repeater_types = {}
 
@@ -115,7 +115,7 @@ class ShortFormRepeater(Repeater):
     def __unicode__(self):
         return "forwarding short form to: %s" % self.url
 
-class RepeatRecord(Document):
+class RepeatRecord(Document, LockableMixIn):
     """
     An record of a particular instance of something that needs to be forwarded
     with a link to the proper repeater object

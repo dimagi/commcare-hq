@@ -25,6 +25,12 @@ class HQMediaLicense(DocumentSchema):
     type = StringProperty(choices=LICENSES)
     attribution_notes = StringProperty()
 
+    def __init__(self, _d=None, **properties):
+        # another place we have to lazy migrate
+        if properties and properties.get('type', '') == 'public':
+            properties['type'] = 'cc'
+        super(HQMediaLicense, self).__init__(_d, **properties)
+    
     @property
     def display_name(self):
         return LICENSES.get(self.type, "Improper License")
@@ -55,9 +61,12 @@ class CommCareMultimedia(Document):
             migrated = [HQMediaLicense(domain=domain, type=type)._doc \
                         for domain, type in data["licenses"].items()]
             data['licenses'] = migrated
-        if data["licenses"][0].get("type", "") == "public": # deprecating support for public domain license
-            data["licenses"][0]["type"] = "cc"
-            should_save = True
+
+        # deprecating support for public domain license
+        if isinstance(data.get("licenses", ""), list) and len(data["licenses"]) > 0:
+            if data["licenses"][0].get("type", "") == "public":
+                data["licenses"][0]["type"] = "cc"
+                should_save = True
 
         self = super(CommCareMultimedia, cls).wrap(data)
 

@@ -6,8 +6,10 @@ from corehq.apps.adm import utils as adm_utils
 from corehq.apps.reports.dispatcher import ProjectReportDispatcher, CustomProjectReportDispatcher
 from corehq.apps.reports.fields import FilterUsersField
 from corehq.apps.reports.generic import GenericReportView
+from corehq.apps.users.models import CommCareUser
 from dimagi.utils.dates import DateSpan
 from django.utils.translation import ugettext_noop
+from dimagi.utils.decorators.memoized import memoized
 
 DATE_FORMAT = "%Y-%m-%d"
 
@@ -30,6 +32,20 @@ class CustomProjectReport(ProjectReport):
     dispatcher = CustomProjectReportDispatcher
     emailable = True
 
+class CommCareUserMemoizer(object):
+
+    @memoized
+    def by_domain(self, domain):
+        users = CommCareUser.by_domain(domain)
+        for user in users:
+            # put users in the cache for get_by_user_id
+            # so that function never has to touch the database
+            self.get_by_user_id.get_cache(self)[(self, user.user_id)] = user
+        return users
+
+    @memoized
+    def get_by_user_id(self, user_id):
+        return CommCareUser.get_by_user_id(user_id)
 
 class ProjectReportParametersMixin(object):
     """
@@ -38,6 +54,22 @@ class ProjectReportParametersMixin(object):
     """
     def __getattr__(self, item):
         return super(ProjectReportParametersMixin, self).__getattribute__(item)
+
+    @property
+    @memoized
+    def CommCareUser(self):
+        return CommCareUserMemoizer()
+
+    @memoized
+    def get_all_users_by_domain(self, group=None, individual=None, user_filter=None, simplified=False):
+        return list(util.get_all_users_by_domain(
+            domain=self.domain,
+            group=group,
+            individual=individual,
+            user_filter=user_filter,
+            simplified=simplified,
+            CommCareUser=self.CommCareUser
+        ))
 
     _user_filter = None
     @property
@@ -73,13 +105,18 @@ class ProjectReportParametersMixin(object):
 
     _users = None
     @property
+    @memoized
     def users(self):
         """
             todo: cache this baby
         """
         if self._users is None:
-            self._users = util.get_all_users_by_domain(self.domain,
-                group=self.group_name, individual=self.individual, user_filter=self.user_filter, simplified=True)
+            self._users = self.get_all_users_by_domain(
+                group=self.group_name,
+                individual=self.individual,
+                user_filter=tuple(self.user_filter),
+                simplified=True
+            )
         return self._users
 
     _user_ids = None

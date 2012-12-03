@@ -107,6 +107,8 @@
                             </div>
                         </nav>
                     {% else %}
+                        {% block extra_tabs %}
+                        {% endblock %}
                         <nav>
                             <div class="btn-toolbar pull-right">
                                 <a href="{% url login %}" class="btn btn-primary">Sign In</a>
@@ -118,13 +120,9 @@
                 {% endblock %}
             </header>
 
-            {% if request.project.is_copy %}
+            {% if request.project.is_snapshot %}
                 <div class="alert alert-info snapshot-alert">
-                    {% if request.project.is_snapshot %}
-                        This is a snapshot of {{ request.project.copied_from.display_name }}
-                    {% else %}
-                        Originally copied from <a href="{% url project_info request.project.copied_from.name %}">a {{ request.project.copied_from.display_name }}</a>
-                    {% endif %}
+                    {% trans "This is a snapshot of " %}{{ request.project.copied_from.display_name }}
                     {% if request.project.copied_from.organization %}
                         by <a href="{% url orgs_landing request.project.copied_from.organization %}">{{ request.project.copied_from.organization_doc.title }}</a>
                     {% endif %}
