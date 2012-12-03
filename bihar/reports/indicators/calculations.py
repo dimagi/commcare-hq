@@ -1,4 +1,4 @@
-from bihar.reports.indicators.filters import A_MONTH, is_pregnant_mother
+from bihar.reports.indicators.filters import A_MONTH, is_pregnant_mother, get_add, get_edd
 from datetime import datetime, timedelta
 from bihar.reports.indicators.visits import visit_is
 
@@ -13,14 +13,16 @@ def _in_last_month(date):
     today = datetime.today().date()
     return today - A_MONTH < date < today
 
+def _in_timeframe(date, days):
+    today = datetime.today().date()
+    return today - timedelta(days=days) < date < today
+
 def _mother_due_in_window(case, days):
-    get_edd = lambda case: getattr(case, 'edd', None)
     get_visitduedate = lambda case: case.edd - timedelta(days=days) + GRACE_PERIOD
     return is_pregnant_mother(case) and get_edd(case) and _in_last_month(get_visitduedate(case))
         
 def _mother_delivered_in_window(case, days):
-    get_add = lambda case: getattr(case, 'add', None) 
-    get_visitduedate = lambda case: case.add + timedelta(days=days) + GRACE_PERIOD 
+    get_visitduedate = lambda case: case.add + timedelta(days=days) + GRACE_PERIOD
     return is_pregnant_mother(case) and get_add(case) and _in_last_month(get_visitduedate(case))
         
 def _done_due_count(cases, done_func, due_func):
@@ -44,6 +46,30 @@ def _visits_done(case, schedule, type):
     due = _visits_due(case, schedule)
     count = len(filter(lambda a: visit_is(a, type), case.actions))
     return len([v for v in due if count > v])
+
+def _delivered_in_timeframe(case, days):
+    return is_pregnant_mother(case) and get_add(case) and _in_timeframe(case.add)
+
+def _delivered_at_in_timeframe(case, at, days):
+    print 'lawl'
+    print getattr(case, 'birth_place', "none")
+    return _delivered_in_timeframe(case, days) and getattr(case, 'birth_place', None) == at
+
+def _get_time_of_visit_after_birth(case):
+    for action in case.actions:
+        if action.updated_unknown_properties.get("add", None):
+            return action.date
+    return None
+
+def _visited_in_timeframe_of_birth(case, days):
+    visit_time = _get_time_of_visit_after_birth(case)
+    add = get_add(case)
+    if visit_time and add:
+        return add < visit_time < add + timedelta(days=days)
+    return False
+
+
+
     
 # NOTE: cases in, values out might not be the right API
 # but it's what we need for the first set of stuff.
@@ -80,3 +106,16 @@ def cf_last_month(cases):
     due = lambda case: len(_visits_due(case, cf_schedule))
     done = lambda case: _visits_done(case, cf_schedule, "cf")
     return _done_due_count(cases, done, due)
+
+def hd_day(cases):
+    valid_cases = filter(lambda case: _delivered_at_in_timeframe(case, 'public', 240), cases)
+    print len(cases)
+    for case in cases:
+        print getattr(case, 'birth_place', "none")
+    if valid_cases:
+        print 'valid_cases'
+    else:
+        print "nah"
+    done = len(valid_cases)
+    due = len(filter(lambda case:_visited_in_timeframe_of_birth(case, 1) , valid_cases))
+    return _done_due(done, due)
