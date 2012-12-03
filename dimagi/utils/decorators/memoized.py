@@ -1,13 +1,16 @@
 # See http://wiki.python.org/moin/PythonDecoratorLibrary#Memoize
 import functools
-from inspect import getargspec, ismethod
+from inspect import getargspec, ismethod, isfunction
 import sys
 
 def memoized(fn):
     m = Memoized(fn)
-    @functools.wraps(fn)
-    def _inner(*args, **kwargs):
-        return m(*args, **kwargs)
+    try:
+        @functools.wraps(fn)
+        def _inner(*args, **kwargs):
+            return m(*args, **kwargs)
+    except TypeError:
+        _inner = m
     _inner.get_cache = m.get_cache
     return _inner
 
@@ -32,7 +35,8 @@ class Memoized(object):
     4
     >>> sorted(f.get_cache().items())
     [((0,), 0), ((2,), 4)]
-    >>> class Person(object):
+    >>> @memoized
+    ... class Person(object):
     ...     def __init__(self, first_name, last_name):
     ...         self.first_name = first_name
     ...         self.last_name = last_name
@@ -60,7 +64,7 @@ class Memoized(object):
     >>> p.full_name
     Computing full name
     'Danny Roberts'
-    >>> p._full_name_cache
+    >>> Person("Danny", "Roberts")._full_name_cache
     {(Person('Danny', 'Roberts'),): 'Danny Roberts'}
     >>> p.full_name
     'Danny Roberts'
@@ -74,13 +78,19 @@ class Memoized(object):
     >>> p.complicated_method(1, 2, 3, 4, 5, foo='bar')
     Calling complicated method
     (1, 2, (3, 4, 5), {'foo': 'bar'})
-    >>> q = Person("Danny", "Roberts")
+    >>> q = Person("Joe", "Schmoe")
     >>> q.get_full_name()
     Computing full name
-    'Danny Roberts'
+    'Joe Schmoe'
     """
     def __init__(self, func):
-        self.func = func
+
+        if isfunction(func):
+            self.func = func
+        else:
+            def wrapped(*args, **kwargs):
+                return func(*args, **kwargs)
+            self.func = wrapped
         self.argspec = getargspec(self.func)
         if self.argspec.args and self.argspec.args[0] == 'self':
             self.is_method = True
