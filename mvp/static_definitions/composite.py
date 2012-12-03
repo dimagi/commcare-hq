@@ -86,6 +86,7 @@ COMPOSITE_INDICATORS = dict(
         numerator_slug="under6month_exclusive_breastfeeding",
         denominator_slug="under6month_visits",
     ),
+    # left off here
     low_birth_weight_proportion=dict(
         description="Proportion of low birth weight (<2.5 kg) babies born during the time period",
         title="% low birth weight (<2.5 kg) babies born during the time period",
