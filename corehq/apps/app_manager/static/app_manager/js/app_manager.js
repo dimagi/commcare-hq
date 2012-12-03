@@ -61,21 +61,6 @@
                 $('#form-tabs').tabs("select", 0);
             });
         }
-
-        //
-        function resetMakeNewBuild() {
-            var $button = $("#make-new-build");
-            var $button_submit = $button.children("[type=submit]");
-            if (lastAppVersion < appVersion) {
-                $button.show();
-                $button_submit.removeAttr('disabled');
-                $button_submit.removeClass('disabled');
-            } else {
-                $button_submit.attr('disabled', 'disabled');
-                $button_submit.addClass('disabled');
-            }
-        }
-        resetMakeNewBuild();
         COMMCAREHQ.resetIndexes = resetIndexes;
 
         if (edit) {
@@ -305,15 +290,6 @@
         }).trigger('change');
 
         makeBuildErrorLinksSwitchTabs();
-
-        $("#make-new-build").submit(function () {
-            var comment = window.prompt("Please write a comment about the build you're making to help you remember later:");
-            if (comment || comment === "") {
-                $(this).find("input[name='comment']").val(comment);
-            } else {
-                return false;
-            }
-        });
 
         COMMCAREHQ.app_manager.on('change:commcareVersion', function () {
             $('.commcare-feature').each(function () {

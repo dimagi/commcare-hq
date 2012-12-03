@@ -753,7 +753,7 @@ class VersionedDoc(Document):
 
     def save_copy(self):
         cls = self.__class__
-        copies = cls.view('app_manager/applications', key=[self.domain, self._id, self.version], include_docs=True).all()
+        copies = cls.view('app_manager/applications', key=[self.domain, self._id, self.version], include_docs=True, limit=1).all()
         if copies:
             copy = copies[0]
         else:

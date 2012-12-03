@@ -13,9 +13,15 @@ function ReleasesMain(o) {
     self.users_cannot_share = self.options.users_cannot_share;
     self.savedApps = ko.observableArray();
     self.doneFetching = ko.observable(false);
+    self.buildState = ko.observable('');
     self.nextVersionToFetch = null;
     self.fetchLimit = 5;
     self.deployAnyway = {};
+    self.lastAppVersion = ko.observable();
+    self.appVersion = ko.observable(self.options.appVersion, 10);
+    self.savedApps.subscribe(function () {
+        self.lastAppVersion(self.savedApps()[0].version());
+    });
     self.url = function (name) {
         var template = self.options.urls[name];
         for (var i = 1; i < arguments.length; i++) {
@@ -31,6 +37,14 @@ function ReleasesMain(o) {
             }
         }
     });
+    self.addSavedApp = function (savedApp, toBeginning) {
+        if (toBeginning) {
+            self.savedApps.unshift(savedApp);
+        } else {
+            self.savedApps.push(savedApp);
+        }
+        self.deployAnyway[savedApp.id()] = ko.observable(false);
+    };
     self.getMoreSavedApps = function () {
         $.ajax({
             url: self.url('fetch'),
@@ -43,8 +57,7 @@ function ReleasesMain(o) {
             var i, savedApp;
             for (i = 0; i < savedApps.length; i++) {
                 savedApp = SavedApp(savedApps[i]);
-                self.savedApps.push(savedApp);
-                self.deployAnyway[savedApp.id()] = ko.observable(false);
+                self.addSavedApp(savedApp);
             }
             if (i) {
                 self.nextVersionToFetch = savedApps[i-1].version - 1;
@@ -79,7 +92,7 @@ function ReleasesMain(o) {
     };
     self.deleteSavedApp = function (savedApp) {
         savedApp._deleteState('pending');
-        $.post(self.url('delete'), {saved_app: savedApp.id}, function () {
+        $.post(self.url('delete'), {saved_app: savedApp.id()}, function () {
             self.savedApps.remove(savedApp);
             savedApp._deleteState(false);
         }).error(function () {
@@ -89,6 +102,34 @@ function ReleasesMain(o) {
                 "and try again"
             );
         });
+    };
+    self.revertSavedApp = function (savedApp) {
+        $.postGo(self.url('revertBuild'), {saved_app: savedApp.id()});
+    };
+    self.makeNewBuild = function () {
+        var comment = window.prompt("Please write a comment about the build you're making to help you remember later:");
+        if (comment || comment === "") {
+            $(this).find("input[name='comment']").val(comment);
+        } else {
+            return false;
+        }
+        self.buildState('pending');
+        $.post(self.url('newBuild'), {
+            comment: comment
+        }).success(function (data) {
+                $('#build-errors-wrapper').html(data.error_html);
+                $('#build-errors').each(function () {
+                    var specialMessage = $('span', this)[0];
+                    var defaultMessage = $('span', this)[1];
+                    if ($.trim($(specialMessage).text())) {
+                        $(defaultMessage).hide();
+                    }
+                });
+                self.addSavedApp(SavedApp(data.saved_app), true);
+                self.buildState('');
+            }).error(function () {
+                self.buildState('error');
+            });
     };
     // init
     self.getMoreSavedApps();

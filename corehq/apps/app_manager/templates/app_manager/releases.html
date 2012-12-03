@@ -13,13 +13,6 @@
 {% block js-inline %}{{ block.super }}
 <script>
     $(function () {
-        $('#build-errors').each(function () {
-            var specialMessage = $('span', this)[0];
-            var defaultMessage = $('span', this)[1];
-            if ($.trim($(specialMessage).text())) {
-                $(defaultMessage).hide();
-            }
-        });
         // init releases
         var urls = {
             fetch: '{% url paginate_releases domain app.id %}',
@@ -30,11 +23,14 @@
             jar: '{% url corehq.apps.app_manager.views.download_jar domain '___' %}',
             odk: '{% url corehq.apps.app_manager.views.odk_install domain '___' %}',
             source: '{% url download_index domain '___' %}',
-            release: '{% url release_build domain app.id '___' %}'
+            release: '{% url release_build domain app.id '___' %}',
+            newBuild: '{% url corehq.apps.app_manager.views.save_copy domain app.id %}',
+            revertBuild: '{% url corehq.apps.app_manager.views.revert_to_copy domain app.id %}'
         };
         var o = {
             users_cannot_share: {{ users_cannot_share|JSON }},
-            urls: urls
+            urls: urls,
+            appVersion: {% if app.version %}{{ app.version }}{% else %}-1{% endif %}
         };
         var el = $('#releases-table');
         ko.applyBindings(new ReleasesMain(o), el.get(0));
@@ -103,6 +99,7 @@
         background-image: url("{% static 'hqwebapp/img/ajax-loader.gif' %}");
         background-size: 80%;
         background-position: center;
+        max-height: 50px;
     }
     .star.star-error:after {
         content: "Error";
@@ -110,99 +107,6 @@
 </style>
 {% endblock %}
 {% block form-view %}
-    <form id="make-new-build" action="{% url corehq.apps.app_manager.views.save_copy domain app.id %}" method="post">
-        <input type="hidden" name="next" value="{{ request.get_full_path }}" />
-        <input type="hidden" name="comment" value="" />
-        <input type="submit" value="Make New Build" />
-    </form>
-    {% if build_errors %}
-    <div class="message">
-        Build Failed!
-        <ul id="build-errors">
-            {% for error in build_errors %}
-            <li>
-                <span>
-            {% if error.type == "invalid xml" %}
-                {% if error.form.content %}
-                    Invalid xml in form
-                {% else %}
-                    Blank form
-                {% endif %}
-                {% include "app_manager/partials/form_error_message.html" %}
-            {% endif %}
-            {% if error.type == "no ref detail" %}
-                Module
-                <a href="{% url view_module domain app.id error.module.id %}">
-                    {{ error.module.name|trans:langs }}</a>
-                uses referrals but doesn't have
-                detail screens configured for referrals.
-            {% endif %}
-            {% if error.type == "no case detail" %}
-                Module
-                <a href="{% url view_module domain app.id error.module.id %}">
-                    {{ error.module.name|trans:langs }}</a>
-                uses cases but doesn't have
-                detail screens configured for cases.
-            {% endif %}
-            {% if error.type == "no modules" %}
-                This application has no modules.
-            {% endif %}
-            {% if error.type == "no forms" %}
-                Module
-                <a href="{% url view_module domain app.id error.module.id %}">{{ error.module.name|trans:langs }}</a>
-                has no forms.
-            {% endif %}
-            {% if error.type == "no case type" %}
-                Module
-                <a href="{% url view_module domain app.id error.module.id %}">{{ error.module.name|trans:langs }}</a>
-                uses cases but doesn't have a
-                case type defined.
-            {% endif %}
-            {% if error.type == "form error" %}
-                One or more forms are invalid: check all your forms for error messages.
-            {% endif %}
-            {% if error.type == "missing languages" %}
-                {% include "app_manager/partials/form_error_message.html" %} missing languages:
-                {% for lang in error.missing_languages %}
-                    {{ lang }}
-                {% endfor %}
-            {% endif %}
-            {% if error.type == "duplicate xmlns" %}
-                You have two forms with the xmlns "{{ error.xmlns }}"
-            {% endif %}
-            {% if error.type == "update_case uses reserved word" %}
-                Case Update uses reserved word "{{ error.word }}"
-                in form
-                {% include "app_manager/partials/form_error_message.html" %}
-            {% endif %}
-            {% if error.type == "update_case word illegal" %}
-                Case Update "{{ error.word }}" should start with a letter and only contain letters, numbers, '-', and '_'
-                in form {% include "app_manager/partials/form_error_message.html" %}
-            {% endif %}
-            {% if error.type == "path error" %}
-                The case configuration in form
-                {% include "app_manager/partials/form_error_message.html" %}
-                contains the invalid path "{{ error.path }}".
-            {% endif %}
-            {% if error.type == "remote error" %}
-                Remote Error: {{ error.message }}
-            {% endif %}
-            {% if error.type == "empty lang" %}
-                One of your languages is empty. Check your <a href="{% url view_app domain app.id %}">app settings</a>.
-            {% endif %}
-                </span>
-                <span>{{ error.message }}</span>
-            </li>
-            {% endfor %}
-        </ul>
-        <p class="help-block">
-            For more information on build errors, please see
-            <a href="https://confluence.dimagi.com/display/commcarepublic/Errors+Building+an+Application" target="_blank">
-                Errors Building an Application
-            </a>
-        </p>
-    </div>
-    {% endif %}
     <div id="releases-table">
         {% include 'app_manager/partials/releases.html' %}
     </div>

@@ -276,3 +276,22 @@ ko.bindingHandlers.bootstrapCollapse = {
         });
     }
 };
+
+ko.bindingHandlers.bootstrapTabs = {
+    init: function (element) {
+        var tabLinkSelector = 'ul.nav > li > a';
+        var activate = function () {
+            var n = $(tabLinkSelector, element).index(this);
+            $(tabLinkSelector, element).parents().removeClass('active');
+            $(this).parent().addClass('active');
+            $('.tab-pane', element).removeClass('active');
+            $('.tab-pane:eq(' + n + ')', element).addClass('active');
+        };
+        $(element).on('click', tabLinkSelector, activate);
+        // Wait for the rest of the element to be rendered before init'ing
+        // (bit of a race condition)
+        setTimeout(function () {
+            $('ul.nav > li.active > a', element).each(activate);
+        }, 0);
+    }
+};

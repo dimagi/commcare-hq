@@ -2,6 +2,7 @@ from StringIO import StringIO
 import logging
 import uuid
 import zipfile
+from django.template.loader import render_to_string
 from corehq.apps.app_manager.const import APP_V1
 from corehq.apps.app_manager.success_message import SuccessMessage
 from corehq.apps.domain.models import Domain
@@ -1465,6 +1466,7 @@ def rearrange(req, domain, app_id, key):
 
 # The following three functions deal with
 # Saving multiple versions of the same app
+# i.e. "making builds"
 
 @require_POST
 @require_can_edit_apps
@@ -1474,27 +1476,28 @@ def save_copy(req, domain, app_id):
     See VersionedDoc.save_copy
 
     """
-    next = req.POST.get('next')
+#    next = req.POST.get('next')
     comment = req.POST.get('comment')
     app = get_app(domain, app_id)
     errors = app.validate_app()
-    def replace_params(next, **kwargs):
-        """this is a more general function that should be moved"""
-        url = urlparse.urlparse(next)
-        q = urlparse.parse_qs(url.query)
-        for param in kwargs:
-            if isinstance(kwargs[param], basestring):
-                q[param] = [kwargs[param]]
-            else:
-                q[param] = kwargs[param]
-        url = url._replace(query=urllib.urlencode(q, doseq=True))
-        next = urlparse.urlunparse(url)
-        return next
+#    def replace_params(next, **kwargs):
+#        """this is a more general function that should be moved"""
+#        url = urlparse.urlparse(next)
+#        q = urlparse.parse_qs(url.query)
+#        for param in kwargs:
+#            if isinstance(kwargs[param], basestring):
+#                q[param] = [kwargs[param]]
+#            else:
+#                q[param] = kwargs[param]
+#        url = url._replace(query=urllib.urlencode(q, doseq=True))
+#        next = urlparse.urlunparse(url)
+#        return next
 
     if not errors:
         try:
-            app.save_copy(comment=comment, user_id=req.couch_user.get_id)
+            copy = app.save_copy(comment=comment, user_id=req.couch_user.get_id)
         except Exception as e:
+            copy = None
             if settings.DEBUG:
                 raise
             messages.error(req, "Unexpected error saving build:\n%s" % e)
@@ -1503,11 +1506,24 @@ def save_copy(req, domain, app_id):
             if app.is_remote_app():
                 app.save(increment_version=True)
     else:
+        copy = None
         errors = BuildErrors(errors=errors)
         errors.save()
-        next = replace_params(next, build_errors=errors.get_id)
-    return HttpResponseRedirect(next)
-
+#        next = replace_params(next, build_errors=errors.get_id)
+#    return HttpResponseRedirect(next)
+    copy = copy and SavedAppBuild.wrap(
+        copy.to_json()
+    ).to_saved_build_json(
+        report_utils.get_timezone(req.couch_user.user_id, domain)
+    )
+    return json_response({
+        "saved_app": copy,
+        "error_html": render_to_string('app_manager/partials/build_errors.html', {
+            'app': get_app(domain, app_id),
+            'build_errors': errors,
+        }),
+    })
+    
 @require_POST
 @require_can_edit_apps
 def revert_to_copy(req, domain, app_id):
