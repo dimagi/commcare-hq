@@ -144,10 +144,7 @@ class SubCenterSelectionReport(ConvenientBaseMixIn, GenericTabularReport,
     _headers = [_("Team Name"), 
                 # ugettext_noop("Rank")
                 ]
-    
-    def __init__(self, *args, **kwargs):
-        super(SubCenterSelectionReport, self).__init__(*args, **kwargs)
-    
+
     @memoized
     def _get_groups(self):
         if self.request.couch_user.is_commcare_user():

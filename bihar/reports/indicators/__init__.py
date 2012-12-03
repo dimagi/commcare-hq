@@ -1,4 +1,5 @@
 from collections import defaultdict
+import functools
 from dimagi.utils.modules import to_function
 from django.utils.translation import ugettext_noop as _
 
@@ -93,7 +94,7 @@ INDICATOR_SETS = [
     },
     {
         "slug": "pregnancy",
-        "name": _("Pregnancy Outcome Information"),
+        "name": _("Pregnancy Outcomes"),
         "indicators": {
             "summary": [
                 {
@@ -117,8 +118,40 @@ INDICATOR_SETS = [
                 },
             ],
         }
-    }
-#    {"slug": "postpartum", "name": _("Post-Partum Complications") },
+    },
+    {
+        "slug": "postpartum",
+        "name": _("Post-Partum Complications"),
+        "indicators": {
+            "summary": [
+                {
+                    "slug": 'comp1',
+                    "name": _("# complications identified in first 24 hours / # complications in last 30 days"),
+                    "calculation_function": "bihar.reports.indicators.calculations.complications",
+                    "calculation_kwargs": {'days': 1},
+                },
+                {
+                    "slug": 'comp3',
+                    "name": _("# complications identified within 3 days of birth / # complications in last 30 days"),
+                    "calculation_function": "bihar.reports.indicators.calculations.complications",
+                    "calculation_kwargs": {'days': 3},
+                },
+                {
+                    "slug": 'comp5',
+                    "name": _("# complications identified within 5 days of birth / # complications in last 30 days"),
+                    "calculation_function": "bihar.reports.indicators.calculations.complications",
+                    "calculation_kwargs": {'days': 5},
+                },
+                {
+                    "slug": 'comp7',
+                    "name": _("# complications identified within 7 days of birth / # complications in last 30 days"),
+                    "calculation_function": "bihar.reports.indicators.calculations.complications",
+                    "calculation_kwargs": {'days': 7},
+                },
+            ],
+            "client_list": [],
+        }
+    },
 #    {"slug": "newborn", "name": _("Weak Newborn") },
 #    {"slug": "familyplanning", "name": _("Family Planning") },
 #    {"slug": "complimentaryfeeding", "name": _("Complimentary Feeding") },
@@ -164,6 +197,8 @@ class Indicator(object):
         self.name = spec["name"]
         self.calculation_function = to_function(spec["calculation_function"]) \
             if "calculation_function" in spec else None
+        if spec.has_key("calculation_kwargs"):
+            self.calculation_function = functools.partial(self.calculation_function, **spec['calculation_kwargs'])
         
         # case filter stuff
         self.filter_function = to_function(spec["filter_function"]) \

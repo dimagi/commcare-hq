@@ -1,6 +1,9 @@
 from bihar.reports.indicators.filters import A_MONTH, is_pregnant_mother, get_add, get_edd
 from datetime import datetime, timedelta
 from bihar.reports.indicators.visits import visit_is
+from couchforms.models import XFormInstance
+from couchforms.safe_index import safe_index
+from dimagi.utils.parsing import string_to_datetime
 
 EMPTY = (0,0)
 GRACE_PERIOD = timedelta(days=7)
@@ -110,3 +113,103 @@ def hd_day(cases):
     done = len(valid_cases)
     due = len(filter(lambda case:_visited_in_timeframe_of_birth(case, 1) , valid_cases))
     return _done_due(done, due)
+
+def _get_time_of_birth(form):
+    try:
+        time_of_birth = form.xpath('form/data/child_info/case/update/time_of_birth')
+        assert time_of_birth is not None
+    except AssertionError:
+        time_of_birth = safe_index(
+            form.xpath('form/data/child_info')[0],
+            'case/update/time_of_birth'.split('/')
+        )
+    return time_of_birth
+
+def complications(cases, days):
+    """
+    DENOM: [
+        any DELIVERY forms with (
+            /data/complications = 'yes'
+        ) in last 30 days
+        PLUS any PNC forms with ( # 'any applicable from PNC forms with' (?)
+            /data/abdominal_pain ='yes' or
+            /data/bleeding = 'yes' or
+            /data/discharge = 'yes' or
+            /data/fever = 'yes' or
+            /data/pain_urination = 'yes'
+        ) in the last 30 days
+        PLUS any REGISTRATION forms with (
+            /data/abd_pain ='yes' or    # == abdominal_pain
+            /data/fever = 'yes' or
+            /data/pain_urine = 'yes' or    # == pain_urination
+            /data/vaginal_discharge = 'yes'    # == discharge
+        ) with /data/add in last 30 days
+        PLUS any EBF forms with (
+            /data/abdominal_pain ='yes' or
+            /data/bleeding = 'yes' or
+            /data/discharge = 'yes' or
+            /data/fever = 'yes' or
+            /data/pain_urination = 'yes'
+        ) in last 30 days    # note, don't exist in EBF yet, but will shortly
+    ]
+    NUM: [
+        filter (
+            DELIVERY ? form.meta.timeStart - /data/child_info/case/update/time_of_birth,
+            REGISTRATION|PNC|EBF ? form.meta.timeStart - case.add
+        ) < `days` days
+    ]
+    """
+    #https://bitbucket.org/dimagi/cc-apps/src/caab8f93c1e48d702b5d9032ef16c9cec48868f0/bihar/mockup/bihar_pnc.xml
+    #https://bitbucket.org/dimagi/cc-apps/src/caab8f93c1e48d702b5d9032ef16c9cec48868f0/bihar/mockup/bihar_del.xml
+    #https://bitbucket.org/dimagi/cc-apps/src/caab8f93c1e48d702b5d9032ef16c9cec48868f0/bihar/mockup/bihar_registration.xml
+    #https://bitbucket.org/dimagi/cc-apps/src/caab8f93c1e48d702b5d9032ef16c9cec48868f0/bihar/mockup/bihar_ebf.xml
+    PNC = 'http://bihar.commcarehq.org/pregnancy/pnc'
+    DELIVERY = 'http://bihar.commcarehq.org/pregnancy/del'
+    REGISTRATION = 'http://bihar.commcarehq.org/pregnancy/registration'
+    EBF = 'https://bitbucket.org/dimagi/cc-apps/src/caab8f93c1e48d702b5d9032ef16c9cec48868f0/bihar/mockup/bihar_ebf.xml'
+    _pnc_ebc_complications = [
+        '/data/abdominal_pain',
+        '/data/bleeding',
+        '/data/discharge',
+        '/data/fever',
+        '/data/pain_urination',
+    ]
+    complications_by_form = {
+        DELIVERY: [
+            '/data/complications'
+        ],
+        PNC: _pnc_ebc_complications,
+        EBF: _pnc_ebc_complications,
+        REGISTRATION: [
+            '/data/abd_pain',
+            '/data/fever',
+            '/data/pain_urine',
+            '/data/vaginal_discharge',
+        ],
+    }
+    now = datetime.utcnow()
+    def get_forms(case, days=30):
+        for action in case.actions:
+            if action.date >= now - timedelta(days=days):
+                yield action.xform
+
+    done = 0
+    due = 0
+    days = timedelta(days=days)
+    for case in cases:
+        for form in get_forms(case):
+            try:
+                complication_paths = complications_by_form[form.xmlns]
+            except KeyError:
+                continue
+            for p in complication_paths:
+                if form.xpath('form' + p) == 'yes':
+                    due += 1
+                    if form.xmlns == DELIVERY:
+                        add = _get_time_of_birth(form)
+                    else:
+                        add = get_add(case)
+                    add = string_to_datetime(add)
+                    if form.metatdata.timeStart - add < days:
+                        done += 1
+    return "%s/%s" % (done, due)
