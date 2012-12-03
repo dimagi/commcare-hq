@@ -3,6 +3,7 @@ APP_NAME = "mvp_child_health"
 CHILD_HEALTH_INDICATORS = dict(
     app=APP_NAME,
     indicators=dict(
+        # todo, these are very likely incorrect.
         child_muac=dict(
             child_muac_wasting=dict(
                 description="No. children aged 6-59 months with moderate or severe wasting (MUAC < 125)"
@@ -15,12 +16,6 @@ CHILD_HEALTH_INDICATORS = dict(
                 title="# 6-59 month Children with MUAC reading",
                 indicator_key="muac_reading"
             ),
-            child_muac_routine=dict(
-                description="No. of children aged 6-59 months receiving on-time routine (every 90 days)"\
-                            " MUAC readings during the time period",
-                title="# Under5s receiving on-time MUAC (90 days)",
-                indicator_key="routine_muac"
-            )
         ),
         under5_child_health=dict(
             num_under5_visits=dict(
@@ -51,7 +46,7 @@ CHILD_HEALTH_INDICATORS = dict(
             under5_fever_rdt_negative=dict(
                 description="No. of Under-5s with negative RDT result",
                 title="# Under-5s w/ Negative RDT Result",
-                indicator_key="under5_fever rdt_test_negative"
+                indicator_key="under5_fever rdt_test_received rdt_test_negative"
             ),
             under5_fever_rdt_positive_medicated=dict(
                 description="No. of Under-5s with positive RDT result who received antimalarial/ADT medication",
@@ -102,7 +97,20 @@ CHILD_HEALTH_INDICATORS = dict(
                 title="# Under-5 who attended follow-up at facility, referred for complicated fever",
                 indicator_key="under5_complicated_fever facility_followup"
             ),
+        ),
+    )
+)
 
+COUNT_UNIQUE_CHILD_HEALTH_INDICATORS=dict(
+    app=APP_NAME,
+    indicators=dict(
+        child_muac=dict(
+            child_muac_routine=dict(
+                description="No. of children aged 6-59 months receiving on-time routine (every 90 days)"\
+                            " MUAC readings during the time period",
+                title="# Under5s receiving on-time MUAC (90 days)",
+                indicator_key="routine_muac"
+            )
         ),
     )
 )

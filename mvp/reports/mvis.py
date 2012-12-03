@@ -2,6 +2,7 @@ import datetime
 from django.utils.safestring import mark_safe
 import logging
 import numpy
+import pytz
 from corehq.apps.indicators.models import DynamicIndicatorDefinition, CombinedCouchViewIndicatorDefinition
 from mvp.models import MVP
 from mvp.reports import MVPIndicatorReport
@@ -15,6 +16,10 @@ class HealthCoordinatorReport(MVPIndicatorReport):
     report_template_path = "mvp/reports/health_coordinator.html"
     hide_filters = True
     fields = []
+
+    @property
+    def timezone(self):
+        return pytz.utc
 
     @property
     def report_context(self):
@@ -77,27 +82,27 @@ class HealthCoordinatorReport(MVPIndicatorReport):
                 category_title="Child Nutrition",
                 indicator_slugs=[
                     "muac_wasting_proportion",
-                    "muac_routine_proportion",
+                    "muac_routine_proportion", # waiting for spec change confirmation
                     "under6month_exclusive_breastfeeding_proportion",
-                    "low_birth_weight_proportion",
+                    "low_birth_weight_proportion", # A3 needs investigation
                 ]
             ),
             dict(
                 category_title="CHW Visits",
                 indicator_slugs=[
-                    "households_routine_visit_past90days",
-                    "households_routine_visit_past30days",
-                    "under5_routine_visit_past30days",
-                    "pregnant_routine_visit_past30days",
-                    "neonate_routine_visit_past7days",
-                    "urgent_referrals_proportion",
-                    "newborn_7day_visit_proportion",
+                    "households_routine_visit_past90days", # denom slightly off
+                    "households_routine_visit_past30days", # denom slightly off
+                    "under5_routine_visit_past30days", # denom slightly off
+                    "pregnant_routine_visit_past30days", # denom slightly off
+                    "neonate_routine_visit_past7days", # denom slightly off
+                    "urgent_referrals_proportion", # A2, needs investigation
+                    "newborn_7day_visit_proportion", # denom slightly off
                 ]
             ),
             dict(
                 category_title="CHW Mgmt",
                 indicator_slugs=[
-                    "median_days_referral_followup",
+                    "median_days_referral_followup", #needs checking ?
                 ]
             ),
             dict(
@@ -112,17 +117,17 @@ class HealthCoordinatorReport(MVPIndicatorReport):
             dict(
                 category_title="Births",
                 indicator_slugs=[
-                    "num_births_registered",
+                    "num_births_recorded",
                 ]
             ),
             dict(
                 category_title="Deaths",
                 indicator_slugs=[
-                    "neonatal_deaths",
-                    "infant_deaths",
-                    "under5_deaths",
-                    "maternal_deaths",
-                    "over5_deaths",
+                    "neonatal_deaths", # qa needed
+                    "infant_deaths", # qa needed
+                    "under5_deaths", # qa needed
+                    "maternal_deaths", # qa needed
+                    "over5_deaths", # qa needed
                 ]
             )
         ]

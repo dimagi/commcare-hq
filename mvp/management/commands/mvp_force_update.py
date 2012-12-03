@@ -6,7 +6,7 @@ from casexml.apps.case.models import CommCareCase
 from corehq.apps.indicators.models import CaseIndicatorDefinition, FormIndicatorDefinition, DocumentMistmatchError, DocumentNotInDomainError
 from couchforms.models import XFormInstance
 from dimagi.utils.couch.database import get_db
-from mvp.models import MVP, MVPCannotFetchCaseError
+from mvp.models import MVP
 
 class Command(LabelCommand):
     help = "Update MVP indicators in existing cases and forms."
@@ -108,7 +108,7 @@ class Command(LabelCommand):
                     sys.stdout.write(".")
                 except ResourceNotFound:
                     sys.stdout.write("R")
-                except (DocumentMistmatchError, MVPCannotFetchCaseError, DocumentNotInDomainError):
+                except (DocumentMistmatchError, DocumentNotInDomainError):
                     sys.stdout.write('-')
                 except Exception as e:
                     errors.append(e)

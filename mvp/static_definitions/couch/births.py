@@ -13,7 +13,7 @@ BIRTH_INDICATORS = dict(
         child_registrations=dict(
             num_births_registered=dict(
                 description="No. of Births Registered",
-                title="# Registered Births",
+                title="# Births Registered",
                 indicator_key="registration"
             ),
             num_births_registered_in_facility=dict(
@@ -36,12 +36,10 @@ BIRTH_INDICATORS = dict(
 )
 
 # These indicators use MVPChildCasesByAgeIndicatorDefinition
-
 ACTIVE_CHILD_CASES_BY_AGE_INDICATORS = dict(
     app=APP_NAME,
     indicators=dict(
-        #todo rename to by_status
-        child_cases_bs=dict(
+        child_cases_by_status=dict(
             under1_cases=dict(
                 description="No. of children Under 1 year of age.",
                 title="# Under-1s",
@@ -62,12 +60,19 @@ ACTIVE_CHILD_CASES_BY_AGE_INDICATORS = dict(
                 indicator_key="",
             ),
             under5_cases_30days=dict(
-                description="No. of Under-5 Children during this timespan",
+                description="No. of Under-5 Children in the past 30 days",
                 title="# Under-5s",
                 age_in_days=1827,
                 indicator_key="",
                 fixed_datespan_days=30,
-            )
+            ),
+            neonate_cases_7days=dict(
+                description="No. of Neonate Newborns in the past 7 days",
+                title="# Under-5s",
+                age_in_days=31,
+                indicator_key="",
+                fixed_datespan_days=7,
+            ),
         )
     )
 )

@@ -1,4 +1,5 @@
 from django.utils.safestring import mark_safe
+import logging
 import numpy
 from corehq.apps.indicators.models import DynamicIndicatorDefinition, CouchViewIndicatorDefinition, CombinedCouchViewIndicatorDefinition
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn, DataTablesColumnGroup
@@ -27,7 +28,10 @@ class CHWManagerReport(GenericTabularReport, MVPIndicatorReport, DatespanMixin):
                 if slug:
                     indicator = DynamicIndicatorDefinition.get_current(MVP.NAMESPACE,
                         self.domain, slug, wrap_correctly=True)
-                    section_indicators.append(indicator)
+                    if indicator is not None:
+                        section_indicators.append(indicator)
+                    else:
+                        logging.error("could not load indicator %s" % slug)
             all_indicators.append(section_indicators)
         return all_indicators
 
@@ -138,7 +142,7 @@ class CHWManagerReport(GenericTabularReport, MVPIndicatorReport, DatespanMixin):
             dict(
                 title="Newborn",
                 indicators=[
-                    dict(slug="num_births_registered", expected="--"),
+                    dict(slug="num_births_recorded", expected="--"),
                     dict(slug="facility_births_proportion", expected="100%"),
                     dict(slug="newborn_7day_visit_proportion", expected="100%"),
                     dict(slug="neonate_routine_visit_past7days", expected="100%"),

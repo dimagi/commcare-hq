@@ -45,9 +45,8 @@ COMPOSITE_INDICATORS = dict(
         denominator_slug="under5_complicated_fever",
     ),
     under5_complicated_fever_referred_proportion=dict(
-        description="Proportion of children who attended follow-up at facility after being referred"\
-                    " for complicated fever",
-        title="% Under-5 attending follow-up at facility after complicated fever referral",
+        description="Proportion of Under-5s with complicated fever who were referred to clinic or hospital",
+        title="% of Under-5s with complicated fever referred to clinic/hospital",
         numerator_slug="under5_complicated_fever_referred",
         denominator_slug="under5_complicated_fever",
     ),
@@ -86,7 +85,6 @@ COMPOSITE_INDICATORS = dict(
         numerator_slug="under6month_exclusive_breastfeeding",
         denominator_slug="under6month_visits",
     ),
-    # left off here
     low_birth_weight_proportion=dict(
         description="Proportion of low birth weight (<2.5 kg) babies born during the time period",
         title="% low birth weight (<2.5 kg) babies born during the time period",
@@ -124,8 +122,8 @@ COMPOSITE_INDICATORS = dict(
                     " routine visit within last 7 DAYS",
         title="% of NEONATES (NEWBORN LESS THAN 30 DAYS OLD) receiving on-time routine visit " \
               "within last 7 DAYS",
-        numerator_slug="neonate_visited_past7days",
-        denominator_slug="num_neonate_past7days"
+        numerator_slug="neonate_visits_7days",
+        denominator_slug="neonate_cases_7days"
     ),
     urgent_referrals_proportion=dict(
         description="Proportion of urgent referrals (codes A, E, B) or treatment receiving CHW "\
@@ -192,7 +190,7 @@ COMPOSITE_INDICATORS = dict(
     pregnant_routine_checkup_proportion_6weeks=dict(
         description="Proportion of Pregnant women receiving on-time routine check-up (every 6 weeks)",
         title="% Pregnant receiving CHW visit in last 6 weeks",
-        numerator_slug="pregnant_visited_past6weeks",
+        numerator_slug="pregnancy_visits_6weeks",
         denominator_slug="pregnancy_cases_6weeks",
     ),
 )

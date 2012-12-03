@@ -62,6 +62,11 @@ CHW_VISITS_UNIQUE_COUNT_INDICATORS = dict(
                 indicator_key="household",
                 fixed_datespan_days=30,
             ),
+            household_visits=dict(
+                description="No. of household visits",
+                title="# Household Visits",
+                indicator_key="household",
+            ),
             pregnancy_visits_6weeks=dict(
                 description="No. of pregnancy visits in the past 6 weeks",
                 title="# Pregnancy Visits in Past 6 Weeks",
@@ -73,11 +78,6 @@ CHW_VISITS_UNIQUE_COUNT_INDICATORS = dict(
                 title="# Pregnancy Visits in Past 30 days",
                 indicator_key="pregnancy",
                 fixed_datespan_days=30,
-            ),
-            under5_visits=dict(
-                description="No. of Under5 visits",
-                title="# Under5 Visits",
-                indicator_key="child under5",
             ),
             under5_visits_30days=dict(
                 description="No. of Under5 visits",
