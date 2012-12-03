@@ -48,7 +48,7 @@ def _visits_done(case, schedule, type):
     return len([v for v in due if count > v])
 
 def _delivered_in_timeframe(case, days):
-    return is_pregnant_mother(case) and get_add(case) and _in_timeframe(case.add)
+    return is_pregnant_mother(case) and get_add(case) and _in_timeframe(case.add, days)
 
 def _delivered_at_in_timeframe(case, at, days):
     return _delivered_in_timeframe(case, days) and getattr(case, 'birth_place', None) == at
@@ -63,6 +63,7 @@ def _visited_in_timeframe_of_birth(case, days):
     visit_time = _get_time_of_visit_after_birth(case)
     add = get_add(case)
     if visit_time and add:
+        add = datetime.combine(add, datetime.time(datetime.now())) #convert date to datetime
         return add < visit_time < add + timedelta(days=days)
     return False
 
@@ -106,7 +107,7 @@ def cf_last_month(cases):
     return _done_due_count(cases, done, due)
 
 def hd_day(cases):
-    valid_cases = filter(lambda case: _delivered_at_in_timeframe(case, 'public', 240), cases)
-    done = len(valid_cases)
-    due = len(filter(lambda case:_visited_in_timeframe_of_birth(case, 1) , valid_cases))
+    valid_cases = filter(lambda case: _delivered_at_in_timeframe(case, 'home', 240), cases)
+    due = len(valid_cases)
+    done = len(filter(lambda case:_visited_in_timeframe_of_birth(case, 1) , valid_cases))
     return _done_due(done, due)
