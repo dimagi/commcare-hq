@@ -1843,10 +1843,6 @@ class DomainError(Exception):
 class AppError(Exception):
     pass
 
-class BuildErrors(Document):
-
-    errors = ListProperty()
-
 def get_app(domain, app_id, wrap_cls=None, latest=False):
     """
     Utility for getting an app, making sure it's in the domain specified, and wrapping it in the right class

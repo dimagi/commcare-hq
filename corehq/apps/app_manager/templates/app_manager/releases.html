@@ -99,7 +99,6 @@
         background-image: url("{% static 'hqwebapp/img/ajax-loader.gif' %}");
         background-size: 80%;
         background-position: center;
-        max-height: 50px;
     }
     .star.star-error:after {
         content: "Error";
@@ -108,6 +107,275 @@
 {% endblock %}
 {% block form-view %}
     <div id="releases-table">
-        {% include 'app_manager/partials/releases.html' %}
+        <button class="btn btn-primary" data-bind="
+            click: makeNewBuild,
+            attr: {disabled: appVersion() === lastAppVersion() ? 'disabled' : undefined},
+            css: {disabled: appVersion() === lastAppVersion()}
+        ">{% trans 'Make New Build' %}</button>
+
+        <div id="build-errors-wrapper"></div>
+
+        <table class="table">
+            <tr>
+                <th colspan="2">Version</th>
+                <th colspan="2">Build Date &amp; Time</th>
+                <th>CommCare Binary</th>
+                <th></th>
+                {% if edit %}
+                <th></th>
+                {% endif %}
+                <th>Comment</th>
+                <th>Released</th>
+
+            </tr>
+            <tbody data-bind="visible: buildState, css: {hidden: false}" class="hidden">
+                <tr data-bind="visible: buildState() == 'pending'">
+                    <td colspan="9">
+                        <img src="{% static 'hqwebapp/img/ajax-loader.gif' %}"/>
+                        <span class="label label-success">
+                            {% trans "Please wait while your CommCare Application builds" %}
+                        </span>
+                    </td>
+                </tr>
+                <tr data-bind="visible: buildState() == 'error'">
+                    <td colspan="9">
+                        <div class="alert alert-danger">Whoops, that didn't go through. Reload the page and click Make New Build to try again.</div>
+                    </td>
+                </tr>
+            </tbody>
+            <tbody data-bind="css: {hidden: false}, template: {
+                foreach: savedApps,
+                afterAdd: function(elem) { $(elem).hide().fadeIn() },
+                beforeRemove: function(elem) { $(elem).fadeOut() }
+            }" class="hidden">
+                <tr class="build" data-bind="css: {
+                    'build-released': is_released(),
+                    'build-unreleased': !is_released(),
+                    'build-latest-release': id() === $root.latestReleaseId()
+                }">
+                    <td>
+                        {% if edit %}
+                        <a href="#" data-bind="
+                            openModal: 'delete-build-modal-template',
+                            visible: !_deleteState()
+                        ">
+                            <span class="icon icon-remove"></span>
+                        </a>
+                        <div class="pending" data-bind="
+                            visible: _deleteState() == 'pending'
+                        "></div>
+
+                        <div class="icon icon-exclamation-sign" data-bind="
+                            visible: _deleteState() == 'error'
+                        "></div>
+                        {% endif %}
+                    </td>
+                    <td class="nowrap" data-bind="text: version"></td>
+                    <td class="nowrap" data-bind="text: built_on_date"></td>
+                    <td class="nowrap" data-bind="text: built_on_time"></td>
+                    <td class="nowrap">
+                        <span data-bind="if: build_label(), text: build_label()"></span>
+                        <p data-bind="text: jar_path"></p>
+                        <h6 data-bind="if: !built_with.signed()">{% trans "Unsigned Jar" %}</h6>
+                    </td>
+                    <td class="nowrap">
+                        <div class="btn-group">
+                            <a class="btn btn-primary" data-bind="openModal: 'deploy-build-modal-template'">Deploy</a>
+                        </div>
+                    </td>
+                    {% if edit %}
+                    <td>
+                        <button class="btn" data-bind="openModal: 'revert-build-modal-template'">Revert</button>
+                    </td>
+                    {% endif %}
+                    <td>
+                        <b data-bind="visible: comment_user_name, text: comment_user_name"></b>
+                        <span data-bind="text: build_comment"></span>
+                        <h6 data-bind="visible: !build_comment()">{% trans "(No Comment)" %}</h6>
+                    </td>
+                    <td class="build-is-released">
+                        <div data-bind="starred: is_released{% if edit %}, click: $root.toggleRelease{% endif %}"></div>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+        <div data-bind="visible: !doneFetching(), css: {hidden: false}" class="hidden">
+            <a href="#" class="btn" data-bind="click: getMoreSavedApps">{% trans "View More" %}</a>
+        </div>
+        <script type="text/html" id="delete-build-modal-template">
+            <div class="modal-header">
+                <a href="#" class="close" data-dismiss="modal">×</a>
+                <h3>Delete Build?</h3>
+            </div>
+            <div class="modal-body">
+                <p>Are you sure you want to delete this build (version <span data-bind="text: version"></span>)?</p>
+            </div>
+            <div class="modal-footer">
+                <a href="#" class="btn" data-dismiss="modal">Cancel</a>
+                <a class="btn btn-danger" href="#" data-bind="click: $root.deleteSavedApp" data-dismiss="modal">Delete Build</a>
+            </div>
+        </script>
+        <script type="text/html" id="revert-build-modal-template">
+            <div class="modal-header">
+                <a href="#" class="close" data-dismiss="modal">×</a>
+                <h3>Revert to Build?</h3>
+            </div>
+            <div class="modal-body">
+                <p>Are you sure you want to delete this build (version <span data-bind="text: version"></span>)?</p>
+            </div>
+            <div class="modal-footer">
+                <a href="#" class="btn" data-dismiss="modal">Cancel</a>
+                <a href="#" class="btn btn-danger" data-bind="click: $root.revertSavedApp" data-dismiss="modal">Revert</a>
+            </div>
+        </script>
+        <script type="text/html" id="deploy-build-modal-template">
+            <div class="modal-header">
+                <a href="#" class="close" data-dismiss="modal">×</a>
+                <h3>Deploying version <span data-bind="text: version"></span></h3>
+            </div>
+            <div class="modal-body">
+                <div data-bind="visible: case_sharing() && $root.users_cannot_share.length">
+                    <p>
+                        <span class="label label-important">Warning!</span>
+                        The following users cannot use this case sharing app because they have either more or less than one group.
+                        To fix this, please <a href="{% url commcare_users domain %}?cannot_share=true&more_columns=true">edit their group settings</a>
+                        so that they all belong to exactly one group.
+                    </p>
+                    <ul data-bind="foreach: $root.users_cannot_share">
+                        <li data-bind="text: username"></li>
+                    </ul>
+                    <p>
+                        <a href="{% url commcare_users domain %}?cannot_share=true&more_columns=true" class="btn">Edit mobile users</a>
+                        <a class="btn" data-bind="click: function () {return $root.deployAnyway[id()](true);}">Deploy anyway</a>
+                    </p>
+                </div>
+                <div class="accordion" data-bind="bootstrapCollapse: true,
+                    visible: $root.deployAnyway[id()]() || !(case_sharing() && $root.users_cannot_share.length)
+                ">
+                    <div class="accordion-group">
+                        <div class="accordion-heading">
+                            <a class="accordion-toggle" data-bind="attr: {href: $root.url('emulator', id)}">
+                                {% trans 'Preview in Emulator' %}
+                            </a>
+                        </div>
+                    </div>
+
+                    <div class="accordion-group">
+                        <div class="accordion-heading">
+                            <a class="accordion-toggle">
+                                {% trans "Download to J2ME" %}
+                            </a>
+                        </div>
+                        <div class="accordion-body collapse">
+                            <div class="accordion-inner">
+                                <ol>
+                                    <li>
+                                        Download <strong>both</strong> of the following files:
+                                        <p><a data-bind="attr: {href: $root.url('jad', id)}">Download CommCare.jad</a></p>
+                                        <p><a data-bind="attr: {href: $root.url('jar', id)}">Download CommCare.jar</a></p>
+                                    </li>
+                                    <li>
+                                        {% trans "For help on how to install, see" %}
+                                        <a target="_blank" href="https://confluence.dimagi.com/display/commcarepublic/Set+Up+Mobile+Phone">{% trans "Set Up Mobile Phone" %}</a>.
+                                    </li>
+                                    <li>
+                                        {% trans "If you have any issues with the installation, please refer to" %}
+                                        <a target="_blank" href="https://confluence.dimagi.com/display/commcarepublic/Troubleshooting+Phone+Problems">{% trans "Troubleshooting Phone Problems" %}</a>.
+                                    </li>
+                                </ol>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="accordion-group">
+                        <div class="accordion-heading">
+                            <a class="accordion-toggle" data-bind="openJqm: $root.url('odk', id)">
+                                {% trans "Download to CommCare ODK (Android)" %}
+                            </a>
+                        </div>
+                    </div>
+
+                    <div class="accordion-group">
+                        <div class="accordion-heading">
+                            <a class="accordion-toggle">
+                                {% trans "Send to phone via SMS" %}
+                            </a>
+                        </div>
+
+                        <div class="accordion-body collapse">
+                            <div class="accordion-inner">
+                                <div data-bind="bootstrapTabs: true">
+                                    <div class="tabbable">
+                                        <ul class="nav nav-pills">
+                                            <li class="active">
+                                                <a>{% trans "Send J2ME app" %}</a>
+                                            </li>
+                                            <li>
+                                                <a>{% trans "Send CommCare ODK app (Android)" %}</a>
+                                            </li>
+                                        </ul>
+                                        <div class="tab-content" data-bind="foreach: [short_url(), short_odk_url()]">
+                                            <div class="tab-pane">
+                                                <div data-bind="visible: $data">
+                                                    <form method="post" action="{% url corehq.apps.sms.views.send_to_recipients domain %}">
+                                                        <label>{% trans "Send to:" %}</label>
+                                                        <input type="text" name="recipients" value=""/>
+                                                        <br />
+                                                        <textarea name="message" data-bind="text: 'Update to CommCare: ' +
+                                                            $data + ' (&quot;' + $parent.short_name() + '&quot; v. ' + $parent.version() + ')'"></textarea>
+                                                        <br />
+                                                        <input type="submit" class="btn" value="Send"/>
+                                                    </form>
+                                                </div>
+                                                <div data-bind="visible: !$data">
+                                                    <span class="label label-important">
+                                                      {% trans "No URL was found for this app, try rebuilding." %}
+                                                    </span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {% if multimedia %}
+                        <div class="accordion-group">
+                            <div class="accordion-heading">
+                                <a class="accordion-toggle" href="{% if multimedia.notice %}#{{ saved_app.id }}_multimedia{% else %}{% url download_multimedia_zip domain app.id %}{% endif %}" {% if multimedia.notice %}data-toggle="collapse" data-target="#{{ saved_app.id }}_multimedia"{% endif %}>Download Multimedia Zip</a>
+                            </div>
+                            <div class="accordion-body collapse" id="{{ saved_app.id }}_multimedia">
+                                <div class="accordion-inner">
+                                    {% if multimedia.missing_image_refs > 0 or multimedia.missing_audio_refs > 0 %}
+                                        <p>
+                                            Your multimedia zip is missing {{ multimedia.missing_image_refs }} image reference{{ multimedia.missing_image_refs|pluralize }} and
+                                            {{ multimedia.missing_audio_refs }} audio reference{{ multimedia.missing_audio_refs|pluralize }}. Your app will likely crash unless this
+                                            is resolved.
+                                        </p>
+                                    {% endif %}
+                                    {% if multimedia.errors %}
+                                        <p>
+                                            Your application contains errors, therefore, your multimedia could not properly be assembled. Please fix your errors and any missing
+                                            multimedia references that are found afterward before using this file.
+                                        </p>
+                                    {% endif %}
+                                    <a class="btn btn-warning" href="{% url download_multimedia_zip domain app.id %}">Download Anyway</a>
+                                </div>
+                            </div>
+                        </div>
+                    {% endif %}
+                    {% if request.user.is_superuser %}
+                        <div class="accordion-group">
+                            <div class="accordion-heading">
+                                <a class="accordion-toggle" data-bind="attr: {href: $root.url('source', id)}">View Source Files</a>
+                            </div>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+            <div class="modal-footer">
+                <a href="#" class="btn" data-dismiss="modal">Close</a>
+            </div>
+        </script>
     </div>
 {% endblock %}

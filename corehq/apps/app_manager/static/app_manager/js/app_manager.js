@@ -56,11 +56,6 @@
                 }
             }
         }
-        function makeBuildErrorLinksSwitchTabs() {
-            $("#build-errors a").click(function () {
-                $('#form-tabs').tabs("select", 0);
-            });
-        }
         COMMCAREHQ.resetIndexes = resetIndexes;
 
         if (edit) {
@@ -288,8 +283,6 @@
             // make sure that column_id changes when index changes (after drag-drop)
             $(this).closest('tr').find('[name="index"]').val($(this).text());
         }).trigger('change');
-
-        makeBuildErrorLinksSwitchTabs();
 
         COMMCAREHQ.app_manager.on('change:commcareVersion', function () {
             $('.commcare-feature').each(function () {

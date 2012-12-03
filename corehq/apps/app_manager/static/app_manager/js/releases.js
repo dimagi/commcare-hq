@@ -18,7 +18,7 @@ function ReleasesMain(o) {
     self.fetchLimit = 5;
     self.deployAnyway = {};
     self.lastAppVersion = ko.observable();
-    self.appVersion = ko.observable(self.options.appVersion, 10);
+    self.appVersion = ko.observable(self.options.appVersion);
     self.savedApps.subscribe(function () {
         self.lastAppVersion(self.savedApps()[0].version());
     });
@@ -117,6 +117,7 @@ function ReleasesMain(o) {
         $.post(self.url('newBuild'), {
             comment: comment
         }).success(function (data) {
+                console.log(data.error_html);
                 $('#build-errors-wrapper').html(data.error_html);
                 $('#build-errors').each(function () {
                     var specialMessage = $('span', this)[0];
@@ -125,7 +126,9 @@ function ReleasesMain(o) {
                         $(defaultMessage).hide();
                     }
                 });
-                self.addSavedApp(SavedApp(data.saved_app), true);
+                if (data.saved_app) {
+                    self.addSavedApp(SavedApp(data.saved_app), true);
+                }
                 self.buildState('');
             }).error(function () {
                 self.buildState('error');
