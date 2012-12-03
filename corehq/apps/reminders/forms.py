@@ -12,6 +12,7 @@ from dimagi.utils.timezones.forms import TimeZoneChoiceField
 from dateutil.parser import parse
 from dimagi.utils.excel import WorkbookJSONReader
 from openpyxl.shared.exc import InvalidFileException
+from django.utils.translation import ugettext as _
 
 YES_OR_NO = (
     ("Y","Yes"),
@@ -69,6 +70,26 @@ def validate_time(value):
     time_regex = re.compile("^\d{1,2}:\d\d(:\d\d){0,1}$")
     if time_regex.match(value) is None:
         raise ValidationError("Times must be in hh:mm format.")
+
+# Used for validating the phone number from a UI. Returns the phone number if valid, otherwise raises a ValidationError.
+def validate_phone_number(value):
+    error_msg = _("Phone numbers must consist only of digits and must be in international format.")
+    if not isinstance(value, basestring):
+        # Cast to an int, then a str. Needed for excel upload where the field comes back as a float.
+        try:
+            value = str(int(value))
+        except Exception:
+            raise ValidationError(error_msg)
+    
+    value = value.strip()
+    phone_regex = re.compile("^\d+$")
+    if phone_regex.match(value) is None:
+        raise ValidationError(error_msg)
+    
+    if isinstance(value, unicode):
+        value = str(value)
+    
+    return value
 
 class CaseReminderForm(Form):
     """
@@ -585,13 +606,11 @@ class SurveySampleForm(Form):
     
     def clean_sample_contacts(self):
         value = self.cleaned_data["sample_contacts"]
-        if len(value) == 0:
-            raise ValidationError("Please add at least one contact.")
-        for contact in value:
-            try:
-                contact["phone_number"] = str(int(contact["phone_number"]))
-            except ValueError:
-                raise ValidationError("Phone numbers must consist only of digits and must be in international format.")
+        if self.cleaned_data.get("use_contact_upload_file", "N") == "N":
+            if len(value) == 0:
+                raise ValidationError("Please add at least one contact.")
+            for contact in value:
+                contact["phone_number"] = validate_phone_number(contact["phone_number"])
         return value
     
     def clean_contact_upload_file(self):
@@ -614,10 +633,11 @@ class SurveySampleForm(Form):
             for row in worksheet:
                 if "PhoneNumber" not in row:
                     raise ValidationError("Column 'PhoneNumber' not found.")
-                try:
-                    contacts.append({"phone_number" : str(int(row.get("PhoneNumber")))})
-                except ValueError:
-                    raise ValidationError("Phone numbers must consist only of digits and must be in international format.")
+                contacts.append({"phone_number" : validate_phone_number(row.get("PhoneNumber"))})
+            
+            if len(contacts) == 0:
+                raise ValidationError(_("Please add at least one contact."))
+            
             return contacts
         else:
             return None
@@ -627,9 +647,5 @@ class EditContactForm(Form):
     
     def clean_phone_number(self):
         value = self.cleaned_data.get("phone_number")
-        try:
-            value = str(int(value))
-        except ValueError:
-            raise ValidationError("Phone numbers must consist only of digits and must be in international format.")
-        return value
+        return validate_phone_number(value)
 
