@@ -172,6 +172,7 @@ def generate_sortables_from_facets(results, params=None, mapping={}):
     return sortable
 
 def appstore(request, template="appstore/appstore_base.html"):
+    page_length = 10
     include_unapproved = True if request.GET.get('is_approved', "") == "false" else False
     if include_unapproved and not request.user.is_superuser:
         raise Http404()
@@ -184,18 +185,18 @@ def appstore(request, template="appstore/appstore_base.html"):
 
     sort_by = request.GET.get('sort_by', None)
     if sort_by == 'best':
-        d_results = Domain.popular_sort(d_results, page)
+        d_results = Domain.popular_sort(d_results)
     elif sort_by == 'hits':
-        d_results = Domain.hit_sort(d_results, page)
+        d_results = Domain.hit_sort(d_results)
 
     average_ratings = list()
     for result in d_results:
         average_ratings.append([result.name, Review.get_average_rating_by_app(result.copied_from._id)])
 
-    more_pages = False if len(d_results) <= page*10 else True
+    more_pages = False if len(d_results) <= page*page_length else True
 
     facets_sortables = generate_sortables_from_facets(results, params, inverse_dict(SNAPSHOT_MAPPING))
-    vals = dict(apps=d_results[(page-1)*10:page*10],
+    vals = dict(apps=d_results[(page-1)*page_length:page*page_length],
         page=page,
         prev_page=(page-1),
         next_page=(page+1),
