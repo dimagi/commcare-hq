@@ -230,6 +230,7 @@ MENU_ITEMS = (
     "corehq.apps.hqwebapp.models.ProjectSettingsMenuItem",
     "corehq.apps.hqwebapp.models.AdminReportsMenuItem",
     "corehq.apps.hqwebapp.models.ExchangeMenuItem",
+    "corehq.apps.hqwebapp.models.ManageSurveysMenuItem",
 )
 
 # after login, django redirects to this URL
