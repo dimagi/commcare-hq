@@ -1,4 +1,5 @@
 from bihar.reports.indicators.filters import A_MONTH, is_pregnant_mother, get_add, get_edd
+from collections import defaultdict
 from datetime import datetime, timedelta
 from bihar.reports.indicators.visits import visit_is
 
@@ -51,7 +52,7 @@ def _delivered_in_timeframe(case, days):
     return is_pregnant_mother(case) and get_add(case) and _in_timeframe(case.add, days)
 
 def _delivered_at_in_timeframe(case, at, days):
-    return _delivered_in_timeframe(case, days) and getattr(case, 'birth_place', None) == at
+    return getattr(case, 'birth_place', None) == at and _delivered_in_timeframe(case, days)
 
 def _get_time_of_visit_after_birth(case):
     for action in case.actions:
@@ -107,7 +108,7 @@ def cf_last_month(cases):
     return _done_due_count(cases, done, due)
 
 def hd_day(cases):
-    valid_cases = filter(lambda case: _delivered_at_in_timeframe(case, 'home', 240), cases)
+    valid_cases = filter(lambda case: _delivered_at_in_timeframe(case, 'home', 30), cases)
     due = len(valid_cases)
     done = len(filter(lambda case:_visited_in_timeframe_of_birth(case, 1) , valid_cases))
     return _done_due(done, due)
