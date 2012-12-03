@@ -461,7 +461,7 @@ def services_stop():
     _supervisor_command('stop all')
 ###########################################################
 
-@roles('django_app', 'django_celery','django_public', 'django_monolith')#, 'formsplayer')
+@roles('django_celery', 'django_app', 'django_public', 'django_monolith')#, 'formsplayer')
 def services_restart():
     ''' Stop and restart all supervisord services'''
     require('environment', provided_by=('staging', 'demo', 'production', 'india'))
