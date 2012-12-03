@@ -51,8 +51,6 @@ def _delivered_in_timeframe(case, days):
     return is_pregnant_mother(case) and get_add(case) and _in_timeframe(case.add)
 
 def _delivered_at_in_timeframe(case, at, days):
-    print 'lawl'
-    print getattr(case, 'birth_place', "none")
     return _delivered_in_timeframe(case, days) and getattr(case, 'birth_place', None) == at
 
 def _get_time_of_visit_after_birth(case):
@@ -109,13 +107,6 @@ def cf_last_month(cases):
 
 def hd_day(cases):
     valid_cases = filter(lambda case: _delivered_at_in_timeframe(case, 'public', 240), cases)
-    print len(cases)
-    for case in cases:
-        print getattr(case, 'birth_place', "none")
-    if valid_cases:
-        print 'valid_cases'
-    else:
-        print "nah"
     done = len(valid_cases)
     due = len(filter(lambda case:_visited_in_timeframe_of_birth(case, 1) , valid_cases))
     return _done_due(done, due)
