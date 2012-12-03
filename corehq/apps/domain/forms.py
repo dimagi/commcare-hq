@@ -5,7 +5,6 @@ from django import forms
 from django.forms.fields import ChoiceField, CharField, BooleanField
 from django.utils.encoding import smart_str
 
-from corehq.apps.domain.middleware import _SESSION_KEY_SELECTED_DOMAIN
 from corehq.apps.domain.models import LICENSES
 
 from corehq.apps.users.models import WebUser
@@ -83,10 +82,11 @@ class SnapshotSettingsForm(SnapshotSettingsMixin):
             'cda_confirmed',]
 
     def clean_cda_confirmed(self):
-        data = self.cleaned_data['cda_confirmed']
-        if data is not True:
+        data_cda = self.cleaned_data['cda_confirmed']
+        data_publish = self.cleaned_data['publish_on_submit']
+        if data_publish is True and data_cda is False:
             raise forms.ValidationError('You must agree to our Content Distribution Agreement to publish your project.')
-        return data
+        return data_cda
 
     def clean(self):
         cleaned_data = self.cleaned_data

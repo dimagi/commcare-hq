@@ -13,6 +13,7 @@ from dimagi.utils.data.deid_generator import DeidGenerator
 from dimagi.utils.dates import DateSpan
 from dimagi.utils.decorators import inline
 from dimagi.utils.decorators.datespan import datespan_in_request
+from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.modules import to_function
 from dimagi.utils.parsing import string_to_datetime
 from django.http import Http404
@@ -139,15 +140,14 @@ def get_group_params(domain, group='', users=None, user_id_only=False, **kwargs)
 
 cache_users_by_domain = cache_users()
 #@cache_users_by_domain
-def get_all_users_by_domain(domain, **kwargs):
+def get_all_users_by_domain(domain=None, group=None, individual=None,
+                            user_filter=None, simplified=False, CommCareUser=None):
     """
         WHEN THERE ARE A LOT OF USERS, THIS IS AN EXPENSIVE OPERATION.
         Returns a list of CommCare Users based on domain, group, and user filter (demo_user, admin, registered, unknown)
     """
-    group = kwargs.get('group')
-    individual = kwargs.get('individual')
-    user_filter = kwargs.get('user_filter')
-    simplified = kwargs.get('simplified', False)
+    if not CommCareUser:
+        from corehq.apps.users.models import CommCareUser
 
     if group:
         # get all the users only in this group and don't bother filtering.
