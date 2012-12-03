@@ -1,4 +1,5 @@
 function (doc) {
+    // !code util/indicators.js
     if (doc.doc_type === "CommCareCase" && doc.type) {
         var indicator_entries_open = {},
             indicator_entries_closed = {},
