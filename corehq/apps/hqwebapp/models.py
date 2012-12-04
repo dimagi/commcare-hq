@@ -247,3 +247,13 @@ class ExchangeMenuItem(DropdownMenuItem):
     @classmethod
     def is_viewable(cls, request, domain):
         return not getattr(request, 'couch_user', False) or not request.couch_user.is_commcare_user()
+
+class ManageSurveysMenuItem(DropdownMenuItem):
+    title = ugettext_noop("Manage Surveys")
+    view = "corehq.apps.reminders.views.sample_list"
+    css_id = "manage_surveys"
+
+    @classmethod
+    def is_viewable(cls, request, domain):
+        return domain and request.couch_user.can_edit_data() and request.project.survey_management_enabled
+

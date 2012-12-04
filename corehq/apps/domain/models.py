@@ -158,6 +158,7 @@ class Domain(Document, HQBillingDomainMixin, SnapshotMixin):
     short_description = StringProperty()
     is_shared = BooleanProperty(default=False)
     commtrack_enabled = BooleanProperty(default=False)
+    survey_management_enabled = BooleanProperty(default=False)
 
     # exchange/domain copying stuff
     is_snapshot = BooleanProperty(default=False)
@@ -634,7 +635,7 @@ class Domain(Document, HQBillingDomainMixin, SnapshotMixin):
         return most_restrictive(licenses)
 
     @classmethod
-    def popular_sort(cls, domains, page):
+    def popular_sort(cls, domains):
         sorted_list = []
         MIN_REVIEWS = 1.0
 
@@ -656,13 +657,13 @@ class Domain(Document, HQBillingDomainMixin, SnapshotMixin):
 
         sorted_list = [domain for weighted_rating, domain in sorted(sorted_list, key=lambda domain: domain[0], reverse=True)]
 
-        return sorted_list[((page-1)*9):((page)*9)]
+        return sorted_list
 
     @classmethod
-    def hit_sort(cls, domains, page):
+    def hit_sort(cls, domains):
         domains = list(domains)
         domains = sorted(domains, key=lambda domain: domain.downloads, reverse=True)
-        return domains[((page-1)*9):((page)*9)]
+        return domains
 
     @classmethod
     def public_deployments(cls):
