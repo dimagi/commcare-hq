@@ -209,6 +209,7 @@ HQ_APPS = (
     'dca',
     'hsph',
     'mvp',
+    'mvp_apps',
     'pathfinder',
     'pathindia',
 )
