@@ -135,6 +135,7 @@ class VisitReport(GenericTabularReport, CommtrackReportMixin, DatespanMixin):
 class StockReportExport(VisitReport):
     name = 'Stock Reports Export'
     slug = 'bulk_export'
+    exportable = True
 
     @property
     def export_table(self):
