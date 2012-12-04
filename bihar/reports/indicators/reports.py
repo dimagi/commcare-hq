@@ -107,6 +107,9 @@ class IndicatorSummaryReport(GroupReferenceMixIn, BiharSummaryReport, IndicatorS
 
 
     def get_indicator_value(self, indicator):
+        if indicator.calculation_class:
+            print indicator.calculation_class
+            return indicator.calculation_class.display(self.cases)
         if indicator.calculation_function:
             return indicator.calculation_function(self.cases)
         return "not available yet"
@@ -176,6 +179,8 @@ class IndicatorClientList(GroupReferenceMixIn, ConvenientBaseMixIn,
         return self.cases
     
     def _filter(self, case):
+        if self.indicator and self.indicator.calculation_class:
+            return self.indicator.calculation_class.filter(case)
         if self.indicator and self.indicator.filter_function:
             return self.indicator.filter_function(case)
         else:
@@ -188,6 +193,11 @@ class IndicatorClientList(GroupReferenceMixIn, ConvenientBaseMixIn,
         
     @property
     def rows(self):
-        return [self.indicator.row_function(c) for c in self._get_clients()]
+        def _row(case):
+            if self.indicator.calculation_class:
+                return self.indicator.calculation_class.as_row(case)
+            else:
+                return self.indicator.row_function(case)
+        return [_row(c) for c in self._get_clients()]
     
         
