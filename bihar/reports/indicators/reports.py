@@ -29,16 +29,12 @@ class IndicatorSetMixIn(object):
 class IndicatorMixIn(IndicatorSetMixIn):
     
     @property
-    def type_slug(self):
-        return self.request_params.get("indicator_type")
-
-    @property
     def indicator_slug(self):
         return self.request_params.get("indicator")
 
     @property
     def indicator(self):
-        return self.indicator_set.get_indicator(self.type_slug, self.indicator_slug)
+        return self.indicator_set.get_indicator(self.indicator_slug)
         
         
 class IndicatorNav(GroupReferenceMixIn, BiharNavReport):
@@ -94,8 +90,20 @@ class IndicatorSummaryReport(GroupReferenceMixIn, BiharSummaryReport, IndicatorS
     @property
     @memoized
     def data(self):
+        def _nav_link(indicator):
+            params = copy(self.request_params)
+            params['indicator'] = indicator.slug
+            del params['next_report']
+            return format_html(u'<a href="{next}">{val}</a>',
+                val=self.get_indicator_value(indicator),
+                next=url_and_params(
+                    IndicatorClientList.get_url(self.domain, 
+                                                render_as=self.render_next),
+                    params
+            ))
+        
         return [self.group.name] + \
-               [self.get_indicator_value(i) for i in self.summary_indicators]
+               [_nav_link(i) for i in self.summary_indicators]
 
 
     def get_indicator_value(self, indicator):
@@ -128,7 +136,6 @@ class IndicatorClientSelectNav(GroupReferenceMixIn, BiharSummaryReport, Indicato
             params = copy(self.request_params)
             params["indicators"] = self.indicator_set.slug
             params["indicator"] = indicator.slug
-            params["indicator_type"] = self._indicator_type
             
             # params["next_report"] = IndicatorNav.slug
             return format_html(u'<a href="{next}">{val}</a>',
