@@ -1,14 +1,12 @@
 import logging
 import calendar
 import copy
-from couchdbkit.ext.django.schema import Document, StringProperty, IntegerProperty, ListProperty, BooleanProperty, DateTimeProperty
+from couchdbkit.ext.django.schema import Document, StringProperty, IntegerProperty, ListProperty
 from couchdbkit.schema.base import DocumentSchema
 import datetime
 from couchdbkit.schema.properties import LazyDict
-from django.utils.safestring import mark_safe
 import numpy
 from casexml.apps.case.models import CommCareCase
-from corehq.apps.indicators.utils import format_datespan_by_case_status
 from couchforms.models import XFormInstance
 from dimagi.utils.couch.database import get_db
 from dimagi.utils.dates import DateSpan, add_months, months_between
@@ -18,7 +16,7 @@ from dimagi.utils.modules import to_function
 class DocumentNotInDomainError(Exception):
     pass
 
-class DocumentMistmatchError(Exception):
+class DocumentMismatchError(Exception):
     pass
 
 
@@ -226,7 +224,7 @@ class DynamicIndicatorDefinition(IndicatorDefinition):
         raise NotImplementedError
 
 
-class CouchViewIndicatorDefinition(DynamicIndicatorDefinition):
+class CouchIndicatorDef(DynamicIndicatorDefinition):
     """
         This indicator defintion expects that it will deal with a couch view and a certain indicator key.
         If a user_id is provided when fetching the results, this definition will use:
@@ -377,7 +375,7 @@ class CouchViewIndicatorDefinition(DynamicIndicatorDefinition):
             ))
         return retrospective
 
-class UnGroupableCouchViewIndicatorDefinitionBase(CouchViewIndicatorDefinition):
+class NoGroupCouchIndicatorDefBase(CouchIndicatorDef):
     """
         Use this base for all CouchViewIndicatorDefinitions that have views which are not simply
         counted during the monthly retrospective.
@@ -392,7 +390,7 @@ class UnGroupableCouchViewIndicatorDefinitionBase(CouchViewIndicatorDefinition):
                                   "Reduce / group will not work here.")
 
 
-class CountUniqueEmitsCouchViewIndicatorDefinition(UnGroupableCouchViewIndicatorDefinitionBase):
+class CountUniqueCouchIndicatorDef(NoGroupCouchIndicatorDefBase):
     """
         Use this indicator to count the # of unique emitted values.
     """
@@ -404,7 +402,7 @@ class CountUniqueEmitsCouchViewIndicatorDefinition(UnGroupableCouchViewIndicator
         return len(all_emitted_values)
 
 
-class MedianEmittedValueCouchViewIndicatorDefinition(UnGroupableCouchViewIndicatorDefinitionBase):
+class MedianCouchIndicatorDef(NoGroupCouchIndicatorDefBase):
     """
         Get the median value of what is emitted. Assumes that emits are numbers.
     """
@@ -415,7 +413,7 @@ class MedianEmittedValueCouchViewIndicatorDefinition(UnGroupableCouchViewIndicat
         return numpy.median(values) if values else 0
 
 
-class SumLastUniqueEmittedValueCouchViewIndicatorDefinition(UnGroupableCouchViewIndicatorDefinitionBase):
+class SumLastEmittedCouchIndicatorDef(NoGroupCouchIndicatorDefBase):
     """
         Expects an emitted value formatted like:
         {
@@ -432,32 +430,6 @@ class SumLastUniqueEmittedValueCouchViewIndicatorDefinition(UnGroupableCouchView
             if item.get('value'):
                 unique_values[item['value']['_id']] = item['value']['value']
         return sum(unique_values.values())
-
-
-class ActiveCasesCouchViewIndicatorDefinition(UnGroupableCouchViewIndicatorDefinitionBase):
-    """
-        Returns # active cases.
-    """
-    case_type = StringProperty()
-
-    def _get_cases_by_status(self, status, user_id, datespan):
-        key_prefix = [status]
-        if self.indicator_key:
-            key_prefix.append(self.indicator_key)
-        key = self._get_results_key(user_id=user_id)
-        if self.case_type:
-            key = key[0:2] + [self.case_type] + key[2:]
-        key[-1] = " ".join(key_prefix)
-        datespan_by_status = format_datespan_by_case_status(datespan, status)
-        return self._get_results_with_key(key, user_id=user_id, datespan=datespan_by_status)
-
-    def get_value(self, user_id=None, datespan=None):
-        opened_on_cases = self._get_cases_by_status("opened_on", user_id, datespan)
-        closed_on_cases = self._get_cases_by_status("closed_on", user_id, datespan)
-        open_ids = set([r['id'] for r in opened_on_cases])
-        closed_ids = set([r['id'] for r in closed_on_cases])
-        all_cases = open_ids.union(closed_ids)
-        return len(all_cases)
 
 
 class CombinedCouchViewIndicatorDefinition(DynamicIndicatorDefinition):
@@ -558,7 +530,7 @@ class FormIndicatorDefinition(DocumentIndicatorDefinition, FormDataIndicatorDefi
         if not isinstance(doc, XFormInstance):
             raise ValueError("The document provided must be an instance of XFormInstance.")
         if not doc.xmlns == self.xmlns:
-            raise DocumentMistmatchError("The xmlns of the form provided does not match the one for this definition.")
+            raise DocumentMismatchError("The xmlns of the form provided does not match the one for this definition.")
         return super(FormIndicatorDefinition, self).get_clean_value(doc)
 
     @classmethod
@@ -611,7 +583,7 @@ class CaseIndicatorDefinition(DocumentIndicatorDefinition):
         if not isinstance(doc, CommCareCase):
             raise ValueError("The document provided must be an instance of CommCareCase.")
         if not doc.type == self.case_type:
-            raise DocumentMistmatchError("The case provided should be a '%s' type case." % self.case_type)
+            raise DocumentMismatchError("The case provided should be a '%s' type case." % self.case_type)
         return super(CaseIndicatorDefinition, self).get_clean_value(doc)
 
     @classmethod
@@ -653,32 +625,3 @@ class FormDataInCaseIndicatorDefinition(CaseIndicatorDefinition, FormDataIndicat
                 )
         return existing_value
 
-
-class PopulateRelatedCasesWithIndicatorDefinitionMixin(DocumentSchema):
-    related_case_types = ListProperty()
-
-    _related_cases = None
-    def set_related_cases(self, case):
-        """
-            set _related_cases here.
-            should be a list of CommCareCase objects
-        """
-        self._related_cases = list()
-
-    def populate_with_value(self, value):
-        """
-            You shouldn't have to modify this.
-        """
-        for case in self._related_cases:
-            if not isinstance(case, CommCareCase):
-                continue
-            try:
-                namespace_computed = case.computed_.get(self.namespace, {})
-                namespace_computed[self.slug] = value
-                case.computed_[self.namespace] = namespace_computed
-                case.computed_modified_on_ = datetime.datetime.utcnow()
-                case.save()
-            except Exception as e:
-                logging.error("Could not populate indicator information to case %s due to error: %s" %
-                    (case.get_id, e)
-                )
