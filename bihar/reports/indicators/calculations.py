@@ -6,8 +6,9 @@ from couchforms.safe_index import safe_index
 from dimagi.utils.parsing import string_to_datetime
 import datetime as dt
 from bihar.reports.indicators.visits import visit_is, get_related_prop
-from dimagi.utils.mixins import UnicodeMixIn
 from dimagi.utils.decorators.memoized import memoized
+from django.utils.translation import ugettext_noop
+from django.utils.translation import ugettext as _
 
 EMPTY = (0,0)
 GRACE_PERIOD = dt.timedelta(days=7)
@@ -25,6 +26,9 @@ class IndicatorCalculator(object):
         raise NotImplementedError("Override this!")
 
     def denominator(self, case):
+        raise NotImplementedError("Override this!")
+
+    def get_columns(self):
         raise NotImplementedError("Override this!")
 
     @memoized
@@ -48,7 +52,7 @@ class IndicatorCalculator(object):
                 num += num_diff
         return "%s/%s" % (num, denom)
 
-class MemoizingCalculator(IndicatorCalculator):
+class MemoizingCalculatorMixIn(object):
     # to avoid decorators everywhere. there might be a smarter way to do this
 
     @memoized
@@ -59,16 +63,48 @@ class MemoizingCalculator(IndicatorCalculator):
     def denominator(self, case):
         return self._denominator(case)
 
-class BP2Calculator(MemoizingCalculator):
+class SummaryValueMixIn(object):
+    """
+    Meant to be used in conjunction with IndicatorCalculators, allows you to
+    define text that should show up in the client list if the numerator is
+    set, if the denominator is set, or neither is set.
+    
+    Also provides sensible defaults.
+    """
+    numerator_text = ugettext_noop("Yes")
+    denominator_text = ugettext_noop("No")
+    neither_text = ugettext_noop("N/A")
+    summary_header = "Value?"
+
+    def summary_value(self, case):
+        if self.denominator(case):
+            return _(self.numerator_text) if self.numerator(case) \
+                else _(self.denominator_text)
+        return _(self.neither_text)
+
+class DoneDueMixIn(SummaryValueMixIn):
+    summary_header = ugettext_noop("Visit Status")
+    numerator_text = ugettext_noop("Done")
+    denominator_text = ugettext_noop("Due")
+
+class MotherPreDeliveryMixIn(object):
+    """
+    Meant to be used with IndicatorCalculators and SummaryValueMixIn, to
+    provide shared defaults for stuff that shows up in the client list.
+    """
+    def get_columns(self):
+        return [_("Name"), _("Husband's Name"), _("EDD"), _(self.summary_header)]
+    
+    def as_row(self, case):
+        return mother_pre_delivery_columns(case) + (self.summary_value(case), )
+    
+class BP2Calculator(MotherPreDeliveryMixIn, MemoizingCalculatorMixIn, DoneDueMixIn, IndicatorCalculator):
 
     def _numerator(self, case):
         return 1 if _mother_due_in_window(case, 75) else 0
 
     def _denominator(self, case):
         return 1 if len(filter(lambda a: visit_is(a, 'bp'), case.actions)) >= 2 else 0
-
-    def as_row(self, case):
-        return mother_pre_delivery_columns(case)
 
 def _num_denom(num, denom):
     return "%s/%s" % (num, denom)
