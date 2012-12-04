@@ -6,6 +6,7 @@ from corehq.apps.locations.models import Location
 from corehq.apps.users.models import CouchUser
 from casexml.apps.case.models import CommCareCase
 from dimagi.utils.couch.database import get_db
+from dimagi.utils.couch.loosechange import map_reduce
 
 def import_stock_reports(domain, f):
     data = list(csv.DictReader(f))
@@ -14,16 +15,28 @@ def import_stock_reports(domain, f):
     try:
         data_col_mapping = validate_headers(domain, headers)
     except Exception, e:
-        yield str(e)
-        return
+        raise RuntimeError(str(e))
 
     locs_by_id = dict((loc.outlet_id, loc) for loc in Location.filter_by_type(domain, 'outlet'))
     for row in data:
         validate_row(row, domain, data_col_mapping, locs_by_id)
- 
+
+    # abort if any location codes are invalid
+    if any(not row.get('loc') for row in data):
+        for row in data:
+            if 'error' not in row:
+                row['error'] = 'row skipped because some rows could not be assigned to a valid location'
+    
+    else:
+
+        rows_by_loc = map_reduce(lambda row: [(row['loc']._id,)], data=data, include_docs=True)
+        for loc, rows in rows_by_loc.iteritems():
+            process_loc(loc, rows)
+
+    # temp
     for i, row in enumerate(data):
         if 'error' in row:
-            yield 'row %d: %s' % (i, row['error'])
+            yield '%d: %s' % (i, row['error'])
 
 def validate_headers(domain, headers):
     META_COLS = ['outlet_id', 'outlet_code', 'date', 'reporter', 'phone']
@@ -70,30 +83,7 @@ def validate_data_header(header, actions, products):
     return (action_code, prod_code)
 
 def validate_row(row, domain, data_cols, locs_by_id):
-    phone = row.get('phone')
-    owner = None
-    if phone:
-        vn = VerifiedNumber.by_phone(phone)
-        if not vn:
-            row['error'] = 'phone number is not verified with any user'
-            return
-        owner = vn.owner
-        row['phone'] = strip_plus(phone)
-
-    username = row.get('reporter')
-    if username:
-        user = CouchUser.get_by_username('%s@%s.commcarehq.org' % (username, domain))
-        if not user:
-            row['error'] = 'reporter user does not exist'
-            return
-
-    if owner:
-        if user and user._id != owner._id:
-            row['error'] = 'phone number does not belong to user'
-            return
-        user = owner
-    row['user'] = user
-
+    # identify location
     loc_id = row.get('outlet_id')
     loc_code = row.get('outlet_code')
     loc_from_id, loc_from_code = None, None
@@ -118,6 +108,33 @@ def validate_row(row, domain, data_cols, locs_by_id):
         return
     row['loc'] = loc_from_code or loc_from_id
 
+    # identify user
+    phone = row.get('phone')
+    owner = None
+    if phone:
+        vn = VerifiedNumber.by_phone(phone)
+        if not vn:
+            row['error'] = 'phone number is not verified with any user'
+            return
+        owner = vn.owner
+        row['phone'] = strip_plus(phone)
+
+    username = row.get('reporter')
+    if username:
+        user = CouchUser.get_by_username('%s@%s.commcarehq.org' % (username, domain))
+        if not user:
+            row['error'] = 'reporter user does not exist'
+            return
+
+    if owner:
+        if user and user._id != owner._id:
+            row['error'] = 'phone number does not belong to user'
+            return
+        user = owner
+    row['user'] = user
+
+    # validate other fields
+
     try:
         datetime.strptime(row['date'], '%Y-%m-%d')
     except ValueError:
@@ -132,3 +149,17 @@ def validate_row(row, domain, data_cols, locs_by_id):
             except ValueError:
                 row['error'] = 'invalid data value "%s" in column "%s"' % (val, k)
                 return
+
+def process_loc(loc, rows):
+    print loc
+    print len(rows)
+
+
+    #   get threshold date
+    #   flag rows before date
+    #   if any row in loc has error, mark rest as error
+    #       skip
+    #   sort by date
+    #   import
+    #   if error (any way to get this error currently?), mark and skip rest
+
