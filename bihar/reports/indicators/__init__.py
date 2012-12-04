@@ -106,17 +106,17 @@ INDICATOR_SETS = [
             {
                 "slug": "hd",
                 "name": _("Home Deliveries visited in 24 hours of Birth (Total Number HD24HR/TNHD)"),
-                "calculation_function": "bihar.reports.indicators.calculations.hd_day"
+                "calculation_class": "bihar.reports.indicators.calculations.HDDayCalculator"
             },
             {
                 "slug": "idv",
                 "name": _("Institutional Deliveries visited in 24 hours of Birth (Total Number ID24HR/TNI)"),
-                "calculation_function": "bihar.reports.indicators.calculations.id_day"
+                "calculation_class": "bihar.reports.indicators.calculations.IDDayCalculator"
             },
             {
                 "slug": "idnb",
                 "name": _("Institutional deliveries not breastfed within one hour (Total NumberBF/Total Number ID24HR)"),
-                "calculation_function": "bihar.reports.indicators.calculations.idnb"
+                "calculation_class": "bihar.reports.indicators.calculations.IDNBCalculator"
             },
             DELIVERIES,
         ],
@@ -158,12 +158,12 @@ INDICATOR_SETS = [
             {
                 "slug": "ptlb",
                 "name": _("# Preterm births / # Live births"),
-                "calculation_function": "bihar.reports.indicators.calculations.ptlb"
+                "calculation_class": "bihar.reports.indicators.calculations.PTLBCalculator"
             },
             {
                 "slug": "lt2kglb",
                 "name": _("# infants < 2kg / # live births"),
-                "calculation_function": "bihar.reports.indicators.calculations.lt2kglb"
+                "calculation_class": "bihar.reports.indicators.calculations.LT2KGLBCalculator"
             },
             {
                 "slug": "visited_weak_ones",

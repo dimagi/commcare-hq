@@ -191,50 +191,51 @@ def cf_last_month(cases):
     done = lambda case: _visits_done(case, cf_schedule, "cf")
     return _num_denom_count(cases, done, due)
 
-def hd_day(cases):
-    valid_cases = filter(lambda case: _delivered_at_in_timeframe(case, 'home', 30), cases)
-    denom = len(valid_cases)
-    num = len(filter(lambda case:_visited_in_timeframe_of_birth(case, 1) , valid_cases))
-    return _num_denom(num, denom)
+class HDDayCalculator(MemoizingCalculator):
 
-def id_day(cases):
-    valid_cases = filter(lambda case: _delivered_at_in_timeframe(case, ['private', 'public'], 30), cases)
-    denom = len(valid_cases)
-    num = len(filter(lambda case:_visited_in_timeframe_of_birth(case, 1) , valid_cases))
-    return _num_denom(num, denom)
+    def _numerator(self, case):
+        return 1 if _visited_in_timeframe_of_birth(case, 1) else 0
 
-def idnb(cases):
-    valid_cases = filter(lambda case: _delivered_at_in_timeframe(case, ['private', 'public'], 30) and
-                                      get_related_prop(case, 'birth_status') == "live_birth", cases)
-    denom = len(valid_cases)
+    def _denominator(self, case):
+        return 1 if _delivered_at_in_timeframe(case, 'home', 30) else 0
 
-    def breastfed_hour(case):
+    def as_row(self, case): #todo: change this
+        return mother_pre_delivery_columns(case)
+
+class IDDayCalculator(HDDayCalculator):
+
+    def _denominator(self, case):
+        return 1 if _delivered_at_in_timeframe(case, ['private', 'public'], 3000) else 0
+
+class IDNBCalculator(IDDayCalculator):
+
+    def _denominator(self, case):
+        if super(IDNBCalculator, self)._denominator(case) and get_related_prop(case, 'birth_status') == "live_birth":
+            return 1
+        else:
+            return 0
+
+    def _numerator(self, case):
         dtf = get_related_prop(case, 'date_time_feed')
         tob = get_related_prop(case, 'time_of_birth')
         if dtf and tob:
-            return dtf - tob <= dt.timedelta(hours=1)
-        return False
+            return 1 if dtf - tob <= dt.timedelta(hours=1) else 0
+        return 0
 
-    num = len(filter(lambda case: breastfed_hour(case), valid_cases))
-    return _num_denom(num, denom)
+class PTLBCalculator(MemoizingCalculator):
 
-def ptlb(cases, num_only=False):
-    valid_cases = filter(lambda case: _weak_babies(case, 30), cases)
-    denom = len(valid_cases)
-    num = len(filter(lambda case: getattr(case, 'term', None) == "pre_term", valid_cases))
-    return _num_denom(num, denom) if not num_only else num
+    def _numerator(self, case):
+        return 1 if getattr(case, 'term', None) == "pre_term" else 0
 
-def lt2kglb(cases, num_only=False):
-    valid_cases = filter(lambda case: _weak_babies(case, 30), cases)
-    denom = len(valid_cases)
+    def _denominator(self, case):
+        return 1 if _weak_babies(case, 30) else 0
 
-    def over2(case):
+class LT2KGLBCalculator(PTLBCalculator): # should change name probs
+
+    def _numerator(self, case):
         w = get_related_prop(case, 'weight')
         fw = get_related_prop(case, 'first_weight')
-        return (w is not None and w < 2.0) or (fw is not None and fw < 2.0)
-
-    num = len(filter(lambda case: over2(case), valid_cases))
-    return _num_denom(num, denom) if not num_only else num
+        return 1 if (w is not None and w < 2.0) or (fw is not None and fw < 2.0) else 0
 
 def _get_time_of_birth(form):
     try:
