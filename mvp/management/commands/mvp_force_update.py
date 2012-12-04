@@ -34,7 +34,10 @@ class Command(LabelCommand):
                 self.update_indicators_for_xmlns(specific_case_or_form)
             else:
                 for form_slug, xmlns in MVP.VISIT_FORMS.items():
-                    print "\n\nGetting Forms of Type %s" % form_slug
+                    print "\n\nGetting Visit Forms of Type %s" % form_slug
+                    self.update_indicators_for_xmlns(xmlns)
+                for form_slug, xmlns in MVP.CLOSE_FORMS.items():
+                    print "\n\nGetting Close Forms of Type %s" % form_slug
                     self.update_indicators_for_xmlns(xmlns)
 
         if do_cases:
