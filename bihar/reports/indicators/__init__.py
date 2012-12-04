@@ -7,8 +7,8 @@ from dimagi.utils.parsing import string_to_datetime
 from django.utils.datastructures import SortedDict
 
 # change here to debug as if today were some day in the past
-#now = string_to_datetime('2012-03-21')
-now = None
+now = string_to_datetime('2012-03-21')
+#now = None
 
 
 DEFAULT_ROW_FUNCTION = 'bihar.reports.indicators.filters.mother_pre_delivery_columns'
@@ -149,6 +149,13 @@ INDICATOR_SETS = [
                 "calculation_function": "bihar.reports.indicators.calculations.complications",
                 "calculation_kwargs": {'days': 7, 'now': now},
             },
+            # client list
+#            {
+#                "slug": "clients_comp30",
+#                "name": _("Clients who have had post-partum complications in the last 30 days "),
+#                "filter_function": "bihar.reports.indicators.filters.complications",
+#                "sortkey": "bihar.reports.indicators.filters.get_add_sortkey",
+#            },
         ],
     },
     {

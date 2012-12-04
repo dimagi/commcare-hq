@@ -281,45 +281,45 @@ def _get_time_of_birth(form):
         )
     return time_of_birth
 
-def complications(cases, days, now=None):
+class ComplicationsCalculator(MemoizingCalculator):
     """
-    DENOM: [
-        any DELIVERY forms with (
-            complications = 'yes'
-        ) in last 30 days
-        PLUS any PNC forms with ( # 'any applicable from PNC forms with' (?)
-            abdominal_pain ='yes' or
-            bleeding = 'yes' or
-            discharge = 'yes' or
-            fever = 'yes' or
-            pain_urination = 'yes'
-        ) in the last 30 days
-        PLUS any REGISTRATION forms with (
-            abd_pain ='yes' or    # == abdominal_pain
-            fever = 'yes' or
-            pain_urine = 'yes' or    # == pain_urination
-            vaginal_discharge = 'yes'    # == discharge
-        ) with add in last 30 days
-        PLUS any EBF forms with (
-            abdominal_pain ='yes' or
-            bleeding = 'yes' or
-            discharge = 'yes' or
-            fever = 'yes' or
-            pain_urination = 'yes'
-        ) in last 30 days    # note, don't exist in EBF yet, but will shortly
-    ]
-    NUM: [
-        filter (
-            DELIVERY ? form.meta.timeStart - child_info/case/update/time_of_birth,
-            REGISTRATION|PNC|EBF ? form.meta.timeStart - case.add
-        ) < `days` days
-    ]
+        DENOM: [
+            any DELIVERY forms with (
+                complications = 'yes'
+            ) in last 30 days
+            PLUS any PNC forms with ( # 'any applicable from PNC forms with' (?)
+                abdominal_pain ='yes' or
+                bleeding = 'yes' or
+                discharge = 'yes' or
+                fever = 'yes' or
+                pain_urination = 'yes'
+            ) in the last 30 days
+            PLUS any REGISTRATION forms with (
+                abd_pain ='yes' or    # == abdominal_pain
+                fever = 'yes' or
+                pain_urine = 'yes' or    # == pain_urination
+                vaginal_discharge = 'yes'    # == discharge
+            ) with add in last 30 days
+            PLUS any EBF forms with (
+                abdominal_pain ='yes' or
+                bleeding = 'yes' or
+                discharge = 'yes' or
+                fever = 'yes' or
+                pain_urination = 'yes'
+            ) in last 30 days    # note, don't exist in EBF yet, but will shortly
+        ]
+        NUM: [
+            filter (
+                DELIVERY ? form.meta.timeStart - child_info/case/update/time_of_birth,
+                REGISTRATION|PNC|EBF ? form.meta.timeStart - case.add
+            ) < `days` days
+        ]
     """
     #https://bitbucket.org/dimagi/cc-apps/src/caab8f93c1e48d702b5d9032ef16c9cec48868f0/bihar/mockup/bihar_pnc.xml
     #https://bitbucket.org/dimagi/cc-apps/src/caab8f93c1e48d702b5d9032ef16c9cec48868f0/bihar/mockup/bihar_del.xml
     #https://bitbucket.org/dimagi/cc-apps/src/caab8f93c1e48d702b5d9032ef16c9cec48868f0/bihar/mockup/bihar_registration.xml
     #https://bitbucket.org/dimagi/cc-apps/src/caab8f93c1e48d702b5d9032ef16c9cec48868f0/bihar/mockup/bihar_ebf.xml
-    now = now or dt.datetime.utcnow()
+
     PNC = 'http://bihar.commcarehq.org/pregnancy/pnc'
     DELIVERY = 'http://bihar.commcarehq.org/pregnancy/del'
     REGISTRATION = 'http://bihar.commcarehq.org/pregnancy/registration'
@@ -345,45 +345,60 @@ def complications(cases, days, now=None):
         ],
     }
 
-    debug = defaultdict(int)
+    def __init__(self, days, now=None):
+        super(ComplicationsCalculator, self).__init__()
+        self.now = now or dt.datetime.utcnow()
+        self.days = dt.timedelta(days=days)
 
-    def get_forms(case, days=30):
+    def _numerator(self, case):
+        return self._calculate_both(case)[0]
+
+    def _denominator(self, case):
+        return self._calculate_both(case)[1]
+
+    def as_row(self, case):
+        return mother_pre_delivery_columns(case)
+
+    @memoized
+    def get_forms(self, case, days=30):
         xform_ids = set()
         for action in case.actions:
             if action.xform_id not in xform_ids:
                 xform_ids.add(action.xform_id)
-                if now - dt.timedelta(days=days) <= action.date <= now:
+                if self.now - dt.timedelta(days=days) <= action.date <= self.now:
                     try:
-                        debug['forms processed'] += 1
                         yield action.xform
                     except ResourceNotFound:
                         pass
 
-    denom = 0
-    num = 0
-    days = dt.timedelta(days=days)
-    for case in filter(lambda case: case.type == 'cc_bihar_pregnancy', cases):
-        for form in get_forms(case):
+    def get_forms_with_complications(self, case):
+        for form in self.get_forms(case):
             try:
-                complication_paths = complications_by_form[form.xmlns]
+                complication_paths = self.complications_by_form[form.xmlns]
             except KeyError:
                 continue
-            debug['relevent_xmlns'] += 1
-            has_complication = False
-            has_recent_complication = False
-            for p in complication_paths:
-                if form.xpath('form/' + p) == 'yes':
-                    has_complication = True
-                    if form.xmlns == DELIVERY:
-                        add = _get_time_of_birth(form)
-                    else:
-                        add = get_add(case)
-                    add = string_to_datetime(add)
-                    if form.metadata.timeStart - add < days:
-                        has_recent_complication = True
-                        break
-            if has_complication:
-                denom += 1
-                if has_recent_complication:
-                    num += 1
-    return "%s/%s" % (num, denom)
+            else:
+                for p in complication_paths:
+                    if form.xpath('form/' + p) == 'yes':
+                        yield form
+
+    @memoized
+    def _calculate_both(self, case):
+        has_complication = False
+        has_recent_complication = False
+        if case.type == 'cc_bihar_pregnancy':
+            for form in self.get_forms_with_complications(case):
+                has_complication = True
+                if form.xmlns == self.DELIVERY:
+                    add = _get_time_of_birth(form)
+                else:
+                    add = get_add(case)
+                add = string_to_datetime(add)
+                if form.metadata.timeStart - add < self.days:
+                    has_recent_complication = True
+                    break
+
+        return has_recent_complication, has_complication
+
+def complications(cases, days, now=None):
+    return ComplicationsCalculator(days=days, now=now).display(cases)
