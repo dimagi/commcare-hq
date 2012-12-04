@@ -8,6 +8,7 @@ from corehq.apps.sms.api import send_sms_to_verified_number
 from lxml import etree
 import logging
 from dimagi.utils.couch.loosechange import map_reduce
+from datetime import datetime
 
 logger = logging.getLogger('commtrack.sms')
 
@@ -18,28 +19,30 @@ def handle(verified_contact, text):
         return False
 
     try:
-        data = StockReport(domain).parse(text.lower())
+        data = StockReport(domain, verified_contact).parse(text.lower())
         if not data:
             return False
-        logger.debug(data)
     except Exception, e:
         send_sms_to_verified_number(verified_contact, 'problem with stock report: %s' % str(e))
         return True
 
+    process(domain.name, data)
     send_confirmation(verified_contact, data)
+    return True
 
-    inst_xml = to_instance(verified_contact, data)
+def process(domain, data):
+    logger.debug(data)
+    inst_xml = to_instance(data)
     logger.debug(inst_xml)
     
-    stockreport.process(domain.name, inst_xml)
-
-    return True
+    stockreport.process(domain, inst_xml)
 
 class StockReport(object):
     """a helper object for parsing raw stock report texts"""
 
-    def __init__(self, domain):
+    def __init__(self, domain, v):
         self.domain = domain
+        self.v = v
         self.C = CommtrackConfig.for_domain(domain.name)
 
     # TODO sms parsing could really use unit tests
@@ -79,6 +82,9 @@ class StockReport(object):
             raise RuntimeError('stock report doesn\'t have any transactions')
 
         return {
+            'timestamp': datetime.utcnow(),
+            'user': self.v.owner,
+            'phone': self.v.phone_number,
             'location': location,
             'transactions': tx,
         }
@@ -203,7 +209,7 @@ def product_subcases(supply_point):
     product_subcase_mapping = dict((subcase.dynamic_properties().get('product'), subcase._id) for subcase in product_subcases)
     return product_subcase_mapping
 
-def to_instance(v, data):
+def to_instance(data):
     """convert the parsed sms stock report into an instance like what would be
     submitted from a commcare phone"""
     E = stockreport.XML()
@@ -217,10 +223,14 @@ def to_instance(v, data):
         tx['case_id'] = product_subcase_mapping[tx['product']._id]
         return stockreport.tx_to_xml(tx, E)
 
+    deviceID = ''
+    if data.get('phone'):
+        deviceID = 'sms:%s' % data['phone']
+
     root = E.stock_report(
         M.meta(
-            M.userID(v.owner._id),
-            M.deviceID('sms:%s' % v.phone_number)
+            M.userID(data['user']._id),
+            M.deviceID(deviceID)
         ),
         E.location(data['location']._id),
         *(mk_xml_tx(tx) for tx in data['transactions'])

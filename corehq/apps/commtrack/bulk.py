@@ -8,6 +8,7 @@ from corehq.apps.users.models import CouchUser
 from casexml.apps.case.models import CommCareCase
 from dimagi.utils.couch.database import get_db
 from dimagi.utils.couch.loosechange import map_reduce
+import sms
 
 def set_error(row, msg, override=False):
     """set an error message on a stock report to be imported"""
@@ -158,7 +159,7 @@ def validate_row(row, domain, data_cols, locs_by_id):
     # validate other fields
 
     try:
-        datetime.strptime(row['date'], '%Y-%m-%d')
+        row['timestamp'] = datetime.strptime(row['date'], '%Y-%m-%d') # TODO: allow time?
     except ValueError:
         set_error(row, 'ERROR invalid date format')
         return
@@ -171,6 +172,10 @@ def validate_row(row, domain, data_cols, locs_by_id):
             except ValueError:
                 set_error(row, 'ERROR invalid data value "%s" in column "%s"' % (val, k))
                 return
+
+    if all(not row[k] for k in data_cols):
+        set_error(row, 'ERROR stock report is empty')
+        return
 
 def process_loc(domain, loc, rows, data_cols):
     """process (import) all the stock reports for a given location"""
@@ -187,28 +192,28 @@ def process_loc(domain, loc, rows, data_cols):
     most_recent_entry = get_db().view('commtrack/stock_reports', startkey=endkey, endkey=startkey, descending=True).first()
     if most_recent_entry:
         most_recent_timestamp = most_recent_entry['key'][-1]
-        most_recent_timestamp = most_recent_timestamp[:10] # truncate to just date for now; also, time zone issues
+        most_recent_timestamp = datetime.strptime(most_recent_timestamp[:10], '%Y-%m-%d') # truncate to just date for now; also, time zone issues
 
     if most_recent_timestamp:
         for row in rows:
-            if row['date'] <= most_recent_timestamp:
-                set_error(row, 'ERROR date must be AFTER the most recently received stock report for this location (%s)' % most_recent_timestamp)
+            if row['timestamp'] <= most_recent_timestamp:
+                set_error(row, 'ERROR date must be AFTER the most recently received stock report for this location (%s)' % most_recent_timestamp.strftime('%Y-%m-%d'))
 
     if any(row.get('error') for row in rows):
         set_error_bulk(rows, 'SKIPPED because other rows for this location have errors')
         return
 
-    rows.sort(key=lambda row: row['date'])
+    rows.sort(key=lambda row: row['timestamp'])
     for row in rows:
         try:
-            import_row(row, data_cols)
+            import_row(row, data_cols, domain)
             set_error(row, 'SUCCESS row imported')
         except Exception, e:
             set_error(row, 'ERROR during import: %s' % str(e))
             set_error_bulk(rows, 'SKIPPED remaining rows due to unexpected error')
             break
 
-def import_row(row, data_cols):
+def import_row(row, data_cols, domain):
     """process (import) a single stock report row"""
     def get_data():
         for header, meta in data_cols.iteritems():
@@ -218,17 +223,12 @@ def import_row(row, data_cols):
 
     report = {
         'location': row['loc'],
-        'date': datetime.strptime(row['date'], '%Y-%m-%d'), # need to handle
-        'user': None, # need to handle
-        'device/phone': None, # need to handle
+        'timestamp': row['timestamp'],
+        'user': row['user'],
+        'phone': row.get('phone'),
         'transactions': list(get_data()),
     }
-    print report
-    # submit report
-
-    # generate the data dict that sms.StockReport.parse() makes
-    # simulate import
-    # also need way use historical date
+    sms.process(domain, report)
 
 def annotate_csv(data, columns):
     """update the original import csv with the import result for each row"""
