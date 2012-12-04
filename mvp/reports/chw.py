@@ -1,7 +1,7 @@
 from django.utils.safestring import mark_safe
 import logging
 import numpy
-from corehq.apps.indicators.models import DynamicIndicatorDefinition, CouchViewIndicatorDefinition, CombinedCouchViewIndicatorDefinition
+from corehq.apps.indicators.models import DynamicIndicatorDefinition, CombinedCouchViewIndicatorDefinition
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn, DataTablesColumnGroup
 from corehq.apps.reports.generic import GenericTabularReport
 from corehq.apps.reports.standard import DatespanMixin
