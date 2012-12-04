@@ -109,6 +109,7 @@ INDICATOR_SETS = [
                 {
                     "slug": "idnb",
                     "name": _("Institutional deliveries not breastfed within one hour (Total NumberBF/Total Number ID24HR)"),
+                    "calculation_function": "bihar.reports.indicators.calculations.idnb"
                 },
             ],
             "client_list": [

@@ -1,28 +1,28 @@
 from bihar.reports.indicators.filters import A_MONTH, is_pregnant_mother, get_add, get_edd
-from datetime import datetime, timedelta
-from bihar.reports.indicators.visits import visit_is
+import datetime as dt
+from bihar.reports.indicators.visits import visit_is, get_related_prop
 
 EMPTY = (0,0)
-GRACE_PERIOD = timedelta(days=7)
+GRACE_PERIOD = dt.timedelta(days=7)
 
 
 def _num_denom(num, denom):
     return "%s/%s" % (num, denom)
 
 def _in_last_month(date):
-    today = datetime.today().date()
+    today = dt.datetime.today().date()
     return today - A_MONTH < date < today
 
 def _in_timeframe(date, days):
-    today = datetime.today().date()
-    return today - timedelta(days=days) < date < today
+    today = dt.datetime.today().date()
+    return today - dt.timedelta(days=days) < date < today
 
 def _mother_due_in_window(case, days):
-    get_visitduedate = lambda case: case.edd - timedelta(days=days) + GRACE_PERIOD
+    get_visitduedate = lambda case: case.edd - dt.timedelta(days=days) + GRACE_PERIOD
     return is_pregnant_mother(case) and get_edd(case) and _in_last_month(get_visitduedate(case))
         
 def _mother_delivered_in_window(case, days):
-    get_visitduedate = lambda case: case.add + timedelta(days=days) + GRACE_PERIOD
+    get_visitduedate = lambda case: case.add + dt.timedelta(days=days) + GRACE_PERIOD
     return is_pregnant_mother(case) and get_add(case) and _in_last_month(get_visitduedate(case))
 
 def _num_denom_count(cases, num_func, denom_func):
@@ -62,10 +62,11 @@ def _get_time_of_visit_after_birth(case):
 
 def _visited_in_timeframe_of_birth(case, days):
     visit_time = _get_time_of_visit_after_birth(case)
-    add = get_add(case)
-    if visit_time and add:
-        add = datetime.combine(add, datetime.time(datetime.now())) #convert date to datetime
-        return add < visit_time < add + timedelta(days=days)
+    time_birth = get_related_prop(case, "time_of_birth") or get_add(case) # use add if time_of_birth can't be found
+    if visit_time and time_birth:
+        if isinstance(time_birth, dt.date):
+            time_birth = dt.datetime.combine(time_birth, dt.datetime.time(dt.datetime.now())) #convert date to dt.datetime
+        return time_birth < visit_time < time_birth + dt.timedelta(days=days)
     return False
 
 
@@ -118,3 +119,8 @@ def id_day(cases):
     denom = len(valid_cases)
     num = len(filter(lambda case:_visited_in_timeframe_of_birth(case, 1) , valid_cases))
     return _num_denom(num, denom)
+
+def idnb(cases): #todo: finish this
+    valid_cases = filter(lambda case: _delivered_at_in_timeframe(case, ['private', 'public'], 30), cases)
+    denom = len(valid_cases)
+    return None
