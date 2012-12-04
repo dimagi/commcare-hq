@@ -31,7 +31,7 @@ MATERNAL_HEALTH_INDICATORS = dict(
     )
 )
 
-# Use SumLastUniqueEmittedValueCouchViewIndicatorDefinition
+# Use SumLastEmittedCouchIndicatorDef
 
 SUM_LAST_UNIQUE_MATERNAL_HEALTH_INDICATORS = dict(
     app=APP_NAME,

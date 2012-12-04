@@ -86,8 +86,7 @@ function get_date_key(date) {
 }
 
 function smart_date_emit_key(prefix, date, suffix, trim_date) {
-    var emit_key = new Array();
-    emit_key.push.apply(emit_key, prefix);
+    var emit_key = prefix.slice(0);
 
     var date_key = get_date_key(date);
     if (!isNaN(trim_date)) {
@@ -146,7 +145,7 @@ function contained_in_indicator_value(indicator, text) {
 
 function emit_standard(doc, emit_date, indicator_keys, suffix) {
     var user_id = get_user_id(doc);
-    for (var k in indicator_keys) {
+    for (var k = 0; k < indicator_keys.length; k++) {
         emit(smart_date_emit_key(["all", doc.domain, indicator_keys[k]], emit_date, suffix), 1);
         emit(smart_date_emit_key(["user", doc.domain, user_id, indicator_keys[k]], emit_date, suffix), 1);
     }
@@ -155,23 +154,10 @@ function emit_standard(doc, emit_date, indicator_keys, suffix) {
 function emit_special(doc, emit_date, indicator_entries, suffix) {
     var user_id = get_user_id(doc);
     for (var key in indicator_entries) {
-        var entry = indicator_entries[key];
-        emit(smart_date_emit_key(["all", doc.domain, key], emit_date, suffix), entry);
-        emit(smart_date_emit_key(["user", doc.domain, user_id, key], emit_date, suffix), entry);
-    }
-}
-
-function emit_by_status(doc, emit_dates, indicator_entries, suffix) {
-    var user_id = get_user_id(doc);
-    for (var indicator in indicator_entries) {
-        var entries = indicator_entries[indicator];
-        for (var e in entries) {
-            var entry = entries[e];
-            for (var open_status in emit_dates) {
-                var emit_date = emit_dates[open_status];
-                emit(smart_date_emit_key(["all", doc.domain, indicator, open_status], emit_date, suffix), entry);
-                emit(smart_date_emit_key(["user", doc.domain, user_id, indicator, open_status], emit_date, suffix), entry);
-            }
+        if (indicator_entries.hasOwnProperty(key)) {
+            var entry = indicator_entries[key];
+            emit(smart_date_emit_key(["all", doc.domain, key], emit_date, suffix), entry);
+            emit(smart_date_emit_key(["user", doc.domain, user_id, key], emit_date, suffix), entry);
         }
     }
 }

@@ -1,9 +1,11 @@
 import datetime
-from couchdbkit.ext.django.schema import IntegerProperty, BooleanProperty
+import copy
+from couchdbkit.ext.django.schema import IntegerProperty, BooleanProperty, StringProperty
 import dateutil
 import pytz
-from corehq.apps.indicators.models import DynamicIndicatorDefinition, ActiveCasesCouchViewIndicatorDefinition
+from corehq.apps.indicators.models import DynamicIndicatorDefinition, NoGroupCouchIndicatorDefBase
 from dimagi.utils.couch.database import get_db
+from dimagi.utils.dates import DateSpan
 
 class MVP(object):
     NAMESPACE = "mvp_indicators"
@@ -55,13 +57,59 @@ class MVPDaysSinceLastTransmission(DynamicIndicatorDefinition):
             pass
         return None
 
+class MVPActiveCasesIndicatorDefinition(NoGroupCouchIndicatorDefBase):
+    """
+        Returns # active cases.
+    """
+    _class_path = CLASS_PATH
+    case_type = StringProperty()
 
-class MVPChildCasesByAgeIndicatorDefinition(ActiveCasesCouchViewIndicatorDefinition):
+    def _get_cases_by_status(self, status, user_id, datespan):
+        key_prefix = [status]
+        if self.indicator_key:
+            key_prefix.append(self.indicator_key)
+        key = self._get_results_key(user_id=user_id)
+        if self.case_type:
+            key = key[0:2] + [self.case_type] + key[2:]
+        key[-1] = " ".join(key_prefix)
+        datespan_by_status = self._format_datespan_by_case_status(datespan, status)
+        return self._get_results_with_key(key, user_id=user_id, datespan=datespan_by_status)
+
+    def get_value(self, user_id=None, datespan=None):
+        opened_on_cases = self._get_cases_by_status("opened_on", user_id, datespan)
+        closed_on_cases = self._get_cases_by_status("closed_on", user_id, datespan)
+        open_ids = set([r['id'] for r in opened_on_cases])
+        closed_ids = set([r['id'] for r in closed_on_cases])
+        all_cases = open_ids.union(closed_ids)
+        return len(all_cases)
+
+    def _format_datespan_by_case_status(self, datespan, status):
+        datespan = copy.copy(datespan) # copy datespan
+        common_kwargs = dict(
+            format=datespan.format,
+            inclusive=datespan.inclusive,
+            timezone=datespan.timezone
+        )
+        if status == 'opened_on':
+            datespan = DateSpan(
+                None,
+                datespan.enddate,
+                **common_kwargs
+            )
+        elif status == "closed_on":
+            datespan = DateSpan(
+                datespan.startdate,
+                None,
+                **common_kwargs
+            )
+        return datespan
+
+
+class MVPChildCasesByAgeIndicatorDefinition(MVPActiveCasesIndicatorDefinition):
     """
         Returns the number of child cases that were active within the datespan provided and have a date of birth
         that is less than the age provided by days in age.
     """
-    _class_path = CLASS_PATH
     age_in_days = IntegerProperty()
     filter_by_active = BooleanProperty(default=True)
 

@@ -1,9 +1,7 @@
 function(doc) {
     // !code util/mvp.js
     if (isChildCase(doc) && (doc.dob_calc || doc.dob)) {
-        var seven_days_ms = 7*MS_IN_DAY,
-            birth_date = new Date(doc.dob_calc || doc.dob),
-            indicators = get_indicators(doc),
+        var birth_date = new Date(doc.dob_calc || doc.dob),
             indicator_keys = new Array();
 
         indicator_keys.push("dob");
