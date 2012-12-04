@@ -193,6 +193,8 @@ def process_loc(domain, loc, rows, data_cols):
     if most_recent_entry:
         most_recent_timestamp = most_recent_entry['key'][-1]
         most_recent_timestamp = datetime.strptime(most_recent_timestamp[:10], '%Y-%m-%d') # truncate to just date for now; also, time zone issues
+    else:
+        most_recent_timestamp = None
 
     if most_recent_timestamp:
         for row in rows:

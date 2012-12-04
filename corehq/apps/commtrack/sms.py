@@ -8,6 +8,7 @@ from corehq.apps.sms.api import send_sms_to_verified_number
 from lxml import etree
 import logging
 from dimagi.utils.couch.loosechange import map_reduce
+from dimagi.utils.parsing import json_format_datetime
 from datetime import datetime
 
 logger = logging.getLogger('commtrack.sms')
@@ -213,8 +214,7 @@ def to_instance(data):
     """convert the parsed sms stock report into an instance like what would be
     submitted from a commcare phone"""
     E = stockreport.XML()
-    from lxml.builder import ElementMaker
-    M = ElementMaker(namespace='http://openrosa.org/jr/xforms', nsmap={'jrm': 'http://openrosa.org/jr/xforms'})
+    M = stockreport.XML(stockreport.META_XMLNS, 'jrm')
 
     product_subcase_mapping = product_subcases(data['location'])
 
@@ -226,11 +226,14 @@ def to_instance(data):
     deviceID = ''
     if data.get('phone'):
         deviceID = 'sms:%s' % data['phone']
+    timestamp = json_format_datetime(data['timestamp'])
 
     root = E.stock_report(
         M.meta(
             M.userID(data['user']._id),
-            M.deviceID(deviceID)
+            M.deviceID(deviceID),
+            M.timeStart(timestamp),
+            M.timeEnd(timestamp)
         ),
         E.location(data['location']._id),
         *(mk_xml_tx(tx) for tx in data['transactions'])
