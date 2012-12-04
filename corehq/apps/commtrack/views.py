@@ -4,6 +4,7 @@ from django.views.decorators.http import require_POST
 from corehq.apps.domain.models import Domain
 from corehq.apps.commtrack.management.commands import bootstrap_psi
 from corehq.apps.commtrack.management.commands import import_locations as import_locations
+import bulk
 import json
 
 @require_superuser
@@ -31,3 +32,21 @@ def location_import(request, domain):
 </form>
 """)
 
+@require_superuser
+def historical_import(request, domain):
+    if request.method == "POST":
+        try:
+            result = bulk.import_stock_reports(domain, request.FILES['history'])
+            resp = HttpResponse(result, 'text/csv')
+            resp['Content-Disposition'] = 'attachment; filename="import_results.csv"'
+            return resp
+        except Exception, e:
+            return HttpResponse(str(e), 'text/plain')
+
+
+    return HttpResponse("""
+<form method="post" action="" enctype="multipart/form-data">
+  <div><input type="file" name="history" /></div>
+  <div><button type="submit">Import historical stock reports</button></div>
+</form>
+""")
