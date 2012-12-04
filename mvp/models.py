@@ -1,21 +1,17 @@
-from couchdbkit.ext.django.schema import StringProperty, IntegerProperty, ListProperty, SetProperty, DocumentSchema, Document
 import datetime
-from couchdbkit.schema.properties import LazyDict
+import copy
+from couchdbkit.ext.django.schema import IntegerProperty, BooleanProperty, StringProperty
 import dateutil
-from django.utils.safestring import mark_safe
-import numpy
+import logging
 import pytz
-from casexml.apps.case.models import CommCareCase
-from corehq.apps.indicators.models import CaseIndicatorDefinition, FormDataInCaseIndicatorDefinition,\
-    PopulateRelatedCasesWithIndicatorDefinitionMixin, CaseDataInFormIndicatorDefinition, CouchViewIndicatorDefinition, DynamicIndicatorDefinition
+from corehq.apps.indicators.models import DynamicIndicatorDefinition, NoGroupCouchIndicatorDefBase
 from corehq.apps.reports.util import make_form_couch_key
-from couchforms.models import XFormInstance
 from dimagi.utils.couch.database import get_db
 from dimagi.utils.dates import DateSpan
 
 class MVP(object):
     NAMESPACE = "mvp_indicators"
-    DOMAINS = ["mvp-sauri", "mvp-potou"]
+    DOMAINS = ["mvp-potou", "mvp-sauri"]
     VISIT_FORMS = dict(
         pregnancy_visit='http://openrosa.org/formdesigner/185A7E63-0ECD-4D9A-8357-6FD770B6F065',
         child_visit='http://openrosa.org/formdesigner/B9CEFDCD-8068-425F-BA67-7DC897030A5A',
@@ -31,13 +27,6 @@ class MVP(object):
     )
 
 CLASS_PATH = "mvp.models"
-
-class MVPCannotFetchCaseError(Exception):
-    pass
-
-
-class MVPCouchViewIndicatorDefinition(CouchViewIndicatorDefinition):
-    _class_path = CLASS_PATH
 
 
 class MVPDaysSinceLastTransmission(DynamicIndicatorDefinition):
@@ -67,104 +56,86 @@ class MVPDaysSinceLastTransmission(DynamicIndicatorDefinition):
             pass
         return None
 
+class MVPActiveCasesIndicatorDefinition(NoGroupCouchIndicatorDefBase):
+    """
+        Returns # active cases.
+    """
+    _class_path = CLASS_PATH
+    case_type = StringProperty()
 
-class MVPReturnMedianCouchViewIndicatorDefinition(MVPCouchViewIndicatorDefinition):
-
-    @property
-    def use_datespans_in_retrospective(self):
-        return True
+    def _get_cases_by_status(self, status, user_id, datespan):
+        key_prefix = [status]
+        if self.indicator_key:
+            key_prefix.append(self.indicator_key)
+        key = self._get_results_key(user_id=user_id)
+        if self.case_type:
+            key = key[0:2] + [self.case_type] + key[2:]
+        key[-1] = " ".join(key_prefix)
+        datespan_by_status = self._format_datespan_by_case_status(datespan, status)
+        return self._get_results_with_key(key, user_id=user_id, datespan=datespan_by_status)
 
     def get_value(self, user_id=None, datespan=None):
-        results = self.get_couch_results(user_id, datespan)
-        values = [item.get('value', 0) for item in results if item.get('value')]
-        return numpy.median(values) if values else 0
+        opened_on_cases = self._get_cases_by_status("opened_on", user_id, datespan)
+        closed_on_cases = self._get_cases_by_status("closed_on", user_id, datespan)
+        open_ids = set([r['id'] for r in opened_on_cases])
+        closed_ids = set([r['id'] for r in closed_on_cases])
+        all_cases = open_ids.union(closed_ids)
+        return len(all_cases)
 
-
-class MVPActiveCasesCouchViewIndicatorDefinition(MVPCouchViewIndicatorDefinition):
-    """
-        THIS IS REALLY REALLY UGLY. I'm so sorry. I did my best with the time I had.
-        Cheers,
-        --Biyeun
-    """
-
-    @property
-    def use_datespans_in_retrospective(self):
-        return True
-
-    def _format_datespan_by_status(self, datespan, date_status):
+    def _format_datespan_by_case_status(self, datespan, status):
+        datespan = copy.copy(datespan) # copy datespan
         common_kwargs = dict(
             format=datespan.format,
             inclusive=datespan.inclusive,
             timezone=datespan.timezone
         )
-        if date_status == 'opened_on':
+        if status == 'opened_on':
             datespan = DateSpan(
                 None,
                 datespan.enddate,
                 **common_kwargs
             )
-        elif date_status == "closed_on":
+        elif status == "closed_on":
             datespan = DateSpan(
-                None,
                 datespan.startdate,
+                None,
                 **common_kwargs
             )
         return datespan
 
-    def _get_cases(self, case_status, date_status,
-                   user_id=None, datespan=None):
-        full_indicator = [case_status, self.indicator_key]
-        key = self._get_results_key(user_id)
-        key[-1] = " ".join(full_indicator).strip()
-        key.append(date_status)
 
-        results = self._get_results_with_key(key, user_id, self._format_datespan_by_status(datespan, date_status))
+class MVPChildCasesByAgeIndicatorDefinition(MVPActiveCasesIndicatorDefinition):
+    """
+        Returns the number of child cases that were active within the datespan provided and have a date of birth
+        that is less than the age provided by days in age.
+    """
+    age_in_days = IntegerProperty()
+    filter_by_active = BooleanProperty(default=True)
 
-        return set([item.get('key',[])[-1] for item in results]), results
+    def _get_cases_by_status(self, status, user_id, datespan):
+        results = super(MVPChildCasesByAgeIndicatorDefinition, self)._get_cases_by_status(status, user_id, datespan)
+        return self._filter_by_age(results, datespan)
 
-    def _get_valid_case_ids(self, closed_opened_on_ids, closed_closed_on_ids, open_opened_on_ids):
-        valid_closed_cases = closed_opened_on_ids.difference(closed_closed_on_ids)
-        valid_cases = open_opened_on_ids.union(valid_closed_cases)
-        return valid_cases
+    def _filter_by_age(self, results, datespan):
+        valid_case_ids = []
+        for item in results:
+            if item.get('value'):
+                try:
+                    date_of_birth = dateutil.parser.parse(item['value'])
+                    td = datespan.enddate - date_of_birth
+                    if td.days < self.age_in_days:
+                        valid_case_ids.append(item['id'])
+                except Exception:
+                    logging.error("date of birth could not be parsed")
+        return set(valid_case_ids)
 
-    def _get_valid_cases_and_results(self, closed_opened_on, closed_closed_on, open_opened_on):
-        valid_cases = self._get_valid_case_ids(closed_opened_on[0], closed_closed_on[0], open_opened_on[0])
-        all_results = closed_opened_on[1] + closed_closed_on[1] + open_opened_on[1]
-        valid_results = list()
-        for result in all_results:
-            case_id = result.get('key', [])[-1]
-            if case_id in valid_cases:
-                valid_results.append(result)
-        return valid_cases, valid_results
-
-    def get_couch_results(self, user_id=None, datespan=None, date_group_level=None, reduce=False):
-        if date_group_level:
-            raise ValueError("Sorry, but date_group_level is not supported for this indicator.")
-        if reduce:
-            raise ValueError("Sorry, but reduce is not supported for this indicator")
-
-        datespan = self._apply_datespan_shifts(datespan)
-        common_kwargs = dict(
-            user_id=user_id,
-            datespan=datespan
-        )
-
-        # Closed Cases Opened Before the End Date
-        closed_opened_on = self._get_cases("closed", "opened_on", **common_kwargs)
-
-        # Closed Cases Opened Before the Start Date
-        closed_closed_on = self._get_cases("closed", "closed_on", **common_kwargs)
-
-        # Open Cases Opened Before the End Date
-        open_opened_on = self._get_cases("open", "opened_on", **common_kwargs)
-
-        valid_cases, valid_results = self._get_valid_cases_and_results(
-            closed_opened_on,
-            closed_closed_on,
-            open_opened_on
-        )
-
-        return len(valid_cases)
 
     def get_value(self, user_id=None, datespan=None):
-        return self.get_couch_results(user_id, datespan)
+        if self.filter_by_active:
+            opened_on_cases = self._get_cases_by_status("opened_on", user_id, datespan)
+            closed_on_cases = self._get_cases_by_status("closed_on", user_id, datespan)
+            all_cases = opened_on_cases.union(closed_on_cases)
+        else:
+            results = self.get_couch_results(user_id, datespan)
+            all_cases = self._filter_by_age(results, datespan)
+        return len(all_cases)
