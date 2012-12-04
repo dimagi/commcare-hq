@@ -13,6 +13,7 @@ DEFAULT_EMPTY = "?"
 
 class IndicatorConfigMixIn(object):
     @property
+    @memoized
     def indicator_config(self):
         return IndicatorConfig(INDICATOR_SETS)
     
@@ -23,6 +24,7 @@ class IndicatorSetMixIn(object):
         return self.request_params.get("indicators")
     
     @property
+    @memoized
     def indicator_set(self):
         return IndicatorConfig(INDICATOR_SETS).get_indicator_set(self.indicator_set_slug)
 
@@ -33,6 +35,7 @@ class IndicatorMixIn(IndicatorSetMixIn):
         return self.request_params.get("indicator")
 
     @property
+    @memoized
     def indicator(self):
         return self.indicator_set.get_indicator(self.indicator_slug)
         

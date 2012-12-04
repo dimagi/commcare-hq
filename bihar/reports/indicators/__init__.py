@@ -204,10 +204,10 @@ class IndicatorSet(object):
     
     def get_indicator(self, slug):
         return self.indicators[slug]
-    
+
 class Indicator(object):
     # this class is currently used both for client list filters and 
-    # calcualtions. it probably makes sense to pull them out into separate
+    # calculations. it probably makes sense to pull them out into separate
     # things
     def __init__(self, spec):
         self.slug = spec["slug"]
@@ -228,5 +228,3 @@ class Indicator(object):
             if "sortkey" in spec else None
         self.row_function = to_function(spec.get("row_function", DEFAULT_ROW_FUNCTION))
         self.columns = spec.get("columns", [_("Name"), _("Husband's Name"), _("EDD")])
-        
-    

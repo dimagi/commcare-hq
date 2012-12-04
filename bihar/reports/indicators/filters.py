@@ -87,5 +87,3 @@ def get_edd_sortkey(case):
     
 def get_add_sortkey(case):
     return get_add(case) or datetime(1970,1,1).date()
-    
-
