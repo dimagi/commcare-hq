@@ -1,14 +1,74 @@
 from collections import defaultdict
 from couchdbkit import ResourceNotFound
-from bihar.reports.indicators.filters import A_MONTH, is_pregnant_mother, get_add, get_edd
+from bihar.reports.indicators.filters import A_MONTH, is_pregnant_mother, get_add, get_edd,\
+    mother_pre_delivery_columns
 from couchforms.safe_index import safe_index
 from dimagi.utils.parsing import string_to_datetime
 import datetime as dt
 from bihar.reports.indicators.visits import visit_is, get_related_prop
+from dimagi.utils.mixins import UnicodeMixIn
+from dimagi.utils.decorators.memoized import memoized
 
 EMPTY = (0,0)
 GRACE_PERIOD = dt.timedelta(days=7)
 
+class IndicatorCalculator(object):
+    """
+    A class that, given a case, can tell you that cases contributions to the
+    numerator and denominator of a particular indicator.
+    """
+
+    def __init__(self, *args, **kwargs):
+        pass
+
+    def numerator(self, case):
+        raise NotImplementedError("Override this!")
+
+    def denominator(self, case):
+        raise NotImplementedError("Override this!")
+
+    @memoized
+    def as_row(self, case):
+        raise NotImplementedError("Override this!")
+
+    def filter(self, case):
+        return bool(self.denominator(case))
+
+    @memoized
+    def display(self, cases):
+        num = denom = 0
+        for case in cases:
+            denom_diff = self.denominator(case)
+            if denom_diff:
+                denom += denom_diff
+                num_diff = self.numerator(case)
+                assert num_diff <= denom_diff
+                # this is to prevent the numerator from ever passing the denominator
+                # though is probably not totally accurate
+                num += num_diff
+        return "%s/%s" % (num, denom)
+
+class MemoizingCalculator(IndicatorCalculator):
+    # to avoid decorators everywhere. there might be a smarter way to do this
+
+    @memoized
+    def numerator(self, case):
+        return self._numerator(case)
+
+    @memoized
+    def denominator(self, case):
+        return self._denominator(case)
+
+class BP2Calculator(MemoizingCalculator):
+
+    def _numerator(self, case):
+        return 1 if _mother_due_in_window(case, 75) else 0
+
+    def _denominator(self, case):
+        return 1 if len(filter(lambda a: visit_is(a, 'bp'), case.actions)) >= 2 else 0
+
+    def as_row(self, case):
+        return mother_pre_delivery_columns(case)
 
 def _num_denom(num, denom):
     return "%s/%s" % (num, denom)
@@ -84,12 +144,6 @@ def _weak_babies(case): # :(
 # might want to revisit.
 
 # NOTE: this is going to be slooooow
-def bp2_last_month(cases):
-    due = lambda case: 1 if _mother_due_in_window(case, 75) else 0
-    # make sure they've done 2 bp visits
-    done = lambda case: 1 if len(filter(lambda a: visit_is(a, 'bp'), case.actions)) >= 2 else 0
-    return _num_denom_count(cases, due, done)    
-    
 def bp3_last_month(cases):
     due = lambda case: 1 if _mother_due_in_window(case, 45) else 0
     # make sure they've done 2 bp visits
