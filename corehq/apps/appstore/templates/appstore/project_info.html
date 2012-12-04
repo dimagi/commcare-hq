@@ -48,13 +48,13 @@
 
 <div class="container-fluid">
 <div class="page-header row-fluid" style="border-bottom: 0; margin-bottom: 0;">
-<div class="span2" style="text-align: center;">
-    {% if project.image_path %}
-        <img class="app-pic" src="{% url appstore_project_image project.name %}" />
-    {% else %}
-        <img class="app-pic opacity65" src="{% static 'hqstyle/img/no-image-available.png' %}" />
-    {% endif %}
-</div>
+    <div class="span2" style="text-align: center;">
+        {% if project.image_path %}
+            <img class="app-pic" src="{% url appstore_project_image project.name %}" />
+        {% else %}
+            <img class="app-pic opacity65" src="{% static 'hqstyle/img/no-image-available.png' %}" />
+        {% endif %}
+    </div>
     <div class="span7">
         <h1>
             {{ project.title }}
@@ -71,12 +71,15 @@
             {% trans "Ratings" %}: <span class="badge badge-info">{{ num_ratings }}</span>
         </h3>
             {% if average_rating %}
-                {% include "partials/five_stars.html" with rating_name=average_rating rating=average_rating %}
+                {% include "appstore/partials/five_stars.html" with rating_name=average_rating rating=average_rating %}
             {% endif %}
     <br/>
     </div>
 </div>
 </div>
+
+<div class="row">
+<div class="span10">
 <dl class="dl-horizontal">
     <dt>{% trans 'Description' %}</dt>
     <dd>
@@ -113,13 +116,23 @@
 {#        This version: {{ project.copies|length }};#}
         <!-- All versions: -->{{ project.downloads }}
     </dd>
+    {% if project.multimedia_included and project.has_media %}
+        <dd>
+            <a class="btn" style="margin-top: .4em" href="{% url media_files project %}">{% trans "Browse Multimedia" %}</a>
+        </dd>
+    {% endif %}
 </dl>
 <hr />
     <div id="application-accordion">
-        {% for app in project.full_applications %}
+        {% for app in applications %}
             <div id="application-{{ app.id }}">
                 <dl class="dl-horizontal">
-                    <dd><h4>{{ app.name }}</h4></dd>
+                    <dd>
+                        <h4 style="display: inline-block;">{{ app.name }}</h4>
+                        <a href="{% url emulator project app.id %}?exchange=true" style="margin-left: 1.2em" target="_blank" class="btn btn-primary">
+                            {% trans "Preview this app" %}
+                        </a>
+                   </dd>
                     <dt>{% trans 'Media' %}</dt>
                     <dd>
                         {{ app.has_media|yesno:"Yes,No" }}
@@ -162,18 +175,22 @@
             <fieldset>
                 <legend>{% trans "Download" %}</legend>
                 {% if request.couch_user %}
+                    {% if request.couch_user.is_commcare_user %}
+                        {% trans "You are currently logged in as a CloudCare user. Please sign out and login as a normal user to download apps" %}
+                    {% else %}
                     <div{% if error_message %} class="error"{% endif %}>
                         <input type="text" class="span3" id="new_project_name"
                                name="new_project_name" value="{{ new_project_name }}" placeholder="{% trans 'New project name' %}">
                         {% if error_message %}
                             <span class="help-inline">{{ error_message }}</span>
                         {% endif %}
-                        <a class="btn btn-primary" data-form="new-project-form" data-toggle="modal" data-target="#licenseAgreement" href="#licenseAgreement">{% trans "Create New Project" %}</a>
+                        <a class="btn btn-primary" data-form="new-project-form" data-toggle="modal" data-target="#licenseAgreement" href="#licenseAgreement">{% trans "Download As New Project" %}</a>
                         {% if display_import %}
                             {% trans "or" %}
-                            <a class="btn" id="import-app-button">{% trans "Import to Existing Project" %}</a>
+                            <a class="btn" id="import-app-button">{% trans "Download to Existing Project" %}</a>
                         {% endif %}
                     </div>
+                    {% endif %}
                 {% else %}
                     {% trans "Please" %} <a href="{% url login %}">{% trans "sign in" %}</a> {% trans "or" %} <a href="{% url registration_new_user %}">{% trans "register" %}</a> {% trans "to download an app from Exchange" %}
                 {% endif %}
@@ -194,7 +211,7 @@
 
     <hr/>
     <div>
-        <h3>{% trans "Reviews of" %} {{ project.copied_from.display_name }}</h3>
+        <h3>{% trans "Reviews of" %} {{ project.title }}</h3>
         {% if project.copied_from.name not in request.couch_user.get_domains and project.published %}
             <div>
                 <a href="#add_review_modal" data-toggle="modal" class="btn btn-inverse">{% trans "Write a Review" %}</a>
@@ -209,7 +226,7 @@
             </div>
             <div class="span6">
                 <div>
-                    {% include "partials/five_stars.html" with rating_name=review.get_id rating=review.rating class="pi-stars" %}
+                    {% include "appstore/partials/five_stars.html" with rating_name=review.get_id rating=review.rating class="pi-stars" %}
                     <h4 style="display: inline-block; vertical-align: bottom;">{{ review.title }}</h4>
                 </div>
                 <div>{{ review.info }}</div>
@@ -217,6 +234,8 @@
             </div>
         </div>
     {% endfor %}
+</div>
+</div>
 {% endblock %}
 
 
@@ -225,7 +244,7 @@
 <div id="add_review_modal" class="modal hide fade">
     <div class="modal-header">
         <a class="close" data-dismiss="modal">&times;</a>
-        <h3>{% trans 'Write a review for ' %}{{ project.copied_from.display_name }}</h3>
+        <h3>{% trans 'Write a review for ' %}{{ project.title }}</h3>
     </div>
     <form class="form-horizontal" method="post" action="{% url project_info project %}">
         <div class="modal-body">
@@ -283,12 +302,16 @@
     </div>
     <div class="modal-body">
         {{ project.title }} {% trans 'is licensed under ' %}<a target="_blank" href="http://creativecommons.org/licenses/#licenses">{{ project.get_license_display }}</a>
+        {% if project.multimedia_included and project.has_media %}
+            <br /><br />
+            {% trans "Please view the" %} <a target="_blank" href="{% url media_files project %}">{% trans "licenses for this app's media files" %}</a>
+        {% endif %}
     </div>
     <div class="modal-footer">
         <div style="text-align: left; line-height: 2em;">
-            {% trans "I have read and agree to terms of this license." %}
+            {% trans "I have read and agree to the terms of this license." %}
         </div>
-        <a id="agree-button" data-form="" href="#" class="btn btn-primary">{% trans "Agree" %}</a>
+        <a id="agree-button" data-dismiss="modal" data-form="" href="#" class="btn btn-primary">{% trans "Agree" %}</a>
         <a href="#" data-dismiss="modal" class="btn">{% trans "Disagree" %}</a>
     </div>
 </div>

@@ -158,6 +158,13 @@
             margin-top: 1.5em;
         }
 
+        #license-info-label {
+            display: inline;
+        }
+
+        #license-info-label:hover {
+            background: inherit;
+        }
     </style>
 {% endblock %}
 
@@ -214,14 +221,16 @@
 {% endblock %}
 
 {% block sidebar %}
-    {% include 'partials/sidebar.html' with display_ua='true' %}
+    {% include 'appstore/partials/sidebar.html' with display_ua='true' %}
 {% endblock %}
 
+{% block extra_tabs %}
 {% block tabs %}
     {% url appstore as search_url %}
     <ul class="nav">
-        {% include 'partials/search_input.html' with search_name="search" search_for="apps..." %}
+        {% include 'appstore/partials/search_input.html' with search_name="search" search_for="apps..." %}
     </ul>
+{% endblock %}
 {% endblock %}
 
 {% block page-title %}
@@ -335,12 +344,12 @@
                         {% if rating_name == app.name %}
                             {% if average_rating %}
                                 <span id="rating_container">
-                                {% include "partials/five_stars.html" with rating_name=rating_name rating=average_rating %}
+                                {% include "appstore/partials/five_stars.html" with rating_name=rating_name rating=average_rating %}
                             </span>
                             {% endif %}
                         {% endif %}
                     {% endfor %}
-                    <h6>{{ app.downloads }} download{{ app.copies_of_parent|length|pluralize }}</h6>
+                    <h6>{{ app.downloads }} download{{ app.downloads|pluralize }}</h6>
                     {% if app.short_description %}
                         <p>{{ app.short_description }}</p>
                     {% endif %}

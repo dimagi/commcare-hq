@@ -4,6 +4,7 @@ from dimagi.utils.decorators import inline
 from django.conf import settings
 import rawes
 from corehq.elastic import get_es
+from dimagi.utils.logging import notify_exception
 
 class CasePaginator():
     def __init__(self, domain, params, case_type=None, owner_ids=None, user_ids=None, status=None):
@@ -32,7 +33,8 @@ class CasePaginator():
             if list and len(list) < MAX_IDS:
                 for item in list:
                     if item is not None:
-                        yield {"term": {key: item}}
+                        # elastic hates capital letters
+                        yield {"term": {key: item.lower()}} 
                     else:
                         yield {"term" :{key: ""}}
 
@@ -98,7 +100,7 @@ class CasePaginator():
         es_results = get_es().get('hqcases/_search', data=es_query)
 
         if es_results.has_key('error'):
-            logging.exception("Error in case list elasticsearch query: %s" % es_results['error'])
+            notify_exception(None, "Error in case list elasticsearch query: %s" % es_results['error'])
             return {
                 'skip': self.params.start,
                 'limit': self.params.count,

@@ -270,11 +270,20 @@ class ReportConfig(Document):
     @property
     @memoized
     def report(self):
+        """
+        Returns None if no report is found for that report slug, which happens
+        when a report is no longer available.  All callers should handle this
+        case.
+
+        """
         return self._dispatcher.get_report(self.domain, self.report_slug)
 
     @property
     def report_name(self):
-        return _(self.report.name)
+        if self.report is None:
+            return _("Deleted Report")
+        else:
+            return _(self.report.name)
 
     @property
     def full_name(self):
@@ -305,10 +314,11 @@ class ReportConfig(Document):
         Get the report's HTML content as rendered by the static view format.
 
         """
-        report_class = self.report.__module__ + '.' + self.report.__name__
-        if not self.owner.can_view_report(self.domain, report_class):
-            raise Exception("User %s can't view report %s" % (self.owner_id,
-                                                              report_class))
+        if self.report is None:
+            return _("The report used to create this scheduled report is no"
+                     " longer available on CommCare HQ.  Please delete this"
+                     " scheduled report and create a new one using an available"
+                     " report.")
 
         from django.http import HttpRequest, QueryDict
         request = HttpRequest()
@@ -442,9 +452,9 @@ class ReportNotification(Document):
             self.delete()
             return
 
-        title = "Scheduled report from CommCare HQ for %s" % self.domain
-        body = get_scheduled_report_response(self.owner, self.domain,
-                                             self._id).content
+        title = "Scheduled report from CommCare HQ"
+        body = get_scheduled_report_response(
+            self.owner, self.domain, self._id).content
 
         for email in self.all_recipient_emails:
             send_HTML_email(title, email, body)

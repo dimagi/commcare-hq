@@ -518,13 +518,6 @@ def test_httpdigest(request, domain):
     return HttpResponse("ok")
 
 
-
-@login_and_domain_required
-def test_autocomplete(request, domain, template="users/test_autocomplete.html"):
-    context = _users_context(request, domain)
-    context.update(get_sms_autocomplete_context(request, domain))
-    return render_to_response(request, template, context)
-
 @Prescription.require('user-domain-transfer')
 @login_and_domain_required
 def user_domain_transfer(request, domain, prescription, template="users/domain_transfer.html"):

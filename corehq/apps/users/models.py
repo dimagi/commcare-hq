@@ -5,7 +5,7 @@ from __future__ import absolute_import
 
 from datetime import datetime
 import logging
-from couchdbkit import ResourceConflict
+from couchdbkit import ResourceConflict, NoResultFound
 import re
 from django.utils import html, safestring
 from restkit.errors import NoMoreData
@@ -333,15 +333,31 @@ class CustomDomainMembership(DomainMembership):
         self.custom_role.domain = self.domain
         self.custom_role.permissions.set(permission, value, data)
 
+class IsMemberOfMixin(DocumentSchema):
+    @memoized
+    def _is_member_of(self, domain):
+        return self.is_global_admin() or domain in self.get_domains()
 
+    def is_member_of(self, domain_qs):
+        """
+        takes either a domain name or a domain object and returns whether the user is part of that domain
+        either natively or through a team
+        """
 
-class AuthorizableMixin(DocumentSchema):
-    domains = StringListProperty()
-    domain_memberships = SchemaListProperty(DomainMembership)
+        try:
+            domain = domain_qs.name
+        except Exception:
+            domain = domain_qs
+        return self._is_member_of(domain)
+
 
     def is_global_admin(self):
         # subclasses to override if they want this functionality
         return False
+
+class AuthorizableMixin(IsMemberOfMixin):
+    domains = StringListProperty()
+    domain_memberships = SchemaListProperty(DomainMembership)
 
     def get_domain_membership(self, domain):
         domain_membership = None
@@ -434,12 +450,6 @@ class AuthorizableMixin(DocumentSchema):
         else:
             return False
 
-    def is_member_of(self, domain_qs):
-        try:
-            return self.is_global_admin() or domain_qs.name in self.get_domains()
-        except Exception:
-            return self.is_global_admin() or domain_qs in self.get_domains()
-
     def get_role(self, domain=None):
         """
         Get the role object for this user
@@ -476,8 +486,6 @@ class AuthorizableMixin(DocumentSchema):
             raise Exception("role_qualified_id is %r" % role_qualified_id)
 
     def role_label(self, domain=None):
-#        import pdb
-#        pdb.set_trace()
         if not domain:
             try:
                 domain = self.current_domain
@@ -547,7 +555,7 @@ class DjangoUserMixin(DocumentSchema):
         dummy.password = self.password
         return dummy.check_password(password)
 
-class CouchUser(Document, DjangoUserMixin, UnicodeMixIn):
+class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, UnicodeMixIn):
     """
     A user (for web and commcare)
     """
@@ -812,12 +820,23 @@ class CouchUser(Document, DjangoUserMixin, UnicodeMixIn):
 
     @classmethod
     def get_by_username(cls, username):
+        def get(stale, raise_if_none):
+            result = cls.get_db().view('users/by_username',
+                key=username,
+                include_docs=True,
+                stale=stale
+            )
+            return result.one(except_all=raise_if_none)
         try:
-            result = get_db().view('users/by_username', key=username, include_docs=True)
-            result = result.one()
+            result = get(stale='update_after', raise_if_none=True)
+            if result['doc'] is None or result['doc']['username'] != username:
+                raise NoResultFound
         except NoMoreData:
             logging.exception('called get_by_username(%r) and it failed pretty bad' % username)
             raise
+        except NoResultFound:
+            result = get(stale=None, raise_if_none=False)
+
         if result:
             return cls.wrap_correctly(result['doc'])
         else:
@@ -825,24 +844,11 @@ class CouchUser(Document, DjangoUserMixin, UnicodeMixIn):
 
     @classmethod
     def get_by_default_phone(cls, phone_number):
-        result = get_db().view('users/by_default_phone', key=phone_number, include_docs=True).one()
+        result = cls.get_db().view('users/by_default_phone', key=phone_number, include_docs=True).one()
         if result:
             return cls.wrap_correctly(result['doc'])
         else:
             return None
-
-    def is_global_admin(self):
-        return False
-
-    def is_member_of(self, domain_qs):
-        """
-        takes either a domain name or a domain object and returns whether the user is part of that domain
-        either natively or through a team
-        """
-        try:
-            return domain_qs.name in self.get_domains() or self.is_global_admin()
-        except Exception:
-            return domain_qs in self.get_domains() or self.is_global_admin()
 
     @classmethod
     def get_by_user_id(cls, userID, domain=None):
@@ -852,7 +858,7 @@ class CouchUser(Document, DjangoUserMixin, UnicodeMixIn):
 
         """
         try:
-            couch_user = cls.wrap_correctly(get_db().get(userID))
+            couch_user = cls.wrap_correctly(cls.get_db().get(userID))
         except ResourceNotFound:
             return None
         if couch_user.doc_type != cls.__name__ and cls.__name__ != "CouchUser":
@@ -900,7 +906,7 @@ class CouchUser(Document, DjangoUserMixin, UnicodeMixIn):
 
     def save(self, **params):
         # test no username conflict
-        by_username = get_db().view('users/by_username', key=self.username).one()
+        by_username = self.get_db().view('users/by_username', key=self.username).one()
         if by_username and by_username['id'] != self._id:
             raise self.Inconsistent("CouchUser with username %s already exists" % self.username)
 
@@ -977,6 +983,10 @@ class CommCareUser(CouchUser, CommCareMobileContactMixin):
     registering_device_id = StringProperty()
     user_data = DictProperty()
     role_id = StringProperty()
+
+    def is_domain_admin(self, domain=None):
+        # cloudcare workaround
+        return False
 
     def sync_from_old_couch_user(self, old_couch_user):
         super(CommCareUser, self).sync_from_old_couch_user(old_couch_user)
@@ -1327,7 +1337,6 @@ class CommCareUser(CouchUser, CommCareMobileContactMixin):
                 raise Exception("unexpected role_qualified_id: %r" % role_qualified_id)
 
 class WebUser(CouchUser, AuthorizableMixin):
-    betahack = BooleanProperty(default=False)
     teams = StringListProperty()
 
     #do sync and create still work?
@@ -1376,6 +1385,7 @@ class WebUser(CouchUser, AuthorizableMixin):
                         domains.append(domain)
         return domains
 
+    @memoized
     def has_permission(self, domain, permission, data=None):
         # is_admin is the same as having all the permissions set
         from corehq.apps.orgs.models import Team
@@ -1477,6 +1487,12 @@ class PublicUser(FakeUser):
     def get_role(self, domain=None):
         assert(domain == self.domain)
         return super(PublicUser, self).get_role(domain)
+
+    def is_eula_signed(self):
+        return True # hack for public domain so eula modal doesn't keep popping up
+
+    def get_domains(self):
+        return []
 
 class InvalidUser(FakeUser):
     """

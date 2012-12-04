@@ -199,7 +199,7 @@ class CommCareBuildConfig(Document):
     def fetch(cls):
         try:
             return cls.get(cls.ID.default)
-        except Exception:
+        except ResourceNotFound:
             return cls.bootstrap()
 
     def get_default(self, application_version):

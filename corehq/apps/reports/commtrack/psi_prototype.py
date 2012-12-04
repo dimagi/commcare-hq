@@ -15,8 +15,14 @@ class CommtrackReportMixin(ProjectReport, ProjectReportParametersMixin):
 
     @classmethod
     def show_in_navigation(cls, request, *args, **kwargs):
-        domain = Domain.get_by_name(kwargs['domain'])
-        return domain.commtrack_enabled
+        try:
+            return request.project.commtrack_enabled
+        except Exception:
+            if settings.DEBUG:
+                raise
+            else:
+                domain = Domain.get_by_name(kwargs['domain'])
+                return domain.commtrack_enabled
     
     @property
     def config(self):

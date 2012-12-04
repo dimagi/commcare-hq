@@ -56,6 +56,7 @@ from collections import defaultdict
 from couchdbkit.resource import ResourceNotFound
 from corehq.apps.app_manager.decorators import safe_download
 from xml.dom.minidom import parseString
+from corehq.apps.hqmedia.models import CommCareMultimedia
 
 try:
     from lxml.etree import XMLSyntaxError
@@ -573,10 +574,10 @@ def view_generic(req, domain, app_id=None, module_id=None, form_id=None, is_user
     if app:
         if True:
             # decided to do Application and RemoteApp the same way; might change later
-            versions = ['1.0', '2.0']
             commcare_build_options = {}
-            for version in versions:
-                options = CommCareBuildConfig.fetch().get_menu(version)
+            build_config = CommCareBuildConfig.fetch()
+            for version in ['1.0', '2.0']:
+                options = build_config.get_menu(version)
                 options_labels = list()
                 options_builds = list()
                 for option in options:
@@ -1636,8 +1637,8 @@ def download_multimedia_zip(req, domain, app_id):
     errors = []
     for form_path, media_item in app.multimedia_map.items():
         try:
-            media = eval(media_item.media_type)
-            media = media.get(media_item.multimedia_id)
+            media_cls = CommCareMultimedia.get_doc_class(media_item.media_type)
+            media = media_cls.get(media_item.multimedia_id)
             data, content_type = media.get_display_file()
             path = form_path.replace(utils.MULTIMEDIA_PREFIX, "")
             if not isinstance(data, unicode):
@@ -1722,8 +1723,7 @@ def download_raw_jar(req, domain, app_id):
     response['Content-Type'] = "application/java-archive"
     return response
 
-@login_and_domain_required
-def emulator(req, domain, app_id, template="app_manager/emulator.html"):
+def emulator_page(req, domain, app_id, template):
     copied_app = app = get_app(domain, app_id)
     if app.copy_of:
         app = get_app(domain, app.copy_of)
@@ -1738,6 +1738,17 @@ def emulator(req, domain, app_id, template="app_manager/emulator.html"):
         'build_path': build_path,
         'url_base': get_url_base()
     })
+
+@login_and_domain_required
+def emulator(req, domain, app_id, template="app_manager/emulator.html"):
+    return emulator_page(req, domain, app_id, template)
+
+def emulator_handler(req, domain, app_id):
+    exchange = req.GET.get("exchange", '')
+    if exchange:
+        return emulator_page(req, domain, app_id, template="app_manager/exchange_emulator.html")
+    else:
+        return emulator(req, domain, app_id)
 
 def emulator_commcare_jar(req, domain, app_id):
     response = HttpResponse(

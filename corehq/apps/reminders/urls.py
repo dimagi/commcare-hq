@@ -19,4 +19,5 @@ urlpatterns = patterns('corehq.apps.reminders.views',
     url(r'^add_sample/$', 'add_sample', name='add_sample'),
     url(r'^edit_sample/(?P<sample_id>[\w-]+)/$', 'add_sample', name='edit_sample'),
     url(r'^sample_list/$', 'sample_list', name='sample_list'),
+    url(r'^edit_contact/(?P<sample_id>[\w-]+)/(?P<case_id>[\w-]+)/$', 'edit_contact', name='edit_contact'),
 )

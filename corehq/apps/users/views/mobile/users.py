@@ -1,4 +1,5 @@
 import json
+from couchexport.models import Format
 import csv
 import io
 import uuid
@@ -18,7 +19,7 @@ from django.views.generic.base import TemplateView
 from corehq.apps.users.forms import CommCareAccountForm
 from corehq.apps.users.models import CommCareUser
 from corehq.apps.groups.models import Group
-from corehq.apps.users.bulkupload import create_or_update_users_and_groups, check_headers
+from corehq.apps.users.bulkupload import create_or_update_users_and_groups, check_headers, dump_users_and_groups
 from corehq.apps.users.tasks import bulk_upload_async
 from corehq.apps.users.views import _users_context, require_can_edit_web_users, require_can_edit_commcare_users
 
@@ -197,7 +198,6 @@ def add_commcare_account(request, domain, template="users/add_commcare_account.h
     context.update(only_numeric=(request.project.password_format() == 'n'))
     return render_to_response(request, template, context)
 
-
 class UploadCommCareUsers(TemplateView):
 
     template_name = 'users/upload_commcare_users.html'
@@ -289,10 +289,11 @@ class UploadCommCareUsers(TemplateView):
         self.domain = domain
         return super(UploadCommCareUsers, self).dispatch(request, *args, **kwargs)
 
-def upload_commcare_users_example(request, domain):
-    response = HttpResponse()
-    response['Content-Type'] = 'text/csv'
-    response['Content-Disposition'] = 'attachment; filename=users.csv'
-    writer = csv.writer(response)
-    writer.writerow(['username', 'password', 'phone-number'])
+@require_can_edit_commcare_users
+def download_commcare_users(request, domain):
+    response = HttpResponse(mimetype=Format.from_format('xlsx').mimetype)
+    response['Content-Disposition'] = 'attachment; filename=%s_users.xlsx' % domain
+
+    dump_users_and_groups(response, domain)
+
     return response

@@ -2,7 +2,7 @@ from datetime import timedelta, datetime, time
 import json
 from django.core.urlresolvers import reverse
 from django.http import HttpResponseRedirect, Http404, HttpResponse, HttpResponseBadRequest
-from corehq.apps.reminders.forms import CaseReminderForm, ComplexCaseReminderForm, SurveyForm, SurveySampleForm
+from corehq.apps.reminders.forms import CaseReminderForm, ComplexCaseReminderForm, SurveyForm, SurveySampleForm, EditContactForm
 from corehq.apps.reminders.models import CaseReminderHandler, CaseReminderEvent, REPEAT_SCHEDULE_INDEFINITELY, EVENT_AS_OFFSET, EVENT_AS_SCHEDULE, SurveyKeyword, Survey, SurveySample, SURVEY_METHOD_LIST, SurveyWave, ON_DATETIME, RECIPIENT_SURVEY_SAMPLE
 from corehq.apps.users.decorators import require_permission
 from corehq.apps.users.models import CouchUser, CommCareUser, Permissions
@@ -10,10 +10,11 @@ from dimagi.utils.web import render_to_response
 from .models import UI_SIMPLE_FIXED, UI_COMPLEX
 from .util import get_form_list, get_sample_list
 from corehq.apps.sms.mixin import VerifiedNumber
-from corehq.apps.sms.util import register_sms_contact
+from corehq.apps.sms.util import register_sms_contact, update_contact
 from corehq.apps.domain.models import DomainCounter
 from casexml.apps.case.models import CommCareCase
 from dateutil.parser import parse
+from corehq.apps.sms.util import close_task
 
 reminders_permission = require_permission(Permissions.edit_data)
 
@@ -24,7 +25,6 @@ def default(request, domain):
 @reminders_permission
 def list_reminders(request, domain, template="reminders/partial/list_reminders.html"):
     handlers = CaseReminderHandler.get_handlers(domain=domain).all()
-    print handlers
     return render_to_response(request, template, {
         'domain': domain,
         'reminder_handlers': handlers
@@ -61,7 +61,6 @@ def add_reminder(request, domain, handler_id=None, template="reminders/partial/a
                )
             ]
             handler.save()
-            print handler.events[0].message
             return HttpResponseRedirect(reverse('list_reminders', args=[domain]))
     elif handler:
         initial = {}
@@ -266,6 +265,7 @@ def delete_keyword(request, domain, keyword_id):
 @reminders_permission
 def add_survey(request, domain, survey_id=None):
     survey = None
+    
     if survey_id is not None:
         survey = Survey.get(survey_id)
     
@@ -279,15 +279,29 @@ def add_survey(request, domain, survey_id=None):
             send_automatically = form.cleaned_data.get("send_automatically")
             send_followup = form.cleaned_data.get("send_followup")
             
+            sample_data = {}
+            for sample in samples:
+                sample_data[sample["sample_id"]] = sample
+            
             if send_followup:
                 timeout_intervals = [int(followup["interval"]) * 1440 for followup in followups]
             else:
                 timeout_intervals = []
             
+            timeout_duration = sum(timeout_intervals) / 1440
+            final_timeout = lambda wave : [((wave.end_date - wave.date).days - timeout_duration) * 1440]
+            
             if survey is None:
                 wave_list = []
                 for wave in waves:
-                    wave_list.append(SurveyWave(date=parse(wave["date"]).date(), time=parse(wave["time"]).time(), form_id=wave["form_id"], reminder_definitions={}))
+                    wave_list.append(SurveyWave(
+                        date=parse(wave["date"]).date(),
+                        time=parse(wave["time"]).time(),
+                        end_date=parse(wave["end_date"]).date(),
+                        form_id=wave["form_id"],
+                        reminder_definitions={},
+                        delegation_tasks={},
+                    ))
                 
                 if send_automatically:
                     for wave in wave_list:
@@ -295,7 +309,7 @@ def add_survey(request, domain, survey_id=None):
                             if sample["method"] == "SMS":
                                 handler = CaseReminderHandler(
                                     domain = domain,
-                                    nickname = "",
+                                    nickname = "Survey '%s'" % name,
                                     default_lang = "en",
                                     method = "survey",
                                     recipient = RECIPIENT_SURVEY_SAMPLE,
@@ -306,12 +320,14 @@ def add_survey(request, domain, survey_id=None):
                                         day_num = 0,
                                         fire_time = wave.time,
                                         form_unique_id = wave.form_id,
-                                        callback_timeout_intervals = timeout_intervals
+                                        callback_timeout_intervals = timeout_intervals + final_timeout(wave),
                                     )],
                                     schedule_length = 1,
                                     event_interpretation = EVENT_AS_SCHEDULE,
                                     max_iteration_count = 1,
-                                    sample_id = sample["sample_id"]
+                                    sample_id = sample["sample_id"],
+                                    survey_incentive = sample["incentive"],
+                                    submit_partial_forms = True,
                                 )
                                 handler.save()
                                 wave.reminder_definitions[sample["sample_id"]] = handler._id
@@ -336,6 +352,7 @@ def add_survey(request, domain, survey_id=None):
                         parsed_date = parse(wave_json["date"]).date()
                         parsed_time = parse(wave_json["time"]).time()
                         if parsed_date == wave.date and parsed_time == wave.time and wave_json["form_id"] == wave.form_id:
+                            wave.end_date = parse(wave_json["end_date"]).date()
                             survey.waves.append(wave)
                             unchanged_wave_json.append(wave_json)
                             continue
@@ -346,19 +363,24 @@ def add_survey(request, domain, survey_id=None):
                 for wave_json in unchanged_wave_json:
                     waves.remove(wave_json)
                 
-                # Retire reminder definitions for old waves
+                # Retire reminder definitions / close delegation tasks for old waves
                 for wave in current_waves:
                     for sample_id, handler_id in wave.reminder_definitions.items():
                         handler = CaseReminderHandler.get(handler_id)
                         handler.retire()
+                    for sample_id, delegation_data in wave.delegation_tasks.items():
+                        for case_id, delegation_case_id in delegation_data.items():
+                            close_task(domain, delegation_case_id, request.couch_user.get_id)
                 
                 # Add in new waves
                 for wave_json in waves:
                     survey.waves.append(SurveyWave(
                         date=parse(wave_json["date"]).date(),
                         time=parse(wave_json["time"]).time(),
+                        end_date=parse(wave_json["end_date"]).date(),
                         form_id=wave_json["form_id"],
                         reminder_definitions={},
+                        delegation_tasks={},
                     ))
                 
                 # Retire reminder definitions that are no longer needed
@@ -378,7 +400,9 @@ def add_survey(request, domain, survey_id=None):
                 for wave in survey.waves:
                     for sample_id, handler_id in wave.reminder_definitions.items():
                         handler = CaseReminderHandler.get(handler_id)
-                        handler.events[0].callback_timeout_intervals = timeout_intervals
+                        handler.events[0].callback_timeout_intervals = timeout_intervals + final_timeout(wave)
+                        handler.nickname = "Survey '%s'" % name
+                        handler.survey_incentive = sample_data[sample_id]["incentive"]
                         handler.save()
                 
                 # Create additional reminder definitions as necessary
@@ -387,7 +411,7 @@ def add_survey(request, domain, survey_id=None):
                         if sample_id not in wave.reminder_definitions:
                             handler = CaseReminderHandler(
                                 domain = domain,
-                                nickname = "",
+                                nickname = "Survey '%s'" % name,
                                 default_lang = "en",
                                 method = "survey",
                                 recipient = RECIPIENT_SURVEY_SAMPLE,
@@ -398,12 +422,14 @@ def add_survey(request, domain, survey_id=None):
                                     day_num = 0,
                                     fire_time = wave.time,
                                     form_unique_id = wave.form_id,
-                                    callback_timeout_intervals = timeout_intervals
+                                    callback_timeout_intervals = timeout_intervals + final_timeout(wave),
                                 )],
                                 schedule_length = 1,
                                 event_interpretation = EVENT_AS_SCHEDULE,
                                 max_iteration_count = 1,
-                                sample_id = sample_id
+                                sample_id = sample_id,
+                                survey_incentive = sample_data[sample_id]["incentive"],
+                                submit_partial_forms = True,
                             )
                             handler.save()
                             wave.reminder_definitions[sample_id] = handler._id
@@ -415,7 +441,7 @@ def add_survey(request, domain, survey_id=None):
                 survey.send_automatically = send_automatically
                 survey.send_followup = send_followup
             
-            # Sort the questionnaire waves by date and time (for display purposes only)
+            # Sort the questionnaire waves by date and time
             survey.waves = sorted(survey.waves, key = lambda wave : datetime.combine(wave.date, wave.time))
             
             # Create / Close delegation tasks as necessary for samples with method "CATI"
@@ -434,13 +460,9 @@ def add_survey(request, domain, survey_id=None):
                     "date" : str(wave.date),
                     "form_id" : wave.form_id,
                     "time" : str(wave.time),
-                    "ignore" : False,
+                    "ignore" : wave.has_started(survey),
+                    "end_date" : str(wave.end_date),
                 }
-                
-                for sample in samples:
-                    if CaseReminderHandler.timestamp_to_utc(sample, datetime.combine(wave.date, wave.time)) < utcnow:
-                        wave_json["ignore"] = True
-                        break
                 
                 waves.append(wave_json)
             
@@ -466,6 +488,7 @@ def add_survey(request, domain, survey_id=None):
         "sample_list" : sample_list,
         "method_list" : SURVEY_METHOD_LIST,
         "user_list" : CommCareUser.by_domain(domain),
+        "started" : survey.has_started() if survey is not None else False,
     }
     return render_to_response(request, "reminders/partial/add_survey.html", context)
 
@@ -484,11 +507,13 @@ def add_sample(request, domain, sample_id=None):
         sample = SurveySample.get(sample_id)
     
     if request.method == "POST":
-        form = SurveySampleForm(request.POST)
+        form = SurveySampleForm(request.POST, request.FILES)
         if form.is_valid():
             name            = form.cleaned_data.get("name")
             sample_contacts = form.cleaned_data.get("sample_contacts")
             time_zone       = form.cleaned_data.get("time_zone")
+            use_contact_upload_file = form.cleaned_data.get("use_contact_upload_file")
+            contact_upload_file = form.cleaned_data.get("contact_upload_file")
             
             if sample is None:
                 sample = SurveySample (
@@ -500,39 +525,55 @@ def add_sample(request, domain, sample_id=None):
                 sample.name = name
                 sample.time_zone = time_zone.zone
             
+            errors = []
+            
             phone_numbers = []
-            for contact in sample_contacts:
-                phone_numbers.append(contact["phone_number"])
+            if use_contact_upload_file == "Y":
+                for contact in contact_upload_file:
+                    phone_numbers.append(contact["phone_number"])
+            else:
+                for contact in sample_contacts:
+                    phone_numbers.append(contact["phone_number"])
             
             existing_number_entries = VerifiedNumber.view('sms/verified_number_by_number',
                                             keys=phone_numbers,
                                             include_docs=True
                                        ).all()
             
-            existing_numbers = [v.phone_number for v in existing_number_entries]
-            nonexisting_numbers = list(set(phone_numbers).difference(existing_numbers))
+            for entry in existing_number_entries:
+                if entry.domain != domain or entry.owner_doc_type != "CommCareCase":
+                    errors.append("Cannot use phone number %s" % entry.phone_number)
             
-            id_range = DomainCounter.increment(domain, "survey_contact_id", len(nonexisting_numbers))
-            ids = iter(range(id_range[0], id_range[1] + 1))
-            for phone_number in nonexisting_numbers:
-                register_sms_contact(domain, "participant", str(ids.next()), request.couch_user.get_id, phone_number, contact_phone_number_is_verified="1", contact_backend_id="MOBILE_BACKEND_TROPO_US", language_code="en", time_zone=time_zone.zone)
-            
-            newly_registered_entries = VerifiedNumber.view('sms/verified_number_by_number',
-                                            keys=nonexisting_numbers,
-                                            include_docs=True
-                                       ).all()
-            
-            sample.contacts = [v.owner_id for v in existing_number_entries] + [v.owner_id for v in newly_registered_entries]
-            
-            sample.save()
-            
-            # Update delegation tasks for surveys using this sample
-            surveys = Survey.view("reminders/sample_to_survey", key=[domain, sample._id, "CATI"], include_docs=True).all()
-            for survey in surveys:
-                survey.update_delegation_tasks(request.couch_user.get_id)
-                survey.save()
-            
-            return HttpResponseRedirect(reverse("sample_list", args=[domain]))
+            if len(errors) > 0:
+                if use_contact_upload_file == "Y":
+                    form._errors["contact_upload_file"] = form.error_class(errors)
+                else:
+                    form._errors["sample_contacts"] = form.error_class(errors)
+            else:
+                existing_numbers = [v.phone_number for v in existing_number_entries]
+                nonexisting_numbers = list(set(phone_numbers).difference(existing_numbers))
+                
+                id_range = DomainCounter.increment(domain, "survey_contact_id", len(nonexisting_numbers))
+                ids = iter(range(id_range[0], id_range[1] + 1))
+                for phone_number in nonexisting_numbers:
+                    register_sms_contact(domain, "participant", str(ids.next()), request.couch_user.get_id, phone_number, contact_phone_number_is_verified="1", contact_backend_id="MOBILE_BACKEND_TROPO_US", language_code="en", time_zone=time_zone.zone)
+                
+                newly_registered_entries = VerifiedNumber.view('sms/verified_number_by_number',
+                                                keys=nonexisting_numbers,
+                                                include_docs=True
+                                           ).all()
+                
+                sample.contacts = [v.owner_id for v in existing_number_entries] + [v.owner_id for v in newly_registered_entries]
+                
+                sample.save()
+                
+                # Update delegation tasks for surveys using this sample
+                surveys = Survey.view("reminders/sample_to_survey", key=[domain, sample._id, "CATI"], include_docs=True).all()
+                for survey in surveys:
+                    survey.update_delegation_tasks(request.couch_user.get_id)
+                    survey.save()
+                
+                return HttpResponseRedirect(reverse("sample_list", args=[domain]))
     else:
         initial = {}
         if sample is not None:
@@ -541,7 +582,7 @@ def add_sample(request, domain, sample_id=None):
             contact_info = []
             for case_id in sample.contacts:
                 case = CommCareCase.get(case_id)
-                contact_info.append({"id":case.name, "phone_number":case.contact_phone_number})
+                contact_info.append({"id":case.name, "phone_number":case.contact_phone_number, "case_id" : case_id})
             initial["sample_contacts"] = contact_info
         form = SurveySampleForm(initial=initial)
     
@@ -559,4 +600,36 @@ def sample_list(request, domain):
         "samples" : SurveySample.get_all(domain)
     }
     return render_to_response(request, "reminders/partial/sample_list.html", context)
+
+@reminders_permission
+def edit_contact(request, domain, sample_id, case_id):
+    case = CommCareCase.get(case_id)
+    if case.domain != domain:
+        raise Http404
+    if request.method == "POST":
+        form = EditContactForm(request.POST)
+        if form.is_valid():
+            phone_number = form.cleaned_data.get("phone_number")
+            vn = VerifiedNumber.view('sms/verified_number_by_number',
+                                        key=phone_number,
+                                        include_docs=True,
+                                    ).one()
+            if vn is not None and vn.owner_id != case_id:
+                form._errors["phone_number"] = form.error_class(["Phone number is already in use."])
+            else:
+                update_contact(domain, case_id, request.couch_user.get_id, contact_phone_number=phone_number)
+                return HttpResponseRedirect(reverse("edit_sample", args=[domain, sample_id]))
+    else:
+        initial = {
+            "phone_number" : case.get_case_property("contact_phone_number"),
+        }
+        form = EditContactForm(initial=initial)
+    
+    context = {
+        "domain" : domain,
+        "case" : case,
+        "form" : form,
+    }
+    return render_to_response(request, "reminders/partial/edit_contact.html", context)
+
 

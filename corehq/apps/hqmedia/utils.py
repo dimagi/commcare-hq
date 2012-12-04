@@ -72,7 +72,6 @@ def most_restrictive(licenses):
     given a list of licenses, this function returns the list of licenses that are as restrictive or more restrictive
     than each of the input licenses
     '<' == less restrictive
-    pd < cc
     cc < cc-nd, cc-nc, cc-sa
     cc-nd < cc-nc-nd
     cc-nc < cc-nc-sa
@@ -99,7 +98,7 @@ def most_restrictive(licenses):
         return ['cc-nc-nd', 'cc-nc-sa', 'cc-nd', 'cc-sa']
     if 'cc' in licenses:
         return ['cc-nc-nd', 'cc-nc-sa', 'cc-nd', 'cc-nc', 'cc-sa', 'cc']
-    return ['cc-nc-nd', 'cc-nc-sa', 'cc-nd', 'cc-nc', 'cc-sa', 'cc', 'public']
+    return ['cc-nc-nd', 'cc-nc-sa', 'cc-nd', 'cc-nc', 'cc-sa', 'cc']
 
 class HQMediaMatcher():
     image_paths = {}
@@ -181,7 +180,8 @@ class HQMediaMatcher():
                         media.add_domain(self.domain, owner=True)
                         media.update_or_add_license(self.domain,
                                                     type=kwargs.get('license', ''),
-                                                    author=kwargs.get('author', ''))
+                                                    author=kwargs.get('author', ''),
+                                                    attribution_notes=kwargs.get('attribution_notes', ''))
                         self.app.create_mapping(media, form_path)
                         match_map = HQMediaMapItem.format_match_map(form_path, media.doc_type, media._id, path)
                         if is_image:
@@ -228,7 +228,10 @@ class HQMediaMatcher():
                     username=self.username,
                     replace_attachment=replace_existing_media)
                 media.add_domain(self.domain, owner=True, **kwargs)
-                media.update_or_add_license(self.domain, type=kwargs.get('license', ''), author=kwargs.get('author', ''))
+                media.update_or_add_license(self.domain,
+                                            type=kwargs.get('license', ''),
+                                            author=kwargs.get('author', ''),
+                                            attribution_notes=kwargs.get('attribution_notes', ''))
                 self.app.create_mapping(media, form_path)
 
                 return True, HQMediaMapItem.format_match_map(form_path, media.doc_type, media._id, filename), errors

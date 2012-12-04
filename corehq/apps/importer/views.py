@@ -1,10 +1,9 @@
 import os.path
 from django.http import HttpResponseRedirect
 from dimagi.utils.web import render_to_response
-from casexml.apps.case.models import CommCareCase, CommCareCaseAction, const
+from casexml.apps.case.models import CommCareCase, const
 from casexml.apps.phone.xml import get_case_xml
 from corehq.apps.hqcase.utils import submit_case_blocks
-from corehq.apps.domain.decorators import login_and_domain_required
 from corehq.apps.importer import base
 from corehq.apps.importer.util import ExcelFile, get_case_properties
 from couchdbkit.exceptions import MultipleResultsFound, NoResultFound
@@ -14,65 +13,82 @@ from datetime import datetime, date
 from xlrd import xldate_as_tuple
 from corehq.apps.users.decorators import require_permission
 from corehq.apps.users.models import Permissions
+from soil.util import expose_download
+from soil import DownloadBase
+from django.contrib import messages
+from django.utils.translation import ugettext as _
 
 require_can_edit_data = require_permission(Permissions.edit_data)
 
+EXCEL_SESSION_ID = "excel_id"
+MAX_ALLOWED_ROWS = 500
+
 @require_can_edit_data
 def excel_config(request, domain):
-    error_type = "nofile"
-    
-    if request.method == 'POST' and request.FILES:
-        named_columns = request.POST['named_columns']    
-        uploaded_file_handle = request.FILES['file']
-        
-        extension = os.path.splitext(uploaded_file_handle.name)[1][1:].strip().lower()
-        
-        if extension in ExcelFile.ALLOWED_EXTENSIONS:
-            # get a temp file
-            fd, filename = mkstemp(suffix='.'+extension)
+    if request.method == 'POST':
+        if request.FILES:
+            named_columns = request.POST['named_columns']
+            uses_headers = named_columns == 'yes'
+            uploaded_file_handle = request.FILES['file']
             
-            with os.fdopen(fd, "wb") as destination:
-                # write the uploaded file to the temp file
-                for chunk in uploaded_file_handle.chunks():
-                    destination.write(chunk)
-
-            uploaded_file_handle.close() 
+            extension = os.path.splitext(uploaded_file_handle.name)[1][1:].strip().lower()
             
-            # stash filename for subsequent views      
-            request.session['excel_path'] = filename  
-            
-            # open spreadsheet and get columns
-            spreadsheet = ExcelFile(filename, (named_columns == 'yes'))
-            columns = spreadsheet.get_header_columns()
+            if extension in ExcelFile.ALLOWED_EXTENSIONS:
+                # NOTE: this is kinda messy and needs to be cleaned up but
+                # just trying to get something functional in place.
+                # We may not always be able to reference files from subsequent
+                # views if your worker changes, so we have to store it elsewhere
+                # using the soil framework.
                 
-            # get case types in this domain
-            case_types = []
-            for row in CommCareCase.view('hqcase/types_by_domain',reduce=True,group=True,startkey=[domain],endkey=[domain,{}]).all():
-                if not row['key'][1] in case_types:
-                    case_types.append(row['key'][1])
-                    
-            if len(case_types) > 0:                                                
-                return render_to_response(request, "importer/excel_config.html", {
-                                            'named_columns': named_columns, 
-                                            'columns': columns,
-                                            'case_types': case_types,
-                                            'domain': domain,
-                                            'report': {
-                                                'name': 'Import: Configuration'
-                                             },
-                                            'slug': base.ImportCases.slug})
+                # stash content in the default storage for subsequent views
+                file_ref = expose_download(uploaded_file_handle.read(),
+                                           expiry=1*60*60)
+                request.session[EXCEL_SESSION_ID] = file_ref.download_id
+
+                spreadsheet = _get_spreadsheet(file_ref, uses_headers)
+                if not spreadsheet:
+                    return _spreadsheet_expired(request, domain)
+                columns = spreadsheet.get_header_columns()
+                row_count = spreadsheet.get_num_rows()
+                if row_count > MAX_ALLOWED_ROWS:
+                    messages.error(request, _('Sorry, your spreadsheet is too big. '
+                                              'Please reduce the number of '
+                                              'rows to less than %s and try again') % MAX_ALLOWED_ROWS)
+                else:
+                    # get case types in this domain
+                    case_types = []
+                    for row in CommCareCase.view('hqcase/types_by_domain',reduce=True,group=True,startkey=[domain],endkey=[domain,{}]).all():
+                        if not row['key'][1] in case_types:
+                            case_types.append(row['key'][1])
+
+                    if len(case_types) > 0:
+                        return render_to_response(request, "importer/excel_config.html", {
+                                                    'named_columns': named_columns, 
+                                                    'columns': columns,
+                                                    'case_types': case_types,
+                                                    'domain': domain,
+                                                    'report': {
+                                                        'name': 'Import: Configuration'
+                                                     },
+                                                    'slug': base.ImportCases.slug})
+                    else:
+                        messages.error(request, _('No cases have been submitted to this domain. '
+                                                  'You cannot update case details from an Excel '
+                                                  'file until you have existing cases.'))
             else:
-                error_type = "cases"
+                messages.error(request, _('The Excel file you chose could not be processed. '
+                                          'Please check that it is saved as a Microsoft Excel '
+                                          '97/2000 .xls file.'))
         else:
-            error_type = "file"
-    
+            messages.error(request, _('Please choose an Excel file to import.'))
     #TODO show bad/invalid file error on this page
-    return HttpResponseRedirect(base.ImportCases.get_url(domain) + "?error=" + error_type)
+    return HttpResponseRedirect(base.ImportCases.get_url(domain))
       
+@require_POST
 @require_can_edit_data
 def excel_fields(request, domain):
     named_columns = request.POST['named_columns']
-    filename = request.session.get('excel_path')
+    uses_headers = named_columns == 'yes'
     case_type = request.POST['case_type']
     search_column = request.POST['search_column']
     search_field = request.POST['search_field']
@@ -80,7 +96,12 @@ def excel_fields(request, domain):
     key_column = ''
     value_column = ''
     
-    spreadsheet = ExcelFile(filename, named_columns)
+    download_ref = DownloadBase.get(request.session.get(EXCEL_SESSION_ID))
+    
+    spreadsheet = _get_spreadsheet(download_ref, uses_headers)
+    if not spreadsheet:
+        return _spreadsheet_expired(request, domain)
+
     columns = spreadsheet.get_header_columns()
     
     if key_value_columns == 'yes':
@@ -136,8 +157,8 @@ def excel_fields(request, domain):
 @require_POST
 @require_can_edit_data
 def excel_commit(request, domain):  
-    named_columns = request.POST['named_columns'] 
-    filename = request.session.get('excel_path')
+    named_columns = request.POST['named_columns']
+    uses_headers = named_columns == 'yes'
     case_type = request.POST['case_type']
     search_column = request.POST['search_column']
     search_field = request.POST['search_field']
@@ -156,9 +177,15 @@ def excel_commit(request, domain):
         if field and (case_fields[i] or custom_fields[i]):
             field_map[field] = {'case': case_fields[i], 'custom': custom_fields[i], 'date': int(date_yesno[i])}
         
-    spreadsheet = ExcelFile(filename, named_columns)
+    download_ref = DownloadBase.get(request.session.get(EXCEL_SESSION_ID))
+    spreadsheet = _get_spreadsheet(download_ref, uses_headers)
+    if not spreadsheet:
+        return _spreadsheet_expired(request, domain)
 
-    if filename is None or spreadsheet is None:
+    if spreadsheet.has_errors:
+        messages.error(request, _('The session containing the file you '
+                                  'uploaded has expired - please upload '
+                                  'a new one.'))
         return HttpResponseRedirect(base.ImportCases.get_url(domain) + "?error=cache")
     
     columns = spreadsheet.get_header_columns()        
@@ -168,12 +195,12 @@ def excel_commit(request, domain):
     
     try:
         key_column_index = columns.index(key_column)
-    except:
+    except ValueError:
         key_column_index = False
     
     try:
         value_column_index = columns.index(value_column)
-    except:
+    except ValueError:
         value_column_index = False
 
     no_match_count = 0
@@ -211,7 +238,7 @@ def excel_commit(request, domain):
                 case = CommCareCase.get(search_id)
                 if case.domain == domain:
                     found = True
-            except:
+            except Exception:
                 pass
         elif search_field == 'external_id':
             try:
@@ -243,7 +270,7 @@ def excel_commit(request, domain):
                 # nothing was set so maybe it is a regular column
                 try:
                     update_value = row[columns.index(key)]
-                except:
+                except Exception:
                     pass
             
             if update_value:
@@ -279,7 +306,7 @@ def excel_commit(request, domain):
             
     # unset filename session var
     try:
-        del request.session['excel_path']
+        del request.session[EXCEL_SESSION_ID]
     except KeyError:
         pass            
     
@@ -292,4 +319,24 @@ def excel_commit(request, domain):
                                     'name': 'Import: Completed'
                                  },
                                 'slug': base.ImportCases.slug})
-     
+
+def _spreadsheet_expired(req, domain):
+    messages.error(req, _('Sorry, your session has expired. Please start over and try again.'))
+    return HttpResponseRedirect(base.ImportCases.get_url(domain))
+
+def _get_spreadsheet(download_ref, column_headers=True):
+    if not download_ref:
+        return None
+
+    # even though we already have the raw data in the download object,
+    # unfortunately the excel library only likes to use files so we 
+    # have to resave it in a temp file before opening.
+
+    # only .xls is supported
+    fd, filename = mkstemp(suffix='.xls')
+    with os.fdopen(fd, "wb") as destination:
+        # write the download reference to the temp file
+        destination.write(download_ref.get_content())
+    
+    return ExcelFile(filename, column_headers)
+    
