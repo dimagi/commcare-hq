@@ -682,6 +682,3 @@ class PopulateRelatedCasesWithIndicatorDefinitionMixin(DocumentSchema):
                 logging.error("Could not populate indicator information to case %s due to error: %s" %
                     (case.get_id, e)
                 )
-
-
-
