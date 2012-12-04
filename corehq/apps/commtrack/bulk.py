@@ -1,4 +1,5 @@
 import csv
+from StringIO import StringIO
 from datetime import datetime
 from models import *
 from corehq.apps.sms.mixin import VerifiedNumber, strip_plus
@@ -17,7 +18,8 @@ def set_error_bulk(rows, msg, override=False):
         set_error(row, msg, override)
 
 def import_stock_reports(domain, f):
-    data = list(csv.DictReader(f))
+    reader = csv.DictReader(f)
+    data = list(reader)
     headers = reduce(lambda a, b: a.union(b.keys()), data, set())
 
     try:
@@ -39,11 +41,8 @@ def import_stock_reports(domain, f):
         for loc, rows in rows_by_loc.iteritems():
             process_loc(domain, loc, rows)
 
-    # temp
-    for i, row in enumerate(data):
-        if 'error' in row:
-            yield '%d: %s' % (i + 1, row['error'])
-
+    return annotate_csv(data, reader.fieldnames)
+    
 def validate_headers(domain, headers):
     META_COLS = ['outlet_id', 'outlet_code', 'date', 'reporter', 'phone']
 
@@ -192,5 +191,16 @@ def process_loc(domain, loc, rows):
 
 def import_row(row):
     pass
+
+    # generate the data dict that sms.StockReport.parse() makes
     #   import
 
+def annotate_csv(data, columns):
+    headers = list(columns)
+    headers.insert(0, 'error')
+
+    f = StringIO()
+    writer = csv.DictWriter(f, headers, extrasaction='ignore')
+    writer.writerow(dict((h, 'STATUS' if h == 'error' else h) for h in headers))
+    writer.writerows(data)
+    return f.getvalue()

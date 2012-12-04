@@ -35,8 +35,14 @@ def location_import(request, domain):
 @require_superuser
 def historical_import(request, domain):
     if request.method == "POST":
-        messages = list(bulk.import_stock_reports(domain, request.FILES['history']))
-        return HttpResponse('results:\n\n' + '\n'.join(messages), 'text/plain')
+        try:
+            result = bulk.import_stock_reports(domain, request.FILES['history'])
+            resp = HttpResponse(result, 'text/csv')
+            resp['Content-Disposition'] = 'attachment; filename="import_results.csv"'
+            return resp
+        except Exception, e:
+            return HttpResponse(str(e), 'text/plain')
+
 
     return HttpResponse("""
 <form method="post" action="" enctype="multipart/form-data">
