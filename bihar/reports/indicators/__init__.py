@@ -117,9 +117,28 @@ INDICATOR_SETS = [
                 DELIVERIES,
             ],
         }
-    }
+    },
 #    {"slug": "postpartum", "name": _("Post-Partum Complications") },
-#    {"slug": "newborn", "name": _("Weak Newborn") },
+    {
+        "slug": "newborn",
+        "name": _("Weak Newborn"),
+        "indicators": {
+            "summary":[
+                {
+                    "slug": "ptlb",
+                    "name": _("# Preterm births / # Live births"),
+                },
+                {
+                    "slug": "lt2kglb",
+                    "name": _("# infants < 2kg / # live births"),
+                },
+                {
+                    "slug": "visited_weak_ones",
+                    "name": _("# live births who are preterm or < 2kg  visited in 24 hours of birth by FLW/ (# preterm + # infants < 2kg)"),
+                },
+            ]
+        }
+    },
 #    {"slug": "familyplanning", "name": _("Family Planning") },
 #    {"slug": "complimentaryfeeding", "name": _("Complimentary Feeding") },
 #    {"slug": "mortality", "name": _("Mortality") }

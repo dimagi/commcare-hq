@@ -121,7 +121,16 @@ def id_day(cases):
     return _num_denom(num, denom)
 
 def idnb(cases):
-    valid_cases = filter(lambda case: _delivered_at_in_timeframe(case, ['private', 'public'], 30), cases)
+    valid_cases = filter(lambda case: _delivered_at_in_timeframe(case, ['private', 'public'], 30) and
+                                      get_related_prop(case, 'birth_status') == "live_birth", cases)
     denom = len(valid_cases)
-    num = len(filter(lambda case: not get_related_prop(case, 'breastfed_hour') == 'yes', valid_cases))
+
+    def breastfed_hour(case):
+        dtf = get_related_prop(case, 'date_time_feed')
+        tob = get_related_prop(case, 'time_of_birth')
+        if dtf and tob:
+            return dtf - tob <= dt.timedelta(hours=1)
+        return False
+
+    num = len(filter(lambda case: breastfed_hour(case), valid_cases))
     return _num_denom(num, denom)
