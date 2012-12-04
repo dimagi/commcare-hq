@@ -227,16 +227,13 @@ def cf_last_month(cases):
     done = lambda case: _visits_done(case, cf_schedule, "cf")
     return _num_denom_count(cases, done, due)
 
-class HDDayCalculator(MemoizingCalculator):
+class HDDayCalculator(SummaryValueMixIn, MotherPreDeliveryMixIn, MemoizingCalculatorMixIn, IndicatorCalculator):
 
     def _numerator(self, case):
         return 1 if _visited_in_timeframe_of_birth(case, 1) else 0
 
     def _denominator(self, case):
         return 1 if _delivered_at_in_timeframe(case, 'home', 30) else 0
-
-    def as_row(self, case): #todo: change this
-        return mother_pre_delivery_columns(case)
 
 class IDDayCalculator(HDDayCalculator):
 
@@ -258,7 +255,7 @@ class IDNBCalculator(IDDayCalculator):
             return 1 if dtf - tob <= dt.timedelta(hours=1) else 0
         return 0
 
-class PTLBCalculator(MemoizingCalculator):
+class PTLBCalculator(SummaryValueMixIn, MotherPreDeliveryMixIn, MemoizingCalculatorMixIn, IndicatorCalculator):
 
     def _numerator(self, case):
         return 1 if getattr(case, 'term', None) == "pre_term" else 0
