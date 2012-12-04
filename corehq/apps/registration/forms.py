@@ -2,11 +2,10 @@ from corehq.apps.users.models import CouchUser
 from django import forms
 from django.contrib.auth.models import User
 import re
-from corehq.apps.domain.forms import clean_password, max_pwd, _BaseForm
+from corehq.apps.domain.forms import clean_password, max_pwd
 from django.core.validators import validate_email
 from corehq.apps.domain.models import Domain
 from corehq.apps.domain.utils import new_domain_re, new_org_re, new_org_title_re, website_re
-from corehq.apps.registration.models import RegistrationRequest
 from corehq.apps.orgs.models import Organization
 
 class NewWebUserRegistrationForm(forms.Form):

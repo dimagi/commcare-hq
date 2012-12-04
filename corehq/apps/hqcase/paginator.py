@@ -100,7 +100,7 @@ class CasePaginator():
         es_results = get_es().get('hqcases/_search', data=es_query)
 
         if es_results.has_key('error'):
-            notify_exception("Error in case list elasticsearch query: %s" % es_results['error'])
+            notify_exception(None, "Error in case list elasticsearch query: %s" % es_results['error'])
             return {
                 'skip': self.params.start,
                 'limit': self.params.count,

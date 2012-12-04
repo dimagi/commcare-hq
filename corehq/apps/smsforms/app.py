@@ -123,6 +123,7 @@ def submit_unfinished_form(session_id):
         # Tag the submission as a partial submission
         xform = XFormInstance.get(xform_id)
         xform.partial_submission = True
+        xform.survey_incentive = session.survey_incentive
         xform.save()
 
 

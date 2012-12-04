@@ -158,6 +158,13 @@
             margin-top: 1.5em;
         }
 
+        #license-info-label {
+            display: inline;
+        }
+
+        #license-info-label:hover {
+            background: inherit;
+        }
     </style>
 {% endblock %}
 
@@ -217,11 +224,13 @@
     {% include 'appstore/partials/sidebar.html' with display_ua='true' %}
 {% endblock %}
 
+{% block extra_tabs %}
 {% block tabs %}
     {% url appstore as search_url %}
     <ul class="nav">
         {% include 'appstore/partials/search_input.html' with search_name="search" search_for="apps..." %}
     </ul>
+{% endblock %}
 {% endblock %}
 
 {% block page-title %}
@@ -340,7 +349,7 @@
                             {% endif %}
                         {% endif %}
                     {% endfor %}
-                    <h6>{{ app.downloads }} download{{ app.copies_of_parent|length|pluralize }}</h6>
+                    <h6>{{ app.downloads }} download{{ app.downloads|pluralize }}</h6>
                     {% if app.short_description %}
                         <p>{{ app.short_description }}</p>
                     {% endif %}
