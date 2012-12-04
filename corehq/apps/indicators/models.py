@@ -1,11 +1,11 @@
 import logging
 import calendar
 import copy
-from couchdbkit.ext.django.schema import Document, StringProperty, IntegerProperty, ListProperty, BooleanProperty, DateTimeProperty
+from couchdbkit.ext.django.schema import Document, StringProperty, IntegerProperty, ListProperty
 from couchdbkit.schema.base import DocumentSchema
 import datetime
 from couchdbkit.schema.properties import LazyDict
-from django.utils.safestring import mark_safe
+import numpy
 from casexml.apps.case.models import CommCareCase
 from couchforms.models import XFormInstance
 from dimagi.utils.couch.database import get_db
@@ -16,7 +16,7 @@ from dimagi.utils.modules import to_function
 class DocumentNotInDomainError(Exception):
     pass
 
-class DocumentMistmatchError(Exception):
+class DocumentMismatchError(Exception):
     pass
 
 
@@ -224,7 +224,7 @@ class DynamicIndicatorDefinition(IndicatorDefinition):
         raise NotImplementedError
 
 
-class CouchViewIndicatorDefinition(DynamicIndicatorDefinition):
+class CouchIndicatorDef(DynamicIndicatorDefinition):
     """
         This indicator defintion expects that it will deal with a couch view and a certain indicator key.
         If a user_id is provided when fetching the results, this definition will use:
@@ -375,6 +375,62 @@ class CouchViewIndicatorDefinition(DynamicIndicatorDefinition):
             ))
         return retrospective
 
+class NoGroupCouchIndicatorDefBase(CouchIndicatorDef):
+    """
+        Use this base for all CouchViewIndicatorDefinitions that have views which are not simply
+        counted during the monthly retrospective.
+    """
+
+    @property
+    def use_datespans_in_retrospective(self):
+        return True
+
+    def get_value(self, user_id=None, datespan=None):
+        raise NotImplementedError("You must override the parent's get_value. "
+                                  "Reduce / group will not work here.")
+
+
+class CountUniqueCouchIndicatorDef(NoGroupCouchIndicatorDefBase):
+    """
+        Use this indicator to count the # of unique emitted values.
+    """
+
+    def get_value(self, user_id=None, datespan=None):
+        results = self.get_couch_results(user_id, datespan)
+        all_emitted_values = [r['value'] for r in results]
+        all_emitted_values = set(all_emitted_values)
+        return len(all_emitted_values)
+
+
+class MedianCouchIndicatorDef(NoGroupCouchIndicatorDefBase):
+    """
+        Get the median value of what is emitted. Assumes that emits are numbers.
+    """
+
+    def get_value(self, user_id=None, datespan=None):
+        results = self.get_couch_results(user_id, datespan)
+        values = [item.get('value', 0) for item in results if item.get('value')]
+        return numpy.median(values) if values else 0
+
+
+class SumLastEmittedCouchIndicatorDef(NoGroupCouchIndicatorDefBase):
+    """
+        Expects an emitted value formatted like:
+        {
+            _id: "<unique id string>",
+            value: <number>,
+        }
+        It then finds the sum of all the last emitted unique values.
+    """
+
+    def get_value(self, user_id=None, datespan=None):
+        results = self.get_couch_results(user_id, datespan)
+        unique_values = {}
+        for item in results:
+            if item.get('value'):
+                unique_values[item['value']['_id']] = item['value']['value']
+        return sum(unique_values.values())
+
 
 class CombinedCouchViewIndicatorDefinition(DynamicIndicatorDefinition):
     numerator_slug = StringProperty()
@@ -474,7 +530,7 @@ class FormIndicatorDefinition(DocumentIndicatorDefinition, FormDataIndicatorDefi
         if not isinstance(doc, XFormInstance):
             raise ValueError("The document provided must be an instance of XFormInstance.")
         if not doc.xmlns == self.xmlns:
-            raise DocumentMistmatchError("The xmlns of the form provided does not match the one for this definition.")
+            raise DocumentMismatchError("The xmlns of the form provided does not match the one for this definition.")
         return super(FormIndicatorDefinition, self).get_clean_value(doc)
 
     @classmethod
@@ -527,7 +583,7 @@ class CaseIndicatorDefinition(DocumentIndicatorDefinition):
         if not isinstance(doc, CommCareCase):
             raise ValueError("The document provided must be an instance of CommCareCase.")
         if not doc.type == self.case_type:
-            raise DocumentMistmatchError("The case provided should be a '%s' type case." % self.case_type)
+            raise DocumentMismatchError("The case provided should be a '%s' type case." % self.case_type)
         return super(CaseIndicatorDefinition, self).get_clean_value(doc)
 
     @classmethod
@@ -568,36 +624,4 @@ class FormDataInCaseIndicatorDefinition(CaseIndicatorDefinition, FormDataIndicat
                     received_on=form.received_on
                 )
         return existing_value
-
-
-class PopulateRelatedCasesWithIndicatorDefinitionMixin(DocumentSchema):
-    related_case_types = ListProperty()
-
-    _related_cases = None
-    def set_related_cases(self, case):
-        """
-            set _related_cases here.
-            should be a list of CommCareCase objects
-        """
-        self._related_cases = list()
-
-    def populate_with_value(self, value):
-        """
-            You shouldn't have to modify this.
-        """
-        for case in self._related_cases:
-            if not isinstance(case, CommCareCase):
-                continue
-            try:
-                namespace_computed = case.computed_.get(self.namespace, {})
-                namespace_computed[self.slug] = value
-                case.computed_[self.namespace] = namespace_computed
-                case.computed_modified_on_ = datetime.datetime.utcnow()
-                case.save()
-            except Exception as e:
-                logging.error("Could not populate indicator information to case %s due to error: %s" %
-                    (case.get_id, e)
-                )
-
-
 
