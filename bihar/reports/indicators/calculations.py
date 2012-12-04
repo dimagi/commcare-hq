@@ -1,3 +1,5 @@
+from collections import defaultdict
+from couchdbkit import ResourceNotFound
 from bihar.reports.indicators.filters import A_MONTH, is_pregnant_mother, get_add, get_edd
 from couchforms.safe_index import safe_index
 from dimagi.utils.parsing import string_to_datetime
@@ -139,7 +141,7 @@ def _get_time_of_birth(form):
         )
     return time_of_birth
 
-def complications(cases, days):
+def complications(cases, days, now=None):
     """
     DENOM: [
         any DELIVERY forms with (
@@ -177,6 +179,7 @@ def complications(cases, days):
     #https://bitbucket.org/dimagi/cc-apps/src/caab8f93c1e48d702b5d9032ef16c9cec48868f0/bihar/mockup/bihar_del.xml
     #https://bitbucket.org/dimagi/cc-apps/src/caab8f93c1e48d702b5d9032ef16c9cec48868f0/bihar/mockup/bihar_registration.xml
     #https://bitbucket.org/dimagi/cc-apps/src/caab8f93c1e48d702b5d9032ef16c9cec48868f0/bihar/mockup/bihar_ebf.xml
+    now = now or dt.datetime.utcnow()
     PNC = 'http://bihar.commcarehq.org/pregnancy/pnc'
     DELIVERY = 'http://bihar.commcarehq.org/pregnancy/del'
     REGISTRATION = 'http://bihar.commcarehq.org/pregnancy/registration'
@@ -201,22 +204,37 @@ def complications(cases, days):
             '/data/vaginal_discharge',
             ],
         }
-    now = dt.datetime.utcnow()
+
+    debug = defaultdict(int)
     def get_forms(case, days=30):
         for action in case.actions:
-            if action.date >= now - timedelta(days=days):
-                yield action.xform
+            debug['forms_scanned'] +=1
+            if now - dt.timedelta(days=days) <= action.date <= now:
+                debug['submitted_in_time'] +=1
+                try:
+                    yield action.xform
+                except ResourceNotFound:
+                    debug['bad_xform_refs'] += 1
 
     done = 0
     due = 0
-    days = timedelta(days=days)
+    days = dt.timedelta(days=days)
     for case in cases:
         for form in get_forms(case):
             try:
                 complication_paths = complications_by_form[form.xmlns]
             except KeyError:
                 continue
+            debug['relevent_xmlns'] += 1
             for p in complication_paths:
+                has_complications = form.xpath('form/data/complications')
+                if has_complications == 'no':
+                    debug['%s complications is no' % form.xmlns.split('/')[-1]] += 1
+                elif has_complications is None:
+                    debug['%s complications dne' % form.xmlns.split('/')[-1]] += 1
+                else:
+                    debug['has_complications'] += 1
+                print form.get_id, p, form.xpath('form' + p)
                 if form.xpath('form' + p) == 'yes':
                     due += 1
                     if form.xmlns == DELIVERY:
@@ -226,4 +244,4 @@ def complications(cases, days):
                     add = string_to_datetime(add)
                     if form.metatdata.timeStart - add < days:
                         done += 1
-    return "%s/%s" % (done, due)
+    return "%s/%s,<br/>debug: %s" % (done, due, dict(debug))
