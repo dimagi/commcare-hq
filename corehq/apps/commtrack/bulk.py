@@ -180,13 +180,17 @@ def process_loc(domain, loc, rows):
         set_error_bulk(rows, 'SKIPPED because other rows for this location have errors')
         return
 
+    rows.sort(key=lambda row: row['date'])
+    for row in rows:
+        try:
+            import_row(row)
+            set_error(row, 'SUCCESS row imported')
+        except Exception, e:
+            set_error(row, 'ERROR during import: %s' % str(e))
+            set_error_bulk(rows, 'SKIPPED remaining rows due to unexpected error')
+            break
 
-    print loc
-    print len(rows)
-
-
-
-    #   sort by date
+def import_row(row):
+    pass
     #   import
-    #   if error (any way to get this error currently?), mark and skip rest
 
