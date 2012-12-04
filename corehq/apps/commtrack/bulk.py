@@ -8,6 +8,14 @@ from casexml.apps.case.models import CommCareCase
 from dimagi.utils.couch.database import get_db
 from dimagi.utils.couch.loosechange import map_reduce
 
+def set_error(row, msg, override=False):
+    if override or 'error' not in row:
+        row['error'] = msg
+
+def set_error_bulk(rows, msg, override=False):
+    for row in rows:
+        set_error(row, msg, override)
+
 def import_stock_reports(domain, f):
     data = list(csv.DictReader(f))
     headers = reduce(lambda a, b: a.union(b.keys()), data, set())
@@ -23,20 +31,18 @@ def import_stock_reports(domain, f):
 
     # abort if any location codes are invalid
     if any(not row.get('loc') for row in data):
-        for row in data:
-            if 'error' not in row:
-                row['error'] = 'row skipped because some rows could not be assigned to a valid location'
+        set_error_bulk(data, 'SKIPPED because some rows could not be assigned to a valid location')
     
     else:
 
         rows_by_loc = map_reduce(lambda row: [(row['loc']._id,)], data=data, include_docs=True)
         for loc, rows in rows_by_loc.iteritems():
-            process_loc(loc, rows)
+            process_loc(domain, loc, rows)
 
     # temp
     for i, row in enumerate(data):
         if 'error' in row:
-            yield '%d: %s' % (i, row['error'])
+            yield '%d: %s' % (i + 1, row['error'])
 
 def validate_headers(domain, headers):
     META_COLS = ['outlet_id', 'outlet_code', 'date', 'reporter', 'phone']
@@ -90,7 +96,7 @@ def validate_row(row, domain, data_cols, locs_by_id):
     if loc_id:
         loc_from_id = locs_by_id.get(loc_id) # loc object
         if loc_from_id is None:
-            row['error'] = 'location id is invalid'
+            set_error(row, 'ERROR location id is invalid')
             return
         # convert location to supply point case
         case_id = [case for case in loc_from_id.linked_docs('CommCareCase') if case['type'] == 'supply-point'][0]['_id']
@@ -101,10 +107,10 @@ def validate_row(row, domain, data_cols, locs_by_id):
                                           key=[domain, loc_code],
                                           include_docs=True).first()
         if loc_from_code is None:
-            row['error'] = 'location code is invalid'
+            set_error(row, 'ERROR location code is invalid')
             return
     if loc_from_id and loc_from_code and loc_from_id._id != loc_from_code._id:
-        row['error'] = 'location id and code refer to different locations'
+        set_error(row, 'ERROR location id and code refer to different locations')
         return
     row['loc'] = loc_from_code or loc_from_id
 
@@ -114,7 +120,7 @@ def validate_row(row, domain, data_cols, locs_by_id):
     if phone:
         vn = VerifiedNumber.by_phone(phone)
         if not vn:
-            row['error'] = 'phone number is not verified with any user'
+            set_error(row, 'ERROR phone number is not verified with any user')
             return
         owner = vn.owner
         row['phone'] = strip_plus(phone)
@@ -123,12 +129,12 @@ def validate_row(row, domain, data_cols, locs_by_id):
     if username:
         user = CouchUser.get_by_username('%s@%s.commcarehq.org' % (username, domain))
         if not user:
-            row['error'] = 'reporter user does not exist'
+            set_error(row, 'ERROR reporter user does not exist')
             return
 
     if owner:
         if user and user._id != owner._id:
-            row['error'] = 'phone number does not belong to user'
+            set_error(row, 'ERROR phone number does not belong to user')
             return
         user = owner
     row['user'] = user
@@ -138,7 +144,7 @@ def validate_row(row, domain, data_cols, locs_by_id):
     try:
         datetime.strptime(row['date'], '%Y-%m-%d')
     except ValueError:
-        row['error'] = 'invalid date format'
+        set_error(row, 'ERROR invalid date format')
         return
 
     for k in data_cols:
@@ -147,18 +153,39 @@ def validate_row(row, domain, data_cols, locs_by_id):
             try:
                 int(val)
             except ValueError:
-                row['error'] = 'invalid data value "%s" in column "%s"' % (val, k)
+                set_error(row, 'ERROR invalid data value "%s" in column "%s"' % (val, k))
                 return
 
-def process_loc(loc, rows):
+def process_loc(domain, loc, rows):
+    # get actual loc object
+    loc = rows[0]['loc']
+
+    # get date of latest-submitted stock report for this loc
+    static_loc_id = loc.location_[-1]
+    startkey = [domain, static_loc_id]
+    endkey = list(startkey)
+    endkey.append({})
+
+    most_recent_entry = get_db().view('commtrack/stock_reports', startkey=endkey, endkey=startkey, descending=True).first()
+    if most_recent_entry:
+        most_recent_timestamp = most_recent_entry['key'][-1]
+        most_recent_timestamp = most_recent_timestamp[:10] # truncate to just date for now; also, time zone issues
+
+    if most_recent_timestamp:
+        for row in rows:
+            if row['date'] <= most_recent_timestamp:
+                set_error(row, 'ERROR date must be AFTER the most recently received stock report for this location (%s)' % most_recent_timestamp)
+
+    if any(row.get('error') for row in rows):
+        set_error_bulk(rows, 'SKIPPED because other rows for this location have errors')
+        return
+
+
     print loc
     print len(rows)
 
 
-    #   get threshold date
-    #   flag rows before date
-    #   if any row in loc has error, mark rest as error
-    #       skip
+
     #   sort by date
     #   import
     #   if error (any way to get this error currently?), mark and skip rest
