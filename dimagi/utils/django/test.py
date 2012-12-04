@@ -31,13 +31,20 @@ class SeleniumWrapper(object):
         duration -- seconds to wait for success before rethrowing (default: 10)
         interval -- seconds between retries (default: min(.5, duration))
         ensure_displayed -- retry if element is not visible (default: True)
+        msg -- an optional descriptive error message to include in the
+        exception string
 
     """
 
-    def __init__(self, browser_name, base_url, *args, **kwargs):
+    def __init__(self, driver, base_url=''):
+        """
+        driver - WebDriver or WebElement instance to wrap
+        base_url - string to prepend to all urls passed to get()
+
+        """
+
+        self.driver = driver
         self.base_url = base_url
-        self.browser_name = browser_name.capitalize()
-        self.driver = getattr(webdriver, self.browser_name)(*args, **kwargs)
 
     def get(self, path):
         return self.driver.get(self.base_url + path)
@@ -67,9 +74,12 @@ class SeleniumWrapper(object):
             if 'interval' in kwargs and 'duration' not in kwargs:
                 raise Exception("Invalid wrapped webdriver method call")
 
-            duration = kwargs.pop('duration', 10)
+            duration = orig_duration = kwargs.pop('duration', 10)
             interval = kwargs.pop('interval', min(.5, duration))
             ensure_displayed = kwargs.pop('ensure_displayed', True)
+            error_message = kwargs.get('msg')
+
+            exceptions = (NoSuchElementException, ElementNotVisibleException)
 
             while True:
                 try:
@@ -80,9 +90,21 @@ class SeleniumWrapper(object):
                         raise ElementNotVisibleException()
 
                     return retval
-                except (NoSuchElementException, ElementNotVisibleException):
+                except exceptions as e:
                     if duration < 0.00000001:
-                        raise
+                        arg_string = ", ".join(
+                            map(repr, args) +
+                            ["%s=%r" % (k, v) for k, v in kwargs.items()]
+                        )
+                        e.msg = ("%s(%s) failed after %d seconds. " +
+                                "(Original message: %s)") % (wrapped.__name__,
+                                                            arg_string,
+                                                            orig_duration,
+                                                            e.msg)
+                        if error_message:
+                            e.msg = "%s: %s" % (error_message, e.msg)
+
+                        raise e
                     else:
                         time.sleep(interval)
                         duration -= interval
@@ -107,20 +129,19 @@ class SeleniumTestCase(TestCase):
 
     @classmethod
     def setUpClass(cls):
-        kwargs = {
-            'browser_name': cls.browser,
-            'base_url': cls.base_url
-        }
+        browser_name = cls.browser
+        kwargs = {}
 
         if cls.remote_url:
+            browser_name = 'Remote'
             kwargs.update({
-                'browser_name': 'Remote',
                 'command_executor': cls.remote_url,
                 'desired_capabilities': getattr(DesiredCapabilities,
                                                 cls.browser.upper())
             })
 
-        cls.driver = SeleniumWrapper(**kwargs)
+        Driver = getattr(webdriver, browser_name.capitalize())
+        cls.driver = SeleniumWrapper(Driver(**kwargs), base_url=cls.base_url)
 
         super(SeleniumTestCase, cls).setUpClass()
 
