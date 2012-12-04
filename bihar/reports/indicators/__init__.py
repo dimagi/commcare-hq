@@ -11,6 +11,14 @@ else:
     now = None
 
 # static config - should this eventually live in the DB?
+DELIVERIES = {
+    "slug": "deliveries",
+    "name": _("Pregnant woman who delivered in last 30 days"),
+    "filter_function": "bihar.reports.indicators.filters.delivered_last_month",
+    "row_function": "bihar.reports.indicators.filters.mother_post_delivery_columns",
+    "sortkey": "bihar.reports.indicators.filters.get_add_sortkey",
+    "columns": [_("Name"), _("Husband's Name"), _("ADD")],
+    }
 INDICATOR_SETS = [
     {
         "slug": "homevisit", 
@@ -51,14 +59,7 @@ INDICATOR_SETS = [
                     "row_function": "bihar.reports.indicators.filters.mother_pre_delivery_columns",
                     "sortkey": "bihar.reports.indicators.filters.get_edd_sortkey",
                 },
-                {
-                    "slug": "deliveries", 
-                    "name": _("Pregnant woman who delivered in last 30 days"),
-                    "filter_function": "bihar.reports.indicators.filters.delivered_last_month",
-                    "row_function": "bihar.reports.indicators.filters.mother_post_delivery_columns",
-                    "sortkey": "bihar.reports.indicators.filters.get_add_sortkey",
-                    "columns": [_("Name"), _("Husband's Name"), _("ADD")],
-                },
+                DELIVERIES,
                 {
                     "slug": "new_pregnancies", 
                     "name": _("Pregnant woman registered in last 30 days"),
@@ -121,10 +122,7 @@ INDICATOR_SETS = [
                 },
             ],
             "client_list": [
-                {
-                    "slug": "delivered_in_last_30",
-                    "name": _("Pregnant woman who delivered in last 30 days (REPEAT FROM HOME VISIT INFO))"),
-                },
+                DELIVERIES,
             ],
         }
     },
@@ -161,7 +159,27 @@ INDICATOR_SETS = [
             "client_list": [],
         }
     },
-#    {"slug": "newborn", "name": _("Weak Newborn") },
+    {
+        "slug": "newborn",
+        "name": _("Weak Newborn"),
+        "indicators": {
+            "summary":[
+                {
+                    "slug": "ptlb",
+                    "name": _("# Preterm births / # Live births"),
+                    "calculation_function": "bihar.reports.indicators.calculations.ptlb"
+                },
+                {
+                    "slug": "lt2kglb",
+                    "name": _("# infants < 2kg / # live births"),
+                },
+                {
+                    "slug": "visited_weak_ones",
+                    "name": _("# live births who are preterm or < 2kg  visited in 24 hours of birth by FLW/ (# preterm + # infants < 2kg)"),
+                },
+            ]
+        }
+    },
 #    {"slug": "familyplanning", "name": _("Family Planning") },
 #    {"slug": "complimentaryfeeding", "name": _("Complimentary Feeding") },
 #    {"slug": "mortality", "name": _("Mortality") }
