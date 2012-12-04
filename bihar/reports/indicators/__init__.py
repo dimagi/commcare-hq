@@ -132,6 +132,7 @@ INDICATOR_SETS = [
                 {
                     "slug": "lt2kglb",
                     "name": _("# infants < 2kg / # live births"),
+                    "calculation_function": "bihar.reports.indicators.calculations.lt2kglb"
                 },
                 {
                     "slug": "visited_weak_ones",

@@ -138,8 +138,20 @@ def idnb(cases):
     num = len(filter(lambda case: breastfed_hour(case), valid_cases))
     return _num_denom(num, denom)
 
-def ptlb(cases):
+def ptlb(cases, num_only=False):
     valid_cases = filter(lambda case: _weak_babies(case), cases)
     denom = len(valid_cases)
     num = len(filter(lambda case: getattr(case, 'term', None) == "pre_term", valid_cases))
-    return _num_denom(num, denom)
+    return _num_denom(num, denom) if not num_only else num
+
+def lt2kglb(cases, num_only=False):
+    valid_cases = filter(lambda case: _weak_babies(case), cases)
+    denom = len(valid_cases)
+
+    def over2(case):
+        w = get_related_prop(case, 'weight')
+        fw = get_related_prop(case, 'first_weight')
+        return (w is not None and w < 2.0) or (fw is not None and fw < 2.0)
+
+    num = len(filter(lambda case: over2(case), valid_cases))
+    return _num_denom(num, denom) if not num_only else num
