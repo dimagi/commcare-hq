@@ -1,6 +1,14 @@
 from collections import defaultdict
+import functools
+from django.conf import settings
 from dimagi.utils.modules import to_function
 from django.utils.translation import ugettext_noop as _
+from dimagi.utils.parsing import string_to_datetime
+
+if settings.DEBUG:
+    now = string_to_datetime('2012-03-21')
+else:
+    now = None
 
 # static config - should this eventually live in the DB?
 DELIVERIES = {
@@ -94,7 +102,7 @@ INDICATOR_SETS = [
     },
     {
         "slug": "pregnancy",
-        "name": _("Pregnancy Outcome Information"),
+        "name": _("Pregnancy Outcomes"),
         "indicators": {
             "summary": [
                 {
@@ -118,7 +126,39 @@ INDICATOR_SETS = [
             ],
         }
     },
-#    {"slug": "postpartum", "name": _("Post-Partum Complications") },
+    {
+        "slug": "postpartum",
+        "name": _("Post-Partum Complications"),
+        "indicators": {
+            "summary": [
+                {
+                    "slug": 'comp1',
+                    "name": _("# complications identified in first 24 hours / # complications in last 30 days"),
+                    "calculation_function": "bihar.reports.indicators.calculations.complications",
+                    "calculation_kwargs": {'days': 1, 'now': now},
+                },
+#                {
+#                    "slug": 'comp3',
+#                    "name": _("# complications identified within 3 days of birth / # complications in last 30 days"),
+#                    "calculation_function": "bihar.reports.indicators.calculations.complications",
+#                    "calculation_kwargs": {'days': 3, 'now': now},
+#                },
+#                {
+#                    "slug": 'comp5',
+#                    "name": _("# complications identified within 5 days of birth / # complications in last 30 days"),
+#                    "calculation_function": "bihar.reports.indicators.calculations.complications",
+#                    "calculation_kwargs": {'days': 5, 'now': now},
+#                },
+#                {
+#                    "slug": 'comp7',
+#                    "name": _("# complications identified within 7 days of birth / # complications in last 30 days"),
+#                    "calculation_function": "bihar.reports.indicators.calculations.complications",
+#                    "calculation_kwargs": {'days': 7, 'now': now},
+#                },
+            ],
+            "client_list": [],
+        }
+    },
     {
         "slug": "newborn",
         "name": _("Weak Newborn"),
@@ -185,6 +225,8 @@ class Indicator(object):
         self.name = spec["name"]
         self.calculation_function = to_function(spec["calculation_function"]) \
             if "calculation_function" in spec else None
+        if spec.has_key("calculation_kwargs"):
+            self.calculation_function = functools.partial(self.calculation_function, **spec['calculation_kwargs'])
         
         # case filter stuff
         self.filter_function = to_function(spec["filter_function"]) \
