@@ -7,8 +7,7 @@ from dimagi.utils.couch.database import get_db
 
 class MVP(object):
     NAMESPACE = "mvp_indicators"
-    # todo: add mvp-sauri back in here
-    DOMAINS = ["mvp-potou"]
+    DOMAINS = ["mvp-potou", "mvp-sauri"]
     VISIT_FORMS = dict(
         pregnancy_visit='http://openrosa.org/formdesigner/185A7E63-0ECD-4D9A-8357-6FD770B6F065',
         child_visit='http://openrosa.org/formdesigner/B9CEFDCD-8068-425F-BA67-7DC897030A5A',
