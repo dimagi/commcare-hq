@@ -10,20 +10,24 @@ from dimagi.utils.couch.database import get_db
 from dimagi.utils.couch.loosechange import map_reduce
 
 def set_error(row, msg, override=False):
+    """set an error message on a stock report to be imported"""
     if override or 'error' not in row:
         row['error'] = msg
 
 def set_error_bulk(rows, msg, override=False):
+    """set an error message on a set of stock reports
+    override - if False, don't set on rows that already have an error message
+    """
     for row in rows:
         set_error(row, msg, override)
 
 def import_stock_reports(domain, f):
+    """bulk import entry point"""
     reader = csv.DictReader(f)
     data = list(reader)
-    headers = reduce(lambda a, b: a.union(b.keys()), data, set())
 
     try:
-        data_cols = validate_headers(domain, headers)
+        data_cols = validate_headers(domain, set(reader.fieldnames))
     except Exception, e:
         raise RuntimeError(str(e))
 
@@ -44,6 +48,10 @@ def import_stock_reports(domain, f):
     return annotate_csv(data, reader.fieldnames)
     
 def validate_headers(domain, headers):
+    """validate the headers of the csv -- make sure required fields are present
+    and stock actions/products are valid (and parse the action/product info out
+    of the header text
+    """
     META_COLS = ['outlet_id', 'outlet_code', 'date', 'reporter', 'phone']
 
     if 'reporter' not in headers and 'phone' not in headers:
@@ -71,6 +79,7 @@ def validate_headers(domain, headers):
     return data_cols
 
 def validate_data_header(header, actions, products):
+    """parse and validate the action/product info out of a data metric column header"""
     pcs = header.lower().split()
     if pcs[0].startswith('data'):
         pcs = pcs[1:]
@@ -93,6 +102,9 @@ def validate_data_header(header, actions, products):
     }
 
 def validate_row(row, domain, data_cols, locs_by_id):
+    """pre-validate the information in a particular import row: valid location,
+    reporting user, and data formats
+    """
     # identify location
     loc_id = row.get('outlet_id')
     loc_code = row.get('outlet_code')
@@ -161,6 +173,8 @@ def validate_row(row, domain, data_cols, locs_by_id):
                 return
 
 def process_loc(domain, loc, rows, data_cols):
+    """process (import) all the stock reports for a given location"""
+
     # get actual loc object
     loc = rows[0]['loc']
 
@@ -195,6 +209,7 @@ def process_loc(domain, loc, rows, data_cols):
             break
 
 def import_row(row, data_cols):
+    """process (import) a single stock report row"""
     def get_data():
         for header, meta in data_cols.iteritems():
             val = row[header]
@@ -216,6 +231,7 @@ def import_row(row, data_cols):
     # also need way use historical date
 
 def annotate_csv(data, columns):
+    """update the original import csv with the import result for each row"""
     headers = list(columns)
     headers.insert(0, 'error')
 
