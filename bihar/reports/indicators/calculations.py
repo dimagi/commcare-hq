@@ -236,20 +236,23 @@ def complications(cases, days, now=None):
     }
 
     debug = defaultdict(int)
+
     def get_forms(case, days=30):
+        xform_ids = set()
         for action in case.actions:
-            debug['forms_scanned'] +=1
-            if now - dt.timedelta(days=days) <= action.date <= now:
-                debug['submitted_in_time'] +=1
-                try:
-                    yield action.xform
-                except ResourceNotFound:
-                    debug['bad_xform_refs'] += 1
+            if action.xform_id not in xform_ids:
+                xform_ids.add(action.xform_id)
+                if now - dt.timedelta(days=days) <= action.date <= now:
+                    try:
+                        debug['forms processed'] += 1
+                        yield action.xform
+                    except ResourceNotFound:
+                        pass
 
     denom = 0
     num = 0
     days = dt.timedelta(days=days)
-    for case in cases:
+    for case in filter(lambda case: case.type == 'cc_bihar_pregnancy', cases):
         for form in get_forms(case):
             try:
                 complication_paths = complications_by_form[form.xmlns]
