@@ -43,7 +43,7 @@ CHW_REFERRAL_INDICATORS = dict(
     )
 )
 
-# Indicators below use MedianEmittedValueCouchViewIndicatorDefinition
+# Indicators below use MedianCouchIndicatorDef
 
 MEDIAN_CHW_REFERRAL_INDICATORS = dict(
     app=APP_NAME,

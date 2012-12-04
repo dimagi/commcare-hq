@@ -1,7 +1,9 @@
+APP_NAME = "mvp_chw_visits"
+
 CHW_VISIT_ACTIVE_CASES_INDICATORS = dict(
-    app="indicators",
+    app=APP_NAME,
     indicators=dict(
-        cases_by_status=dict(
+        all_cases=dict(
             household_cases_90days=dict(
                 description="No. of active households in the past 90 days",
                 title="# Households in past 90 days",
@@ -47,7 +49,7 @@ CHW_VISIT_ACTIVE_CASES_INDICATORS = dict(
 )
 
 CHW_VISITS_UNIQUE_COUNT_INDICATORS = dict(
-    app="mvp_chw_visits",
+    app=APP_NAME,
     indicators=dict(
         all_visit_forms=dict(
             household_visits_90days=dict(

@@ -1,9 +1,11 @@
 from django.core.management.base import LabelCommand
-from corehq.apps.indicators.models import (DynamicIndicatorDefinition, CouchViewIndicatorDefinition,
+from corehq.apps.indicators.models import (DynamicIndicatorDefinition, CouchIndicatorDef,
                                            CombinedCouchViewIndicatorDefinition,
-                                           MedianEmittedValueCouchViewIndicatorDefinition,
-                                           CountUniqueEmitsCouchViewIndicatorDefinition, ActiveCasesCouchViewIndicatorDefinition, SumLastUniqueEmittedValueCouchViewIndicatorDefinition)
-from mvp.models import (MVP, MVPDaysSinceLastTransmission, MVPChildCasesByAgeIndicatorDefinition)
+                                           MedianCouchIndicatorDef,
+                                           CountUniqueCouchIndicatorDef,
+                                           SumLastEmittedCouchIndicatorDef)
+from mvp.models import (MVP, MVPDaysSinceLastTransmission, MVPChildCasesByAgeIndicatorDefinition,
+                        MVPActiveCasesIndicatorDefinition)
 
 from mvp.static_definitions.composite import COMPOSITE_INDICATORS
 from mvp.static_definitions.couch.births import BIRTH_INDICATORS, ACTIVE_CHILD_CASES_BY_AGE_INDICATORS
@@ -21,12 +23,12 @@ SIMPLE_COUCH_VIEW_INDICATORS = [
     MATERNAL_HEALTH_INDICATORS,
 ]
 
-# use with MedianEmittedValueCouchViewIndicatorDefinition
+# use with MedianCouchIndicatorDef
 MEDIAN_INDICATORS = [
     MEDIAN_CHW_REFERRAL_INDICATORS
 ]
 
-# Use with ActiveCasesCouchViewIndicatorDefinition
+# Use with MVPActiveCasesIndicatorDefinition
 ACTIVE_CASES_INDICATORS = [
     CHW_VISIT_ACTIVE_CASES_INDICATORS
 ]
@@ -36,13 +38,13 @@ ACTIVE_CHILD_CASES_INDICATORS = [
     ACTIVE_CHILD_CASES_BY_AGE_INDICATORS,
 ]
 
-# Use with CountUniqueEmitsCouchViewIndicatorDefinition
+# Use with CountUniqueCouchIndicatorDef
 COUNT_UNIQUE_INDICATORS = [
     CHW_VISITS_UNIQUE_COUNT_INDICATORS,
     COUNT_UNIQUE_CHILD_HEALTH_INDICATORS,
 ]
 
-# use with SumLastUniqueEmittedValueCouchViewIndicatorDefinition
+# use with SumLastEmittedCouchIndicatorDef
 SUM_LAST_UNIQUE_INICATORS = [
     SUM_LAST_UNIQUE_MATERNAL_HEALTH_INDICATORS
 ]
@@ -71,15 +73,15 @@ class Command(LabelCommand):
                 version=1
             )
 
-            self.create_indicators_of_type(CouchViewIndicatorDefinition,
+            self.create_indicators_of_type(CouchIndicatorDef,
                 SIMPLE_COUCH_VIEW_INDICATORS,
                 shared_args, shared_kwargs)
 
-            self.create_indicators_of_type(MedianEmittedValueCouchViewIndicatorDefinition,
+            self.create_indicators_of_type(MedianCouchIndicatorDef,
                 MEDIAN_INDICATORS,
                 shared_args, shared_kwargs)
 
-            self.create_indicators_of_type(ActiveCasesCouchViewIndicatorDefinition,
+            self.create_indicators_of_type(MVPActiveCasesIndicatorDefinition,
                 ACTIVE_CASES_INDICATORS,
                 shared_args, shared_kwargs)
 
@@ -87,11 +89,11 @@ class Command(LabelCommand):
                 ACTIVE_CHILD_CASES_INDICATORS,
                 shared_args, shared_kwargs)
 
-            self.create_indicators_of_type(CountUniqueEmitsCouchViewIndicatorDefinition,
+            self.create_indicators_of_type(CountUniqueCouchIndicatorDef,
                 COUNT_UNIQUE_INDICATORS,
                 shared_args, shared_kwargs)
 
-            self.create_indicators_of_type(SumLastUniqueEmittedValueCouchViewIndicatorDefinition,
+            self.create_indicators_of_type(SumLastEmittedCouchIndicatorDef,
                 SUM_LAST_UNIQUE_INICATORS,
                 shared_args, shared_kwargs)
 
