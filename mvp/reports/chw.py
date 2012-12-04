@@ -1,4 +1,5 @@
 from django.utils.safestring import mark_safe
+import logging
 import numpy
 from corehq.apps.indicators.models import DynamicIndicatorDefinition, CouchViewIndicatorDefinition, CombinedCouchViewIndicatorDefinition
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn, DataTablesColumnGroup
@@ -27,7 +28,10 @@ class CHWManagerReport(GenericTabularReport, MVPIndicatorReport, DatespanMixin):
                 if slug:
                     indicator = DynamicIndicatorDefinition.get_current(MVP.NAMESPACE,
                         self.domain, slug, wrap_correctly=True)
-                    section_indicators.append(indicator)
+                    if indicator is not None:
+                        section_indicators.append(indicator)
+                    else:
+                        logging.error("could not load indicator %s" % slug)
             all_indicators.append(section_indicators)
         return all_indicators
 
@@ -129,8 +133,8 @@ class CHWManagerReport(GenericTabularReport, MVPIndicatorReport, DatespanMixin):
             dict(
                 title="Household",
                 indicators=[
-                    dict(slug="num_active_households", expected="--"),
-                    dict(slug="num_household_visits", expected="--"),
+                    dict(slug="household_cases", expected="--"),
+                    dict(slug="household_visits", expected="--"),
                     dict(slug="households_routine_visit_past90days", expected="100%"),
                     dict(slug="households_routine_visit_past30days", expected="100%"),
                 ]
@@ -138,16 +142,16 @@ class CHWManagerReport(GenericTabularReport, MVPIndicatorReport, DatespanMixin):
             dict(
                 title="Newborn",
                 indicators=[
-                    dict(slug="num_births_registered", expected="--"),
+                    dict(slug="num_births_recorded", expected="--"),
                     dict(slug="facility_births_proportion", expected="100%"),
-                    dict(slug="newborn_visit_proportion", expected="100%"),
+                    dict(slug="newborn_7day_visit_proportion", expected="100%"),
                     dict(slug="neonate_routine_visit_past7days", expected="100%"),
                 ]
             ),
             dict(
                 title="Under-5s",
                 indicators=[
-                    dict(slug="num_under5", expected="--"),
+                    dict(slug="num_under5_visits", expected="--"),
                     dict(slug="under5_danger_signs", expected="--"),
                     dict(slug="under5_fever", expected="--"),
                     dict(slug="under5_fever_rdt_proportion", expected="100%"),
@@ -156,17 +160,18 @@ class CHWManagerReport(GenericTabularReport, MVPIndicatorReport, DatespanMixin):
                     dict(slug="under5_diarrhea", expected="--"),
                     dict(slug="under5_diarrhea_ors_proportion", expected="100%"),
                     dict(slug="muac_routine_proportion", expected="100%"),
-                    dict(slug="num_active_gam", expected="--"),
+                    # todo better indicator def needed
+#                    dict(slug="num_active_gam", expected="--"),
                     dict(slug="under5_routine_visit_past30days", expected="100%"),
                 ]
             ),
             dict(
                 title="Pregnant",
                 indicators=[
-                    dict(slug="num_active_pregnancies", expected="--"),
+                    dict(slug="pregnancy_cases", expected="--"),
                     dict(slug="pregnancy_visit_danger_sign_referral_proportion", expected="100%"),
                     dict(slug="anc4_proportion", expected="100%"),
-                    dict(slug="pregnant_routine_checkup_proportion", expected="100%"),
+                    dict(slug="pregnant_routine_checkup_proportion_6weeks", expected="100%"),
                     dict(slug="pregnant_routine_visit_past30days", expected="100%"),
                     ]
             ),
@@ -184,7 +189,7 @@ class CHWManagerReport(GenericTabularReport, MVPIndicatorReport, DatespanMixin):
                 title="Family Planning",
                 indicators=[
                     dict(slug="household_num_ec", expected="--"),
-                    dict(slug="family_planning_households", expected="100%"),
+                    dict(slug="family_planning_proportion", expected="100%"),
                     ]
             ),
             dict(
