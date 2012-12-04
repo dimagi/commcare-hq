@@ -162,11 +162,11 @@ def lt2kglb(cases, num_only=False):
 
 def _get_time_of_birth(form):
     try:
-        time_of_birth = form.xpath('form/data/child_info/case/update/time_of_birth')
+        time_of_birth = form.xpath('form/child_info/case/update/time_of_birth')
         assert time_of_birth is not None
     except AssertionError:
         time_of_birth = safe_index(
-            form.xpath('form/data/child_info')[0],
+            form.xpath('form/child_info')[0],
             'case/update/time_of_birth'.split('/')
         )
     return time_of_birth
@@ -175,32 +175,32 @@ def complications(cases, days, now=None):
     """
     DENOM: [
         any DELIVERY forms with (
-            /data/complications = 'yes'
+            complications = 'yes'
         ) in last 30 days
         PLUS any PNC forms with ( # 'any applicable from PNC forms with' (?)
-            /data/abdominal_pain ='yes' or
-            /data/bleeding = 'yes' or
-            /data/discharge = 'yes' or
-            /data/fever = 'yes' or
-            /data/pain_urination = 'yes'
+            abdominal_pain ='yes' or
+            bleeding = 'yes' or
+            discharge = 'yes' or
+            fever = 'yes' or
+            pain_urination = 'yes'
         ) in the last 30 days
         PLUS any REGISTRATION forms with (
-            /data/abd_pain ='yes' or    # == abdominal_pain
-            /data/fever = 'yes' or
-            /data/pain_urine = 'yes' or    # == pain_urination
-            /data/vaginal_discharge = 'yes'    # == discharge
-        ) with /data/add in last 30 days
+            abd_pain ='yes' or    # == abdominal_pain
+            fever = 'yes' or
+            pain_urine = 'yes' or    # == pain_urination
+            vaginal_discharge = 'yes'    # == discharge
+        ) with add in last 30 days
         PLUS any EBF forms with (
-            /data/abdominal_pain ='yes' or
-            /data/bleeding = 'yes' or
-            /data/discharge = 'yes' or
-            /data/fever = 'yes' or
-            /data/pain_urination = 'yes'
+            abdominal_pain ='yes' or
+            bleeding = 'yes' or
+            discharge = 'yes' or
+            fever = 'yes' or
+            pain_urination = 'yes'
         ) in last 30 days    # note, don't exist in EBF yet, but will shortly
     ]
     NUM: [
         filter (
-            DELIVERY ? form.meta.timeStart - /data/child_info/case/update/time_of_birth,
+            DELIVERY ? form.meta.timeStart - child_info/case/update/time_of_birth,
             REGISTRATION|PNC|EBF ? form.meta.timeStart - case.add
         ) < `days` days
     ]
@@ -215,25 +215,25 @@ def complications(cases, days, now=None):
     REGISTRATION = 'http://bihar.commcarehq.org/pregnancy/registration'
     EBF = 'https://bitbucket.org/dimagi/cc-apps/src/caab8f93c1e48d702b5d9032ef16c9cec48868f0/bihar/mockup/bihar_ebf.xml'
     _pnc_ebc_complications = [
-        '/data/abdominal_pain',
-        '/data/bleeding',
-        '/data/discharge',
-        '/data/fever',
-        '/data/pain_urination',
-        ]
+        'abdominal_pain',
+        'bleeding',
+        'discharge',
+        'fever',
+        'pain_urination',
+    ]
     complications_by_form = {
         DELIVERY: [
-            '/data/complications'
+            'complications'
         ],
         PNC: _pnc_ebc_complications,
         EBF: _pnc_ebc_complications,
         REGISTRATION: [
-            '/data/abd_pain',
-            '/data/fever',
-            '/data/pain_urine',
-            '/data/vaginal_discharge',
-            ],
-        }
+            'abd_pain',
+            'fever',
+            'pain_urine',
+            'vaginal_discharge',
+        ],
+    }
 
     debug = defaultdict(int)
     def get_forms(case, days=30):
@@ -246,8 +246,8 @@ def complications(cases, days, now=None):
                 except ResourceNotFound:
                     debug['bad_xform_refs'] += 1
 
-    done = 0
-    due = 0
+    denom = 0
+    num = 0
     days = dt.timedelta(days=days)
     for case in cases:
         for form in get_forms(case):
@@ -256,22 +256,21 @@ def complications(cases, days, now=None):
             except KeyError:
                 continue
             debug['relevent_xmlns'] += 1
+            has_complication = False
+            has_recent_complication = False
             for p in complication_paths:
-                has_complications = form.xpath('form/data/complications')
-                if has_complications == 'no':
-                    debug['%s complications is no' % form.xmlns.split('/')[-1]] += 1
-                elif has_complications is None:
-                    debug['%s complications dne' % form.xmlns.split('/')[-1]] += 1
-                else:
-                    debug['has_complications'] += 1
-                print form.get_id, p, form.xpath('form' + p)
-                if form.xpath('form' + p) == 'yes':
-                    due += 1
+                if form.xpath('form/' + p) == 'yes':
+                    has_complication = True
                     if form.xmlns == DELIVERY:
                         add = _get_time_of_birth(form)
                     else:
                         add = get_add(case)
                     add = string_to_datetime(add)
-                    if form.metatdata.timeStart - add < days:
-                        done += 1
-    return "%s/%s,<br/>debug: %s" % (done, due, dict(debug))
+                    if form.metadata.timeStart - add < days:
+                        has_recent_complication = True
+                        break
+            if has_complication:
+                denom += 1
+                if has_recent_complication:
+                    num += 1
+    return "%s/%s" % (num, denom)
