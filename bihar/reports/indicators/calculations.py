@@ -69,6 +69,9 @@ def _visited_in_timeframe_of_birth(case, days):
         return time_birth < visit_time < time_birth + dt.timedelta(days=days)
     return False
 
+def _weak_babies(case): # :(
+    return is_pregnant_mother(case) and\
+           (getattr(case, 'recently_delivered', None) == "yes" or get_related_prop(case, 'birth_status') == "live_birth")
 
 
     
@@ -133,4 +136,10 @@ def idnb(cases):
         return False
 
     num = len(filter(lambda case: breastfed_hour(case), valid_cases))
+    return _num_denom(num, denom)
+
+def ptlb(cases):
+    valid_cases = filter(lambda case: _weak_babies(case), cases)
+    denom = len(valid_cases)
+    num = len(filter(lambda case: getattr(case, 'term', None) == "pre_term", valid_cases))
     return _num_denom(num, denom)

@@ -127,6 +127,7 @@ INDICATOR_SETS = [
                 {
                     "slug": "ptlb",
                     "name": _("# Preterm births / # Live births"),
+                    "calculation_function": "bihar.reports.indicators.calculations.ptlb"
                 },
                 {
                     "slug": "lt2kglb",
