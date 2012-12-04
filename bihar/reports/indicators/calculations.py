@@ -73,9 +73,31 @@ def _visited_in_timeframe_of_birth(case, days):
         return time_birth < visit_time < time_birth + dt.timedelta(days=days)
     return False
 
-def _weak_babies(case): # :(
+def _get_actions(case, action_filter=lambda a: True):
+    for action in case.actions:
+        if action_filter(action):
+            yield action
+
+def _get_forms(case, action_filter=lambda a: True, form_filter=lambda f: True):
+    for action in _get_actions(case, action_filter):
+        if getattr(action, 'xform', None) and form_filter(action.xform):
+            yield action.xform
+
+def _weak_babies(case, days=None): # :(
+    def af(action):
+        if not days:
+            return True
+        now = dt.datetime.now()
+        return now - dt.timedelta(days=days) <= action.date <= now
+
+    def recently_delivered(case):
+        for form in _get_forms(case, action_filter=af):
+            if form.xpath("form/data/recently_delivered") == 'yes':
+                return True
+        return False
+
     return is_pregnant_mother(case) and\
-           (getattr(case, 'recently_delivered', None) == "yes" or get_related_prop(case, 'birth_status') == "live_birth")
+           (recently_delivered(case) or get_related_prop(case, 'birth_status') == "live_birth")
 
 
     
@@ -143,13 +165,13 @@ def idnb(cases):
     return _num_denom(num, denom)
 
 def ptlb(cases, num_only=False):
-    valid_cases = filter(lambda case: _weak_babies(case), cases)
+    valid_cases = filter(lambda case: _weak_babies(case, 30), cases)
     denom = len(valid_cases)
     num = len(filter(lambda case: getattr(case, 'term', None) == "pre_term", valid_cases))
     return _num_denom(num, denom) if not num_only else num
 
 def lt2kglb(cases, num_only=False):
-    valid_cases = filter(lambda case: _weak_babies(case), cases)
+    valid_cases = filter(lambda case: _weak_babies(case, 30), cases)
     denom = len(valid_cases)
 
     def over2(case):
