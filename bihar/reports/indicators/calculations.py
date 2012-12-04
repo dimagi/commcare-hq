@@ -1,28 +1,32 @@
+from collections import defaultdict
+from couchdbkit import ResourceNotFound
 from bihar.reports.indicators.filters import A_MONTH, is_pregnant_mother, get_add, get_edd
-from datetime import datetime, timedelta
-from bihar.reports.indicators.visits import visit_is
+from couchforms.safe_index import safe_index
+from dimagi.utils.parsing import string_to_datetime
+import datetime as dt
+from bihar.reports.indicators.visits import visit_is, get_related_prop
 
 EMPTY = (0,0)
-GRACE_PERIOD = timedelta(days=7)
+GRACE_PERIOD = dt.timedelta(days=7)
 
 
 def _num_denom(num, denom):
     return "%s/%s" % (num, denom)
 
 def _in_last_month(date):
-    today = datetime.today().date()
+    today = dt.datetime.today().date()
     return today - A_MONTH < date < today
 
 def _in_timeframe(date, days):
-    today = datetime.today().date()
-    return today - timedelta(days=days) < date < today
+    today = dt.datetime.today().date()
+    return today - dt.timedelta(days=days) < date < today
 
 def _mother_due_in_window(case, days):
-    get_visitduedate = lambda case: case.edd - timedelta(days=days) + GRACE_PERIOD
+    get_visitduedate = lambda case: case.edd - dt.timedelta(days=days) + GRACE_PERIOD
     return is_pregnant_mother(case) and get_edd(case) and _in_last_month(get_visitduedate(case))
         
 def _mother_delivered_in_window(case, days):
-    get_visitduedate = lambda case: case.add + timedelta(days=days) + GRACE_PERIOD
+    get_visitduedate = lambda case: case.add + dt.timedelta(days=days) + GRACE_PERIOD
     return is_pregnant_mother(case) and get_add(case) and _in_last_month(get_visitduedate(case))
 
 def _num_denom_count(cases, num_func, denom_func):
@@ -62,12 +66,16 @@ def _get_time_of_visit_after_birth(case):
 
 def _visited_in_timeframe_of_birth(case, days):
     visit_time = _get_time_of_visit_after_birth(case)
-    add = get_add(case)
-    if visit_time and add:
-        add = datetime.combine(add, datetime.time(datetime.now())) #convert date to datetime
-        return add < visit_time < add + timedelta(days=days)
+    time_birth = get_related_prop(case, "time_of_birth") or get_add(case) # use add if time_of_birth can't be found
+    if visit_time and time_birth:
+        if isinstance(time_birth, dt.date):
+            time_birth = dt.datetime.combine(time_birth, dt.datetime.time(dt.datetime.now())) #convert date to dt.datetime
+        return time_birth < visit_time < time_birth + dt.timedelta(days=days)
     return False
 
+def _weak_babies(case): # :(
+    return is_pregnant_mother(case) and\
+           (getattr(case, 'recently_delivered', None) == "yes" or get_related_prop(case, 'birth_status') == "live_birth")
 
 
     
@@ -118,3 +126,152 @@ def id_day(cases):
     denom = len(valid_cases)
     num = len(filter(lambda case:_visited_in_timeframe_of_birth(case, 1) , valid_cases))
     return _num_denom(num, denom)
+
+def idnb(cases):
+    valid_cases = filter(lambda case: _delivered_at_in_timeframe(case, ['private', 'public'], 30) and
+                                      get_related_prop(case, 'birth_status') == "live_birth", cases)
+    denom = len(valid_cases)
+
+    def breastfed_hour(case):
+        dtf = get_related_prop(case, 'date_time_feed')
+        tob = get_related_prop(case, 'time_of_birth')
+        if dtf and tob:
+            return dtf - tob <= dt.timedelta(hours=1)
+        return False
+
+    num = len(filter(lambda case: breastfed_hour(case), valid_cases))
+    return _num_denom(num, denom)
+
+def ptlb(cases, num_only=False):
+    valid_cases = filter(lambda case: _weak_babies(case), cases)
+    denom = len(valid_cases)
+    num = len(filter(lambda case: getattr(case, 'term', None) == "pre_term", valid_cases))
+    return _num_denom(num, denom) if not num_only else num
+
+def lt2kglb(cases, num_only=False):
+    valid_cases = filter(lambda case: _weak_babies(case), cases)
+    denom = len(valid_cases)
+
+    def over2(case):
+        w = get_related_prop(case, 'weight')
+        fw = get_related_prop(case, 'first_weight')
+        return (w is not None and w < 2.0) or (fw is not None and fw < 2.0)
+
+    num = len(filter(lambda case: over2(case), valid_cases))
+    return _num_denom(num, denom) if not num_only else num
+
+def _get_time_of_birth(form):
+    try:
+        time_of_birth = form.xpath('form/data/child_info/case/update/time_of_birth')
+        assert time_of_birth is not None
+    except AssertionError:
+        time_of_birth = safe_index(
+            form.xpath('form/data/child_info')[0],
+            'case/update/time_of_birth'.split('/')
+        )
+    return time_of_birth
+
+def complications(cases, days, now=None):
+    """
+    DENOM: [
+        any DELIVERY forms with (
+            /data/complications = 'yes'
+        ) in last 30 days
+        PLUS any PNC forms with ( # 'any applicable from PNC forms with' (?)
+            /data/abdominal_pain ='yes' or
+            /data/bleeding = 'yes' or
+            /data/discharge = 'yes' or
+            /data/fever = 'yes' or
+            /data/pain_urination = 'yes'
+        ) in the last 30 days
+        PLUS any REGISTRATION forms with (
+            /data/abd_pain ='yes' or    # == abdominal_pain
+            /data/fever = 'yes' or
+            /data/pain_urine = 'yes' or    # == pain_urination
+            /data/vaginal_discharge = 'yes'    # == discharge
+        ) with /data/add in last 30 days
+        PLUS any EBF forms with (
+            /data/abdominal_pain ='yes' or
+            /data/bleeding = 'yes' or
+            /data/discharge = 'yes' or
+            /data/fever = 'yes' or
+            /data/pain_urination = 'yes'
+        ) in last 30 days    # note, don't exist in EBF yet, but will shortly
+    ]
+    NUM: [
+        filter (
+            DELIVERY ? form.meta.timeStart - /data/child_info/case/update/time_of_birth,
+            REGISTRATION|PNC|EBF ? form.meta.timeStart - case.add
+        ) < `days` days
+    ]
+    """
+    #https://bitbucket.org/dimagi/cc-apps/src/caab8f93c1e48d702b5d9032ef16c9cec48868f0/bihar/mockup/bihar_pnc.xml
+    #https://bitbucket.org/dimagi/cc-apps/src/caab8f93c1e48d702b5d9032ef16c9cec48868f0/bihar/mockup/bihar_del.xml
+    #https://bitbucket.org/dimagi/cc-apps/src/caab8f93c1e48d702b5d9032ef16c9cec48868f0/bihar/mockup/bihar_registration.xml
+    #https://bitbucket.org/dimagi/cc-apps/src/caab8f93c1e48d702b5d9032ef16c9cec48868f0/bihar/mockup/bihar_ebf.xml
+    now = now or dt.datetime.utcnow()
+    PNC = 'http://bihar.commcarehq.org/pregnancy/pnc'
+    DELIVERY = 'http://bihar.commcarehq.org/pregnancy/del'
+    REGISTRATION = 'http://bihar.commcarehq.org/pregnancy/registration'
+    EBF = 'https://bitbucket.org/dimagi/cc-apps/src/caab8f93c1e48d702b5d9032ef16c9cec48868f0/bihar/mockup/bihar_ebf.xml'
+    _pnc_ebc_complications = [
+        '/data/abdominal_pain',
+        '/data/bleeding',
+        '/data/discharge',
+        '/data/fever',
+        '/data/pain_urination',
+        ]
+    complications_by_form = {
+        DELIVERY: [
+            '/data/complications'
+        ],
+        PNC: _pnc_ebc_complications,
+        EBF: _pnc_ebc_complications,
+        REGISTRATION: [
+            '/data/abd_pain',
+            '/data/fever',
+            '/data/pain_urine',
+            '/data/vaginal_discharge',
+            ],
+        }
+
+    debug = defaultdict(int)
+    def get_forms(case, days=30):
+        for action in case.actions:
+            debug['forms_scanned'] +=1
+            if now - dt.timedelta(days=days) <= action.date <= now:
+                debug['submitted_in_time'] +=1
+                try:
+                    yield action.xform
+                except ResourceNotFound:
+                    debug['bad_xform_refs'] += 1
+
+    done = 0
+    due = 0
+    days = dt.timedelta(days=days)
+    for case in cases:
+        for form in get_forms(case):
+            try:
+                complication_paths = complications_by_form[form.xmlns]
+            except KeyError:
+                continue
+            debug['relevent_xmlns'] += 1
+            for p in complication_paths:
+                has_complications = form.xpath('form/data/complications')
+                if has_complications == 'no':
+                    debug['%s complications is no' % form.xmlns.split('/')[-1]] += 1
+                elif has_complications is None:
+                    debug['%s complications dne' % form.xmlns.split('/')[-1]] += 1
+                else:
+                    debug['has_complications'] += 1
+                print form.get_id, p, form.xpath('form' + p)
+                if form.xpath('form' + p) == 'yes':
+                    due += 1
+                    if form.xmlns == DELIVERY:
+                        add = _get_time_of_birth(form)
+                    else:
+                        add = get_add(case)
+                    add = string_to_datetime(add)
+                    if form.metatdata.timeStart - add < days:
+                        done += 1
+    return "%s/%s,<br/>debug: %s" % (done, due, dict(debug))

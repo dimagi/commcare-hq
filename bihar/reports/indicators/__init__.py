@@ -1,8 +1,24 @@
 from collections import defaultdict
+import functools
+from django.conf import settings
 from dimagi.utils.modules import to_function
 from django.utils.translation import ugettext_noop as _
+from dimagi.utils.parsing import string_to_datetime
+
+if settings.DEBUG:
+    now = string_to_datetime('2012-03-21')
+else:
+    now = None
 
 # static config - should this eventually live in the DB?
+DELIVERIES = {
+    "slug": "deliveries",
+    "name": _("Pregnant woman who delivered in last 30 days"),
+    "filter_function": "bihar.reports.indicators.filters.delivered_last_month",
+    "row_function": "bihar.reports.indicators.filters.mother_post_delivery_columns",
+    "sortkey": "bihar.reports.indicators.filters.get_add_sortkey",
+    "columns": [_("Name"), _("Husband's Name"), _("ADD")],
+    }
 INDICATOR_SETS = [
     {
         "slug": "homevisit", 
@@ -43,14 +59,7 @@ INDICATOR_SETS = [
                     "row_function": "bihar.reports.indicators.filters.mother_pre_delivery_columns",
                     "sortkey": "bihar.reports.indicators.filters.get_edd_sortkey",
                 },
-                {
-                    "slug": "deliveries", 
-                    "name": _("Pregnant woman who delivered in last 30 days"),
-                    "filter_function": "bihar.reports.indicators.filters.delivered_last_month",
-                    "row_function": "bihar.reports.indicators.filters.mother_post_delivery_columns",
-                    "sortkey": "bihar.reports.indicators.filters.get_add_sortkey",
-                    "columns": [_("Name"), _("Husband's Name"), _("ADD")],
-                },
+                DELIVERIES,
                 {
                     "slug": "new_pregnancies", 
                     "name": _("Pregnant woman registered in last 30 days"),
@@ -93,7 +102,7 @@ INDICATOR_SETS = [
     },
     {
         "slug": "pregnancy",
-        "name": _("Pregnancy Outcome Information"),
+        "name": _("Pregnancy Outcomes"),
         "indicators": {
             "summary": [
                 {
@@ -109,18 +118,69 @@ INDICATOR_SETS = [
                 {
                     "slug": "idnb",
                     "name": _("Institutional deliveries not breastfed within one hour (Total NumberBF/Total Number ID24HR)"),
+                    "calculation_function": "bihar.reports.indicators.calculations.idnb"
                 },
             ],
             "client_list": [
-                {
-                    "slug": "delivered_in_last_30",
-                    "name": _("Pregnant woman who delivered in last 30 days (REPEAT FROM HOME VISIT INFO))"),
-                },
+                DELIVERIES,
             ],
         }
-    }
-#    {"slug": "postpartum", "name": _("Post-Partum Complications") },
-#    {"slug": "newborn", "name": _("Weak Newborn") },
+    },
+    {
+        "slug": "postpartum",
+        "name": _("Post-Partum Complications"),
+        "indicators": {
+            "summary": [
+                {
+                    "slug": 'comp1',
+                    "name": _("# complications identified in first 24 hours / # complications in last 30 days"),
+                    "calculation_function": "bihar.reports.indicators.calculations.complications",
+                    "calculation_kwargs": {'days': 1, 'now': now},
+                },
+#                {
+#                    "slug": 'comp3',
+#                    "name": _("# complications identified within 3 days of birth / # complications in last 30 days"),
+#                    "calculation_function": "bihar.reports.indicators.calculations.complications",
+#                    "calculation_kwargs": {'days': 3, 'now': now},
+#                },
+#                {
+#                    "slug": 'comp5',
+#                    "name": _("# complications identified within 5 days of birth / # complications in last 30 days"),
+#                    "calculation_function": "bihar.reports.indicators.calculations.complications",
+#                    "calculation_kwargs": {'days': 5, 'now': now},
+#                },
+#                {
+#                    "slug": 'comp7',
+#                    "name": _("# complications identified within 7 days of birth / # complications in last 30 days"),
+#                    "calculation_function": "bihar.reports.indicators.calculations.complications",
+#                    "calculation_kwargs": {'days': 7, 'now': now},
+#                },
+            ],
+            "client_list": [],
+        }
+    },
+    {
+        "slug": "newborn",
+        "name": _("Weak Newborn"),
+        "indicators": {
+            "summary":[
+                {
+                    "slug": "ptlb",
+                    "name": _("# Preterm births / # Live births"),
+                    "calculation_function": "bihar.reports.indicators.calculations.ptlb"
+                },
+                {
+                    "slug": "lt2kglb",
+                    "name": _("# infants < 2kg / # live births"),
+                    "calculation_function": "bihar.reports.indicators.calculations.lt2kglb"
+                },
+                {
+                    "slug": "visited_weak_ones",
+                    "name": _("# live births who are preterm or < 2kg  visited in 24 hours of birth by FLW/ (# preterm + # infants < 2kg)"),
+                },
+            ]
+        }
+    },
 #    {"slug": "familyplanning", "name": _("Family Planning") },
 #    {"slug": "complimentaryfeeding", "name": _("Complimentary Feeding") },
 #    {"slug": "mortality", "name": _("Mortality") }
@@ -165,6 +225,8 @@ class Indicator(object):
         self.name = spec["name"]
         self.calculation_function = to_function(spec["calculation_function"]) \
             if "calculation_function" in spec else None
+        if spec.has_key("calculation_kwargs"):
+            self.calculation_function = functools.partial(self.calculation_function, **spec['calculation_kwargs'])
         
         # case filter stuff
         self.filter_function = to_function(spec["filter_function"]) \
