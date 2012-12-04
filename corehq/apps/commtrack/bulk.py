@@ -23,13 +23,13 @@ def import_stock_reports(domain, f):
     headers = reduce(lambda a, b: a.union(b.keys()), data, set())
 
     try:
-        data_col_mapping = validate_headers(domain, headers)
+        data_cols = validate_headers(domain, headers)
     except Exception, e:
         raise RuntimeError(str(e))
 
     locs_by_id = dict((loc.outlet_id, loc) for loc in Location.filter_by_type(domain, 'outlet'))
     for row in data:
-        validate_row(row, domain, data_col_mapping, locs_by_id)
+        validate_row(row, domain, data_cols, locs_by_id)
 
     # abort if any location codes are invalid
     if any(not row.get('loc') for row in data):
@@ -39,7 +39,7 @@ def import_stock_reports(domain, f):
 
         rows_by_loc = map_reduce(lambda row: [(row['loc']._id,)], data=data, include_docs=True)
         for loc, rows in rows_by_loc.iteritems():
-            process_loc(domain, loc, rows)
+            process_loc(domain, loc, rows, data_cols)
 
     return annotate_csv(data, reader.fieldnames)
     
@@ -84,8 +84,13 @@ def validate_data_header(header, actions, products):
         raise RuntimeError('don\'t recognize action code "%s"' % action_code)
     if prod_code not in products:
         raise RuntimeError('don\'t recognize product code "%s"' % prod_code)
-        
-    return (action_code, prod_code)
+
+    return {
+        'action_code': action_code,
+        'action': actions[action_code],
+        'prod_code': prod_code,
+        'product': products[prod_code],
+    }
 
 def validate_row(row, domain, data_cols, locs_by_id):
     # identify location
@@ -155,7 +160,7 @@ def validate_row(row, domain, data_cols, locs_by_id):
                 set_error(row, 'ERROR invalid data value "%s" in column "%s"' % (val, k))
                 return
 
-def process_loc(domain, loc, rows):
+def process_loc(domain, loc, rows, data_cols):
     # get actual loc object
     loc = rows[0]['loc']
 
@@ -182,18 +187,33 @@ def process_loc(domain, loc, rows):
     rows.sort(key=lambda row: row['date'])
     for row in rows:
         try:
-            import_row(row)
+            import_row(row, data_cols)
             set_error(row, 'SUCCESS row imported')
         except Exception, e:
             set_error(row, 'ERROR during import: %s' % str(e))
             set_error_bulk(rows, 'SKIPPED remaining rows due to unexpected error')
             break
 
-def import_row(row):
-    pass
+def import_row(row, data_cols):
+    def get_data():
+        for header, meta in data_cols.iteritems():
+            val = row[header]
+            if val is not None and val != '':
+                yield {'action': meta['action'], 'product': meta['product'], 'value': int(val)}
+
+    report = {
+        'location': row['loc'],
+        'date': datetime.strptime(row['date'], '%Y-%m-%d'), # need to handle
+        'user': None, # need to handle
+        'device/phone': None, # need to handle
+        'transactions': list(get_data()),
+    }
+    print report
+    # submit report
 
     # generate the data dict that sms.StockReport.parse() makes
-    #   import
+    # simulate import
+    # also need way use historical date
 
 def annotate_csv(data, columns):
     headers = list(columns)
