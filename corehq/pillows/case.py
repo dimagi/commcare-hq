@@ -1,4 +1,6 @@
 from casexml.apps.case.models import CommCareCase
+from corehq.pillows import dynamic
+from corehq.pillows.core import DATE_FORMATS_ARR, DATE_FORMATS_STRING
 from pillowtop.listener import AliasedElasticPillow
 import hashlib
 import simplejson
@@ -41,79 +43,8 @@ class CasePillow(AliasedElasticPillow):
         #all will be strings EXCEPT the core case properties which we need to explicitly define below.
         #that way date sort and ranges will work with canonical date formats for queries.
         return {
-            self.get_type_string(doc_dict): {
-                "date_detection": False,
-                "_meta": {
-                    "created": '',
-                    },
-                "properties": {
-                    "name": {
-                        "type": "string"
-                    },
-                    "domain": {
-                        "type": "multi_field",
-                        "fields": {
-                            "domain": {"type": "string", "index": "analyzed"},
-                            "exact": {"type": "string", "index": "not_analyzed"}
-                            #exact is full text string match - hyphens get parsed in standard
-                            # analyzer
-                            # in queries you can access by domain.exact
-                        }
-                    },
-                    "modified_on": {
-                        "format": "dateOptionalTime",
-                        "type": "date"
-                    },
-                    "closed_on": {
-                        "format": "dateOptionalTime",
-                        "type": "date"
-                    },
-                    "opened_on": {
-                        "format": "dateOptionalTime",
-                        "type": "date"
-                    },
-                    "server_modified_on": {
-                        "type": "date",
-                        "format": "dateOptionalTime"
-                    },
-                    "user_id": {
-                        "type": "string"
-                    },
-                    "closed": {
-                        "type": "boolean"
-                    },
-                    "type": {
-                        "type": "string"
-                    },
-                    "owner_id": {
-                        "type": "string"
-                    },
-                    "xform_ids": {"type": "string", "index_name": "xform_id"},
-                    'actions': {
-                        'properties': {
-                            'action_type': {
-                                "type": "string"
-                            },
-                            'seq': {
-                                'type': 'long'
-                            },
-                            'server_date': {
-                                "format": "dateOptionalTime",
-                                "type": "date"
-                            },
-                            'date': {
-                                "format": "dateOptionalTime",
-                                "type": "date"
-                            },
-                            'xform_id': {
-                                "type": "string"
-                            },
-                            }
-                    }
-                }
-            }
+            self.get_type_string(doc_dict): dynamic.case_mapping_generator()
         }
-
 
     def get_type_string(self, doc_dict):
         domain = doc_dict.get('domain', None)
@@ -127,5 +58,5 @@ class CasePillow(AliasedElasticPillow):
             'type': self.es_type,
             'domain': domain.lower(),
             'case_type': case_type.lower(),
-            }
+        }
 

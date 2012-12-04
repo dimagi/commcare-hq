@@ -1,7 +1,7 @@
 import pdb
 import random
 import traceback
-from corehq.pillows.core import date_format_arr, formats_string
+from corehq.pillows.core import DATE_FORMATS_ARR, DATE_FORMATS_STRING
 import sys
 from pillowtop.listener import AliasedElasticPillow, CHECKPOINT_FREQUENCY
 import hashlib
@@ -70,7 +70,7 @@ class XFormPillow(AliasedElasticPillow):
     es_type = "xform"
 
     es_meta = {
-        "date_formats": date_format_arr
+        "date_formats": DATE_FORMATS_ARR
     }
     xform_handlers = []
 
@@ -82,7 +82,7 @@ class XFormPillow(AliasedElasticPillow):
     #type level mapping
     default_xform_mapping = {
         "date_detection": False,
-        "date_formats": date_format_arr, #for parsing the explicitly defined dates
+        "date_formats": DATE_FORMATS_ARR, #for parsing the explicitly defined dates
         'ignore_malformed': True,
         'dynamic': False,
         "_meta": {
@@ -111,7 +111,7 @@ class XFormPillow(AliasedElasticPillow):
             "app_id": {"type": "string", "index": "not_analyzed"},
             "received_on": {
                 "type": "date",
-                "format": formats_string
+                "format": DATE_FORMATS_STRING
             },
             'form': {
                 'dynamic': False,
@@ -121,11 +121,11 @@ class XFormPillow(AliasedElasticPillow):
                         'properties': {
                             'date_modified': {
                                 "type": "date",
-                                "format": formats_string
+                                "format": DATE_FORMATS_STRING
                             },
                             '@date_modified': {
                                 "type": "date",
-                                "format": formats_string
+                                "format": DATE_FORMATS_STRING
                             },
 
                             "@case_id": {"type": "string", "index": "not_analyzed"},
@@ -143,11 +143,11 @@ class XFormPillow(AliasedElasticPillow):
                         'properties': {
                             "timeStart": {
                                 "type": "date",
-                                "format": formats_string
+                                "format": DATE_FORMATS_STRING
                             },
                             "timeEnd": {
                                 "type": "date",
-                                "format": formats_string
+                                "format": DATE_FORMATS_STRING
                             },
                             "userID": {"type": "string", "index": "not_analyzed"},
                             "deviceID": {"type": "string", "index": "not_analyzed"},

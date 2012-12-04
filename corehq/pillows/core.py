@@ -12,7 +12,7 @@ import settings
 from datetime import datetime
 
 
-date_format_arr = ["yyyy-MM-dd",
+DATE_FORMATS_ARR = ["yyyy-MM-dd",
                    #"date_time_no_millis",
                    #                      'date_optional_time',
                    "yyyy-MM-dd'T'HH:mm:ssZZ",
@@ -29,7 +29,7 @@ date_format_arr = ["yyyy-MM-dd",
 #https://github.com/elasticsearch/elasticsearch/issues/2132
 #elasticsearch Illegal pattern component: t
 #no builtin types for || joins
-formats_string = '||'.join(date_format_arr)
+DATE_FORMATS_STRING = '||'.join(DATE_FORMATS_ARR)
 
 class AuditcarePillow(LogstashMonitoringPillow):
     endpoint_host = settings.LOGSTASH_HOST
