@@ -86,7 +86,6 @@ MIDDLEWARE_CLASSES = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'corehq.middleware.OpenRosaMiddleware',
-    'corehq.apps.domain.middleware.DomainMiddleware',
     'corehq.apps.users.middleware.UsersMiddleware',
     'casexml.apps.phone.middleware.SyncTokenMiddleware',
     'auditcare.middleware.AuditMiddleware',
@@ -134,10 +133,8 @@ CRISPY_TEMPLATE_PACK = 'bootstrap'
 
 HQ_APPS = (
     'django_digest',
-    'django_rest_interface',
-    'django_granular_permissions',
-    'django_tables',
     'django_user_registration',
+    'rosetta',
     'auditcare',
     'djangocouch',
     'djangocouchuser',
@@ -212,10 +209,14 @@ HQ_APPS = (
     'dca',
     'hsph',
     'mvp',
+    'mvp_apps',
     'pathfinder',
     'pathindia',
 )
 
+TEST_APPS = (
+    'dimagi.utils',
+)
 REFLEXIVE_URL_BASE = "localhost:8000"
 
 INSTALLED_APPS = DEFAULT_APPS + HQ_APPS
@@ -229,6 +230,8 @@ MENU_ITEMS = (
     "corehq.apps.hqwebapp.models.MessagesMenuItem",
     "corehq.apps.hqwebapp.models.ProjectSettingsMenuItem",
     "corehq.apps.hqwebapp.models.AdminReportsMenuItem",
+    "corehq.apps.hqwebapp.models.ExchangeMenuItem",
+    "corehq.apps.hqwebapp.models.ManageSurveysMenuItem",
 )
 
 # after login, django redirects to this URL
