@@ -1,6 +1,7 @@
 import logging
 from datetime import datetime
 import hashlib
+import traceback
 import simplejson
 from gevent import socket
 import rawes
@@ -26,27 +27,29 @@ def ms_from_timedelta(td):
     """
     return (td.seconds * 1000) + (td.microseconds / 1000.0)
 
-def old_changes(pillow):
-    from couchdbkit import  Consumer
-    c = Consumer(pillow.couch_db, backend='gevent')
-    while True:
-        try:
-            c.wait(pillow.parsing_processor, since=pillow.since, filter=pillow.couch_filter,
-                heartbeat=WAIT_HEARTBEAT, feed='continuous', timeout=30000)
-        except Exception, ex:
-            logging.exception("Exception in form listener: %s, sleeping and restarting" % ex)
-            gevent.sleep(5)
 
-def new_changes(pillow):
-     with ChangesStream(pillow.couch_db, feed='continuous', heartbeat=True, since=pillow.since,
-         filter=pillow.couch_filter) as st:
-        for c in st:
-            pillow.processor(c)
 
 class BasicPillow(object):
     couch_filter = None # string for filter if needed
     couch_db = None #couchdbkit Database Object
     changes_seen = 0
+
+    def old_changes(self):
+        from couchdbkit import  Consumer
+        c = Consumer(self.couch_db, backend='gevent')
+        while True:
+            try:
+                c.wait(self.parsing_processor, since=self.since, filter=self.couch_filter,
+                    heartbeat=WAIT_HEARTBEAT, feed='continuous', timeout=30000)
+            except Exception, ex:
+                logging.exception("Exception in form listener: %s, sleeping and restarting" % ex)
+                gevent.sleep(5)
+
+    def new_changes(self):
+         with ChangesStream(self.couch_db, feed='continuous', heartbeat=True, since=self.since,
+             filter=self.couch_filter) as st:
+            for c in st:
+                self.processor(c)
 
     def run(self, since=0):
         """
@@ -54,9 +57,9 @@ class BasicPillow(object):
         """
         logging.info("Starting pillow %s" % self.__class__)
         if USE_NEW_CHANGES:
-            new_changes(self)
+            self.new_changes()
         else:
-            old_changes(self)
+            self.old_changes()
 
     def get_name(self):
         return "%s.%s" % (self.__module__, self.__class__.__name__)
@@ -109,10 +112,8 @@ class BasicPillow(object):
         """
         self.changes_seen+=1
         if self.changes_seen % CHECKPOINT_FREQUENCY == 0 and do_set_checkpoint:
-            logging.info("(%s) setting checkpoint: %d" % (self.get_checkpoint_doc_name(),
-                                                      change['seq']))
+            logging.info("(%s) setting checkpoint: %d" % (self.get_checkpoint_doc_name(), change['seq']))
             self.set_checkpoint(change)
-
 
         try:
             t = self.change_trigger(change)
@@ -180,6 +181,10 @@ class ElasticPillow(BasicPillow):
     def get_index_mapping(self):
         es = self.get_es()
         return es.get('%s/_mapping' % self.es_index)[self.es_index]
+
+    def set_mapping(self, type_string, mapping):
+        es = self.get_es()
+        return es.put("%s/%s/_mapping" % (self.es_index, type_string), data=mapping)
 
     @memoized
     def get_es(self):
@@ -299,13 +304,7 @@ class AliasedElasticPillow(ElasticPillow):
         Overrided based upon the doc type
         """
         es = self.get_es()
-        doc_path = "%(index)s/%(type_string)s/%(id)s" % (
-            {
-                'index': self.es_index,
-                'type_string': self.get_type_string(doc_dict),
-                'id': doc_dict['_id']
-            })
-        head_result = es.head(doc_path)
+        head_result = es.head(self.get_doc_path_typed(doc_dict))
         return head_result
 
     def get_name(self):
@@ -327,13 +326,12 @@ class AliasedElasticPillow(ElasticPillow):
 #        start = datetime.utcnow()
         try:
             es = self.get_es()
-
             if not self.type_exists(doc_dict):
                 #if type is never seen, apply mapping for said type
                 type_mapping = self.get_mapping_from_type(doc_dict)
                 #update metadata
                 type_mapping[self.get_type_string(doc_dict)]['_meta']['created'] = datetime.isoformat(datetime.utcnow())
-                mapping_res = es.put("%s/%s/_mapping" % (self.es_index, self.get_type_string(doc_dict)), data=type_mapping)
+                mapping_res = self.set_mapping(self.get_type_string(doc_dict), type_mapping)
                 if mapping_res.get('ok', False) and mapping_res.get('acknowledged', False):
                     #API confirms OK, trust it.
                     logging.info("Mapping set: [%s] %s" % (self.get_type_string(doc_dict), mapping_res))
@@ -370,7 +368,9 @@ class AliasedElasticPillow(ElasticPillow):
 #                print "\ttype_to_submit: %d ms" % ms_from_timedelta(did_put-got_type)
 
         except Exception, ex:
-            logging.error("PillowTop [%s]: transporting change data doc_id: %s to elasticsearch error: %s", (self.get_name(), doc_dict['_id'], ex))
+            logging.error("PillowTop [%s]: transporting change data doc_id: %s to elasticsearch error: %s" % (self.get_name(), doc_dict['_id'], ex))
+#            tb = traceback.format_exc()
+#            print tb
             return None
 
     @property
