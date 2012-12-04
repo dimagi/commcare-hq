@@ -3,6 +3,14 @@ from dimagi.utils.modules import to_function
 from django.utils.translation import ugettext_noop as _
 
 # static config - should this eventually live in the DB?
+DELIVERIES = {
+    "slug": "deliveries",
+    "name": _("Pregnant woman who delivered in last 30 days"),
+    "filter_function": "bihar.reports.indicators.filters.delivered_last_month",
+    "row_function": "bihar.reports.indicators.filters.mother_post_delivery_columns",
+    "sortkey": "bihar.reports.indicators.filters.get_add_sortkey",
+    "columns": [_("Name"), _("Husband's Name"), _("ADD")],
+    }
 INDICATOR_SETS = [
     {
         "slug": "homevisit", 
@@ -43,14 +51,7 @@ INDICATOR_SETS = [
                     "row_function": "bihar.reports.indicators.filters.mother_pre_delivery_columns",
                     "sortkey": "bihar.reports.indicators.filters.get_edd_sortkey",
                 },
-                {
-                    "slug": "deliveries", 
-                    "name": _("Pregnant woman who delivered in last 30 days"),
-                    "filter_function": "bihar.reports.indicators.filters.delivered_last_month",
-                    "row_function": "bihar.reports.indicators.filters.mother_post_delivery_columns",
-                    "sortkey": "bihar.reports.indicators.filters.get_add_sortkey",
-                    "columns": [_("Name"), _("Husband's Name"), _("ADD")],
-                },
+                DELIVERIES,
                 {
                     "slug": "new_pregnancies", 
                     "name": _("Pregnant woman registered in last 30 days"),
@@ -113,10 +114,7 @@ INDICATOR_SETS = [
                 },
             ],
             "client_list": [
-                {
-                    "slug": "delivered_in_last_30",
-                    "name": _("Pregnant woman who delivered in last 30 days (REPEAT FROM HOME VISIT INFO))"),
-                },
+                DELIVERIES,
             ],
         }
     }
