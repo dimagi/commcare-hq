@@ -209,6 +209,7 @@ HQ_APPS = (
     'dca',
     'hsph',
     'mvp',
+    'mvp_apps',
     'pathfinder',
     'pathindia',
 )
@@ -230,6 +231,7 @@ MENU_ITEMS = (
     "corehq.apps.hqwebapp.models.ProjectSettingsMenuItem",
     "corehq.apps.hqwebapp.models.AdminReportsMenuItem",
     "corehq.apps.hqwebapp.models.ExchangeMenuItem",
+    "corehq.apps.hqwebapp.models.ManageSurveysMenuItem",
 )
 
 # after login, django redirects to this URL
