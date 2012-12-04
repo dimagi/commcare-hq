@@ -120,7 +120,8 @@ def id_day(cases):
     num = len(filter(lambda case:_visited_in_timeframe_of_birth(case, 1) , valid_cases))
     return _num_denom(num, denom)
 
-def idnb(cases): #todo: finish this
+def idnb(cases):
     valid_cases = filter(lambda case: _delivered_at_in_timeframe(case, ['private', 'public'], 30), cases)
     denom = len(valid_cases)
-    return None
+    num = len(filter(lambda case: not get_related_prop(case, 'breastfed_hour') == 'yes', valid_cases))
+    return _num_denom(num, denom)
