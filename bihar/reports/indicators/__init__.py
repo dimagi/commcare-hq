@@ -6,10 +6,10 @@ from django.utils.translation import ugettext_noop as _
 from dimagi.utils.parsing import string_to_datetime
 from django.utils.datastructures import SortedDict
 
-if settings.DEBUG:
-    now = string_to_datetime('2012-03-21')
-else:
-    now = None
+# change here to debug as if today were some day in the past
+#now = string_to_datetime('2012-03-21')
+now = None
+
 
 DEFAULT_ROW_FUNCTION = 'bihar.reports.indicators.filters.mother_pre_delivery_columns'
 
@@ -30,7 +30,7 @@ INDICATOR_SETS = [
             {
                 "slug": "bp2",
                 "name": _("BP (2nd Tri) Visits in last 30 days (Done/Due)"),
-                "calculation_function": "bihar.reports.indicators.calculations.bp2_last_month"
+                "calculation_class": "bihar.reports.indicators.calculations.BP2Calculator"
             },
             {
                 "slug": "bp3",
@@ -131,24 +131,24 @@ INDICATOR_SETS = [
                 "calculation_function": "bihar.reports.indicators.calculations.complications",
                 "calculation_kwargs": {'days': 1, 'now': now},
             },
-#                {
-#                    "slug": 'comp3',
-#                    "name": _("# complications identified within 3 days of birth / # complications in last 30 days"),
-#                    "calculation_function": "bihar.reports.indicators.calculations.complications",
-#                    "calculation_kwargs": {'days': 3, 'now': now},
-#                },
-#                {
-#                    "slug": 'comp5',
-#                    "name": _("# complications identified within 5 days of birth / # complications in last 30 days"),
-#                    "calculation_function": "bihar.reports.indicators.calculations.complications",
-#                    "calculation_kwargs": {'days': 5, 'now': now},
-#                },
-#                {
-#                    "slug": 'comp7',
-#                    "name": _("# complications identified within 7 days of birth / # complications in last 30 days"),
-#                    "calculation_function": "bihar.reports.indicators.calculations.complications",
-#                    "calculation_kwargs": {'days': 7, 'now': now},
-#                },
+            {
+                "slug": 'comp3',
+                "name": _("# complications identified within 3 days of birth / # complications in last 30 days"),
+                "calculation_function": "bihar.reports.indicators.calculations.complications",
+                "calculation_kwargs": {'days': 3, 'now': now},
+            },
+            {
+                "slug": 'comp5',
+                "name": _("# complications identified within 5 days of birth / # complications in last 30 days"),
+                "calculation_function": "bihar.reports.indicators.calculations.complications",
+                "calculation_kwargs": {'days': 5, 'now': now},
+            },
+            {
+                "slug": 'comp7',
+                "name": _("# complications identified within 7 days of birth / # complications in last 30 days"),
+                "calculation_function": "bihar.reports.indicators.calculations.complications",
+                "calculation_kwargs": {'days': 7, 'now': now},
+            },
         ],
     },
     {
@@ -205,8 +205,6 @@ class IndicatorSet(object):
     def get_indicator(self, slug):
         return self.indicators[slug]
     
-    
-    
 class Indicator(object):
     # this class is currently used both for client list filters and 
     # calcualtions. it probably makes sense to pull them out into separate
@@ -214,6 +212,10 @@ class Indicator(object):
     def __init__(self, spec):
         self.slug = spec["slug"]
         self.name = spec["name"]
+
+        self.calculation_class = to_function(spec["calculation_class"])() \
+            if "calculation_class" in spec else None
+
         self.calculation_function = to_function(spec["calculation_function"]) \
             if "calculation_function" in spec else None
         if spec.has_key("calculation_kwargs"):

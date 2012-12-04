@@ -1,14 +1,74 @@
 from collections import defaultdict
 from couchdbkit import ResourceNotFound
-from bihar.reports.indicators.filters import A_MONTH, is_pregnant_mother, get_add, get_edd
+from bihar.reports.indicators.filters import A_MONTH, is_pregnant_mother, get_add, get_edd,\
+    mother_pre_delivery_columns
 from couchforms.safe_index import safe_index
 from dimagi.utils.parsing import string_to_datetime
 import datetime as dt
 from bihar.reports.indicators.visits import visit_is, get_related_prop
+from dimagi.utils.mixins import UnicodeMixIn
+from dimagi.utils.decorators.memoized import memoized
 
 EMPTY = (0,0)
 GRACE_PERIOD = dt.timedelta(days=7)
 
+class IndicatorCalculator(object):
+    """
+    A class that, given a case, can tell you that cases contributions to the
+    numerator and denominator of a particular indicator.
+    """
+
+    def __init__(self, *args, **kwargs):
+        pass
+
+    def numerator(self, case):
+        raise NotImplementedError("Override this!")
+
+    def denominator(self, case):
+        raise NotImplementedError("Override this!")
+
+    @memoized
+    def as_row(self, case):
+        raise NotImplementedError("Override this!")
+
+    def filter(self, case):
+        return bool(self.denominator(case))
+
+    @memoized
+    def display(self, cases):
+        num = denom = 0
+        for case in cases:
+            denom_diff = self.denominator(case)
+            if denom_diff:
+                denom += denom_diff
+                num_diff = self.numerator(case)
+                assert num_diff <= denom_diff
+                # this is to prevent the numerator from ever passing the denominator
+                # though is probably not totally accurate
+                num += num_diff
+        return "%s/%s" % (num, denom)
+
+class MemoizingCalculator(IndicatorCalculator):
+    # to avoid decorators everywhere. there might be a smarter way to do this
+
+    @memoized
+    def numerator(self, case):
+        return self._numerator(case)
+
+    @memoized
+    def denominator(self, case):
+        return self._denominator(case)
+
+class BP2Calculator(MemoizingCalculator):
+
+    def _numerator(self, case):
+        return 1 if _mother_due_in_window(case, 75) else 0
+
+    def _denominator(self, case):
+        return 1 if len(filter(lambda a: visit_is(a, 'bp'), case.actions)) >= 2 else 0
+
+    def as_row(self, case):
+        return mother_pre_delivery_columns(case)
 
 def _num_denom(num, denom):
     return "%s/%s" % (num, denom)
@@ -106,12 +166,6 @@ def _weak_babies(case, days=None): # :(
 # might want to revisit.
 
 # NOTE: this is going to be slooooow
-def bp2_last_month(cases):
-    due = lambda case: 1 if _mother_due_in_window(case, 75) else 0
-    # make sure they've done 2 bp visits
-    done = lambda case: 1 if len(filter(lambda a: visit_is(a, 'bp'), case.actions)) >= 2 else 0
-    return _num_denom_count(cases, due, done)    
-    
 def bp3_last_month(cases):
     due = lambda case: 1 if _mother_due_in_window(case, 45) else 0
     # make sure they've done 2 bp visits
@@ -184,11 +238,11 @@ def lt2kglb(cases, num_only=False):
 
 def _get_time_of_birth(form):
     try:
-        time_of_birth = form.xpath('form/data/child_info/case/update/time_of_birth')
+        time_of_birth = form.xpath('form/child_info/case/update/time_of_birth')
         assert time_of_birth is not None
     except AssertionError:
         time_of_birth = safe_index(
-            form.xpath('form/data/child_info')[0],
+            form.xpath('form/child_info')[0],
             'case/update/time_of_birth'.split('/')
         )
     return time_of_birth
@@ -197,32 +251,32 @@ def complications(cases, days, now=None):
     """
     DENOM: [
         any DELIVERY forms with (
-            /data/complications = 'yes'
+            complications = 'yes'
         ) in last 30 days
         PLUS any PNC forms with ( # 'any applicable from PNC forms with' (?)
-            /data/abdominal_pain ='yes' or
-            /data/bleeding = 'yes' or
-            /data/discharge = 'yes' or
-            /data/fever = 'yes' or
-            /data/pain_urination = 'yes'
+            abdominal_pain ='yes' or
+            bleeding = 'yes' or
+            discharge = 'yes' or
+            fever = 'yes' or
+            pain_urination = 'yes'
         ) in the last 30 days
         PLUS any REGISTRATION forms with (
-            /data/abd_pain ='yes' or    # == abdominal_pain
-            /data/fever = 'yes' or
-            /data/pain_urine = 'yes' or    # == pain_urination
-            /data/vaginal_discharge = 'yes'    # == discharge
-        ) with /data/add in last 30 days
+            abd_pain ='yes' or    # == abdominal_pain
+            fever = 'yes' or
+            pain_urine = 'yes' or    # == pain_urination
+            vaginal_discharge = 'yes'    # == discharge
+        ) with add in last 30 days
         PLUS any EBF forms with (
-            /data/abdominal_pain ='yes' or
-            /data/bleeding = 'yes' or
-            /data/discharge = 'yes' or
-            /data/fever = 'yes' or
-            /data/pain_urination = 'yes'
+            abdominal_pain ='yes' or
+            bleeding = 'yes' or
+            discharge = 'yes' or
+            fever = 'yes' or
+            pain_urination = 'yes'
         ) in last 30 days    # note, don't exist in EBF yet, but will shortly
     ]
     NUM: [
         filter (
-            DELIVERY ? form.meta.timeStart - /data/child_info/case/update/time_of_birth,
+            DELIVERY ? form.meta.timeStart - child_info/case/update/time_of_birth,
             REGISTRATION|PNC|EBF ? form.meta.timeStart - case.add
         ) < `days` days
     ]
@@ -237,63 +291,65 @@ def complications(cases, days, now=None):
     REGISTRATION = 'http://bihar.commcarehq.org/pregnancy/registration'
     EBF = 'https://bitbucket.org/dimagi/cc-apps/src/caab8f93c1e48d702b5d9032ef16c9cec48868f0/bihar/mockup/bihar_ebf.xml'
     _pnc_ebc_complications = [
-        '/data/abdominal_pain',
-        '/data/bleeding',
-        '/data/discharge',
-        '/data/fever',
-        '/data/pain_urination',
-        ]
+        'abdominal_pain',
+        'bleeding',
+        'discharge',
+        'fever',
+        'pain_urination',
+    ]
     complications_by_form = {
         DELIVERY: [
-            '/data/complications'
+            'complications'
         ],
         PNC: _pnc_ebc_complications,
         EBF: _pnc_ebc_complications,
         REGISTRATION: [
-            '/data/abd_pain',
-            '/data/fever',
-            '/data/pain_urine',
-            '/data/vaginal_discharge',
-            ],
-        }
+            'abd_pain',
+            'fever',
+            'pain_urine',
+            'vaginal_discharge',
+        ],
+    }
 
     debug = defaultdict(int)
-    def get_forms(case, days=30):
-        for action in case.actions:
-            debug['forms_scanned'] +=1
-            if now - dt.timedelta(days=days) <= action.date <= now:
-                debug['submitted_in_time'] +=1
-                try:
-                    yield action.xform
-                except ResourceNotFound:
-                    debug['bad_xform_refs'] += 1
 
-    done = 0
-    due = 0
+    def get_forms(case, days=30):
+        xform_ids = set()
+        for action in case.actions:
+            if action.xform_id not in xform_ids:
+                xform_ids.add(action.xform_id)
+                if now - dt.timedelta(days=days) <= action.date <= now:
+                    try:
+                        debug['forms processed'] += 1
+                        yield action.xform
+                    except ResourceNotFound:
+                        pass
+
+    denom = 0
+    num = 0
     days = dt.timedelta(days=days)
-    for case in cases:
+    for case in filter(lambda case: case.type == 'cc_bihar_pregnancy', cases):
         for form in get_forms(case):
             try:
                 complication_paths = complications_by_form[form.xmlns]
             except KeyError:
                 continue
             debug['relevent_xmlns'] += 1
+            has_complication = False
+            has_recent_complication = False
             for p in complication_paths:
-                has_complications = form.xpath('form/data/complications')
-                if has_complications == 'no':
-                    debug['%s complications is no' % form.xmlns.split('/')[-1]] += 1
-                elif has_complications is None:
-                    debug['%s complications dne' % form.xmlns.split('/')[-1]] += 1
-                else:
-                    debug['has_complications'] += 1
-                print form.get_id, p, form.xpath('form' + p)
-                if form.xpath('form' + p) == 'yes':
-                    due += 1
+                if form.xpath('form/' + p) == 'yes':
+                    has_complication = True
                     if form.xmlns == DELIVERY:
                         add = _get_time_of_birth(form)
                     else:
                         add = get_add(case)
                     add = string_to_datetime(add)
-                    if form.metatdata.timeStart - add < days:
-                        done += 1
-    return "%s/%s,<br/>debug: %s" % (done, due, dict(debug))
+                    if form.metadata.timeStart - add < days:
+                        has_recent_complication = True
+                        break
+            if has_complication:
+                denom += 1
+                if has_recent_complication:
+                    num += 1
+    return "%s/%s" % (num, denom)
