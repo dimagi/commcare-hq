@@ -1,14 +1,14 @@
 import csv
 from StringIO import StringIO
 from datetime import datetime
-from models import *
+from corehq.apps.commtrack.models import *
 from corehq.apps.sms.mixin import VerifiedNumber, strip_plus
 from corehq.apps.locations.models import Location
 from corehq.apps.users.models import CouchUser
 from casexml.apps.case.models import CommCareCase
 from dimagi.utils.couch.database import get_db
 from dimagi.utils.couch.loosechange import map_reduce
-import sms
+import corehq.apps.commtrack.sms
 
 def set_error(row, msg, override=False):
     """set an error message on a stock report to be imported"""
