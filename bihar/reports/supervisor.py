@@ -91,7 +91,7 @@ class GroupReferenceMixIn(object):
     def rendered_report_title(self):
         return u"{title} - {group} ({awcc})".format(title=_(self.name),
                                            group=self.group.name,
-                                           awcc=get_awcc(self.group, default=""))
+                                           awcc=get_awcc(self.group))
 
 
 class BiharSummaryReport(ConvenientBaseMixIn, SummaryTablularReport, 
@@ -254,8 +254,8 @@ def _shared_nav_link(nav_report, i, report_cls):
                         val=list_prompt(i, report_cls.name),
                         details=url)
 
-def get_awcc(group, default=ugettext_noop('unknown')):
-    return group.metadata.get("awc-code", _(default))
+def get_awcc(group):
+    return group.metadata.get("awc-code", _('no awc code found'))
 
 def url_and_params(urlbase, params):
     assert "?" not in urlbase
