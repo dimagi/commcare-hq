@@ -191,7 +191,22 @@ INDICATOR_SETS = [
     },
 #    {"slug": "familyplanning", "name": _("Family Planning") },
 #    {"slug": "complimentaryfeeding", "name": _("Complimentary Feeding") },
-#    {"slug": "mortality", "name": _("Mortality") }
+    {
+        "slug": "mortality",
+        "name": _("Mortality"),
+        "indicators": [
+            {
+                "slug": "mother_mortality",
+                "name": _("# Mothers who've died in the last 30 days"),
+                "calculation_class": "bihar.reports.indicators.calculations.MMCalculator"
+            },
+            {
+                "slug": "infant_mortality",
+                "name": _("# Infants who've died in the last 30 days"),
+                "calculation_class": "bihar.reports.indicators.calculations.IMCalculator"
+            },
+        ]
+    }
 ]
 
 
