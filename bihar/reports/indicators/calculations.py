@@ -1,6 +1,6 @@
 from collections import defaultdict
 from couchdbkit import ResourceNotFound
-from bihar.reports.indicators.filters import A_MONTH, is_pregnant_mother, get_add, get_edd,\
+from bihar.reports.indicators.filters import A_MONTH, is_pregnant_mother, is_newborn_child, get_add, get_edd,\
     mother_pre_delivery_columns, mother_post_delivery_columns
 from couchforms.safe_index import safe_index
 from dimagi.utils.parsing import string_to_datetime
@@ -165,6 +165,16 @@ def _get_forms(case, action_filter=lambda a: True, form_filter=lambda f: True):
         if getattr(action, 'xform', None) and form_filter(action.xform):
             yield action.xform
 
+def _get_action(case, action_filter=lambda a: True):
+    """
+    returns the first action that passes through the action filter
+    """
+    ga = _get_actions(case, action_filter=action_filter)
+    try:
+        return ga.next()
+    except StopIteration:
+        return None
+
 def _get_form(case, action_filter=lambda a: True, form_filter=lambda f: True):
     """
     returns the first form that passes through both filter functions
@@ -266,21 +276,48 @@ class VWOCalculator(LT2KGLBCalculator):
     def _numerator(self, case):
         return 1 if _visited_in_timeframe_of_birth(case, 1) else 0
 
-class S2SCalculator(VWOCalculator):
-
+class SimpleListMixin(object):
     def _render(self, num, denom):
         return str(denom)
 
-    def _denominator(self, case):
-        return 1 if self._weak_baby(case) and _get_xpath_from_forms(case, "child_info/skin_to_skin") == 'no' else 0
-
     def _numerator(self, case):
         return 0
+
+class S2SCalculator(SimpleListMixin, VWOCalculator):
+
+    def _denominator(self, case):
+        return 1 if self._weak_baby(case) and _get_xpath_from_forms(case, "child_info/skin_to_skin") == 'no' else 0
 
 class FVCalculator(S2SCalculator):
 
     def _denominator(self, case):
         return 1 if self._weak_baby(case) and _get_xpath_from_forms(case, "child_info/feed_vigour") == 'no' else 0
+
+class MMCalculator(SimpleListMixin, SummaryValueMixIn, MotherPreDeliveryMixIn, MemoizingCalculatorMixIn, IndicatorCalculator):
+
+    def _action_within_timeframe(self, action, days):
+        now = dt.datetime.now()
+        return now - dt.timedelta(days=days) <= action.date <= now
+
+    def _denominator(self, case):
+        def afn(a):
+            return self._action_within_timeframe(a, 30) and a.updated_known_properties.get('mother_alive', None) == "no"
+
+        if is_pregnant_mother(case):
+            action = _get_action(case, action_filter=afn)
+            return 1 if action else 0
+        return 0
+
+class IMCalculator(MMCalculator):
+
+    def _denominator(self, case):
+        def afn(a):
+            return self._action_within_timeframe(a, 30) and a.updated_known_properties.get('child_alive', None) == "no"
+
+        if is_newborn_child(case):
+            action = _get_action(case, action_filter=afn)
+            return 1 if action else 0
+        return 0
 
 def _get_time_of_birth(form):
     try:
