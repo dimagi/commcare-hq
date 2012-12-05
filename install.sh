@@ -1,16 +1,8 @@
-# Change these if desired
-POSTGRES_DB="foodb"
-POSTGRES_USER="django"
-POSTGRES_PW="django"
-
-COUCHDB_DB="foodb"
-
-# This script installs dependencies for CommCare HQ on Ubuntu 12.04 (Java,
-# Jython, couchdb, couchdb-lucene, less, uglifyjs, and various python packages)
-# and sets couchdb and couchdb-lucene up to automatically run on startup.  It
-# also creates postgres (user 'django', pass 'django') and couchdb databases
-# named according to $DBNAME as specified above. 
-
+# Install script for CommCare HQ on Ubuntu 12.04
+# - installs all dependencies
+# - ensures all necessary processes will run on startup
+# - creates databases 
+#
 # Before running, you must download the following files to the script's
 # directory: 
 #  - the JDK 7 tar.gz from
@@ -21,13 +13,19 @@ COUCHDB_DB="foodb"
 #
 #  - apache-couchdb-1.2.0.tar.gz from http://couchdb.apache.org/#download
 
+# Database settings; change these if desired
+
+POSTGRES_DB="foodb"
+POSTGRES_USER="django"
+POSTGRES_PW="django"
+
+COUCHDB_DB="foodb"
+
+## Add PPA to get latest versions of nodejs and npm
+
 if [[ ! $(sudo grep -r "chris-lea/node\.js" /etc/apt/) ]]; then
     sudo add-apt-repository -y ppa:chris-lea/node.js
     sudo apt-get update
-fi
-
-if [ ! -f couchdb-lucene-0.8.0-dist.zip ]; then
-    wget https://github.com/downloads/rnewson/couchdb-lucene/couchdb-lucene-0.8.0-dist.zip -O couchdb-lucene-0.8.0-dist.zip
 fi
 
 ## Install dependencies ##
@@ -103,33 +101,6 @@ if [ ! -f /etc/init.d/couchdb ]; then
     sudo ln -s /usr/local/etc/init.d/couchdb /etc/init.d
 
     sudo update-rc.d couchdb defaults
-fi
-
-
-## Install couchdb-lucene ##
-
-if [ ! -f /etc/init.d/couchdb-lucene ]; then
-    unzip couchdb-lucene-0.8.0-dist.zip
-    sudo cp couchdb-lucene-0.8.0 /usr/local
-    rm -r couchdb-lucene-0.8.0
-    sudo cp /usr/local/couchdb-lucene-0.8.0/tools/etc/init.d/couchdb-lucene/couchdb-lucene /etc/init.d/
-
-
-    sudo update-rc.d couchdb-lucene defaults
-fi
-
-if [[ ! $(grep _fti /usr/local/etc/couchdb/local.ini) ]]; then
-    config=/usr/local/etc/couchdb/local.ini
-    sudo sed -i '/\[couchdb\]/ a\os_process_timeout=60000' $config
-
-    echo "
-[external]
-fti=/usr/bin/python /usr/local/couchdb-lucene-0.8.0/tools/couchdb-external-hook.py
-
-[httpd_db_handlers]
-_fti = {couch_httpd_external, handle_external_req, <<\"fti\">>}
-" | sudo tee -a $config
-
 fi
 
 ## Configure databases ##
