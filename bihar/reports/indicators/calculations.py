@@ -68,7 +68,7 @@ class SummaryValueMixIn(object):
     Meant to be used in conjunction with IndicatorCalculators, allows you to
     define text that should show up in the client list if the numerator is
     set, if the denominator is set, or neither is set.
-    
+
     Also provides sensible defaults.
     """
     numerator_text = ugettext_noop("Yes")
@@ -94,10 +94,10 @@ class MotherPreDeliveryMixIn(object):
     """
     def get_columns(self):
         return [_("Name"), _("Husband's Name"), _("EDD"), _(self.summary_header)]
-    
+
     def as_row(self, case):
         return mother_pre_delivery_columns(case) + (self.summary_value(case), )
-    
+
 class BP2Calculator(MotherPreDeliveryMixIn, MemoizingCalculatorMixIn, DoneDueMixIn, IndicatorCalculator):
 
     def _numerator(self, case):
@@ -120,7 +120,7 @@ def _in_timeframe(date, days):
 def _mother_due_in_window(case, days):
     get_visitduedate = lambda case: case.edd - dt.timedelta(days=days) + GRACE_PERIOD
     return is_pregnant_mother(case) and get_edd(case) and _in_last_month(get_visitduedate(case))
-        
+
 def _mother_delivered_in_window(case, days):
     get_visitduedate = lambda case: case.add + dt.timedelta(days=days) + GRACE_PERIOD
     return is_pregnant_mother(case) and get_add(case) and _in_last_month(get_visitduedate(case))
@@ -154,18 +154,20 @@ def _delivered_at_in_timeframe(case, at, days):
     at = at if isinstance(at, list) else [at]
     return getattr(case, 'birth_place', None) in at and _delivered_in_timeframe(case, days)
 
+def _get_tob(case): # only guaranteed to be accurate within 24 hours
+    tob = get_related_prop(case, "time_of_birth") or get_add(case) # use add if time_of_birth can't be found
+    if isinstance(tob, dt.date):
+        tob = dt.datetime.combine(tob, dt.datetime.time(dt.datetime.now())) #convert date to dt.datetime
+    return tob
+
 def _get_time_of_visit_after_birth(case):
-    for action in case.actions:
-        if action.updated_unknown_properties.get("add", None):
-            return action.date
-    return None
+    form = _get_form(case, action_filter=lambda a: a.updated_unknown_properties.get("add", None))
+    return form.xpath('form/meta/timeStart')
 
 def _visited_in_timeframe_of_birth(case, days):
     visit_time = _get_time_of_visit_after_birth(case)
-    time_birth = get_related_prop(case, "time_of_birth") or get_add(case) # use add if time_of_birth can't be found
+    time_birth = _get_tob(case)
     if visit_time and time_birth:
-        if isinstance(time_birth, dt.date):
-            time_birth = dt.datetime.combine(time_birth, dt.datetime.time(dt.datetime.now())) #convert date to dt.datetime
         return time_birth < visit_time < time_birth + dt.timedelta(days=days)
     return False
 
@@ -175,9 +177,27 @@ def _get_actions(case, action_filter=lambda a: True):
             yield action
 
 def _get_forms(case, action_filter=lambda a: True, form_filter=lambda f: True):
-    for action in _get_actions(case, action_filter):
+    for action in _get_actions(case, action_filter=action_filter):
         if getattr(action, 'xform', None) and form_filter(action.xform):
             yield action.xform
+
+def _get_form(case, action_filter=lambda a: True, form_filter=lambda f: True):
+    """
+    returns the first form that passes through both filter functions
+    """
+    gf = _get_forms(case, action_filter=action_filter, form_filter=form_filter)
+    try:
+        return gf.next()
+    except StopIteration:
+        return None
+
+def _get_prop_from_forms(case, property):
+    form = _get_form(case, form_filter=lambda f: f.form.get(property, None))
+    return form.form[property] if form else None
+
+def _get_xpath_from_forms(case, path):
+    form = _get_form(case, form_filter=lambda f: f.xpath("form/%s" % path))
+    return form.xpath("form/%s" % path) if form else None
 
 def _weak_babies(case, days=None): # :(
     def af(action):
@@ -187,16 +207,13 @@ def _weak_babies(case, days=None): # :(
         return now - dt.timedelta(days=days) <= action.date <= now
 
     def recently_delivered(case):
-        for form in _get_forms(case, action_filter=af):
-            if form.xpath("form/data/recently_delivered") == 'yes':
-                return True
-        return False
+        return _get_form(case, action_filter=af, form_filter=lambda f: f.form.get('recently_delivered', "") == 'yes')
 
     return is_pregnant_mother(case) and\
            (recently_delivered(case) or get_related_prop(case, 'birth_status') == "live_birth")
 
 
-    
+
 # NOTE: cases in, values out might not be the right API
 # but it's what we need for the first set of stuff.
 # might want to revisit.
@@ -206,8 +223,8 @@ def bp3_last_month(cases):
     due = lambda case: 1 if _mother_due_in_window(case, 45) else 0
     # make sure they've done 2 bp visits
     done = lambda case: 1 if len(filter(lambda a: visit_is(a, 'bp'), case.actions)) >= 3 else 0
-    return _num_denom_count(cases, due, done)    
-    
+    return _num_denom_count(cases, due, done)
+
 def pnc_last_month(cases):
     pnc_schedule = (1, 3, 6)
     due = lambda case: len(_visits_due(case, pnc_schedule))
@@ -238,7 +255,7 @@ class HDDayCalculator(SummaryValueMixIn, MotherPreDeliveryMixIn, MemoizingCalcul
 class IDDayCalculator(HDDayCalculator):
 
     def _denominator(self, case):
-        return 1 if _delivered_at_in_timeframe(case, ['private', 'public'], 3000) else 0
+        return 1 if _delivered_at_in_timeframe(case, ['private', 'public'], 30) else 0
 
 class IDNBCalculator(IDDayCalculator):
 
@@ -249,7 +266,7 @@ class IDNBCalculator(IDDayCalculator):
             return 0
 
     def _numerator(self, case):
-        dtf = get_related_prop(case, 'date_time_feed')
+        dtf = _get_prop_from_forms(case, 'date_time_feed')
         tob = get_related_prop(case, 'time_of_birth')
         if dtf and tob:
             return 1 if dtf - tob <= dt.timedelta(hours=1) else 0
@@ -266,8 +283,8 @@ class PTLBCalculator(SummaryValueMixIn, MotherPreDeliveryMixIn, MemoizingCalcula
 class LT2KGLBCalculator(PTLBCalculator): # should change name probs
 
     def _numerator(self, case):
-        w = get_related_prop(case, 'weight')
-        fw = get_related_prop(case, 'first_weight')
+        w = _get_xpath_from_forms(case, "child_info/weight")
+        fw = _get_xpath_from_forms(case, "child_info/first_weight")
         return 1 if (w is not None and w < 2.0) or (fw is not None and fw < 2.0) else 0
 
 def _get_time_of_birth(form):
