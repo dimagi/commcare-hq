@@ -155,10 +155,8 @@ def _delivered_at_in_timeframe(case, at, days):
     return getattr(case, 'birth_place', None) in at and _delivered_in_timeframe(case, days)
 
 def _get_time_of_visit_after_birth(case):
-    for action in case.actions:
-        if action.updated_unknown_properties.get("add", None):
-            return action.date
-    return None
+    form = _get_form(case, action_filter=lambda a: a.updated_unknown_properties.get("add", None))
+    return form.xpath('form/meta/timeStart')
 
 def _visited_in_timeframe_of_birth(case, days):
     visit_time = _get_time_of_visit_after_birth(case)
@@ -178,6 +176,14 @@ def _get_forms(case, action_filter=lambda a: True, form_filter=lambda f: True):
     for action in _get_actions(case, action_filter):
         if getattr(action, 'xform', None) and form_filter(action.xform):
             yield action.xform
+
+def _get_form(case, action_filter=lambda a: True, form_filter=lambda f: True):
+    gf = _get_forms(case, action_filter=action_filter, form_filter=form_filter)
+    try:
+        return gf.next()
+    except StopIteration:
+        return None
+
 
 def _weak_babies(case, days=None): # :(
     def af(action):
@@ -230,7 +236,7 @@ def cf_last_month(cases):
 class HDDayCalculator(SummaryValueMixIn, MotherPreDeliveryMixIn, MemoizingCalculatorMixIn, IndicatorCalculator):
 
     def _numerator(self, case):
-        return 1 if _visited_in_timeframe_of_birth(case, 1) else 0
+        return 1 if _visited_in_timeframe_of_birth(case, 1000) else 0
 
     def _denominator(self, case):
         return 1 if _delivered_at_in_timeframe(case, 'home', 30) else 0
