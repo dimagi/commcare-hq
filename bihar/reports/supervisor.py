@@ -89,8 +89,9 @@ class GroupReferenceMixIn(object):
     @property
     @memoized
     def rendered_report_title(self):
-        return u"{title} - {group}".format(title=_(self.name),
-                                           group=self.group.name)
+        return u"{title} - {group} ({awcc})".format(title=_(self.name),
+                                           group=self.group.name,
+                                           awcc=get_awcc(self.group, default=""))
 
 
 class BiharSummaryReport(ConvenientBaseMixIn, SummaryTablularReport, 
@@ -168,7 +169,7 @@ class SubCenterSelectionReport(ConvenientBaseMixIn, GenericTabularReport,
                 details=url_and_params(self.next_report_class.get_url(self.domain,
                                                                       render_as=self.render_next),
                                        params))
-        return [_link(group), group.metadata.get("awc-code", _('unknown'))]
+        return [_link(group), get_awcc(group)]
             
 
 class MainNavReport(BiharNavReport):
@@ -221,6 +222,9 @@ class DueListReport(MockEmptyReport):
 class ToolsReport(MockEmptyReport):
     name = ugettext_noop("Tools")
     slug = "tools"
+
+def get_awcc(group, default=ugettext_noop('unknown')):
+    return group.metadata.get("awc-code", _(default))
 
 def url_and_params(urlbase, params):
     assert "?" not in urlbase
