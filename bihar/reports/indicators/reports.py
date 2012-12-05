@@ -172,7 +172,7 @@ class IndicatorClientList(GroupReferenceMixIn, ConvenientBaseMixIn,
 
     @property
     def _headers(self):
-        return [_(c) for c in self.indicator.columns]
+        return [_(c) for c in self.indicator.get_columns()]
 
     @property
     def sorted_cases(self):
