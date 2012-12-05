@@ -1,7 +1,7 @@
 from collections import defaultdict
 from couchdbkit import ResourceNotFound
 from bihar.reports.indicators.filters import A_MONTH, is_pregnant_mother, is_newborn_child, get_add, get_edd,\
-    mother_pre_delivery_columns
+    mother_pre_delivery_columns, mother_post_delivery_columns
 from couchforms.safe_index import safe_index
 from dimagi.utils.parsing import string_to_datetime
 import datetime as dt
@@ -11,7 +11,6 @@ from django.utils.translation import ugettext_noop
 from django.utils.translation import ugettext as _
 
 EMPTY = (0,0)
-GRACE_PERIOD = dt.timedelta(days=7)
 
 class IndicatorCalculator(object):
     """
@@ -101,32 +100,23 @@ class MotherPreDeliveryMixIn(object):
     def as_row(self, case):
         return mother_pre_delivery_columns(case) + (self.summary_value(case), )
 
-class BP2Calculator(MotherPreDeliveryMixIn, MemoizingCalculatorMixIn, DoneDueMixIn, IndicatorCalculator):
+class MotherPostDeliveryMixIn(object):
+    """
+    Meant to be used with IndicatorCalculators and SummaryValueMixIn, to
+    provide shared defaults for stuff that shows up in the client list.
+    """
+    def get_columns(self):
+        return [_("Name"), _("Husband's Name"), _("ADD"), _(self.summary_header)]
 
-    def _numerator(self, case):
-        return 1 if _mother_due_in_window(case, 75) else 0
-
-    def _denominator(self, case):
-        return 1 if len(filter(lambda a: visit_is(a, 'bp'), case.actions)) >= 2 else 0
+    def as_row(self, case):
+        return mother_post_delivery_columns(case) + (self.summary_value(case), )
 
 def _num_denom(num, denom):
     return "%s/%s" % (num, denom)
 
-def _in_last_month(date):
-    today = dt.datetime.today().date()
-    return today - A_MONTH < date < today
-
 def _in_timeframe(date, days):
     today = dt.datetime.today().date()
     return today - dt.timedelta(days=days) < date < today
-
-def _mother_due_in_window(case, days):
-    get_visitduedate = lambda case: case.edd - dt.timedelta(days=days) + GRACE_PERIOD
-    return is_pregnant_mother(case) and get_edd(case) and _in_last_month(get_visitduedate(case))
-
-def _mother_delivered_in_window(case, days):
-    get_visitduedate = lambda case: case.add + dt.timedelta(days=days) + GRACE_PERIOD
-    return is_pregnant_mother(case) and get_add(case) and _in_last_month(get_visitduedate(case))
 
 def _num_denom_count(cases, num_func, denom_func):
     num = denom = 0
@@ -140,15 +130,6 @@ def _num_denom_count(cases, num_func, denom_func):
             # though is probably not totally accurate
             num += num_diff
     return _num_denom(num, denom)
-
-def _visits_due(case, schedule):
-    return [i + 1 for i, days in enumerate(schedule) \
-            if _mother_delivered_in_window(case, days)]
-
-def _visits_done(case, schedule, type):
-    due = _visits_due(case, schedule)
-    count = len(filter(lambda a: visit_is(a, type), case.actions))
-    return len([v for v in due if count > v])
 
 def _delivered_in_timeframe(case, days):
     return is_pregnant_mother(case) and get_add(case) and _in_timeframe(case.add, days)
@@ -232,30 +213,7 @@ def _newborn(case, days=None): # :(
 # might want to revisit.
 
 # NOTE: this is going to be slooooow
-def bp3_last_month(cases):
-    due = lambda case: 1 if _mother_due_in_window(case, 45) else 0
-    # make sure they've done 2 bp visits
-    done = lambda case: 1 if len(filter(lambda a: visit_is(a, 'bp'), case.actions)) >= 3 else 0
-    return _num_denom_count(cases, due, done)
 
-def pnc_last_month(cases):
-    pnc_schedule = (1, 3, 6)
-    due = lambda case: len(_visits_due(case, pnc_schedule))
-    done = lambda case: _visits_done(case, pnc_schedule, "pnc")
-    return _num_denom_count(cases, done, due)
-
-def eb_last_month(cases):
-    eb_schedule = (14, 28, 60, 90, 120, 150)
-    due = lambda case: len(_visits_due(case, eb_schedule))
-    done = lambda case: _visits_done(case, eb_schedule, "eb")
-    return _num_denom_count(cases, done, due)
-
-def cf_last_month(cases):
-    cf_schedule_in_months = (6, 7, 8, 9, 12, 15, 18)
-    cf_schedule = (m * 30 for m in cf_schedule_in_months)
-    due = lambda case: len(_visits_due(case, cf_schedule))
-    done = lambda case: _visits_done(case, cf_schedule, "cf")
-    return _num_denom_count(cases, done, due)
 
 class HDDayCalculator(SummaryValueMixIn, MotherPreDeliveryMixIn, MemoizingCalculatorMixIn, IndicatorCalculator):
 
