@@ -233,7 +233,7 @@ class ToolsNavReport(BiharSummaryReport):
                 _shared_nav_link(self, 1, EDDCalcReport),
                 _shared_nav_link(self, 2, BMICalcReport),]
 
-class ReferralListReport(GroupReferenceMixIn):
+class ReferralListReport(GroupReferenceMixIn, MockEmptyReport):
     name = ugettext_noop("Referrals")
     slug = "referrals"
 
