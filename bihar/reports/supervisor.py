@@ -118,15 +118,7 @@ class BiharNavReport(BiharSummaryReport):
     
     @property
     def data(self):
-        def _nav_link(i, report_cls):
-            url = report_cls.get_url(self.domain, 
-                                     render_as=self.render_next)
-            if self.preserve_url_params:
-                url = url_and_params(url, self.request_params)
-            return format_html(u'<a href="{details}">{val}</a>',
-                                val=list_prompt(i, report_cls.name),
-                                details=url)
-        return [_nav_link(i, report_cls) for i, report_cls in enumerate(self.reports)]
+        return [_shared_nav_link(self, i, report_cls) for i, report_cls in enumerate(self.reports)]
         
 class MockEmptyReport(BiharSummaryReport):
     """
@@ -184,8 +176,8 @@ class MainNavReport(BiharNavReport):
     @property
     def reports(self):
         from bihar.reports.indicators.reports import IndicatorSelectNav
-        return [IndicatorSelectNav, WorkerRankSelectionReport, 
-                # DueListReport, ToolsReport
+        return [IndicatorSelectNav, WorkerRankSelectionReport, ToolsNavReport
+                # DueListReport, 
                 ]
 
 
@@ -219,9 +211,48 @@ class DueListReport(MockEmptyReport):
     name = ugettext_noop("Due List")
     slug = "duelist"
 
-class ToolsReport(MockEmptyReport):
-    name = ugettext_noop("Tools")
+class ToolsNavReport(BiharSummaryReport):
+    name = ugettext_noop("Tools Menu")
     slug = "tools"
+    
+    _headers = [" ", " ", " "]
+
+    @property
+    def data(self):
+        def _referral_link(i):
+            params = copy(self.request_params)
+            params["next_report"] = ReferralListReport.slug
+            return format_html(u'<a href="{next}">{val}</a>',
+                val=list_prompt(i, _(ReferralListReport.name)),
+                next=url_and_params(
+                    SubCenterSelectionReport.get_url(self.domain, 
+                                                     render_as=self.render_next),
+                    params
+            ))
+        return [_referral_link(0), 
+                _shared_nav_link(self, 1, EDDCalcReport),
+                _shared_nav_link(self, 2, BMICalcReport),]
+
+class ReferralListReport(GroupReferenceMixIn):
+    name = ugettext_noop("Referrals")
+    slug = "referrals"
+
+class EDDCalcReport(MockEmptyReport):
+    name = ugettext_noop("EDD Calculator")
+    slug = "eddcalc"
+
+class BMICalcReport(MockEmptyReport):
+    name = ugettext_noop("BMI Calculator")
+    slug = "bmicalc"
+
+def _shared_nav_link(nav_report, i, report_cls):
+    url = report_cls.get_url(nav_report.domain, 
+                             render_as=nav_report.render_next)
+    if getattr(nav_report, 'preserve_url_params', False):
+        url = url_and_params(url, nav_report.request_params)
+    return format_html(u'<a href="{details}">{val}</a>',
+                        val=list_prompt(i, report_cls.name),
+                        details=url)
 
 def get_awcc(group, default=ugettext_noop('unknown')):
     return group.metadata.get("awc-code", _(default))
