@@ -38,6 +38,9 @@ class IndicatorCalculator(object):
     def filter(self, case):
         return bool(self.denominator(case))
 
+    def _render(self, num, denom):
+        return "%s/%s" % (num, denom)
+
     @memoized
     def display(self, cases):
         num = denom = 0
@@ -50,7 +53,7 @@ class IndicatorCalculator(object):
                 # this is to prevent the numerator from ever passing the denominator
                 # though is probably not totally accurate
                 num += num_diff
-        return "%s/%s" % (num, denom)
+        return self._render(num, denom)
 
 class MemoizingCalculatorMixIn(object):
     # to avoid decorators everywhere. there might be a smarter way to do this
@@ -199,7 +202,7 @@ def _get_xpath_from_forms(case, path):
     form = _get_form(case, form_filter=lambda f: f.xpath("form/%s" % path))
     return form.xpath("form/%s" % path) if form else None
 
-def _weak_babies(case, days=None): # :(
+def _newborn(case, days=None): # :(
     def af(action):
         if not days:
             return True
@@ -282,7 +285,7 @@ class PTLBCalculator(SummaryValueMixIn, MotherPreDeliveryMixIn, MemoizingCalcula
         return 1 if self._preterm(case) else 0
 
     def _denominator(self, case):
-        return 1 if _weak_babies(case, 30) else 0
+        return 1 if _newborn(case, 30) else 0
 
 class LT2KGLBCalculator(PTLBCalculator): # should change name probs
 
@@ -296,11 +299,30 @@ class LT2KGLBCalculator(PTLBCalculator): # should change name probs
 
 class VWOCalculator(LT2KGLBCalculator):
 
+    def _weak_baby(self, case):
+        return True if _newborn(case, 30) and (self._preterm(case) or self._lt2(case)) else False
+
     def _denominator(self, case):
-        return 1 if _weak_babies(case, 30) and (self._preterm(case) or self._lt2(case)) else 0
+        return 1 if self._weak_baby(case) else 0
 
     def _numerator(self, case):
         return 1 if _visited_in_timeframe_of_birth(case, 1) else 0
+
+class S2SCalculator(VWOCalculator):
+
+    def _render(self, num, denom):
+        return str(denom)
+
+    def _denominator(self, case):
+        return 1 if self._weak_baby(case) and _get_xpath_from_forms(case, "child_info/skin_to_skin") == 'no' else 0
+
+    def _numerator(self, case):
+        return 0
+
+class FVCalculator(S2SCalculator):
+
+    def _denominator(self, case):
+        return 1 if self._weak_baby(case) and _get_xpath_from_forms(case, "child_info/feed_vigour") == 'no' else 0
 
 def _get_time_of_birth(form):
     try:

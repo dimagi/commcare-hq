@@ -177,6 +177,16 @@ INDICATOR_SETS = [
                 "name": _("# live births who are preterm or < 2kg  visited in 24 hours of birth by FLW/ (# preterm + # infants < 2kg)"),
                 "calculation_class": "bihar.reports.indicators.calculations.VWOCalculator"
             },
+            {
+                "slug": "skin_to_skin",
+                "name": _("# live births who are preterm and < 2kg not receiving skin to skin care message by FLW"),
+                "calculation_class": "bihar.reports.indicators.calculations.S2SCalculator"
+            },
+            {
+                "slug": "feed_vigour",
+                "name": _("# live births who are preterm and < 2kg infants not breastfeeding vigorously "),
+                "calculation_class": "bihar.reports.indicators.calculations.FVCalculator"
+            },
         ]
     },
 #    {"slug": "familyplanning", "name": _("Family Planning") },
