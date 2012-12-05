@@ -200,10 +200,7 @@ def _weak_babies(case, days=None): # :(
         return now - dt.timedelta(days=days) <= action.date <= now
 
     def recently_delivered(case):
-        for form in _get_forms(case, action_filter=af):
-            if form.xpath("form/data/recently_delivered") == 'yes':
-                return True
-        return False
+        return _get_form(case, action_filter=af, form_filter=lambda f: f.form.get('recently_delivered', "") == 'yes')
 
     return is_pregnant_mother(case) and\
            (recently_delivered(case) or get_related_prop(case, 'birth_status') == "live_birth")
