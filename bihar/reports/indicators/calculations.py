@@ -272,20 +272,35 @@ class IDNBCalculator(IDDayCalculator):
             return 1 if dtf - tob <= dt.timedelta(hours=1) else 0
         return 0
 
+
 class PTLBCalculator(SummaryValueMixIn, MotherPreDeliveryMixIn, MemoizingCalculatorMixIn, IndicatorCalculator):
 
+    def _preterm(self, case):
+        return True if getattr(case, 'term', None) == "pre_term" else False
+
     def _numerator(self, case):
-        return 1 if getattr(case, 'term', None) == "pre_term" else 0
+        return 1 if self._preterm(case) else 0
 
     def _denominator(self, case):
         return 1 if _weak_babies(case, 30) else 0
 
 class LT2KGLBCalculator(PTLBCalculator): # should change name probs
 
-    def _numerator(self, case):
+    def _lt2(self, case):
         w = _get_xpath_from_forms(case, "child_info/weight")
         fw = _get_xpath_from_forms(case, "child_info/first_weight")
-        return 1 if (w is not None and w < 2.0) or (fw is not None and fw < 2.0) else 0
+        return True if (w is not None and w < 2.0) or (fw is not None and fw < 2.0) else False
+
+    def _numerator(self, case):
+        return 1 if self._lt2(case) else 0
+
+class VWOCalculator(LT2KGLBCalculator):
+
+    def _denominator(self, case):
+        return 1 if _weak_babies(case, 30) and (self._preterm(case) or self._lt2(case)) else 0
+
+    def _numerator(self, case):
+        return 1 if _visited_in_timeframe_of_birth(case, 1) else 0
 
 def _get_time_of_birth(form):
     try:

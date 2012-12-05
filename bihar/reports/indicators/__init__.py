@@ -175,6 +175,7 @@ INDICATOR_SETS = [
             {
                 "slug": "visited_weak_ones",
                 "name": _("# live births who are preterm or < 2kg  visited in 24 hours of birth by FLW/ (# preterm + # infants < 2kg)"),
+                "calculation_class": "bihar.reports.indicators.calculations.VWOCalculator"
             },
         ]
     },
