@@ -854,7 +854,7 @@ class GenericTabularReport(GenericReportView):
         )
 
 
-def _summary_context(report):
+def summary_context(report):
     # will intentionally break if used with something that doesn't have
     # a summary_values attribute
     return {"summary_values": report.summary_values}
