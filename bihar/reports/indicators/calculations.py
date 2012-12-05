@@ -182,15 +182,22 @@ def _get_forms(case, action_filter=lambda a: True, form_filter=lambda f: True):
             yield action.xform
 
 def _get_form(case, action_filter=lambda a: True, form_filter=lambda f: True):
+    """
+    returns the first form that passes through both filter functions
+    """
     gf = _get_forms(case, action_filter=action_filter, form_filter=form_filter)
     try:
         return gf.next()
     except StopIteration:
         return None
 
-def _get_prop_from_form(case, property):
+def _get_prop_from_forms(case, property):
     form = _get_form(case, form_filter=lambda f: f.form.get(property, None))
     return form.form[property] if form else None
+
+def _get_xpath_from_forms(case, path):
+    form = _get_form(case, form_filter=lambda f: f.xpath("form/%s" % path))
+    return form.xpath("form/%s" % path) if form else None
 
 def _weak_babies(case, days=None): # :(
     def af(action):
@@ -259,7 +266,7 @@ class IDNBCalculator(IDDayCalculator):
             return 0
 
     def _numerator(self, case):
-        dtf = _get_prop_from_form(case, 'date_time_feed')
+        dtf = _get_prop_from_forms(case, 'date_time_feed')
         tob = get_related_prop(case, 'time_of_birth')
         if dtf and tob:
             return 1 if dtf - tob <= dt.timedelta(hours=1) else 0
@@ -276,8 +283,8 @@ class PTLBCalculator(SummaryValueMixIn, MotherPreDeliveryMixIn, MemoizingCalcula
 class LT2KGLBCalculator(PTLBCalculator): # should change name probs
 
     def _numerator(self, case):
-        w = get_related_prop(case, 'weight')
-        fw = get_related_prop(case, 'first_weight')
+        w = _get_xpath_from_forms(case, "child_info/weight")
+        fw = _get_xpath_from_forms(case, "child_info/first_weight")
         return 1 if (w is not None and w < 2.0) or (fw is not None and fw < 2.0) else 0
 
 def _get_time_of_birth(form):
