@@ -143,7 +143,7 @@ Please make sure you're still in the root directory of commcare-hq and that you 
 
 #### Celery (asynchronous task scheduler)
 
-   ./manage.py celeryd -v 2 -B -s celery -E
+    ./manage.py celeryd -v 2 -B -s celery -E
 
 
 ### Get CommCare Binaries
@@ -151,12 +151,3 @@ Please make sure you're still in the root directory of commcare-hq and that you 
 In order to build and download a CommCare mobile app from your instance of CommCare HQ, you need to follow
 our instructions for how to download and load CommCare binaries from the Dimagi build server:
 https://github.com/dimagi/core-hq/blob/master/corehq/apps/builds/README.md
-
-A Note about requirements.txt
------------------------------
-
-If an import isn't working it may well be because we aren't specifying all versions in the requirements.txt and you have
-an old version. If you figure out this problem and figure out what version we *should* be using, feel free to add it to
-requirements.txt as ">=ver.si.on" like so:
-    couchdbkit>=0.5.2
-(Use == for exact version instead of lower bound.)
