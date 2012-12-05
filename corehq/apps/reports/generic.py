@@ -861,7 +861,7 @@ def summary_context(report):
 
 class SummaryTablularReport(GenericTabularReport):
     report_template_path = "reports/async/summary_tabular.html"
-    extra_context_providers = [_summary_context]
+    extra_context_providers = [summary_context]
 
     @property
     def data(self):
