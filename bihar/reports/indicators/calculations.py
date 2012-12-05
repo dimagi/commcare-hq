@@ -281,7 +281,7 @@ def _get_time_of_birth(form):
         )
     return time_of_birth
 
-class ComplicationsCalculator(MemoizingCalculator):
+class ComplicationsCalculator(MotherPreDeliveryMixIn, MemoizingCalculatorMixIn, DoneDueMixIn, IndicatorCalculator):
     """
         DENOM: [
             any DELIVERY forms with (
@@ -355,9 +355,6 @@ class ComplicationsCalculator(MemoizingCalculator):
 
     def _denominator(self, case):
         return self._calculate_both(case)[1]
-
-    def as_row(self, case):
-        return mother_pre_delivery_columns(case)
 
     @memoized
     def get_forms(self, case, days=30):
