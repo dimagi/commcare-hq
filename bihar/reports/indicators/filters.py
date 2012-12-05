@@ -10,6 +10,9 @@ A_MONTH = timedelta(days=30)
 
 def is_pregnant_mother(case):
     return case.type == "cc_bihar_pregnancy"
+
+def is_newborn_child(case):
+    return case.type == "cc_bihar_newborn"
  
 def created_last_month(case):
     return case.opened_on > datetime.today() - A_MONTH

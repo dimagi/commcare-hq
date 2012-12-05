@@ -1,6 +1,6 @@
 from collections import defaultdict
 from couchdbkit import ResourceNotFound
-from bihar.reports.indicators.filters import A_MONTH, is_pregnant_mother, get_add, get_edd,\
+from bihar.reports.indicators.filters import A_MONTH, is_pregnant_mother, is_newborn_child, get_add, get_edd,\
     mother_pre_delivery_columns
 from couchforms.safe_index import safe_index
 from dimagi.utils.parsing import string_to_datetime
@@ -337,12 +337,28 @@ class FVCalculator(S2SCalculator):
 
 class MMCalculator(SimpleListMixin, SummaryValueMixIn, MotherPreDeliveryMixIn, MemoizingCalculatorMixIn, IndicatorCalculator):
 
+    def _action_within_timeframe(self, action, days):
+        now = dt.datetime.now()
+        return now - dt.timedelta(days=days) <= action.date <= now
+
     def _denominator(self, case):
+        def afn(a):
+            return self._action_within_timeframe(a, 30) and a.updated_known_properties.get('mother_alive', None) == "no"
+
+        if is_pregnant_mother(case):
+            action = _get_action(case, action_filter=afn)
+            return 1 if action else 0
         return 0
 
 class IMCalculator(MMCalculator):
 
     def _denominator(self, case):
+        def afn(a):
+            return self._action_within_timeframe(a, 30) and a.updated_known_properties.get('child_alive', None) == "no"
+
+        if is_newborn_child(case):
+            action = _get_action(case, action_filter=afn)
+            return 1 if action else 0
         return 0
 
 def _get_time_of_birth(form):
