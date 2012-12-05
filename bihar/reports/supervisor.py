@@ -141,7 +141,8 @@ class SubCenterSelectionReport(ConvenientBaseMixIn, GenericTabularReport,
     slug = "subcenter"
     description = ugettext_noop("Subcenter selection report")
     
-    _headers = [_("Team Name"), 
+    _headers = [ugettext_noop("Team Name"), 
+                ugettext_noop("AWCC"),
                 # ugettext_noop("Rank")
                 ]
 
@@ -167,7 +168,7 @@ class SubCenterSelectionReport(ConvenientBaseMixIn, GenericTabularReport,
                 details=url_and_params(self.next_report_class.get_url(self.domain,
                                                                       render_as=self.render_next),
                                        params))
-        return [_link(group)]
+        return [_link(group), group.metadata.get("awc-code", _('unknown'))]
             
 
 class MainNavReport(BiharNavReport):
