@@ -1,8 +1,3 @@
-# Install script for CommCare HQ on Ubuntu 12.04
-# - installs all dependencies
-# - ensures all necessary processes will run on startup
-# - creates databases 
-#
 # Before running, you must download the following files to the script's
 # directory: 
 #  - the JDK 7 tar.gz from
@@ -13,6 +8,17 @@
 #
 #  - apache-couchdb-1.2.0.tar.gz from http://couchdb.apache.org/#download
 
+# Install script for CommCare HQ on Ubuntu 12.04
+# - installs all dependencies
+# - ensures all necessary processes will run on startup
+# - creates databases 
+
+if [ ! -f jdk.tar.gz ]; then
+    echo "Please read the top of this file."
+    exit
+fi
+
+
 # Database settings; change these if desired
 
 POSTGRES_DB="foodb"
@@ -21,7 +27,11 @@ POSTGRES_PW="django"
 
 COUCHDB_DB="foodb"
 
-## Add PPA to get latest versions of nodejs and npm
+## Misc settings
+
+ES_VERSION=0.19.12
+
+## PPA to get latest versions of nodejs and npm
 
 if [[ ! $(sudo grep -r "chris-lea/node\.js" /etc/apt/) ]]; then
     sudo add-apt-repository -y ppa:chris-lea/node.js
@@ -31,7 +41,7 @@ fi
 ## Install dependencies ##
 
 sudo apt-get install nodejs npm
-sudo npm install less uglify-js -g
+#sudo npm install less uglify-js -g
 
 sudo apt-get install -y curl python-pip python-dev libevent-1.4-2 libevent-dev python-setuptools build-essential
 sudo apt-get install -y postgresql memcached
@@ -71,9 +81,6 @@ if [ ! -d /usr/local/lib/jython ]; then
     wget http://peak.telecommunity.com/dist/ez_setup.py
 
     sudo jython ez_setup.py
-
-    /usr/local/lib/jython/bin/easy_install django
-    /usr/local/lib/jython/bin/easy_install django-jython
 fi
 
 ## Install couchdb ##
@@ -99,9 +106,31 @@ if [ ! -f /etc/init.d/couchdb ]; then
     sudo chown -R couchdb:couchdb /usr/local/var/run/couchdb
 
     sudo ln -s /usr/local/etc/init.d/couchdb /etc/init.d
-
-    sudo update-rc.d couchdb defaults
 fi
+
+## Install elastic-search ##
+
+if [ ! -f /etc/init.d/elasticsearch ]; then
+    file=elasticsearch-$ES_VERSION.deb
+
+    if [ ! -f $file ]; then
+        wget https://github.com/downloads/elasticsearch/elasticsearch/$file -O $file
+    fi
+
+    sudo dpkg -i $file 
+
+    echo "
+    JAVA_HOME=/usr/lib/jvm/jdk1.7.0-
+    " | sudo tee -a /etc/default/elasticsearch
+fi
+
+## Ensure processes start on startup
+
+sudo update-rc.d couchdb defaults
+
+# these should already be on by default
+sudo update-rc.d elasticsearch defaults
+sudo update-rc.d memcached defaults
 
 ## Configure databases ##
 

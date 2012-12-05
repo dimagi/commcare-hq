@@ -39,11 +39,6 @@ USE_I18N = True
 # Django i18n searches for translation files (django.po) within this dir
 LOCALE_PATHS=['contrib/locale']
 
-# Absolute path to the directory that holds media.
-# Example: "/home/media/media.lawrence.com/"
-MEDIA_ROOT = ''
-STATIC_ROOT = ''
-
 # URL that handles the media served from MEDIA_ROOT. Make sure to use a
 # trailing slash if there is a path component (optional in other cases).
 # Examples: "http://media.lawrence.com", "http://example.com/media/"
@@ -51,6 +46,9 @@ MEDIA_URL = '/media/'
 STATIC_URL = '/static/'
 
 FILEPATH = os.path.abspath(os.path.dirname(__file__))
+# media for user uploaded media.  in general this won't be used at all.
+MEDIA_ROOT = os.path.join(FILEPATH, 'mediafiles')
+STATIC_ROOT = os.path.join(FILEPATH, 'staticfiles')
 
 STATICFILES_FINDERS = (
     "django.contrib.staticfiles.finders.FileSystemFinder",
