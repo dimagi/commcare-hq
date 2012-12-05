@@ -30,27 +30,27 @@ INDICATOR_SETS = [
             {
                 "slug": "bp2",
                 "name": _("BP (2nd Tri) Visits in last 30 days (Done/Due)"),
-                "calculation_class": "bihar.reports.indicators.calculations.BP2Calculator"
+                "calculation_class": "bihar.reports.indicators.home_visit.BP2Calculator"
             },
             {
                 "slug": "bp3",
                 "name": _("BP (3rd Tri) Visits in last 30 days (Done/Due)"),
-                "calculation_function": "bihar.reports.indicators.calculations.bp3_last_month"
+                "calculation_class": "bihar.reports.indicators.home_visit.BP3Calculator"
             },
             {
                 "slug": "pnc",
                 "name": _("PNC Visits  in last 30 days (Done/Due)"),
-                "calculation_function": "bihar.reports.indicators.calculations.pnc_last_month"
+                "calculation_class": "bihar.reports.indicators.home_visit.PNCCalculator"
             },
             {
                 "slug": "ebf",
                 "name": _("EBF Visits in last 30 days (Done/Due)"),
-                "calculation_function": "bihar.reports.indicators.calculations.eb_last_month"
+                "calculation_class": "bihar.reports.indicators.home_visit.EBCalculator"
             },
             {
                 "slug": "cf",
                 "name": _("CF Visits in last 30 days (Done/Due)"),
-                "calculation_function": "bihar.reports.indicators.calculations.cf_last_month"
+                "calculation_class": "bihar.reports.indicators.home_visit.CFCalculator"
             },
             {
                 "slug": "upcoming_deliveries", 
