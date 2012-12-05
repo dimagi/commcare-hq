@@ -597,6 +597,7 @@ PROJECT_REPORT_MAP = {
     "Commtrack": [
         'corehq.apps.reports.commtrack.psi_prototype.VisitReport',
         'corehq.apps.reports.commtrack.psi_prototype.SalesAndConsumptionReport',
+        'corehq.apps.reports.commtrack.psi_prototype.StockReportExport',
     ],
 }
 
@@ -750,6 +751,7 @@ DEFAULT_CURRENCY = "USD"
 SMS_HANDLERS = [
     'corehq.apps.commtrack.sms.handle',
     'corehq.apps.sms.api.form_session_handler',
+    'corehq.apps.sms.api.fallback_handler',
 ]
 
 # mapping of phone number prefix (including country code) to a registered
