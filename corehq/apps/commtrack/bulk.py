@@ -8,7 +8,7 @@ from corehq.apps.users.models import CouchUser
 from casexml.apps.case.models import CommCareCase
 from dimagi.utils.couch.database import get_db
 from dimagi.utils.couch.loosechange import map_reduce
-import corehq.apps.commtrack.sms
+from corehq.apps.commtrack import sms
 
 def set_error(row, msg, override=False):
     """set an error message on a stock report to be imported"""
