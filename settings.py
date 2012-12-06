@@ -777,3 +777,5 @@ PILLOWTOPS = [ 'corehq.pillows.CasePillow',
                'corehq.pillows.CouchlogPillow',
                'corehq.pillows.DevicelogPillow',
                ] + LOCAL_PILLOWTOPS
+
+REMOTE_APP_NAMESPACE = "%(domain)s.commcarehq.org"
