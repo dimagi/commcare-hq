@@ -5,6 +5,7 @@ from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
 from copy import copy
 from corehq.apps.reports.dispatcher import CustomProjectReportDispatcher
 import urllib
+from dimagi.utils.excel import alphanumeric_sort_key
 from dimagi.utils.html import format_html
 from corehq.apps.groups.models import Group
 from dimagi.utils.decorators.memoized import memoized
@@ -143,10 +144,14 @@ class SubCenterSelectionReport(ConvenientBaseMixIn, GenericTabularReport,
     @memoized
     def _get_groups(self):
         if self.request.couch_user.is_commcare_user():
-            return Group.by_user(self.request.couch_user)
+            groups = Group.by_user(self.request.couch_user)
         else:
             # for web users just show everything?
-            return Group.by_domain(self.domain)
+            groups = Group.by_domain(self.domain)
+        return sorted(
+            groups,
+            key=lambda group: alphanumeric_sort_key(group.name)
+        )
         
     @property
     def rows(self):
