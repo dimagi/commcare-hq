@@ -1,6 +1,8 @@
 {% load report_tags %}
 <nav>
     <ul class="nav nav-list" id="report-list">
+        <li class="nav-header">Tools</li>
+        <li><a href="{% url reports_home domain %}"><i class="icon-tasks"></i> My Saved Reports</a></li>
         {% report_list 'corehq.apps.reports.dispatcher.ProjectReportDispatcher' %}
         {% report_list 'corehq.apps.reports.dispatcher.CustomProjectReportDispatcher' %}
     </ul>

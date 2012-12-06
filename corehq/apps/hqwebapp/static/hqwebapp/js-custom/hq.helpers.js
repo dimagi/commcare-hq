@@ -8,3 +8,17 @@ $(function() {
         }
     });
 });
+
+$.fn.hqHelp = function (options) {
+    var self = this;
+    self.each(function(i) {
+        var $helpElem = $($(self).get(i));
+        $helpElem.find('i').popover();
+        $helpElem.click(function () {
+            $(this).toggleClass('on');
+            if ($(this).hasClass('no-click')) {
+                return false;
+            }
+        })
+    });
+};

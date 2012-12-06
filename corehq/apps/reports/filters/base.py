@@ -205,6 +205,17 @@ class BaseDrilldownOptionFilter(BaseReportFilter):
         """
         raise NotImplementedError("drilldown_map must be implemented")
 
+    @property
+    @memoized
+    def GET_values(self):
+        values = []
+        for label in self.rendered_labels:
+            value = self._get_label_value(self.request, label)
+            if not value['value']:
+                break
+            values.append(value)
+        return values
+
     def _map_structure(self, val, text, next=None):
         if next is None:
             next = []
@@ -237,13 +248,7 @@ class BaseDrilldownOptionFilter(BaseReportFilter):
 
     @classmethod
     def get_value(cls, request, domain):
-        values = []
         instance = cls(request, domain)
-        for label in instance.rendered_labels:
-            value = cls._get_label_value(request, label)
-            if not value['value']:
-                break
-            values.append(value)
-        return values, instance
+        return instance.GET_values, instance
 
 
