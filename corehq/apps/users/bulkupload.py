@@ -9,6 +9,7 @@ from django.db.utils import DatabaseError
 from django.db import transaction
 from couchexport.writers import Excel2007ExportWriter
 from dimagi.utils.excel import flatten_json, json_to_headers, alphanumeric_sort_key
+import settings
 
 required_headers = set(['username'])
 allowed_headers = set(['password', 'phone-number', 'user_id', 'name', 'group', 'data']) | required_headers
@@ -40,19 +41,21 @@ class GroupMemoizer(object):
         self.domain = domain
 
     def load_all(self):
+        group_set = set()
         for group in Group.by_domain(self.domain):
+            group_set.add(group)
             self.add_group(group)
 
-    def add_group(self, group):
+    def add_group(self, new_group):
         # todo
         # this has the possibility of missing two rows one with id one with name
         # that actually refer to the same group
         # and overwriting one with the other
-        assert group.name
-        if group.get_id:
-            self.groups_by_id[group.get_id] = group
-        self.groups_by_name[group.name] = group
-        self.groups.add(group)
+        assert new_group.name
+        if new_group.get_id:
+            self.groups_by_id[new_group.get_id] = new_group
+        self.groups_by_name[new_group.name] = new_group
+        self.groups.add(new_group)
 
     def by_name(self, group_name):
         if not self.groups_by_name.has_key(group_name):
@@ -76,7 +79,12 @@ class GroupMemoizer(object):
         return group
 
     def rename_group(self, group, name):
-        assert self.groups_by_name.get(group.name) is group
+        # This isn't always true, you can rename A => B and then B => C,
+        # and what was A will now be called B when you try to change
+        # what was B to be called C. That's fine, but you don't want to
+        # delete someone else's entry
+        if self.groups_by_name.get(group.name) is group:
+            del self.groups_by_name[group.name]
         group.name = name
         self.add_group(group)
 
@@ -90,6 +98,7 @@ def _fmt_phone(phone_number):
 
 def create_or_update_groups(domain, group_specs, log):
     group_memoizer = GroupMemoizer(domain)
+    group_memoizer.load_all()
     group_names = set()
     for row in group_specs:
         group_id = row.get('id')
@@ -132,7 +141,6 @@ def create_or_update_groups(domain, group_specs, log):
 def create_or_update_users_and_groups(domain, user_specs, group_specs):
     ret = {"errors": [], "rows": []}
     group_memoizer = create_or_update_groups(domain, group_specs, log=ret)
-    group_memoizer.load_all()
     usernames = set()
     user_ids = set()
 
@@ -199,14 +207,16 @@ def create_or_update_users_and_groups(domain, user_specs, group_specs):
                     for group_id in Group.by_user(user, wrap=False):
                         group = group_memoizer.get(group_id)
                         if group.name not in group_names:
-                            group.remove_user(user)
+                            group.remove_user(user, save=False)
 
                     for group_name in group_names:
                         if group_name not in allowed_group_names:
                             raise Exception("Can't add to group '%s' (try adding it to your spreadsheet)" % group_name)
-                        group_memoizer.by_name(group_name).add_user(user)
+                        group_memoizer.by_name(group_name).add_user(user, save=False)
 
                 except Exception, e:
+#                    if settings.DEBUG:
+#                        raise
                     if isinstance(e, DatabaseError):
                         transaction.rollback()
                     status_row['flag'] = 'error: %s' % e
