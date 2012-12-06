@@ -4,6 +4,8 @@
 {% load i18n %}
 
 {% block reportcontent %}
+{% block pretable %}{% endblock %}
+{% block reporttable %}
 {% if report.needs_filters %}
     {% include 'reports/standard/partials/description.html' %}
 {% else %}
@@ -70,6 +72,8 @@
         {% endif %}
     </table>
 {% endif %}
+{% endblock %}
+{% block posttable %}{% endblock %}
 {% endblock %}
 
 {% block js-inline %} {{ block.super }}

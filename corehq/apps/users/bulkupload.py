@@ -1,5 +1,6 @@
 from StringIO import StringIO
-from couchdbkit.exceptions import MultipleResultsFound
+from collections import defaultdict
+from couchdbkit.exceptions import MultipleResultsFound, ResourceNotFound, NoResultFound
 from django.contrib import messages
 from corehq.apps.groups.models import Group
 from corehq.apps.users.util import normalize_username, raw_username
@@ -7,9 +8,8 @@ from corehq.apps.users.models import CommCareUser
 from django.db.utils import DatabaseError
 from django.db import transaction
 from couchexport.writers import Excel2007ExportWriter
-from dimagi.utils.decorators.memoized import memoized
-from dimagi.utils.decorators.profile import profile
 from dimagi.utils.excel import flatten_json, json_to_headers, alphanumeric_sort_key
+import settings
 
 required_headers = set(['username'])
 allowed_headers = set(['password', 'phone-number', 'user_id', 'name', 'group', 'data']) | required_headers
@@ -29,55 +29,123 @@ def check_headers(user_specs):
         raise Exception('\n'.join(messages))
 
 class GroupMemoizer(object):
+    """
+
+    If you use this to get a group, do not set group.name directly;
+    use group_memoizer.rename_group(group, name) instead.
+    """
     def __init__(self, domain):
-        self.groups = {}
+        self.groups_by_name = {}
+        self.groups_by_id = {}
+        self.groups = set()
         self.domain = domain
 
-    def get_or_create_group(self, group_name):
-        return self.get_group(group_name, load_if_not_loaded=True)
+    def load_all(self):
+        group_set = set()
+        for group in Group.by_domain(self.domain):
+            group_set.add(group)
+            self.add_group(group)
 
-    def get_group(self, group_name, load_if_not_loaded=False):
-        if load_if_not_loaded and not self.groups.has_key(group_name):
+    def add_group(self, new_group):
+        # todo
+        # this has the possibility of missing two rows one with id one with name
+        # that actually refer to the same group
+        # and overwriting one with the other
+        assert new_group.name
+        if new_group.get_id:
+            self.groups_by_id[new_group.get_id] = new_group
+        self.groups_by_name[new_group.name] = new_group
+        self.groups.add(new_group)
+
+    def by_name(self, group_name):
+        if not self.groups_by_name.has_key(group_name):
             group = Group.by_name(self.domain, group_name)
-            if group:
-                self.groups[group_name] = group
-            else:
-                self.groups[group_name] = Group(domain=self.domain, name=group_name)
-        return self.groups[group_name]
+            if not group:
+                return None
+            self.add_group(group)
+        return self.groups_by_name[group_name]
 
-    def delete_other(self):
-        all_groups = Group.by_domain(self.domain)
-        records = []
-        for group in all_groups:
-            if not self.groups.has_key(group.name):
-                record = group.soft_delete()
-                records.append(record)
-        return records
+    def get(self, group_id):
+        if not self.groups_by_id.has_key(group_id):
+            group = Group.get(group_id)
+            if group.domain != self.domain:
+                raise ResourceNotFound()
+            self.add_group(group)
+        return self.groups_by_id[group_id]
+
+    def create(self, domain, name):
+        group = Group(domain=domain, name=name)
+        self.add_group(group)
+        return group
+
+    def rename_group(self, group, name):
+        # This isn't always true, you can rename A => B and then B => C,
+        # and what was A will now be called B when you try to change
+        # what was B to be called C. That's fine, but you don't want to
+        # delete someone else's entry
+        if self.groups_by_name.get(group.name) is group:
+            del self.groups_by_name[group.name]
+        group.name = name
+        self.add_group(group)
 
     def save_all(self):
-        for group in self.groups.values():
-            group.save()
+        Group.bulk_save(self.groups, all_or_nothing=True)
 
 def _fmt_phone(phone_number):
     if phone_number and not isinstance(phone_number, basestring):
         phone_number = str(int(phone_number))
     return phone_number.lstrip("+")
 
-def create_or_update_users_and_groups(domain, user_specs, group_specs):
+def create_or_update_groups(domain, group_specs, log):
     group_memoizer = GroupMemoizer(domain)
-    ret = {"errors": [], "rows": []}
+    group_memoizer.load_all()
+    group_names = set()
     for row in group_specs:
-        group_name, case_sharing, reporting, data = row['name'], row.get('case-sharing'), row.get('reporting'), row.get('data')
-        try:
-            group = group_memoizer.get_or_create_group(group_name)
-        except MultipleResultsFound:
-            ret["errors"].append("Multiple groups named: %s" % group_name)
+        group_id = row.get('id')
+        group_name = row.get('name')
+        case_sharing = row.get('case-sharing')
+        reporting = row.get('reporting')
+        data = row.get('data')
+
+        # check that group_names are unique
+        if group_name in group_names:
+            log['errors'].append('Your spreadsheet has multiple groups called "%s" and only the first was processed' % group_name)
+            continue
         else:
+            group_names.add(group_name)
+
+        # check that there's a group_id or a group_name
+        if not group_id and not group_name:
+            log['errors'].append('Your spreadsheet has a group with no name or id and it has been ignored')
+            continue
+
+        try:
+            if group_id:
+                group = group_memoizer.get(group_id)
+            else:
+                group = group_memoizer.by_name(group_name)
+                if not group:
+                    group = group_memoizer.create(domain=domain, name=group_name)
+        except ResourceNotFound:
+            log["errors"].append('There are no groups on CommCare HQ with id "%s"' % group_id)
+        except MultipleResultsFound:
+            log["errors"].append("There are multiple groups on CommCare HQ named: %s" % group_name)
+        else:
+            if group_name:
+                group_memoizer.rename_group(group, group_name)
             group.case_sharing = case_sharing
             group.reporting = reporting
             group.metadata = data
+    return group_memoizer
+
+def create_or_update_users_and_groups(domain, user_specs, group_specs):
+    ret = {"errors": [], "rows": []}
+    group_memoizer = create_or_update_groups(domain, group_specs, log=ret)
     usernames = set()
     user_ids = set()
+
+    allowed_groups = set(group_memoizer.groups)
+    allowed_group_names = [group.name for group in allowed_groups]
 
     try:
         for row in user_specs:
@@ -135,17 +203,20 @@ def create_or_update_users_and_groups(domain, user_specs, group_specs):
                         # With this line, digest auth works.
                         # Other than that, I'm not sure what's going on
                         user.get_django_user().check_password(password)
-                    for group in Group.by_user(user):
+
+                    for group_id in Group.by_user(user, wrap=False):
+                        group = group_memoizer.get(group_id)
                         if group.name not in group_names:
-                            group = group_memoizer.get_or_create_group(group.name)
-                            group.remove_user(user)
+                            group.remove_user(user, save=False)
 
                     for group_name in group_names:
-                        try:
-                            group_memoizer.get_group(group_name).add_user(user)
-                        except Exception:
+                        if group_name not in allowed_group_names:
                             raise Exception("Can't add to group '%s' (try adding it to your spreadsheet)" % group_name)
+                        group_memoizer.by_name(group_name).add_user(user, save=False)
+
                 except Exception, e:
+#                    if settings.DEBUG:
+#                        raise
                     if isinstance(e, DatabaseError):
                         transaction.rollback()
                     status_row['flag'] = 'error: %s' % e
@@ -155,23 +226,6 @@ def create_or_update_users_and_groups(domain, user_specs, group_specs):
         group_memoizer.save_all()
     
     return ret
-
-class UsersDumpHelper(object):
-
-    def __init__(self):
-        self.groups = {}
-
-    def get_group(self, id):
-        if not self.groups.has_key(id):
-            self.groups[id] = Group.get(id)
-        return self.groups[id]
-
-    def get_group_name(self, id):
-        return self.get_group(id).name
-
-    def get_all_groups(self):
-        # sort in memory
-        return sorted(self.groups.values(), key=lambda group: group.name)
 
 def dump_users_and_groups(response, domain):
 
@@ -184,12 +238,13 @@ def dump_users_and_groups(response, domain):
     user_dicts = []
     group_data_keys = set()
     group_dicts = []
-    helper = UsersDumpHelper()
+    group_memoizer = GroupMemoizer(domain=domain)
+    group_memoizer.load_all()
 
     for user in users:
         data = user.user_data
         group_names = sorted(map(
-            helper.get_group_name,
+            lambda id: group_memoizer.get(id).name,
             Group.by_user(user, wrap=False)
         ), key=alphanumeric_sort_key)
         # exclude password and user_id
@@ -203,8 +258,10 @@ def dump_users_and_groups(response, domain):
         user_data_keys.update(user.user_data.keys())
         user_groups_length = max(user_groups_length, len(group_names))
 
-    for group in helper.get_all_groups():
+    sorted_groups = sorted(group_memoizer.groups, key=lambda group: alphanumeric_sort_key(group.name))
+    for group in sorted_groups:
         group_dicts.append({
+            'id': group.get_id,
             'name': group.name,
             'case-sharing': group.case_sharing,
             'reporting': group.reporting,
@@ -221,7 +278,7 @@ def dump_users_and_groups(response, domain):
         {'group': range(1, user_groups_length + 1)}
     ))
 
-    group_headers = ['name', 'case-sharing?', 'reporting?']
+    group_headers = ['id', 'name', 'case-sharing?', 'reporting?']
     group_headers.extend(json_to_headers(
         {'data': dict([(key, None) for key in group_data_keys])}
     ))

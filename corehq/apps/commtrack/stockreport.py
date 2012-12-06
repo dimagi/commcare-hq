@@ -13,10 +13,14 @@ import logging
 logger = logging.getLogger('commtrack.incoming')
 
 XMLNS = 'http://openrosa.org/commtrack/stock_report'
+META_XMLNS = 'http://openrosa.org/jr/xforms'
 def _(tag, ns=XMLNS):
     return '{%s}%s' % (ns, tag)
-def XML(ns=XMLNS):
-    return ElementMaker(namespace=ns)
+def XML(ns=XMLNS, prefix=None):
+    prefix_map = None
+    if prefix:
+        prefix_map = {prefix: ns}
+    return ElementMaker(namespace=ns, nsmap=prefix_map)
 
 def process(domain, instance):
     """process an incoming commtrack stock report instance"""
@@ -43,7 +47,9 @@ def process(domain, instance):
 
     submission = etree.tostring(root)
     logger.debug('submitting: %s' % submission)
-    spoof_submission(get_submit_url(domain), submission)
+
+    submit_time = root.find('.//%s' % _('timeStart', META_XMLNS)).text
+    spoof_submission(get_submit_url(domain), submission, headers={'HTTP_X_SUBMIT_TIME': submit_time})
 
 # TODO: make a transaction class
 

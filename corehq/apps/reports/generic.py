@@ -654,6 +654,11 @@ class GenericTabularReport(GenericReportView):
     report_template_path = "reports/async/tabular.html"
     flush_layout = True
 
+    # set to a list of functions that take in a report object 
+    # and return a dictionary of items that will show up in 
+    # the report context
+    extra_context_providers = []
+
 #    @property
 #    def searchable(self):
 #        return not self.ajax_pagination
@@ -828,7 +833,7 @@ class GenericTabularReport(GenericReportView):
                 raise ValueError("Property 'fixed_cols_spec' should return a dict.")
             left_col.update(fixed=spec)
 
-        return dict(
+        context = dict(
             report_table=dict(
                 headers=headers,
                 rows=rows,
@@ -842,6 +847,9 @@ class GenericTabularReport(GenericReportView):
                 datatables=self.use_datatables,
             )
         )
+        for provider_function in self.extra_context_providers:
+            context.update(provider_function(self))
+        return context
 
     def table_cell(self, value, html=None):
         return dict(
@@ -850,9 +858,15 @@ class GenericTabularReport(GenericReportView):
         )
 
 
+def summary_context(report):
+    # will intentionally break if used with something that doesn't have
+    # a summary_values attribute
+    return {"summary_values": report.summary_values}
+
 class SummaryTablularReport(GenericTabularReport):
     report_template_path = "reports/async/summary_tabular.html"
-    
+    extra_context_providers = [summary_context]
+
     @property
     def data(self):
         """
@@ -860,20 +874,14 @@ class SummaryTablularReport(GenericTabularReport):
         headers.
         """
         raise NotImplementedError("Override this function!")
-    
+
     @property
     def rows(self):
         # for backwards compatibility / easy switching with a single-row table
         return [self.data]
-    
+
     @property
     def summary_values(self):
         headers = list(self.headers)
         assert (len(self.data) == len(headers))
         return zip(headers, self.data)
-    
-    @property
-    def report_context(self):
-        context = super(SummaryTablularReport, self).report_context
-        context["summary_values"] = self.summary_values
-        return context
