@@ -3,19 +3,16 @@ import datetime
 import logging
 import dateutil
 from django.core.urlresolvers import reverse
-from corehq.apps.reports.filters.forms import CompletionOrSubmissionTimeFilter, FormsByApplicationFilter, SingleFormByApplicationFilter
+import numpy
 import pytz
-import sys
 from corehq.apps.reports import util
 from corehq.apps.reports.standard import ProjectReportParametersMixin, \
     DatespanMixin, ProjectReport, DATE_FORMAT
-from corehq.apps.reports.calc import entrytimes
+from corehq.apps.reports.filters.forms import CompletionOrSubmissionTimeFilter, FormsByApplicationFilter, SingleFormByApplicationFilter
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn, DTSortType, DataTablesColumnGroup
-from corehq.apps.reports.decorators import cache_report
-from corehq.apps.reports.display import xmlns_to_name, FormType
+from corehq.apps.reports.display import xmlns_to_name
 from corehq.apps.reports.generic import GenericTabularReport
 from corehq.apps.reports.util import make_form_couch_key, friendly_timedelta
-from couchforms.models import XFormInstance
 from dimagi.utils.couch.database import get_db
 from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.parsing import json_format_datetime
@@ -61,17 +58,8 @@ class MultiFormDrilldownMixin(object):
     """
     @property
     @memoized
-    def all_relevant_xmlns(self):
-        filtered_xmlns = FormsByApplicationFilter.get_all_xmlns(self.request, self.domain)
-        key = make_form_couch_key(self.domain)
-        data = get_db().view('reports_forms/all_forms',
-            reduce=False,
-            startkey=key+[self.datespan.startdate_param_utc],
-            endkey=key+[self.datespan.enddate_param_utc],
-        ).all()
-        all_xmlns = set([d['value']['xmlns'] for d in data])
-        relevant_xmlns = all_xmlns.intersection(set(filtered_xmlns.keys()))
-        return dict([(k, filtered_xmlns[k]) for k in relevant_xmlns])
+    def all_relevant_forms(self):
+        return FormsByApplicationFilter.get_value(self.request, self.domain)
 
 
 class CompletionOrSubmissionTimeMixin(object):
@@ -102,7 +90,6 @@ class CaseActivityReport(WorkerMonitoringReportTableBase):
     special_notice = ugettext_noop("This report currently does not support case sharing. "
                        "There might be inconsistencies in case totals if the user is part of a case sharing group. "
                        "We are working to correct this shortly.")
-
 
     class Row(object):
         def __init__(self, report, user):
@@ -289,14 +276,38 @@ class SubmissionsByFormReport(WorkerMonitoringReportTableBase, MultiFormDrilldow
                     " during the selected date range.")
 
     @property
+    @memoized
+    def all_relevant_forms(self):
+        selected_forms = super(SubmissionsByFormReport, self).all_relevant_forms
+        if self.request.GET.get('%s_unknown' % FormsByApplicationFilter.slug) == 'yes':
+            return selected_forms
+
+        # filter this result by submissions within this time frame
+        by_submission_time = True
+        if hasattr(self, 'by_submission_time'):
+            by_submission_time = self.by_submission_time
+        key = make_form_couch_key(self.domain, by_submission_time=by_submission_time)
+        data = get_db().view('reports_forms/all_forms',
+            reduce=False,
+            startkey=key+[self.datespan.startdate_param_utc],
+            endkey=key+[self.datespan.enddate_param_utc],
+        ).all()
+        all_xmlns = set([FormsByApplicationFilter.xmlns_app_key(d['value']['xmlns'], d['value']['app_id']) for d in data])
+        fuzzy_xmlns = set([k for k in selected_forms.keys() if FormsByApplicationFilter.fuzzy_slug in k])
+
+        relevant_xmlns = all_xmlns.intersection(set(selected_forms.keys()))
+        relevant_xmlns = relevant_xmlns.union(fuzzy_xmlns)
+        return dict([(k, selected_forms[k]) for k in relevant_xmlns])
+
+    @property
     def headers(self):
         headers = DataTablesHeader(DataTablesColumn(_("User"), span=3))
-        if not self.all_relevant_xmlns:
+        if not self.all_relevant_forms:
             headers.add_column(DataTablesColumn(_("No submissions were found for selected forms within this date range."),
                 sortable=False))
         else:
-            for xmlns, info in self.all_relevant_xmlns.items():
-                help_text = "Note: This Form's ID is not unique among your applications." if info['is_dupe'] else None
+            for _form, info in self.all_relevant_forms.items():
+                help_text = "Note: This Form's ID is not unique among your applications." if info['is_fuzzy'] else None
                 headers.add_column(DataTablesColumn(info['name'], sort_type=DTSortType.NUMERIC, help_text=help_text))
             headers.add_column(DataTablesColumn(_("All Forms"), sort_type=DTSortType.NUMERIC))
         return headers
@@ -304,12 +315,12 @@ class SubmissionsByFormReport(WorkerMonitoringReportTableBase, MultiFormDrilldow
     @property
     def rows(self):
         rows = []
-        totals = [0]*(len(self.all_relevant_xmlns)+1)
+        totals = [0]*(len(self.all_relevant_forms)+1)
         for user in self.users:
             row = []
-            if self.all_relevant_xmlns:
-                for xmlns in self.all_relevant_xmlns.keys():
-                    row.append(self._get_num_submissions(user.get('user_id'), xmlns))
+            if self.all_relevant_forms:
+                for form in self.all_relevant_forms.values():
+                    row.append(self._get_num_submissions(user.get('user_id'), form['xmlns'], form['app_id']))
                 row_sum = sum(row)
                 row = [self.get_user_link(user)] + \
                     [self.table_cell(row_data) for row_data in row] + \
@@ -318,12 +329,12 @@ class SubmissionsByFormReport(WorkerMonitoringReportTableBase, MultiFormDrilldow
                 rows.append(row)
             else:
                 rows.append([self.get_user_link(user), '--'])
-        if self.all_relevant_xmlns:
+        if self.all_relevant_forms:
             self.total_row = [_("All Users")] + totals
         return rows
 
-    def _get_num_submissions(self, user_id, xmlns):
-        key = make_form_couch_key(self.domain, user_id=user_id, xmlns=xmlns)
+    def _get_num_submissions(self, user_id, xmlns, app_id):
+        key = make_form_couch_key(self.domain, user_id=user_id, xmlns=xmlns, app_id=app_id)
         data = get_db().view('reports_forms/all_forms',
             reduce=True,
             startkey=key+[self.datespan.startdate_param_utc],
@@ -422,7 +433,9 @@ class FormCompletionTimeReport(WorkerMonitoringReportTableBase, DatespanMixin):
         if self.selected_xmlns is None:
             return DataTablesHeader(DataTablesColumn(_("No Form Selected"), sortable=False))
         return DataTablesHeader(DataTablesColumn(_("User")),
-            DataTablesColumn(_("Average duration")),
+            DataTablesColumn(_("Average")),
+            DataTablesColumn(_("Median")),
+            DataTablesColumn(_("Std. Dev.")),
             DataTablesColumn(_("Shortest")),
             DataTablesColumn(_("Longest")),
             DataTablesColumn(_("No. of Forms")))
@@ -434,7 +447,6 @@ class FormCompletionTimeReport(WorkerMonitoringReportTableBase, DatespanMixin):
             rows.append([_("You must select a form to view data.")])
             return rows
 
-        totalsum = totalcount = 0
         def to_minutes(val_in_ms, d=None):
             if val_in_ms is None or d == 0:
                 return "--"
@@ -443,30 +455,51 @@ class FormCompletionTimeReport(WorkerMonitoringReportTableBase, DatespanMixin):
             duration = datetime.timedelta(seconds=int((val_in_ms + 500)/1000))
             return friendly_timedelta(duration)
 
-        globalmin = sys.maxint
-        globalmax = 0
+        durations = []
+        totalcount = 0
         for user in self.users:
-            datadict = entrytimes.get_user_data(self.domain, user.get('user_id'), self.selected_xmlns, self.datespan)
+            stats = self.get_user_data(user.get('user_id'))
             rows.append([self.get_user_link(user),
-                         to_minutes(float(datadict["sum"]), float(datadict["count"])),
-                         to_minutes(datadict["min"]),
-                         to_minutes(datadict["max"]),
-                         datadict["count"]
+                         stats['error_msg'] if stats['error_msg'] else to_minutes(stats['avg']),
+                         to_minutes(stats['med']),
+                         to_minutes(stats['std']),
+                         to_minutes(stats["min"]),
+                         to_minutes(stats["max"]),
+                         stats["count"]
             ])
-            totalsum = totalsum + datadict["sum"]
-            totalcount = totalcount + datadict["count"]
-            if datadict['min'] is not None:
-                globalmin = min(globalmin, datadict["min"])
-            if datadict['max'] is not None:
-                globalmax = max(globalmax, datadict["max"])
+            durations.extend(stats['durations'])
+            totalcount += stats["count"]
 
         if totalcount:
-            self.total_row = ["Total",
-                              to_minutes(float(totalsum), float(totalcount)),
-                              to_minutes(globalmin),
-                              to_minutes(globalmax),
+            self.total_row = ["All Users",
+                              to_minutes(numpy.average(durations) if durations else None),
+                              to_minutes(numpy.median(durations) if durations else None),
+                              to_minutes(numpy.std(durations) if durations else None),
+                              to_minutes(numpy.min(durations) if durations else None),
+                              to_minutes(numpy.max(durations) if durations else None),
                               totalcount]
         return rows
+
+    def get_user_data(self, user_id):
+        key = make_form_couch_key(self.domain, by_submission_time=False, user_id=user_id,
+            xmlns=self.selected_xmlns['xmlns'], app_id=self.selected_xmlns['app_id'])
+        data = get_db().view("reports_forms/all_forms",
+            startkey=key+[self.datespan.startdate_param_utc],
+            endkey=key+[self.datespan.enddate_param_utc],
+            reduce=False
+        ).all()
+        durations = [d['value']['duration'] for d in data if d['value']['duration'] is not None]
+        error_msg = _("Problem retrieving form durations.") if (not durations and data) else None
+        return {
+            "count": len(data),
+            "max": numpy.max(durations) if durations else None,
+            "min": numpy.min(durations) if durations else None,
+            "avg": numpy.average(durations) if durations else None,
+            "med": numpy.median(durations) if durations else None,
+            "std": numpy.std(durations) if durations else None,
+            "durations": durations,
+            "error_msg": error_msg,
+        }
 
 
 class FormCompletionVsSubmissionTrendsReport(WorkerMonitoringReportTableBase, DatespanMixin):
@@ -599,7 +632,7 @@ class WorkerActivityTimes(WorkerMonitoringChartBase,
     def activity_times(self):
         all_times = []
         for user in self.users:
-            for xmlns in self.all_relevant_xmlns:
+            for xmlns in self.all_relevant_forms:
                 key = make_form_couch_key(self.domain, user_id=user.get('user_id'),
                    xmlns=xmlns, by_submission_time=self.by_submission_time)
                 data = get_db().view("reports_forms/all_forms",
