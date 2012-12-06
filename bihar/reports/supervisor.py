@@ -1,3 +1,4 @@
+from corehq.apps.fixtures.models import FixtureDataItem
 from corehq.apps.reports.standard import CustomProjectReport
 from corehq.apps.reports.generic import GenericTabularReport,\
     SummaryTablularReport
@@ -263,6 +264,28 @@ class ToolsNavReport(BiharSummaryReport):
 class ReferralListReport(GroupReferenceMixIn, MockEmptyReport):
     name = ugettext_noop("Referrals")
     slug = "referrals"
+
+    _headers = []
+
+    @property
+    def data(self): # this is being called multiple times
+
+        def render(f):
+            title = {
+                "public": _("Public Facility"),
+                "private": _("Private Facility"),
+                "transport": _("Transport")
+            }[f.fields["type"]]
+            return format_html(u"%s: %s<br /># %s" % (title, f.fields.get("name", ""), f.fields.get("number", "")))
+
+        fixtures = FixtureDataItem.by_group(self.group)
+        _data = []
+        self._headers = []
+        for f in fixtures:
+            _data.append(render(f))
+            self._headers.append(" ")
+
+        return _data
 
 class EDDCalcReport(MockEmptyReport):
     name = ugettext_noop("EDD Calculator")
