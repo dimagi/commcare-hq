@@ -53,7 +53,7 @@ def make_psi_config(domain):
         actions = [
             CommtrackActionConfig(
                 action_type='stockedoutfor',
-                keyword='so',
+                keyword='d',
                 caption='Stock-out Days'
             ),
             CommtrackActionConfig(
