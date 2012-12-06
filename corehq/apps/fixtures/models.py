@@ -138,6 +138,16 @@ class FixtureDataItem(Document):
             return fixture_ids
 
     @classmethod
+    def by_group(cls, group, wrap=True):
+        fixture_ids = get_db().view('fixtures/ownership',
+            key=['data_item by group', group.domain, group.get_id],
+            reduce=False,
+            wrapper=lambda r: r['value'],
+        ).all()
+
+        return cls.view('_all_docs', keys=list(fixture_ids), include_docs=True) if wrap else fixture_ids
+
+    @classmethod
     def by_data_type(cls, domain, data_type):
         if isinstance(data_type, basestring):
             data_type_id = data_type
