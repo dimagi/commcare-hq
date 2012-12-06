@@ -29,3 +29,29 @@
 
 .icon-hq-triangle-up   {background-position: 0      -48px;}
 .icon-hq-triangle-down {background-position: -24px  -48px;}
+
+.hq-help {
+    position: relative;
+    width: 40px;
+    overflow: visible;
+
+    i {
+        font-size: 20px;
+        line-height: 25px;
+        width:25px;
+        text-decoration:none;
+        position: absolute;
+        top: -30%;
+        left: @gridGutterWidth/3;
+    }
+    &:hover i,
+    &.on i {
+        font-size: 30px;
+        text-decoration:none;
+        left: @gridGutterWidth/3-2px;
+        color: @green;
+    }
+    .popover {
+        color: @textColor;
+    }
+}
