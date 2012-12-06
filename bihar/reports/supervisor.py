@@ -14,6 +14,7 @@ from corehq.apps.adm.reports.supervisor import SupervisorReportsADMSection
 
 from django.utils.translation import ugettext_noop
 from django.utils.translation import ugettext as _
+from bihar.reports.indicators.mixins import IndicatorConfigMixIn
 
 class ConvenientBaseMixIn(object):
     # this is everything that's shared amongst the Bihar supervision reports
@@ -118,7 +119,7 @@ class BiharNavReport(BiharSummaryReport):
     
     @property
     def data(self):
-        return [_shared_nav_link(self, i, report_cls) for i, report_cls in enumerate(self.reports)]
+        return [default_nav_link(self, i, report_cls) for i, report_cls in enumerate(self.reports)]
         
 class MockEmptyReport(BiharSummaryReport):
     """
@@ -164,23 +165,44 @@ class SubCenterSelectionReport(ConvenientBaseMixIn, GenericTabularReport,
         return [_link(group), get_awcc(group)]
             
 
-class MainNavReport(BiharNavReport):
+class MainNavReport(BiharSummaryReport, IndicatorConfigMixIn):
     name = ugettext_noop("Main Menu")
     slug = "mainnav"
     description = ugettext_noop("Main navigation")
+
+    @classmethod
+    def additional_reports(cls):
+        return [WorkerRankSelectionReport, ToolsNavReport]
     
     @classmethod
     def show_in_navigation(cls, request, *args, **kwargs):
         return True
-    
+
     @property
-    def reports(self):
-        from bihar.reports.indicators.reports import IndicatorSelectNav
-        return [IndicatorSelectNav, WorkerRankSelectionReport, ToolsNavReport
-                # DueListReport, 
-                ]
+    def _headers(self):
+        return [" "] * (len(self.indicator_config.indicator_sets) + len(self.additional_reports())) 
 
+    @property
+    def data(self):
+        from bihar.reports.indicators.reports import IndicatorNav
 
+        def _indicator_nav_link(i, indicator_set):
+            params = copy(self.request_params)
+            params["indicators"] = indicator_set.slug
+            params["next_report"] = IndicatorNav.slug
+            return format_html(u'<a href="{next}">{val}</a>',
+                val=list_prompt(i, indicator_set.name),
+                next=url_and_params(
+                    SubCenterSelectionReport.get_url(self.domain, 
+                                                     render_as=self.render_next),
+                    params
+            ))
+        return [_indicator_nav_link(i, iset) for i, iset in\
+                enumerate(self.indicator_config.indicator_sets)] + \
+               [default_nav_link(self, len(self.indicator_config.indicator_sets) + i, r) \
+                for i, r in enumerate(self.additional_reports())]
+
+    
 class WorkerRankSelectionReport(SubCenterSelectionReport):
     slug = "workerranks"
     name = ugettext_noop("Worker Rank Table")
@@ -204,7 +226,7 @@ class WorkerRankSelectionReport(SubCenterSelectionReport):
                 group=g.name,
                 details=url_and_params(url,
                                        params))
-        return [_link(group)]
+        return [_link(group), get_awcc(group)]
     
 
 class DueListReport(MockEmptyReport):
@@ -230,8 +252,8 @@ class ToolsNavReport(BiharSummaryReport):
                     params
             ))
         return [_referral_link(0), 
-                _shared_nav_link(self, 1, EDDCalcReport),
-                _shared_nav_link(self, 2, BMICalcReport),]
+                default_nav_link(self, 1, EDDCalcReport),
+                default_nav_link(self, 2, BMICalcReport),]
 
 class ReferralListReport(GroupReferenceMixIn, MockEmptyReport):
     name = ugettext_noop("Referrals")
@@ -245,7 +267,7 @@ class BMICalcReport(MockEmptyReport):
     name = ugettext_noop("BMI Calculator")
     slug = "bmicalc"
 
-def _shared_nav_link(nav_report, i, report_cls):
+def default_nav_link(nav_report, i, report_cls):
     url = report_cls.get_url(nav_report.domain, 
                              render_as=nav_report.render_next)
     if getattr(nav_report, 'preserve_url_params', False):
