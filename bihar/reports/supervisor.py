@@ -266,14 +266,11 @@ class ReferralListReport(GroupReferenceMixIn, MockEmptyReport):
     def data(self): # this is being called multiple times
 
         def render(f):
-            title_text = {
+            title = {
                 "public": _("Public Facility"),
-                "private": _("Private Facility")
-            }
-            if f.fields["type"] in ['public', 'private']:
-                title = title_text[f.fields["type"]]
-            if f.fields["type"] in ['transport']:
-                title = _("Transport")
+                "private": _("Private Facility"),
+                "transport": _("Transport")
+            }[f.fields["type"]]
             return format_html(u"%s: %s<br /># %s" % (title, f.fields.get("name", ""), f.fields.get("number", "")))
 
         fixtures = FixtureDataItem.by_group(self.group)
