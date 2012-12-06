@@ -2,7 +2,14 @@ from django.http import Http404
 from corehq.apps.groups.models import Group
 from corehq.apps.users.models import CouchUser, CommCareUser
 from corehq.apps.users.views import _users_context, require_can_edit_commcare_users
+from dimagi.utils.excel import alphanumeric_sort_key
 from dimagi.utils.web import render_to_response, json_response, get_url_base, get_ip
+
+def _get_sorted_groups(domain):
+    return sorted(
+        Group.by_domain(domain),
+        key=lambda group: alphanumeric_sort_key(group.name)
+    )
 
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 GROUP VIEWS
@@ -10,7 +17,7 @@ GROUP VIEWS
 @require_can_edit_commcare_users
 def all_groups(request, domain, template="groups/all_groups.html"):
     context = _users_context(request, domain)
-    all_groups = Group.by_domain(domain)
+    all_groups = _get_sorted_groups(domain)
     context.update({
         'domain': domain,
         'all_groups': all_groups
@@ -20,7 +27,7 @@ def all_groups(request, domain, template="groups/all_groups.html"):
 @require_can_edit_commcare_users
 def group_members(request, domain, group_id, template="groups/group_members.html"):
     context = _users_context(request, domain)
-    all_groups = Group.by_domain(domain)
+    all_groups = _get_sorted_groups(domain)
     group = Group.get(group_id)
     if group is None:
         raise Http404("Group %s does not exist" % group_id)
@@ -53,7 +60,7 @@ def group_membership(request, domain, couch_user_id, template="groups/groups.htm
         group.save()
         #messages.success(request, '%s joined group %s' % (couch_user.username, group.name))
     my_groups = Group.view("groups/by_user", key=couch_user_id, include_docs=True).all()
-    all_groups = Group.view("groups/by_domain", key=domain, include_docs=True).all()
+    all_groups = _get_sorted_groups(domain)
     other_groups = []
     for group in all_groups:
         if group.get_id not in [g.get_id for g in my_groups]:
