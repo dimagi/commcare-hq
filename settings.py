@@ -37,7 +37,8 @@ SITE_ID = 1
 USE_I18N = True
 
 # Django i18n searches for translation files (django.po) within this dir
-LOCALE_PATHS=['contrib/locale']
+# and then in the locale/ directories of installed apps
+LOCALE_PATHS = ()
 
 # URL that handles the media served from MEDIA_ROOT. Make sure to use a
 # trailing slash if there is a path component (optional in other cases).
@@ -595,6 +596,7 @@ PROJECT_REPORT_MAP = {
     "Commtrack": [
         'corehq.apps.reports.commtrack.psi_prototype.VisitReport',
         'corehq.apps.reports.commtrack.psi_prototype.SalesAndConsumptionReport',
+        'corehq.apps.reports.commtrack.psi_prototype.StockReportExport',
     ],
 }
 
@@ -679,7 +681,6 @@ CUSTOM_REPORT_MAP = {
             "bihar.reports.supervisor.EDDCalcReport",
             "bihar.reports.supervisor.BMICalcReport",
             "bihar.reports.supervisor.SubCenterSelectionReport",
-            "bihar.reports.indicators.reports.IndicatorSelectNav",
             "bihar.reports.indicators.reports.IndicatorNav",
             "bihar.reports.indicators.reports.IndicatorSummaryReport",
             "bihar.reports.indicators.reports.IndicatorClientSelectNav",
@@ -748,6 +749,7 @@ DEFAULT_CURRENCY = "USD"
 SMS_HANDLERS = [
     'corehq.apps.commtrack.sms.handle',
     'corehq.apps.sms.api.form_session_handler',
+    'corehq.apps.sms.api.fallback_handler',
 ]
 
 # mapping of phone number prefix (including country code) to a registered
