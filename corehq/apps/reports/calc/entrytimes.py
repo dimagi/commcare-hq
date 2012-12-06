@@ -41,32 +41,3 @@ def get_data(domain, user=None, datespan=None):
             data[date][key] = data[date][key] + thisrow[key]
     return all_data
 
-def get_user_data(domain, user_id, xmlns, datespan):
-    """
-    Returns a data structure like:
-    
-    {
-        count: <count>,
-        max: <time in ms>,
-        min: <time in ms>,
-        sum: <time in ms>
-    }
-    
-    """
-    
-    startkey = ["uxd", domain, user_id, xmlns, datespan.startdate_param_utc]
-    endkey = ["uxd", domain, user_id, xmlns, datespan.enddate_param_utc]
-    try:
-        return get_db().view("formtrends/form_duration_by_user",
-             startkey=startkey,
-             endkey=endkey,
-             group_level=None
-        ).one()["value"]
-    except TypeError:
-        return {
-            "count": 0,
-            "max": None,
-            "min": None,
-            "sum": 0,
-        }
-    
