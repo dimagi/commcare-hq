@@ -285,6 +285,9 @@ class ReferralListReport(GroupReferenceMixIn, MockEmptyReport):
             _data.append(render(f))
             self._headers.append(" ")
 
+        if not _data:
+            _data = ['No referrals for %s' % self.group.name]
+            self._headers = [" "]
         return _data
 
 class EDDCalcReport(MockEmptyReport):
