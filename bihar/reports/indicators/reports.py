@@ -1,6 +1,5 @@
-from bihar.reports.indicators import INDICATOR_SETS, IndicatorConfig
 from bihar.reports.supervisor import BiharNavReport, MockEmptyReport, \
-    url_and_params, SubCenterSelectionReport, BiharSummaryReport, \
+    url_and_params, BiharSummaryReport, \
     ConvenientBaseMixIn, GroupReferenceMixIn, list_prompt
 from copy import copy
 from corehq.apps.reports.generic import GenericTabularReport
@@ -8,38 +7,10 @@ from corehq.apps.reports.standard import CustomProjectReport
 from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.html import format_html
 from django.utils.translation import ugettext as _, ugettext_noop
+from bihar.reports.indicators.mixins import IndicatorSetMixIn, IndicatorMixIn
 
 DEFAULT_EMPTY = "?"
 
-class IndicatorConfigMixIn(object):
-    @property
-    @memoized
-    def indicator_config(self):
-        return IndicatorConfig(INDICATOR_SETS)
-    
-class IndicatorSetMixIn(object):
-    
-    @property
-    def indicator_set_slug(self):
-        return self.request_params.get("indicators")
-    
-    @property
-    @memoized
-    def indicator_set(self):
-        return IndicatorConfig(INDICATOR_SETS).get_indicator_set(self.indicator_set_slug)
-
-class IndicatorMixIn(IndicatorSetMixIn):
-    
-    @property
-    def indicator_slug(self):
-        return self.request_params.get("indicator")
-
-    @property
-    @memoized
-    def indicator(self):
-        return self.indicator_set.get_indicator(self.indicator_slug)
-        
-        
 class IndicatorNav(GroupReferenceMixIn, BiharNavReport):
     name = ugettext_noop("Indicator Options")
     slug = "indicatornav"
@@ -52,30 +23,6 @@ class IndicatorNav(GroupReferenceMixIn, BiharNavReport):
                 # IndicatorCharts
                 ]
 
-class IndicatorSelectNav(BiharSummaryReport, IndicatorConfigMixIn):
-    name = ugettext_noop("Select Indicator Category")
-    slug = "teams"
-    
-    @property
-    def _headers(self):
-        return [" "] * len(self.indicator_config.indicator_sets)
-    
-    @property
-    def data(self):
-        def _nav_link(i, indicator_set):
-            params = copy(self.request_params)
-            params["indicators"] = indicator_set.slug
-            params["next_report"] = IndicatorNav.slug
-            return format_html(u'<a href="{next}">{val}</a>',
-                val=list_prompt(i, indicator_set.name),
-                next=url_and_params(
-                    SubCenterSelectionReport.get_url(self.domain, 
-                                                     render_as=self.render_next),
-                    params
-            ))
-        return [_nav_link(i, iset) for i, iset in enumerate(self.indicator_config.indicator_sets)]
-
-    
 class IndicatorSummaryReport(GroupReferenceMixIn, BiharSummaryReport, IndicatorSetMixIn):
     
     name = ugettext_noop("Indicators")
