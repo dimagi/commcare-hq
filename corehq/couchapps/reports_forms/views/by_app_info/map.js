@@ -30,8 +30,11 @@ function (doc) {
                     emit(["xmlns", doc.domain, form.xmlns], value);
                     emit(["status xmlns", doc.domain, status, form.xmlns], value);
 
-                    emit(["app module form", doc.domain, value.app.id, value.module.id, value.form.id], value);
-                    emit(["status app module form", doc.domain, status, value.app.id, value.module.id, value.form.id], value);
+                    emit(["xmlns app", doc.domain, form.xmlns, value.app.id || {}], value);
+                    emit(["status xmlns app", doc.domain, status, form.xmlns, value.app.id || {}], value);
+
+                    emit(["app module form", doc.domain, value.app.id || {}, value.module.id, value.form.id], value);
+                    emit(["status app module form", doc.domain, status, value.app.id || {}, value.module.id, value.form.id], value);
                 }
             }
             if (doc.user_registration) {
@@ -58,8 +61,11 @@ function (doc) {
                     emit(["xmlns", doc.domain, reg_form.xmlns], reg_value);
                     emit(["status xmlns", doc.domain, status, reg_form.xmlns], reg_value);
 
-                    emit(["app module form", doc.domain, reg_value.app.id, reg_value.module.id, reg_value.form.id], reg_value);
-                    emit(["status app module form", doc.domain, status, reg_value.app.id, reg_value.module.id, reg_value.form.id], reg_value);
+                    emit(["xmlns app", doc.domain, reg_value.xmlns, reg_value.app.id || {}], reg_value);
+                    emit(["status xmlns app", doc.domain, status, reg_value.xmlns, reg_value.app.id || {}], reg_value);
+
+                    emit(["app module form", doc.domain, reg_value.app.id || {}, reg_value.module.id, reg_value.form.id], reg_value);
+                    emit(["status app module form", doc.domain, status, reg_value.app.id || {}, reg_value.module.id, reg_value.form.id], reg_value);
                 }
             }
         }
