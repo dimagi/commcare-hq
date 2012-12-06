@@ -4,6 +4,8 @@
 {% load i18n %}
 
 {% block reportcontent %}
+{% block pretable %}{% endblock %}
+{% block reporttable %}
 {% if report.needs_filters %}
     <div class="well">
         <p>{% trans "Please choose your filters above to see report data." %}</p>
@@ -72,6 +74,8 @@
         {% endif %}
     </table>
 {% endif %}
+{% block posttable %}{% endblock %}
+{% endblock %}
 {% endblock %}
 
 {% block js-inline %} {{ block.super }}
