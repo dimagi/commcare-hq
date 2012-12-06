@@ -1,3 +1,4 @@
+from corehq.apps.fixtures.models import FixtureDataItem
 from corehq.apps.reports.standard import CustomProjectReport
 from corehq.apps.reports.generic import GenericTabularReport,\
     SummaryTablularReport
@@ -237,6 +238,27 @@ class ReferralListReport(GroupReferenceMixIn, MockEmptyReport):
     name = ugettext_noop("Referrals")
     slug = "referrals"
 
+    _headers = []
+
+    @property
+    def data(self): # this is being called multiple times
+
+        def render(f):
+            if f.fields["type"] in ['public', 'private']:
+                title = "Facility"
+            if f.fields["type"] in ['transport']:
+                title = "Transport"
+            return format_html(u"%s: %s<br />Number: %s" % (title, f.fields.get("name", ""), f.fields.get("number", "")))
+
+        fixtures = FixtureDataItem.by_group(self.group)
+        _data = []
+        self._headers = []
+        for f in fixtures:
+            _data.append(render(f))
+            self._headers.append(" ")
+
+        return _data
+
 class EDDCalcReport(MockEmptyReport):
     name = ugettext_noop("EDD Calculator")
     slug = "eddcalc"
@@ -255,7 +277,7 @@ def _shared_nav_link(nav_report, i, report_cls):
                         details=url)
 
 def get_awcc(group, default=ugettext_noop('unknown')):
-    return group.metadata.get("awc-code", _(default))
+    return group.metadata.get("awc-code", _(default) if default else default)
 
 def url_and_params(urlbase, params):
     assert "?" not in urlbase
