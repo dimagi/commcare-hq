@@ -1,7 +1,8 @@
 *.pyc
 *~
 local.ini*
-localsettings.py
+localsettings*
+!localsettings.example.py
 .settings/*
 .project
 .pydevproject

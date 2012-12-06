@@ -37,7 +37,8 @@ SITE_ID = 1
 USE_I18N = True
 
 # Django i18n searches for translation files (django.po) within this dir
-LOCALE_PATHS=['contrib/locale']
+# and then in the locale/ directories of installed apps
+LOCALE_PATHS = ()
 
 # Absolute path to the directory that holds media.
 # Example: "/home/media/media.lawrence.com/"
