@@ -1,3 +1,6 @@
 [submodule "hq-bootstrap"]
 	path = hq-bootstrap
 	url = git://github.com/dimagi/hq-bootstrap.git
+[submodule "font_awesome"]
+	path = font_awesome
+	url = git://github.com/dimagi/Font-Awesome.git
