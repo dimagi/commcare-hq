@@ -243,7 +243,6 @@ class UploadCommCareUsers(TemplateView):
             return HttpResponseBadRequest(e)
 
         response = HttpResponse()
-        response_writer = csv.DictWriter(response, ['username', 'flag', 'row'])
         response_rows = []
         async = request.REQUEST.get("async", False)
         if async:
@@ -261,7 +260,6 @@ class UploadCommCareUsers(TemplateView):
                 messages.error(request, error)
 
             for row in ret["rows"]:
-                response_writer.writerow(row)
                 response_rows.append(row)
 
         redirect = request.POST.get('redirect')
