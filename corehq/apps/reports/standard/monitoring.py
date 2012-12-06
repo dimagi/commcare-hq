@@ -56,10 +56,30 @@ class MultiFormDrilldownMixin(object):
     """
         This is a useful mixin when you use FormsByApplicationFilter.
     """
+
     @property
     @memoized
     def all_relevant_forms(self):
-        return FormsByApplicationFilter.get_value(self.request, self.domain)
+        selected_forms = FormsByApplicationFilter.get_value(self.request, self.domain)
+        if self.request.GET.get('%s_unknown' % FormsByApplicationFilter.slug) == 'yes':
+            return selected_forms
+
+        # filter this result by submissions within this time frame
+        by_submission_time = True
+        if hasattr(self, 'by_submission_time'):
+            by_submission_time = self.by_submission_time
+        key = make_form_couch_key(self.domain, by_submission_time=by_submission_time)
+        data = get_db().view('reports_forms/all_forms',
+            reduce=False,
+            startkey=key+[self.datespan.startdate_param_utc],
+            endkey=key+[self.datespan.enddate_param_utc],
+        ).all()
+        all_xmlns = set([FormsByApplicationFilter.xmlns_app_key(d['value']['xmlns'], d['value']['app_id']) for d in data])
+        fuzzy_xmlns = set([k for k in selected_forms.keys() if FormsByApplicationFilter.fuzzy_slug in k])
+
+        relevant_xmlns = all_xmlns.intersection(set(selected_forms.keys()))
+        relevant_xmlns = relevant_xmlns.union(fuzzy_xmlns)
+        return dict([(k, selected_forms[k]) for k in relevant_xmlns])
 
 
 class CompletionOrSubmissionTimeMixin(object):
@@ -187,7 +207,7 @@ class CaseActivityReport(WorkerMonitoringReportTableBase):
                 help_text=_("The number of cases that have been modified between %d days ago and today." % landmark.days)
             )
             proportion = DataTablesColumn(_("Proportion"), sort_type=DTSortType.NUMERIC,
-                help_text=_("The number of modified cases / (#active + #closed cases).")
+                help_text=_("The number of modified cases / (#active + #closed cases in the last %d days)." % landmark.days)
             )
             columns.append(DataTablesColumnGroup(_("Cases in Last %s Days") % landmark.days if landmark else _("Ever"),
                 num_cases,
@@ -276,38 +296,20 @@ class SubmissionsByFormReport(WorkerMonitoringReportTableBase, MultiFormDrilldow
                     " during the selected date range.")
 
     @property
-    @memoized
-    def all_relevant_forms(self):
-        selected_forms = super(SubmissionsByFormReport, self).all_relevant_forms
-        if self.request.GET.get('%s_unknown' % FormsByApplicationFilter.slug) == 'yes':
-            return selected_forms
-
-        # filter this result by submissions within this time frame
-        by_submission_time = True
-        if hasattr(self, 'by_submission_time'):
-            by_submission_time = self.by_submission_time
-        key = make_form_couch_key(self.domain, by_submission_time=by_submission_time)
-        data = get_db().view('reports_forms/all_forms',
-            reduce=False,
-            startkey=key+[self.datespan.startdate_param_utc],
-            endkey=key+[self.datespan.enddate_param_utc],
-        ).all()
-        all_xmlns = set([FormsByApplicationFilter.xmlns_app_key(d['value']['xmlns'], d['value']['app_id']) for d in data])
-        fuzzy_xmlns = set([k for k in selected_forms.keys() if FormsByApplicationFilter.fuzzy_slug in k])
-
-        relevant_xmlns = all_xmlns.intersection(set(selected_forms.keys()))
-        relevant_xmlns = relevant_xmlns.union(fuzzy_xmlns)
-        return dict([(k, selected_forms[k]) for k in relevant_xmlns])
-
-    @property
     def headers(self):
         headers = DataTablesHeader(DataTablesColumn(_("User"), span=3))
         if not self.all_relevant_forms:
             headers.add_column(DataTablesColumn(_("No submissions were found for selected forms within this date range."),
                 sortable=False))
         else:
+
+
             for _form, info in self.all_relevant_forms.items():
-                help_text = "Note: This Form's ID is not unique among your applications." if info['is_fuzzy'] else None
+                help_text = None
+                if info['is_fuzzy']:
+                    help_text = "This column shows Fuzzy Submissions."
+                elif info['is_remote']:
+                    help_text = "These forms came from a Remote CommCare HQ Application."
                 headers.add_column(DataTablesColumn(info['name'], sort_type=DTSortType.NUMERIC, help_text=help_text))
             headers.add_column(DataTablesColumn(_("All Forms"), sort_type=DTSortType.NUMERIC))
         return headers
@@ -632,9 +634,9 @@ class WorkerActivityTimes(WorkerMonitoringChartBase,
     def activity_times(self):
         all_times = []
         for user in self.users:
-            for xmlns in self.all_relevant_forms:
+            for form, info in self.all_relevant_forms.items():
                 key = make_form_couch_key(self.domain, user_id=user.get('user_id'),
-                   xmlns=xmlns, by_submission_time=self.by_submission_time)
+                   xmlns=info['xmlns'], app_id=info['app_id'], by_submission_time=self.by_submission_time)
                 data = get_db().view("reports_forms/all_forms",
                     reduce=False,
                     startkey=key+[self.datespan.startdate_param_utc],
