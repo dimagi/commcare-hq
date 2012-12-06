@@ -226,7 +226,7 @@ class WorkerRankSelectionReport(SubCenterSelectionReport):
                 group=g.name,
                 details=url_and_params(url,
                                        params))
-        return [_link(group)]
+        return [_link(group), get_awcc(group)]
     
 
 class DueListReport(MockEmptyReport):
