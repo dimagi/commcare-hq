@@ -683,7 +683,6 @@ CUSTOM_REPORT_MAP = {
             "bihar.reports.supervisor.EDDCalcReport",
             "bihar.reports.supervisor.BMICalcReport",
             "bihar.reports.supervisor.SubCenterSelectionReport",
-            "bihar.reports.indicators.reports.IndicatorSelectNav",
             "bihar.reports.indicators.reports.IndicatorNav",
             "bihar.reports.indicators.reports.IndicatorSummaryReport",
             "bihar.reports.indicators.reports.IndicatorClientSelectNav",
