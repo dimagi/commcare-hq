@@ -34,7 +34,7 @@ class IndicatorSummaryReport(GroupReferenceMixIn, BiharSummaryReport, IndicatorS
 
     @property
     def summary_indicators(self):
-        return self.indicator_set.get_indicators("summary")
+        return [i for i in self.indicator_set.get_indicators() if i.show_in_indicators]
     
     @property
     def _headers(self):
@@ -79,7 +79,7 @@ class IndicatorClientSelectNav(GroupReferenceMixIn, BiharSummaryReport, Indicato
     _indicator_type = "client_list"
     @property
     def indicators(self):
-        return self.indicator_set.get_indicators(self._indicator_type)
+        return [i for i in self.indicator_set.get_indicators() if i.show_in_client_list]
     
     @property
     def _headers(self):
@@ -125,6 +125,7 @@ class IndicatorClientList(GroupReferenceMixIn, ConvenientBaseMixIn,
 
     @property
     def sorted_cases(self):
+        print "this is broken!"
         if self.indicator.sortkey:
             return sorted(self.cases, key=self.indicator.sortkey, reverse=True)
         
