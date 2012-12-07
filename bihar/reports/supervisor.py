@@ -2,7 +2,7 @@ from django.template.loader import render_to_string
 from corehq.apps.fixtures.models import FixtureDataItem
 from corehq.apps.reports.standard import CustomProjectReport
 from corehq.apps.reports.generic import GenericTabularReport,\
-    SummaryTablularReport
+    SummaryTablularReport, summary_context
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
 from copy import copy
 from corehq.apps.reports.dispatcher import CustomProjectReportDispatcher
@@ -19,19 +19,30 @@ from django.utils.translation import ugettext_noop
 from django.utils.translation import ugettext as _
 from bihar.reports.indicators.mixins import IndicatorConfigMixIn
 
+ASHA_ROLE = 'ASHA'
+AWW_ROLE = 'AWW'
+
+def shared_bihar_context(report):
+    return {
+        'home':      MainNavReport.get_url(report.domain, render_as=report.render_next),
+        'render_as': report.render_next
+    }
+        
 class ConvenientBaseMixIn(object):
     # this is everything that's shared amongst the Bihar supervision reports
     # this class is an amalgamation of random behavior and is just 
     # for convenience
 
     base_template_mobile = "bihar/base_template_mobile.html"
-    report_template_path = "bihar/tabular.html"
+    report_template_path = "reports/async/tabular.html"
     
     hide_filters = True
     flush_layout = True
     mobile_enabled = True
     fields = []
     
+    extra_context_providers = [shared_bihar_context]
+
     # for the lazy
     _headers = []  # override
     @property
@@ -46,13 +57,6 @@ class ConvenientBaseMixIn(object):
     def show_in_navigation(cls, request, *args, **kwargs):
         return False
      
-    @property
-    def report_context(self):
-        context = super(ConvenientBaseMixIn, self).report_context
-        context['home'] = MainNavReport.get_url(self.domain, render_as=self.render_next)
-        context['render_as'] = self.render_next
-        return context
-        
 def list_prompt(index, value):
     # e.g. 1. Reports
     return u"%s. %s" % (_(str(index+1)), _(value)) 
@@ -84,6 +88,19 @@ class GroupReferenceMixIn(object):
         assert g.domain == self.domain, "Group %s isn't in domain %s" % (g.get_id, self.domain)
         return g
     
+    @memoized
+    def get_team_members(self):
+        """
+        Get any commcare users that are either "asha" or "aww".
+        """
+        users = self.group.get_users(only_commcare=True)
+        def is_team_member(user):
+            role = user.user_data.get('role', '')
+            return role == ASHA_ROLE or role == AWW_ROLE
+
+        return sorted([u for u in users if is_team_member(u)], 
+                      key=lambda u: u.user_data['role'])
+
     @property
     @memoized
     def cases(self):
@@ -97,13 +114,21 @@ class GroupReferenceMixIn(object):
                                            group=self.group.name,
                                            awcc=get_awcc(self.group))
 
+def team_member_context(report):
+    """
+    Gets context for adding a team members listing to a report.
+    """
+    return {
+        "team_members": report.get_team_members()
+    }
+
 
 class BiharSummaryReport(ConvenientBaseMixIn, SummaryTablularReport, 
                          CustomProjectReport):
     # this is literally just a way to do a multiple inheritance without having
     # the same 3 classes extended by a bunch of other classes
-    report_template_path = "bihar/summary_tabular.html"
-    
+    report_template_path = "reports/async/summary_tabular.html"
+    extra_context_providers = [shared_bihar_context, summary_context]
             
 class BiharNavReport(BiharSummaryReport):
     # this is a bit of a bastardization of the summary report

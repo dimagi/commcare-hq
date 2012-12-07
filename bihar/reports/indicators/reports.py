@@ -1,8 +1,9 @@
 from bihar.reports.supervisor import BiharNavReport, MockEmptyReport, \
     url_and_params, BiharSummaryReport, \
-    ConvenientBaseMixIn, GroupReferenceMixIn, list_prompt
+    ConvenientBaseMixIn, GroupReferenceMixIn, list_prompt, shared_bihar_context,\
+    team_member_context
 from copy import copy
-from corehq.apps.reports.generic import GenericTabularReport
+from corehq.apps.reports.generic import GenericTabularReport, summary_context
 from corehq.apps.reports.standard import CustomProjectReport
 from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.html import format_html
@@ -16,7 +17,9 @@ class IndicatorNav(GroupReferenceMixIn, BiharNavReport):
     slug = "indicatornav"
     description = ugettext_noop("Indicator navigation")
     preserve_url_params = True
+    report_template_path = "bihar/team_listing_tabular.html"
     
+    extra_context_providers = [shared_bihar_context, summary_context, team_member_context]
     @property
     def reports(self):
         return [IndicatorClientSelectNav, IndicatorSummaryReport,
@@ -58,7 +61,6 @@ class IndicatorSummaryReport(GroupReferenceMixIn, BiharSummaryReport, IndicatorS
 
     def get_indicator_value(self, indicator):
         if indicator.calculation_class:
-            print indicator.calculation_class
             return indicator.calculation_class.display(self.cases)
         if indicator.calculation_function:
             return indicator.calculation_function(self.cases)
