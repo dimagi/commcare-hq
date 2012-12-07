@@ -1,3 +1,4 @@
+from django.template.loader import render_to_string
 from corehq.apps.fixtures.models import FixtureDataItem
 from corehq.apps.reports.standard import CustomProjectReport
 from corehq.apps.reports.generic import GenericTabularReport,\
@@ -290,9 +291,47 @@ class ReferralListReport(GroupReferenceMixIn, MockEmptyReport):
             self._headers = [" "]
         return _data
 
-class EDDCalcReport(MockEmptyReport):
+class InputReport(MockEmptyReport):
+    name = ""
+    slug = ""
+    _headers = [" "]
+    _input_name = ""
+    _input_type = "text"
+
+    @property
+    def form_html(self):
+        return render_to_string("bihar/partials/input.html", {"input_name": self._input_name,
+                                                              "input_type": self._input_type,
+                                                              "label_text": self._label_text})
+
+    @property
+    def data(self):
+        input = self.request.GET.get(self._input_name, None)
+        if input:
+            return self.calc(input)
+        else:
+            return [self.form_html]
+
+    def calc(self, input):
+        return ["This calculation has not yet been implemented. The value retrieved was %s" % input]
+
+class EDDCalcReport(InputReport):
     name = ugettext_noop("EDD Calculator")
     slug = "eddcalc"
+    _input_name = "lmp"
+    _label_text = "Enter LMP (YYYY-MM-DD)"
+
+    _headers = [" "]
+
+    def calc(self, input):
+        try:
+            lmp_date = datetime.strptime(input, "%Y-%m-%d")
+            edd_date = lmp_date + timedelta(days=280)
+            return ["Estitmated Date of Delivery: %s" % edd_date.strftime("%Y-%m-%d")]
+        except ValueError:
+            self._headers = [" ", " "]
+            return ["Error: We can't parse your input, please try again", self.form_html]
+
 
 class BMICalcReport(MockEmptyReport):
     name = ugettext_noop("BMI Calculator")
