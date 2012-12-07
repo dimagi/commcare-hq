@@ -15,7 +15,7 @@ class CloudCareQuestion(object):
     def __init__(self, element):
         # element is a fully loaded question - we can assume any finds can
         # return immediately
-        self.element = SeleniumWrapper(element=element)
+        self.element = SeleniumWrapper(element)
 
     def __getattr__(self, name):
         return getattr(self.element, name)
