@@ -9,6 +9,8 @@ function (doc) {
         }
     }
 
+    var status = (doc.closed) ? "closed" : "open";
+
     if (isHouseholdCase(doc) ||
         isChildCase(doc) ||
         isPregnancyCase(doc) ) {
@@ -17,11 +19,13 @@ function (doc) {
             opened_on_date = new Date(doc.opened_on);
 
         indicator_entries_open["opened_on"] = 1;
+        indicator_entries_open["opened_on "+status] = 1;
         emit_special_case_type(doc, opened_on_date, indicator_entries_open, [doc._id]);
 
         if (doc.closed_on) {
             var closed_on_date = new Date(doc.closed_on);
             indicator_entries_closed["closed_on"] = 1;
+            indicator_entries_closed["closed_on "+status] = 1;
             emit_special_case_type(doc, closed_on_date, indicator_entries_closed, [doc._id]);
         }
 

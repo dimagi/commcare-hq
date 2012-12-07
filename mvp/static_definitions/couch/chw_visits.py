@@ -9,14 +9,14 @@ CHW_VISIT_ACTIVE_CASES_INDICATORS = dict(
                 title="# Households in past 90 days",
                 indicator_key="",
                 case_type="household",
-                fixed_datespan_days=90,
+                fixed_datespan_months=3,
             ),
             household_cases_30days=dict(
                 description="No. of Households in the past 30 days",
                 title="# Households in the past 30 days",
                 indicator_key="",
                 case_type="household",
-                fixed_datespan_days=30,
+                fixed_datespan_months=1,
             ),
             household_cases=dict(
                 description="No. of Active Households ",
@@ -36,7 +36,7 @@ CHW_VISIT_ACTIVE_CASES_INDICATORS = dict(
                 title="# pregnancies in the last 30 days",
                 indicator_key="",
                 case_type="pregnancy",
-                fixed_datespan_days=30,
+                fixed_datespan_months=1,
             ),
             pregnancy_cases=dict(
                 description="No. of Active Pregnancies",
@@ -56,13 +56,13 @@ CHW_VISITS_UNIQUE_COUNT_INDICATORS = dict(
                 description="No. of household visits in the past 90 days.",
                 title="# household visits in past 90 days",
                 indicator_key="household",
-                fixed_datespan_days=90,
+                fixed_datespan_months=3,
             ),
             household_visits_30days=dict(
                 description="No. of household visits",
                 title="# Household Visits",
                 indicator_key="household",
-                fixed_datespan_days=30,
+                fixed_datespan_months=1,
             ),
             household_visits=dict(
                 description="No. of household visits",
@@ -79,13 +79,13 @@ CHW_VISITS_UNIQUE_COUNT_INDICATORS = dict(
                 description="No. of Pregnancy Visits in the last 30 days",
                 title="# Pregnancy Visits in Past 30 days",
                 indicator_key="pregnancy",
-                fixed_datespan_days=30,
+                fixed_datespan_months=1,
             ),
             under5_visits_30days=dict(
                 description="No. of Under5 visits",
                 title="# Under5 Visits",
                 indicator_key="child under5",
-                fixed_datespan_days=30,
+                fixed_datespan_months=1,
             ),
             neonate_visits_7days=dict(
                 description="No. of Neonate visits",
