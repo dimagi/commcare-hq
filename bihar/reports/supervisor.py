@@ -295,37 +295,38 @@ class InputReport(MockEmptyReport):
     name = ""
     slug = ""
     _headers = [" "]
-    _input_name = ""
-    _input_type = "text"
+    _inputs = []
 
     @property
     def form_html(self):
-        return render_to_string("bihar/partials/input.html", {"input_name": self._input_name,
-                                                              "input_type": self._input_type,
-                                                              "label_text": self._label_text})
+        return render_to_string("bihar/partials/input.html", {"inputs": self._inputs})
 
     @property
     def data(self):
-        input = self.request.GET.get(self._input_name, None)
-        if input:
-            return self.calc(input)
-        else:
-            return [self.form_html]
+        for i in self._inputs:
+            if not self.request.GET.get(i["name"], None):
+                return [self.form_html]
+        return self.calc(self.request.GET)
 
     def calc(self, input):
-        return ["This calculation has not yet been implemented. The value retrieved was %s" % input]
+        return [_("This calculation has not yet been implemented.")]
 
 class EDDCalcReport(InputReport):
     name = ugettext_noop("EDD Calculator")
     slug = "eddcalc"
-    _input_name = "lmp"
-    _label_text = "Enter LMP (YYYY-MM-DD)"
+    _inputs = [
+        {
+            "name": "lmp",
+            "type": "text",
+            "label": _("Enter LMP (YYYY-MM-DD)")
+        }
+    ]
 
     _headers = [" "]
 
     def calc(self, input):
         try:
-            lmp_date = datetime.strptime(input, "%Y-%m-%d")
+            lmp_date = datetime.strptime(input["lmp"], "%Y-%m-%d")
             edd_date = lmp_date + timedelta(days=280)
             return ["Estitmated Date of Delivery: %s" % edd_date.strftime("%Y-%m-%d")]
         except ValueError:
@@ -333,9 +334,39 @@ class EDDCalcReport(InputReport):
             return ["Error: We can't parse your input, please try again", self.form_html]
 
 
-class BMICalcReport(MockEmptyReport):
+class BMICalcReport(InputReport):
     name = ugettext_noop("BMI Calculator")
     slug = "bmicalc"
+    _inputs = [
+        {
+            "name": "weight",
+            "type": "text",
+            "label": _("Enter weight in kilograms:")
+        },
+        {
+            "name": "height",
+            "type": "text",
+            "label": _("Enter height in meters:")
+        }
+    ]
+
+    def calc(self, input):
+        try:
+            weight = float(input["weight"])
+            height = float(input["height"])
+        except ValueError:
+            self._headers = [" ", " "]
+            return ["Error: We can't parse your input, please try again", self.form_html]
+
+        bmi = weight / (height * height)
+        if bmi >= 30:
+            return [_("You are obese")]
+        elif bmi >= 25:
+            return [_("You are overweight")]
+        elif bmi >= 18.5:
+            return [_("You are normal weight")]
+        else:
+            return [_("You are underweight")]
 
 def default_nav_link(nav_report, i, report_cls):
     url = report_cls.get_url(nav_report.domain, 
