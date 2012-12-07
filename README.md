@@ -26,7 +26,7 @@ Please note that these instructions are targeted toward UNIX-based systems.
 
 For Ubuntu 12.04, you can use the included `install.sh` script to install all
 dependencies, set them up to run at startup, and set up required databases.
-Then skip to "Setting up a virtualenv".
+Then skip to "Setting up a virtualenv". 
 
 Otherwise, install the following software from your OS package manager or the
 individual project sites when necessary.
@@ -45,6 +45,7 @@ individual project sites when necessary.
  [postgres]: http://jython.org/downloads.html
  [elasticsearch]: http://www.elasticsearch.org/download/
  [jython]: http://jython.org/downloads.html
+
 
 
 #### Common issues
@@ -115,6 +116,7 @@ to automatically run on system startup, you need to run them manually:
 
     memcached -d &
     /path/to/unzipped/elasticsearch/bin/elasticsearch &
+    /path/to/couchdb/bin/couchdb &
 
 Our own helper processes must also be running:
 
