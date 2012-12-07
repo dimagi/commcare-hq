@@ -12,26 +12,40 @@ from django.utils.translation import ugettext as _
 
 EMPTY = (0,0)
 
-class IndicatorCalculator(object):
+class CalculatorBase(object):
     """
-    A class that, given a case, can tell you that cases contributions to the
-    numerator and denominator of a particular indicator.
+    The public API for calculators. Which are used in both the indicator
+    list and the client list.
     """
-
-    def __init__(self, *args, **kwargs):
-        pass
-
-    def numerator(self, case):
-        raise NotImplementedError("Override this!")
-
-    def denominator(self, case):
-        raise NotImplementedError("Override this!")
-
     def get_columns(self):
         raise NotImplementedError("Override this!")
 
     @memoized
     def as_row(self, case):
+        raise NotImplementedError("Override this!")
+
+    def filter(self, case):
+        raise NotImplementedError("Override this!")
+
+class FilterOnlyCalculator(CalculatorBase):
+    """
+    A class for indicators that are used only by the client list.
+    """
+    show_in_indicators = False
+    show_in_client_list = True
+
+class IndicatorCalculator(CalculatorBase):
+    """
+    A class that, given a case, can tell you that cases contributions to the
+    numerator and denominator of a particular indicator.
+    """
+    show_in_indicators = True
+    show_in_client_list = False
+
+    def numerator(self, case):
+        raise NotImplementedError("Override this!")
+
+    def denominator(self, case):
         raise NotImplementedError("Override this!")
 
     def filter(self, case):
@@ -54,8 +68,14 @@ class IndicatorCalculator(object):
                 num += num_diff
         return self._render(num, denom)
 
-class MemoizingCalculatorMixIn(object):
+class MemoizingFilterCalculator(FilterOnlyCalculator):
     # to avoid decorators everywhere. there might be a smarter way to do this
+    @memoized
+    def filter(self, case):
+        return self._filter(case)
+
+class MemoizingCalculatorMixIn(object):
+    # same concept as MemoizingFilterCalculator
 
     @memoized
     def numerator(self, case):
@@ -91,25 +111,39 @@ class DoneDueMixIn(SummaryValueMixIn):
 
 class MotherPreDeliveryMixIn(object):
     """
-    Meant to be used with IndicatorCalculators and SummaryValueMixIn, to
-    provide shared defaults for stuff that shows up in the client list.
+    Meant to be used with IndicatorCalculators shared defaults for stuff that
+    shows up in the client list.
     """
     def get_columns(self):
-        return [_("Name"), _("Husband's Name"), _("EDD"), _(self.summary_header)]
+        return (_("Name"), _("Husband's Name"), _("EDD"))
 
     def as_row(self, case):
-        return mother_pre_delivery_columns(case) + (self.summary_value(case), )
+        return mother_pre_delivery_columns(case)
+
+class MotherPreDeliverySummaryMixIn(MotherPreDeliveryMixIn):
+    """
+    Meant to be used with MotherPreDeliveryMixIn and SummaryValueMixIn, to
+    provide extra shared defaults for clicking through the indicators.
+    """
+    def get_columns(self):
+        return super(MotherPreDeliverySummaryMixIn, self).get_columns() + (_(self.summary_header),)
+
+    def as_row(self, case):
+        return super(MotherPreDeliverySummaryMixIn, self).as_row(case) + (self.summary_value(case),)
 
 class MotherPostDeliveryMixIn(object):
-    """
-    Meant to be used with IndicatorCalculators and SummaryValueMixIn, to
-    provide shared defaults for stuff that shows up in the client list.
-    """
     def get_columns(self):
-        return [_("Name"), _("Husband's Name"), _("ADD"), _(self.summary_header)]
+        return (_("Name"), _("Husband's Name"), _("ADD"))
 
     def as_row(self, case):
-        return mother_post_delivery_columns(case) + (self.summary_value(case), )
+        return mother_post_delivery_columns(case)
+
+class MotherPostDeliverySummaryMixIn(MotherPostDeliveryMixIn):
+    def get_columns(self):
+        return super(MotherPostDeliverySummaryMixIn, self).get_columns() + (_(self.summary_header),)
+
+    def as_row(self, case):
+        return super(MotherPostDeliverySummaryMixIn, self).as_row(case) + (self.summary_value(case),)
 
 def _num_denom(num, denom):
     return "%s/%s" % (num, denom)
@@ -215,7 +249,8 @@ def _newborn(case, days=None): # :(
 # NOTE: this is going to be slooooow
 
 
-class HDDayCalculator(SummaryValueMixIn, MotherPreDeliveryMixIn, MemoizingCalculatorMixIn, IndicatorCalculator):
+class HDDayCalculator(SummaryValueMixIn, MotherPreDeliverySummaryMixIn,
+                      MemoizingCalculatorMixIn, IndicatorCalculator):
 
     def _numerator(self, case):
         return 1 if _visited_in_timeframe_of_birth(case, 1) else 0
@@ -244,7 +279,8 @@ class IDNBCalculator(IDDayCalculator):
         return 0
 
 
-class PTLBCalculator(SummaryValueMixIn, MotherPreDeliveryMixIn, MemoizingCalculatorMixIn, IndicatorCalculator):
+class PTLBCalculator(SummaryValueMixIn, MotherPreDeliverySummaryMixIn,
+                     MemoizingCalculatorMixIn, IndicatorCalculator):
 
     def _preterm(self, case):
         return True if getattr(case, 'term', None) == "pre_term" else False
@@ -293,7 +329,8 @@ class FVCalculator(S2SCalculator):
     def _denominator(self, case):
         return 1 if self._weak_baby(case) and _get_xpath_from_forms(case, "child_info/feed_vigour") == 'no' else 0
 
-class MMCalculator(SimpleListMixin, SummaryValueMixIn, MotherPreDeliveryMixIn, MemoizingCalculatorMixIn, IndicatorCalculator):
+class MMCalculator(SimpleListMixin, SummaryValueMixIn, MotherPreDeliverySummaryMixIn,
+                   MemoizingCalculatorMixIn, IndicatorCalculator):
 
     def _action_within_timeframe(self, action, days):
         now = dt.datetime.now()
@@ -330,7 +367,8 @@ def _get_time_of_birth(form):
         )
     return time_of_birth
 
-class ComplicationsCalculator(MotherPreDeliveryMixIn, MemoizingCalculatorMixIn, DoneDueMixIn, IndicatorCalculator):
+class ComplicationsCalculator(MotherPreDeliverySummaryMixIn, MemoizingCalculatorMixIn,
+                              DoneDueMixIn, IndicatorCalculator):
     """
         DENOM: [
             any DELIVERY forms with (

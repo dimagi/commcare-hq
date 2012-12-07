@@ -1,10 +1,12 @@
 from bihar.reports.indicators.calculations import DoneDueMixIn,\
-    IndicatorCalculator, MemoizingCalculatorMixIn, MotherPreDeliveryMixIn,\
-    MotherPostDeliveryMixIn
+    IndicatorCalculator, MemoizingCalculatorMixIn, MotherPreDeliverySummaryMixIn,\
+    MotherPostDeliveryMixIn, MotherPreDeliveryMixIn, MemoizingFilterCalculator,\
+    MotherPostDeliverySummaryMixIn
 from bihar.reports.indicators.visits import visit_is
 import datetime as dt
 from bihar.reports.indicators.filters import get_edd, is_pregnant_mother,\
-    get_add, A_MONTH
+    get_add, A_MONTH, due_next_month, delivered_last_month,\
+    pregnancy_registered_last_month, no_bp_counseling, no_ifa_tablets
 
 GRACE_PERIOD = dt.timedelta(days=7)
 
@@ -29,21 +31,22 @@ def _visits_done(case, schedule, type):
     count = len(filter(lambda a: visit_is(a, type), case.actions))
     return len([v for v in due if count > v])
 
-class BP2Calculator(MotherPreDeliveryMixIn, MemoizingCalculatorMixIn, DoneDueMixIn, IndicatorCalculator):
+class BP2Calculator(MotherPreDeliverySummaryMixIn, MemoizingCalculatorMixIn, DoneDueMixIn, IndicatorCalculator):
     def _numerator(self, case):
         return 1 if _mother_due_in_window(case, 75) else 0
 
     def _denominator(self, case):
         return 1 if len(filter(lambda a: visit_is(a, 'bp'), case.actions)) >= 2 else 0
 
-class BP3Calculator(MotherPreDeliveryMixIn, MemoizingCalculatorMixIn, DoneDueMixIn, IndicatorCalculator):
+class BP3Calculator(MotherPreDeliverySummaryMixIn, MemoizingCalculatorMixIn, DoneDueMixIn, IndicatorCalculator):
     def _numerator(self, case):
         return 1 if _mother_due_in_window(case, 45) else 0
 
     def _denominator(self, case):
         return 1 if len(filter(lambda a: visit_is(a, 'bp'), case.actions)) >= 3 else 0
 
-class VisitCalculator(MotherPostDeliveryMixIn, MemoizingCalculatorMixIn, DoneDueMixIn, IndicatorCalculator):
+class VisitCalculator(MotherPostDeliverySummaryMixIn, MemoizingCalculatorMixIn,
+                      DoneDueMixIn, IndicatorCalculator):
     schedule = ()      # override
     visit_type = None  # override
     def _numerator(self, case):
@@ -64,3 +67,30 @@ class CFCalculator(VisitCalculator):
     schedule_in_months = (6, 7, 8, 9, 12, 15, 18)
     schedule = (m * 30 for m in schedule_in_months)
     visit_type = "cf"
+
+# client list filters
+
+class UpcomingDeliveryList(MotherPreDeliveryMixIn, MemoizingFilterCalculator,
+                           IndicatorCalculator):
+    def _filter(self, case):
+        return due_next_month(case)
+
+class RecentDeliveryList(MotherPostDeliveryMixIn, MemoizingFilterCalculator,
+                         IndicatorCalculator):
+    def _filter(self, case):
+        return delivered_last_month(case)
+
+class RecentRegistrationList(MotherPreDeliveryMixIn, MemoizingFilterCalculator,
+                             IndicatorCalculator):
+    def _filter(self, case):
+        return pregnancy_registered_last_month(case)
+    
+class NoBPList(MotherPreDeliveryMixIn, MemoizingFilterCalculator,
+                             IndicatorCalculator):
+    def _filter(self, case):
+        return no_bp_counseling(case)
+
+class NoIFAList(MotherPreDeliveryMixIn, MemoizingFilterCalculator,
+                             IndicatorCalculator):
+    def _filter(self, case):
+        return no_ifa_tablets(case)

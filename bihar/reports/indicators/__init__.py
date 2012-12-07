@@ -17,11 +17,8 @@ DEFAULT_ROW_FUNCTION = 'bihar.reports.indicators.filters.mother_pre_delivery_col
 DELIVERIES = {
     "slug": "deliveries",
     "name": _("Pregnant woman who delivered in last 30 days"),
-    "filter_function": "bihar.reports.indicators.filters.delivered_last_month",
-    "row_function": "bihar.reports.indicators.filters.mother_post_delivery_columns",
-    "sortkey": "bihar.reports.indicators.filters.get_add_sortkey",
-    "columns": [_("Name"), _("Husband's Name"), _("ADD")],
-    }
+    "calculation_class": "bihar.reports.indicators.home_visit.RecentDeliveryList",
+}
 INDICATOR_SETS = [
     {
         "slug": "homevisit", 
@@ -55,31 +52,23 @@ INDICATOR_SETS = [
             {
                 "slug": "upcoming_deliveries", 
                 "name": _("All woman due for delivery in next 30 days"),
-                "filter_function": "bihar.reports.indicators.filters.due_next_month",
-                "row_function": "bihar.reports.indicators.filters.mother_pre_delivery_columns",
-                "sortkey": "bihar.reports.indicators.filters.get_edd_sortkey",
+                "calculation_class": "bihar.reports.indicators.home_visit.UpcomingDeliveryList",
             },
             DELIVERIES,
             {
                 "slug": "new_pregnancies", 
                 "name": _("Pregnant woman registered in last 30 days"),
-                "filter_function": "bihar.reports.indicators.filters.pregnancy_registered_last_month",
-                "row_function": "bihar.reports.indicators.filters.mother_pre_delivery_columns",
-                "sortkey": "bihar.reports.indicators.filters.get_edd_sortkey",
+                "calculation_class": "bihar.reports.indicators.home_visit.RecentRegistrationList",
             },
             {
                 "slug": "no_bp_counseling",
                 "name": _("Pregnant woman not given BP counselling (of pregnant woman registered in last 30 days)"),
-                "filter_function": "bihar.reports.indicators.filters.no_bp_counseling",
-                "row_function": "bihar.reports.indicators.filters.mother_pre_delivery_columns",
-                "sortkey": "bihar.reports.indicators.filters.get_edd_sortkey",
+                "calculation_class": "bihar.reports.indicators.home_visit.NoBPList",
             },
             {
                 "slug": "no_ifa_tablets",
                 "name": _("Pregnant woman not received IFA tablets (of pregnant woman registered in last 30 days)"),
-                "filter_function": "bihar.reports.indicators.filters.no_ifa_tablets",
-                "row_function": "bihar.reports.indicators.filters.mother_pre_delivery_columns",
-                "sortkey": "bihar.reports.indicators.filters.get_edd_sortkey",
+                "calculation_class": "bihar.reports.indicators.home_visit.NoBPList",
             },
 #                {
 #                    "slug": "",
@@ -231,7 +220,7 @@ class IndicatorSet(object):
         for ispec in spec.get("indicators", []):
             self.indicators[ispec["slug"]] = Indicator(ispec)
                 
-    def get_indicators(self, type):
+    def get_indicators(self):
         print "this is broken!"
         return self.indicators.values()
     
@@ -245,10 +234,9 @@ class Indicator(object):
     def __init__(self, spec):
         self.slug = spec["slug"]
         self.name = spec["name"]
-
         self.calculation_class = to_function(spec["calculation_class"])() \
             if "calculation_class" in spec else None
-
+        
         self.calculation_function = to_function(spec["calculation_function"]) \
             if "calculation_function" in spec else None
         if spec.has_key("calculation_kwargs"):
@@ -262,6 +250,16 @@ class Indicator(object):
         self.row_function = to_function(spec.get("row_function", DEFAULT_ROW_FUNCTION))
         self.columns = spec.get("columns", [_("Name"), _("Husband's Name"), _("EDD")])
 
+    @property
+    def show_in_client_list(self):
+        return self.calculation_class.show_in_client_list if \
+            self.calculation_class else True
+    
+    @property
+    def show_in_indicators(self):
+        return self.calculation_class.show_in_indicators if \
+            self.calculation_class else True
+        
     def get_columns(self):
         if self.calculation_class:
             return self.calculation_class.get_columns()
