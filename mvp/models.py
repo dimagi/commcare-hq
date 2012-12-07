@@ -78,23 +78,20 @@ class MVPActiveCasesIndicatorDefinition(NoGroupCouchIndicatorDefBase):
         return self._get_results_with_key(key, user_id=user_id, datespan=datespan_by_status)
 
     def get_value(self, user_id=None, datespan=None):
+        def _get_ids(cases):
+            if isinstance(cases, set):
+                return cases
+            else:
+                return set([r['id'] for r in cases])
+
         open_cases = self._get_cases_by_status("opened_on open", user_id, datespan)
-        if isinstance(open_cases, set):
-            open_ids = open_cases
-        else:
-            open_ids = set([r['id'] for r in open_cases])
+        open_ids = _get_ids(open_cases)
 
         closed_on_closed_cases = self._get_cases_by_status("closed_on closed", user_id, datespan)
-        if isinstance(closed_on_closed_cases, set):
-            closed_on_closed_ids = closed_on_closed_cases
-        else:
-            closed_on_closed_ids = set([r['id'] for r in closed_on_closed_cases])
+        closed_on_closed_ids = _get_ids(closed_on_closed_cases)
 
         opened_on_closed_cases = self._get_cases_by_status("opened_on closed", user_id, datespan)
-        if isinstance(opened_on_closed_cases, set):
-            opened_on_closed_ids = opened_on_closed_cases
-        else:
-            opened_on_closed_ids = set([r['id'] for r in opened_on_closed_cases])
+        opened_on_closed_ids = _get_ids(opened_on_closed_cases)
 
         closed_ids = closed_on_closed_ids.intersection(opened_on_closed_ids)
 
