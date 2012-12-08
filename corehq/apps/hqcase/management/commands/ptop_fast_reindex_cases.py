@@ -41,6 +41,7 @@ class Command(BaseCommand):
         casepillow.delete_index()
         print "Recreating index"
         casepillow.create_index()
+        casepillow.seen_types = {}
         print "Resetting CasePillow Checkpoint"
 
         casepillow.reset_checkpoint()
