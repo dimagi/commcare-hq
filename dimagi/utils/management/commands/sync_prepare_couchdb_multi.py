@@ -30,9 +30,9 @@ def do_sync(app_index):
         app = get_apps()[app_index]
         couchdbkit_handler.sync(app, verbosity=2, temp='tmp')
     except Exception, ex:
-        logging.error("Exception running sync, but ignoring.\n\tapp=%s\n\t%s" % (app, ex))
-        return None
-    print "Done with %s!!!" % app_index
+        print "Exception running sync, but ignoring.\n\tapp=%s\n\t%s" % (app, ex)
+        return "%s-error" % app_index
+    print "preindex %s complete" % app_index
     return app_index
 
 class Command(BaseCommand):
@@ -55,31 +55,13 @@ class Command(BaseCommand):
         pool = Pool(num_pool)
 
         apps = get_apps()
-        tries_dict = {}
-        
+
         completed = set()
-        running = []
         app_ids = set(range(len(apps)))
         for app_id in sorted(app_ids.difference(completed)):
             #keep trying all the preindexes until they all complete satisfactorily.
             print "Trying to preindex view (%d/%d) %s" % (app_id, len(apps), apps[app_id])
-            curr_g = pool.spawn(do_sync, app_id)
-            running.append(curr_g)
-
-            for g in running:
-                if g.ready(): #finished execution?
-                    if g.value is not None:
-                        completed.add(g.value)
-                        running.remove(g)
-                    else:
-                        print "\tSync failed for %s, trying again" % (apps[app_id])
-                        curr_tries = tries_dict.get(app_id, 0)
-                        if curr_tries > MAX_TRIES:
-                            completed.add(app_id)
-                            print "\tmax tries exceeded, marking as done"
-                        else:
-                            tries_dict[app_id] = curr_tries + 1
-            print "end of main app for loop"
+            pool.spawn(do_sync, app_id)
 
         # sshhhhhh: if we're using HQ also preindex the couch apps
         # this could probably be multithreaded too, but leaving for now
