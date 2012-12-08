@@ -14,7 +14,7 @@ DESIGN_SK = "_design"
 DESIGN_EK = "_design0"
 
 POOL_SIZE=12
-REPEAT_INTERVAL =15
+REPEAT_INTERVAL = settings.get('PRIME_VIEWS_INTERVAL', 20)
 
 #apps_with_dbs = [
 #    'couchforms', #commcarehq for everything
@@ -44,9 +44,9 @@ def get_unique_dbs():
 
 def do_prime(app_label, design_doc_name, view_name):
     db = get_db(app_label)
-    print "start priming %s:%s/%s" % (app_label, design_doc_name, view_name)
+#    print "start priming %s:%s/%s" % (app_label, design_doc_name, view_name)
     list(db.view('%s/%s' % (design_doc_name, view_name), limit=0))
-    print "done priming %s:%s/%s" % (app_label, design_doc_name, view_name)
+#    print "done priming %s:%s/%s" % (app_label, design_doc_name, view_name)
 
 class Command(BaseCommand):
     help = 'Sync live design docs with gevent'
@@ -63,7 +63,6 @@ class Command(BaseCommand):
                     db = get_db(app)
                     design_docs = db.view(DESIGN_DOC_VIEW, startkey=DESIGN_SK, endkey=DESIGN_EK, include_docs=True).all()
                     for res in design_docs:
-                    #                    print res.keys()
                         design_doc = res['doc']
                         design_doc_name = design_doc['_id'].split('/')[-1] # _design/app_name
                         if design_doc_name.endswith('-tmp'):
@@ -77,8 +76,9 @@ class Command(BaseCommand):
                                 #and that's it for that design doc
                                 break
                 except Exception, ex:
-                    print "Got an exception but ignoring: %s" % ex
+                    #print "Got an exception but ignoring: %s" % ex
+                    pass
             gevent.sleep(REPEAT_INTERVAL)
-            print "exited main app loop - repeating after %s pause" % REPEAT_INTERVAL
-        print "done!"
+#            print "exited main app loop - repeating after %s pause" % REPEAT_INTERVAL
+#        print "done!"
 
