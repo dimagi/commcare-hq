@@ -37,7 +37,8 @@ SITE_ID = 1
 USE_I18N = True
 
 # Django i18n searches for translation files (django.po) within this dir
-LOCALE_PATHS=['contrib/locale']
+# and then in the locale/ directories of installed apps
+LOCALE_PATHS = ()
 
 # Absolute path to the directory that holds media.
 # Example: "/home/media/media.lawrence.com/"
@@ -68,8 +69,8 @@ DJANGO_LOG_FILE = "%s/%s" % (FILEPATH, "commcarehq.django.log")
 # Examples: "http://foo.com/media/", "/media/".
 ADMIN_MEDIA_PREFIX = '/static/admin/'
 
-# Make this unique, and don't share it with anybody.
-SECRET_KEY = '2rgmwtyq$thj49+-6u7x9t39r7jflu&1ljj3x2c0n0fl$)04_0'
+# Make this unique, and don't share it with anybody - put into localsettings.py
+SECRET_KEY = ''
 
 # List of callables that know how to import templates from various sources.
 TEMPLATE_LOADERS = (
@@ -86,7 +87,6 @@ MIDDLEWARE_CLASSES = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'corehq.middleware.OpenRosaMiddleware',
-    'corehq.apps.domain.middleware.DomainMiddleware',
     'corehq.apps.users.middleware.UsersMiddleware',
     'casexml.apps.phone.middleware.SyncTokenMiddleware',
     'auditcare.middleware.AuditMiddleware',
@@ -210,11 +210,15 @@ HQ_APPS = (
     'dca',
     'hsph',
     'mvp',
+    'mvp_apps',
     'pathfinder',
     'pathindia',
     'pact',
 )
 
+TEST_APPS = (
+    'dimagi.utils',
+)
 REFLEXIVE_URL_BASE = "localhost:8000"
 
 INSTALLED_APPS = DEFAULT_APPS + HQ_APPS
@@ -228,6 +232,8 @@ MENU_ITEMS = (
     "corehq.apps.hqwebapp.models.MessagesMenuItem",
     "corehq.apps.hqwebapp.models.ProjectSettingsMenuItem",
     "corehq.apps.hqwebapp.models.AdminReportsMenuItem",
+    "corehq.apps.hqwebapp.models.ExchangeMenuItem",
+    "corehq.apps.hqwebapp.models.ManageSurveysMenuItem",
 )
 
 # after login, django redirects to this URL
@@ -593,6 +599,7 @@ PROJECT_REPORT_MAP = {
     "Commtrack": [
         'corehq.apps.reports.commtrack.psi_prototype.VisitReport',
         'corehq.apps.reports.commtrack.psi_prototype.SalesAndConsumptionReport',
+        'corehq.apps.reports.commtrack.psi_prototype.StockReportExport',
     ],
 }
 
@@ -672,9 +679,11 @@ CUSTOM_REPORT_MAP = {
             "bihar.reports.supervisor.MainNavReport",
             "bihar.reports.supervisor.WorkerRankSelectionReport",
             "bihar.reports.supervisor.DueListReport",
-            "bihar.reports.supervisor.ToolsReport",
+            "bihar.reports.supervisor.ToolsNavReport",
+            "bihar.reports.supervisor.ReferralListReport",
+            "bihar.reports.supervisor.EDDCalcReport",
+            "bihar.reports.supervisor.BMICalcReport",
             "bihar.reports.supervisor.SubCenterSelectionReport",
-            "bihar.reports.indicators.reports.IndicatorSelectNav",
             "bihar.reports.indicators.reports.IndicatorNav",
             "bihar.reports.indicators.reports.IndicatorSummaryReport",
             "bihar.reports.indicators.reports.IndicatorClientSelectNav",
@@ -755,6 +764,7 @@ DEFAULT_CURRENCY = "USD"
 SMS_HANDLERS = [
     'corehq.apps.commtrack.sms.handle',
     'corehq.apps.sms.api.form_session_handler',
+    'corehq.apps.sms.api.fallback_handler',
 ]
 
 # mapping of phone number prefix (including country code) to a registered
