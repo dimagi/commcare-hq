@@ -210,7 +210,7 @@ class XFormPillow(AliasedElasticPillow):
         xmlns = doc_dict.get('xmlns', 'http://noxmlns')
         if xmlns is None:
             xmlns = 'http://noxmlns'
-        ret =  "%(type)s.%(domain)s.%(xmlns_suffix)s.u%(ui_version)s-v%(version)s" % {
+        ret =  "%(type)s_%(domain)s_%(xmlns_suffix)s_u%(ui_version)s_v%(version)s" % {
             'type': self.es_type,
             'domain': domain.lower(),
             'xmlns_suffix': xmlns.split('/')[-1],

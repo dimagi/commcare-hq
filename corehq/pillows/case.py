@@ -54,9 +54,9 @@ class CasePillow(AliasedElasticPillow):
         if case_type is None:
             case_type = "unknowntype"
 
-        return "%(type)s_%(domain)s__%(case_type)s" % {
+        ret = "%(type)s_%(domain)s__%(case_type)s" % {
             'type': self.es_type,
             'domain': domain.lower(),
             'case_type': case_type.lower(),
         }
-
+        return ret

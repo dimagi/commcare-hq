@@ -1,7 +1,7 @@
 from corehq.apps.api.resources import v0_1, v0_2, v0_3
 from django.conf.urls.defaults import *
 from tastypie.api import Api
-from corehq.apps.api.xform_es import XFormES
+from corehq.apps.api.es import XFormES
 from dimagi.utils.decorators import inline
 
 API_LIST = (
