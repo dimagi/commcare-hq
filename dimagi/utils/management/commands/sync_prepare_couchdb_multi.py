@@ -1,3 +1,8 @@
+from gevent import monkey
+monkey.patch_all()
+from restkit.session import set_session
+set_session("gevent")
+
 from django.db.models import get_apps
 from django.core.management.base import BaseCommand
 from django.core.mail import send_mail
@@ -6,16 +11,12 @@ from gevent.pool import Pool
 import logging
 import time
 from django.conf import settings
-setattr(settings, 'COUCHDB_TIMEOUT', 1)
+setattr(settings, 'COUCHDB_TIMEOUT', 999999)
 from couchdbkit.ext.django.loading import couchdbkit_handler
 from dimagi.utils.couch.database import get_db
 
-from gevent import monkey
-monkey.patch_all()
-from restkit.session import set_session
-set_session("gevent")
 
-POOL_SIZE = getattr(settings, 'PREINDEX_POOL_SIZE', 4)
+POOL_SIZE = getattr(settings, 'PREINDEX_POOL_SIZE', 8)
 POOL_WAIT = getattr(settings, 'PREINDEX_POOL_WAIT', 10)
 MAX_TRIES = getattr(settings, 'PREINDEX_MAX_TRIES', 3)
 
@@ -66,7 +67,6 @@ class Command(BaseCommand):
             running.append(curr_g)
 
             for g in running:
-                print "looping through running tasks: %s" % g
                 if g.ready(): #finished execution?
                     if g.value is not None:
                         completed.add(g.value)
@@ -76,7 +76,7 @@ class Command(BaseCommand):
                         curr_tries = tries_dict.get(app_id, 0)
                         if curr_tries > MAX_TRIES:
                             completed.add(app_id)
-                            print "\t\tmax tries exceeded, marking as done"
+                            print "\tmax tries exceeded, marking as done"
                         else:
                             tries_dict[app_id] = curr_tries + 1
             print "end of main app for loop"
