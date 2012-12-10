@@ -8,6 +8,26 @@ from dimagi.utils.couch.database import get_db
 from couchexport import writers
 from soil import DownloadBase
 
+def chunked(it, n):
+    """
+    >>> for nums in chunked(range(10), 4):
+    ...    print nums
+    (0, 1, 2, 3)
+    (4, 5, 6, 7)
+    (8, 9)
+    """
+    it = iter(it)
+    while True:
+        buffer = []
+        try:
+            for i in xrange(n):
+                buffer.append(it.next())
+            yield tuple(buffer)
+        except StopIteration:
+            if buffer:
+                yield tuple(buffer)
+            break
+
 class ExportConfiguration(object):
     """
     A representation of the configuration parameters for an export and 
@@ -61,14 +81,14 @@ class ExportConfiguration(object):
             return self._all_ids()
     
     def enum_docs(self):
-        for i, doc_id in enumerate(self.potentially_relevant_ids):
-            doc = self.database.get(doc_id)
+        for i, doc in enumerate(self.get_docs()):
             if self.include(doc):
                 yield i, doc
 
     def get_docs(self):
-        for _, doc in self.enum_docs():
-            yield doc
+        for doc_ids in chunked(self.potentially_relevant_ids, 100):
+            for doc in self.database.all_docs(keys=doc_ids, include_docs=True):
+                yield doc['doc']
 
     def last_checkpoint(self):
         return self.previous_export or ExportSchema.last(self.schema_index)
