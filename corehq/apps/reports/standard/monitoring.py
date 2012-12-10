@@ -107,6 +107,7 @@ class CaseActivityReport(WorkerMonitoringReportTableBase):
     all_users = None
     display_data = ['percent']
     emailable = True
+    description = ugettext_noop("This report displays the followup rates on active cases.")
     special_notice = ugettext_noop("This report currently does not support case sharing. "
                        "There might be inconsistencies in case totals if the user is part of a case sharing group. "
                        "We are working to correct this shortly.")
@@ -354,6 +355,8 @@ class DailyFormStatsReport(WorkerMonitoringReportTableBase, CompletionOrSubmissi
                 'corehq.apps.reports.filters.forms.CompletionOrSubmissionTimeFilter',
                 'corehq.apps.reports.fields.DatespanField']
 
+    description = ugettext_noop("This report shows the number of submissions for each form per day.")
+
     fix_left_col = True
     emailable = True
 
@@ -424,6 +427,9 @@ class FormCompletionTimeReport(WorkerMonitoringReportTableBase, DatespanMixin):
               'corehq.apps.reports.fields.GroupField',
               'corehq.apps.reports.filters.forms.SingleFormByApplicationFilter',
               'corehq.apps.reports.fields.DatespanField']
+
+    description = ugettext_noop("This report displays statistics based on the amount of time spent on a particular "
+                                "form per Mobile Worker.")
 
     @property
     @memoized
@@ -507,6 +513,9 @@ class FormCompletionTimeReport(WorkerMonitoringReportTableBase, DatespanMixin):
 class FormCompletionVsSubmissionTrendsReport(WorkerMonitoringReportTableBase, DatespanMixin):
     name = ugettext_noop("Form Completion vs. Submission Trends")
     slug = "completion_vs_submission"
+
+    description = ugettext_noop("This report shows the time difference between when the forms were completed on the "
+                                "phone and when they were received by CommCare HQ.")
     
     fields = ['corehq.apps.reports.fields.FilterUsersField',
               'corehq.apps.reports.fields.GroupField',
@@ -620,6 +629,8 @@ class WorkerActivityTimes(WorkerMonitoringChartBase,
     name = ugettext_noop("Worker Activity Times")
     slug = "worker_activity_times"
 
+    description = ugettext_noop("A graphical representation of when forms are completed.")
+
     fields = [
         'corehq.apps.reports.fields.FilterUsersField',
         'corehq.apps.reports.fields.GroupField',
@@ -701,48 +712,3 @@ class WorkerActivityTimes(WorkerMonitoringChartBase,
 
         chart.add_marker(1, 1.0, 'o', '333333', 25)
         return chart.get_url() + '&chds=-1,24,-1,7,0,20'
-
-
-class SubmitDistributionReport(WorkerMonitoringChartBase):
-    name = ugettext_noop("Submit Distribution")
-    slug = "submit_distribution"
-
-    report_partial_path = "reports/partials/generic_piechart.html"
-
-    @property
-    @monitoring_report_cacher
-    def report_context(self):
-        predata = {}
-        data = []
-        for user in self.users:
-            startkey = ["u", self.domain, user.get('user_id')]
-            endkey = ["u", self.domain, user.get('user_id'), {}]
-            view = get_db().view("formtrends/form_type_by_user",
-                startkey=startkey,
-                endkey=endkey,
-                group=True,
-                reduce=True)
-            for row in view:
-                xmlns = row["key"][-1]
-                form_name = xmlns_to_name(self.domain, xmlns, app_id=None)
-                def _desc(amt, form_name):
-                    return _("(%(amt)s) submissions of %(form)s") % {
-                        "amt": _(str(amt)), 
-                        "form": _(form_name)
-                    }
-                if form_name in predata:
-                    predata[form_name]["value"] = predata[form_name]["value"] + row["value"]
-                    predata[form_name]["description"] = _desc(predata[form_name]["value"], 
-                                                              form_name)
-                else:
-                    predata[form_name] = {"display": form_name,
-                                          "value": row["value"],
-                                          "description": _desc(row["value"], form_name)}
-        for value in predata.values():
-            data.append(value)
-        return dict(
-            chart_data=data,
-            user_id=self.individual,
-            graph_width=900,
-            graph_height=500
-        )
