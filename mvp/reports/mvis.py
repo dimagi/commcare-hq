@@ -15,7 +15,8 @@ class HealthCoordinatorReport(MVPIndicatorReport):
     name = "MVIS Health Coordinator Report"
     report_template_path = "mvp/reports/health_coordinator.html"
     hide_filters = True
-    fields = []
+    fields = ['corehq.apps.reports.fields.FilterUsersField',
+              'corehq.apps.reports.fields.GroupField']
 
     @property
     def timezone(self):
@@ -31,7 +32,7 @@ class HealthCoordinatorReport(MVPIndicatorReport):
             for slug in category_group['indicator_slugs']:
                 indicator = DynamicIndicatorDefinition.get_current(MVP.NAMESPACE, self.domain, slug, wrap_correctly=True)
                 if indicator:
-                    retrospective = indicator.get_monthly_retrospective()
+                    retrospective = indicator.get_monthly_retrospective(user_ids=self.user_ids)
                     if not month_headers:
                         month_headers = self.get_month_headers(retrospective)
 
@@ -66,12 +67,12 @@ class HealthCoordinatorReport(MVPIndicatorReport):
             dict(
                 category_title="Child Health",
                 indicator_slugs=[
-                    "under5_fever_rdt_proportion",
-                    "under5_fever_rdt_positive_proportion",
-                    "under5_fever_rdt_positive_medicated_proportion",
-                    "under5_fever_rdt_negative_medicated_proportion",
-                    "under5_fever_rdt_not_received_proportion",
-                    "under5_diarrhea_ors_proportion",
+                    "under5_fever_rdt_proportion", # A1 - 28, all set
+                    "under5_fever_rdt_positive_proportion", # A1 - 29, all set
+                    "under5_fever_rdt_positive_medicated_proportion", # A1 - 20, all set
+                    "under5_fever_rdt_negative_medicated_proportion", # A2 - 30
+                    "under5_fever_rdt_not_received_proportion", #A1 - 48, all set
+                    "under5_diarrhea_ors_proportion", # A2 - 37
                     "under5_diarrhea_zinc_proportion",
                     "under5_complicated_fever_facility_followup_proportion",
                     "under5_complicated_fever_referred_proportion",
@@ -81,22 +82,22 @@ class HealthCoordinatorReport(MVPIndicatorReport):
             dict(
                 category_title="Child Nutrition",
                 indicator_slugs=[
-                    "muac_wasting_proportion",
-                    "muac_routine_proportion", # waiting for spec change confirmation
+                    "muac_wasting_proportion", # A2 - 10
+                    "muac_routine_proportion", # A2 - 11, waiting for spec change confirmation
                     "under6month_exclusive_breastfeeding_proportion",
-                    "low_birth_weight_proportion", # A3 needs investigation
+                    "low_birth_weight_proportion", # A3 - 5, needs investigation
                 ]
             ),
             dict(
                 category_title="CHW Visits",
                 indicator_slugs=[
-                    "households_routine_visit_past90days", # denom slightly off
-                    "households_routine_visit_past30days", # denom slightly off
-                    "under5_routine_visit_past30days", # denom slightly off
-                    "pregnant_routine_visit_past30days", # denom slightly off
-                    "neonate_routine_visit_past7days", # denom slightly off
-                    "urgent_referrals_proportion", # A2, needs investigation
-                    "newborn_7day_visit_proportion", # denom slightly off
+                    "households_routine_visit_past90days", # A1 - 23, all set
+                    "households_routine_visit_past30days", # A1 - 44, all set
+                    "under5_routine_visit_past30days", # A1 - 45
+                    "pregnant_routine_visit_past30days", # A1 - 46
+                    "neonate_routine_visit_past7days", # A1 - 47
+                    "urgent_referrals_proportion", # A2 - 13, needs investigation
+                    "newborn_7day_visit_proportion", # A2 - 6, denom slightly off
                 ]
             ),
             dict(
@@ -108,16 +109,16 @@ class HealthCoordinatorReport(MVPIndicatorReport):
             dict(
                 category_title="Maternal",
                 indicator_slugs=[
-                    "family_planning_proportion",
-                    "anc4_proportion",
-                    "facility_births_proportion",
+                    "family_planning_proportion", # A2 - 1
+                    "anc4_proportion", # A2 - 3
+                    "facility_births_proportion", # A2 - 4
                     "pregnant_routine_checkup_proportion_6weeks",
                 ]
             ),
             dict(
                 category_title="Births",
                 indicator_slugs=[
-                    "num_births_recorded",
+                    "num_births_recorded", # A3 - 5
                 ]
             ),
             dict(
