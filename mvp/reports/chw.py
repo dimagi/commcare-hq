@@ -63,7 +63,7 @@ class CHWManagerReport(GenericTabularReport, MVPIndicatorReport, DatespanMixin):
                 for indicator in section:
                     if indicator.slug not in raw_values:
                         raw_values[indicator.slug] = list()
-                    value = indicator.get_value(user.get('user_id'), self.datespan)
+                    value = indicator.get_value([user.get('user_id')], self.datespan)
                     raw_values[indicator.slug].append(value)
 
         averages = dict()
