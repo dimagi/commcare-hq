@@ -238,11 +238,13 @@ class CouchIndicatorDef(DynamicIndicatorDefinition):
     startdate_shift = IntegerProperty(default=0)
     enddate_shift = IntegerProperty(default=0)
     fixed_datespan_days = IntegerProperty(default=0)
+    fixed_datespan_months = IntegerProperty(default=0)
 
     @property
     @memoized
     def use_datespans_in_retrospective(self):
-        return (abs(self.startdate_shift) + abs(self.enddate_shift) + abs(self.fixed_datespan_days)) > 0
+        return any(getattr(self, field) for field in ('startdate_shift', 'enddate_shift',
+                                                      'fixed_datespan_days', 'fixed_datespan_months'))
 
     def _get_results_key(self, user_id=None):
         prefix = "user" if user_id else "all"
@@ -260,6 +262,17 @@ class CouchIndicatorDef(DynamicIndicatorDefinition):
             datespan = copy.copy(datespan)
             if self.fixed_datespan_days:
                 datespan.startdate = datespan.enddate - datetime.timedelta(days=self.fixed_datespan_days)
+            if self.fixed_datespan_months:
+                start_year, start_month = add_months(datespan.enddate.year, datespan.enddate.month,
+                    -self.fixed_datespan_months)
+                try:
+                    datespan.startdate = datetime.datetime(start_year, start_month, datespan.enddate.day,
+                        datespan.enddate.hour, datespan.enddate.minute, datespan.enddate.second,
+                        datespan.enddate.microsecond)
+                except ValueError:
+                    # day is out of range for month
+                    datespan.startdate = self.get_last_day_of_month(start_year, start_month)
+
             datespan.startdate = datespan.startdate + datetime.timedelta(days=self.startdate_shift)
             datespan.enddate = datespan.enddate + datetime.timedelta(days=self.enddate_shift)
 
