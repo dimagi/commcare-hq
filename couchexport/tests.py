@@ -2,7 +2,7 @@ from StringIO import StringIO
 import json
 from django.test import TestCase
 import itertools
-from couchexport.export import export_raw, export_from_tables
+from couchexport.export import export_raw, export_from_tables, chunked
 from couchexport.models import ExportSchema, Format
 
 class ExportSchemaTest(TestCase):
@@ -61,3 +61,7 @@ class ExportRawTest(TestCase):
                 tables[key] = itertools.chain([headers[key]], data[key])
 
             export_from_tables(tables.items(), buffer, format=Format.JSON)
+
+__test__ = {
+    'chunked': chunked,
+}
