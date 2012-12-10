@@ -64,6 +64,7 @@ class MVPActiveCasesIndicatorDefinition(NoGroupCouchIndicatorDefBase):
     case_type = StringProperty()
 
     def _get_cases_by_status(self, status, user_id, datespan):
+        datespan = self._apply_datespan_shifts(datespan)
         key_prefix = [status]
         if self.indicator_key:
             key_prefix.append(self.indicator_key)
@@ -75,32 +76,34 @@ class MVPActiveCasesIndicatorDefinition(NoGroupCouchIndicatorDefBase):
         return self._get_results_with_key(key, user_id=user_id, datespan=datespan_by_status)
 
     def get_value(self, user_id=None, datespan=None):
-        opened_on_cases = self._get_cases_by_status("opened_on", user_id, datespan)
-        closed_on_cases = self._get_cases_by_status("closed_on", user_id, datespan)
-        open_ids = set([r['id'] for r in opened_on_cases])
-        closed_ids = set([r['id'] for r in closed_on_cases])
+        def _get_ids(cases):
+            if isinstance(cases, set):
+                return cases
+            else:
+                return set([r['id'] for r in cases])
+
+        open_cases = self._get_cases_by_status("opened_on open", user_id, datespan)
+        open_ids = _get_ids(open_cases)
+
+        closed_on_closed_cases = self._get_cases_by_status("closed_on closed", user_id, datespan)
+        closed_on_closed_ids = _get_ids(closed_on_closed_cases)
+
+        opened_on_closed_cases = self._get_cases_by_status("opened_on closed", user_id, datespan)
+        opened_on_closed_ids = _get_ids(opened_on_closed_cases)
+
+        closed_ids = closed_on_closed_ids.intersection(opened_on_closed_ids)
+
         all_cases = open_ids.union(closed_ids)
         return len(all_cases)
 
     def _format_datespan_by_case_status(self, datespan, status):
         datespan = copy.copy(datespan) # copy datespan
-        common_kwargs = dict(
-            format=datespan.format,
-            inclusive=datespan.inclusive,
-            timezone=datespan.timezone
-        )
-        if status == 'opened_on':
-            datespan = DateSpan(
-                None,
-                datespan.enddate,
-                **common_kwargs
-            )
-        elif status == "closed_on":
-            datespan = DateSpan(
-                datespan.startdate,
-                None,
-                **common_kwargs
-            )
+        if status == 'opened_on open':
+            datespan.startdate = None
+        elif status == 'closed_on closed':
+            datespan.enddate = None
+        elif status == 'opened_on closed':
+            datespan.startdate = None
         return datespan
 
 
@@ -132,9 +135,7 @@ class MVPChildCasesByAgeIndicatorDefinition(MVPActiveCasesIndicatorDefinition):
 
     def get_value(self, user_id=None, datespan=None):
         if self.filter_by_active:
-            opened_on_cases = self._get_cases_by_status("opened_on", user_id, datespan)
-            closed_on_cases = self._get_cases_by_status("closed_on", user_id, datespan)
-            all_cases = opened_on_cases.union(closed_on_cases)
+            return super(MVPChildCasesByAgeIndicatorDefinition, self).get_value(user_id=user_id, datespan=datespan)
         else:
             results = self.get_couch_results(user_id, datespan)
             all_cases = self._filter_by_age(results, datespan)
