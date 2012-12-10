@@ -576,7 +576,6 @@ PROJECT_REPORT_MAP = {
         'corehq.apps.reports.standard.monitoring.CaseActivityReport',
         'corehq.apps.reports.standard.monitoring.FormCompletionVsSubmissionTrendsReport',
         'corehq.apps.reports.standard.monitoring.WorkerActivityTimes',
-        'corehq.apps.reports.standard.monitoring.SubmitDistributionReport',
     ],
     "Inspect Data" : [
         'corehq.apps.reports.standard.inspect.SubmitHistory',
