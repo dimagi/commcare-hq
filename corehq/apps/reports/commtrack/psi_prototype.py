@@ -95,19 +95,25 @@ class VisitReport(GenericTabularReport, CommtrackReportMixin, DatespanMixin):
     fields = ['corehq.apps.reports.fields.DatespanField',
               'corehq.apps.reports.fields.LocationField']
 
-    @property
-    def headers(self):
-        cols = [DataTablesColumn(caption) for key, caption in OUTLET_METADATA]
+    def header_text(self, slug=False):
+        cols = [(key if slug else caption) for key, caption in OUTLET_METADATA]
         cols.extend([
-            DataTablesColumn('Date'),
-            DataTablesColumn('Reporter'),
+            ('date' if slug else 'Date'),
+            ('reporter' if slug else 'Reporter'),
         ])
         cfg = self.config
         for p in self.ordered_products(PRODUCT_ORDERING):
             for a in self.ordered_actions(ACTION_ORDERING):
-                cols.append(DataTablesColumn('%s (%s)' % (cfg.actions_by_name[a].caption, p['name'])))
+                if slug:
+                    cols.append('data: %s %s' % (cfg.actions_by_name[a].keyword, p['code']))
+                else:
+                    cols.append('%s (%s)' % (cfg.actions_by_name[a].caption, p['name']))
         
-        return DataTablesHeader(*cols)
+        return cols
+
+    @property
+    def headers(self):
+        return DataTablesHeader(*(DataTablesColumn(text) for text in self.header_text()))
 
     @property
     def rows(self):
@@ -131,6 +137,31 @@ class VisitReport(GenericTabularReport, CommtrackReportMixin, DatespanMixin):
             return data
 
         return [row(r) for r in reports]
+
+class StockReportExport(VisitReport):
+    name = 'Stock Reports Export'
+    slug = 'bulk_export'
+    exportable = True
+
+    @property
+    def export_table(self):
+        headers = self.header_text(slug=True)
+        rows = [headers]
+        rows.extend(self.rows)
+
+        exclude_cols = set()
+        for i, h in enumerate(headers):
+            if not (h.startswith('data:') or h in ('outlet_id', 'reporter', 'date')):
+                exclude_cols.add(i)
+
+        def clean_cell(val):
+            dashes = set(['-', '--']).union(unichr(c) for c in range(0x2012, 0x2016))
+            return '' if val in dashes else val
+
+        def filter_row(row):
+            return [clean_cell(c) for i, c in enumerate(row) if i not in exclude_cols]
+
+        return [['stock reports', [filter_row(r) for r in rows]]]
 
 class SalesAndConsumptionReport(GenericTabularReport, CommtrackReportMixin, DatespanMixin):
     OUTLETS_LIMIT = 200

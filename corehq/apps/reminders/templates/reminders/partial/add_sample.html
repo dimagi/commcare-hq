@@ -164,7 +164,8 @@
     </div>
     <div class="form-block" id="upload_file_div">
     {{ form.contact_upload_file.errors }}
-    Choose an Excel file (*.xlsx): {{ form.contact_upload_file }}
+    <p>Choose an Excel file (*.xlsx): {{ form.contact_upload_file }}</p>
+    <p>NOTE: The excel file must contain a column labeled "PhoneNumber".</p>
     </div>
     <br />
     <input type="submit" class="btn btn-primary" value="Submit" />

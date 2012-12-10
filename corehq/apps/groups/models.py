@@ -27,21 +27,23 @@ class Group(UndoableDocument):
     # custom data can live here
     metadata = DictProperty()
 
-    def add_user(self, couch_user_id):
+    def add_user(self, couch_user_id, save=True):
         if not isinstance(couch_user_id, basestring):
             couch_user_id = couch_user_id.user_id
         if couch_user_id not in self.users:
             self.users.append(couch_user_id)
-        self.save()
+        if save:
+            self.save()
         
-    def remove_user(self, couch_user_id):
+    def remove_user(self, couch_user_id, save=True):
         if not isinstance(couch_user_id, basestring):
             couch_user_id = couch_user_id.user_id
         if couch_user_id in self.users:
             for i in range(0,len(self.users)):
                 if self.users[i] == couch_user_id:
                     del self.users[i]
-                    self.save()
+                    if save:
+                        self.save()
                     return
     
     def add_group(self, group):
@@ -100,8 +102,7 @@ class Group(UndoableDocument):
     
     @classmethod
     def by_domain(cls, domain):
-        key = [domain]
-        return cls.view('groups/by_name', startkey=key, endkey=key + [{}], include_docs=True)
+        return cls.view('groups/by_domain', key=domain, include_docs=True)
 
     @classmethod
     def by_name(cls, domain, name):

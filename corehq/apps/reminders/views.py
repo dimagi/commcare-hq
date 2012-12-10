@@ -265,7 +265,6 @@ def delete_keyword(request, domain, keyword_id):
 @reminders_permission
 def add_survey(request, domain, survey_id=None):
     survey = None
-    started = False
     
     if survey_id is not None:
         survey = Survey.get(survey_id)
@@ -453,7 +452,6 @@ def add_survey(request, domain, survey_id=None):
     else:
         initial = {}
         if survey is not None:
-            started = survey.has_started()
             waves = []
             samples = [SurveySample.get(sample["sample_id"]) for sample in survey.samples]
             utcnow = datetime.utcnow()
@@ -490,7 +488,7 @@ def add_survey(request, domain, survey_id=None):
         "sample_list" : sample_list,
         "method_list" : SURVEY_METHOD_LIST,
         "user_list" : CommCareUser.by_domain(domain),
-        "started" : started,
+        "started" : survey.has_started() if survey is not None else False,
     }
     return render_to_response(request, "reminders/partial/add_survey.html", context)
 
