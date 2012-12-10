@@ -1,5 +1,6 @@
 {% extends "reports/base_template.html" %}
 {% load hq_shared_tags %}
+{% load i18n %}
 
 {% block js-inline %}{{ block.super }}
     <script src="{{ STATIC_URL }}reports/javascripts/jquery.tablednd_0_5.js"></script>
@@ -80,17 +81,17 @@
 {% block page-title %}
     <ul class="breadcrumb">
         <li>
-            <a href="{% url reports_home domain %}"><strong>Reports</strong></a> <span class="divider">&gt;</span>
+            <a href="{% url reports_home domain %}"><strong>{% trans "Reports" %}</strong></a> <span class="divider">&gt;</span>
         </li>
         <li>
             {% ifequal request.GET.type "case" %}
-                <a href="{% url project_report_dispatcher domain 'case_export' %}">Export Cases, Referrals, and Users</a> <span class="divider">&gt;</span>
+                <a href="{% url project_report_dispatcher domain 'case_export' %}">{% trans "Export Cases, Referrals, and Users" %}</a> <span class="divider">&gt;</span>
             {% else %}
-            <a href="{% url project_report_dispatcher domain 'excel_export_data' %}">Export Submissions to Excel</a> <span class="divider">&gt;</span>
+            <a href="{% url project_report_dispatcher domain 'excel_export_data' %}">{% trans "Export Submissions to Excel" %}</a> <span class="divider">&gt;</span>
             {% endifequal %}
         </li>
         <li class="active">
-            <a href="#">Create Custom Export</a>
+            <a href="#">{% trans "Create Custom Export" %}</a>
         </li>
     </ul>
 {% endblock %}
@@ -104,15 +105,15 @@
             <input type="hidden" name="app_id" value="{{ saved_export.app_id|default:'' }}" />
         {% endif %}
         <fieldset>
-            <legend>Export Settings</legend>
+            <legend>{% trans "Export Settings" %}</legend>
             <div class="control-group">
-                <label for="export-name" class="control-label">Export Name: </label>
+                <label for="export-name" class="control-label">{% trans "Export Name" %}: </label>
                 <div class="controls">
                     <input type="text" id="export-name" name="name" value="{{ saved_export.name }}" />
                 </div>
             </div>
             <div class="control-group">
-                <label for="format-select" class="control-label">Default file type: </label>
+                <label for="format-select" class="control-label">{% trans "Default file type" %}: </label>
                 <div class="controls">
                     <select name="format" id="format-select" >
                         <option value="xlsx"{% if saved_export.default_format == "xlsx"%} selected="selected"{% endif %}>Excel 2007</option>
@@ -127,28 +128,32 @@
                 <div class="controls">
                     <label class="checkbox">
                         <input type="checkbox" name="include-errors" id="include-errors-checkbox" value="include-errors" {% if saved_export.include_errors %}checked="yes"{% endif %}/>
-                        Include duplicates and other unprocessed forms
+                        {% trans "Include duplicates and other unprocessed forms" %}
+                    </label>
+                    <label class="checkbox">
+                        <input type="checkbox" name="presave" id="presave-checkbox" value="presave" {% if presave %}checked="yes"{% endif %}/>
+                        {% trans "Save this report daily?" %}
                     </label>
                 </div>
             </div>
             {% endif %}
         </fieldset>
         <fieldset>
-            <legend>Export Fields</legend>
+            <legend>{% trans "Export Fields" %}</legend>
             <div class="control-group">
                 <label class="control-label">
-                    <strong>Choose the fields you want to export.</strong><br />
-                    You can drag and drop fields to reorder them.  You can also rename fields, which will update the headers in the export file.
+                    <strong>{% trans "Choose the fields you want to export." %}</strong><br />
+                    {% trans "You can drag and drop fields to reorder them.  You can also rename fields, which will update the headers in the export file." %}
                 </label>
                 <div class="controls">
                     <table class="column_list table table-striped table-bordered" id="field-select">
                         <thead>
                         <tr class="nodrag nodrop">
-                            <th>Include this Field?<br>
-                                <a href="#" class="btn btn-mini" id="select_all">Select All</a> <a href="#" class="btn btn-mini btn-inverse" id="select_none">Select None</a></th>
-                            <th>Field</th>
-                            <th>Display</th>
-                            <th class="deid-column">Sensitivity</th>
+                            <th>{% trans "Include this Field?" %}<br>
+                                <a href="#" class="btn btn-mini" id="select_all">{% trans "Select All" %}</a> <a href="#" class="btn btn-mini btn-inverse" id="select_none">{% trans "Select None" %}</a></th>
+                            <th>{% trans "Field" %}</th>
+                            <th>{% trans "Display" %}</th>
+                            <th class="deid-column">{% trans "Sensitivity" %}</th>
                         </tr>
                         </thead>
                         <tbody>
@@ -183,9 +188,9 @@
                         <input type="checkbox" name="is_safe" id="is_safe" value="is_safe" {% if saved_export.is_safe %}checked="yes"{% endif %}/>
                         Publish in {{ DeidExportReport_name }}
                     </label>
-                    <span class="help-inline">Check only if this export has been fully and safely de-identified.</span>
+                    <span class="help-inline">{% trans "Check only if this export has been fully and safely de-identified." %}</span>
                 </div>
-                <button class="btn" id="show_deid_button">Allow me to mark sensitive data</button>
+                <button class="btn" id="show_deid_button">{% trans "Allow me to mark sensitive data" %}</button>
             </div>
         </fieldset>
         {% endif %}
