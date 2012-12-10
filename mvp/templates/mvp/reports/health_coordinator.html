@@ -15,10 +15,25 @@
                 $('.mvp-table thead th.indicator-def, .mvp-table tbody th.indicator-def').width(indicator_width);
             };
             recalc_thead_width();
+            var findOffset = function () {
+                var self = this;
+                self.top = function () {
+                    return $('#reportFilters').hasClass('in') ? 450 : 197;
+                };
+                self.bottom = function () {
+                    return null;
+                };
+            };
 
             $('#mvp-table-head').affix({
-                offset: 197
+                offset: new findOffset()
             });
+
+            $(window).on('scroll.affix.data-api', function () {
+                $('.mvp-table thead.affix').css('margin-top', $('#reportFilters').hasClass('in') ? '-450px' : '-197px');
+            });
+            // 450 if filters are set
+
             $(window).resize(function () {
                 recalc_thead_width();
             });
