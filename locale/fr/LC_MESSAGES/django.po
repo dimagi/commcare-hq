@@ -44,6 +44,7 @@ msgstr "Modifications du modèle audité"
 msgid "Active Cases"
 msgstr "Cas actifs"
 
+
 #: submodules/bihar-reports/bihar/reports/__init__.py:5
 msgid "Total Cases"
 msgstr "Nombre total de cas"
