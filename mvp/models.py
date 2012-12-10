@@ -1,4 +1,3 @@
-from StringIO import StringIO
 import datetime
 import copy
 from couchdbkit.ext.django.schema import IntegerProperty, BooleanProperty, StringProperty
