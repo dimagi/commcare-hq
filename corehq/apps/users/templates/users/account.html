@@ -165,6 +165,9 @@
                                 {% ifequal phone.status "duplicate" %}
                                 <div>{% if phone.dup_url %}<a href="{{ phone.dup_url }}">{% endif %}<span class="label label-warning"><small>ALREADY IN USE</small></span>{% if phone.dup_url %}</a>{% endif %}</div>
                                 {% endifequal %}
+                                {% ifequal phone.status "invalid" %}
+                                <div><span class="label"><small>INVALID FORMAT</small></span></div>
+                                {% endifequal %}
                             </label>
                             
                             <div class="controls">
