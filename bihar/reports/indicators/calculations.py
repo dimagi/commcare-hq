@@ -382,8 +382,8 @@ def _get_time_of_birth(form):
         )
     return time_of_birth
 
-class ComplicationsCalculator(MotherPreDeliverySummaryMixIn, MemoizingCalculatorMixIn,
-                              DoneDueMixIn, IndicatorCalculator):
+class ComplicationsCalculator(SummaryValueMixIn, MotherPreDeliverySummaryMixIn,
+    MemoizingCalculatorMixIn, IndicatorCalculator):
     """
         DENOM: [
             any DELIVERY forms with (
@@ -446,6 +446,8 @@ class ComplicationsCalculator(MotherPreDeliverySummaryMixIn, MemoizingCalculator
             'vaginal_discharge',
         ],
     }
+    show_in_client_list = True
+    show_in_indicators = True
 
     def __init__(self, days, now=None):
         super(ComplicationsCalculator, self).__init__()
@@ -457,6 +459,13 @@ class ComplicationsCalculator(MotherPreDeliverySummaryMixIn, MemoizingCalculator
 
     def _denominator(self, case):
         return self._calculate_both(case)[1]
+
+    @property
+    def summary_header(self):
+        if self.days.days > 1:
+            return _("Identified in %s days") % self.days.days
+        else:
+            return _("Identified in %s hours") % (self.days.days*24)
 
     @memoized
     def get_forms(self, case, days=30):
@@ -498,6 +507,3 @@ class ComplicationsCalculator(MotherPreDeliverySummaryMixIn, MemoizingCalculator
                     break
 
         return has_recent_complication, has_complication
-
-def complications(cases, days, now=None):
-    return ComplicationsCalculator(days=days, now=now).display(cases)
