@@ -88,7 +88,7 @@ def _users_context(request, domain):
 
 @login_and_domain_required
 def users(request, domain):
-    user = WebUser.get_by_user_id(request.couch_user._id, domain)
+    user = CouchUser.get_by_user_id(request.couch_user._id, domain)
     if user:
         if user.has_permission(domain, 'edit_commcare_users'):
             redirect = reverse("commcare_users", args=[domain])
