@@ -8,6 +8,7 @@ from django.conf import settings
 import tempfile
 import os
 import stat
+from tempfile import mkstemp
 
 GLOBAL_RW = stat.S_IRUSR | stat.S_IWUSR | stat.S_IRGRP | stat.S_IWGRP | stat.S_IROTH | stat.S_IWOTH
 
@@ -39,6 +40,18 @@ class DownloadBase(object):
 
     def get_content(self):
         raise NotImplemented("Use CachedDownload or FileDownload!")
+
+    def get_filename(self):
+        """
+        Gets a filename of a file containing the content for this.
+        """
+        # some libraries like to work with files rather than content
+        # so use this to force it be a file. FileDownload will override
+        # this to avoid the duplicate storage.
+        fd, filename = mkstemp(suffix='.xls')
+        with os.fdopen(fd, "wb") as tmp:
+            tmp.write(self.get_content())
+        return filename
 
     @classmethod
     def get(cls, download_id):
@@ -165,6 +178,9 @@ class FileDownload(DownloadBase):
         with open(self.filename, 'rb') as f:
             return f.read()
         
+    def get_filename(self):
+        return self.filename
+
     @classmethod
     def create(cls, payload, expiry, **kwargs):
         """
