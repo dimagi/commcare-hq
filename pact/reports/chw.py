@@ -3,7 +3,7 @@ import pdb
 from django.http import Http404
 import simplejson
 from casexml.apps.case.models import CommCareCase
-from corehq.apps.api.xform_es import XFormES
+from corehq.apps.api.es import XFormES
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
 from corehq.apps.reports.dispatcher import ProjectReportDispatcher, CustomProjectReportDispatcher
 from corehq.apps.reports.generic import GenericTabularReport
@@ -11,7 +11,7 @@ from corehq.apps.reports.standard import CustomProjectReport
 from corehq.apps.users.models import CommCareUser
 from dimagi.utils.decorators.memoized import memoized
 from pact.models import CDotWeeklySchedule, PactPatientCase
-from pact.reports import PactPatientDispatcher, PactDrilldownReportMixin, PatientNavigationReport
+from pact.reports import PactPatientDispatcher, PactDrilldownReportMixin, PatientNavigationReport, chw_schedule
 
 
 class PactCHWProfileReport(PactDrilldownReportMixin, GenericTabularReport, CustomProjectReport):
@@ -67,6 +67,8 @@ class PactCHWProfileReport(PactDrilldownReportMixin, GenericTabularReport, Custo
             self.report_template_path = "pact/chw/pact_chw_profile_submissions.html"
             return tabular_context
         elif self.view_mode == 'schedule':
+            scheduled_context = chw_schedule.chw_calendar_submit_report(self.request, user_doc.raw_username)
+            ret.update(scheduled_context)
             self.report_template_path = "pact/chw/pact_chw_profile_schedule.html"
         else:
             raise Http404

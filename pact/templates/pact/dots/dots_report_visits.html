@@ -1,0 +1,66 @@
+{% if sorted_visits %}
+    <br>
+    <br>
+    <h3>Visits in this report</h3>
+    <table class="table table-striped">
+        <thead>
+        <tr>
+            <th class="span2">Visit Date</th>
+            <th>CHW</th>
+            <th>Visit Type</th>
+            <th>Visit Kept</th>
+            <th>Scheduled</th>
+            <th>Contact</th>
+            <th class="span2">Observed ART</th>
+            <th class="span2">Observed Non ART</th>
+        </tr>
+        </thead>
+        <tbody>
+        {% for vdoc in sorted_visits %}
+            <tr>
+                <td>
+                    <a href="{{ request.path }}?submit_id={{ vdoc.get_id }}&patient={{ patient.id }}&start={{ start_date|date:"Y-m-d" }}&end={{ end_date|date:"Y-m-d" }}">
+                        {{ vdoc.form.encounter_date|date:"m/d/Y" }}</a>
+                    <small>[<a href="#">Raw</a>]</small>
+{#                    <small>[<a href="{% url show_submission vdoc.get_id %}">Raw</a>]</small>#}
+                    {#                            {{ vdoc.form.case.update.dots.anchor }} commenting out to use this vs encounter date?#}
+                </td>
+                <td>{{ vdoc.form.meta.username }}</td>
+                <td>{{ vdoc.form.visit_type|title }}</td>
+                <td>{{ vdoc.form.visit_kept|title }}</td>
+                <td>{{ vdoc.form.scheduled|title }}</td>
+                <td>{{ vdoc.form.contact_type|title }}</td>
+                <td>{{ vdoc.form.observed_art|title }}
+                    {% if vdoc.form.observed_art == "no" %}
+                        <br>
+                        <small>
+                            {{ vdoc.form.art_no_details }}
+                        </small>
+                    {% endif %}
+                </td>
+                <td>{{ vdoc.form.observed_non_art|title }}
+                    {% if vdoc.form.observed_non_art == "no" %}
+                        <br>
+                        <small>
+                            {{ vdoc.form.non_art_no_details }}
+                        </small>
+                    {% endif %}
+                </td>
+
+                {% if vdoc.form.notes|length_is:"0" %}
+                    </tr>
+                {% else %}
+                    <tr>
+                        <td>&nbsp;</td>
+                        <td>
+                            <small><strong>Notes:</strong></small>
+                        </td>
+                        <td colspan="6"><em>
+                            <small>{{ vdoc.form.notes }}</small>
+                        </em></td>
+                    </tr>
+                {% endif %}
+        {% endfor %}
+        </tbody>
+    </table>
+{% endif %}

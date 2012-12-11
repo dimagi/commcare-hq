@@ -1,11 +1,15 @@
 from functools import partial
 import uuid
+import simplejson
 from casexml.apps.case.models import CommCareCase
+from corehq.apps.indicators.models import DocumentIndicatorDefinition, FormIndicatorDefinition
 from corehq.apps.users.models import CommCareUser
 from dimagi.utils.decorators.memoized import memoized
 from pact import enums
 
 from couchdbkit.schema.properties import ALLOWED_PROPERTY_TYPES
+from pact.enums import TIME_LABEL_LOOKUP
+
 ALLOWED_PROPERTY_TYPES.add(partial)
 
 def make_uuid():
@@ -13,12 +17,36 @@ def make_uuid():
 
 #placeholder for management of pact case models
 from datetime import datetime
-from couchdbkit.ext.django.schema import StringProperty, DateTimeProperty, BooleanProperty, Document
+from couchdbkit.ext.django.schema import StringProperty, DateTimeProperty, BooleanProperty, Document, DateProperty, SchemaListProperty, IntegerProperty
+
+
+#class PactDOTIndicatorDefinition(FormIndicatorDefinition):
+#    namespace = StringProperty()
+#    domain = StringProperty()
+#    slug = StringProperty()
+#    version = IntegerProperty()
+#    class_path = StringProperty()
+#
+#
+#    def get_value(self, doc):
+#        dots_json = doc['form']['case']['update']['dots']
+#        if isinstance(dots_json, str) or isinstance(dots_json, unicode):
+#            json_dots = simplejson.loads(dots_json)
+#            return json_dots
+#        else:
+#            return {}
+#
+#    def get_existing_value(self, doc):
+#        try:
+#            return doc.computed_.get(self.namespace, {}).get(self.slug, {}).get('value')
+#        except AttributeError:
+#            return None
+
+
 
 
 class PactPatientCase(CommCareCase):
-
-
+#class PactPatientCase(Document):
     def __init__(self, *args, **kwargs):
         super(PactPatientCase, self).__init__(*args, **kwargs)
 
@@ -63,6 +91,10 @@ class PactPatientCase(CommCareCase):
             if hasattr(self, 'Phone%d' % ix) and hasattr(self, 'Phone%dType' % ix):
                 yield {'id': ix, 'number': getattr(self, "Phone%d" % ix), "type": getattr(self, "Phone%dType" % ix)}
 
+    class Meta:
+        app_label='pact'
+
+
 
 
 class CDotWeeklySchedule(Document):
@@ -103,4 +135,98 @@ class CDotWeeklySchedule(Document):
                 ]
 
     class Meta:
-        app_label='pactpatient'
+        app_label='pact'
+
+
+
+ADDENDUM_NOTE_STRING = "[AddendumEntry]"
+class CObservation(Document):
+    doc_id = StringProperty()
+    patient = StringProperty() #case id
+
+    pact_id = StringProperty() #patient pact id
+    provider = StringProperty()
+
+    encounter_date = DateTimeProperty()
+    anchor_date = DateTimeProperty()
+    observed_date = DateTimeProperty()
+
+    submitted_date = DateTimeProperty()
+    created_date = DateTimeProperty()
+
+    is_art = BooleanProperty()
+    dose_number=IntegerProperty()
+    total_doses = IntegerProperty()
+    adherence=StringProperty()
+    method=StringProperty()
+
+    is_reconciliation = BooleanProperty(default=False)
+
+    day_index = IntegerProperty()
+
+    day_note = StringProperty() #if there's something for that particular day, then it'll be here
+    day_slot = IntegerProperty() #new addition, if there's a slot for the day label, then retain it
+    note = StringProperty() #this is for the overall note for that submission, will exist on the anchor date
+
+
+    def __unicode__(self):
+        return simplejson.dumps(self.to_json())
+
+
+    @property
+    def obs_score(self):
+        """Gets the relative score of the observation.
+        """
+        if self.method == "direct":
+            return 3
+        if self.method == "pillbox":
+            return 2
+        if self.method == "self":
+            return 1
+
+
+
+    @property
+    def adinfo(self):
+        """helper function to concatenate adherence and method to check for conflicts"""
+        return ((self.is_art, self.dose_number, self.total_doses), "%s" % (self.adherence))
+
+
+    #    def save(self):
+    #        #override save as this is not a document but just a view
+    #        pass
+
+    def __unicode__(self):
+        return "Dots Observation: %s on %s" % (self.observed_date, self.anchor_date)
+
+    def get_time_label(self):
+        """
+        old style way
+        returns an English time label out of
+        'Dose', 'Morning', 'Noon', 'Evening', 'Bedtime'
+        """
+        return TIME_LABEL_LOOKUP[self.total_doses][self.dose_number]
+
+    @classmethod
+    def get_time_labels(cls, total_doses):
+        return TIME_LABEL_LOOKUP[total_doses]
+
+    class Meta:
+        app_label = 'pact'
+
+    def __unicode__(self):
+        return "Obs %s [%s] %d/%d" % (self.observed_date.strftime("%Y-%m-%d"), "ART" if self.is_art else "NonART", self.dose_number, self.total_doses)
+
+    def __str__(self):
+        return "Obs %s [%s] %d/%d" % (self.observed_date.strftime("%Y-%m-%d"), "ART" if self.is_art else "NonART", self.dose_number, self.total_doses)
+
+class CObservationAddendum(Document):
+#    sub_id = StringProperty(default=make_uuid)
+    observed_date = DateProperty()
+    art_observations = SchemaListProperty(CObservation)
+    nonart_observations = SchemaListProperty(CObservation)
+    created_by = StringProperty()
+    created_date = DateTimeProperty()
+    notes = StringProperty() #placeholder if need be
+    class Meta:
+        app_label = 'pact'

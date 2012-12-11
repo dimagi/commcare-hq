@@ -38,7 +38,7 @@ def purge_case(case_id):
     print "case purged"
 
 
-def base_create_block(pact_id, case_id, user_id, name, type, owner_id, primary_hp, demographics):
+def base_create_block(pactid, case_id, user_id, name, type, owner_id, primary_hp, demographics):
     """
     Skeleton case to send to HQ
     """
@@ -56,8 +56,8 @@ def base_create_block(pact_id, case_id, user_id, name, type, owner_id, primary_h
             <case_name>%(case_name)s</case_name>
             <owner_id>%(owner_id)s</owner_id>
             <primary_hp>%(primary_hp)s</primary_hp>
-            <external_id>%(pact_id)s</external_id>
-            <pactid>%(pact_id)s</pactid>
+            <external_id>%(pactid)s</external_id>
+            <pactid>%(pactid)s</pactid>
         </create>
         %(demographics_block)s
     </case>
@@ -67,7 +67,7 @@ def base_create_block(pact_id, case_id, user_id, name, type, owner_id, primary_h
             "case_type": type,
             "case_name": name,
             "owner_id": owner_id,
-            "pact_id": pact_id,
+            "pactid": pactid,
             "primary_hp": primary_hp,
             'demographics_block': ''.join(make_demographics(demographics))
             }

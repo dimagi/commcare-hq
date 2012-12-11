@@ -2,11 +2,12 @@ from datetime import datetime
 from django.http import Http404
 import simplejson
 from casexml.apps.case.models import CommCareCase
-from corehq.apps.api.xform_es import XFormES
-from corehq.apps.reports.datatables import DataTablesColumn, DataTablesHeader
+from corehq.apps.api.es import XFormES
+from corehq.apps.reports.datatables import DataTablesColumn, DataTablesHeader, DTSortDirection
 from corehq.apps.reports.dispatcher import ProjectReportDispatcher, CustomProjectReportDispatcher
 from corehq.apps.reports.generic import GenericTabularReport
 from corehq.apps.reports.standard import CustomProjectReport
+from dimagi.utils.decorators import inline
 from dimagi.utils.decorators.memoized import memoized
 from pact.models import CDotWeeklySchedule, PactPatientCase
 from pact.reports import PactPatientDispatcher, PactDrilldownReportMixin, PatientNavigationReport
@@ -135,11 +136,11 @@ class PactPatientInfoReport(PactDrilldownReportMixin, GenericTabularReport, Cust
 
     @property
     def headers(self):
-        return DataTablesHeader(DataTablesColumn("Form"),
-                                DataTablesColumn("CHW"),
-                                DataTablesColumn("Created Date"),
-                                DataTablesColumn("Encounter Date"),
-                                DataTablesColumn("Received"),
+        return DataTablesHeader(DataTablesColumn("Form", prop_name="form.#type"),
+                                DataTablesColumn("CHW", prop_name="form.meta.username"),
+                                DataTablesColumn("Created Date", prop_name="form.meta.timeStart"),
+                                DataTablesColumn("Received", prop_name="received_on"),
+                                DataTablesColumn("Encounter Date", sortable=False),
         )
 
     @property
@@ -148,12 +149,31 @@ class PactPatientInfoReport(PactDrilldownReportMixin, GenericTabularReport, Cust
         if not self.request.GET.has_key('patient_id'):
             return None
 
+        @inline
+        def sorting_block():
+            sort_cols = int(self.request.GET['iSortingCols'][0])
+            if sort_cols > 0:
+                for x in range(sort_cols):
+                    col_key = 'iSortCol_%d' % x
+                    sort_dir = self.request.GET['sSortDir_%d' % x]
+                    col_id = int(self.request.GET[col_key])
+                    col = self.headers.header[col_id]
+                    sort_dict = {col.prop_name: sort_dir}
+                    yield sort_dict
+            else:
+                yield {
+                "received_on": "desc"
+                }
+
+
+
+
         full_query =  {
             'query': {
                 "filtered": {
                     "query": {
                         "query_string": {
-                            "query": "(form.case.case_id:%(case_id)s OR form.case.@case_id:%(case_id)s)" % dict(case_id=self.request.GET['patient_id']),
+                            "query": "(form.case.case_id:%(case_id)s OR form.case.@case_id:%(case_id)s)" % dict(case_id=self.request.GET['patient_id'])
                         }
                     },
                     "filter": {
@@ -164,7 +184,7 @@ class PactPatientInfoReport(PactDrilldownReportMixin, GenericTabularReport, Cust
                                 }
                             }
                         ]
-                    },
+                    }
                 }
             },
             "fields": [
@@ -180,9 +200,7 @@ class PactPatientInfoReport(PactDrilldownReportMixin, GenericTabularReport, Cust
                 "form.meta.timeEnd",
                 "form.meta.username"
             ],
-            "sort": {
-                "received_on": "desc"
-            },
+            "sort": list(sorting_block),
             "size": self.pagination.count,
             "from":self.pagination.start
 
@@ -202,18 +220,18 @@ class PactPatientInfoReport(PactDrilldownReportMixin, GenericTabularReport, Cust
             def _format_row(row_field_dict):
                 yield row_field_dict["form.#type"].replace('_', ' ').title()
                 yield row_field_dict.get("form.meta.username", "")
-                yield row_field_dict["form.meta.timeStart"]
-
+                yield row_field_dict.get("form.meta.timeStart", "")
+                yield row_field_dict["received_on"]
                 for p in ["form.encounter_date", "form.note.encounter_date", None]:
                     if p is None:
                         yield "None"
                     if row_field_dict.has_key(p):
                         yield row_field_dict[p]
                         break
-                yield row_field_dict["received_on"]
 
+            print "########## HERE GET"
             res = self.es_results
-            print simplejson.dumps(res.keys(), indent=4)
+#            print simplejson.dumps(res.keys(), indent=4)
             if res.has_key('error'):
                 pass
             else:

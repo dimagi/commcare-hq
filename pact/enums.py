@@ -7,6 +7,18 @@ PACT_HP_GROUP_ID = settings.PACT_HP_GROUP_ID
 PACT_CASE_TYPE = 'cc_path_client' # WRONG is cc_path_type
 PACT_SCHEDULES_NAMESPACE = 'pact_weekly_schedule'
 
+PACT_DOTS_DATA_PROPERTY = "pact_dots_data_"
+
+#Deprecated static sequence of time labels. needed to support legacy data pre labeling
+TIME_LABEL_LOOKUP = (
+    (),
+    ('Dose',),
+    ('Morning', 'Evening'),
+    ('Morning', 'Noon', 'Evening'),
+    ('Morning', 'Noon', 'Evening', 'Bedtime'),
+    ('Dose', 'Morning', 'Noon', 'Evening', 'Bedtime'),
+)
+
 
 GENDER_CHOICES = (
     ('m', 'Male'),

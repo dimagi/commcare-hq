@@ -1,6 +1,7 @@
 #OTA restore from pact
 #recreate submissions to import as new cases to
 from StringIO import StringIO
+from optparse import make_option
 from django.test.client import RequestFactory
 import gevent
 import simplejson
@@ -9,6 +10,7 @@ from datetime import datetime
 import uuid
 
 from django.core.management.base import NoArgsCommand
+from casexml.apps.case.models import CommCareCase
 from corehq.apps.domain.models import Domain
 import sys
 import getpass
@@ -34,7 +36,13 @@ from restkit import Resource
 class Command(PactMigrateCommand):
     help = "OTA restore from pact server"
     option_list = NoArgsCommand.option_list + (
+        make_option('--purge',
+                    action='store',
+                    dest='purge',
+                    default=False,
+                    help='Purge already migrated data'),
     )
+
 
 
     def get_meta_block(self, instance_id=None, timestart=None, timeend=None, webuser=None):
@@ -106,7 +114,23 @@ class Command(PactMigrateCommand):
         case_post_save.disconnect(create_case_repeat_records)
         print "successful_form_received signals truncated: %d" % len(successful_form_received.receivers)
 
+    def purge_cases(self, case_ids):
+        pool = Pool(POOL_SIZE)
+        print "Purging All Cases"
+        for id in case_ids:
+#            purge_case(id)
+#            pool.spawn(purge_case, id)
+            print "purge %s" % id
+            pass
+
+        print "all cases pooled for purge"
+        pool.join()
+        print "Cases Purged"
+
+
+
     def handle(self, **options):
+        self.purge = options['purge']
         domain_obj = Domain.get_by_name(PACT_DOMAIN)
         self.old_id_map = get_user_id_map()
         print self.old_id_map
@@ -116,20 +140,12 @@ class Command(PactMigrateCommand):
 
         #get cases
         case_ids = simplejson.loads(self.get_url(PACT_URL + 'hqmigration/cases/'))
+        if self.purge:
+            self.purge_cases(case_ids)
+
         pool = Pool(POOL_SIZE)
-
-        print "Purging All Cases"
-        for id in case_ids:
-#            purge_case(id)
-            pool.spawn(purge_case, id)
-
-        print "all cases pooled for purge"
-        pool.join()
-        print "Cases Purged"
-
-        import random
-
-        random.shuffle(case_ids)
+#        import random
+#        random.shuffle(case_ids)
 
         for id in case_ids:
             try:
@@ -204,6 +220,9 @@ class Command(PactMigrateCommand):
         Get xform from server and process it with new userid and submit it to hq
         """
         xform_xml = self.get_url(PACT_URL + "hqmigration/xform/%s/" % action['xform_id'])
+        if xform_xml is None:
+            print "\t\tXForm ID [%s] not found, skipping" % (action['xform_id'])
+            return
         xfroot = etree.fromstring(xform_xml)
 
         nsmap = xfroot.nsmap
@@ -218,37 +237,42 @@ class Command(PactMigrateCommand):
             print "\t\tError: %s: %s" % (action['xform_id'], ex)
             #        print "Form %s submitted" % action['xform_id']
 
-
-    def process_case(self, case_json):
-        print "############## Starting Case %s ##################" % case_json['_id']
-        case_id = case_json['_id']
-        pact_id = case_json['pactid']
-        name = case_json['name']
-        case_type = 'cc_path_client' # case_json['type']
-        user_id = self.old_id_map.get(case_json['user_id'], None)
-        ccuser = CommCareUser.get_by_username("%s@pact.commcarehq.org" % case_json['primary_hp'])
+    def process_case(self, remote_case_json):
+        print "############## Starting Case %s ##################" % remote_case_json['_id']
+        case_id = remote_case_json['_id']
+        pactid = remote_case_json['pactid']
+        name = remote_case_json['name']
+        case_type = 'cc_path_client' # remote_case_json['type']
+        user_id = self.old_id_map.get(remote_case_json['user_id'], None)
+        ccuser = CommCareUser.get_by_username("%s@pact.commcarehq.org" % remote_case_json['primary_hp'])
         owner_id = PACT_HP_GROUP_ID
         if ccuser is not None:
             primary_hp = ccuser._id
         else:
             primary_hp = None
 
-       # self.old_id_map.get(case_json['primary_hp']) #PACT_HP_GROUP_ID
+        #check if case already exists:
+        existing_xform_ids = []
+        if CommCareCase.get_db().doc_exist(case_id):
+            print "\tCase ID %s already exists in DB" % case_id
+            local_case = CommCareCase.get(case_id)
+            existing_xform_ids = local_case.xform_ids
+        else:
+            #make new blank case
+            new_block = base_create_block(pactid, case_id, user_id, name, case_type, owner_id, primary_hp, remote_case_json['demographics'])
+            opened_date = datetime.strptime(remote_case_json['opened_on'], '%Y-%m-%dT%H:%M:%SZ')
+            res = self.submit_case_create_block(opened_date, new_block)
+            print "\tRegenerated case"
 
-        #make new blank case
-        new_block = base_create_block(pact_id, case_id, user_id, name, case_type, owner_id, primary_hp, case_json['demographics'])
-
-        opened_date = datetime.strptime(case_json['opened_on'], '%Y-%m-%dT%H:%M:%SZ')
-        res = self.submit_case_create_block(opened_date, new_block)
-        print "\tRegenerated case"
-
-        for ix, action in enumerate(case_json['actions']):
-            print "\t[%s] %s/%s (%d/%d)" % (
-                pact_id, case_id, action['xform_id'], ix, len(case_json['actions']))
+        for ix, action in enumerate(remote_case_json['actions']):
+            if action['xform_id'] in existing_xform_ids:
+                print "\t[%s] %s/%s (%d/%d) :: skipped" % ( pactid, case_id, action['xform_id'], ix, len(remote_case_json['actions']))
+                continue
+            print "\t[%s] %s/%s (%d/%d)" % ( pactid, case_id, action['xform_id'], ix, len(remote_case_json['actions']))
             self.process_xform_from_action(action)
 
         #todo: verify actions on migrated case
-        print "########### Case %s completed ###################" % case_json['_id']
+        print "########### Case %s completed ###################" % remote_case_json['_id']
 
 
 

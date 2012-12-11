@@ -1,22 +1,9 @@
-{% extends base_template %}
-{% load patient_lookup %}
+{% extends "pact/chw/pact_chw_profile_base.html" %}
+{#{% load patient_lookup %}#}
 
-{% block page_header %}
-    <h2>CHW Submission Schedule for {{ username }}
-        <small>{{ end_date|date:"m/d/Y" }} - {{ start_date|date:"m/d/Y" }}</small>
-    </h2>
-{% endblock %}
-
-{% block page_crumbs %}
-    <ul class="breadcrumb">
-        <li><a href="/">Home</a> <span class="divider">/</span></li>
-        <li class="active">CHW Submission Schedule</li>
-
-    </ul>
-{% endblock page_crumbs %}
-
-{% block content %}
-    <div class="row-fluid">
+{% block actor-tab-container %}
+    <h3>Submission Schedule {{ end_date|date:"m/d/Y" }} - {{ start_date|date:"m/d/Y" }}</h3>
+   <div class="row-fluid">
         <div class="span4">
             {% if total_scheduled == total_visited %}
                 <div class="alert alert-success">
@@ -60,8 +47,8 @@
                     <div class="span3">
                         <div class="alert alert-success">
                             <h4>
-                                <a href="{% url view_pactpatient cpatient.get_id '' %}">{{ cpatient.first_name }} {{ cpatient.last_name }}
-                                    ({{ cpatient.pact_id }})</a>
+{#                                <a href="{% url view_pactpatient cpatient.get_id '' %}">{{ cpatient.first_name }} {{ cpatient.last_name }} ({{ cpatient.pact_id }})</a> #}
+                                <a href="#">({{ cpatient.pactid }}) {{ cpatient.name }}</a>
                             </h4>
                         </div>
                     </div>
@@ -69,8 +56,9 @@
                         {% if visit %}
                             <div class="alert alert-info">
                                 <strong>
-                                    <a href="{% patient_url_from_form visit %}">
-                                        {% if visit.form.scheduled == "yes" %}
+                                    <a href="#">
+{#                                  <a href="{% patient_url_from_form visit %}">#}
+                                        {% if visit.scheduled == "yes" %}
                                             Scheduled
                                         {% else %}
                                             Unscheduled
@@ -79,12 +67,12 @@
                                     </a></strong>
                                 by
                                 {% if visit.form.meta.username == username %}
-                                    <strong>{{ visit.form.meta.username }}</strong>
+                                    <strong>{{ visit.username }}</strong>
                                 {% else %}
-                                    <em>{{ visit.form.meta.username }}</em>
+                                    <em>{{ visit.username }}</em>
                                 {% endif %}
                                 &nbsp;&nbsp;
-                                <a href="{% url show_submission visit.get_id %}">View</a>
+                                <a href="#">View {{ visit.doc_id }}</a>
                             </div>
                         {% else %}
                             <div class="alert alert-error"><h4>No Visit</h4></div>
@@ -108,4 +96,5 @@
         {% endif %}
     {% endfor %}
     </div>
-{% endblock content %}
+{% endblock actor-tab-container %}
+

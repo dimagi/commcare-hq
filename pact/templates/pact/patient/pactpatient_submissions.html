@@ -47,8 +47,6 @@
                 {% if report_table.headers.custom_sort %}customSort: {{ report_table.headers.custom_sort|JSON }},{% endif %}
 
                 {% if report_table.pagination.is_on %}
-                    bProcessing: true,
-                    bServerSide: true,
                     ajaxSource: '{{ report_table.pagination.source }}',
                     ajaxParams: {{ report_table.pagination.params|JSON }},
                 {% endif %}

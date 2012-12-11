@@ -11,7 +11,7 @@ from dimagi.utils.parsing import ISO_FORMAT
 from localsettings import PACT_URL
 from pact.management.commands import PactMigrateCommand
 from pact.management.commands.constants import  POOL_SIZE
-from pact.enums import PACT_DOMAIN
+from pact.enums import PACT_DOMAIN, PACT_SCHEDULES_NAMESPACE
 from casexml.apps.case.models import CommCareCase
 
 
@@ -23,13 +23,16 @@ class Command(PactMigrateCommand):
 
     def process_schedule(self, case_json):
 
-        hqcase = CommCareCase.get(case_json['_id'])
+        try:
+            hqcase = CommCareCase.get(case_json['_id'])
+        except Exception, ex:
+            return
 #        print case_json['_id']
 #        print case_json['weekly_schedule']
 
         if len(case_json.get('weekly_schedule', [])) > 0:
             print "updating schedule for %s" % case_json['_id']
-            hqcase['computed_']['pact_weekly_schedule'] = case_json['weekly_schedule']
+            hqcase['computed_'][PACT_SCHEDULES_NAMESPACE] = case_json['weekly_schedule']
             hqcase['computed_modified_on_'] = datetime.utcnow()
             hqcase.save()
 
@@ -43,6 +46,8 @@ class Command(PactMigrateCommand):
         pool = Pool(POOL_SIZE)
 
         for id in case_ids:
+            print "updating ID: %s" % id
+
             try:
                 case_json = simplejson.loads(self.get_url(PACT_URL + 'hqmigration/cases/%s' % id))
             except Exception, ex:

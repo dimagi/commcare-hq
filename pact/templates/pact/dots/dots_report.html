@@ -1,22 +1,44 @@
 {% extends "reports/async/default.html" %}
 {% load i18n %}
+{#{% block extrahead %}#}
+{#    {{ block.super }}#}
+{#    <link type="text/css" rel="stylesheet" href="{{ STATIC_URL }}pact/stylesheets/dots.css"/>#}
+{#{% endblock extrahead %}#}
 
 {% block reportcontent %}
+    <h3>({{ patient_case.pactid }}) {{ patient_case.name }} DOT Report <small>{{ startdate }}-{{ enddate }}</small></h3>
+    <small>Observations spanning <strong>visits</strong> during this time</small>
+    <a id="legendpop" href="#" class="btn btn-info" rel="popover" data-content='<strong>Obs. Method</strong><br>
+            <img src="{{ STATIC_URL }}pact/icons/plus.png">&nbsp;Direct<br>
+            <img src="{{ STATIC_URL }}pact/icons/bucket.png">&nbsp;Pillbox<br>
+            <img src="{{ STATIC_URL }}pact/icons/minus.png">&nbsp;Self Report<br>
+            <img src="{{ STATIC_URL }}pact/icons/warning.png">&nbsp;Conflict<br>
+            <img src="{{ STATIC_URL }}pact/icons/info.png">&nbsp;Notes<br>
+            <hr>
+            <strong>Pillbox</strong><br>
+            <img src="{{ STATIC_URL }}pact/icons/check.jpg">&nbsp; Empty<br>
+            <img src="{{ STATIC_URL }}pact/icons/exclamation-point.jpg">&nbsp;Partial<br>
+            <img src="{{ STATIC_URL }}pact/icons/x-mark.png">&nbsp; Full<br> ' data-original-title="Report Legend">Legend</a>
+    <script>
+        $(function ()
+        {
+            $('#legendpop').popover(
+                    {
+                        html:true,
+                    }
+            );
+        });
+    </script>
 
-    <table class="table table-striped">
-    <thead>
-    <tr>
-        <td></td>
-        <th>IHF</th>
-        <th>CHF</th>
-    </tr>
-    </thead>
-    <tbody>
-            <tr>
-                <th>foo</th>
-                <td>bar</td>
-                <td>foobar</td>
-            </tr>
-    </tbody>
-    </table>
+    <div class="span11">
+    {% for calendar in dot_calendar.calendars %}
+        {{ calendar|safe }}
+    {% endfor %}
+    </div>
+        <link type="text/css" rel="stylesheet" href="{{ STATIC_URL }}pact/stylesheets/dots.css"/>
+
+    <div class="span11">
+    <hr>
+    {% include "pact/dots/dots_report_visits.html" %}
+    </div>
 {% endblock %}

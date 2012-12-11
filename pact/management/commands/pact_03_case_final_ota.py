@@ -33,7 +33,7 @@ set_session("gevent")
 POOL_SIZE = 15
 
 class Command(PactMigrateCommand):
-    help = "OTA restore from pact server but ONLY create stub of cases"
+    help = "Final OTA from server, to set mainly the primary_hp/owner_id, and all the regimens"""
     option_list = NoArgsCommand.option_list + (
     )
 

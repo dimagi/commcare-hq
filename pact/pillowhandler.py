@@ -1,4 +1,4 @@
-from corehq.pillows.core import formats_string
+from corehq.pillows.core import DATE_FORMATS_STRING
 from corehq.pillows.xform import XFormPillowHandler
 
 class PactHandler(XFormPillowHandler):
@@ -33,7 +33,7 @@ class PactHandler(XFormPillowHandler):
         mapping['properties']['form']['dynamic'] = True
         mapping['properties']['form']['properties']['encounter_date'] = {
             "type": "date",
-            "format": formats_string
+            "format": DATE_FORMATS_STRING
         }
 
     def pn_handler(self, doc_dict, mapping):
@@ -43,7 +43,7 @@ class PactHandler(XFormPillowHandler):
             'properties': {
                 'encounter_date': {
                     "type": "date",
-                    "format": formats_string
+                    "format": DATE_FORMATS_STRING
                 },
                 "bwresults": {
                     "dynamic": "true",
@@ -53,7 +53,7 @@ class PactHandler(XFormPillowHandler):
                             "properties": {
                                 "test_date": {
                                     "type": "date",
-                                    "format": formats_string
+                                    "format": DATE_FORMATS_STRING
                                 },
                             }
                         }
@@ -75,7 +75,7 @@ class PactHandler(XFormPillowHandler):
                     "properties": {
                         "test_date": {
                             "type": "date",
-                            "format": formats_string
+                            "format": DATE_FORMATS_STRING
                         },
                     }
                 }
@@ -162,8 +162,5 @@ class PactHandler(XFormPillowHandler):
 
             if doc_dict['xmlns'] == "http://dev.commcarehq.org/pact/bloodwork":
                 bw_fixer('results', doc_dict['form'])
-
-
-
 
         return doc_dict

@@ -47,6 +47,7 @@ class PactMigrateCommand(NoArgsCommand):
             if retry < RETRY_LIMIT:
                 print "Retry %d/%d" % (retry,RETRY_LIMIT)
                 return self.get_url(url, retry=retry+1)
+            return None
 
     def submit_xform(self, submission_xml_string):
         p = Resource('http://localhost:8000')
@@ -88,8 +89,5 @@ class PactMigrateCommand(NoArgsCommand):
         else:
             if phone_date is not None:
                 req.META['HTTP_X_SUBMIT_TIME'] = phone_date
-
-
-
         return rcv_views.post(req, PACT_DOMAIN)
 
