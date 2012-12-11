@@ -243,8 +243,10 @@ def account(request, domain, couch_user_id, template="users/account.html"):
     if not couch_user:
         raise Http404
 
+    editing_commcare_user = couch_user.is_commcare_user() and request.couch_user.can_edit_commcare_users
     context.update({
         'couch_user': couch_user,
+        'editing_commcare_user': editing_commcare_user,
     })
     if couch_user.is_commcare_user():
         context.update({
