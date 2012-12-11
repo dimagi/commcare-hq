@@ -2314,10 +2314,10 @@ table th[class*="span"],
 }
 .hq-help:hover i,
 .hq-help.on i {
-  font-size: 30px;
   text-decoration: none;
   left: 4.666666666666667px;
   color: #46a546;
+  font-size: 30px;
 }
 .hq-help .popover {
   color: #333333;
