@@ -47,7 +47,7 @@ class ConvenientBaseMixIn(object):
     _headers = []  # override
     @property
     def headers(self):
-        return DataTablesHeader(*(DataTablesColumn(h) for h in self._headers))
+        return DataTablesHeader(*(DataTablesColumn(_(h)) for h in self._headers))
 
     @property
     def render_next(self):
