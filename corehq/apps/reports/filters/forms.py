@@ -281,45 +281,47 @@ class FormsByApplicationFilter(BaseDrilldownOptionFilter):
         ).all()
         remote_apps = dict([(d['id'], d['value']) for d in remote_app_data])
 
+
         for form in other_forms:
-            xmlns, app_id = self.split_xmlns_app_key(form)
-            if app_id in remote_apps.keys() or remote_app_namespace in xmlns:
-                if app_id in remote_apps.keys():
-                    app_info = remote_apps[app_id]
-                else:
-                    app_info = {
-                        'app': {
-                            'is_unknown': True,
-                            'id': self.unknown_remote_app_id,
-                            'names': 'Name Unknown',
-                            'langs': None,
+            if form:
+                xmlns, app_id = self.split_xmlns_app_key(form)
+                if app_id in remote_apps.keys() or remote_app_namespace in xmlns:
+                    if app_id in remote_apps.keys():
+                        app_info = remote_apps[app_id]
+                    else:
+                        app_info = {
+                            'app': {
+                                'is_unknown': True,
+                                'id': self.unknown_remote_app_id,
+                                'names': 'Name Unknown',
+                                'langs': None,
+                            },
+                            'is_deleted': False,
+                        }
+
+                    # A little hokey, but for the RemoteApps that follow our expected namespacing we can lift
+                    # the module and form names from the xmlns.
+                    module_desc = xmlns.split('/')
+                    form_name = self.get_unknown_form_name(xmlns, app_id=app_id if app_id else None, none_if_not_found=True)
+                    if remote_app_namespace in xmlns:
+                        module_name = module_desc[-2] if len(module_desc) > 1 else None
+                        if not form_name:
+                            form_name = module_desc[-1] if module_desc else None
+                    else:
+                        module_name = None
+
+                    app_info.update({
+                        'module': {
+                            'names': module_name or "Unknown Module",
+                            'id': module_name or "unknown_module",
                         },
-                        'is_deleted': False,
-                    }
-
-                # A little hokey, but for the RemoteApps that follow our expected namespacing we can lift
-                # the module and form names from the xmlns.
-                module_desc = xmlns.split('/')
-                form_name = self.get_unknown_form_name(xmlns, app_id=app_id if app_id else None, none_if_not_found=True)
-                if remote_app_namespace in xmlns:
-                    module_name = module_desc[-2] if len(module_desc) > 1 else None
-                    if not form_name:
-                        form_name = module_desc[-1] if module_desc else None
-                else:
-                    module_name = None
-
-                app_info.update({
-                    'module': {
-                        'names': module_name or "Unknown Module",
-                        'id': module_name or "unknown_module",
-                    },
-                    'form': {
-                        'names': form_name or "Unknown Name",
-                        'id': form_name or 'unknown_form',
-                    },
-                    'xmlns': xmlns,
-                })
-                result[form] = app_info
+                        'form': {
+                            'names': form_name or "Unknown Name",
+                            'id': form_name or 'unknown_form',
+                        },
+                        'xmlns': xmlns,
+                    })
+                    result[form] = app_info
 
         return result
 

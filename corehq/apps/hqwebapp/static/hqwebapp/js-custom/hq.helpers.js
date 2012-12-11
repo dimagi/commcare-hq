@@ -15,7 +15,9 @@ $.fn.hqHelp = function (options) {
         var $helpElem = $($(self).get(i));
         $helpElem.find('i').popover();
         $helpElem.click(function () {
-            $(this).toggleClass('on');
+            if ($helpElem.find('i').attr('data-trigger') != 'hover') {
+                $(this).toggleClass('on');
+            }
             if ($(this).hasClass('no-click')) {
                 return false;
             }

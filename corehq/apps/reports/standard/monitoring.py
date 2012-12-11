@@ -106,7 +106,7 @@ class CaseActivityReport(WorkerMonitoringReportTableBase):
     all_users = None
     display_data = ['percent']
     emailable = True
-    description = ugettext_noop("This report displays the followup rates on active cases.")
+    description = ugettext_noop("Followup rates on active cases.")
     special_notice = ugettext_noop("This report currently does not support case sharing. "
                        "There might be inconsistencies in case totals if the user is part of a case sharing group. "
                        "We are working to correct this shortly.")
@@ -292,8 +292,7 @@ class SubmissionsByFormReport(WorkerMonitoringReportTableBase, MultiFormDrilldow
     fix_left_col = True
     emailable = True
 
-    description = _("This report shows the number of submissions received for each form per mobile worker"
-                    " during the selected date range.")
+    description = _("Number of submissions by form.")
 
     @property
     def headers(self):
@@ -354,7 +353,7 @@ class DailyFormStatsReport(WorkerMonitoringReportTableBase, CompletionOrSubmissi
                 'corehq.apps.reports.filters.forms.CompletionOrSubmissionTimeFilter',
                 'corehq.apps.reports.fields.DatespanField']
 
-    description = ugettext_noop("This report shows the number of submissions for each form per day.")
+    description = ugettext_noop("Number of submissions per day.")
 
     fix_left_col = True
     emailable = True
@@ -427,8 +426,7 @@ class FormCompletionTimeReport(WorkerMonitoringReportTableBase, DatespanMixin):
               'corehq.apps.reports.filters.forms.SingleFormByApplicationFilter',
               'corehq.apps.reports.fields.DatespanField']
 
-    description = ugettext_noop("This report displays statistics based on the amount of time spent on a particular "
-                                "form per Mobile Worker.")
+    description = ugettext_noop("Statistics on time spent on a particular form.")
 
     @property
     @memoized
@@ -513,8 +511,8 @@ class FormCompletionVsSubmissionTrendsReport(WorkerMonitoringReportTableBase, Da
     name = ugettext_noop("Form Completion vs. Submission Trends")
     slug = "completion_vs_submission"
 
-    description = ugettext_noop("This report shows the time difference between when the forms were completed on the "
-                                "phone and when they were received by CommCare HQ.")
+    description = ugettext_noop("Time lag between when forms were completed and when forms were successfully "
+                                "sent to CommCare HQ.")
     
     fields = ['corehq.apps.reports.fields.FilterUsersField',
               'corehq.apps.reports.fields.GroupField',
@@ -628,7 +626,7 @@ class WorkerActivityTimes(WorkerMonitoringChartBase,
     name = ugettext_noop("Worker Activity Times")
     slug = "worker_activity_times"
 
-    description = ugettext_noop("A graphical representation of when forms are completed.")
+    description = ugettext_noop("Graphical representation of when forms are submitted.")
 
     fields = [
         'corehq.apps.reports.fields.FilterUsersField',
