@@ -205,7 +205,6 @@ class IndicatorSet(object):
             self.indicators[ispec["slug"]] = Indicator(ispec)
                 
     def get_indicators(self):
-        print "this is broken!"
         return self.indicators.values()
     
     def get_indicator(self, slug):
