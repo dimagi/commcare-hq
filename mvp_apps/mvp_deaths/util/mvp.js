@@ -6,7 +6,8 @@ function hasIndicators(doc) {
 
 function isChildRegistrationForm(doc) {
     return (doc.doc_type === "XFormInstance"
-        && doc.xmlns === 'http://openrosa.org/formdesigner/E6511C2B-DFC8-4DEA-8200-CC2F2CED00DA');
+        && doc.xmlns === 'http://openrosa.org/formdesigner/E6511C2B-DFC8-4DEA-8200-CC2F2CED00DA'
+        && hasIndicators(doc));
 }
 
 function isChildVisitForm(doc) {
@@ -17,7 +18,8 @@ function isChildVisitForm(doc) {
 
 function isChildCloseForm(doc) {
     return (doc.doc_type === "XFormInstance"
-        && doc.xmlns === 'http://openrosa.org/formdesigner/AC164B28-AECA-45C9-B7F6-E0668D5AF84B');
+        && doc.xmlns === 'http://openrosa.org/formdesigner/AC164B28-AECA-45C9-B7F6-E0668D5AF84B'
+        && hasIndicators(doc));
 }
 
 function isPregnancyVisitForm(doc) {
@@ -28,7 +30,8 @@ function isPregnancyVisitForm(doc) {
 
 function isPregnancyCloseForm(doc) {
     return (doc.doc_type === "XFormInstance"
-        && doc.xmlns === 'http://openrosa.org/formdesigner/01EB3014-71CE-4EBE-AE34-647EF70A55DE');
+        && doc.xmlns === 'http://openrosa.org/formdesigner/01EB3014-71CE-4EBE-AE34-647EF70A55DE'
+        && hasIndicators(doc));
 }
 
 function isHomeVisitForm(doc) {
@@ -39,29 +42,30 @@ function isHomeVisitForm(doc) {
 
 function isDeathWithoutRegistrationForm(doc) {
     return (doc.doc_type === "XFormInstance"
-        && doc.xmlns === 'http://openrosa.org/formdesigner/b3af1fddeb661ee045fef1e764995440ea8f057f');
+        && doc.xmlns === 'http://openrosa.org/formdesigner/b3af1fddeb661ee045fef1e764995440ea8f057f'
+        && hasIndicators(doc));
 }
 
 function isHouseholdCase(doc) {
     return (doc.doc_type === "CommCareCase"
-        && doc.type === 'household'
-        && hasIndicators(doc));
+        && doc.type === 'household');
 }
 
 function isChildCase(doc) {
     return (doc.doc_type === "CommCareCase"
-        && doc.type === 'child'
-        && hasIndicators(doc));
+        && doc.type === 'child');
 }
 
 function isPregnancyCase(doc) {
     return (doc.doc_type === "CommCareCase"
-        && doc.type === 'pregnancy'
-        && hasIndicators(doc));
+        && doc.type === 'pregnancy');
 }
 
 function get_indicators(doc) {
-    return doc.computed_.mvp_indicators;
+    if (doc.computed_ && doc.computed_.mvp_indicators) {
+        return doc.computed_.mvp_indicators;
+    }
+    return {};
 }
 
 function get_user_id(doc) {
