@@ -1,4 +1,4 @@
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, date
 from bihar.reports.indicators.reports import DEFAULT_EMPTY
 from bihar.reports.indicators.visits import has_visit
 
@@ -79,11 +79,17 @@ def mother_post_delivery_columns(case):
     return (case.name, getattr(case, "husband_name", DEFAULT_EMPTY),
             getattr(case, "add", DEFAULT_EMPTY))
 
+def get_date_attr(case, attr):
+    value = getattr(case, attr, None)
+    if not isinstance(value, datetime) and not isinstance(value, date):
+        value = None
+    return value
+
 def get_edd(case):
-    return getattr(case, 'edd', None)
+    return get_date_attr(case, 'edd')
 
 def get_add(case):
-    return getattr(case, 'add', None)
+    return get_date_attr(case, 'add')
 
 def get_edd_sortkey(case):
     return get_edd(case) or datetime(1970,1,1).date()

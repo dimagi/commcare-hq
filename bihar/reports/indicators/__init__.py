@@ -101,34 +101,27 @@ INDICATOR_SETS = [
             {
                 "slug": 'comp1',
                 "name": _("# complications identified in first 24 hours / # complications in last 30 days"),
-                "calculation_function": "bihar.reports.indicators.calculations.complications",
+                "calculation_class": "bihar.reports.indicators.calculations.ComplicationsCalculator",
                 "calculation_kwargs": {'days': 1, 'now': now},
             },
             {
                 "slug": 'comp3',
                 "name": _("# complications identified within 3 days of birth / # complications in last 30 days"),
-                "calculation_function": "bihar.reports.indicators.calculations.complications",
+                "calculation_class": "bihar.reports.indicators.calculations.ComplicationsCalculator",
                 "calculation_kwargs": {'days': 3, 'now': now},
             },
             {
                 "slug": 'comp5',
                 "name": _("# complications identified within 5 days of birth / # complications in last 30 days"),
-                "calculation_function": "bihar.reports.indicators.calculations.complications",
+                "calculation_class": "bihar.reports.indicators.calculations.ComplicationsCalculator",
                 "calculation_kwargs": {'days': 5, 'now': now},
             },
             {
                 "slug": 'comp7',
                 "name": _("# complications identified within 7 days of birth / # complications in last 30 days"),
-                "calculation_function": "bihar.reports.indicators.calculations.complications",
+                "calculation_class": "bihar.reports.indicators.calculations.ComplicationsCalculator",
                 "calculation_kwargs": {'days': 7, 'now': now},
             },
-            # client list
-#            {
-#                "slug": "clients_comp30",
-#                "name": _("Clients who have had post-partum complications in the last 30 days "),
-#                "filter_function": "bihar.reports.indicators.filters.complications",
-#                "sortkey": "bihar.reports.indicators.filters.get_add_sortkey",
-#            },
         ],
     },
     {
@@ -217,13 +210,12 @@ class Indicator(object):
     def __init__(self, spec):
         self.slug = spec["slug"]
         self.name = spec["name"]
-        self.calculation_class = to_function(spec["calculation_class"])() \
-            if "calculation_class" in spec else None
-        
-        self.calculation_function = to_function(spec["calculation_function"]) \
-            if "calculation_function" in spec else None
-        if spec.has_key("calculation_kwargs"):
-            self.calculation_function = functools.partial(self.calculation_function, **spec['calculation_kwargs'])
+        if "calculation_class" in spec:
+            calculation_class = to_function(spec["calculation_class"])
+            kwargs = spec.get("calculation_kwargs", {})
+            self.calculation_class = calculation_class(**kwargs)
+        else:
+            self.calculation_class = None
         
         # case filter stuff
         self.filter_function = to_function(spec["filter_function"]) \
