@@ -27,6 +27,12 @@ class CalculatorBase(object):
     def filter(self, case):
         raise NotImplementedError("Override this!")
 
+    @property
+    def sortkey(self):
+        # not having a sortkey shouldn't raise an exception so just
+        # default to something reasonable
+        return lambda case: case.name
+
 class FilterOnlyCalculator(CalculatorBase):
     """
     A class for indicators that are used only by the client list.
@@ -120,6 +126,10 @@ class MotherPreDeliveryMixIn(object):
     def as_row(self, case):
         return mother_pre_delivery_columns(case)
 
+    @property
+    def sortkey(self):
+        return lambda case: get_edd(case)
+
 class MotherPreDeliverySummaryMixIn(MotherPreDeliveryMixIn):
     """
     Meant to be used with MotherPreDeliveryMixIn and SummaryValueMixIn, to
@@ -137,6 +147,10 @@ class MotherPostDeliveryMixIn(object):
 
     def as_row(self, case):
         return mother_post_delivery_columns(case)
+
+    @property
+    def sortkey(self):
+        return lambda case: get_add(case)
 
 class MotherPostDeliverySummaryMixIn(MotherPostDeliveryMixIn):
     def get_columns(self):

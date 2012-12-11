@@ -51,7 +51,7 @@ def delivered_last_month(case):
     def _delivered_last_month(case):
         add = get_add(case)
         return add and add > datetime.today().date() - A_MONTH
-         
+
     return is_pregnant_mother(case) and _delivered_last_month(case)
 
 def due_next_month(case):

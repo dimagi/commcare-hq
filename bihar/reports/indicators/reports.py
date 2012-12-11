@@ -125,8 +125,10 @@ class IndicatorClientList(GroupReferenceMixIn, ConvenientBaseMixIn,
 
     @property
     def sorted_cases(self):
-        print "this is broken!"
-        if self.indicator.sortkey:
+        if self.indicator.calculation_class:
+            return sorted(self.cases, key=self.indicator.calculation_class.sortkey)
+        elif self.indicator.sortkey:
+            # TODO: remove
             return sorted(self.cases, key=self.indicator.sortkey, reverse=True)
         
         return self.cases
