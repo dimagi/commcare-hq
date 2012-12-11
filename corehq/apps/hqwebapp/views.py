@@ -12,7 +12,8 @@ from django.http import HttpResponseRedirect, HttpResponse, Http404,\
 from django.shortcuts import redirect
 from corehq.apps.app_manager.models import BUG_REPORTS_DOMAIN
 from corehq.apps.app_manager.models import import_app
-from corehq.apps.domain.decorators import require_superuser
+from corehq.apps.domain.decorators import require_superuser,\
+    login_and_domain_required
 from corehq.apps.domain.utils import normalize_domain_name, get_domain_from_url
 from corehq.apps.hqwebapp.forms import EmailAuthenticationForm, CloudCareAuthenticationForm
 from corehq.apps.users.util import format_username
@@ -26,6 +27,7 @@ from django.template import loader
 from django.template.context import RequestContext
 from couchforms.models import XFormInstance
 from soil import heartbeat
+from soil import views as soil_views
 import os
 
 def server_error(request, template_name='500.html'):
@@ -197,6 +199,9 @@ def logout(req, template_name="hqwebapp/loggedout.html"):
     response = django_logout(req, **{"template_name": template_name})
     return HttpResponseRedirect(reverse('login'))
 
+@login_and_domain_required
+def retrieve_download(req, domain, download_id, template="hqwebapp/file_download.html"):
+    return soil_views.retrieve_download(req, download_id, template)
 
 @require_superuser
 def debug_notify(request):
