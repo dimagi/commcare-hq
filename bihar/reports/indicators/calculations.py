@@ -128,7 +128,7 @@ class MotherPreDeliveryMixIn(object):
 
     @property
     def sortkey(self):
-        return lambda case: get_edd(case)
+        return lambda case: get_edd(case) or dt.datetime.max.date()
 
 class MotherPreDeliverySummaryMixIn(MotherPreDeliveryMixIn):
     """
@@ -150,7 +150,8 @@ class MotherPostDeliveryMixIn(object):
 
     @property
     def sortkey(self):
-        return lambda case: get_add(case)
+        # hacky way to sort by reverse add
+        return lambda case: dt.datetime.today().date() - (get_add(case) or dt.datetime.max.date())
 
 class MotherPostDeliverySummaryMixIn(MotherPostDeliveryMixIn):
     def get_columns(self):
