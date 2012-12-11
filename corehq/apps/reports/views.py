@@ -50,6 +50,7 @@ from soil import DownloadBase
 from soil.tasks import prepare_download
 from django.utils.translation import ugettext as _
 from django.utils.safestring import mark_safe
+from dimagi.utils.logging import notify_exception
 
 DATE_FORMAT = "%Y-%m-%d"
 
@@ -185,6 +186,8 @@ class CustomExportHelper(object):
         self.request = request
         self.domain = domain
         self.export_type = request.GET.get('type', 'form')
+        self.presave = False
+
         if self.export_type == 'form':
             self.ExportSchemaClass = FormExportSchema
         else:
@@ -194,7 +197,11 @@ class CustomExportHelper(object):
             self.custom_export = self.ExportSchemaClass.get(export_id)
             # also update the schema to include potential new stuff
             self.custom_export.update_schema()
-            
+
+            # enable configuring saved exports from this page
+            saved_group = HQGroupExportConfiguration.get_for_domain(self.domain)
+            self.presave = export_id in saved_group.custom_export_ids
+
             assert(self.custom_export.doc_type == 'SavedExportSchema')
             assert(self.custom_export.type == self.export_type)
             assert(self.custom_export.index[0] == domain)
@@ -210,6 +217,10 @@ class CustomExportHelper(object):
         self.custom_export.name = self.request.POST["name"]
         self.custom_export.default_format = self.request.POST["format"] or Format.XLS_2007
         self.custom_export.is_safe = bool(self.request.POST.get('is_safe'))
+
+        self.presave = bool(self.request.POST.get('presave'))
+        if self.presave:
+            HQGroupExportConfiguration.add_custom_export(self.domain, self.custom_export._id)
 
         table = self.request.POST["table"]
         cols = self.request.POST['order'].strip().split()
@@ -256,6 +267,7 @@ class CustomExportHelper(object):
         return render_to_response(self.request, "reports/reportdata/customize_export.html", {
             "saved_export": self.custom_export,
             "deid_options": CustomExportHelper.DEID.options,
+            "presave": self.presave,
             "DeidExportReport_name": DeidExportReport.name,
             "table_config": table_config,
             "slug": slug,
