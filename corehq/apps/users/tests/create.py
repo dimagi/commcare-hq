@@ -10,7 +10,7 @@ from casexml.apps.phone.xml import USER_REGISTRATION_XMLNS,\
 
 
 class CreateTestCase(TestCase):
-    
+
     def setUp(self):
         all_users = CouchUser.all()
         for user in all_users:
@@ -62,6 +62,47 @@ class CreateTestCase(TestCase):
         self.assertEqual(couch_user.domain_memberships[1].domain, 'domain2')
         django_user = couch_user.get_django_user()
         self.assertEqual(couch_user.user_id, CouchUser.from_django_user(django_user).user_id)
+
+    def testDomainMemberships(self):
+        w_username = "joe"
+        w_email = "joe@domain.com"
+        cc_username = "mobby"
+        password = "password"
+        domain = "test-domain"
+
+        # check that memberships are added on creation
+        webuser = WebUser.create(domain, w_username, password, w_email)
+        ccuser = CommCareUser.create(domain, cc_username, password)
+
+        self.assertEquals(webuser.is_member_of('test-domain'), True)
+        self.assertEquals(ccuser.is_member_of('test-domain'), True)
+
+        # getting memberships
+        self.assertEquals(webuser.get_domain_membership(domain).domain, domain)
+        self.assertEquals(ccuser.get_domain_membership(domain).domain, domain)
+
+        webuser.set_role(domain, "field-implementer")
+        ccuser.set_role(domain, "field-implementer")
+        self.assertEquals(  webuser.get_domain_membership(domain).role_id,
+                            ccuser.get_domain_membership(domain).role_id)
+#        self.assertEquals(webuser.get_role(domain).get_id, ccuser.get_role(domain).get_id) # discuss with danny
+        self.assertEquals(webuser.role_label(), ccuser.role_label())
+
+        self.assertEquals(webuser.is_domain_admin(domain), False)
+        self.assertEquals(ccuser.is_domain_admin(domain), False)
+
+        # deleting memberships
+        webuser.delete_domain_membership(domain)
+        err = False
+        try:
+            ccuser.delete_domain_membership(domain)
+        except NotImplementedError:
+            err = True
+
+        self.assertEquals(webuser.is_member_of(domain), False)
+        self.assertEquals(ccuser.is_member_of(domain), True)
+        self.assertEquals(ccuser.is_member_of(domain), True)
+
 
     def _runCreateUserFromRegistrationTest(self):
         """ 
