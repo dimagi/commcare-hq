@@ -7,8 +7,8 @@ from dimagi.utils.parsing import string_to_datetime
 from django.utils.datastructures import SortedDict
 
 # change here to debug as if today were some day in the past
-now = string_to_datetime('2012-03-21')
-#now = None
+#now = string_to_datetime('2012-03-21')
+now = None
 
 
 DEFAULT_ROW_FUNCTION = 'bihar.reports.indicators.filters.mother_pre_delivery_columns'
