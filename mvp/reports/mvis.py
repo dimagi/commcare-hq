@@ -82,10 +82,10 @@ class HealthCoordinatorReport(MVPIndicatorReport):
             dict(
                 category_title="Child Nutrition",
                 indicator_slugs=[
-                    "muac_wasting_proportion", # A2 - 10
-                    "muac_routine_proportion", # A2 - 11, waiting for spec change confirmation
+                    "muac_wasting_proportion", # A2 - 10, all set
+                    "muac_routine_proportion", # A2 - 11, all set
                     "under6month_exclusive_breastfeeding_proportion",
-                    "low_birth_weight_proportion", # A3 - 5, needs investigation
+                    "low_birth_weight_proportion", # A3 - 5, all set
                 ]
             ),
             dict(
@@ -124,11 +124,11 @@ class HealthCoordinatorReport(MVPIndicatorReport):
             dict(
                 category_title="Deaths",
                 indicator_slugs=[
-                    "neonatal_deaths", # qa needed
-                    "infant_deaths", # qa needed
-                    "under5_deaths", # qa needed
-                    "maternal_deaths", # qa needed
-                    "over5_deaths", # qa needed
+                    "neonatal_deaths",
+                    "infant_deaths",
+                    "under5_deaths",
+                    "maternal_deaths",
+                    "over5_deaths",
                 ]
             )
         ]

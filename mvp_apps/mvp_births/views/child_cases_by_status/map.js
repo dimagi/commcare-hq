@@ -8,10 +8,21 @@ function (doc) {
 
         if (doc.dob || doc.dob_calc) {
             var dob_date = doc.dob_calc || doc.dob,
+                weight_at_birth = doc.weight_at_birth,
                 opened_on_date = new Date(doc.opened_on);
 
             indicator_entries_open["opened_on"] = dob_date;
             indicator_entries_open["opened_on "+status] = dob_date;
+            if (weight_at_birth) {
+                try {
+                    var weight = parseFloat(weight_at_birth);
+                    if (weight < 2.5) {
+                        indicator_entries_open["opened_on low_birth_weight"] = dob_date;
+                    }
+                } catch (e) {
+                    // pass
+                }
+            }
             emit_special(doc, opened_on_date, indicator_entries_open, [doc._id]);
 
             if (doc.closed_on) {

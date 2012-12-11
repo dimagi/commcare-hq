@@ -14,11 +14,6 @@ BIRTH_INDICATORS = dict(
                 title="# Births delivered in Health Facility",
                 indicator_key="facility_delivery"
             ),
-            low_birth_weight_registration=dict(
-                description="No. of low birth weight (<2.5 kg) babies born during the time period",
-                title="# low birth weight (<2.5 kg) births",
-                indicator_key="birth_weight low"
-            ),
             birth_weight_registration=dict(
                 description="Number of births reported with weight recorded during time period",
                 title="# birth registrations w/ weight recorded",
@@ -46,10 +41,11 @@ ACTIVE_CHILD_CASES_BY_AGE_INDICATORS = dict(
                 show_active_only=False,
                 indicator_key="opened_on"
             ),
-            num_active_under5=dict(
-                description="No. of Under-5 Children during this timespan",
-                title="# Under-5s",
-                max_age_in_days=1827,
+            num_children_6to59months=dict(
+                description="No. of Children 6 to 59 Months of Age during this timespan",
+                title="# Under-5s 6-59 Months",
+                max_age_in_days=1770,
+                min_age_in_days=180,
                 indicator_key="",
             ),
             under5_cases_30days=dict(
@@ -72,6 +68,13 @@ ACTIVE_CHILD_CASES_BY_AGE_INDICATORS = dict(
                 indicator_key="opened_on",
                 is_dob_in_datespan=True,
                 show_active_only=False,
+            ),
+            low_birth_weight=dict(
+                description="No. of low birth weight (<2.5 kg) babies born during the time period",
+                title="# low birth weight (<2.5 kg) births",
+                indicator_key="opened_on low_birth_weight",
+                show_active_only=False,
+                max_age_in_days=1827,
             ),
         )
     )
