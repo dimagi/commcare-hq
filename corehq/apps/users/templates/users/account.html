@@ -107,7 +107,7 @@
 {% block user-view %}
     <ul class="nav nav-tabs" id="project-settings-tabs">
         <li><a href="#basic-info" data-toggle="tab">Basic</a></li>
-    {% if couch_user.is_commcare_user %}
+    {% if editing_commcare_user %}
         <li><a href="#user-data" data-toggle="tab">Custom Registration Data</a></li>
     {% endif %}
     {% if couch_user.user_id == request.couch_user.user_id and not couch_user.is_commcare_user %}
@@ -215,7 +215,7 @@
                 <div class="form-actions"><button type="submit" class="btn btn-primary">Add Number</button></div>
             </form>
         </div>
-        {% if couch_user.is_commcare_user %}
+        {% if editing_commcare_user %}
         <div class="tab-pane" id="user-data">
             {% include "users/partial/user_data.html" %}
         </div>
@@ -231,7 +231,7 @@
         </div>
         {% endif %}
     </div>
-    {% if couch_user.is_commcare_user %}
+    {% if editing_commcare_user %}
         <fieldset>
             <legend>Reset Password</legend>
             <a href="#reset_password_{{ couch_user.user_id }}" class="btn btn-info" data-toggle="modal">Reset Password</a>

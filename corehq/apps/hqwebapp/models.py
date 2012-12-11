@@ -12,12 +12,12 @@ class DropdownMenuItem(object):
     css_id = None
 
     def __init__(self, request, domain):
+        self.request = request
+        self.domain = domain
         if self.title is None:
             raise NotImplementedError("A title is required")
         if self.view is None:
             raise NotImplementedError("A view is required")
-        self.request = request
-        self.domain = domain
 
     @property
     def menu_context(self):
@@ -178,7 +178,6 @@ class MessagesMenuItem(DropdownMenuItem):
 
 
 class ProjectSettingsMenuItem(DropdownMenuItem):
-    title = ugettext_noop("Settings & Users")
     view = "corehq.apps.settings.views.default"
     css_id = "project_settings"
 
@@ -187,10 +186,16 @@ class ProjectSettingsMenuItem(DropdownMenuItem):
     def submenu_items(self):
         return []
 
+    @property
+    def title(self):
+        if not (self.request.couch_user.can_edit_commcare_users() or self.request.couch_user.can_edit_web_users()):
+            return _("Settings")
+        return _("Settings & Users")
+
     @classmethod
     def is_viewable(cls, request, domain):
-        return (domain is not None
-                and (request.couch_user.can_edit_commcare_users() or request.couch_user.can_edit_web_users()))
+        return domain is not None
+
 
 
 class AdminReportsMenuItem(DropdownMenuItem):
