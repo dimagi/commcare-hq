@@ -686,11 +686,13 @@ class XForm(WrappedNode):
             if 'case_preload' in actions:
                 needs_casedb_instance = True
                 for nodeset, property in actions['case_preload'].preload.items():
-                    if property == 'name':
-                        property = 'case_name'
+                    property_xpath = {
+                        'name': 'case_name',
+                        'owner_id': '@owner_id'
+                    }.get(property, property)
                     self.add_setvalue(
                         ref=nodeset,
-                        value="instance('casedb')/casedb/case[@case_id=instance('commcaresession')/session/data/case_id]/%s" % property,
+                        value="instance('casedb')/casedb/case[@case_id=instance('commcaresession')/session/data/case_id]/%s" % property_xpath,
                     )
             if needs_casedb_instance:
                 self.add_instance('casedb', src='jr://instance/casedb')
