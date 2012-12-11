@@ -9,7 +9,7 @@ from corehq.apps.commtrack.management.commands.import_locations import import_lo
 @task
 def import_locations_async(download_id, domain, file_ref_id):
     """
-    Asynchronously import stock reports. download_id is for showing
+    Asynchronously import locations. download_id is for showing
     the results to the user through soil. file_ref_id is also a
     download_id, but should be a pointer to the import file.
     """
@@ -19,4 +19,13 @@ def import_locations_async(download_id, domain, file_ref_id):
     ref = expose_download(results_msg, 60*60*3)
     cache.set(download_id, ref)
 
-    
+@task
+def import_stock_reports_async(download_id, domain, file_ref_id):
+    """
+    Same idea but for stock reports
+    """
+    download_ref = DownloadBase.get(file_ref_id)
+    with open(download_ref.get_filename(), 'rb') as f:
+        results = bulk.import_stock_reports(domain, f)
+    ref = expose_download(results, 60*60*3)
+    cache.set(download_id, ref)
