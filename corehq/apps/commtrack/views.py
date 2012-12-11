@@ -5,6 +5,11 @@ from corehq.apps.domain.models import Domain
 from corehq.apps.commtrack.management.commands import bootstrap_psi
 import bulk
 import json
+from soil.util import expose_download
+import uuid
+from django.core.urlresolvers import reverse
+from django.contrib import messages
+from corehq.apps.commtrack.tasks import import_locations_async
 
 @require_superuser
 def bootstrap(request, domain):
@@ -21,8 +26,17 @@ def bootstrap(request, domain):
 @require_superuser
 def location_import(request, domain):
     if request.method == "POST":
-        messages = list(bulk.import_locations(domain, request.FILES['locs']))
-        return HttpResponse('results:\n\n' + '\n'.join(messages), 'text/plain')
+        # stash content in the default storage for subsequent views
+        # ret = list(bulk.import_locations(domain, request.FILES['locs']))
+        file_ref = expose_download(request.FILES['locs'].read(),
+                                   expiry=1*60*60)
+        download_id = uuid.uuid4().hex
+        import_locations_async.delay(download_id, domain, file_ref.download_id)
+        messages.success(request,
+            'Your upload is in progress. You can check the progress <a href="%s">here</a>.' %\
+            (reverse('hq_soil_download', kwargs={'domain': domain, 'download_id': download_id})),
+            extra_tags="html")
+        return HttpResponseRedirect(reverse('domain_homepage', args=[domain]))
 
     return HttpResponse("""
 <form method="post" action="" enctype="multipart/form-data">
