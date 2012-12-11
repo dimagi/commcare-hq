@@ -220,13 +220,13 @@ class DynamicIndicatorDefinition(IndicatorDefinition):
     def get_monthly_retrospective(self, user_ids=None, current_month=None, num_previous_months=12):
         raise NotImplementedError
 
-    def get_value(self, user_id=None, datespan=None):
+    def get_value(self, user_ids, datespan=None):
         raise NotImplementedError
 
 
 class CouchIndicatorDef(DynamicIndicatorDefinition):
     """
-        This indicator defintion expects that it will deal with a couch view and a certain indicator key.
+        This indicator defintion expects that it will deal with a couch view and an indicator key.
         If a user_id is provided when fetching the results, this definition will use:
         ["user", <domain_name>, <user_id>, <indicator_key>] as the main couch view key
         Otherwise it will use:
@@ -242,7 +242,10 @@ class CouchIndicatorDef(DynamicIndicatorDefinition):
 
     @property
     @memoized
-    def use_datespans_in_retrospective(self):
+    def group_results_in_retrospective(self):
+        """
+            Determines whether or not to group results in the retrospective
+        """
         return any(getattr(self, field) for field in ('startdate_shift', 'enddate_shift',
                                                       'fixed_datespan_days', 'fixed_datespan_months'))
 
@@ -278,7 +281,7 @@ class CouchIndicatorDef(DynamicIndicatorDefinition):
 
         return datespan
 
-    def _get_results_with_key(self, key, user_id=None, datespan=None, date_group_level=None, reduce=False):
+    def get_results_with_key(self, key, user_id=None, datespan=None, date_group_level=None, reduce=False):
         view_kwargs = dict()
         if datespan:
             view_kwargs.update(
@@ -304,16 +307,23 @@ class CouchIndicatorDef(DynamicIndicatorDefinition):
             **view_kwargs
         ).all()
 
-    def get_couch_results(self, user_id=None, datespan=None, date_group_level=None, reduce=False):
+    def get_raw_results(self, user_ids, datespan=False, date_group_level=False, reduce=False):
         """
             date_group_level can be 0 to group by year, 1 to group by month and 2 to group by day
         """
-        key = self._get_results_key(user_id)
         datespan = self._apply_datespan_shifts(datespan)
-        return self._get_results_with_key(key, user_id, datespan, date_group_level, reduce)
+        results = []
+        for user_id in user_ids:
+            key = self._get_results_key(user_id)
+            results.extend(self.get_results_with_key(key, user_id, datespan, date_group_level, reduce))
+        return results
 
-    def get_value(self, user_id=None, datespan=None):
-        return self._get_value_from_result(self.get_couch_results(user_id, datespan, reduce=True))
+    def get_value(self, user_ids, datespan=None):
+        value = 0
+        results = self.get_raw_results(user_ids, datespan, reduce=True)
+        for result in results:
+            value += self._get_value_from_result(result)
+        return value
 
     def _get_value_from_result(self, result):
         value = 0
@@ -330,56 +340,52 @@ class CouchIndicatorDef(DynamicIndicatorDefinition):
                 value += new_val
         return value
 
-    def get_values_by_month(self, user_ids=None, datespan=None):
+    def get_values_by_month(self, user_ids, datespan=None):
         totals = dict()
-        for user_id in user_ids:
-            result = self.get_couch_results(user_id, datespan, date_group_level=1)
-            for item in result:
-                key = item.get('key', [])
-                if len(key) >= 2:
-                    value = self._get_value_from_result(item)
-                    year = str(key[-2])
-                    month = str(key[-1])
-                    if not (month and year):
-                        continue
-                    if year not in totals:
-                        totals[year] = dict()
-                    if month not in totals[year]:
-                        totals[year][month] = 0
-                    totals[year][month] += value
+        result = self.get_raw_results(user_ids, datespan, date_group_level=1)
+        for item in result:
+            key = item.get('key', [])
+            if len(key) >= 2:
+                value = self._get_value_from_result(item)
+                year = str(key[-2])
+                month = str(key[-1])
+                if not (month and year):
+                    continue
+                if year not in totals:
+                    totals[year] = dict()
+                if month not in totals[year]:
+                    totals[year][month] = 0
+                totals[year][month] += value
         return totals
 
-    def get_values_by_year(self, user_ids=None, datespan=None):
+    def get_values_by_year(self, user_ids, datespan=None):
         totals = dict()
-        for user_id in user_ids:
-            result = self.get_couch_results(user_id, datespan, date_group_level=0)
-            for item in result:
-                key = item.get('key', [])
-                value = self._get_value_from_result(item)
-                if len(key) >= 1:
-                    year = str(key[-1])
-                    if not year:
-                        continue
-                    if year not in totals:
-                        totals[year] = 0
-                    totals[year] += value
+        result = self.get_raw_results(user_ids, datespan, date_group_level=0)
+        for item in result:
+            key = item.get('key', [])
+            value = self._get_value_from_result(item)
+            if len(key) >= 1:
+                year = str(key[-1])
+                if not year:
+                    continue
+                if year not in totals:
+                    totals[year] = 0
+                totals[year] += value
         return totals
 
     def get_monthly_retrospective(self, user_ids=None, current_month=None, num_previous_months=12):
         if not isinstance(user_ids, list):
             user_ids = [user_ids]
         retro_months, datespan = self.get_first_days(current_month, num_previous_months,
-            as_datespans=self.use_datespans_in_retrospective)
-        monthly_totals = {} if self.use_datespans_in_retrospective else self.get_values_by_month(user_ids, datespan)
+            as_datespans=self.group_results_in_retrospective)
+        monthly_totals = {} if self.group_results_in_retrospective else self.get_values_by_month(user_ids, datespan)
         retrospective = list()
         for i, this_month in enumerate(retro_months):
-            startdate = this_month.startdate if self.use_datespans_in_retrospective else this_month
+            startdate = this_month.startdate if self.group_results_in_retrospective else this_month
             y = str(startdate.year)
             m = str(startdate.month)
-            if self.use_datespans_in_retrospective:
-                month_value = 0
-                for user_id in user_ids:
-                    month_value += self.get_value(user_id, this_month)
+            if self.group_results_in_retrospective:
+                month_value = self.get_value(user_ids, this_month)
             else:
                 month_value = monthly_totals.get(y, {}).get(m, 0)
             retrospective.append(dict(
@@ -395,10 +401,10 @@ class NoGroupCouchIndicatorDefBase(CouchIndicatorDef):
     """
 
     @property
-    def use_datespans_in_retrospective(self):
+    def group_results_in_retrospective(self):
         return True
 
-    def get_value(self, user_id=None, datespan=None):
+    def get_value(self, user_ids, datespan=None):
         raise NotImplementedError("You must override the parent's get_value. "
                                   "Reduce / group will not work here.")
 
@@ -408,8 +414,8 @@ class CountUniqueCouchIndicatorDef(NoGroupCouchIndicatorDefBase):
         Use this indicator to count the # of unique emitted values.
     """
 
-    def get_value(self, user_id=None, datespan=None):
-        results = self.get_couch_results(user_id, datespan)
+    def get_value(self, user_ids, datespan=None):
+        results = self.get_raw_results(user_ids, datespan)
         all_emitted_values = [r['value'] for r in results]
         all_emitted_values = set(all_emitted_values)
         return len(all_emitted_values)
@@ -420,8 +426,8 @@ class MedianCouchIndicatorDef(NoGroupCouchIndicatorDefBase):
         Get the median value of what is emitted. Assumes that emits are numbers.
     """
 
-    def get_value(self, user_id=None, datespan=None):
-        results = self.get_couch_results(user_id, datespan)
+    def get_value(self, user_ids, datespan=None):
+        results = self.get_raw_results(user_ids, datespan)
         values = [item.get('value', 0) for item in results if item.get('value')]
         return numpy.median(values) if values else 0
 
@@ -436,8 +442,8 @@ class SumLastEmittedCouchIndicatorDef(NoGroupCouchIndicatorDefBase):
         It then finds the sum of all the last emitted unique values.
     """
 
-    def get_value(self, user_id=None, datespan=None):
-        results = self.get_couch_results(user_id, datespan)
+    def get_value(self, user_ids, datespan=None):
+        results = self.get_raw_results(user_ids, datespan)
         unique_values = {}
         for item in results:
             if item.get('value'):
@@ -459,9 +465,9 @@ class CombinedCouchViewIndicatorDefinition(DynamicIndicatorDefinition):
     def denominator(self):
         return self.get_current(self.namespace, self.domain, self.denominator_slug)
 
-    def get_value(self, user_id=None, datespan=None):
-        numerator = self.numerator.get_value(user_id, datespan)
-        denominator = self.denominator.get_value(user_id, datespan)
+    def get_value(self, user_ids, datespan=None):
+        numerator = self.numerator.get_value(user_ids, datespan)
+        denominator = self.denominator.get_value(user_ids, datespan)
         ratio = float(numerator)/float(denominator) if denominator > 0 else None
         return dict(
             numerator=numerator,
