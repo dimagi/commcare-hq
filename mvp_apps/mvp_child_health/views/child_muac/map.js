@@ -12,7 +12,7 @@ function (doc) {
 
             var age_in_months = age_in_years*12;
 
-            if (age_in_months > 6 && age_in_months < 60 && indicators.muac.value) {
+            if (age_in_months >= 6 && age_in_months < 60 && indicators.muac.value) {
                 // MUAC reading taken during visit
                 indicator_entries["muac_reading"] = 1;
                 try {
@@ -24,12 +24,11 @@ function (doc) {
                     log("MUAC value could not be obtained");
                 }
 
-                if (doc.form.prev_last_muac) {
-                    var prev_last_muac = new Date(doc.form.prev_last_muac),
-                        ninety_days_ms = 90*MS_IN_DAY;
-                    if (prev_last_muac < visit_date) {
-                        var difference = visit_date.getTime() - prev_last_muac.getTime();
-                        if (difference <= ninety_days_ms){
+                if (doc.form.last_muac) {
+                    var last_muac = new Date(doc.form.last_muac);
+                    if (last_muac <= visit_date) {
+                        var difference = visit_date.getTime() - last_muac.getTime();
+                        if (difference <= 90*MS_IN_DAY){
                             indicator_entries["routine_muac"] = case_id;
                         }
                     }

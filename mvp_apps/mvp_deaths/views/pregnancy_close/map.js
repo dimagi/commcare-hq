@@ -1,20 +1,27 @@
  function (doc) {
     // !code util/mvp.js
-    if (isPregnancyCloseForm(doc) && hasIndicators(doc)) {
+    if (isPregnancyCloseForm(doc)) {
         var indicators = get_indicators(doc),
             close_date = new Date(doc.form.meta.timeEnd),
-            indicator_keys = new Array();
+            indicator_keys = new Array(),
+            close_reason = "";
 
         if (indicators.close_reason && indicators.close_reason.value) {
-            var days_from_termination_ms = 0;
-            if (indicators.pregnancy_termination && indicators.pregnancy_termination.value) {
-                var termination_date = new Date(indicators.pregnancy_termination.value);
-                days_from_termination_ms = close_date.getTime() - termination_date.getTime();
-            }
-            if (indicators.close_reason.value.indexOf('died') >= 0 && days_from_termination_ms <= 42) {
-                indicator_keys.push('maternal_death');
+            close_reason = indicators.close_reason.value;
+        }
+
+        if (close_reason.indexOf("died") >= 0
+            && (indicators.pregnancy_termination && indicators.pregnancy_termination.value)) {
+            // woman died and there is a termination date
+            var termination_date = new Date(indicators.pregnancy_termination.value);
+            if (close_date > termination_date) {
+                var difference = close_date.getTime() - termination_date.getTime();
+                if (difference <= 42*MS_IN_DAY) {
+                    indicator_keys.push("maternal_death");
+                }
             }
         }
-        emit_standard(doc, death_date, indicator_keys, []);
+
+        emit_standard(doc, close_date, indicator_keys, []);
     }
 }

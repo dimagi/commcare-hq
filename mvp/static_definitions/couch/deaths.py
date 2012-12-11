@@ -1,7 +1,7 @@
 DEATH_INDICATORS = dict(
     app="mvp_deaths",
     indicators=dict(
-        child_close=dict(
+        under5_deaths=dict(
             neonatal_deaths=dict(
                 description="No. of Neonatal (0-28 days) Deaths",
                 title="# Neonatal Deaths",

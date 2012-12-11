@@ -76,7 +76,7 @@ COMPOSITE_INDICATORS = dict(
                     "readings during the time period",
         title="% Under-5s receiving on-time MUAC (90 days)",
         numerator_slug="child_muac_routine",
-        denominator_slug="num_active_under5"
+        denominator_slug="num_children_6to59months"
     ),
     under6month_exclusive_breastfeeding_proportion=dict(
         description="Proportion of children under 6 months reported as exclusively breast-fed at last " \
@@ -88,7 +88,7 @@ COMPOSITE_INDICATORS = dict(
     low_birth_weight_proportion=dict(
         description="Proportion of low birth weight (<2.5 kg) babies born during the time period",
         title="% low birth weight (<2.5 kg) babies born during the time period",
-        numerator_slug="low_birth_weight_registration",
+        numerator_slug="low_birth_weight",
         denominator_slug="birth_weight_registration",
     ),
 
