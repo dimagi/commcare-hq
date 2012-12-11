@@ -1,10 +1,7 @@
-from django.http import HttpResponse, HttpResponseRedirect, HttpResponseBadRequest
+from django.http import HttpResponse, HttpResponseRedirect
 from corehq.apps.domain.decorators import require_superuser
-from django.views.decorators.http import require_POST
 from corehq.apps.domain.models import Domain
 from corehq.apps.commtrack.management.commands import bootstrap_psi
-import bulk
-import json
 from soil.util import expose_download
 import uuid
 from django.core.urlresolvers import reverse
