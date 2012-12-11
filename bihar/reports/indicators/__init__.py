@@ -68,24 +68,8 @@ INDICATOR_SETS = [
             {
                 "slug": "no_ifa_tablets",
                 "name": _("Pregnant woman not received IFA tablets (of pregnant woman registered in last 30 days)"),
-                "calculation_class": "bihar.reports.indicators.home_visit.NoBPList",
+                "calculation_class": "bihar.reports.indicators.home_visit.NoBPList",    
             },
-#                {
-#                    "slug": "",
-#                    "name": _("Women due for delivery within 30 days who have not done preparation for Emergency Maternal Care")
-#                },
-#                {
-#                    "slug": "",
-#                    "name": _("Women due for delivery within 30 days who have not done preparation for immediate new-born")
-#                },
-#                {
-#                    "slug": "",
-#                    "name": _("Women due for delivery within 30 days who have not been counselled on Immediate Post-Partum Family Planning")
-#                },
-#                {
-#                    "slug": "",
-#                    "name": _("Women due for delivery within 30 days who have not showed interest to adopt Family planning methods")
-#                }
         ]
     },
     {
