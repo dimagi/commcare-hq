@@ -35,7 +35,9 @@ ko.bindingHandlers.previewHQImageButton = {
             $previewButton.popover({
                 title: 'Click to open in new window',
                 content: '<img src="'+url+'" alt="preview image" />',
-                placement: 'bottom'
+                html: true,
+                placement: 'right',
+                trigger: 'hover'
             });
             $(element).append($previewButton);
         }
