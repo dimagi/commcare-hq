@@ -2,7 +2,7 @@ from StringIO import StringIO
 import datetime
 from celery.log import get_task_logger
 from django.core.urlresolvers import reverse
-from django.http import HttpResponse
+from django.http import HttpResponse, Http404
 from django.template.context import RequestContext
 import json
 from django.template.loader import render_to_string
@@ -579,6 +579,14 @@ class GenericReportView(object):
         temp = StringIO()
         export_from_tables(self.export_table, temp, self.export_format)
         return export_response(temp, self.export_format, self.export_name)
+
+    @property
+    def partial_response(self):
+        """
+            Use this response for rendering smaller chunks of your report.
+            (Great if you have a giant report with annoying, complex indicators.)
+        """
+        raise Http404
 
     @property
     def clear_cache_response(self):

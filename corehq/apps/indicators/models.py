@@ -217,7 +217,8 @@ class DynamicIndicatorDefinition(IndicatorDefinition):
         )
         return month_dates, datespan
 
-    def get_monthly_retrospective(self, user_ids=None, current_month=None, num_previous_months=12):
+    def get_monthly_retrospective(self, user_ids=None, current_month=None,
+                                  num_previous_months=12, return_only_dates=False):
         raise NotImplementedError
 
     def get_value(self, user_ids, datespan=None):
@@ -246,7 +247,7 @@ class CouchIndicatorDef(DynamicIndicatorDefinition):
         """
             Determines whether or not to group results in the retrospective
         """
-        return any(getattr(self, field) for field in ('startdate_shift', 'enddate_shift',
+        return not any(getattr(self, field) for field in ('startdate_shift', 'enddate_shift',
                                                       'fixed_datespan_days', 'fixed_datespan_months'))
 
     def _get_results_key(self, user_id=None):
@@ -373,21 +374,28 @@ class CouchIndicatorDef(DynamicIndicatorDefinition):
                 totals[year] += value
         return totals
 
-    def get_monthly_retrospective(self, user_ids=None, current_month=None, num_previous_months=12):
+    def get_monthly_retrospective(self, user_ids=None, current_month=None,
+                                  num_previous_months=12, return_only_dates=False):
         if not isinstance(user_ids, list):
             user_ids = [user_ids]
         retro_months, datespan = self.get_first_days(current_month, num_previous_months,
-            as_datespans=self.group_results_in_retrospective)
-        monthly_totals = {} if self.group_results_in_retrospective else self.get_values_by_month(user_ids, datespan)
+            as_datespans=not self.group_results_in_retrospective)
+
+        monthly_totals = {}
+        if self.group_results_in_retrospective and not return_only_dates:
+            monthly_totals = self.get_values_by_month(user_ids, datespan)
+
         retrospective = list()
         for i, this_month in enumerate(retro_months):
-            startdate = this_month.startdate if self.group_results_in_retrospective else this_month
+            startdate = this_month if self.group_results_in_retrospective else this_month.startdate
             y = str(startdate.year)
             m = str(startdate.month)
-            if self.group_results_in_retrospective:
-                month_value = self.get_value(user_ids, this_month)
-            else:
+            if return_only_dates:
+                month_value = 0
+            elif self.group_results_in_retrospective:
                 month_value = monthly_totals.get(y, {}).get(m, 0)
+            else:
+                month_value = self.get_value(user_ids, this_month)
             retrospective.append(dict(
                 date=startdate,
                 value=month_value
@@ -402,7 +410,7 @@ class NoGroupCouchIndicatorDefBase(CouchIndicatorDef):
 
     @property
     def group_results_in_retrospective(self):
-        return True
+        return False
 
     def get_value(self, user_ids, datespan=None):
         raise NotImplementedError("You must override the parent's get_value. "
@@ -475,9 +483,12 @@ class CombinedCouchViewIndicatorDefinition(DynamicIndicatorDefinition):
             ratio=ratio
         )
 
-    def get_monthly_retrospective(self, user_ids=None, current_month=None, num_previous_months=12):
-        numerator_retro = self.numerator.get_monthly_retrospective(user_ids, current_month, num_previous_months)
-        denominator_retro = self.denominator.get_monthly_retrospective(user_ids, current_month, num_previous_months)
+    def get_monthly_retrospective(self, user_ids=None, current_month=None,
+                                  num_previous_months=12, return_only_dates=False):
+        numerator_retro = self.numerator.get_monthly_retrospective(user_ids, current_month, num_previous_months,
+            return_only_dates)
+        denominator_retro = self.denominator.get_monthly_retrospective(user_ids, current_month, num_previous_months,
+            return_only_dates)
         combined_retro = list()
         for i, denominator in enumerate(denominator_retro):
             numerator = numerator_retro[i]
