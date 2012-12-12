@@ -88,15 +88,20 @@ def _users_context(request, domain):
 
 @login_and_domain_required
 def users(request, domain):
+    redirect = _redirect_users_to(request, domain)
+    if not redirect:
+        raise Http404
+    return HttpResponseRedirect(redirect)
+
+def _redirect_users_to(request, domain):
+    redirect = None
     user = CouchUser.get_by_user_id(request.couch_user._id, domain)
     if user:
         if user.has_permission(domain, 'edit_commcare_users'):
             redirect = reverse("commcare_users", args=[domain])
         else:
             redirect = reverse("user_account", args=[domain, request.couch_user._id])
-    else:
-        raise Http404()
-    return HttpResponseRedirect(redirect)
+    return redirect
 
 @require_can_edit_web_users
 def web_users(request, domain, template="users/web_users.html"):
