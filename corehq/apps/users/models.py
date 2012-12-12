@@ -1287,7 +1287,7 @@ class CommCareUser(CouchUser, CommCareMobileContactMixin, SingleMembershipMixin)
         for case in self.get_cases():
             case.domain = domain
             case.save()
-        self.add_domain_membership(domain)
+        self.domain_membership = DomainMembership(domain=domain)
         self.save()
 
     def get_group_fixture(self):
