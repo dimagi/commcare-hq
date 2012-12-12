@@ -109,6 +109,16 @@ function ReleasesMain(o) {
     self.revertSavedApp = function (savedApp) {
         $.postGo(self.url('revertBuild'), {saved_app: savedApp.id()});
     };
+    self.makeNewBuildEnabled = function () {
+        if (self.buildState() === 'pending') {
+            return false;
+        } else {
+            return (
+                self.lastAppVersion() === undefined ||
+                self.lastAppVersion() !== self.appVersion()
+            );
+        }
+    };
     self.makeNewBuild = function () {
         var comment = window.prompt("Please write a comment about the build you're making to help you remember later:");
         if (comment || comment === "") {
