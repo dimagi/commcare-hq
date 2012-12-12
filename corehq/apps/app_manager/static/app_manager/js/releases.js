@@ -117,7 +117,6 @@ function ReleasesMain(o) {
         $.post(self.url('newBuild'), {
             comment: comment
         }).success(function (data) {
-                console.log(data.error_html);
                 $('#build-errors-wrapper').html(data.error_html);
                 $('#build-errors').each(function () {
                     var specialMessage = $('span', this)[0];
