@@ -81,12 +81,16 @@ class CreateTestCase(TestCase):
         self.assertEquals(webuser.get_domain_membership(domain).domain, domain)
         self.assertEquals(ccuser.get_domain_membership(domain).domain, domain)
 
+        permission_to = 'view_reports'
+        self.assertEquals(webuser.has_permission(domain, permission_to), False)
+        self.assertEquals(ccuser.has_permission(domain, permission_to), False)
         webuser.set_role(domain, "field-implementer")
         ccuser.set_role(domain, "field-implementer")
         self.assertEquals(  webuser.get_domain_membership(domain).role_id,
                             ccuser.get_domain_membership(domain).role_id)
-#        self.assertEquals(webuser.get_role(domain).get_id, ccuser.get_role(domain).get_id) # discuss with danny
         self.assertEquals(webuser.role_label(), ccuser.role_label())
+        self.assertEquals(webuser.has_permission(domain, permission_to), True)
+        self.assertEquals(ccuser.has_permission(domain, permission_to), True)
 
         self.assertEquals(webuser.is_domain_admin(domain), False)
         self.assertEquals(ccuser.is_domain_admin(domain), False)

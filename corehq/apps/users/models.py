@@ -436,6 +436,7 @@ class _AuthorizableMixin(IsMemberOfMixin):
         else:
             raise self.Inconsistent("domains and domain_memberships out of sync")
 
+    @memoized
     def has_permission(self, domain, permission, data=None):
         # is_admin is the same as having all the permissions set
         if self.is_global_admin():
@@ -449,6 +450,7 @@ class _AuthorizableMixin(IsMemberOfMixin):
         else:
             return False
 
+    @memoized
     def get_role(self, domain=None):
         """
         Get the role object for this user
@@ -485,6 +487,9 @@ class _AuthorizableMixin(IsMemberOfMixin):
             dm.role_id = None
         else:
             raise Exception("unexpected role_qualified_id is %r" % role_qualified_id)
+
+        self.has_permission.reset_cache(self)
+        self.get_role.reset_cache(self)
 
     def role_label(self, domain=None):
         if not domain:
@@ -1405,8 +1410,7 @@ class WebUser(CouchUser, MultiMembershipMixin):
         else:
             return False
 
-
-
+    @memoized
     def get_role(self, domain=None):
         """
         Get the role object for this user
@@ -1449,7 +1453,8 @@ class WebUser(CouchUser, MultiMembershipMixin):
                 total_permission |= permission
 
             #set up a user role
-            return UserRole(domain=domain, permissions=total_permission, name=', '.join(["%s %s" % (domain_membership.role.name, membership_source) for domain_membership, membership_source in domain_memberships]))
+            return UserRole(domain=domain, permissions=total_permission,
+                            name=', '.join(["%s %s" % (dm.role.name, ms) for dm, ms in domain_memberships if dm.role]))
             #set up a domain_membership
 
 
@@ -1476,6 +1481,7 @@ class PublicUser(FakeUser):
         dm.set_permission('view_reports', True)
         self.domain_memberships = [dm]
 
+    @memoized
     def get_role(self, domain=None):
         assert(domain == self.domain)
         return super(PublicUser, self).get_role(domain)
