@@ -31,7 +31,7 @@ from corehq.apps.domain.utils import normalize_domain_name
 from corehq.apps.domain.models import LicenseAgreement
 from corehq.apps.users.util import normalize_username, user_data_from_registration_form, format_username, raw_username, cc_user_domain
 from corehq.apps.users.xml import group_fixture
-from corehq.apps.sms.mixin import CommCareMobileContactMixin, VerifiedNumber, PhoneNumberInUseException
+from corehq.apps.sms.mixin import CommCareMobileContactMixin, VerifiedNumber, PhoneNumberInUseException, InvalidFormatException
 from couchforms.models import XFormInstance
 
 from dimagi.utils.couch.database import get_db
@@ -697,7 +697,8 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, UnicodeMixIn):
                             extended_info['dup_url'] = dup_url
                     except Exception, e:
                         pass
-
+                except InvalidFormatException:
+                    status = 'invalid'
             extended_info.update({'number': phone, 'status': status, 'contact': contact})
             return extended_info
         return [extend_phone(phone) for phone in self.phone_numbers]
