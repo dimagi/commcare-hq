@@ -110,10 +110,10 @@
     {% if editing_commcare_user %}
         <li><a href="#user-data" data-toggle="tab">Custom Registration Data</a></li>
     {% endif %}
-    {% if couch_user.user_id == request.couch_user.user_id and not couch_user.is_commcare_user %}
-        {% if proj_settings_form %}
+    {% if proj_settings_form %}
         <li><a href="#project-settings" data-toggle="tab">My Settings for this Project</a></li>
-        {% endif %}
+    {% endif %}
+    {% if couch_user.user_id == request.couch_user.user_id and not couch_user.is_commcare_user %}
         <li><a href="#domains" data-toggle="tab">My Projects</a></li>
     {% endif %}
     </ul>
@@ -217,12 +217,12 @@
             {% include "users/partial/user_data.html" %}
         </div>
         {% endif %}
-        {% if couch_user.user_id == request.couch_user.user_id and not couch_user.is_commcare_user %}
         {% if proj_settings_form %}
-        <div class="tab-pane" id="project-settings">
-            {% include "users/partial/project_settings.html" %}
-        </div>
+            <div class="tab-pane" id="project-settings">
+                {% include "users/partial/project_settings.html" %}
+            </div>
         {% endif %}
+        {% if couch_user.user_id == request.couch_user.user_id and not couch_user.is_commcare_user %}
         <div class="tab-pane" id="domains">
             {% include "users/partial/domain_accounts.html" %}
         </div>

@@ -101,7 +101,7 @@ class CreateTestCase(TestCase):
 
         self.assertEquals(webuser.is_member_of(domain), False)
         self.assertEquals(ccuser.is_member_of(domain), True)
-        self.assertEquals(ccuser.is_member_of(domain), True)
+        self.assertEquals(ccuser.get_domain_membership(domain).domain, domain)
 
 
     def _runCreateUserFromRegistrationTest(self):
