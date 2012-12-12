@@ -80,7 +80,7 @@ HOUSEHOLD_VISIT_QUESTION_IDS = dict(
 CHILD_CLOSE_FORM_QUESTION_IDS = dict(
     close_reason={
         'mvp-sauri': 'reason',
-        'mvp-potou': 'termination_reason',
+        'mvp-potou': 'reason',
         },
     date_of_death={
         'mvp-sauri': 'date_of_death',
@@ -91,7 +91,11 @@ CHILD_CLOSE_FORM_QUESTION_IDS = dict(
 PREGNANCY_CLOSE_FORM_QUESTION_IDS = dict(
     close_reason={
         'mvp-sauri': 'close_reason',
-        'mvp-potou': 'close_reason'
+        'mvp-potou': 'close_reason',
+    },
+    termination_reason={
+        'mvp-sauri': 'termination_reason',
+        'mvp-potou': 'termination_reason',
     },
     pregnancy_termination={
         'mvp-sauri': 'date_of_termination',
