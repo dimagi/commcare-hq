@@ -2193,6 +2193,10 @@ table th[class*="span"],
 .mvp-table tbody td {
   width: 5.5%;
 }
+.mvp-table tbody td.loading,
+.mvp-table tbody td.loading:nth-child(odd) {
+  background-color: #ffffff;
+}
 .mvp-table thead.affix {
   margin-top: -197px;
 }
