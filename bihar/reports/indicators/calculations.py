@@ -1,33 +1,171 @@
 from collections import defaultdict
 from couchdbkit import ResourceNotFound
-from bihar.reports.indicators.filters import A_MONTH, is_pregnant_mother, get_add, get_edd
+from bihar.reports.indicators.filters import A_MONTH, is_pregnant_mother, is_newborn_child, get_add, get_edd,\
+    mother_pre_delivery_columns, mother_post_delivery_columns
 from couchforms.safe_index import safe_index
 from dimagi.utils.parsing import string_to_datetime
 import datetime as dt
 from bihar.reports.indicators.visits import visit_is, get_related_prop
+from dimagi.utils.decorators.memoized import memoized
+from django.utils.translation import ugettext_noop
+from django.utils.translation import ugettext as _
 
 EMPTY = (0,0)
-GRACE_PERIOD = dt.timedelta(days=7)
 
+class CalculatorBase(object):
+    """
+    The public API for calculators. Which are used in both the indicator
+    list and the client list.
+    """
+    def get_columns(self):
+        raise NotImplementedError("Override this!")
+
+    @memoized
+    def as_row(self, case):
+        raise NotImplementedError("Override this!")
+
+    def filter(self, case):
+        raise NotImplementedError("Override this!")
+
+    @property
+    def sortkey(self):
+        # not having a sortkey shouldn't raise an exception so just
+        # default to something reasonable
+        return lambda case: case.name
+
+class FilterOnlyCalculator(CalculatorBase):
+    """
+    A class for indicators that are used only by the client list.
+    """
+    show_in_indicators = False
+    show_in_client_list = True
+
+class IndicatorCalculator(CalculatorBase):
+    """
+    A class that, given a case, can tell you that cases contributions to the
+    numerator and denominator of a particular indicator.
+    """
+    show_in_indicators = True
+    show_in_client_list = False
+
+    def numerator(self, case):
+        raise NotImplementedError("Override this!")
+
+    def denominator(self, case):
+        raise NotImplementedError("Override this!")
+
+    def filter(self, case):
+        return bool(self.denominator(case))
+
+    def _render(self, num, denom):
+        return "%s/%s" % (num, denom)
+
+    @memoized
+    def display(self, cases):
+        num = denom = 0
+        for case in cases:
+            denom_diff = self.denominator(case)
+            if denom_diff:
+                denom += denom_diff
+                num_diff = self.numerator(case)
+                assert num_diff <= denom_diff
+                # this is to prevent the numerator from ever passing the denominator
+                # though is probably not totally accurate
+                num += num_diff
+        return self._render(num, denom)
+
+class MemoizingFilterCalculator(FilterOnlyCalculator):
+    # to avoid decorators everywhere. there might be a smarter way to do this
+    @memoized
+    def filter(self, case):
+        return self._filter(case)
+
+class MemoizingCalculatorMixIn(object):
+    # same concept as MemoizingFilterCalculator
+
+    @memoized
+    def numerator(self, case):
+        return self._numerator(case)
+
+    @memoized
+    def denominator(self, case):
+        return self._denominator(case)
+
+class SummaryValueMixIn(object):
+    """
+    Meant to be used in conjunction with IndicatorCalculators, allows you to
+    define text that should show up in the client list if the numerator is
+    set, if the denominator is set, or neither is set.
+
+    Also provides sensible defaults.
+    """
+    numerator_text = ugettext_noop("Yes")
+    denominator_text = ugettext_noop("No")
+    neither_text = ugettext_noop("N/A")
+    summary_header = "Value?"
+
+    def summary_value(self, case):
+        if self.denominator(case):
+            return _(self.numerator_text) if self.numerator(case) \
+                else _(self.denominator_text)
+        return _(self.neither_text)
+
+class DoneDueMixIn(SummaryValueMixIn):
+    summary_header = ugettext_noop("Visit Status")
+    numerator_text = ugettext_noop("Done")
+    denominator_text = ugettext_noop("Due")
+
+class MotherPreDeliveryMixIn(object):
+    """
+    Meant to be used with IndicatorCalculators shared defaults for stuff that
+    shows up in the client list.
+    """
+    def get_columns(self):
+        return (_("Name"), _("Husband's Name"), _("EDD"))
+
+    def as_row(self, case):
+        return mother_pre_delivery_columns(case)
+
+    @property
+    def sortkey(self):
+        return lambda case: get_edd(case) or dt.datetime.max.date()
+
+class MotherPreDeliverySummaryMixIn(MotherPreDeliveryMixIn):
+    """
+    Meant to be used with MotherPreDeliveryMixIn and SummaryValueMixIn, to
+    provide extra shared defaults for clicking through the indicators.
+    """
+    def get_columns(self):
+        return super(MotherPreDeliverySummaryMixIn, self).get_columns() + (_(self.summary_header),)
+
+    def as_row(self, case):
+        return super(MotherPreDeliverySummaryMixIn, self).as_row(case) + (self.summary_value(case),)
+
+class MotherPostDeliveryMixIn(object):
+    def get_columns(self):
+        return (_("Name"), _("Husband's Name"), _("ADD"))
+
+    def as_row(self, case):
+        return mother_post_delivery_columns(case)
+
+    @property
+    def sortkey(self):
+        # hacky way to sort by reverse add
+        return lambda case: dt.datetime.today().date() - (get_add(case) or dt.datetime.max.date())
+
+class MotherPostDeliverySummaryMixIn(MotherPostDeliveryMixIn):
+    def get_columns(self):
+        return super(MotherPostDeliverySummaryMixIn, self).get_columns() + (_(self.summary_header),)
+
+    def as_row(self, case):
+        return super(MotherPostDeliverySummaryMixIn, self).as_row(case) + (self.summary_value(case),)
 
 def _num_denom(num, denom):
     return "%s/%s" % (num, denom)
 
-def _in_last_month(date):
-    today = dt.datetime.today().date()
-    return today - A_MONTH < date < today
-
 def _in_timeframe(date, days):
     today = dt.datetime.today().date()
     return today - dt.timedelta(days=days) < date < today
-
-def _mother_due_in_window(case, days):
-    get_visitduedate = lambda case: case.edd - dt.timedelta(days=days) + GRACE_PERIOD
-    return is_pregnant_mother(case) and get_edd(case) and _in_last_month(get_visitduedate(case))
-        
-def _mother_delivered_in_window(case, days):
-    get_visitduedate = lambda case: case.add + dt.timedelta(days=days) + GRACE_PERIOD
-    return is_pregnant_mother(case) and get_add(case) and _in_last_month(get_visitduedate(case))
 
 def _num_denom_count(cases, num_func, denom_func):
     num = denom = 0
@@ -42,15 +180,6 @@ def _num_denom_count(cases, num_func, denom_func):
             num += num_diff
     return _num_denom(num, denom)
 
-def _visits_due(case, schedule):
-    return [i + 1 for i, days in enumerate(schedule) \
-            if _mother_delivered_in_window(case, days)]
-
-def _visits_done(case, schedule, type):
-    due = _visits_due(case, schedule)
-    count = len(filter(lambda a: visit_is(a, type), case.actions))
-    return len([v for v in due if count > v])
-
 def _delivered_in_timeframe(case, days):
     return is_pregnant_mother(case) and get_add(case) and _in_timeframe(case.add, days)
 
@@ -58,220 +187,323 @@ def _delivered_at_in_timeframe(case, at, days):
     at = at if isinstance(at, list) else [at]
     return getattr(case, 'birth_place', None) in at and _delivered_in_timeframe(case, days)
 
+def _get_tob(case): # only guaranteed to be accurate within 24 hours
+    tob = get_related_prop(case, "time_of_birth") or get_add(case) # use add if time_of_birth can't be found
+    if isinstance(tob, dt.date):
+        tob = dt.datetime.combine(tob, dt.datetime.time(dt.datetime.now())) #convert date to dt.datetime
+    return tob
+
 def _get_time_of_visit_after_birth(case):
-    for action in case.actions:
-        if action.updated_unknown_properties.get("add", None):
-            return action.date
-    return None
+    form = _get_form(case, action_filter=lambda a: a.updated_unknown_properties.get("add", None))
+    return form.xpath('form/meta/timeStart')
 
 def _visited_in_timeframe_of_birth(case, days):
     visit_time = _get_time_of_visit_after_birth(case)
-    time_birth = get_related_prop(case, "time_of_birth") or get_add(case) # use add if time_of_birth can't be found
+    time_birth = _get_tob(case)
     if visit_time and time_birth:
-        if isinstance(time_birth, dt.date):
-            time_birth = dt.datetime.combine(time_birth, dt.datetime.time(dt.datetime.now())) #convert date to dt.datetime
         return time_birth < visit_time < time_birth + dt.timedelta(days=days)
     return False
 
-def _weak_babies(case): # :(
+def _get_actions(case, action_filter=lambda a: True):
+    for action in case.actions:
+        if action_filter(action):
+            yield action
+
+def _get_forms(case, action_filter=lambda a: True, form_filter=lambda f: True):
+    for action in _get_actions(case, action_filter=action_filter):
+        if getattr(action, 'xform', None) and form_filter(action.xform):
+            yield action.xform
+
+def _get_action(case, action_filter=lambda a: True):
+    """
+    returns the first action that passes through the action filter
+    """
+    ga = _get_actions(case, action_filter=action_filter)
+    try:
+        return ga.next()
+    except StopIteration:
+        return None
+
+def _get_form(case, action_filter=lambda a: True, form_filter=lambda f: True):
+    """
+    returns the first form that passes through both filter functions
+    """
+    gf = _get_forms(case, action_filter=action_filter, form_filter=form_filter)
+    try:
+        return gf.next()
+    except StopIteration:
+        return None
+
+def _get_prop_from_forms(case, property):
+    form = _get_form(case, form_filter=lambda f: f.form.get(property, None))
+    return form.form[property] if form else None
+
+def _get_xpath_from_forms(case, path):
+    form = _get_form(case, form_filter=lambda f: f.xpath("form/%s" % path))
+    return form.xpath("form/%s" % path) if form else None
+
+def _newborn(case, days=None): # :(
+    def af(action):
+        if not days:
+            return True
+        now = dt.datetime.now()
+        return now - dt.timedelta(days=days) <= action.date <= now
+
+    def recently_delivered(case):
+        return _get_form(case, action_filter=af, form_filter=lambda f: f.form.get('recently_delivered', "") == 'yes')
+
     return is_pregnant_mother(case) and\
-           (getattr(case, 'recently_delivered', None) == "yes" or get_related_prop(case, 'birth_status') == "live_birth")
+           (recently_delivered(case) or get_related_prop(case, 'birth_status') == "live_birth")
 
 
-    
+
 # NOTE: cases in, values out might not be the right API
 # but it's what we need for the first set of stuff.
 # might want to revisit.
 
 # NOTE: this is going to be slooooow
-def bp2_last_month(cases):
-    due = lambda case: 1 if _mother_due_in_window(case, 75) else 0
-    # make sure they've done 2 bp visits
-    done = lambda case: 1 if len(filter(lambda a: visit_is(a, 'bp'), case.actions)) >= 2 else 0
-    return _num_denom_count(cases, due, done)    
-    
-def bp3_last_month(cases):
-    due = lambda case: 1 if _mother_due_in_window(case, 45) else 0
-    # make sure they've done 2 bp visits
-    done = lambda case: 1 if len(filter(lambda a: visit_is(a, 'bp'), case.actions)) >= 3 else 0
-    return _num_denom_count(cases, due, done)    
-    
-def pnc_last_month(cases):
-    pnc_schedule = (1, 3, 6)
-    due = lambda case: len(_visits_due(case, pnc_schedule))
-    done = lambda case: _visits_done(case, pnc_schedule, "pnc")
-    return _num_denom_count(cases, done, due)
 
-def eb_last_month(cases):
-    eb_schedule = (14, 28, 60, 90, 120, 150)
-    due = lambda case: len(_visits_due(case, eb_schedule))
-    done = lambda case: _visits_done(case, eb_schedule, "eb")
-    return _num_denom_count(cases, done, due)
 
-def cf_last_month(cases):
-    cf_schedule_in_months = (6, 7, 8, 9, 12, 15, 18)
-    cf_schedule = (m * 30 for m in cf_schedule_in_months)
-    due = lambda case: len(_visits_due(case, cf_schedule))
-    done = lambda case: _visits_done(case, cf_schedule, "cf")
-    return _num_denom_count(cases, done, due)
+class HDDayCalculator(SummaryValueMixIn, MotherPreDeliverySummaryMixIn,
+                      MemoizingCalculatorMixIn, IndicatorCalculator):
 
-def hd_day(cases):
-    valid_cases = filter(lambda case: _delivered_at_in_timeframe(case, 'home', 30), cases)
-    denom = len(valid_cases)
-    num = len(filter(lambda case:_visited_in_timeframe_of_birth(case, 1) , valid_cases))
-    return _num_denom(num, denom)
+    def _numerator(self, case):
+        return 1 if _visited_in_timeframe_of_birth(case, 1) else 0
 
-def id_day(cases):
-    valid_cases = filter(lambda case: _delivered_at_in_timeframe(case, ['private', 'public'], 30), cases)
-    denom = len(valid_cases)
-    num = len(filter(lambda case:_visited_in_timeframe_of_birth(case, 1) , valid_cases))
-    return _num_denom(num, denom)
+    def _denominator(self, case):
+        return 1 if _delivered_at_in_timeframe(case, 'home', 30) else 0
 
-def idnb(cases):
-    valid_cases = filter(lambda case: _delivered_at_in_timeframe(case, ['private', 'public'], 30) and
-                                      get_related_prop(case, 'birth_status') == "live_birth", cases)
-    denom = len(valid_cases)
+class IDDayCalculator(HDDayCalculator):
 
-    def breastfed_hour(case):
-        dtf = get_related_prop(case, 'date_time_feed')
+    def _denominator(self, case):
+        return 1 if _delivered_at_in_timeframe(case, ['private', 'public'], 30) else 0
+
+class IDNBCalculator(IDDayCalculator):
+
+    def _denominator(self, case):
+        if super(IDNBCalculator, self)._denominator(case) and get_related_prop(case, 'birth_status') == "live_birth":
+            return 1
+        else:
+            return 0
+
+    def _numerator(self, case):
+        dtf = _get_prop_from_forms(case, 'date_time_feed')
         tob = get_related_prop(case, 'time_of_birth')
         if dtf and tob:
-            return dtf - tob <= dt.timedelta(hours=1)
-        return False
+            return 1 if dtf - tob <= dt.timedelta(hours=1) else 0
+        return 0
 
-    num = len(filter(lambda case: breastfed_hour(case), valid_cases))
-    return _num_denom(num, denom)
 
-def ptlb(cases, num_only=False):
-    valid_cases = filter(lambda case: _weak_babies(case), cases)
-    denom = len(valid_cases)
-    num = len(filter(lambda case: getattr(case, 'term', None) == "pre_term", valid_cases))
-    return _num_denom(num, denom) if not num_only else num
+class PTLBCalculator(SummaryValueMixIn, MotherPreDeliverySummaryMixIn,
+                     MemoizingCalculatorMixIn, IndicatorCalculator):
 
-def lt2kglb(cases, num_only=False):
-    valid_cases = filter(lambda case: _weak_babies(case), cases)
-    denom = len(valid_cases)
+    def _preterm(self, case):
+        return True if getattr(case, 'term', None) == "pre_term" else False
 
-    def over2(case):
-        w = get_related_prop(case, 'weight')
-        fw = get_related_prop(case, 'first_weight')
-        return (w is not None and w < 2.0) or (fw is not None and fw < 2.0)
+    def _numerator(self, case):
+        return 1 if self._preterm(case) else 0
 
-    num = len(filter(lambda case: over2(case), valid_cases))
-    return _num_denom(num, denom) if not num_only else num
+    def _denominator(self, case):
+        return 1 if _newborn(case, 30) else 0
+
+class LT2KGLBCalculator(PTLBCalculator): # should change name probs
+
+    def _lt2(self, case):
+        w = _get_xpath_from_forms(case, "child_info/weight")
+        fw = _get_xpath_from_forms(case, "child_info/first_weight")
+        return True if (w is not None and w < 2.0) or (fw is not None and fw < 2.0) else False
+
+    def _numerator(self, case):
+        return 1 if self._lt2(case) else 0
+
+class VWOCalculator(LT2KGLBCalculator):
+
+    def _weak_baby(self, case):
+        return True if _newborn(case, 30) and (self._preterm(case) or self._lt2(case)) else False
+
+    def _denominator(self, case):
+        return 1 if self._weak_baby(case) else 0
+
+    def _numerator(self, case):
+        return 1 if _visited_in_timeframe_of_birth(case, 1) else 0
+
+class SimpleListMixin(object):
+    def _render(self, num, denom):
+        return str(denom)
+
+    def _numerator(self, case):
+        return 0
+
+class S2SCalculator(SimpleListMixin, VWOCalculator):
+
+    def _denominator(self, case):
+        return 1 if self._weak_baby(case) and _get_xpath_from_forms(case, "child_info/skin_to_skin") == 'no' else 0
+
+class FVCalculator(S2SCalculator):
+
+    def _denominator(self, case):
+        return 1 if self._weak_baby(case) and _get_xpath_from_forms(case, "child_info/feed_vigour") == 'no' else 0
+
+class MMCalculator(SimpleListMixin, SummaryValueMixIn, MotherPreDeliverySummaryMixIn,
+                   MemoizingCalculatorMixIn, IndicatorCalculator):
+
+    def _action_within_timeframe(self, action, days):
+        now = dt.datetime.now()
+        return now - dt.timedelta(days=days) <= action.date <= now
+
+    def _denominator(self, case):
+        def afn(a):
+            return self._action_within_timeframe(a, 30) and a.updated_known_properties.get('mother_alive', None) == "no"
+
+        if is_pregnant_mother(case):
+            action = _get_action(case, action_filter=afn)
+            return 1 if action else 0
+        return 0
+
+class IMCalculator(MMCalculator):
+
+    def _denominator(self, case):
+        def afn(a):
+            return self._action_within_timeframe(a, 30) and a.updated_known_properties.get('child_alive', None) == "no"
+
+        if is_newborn_child(case):
+            action = _get_action(case, action_filter=afn)
+            return 1 if action else 0
+        return 0
 
 def _get_time_of_birth(form):
     try:
-        time_of_birth = form.xpath('form/data/child_info/case/update/time_of_birth')
+        time_of_birth = form.xpath('form/child_info/case/update/time_of_birth')
         assert time_of_birth is not None
     except AssertionError:
         time_of_birth = safe_index(
-            form.xpath('form/data/child_info')[0],
+            form.xpath('form/child_info')[0],
             'case/update/time_of_birth'.split('/')
         )
     return time_of_birth
 
-def complications(cases, days, now=None):
+class ComplicationsCalculator(SummaryValueMixIn, MotherPreDeliverySummaryMixIn,
+    MemoizingCalculatorMixIn, IndicatorCalculator):
     """
-    DENOM: [
-        any DELIVERY forms with (
-            /data/complications = 'yes'
-        ) in last 30 days
-        PLUS any PNC forms with ( # 'any applicable from PNC forms with' (?)
-            /data/abdominal_pain ='yes' or
-            /data/bleeding = 'yes' or
-            /data/discharge = 'yes' or
-            /data/fever = 'yes' or
-            /data/pain_urination = 'yes'
-        ) in the last 30 days
-        PLUS any REGISTRATION forms with (
-            /data/abd_pain ='yes' or    # == abdominal_pain
-            /data/fever = 'yes' or
-            /data/pain_urine = 'yes' or    # == pain_urination
-            /data/vaginal_discharge = 'yes'    # == discharge
-        ) with /data/add in last 30 days
-        PLUS any EBF forms with (
-            /data/abdominal_pain ='yes' or
-            /data/bleeding = 'yes' or
-            /data/discharge = 'yes' or
-            /data/fever = 'yes' or
-            /data/pain_urination = 'yes'
-        ) in last 30 days    # note, don't exist in EBF yet, but will shortly
-    ]
-    NUM: [
-        filter (
-            DELIVERY ? form.meta.timeStart - /data/child_info/case/update/time_of_birth,
-            REGISTRATION|PNC|EBF ? form.meta.timeStart - case.add
-        ) < `days` days
-    ]
+        DENOM: [
+            any DELIVERY forms with (
+                complications = 'yes'
+            ) in last 30 days
+            PLUS any PNC forms with ( # 'any applicable from PNC forms with' (?)
+                abdominal_pain ='yes' or
+                bleeding = 'yes' or
+                discharge = 'yes' or
+                fever = 'yes' or
+                pain_urination = 'yes'
+            ) in the last 30 days
+            PLUS any REGISTRATION forms with (
+                abd_pain ='yes' or    # == abdominal_pain
+                fever = 'yes' or
+                pain_urine = 'yes' or    # == pain_urination
+                vaginal_discharge = 'yes'    # == discharge
+            ) with add in last 30 days
+            PLUS any EBF forms with (
+                abdominal_pain ='yes' or
+                bleeding = 'yes' or
+                discharge = 'yes' or
+                fever = 'yes' or
+                pain_urination = 'yes'
+            ) in last 30 days    # note, don't exist in EBF yet, but will shortly
+        ]
+        NUM: [
+            filter (
+                DELIVERY ? form.meta.timeStart - child_info/case/update/time_of_birth,
+                REGISTRATION|PNC|EBF ? form.meta.timeStart - case.add
+            ) < `days` days
+        ]
     """
     #https://bitbucket.org/dimagi/cc-apps/src/caab8f93c1e48d702b5d9032ef16c9cec48868f0/bihar/mockup/bihar_pnc.xml
     #https://bitbucket.org/dimagi/cc-apps/src/caab8f93c1e48d702b5d9032ef16c9cec48868f0/bihar/mockup/bihar_del.xml
     #https://bitbucket.org/dimagi/cc-apps/src/caab8f93c1e48d702b5d9032ef16c9cec48868f0/bihar/mockup/bihar_registration.xml
     #https://bitbucket.org/dimagi/cc-apps/src/caab8f93c1e48d702b5d9032ef16c9cec48868f0/bihar/mockup/bihar_ebf.xml
-    now = now or dt.datetime.utcnow()
+
     PNC = 'http://bihar.commcarehq.org/pregnancy/pnc'
     DELIVERY = 'http://bihar.commcarehq.org/pregnancy/del'
     REGISTRATION = 'http://bihar.commcarehq.org/pregnancy/registration'
     EBF = 'https://bitbucket.org/dimagi/cc-apps/src/caab8f93c1e48d702b5d9032ef16c9cec48868f0/bihar/mockup/bihar_ebf.xml'
     _pnc_ebc_complications = [
-        '/data/abdominal_pain',
-        '/data/bleeding',
-        '/data/discharge',
-        '/data/fever',
-        '/data/pain_urination',
-        ]
+        'abdominal_pain',
+        'bleeding',
+        'discharge',
+        'fever',
+        'pain_urination',
+    ]
     complications_by_form = {
         DELIVERY: [
-            '/data/complications'
+            'complications'
         ],
         PNC: _pnc_ebc_complications,
         EBF: _pnc_ebc_complications,
         REGISTRATION: [
-            '/data/abd_pain',
-            '/data/fever',
-            '/data/pain_urine',
-            '/data/vaginal_discharge',
-            ],
-        }
+            'abd_pain',
+            'fever',
+            'pain_urine',
+            'vaginal_discharge',
+        ],
+    }
+    show_in_client_list = True
+    show_in_indicators = True
 
-    debug = defaultdict(int)
-    def get_forms(case, days=30):
+    def __init__(self, days, now=None):
+        super(ComplicationsCalculator, self).__init__()
+        self.now = now or dt.datetime.utcnow()
+        self.days = dt.timedelta(days=days)
+
+    def _numerator(self, case):
+        return self._calculate_both(case)[0]
+
+    def _denominator(self, case):
+        return self._calculate_both(case)[1]
+
+    @property
+    def summary_header(self):
+        if self.days.days > 1:
+            return _("Identified in %s days") % self.days.days
+        else:
+            return _("Identified in %s hours") % (self.days.days*24)
+
+    @memoized
+    def get_forms(self, case, days=30):
+        xform_ids = set()
         for action in case.actions:
-            debug['forms_scanned'] +=1
-            if now - dt.timedelta(days=days) <= action.date <= now:
-                debug['submitted_in_time'] +=1
-                try:
-                    yield action.xform
-                except ResourceNotFound:
-                    debug['bad_xform_refs'] += 1
+            if action.xform_id not in xform_ids:
+                xform_ids.add(action.xform_id)
+                if self.now - dt.timedelta(days=days) <= action.date <= self.now:
+                    try:
+                        yield action.xform
+                    except ResourceNotFound:
+                        pass
 
-    done = 0
-    due = 0
-    days = dt.timedelta(days=days)
-    for case in cases:
-        for form in get_forms(case):
+    def get_forms_with_complications(self, case):
+        for form in self.get_forms(case):
             try:
-                complication_paths = complications_by_form[form.xmlns]
+                complication_paths = self.complications_by_form[form.xmlns]
             except KeyError:
                 continue
-            debug['relevent_xmlns'] += 1
-            for p in complication_paths:
-                has_complications = form.xpath('form/data/complications')
-                if has_complications == 'no':
-                    debug['%s complications is no' % form.xmlns.split('/')[-1]] += 1
-                elif has_complications is None:
-                    debug['%s complications dne' % form.xmlns.split('/')[-1]] += 1
+            else:
+                for p in complication_paths:
+                    if form.xpath('form/' + p) == 'yes':
+                        yield form
+
+    @memoized
+    def _calculate_both(self, case):
+        has_complication = False
+        has_recent_complication = False
+        if case.type == 'cc_bihar_pregnancy':
+            for form in self.get_forms_with_complications(case):
+                has_complication = True
+                if form.xmlns == self.DELIVERY:
+                    add = _get_time_of_birth(form)
                 else:
-                    debug['has_complications'] += 1
-                print form.get_id, p, form.xpath('form' + p)
-                if form.xpath('form' + p) == 'yes':
-                    due += 1
-                    if form.xmlns == DELIVERY:
-                        add = _get_time_of_birth(form)
-                    else:
-                        add = get_add(case)
-                    add = string_to_datetime(add)
-                    if form.metatdata.timeStart - add < days:
-                        done += 1
-    return "%s/%s,<br/>debug: %s" % (done, due, dict(debug))
+                    add = get_add(case)
+                add = string_to_datetime(add)
+                if form.metadata.timeStart - add < self.days:
+                    has_recent_complication = True
+                    break
+
+        return has_recent_complication, has_complication

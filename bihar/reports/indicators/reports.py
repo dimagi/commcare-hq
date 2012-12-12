@@ -1,82 +1,31 @@
-from bihar.reports.indicators import INDICATOR_SETS, IndicatorConfig
 from bihar.reports.supervisor import BiharNavReport, MockEmptyReport, \
-    url_and_params, SubCenterSelectionReport, BiharSummaryReport, \
-    ConvenientBaseMixIn, GroupReferenceMixIn, list_prompt
+    url_and_params, BiharSummaryReport, \
+    ConvenientBaseMixIn, GroupReferenceMixIn, list_prompt, shared_bihar_context,\
+    team_member_context
 from copy import copy
-from corehq.apps.reports.generic import GenericTabularReport
+from corehq.apps.reports.generic import GenericTabularReport, summary_context
 from corehq.apps.reports.standard import CustomProjectReport
 from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.html import format_html
 from django.utils.translation import ugettext as _, ugettext_noop
+from bihar.reports.indicators.mixins import IndicatorSetMixIn, IndicatorMixIn
 
 DEFAULT_EMPTY = "?"
 
-class IndicatorConfigMixIn(object):
-    @property
-    def indicator_config(self):
-        return IndicatorConfig(INDICATOR_SETS)
-    
-class IndicatorSetMixIn(object):
-    
-    @property
-    def indicator_set_slug(self):
-        return self.request_params.get("indicators")
-    
-    @property
-    def indicator_set(self):
-        return IndicatorConfig(INDICATOR_SETS).get_indicator_set(self.indicator_set_slug)
-
-class IndicatorMixIn(IndicatorSetMixIn):
-    
-    @property
-    def type_slug(self):
-        return self.request_params.get("indicator_type")
-
-    @property
-    def indicator_slug(self):
-        return self.request_params.get("indicator")
-
-    @property
-    def indicator(self):
-        return self.indicator_set.get_indicator(self.type_slug, self.indicator_slug)
-        
-        
 class IndicatorNav(GroupReferenceMixIn, BiharNavReport):
     name = ugettext_noop("Indicator Options")
     slug = "indicatornav"
     description = ugettext_noop("Indicator navigation")
     preserve_url_params = True
+    report_template_path = "bihar/team_listing_tabular.html"
     
+    extra_context_providers = [shared_bihar_context, summary_context, team_member_context]
     @property
     def reports(self):
         return [IndicatorClientSelectNav, IndicatorSummaryReport,
                 # IndicatorCharts
                 ]
 
-class IndicatorSelectNav(BiharSummaryReport, IndicatorConfigMixIn):
-    name = ugettext_noop("Select Indicator Category")
-    slug = "teams"
-    
-    @property
-    def _headers(self):
-        return [" "] * len(self.indicator_config.indicator_sets)
-    
-    @property
-    def data(self):
-        def _nav_link(i, indicator_set):
-            params = copy(self.request_params)
-            params["indicators"] = indicator_set.slug
-            params["next_report"] = IndicatorNav.slug
-            return format_html(u'<a href="{next}">{val}</a>',
-                val=list_prompt(i, indicator_set.name),
-                next=url_and_params(
-                    SubCenterSelectionReport.get_url(domain=self.domain,
-                                                     render_as=self.render_next),
-                    params
-            ))
-        return [_nav_link(i, iset) for i, iset in enumerate(self.indicator_config.indicator_sets)]
-
-    
 class IndicatorSummaryReport(GroupReferenceMixIn, BiharSummaryReport, IndicatorSetMixIn):
     
     name = ugettext_noop("Indicators")
@@ -85,7 +34,7 @@ class IndicatorSummaryReport(GroupReferenceMixIn, BiharSummaryReport, IndicatorS
 
     @property
     def summary_indicators(self):
-        return self.indicator_set.get_indicators("summary")
+        return [i for i in self.indicator_set.get_indicators() if i.show_in_indicators]
     
     @property
     def _headers(self):
@@ -94,11 +43,25 @@ class IndicatorSummaryReport(GroupReferenceMixIn, BiharSummaryReport, IndicatorS
     @property
     @memoized
     def data(self):
+        def _nav_link(indicator):
+            params = copy(self.request_params)
+            params['indicator'] = indicator.slug
+            del params['next_report']
+            return format_html(u'<a href="{next}">{val}</a>',
+                val=self.get_indicator_value(indicator),
+                next=url_and_params(
+                    IndicatorClientList.get_url(self.domain, 
+                                                render_as=self.render_next),
+                    params
+            ))
+        
         return [self.group.name] + \
-               [self.get_indicator_value(i) for i in self.summary_indicators]
+               [_nav_link(i) for i in self.summary_indicators]
 
 
     def get_indicator_value(self, indicator):
+        if indicator.calculation_class:
+            return indicator.calculation_class.display(self.cases)
         if indicator.calculation_function:
             return indicator.calculation_function(self.cases)
         return "not available yet"
@@ -116,7 +79,7 @@ class IndicatorClientSelectNav(GroupReferenceMixIn, BiharSummaryReport, Indicato
     _indicator_type = "client_list"
     @property
     def indicators(self):
-        return self.indicator_set.get_indicators(self._indicator_type)
+        return [i for i in self.indicator_set.get_indicators() if i.show_in_client_list]
     
     @property
     def _headers(self):
@@ -128,7 +91,6 @@ class IndicatorClientSelectNav(GroupReferenceMixIn, BiharSummaryReport, Indicato
             params = copy(self.request_params)
             params["indicators"] = self.indicator_set.slug
             params["indicator"] = indicator.slug
-            params["indicator_type"] = self._indicator_type
             
             # params["next_report"] = IndicatorNav.slug
             return format_html(u'<a href="{next}">{val}</a>',
@@ -159,16 +121,21 @@ class IndicatorClientList(GroupReferenceMixIn, ConvenientBaseMixIn,
 
     @property
     def _headers(self):
-        return [_(c) for c in self.indicator.columns]
+        return [_(c) for c in self.indicator.get_columns()]
 
     @property
     def sorted_cases(self):
-        if self.indicator.sortkey:
+        if self.indicator.calculation_class:
+            return sorted(self.cases, key=self.indicator.calculation_class.sortkey)
+        elif self.indicator.sortkey:
+            # TODO: remove
             return sorted(self.cases, key=self.indicator.sortkey, reverse=True)
         
         return self.cases
     
     def _filter(self, case):
+        if self.indicator and self.indicator.calculation_class:
+            return self.indicator.calculation_class.filter(case)
         if self.indicator and self.indicator.filter_function:
             return self.indicator.filter_function(case)
         else:
@@ -181,6 +148,11 @@ class IndicatorClientList(GroupReferenceMixIn, ConvenientBaseMixIn,
         
     @property
     def rows(self):
-        return [self.indicator.row_function(c) for c in self._get_clients()]
+        def _row(case):
+            if self.indicator.calculation_class:
+                return self.indicator.calculation_class.as_row(case)
+            else:
+                return self.indicator.row_function(case)
+        return [_row(c) for c in self._get_clients()]
     
         

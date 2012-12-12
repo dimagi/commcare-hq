@@ -1,4 +1,4 @@
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, date
 from bihar.reports.indicators.reports import DEFAULT_EMPTY
 from bihar.reports.indicators.visits import has_visit
 
@@ -10,6 +10,9 @@ A_MONTH = timedelta(days=30)
 
 def is_pregnant_mother(case):
     return case.type == "cc_bihar_pregnancy"
+
+def is_newborn_child(case):
+    return case.type == "cc_bihar_newborn"
  
 def created_last_month(case):
     return case.opened_on > datetime.today() - A_MONTH
@@ -48,7 +51,7 @@ def delivered_last_month(case):
     def _delivered_last_month(case):
         add = get_add(case)
         return add and add > datetime.today().date() - A_MONTH
-         
+
     return is_pregnant_mother(case) and _delivered_last_month(case)
 
 def due_next_month(case):
@@ -76,16 +79,20 @@ def mother_post_delivery_columns(case):
     return (case.name, getattr(case, "husband_name", DEFAULT_EMPTY),
             getattr(case, "add", DEFAULT_EMPTY))
 
+def get_date_attr(case, attr):
+    value = getattr(case, attr, None)
+    if not isinstance(value, datetime) and not isinstance(value, date):
+        value = None
+    return value
+
 def get_edd(case):
-    return getattr(case, 'edd', None)
+    return get_date_attr(case, 'edd')
 
 def get_add(case):
-    return getattr(case, 'add', None)
+    return get_date_attr(case, 'add')
 
 def get_edd_sortkey(case):
     return get_edd(case) or datetime(1970,1,1).date()
     
 def get_add_sortkey(case):
     return get_add(case) or datetime(1970,1,1).date()
-    
-
