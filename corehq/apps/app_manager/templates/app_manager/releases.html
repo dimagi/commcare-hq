@@ -185,7 +185,10 @@
                     </td>
                     {% if edit %}
                     <td>
-                        <button class="btn" data-bind="openModal: 'revert-build-modal-template'">Revert</button>
+                        <button class="btn" data-bind="
+                            openModal: 'revert-build-modal-template',
+                            visible: version() !== $root.appVersion()
+                        ">Revert</button>
                     </td>
                     {% endif %}
                     <td>
