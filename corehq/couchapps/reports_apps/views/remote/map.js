@@ -8,7 +8,7 @@ function (doc) {
                 langs: doc.langs,
             },
             profile_url: doc.profile_url,
-            is_deleted: !!(doc.doc_type === "RemoteApp-Deleted"),
+            is_deleted: doc.doc_type === "RemoteApp-Deleted",
         };
         var status = (emit_entry.is_deleted) ? "deleted" : "active";
         emit(["", doc.domain, doc._id], emit_entry);

@@ -64,21 +64,25 @@ class MultiFormDrilldownMixin(object):
             return selected_forms
 
         # filter this result by submissions within this time frame
-        by_submission_time = True
-        if hasattr(self, 'by_submission_time'):
-            by_submission_time = self.by_submission_time
-        key = make_form_couch_key(self.domain, by_submission_time=by_submission_time)
+        key = make_form_couch_key(self.domain, by_submission_time=getattr(self, 'by_submission_time', True))
         data = get_db().view('reports_forms/all_forms',
             reduce=False,
             startkey=key+[self.datespan.startdate_param_utc],
             endkey=key+[self.datespan.enddate_param_utc],
         ).all()
-        all_xmlns = set([FormsByApplicationFilter.xmlns_app_key(d['value']['xmlns'], d['value']['app_id']) for d in data])
-        fuzzy_xmlns = set([k for k in selected_forms.keys() if FormsByApplicationFilter.fuzzy_slug in k])
 
-        relevant_xmlns = all_xmlns.intersection(set(selected_forms.keys()))
-        relevant_xmlns = relevant_xmlns.union(fuzzy_xmlns)
-        return dict([(k, selected_forms[k]) for k in relevant_xmlns])
+        all_submitted_forms = set([FormsByApplicationFilter.make_xmlns_app_key(d['value']['xmlns'], d['value']['app_id'])
+                                   for d in data])
+        relevant_forms = all_submitted_forms.intersection(set(selected_forms.keys()))
+
+        all_submitted_xmlns = [d['value']['xmlns'] for d in data]
+        fuzzy_xmlns = set([k for k in selected_forms.keys()
+                           if (FormsByApplicationFilter.fuzzy_slug in k and
+                               FormsByApplicationFilter.split_xmlns_app_key(k, only_xmlns=True) in all_submitted_xmlns)])
+
+
+        relevant_forms = relevant_forms.union(fuzzy_xmlns)
+        return dict([(k, selected_forms[k]) for k in relevant_forms])
 
 
 class CompletionOrSubmissionTimeMixin(object):
@@ -346,7 +350,7 @@ class SubmissionsByFormReport(WorkerMonitoringReportTableBase, MultiFormDrilldow
 
 class DailyFormStatsReport(WorkerMonitoringReportTableBase, CompletionOrSubmissionTimeMixin, DatespanMixin):
     slug = "daily_form_stats"
-    name = "Daily Form Statistics"
+    name = ugettext_noop("Daily Form Activity")
 
     fields = ['corehq.apps.reports.fields.FilterUsersField',
                 'corehq.apps.reports.fields.GroupField',
@@ -419,7 +423,7 @@ class DailyFormStatsReport(WorkerMonitoringReportTableBase, CompletionOrSubmissi
 
 
 class FormCompletionTimeReport(WorkerMonitoringReportTableBase, DatespanMixin):
-    name = ugettext_noop("Form Completion Time")
+    name = ugettext_noop("Form Statistics")
     slug = "completion_times"
     fields = ['corehq.apps.reports.fields.FilterUsersField',
               'corehq.apps.reports.fields.GroupField',

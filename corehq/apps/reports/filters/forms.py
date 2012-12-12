@@ -177,7 +177,7 @@ class FormsByApplicationFilter(BaseDrilldownOptionFilter):
             group=True,
             group_level=4,
         ).all()
-        all_submitted = set([self.xmlns_app_key(d['key'][-2], d['key'][-1]) for d in data])
+        all_submitted = set(self.get_xmlns_app_keys(data))
         from_apps = set(self.application_forms)
         return list(all_submitted.union(from_apps))
 
@@ -189,7 +189,7 @@ class FormsByApplicationFilter(BaseDrilldownOptionFilter):
             id with certainty.
         """
         data = self._raw_data(["xmlns app", self.domain], group=True)
-        all_forms = [self.xmlns_app_key(d['key'][-2], d['key'][-1]) for d in data]
+        all_forms = self.get_xmlns_app_keys(data)
         return all_forms
 
     @property
@@ -419,7 +419,7 @@ class FormsByApplicationFilter(BaseDrilldownOptionFilter):
     @property
     @memoized
     def hide_fuzzy_results(self):
-        return bool(self.request.GET.get('%s_%s' % (self.slug, self.fuzzy_slug)) == 'yes')
+        return self.request.GET.get('%s_%s' % (self.slug, self.fuzzy_slug)) == 'yes'
 
     @property
     @memoized
@@ -500,12 +500,13 @@ class FormsByApplicationFilter(BaseDrilldownOptionFilter):
             Returns the raw form data based on the current filter selection.
         """
         if not filter_results:
+            print "getting all data"
             data = []
             if self.application_forms:
                 key = ["app module form", self.domain]
                 data.extend(self._raw_data(key))
             if self.remote_forms:
-                data.extend([dict(value=v) for v in self.remote_forms.values()])
+                data.extend([{'value': v} for v in self.remote_forms.values()])
             return data
 
         use_remote_form_data = bool((filter_results[0]['slug'] == 'status' and filter_results[0]['value'] == 'remote') or
@@ -516,13 +517,14 @@ class FormsByApplicationFilter(BaseDrilldownOptionFilter):
             app_id = filter_results[-3]['value']
             if use_remote_form_data:
                 app_id = app_id if app_id != self.unknown_remote_app_id else {}
-                data = [{'value': self.remote_forms[self.xmlns_app_key(xmlns, app_id)]}]
+                data = [{'value': self.remote_forms[self.make_xmlns_app_key(xmlns, app_id)]}]
             else:
                 status = filter_results[0]['value'] if filter_results[0]['slug'] == 'status' else 'active'
                 key = ["status xmlns app", self.domain, status, filter_results[-1]['value'], filter_results[-3]['value']]
                 data = self._raw_data(key)
         else:
             data = []
+
             if use_remote_form_data:
                 all_forms = []
                 if filter_results[-1]['slug'] == 'module':
@@ -540,9 +542,10 @@ class FormsByApplicationFilter(BaseDrilldownOptionFilter):
                     except KeyError:
                         pass
                 app_id = app_id if app_id != self.unknown_remote_app_id else {}
-                data.extend([dict(value=self.remote_forms[self.xmlns_app_key(f['xmlns'], app_id)]) for f in all_forms])
+                data.extend([{'value': self.remote_forms[self.make_xmlns_app_key(f['xmlns'], app_id)]} for f in all_forms])
+
             if (self.application_forms and
-                (filter_results[0]['slug'] == 'status' and filter_results[0]['value'] != 'remote')):
+                not (filter_results[0]['slug'] == 'status' and filter_results[0]['value'] == 'remote')):
                 prefix = "app module form"
                 key = [self.domain]
                 if filter_results[0]['slug'] == 'status':
@@ -562,34 +565,40 @@ class FormsByApplicationFilter(BaseDrilldownOptionFilter):
         """
             Returns the appropriate form information based on the current filter selection.
         """
+        def _generate_report_app_info(xmlns, app_id, name, is_fuzzy=False, is_remote=False):
+            return {
+                'xmlns': xmlns,
+                'app_id': app_id,
+                'name': name,
+                'is_fuzzy': is_fuzzy,
+                'is_remote': is_remote
+            }
+
         result = {}
         if self.show_unknown:
             all_unknown = [self.selected_unknown_xmlns] if self.selected_unknown_xmlns else self.unknown_forms
             for form in all_unknown:
                 xmlns, app_id = self.split_xmlns_app_key(form)
                 if form not in result:
-                    result[xmlns] = {
-                        'xmlns': xmlns,
-                        'app_id': None if self.selected_unknown_xmlns else app_id,
-                        'name': "%s; ID: %s" % (self.get_unknown_form_name(xmlns), xmlns),
-                        'is_fuzzy': False,
-                        'is_remote': False,
-                    }
+                    result[xmlns] = _generate_report_app_info(
+                        xmlns,
+                        None if self.selected_unknown_xmlns else app_id,
+                        "%s; ID: %s" % (self.get_unknown_form_name(xmlns), xmlns)
+                    )
         else:
             data = self.get_filtered_data(filter_results)
             for line in data:
                 app = line['value']
                 app_id = app['app']['id']
                 app_id = app_id if app_id != self.unknown_remote_app_id else {}
-                xmlns_app = self.xmlns_app_key(app['xmlns'], app_id)
+                xmlns_app = self.make_xmlns_app_key(app['xmlns'], app_id)
                 if xmlns_app not in result:
-                    result[xmlns_app] = {
-                        'xmlns': app['xmlns'],
-                        'app_id': app_id,
-                        'name': self.formatted_name_from_app(app),
-                        'is_fuzzy': False,
-                        'is_remote': app.get('is_remote', False)
-                    }
+                    result[xmlns_app] = _generate_report_app_info(
+                        app['xmlns'],
+                        app_id,
+                        self.formatted_name_from_app(app),
+                        is_remote=app.get('is_remote', False),
+                    )
 
             if self.fuzzy_forms and not self.hide_fuzzy_results:
                 selected_xmlns = [r['xmlns'] for r in result.values()]
@@ -597,13 +606,12 @@ class FormsByApplicationFilter(BaseDrilldownOptionFilter):
                 for xmlns, info in self.fuzzy_form_data.items():
                     for app_map in info['apps']:
                         if xmlns in selected_xmlns and app_map['app']['id'] in selected_apps:
-                            result["%s %s" % (xmlns, self.fuzzy_slug)] = {
-                                'xmlns': xmlns,
-                                'app_id': info['unknown_id'],
-                                'name': "%s [Fuzzy Submissions]" % self.formatted_name_from_app(app_map),
-                                'is_fuzzy': True,
-                                'is_remote': False,
-                            }
+                            result["%s %s" % (xmlns, self.fuzzy_slug)] = _generate_report_app_info(
+                                xmlns,
+                                info['unknown_id'],
+                                "%s [Fuzzy Submissions]" % self.formatted_name_from_app(app_map),
+                                is_fuzzy=True,
+                            )
         return result
 
     def _raw_data(self, startkey, endkey=None, reduce=False, group=False):
@@ -617,7 +625,11 @@ class FormsByApplicationFilter(BaseDrilldownOptionFilter):
         ).all()
 
     @classmethod
-    def xmlns_app_key(cls, xmlns, app_id):
+    def get_xmlns_app_keys(cls, data):
+        return [cls.make_xmlns_app_key(d['key'][-2], d['key'][-1]) for d in data]
+
+    @classmethod
+    def make_xmlns_app_key(cls, xmlns, app_id):
         """
             Uniquely identify a form with an xmlns+app_id pairing so that we can split fuzzy-matched data from
             non-fuzzy data.
@@ -629,7 +641,7 @@ class FormsByApplicationFilter(BaseDrilldownOptionFilter):
     @classmethod
     def split_xmlns_app_key(cls, key, only_xmlns=False):
         """
-            Takes an unique xmlns+app_id key generated by xmlns_app_key and spits out the xmlns and app_id.
+            Takes an unique xmlns+app_id key generated by make_xmlns_app_key and spits out the xmlns and app_id.
         """
         if key is None:
             return key

@@ -9,7 +9,7 @@ $(function() {
     });
 });
 
-$.fn.hqHelp = function (options) {
+$.fn.hqHelp = function () {
     var self = this;
     self.each(function(i) {
         var $helpElem = $($(self).get(i));
