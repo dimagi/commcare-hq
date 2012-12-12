@@ -330,7 +330,7 @@ class ReportConfig(Document):
 
         request.GET = QueryDict(self.query_string + '&filterSet=true')
 
-        response = self._dispatcher.dispatch(request, render_as='static',
+        response = self._dispatcher.dispatch(request, render_as='email',
                                              **self.view_kwargs)
         return json.loads(response.content)['report']
 
