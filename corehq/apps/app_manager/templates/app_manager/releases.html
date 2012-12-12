@@ -201,10 +201,29 @@
                     </td>
                 </tr>
             </tbody>
+            <tbody>
+                <tr>
+                    <td colspan="9">
+                        <div data-bind="visible: fetchState() === 'pending', css: {hidden: false}" class="hidden">
+                            <img src="{% static 'hqwebapp/img/ajax-loader.gif' %}"/>
+                        </div>
+                        <div data-bind="visible: fetchState() === 'error', css: {hidden: false}" class="hidden">
+                            <div class="alert alert-error">
+                                {% trans "Whoops, we couldn't get those builds for you. Could you try that again?" %}
+                            </div>
+                        </div>
+                        <div data-bind="visible: fetchState() !== 'pending' && !doneFetching(), css: {hidden: false}" class="hidden">
+                            <a href="#" class="btn" data-bind="click: getMoreSavedApps">{% trans "View More" %}</a>
+                        </div>
+                        <div data-bind="visible: doneFetching() && !savedApps().length, css: {hidden: false}" class="hidden">
+                            <div class="alert alert-info">
+                                {% trans "This application currently has no builds" %}
+                            </div>
+                        </div>
+                    </td>
+                </tr>
+            </tbody>
         </table>
-        <div data-bind="visible: savedApps().length && !doneFetching(), css: {hidden: false}" class="hidden">
-            <a href="#" class="btn" data-bind="click: getMoreSavedApps">{% trans "View More" %}</a>
-        </div>
         <script type="text/html" id="delete-build-modal-template">
             <div class="modal-header">
                 <a href="#" class="close" data-dismiss="modal">×</a>
