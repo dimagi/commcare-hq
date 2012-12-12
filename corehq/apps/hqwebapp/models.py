@@ -1,5 +1,6 @@
 from django.template.loader import render_to_string
 from django.utils.safestring import mark_safe, mark_for_escaping
+from corehq.apps.users.views import _redirect_users_to
 from dimagi.utils.couch.database import get_db
 from dimagi.utils.decorators.memoized import memoized
 from django.core.urlresolvers import reverse
@@ -178,8 +179,13 @@ class MessagesMenuItem(DropdownMenuItem):
 
 
 class ProjectSettingsMenuItem(DropdownMenuItem):
-    view = "corehq.apps.settings.views.default"
+    view = "corehq.apps.users.views.users"
     css_id = "project_settings"
+
+    @property
+    @memoized
+    def url(self):
+        return _redirect_users_to(self.request, self.domain)
 
     @property
     @memoized
