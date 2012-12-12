@@ -1,6 +1,8 @@
 import datetime
+from django.http import HttpResponse
 from django.utils.safestring import mark_safe
 import logging
+import json
 import numpy
 import pytz
 from corehq.apps.indicators.models import DynamicIndicatorDefinition, CombinedCouchViewIndicatorDefinition
@@ -17,6 +19,7 @@ class HealthCoordinatorReport(MVPIndicatorReport):
     hide_filters = True
     fields = ['corehq.apps.reports.fields.FilterUsersField',
               'corehq.apps.reports.fields.GroupField']
+    emailable = False
 
     @property
     def timezone(self):
@@ -24,15 +27,16 @@ class HealthCoordinatorReport(MVPIndicatorReport):
 
     @property
     def report_context(self):
-        report_matrix = list()
+        report_matrix = []
         month_headers = None
         for category_group in self.indicator_slugs:
-            category_indicators = list()
+            category_indicators = []
             total_rowspan = 0
             for slug in category_group['indicator_slugs']:
                 indicator = DynamicIndicatorDefinition.get_current(MVP.NAMESPACE, self.domain, slug, wrap_correctly=True)
                 if indicator:
-                    retrospective = indicator.get_monthly_retrospective(user_ids=self.user_ids)
+#                    retrospective = indicator.get_monthly_retrospective(user_ids=self.user_ids)
+                    retrospective = indicator.get_monthly_retrospective(return_only_dates=True)
                     if not month_headers:
                         month_headers = self.get_month_headers(retrospective)
 
@@ -42,17 +46,19 @@ class HealthCoordinatorReport(MVPIndicatorReport):
                     else:
                         table = self.get_indicator_row(retrospective)
                         indicator_rowspan = 1
+
                     total_rowspan += indicator_rowspan + 1
                     category_indicators.append(dict(
                         title=indicator.description,
-                        values=retrospective,
                         table=table,
+                        load_url="%s?indicator=%s" % (self.get_url(self.domain, render_as='partial'), indicator.slug),
                         rowspan=indicator_rowspan
                     ))
                 else:
                     logging.info("Could not grab indicator %s in domain %s" % (slug, self.domain))
             report_matrix.append(dict(
                 category_title=category_group['category_title'],
+                category_slug=category_group['category_slug'],
                 rowspan=total_rowspan,
                 indicators=category_indicators,
             ))
@@ -64,73 +70,80 @@ class HealthCoordinatorReport(MVPIndicatorReport):
     @property
     def indicator_slugs(self):
         return  [
-            dict(
-                category_title="Child Health",
-                indicator_slugs=[
-                    "under5_fever_rdt_proportion", # A1 - 28, all set
-                    "under5_fever_rdt_positive_proportion", # A1 - 29, all set
-                    "under5_fever_rdt_positive_medicated_proportion", # A1 - 20, all set
-                    "under5_fever_rdt_negative_medicated_proportion", # A2 - 30
-                    "under5_fever_rdt_not_received_proportion", #A1 - 48, all set
-                    "under5_diarrhea_ors_proportion", # A2 - 37
-                    "under5_diarrhea_zinc_proportion",
-                    "under5_complicated_fever_facility_followup_proportion",
-                    "under5_complicated_fever_referred_proportion",
-                    "under1_check_ups_proportion",
-                ]
-            ),
-            dict(
-                category_title="Child Nutrition",
-                indicator_slugs=[
-                    "muac_wasting_proportion", # A2 - 10, all set
-                    "muac_routine_proportion", # A2 - 11, all set
-                    "under6month_exclusive_breastfeeding_proportion",
-                    "low_birth_weight_proportion", # A3 - 5, all set
-                ]
-            ),
-            dict(
-                category_title="CHW Visits",
-                indicator_slugs=[
-                    "households_routine_visit_past90days", # A1 - 23, all set
-                    "households_routine_visit_past30days", # A1 - 44, all set
-                    "under5_routine_visit_past30days", # A1 - 45
-                    "pregnant_routine_visit_past30days", # A1 - 46
-                    "neonate_routine_visit_past7days", # A1 - 47
-                    "urgent_referrals_proportion", # A2 - 13, needs investigation
-                    "newborn_7day_visit_proportion", # A2 - 6, denom slightly off
-                ]
-            ),
-            dict(
-                category_title="CHW Mgmt",
-                indicator_slugs=[
+#            {
+#                'category_title': "Child Health",
+#                'category_slug': 'child_health',
+#                'indicator_slugs': [
+#                    "under5_fever_rdt_proportion", # A1 - 28, all set
+#                    "under5_fever_rdt_positive_proportion", # A1 - 29, all set
+#                    "under5_fever_rdt_positive_medicated_proportion", # A1 - 20, all set
+#                    "under5_fever_rdt_negative_medicated_proportion", # A2 - 30
+#                    "under5_fever_rdt_not_received_proportion", #A1 - 48, all set
+#                    "under5_diarrhea_ors_proportion", # A2 - 37
+#                    "under5_diarrhea_zinc_proportion",
+#                    "under5_complicated_fever_facility_followup_proportion",
+#                    "under5_complicated_fever_referred_proportion",
+#                    "under1_check_ups_proportion",
+#                ]
+#            },
+#            {
+#                'category_title': "Child Nutrition",
+#                'category_slug': 'child_nutrition',
+#                'indicator_slugs': [
+#                    "muac_wasting_proportion", # A2 - 10, all set
+#                    "muac_routine_proportion", # A2 - 11, all set
+#                    "under6month_exclusive_breastfeeding_proportion",
+#                    "low_birth_weight_proportion", # A3 - 5, all set
+#                ]
+#            },
+#            {
+#                'category_title': "CHW Visits",
+#                'category_slug': 'chw_visits',
+#                'indicator_slugs': [
+#                    "households_routine_visit_past90days", # A1 - 23, all set
+#                    "households_routine_visit_past30days", # A1 - 44, all set
+#                    "under5_routine_visit_past30days", # A1 - 45
+#                    "pregnant_routine_visit_past30days", # A1 - 46
+#                    "neonate_routine_visit_past7days", # A1 - 47
+#                    "urgent_referrals_proportion", # A2 - 13, needs investigation
+#                    "newborn_7day_visit_proportion", # A2 - 6, denom slightly off
+#                ]
+#            },
+            {
+                'category_title': "CHW Mgmt",
+                'category_slug': 'chw_management',
+                'indicator_slugs': [
                     "median_days_referral_followup", #needs checking ?
                 ]
-            ),
-            dict(
-                category_title="Maternal",
-                indicator_slugs=[
-                    "family_planning_proportion", # A2 - 1
-                    "anc4_proportion", # A2 - 3
-                    "facility_births_proportion", # A2 - 4
-                    "pregnant_routine_checkup_proportion_6weeks",
-                ]
-            ),
-            dict(
-                category_title="Births",
-                indicator_slugs=[
+            },
+#            {
+#                'category_title': "Maternal",
+#                'category_slug': 'maternal_health',
+#                'indicator_slugs': [
+#                    "family_planning_proportion", # A2 - 1
+#                    "anc4_proportion", # A2 - 3
+#                    "facility_births_proportion", # A2 - 4
+#                    "pregnant_routine_checkup_proportion_6weeks",
+#                ]
+#            },
+            {
+                'category_title': "Births",
+                'category_slug': 'births',
+                'indicator_slugs': [
                     "num_births_recorded", # A3 - 5
                 ]
-            ),
-            dict(
-                category_title="Deaths",
-                indicator_slugs=[
-                    "neonatal_deaths",
-                    "infant_deaths",
-                    "under5_deaths",
-                    "maternal_deaths",
-                    "over5_deaths",
-                ]
-            )
+            },
+#            {
+#                'category_title': "Deaths",
+#                'category_slug': 'deaths',
+#                'indicator_slugs': [
+#                    "neonatal_deaths",
+#                    "infant_deaths",
+#                    "under5_deaths",
+#                    "maternal_deaths",
+#                    "over5_deaths",
+#                ]
+#            }
         ]
 
     def get_month_headers(self, retrospective):
@@ -177,6 +190,9 @@ class HealthCoordinatorReport(MVPIndicatorReport):
             else:
                 text = "--"
 
+            if numpy.isnan(val):
+                val = None
+
             if i == num_cols-4:
                 css = "current_month"
             elif i > num_cols-4:
@@ -201,3 +217,26 @@ class HealthCoordinatorReport(MVPIndicatorReport):
         return dict(
             numerators=self._format_row(row)
         )
+
+    @property
+    def partial_response(self):
+        indicator_slug = self.request.GET.get('indicator')
+        response = {
+            'error': True,
+            'message': 'Indicator could not be processed.'
+        }
+        if indicator_slug:
+            indicator = DynamicIndicatorDefinition.get_current(MVP.NAMESPACE, self.domain, indicator_slug,
+                wrap_correctly=True)
+            if indicator:
+                print "GOT INDICATOR", indicator
+                retrospective = indicator.get_monthly_retrospective(user_ids=self.user_ids)
+                if isinstance(indicator, CombinedCouchViewIndicatorDefinition):
+                    table = self.get_indicator_table(retrospective)
+                else:
+                    table = self.get_indicator_row(retrospective)
+                response = {
+                    'table': table,
+                }
+                print "response", response
+        return HttpResponse(json.dumps(response))

@@ -3,9 +3,38 @@
 {% load report_tags %}
 {% load i18n %}
 
+{% block js %} {{ block.super }}
+    <script type="text/javascript" src="{% static 'hqstyle/js/jquery/plugins/jquery.ba-jqmq.min.js' %}"></script>
+    <script type="text/javascript" src="{% static 'mvp/ko/mvp.async_indicators.js' %}"></script>
+{% endblock %}
+
 {% block js-inline %} {{ block.super }}
     <script type="text/javascript">
         $(function(){
+            window.queue = $.jqmq({
+                delay: -1,
+                batch: 1,
+                callback: function( item ) {
+                    console.log("start queueing");
+                    item.loading_text("Loading...");
+                    item.is_loading(true);
+                    $.ajax({
+                        url: item.load_url+window.location.search.replace( "?", "&" ),
+                        dataType: 'json',
+                        success: item.load_success,
+                        error: item.load_error
+                    });
+                    console.log(item);
+                },
+                complete: function(){
+                    console.log("GOT AN INDICATOR!");
+                }
+            });
+
+            $('#mvp_mvis_indicators').asyncIndicators({
+                categories: {{ report|JSON }},
+            });
+
             var recalc_thead_width = function () {
                 var th_width = $('.mvp-table tbody td').width();
                 var category_title = $('.mvp-table tbody th.category_title').width();
@@ -39,10 +68,13 @@
             });
         });
     </script>
+    <script type="text/html" id="numerator_denominator_template">
+        <td data-bind="text: val.text"></td>
+    </script>
 {% endblock %}
 
 {% block reportcontent %}
-    <table class="table table-bordered table-striped datatable mvp-table">
+    <table id="mvp_mvis_indicators" class="table table-bordered table-striped datatable mvp-table">
         <thead id="mvp-table-head" data-spy="affix" data-offset-top="197">
             <tr>
                 <th class="category_title">&nbsp;</th>
@@ -55,39 +87,73 @@
                 <th class="summary">Std. Dev.</th>
             </tr>
         </thead>
-        <tbody>
-            {% for category in report %}
-                <tr>
-                    <th class="category_title" rowspan="{{ category.rowspan }}">
-                        <div>{{ category.category_title }}</div>
-                    </th>
-                {% for indicator in category.indicators %}
-                {% ifnotequal forloop.counter0 0 %}<tr>{% endifnotequal %}
-                    <th rowspan="{{ indicator.rowspan }}" class="indicator-def">{{ indicator.title }}</th>
+        <tbody data-bind="foreach: categories">
+        <!-- ko foreach: indicators -->
+            <tr>
+                <!-- ko if: $parent.show_category_title($index) -->
+                <th class="category_title"
+                    style="width: 43px;"
+                    data-bind="attr: {rowspan: $parent.rowspan}">
+                    <div data-bind="text: $parent.category_title"></div>
+                </th>
+                <!-- /ko -->
+                <th class="indicator-def"
+                    data-bind="text: title, attr: {rowspan: rowspan}"></th>
 
-                    {% for p in indicator.table.percentages %}
-                        <td{% if p.css %} class="{{ p.css }}"{% endif %}>{{ p.text }}</td>
-                    {% endfor %}
-                {% ifequal indicator.rowspan 3 %}
+                <!-- ko if: show_only_numerators -->
+                    <!-- ko if: is_loaded -->
+                        <!-- ko foreach: numerators -->
+                        <td data-bind="text: $data.text, attr: {class: $data.css}"></td>
+                        <!-- /ko -->
+                    <!-- /ko -->
+                    <!-- ko if: show_loading -->
+                    <td data-bind="attr: {colspan: num_columns}" class="loading">
+                        <img src="{% static 'hqstyle/img/loading.gif' %}" alt="loading"
+                                data-bind="visible: is_loading"/>
+                        <span data-bind="text: default_loading_text"></span>
+                    </td>
+                    <!-- /ko -->
+                <!-- /ko -->
+
+                <!-- ko foreach: percentages -->
+                    <td data-bind="text: $data.text"></td>
+                <!-- /ko -->
+
+            </tr>
+            <!-- ko if: !show_only_numerators -->
+                <!-- ko if: is_loaded -->
+                <tr>
+                    <!-- ko foreach: numerators -->
+                    <td data-bind="text: $data.text, attr: {class: $data.css}"></td>
+                    <!-- /ko -->
                 </tr>
                 <tr>
-                {% endifequal %}
-                    {% for n in indicator.table.numerators %}
-                        <td{% if n.css %} class="{{ n.css }}"{% endif %}>{{ n.text }}</td>
-                    {% endfor %}
+                    <!-- ko foreach: denominators -->
+                    <td data-bind="text: $data.text, attr: {class: $data.css}"></td>
+                    <!-- /ko -->
                 </tr>
-                {% ifequal indicator.rowspan 3 %}
+                <!-- /ko -->
+                <!-- ko if: show_loading -->
                 <tr>
-                    {% for d in indicator.table.denominators %}
-                        <td{% if d.css %} class="{{ d.css }}"{% endif %}>{{ d.text }}</td>
-                    {% endfor %}
+                    <td data-bind="attr: {colspan: num_columns}" class="loading">
+                        <img src="{% static 'hqstyle/img/loading.gif' %}" alt="loading"
+                             data-bind="visible: is_loading"/>
+                        <span data-bind="text: num_loading_text"></span>
+                    </td>
                 </tr>
-                {% endifequal %}
                 <tr>
-                    <td colspan="17"></td>
+                    <td data-bind="attr: {colspan: num_columns}" class="loading">
+                        <img src="{% static 'hqstyle/img/loading.gif' %}" alt="loading"
+                             data-bind="visible: is_loading"/>
+                        <span data-bind="text: denom_loading_text"></span>
+                    </td>
                 </tr>
-                {% endfor %}
-            {% endfor %}
+                <!-- /ko -->
+            <!-- /ko -->
+            <tr>
+                <td colspan="17"></td>
+            </tr>
+            <!-- /ko -->
         </tbody>
     </table>
 
