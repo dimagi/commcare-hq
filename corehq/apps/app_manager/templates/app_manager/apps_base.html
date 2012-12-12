@@ -63,10 +63,6 @@
         });
     });
     $(function() {
-        $('#odk-install-placeholder').jqm({ajax: '@href', trigger: 'a.odk_install', 
-                                   ajaxText: "Please wait while we load that for you..." });
-    });
-    $(function() {
         var hidden,
             bootstrap = {% if applications %}false{% else %}true{% endif %},
             $appsMenu = $("#apps-menu"),
@@ -259,8 +255,5 @@
                 </form>
             </div>
         {% endif %}
-    </div>
-    <div class="jqmWindow" id="odk-install-placeholder">
-    Please wait while that loads... 
     </div>
 {% endblock %}
