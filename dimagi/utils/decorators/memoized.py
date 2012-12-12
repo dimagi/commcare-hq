@@ -12,6 +12,7 @@ def memoized(fn):
     except TypeError:
         _inner = m
     _inner.get_cache = m.get_cache
+    _inner.reset_cache = m.reset_cache
     return _inner
 
 
@@ -110,6 +111,8 @@ class Memoized(object):
         else:
             return self._cache
 
+    def reset_cache(self, obj=None):
+        self.get_cache(obj).clear()
 
     def __call__(self, *args, **kwargs):
         key = self.get_args_tuple(*args, **kwargs)
