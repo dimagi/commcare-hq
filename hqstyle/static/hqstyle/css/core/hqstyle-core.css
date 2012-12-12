@@ -1810,6 +1810,9 @@ legend + .control-group {
 .input-fancy-multi {
   width: 100%;
 }
+.checkbox {
+  line-height: 21.599999999999998px;
+}
 table {
   max-width: 100%;
   background-color: transparent;
