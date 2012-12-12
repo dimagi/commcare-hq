@@ -123,7 +123,7 @@ class ReportDispatcher(View):
 
     @classmethod
     def allowed_renderings(cls):
-        return ['json', 'async', 'filters', 'export', 'mobile', 'email', 'clear_cache']
+        return ['json', 'async', 'filters', 'export', 'mobile', 'email', 'clear_cache', 'partial']
 
     @classmethod
     def args_kwargs_from_context(cls, context):
