@@ -8,55 +8,13 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2012-12-11 20:41+0530\n"
+"POT-Creation-Date: 2012-12-12 16:08+0530\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-
-#: .\build\kombu\build\lib\kombu\transport\django\models.py:10
-#: .\build\kombu\kombu\transport\django\models.py:10
-msgid "name"
-msgstr "नाम"
-
-#: .\build\kombu\build\lib\kombu\transport\django\models.py:16
-#: .\build\kombu\kombu\transport\django\models.py:16
-msgid "queue"
-msgstr ""
-
-#: .\build\kombu\build\lib\kombu\transport\django\models.py:17
-#: .\build\kombu\kombu\transport\django\models.py:17
-msgid "queues"
-msgstr ""
-
-#: .\build\kombu\build\lib\kombu\transport\django\models.py:24
-#: .\build\kombu\kombu\transport\django\models.py:24
-msgid "payload"
-msgstr ""
-
-#: .\build\kombu\build\lib\kombu\transport\django\models.py:31
-#: .\build\kombu\kombu\transport\django\models.py:31
-msgid "message"
-msgstr ""
-
-#: .\build\kombu\build\lib\kombu\transport\django\models.py:32
-#: .\build\kombu\kombu\transport\django\models.py:32
-msgid "messages"
-msgstr ""
-
-#: .\build\sorl-thumbnail\build\lib\sorl\thumbnail\fields.py:47
-#: .\build\sorl-thumbnail\sorl\thumbnail\fields.py:47
-msgid ""
-"Upload a valid image. The file you uploaded was either not an image or a "
-"corrupted image."
-msgstr ""
-
-#: .\build\sorl-thumbnail\build\lib\sorl\thumbnail\admin\compat.py:56
-#: .\build\sorl-thumbnail\sorl\thumbnail\admin\compat.py:56
-msgid "Clear image"
-msgstr ""
 
 #: .\submodules\auditcare-src\auditcare\forms.py:14
 msgid ""
@@ -105,6 +63,14 @@ msgstr "ग्राहक बार देखा गया"
 msgid "Inactive Clients"
 msgstr "निष्क्रिय ग्राहक"
 
+#: .\submodules\bihar-reports\bihar\reports\supervisor.py:22
+msgid "ASHA"
+msgstr "आशा"
+
+#: .\submodules\bihar-reports\bihar\reports\supervisor.py:23
+msgid "AWW"
+msgstr "ऑगनवाड़ी सेविका"
+
 #: .\submodules\bihar-reports\bihar\reports\supervisor.py:162
 msgid "Select Subcenter"
 msgstr "सब-सेंटर चुनिए"
@@ -120,7 +86,7 @@ msgstr "टीम का नाम"
 
 #: .\submodules\bihar-reports\bihar\reports\supervisor.py:167
 msgid "AWCC"
-msgstr ""
+msgstr "ऑगनवाड़ी केंद्र संख्या"
 
 #: .\submodules\bihar-reports\bihar\reports\supervisor.py:201
 #: .\submodules\bihar-reports\bihar\templates\bihar\base_template_mobile.html.py:6
@@ -145,63 +111,73 @@ msgstr "उपकरण"
 
 #: .\submodules\bihar-reports\bihar\reports\supervisor.py:291
 msgid "Referrals"
-msgstr ""
+msgstr "रेफेरल"
 
 #: .\submodules\bihar-reports\bihar\reports\supervisor.py:301
 msgid "Public Facility"
-msgstr ""
+msgstr "सरकारी अस्पताल"
 
 #: .\submodules\bihar-reports\bihar\reports\supervisor.py:302
 msgid "Private Facility"
-msgstr ""
+msgstr "प्राईवेट अस्पताल"
 
 #: .\submodules\bihar-reports\bihar\reports\supervisor.py:303
 msgid "Transport"
-msgstr ""
+msgstr "परिवहन"
 
 #: .\submodules\bihar-reports\bihar\reports\supervisor.py:337
 msgid "This calculation has not yet been implemented."
-msgstr ""
+msgstr "ये केलकुलेटर अभि तक लागु नहीं हुआ"
 
 #: .\submodules\bihar-reports\bihar\reports\supervisor.py:340
 msgid "EDD Calculator"
-msgstr ""
+msgstr "प्रसव की सम्भावित तिथी का केलकुलेटर"
 
 #: .\submodules\bihar-reports\bihar\reports\supervisor.py:346
-msgid "Enter LMP (YYYY-MM-DD)"
+msgid "Enter LMP (MM/DD/YYYY)"
+msgstr "अंतिम मासिक धर्म की तिथी भरें"
+
+#: .\submodules\bihar-reports\bihar\reports\supervisor.py:356
+#, python-format
+msgid "Estimated Date of Delivery: %s"
+msgstr "प्रसव की सम्भावित तारीख: %s"
+
+#: .\submodules\bihar-reports\bihar\reports\supervisor.py:359
+#: .\submodules\bihar-reports\bihar\reports\supervisor.py:384
+msgid "Error: We can't parse your input, please try again"
 msgstr ""
 
 #: .\submodules\bihar-reports\bihar\reports\supervisor.py:363
 msgid "BMI Calculator"
-msgstr ""
+msgstr "बी एम आई केलकुलेटर"
 
 #: .\submodules\bihar-reports\bihar\reports\supervisor.py:369
 msgid "Enter weight in kilograms:"
-msgstr ""
+msgstr "वजन किलोग्राम में भरे"
 
 #: .\submodules\bihar-reports\bihar\reports\supervisor.py:374
 msgid "Enter height in meters:"
-msgstr ""
+msgstr "लम्बाई मीटर में भरे"
 
 #: .\submodules\bihar-reports\bihar\reports\supervisor.py:388
 msgid "You are obese"
-msgstr ""
+msgstr "आपको मोटापा है"
 
 #: .\submodules\bihar-reports\bihar\reports\supervisor.py:390
 msgid "You are overweight"
-msgstr ""
+msgstr "आपका वजन ज्यादा है"
 
 #: .\submodules\bihar-reports\bihar\reports\supervisor.py:392
 msgid "You are normal weight"
-msgstr ""
+msgstr "आपका वजन सामान्य है"
 
 #: .\submodules\bihar-reports\bihar\reports\supervisor.py:394
 msgid "You are underweight"
-msgstr ""
+msgstr "आपका वजन सामान्य से कम है"
 
 #: .\submodules\bihar-reports\bihar\reports\supervisor.py:406
 msgid "no awc code found"
-msgstr ""
+msgstr "ऑगनवाड़ी केंद्र संख्या नही मिला"
 
 #: .\submodules\bihar-reports\bihar\reports\indicators\__init__.py:19
 msgid "Pregnant woman who delivered in last 30 days"
@@ -261,19 +237,23 @@ msgstr "प्रसव का परिणाम"
 
 #: .\submodules\bihar-reports\bihar\reports\indicators\__init__.py:81
 msgid "Home Deliveries visited in 24 hours of Birth (Total Number HD24HR/TNHD)"
-msgstr "पिछले ३० दिनों मे जन्म के 24 घंटे के अंदर घर पर हुये प्रसव की गृहभेंट  (कुल संख्यॉHD24HR/TNHD)"
+msgstr ""
+"पिछले ३० दिनों मे जन्म के 24 घंटे के अंदर घर पर हुये प्रसव की गृहभेंट  (कुल संख्यॉHD24HR/TNHD)"
 
 #: .\submodules\bihar-reports\bihar\reports\indicators\__init__.py:86
 msgid ""
 "Institutional Deliveries visited in 24 hours of Birth (Total Number ID24HR/"
 "TNI)"
-msgstr "पिछले ३० दिनों मे जन्म के 24 घंटे के अंदर संस्थागत प्रसव की गृहभेंट(कुल संख्यॉID24HR/TNI)"
+msgstr ""
+"पिछले ३० दिनों मे जन्म के 24 घंटे के अंदर संस्थागत प्रसव की गृहभेंट(कुल संख्यॉID24HR/TNI)"
 
 #: .\submodules\bihar-reports\bihar\reports\indicators\__init__.py:91
 msgid ""
 "Institutional deliveries not breastfed within one hour (Total NumberBF/Total "
 "Number ID24HR)"
-msgstr "पिछले ३० दिनों मे हुये संस्थागत प्रसव जिसमे जन्म के २४ घंटे के अंदर स्तनपान नही कराया गया (Total NumberBF/कुल संख्यॉID24HR)"
+msgstr ""
+"पिछले ३० दिनों मे हुये संस्थागत प्रसव जिसमे जन्म के २४ घंटे के अंदर स्तनपान नही कराया गया "
+"(Total NumberBF/कुल संख्यॉID24HR)"
 
 #: .\submodules\bihar-reports\bihar\reports\indicators\__init__.py:99
 msgid "Post-Partum Complications"
@@ -303,50 +283,54 @@ msgid ""
 "30 days"
 msgstr "# जटिलता जटिलता जन्म के ७ दिनों के अंदर पहचाने गये / #जटिलता पिछले ३० दिनों मे"
 
-#: .\submodules\bihar-reports\bihar\reports\indicators\__init__.py:136
+#: .\submodules\bihar-reports\bihar\reports\indicators\__init__.py:129
 msgid "Weak Newborn"
 msgstr "कमजोर नवजात"
 
-#: .\submodules\bihar-reports\bihar\reports\indicators\__init__.py:140
+#: .\submodules\bihar-reports\bihar\reports\indicators\__init__.py:133
 msgid "# Preterm births / # Live births"
 msgstr "# समय से पहले / #पिछले ३० दिनों मे जीवित जन्म"
 
-#: .\submodules\bihar-reports\bihar\reports\indicators\__init__.py:145
+#: .\submodules\bihar-reports\bihar\reports\indicators\__init__.py:138
 msgid "# infants < 2kg / # live births"
 msgstr "# नवजात < 2kg / #पिछले ३० दिनों मे जीवित जन्म"
 
-#: .\submodules\bihar-reports\bihar\reports\indicators\__init__.py:150
+#: .\submodules\bihar-reports\bihar\reports\indicators\__init__.py:143
 msgid ""
 "# live births who are preterm or < 2kg  visited in 24 hours of birth by FLW/ "
 "(# preterm + # infants < 2kg)"
-msgstr "#जीवित जन्म जो समय से पहले हुआ या < 2kg आशा या ऑगनवाडी द्वारा २४ घंटे के अंदर भ्रमण किया गया  / (# समय से पहले + # नवजात < 2kg)"
+msgstr ""
+"#जीवित जन्म जो समय से पहले हुआ या < 2kg आशा या ऑगनवाडी द्वारा २४ घंटे के अंदर भ्रमण "
+"किया गया  / (# समय से पहले + # नवजात < 2kg)"
 
-#: .\submodules\bihar-reports\bihar\reports\indicators\__init__.py:155
+#: .\submodules\bihar-reports\bihar\reports\indicators\__init__.py:148
 msgid ""
 "# live births who are preterm and < 2kg not receiving skin to skin care "
 "message by FLW"
-msgstr "# समय से पहले जन्मे जीवित जन्म और < 2kg जिन्हे आशा/ऑगनवाडी द्वारा त्वचा से त्वचा देखभाल की सलाह नही दी गई(और अलग किये गये लाभार्थी को अगले स्क्रीन मे दिखाऐं)"
+msgstr ""
+"# समय से पहले जन्मे जीवित जन्म और < 2kg जिन्हे आशा/ऑगनवाडी द्वारा त्वचा से त्वचा देखभाल "
+"की सलाह नही दी गई(और अलग किये गये लाभार्थी को अगले स्क्रीन मे दिखाऐं)"
 
-#: .\submodules\bihar-reports\bihar\reports\indicators\__init__.py:160
+#: .\submodules\bihar-reports\bihar\reports\indicators\__init__.py:153
 msgid ""
 "# live births who are preterm and < 2kg infants not breastfeeding vigorously "
-msgstr "#समय से पहले जन्मे जीवित जन्म और < 2kgनवजात जिन्हे लगातार स्तनपान नही कराया जा रहा(और अलग किये गये लाभार्थी को अगले स्क्रीन मे दिखाऐं)"
+msgstr ""
+"#समय से पहले जन्मे जीवित जन्म और < 2kgनवजात जिन्हे लगातार स्तनपान नही कराया जा रहा"
+"(और अलग किये गये लाभार्थी को अगले स्क्रीन मे दिखाऐं)"
 
-#: .\submodules\bihar-reports\bihar\reports\indicators\__init__.py:169
+#: .\submodules\bihar-reports\bihar\reports\indicators\__init__.py:162
 msgid "Mortality"
 msgstr "मृत्यु"
 
-#: .\submodules\bihar-reports\bihar\reports\indicators\__init__.py:173
+#: .\submodules\bihar-reports\bihar\reports\indicators\__init__.py:166
 msgid "# Mothers who've died in the last 30 days"
 msgstr "पिछले ३० दिनों मे हुई मातृ मृत्यु(और अलग किये गये लाभार्थी को अगले स्क्रीन मे दिखाऐं)"
 
-
-
-#: .\submodules\bihar-reports\bihar\reports\indicators\__init__.py:178
+#: .\submodules\bihar-reports\bihar\reports\indicators\__init__.py:171
 msgid "# Infants who've died in the last 30 days"
 msgstr "#पिछले ३० दिनों मे हुई शिशु मृत्यु(और अलग किये गये लाभार्थी को अगले स्क्रीन मे दिखाऐं)"
 
-#: .\submodules\bihar-reports\bihar\reports\indicators\__init__.py:234
+#: .\submodules\bihar-reports\bihar\reports\indicators\__init__.py:226
 #: .\submodules\bihar-reports\bihar\reports\indicators\calculations.py:124
 #: .\submodules\bihar-reports\bihar\reports\indicators\calculations.py:146
 #: .\submodules\core-hq-src\corehq\apps\domain\forms.py:22
@@ -358,24 +342,24 @@ msgstr "#पिछले ३० दिनों मे हुई शिशु �
 msgid "Name"
 msgstr "नाम"
 
-#: .\submodules\bihar-reports\bihar\reports\indicators\__init__.py:234
+#: .\submodules\bihar-reports\bihar\reports\indicators\__init__.py:226
 #: .\submodules\bihar-reports\bihar\reports\indicators\calculations.py:124
 #: .\submodules\bihar-reports\bihar\reports\indicators\calculations.py:146
 msgid "Husband's Name"
 msgstr "पति"
 
-#: .\submodules\bihar-reports\bihar\reports\indicators\__init__.py:234
+#: .\submodules\bihar-reports\bihar\reports\indicators\__init__.py:226
 #: .\submodules\bihar-reports\bihar\reports\indicators\calculations.py:124
 msgid "EDD"
 msgstr "प्रसव की सम्भावित तारीख"
 
 #: .\submodules\bihar-reports\bihar\reports\indicators\calculations.py:102
 msgid "Yes"
-msgstr ""
+msgstr "हां"
 
 #: .\submodules\bihar-reports\bihar\reports\indicators\calculations.py:103
 msgid "No"
-msgstr ""
+msgstr "नहीं"
 
 #: .\submodules\bihar-reports\bihar\reports\indicators\calculations.py:104
 #: .\submodules\core-hq-src\corehq\apps\reports\templates\reports\partials\hqexport_group_table.html.py:20
@@ -385,7 +369,7 @@ msgstr ""
 
 #: .\submodules\bihar-reports\bihar\reports\indicators\calculations.py:114
 msgid "Visit Status"
-msgstr ""
+msgstr "गृह-भ्रमण कि स्थिति"
 
 #: .\submodules\bihar-reports\bihar\reports\indicators\calculations.py:115
 msgid "Done"
@@ -398,6 +382,16 @@ msgstr "बॉकी"
 #: .\submodules\bihar-reports\bihar\reports\indicators\calculations.py:146
 msgid "ADD"
 msgstr "प्रसव की तारीख"
+
+#: .\submodules\bihar-reports\bihar\reports\indicators\calculations.py:466
+#, python-format
+msgid "Identified in %s days"
+msgstr "%s घंटे में पहचान कर लिया गया"
+
+#: .\submodules\bihar-reports\bihar\reports\indicators\calculations.py:468
+#, python-format
+msgid "Identified in %s hours"
+msgstr "%s घंटे में पहचान कर लिया गया"
 
 #: .\submodules\bihar-reports\bihar\reports\indicators\reports.py:16
 msgid "Indicator Options"
@@ -2573,6 +2567,9 @@ msgstr ""
 #: .\submodules\pathfinder-reports\pathfinder\templates\pathfinder-reports\hbc.html.py:5
 msgid "Home-Based Care Monthly Report"
 msgstr ""
+
+#~ msgid "name"
+#~ msgstr "नाम"
 
 #~ msgid ""
 #~ "Women due for delivery within 30 days who have not done preparation for "
