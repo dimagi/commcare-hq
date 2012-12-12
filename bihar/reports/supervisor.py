@@ -19,8 +19,8 @@ from django.utils.translation import ugettext_noop
 from django.utils.translation import ugettext as _
 from bihar.reports.indicators.mixins import IndicatorConfigMixIn
 
-ASHA_ROLE = 'ASHA'
-AWW_ROLE = 'AWW'
+ASHA_ROLE = ugettext_noop('ASHA')
+AWW_ROLE = ugettext_noop('AWW')
 
 def shared_bihar_context(report):
     return {
@@ -342,8 +342,8 @@ class EDDCalcReport(InputReport):
     _inputs = [
         {
             "name": "lmp",
-            "type": "text",
-            "label": _("Enter LMP (YYYY-MM-DD)")
+            "type": "date",
+            "label": ugettext_noop("Enter LMP (MM/DD/YYYY)")
         }
     ]
 
@@ -353,10 +353,10 @@ class EDDCalcReport(InputReport):
         try:
             lmp_date = datetime.strptime(input["lmp"], "%Y-%m-%d")
             edd_date = lmp_date + timedelta(days=280)
-            return ["Estitmated Date of Delivery: %s" % edd_date.strftime("%Y-%m-%d")]
+            return [_("Estimated Date of Delivery: %s") % edd_date.strftime("%Y-%m-%d")]
         except ValueError:
             self._headers = [" ", " "]
-            return ["Error: We can't parse your input, please try again", self.form_html]
+            return [_("Error: We can't parse your input, please try again"), self.form_html]
 
 
 class BMICalcReport(InputReport):
@@ -366,12 +366,12 @@ class BMICalcReport(InputReport):
         {
             "name": "weight",
             "type": "text",
-            "label": _("Enter weight in kilograms:")
+            "label": ugettext_noop("Enter weight in kilograms:")
         },
         {
             "name": "height",
             "type": "text",
-            "label": _("Enter height in meters:")
+            "label": ugettext_noop("Enter height in meters:")
         }
     ]
 
@@ -381,7 +381,7 @@ class BMICalcReport(InputReport):
             height = float(input["height"])
         except ValueError:
             self._headers = [" ", " "]
-            return ["Error: We can't parse your input, please try again", self.form_html]
+            return [_("Error: We can't parse your input, please try again"), self.form_html]
 
         bmi = weight / (height * height)
         if bmi >= 30:
