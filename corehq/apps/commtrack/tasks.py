@@ -30,5 +30,5 @@ def import_stock_reports_async(download_id, domain, file_ref_id):
             results = bulk.import_stock_reports(domain, f)
         except Exception, e:
             results = "ERROR: %s" % e
-    ref = expose_download(results, 60*60*3)
+    ref = expose_download(results, 60*60*3, mimetype='text/csv')
     cache.set(download_id, ref)
