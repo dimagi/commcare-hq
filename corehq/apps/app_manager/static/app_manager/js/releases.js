@@ -17,10 +17,11 @@ function ReleasesMain(o) {
     self.nextVersionToFetch = null;
     self.fetchLimit = 5;
     self.deployAnyway = {};
-    self.lastAppVersion = ko.observable();
     self.appVersion = ko.observable(self.options.appVersion);
+    self.lastAppVersion = ko.observable();
     self.savedApps.subscribe(function () {
-        self.lastAppVersion(self.savedApps()[0].version());
+        var lastApp = self.savedApps()[0];
+        self.lastAppVersion(lastApp ? lastApp.version() : -1);
     });
     self.url = function (name) {
         var template = self.options.urls[name];
@@ -64,6 +65,8 @@ function ReleasesMain(o) {
             }
             if (savedApps.length < self.fetchLimit) {
                 self.doneFetching(true);
+            } else {
+                self.doneFetching(false);
             }
         });
     };

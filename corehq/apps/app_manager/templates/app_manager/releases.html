@@ -109,8 +109,8 @@
     <div id="releases-table">
         <button class="btn btn-primary" data-bind="
             click: makeNewBuild,
-            attr: {disabled: appVersion() === lastAppVersion() ? 'disabled' : undefined},
-            css: {disabled: appVersion() === lastAppVersion()}
+            attr: {disabled: lastAppVersion() !== undefined && appVersion() === lastAppVersion() ? 'disabled' : undefined},
+            css: {disabled: lastAppVersion() !== undefined && appVersion() === lastAppVersion()}
         ">{% trans 'Make New Build' %}</button>
 
         <div id="build-errors-wrapper"></div>
@@ -199,7 +199,7 @@
                 </tr>
             </tbody>
         </table>
-        <div data-bind="visible: !doneFetching(), css: {hidden: false}" class="hidden">
+        <div data-bind="visible: savedApps().length && !doneFetching(), css: {hidden: false}" class="hidden">
             <a href="#" class="btn" data-bind="click: getMoreSavedApps">{% trans "View More" %}</a>
         </div>
         <script type="text/html" id="delete-build-modal-template">

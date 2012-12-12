@@ -1239,7 +1239,7 @@ def validate_lang(lang):
 
 class SavedAppBuild(ApplicationBase):
     def to_saved_build_json(self, timezone):
-        data = super(SavedAppBuild, self).to_json()
+        data = super(SavedAppBuild, self).to_json().copy()
         data.update({
             'id': self.id,
             'built_on_date': utc_to_timezone(data['built_on'], timezone, "%b %d, %Y"),
