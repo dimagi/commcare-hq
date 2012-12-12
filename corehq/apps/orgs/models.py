@@ -1,5 +1,5 @@
 from couchdbkit.ext.django.schema import *
-from corehq.apps.users.models import AuthorizableMixin, WebUser
+from corehq.apps.users.models import WebUser, MultiMembershipMixin
 from dimagi.utils.couch.undo import UndoableDocument, DeleteDocRecord
 
 
@@ -47,7 +47,7 @@ class Organization(Document):
         return self.members
 
 
-class Team(UndoableDocument, AuthorizableMixin):
+class Team(UndoableDocument, MultiMembershipMixin):
     name = StringProperty()
     organization = StringProperty()
     member_ids = StringListProperty()

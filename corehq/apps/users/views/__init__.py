@@ -289,16 +289,15 @@ def account(request, domain, couch_user_id, template="users/account.html"):
     })
 
     #project settings tab
-    if couch_user.user_id == request.couch_user.user_id and not couch_user.is_commcare_user():
-        web_user = WebUser.get_by_user_id(couch_user.user_id)
-        dm = web_user.get_domain_membership(domain)
+    if couch_user.user_id == request.couch_user.user_id:
+        dm = couch_user.get_domain_membership(domain)
         if dm:
             domain_obj = Domain.get_by_name(domain)
             if request.method == "POST" and request.POST['form_type'] == "project-settings":
                 # deal with project settings data
                 project_settings_form = ProjectSettingsForm(request.POST)
                 if project_settings_form.is_valid():
-                    if project_settings_form.save(web_user, domain):
+                    if project_settings_form.save(couch_user, domain):
                         messages.success(request, "Your project settings were successfully saved!")
                     else:
                         messages.error(request, "There seems to have been an error saving your project settings. Please try again!")

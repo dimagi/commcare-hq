@@ -69,7 +69,7 @@ def build_url(relative_path, request=None):
 
 try:
     from resource_versions import resource_versions
-except ImportError:
+except (ImportError, SyntaxError):
     resource_versions = {}
 @register.simple_tag
 def static(url):
