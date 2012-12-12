@@ -153,7 +153,7 @@ h6 {
 body {
   margin: 0;
   font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
-  font-size: 150%;
+  font-size: 125%;
   line-height: 1.2em;
   color: #333333;
   background-color: #ffffff;
@@ -436,7 +436,7 @@ p {
 }
 .lead {
   margin-bottom: 1.2em;
-  font-size: 225%;
+  font-size: 187.5%;
   font-weight: 200;
   line-height: 1.7999999999999998em;
 }
@@ -508,34 +508,34 @@ h3 {
   line-height: 2.4em;
 }
 h1 {
-  font-size: 412.5%;
+  font-size: 343.75%;
 }
 h2 {
-  font-size: 337.5%;
+  font-size: 281.25%;
 }
 h3 {
-  font-size: 262.5%;
+  font-size: 218.75%;
 }
 h4 {
-  font-size: 187.5%;
+  font-size: 156.25%;
 }
 h5 {
-  font-size: 150%;
+  font-size: 125%;
 }
 h6 {
-  font-size: 127.5%;
+  font-size: 106.25%;
 }
 h1 small {
-  font-size: 262.5%;
+  font-size: 218.75%;
 }
 h2 small {
-  font-size: 187.5%;
+  font-size: 156.25%;
 }
 h3 small {
-  font-size: 150%;
+  font-size: 125%;
 }
 h4 small {
-  font-size: 150%;
+  font-size: 125%;
 }
 .page-header {
   padding-bottom: -0.4em;
@@ -588,7 +588,7 @@ dd {
 }
 .dl-horizontal dt {
   float: left;
-  width: 160px;
+  width: 100px;
   clear: left;
   text-align: right;
   overflow: hidden;
@@ -596,7 +596,7 @@ dd {
   white-space: nowrap;
 }
 .dl-horizontal dd {
-  margin-left: 180px;
+  margin-left: 120px;
 }
 hr {
   margin: 1.2em 0;
@@ -663,6 +663,12 @@ address {
 }
 h1 {
   line-height: 1em ;
+}
+.dl-horizontal dt {
+  white-space: normal;
+}
+.dl-horizontal dd {
+  width: 120px;
 }
 table {
   max-width: 100%;
@@ -886,7 +892,7 @@ table th[class*="span"],
 }
 .table {
   border: 1px solid #dddddd;
-  max-width: 15em;
+  max-width: 12em;
 }
 .table th,
 .table td {
