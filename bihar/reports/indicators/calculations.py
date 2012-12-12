@@ -2,7 +2,7 @@ from collections import defaultdict
 from couchdbkit import ResourceNotFound
 from bihar.reports.indicators.filters import A_MONTH, is_pregnant_mother, is_newborn_child, get_add, get_edd,\
     mother_pre_delivery_columns, mother_post_delivery_columns
-from couchforms.safe_index import safe_index
+from dimagi.utils.couch.safe_index import safe_index
 from dimagi.utils.parsing import string_to_datetime
 import datetime as dt
 from bihar.reports.indicators.visits import visit_is, get_related_prop
