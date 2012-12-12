@@ -41,15 +41,11 @@ def location_import(request, domain):
 @require_superuser
 def historical_import(request, domain):
     if request.method == "POST":
-        try:
-            file_ref = expose_download(request.FILES['history'].read(),
-                                       expiry=1*60*60)
-            download_id = uuid.uuid4().hex
-            import_stock_reports_async.delay(download_id, domain, file_ref.download_id)
-            return _async_in_progress(request, domain, download_id)
-        except Exception, e:
-            return HttpResponse(str(e), 'text/plain')
-
+        file_ref = expose_download(request.FILES['history'].read(),
+                                   expiry=1*60*60)
+        download_id = uuid.uuid4().hex
+        import_stock_reports_async.delay(download_id, domain, file_ref.download_id)
+        return _async_in_progress(request, domain, download_id)
 
     return HttpResponse("""
 <form method="post" action="" enctype="multipart/form-data">

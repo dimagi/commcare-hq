@@ -26,6 +26,9 @@ def import_stock_reports_async(download_id, domain, file_ref_id):
     """
     download_ref = DownloadBase.get(file_ref_id)
     with open(download_ref.get_filename(), 'rb') as f:
-        results = bulk.import_stock_reports(domain, f)
+        try:
+            results = bulk.import_stock_reports(domain, f)
+        except Exception, e:
+            results = "ERROR: %s" % e
     ref = expose_download(results, 60*60*3)
     cache.set(download_id, ref)
