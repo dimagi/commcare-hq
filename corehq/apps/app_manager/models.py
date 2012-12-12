@@ -753,7 +753,7 @@ class VersionedDoc(Document):
 
     def save_copy(self):
         cls = self.__class__
-        copies = cls.view('app_manager/applications', key=[self.domain, self._id, self.version], include_docs=True).all()
+        copies = cls.view('app_manager/applications', key=[self.domain, self._id, self.version], include_docs=True, limit=1).all()
         if copies:
             copy = copies[0]
         else:
@@ -1239,13 +1239,14 @@ def validate_lang(lang):
 
 class SavedAppBuild(ApplicationBase):
     def to_saved_build_json(self, timezone):
-        data = super(SavedAppBuild, self).to_json()
+        data = super(SavedAppBuild, self).to_json().copy()
         data.update({
             'id': self.id,
             'built_on_date': utc_to_timezone(data['built_on'], timezone, "%b %d, %Y"),
             'built_on_time': utc_to_timezone(data['built_on'], timezone, "%H:%M %Z"),
             'build_label': self.built_with.get_label(),
             'jar_path': self.get_jar_path(),
+            'short_name': self.short_name
         })
         if data['comment_from']:
             comment_user = CouchUser.get(data['comment_from'])
@@ -1841,10 +1842,6 @@ class DomainError(Exception):
 
 class AppError(Exception):
     pass
-
-class BuildErrors(Document):
-
-    errors = ListProperty()
 
 def get_app(domain, app_id, wrap_cls=None, latest=False):
     """

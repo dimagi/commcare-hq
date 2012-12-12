@@ -5,107 +5,63 @@
 {% load hq_shared_tags %}
 {% load timezone_tags %}
 {% load i18n %}
+{% block js %}{{ block.super }}
+    <script src="{% static 'hqwebapp/javascripts/knockout.mapping.js' %}"></script>
+    <script src="{% static 'hqwebapp/js/knockout-bindings.js' %}"></script>
+    <script src="{% static 'app_manager/js/releases.js' %}"></script>
+{% endblock %}
 {% block js-inline %}{{ block.super }}
 <script>
     $(function () {
-        {% if edit %}
-        var URLS = {
-            set_is_released: function (saved_app_id, is_released) {
-                return(
-                    is_released
-                    ? '{% url unrelease_build domain app.id "__saved_app_id__" %}'
-                    : '{% url release_build domain app.id "__saved_app_id__" %}'
-                ).replace("__saved_app_id__", saved_app_id);
-            }
+        // init releases
+        var urls = {
+            fetch: '{% url paginate_releases domain app.id %}',
+            delete: '{% url corehq.apps.app_manager.views.delete_copy domain app.id %}',
+            emulator: '{% url emulator domain '___' %}',
+            cloudcare: '{% url cloudcare_get_app domain '___' %}',
+            jad: '{% url corehq.apps.app_manager.views.download_jad domain '___' %}',
+            jar: '{% url corehq.apps.app_manager.views.download_jar domain '___' %}',
+            odk: '{% url corehq.apps.app_manager.views.odk_install domain '___' %}',
+            source: '{% url download_index domain '___' %}',
+            release: '{% url release_build domain app.id '___' %}',
+            newBuild: '{% url corehq.apps.app_manager.views.save_copy domain app.id %}',
+            revertBuild: '{% url corehq.apps.app_manager.views.revert_to_copy domain app.id %}'
         };
-        function setIsReleased(element, is_released) {
-            if (is_released === undefined) {
-                is_released = $(element).data('is-released');
-            } else {
-                $(element).data('is-released', is_released);
-                $(element).attr('data-is-released', is_released);
-            }
-            function destroyPopover(element) {
-                var p = $(element).data('popover');
-                if (p) {
-                    if (p.$tip) {
-                        p.$tip.remove();
-                    }
-                    $(element).data('popover', null);
-                }
-            }
-            destroyPopover(element);
-            var row = $(element).parents('tr');
-            if (is_released === true) {
-                $(element).popover({
-                    placement: 'left',
-                    title: 'Retract Build',
-                    content: (
-                            "We recommend caution when retracting a build. Although " +
-                                    "this build will no longer be considered when a CommCare application searches for updates, " +
-                                    "it will not be purged from phones onto which it has already been downloaded."
-                            )
-                });
-                row.removeClass('build-unreleased');
-                row.addClass('build-released');
-            } else if (is_released === false) {
-                $(element).popover({
-                    placement: 'left',
-                    title: 'Release Build',
-                    content: (
-                            "Once you've fully tested an application, you can star it to mark it as released. " +
-                                    "When a CommCare application searches for updates, only starred builds will be considered."
-                            )
-                });
-                row.removeClass('build-released');
-                row.addClass('build-unreleased');
-            }
-            var LATEST = 'build-latest-release';
-            $('.' + LATEST).removeClass(LATEST);
-            $('.build-is-released [data-is-released="true"]').first().each(function () {
-                var row = $(this).parents('tr');
-                row.addClass(LATEST);
+        var o = {
+            users_cannot_share: {{ users_cannot_share|JSON }},
+            urls: urls,
+            appVersion: {% if app.version %}{{ app.version }}{% else %}-1{% endif %}
+        };
+        var el = $('#releases-table');
+        ko.applyBindings(new ReleasesMain(o), el.get(0));
+        el.show();
+        {# This currently doesn't work because of a bootstrap update, #}
+        {# but no one's asked for it back so it doesn't seem urgent. #}
+        {% comment %}
+        {% if edit %}
+            $(document).popover({
+                placement: 'left',
+                title: 'Release Build',
+                selector: '.star-false',
+                trigger: 'hover',
+                content: (
+                        "Once you've fully tested an application, you can star it to mark it as released. " +
+                                "When a CommCare application searches for updates, only starred builds will be considered."
+                        )
             });
-        }
-        $('.build-is-released [data-is-released]').each(function () {
-            setIsReleased(this);
-        }).click(function (e) {
-            e.preventDefault();
-            var is_released = $(this).data('is-released');
-            var saved_app_id = $(this).data('saved-app-id');
-            if (is_released !== 'pending') {
-                var url = URLS.set_is_released(saved_app_id, is_released);
-                var that = this;
-                $.ajax({
-                    url: url,
-                    type: 'post',
-                    dataType: 'json',
-                    data: {ajax: true},
-                    beforeSend: function () {
-                        setIsReleased(that, 'pending');
-                    },
-                    success: function (data) {
-                        setIsReleased(that, data.is_released);
-                    },
-                    error: function () {
-                        setIsReleased(that, 'error');
-                    }
-                });
-            }
-        });
+            $(document).popover({
+                placement: 'left',
+                title: 'Retract Build',
+                selector: '.star-true',
+                trigger: 'hover',
+                content: (
+                        "We recommend caution when retracting a build. Although " +
+                                "this build will no longer be considered when a CommCare application searches for updates, " +
+                                "it will not be purged from phones onto which it has already been downloaded."
+                        )
+            });
         {% endif %}
-        $('#build-errors').each(function () {
-            var specialMessage = $('span', this)[0];
-            var defaultMessage = $('span', this)[1];
-            if ($.trim($(specialMessage).text())) {
-                $(defaultMessage).hide();
-            }
-        });
-        $('.showAccordionButton').click(function(e) {
-            $($(this).attr('href')).slideDown();
-            $(this).parent().hide();
-            return false;
-        });
+        {% endcomment %}
     });
 </script>
 {% endblock %}
@@ -128,364 +84,301 @@
     .nowrap {
         white-space: nowrap;
     }
-    .build-is-released [data-is-released]{
-        min-width: 20px;
-        min-height: 20px;
+    .star, .pending {
+        width: 20px;
+        height: 20px;
         background-repeat: no-repeat;
     }
-    .build-is-released [data-is-released="true"] {
+    .star.star-true {
         background-image: url("{% static 'app_manager/img/star-filled.svg' %}");
     }
-    .build-is-released [data-is-released="false"] {
+    .star.star-false {
         background-image: url("{% static 'app_manager/img/star-empty.svg' %}");
     }
-    .build-is-released [data-is-released="error"]:after {
+    .pending, .star-pending {
+        background-image: url("{% static 'hqwebapp/img/ajax-loader.gif' %}");
+        background-size: 80%;
+        background-position: center;
+    }
+    .star.star-error:after {
         content: "Error";
     }
 </style>
 {% endblock %}
 {% block form-view %}
-    <form id="make-new-build" action="{% url corehq.apps.app_manager.views.save_copy domain app.id %}" method="post">
-        <input type="hidden" name="next" value="{{ request.get_full_path }}" />
-        <input type="hidden" name="comment" value="" />
-        <input type="submit" value="Make New Build" />
-    </form>
-    {% if build_errors %}
-    <div class="message">
-        Build Failed!
-        <ul id="build-errors">
-            {% for error in build_errors %}
-            <li>
-                <span>
-            {% if error.type == "invalid xml" %}
-                {% if error.form.content %}
-                    Invalid xml in form
-                {% else %}
-                    Blank form
-                {% endif %}
-                {% include "app_manager/partials/form_error_message.html" %}
-            {% endif %}
-            {% if error.type == "no ref detail" %}
-                Module
-                <a href="{% url view_module domain app.id error.module.id %}">
-                    {{ error.module.name|trans:langs }}</a>
-                uses referrals but doesn't have
-                detail screens configured for referrals.
-            {% endif %}
-            {% if error.type == "no case detail" %}
-                Module
-                <a href="{% url view_module domain app.id error.module.id %}">
-                    {{ error.module.name|trans:langs }}</a>
-                uses cases but doesn't have
-                detail screens configured for cases.
-            {% endif %}
-            {% if error.type == "no modules" %}
-                This application has no modules.
-            {% endif %}
-            {% if error.type == "no forms" %}
-                Module
-                <a href="{% url view_module domain app.id error.module.id %}">{{ error.module.name|trans:langs }}</a>
-                has no forms.
-            {% endif %}
-            {% if error.type == "no case type" %}
-                Module
-                <a href="{% url view_module domain app.id error.module.id %}">{{ error.module.name|trans:langs }}</a>
-                uses cases but doesn't have a
-                case type defined.
-            {% endif %}
-            {% if error.type == "form error" %}
-                One or more forms are invalid: check all your forms for error messages.
-            {% endif %}
-            {% if error.type == "missing languages" %}
-                {% include "app_manager/partials/form_error_message.html" %} missing languages:
-                {% for lang in error.missing_languages %}
-                    {{ lang }}
-                {% endfor %}
-            {% endif %}
-            {% if error.type == "duplicate xmlns" %}
-                You have two forms with the xmlns "{{ error.xmlns }}"
-            {% endif %}
-            {% if error.type == "update_case uses reserved word" %}
-                Case Update uses reserved word "{{ error.word }}"
-                in form
-                {% include "app_manager/partials/form_error_message.html" %}
-            {% endif %}
-            {% if error.type == "update_case word illegal" %}
-                Case Update "{{ error.word }}" should start with a letter and only contain letters, numbers, '-', and '_'
-                in form {% include "app_manager/partials/form_error_message.html" %}
-            {% endif %}
-            {% if error.type == "path error" %}
-                The case configuration in form
-                {% include "app_manager/partials/form_error_message.html" %}
-                contains the invalid path "{{ error.path }}".
-            {% endif %}
-            {% if error.type == "remote error" %}
-                Remote Error: {{ error.message }}
-            {% endif %}
-            {% if error.type == "empty lang" %}
-                One of your languages is empty. Check your <a href="{% url view_app domain app.id %}">app settings</a>.
-            {% endif %}
-                </span>
-                <span>{{ error.message }}</span>
-            </li>
-            {% endfor %}
-        </ul>
-        <p class="help-block">
-            For more information on build errors, please see
-            <a href="https://confluence.dimagi.com/display/commcarepublic/Errors+Building+an+Application" target="_blank">
-                Errors Building an Application
-            </a>
-        </p>
-    </div>
-    {% endif %}
-    <table class="table">
-        <tr>
-            <th colspan="2">Version</th>
-            <th colspan="2">Build Date &amp; Time</th>
-            <th>CommCare Binary</th>
+    <div id="releases-table">
+        <button class="btn btn-primary" data-bind="
+            click: makeNewBuild,
+            attr: {disabled: !makeNewBuildEnabled() ? 'disabled' : undefined},
+            css: {disabled: !makeNewBuildEnabled()}
+        ">{% trans 'Make New Build' %}</button>
 
-            <th></th>
-            {% if edit %}
-            <th></th>
-            {% endif %}
-            <th>Comment</th>
-            <th>Released</th>
+        <div id="build-errors-wrapper"></div>
 
-        </tr>
-        {% for saved_app in saved_apps %}
-        <tr data-is_released="{{ saved_app.is_released|BOOL }}" class="build build-{% if saved_app.is_released %}released{% else %}unreleased{% endif %} {% if saved_app.id == latest_release.id %}build-latest-release{% endif %}">
-            <td>
+        <table class="table">
+            <tr>
+                <th colspan="2">Version</th>
+                <th colspan="2">Build Date &amp; Time</th>
+                <th>CommCare Binary</th>
+                <th></th>
                 {% if edit %}
-                <form action="{% url corehq.apps.app_manager.views.delete_copy domain app.id %}"
-                      data-title="Delete Build"
-                      data-message="Are you sure you want to delete this build (version {{ saved_app.version }})?"
-                      method="post">
-                    <input type="hidden" name="saved_app" value="{{ saved_app.id }}" />
-                    <input type="hidden" name="next" value="{{ request.get_full_path }}" />
-                    <a class="delete_link confirm-submit" href="#"></a>
-                </form>
+                <th></th>
                 {% endif %}
-            </td>
-            <td class="nowrap">{{ saved_app.version }}</td>
-            <td class="nowrap">{{ saved_app.built_on_date }}</td>
-            <td class="nowrap">{{ saved_app.built_on_time }}</td>
-            <td class="nowrap">
-                {% if saved_app.build_label %}{{ saved_app.build_label }}{% endif %}
-                <p>{{ saved_app.jar_path }}</p>
-                {% if not saved_app.built_with.signed %}<h6>Unsigned Jar</h6>{% endif %}
-            </td>
-            <td class="nowrap">
-                <div class="btn-group">
-                    <span class="btn btn-primary" data-toggle="modal" data-target="#{{ saved_app.id }}_modal">
-                        Deploy
-                    </span>
-                </div>
-            </td>
-            {% if edit %}
-            <td>
-                {% if saved_app.version != app.version %}
-                <button class="btn dialog_opener">Revert</button>
-                <form class="dialog" action="{% url corehq.apps.app_manager.views.revert_to_copy domain app.id %}" method="post"
-                        title="Revert to Build">
-                    <p>Are you sure you want to revert to build {{ saved_app.version }}?</p>
-                    <input type="hidden" name="saved_app" value="{{ saved_app.id }}" />
-                    <button class="btn btn-primary" data-dismiss="modal" type="submit">Revert</button>
-                </form>
-                {% endif %}
-            </td>
-            {% endif %}
-            <td>
-                {% if saved_app.build_comment %}
-                    {% if saved_app.comment_user_name %}<b>{{ saved_app.comment_user_name }}:</b>{% endif %}
-                    {{ saved_app.build_comment }}
-                {% else %}<h6>(No Comment)</h6>
-                {% endif %}
-            </td>
-            <td class="build-is-released">
-                <div data-is-released="{{ saved_app.is_released|BOOL }}" data-saved-app-id="{{ saved_app.id }}"></div>
-            </td>
-        </tr>
-        {% endfor %}
-    </table>
-{% endblock %}
+                <th>Comment</th>
+                <th>Released</th>
 
-{% block modals %}
-{{ block.super }}
-    {% for saved_app in saved_apps %}
-        <div id="{{ saved_app.id }}_modal" class="modal hide fade">
+            </tr>
+            <tbody data-bind="visible: buildState, css: {hidden: false}" class="hidden">
+                <tr data-bind="visible: buildState() == 'pending'">
+                    <td colspan="9">
+                        <img src="{% static 'hqwebapp/img/ajax-loader.gif' %}"/>
+                        <span class="label label-success">
+                            {% trans "Please wait while your CommCare Application builds" %}
+                        </span>
+                    </td>
+                </tr>
+                <tr data-bind="visible: buildState() == 'error'">
+                    <td colspan="9">
+                        <div class="alert alert-danger">Whoops, that didn't go through. Reload the page and click Make New Build to try again.</div>
+                    </td>
+                </tr>
+            </tbody>
+            <tbody data-bind="css: {hidden: false}, template: {
+                foreach: savedApps,
+                afterAdd: function(elem) { $(elem).hide().fadeIn() },
+                beforeRemove: function(elem) { $(elem).fadeOut() }
+            }" class="hidden">
+                <tr class="build" data-bind="css: {
+                    'build-released': is_released(),
+                    'build-unreleased': !is_released(),
+                    'build-latest-release': id() === $root.latestReleaseId()
+                }">
+                    <td>
+                        {% if edit %}
+                        <a href="#" data-bind="
+                            openModal: 'delete-build-modal-template',
+                            visible: !_deleteState()
+                        ">
+                            <span class="icon icon-remove"></span>
+                        </a>
+                        <div class="pending" data-bind="
+                            visible: _deleteState() == 'pending'
+                        "></div>
+
+                        <div class="icon icon-exclamation-sign" data-bind="
+                            visible: _deleteState() == 'error'
+                        "></div>
+                        {% endif %}
+                    </td>
+                    <td class="nowrap" data-bind="text: version"></td>
+                    <td class="nowrap" data-bind="text: built_on_date"></td>
+                    <td class="nowrap" data-bind="text: built_on_time"></td>
+                    <td class="nowrap">
+                        <span data-bind="if: build_label(), text: build_label()"></span>
+                        <p data-bind="text: jar_path"></p>
+                        <h6 data-bind="if: !built_with.signed()">{% trans "Unsigned Jar" %}</h6>
+                    </td>
+                    <td class="nowrap">
+                        <div class="btn-group">
+                            <a class="btn btn-primary" data-bind="openModal: 'deploy-build-modal-template'">Deploy</a>
+                        </div>
+                    </td>
+                    {% if edit %}
+                    <td>
+                        <button class="btn" data-bind="
+                            openModal: 'revert-build-modal-template',
+                            visible: version() !== $root.appVersion()
+                        ">Revert</button>
+                    </td>
+                    {% endif %}
+                    <td>
+                        <b data-bind="visible: comment_user_name, text: comment_user_name"></b>
+                        <span data-bind="text: build_comment"></span>
+                        <h6 data-bind="visible: !build_comment()">{% trans "(No Comment)" %}</h6>
+                    </td>
+                    <td class="build-is-released">
+                        <div data-bind="starred: is_released{% if edit %}, click: $root.toggleRelease{% endif %}"></div>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+        <div data-bind="visible: savedApps().length && !doneFetching(), css: {hidden: false}" class="hidden">
+            <a href="#" class="btn" data-bind="click: getMoreSavedApps">{% trans "View More" %}</a>
+        </div>
+        <script type="text/html" id="delete-build-modal-template">
             <div class="modal-header">
-            <a href="#" class="close" data-dismiss="modal">×</a>
-            <h3>Deploying version {{ saved_app.version }}</h3>
+                <a href="#" class="close" data-dismiss="modal">×</a>
+                <h3>Delete Build?</h3>
             </div>
             <div class="modal-body">
-            {% if saved_app.case_sharing and users_cannot_share|length > 0 %}
-                <p>
-                    <span class="label label-important">Warning!</span>
-                    The following users cannot use this case sharing app because they have either more or less than one group. To fix this, please <a href="{% url commcare_users domain %}?cannot_share=true">edit their group settings</a> so that they all belong to exactly one group.
-                </p>
-                <ul>
-                    {% for user in users_cannot_share %}
-                        <li>{{ user.raw_username }}</li>
-                    {% endfor %}
-                </ul>
-                <p>
-                    <a href="{% url commcare_users domain %}?cannot_share=true" class="btn">Edit mobile users</a>
-                    <a href="#{{ saved_app.id }}_accordion" class="btn showAccordionButton">Deploy anyway</a>
-                </p>
-            {% endif %}
-            <div class="accordion{% if saved_app.case_sharing and users_cannot_share|length > 0 %} hide {% endif %}" id="{{ saved_app.id }}_accordion">
-                <div class="accordion-group">
-                  <div class="accordion-heading">
-                    <a class="accordion-toggle"{% if saved_app.cloudcare_enabled %} data-toggle="collapse" data-parent="#{{ saved_app.id }}_accordion" href="#{{ saved_app.id }}_preview"{% else %} href="{% url emulator domain saved_app.id %}"{% endif %}>
-                      Preview
-                      {% if not saved_app.cloudcare_enabled %}
-                        in emulator
-                      {% endif %}
-                    </a>
-                  </div>
-                  <div id="{{ saved_app.id }}_preview" class="accordion-body collapse">
-                    <div class="accordion-inner">
-                      <p>
-                            Preview in <a href="{% url emulator domain saved_app.id %}">the emulator</a> or in <a href="{% url cloudcare_get_app domain saved_app.id %}">CloudCare</a>
-                      </p>
-                    </div>
-                  </div>
-                </div>
-
-                <div class="accordion-group">
-                  <div class="accordion-heading">
-                    <a class="accordion-toggle" data-toggle="collapse" data-parent="#{{ saved_app.id }}_accordion" href="#{{ saved_app.id }}_j2me">
-                      Download to J2ME
-                    </a>
-                  </div>
-                  <div id="{{ saved_app.id }}_j2me" class="accordion-body collapse">
-                    <div class="accordion-inner">
-                      <ol>
-                        <li>
-                            Download <strong>both</strong> of the following files:
-                            <p><a href="{% url corehq.apps.app_manager.views.download_jad domain saved_app.id %}">Download CommCare.jad</a></p>
-                            <p><a href="{% url corehq.apps.app_manager.views.download_jar domain saved_app.id %}">Download CommCare.jar</a></p>
-                        </li>
-                        <li>
-                            For help on how to install, see our <a target="_blank" href="https://confluence.dimagi.com/display/commcarepublic/Set+Up+Mobile+Phone">Set Up Mobile Phone</a>.
-                        </li>
-                        <li>
-                            If you have any issues with the installation, please refer to
-                            <a target="_blank" href="https://confluence.dimagi.com/display/commcarepublic/Troubleshooting+Phone+Problems">Troubleshooting Phone Problems</a>.
-                        </li>
-                    </ol>
-                    </div>
-                  </div>
-                </div>
-
-                <div class="accordion-group">
-                  <div class="accordion-heading">
-                    <a class="accordion-toggle odk_install" href="{% url corehq.apps.app_manager.views.odk_install domain saved_app.id %}">
-                        Download to CommCare ODK (Android)
-                    </a>
-                  </div>
-                </div>
-
-                <div class="accordion-group">
-                  <div class="accordion-heading">
-                    <a class="accordion-toggle" data-toggle="collapse" data-parent="#{{ saved_app.id }}_accordion" href="#{{ saved_app.id }}_sms">
-                      Send to phone via SMS
-                    </a>
-                  </div>
-
-                  <div id="{{ saved_app.id }}_sms" class="accordion-body collapse">
-                    <div class="accordion-inner">
-                      <div class="tab-pane" id="pills-basic">
-                          <div class="tabbable">
-                            <ul class="nav nav-pills">
-                              <li class="active">
-                                <a href="#{{ saved_app.id }}_sms_j2me" data-toggle="tab">Send J2ME app</a>
-                              </li>
-                              <li>
-                                <a href="#{{ saved_app.id }}_sms_odk" data-toggle="tab">Send CommCare ODK app (Android)</a>
-                              </li>
-                            </ul>
-                            <div class="tab-content">
-                              <div id="{{ saved_app.id }}_sms_j2me" class="tab-pane active">
-                              {% if saved_app.short_url %}
-                                <form method="post" action="{% url corehq.apps.sms.views.send_to_recipients domain %}">
-                                  <label>Send to: </label>
-                                  <input type="text" name="recipients" class="sms-autocomplete" value="{{ app.recipients }}"/>
-                                  <br />
-                                  <textarea name="message">Update to CommCare: {{ saved_app.short_url }} ("{{ app.short_name }}" v.{{ saved_app.version }})</textarea>
-                                  <br />
-                                  <input type="submit" class="btn" value="Send"/>
-                                </form>
-                              {% else %}
-                                <span class="label label-important">
-                                  No URL was found for this app, try rebuilding. 
-                                </span>
-                              {% endif %}
-                              </div>
-
-                              <div id="{{ saved_app.id }}_sms_odk" class="tab-pane">
-                              {% if saved_app.short_odk_url %}
-                                <form method="post" action="{% url corehq.apps.sms.views.send_to_recipients domain %}">
-                                  <label>Send to: </label>
-                                  <input type="text" name="recipients" class="sms-autocomplete" value="{{ app.recipients }}"/>
-                                  <br />
-                                  <textarea name="message">Update to CommCare: {{ saved_app.short_odk_url }} ("{{ app.short_name }}" v.{{ saved_app.version }})</textarea>
-                                  <br />
-                                  <input type="submit" class="btn" value="Send"/>
-                                </form>
-                              {% else %}
-                                <span class="label label-important">
-                                  No URL was found for this app, try rebuilding.
-                                </span>
-                              {% endif %}
-                              </div>
-                            </div>
-                          </div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                {% ifchanged %}
-                {% if multimedia %}
-                <div class="accordion-group">
-                  <div class="accordion-heading">
-                    <a class="accordion-toggle" href="{% if multimedia.notice %}#{{ saved_app.id }}_multimedia{% else %}{% url download_multimedia_zip domain app.id %}{% endif %}" {% if multimedia.notice %}data-toggle="collapse" data-target="#{{ saved_app.id }}_multimedia"{% endif %}>Download Multimedia Zip</a>
-                  </div>
-                  <div class="accordion-body collapse" id="{{ saved_app.id }}_multimedia">
-                    <div class="accordion-inner">
-                    {% if multimedia.missing_image_refs > 0 or multimedia.missing_audio_refs > 0 %}
-                        <p>
-                            Your multimedia zip is missing {{ multimedia.missing_image_refs }} image reference{{ multimedia.missing_image_refs|pluralize }} and
-                            {{ multimedia.missing_audio_refs }} audio reference{{ multimedia.missing_audio_refs|pluralize }}. Your app will likely crash unless this
-                            is resolved.
-                        </p>
-                    {% endif %}
-                    {% if multimedia.errors %}
-                        <p>
-                            Your application contains errors, therefore, your multimedia could not properly be assembled. Please fix your errors and any missing
-                            multimedia references that are found afterward before using this file.
-                        </p>
-                    {% endif %}
-                    <a class="btn btn-warning" href="{% url download_multimedia_zip domain app.id %}">Download Anyway</a>
-                    </div>
-                  </div>
-                </div>
-                {% endif %}
-                {% endifchanged %}
-
-                {% if request.user.is_superuser %}
-                <div class="accordion-group">
-                  <div class="accordion-heading">
-                    <a class="accordion-toggle" href="{% url download_index domain saved_app.id %}">View Source Files</a>
-                  </div>
-                </div>
-                {% endif %}
-            </div>
+                <p>Are you sure you want to delete this build (version <span data-bind="text: version"></span>)?</p>
             </div>
             <div class="modal-footer">
-            <a href="#" class="btn" data-dismiss="modal">Close</a>
+                <a href="#" class="btn" data-dismiss="modal">Cancel</a>
+                <a class="btn btn-danger" href="#" data-bind="click: $root.deleteSavedApp" data-dismiss="modal">Delete Build</a>
             </div>
-        </div>
-    {% endfor %}
+        </script>
+        <script type="text/html" id="revert-build-modal-template">
+            <div class="modal-header">
+                <a href="#" class="close" data-dismiss="modal">×</a>
+                <h3>Revert to Build?</h3>
+            </div>
+            <div class="modal-body">
+                <p>Are you sure you want to revert to build <span data-bind="text: version"></span>?</p>
+            </div>
+            <div class="modal-footer">
+                <a href="#" class="btn" data-dismiss="modal">Cancel</a>
+                <a href="#" class="btn btn-danger" data-bind="click: $root.revertSavedApp" data-dismiss="modal">Revert</a>
+            </div>
+        </script>
+        <script type="text/html" id="deploy-build-modal-template">
+            <div class="modal-header">
+                <a href="#" class="close" data-dismiss="modal">×</a>
+                <h3>Deploying version <span data-bind="text: version"></span></h3>
+            </div>
+            <div class="modal-body">
+                <div data-bind="visible: case_sharing() && $root.users_cannot_share.length">
+                    <p>
+                        <span class="label label-important">Warning!</span>
+                        The following users cannot use this case sharing app because they have either more or less than one group.
+                        To fix this, please <a href="{% url commcare_users domain %}?cannot_share=true&more_columns=true">edit their group settings</a>
+                        so that they all belong to exactly one group.
+                    </p>
+                    <ul data-bind="foreach: $root.users_cannot_share">
+                        <li data-bind="text: username"></li>
+                    </ul>
+                    <p>
+                        <a href="{% url commcare_users domain %}?cannot_share=true&more_columns=true" class="btn">Edit mobile users</a>
+                        <a class="btn" data-bind="click: function () {return $root.deployAnyway[id()](true);}">Deploy anyway</a>
+                    </p>
+                </div>
+                <div class="accordion" data-bind="bootstrapCollapse: true,
+                    visible: $root.deployAnyway[id()]() || !(case_sharing() && $root.users_cannot_share.length)
+                ">
+                    <div class="accordion-group">
+                        <div class="accordion-heading">
+                            <a class="accordion-toggle" data-bind="attr: {href: $root.url('emulator', id)}">
+                                {% trans 'Preview in Emulator' %}
+                            </a>
+                        </div>
+                    </div>
+
+                    <div class="accordion-group">
+                        <div class="accordion-heading">
+                            <a class="accordion-toggle">
+                                {% trans "Download to J2ME" %}
+                            </a>
+                        </div>
+                        <div class="accordion-body collapse">
+                            <div class="accordion-inner">
+                                <ol>
+                                    <li>
+                                        Download <strong>both</strong> of the following files:
+                                        <p><a data-bind="attr: {href: $root.url('jad', id)}">Download CommCare.jad</a></p>
+                                        <p><a data-bind="attr: {href: $root.url('jar', id)}">Download CommCare.jar</a></p>
+                                    </li>
+                                    <li>
+                                        {% trans "For help on how to install, see" %}
+                                        <a target="_blank" href="https://confluence.dimagi.com/display/commcarepublic/Set+Up+Mobile+Phone">{% trans "Set Up Mobile Phone" %}</a>.
+                                    </li>
+                                    <li>
+                                        {% trans "If you have any issues with the installation, please refer to" %}
+                                        <a target="_blank" href="https://confluence.dimagi.com/display/commcarepublic/Troubleshooting+Phone+Problems">{% trans "Troubleshooting Phone Problems" %}</a>.
+                                    </li>
+                                </ol>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="accordion-group">
+                        <div class="accordion-heading">
+                            <a class="accordion-toggle" data-bind="openJqm: $root.url('odk', id)">
+                                {% trans "Download to CommCare ODK (Android)" %}
+                            </a>
+                        </div>
+                    </div>
+
+                    <div class="accordion-group">
+                        <div class="accordion-heading">
+                            <a class="accordion-toggle">
+                                {% trans "Send to phone via SMS" %}
+                            </a>
+                        </div>
+
+                        <div class="accordion-body collapse">
+                            <div class="accordion-inner">
+                                <div data-bind="bootstrapTabs: true">
+                                    <div class="tabbable">
+                                        <ul class="nav nav-pills">
+                                            <li class="active">
+                                                <a>{% trans "Send J2ME app" %}</a>
+                                            </li>
+                                            <li>
+                                                <a>{% trans "Send CommCare ODK app (Android)" %}</a>
+                                            </li>
+                                        </ul>
+                                        <div class="tab-content" data-bind="foreach: [short_url(), short_odk_url()]">
+                                            <div class="tab-pane">
+                                                <div data-bind="visible: $data">
+                                                    <form method="post" action="{% url corehq.apps.sms.views.send_to_recipients domain %}">
+                                                        <label>{% trans "Send to:" %}</label>
+                                                        <input type="text" name="recipients" value=""/>
+                                                        <br />
+                                                        <textarea name="message" data-bind="text: 'Update to CommCare: ' +
+                                                            $data + ' (&quot;' + $parent.short_name() + '&quot; v. ' + $parent.version() + ')'"></textarea>
+                                                        <br />
+                                                        <input type="submit" class="btn" value="Send"/>
+                                                    </form>
+                                                </div>
+                                                <div data-bind="visible: !$data">
+                                                    <span class="label label-important">
+                                                      {% trans "No URL was found for this app, try rebuilding." %}
+                                                    </span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {% if multimedia %}
+                        <div class="accordion-group">
+                            <div class="accordion-heading">
+                                <a class="accordion-toggle" href="{% if multimedia.notice %}#{{ saved_app.id }}_multimedia{% else %}{% url download_multimedia_zip domain app.id %}{% endif %}" {% if multimedia.notice %}data-toggle="collapse" data-target="#{{ saved_app.id }}_multimedia"{% endif %}>Download Multimedia Zip</a>
+                            </div>
+                            <div class="accordion-body collapse" id="{{ saved_app.id }}_multimedia">
+                                <div class="accordion-inner">
+                                    {% if multimedia.missing_image_refs > 0 or multimedia.missing_audio_refs > 0 %}
+                                        <p>
+                                            Your multimedia zip is missing {{ multimedia.missing_image_refs }} image reference{{ multimedia.missing_image_refs|pluralize }} and
+                                            {{ multimedia.missing_audio_refs }} audio reference{{ multimedia.missing_audio_refs|pluralize }}. Your app will likely crash unless this
+                                            is resolved.
+                                        </p>
+                                    {% endif %}
+                                    {% if multimedia.errors %}
+                                        <p>
+                                            Your application contains errors, therefore, your multimedia could not properly be assembled. Please fix your errors and any missing
+                                            multimedia references that are found afterward before using this file.
+                                        </p>
+                                    {% endif %}
+                                    <a class="btn btn-warning" href="{% url download_multimedia_zip domain app.id %}">Download Anyway</a>
+                                </div>
+                            </div>
+                        </div>
+                    {% endif %}
+                    {% if request.user.is_superuser %}
+                        <div class="accordion-group">
+                            <div class="accordion-heading">
+                                <a class="accordion-toggle" data-bind="attr: {href: $root.url('source', id)}">View Source Files</a>
+                            </div>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+            <div class="modal-footer">
+                <a href="#" class="btn" data-dismiss="modal">Close</a>
+            </div>
+        </script>
+    </div>
 {% endblock %}
