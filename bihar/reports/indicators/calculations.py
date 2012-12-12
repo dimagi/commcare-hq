@@ -501,8 +501,8 @@ class ComplicationsCalculator(SummaryValueMixIn, MotherPreDeliverySummaryMixIn,
                     add = _get_time_of_birth(form)
                 else:
                     add = get_add(case)
-                add = string_to_datetime(add)
-                if form.metadata.timeStart - add < self.days:
+                add = string_to_datetime(add).date()
+                if form.metadata.timeStart.date() - add <= self.days:
                     has_recent_complication = True
                     break
 
