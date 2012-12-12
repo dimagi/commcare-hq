@@ -513,26 +513,7 @@ class SingleMembershipMixin(_AuthorizableMixin):
         return [self.domain_membership]
 
     def add_domain_membership(self, domain, timezone=None, **kwargs):
-        # replaces empty domain_membership
-        if self.domain_membership.domain == domain:
-            return
-
-        if not domain == self.domain:
-            raise self.Inconsistent("Domain '%s' is not this commcare user's domain" % domain)
-
-        domain_obj = Domain.get_by_name(domain)
-        if not domain_obj:
-            domain_obj = Domain(is_active=True, name=domain, date_created=datetime.utcnow())
-            domain_obj.save()
-
-        if timezone:
-            domain_membership = DomainMembership(domain=domain, timezone=timezone, **kwargs)
-        else:
-            domain_membership = DomainMembership(domain=domain,
-                timezone=domain_obj.default_timezone,
-                **kwargs)
-
-        self.domain_membership = domain_membership
+        raise NotImplementedError
 
     def delete_domain_membership(self, domain, create_record=False):
         raise NotImplementedError
@@ -999,10 +980,6 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, UnicodeMixIn):
         except AttributeError:
             return []
 
-    def has_permission(self, domain, permission, data=None):
-        """To be overridden by subclasses"""
-        return False
-
     def __getattr__(self, item):
         if item.startswith('can_'):
             perm = item[len('can_'):]
@@ -1034,7 +1011,7 @@ class CommCareUser(CouchUser, CommCareMobileContactMixin, SingleMembershipMixin)
             should_save = True
         self = super(CommCareUser, cls).wrap(data)
         if should_save:
-            self.add_domain_membership(self.domain, role_id=role_id)
+            self.domain_membership = DomainMembership(domain=self.domain, role_id=role_id)
             self.save()
 
         return self
@@ -1066,7 +1043,7 @@ class CommCareUser(CouchUser, CommCareMobileContactMixin, SingleMembershipMixin)
         commcare_user.registering_device_id = device_id
         commcare_user.user_data = user_data
 
-        commcare_user.add_domain_membership(domain, **kwargs)
+        commcare_user.domain_membership = DomainMembership(domain=domain, **kwargs)
 
         commcare_user.save()
 
