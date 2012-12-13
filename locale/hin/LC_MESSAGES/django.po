@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2012-12-13 14:41+0530\n"
+"POT-Creation-Date: 2012-12-13 14:56+0530\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -133,7 +133,6 @@ msgid "EDD Calculator"
 msgstr "ई0ड़ी0ड़ी केलकुलेटर"
 
 #: .\submodules\bihar-reports\bihar\reports\supervisor.py:350
-#, fuzzy
 msgid "Enter LMP (YYYY-MM-DD)"
 msgstr "अंतिम मासिक धर्म की तारीख भरें"
 
@@ -216,16 +215,12 @@ msgid "Pregnant woman registered in last 30 days"
 msgstr "पिछले 30 दिनों मे पंजीकृत गर्भवती की संख्या"
 
 #: .\submodules\bihar-reports\bihar\reports\indicators\__init__.py:65
-msgid ""
-"Pregnant woman not given BP counselling (of pregnant woman registered in "
-"last 30 days)"
-msgstr "गर्भवती जिन्हे प्रसव पूर्व देखभाल की जानकारी नही दी गई "
+msgid "Pregnant woman not given BP counselling"
+msgstr "गर्भवती जिन्हे प्रसव पूर्व देखभाल की जानकारी नही दी गई"
 
 #: .\submodules\bihar-reports\bihar\reports\indicators\__init__.py:70
-msgid ""
-"Pregnant woman not received IFA tablets (of pregnant woman registered in "
-"last 30 days)"
-msgstr "गर्भवती जिन्हे IFA की गोलीयॉ नही मिली "
+msgid "Pregnant woman not received IFA tablets"
+msgstr "गर्भवती जिन्हे IFA की गोलीयॉ नही मिली"
 
 #: .\submodules\bihar-reports\bihar\reports\indicators\__init__.py:77
 msgid "Pregnancy Outcomes"
@@ -236,44 +231,32 @@ msgid "Home Deliveries visited in 24 hours of Birth"
 msgstr "जन्म के 24 घंटे मे घर पर हुये प्रसव की गृहभेंट "
 
 #: .\submodules\bihar-reports\bihar\reports\indicators\__init__.py:86
-msgid ""
-"Institutional Deliveries visited in 24 hours of Birth (Total Number ID24HR/"
-"TNI)"
+msgid "Institutional Deliveries visited in 24 hours of Birth"
 msgstr "जन्म के 24 घंटे मे अस्पताल मे हुए प्रसव की गृहभेंट"
 
 #: .\submodules\bihar-reports\bihar\reports\indicators\__init__.py:91
-msgid ""
-"Institutional deliveries not breastfed within one hour (Total NumberBF/Total "
-"Number ID24HR)"
-msgstr "अस्पताल मे हुए प्रसव जिसमे जन्म के एक घंटे के अंदर स्तनपान नही कराया गया "
+msgid "Institutional deliveries not breastfed within one hour"
+msgstr "अस्पताल मे हुए प्रसव जिसमे जन्म के एक घंटे के अंदर स्तनपान नही कराया गया"
 
 #: .\submodules\bihar-reports\bihar\reports\indicators\__init__.py:99
 msgid "Post-Partum Complications"
 msgstr "प्रसव पश्चात जटिलताए"
 
 #: .\submodules\bihar-reports\bihar\reports\indicators\__init__.py:103
-msgid ""
-"# complications identified in first 24 hours / # complications in last 30 "
-"days"
+msgid "complications identified in first 24 hours"
 msgstr "पहले 24 घंटे मे पहचानी गइ जटिलताए"
 
 #: .\submodules\bihar-reports\bihar\reports\indicators\__init__.py:109
-msgid ""
-"# complications identified within 3 days of birth / # complications in last "
-"30 days"
-msgstr "जन्म के 3 दिनों मे पहचानी गइ जटिलताए "
+msgid "complications identified within 3 days of birth"
+msgstr "जन्म के 3 दिनों मे पहचानी गइ जटिलताए"
 
 #: .\submodules\bihar-reports\bihar\reports\indicators\__init__.py:115
-msgid ""
-"# complications identified within 5 days of birth / # complications in last "
-"30 days"
+msgid "complications identified within 5 days of birth"
 msgstr "जन्म के 5 दिनों मे पहचानी गइ जटिलताए"
 
 #: .\submodules\bihar-reports\bihar\reports\indicators\__init__.py:121
-msgid ""
-"# complications identified within 7 days of birth / # complications in last "
-"30 days"
-msgstr "जन्म के 7 दिनों मे पहचानी गइ जटिलताए "
+msgid "complications identified within 7 days of birth"
+msgstr "जन्म के 7 दिनों मे पहचानी गइ जटिलताए"
 
 #: .\submodules\bihar-reports\bihar\reports\indicators\__init__.py:129
 msgid "Weak Newborn"
@@ -288,20 +271,15 @@ msgid "infants < 2kg"
 msgstr "2kg से कम वजन वाले नवजात "
 
 #: .\submodules\bihar-reports\bihar\reports\indicators\__init__.py:143
-msgid ""
-"# live births who are preterm or < 2kg  visited in 24 hours of birth by FLW/ "
-"(# preterm + # infants < 2kg)"
-msgstr "जन्म के 24 घंटे मे आशा/ऑगनवाडी द्वारा कमजोर नवजात का गृहभ्रमण "
+msgid "visited Weak Newborn within 24 hours of birth by FLW"
+msgstr "जन्म के 24 घंटे मे आशा/ऑगनवाडी द्वारा कमजोर नवजात का गृहभ्रमण"
 
 #: .\submodules\bihar-reports\bihar\reports\indicators\__init__.py:148
-msgid ""
-"# live births who are preterm and < 2kg not receiving skin to skin care "
-"message by FLW"
+msgid "weak newborn not receiving skin to skin care message by FLW"
 msgstr "कमजोर नवजात जिन्हे आशा/ऑगनवाडी द्वारा त्वचा से त्वचा देखभाल की सलाह नही दी गई"
 
 #: .\submodules\bihar-reports\bihar\reports\indicators\__init__.py:153
-msgid ""
-"weak newborn not breastfeeding vigorously "
+msgid "weak newborn not breastfeeding vigorously "
 msgstr "कमजोर नवजात जिन्हे लगातार स्तनपान नही कराया जा रहा"
 
 #: .\submodules\bihar-reports\bihar\reports\indicators\__init__.py:162
