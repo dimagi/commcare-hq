@@ -346,8 +346,8 @@ class EDDCalcReport(InputReport):
     _inputs = [
         {
             "name": "lmp",
-            "type": "date",
-            "label": ugettext_noop("Enter LMP (MM/DD/YYYY)")
+            "type": "text",
+            "label": ugettext_noop("Enter LMP (YYYY-MM-DD)")
         }
     ]
 
