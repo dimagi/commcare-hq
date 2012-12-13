@@ -26,28 +26,27 @@ class Command(LabelCommand):
                 MVP.NAMESPACE,
                 domain
             )
-            shared_kwargs = dict(
-                version=1
-            )
 
+            # All the visit forms
             self.create_form_alias_indicators(CHILD_VISIT_QUESTION_IDS,
-                MVP.VISIT_FORMS.get('child_visit'), domain, shared_args, shared_kwargs)
+                MVP.VISIT_FORMS.get('child_visit'), domain, shared_args)
             self.create_form_alias_indicators(HOUSEHOLD_VISIT_QUESTION_IDS,
-                MVP.VISIT_FORMS.get('household_visit'), domain, shared_args, shared_kwargs)
+                MVP.VISIT_FORMS.get('household_visit'), domain, shared_args)
             self.create_form_alias_indicators(PREGNANCY_VISIT_QUESTION_IDS,
-                MVP.VISIT_FORMS.get('pregnancy_visit'), domain, shared_args, shared_kwargs)
+                MVP.VISIT_FORMS.get('pregnancy_visit'), domain, shared_args)
 
+            # All the close forms
             self.create_form_alias_indicators(CHILD_CLOSE_FORM_QUESTION_IDS,
-                MVP.CLOSE_FORMS.get('child_close'), domain, shared_args, shared_kwargs)
+                MVP.CLOSE_FORMS.get('child_close'), domain, shared_args)
             self.create_form_alias_indicators(PREGNANCY_CLOSE_FORM_QUESTION_IDS,
-                MVP.CLOSE_FORMS.get('pregnancy_close'), domain, shared_args, shared_kwargs)
+                MVP.CLOSE_FORMS.get('pregnancy_close'), domain, shared_args)
 
             pregnancy_edd = CaseDataInFormIndicatorDefinition.update_or_create_unique(
                 *shared_args,
                 slug="pregnancy_edd",
                 xmlns=MVP.VISIT_FORMS.get('pregnancy_visit'),
                 case_property="edd_calc",
-                **shared_kwargs
+                version=1
             )
             pregnancy_edd.save()
 
@@ -56,7 +55,7 @@ class Command(LabelCommand):
                 slug="pregnancy_end",
                 xmlns=MVP.VISIT_FORMS.get('pregnancy_visit'),
                 case_property="closed_on",
-                **shared_kwargs
+                version=1
             )
             pregnancy_end.save()
 
@@ -68,7 +67,7 @@ class Command(LabelCommand):
                     case_type='child',
                     xmlns=MVP.VISIT_FORMS.get('child_visit'),
                     question_id=child_visit_referral_type_quid,
-                    **shared_kwargs
+                    version=1
                 )
                 child_case_referral_type.save()
 
@@ -80,7 +79,7 @@ class Command(LabelCommand):
                     case_type='pregnancy',
                     xmlns=MVP.VISIT_FORMS.get('pregnancy_visit'),
                     question_id=pregnancy_visit_referral_type_quid,
-                    **shared_kwargs
+                    version=1
                 )
                 pregnancy_case_referral_type.save()
 
@@ -92,7 +91,7 @@ class Command(LabelCommand):
                     case_type='child',
                     xmlns=MVP.VISIT_FORMS.get('child_visit'),
                     question_id=visit_hospital_quid,
-                    **shared_kwargs
+                    version=1
                 )
                 visit_hospital_case.save()
 
@@ -103,30 +102,30 @@ class Command(LabelCommand):
                     slug="immediate_danger_sign",
                     case_type='child',
                     xmlns=MVP.VISIT_FORMS.get('child_visit'),
-                    question_id=immediate_danger_sign_quid,
-                    **shared_kwargs
+                    question_id=immediate_danger_sign_quid[0],
+                    version=1
                 )
                 immediate_danger_sign_case.save()
 
             self.insert_dob_into_form('child_dob', MVP.VISIT_FORMS.get('child_visit'),
-                shared_args, shared_kwargs)
+                shared_args)
 
             self.insert_dob_into_form('child_dob', MVP.CLOSE_FORMS.get('child_close'),
-                shared_args, shared_kwargs)
+                shared_args)
 
 
-    def insert_dob_into_form(self, indicator_slug, xmlns, shared_args, shared_kwargs):
+    def insert_dob_into_form(self, indicator_slug, xmlns, shared_args, version=1):
         child_dob = CaseDataInFormIndicatorDefinition.update_or_create_unique(
             *shared_args,
             slug=indicator_slug,
             xmlns=xmlns,
             case_property="dob_calc",
-            **shared_kwargs
+            version=version,
         )
         child_dob.save()
 
 
-    def create_form_alias_indicators(self, question_ids, xmlns, domain, shared_args, shared_kwargs):
+    def create_form_alias_indicators(self, question_ids, xmlns, domain, shared_args):
         for indicator_slug, ids_per_domain in question_ids.items():
             question_id = ids_per_domain.get(domain)
             if question_id:
@@ -135,6 +134,6 @@ class Command(LabelCommand):
                     slug=indicator_slug,
                     xmlns=xmlns,
                     question_id=question_id,
-                    **shared_kwargs
+                    version=1,
                 )
                 form_question.save()
