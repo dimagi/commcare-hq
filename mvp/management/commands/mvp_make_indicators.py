@@ -12,15 +12,6 @@ class Command(LabelCommand):
     label = ""
 
     def handle(self, *args, **options):
-        all_indicators = DocumentIndicatorDefinition.view("indicators/indicator_definitions",
-            reduce=False,
-            include_docs=True,
-            startkey=["namespace domain slug", MVP.NAMESPACE],
-            endkey=["namespace domain slug", MVP.NAMESPACE, {}]
-        ).all()
-        for ind in all_indicators:
-            ind.delete()
-
         for domain in MVP.DOMAINS:
             shared_args=(
                 MVP.NAMESPACE,
@@ -48,7 +39,7 @@ class Command(LabelCommand):
                 case_property="edd_calc",
                 version=1
             )
-            pregnancy_edd.save()
+            print pregnancy_edd
 
             pregnancy_end = CaseDataInFormIndicatorDefinition.update_or_create_unique(
                 *shared_args,
@@ -57,55 +48,51 @@ class Command(LabelCommand):
                 case_property="closed_on",
                 version=1
             )
-            pregnancy_end.save()
+            print pregnancy_end
 
-            child_visit_referral_type_quid = CHILD_VISIT_QUESTION_IDS.get('referral_type', {}).get(domain)
-            if child_visit_referral_type_quid:
+            child_visit_referral = CHILD_VISIT_QUESTION_IDS.get('referral_type', {}).get(domain)
+            if child_visit_referral:
                 child_case_referral_type = FormDataInCaseIndicatorDefinition.update_or_create_unique(
                     *shared_args,
                     slug="referral_type",
                     case_type='child',
                     xmlns=MVP.VISIT_FORMS.get('child_visit'),
-                    question_id=child_visit_referral_type_quid,
-                    version=1
+                    **child_visit_referral
                 )
-                child_case_referral_type.save()
+                print child_case_referral_type
 
-            pregnancy_visit_referral_type_quid = PREGNANCY_VISIT_QUESTION_IDS.get('referral_type', {}).get(domain)
-            if pregnancy_visit_referral_type_quid:
+            pregnancy_visit_referral = PREGNANCY_VISIT_QUESTION_IDS.get('referral_type', {}).get(domain)
+            if pregnancy_visit_referral:
                 pregnancy_case_referral_type = FormDataInCaseIndicatorDefinition.update_or_create_unique(
                     *shared_args,
                     slug="referral_type",
                     case_type='pregnancy',
                     xmlns=MVP.VISIT_FORMS.get('pregnancy_visit'),
-                    question_id=pregnancy_visit_referral_type_quid,
-                    version=1
+                    **pregnancy_visit_referral
                 )
-                pregnancy_case_referral_type.save()
+                print pregnancy_case_referral_type
 
-            visit_hospital_quid = CHILD_VISIT_QUESTION_IDS.get('visit_hospital', {}).get(domain)
-            if visit_hospital_quid:
+            visit_hospital = CHILD_VISIT_QUESTION_IDS.get('visit_hospital', {}).get(domain)
+            if visit_hospital:
                 visit_hospital_case = FormDataInCaseIndicatorDefinition.update_or_create_unique(
                     *shared_args,
                     slug="visit_hospital",
                     case_type='child',
                     xmlns=MVP.VISIT_FORMS.get('child_visit'),
-                    question_id=visit_hospital_quid,
-                    version=1
+                    **visit_hospital
                 )
-                visit_hospital_case.save()
+                print visit_hospital_case
 
-            immediate_danger_sign_quid = CHILD_VISIT_QUESTION_IDS.get('immediate_danger_sign', {}).get(domain)
-            if immediate_danger_sign_quid:
+            immediate_danger_sign = CHILD_VISIT_QUESTION_IDS.get('immediate_danger_sign', {}).get(domain)
+            if immediate_danger_sign:
                 immediate_danger_sign_case = FormDataInCaseIndicatorDefinition.update_or_create_unique(
                     *shared_args,
                     slug="immediate_danger_sign",
                     case_type='child',
                     xmlns=MVP.VISIT_FORMS.get('child_visit'),
-                    question_id=immediate_danger_sign_quid[0],
-                    version=1
+                    **immediate_danger_sign
                 )
-                immediate_danger_sign_case.save()
+                print immediate_danger_sign_case
 
             self.insert_dob_into_form('child_dob', MVP.VISIT_FORMS.get('child_visit'),
                 shared_args)
@@ -120,20 +107,30 @@ class Command(LabelCommand):
             slug=indicator_slug,
             xmlns=xmlns,
             case_property="dob_calc",
-            version=version,
+            version=version
         )
-        child_dob.save()
+        print child_dob
 
 
     def create_form_alias_indicators(self, question_ids, xmlns, domain, shared_args):
         for indicator_slug, ids_per_domain in question_ids.items():
-            question_id = ids_per_domain.get(domain)
-            if question_id:
+            indicator_info = ids_per_domain.get(domain)
+            if indicator_info:
                 form_question = FormDataAliasIndicatorDefinition.update_or_create_unique(
                     *shared_args,
                     slug=indicator_slug,
                     xmlns=xmlns,
-                    question_id=question_id,
-                    version=1,
+                    **indicator_info
                 )
-                form_question.save()
+                print form_question
+
+    def _delete_existing(self):
+        print "DELETING ALL INDICATORS"
+        all_indicators = DocumentIndicatorDefinition.view("indicators/indicator_definitions",
+            reduce=False,
+            include_docs=True,
+            startkey=["namespace domain slug", MVP.NAMESPACE],
+            endkey=["namespace domain slug", MVP.NAMESPACE, {}]
+        ).all()
+        for ind in all_indicators:
+            ind.delete()
