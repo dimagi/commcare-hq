@@ -185,7 +185,7 @@ class ProjectSettingsMenuItem(DropdownMenuItem):
     @property
     @memoized
     def url(self):
-        return _redirect_users_to(self.request, self.domain)
+        return _redirect_users_to(self.request, self.domain) or reverse("homepage")
 
     @property
     @memoized
