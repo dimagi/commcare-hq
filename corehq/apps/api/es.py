@@ -11,6 +11,18 @@ from django.views.generic import View
 
 
 class ESView(View):
+    """
+    Generic CBV for interfacing with the Elasticsearch REST api.
+    This is necessary because tastypie's built in REST assumptions don't like
+    ES's POST for querying, which we can set explicitly here.
+
+    For security purposes, queries ought to be domain'ed by the requesting user, so a base_query
+    is encouraged to be added.
+
+    Access to the APIs can be done via url endpoints which are attached to the corehq.api.urls
+
+    or programmatically via the self.run_query() method.
+    """
 
     #note - for security purposes, csrf protection is ENABLED
     #search POST queries must take the following format:
@@ -20,15 +32,12 @@ class ESView(View):
     #in curl, this is:
     #curl -b "csrftoken=<csrftoken>;sessionid=<session_id>" -H "Content-Type: application/json" -XPOST http://server/a/domain/api/v0.1/xform_es/
     #     -d"query=@myquery.json&csrfmiddlewaretoken=<csrftoken>"
+    #or, call this programmatically to avoid CSRF issues.
 
     index = ""
     es = get_es()
 
     http_method_names = ['get', 'post', 'head', ]
-    def get(self, *args, **kwargs):
-        raise NotImplementedError("Not implemented")
-    def post(self,  *args, **kwargs):
-        raise NotImplementedError("Not implemented")
     def head(self, *args, **kwargs):
         raise NotImplementedError("Not implemented")
 
@@ -52,6 +61,7 @@ class ESView(View):
         Returns the raw query json back, or None if there's an error
         """
         #todo: backend audit logging of all these types of queries
+        print simplejson.dumps(es_query, indent=4)
         es_results = self.es[self.index].get('_search', data=es_query)
         if es_results.has_key('error'):
             logging.exception("Error in %s elasticsearch query: %s" % (self.index, es_results['error']))
@@ -70,17 +80,16 @@ class ESView(View):
                     }
                 ]
             },
-            "sort": {
-                "received_on": "desc"
-            },
-            "size": size,
             "from":start
         }
+        if size is not None:
+            query['size']=size
         return query
 
     def get(self, *args, **kwargs):
         """
         Very basic querying based upon GET parameters.
+        todo: apply GET params as lucene query_string params to base_query
         """
         size = self.request.GET.get('size', 10)
         start = self.request.GET.get('start', 0)
@@ -102,6 +111,7 @@ class ESView(View):
             response = HttpResponse(status=406, content=simplejson.dumps(content_response))
             return response
 
+        #ensure that the domain is filtered in implementation
         domain = self.request.domain
         query_results = self.run_query(raw_query)
         query_output = simplejson.dumps(query_results, indent=self.indent)
@@ -110,6 +120,10 @@ class ESView(View):
 
 
 class CaseES(ESView):
+    """
+    Expressive CaseES interface. Yes, this is redundant with pieces of the v0_1.py CaseAPI - todo to merge these applications
+    Which this should be the final say on ES access for Casedocs
+    """
     index = "hqcases"
 
 

@@ -1,3 +1,4 @@
+from corehq.apps.api.domainapi import DomainAPI
 from corehq.apps.api.resources import v0_1, v0_2, v0_3
 from django.conf.urls.defaults import *
 from tastypie.api import Api
@@ -18,6 +19,9 @@ def api_url_patterns():
             api.register(R())
         yield (r'^', include(api.urls))
     yield url(r'^v0.1/xform_es/$', XFormES.as_view())
+    for view_class in DomainAPI.__subclasses__():
+        yield url(r'^custom/%s/%s/$' % (view_class.api_name(), view_class.api_version()), view_class.as_view(), name="%s_%s" % (view_class.api_name(), view_class.api_version()))
+
 
 urlpatterns = patterns('',
     *api_url_patterns)

@@ -1,17 +1,10 @@
-import pdb
-import random
-import traceback
 from corehq.pillows.core import DATE_FORMATS_ARR, DATE_FORMATS_STRING
-import sys
-from pillowtop.listener import AliasedElasticPillow, CHECKPOINT_FREQUENCY
+from pillowtop.listener import AliasedElasticPillow
 import hashlib
 import simplejson
 from couchforms.models import XFormInstance
 from pillowtop.listener import ElasticPillow
-import logging
 from django.conf import settings
-from datetime import datetime
-
 
 
 class StrippedXformPillow(ElasticPillow):
@@ -198,7 +191,6 @@ class XFormPillow(AliasedElasticPillow):
 #                print "no domain, but fixed %s [%s] %d" % (doc_dict['_id'], doc_dict['xmlns'], self.nodomain_check[doc_dict['_id']])
                 pass
             return domain
-
 
     def get_type_string(self, doc_dict):
         domain = self.get_domain(doc_dict)

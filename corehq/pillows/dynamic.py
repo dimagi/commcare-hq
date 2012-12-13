@@ -81,7 +81,7 @@ def set_properties(schema_class, custom_types=default_special_types):
 
         if complex_type_mapper.has_key(prop_type.__class__):
             func = complex_type_mapper[prop_type.__class__]
-            props_dict[prop_name] = func(prop_type._schema, nested=True, dynamic=False)
+            props_dict[prop_name] = func(prop_type._schema, nested=False, dynamic=False)
             continue
 #        print prop_name
     return props_dict
@@ -89,7 +89,7 @@ def set_properties(schema_class, custom_types=default_special_types):
 
 DEFAULT_MAPPING_WRAPPER = {
         "date_detection": False,
-        'dynamic': False,
+        'dynamic': True,
         "date_formats": DATE_FORMATS_ARR, #for parsing the explicitly defined dates
         "_meta": {"created": None},
         "properties": {}
