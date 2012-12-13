@@ -26,6 +26,6 @@ class Command(LabelCommand):
         print "Grabbed Indicator", form_indicator
         xform = XFormInstance.get(form_id)
         print "Grabbed XForm", xform
-        xform.set_definition(form_indicator)
+        xform.update_indicator(form_indicator)
         xform.save()
         print "Set definition"
