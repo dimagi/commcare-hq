@@ -2,7 +2,7 @@ from StringIO import StringIO
 import datetime
 from celery.log import get_task_logger
 from django.core.urlresolvers import reverse
-from django.http import HttpResponse
+from django.http import HttpResponse, Http404
 from django.template.context import RequestContext
 import json
 from django.template.loader import render_to_string
@@ -117,6 +117,7 @@ class GenericReportView(object):
         self.domain = kwargs.get('domain')
         self.context = base_context or {}
         self._update_initial_context()
+        self.is_rendered_as_email = False # setting this to true in email_response
 
     def __str__(self):
         return "%(klass)s report named '%(name)s' with slug '%(slug)s' in section '%(section)s'.%(desc)s%(fields)s" % dict(
@@ -507,13 +508,14 @@ class GenericReportView(object):
                                   self.context)
     
     @property
-    def static_response(self):
+    def email_response(self):
         """
         This renders a json object containing a pointer to the static html 
         content of the report. It is intended for use by the report scheduler.
         """
+        self.is_rendered_as_email = True
         self.context.update(original_template=self.template_report)
-        self._template_report = "reports/async/static_only.html"
+        self._template_report = "reports/async/email_report.html"
         return self.async_response
 
     @property
@@ -579,6 +581,14 @@ class GenericReportView(object):
         temp = StringIO()
         export_from_tables(self.export_table, temp, self.export_format)
         return export_response(temp, self.export_format, self.export_name)
+
+    @property
+    def partial_response(self):
+        """
+            Use this response for rendering smaller chunks of your report.
+            (Great if you have a giant report with annoying, complex indicators.)
+        """
+        raise Http404
 
     @property
     def clear_cache_response(self):

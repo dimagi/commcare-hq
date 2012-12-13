@@ -9,6 +9,7 @@ from casexml.apps.case.models import CommCareCase
 from dimagi.utils.couch.database import get_db
 from dimagi.utils.couch.loosechange import map_reduce
 from corehq.apps.commtrack import sms
+from corehq.apps.commtrack.helpers import make_supply_point
 
 def set_error(row, msg, override=False):
     """set an error message on a stock report to be imported"""
@@ -242,3 +243,61 @@ def annotate_csv(data, columns):
     writer.writerow(dict((h, 'STATUS' if h == 'error' else h) for h in headers))
     writer.writerows(data)
     return f.getvalue()
+
+def import_locations(domain, f):
+    data = list(csv.DictReader(f))
+    for loc in data:
+        for m in import_location(domain, loc):
+            yield m
+
+def import_location(domain, loc):
+    def _loc(*args, **kwargs):
+        return make_loc(domain, *args, **kwargs)
+
+    def get_by_name(loc_name, loc_type, parent):
+        # TODO: could cache the results of this for speed
+        existing = Location.filter_by_type(domain, loc_type, parent)
+        try:
+            return [l for l in existing if l.name == loc_name][0]
+        except IndexError:
+            return None
+
+    HIERARCHY_FIELDS = ('state', 'district', 'block')
+    hierarchy = [(p, loc[p]) for p in HIERARCHY_FIELDS]
+
+    # create parent hierarchy if it does not exist
+    parent = None
+    for anc_type, anc_name in hierarchy:
+        child = get_by_name(anc_name, anc_type, parent)
+        if not child:
+            child = _loc(name=anc_name, location_type=anc_type, parent=parent)
+            yield 'created %s %s' % (anc_type, anc_name)
+        parent = child
+
+    name = loc['outlet_name']
+    # check if outlet already exists
+    outlet = get_by_name(name, 'outlet', parent)
+    if outlet:
+        yield 'outlet %s exists; skipping...' % name
+        return
+
+    outlet_props = dict(loc)
+    for k in ('outlet_name', 'outlet_code'):
+        del outlet_props[k]
+
+    # check that sms code for outlet is unique
+    code = loc['outlet_code'].lower()
+    if get_db().view('commtrack/locations_by_code',
+                     key=[domain, code],
+                     include_docs=True).one():
+        yield 'code %s for outlet %s already in use! outlet NOT created' % (code, name)
+        return
+
+    outlet = _loc(name=name, location_type='outlet', parent=parent, **outlet_props)
+    make_supply_point(domain, outlet, code)
+    yield 'created outlet %s' % name
+
+def make_loc(domain, *args, **kwargs):
+    loc = Location(domain=domain, *args, **kwargs)
+    loc.save()
+    return loc

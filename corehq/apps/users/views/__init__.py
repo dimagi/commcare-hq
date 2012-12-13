@@ -88,15 +88,20 @@ def _users_context(request, domain):
 
 @login_and_domain_required
 def users(request, domain):
-    user = WebUser.get_by_user_id(request.couch_user._id, domain)
+    redirect = _redirect_users_to(request, domain)
+    if not redirect:
+        raise Http404
+    return HttpResponseRedirect(redirect)
+
+def _redirect_users_to(request, domain):
+    redirect = None
+    user = CouchUser.get_by_user_id(request.couch_user._id, domain)
     if user:
         if user.has_permission(domain, 'edit_commcare_users'):
             redirect = reverse("commcare_users", args=[domain])
         else:
             redirect = reverse("user_account", args=[domain, request.couch_user._id])
-    else:
-        raise Http404()
-    return HttpResponseRedirect(redirect)
+    return redirect
 
 @require_can_edit_web_users
 def web_users(request, domain, template="users/web_users.html"):
@@ -243,8 +248,10 @@ def account(request, domain, couch_user_id, template="users/account.html"):
     if not couch_user:
         raise Http404
 
+    editing_commcare_user = couch_user.is_commcare_user() and request.couch_user.can_edit_commcare_users
     context.update({
         'couch_user': couch_user,
+        'editing_commcare_user': editing_commcare_user,
     })
     if couch_user.is_commcare_user():
         context.update({
@@ -287,16 +294,15 @@ def account(request, domain, couch_user_id, template="users/account.html"):
     })
 
     #project settings tab
-    if couch_user.user_id == request.couch_user.user_id and not couch_user.is_commcare_user():
-        web_user = WebUser.get_by_user_id(couch_user.user_id)
-        dm = web_user.get_domain_membership(domain)
+    if couch_user.user_id == request.couch_user.user_id:
+        dm = couch_user.get_domain_membership(domain)
         if dm:
             domain_obj = Domain.get_by_name(domain)
             if request.method == "POST" and request.POST['form_type'] == "project-settings":
                 # deal with project settings data
                 project_settings_form = ProjectSettingsForm(request.POST)
                 if project_settings_form.is_valid():
-                    if project_settings_form.save(web_user, domain):
+                    if project_settings_form.save(couch_user, domain):
                         messages.success(request, "Your project settings were successfully saved!")
                     else:
                         messages.error(request, "There seems to have been an error saving your project settings. Please try again!")

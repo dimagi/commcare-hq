@@ -327,16 +327,4 @@ def _spreadsheet_expired(req, domain):
 def _get_spreadsheet(download_ref, column_headers=True):
     if not download_ref:
         return None
-
-    # even though we already have the raw data in the download object,
-    # unfortunately the excel library only likes to use files so we 
-    # have to resave it in a temp file before opening.
-
-    # only .xls is supported
-    fd, filename = mkstemp(suffix='.xls')
-    with os.fdopen(fd, "wb") as destination:
-        # write the download reference to the temp file
-        destination.write(download_ref.get_content())
-    
-    return ExcelFile(filename, column_headers)
-    
+    return ExcelFile(download_ref.get_filename(), column_headers)

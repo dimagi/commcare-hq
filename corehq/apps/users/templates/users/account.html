@@ -107,13 +107,13 @@
 {% block user-view %}
     <ul class="nav nav-tabs" id="project-settings-tabs">
         <li><a href="#basic-info" data-toggle="tab">Basic</a></li>
-    {% if couch_user.is_commcare_user %}
+    {% if editing_commcare_user %}
         <li><a href="#user-data" data-toggle="tab">Custom Registration Data</a></li>
     {% endif %}
-    {% if couch_user.user_id == request.couch_user.user_id and not couch_user.is_commcare_user %}
-        {% if proj_settings_form %}
+    {% if proj_settings_form %}
         <li><a href="#project-settings" data-toggle="tab">My Settings for this Project</a></li>
-        {% endif %}
+    {% endif %}
+    {% if couch_user.user_id == request.couch_user.user_id and not couch_user.is_commcare_user %}
         <li><a href="#domains" data-toggle="tab">My Projects</a></li>
     {% endif %}
     </ul>
@@ -165,6 +165,9 @@
                                 {% ifequal phone.status "duplicate" %}
                                 <div>{% if phone.dup_url %}<a href="{{ phone.dup_url }}">{% endif %}<span class="label label-warning"><small>ALREADY IN USE</small></span>{% if phone.dup_url %}</a>{% endif %}</div>
                                 {% endifequal %}
+                                {% ifequal phone.status "invalid" %}
+                                <div><span class="label"><small>INVALID FORMAT</small></span></div>
+                                {% endifequal %}
                             </label>
                             
                             <div class="controls">
@@ -212,23 +215,23 @@
                 <div class="form-actions"><button type="submit" class="btn btn-primary">Add Number</button></div>
             </form>
         </div>
-        {% if couch_user.is_commcare_user %}
+        {% if editing_commcare_user %}
         <div class="tab-pane" id="user-data">
             {% include "users/partial/user_data.html" %}
         </div>
         {% endif %}
-        {% if couch_user.user_id == request.couch_user.user_id and not couch_user.is_commcare_user %}
         {% if proj_settings_form %}
-        <div class="tab-pane" id="project-settings">
-            {% include "users/partial/project_settings.html" %}
-        </div>
+            <div class="tab-pane" id="project-settings">
+                {% include "users/partial/project_settings.html" %}
+            </div>
         {% endif %}
+        {% if couch_user.user_id == request.couch_user.user_id and not couch_user.is_commcare_user %}
         <div class="tab-pane" id="domains">
             {% include "users/partial/domain_accounts.html" %}
         </div>
         {% endif %}
     </div>
-    {% if couch_user.is_commcare_user %}
+    {% if editing_commcare_user %}
         <fieldset>
             <legend>Reset Password</legend>
             <a href="#reset_password_{{ couch_user.user_id }}" class="btn btn-info" data-toggle="modal">Reset Password</a>

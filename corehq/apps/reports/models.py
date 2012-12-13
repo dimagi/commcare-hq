@@ -19,6 +19,7 @@ import json
 import calendar
 from django.utils.translation import ugettext as _
 from django.utils.translation import ugettext_noop
+from dimagi.utils.logging import notify_exception
 
 class HQUserType(object):
     REGISTERED = 0
@@ -329,7 +330,7 @@ class ReportConfig(Document):
 
         request.GET = QueryDict(self.query_string + '&filterSet=true')
 
-        response = self._dispatcher.dispatch(request, render_as='static',
+        response = self._dispatcher.dispatch(request, render_as='email',
                                              **self.view_kwargs)
         return json.loads(response.content)['report']
 
@@ -515,6 +516,38 @@ class HQGroupExportConfiguration(GroupExportConfiguration):
     def by_domain(cls, domain):
         return cls.view("groupexport/by_domain", key=domain, 
                         reduce=False, include_docs=True).all()
+
+    @classmethod
+    def get_for_domain(cls, domain):
+        """
+        For when we only expect there to be one of these per domain,
+        which right now is always.
+        """
+        groups = cls.by_domain(domain)
+        if groups:
+            if len(groups) > 1:
+                notify_exception("Domain %s has more than one group export config! This is weird." % domain)
+            return groups[0]
+        return HQGroupExportConfiguration(domain=domain)
+
+    @classmethod
+    def add_custom_export(cls, domain, export_id):
+        group = cls.get_for_domain(domain)
+        if export_id not in group.custom_export_ids:
+            group.custom_export_ids.append(export_id)
+            group.save()
+        return group
+
+    @classmethod
+    def remove_custom_export(cls, domain, export_id):
+        group = cls.get_for_domain(domain)
+        updated = False
+        while export_id in group.custom_export_ids:
+            group.custom_export_ids.remove(export_id)
+            updated = True
+        if updated:
+            group.save()
+        return group
 
 class CaseActivityReportCache(Document):
     domain = StringProperty()

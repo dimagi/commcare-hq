@@ -217,8 +217,24 @@ ko.bindingHandlers.openModal = {
                 };
                 return clickAction;
             };
-        console.log(modal);
         ko.bindingHandlers.click.init(element, newValueAccessor, allBindingsAccessor, viewModel, bindingContext);
+    }
+};
+
+ko.bindingHandlers.openJqm = {
+    init: function (element, valueAccessor, allBindingsAccessor, viewModel, bindingContext) {
+        var ajaxSrc = valueAccessor(),
+            modal = $('<div></div>').addClass('jqmWindow').appendTo('body'),
+            newValueAccessor = function () {
+                var clickAction = function () {
+                    modal.jqm({ajax: ajaxSrc}).jqmShow();
+                };
+                return clickAction;
+
+            };
+        ko.bindingHandlers.click.init(element, newValueAccessor, allBindingsAccessor, viewModel, bindingContext);
+//            $('#odk-install-placeholder').jqm({ajax: '@href', trigger: 'a.odk_install',
+//            ajaxText: "Please wait while we load that for you..." });
     }
 };
 
@@ -230,5 +246,52 @@ ko.bindingHandlers.visibleFade = {
         } else if (!value) {
             $(element).slideUp();
         }
+    }
+};
+
+ko.bindingHandlers.starred = {
+    init: function (element) {
+        $(element).addClass('star');
+    },
+    update: function (element, valueAccessor) {
+        var value = ko.utils.unwrapObservable(valueAccessor()),
+            $element = $(element);
+        $element.addClass('star');
+
+        $element.removeClass('star-false');
+        $element.removeClass('star-true');
+        $element.removeClass('star-pending');
+        $element.removeClass('star-error');
+        $element.addClass('star-' + value);
+    }
+};
+
+ko.bindingHandlers.bootstrapCollapse = {
+    init: function (element) {
+        $(element).on('click', 'a.accordion-toggle', function () {
+            var $a = $(this);
+            if (!$a.attr('href')) {
+                $a.parent().parent().find('.collapse').collapse('toggle');
+            }
+        });
+    }
+};
+
+ko.bindingHandlers.bootstrapTabs = {
+    init: function (element) {
+        var tabLinkSelector = 'ul.nav > li > a';
+        var activate = function () {
+            var n = $(tabLinkSelector, element).index(this);
+            $(tabLinkSelector, element).parents().removeClass('active');
+            $(this).parent().addClass('active');
+            $('.tab-pane', element).removeClass('active');
+            $('.tab-pane:eq(' + n + ')', element).addClass('active');
+        };
+        $(element).on('click', tabLinkSelector, activate);
+        // Wait for the rest of the element to be rendered before init'ing
+        // (bit of a race condition)
+        setTimeout(function () {
+            $('ul.nav > li.active > a', element).each(activate);
+        }, 0);
     }
 };

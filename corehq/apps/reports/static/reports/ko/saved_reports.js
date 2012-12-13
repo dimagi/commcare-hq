@@ -156,15 +156,20 @@ var ReportConfigsViewModel = function (options) {
         self.filterForm.find(":input").each(function () {
             var el = $(this),
                 name = el.prop('name'),
-                val = el.val();
+                val = el.val(),
+                type = el.prop('type');
 
-            if (el.prop('type') === 'checkbox') {
+            if (type === 'checkbox') {
                 if (el.prop('checked') === true) {
                     if (!filters.hasOwnProperty(name)) {
                         filters[name] = [];
                     }
 
                     filters[name].push(val);
+                }
+            } else if (type === 'radio') {
+                if (el.prop('checked') === true) {
+                    filters[name] = val;
                 }
             } else if (name && excludeFilters.indexOf(name) === -1) {
                 filters[name] = val;
