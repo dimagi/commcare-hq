@@ -543,6 +543,23 @@ class DocumentIndicatorDefinition(IndicatorDefinition):
         except AttributeError:
             return None
 
+    def update_computed_namespace(self, computed, document):
+        update_computed = False
+        existing_indicator = computed.get(self.slug)
+        if isinstance(existing_indicator, dict) or isinstance(existing_indicator, LazyDict):
+            update_computed = existing_indicator.get('version') != self.version
+        if update_computed:
+            computed[self.slug] = self._set_computed_indicator(document)
+        return computed, update_computed
+
+    def _set_computed_indicator(self, document):
+        return {
+            'version': self.version,
+            'value': self.get_clean_value(document),
+            'multi_value': self._returns_multiple,
+            'type': self.doc_type,
+        }
+
 
 class FormDataIndicatorDefinitionMixin(DocumentSchema):
     """
