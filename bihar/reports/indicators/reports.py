@@ -48,7 +48,7 @@ class IndicatorSummaryReport(GroupReferenceMixIn, BiharSummaryReport, IndicatorS
             params = copy(self.request_params)
             params['indicator'] = indicator.slug
             del params['next_report']
-            return format_html(u'<a href="{next}">{val}{chart}</a>',
+            return format_html(u'<a href="{next}">{chart}{val}</a>',
                 val=self.get_indicator_value(indicator),
                 chart=self.get_chart(indicator),
                 next=url_and_params(
