@@ -130,7 +130,7 @@ msgstr "इस समय केलकुलेशन संभव नही ह�
 
 #: .\submodules\bihar-reports\bihar\reports\supervisor.py:344
 msgid "EDD Calculator"
-msgstr "ई0ड़ी0ड़ी केलकुलेटर"
+msgstr "ईड़ीड़ी केलकुलेटर"
 
 #: .\submodules\bihar-reports\bihar\reports\supervisor.py:350
 msgid "Enter LMP (YYYY-MM-DD)"
@@ -338,7 +338,7 @@ msgstr "पति का नाम"
 
 #: .\submodules\bihar-reports\bihar\reports\indicators\calculations.py:124
 msgid "EDD"
-msgstr "ई0ड़ी0ड़ी केलकुलेटर"
+msgstr "ईड़ीड़ी"
 
 #: .\submodules\bihar-reports\bihar\reports\indicators\calculations.py:146
 msgid "ADD"
