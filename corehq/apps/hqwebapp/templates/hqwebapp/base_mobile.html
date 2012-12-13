@@ -2,9 +2,10 @@
 <!DOCTYPE html>
 <html>
 <head>
+    <title>{% block title %}CommCareHQ Mobile{% endblock %}</title>
     <link rel="stylesheet" media="screen" href="{% static 'hqstyle/css/mobile/c2/hqstyle-mobile-c2.css' %}"/>
     <link rel="shortcut icon" href="{% static 'hqwebapp/img/favicon2.png' %}" />
-    <title>{% block title %}CommCareHQ Mobile{% endblock %}</title>
+{% block head %}{% endblock %}
 </head>
 <body>
 <div class="container-fluid">
@@ -13,5 +14,6 @@
         <small>CommCare HQ Mobile is Copyright &copy; {% now "Y" %} <a href="http://www.dimagi.com/">Dimagi, Inc.</a></small>
     </footer>
 </div>
+{% block js %}{% endblock %}
 </body>
 </html>
