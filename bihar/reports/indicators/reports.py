@@ -3,7 +3,8 @@ from bihar.reports.supervisor import BiharNavReport, MockEmptyReport, \
     ConvenientBaseMixIn, GroupReferenceMixIn, list_prompt, shared_bihar_context,\
     team_member_context
 from copy import copy
-from corehq.apps.reports.generic import GenericTabularReport, summary_context
+from corehq.apps.reports.generic import GenericTabularReport, summary_context,\
+    CacheableRequestMixIn
 from corehq.apps.reports.standard import CustomProjectReport
 from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.html import format_html
@@ -28,7 +29,8 @@ class IndicatorNav(GroupReferenceMixIn, BiharNavReport):
     def rendered_report_title(self):
         return self.group_display
 
-class IndicatorSummaryReport(GroupReferenceMixIn, BiharSummaryReport, IndicatorSetMixIn):
+class IndicatorSummaryReport(GroupReferenceMixIn, BiharSummaryReport,
+                             IndicatorSetMixIn, CacheableRequestMixIn):
     
     name = ugettext_noop("Indicators")
     slug = "indicatorsummary"
@@ -62,7 +64,7 @@ class IndicatorSummaryReport(GroupReferenceMixIn, BiharSummaryReport, IndicatorS
                                                 render_as=self.render_next),
                     params
             ))
-        
+
         return [self.group.name] + \
                [_nav_link(i) for i in self.summary_indicators]
 
@@ -86,7 +88,8 @@ class IndicatorCharts(MockEmptyReport):
     slug = "indicatorcharts"
 
 
-class IndicatorClientSelectNav(GroupReferenceMixIn, BiharSummaryReport, IndicatorSetMixIn):
+class IndicatorClientSelectNav(GroupReferenceMixIn, BiharSummaryReport,
+                               IndicatorSetMixIn, CacheableRequestMixIn):
     name = ugettext_noop("Select Client List")
     slug = "clients"
     
@@ -125,7 +128,7 @@ class IndicatorClientSelectNav(GroupReferenceMixIn, BiharSummaryReport, Indicato
 
 class IndicatorClientList(GroupReferenceMixIn, ConvenientBaseMixIn,
                           GenericTabularReport, CustomProjectReport,
-                          IndicatorMixIn):
+                          IndicatorMixIn, CacheableRequestMixIn):
     slug = "indicatorclientlist"
     name = ugettext_noop("Client List") 
     
