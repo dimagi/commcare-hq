@@ -200,7 +200,7 @@ class ProjectSettingsMenuItem(DropdownMenuItem):
 
     @classmethod
     def is_viewable(cls, request, domain):
-        return domain is not None
+        return domain is not None and request.couch_user
 
 
 
