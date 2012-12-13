@@ -138,7 +138,7 @@ if [ ! -f /etc/init.d/couchdb ]; then
         ./configure
     elif  [ "$PM" = "yum-rhel" ]; then
         sudo mkdir -p /usr/local/var/log/couchdb \
-            /usr/local/var/lib/couchdb
+            /usr/local/var/lib/couchdb \
             /usr/local/var/run/couchdb
 
         # this is not actually for all yum installs, just 64-bit
