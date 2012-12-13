@@ -13,7 +13,7 @@ from corehq.apps.appstore.models import Review
 from corehq.apps.domain.decorators import login_and_domain_required, require_superuser
 from corehq.apps.hqmedia.utils import most_restrictive
 from corehq.apps.registration.forms import DomainRegistrationForm
-from corehq.apps.users.models import Permissions
+from corehq.apps.users.models import Permissions, CouchUser
 from corehq.elastic import get_es
 from dimagi.utils.logging import notify_exception
 from dimagi.utils.web import render_to_response, json_response, get_url_base
@@ -104,10 +104,13 @@ def project_info(request, domain, template="appstore/project_info.html"):
     results = es_snapshot_query({}, SNAPSHOT_FACETS)
     facets_sortables = generate_sortables_from_facets(results, {}, inverse_dict(SNAPSHOT_MAPPING))
 
+    published_by = CouchUser.get_by_user_id(dom.cda.user_id)
+
     return render_to_response(request, template, {
         "project": dom,
         "applications": dom.full_applications(include_builds=False),
         "form": form,
+        "published_by": published_by,
         "reviews": reviews,
         "average_rating": average_rating,
         "num_ratings": num_ratings,

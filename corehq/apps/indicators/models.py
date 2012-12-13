@@ -1,7 +1,7 @@
 import logging
 import calendar
 import copy
-from couchdbkit.ext.django.schema import Document, StringProperty, IntegerProperty, ListProperty
+from couchdbkit.ext.django.schema import Document, StringProperty, IntegerProperty, ListProperty, DateTimeProperty
 from couchdbkit.schema.base import DocumentSchema
 import datetime
 from couchdbkit.schema.properties import LazyDict
@@ -30,6 +30,7 @@ class IndicatorDefinition(Document):
     slug = StringProperty()
     version = IntegerProperty()
     class_path = StringProperty()
+    last_modified = DateTimeProperty()
 
     _class_path = "corehq.apps.indicators.models"
     _returns_multiple = False
@@ -39,7 +40,14 @@ class IndicatorDefinition(Document):
         self.class_path = self._class_path
 
     def __str__(self):
-        return "%s %s in namespace %s." % (self.__class__.__name__, self.slug, self.namespace)
+        return "\n\n%(class_name)s - Modified %(last_modified)s\n %(slug)s, v. %(version)s, namespace: %(namespace)s." % {
+                'class_name': self.__class__.__name__,
+                'slug': self.slug,
+                'version': self.version,
+                'namespace': self.namespace,
+                'last_modified': self.last_modified.strftime('%M %B %Y at %H:%M')
+                        if self.last_modified else "Ages Ago"
+            }
 
     @classmethod
     def key_properties(cls):
@@ -71,7 +79,7 @@ class IndicatorDefinition(Document):
         return couch_key
 
     @classmethod
-    def update_or_create_unique(cls, namespace, domain, slug=None, version=None, **kwargs):
+    def update_or_create_unique(cls, namespace, domain, slug=None, version=None, save_on_update=False, **kwargs):
         """
             key_options should be formatted as an option list:
             [(key, val), ...]
@@ -96,13 +104,19 @@ class IndicatorDefinition(Document):
                 slug=slug,
                 **kwargs
             )
+            unique_indicator.last_modified = datetime.datetime.utcnow()
+            unique_indicator.save()
         else:
+            # update indicator
             unique_indicator.namespace = namespace
             unique_indicator.domain = domain
             unique_indicator.slug = slug
             unique_indicator.version = version
             for key, val in kwargs.items():
                 setattr(unique_indicator, key, val)
+            if save_on_update:
+                unique_indicator.last_modified = datetime.datetime.utcnow()
+                unique_indicator.save()
         return unique_indicator
 
     @classmethod
@@ -528,6 +542,23 @@ class DocumentIndicatorDefinition(IndicatorDefinition):
             return doc.computed_.get(self.namespace, {}).get(self.slug, {}).get('value')
         except AttributeError:
             return None
+
+    def update_computed_namespace(self, computed, document):
+        update_computed = True
+        existing_indicator = computed.get(self.slug)
+        if isinstance(existing_indicator, dict) or isinstance(existing_indicator, LazyDict):
+            update_computed = existing_indicator.get('version') != self.version
+        if update_computed:
+            computed[self.slug] = self._set_computed_indicator(document)
+        return computed, update_computed
+
+    def _set_computed_indicator(self, document):
+        return {
+            'version': self.version,
+            'value': self.get_clean_value(document),
+            'multi_value': self._returns_multiple,
+            'type': self.doc_type,
+        }
 
 
 class FormDataIndicatorDefinitionMixin(DocumentSchema):
