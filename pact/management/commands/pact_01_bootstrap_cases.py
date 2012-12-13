@@ -1,11 +1,7 @@
 #OTA restore from pact
 #recreate submissions to import as new cases to
-from StringIO import StringIO
 from optparse import make_option
-from django.test.client import RequestFactory
-import gevent
 import simplejson
-import urllib2
 from datetime import datetime
 import uuid
 
@@ -13,24 +9,23 @@ from django.core.management.base import NoArgsCommand
 from casexml.apps.case.models import CommCareCase
 from corehq.apps.domain.models import Domain
 import sys
-import getpass
 from lxml import etree
-from corehq.apps.users.models import WebUser, CommCareUser
+from corehq.apps.users.models import  CommCareUser
 from pact.management.commands import PactMigrateCommand
 from pact.management.commands.constants import PACT_URL, POOL_SIZE
 from pact.enums import PACT_DOMAIN, PACT_HP_GROUP_ID, PACT_CASE_TYPE
-from pact.management.commands.utils import get_user_id_map, base_create_block, purge_case
+from pact.management.commands.utils import get_user_id_map, base_create_block
 
 from gevent.pool import Pool
 from gevent import monkey
 from receiver.signals import successful_form_received
+from pact.management.commands.utils import purge_case
 
 monkey.patch_all()
 
 from restkit.session import set_session
 
 set_session("gevent")
-from restkit import Resource
 
 
 class Command(PactMigrateCommand):
@@ -105,7 +100,7 @@ class Command(PactMigrateCommand):
         successful_form_received.disconnect(get_custom_response_message)
 
         from corehq.apps.receiverwrapper.signals import create_case_repeat_records,\
-            create_short_form_repeat_records, create_case_repeat_records, create_form_repeat_records
+            create_short_form_repeat_records, create_form_repeat_records
 
         from casexml.apps.case.signals import case_post_save
 
@@ -119,7 +114,7 @@ class Command(PactMigrateCommand):
         print "Purging All Cases"
         for id in case_ids:
 #            purge_case(id)
-#            pool.spawn(purge_case, id)
+            pool.spawn(purge_case, id)
             print "purge %s" % id
             pass
 
@@ -186,7 +181,10 @@ class Command(PactMigrateCommand):
             mkmeta = self.get_meta_block(instance_id=action['xform_id'], timestart=adate, timeend=adate)
             form_root.append(etree.XML(mkmeta))
             #            print etree.tostring(xfroot, pretty_print=True)
-    def fix_case(self, action, xmlns, form_root):
+    def fix_case_type(self, action, xmlns, form_root):
+        """
+        Fix case properties with hp_status and case type
+        """
         #Walk the case tags to update the type if it was munged
         def walk_case_tags(taglist, subnode):
             case_node = subnode.find(taglist[0])
@@ -206,7 +204,7 @@ class Command(PactMigrateCommand):
 
 
 
-        new_casetags =  ['{http://commcarehq.org/case/transaction/v2}case',  '{http://commcarehq.org/case/transaction/v2}case', '{http://commcarehq.org/case/transaction/v2}update',]
+        new_casetags =  ['{http://commcarehq.org/case/transaction/v2}case',  '{http://commcarehq.org/case/transaction/v2}update', '{http://commcarehq.org/case/transaction/v2}type',]
         old_casetags = ['{%s}case' % xmlns, '{%s}update' % xmlns, '{%s}type' % xmlns ]
 
         for tags in [new_casetags, old_casetags]:
@@ -214,8 +212,63 @@ class Command(PactMigrateCommand):
                 break
 
 
+    def fix_case_id(self, case_id, pact_id, action, xmlns, form_root):
+        """
+        Fix case properties with hp_status and case type
+        """
+        #Walk the case tags to update the type if it was munged
+        def walk_case_tags(taglist, subnode):
+            case_node = subnode.find(taglist[0])
+            if case_node is not None:
+                update_node = case_node.find(taglist[1])
+                if update_node is not None:
+                    type_node = update_node.find(taglist[2])
+                    if type_node is not None:
+                    #                        print "Got type node!"
+                        if type_node.text != PACT_CASE_TYPE:
+                            orig_text = type_node.text
+                            type_node.text = PACT_CASE_TYPE
+                            update_node.append(etree.XML("<hp_status>%s</hp_status>" % orig_text))
+                            #                            print etree.tostring(form_root, pretty_print=True)
+                            return True
+            return False
 
-    def process_xform_from_action(self, action):
+
+
+        new_caseblock = '{http://commcarehq.org/case/transaction/v2}case'
+        new_caseid = 'case_id' #attribute
+
+        old_caseblock = '{%s}case' % xmlns
+        old_caseid = '{%s}case_id' % xmlns
+
+
+        #old casexml:
+        old_case_node = form_root.find(old_caseblock)
+        if old_case_node is not None:
+            case_id_node = old_case_node.find(old_caseid)
+            if case_id_node is not None:
+                if case_id == case_id_node.text:
+                    pass
+                else:
+                    #blank case_id block
+                    case_id_node.text = case_id
+            else:
+                #missing case_id block
+                old_case_node.append(etree.XML("<case_id>%s</case_id>" % case_id))
+            return
+        #doesn't have case block?
+        #new casexml:
+        new_case_node = form_root.find(new_caseblock)
+        if new_case_node is not None:
+            if new_case_node.get('case_id') != case_id:
+                print "@@@@@@@@@@@@@@@@@ fixing new"
+                new_case_node.set('case_id', case_id)
+                return
+
+
+
+
+    def process_xform_from_action(self, case_id, pact_id, action):
         """
         Get xform from server and process it with new userid and submit it to hq
         """
@@ -229,7 +282,8 @@ class Command(PactMigrateCommand):
         xmlns = nsmap[None]
 
         self.process_xform_meta(action, xmlns, xfroot)
-        self.fix_case(action, xmlns, xfroot)
+        self.fix_case_type(action, xmlns, xfroot)
+        self.fix_case_id(case_id, pact_id, action, xmlns, xfroot)
 
         try:
             self.submit_xform_rf(action, etree.tostring(xfroot))
@@ -266,10 +320,10 @@ class Command(PactMigrateCommand):
 
         for ix, action in enumerate(remote_case_json['actions']):
             if action['xform_id'] in existing_xform_ids:
-                print "\t[%s] %s/%s (%d/%d) :: skipped" % ( pactid, case_id, action['xform_id'], ix, len(remote_case_json['actions']))
+#                print "\t[%s] %s/%s (%d/%d) :: skipped" % ( pactid, case_id, action['xform_id'], ix, len(remote_case_json['actions']))
                 continue
             print "\t[%s] %s/%s (%d/%d)" % ( pactid, case_id, action['xform_id'], ix, len(remote_case_json['actions']))
-            self.process_xform_from_action(action)
+            self.process_xform_from_action(case_id, pactid, action)
 
         #todo: verify actions on migrated case
         print "########### Case %s completed ###################" % remote_case_json['_id']
