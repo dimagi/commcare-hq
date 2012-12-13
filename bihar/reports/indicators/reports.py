@@ -91,31 +91,39 @@ class IndicatorClientSelectNav(GroupReferenceMixIn, BiharSummaryReport, Indicato
     slug = "clients"
     
     _indicator_type = "client_list"
+
+    @property
+    def rendered_report_title(self):
+        return self.group_display
+
     @property
     def indicators(self):
         return [i for i in self.indicator_set.get_indicators() if i.show_in_client_list]
     
     @property
     def _headers(self):
-        return [" "] * len(self.indicators)
-    
+        return [list_prompt(i, iset.name) for i, iset in enumerate(self.indicators)]
+
     @property
     def data(self):
-        def _nav_link(i, indicator):
+        def _nav_link(indicator):
             params = copy(self.request_params)
             params["indicators"] = self.indicator_set.slug
             params["indicator"] = indicator.slug
             
             # params["next_report"] = IndicatorNav.slug
             return format_html(u'<a href="{next}">{val}</a>',
-                val=list_prompt(i, indicator.name),
+                val=self.count(indicator),
                 next=url_and_params(
                     IndicatorClientList.get_url(self.domain, 
                                                 render_as=self.render_next),
                     params
                 ))
-        return [_nav_link(i, iset) for i, iset in enumerate(self.indicators)]
 
+        return [_nav_link(i) for i in self.indicators]
+
+    def count(self, indicator):
+        return len([c for c in self.cases if indicator.filter(c)])
 
 class IndicatorClientList(GroupReferenceMixIn, ConvenientBaseMixIn,
                           GenericTabularReport, CustomProjectReport,
