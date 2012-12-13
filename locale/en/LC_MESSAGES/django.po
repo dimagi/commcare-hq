@@ -179,7 +179,7 @@ msgid "no awc code found"
 msgstr ""
 
 #: .\submodules\bihar-reports\bihar\reports\indicators\__init__.py:19
-msgid "Pregnant woman who delivered in last 30 days"
+msgid "Pregnant woman who delivered"
 msgstr ""
 
 #: .\submodules\bihar-reports\bihar\reports\indicators\__init__.py:25
@@ -187,23 +187,23 @@ msgid "Home Visit Information"
 msgstr ""
 
 #: .\submodules\bihar-reports\bihar\reports\indicators\__init__.py:29
-msgid "BP (2nd Tri) Visits in last 30 days (Done/Due)"
+msgid "BP (2nd Tri) Visits"
 msgstr ""
 
 #: .\submodules\bihar-reports\bihar\reports\indicators\__init__.py:34
-msgid "BP (3rd Tri) Visits in last 30 days (Done/Due)"
+msgid "BP (3rd Tri) Visits"
 msgstr ""
 
 #: .\submodules\bihar-reports\bihar\reports\indicators\__init__.py:39
-msgid "PNC Visits  in last 30 days (Done/Due)"
+msgid "PNC Visits"
 msgstr ""
 
 #: .\submodules\bihar-reports\bihar\reports\indicators\__init__.py:44
-msgid "EBF Visits in last 30 days (Done/Due)"
+msgid "EBF Visits"
 msgstr ""
 
 #: .\submodules\bihar-reports\bihar\reports\indicators\__init__.py:49
-msgid "CF Visits in last 30 days (Done/Due)"
+msgid "CF Visits"
 msgstr ""
 
 #: .\submodules\bihar-reports\bihar\reports\indicators\__init__.py:54
@@ -231,7 +231,7 @@ msgid "Pregnancy Outcomes"
 msgstr ""
 
 #: .\submodules\bihar-reports\bihar\reports\indicators\__init__.py:81
-msgid "Home Deliveries visited in 24 hours of Birth (Total Number HD24HR/TNHD)"
+msgid "Home Deliveries visited in 24 hours of Birth"
 msgstr ""
 
 #: .\submodules\bihar-reports\bihar\reports\indicators\__init__.py:86
@@ -279,11 +279,11 @@ msgid "Weak Newborn"
 msgstr ""
 
 #: .\submodules\bihar-reports\bihar\reports\indicators\__init__.py:133
-msgid "# Preterm births / # Live births"
+msgid "Preterm births"
 msgstr ""
 
 #: .\submodules\bihar-reports\bihar\reports\indicators\__init__.py:138
-msgid "# infants < 2kg / # live births"
+msgid "infants < 2kg"
 msgstr ""
 
 #: .\submodules\bihar-reports\bihar\reports\indicators\__init__.py:143
@@ -300,7 +300,7 @@ msgstr ""
 
 #: .\submodules\bihar-reports\bihar\reports\indicators\__init__.py:153
 msgid ""
-"# live births who are preterm and < 2kg infants not breastfeeding vigorously "
+"weak newborn not breastfeeding vigorously "
 msgstr ""
 
 #: .\submodules\bihar-reports\bihar\reports\indicators\__init__.py:162
@@ -308,11 +308,11 @@ msgid "Mortality"
 msgstr ""
 
 #: .\submodules\bihar-reports\bihar\reports\indicators\__init__.py:166
-msgid "# Mothers who've died in the last 30 days"
+msgid "Mothers died"
 msgstr ""
 
 #: .\submodules\bihar-reports\bihar\reports\indicators\__init__.py:171
-msgid "# Infants who've died in the last 30 days"
+msgid "Infants died"
 msgstr ""
 
 #: .\submodules\bihar-reports\bihar\reports\indicators\calculations.py:102

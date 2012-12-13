@@ -180,7 +180,7 @@ msgid "no awc code found"
 msgstr "ऑगनवाड़ी कोड़ संख्या नही मिली"
 
 #: .\submodules\bihar-reports\bihar\reports\indicators\__init__.py:19
-msgid "Pregnant woman who delivered in last 30 days"
+msgid "Pregnant woman who delivered"
 msgstr "जिनका प्रसव हो चुका है"
 
 #: .\submodules\bihar-reports\bihar\reports\indicators\__init__.py:25
@@ -188,23 +188,23 @@ msgid "Home Visit Information"
 msgstr "गृह भ्रमण की जानकारी"
 
 #: .\submodules\bihar-reports\bihar\reports\indicators\__init__.py:29
-msgid "BP (2nd Tri) Visits in last 30 days (Done/Due)"
+msgid "BP (2nd Tri) Visits"
 msgstr "दूसरी तिमाही प्रसव पूर्व देखभाल भ्रमण"
 
 #: .\submodules\bihar-reports\bihar\reports\indicators\__init__.py:34
-msgid "BP (3rd Tri) Visits in last 30 days (Done/Due)"
+msgid "BP (3rd Tri) Visits"
 msgstr "तृतीय तिमाही प्रसव पूर्व देखभाल भ्रमण"
 
 #: .\submodules\bihar-reports\bihar\reports\indicators\__init__.py:39
-msgid "PNC Visits  in last 30 days (Done/Due)"
+msgid "PNC Visits"
 msgstr "प्रसव बाद जाँच भ्रमण"
 
 #: .\submodules\bihar-reports\bihar\reports\indicators\__init__.py:44
-msgid "EBF Visits in last 30 days (Done/Due)"
+msgid "EBF Visits"
 msgstr "केवल स्तनपान भ्रमण"
 
 #: .\submodules\bihar-reports\bihar\reports\indicators\__init__.py:49
-msgid "CF Visits in last 30 days (Done/Due)"
+msgid "CF Visits"
 msgstr "ऊपरी आहार भ्रमण"
 
 #: .\submodules\bihar-reports\bihar\reports\indicators\__init__.py:54
@@ -232,7 +232,7 @@ msgid "Pregnancy Outcomes"
 msgstr "प्रसव परिणाम"
 
 #: .\submodules\bihar-reports\bihar\reports\indicators\__init__.py:81
-msgid "Home Deliveries visited in 24 hours of Birth (Total Number HD24HR/TNHD)"
+msgid "Home Deliveries visited in 24 hours of Birth"
 msgstr "जन्म के 24 घंटे मे घर पर हुये प्रसव की गृहभेंट "
 
 #: .\submodules\bihar-reports\bihar\reports\indicators\__init__.py:86
@@ -280,11 +280,11 @@ msgid "Weak Newborn"
 msgstr "कमजोर नवजात"
 
 #: .\submodules\bihar-reports\bihar\reports\indicators\__init__.py:133
-msgid "# Preterm births / # Live births"
+msgid "Preterm births"
 msgstr "समय से पूर्व "
 
 #: .\submodules\bihar-reports\bihar\reports\indicators\__init__.py:138
-msgid "# infants < 2kg / # live births"
+msgid "infants < 2kg"
 msgstr "2kg से कम वजन वाले नवजात "
 
 #: .\submodules\bihar-reports\bihar\reports\indicators\__init__.py:143
@@ -301,7 +301,7 @@ msgstr "कमजोर नवजात जिन्हे आशा/ऑगन�
 
 #: .\submodules\bihar-reports\bihar\reports\indicators\__init__.py:153
 msgid ""
-"# live births who are preterm and < 2kg infants not breastfeeding vigorously "
+"weak newborn not breastfeeding vigorously "
 msgstr "कमजोर नवजात जिन्हे लगातार स्तनपान नही कराया जा रहा"
 
 #: .\submodules\bihar-reports\bihar\reports\indicators\__init__.py:162
@@ -309,11 +309,11 @@ msgid "Mortality"
 msgstr "मृत्यु"
 
 #: .\submodules\bihar-reports\bihar\reports\indicators\__init__.py:166
-msgid "# Mothers who've died in the last 30 days"
+msgid "Mothers died"
 msgstr "मात्र मृत्यु"
 
 #: .\submodules\bihar-reports\bihar\reports\indicators\__init__.py:171
-msgid "# Infants who've died in the last 30 days"
+msgid "Infants died"
 msgstr "शिशु मृत्यु"
 
 #: .\submodules\bihar-reports\bihar\reports\indicators\calculations.py:102
