@@ -217,7 +217,7 @@ class GenericReportView(object):
 
     @property
     def is_cacheable(self):
-        # don't override this if you don't want to use it.
+        # don't override this
         return isinstance(self, CacheableRequestMixIn)
 
     _caching = False
