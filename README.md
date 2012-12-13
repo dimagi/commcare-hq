@@ -47,7 +47,6 @@ individual project sites when necessary.
  [jython]: http://jython.org/downloads.html
 
 
-
 #### Common issues
 
 + A bug in psycopg 2.4.1 (a Python package we require) may break CommCare HQ
@@ -60,7 +59,9 @@ individual project sites when necessary.
   properly. To fix this, run `brew install libmagic`.
 
 + To install PIL (Python Image Library) correctly on Ubuntu, you may need to
-  follow [these instructions](http://obroll.com/install-python-pil-python-image-library-on-ubuntu-11-10-oneiric/).
+  follow [these instructions](http://obroll.com/install-python-pil-python-image-library-on-ubuntu-11-10-oneiric/). 
+  (If you don't do this, the only thing that won't work is uploading of JPEGs to
+  the CommCare Exchange.)
 
 #### Configuration for Elasticsearch
 
@@ -98,6 +99,7 @@ functionality you want to use, such as SMS sending and Google Analytics.
 Ensure that the directories for `LOG_FILE` and `DJANGO_LOG_FILE` exist and are
 writeable.
 
+
 ### Set up your django environment
 
     ./manage.py syncdb
@@ -106,6 +108,26 @@ writeable.
 
     # this will do some basic setup, create a superuser, and create a project
     ./manage.py bootstrap <project-name> <email> <password>
+
+    # To set up elasticsearch indexes, first run:
+    ./manage.py run_ptop
+
+    # Note the hqcases_<long_string> part in the output of the above
+    # command, and run:
+    curl -XPOST 'http://localhost:9200/_aliases' -d \
+        '{ "actions": [ {"add": {"index": "hqcases_<long_string>", "alias": "hqcases"}}]}'
+
+    # If run_ptop didn't output anything like hqcases_<long_string>, go to
+    # http://localhost:9200/_status?pretty=true and find it near the top of the
+    # page and use that to run the above command
+
+To enable CloudCare, ensure that `TOUCHFORMS_API_USER` and
+`TOUCHFORMS_API_PASSWORD` in `localsettings.py` are the credentials of the
+django admin user you created above and then create the file
+`submodules/touchforms-src/touchforms/backend/localsettings.py` with the
+following contents:
+
+    URL_ROOT = 'http://localhost:8000/a/{{DOMAIN}}'
 
 
 Running CommCare HQ
