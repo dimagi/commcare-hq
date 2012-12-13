@@ -631,7 +631,7 @@ class XForm(WrappedNode):
                 relevant=relevance(action) if action else 'true()',
             )
         delegation_case_block = None
-        if form.requires == 'none' and 'open_case' not in actions:
+        if not actions or (form.requires == 'none' and 'open_case' not in actions):
             case_block = None
         else:
             extra_updates = {}
