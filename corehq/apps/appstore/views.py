@@ -104,7 +104,8 @@ def project_info(request, domain, template="appstore/project_info.html"):
     results = es_snapshot_query({}, SNAPSHOT_FACETS)
     facets_sortables = generate_sortables_from_facets(results, {}, inverse_dict(SNAPSHOT_MAPPING))
 
-    published_by = CouchUser.get_by_user_id(dom.cda.user_id)
+    pb_id = dom.cda.user_id
+    published_by = CouchUser.get_by_user_id(pb_id) if pb_id else None
 
     return render_to_response(request, template, {
         "project": dom,
