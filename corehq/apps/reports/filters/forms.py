@@ -500,7 +500,6 @@ class FormsByApplicationFilter(BaseDrilldownOptionFilter):
             Returns the raw form data based on the current filter selection.
         """
         if not filter_results:
-            print "getting all data"
             data = []
             if self.application_forms:
                 key = ["app module form", self.domain]
