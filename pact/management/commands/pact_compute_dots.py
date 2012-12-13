@@ -22,7 +22,7 @@ class Command(NoArgsCommand):
         q['size'] = CHUNK_SIZE
 
         while True:
-            #q['from'] = offset
+            q['from'] = offset
             res = xform_es.run_query(q)
             print "####### Query block total: %s" % res['hits']['total']
             if len(res['hits'].get('hits', [])) == 0:
