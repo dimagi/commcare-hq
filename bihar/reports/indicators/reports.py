@@ -60,12 +60,7 @@ class IndicatorSummaryReport(GroupReferenceMixIn, BiharSummaryReport, IndicatorS
 
 
     def get_indicator_value(self, indicator):
-        if indicator.calculation_class:
-            return indicator.calculation_class.display(self.cases)
-        if indicator.calculation_function:
-            return indicator.calculation_function(self.cases)
-        return "not available yet"
-    
+        return indicator.calculation_class.display(self.cases)
     
 class IndicatorCharts(MockEmptyReport):
     name = ugettext_noop("Charts")
@@ -125,19 +120,11 @@ class IndicatorClientList(GroupReferenceMixIn, ConvenientBaseMixIn,
 
     @property
     def sorted_cases(self):
-        if self.indicator.calculation_class:
-            return sorted(self.cases, key=self.indicator.calculation_class.sortkey)
-        elif self.indicator.sortkey:
-            # TODO: remove
-            return sorted(self.cases, key=self.indicator.sortkey, reverse=True)
+        return sorted(self.cases, key=self.indicator.calculation_class.sortkey)
         
-        return self.cases
-    
     def _filter(self, case):
-        if self.indicator and self.indicator.calculation_class:
+        if self.indicator:
             return self.indicator.calculation_class.filter(case)
-        if self.indicator and self.indicator.filter_function:
-            return self.indicator.filter_function(case)
         else:
             return True
     
@@ -148,11 +135,4 @@ class IndicatorClientList(GroupReferenceMixIn, ConvenientBaseMixIn,
         
     @property
     def rows(self):
-        def _row(case):
-            if self.indicator.calculation_class:
-                return self.indicator.calculation_class.as_row(case)
-            else:
-                return self.indicator.row_function(case)
-        return [_row(c) for c in self._get_clients()]
-    
-        
+        return [self.indicator.calculation_class.as_row(c) for c in self._get_clients()]
