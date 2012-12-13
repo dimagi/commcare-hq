@@ -110,8 +110,6 @@ class IndicatorClientSelectNav(GroupReferenceMixIn, BiharSummaryReport, Indicato
             params = copy(self.request_params)
             params["indicators"] = self.indicator_set.slug
             params["indicator"] = indicator.slug
-            
-            # params["next_report"] = IndicatorNav.slug
             return format_html(u'<a href="{next}">{val}</a>',
                 val=self.count(indicator),
                 next=url_and_params(
