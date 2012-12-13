@@ -1,20 +1,18 @@
-from datetime import datetime
 from django.http import Http404
-import simplejson
-from casexml.apps.case.models import CommCareCase
+from django.template.context import RequestContext
 from corehq.apps.api.es import XFormES
-from corehq.apps.reports.datatables import DataTablesColumn, DataTablesHeader, DTSortDirection
-from corehq.apps.reports.dispatcher import ProjectReportDispatcher, CustomProjectReportDispatcher
+from corehq.apps.reports.datatables import DataTablesColumn, DataTablesHeader
 from corehq.apps.reports.generic import GenericTabularReport
 from corehq.apps.reports.standard import CustomProjectReport
 from dimagi.utils.decorators import inline
 from dimagi.utils.decorators.memoized import memoized
-from pact.models import CDotWeeklySchedule, PactPatientCase
-from pact.reports import PactPatientDispatcher, PactDrilldownReportMixin, PatientNavigationReport
+from pact.forms.weekly_schedule_form import ScheduleForm
+from pact.models import  PactPatientCase
+from pact.reports import  PactDrilldownReportMixin
+from pact.utils import pact_script_fields
 
 
 class PactPatientInfoReport(PactDrilldownReportMixin, GenericTabularReport, CustomProjectReport):
-#    name = "Patient Info"
     slug = "patient"
     description = "some patient"
 
@@ -23,47 +21,9 @@ class PactPatientInfoReport(PactDrilldownReportMixin, GenericTabularReport, Cust
     ajax_pagination = True
     xform_es = XFormES()
 
-
-    def prepare_schedule(self, patient_doc, context):
-        #patient_doc is the case doc
-        computed = patient_doc['computed_']
-
-        def get_current(x):
-            if x.deprecated:
-                return False
-            if x.ended is None and x.started < datetime.utcnow():
-                return True
-            if x.ended < datetime.utcnow():
-                return False
-
-            print "made it to the end somehow..."
-            print '\n'.join(x.weekly_arr)
-            return False
-
-        if computed.has_key('pact_weekly_schedule'):
-            schedule_arr = [CDotWeeklySchedule.wrap(x) for x in computed['pact_weekly_schedule']]
-
-            past = filter(lambda x: x.ended is not None and x.ended < datetime.utcnow(),
-                          schedule_arr)
-            current = filter(get_current, schedule_arr)
-            future = filter(lambda x: x.deprecated and x.started > datetime.utcnow(), schedule_arr)
-
-            #            print '\n'.join([x.weekly_arr() for x in current])
-            past.reverse()
-            print current
-            if len(current) > 1:
-                for x in current:
-                    print '\n'.join(x.weekly_arr())
-
-            context['current_schedule'] = current[0]
-            context['past_schedules'] = past
-            context['future_schedules'] = future
-
-
     @memoized
     def get_case(self):
-        self._case_doc = PactPatientCase.get(self.request.GET['patient_id'])
-        return self._case_doc
+        return PactPatientCase.get(self.request.GET['patient_id'])
 
     @property
     def name(self):
@@ -75,6 +35,7 @@ class PactPatientInfoReport(PactDrilldownReportMixin, GenericTabularReport, Cust
             return "Patient Info"
 
     def patient_submissions_query(self):
+        #todo: remove and deprecate - unused
         query = {
             "fields": [
                 "form.#type",
@@ -113,11 +74,12 @@ class PactPatientInfoReport(PactDrilldownReportMixin, GenericTabularReport, Cust
     def report_context(self):
         patient_doc = self.get_case()
         view_mode = self.request.GET.get('view', 'info')
+        ret = RequestContext(self.request)
         ret = {'patient_doc': patient_doc}
+        #        ret.update(csrf(self.request))
         ret['pt_root_url'] = PactPatientInfoReport.get_url(
             *[self.request.domain]) + "?patient_id=%s" % self.request.GET['patient_id']
         ret['view_mode'] = view_mode
-        print ret
 
         if view_mode == 'info':
             self.report_template_path = "pact/patient/pactpatient_info.html"
@@ -127,7 +89,9 @@ class PactPatientInfoReport(PactDrilldownReportMixin, GenericTabularReport, Cust
             self.report_template_path = "pact/patient/pactpatient_submissions.html"
             return tabular_context
         elif view_mode == 'schedule':
-            self.prepare_schedule(patient_doc, ret)
+            ret.update(patient_doc.schedules)
+            ret['schedule_form'] = ScheduleForm()
+            print ret
             self.report_template_path = "pact/patient/pactpatient_schedule.html"
         else:
             raise Http404
@@ -136,11 +100,11 @@ class PactPatientInfoReport(PactDrilldownReportMixin, GenericTabularReport, Cust
 
     @property
     def headers(self):
-        return DataTablesHeader(DataTablesColumn("Form", prop_name="form.#type"),
-                                DataTablesColumn("CHW", prop_name="form.meta.username"),
-                                DataTablesColumn("Created Date", prop_name="form.meta.timeStart"),
-                                DataTablesColumn("Received", prop_name="received_on"),
-                                DataTablesColumn("Encounter Date", sortable=False),
+        return DataTablesHeader(DataTablesColumn("Form", prop_name="form.#type", span=1),
+                                DataTablesColumn("CHW", prop_name="form.meta.username", span=2),
+                                DataTablesColumn("Created Date", prop_name="form.meta.timeStart", span=2),
+                                DataTablesColumn("Received", prop_name="received_on", span=2),
+                                DataTablesColumn("Encounter Date", sortable=False, span=2),
         )
 
     @property
@@ -149,31 +113,13 @@ class PactPatientInfoReport(PactDrilldownReportMixin, GenericTabularReport, Cust
         if not self.request.GET.has_key('patient_id'):
             return None
 
-        @inline
-        def sorting_block():
-            sort_cols = int(self.request.GET['iSortingCols'][0])
-            if sort_cols > 0:
-                for x in range(sort_cols):
-                    col_key = 'iSortCol_%d' % x
-                    sort_dir = self.request.GET['sSortDir_%d' % x]
-                    col_id = int(self.request.GET[col_key])
-                    col = self.headers.header[col_id]
-                    sort_dict = {col.prop_name: sort_dir}
-                    yield sort_dict
-            else:
-                yield {
-                "received_on": "desc"
-                }
-
-
-
-
-        full_query =  {
+        full_query = {
             'query': {
                 "filtered": {
                     "query": {
                         "query_string": {
-                            "query": "(form.case.case_id:%(case_id)s OR form.case.@case_id:%(case_id)s)" % dict(case_id=self.request.GET['patient_id'])
+                            "query": "(form.case.case_id:%(case_id)s OR form.case.@case_id:%(case_id)s)" % dict(
+                                case_id=self.request.GET['patient_id'])
                         }
                     },
                     "filter": {
@@ -189,22 +135,24 @@ class PactPatientInfoReport(PactDrilldownReportMixin, GenericTabularReport, Cust
             },
             "fields": [
                 "form.#type",
-                "form.encounter_date",
-                "form.note.encounter_date",
-                "form.case.case_id",
-                "form.case.@case_id",
-                "form.pact_id",
-                "form.note.pact_id",
+#                "form.encounter_date",
+#                "form.note.encounter_date",
+#                "form.case.case_id",
+#                "form.case.@case_id",
+#                "form.pact_id",
+#                "form.note.pact_id",
                 "received_on",
                 "form.meta.timeStart",
                 "form.meta.timeEnd",
                 "form.meta.username"
             ],
-            "sort": list(sorting_block),
+            "sort": self.get_sorting_block(),
             "size": self.pagination.count,
-            "from":self.pagination.start
+            "from": self.pagination.start
 
         }
+
+        full_query['script_fields'] = pact_script_fields()
         return self.xform_es.run_query(full_query)
 
 
@@ -217,26 +165,24 @@ class PactPatientInfoReport(PactDrilldownReportMixin, GenericTabularReport, Cust
         """
         if self.request.GET.has_key('patient_id'):
             rows = []
+
             def _format_row(row_field_dict):
                 yield row_field_dict["form.#type"].replace('_', ' ').title()
                 yield row_field_dict.get("form.meta.username", "")
                 yield row_field_dict.get("form.meta.timeStart", "")
                 yield row_field_dict["received_on"]
-                for p in ["form.encounter_date", "form.note.encounter_date", None]:
-                    if p is None:
-                        yield "None"
-                    if row_field_dict.has_key(p):
-                        yield row_field_dict[p]
-                        break
+                if row_field_dict["script_encounter_date"] != None:
+                    yield row_field_dict["script_encounter_date"]
+                else:
+                    yield "---"
 
-            print "########## HERE GET"
             res = self.es_results
-#            print simplejson.dumps(res.keys(), indent=4)
             if res.has_key('error'):
                 pass
             else:
                 for result in res['hits']['hits']:
                     yield list(_format_row(result['fields']))
+
 
     @property
     def total_records(self):
@@ -259,6 +205,8 @@ class PactPatientInfoReport(PactDrilldownReportMixin, GenericTabularReport, Cust
             ex: [dict(name='group', value=self.group_name)]
         """
         ret = []
-        for k,v in self.request.GET.items():
+        for k, v in self.request.GET.items():
             ret.append(dict(name=k, value=v))
         return ret
+
+

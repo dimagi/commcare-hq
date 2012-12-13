@@ -8,7 +8,7 @@ from dimagi.utils.decorators.memoized import memoized
 from pact import enums
 
 from couchdbkit.schema.properties import ALLOWED_PROPERTY_TYPES
-from pact.enums import TIME_LABEL_LOOKUP
+from pact.enums import TIME_LABEL_LOOKUP, PACT_SCHEDULES_NAMESPACE
 
 ALLOWED_PROPERTY_TYPES.add(partial)
 
@@ -78,6 +78,76 @@ class PactPatientCase(CommCareCase):
             return display_dict.get(attr_val, attr_val)
         else:
             return ""
+
+
+    def get_schedules(self, raw_json=False, reversed=False):
+        if raw_json:
+            obj = self.to_json()
+        else:
+            obj=self
+        computed = obj['computed_']
+        if computed.has_key(PACT_SCHEDULES_NAMESPACE):
+            ret = [x for x in computed[PACT_SCHEDULES_NAMESPACE]]
+            if reversed:
+                ret.reverse()
+            return ret
+
+    def set_schedule(self, new_schedule):
+        """set the schedule as head of the schedule by accepting a cdotweeklychedule"""
+        #first, set all the others to inactive
+
+        schedules = self.get_schedules()
+        new_schedule.deprecated=False
+        if new_schedule.started == None or new_schedule.started <= datetime.utcnow():
+            new_schedule.started=datetime.utcnow()
+            for sched in schedules:
+                if not sched.deprecated:
+                    #sched.deprecated=True
+                    sched.ended=datetime.utcnow()
+#                    sched.save()
+        elif new_schedule.started > datetime.utcnow():
+            #if it's in the future, then don't deprecate the future schedule, just procede along and let the system set the dates correctly
+            pass
+#        self.weekly_schedule.append(new_schedule)
+#        self.save()
+
+
+    @property
+    def schedules(self):
+        #patient_doc is the case doc
+        computed = self['computed_']
+        ret = {}
+
+        def get_current(x):
+            if x.deprecated:
+                return False
+            if x.ended is None and x.started < datetime.utcnow():
+                return True
+            if x.ended < datetime.utcnow():
+                return False
+
+            print "made it to the end somehow..."
+            print '\n'.join(x.weekly_arr)
+            return False
+
+        if computed.has_key(PACT_SCHEDULES_NAMESPACE):
+            schedule_arr = [CDotWeeklySchedule.wrap(x) for x in self.get_schedules()]
+
+            past = filter(lambda x: x.ended is not None and x.ended < datetime.utcnow(), schedule_arr)
+            current = filter(get_current, schedule_arr)
+            future = filter(lambda x: x.deprecated and x.started > datetime.utcnow(), schedule_arr)
+            past.reverse()
+
+#            print current
+            if len(current) > 1:
+                for x in current:
+                    print '\n'.join(x.weekly_arr())
+
+            ret['current_schedule'] = current[0]
+            ret['past_schedules'] = past
+            ret['future_schedules'] = future
+        return ret
+
 
     @property
     def addresses(self):
