@@ -19,13 +19,14 @@ class ComputedDocumentMixin(DocumentSchema):
     computed_ = DictProperty()
     computed_modified_on_ = DateTimeProperty()
 
-    def set_definition(self, definition):
-        current_namespace = self.computed_.get(definition.namespace, {})
-        current_namespace[definition.slug] = dict(
-            version=definition.version,
-            value=definition.get_clean_value(self),
-            muti_value=definition._returns_multiple,
-            type=definition.doc_type
-        )
-        self.computed_[definition.namespace] = current_namespace
-        self.computed_modified_on_ = datetime.datetime.utcnow()
+    def update_indicator(self, indicator_def, save_on_update=True):
+        existing_indicators = self.computed_.get(indicator_def.namespace, {})
+        updated_indicators, is_update = indicator_def.update_computed_namespace(existing_indicators, self)
+
+        if is_update:
+            self.computed_[indicator_def.namespace] = updated_indicators
+            self.computed_modified_on_ = datetime.datetime.utcnow()
+            if save_on_update:
+                self.save()
+
+        return is_update
