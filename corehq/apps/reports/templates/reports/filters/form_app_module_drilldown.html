@@ -9,7 +9,7 @@
                data-bind="checked: is_unknown_shown, hideKnownForms: is_unknown_shown"
                data-known="#{{ css_id }}-known_control"
                name="{{ slug }}_{{ unknown.slug }}"
-               id="{{ css_id }}_{{ unknown.slug }}"
+               id="{{ css_id }}_{{ unknown.slug }}_hide"
                value="">
         {% trans 'Known Forms' %}
         <a href="#" class="hq-help no-click">
@@ -24,7 +24,7 @@
                data-bind="checked: is_unknown_shown, hideKnownForms: is_unknown_shown"
                data-known="#{{ css_id }}-known_control"
                name="{{ slug }}_{{ unknown.slug }}"
-               id="{{ css_id }}_{{ unknown.slug }}"
+               id="{{ css_id }}_{{ unknown.slug }}_show"
                value="yes">
         {% trans 'Unknown Forms (Possibly Deleted)' %}
         <a href="#" class="hq-help no-click">
