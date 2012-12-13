@@ -60,7 +60,7 @@ class IndicatorSummaryReport(GroupReferenceMixIn, BiharSummaryReport, IndicatorS
 
 
     def get_indicator_value(self, indicator):
-        return indicator.calculation_class.display(self.cases)
+        return indicator.display(self.cases)
     
 class IndicatorCharts(MockEmptyReport):
     name = ugettext_noop("Charts")
@@ -120,11 +120,11 @@ class IndicatorClientList(GroupReferenceMixIn, ConvenientBaseMixIn,
 
     @property
     def sorted_cases(self):
-        return sorted(self.cases, key=self.indicator.calculation_class.sortkey)
+        return sorted(self.cases, key=self.indicator.sortkey)
         
     def _filter(self, case):
         if self.indicator:
-            return self.indicator.calculation_class.filter(case)
+            return self.indicator.filter(case)
         else:
             return True
     
@@ -135,4 +135,4 @@ class IndicatorClientList(GroupReferenceMixIn, ConvenientBaseMixIn,
         
     @property
     def rows(self):
-        return [self.indicator.calculation_class.as_row(c) for c in self._get_clients()]
+        return [self.indicator.as_row(c) for c in self._get_clients()]

@@ -212,15 +212,28 @@ class Indicator(object):
         self.name = spec["name"]
         calculation_class = to_function(spec["calculation_class"], failhard=True)
         kwargs = spec.get("calculation_kwargs", {})
-        self.calculation_class = calculation_class(**kwargs)
+        self._calculator = calculation_class(**kwargs)
 
     @property
     def show_in_client_list(self):
-        return self.calculation_class.show_in_client_list
+        return self._calculator.show_in_client_list
     
     @property
     def show_in_indicators(self):
-        return self.calculation_class.show_in_indicators
+        return self._calculator.show_in_indicators
         
     def get_columns(self):
-        return self.calculation_class.get_columns()
+        return self._calculator.get_columns()
+
+    @property
+    def sortkey(self):
+        return self._calculator.sortkey
+
+    def filter(self, case):
+        return self._calculator.filter(case)
+
+    def as_row(self, case):
+        return self._calculator.as_row(case)
+
+    def display(self, cases):
+        return self._calculator.display(cases)
