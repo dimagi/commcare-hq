@@ -1,4 +1,5 @@
 {% load hq_shared_tags %}
+{% load i18n %}
 <!DOCTYPE html>
 <html>
 <head>
@@ -11,7 +12,9 @@
 <div class="container-fluid">
     {% block content %}{% endblock %}
     <footer>
-        <small>CommCare HQ Mobile is Copyright &copy; {% now "Y" %} <a href="http://www.dimagi.com/">Dimagi, Inc.</a></small>
+        <small>{% trans "CommCare HQ Mobile is Copyright" %} &copy; {% now "Y" %} <a href="http://www.dimagi.com/">Dimagi, Inc.</a></small>
+        <br>
+        <small><a href="{% url logout %}">{% trans "Logout" %}</a></small>
     </footer>
 </div>
 {% block js %}{% endblock %}
