@@ -16,7 +16,7 @@ DEFAULT_ROW_FUNCTION = 'bihar.reports.indicators.filters.mother_pre_delivery_col
 # static config - should this eventually live in the DB?
 DELIVERIES = {
     "slug": "deliveries",
-    "name": _("Pregnant woman who delivered in last 30 days"),
+    "name": _("Pregnant woman who delivered"),
     "calculation_class": "bihar.reports.indicators.home_visit.RecentDeliveryList",
 }
 INDICATOR_SETS = [
@@ -26,27 +26,27 @@ INDICATOR_SETS = [
         "indicators": [
             {
                 "slug": "bp2",
-                "name": _("BP (2nd Tri) Visits in last 30 days (Done/Due)"),
+                "name": _("BP (2nd Tri) Visits"),
                 "calculation_class": "bihar.reports.indicators.home_visit.BP2Calculator"
             },
             {
                 "slug": "bp3",
-                "name": _("BP (3rd Tri) Visits in last 30 days (Done/Due)"),
+                "name": _("BP (3rd Tri) Visits"),
                 "calculation_class": "bihar.reports.indicators.home_visit.BP3Calculator"
             },
             {
                 "slug": "pnc",
-                "name": _("PNC Visits  in last 30 days (Done/Due)"),
+                "name": _("PNC Visits"),
                 "calculation_class": "bihar.reports.indicators.home_visit.PNCCalculator"
             },
             {
                 "slug": "ebf",
-                "name": _("EBF Visits in last 30 days (Done/Due)"),
+                "name": _("EBF Visits"),
                 "calculation_class": "bihar.reports.indicators.home_visit.EBCalculator"
             },
             {
                 "slug": "cf",
-                "name": _("CF Visits in last 30 days (Done/Due)"),
+                "name": _("CF Visits"),
                 "calculation_class": "bihar.reports.indicators.home_visit.CFCalculator"
             },
             {
@@ -62,12 +62,12 @@ INDICATOR_SETS = [
             },
             {
                 "slug": "no_bp_counseling",
-                "name": _("Pregnant woman not given BP counselling (of pregnant woman registered in last 30 days)"),
+                "name": _("Pregnant woman not given BP counselling"),
                 "calculation_class": "bihar.reports.indicators.home_visit.NoBPList",
             },
             {
                 "slug": "no_ifa_tablets",
-                "name": _("Pregnant woman not received IFA tablets (of pregnant woman registered in last 30 days)"),
+                "name": _("Pregnant woman not received IFA tablets"),
                 "calculation_class": "bihar.reports.indicators.home_visit.NoBPList",    
             },
         ]
@@ -78,17 +78,17 @@ INDICATOR_SETS = [
         "indicators": [
             {
                 "slug": "hd",
-                "name": _("Home Deliveries visited in 24 hours of Birth (Total Number HD24HR/TNHD)"),
+                "name": _("Home Deliveries visited in 24 hours of Birth"),
                 "calculation_class": "bihar.reports.indicators.calculations.HDDayCalculator"
             },
             {
                 "slug": "idv",
-                "name": _("Institutional Deliveries visited in 24 hours of Birth (Total Number ID24HR/TNI)"),
+                "name": _("Institutional Deliveries visited in 24 hours of Birth"),
                 "calculation_class": "bihar.reports.indicators.calculations.IDDayCalculator"
             },
             {
                 "slug": "idnb",
-                "name": _("Institutional deliveries not breastfed within one hour (Total NumberBF/Total Number ID24HR)"),
+                "name": _("Institutional deliveries not breastfed within one hour"),
                 "calculation_class": "bihar.reports.indicators.calculations.IDNBCalculator"
             },
             DELIVERIES,
@@ -100,25 +100,25 @@ INDICATOR_SETS = [
         "indicators": [
             {
                 "slug": 'comp1',
-                "name": _("# complications identified in first 24 hours / # complications in last 30 days"),
+                "name": _("complications identified in first 24 hours"),
                 "calculation_class": "bihar.reports.indicators.calculations.ComplicationsCalculator",
                 "calculation_kwargs": {'days': 1, 'now': now},
             },
             {
                 "slug": 'comp3',
-                "name": _("# complications identified within 3 days of birth / # complications in last 30 days"),
+                "name": _("complications identified within 3 days of birth"),
                 "calculation_class": "bihar.reports.indicators.calculations.ComplicationsCalculator",
                 "calculation_kwargs": {'days': 3, 'now': now},
             },
             {
                 "slug": 'comp5',
-                "name": _("# complications identified within 5 days of birth / # complications in last 30 days"),
+                "name": _("complications identified within 5 days of birth"),
                 "calculation_class": "bihar.reports.indicators.calculations.ComplicationsCalculator",
                 "calculation_kwargs": {'days': 5, 'now': now},
             },
             {
                 "slug": 'comp7',
-                "name": _("# complications identified within 7 days of birth / # complications in last 30 days"),
+                "name": _("complications identified within 7 days of birth"),
                 "calculation_class": "bihar.reports.indicators.calculations.ComplicationsCalculator",
                 "calculation_kwargs": {'days': 7, 'now': now},
             },
@@ -130,27 +130,27 @@ INDICATOR_SETS = [
         "indicators": [
             {
                 "slug": "ptlb",
-                "name": _("# Preterm births / # Live births"),
+                "name": _("Preterm births"),
                 "calculation_class": "bihar.reports.indicators.calculations.PTLBCalculator"
             },
             {
                 "slug": "lt2kglb",
-                "name": _("# infants < 2kg / # live births"),
+                "name": _("infants < 2kg"),
                 "calculation_class": "bihar.reports.indicators.calculations.LT2KGLBCalculator"
             },
             {
                 "slug": "visited_weak_ones",
-                "name": _("# live births who are preterm or < 2kg  visited in 24 hours of birth by FLW/ (# preterm + # infants < 2kg)"),
+                "name": _("visited Weak Newborn within 24 hours of birth by FLW"),
                 "calculation_class": "bihar.reports.indicators.calculations.VWOCalculator"
             },
             {
                 "slug": "skin_to_skin",
-                "name": _("# live births who are preterm and < 2kg not receiving skin to skin care message by FLW"),
+                "name": _("weak newborn not receiving skin to skin care message by FLW"),
                 "calculation_class": "bihar.reports.indicators.calculations.S2SCalculator"
             },
             {
                 "slug": "feed_vigour",
-                "name": _("# live births who are preterm and < 2kg infants not breastfeeding vigorously "),
+                "name": _("weak newborn not breastfeeding vigorously "),
                 "calculation_class": "bihar.reports.indicators.calculations.FVCalculator"
             },
         ]
@@ -163,12 +163,12 @@ INDICATOR_SETS = [
         "indicators": [
             {
                 "slug": "mother_mortality",
-                "name": _("# Mothers who've died in the last 30 days"),
+                "name": _("Mothers died"),
                 "calculation_class": "bihar.reports.indicators.calculations.MMCalculator"
             },
             {
                 "slug": "infant_mortality",
-                "name": _("# Infants who've died in the last 30 days"),
+                "name": _("Infants died"),
                 "calculation_class": "bihar.reports.indicators.calculations.IMCalculator"
             },
         ]
