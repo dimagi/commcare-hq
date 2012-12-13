@@ -390,10 +390,20 @@ class FormBase(DocumentSchema):
                 'case_preload', 'referral_preload'
             )
         else:
-            action_types = (
-                'open_case', 'update_case', 'close_case',
-                'case_preload', 'subcases',
-            )
+            if self.requires == 'none':
+                action_types = (
+                    'open_case', 'update_case', 'subcases',
+                )
+            elif self.requires == 'case':
+                action_types = (
+                    'update_case', 'close_case', 'case_preload', 'subcases',
+                )
+            else:
+                # this is left around for legacy migrated apps
+                action_types = (
+                    'open_case', 'update_case', 'close_case',
+                    'case_preload', 'subcases',
+                )
         return self._get_active_actions(action_types)
 
     def active_non_preloader_actions(self):

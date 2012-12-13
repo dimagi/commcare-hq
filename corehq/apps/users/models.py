@@ -1010,15 +1010,20 @@ class CommCareUser(CouchUser, CommCareMobileContactMixin, SingleMembershipMixin)
     @classmethod
     def wrap(cls, data):
         # migrations from using role_id to using the domain_memberships
+        role_id = None
         should_save = False
+        if not data.has_key('domain_membership') or not data['domain_membership'].get('domain', None):
+            should_save = True
         if data.has_key('role_id'):
             role_id = data["role_id"]
             del data['role_id']
             should_save = True
         self = super(CommCareUser, cls).wrap(data)
         if should_save:
-            self.domain_membership = DomainMembership(domain=self.domain, role_id=role_id)
-            self.save()
+            self.domain_membership = DomainMembership(domain=self.domain)
+            if role_id:
+                self.domain_membership.role_id = role_id
+#            self.save() # will uncomment when I figure out what's happening with sheels commcareuser
 
         return self
 

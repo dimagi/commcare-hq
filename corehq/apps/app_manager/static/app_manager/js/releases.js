@@ -14,6 +14,7 @@ function ReleasesMain(o) {
     self.savedApps = ko.observableArray();
     self.doneFetching = ko.observable(false);
     self.buildState = ko.observable('');
+    self.fetchState = ko.observable('');
     self.nextVersionToFetch = null;
     self.fetchLimit = 5;
     self.deployAnyway = {};
@@ -47,6 +48,7 @@ function ReleasesMain(o) {
         self.deployAnyway[savedApp.id()] = ko.observable(false);
     };
     self.getMoreSavedApps = function () {
+        self.fetchState('pending');
         $.ajax({
             url: self.url('fetch'),
             dataType: 'json',
@@ -68,6 +70,9 @@ function ReleasesMain(o) {
             } else {
                 self.doneFetching(false);
             }
+            self.fetchState('');
+        }).error(function () {
+            self.fetchState('error');
         });
     };
     self.toggleRelease = function (savedApp) {
@@ -112,11 +117,10 @@ function ReleasesMain(o) {
     self.makeNewBuildEnabled = function () {
         if (self.buildState() === 'pending') {
             return false;
+        } else if (self.lastAppVersion() === undefined) {
+            return self.doneFetching();
         } else {
-            return (
-                self.lastAppVersion() === undefined ||
-                self.lastAppVersion() !== self.appVersion()
-            );
+            return self.lastAppVersion() !== self.appVersion();
         }
     };
     self.makeNewBuild = function () {
@@ -124,7 +128,7 @@ function ReleasesMain(o) {
         if (comment || comment === "") {
             $(this).find("input[name='comment']").val(comment);
         } else {
-            return false;
+            return;
         }
         self.buildState('pending');
         $.post(self.url('newBuild'), {
