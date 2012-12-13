@@ -22,9 +22,11 @@ class IndicatorNav(GroupReferenceMixIn, BiharNavReport):
     extra_context_providers = [shared_bihar_context, summary_context, team_member_context]
     @property
     def reports(self):
-        return [IndicatorClientSelectNav, IndicatorSummaryReport,
-                # IndicatorCharts
-                ]
+        return [IndicatorClientSelectNav, IndicatorSummaryReport]
+
+    @property
+    def rendered_report_title(self):
+        return self.group_display
 
 class IndicatorSummaryReport(GroupReferenceMixIn, BiharSummaryReport, IndicatorSetMixIn):
     
@@ -32,6 +34,10 @@ class IndicatorSummaryReport(GroupReferenceMixIn, BiharSummaryReport, IndicatorS
     slug = "indicatorsummary"
     description = "Indicator details report"
     base_template_mobile = "bihar/indicator_summary.html"
+
+    @property
+    def rendered_report_title(self):
+        return _(self.indicator_set.name)
 
     @property
     def summary_indicators(self):
