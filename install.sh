@@ -1,3 +1,5 @@
+#!/bin/bash
+
 # Install script for CommCare HQ on Ubuntu 12.04
 # - installs all dependencies
 # - ensures all necessary processes will run on startup
@@ -212,6 +214,7 @@ elif [ "$PM" = "yum-rhel" ]; then
     sudo chkconfig couchdb on
     sudo chkconfig elasticsearch on
     sudo chkconfig memcached on
+    sudo chkconfig postgresql on
 fi
 
 ## Ensure services are running ##

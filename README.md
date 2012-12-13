@@ -119,7 +119,11 @@ writeable.
 
     # If run_ptop didn't output anything like hqcases_<long_string>, go to
     # http://localhost:9200/_status?pretty=true and find it near the top of the
-    # page and use that to run the above command
+    # page and use that to run the above command.
+    # 
+    # Any potential future changes to the HQ code that change the case index
+    # mapping type for elasticsearch require you to repeat this step. This
+    # process will be improved.
 
 To enable CloudCare, ensure that `TOUCHFORMS_API_USER` and
 `TOUCHFORMS_API_PASSWORD` in `localsettings.py` are the credentials of the
@@ -140,24 +144,18 @@ to automatically run on system startup, you need to run them manually:
     /path/to/unzipped/elasticsearch/bin/elasticsearch &
     /path/to/couchdb/bin/couchdb &
 
-Our own helper processes must also be running:
+Then run
 
-    # Asynchronous task scheduler
-    ./manage.py celeryd --verbosity=2 --beat --statedb=celery --events &
+    ./run.sh
 
-    # Keeps elasticsearch index in sync
-    ./manage.py run_ptop &
+Or for debugging,
 
-    # only necessary if you want to use CloudCare
-    jython submodules/touchforms-src/touchforms/backend/xformserver.py &
+    ./run.sh --werkzeug
 
-Finally, run HQ with
-
-    ./manage.py run_gunicorn --workers=3
-
-Or, for debugging:
-
-    ./manage.py runserver --werkzeug
+For a robust setup, you will want to use something like
+[supervisor](http://supervisord.org/) to manage processes.  You can see the
+supervisor configs for [CommCareHQ.org](http://www.commcarehq.org) in the
+`services/` directory.
 
 
 Building CommCare Mobile Apps
