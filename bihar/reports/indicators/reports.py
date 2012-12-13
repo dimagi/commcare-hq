@@ -31,6 +31,7 @@ class IndicatorSummaryReport(GroupReferenceMixIn, BiharSummaryReport, IndicatorS
     name = ugettext_noop("Indicators")
     slug = "indicatorsummary"
     description = "Indicator details report"
+    base_template_mobile = "bihar/indicator_summary.html"
 
     @property
     def summary_indicators(self):
@@ -47,8 +48,9 @@ class IndicatorSummaryReport(GroupReferenceMixIn, BiharSummaryReport, IndicatorS
             params = copy(self.request_params)
             params['indicator'] = indicator.slug
             del params['next_report']
-            return format_html(u'<a href="{next}">{val}</a>',
+            return format_html(u'<a href="{next}">{val}{chart}</a>',
                 val=self.get_indicator_value(indicator),
+                chart=self.get_chart(indicator),
                 next=url_and_params(
                     IndicatorClientList.get_url(self.domain, 
                                                 render_as=self.render_next),
@@ -58,10 +60,21 @@ class IndicatorSummaryReport(GroupReferenceMixIn, BiharSummaryReport, IndicatorS
         return [self.group.name] + \
                [_nav_link(i) for i in self.summary_indicators]
 
-
     def get_indicator_value(self, indicator):
         return indicator.display(self.cases)
-    
+
+    def get_chart(self, indicator):
+        # this is a serious hack for now
+        piecls = 'sparkpie'
+        split = self.get_indicator_value(indicator).split("/")
+        chart_template = '<span data-numerator="{num}" ' \
+            'data-denominator="{denom}" class="{piecls}"></span>'
+        if len(split) == 2:
+            return format_html(chart_template, num=split[0],
+                               denom=int(split[1]) - int(split[0]),
+                               piecls=piecls)
+        return '' # no chart
+
 class IndicatorCharts(MockEmptyReport):
     name = ugettext_noop("Charts")
     slug = "indicatorcharts"
