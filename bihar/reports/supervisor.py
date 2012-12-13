@@ -109,10 +109,14 @@ class GroupReferenceMixIn(object):
 
     @property
     @memoized
+    def group_display(self):
+        return u"{group} ({awcc})".format(group=self.group.name,
+                                          awcc=get_awcc(self.group))
+
+    @property
     def rendered_report_title(self):
-        return u"{title} - {group} ({awcc})".format(title=_(self.name),
-                                           group=self.group.name,
-                                           awcc=get_awcc(self.group))
+        return u"{title} - {group}".format(title=_(self.name),
+                                           group=self.group_display)
 
 def team_member_context(report):
     """

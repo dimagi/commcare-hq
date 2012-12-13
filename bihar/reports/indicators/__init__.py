@@ -210,32 +210,30 @@ class Indicator(object):
     def __init__(self, spec):
         self.slug = spec["slug"]
         self.name = spec["name"]
-        if "calculation_class" in spec:
-            calculation_class = to_function(spec["calculation_class"])
-            kwargs = spec.get("calculation_kwargs", {})
-            self.calculation_class = calculation_class(**kwargs)
-        else:
-            self.calculation_class = None
-        
-        # case filter stuff
-        self.filter_function = to_function(spec["filter_function"]) \
-            if "filter_function" in spec else None
-        self.sortkey = to_function(spec["sortkey"]) \
-            if "sortkey" in spec else None
-        self.row_function = to_function(spec.get("row_function", DEFAULT_ROW_FUNCTION))
-        self.columns = spec.get("columns", [_("Name"), _("Husband's Name"), _("EDD")])
+        calculation_class = to_function(spec["calculation_class"], failhard=True)
+        kwargs = spec.get("calculation_kwargs", {})
+        self._calculator = calculation_class(**kwargs)
 
     @property
     def show_in_client_list(self):
-        return self.calculation_class.show_in_client_list if \
-            self.calculation_class else True
+        return self._calculator.show_in_client_list
     
     @property
     def show_in_indicators(self):
-        return self.calculation_class.show_in_indicators if \
-            self.calculation_class else True
+        return self._calculator.show_in_indicators
         
     def get_columns(self):
-        if self.calculation_class:
-            return self.calculation_class.get_columns()
-        return self.columns
+        return self._calculator.get_columns()
+
+    @property
+    def sortkey(self):
+        return self._calculator.sortkey
+
+    def filter(self, case):
+        return self._calculator.filter(case)
+
+    def as_row(self, case):
+        return self._calculator.as_row(case)
+
+    def display(self, cases):
+        return self._calculator.display(cases)

@@ -22,15 +22,22 @@ class IndicatorNav(GroupReferenceMixIn, BiharNavReport):
     extra_context_providers = [shared_bihar_context, summary_context, team_member_context]
     @property
     def reports(self):
-        return [IndicatorClientSelectNav, IndicatorSummaryReport,
-                # IndicatorCharts
-                ]
+        return [IndicatorClientSelectNav, IndicatorSummaryReport]
+
+    @property
+    def rendered_report_title(self):
+        return self.group_display
 
 class IndicatorSummaryReport(GroupReferenceMixIn, BiharSummaryReport, IndicatorSetMixIn):
     
     name = ugettext_noop("Indicators")
     slug = "indicatorsummary"
     description = "Indicator details report"
+    base_template_mobile = "bihar/indicator_summary.html"
+
+    @property
+    def rendered_report_title(self):
+        return _(self.indicator_set.name)
 
     @property
     def summary_indicators(self):
@@ -47,8 +54,9 @@ class IndicatorSummaryReport(GroupReferenceMixIn, BiharSummaryReport, IndicatorS
             params = copy(self.request_params)
             params['indicator'] = indicator.slug
             del params['next_report']
-            return format_html(u'<a href="{next}">{val}</a>',
+            return format_html(u'<a href="{next}">{chart}{val}</a>',
                 val=self.get_indicator_value(indicator),
+                chart=self.get_chart(indicator),
                 next=url_and_params(
                     IndicatorClientList.get_url(self.domain, 
                                                 render_as=self.render_next),
@@ -58,15 +66,21 @@ class IndicatorSummaryReport(GroupReferenceMixIn, BiharSummaryReport, IndicatorS
         return [self.group.name] + \
                [_nav_link(i) for i in self.summary_indicators]
 
-
     def get_indicator_value(self, indicator):
-        if indicator.calculation_class:
-            return indicator.calculation_class.display(self.cases)
-        if indicator.calculation_function:
-            return indicator.calculation_function(self.cases)
-        return "not available yet"
-    
-    
+        return indicator.display(self.cases)
+
+    def get_chart(self, indicator):
+        # this is a serious hack for now
+        piecls = 'sparkpie'
+        split = self.get_indicator_value(indicator).split("/")
+        chart_template = '<span data-numerator="{num}" ' \
+            'data-denominator="{denom}" class="{piecls}"></span>'
+        if len(split) == 2:
+            return format_html(chart_template, num=split[0],
+                               denom=int(split[1]) - int(split[0]),
+                               piecls=piecls)
+        return '' # no chart
+
 class IndicatorCharts(MockEmptyReport):
     name = ugettext_noop("Charts")
     slug = "indicatorcharts"
@@ -125,19 +139,11 @@ class IndicatorClientList(GroupReferenceMixIn, ConvenientBaseMixIn,
 
     @property
     def sorted_cases(self):
-        if self.indicator.calculation_class:
-            return sorted(self.cases, key=self.indicator.calculation_class.sortkey)
-        elif self.indicator.sortkey:
-            # TODO: remove
-            return sorted(self.cases, key=self.indicator.sortkey, reverse=True)
+        return sorted(self.cases, key=self.indicator.sortkey)
         
-        return self.cases
-    
     def _filter(self, case):
-        if self.indicator and self.indicator.calculation_class:
-            return self.indicator.calculation_class.filter(case)
-        if self.indicator and self.indicator.filter_function:
-            return self.indicator.filter_function(case)
+        if self.indicator:
+            return self.indicator.filter(case)
         else:
             return True
     
@@ -148,11 +154,4 @@ class IndicatorClientList(GroupReferenceMixIn, ConvenientBaseMixIn,
         
     @property
     def rows(self):
-        def _row(case):
-            if self.indicator.calculation_class:
-                return self.indicator.calculation_class.as_row(case)
-            else:
-                return self.indicator.row_function(case)
-        return [_row(c) for c in self._get_clients()]
-    
-        
+        return [self.indicator.as_row(c) for c in self._get_clients()]

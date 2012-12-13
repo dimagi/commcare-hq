@@ -2,7 +2,7 @@ from collections import defaultdict
 from couchdbkit import ResourceNotFound
 from bihar.reports.indicators.filters import A_MONTH, is_pregnant_mother, is_newborn_child, get_add, get_edd,\
     mother_pre_delivery_columns, mother_post_delivery_columns
-from couchforms.safe_index import safe_index
+from dimagi.utils.couch.safe_index import safe_index
 from dimagi.utils.parsing import string_to_datetime
 import datetime as dt
 from bihar.reports.indicators.visits import visit_is, get_related_prop
@@ -501,8 +501,8 @@ class ComplicationsCalculator(SummaryValueMixIn, MotherPreDeliverySummaryMixIn,
                     add = _get_time_of_birth(form)
                 else:
                     add = get_add(case)
-                add = string_to_datetime(add)
-                if form.metadata.timeStart - add < self.days:
+                add = string_to_datetime(add).date()
+                if form.metadata.timeStart.date() - add <= self.days:
                     has_recent_complication = True
                     break
 

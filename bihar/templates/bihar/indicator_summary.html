@@ -1,0 +1,20 @@
+{% extends "bihar/base_template_mobile.html" %}
+{% load hq_shared_tags %}
+{% block head %}{{ block.super }}
+<style>
+    .sparkpie {
+        padding-right: .5em;
+    }
+</style>
+{% endblock %}
+{% block js %}{{ block.super }}
+<script src="{% static 'hqstyle/js/jquery/jquery-1.7.1.min.js' %}"></script>
+<script src="{% static 'hqwebapp/javascripts/jquery.sparkline.min.js' %}"></script>
+<script>
+    $(function () {
+        $(".sparkpie").each(function () {
+            $(this).sparkline([$(this).data('numerator'),$(this).data('denominator')], {type: 'pie'});
+        });
+    });
+</script>
+{% endblock %}
