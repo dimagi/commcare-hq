@@ -1,20 +1,11 @@
-import random
-from django.core.urlresolvers import reverse, NoReverseMatch
-from corehq.apps.hqcase.paginator import CasePaginator
-from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn, DTSortType
-from corehq.apps.reports.fields import SelectMobileWorkerField
+from django.core.urlresolvers import  NoReverseMatch
+from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
 from corehq.apps.reports.generic import GenericTabularReport
 from corehq.apps.reports.standard import CustomProjectReport, ProjectReportParametersMixin
-from corehq.apps.reports.standard.inspect import CaseListReport, CaseDisplay, CaseListMixin
 from django.utils import html
 
-from couchdbkit.resource import RequestFailed
-from corehq.apps.users.models import CouchUser, CommCareUser
 from couchforms.models import XFormInstance
-from dimagi.utils.decorators.memoized import memoized
-from pact.reports import PatientNavigationReport
 from pact.reports.chw import PactCHWProfileReport
-from pact.reports.patient import PactPatientInfoReport
 
 
 class PactCHWDashboard(GenericTabularReport, ProjectReportParametersMixin, CustomProjectReport):

@@ -8,7 +8,6 @@ from django.utils import html
 
 from couchdbkit.resource import RequestFailed
 from dimagi.utils.decorators.memoized import memoized
-from pact.reports import PatientNavigationReport
 from pact.reports.patient import PactPatientInfoReport
 
 
@@ -34,6 +33,7 @@ class PatientDashboardReport(CaseListReport, PactCaseListMixin, CustomProjectRep
     name = "All Patients"
     slug = "patients"
     hide_filters = True
+#    ajax_pagination = True
 
     fields = [
 #        'corehq.apps.reports.fields.FilterUsersField',
@@ -51,12 +51,10 @@ class PatientDashboardReport(CaseListReport, PactCaseListMixin, CustomProjectRep
             DataTablesColumn("Name"),
             DataTablesColumn("Primary HP"),
             DataTablesColumn("Opened Date"),
-            DataTablesColumn("Last Encounter"),
-            DataTablesColumn("Encounter Date"),
+            DataTablesColumn("Last Modified"),
             DataTablesColumn("HP Status"),
             DataTablesColumn("DOT Status"),
-            DataTablesColumn("Last BW"),
-            DataTablesColumn("Submissions"),
+            DataTablesColumn("Status"),
         )
 #        headers.no_sort = True
         headers.no_sort = False
@@ -79,14 +77,10 @@ class PatientDashboardReport(CaseListReport, PactCaseListMixin, CustomProjectRep
                 display.pact_case_link,
                 display.primary_hp, #primary hp
                 display.opened_on,
-                display.last_encounter,
                 display.modified_on,
                 display.hp_status,
                 display.dot_status,
                 display.closed_display,
-                display.last_bw,
-                display.num_submissions,
-
             ]
 
         try:
@@ -124,25 +118,18 @@ class PactCaseDisplay(CaseDisplay):
             return "no status"
 
     @property
-    def last_encounter(self):
-        return "some encounter"
-    @property
-    def last_bw(self):
-        return "some bw"
-
-    @property
     def primary_hp(self):
-        if hasattr(self.case, 'owner_id'):
-            return self.case.owner_id
+        if hasattr(self.case, 'hp'):
+            return self.case.hp
         else:
             return "no HP"
 
     @property
     def dot_status(self):
-        if hasattr(self.case, 'dot_status'):
+        if hasattr(self.case, 'dot_status') and (self.case.dot_status != None and self.case.dot_status != ""):
             return self.case.dot_status
         else:
-            return "no status"
+            return "---"
 
     @property
     def num_submissions(self):

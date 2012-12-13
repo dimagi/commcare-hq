@@ -1,30 +1,53 @@
-from datetime import datetime
-import pdb
 from django.http import Http404
 import simplejson
-from casexml.apps.case.models import CommCareCase
 from corehq.apps.api.es import XFormES
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
-from corehq.apps.reports.dispatcher import ProjectReportDispatcher, CustomProjectReportDispatcher
 from corehq.apps.reports.generic import GenericTabularReport
 from corehq.apps.reports.standard import CustomProjectReport
 from corehq.apps.users.models import CommCareUser
+from dimagi.utils.decorators import inline
 from dimagi.utils.decorators.memoized import memoized
-from pact.models import CDotWeeklySchedule, PactPatientCase
-from pact.reports import PactPatientDispatcher, PactDrilldownReportMixin, PatientNavigationReport, chw_schedule
+from pact.reports import  PactDrilldownReportMixin, chw_schedule
+from pact.utils import pact_script_fields, case_script_field
+
+
+class XFormDisplay(object):
+    def __init__(self, result_row):
+        self.result_row = result_row
+
+
+    @property
+    def pact_id(self):
+        pass
+
+    @property
+    def case_id(self):
+        pass
+
+    @property
+    def form_type(self):
+        pass
+
+    @property
+    def encounter_date(self):
+        pass
+
+    @property
+    def received_on(self):
+        pass
 
 
 class PactCHWProfileReport(PactDrilldownReportMixin, GenericTabularReport, CustomProjectReport):
     slug = "chw_profile"
     description = "CHW Profile"
-    view_mode='info'
+    view_mode = 'info'
     ajax_pagination = True
     xform_es = XFormES()
 
     hide_filters = True
     filters = []
-#    fields = ['corehq.apps.reports.fields.FilterUsersField', 'corehq.apps.reports.fields.DatespanField',]
-#    hide_filters=False
+    #    fields = ['corehq.apps.reports.fields.FilterUsersField', 'corehq.apps.reports.fields.DatespanField',]
+    #    hide_filters=False
 
     def get_fields(self):
         if self.view_mode == 'submissions':
@@ -56,10 +79,9 @@ class PactCHWProfileReport(PactDrilldownReportMixin, GenericTabularReport, Custo
         ret = {'user_doc': user_doc}
         ret['view_mode'] = self.view_mode
         ret['chw_root_url'] = PactCHWProfileReport.get_url(*[self.request.domain]) + "?chw_id=%s" % self.request.GET['chw_id']
-        print self.request.GET.keys()
 
         if self.view_mode == 'info':
-            self.hide_filters=True
+            self.hide_filters = True
             self.report_template_path = "pact/chw/pact_chw_profile_info.html"
         elif self.view_mode == 'submissions':
             tabular_context = super(PactCHWProfileReport, self).report_context
@@ -67,7 +89,8 @@ class PactCHWProfileReport(PactDrilldownReportMixin, GenericTabularReport, Custo
             self.report_template_path = "pact/chw/pact_chw_profile_submissions.html"
             return tabular_context
         elif self.view_mode == 'schedule':
-            scheduled_context = chw_schedule.chw_calendar_submit_report(self.request, user_doc.raw_username)
+            scheduled_context = chw_schedule.chw_calendar_submit_report(self.request,
+                                                                        user_doc.raw_username)
             ret.update(scheduled_context)
             self.report_template_path = "pact/chw/pact_chw_profile_schedule.html"
         else:
@@ -75,35 +98,43 @@ class PactCHWProfileReport(PactDrilldownReportMixin, GenericTabularReport, Custo
         return ret
 
 
-
     #submission stuff
     @property
     def headers(self):
-        return DataTablesHeader(DataTablesColumn("Pact ID"),
-#                                DataTablesColumn("Patient Name"),
-                                DataTablesColumn("Form"),
-                                DataTablesColumn("Encounter Date"),
-                                DataTablesColumn("Received"),
+        return DataTablesHeader(DataTablesColumn("Pact ID", sortable=False, span=2),
+                                DataTablesColumn("Encounter Date", sortable=False, span=2),
+
+                                DataTablesColumn("Form", prop_name="form.#type", sortable=True, span=2),
+                                DataTablesColumn("Received", prop_name="received_on", sortable=True, span=2),
         )
 
     @property
-    @memoized
+#    @memoized
     def es_results(self):
+
+
         user = self.get_user()
-        query = self.xform_es.base_query(self.request.domain, start=self.pagination.start, size=self.pagination.count)
+        query = self.xform_es.base_query(self.request.domain, start=self.pagination.start,
+                                         size=self.pagination.count)
         query['fields'] = [
-                            "form.#type",
-                            "form.encounter_date",
-                            "form.note.encounter_date",
-                            "form.case.case_id",
-                            "form.case.@case_id",
-                            "form.pact_id",
-                            "form.note.pact_id",
-                            "received_on",
-                            "form.meta.timeStart",
-                            "form.meta.timeEnd"
-                        ]
+            "form.#type",
+#            "form.encounter_date",
+#            "form.note.encounter_date",
+#            "form.case.case_id",
+#            "form.case.@case_id",
+#            "form.pact_id",
+#            "form.note.pact_id",
+            "received_on",
+            "form.meta.timeStart",
+            "form.meta.timeEnd"
+        ]
         query['filter']['and'].append({"term": {"form.meta.username": user.raw_username}})
+        query['script_fields'] = {}
+        query['script_fields'].update(pact_script_fields())
+        query['script_fields'].update(case_script_field())
+        query['sort'] = self.get_sorting_block()
+
+        print simplejson.dumps(query, indent=4)
         return self.xform_es.run_query(query)
 
     @property
@@ -115,20 +146,11 @@ class PactCHWProfileReport(PactDrilldownReportMixin, GenericTabularReport, Custo
         """
         if self.get_user() is not None:
             rows = []
+
             def _format_row(row_field_dict):
-                for p in ["form.pact_id", "form.note.pact_id", None]:
-                    if p is None:
-                        yield ""
-                    if row_field_dict.has_key(p):
-                        yield row_field_dict[p]
-                        break
+                yield row_field_dict['script_pact_id']
+                yield row_field_dict['script_encounter_date']
                 yield row_field_dict["form.#type"].replace('_', ' ').title()
-                for p in ["form.encounter_date", "form.note.encounter_date", None]:
-                    if p is None:
-                        yield "None"
-                    if row_field_dict.has_key(p):
-                        yield row_field_dict[p]
-                        break
                 yield row_field_dict["received_on"].replace('_', ' ').title()
 
             res = self.es_results
@@ -166,12 +188,12 @@ class PactCHWProfileReport(PactDrilldownReportMixin, GenericTabularReport, Custo
             ex: [dict(name='group', value=self.group_name)]
         """
         ret = []
-        for k,v in self.request.GET.items():
+        for k, v in self.request.GET.items():
             ret.append(dict(name=k, value=v))
         return ret
 
     def per_case_submissions_facet(self):
-        user=self.get_user()
+        user = self.get_user()
         query = {
             "facets": {
                 "case_submissions": {
@@ -201,7 +223,8 @@ class PactCHWProfileReport(PactDrilldownReportMixin, GenericTabularReport, Custo
         }
 
     def my_submissions(self):
-        user=self.get_user()
+        #todo: delete, unused
+        user = self.get_user()
         query = {
             "fields": [
                 "form.#type",

@@ -76,12 +76,14 @@ class PactDOTReport(GenericTabularReport, CustomProjectReport, ProjectReportPara
         xform_es = XFormES()
 
         q = xform_es.base_query(PACT_DOMAIN, size=None)
-        q['filter']['and'].append({
-                    "ids": {
-                        "values": list(unique_visits)
+        lvisits = list(unique_visits)
+        if len(lvisits) > 0:
+            q['filter']['and'].append({
+                        "ids": {
+                            "values": lvisits
+                        }
                     }
-                }
-        )
+            )
         #todo double check pactid/caseid matches
 #        q['filter']['and'].append({ "term": {"pactid": casedoc.pactid} })
 #        q['fields'] =  [

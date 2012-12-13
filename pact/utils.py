@@ -2,6 +2,39 @@ import simplejson
 from corehq.apps.api.es import XFormES, CaseES
 from pact.enums import PACT_DOTS_DATA_PROPERTY
 
+
+def pact_script_fields():
+    """
+    This is a hack of the query to allow for the encounter date and pact_ids to show up as first class properties
+    """
+    return {
+        "script_pact_id": {
+            "script": """if(_source['form']['note'] != null) { _source['form']['note']['pact_id']; }
+                      else { _source['form']['pact_id']; }"""
+        },
+        "script_encounter_date": {
+            "script": """if(_source['form']['note'] != null) { _source['form']['note']['encounter_date']; }
+        else { _source['form']['encounter_date']; }"""
+        }
+    }
+
+
+def case_script_field():
+    """
+    Hack method to give a single case_id placeholder for viewing results for both old and new style
+    """
+    return {
+        "script_case_id": {
+            "script": """if (_source['form']['case']['@case_id'] != null) {
+                _source['form']['case']['@case_id'];
+             }
+             else {
+                _source['form']['case']['case_id'];
+            }"""
+        }
+    }
+
+
 def get_case_id(xform):
     if xform['form'].has_key('case'):
         if xform['form']['case'].has_key('case_id'):
