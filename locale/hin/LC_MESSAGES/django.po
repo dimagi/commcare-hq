@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2012-12-12 16:08+0530\n"
+"POT-Creation-Date: 2012-12-13 14:31+0530\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -71,111 +71,112 @@ msgstr "आशा"
 msgid "AWW"
 msgstr "ऑगनवाड़ी सेविका"
 
-#: .\submodules\bihar-reports\bihar\reports\supervisor.py:162
+#: .\submodules\bihar-reports\bihar\reports\supervisor.py:166
 msgid "Select Subcenter"
 msgstr "सब-सेंटर चुनिए"
 
-#: .\submodules\bihar-reports\bihar\reports\supervisor.py:164
+#: .\submodules\bihar-reports\bihar\reports\supervisor.py:168
 msgid "Subcenter selection report"
 msgstr "सब-सेंटर चयन रिपोर्ट"
 
-#: .\submodules\bihar-reports\bihar\reports\supervisor.py:166
-#: .\submodules\bihar-reports\bihar\reports\indicators\reports.py:41
+#: .\submodules\bihar-reports\bihar\reports\supervisor.py:170
+#: .\submodules\bihar-reports\bihar\reports\indicators\reports.py:48
 msgid "Team Name"
 msgstr "टीम का नाम"
 
-#: .\submodules\bihar-reports\bihar\reports\supervisor.py:167
+#: .\submodules\bihar-reports\bihar\reports\supervisor.py:171
 msgid "AWCC"
 msgstr "ऑगनवाड़ी केंद्र संख्या"
 
-#: .\submodules\bihar-reports\bihar\reports\supervisor.py:201
+#: .\submodules\bihar-reports\bihar\reports\supervisor.py:205
 #: .\submodules\bihar-reports\bihar\templates\bihar\base_template_mobile.html.py:6
 msgid "Main Menu"
 msgstr "मुख्य मेनू"
 
-#: .\submodules\bihar-reports\bihar\reports\supervisor.py:203
+#: .\submodules\bihar-reports\bihar\reports\supervisor.py:207
 msgid "Main navigation"
 msgstr "मुख्य नेवीगेशन"
 
-#: .\submodules\bihar-reports\bihar\reports\supervisor.py:240
+#: .\submodules\bihar-reports\bihar\reports\supervisor.py:244
 msgid "Worker Rank Table"
 msgstr "कार्यकर्ता रैंक/पद"
 
-#: .\submodules\bihar-reports\bihar\reports\supervisor.py:265
+#: .\submodules\bihar-reports\bihar\reports\supervisor.py:269
 msgid "Due List"
 msgstr "ड्यू लिस्ट"
 
-#: .\submodules\bihar-reports\bihar\reports\supervisor.py:269
+#: .\submodules\bihar-reports\bihar\reports\supervisor.py:273
 msgid "Tools Menu"
 msgstr "उपकरण"
 
-#: .\submodules\bihar-reports\bihar\reports\supervisor.py:291
+#: .\submodules\bihar-reports\bihar\reports\supervisor.py:295
 msgid "Referrals"
 msgstr "रेफेरल"
 
-#: .\submodules\bihar-reports\bihar\reports\supervisor.py:301
+#: .\submodules\bihar-reports\bihar\reports\supervisor.py:305
 msgid "Public Facility"
 msgstr "सरकारी अस्पताल"
 
-#: .\submodules\bihar-reports\bihar\reports\supervisor.py:302
+#: .\submodules\bihar-reports\bihar\reports\supervisor.py:306
 msgid "Private Facility"
 msgstr "प्राईवेट अस्पताल"
 
-#: .\submodules\bihar-reports\bihar\reports\supervisor.py:303
+#: .\submodules\bihar-reports\bihar\reports\supervisor.py:307
 msgid "Transport"
 msgstr "परिवहन"
 
-#: .\submodules\bihar-reports\bihar\reports\supervisor.py:337
+#: .\submodules\bihar-reports\bihar\reports\supervisor.py:341
 msgid "This calculation has not yet been implemented."
 msgstr "ये केलकुलेटर अभि तक लागु नहीं हुआ"
 
-#: .\submodules\bihar-reports\bihar\reports\supervisor.py:340
+#: .\submodules\bihar-reports\bihar\reports\supervisor.py:344
 msgid "EDD Calculator"
 msgstr "प्रसव की सम्भावित तिथी का केलकुलेटर"
 
-#: .\submodules\bihar-reports\bihar\reports\supervisor.py:346
-msgid "Enter LMP (MM/DD/YYYY)"
+#: .\submodules\bihar-reports\bihar\reports\supervisor.py:350
+#, fuzzy
+msgid "Enter LMP (YYYY-MM-DD)"
 msgstr "अंतिम मासिक धर्म की तिथी भरें"
 
-#: .\submodules\bihar-reports\bihar\reports\supervisor.py:356
+#: .\submodules\bihar-reports\bihar\reports\supervisor.py:360
 #, python-format
 msgid "Estimated Date of Delivery: %s"
 msgstr "प्रसव की सम्भावित तारीख: %s"
 
-#: .\submodules\bihar-reports\bihar\reports\supervisor.py:359
-#: .\submodules\bihar-reports\bihar\reports\supervisor.py:384
-msgid "Error: We can't parse your input, please try again"
-msgstr ""
-
 #: .\submodules\bihar-reports\bihar\reports\supervisor.py:363
+#: .\submodules\bihar-reports\bihar\reports\supervisor.py:388
+msgid "Error: We can't parse your input, please try again"
+msgstr "त्रुटि:कृपया दोबारा भरें"
+
+#: .\submodules\bihar-reports\bihar\reports\supervisor.py:367
 msgid "BMI Calculator"
 msgstr "बी एम आई केलकुलेटर"
 
-#: .\submodules\bihar-reports\bihar\reports\supervisor.py:369
+#: .\submodules\bihar-reports\bihar\reports\supervisor.py:373
 msgid "Enter weight in kilograms:"
 msgstr "वजन किलोग्राम में भरे"
 
-#: .\submodules\bihar-reports\bihar\reports\supervisor.py:374
+#: .\submodules\bihar-reports\bihar\reports\supervisor.py:378
 msgid "Enter height in meters:"
 msgstr "लम्बाई मीटर में भरे"
 
-#: .\submodules\bihar-reports\bihar\reports\supervisor.py:388
+#: .\submodules\bihar-reports\bihar\reports\supervisor.py:392
 msgid "You are obese"
 msgstr "आपको मोटापा है"
 
-#: .\submodules\bihar-reports\bihar\reports\supervisor.py:390
+#: .\submodules\bihar-reports\bihar\reports\supervisor.py:394
 msgid "You are overweight"
 msgstr "आपका वजन ज्यादा है"
 
-#: .\submodules\bihar-reports\bihar\reports\supervisor.py:392
+#: .\submodules\bihar-reports\bihar\reports\supervisor.py:396
 msgid "You are normal weight"
 msgstr "आपका वजन सामान्य है"
 
-#: .\submodules\bihar-reports\bihar\reports\supervisor.py:394
+#: .\submodules\bihar-reports\bihar\reports\supervisor.py:398
 msgid "You are underweight"
 msgstr "आपका वजन सामान्य से कम है"
 
-#: .\submodules\bihar-reports\bihar\reports\supervisor.py:406
+#: .\submodules\bihar-reports\bihar\reports\supervisor.py:410
 msgid "no awc code found"
 msgstr "ऑगनवाड़ी केंद्र संख्या नही मिला"
 
@@ -330,29 +331,6 @@ msgstr "पिछले ३० दिनों मे हुई मातृ म
 msgid "# Infants who've died in the last 30 days"
 msgstr "#पिछले ३० दिनों मे हुई शिशु मृत्यु(और अलग किये गये लाभार्थी को अगले स्क्रीन मे दिखाऐं)"
 
-#: .\submodules\bihar-reports\bihar\reports\indicators\__init__.py:226
-#: .\submodules\bihar-reports\bihar\reports\indicators\calculations.py:124
-#: .\submodules\bihar-reports\bihar\reports\indicators\calculations.py:146
-#: .\submodules\core-hq-src\corehq\apps\domain\forms.py:22
-#: .\submodules\core-hq-src\corehq\apps\reports\standard\inspect.py:332
-#: .\submodules\core-hq-src\corehq\apps\reports\templates\reports\base_template.html.py:111
-#: .\submodules\core-hq-src\corehq\apps\reports\templates\reports\partials\saved_custom_exports.html.py:5
-#: .\submodules\core-hq-src\corehq\apps\reports\templates\reports\reportdata\case_export_data.html.py:55
-#: .\submodules\core-hq-src\corehq\apps\users\templates\users\web_users.html.py:81
-msgid "Name"
-msgstr "नाम"
-
-#: .\submodules\bihar-reports\bihar\reports\indicators\__init__.py:226
-#: .\submodules\bihar-reports\bihar\reports\indicators\calculations.py:124
-#: .\submodules\bihar-reports\bihar\reports\indicators\calculations.py:146
-msgid "Husband's Name"
-msgstr "पति"
-
-#: .\submodules\bihar-reports\bihar\reports\indicators\__init__.py:226
-#: .\submodules\bihar-reports\bihar\reports\indicators\calculations.py:124
-msgid "EDD"
-msgstr "प्रसव की सम्भावित तारीख"
-
 #: .\submodules\bihar-reports\bihar\reports\indicators\calculations.py:102
 msgid "Yes"
 msgstr "हां"
@@ -365,7 +343,7 @@ msgstr "नहीं"
 #: .\submodules\core-hq-src\corehq\apps\reports\templates\reports\partials\hqexport_group_table.html.py:20
 #: .\submodules\core-hq-src\corehq\apps\reports\templates\reports\partials\hqexport_group_table.html.py:21
 msgid "N/A"
-msgstr ""
+msgstr "लागु नही"
 
 #: .\submodules\bihar-reports\bihar\reports\indicators\calculations.py:114
 msgid "Visit Status"
@@ -378,6 +356,26 @@ msgstr "समाप्त"
 #: .\submodules\bihar-reports\bihar\reports\indicators\calculations.py:116
 msgid "Due"
 msgstr "बॉकी"
+
+#: .\submodules\bihar-reports\bihar\reports\indicators\calculations.py:124
+#: .\submodules\bihar-reports\bihar\reports\indicators\calculations.py:146
+#: .\submodules\core-hq-src\corehq\apps\domain\forms.py:22
+#: .\submodules\core-hq-src\corehq\apps\reports\standard\inspect.py:332
+#: .\submodules\core-hq-src\corehq\apps\reports\templates\reports\base_template.html.py:111
+#: .\submodules\core-hq-src\corehq\apps\reports\templates\reports\partials\saved_custom_exports.html.py:5
+#: .\submodules\core-hq-src\corehq\apps\reports\templates\reports\reportdata\case_export_data.html.py:55
+#: .\submodules\core-hq-src\corehq\apps\users\templates\users\web_users.html.py:81
+msgid "Name"
+msgstr "नाम"
+
+#: .\submodules\bihar-reports\bihar\reports\indicators\calculations.py:124
+#: .\submodules\bihar-reports\bihar\reports\indicators\calculations.py:146
+msgid "Husband's Name"
+msgstr "पति"
+
+#: .\submodules\bihar-reports\bihar\reports\indicators\calculations.py:124
+msgid "EDD"
+msgstr "प्रसव की सम्भावित तारीख"
 
 #: .\submodules\bihar-reports\bihar\reports\indicators\calculations.py:146
 msgid "ADD"
@@ -401,19 +399,19 @@ msgstr "संकेतक विकल्प"
 msgid "Indicator navigation"
 msgstr "संकेतक नेवीगेशन"
 
-#: .\submodules\bihar-reports\bihar\reports\indicators\reports.py:31
+#: .\submodules\bihar-reports\bihar\reports\indicators\reports.py:33
 msgid "Indicators"
 msgstr "संकेतक"
 
-#: .\submodules\bihar-reports\bihar\reports\indicators\reports.py:71
+#: .\submodules\bihar-reports\bihar\reports\indicators\reports.py:85
 msgid "Charts"
 msgstr "चार्ट/चित्र"
 
-#: .\submodules\bihar-reports\bihar\reports\indicators\reports.py:76
+#: .\submodules\bihar-reports\bihar\reports\indicators\reports.py:90
 msgid "Select Client List"
 msgstr "लाभार्थी सूचि चुनिए"
 
-#: .\submodules\bihar-reports\bihar\reports\indicators\reports.py:110
+#: .\submodules\bihar-reports\bihar\reports\indicators\reports.py:124
 msgid "Client List"
 msgstr "लाभार्थी सूचि"
 
@@ -432,21 +430,21 @@ msgstr ""
 msgid "FLW Name"
 msgstr "नाम"
 
-#: .\submodules\core-hq-src\corehq\apps\app_manager\templates\app_manager\apps_base.html.py:169
-#: .\submodules\core-hq-src\corehq\apps\hqwebapp\models.py:133
+#: .\submodules\core-hq-src\corehq\apps\app_manager\templates\app_manager\apps_base.html.py:165
+#: .\submodules\core-hq-src\corehq\apps\hqwebapp\models.py:134
 msgid "Blank Application"
 msgstr ""
 
-#: .\submodules\core-hq-src\corehq\apps\app_manager\templates\app_manager\apps_base.html.py:173
+#: .\submodules\core-hq-src\corehq\apps\app_manager\templates\app_manager\apps_base.html.py:169
 msgid "Remote App (Advanced Users Only)"
 msgstr ""
 
-#: .\submodules\core-hq-src\corehq\apps\app_manager\templates\app_manager\apps_base.html.py:176
-#: .\submodules\core-hq-src\corehq\apps\hqwebapp\models.py:137
+#: .\submodules\core-hq-src\corehq\apps\app_manager\templates\app_manager\apps_base.html.py:172
+#: .\submodules\core-hq-src\corehq\apps\hqwebapp\models.py:138
 msgid "Visit CommCare Exchange to copy existing app..."
 msgstr ""
 
-#: .\submodules\core-hq-src\corehq\apps\app_manager\templates\app_manager\apps_base.html.py:185
+#: .\submodules\core-hq-src\corehq\apps\app_manager\templates\app_manager\apps_base.html.py:181
 msgid "Go to: "
 msgstr ""
 
@@ -480,6 +478,84 @@ msgstr ""
 
 #: .\submodules\core-hq-src\corehq\apps\app_manager\templates\app_manager\emulator.html.py:72
 msgid "Behavior may differ from phone."
+msgstr ""
+
+#: .\submodules\core-hq-src\corehq\apps\app_manager\templates\app_manager\releases.html.py:115
+msgid "Make New Build"
+msgstr ""
+
+#: .\submodules\core-hq-src\corehq\apps\app_manager\templates\app_manager\releases.html.py:137
+msgid "Please wait while your CommCare Application builds"
+msgstr ""
+
+#: .\submodules\core-hq-src\corehq\apps\app_manager\templates\app_manager\releases.html.py:180
+msgid "Unsigned Jar"
+msgstr ""
+
+#: .\submodules\core-hq-src\corehq\apps\app_manager\templates\app_manager\releases.html.py:198
+#, fuzzy
+msgid "(No Comment)"
+msgstr "नाम"
+
+#: .\submodules\core-hq-src\corehq\apps\app_manager\templates\app_manager\releases.html.py:213
+msgid "Whoops, we couldn't get those builds for you. Could you try that again?"
+msgstr ""
+
+#: .\submodules\core-hq-src\corehq\apps\app_manager\templates\app_manager\releases.html.py:217
+msgid "View More"
+msgstr ""
+
+#: .\submodules\core-hq-src\corehq\apps\app_manager\templates\app_manager\releases.html.py:221
+msgid "This application currently has no builds"
+msgstr ""
+
+#: .\submodules\core-hq-src\corehq\apps\app_manager\templates\app_manager\releases.html.py:281
+msgid "Preview in Emulator"
+msgstr ""
+
+#: .\submodules\core-hq-src\corehq\apps\app_manager\templates\app_manager\releases.html.py:289
+msgid "Download to J2ME"
+msgstr ""
+
+#: .\submodules\core-hq-src\corehq\apps\app_manager\templates\app_manager\releases.html.py:301
+msgid "For help on how to install, see"
+msgstr ""
+
+#: .\submodules\core-hq-src\corehq\apps\app_manager\templates\app_manager\releases.html.py:302
+#, fuzzy
+msgid "Set Up Mobile Phone"
+msgstr "सब-सेंटर चुनिए"
+
+#: .\submodules\core-hq-src\corehq\apps\app_manager\templates\app_manager\releases.html.py:305
+msgid "If you have any issues with the installation, please refer to"
+msgstr ""
+
+#: .\submodules\core-hq-src\corehq\apps\app_manager\templates\app_manager\releases.html.py:306
+msgid "Troubleshooting Phone Problems"
+msgstr ""
+
+#: .\submodules\core-hq-src\corehq\apps\app_manager\templates\app_manager\releases.html.py:316
+msgid "Download to CommCare ODK (Android)"
+msgstr ""
+
+#: .\submodules\core-hq-src\corehq\apps\app_manager\templates\app_manager\releases.html.py:324
+msgid "Send to phone via SMS"
+msgstr ""
+
+#: .\submodules\core-hq-src\corehq\apps\app_manager\templates\app_manager\releases.html.py:334
+msgid "Send J2ME app"
+msgstr ""
+
+#: .\submodules\core-hq-src\corehq\apps\app_manager\templates\app_manager\releases.html.py:337
+msgid "Send CommCare ODK app (Android)"
+msgstr ""
+
+#: .\submodules\core-hq-src\corehq\apps\app_manager\templates\app_manager\releases.html.py:344
+msgid "Send to:"
+msgstr ""
+
+#: .\submodules\core-hq-src\corehq\apps\app_manager\templates\app_manager\releases.html.py:355
+msgid "No URL was found for this app, try rebuilding."
 msgstr ""
 
 #: .\submodules\core-hq-src\corehq\apps\appstore\views.py:308
@@ -849,7 +925,7 @@ msgid "transaction"
 msgstr ""
 
 #: .\submodules\core-hq-src\corehq\apps\data_interfaces\interfaces.py:15
-#: .\submodules\core-hq-src\corehq\apps\hqwebapp\models.py:94
+#: .\submodules\core-hq-src\corehq\apps\hqwebapp\models.py:95
 msgid "Manage Data"
 msgstr ""
 
@@ -1014,7 +1090,7 @@ msgid "This project was originally copied from "
 msgstr ""
 
 #: .\submodules\core-hq-src\corehq\apps\domain\templates\domain\admin\project_settings.html.py:82
-#: .\submodules\core-hq-src\corehq\apps\hqwebapp\models.py:104
+#: .\submodules\core-hq-src\corehq\apps\hqwebapp\models.py:105
 msgid "Applications"
 msgstr ""
 
@@ -1136,90 +1212,98 @@ msgstr ""
 msgid "Username"
 msgstr ""
 
-#: .\submodules\core-hq-src\corehq\apps\hqwebapp\models.py:74
-#: .\submodules\core-hq-src\corehq\apps\hqwebapp\models.py:210
+#: .\submodules\core-hq-src\corehq\apps\hqwebapp\models.py:75
+#: .\submodules\core-hq-src\corehq\apps\hqwebapp\models.py:216
 #: .\submodules\core-hq-src\corehq\apps\reports\templates\reports\reportdata\customize_export.html.py:84
 msgid "Reports"
 msgstr ""
 
-#: .\submodules\core-hq-src\corehq\apps\hqwebapp\models.py:84
+#: .\submodules\core-hq-src\corehq\apps\hqwebapp\models.py:85
 msgid "Project Info"
 msgstr ""
 
-#: .\submodules\core-hq-src\corehq\apps\hqwebapp\models.py:122
+#: .\submodules\core-hq-src\corehq\apps\hqwebapp\models.py:123
 msgid "My Applications"
 msgstr ""
 
-#: .\submodules\core-hq-src\corehq\apps\hqwebapp\models.py:134
+#: .\submodules\core-hq-src\corehq\apps\hqwebapp\models.py:135
 msgid "RemoteApp (Advanced Users Only)"
 msgstr ""
 
-#: .\submodules\core-hq-src\corehq\apps\hqwebapp\models.py:140
+#: .\submodules\core-hq-src\corehq\apps\hqwebapp\models.py:141
 msgid "New Application..."
 msgstr ""
 
-#: .\submodules\core-hq-src\corehq\apps\hqwebapp\models.py:161
+#: .\submodules\core-hq-src\corehq\apps\hqwebapp\models.py:162
 msgid "CloudCare"
 msgstr ""
 
-#: .\submodules\core-hq-src\corehq\apps\hqwebapp\models.py:171
+#: .\submodules\core-hq-src\corehq\apps\hqwebapp\models.py:172
 msgid "Messages"
 msgstr ""
 
-#: .\submodules\core-hq-src\corehq\apps\hqwebapp\models.py:192
+#: .\submodules\core-hq-src\corehq\apps\hqwebapp\models.py:198
 msgid "Settings"
 msgstr ""
 
-#: .\submodules\core-hq-src\corehq\apps\hqwebapp\models.py:193
+#: .\submodules\core-hq-src\corehq\apps\hqwebapp\models.py:199
 msgid "Settings & Users"
 msgstr ""
 
-#: .\submodules\core-hq-src\corehq\apps\hqwebapp\models.py:202
+#: .\submodules\core-hq-src\corehq\apps\hqwebapp\models.py:208
 msgid "Admin"
 msgstr ""
 
-#: .\submodules\core-hq-src\corehq\apps\hqwebapp\models.py:211
+#: .\submodules\core-hq-src\corehq\apps\hqwebapp\models.py:217
 msgid "Admin Reports"
 msgstr ""
 
-#: .\submodules\core-hq-src\corehq\apps\hqwebapp\models.py:212
+#: .\submodules\core-hq-src\corehq\apps\hqwebapp\models.py:218
 msgid "System Info"
 msgstr ""
 
-#: .\submodules\core-hq-src\corehq\apps\hqwebapp\models.py:213
+#: .\submodules\core-hq-src\corehq\apps\hqwebapp\models.py:219
 msgid "Management"
 msgstr ""
 
-#: .\submodules\core-hq-src\corehq\apps\hqwebapp\models.py:214
+#: .\submodules\core-hq-src\corehq\apps\hqwebapp\models.py:220
 msgid "ADM Reports & Columns"
 msgstr ""
 
-#: .\submodules\core-hq-src\corehq\apps\hqwebapp\models.py:220
+#: .\submodules\core-hq-src\corehq\apps\hqwebapp\models.py:226
 msgid "Billing"
 msgstr ""
 
-#: .\submodules\core-hq-src\corehq\apps\hqwebapp\models.py:226
+#: .\submodules\core-hq-src\corehq\apps\hqwebapp\models.py:232
 msgid "Django Admin"
 msgstr ""
 
-#: .\submodules\core-hq-src\corehq\apps\hqwebapp\models.py:236
+#: .\submodules\core-hq-src\corehq\apps\hqwebapp\models.py:242
 msgid "Exchange"
 msgstr ""
 
-#: .\submodules\core-hq-src\corehq\apps\hqwebapp\models.py:246
+#: .\submodules\core-hq-src\corehq\apps\hqwebapp\models.py:252
 msgid "CommCare Exchange"
 msgstr ""
 
-#: .\submodules\core-hq-src\corehq\apps\hqwebapp\models.py:247
+#: .\submodules\core-hq-src\corehq\apps\hqwebapp\models.py:253
 msgid "Publish this project"
 msgstr ""
 
-#: .\submodules\core-hq-src\corehq\apps\hqwebapp\models.py:257
+#: .\submodules\core-hq-src\corehq\apps\hqwebapp\models.py:263
 msgid "Manage Surveys"
 msgstr ""
 
 #: .\submodules\core-hq-src\corehq\apps\hqwebapp\templates\hqwebapp\base.html.py:126
 msgid "This is a snapshot of "
+msgstr ""
+
+#: .\submodules\core-hq-src\corehq\apps\hqwebapp\templates\hqwebapp\base_mobile.html.py:15
+msgid "CommCare HQ Mobile is Copyright"
+msgstr ""
+
+#: .\submodules\core-hq-src\corehq\apps\hqwebapp\templates\hqwebapp\base_mobile.html.py:17
+msgid "Logout"
 msgstr ""
 
 #: .\submodules\core-hq-src\corehq\apps\hqwebapp\templates\hqwebapp\dashboard.html.py:5
