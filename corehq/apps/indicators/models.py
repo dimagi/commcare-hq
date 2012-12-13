@@ -544,7 +544,7 @@ class DocumentIndicatorDefinition(IndicatorDefinition):
             return None
 
     def update_computed_namespace(self, computed, document):
-        update_computed = False
+        update_computed = True
         existing_indicator = computed.get(self.slug)
         if isinstance(existing_indicator, dict) or isinstance(existing_indicator, LazyDict):
             update_computed = existing_indicator.get('version') != self.version
