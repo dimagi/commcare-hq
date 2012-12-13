@@ -2062,12 +2062,6 @@ table th[class*="span"],
   background-repeat: repeat-x;
   filter: progid:DXImageTransform.Microsoft.gradient(startColorstr='#ff4c5b6b', endColorstr='#ff1c4068', GradientType=0);
 }
-.datatable thead th.headerSortDown [class^="icon-hq-"] {
-  background-position: -24px -48px;
-}
-.datatable thead th.headerSortUp [class^="icon-hq-"] {
-  background-position: 0 -48px;
-}
 .datatable thead th .sideways {
   transform-origin: 0 0;
   -webkit-writing-mode: vertical-rl;
@@ -2284,6 +2278,12 @@ table th[class*="span"],
   -moz-border-radius: 2px;
   border-radius: 2px;
 }
+.icon-hq,
+.icon-hq-white {
+  display: inline-block;
+  width: 17px;
+  height: 14px;
+}
 .icon-hq {
   background-image: url('../../img/commcare-glyphs.png');
 }
@@ -2299,11 +2299,20 @@ table th[class*="span"],
 .icon-hq-doublechevron {
   background-position: 0 -24px;
 }
+.headerSortUp .icon-hq-doublechevron {
+  background-position: 0 -46px;
+}
+.headerSortDown .icon-hq-doublechevron {
+  background-position: -24px -46px;
+}
+th.header > div {
+  cursor: pointer;
+}
 .icon-hq-triangle-up {
-  background-position: 0 -48px;
+  background-position: 0 -46px;
 }
 .icon-hq-triangle-down {
-  background-position: -24px -48px;
+  background-position: -24px -46px;
 }
 .hq-help {
   position: relative;
