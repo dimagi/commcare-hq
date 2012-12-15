@@ -1,5 +1,6 @@
 from django.http import Http404
 from django.template.context import RequestContext
+import simplejson
 from corehq.apps.api.es import XFormES
 from corehq.apps.reports.datatables import DataTablesColumn, DataTablesHeader
 from corehq.apps.reports.generic import GenericTabularReport
@@ -8,11 +9,11 @@ from dimagi.utils.decorators import inline
 from dimagi.utils.decorators.memoized import memoized
 from pact.forms.weekly_schedule_form import ScheduleForm
 from pact.models import  PactPatientCase
-from pact.reports import  PactDrilldownReportMixin
+from pact.reports import  PactDrilldownReportMixin, ESSortableMixin
 from pact.utils import pact_script_fields
 
 
-class PactPatientInfoReport(PactDrilldownReportMixin, GenericTabularReport, CustomProjectReport):
+class PactPatientInfoReport(PactDrilldownReportMixin,ESSortableMixin, GenericTabularReport, CustomProjectReport):
     slug = "patient"
     description = "some patient"
 
@@ -20,6 +21,10 @@ class PactPatientInfoReport(PactDrilldownReportMixin, GenericTabularReport, Cust
     filters = []
     ajax_pagination = True
     xform_es = XFormES()
+
+    default_sort = {
+        "received_on": "desc"
+    }
 
     @memoized
     def get_case(self):
@@ -89,8 +94,10 @@ class PactPatientInfoReport(PactDrilldownReportMixin, GenericTabularReport, Cust
             self.report_template_path = "pact/patient/pactpatient_submissions.html"
             return tabular_context
         elif view_mode == 'schedule':
-            ret.update(patient_doc.schedules)
-            ret['schedule_form'] = ScheduleForm()
+#            ret.update(patient_doc.schedules)
+            the_form = ScheduleForm()
+            ret['schedule_form'] = the_form
+            ret['schedule_fields'] = simplejson.dumps(the_form.fields.keys())
             print ret
             self.report_template_path = "pact/patient/pactpatient_schedule.html"
         else:
@@ -169,8 +176,8 @@ class PactPatientInfoReport(PactDrilldownReportMixin, GenericTabularReport, Cust
             def _format_row(row_field_dict):
                 yield row_field_dict["form.#type"].replace('_', ' ').title()
                 yield row_field_dict.get("form.meta.username", "")
-                yield row_field_dict.get("form.meta.timeStart", "")
-                yield row_field_dict["received_on"]
+                yield self.format_date(row_field_dict.get("form.meta.timeStart", ""))
+                yield self.format_date(row_field_dict["received_on"])
                 if row_field_dict["script_encounter_date"] != None:
                     yield row_field_dict["script_encounter_date"]
                 else:
@@ -183,30 +190,5 @@ class PactPatientInfoReport(PactDrilldownReportMixin, GenericTabularReport, Cust
                 for result in res['hits']['hits']:
                     yield list(_format_row(result['fields']))
 
-
-    @property
-    def total_records(self):
-        """
-            Override for pagination.
-            Returns an integer.
-        """
-        res = self.es_results
-        if res is not None:
-            return res['hits'].get('total', 0)
-        else:
-            return 0
-
-    @property
-    def shared_pagination_GET_params(self):
-        """
-            Override.
-            Should return a list of dicts with the name and value of the GET parameters
-            that you'd like to pass to the server-side pagination.
-            ex: [dict(name='group', value=self.group_name)]
-        """
-        ret = []
-        for k, v in self.request.GET.items():
-            ret.append(dict(name=k, value=v))
-        return ret
 
 

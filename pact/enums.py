@@ -58,7 +58,7 @@ DAY_SLOTS_BY_IDX = {
     }
 
 PACT_HP_CHOICES = (
-    ('HP', 'HP - Health Promoter (old)'),
+#    ('HP', 'HP - Health Promoter (old)'),
     ('HP1', 'Health Promoter 1 (HP-1)'),
     ('HP2', 'Health Promoter 2 (HP-2)'),
     ('HP3', 'Health Promoter 3 (HP-3)'),
@@ -67,7 +67,7 @@ PACT_HP_CHOICES = (
 PACT_HP_CHOICES_DICT = dict(x for x in PACT_HP_CHOICES)
 
 PACT_DOT_CHOICES = (
-    ('DOT', 'DOT - Directly Observed Therapy (old)'),
+#    ('DOT', 'DOT - Directly Observed Therapy (old)'),
     ('DOT7', 'Directly Observed Therapy 7 (DOT-7)'),
     ('DOT5', 'Directly Observed Therapy 5 (DOT-5)'),
     ('DOT3', 'Directly Observed Therapy 3 (DOT-3)'),

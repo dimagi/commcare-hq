@@ -21,7 +21,7 @@ class PactCHWDashboard(GenericTabularReport, ProjectReportParametersMixin, Custo
             DataTablesColumn("Username"),
             DataTablesColumn("Last Submit"),
             DataTablesColumn("Total Submits"),
-            DataTablesColumn("Actions"),
+            DataTablesColumn("", sortable=False),
         )
         return headers
 

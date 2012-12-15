@@ -16,7 +16,7 @@ def make_uuid():
     return uuid.uuid4().hex
 
 #placeholder for management of pact case models
-from datetime import datetime
+from datetime import datetime, timedelta
 from couchdbkit.ext.django.schema import StringProperty, DateTimeProperty, BooleanProperty, Document, DateProperty, SchemaListProperty, IntegerProperty
 
 
@@ -88,28 +88,51 @@ class PactPatientCase(CommCareCase):
         computed = obj['computed_']
         if computed.has_key(PACT_SCHEDULES_NAMESPACE):
             ret = [x for x in computed[PACT_SCHEDULES_NAMESPACE]]
+            if not raw_json:
+                ret = [CDotWeeklySchedule.wrap(x) for x in ret]
             if reversed:
                 ret.reverse()
             return ret
+    def rm_schedule(self):
+        """
+        Remove the tail from the schedule
+        """
+        schedules= self.get_schedules()[:-1]
+        self['computed_'][PACT_SCHEDULES_NAMESPACE] = [x.to_json() for x in schedules]
+        self.save()
 
     def set_schedule(self, new_schedule):
         """set the schedule as head of the schedule by accepting a cdotweeklychedule"""
         #first, set all the others to inactive
-
         schedules = self.get_schedules()
         new_schedule.deprecated=False
         if new_schedule.started == None or new_schedule.started <= datetime.utcnow():
             new_schedule.started=datetime.utcnow()
-            for sched in schedules:
-                if not sched.deprecated:
-                    #sched.deprecated=True
-                    sched.ended=datetime.utcnow()
-#                    sched.save()
-        elif new_schedule.started > datetime.utcnow():
-            #if it's in the future, then don't deprecate the future schedule, just procede along and let the system set the dates correctly
-            pass
-#        self.weekly_schedule.append(new_schedule)
-#        self.save()
+        #recompute and make sure all schedules are closed time intervals
+        for ix, curr_sched in enumerate(schedules):
+            #ensure that current ended is <= next ended
+            next_sched = None
+            if ix < len(schedules) - 1:
+                next_sched = schedules[ix+1]
+
+            if next_sched is not None:
+                if curr_sched.ended is None:
+                    #not good, there's a next
+                    curr_sched.ended = next_sched.started - timedelta(seconds=1)
+                if curr_sched.ended <= next_sched.started:
+                    #ok, good
+                    pass
+            else:
+                #we're at the end
+                #do nothing, assume it was created OK
+                #curr_sched.deprecated=False
+                pass
+
+        schedules.append(new_schedule)
+        self['computed_'][PACT_SCHEDULES_NAMESPACE] = [x.to_json() for x in schedules]
+        self.save()
+#        print schedules
+
 
 
     @property
@@ -119,11 +142,11 @@ class PactPatientCase(CommCareCase):
         ret = {}
 
         def get_current(x):
-            if x.deprecated:
-                return False
-            if x.ended is None and x.started < datetime.utcnow():
+            if x.ended is None and x.started <= datetime.utcnow():
                 return True
-            if x.ended < datetime.utcnow():
+            if x.ended is not None and x.ended <= datetime.utcnow():
+                return False
+            if x.started > datetime.utcnow():
                 return False
 
             print "made it to the end somehow..."
@@ -131,7 +154,7 @@ class PactPatientCase(CommCareCase):
             return False
 
         if computed.has_key(PACT_SCHEDULES_NAMESPACE):
-            schedule_arr = [CDotWeeklySchedule.wrap(x) for x in self.get_schedules()]
+            schedule_arr = self.get_schedules()
 
             past = filter(lambda x: x.ended is not None and x.ended < datetime.utcnow(), schedule_arr)
             current = filter(get_current, schedule_arr)

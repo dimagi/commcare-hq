@@ -18,6 +18,7 @@ from pact.reports.dot_calendar import DOTCalendarReporter
 class PactDOTPatientField(ReportSelectField):
     slug = "dot_patient"
     name = "DOT Patient"
+    default_option = "Select DOT Patient"
 #    cssId = "case_type_select"
 
     def update_params(self):
@@ -40,6 +41,7 @@ class PactDOTPatientField(ReportSelectField):
         query['fields'] = ['_id', 'name', 'pactid']
         results = case_es.run_query(query)
         for res in results['hits']['hits']:
+            print res
             yield res['fields']
 
 class PactDOTReport(GenericTabularReport, CustomProjectReport, ProjectReportParametersMixin, DatespanMixin):
@@ -55,8 +57,8 @@ class PactDOTReport(GenericTabularReport, CustomProjectReport, ProjectReportPara
     @property
     def report_context(self):
         ret = {}
-        if not self.request.GET.has_key('dot_patient'):
-            report_template_path = "pact/dots/dots_report_nopatient.html"
+        if not self.request.GET.has_key('dot_patient') or self.request.GET.get('dot_patient') == "":
+            self.report_template_path = "pact/dots/dots_report_nopatient.html"
             return ret
         ret['dot_case_id'] = self.request.GET['dot_patient']
         casedoc = CommCareCase.get(ret['dot_case_id'])
@@ -100,7 +102,6 @@ class PactDOTReport(GenericTabularReport, CustomProjectReport, ProjectReportPara
         res = xform_es.run_query(q)
 
         ret['sorted_visits'] = [XFormInstance.wrap(x['_source']) for x in res['hits']['hits']]
-        print "finished fucking wrapping"
         return ret
 
 

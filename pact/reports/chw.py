@@ -7,7 +7,7 @@ from corehq.apps.reports.standard import CustomProjectReport
 from corehq.apps.users.models import CommCareUser
 from dimagi.utils.decorators import inline
 from dimagi.utils.decorators.memoized import memoized
-from pact.reports import  PactDrilldownReportMixin, chw_schedule
+from pact.reports import  PactDrilldownReportMixin, chw_schedule, ESSortableMixin
 from pact.utils import pact_script_fields, case_script_field
 
 
@@ -37,12 +37,13 @@ class XFormDisplay(object):
         pass
 
 
-class PactCHWProfileReport(PactDrilldownReportMixin, GenericTabularReport, CustomProjectReport):
+class PactCHWProfileReport(PactDrilldownReportMixin, ESSortableMixin,GenericTabularReport, CustomProjectReport):
     slug = "chw_profile"
     description = "CHW Profile"
     view_mode = 'info'
     ajax_pagination = True
     xform_es = XFormES()
+    default_sort = {"received_on": "desc"}
 
     hide_filters = True
     filters = []
@@ -57,6 +58,7 @@ class PactCHWProfileReport(PactDrilldownReportMixin, GenericTabularReport, Custo
 
     @memoized
     def get_user(self):
+        print self.request.GET.keys()
         if hasattr(self, 'request') and self.request.GET.has_key('chw_id'):
             self._user_doc = CommCareUser.get(self.request.GET['chw_id'])
             return self._user_doc
@@ -109,10 +111,7 @@ class PactCHWProfileReport(PactDrilldownReportMixin, GenericTabularReport, Custo
         )
 
     @property
-#    @memoized
     def es_results(self):
-
-
         user = self.get_user()
         query = self.xform_es.base_query(self.request.domain, start=self.pagination.start,
                                          size=self.pagination.count)
@@ -145,8 +144,6 @@ class PactCHWProfileReport(PactDrilldownReportMixin, GenericTabularReport, Custo
             [['row1'],[row2']]
         """
         if self.get_user() is not None:
-            rows = []
-
             def _format_row(row_field_dict):
                 yield row_field_dict['script_pact_id']
                 yield row_field_dict['script_encounter_date']
@@ -154,73 +151,13 @@ class PactCHWProfileReport(PactDrilldownReportMixin, GenericTabularReport, Custo
                 yield row_field_dict["received_on"].replace('_', ' ').title()
 
             res = self.es_results
-            print simplejson.dumps(res.keys(), indent=4)
             if res.has_key('error'):
                 pass
             else:
                 for result in res['hits']['hits']:
                     yield list(_format_row(result['fields']))
 
-    @property
-    def total_records(self):
-        """
-            Override for pagination.
-            Returns an integer.
-        """
-        res = self.es_results
-        return res['hits'].get('total', 0)
 
-    @property
-    def total_filtered_records(self):
-        """
-            Override for pagination.
-            Returns an integer.
-            return -1 if you want total_filtered_records to equal whatever the value of total_records is.
-        """
-        return -1
-
-    @property
-    def shared_pagination_GET_params(self):
-        """
-            Override.
-            Should return a list of dicts with the name and value of the GET parameters
-            that you'd like to pass to the server-side pagination.
-            ex: [dict(name='group', value=self.group_name)]
-        """
-        ret = []
-        for k, v in self.request.GET.items():
-            ret.append(dict(name=k, value=v))
-        return ret
-
-    def per_case_submissions_facet(self):
-        user = self.get_user()
-        query = {
-            "facets": {
-                "case_submissions": {
-                    "terms": {
-                        "field": "form.case.case_id"
-                    },
-                    "facet_filter": {
-                        "and": [
-                            {
-                                "term": {
-                                    "domain.exact": "pact"
-                                }
-                            },
-                            {
-                                "term": {
-                                    "form.meta.username": user.raw_username
-                                }
-                            }
-                        ]
-                    }
-                }
-            },
-            #            "sort": {
-            #                "received_on": "desc"
-            #            },
-            "size": 0
-        }
 
     def my_submissions(self):
         #todo: delete, unused
