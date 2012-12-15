@@ -1,6 +1,4 @@
 import os
-import sys
-
 ####### Database config. This assumes Postgres ####### 
 
 DATABASES = {
@@ -21,9 +19,9 @@ COUCH_DATABASE_NAME = 'commcarehq'
 ####### # Email setup ########
 # email settings: these ones are the custom hq ones
 EMAIL_LOGIN = "notifications@dimagi.com"
-EMAIL_PASSWORD="******"
-EMAIL_SMTP_HOST="smtp.gmail.com"
-EMAIL_SMTP_PORT=587
+EMAIL_PASSWORD = "******"
+EMAIL_SMTP_HOST = "smtp.gmail.com"
+EMAIL_SMTP_PORT = 587
 
 ADMINS = (('HQ Dev Team', 'commcarehq-dev+www-notifications@dimagi.com'),)
 BUG_REPORT_RECIPIENTS = ['commcarehq-support@dimagi.com']
@@ -34,24 +32,18 @@ NEW_DOMAIN_RECIPIENTS = ['commcarehq-dev+newdomain@dimagi.com']
 DEBUG = False
 TEMPLATE_DEBUG = DEBUG
 
-# The django logs will end up here
-DJANGO_LOG_FILE = os.path.join('/opt/www.commcarehq.org_project/log',"www.commcarehq.org.django.log")
+# log directories must exist and be writeable!
+DJANGO_LOG_FILE = "/var/log/commcare-hq/commcare-hq.django.log"
+LOG_FILE = "/var/log/commcare-hq/commcare-hq.log"
 
 SEND_BROKEN_LINK_EMAILS = True
 CELERY_SEND_TASK_ERROR_EMAILS = True
-
-####### Static files ########
-
-FILEPATH = os.path.abspath(os.path.dirname(__file__))
-# media for user uploaded media.  in general this won't be used at all.
-MEDIA_ROOT = os.path.join(FILEPATH,'mediafiles')
-STATIC_ROOT = os.path.join(FILEPATH,'staticfiles')
-
 
 ####### Bitly ########
 
 BITLY_LOGIN = 'dimagi'
 BITLY_APIKEY = '*******'
+
 
 ####### Jar signing config ########
 
@@ -102,12 +94,50 @@ DOMAIN_SYNCS = {
 }
 DOMAIN_SYNC_APP_NAME_MAP = { "app_name": "new_app_name" }
 
-####### Touchforms config #######
+####### Touchforms config - for CloudCare #######
 
 XFORMS_PLAYER_URL = 'http://127.0.0.1:4444'
 
 TOUCHFORMS_API_USER = 'admin@example.com'
 TOUCHFORMS_API_PASSWORD = 'password'
+
+
+####### Misc / HQ-specific Config ########
+
+DEFAULT_PROTOCOL = "https" # or http
+OVERRIDE_LOCATION="https://www.commcarehq.org"
+
+
+GOOGLE_ANALYTICS_ID = '*******'
+
+AXES_LOCK_OUT_AT_FAILURE = False
+LUCENE_ENABLED = True
+
+INSECURE_URL_BASE = "http://submit.commcarehq.org"
+
+PREVIEWER_RE = r'^.*@dimagi\.com$'
+GMAPS_API_KEY = '******'
+FORMTRANSLATE_TIMEOUT = 5
+#LOCAL_APPS = ('django_cpserver','dimagi.utils')
+
+# list of domains to enable ADM reporting on
+ADM_ENABLED_PROJECTS = []
+
+# prod settings
+SOIL_DEFAULT_CACHE = "redis"
+SOIL_BACKEND = "soil.CachedDownload"
+
+ELASTICSEARCH_HOST = 'localhost' #on both a local and a distributed environment this should be
+# localhost
+ELASTICSEARCH_PORT = 9200
+
+# our production logstash aggregation
+LOGSTASH_DEVICELOG_PORT = 10777
+LOGSTASH_COUCHLOG_PORT = 10888
+LOGSTASH_AUDITCARE_PORT = 10999
+LOGSTASH_HOST = 'localhost'
+
+LOCAL_PILLOWTOPS = []
 
 ####### Selenium tests config ########
 
@@ -158,42 +188,3 @@ SELENIUM_APP_SETTINGS = {
         'MAX_LOAD_TIME': 30,
     },
 }
-
-####### Misc / HQ-specific Config ########
-
-DEFAULT_PROTOCOL = "https" # or http
-OVERRIDE_LOCATION="https://www.commcarehq.org"
-
-
-GOOGLE_ANALYTICS_ID = '*******'
-
-AXES_LOCK_OUT_AT_FAILURE = False
-LUCENE_ENABLED = True
-
-INSECURE_URL_BASE = "http://submit.commcarehq.org"
-
-PREVIEWER_RE = r'^.*@dimagi\.com$'
-GMAPS_API_KEY = '******'
-FORMTRANSLATE_TIMEOUT = 5
-#LOCAL_APPS = ('django_cpserver','dimagi.utils')
-
-# list of domains to enable ADM reporting on
-ADM_ENABLED_PROJECTS = []
-
-# prod settings
-SOIL_DEFAULT_CACHE = "redis"
-SOIL_BACKEND = "soil.CachedDownload"
-
-ELASTICSEARCH_HOST = 'localhost' #on both a local and a distributed environment this should be
-# localhost
-ELASTICSEARCH_PORT = 9200
-
-# our production logstash aggregation
-LOGSTASH_DEVICELOG_PORT = 10777
-LOGSTASH_COUCHLOG_PORT = 10888
-LOGSTASH_AUDITCARE_PORT = 10999
-LOGSTASH_HOST = 'localhost'
-
-LOCAL_PILLOWTOPS = []
-
-
