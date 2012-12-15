@@ -1,10 +1,9 @@
-from datetime import datetime
+from datetime import datetime, time
 import tempfile
 from django.utils.decorators import method_decorator
 from django.views.decorators.csrf import csrf_protect
 from django_digest.decorators import httpdigest
 import simplejson
-import time
 from corehq.apps.api.domainapi import DomainAPI
 from corehq.apps.domain.decorators import login_and_domain_required
 from couchforms.models import XFormInstance
@@ -159,6 +158,7 @@ class PactAPI(DomainAPI):
         return "pactdata"
 
     http_method_names = ['get', 'post', 'head', ]
+
     def get(self, *args, **kwargs):
         print "\tget"
         if self.request.GET.get('case_id', None) is None:
@@ -168,7 +168,9 @@ class PactAPI(DomainAPI):
         if self.method is None:
             return HttpResponse("API Method unknown: no method", status=400)
         elif self.method == "schedule":
-            payload = simplejson.dumps(case.get_schedules(raw_json=True))
+            scheds = case.get_schedules(raw_json=True)
+
+            payload = simplejson.dumps(scheds)
             response = HttpResponse(payload, content_type="application/json")
             return response
         else:
@@ -176,13 +178,22 @@ class PactAPI(DomainAPI):
 
     def post(self,  *args, **kwargs):
         pdoc = PactPatientCase.get(self.request.GET['case_id'])
+        resp = HttpResponse()
         if self.method is not None:
+            print self.request.POST
+            if self.request.POST.has_key('rm_schedule'):
+                pdoc.rm_schedule()
+                resp.status_code = 204
+                return resp
+
+
             form = ScheduleForm(data=self.request.POST)
+
             if form.is_valid():
                 sched = CDotWeeklySchedule()
                 for day in DAYS_OF_WEEK:
-                    if form.cleaned_data[day] != None:
-                        setattr(sched, day, form.cleaned_data[day].username)
+                    if form.cleaned_data[day] != 'None':
+                        setattr(sched, day, form.cleaned_data[day])
                 if form.cleaned_data['active_date'] == None:
                     sched.started = datetime.utcnow()
                 else:
@@ -191,11 +202,14 @@ class PactAPI(DomainAPI):
                 sched.created_by = self.request.user.username
                 sched.deprecated = False
                 pdoc.set_schedule(sched)
-                caseapi.compute_schedule_block(pdoc)
                 resp.status_code = 204
                 return resp
+            else:
+                print form.errors
+                resp.write(str(form.errors))
+                resp.status_code = 406
+                return resp
 
-        raise NotImplementedError("Not implemented")
     def head(self, *args, **kwargs):
         raise NotImplementedError("Not implemented")
 

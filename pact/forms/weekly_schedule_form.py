@@ -28,7 +28,9 @@ class ScheduleForm(forms.Form):
     saturday = forms.ChoiceField(choices=[], required=False)
 
     comment = forms.CharField(required=False)
-    active_date = forms.DateField(help_text="Date this schedule should be made active.  Note active time is 12:01am the day you choose.", required=True, widget=widgets.TextInput(attrs={'class':'date-picker'}))
+    active_date = forms.DateField(help_text="Date this schedule should be made active.  Note active time is 12:01am the day you choose.",
+                                  required=True, widget=widgets.TextInput(), initial= datetime.utcnow().strftime("%m/%d/%Y"))#attrs={"value": datetime.utcnow().strftime("%m-%d-%Y")}))
+
     schedule_id = forms.CharField(widget=widgets.HiddenInput(), initial=make_uuid)
 
     @memoized
@@ -48,8 +50,8 @@ class ScheduleForm(forms.Form):
             self.fields[day].choices = user_choices
 
         #http://stackoverflow.com/questions/10403094/using-knockout-js-with-django-forms
-        for name, field in self.fields.items():
+#        for name, field in self.fields.items():
 #            field.widget.attrs['class'] = 'schedule_form_field'
             # this could be used in your case if the Django field name is the
             # same as the KO.js field name
-            field.widget.attrs['data-bind'] = 'value: %s' % name
+#            field.widget.attrs['data-bind'] = 'value: new_%s' % name

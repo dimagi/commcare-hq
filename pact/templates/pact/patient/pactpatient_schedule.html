@@ -15,7 +15,7 @@
                 <th>Thu</th>
                 <th>Fri</th>
                 <th>Sat</th>
-                <th class="span3">Status</th>
+                <th class="span2">Status</th>
                 <th class="span4">&nbsp</th>
             </tr>
             </thead>
@@ -31,18 +31,18 @@
                 <td>
                     <span data-bind="text: display_started"></span> - <span data-bind="text: display_ended"></span>
                 </td>
-                <td>
-                </td>
+                <td data-bind="text:comment"></td>
             </tr>
             </tbody>
         </table>
+        <button data-bind="click:removeLast">Remove Last</button>
         <hr>
-        <form action="{% url pactdata_1 domain=domain %}?case_id={{ patient_doc.get_id }}&method=schedule" method="POST">
-            {% csrf_token %}
-            {{ csrf_token }}
-            <table>
-            {{ schedule_form.as_table }}
-            </table>
+        <form id="new_schedule_form">
+{#            action="{% url pactdata_1 domain=domain %}?case_id={{ patient_doc.get_id }}&method=schedule" method="POST">#}
+{#        <form data-bind="submit:addSchedule">#}
+{#            {% csrf_token %}#}
+{#            {{ csrf_token }}#}
+            {{ schedule_form.as_p }}
             <button type="submit">Save</button>
         </form>
     </div>
@@ -76,7 +76,10 @@
         }
 
         function format_user(username) {
-            if (username == "" || username == null || username === undefined) {
+            if (username === undefined) {
+                return "---"
+            }
+            if (username == "" || username == null ) {
                 return "---"
             }
             else {
@@ -106,11 +109,10 @@
 
             this.deprecated = ko.observable(data.deprecated);
         }
+        var api_url = "{% url pactdata_1 domain=domain %}?case_id={{ patient_doc.get_id }}&method=schedule";
         function ScheduleListViewModel() {
             // Data
             var self = this;
-            var api_url = "{% url pactdata_1 domain=domain %}?case_id={{ patient_doc.get_id }}&method=schedule";
-
             self.getSchedules = function () {
                 $.getJSON(api_url, function (allData) {
                             var mappedSchedules = $.map(allData, function (item) {
@@ -121,12 +123,49 @@
                 );
             };
             self.schedules = ko.observableArray(self.getSchedules());
+
+            self.refresh = function () {
+                self.getSchedules();
+            };
+            self.removeLast = function() {
+                var json_schedules= ko.toJSON(self.schedules);
+                var send_xhr = $.ajax({
+                    "type": "POST",
+                    "url":  api_url,
+                    "data": {"rm_schedule":""},
+                    "success": function(data) {
+                        alert("Removed, I hope you know what you're doing");
+                        scheduleView.refresh();
+                    }, //end success
+                    "error": function(data) {
+                        alert ("Error trying to save form, please try again.");
+                    }
+                });
+            }
+
         }
 
         var scheduleView = new ScheduleListViewModel();
         $(function () {
             ko.applyBindings(scheduleView, $("#scheduleblock")[0]);
+            $( "#id_active_date" ).datepicker({ minDate: 0, maxDate: "+14D" });
+            $('#new_schedule_form').ajaxForm(function() {
+                var send_xhr = $.ajax({
+                    "type": "POST",
+                    "url":  api_url,
+                    "data": $("#new_schedule_form").serialize(),
+                    "success": function(data) {
+                        console.log(data);
+                        scheduleView.refresh();
+                    }, //end success
+                    "error": function(data) {
+                        console.log(data);
+                        alert ("Error trying to save form, please try again.");
+                    }
+                });
+            });
         });
+
     </script>
 
 {% endblock %}
