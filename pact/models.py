@@ -251,6 +251,8 @@ class CObservation(Document):
     dose_number=IntegerProperty()
     total_doses = IntegerProperty()
     adherence=StringProperty()
+
+    # DOT_OBSERVATION_ types
     method=StringProperty()
 
     is_reconciliation = BooleanProperty(default=False)

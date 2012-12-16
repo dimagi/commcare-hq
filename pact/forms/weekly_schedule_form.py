@@ -39,7 +39,7 @@ class ScheduleForm(forms.Form):
 #        return [(x._id, x.raw_username) for x in users]
         yield (None, "-- unassigned --")
         for x in users:
-            yield (x._id, x.raw_username)
+            yield (x.raw_username, x.raw_username)
 
 
     def __init__(self, *args, **kwargs):
