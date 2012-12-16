@@ -7,7 +7,7 @@ from django import forms
 from django.forms.forms import Form
 from dimagi.utils import make_time
 from dimagi.utils.decorators.memoized import memoized
-from pact.enums import DAY_SLOTS_BY_IDX
+from pact.enums import DAY_SLOTS_BY_IDX, DOT_ADHERENCE_EMPTY, DOT_ADHERENCE_PARTIAL, DOT_ADHERENCE_FULL, DOT_OBSERVATION_DIRECT, DOT_OBSERVATION_PILLBOX, DOT_OBSERVATION_SELF, DOT_ADHERENCE_UNCHECKED, DOT_ART, DOT_NONART
 from pact.models import CObservation
 import settings
 
@@ -20,29 +20,27 @@ def obs_for_day(this_date, observations):
     return ret
 
 
-def merge_dot_day(day_observations):
+def cmp_observation(x, y):
     """
-    Receive an array of CObservations and try to priority sort them and make a json-able array of ART and NON ART submissions
-    for DOT calendar display AND ota restore.
+    for a given COBservation, do the following.
+    1: If it's an addendum/reconciliation trumps all
+    2: If it's direct, and other is not direct, the direct wins
+    3: If both direct, do by earliest date
+    4: If neither direct, do by earliest encounter_date regardless of method.
+
+    < -1
+    = 0
+    > 1
+
+    Assumes that x and y have the same observation date (cell in the DOT json array)
+    Encounter date is the date in which the date cell is observed.
     """
-    day_dict = {'ART': {'total_doses':0, 'dose_dict': {} }, 'NONART': {'total_doses': 0, 'dose_dict': {}}}
 
-    def cmp_observation(x, y):
-        """
-        for a given COBservation, do the following.
-        1: If it's an addendump trumps all
-        2: If it's direct, and other is not direct, direct wins
-        3: If both direct, do by earliest date
-        4: If neither direct, do by earliest date.
-
-        < -1
-        = 0
-        > 1
-        """
-        #Reconcilation handling
-        if (hasattr(x, 'is_reconciliation') and getattr(x, 'is_reconciliation')) and (hasattr(y, 'is_reconciliation') and getattr(y, 'is_reconciliation')):
-            #sort by earlier date, so flip x,y
-            return cmp(y.submitted_date, x.submitted_date)
+    assert x.observed_date.date() == y.observed_date.date()
+    #Reconcilation handling
+    if (hasattr(x, 'is_reconciliation') and getattr(x, 'is_reconciliation')) and (hasattr(y, 'is_reconciliation') and getattr(y, 'is_reconciliation')):
+        #sort by earlier date, so flip x,y
+        return cmp(y.submitted_date, x.submitted_date)
 #            if x.submitted_date > y.submitted_date:
 #                # result: x < y
 #                return -1
@@ -51,33 +49,45 @@ def merge_dot_day(day_observations):
 #                return 1
 #            elif x.submitted_date == y.submitted_date:
 #                return 0
-        elif (hasattr(x, 'is_reconciliation') and getattr(x, 'is_reconciliation')) and (not hasattr(y,'is_reconciliation') or not getattr(y, 'is_reconciliation')):
-            # result: x > y
-            return 1
-        elif (not hasattr(x, 'is_reconciliation') or not getattr(x, 'is_reconciliation')) and (hasattr(y, 'is_reconciliation') and getattr(y, 'is_reconciliation')):
-            # result: x < y
-            return -1
+    elif (hasattr(x, 'is_reconciliation') and getattr(x, 'is_reconciliation')) and (not hasattr(y,'is_reconciliation') or not getattr(y, 'is_reconciliation')):
+        # result: x > y
+        return 1
+    elif (not hasattr(x, 'is_reconciliation') or not getattr(x, 'is_reconciliation')) and (hasattr(y, 'is_reconciliation') and getattr(y, 'is_reconciliation')):
+        # result: x < y
+        return -1
 
-        if x.method == 'direct' and y.method == 'direct':
-            #sort by earlier date, so flip x,y
-            return cmp(y.encounter_date, x.encounter_date)
-        elif x.method == 'direct' and y.method != 'direct':
-            #result: x > y
-            return 1
-        elif x.method != 'direct' and y.method == 'direct':
-            #result: x < y
-            return -1
-        else:
-            #sort by earlier date, so flip x,y
-            return cmp(y.encounter_date, x.encounter_date)
+    if x.method == DOT_OBSERVATION_DIRECT and y.method == DOT_OBSERVATION_DIRECT:
+        #sort by earlier date, so flip x,y
+        return cmp(y.encounter_date, x.encounter_date)
+    elif x.method == DOT_OBSERVATION_DIRECT and y.method != DOT_OBSERVATION_DIRECT:
+        #result: x > y
+        return 1
+    elif x.method != DOT_OBSERVATION_DIRECT and y.method == DOT_OBSERVATION_DIRECT:
+        #result: x < y
+        return -1
+    else:
+        #sort by earlier date, so flip x,y
+        return cmp(y.encounter_date, x.encounter_date)
 
+def sort_observations(observations):
+    """
+    Method to sort observations to make sure that the "winner" is at index 0
+    """
+    return sorted(observations, cmp=cmp_observation, reverse=True) #key=lambda x: x.created_date, reverse=True)
+
+def merge_dot_day(day_observations):
+    """
+    Receive an array of CObservations and try to priority sort them and make a json-able array of ART and NON ART submissions
+    for DOT calendar display AND ota restore.
+    """
+    day_dict = {DOT_ART: {'total_doses':0, 'dose_dict': {} }, DOT_NONART: {'total_doses': 0, 'dose_dict': {}}}
 
 
     for obs in day_observations:
         if obs.is_art:
-            dict_to_use = day_dict['ART']
+            dict_to_use = day_dict[DOT_ART]
         else:
-            dict_to_use = day_dict['NONART']
+            dict_to_use = day_dict[DOT_NONART]
 
 
         if dict_to_use['total_doses'] < obs.total_doses:
@@ -92,7 +102,7 @@ def merge_dot_day(day_observations):
         for dose_num in dose_dict.keys():
             observations = dose_dict[dose_num]
             #reverse here because our cmp assigns increasing weight by comparison
-            observations = sorted(observations, cmp=cmp_observation, reverse=True) #key=lambda x: x.created_date, reverse=True)
+            observations = sort_observations(observations)
             dose_dict[dose_num]=observations
     return day_dict
 
@@ -253,26 +263,26 @@ class DOTCalendar(HTMLCalendar):
                                 body.append('<div class="time-label">Dose %d</div>' % (int(dose_num) + 1))
                             body.append('<div class="time-cell">')
                             body.append('<div class="observation">')
-                            if obs.adherence =='unchecked':
+                            if obs.adherence == DOT_ADHERENCE_UNCHECKED:
                                 body.append('<span style="font-size:85%;color:#888;font-style:italic;">unchecked</span>')
                             else:
-                                if obs.adherence == 'empty':
+                                if obs.adherence == DOT_ADHERENCE_EMPTY:
 #                                    body.append('<span class="label label-success">Empty</span>')
                                     body.append('<img src="%spact/icons/check.jpg">' % settings.STATIC_URL)
-                                elif obs.adherence == 'partial':
+                                elif obs.adherence == DOT_ADHERENCE_PARTIAL:
 #                                    body.append('<span class="label label-warning">Partial</span>')
                                     body.append('<img src="%spact/icons/exclamation-point.jpg">' % settings.STATIC_URL)
-                                elif obs.adherence == 'full':
+                                elif obs.adherence == DOT_ADHERENCE_FULL:
 #                                    body.append('<span class="label label-important">Full</span>')
                                     body.append('<img src="%spact/icons/x-mark.png">' % settings.STATIC_URL)
 
-                                if obs.method == 'direct':
+                                if obs.method == DOT_OBSERVATION_DIRECT:
 #                                    body.append('<span class="label label-info">Direct</span>')
                                     body.append('<img src="%spact/icons/plus.png">' % settings.STATIC_URL)
-                                elif obs.method == 'pillbox':
+                                elif obs.method == DOT_OBSERVATION_PILLBOX:
 #                                    body.append('<span class="label label-inverse">Pillbox</span>')
                                     body.append('<img src="%spact/icons/bucket.png">' % settings.STATIC_URL)
-                                elif obs.method == 'self':
+                                elif obs.method == DOT_OBSERVATION_SELF:
 #                                    body.append('<span class="label">Self</span>')
                                     body.append('<img src="%spact/icons/minus.png">' % settings.STATIC_URL)
                             body.append('&nbsp;</div>') #close time-cell

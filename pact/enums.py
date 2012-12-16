@@ -19,6 +19,19 @@ TIME_LABEL_LOOKUP = (
     ('Dose', 'Morning', 'Noon', 'Evening', 'Bedtime'),
 )
 
+DOT_ART = "ART"
+DOT_NONART = "NONART"
+
+DOT_OBSERVATION_DIRECT = "direct" #saw them take it - most trustworthy
+DOT_OBSERVATION_PILLBOX = "pillbox"
+DOT_OBSERVATION_SELF = "self"
+
+DOT_ADHERENCE_UNCHECKED = "unchecked" #not great
+DOT_ADHERENCE_EMPTY = "empty" # good!
+DOT_ADHERENCE_PARTIAL = "partial" #ok
+DOT_ADHERENCE_FULL = "full" # bad - didn't take meds
+
+
 
 GENDER_CHOICES = (
     ('m', 'Male'),
