@@ -6,7 +6,6 @@ from django.http import HttpResponse, Http404
 from django.template.context import RequestContext
 import json
 from django.template.loader import render_to_string
-import pickle
 import pytz
 from corehq.apps.reports.models import ReportConfig
 from corehq.apps.reports import util
@@ -15,70 +14,14 @@ from corehq.apps.users.models import CouchUser
 from couchexport.export import export_from_tables
 from couchexport.shortcuts import export_response
 from dimagi.utils.couch.pagination import DatatablesParams
-from dimagi.utils.dates import DateSpan
 from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.modules import to_function
 from dimagi.utils.web import render_to_response, json_request
 from dimagi.utils.parsing import string_to_boolean
-from django.core.cache import cache
-from django.utils.cache import get_cache_key, _generate_cache_header_key
-import functools
+from corehq.apps.reports.cache import CacheableRequestMixIn, request_cache
 
-DEFAULT_EXPIRY = 60 * 60 # an hour
 
-class _request_cache(object):
-    """
-    This is private because it can only be used on a CacheableRequestMixIn
-    """
-    def __init__(self, tag, expiry=DEFAULT_EXPIRY):
-        self.tag = tag
-        self.expiry = expiry
-
-    def __call__(self, fn):
-        @functools.wraps(fn)
-        def decorated(*args, **kwargs):
-            report = args[0]
-            if not report.is_cacheable:
-                return fn(*args, **kwargs)
-            else:
-                from_cache = report.get_from_cache(self.tag)
-                if from_cache:
-                    return from_cache
-                ret = fn(*args, **kwargs)
-                report.set_in_cache(self.tag, ret, self.expiry)
-                return ret
-        return decorated
-
-class CacheableRequestMixIn(object):
-    """
-    Used in conjunction with reports, to get a cache key that can be
-    used in django's caching framework
-    """
-    
-    CACHE_PREFIX = 'hq.reports'
-
-    @property
-    @memoized
-    def cache_key(self):
-        # went source diving for this in django, it does exactly
-        # what we want here, though is marked 'private'. seemed
-        # better to import than to copy it and all dependencies
-        # elsewhere
-        return _generate_cache_header_key(self.CACHE_PREFIX, self.request)
-
-    def set_in_cache(self, tag, object, expiry=DEFAULT_EXPIRY):
-        return cache.set(self.get_cache_key(tag), object, expiry)
-
-    def get_from_cache(self, tag):
-        return cache.get(self.get_cache_key(tag))
-
-    def get_cache_key(self, tag):
-        return "{key}-{tag}".format(
-            key=self.cache_key, 
-            tag=tag
-        )
-
-class GenericReportView(object):
+class GenericReportView(CacheableRequestMixIn):
     """
         A generic report structure for viewing a report
         (or pages that follow the reporting structure closely---though that seems a bit hacky)
@@ -215,10 +158,6 @@ class GenericReportView(object):
             context={}
         )
 
-    @property
-    def is_cacheable(self):
-        # don't override this
-        return isinstance(self, CacheableRequestMixIn)
 
     _caching = False
     def __setstate__(self, state):
@@ -540,7 +479,7 @@ class GenericReportView(object):
         return "%s:%s" % (self.__class__.__name__, func_name)
 
     @property
-    @_request_cache("default")
+    @request_cache("default")
     def view_response(self):
         """
             Intention: Not to be overridden in general.
@@ -556,7 +495,7 @@ class GenericReportView(object):
 
     
     @property
-    @_request_cache("mobile")
+    @request_cache("mobile")
     def mobile_response(self):
         """
         This tries to render a mobile version of the report, by just calling 
@@ -574,7 +513,7 @@ class GenericReportView(object):
                                   self.context)
     
     @property
-    @_request_cache("email")
+    @request_cache("email")
     def email_response(self):
         """
         This renders a json object containing a pointer to the static html 
@@ -586,7 +525,7 @@ class GenericReportView(object):
         return self.async_response
 
     @property
-    @_request_cache("async")
+    @request_cache("async")
     def async_response(self):
         """
             Intention: Not to be overridden in general.
@@ -617,7 +556,7 @@ class GenericReportView(object):
         )
 
     @property
-    @_request_cache("filters")
+    @request_cache("filters")
     def filters_response(self):
         """
             Intention: Not to be overridden in general.
@@ -634,7 +573,7 @@ class GenericReportView(object):
         )))
 
     @property
-    @_request_cache("json")
+    @request_cache("json")
     def json_response(self):
         """
             Intention: Not to be overridden in general.
@@ -643,7 +582,7 @@ class GenericReportView(object):
         return HttpResponse(json.dumps(self.json_dict))
 
     @property
-    @_request_cache("export")
+    @request_cache("export")
     def export_response(self):
         """
             Intention: Not to be overridden in general.
