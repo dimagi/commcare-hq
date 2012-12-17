@@ -31,7 +31,7 @@ function (doc) {
                 if (difference < 330*MS_IN_DAY) {
                     indicator_keys.push("infant_death")
                 }
-                if (difference < 1860*MS_IN_DAY) {
+                if (difference < 1825*MS_IN_DAY) {
                     indicator_keys.push("under5_death")
                 }
 
