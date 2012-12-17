@@ -29,3 +29,19 @@ class Command(LabelCommand):
         xform.update_indicator(form_indicator)
         xform.save()
         print "Set definition"
+
+    def apply_case_indicator(self, form_id, xmlns, indicator_slug):
+        print "Form ID", form_id
+        print "XMLNS", xmlns
+        print "Slug", indicator_slug
+        form_indicator = FormIndicatorDefinition.get_current(
+            MVP.NAMESPACE,
+            MVP.DOMAINS[0],
+            indicator_slug,
+            xmlns=xmlns)
+        print "Grabbed Indicator", form_indicator
+        xform = XFormInstance.get(form_id)
+        print "Grabbed XForm", xform
+        xform.update_indicator(form_indicator)
+        xform.save()
+        print "Set definition"
