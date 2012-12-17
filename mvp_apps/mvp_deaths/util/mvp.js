@@ -116,8 +116,10 @@ function get_age_from_dob(dob, date_diff) {
 }
 
 function contained_in_indicator_value(indicator, text) {
-    if (indicator && indicator.value) {
+    try {
         return (indicator.value.toLowerCase().indexOf(text) >= 0);
+    } catch (e) {
+        // do nothing
     }
     return false;
 }

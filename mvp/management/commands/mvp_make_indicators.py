@@ -94,6 +94,28 @@ class Command(LabelCommand):
                 )
                 print immediate_danger_sign_case
 
+            diarrhea_medication_in_case = CHILD_VISIT_QUESTION_IDS.get('diarrhea_medication', {}).get(domain)
+            if diarrhea_medication_in_case:
+                diarrhea_medication_case = FormDataInCaseIndicatorDefinition.update_or_create_unique(
+                    *shared_args,
+                    slug="diarrhea_medication",
+                    case_type='child',
+                    xmlns=MVP.VISIT_FORMS.get('child_visit'),
+                    **diarrhea_medication_in_case
+                )
+                print diarrhea_medication_case
+
+            fever_medication_in_case = CHILD_VISIT_QUESTION_IDS.get('fever_medication', {}).get(domain)
+            if fever_medication_in_case:
+                fever_medication_case = FormDataInCaseIndicatorDefinition.update_or_create_unique(
+                    *shared_args,
+                    slug="fever_medication",
+                    case_type='child',
+                    xmlns=MVP.VISIT_FORMS.get('child_visit'),
+                    **fever_medication_in_case
+                )
+                print fever_medication_case
+
             self.insert_dob_into_form('child_dob', MVP.VISIT_FORMS.get('child_visit'),
                 shared_args)
 

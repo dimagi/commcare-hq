@@ -1,5 +1,6 @@
 function (doc) {
     // !code util/mvp.js
+    // !code util/danger_signs.js
     if (isChildCase(doc)) {
         var indicators = get_indicators(doc);
 

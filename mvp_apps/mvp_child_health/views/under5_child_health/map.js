@@ -1,16 +1,7 @@
 function(doc) {
     // !code util/mvp.js
+    // !code util/danger_signs.js
     if(isChildVisitForm(doc)) {
-
-        function get_danger_signs(danger_sign_value) {
-            if (danger_sign_value) {
-                var signs = danger_sign_value.trim().toLowerCase();
-                signs = signs.split(' ');
-                return signs;
-            }
-            return [];
-        }
-
         var indicators = get_indicators(doc),
             meta = doc.form.meta;
         var indicator_keys = new Array();
