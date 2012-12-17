@@ -15,16 +15,16 @@ class Location(Document):
 
     def __init__(self, *args, **kwargs):
         if 'parent' in kwargs:
-           parent = kwargs['parent']
-           if parent:
-               if not isinstance(parent, Document):
-                   # 'parent' is a doc id
-                   parent = Location.get(parent)
-               lineage = list(reversed(parent.path))
-           else:
-               lineage = []
-           kwargs['lineage'] = lineage
-           del kwargs['parent']
+            parent = kwargs['parent']
+            if parent:
+                if not isinstance(parent, Document):
+                    # 'parent' is a doc id
+                    parent = Location.get(parent)
+                lineage = list(reversed(parent.path))
+            else:
+                lineage = []
+            kwargs['lineage'] = lineage
+            del kwargs['parent']
 
         super(Document, self).__init__(*args, **kwargs)
 
@@ -85,9 +85,11 @@ class Location(Document):
 
 def location_tree(domain):
     """build a hierarchical tree of the entire location structure for a domain"""
-    locs = Location.view('locations/hierarchy', startkey=[domain], endkey=[domain, {}], reduce=False, include_docs=True).all()
+    # this is going to be extremely slow as the number of locations gets big
+    locs = Location.view('locations/hierarchy', startkey=[domain], endkey=[domain, {}],
+                         reduce=False, include_docs=True).all()
     locs.sort(key=lambda l: l.path) # parents must appear before their children; couch should
-      # return docs in the correct order, but, just to be safe...
+    # return docs in the correct order, but, just to be safe...
     locs_by_id = dict((l._id, l) for l in locs)
 
     tree_root = []
