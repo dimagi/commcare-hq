@@ -3,8 +3,7 @@ from bihar.reports.supervisor import BiharNavReport, MockEmptyReport, \
     ConvenientBaseMixIn, GroupReferenceMixIn, list_prompt, shared_bihar_context,\
     team_member_context
 from copy import copy
-from corehq.apps.reports.generic import GenericTabularReport, summary_context,\
-    CacheableRequestMixIn
+from corehq.apps.reports.generic import GenericTabularReport, summary_context
 from corehq.apps.reports.standard import CustomProjectReport
 from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.html import format_html
@@ -30,13 +29,14 @@ class IndicatorNav(GroupReferenceMixIn, BiharNavReport):
         return self.group_display
 
 class IndicatorSummaryReport(GroupReferenceMixIn, BiharSummaryReport,
-                             IndicatorSetMixIn, CacheableRequestMixIn):
+                             IndicatorSetMixIn):
     
     name = ugettext_noop("Indicators")
     slug = "indicatorsummary"
     description = "Indicator details report"
     base_template_mobile = "bihar/indicator_summary.html"
-
+    is_cacheable = True
+    
     @property
     def rendered_report_title(self):
         return _(self.indicator_set.name)
@@ -89,9 +89,10 @@ class IndicatorCharts(MockEmptyReport):
 
 
 class IndicatorClientSelectNav(GroupReferenceMixIn, BiharSummaryReport,
-                               IndicatorSetMixIn, CacheableRequestMixIn):
+                               IndicatorSetMixIn):
     name = ugettext_noop("Select Client List")
     slug = "clients"
+    is_cacheable = True
     
     _indicator_type = "client_list"
 
@@ -128,10 +129,11 @@ class IndicatorClientSelectNav(GroupReferenceMixIn, BiharSummaryReport,
 
 class IndicatorClientList(GroupReferenceMixIn, ConvenientBaseMixIn,
                           GenericTabularReport, CustomProjectReport,
-                          IndicatorMixIn, CacheableRequestMixIn):
+                          IndicatorMixIn):
     slug = "indicatorclientlist"
     name = ugettext_noop("Client List") 
-    
+    is_cacheable = True
+
     @property
     def _name(self):
         # NOTE: this isn't currently used, but is how things should work
