@@ -6,7 +6,6 @@ from django.http import HttpResponse, Http404
 from django.template.context import RequestContext
 import json
 from django.template.loader import render_to_string
-import pickle
 import pytz
 from corehq.apps.reports.models import ReportConfig
 from corehq.apps.reports import util
@@ -15,13 +14,14 @@ from corehq.apps.users.models import CouchUser
 from couchexport.export import export_from_tables
 from couchexport.shortcuts import export_response
 from dimagi.utils.couch.pagination import DatatablesParams
-from dimagi.utils.dates import DateSpan
 from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.modules import to_function
 from dimagi.utils.web import render_to_response, json_request
 from dimagi.utils.parsing import string_to_boolean
+from corehq.apps.reports.cache import CacheableRequestMixIn, request_cache
 
-class GenericReportView(object):
+
+class GenericReportView(CacheableRequestMixIn):
     """
         A generic report structure for viewing a report
         (or pages that follow the reporting structure closely---though that seems a bit hacky)
@@ -157,6 +157,7 @@ class GenericReportView(object):
             domain=self.domain,
             context={}
         )
+
 
     _caching = False
     def __setstate__(self, state):
@@ -474,9 +475,11 @@ class GenericReportView(object):
         self.context.update(self._validate_context_dict(self.report_context))
 
     def generate_cache_key(self, func_name):
+        raise NotImplementedError("This is very broken!")
         return "%s:%s" % (self.__class__.__name__, func_name)
 
     @property
+    @request_cache("default")
     def view_response(self):
         """
             Intention: Not to be overridden in general.
@@ -490,7 +493,9 @@ class GenericReportView(object):
             template = self.template_report
         return render_to_response(self.request, template, self.context)
 
+    
     @property
+    @request_cache("mobile")
     def mobile_response(self):
         """
         This tries to render a mobile version of the report, by just calling 
@@ -508,6 +513,7 @@ class GenericReportView(object):
                                   self.context)
     
     @property
+    @request_cache("email")
     def email_response(self):
         """
         This renders a json object containing a pointer to the static html 
@@ -519,6 +525,7 @@ class GenericReportView(object):
         return self.async_response
 
     @property
+    @request_cache("async")
     def async_response(self):
         """
             Intention: Not to be overridden in general.
@@ -549,6 +556,7 @@ class GenericReportView(object):
         )
 
     @property
+    @request_cache("filters")
     def filters_response(self):
         """
             Intention: Not to be overridden in general.
@@ -565,6 +573,7 @@ class GenericReportView(object):
         )))
 
     @property
+    @request_cache("json")
     def json_response(self):
         """
             Intention: Not to be overridden in general.
@@ -573,6 +582,7 @@ class GenericReportView(object):
         return HttpResponse(json.dumps(self.json_dict))
 
     @property
+    @request_cache("export")
     def export_response(self):
         """
             Intention: Not to be overridden in general.
@@ -615,7 +625,6 @@ class GenericReportView(object):
     @classmethod
     def show_in_navigation(cls, request, *args, **kwargs):
         return True
-
 
 class GenericTabularReport(GenericReportView):
     """

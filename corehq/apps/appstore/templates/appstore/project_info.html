@@ -97,6 +97,16 @@
             <h6>{% trans "None" %}</h6>
         {% endif %}
     </dd>
+    {% if request.couch_user.is_superuser %}
+        <dt> {% trans 'Published by' %}</dt>
+        <dd>
+            {% if published_by %}
+                {{ published_by.username }}
+            {% else %}
+                No Data
+            {% endif %}
+        </dd>
+    {% endif %}
     <dt> {% trans 'Published on' %}</dt>
     <dd>
         {{ project.snapshot_time|date:"N j, Y" }}

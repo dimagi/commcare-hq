@@ -2,14 +2,15 @@ from corehq.apps.reports.standard import ProjectReport, ProjectReportParametersM
 from corehq.apps.reports.generic import GenericTabularReport
 from corehq.apps.domain.models import Domain
 from corehq.apps.users.models import CommCareUser
-from corehq.apps.commtrack.models import *
-from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn, DTSortType
+from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
 from corehq.apps.locations.models import Location
 from dimagi.utils.couch.database import get_db
 from dimagi.utils.couch.loosechange import map_reduce
 from dimagi.utils import parsing as dateparse
 import itertools
-from datetime import datetime, date, timedelta
+from datetime import timedelta
+from django.conf import settings
+from corehq.apps.commtrack.models import CommtrackConfig
 
 class CommtrackReportMixin(ProjectReport, ProjectReportParametersMixin):
 
