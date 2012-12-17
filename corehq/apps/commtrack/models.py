@@ -65,7 +65,7 @@ class CommtrackConfig(Document):
 
     multiaction_enabled = BooleanProperty()
     multiaction_keyword = StringProperty() # if None, will attempt to parse
-      # all messages as multi-action
+    # all messages as multi-action
 
     @classmethod
     def for_domain(cls, domain):
