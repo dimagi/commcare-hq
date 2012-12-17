@@ -292,6 +292,7 @@
                 _gaq.push(['_trackPageview']);
                 {% if domain %}_gaq.push(['_setCustomVar', 1, 'domain', '{{ domain }}', 3]);{% endif %}
                 {% if request.user.is_authenticated %}_gaq.push(['_setCustomVar', 1, 'uuid', '{{ request.user.id }}', 3]);{% endif %}
+                {% if request.couch_user and request.couch_user.is_dimagi %}_gaq.push(['_setCustomVar', 1, 'is_dimagi', '{{ request.couch_user.username }}', 3]);{% endif %}
                 {% get_report_analytics_tag request %}
 
                 (function() {

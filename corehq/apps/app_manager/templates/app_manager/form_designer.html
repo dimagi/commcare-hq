@@ -18,6 +18,8 @@
     <script src="{% static 'formdesigner/js/model.js' %}"></script>
     <script src="{% static 'formdesigner/js/controller.js' %}"></script>
     <script src="{% static 'formdesigner/js/widgets.js' %}"></script>
+    <script src="{% static 'hqwebapp/javascripts/sha1.js' %}"></script>
+    <script src="{% static 'hqwebapp/javascripts/diff_match_patch.js' %}"></script>
 {% include 'hqmedia/includes/yui_upload.html' %}
 {#<script type="text/javascript" src="{% static 'hqmedia/js/hqmedia.uploader.js' %}"></script>#}
 <script type="text/javascript" src="{% static 'hqmedia/js/jquery.jplayer.min.js' %}"></script>
@@ -75,13 +77,15 @@
                 staticPrefix: '/static/formdesigner/',
                 iconUrl: '/static/hqwebapp/javascripts/jquery-ui/images/ui-icons_469bdd_256x240.png',
                 saveUrl: '{% url edit_form_attr domain app.id form.get_unique_id "xform" %}',
+                patchUrl: '{% url patch_xform domain app.id form.get_unique_id %}',
+                saveType: 'patch',
                 form: {{ form.source|JSON }},
                 langs: {{ app.langs|JSON }},
                 formName: "{{ form.name|trans:app.langs }}",
                 displayLanguage: {{ lang|JSON }}
             });
             formdesigner.on('form-saved', function (args) {
-                var response = JSON.parse(args.response);
+                var response = args.response;
                 COMMCAREHQ.app_manager.updateDOM(response.update);
             });
         });
