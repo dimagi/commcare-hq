@@ -101,23 +101,6 @@ function smart_date_emit_key(prefix, date, suffix, trim_date) {
     return emit_key;
 }
 
-function get_pregnancy_start_from_edd_date(edd_date) {
-    var preg_start = new Date(),
-        gestation_ms = 266*MS_IN_DAY;
-    var start_ms = edd_date.getTime() - gestation_ms;
-    preg_start.setTime(start_ms);
-    return preg_start;
-}
-
-function get_danger_signs(danger_sign_value) {
-    if (danger_sign_value) {
-        var signs = danger_sign_value.trim().toLowerCase();
-        signs = signs.split(' ');
-        return signs;
-    }
-    return [];
-}
-
 function get_age_from_dob(dob, date_diff) {
     // dob and date_diff are date strings
     try {
