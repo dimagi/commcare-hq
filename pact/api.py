@@ -180,11 +180,12 @@ class PactAPI(DomainAPI):
         pdoc = PactPatientCase.get(self.request.GET['case_id'])
         resp = HttpResponse()
         if self.method is not None:
-            print self.request.POST
             if self.request.POST.has_key('rm_schedule'):
+                #hacky remove schedule method
                 pdoc.rm_schedule()
                 resp.status_code = 204
                 return resp
+
 
 
             form = ScheduleForm(data=self.request.POST)

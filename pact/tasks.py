@@ -1,4 +1,5 @@
 import logging
+import pdb
 import traceback
 from celery.task import task, subtask
 from datetime import datetime
@@ -36,7 +37,7 @@ def eval_dots_block(xform_json, callback=None):
 
         xform_json[PACT_DOTS_DATA_PROPERTY] = {}
         if not isinstance(xform_json['form']['case'].get('update', None), dict):
-            pass
+            print "\tno case update property"
         else:
             #update is a dict
             if xform_json['form']['case']['update'].has_key('dots'):

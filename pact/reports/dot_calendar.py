@@ -14,10 +14,25 @@ import settings
 
 
 def obs_for_day(this_date, observations):
+    assert this_date.__class__ == date
     #todo, normalize for timezone
 #    print "obs for day: %s" % this_date
     ret = filter(lambda x: x['observed_date'].date() == this_date, observations)
     return ret
+
+
+def query_observations(case_id, start_date, end_date):
+    """
+    Hit couch to get the CObservations for the given date range of the OBSERVED dates.
+    These are the actual observation day cells in which they filled in DOT data.
+    """
+    startkey = [case_id, 'observe_date', start_date.year, start_date.month, start_date.day]
+    endkey = [case_id, 'observe_date', end_date.year, end_date.month, end_date.day]
+    print "Running dots_observation_range"
+    print "%s-%s" % (startkey, endkey)
+    observations = CObservation.view('pact/dots_observations', startkey=startkey, endkey=endkey).all()
+    print "\t%d observations" % (len(observations))
+    return observations
 
 
 def cmp_observation(x, y):
@@ -126,12 +141,7 @@ class DOTCalendarReporter(object):
         get the entire range of observations for our given date range.
         """
         case_id = self.patient_casedoc._id
-        startkey = [case_id, 'observe_date', self.start_date.year, self.start_date.month, self.start_date.day]
-        endkey = [case_id, 'observe_date', self.end_date.year, self.end_date.month, self.end_date.day]
-        print "Running dots_observation_range"
-        print "%s-%s" % (startkey, endkey)
-        observations = CObservation.view('pact/dots_observations', startkey=startkey, endkey=endkey).all()
-        print "\t%d observations" % (len(observations))
+        observations = query_observations(case_id, self.start_date, self.end_date)
         return observations
 
     def __init__(self, patient_casedoc, start_date=None, end_date=None):

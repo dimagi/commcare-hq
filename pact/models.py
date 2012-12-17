@@ -263,11 +263,6 @@ class CObservation(Document):
     day_slot = IntegerProperty() #new addition, if there's a slot for the day label, then retain it
     note = StringProperty() #this is for the overall note for that submission, will exist on the anchor date
 
-
-    def __unicode__(self):
-        return simplejson.dumps(self.to_json())
-
-
     @property
     def obs_score(self):
         """Gets the relative score of the observation.
@@ -291,8 +286,6 @@ class CObservation(Document):
     #        #override save as this is not a document but just a view
     #        pass
 
-    def __unicode__(self):
-        return "Dots Observation: %s on %s" % (self.observed_date, self.anchor_date)
 
     def get_time_label(self):
         """
@@ -310,10 +303,13 @@ class CObservation(Document):
         app_label = 'pact'
 
     def __unicode__(self):
-        return "Obs %s [%s] %d/%d" % (self.observed_date.strftime("%Y-%m-%d"), "ART" if self.is_art else "NonART", self.dose_number, self.total_doses)
+        return "Obs %s [%s] %d/%d" % (self.observed_date.strftime("%Y-%m-%d"), "ART" if self.is_art else "NonART", self.dose_number+1, self.total_doses)
 
     def __str__(self):
-        return "Obs %s [%s] %d/%d" % (self.observed_date.strftime("%Y-%m-%d"), "ART" if self.is_art else "NonART", self.dose_number, self.total_doses)
+        return "Obs %s [%s] %d/%d" % (self.observed_date.strftime("%Y-%m-%d"), "ART" if self.is_art else "NonART", self.dose_number+1, self.total_doses)
+
+    def __repr__(self):
+        return simplejson.dumps(self.to_json(), indent=4)
 
 class CObservationAddendum(Document):
 #    sub_id = StringProperty(default=make_uuid)
@@ -325,3 +321,6 @@ class CObservationAddendum(Document):
     notes = StringProperty() #placeholder if need be
     class Meta:
         app_label = 'pact'
+
+
+from .signals import *

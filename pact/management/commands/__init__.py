@@ -1,13 +1,13 @@
 from StringIO import StringIO
+from django.test.client import RequestFactory
 from datetime import datetime
 import getpass
 import urllib2
 from django.core.management.base import NoArgsCommand
-from django.test.client import RequestFactory
 from restkit import Resource
 from pact.management.commands.constants import RETRY_LIMIT
 from pact.enums import PACT_DOMAIN
-from corehq.apps.receiverwrapper import views as rcv_views
+from pact.utils import submit_xform
 
 
 class PactMigrateCommand(NoArgsCommand):
@@ -49,13 +49,6 @@ class PactMigrateCommand(NoArgsCommand):
                 return self.get_url(url, retry=retry+1)
             return None
 
-    def submit_xform(self, submission_xml_string):
-        p = Resource('http://localhost:8000')
-        f = StringIO(submission_xml_string.encode('utf-8'))
-        f.name = 'form.xml'
-        res = p.post('/a/pact/receiver', payload= { 'xml_submission_file': f }, headers={'content-type':"multipart/form-data"})
-        return res
-
     def submit_xform_rf(self, action, submission_xml_string):
 #        received_on = request.META.get('HTTP_X_SUBMIT_TIME')
 #        date_header = request.META.get('HTTP_DATE')
@@ -70,24 +63,19 @@ class PactMigrateCommand(NoArgsCommand):
 #                date = datetime.strptime(date_header, "%a, %d %b %Y %H:%M:%S GMT")
 #                date = datetime.strftime(date, "%Y-%m-%dT%H:%M:%SZ")
 
-
-        rf = RequestFactory()
-        f = StringIO(submission_xml_string.encode('utf-8'))
-        f.name = 'form.xml'
-        req = rf.post('/a/pact/receiver', data = { 'xml_submission_file': f }) #, content_type='multipart/form-data')
-
         server_date = action.get('server_date', None)
         phone_date = action.get('date', None)
+
+        extra_meta = {}
 
         if phone_date:
             date = datetime.strptime(phone_date, "%Y-%m-%dT%H:%M:%SZ")
             date = datetime.strftime(date, "%a, %d %b %Y %H:%M:%S GMT")
-            req.META['HTTP_DATE'] = date
+            extra_meta['HTTP_DATE'] = date
 
         if server_date:
-            req.META['HTTP_X_SUBMIT_TIME'] = server_date
+            extra_meta['HTTP_X_SUBMIT_TIME'] = server_date
         else:
             if phone_date is not None:
-                req.META['HTTP_X_SUBMIT_TIME'] = phone_date
-        return rcv_views.post(req, PACT_DOMAIN)
-
+                extra_meta['HTTP_X_SUBMIT_TIME'] = phone_date
+        submit_xform('/a/pact/receiver', PACT_DOMAIN, submission_xml_string, extra_meta=extra_meta)

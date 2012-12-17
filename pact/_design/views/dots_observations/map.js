@@ -84,7 +84,7 @@ function (doc) {
             var daily_data = pactdata['dots']['days'];
             var drop_note = true;
             var encounter_date = parse_date(doc.form['encounter_date']); //yyyy-mm-dd which sucks at parsing with new Date
-            var anchor_datestring = anchor_date.getFullYear() + "-" + padzero(anchor_date.getMonth() + 1) + "-" + anchor_date.getDate();
+            var anchor_datestring = anchor_date.getFullYear() + "-" + padzero(anchor_date.getMonth() + 1) + "-" + padzero(anchor_date.getDate());
 
             for (var i = 0; i < daily_data.length; i += 1) {
                 //iterate through each day = i

@@ -9,12 +9,9 @@ from pact.utils import get_case_id
 from receiver.signals import successful_form_received
 from pact.tasks import recompute_dots_caseblock, eval_dots_block
 import traceback
-
-BLOCKING = False
-
-
 from django.conf import settings
-print settings.BROKER_URL
+
+BLOCKING = True
 
 def process_dots_submission(sender, xform, **kwargs):
     try:
@@ -27,8 +24,8 @@ def process_dots_submission(sender, xform, **kwargs):
         #        chain()
 
         #2.4.5 subtasking:
-        blocking =  kwargs.get("blocking", False)
-        if blocking:
+#        blocking =  kwargs.get("blocking", False)
+        if BLOCKING:
             eval_dots_block(xform.to_json())
             case_id = get_case_id(xform)
             recompute_dots_caseblock(case_id)
