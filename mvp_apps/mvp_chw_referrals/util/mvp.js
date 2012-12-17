@@ -120,15 +120,14 @@ function get_danger_signs(danger_sign_value) {
 
 function get_age_from_dob(dob, date_diff) {
     // dob and date_diff are date strings
-    var now,
-        birth_date = new Date(dob);
-    if (date_diff) {
-        now = new Date(date_diff);
-    } else {
-        now = new Date();
-    }
-    if (now >= birth_date) {
-        return (now.getTime() - birth_date.getTime())/(MS_IN_DAY*365);
+    try {
+        var now = new Date(date_diff),
+            birth_date = new Date(dob);
+        if (now >= birth_date) {
+            return now.getTime() - birth_date.getTime();
+        }
+    } catch (e) {
+        // do nothing
     }
     return null;
 }
