@@ -1,13 +1,23 @@
 function(doc) {
     // !code util/mvp.js
     if(isChildVisitForm(doc)) {
+
+        function get_danger_signs(danger_sign_value) {
+            if (danger_sign_value) {
+                var signs = danger_sign_value.trim().toLowerCase();
+                signs = signs.split(' ');
+                return signs;
+            }
+            return [];
+        }
+
         var indicators = get_indicators(doc),
             meta = doc.form.meta;
         var indicator_keys = new Array();
         if (indicators.child_dob && indicators.child_dob.value) {
             // birthdate found, is child under 5?
             var age = get_age_from_dob(indicators.child_dob.value, meta.timeEnd);
-            if (age < 5) {
+            if (age < 1825*MS_IN_DAY) {
                 indicator_keys.push("under5");
 
                 var fever_medication = indicators.fever_medication.value,
