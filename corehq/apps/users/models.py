@@ -582,6 +582,7 @@ class DjangoUserMixin(DocumentSchema):
         dummy.password = self.password
         return dummy.check_password(password)
 
+
 class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, UnicodeMixIn):
     """
     A user (for web and commcare)
@@ -610,6 +611,10 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, UnicodeMixIn):
 
     class InvalidID(Exception):
         pass
+
+    @property
+    def is_dimagi(self):
+        return self.username.endswith('@dimagi.com')
 
     @property
     def raw_username(self):
@@ -1344,6 +1349,7 @@ class CommCareUser(CouchUser, CommCareMobileContactMixin, SingleMembershipMixin)
             # Gracefully handle when user_data is None, or does not have a "language_code" entry
             lang = None
         return lang
+
 
 class WebUser(CouchUser, MultiMembershipMixin):
     teams = StringListProperty()
