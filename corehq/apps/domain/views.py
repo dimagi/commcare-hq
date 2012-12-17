@@ -1,5 +1,9 @@
 import datetime
+import logging
 import dateutil
+from django.conf import settings
+from django.contrib.sites.models import Site
+from django.template.loader import render_to_string
 from corehq.apps import receiverwrapper
 from django.core.urlresolvers import reverse
 from django.http import HttpResponseRedirect, HttpResponse, Http404
@@ -12,6 +16,7 @@ from corehq.apps.domain.forms import DomainGlobalSettingsForm,\
 from corehq.apps.domain.models import Domain, LICENSES
 from corehq.apps.domain.utils import get_domained_url, normalize_domain_name
 from corehq.apps.users.models import CouchUser
+from dimagi.utils.django.email import send_HTML_email
 
 from dimagi.utils.web import render_to_response, get_ip
 from corehq.apps.users.views import require_can_edit_web_users
@@ -459,7 +464,21 @@ def _publish_snapshot(request, domain, published_snapshot=None):
 
         published_snapshot.published = True
         published_snapshot.save()
+        _notification_email_on_publish(domain, published_snapshot, request.couch_user)
     return True
+
+def _notification_email_on_publish(domain, snapshot, published_by):
+    url_base = Site.objects.get_current().domain
+    params = {"domain": domain, "snapshot": snapshot, "published_by": published_by, "url_base": url_base}
+    text_content = render_to_string("domain/email/published_app_notification.txt", params)
+    html_content = render_to_string("domain/email/published_app_notification.html", params)
+    recipients = settings.EXCHANGE_NOTIFICATION_RECIPIENTS
+    subject = "New App on Exchange: %s" % snapshot.title
+    try:
+        for recipient in recipients:
+            send_HTML_email(subject, recipient, html_content, text_content=text_content)
+    except Exception:
+        logging.warning("Can't send notification email, but the message was:\n%s" % text_content)
 
 @domain_admin_required
 def set_published_snapshot(request, domain, snapshot_name=''):

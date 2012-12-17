@@ -1020,7 +1020,7 @@ class CommCareUser(CouchUser, CommCareMobileContactMixin, SingleMembershipMixin)
             should_save = True
         self = super(CommCareUser, cls).wrap(data)
         if should_save:
-            self.domain_membership = DomainMembership(domain=self.domain)
+            self.domain_membership = DomainMembership(domain=data.get('domain', ""))
             if role_id:
                 self.domain_membership.role_id = role_id
 #            self.save() # will uncomment when I figure out what's happening with sheels commcareuser
