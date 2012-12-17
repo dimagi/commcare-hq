@@ -26,6 +26,7 @@ EMAIL_SMTP_PORT = 587
 ADMINS = (('HQ Dev Team', 'commcarehq-dev+www-notifications@dimagi.com'),)
 BUG_REPORT_RECIPIENTS = ['commcarehq-support@dimagi.com']
 NEW_DOMAIN_RECIPIENTS = ['commcarehq-dev+newdomain@dimagi.com']
+EXCHANGE_NOTIFICATION_RECIPIENTS = ['commcarehq-dev+exchange@dimagi.com']
 
 ####### Log/debug setup ########
 
