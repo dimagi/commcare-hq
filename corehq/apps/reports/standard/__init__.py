@@ -1,10 +1,6 @@
-import datetime
 import dateutil
-from django.contrib import messages
 from django.core.urlresolvers import reverse
 from django.utils.safestring import mark_safe
-import logging
-from corehq.apps.announcements.models import ReportAnnouncement
 from corehq.apps.groups.models import Group
 from corehq.apps.reports import util
 from corehq.apps.adm import utils as adm_utils
@@ -35,20 +31,7 @@ class ProjectReport(GenericReportView):
 
     def set_announcements(self):
         if self.request.couch_user:
-            key = ["type", ReportAnnouncement.__name__]
-            now = datetime.datetime.utcnow()
-            data = ReportAnnouncement.get_db().view('announcements/all_announcements',
-                reduce=False,
-                startkey=key+[now.isoformat()],
-                endkey=key+[{}]
-            ).all()
-            announce_ids = [a['id'] for a in data if a['id'] not in self.request.couch_user.announcements_seen]
-            for announcement_id in announce_ids:
-                try:
-                    announcement = ReportAnnouncement.get(announcement_id)
-                    messages.info(self.request, announcement.as_html)
-                except Exception as e:
-                    logging.error("Could not fetch Report Announcement: %s" % e)
+            util.set_report_announcements_for_user(self.request, self.request.couch_user)
 
 
 class CustomProjectReport(ProjectReport):

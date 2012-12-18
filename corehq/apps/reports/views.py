@@ -94,6 +94,9 @@ def default(request, domain, template="reports/reports_home.html"):
         ),
     )
 
+    if request.couch_user:
+        util.set_report_announcements_for_user(request, user)
+
     return render_to_response(request, template, context)
 
 @login_or_digest
