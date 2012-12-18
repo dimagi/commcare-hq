@@ -29,7 +29,11 @@ var HQAsyncReport = function (o) {
 
     var loadFilters = function (data) {
         self.filterRequest = null;
-        $('#hq-report-filters').html(data.filters);
+        try {
+            $('#hq-report-filters').html(data.filters);
+        } catch (e) {
+            console.log(e);
+        }
         $('#reportFiltersAccordion').removeClass('hide');
         self.standardReport.resetFilterState();
     };
@@ -79,8 +83,9 @@ var HQAsyncReport = function (o) {
             dataType: 'json',
             success: function(data) {
                 self.reportRequest = null;
-                if (data.filters)
+                if (data.filters) {
                     loadFilters(data);
+                }
                 self.issueAttempts = 0;
                 self.loadingIssueModal.modal('hide');
                 self.hqLoading = $('.hq-loading');
