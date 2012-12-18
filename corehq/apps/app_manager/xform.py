@@ -513,8 +513,16 @@ class XForm(WrappedNode):
                 self.model_node.append(bind)
 
     def add_instance(self, id, src):
-        # insert right after the main <instance> block
-        self.model_node.insert(1, _make_elem('instance', {'id': id, 'src': src}))
+        """
+        Add an instance with an id and src if it doesn't exist already
+        If the id already exists, DOES NOT overwrite.
+
+        """
+        conflicting = self.model_node.find('{f}instance[@id="%s"]' % id)
+        if not conflicting.exists():
+            # insert right after the main <instance> block
+            first_instance = self.model_node.find('{f}instance')
+            first_instance.addnext(_make_elem('instance', {'id': id, 'src': src}))
 
     def add_setvalue(self, ref, value, event='xforms-ready', type=None):
         ref = self.resolve_path(ref)
