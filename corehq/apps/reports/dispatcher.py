@@ -113,11 +113,16 @@ class ReportDispatcher(View):
         render_as = kwargs.get('render_as') or 'view'
         domain = kwargs.get('domain') or getattr(request, 'domain', None)
 
-        if self._redirect_slug(current_slug):
+        redirect_slug = self._redirect_slug(current_slug)
+
+        if redirect_slug and render_as == 'email':
+            # todo saved reports should probably change the slug to the redirected slug. this seems like a hack.
+            current_slug = redirect_slug
+        elif redirect_slug:
             new_args = [domain] if domain else []
             if render_as != 'view':
                 new_args.append(render_as)
-            new_args.append(self._slug_alias(current_slug))
+            new_args.append(redirect_slug)
             return HttpResponseRedirect(reverse(self.name(), args=new_args))
 
         report_kwargs = kwargs.copy()
