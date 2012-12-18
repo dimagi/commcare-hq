@@ -117,7 +117,7 @@ class ReportDispatcher(View):
 
         if redirect_slug and render_as == 'email':
             # todo saved reports should probably change the slug to the redirected slug. this seems like a hack.
-            current_slug = redirect_slug
+            raise Http404
         elif redirect_slug:
             new_args = [domain] if domain else []
             if render_as != 'view':
