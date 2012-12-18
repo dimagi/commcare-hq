@@ -8,10 +8,17 @@ $(function() {
         }
     });
 
-    $('.announcement-control').on('click', function () {
+    var clearAnnouncement = function (announcementID) {
         $.ajax({
-            url: '/announcements/clear/'+$(this).data('announcementid')
+            url: '/announcements/clear/' + announcementID
         });
+    };
+
+    $('.page-level-alert').bind('closed', function () {
+        var announcement_id = $('.page-level-alert').find('.announcement-control').data('announcementid');
+        if (announcement_id) {
+            clearAnnouncement(announcement_id);
+        }
     });
 });
 
