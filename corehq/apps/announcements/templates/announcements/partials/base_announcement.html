@@ -1,0 +1,8 @@
+{% load i18n %}
+{% load markup %}
+<section>
+    <h1>{{ title }}</h1>
+    {{ content|markdown }}
+</section>
+<a href="#{{ announcement_id }}" data-dismiss="alert" data-announcementid="{{ announcement_id }}"
+   class="btn btn-primary announcement-control" id="announcement-control-{{ announcement_id }}">{%  trans 'Great! Please hide this message.' %}</a>

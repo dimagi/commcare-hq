@@ -1,3 +1,4 @@
+from django.conf import settings
 from corehq.apps.reports.standard import ProjectReport, ProjectReportParametersMixin, DatespanMixin
 from corehq.apps.reports.generic import GenericTabularReport
 from corehq.apps.domain.models import Domain
@@ -15,14 +16,14 @@ from corehq.apps.commtrack.models import CommtrackConfig
 class CommtrackReportMixin(ProjectReport, ProjectReportParametersMixin):
 
     @classmethod
-    def show_in_navigation(cls, request, *args, **kwargs):
+    def show_in_navigation(cls, request, domain=None):
         try:
             return request.project.commtrack_enabled
         except Exception:
             if settings.DEBUG:
                 raise
             else:
-                domain = Domain.get_by_name(kwargs['domain'])
+                domain = Domain.get_by_name(domain)
                 return domain.commtrack_enabled
     
     @property

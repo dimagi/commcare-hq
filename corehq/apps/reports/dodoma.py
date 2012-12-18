@@ -5,6 +5,7 @@ import json
 from django.core.urlresolvers import reverse
 from django.http import Http404, HttpResponse
 from corehq.apps.domain.decorators import login_and_domain_required
+from corehq.apps.reports.util import make_form_couch_key
 from corehq.apps.users.models import CouchUser, CommCareUser
 from couchforms.models import XFormInstance
 from dimagi.utils.parsing import string_to_datetime, json_format_datetime
@@ -54,11 +55,11 @@ def _household_verification_json(
         now = datetime.utcnow()
         start, end = now - timedelta(days=7), now
 
-
-    submissions = XFormInstance.view('reports/submissions_by_domain_xmlns',
+    key = make_form_couch_key(domain, xmlns=xmlns)
+    submissions = XFormInstance.view('reports_forms/all_forms',
         reduce=False,
-        startkey=[domain, xmlns, json_format_datetime(start)],
-        endkey=[domain, xmlns, json_format_datetime(end)],
+        startkey=key+[json_format_datetime(start)],
+        endkey=key+[json_format_datetime(end)],
         include_docs=True,
     )
 

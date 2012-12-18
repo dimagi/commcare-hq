@@ -21,7 +21,3 @@ class AppstoreDispatcher(ReportDispatcher):
             dummy.save()
         kwargs['domain'] = 'dumdum'
         return super(AppstoreDispatcher, self).dispatch(request, *args, **kwargs)
-
-    @classmethod
-    def args_kwargs_from_context(cls, context):
-        return ProjectReportDispatcher.args_kwargs_from_context(context)

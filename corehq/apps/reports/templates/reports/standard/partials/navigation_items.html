@@ -1,0 +1,22 @@
+{% for nav in navs %}
+{% if nav.header %}
+    <li class="nav-header">{{ nav.header }}</li>
+{% endif %}
+{% if nav.is_report %}
+    <li {% if nav.is_active %}class="active"{% endif %}>
+        <a href="{{ nav.url }}" {% if nav.description %}class="report-description-popover" data-title="{{ nav.title }}" data-content="{{ nav.description }}"{% endif %}>
+            {% if nav.icon %}
+            <i class="icon{% if nav.is_active %}-white{% endif %} {{ nav.icon }}"></i>
+            {% endif %}
+            {{ nav.title }}
+        </a>
+    </li>
+{% endif %}
+{% if nav.warning %}
+    <li>
+        <span class="label">
+            <i class="icon-white icon-info-sign"></i> {{ nav.warning }}
+        </span>
+    </li>
+{% endif %}
+{% endfor %}

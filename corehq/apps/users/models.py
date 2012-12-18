@@ -597,6 +597,7 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, UnicodeMixIn):
 #        ('site_edited',     'Manually added or edited from the HQ website.'),
     status = StringProperty()
     language = StringProperty()
+    announcements_seen = ListProperty()
 
     eula = SchemaProperty(LicenseAgreement)
 
@@ -939,7 +940,7 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, UnicodeMixIn):
 
     def save(self, **params):
         # test no username conflict
-        by_username = self.get_db().view('users/by_username', key=self.username).one()
+        by_username = self.get_db().view('users/by_username', key=self.username).first()
         if by_username and by_username['id'] != self._id:
             raise self.Inconsistent("CouchUser with username %s already exists" % self.username)
 

@@ -14,12 +14,5 @@ class DataInterfaceDispatcher(ReportDispatcher):
     def dispatch(self, request, *args, **kwargs):
         return super(DataInterfaceDispatcher, self).dispatch(request, *args, **kwargs)
 
-    def permissions_check(self, report, request, *args, **kwargs):
-        domain = kwargs.get('domain')
-        if domain is None:
-            domain = args[0]
+    def permissions_check(self, report, request, domain=None):
         return request.couch_user.can_edit_data(domain)
-
-    @classmethod
-    def args_kwargs_from_context(cls, context):
-        return ProjectReportDispatcher.args_kwargs_from_context(context)

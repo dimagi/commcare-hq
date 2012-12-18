@@ -139,7 +139,7 @@
                 {% block messages %}
                 {% if messages %}
                     {% for message in messages %}
-                        <div class="alert fade in alert-block alert-full{% if message.tags %} {{ message.tags }}{% endif %}">
+                        <div class="alert fade in alert-block alert-full page-level-alert{% if message.tags %} {{ message.tags }}{% endif %}">
                             <a class="close" data-dismiss="alert" href="#">&times;</a>
                             {% if 'html' in message.tags %}{{ message|safe }}{% else %}{{ message }}{% endif %}
                         </div>
