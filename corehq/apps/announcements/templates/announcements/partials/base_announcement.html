@@ -1,0 +1,7 @@
+{% load markup %}
+<section>
+    <h1>{{ title }}</h1>
+    {{ content|markdown }}
+</section>
+<a href="#{{ announcement_id }}" data-dismiss="alert" data-announcementid="{{ announcement_id }}"
+   class="btn btn-primary announcement-control">Great! Please hide this message.</a>

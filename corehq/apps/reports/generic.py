@@ -429,6 +429,12 @@ class GenericReportView(CacheableRequestMixIn):
             layout_flush_content=self.flush_layout
         )
 
+    def set_announcements(self):
+        """
+            Update django messages here.
+        """
+        pass
+
     def update_filter_context(self):
         """
             Intention: This probably does not need to be overridden in general.
@@ -494,6 +500,7 @@ class GenericReportView(CacheableRequestMixIn):
             self.update_filter_context()
             self.update_report_context()
             template = self.template_report
+        self.set_announcements()
         return render_to_response(self.request, template, self.context)
 
     

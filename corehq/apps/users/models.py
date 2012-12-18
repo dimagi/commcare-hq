@@ -597,6 +597,7 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, UnicodeMixIn):
 #        ('site_edited',     'Manually added or edited from the HQ website.'),
     status = StringProperty()
     language = StringProperty()
+    announcements_seen = ListProperty()
 
     eula = SchemaProperty(LicenseAgreement)
 

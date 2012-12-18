@@ -1,11 +1,12 @@
 import pytz
 from django.template.loader import render_to_string
+from corehq.apps.reports.cache import CacheableRequestMixIn, request_cache
 from dimagi.utils.decorators.memoized import memoized
 # For translations
 from django.utils.translation import ugettext as _
 from django.utils.translation import ugettext_noop
 
-class BaseReportFilter(object):
+class BaseReportFilter(CacheableRequestMixIn):
     """
         For filtering the results of CommCare HQ Reports.
 
@@ -137,6 +138,7 @@ class BaseDrilldownOptionFilter(BaseReportFilter):
     template = "reports/filters/drilldown_options.html"
     use_only_last = False
     drilldown_empty_text = ugettext_noop("No Data Available")
+    is_cacheable = True
 
     @property
     def selected(self):
@@ -156,6 +158,7 @@ class BaseDrilldownOptionFilter(BaseReportFilter):
         return self.get_labels()
 
     @property
+    @request_cache('drilldownfiltercontext')
     def filter_context(self):
         controls = []
         for level, label in enumerate(self.rendered_labels):

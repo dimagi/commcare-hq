@@ -1,4 +1,4 @@
-from datetime import datetime, timedelta
+from datetime import datetime
 from corehq.apps.groups.models import Group
 from corehq.apps.reports.decorators import cache_users
 from corehq.apps.reports.display import xmlns_to_name
@@ -337,3 +337,4 @@ def friendly_timedelta(td):
         if t[1]:
             text.append("%d %s%s" % (t[1], t[0], "s" if t[1] != 1 else ""))
     return ", ".join(text)
+

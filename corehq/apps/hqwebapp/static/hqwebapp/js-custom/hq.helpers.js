@@ -7,6 +7,12 @@ $(function() {
             $(this).find('option[value="' + val + '"]').attr('selected', 'true');
         }
     });
+
+    $('.announcement-control').on('click', function () {
+        $.ajax({
+            url: '/announcements/clear/'+$(this).data('announcementid')
+        });
+    });
 });
 
 $.fn.hqHelp = function () {
