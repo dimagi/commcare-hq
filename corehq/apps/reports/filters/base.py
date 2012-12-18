@@ -158,7 +158,7 @@ class BaseDrilldownOptionFilter(BaseReportFilter):
         return self.get_labels()
 
     @property
-    @request_cache('drilldownfiltercontext')
+#    @request_cache('drilldownfiltercontext')
     def filter_context(self):
         controls = []
         for level, label in enumerate(self.rendered_labels):
