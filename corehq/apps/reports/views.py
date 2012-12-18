@@ -894,6 +894,12 @@ def psi_reports(request, domain):
     print request.GET
     psi_e = psi_events(domain, request.GET)
     psi_hd = psi_household_demonstrations(domain, request.GET)
+    psi_ss = psi_sensitization_sessions(domain, request.GET)
+
+    import pprint
+    pp = pprint.PrettyPrinter(indent=2)
+    pp.pprint(dict(psi_ss))
+
     return HttpResponse(request.GET)
 
 def _get_place_mapping_to_fdi(domain, query_dict, place_types=None):
@@ -971,7 +977,6 @@ def psi_household_demonstrations(domain, query_dict):
         wt = query_dict.get('worker_type', None)
         if wt:
             if not form.xpath('form/demo_type') == wt:
-                print "GAWD NO"
                 return False
         return form.form.get('@name', None) == 'Household Demonstration'
 
@@ -984,10 +989,53 @@ def psi_household_demonstrations(domain, query_dict):
     })
     return resp_dict
 
+def psi_sensitization_sessions(domain, query_dict):
+    place_types = ['block', 'state', 'district']
+    places, pdts = _get_place_mapping_to_fdi(domain, query_dict, place_types=place_types)
+    resp_dict = {}
+
+    name_of_district = _get_related_fixture_items(domain, pdts, places.values(), 'district', 'district_id')
+    if name_of_district:
+        resp_dict["name_of_district"] = name_of_district
+    name_of_block = _get_related_fixture_items(domain, pdts, places.values(), 'block', 'block_id')
+    if name_of_block:
+        resp_dict["name_of_block"] = name_of_block
+    name_of_state = _get_related_fixture_items(domain, pdts, places.values(), 'state', 'state_id')
+    if name_of_state:
+        resp_dict["name_of_state"] = name_of_state
+
+    def ff_func(form):
+        return form.form.get('@name', None) == 'Sensitization Session'
+
+    forms = list(_get_forms(domain, form_filter=ff_func))
+
+    def rf_func(data):
+        return data.get('type_of_sensitization', None) == 'vhnd'
+
+    resp_dict.update({
+        "num_sessions": reduce(lambda sum, f: sum + _count_in_repeats(f.xpath('form/training_sessions'), 'number_of_blm_attended'), forms, 0) +
+                        reduce(lambda sum, f: sum + len(list(_get_repeats(f.xpath('form/training_sessions'), repeat_filter=rf_func))), forms, 0),
+        "num_ayush_doctors": reduce(lambda sum, f: sum + _count_in_repeats(f.xpath('form/training_sessions'), 'num_ayush_doctors'), forms, 0),
+        "num_mbbs_doctors": reduce(lambda sum, f: sum + _count_in_repeats(f.xpath('form/training_sessions'), 'num_mbbs_doctors'), forms, 0),
+        "num_asha_supervisors": reduce(lambda sum, f: sum + _count_in_repeats(f.xpath('form/training_sessions'), 'num_asha_supervisors'), forms, 0),
+        "num_ashas": reduce(lambda sum, f: sum + _count_in_repeats(f.xpath('form/training_sessions'), 'num_ashas'), forms, 0),
+        "num_awws": reduce(lambda sum, f: sum + _count_in_repeats(f.xpath('form/training_sessions'), 'num_awws'), forms, 0),
+        "num_other": reduce(lambda sum, f: sum + _count_in_repeats(f.xpath('form/training_sessions'), 'num_other'), forms, 0),
+        "number_attendees": reduce(lambda sum, f: sum + _count_in_repeats(f.xpath('form/training_sessions'), 'number_attendees'), forms, 0),
+        })
+    return resp_dict
+
+def _get_repeats(data, repeat_filter=lambda r: True):
+    if not isinstance(data, list):
+        data = [data]
+    for d in data:
+        if repeat_filter(d):
+            yield d
+
 def _count_in_repeats(data, what_to_count):
     if not isinstance(data, list):
         data = [data]
-    return reduce(lambda sum, d: sum + int(d.get(what_to_count, 0)), data, 0)
+    return reduce(lambda sum, d: sum + int(d.get(what_to_count, 0) or 0), data, 0)
 
 def _get_all_form_submissions(domain):
     submissions = XFormInstance.view('reports/all_submissions',
@@ -1001,12 +1049,11 @@ def _get_all_form_submissions(domain):
 
 def _get_forms(domain, form_filter=lambda f: True):
     for form in _get_all_form_submissions(domain):
-#        import pprint
-#        pp = pprint.PrettyPrinter(indent=2)
-#        pp.pprint(dict(form))
-#        print form.form.get('@name', None)
+        import pprint
+        pp = pprint.PrettyPrinter(indent=2)
+        pp.pprint(dict(form))
+        print form.form.get('@name', None)
         if form_filter(form):
-            print "YEP"
             yield form
 
 def _get_form(domain, action_filter=lambda a: True, form_filter=lambda f: True):
