@@ -117,7 +117,7 @@ class IndicatorClientSelectNav(GroupReferenceMixIn, BiharSummaryReport,
             return format_html(u'<a href="{next}">{val}</a>',
                 val=self.count(indicator),
                 next=url_and_params(
-                    IndicatorClientList.get_url(self.domain, 
+                    IndicatorClientList.get_url(domain=self.domain,
                                                 render_as=self.render_next),
                     params
                 ))

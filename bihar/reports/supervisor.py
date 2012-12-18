@@ -54,9 +54,9 @@ class ConvenientBaseMixIn(object):
         return None if self.rendered_as == "async" else self.rendered_as
        
     @classmethod
-    def show_in_navigation(cls, request, *args, **kwargs):
+    def show_in_navigation(cls, request, domain=None):
         return False
-     
+
 def list_prompt(index, value):
     # e.g. 1. Reports
     return u"%s. %s" % (_(str(index+1)), _(value)) 
@@ -196,7 +196,7 @@ class SubCenterSelectionReport(ConvenientBaseMixIn, GenericTabularReport,
             params["group"] = g.get_id
             return format_html(u'<a href="{details}">{group}</a>',
                 group=g.name,
-                details=url_and_params(self.next_report_class.get_url(self.domain,
+                details=url_and_params(self.next_report_class.get_url(domain=self.domain,
                                                                       render_as=self.render_next),
                                        params))
         return [_link(group), get_awcc(group)]
@@ -212,7 +212,7 @@ class MainNavReport(BiharSummaryReport, IndicatorConfigMixIn):
         return [WorkerRankSelectionReport, ToolsNavReport]
     
     @classmethod
-    def show_in_navigation(cls, request, *args, **kwargs):
+    def show_in_navigation(cls, request, domain=None):
         return True
 
     @property
@@ -248,7 +248,7 @@ class WorkerRankSelectionReport(SubCenterSelectionReport):
         # HACK: hard code this for now until there's an easier 
         # way to get this from configuration
         args = [self.domain, self.render_next] if self.render_next else [self.domain]
-        url = SupervisorReportsADMSection.get_url(*args,
+        url = SupervisorReportsADMSection.get_url(domain=self.domain, render_as=self.render_next,
                                                   subreport="worker_rank_table")
         end = datetime.today().date()
         start = end - timedelta(days=30)
