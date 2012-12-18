@@ -893,6 +893,7 @@ def clear_report_caches(request, domain):
 def psi_reports(request, domain):
     print request.GET
     psi_e = psi_events(domain, request.GET)
+    psi_hd = psi_household_demonstrations(domain, request.GET)
     return HttpResponse(request.GET)
 
 def _get_place_mapping_to_fdi(domain, query_dict, place_types=None):
@@ -914,6 +915,10 @@ def _get_related_fixture_items(domain, data_types, fixture_items, fixture_name, 
     for fdi in fixture_items:
         if not fdi:
             continue
+
+        if fdi.data_type_id == data_types.get(fixture_name, None).get_id:
+            return fdi.fields['name']
+
         d_id = fdi.fields.get(fixture_id_name, None)
         if d_id:
             district_item = FixtureDataItem.by_data_type_and_name(domain, data_types[fixture_name], d_id)
@@ -923,7 +928,6 @@ def _get_related_fixture_items(domain, data_types, fixture_items, fixture_name, 
 def psi_events(domain, query_dict):
     place_types = ['block', 'state', 'district']
     places, pdts = _get_place_mapping_to_fdi(domain, query_dict, place_types=place_types)
-
     resp_dict = {}
 
     # get the name of district
@@ -951,7 +955,39 @@ def psi_events(domain, query_dict):
 def psi_household_demonstrations(domain, query_dict):
     place_types = ['block', 'state', 'district', 'village']
     places, pdts = _get_place_mapping_to_fdi(domain, query_dict, place_types=place_types)
+    resp_dict = {}
 
+    name_of_district = _get_related_fixture_items(domain, pdts, places.values(), 'district', 'district_id')
+    if name_of_district:
+        resp_dict["name_of_district"] = name_of_district
+    name_of_block = _get_related_fixture_items(domain, pdts, places.values(), 'block', 'block_id')
+    if name_of_block:
+        resp_dict["name_of_block"] = name_of_block
+    name_of_village = _get_related_fixture_items(domain, pdts, places.values(), 'village', 'village_id')
+    if name_of_village:
+        resp_dict["name_of_village"] = name_of_village
+
+    def ff_func(form):
+        wt = query_dict.get('worker_type', None)
+        if wt:
+            if not form.xpath('form/demo_type') == wt:
+                print "GAWD NO"
+                return False
+        return form.form.get('@name', None) == 'Household Demonstration'
+
+    forms = list(_get_forms(domain, form_filter=ff_func))
+    resp_dict.update({
+        "num_hh_demo": reduce(lambda sum, f: sum + _count_in_repeats(f.xpath('form/visits'), 'hh_covered'), forms, 0),
+        "num_young": reduce(lambda sum, f: sum + _count_in_repeats(f.xpath('form/visits'), 'number_young_children_covered'), forms, 0),
+        "num_leaflets": reduce(lambda sum, f: sum + _count_in_repeats(f.xpath('form/visits'), 'leaflets_distributed'), forms, 0),
+        "num_kits": reduce(lambda sum, f: sum + _count_in_repeats(f.xpath('form/visits'), 'kits_sold'), forms, 0),
+    })
+    return resp_dict
+
+def _count_in_repeats(data, what_to_count):
+    if not isinstance(data, list):
+        data = [data]
+    return reduce(lambda sum, d: sum + int(d.get(what_to_count, 0)), data, 0)
 
 def _get_all_form_submissions(domain):
     submissions = XFormInstance.view('reports/all_submissions',
@@ -965,11 +1001,12 @@ def _get_all_form_submissions(domain):
 
 def _get_forms(domain, form_filter=lambda f: True):
     for form in _get_all_form_submissions(domain):
-        import pprint
-        pp = pprint.PrettyPrinter(indent=2)
-        pp.pprint(dict(form))
-        print form.form.get('@name', None)
+#        import pprint
+#        pp = pprint.PrettyPrinter(indent=2)
+#        pp.pprint(dict(form))
+#        print form.form.get('@name', None)
         if form_filter(form):
+            print "YEP"
             yield form
 
 def _get_form(domain, action_filter=lambda a: True, form_filter=lambda f: True):
