@@ -16,90 +16,74 @@ providing generic domain management and form data-collection functionality.
 + Over-the-air (ota) restore of user and cases
 + Integrated web and email reporting
 
-### Basic Project Structure
-
-+ **submodules/** - submodule reference to the meat of the code (which lives in many other packages, particularly core-hq)
-+ **libs/** - Third party libs (presumably python) that you'll need to reference
-+ **scripts/** - Any helper scripts you'll want to write to deal with data and or other things.  This stuff should probably run outside the scope of the python environment
-
 
 Installing CommCare HQ
 ----------------------
 
-Please note, these instructions are targeted toward UNIX-based systems.
+Please note that these instructions are targeted toward UNIX-based systems.
+
+### Installing dependencies
+
+For Ubuntu 12.04, you can use the included `install.sh` script to install all
+dependencies, set them up to run at startup, and set up required databases.
+Then skip to "Setting up a virtualenv". 
+
+Otherwise, install the following software from your OS package manager or the
+individual project sites when necessary.
+
++ Python 2.6 or 2.7
++ pip
++ CouchDB >= 1.0 (1.2 recommended) ([installation instructions][couchdb])
++ PostgreSQL >= 8.4 - (install from OS package manager or [here][postgres])
++ [elasticsearch][elasticsearch] (including Java 7)
++ memcached
++ [Jython][jython] 2.5.2 (optional, only needed for CloudCare)
++ For additional requirements necessary only if you want to modify the default
+  JavaScript or CSS styling, see [CommCare HQ Style](https://github.com/dimagi/hqstyle-src).
+
+ [couchdb]: http://wiki.apache.org/couchdb/Installation
+ [postgres]: http://jython.org/downloads.html
+ [elasticsearch]: http://www.elasticsearch.org/download/
+ [jython]: http://jython.org/downloads.html
 
 
-### Requirements
+#### Common issues
 
-The following are necessary for the basic function of CommCare HQ.
++ A bug in psycopg 2.4.1 (a Python package we require) may break CommCare HQ
+  when using a virtualenv created with `--no-site-packages` or when the
+  `egenix-mx-base` Python package is not already installed. To fix this, install
+  `egenix-mx-base` (`sudo apt-get install python-egenix-mxdatetime` on Ubuntu)
+  and use `virtualenv --with-site-packages` instead.
 
-+ `python`
-+ `pip`
-+ `memcached`
-+ **postgres** - [Download postgres here](http://www.enterprisedb.com/products-services-training/pgdownload)
-+ **couchdb** - Version 1.0 or greater required - [View installation instructions here](http://wiki.apache.org/couchdb/Installation)
-+ **elasticsearch** - [Download](http://www.elasticsearch.org/download/) - and requisite requirements (java)
-+ You may need to take some manual steps before running the pip install:
-  + For PIL (Python Image Library) on Ubuntu: http://obroll.com/install-python-pil-python-image-library-on-ubuntu-11-10-oneiric/
++ On Mac OS X, pip doesn't install the `libmagic` dependency for `python-magic`
+  properly. To fix this, run `brew install libmagic`.
 
-Note on couchdb installation: Using aptitude or apt-get may not install the latest version. See other installation options if version < 1.0 is installed by using this method.
-
-CommCare HQ requires the python package `egenix-mx-base`, but a bug in
-`psycopg2` < 2.4.2 makes it difficult to use psycopg2 in a virtualenv if
-egenix-mx-base was also installed in a virtualenv.  Since CommCare HQ requires
-psycopg 2.4.1, you need to install egenix-mx-base using your operating system's
-package manager if it isn't already installed.
-
-#### Configurations for postgres
-
-It is recommended that you create the database **commcarehq** before continuing.
-
-
-#### Configuration for CouchDB
-
-It is recommended that you create the database **commcarehq** before continuing.
-
++ To install PIL (Python Image Library) correctly on Ubuntu, you may need to
+  follow [these instructions](http://obroll.com/install-python-pil-python-image-library-on-ubuntu-11-10-oneiric/). 
+  (If you don't do this, the only thing that won't work is uploading of JPEGs to
+  the CommCare Exchange.)
 
 #### Configuration for Elasticsearch
 
-Unzip and install elasticsearch. To run it in an upstart configuration,
-see [this example](https://gist.github.com/3961323). Otherwise, just run the elasticsearch in the
- bin/ directory of the unzipped archive.  All configs for indexes will be run via the run_ptop
- management command.
+To run elasticsearch in an upstart configuration, see [this example](https://gist.github.com/3961323).
 
- To secure elasticsearch, we recommend setting the listen port to localhost on a local machine.
- On a distributed environment, we recommend setting up ssh tunneled ports for the elasticsearch
- port. The supervisor_elasticsearch.conf supervisor config demonstrates the tunnel creation using
-  autossh.
+To secure elasticsearch, we recommend setting the listen port to localhost on a
+local machine. On a distributed environment, we recommend setting up ssh
+tunneled ports for the elasticsearch port. The supervisor_elasticsearch.conf
+supervisor config demonstrates the tunnel creation using autossh.
 
 
-#### Setting up a virtualenv
+### Setting up a virtualenv
 
 A virtualenv is not required, but it may make your life easier.
 
-To install:
-
-    sudo pip install virtualenv     # or sudo easy_install virtualenv
+    sudo pip install virtualenv
     mkdir ~/.virtualenvs/
     virtualenv ~/.virtualenvs/commcare-hq --no-site-packages
 
-Run `source ~/.virtualenvs/commcare-hq/bin/activate` to enter your virtualenv.
+### Downloading and configuring CommCare HQ
 
-`libmagic` is required by `python-magic`, which pip will install automatically. Unfortunately, on Mac OS X, pip doesn't install libmagic itself. To add it, just
-
-     brew install libmagic
-
-#### CommCare HQ Style Developer Requirements
-
-We use our own flavor of [Twitter Bootstrap](http://twitter.github.com/bootstrap/) for our user interface.
-Please check the README on our [CommCare HQ Style project page](https://github.com/dimagi/hqstyle-src) for requirements and instructions.
-Most notably, you will need `lessc` and `uglify-js` to compile CommCare HQ Style. However, since compiled files already exist,
-so you compiling the .less files from scratch will not be necessary unless you make modifications to the .less files.
-
-
-### Install CommCare HQ
-
-Once all the requirements are in order, please do the following:
+Once all the dependencies are in order, please do the following:
 
     git clone git@github.com:dimagi/commcare-hq.git
     cd commcare-hq
@@ -108,46 +92,77 @@ Once all the requirements are in order, please do the following:
     pip install -r requirements/requirements.txt -r requirements/prod-requirements.txt
     cp localsettings.example.py localsettings.py
 
+Then, edit localsettings.py and ensure that your Postgres, CouchDB, email, and
+log file settings are correct, as well as any settings required by any other
+functionality you want to use, such as SMS sending and Google Analytics.
 
-#### Edit localsettings.py
-
-Make the necessary edits to localsettings.py (database passwords, email configuration, etc.).
-Things to note:
-
-+ Make sure the postgres settings match your expectations (for instance, the postgres user password likely needs to be changed from the ***** in the file)
-+ Make sure the CouchDB settings match your expectations
-+ Make sure the following lines are correct and that the directories exist and are accessible by your user. Feel free to change the paths to your liking.
-    DJANGO_LOG_FILE = "/var/log/datahq/datahq.django.log"
-    LOG_FILE = "/var/log/datahq/datahq.log"
+Ensure that the directories for `LOG_FILE` and `DJANGO_LOG_FILE` exist and are
+writeable.
 
 
-#### Set up your django environment
-
-Please make sure you're still in the root directory of commcare-hq and that you are inside the correct virtualenv (if you are using one).
+### Set up your django environment
 
     ./manage.py syncdb
     ./manage.py migrate
-    # this will do some basic setup, create a superuser, and create a project
-    ./manage.py bootstrap <project-name> <email> <password>
     ./manage.py collectstatic
 
-### Don't forget to start up helper processes
+    # this will do some basic setup, create a superuser, and create a project
+    ./manage.py bootstrap <project-name> <email> <password>
 
-#### memcached (a lightweight cacher)
+    # To set up elasticsearch indexes, first run:
+    ./manage.py run_ptop
 
-    memcached -d
+    # Note the hqcases_<long_string> part in the output of the above
+    # command, and run:
+    curl -XPOST 'http://localhost:9200/_aliases' -d \
+        '{ "actions": [ {"add": {"index": "hqcases_<long_string>", "alias": "hqcases"}}]}'
 
-#### Couch-lucene
+    # If run_ptop didn't output anything like hqcases_<long_string>, go to
+    # http://localhost:9200/_status?pretty=true and find it near the top of the
+    # page and use that to run the above command.
+    # 
+    # Any potential future changes to the HQ code that change the case index
+    # mapping type for elasticsearch require you to repeat this step. This
+    # process will be improved.
 
-    Enable  Lucene settings in  localsettings.py (to view  case list in the  Report section)
+To enable CloudCare, ensure that `TOUCHFORMS_API_USER` and
+`TOUCHFORMS_API_PASSWORD` in `localsettings.py` are the credentials of the
+django admin user you created above and then create the file
+`submodules/touchforms-src/touchforms/backend/localsettings.py` with the
+following contents:
 
-#### Celery (asynchronous task scheduler)
-
-    ./manage.py celeryd -v 2 -B -s celery -E
+    URL_ROOT = 'http://localhost:8000/a/{{DOMAIN}}'
 
 
-### Get CommCare Binaries
+Running CommCare HQ
+-------------------
 
-In order to build and download a CommCare mobile app from your instance of CommCare HQ, you need to follow
-our instructions for how to download and load CommCare binaries from the Dimagi build server:
-https://github.com/dimagi/core-hq/blob/master/corehq/apps/builds/README.md
+If your installation didn't set up the helper processes required by CommCare HQ
+to automatically run on system startup, you need to run them manually:
+
+    memcached -d &
+    /path/to/unzipped/elasticsearch/bin/elasticsearch &
+    /path/to/couchdb/bin/couchdb &
+
+Then run
+
+    ./run.sh
+
+Or for debugging,
+
+    ./run.sh --werkzeug
+
+For a robust setup, you will want to use something like
+[supervisor](http://supervisord.org/) to manage processes.  You can see the
+supervisor configs for [CommCareHQ.org](http://www.commcarehq.org) in the
+`services/` directory.
+
+
+Building CommCare Mobile Apps
+-----------------------------
+
+In order to build and download a CommCare mobile app from your instance of
+CommCare HQ, you need to follow our [instructions][builds] for how to download
+and load CommCare binaries from the Dimagi build server.
+
+ [builds]: https://github.com/dimagi/core-hq/blob/master/corehq/apps/builds/README.md
