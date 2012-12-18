@@ -125,7 +125,8 @@ DEFAULT_APPS = (
     #'ghettoq',     # pip install ghettoq
     'djkombu',     # pip install django-kombu
     'couchdbkit.ext.django',
-    'crispy_forms'
+    'crispy_forms',
+    'django.contrib.markup',
 )
 
 CRISPY_TEMPLATE_PACK = 'bootstrap'
@@ -569,14 +570,12 @@ APPSTORE_INTERFACE_MAP = {
 
 PROJECT_REPORT_MAP = {
     "Monitor Workers" : [
-        'corehq.apps.reports.standard.monitoring.CaseActivityReport',
+        'corehq.apps.reports.standard.monitoring.DailyFormStatsReport',
         'corehq.apps.reports.standard.monitoring.SubmissionsByFormReport',
-        'corehq.apps.reports.standard.monitoring.DailySubmissionsReport',
-        'corehq.apps.reports.standard.monitoring.DailyFormCompletionsReport',
-        'corehq.apps.reports.standard.monitoring.FormCompletionTrendsReport',
+        'corehq.apps.reports.standard.monitoring.FormCompletionTimeReport',
+        'corehq.apps.reports.standard.monitoring.CaseActivityReport',
         'corehq.apps.reports.standard.monitoring.FormCompletionVsSubmissionTrendsReport',
-        'corehq.apps.reports.standard.monitoring.SubmissionTimesReport',
-        'corehq.apps.reports.standard.monitoring.SubmitDistributionReport',
+        'corehq.apps.reports.standard.monitoring.WorkerActivityTimes',
     ],
     "Inspect Data" : [
         'corehq.apps.reports.standard.inspect.SubmitHistory',
@@ -729,8 +728,9 @@ ADM_ADMIN_INTERFACE_MAP = {
 }
 
 ANNOUNCEMENTS_ADMIN_INTERFACE_MAP = {
-    "Global HQ Announcements": [
+    "Manage Announcements": [
         'corehq.apps.announcements.interface.ManageGlobalHQAnnouncementsInterface',
+        'corehq.apps.announcements.interface.ManageReportAnnouncementsInterface',
     ]
 }
 
@@ -782,3 +782,5 @@ PILLOWTOPS = [ 'corehq.pillows.CasePillow',
                'corehq.pillows.CouchlogPillow',
                'corehq.pillows.DevicelogPillow',
                ] + LOCAL_PILLOWTOPS
+
+REMOTE_APP_NAMESPACE = "%(domain)s.commcarehq.org"
