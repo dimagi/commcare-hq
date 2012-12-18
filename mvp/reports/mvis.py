@@ -82,10 +82,10 @@ class HealthCoordinatorReport(MVPIndicatorReport):
                     "under5_fever_rdt_negative_medicated_proportion", # A2 - 30
                     "under5_fever_rdt_not_received_proportion", #A1 - 48, all set
                     "under5_diarrhea_ors_proportion", # A2 - 37
-                    "under5_diarrhea_zinc_proportion",
-                    "under5_complicated_fever_facility_followup_proportion",
+                    "under5_diarrhea_zinc_proportion", # B - 38
+                    "under5_complicated_fever_facility_followup_proportion", # C - 32
                     "under5_complicated_fever_referred_proportion",
-                    "under1_check_ups_proportion",
+                    "under1_check_ups_proportion", # C - 9
                 ]
             },
             {
@@ -94,7 +94,7 @@ class HealthCoordinatorReport(MVPIndicatorReport):
                 'indicator_slugs': [
                     "muac_wasting_proportion", # A2 - 10, all set
                     "muac_routine_proportion", # A2 - 11, all set
-                    "under6month_exclusive_breastfeeding_proportion",
+                    "under6month_exclusive_breastfeeding_proportion", # B - 7, all set
                     "low_birth_weight_proportion", # A3 - 5, all set
                 ]
             },
@@ -115,7 +115,7 @@ class HealthCoordinatorReport(MVPIndicatorReport):
                 'category_title': "CHW Mgmt",
                 'category_slug': 'chw_management',
                 'indicator_slugs': [
-                    "median_days_referral_followup", #needs checking ?
+                    "median_days_referral_followup", # ok all set
                 ]
             },
             {
@@ -125,7 +125,7 @@ class HealthCoordinatorReport(MVPIndicatorReport):
                     "family_planning_proportion", # A2 - 1
                     "anc4_proportion", # A2 - 3
                     "facility_births_proportion", # A2 - 4
-                    "pregnant_routine_checkup_proportion_6weeks",
+                    "pregnant_routine_checkup_proportion_6weeks", # B - 24
                 ]
             },
             {
