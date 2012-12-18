@@ -1,6 +1,7 @@
 from django.core.management.base import LabelCommand
 import sys
 from casexml.apps.case.models import CommCareCase
+from corehq.apps.reports.util import make_form_couch_key
 from couchforms.models import XFormInstance
 
 class Command(LabelCommand):
@@ -9,10 +10,11 @@ class Command(LabelCommand):
     label = ""
 
     def handle(self, *args, **options):
-        test_forms = XFormInstance.view('reports/all_submissions',
+        key = make_form_couch_key("hsph")
+        test_forms = XFormInstance.view('reports_forms/all_forms',
             reduce=False,
-            startkey=["hsph"],
-            endkey=["hsph", "2012-11-07"],
+            startkey=key,
+            endkey=key+["2012-11-07"],
             include_docs=True,
         ).all()
         test_cases = CommCareCase.view('reports/case_activity',
