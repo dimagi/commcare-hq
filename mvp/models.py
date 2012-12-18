@@ -5,6 +5,7 @@ import dateutil
 import logging
 import pytz
 from corehq.apps.indicators.models import DynamicIndicatorDefinition, NoGroupCouchIndicatorDefBase
+from corehq.apps.reports.util import make_form_couch_key
 from dimagi.utils.couch.database import get_db
 
 class MVP(object):
@@ -37,11 +38,8 @@ class MVPDaysSinceLastTransmission(DynamicIndicatorDefinition):
             enddate = datetime.datetime.utcnow()
         days = []
         for user_id in user_ids:
-            couch_view = "reports/submit_history" if user_id else "reports/all_submissions"
-            key = [self.domain]
-            if user_id:
-                key.append(user_id)
-            results = get_db().view(couch_view,
+            key = make_form_couch_key(self.domain, user_id=user_id)
+            results = get_db().view("reports_forms/all_forms",
                 reduce=False,
                 include_docs=False,
                 descending=True,
@@ -62,7 +60,7 @@ class MVPDaysSinceLastTransmission(DynamicIndicatorDefinition):
         if not days:
             return None
         return days
-
+    
 
 class MVPActiveCasesIndicatorDefinition(NoGroupCouchIndicatorDefBase):
     """
@@ -146,7 +144,7 @@ class MVPChildCasesByAgeIndicatorDefinition(MVPActiveCasesIndicatorDefinition):
                             valid_id = True
                     if valid_id:
                         valid_case_ids.append(item['id'])
-                except Exception as e:
+                except Exception:
                     logging.error("date of birth could not be parsed")
         return valid_case_ids
 
