@@ -4,6 +4,14 @@ function(doc) {
         isPregnancyVisitForm(doc) ||
         isHomeVisitForm(doc)) {
 
+        function get_pregnancy_start_from_edd_date(edd_date) {
+            var preg_start = new Date(),
+                gestation_ms = 266*MS_IN_DAY;
+            var start_ms = edd_date.getTime() - gestation_ms;
+            preg_start.setTime(start_ms);
+            return preg_start;
+        }
+
         var indicators = get_indicators(doc),
             meta = doc.form.meta,
             case_id = get_case_id(doc);
@@ -14,25 +22,24 @@ function(doc) {
 
         if (isChildVisitForm(doc) && indicators.child_dob && indicators.child_dob.value) {
             // birthdate found, is child under 5?
-            var age_in_years = get_age_from_dob(indicators.child_dob.value, visit_date);
-            if (age_in_years < 5) {
+            var age = get_age_from_dob(indicators.child_dob.value, visit_date);
+            if (age < 1825*MS_IN_DAY) {
                 indicator_entries['child under5'] = case_id;
-                if (age_in_years < 1) {
+                if (age < 365*MS_IN_DAY) {
                     indicator_entries['child under1'] = case_id;
 
-                    var age_in_days = age_in_years*365;
-                    if (age_in_days < 180) {
+                    if (age < 180*MS_IN_DAY) {
                         indicator_entries['child under6mo'] = case_id;
                         if (indicators.exclusive_breastfeeding
                             && indicators.exclusive_breastfeeding.value === 'yes') {
                             indicator_entries['child under6mo_ex_breast'] = case_id;
                         }
                     }
-                    if (age_in_days < 31) {
+                    if (age < 31*MS_IN_DAY) {
                         // This under5 child is also neonate
                         indicator_entries["child neonate"] = case_id;
                     }
-                    if (age_in_days <= 7) {
+                    if (age <= 7*MS_IN_DAY) {
                         indicator_entries["child 7days"] = case_id;
                     }
                 }
