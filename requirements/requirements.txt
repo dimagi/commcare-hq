@@ -41,3 +41,4 @@ gevent==0.13.8
 rawes==0.2
 numpy==1.6.2
 socketpool==0.5.2
+markdown==2.2.1
