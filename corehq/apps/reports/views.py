@@ -921,14 +921,10 @@ def _get_related_fixture_items(domain, data_types, fixture_items, fixture_name, 
     return None
 
 def psi_events(domain, query_dict):
-    import pprint
-    pp = pprint.PrettyPrinter(indent=2)
-
     place_types = ['block', 'state', 'district']
     places, pdts = _get_place_mapping_to_fdi(domain, query_dict, place_types=place_types)
 
     resp_dict = {}
-    pp.pprint(dict(places))
 
     # get the name of district
     name_of_district = _get_related_fixture_items(domain, pdts, places.values(), 'district', 'district_id')
@@ -950,7 +946,6 @@ def psi_events(domain, query_dict):
         "num_leaflets": reduce(lambda sum, f: sum + f.xpath('form/number_of_leaflets'), forms, 0),
         "num_gifts": reduce(lambda sum, f: sum + f.xpath('form/number_of_gifts'), forms, 0)
     })
-    pp.pprint(resp_dict)
     return resp_dict
 
 def psi_household_demonstrations(domain, query_dict):
