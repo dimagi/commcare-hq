@@ -46,7 +46,8 @@ if [ $? -eq 0 ]; then
     sudo apt-get install -y git python-pip python-dev libevent-1.4-2 \
         libevent-dev python-setuptools  \
         postgresql memcached \
-        nodejs npm
+        nodejs npm \
+        gdebi-core python-software-properties
 
     sudo apt-get build-dep -y python-psycopg2 python-lxml
 
@@ -109,11 +110,6 @@ if [ ! -d /usr/lib/jvm/jdk1.7.0 ]; then
     sudo rm -r /usr/lib/jvm/jdk1.7.0/
     sudo mv ./jdk1.7.0* /usr/lib/jvm/jdk1.7.0
 
-    sudo update-alternatives --install "/usr/bin/java" "java" "/usr/lib/jvm/jdk1.7.0/bin/java" 1
-    sudo update-alternatives --install "/usr/bin/javac" "javac" "/usr/lib/jvm/jdk1.7.0/bin/javac" 1
-    sudo update-alternatives --install "/usr/bin/javaws" "javaws" "/usr/lib/jvm/jdk1.7.0/bin/javaws" 1
-
-    sudo update-alternatives --config java
 fi
 
 ## Install Jython ##
@@ -170,7 +166,7 @@ if [ ! -f /etc/init.d/elasticsearch ]; then
         if [ ! -f $file ]; then
             wget https://github.com/downloads/elasticsearch/elasticsearch/$file
         fi
-        sudo dpkg -i $file 
+        sudo gdebi -n $file
 
         echo "
         JAVA_HOME=/usr/lib/jvm/jdk1.7.0
@@ -196,6 +192,16 @@ if [ ! -f /etc/init.d/elasticsearch ]; then
         " | sudo tee /etc/default/elasticsearch
     fi
 fi
+
+# We do this at the end in case anything above (such as gdebi elasticsearch.deb) 
+# installs a system java package and changes the configured java install path,
+# which we don't want
+
+sudo update-alternatives --install "/usr/bin/java" "java" "/usr/lib/jvm/jdk1.7.0/bin/java" 1
+sudo update-alternatives --install "/usr/bin/javac" "javac" "/usr/lib/jvm/jdk1.7.0/bin/javac" 1
+sudo update-alternatives --install "/usr/bin/javaws" "javaws" "/usr/lib/jvm/jdk1.7.0/bin/javaws" 1
+
+sudo update-alternatives --config java
 
 ## Ensure services start on startup ##
 if [ "$PM" = "apt-ubuntu" ]; then
