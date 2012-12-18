@@ -1,12 +1,12 @@
 function (doc) {
 
-    if(doc.domain != "pact") {
+    if (doc.domain != "pact") {
         return;
     }
 
 
     function get_case_id(doc) {
-        if(doc.form['case'] !== undefined) {
+        if (doc.form['case'] !== undefined) {
             if (doc.form['case']['case_id'] !== undefined) {
                 return doc.form['case']['case_id'];
             }
@@ -86,56 +86,59 @@ function (doc) {
             var encounter_date = parse_date(doc.form['encounter_date']); //yyyy-mm-dd which sucks at parsing with new Date
             var anchor_datestring = anchor_date.getFullYear() + "-" + padzero(anchor_date.getMonth() + 1) + "-" + padzero(anchor_date.getDate());
 
-            for (var i = 0; i < daily_data.length; i += 1) {
-                //iterate through each day = i
-                //i = 0 = oldest
-                //i = length-1 = youngest, ie, today
-                var day_delta = daily_data.length - 1 - i;
-                var drug_classes = daily_data[i];
-                //var observed_date = new Date(anchor_date.getTime() - (24*3600*1000 * i));
-                var observed_date = new Date(pactdata['dots']['anchor']); //set value based upon anchor...
-                observed_date.setDate(anchor_date.getDate() - day_delta); //adjusted with the day_delta
-                for (var j = 0; j < drug_classes.length; j += 1) {
-                    //iterate through the drugs to get art status within a given day.  right now that's just 2
-                    var dispenses = drug_classes[j]; //right now just 2 elements[art, nonart]
-                    var is_art = false;
-                    if (j == 0) {
-                        //non art drug is always zero'th
-                        is_art = false;
-                    }
-                    else {
-                        is_art = true;
-                    }
-                    var note = '';
-                    if (i == daily_data.length - 1 && drop_note) {
-                        //if this is the first element at the anchor date, put the note of the xform in here.
-                        note = doc.form['notes'];
-                        drop_note = false;
-                    }
+            if (anchor_datestring == doc.form['encounter_date']) {
+                for (var i = 0; i < daily_data.length; i += 1) {
+                    //iterate through each day = i
+                    //i = 0 = oldest
+                    //i = length-1 = youngest, ie, today
+                    var day_delta = daily_data.length - 1 - i;
+                    var drug_classes = daily_data[i];
+                    //var observed_date = new Date(anchor_date.getTime() - (24*3600*1000 * i));
+                    var observed_date = new Date(pactdata['dots']['anchor']); //set value based upon anchor...
+                    observed_date.setDate(anchor_date.getDate() - day_delta); //adjusted with the day_delta
+                    for (var j = 0; j < drug_classes.length; j += 1) {
+                        //iterate through the drugs to get art status within a given day.  right now that's just 2
+                        var dispenses = drug_classes[j]; //right now just 2 elements[art, nonart]
+                        var is_art = false;
+                        if (j == 0) {
+                            //non art drug is always zero'th
+                            is_art = false;
+                        }
+                        else {
+                            is_art = true;
+                        }
+                        var note = '';
+                        if (i == daily_data.length - 1 && drop_note) {
+                            //if this is the first element at the anchor date, put the note of the xform in here.
+                            note = doc.form['notes'];
+                            drop_note = false;
+                        }
 
-                    for (var drug_freq = 0; drug_freq < dispenses.length; drug_freq += 1) {
-                        //within each drug, iterate through the "taken time", as according to frequency
-                        //populate the rest of the information
-                        //create the dictionary to be emitted
-                        var drug_obs = {};
-                        drug_obs['doc_id'] = doc._id;
-                        drug_obs['pact_id'] = doc.form['pact_id'];
-                        drug_obs['provider'] = doc.form['meta']['username'];
-                        drug_obs['created_date'] = doc.form['meta']['timeStart'];
-                        drug_obs['encounter_date'] = toISOString(encounter_date);
-                        drug_obs['completed_date'] = doc.form['meta']['timeEnd'];
-                        drug_obs['anchor_date'] = toISOString(anchor_date);
-                        drug_obs['day_index'] = day_delta;
-                        drug_obs['is_art'] = is_art;
-                        drug_obs['note'] = note;
-                        drug_obs['total_doses'] = dispenses.length;
-                        drug_obs['observed_date'] = toISOString(observed_date);
-                        drug_obs['dose_number'] = drug_freq;
-                        do_observation(doc, observed_date, anchor_date, dispenses[drug_freq], drug_obs);
+                        for (var drug_freq = 0; drug_freq < dispenses.length; drug_freq += 1) {
+                            //within each drug, iterate through the "taken time", as according to frequency
+                            //populate the rest of the information
+                            //create the dictionary to be emitted
+                            var drug_obs = {};
+                            drug_obs['doc_id'] = doc._id;
+                            drug_obs['pact_id'] = doc.form['pact_id'];
+                            drug_obs['provider'] = doc.form['meta']['username'];
+                            drug_obs['created_date'] = doc.form['meta']['timeStart'];
+                            drug_obs['encounter_date'] = toISOString(encounter_date);
+                            drug_obs['completed_date'] = doc.form['meta']['timeEnd'];
+                            drug_obs['anchor_date'] = toISOString(anchor_date);
+                            drug_obs['day_index'] = day_delta;
+                            drug_obs['is_art'] = is_art;
+                            drug_obs['note'] = note;
+                            drug_obs['total_doses'] = dispenses.length;
+                            drug_obs['observed_date'] = toISOString(observed_date);
+                            drug_obs['dose_number'] = drug_freq;
+                            do_observation(doc, observed_date, anchor_date, dispenses[drug_freq], drug_obs);
+                        }
                     }
                 }
             }
-            if (anchor_datestring != doc.form['encounter_date']) {
+            else {
+                //if (anchor_datestring != doc.form['encounter_date']) {
                 //finally, if the observed_date and anchor dates are different, we need to make a manual single DOT entry:
                 //doing a direct string interpretation due to timezone issues, at the time of creation on the phone, the DATE is correct, regardless of time taken.  So comparing by the individual
                 //date components is the most accurate way to fly here.

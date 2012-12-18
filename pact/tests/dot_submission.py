@@ -38,36 +38,68 @@ class dotsSubmissionTests(TestCase):
                                '02_no_pillbox.xml')) as fin:
             self.no_pillbox_form = fin.read()
 
+    def tearDown(self):
+        for x in [PILLBOX_ID, NO_PILLBOX_ID]:
+            if XFormInstance.get_db().doc_exist(x):
+                doc = XFormInstance.get(x)
+                XFormInstance.get_db().delete_doc(doc)
+
     def testSignal(self):
         """
         Test to ensure that with a DOT submission the signal works
         """
         submit_xform(self.submit_url, self.domain.name, self.pillbox_form)
-
         submitted = XFormInstance.get(PILLBOX_ID)
         self.assertTrue(hasattr(submitted, PACT_DOTS_DATA_PROPERTY))
 
+    def testNoPillboxCheck(self):
+        """
+        Test the dot map function that the no-pillbox checker is faithfully returning DOT data in the calendar thanks to the view
+        """
+        submit_xform(self.submit_url, self.domain.name, self.no_pillbox_form)
+        submitted = XFormInstance.get(NO_PILLBOX_ID)
+        self.assertTrue(hasattr(submitted, PACT_DOTS_DATA_PROPERTY))
+        observations = query_observations(CASE_ID, START_DATE, END_DATE)
+        observed_dates = set()
+        #assume to be two
+        art_nonart = set()
+        for obs in observations:
+            observed_dates.add(obs.observed_date)
+            self.assertEquals(obs.day_note, "No check, from form") #magic string from the view to indicate a generated DOT observation from form data.
+            art_nonart.add(obs.is_art)
+            self.assertEquals(obs.doc_id, NO_PILLBOX_ID)
+        #this only does SINGLE observations for art and non art
+        self.assertEquals(len(observed_dates), 1)
+        self.assertEquals(len(art_nonart), 2)
+
+    def testDOTResubmissionWorkflow(self):
+        #submit form, check that it's 2x num of forms
+        #check case history
+        pass
 
     def testPillboxCheck(self):
+        """
+        This test tries to accomplish a few things
+        0: ensure the content of the signal is correctly set
+        1: verify that the dots_observations view is working correctly in reporting dates correclty back in order
+        2: Ensure that if you fill out the questions on the form, it won't redundantly fill out the pillbox cells again as well
+        3: ensure that proper ART/NonART sequences are put in the correct buckets when combined into a "DOTS Day" cell
+
+        todo: get label day_slot to work correctly
+        """
         #check to make sure that 0th and nth elements are where they ought to be
         #hit the VIEW to make sure it's there
-
         #make sure the pact_dots_data signal is working
-
         #check no pillbox check entries that entries show up, and NOTHING more.
-
-        #labeling checks?
-
         #ensure signal works
+        #todo: labeling checks
+
         self.testSignal()
         observations = query_observations(CASE_ID, START_DATE, END_DATE)
-        print len(observations)
         td = END_DATE - START_DATE
 
         def check_obs_props(obs, props):
-            pdb.set_trace()
             for k, v in props.items():
-                print "check obs: %s: %s" % (k, v)
                 if k.endswith("_date"):
                     #datetime check
                     obs_date = getattr(obs, k).date()
@@ -75,16 +107,12 @@ class dotsSubmissionTests(TestCase):
                     self.assertEquals(obs_date, val_date)
                 else:
                     self.assertEquals(getattr(obs, k), v)
-                print "success\n"
 
         for d in range(td.days):
             this_day = START_DATE + timedelta(days=d)
-            print this_day.strftime("%m/%d/%Y")
             day_submissions = obs_for_day(this_day.date(), observations)
             day_data = merge_dot_day(day_submissions)
             if this_day.date() == START_DATE.date():
-                #print day_data
-                pdb.set_trace()
                 art_first = day_data['ART']['dose_dict'][1][0]
                 art_first_check_props = {
                     "encounter_date": "2012-12-07T05:00:00Z",
@@ -100,7 +128,7 @@ class dotsSubmissionTests(TestCase):
                     "completed_date": "2012-12-16T22:00:28Z",
                     "adherence": "partial",
                     "dose_number": 1, #zero indexed
-#                    "doc_type": "CObservation",
+                    #                    "doc_type": "CObservation",
                     "is_reconciliation": False,
                     "anchor_date": "2012-12-07T05:00:00Z",
                     "created_date": "2012-12-16T21:37:52Z",
@@ -121,11 +149,11 @@ class dotsSubmissionTests(TestCase):
                     "provider": "ctsims",
                     "method": "pillbox",
                     "observed_date": "2012-11-17T05:00:00Z",
-#                    "day_slot": 2,
+                    #                    "day_slot": 2,
                     "completed_date": "2012-12-16T22:00:28Z",
                     "adherence": "partial",
                     "dose_number": 1,
-#                    "doc_type": "CObservation",
+                    #                    "doc_type": "CObservation",
                     "is_reconciliation": False,
                     "anchor_date": "2012-12-07T05:00:00Z",
                     "created_date": "2012-12-16T21:37:52Z",
@@ -134,7 +162,6 @@ class dotsSubmissionTests(TestCase):
                     "doc_id": "a1811d7e-c968-4b63-aea5-6195ce0d8759"
                 }
                 check_obs_props(non_art_first_1, non_art_first_1_props)
-
 
                 non_art_first_2 = day_data['NONART']['dose_dict'][2][0]
                 non_art_first_2_props = {
@@ -147,11 +174,11 @@ class dotsSubmissionTests(TestCase):
                     "provider": "ctsims",
                     "method": "pillbox",
                     "observed_date": "2012-11-17T05:00:00Z",
-#                    "day_slot": 3,
+                    #                    "day_slot": 3,
                     "completed_date": "2012-12-16T22:00:28Z",
                     "adherence": "partial",
                     "dose_number": 2,
-#                    "doc_type": "CObservation",
+                    #                    "doc_type": "CObservation",
                     "is_reconciliation": False,
                     "anchor_date": "2012-12-07T05:00:00Z",
                     "created_date": "2012-12-16T21:37:52Z",
@@ -161,66 +188,159 @@ class dotsSubmissionTests(TestCase):
                 }
                 check_obs_props(non_art_first_2, non_art_first_2_props)
 
-                if this_day.date() == (ANCHOR_DATE - timedelta(days=1)).date():
-                    print "Second to last date"
-                print day_data
+            if this_day.date() == (ANCHOR_DATE - timedelta(days=1)).date():
+                self.assertEquals(len(day_data['ART']['dose_dict'].keys()), 1) # only filled ART one dose
+                art_slast = day_data['ART']['dose_dict'][0][0]
+                art_slast_props = {
+                    "encounter_date": "2012-12-07T05:00:00Z",
+                    "total_doses": 2,
+                    "day_note": "2nd to last last filled by questions",
+                    "day_index": 1,
+                    "note": "",
+                    "pact_id": "999999",
+                    "provider": "ctsims",
+                    "method": "pillbox",
+                    "observed_date": "2012-12-06T05:00:00Z",
+                    "day_slot": -1,
+                    "completed_date": "2012-12-16T22:00:28Z",
+                    "adherence": "partial",
+                    "dose_number": 0,
+                    #                    "doc_type": "CObservation",
+                    "is_reconciliation": False,
+                    "anchor_date": "2012-12-07T05:00:00Z",
+                    "created_date": "2012-12-16T21:37:52Z",
+                    "is_art": True,
+                    "_id": "a1811d7e-c968-4b63-aea5-6195ce0d8759",
+                    "doc_id": "a1811d7e-c968-4b63-aea5-6195ce0d8759"
+                }
+                check_obs_props(art_slast, art_slast_props)
 
-                if this_day.date() == ANCHOR_DATE.date():
-                    print "Anchor date"
-                    self.assertEqual(len(day_data['NONART']['dose_dict']), 1)
-                    non_art_last = day_data['NONART']['dose_dict'][0][0]
-                    non_art_last_props = {
-                        "encounter_date": "2012-12-07T05:00:00Z",
-                        "total_doses": 3,
-                        "day_note": "",
-                        "day_index": 0,
-                        "note": "Anchor same",
-                        "pact_id": "999999",
-                        "provider": "ctsims",
-                        "method": "direct",
-                        "observed_date": "2012-12-07T05:00:00Z",
-                        #"day_slot": -1,
-                        "completed_date": "2012-12-16T22:00:28Z",
-                        "adherence": "partial",
-                        "dose_number": 0,
-#                        "doc_type": "CObservation",
-                        "is_reconciliation": False,
-                        "anchor_date": "2012-12-07T05:00:00Z",
-                        "created_date": "2012-12-16T21:37:52Z",
-                        "is_art": False,
-                        "_id": "a1811d7e-c968-4b63-aea5-6195ce0d8759",
-                        "doc_id": "a1811d7e-c968-4b63-aea5-6195ce0d8759"
-                    }
-                    check_obs_props(non_art_last, non_art_last_props)
+                nonart_slast0 = day_data['NONART']['dose_dict'][0][0]
+                non_art0 = {
+                    "encounter_date": "2012-12-07T05:00:00Z",
+                    "total_doses": 3,
+                    "day_note": "",
+                    "day_index": 1,
+                    "note": "",
+                    "pact_id": "999999",
+                    "provider": "ctsims",
+                    "method": "direct",
+                    "observed_date": "2012-12-06T05:00:00Z",
+                    #                "day_slot": -1,
+                    "completed_date": "2012-12-16T22:00:28Z",
+                    "adherence": "empty",
+                    "dose_number": 0,
+                    #                "doc_type": "CObservation",
+                    "is_reconciliation": False,
+                    "anchor_date": "2012-12-07T05:00:00Z",
+                    "created_date": "2012-12-16T21:37:52Z",
+                    "is_art": False,
+                    "_id": "a1811d7e-c968-4b63-aea5-6195ce0d8759",
+                    "doc_id": "a1811d7e-c968-4b63-aea5-6195ce0d8759"
+                }
+                check_obs_props(nonart_slast0, non_art0)
 
-                    non_art_last_noon = day_data['NONART']['dose_dict'][1][0]
-                    non_art_last_noon_props = {
-                        "encounter_date": "2012-12-07T05:00:00Z",
-                        "total_doses": 3,
-                        "day_note": "non art noon last",
-                        "day_index": 0,
-                        "note": "Anchor same",
-                        "pact_id": "999999",
-                        "provider": "ctsims",
-                        "method": "pillbox",
-                        "observed_date": "2012-12-07T05:00:00Z",
-#                        "day_slot": -1,
-                        "completed_date": "2012-12-16T22:00:28Z",
-                        "adherence": "partial",
-                        "dose_number": 1,
-#                        "doc_type": "CObservation",
-                        "is_reconciliation": False,
-                        "anchor_date": "2012-12-07T05:00:00Z",
-                        "created_date": "2012-12-16T21:37:52Z",
-                        "is_art": False,
-                        "_id": "a1811d7e-c968-4b63-aea5-6195ce0d8759",
-                        "doc_id": "a1811d7e-c968-4b63-aea5-6195ce0d8759"
-                    }
+                nonart_slast1 = day_data['NONART']['dose_dict'][1][0]
+                non_art1 = {
+                    "encounter_date": "2012-12-07T05:00:00Z",
+                    "total_doses": 3,
+                    "day_note": "non art noon second to last",
+                    "day_index": 1,
+                    "note": "",
+                    "pact_id": "999999",
+                    "provider": "ctsims",
+                    "method": "pillbox",
+                    "observed_date": "2012-12-06T05:00:00Z",
+                    #                "day_slot": -1,
+                    "completed_date": "2012-12-16T22:00:28Z",
+                    "adherence": "partial",
+                    "dose_number": 1,
+                    #                "doc_type": "CObservation",
+                    "is_reconciliation": False,
+                    "anchor_date": "2012-12-07T05:00:00Z",
+                    "created_date": "2012-12-16T21:37:52Z",
+                    "is_art": False,
+                    "_id": "a1811d7e-c968-4b63-aea5-6195ce0d8759",
+                    "doc_id": "a1811d7e-c968-4b63-aea5-6195ce0d8759"
+                }
+                check_obs_props(nonart_slast1, non_art1)
 
-                print day_data
+                nonart_slast2 = day_data['NONART']['dose_dict'][2][0]
+                non_art2 = {
+                    "encounter_date": "2012-12-07T05:00:00Z",
+                    "total_doses": 3,
+                    "day_note": "art evening second to last",
+                    "day_index": 1,
+                    "note": "",
+                    "pact_id": "999999",
+                    "provider": "ctsims",
+                    "method": "pillbox",
+                    "observed_date": "2012-12-06T05:00:00Z",
+                    #                "day_slot": -1,
+                    "completed_date": "2012-12-16T22:00:28Z",
+                    "adherence": "partial",
+                    "dose_number": 2,
+                    #                "doc_type": "CObservation",
+                    "is_reconciliation": False,
+                    "anchor_date": "2012-12-07T05:00:00Z",
+                    "created_date": "2012-12-16T21:37:52Z",
+                    "is_art": False,
+                    "_id": "a1811d7e-c968-4b63-aea5-6195ce0d8759",
+                    "doc_id": "a1811d7e-c968-4b63-aea5-6195ce0d8759"
+                }
+                check_obs_props(nonart_slast2, non_art2)
 
+            if this_day.date() == ANCHOR_DATE.date():
+                self.assertEqual(len(day_data['NONART']['dose_dict'][0]), 1)
+                non_art_last = day_data['NONART']['dose_dict'][0][0]
+                non_art_last_props = {
+                    "encounter_date": "2012-12-07T05:00:00Z",
+                    "total_doses": 3,
+                    "day_note": "",
+                    "day_index": 0,
+                    "note": "Anchor same",
+                    "pact_id": "999999",
+                    "provider": "ctsims",
+                    "method": "direct",
+                    "observed_date": "2012-12-07T05:00:00Z",
+                    #"day_slot": -1,
+                    "completed_date": "2012-12-16T22:00:28Z",
+                    "adherence": "partial",
+                    "dose_number": 0,
+                    #                        "doc_type": "CObservation",
+                    "is_reconciliation": False,
+                    "anchor_date": "2012-12-07T05:00:00Z",
+                    "created_date": "2012-12-16T21:37:52Z",
+                    "is_art": False,
+                    "_id": "a1811d7e-c968-4b63-aea5-6195ce0d8759",
+                    "doc_id": "a1811d7e-c968-4b63-aea5-6195ce0d8759"
+                }
+                check_obs_props(non_art_last, non_art_last_props)
 
-                #            print simplejson.dumps(day_data, indent=4)
-
+                non_art_last_noon = day_data['NONART']['dose_dict'][1][0]
+                non_art_last_noon_props = {
+                    "encounter_date": "2012-12-07T05:00:00Z",
+                    "total_doses": 3,
+                    "day_note": "non art noon last",
+                    "day_index": 0,
+                    "note": "Anchor same",
+                    "pact_id": "999999",
+                    "provider": "ctsims",
+                    "method": "pillbox",
+                    "observed_date": "2012-12-07T05:00:00Z",
+                    #                        "day_slot": -1,
+                    "completed_date": "2012-12-16T22:00:28Z",
+                    "adherence": "partial",
+                    "dose_number": 1,
+                    #                        "doc_type": "CObservation",
+                    "is_reconciliation": False,
+                    "anchor_date": "2012-12-07T05:00:00Z",
+                    "created_date": "2012-12-16T21:37:52Z",
+                    "is_art": False,
+                    "_id": "a1811d7e-c968-4b63-aea5-6195ce0d8759",
+                    "doc_id": "a1811d7e-c968-4b63-aea5-6195ce0d8759"
+                }
+                check_obs_props(non_art_last_noon, non_art_last_noon_props)
                 #todo: check reconciliation?
-                pass
+            pass
+            #outside for
