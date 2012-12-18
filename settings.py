@@ -125,7 +125,8 @@ DEFAULT_APPS = (
     #'ghettoq',     # pip install ghettoq
     'djkombu',     # pip install django-kombu
     'couchdbkit.ext.django',
-    'crispy_forms'
+    'crispy_forms',
+    'django.contrib.markup',
 )
 
 CRISPY_TEMPLATE_PACK = 'bootstrap'
@@ -727,8 +728,9 @@ ADM_ADMIN_INTERFACE_MAP = {
 }
 
 ANNOUNCEMENTS_ADMIN_INTERFACE_MAP = {
-    "Global HQ Announcements": [
+    "Manage Announcements": [
         'corehq.apps.announcements.interface.ManageGlobalHQAnnouncementsInterface',
+        'corehq.apps.announcements.interface.ManageReportAnnouncementsInterface',
     ]
 }
 
