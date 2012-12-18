@@ -21,7 +21,6 @@ class HqTestSuiteRunner(CouchDbKitTestSuiteRunner):
         return super(HqTestSuiteRunner, self).setup_test_environment(**kwargs)
         
     def setup_databases(self, **kwargs):
-        returnval = super(HqTestSuiteRunner, self).setup_databases(**kwargs)
         self.newdbname = self.get_test_db_name(settings.COUCH_DATABASE_NAME)
         print "overridding the couch settings!"
         new_db_settings = settingshelper.get_dynamic_db_settings(settings.COUCH_SERVER_ROOT, 
@@ -33,5 +32,5 @@ class HqTestSuiteRunner(CouchDbKitTestSuiteRunner):
         for (setting, value) in new_db_settings.items():
             setattr(settings, setting, value)
             print "set %s settting to %s" % (setting, value)
-        
-        return returnval
+
+        return super(HqTestSuiteRunner, self).setup_databases(**kwargs)
