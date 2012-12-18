@@ -1,5 +1,6 @@
 function(doc) {
     // !code util/mvp.js
+    // !code util/danger_signs.js
     if(isChildVisitForm(doc)) {
         var indicators = get_indicators(doc),
             meta = doc.form.meta;
@@ -7,7 +8,7 @@ function(doc) {
         if (indicators.child_dob && indicators.child_dob.value) {
             // birthdate found, is child under 5?
             var age = get_age_from_dob(indicators.child_dob.value, meta.timeEnd);
-            if (age < 5) {
+            if (age < 1825*MS_IN_DAY) {
                 indicator_keys.push("under5");
 
                 var fever_medication = indicators.fever_medication.value,

@@ -51,7 +51,7 @@ ACTIVE_CHILD_CASES_BY_AGE_INDICATORS = dict(
             under5_cases_30days=dict(
                 description="No. of Under-5 Children in the past 30 days",
                 title="# Under-5s",
-                max_age_in_days=1827,
+                max_age_in_days=1825,
                 indicator_key="",
                 fixed_datespan_months=1,
             ),
@@ -74,7 +74,7 @@ ACTIVE_CHILD_CASES_BY_AGE_INDICATORS = dict(
                 title="# low birth weight (<2.5 kg) births",
                 indicator_key="opened_on low_birth_weight",
                 show_active_only=False,
-                max_age_in_days=1827,
+                max_age_in_days=1825,
             ),
         )
     )
