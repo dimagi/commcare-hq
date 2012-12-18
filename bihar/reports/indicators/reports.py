@@ -28,13 +28,15 @@ class IndicatorNav(GroupReferenceMixIn, BiharNavReport):
     def rendered_report_title(self):
         return self.group_display
 
-class IndicatorSummaryReport(GroupReferenceMixIn, BiharSummaryReport, IndicatorSetMixIn):
+class IndicatorSummaryReport(GroupReferenceMixIn, BiharSummaryReport,
+                             IndicatorSetMixIn):
     
     name = ugettext_noop("Indicators")
     slug = "indicatorsummary"
     description = "Indicator details report"
     base_template_mobile = "bihar/indicator_summary.html"
-
+    is_cacheable = True
+    
     @property
     def rendered_report_title(self):
         return _(self.indicator_set.name)
@@ -62,7 +64,7 @@ class IndicatorSummaryReport(GroupReferenceMixIn, BiharSummaryReport, IndicatorS
                                                 render_as=self.render_next),
                     params
             ))
-        
+
         return [self.group.name] + \
                [_nav_link(i) for i in self.summary_indicators]
 
@@ -86,43 +88,52 @@ class IndicatorCharts(MockEmptyReport):
     slug = "indicatorcharts"
 
 
-class IndicatorClientSelectNav(GroupReferenceMixIn, BiharSummaryReport, IndicatorSetMixIn):
+class IndicatorClientSelectNav(GroupReferenceMixIn, BiharSummaryReport,
+                               IndicatorSetMixIn):
     name = ugettext_noop("Select Client List")
     slug = "clients"
+    is_cacheable = True
     
     _indicator_type = "client_list"
+
+    @property
+    def rendered_report_title(self):
+        return self.group_display
+
     @property
     def indicators(self):
         return [i for i in self.indicator_set.get_indicators() if i.show_in_client_list]
     
     @property
     def _headers(self):
-        return [" "] * len(self.indicators)
-    
+        return [list_prompt(i, iset.name) for i, iset in enumerate(self.indicators)]
+
     @property
     def data(self):
-        def _nav_link(i, indicator):
+        def _nav_link(indicator):
             params = copy(self.request_params)
             params["indicators"] = self.indicator_set.slug
             params["indicator"] = indicator.slug
-            
-            # params["next_report"] = IndicatorNav.slug
             return format_html(u'<a href="{next}">{val}</a>',
-                val=list_prompt(i, indicator.name),
+                val=self.count(indicator),
                 next=url_and_params(
                     IndicatorClientList.get_url(domain=self.domain,
                                                 render_as=self.render_next),
                     params
                 ))
-        return [_nav_link(i, iset) for i, iset in enumerate(self.indicators)]
 
+        return [_nav_link(i) for i in self.indicators]
+
+    def count(self, indicator):
+        return len([c for c in self.cases if indicator.filter(c)])
 
 class IndicatorClientList(GroupReferenceMixIn, ConvenientBaseMixIn,
                           GenericTabularReport, CustomProjectReport,
                           IndicatorMixIn):
     slug = "indicatorclientlist"
     name = ugettext_noop("Client List") 
-    
+    is_cacheable = True
+
     @property
     def _name(self):
         # NOTE: this isn't currently used, but is how things should work

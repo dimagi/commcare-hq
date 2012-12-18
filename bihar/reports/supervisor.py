@@ -131,6 +131,7 @@ class BiharSummaryReport(ConvenientBaseMixIn, SummaryTablularReport,
                          CustomProjectReport):
     # this is literally just a way to do a multiple inheritance without having
     # the same 3 classes extended by a bunch of other classes
+    base_template_mobile = "bihar/bihar_summary.html"
     report_template_path = "reports/async/summary_tabular.html"
     extra_context_providers = [shared_bihar_context, summary_context]
             
@@ -346,8 +347,8 @@ class EDDCalcReport(InputReport):
     _inputs = [
         {
             "name": "lmp",
-            "type": "date",
-            "label": ugettext_noop("Enter LMP (MM/DD/YYYY)")
+            "type": "text",
+            "label": ugettext_noop("Enter LMP (YYYY-MM-DD)")
         }
     ]
 
