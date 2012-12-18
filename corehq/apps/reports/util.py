@@ -1,4 +1,7 @@
 from datetime import datetime
+from django.contrib import messages
+import logging
+from corehq.apps.announcements.models import ReportAnnouncement
 from corehq.apps.groups.models import Group
 from corehq.apps.reports.decorators import cache_users
 from corehq.apps.reports.display import xmlns_to_name
@@ -338,3 +341,19 @@ def friendly_timedelta(td):
             text.append("%d %s%s" % (t[1], t[0], "s" if t[1] != 1 else ""))
     return ", ".join(text)
 
+
+def set_report_announcements_for_user(request, couch_user):
+    key = ["type", ReportAnnouncement.__name__]
+    now = datetime.utcnow()
+    data = ReportAnnouncement.get_db().view('announcements/all_announcements',
+        reduce=False,
+        startkey=key+[now.isoformat()],
+        endkey=key+[{}]
+    ).all()
+    announce_ids = [a['id'] for a in data if a['id'] not in couch_user.announcements_seen]
+    for announcement_id in announce_ids:
+        try:
+            announcement = ReportAnnouncement.get(announcement_id)
+            messages.info(request, announcement.as_html)
+        except Exception as e:
+            logging.error("Could not fetch Report Announcement: %s" % e)
