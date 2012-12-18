@@ -1,6 +1,7 @@
 from datetime import datetime, timedelta
 import json
 from django.core.cache import cache
+from corehq.apps.fixtures.models import FixtureDataType, FixtureDataItem
 from corehq.apps.reports import util
 from corehq.apps.reports.standard import inspect, export, ProjectReport
 from corehq.apps.reports.standard.export import DeidExportReport
@@ -887,3 +888,101 @@ def clear_report_caches(request, domain):
     print "CLEARING CACHE FOR DOMAIN", domain
     print "ALL CACHES", cache.all()
     return HttpResponse("TESTING")
+
+
+def psi_reports(request, domain):
+    print request.GET
+    psi_e = psi_events(domain, request.GET)
+    return HttpResponse(request.GET)
+
+def _get_place_mapping_to_fdi(domain, query_dict, place_types=None):
+    place_types = place_types or []
+    place_data_types = {}
+    for pt in place_types:
+        place_data_types[pt] = FixtureDataType.by_domain_tag(domain, pt).one()
+
+    places_map = {} # will contain a mapping of place type to the fdi that corresponds with the specified name of the place
+    for pt in place_types:
+        places_map[pt] = query_dict.get(pt, None)
+    for place_type, value in places_map.items():
+        places_map[place_type] = FixtureDataItem.by_data_type_and_name(domain, place_data_types[place_type], value)
+
+    return places_map, place_data_types
+
+def _get_related_fixture_items(domain, data_types, fixture_items, fixture_name, fixture_id_name):
+    # get the name of district
+    for fdi in fixture_items:
+        if not fdi:
+            continue
+        d_id = fdi.fields.get(fixture_id_name, None)
+        if d_id:
+            district_item = FixtureDataItem.by_data_type_and_name(domain, data_types[fixture_name], d_id)
+            return district_item.fields['name']
+    return None
+
+def psi_events(domain, query_dict):
+    import pprint
+    pp = pprint.PrettyPrinter(indent=2)
+
+    place_types = ['block', 'state', 'district']
+    places, pdts = _get_place_mapping_to_fdi(domain, query_dict, place_types=place_types)
+
+    resp_dict = {}
+    pp.pprint(dict(places))
+
+    # get the name of district
+    name_of_district = _get_related_fixture_items(domain, pdts, places.values(), 'district', 'district_id')
+    if name_of_district:
+        resp_dict["name_of_district"] = name_of_district
+
+    def ff_func(form):
+        loc = query_dict.get('location', None)
+        if loc:
+            if not form.xpath('form/event_location') == loc:
+                return False
+        return form.form.get('@name', None) == 'Plays and Events'
+
+    forms = list(_get_forms(domain, form_filter=ff_func))
+    resp_dict.update({
+        "num_male": reduce(lambda sum, f: sum + f.xpath('form/number_of_males'), forms, 0),
+        "num_female": reduce(lambda sum, f: sum + f.xpath('form/number_of_females'), forms, 0),
+        "num_total": reduce(lambda sum, f: sum + f.xpath('form/number_of_attendees'), forms, 0),
+        "num_leaflets": reduce(lambda sum, f: sum + f.xpath('form/number_of_leaflets'), forms, 0),
+        "num_gifts": reduce(lambda sum, f: sum + f.xpath('form/number_of_gifts'), forms, 0)
+    })
+    pp.pprint(resp_dict)
+    return resp_dict
+
+def psi_household_demonstrations(domain, query_dict):
+    place_types = ['block', 'state', 'district', 'village']
+    places, pdts = _get_place_mapping_to_fdi(domain, query_dict, place_types=place_types)
+
+
+def _get_all_form_submissions(domain):
+    submissions = XFormInstance.view('reports/all_submissions',
+        startkey=[domain],
+        endkey=[domain, {}],
+        include_docs=True,
+        reduce=False
+    )
+    return submissions
+
+
+def _get_forms(domain, form_filter=lambda f: True):
+    for form in _get_all_form_submissions(domain):
+        import pprint
+        pp = pprint.PrettyPrinter(indent=2)
+        pp.pprint(dict(form))
+        print form.form.get('@name', None)
+        if form_filter(form):
+            yield form
+
+def _get_form(domain, action_filter=lambda a: True, form_filter=lambda f: True):
+    """
+    returns the first form that passes through the form filter function
+    """
+    gf = _get_forms(domain, form_filter=form_filter)
+    try:
+        return gf.next()
+    except StopIteration:
+        return None
