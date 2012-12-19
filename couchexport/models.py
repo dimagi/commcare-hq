@@ -266,7 +266,7 @@ class FakeSavedExportSchema(BaseSavedExportSchema):
 
     def get_export_components(self, previous_export_id=None, filter=None):
         from couchexport.export import get_export_components
-        return get_export_components(self.index, previous_export_id, filter)
+        return get_export_components(self.index, previous_export_id, filter=self.filter & filter)
 
     def get_export_files(self, format='', previous_export_id=None, filter=None,
                          use_cache=True, max_column_size=2000, separator='|', process=None, **kwargs):
