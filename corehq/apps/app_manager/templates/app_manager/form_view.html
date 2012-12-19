@@ -188,7 +188,7 @@
 
                 // tag the 'preview in cloudcare' button with the right url
                 // unfortunately, has to be done in javascript
-                var cloudCareUrl = getCloudCareUrl("{% url cloudcare_app_list domain '' %}", "{{ app.id }}", "{{ module.id }}", "{{ nav_form.id }}") + "?preview=true";
+                var cloudCareUrl = getCloudCareUrl("{% url cloudcare_main domain '' %}", "{{ app.id }}", "{{ module.id }}", "{{ nav_form.id }}") + "?preview=true";
                 $("#cloudcare-preview-url").attr("href", cloudCareUrl);
             }
         {% endif %}
