@@ -47,13 +47,17 @@
         var submitUrlRoot = "{% url receiver_post domain %}";
         var language = "{{ language }}";
         var apps = {{ apps|safe }};
+        var initialApp = {{ app|JSON }};
+        var initialCase = {{ case|JSON }};
         window.mainView = new cloudCare.AppMainView({
 			apps: apps,
 			language: language,
 			urlRoot: urlRoot,
 			appUrlRoot: appUrlRoot,
 			caseUrlRoot: caseUrlRoot,
-			submitUrlRoot: submitUrlRoot
+			submitUrlRoot: submitUrlRoot,
+			initialApp: initialApp,
+			initialCase: initialCase
         });
         // TODO: when we figure out what to do about get params, use this
         Backbone.history.start({pushState: true, root: urlRoot});
