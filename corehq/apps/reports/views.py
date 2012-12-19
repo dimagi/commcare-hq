@@ -895,11 +895,7 @@ def psi_reports(request, domain):
     psi_e = psi_events(domain, request.GET)
     psi_hd = psi_household_demonstrations(domain, request.GET)
     psi_ss = psi_sensitization_sessions(domain, request.GET)
-
-    import pprint
-    pp = pprint.PrettyPrinter(indent=2)
-    pp.pprint(dict(psi_ss))
-
+    psi_ts = psi_training_sessions(domain, request.GET)
     return HttpResponse(request.GET)
 
 def _get_place_mapping_to_fdi(domain, query_dict, place_types=None):
@@ -1025,6 +1021,72 @@ def psi_sensitization_sessions(domain, query_dict):
         })
     return resp_dict
 
+def psi_training_sessions(domain, query_dict):
+    place_types = ['state', 'district']
+    places, pdts = _get_place_mapping_to_fdi(domain, query_dict, place_types=place_types)
+    resp_dict = {}
+
+    name_of_district = _get_related_fixture_items(domain, pdts, places.values(), 'district', 'district_id')
+    if name_of_district:
+        resp_dict["name_of_district"] = name_of_district
+    name_of_state = _get_related_fixture_items(domain, pdts, places.values(), 'state', 'state_id')
+    if name_of_state:
+        resp_dict["name_of_state"] = name_of_state
+
+    def ff_func(form):
+        tt = query_dict.get('training_type', None)
+        if tt:
+            if not form.xpath('form/training_type') == tt:
+                return False
+        return form.form.get('@name', None) == 'Training Session'
+
+    forms = list(_get_forms(domain, form_filter=ff_func))
+    private_forms = filter(lambda f: f.xpath('form/trainee_category') == 'private', forms)
+    public_forms = filter(lambda f: f.xpath('form/trainee_category') == 'public', forms)
+    dh_forms = filter(lambda f: f.xpath('form/trainee_category') == 'depot_holder', forms)
+    flw_forms = filter(lambda f: f.xpath('form/trainee_category') == 'flw_training', forms)
+
+    resp_dict.update({
+        "private_hcp": _indicators(private_forms, aa=True),
+        "public_hcp": _indicators(public_forms, aa=True),
+        "depot_training": _indicators(dh_forms),
+        "flw_training": _indicators(flw_forms),
+    })
+    return resp_dict
+
+def _indicators(forms, aa=False):
+    ret = { "num_forms": len(forms),
+            "num_trained": _num_trained(forms)}
+    if aa:
+        ret.update({
+            "num_ayush_trained": _num_trained(forms, doctor_type="ayush"),
+            "num_allopathics_trained": _num_trained(forms, doctor_type="allopathic"),
+        })
+    ret.update(_scores(forms))
+    return ret
+
+def _num_trained(forms, doctor_type=None):
+    def rf_func(data):
+        return data.get('doctor_type', None) == doctor_type if doctor_type else True
+    return reduce(lambda sum, f: sum + len(list(_get_repeats(f.xpath('form/trainee_information'), repeat_filter=rf_func))), forms, 0)
+
+def _scores(forms):
+    trainees = []
+
+    for f in forms:
+        trainees.extend(list(_get_repeats(f.xpath('form/trainee_information'))))
+
+    total_pre_scores = reduce(lambda sum, t: sum + int(t.get("pre_test_score", 0)), trainees, 0)
+    total_post_scores = reduce(lambda sum, t: sum + int(t.get("post_test_score", 0)), trainees, 0)
+    total_diffs = reduce(lambda sum, t: sum + (int(t.get("post_test_score", 0)) - int(t.get("pre_test_score", 0))), trainees, 0)
+
+    return {
+        "avg_pre_score": total_pre_scores/len(trainees) if trainees else "No Data",
+        "avg_post_score": total_post_scores/len(trainees) if trainees else "No Data",
+        "avg_difference": total_diffs/len(trainees) if trainees else "No Data",
+        "num_gt80": len(filter(lambda t: t.get("post_test_score", 0) >= 80.0, trainees))/len(trainees) if trainees else "No Data"
+    }
+
 def _get_repeats(data, repeat_filter=lambda r: True):
     if not isinstance(data, list):
         data = [data]
@@ -1049,10 +1111,6 @@ def _get_all_form_submissions(domain):
 
 def _get_forms(domain, form_filter=lambda f: True):
     for form in _get_all_form_submissions(domain):
-        import pprint
-        pp = pprint.PrettyPrinter(indent=2)
-        pp.pprint(dict(form))
-        print form.form.get('@name', None)
         if form_filter(form):
             yield form
 
