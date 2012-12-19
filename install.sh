@@ -166,7 +166,7 @@ if [ ! -f /etc/init.d/elasticsearch ]; then
         if [ ! -f $file ]; then
             wget https://github.com/downloads/elasticsearch/elasticsearch/$file
         fi
-        sudo gdebi -n $file
+        sudo gdebi --n $file
 
         echo "
         JAVA_HOME=/usr/lib/jvm/jdk1.7.0
