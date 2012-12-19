@@ -7,6 +7,8 @@
     <script src="{% static 'formdesigner/js/jquery.fancybox-1.3.4.pack.js' %}"></script>
     <script src="{% static 'formdesigner/js/chosen.jquery.min.js' %}"></script>
     <script src="{% static 'formdesigner/js/jquery-ui-timepicker-addon.js' %}"></script>
+    <script src="{% static 'formdesigner/js/sha1.js' %}"></script>
+    <script src="{% static 'formdesigner/js/diff_match_patch.js' %}"></script>
     <script src="{% static 'formdesigner/lib/xpath/lib/biginteger.js' %}"></script>
     <script src="{% static 'formdesigner/lib/xpath/lib/schemeNumber.js' %}"></script>
     <script src="{% static 'formdesigner/lib/xpath/models.js' %}"></script>
@@ -75,13 +77,15 @@
                 staticPrefix: '/static/formdesigner/',
                 iconUrl: '/static/hqwebapp/javascripts/jquery-ui/images/ui-icons_469bdd_256x240.png',
                 saveUrl: '{% url edit_form_attr domain app.id form.get_unique_id "xform" %}',
+                patchUrl: '{% url patch_xform domain app.id form.get_unique_id %}',
+                saveType: 'patch',
                 form: {{ form.source|JSON }},
                 langs: {{ app.langs|JSON }},
                 formName: "{{ form.name|trans:app.langs }}",
                 displayLanguage: {{ lang|JSON }}
             });
             formdesigner.on('form-saved', function (args) {
-                var response = JSON.parse(args.response);
+                var response = args.response;
                 COMMCAREHQ.app_manager.updateDOM(response.update);
             });
         });

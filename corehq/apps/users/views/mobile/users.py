@@ -251,8 +251,8 @@ class UploadCommCareUsers(TemplateView):
                 list(self.user_specs),
                 list(self.group_specs))
             messages.success(request,
-                'Your upload is in progress. You can check the progress at "%s%s".' %\
-                (get_url_base(), reverse('retrieve_download', kwargs={'download_id': download_id})),
+                'Your upload is in progress. You can check the progress <a href="%s">here</a>.' %\
+                reverse('hq_soil_download', kwargs={'domain': self.domain, 'download_id': download_id}),
                 extra_tags="html")
         else:
             ret = create_or_update_users_and_groups(self.domain, self.user_specs, self.group_specs)

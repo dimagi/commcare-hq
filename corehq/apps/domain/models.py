@@ -325,15 +325,19 @@ class Domain(Document, HQBillingDomainMixin, SnapshotMixin):
         return False
 
     def recent_submissions(self):
-        res = get_db().view('reports/all_submissions',
-            startkey=[self.name, {}],
-            endkey=[self.name],
+        from corehq.apps.reports.util import make_form_couch_key
+        key = make_form_couch_key(self.name)
+        res = get_db().view('reports_forms/all_forms',
+            startkey=key+[{}],
+            endkey=key,
             descending=True,
             reduce=False,
             include_docs=False,
             limit=1).all()
         if len(res) > 0: # if there have been any submissions in the past 30 days
-            return datetime.now() <= datetime.strptime(res[0]['value']['time'], "%Y-%m-%dT%H:%M:%SZ") + timedelta(days=30)
+            return (datetime.now() <=
+                    datetime.strptime(res[0]['value']['submission_time'], "%Y-%m-%dT%H:%M:%SZ")
+                    + timedelta(days=30))
         else:
             return False
 

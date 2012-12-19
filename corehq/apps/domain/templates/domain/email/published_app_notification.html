@@ -1,0 +1,5 @@
+<p>A new app has been published to Exchange!</p>
+<p>Check it out: <a href="http://{{ url_base }}{% url project_info snapshot.name %}">{{ snapshot.title }}</a></p>
+<p>Author: {{ snapshot.author }}</p>
+<p>Published (and cda signed) by: {{ published_by.username }}</p>
+<p>Published from: <a href="http://{{ url_base }}{% url domain_homepage domain.name %}">{{ domain.name }}</a></p>

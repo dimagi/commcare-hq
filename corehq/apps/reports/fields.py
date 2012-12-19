@@ -15,7 +15,14 @@ import settings
 import json
 from django.utils.translation import ugettext_noop
 from django.utils.translation import ugettext as _
+from corehq.apps.reports.cache import CacheableRequestMixIn, request_cache
 
+
+"""
+    Note: Fields is being phased out in favor of filters.
+    The only reason it still exists is because admin reports needs to get moved over to the new
+    reporting structure.
+"""
 
 datespan_default = datespan_in_request(
             from_param="startdate",
@@ -23,7 +30,7 @@ datespan_default = datespan_in_request(
             default_days=7,
         )
 
-class ReportField(object):
+class ReportField(CacheableRequestMixIn):
     slug = ""
     template = ""
     context = Context()
@@ -160,7 +167,6 @@ class CaseTypeField(ReportSelectField):
 
     @classmethod
     def get_case_types(cls, domain):
-
         key = [domain]
         for r in get_db().view('hqcase/all_cases',
             startkey=key,
@@ -382,8 +388,13 @@ class LocationField(ReportField):
     name = ugettext_noop("Location")
     slug = "location"
     template = "reports/fields/location.html"
+    is_cacheable = True
 
     def update_context(self):
+        self.context.update(self._get_custom_context())
+
+    @request_cache('locationfieldcontext')
+    def _get_custom_context(self):
         all_locs = location_tree(self.domain)
         def loc_to_json(loc):
             return {
@@ -394,10 +405,12 @@ class LocationField(ReportField):
             }
         loc_json = [loc_to_json(root) for root in all_locs]
 
-        self.context['control_name'] = self.name
-        self.context['control_slug'] = self.slug
-        self.context['loc_id'] = self.request.GET.get('location_id')
-        self.context['locations'] = json.dumps(loc_json)
+        return {
+            'control_name': self.name,
+            'control_slug': self.slug,
+            'loc_id': self.request.GET.get('location_id'),
+            'locations': json.dumps(loc_json)
+        }
 
 class DeviceLogTagField(ReportField):
     slug = "logtag"

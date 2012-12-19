@@ -50,6 +50,7 @@ from soil import DownloadBase
 from soil.tasks import prepare_download
 from django.utils.translation import ugettext as _
 from django.utils.safestring import mark_safe
+from dimagi.utils.logging import notify_exception
 
 DATE_FORMAT = "%Y-%m-%d"
 
@@ -92,6 +93,9 @@ def default(request, domain, template="reports/reports_home.html"):
             show_subsection_navigation=adm_utils.show_adm_nav(domain, request)
         ),
     )
+
+    if request.couch_user:
+        util.set_report_announcements_for_user(request, user)
 
     return render_to_response(request, template, context)
 
@@ -149,7 +153,7 @@ def export_data(req, domain):
         messages.error(req, "Sorry, there was no data found for the tag '%s'." % export_tag)
         next = req.GET.get("next", "")
         if not next:
-            next = export.ExcelExportReport.get_url(domain)
+            next = export.ExcelExportReport.get_url(domain=domain)
         return HttpResponseRedirect(next)
 
 @require_form_export_permission
@@ -185,6 +189,8 @@ class CustomExportHelper(object):
         self.request = request
         self.domain = domain
         self.export_type = request.GET.get('type', 'form')
+        self.presave = False
+
         if self.export_type == 'form':
             self.ExportSchemaClass = FormExportSchema
         else:
@@ -194,7 +200,11 @@ class CustomExportHelper(object):
             self.custom_export = self.ExportSchemaClass.get(export_id)
             # also update the schema to include potential new stuff
             self.custom_export.update_schema()
-            
+
+            # enable configuring saved exports from this page
+            saved_group = HQGroupExportConfiguration.get_for_domain(self.domain)
+            self.presave = export_id in saved_group.custom_export_ids
+
             assert(self.custom_export.doc_type == 'SavedExportSchema')
             assert(self.custom_export.type == self.export_type)
             assert(self.custom_export.index[0] == domain)
@@ -210,6 +220,10 @@ class CustomExportHelper(object):
         self.custom_export.name = self.request.POST["name"]
         self.custom_export.default_format = self.request.POST["format"] or Format.XLS_2007
         self.custom_export.is_safe = bool(self.request.POST.get('is_safe'))
+
+        self.presave = bool(self.request.POST.get('presave'))
+        if self.presave:
+            HQGroupExportConfiguration.add_custom_export(self.domain, self.custom_export._id)
 
         table = self.request.POST["table"]
         cols = self.request.POST['order'].strip().split()
@@ -256,6 +270,7 @@ class CustomExportHelper(object):
         return render_to_response(self.request, "reports/reportdata/customize_export.html", {
             "saved_export": self.custom_export,
             "deid_options": CustomExportHelper.DEID.options,
+            "presave": self.presave,
             "DeidExportReport_name": DeidExportReport.name,
             "table_config": table_config,
             "slug": slug,
@@ -343,7 +358,7 @@ def _export_default_or_custom_data(request, domain, export_id=None, bulk_export=
         )
     else:
         if not next:
-            next = export.ExcelExportReport.get_url(domain)
+            next = export.ExcelExportReport.get_url(domain=domain)
         resp = export_object.download_data(format, filter=filter)
         if resp:
             return resp
@@ -391,7 +406,7 @@ def custom_export(req, domain):
         messages.warning(req, "<strong>No data found for that form "
                       "(%s).</strong> Submit some data before creating an export!" % \
                       xmlns_to_name(domain, export_tag[1], app_id=None), extra_tags="html")
-        return HttpResponseRedirect(export.ExcelExportReport.get_url(domain))
+        return HttpResponseRedirect(export.ExcelExportReport.get_url(domain=domain))
 
 @require_form_export_permission
 @login_and_domain_required
@@ -458,9 +473,9 @@ def delete_custom_export(req, domain, export_id):
     saved_export.delete()
     messages.success(req, "Custom export was deleted.")
     if type == "form":
-        return HttpResponseRedirect(export.ExcelExportReport.get_url(domain))
+        return HttpResponseRedirect(export.ExcelExportReport.get_url(domain=domain))
     else:
-        return HttpResponseRedirect(export.CaseExportReport.get_url(domain))
+        return HttpResponseRedirect(export.CaseExportReport.get_url(domain=domain))
 
 @login_and_domain_required
 @require_POST
@@ -689,7 +704,7 @@ def case_details(request, domain, case_id):
     
     if case == None or case.doc_type != "CommCareCase" or case.domain != domain:
         messages.info(request, "Sorry, we couldn't find that case. If you think this is a mistake plase report an issue.")
-        return HttpResponseRedirect(inspect.CaseListReport.get_url(domain))
+        return HttpResponseRedirect(inspect.CaseListReport.get_url(domain=domain))
 
     report_name = 'Details for Case "%s"' % case.name
     form_lookups = dict((form.get_id,

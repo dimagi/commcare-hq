@@ -1,27 +1,29 @@
+from django.conf import settings
 from corehq.apps.reports.standard import ProjectReport, ProjectReportParametersMixin, DatespanMixin
 from corehq.apps.reports.generic import GenericTabularReport
 from corehq.apps.domain.models import Domain
 from corehq.apps.users.models import CommCareUser
-from corehq.apps.commtrack.models import *
-from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn, DTSortType
+from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
 from corehq.apps.locations.models import Location
 from dimagi.utils.couch.database import get_db
 from dimagi.utils.couch.loosechange import map_reduce
 from dimagi.utils import parsing as dateparse
 import itertools
-from datetime import datetime, date, timedelta
+from datetime import timedelta
+from django.conf import settings
+from corehq.apps.commtrack.models import CommtrackConfig
 
 class CommtrackReportMixin(ProjectReport, ProjectReportParametersMixin):
 
     @classmethod
-    def show_in_navigation(cls, request, *args, **kwargs):
+    def show_in_navigation(cls, request, domain=None):
         try:
             return request.project.commtrack_enabled
         except Exception:
             if settings.DEBUG:
                 raise
             else:
-                domain = Domain.get_by_name(kwargs['domain'])
+                domain = Domain.get_by_name(domain)
                 return domain.commtrack_enabled
     
     @property

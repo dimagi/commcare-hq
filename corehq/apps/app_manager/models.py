@@ -390,10 +390,20 @@ class FormBase(DocumentSchema):
                 'case_preload', 'referral_preload'
             )
         else:
-            action_types = (
-                'open_case', 'update_case', 'close_case',
-                'case_preload', 'subcases',
-            )
+            if self.requires == 'none':
+                action_types = (
+                    'open_case', 'update_case', 'subcases',
+                )
+            elif self.requires == 'case':
+                action_types = (
+                    'update_case', 'close_case', 'case_preload', 'subcases',
+                )
+            else:
+                # this is left around for legacy migrated apps
+                action_types = (
+                    'open_case', 'update_case', 'close_case',
+                    'case_preload', 'subcases',
+                )
         return self._get_active_actions(action_types)
 
     def active_non_preloader_actions(self):
@@ -753,7 +763,7 @@ class VersionedDoc(Document):
 
     def save_copy(self):
         cls = self.__class__
-        copies = cls.view('app_manager/applications', key=[self.domain, self._id, self.version], include_docs=True).all()
+        copies = cls.view('app_manager/applications', key=[self.domain, self._id, self.version], include_docs=True, limit=1).all()
         if copies:
             copy = copies[0]
         else:
@@ -1239,13 +1249,14 @@ def validate_lang(lang):
 
 class SavedAppBuild(ApplicationBase):
     def to_saved_build_json(self, timezone):
-        data = super(SavedAppBuild, self).to_json()
+        data = super(SavedAppBuild, self).to_json().copy()
         data.update({
             'id': self.id,
             'built_on_date': utc_to_timezone(data['built_on'], timezone, "%b %d, %Y"),
             'built_on_time': utc_to_timezone(data['built_on'], timezone, "%H:%M %Z"),
             'build_label': self.built_with.get_label(),
             'jar_path': self.get_jar_path(),
+            'short_name': self.short_name
         })
         if data['comment_from']:
             comment_user = CouchUser.get(data['comment_from'])
@@ -1706,7 +1717,7 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
 
     @classmethod
     def get_by_xmlns(cls, domain, xmlns):
-        r = get_db().view('reports/forms_by_xmlns', key=[domain, {}, xmlns], group=True).one()
+        r = get_db().view('exports_forms/by_xmlns', key=[domain, {}, xmlns], group=True).one()
         return cls.get(r['value']['app']['id']) if r and 'app' in r['value'] else None
 
 class NotImplementedYet(Exception):
@@ -1841,10 +1852,6 @@ class DomainError(Exception):
 
 class AppError(Exception):
     pass
-
-class BuildErrors(Document):
-
-    errors = ListProperty()
 
 def get_app(domain, app_id, wrap_cls=None, latest=False):
     """

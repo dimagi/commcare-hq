@@ -1,17 +1,22 @@
 {% load hq_shared_tags %}
+{% load i18n %}
 <!DOCTYPE html>
 <html>
 <head>
+    <title>{% block title %}CommCareHQ Mobile{% endblock %}</title>
     <link rel="stylesheet" media="screen" href="{% static 'hqstyle/css/mobile/c2/hqstyle-mobile-c2.css' %}"/>
     <link rel="shortcut icon" href="{% static 'hqwebapp/img/favicon2.png' %}" />
-    <title>{% block title %}CommCareHQ Mobile{% endblock %}</title>
+{% block head %}{% endblock %}
 </head>
 <body>
 <div class="container-fluid">
     {% block content %}{% endblock %}
     <footer>
-        <small>CommCare HQ Mobile is Copyright &copy; {% now "Y" %} <a href="http://www.dimagi.com/">Dimagi, Inc.</a></small>
+        <small>{% trans "CommCare HQ Mobile is Copyright" %} &copy; {% now "Y" %} <a href="http://www.dimagi.com/">Dimagi, Inc.</a></small>
+        <br>
+        <small><a href="{% url logout %}">{% trans "Logout" %}</a></small>
     </footer>
 </div>
+{% block js %}{% endblock %}
 </body>
 </html>

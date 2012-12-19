@@ -1,5 +1,6 @@
 import dateutil
 from django.core.urlresolvers import reverse
+from django.utils.safestring import mark_safe
 from corehq.apps.groups.models import Group
 from corehq.apps.reports import util
 from corehq.apps.adm import utils as adm_utils
@@ -27,6 +28,11 @@ class ProjectReport(GenericReportView):
     @property
     def show_subsection_navigation(self):
         return adm_utils.show_adm_nav(self.domain, self.request)
+
+    def set_announcements(self):
+        if self.request.couch_user:
+            util.set_report_announcements_for_user(self.request, self.request.couch_user)
+
 
 class CustomProjectReport(ProjectReport):
     dispatcher = CustomProjectReportDispatcher

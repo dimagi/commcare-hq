@@ -1,5 +1,6 @@
 from django.template.loader import render_to_string
 from django.utils.safestring import mark_safe, mark_for_escaping
+from corehq.apps.users.views import _redirect_users_to
 from dimagi.utils.couch.database import get_db
 from dimagi.utils.decorators.memoized import memoized
 from django.core.urlresolvers import reverse
@@ -12,12 +13,12 @@ class DropdownMenuItem(object):
     css_id = None
 
     def __init__(self, request, domain):
+        self.request = request
+        self.domain = domain
         if self.title is None:
             raise NotImplementedError("A title is required")
         if self.view is None:
             raise NotImplementedError("A view is required")
-        self.request = request
-        self.domain = domain
 
     @property
     def menu_context(self):
@@ -178,19 +179,29 @@ class MessagesMenuItem(DropdownMenuItem):
 
 
 class ProjectSettingsMenuItem(DropdownMenuItem):
-    title = ugettext_noop("Settings & Users")
-    view = "corehq.apps.settings.views.default"
+    view = "corehq.apps.users.views.users"
     css_id = "project_settings"
+
+    @property
+    @memoized
+    def url(self):
+        return _redirect_users_to(self.request, self.domain) or reverse("homepage")
 
     @property
     @memoized
     def submenu_items(self):
         return []
 
+    @property
+    def title(self):
+        if not (self.request.couch_user.can_edit_commcare_users() or self.request.couch_user.can_edit_web_users()):
+            return _("Settings")
+        return _("Settings & Users")
+
     @classmethod
     def is_viewable(cls, request, domain):
-        return (domain is not None
-                and (request.couch_user.can_edit_commcare_users() or request.couch_user.can_edit_web_users()))
+        return domain is not None and request.couch_user
+
 
 
 class AdminReportsMenuItem(DropdownMenuItem):
