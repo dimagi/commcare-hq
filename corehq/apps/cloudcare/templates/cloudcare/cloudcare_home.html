@@ -41,7 +41,7 @@
     GMAPS_API_KEY = '{{ maps_api_key|safe }}'; // maps api is loaded on-demand
 
     $(function () {
-        var urlRoot = "{% url cloudcare_app_list domain '' %}";
+        var urlRoot = "{% url cloudcare_main domain '' %}";
         var appUrlRoot = "{% url cloudcare_get_apps domain %}";
         var caseUrlRoot = "{% url cloudcare_get_cases domain %}";
         var submitUrlRoot = "{% url receiver_post domain %}";

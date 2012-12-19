@@ -25,10 +25,10 @@ import HTMLParser
 
 @require_cloudcare_access
 def default(request, domain):
-    return HttpResponseRedirect(reverse('cloudcare_app_list', args=[domain, '']))
+    return HttpResponseRedirect(reverse('cloudcare_main', args=[domain, '']))
 
-@login_and_domain_required
-def app_list(request, domain, urlPath):
+@require_cloudcare_access
+def cloudcare_main(request, domain, urlPath):
     preview = string_to_boolean(request.REQUEST.get("preview", "false"))
     app_access = ApplicationAccess.get_by_domain(domain)
     def _app_latest_build_json(app_id):
