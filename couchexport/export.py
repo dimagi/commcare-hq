@@ -82,13 +82,14 @@ class ExportConfiguration(object):
     
     def enum_docs(self):
         for i, doc in enumerate(self.get_docs()):
-            if self.include(doc):
-                yield i, doc
+            yield i, doc
 
     def get_docs(self):
         for doc_ids in chunked(self.potentially_relevant_ids, 100):
             for doc in self.database.all_docs(keys=doc_ids, include_docs=True):
-                yield doc['doc']
+                doc = doc['doc']
+                if self.include(doc):
+                    yield doc
 
     def last_checkpoint(self):
         return self.previous_export or ExportSchema.last(self.schema_index)
