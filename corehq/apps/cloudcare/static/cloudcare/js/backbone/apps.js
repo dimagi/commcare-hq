@@ -759,7 +759,7 @@ cloudCare.AppMainView = Backbone.View.extend({
                                         form.get("module_index"),
                                         form.get("index"),
                                         caseId);
-            self.navigate(path);
+            self.navigate(path, {replace: true});
         });
         cloudCare.dispatch.on("case:selected", function (caseModel) {
             var appConfig = caseModel.get("appConfig");
@@ -784,9 +784,9 @@ cloudCare.AppMainView = Backbone.View.extend({
         });
     },
 
-    navigate: function (path) {
+    navigate: function (path, options) {
         if (this._navEnabled) {
-            this.router.navigate(path);
+            this.router.navigate(path, options);
         }
     },
 
