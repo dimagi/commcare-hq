@@ -22,7 +22,6 @@ from casexml.apps.case.xml import V2
 from xml.etree import ElementTree
 from corehq.apps.cloudcare.decorators import require_cloudcare_access
 import HTMLParser
-from couchdbkit.exceptions import ResourceNotFound
 from django.contrib import messages
 from django.utils.translation import ugettext as _
 
