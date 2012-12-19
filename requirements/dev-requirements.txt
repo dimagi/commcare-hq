@@ -5,3 +5,5 @@ werkzeug
 line_profiler
 git+git://github.com/dimagi/couchdbkit-debugpanel.git
 Fabric>=1.4.3
+selenium==2.25.0
+PyVirtualDisplay==0.1.1
