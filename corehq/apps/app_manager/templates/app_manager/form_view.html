@@ -305,6 +305,16 @@
                     {% with form as item %}
                         {% include "app_manager/partials/nav_menu_media.html" %}
                     {% endwith %}
+                    <tr>
+                        <th>Advanced Form Filter</th>
+                        <td>
+                            {% if edit %}
+                                <input type="text" class="wide" name="form_filter" value="{{ form.form_filter|default:'' }}"/>
+                            {% else %}
+                                <code>{{ form.form_filter|default:'' }}</code>
+                            {% endif %}
+                        </td>
+                    </tr>
                 </table>
             </form>
         </div>

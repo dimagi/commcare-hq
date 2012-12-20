@@ -520,6 +520,8 @@ class NavMenuItemMediaMixin(DocumentSchema):
 
 
 class Form(FormBase, IndexedSchema, NavMenuItemMediaMixin):
+    form_filter = StringProperty()
+
     def add_stuff_to_xform(self, xform):
         super(Form, self).add_stuff_to_xform(xform)
         xform.add_case_and_meta(self)
