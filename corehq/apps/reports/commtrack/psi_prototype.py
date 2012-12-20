@@ -94,7 +94,7 @@ class VisitReport(GenericTabularReport, CommtrackReportMixin, DatespanMixin):
     name = 'Visit Report'
     slug = 'visits'
     fields = ['corehq.apps.reports.fields.DatespanField',
-              'corehq.apps.reports.fields.LocationField']
+              'corehq.apps.reports.fields.AsyncLocationField']
     exportable = True
 
     def header_text(self, slug=False):
@@ -171,7 +171,7 @@ class SalesAndConsumptionReport(GenericTabularReport, CommtrackReportMixin, Date
     name = 'Sales and Consumption Report'
     slug = 'sales_consumption'
     fields = ['corehq.apps.reports.fields.DatespanField',
-              'corehq.apps.reports.fields.LocationField']
+              'corehq.apps.reports.fields.AsyncLocationField']
     exportable = True
 
     @property
