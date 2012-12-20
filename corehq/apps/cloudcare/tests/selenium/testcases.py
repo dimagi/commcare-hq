@@ -1,6 +1,6 @@
 from dimagi.utils.django.test import SeleniumWrapper
 from corehq.apps.selenium.testcases import MobileWorkerTestCase
-from selenium.common.exceptions import NoSuchElementException
+from selenium.common.exceptions import NoSuchElementException, StaleElementReferenceException
 from corehq.apps import selenium
 
 DEFAULT_OPEN_FORM_WAIT_TIME = 10
@@ -109,9 +109,14 @@ class CloudCareTestCase(MobileWorkerTestCase):
         cls.driver.wait_until_not(lambda d: d.find_element_by_xpath(success))
 
         # todo: make single click work
-        cls.driver.find_element_by_id('submit').click()
-        cls.driver.sleep(1)
-        cls.driver.find_element_by_id('submit').click()
+        submit_button = cls.driver.find_element_by_id('submit')
+        submit_button.click()
+        try:
+            cls.driver.sleep(1)
+            submit_button.click()
+        except StaleElementReferenceException:
+            # sometimes this works, sometimes it doesn't...
+            pass
 
         if expect_success:
             cls.driver.find_element_by_xpath(

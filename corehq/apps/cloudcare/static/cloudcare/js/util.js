@@ -40,6 +40,19 @@ var getFormUrl = function(urlRoot, appId, moduleId, formId) {
     return urlRoot + "view/" + appId + "/modules-" + moduleId + "/forms-" + formId + "/context/";
 };
 
+var getFormEntryUrl = function (urlRoot, appId, moduleId, formId, caseId) {
+    return urlRoot + getFormEntryPath(appId, moduleId, formId, caseId);
+}
+var getFormEntryPath = function(appId, moduleId, formId, caseId) {
+    // TODO: make this cleaner
+    var url = "view/" + appId + "/" + moduleId + "/" + formId;
+    if (caseId) {
+        url = url + '/case/' + caseId
+    }
+    url += "/enter/";
+    return url;
+};
+
 var getSubmitUrl = function (urlRoot, appId) {
     // TODO: make this cleaner
     return urlRoot + "/" + appId + "/";

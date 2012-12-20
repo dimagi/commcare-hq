@@ -64,7 +64,7 @@ class DropdownMenuItem(object):
 
     @property
     def is_active(self):
-        return self.request.get_full_path().startswith(self.url)
+        return self.request.get_full_path().startswith(self.url or "")
 
     @classmethod
     def is_viewable(cls, request, domain):

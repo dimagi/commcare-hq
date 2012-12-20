@@ -22,15 +22,18 @@ from casexml.apps.case.xml import V2
 from xml.etree import ElementTree
 from corehq.apps.cloudcare.decorators import require_cloudcare_access
 import HTMLParser
+from django.contrib import messages
+from django.utils.translation import ugettext as _
 
 @require_cloudcare_access
 def default(request, domain):
-    return HttpResponseRedirect(reverse('cloudcare_app_list', args=[domain, '']))
+    return HttpResponseRedirect(reverse('cloudcare_main', args=[domain, '']))
 
-@login_and_domain_required
-def app_list(request, domain, urlPath):
+@require_cloudcare_access
+def cloudcare_main(request, domain, urlPath):
     preview = string_to_boolean(request.REQUEST.get("preview", "false"))
     app_access = ApplicationAccess.get_by_domain(domain)
+    
     def _app_latest_build_json(app_id):
         build = ApplicationBase.view('app_manager/saved_app',
                                      startkey=[domain, app_id, {}],
@@ -58,17 +61,62 @@ def app_list(request, domain, urlPath):
             return Application.get(apps[0]["_id"]).build_langs[0]
         else:
             return "en"
-    
+
     # default language to user's preference, followed by 
     # first app's default, followed by english
     language = request.couch_user.language or _default_lang()
-    return render_to_response(request, "cloudcare/cloudcare_home.html", 
-                              {"domain": domain,
-                               "language": language,
-                               "apps": json.dumps(apps),
-                               "apps_raw": apps,
-                               "preview": preview,
-                               "maps_api_key": settings.GMAPS_API_KEY })
+    
+    def _url_context():
+        # given a url path, returns potentially the app and case, if they're
+        # selected. the front end optimizes with these to avoid excess server
+        # calls
+
+        # there's an annoying dependency between this logic and backbone's
+        # url routing that seems hard to solve well. this needs to be synced
+        # with apps.js if anything changes
+
+        # for apps anything with "view/app/" works
+
+        # for cases it will be:
+        # "view/:app/:module/:form/case/:case/"
+        
+        # could use regex here but this is actually simpler with the potential
+        # absence of a trailing slash
+        split = urlPath.split('/')
+        app_id = split[1] if len(split) >= 2 else None
+        case_id = split[5] if len(split) >= 6 else None
+        
+        app = None
+        if app_id:
+            if app_id in [a['_id'] for a in apps]:
+                app = get_app(domain, app_id)
+            else:
+                messages.info(request, _("That app is no longer valid. Try using the "
+                                         "navigation links to select an app."))
+        if app == None and len(apps) == 1:
+            app = get_app(domain, apps[0]['_id'])
+
+        def _get_case(domain, case_id):
+            case = CommCareCase.get(case_id)
+            assert case.domain == domain, "case %s not in %s" % (case_id, domain)
+            return case.get_json()
+        
+        case = _get_case(domain, case_id) if case_id else None
+        return {
+            "app": app, 
+            "case": case
+        }
+
+    context = {
+       "domain": domain,
+       "language": language,
+       "apps": json.dumps(apps),
+       "apps_raw": apps,
+       "preview": preview,
+       "maps_api_key": settings.GMAPS_API_KEY
+    }
+    context.update(_url_context())
+    return render_to_response(request, "cloudcare/cloudcare_home.html", context)
 
 
 @login_and_domain_required

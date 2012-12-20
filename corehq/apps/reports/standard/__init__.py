@@ -77,95 +77,66 @@ class ProjectReportParametersMixin(object):
             CommCareUser=self.CommCareUser
         ))
 
-    _user_filter = None
     @property
+    @memoized
     def user_filter(self):
-        if self._user_filter is None:
-            self._user_filter, _ = FilterUsersField.get_user_filter(self.request)
-        return self._user_filter
+        return FilterUsersField.get_user_filter(self.request)[0]
 
-    _group_name = None
     @property
     def group_name(self):
-        if self._group_name is None:
-            self._group_name = self.request_params.get('group', '')
-        return self._group_name
+        return self.request_params.get('group', '')
 
-    _group = None
     @property
+    @memoized
     def group(self):
-        if self._group is None:
-            self._group = Group.by_name(self.domain, self.group_name)
-        return self._group
+        return Group.by_name(self.domain, self.group_name)
 
-    _individual = None
     @property
     def individual(self):
         """
             todo: remember this: if self.individual and self.users:
             self.name = "%s for %s" % (self.name, self.users[0].get('raw_username'))
         """
-        if self._individual is None:
-            self._individual = self.request_params.get('individual', '')
-        return self._individual
+        return self.request_params.get('individual', '')
 
-    _users = None
     @property
     @memoized
     def users(self):
-        """
-            todo: cache this baby
-        """
-        if self._users is None:
-            self._users = self.get_all_users_by_domain(
-                group=self.group_name,
-                individual=self.individual,
-                user_filter=tuple(self.user_filter),
-                simplified=True
-            )
-        return self._users
+        return self.get_all_users_by_domain(
+            group=self.group_name,
+            individual=self.individual,
+            user_filter=tuple(self.user_filter),
+            simplified=True
+        )
 
-    _user_ids = None
     @property
+    @memoized
     def user_ids(self):
-        if self._user_ids is None:
-            self._user_ids = [user.get('user_id') for user in self.users]
-        return self._user_ids
+        return [user.get('user_id') for user in self.users]
 
     _usernames = None
     @property
+    @memoized
     def usernames(self):
-        if self._usernames is None:
-            self._usernames = dict([(user.get('user_id'), user.get('username_in_report')) for user in self.users])
-        return self._usernames
+        return dict([(user.get('user_id'), user.get('username_in_report')) for user in self.users])
 
-    _history = None
     @property
     def history(self):
-        if self._history is None:
-            self._history = self.request_params('history')
-            if self._history:
-                try:
-                    self._history = dateutil.parser.parse(self._history)
-                except ValueError:
-                    pass
-        return self._history
+        history = self.request_params.get('history', '')
+        if history:
+            try:
+                return dateutil.parser.parse(history)
+            except ValueError:
+                pass
 
-    _case_type = None
     @property
     def case_type(self):
-        if self._case_type is None:
-            self._case_type = self.request_params.get('case_type', '')
-        return self._case_type
+        return self.request_params.get('case_type', '')
 
-    _case_status = None
     @property
     def case_status(self):
-        if self._case_status is None:
-            from corehq.apps.reports.fields import SelectOpenCloseField
-            self._case_status = self.request_params.get(SelectOpenCloseField.slug, '')
-        return self._case_status
-
+        from corehq.apps.reports.fields import SelectOpenCloseField
+        return self.request_params.get(SelectOpenCloseField.slug, '')
 
 class CouchCachedReportMixin(object):
     """
