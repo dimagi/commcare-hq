@@ -6,40 +6,26 @@
 
 <script type="text/javascript">
 
+var LOAD_LOCS_URL = '{{ api_root }}';
+
+function api_get_children(loc_uuid, callback) {
+  var params = (loc_uuid ? {parent_id: loc_uuid} : {});
+  $.getJSON(LOAD_LOCS_URL, params, function(allData) {
+      callback(allData.objects);
+    });
+}
+
 $(function() {
 
   var locs = {{ locations|safe }};
   var selected = '{{ loc_id }}';
-  // there's probably a much smarter way to do this
-  window.location_loader = new LocationLoader('{{ api_root }}');
   
   var model = new LocationSelectViewModel();
   ko.applyBindings(model, $('#group_{{ control_slug }}')[0]);
   model.load(locs, selected);
     
 });
-function LocationLoader(api_root) {
-    this.url = api_root;
-    
-    this.load_children = function (loc) {
-        var url = this.url;
-        if (loc.uuid()) {
-             url += '?parent_id=' + loc.uuid();
-        }
-        console.log("call", loc.name());
-        $.getJSON(url, function(allData) {
-            var sublocs = $.map(allData["objects"], function(item) {
-                console.log('creating loc from', item); 
-                return new LocationModel(item, loc.root, loc.depth + 1); 
-            });
-            console.log('sublocs', sublocs);
-	        loc.children(sublocs);
-	        if (loc.num_children()) {
-                loc.root.path_push(loc);
-            }
-	    });
-    };
-}
+
 
 function LocationSelectViewModel() {
   var model = this;
@@ -91,9 +77,8 @@ function LocationSelectViewModel() {
   }
 
   // load location hierarchy and set initial path
-  this.load = function(locs, selected, api_root) {
-    this.api_root = api_root;
-    this.root(new LocationModel({name: '_root', id: -1, children: locs}, this));
+  this.load = function(locs, selected) {
+    this.root(new LocationModel({name: '_root', children: locs}, this));
     this.path_push(this.root());
 
     if (selected) {
@@ -115,7 +100,7 @@ function LocationModel(data, root, depth) {
   this.uuid = ko.observable();
   this.children = ko.observableArray();
   this.depth = depth || 0;
-  this.root = root;
+  this.children_loaded = false;
   
   this.display_name = ko.computed(function() {
       return this.name() == '_all' ? 'All' : this.name();
@@ -124,7 +109,6 @@ function LocationModel(data, root, depth) {
   this.selected_child = ko.observable();
   // when a location is selected, update the drill-down tree
   this.selected_child.subscribe(function(val) {
-      console.log("selected", val, val.uuid(), val.name());
       if (val == null) {
         return;
       }
@@ -135,8 +119,16 @@ function LocationModel(data, root, depth) {
           e.selected_child(null);
         });
       
-      if (val.uuid()) {
-        window.location_loader.load_children(val);
+      var post_children_loaded = function(parent) {
+        if (parent.num_children()) {
+          root.path_push(parent);
+        }
+      };
+
+      if (val.uuid() != null && !val.children_loaded) {
+        val.load_children_async(post_children_loaded);
+      } else {
+        post_children_loaded(val);
       }
     }, this);
   this.selected_is_valid = ko.computed(function() {
@@ -152,24 +144,39 @@ function LocationModel(data, root, depth) {
   }
 
   this.load = function(data) {
-    console.log('load', data);
     this.name(data.name);
-    this.type(data.type);
+    this.type(data.location_type);
     this.uuid(data.uuid);
-    
+    if (data.children != null) {
+      this.set_children(data.children);
+    }
+  }
+
+  this.set_children = function(data) {
     var children = [];
-    if (data.children) {
-      children = _.sortBy(data.children, function(e) { return e.name; });
+    if (data) {
+      children = _.sortBy(data, function(e) { return e.name; });
 
       //'all choices' meta-entry; annoying that we have to stuff this in
       //the children list, but all my attempts to make computed observables
       //based of children() caused infinite loops.
-      children.splice(0, 0, {name: '_all', id: -1});
+      children.splice(0, 0, {name: '_all'});
     }
     this.children($.map(children, function(e) {
         return new LocationModel(e, root, loc.depth + 1);
       }));
+    this.children_loaded = true;
   }
+
+  this.load_children_async = function(callback) {
+    api_get_children(this.uuid(), function(resp) {
+        loc.set_children(resp);
+        callback(loc);
+      });
+  }
+
   this.load(data);
 }
+
 </script>
+

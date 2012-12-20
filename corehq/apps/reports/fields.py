@@ -425,9 +425,8 @@ class AsyncLocationField(ReportField):
         def loc_to_json(loc):
             return {
                 'name': loc.name,
-                'type': loc.location_type,
+                'location_type': loc.location_type,
                 'uuid': loc._id,
-                'children': []
             }
         loc_json = [loc_to_json(loc) for loc in root_locations(self.domain)]
         api_root = reverse('api_dispatch_list', kwargs={'domain': self.domain,
