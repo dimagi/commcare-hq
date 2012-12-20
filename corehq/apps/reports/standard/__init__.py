@@ -109,21 +109,15 @@ class ProjectReportParametersMixin(object):
             self._individual = self.request_params.get('individual', '')
         return self._individual
 
-    _users = None
     @property
     @memoized
     def users(self):
-        """
-            todo: cache this baby
-        """
-        if self._users is None:
-            self._users = self.get_all_users_by_domain(
-                group=self.group_name,
-                individual=self.individual,
-                user_filter=tuple(self.user_filter),
-                simplified=True
-            )
-        return self._users
+        return self.get_all_users_by_domain(
+            group=self.group_name,
+            individual=self.individual,
+            user_filter=tuple(self.user_filter),
+            simplified=True
+        )
 
     _user_ids = None
     @property
