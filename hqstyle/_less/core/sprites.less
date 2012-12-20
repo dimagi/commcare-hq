@@ -14,6 +14,13 @@
 // For the white version of the  icons, just add the .icon-white class:
 // <i class="i icon-inbox icon-white"></i>
 
+.icon-hq,
+.icon-hq-white {
+  display: inline-block;
+  width: 17px;
+  height: 14px;
+}
+
 .icon-hq {
   background-image: url('@{hqImageDirectory}commcare-glyphs.png');
 }
@@ -27,5 +34,42 @@
 
 .icon-hq-doublechevron {background-position: 0      -24px;}
 
-.icon-hq-triangle-up   {background-position: 0      -48px;}
-.icon-hq-triangle-down {background-position: -24px  -48px;}
+.headerSortUp .icon-hq-doublechevron{
+    .icon-hq-triangle-up();
+}
+.headerSortDown .icon-hq-doublechevron{
+    .icon-hq-triangle-down();
+}
+
+th.header > div {
+    cursor: pointer;
+}
+
+.icon-hq-triangle-up   {background-position: 0      -46px;}
+.icon-hq-triangle-down {background-position: -24px  -46px;}
+
+.hq-help {
+    position: relative;
+    width: 40px;
+    overflow: visible;
+
+    i {
+        font-size: 20px;
+        line-height: 25px;
+        width:25px;
+        text-decoration:none;
+        position: absolute;
+        top: -30%;
+        left: @gridGutterWidth/3;
+    }
+    &:hover i,
+    &.on i {
+        font-size: 30px;
+        text-decoration:none;
+        left: @gridGutterWidth/3-2px;
+        color: @green;
+    }
+    .popover {
+        color: @textColor;
+    }
+}
