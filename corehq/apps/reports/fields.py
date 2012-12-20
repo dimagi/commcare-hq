@@ -10,12 +10,13 @@ from corehq.apps.reports.models import HQUserType
 from dimagi.utils.couch.database import get_db
 from dimagi.utils.dates import DateSpan
 from dimagi.utils.decorators.datespan import datespan_in_request
-from corehq.apps.locations.models import location_tree
+from corehq.apps.locations.models import location_tree, root_locations
 import settings
 import json
 from django.utils.translation import ugettext_noop
 from django.utils.translation import ugettext as _
 from corehq.apps.reports.cache import CacheableRequestMixIn, request_cache
+from django.core.urlresolvers import reverse
 
 
 """
@@ -412,6 +413,34 @@ class LocationField(ReportField):
             'locations': json.dumps(loc_json)
         }
 
+class AsyncLocationField(ReportField):
+    name = ugettext_noop("Location")
+    slug = "location_async"
+    template = "reports/fields/location_async.html"
+
+    def update_context(self):
+        self.context.update(self._get_custom_context())
+
+    def _get_custom_context(self):
+        def loc_to_json(loc):
+            return {
+                'name': loc.name,
+                'type': loc.location_type,
+                'uuid': loc._id,
+                'children': []
+            }
+        loc_json = [loc_to_json(loc) for loc in root_locations(self.domain)]
+        api_root = reverse('api_dispatch_list', kwargs={'domain': self.domain,
+                                                        'resource_name': 'location', 
+                                                        'api_name': 'v0.3'})
+        return {
+            'api_root': api_root,
+            'control_name': self.name,
+            'control_slug': self.slug,
+            'loc_id': self.request.GET.get('location_id'),
+            'locations': json.dumps(loc_json)
+        }
+        
 class DeviceLogTagField(ReportField):
     slug = "logtag"
     errors_only_slug = "errors_only"
@@ -463,5 +492,3 @@ class DeviceLogDevicesField(DeviceLogFilterField):
     slug = "logdevice"
     view = "phonelog/devicelog_data_devices"
     filter_desc = ugettext_noop("Filter Logs by Device")
-
-
