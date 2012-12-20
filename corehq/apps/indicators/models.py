@@ -160,7 +160,6 @@ class IndicatorDefinition(Document):
             descending=True,
             **couch_key
         ).all()
-        print "SLUG DAta", data
         return [item.get('key',[])[-1] for item in data]
 
     @classmethod
