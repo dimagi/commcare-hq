@@ -108,3 +108,10 @@ def location_tree(domain):
             tree_root.append(loc)
     return tree_root
     
+def root_locations(domain):
+    results = Location.get_db().view('locations/hierarchy',
+                                     startkey=[domain], endkey=[domain, {}],
+                                     reduce=True, group_level=2)
+
+    ids = [res['key'][-1] for res in results]
+    return [Location.get(id) for id in ids]
