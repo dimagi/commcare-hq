@@ -52,12 +52,10 @@ class ReportsTestCase(WebUserTestCase):
 report_names = (
     'Case Activity',
     'Submissions By Form',
-    'Daily Form Submissions',
-    'Daily Form Completions',
-    'Form Completion Trends',
+    'Daily Form Activity',
+    'Form Completion Time',
     'Form Completion vs. Submission Trends',
-    'Submission Times',
-    'Submit Distribution',
+    'Worker Activity Times',
 
     'Submit History',
     'Case List',
