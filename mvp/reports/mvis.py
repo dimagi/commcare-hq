@@ -107,7 +107,7 @@ class HealthCoordinatorReport(MVPIndicatorReport):
                     "under5_routine_visit_past30days", # A1 - 45
                     "pregnant_routine_visit_past30days", # A1 - 46
                     "neonate_routine_visit_past7days", # A1 - 47
-                    "urgent_referrals_proportion", # A2 - 13, needs investigation
+                    "urgent_referrals_proportion", # A2 - 13, updated to spec
                     "newborn_7day_visit_proportion", # A2 - 6, denom slightly off
                 ]
             },
@@ -124,8 +124,16 @@ class HealthCoordinatorReport(MVPIndicatorReport):
                 'indicator_slugs': [
                     "family_planning_proportion", # A2 - 1
                     "anc4_proportion", # A2 - 3
+                    "no_anc_proportion", # A3 - 2
                     "facility_births_proportion", # A2 - 4
                     "pregnant_routine_checkup_proportion_6weeks", # B - 24
+                ]
+            },
+            {
+                'category_title': "Over 5 Health",
+                'category_slug': 'over5',
+                'indicator_slugs': [
+                    "over5_positive_rdt_medicated_proportion",
                 ]
             },
             {

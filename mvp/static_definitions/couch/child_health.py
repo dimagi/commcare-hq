@@ -3,7 +3,6 @@ APP_NAME = "mvp_child_health"
 CHILD_HEALTH_INDICATORS = dict(
     app=APP_NAME,
     indicators=dict(
-        # todo, these are very likely incorrect.
         child_muac=dict(
             child_muac_wasting=dict(
                 description="No. children aged 6-59 months with moderate or severe wasting (MUAC < 125)"

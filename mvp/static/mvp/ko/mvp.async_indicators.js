@@ -96,7 +96,7 @@ var MVISIndicator = function (indicator) {
         if (try_again) {
             console.log("trying again");
             queue.add(self);
-            self.loading_text("trying again in a bit.");
+            self.loading_text("experienced a connection issue while loading, trying again after the rest of the indicators.");
         } else {
             self.loading_text("encountered errors while loading.");
         }

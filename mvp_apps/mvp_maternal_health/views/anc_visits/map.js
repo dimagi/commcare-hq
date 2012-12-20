@@ -6,7 +6,7 @@ function (doc) {
             case_id = get_case_id(doc);
 
         var visit_date = new Date(meta.timeEnd),
-            indicator_keys = new Array();
+            indicator_emits = {};
 
         if (indicators.pregnancy_edd && indicators.pregnancy_edd.value &&
             indicators.num_anc && indicators.prev_num_anc &&
@@ -21,9 +21,15 @@ function (doc) {
             if (edd) {
                 var edd_date = new Date(edd);
                 var difference = edd_date.getTime() - visit_date.getTime();
+
+                if (edd_date >= visit_date && difference <= 150*MS_IN_DAY && num_ancs === 0) {
+                    indicator_emits["no_anc"] = case_id;
+                    indicator_emits["_no_anc"] = edd;
+                }
+
                 if (edd_date >= visit_date && difference <= one_month_ms) {
                     // EDD is happening within one month of this form's visit date.
-                    indicator_keys.push("visit");
+                    indicator_emits["visit"] = case_id;
                     var count_anc = false;
 
                     if (indicators.last_anc_weeks && indicators.last_anc_weeks.value) {
@@ -47,12 +53,12 @@ function (doc) {
                         anc_total += num_ancs;
                     }
                     if (anc_total > 3) {
-                        indicator_keys.push("anc4");
+                        indicator_emits["anc4"] = case_id;
                     }
                 }
             }
         }
 
-        emit_standard(doc, visit_date, indicator_keys, [case_id]);
+        emit_special(doc, visit_date, indicator_emits, []);
     }
 }
