@@ -2,10 +2,8 @@
 # vim: ai ts=4 sts=4 et sw=4 encoding=utf-8
 
 import os
-import logging
 from django.contrib import messages
-
-
+from django.utils.datastructures import SortedDict
 
 CACHE_BACKEND = 'memcached://127.0.0.1:11211/'
 
@@ -568,37 +566,37 @@ APPSTORE_INTERFACE_MAP = {
     ]
 }
 
-PROJECT_REPORT_MAP = {
-    "Monitor Workers" : [
+PROJECT_REPORT_MAP = SortedDict([
+    ["Monitor Workers", [
         'corehq.apps.reports.standard.monitoring.DailyFormStatsReport',
         'corehq.apps.reports.standard.monitoring.SubmissionsByFormReport',
         'corehq.apps.reports.standard.monitoring.FormCompletionTimeReport',
         'corehq.apps.reports.standard.monitoring.CaseActivityReport',
         'corehq.apps.reports.standard.monitoring.FormCompletionVsSubmissionTrendsReport',
         'corehq.apps.reports.standard.monitoring.WorkerActivityTimes',
-    ],
-    "Inspect Data" : [
+    ]],
+    ["Inspect Data", [
         'corehq.apps.reports.standard.inspect.SubmitHistory',
         'corehq.apps.reports.standard.inspect.CaseListReport',
         'corehq.apps.reports.standard.inspect.MapReport',
-    ],
-    "Raw Data" : [
+    ]],
+    ["Raw Data", [
         'corehq.apps.reports.standard.export.ExcelExportReport',
         'corehq.apps.reports.standard.export.CaseExportReport',
         'corehq.apps.reports.standard.export.DeidExportReport',
-    ],
-    "Manage Deployments" : [
+    ]],
+    ["Manage Deployments", [
         'corehq.apps.reports.standard.deployments.ApplicationStatusReport',
         'corehq.apps.receiverwrapper.reports.SubmissionErrorReport',
         'phonelog.reports.FormErrorReport',
         'phonelog.reports.DeviceLogDetailsReport'
-    ],
-    "Commtrack": [
+    ]],
+    ["Commtrack", [
         'corehq.apps.reports.commtrack.psi_prototype.VisitReport',
         'corehq.apps.reports.commtrack.psi_prototype.SalesAndConsumptionReport',
         'corehq.apps.reports.commtrack.psi_prototype.StockReportExport',
-    ],
-}
+    ]]
+])
 
 CUSTOM_REPORT_MAP = {
     ## legacy custom reports. do not follow practices followed here
