@@ -43,7 +43,6 @@ class DomainAPI(View):
         raise NotImplementedError("Not implemented")
 
     @method_decorator(login_and_domain_required)
-#    @method_decorator(csrf_protect)
     def dispatch(self, *args, **kwargs):
         req = args[0]
         if not self.allowed_domain(req.domain):

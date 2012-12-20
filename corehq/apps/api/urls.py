@@ -20,7 +20,7 @@ def api_url_patterns():
         yield (r'^', include(api.urls))
     yield url(r'^v0.1/xform_es/$', XFormES.as_view())
     for view_class in DomainAPI.__subclasses__():
-        yield url(r'^custom/%s/%s/$' % (view_class.api_name(), view_class.api_version()), view_class.as_view(), name="%s_%s" % (view_class.api_name(), view_class.api_version()))
+        yield url(r'^custom/%s/v%s/$' % (view_class.api_name(), view_class.api_version()), view_class.as_view(), name="%s_%s" % (view_class.api_name(), view_class.api_version()))
 
 
 urlpatterns = patterns('',
