@@ -79,17 +79,31 @@ class ExportConfiguration(object):
                 return []
         else:
             return self._all_ids()
-    
-    def enum_docs(self):
-        for i, doc in enumerate(self.get_docs()):
-            yield i, doc
 
-    def get_docs(self):
+    def get_potentially_relevant_docs(self):
         for doc_ids in chunked(self.potentially_relevant_ids, 100):
             for doc in self.database.all_docs(keys=doc_ids, include_docs=True):
-                doc = doc['doc']
-                if self.include(doc):
-                    yield doc
+                yield doc['doc']
+
+    def enum_docs(self):
+        """
+        yields (index, doc) tuples for docs that pass the filter
+        index counts number of docs processed so far
+        NOT the number of docs returned so far
+
+        Useful for progress bars which use
+        len(self.potentially_relevant_ids) as the total.
+
+        """
+        for i, doc in enumerate(self.get_potentially_relevant_docs()):
+            if self.include(doc):
+                yield i, doc
+
+    def get_docs(self):
+
+        for _, doc in self.enum_docs():
+            yield doc
+
 
     def last_checkpoint(self):
         return self.previous_export or ExportSchema.last(self.schema_index)

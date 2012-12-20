@@ -64,7 +64,7 @@ def build_latest_schema(schema_index):
 def get_schema_new(config):
     last_export = config.last_checkpoint()
     schema = dict(last_export.schema) if last_export else None
-    for doc in config.get_docs():
+    for doc in config.get_potentially_relevant_docs():
         schema = extend_schema(schema, doc)
     return schema
 
