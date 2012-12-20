@@ -10,8 +10,8 @@ from dimagi.utils.couch.loosechange import map_reduce
 from dimagi.utils import parsing as dateparse
 import itertools
 from datetime import timedelta
-from django.conf import settings
 from corehq.apps.commtrack.models import CommtrackConfig
+from dimagi.utils.decorators.memoized import memoized
 
 class CommtrackReportMixin(ProjectReport, ProjectReportParametersMixin):
 
@@ -31,6 +31,7 @@ class CommtrackReportMixin(ProjectReport, ProjectReportParametersMixin):
         return CommtrackConfig.for_domain(self.domain)
 
     @property
+    @memoized
     def products(self):
         query = get_db().view('commtrack/products', startkey=[self.domain], endkey=[self.domain, {}], include_docs=True)
         prods = [e['doc'] for e in query]
@@ -46,15 +47,13 @@ class CommtrackReportMixin(ProjectReport, ProjectReportParametersMixin):
     def ordered_actions(self, ordering):
         return sorted(self.actions, key=lambda a: (0, ordering.index(a)) if a in ordering else (1, a))
 
-    # find a memoize decorator?
     _location = None
     @property
+    @memoized
     def active_location(self):
-        if not self._location:
-            loc_id = self.request_params.get('location_id')
-            if loc_id:
-                self._location = Location.get(loc_id)
-        return self._location
+        loc_id = self.request_params.get('location_id')
+        if loc_id:
+            return Location.get(loc_id)
 
 def get_transactions(form_doc, include_inferred=True):
     from collections import Sequence
