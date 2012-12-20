@@ -1,6 +1,7 @@
 import dateutil
 from corehq.apps.reports.dispatcher import CustomProjectReportDispatcher
 from corehq.apps.reports.standard import CustomProjectReport
+from pact.utils import case_script_field
 
 class PactPatientDispatcher(CustomProjectReportDispatcher):
     prefix = 'pactpatient'
@@ -125,7 +126,8 @@ def query_per_case_submissions_facet(domain, username=None, limit=100):
         "facets": {
             "case_submissions": {
                 "terms": {
-                    "field": "form.case.case_id",
+#                    "field": "form.case.case_id",
+                    "script_field": case_script_field()['script_case_id']['script'],
                     "size": limit
                 },
                 "facet_filter": {
@@ -143,5 +145,5 @@ def query_per_case_submissions_facet(domain, username=None, limit=100):
     }
 
     if username is not None:
-        query['facets']['facet_filter']['and'].append({ "term": { "form.meta.username": username } })
+        query['facets']['case_submissions']['facet_filter']['and'].append({ "term": { "form.meta.username": username } })
     return query

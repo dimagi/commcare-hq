@@ -39,11 +39,13 @@ def case_script_field():
     """
     return {
         "script_case_id": {
-            "script": """if (_source['form']['case']['@case_id'] != null) {
+            "script": """
+            if(_source['form']['case'] != null) {
+              if (_source['form']['case']['@case_id'] != null) {
                 _source['form']['case']['@case_id'];
+              }
+              else { _source['form']['case']['case_id'];
              }
-             else {
-                _source['form']['case']['case_id'];
             }"""
         }
     }

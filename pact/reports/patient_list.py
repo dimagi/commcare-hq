@@ -40,14 +40,14 @@ class PactPrimaryHPField(ReportSelectField):
 class HPStatusField(ReportSelectField):
     slug = "hp_status"
     name = "HP Status"
-    default_option = "All"
+    default_option = "All Active HP"
     cssId = "hp_status_select"
     ANY_HP = "any_hp"
 
     def update_params(self):
         self.selected = self.request.GET.get(self.slug, "")
+        self.options.insert(0, dict(val=self.ANY_HP, text="All Active HP"))
         self.options = [dict(val=x[0], text=x[1]) for x in PACT_HP_CHOICES]
-        self.options.insert(0, dict(val=self.ANY_HP, text="Any HP"))
 
 
 class DOTStatus(ReportSelectField):
