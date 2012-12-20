@@ -582,6 +582,7 @@ class DjangoUserMixin(DocumentSchema):
         dummy.password = self.password
         return dummy.check_password(password)
 
+
 class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, UnicodeMixIn):
     """
     A user (for web and commcare)
@@ -596,6 +597,7 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, UnicodeMixIn):
 #        ('site_edited',     'Manually added or edited from the HQ website.'),
     status = StringProperty()
     language = StringProperty()
+    announcements_seen = ListProperty()
 
     eula = SchemaProperty(LicenseAgreement)
 
@@ -610,6 +612,10 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, UnicodeMixIn):
 
     class InvalidID(Exception):
         pass
+
+    @property
+    def is_dimagi(self):
+        return self.username.endswith('@dimagi.com')
 
     @property
     def raw_username(self):
@@ -934,7 +940,7 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, UnicodeMixIn):
 
     def save(self, **params):
         # test no username conflict
-        by_username = self.get_db().view('users/by_username', key=self.username).one()
+        by_username = self.get_db().view('users/by_username', key=self.username).first()
         if by_username and by_username['id'] != self._id:
             raise self.Inconsistent("CouchUser with username %s already exists" % self.username)
 
@@ -1344,6 +1350,7 @@ class CommCareUser(CouchUser, CommCareMobileContactMixin, SingleMembershipMixin)
             # Gracefully handle when user_data is None, or does not have a "language_code" entry
             lang = None
         return lang
+
 
 class WebUser(CouchUser, MultiMembershipMixin):
     teams = StringListProperty()

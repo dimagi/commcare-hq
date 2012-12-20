@@ -1,21 +1,18 @@
-from datetime import datetime, timedelta
+from datetime import datetime
+from django.contrib import messages
+import logging
+from corehq.apps.announcements.models import ReportAnnouncement
 from corehq.apps.groups.models import Group
 from corehq.apps.reports.decorators import cache_users
 from corehq.apps.reports.display import xmlns_to_name
 from corehq.apps.reports.models import HQUserType, TempCommCareUser
 from corehq.apps.users.models import CommCareUser, CouchUser
 from corehq.apps.users.util import user_id_to_username
-from couchdbkit.schema.properties import DictProperty
 from couchexport.util import SerializableFunction
 from couchforms.filters import instances
 from dimagi.utils.couch.database import get_db
-from dimagi.utils.data.deid_generator import DeidGenerator
 from dimagi.utils.dates import DateSpan
-from dimagi.utils.decorators import inline
-from dimagi.utils.decorators.datespan import datespan_in_request
-from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.modules import to_function
-from dimagi.utils.parsing import string_to_datetime
 from django.http import Http404
 import pytz
 from corehq.apps.domain.models import Domain
@@ -23,6 +20,40 @@ from corehq.apps.users.models import WebUser
 from dimagi.utils.timezones import utils as tz_utils
 from dimagi.utils.web import json_request
 from django.conf import settings
+
+def make_form_couch_key(domain, by_submission_time=True,
+                   xmlns=None, user_id=None, app_id=None):
+    prefix = ["submission"] if by_submission_time else ["completion"]
+    key = [domain] if domain is not None else []
+    if xmlns == "":
+        prefix.append('xmlns')
+    elif app_id == "":
+        prefix.append('app')
+    elif user_id == "":
+        prefix.append('user')
+    else:
+        if xmlns:
+            prefix.append('xmlns')
+            key.append(xmlns)
+        if app_id:
+            prefix.append('app')
+            key.append(app_id)
+        if user_id:
+            prefix.append('user')
+            key.append(user_id)
+    return [" ".join(prefix)] + key
+
+def all_xmlns_in_domain(domain):
+    # todo replace form_list with this
+    key = make_form_couch_key(domain, xmlns="")
+    domain_xmlns = get_db().view('reports_forms/all_forms',
+        startkey=key,
+        endkey=key+[{}],
+        group=True,
+        group_level=3,
+    ).all()
+    return [d['key'][-1] for d in domain_xmlns if d['key'][-1] is not None]
+
 
 def user_list(domain):
     #todo cleanup
@@ -66,7 +97,8 @@ def get_all_users_by_domain(domain=None, group=None, individual=None,
                             user_filter=None, simplified=False, CommCareUser=None):
     """
         WHEN THERE ARE A LOT OF USERS, THIS IS AN EXPENSIVE OPERATION.
-        Returns a list of CommCare Users based on domain, group, and user filter (demo_user, admin, registered, unknown)
+        Returns a list of CommCare Users based on domain, group, and user 
+        filter (demo_user, admin, registered, unknown)
     """
     if not CommCareUser:
         from corehq.apps.users.models import CommCareUser
@@ -116,14 +148,12 @@ def get_all_users_by_domain(domain=None, group=None, individual=None,
     return users
 
 def get_all_userids_submitted(domain):
-    submitted = get_db().view(
-        'reports/all_users_submitted',
+    submitted = get_db().view('reports_forms/all_submitted_users',
         startkey=[domain],
         endkey=[domain, {}],
         group=True,
-        reduce=True
     ).all()
-    return [ user['key'][1] for user in submitted]
+    return [user['key'][1] for user in submitted]
 
 def get_all_owner_ids_submitted(domain):
     key = ["all owner", domain]
@@ -135,9 +165,10 @@ def get_all_owner_ids_submitted(domain):
     return set([row['key'][2] for row in submitted])
 
 def get_username_from_forms(domain, user_id):
+    key = make_form_couch_key(domain, user_id=user_id)
     user_info = get_db().view(
-        'reports/submit_history',
-        startkey=[domain, user_id],
+        'reports_forms/all_forms',
+        startkey=key,
         limit=1,
         reduce=False
     ).one()
@@ -208,7 +239,6 @@ def datespan_export_filter(doc, datespan):
     return False
 
 def case_users_filter(doc, users):
-    pass
     try:
         return doc['user_id'] in users
     except KeyError:
@@ -289,3 +319,35 @@ def format_relative_date(date, tz=pytz.utc):
     else:
         dtext = "%s days ago" % dtime.days
     return format_datatables_data(dtext, dtime.days)
+
+def friendly_timedelta(td):
+    hours, remainder = divmod(td.seconds, 3600)
+    minutes, seconds = divmod(remainder, 60)
+    parts = [
+        ("day", td.days),
+        ("hour", hours),
+        ("minute", minutes),
+        ("second", seconds),
+    ]
+    text = []
+    for t in parts:
+        if t[1]:
+            text.append("%d %s%s" % (t[1], t[0], "s" if t[1] != 1 else ""))
+    return ", ".join(text)
+
+
+def set_report_announcements_for_user(request, couch_user):
+    key = ["type", ReportAnnouncement.__name__]
+    now = datetime.utcnow()
+    data = ReportAnnouncement.get_db().view('announcements/all_announcements',
+        reduce=False,
+        startkey=key+[now.isoformat()],
+        endkey=key+[{}]
+    ).all()
+    announce_ids = [a['id'] for a in data if a['id'] not in couch_user.announcements_seen]
+    for announcement_id in announce_ids:
+        try:
+            announcement = ReportAnnouncement.get(announcement_id)
+            messages.info(request, announcement.as_html)
+        except Exception as e:
+            logging.error("Could not fetch Report Announcement: %s" % e)

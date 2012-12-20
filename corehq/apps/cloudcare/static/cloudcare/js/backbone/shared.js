@@ -26,11 +26,13 @@ var Selectable = Backbone.View.extend({
             this.select();
         }
     }, 
-    select: function () {
+    select: function (options) {
         if (!this.selected) {
 	        this.selected = true;
 	        this.$el.addClass("active");
-	        this.trigger("selected");
+	        if (typeof options === 'undefined' || !options.noEvents) {
+	            this.trigger("selected");
+	        }
         }
     }, 
     

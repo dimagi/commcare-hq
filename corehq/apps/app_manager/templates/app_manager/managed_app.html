@@ -2,6 +2,20 @@
 {% load xforms_extras %}
 {% load url_extras %}
 {% load hq_shared_tags %}
+{% load i18n %}
+{% block head %}{{ block.super }}
+<style>
+    .edit-form-pencil {
+        position: absolute;
+        right: 5px;
+        top: 2px;
+        opacity: 0.5;
+    }
+    .edit-form-li {
+        position: relative;
+    }
+</style>
+{% endblock %}
 {% block js-inline %}{{ block.super }}
     {% if app.get_doc_type == "Application" %}
     <script>
@@ -10,6 +24,19 @@
             if (!show_user_registration) {
                 $('#user-registration-nav-link').hide();
             }
+        });
+        $(function () {
+            $('.edit-form-pencil').hide().tooltip({
+                title: '{% trans "Edit in form designer" %}',
+                placement: 'left'
+            });
+            $('.edit-form-li').each(function () {
+                $(this).mouseenter(function () {
+                    $(this).find('.edit-form-pencil').show();
+                }).mouseleave(function () {
+                    $(this).find('.edit-form-pencil').hide();
+                });
+            });
         });
     </script>
     {% endif %}
@@ -47,8 +74,13 @@
                             </form>
                         </li>
                     {% endif %}
-                        <li class="sort-disabled{% if is_user_registration %} selected{% endif %}" id="user-registration-nav-link">
+                        <li class="sort-disabled edit-form-li {% if is_user_registration %} selected{% endif %}" id="user-registration-nav-link">
                             <a href="{% url view_user_registration domain app.id %}?edit={{ edit|BOOL }}">User Registration</a>
+                            <div class="edit-form-pencil">
+                                <a href="{% url user_registration_source domain app.id %}">
+                                    <span class="icon icon-pencil"></span>
+                                </a>
+                            </div>
                         </li>
                     {% with module as selected_module %}
                         {% for module in app.get_modules %}
@@ -76,7 +108,7 @@
                                     {% endif %}
                                     {% with nav_form as selected_form %}
                                         {% for form in module.get_forms %}
-                                            <li {% ifequal form selected_form %} class="selected"{% endifequal %}>
+                                            <li class="edit-form-li{% ifequal form selected_form %} selected{% endifequal %}">
                                                 <!--[F]-->
                                                 {% if edit %}
                                                     <div class="index">{{ form.id }}</div>{% endif %}
@@ -87,6 +119,11 @@
                                                    {% if form == selected_form %}class="variable-form_name"{% endif %}>
                                                     {{ form.name|html_trans:langs }}
                                                 </a>
+                                                <div class="edit-form-pencil">
+                                                    <a href="{% url form_source domain app.id module.id form.id %}">
+                                                        <span class="icon icon-pencil"></span>
+                                                    </a>
+                                                </div>
                                             </li>
                                         {% endfor %}
                                     {% endwith %}
