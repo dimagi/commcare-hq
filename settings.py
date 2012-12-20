@@ -595,6 +595,7 @@ PROJECT_REPORT_MAP = SortedDict([
         'corehq.apps.reports.commtrack.psi_prototype.VisitReport',
         'corehq.apps.reports.commtrack.psi_prototype.SalesAndConsumptionReport',
         'corehq.apps.reports.commtrack.psi_prototype.StockReportExport',
+        'corehq.apps.reports.standard.sms.MessagesReport', # TODO: move to sms section?
     ]]
 ])
 
