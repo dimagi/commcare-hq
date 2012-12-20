@@ -2,10 +2,8 @@
 # vim: ai ts=4 sts=4 et sw=4 encoding=utf-8
 
 import os
-import logging
 from django.contrib import messages
-
-
+from django.utils.datastructures import SortedDict
 
 CACHE_BACKEND = 'memcached://127.0.0.1:11211/'
 
@@ -40,11 +38,6 @@ USE_I18N = True
 # and then in the locale/ directories of installed apps
 LOCALE_PATHS = ()
 
-# Absolute path to the directory that holds media.
-# Example: "/home/media/media.lawrence.com/"
-MEDIA_ROOT = ''
-STATIC_ROOT = ''
-
 # URL that handles the media served from MEDIA_ROOT. Make sure to use a
 # trailing slash if there is a path component (optional in other cases).
 # Examples: "http://media.lawrence.com", "http://example.com/media/"
@@ -52,6 +45,9 @@ MEDIA_URL = '/media/'
 STATIC_URL = '/static/'
 
 FILEPATH = os.path.abspath(os.path.dirname(__file__))
+# media for user uploaded media.  in general this won't be used at all.
+MEDIA_ROOT = os.path.join(FILEPATH, 'mediafiles')
+STATIC_ROOT = os.path.join(FILEPATH, 'staticfiles')
 
 STATICFILES_FINDERS = (
     "django.contrib.staticfiles.finders.FileSystemFinder",
@@ -127,7 +123,8 @@ DEFAULT_APPS = (
     #'ghettoq',     # pip install ghettoq
     'djkombu',     # pip install django-kombu
     'couchdbkit.ext.django',
-    'crispy_forms'
+    'crispy_forms',
+    'django.contrib.markup',
 )
 
 CRISPY_TEMPLATE_PACK = 'bootstrap'
@@ -285,7 +282,8 @@ EMAIL_SMTP_HOST="smtp.gmail.com"
 EMAIL_SMTP_PORT=587
 
 # put email addresses here to have them receive bug reports
-BUG_REPORT_RECIPIENTS=() 
+BUG_REPORT_RECIPIENTS=()
+EXCHANGE_NOTIFICATION_RECIPIENTS = []
 
 PAGINATOR_OBJECTS_PER_PAGE = 15
 PAGINATOR_MAX_PAGE_LINKS = 5
@@ -570,39 +568,38 @@ APPSTORE_INTERFACE_MAP = {
     ]
 }
 
-PROJECT_REPORT_MAP = {
-    "Monitor Workers" : [
-        'corehq.apps.reports.standard.monitoring.CaseActivityReport',
+PROJECT_REPORT_MAP = SortedDict([
+    ["Monitor Workers", [
+        'corehq.apps.reports.standard.monitoring.DailyFormStatsReport',
         'corehq.apps.reports.standard.monitoring.SubmissionsByFormReport',
-        'corehq.apps.reports.standard.monitoring.DailySubmissionsReport',
-        'corehq.apps.reports.standard.monitoring.DailyFormCompletionsReport',
-        'corehq.apps.reports.standard.monitoring.FormCompletionTrendsReport',
+        'corehq.apps.reports.standard.monitoring.FormCompletionTimeReport',
+        'corehq.apps.reports.standard.monitoring.CaseActivityReport',
         'corehq.apps.reports.standard.monitoring.FormCompletionVsSubmissionTrendsReport',
-        'corehq.apps.reports.standard.monitoring.SubmissionTimesReport',
-        'corehq.apps.reports.standard.monitoring.SubmitDistributionReport',
-    ],
-    "Inspect Data" : [
+        'corehq.apps.reports.standard.monitoring.WorkerActivityTimes',
+    ]],
+    ["Inspect Data", [
         'corehq.apps.reports.standard.inspect.SubmitHistory',
         'corehq.apps.reports.standard.inspect.CaseListReport',
         'corehq.apps.reports.standard.inspect.MapReport',
-    ],
-    "Raw Data" : [
+    ]],
+    ["Raw Data", [
         'corehq.apps.reports.standard.export.ExcelExportReport',
         'corehq.apps.reports.standard.export.CaseExportReport',
         'corehq.apps.reports.standard.export.DeidExportReport',
-    ],
-    "Manage Deployments" : [
+    ]],
+    ["Manage Deployments", [
         'corehq.apps.reports.standard.deployments.ApplicationStatusReport',
         'corehq.apps.receiverwrapper.reports.SubmissionErrorReport',
         'phonelog.reports.FormErrorReport',
         'phonelog.reports.DeviceLogDetailsReport'
-    ],
-    "Commtrack": [
+    ]],
+    ["Commtrack", [
         'corehq.apps.reports.commtrack.psi_prototype.VisitReport',
         'corehq.apps.reports.commtrack.psi_prototype.SalesAndConsumptionReport',
         'corehq.apps.reports.commtrack.psi_prototype.StockReportExport',
-    ],
-}
+        'corehq.apps.reports.standard.sms.MessagesReport', # TODO: move to sms section?
+    ]]
+])
 
 CUSTOM_REPORT_MAP = {
     ## legacy custom reports. do not follow practices followed here
@@ -745,8 +742,9 @@ ADM_ADMIN_INTERFACE_MAP = {
 }
 
 ANNOUNCEMENTS_ADMIN_INTERFACE_MAP = {
-    "Global HQ Announcements": [
+    "Manage Announcements": [
         'corehq.apps.announcements.interface.ManageGlobalHQAnnouncementsInterface',
+        'corehq.apps.announcements.interface.ManageReportAnnouncementsInterface',
     ]
 }
 
@@ -800,3 +798,5 @@ PILLOWTOPS = [
 #               'corehq.pillows.CouchlogPillow',
 #               'corehq.pillows.DevicelogPillow',
                ] + LOCAL_PILLOWTOPS
+
+REMOTE_APP_NAMESPACE = "%(domain)s.commcarehq.org"

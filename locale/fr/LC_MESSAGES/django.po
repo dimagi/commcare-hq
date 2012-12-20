@@ -103,28 +103,28 @@ msgid "Home Visit Information"
 msgstr "Renseignements concernant les visites à domicile"
 
 #: submodules/bihar-reports/bihar/reports/indicators/__init__.py:14
-msgid "BP (2nd Tri) Visits in last 30 days (Done/Due)"
+msgid "BP (2nd Tri) Visits"
 msgstr ""
 "Visite du plan pour l'accouchement (2e trimestre) durant les 30 derniers "
 "jours (fait/en attente)"
 
 #: submodules/bihar-reports/bihar/reports/indicators/__init__.py:19
-msgid "BP (3rd Tri) Visits in last 30 days (Done/Due)"
+msgid "BP (3rd Tri) Visits"
 msgstr ""
 "Visite du plan pour l'accouchement (3e trimestre) durant les 30 derniers "
 "jours (fait/en attente)"
 
 #: submodules/bihar-reports/bihar/reports/indicators/__init__.py:24
-msgid "PNC Visits  in last 30 days (Done/Due)"
+msgid "PNC Visits"
 msgstr ""
 "Visites de soins postnataux durant les 30 derniers jours (fait/en attente)"
 
 #: submodules/bihar-reports/bihar/reports/indicators/__init__.py:29
-msgid "EBF Visits in last 30 days (Done/Due)"
+msgid "EBF Visits"
 msgstr "Visites AME durant les 30 derniers jours (fait/en attente)"
 
 #: submodules/bihar-reports/bihar/reports/indicators/__init__.py:34
-msgid "CF Visits in last 30 days (Done/Due)"
+msgid "CF Visits"
 msgstr "Visites AC durant les 30 derniers jours (fait/en attente)"
 
 #: submodules/bihar-reports/bihar/reports/indicators/__init__.py:41
@@ -132,7 +132,7 @@ msgid "All woman due for delivery in next 30 days"
 msgstr "Toutes les femmes devant accoucher durant les 30 prochains jours"
 
 #: submodules/bihar-reports/bihar/reports/indicators/__init__.py:48
-msgid "Pregnant woman who delivered in last 30 days"
+msgid "Pregnant woman who delivered"
 msgstr "Femmes enceintes ayant accouché durant les 30 derniers jours"
 
 #: submodules/bihar-reports/bihar/reports/indicators/__init__.py:52
