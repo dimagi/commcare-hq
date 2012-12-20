@@ -2,7 +2,7 @@
   /* has to be more specific than the existing rule */
 
 }
-.hq-oldstyle h3 {
+.hq-oldstyle h3.app-manager-title {
   font-size: 2em;
   text-align: center;
 }
