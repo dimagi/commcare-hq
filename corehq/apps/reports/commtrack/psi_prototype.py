@@ -96,6 +96,7 @@ class VisitReport(GenericTabularReport, CommtrackReportMixin, DatespanMixin):
     slug = 'visits'
     fields = ['corehq.apps.reports.fields.DatespanField',
               'corehq.apps.reports.fields.LocationField']
+    exportable = True
 
     def header_text(self, slug=False):
         cols = [(key if slug else caption) for key, caption in OUTLET_METADATA]
@@ -172,6 +173,7 @@ class SalesAndConsumptionReport(GenericTabularReport, CommtrackReportMixin, Date
     slug = 'sales_consumption'
     fields = ['corehq.apps.reports.fields.DatespanField',
               'corehq.apps.reports.fields.LocationField']
+    exportable = True
 
     @property
     def outlets(self):
