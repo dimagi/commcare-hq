@@ -209,9 +209,6 @@ class CouchUser(Document, UnicodeMixIn):
                            date_joined=self.date_joined,
                            user_data=self.user_data)
 
-    def get_scheduled_reports(self):
-        return ReportNotification.view("reports/user_notifications", key=self.get_id, include_docs=True).all()
-
     def save(self, *args, **kwargs):
         # Call the "real" save() method.
         super(CouchUser, self).save(*args, **kwargs)

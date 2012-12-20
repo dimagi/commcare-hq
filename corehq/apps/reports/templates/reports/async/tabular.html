@@ -4,11 +4,11 @@
 {% load i18n %}
 
 {% block reportcontent %}
+{% block pretable %}{% endblock %}
+{% block reporttable %}
 {% if report.needs_filters %}
-    <div class="well">
-        <p>Please choose your filters above to see report data.</p>
-    </div>
-{% else %}        
+    {% include 'reports/standard/partials/description.html' %}
+{% else %}
     <table class="table table-striped datatable" {% if pagination.filter %} data-filter="true"{% endif %}>
         <thead>
         {%  if report_table.headers.complex %}
@@ -32,7 +32,7 @@
         {% if report_table.pagination.is_on %}
             <tr>
                 <td colspan="{{ report_table.headers.header|length }}" class="dataTables_empty">
-                    Fetching additional data, please wait...
+                    {% trans "Fetching additional data, please wait..." %}
                 </td>
             </tr>
         {% endif %}
@@ -73,6 +73,8 @@
     </table>
 {% endif %}
 {% endblock %}
+{% block posttable %}{% endblock %}
+{% endblock %}
 
 {% block js-inline %} {{ block.super }}
     <script type="text/javascript">
@@ -100,10 +102,14 @@
             });
             standardHQReport.handleTabularReportCookies(reportTables);
             reportTables.render();
+
         {% endif %}
 
         $(function() {
-            $('.header-tooltip').tooltip();
+            $('.header-popover').popout({
+                trigger: 'hover',
+                placement: 'bottom',
+            });
         });
     </script>
 {% endblock %}

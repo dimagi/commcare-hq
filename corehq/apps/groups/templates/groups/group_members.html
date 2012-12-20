@@ -1,13 +1,13 @@
 {% extends "groups/all_groups.html" %}
 {% load i18n %}
 {% load hq_shared_tags %}
-
 {% block head %} {{ block.super }}
     <style type="text/css">
         .group-bubble {
             margin: .3em 0 .8em;
         }
     </style>
+    <script src="{% static 'hqwebapp/js/ui-element.js' %}"></script>
 {% endblock %}
 
 {% block js-inline %}{{ block.super }}
@@ -28,6 +28,14 @@
                     }
                 }
             }
+        });
+        $(function () {
+            var customDataEditor = uiElement.map_list('{{ group.group_id }}', '{% trans "Group Information" %}');
+            customDataEditor.val({{ group.metadata|JSON }});
+            customDataEditor.on("change", function () {
+                $("input#group-data").val(JSON.stringify(this.val()));
+            });
+            $("#group-data-form").prepend(customDataEditor.ui);
         });
     </script>
 {% endblock %}
@@ -128,5 +136,10 @@
             </div>
         </div>
     </div>
+    <h3>{% trans "Group Data" %}</h3>
+    <form id="group-data-form" class="form form-horizontal" name="group-data-form" method="post" action="{% url update_group_data domain group.get_id %}">
+        <input name="group-data" id="group-data" type="hidden" value='{{ group.metadata|JSON }}'></input>
+        <div class="form-actions"><button type="submit" class="btn btn-primary">{% trans "Update Information" %}</button></div>
+    </form>
 {% endblock %}
 

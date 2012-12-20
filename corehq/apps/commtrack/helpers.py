@@ -3,7 +3,6 @@ from corehq.apps.users.models import CommCareUser
 from casexml.apps.case.models import CommCareCase
 from casexml.apps.case.sharedmodels import CommCareCaseIndex
 from corehq.apps.commtrack.models import *
-from corehq.apps.sms import test_backend
 from dimagi.utils.couch.database import get_db
 
 """
@@ -11,17 +10,11 @@ helper code to populate the various commtrack models, for ease of
 development/testing, before we have proper UIs and imports
 """
 
-def make_verified_contact(username, backend=test_backend.API_ID):
-    """utility function to register 'verified' phone numbers for a commcare user"""
-    u = CommCareUser.get_by_username(username)
-    for phone in u.phone_numbers:
-        u.save_verified_number(u.domain, phone, True, backend)
-
 def make_product(domain, name, code):
     p = Product()
     p.domain = domain
     p.name = name
-    p.code = code
+    p.code = code.lower()
     p.save()
     return p
 
@@ -56,23 +49,30 @@ def make_psi_config(domain):
     c = CommtrackConfig(
         domain=domain,
         multiaction_enabled=True,
-        multiaction_keyword='psi',
-        multiaction_delimiter='.',
-        actions = {
-            'prevstockonhand': CommtrackActionConfig(
-                keyword='soh',
-                multiaction_keyword='st',
-                caption='Stock on Hand'
-            ),
-            'receipts': CommtrackActionConfig(
-                keyword='s',
-                caption='Sales'
-            ),
-            'stockedoutfor': CommtrackActionConfig(
+        multiaction_keyword='s',
+        actions = [
+            CommtrackActionConfig(
+                action_type='stockedoutfor',
                 keyword='so',
                 caption='Stock-out Days'
             ),
-        }
+            CommtrackActionConfig(
+                action_type='receipts',
+                keyword='r',
+                caption='Other Receipts'
+            ),
+            CommtrackActionConfig(
+                action_type='stockonhand',
+                keyword='b',
+                caption='Balance'
+            ),
+            CommtrackActionConfig(
+                action_type='receipts',
+                name='sales',
+                keyword='p',
+                caption='Placements'
+            ),
+        ]
     )
     c.save()
     return c

@@ -1,0 +1,25 @@
+This license doesn't cover all your multimedia. <a data-toggle="modal" href="#restrictive-license-notice">More info...</a>
+<div class="modal hide fade" id="restrictive-license-notice">
+    <div class="modal-header">
+        <a class="close" href="#" data-dismiss="modal">&times;</a>
+        <h3>Select a more restrictive license</h3>
+    </div>
+    <div class="modal-body">
+        <p>
+            Since you've opted to publish your multimedia along with your app,
+            you must select a license that is more restrictive than the multimedia in the app.
+        </p>
+        <p>
+            To satisfy this condition, you can either decide not to publish the multimedia
+            or select one of the following licenses:
+        </p>
+        <ul>
+        {% for license in licenses %}
+            {{ license }}
+        {% endfor %}
+        </ul>
+    </div>
+    <div class="modal-footer">
+        <a href="#" class="btn" data-dismiss="modal">Close</a>
+    </div>
+</div>

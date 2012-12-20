@@ -1,18 +1,18 @@
 from StringIO import StringIO
 import logging
-import tempfile
 import uuid
-from wsgiref.util import FileWrapper
 import zipfile
+from diff_match_patch import diff_match_patch
+from django.template.loader import render_to_string
+import hashlib
 from corehq.apps.app_manager.const import APP_V1
 from corehq.apps.app_manager.success_message import SuccessMessage
 from corehq.apps.domain.models import Domain
-from corehq.apps.reports.templatetags.timezone_tags import utc_to_timezone
 from couchexport.export import FormattedRow
 from couchexport.models import Format
 from couchexport.writers import Excel2007ExportWriter
 from dimagi.utils.couch.database import get_db
-from dimagi.utils.couch.resource_conflict import repeat, retry_resource
+from dimagi.utils.couch.resource_conflict import retry_resource
 from django.utils import simplejson
 from django.utils.http import urlencode as django_urlencode
 import os
@@ -20,31 +20,30 @@ import re
 
 from couchdbkit.exceptions import ResourceConflict
 from django.http import HttpResponse, Http404, HttpResponseBadRequest, HttpResponseForbidden, HttpResponseServerError
-import sys
 from unidecode import unidecode
 from corehq.apps.hqmedia import utils
 from corehq.apps.app_manager.xform import XFormError, XFormValidationError, CaseError,\
     XForm, parse_xml
-from corehq.apps.builds.models import CommCareBuildConfig, BuildSpec, BuildRecord
+from corehq.apps.builds.models import CommCareBuildConfig, BuildSpec
 from corehq.apps.hqmedia import upload
 from corehq.apps.sms.views import get_sms_autocomplete_context
-from corehq.apps.translations.models import TranslationMixin
 from corehq.apps.users.decorators import require_permission
 from corehq.apps.users.models import Permissions, CommCareUser
+from dimagi.utils.logging import notify_exception
+from dimagi.utils.subprocess_timeout import ProcessTimedOut
 
 from dimagi.utils.web import render_to_response, json_response, json_request
 
 from corehq.apps.app_manager.forms import NewXFormForm, NewModuleForm
 from corehq.apps.hqmedia.forms import HQMediaZipUploadForm, HQMediaFileUploadForm
 from corehq.apps.reports import util as report_utils
-from corehq.apps.hqmedia.models import CommCareMultimedia, CommCareImage, CommCareAudio
 
 from corehq.apps.domain.decorators import login_and_domain_required, login_or_digest
 
 from django.http import HttpResponseRedirect
-from django.core.urlresolvers import reverse, resolve, get_resolver, RegexURLResolver
-from corehq.apps.app_manager.models import RemoteApp, Application, VersionedDoc, get_app, DetailColumn, Form, FormAction, FormActionCondition, FormActions,\
-    BuildErrors, AppError, load_case_reserved_words, ApplicationBase, DeleteFormRecord, DeleteModuleRecord, DeleteApplicationRecord, EXAMPLE_DOMAIN, str_to_cls, validate_lang, SavedAppBuild
+from django.core.urlresolvers import reverse, RegexURLResolver
+from corehq.apps.app_manager.models import Application, get_app, DetailColumn, Form, FormActions,\
+    AppError, load_case_reserved_words, ApplicationBase, DeleteFormRecord, DeleteModuleRecord, DeleteApplicationRecord, EXAMPLE_DOMAIN, str_to_cls, validate_lang, SavedAppBuild
 
 from corehq.apps.app_manager.models import DETAIL_TYPES, import_app as import_app_util
 from django.utils.http import urlencode
@@ -54,20 +53,16 @@ from django.conf import settings
 from dimagi.utils.web import get_url_base
 
 import json
-from dimagi.utils.make_uuid import random_hex
 import urllib
 import urlparse
-import re
 from collections import defaultdict
 from couchdbkit.resource import ResourceNotFound
 from corehq.apps.app_manager.decorators import safe_download
-from django.utils.datastructures import SortedDict
 from xml.dom.minidom import parseString
-from formtranslate import api
+from corehq.apps.hqmedia.models import CommCareMultimedia
 
 try:
     from lxml.etree import XMLSyntaxError
-    from lxml.etree import parse as lxml_parse
 except ImportError:
     logging.error("lxml not installed! apps won't work properly!!")
 from django.contrib import messages
@@ -292,7 +287,10 @@ def get_form_view_context(request, form, langs, is_user_registration, messages=m
 
     if xform and xform.exists():
         if xform.already_has_meta():
-            messages.warning(request, "This form has a meta block already! It will be replaced by CommCare HQ's standard meta block.")
+            messages.warning(request,
+                "This form has a meta block already! "
+                "It may be replaced by CommCare HQ's standard meta block."
+            )
         try:
             form.validate_form()
             xform_questions = xform.get_questions(langs)
@@ -344,12 +342,7 @@ def get_form_view_context(request, form, langs, is_user_registration, messages=m
         'module_case_types': [{'module_name': module.name.get('en'), 'case_type': module.case_type} for module in form.get_app().modules if module.case_type] if not is_user_registration else None
     }
 
-def get_apps_base_context(request, domain, app):
-
-    applications = []
-    for _app in ApplicationBase.view('app_manager/applications_brief', startkey=[domain], endkey=[domain, {}]):
-        applications.append(_app)
-
+def get_langs(request, app):
     lang = request.GET.get('lang',
         request.COOKIES.get('lang', app.langs[0] if hasattr(app, 'langs') and app.langs else '')
     )
@@ -363,9 +356,23 @@ def get_apps_base_context(request, domain, app):
         if not lang or lang not in app.langs:
             lang = (app.langs or ['en'])[0]
         langs = [lang] + app.langs
+    return lang, langs
 
-    edit = (request.GET.get('edit', 'true') == 'true') and\
-           (request.couch_user.can_edit_apps(domain) or request.user.is_superuser)
+def get_apps_base_context(request, domain, app):
+
+    applications = []
+    for _app in ApplicationBase.view('app_manager/applications_brief', startkey=[domain], endkey=[domain, {}]):
+        applications.append(_app)
+
+    lang, langs = get_langs(request, app)
+
+    if getattr(request, 'couch_user', None):
+        edit = (request.GET.get('edit', 'true') == 'true') and\
+               (request.couch_user.can_edit_apps(domain) or request.user.is_superuser)
+        timezone = report_utils.get_timezone(request.couch_user.user_id, domain)
+    else:
+        edit = False
+        timezone = None
 
     if app:
         latest_app_version = ApplicationBase.view('app_manager/saved_app',
@@ -383,7 +390,6 @@ def get_apps_base_context(request, domain, app):
     else:
         latest_app_version = -1
     context = {
-        ''
         'lang': lang,
         'langs': langs,
         'domain': domain,
@@ -392,39 +398,41 @@ def get_apps_base_context(request, domain, app):
         'latest_app_version': latest_app_version,
         'app': app
     }
-    build_errors_id = request.GET.get('build_errors', "")
-    build_errors = []
-    if build_errors_id:
-        try:
-            error_doc = BuildErrors.get(build_errors_id)
-            build_errors = error_doc.errors
-            error_doc.delete()
-        except ResourceNotFound:
-            pass
-
     context.update(get_sms_autocomplete_context(request, domain))
     context.update({
         'URL_BASE': get_url_base(),
-        'build_errors': build_errors,
         'edit': edit,
         'latest_app_version': latest_app_version,
-        'timezone': report_utils.get_timezone(request.couch_user.user_id, domain)
+        'timezone': timezone,
     })
+
     return context
+
+@login_and_domain_required
+def paginate_releases(request, domain, app_id):
+    limit = request.GET.get('limit', 10)
+    start_build = json.loads(request.GET.get('start_build'))
+    if start_build:
+        assert isinstance(start_build, int)
+    else:
+        start_build = {}
+    timezone = report_utils.get_timezone(request.couch_user.user_id, domain)
+    saved_apps = get_db().view('app_manager/saved_app',
+        startkey=[domain, app_id, start_build],
+        endkey=[domain, app_id],
+        descending=True,
+        limit=limit,
+        wrapper=lambda x: SavedAppBuild.wrap(x['value']).to_saved_build_json(timezone),
+    ).all()
+    return json_response(saved_apps)
 
 @login_and_domain_required
 def release_manager(request, domain, app_id, template='app_manager/releases.html'):
     app = get_app(domain, app_id)
     latest_release = get_app(domain, app_id, latest=True)
     context = get_apps_base_context(request, domain, app)
-    timezone = context['timezone']
 
-    saved_apps = get_db().view('app_manager/saved_app',
-        startkey=[domain, app.id, {}],
-        endkey=[domain, app.id],
-        descending=True,
-        wrapper=lambda x: SavedAppBuild.wrap(x['value']).to_saved_build_json(timezone),
-    ).all()
+    saved_apps = []
 
     users_cannot_share = CommCareUser.cannot_share(domain)
     context.update({
@@ -450,7 +458,8 @@ def release_manager(request, domain, app_id, template='app_manager/releases.html
 
 @require_POST
 @require_can_edit_apps
-def release_build(request, domain, app_id, saved_app_id, is_released=True):
+def release_build(request, domain, app_id, saved_app_id):
+    is_released = request.POST.get('is_released') == 'true'
     ajax = request.POST.get('ajax') == 'true'
     saved_app = get_app(domain, saved_app_id)
     if saved_app.copy_of != app_id:
@@ -531,9 +540,20 @@ def view_generic(req, domain, app_id=None, module_id=None, form_id=None, is_user
         context.update({"translations": app.translations.get(context['lang'], {})})
 
     if app and app.get_doc_type() == 'Application':
-        images, audio, has_error = utils.get_multimedia_filenames(app)
-        multimedia_images, missing_image_refs = app.get_template_map(images)
-        multimedia_audio, missing_audio_refs = app.get_template_map(audio)
+        try:
+            images, audio, has_error = utils.get_multimedia_filenames(app)
+        except ProcessTimedOut as e:
+            notify_exception(req)
+            messages.warning(req,
+                "We were unable to check if your forms had errors. "
+                "Refresh the page and we will try again."
+            )
+            images, audio, has_error = [], [], True
+            multimedia_images, missing_image_refs = [], 0
+            multimedia_audio, missing_audio_refs = [], 0
+        else:
+            multimedia_images, missing_image_refs = app.get_template_map(images, req=req)
+            multimedia_audio, missing_audio_refs = app.get_template_map(audio, req=req)
         context.update({
             'missing_image_refs': missing_image_refs,
             'missing_audio_refs': missing_audio_refs,
@@ -565,10 +585,10 @@ def view_generic(req, domain, app_id=None, module_id=None, form_id=None, is_user
     if app:
         if True:
             # decided to do Application and RemoteApp the same way; might change later
-            versions = ['1.0', '2.0']
             commcare_build_options = {}
-            for version in versions:
-                options = CommCareBuildConfig.fetch().get_menu(version)
+            build_config = CommCareBuildConfig.fetch()
+            for version in ['1.0', '2.0']:
+                options = build_config.get_menu(version)
                 options_labels = list()
                 options_builds = list()
                 for option in options:
@@ -827,6 +847,7 @@ def edit_module_attr(req, domain, app_id, module_id, attr):
     _handle_media_edits(req, module, should_edit, resp)
 
     app.save(resp)
+    resp['case_list-show'] = module.requires_case_details()
     return HttpResponse(json.dumps(resp))
 
 @require_POST
@@ -942,6 +963,50 @@ def _handle_media_edits(request, item, should_edit, resp):
                 val = None
             setattr(item, attribute, val)
 
+def _save_xform(app, form, xml):
+    try:
+        xform = XForm(xml)
+    except XFormError:
+        pass
+    else:
+        duplicates = app.get_xmlns_map()[xform.data_node.tag_xmlns]
+        for duplicate in duplicates:
+            if form == duplicate:
+                continue
+            else:
+                data = xform.data_node.render()
+                xmlns = "http://openrosa.org/formdesigner/%s" % form.get_unique_id()
+                data = data.replace(xform.data_node.tag_xmlns, xmlns, 1)
+                xform.instance_node.remove(xform.data_node.xml)
+                xform.instance_node.append(parse_xml(data))
+                xml = xform.render()
+                break
+    form.source = xml
+
+@require_POST
+@login_or_digest
+@require_permission(Permissions.edit_apps, login_decorator=None)
+def patch_xform(request, domain, app_id, unique_form_id):
+    patch = request.POST['patch']
+    sha1_checksum = request.POST['sha1']
+
+    app = get_app(domain, app_id)
+    form = app.get_form(unique_form_id)
+
+    current_xml = form.source
+    if hashlib.sha1(current_xml.encode('utf-8')).hexdigest() != sha1_checksum:
+        return json_response({'status': 'conflict', 'xform': current_xml})
+
+    dmp = diff_match_patch()
+    xform, _ = dmp.patch_apply(dmp.patch_fromText(patch), current_xml)
+    _save_xform(app, form, xform)
+    response_json = {
+        'status': 'ok',
+        'sha1': hashlib.sha1(form.source.encode('utf-8')).hexdigest()
+    }
+    app.save(response_json)
+    return json_response(response_json)
+
 @require_POST
 @login_or_digest
 @require_permission(Permissions.edit_apps, login_decorator=None)
@@ -1005,23 +1070,7 @@ def edit_form_attr(req, domain, app_id, unique_form_id, attr):
                 except Exception:
                     pass
             if xform:
-                try:
-                    xform = XForm(xform)
-                except XFormError:
-                    form.source = xform
-                else:
-                    duplicates = app.get_xmlns_map()[xform.data_node.tag_xmlns]
-                    for duplicate in duplicates:
-                        if form == duplicate:
-                            continue
-                        else:
-                            data = xform.data_node.render()
-                            xmlns = "http://openrosa.org/formdesigner/%s" % form.get_unique_id()
-                            data = data.replace(xform.data_node.tag_xmlns, xmlns, 1)
-                            xform.instance_node.remove(xform.data_node.xml)
-                            xform.instance_node.append(parse_xml(data))
-                            break
-                    form.source = xform.render()
+                _save_xform(app, form, xform)
             else:
                 raise Exception("You didn't select a form to upload")
         except Exception, e:
@@ -1442,6 +1491,7 @@ def rearrange(req, domain, app_id, key):
 
 # The following three functions deal with
 # Saving multiple versions of the same app
+# i.e. "making builds"
 
 @require_POST
 @require_can_edit_apps
@@ -1451,27 +1501,15 @@ def save_copy(req, domain, app_id):
     See VersionedDoc.save_copy
 
     """
-    next = req.POST.get('next')
     comment = req.POST.get('comment')
     app = get_app(domain, app_id)
     errors = app.validate_app()
-    def replace_params(next, **kwargs):
-        """this is a more general function that should be moved"""
-        url = urlparse.urlparse(next)
-        q = urlparse.parse_qs(url.query)
-        for param in kwargs:
-            if isinstance(kwargs[param], basestring):
-                q[param] = [kwargs[param]]
-            else:
-                q[param] = kwargs[param]
-        url = url._replace(query=urllib.urlencode(q, doseq=True))
-        next = urlparse.urlunparse(url)
-        return next
 
     if not errors:
         try:
-            app.save_copy(comment=comment, user_id=req.couch_user.get_id)
+            copy = app.save_copy(comment=comment, user_id=req.couch_user.get_id)
         except Exception as e:
+            copy = None
             if settings.DEBUG:
                 raise
             messages.error(req, "Unexpected error saving build:\n%s" % e)
@@ -1480,11 +1518,23 @@ def save_copy(req, domain, app_id):
             if app.is_remote_app():
                 app.save(increment_version=True)
     else:
-        errors = BuildErrors(errors=errors)
-        errors.save()
-        next = replace_params(next, build_errors=errors.get_id)
-    return HttpResponseRedirect(next)
-
+        copy = None
+    copy = copy and SavedAppBuild.wrap(copy.to_json()).to_saved_build_json(
+        report_utils.get_timezone(req.couch_user.user_id, domain)
+    )
+    lang, langs = get_langs(req, app)
+    print errors
+    return json_response({
+        "saved_app": copy,
+        "error_html": render_to_string('app_manager/partials/build_errors.html', {
+            'app': get_app(domain, app_id),
+            'build_errors': errors,
+            'domain': domain,
+            'langs': langs,
+            'lang': lang
+        }),
+    })
+    
 @require_POST
 @require_can_edit_apps
 def revert_to_copy(req, domain, app_id):
@@ -1507,11 +1557,11 @@ def delete_copy(req, domain, app_id):
     See VersionedDoc.delete_copy
 
     """
-    next = req.POST.get('next')
     app = get_app(domain, app_id)
     copy = get_app(domain, req.POST['saved_app'])
     app.delete_copy(copy)
-    return HttpResponseRedirect(next)
+    return json_response({})
+
 
 # download_* views are for downloading the files that the application generates
 # (such as CommCare.jad, suite.xml, profile.xml, etc.
@@ -1627,8 +1677,8 @@ def download_multimedia_zip(req, domain, app_id):
     errors = []
     for form_path, media_item in app.multimedia_map.items():
         try:
-            media = eval(media_item.media_type)
-            media = media.get(media_item.multimedia_id)
+            media_cls = CommCareMultimedia.get_doc_class(media_item.media_type)
+            media = media_cls.get(media_item.multimedia_id)
             data, content_type = media.get_display_file()
             path = form_path.replace(utils.MULTIMEDIA_PREFIX, "")
             if not isinstance(data, unicode):
@@ -1713,8 +1763,7 @@ def download_raw_jar(req, domain, app_id):
     response['Content-Type'] = "application/java-archive"
     return response
 
-@login_and_domain_required
-def emulator(req, domain, app_id, template="app_manager/emulator.html"):
+def emulator_page(req, domain, app_id, template):
     copied_app = app = get_app(domain, app_id)
     if app.copy_of:
         app = get_app(domain, app.copy_of)
@@ -1726,8 +1775,20 @@ def emulator(req, domain, app_id, template="app_manager/emulator.html"):
     return render_to_response(req, template, {
         'domain': domain,
         'app': app,
-        'build_path': build_path
+        'build_path': build_path,
+        'url_base': get_url_base()
     })
+
+@login_and_domain_required
+def emulator(req, domain, app_id, template="app_manager/emulator.html"):
+    return emulator_page(req, domain, app_id, template)
+
+def emulator_handler(req, domain, app_id):
+    exchange = req.GET.get("exchange", '')
+    if exchange:
+        return emulator_page(req, domain, app_id, template="app_manager/exchange_emulator.html")
+    else:
+        return emulator(req, domain, app_id)
 
 def emulator_commcare_jar(req, domain, app_id):
     response = HttpResponse(
@@ -1810,7 +1871,17 @@ def _find_name(names, langs):
     return name
 
 @login_and_domain_required
-def summary(request, domain, app_id):
+def app_summary(request, domain, app_id):
+    return summary(request, domain, app_id, should_edit=True)
+
+def app_summary_from_exchange(request, domain, app_id):
+    dom = Domain.get_by_name(domain)
+    if dom.is_snapshot:
+        return summary(request, domain, app_id, should_edit=False)
+    else:
+        return HttpResponseForbidden()
+
+def summary(request, domain, app_id, should_edit=True):
     app = Application.get(app_id)
     context = get_apps_base_context(request, domain, app)
     langs = context['langs']
@@ -1830,4 +1901,7 @@ def summary(request, domain, app_id):
     context['modules'] = modules
     context['summary'] = True
 
-    return render_to_response(request, "app_manager/summary.html", context)
+    if should_edit:
+        return render_to_response(request, "app_manager/summary.html", context)
+    else:
+        return render_to_response(request, "app_manager/exchange_summary.html", context)

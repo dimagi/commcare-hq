@@ -1,6 +1,4 @@
 from couchdbkit.ext.django.schema import *
-import util
-from dimagi.utils.couch.database import get_db
 from dimagi.utils.decorators.memoized import memoized
 
 class SnapshotMixin(DocumentSchema):

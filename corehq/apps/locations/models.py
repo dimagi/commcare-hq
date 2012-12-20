@@ -1,5 +1,6 @@
 from couchdbkit.ext.django.schema import *
 import itertools
+from dimagi.utils.couch.database import get_db
 
 class Location(Document):
     domain = StringProperty()
@@ -14,16 +15,16 @@ class Location(Document):
 
     def __init__(self, *args, **kwargs):
         if 'parent' in kwargs:
-           parent = kwargs['parent']
-           if parent:
-               if not isinstance(parent, Document):
-                   # 'parent' is a doc id
-                   parent = Location.get(parent)
-               lineage = list(reversed(parent.path))
-           else:
-               lineage = []
-           kwargs['lineage'] = lineage
-           del kwargs['parent']
+            parent = kwargs['parent']
+            if parent:
+                if not isinstance(parent, Document):
+                    # 'parent' is a doc id
+                    parent = Location.get(parent)
+                lineage = list(reversed(parent.path))
+            else:
+                lineage = []
+            kwargs['lineage'] = lineage
+            del kwargs['parent']
 
         super(Document, self).__init__(*args, **kwargs)
 
@@ -73,10 +74,22 @@ class Location(Document):
         keys = [e['key'] for e in q if len(e['key']) == depth]
         return self.view('locations/hierarchy', keys=keys, reduce=False, include_docs=True).all()
 
+    def linked_docs(self, doc_type, include_descendants=False):
+        startkey = [self.domain, self._id, doc_type]
+        if not include_descendants:
+            startkey.append(True)
+        endkey = list(startkey)
+        endkey.append({})
+        # returns arbitrary doc types, so can't call self.view()
+        return [k['doc'] for k in get_db().view('locations/linked_docs', startkey=startkey, endkey=endkey, include_docs=True)]
+
 def location_tree(domain):
     """build a hierarchical tree of the entire location structure for a domain"""
-    locs = Location.view('locations/hierarchy', startkey=[domain], endkey=[domain, {}], reduce=False, include_docs=True).all()
-    locs.sort(key=lambda l: l.path) # just to be safe; couch view should return in the correct sorted order
+    # this is going to be extremely slow as the number of locations gets big
+    locs = Location.view('locations/hierarchy', startkey=[domain], endkey=[domain, {}],
+                         reduce=False, include_docs=True).all()
+    locs.sort(key=lambda l: l.path) # parents must appear before their children; couch should
+    # return docs in the correct order, but, just to be safe...
     locs_by_id = dict((l._id, l) for l in locs)
 
     tree_root = []

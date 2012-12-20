@@ -3,10 +3,11 @@
 {% load case_tags %}
 {% load timezone_tags %}
 {% load hq_shared_tags %}
+{% load i18n %}
 
 {% block head %}{{ block.super }}
     {% include "imports/bootstrap.google-prettify.html" %}
-    <script type="text/javascript" src="{% static 'hq_bootstrap/js/jquery.selectText.js' %}"></script>
+    <script type="text/javascript" src="{% static 'hqstyle/js/jquery/plugins/jquery.selectText.js' %}"></script>
     <script type="text/javascript">
         $(function() {
             var $codeBlock = $("#formatted-form-xml"),
@@ -27,14 +28,28 @@
                     $codeBlock.html(formatted_block);
                 }
             });
-        })
+            var help_text = {
+                "{% trans "Archiving Forms" %}": "{% trans "Archived forms will no longer show up in reports. However, case data submitted from archived forms is still maintained." %}",
+                "{% trans "Restoring Forms" %}": "{% trans "Restoring this form will cause it to show up in reports again." %}",
+            };
+            $('.help_popover').popover({
+                placement: 'top',
+                trigger: 'hover',
+                title: function () {
+                    return $(this).attr('data-help-key');
+                },
+                content: function () {
+                    return help_text[$(this).attr('data-help-key')];
+                }
+            });
+        });
     </script>
 {% endblock %}
 
 {% block page-title %}
     <ul class="breadcrumb">
         <li>
-            <a href="{% url default_report domain %}"><strong>Reports</strong></a> <span class="divider">&gt;</span>
+            <a href="{% url reports_home domain %}"><strong>Reports</strong></a> <span class="divider">&gt;</span>
         </li>
         <li>
             <a href="{% url project_report_dispatcher domain 'submit_history' %}">Submit History</a> <span class="divider">&gt;</span>
@@ -59,6 +74,15 @@
     <div class="tab-content">
         <div class="tab-pane active" id="form_display">
             {% render_form_data instance %}
+            {% if not is_archived %}
+            <form action="{% url archive_form domain instance.get_id %}" method="POST">
+                <input type="submit" class="btn btn-danger" value="{% trans "Archive this form" %}"><span class="help_popover" data-help-key="Archiving Forms"><i class="icon icon-question-sign"></i></span>
+            </form>
+            {% else %}
+            <form action="{% url unarchive_form domain instance.get_id %}" method="POST">
+                <input type="submit" class="btn btn-primary" value="{% trans "Restore this form" %}"><span class="help_popover" data-help-key="Restoring Forms"><i class="icon icon-question-sign"></i></span>
+            </form>
+            {% endif %}
         </div>
         <div class="tab-pane" id="raw_xml">
             <p><a class="btn" href="{% url download_form domain instance.get_id %}" target="_blank">Open XML in New Window</a></p>

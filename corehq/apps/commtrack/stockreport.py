@@ -13,20 +13,27 @@ import logging
 logger = logging.getLogger('commtrack.incoming')
 
 XMLNS = 'http://openrosa.org/commtrack/stock_report'
+META_XMLNS = 'http://openrosa.org/jr/xforms'
 def _(tag, ns=XMLNS):
     return '{%s}%s' % (ns, tag)
-def XML(ns=XMLNS):
-    return ElementMaker(namespace=ns)
+def XML(ns=XMLNS, prefix=None):
+    prefix_map = None
+    if prefix:
+        prefix_map = {prefix: ns}
+    return ElementMaker(namespace=ns, nsmap=prefix_map)
 
 def process(domain, instance):
     """process an incoming commtrack stock report instance"""
+    config = CommtrackConfig.for_domain(domain)
     root = etree.fromstring(instance)
-    transactions = unpack_transactions(root)
+    transactions = unpack_transactions(root, config)
 
     case_ids = [tx['case_id'] for tx in transactions]
     cases = dict((c._id, c) for c in CommCareCase.view('_all_docs', keys=case_ids, include_docs=True))
 
     # ensure transaction types are processed in the correct order
+    def transaction_order(tx):
+        return [action.action_name for action in config.actions].index(tx['action'])
     transactions.sort(key=transaction_order)
     # apply all transactions to each product case in bulk
     transactions_by_product = map_reduce(lambda tx: [(tx['case_id'],)], data=transactions, include_docs=True)
@@ -40,18 +47,25 @@ def process(domain, instance):
 
     submission = etree.tostring(root)
     logger.debug('submitting: %s' % submission)
-    spoof_submission(get_submit_url(domain), submission)
+
+    submit_time = root.find('.//%s' % _('timeStart', META_XMLNS)).text
+    spoof_submission(get_submit_url(domain), submission, headers={'HTTP_X_SUBMIT_TIME': submit_time})
 
 # TODO: make a transaction class
 
-def tx_from_xml(tx):
-    return {
+# TODO: tag all transactions with 'order in which processed' info -- especially
+# needed for the reconciliation transactions
+
+def tx_from_xml(tx, config):
+    data = {
         'product_id': tx.find(_('product')).text,
         'case_id': tx.find(_('product_entry')).text,
         'action': tx.find(_('action')).text,
         'value': int(tx.find(_('value')).text),
         'inferred': tx.attrib.get('inferred') == 'true',
     }
+    data['base_action'] = config.actions_by_name[data['action']].action_type
+    return data
 
 def tx_to_xml(tx, E=None):
     if not E:
@@ -68,11 +82,8 @@ def tx_to_xml(tx, E=None):
         **attr
     )
 
-def unpack_transactions(root):
-    return [tx_from_xml(tx) for tx in root.findall(_('transaction'))]
-
-def transaction_order(tx):
-    return ACTION_TYPES.index(tx['action'])
+def unpack_transactions(root, config):
+    return [tx_from_xml(tx, config) for tx in root.findall(_('transaction'))]
 
 def process_product_transactions(case, txs):
     """process all the transactions from a stock report for an individual
@@ -83,7 +94,7 @@ def process_product_transactions(case, txs):
     current_state = StockState(case)
     reconciliations = []
     for tx in txs:
-        recon = current_state.update(tx['action'], tx['value'])
+        recon = current_state.update(tx['base_action'], tx['value'])
         if recon:
             reconciliations.append(tx_to_xml(recon))
     return current_state.to_case_block(), reconciliations
@@ -112,9 +123,9 @@ class StockState(object):
                 'inferred': True,
             }
 
-        if action in ('stockout', 'stockedoutfor'):
+        if action == 'stockout' or (action == 'stockedoutfor' and value > 0):
             self.current_stock = 0
-            days_stocked_out = value if action == 'stockedoutfor' else 0
+            days_stocked_out = (value - 1) if action == 'stockedoutfor' else 0
             self.stocked_out_since = date.today() - timedelta(days=days_stocked_out)
         else:
 

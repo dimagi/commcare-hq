@@ -5,6 +5,7 @@ from couchdbkit.ext.django.schema import *
 from casexml.apps.case.models import CommCareCase
 from corehq.apps.adm import utils
 from corehq.apps.adm.admin.crud import *
+from corehq.apps.crud.models import AdminCRUDDocumentMixin
 from corehq.apps.groups.models import Group
 from dimagi.utils.couch.database import get_db
 from dimagi.utils.dates import DateSpan
@@ -26,6 +27,10 @@ CASE_STATUS_OPTIONS = [
     ('', 'All Cases'),
     ('open', 'Open Cases'),
     ('closed', 'Closed Cases')
+]
+SORT_BY_DIRECTION_OPTIONS = [
+    ('asc', "Ascending"),
+    ('desc', "Descending"),
 ]
 
 class NumericalADMColumnMixin(DocumentSchema):
@@ -55,7 +60,7 @@ class IgnoreDatespanADMColumnMixin(DocumentSchema):
     ignore_datespan = BooleanProperty(default=True)
 
 
-class BaseADMDocument(Document):
+class BaseADMDocument(Document, AdminCRUDDocumentMixin):
     """
         For all things ADM.
         The important thing is that default versions of ADM items (reports and columns) are unique for domain + slug
@@ -86,15 +91,6 @@ class BaseADMDocument(Document):
     date_modified = DateTimeProperty()
 
     _admin_crud_class = ADMAdminCRUDManager
-
-    @property
-    @memoized
-    def admin_crud(self):
-        return self._admin_crud_class(self.__class__, self)
-
-    @classmethod
-    def get_admin_crud(cls):
-        return cls._admin_crud_class(cls)
 
     @classmethod
     def defaults_couch_view(cls):
@@ -178,6 +174,17 @@ class BaseADMColumn(BaseADMDocument):
             definition will have the domain set.
         """
         return self._report_domain
+
+    def _get_raw_vals_from_data(self, column_data):
+        return [d.get('sort_key') for d in column_data if d.get('sort_key') is not None]
+
+    def calculate_totals(self, column_data):
+        raw_vals = self._get_raw_vals_from_data(column_data)
+        return sum(raw_vals)
+
+    def calculate_averages(self, column_data):
+        raw_vals = self._get_raw_vals_from_data(column_data)
+        return sum(raw_vals)/len(raw_vals) if raw_vals else 0
 
     def set_report_values(self, **kwargs):
         """
@@ -273,7 +280,7 @@ class CouchViewADMColumn(BaseADMColumn):
         for key in self.couch_key:
             if isinstance(key, DateSpan):
                 datespan = key
-            elif isinstance(key, str) or isinstance(key, unicode):
+            elif isinstance(key, basestring):
                 cleaned_key.append(kwargs.get(key, key))
             else:
                 cleaned_key.append(key)
@@ -324,6 +331,9 @@ class DaysSinceADMColumn(CouchViewADMColumn, NumericalADMColumnMixin):
         if isinstance(doc, dict) and len(property) > 0:
             return self._get_property_from_doc(doc.get(property[0]), property[1:-1])
         return doc
+
+    def calculate_totals(self, column_data):
+        return "--"
 
     def get_couch_view_data(self, key, datespan=None):
         default_value = None
@@ -400,6 +410,41 @@ class ConfigurableADMColumn(BaseADMColumn):
         return wrapped_data
 
 
+class UserDataADMColumn(ConfigurableADMColumn):
+    user_data_key = StringProperty()
+
+    _admin_crud_class = ConfigurableColumnAdminCRUDManager
+
+    @property
+    def configurable_properties(self):
+        return ["user_data_key"]
+
+    def raw_value(self, **kwargs):
+        user_id = kwargs.get('user_id')
+        try:
+            user = CommCareUser.get(user_id)
+            return user.user_data.get(self.user_data_key)
+        except Exception:
+            pass
+        return None
+
+    def clean_value(self, value):
+        return "--" if value is None else value
+
+    def html_value(self, value):
+        return self.clean_value(value)
+
+    def calculate_averages(self, column_data):
+        return "--"
+
+    def calculate_totals(self, column_data):
+        return "--"
+
+    @classmethod
+    def column_type(cls):
+        return "User Data"
+
+
 class CompareADMColumn(ConfigurableADMColumn):
     """
         Grabs two ADMColumns that return numerical values.
@@ -436,6 +481,34 @@ class CompareADMColumn(ConfigurableADMColumn):
             return ConfigurableADMColumn.get_default(self.denominator_ref, domain=self.report_domain)
         return ConfigurableADMColumn.get_correct_wrap(self.denominator_ref)
 
+    def _get_fractions(self, column_data):
+        formatted_vals = [d.get('html') for d in column_data if d.get('sort_key', -1) >= 0]
+        numerators = []
+        denominators = []
+        for v in formatted_vals:
+            fraction = v.split(' ')[0].split('/')
+            numerators.append(int(fraction[0]))
+            denominators.append(int(fraction[1]))
+        return numerators, denominators
+
+    def calculate_totals(self, column_data):
+        numerators, denominators = self._get_fractions(column_data)
+        n_sum = sum(numerators) if numerators else 0
+        d_sum = sum(denominators) if denominators else 0
+        return self.html_value(dict(
+            numerator=n_sum,
+            denominator=d_sum,
+        ))
+
+    def calculate_averages(self, column_data):
+        numerators, denominators = self._get_fractions(column_data)
+        n_avg = sum(numerators)/len(numerators) if numerators else 0
+        d_avg = sum(denominators)/len(denominators) if denominators else 0
+        return self.html_value(dict(
+            numerator=n_avg,
+            denominator=d_avg,
+        ))
+
     def set_report_values(self, **kwargs):
         super(CompareADMColumn, self).set_report_values(**kwargs)
         if self.numerator:
@@ -455,9 +528,9 @@ class CompareADMColumn(ConfigurableADMColumn):
         d = value.get('denominator', 0)
         n = value.get('numerator', 0)
         try:
-            return float(n)/float(d)
+            return float(n)/float(d)*100
         except Exception:
-            return 0
+            return -1
 
     def html_value(self, value):
         default_value = "--"
@@ -607,6 +680,11 @@ class ADMReport(BaseADMDocument):
     """
     reporting_section = StringProperty(default="supervisor")
     column_refs = ListProperty()
+    sort_by_default = StringProperty()
+    sort_by_direction = StringProperty(
+        choices=[d[0] for d in SORT_BY_DIRECTION_OPTIONS],
+        default=SORT_BY_DIRECTION_OPTIONS[0][0]
+    )
     key_type = StringProperty(default="user_id")
 
     base_doc = "ADMReport"
@@ -636,6 +714,15 @@ class ADMReport(BaseADMDocument):
         if self._viewing_domain is None:
             self._viewing_domain = self.domain
         return self._viewing_domain
+
+    @property
+    def default_sort_params(self):
+        sort_ind = 0
+        for ind, col in enumerate(self.columns):
+            if self.sort_by_default == col.slug:
+                sort_ind = 1+ind
+                break
+        return [[sort_ind, self.sort_by_direction]]
 
     def set_domain_specific_values(self, domain):
         self._viewing_domain = domain

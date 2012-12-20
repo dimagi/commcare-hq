@@ -14,8 +14,7 @@ _phonelog_context = {
 }
 
 custom_report_urls = patterns('',
-    url(CustomProjectReportDispatcher.pattern(), CustomProjectReportDispatcher.as_view(),
-        name=CustomProjectReportDispatcher.name())
+    CustomProjectReportDispatcher.url_pattern(),
 )
 
 phonelog_reports = patterns('',
@@ -34,7 +33,7 @@ phonelog_reports = patterns('',
 )
 
 urlpatterns = patterns('corehq.apps.reports.views',
-    url(r'^$', "default", name="default_report"),
+    url(r'^$', "default", name="reports_home"),
 
     url(r'^case_data/(?P<case_id>[\w\-]+)/$', 'case_details', name="case_details"),
 
@@ -43,13 +42,12 @@ urlpatterns = patterns('corehq.apps.reports.views',
     url(r'^form_data/(?P<instance_id>[\w\-:]+)/download/$', 'download_form', name='download_form'),
     url(r'^form_data/(?P<instance_id>[\w\-:]+)/download/(?P<attachment>[\w.-_]+)?$',
         'download_attachment', name='download_attachment'),
+    url(r'^form_data/(?P<instance_id>[\w\-:]+)/archive/$', 'archive_form', name='archive_form'),
+    url(r'^form_data/(?P<instance_id>[\w\-:]+)/unarchive/$', 'unarchive_form', name='unarchive_form'),
 
     # Custom Hook for Dodoma TODO should this be here?
     url(r'^dodoma/', include(dodoma_reports)),
 
-    # useful for debugging email reports
-    url(r'^emaillist/$', 'emaillist', name="emailable_report_list"),
-    url(r'^emailtest/(?P<report_slug>[\w_]+)/$', 'emailtest', name="emailable_report_test"),
 
     # Create and Manage Custom Exports
     url(r"^export/$", 'export_data'),
@@ -72,6 +70,16 @@ urlpatterns = patterns('corehq.apps.reports.views',
     url(r"^configs/(?P<config_id>[\w-]+)$", 'delete_config',
         name='delete_report_config'),
 
+    # Scheduled reports
+    url(r'^scheduled_reports/(?P<scheduled_report_id>[\w-]+)?$',
+        'edit_scheduled_report', name="edit_scheduled_report"),
+    url(r'^scheduled_report/(?P<scheduled_report_id>[\w-]+)/delete$',
+        'delete_scheduled_report', name='delete_scheduled_report'),
+    url(r'^send_test_scheduled_report/(?P<scheduled_report_id>[\w-]+)/$',
+         'send_test_scheduled_report', name='send_test_scheduled_report'),
+    url(r'^view_scheduled_report/(?P<scheduled_report_id>[\w_]+)/$',
+        'view_scheduled_report', name='view_scheduled_report'),
+
     # Internal Use
     url(r"^export/forms/all/$", 'export_all_form_metadata', name="export_all_form_metadata"),
     url(r'^download/cases/$', 'download_cases', name='download_cases'),
@@ -80,7 +88,5 @@ urlpatterns = patterns('corehq.apps.reports.views',
     url(r'^phonelog/', include(phonelog_reports)),
 
     url(r'^custom/', include(custom_report_urls)),
-    url(ProjectReportDispatcher.pattern(), ProjectReportDispatcher.as_view(),
-        name=ProjectReportDispatcher.name()
-    )
+    ProjectReportDispatcher.url_pattern(),
 )

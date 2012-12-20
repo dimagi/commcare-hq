@@ -1,10 +1,14 @@
+{% load i18n %}
 <div class="hq-graphic-report">
-{% if chart_url %}
 <div class="hq-graph">
-    <h2>Submission Times (Hour vs. Weekday)</h2>
-    <img src="{{chart_url}}" />
+    <h2>{{ report.title }}<br /><small>{% trans "Hour vs. Weekday" %}</small></h2>
+    {% if no_data %}
+        <div class="alert alert-info">
+            {% trans "Note: No submissions matched your filters." %}
+        </div>
+    {% endif %}
+    {% if chart_url %}
+        <img class="{{ report.title }}" src="{{chart_url}}" />
+    {% endif %}
 </div>
-{% else %}
-<div class="alert">No data available.</div>
-{% endif %}
 </div>

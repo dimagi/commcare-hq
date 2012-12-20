@@ -2,8 +2,9 @@
 {% load hq_shared_tags %}
 {% load report_tags %}
 {% load i18n %}
-
 {% block reportcontent %}
+{% block pretable %}{% endblock %}
+{% block reporttable %}
     <table class="table table-striped summary" >
         {% for header, value in summary_values %}
         <tr>
@@ -19,4 +20,6 @@
         </tr>
         {% endfor %}
     </table>
+{% endblock %}
+{% block posttable %}{% endblock %}
 {% endblock %}

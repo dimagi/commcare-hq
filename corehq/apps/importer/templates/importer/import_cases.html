@@ -6,12 +6,6 @@
 {% endblock %}
 
 {% block main_column %}
-    {% if error_text %}
-    <div class="alert alert-info alert-full">
-        <strong>{{error_text}}</strong>
-    </div>
-    {% endif %}
-    
     <form class="form-horizontal form-report" action="{% url corehq.apps.importer.views.excel_config domain %}" method="post" enctype="multipart/form-data">
 
     <fieldset>

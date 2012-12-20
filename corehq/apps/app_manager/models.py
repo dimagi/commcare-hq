@@ -3,7 +3,6 @@ from collections import defaultdict
 from datetime import datetime
 import types
 from django.core.cache import cache
-from django.utils.decorators import method_decorator
 from django.utils.encoding import force_unicode
 from django.utils.safestring import mark_safe
 import re
@@ -33,13 +32,11 @@ from dimagi.utils.couch.undo import DeleteRecord, DELETED_SUFFIX
 from dimagi.utils.web import get_url_base, parse_int
 from copy import deepcopy
 from corehq.apps.domain.models import Domain, cached_property
-import hashlib
 from django.template.loader import render_to_string
 from urllib2 import urlopen
 from urlparse import urljoin
 from corehq.apps.domain.decorators import login_and_domain_required
 import langcodes
-import util
 
 
 import random
@@ -257,10 +254,42 @@ class CachedStringProperty(object):
         self.get_key = key
 
     def __get__(self, instance, owner):
-        return cache.get(self.get_key(instance))
+        return self.get(self.get_key(instance))
 
     def __set__(self, instance, value):
-        cache.set(self.get_key(instance), value, 12*60*60)
+        self.set(self.get_key(instance), value)
+
+    @classmethod
+    def get(cls, key):
+        return cache.get(key)
+
+    @classmethod
+    def set(cls, key, value):
+        cache.set(key, value, 12*60*60)
+
+class CouchCache(Document):
+    value = StringProperty(default=None)
+
+class CouchCachedStringProperty(CachedStringProperty):
+
+    @classmethod
+    def _get(cls, key):
+        try:
+            c = CouchCache.get(key)
+            assert(c.doc_type == CouchCache.__name__)
+        except ResourceNotFound:
+            c = CouchCache(_id=key)
+        return c
+
+    @classmethod
+    def get(cls, key):
+        return cls._get(key).value
+
+    @classmethod
+    def set(cls, key, value):
+        c = cls._get(key)
+        c.value = value
+        c.save()
 
 class FormBase(DocumentSchema):
     """
@@ -276,7 +305,7 @@ class FormBase(DocumentSchema):
     show_count  = BooleanProperty(default=False)
     xmlns       = StringProperty()
     source      = FormSource()
-    validation_cache = CachedStringProperty(lambda self: "%s-validation" % self.unique_id)
+    validation_cache = CouchCachedStringProperty(lambda self: "cache-%s-validation" % self.unique_id)
 
     @classmethod
     def wrap(cls, data):
@@ -361,10 +390,20 @@ class FormBase(DocumentSchema):
                 'case_preload', 'referral_preload'
             )
         else:
-            action_types = (
-                'open_case', 'update_case', 'close_case',
-                'case_preload', 'subcases',
-            )
+            if self.requires == 'none':
+                action_types = (
+                    'open_case', 'update_case', 'subcases',
+                )
+            elif self.requires == 'case':
+                action_types = (
+                    'update_case', 'close_case', 'case_preload', 'subcases',
+                )
+            else:
+                # this is left around for legacy migrated apps
+                action_types = (
+                    'open_case', 'update_case', 'close_case',
+                    'case_preload', 'subcases',
+                )
         return self._get_active_actions(action_types)
 
     def active_non_preloader_actions(self):
@@ -683,6 +722,8 @@ class Module(IndexedSchema, NavMenuItemMediaMixin):
         }[self.requires()]
     def requires_case_details(self):
         ret = False
+        if self.case_list.show:
+            return True
         for form in self.get_forms():
             if form.requires_case():
                 ret = True
@@ -722,7 +763,7 @@ class VersionedDoc(Document):
 
     def save_copy(self):
         cls = self.__class__
-        copies = cls.view('app_manager/applications', key=[self.domain, self._id, self.version], include_docs=True).all()
+        copies = cls.view('app_manager/applications', key=[self.domain, self._id, self.version], include_docs=True, limit=1).all()
         if copies:
             copy = copies[0]
         else:
@@ -1208,13 +1249,14 @@ def validate_lang(lang):
 
 class SavedAppBuild(ApplicationBase):
     def to_saved_build_json(self, timezone):
-        data = super(SavedAppBuild, self).to_json()
+        data = super(SavedAppBuild, self).to_json().copy()
         data.update({
             'id': self.id,
             'built_on_date': utc_to_timezone(data['built_on'], timezone, "%b %d, %Y"),
             'built_on_time': utc_to_timezone(data['built_on'], timezone, "%H:%M %Z"),
             'build_label': self.built_with.get_label(),
             'jar_path': self.get_jar_path(),
+            'short_name': self.short_name
         })
         if data['comment_from']:
             comment_user = CouchUser.get(data['comment_from'])
@@ -1310,7 +1352,7 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
 
     def _create_custom_app_strings(self, lang):
         def trans(d):
-            return clean_trans(d, langs).strip()
+            return clean_trans(d, langs)
         id_strings = IdStrings()
         langs = [lang] + self.langs
         yield id_strings.homescreen_title(), self.name
@@ -1675,7 +1717,7 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
 
     @classmethod
     def get_by_xmlns(cls, domain, xmlns):
-        r = get_db().view('reports/forms_by_xmlns', key=[domain, {}, xmlns], group=True).one()
+        r = get_db().view('exports_forms/by_xmlns', key=[domain, {}, xmlns], group=True).one()
         return cls.get(r['value']['app']['id']) if r and 'app' in r['value'] else None
 
 class NotImplementedYet(Exception):
@@ -1810,10 +1852,6 @@ class DomainError(Exception):
 
 class AppError(Exception):
     pass
-
-class BuildErrors(Document):
-
-    errors = ListProperty()
 
 def get_app(domain, app_id, wrap_cls=None, latest=False):
     """

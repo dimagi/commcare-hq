@@ -6,27 +6,37 @@ from django.forms.fields import *
 from django.forms.forms import Form
 from django.forms import Field, Widget, Select, TextInput
 from django.utils.datastructures import DotExpandedDict
-from .models import REPEAT_SCHEDULE_INDEFINITELY, CaseReminderEvent, RECIPIENT_USER, RECIPIENT_CASE, MATCH_EXACT, MATCH_REGEX, MATCH_ANY_VALUE, EVENT_AS_SCHEDULE, EVENT_AS_OFFSET, SurveySample, CaseReminderHandler
+from .models import REPEAT_SCHEDULE_INDEFINITELY, CaseReminderEvent, RECIPIENT_USER, RECIPIENT_CASE, RECIPIENT_SURVEY_SAMPLE, MATCH_EXACT, MATCH_REGEX, MATCH_ANY_VALUE, EVENT_AS_SCHEDULE, EVENT_AS_OFFSET, SurveySample, CaseReminderHandler
 from dimagi.utils.parsing import string_to_datetime
 from dimagi.utils.timezones.forms import TimeZoneChoiceField
 from dateutil.parser import parse
+from dimagi.utils.excel import WorkbookJSONReader
+from openpyxl.shared.exc import InvalidFileException
+from django.utils.translation import ugettext as _
+
+YES_OR_NO = (
+    ("Y","Yes"),
+    ("N","No"),
+)
 
 METHOD_CHOICES = (
     ('sms', 'SMS'),
     #('email', 'Email'),
     #('test', 'Test'),
-    ('survey', 'SMS Survey'),
-    ('callback', 'SMS/Callback'),
+    ('survey', 'SMS survey'),
+    ('callback', 'SMS expecting callback'),
+    ('ivr_survey', 'IVR survey'),
 )
 
 RECIPIENT_CHOICES = (
-    (RECIPIENT_USER, "the user whose case matches the rule"),
-    (RECIPIENT_CASE, "the case that matches the rule")
+    (RECIPIENT_USER, "The case's last submitting user"),
+    (RECIPIENT_CASE, "The case"),
+    (RECIPIENT_SURVEY_SAMPLE, "Survey Sample"),
 )
 
 MATCH_TYPE_DISPLAY_CHOICES = (
-    (MATCH_EXACT, "exactly matches"),
-    (MATCH_ANY_VALUE, "takes any value"),
+    (MATCH_EXACT, "equals"),
+    (MATCH_ANY_VALUE, "exists"),
     (MATCH_REGEX, "matches the regular expression")
 )
 
@@ -34,7 +44,7 @@ START_IMMEDIATELY = "IMMEDIATELY"
 START_ON_DATE = "DATE"
 
 START_CHOICES = (
-    (START_ON_DATE, "on the date referenced by case property"),
+    (START_ON_DATE, "defined by case property"),
     (START_IMMEDIATELY, "immediately")
 )
 
@@ -47,8 +57,8 @@ ITERATION_CHOICES = (
 )
 
 EVENT_CHOICES = (
-    (EVENT_AS_OFFSET, "are offsets from each other"),
-    (EVENT_AS_SCHEDULE, "represent the exact day and time in the schedule")
+    (EVENT_AS_OFFSET, "Offset-based"),
+    (EVENT_AS_SCHEDULE, "Schedule-based")
 )
 
 def validate_date(value):
@@ -60,6 +70,26 @@ def validate_time(value):
     time_regex = re.compile("^\d{1,2}:\d\d(:\d\d){0,1}$")
     if time_regex.match(value) is None:
         raise ValidationError("Times must be in hh:mm format.")
+
+# Used for validating the phone number from a UI. Returns the phone number if valid, otherwise raises a ValidationError.
+def validate_phone_number(value):
+    error_msg = _("Phone numbers must consist only of digits and must be in international format.")
+    if not isinstance(value, basestring):
+        # Cast to an int, then a str. Needed for excel upload where the field comes back as a float.
+        try:
+            value = str(int(value))
+        except Exception:
+            raise ValidationError(error_msg)
+    
+    value = value.strip()
+    phone_regex = re.compile("^\d+$")
+    if phone_regex.match(value) is None:
+        raise ValidationError(error_msg)
+    
+    if isinstance(value, unicode):
+        value = str(value)
+    
+    return value
 
 class CaseReminderForm(Form):
     """
@@ -122,8 +152,9 @@ class EventListField(Field):
         for e in value:
             try:
                 day = int(e["day"])
-            except Exception:
-                raise ValidationError("Day must be specified and must be a number.")
+                assert day >= 0
+            except (ValueError, AssertionError):
+                raise ValidationError("Day must be specified and must be a non-negative number.")
             
             pattern = re.compile("\d{1,2}:\d\d")
             if pattern.match(e["time"]):
@@ -159,7 +190,7 @@ class EventListField(Field):
                         raise ValidationError("Timeout intervals must be a list of comma-separated numbers.")
             
             form_unique_id = None
-            if self.widget.method == "survey":
+            if self.widget.method in ["survey", "ivr_survey"]:
                 form_unique_id = e.get("survey", None)
                 if form_unique_id is None:
                     raise ValidationError("Please create a form for the survey first, and then create the reminder definition.")
@@ -182,23 +213,30 @@ class ComplexCaseReminderForm(Form):
     A form used to create/edit CaseReminderHandlers with any type of schedule.
     """
     nickname = CharField(error_messages={"required":"Please enter the name of this reminder definition."})
-    case_type = CharField(error_messages={"required":"Please enter the case type."})
-    method = ChoiceField(choices=METHOD_CHOICES, widget=Select(attrs={"onchange":"method_changed();"}))
+    start_condition_type = CharField()
+    case_type = CharField(required=False)
+    method = ChoiceField(choices=METHOD_CHOICES)
     recipient = ChoiceField(choices=RECIPIENT_CHOICES)
-    start_match_type = ChoiceField(choices=MATCH_TYPE_DISPLAY_CHOICES, widget=Select(attrs={"onchange":"start_match_type_changed();"}))
-    start_choice = ChoiceField(choices=START_CHOICES, widget=Select(attrs={"onchange":"start_choice_changed();"}))
-    iteration_type = ChoiceField(choices=ITERATION_CHOICES, widget=Select(attrs={"onchange":"iteration_type_changed();"}))
-    start_property = CharField(error_messages={"required":"Please enter the name of the case property."})
+    start_match_type = ChoiceField(choices=MATCH_TYPE_DISPLAY_CHOICES)
+    start_choice = ChoiceField(choices=START_CHOICES)
+    iteration_type = ChoiceField(choices=ITERATION_CHOICES)
+    start_property = CharField(required=False)
     start_value = CharField(required=False)
     start_date = CharField(required=False)
-    start_offset = IntegerField(error_messages={"required":"Please enter an integer for the day offset.","invalid":"Please enter an integer for the day offset."})
+    start_offset = CharField(required=False)
+    use_until = CharField()
     until = CharField(required=False)
-    default_lang = CharField(error_messages={"required":"Please enter the default language to use for the messages."})
+    default_lang = CharField(required=False)
     max_iteration_count_input = CharField(required=False)
     max_iteration_count = IntegerField(required=False)
-    event_interpretation = ChoiceField(choices=EVENT_CHOICES, widget=Select(attrs={"onchange":"event_interpretation_changed();"}))
-    schedule_length = IntegerField()
+    event_interpretation = ChoiceField(choices=EVENT_CHOICES)
+    schedule_length = CharField()
     events = EventListField()
+    submit_partial_forms = BooleanField(required=False)
+    start_datetime_date = CharField(required=False)
+    start_datetime_time = CharField(required=False)
+    frequency = CharField()
+    sample_id = CharField(required=False)
     
     def __init__(self, *args, **kwargs):
         super(ComplexCaseReminderForm, self).__init__(*args, **kwargs)
@@ -255,50 +293,126 @@ class ComplexCaseReminderForm(Form):
         self.initial["events"] = events
     
     def clean_max_iteration_count(self):
-        if self.cleaned_data.get("iteration_type",None) == ITERATE_FIXED_NUMBER:
-            max_iteration_count = self.cleaned_data.get("max_iteration_count_input",None)
+        if self.cleaned_data.get("iteration_type") == ITERATE_FIXED_NUMBER:
+            max_iteration_count = self.cleaned_data.get("max_iteration_count_input")
+            try:
+                max_iteration_count = int(max_iteration_count)
+                assert max_iteration_count > 0
+                return max_iteration_count
+            except (ValueError, AssertionError):
+                raise ValidationError("Please enter a number greater than zero.")
         else:
-            max_iteration_count = REPEAT_SCHEDULE_INDEFINITELY
-        
-        try:
-            max_iteration_count = int(max_iteration_count)
-        except Exception:
-            raise ValidationError("Please enter a number greater than zero.")
-        
-        if max_iteration_count != REPEAT_SCHEDULE_INDEFINITELY and max_iteration_count <= 0:
-            raise ValidationError("Please enter a number greater than zero.")
-        
-        return max_iteration_count
-
+            return REPEAT_SCHEDULE_INDEFINITELY
+    
+    def clean_case_type(self):
+        if self.cleaned_data.get("start_condition_type") == "CASE_CRITERIA":
+            value = self.cleaned_data.get("case_type").strip()
+            if value == "":
+                raise ValidationError("Please enter the case type.")
+            return value
+        else:
+            return None
+    
+    def clean_start_property(self):
+        if self.cleaned_data.get("start_condition_type") == "CASE_CRITERIA":
+            value = self.cleaned_data.get("start_property").strip()
+            if value == "":
+                raise ValidationError("Please enter the case property's name.")
+            return value
+        else:
+            return None
+    
+    def clean_start_match_type(self):
+        if self.cleaned_data.get("start_condition_type") == "CASE_CRITERIA":
+            return self.cleaned_data.get("start_match_type")
+        else:
+            return None
+    
     def clean_start_value(self):
-        if self.cleaned_data.get("start_match_type", None) == MATCH_ANY_VALUE:
+        if self.cleaned_data.get("start_match_type", None) == MATCH_ANY_VALUE or self.cleaned_data.get("start_condition_type") != "CASE_CRITERIA":
             return None
         else:
-            value = self.cleaned_data.get("start_value")
-            if value is None or value == "":
+            value = self.cleaned_data.get("start_value").strip()
+            if value == "":
                 raise ValidationError("Please enter the value to match.")
             return value
-
+    
     def clean_start_date(self):
-        if self.cleaned_data.get("start_choice", None) == START_IMMEDIATELY:
+        if self.cleaned_data.get("start_choice", None) == START_IMMEDIATELY or self.cleaned_data.get("start_condition_type") != "CASE_CRITERIA":
             return None
         else:
-            value = self.cleaned_data.get("start_date")
-            if value is None or value == "":
-                raise ValidationError("Please enter the name of the case property.")
-            return value
-
-    def clean_until(self):
-        if self.cleaned_data.get("iteration_type", None) == ITERATE_FIXED_NUMBER:
-            return None
-        else:
-            value = self.cleaned_data.get("until")
+            value = self.cleaned_data.get("start_date").strip()
             if value is None or value == "":
                 raise ValidationError("Please enter the name of the case property.")
             return value
     
+    def clean_start_offset(self):
+        if self.cleaned_data.get("start_condition_type") == "CASE_CRITERIA":
+            value = self.cleaned_data.get("start_offset").strip()
+            try:
+                value = int(value)
+                return value
+            except ValueError:
+                raise ValidationError("Please enter an integer.")
+        else:
+            return 0
+    
+    def clean_until(self):
+        if self.cleaned_data.get("use_until", None) == "N" or self.cleaned_data.get("start_condition_type") != "CASE_CRITERIA":
+            return None
+        else:
+            value = self.cleaned_data.get("until").strip()
+            if value == "":
+                raise ValidationError("Please enter the name of the case property.")
+            return value
+    
     def clean_default_lang(self):
-        return self.cleaned_data.get("default_lang").strip()
+        if self.cleaned_data.get("method") in ["sms", "callback"]:
+            value = self.cleaned_data.get("default_lang").strip()
+            if value == "":
+                raise ValidationError("Please enter the default language code to use for the messages.")
+            return value
+        else:
+            return None
+    
+    def clean_start_datetime_date(self):
+        if self.cleaned_data.get("start_condition_type") == "ON_DATETIME":
+            value = self.cleaned_data.get("start_datetime_date")
+            validate_date(value)
+            return value
+        else:
+            return None
+    
+    def clean_start_datetime_time(self):
+        if self.cleaned_data.get("start_condition_type") == "ON_DATETIME":
+            value = self.cleaned_data.get("start_datetime_time")
+            validate_time(value)
+            return value
+        else:
+            return None
+    
+    def clean_sample_id(self):
+        if self.cleaned_data.get("recipient") == "SURVEY_SAMPLE":
+            value = self.cleaned_data.get("sample_id")
+            if value is None or value == "":
+                raise ValidationError("Please select a Survey Sample.")
+            return value
+        else:
+            return None
+    
+    def clean_schedule_length(self):
+        try:
+            value = self.cleaned_data.get("schedule_length")
+            value = int(value)
+        except ValueError:
+            raise ValidationError("Please enter a number.")
+        
+        if self.cleaned_data.get("event_interpretation") == "OFFSET" and value < 0:
+            raise ValidationError("Please enter a non-negative number.")
+        elif self.cleaned_data.get("event_interpretation") == "SCHEDULE" and value <= 0:
+            raise ValidationError("Please enter a positive number.")
+        
+        return value
     
     def clean(self):
         cleaned_data = super(ComplexCaseReminderForm, self).clean()
@@ -402,10 +516,14 @@ class SurveyForm(Form):
     def clean_waves(self):
         value = self.cleaned_data["waves"]
         datetimes = {}
-        samples = [SurveySample.get(sample["sample_id"]) for sample in self.cleaned_data["samples"]]
+        samples = [SurveySample.get(sample["sample_id"]) for sample in self.cleaned_data.get("samples",[])]
         utcnow = datetime.utcnow()
+        followups = [int(followup["interval"]) for followup in self.cleaned_data.get("followups", [])]
+        followup_duration = sum(followups)
+        start_end_intervals = []
         for wave_json in value:
             validate_date(wave_json["date"])
+            validate_date(wave_json["end_date"])
             validate_time(wave_json["time"])
             
             # Convert the datetime to a string and compare it against the other datetimes
@@ -418,6 +536,17 @@ class SurveyForm(Form):
                 raise ValidationError("Two waves cannot be scheduled at the same date and time.")
             datetimes[datetime_string] = True
             
+            # Validate end date
+            end_date = parse(wave_json["end_date"]).date()
+            end_datetime = datetime.combine(end_date, time)
+            days_between = (end_date - date).days
+            if days_between < 1:
+                raise ValidationError("End date must come after start date.")
+            if days_between <= followup_duration:
+                raise ValidationError("End date must come after all followups.")
+            
+            start_end_intervals.append((d8time, end_datetime))
+            
             if wave_json["form_id"] == "--choose--":
                 raise ValidationError("Please choose a questionnaire.")
             
@@ -426,6 +555,17 @@ class SurveyForm(Form):
                 for sample in samples:
                     if CaseReminderHandler.timestamp_to_utc(sample, d8time) < utcnow:
                         raise ValidationError("Waves cannot be scheduled in the past.")
+        
+        # Ensure wave start and end dates do not overlap
+        start_end_intervals.sort(key = lambda t : t[0])
+        i = 0
+        last_end = None
+        for start_end in start_end_intervals:
+            if i > 0 and (start_end[0] - last_end).days < 1:
+                raise ValidationError("Waves must be scheduled at least one day apart.")
+            i += 1
+            last_end = start_end[1]
+        
         return value
     
     def clean_followups(self):
@@ -445,6 +585,11 @@ class SurveyForm(Form):
     
     def clean_samples(self):
         value = self.cleaned_data["samples"]
+        for sample_json in value:
+            if sample_json["sample_id"] == "--choose--":
+                raise ValidationError("Please choose a sample.")
+            if sample_json.get("cati_operator", None) is None and sample_json["method"] == "CATI":
+                raise ValidationError("Please create a mobile worker to use as a CATI Operator.")
         return value
 
     def clean(self):
@@ -456,17 +601,51 @@ class SurveySampleForm(Form):
     name = CharField()
     sample_contacts = RecordListField(input_name="sample_contact")
     time_zone = TimeZoneChoiceField()
+    use_contact_upload_file = ChoiceField(choices=YES_OR_NO)
+    contact_upload_file = FileField(required=False)
     
     def clean_sample_contacts(self):
         value = self.cleaned_data["sample_contacts"]
-        if len(value) == 0:
-            raise ValidationError("Please add at least one contact.");
-        for contact in value:
-            try:
-                contact["phone_number"] = str(int(contact["phone_number"]))
-            except ValueError:
-                raise ValidationError("Phone numbers must consist only of numbers and must be in international format.")
+        if self.cleaned_data.get("use_contact_upload_file", "N") == "N":
+            if len(value) == 0:
+                raise ValidationError("Please add at least one contact.")
+            for contact in value:
+                contact["phone_number"] = validate_phone_number(contact["phone_number"])
         return value
+    
+    def clean_contact_upload_file(self):
+        value = self.cleaned_data.get("contact_upload_file", None)
+        if self.cleaned_data.get("use_contact_upload_file", "N") == "Y":
+            if value is None:
+                raise ValidationError("Please choose a file.")
+            
+            try:
+                workbook = WorkbookJSONReader(value)
+            except InvalidFileException:
+                raise ValidationError("Invalid format. Please convert to Excel 2007 or higher (.xlsx) and try again.")
+            
+            try:
+                worksheet = workbook.get_worksheet()
+            except IndexError:
+                raise ValidationError("Workbook has no worksheets.")
+            
+            contacts = []
+            for row in worksheet:
+                if "PhoneNumber" not in row:
+                    raise ValidationError("Column 'PhoneNumber' not found.")
+                contacts.append({"phone_number" : validate_phone_number(row.get("PhoneNumber"))})
+            
+            if len(contacts) == 0:
+                raise ValidationError(_("Please add at least one contact."))
+            
+            return contacts
+        else:
+            return None
 
-
+class EditContactForm(Form):
+    phone_number = CharField()
+    
+    def clean_phone_number(self):
+        value = self.cleaned_data.get("phone_number")
+        return validate_phone_number(value)
 

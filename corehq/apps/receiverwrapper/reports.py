@@ -8,6 +8,8 @@ from corehq.apps.receiverwrapper.fields import SubmissionErrorType, \
     SubmissionTypeField
 from dimagi.utils.couch.pagination import FilteredPaginator, CouchFilter
 from corehq.apps.reports.display import xmlns_to_name
+from django.utils.translation import ugettext_noop
+from django.utils.translation import ugettext as _
 
 def compare_submissions(x, y):
     # these are backwards because we want most recent to come first
@@ -42,24 +44,22 @@ class SubmitFilter(CouchFilter):
 
 
 class SubmissionErrorReport(DeploymentsReport):
-    name = "Raw Forms, Errors & Duplicates"
+    name = ugettext_noop("Raw Forms, Errors & Duplicates")
     slug = "submit_errors"
     ajax_pagination = True
     asynchronous = False
 
     fields = ['corehq.apps.receiverwrapper.fields.SubmissionTypeField',
-              # 'corehq.apps.reports.fields.GroupField',
-              #'corehq.apps.reports.fields.DatespanField']
               ]
 
     @property
     def headers(self):
-        headers = DataTablesHeader(DataTablesColumn("View Form"),
-                                   DataTablesColumn("Username"),
-                                   DataTablesColumn("Submit Time"),
-                                   DataTablesColumn("Form Type"),
-                                   DataTablesColumn("Error Type"),
-                                   DataTablesColumn("Error Message"))
+        headers = DataTablesHeader(DataTablesColumn(_("View Form")),
+                                   DataTablesColumn(_("Username")),
+                                   DataTablesColumn(_("Submit Time")),
+                                   DataTablesColumn(_("Form Type")),
+                                   DataTablesColumn(_("Error Type")),
+                                   DataTablesColumn(_("Error Message")))
         headers.no_sort = True
         return headers
 
@@ -100,15 +100,21 @@ class SubmissionErrorReport(DeploymentsReport):
 
     @property
     def rows(self):
-        EMPTY_ERROR = "No Error"
-        EMPTY_USER = "No User"
-        EMPTY_FORM = "Unknown Form"
+        EMPTY_ERROR = _("No Error")
+        EMPTY_USER = _("No User")
+        EMPTY_FORM = _("Unknown Form")
 
         items = self.paginator_results.get(self.pagination.start, self.pagination.count)
         
         def _to_row(error_doc):
             def _fmt_url(doc_id):
-                return "<a class='ajax_dialog' href='%s'>View Form</a>" % reverse('download_form', args=[self.domain, doc_id])
+                view_name = 'render_form_data' \
+                    if error_doc.doc_type in ["XFormInstance", "XFormArchived"] \
+                    else 'download_form'
+                return "<a class='ajax_dialog' href='%(url)s'>%(text)s</a>" % {
+                    "url": reverse(view_name, args=[self.domain, doc_id]),
+                    "text": _("View Form")
+                }
             
             def _fmt_date(somedate):
                 time = tz_utils.adjust_datetime_to_timezone(somedate, pytz.utc.zone, self.timezone.zone)

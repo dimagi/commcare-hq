@@ -134,7 +134,8 @@ The CommCareHQ Team
     subject = 'Welcome to CommCare HQ!'.format(**locals())
 
     try:
-        send_HTML_email(subject, recipient, message_plaintext, message_html)
+        send_HTML_email(subject, recipient, message_html,
+                        text_content=message_plaintext)
     except Exception:
         logging.warning("Can't send email, but the message was:\n%s" % message_plaintext)
 
@@ -186,7 +187,8 @@ The CommCareHQ Team
     subject = 'CommCare HQ: New project created!'.format(**locals())
 
     try:
-        send_HTML_email(subject, requesting_user.email, message_plaintext, message_html)
+        send_HTML_email(subject, requesting_user.email, message_html,
+                        text_content=message_plaintext)
     except Exception:
         logging.warning("Can't send email, but the message was:\n%s" % message_plaintext)
 
@@ -211,6 +213,6 @@ You can view the project here: %s""" % (
         get_url_base() + "/a/%s/" % domain_name)
     try:
         recipients = settings.NEW_DOMAIN_RECIPIENTS
-        send_mail("New Project: %s" % domain_name, message, settings.EMAIL_LOGIN, recipients)
+        send_mail("New Project: %s" % domain_name, message, settings.EMAIL_HOST_USER, recipients)
     except Exception:
         logging.warning("Can't send email, but the message was:\n%s" % message)

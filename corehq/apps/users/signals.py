@@ -26,7 +26,7 @@ def set_language(sender, **kwargs):
 
 # Signal that syncs django_user => couch_user
 def django_user_post_save_signal(sender, instance, created, **kwargs):
-    return CouchUser.django_user_post_save_signal(sender, instance, created, **kwargs)
+    return CouchUser.django_user_post_save_signal(sender, instance, created)
 
 post_save.connect(django_user_post_save_signal, User)
 

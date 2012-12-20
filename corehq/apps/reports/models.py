@@ -5,18 +5,21 @@ import pytz
 from corehq.apps import reports
 from corehq.apps.reports.display import xmlns_to_name
 from couchdbkit.ext.django.schema import *
-from corehq.apps.users.models import CouchUser, CommCareUser
+from corehq.apps.users.models import WebUser, CommCareUser
 from couchexport.models import SavedExportSchema, GroupExportConfiguration
 from couchexport.util import SerializableFunction
 import couchforms
 from dimagi.utils.couch.database import get_db
-from dimagi.utils.mixins import UnicodeMixIn
 from dimagi.utils.decorators.memoized import memoized
-import settings
+from django.conf import settings
 from corehq.apps.reports.dispatcher import (ProjectReportDispatcher,
     CustomProjectReportDispatcher)
 from corehq.apps.adm.dispatcher import ADMSectionDispatcher
-
+import json
+import calendar
+from django.utils.translation import ugettext as _
+from django.utils.translation import ugettext_noop
+from dimagi.utils.logging import notify_exception
 
 class HQUserType(object):
     REGISTERED = 0
@@ -24,9 +27,9 @@ class HQUserType(object):
     ADMIN = 2
     UNKNOWN = 3
     human_readable = [settings.COMMCARE_USER_TERM,
-                      "demo_user",
-                      "admin",
-                      "Unknown Users"]
+                      ugettext_noop("demo_user"),
+                      ugettext_noop("admin"),
+                      ugettext_noop("Unknown Users")]
     toggle_defaults = [True, False, False, False]
 
     @classmethod
@@ -61,7 +64,7 @@ class HQToggle(object):
 class HQUserToggle(HQToggle):
     
     def __init__(self, type, show):
-        name = HQUserType.human_readable[type]
+        name = _(HQUserType.human_readable[type])
         super(HQUserToggle, self).__init__(type, show, name)
 
 
@@ -112,9 +115,6 @@ class TempCommCareUser(CommCareUser):
         app_label = 'reports'
 
 
-project_report_dispatcher = ProjectReportDispatcher()
-custom_project_report_dispatcher = CustomProjectReportDispatcher()
-adm_section_dispatcher = ADMSectionDispatcher()
 
 DATE_RANGE_CHOICES = ['last7', 'last30', 'lastn', 'since', 'range']
 
@@ -140,11 +140,25 @@ class ReportConfig(Document):
     start_date = DateProperty(default=None)
     end_date = DateProperty(default=None)
 
+    def delete(self, *args, **kwargs):
+        notifications = self.view('reportconfig/notifications_by_config',
+            reduce=False, include_docs=True, key=self._id).all()
+
+        for n in notifications:
+            n.config_ids.remove(self._id)
+            if n.config_ids:
+                n.save()
+            else:
+                n.delete()
+
+        return super(ReportConfig, self).delete(*args, **kwargs)
+
     @classmethod
     def by_domain_and_owner(cls, domain, owner_id, report_slug=None, include_docs=True):
-        key = [domain, owner_id]
-        if report_slug:
-            key.append(report_slug)
+        if report_slug is not None:
+            key = ["name slug", domain, owner_id, report_slug]
+        else:
+            key = ["name", domain, owner_id]
 
         return cls.view('reportconfig/configs_by_domain',
             reduce=False,
@@ -157,7 +171,7 @@ class ReportConfig(Document):
         return {
             'name': '',
             'description': '',
-            'date_range': 'last7',
+            #'date_range': 'last7',
             'days': None,
             'start_date': None,
             'end_date': None,
@@ -175,22 +189,30 @@ class ReportConfig(Document):
     @property
     @memoized
     def _dispatcher(self):
-        dispatchers = [project_report_dispatcher,
-                       custom_project_report_dispatcher,
-                       adm_section_dispatcher]
+
+        dispatchers = [ProjectReportDispatcher,
+                       CustomProjectReportDispatcher,
+                       ADMSectionDispatcher]
 
         for dispatcher in dispatchers:
             if dispatcher.prefix == self.report_type:
-                return dispatcher
+                return dispatcher()
 
         raise Exception("Unknown dispatcher: %s" % self.report_type)
 
     def get_date_range(self):
         """Duplicated in reports.config.js"""
+        
+        date_range = self.date_range
+
+        # allow old report email notifications to represent themselves as a
+        # report config by leaving the default date range up to the report
+        # dispatcher
+        if not date_range:
+            return {}
 
         import datetime
         today = datetime.date.today()
-        date_range = self.date_range
 
         if date_range == 'since':
             start_date = self.start_date
@@ -216,28 +238,60 @@ class ReportConfig(Document):
                 'enddate': end_date.isoformat()}
 
     @property
-    def url(self):
-        from django.core.urlresolvers import reverse
+    @memoized
+    def query_string(self):
         from urllib import urlencode
 
-        route = self._dispatcher.name()
+        params = self.filters.copy()
+        if self._id != 'dummy':
+            params['config_id'] = self._id
+        params.update(self.get_date_range())
+
+        return urlencode(params, True)
+
+    @property
+    @memoized
+    def view_kwargs(self):
         kwargs = {'domain': self.domain,
                   'report_slug': self.report_slug}
 
         if self.subreport_slug:
-            kwargs.update(subreport_slug=self.subreport_slug)
+            kwargs['subreport_slug'] = self.subreport_slug
 
-        params = self.filters.copy()
-        params['config_id'] = self._id
-        params.update(self.get_date_range())
+        return kwargs
 
-        return reverse(route, kwargs=kwargs) + '?' + urlencode(params, True)
+    @property
+    @memoized
+    def url(self):
+        from django.core.urlresolvers import reverse
+        
+        return reverse(self._dispatcher.name(), kwargs=self.view_kwargs) \
+                + '?' + self.query_string
+
+    @property
+    @memoized
+    def report(self):
+        """
+        Returns None if no report is found for that report slug, which happens
+        when a report is no longer available.  All callers should handle this
+        case.
+
+        """
+        return self._dispatcher.get_report(self.domain, self.report_slug)
 
     @property
     def report_name(self):
-        report = self._dispatcher.get_report(self.domain,
-                                            self.report_slug)
-        return report.name
+        if self.report is None:
+            return _("Deleted Report")
+        else:
+            return _(self.report.name)
+
+    @property
+    def full_name(self):
+        if self.name:
+            return "%s (%s)" % (self.name, self.report_name)
+        else:
+            return self.report_name
 
     @property
     def date_description(self):
@@ -246,31 +300,165 @@ class ReportConfig(Document):
             return "Last %d %s" % (self.days, day)
         elif self.end_date:
             return "From %s to %s" % (self.start_date, self.end_date)
-        else:
+        elif self.start_date:
             return "Since %s" % self.start_date
+        else:
+            return ''
 
     @property
     @memoized
     def owner(self):
-        return CouchUser.get(self.owner_id)
+        return WebUser.get(self.owner_id)
+
+    def get_report_content(self):
+        """
+        Get the report's HTML content as rendered by the static view format.
+
+        """
+        if self.report is None:
+            return _("The report used to create this scheduled report is no"
+                     " longer available on CommCare HQ.  Please delete this"
+                     " scheduled report and create a new one using an available"
+                     " report.")
+
+        from django.http import HttpRequest, QueryDict
+        request = HttpRequest()
+        request.couch_user = self.owner
+        request.user = self.owner.get_django_user()
+        request.domain = self.domain
+        request.couch_user.current_domain = self.domain
+
+        request.GET = QueryDict(self.query_string + '&filterSet=true')
+
+        response = self._dispatcher.dispatch(request, render_as='email',
+                                             **self.view_kwargs)
+        return json.loads(response.content)['report']
 
 
-class ReportNotification(Document, UnicodeMixIn):
+class UnsupportedScheduledReportError(Exception):
+    pass
+
+
+class ReportNotification(Document):
+    # 11/12: removed WeeklyNotification and DailyNotification subclasses
+
     domain = StringProperty()
-    user_ids = StringListProperty()
-    report_slug = StringProperty()
-    
-    def __unicode__(self):
-        return "Notify: %s user(s): %s, report: %s" % \
-                (self.doc_type, ",".join(self.user_ids), self.report_slug)
-    
-class DailyReportNotification(ReportNotification):
-    hours = IntegerProperty()
-    
-    
-class WeeklyReportNotification(ReportNotification):
-    hours = IntegerProperty()
-    day_of_week = IntegerProperty()
+    owner_id = StringProperty()
+
+    recipient_emails = StringListProperty()
+    config_ids = StringListProperty()  # added 11/2012
+    send_to_owner = BooleanProperty()  # added 11/2012
+
+    # should be named hour, actually.  moved from subclasses
+    hours = IntegerProperty(default=8)
+    # moved from WeeklyNotification subclass.  Will now be -1 for daily
+    # notifications
+    day_of_week = IntegerProperty(default=-1)
+
+    # report_slug = StringProperty()  # removed 11/2012
+    # removed 11/2012, only ever contained the user_id of the owner
+    # user_ids = StringListProperty()
+
+    @property
+    def is_editable(self):
+        try:
+            self.report_slug
+            return False
+        except AttributeError:
+            return True
+        
+    @classmethod
+    def by_domain_and_owner(cls, domain, owner_id):
+        key = [domain, owner_id]
+
+        return cls.view("reportconfig/user_notifications",
+            reduce=False,
+            startkey=key,
+            endkey=key + [{}],
+            include_docs=True)
+
+    @property
+    def all_recipient_emails(self):
+        # handle old documents
+        if not self.owner_id:
+            return [self.owner.get_email()]
+
+        emails = []
+        if self.send_to_owner:
+            emails.append(self.owner.username)
+        emails.extend(self.recipient_emails)
+        return emails
+
+    @property
+    @memoized
+    def owner(self):
+        id = self.owner_id if self.owner_id else self.user_ids[0]
+        return WebUser.get(id)
+
+    @property
+    @memoized
+    def configs(self):
+        """
+        Access the notification's associated configs as a list, transparently
+        returning an appropriate dummy for old notifications which have
+        `report_slug` instead of `config_ids`.
+
+        """
+        if self.config_ids:
+            configs = ReportConfig.view('_all_docs', keys=self.config_ids,
+                include_docs=True).all()
+            configs = [c for c in configs if not hasattr(c, 'deleted')]
+        elif self.report_slug == 'admin_domains':
+            raise UnsupportedScheduledReportError("admin_domains is no longer "
+                "supported as a schedulable report for the time being")
+        else:
+            # create a new ReportConfig object, useful for its methods and
+            # calculated properties, but don't save it
+            config = ReportConfig()
+            config.save = lambda self, *args, **kwargs: None
+            object.__setattr__(config, '_id', 'dummy')
+            config.report_type = ProjectReportDispatcher.prefix
+            config.report_slug = self.report_slug
+            config.domain = self.domain
+            config.owner_id = self.user_ids[0]
+            configs = [config]
+
+        return configs
+
+    @property
+    def day_name(self):
+        if self.day_of_week != -1:
+            return calendar.day_name[self.day_of_week]
+        else:
+            return "Every day"
+
+    @classmethod
+    def day_choices(cls):
+        """Tuples for day of week number and human-readable day of week"""
+        return tuple([(val, calendar.day_name[val]) for val in range(7)])
+
+    @classmethod
+    def hour_choices(cls):
+        """Tuples for hour number and human-readable hour"""
+        return tuple([(val, "%s:00" % val) for val in range(24)])
+
+
+    def send(self):
+        from dimagi.utils.django.email import send_HTML_email
+        from corehq.apps.reports.views import get_scheduled_report_response
+
+        # Scenario: user has been removed from the domain that they
+        # have scheduled reports for.  Delete this scheduled report
+        if not self.owner.is_member_of(self.domain):
+            self.delete()
+            return
+
+        title = "Scheduled report from CommCare HQ"
+        body = get_scheduled_report_response(
+            self.owner, self.domain, self._id).content
+
+        for email in self.all_recipient_emails:
+            send_HTML_email(title, email, body)
 
 class FormExportSchema(SavedExportSchema):
     doc_type = 'SavedExportSchema'
@@ -328,6 +516,38 @@ class HQGroupExportConfiguration(GroupExportConfiguration):
     def by_domain(cls, domain):
         return cls.view("groupexport/by_domain", key=domain, 
                         reduce=False, include_docs=True).all()
+
+    @classmethod
+    def get_for_domain(cls, domain):
+        """
+        For when we only expect there to be one of these per domain,
+        which right now is always.
+        """
+        groups = cls.by_domain(domain)
+        if groups:
+            if len(groups) > 1:
+                notify_exception("Domain %s has more than one group export config! This is weird." % domain)
+            return groups[0]
+        return HQGroupExportConfiguration(domain=domain)
+
+    @classmethod
+    def add_custom_export(cls, domain, export_id):
+        group = cls.get_for_domain(domain)
+        if export_id not in group.custom_export_ids:
+            group.custom_export_ids.append(export_id)
+            group.save()
+        return group
+
+    @classmethod
+    def remove_custom_export(cls, domain, export_id):
+        group = cls.get_for_domain(domain)
+        updated = False
+        while export_id in group.custom_export_ids:
+            group.custom_export_ids.remove(export_id)
+            updated = True
+        if updated:
+            group.save()
+        return group
 
 class CaseActivityReportCache(Document):
     domain = StringProperty()

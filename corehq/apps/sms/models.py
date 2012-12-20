@@ -9,7 +9,8 @@ from casexml.apps.case.models import CommCareCase
 from dimagi.utils.mixins import UnicodeMixIn
 from dimagi.utils.parsing import json_format_datetime
 from casexml.apps.case.signals import case_post_save
-from .mixin import CommCareMobileContactMixin
+from .mixin import CommCareMobileContactMixin, MobileBackend
+from corehq.apps.sms import util as smsutil
 
 INCOMING = "I"
 OUTGOING = "O"
@@ -54,7 +55,14 @@ class MessageLog(Document, UnicodeMixIn):
             except Exception as e:
                 pass
         return name
-
+    
+    @property
+    def recipient(self):
+        if self.couch_recipient_doc_type == "CommCareCase":
+            return CommConnectCase.get(self.couch_recipient)
+        else:
+            return CouchUser.get_by_user_id(self.couch_recipient)
+    
     @classmethod
     def by_domain_asc(cls, domain):
         if cls.__name__ == "MessageLog":
@@ -132,6 +140,14 @@ class MessageLog(Document, UnicodeMixIn):
 class SMSLog(MessageLog):
     text = StringProperty()
     
+    @property
+    def outbound_backend(self):
+        """appropriate outbound sms backend"""
+        return MobileBackend.auto_load(
+            smsutil.clean_phone_number(self.phone_number),
+            self.domain
+        )
+
     def __unicode__(self):
 
         # crop the text (to avoid exploding the admin)
@@ -142,6 +158,12 @@ class SMSLog(MessageLog):
         return "%s (%s %s)" % (str, to_from, self.phone_number)
 
 class CallLog(MessageLog):
+    form_unique_id = StringProperty()
+    answered = BooleanProperty(default=False)
+    duration = IntegerProperty() # Length of the call in seconds
+    gateway_session_id = StringProperty() # This is the session id returned from the backend
+    error = BooleanProperty(default=False)
+    error_message = StringProperty()
     
     def __unicode__(self):
         to_from = (self.direction == INCOMING) and "from" or "to"
@@ -212,6 +234,7 @@ class CommConnectCase(CommCareCase, CommCareMobileContactMixin):
         contact_phone_number = self.get_case_property("contact_phone_number")
         contact_phone_number_is_verified = self.get_case_property("contact_phone_number_is_verified")
         contact_backend_id = self.get_case_property("contact_backend_id")
+        contact_ivr_backend_id = self.get_case_property("contact_ivr_backend_id")
         if (contact_phone_number is None) or (contact_phone_number == "") or (str(contact_phone_number) == "0") or self.closed:
             try:
                 self.delete_verified_number()
@@ -220,7 +243,8 @@ class CommConnectCase(CommCareCase, CommCareMobileContactMixin):
                 pass
         elif contact_phone_number_is_verified:
             try:
-                self.save_verified_number(self.domain, contact_phone_number, True, contact_backend_id)
+                self.delete_verified_number()
+                self.save_verified_number(self.domain, contact_phone_number, True, contact_backend_id, ivr_backend_id=contact_ivr_backend_id)
             except:
                 #TODO: Handle exception
                 pass

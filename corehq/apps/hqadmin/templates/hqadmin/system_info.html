@@ -29,7 +29,7 @@
         }
 
         function number_fix(num) {
-            if (num !== undefined) {
+            if (num !== null) {
                 if (num.toFixed) {
                     return num.toFixed(2)
                 }
@@ -91,7 +91,6 @@
             self.getCeleryTasks = function () {
                 $.getJSON("{% url system_ajax %}?api=celerymon_poll", function (allData) {
                             var mappedTasks = $.map(allData, function (item) {
-                                console.log(item)
                                 return new CeleryTaskModel(item)
                             });
                             self.celery_tasks(mappedTasks);
@@ -165,6 +164,7 @@
                 <th>Started</th>
                 <th>Updated</th>
                 <th class="span2">Progress</th>
+                <th></th>
             </tr>
             </thead>
             <tbody data-bind="foreach: couch_tasks">
@@ -179,6 +179,9 @@
                     <div class="progress progress-striped active">
                         <div class="bar" data-bind="style: {width: progress()}"></div>
                     </div>
+                </td>
+                <td>
+                    <p class="help-inline" data-bind="text: total_changes"></p>
                 </td>
             </tr>
             </tbody>
@@ -226,6 +229,7 @@
 
     <div class="row-fluid">
         <h3>Current Build</h3>
+        <h4>Temporarily offline</h4>
 
         <div class="well">
             <h5>Active Branch</h5>

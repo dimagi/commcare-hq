@@ -33,30 +33,9 @@
                 $char_count.text(cc_message);
             });
 
-            function split( val ) {
-                return val.split( /,\s*/ );
-            }
-            function extractLast( term ) {
-                return split( term ).pop();
-            }
 
-            $('.sms-typeahead').typeahead({
-                source:{{ sms_contacts|JSON }},
-                matcher: function(item) {
-                    return ~item.toLowerCase().indexOf(extractLast(this.query).toLowerCase());
-                },
-                select: function () {
-                    var val = this.$menu.find('.active').attr('data-value'),
-                            current_val = this.$element.val();
-                    current_val = current_val.substring(0, current_val.lastIndexOf(',')+1);
-                    if(current_val)
-                        current_val = current_val + ' ';
-                    this.$element
-                            .val(current_val+this.updater(val)+", ")
-                            .change();
-                    this.$element.focus();
-                    return this.hide();
-                }
+            $('.sms-typeahead').multiTypeahead({
+                source: {{ sms_contacts|JSON }},
             }).focus();
 
         });

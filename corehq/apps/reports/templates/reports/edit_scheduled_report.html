@@ -1,0 +1,38 @@
+{% extends "reports/base_template.html" %}
+{% load hq_shared_tags %}
+{% load crispy_forms_tags %}
+
+{% block reports-js %}
+<script src="{% static 'hqwebapp/javascripts/jquery-ui/jquery-ui-1.9.2.multiselect-deps.custom.min.js' %}"></script>
+<script src="{% static 'hqwebapp/javascripts/jquery-ui/multiselect/ui.multiselect.js' %}"></script>
+{% endblock %}
+
+
+{% block reports-js-inline %}
+<script>
+    $("#id_config_ids").width(600).height(200).multiselect();
+</script>
+{% endblock %}
+
+{% block reports-css %}
+<link rel="stylesheet" href="{% static 'hqwebapp/javascripts/jquery-ui-datepicker/datepicker-theme/jquery-ui-1.8.17.custom.css' %}" />
+<link rel="stylesheet" href="{% static 'hqwebapp/javascripts/jquery-ui/multiselect/ui.multiselect.css' %}" />
+{% endblock %}
+
+{% block main_column %}
+    <div class="row-fluid">
+        <div class="span12">
+            <h2>{{ form_action }} scheduled report</h2>
+            {% if form %}
+            {% crispy form %}
+            {% else %}
+            <div class="alert">
+                You need a saved report that supports email in order to set up a scheduled email report, but you don't have any.
+            </div>
+            <div class="alert alert-info">
+                <strong>Note:</strong> Not all built-in reports currently support email delivery.
+            </div>
+            {% endif %}
+        </div>
+    </div>
+{% endblock %}

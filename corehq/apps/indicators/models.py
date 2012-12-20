@@ -1,11 +1,11 @@
 import logging
 import calendar
 import copy
-from couchdbkit.ext.django.schema import Document, StringProperty, IntegerProperty, ListProperty, BooleanProperty, DateTimeProperty
+from couchdbkit.ext.django.schema import Document, StringProperty, IntegerProperty, ListProperty, DateTimeProperty
 from couchdbkit.schema.base import DocumentSchema
 import datetime
 from couchdbkit.schema.properties import LazyDict
-from django.utils.safestring import mark_safe
+import numpy
 from casexml.apps.case.models import CommCareCase
 from couchforms.models import XFormInstance
 from dimagi.utils.couch.database import get_db
@@ -16,7 +16,7 @@ from dimagi.utils.modules import to_function
 class DocumentNotInDomainError(Exception):
     pass
 
-class DocumentMistmatchError(Exception):
+class DocumentMismatchError(Exception):
     pass
 
 
@@ -30,6 +30,7 @@ class IndicatorDefinition(Document):
     slug = StringProperty()
     version = IntegerProperty()
     class_path = StringProperty()
+    last_modified = DateTimeProperty()
 
     _class_path = "corehq.apps.indicators.models"
     _returns_multiple = False
@@ -39,7 +40,14 @@ class IndicatorDefinition(Document):
         self.class_path = self._class_path
 
     def __str__(self):
-        return "%s %s in namespace %s." % (self.__class__.__name__, self.slug, self.namespace)
+        return "\n\n%(class_name)s - Modified %(last_modified)s\n %(slug)s, v. %(version)s, namespace: %(namespace)s." % {
+                'class_name': self.__class__.__name__,
+                'slug': self.slug,
+                'version': self.version,
+                'namespace': self.namespace,
+                'last_modified': self.last_modified.strftime('%M %B %Y at %H:%M')
+                        if self.last_modified else "Ages Ago"
+            }
 
     @classmethod
     def key_properties(cls):
@@ -71,7 +79,7 @@ class IndicatorDefinition(Document):
         return couch_key
 
     @classmethod
-    def update_or_create_unique(cls, namespace, domain, slug=None, version=None, **kwargs):
+    def update_or_create_unique(cls, namespace, domain, slug=None, version=None, save_on_update=False, **kwargs):
         """
             key_options should be formatted as an option list:
             [(key, val), ...]
@@ -96,13 +104,19 @@ class IndicatorDefinition(Document):
                 slug=slug,
                 **kwargs
             )
+            unique_indicator.last_modified = datetime.datetime.utcnow()
+            unique_indicator.save()
         else:
+            # update indicator
             unique_indicator.namespace = namespace
             unique_indicator.domain = domain
             unique_indicator.slug = slug
             unique_indicator.version = version
             for key, val in kwargs.items():
                 setattr(unique_indicator, key, val)
+            if save_on_update:
+                unique_indicator.last_modified = datetime.datetime.utcnow()
+                unique_indicator.save()
         return unique_indicator
 
     @classmethod
@@ -216,16 +230,17 @@ class DynamicIndicatorDefinition(IndicatorDefinition):
         )
         return month_dates, datespan
 
-    def get_monthly_retrospective(self, user_ids=None, current_month=None, num_previous_months=12):
+    def get_monthly_retrospective(self, user_ids=None, current_month=None,
+                                  num_previous_months=12, return_only_dates=False):
         raise NotImplementedError
 
-    def get_value(self, user_id=None, datespan=None):
+    def get_value(self, user_ids, datespan=None):
         raise NotImplementedError
 
 
-class CouchViewIndicatorDefinition(DynamicIndicatorDefinition):
+class CouchIndicatorDef(DynamicIndicatorDefinition):
     """
-        This indicator defintion expects that it will deal with a couch view and a certain indicator key.
+        This indicator defintion expects that it will deal with a couch view and an indicator key.
         If a user_id is provided when fetching the results, this definition will use:
         ["user", <domain_name>, <user_id>, <indicator_key>] as the main couch view key
         Otherwise it will use:
@@ -237,11 +252,16 @@ class CouchViewIndicatorDefinition(DynamicIndicatorDefinition):
     startdate_shift = IntegerProperty(default=0)
     enddate_shift = IntegerProperty(default=0)
     fixed_datespan_days = IntegerProperty(default=0)
+    fixed_datespan_months = IntegerProperty(default=0)
 
     @property
     @memoized
-    def use_datespans_in_retrospective(self):
-        return (abs(self.startdate_shift) + abs(self.enddate_shift) + abs(self.fixed_datespan_days)) > 0
+    def group_results_in_retrospective(self):
+        """
+            Determines whether or not to group results in the retrospective
+        """
+        return not any(getattr(self, field) for field in ('startdate_shift', 'enddate_shift',
+                                                      'fixed_datespan_days', 'fixed_datespan_months'))
 
     def _get_results_key(self, user_id=None):
         prefix = "user" if user_id else "all"
@@ -259,12 +279,23 @@ class CouchViewIndicatorDefinition(DynamicIndicatorDefinition):
             datespan = copy.copy(datespan)
             if self.fixed_datespan_days:
                 datespan.startdate = datespan.enddate - datetime.timedelta(days=self.fixed_datespan_days)
+            if self.fixed_datespan_months:
+                start_year, start_month = add_months(datespan.enddate.year, datespan.enddate.month,
+                    -self.fixed_datespan_months)
+                try:
+                    datespan.startdate = datetime.datetime(start_year, start_month, datespan.enddate.day,
+                        datespan.enddate.hour, datespan.enddate.minute, datespan.enddate.second,
+                        datespan.enddate.microsecond)
+                except ValueError:
+                    # day is out of range for month
+                    datespan.startdate = self.get_last_day_of_month(start_year, start_month)
+
             datespan.startdate = datespan.startdate + datetime.timedelta(days=self.startdate_shift)
             datespan.enddate = datespan.enddate + datetime.timedelta(days=self.enddate_shift)
 
         return datespan
 
-    def _get_results_with_key(self, key, user_id=None, datespan=None, date_group_level=None, reduce=False):
+    def get_results_with_key(self, key, user_id=None, datespan=None, date_group_level=None, reduce=False):
         view_kwargs = dict()
         if datespan:
             view_kwargs.update(
@@ -290,16 +321,23 @@ class CouchViewIndicatorDefinition(DynamicIndicatorDefinition):
             **view_kwargs
         ).all()
 
-    def get_couch_results(self, user_id=None, datespan=None, date_group_level=None, reduce=False):
+    def get_raw_results(self, user_ids, datespan=False, date_group_level=False, reduce=False):
         """
             date_group_level can be 0 to group by year, 1 to group by month and 2 to group by day
         """
-        key = self._get_results_key(user_id)
         datespan = self._apply_datespan_shifts(datespan)
-        return self._get_results_with_key(key, user_id, datespan, date_group_level, reduce)
+        results = []
+        for user_id in user_ids:
+            key = self._get_results_key(user_id)
+            results.extend(self.get_results_with_key(key, user_id, datespan, date_group_level, reduce))
+        return results
 
-    def get_value(self, user_id=None, datespan=None):
-        return self._get_value_from_result(self.get_couch_results(user_id, datespan, reduce=True))
+    def get_value(self, user_ids, datespan=None):
+        value = 0
+        results = self.get_raw_results(user_ids, datespan, reduce=True)
+        for result in results:
+            value += self._get_value_from_result(result)
+        return value
 
     def _get_value_from_result(self, result):
         value = 0
@@ -316,63 +354,122 @@ class CouchViewIndicatorDefinition(DynamicIndicatorDefinition):
                 value += new_val
         return value
 
-    def get_values_by_month(self, user_ids=None, datespan=None):
+    def get_values_by_month(self, user_ids, datespan=None):
         totals = dict()
-        for user_id in user_ids:
-            result = self.get_couch_results(user_id, datespan, date_group_level=1)
-            for item in result:
-                key = item.get('key', [])
-                if len(key) >= 2:
-                    value = self._get_value_from_result(item)
-                    year = str(key[-2])
-                    month = str(key[-1])
-                    if not (month and year):
-                        continue
-                    if year not in totals:
-                        totals[year] = dict()
-                    if month not in totals[year]:
-                        totals[year][month] = 0
-                    totals[year][month] += value
-        return totals
-
-    def get_values_by_year(self, user_ids=None, datespan=None):
-        totals = dict()
-        for user_id in user_ids:
-            result = self.get_couch_results(user_id, datespan, date_group_level=0)
-            for item in result:
-                key = item.get('key', [])
+        result = self.get_raw_results(user_ids, datespan, date_group_level=1)
+        for item in result:
+            key = item.get('key', [])
+            if len(key) >= 2:
                 value = self._get_value_from_result(item)
-                if len(key) >= 1:
-                    year = str(key[-1])
-                    if not year:
-                        continue
-                    if year not in totals:
-                        totals[year] = 0
-                    totals[year] += value
+                year = str(key[-2])
+                month = str(key[-1])
+                if not (month and year):
+                    continue
+                if year not in totals:
+                    totals[year] = dict()
+                if month not in totals[year]:
+                    totals[year][month] = 0
+                totals[year][month] += value
         return totals
 
-    def get_monthly_retrospective(self, user_ids=None, current_month=None, num_previous_months=12):
+    def get_values_by_year(self, user_ids, datespan=None):
+        totals = dict()
+        result = self.get_raw_results(user_ids, datespan, date_group_level=0)
+        for item in result:
+            key = item.get('key', [])
+            value = self._get_value_from_result(item)
+            if len(key) >= 1:
+                year = str(key[-1])
+                if not year:
+                    continue
+                if year not in totals:
+                    totals[year] = 0
+                totals[year] += value
+        return totals
+
+    def get_monthly_retrospective(self, user_ids=None, current_month=None,
+                                  num_previous_months=12, return_only_dates=False):
         if not isinstance(user_ids, list):
             user_ids = [user_ids]
         retro_months, datespan = self.get_first_days(current_month, num_previous_months,
-            as_datespans=self.use_datespans_in_retrospective)
-        monthly_totals = {} if self.use_datespans_in_retrospective else self.get_values_by_month(user_ids, datespan)
+            as_datespans=not self.group_results_in_retrospective)
+
+        monthly_totals = {}
+        if self.group_results_in_retrospective and not return_only_dates:
+            monthly_totals = self.get_values_by_month(user_ids, datespan)
+
         retrospective = list()
         for i, this_month in enumerate(retro_months):
-            startdate = this_month.startdate if self.use_datespans_in_retrospective else this_month
+            startdate = this_month if self.group_results_in_retrospective else this_month.startdate
             y = str(startdate.year)
             m = str(startdate.month)
-            if self.use_datespans_in_retrospective:
+            if return_only_dates:
                 month_value = 0
-                for user_id in user_ids:
-                    month_value += self.get_value(user_id, this_month)
-            else:
+            elif self.group_results_in_retrospective:
                 month_value = monthly_totals.get(y, {}).get(m, 0)
+            else:
+                month_value = self.get_value(user_ids, this_month)
             retrospective.append(dict(
                 date=startdate,
                 value=month_value
             ))
         return retrospective
+
+class NoGroupCouchIndicatorDefBase(CouchIndicatorDef):
+    """
+        Use this base for all CouchViewIndicatorDefinitions that have views which are not simply
+        counted during the monthly retrospective.
+    """
+
+    @property
+    def group_results_in_retrospective(self):
+        return False
+
+    def get_value(self, user_ids, datespan=None):
+        raise NotImplementedError("You must override the parent's get_value. "
+                                  "Reduce / group will not work here.")
+
+
+class CountUniqueCouchIndicatorDef(NoGroupCouchIndicatorDefBase):
+    """
+        Use this indicator to count the # of unique emitted values.
+    """
+
+    def get_value(self, user_ids, datespan=None):
+        results = self.get_raw_results(user_ids, datespan)
+        all_emitted_values = [r['value'] for r in results]
+        all_emitted_values = set(all_emitted_values)
+        return len(all_emitted_values)
+
+
+class MedianCouchIndicatorDef(NoGroupCouchIndicatorDefBase):
+    """
+        Get the median value of what is emitted. Assumes that emits are numbers.
+    """
+
+    def get_value(self, user_ids, datespan=None):
+        results = self.get_raw_results(user_ids, datespan)
+        values = [item.get('value', 0) for item in results if item.get('value')]
+        return numpy.median(values) if values else None
+
+
+class SumLastEmittedCouchIndicatorDef(NoGroupCouchIndicatorDefBase):
+    """
+        Expects an emitted value formatted like:
+        {
+            _id: "<unique id string>",
+            value: <number>,
+        }
+        It then finds the sum of all the last emitted unique values.
+    """
+
+    def get_value(self, user_ids, datespan=None):
+        results = self.get_raw_results(user_ids, datespan)
+        unique_values = {}
+        for item in results:
+            if item.get('value'):
+                unique_values[item['value']['_id']] = item['value']['value']
+        return sum(unique_values.values())
 
 
 class CombinedCouchViewIndicatorDefinition(DynamicIndicatorDefinition):
@@ -389,9 +486,9 @@ class CombinedCouchViewIndicatorDefinition(DynamicIndicatorDefinition):
     def denominator(self):
         return self.get_current(self.namespace, self.domain, self.denominator_slug)
 
-    def get_value(self, user_id=None, datespan=None):
-        numerator = self.numerator.get_value(user_id, datespan)
-        denominator = self.denominator.get_value(user_id, datespan)
+    def get_value(self, user_ids, datespan=None):
+        numerator = self.numerator.get_value(user_ids, datespan)
+        denominator = self.denominator.get_value(user_ids, datespan)
         ratio = float(numerator)/float(denominator) if denominator > 0 else None
         return dict(
             numerator=numerator,
@@ -399,9 +496,12 @@ class CombinedCouchViewIndicatorDefinition(DynamicIndicatorDefinition):
             ratio=ratio
         )
 
-    def get_monthly_retrospective(self, user_ids=None, current_month=None, num_previous_months=12):
-        numerator_retro = self.numerator.get_monthly_retrospective(user_ids, current_month, num_previous_months)
-        denominator_retro = self.denominator.get_monthly_retrospective(user_ids, current_month, num_previous_months)
+    def get_monthly_retrospective(self, user_ids=None, current_month=None,
+                                  num_previous_months=12, return_only_dates=False):
+        numerator_retro = self.numerator.get_monthly_retrospective(user_ids, current_month, num_previous_months,
+            return_only_dates)
+        denominator_retro = self.denominator.get_monthly_retrospective(user_ids, current_month, num_previous_months,
+            return_only_dates)
         combined_retro = list()
         for i, denominator in enumerate(denominator_retro):
             numerator = numerator_retro[i]
@@ -450,6 +550,23 @@ class DocumentIndicatorDefinition(IndicatorDefinition):
         except AttributeError:
             return None
 
+    def update_computed_namespace(self, computed, document):
+        update_computed = True
+        existing_indicator = computed.get(self.slug)
+        if isinstance(existing_indicator, dict) or isinstance(existing_indicator, LazyDict):
+            update_computed = existing_indicator.get('version') != self.version
+        if update_computed:
+            computed[self.slug] = self._set_computed_indicator(document)
+        return computed, update_computed
+
+    def _set_computed_indicator(self, document):
+        return {
+            'version': self.version,
+            'value': self.get_clean_value(document),
+            'multi_value': self._returns_multiple,
+            'type': self.doc_type,
+        }
+
 
 class FormDataIndicatorDefinitionMixin(DocumentSchema):
     """
@@ -461,7 +578,7 @@ class FormDataIndicatorDefinitionMixin(DocumentSchema):
         """
             question_id must be formatted like: path.to.question_id
         """
-        if isinstance(question_id, str) or isinstance(question_id, unicode):
+        if isinstance(question_id, basestring):
             question_id = question_id.split('.')
         if len(question_id) > 0 and form_data:
             return self.get_from_form(form_data.get(question_id[0]), question_id[1:])
@@ -481,7 +598,7 @@ class FormIndicatorDefinition(DocumentIndicatorDefinition, FormDataIndicatorDefi
         if not isinstance(doc, XFormInstance):
             raise ValueError("The document provided must be an instance of XFormInstance.")
         if not doc.xmlns == self.xmlns:
-            raise DocumentMistmatchError("The xmlns of the form provided does not match the one for this definition.")
+            raise DocumentMismatchError("The xmlns of the form provided does not match the one for this definition.")
         return super(FormIndicatorDefinition, self).get_clean_value(doc)
 
     @classmethod
@@ -534,7 +651,7 @@ class CaseIndicatorDefinition(DocumentIndicatorDefinition):
         if not isinstance(doc, CommCareCase):
             raise ValueError("The document provided must be an instance of CommCareCase.")
         if not doc.type == self.case_type:
-            raise DocumentMistmatchError("The case provided should be a '%s' type case." % self.case_type)
+            raise DocumentMismatchError("The case provided should be a '%s' type case." % self.case_type)
         return super(CaseIndicatorDefinition, self).get_clean_value(doc)
 
     @classmethod
@@ -575,36 +692,4 @@ class FormDataInCaseIndicatorDefinition(CaseIndicatorDefinition, FormDataIndicat
                     received_on=form.received_on
                 )
         return existing_value
-
-
-class PopulateRelatedCasesWithIndicatorDefinitionMixin(DocumentSchema):
-    related_case_types = ListProperty()
-
-    _related_cases = None
-    def set_related_cases(self, case):
-        """
-            set _related_cases here.
-            should be a list of CommCareCase objects
-        """
-        self._related_cases = list()
-
-    def populate_with_value(self, value):
-        """
-            You shouldn't have to modify this.
-        """
-        for case in self._related_cases:
-            if not isinstance(case, CommCareCase):
-                continue
-            try:
-                namespace_computed = case.computed_.get(self.namespace, {})
-                namespace_computed[self.slug] = value
-                case.computed_[self.namespace] = namespace_computed
-                case.computed_modified_on_ = datetime.datetime.utcnow()
-                case.save()
-            except Exception as e:
-                logging.error("Could not populate indicator information to case %s due to error: %s" %
-                    (case.get_id, e)
-                )
-
-
 

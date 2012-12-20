@@ -1,15 +1,19 @@
+import copy
 from datetime import datetime
 import json
 import logging
 from urllib import urlencode
+from django.contrib.auth.decorators import login_required
 from django.core.urlresolvers import reverse
 from django.http import Http404, HttpResponseRedirect, HttpResponse
+from django.template.loader import render_to_string
 from restkit.errors import RequestFailed
 from corehq.apps.appstore.forms import AddReviewForm
 from corehq.apps.appstore.models import Review
-from corehq.apps.domain.decorators import require_previewer, login_and_domain_required
+from corehq.apps.domain.decorators import login_and_domain_required, require_superuser
+from corehq.apps.hqmedia.utils import most_restrictive
 from corehq.apps.registration.forms import DomainRegistrationForm
-from corehq.apps.users.models import Permissions
+from corehq.apps.users.models import Permissions, CouchUser
 from corehq.elastic import get_es
 from dimagi.utils.logging import notify_exception
 from dimagi.utils.web import render_to_response, json_response, get_url_base
@@ -22,6 +26,7 @@ from corehq.apps.reports.views import datespan_default
 from corehq.apps.hqmedia import utils
 from corehq.apps.app_manager.models import Application
 from django.shortcuts import redirect
+from django.utils.translation import ugettext as _
 import rawes
 
 PER_PAGE = 9
@@ -37,10 +42,16 @@ def rewrite_url(request, path):
 def inverse_dict(d):
     return dict([(v, k) for k, v in d.iteritems()])
 
-@require_previewer # remove for production
+def can_view_app(req, dom):
+    if not dom or not dom.is_snapshot:
+        return False
+    if not dom.is_approved and (not getattr(req, "couch_user", "") or not req.couch_user.is_domain_admin(dom.copied_from.name)):
+        return False
+    return True
+
 def project_info(request, domain, template="appstore/project_info.html"):
     dom = Domain.get_by_name(domain)
-    if not dom or not dom.is_snapshot or (not dom.is_approved and not request.couch_user.is_domain_admin(domain)):
+    if not can_view_app(request, dom):
         raise Http404()
 
     if request.method == "POST" and dom.copied_from.name not in request.couch_user.get_domains():
@@ -72,23 +83,13 @@ def project_info(request, domain, template="appstore/project_info.html"):
             form = AddReviewForm()
     else:
         form = AddReviewForm()
-        versioned = request.GET.get('current', False)
 
-    if versioned:
-        reviews = Review.get_by_version(domain)
-        average_rating = Review.get_average_rating_by_version(domain)
-        num_ratings = Review.get_num_ratings_by_version(domain)
-    else:
-        reviews = Review.get_by_app(dom.copied_from._id)
-        average_rating = Review.get_average_rating_by_app(dom.copied_from._id)
-        num_ratings = Review.get_num_ratings_by_app(dom.copied_from._id)
+    reviews = Review.get_by_app(dom.copied_from._id)
+    average_rating = Review.get_average_rating_by_app(dom.copied_from._id)
+    num_ratings = Review.get_num_ratings_by_app(dom.copied_from._id)
 
     if average_rating:
         average_rating = round(average_rating, 1)
-
-    current_link = ''
-    if not versioned:
-        current_link = 'true'
 
     images = set()
     audio = set()
@@ -103,18 +104,22 @@ def project_info(request, domain, template="appstore/project_info.html"):
     results = es_snapshot_query({}, SNAPSHOT_FACETS)
     facets_sortables = generate_sortables_from_facets(results, {}, inverse_dict(SNAPSHOT_MAPPING))
 
+    pb_id = dom.cda.user_id
+    published_by = CouchUser.get_by_user_id(pb_id) if pb_id else None
+
     return render_to_response(request, template, {
         "project": dom,
+        "applications": dom.full_applications(include_builds=False),
         "form": form,
+        "published_by": published_by,
         "reviews": reviews,
         "average_rating": average_rating,
         "num_ratings": num_ratings,
-        "versioned": versioned,
-        "current_link": current_link,
         "images": images,
         "audio": audio,
         "sortables": facets_sortables,
-        "url_base": reverse('appstore')
+        "url_base": reverse('appstore'),
+        'display_import': True if getattr(request, "couch_user", "") and request.couch_user.get_domains() else False
     })
 
 def parse_args_for_es(request):
@@ -128,7 +133,8 @@ def parse_args_for_es(request):
         if attr[0] == 'facets':
             facets = attr[1][0].split()
             continue
-        params[attr[0]] = attr[1][0] if len(attr[1]) < 2 else attr[1]
+#        params[attr[0]] = attr[1][0] if len(attr[1]) < 2 else attr[1]
+        params[attr[0]] = attr[1]
     return params, facets
 
 def generate_sortables_from_facets(results, params=None, mapping={}):
@@ -139,16 +145,28 @@ def generate_sortables_from_facets(results, params=None, mapping={}):
     """
     params = dict([(mapping.get(p, p), params[p]) for p in params])
     def generate_query_string(attr, val):
-        updated_params = params.copy()
-        updated_params.update({attr: val})
-        return "?%s" % urlencode(updated_params)
+        updated_params = copy.deepcopy(params)
+        updated_params[attr] = updated_params.get(attr, [])
+        if val in params.get(attr, []):
+            updated_params[attr].remove(val)
+        else:
+            updated_params[attr].append(val)
+        return "?%s" % urlencode(updated_params, True)
 
     def generate_facet_dict(f_name, ft):
+        ccs = {
+            'cc': 'CC BY',
+            'cc-sa': 'CC BY-SA',
+            'cc-nd': 'CC BY-ND',
+            'cc-nc': 'CC BY-NC',
+            'cc-nc-sa': 'CC BY-NC-SA',
+            'cc-nc-nd': 'CC BY-NC-ND',
+            }
         license = (f_name == 'license')
         return {'url': generate_query_string(f_name, ft["term"]),
-                'name': ft["term"] if not license else LICENSES.get(ft["term"]),
+                'name': ft["term"] if not license else ccs.get(ft["term"]),
                 'count': ft["count"],
-                'active': params.get(f_name, "") == ft["term"]}
+                'active': ft["term"] in params.get(f_name, "")}
 
     sortable = []
     for facet in results.get("facets", []):
@@ -157,29 +175,32 @@ def generate_sortables_from_facets(results, params=None, mapping={}):
 
     return sortable
 
-@require_previewer # remove for production
 def appstore(request, template="appstore/appstore_base.html"):
+    page_length = 10
+    include_unapproved = True if request.GET.get('is_approved', "") == "false" else False
+    if include_unapproved and not request.user.is_superuser:
+        raise Http404()
     params, _ = parse_args_for_es(request)
     params = dict([(SNAPSHOT_MAPPING.get(p, p), params[p]) for p in params])
-    page = int(params.pop('page', 1))
+    page = params.pop('page', 1)
+    page = int(page[0] if isinstance(page, list) else page)
     results = es_snapshot_query(params, SNAPSHOT_FACETS)
-    d_results = [Domain.wrap(res['_source']) for res in results['hits']['hits']]
+    d_results = [Domain.wrap(res['_source']) for res in results.get('hits', {}).get('hits', [])]
 
     sort_by = request.GET.get('sort_by', None)
     if sort_by == 'best':
-        d_results = Domain.popular_sort(d_results, page)
+        d_results = Domain.popular_sort(d_results)
     elif sort_by == 'hits':
-        d_results = Domain.hit_sort(d_results, page)
+        d_results = Domain.hit_sort(d_results)
 
     average_ratings = list()
     for result in d_results:
         average_ratings.append([result.name, Review.get_average_rating_by_app(result.copied_from._id)])
 
-    more_pages = False if len(d_results) <= page*10 else True
+    more_pages = False if len(d_results) <= page*page_length else True
 
     facets_sortables = generate_sortables_from_facets(results, params, inverse_dict(SNAPSHOT_MAPPING))
-    include_unapproved = True if request.GET.get('is_approved', "") == "false" else False
-    vals = dict(apps=d_results[(page-1)*10:page*10],
+    vals = dict(apps=d_results[(page-1)*page_length:page*page_length],
         page=page,
         prev_page=(page-1),
         next_page=(page+1),
@@ -188,17 +209,23 @@ def appstore(request, template="appstore/appstore_base.html"):
         average_ratings=average_ratings,
         include_unapproved=include_unapproved,
         sortables=facets_sortables,
-        query_str=request.META['QUERY_STRING'])
+        query_str=request.META['QUERY_STRING'],
+        search_query = params.get('search', [""])[0])
     return render_to_response(request, template, vals)
 
-@require_previewer # remove for production
 def appstore_api(request):
     params, facets = parse_args_for_es(request)
     params = dict([(SNAPSHOT_MAPPING.get(p, p), params[p]) for p in params])
     results = es_snapshot_query(params, facets)
     return HttpResponse(json.dumps(results), mimetype="application/json")
 
-def es_query(params, facets=[], terms=[], q={}):
+def es_query(params, facets=None, terms=None, q=None):
+    if terms is None:
+        terms = []
+    if q is None:
+        q = {}
+
+    q["size"] = 9999
     q["filter"] = q.get("filter", {})
     q["filter"]["and"] = q["filter"].get("and", [])
     for attr in params:
@@ -214,7 +241,7 @@ def es_query(params, facets=[], terms=[], q={}):
     if facets:
         q["facets"] = {}
         for facet in facets:
-            q["facets"][facet] = {"terms": {"field": facet}}
+            q["facets"][facet] = {"terms": {"field": facet, "size": 9999}}
             q["facets"][facet].update(facet_filter(facet))
 
     if not q['filter']['and']:
@@ -223,10 +250,13 @@ def es_query(params, facets=[], terms=[], q={}):
     es_url = "cc_exchange/domain/_search"
     es = get_es()
     ret_data = es.get(es_url, data=q)
-
     return ret_data
 
-def es_snapshot_query(params, facets=[], terms=['is_approved', 'sort_by', 'search'], sort_by="snapshot_time"):
+def es_snapshot_query(params, facets=None, terms=None, sort_by="snapshot_time"):
+    if terms is None:
+        terms = ['is_approved', 'sort_by', 'search']
+    if facets is None:
+        facets = []
     q = {"sort": {sort_by: {"order" : "desc"} },
          "query":   {"bool": {"must":
                                   [{"match": {'doc_type': "Domain"}},
@@ -247,12 +277,11 @@ def es_snapshot_query(params, facets=[], terms=['is_approved', 'sort_by', 'searc
 
     return es_query(params, facets, terms, q)
 
-@require_previewer
 def appstore_default(request):
     from corehq.apps.appstore.dispatcher import AppstoreDispatcher
     return HttpResponseRedirect(reverse(AppstoreDispatcher.name(), args=['advanced']))
 
-@require_previewer # remove for production
+@require_superuser
 def approve_app(request, domain):
     domain = Domain.get_by_name(domain)
     if request.GET.get('approve') == 'true':
@@ -264,43 +293,71 @@ def approve_app(request, domain):
     meta = request.META
     return HttpResponseRedirect(request.META.get('HTTP_REFERER') or reverse('appstore'))
 
-@require_previewer # remove for production
-def copy_snapshot_app(request, domain):
+@login_required
+def import_app(request, domain):
     user = request.couch_user
-    dom = Domain.get_by_name(domain)
-    if request.method == 'POST':
-        new_domain_name = request.POST['project']
-        app_id = request.POST['app_id']
-        if user.is_member_of(new_domain_name):
-            doc_type = get_db().get(app_id)['doc_type']
-            new_doc = dom.copy_component(doc_type, app_id, new_domain_name, user)
+    if not user.is_eula_signed():
+        messages.error(request, 'You must agree to our eula to download an app')
+        return project_info(request, domain)
 
-            messages.info(request, "Application successfully copied!")
-            return HttpResponseRedirect(reverse('view_app', args=[new_domain_name, new_doc.id]))
-    return HttpResponseRedirect(reverse('project_info', args=[domain]))
+    from_project = Domain.get_by_name(domain)
 
-#@login_and_domain_required
-@require_previewer # remove for production
+    if request.method == 'POST' and from_project.is_snapshot:
+        if not from_project.published:
+            messages.error(request, "This project is not published and can't be downloaded")
+            return project_info(request, domain)
+
+        to_project_name = request.POST['project']
+        if not user.is_member_of(to_project_name):
+            messages.error(request, _("You don't belong to that project"))
+            return project_info(request, domain)
+
+        for app in from_project.full_applications(include_builds=False):
+            new_doc = from_project.copy_component(app['doc_type'], app.get_id, to_project_name, user)
+
+        from_project.downloads += 1
+        from_project.save()
+        messages.success(request, render_to_string("appstore/partials/view_wiki.html", {"pre": _("Application successfully imported!")}), extra_tags="html")
+        return HttpResponseRedirect(reverse('view_app', args=[to_project_name, new_doc.id]))
+    else:
+        return project_info(request, domain)
+
+@login_required
 def copy_snapshot(request, domain):
+    user = request.couch_user
+    if not user.is_eula_signed():
+        messages.error(request, 'You must agree to our eula to download an app')
+        return project_info(request, domain)
+
     dom = Domain.get_by_name(domain)
     if request.method == "POST" and dom.is_snapshot:
         args = {'domain_name': request.POST['new_project_name'], 'eula_confirmed': True}
         form = DomainRegistrationForm(args)
 
-        if form.is_valid():
-            new_domain = dom.save_copy(form.clean_domain_name(), user=request.couch_user)
+        if request.POST.get('new_project_name', ""):
+            if not dom.published:
+                messages.error(request, "This project is not published and can't be downloaded")
+                return project_info(request, domain)
+
+            if form.is_valid():
+                new_domain = dom.save_copy(form.clean_domain_name(), user=user)
+            else:
+                messages.error(request, form.errors)
+                return project_info(request, domain)
+
+            if new_domain is None:
+                messages.error(request, _("A project by that name already exists"))
+                return project_info(request, domain)
+            dom.downloads += 1
+            dom.save()
+            messages.success(request, render_to_string("appstore/partials/view_wiki.html", {"pre": _("Project copied successfully!")}), extra_tags="html")
+            return HttpResponseRedirect(reverse('view_app',
+                args=[new_domain.name, new_domain.full_applications()[0].get_id]))
         else:
-            messages.error(request, form.errors)
+            messages.error(request, _("You must specify a name for the new project"))
             return project_info(request, domain)
 
-        if new_domain is None:
-            messages.error(request, "A project by that name already exists")
-            return project_info(request, domain)
 
-        messages.success(request, "Project copied successfully!")
-        return redirect("domain_project_settings", new_domain.name)
-
-@require_previewer # remove for production
 def project_image(request, domain):
     project = Domain.get_by_name(domain)
     if project.image_path:
@@ -309,7 +366,7 @@ def project_image(request, domain):
     else:
         raise Http404()
 
-@require_previewer # remove for production
+@login_required
 def deployment_info(request, domain, template="appstore/deployment_info.html"):
     dom = Domain.get_by_name(domain)
     if not dom or not dom.deployment.public:
@@ -324,7 +381,7 @@ def deployment_info(request, domain, template="appstore/deployment_info.html"):
                                                   'url_base': reverse('deployments'),
                                                   'sortables': facets_sortables})
 
-@require_previewer # remove for production
+@login_required
 def deployments(request, template="appstore/deployments.html"):
     params, _ = parse_args_for_es(request)
     params = dict([(DEPLOYMENT_MAPPING.get(p, p), params[p]) for p in params])
@@ -344,22 +401,26 @@ def deployments(request, template="appstore/deployments.html"):
              'include_unapproved': include_unapproved,
              'sortables': facets_sortables,
              'query_str': request.META['QUERY_STRING'],
-             'search_url': reverse('deployments')}
+             'search_url': reverse('deployments'),
+             'search_query': params.get('search', [""])[0]}
     return render_to_response(request, template, vals)
 
-@require_previewer # remove for production
 def deployments_api(request):
     params, facets = parse_args_for_es(request)
     params = dict([(DEPLOYMENT_MAPPING.get(p, p), params[p]) for p in params])
     results = es_deployments_query(params, facets)
     return HttpResponse(json.dumps(results), mimetype="application/json")
 
-def es_deployments_query(params, facets=[], terms=['is_approved', 'sort_by', 'search'], sort_by="snapshot_time"):
+def es_deployments_query(params, facets=None, terms=None, sort_by="snapshot_time"):
+    if terms is None:
+        terms = ['is_approved', 'sort_by', 'search']
+    if facets is None:
+        facets = []
     q = {"query":   {"bool": {"must":
                                   [{"match": {'doc_type': "Domain"}},
                                    {"term": {"deployment.public": True}}]}}}
 
-    search_query = params.pop('search', "")
+    search_query = params.get('search', "")
     if search_query:
         q['query']['bool']['must'].append({
             "match" : {
@@ -370,3 +431,13 @@ def es_deployments_query(params, facets=[], terms=['is_approved', 'sort_by', 'se
             }
         })
     return es_query(params, facets, terms, q)
+
+def media_files(request, domain, template="appstore/media_files.html"):
+    dom = Domain.get_by_name(domain)
+    if not can_view_app(request, dom):
+        raise Http404()
+
+    return render_to_response(request, template, {
+        "project": dom,
+        "url_base": reverse('appstore')
+    })

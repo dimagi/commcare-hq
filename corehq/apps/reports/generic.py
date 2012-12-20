@@ -2,11 +2,10 @@ from StringIO import StringIO
 import datetime
 from celery.log import get_task_logger
 from django.core.urlresolvers import reverse
-from django.http import HttpResponse
+from django.http import HttpResponse, Http404
 from django.template.context import RequestContext
 import json
 from django.template.loader import render_to_string
-import pickle
 import pytz
 from corehq.apps.reports.models import ReportConfig
 from corehq.apps.reports import util
@@ -15,12 +14,14 @@ from corehq.apps.users.models import CouchUser
 from couchexport.export import export_from_tables
 from couchexport.shortcuts import export_response
 from dimagi.utils.couch.pagination import DatatablesParams
-from dimagi.utils.dates import DateSpan
+from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.modules import to_function
 from dimagi.utils.web import render_to_response, json_request
 from dimagi.utils.parsing import string_to_boolean
+from corehq.apps.reports.cache import CacheableRequestMixIn, request_cache
 
-class GenericReportView(object):
+
+class GenericReportView(CacheableRequestMixIn):
     """
         A generic report structure for viewing a report
         (or pages that follow the reporting structure closely---though that seems a bit hacky)
@@ -64,15 +65,18 @@ class GenericReportView(object):
     section_name = None # string. ex: "Reports"
     app_slug = None     # string. ex: 'reports' or 'manage'
     dispatcher = None   # ReportDispatcher subclass
-    
+
+    # Code can expect `fields` to be an iterable even when empty (never None)
+    fields = ()
+
     # not required
-    description = None  # string. description of the report. Currently not being used.
+    description = None  # description of the report
     report_template_path = None
     report_partial_path = None
 
     asynchronous = False
     hide_filters = False
-    fields = None
+    emailable = False
 
     exportable = False
     mobile_enabled = False
@@ -80,20 +84,20 @@ class GenericReportView(object):
     icon = None
 
     # the defaults for this should be sufficient. But if they aren't, well go for it.
-    base_templates = dict(
-        base=None,
-        base_async=None,
-        filters=None
-    )
+    base_template = None
+    base_template_mobile = None
+    base_template_async = None
+    base_template_filters = None
 
     flush_layout = False
     # Todo: maybe make these a little cleaner?
     show_timezone_notice = False
     show_time_notice = False
     is_admin_report = False
+    special_notice = None
     
     
-    def __init__(self, request, base_context=None, *args, **kwargs):
+    def __init__(self, request, base_context=None, domain=None, **kwargs):
         if not self.name or not self.section_name or self.slug is None or not self.dispatcher:
             raise NotImplementedError("Missing a required parameter: (name: %(name)s, section_name: %(section_name)s,"
             " slug: %(slug)s, dispatcher: %(dispatcher)s" % dict(
@@ -109,9 +113,10 @@ class GenericReportView(object):
 
         self.request = request
         self.request_params = json_request(self.request.GET)
-        self.domain = kwargs.get('domain')
+        self.domain = domain
         self.context = base_context or {}
         self._update_initial_context()
+        self.is_rendered_as_email = False # setting this to true in email_response
 
     def __str__(self):
         return "%(klass)s report named '%(name)s' with slug '%(slug)s' in section '%(section)s'.%(desc)s%(fields)s" % dict(
@@ -152,6 +157,7 @@ class GenericReportView(object):
             context={}
         )
 
+
     _caching = False
     def __setstate__(self, state):
         """
@@ -184,17 +190,15 @@ class GenericReportView(object):
         self.request_params = state.get('request_params')
         self._update_initial_context()
 
-    _url_root = None
     @property
+    @memoized
     def url_root(self):
-        if self._url_root is None:
-            path = self.request.META.get('PATH_INFO', "")
-            try:
-                root = path[0:path.index(self.slug)]
-            except ValueError:
-                root = None
-            self._url_root = root
-        return self._url_root
+        path = self.request.META.get('PATH_INFO', "")
+        try:
+            root = path[0:path.index(self.slug)]
+        except ValueError:
+            root = None
+        return root
 
     @property
     def queried_path(self):
@@ -202,41 +206,40 @@ class GenericReportView(object):
         query = self.request.META.get('QUERY_STRING')
         return "%s:%s" % (path, query)
 
-    _domain_object = None
     @property
+    @memoized
     def domain_object(self):
-        if self._domain_object is None and self.domain is not None:
+        if self.domain is not None:
             from corehq.apps.domain.models import Domain
-            self._domain_object = Domain.get_by_name(self.domain)
-        return self._domain_object
+            return Domain.get_by_name(self.domain)
+        return None
 
-    _timezone = None
     @property
+    @memoized
     def timezone(self):
-        if self._timezone is None:
-            if not self.domain:
-                self._timezone = pytz.utc
-            else:
-                try:
-                    self._timezone = util.get_timezone(self.request.couch_user.user_id, self.domain)
-                except AttributeError:
-                    self._timezone = util.get_timezone(None, self.domain)
-        return self._timezone
+        if not self.domain:
+            return pytz.utc
+        else:
+            try:
+                return util.get_timezone(self.request.couch_user.user_id, self.domain)
+            except AttributeError:
+                return util.get_timezone(None, self.domain)
 
-    _template_base = None
     @property
+    @memoized
     def template_base(self):
-        if self._template_base is None:
-            self._template_base = self.base_templates.get('base') or "%s/base_template.html" % self.app_slug
-        return self._template_base
+        return self.base_template or "%s/base_template.html" % self.app_slug
 
-    _template_async_base = None
     @property
+    @memoized
+    def mobile_template_base(self):
+        return self.base_template_mobile or "reports/mobile/mobile_report_base.html"
+
+    @property
+    @memoized
     def template_async_base(self):
-        if self._template_async_base is None:
-            self._template_async_base = (self.base_templates.get('base_async') or "reports/async/default.html") \
-                                        if self.asynchronous else self.template_base
-        return self._template_async_base
+        return ((self.base_template_async or "reports/async/default.html")
+                                        if self.asynchronous else self.template_base)
 
     _template_report = None
     @property
@@ -245,66 +248,36 @@ class GenericReportView(object):
             self._template_report = self.report_template_path or "reports/async/basic.html"
         return self._template_report
 
-    _template_report_partial = None
     @property
+    @memoized
     def template_report_partial(self):
-        """
-            Don't override.
-        """
-        if self._template_report_partial is None:
-            override_partial = self.override_report_partial_template
-            self._template_report_partial = override_partial if isinstance(override_partial, str) \
-                                                else self.report_partial_path
-        return self._template_report_partial
+        return self.report_partial_path
 
     @property
-    def override_report_partial_template(self):
-        """
-            Here exists future flexibility to do things with selecting the
-            report_partial based on get parameters.
-        """
-        return None
-
-    _template_filters = None
-    @property
+    @memoized
     def template_filters(self):
-        if self._template_filters is None:
-            self._template_filters = self.base_templates.get('filters') or "reports/async/filters.html"
-        return self._template_filters
+        return self.base_template_filters or "reports/async/filters.html"
 
-    _rendered_report_title = None
     @property
+    @memoized
     def rendered_report_title(self):
-        """
-            Don't override.
-        """
-        if self._rendered_report_title is None:
-            rendered_title = self.render_report_title
-            self._rendered_report_title = rendered_title if isinstance(rendered_title, str) else self.name
-        return self._rendered_report_title
+        return self.name
 
     @property
-    def render_report_title(self):
-        """
-            Override this to do special report titles that include specific info from the report (ex: a username).
-            Inserted into the template as the report title upon rending the report asynchronously or when
-            self.asynchronous is false
-        """
-        return None
-
-    _filter_classes = None
-    @property
+    @memoized
     def filter_classes(self):
-        if self._filter_classes is None:
-            filters = []
-            fields = self.override_fields
-            if not fields:
-                fields = self.fields
-            for field in fields or []:
+        # todo messy...fix eventually
+        filters = []
+        fields = self.override_fields
+        if not fields:
+            fields = self.fields
+        for field in fields or []:
+            if isinstance(field, basestring):
                 klass = to_function(field)
-                filters.append(klass(self.request, self.domain, self.timezone))
-            self._filter_classes = filters
-        return self._filter_classes
+            else:
+                klass = field
+            filters.append(klass(self.request, self.domain, self.timezone))
+        return filters
 
     @property
     def override_fields(self):
@@ -314,23 +287,15 @@ class GenericReportView(object):
         """
         return None
 
-    _export_format = None
     @property
+    @memoized
     def export_format(self):
-        if self._export_format is None:
-            from couchexport.models import Format
-            self._export_format = self.export_format_override or self.request.GET.get('format', Format.XLS)
-        return self._export_format
+        from couchexport.models import Format
+        return self.export_format_override or self.request.GET.get('format', Format.XLS)
 
-    _export_name = None
     @property
     def export_name(self):
-        """
-            Override this if you don't want <slug>.xls or <slug>.csv to be the tabular export filename.
-        """
-        if self._export_name is None:
-            self._export_name = self.slug
-        return self._export_name
+        return self.slug
 
     @property
     def default_report_url(self):
@@ -433,6 +398,8 @@ class GenericReportView(object):
         current_config_id = self.request.GET.get('config_id', '')
         default_config = ReportConfig.default()
 
+        has_datespan = ('corehq.apps.reports.fields.DatespanField' in self.fields)
+
         self.context.update(
             report=dict(
                 title=self.name,
@@ -440,6 +407,7 @@ class GenericReportView(object):
                 section_name=self.section_name,
                 slug=self.slug,
                 sub_slug=None,
+                app_slug=self.app_slug,
                 type=self.dispatcher.prefix,
                 url_root=self.url_root,
                 is_async=self.asynchronous,
@@ -447,8 +415,11 @@ class GenericReportView(object):
                 dispatcher=self.dispatcher,
                 filter_set=self.filter_set,
                 needs_filters=self.needs_filters,
+                has_datespan=has_datespan,
                 show=self.request.couch_user.can_view_reports() or self.request.couch_user.get_viewable_reports(),
+                is_emailable=self.emailable,
                 is_admin=self.is_admin_report,   # todo is this necessary???
+                special_notice=self.special_notice,
             ),
             current_config_id=current_config_id,
             default_config=default_config,
@@ -457,6 +428,12 @@ class GenericReportView(object):
             domain=self.domain,
             layout_flush_content=self.flush_layout
         )
+
+    def set_announcements(self):
+        """
+            Update django messages here.
+        """
+        pass
 
     def update_filter_context(self):
         """
@@ -477,7 +454,7 @@ class GenericReportView(object):
             show_filters=self.fields or not self.hide_filters,
             breadcrumbs=self.breadcrumbs,
             default_url=self.default_report_url,
-            url=self.get_url(*url_args),
+            url=self.get_url(domain=self.domain),
             title=self.name
         )
         if hasattr(self, 'datespan'):
@@ -502,14 +479,16 @@ class GenericReportView(object):
             report_base=self.template_async_base
         )
         self.context['report'].update(
-            title=self.rendered_report_title    # overriding the default title
+            title=self.rendered_report_title,    # overriding the default title
         )
         self.context.update(self._validate_context_dict(self.report_context))
 
     def generate_cache_key(self, func_name):
+        raise NotImplementedError("This is very broken!")
         return "%s:%s" % (self.__class__.__name__, func_name)
 
     @property
+    @request_cache("default")
     def view_response(self):
         """
             Intention: Not to be overridden in general.
@@ -521,9 +500,12 @@ class GenericReportView(object):
             self.update_filter_context()
             self.update_report_context()
             template = self.template_report
+        self.set_announcements()
         return render_to_response(self.request, template, self.context)
 
+    
     @property
+    @request_cache("mobile")
     def mobile_response(self):
         """
         This tries to render a mobile version of the report, by just calling 
@@ -534,26 +516,26 @@ class GenericReportView(object):
             raise NotImplementedError("This report isn't configured for mobile usage. "
                                       "If you're a developer, add mobile_enabled=True "
                                       "to the report config.")
-        # TODO: this is wacky / copy paste, and breaks all kinds of abstraction
-        # barriers. 
-        self.context.update(original_template=self.template_report)
-        self._template_report = "reports/async/static_only.html"
-        report_context = self._async_context()
+        async_context = self._async_context()
+        self.context.update(async_context)
         return render_to_response(self.request, 
-                                  "reports/mobile/mobile_report_base.html", 
-                                  report_context)
+                                  self.mobile_template_base,
+                                  self.context)
     
     @property
-    def static_response(self):
+    @request_cache("email")
+    def email_response(self):
         """
         This renders a json object containing a pointer to the static html 
         content of the report. It is intended for use by the report scheduler.
         """
+        self.is_rendered_as_email = True
         self.context.update(original_template=self.template_report)
-        self._template_report = "reports/async/static_only.html"
+        self._template_report = "reports/async/email_report.html"
         return self.async_response
 
     @property
+    @request_cache("async")
     def async_response(self):
         """
             Intention: Not to be overridden in general.
@@ -584,6 +566,7 @@ class GenericReportView(object):
         )
 
     @property
+    @request_cache("filters")
     def filters_response(self):
         """
             Intention: Not to be overridden in general.
@@ -600,6 +583,7 @@ class GenericReportView(object):
         )))
 
     @property
+    @request_cache("json")
     def json_response(self):
         """
             Intention: Not to be overridden in general.
@@ -608,6 +592,7 @@ class GenericReportView(object):
         return HttpResponse(json.dumps(self.json_dict))
 
     @property
+    @request_cache("export")
     def export_response(self):
         """
             Intention: Not to be overridden in general.
@@ -616,6 +601,14 @@ class GenericReportView(object):
         temp = StringIO()
         export_from_tables(self.export_table, temp, self.export_format)
         return export_response(temp, self.export_format, self.export_name)
+
+    @property
+    def partial_response(self):
+        """
+            Use this response for rendering smaller chunks of your report.
+            (Great if you have a giant report with annoying, complex indicators.)
+        """
+        raise Http404
 
     @property
     def clear_cache_response(self):
@@ -629,20 +622,21 @@ class GenericReportView(object):
         return HttpResponse("Clearing cache")
 
     @classmethod
-    def get_url(cls, *args, **kwargs):
-        type = kwargs.get('render_as')
-        reverse_args = list(args)
-        if type:
-            if type is not None and type not in cls.dispatcher.allowed_renderings():
-                raise ValueError('The type parameter is not one of the following allowed values: %s' %
-                                 ', '.join(cls.dispatcher.allowed_renderings()))
-            reverse_args.append(type+'/')
-        return reverse(cls.dispatcher.name(), args=reverse_args+[cls.slug])
+    def get_url(cls, domain=None, render_as=None, **kwargs):
+        if isinstance(cls, cls):
+            domain = getattr(cls, 'domain')
+            render_as = getattr(cls, 'rendered_as')
+        if render_as is not None and render_as not in cls.dispatcher.allowed_renderings():
+            raise ValueError('The render_as parameter is not one of the following allowed values: %s' %
+                             ', '.join(cls.dispatcher.allowed_renderings()))
+        url_args = [domain] if domain is not None else []
+        if render_as is not None:
+            url_args.append(render_as+'/')
+        return reverse(cls.dispatcher.name(), args=url_args+[cls.slug])
 
     @classmethod
-    def show_in_navigation(cls, request, *args, **kwargs):
+    def show_in_navigation(cls, request, domain=None):
         return True
-
 
 class GenericTabularReport(GenericReportView):
     """
@@ -685,6 +679,11 @@ class GenericTabularReport(GenericReportView):
     # override old class properties
     report_template_path = "reports/async/tabular.html"
     flush_layout = True
+
+    # set to a list of functions that take in a report object 
+    # and return a dictionary of items that will show up in 
+    # the report context
+    extra_context_providers = []
 
 #    @property
 #    def searchable(self):
@@ -736,8 +735,7 @@ class GenericTabularReport(GenericReportView):
 
     @property
     def pagination_source(self):
-        args = [self.domain] if self.domain else []
-        return self.get_url(*args, **dict(render_as='json'))
+        return self.get_url(domain=self.domain, render_as='json')
 
     _pagination = None
     @property
@@ -789,7 +787,7 @@ class GenericTabularReport(GenericReportView):
     def export_sheet_name(self):
         if self._export_sheet_name is None:
             override = self.override_export_sheet_name
-            self._export_sheet_name = override if isinstance(override, str) else self.name
+            self._export_sheet_name = override if isinstance(override, str) else self.name # unicode?
         return self._export_sheet_name
 
     @property
@@ -861,7 +859,7 @@ class GenericTabularReport(GenericReportView):
                 raise ValueError("Property 'fixed_cols_spec' should return a dict.")
             left_col.update(fixed=spec)
 
-        return dict(
+        context = dict(
             report_table=dict(
                 headers=headers,
                 rows=rows,
@@ -875,6 +873,9 @@ class GenericTabularReport(GenericReportView):
                 datatables=self.use_datatables,
             )
         )
+        for provider_function in self.extra_context_providers:
+            context.update(provider_function(self))
+        return context
 
     def table_cell(self, value, html=None):
         return dict(
@@ -883,9 +884,15 @@ class GenericTabularReport(GenericReportView):
         )
 
 
+def summary_context(report):
+    # will intentionally break if used with something that doesn't have
+    # a summary_values attribute
+    return {"summary_values": report.summary_values}
+
 class SummaryTablularReport(GenericTabularReport):
     report_template_path = "reports/async/summary_tabular.html"
-    
+    extra_context_providers = [summary_context]
+
     @property
     def data(self):
         """
@@ -893,20 +900,14 @@ class SummaryTablularReport(GenericTabularReport):
         headers.
         """
         raise NotImplementedError("Override this function!")
-    
+
     @property
     def rows(self):
         # for backwards compatibility / easy switching with a single-row table
         return [self.data]
-    
+
     @property
     def summary_values(self):
         headers = list(self.headers)
         assert (len(self.data) == len(headers))
         return zip(headers, self.data)
-    
-    @property
-    def report_context(self):
-        context = super(SummaryTablularReport, self).report_context
-        context["summary_values"] = self.summary_values
-        return context

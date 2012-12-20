@@ -1,18 +1,22 @@
 import datetime
+import logging
 import dateutil
+from django.conf import settings
+from django.contrib.sites.models import Site
+from django.template.loader import render_to_string
 from corehq.apps import receiverwrapper
 from django.core.urlresolvers import reverse
 from django.http import HttpResponseRedirect, HttpResponse, Http404
 
-from django_tables import tables
 from django.shortcuts import redirect
 
-from corehq.apps.domain.decorators import REDIRECT_FIELD_NAME, login_required_late_eval_of_LOGIN_URL, login_and_domain_required, domain_admin_required, require_previewer
-from corehq.apps.domain.forms import DomainSelectionForm, DomainGlobalSettingsForm,\
+from corehq.apps.domain.decorators import REDIRECT_FIELD_NAME, login_required_late_eval_of_LOGIN_URL, login_and_domain_required, domain_admin_required
+from corehq.apps.domain.forms import DomainGlobalSettingsForm,\
     DomainMetadataForm, SnapshotSettingsForm, SnapshotApplicationForm, DomainDeploymentForm
 from corehq.apps.domain.models import Domain, LICENSES
 from corehq.apps.domain.utils import get_domained_url, normalize_domain_name
 from corehq.apps.users.models import CouchUser
+from dimagi.utils.django.email import send_HTML_email
 
 from dimagi.utils.web import render_to_response, get_ip
 from corehq.apps.users.views import require_can_edit_web_users
@@ -22,9 +26,9 @@ from django.contrib import messages
 from django.views.decorators.http import require_POST
 import json
 from dimagi.utils.post import simple_post
-from corehq.apps.app_manager.models import get_app
 import cStringIO
 from PIL import Image
+from django.utils.translation import ugettext as _
 
 
 # Domain not required here - we could be selecting it for the first time. See notes domain.decorators
@@ -32,55 +36,14 @@ from PIL import Image
 from lib.django_user_registration.models import RegistrationProfile
 
 @login_required_late_eval_of_LOGIN_URL
-def select( request,
-            redirect_field_name = REDIRECT_FIELD_NAME,
-            domain_select_template = 'domain/select.html' ):
+def select(request, domain_select_template='domain/select.html'):
 
     domains_for_user = Domain.active_for_user(request.user)
     if not domains_for_user:
         return redirect('registration_domain')
 
-    redirect_to = request.REQUEST.get(redirect_field_name, '')
-    if request.method == 'POST': # If the form has been submitted...
-        form = DomainSelectionForm(domain_list=domains_for_user,
-                                   data=request.POST) # A form bound to the POST data
+    return render_to_response(request, domain_select_template, {})
 
-        if form.is_valid():
-            # We've just checked the submitted data against a freshly-retrieved set of domains
-            # associated with the user. It's safe to set the domain in the sesssion (and we'll
-            # check again on views validated with the domain-checking decorator)
-            form.save(request) # Needs request because it saves domain in session
-
-            #  Weak attempt to give user a good UX - make sure redirect_to isn't garbage.
-            domain = form.cleaned_data['domain_list'].name
-            if not redirect_to or '//' in redirect_to or ' ' in redirect_to:
-                redirect_to = reverse('domain_homepage', args=[domain])
-            return HttpResponseRedirect(redirect_to) # Redirect after POST
-    else:
-        # An unbound form
-        form = DomainSelectionForm( domain_list=domains_for_user )
-
-    vals = dict( next = redirect_to,
-                 form = form )
-
-    return render_to_response(request, domain_select_template, vals)
-
-########################################################################################################
-
-########################################################################################################
-
-class UserTable(tables.Table):
-    id = tables.Column(verbose_name="Id")
-    username = tables.Column(verbose_name="Username")
-    first_name = tables.Column(verbose_name="First name")
-    last_name = tables.Column(verbose_name="Last name")
-    is_active_auth = tables.Column(verbose_name="Active in system")
-    is_active_member = tables.Column(verbose_name="Active in domain")
-    is_domain_admin = tables.Column(verbose_name="Domain admin")
-    last_login = tables.Column(verbose_name="Most recent login")
-    invite_status = tables.Column(verbose_name="Invite status")
-
-########################################################################################################
 
 ########################################################################################################
 
@@ -228,6 +191,7 @@ def project_settings(request, domain, template="domain/admin/project_settings.ht
                 'project_type': domain.project_type,
                 'customer_type': domain.customer_type,
                 'is_test': json.dumps(domain.is_test),
+                'survey_management_enabled' : domain.survey_management_enabled,
             })
         else:
             form = DomainGlobalSettingsForm(initial={
@@ -289,15 +253,13 @@ def autocomplete_fields(request, field):
     results = Domain.field_by_prefix(field, prefix)
     return HttpResponse(json.dumps(results))
 
-@require_previewer # remove for production
 @domain_admin_required
 def snapshot_settings(request, domain):
     domain = Domain.get_by_name(domain)
     snapshots = domain.snapshots()
     return render_to_response(request, 'domain/snapshot_settings.html',
-                {'domain': domain.name, 'snapshots': snapshots})
+                {"project": domain, 'domain': domain.name, 'snapshots': list(snapshots), 'published_snapshot': domain.published_snapshot()})
 
-@require_previewer # remove for production
 @domain_admin_required
 def create_snapshot(request, domain):
     domain = Domain.get_by_name(domain)
@@ -306,29 +268,26 @@ def create_snapshot(request, domain):
         form = SnapshotSettingsForm(initial={
                 'default_timezone': domain.default_timezone,
                 'case_sharing': json.dumps(domain.case_sharing),
-                'city': domain.deployment.city,
-                'country': domain.deployment.country,
-                'region': domain.deployment.region,
                 'project_type': domain.project_type,
                 'share_multimedia': True,
-                'license': domain.license
+                'license': domain.license,
+                'publish_on_submit': True,
             })
-        published_snapshot = domain.published_snapshot() or domain
+        snapshots = list(domain.snapshots())
+        published_snapshot = snapshots[0] if snapshots else domain
         published_apps = {}
         if published_snapshot is not None:
             form = SnapshotSettingsForm(initial={
                 'default_timezone': published_snapshot.default_timezone,
                 'case_sharing': json.dumps(published_snapshot.case_sharing),
-#                'city': published_snapshot.city,
-#                'country': published_snapshot.country,
-#                'region': published_snapshot.region,
                 'project_type': published_snapshot.project_type,
                 'license': published_snapshot.license,
                 'title': published_snapshot.title,
                 'author': published_snapshot.author,
-                'share_multimedia': True,
+                'share_multimedia': published_snapshot.multimedia_included,
                 'description': published_snapshot.description,
-                'short_description': published_snapshot.short_description
+                'short_description': published_snapshot.short_description,
+                'publish_on_submit': True,
             })
             for app in published_snapshot.full_applications():
                 if domain == published_snapshot:
@@ -361,6 +320,7 @@ def create_snapshot(request, domain):
              'autocomplete_fields': ('project_type', 'phone_model', 'user_type', 'city', 'country', 'region')})
     elif request.method == 'POST':
         form = SnapshotSettingsForm(request.POST, request.FILES)
+        form.dom = domain
         app_forms = []
         publishing_apps = False
         for app in domain.applications():
@@ -375,7 +335,17 @@ def create_snapshot(request, domain):
                  'app_forms': app_forms,
                  'autocomplete_fields': ('project_type', 'phone_model', 'user_type', 'city', 'country', 'region')})
 
+        current_user = request.couch_user
+        if not current_user.is_eula_signed():
+            messages.error(request, 'You must agree to our eula to publish a project to Exchange')
+            return render_to_response(request, 'domain/create_snapshot.html',
+                {'domain': domain.name,
+                 'form': form,
+                 'app_forms': app_forms,
+                 'autocomplete_fields': ('project_type', 'phone_model', 'user_type', 'city', 'country', 'region')})
+
         if not form.is_valid():
+            messages.error(request, _("There are some problems with your form. Please address these issues and try again."))
             return render_to_response(request, 'domain/create_snapshot.html',
                     {'domain': domain.name,
                      'form': form,
@@ -383,39 +353,32 @@ def create_snapshot(request, domain):
                      'app_forms': app_forms,
                      'autocomplete_fields': ('project_type', 'phone_model', 'user_type', 'city', 'country', 'region')})
 
+        new_license = request.POST['license']
         if request.POST.get('share_multimedia', False):
-            media = domain.all_media()
+            app_ids = form._get_apps_to_publish()
+            media = domain.all_media(from_apps=app_ids)
             for m_file in media:
                 if domain.name not in m_file.shared_by:
                     m_file.shared_by.append(domain.name)
-#                    m_file.licenses[domain.name] = domain.license # this shouldn't be necessary now that licenses are set on upload
-                    m_file.save()
+
+                # set the license of every multimedia file that doesn't yet have a license set
+                if not m_file.license:
+                    m_file.update_or_add_license(domain.name, type=new_license)
+
+                m_file.save()
+
         old = domain.published_snapshot()
         new_domain = domain.save_snapshot()
-        if request.POST['license'] in LICENSES.keys():
-            new_domain.license = request.POST['license']
+        new_domain.license = new_license
         new_domain.description = request.POST['description']
         new_domain.short_description = request.POST['short_description']
         new_domain.project_type = request.POST['project_type']
-#        new_domain.region = request.POST['region']
-#        new_domain.city = request.POST['city']
-#        new_domain.country = request.POST['country']
         new_domain.title = request.POST['title']
         new_domain.author = request.POST['author']
-        for snapshot in domain.snapshots():
-            if snapshot.published and snapshot._id != new_domain._id:
-                snapshot.published = False
-                snapshot.save()
-        new_domain.is_approved = False
-        new_domain.published = True
+        new_domain.multimedia_included = request.POST.get('share_multimedia', '') == 'on'
 
-        current_user = CouchUser.from_django_user(request.user)
-        new_domain.cda.signed = True
-        new_domain.cda.date = datetime.datetime.utcnow()
-        new_domain.cda.type = 'Content Distribution Agreement'
-        if current_user:
-            new_domain.cda.user_id = current_user.get_id
-        new_domain.cda.user_ip = get_ip(request)
+        new_domain.is_approved = False
+        publish_on_submit = request.POST.get('publish_on_submit', False)
 
         image = form.cleaned_data['image']
         if image:
@@ -425,6 +388,12 @@ def create_snapshot(request, domain):
             new_domain.image_path = old.image_path
             new_domain.image_type = old.image_type
         new_domain.save()
+
+        if publish_on_submit:
+            _publish_snapshot(request, domain, published_snapshot=new_domain)
+        else:
+            new_domain.published = False
+            new_domain.save()
 
         if image:
             im = Image.open(image)
@@ -452,6 +421,9 @@ def create_snapshot(request, domain):
                 application.phone_model = request.POST["%s-phone_model" % original_id]
                 application.attribution_notes = request.POST["%s-attribution_notes" % original_id]
                 application.user_type = request.POST["%s-user_type" % original_id]
+
+                if not new_domain.multimedia_included:
+                    application.multimedia_map = None
                 application.save()
             else:
                 application.delete()
@@ -462,27 +434,62 @@ def create_snapshot(request, domain):
                      'form': form,
                      #'latest_applications': latest_applications,
                      'app_forms': app_forms,
-                     'error_message': 'Snapshot creation failed; please try again'})
+                     'error_message': _('Version creation failed; please try again')})
 
-        messages.success(request, "Created snapshot. The snapshot will be posted to CommCare Exchange pending approval by admins.")
+        if publish_on_submit:
+            messages.success(request, _("Created a new version of your app. This version will be posted to CommCare Exchange pending approval by admins."))
+        else:
+            messages.success(request, _("Created a new version of your app."))
         return redirect('domain_snapshot_settings', domain.name)
 
-@require_previewer # remove for production
+def _publish_snapshot(request, domain, published_snapshot=None):
+    snapshots = domain.snapshots()
+    for snapshot in snapshots:
+        if snapshot.published:
+            snapshot.published = False
+            if not published_snapshot or snapshot.name != published_snapshot.name:
+                snapshot.save()
+    if published_snapshot:
+        if published_snapshot.copied_from.name != domain.name:
+            messages.error(request, "Invalid snapshot")
+            return False
+
+        # cda stuff. In order to publish a snapshot, a user must have agreed to this
+        published_snapshot.cda.signed = True
+        published_snapshot.cda.date = datetime.datetime.utcnow()
+        published_snapshot.cda.type = 'Content Distribution Agreement'
+        if request.couch_user:
+            published_snapshot.cda.user_id = request.couch_user.get_id
+        published_snapshot.cda.user_ip = get_ip(request)
+
+        published_snapshot.published = True
+        published_snapshot.save()
+        _notification_email_on_publish(domain, published_snapshot, request.couch_user)
+    return True
+
+def _notification_email_on_publish(domain, snapshot, published_by):
+    url_base = Site.objects.get_current().domain
+    params = {"domain": domain, "snapshot": snapshot, "published_by": published_by, "url_base": url_base}
+    text_content = render_to_string("domain/email/published_app_notification.txt", params)
+    html_content = render_to_string("domain/email/published_app_notification.html", params)
+    recipients = settings.EXCHANGE_NOTIFICATION_RECIPIENTS
+    subject = "New App on Exchange: %s" % snapshot.title
+    try:
+        for recipient in recipients:
+            send_HTML_email(subject, recipient, html_content, text_content=text_content)
+    except Exception:
+        logging.warning("Can't send notification email, but the message was:\n%s" % text_content)
+
 @domain_admin_required
 def set_published_snapshot(request, domain, snapshot_name=''):
     domain = request.project
     snapshots = domain.snapshots()
     if request.method == 'POST':
-        for snapshot in snapshots:
-            if snapshot.published:
-                snapshot.published = False
-                snapshot.save()
         if snapshot_name != '':
             published_snapshot = Domain.get_by_name(snapshot_name)
-            if published_snapshot.copied_from.name != domain.name:
-                messages.error(request, "Invalid snapshot")
-            published_snapshot.published = True
-            published_snapshot.save()
+            _publish_snapshot(request, domain, published_snapshot=published_snapshot)
+        else:
+            _publish_snapshot(request, domain)
     return redirect('domain_snapshot_settings', domain.name)
 
 @domain_admin_required

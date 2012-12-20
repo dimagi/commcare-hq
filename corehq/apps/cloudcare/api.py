@@ -7,6 +7,7 @@ from dimagi.utils.decorators import inline
 from casexml.apps.phone.caselogic import get_footprint
 from datetime import datetime
 from corehq.elastic import get_es
+import urllib
 
 # todo: Make these api functions use generators for streaming
 # so that a limit call won't fetch more docs than it needs to
@@ -104,7 +105,9 @@ def es_filter_cases(domain, filters=None):
         # this class is currently pretty customized to serve exactly
         # this API. one day it may be worth reconciling our ES interfaces
         # but today is not that day.
-        RESERVED_KEYS = ('date_modified_start', 'date_modified_end', 'limit')
+        RESERVED_KEYS = ('date_modified_start', 'date_modified_end', 
+                         'server_date_modified_start', 'server_date_modified_end', 
+                         'limit')
     
         def __init__(self, domain, filters):
             self.domain = domain
@@ -112,10 +115,17 @@ def es_filter_cases(domain, filters=None):
             self.limit = int(filters.get('limit', 50))
             self._date_modified_start = filters.get("date_modified_start", None)
             self._date_modified_end = filters.get("date_modified_end", None)
+            self._server_date_modified_start = filters.get("server_date_modified_start", None)
+            self._server_date_modified_end = filters.get("server_date_modified_end", None)
             
+        
         @property
         def uses_modified(self):
             return bool(self._date_modified_start or self._date_modified_end)
+        
+        @property
+        def uses_server_modified(self):
+            return bool(self._server_date_modified_start or self._server_date_modified_end)
         
         @property
         def date_modified_start(self):
@@ -126,24 +136,47 @@ def es_filter_cases(domain, filters=None):
             return self._date_modified_end or datetime.max.strftime("%Y-%m-%d")
         
         @property
+        def server_date_modified_start(self):
+            return self._server_date_modified_start or datetime(1970,1,1).strftime("%Y-%m-%d")
+        
+        @property
+        def server_date_modified_end(self):
+            return self._server_date_modified_end or datetime.max.strftime("%Y-%m-%d")
+        
+        @property
         def scrubbed_filters(self):
             return dict((k, v) for k, v in self.filters.items() if k not in self.RESERVED_KEYS)
         
-        @property
-        def modified_params(self):
+        def _modified_params(self, key, start, end):
             return {
                 'range': {
-                    'modified_on': {
-                        'from': self.date_modified_start,
-                        'to': self.date_modified_end
+                    key: {
+                        'from': start,
+                        'to': end
                     }
                 }
             }
+        
+        @property
+        def modified_params(self, ):
+            return self._modified_params('modified_on',
+                                         self.date_modified_start,
+                                         self.date_modified_end)
+        
+        @property
+        def server_modified_params(self):
+            return self._modified_params('server_modified_on',
+                                         self.server_date_modified_start,
+                                         self.server_date_modified_end)
         
         def get_terms(self):
             yield {'term': {'domain.exact': self.domain}}
             if self.uses_modified:
                 yield self.modified_params
+            if self.uses_modified:
+                yield self.modified_params
+            if self.uses_server_modified:
+                yield self.server_modified_params
             for k, v in self.scrubbed_filters.items():
                 yield {'term': {k: v.lower()}}
 
@@ -172,7 +205,15 @@ def get_filters_from_request(request, limit_top_level=None):
     limit_top_level lets you specify a whitelist of top-level properties you can include in the filters,
     properties with a / in them are always included in the filters
     """
-    filters = dict(request.REQUEST.items())
+    def _decode(thing):
+        try:
+            return urllib.unquote(thing)
+        except Exception:
+            return thing
+    
+    # super weird hack: force decoding keys because sometimes (only seen in 
+    # production) django doesn't do this for us.
+    filters = dict((_decode(k), v) for k, v in request.REQUEST.items())
     if limit_top_level is not None:
         filters = dict([(key, val) for key, val in filters.items() if '/' in key or key in limit_top_level])
 

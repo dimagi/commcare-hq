@@ -7,6 +7,8 @@
     <update>
         <form_id>{{ form_unique_id }}</form_id>
         <start_date>{{ task_activation_date }}</start_date>
+        <end_date>{{ task_deactivation_date }}</end_date>
+        <incentive>{{ incentive }}</incentive>
     </update>
     <index>
         <parent case_type="{{ parent.type }}">{{ parent.get_id }}</parent>

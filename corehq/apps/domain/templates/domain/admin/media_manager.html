@@ -1,5 +1,5 @@
 {% extends "users/users_base.html" %}
-{% load hq_bootstrap_tags %}
+{% load hqstyle_tags %}
 {% load hq_shared_tags %}
 {% load i18n %}
 
@@ -19,7 +19,7 @@
     <fieldset>
         <legend>Change Multimedia Sharing Settings</legend>
         <p>
-            Multimedia shared below will show up{% if request.couch_user.is_previewer %} in projects shared on CommCare Exchange and{% endif %} in the list of available multimedia for others to use.
+            Multimedia shared below will show up in projects shared on CommCare Exchange and in the list of available multimedia for others to use.
         </p>
     <table class="table table-striped table-bordered table-condensed hqtable-vcentered">
         <thead>

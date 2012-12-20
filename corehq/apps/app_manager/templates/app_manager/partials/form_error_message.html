@@ -1,8 +1,6 @@
 {% load xforms_extras %}
 {% if error.module %}
-    <a href="{% url view_form domain app.id error.module.id error.form.id %}">
-        {{ error.form.name|trans:langs }}
-    </a>
+    <a href="{% url view_form domain app.id error.module.id error.form.id %}">{{ error.form.name|trans:langs }}</a>
     in module "{{ error.module.name|trans:langs }}"
 {% else %}
     <a href="{% url view_user_registration domain app.id %}">User Registration</a>

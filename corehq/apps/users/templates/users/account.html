@@ -1,6 +1,6 @@
 {% extends "users/users_base.html" %}
 {% load hq_shared_tags %}
-{% load hq_bootstrap_tags %}
+{% load hqstyle_tags %}
 {% block js %}{{ block.super }}
     <script src="{% static 'hqwebapp/javascripts/jquery.textchange.min.js' %}"></script>
     <script src="{% static 'users/js/key_filters.js' %}"></script>
@@ -107,19 +107,13 @@
 {% block user-view %}
     <ul class="nav nav-tabs" id="project-settings-tabs">
         <li><a href="#basic-info" data-toggle="tab">Basic</a></li>
-    {% if couch_user.is_commcare_user %}
+    {% if editing_commcare_user %}
         <li><a href="#user-data" data-toggle="tab">Custom Registration Data</a></li>
     {% endif %}
-    {% if couch_user.user_id == request.couch_user.user_id and couch_user.is_commcare_user %}
-        {% if request.couch_user.can_view_reports or request.couch_user.get_viewable_reports %}
-            <li><a href="#scheduled-reports" data-toggle="tab">My Scheduled Reports</a></li>
-        {% endif %}
+    {% if proj_settings_form %}
+        <li><a href="#project-settings" data-toggle="tab">My Settings for this Project</a></li>
     {% endif %}
     {% if couch_user.user_id == request.couch_user.user_id and not couch_user.is_commcare_user %}
-        <li><a href="#scheduled-reports" data-toggle="tab">My Scheduled Reports</a></li>
-        {% if proj_settings_form %}
-        <li><a href="#project-settings" data-toggle="tab">My Settings for this Project</a></li>
-        {% endif %}
         <li><a href="#domains" data-toggle="tab">My Projects</a></li>
     {% endif %}
     </ul>
@@ -158,12 +152,44 @@
 
             <div class="form form-horizontal">
                 <fieldset>
-                    {% for phone_number in phone_numbers %}
+                    {% for phone in phone_numbers_extended %}
                         {% if forloop.first %}<legend>Registered Phone Numbers</legend>{% endif %}
                         <div class="control-group">
-                            <label class="control-label">+{{ phone_number }}</label>
+                            <label class="control-label">+{{ phone.number }}
+                                {% ifequal phone.status "verified" %}
+                                <div><span class="label label-success"><small>VERIFIED</small></span></div>
+                                {% endifequal %}
+                                {% ifequal phone.status "pending" %}
+                                <div><span class="label"><small>VERIFICATION PENDING</small></span></div>
+                                {% endifequal %}
+                                {% ifequal phone.status "duplicate" %}
+                                <div>{% if phone.dup_url %}<a href="{{ phone.dup_url }}">{% endif %}<span class="label label-warning"><small>ALREADY IN USE</small></span>{% if phone.dup_url %}</a>{% endif %}</div>
+                                {% endifequal %}
+                                {% ifequal phone.status "invalid" %}
+                                <div><span class="label"><small>INVALID FORMAT</small></span></div>
+                                {% endifequal %}
+                            </label>
+                            
                             <div class="controls">
-                                <a class="btn btn-danger" data-toggle="modal" href="#delete_{{phone_number|urlencode}}"><i class="icon icon-remove icon-white"></i> Delete</a>
+                                {% ifnotequal couch_user.doc_type "WebUser" %}
+
+                                  {% ifequal phone.status "unverified" %}
+                                <form method="post" action="{% url verify_phone_number domain couch_user.couch_id %}?phone_number={{phone.number|urlencode}}" style="display: inline;">
+                                    <button type="submit" title="Send a verification SMS to this phone. When the user replies to this SMS, the phone number will be verified." class="btn btn-primary"><i class="icon icon-signal icon-white"></i> Verify</button>
+                                </form>
+                                  {% endifequal %}
+
+                                  {% ifequal phone.status "duplicate" %}
+                                <a title="You cannot verify this phone because it is already being used elsewhere" class="btn btn-primary disabled"><i class="icon icon-signal icon-white"></i> Verify</a>
+                                  {% endifequal %}
+
+                                  {% ifequal phone.status "pending" %}
+                                <a title="Re-send the verification SMS to this phone" class="btn btn-primary" data-toggle="modal" href="#reverify_{{phone.number|urlencode}}"><i class="icon icon-signal icon-white"></i> Verify (retry)</a>
+                                  {% endifequal %}
+
+                                {% endifnotequal %}
+
+                                <a class="btn btn-danger" data-toggle="modal" href="#delete_{{phone.number|urlencode}}"><i class="icon icon-remove icon-white"></i> Delete</a>
                             </div>
                         </div>
                     {% endfor %}
@@ -189,33 +215,23 @@
                 <div class="form-actions"><button type="submit" class="btn btn-primary">Add Number</button></div>
             </form>
         </div>
-        {% if couch_user.is_commcare_user %}
+        {% if editing_commcare_user %}
         <div class="tab-pane" id="user-data">
             {% include "users/partial/user_data.html" %}
         </div>
         {% endif %}
-        {% if couch_user.user_id == request.couch_user.user_id and couch_user.is_commcare_user %}
-            {% if request.couch_user.can_view_reports or request.couch_user.get_viewable_reports %}
-                <div class="tab-pane" id="scheduled-reports">
-                    {% include "users/partial/scheduled_reports.html" %}
-                </div>
-            {% endif %}
+        {% if proj_settings_form %}
+            <div class="tab-pane" id="project-settings">
+                {% include "users/partial/project_settings.html" %}
+            </div>
         {% endif %}
         {% if couch_user.user_id == request.couch_user.user_id and not couch_user.is_commcare_user %}
-        <div class="tab-pane" id="scheduled-reports">
-            {% include "users/partial/scheduled_reports.html" %}
-        </div>
-        {% if proj_settings_form %}
-        <div class="tab-pane" id="project-settings">
-            {% include "users/partial/project_settings.html" %}
-        </div>
-        {% endif %}
         <div class="tab-pane" id="domains">
             {% include "users/partial/domain_accounts.html" %}
         </div>
         {% endif %}
     </div>
-    {% if couch_user.is_commcare_user %}
+    {% if editing_commcare_user %}
         <fieldset>
             <legend>Reset Password</legend>
             <a href="#reset_password_{{ couch_user.user_id }}" class="btn btn-info" data-toggle="modal">Reset Password</a>
@@ -244,7 +260,7 @@
 {% endblock %}
 
 {% block modals %}{{ block.super }}
-    {% for phone_number in phone_numbers %}
+    {% for phone_number in couch_user.phone_numbers %}
         <div id="delete_{{phone_number|urlencode}}" class="modal hide fade">
             <div class="modal-header">
                 <a class="close" data-dismiss="modal">&times;</a>
@@ -261,6 +277,23 @@
             </form>
         </div>
     {% endfor %}
+    {% for phone in phone_numbers_extended %}{% ifequal phone.status "pending" %}
+        <div id="reverify_{{phone.number|urlencode}}" class="modal hide fade">
+            <div class="modal-header">
+                <a class="close" data-dismiss="modal">&times;</a>
+                <h3>Verify +{{ phone.number }}?</h3>
+            </div>
+            <form class="form form-horizontal hq-form" name="reverify_phone_number" action="{% url verify_phone_number domain couch_user.couch_id %}?phone_number={{phone.number|urlencode}}" method="post">
+                <div class="modal-body">
+                    <p>A verification message has already been sent to this phone. The phone has not replied yet. Send again?</p>
+                </div>
+                <div class="modal-footer">
+                    <a href="#" data-dismiss="modal" class="btn">Cancel</a>
+                    <button type="submit" class="btn btn-primary"><i class="icon icon-signal icon-white"></i> Verify</button>
+                </div>
+            </form>
+        </div>
+    {% endifequal %}{% endfor %}
     {% if couch_user.is_commcare_user and couch_user.user_id != request.couch_user.user_id %}
     <div id="delete_user_{{ couch_user.user_id }}" class="modal hide fade">
         <div class="modal-header">

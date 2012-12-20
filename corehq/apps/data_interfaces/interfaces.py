@@ -1,3 +1,4 @@
+from django.utils.safestring import mark_safe
 from corehq.apps.data_interfaces.dispatcher import DataInterfaceDispatcher
 from corehq.apps.groups.models import Group
 from django.core.urlresolvers import reverse
@@ -7,10 +8,11 @@ from corehq.apps.reports.generic import GenericReportView
 from corehq.apps.reports.models import HQUserType
 from corehq.apps.reports.standard.inspect import CaseListMixin
 from dimagi.utils.decorators.memoized import memoized
+from django.utils.translation import ugettext_noop
 
 class DataInterface(GenericReportView):
     # overriding properties from GenericReportView
-    section_name = 'Manage Data'
+    section_name = ugettext_noop('Manage Data')
     app_slug = 'data_interfaces'
     asynchronous = True
     dispatcher = DataInterfaceDispatcher
@@ -21,7 +23,7 @@ class DataInterface(GenericReportView):
         return reverse('data_interfaces_default', args=[self.request.project])
 
 class CaseReassignmentInterface(CaseListMixin, DataInterface):
-    name = "Reassign Cases"
+    name = ugettext_noop("Reassign Cases")
     slug = "reassign_cases"
 
     report_template_path = 'data_interfaces/interfaces/case_management.html'
@@ -37,7 +39,7 @@ class CaseReassignmentInterface(CaseListMixin, DataInterface):
     @property
     def headers(self):
         headers = DataTablesHeader(
-            DataTablesColumn('Select  <a href="#" class="select-all btn btn-mini btn-inverse">all</a> <a href="#" class="select-none btn btn-mini btn-warning">none</a>', sortable=False, span=2),
+            DataTablesColumn(mark_safe('Select  <a href="#" class="select-all btn btn-mini btn-inverse">all</a> <a href="#" class="select-none btn btn-mini btn-warning">none</a>'), sortable=False, span=2),
             DataTablesColumn("Case Name", span=3),
             DataTablesColumn("Case Type", span=2),
             DataTablesColumn("Owner", span=2),
@@ -49,7 +51,7 @@ class CaseReassignmentInterface(CaseListMixin, DataInterface):
 
     @property
     def rows(self):
-        checkbox = '<input type="checkbox" class="selected-commcare-case" data-bind="event: {change: updateCaseSelection}" data-caseid="%(case_id)s" data-owner="%(owner)s" data-ownertype="%(owner_type)s" />'
+        checkbox = mark_safe('<input type="checkbox" class="selected-commcare-case" data-bind="event: {change: updateCaseSelection}" data-caseid="%(case_id)s" data-owner="%(owner)s" data-ownertype="%(owner_type)s" />')
         for row in self.case_results['rows']:
             case = self.get_case(row)
             display = self.CaseDisplay(case)
@@ -64,7 +66,7 @@ class CaseReassignmentInterface(CaseListMixin, DataInterface):
     @property
     def report_context(self):
         context = super(CaseReassignmentInterface, self).report_context
-        active_users = util.get_all_users_by_domain(self.domain, user_filter=HQUserType.use_defaults(), simplified=True)
+        active_users = self.get_all_users_by_domain(user_filter=tuple(HQUserType.use_defaults()), simplified=True)
         context.update(
             users=[dict(ownerid=user.get('user_id'), name=user.get('username_in_report'), type="user")
                    for user in active_users],

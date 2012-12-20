@@ -1,10 +1,174 @@
 {% extends "hqwebapp/two_column.html" %}
 {% load hq_shared_tags %}
-{% load hq_bootstrap_tags %}
+{% load hqstyle_tags %}
 {% load i18n %}
 {% load url_extras %}
 
-{% block js %}{{ block.super }}
+{% block head %}{{ block.super }}
+    <style type="text/css">
+        .rating_static > span {
+            display: inline-block;
+            position: relative;
+            width: 1.1em;
+        }
+
+            /* :not(:checked) is a filter, so that browsers that don’t support :checked don’t
+     follow these rules. Every browser that supports :checked also supports :not(), so
+     it doesn’t make the test unnecessarily selective */
+        .rating_static:not(:checked) > input {
+            position:absolute;
+            top:-9999px;
+            clip:rect(0,0,0,0);
+        }
+
+        .rating_static:not(:checked) > label {
+            float:left;
+            padding:0 .1em;
+            overflow:hidden;
+            white-space:nowrap;
+            cursor:default;
+            font-size:200%;
+            line-height:1.1;
+            color:#ddd;
+            text-shadow:1px 1px #bbb, 2px 2px #666, .1em .1em .2em rgba(0,0,0,.5);
+        }
+
+        .rating_static:not(:checked) > label:before {
+            content: '★ ';
+        }
+
+        .rating_static > input.filled + label {
+            color: #f70;
+            text-shadow:1px 1px #c60, 2px 2px #940, .1em .1em .2em rgba(0,0,0,.5);
+        }
+
+        .rating_static > label:active {
+            position:relative;
+            top:2px;
+            left:2px;
+        }
+
+
+
+        .rating > span {
+            display: inline-block;
+            position: relative;
+            width: 1.1em;
+        }
+
+        .rating {
+            float:left;
+        }
+
+            /* :not(:checked) is a filter, so that browsers that don’t support :checked don’t
+     follow these rules. Every browser that supports :checked also supports :not(), so
+     it doesn’t make the test unnecessarily selective */
+        .rating:not(:checked) > input {
+            position:absolute;
+            top:-9999px;
+            clip:rect(0,0,0,0);
+        }
+
+        .rating:not(:checked) > label {
+            float:right;
+            width:1em;
+            padding:0 .1em;
+            overflow:hidden;
+            white-space:nowrap;
+            cursor:pointer;
+            font-size:200%;
+            line-height:1.2;
+            color:#ddd;
+            text-shadow:1px 1px #bbb, 2px 2px #666, .1em .1em .2em rgba(0,0,0,.5);
+        }
+
+        .rating:not(:checked) > label:before {
+            content: '★ ';
+        }
+
+        .rating > input:checked ~ label {
+            color: #f70;
+            text-shadow:1px 1px #c60, 2px 2px #940, .1em .1em .2em rgba(0,0,0,.5);
+        }
+
+        .rating:not(:checked) > label:hover,
+        .rating:not(:checked) > label:hover ~ label {
+            color: gold;
+            text-shadow:1px 1px goldenrod, 2px 2px #B57340, .1em .1em .2em rgba(0,0,0,.5);
+        }
+
+        .rating > input:checked + label:hover,
+        .rating > input:checked + label:hover ~ label,
+        .rating > input:checked ~ label:hover,
+        .rating > input:checked ~ label:hover ~ label,
+        .rating > label:hover ~ input:checked ~ label {
+            color: #ea0;
+            text-shadow:1px 1px goldenrod, 2px 2px #B57340, .1em .1em .2em rgba(0,0,0,.5);
+        }
+
+        .rating > label:active {
+            position:relative;
+            top:2px;
+            left:2px;
+        }
+
+        .label-for-star {
+            cursor: default;
+        }
+
+        .scrollable {
+            overflow-x: scroll;
+            overflow-y:hidden;
+            white-space:nowrap;
+            /*max-height: 300px;*/
+        }
+
+        .pager {
+            margin-top: 25px;
+        }
+
+        .app-pic {
+            width: 12.5em;
+            height: 12.5em;
+            margin-right: .5em;
+        }
+
+        .opacity65 {
+            filter:alpha(opacity=65);
+            -moz-opacity:0.65;
+            -khtml-opacity: 0.65;
+            opacity: 0.65;
+        }
+
+        .pi-stars {
+            display: inline-block;
+            padding-right: 1.8em;
+            font-size: 70%;
+        }
+
+        #results {
+            display: table;
+        }
+
+        #results div.span3 {
+            display: "table-cell";
+        }
+
+        .top-nav-search {
+            margin-top: 1.5em;
+        }
+
+        #license-info-label {
+            display: inline;
+        }
+
+        #license-info-label:hover {
+            background: inherit;
+        }
+    </style>
+{% endblock %}
+
+{% block js-inline %}{{ block.super }}
     <script type="text/javascript">
         $(function () {
             $(".more-sortable-button").click(function() {
@@ -16,133 +180,57 @@
             });
         });
     </script>
+
+    <script type="text/javascript">
+        $(function () {
+            $(".facet-checkbox").click(function() {
+                window.location = $(this).parent().attr('href');
+            });
+        });
+    </script>
+
+    <script>
+        // This assures that all the result elements are the same height
+        $(function(){
+            $('.results').each(function(){
+                var heighest = 0;
+                var $this = $(this);
+                $this.find('.well').each(function(){
+                    heighest = ($(this).height() > heighest) ? $(this).height() : heighest;
+                });
+                $this.find('.well').css('height',heighest + 'px');
+            });
+        });
+    </script>
+
+    <script>
+        function genScalePicFunc() {
+            var $app_pic = $('.app-pic');
+            return function() {
+                var pic_width = $app_pic.width();
+                $app_pic.css('height', pic_width+'px');
+            }
+        }
+        var scaleAppPic = genScalePicFunc();
+
+        $(function(){
+            scaleAppPic();
+            $(window).resize(scaleAppPic);
+        });
+    </script>
 {% endblock %}
-
-{% block js-inline %}{{ block.super }}
-<style type="text/css">
-    .rating_static > span {
-        display: inline-block;
-        position: relative;
-        width: 1.1em;
-    }
-
-        /* :not(:checked) is a filter, so that browsers that don’t support :checked don’t
- follow these rules. Every browser that supports :checked also supports :not(), so
- it doesn’t make the test unnecessarily selective */
-    .rating_static:not(:checked) > input {
-        position:absolute;
-        top:-9999px;
-        clip:rect(0,0,0,0);
-    }
-
-    .rating_static:not(:checked) > label {
-        float:left;
-        padding:0 .1em;
-        overflow:hidden;
-        white-space:nowrap;
-        cursor:pointer;
-        font-size:200%;
-        line-height:1.1;
-        color:#ddd;
-        text-shadow:1px 1px #bbb, 2px 2px #666, .1em .1em .2em rgba(0,0,0,.5);
-    }
-
-    .rating_static:not(:checked) > label:before {
-        content: '★ ';
-    }
-
-    .rating_static > input.filled + label {
-        color: #f70;
-        text-shadow:1px 1px #c60, 2px 2px #940, .1em .1em .2em rgba(0,0,0,.5);
-    }
-
-    .rating_static > label:active {
-        position:relative;
-        top:2px;
-        left:2px;
-    }
-
-
-
-    .rating > span {
-        display: inline-block;
-        position: relative;
-        width: 1.1em;
-    }
-
-    .rating {
-        float:left;
-    }
-
-        /* :not(:checked) is a filter, so that browsers that don’t support :checked don’t
- follow these rules. Every browser that supports :checked also supports :not(), so
- it doesn’t make the test unnecessarily selective */
-    .rating:not(:checked) > input {
-        position:absolute;
-        top:-9999px;
-        clip:rect(0,0,0,0);
-    }
-
-    .rating:not(:checked) > label {
-        float:right;
-        width:1em;
-        padding:0 .1em;
-        overflow:hidden;
-        white-space:nowrap;
-        cursor:pointer;
-        font-size:200%;
-        line-height:1.2;
-        color:#ddd;
-        text-shadow:1px 1px #bbb, 2px 2px #666, .1em .1em .2em rgba(0,0,0,.5);
-    }
-
-    .rating:not(:checked) > label:before {
-        content: '★ ';
-    }
-
-    .rating > input:checked ~ label {
-        color: #f70;
-        text-shadow:1px 1px #c60, 2px 2px #940, .1em .1em .2em rgba(0,0,0,.5);
-    }
-
-    .rating:not(:checked) > label:hover,
-    .rating:not(:checked) > label:hover ~ label {
-        color: gold;
-        text-shadow:1px 1px goldenrod, 2px 2px #B57340, .1em .1em .2em rgba(0,0,0,.5);
-    }
-
-    .rating > input:checked + label:hover,
-    .rating > input:checked + label:hover ~ label,
-    .rating > input:checked ~ label:hover,
-    .rating > input:checked ~ label:hover ~ label,
-    .rating > label:hover ~ input:checked ~ label {
-        color: #ea0;
-        text-shadow:1px 1px goldenrod, 2px 2px #B57340, .1em .1em .2em rgba(0,0,0,.5);
-    }
-
-    .rating > label:active {
-        position:relative;
-        top:2px;
-        left:2px;
-    }
-
-    .scrollable {
-        overflow-x: scroll;
-        overflow-y:hidden;
-        white-space:nowrap;
-        /*max-height: 300px;*/
-    }
-
-    .pager {
-        margin-top: 25px;
-    }
-
-    </style>
-{% endblock %}
-
 
 {% block sidebar %}
-{% include 'partials/sidebar.html' with search_for="apps..." search_name="search" display_ua='true' %}
+    {% include 'appstore/partials/sidebar.html' with display_ua='true' %}
+{% endblock %}
+
+{% block extra_tabs %}
+{% block tabs %}
+    {% url appstore as search_url %}
+    <ul class="nav">
+        {% include 'appstore/partials/search_input.html' with search_name="search" search_for="apps..." %}
+    </ul>
+{% endblock %}
 {% endblock %}
 
 {% block page-title %}
@@ -157,7 +245,8 @@
     {% endblock %}
     {% if search_query %}
         <li>
-            Searching for "{{ search_query }}"
+            {% trans "Searching for" %} "{{ search_query }}"
+            <a href="{% urlencode request.path request.GET without "search" %}" style="font-size: 60%;">{% trans "(cancel)" %}</a>
             {% if sort_by %}
                 <span class="divider">&gt;</span>
             {% endif %}
@@ -172,10 +261,10 @@
         </li>
     {% endif %}
     {% if sort_by  == 'best' %}
-    <li>Highest Rated</li>
+    <li>{% trans "Highest Rated" %}</li>
     {% endif %}
     {% if sort_by == 'hits' %}
-    <li>Most Downloaded</li>
+    <li>{% trans "Most Downloaded" %}</li>
     {% endif %}
 
 </ul>
@@ -189,7 +278,6 @@
 
 <h1>
     {% block store-header %}
-    Projects
     {% endblock %}
 </h1>
 
@@ -198,65 +286,79 @@
     {% block view-tabs %}
     <div class="tabbable" style="padding-top: 15px;">
         <ul class="nav nav-pills">
-            <li{% if not sort_by %} class="active"{% endif %}><a href="{% urlencode request.path request.GET without "sort_by" %}">Newest</a></li>
-            <li{% if sort_by == 'best' %} class="active"{% endif %}><a href="{% urlencode request.path request.GET with "sort_by" as "best" %}">Highest Rated</a></li>
-            <li{% if sort_by == 'hits' %} class="active"{% endif %}><a href="{% urlencode request.path request.GET with "sort_by" as "hits" %}">Most Downloaded</a></li>
+            <li{% if not sort_by %} class="active"{% endif %}><a href="{% urlencode request.path request.GET without "sort_by" %}">{% trans "Newest" %}</a></li>
+            <li{% if sort_by == 'best' %} class="active"{% endif %}><a href="{% urlencode request.path request.GET with "sort_by" as "best" %}">{% trans "Highest Rated" %}</a></li>
+            <li{% if sort_by == 'hits' %} class="active"{% endif %}><a href="{% urlencode request.path request.GET with "sort_by" as "hits" %}">{% trans "Most Downloaded" %}</a></li>
         </ul>
     </div>
     {% endblock %}
 </div>
-<div class="row-fluid">
+<div class="row-fluid results">
 {% block results-display %}
 {% for app in apps %}
-    {% if forloop.counter0|divisibleby:"3" and forloop.counter0 != 0 %}
-        </div><div class="row-fluid">
+    {% if forloop.counter0|divisibleby:"2" and forloop.counter0 != 0 %}
+        </div><div class="row-fluid results">
     {% endif %}
-    <div class="span3">
+    <div class="span5">
         <div class="well">
-            {% if app.image_path %}
-            <div style="text-align: center;">
-                <img src="{% url appstore_project_image app.name %}" style="max-width: 200px; max-height:200px;" />
-            </div>
-            {% endif %}
-            <h2>
-                {{ app.title }}
-                <br/>
-                <small>By
-                    {% if app.organization %}
-                        {{ app.organization_doc.title }}
-                    {% else %}
-                        {{ app.author }}
-                    {% endif %}
-                </small>
-            </h2>
-                {% if app.project_type %}
-                    <h6>{{ app.project_type }}</h6>
-                {% endif %}
-                {% for rating_name, average_rating in average_ratings %}
-                    {% if rating_name == app.name %}
-                        {% if average_rating %}
-                            <span id="rating_container">
-                                {% include "partials/five_stars.html" with rating_name=rating_name rating=average_rating %}
-                            </span>
+            <div class="row-fluid">
+                <div class="span5">
+                    <a href="{% url project_info app.name %}">
+                        {% if app.image_path %}
+                            <div style="text-align: center;">
+                                <img class="app-pic" src="{% url appstore_project_image app.name %}" />
+                            </div>
+                        {% else %}
+                            <div style="text-align: center;">
+                                <img class="app-pic opacity65" src="{% static 'hqstyle/img/no-image-available.png' %}" />
+                            </div>
+                        {% endif %}
+                    </a>
+                    <p style="margin-top: .5em;">{% trans "Last updated" %}: {{ app.snapshot_time|date:"N j, Y" }}</p>
+                    <a class="btn" href="{% url project_info app.name %}">{% trans "View" %} &raquo;</a>
+                    {% if user.is_superuser %}
+                        {% if app.is_approved %}
+                            <a class="btn btn-danger" href="{% url approve_appstore_app app.name %}?approve=false">{% trans "Unapprove" %}</a>
+                        {% else %}
+                            <a class="btn btn-success" href="{% url approve_appstore_app app.name %}?approve=true">{% trans "Approve" %}</a>
                         {% endif %}
                     {% endif %}
-                {% endfor %}
-            <br/>
-            <h6>{{ app.copies_of_parent|length }} download{{ app.copies_of_parent|length|pluralize }}</h6>
-        <p>{{ app.short_description }}</p>
-        <p>Last updated: {{ app.snapshot_time|date:"N j, Y" }}</p>
-        <a class="btn" href="{% url project_info app.name %}">View &raquo;</a>
-        {% if user.is_superuser %}
-            {% if app.is_approved %}
-                <a class="btn btn-danger" href="{% url approve_appstore_app app.name %}?approve=false">Unapprove</a>
-            {% else %}
-                <a class="btn btn-success" href="{% url approve_appstore_app app.name %}?approve=true">Approve</a>
-            {% endif %}
-        {% endif %}
+                </div>
+                <div class="span7">
+                    <h3>
+                        <a href="{% url project_info app.name %}">
+                            {{ app.title }}
+                        </a>
+                        <small style="display: block;">{% trans "By" %}
+                            {% if app.organization %}
+                                {{ app.organization_doc.title }}
+                            {% else %}
+                                {{ app.author }}
+                            {% endif %}
+                        </small>
+                    </h3>
+                    {% if app.project_type %}
+                        <h6>{{ app.project_type }}</h6>
+                    {% endif %}
+                    {% for rating_name, average_rating in average_ratings %}
+                        {% if rating_name == app.name %}
+                            {% if average_rating %}
+                                <span id="rating_container">
+                                {% include "appstore/partials/five_stars.html" with rating_name=rating_name rating=average_rating %}
+                            </span>
+                            {% endif %}
+                        {% endif %}
+                    {% endfor %}
+                    <h6>{{ app.downloads }} download{{ app.downloads|pluralize }}</h6>
+                    {% if app.short_description %}
+                        <p>{{ app.short_description }}</p>
+                    {% endif %}
+                </div>
+            </div>
         </div>
     </div>
 {% empty %}
-    No results were found for your query.
+    {% trans "No results were found for your query" %}.
 {% endfor %}
 {% endblock %}
 </div>
@@ -265,12 +367,12 @@
     <ul class="pager span10">
         {% if page > 1 %}
         <li class="previous">
-            <a href="{% urlencode request.path request.GET with "page" as prev_page %}">&larr; Previous</a>
+            <a href="{% urlencode request.path request.GET with "page" as prev_page %}">&larr; {% trans "Previous" %}</a>
         </li>
         {% endif %}
         {% if more_pages %}
         <li class="next">
-            <a href="{% urlencode request.path request.GET with "page" as next_page %}">Next &rarr;</a>
+            <a href="{% urlencode request.path request.GET with "page" as next_page %}">{% trans "Next" %} &rarr;</a>
         </li>
         {% endif %}
     </ul>

@@ -513,8 +513,16 @@ class XForm(WrappedNode):
                 self.model_node.append(bind)
 
     def add_instance(self, id, src):
-        # insert right after the main <instance> block
-        self.model_node.insert(1, _make_elem('instance', {'id': id, 'src': src}))
+        """
+        Add an instance with an id and src if it doesn't exist already
+        If the id already exists, DOES NOT overwrite.
+
+        """
+        conflicting = self.model_node.find('{f}instance[@id="%s"]' % id)
+        if not conflicting.exists():
+            # insert right after the main <instance> block
+            first_instance = self.model_node.find('{f}instance')
+            first_instance.addnext(_make_elem('instance', {'id': id, 'src': src}))
 
     def add_setvalue(self, ref, value, event='xforms-ready', type=None):
         ref = self.resolve_path(ref)
@@ -631,7 +639,7 @@ class XForm(WrappedNode):
                 relevant=relevance(action) if action else 'true()',
             )
         delegation_case_block = None
-        if form.requires == 'none' and 'open_case' not in actions:
+        if not actions or (form.requires == 'none' and 'open_case' not in actions):
             case_block = None
         else:
             extra_updates = {}
@@ -686,11 +694,13 @@ class XForm(WrappedNode):
             if 'case_preload' in actions:
                 needs_casedb_instance = True
                 for nodeset, property in actions['case_preload'].preload.items():
-                    if property == 'name':
-                        property = 'case_name'
+                    property_xpath = {
+                        'name': 'case_name',
+                        'owner_id': '@owner_id'
+                    }.get(property, property)
                     self.add_setvalue(
                         ref=nodeset,
-                        value="instance('casedb')/casedb/case[@case_id=instance('commcaresession')/session/data/case_id]/%s" % property,
+                        value="instance('casedb')/casedb/case[@case_id=instance('commcaresession')/session/data/case_id]/%s" % property_xpath,
                     )
             if needs_casedb_instance:
                 self.add_instance('casedb', src='jr://instance/casedb')

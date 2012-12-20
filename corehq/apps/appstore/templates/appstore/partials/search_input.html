@@ -1,0 +1,8 @@
+<li>
+    <form action="{{ search_url }}" method="get" class="form-search top-nav-search">
+        {% if include_unapproved %}
+            <input type="hidden" name="is_approved" value="false" />
+        {% endif %}
+        <input type="text" name="{{ search_name }}" placeholder="Search for {{ search_for }}" value="{{ search_query }}" class="search-query" style="width: 80%" />
+    </form>
+</li>

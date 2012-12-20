@@ -1,6 +1,5 @@
 import json
 from corehq.apps.users.models import Permissions
-from couchdbkit.exceptions import ResourceConflict
 from django.contrib import messages
 from django.core.urlresolvers import reverse
 from django.http import HttpResponseRedirect, HttpResponseForbidden
@@ -8,6 +7,7 @@ from django.views.decorators.http import require_POST
 from corehq.apps.groups.models import Group, DeleteGroupRecord
 from corehq.apps.users.decorators import require_permission
 from dimagi.utils.couch.resource_conflict import repeat
+from django.utils.translation import ugettext as _
 
 require_can_edit_groups = require_permission(Permissions.edit_commcare_users)
 
@@ -27,9 +27,10 @@ def delete_group(request, domain, group_id):
     group = Group.get(group_id)
     if group.domain == domain:
         record = group.soft_delete()
-        messages.success(request, 'You have deleted a group. <a href="{url}" class="post-link">Undo</a>'.format(
-            url=reverse('undo_delete_group', args=[domain, record.get_id])
-        ), extra_tags="html")
+        if record:
+            messages.success(request, 'You have deleted a group. <a href="{url}" class="post-link">Undo</a>'.format(
+                url=reverse('undo_delete_group', args=[domain, record.get_id])
+            ), extra_tags="html")
         return HttpResponseRedirect(reverse("all_groups", args=(domain, )))
     else:
         return HttpResponseForbidden()
@@ -55,6 +56,19 @@ def edit_group(request, domain, group_id):
         if reporting in ('true', 'false'):
             group.reporting = json.loads(reporting)
         group.save()
+        return HttpResponseRedirect(reverse("group_members", args=[domain, group_id]))
+    else:
+        return HttpResponseForbidden()
+
+@require_can_edit_groups
+@require_POST
+def update_group_data(request, domain, group_id):
+    group = Group.get(group_id)
+    if group.domain == domain:
+        updated_data = json.loads(request.POST["group-data"])
+        group.metadata = updated_data
+        group.save()
+        messages.success(request, _("Group '%s' data updated!") % group.name)
         return HttpResponseRedirect(reverse("group_members", args=[domain, group_id]))
     else:
         return HttpResponseForbidden()

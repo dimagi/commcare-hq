@@ -1,13 +1,12 @@
 from datetime import datetime, timedelta
 import json
 from django.core.cache import cache
-from corehq.apps.domain.models import Domain
 from corehq.apps.reports import util
-from corehq.apps.reports.standard import inspect, export
+from corehq.apps.reports.standard import inspect, export, ProjectReport
 from corehq.apps.reports.standard.export import DeidExportReport
 from corehq.apps.reports.export import ApplicationBulkExportHelper, CustomBulkExportHelper
-from corehq.apps.reports.models import (ReportConfig, FormExportSchema,
-    HQGroupExportConfiguration)
+from corehq.apps.reports.models import (ReportConfig, ReportNotification,
+    FormExportSchema, HQGroupExportConfiguration, UnsupportedScheduledReportError)
 from corehq.apps.users.decorators import require_permission
 from corehq.apps.users.export import export_users
 from corehq.apps.users.models import Permissions
@@ -49,6 +48,9 @@ from corehq.apps.groups.models import Group
 from corehq.apps.adm import utils as adm_utils
 from soil import DownloadBase
 from soil.tasks import prepare_download
+from django.utils.translation import ugettext as _
+from django.utils.safestring import mark_safe
+from dimagi.utils.logging import notify_exception
 
 DATE_FORMAT = "%Y-%m-%d"
 
@@ -60,28 +62,41 @@ datespan_default = datespan_in_request(
 
 require_form_export_permission = require_permission(Permissions.view_report, 'corehq.apps.reports.standard.export.ExcelExportReport', login_decorator=None)
 require_case_export_permission = require_permission(Permissions.view_report, 'corehq.apps.reports.standard.export.CaseExportReport', login_decorator=None)
+
+require_form_view_permission = require_permission(Permissions.view_report, 'corehq.apps.reports.standard.inspect.SubmitHistory', login_decorator=None)
+require_case_view_permission = require_permission(Permissions.view_report, 'corehq.apps.reports.standard.inspect.CaseListReport', login_decorator=None)
+
 require_can_view_all_reports = require_permission(Permissions.view_reports)
 
 @login_and_domain_required
-def default(request, domain, template="reports/favorites.html"):
+def default(request, domain, template="reports/reports_home.html"):
     user = request.couch_user
+    if not request.couch_user.is_web_user():
+        raise Http404
 
-    configs = ReportConfig.by_domain_and_owner(domain,
-        user.get_id).all()
+    configs = ReportConfig.by_domain_and_owner(domain, user._id).all()
+    scheduled_reports = [s for s in ReportNotification.by_domain_and_owner(domain, user._id).all()
+                         if not hasattr(s, 'report_slug') or s.report_slug != 'admin_domains']
 
-    from corehq.apps.reports.standard import ProjectReport
     context = dict(
+        couch_user=request.couch_user,
         domain=domain,
         configs=configs,
+        scheduled_reports=scheduled_reports,
         report=dict(
             title="Select a Report to View",
             show=user.can_view_reports() or user.get_viewable_reports(),
             slug=None,
             is_async=True,
+            app_slug="reports",
             section_name=ProjectReport.section_name,
+            show_subsection_navigation=adm_utils.show_adm_nav(domain, request)
         ),
     )
-    context["report"].update(show_subsection_navigation=adm_utils.show_adm_nav(domain, request))
+
+    if request.couch_user:
+        util.set_report_announcements_for_user(request, user)
+
     return render_to_response(request, template, context)
 
 @login_or_digest
@@ -138,7 +153,7 @@ def export_data(req, domain):
         messages.error(req, "Sorry, there was no data found for the tag '%s'." % export_tag)
         next = req.GET.get("next", "")
         if not next:
-            next = export.ExcelExportReport.get_url(domain)
+            next = export.ExcelExportReport.get_url(domain=domain)
         return HttpResponseRedirect(next)
 
 @require_form_export_permission
@@ -174,6 +189,8 @@ class CustomExportHelper(object):
         self.request = request
         self.domain = domain
         self.export_type = request.GET.get('type', 'form')
+        self.presave = False
+
         if self.export_type == 'form':
             self.ExportSchemaClass = FormExportSchema
         else:
@@ -183,7 +200,11 @@ class CustomExportHelper(object):
             self.custom_export = self.ExportSchemaClass.get(export_id)
             # also update the schema to include potential new stuff
             self.custom_export.update_schema()
-            
+
+            # enable configuring saved exports from this page
+            saved_group = HQGroupExportConfiguration.get_for_domain(self.domain)
+            self.presave = export_id in saved_group.custom_export_ids
+
             assert(self.custom_export.doc_type == 'SavedExportSchema')
             assert(self.custom_export.type == self.export_type)
             assert(self.custom_export.index[0] == domain)
@@ -199,6 +220,10 @@ class CustomExportHelper(object):
         self.custom_export.name = self.request.POST["name"]
         self.custom_export.default_format = self.request.POST["format"] or Format.XLS_2007
         self.custom_export.is_safe = bool(self.request.POST.get('is_safe'))
+
+        self.presave = bool(self.request.POST.get('presave'))
+        if self.presave:
+            HQGroupExportConfiguration.add_custom_export(self.domain, self.custom_export._id)
 
         table = self.request.POST["table"]
         cols = self.request.POST['order'].strip().split()
@@ -245,6 +270,7 @@ class CustomExportHelper(object):
         return render_to_response(self.request, "reports/reportdata/customize_export.html", {
             "saved_export": self.custom_export,
             "deid_options": CustomExportHelper.DEID.options,
+            "presave": self.presave,
             "DeidExportReport_name": DeidExportReport.name,
             "table_config": table_config,
             "slug": slug,
@@ -332,7 +358,7 @@ def _export_default_or_custom_data(request, domain, export_id=None, bulk_export=
         )
     else:
         if not next:
-            next = export.ExcelExportReport.get_url(domain)
+            next = export.ExcelExportReport.get_url(domain=domain)
         resp = export_object.download_data(format, filter=filter)
         if resp:
             return resp
@@ -380,7 +406,7 @@ def custom_export(req, domain):
         messages.warning(req, "<strong>No data found for that form "
                       "(%s).</strong> Submit some data before creating an export!" % \
                       xmlns_to_name(domain, export_tag[1], app_id=None), extra_tags="html")
-        return HttpResponseRedirect(export.ExcelExportReport.get_url(domain))
+        return HttpResponseRedirect(export.ExcelExportReport.get_url(domain=domain))
 
 @require_form_export_permission
 @login_and_domain_required
@@ -447,27 +473,39 @@ def delete_custom_export(req, domain, export_id):
     saved_export.delete()
     messages.success(req, "Custom export was deleted.")
     if type == "form":
-        return HttpResponseRedirect(export.ExcelExportReport.get_url(domain))
+        return HttpResponseRedirect(export.ExcelExportReport.get_url(domain=domain))
     else:
-        return HttpResponseRedirect(export.CaseExportReport.get_url(domain))
+        return HttpResponseRedirect(export.CaseExportReport.get_url(domain=domain))
 
 @login_and_domain_required
 @require_POST
 def add_config(request, domain=None):
+    # todo: refactor this into a django form
     from datetime import datetime
-    
+    user_id = request.couch_user._id
+
     POST = json.loads(request.raw_post_data)
     if 'name' not in POST or not POST['name']:
         return HttpResponseBadRequest()
+    
+    user_configs = ReportConfig.by_domain_and_owner(domain, user_id).all()
+    if not POST.get('_id') and POST['name'] in [c.name for c in user_configs]:
+        return HttpResponseBadRequest()
 
     to_date = lambda s: datetime.strptime(s, '%Y-%m-%d').date() if s else s
-    POST['start_date'] = to_date(POST['start_date'])
-    POST['end_date'] = to_date(POST['end_date'])
-    if POST['date_range'] == 'last7':
+    try:
+        POST['start_date'] = to_date(POST['start_date'])
+        POST['end_date'] = to_date(POST['end_date'])
+    except ValueError:
+        # invalidly formatted date input
+        return HttpResponseBadRequest()
+
+    date_range = POST.get('date_range')
+    if date_range == 'last7':
         POST['days'] = 7
-    elif POST['date_range'] == 'last30':
+    elif date_range == 'last30':
         POST['days'] = 30
-    elif POST['days']:
+    elif POST.get('days'):
         POST['days'] = int(POST['days'])
   
     exclude_filters = ['startdate', 'enddate']
@@ -477,10 +515,11 @@ def add_config(request, domain=None):
     config = ReportConfig.get_or_create(POST.get('_id', None))
 
     if config.owner_id:
-        assert config.owner_id == request.couch_user._id
+        # in case a user maliciously tries to edit another user's config
+        assert config.owner_id == user_id
     else:
         config.domain = domain
-        config.owner_id = request.couch_user._id
+        config.owner_id = user_id
 
     for field in config.properties().keys():
         if field in POST:
@@ -501,7 +540,158 @@ def delete_config(request, domain, config_id):
     config.delete()
     return HttpResponse()
 
-@require_can_view_all_reports
+
+@login_and_domain_required
+def edit_scheduled_report(request, domain, scheduled_report_id=None, 
+                          template="reports/edit_scheduled_report.html"):
+    from corehq.apps.users.models import WebUser
+    from corehq.apps.reports.forms import ScheduledReportForm
+
+    context = {
+        'form': None,
+        'domain': domain,
+        'report': {
+            'show': request.couch_user.can_view_reports() or request.couch_user.get_viewable_reports(),
+            'slug': None,
+            'default_url': reverse('reports_home', args=(domain,)),
+            'is_async': False,
+            'section_name': ProjectReport.section_name,
+            'show_subsection_navigation': adm_utils.show_adm_nav(domain, request)
+        }
+    }
+    
+    user_id = request.couch_user._id
+
+    configs = ReportConfig.by_domain_and_owner(domain, user_id).all()
+    config_choices = [(c._id, c.full_name) for c in configs if c.report.emailable]
+
+    if not config_choices:
+        return render_to_response(request, template, context)
+
+    web_users = WebUser.view('users/web_users_by_domain', reduce=False,
+                               key=domain, include_docs=True).all()
+    web_user_emails = [u.get_email() for u in web_users]
+
+    if scheduled_report_id:
+        instance = ReportNotification.get(scheduled_report_id)
+        if instance.owner_id != user_id or instance.domain != domain:
+            raise HttpResponseBadRequest()
+    else:
+        instance = ReportNotification(owner_id=user_id, domain=domain,
+                                      config_ids=[], day_of_week=-1, hours=8,
+                                      send_to_owner=True, recipient_emails=[])
+
+    is_new = instance.new_document
+    initial = instance.to_json()
+    initial['recipient_emails'] = ', '.join(initial['recipient_emails'])
+
+    kwargs = {'initial': initial}
+    args = (request.POST,) if request.method == "POST" else ()
+    form = ScheduledReportForm(*args, **kwargs)
+    
+    form.fields['config_ids'].choices = config_choices
+    form.fields['recipient_emails'].choices = web_user_emails
+
+    if request.method == "POST" and form.is_valid():
+        for k, v in form.cleaned_data.items():
+            setattr(instance, k, v)
+        instance.save()
+
+        if is_new:
+            messages.success(request, "Scheduled report added!")
+        else:
+            messages.success(request, "Scheduled report updated!")
+
+        return HttpResponseRedirect(reverse('reports_home', args=(domain,)))
+
+    context['form'] = form
+    if is_new:
+        context['form_action'] = "Create a new"
+        context['report']['title'] = "New Scheduled Report"
+    else:
+        context['form_action'] = "Edit"
+        context['report']['title'] = "Edit Scheduled Report"
+
+    return render_to_response(request, template, context)
+
+@login_and_domain_required
+@require_POST
+def delete_scheduled_report(request, domain, scheduled_report_id):
+    user_id = request.couch_user._id
+    rep = ReportNotification.get(scheduled_report_id)
+
+    if user_id != rep.owner._id:
+        return HttpResponseBadRequest()
+
+    rep.delete()
+    messages.success(request, "Scheduled report deleted!")
+    return HttpResponseRedirect(reverse("reports_home", args=(domain,)))
+
+@login_and_domain_required
+def send_test_scheduled_report(request, domain, scheduled_report_id):
+    from corehq.apps.reports.tasks import send_report
+    from corehq.apps.users.models import CouchUser, CommCareUser, WebUser
+    
+    user_id = request.couch_user._id
+
+    notification = ReportNotification.get(scheduled_report_id)
+    try:
+        user = WebUser.get_by_user_id(user_id, domain)
+    except CouchUser.AccountTypeError:
+        user = CommCareUser.get_by_user_id(user_id, domain)
+
+    try:
+        send_report.delay(notification._id)
+    except Exception, e:
+        import logging
+        logging.exception(e)
+        messages.error(request, "An error occured, message unable to send")
+    else:
+        messages.success(request, "Test message sent to %s" % user.get_email())
+
+    return HttpResponseRedirect(reverse("reports_home", args=(domain,)))
+
+
+def get_scheduled_report_response(couch_user, domain, scheduled_report_id,
+                                  email=True):
+    from dimagi.utils.web import get_url_base
+    from django.http import HttpRequest
+    
+    request = HttpRequest()
+    request.couch_user = couch_user
+    request.user = couch_user.get_django_user()
+    request.domain = domain
+    request.couch_user.current_domain = domain
+
+    notification = ReportNotification.get(scheduled_report_id)
+
+    report_outputs = []
+    try:
+        for config in notification.configs:
+            report_outputs.append({
+                'title': config.full_name,
+                'url': config.url,
+                'content': config.get_report_content()
+            })
+    except UnsupportedScheduledReportError:
+        pass
+    
+    return render_to_response(request, "reports/report_email.html", {
+        "reports": report_outputs,
+        "domain": notification.domain,
+        "couch_user": notification.owner._id,
+        "DNS_name": get_url_base(),
+        "owner_name": couch_user.full_name or couch_user.get_email(),
+        "email": email
+    })
+
+@login_and_domain_required
+@permission_required("is_superuser")
+def view_scheduled_report(request, domain, scheduled_report_id):
+    return get_scheduled_report_response(
+        request.couch_user, domain, scheduled_report_id, email=False)
+
+@require_case_view_permission
 @login_and_domain_required
 @require_GET
 def case_details(request, domain, case_id):
@@ -514,7 +704,7 @@ def case_details(request, domain, case_id):
     
     if case == None or case.doc_type != "CommCareCase" or case.domain != domain:
         messages.info(request, "Sorry, we couldn't find that case. If you think this is a mistake plase report an issue.")
-        return HttpResponseRedirect(inspect.CaseListReport.get_url(domain))
+        return HttpResponseRedirect(inspect.CaseListReport.get_url(domain=domain))
 
     report_name = 'Details for Case "%s"' % case.name
     form_lookups = dict((form.get_id,
@@ -593,7 +783,7 @@ def download_cases(request, domain):
     return generate_payload(payload_func)
 
 
-@require_can_view_all_reports
+@require_form_view_permission
 @login_and_domain_required
 @require_GET
 def form_data(request, domain, instance_id):
@@ -611,16 +801,20 @@ def form_data(request, domain, instance_id):
         form_name = instance.get_form["@name"]
     except KeyError:
         form_name = "Untitled Form"
+    is_archived = instance.doc_type == "XFormArchived"
+    if is_archived:
+        messages.info(request, _("This form is archived. To restore it, click 'Restore this form' at the bottom of the page."))
     return render_to_response(request, "reports/reportdata/form_data.html",
                               dict(domain=domain,
                                    instance=instance,
                                    cases=cases,
                                    timezone=timezone,
                                    slug=inspect.SubmitHistory.slug,
+                                   is_archived=is_archived,
                                    form_data=dict(name=form_name,
                                                   modified=instance.received_on)))
 
-@require_form_export_permission
+@require_form_view_permission
 @login_and_domain_required
 @require_GET
 def download_form(request, domain, instance_id):
@@ -628,7 +822,7 @@ def download_form(request, domain, instance_id):
     assert(domain == instance.domain)
     return couchforms_views.download_form(request, instance_id)
 
-@require_form_export_permission
+@require_form_view_permission
 @login_and_domain_required
 @require_GET
 def download_attachment(request, domain, instance_id, attachment):
@@ -636,8 +830,44 @@ def download_attachment(request, domain, instance_id, attachment):
     assert(domain == instance.domain)
     return couchforms_views.download_attachment(request, instance_id, attachment)
 
-# Weekly submissions by xmlns
+@require_form_view_permission
+@require_permission(Permissions.edit_data)
+@require_POST
+def archive_form(request, domain, instance_id):
+    instance = XFormInstance.get(instance_id)
+    assert instance.domain == domain
+    if instance.doc_type == "XFormInstance": 
+        instance.archive()
+        notif_msg = _("Form was successfully archived.")
+    elif instance.doc_type == "XFormArchived":
+        notif_msg = _("Form was already archived.")
+    else:
+        notif_msg = _("Can't archive documents of type %(s). How did you get here??") % instance.doc_type
+    
+    params = {
+        "notif": notif_msg,
+        "undo": _("Undo"),
+        "url": reverse('render_form_data', args=[domain, instance_id])
+    }
+    msg_template = '%(notif)s <a href="%(url)s">%(undo)s</a>' if instance.doc_type == "XFormArchived" else '%(notif)s'
+    msg = msg_template % params
+    messages.success(request, mark_safe(msg), extra_tags='html')
+    return HttpResponseRedirect(inspect.SubmitHistory.get_url(domain))
 
+@require_form_view_permission
+@require_permission(Permissions.edit_data)
+def unarchive_form(request, domain, instance_id):
+    instance = XFormInstance.get(instance_id)
+    assert instance.domain == domain
+    if instance.doc_type == "XFormArchived":
+        instance.doc_type = "XFormInstance"
+        instance.save()
+    else:
+        assert instance.doc_type == "XFormInstance"
+    messages.success(request, _("Form was successfully restored."))
+    return HttpResponseRedirect(reverse('render_form_data', args=[domain, instance_id]))
+    
+# Weekly submissions by xmlns
 def mk_date_range(start=None, end=None, ago=timedelta(days=7), iso=False):
     if isinstance(end, basestring):
         end = parse_date(end)
@@ -652,28 +882,6 @@ def mk_date_range(start=None, end=None, ago=timedelta(days=7), iso=False):
     else:
         return start, end
 
-@login_and_domain_required
-@permission_required("is_superuser")
-def emaillist(request, domain):
-    """
-    Test an email report 
-    """
-    # circular import
-    from corehq.apps.reports.schedule.config import ScheduledReportFactory
-    return render_to_response(request, "reports/email/report_list.html", 
-                              {"domain": domain,
-                               "reports": ScheduledReportFactory.get_reports()})
-
-@login_and_domain_required
-@permission_required("is_superuser")
-def emailtest(request, domain, report_slug):
-    """
-    Test an email report 
-    """
-    # circular import
-    from corehq.apps.reports.schedule.config import ScheduledReportFactory
-    report = ScheduledReportFactory.get_report(report_slug)
-    return HttpResponse(report.get_response(request.couch_user, domain))
 
 
 @login_and_domain_required

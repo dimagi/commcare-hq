@@ -1,11 +1,13 @@
 from datetime import timedelta, datetime
 import json
 from copy import deepcopy
+import logging
 from django.http import HttpResponseRedirect, HttpResponse
 from django.core.urlresolvers import reverse
 from corehq.apps.builds.models import CommCareBuildConfig, BuildSpec
 from corehq.apps.domain.models import Domain
 from corehq.apps.reports.datatables import DataTablesColumn, DataTablesHeader, DTSortType
+from corehq.apps.reports.util import make_form_couch_key
 from corehq.apps.sms.models import SMSLog
 from corehq.apps.users.models import  CommCareUser
 from couchforms.models import XFormInstance
@@ -24,12 +26,10 @@ from django.template.defaultfilters import yesno
 from dimagi.utils.excel import WorkbookJSONReader
 from dimagi.utils.decorators.view import get_file
 from django.contrib import messages
-from dimagi.utils import gitinfo
 from django.conf import settings
 from restkit import Resource
 import os
 from django.core import cache
-from django.core.cache import InvalidCacheBackendError
 
 @require_superuser
 def default(request):
@@ -43,13 +43,8 @@ datespan_default = datespan_in_request(
 
 
 def get_hqadmin_base_context(request):
-    try:
-        domain = request.user.selected_domain.name
-    except AttributeError:
-        domain = None
-
     return {
-        "domain": domain,
+        "domain": None,
     }
 
 def _all_domain_stats():
@@ -67,9 +62,14 @@ def _all_domain_stats():
             'CommCareUser': commcare_counts
         }[doc_type][domain] = value
 
-    form_counts.update(dict([(row["key"][0], row["value"]) for row in \
-                             get_db().view("reports/all_submissions", 
-                                           group=True,group_level=1).all()]))
+    key = make_form_couch_key(None)
+    form_counts.update(dict([(row["key"][1], row["value"]) for row in \
+                                get_db().view("reports_forms/all_forms",
+                                    group=True,
+                                    group_level=2,
+                                    startkey=key,
+                                    endkey=key+[{}]
+                             ).all()]))
     
     case_counts.update(dict([(row["key"][0], row["value"]) for row in \
                              get_db().view("hqcase/types_by_domain", 
@@ -114,7 +114,11 @@ def active_users(request):
     number_threshold = 15
     date_threshold_days_ago = 90
     date_threshold = json_format_datetime(datetime.utcnow() - timedelta(days=date_threshold_days_ago))
-    for line in get_db().view("reports/submit_history", group_level=2):
+    key = make_form_couch_key(None, user_id="")
+    for line in get_db().view("reports_forms/all_forms",
+        startkey=key,
+        endkey=key+[{}],
+        group_level=3):
         if line['value'] >= number_threshold:
             keys.append(line["key"])
 
@@ -128,8 +132,11 @@ def active_users(request):
         except Exception:
             return False
 
-    for domain, user_id in keys:
-        if get_db().view("reports/submit_history", reduce=False, startkey=[domain, user_id, date_threshold], limit=1):
+    for time_type, domain, user_id in keys:
+        if get_db().view("reports_forms/all_forms",
+            reduce=False,
+            startkey=[time_type, domain, user_id, date_threshold],
+            limit=1):
             if True or is_valid_user_id(user_id):
                 final_count[domain] += 1
 
@@ -264,16 +271,17 @@ def _cacheable_domain_activity_report(request):
         domain['users'] = dict([(user.user_id, {'raw_username': user.raw_username}) for user in CommCareUser.by_domain(domain['name'])])
         if not domain['users']:
             continue
-        forms = [r['value'] for r in get_db().view('reports/all_submissions',
+        key = make_form_couch_key(domain['name'])
+        forms = [r['value'] for r in get_db().view('reports_forms/all_forms',
             reduce=False,
-            startkey=[domain['name'], json_format_datetime(dates[-1])],
-            endkey=[domain['name'], json_format_datetime(now)],
+            startkey=key+[json_format_datetime(dates[-1])],
+            endkey=key+[json_format_datetime(now)],
         ).all()]
         domain['user_sets'] = [dict() for landmark in landmarks]
 
         for form in forms:
             user_id = form.get('user_id')
-            time = string_to_datetime(form['time']).replace(tzinfo = None)
+            time = string_to_datetime(form['submission_time']).replace(tzinfo = None)
             if user_id in domain['users']:
                 for i, date in enumerate(dates):
                     if time > date:
@@ -354,8 +362,8 @@ def submissions_errors(request, template="hqadmin/submissions_errors_report.html
         ).all()
         num_active_users = data[0].get('value', 0) if data else 0
 
-        key = [domain.name]
-        data = get_db().view('reports/all_submissions',
+        key = make_form_couch_key(domain.name)
+        data = get_db().view('reports_forms/all_forms',
             startkey=key+[datespan.startdate_param_utc],
             endkey=key+[datespan.enddate_param_utc, {}],
             reduce=True
@@ -496,8 +504,8 @@ def domain_list_download(request):
     def _row(domain):
         def _prop(domain, prop):
             if prop.endswith("?"):
-                return yesno(getattr(domain, prop[:-1]))
-            return getattr(domain, prop) or ""
+                return yesno(getattr(domain, prop[:-1], ""))
+            return getattr(domain, prop, "")
         return (_prop(domain, prop) for prop in properties)
     
     temp = StringIO()
@@ -519,8 +527,14 @@ def system_ajax(request):
     ret = {}
     if type == "_active_tasks":
         tasks = filter(lambda x: x['type'] == "indexer", db.server.active_tasks())
-        #tasks = [{'type': 'indexer', 'pid': 'foo', 'database': 'mock',
-        # 'design_document': 'mockymock', 'progress': random.randint(0,100), 'started_on': 1349906040.723517, 'updated_on': 1349905800.679458}]
+#        tasks = [{'type': 'indexer', 'pid': 'foo', 'database': 'mock',
+#            'design_document': 'mockymock', 'progress': 0,
+#            'started_on': 1349906040.723517, 'updated_on': 1349905800.679458,
+#            'total_changes': 1023},
+#            {'type': 'indexer', 'pid': 'foo', 'database': 'mock',
+#            'design_document': 'mockymock', 'progress': 70,
+#            'started_on': 1349906040.723517, 'updated_on': 1349905800.679458,
+#            'total_changes': 1023}]
         return HttpResponse(json.dumps(tasks), mimetype='application/json')
     elif type == "_stats":
         return HttpResponse(json.dumps({}), mimetype = 'application/json')
@@ -528,13 +542,19 @@ def system_ajax(request):
         pass
 
     if celerymon_url != '':
-        cresource = Resource(celerymon_url)
+        cresource = Resource(celerymon_url, timeout=3)
         if type == "celerymon_poll":
             #inefficient way to just get everything in one fell swoop
             #first, get all task types:
-            t = cresource.get("api/task/name/").body_string()
-            task_names = json.loads(t)
             ret = []
+            try:
+                t = cresource.get("api/task/name/").body_string()
+                task_names = json.loads(t)
+            except Exception, ex:
+                task_names = []
+                t = {}
+                logging.error("Error with getting celerymon: %s" % ex)
+
             for tname in task_names:
                 taskinfo_raw = json.loads(cresource.get('api/task/name/%s' % (tname), params_dict={'limit': task_limit}).body_string())
                 for traw in taskinfo_raw:
@@ -584,12 +604,19 @@ def system_info(request):
 
     context['hide_filters'] = True
     context['current_system'] = os.uname()[1]
-    context['current_ref'] = gitinfo.get_project_info()
+
+    #from dimagi.utils import gitinfo
+    #context['current_ref'] = gitinfo.get_project_info()
+    #removing until the async library is updated
+    context['current_ref'] = {}
     if settings.COUCH_USERNAME == '' and settings.COUCH_PASSWORD == '':
         couchlog_resource = Resource("http://%s/" % (settings.COUCH_SERVER_ROOT))
     else:
         couchlog_resource = Resource("http://%s:%s@%s/" % (settings.COUCH_USERNAME, settings.COUCH_PASSWORD, settings.COUCH_SERVER_ROOT))
-    context['couch_log'] = couchlog_resource.get('_log', params_dict={'bytes': 2000 }).body_string()
+    try:
+        context['couch_log'] = couchlog_resource.get('_log', params_dict={'bytes': 2000 }).body_string()
+    except Exception, ex:
+        context['couch_log'] = "unable to open couch log: %s" % ex
 
     #redis status
     redis_status = ""
@@ -618,12 +645,15 @@ def system_info(request):
         amqp_parts = settings.BROKER_URL.replace('amqp://','').split('/')
         mq_management_url = amqp_parts[0].replace('5672', '55672')
         vhost = amqp_parts[1]
-        mq = Resource('http://%s' % mq_management_url)
-        vhost_dict = json.loads(mq.get('api/vhosts').body_string())
-        mq_status = "Offline"
-        for d in vhost_dict:
-            if d['name'] == vhost:
-                mq_status='OK'
+        try:
+            mq = Resource('http://%s' % mq_management_url, timeout=2)
+            vhost_dict = json.loads(mq.get('api/vhosts').body_string())
+            mq_status = "Offline"
+            for d in vhost_dict:
+                if d['name'] == vhost:
+                    mq_status='OK'
+        except Exception, ex:
+            mq_status = "Error connecting: %s" % ex
     else:
         mq_status = "Not configured"
     context['rabbitmq_status'] = mq_status

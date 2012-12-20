@@ -1,0 +1,22 @@
+{% extends 'reports/filters/base.html' %}
+{% load hq_shared_tags %}
+{% block filter_content %}
+    <select id="{{ css_id }}"
+            data-bind="value: current_selection"
+            name="{{ slug }}">
+        <option></option>
+        {% for option in select.options %}
+            <option value="{{ option.val }}">{{ option.text }}</option>
+        {% endfor %}
+    </select>
+{% endblock %}
+{% block filter_js %}
+<script type="text/javascript">
+    $(function () {
+        ko.applyBindings({current_selection: ko.observable('{{ select.selected|default:'' }}')}, $('#{{ css_id }}').parent().get(0));
+        $('#{{ css_id }}').combobox({
+            placeholder: '{{ select.default_text|safe }}'
+        });
+    });
+</script>
+{% endblock %}

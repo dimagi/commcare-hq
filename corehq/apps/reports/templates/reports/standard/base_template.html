@@ -1,7 +1,8 @@
 {% extends "hqwebapp/two_column.html" %}
 {% load hq_shared_tags %}
-
+{% load i18n %}
 {% block js %}{{ block.super }}
+    {% block reports-js %}
     {% include "imports/datatables.html" %}
     <script src="{% static 'reports/javascripts/config.dataTables.bootstrap.js' %}"></script>
     {% include "imports/flot.html" %}
@@ -13,9 +14,11 @@
     <script src="{% static 'reports/javascripts/datepicker.js' %}"></script>
     <script src="{% static 'reports/javascripts/reports.config.js' %}"></script>
     <script src="{% static 'reports/javascripts/reports.async.js' %}"></script>
+    {% endblock %}
 {% endblock %}
 
 {% block js-inline %}{{ block.super }}
+{% block reports-js-inline %}
     <script type="text/javascript">
         var standardHQReport = new HQReport({
             domain: '{{ domain }}',
@@ -41,12 +44,20 @@
             });
             asyncHQReport.init();
         {% endif %}
+
+        $('.report-description-popover').popover({
+            placement: 'right',
+            trigger: 'hover',
+        });
     </script>
+{% endblock %}
 {% endblock %}
 
 {% block head %}
     {{ block.super }}
+    {% block reports-css %}
     <link rel="stylesheet" href="{% static 'hqwebapp/javascripts/jquery-ui-datepicker/datepicker-theme/jquery-ui-1.8.17.custom.css' %}" />
+    {% endblock %}
 {% endblock %}
 
 {% block title %} - Report: {{ report.title|default:"Project Reports"|safe }}{% endblock %}
@@ -61,7 +72,7 @@
 {% block page-title %}
     <ul class="breadcrumb">
         <li>
-            <a href="{{ report.default_url }}"><strong>{{ report.section_name|default:"Reports" }}</strong></a> <span class="divider">&gt;</span>
+            <a href="{{ report.default_url }}"><strong>{% trans report.section_name|default:"Reports" %}</strong></a> <span class="divider">&gt;</span>
         </li>
         {% if report.breadcrumbs %}
             {% for crumb in report.breadcrumbs %}
@@ -71,7 +82,7 @@
             {% endfor %}
         {% endif %}
         <li class="active">
-            <div id="report-title"><a href="{{ report.url }}">{{ report.title|default:"Untitled Report"|safe }}</a></div>
+            <div id="report-title"><a href="{{ report.url }}">{% trans report.title|default:"Untitled Report"|safe %}</a></div>
         </li>
     </ul>
 {% endblock %}
@@ -83,8 +94,8 @@
             <div class="accordion-actions">
                 {% if report.show_filters %}
                     <a href="#reportFilters" class="btn" id="toggle-report-filters"
-                       data-toggle="collapse" data-show-text="Show Filter Options"
-                       data-hide-text="Hide Filter Options">
+                       data-toggle="collapse" data-open-text="Show Filter Options"
+                       data-close-text="Hide Filter Options">
                         Filter Options
                     </a>
                 {% endif %}
@@ -107,9 +118,9 @@
                                 {% include "reports/async/filters.html" %}
                             {% endif %}
                         </div>
-                        <div id="reportFavorites" class="form-actions">
+                        <div class="form-actions">
                             {% block report_filter_actions %}
-                            <button type="submit" class="btn btn-large disabled"
+                            <button type="submit" class="btn disabled"
                                     data-loading-text="Generating Report..."
                                     data-standard-text="Apply">
                                 Apply
@@ -121,6 +132,12 @@
             </div>
         {% endif %}
     </div>
+    {% if report.special_notice %}
+    <div class="alert alert-info" style="margin-bottom: 2px">
+        <h4>{% trans 'Notice' %}</h4>
+        <p>{{ report.special_notice }}</p>
+    </div>
+    {% endif %}
     <div id="report-content">
         {% if not report.is_async and report.slug %}
             {% block reportcontent %}

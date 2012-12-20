@@ -1,5 +1,9 @@
 {% extends login_template %}
 {% block title %}Domain Selection{% endblock title %}
+{% block js-inline  %}{{ block.super }}
+    {% url eula as eula_url %}
+    {% include 'hqstyle/partials/load_into_modal.html' with modal_id="eulaModal" load_from=eula_url %}
+{% endblock %}
 {% block login-content %}
     <div class="row">
         {% if request.user.is_authenticated %}
@@ -43,7 +47,11 @@
                         <div class="control-group{% if field.errors %} error{% endif %}">
                             <label class="control-label" for="{{ field.id }}">{{ field.label }}</label>
                             <div class="controls">
-                                {{ field }}
+                                {% ifnotequal field.name 'eula_confirmed' %}
+                                    {{ field }}
+                                {% else %}
+                                    <label class="checkbox">{{ field }} I have read and agree to the <a data-toggle="modal" data-target="#eulaModal" href="#eulaModal">CommCare HQ End User License Agreement</a>.</label>
+                                {% endifnotequal %}
                                 {% for error in field.errors %}
                                     <span class="help-inline">{{ error }}</span>
                                 {% endfor %}
@@ -62,4 +70,7 @@
             </div>
         {% endif %}
     </div>
+{% endblock %}
+{% block modals %}{{ block.super }}
+    {% include 'registration/partials/eula_modal.html' %}
 {% endblock %}

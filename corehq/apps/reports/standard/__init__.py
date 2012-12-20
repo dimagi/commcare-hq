@@ -1,33 +1,57 @@
 import dateutil
 from django.core.urlresolvers import reverse
+from django.utils.safestring import mark_safe
 from corehq.apps.groups.models import Group
 from corehq.apps.reports import util
 from corehq.apps.adm import utils as adm_utils
 from corehq.apps.reports.dispatcher import ProjectReportDispatcher, CustomProjectReportDispatcher
 from corehq.apps.reports.fields import FilterUsersField
 from corehq.apps.reports.generic import GenericReportView
+from corehq.apps.users.models import CommCareUser
 from dimagi.utils.dates import DateSpan
+from django.utils.translation import ugettext_noop
+from dimagi.utils.decorators.memoized import memoized
 
 DATE_FORMAT = "%Y-%m-%d"
 
 class ProjectReport(GenericReportView):
     # overriding properties from GenericReportView
-    section_name = "Project Reports"
+    section_name = ugettext_noop("Project Reports")
     app_slug = 'reports'
     dispatcher = ProjectReportDispatcher
     asynchronous = True
 
     @property
     def default_report_url(self):
-        return reverse('default_report', args=[self.request.project])
+        return reverse('reports_home', args=[self.request.project])
 
     @property
     def show_subsection_navigation(self):
         return adm_utils.show_adm_nav(self.domain, self.request)
 
+    def set_announcements(self):
+        if self.request.couch_user:
+            util.set_report_announcements_for_user(self.request, self.request.couch_user)
+
+
 class CustomProjectReport(ProjectReport):
     dispatcher = CustomProjectReportDispatcher
+    emailable = True
 
+class CommCareUserMemoizer(object):
+
+    @memoized
+    def by_domain(self, domain):
+        users = CommCareUser.by_domain(domain)
+        for user in users:
+            # put users in the cache for get_by_user_id
+            # so that function never has to touch the database
+            self.get_by_user_id.get_cache(self)[(self, user.user_id)] = user
+        return users
+
+    @memoized
+    def get_by_user_id(self, user_id):
+        return CommCareUser.get_by_user_id(user_id)
 
 class ProjectReportParametersMixin(object):
     """
@@ -37,90 +61,82 @@ class ProjectReportParametersMixin(object):
     def __getattr__(self, item):
         return super(ProjectReportParametersMixin, self).__getattribute__(item)
 
-    _user_filter = None
     @property
-    def user_filter(self):
-        if self._user_filter is None:
-            self._user_filter, _ = FilterUsersField.get_user_filter(self.request)
-        return self._user_filter
+    @memoized
+    def CommCareUser(self):
+        return CommCareUserMemoizer()
 
-    _group_name = None
+    @memoized
+    def get_all_users_by_domain(self, group=None, individual=None, user_filter=None, simplified=False):
+        return list(util.get_all_users_by_domain(
+            domain=self.domain,
+            group=group,
+            individual=individual,
+            user_filter=user_filter,
+            simplified=simplified,
+            CommCareUser=self.CommCareUser
+        ))
+
+    @property
+    @memoized
+    def user_filter(self):
+        return FilterUsersField.get_user_filter(self.request)[0]
+
     @property
     def group_name(self):
-        if self._group_name is None:
-            self._group_name = self.request_params.get('group', '')
-        return self._group_name
+        return self.request_params.get('group', '')
 
-    _group = None
     @property
+    @memoized
     def group(self):
-        if self._group is None:
-            self._group = Group.by_name(self.domain, self.group_name)
-        return self._group
+        return Group.by_name(self.domain, self.group_name)
 
-    _individual = None
     @property
     def individual(self):
         """
             todo: remember this: if self.individual and self.users:
             self.name = "%s for %s" % (self.name, self.users[0].get('raw_username'))
         """
-        if self._individual is None:
-            self._individual = self.request_params.get('individual', '')
-        return self._individual
+        return self.request_params.get('individual', '')
 
-    _users = None
     @property
+    @memoized
     def users(self):
-        """
-            todo: cache this baby
-        """
-        if self._users is None:
-            self._users = util.get_all_users_by_domain(self.domain,
-                group=self.group_name, individual=self.individual, user_filter=self.user_filter, simplified=True)
-        return self._users
+        return self.get_all_users_by_domain(
+            group=self.group_name,
+            individual=self.individual,
+            user_filter=tuple(self.user_filter),
+            simplified=True
+        )
 
-    _user_ids = None
     @property
+    @memoized
     def user_ids(self):
-        if self._user_ids is None:
-            self._user_ids = [user.get('user_id') for user in self.users]
-        return self._user_ids
+        return [user.get('user_id') for user in self.users]
 
     _usernames = None
     @property
+    @memoized
     def usernames(self):
-        if self._usernames is None:
-            self._usernames = dict([(user.get('user_id'), user.get('username_in_report')) for user in self.users])
-        return self._usernames
+        return dict([(user.get('user_id'), user.get('username_in_report')) for user in self.users])
 
-    _history = None
     @property
     def history(self):
-        if self._history is None:
-            self._history = self.request_params('history')
-            if self._history:
-                try:
-                    self._history = dateutil.parser.parse(self._history)
-                except ValueError:
-                    pass
-        return self._history
+        history = self.request_params.get('history', '')
+        if history:
+            try:
+                return dateutil.parser.parse(history)
+            except ValueError:
+                pass
 
-    _case_type = None
     @property
     def case_type(self):
-        if self._case_type is None:
-            self._case_type = self.request_params.get('case_type', '')
-        return self._case_type
+        return self.request_params.get('case_type', '')
 
-    _case_status = None
     @property
     def case_status(self):
-        if self._case_status is None:
-            from corehq.apps.reports.fields import SelectOpenCloseField
-            self._case_status = self.request_params.get(SelectOpenCloseField.slug, '')
-        return self._case_status
-
+        from corehq.apps.reports.fields import SelectOpenCloseField
+        return self.request_params.get(SelectOpenCloseField.slug, '')
 
 class CouchCachedReportMixin(object):
     """

@@ -12,6 +12,7 @@ from corehq.apps.orgs.views import orgs_landing
 from corehq.apps.registration.models import RegistrationRequest
 from corehq.apps.registration.forms import NewWebUserRegistrationForm, DomainRegistrationForm, OrganizationRegistrationForm
 from corehq.apps.registration.utils import *
+from dimagi.utils.couch.resource_conflict import retry_resource
 from dimagi.utils.web import render_to_response, get_ip
 from corehq.apps.domain.decorators import require_superuser
 from corehq.apps.orgs.models import Organization
@@ -209,6 +210,7 @@ def confirm_domain(request, guid=None):
     vals['is_error'] = False
     return render_to_response(request, 'registration/confirmation_complete.html', vals)
 
+@retry_resource(3)
 def eula_agreement(request):
     if request.method == 'POST':
         current_user = CouchUser.from_django_user(request.user)

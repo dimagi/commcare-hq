@@ -13,9 +13,9 @@
         <p>In the meantime, please explore the <a href="/a/public/">CommCare HQ Example Project.</a></p>
     {% else %}
         {% if request.user.is_authenticated %}
-            <p>You may now access your project  <a href="{% url default_report requested_domain %}"><strong>{{ requested_domain }}</strong></a>.</p>
+            <p>You may now access your project  <a href="{% url reports_home requested_domain %}"><strong>{{ requested_domain }}</strong></a>.</p>
         {% else %}
-            <p>You may access your project as soon as you sign in:  <a href="{% url default_report requested_domain %}">Sign in and go to <strong>{{ requested_domain }}</strong></a>.</p>
+            <p>You may access your project as soon as you sign in:  <a href="{% url reports_home requested_domain %}">Sign in and go to <strong>{{ requested_domain }}</strong></a>.</p>
         {% endif %}
     {% endif %}
 {% endblock %}
