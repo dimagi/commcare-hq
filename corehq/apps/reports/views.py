@@ -1,6 +1,8 @@
 from datetime import datetime, timedelta
 import json
+import tempfile
 from django.core.cache import cache
+import os
 from corehq.apps.reports import util
 from corehq.apps.reports.standard import inspect, export, ProjectReport
 from corehq.apps.reports.standard.export import DeidExportReport
@@ -453,9 +455,17 @@ def export_all_form_metadata(req, domain):
             else:              return getattr(formdata, key)
         return [_key_to_val(formdata, key) for key in headers]
     
-    temp = StringIO()
+    fd, path = tempfile.mkstemp()
+    
     data = (_form_data_to_row(f) for f in HQFormData.objects.filter(domain=domain))
-    export_raw((("forms", headers),), (("forms", data),), temp)
+
+    with open(path, 'w') as temp:
+        export_raw((("forms", headers),), (("forms", data),), temp)
+
+    os.close(fd)
+    with open(path) as f:
+        temp = StringIO()
+        temp.write(f.read())
     return export_response(temp, format, "%s_forms" % domain)
     
 @require_form_export_permission
