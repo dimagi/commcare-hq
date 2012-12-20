@@ -181,6 +181,13 @@ COMPOSITE_INDICATORS = dict(
         numerator_slug="edd_soon_anc4",
         denominator_slug="edd_soon_visit"
     ),
+    no_anc_proportion=dict(
+        description="Proportion of Pregnant women reporting no Antenatal Care visit by " \
+                    "4 months of gestation this time period",
+        title="% Pregnant women reporting no Antenatal Care visit by 4 months of gestation",
+        numerator_slug="no_anc",
+        denominator_slug="pregnant_women"
+    ),
     facility_births_proportion=dict(
         description="Proportion of Births delivered in a Health Facility during the time period",
         title="% Births delivered in Health Facility",
@@ -192,5 +199,13 @@ COMPOSITE_INDICATORS = dict(
         title="% Pregnant receiving CHW visit in last 6 weeks",
         numerator_slug="pregnancy_visits_6weeks",
         denominator_slug="pregnancy_cases_6weeks",
+    ),
+
+    # Over5 Health
+    over5_positive_rdt_medicated_proportion=dict(
+        description="Proportion of Over-5s with positive RDT result who received antimalarial/ADT medication",
+        title="% of Over-5s with positive RDT result who received antimalarial/ADT medication",
+        numerator_slug="over5_positive_rdt_medicated",
+        denominator_slug="over5_positive_rdt",
     ),
 )
