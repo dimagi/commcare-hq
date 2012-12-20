@@ -24,8 +24,23 @@ from corehq.apps.smsforms.app import submit_unfinished_form
 from corehq.apps.ivr.api import initiate_outbound_call
 from dimagi.utils.couch import LockableMixIn
 
+METHOD_SMS = "sms"
+METHOD_SMS_CALLBACK = "callback"
+METHOD_SMS_SURVEY = "survey"
+METHOD_IVR_SURVEY = "ivr_survey"
+METHOD_EMAIL = "email"
+METHOD_TEST = "test"
+METHOD_SMS_CALLBACK_TEST = "callback_test"
 
-METHOD_CHOICES = ["sms", "email", "test", "callback", "callback_test", "survey", "ivr_survey"]
+METHOD_CHOICES = [
+    METHOD_SMS,
+    METHOD_SMS_CALLBACK,
+    METHOD_SMS_SURVEY,
+    METHOD_IVR_SURVEY,
+    METHOD_EMAIL,
+    METHOD_TEST,
+    METHOD_SMS_CALLBACK_TEST,
+]
 
 REPEAT_SCHEDULE_INDEFINITELY = -1
 
@@ -489,127 +504,32 @@ class CaseReminderHandler(Document):
         
         return      True on success, False on failure
         """
-        # Get the proper recipient
+        # Prevent circular import
+        from .event_handlers import EVENT_HANDLER_MAP
+        
+        # Retrieve the list of individual recipients
         recipient = reminder.recipient
         
-        # Retrieve the VerifiedNumber entry for the recipient
-        try:
-            verified_number = recipient.get_verified_number()
-        except Exception:
-            verified_number = None
-            
-        # Get the language of the recipient
-        try:
-            lang = recipient.get_language_code()
-        except Exception:
-            lang = None
+        if self.recipient in [RECIPIENT_CASE, RECIPIENT_USER]:
+            recipients = [recipient]
+        elif self.recipient == RECIPIENT_SURVEY_SAMPLE:
+            recipients = [CommConnectCase.get(case_id) for case_id in recipient.contacts]
         
-        if reminder.method == "ivr_survey":
-            if verified_number is not None:
-                initiate_outbound_call(verified_number, reminder.current_event.form_unique_id)
-            return True
-        elif reminder.method == "survey":
-            if reminder.callback_try_count > 0:
-                if self.submit_partial_forms and (reminder.callback_try_count == len(reminder.current_event.callback_timeout_intervals)):
-                    for session_id in reminder.xforms_session_ids:
-                        submit_unfinished_form(session_id)
-                else:
-                    for session_id in reminder.xforms_session_ids:
-                        session = XFormsSession.view("smsforms/sessions_by_touchforms_id",
-                                                        startkey=[session_id],
-                                                        endkey=[session_id, {}],
-                                                        include_docs=True).one()
-                        if session.end_time is None:
-                            vn = VerifiedNumber.view("sms/verified_number_by_owner_id",
-                                                      key=session.connection_id,
-                                                      include_docs=True).one()
-                            if vn is not None:
-                                resp = current_question(session_id)
-                                send_sms_to_verified_number(vn, resp.event.text_prompt)
-                return True
-            else:
-                recipients = []
-                if self.recipient == RECIPIENT_CASE:
-                    recipients = [reminder.recipient]
-                elif self.recipient == RECIPIENT_SURVEY_SAMPLE:
-                    recipients = [CommConnectCase.get(case_id) for case_id in reminder.recipient.contacts]
-                
-                reminder.xforms_session_ids = []
-                
-                for recipient in recipients:
-                    # Close all currently open sessions
-                    sessions = XFormsSession.view("smsforms/open_sessions_by_connection",
-                                                 key=[reminder.domain, recipient.get_id],
-                                                 include_docs=True).all()
-                    for session in sessions:
-                        session.end(False)
-                        session.save()
-                    
-                    # Start the new session
-                    try:
-                        form_unique_id = reminder.current_event.form_unique_id
-                        form = Form.get_form(form_unique_id)
-                        app = form.get_app()
-                        module = form.get_module()
-                    except Exception as e:
-                        logging.exception("ERROR: Could not load survey form for handler " + reminder.handler_id + ", event " + str(reminder.current_event_sequence_num))
-                        return False
-                    session, responses = start_session(reminder.domain, recipient, app, module, form, recipient.get_id)
-                    session.survey_incentive = self.survey_incentive
-                    session.save()
-                    reminder.xforms_session_ids.append(session.session_id)
-                    
-                    # Send out first message
-                    if len(responses) > 0:
-                        message = format_message_list(responses)
-                        verified_number = recipient.get_verified_number()
-                        if len(recipients) == 1:
-                            if verified_number is not None:
-                                return send_sms_to_verified_number(verified_number, message)
-                            else:
-                                return True
-                        else:
-                            send_sms_to_verified_number(verified_number, message)
-                    
-                return True
-        else:
-            # If it is a callback reminder and the callback has been received, skip sending the next timeout message
-            if (reminder.method == "callback" or reminder.method == "callback_test") and len(reminder.current_event.callback_timeout_intervals) > 0 and (reminder.callback_try_count > 0):
-                if CallLog.inbound_call_exists(recipient.doc_type, recipient._id, reminder.last_fired):
-                    reminder.callback_received = True
-                    return True
-                elif len(reminder.current_event.callback_timeout_intervals) == reminder.callback_try_count:
-                    # On the last callback timeout, instead of sending the SMS again, log the missed callback
-                    event = EventLog(
-                        domain          = reminder.domain,
-                        date            = self.get_now(),
-                        event_type      = MISSED_EXPECTED_CALLBACK
-                    )
-                    if verified_number is not None:
-                        event.couch_recipient_doc_type = verified_number.owner_doc_type
-                        event.couch_recipient = verified_number.owner_id
-                    event.save()
-                    return True
-            reminder.last_fired = self.get_now()
-            message = reminder.current_event.message.get(lang, reminder.current_event.message[self.default_lang])
-            message = Message.render(message, case=reminder.case.case_properties())
-            if reminder.method == "sms" or reminder.method == "callback":
-                if verified_number is not None:
-                    return send_sms_to_verified_number(verified_number, message)
-                elif self.recipient == RECIPIENT_USER:
-                    # If there is no verified number, but the recipient is a CommCareUser, still try to send it
-                    try:
-                        phone_number = reminder.user.phone_number
-                    except Exception:
-                        # If the user has no phone number, we cannot send any SMS
-                        return False
-                    return send_sms(reminder.domain, reminder.user_id, phone_number, message)
-                else:
-                    return False
-            elif reminder.method == "test" or reminder.method == "callback_test":
-                print(message)
-                return True
+        # Retrieve the corresponding verified number entries for all individual recipients
+        verified_numbers = {}
+        for r in recipients:
+            try:
+                verified_number = r.get_verified_number()
+            except Exception:
+                verified_number = None
+            verified_numbers[r.get_id] = verified_number
         
+        # Call the appropriate event handler
+        event_handler = EVENT_HANDLER_MAP.get(self.method)
+        last_fired = self.get_now() # Store the timestamp right before firing to ensure continuity in the callback lookups
+        result = event_handler(reminder, self, recipients, verified_numbers)
+        reminder.last_fired = last_fired
+        return result
 
     @classmethod
     def condition_reached(cls, case, case_property, now):
