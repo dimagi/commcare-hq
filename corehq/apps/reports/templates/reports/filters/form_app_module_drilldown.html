@@ -1,0 +1,79 @@
+{% extends 'reports/filters/drilldown_options.html' %}
+{% load hq_shared_tags %}
+{% load i18n %}
+{% block filter_content %}
+{% if unknown_available %}
+<div id="{{ css_id }}-unknown_control">
+    <label class="radio">
+        <input type="radio"
+               data-bind="checked: is_unknown_shown, hideKnownForms: is_unknown_shown"
+               data-known="#{{ css_id }}-known_control"
+               name="{{ slug }}_{{ unknown.slug }}"
+               id="{{ css_id }}_{{ unknown.slug }}_hide"
+               value="">
+        {% trans 'Known Forms' %}
+        <a href="#" class="hq-help no-click">
+            <i class="icon-question-sign"
+               data-title="{% trans "What are Known Forms?" %}"
+               data-content="{% trans "Known Forms are forms that have IDs which can be matched to existing or deleted CommCare Applications in your Project." %}"
+               data-trigger="hover"></i>
+        </a>
+    </label>
+    <label class="radio">
+        <input type="radio"
+               data-bind="checked: is_unknown_shown, hideKnownForms: is_unknown_shown"
+               data-known="#{{ css_id }}-known_control"
+               name="{{ slug }}_{{ unknown.slug }}"
+               id="{{ css_id }}_{{ unknown.slug }}_show"
+               value="yes">
+        {% trans 'Unknown Forms (Possibly Deleted)' %}
+        <a href="#" class="hq-help no-click">
+            <i class="icon-question-sign"
+               data-title="{% trans "What are Unknown Forms?" %}"
+               data-content="{% trans "We tried and tried, but these form IDs did not belong to any CommCare Applications (existing or deleted) in your Project. It might mean that these forms once belonged to an application, were deleted from it, and then replaced by a different form." %}"
+               data-trigger="hover"></i>
+        </a>
+    </label>
+    <div class="well" style="padding-bottom: 0px;" data-bind="visible: is_unknown_shown">
+        <div class="control-group">
+            <label class="control-label" for="{{ css_id }}-{{ unknown.slug }}_xmlns">
+                {% trans 'Choose Unknown Form' %}
+            </label>
+            <div class="controls">
+                <select class="{{ css_class }}"
+                        id="{{ css_id }}-{{ unknown.slug }}_xmlns"
+                        name="{{ slug }}_{{ unknown.slug }}_xmlns"
+                        data-bind="options: all_unknown_forms,
+                        optionsText: 'text', optionsValue: 'val',
+                        optionsCaption: caption_text, value: selected_unknown_form"></select>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+<div id="{{ css_id }}-known_control">
+    {{ block.super }}
+</div>
+{% if hide_fuzzy.show %}
+<div class="alert alert-info">
+    {% include 'reports/filters/partials/fuzzy_checkbox.html' %}
+</div>
+{% endif %}
+{% endblock %}
+
+{% block filter_js %} {{ block.super }}
+{% if unknown_available %}
+<script type="text/javascript" src="{% static 'reports/ko/report_filter.unknown_forms_extension.js' %}"></script>
+<script type="text/javascript">
+    $(function () {
+       $('#{{ css_id }}-unknown_control').unknownFormsExtension({
+           is_unknown_shown: {{ unknown.show|yesno:'true,false' }},
+           selected_unknown_form: '{{ unknown.selected }}',
+           all_unknown_forms: {{ unknown.options|JSON }},
+           caption_text: '{{ unknown.default_text }}',
+       });
+        $('.hq-help').hqHelp();
+    });
+</script>
+{% endif %}
+{% endblock %}

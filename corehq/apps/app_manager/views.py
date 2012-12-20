@@ -2,7 +2,9 @@ from StringIO import StringIO
 import logging
 import uuid
 import zipfile
+from diff_match_patch import diff_match_patch
 from django.template.loader import render_to_string
+import hashlib
 from corehq.apps.app_manager.const import APP_V1
 from corehq.apps.app_manager.success_message import SuccessMessage
 from corehq.apps.domain.models import Domain
@@ -285,7 +287,10 @@ def get_form_view_context(request, form, langs, is_user_registration, messages=m
 
     if xform and xform.exists():
         if xform.already_has_meta():
-            messages.warning(request, "This form has a meta block already! It will be replaced by CommCare HQ's standard meta block.")
+            messages.warning(request,
+                "This form has a meta block already! "
+                "It may be replaced by CommCare HQ's standard meta block."
+            )
         try:
             form.validate_form()
             xform_questions = xform.get_questions(langs)
@@ -958,6 +963,50 @@ def _handle_media_edits(request, item, should_edit, resp):
                 val = None
             setattr(item, attribute, val)
 
+def _save_xform(app, form, xml):
+    try:
+        xform = XForm(xml)
+    except XFormError:
+        pass
+    else:
+        duplicates = app.get_xmlns_map()[xform.data_node.tag_xmlns]
+        for duplicate in duplicates:
+            if form == duplicate:
+                continue
+            else:
+                data = xform.data_node.render()
+                xmlns = "http://openrosa.org/formdesigner/%s" % form.get_unique_id()
+                data = data.replace(xform.data_node.tag_xmlns, xmlns, 1)
+                xform.instance_node.remove(xform.data_node.xml)
+                xform.instance_node.append(parse_xml(data))
+                xml = xform.render()
+                break
+    form.source = xml
+
+@require_POST
+@login_or_digest
+@require_permission(Permissions.edit_apps, login_decorator=None)
+def patch_xform(request, domain, app_id, unique_form_id):
+    patch = request.POST['patch']
+    sha1_checksum = request.POST['sha1']
+
+    app = get_app(domain, app_id)
+    form = app.get_form(unique_form_id)
+
+    current_xml = form.source
+    if hashlib.sha1(current_xml.encode('utf-8')).hexdigest() != sha1_checksum:
+        return json_response({'status': 'conflict', 'xform': current_xml})
+
+    dmp = diff_match_patch()
+    xform, _ = dmp.patch_apply(dmp.patch_fromText(patch), current_xml)
+    _save_xform(app, form, xform)
+    response_json = {
+        'status': 'ok',
+        'sha1': hashlib.sha1(form.source.encode('utf-8')).hexdigest()
+    }
+    app.save(response_json)
+    return json_response(response_json)
+
 @require_POST
 @login_or_digest
 @require_permission(Permissions.edit_apps, login_decorator=None)
@@ -1021,23 +1070,7 @@ def edit_form_attr(req, domain, app_id, unique_form_id, attr):
                 except Exception:
                     pass
             if xform:
-                try:
-                    xform = XForm(xform)
-                except XFormError:
-                    form.source = xform
-                else:
-                    duplicates = app.get_xmlns_map()[xform.data_node.tag_xmlns]
-                    for duplicate in duplicates:
-                        if form == duplicate:
-                            continue
-                        else:
-                            data = xform.data_node.render()
-                            xmlns = "http://openrosa.org/formdesigner/%s" % form.get_unique_id()
-                            data = data.replace(xform.data_node.tag_xmlns, xmlns, 1)
-                            xform.instance_node.remove(xform.data_node.xml)
-                            xform.instance_node.append(parse_xml(data))
-                            break
-                    form.source = xform.render()
+                _save_xform(app, form, xform)
             else:
                 raise Exception("You didn't select a form to upload")
         except Exception, e:

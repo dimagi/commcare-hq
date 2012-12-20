@@ -139,7 +139,7 @@
                 {% block messages %}
                 {% if messages %}
                     {% for message in messages %}
-                        <div class="alert fade in alert-block alert-full{% if message.tags %} {{ message.tags }}{% endif %}">
+                        <div class="alert fade in alert-block alert-full page-level-alert{% if message.tags %} {{ message.tags }}{% endif %}">
                             <a class="close" data-dismiss="alert" href="#">&times;</a>
                             {% if 'html' in message.tags %}{{ message|safe }}{% else %}{{ message }}{% endif %}
                         </div>
@@ -292,6 +292,7 @@
                 _gaq.push(['_trackPageview']);
                 {% if domain %}_gaq.push(['_setCustomVar', 1, 'domain', '{{ domain }}', 3]);{% endif %}
                 {% if request.user.is_authenticated %}_gaq.push(['_setCustomVar', 1, 'uuid', '{{ request.user.id }}', 3]);{% endif %}
+                {% if request.couch_user and request.couch_user.is_dimagi %}_gaq.push(['_setCustomVar', 1, 'is_dimagi', '{{ request.couch_user.username }}', 3]);{% endif %}
                 {% get_report_analytics_tag request %}
 
                 (function() {

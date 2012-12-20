@@ -1,3 +1,4 @@
+from django.conf import settings
 from corehq.apps.reports.standard import ProjectReport, ProjectReportParametersMixin, DatespanMixin
 from corehq.apps.reports.generic import GenericTabularReport
 from corehq.apps.domain.models import Domain
@@ -9,20 +10,20 @@ from dimagi.utils.couch.loosechange import map_reduce
 from dimagi.utils import parsing as dateparse
 import itertools
 from datetime import timedelta
-from django.conf import settings
 from corehq.apps.commtrack.models import CommtrackConfig
+from dimagi.utils.decorators.memoized import memoized
 
 class CommtrackReportMixin(ProjectReport, ProjectReportParametersMixin):
 
     @classmethod
-    def show_in_navigation(cls, request, *args, **kwargs):
+    def show_in_navigation(cls, request, domain=None):
         try:
             return request.project.commtrack_enabled
         except Exception:
             if settings.DEBUG:
                 raise
             else:
-                domain = Domain.get_by_name(kwargs['domain'])
+                domain = Domain.get_by_name(domain)
                 return domain.commtrack_enabled
     
     @property
@@ -30,6 +31,7 @@ class CommtrackReportMixin(ProjectReport, ProjectReportParametersMixin):
         return CommtrackConfig.for_domain(self.domain)
 
     @property
+    @memoized
     def products(self):
         query = get_db().view('commtrack/products', startkey=[self.domain], endkey=[self.domain, {}], include_docs=True)
         prods = [e['doc'] for e in query]
@@ -45,15 +47,13 @@ class CommtrackReportMixin(ProjectReport, ProjectReportParametersMixin):
     def ordered_actions(self, ordering):
         return sorted(self.actions, key=lambda a: (0, ordering.index(a)) if a in ordering else (1, a))
 
-    # find a memoize decorator?
     _location = None
     @property
+    @memoized
     def active_location(self):
-        if not self._location:
-            loc_id = self.request_params.get('location_id')
-            if loc_id:
-                self._location = Location.get(loc_id)
-        return self._location
+        loc_id = self.request_params.get('location_id')
+        if loc_id:
+            return Location.get(loc_id)
 
 def get_transactions(form_doc, include_inferred=True):
     from collections import Sequence

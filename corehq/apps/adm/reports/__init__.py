@@ -21,7 +21,7 @@ class ADMSectionView(GenericReportView):
     # adm-specific stuff
     adm_slug = None
     
-    def __init__(self, request, base_context=None, *args, **kwargs):
+    def __init__(self, request, base_context=None, domain=None, **kwargs):
         self.adm_sections = dict(REPORT_SECTION_OPTIONS)
         if self.adm_slug not in self.adm_sections:
             raise ValueError("The adm_slug provided, %s, is not in the list of valid ADM report section slugs: %s." %
@@ -29,7 +29,7 @@ class ADMSectionView(GenericReportView):
             )
         self.subreport_slug = kwargs.get("subreport_slug")
 
-        super(ADMSectionView, self).__init__(request, base_context, *args, **kwargs)
+        super(ADMSectionView, self).__init__(request, base_context, domain=domain, **kwargs)
         self.context['report'].update(sub_slug=self.subreport_slug)
         if self.subreport_data:
             self.name = mark_safe("""%s <small>%s</small>""" %\
@@ -49,9 +49,9 @@ class ADMSectionView(GenericReportView):
         return reverse('default_adm_report', args=[self.request.project])
 
     @classmethod
-    def get_url(cls, *args, **kwargs):
+    def get_url(cls, domain=None, render_as=None, **kwargs):
         subreport = kwargs.get('subreport')
-        url = super(ADMSectionView, cls).get_url(*args, **kwargs)
+        url = super(ADMSectionView, cls).get_url(domain=domain, render_as=render_as, **kwargs)
         return "%s%s" % (url, "%s/" % subreport if subreport else "")
 
 
@@ -105,11 +105,13 @@ class DefaultReportADMSectionView(GenericTabularReport, ADMSectionView, ProjectR
 
     @property
     def headers(self):
+        if self.subreport_slug is None:
+            raise ValueError("Cannot render this report. A subreport_slug is required.")
         header = DataTablesHeader(DataTablesColumn(_("FLW Name")))
         for col in self.adm_report.columns:
             sort_type = DTSortType.NUMERIC if hasattr(col, 'returns_numerical') and col.returns_numerical else None
             help_text = _(col.description) if col.description else None
-            header.add_column(DataTablesColumn(_(col.name), sort_type=DTSortType.NUMERIC, help_text=help_text))
+            header.add_column(DataTablesColumn(_(col.name), sort_type=sort_type, help_text=help_text))
         header.custom_sort = self.adm_report.default_sort_params
         return header
 
@@ -146,28 +148,28 @@ class DefaultReportADMSectionView(GenericTabularReport, ADMSectionView, ProjectR
         current_slug = context.get('report', {}).get('sub_slug')
         domain = context.get('domain')
 
-        subreport_nav = list()
+        subreport_context = []
         subreports = ADMReport.get_default_subreports(domain, cls.adm_slug)
 
         if not subreports:
-            return ["""<li><span class="label">
-            <i class="icon-white icon-info-sign"></i> No ADM Reports Configured</span>
-            </li>"""]
+            subreport_context.append({
+                'warning_label': 'No ADM Reports Configured',
+            })
+            return subreport_context
 
         for report in subreports:
             key = report.get("key", [])
             entry = report.get("value", {})
             report_slug = key[-2]
             if cls.show_subreport_in_navigation(report_slug):
-                subreport_nav.append("""<li%(active_class)s>
-                <a href="%(url)s" title="%(description)s">%(name)s</a>
-                </li>""" % dict(
-                    active_class=' class="active"' if current_slug == report_slug else "",
-                    url=cls.get_url(domain, subreport=report_slug),
-                    description=entry.get('description', ''),
-                    name=entry.get('name', 'Untitled Report')
-                ))
-        return subreport_nav
+                subreport_context.append({
+                    'is_report': True,
+                    'is_active': current_slug == report_slug,
+                    'url': cls.get_url(domain=domain, subreport=report_slug),
+                    'description': entry.get('description', ''),
+                    'title': entry.get('name', 'Untitled Report'),
+                })
+        return subreport_context
 
     @classmethod
     def show_subreport_in_navigation(cls, subreport_slug):

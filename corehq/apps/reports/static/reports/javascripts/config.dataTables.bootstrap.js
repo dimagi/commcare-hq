@@ -140,16 +140,26 @@ $.extend( $.fn.dataTableExt.oStdClasses, {
 
 // For sorting rows
 jQuery.fn.dataTableExt.oSort['title-numeric-asc']  = function(a,b) {
-    var x = a.match(/title="*(-?[0-9]+)/)[1];
-    var y = b.match(/title="*(-?[0-9]+)/)[1];
-    x = parseFloat( x );
-    y = parseFloat( y );
+    var x = a.match(/title="*(-?[0-9]+)/);
+    var y = b.match(/title="*(-?[0-9]+)/);
+
+    if (x === null && y === null) return 0;
+    if (x === null) return -1;
+    if (y === null) return 1;
+
+    x = parseFloat(x[1]);
+    y = parseFloat(y[1]);
     return ((x < y) ? -1 : ((x > y) ?  1 : 0));
 };
 jQuery.fn.dataTableExt.oSort['title-numeric-desc'] = function(a,b) {
-    var x = a.match(/title="*(-?[0-9]+)/)[1];
-    var y = b.match(/title="*(-?[0-9]+)/)[1];
-    x = parseFloat( x );
-    y = parseFloat( y );
+    var x = a.match(/title="*(-?[0-9]+)/);
+    var y = b.match(/title="*(-?[0-9]+)/);
+
+    if (x === null && y === null) return 0;
+    if (x === null) return 1;
+    if (y === null) return -1;
+
+    x = parseFloat(x[1]);
+    y = parseFloat(y[1]);
     return ((x < y) ?  1 : ((x > y) ? -1 : 0));
 };
