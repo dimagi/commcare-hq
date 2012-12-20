@@ -475,6 +475,7 @@ COUCHDB_APPS = [
     'mvp',
     'pathfinder',
     'pathindia',
+    'pact',
 ]
 
 
@@ -693,12 +694,13 @@ CUSTOM_REPORT_MAP = {
     },
     "pact": {
         "PACT Reports": [
-            "pact.reports.patient_list.PatientDashboardReport",
+            "pact.reports.patient_list.PatientListDashboardReport",
             #"pact.reports.patient.PactPatientReport",
             "pact.reports.dot.PactDOTReport",
             "pact.reports.patient.PactPatientInfoReport",
-            "pact.reports.CHWListReport",
-            "pact.reports.CHWVisitsReport",
+            "pact.reports.chw_list.PactCHWDashboard",
+            "pact.reports.chw.PactCHWProfileReport",
+            #"pact.reports.CHWVisitsReport",
 #            "pact.reports.DOTReport",
 #            "pact.reports.PactExports",
         ]
@@ -790,9 +792,11 @@ SELENIUM_APP_SETTING_DEFAULTS = {
     },
 }
 
-PILLOWTOPS = [ 'corehq.pillows.CasePillow',
-               'corehq.pillows.ExchangePillow',
-               'corehq.pillows.AuditcarePillow',
-               'corehq.pillows.CouchlogPillow',
-               'corehq.pillows.DevicelogPillow',
+PILLOWTOPS = [
+                 'corehq.pillows.CasePillow',
+                 'corehq.pillows.XFormPillow',
+#               'corehq.pillows.ExchangePillow',
+#               'corehq.pillows.AuditcarePillow',
+#               'corehq.pillows.CouchlogPillow',
+#               'corehq.pillows.DevicelogPillow',
                ] + LOCAL_PILLOWTOPS
