@@ -13,8 +13,9 @@ function(doc) {
             var medicated = false;
             if (isChildVisitForm(doc)) {
                 var has_fever_meds = (contained_in_indicator_value(indicators.fever_medication, "anti_malarial") ||
-                    contained_in_indicator_value(indicators.fever_medication, "coartem"));
-                var has_diahrrea_meds = contained_in_indicator_value(indicators.diarrhea_medication, "ors");
+                                        contained_in_indicator_value(indicators.fever_medication, "coartem"));
+                var has_diahrrea_meds = (contained_in_indicator_value(indicators.diarrhea_medication, "ors") ||
+                                        contained_in_indicator_value(indicators.diarrhea_medication, "zinc"));
                 medicated = has_fever_meds || has_diahrrea_meds;
             }
             if (medicated || is_emergency) {

@@ -32,7 +32,8 @@ function(doc) {
                             try {
                                 is_medicated_child =  (contained_in_indicator_value(fever_medications[r], "coartem") ||
                                     contained_in_indicator_value(fever_medications[r], "anti_malarial") ||
-                                    contained_in_indicator_value(diarrhea_medications[r],"ors"));
+                                    contained_in_indicator_value(diarrhea_medications[r],"ors") ||
+                                    contained_in_indicator_value(diarrhea_medications[r],"zinc"));
                             } catch (e) {
                                 // do nothing
                             }
