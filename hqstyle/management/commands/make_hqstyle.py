@@ -36,9 +36,11 @@ class Command(BaseCommand):
         "combobox",
         "multi-typeahead",
         "hoverdropdown",
+        "popout",
     ]
 
     hq_bootstrap_src = "submodules/hqstyle-src/hq-bootstrap"
+    font_awesome_src = "submodules/hqstyle-src/font_awesome"
     hqstyle_src = "submodules/hqstyle-src/hqstyle"
     destination = "%s/static/hqstyle" % hqstyle_src
 
@@ -62,6 +64,7 @@ class Command(BaseCommand):
         self.compile_core_js()
         self.compile_css()
         self.copy_bootstrap_images()
+        self.copy_font_awesome()
 
     def compile_core_js(self):
         print "\nCompiling HQStyle Core Javascript"
@@ -95,6 +98,12 @@ class Command(BaseCommand):
         print "\nCopying Images from HQ Bootstrap"
         source_folder = "%s/img" % self.hq_bootstrap_src
         dest_folder = "%s/img" % self.destination
+        self.copy_all_files(source_folder, dest_folder)
+
+    def copy_font_awesome(self):
+        print "\nCopying fonts for Font Awesome"
+        source_folder = "%s/font" % self.font_awesome_src
+        dest_folder = "%s/css/font" % self.destination
         self.copy_all_files(source_folder, dest_folder)
 
     def copy_all_files(self, folder_src, folder_dest):
