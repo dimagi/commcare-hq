@@ -1,6 +1,11 @@
+from gevent import monkey; monkey.patch_all()
+import sys
+import gevent
+from restkit.session import set_session
+set_session("gevent")
+
 from couchdbkit.exceptions import ResourceNotFound
 from django.core.management.base import LabelCommand
-import sys
 from casexml.apps.case.models import CommCareCase
 from corehq.apps.indicators.models import CaseIndicatorDefinition, FormIndicatorDefinition, DocumentMismatchError, DocumentNotInDomainError
 from couchforms.models import XFormInstance
