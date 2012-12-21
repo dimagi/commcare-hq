@@ -298,9 +298,17 @@
                         <td>
                             {% if edit %}
                                 {% if not module.all_forms_require_a_case %}
-                                    <div class="label label-{% if form.form_filter %}important{% else %}info{% endif %}">
-                                        {% trans "This option only applies when all forms in a module require a case" %}
-                                    </div>
+                                    {% if form.form_filter %}
+                                        <div class="alert alert-error">
+                                            <strong>{% trans "This option only applies when all forms in a module require a case" %}</strong>
+                                            {% trans "but it looks like you tried to configure one earlier, which we'll have to ignore:" %}
+                                            <code>{{ form.form_filter|default:'' }}</code>
+                                        </div>
+                                    {% else %}
+                                        <div class="label label-info">
+                                            {% trans "This option only applies when all forms in a module require a case" %}
+                                        </div>
+                                    {% endif %}
                                 {% else %}
                                     <input type="text" class="wide" name="form_filter" value="{{ form.form_filter|default:'' }}"/>
                                 {% endif %}
