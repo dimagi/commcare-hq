@@ -29,6 +29,7 @@ from corehq.apps.users.util import cc_user_domain
 from corehq.util import bitly
 import current_builds
 from dimagi.utils.couch.undo import DeleteRecord, DELETED_SUFFIX
+from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.web import get_url_base, parse_int
 from copy import deepcopy
 from corehq.apps.domain.models import Domain, cached_property
@@ -731,6 +732,10 @@ class Module(IndexedSchema, NavMenuItemMediaMixin):
                 ret = True
                 break
         return ret
+
+    @memoized
+    def all_forms_require_a_case(self):
+        return all([form.requires == 'case' for form in self.get_forms()])
 
 class VersioningError(Exception):
     """For errors that violate the principals of versioning in VersionedDoc"""

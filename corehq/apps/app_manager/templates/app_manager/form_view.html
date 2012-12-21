@@ -286,16 +286,30 @@
                     {% with form as item %}
                         {% include "app_manager/partials/nav_menu_media.html" %}
                     {% endwith %}
+                    {% if app.application_version != '1.0' %}
                     <tr>
-                        <th>Advanced Form Filter</th>
+                        <th>
+                            {% trans "Display Condition" %}
+                            <span class="hq-help-template"
+                                data-title="{% trans "Display Condition" %}"
+                                data-content="{% trans "You can specify an XPath to use as a display condition for this form. For example './edd > today()' means 'show this form if the selected case has an edd later than today'" %}"
+                            ></span>
+                        </th>
                         <td>
                             {% if edit %}
-                                <input type="text" class="wide" name="form_filter" value="{{ form.form_filter|default:'' }}"/>
+                                {% if not module.all_forms_require_a_case %}
+                                    <div class="label label-{% if form.form_filter %}important{% else %}info{% endif %}">
+                                        {% trans "This option only applies when all forms in a module require a case" %}
+                                    </div>
+                                {% else %}
+                                    <input type="text" class="wide" name="form_filter" value="{{ form.form_filter|default:'' }}"/>
+                                {% endif %}
                             {% else %}
                                 <code>{{ form.form_filter|default:'' }}</code>
                             {% endif %}
                         </td>
                     </tr>
+                    {% endif %}
                 </table>
             </form>
         </div>

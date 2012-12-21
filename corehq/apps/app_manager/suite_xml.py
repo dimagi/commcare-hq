@@ -345,7 +345,8 @@ class SuiteGenerator(object):
         def add_case_stuff(module, e, use_filter=False):
             def get_instances():
                 yield Instance(id='casedb', src='jr://instance/casedb')
-                if any([form.form_filter for form in module.get_forms()]):
+                if any([form.form_filter for form in module.get_forms()]) and \
+                        module.all_forms_require_a_case():
                     yield Instance(id='commcaresession', src='jr://instance/session')
             e.instances.extend(get_instances())
 
@@ -396,7 +397,8 @@ class SuiteGenerator(object):
             def get_commands():
                 for form in module.get_forms():
                     command = Command(id=self.id_strings.form_command(form))
-                    if getattr(form, 'form_filter', None):
+                    if module.all_forms_require_a_case() and \
+                            getattr(form, 'form_filter', None):
                         command.relevant = form.form_filter.replace('.', (
                             "instance('casedb')/casedb/case[@case_id="
                             "instance('commcaresession')/session/data/case_id]"
