@@ -1,5 +1,4 @@
 from django.core.exceptions import ObjectDoesNotExist
-from django.http import Http404
 from casexml.apps.case.models import CommCareCase
 from corehq.apps.domain.decorators import login_or_digest
 from corehq.apps.groups.models import Group

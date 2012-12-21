@@ -8,17 +8,11 @@ from corehq.apps.reports.display import xmlns_to_name
 from corehq.apps.reports.models import HQUserType, TempCommCareUser
 from corehq.apps.users.models import CommCareUser, CouchUser
 from corehq.apps.users.util import user_id_to_username
-from couchdbkit.schema.properties import DictProperty
 from couchexport.util import SerializableFunction
 from couchforms.filters import instances
 from dimagi.utils.couch.database import get_db
-from dimagi.utils.data.deid_generator import DeidGenerator
 from dimagi.utils.dates import DateSpan
-from dimagi.utils.decorators import inline
-from dimagi.utils.decorators.datespan import datespan_in_request
-from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.modules import to_function
-from dimagi.utils.parsing import string_to_datetime
 from django.http import Http404
 import pytz
 from corehq.apps.domain.models import Domain
@@ -103,7 +97,8 @@ def get_all_users_by_domain(domain=None, group=None, individual=None,
                             user_filter=None, simplified=False, CommCareUser=None):
     """
         WHEN THERE ARE A LOT OF USERS, THIS IS AN EXPENSIVE OPERATION.
-        Returns a list of CommCare Users based on domain, group, and user filter (demo_user, admin, registered, unknown)
+        Returns a list of CommCare Users based on domain, group, and user 
+        filter (demo_user, admin, registered, unknown)
     """
     if not CommCareUser:
         from corehq.apps.users.models import CommCareUser
@@ -244,7 +239,6 @@ def datespan_export_filter(doc, datespan):
     return False
 
 def case_users_filter(doc, users):
-    pass
     try:
         return doc['user_id'] in users
     except KeyError:

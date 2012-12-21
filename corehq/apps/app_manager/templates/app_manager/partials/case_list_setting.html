@@ -1,9 +1,13 @@
 {% load xforms_extras %}
 {% load hq_shared_tags %}
+{% load i18n %}
 <tr {% if edit %}class="form editable"{% endif %}>
     <th>
-        {{ LABEL }}
-        <i class="help_popover icon icon-question-sign" data-help-key="{{ LABEL }}"></i>
+        {% trans LABEL %}
+        <span class="hq-help-template"
+            data-title="{% trans LABEL %}"
+            data-content="{% trans DESC %}"
+        ></span>
     </th>
     {% if edit %}
         <td>
