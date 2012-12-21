@@ -1,5 +1,6 @@
 import logging
 from zipfile import ZipFile
+from django.core.servers.basehttp import FileWrapper
 from couchexport.models import FakeSavedExportSchema
 from django.http import HttpResponse
 from StringIO import StringIO
@@ -47,38 +48,39 @@ def export_data_shared(export_tag, format=None, filename=None,
 def export_response(file, format, filename, checkpoint=None):
     """
     Get an http response for an export
+    file can be either a StringIO
+    or an open file object (which this function is responsible for closing)
+
     """
     from couchexport.export import Format
     if not filename:
         filename = "NAMELESS EXPORT"
         
     format = Format.from_format(format)
+    if isinstance(file, StringIO):
+        payload = file.getvalue()
+        # I don't know why we need to close the file. Keeping around.
+        file.close()
+    else:
+        payload = FileWrapper(file)
 
-    if not format.download:
-        # For direct-display formats like HTML and JSON, don't attach the file, just send it directly.
-        response = HttpResponse(file.getvalue(), mimetype=format.mimetype)
-        if checkpoint:
-            response['X-CommCareHQ-Export-Token'] = checkpoint.get_id
-        return response
+    response = HttpResponse(payload, mimetype=format.mimetype)
 
-
-    response = HttpResponse(mimetype=format.mimetype)
-
-    try:
-        filename = unidecode(filename)
-    except Exception:
-        logging.exception("Error with filename: %r" % filename)
-        filename = "data"
-    finally:
-        response['Content-Disposition'] = 'attachment; filename="{filename}.{format.extension}"'.format(
-            filename=filename,
-            format=format
-        )
+    if format.download:
+        try:
+            filename = unidecode(filename)
+        except Exception:
+            logging.exception("Error with filename: %r" % filename)
+            filename = "data"
+        finally:
+            response['Content-Disposition'] = 'attachment; filename="{filename}.{format.extension}"'.format(
+                filename=filename,
+                format=format
+            )
 
     if checkpoint:
         response['X-CommCareHQ-Export-Token'] = checkpoint.get_id
-    response.write(file.getvalue())
-    file.close()
+
     return response
 
 def export_raw_data(export_tag, filename=None):
