@@ -113,13 +113,13 @@ def scheduled_reminders(request, domain, template="reminders/partial/scheduled_r
         recipient = reminder.recipient
         
         if isinstance(recipient, CouchUser):
-            recipient_desc = "User " + recipient.raw_username
+            recipient_desc = "User '" + recipient.raw_username + "'"
         elif isinstance(recipient, CommCareCase):
-            recipient_desc = "Case " + recipient.name
+            recipient_desc = "Case '" + recipient.name + "'"
         elif isinstance(recipient, Group):
-            recipient_desc = "Group " + recipient.name
+            recipient_desc = "Group '" + recipient.name + "'"
         elif isinstance(recipient, SurveySample):
-            recipient_desc = "Survey Sample " + recipient.name
+            recipient_desc = "Survey Sample '" + recipient.name + "'"
         else:
             recipient_desc = ""
         

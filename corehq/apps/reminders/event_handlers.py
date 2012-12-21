@@ -9,6 +9,7 @@ from corehq.apps.sms.util import format_message_list
 from corehq.apps.users.models import CouchUser
 from corehq.apps.sms.models import CallLog, EventLog, MISSED_EXPECTED_CALLBACK
 from django.conf import settings
+from corehq.apps.app_manager.models import Form
 
 """
 This module defines the methods that will be called from CaseReminderHandler.fire()
@@ -151,6 +152,14 @@ def fire_sms_survey_event(reminder, handler, recipients, verified_numbers):
             
             # Start a touchforms session for each recipient
             for recipient in recipients:
+                verified_number = verified_numbers[recipient.get_id]
+                if verified_number is None:
+                    raise_warning() # Recipient is missing a verified number
+                    if len(recipients) == 1:
+                        return False
+                    else:
+                        continue
+                
                 # Close all currently open sessions
                 sessions = XFormsSession.view("smsforms/open_sessions_by_connection",
                                              key=[reminder.domain, recipient.get_id],
@@ -168,14 +177,9 @@ def fire_sms_survey_event(reminder, handler, recipients, verified_numbers):
                 # Send out first message
                 if len(responses) > 0:
                     message = format_message_list(responses)
-                    verified_number = verified_numbers[recipient.get_id]
-                    if verified_number is None:
-                        raise_warning() # Recipient is missing a verified number
-                        result = False
-                    else:
-                        result = send_sms_to_verified_number(verified_number, message)
-                        if not result:
-                            raise_warning() # Could not send SMS
+                    result = send_sms_to_verified_number(verified_number, message)
+                    if not result:
+                        raise_warning() # Could not send SMS
                     
                     if len(recipients) == 1:
                         return result
