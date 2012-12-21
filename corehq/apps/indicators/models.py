@@ -642,22 +642,22 @@ class CaseDataInFormIndicatorDefinition(FormIndicatorDefinition):
         return None
 
     def update_computed_namespace(self, computed, document):
-        current_value = computed.get(self.slug, {})
-        force_update = False
-        if current_value:
+        computed, is_update = super(CaseDataInFormIndicatorDefinition,
+            self).update_computed_namespace(computed, document)
+        if not is_update:
+            # check to see if the related case has changed information
             case = self._get_related_case(document)
             if case is not None:
                 try:
-                    indicator_updated = dateutil.parser.parse(computed.get(self.slug, {}).get('updated'))
-                    force_update = case.modified_on > indicator_updated
+                    indicator_updated = computed.get(self.slug, {}).get('updated')
+                    if not isinstance(indicator_updated, datetime.datetime):
+                        indicator_updated = dateutil.parser.parse(indicator_updated)
+                    is_update = case.modified_on > indicator_updated
+                    if is_update:
+                        computed[self.slug] = self.get_doc_dict(document)
                 except ValueError:
                     pass
-
-        if force_update:
-            computed[self.slug] = self.get_doc_dict(document)
-            return computed, force_update
-
-        return super(CaseDataInFormIndicatorDefinition, self).update_computed_namespace(computed, document)
+        return computed, is_update
 
 
 class CaseIndicatorDefinition(DocumentIndicatorDefinition):
@@ -715,20 +715,23 @@ class FormDataInCaseIndicatorDefinition(CaseIndicatorDefinition, FormDataIndicat
         return existing_value
 
     def update_computed_namespace(self, computed, document):
-        current_value = computed.get(self.slug, {})
-        force_update = False
-        if current_value:
-            try:
-                value_list = current_value.get('value', {})
-                saved_form_ids = value_list.keys()
-                related_forms = self.get_related_forms(document)
-                current_ids = set([f._id for f in related_forms])
-                force_update = len(current_ids.difference(saved_form_ids)) > 0
-            except Exception as e:
-                logging.error("Error updating computed namespace for doc %s: %s" % (document._id, e))
+        computed, is_update = super(FormDataInCaseIndicatorDefinition,
+            self).update_computed_namespace(computed, document)
 
-        if force_update:
-            computed[self.slug] = self.get_doc_dict(document)
-            return computed, force_update
+        if not is_update:
+            # check to see if more relevant forms have been added to the case since the last time
+            # this indicator was computed
+            case = self._get_related_case(document)
+            if case is not None:
+                try:
+                    value_list = computed.get(self.slug, {}).get('value', {})
+                    saved_form_ids = value_list.keys()
+                    related_forms = self.get_related_forms(document)
+                    current_ids = set([f._id for f in related_forms])
+                    is_update = len(current_ids.difference(saved_form_ids)) > 0
+                    if is_update:
+                        computed[self.slug] = self.get_doc_dict(document)
+                except Exception as e:
+                    logging.error("Error updating computed namespace for doc %s: %s" % (document._id, e))
 
-        return super(FormDataInCaseIndicatorDefinition, self).update_computed_namespace(computed, document)
+        return computed, is_update

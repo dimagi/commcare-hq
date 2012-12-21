@@ -15,9 +15,6 @@ class IndicatorPillowBase(BasicPillow):
     def indicator_domains(self):
         return INDICATOR_CONFIG.keys()
 
-    def get_marker_slug(self, namespace):
-        return "%s__marker__" % namespace
-
     def change_transform(self, doc_dict):
         if self.doc_is_valid(doc_dict):
             indicators = self.get_indicators_by_doc(doc_dict)
@@ -26,22 +23,6 @@ class IndicatorPillowBase(BasicPillow):
                 self.update_indicators_in_doc_instance(doc, indicators)
                 return doc._doc
         return doc_dict
-
-    def update_indicators_in_doc_instance(self, doc_instance, indicators):
-        for indicator in indicators:
-            if not self.only_use_fresh_docs:
-                doc_instance.computed_[self.get_marker_slug(indicator.namespace)] = self.get_change_marker(doc_instance)
-            updated_status = doc_instance.update_indicator(indicator)
-            if updated_status:
-                logging.info("Set %(doc_type)s indicator %(indicator_slug)s in namespace %(namespace)s: %(doc_id)s" % {
-                    'doc_type': doc_instance.doc_type,
-                    'indicator_slug': indicator.slug,
-                    'namespace': indicator.namespace,
-                    'doc_id': doc_instance._id,
-                })
-
-    def get_change_marker(self, doc_instance):
-        return []
 
     def is_document_update(self, marker, doc_dict):
         return True
@@ -63,7 +44,8 @@ class IndicatorPillowBase(BasicPillow):
         domain = doc_dict.get('domain')
         if (computed_dict is not None
             and domain in self.indicator_domains
-            and doc_dict.get('doc_type') == self.indicator_document_type.__name__):
+            and doc_dict.get('doc_type') == self.indicator_document_type.__name__
+            and doc_dict.get('initial_processing_complete')):
             namespaces = INDICATOR_CONFIG[domain]
             for namespace in namespaces:
                 if not self.only_use_fresh_docs:
@@ -72,6 +54,29 @@ class IndicatorPillowBase(BasicPillow):
                 elif namespace not in computed_dict:
                     return True
         return False
+
+    @classmethod
+    def update_indicators_in_doc_instance(cls, doc_instance, indicators):
+        for indicator in indicators:
+            if not cls.only_use_fresh_docs:
+                doc_instance.computed_[cls.get_marker_slug(indicator.namespace)] = cls.get_change_marker(doc_instance)
+            updated_status = doc_instance.update_indicator(indicator)
+            if updated_status:
+                logging.info("Set %(doc_type)s indicator %(indicator_slug)s in namespace %(namespace)s: %(doc_id)s" % {
+                    'doc_type': doc_instance.doc_type,
+                    'indicator_slug': indicator.slug,
+                    'namespace': indicator.namespace,
+                    'doc_id': doc_instance._id,
+                    })
+
+    @classmethod
+    def get_change_marker(cls, doc_dict):
+        return []
+
+    @classmethod
+    def get_marker_slug(cls, namespace):
+        return "%s__marker__" % namespace
+
 
 class CaseIndicatorPillow(IndicatorPillowBase):
     couch_db = CommCareCase.get_db()
@@ -100,20 +105,26 @@ class CaseIndicatorPillow(IndicatorPillowBase):
                 for form_id in form_ids:
                     try:
                         xform = XFormInstance.get(form_id)
-                        if xform.xmlns:
-                                case_related_indicators = CaseDataInFormIndicatorDefinition.get_all(namespace, domain,
-                                    xmlns=xform.xmlns)
-                                self.update_indicators_in_doc_instance(xform, case_related_indicators)
+                        if xform.xmlns and isinstance(xform, XFormInstance):
+                            case_related_indicators = CaseDataInFormIndicatorDefinition.get_all(namespace, domain,
+                                xmlns=xform.xmlns)
+                            logging.info("Grabbed Related XForm %s and now processing %d indicators." %
+                                         (form_id, len(case_related_indicators)))
+                            FormIndicatorPillow.update_indicators_in_doc_instance(xform, case_related_indicators)
+                            logging.info("Done processing indicators.")
                     except Exception as e:
-                        logging.error("Error grabbing related xform for doc %s: %s" % (doc_dict['_id'], e))
+                        logging.error("Error grabbing related xform for CommCareCase %s: %s" % (doc_dict['_id'], e))
 
         return indicators
 
     def get_document(self, doc_dict):
         return CommCareCase.get(doc_dict['_id'])
 
-    def get_change_marker(self, doc_instance):
-        return len(doc_instance.xform_ids) if doc_instance.xform_ids else 0
+    @classmethod
+    def get_change_marker(cls, doc_instance):
+        if isinstance(doc_instance, CommCareCase):
+            return len(doc_instance.xform_ids) if doc_instance.xform_ids else 0
+        return super(CaseIndicatorPillow, cls).get_change_marker(doc_instance)
 
     def is_document_update(self, marker, doc_dict):
         xform_ids = doc_dict.get('xform_ids') or []
