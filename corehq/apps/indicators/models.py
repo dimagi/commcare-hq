@@ -5,6 +5,7 @@ from couchdbkit.ext.django.schema import Document, StringProperty, IntegerProper
 from couchdbkit.schema.base import DocumentSchema
 import datetime
 from couchdbkit.schema.properties import LazyDict
+import dateutil
 import numpy
 from casexml.apps.case.models import CommCareCase
 from couchforms.models import XFormInstance
@@ -168,7 +169,7 @@ class IndicatorDefinition(Document):
         all_indicators = list()
         for slug in all_slugs:
             indicator = cls.get_current(namespace, domain, slug, version=version, **kwargs)
-            if indicator:
+            if indicator and issubclass(indicator.__class__, cls):
                 all_indicators.append(indicator)
         return all_indicators
 
@@ -524,14 +525,6 @@ class DocumentIndicatorDefinition(IndicatorDefinition):
         So far, the types of Documents that support this are XFormInstance and CommCareCase
     """
 
-    def get_doc_dict(self, doc):
-        return {
-            'version': self.version,
-            'value': self.get_clean_value(doc),
-            'multi_value': self._returns_multiple,
-            'type': self.doc_type,
-        }
-
     def get_clean_value(self, doc):
         """
             Add validation to whatever comes in as doc here...
@@ -555,15 +548,16 @@ class DocumentIndicatorDefinition(IndicatorDefinition):
         if isinstance(existing_indicator, dict) or isinstance(existing_indicator, LazyDict):
             update_computed = existing_indicator.get('version') != self.version
         if update_computed:
-            computed[self.slug] = self._set_computed_indicator(document)
+            computed[self.slug] = self.get_doc_dict(document)
         return computed, update_computed
 
-    def _set_computed_indicator(self, document):
+    def get_doc_dict(self, document):
         return {
             'version': self.version,
             'value': self.get_clean_value(document),
             'multi_value': self._returns_multiple,
             'type': self.doc_type,
+            'updated': datetime.datetime.utcnow(),
         }
 
 
@@ -632,10 +626,38 @@ class CaseDataInFormIndicatorDefinition(FormIndicatorDefinition):
         form_data = doc.get_form
         related_case_id = form_data.get('case', {}).get('@case_id')
         if related_case_id:
-            case = CommCareCase.get(related_case_id)
-            if isinstance(case, CommCareCase) and hasattr(case, str(self.case_property)):
+            case = self._get_related_case(doc)
+            if case is not None and hasattr(case, str(self.case_property)):
                 return getattr(case, str(self.case_property))
         return None
+
+    def _get_related_case(self, xform):
+        form_data = xform.get_form
+        related_case_id = form_data.get('case', {}).get('@case_id')
+        if related_case_id:
+            try:
+                return CommCareCase.get(related_case_id)
+            except Exception:
+                pass
+        return None
+
+    def update_computed_namespace(self, computed, document):
+        current_value = computed.get(self.slug, {})
+        force_update = False
+        if current_value:
+            case = self._get_related_case(document)
+            if case is not None:
+                try:
+                    indicator_updated = dateutil.parser.parse(computed.get(self.slug, {}).get('updated'))
+                    force_update = case.modified_on > indicator_updated
+                except ValueError:
+                    pass
+
+        if force_update:
+            computed[self.slug] = self.get_doc_dict(document)
+            return computed, force_update
+
+        return super(CaseDataInFormIndicatorDefinition, self).update_computed_namespace(computed, document)
 
 
 class CaseIndicatorDefinition(DocumentIndicatorDefinition):
@@ -685,10 +707,28 @@ class FormDataInCaseIndicatorDefinition(CaseIndicatorDefinition, FormDataIndicat
         for form in forms:
             if isinstance(form, XFormInstance):
                 form_data = form.get_form
-                existing_value[form.get_id] = dict(
-                    value=self.get_from_form(form_data, self.question_id),
-                    timeEnd=self.get_from_form(form_data, 'meta.timeEnd'),
-                    received_on=form.received_on
-                )
+                existing_value[form.get_id] = {
+                    'value': self.get_from_form(form_data, self.question_id),
+                    'timeEnd': self.get_from_form(form_data, 'meta.timeEnd'),
+                    'received_on': form.received_on,
+                }
         return existing_value
 
+    def update_computed_namespace(self, computed, document):
+        current_value = computed.get(self.slug, {})
+        force_update = False
+        if current_value:
+            try:
+                value_list = current_value.get('value', {})
+                saved_form_ids = value_list.keys()
+                related_forms = self.get_related_forms(document)
+                current_ids = set([f._id for f in related_forms])
+                force_update = len(current_ids.difference(saved_form_ids)) > 0
+            except Exception as e:
+                logging.error("Error updating computed namespace for doc %s: %s" % (document._id, e))
+
+        if force_update:
+            computed[self.slug] = self.get_doc_dict(document)
+            return computed, force_update
+
+        return super(FormDataInCaseIndicatorDefinition, self).update_computed_namespace(computed, document)
