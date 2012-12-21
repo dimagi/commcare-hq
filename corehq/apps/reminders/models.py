@@ -7,7 +7,8 @@ from django.conf import settings
 from casexml.apps.case.models import CommCareCase
 from corehq.apps.sms.api import send_sms, send_sms_to_verified_number
 from corehq.apps.sms.models import CallLog, EventLog, MISSED_EXPECTED_CALLBACK, CommConnectCase
-from corehq.apps.users.models import CommCareUser
+from corehq.apps.users.models import CommCareUser, CouchUser
+from corehq.apps.groups.models import Group
 import logging
 from dimagi.utils.parsing import string_to_datetime, json_format_datetime
 from dateutil.parser import parse
@@ -23,6 +24,7 @@ from corehq.apps.sms.util import create_task, close_task, update_task
 from corehq.apps.smsforms.app import submit_unfinished_form
 from corehq.apps.ivr.api import initiate_outbound_call
 from dimagi.utils.couch import LockableMixIn
+from dimagi.utils.couch.database import get_db
 
 METHOD_SMS = "sms"
 METHOD_SMS_CALLBACK = "callback"
@@ -53,9 +55,10 @@ UI_COMPLEX = "COMPLEX"
 UI_CHOICES = [UI_SIMPLE_FIXED, UI_COMPLEX]
 
 RECIPIENT_USER = "USER"
+RECIPIENT_OWNER = "OWNER"
 RECIPIENT_CASE = "CASE"
 RECIPIENT_SURVEY_SAMPLE = "SURVEY_SAMPLE"
-RECIPIENT_CHOICES = [RECIPIENT_USER, RECIPIENT_CASE, RECIPIENT_SURVEY_SAMPLE]
+RECIPIENT_CHOICES = [RECIPIENT_USER, RECIPIENT_OWNER, RECIPIENT_CASE, RECIPIENT_SURVEY_SAMPLE]
 
 MATCH_EXACT = "EXACT"
 MATCH_REGEX = "REGEX"
@@ -339,7 +342,7 @@ class CaseReminderHandler(Document):
         if recipient is None:
             if self.recipient == RECIPIENT_USER:
                 recipient = CommCareUser.get_by_user_id(case.user_id)
-            else:
+            elif self.recipient == RECIPIENT_CASE:
                 recipient = CommConnectCase.get(case._id)
         local_now = CaseReminderHandler.utc_to_local(recipient, now)
         
@@ -510,10 +513,14 @@ class CaseReminderHandler(Document):
         # Retrieve the list of individual recipients
         recipient = reminder.recipient
         
-        if self.recipient in [RECIPIENT_CASE, RECIPIENT_USER]:
+        if isinstance(recipient, CouchUser) or isinstance(recipient, CommCareCase):
             recipients = [recipient]
-        elif self.recipient == RECIPIENT_SURVEY_SAMPLE:
+        elif isinstance(recipient, Group):
+            recipients = recipient.get_users(is_active=True, only_commcare=False)
+        elif isinstance(recipient, SurveySample):
             recipients = [CommConnectCase.get(case_id) for case_id in recipient.contacts]
+        else:
+            return False
         
         # Retrieve the corresponding verified number entries for all individual recipients
         verified_numbers = {}
@@ -810,8 +817,24 @@ class CaseReminder(Document, LockableMixIn):
             return self.user
         elif handler.recipient == RECIPIENT_CASE:
             return CommConnectCase.get(self.case_id)
-        else:
+        elif handler.recipient == RECIPIENT_SURVEY_SAMPLE:
             return SurveySample.get(self.sample_id)
+        elif handler.recipient == RECIPIENT_OWNER:
+            case = self.case
+            
+            owner_id = case.owner_id
+            if owner_id is None:
+                owner_id = case.user_id
+            owner_doc = get_db().get(owner_id)
+            
+            if owner_doc["doc_type"] == "CommCareUser":
+                return CommCareUser.get_by_user_id(owner_id)
+            elif owner_doc["doc_type"] == "Group":
+                return Group.get(owner_id)
+            else:
+                return None
+        else:
+            return None
     
     @property
     def retired(self):

@@ -50,7 +50,10 @@ def fire_sms_event(reminder, handler, recipients, verified_numbers):
                 message = Message.render(message, case=reminder.case.case_properties())
             except Exception:
                 raise_warning() # Error in rendering template message, check syntax
-                continue # Move the reminder forward
+                if len(recipients) == 1:
+                    return False
+                else:
+                    continue
             
             verified_number = verified_numbers[recipient.get_id]
             if verified_number is not None:
@@ -63,10 +66,11 @@ def fire_sms_event(reminder, handler, recipients, verified_numbers):
                     phone_number = recipient.phone_number
                 except Exception:
                     phone_number = None
+                
+                if phone_number is None:
                     result = False
                     raise_warning() # CouchUser has no VerifiedNumber and no other numbers
-                
-                if phone_number is not None:
+                else:
                     result = send_sms(reminder.domain, recipient.get_id, phone_number, message)
                     if not result:
                         raise_warning() # Could not send SMS
@@ -106,7 +110,7 @@ def fire_sms_callback_event(reminder, handler, recipients, verified_numbers):
         
         return fire_sms_event(reminder, handler, recipients, verified_numbers)
     else:
-        # TODO: Implement sms callback for RECIPIENT_OWNER, and RECIPIENT_SURVEY_SAMPLE
+        # TODO: Implement sms callback for RECIPIENT_OWNER and RECIPIENT_SURVEY_SAMPLE
         return False
 
 def fire_sms_survey_event(reminder, handler, recipients, verified_numbers):
@@ -142,7 +146,7 @@ def fire_sms_survey_event(reminder, handler, recipients, verified_numbers):
                 app = form.get_app()
                 module = form.get_module()
             except Exception as e:
-                logging.exception("ERROR: Could not load survey form for handler " + reminder.handler_id + ", event " + str(reminder.current_event_sequence_num))
+                raise_warning() # Can't load form, check config
                 return False
             
             # Start a touchforms session for each recipient
@@ -167,11 +171,15 @@ def fire_sms_survey_event(reminder, handler, recipients, verified_numbers):
                     verified_number = verified_numbers[recipient.get_id]
                     if verified_number is None:
                         raise_warning() # Recipient is missing a verified number
-                    elif len(recipients) == 1:
-                        return send_sms_to_verified_number(verified_number, message)
+                        result = False
                     else:
-                        if not send_sms_to_verified_number(verified_number, message):
-                            raise_warning() # One recipient in a group could not receive sms, but moving on to send to others
+                        result = send_sms_to_verified_number(verified_number, message)
+                        if not result:
+                            raise_warning() # Could not send SMS
+                    
+                    if len(recipients) == 1:
+                        return result
+                
             return True
     else:
         # TODO: Make sure the above flow works for RECIPIENT_USER and RECIPIENT_OWNER

@@ -15,6 +15,7 @@ from corehq.apps.domain.models import DomainCounter
 from casexml.apps.case.models import CommCareCase
 from dateutil.parser import parse
 from corehq.apps.sms.util import close_task
+from corehq.apps.groups.models import Group
 
 reminders_permission = require_permission(Permissions.edit_data)
 
@@ -105,10 +106,37 @@ def scheduled_reminders(request, domain, template="reminders/partial/scheduled_r
     while start_date <= end_date:
         dates.append(start_date)
         start_date += timedelta(days=1)
-
+    
+    reminder_data = []
+    for reminder in reminders:
+        handler = reminder.handler
+        recipient = reminder.recipient
+        
+        if isinstance(recipient, CouchUser):
+            recipient_desc = "User " + recipient.raw_username
+        elif isinstance(recipient, CommCareCase):
+            recipient_desc = "Case " + recipient.name
+        elif isinstance(recipient, Group):
+            recipient_desc = "Group " + recipient.name
+        elif isinstance(recipient, SurveySample):
+            recipient_desc = "Survey Sample " + recipient.name
+        else:
+            recipient_desc = ""
+        
+        case = reminder.case
+        
+        reminder_data.append({
+            "handler_name" : handler.nickname,
+            "next_fire" : reminder.next_fire,
+            "recipient_desc" : recipient_desc,
+            "recipient_type" : handler.recipient,
+            "case_id" : case.get_id if case is not None else None,
+            "case_name" : case.name if case is not None else None,
+        })
+    
     return render_to_response(request, template, {
         'domain': domain,
-        'reminders': reminders,
+        'reminder_data': reminder_data,
         'dates': dates,
         'today': today,
         'now': now,
