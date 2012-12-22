@@ -1,3 +1,5 @@
+import pdb
+from corehq.pillows.case import UNKNOWN_DOMAIN, UNKNOWN_TYPE
 from corehq.pillows.core import DATE_FORMATS_ARR, DATE_FORMATS_STRING
 from pillowtop.listener import AliasedElasticPillow
 import hashlib
@@ -195,21 +197,22 @@ class XFormPillow(AliasedElasticPillow):
     def get_type_string(self, doc_dict):
         domain = self.get_domain(doc_dict)
         if domain is None:
-            domain = "nodomain"
+            domain = UNKNOWN_DOMAIN
 
         ui_version = doc_dict.get('form', {}).get('@uiVersion', 'XXX')
         version = doc_dict.get('form', {}).get('@version', 'XXX')
-        xmlns = doc_dict.get('xmlns', 'http://noxmlns')
+        xmlns = doc_dict.get('xmlns', 'http://%s' % UNKNOWN_TYPE )
         if xmlns is None:
-            xmlns = 'http://noxmlns'
+            xmlns_str = UNKNOWN_TYPE
+        else:
+            xmlns_str = xmlns.split('/')[-1]
         ret =  "%(type)s_%(domain)s_%(xmlns_suffix)s_u%(ui_version)s_v%(version)s" % {
             'type': self.es_type,
             'domain': domain.lower(),
-            'xmlns_suffix': xmlns.split('/')[-1],
+            'xmlns_suffix': xmlns_str,
             'ui_version': ui_version,
             'version': version
         }
-#        print ret
         return ret
 
     def get_mapping_from_type(self, doc_dict):
@@ -226,7 +229,6 @@ class XFormPillow(AliasedElasticPillow):
         if doc_dict.get('domain', None) is not None:
             if self.handler_domain_map.has_key(doc_dict['domain']):
                 if self.handler_domain_map[doc_dict['domain']].has_custom_mapping(doc_dict):
-                    print "has custom mapping"
                     mapping = self.handler_domain_map[doc_dict['domain']].get_custom_mapping(doc_dict, mapping=mapping)
 
         return {

@@ -8,6 +8,10 @@ import logging
 import settings
 from datetime import datetime
 
+
+UNKNOWN_DOMAIN = "#nodomain"
+UNKNOWN_TYPE = "#notype"
+
 class CasePillow(AliasedElasticPillow):
     couch_db = CommCareCase.get_db()
     couch_filter = "case/casedocs"
@@ -21,11 +25,11 @@ class CasePillow(AliasedElasticPillow):
     def calc_meta(self):
         """
         override of the meta calculator since we're separating out all the types,
-        so we just do a hash of the "prototype" instead to determind md5
+        so we just do a hash of the "prototype" instead to determined md5
         """
         if not hasattr(self, '_calc_meta'):
             self._calc_meta = hashlib.md5(simplejson.dumps(
-                self.get_mapping_from_type({'domain': 'default', 'type': 'default'}))).hexdigest()
+                self.get_mapping_from_type({'domain': UNKNOWN_DOMAIN, 'type': UNKNOWN_TYPE}))).hexdigest()
         return self._calc_meta
 
     def get_mapping_from_type(self, doc_dict):
@@ -49,10 +53,10 @@ class CasePillow(AliasedElasticPillow):
     def get_type_string(self, doc_dict):
         domain = doc_dict.get('domain', None)
         if domain is None:
-            domain = "unknowndomain"
+            domain = UNKNOWN_DOMAIN
         case_type = doc_dict.get('type', None)
         if case_type is None:
-            case_type = "unknowntype"
+            case_type = UNKNOWN_TYPE
 
         ret = "%(type)s_%(domain)s__%(case_type)s" % {
             'type': self.es_type,

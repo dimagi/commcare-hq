@@ -44,6 +44,10 @@ conservative_types = {
 
 
 def type_exact_match_string(prop_name, dual=True):
+    """
+    Mapping for fields that may want prefixes (based upon the default tokenizer which splits by -'s)
+    Or the full exact string (like domains)
+    """
     if dual:
         return {
             "type": "multi_field",
@@ -58,17 +62,21 @@ def type_exact_match_string(prop_name, dual=True):
 
 default_special_types = {
     "domain":type_exact_match_string("domain", dual=True),
-    #special date formats here...
+    #to extend, use this and add special formats here...
 }
 
 case_special_types = {
     "domain":type_exact_match_string("domain", dual=True),
     "xform_ids": {"type": "string", "index": "not_analyzed"},
     "xform_id": {"type": "string", "index": "not_analyzed"},
-    #special date formats here...
+    #to extend, use this and add special date formats here...
 }
 
 def set_properties(schema_class, custom_types=default_special_types):
+    """
+    Helper function to walk a schema_class's properties recursively and create a typed out mapping
+    that can index well (specifically dict types and date time properties)
+    """
     props_dict = {}
     for prop_name, prop_type in schema_class.properties().items():
         if custom_types.has_key(prop_name):
@@ -83,10 +91,12 @@ def set_properties(schema_class, custom_types=default_special_types):
             func = complex_type_mapper[prop_type.__class__]
             props_dict[prop_name] = func(prop_type._schema, nested=False, dynamic=False)
             continue
-#        print prop_name
     return props_dict
-#    print simplejson.dumps(m, indent=4)
 
+
+
+#A conservative mapping - don't detect datestring we don't know about
+#but try to always add to mapping additional properties of dicts we didn't expect (from DictProperties)
 DEFAULT_MAPPING_WRAPPER = {
         "date_detection": False,
         'dynamic': True,
