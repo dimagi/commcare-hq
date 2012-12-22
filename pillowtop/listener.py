@@ -251,8 +251,18 @@ class ElasticPillow(BasicPillow):
                 (self.get_name(), ex))
             return None
 
-
 class AliasedElasticPillow(ElasticPillow):
+    """
+    This pillow class defines it as being alias-able. That is, when you query it, you use an Alias to access it.
+
+    This could be for varying reasons -  to make an index by certain metadata into its own index for performance/separation reasons
+
+    Or, for our initial use case, needing to version/update the index mappings on the fly with minimal disruption.
+
+
+    The workflow for altering an AliasedElasticPillow is that if you know you made a change, the pillow will create a new
+    Index witha new md5sum as its suffix. Once it's finished indexing, you will need to flip the alias over to it.
+    """
     es_alias = ''
     es_index_prefix = ''
     seen_types = {}
@@ -308,10 +318,27 @@ class AliasedElasticPillow(ElasticPillow):
         head_result = es.head(self.get_doc_path_typed(doc_dict))
         return head_result
 
+
+    def assume_alias(self):
+        """
+        todo: for this instance, have the index that represents this index receive the alias itself as well.
+        This presents a management issue later if we route out additional indexes/aliases that we automate this carefully.
+        """
+        pass
+
     def get_name(self):
+        """
+        Gets the doc_name in which to set the checkpoint for itself, based upon class name and the hashed name representation.
+        """
         return "%s.%s.%s" % (self.__module__, self.__class__.__name__, self.calc_meta())
 
     def calc_meta(self):
+        """
+        Calculate an md5 sum based upon the state of the inbuilt meta (mapping) of the type you want to index on this pillow.
+
+        simplejson.dumps(dict) is actually fairly good at syntactical/ordering of keys - only substantive content changes alter the hash.
+
+        """
         if not hasattr(self, '_calc_meta'):
             self._calc_meta = hashlib.md5(simplejson.dumps(self.es_meta)).hexdigest()
         return self._calc_meta
@@ -376,6 +403,9 @@ class AliasedElasticPillow(ElasticPillow):
 
     @property
     def es_index(self):
+        """
+        The real index that this instance represents
+        """
         return "%s_%s" % (self.es_index_prefix, self.calc_meta())
 
 
