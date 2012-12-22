@@ -1,41 +1,14 @@
 {% extends "app_manager/managed_app.html" %}
 {% load xforms_extras %}
 {% load hq_shared_tags %}
+{% load i18n %}
 {% block js %}{{ block.super }}
     <script src="{% static 'hqwebapp/javascripts/underscore-1.3.1.js' %}"></script>
     <script src="{% static 'hqwebapp/js/guidGenerator.js' %}"></script>
     <script src="{% static 'app_manager/js/lcs-merge.js' %}"></script>
     <script src="{% static 'app_manager/js/detail-screen-config.js' %}"></script>
 {% endblock %}
-
 {% block js-inline %}{{ block.super }}
-<script type="text/javascript">
-    $(function(){
-        var help_text = {
-            "Case Type": "e.g. \"pregnant_mother\"\r\n. The value you set for \"Case Type\" will be the name for the type"
-            + " of case that this module uses. If you are creating an application for the first time, you can name" +
-                    " the case type whatever you like. If you want to be able to interface with the cases of other"
-            + "modules, you will have to use the same name for the case type. When you view the case data online, it " +
-                    "will be organized by case type. Perhaps you will have one case called \"pregnant_mother\", and " +
-                    "another called \"routine_patient\", etc.",
-            "Case List": "Whether to have an item in the module's menu that lets you browse the case list without " +
-                    "moving on to fill out a form.",
-            "Task List": "Whether to have an item in the module's menu that lets you see all of your delegated tasks. " +
-                    "Only makes sense if you're using a delegation workflow."
-
-        };
-        $('.help_popover').popover({
-            placement: $(this).data('placement') || 'left',
-            title: function () {
-                return $(this).attr('data-help-key');
-            },
-            content: function () {
-                return help_text[$(this).attr('data-help-key')];
-            },
-            trigger: 'hover'
-        });
-    });
-</script>
 {% endblock %}
 {% block head %}{{ block.super }}
     <link rel="stylesheet" href="{% static 'app_manager/css/detail-screen-config.css' %}"/>
@@ -74,7 +47,7 @@
         </form>
     </div>
     {% endif %}
-    <h3 class="variable-module_name">{{ module.name|html_trans:langs|safe }}</h3>
+    <h3 class="app-manager-title variable-module_name">{{ module.name|html_trans:langs|safe }}</h3>
 
     <h4>Module Settings</h4>
 
@@ -97,8 +70,12 @@
                     {% endwith %}
                     <tr class="form editable">
                         <th>
-                            Case Type
-                            <span class="help_popover" data-help-key="Case Type"><span> <i class="icon icon-question-sign"></i></span></span>
+                            {% trans "Case Type" %}
+
+                            <span class="hq-help-template"
+                                data-title="{% trans "Case Type" %}"
+                                data-content="{% trans "e.g. &quot;pregnant_mother&quot;. The value you set for Case Type will be the name for the type of case that this module uses. If you are creating an application for the first time, you can name the case type whatever you like. If you want to be able to interface with the cases of other modules, you will have to use the same name for the case type. When you view the case data online, it will be organized by case type. Perhaps you will have one case called &quot;pregnant_mother&quot;, and another called &quot;routine_patient&quot;, etc." %}"
+                            ></span>
                         </th>
                         <td>
                             <input class="code" type="text" name="case_type" value="{{ module.case_type }}"/>
@@ -175,9 +152,9 @@
                     </tr>
                     {% endif %}
                 {% endif %}
-                {% include 'app_manager/partials/case_list_setting.html' with LABEL="Case List" SLUG="case_list" case_list=module.case_list %}
-                {% if app.application_version != '1.0' %}
-                    {% include 'app_manager/partials/case_list_setting.html' with LABEL="Task List" SLUG="task_list" case_list=module.task_list %}
+                {% include 'app_manager/partials/case_list_setting.html' with LABEL="Case List" DESC="Whether to have an item in the module's menu that lets you browse the case list without moving on to fill out a form." SLUG="case_list" case_list=module.case_list %}
+                {% if app.application_version != '1.0' and request.project.survey_management_enabled %}
+                    {% include 'app_manager/partials/case_list_setting.html' with LABEL="Task List" DESC="Whether to have an item in the module's menu that lets you see all of your delegated tasks. Only makes sense if you're using a delegation workflow." SLUG="task_list" case_list=module.task_list %}
                 {% endif %}
             </table>
         </form>
