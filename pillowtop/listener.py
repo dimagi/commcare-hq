@@ -277,22 +277,26 @@ class AliasedElasticPillow(ElasticPillow):
         raise NotImplementedError("Need to implement your own meta calculator")
 
 
-    def type_exists(self, doc_dict):
+    def type_exists(self, doc_dict, server=False):
+        """
+        Verify whether the server has indexed this type
+
+        We can assume at startup that the mapping from the server is loaded, so in memory will be up to date.
+
+        server = False:
+            if true, override to always call server
+        """
         es = self.get_es()
         type_string = self.get_type_string(doc_dict)
 
         ##################
         #ES 0.20 has the index HEAD API.  While we're on 0.19, we will need to poll the index
         # metadata
-        #type_path = "%(index)s/%(type_string)s" % ( { 'index': self.es_index, 'type_string': type_string, })
-
-        #if we don't want to server confirm it for both .19 or .20, then this hash is enough
-        #if self.seen_types.has_key(type_string):
-        #return True
-        #else:
-        #self.seen_types[type_string] = True
-        #head_result = es.head(type_path)
-        #return head_result
+        if server:
+            type_path = "%(index)s/%(type_string)s" % ( { 'index': self.es_index, 'type_string': type_string, })
+            head_result = es.head(type_path)
+            self.seen_types[type_string] = head_result
+            return head_result
         ##################
 
         #####
@@ -365,12 +369,6 @@ class AliasedElasticPillow(ElasticPillow):
                     logging.info("Mapping set: [%s] %s" % (self.get_type_string(doc_dict), mapping_res))
                     #manually update in memory dict
                     self.seen_types[self.get_type_string(doc_dict)] = {}
-                else:
-                    # 0.19 mapping - retrieve the mapping to confirm that it's been seen
-                    #something didn't go right, get mapping manually
-                    #this server confirm is an overhead but it tells us whether or not the type for real
-                    logging.error("[%s] %s: Mapping error: %s" % (self.get_name(), doc_dict['_id'], mapping_res))
-                    self.seen_types = es.get('%s/_mapping' % self.es_index)[self.es_index]
 
 #            got_type = datetime.utcnow()
             doc_path = self.get_doc_path_typed(doc_dict)
