@@ -1,0 +1,29 @@
+<script type="text/html" id="value-or-none-ui-template">
+    <div data-bind="visible: !hasValue()">
+        <a href="#" data-bind="enterInput: $data">
+            <span data-bind="text: messages.add"></span>
+        </a>
+    </div>
+    <div data-bind="visible: hasValue">
+        <div data-bind="visible: allowed()">
+            <a href="#" data-bind="exitInput: $data"></a>
+            <input type="text" data-bind="value: inputValue, hasfocus: hasFocus, css: inputCss, attr: inputAttr, valueUpdate: 'textchange'"/>
+        </div>
+        <div data-bind="visible: !allowed()">
+            <div class="alert alert-error" data-bind="visible: value">
+                <strong data-bind="text: messages.notAllowed"></strong>
+                <span data-bind="text: messages.notAllowedButExists"></span>
+                <div>
+                    <code data-bind="text: value()"></code>
+                    <a href="#" data-bind="exitInput: $data">
+                        <span data-bind="text: messages.remove"></span>
+                    </a>
+                </div>
+            </div>
+            <div class="label label-info" data-bind="visible: !value(),
+                text: messages.notAllowed">
+            </div>
+        </div>
+    </div>
+    <input type="hidden" data-bind="value: value, attr: {name: inputName}"/>
+</script>

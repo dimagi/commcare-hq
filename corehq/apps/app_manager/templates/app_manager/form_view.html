@@ -2,8 +2,6 @@
 {% load xforms_extras %}
 {% load hq_shared_tags %}
 {% load i18n %}
-{% block js-inline %}{{ block.super }}
-{% endblock %}
 {% block js %}{{ block.super }}
     <script src="{% static 'hqwebapp/javascripts/knockout.mapping.js' %}"></script>
     <script src="{% static 'hqwebapp/js/knockout-bindings.js' %}"></script>
@@ -16,7 +14,10 @@
     {% endif %}
     <script src="{% static 'app_manager/js/langcodeValidator.js' %}"></script>
     <script src="{% static 'cloudcare/js/util.js' %}"></script>
-
+{% endblock %}
+{% block js-inline %}{{ block.super }}
+    {% include "hqwebapp/ko/value-or-none-ui.html" %}
+    {% include "app_manager/partials/nav_menu_media_js.html" with item=form %}
     <script>
         $(function(){
             (function styleSourcePopup() {
@@ -173,6 +174,14 @@
                 $("#cloudcare-preview-url").attr("href", cloudCareUrl);
             }
         {% endif %}
+        {% if app.application_version != '1.0' %}
+            ko.applyBindings({
+                    formFilter: ko.observable({{ form.form_filter|JSON }}),
+                    formFilterAllowed: {{ module.all_forms_require_a_case|BOOL }}
+                },
+                $('#form-filter').get(0)
+            );
+        {% endif %}
         });
     </script>
 {% endblock %}
@@ -283,9 +292,7 @@
                             {% endif %}
                         </td>
                     </tr>
-                    {% with form as item %}
-                        {% include "app_manager/partials/nav_menu_media.html" %}
-                    {% endwith %}
+                    {% include "app_manager/partials/nav_menu_media.html" with item=form%}
                     {% if app.application_version != '1.0' %}
                     <tr>
                         <th>
@@ -295,23 +302,19 @@
                                 data-content="{% trans "You can specify an XPath to use as a display condition for this form. For example './edd > today()' means 'show this form if the selected case has an edd later than today'" %}"
                             ></span>
                         </th>
-                        <td>
+                        <td id="form-filter">
                             {% if edit %}
-                                {% if not module.all_forms_require_a_case %}
-                                    {% if form.form_filter %}
-                                        <div class="alert alert-error">
-                                            <strong>{% trans "This option only applies when all forms in a module require a case" %}</strong>
-                                            {% trans "but it looks like you tried to configure one earlier, which we'll have to ignore:" %}
-                                            <code>{{ form.form_filter|default:'' }}</code>
-                                        </div>
-                                    {% else %}
-                                        <div class="label label-info">
-                                            {% trans "This option only applies when all forms in a module require a case" %}
-                                        </div>
-                                    {% endif %}
-                                {% else %}
-                                    <input type="text" class="wide" name="form_filter" value="{{ form.form_filter|default:'' }}"/>
-                                {% endif %}
+                                <div data-bind="valueOrNoneUI: {
+                                    value: formFilter,
+                                    allowed: formFilterAllowed,
+                                    inputCss: {wide: true},
+                                    inputName: 'form_filter'
+                                }">
+                                    <span data-slug="add">{% trans "Add Display Condition..." %}</span>
+                                    <span data-slug="remove">{% trans "Remove Display Condition" %}</span>
+                                    <span data-slug="notAllowed">{% trans "This option only applies when all forms in a module require a case" %}</span>
+                                    <span data-slug="notAllowedButExists">{% trans "but it looks like you tried to configure one earlier, which we'll have to ignore:" %}</span>
+                                </div>
                             {% else %}
                                 <code>{{ form.form_filter|default:'' }}</code>
                             {% endif %}

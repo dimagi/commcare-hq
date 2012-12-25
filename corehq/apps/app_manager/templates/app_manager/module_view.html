@@ -3,15 +3,18 @@
 {% load hq_shared_tags %}
 {% load i18n %}
 {% block js %}{{ block.super }}
+    <script src="{% static 'hqwebapp/js/knockout-bindings.js' %}"></script>
     <script src="{% static 'hqwebapp/javascripts/underscore-1.3.1.js' %}"></script>
     <script src="{% static 'hqwebapp/js/guidGenerator.js' %}"></script>
     <script src="{% static 'app_manager/js/lcs-merge.js' %}"></script>
     <script src="{% static 'app_manager/js/detail-screen-config.js' %}"></script>
 {% endblock %}
-{% block js-inline %}{{ block.super }}
-{% endblock %}
 {% block head %}{{ block.super }}
     <link rel="stylesheet" href="{% static 'app_manager/css/detail-screen-config.css' %}"/>
+{% endblock %}
+{% block js-inline %}{{ block.super }}
+    {% include "hqwebapp/ko/value-or-none-ui.html" %}
+    {% include "app_manager/partials/nav_menu_media_js.html" with item=module %}
     <script>
         $(function () {
             var $home = $("#detail-screen-config");

@@ -1,30 +1,42 @@
+{% load i18n %}
+{% load hq_shared_tags %}
 <tr>
-    <th>Image (optional)</th>
-    <td class="commcare-feature" data-since-version="1.3">
+    <th>{% trans "Image" %}</th>
+    <td class="commcare-feature" data-since-version="1.3" id="media_image">
         {% if edit %}
-            <input type="text" class="wide jr-resource-field" name="media_image"
-                   value="{{ item.media_image|default:"" }}"
-                   placeholder="jr://file/commcare_media/image/image.png"/>
+            <div data-bind="valueOrNoneUI: {
+                value: media_image,
+                allowed: true,
+                inputName: 'media_image',
+                inputCss: {wide: true, 'jr-resource-field': true},
+                inputAttr: {placeholder: 'jr://file/commcare_media/image/image.png', 'data-name': 'media_image'}
+            }">
+                <span data-slug="add">{% trans "Add Image..." %}</span>
+                <span data-slug="remove">{% trans "Remove Image" %}</span>
+            </div>
         {% else %}
             {{ item.media_image }}
         {% endif %}
     </td>
 </tr>
 <tr>
-    <th>Audio (optional)</th>
-    <td class="commcare-feature" data-since-version="1.3">
+    <th>{% trans "Audio" %}</th>
+    <td class="commcare-feature" data-since-version="1.3" id="media_audio">
         {% if edit %}
-            <input type="text" class="wide jr-resource-field" name="media_audio"
-                   value="{{ item.media_audio|default:"" }}"
-                   placeholder="jr://file/commcare_media/audio/audio.mp3"/>
+            <div data-bind="valueOrNoneUI: {
+                value: media_audio,
+                allowed: media_audio_allowed,
+                inputName: 'media_audio',
+                inputCss: {wide: true, 'jr-resource-field': true},
+                inputAttr: {placeholder: 'jr://file/commcare_media/audio/audio.mp3', 'data-name': 'media_audio'}
+            }">
+                <span data-slug="add">{% trans "Add Audio..." %}</span>
+                <span data-slug="remove">{% trans "Remove Audio" %}</span>
+                <span data-slug="notAllowed">{% trans "To hear audio, you must be in CommCare Sense mode or Numeric Selection mode" %}</span>
+                <span data-slug="notAllowedButExists">{% trans "but you have audio configured, which we'll have to ignore:" %}</span>
+            </div>
         {% else %}
             {{ item.media_audio }}
-        {% endif %}
-        {% if app.profile.features.sense != "true" %}
-        <div>
-            <span class="ui-icon ui-icon-arrowthick-1-e"></span>
-            To hear audio, you must be in CommCare Sense mode or Numeric Selection mode
-        </div>
         {% endif %}
     </td>
 </tr>
