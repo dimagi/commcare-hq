@@ -103,13 +103,12 @@
             this.started = ko.observable(data.started);
             this.ended = ko.observable(data.ended);
 
-
             this.display_started = ko.observable(format_date(data.started));
             this.display_ended = ko.observable(format_date(data.ended));
 
             this.deprecated = ko.observable(data.deprecated);
         }
-        var api_url = "{% url pactdata_1 domain=domain %}?case_id={{ patient_doc.get_id }};
+        var api_url = "{% url pactdata_1 domain=domain %}?case_id={{ patient_doc.get_id }}";
         function ScheduleListViewModel() {
             // Data
             var self = this;
@@ -152,7 +151,7 @@
             $('#new_schedule_form').ajaxForm(function() {
                 var send_xhr = $.ajax({
                     "type": "POST",
-                    "url":  api_url,
+                    "url":  api_url + "&method=schedule",
                     "data": $("#new_schedule_form").serialize(),
                     "success": function(data) {
                         console.log(data);
