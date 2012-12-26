@@ -11,8 +11,6 @@ class Command(BaseCommand):
         "core/hqstyle-core",
         "legacy/app_manager",
         "legacy/core",
-        "legacy/formdesigner/formdesigner",
-        "legacy/formdesigner/screen",
         "mobile/c2/hqstyle-mobile-c2",
     ]
     # NOTE: Order matters for the bootstrap js files.
