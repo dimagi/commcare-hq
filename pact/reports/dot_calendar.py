@@ -266,7 +266,7 @@ class DOTCalendar(HTMLCalendar):
                         if len(obs_list) > 0:
                             obs = obs_list[0]
                             if obs.day_slot != '' and obs.day_slot is not None and obs.day_slot != -1:
-                                day_slot_string = DAY_SLOTS_BY_IDX.get(int(obs.day_slot), 'Unknown')
+                                day_slot_string = DAY_SLOTS_BY_IDX.get(int(obs.day_slot), 'Unknown').title()
                                 body.append('<div class="time-label">%s</div>' % day_slot_string)
                             else:
                                 #do it by seq?

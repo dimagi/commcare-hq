@@ -5,11 +5,7 @@
         <div>
             <div class="commit-group-heading">
                 <h4>Information
-                    <div style="float:right;">
-                        <small>
-{#                            <a href="javascript:ajax_get_form('{% url ajax_patient_form_get %}', '{{ patient_doc.get_id }}', 'ptedit', 'patienteditform');"> Edit</a>#}
-                        </small>
-                    </div>
+                            &nbsp;<a class="btn btn-success" href="{{ pt_root_url }}&view=edit">Edit</a>
                 </h4>
             </div>
             <div class="commit-group">
@@ -23,7 +19,6 @@
                         <td>{{ patient_doc.get_gender_display}}</td>
                         <th>SSN</th>
                         <td>{{ patient_doc.ssn }}</td>
-
                     </tr>
 
                     <tr>

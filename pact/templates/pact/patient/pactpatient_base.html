@@ -17,7 +17,7 @@
             {% block patient-content-tabs %}
                 <ul class="nav nav-pills">
                     {% block patient-tab-controller %}
-                        <li {% if view_mode == "info" %}class="active"{% endif %}>
+                        <li {% if view_mode == "info" or view_mode == "edit" %}class="active"{% endif %}>
                             <a href="{{ pt_root_url }}" >{% trans "Info" %}</a></li>
 
                         <li {% if view_mode == "schedule" %}class="active"{% endif %}>

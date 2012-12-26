@@ -7,6 +7,7 @@ from corehq.apps.reports.generic import GenericTabularReport
 from corehq.apps.reports.standard import CustomProjectReport
 from dimagi.utils.decorators import inline
 from dimagi.utils.decorators.memoized import memoized
+from pact.forms.patient_form import PactPatientForm
 from pact.forms.weekly_schedule_form import ScheduleForm
 from pact.models import  PactPatientCase
 from pact.reports import  PactDrilldownReportMixin, ESSortableMixin
@@ -98,8 +99,11 @@ class PactPatientInfoReport(PactDrilldownReportMixin,ESSortableMixin, GenericTab
             the_form = ScheduleForm()
             ret['schedule_form'] = the_form
             ret['schedule_fields'] = simplejson.dumps(the_form.fields.keys())
-            print ret
             self.report_template_path = "pact/patient/pactpatient_schedule.html"
+        elif view_mode == 'edit':
+            the_form = PactPatientForm(patient_doc)
+            ret['patient_form'] = the_form
+            self.report_template_path = "pact/patient/pactpatient_edit.html"
         else:
             raise Http404
         return ret

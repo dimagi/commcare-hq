@@ -1,5 +1,6 @@
 import logging
 from xml.etree import ElementTree
+import dateutil
 from django.conf import settings
 from datetime import datetime, timedelta
 from pytz import timezone
@@ -10,11 +11,12 @@ from casexml.apps.case.xml import V2
 from couchforms.util import post_xform_to_couch
 from dimagi.utils import make_time
 from dimagi.utils.printing import print_pretty_xml
+from pact.api import submit_blocks
 from pact.enums import DAY_SLOTS_BY_TIME
 
 
 def isodate_string(date):
-    if date: return isodate.datetime_isoformat(date) + "Z"
+    if date: return dateutil.datetime_isoformat(date) + "Z"
     return ""
 
 def get_regimen_code_arr(str_regimen):
@@ -123,20 +125,6 @@ def calculate_regimen_caseblock(case):
             else:
                 update_ret[prop_prop] = str(code_arr[x-1])
     return update_ret
-
-def submit_blocks(case_blocks, sender_name):
-    form = ElementTree.Element("data")
-    form.attrib['xmlns'] = "http://dev.commcarehq.org/pact/patientupdate"
-    form.attrib['xmlns:jrm'] = "http://openrosa.org/jr/xforms"
-    for block in case_blocks:
-        form.append(block)
-    submission_xml_string = ElementTree.tostring(form)
-    print "#################################\nCase Update Submission: %s" % sender_name
-    print_pretty_xml(submission_xml_string)
-    print "#################################\n\n"
-    xform_posted = post_xform_to_couch(ElementTree.tostring(form))
-    process_cases(sender=sender_name, xform=xform_posted)
-    return xform_posted
 
 def recompute_dots_casedata(case):
     """

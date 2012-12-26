@@ -22,6 +22,9 @@ TIME_LABEL_LOOKUP = (
 DOT_ART = "ART"
 DOT_NONART = "NONART"
 
+CASE_ART_REGIMEN_PROP = 'artregimen'
+CASE_NONART_REGIMEN_PROP = 'nonartregimen'
+
 DOT_OBSERVATION_DIRECT = "direct" #saw them take it - most trustworthy
 DOT_OBSERVATION_PILLBOX = "pillbox"
 DOT_OBSERVATION_SELF = "self"
@@ -40,6 +43,7 @@ GENDER_CHOICES = (
     )
 GENDER_CHOICES_DICT = dict(x for x in GENDER_CHOICES)
 
+#deprecated
 REGIMEN_CHOICES = (
     ('None', '-- No Regimen --'),
     (None, '-- No Regimen --'),
@@ -64,10 +68,10 @@ DAY_SLOTS_BY_TIME = {
 
 
 DAY_SLOTS_BY_IDX = {
-    0: 'Morning',
-    1: 'Noon',
-    2: 'Evening',
-    3: 'Bedtime',
+    0: 'morning',
+    1: 'noon',
+    2: 'evening',
+    3: 'bedtime',
     }
 
 PACT_HP_CHOICES = (

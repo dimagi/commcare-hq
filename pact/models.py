@@ -8,7 +8,8 @@ from dimagi.utils.decorators.memoized import memoized
 from pact import enums
 
 from couchdbkit.schema.properties import ALLOWED_PROPERTY_TYPES
-from pact.enums import TIME_LABEL_LOOKUP, PACT_SCHEDULES_NAMESPACE
+from pact.enums import TIME_LABEL_LOOKUP, PACT_SCHEDULES_NAMESPACE, DOT_ART, DOT_NONART
+from pact.regimen import regimen_string_from_doc
 
 ALLOWED_PROPERTY_TYPES.add(partial)
 
@@ -18,30 +19,6 @@ def make_uuid():
 #placeholder for management of pact case models
 from datetime import datetime, timedelta
 from couchdbkit.ext.django.schema import StringProperty, DateTimeProperty, BooleanProperty, Document, DateProperty, SchemaListProperty, IntegerProperty
-
-
-#class PactDOTIndicatorDefinition(FormIndicatorDefinition):
-#    namespace = StringProperty()
-#    domain = StringProperty()
-#    slug = StringProperty()
-#    version = IntegerProperty()
-#    class_path = StringProperty()
-#
-#
-#    def get_value(self, doc):
-#        dots_json = doc['form']['case']['update']['dots']
-#        if isinstance(dots_json, str) or isinstance(dots_json, unicode):
-#            json_dots = simplejson.loads(dots_json)
-#            return json_dots
-#        else:
-#            return {}
-#
-#    def get_existing_value(self, doc):
-#        try:
-#            return doc.computed_.get(self.namespace, {}).get(self.slug, {}).get('value')
-#        except AttributeError:
-#            return None
-
 
 
 
@@ -78,6 +55,36 @@ class PactPatientCase(CommCareCase):
             return display_dict.get(attr_val, attr_val)
         else:
             return ""
+
+    def art_regimen_label_string(self):
+        """
+        representation of the labeled strings of the art regimen
+        """
+        return regimen_string_from_doc(DOT_ART, self.to_json())
+
+    def nonart_regimen_label_string(self):
+        """
+        representation of the labeled strings of the nonart regimen
+        """
+        return regimen_string_from_doc(DOT_NONART, self.to_json())
+
+    def art_properties(self):
+        return {
+            enums.CASE_ART_REGIMEN_PROP: getattr(self, enums.CASE_ART_REGIMEN_PROP, None),
+            'dot_a_one': getattr(self, 'dot_a_one', ''),
+            'dot_a_two': getattr(self, 'dot_a_two', ''),
+            'dot_a_three': getattr(self, 'dot_a_three', ''),
+            'dot_a_four': getattr(self, 'dot_a_four', '')
+        }
+
+    def nonart_properties(self):
+        return {
+            enums.CASE_NONART_REGIMEN_PROP: getattr(self, enums.CASE_NONART_REGIMEN_PROP, None),
+            'dot_n_one': getattr(self, 'dot_n_one', ''),
+            'dot_n_two': getattr(self, 'dot_n_two', ''),
+            'dot_n_three': getattr(self, 'dot_n_three', ''),
+            'dot_n_four': getattr(self, 'dot_n_four', '')
+        }
 
 
     def get_schedules(self, raw_json=False, reversed=False):

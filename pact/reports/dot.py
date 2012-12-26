@@ -26,7 +26,7 @@ class PactDOTPatientField(ReportSelectField):
         case_type = self.request.GET.get(self.slug, '')
 
         self.selected = case_type
-        self.options = [dict(val=case['_id'], text="(%s) - %s" % (case['pactid'], case['name'])) for case in patient_cases]
+        self.options = [dict(val=case['_id'], text="(%s) - %s" % (case.get('pactid', '[none]'), case['name'])) for case in patient_cases]
 
     @classmethod
     def get_pact_cases(cls):

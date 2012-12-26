@@ -1,0 +1,48 @@
+{% extends "pact/patient/pactpatient_base.html" %}
+{% block js-inline %}
+    {{ block.super }}
+{% endblock js-inline %}
+{% block extrahead %}
+{% endblock extrahead %}
+{% block patient-tab-container %}
+    <div class="row-fluid" id="celeryblock">
+        <h4>Edit Information
+        &nbsp;<a class="btn btn-info" href="{{ pt_root_url }}&view=info">Cancel</a>
+            </h4>
+        <form id="pt_edit_form">
+        <table class="table table-striped">
+            <tbody>
+            {{ patient_form.as_table }}
+            </tbody>
+        </table>
+        </form>
+        <div id="form_errors">
+        </div>
+        <button id="submit_button" class="btn">Submit</button>
+    </div>
+
+    <script type="text/javascript">
+            $("#submit_button").click(function() {
+                // validate and process form here
+                var form_data = $("#pt_edit_form").serialize();
+                var api_url = "{% url pactdata_1 domain=domain %}?case_id={{ patient_doc.get_id }}&method=patient_edit";
+                console.log(form_data);
+                var send_xhr = $.ajax({
+                    "type": "POST",
+                    "url":  api_url,
+                    "data": form_data,
+                    "success": function(data) {
+                        window.location.href = "{{ pt_root_url }}&view=info"; //totally nasty, but works for now
+                    }, //end success
+                    "error": function(data) {
+                        if(data.responseText !== undefined) {
+                            $("#form_errors").html(data.responseText);
+
+                        }
+                    }
+                });
+
+            });
+    </script>
+
+{% endblock %}

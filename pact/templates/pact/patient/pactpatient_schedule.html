@@ -109,12 +109,12 @@
 
             this.deprecated = ko.observable(data.deprecated);
         }
-        var api_url = "{% url pactdata_1 domain=domain %}?case_id={{ patient_doc.get_id }}&method=schedule";
+        var api_url = "{% url pactdata_1 domain=domain %}?case_id={{ patient_doc.get_id }};
         function ScheduleListViewModel() {
             // Data
             var self = this;
             self.getSchedules = function () {
-                $.getJSON(api_url, function (allData) {
+                $.getJSON(api_url + "&method=schedule", function (allData) {
                             var mappedSchedules = $.map(allData, function (item) {
                                 return new ScheduleModel(item)
                             });
@@ -131,7 +131,7 @@
                 var json_schedules= ko.toJSON(self.schedules);
                 var send_xhr = $.ajax({
                     "type": "POST",
-                    "url":  api_url,
+                    "url":  api_url + "&method=rm_schedule",
                     "data": {"rm_schedule":""},
                     "success": function(data) {
                         alert("Removed, I hope you know what you're doing");

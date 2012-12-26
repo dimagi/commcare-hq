@@ -1,11 +1,14 @@
 from corehq.apps.cloudcare.models import CaseSpec, CasePropertySpec, SelectChoice
 from django.core.management.base import NoArgsCommand
 from pact.enums import PACT_DOMAIN, PACT_CASE_TYPE, PACT_HP_CHOICES, GENDER_CHOICES, PACT_DOT_CHOICES
+from pact.reports.patient_list import PactPrimaryHPField
 
 class Command(NoArgsCommand):
     help = "Create or update the CaseSpec for PACT Cases"
     option_list = NoArgsCommand.option_list + (
     )
+
+    #http://localhost:8000/a/pact/cloudcare/cases/view/<case_id> #0bd56681dce2b7a5140f75266d1df9c9
 
     def handle_noargs(self, **options):
         pact_spec = CaseSpec.get_suggested(PACT_DOMAIN, case_type=PACT_CASE_TYPE)
@@ -28,6 +31,9 @@ class Command(NoArgsCommand):
         spec_hp_choices = [SelectChoice(stringValue=x[0], label={'en': x[1]}) for x in  PACT_HP_CHOICES]
         spec_dot_choices = [SelectChoice(stringValue=x[0], label={'en': x[1]}) for x in PACT_DOT_CHOICES]
         spec_gender_choices = [SelectChoice(stringValue=x[0], label={'en': x[1]}) for x in GENDER_CHOICES]
+        primary_hp_choices = [SelectChoice(stringValue=x['val'], label=dict(en=x['text'])) for x in PactPrimaryHPField.get_chws()]
+
+
         properties.append(CasePropertySpec(key='hp_status', label={'en':'HP Status'}, type='select', choices=spec_hp_choices))
         properties.append(CasePropertySpec(key='dot_status', label={'en': 'DOT Status'}, type='select', choices=spec_dot_choices))
         properties.append(CasePropertySpec(key='gender', label={'en': 'Sex'}, type='select', choices=spec_gender_choices))
@@ -35,6 +41,7 @@ class Command(NoArgsCommand):
         properties.append(CasePropertySpec(key='notes', label={'en': 'Notes'}, type='string'))
         properties.append(CasePropertySpec(key='mass_health_expiration',  label={'en': 'Mass Health Expiration Date'}, type='date'))
         properties.append(CasePropertySpec(key='ssn', label={'en': 'SSN'}, type='string'))
+        properties.append(CasePropertySpec(key='hp', label={'en': 'Primary HP'}, type='select', choices=primary_hp_choices))
         newspec.propertySpecs = properties
         newspec.save()
 
