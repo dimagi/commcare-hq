@@ -73,35 +73,19 @@ class PactFormAPI(DomainAPI):
         total_count = 0
 
         query = {
-            "sort": {
-                "received_on": "asc"
-            },
             "query": {
                 "filtered": {
                     "filter": {
                         "and": [
-                            {
-                                "term": {
-                                    "domain.exact": "pact"
-                                }
-                            },
-                            {
-                                "term": {
-                                    "form.#type": "progress_note"
-                                }
-                            },
-                            {
-                                "term": {
-                                    "form.meta.username": username
-                                }
-                            }
+                            { "term": { "domain.exact": "pact" } },
+                            { "term": { "form.#type": "progress_note" } },
+                            { "term": { "form.meta.username": username } }
                         ]
                     },
-                    "query": {
-                        "match_all": {}
-                    }
+                    "query": { "match_all": {} }
                 }
             },
+            "sort": { "received_on": "asc" },
             "size": limit_count,
             "fields": ['_id']
         }
@@ -194,7 +178,7 @@ def generate_meta_block(couch_user, instance_id=None, timestart=None, timeend=No
     return meta_lxml
 
 
-def prepare_case_update_xml_block(casedoc, couch_user, update_dict, submit_date, include_dots=False, close=False):
+def prepare_case_update_xml_block(casedoc, couch_user, update_dict, submit_date):
     case_nsmap = {'n1': 'http://commcarehq.org/case/transaction/v2'}
     def make_update(update_elem, updates):
         for k,v in updates.items():
@@ -205,6 +189,14 @@ def prepare_case_update_xml_block(casedoc, couch_user, update_dict, submit_date,
     update_lxml = etree.SubElement(case_lxml, '{%s}update' % case_nsmap['n1'])
     make_update(update_lxml, update_dict)
     return case_lxml
+
+
+def recompute_dots_update(casedoc, submit_date=None):
+    """
+    On a DOT submission, recompute the DOT block and submit a case update xform
+    """
+
+    pass
 
 def submit_case_update_form(casedoc, update_dict, couch_user, submit_date=None):
     """
