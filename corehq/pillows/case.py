@@ -9,8 +9,8 @@ import settings
 from datetime import datetime
 
 
-UNKNOWN_DOMAIN = "#nodomain"
-UNKNOWN_TYPE = "#notype"
+UNKNOWN_DOMAIN = "__nodomain__"
+UNKNOWN_TYPE = "__notype__"
 
 class CasePillow(AliasedElasticPillow):
     couch_db = CommCareCase.get_db()
