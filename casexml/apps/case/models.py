@@ -83,7 +83,10 @@ class CommCareCaseAction(DocumentSchema):
         id = cache.get(key)
         if not id:
             xform = self.xform
-            id = xform.metadata.userID if xform else None
+            try:
+                id = xform.metadata.userID
+            except AttributeError:
+                id = None
             cache.set(key, id, 12*60*60)
         return id
 
