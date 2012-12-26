@@ -11,7 +11,7 @@ from corehq.apps.reports.standard.inspect import CaseListReport, CaseDisplay, Ca
 from couchdbkit.resource import RequestFailed
 from couchforms.models import XFormInstance
 from dimagi.utils.decorators.memoized import memoized
-from pact.enums import PACT_DOMAIN
+from pact.enums import PACT_DOMAIN, PACT_CASE_TYPE
 from pact.reports.dot_calendar import DOTCalendarReporter
 
 
@@ -33,11 +33,9 @@ class PactDOTPatientField(ReportSelectField):
         domain = PACT_DOMAIN
         case_es = CaseES()
         query = case_es.base_query(domain, start=0, size=None)
-        query['filter']['and'].append({
-            "prefix": {
-                "dot_status": "dot"
-            }
-        })
+        query['filter']['and'].append({ "prefix": { "dot_status": "dot" } })
+        query['filter']['and'].append({ "term": { "type": PACT_CASE_TYPE } })
+
         query['fields'] = ['_id', 'name', 'pactid']
         results = case_es.run_query(query)
         for res in results['hits']['hits']:
