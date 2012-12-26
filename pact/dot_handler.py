@@ -57,7 +57,7 @@ def get_regimen_code_arr(str_regimen):
             ret = []
     return ret
 
-def get_dots_data(self):
+def get_dots_data(casedoc):
     """
     Return JSON-ready array of the DOTS block for given patient.
     Pulling properties from PATIENT document.  patient document trumps casedoc in this use case.
@@ -65,7 +65,7 @@ def get_dots_data(self):
     startdate = datetime.utcnow()
     ret = {}
     try:
-        art_arr = get_regimen_code_arr(self.art_regimen.lower())
+        art_arr = get_regimen_code_arr(casedoc.art_regimen.lower())
         art_num = len(art_arr)
     except:
         art_num = 0
@@ -73,7 +73,7 @@ def get_dots_data(self):
         logging.error("Patient does not have a set art regimen")
 
     try:
-        non_art_arr = get_regimen_code_arr(self.non_art_regimen.lower())
+        non_art_arr = get_regimen_code_arr(casedoc.non_art_regimen.lower())
         non_art_num = len(non_art_arr)
     except:
         non_art_num = 0
@@ -98,7 +98,7 @@ def get_dots_data(self):
 
     for delta in range(21):
         date = startdate - timedelta(days=delta)
-        day_arr = self.dots_casedata_for_day(date)
+        day_arr = casedoc.dots_casedata_for_day(date)
         ret['days'].append(day_arr)
     ret['days'].reverse()
     return ret
