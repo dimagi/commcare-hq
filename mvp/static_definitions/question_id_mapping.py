@@ -57,18 +57,18 @@ PREGNANCY_VISIT_QUESTION_IDS = {
         'mvp-potou': _make_qid('emergency_danger_sign', 1),
     },
     'prev_num_anc': {
-        'mvp-sauri': _make_qid('group_counseling.prev_num_anc', 1),
-        'mvp-potou': _make_qid('prev_num_anc', 1),
+        'mvp-sauri': _make_qid('prev_num_anc', 2),
+        'mvp-potou': _make_qid('prev_cur_num_anc', 2),
     },
     'num_anc': {
         'mvp-sauri': _make_qid('group_counseling.num_anc', 1),
-        'mvp-potou': _make_qid('group_counseling.num_anc', 1),
+        'mvp-potou': _make_qid('group_referral_dangersign.num_anc', 2),
     },
     'last_anc_date': {
         'mvp-sauri': _make_qid('group_counseling.last_anc_date', 1),
     },
     'last_anc_weeks': {
-        'mvp-potou': _make_qid('group_counseling.last_anc_weeks', 1),
+        'mvp-potou': _make_qid('group_referral_dangersign.last_anc_weeks', 2),
     },
     'referral_type': {
         'mvp-sauri': _make_qid('group_referral_dangersign.referral_type', 1),
