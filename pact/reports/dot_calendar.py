@@ -1,5 +1,5 @@
 from calendar import HTMLCalendar
-from calendar import  month_name
+from calendar import  month_name, monthrange
 from datetime import date, timedelta, datetime
 from itertools import groupby
 import pdb
@@ -175,13 +175,25 @@ class DOTCalendarReporter(object):
         currmonth = startmonth
         curryear = startyear
         observations = self.dot_observation_range()
-        while currmonth % 13 + 1 <= endmonth:
+
+        def endcur_in_obs(currmonth, curryear, observations):
+            month_days = monthrange(curryear, currmonth)[1]
+            if (curryear, currmonth) <= (observations[-1].observed_date.year, observations[-1].observed_date.month):
+                return True
+            else:
+                return False
+
+        while endcur_in_obs(currmonth, curryear, observations):
+        #while currmonth % 13 + 1 <= endmonth:
             cal = DOTCalendar(self.patient_casedoc, observations)
             yield cal.formatmonth(curryear, currmonth)
             currmonth += 1
-            if currmonth % 13 == 0:
+            print "currmonth: %s" % currmonth
+            print "curryear: %s" % curryear
+            if currmonth == 13:
                 #roll over, flip year
                 curryear+=1
+                currmonth = 1
 
 
 class DOTCalendar(HTMLCalendar):
