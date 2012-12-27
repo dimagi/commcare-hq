@@ -29,7 +29,7 @@ from dimagi.utils.parsing import json_format_datetime, string_to_boolean
 from django.contrib.auth.decorators import permission_required
 from dimagi.utils.decorators.datespan import datespan_in_request
 from casexml.apps.case.models import CommCareCase
-from casexml.apps.case.export import export_cases_and_referrals
+from corehq.apps.hqcase.export import export_cases_and_referrals
 from corehq.apps.reports.display import xmlns_to_name
 from couchexport.schema import build_latest_schema
 from couchexport.models import ExportSchema, ExportColumn, SavedExportSchema,\
