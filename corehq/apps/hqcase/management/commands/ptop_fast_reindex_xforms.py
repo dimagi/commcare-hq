@@ -70,7 +70,7 @@ class Command(BaseCommand):
                     xform_pillow.processor(item, do_set_checkpoint=False)
                 start_num += CHUNK_SIZE
                 print "Grabbing next chunk: %d" % start_num
-                chunk = db.view('case/by_owner', reduce=False, limit=CHUNK_SIZE, skip=start_num)
+                chunk = db.view('couchforms/by_xmlns', reduce=False, limit=CHUNK_SIZE, skip=start_num)
 
             print "Index recreated - you may now restart run_ptop"
             send_mail('[commcare-hq] Pillowtop XForm Reindex Complete',
