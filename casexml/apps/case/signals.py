@@ -18,10 +18,6 @@ def process_cases(sender, xform, **kwargs):
             return case
         cases = [attach_domain(case) for case in cases]
 
-    for case in cases:
-        case.initial_processing_complete = True
-        case.save()
-
     # HACK -- figure out how to do this more properly
     # todo: create a pillow for this
     if cases:
@@ -33,6 +29,9 @@ def process_cases(sender, xform, **kwargs):
     # set flags for indicator pillows and save
     xform.initial_processing_complete = True
     xform.save()
+    for case in cases:
+        case.initial_processing_complete = True
+        case.save()
 
     # handle updating the sync records for apps that use sync mode
     if hasattr(xform, "last_sync_token") and xform.last_sync_token:
