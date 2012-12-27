@@ -10,6 +10,7 @@ from tastypie.exceptions import BadRequest
 from tastypie.resources import Resource
 from tastypie.serializers import Serializer
 from corehq.apps.api.util import get_object_or_not_exist
+from corehq.apps.api.resources import JsonResource
 
 class CustomXMLSerializer(Serializer):
     def to_etree(self, data, options=None, name=None, depth=0):
@@ -43,13 +44,12 @@ class LoginAndDomainAuthentication(Authentication):
     def get_identifier(self, request):
         return request.couch_user.username
 
-
 class CustomResourceMeta(object):
     authorization = ReadOnlyAuthorization()
     authentication = LoginAndDomainAuthentication()
     serializer = CustomXMLSerializer()
 
-class CommCareUserResource(Resource):
+class CommCareUserResource(JsonResource):
     type = "user"
     id = fields.CharField(attribute='get_id', readonly=True, unique=True)
     username = fields.CharField(attribute='username', unique=True)
@@ -84,7 +84,7 @@ class CommCareUserResource(Resource):
     class Meta(CustomResourceMeta):
         resource_name = 'user'
 
-class CommCareCaseResource(Resource):
+class CommCareCaseResource(JsonResource):
     type = "case"
     id = fields.CharField(attribute='get_id', readonly=True, unique=True)
     user_id = fields.CharField(attribute='user_id')
@@ -133,7 +133,7 @@ class CommCareCaseResource(Resource):
     class Meta(CustomResourceMeta):
         resource_name = 'case'
 
-class XFormInstanceResource(Resource):
+class XFormInstanceResource(JsonResource):
     type = "form"
     id = fields.CharField(attribute='get_id', readonly=True, unique=True)
 

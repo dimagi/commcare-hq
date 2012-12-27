@@ -1,18 +1,14 @@
-from django.core.exceptions import ObjectDoesNotExist
 from tastypie import fields
-from tastypie.resources import Resource
 from corehq.apps.locations.models import Location, root_locations
 from corehq.apps.api.resources.v0_1 import CustomResourceMeta
 from corehq.apps.api.util import get_object_or_not_exist
+from corehq.apps.api.resources import JsonResource
 
-class LocationResource(Resource):
+class LocationResource(JsonResource):
     type = "location"
     uuid = fields.CharField(attribute='_id', readonly=True, unique=True)
     location_type = fields.CharField(attribute='location_type', readonly=True)
     name = fields.CharField(attribute='name', readonly=True, unique=True)
-
-    def determine_format(self, request):
-        return "application/json"
 
     def obj_get(self, request, **kwargs):
         domain = kwargs['domain']
