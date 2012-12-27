@@ -57,7 +57,7 @@
     <div class="config" id="module-settings">
         <form class="save-button-form" action="{% url corehq.apps.app_manager.views.edit_module_attr domain app.id module.id 'all' %}">
             <div class="save-button-holder"></div>
-            <table>
+            <table style="clear: both;">
                 {% if edit %}
 
                     <tr class="form editable">

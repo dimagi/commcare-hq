@@ -175,9 +175,12 @@
             }
         {% endif %}
         {% if app.application_version != '1.0' %}
+            var allFormsRequireACase = {{ module.all_forms_require_a_case|BOOL }};
+            var putInRoot = {{ module.put_in_root|BOOL }};
+            var formFilter = {{ form.form_filter|JSON }};
             ko.applyBindings({
-                    formFilter: ko.observable({{ form.form_filter|JSON }}),
-                    formFilterAllowed: {{ module.all_forms_require_a_case|BOOL }}
+                    formFilter: ko.observable(formFilter),
+                    formFilterAllowed: allFormsRequireACase && !putInRoot
                 },
                 $('#form-filter').get(0)
             );
@@ -237,6 +240,9 @@
             cursor: default;
             color: #888;
         }
+        .config th {
+            text-wrap: nowrap;
+        }
     </style>
     {% if app.application_version == '2.0' %}
     <style>
@@ -281,9 +287,9 @@
         <div class="config">
             <form class="save-button-form" action="{% url corehq.apps.app_manager.views.edit_form_attr domain app.id form.get_unique_id 'all' %}">
                 <div class="save-button-holder"></div>
-                <table>
+                <table style="clear: both;">
                     <tr>
-                        <th>Form Name</th>
+                        <th>{% trans "Form Name" %}</th>
                         <td>
                             {% if edit %}
                                 {{ form.name|input_trans:langs|safe }}
@@ -312,8 +318,8 @@
                                 }">
                                     <span data-slug="add">{% trans "Add Display Condition..." %}</span>
                                     <span data-slug="remove">{% trans "Remove Display Condition" %}</span>
-                                    <span data-slug="notAllowed">{% trans "This option only applies when all forms in a module require a case" %}</span>
-                                    <span data-slug="notAllowedButExists">{% trans "but it looks like you tried to configure one earlier, which we'll have to ignore:" %}</span>
+                                    <span data-slug="notAllowed">{% trans "To use display conditions in a module, (1) it must not put its forms on the first screen and (2) all its forms must require a case. " %}</span>
+                                    <span data-slug="notAllowedButExists">{% trans "It looks like you tried to configure one earlier, but we'll have to ignore it:" %}</span>
                                 </div>
                             {% else %}
                                 <code>{{ form.form_filter|default:'' }}</code>
