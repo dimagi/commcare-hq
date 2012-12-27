@@ -15,4 +15,9 @@ def get_object_or_not_exist(cls, doc_id, domain):
             return doc
     except ResourceNotFound:
         pass # covered by the below
+    except AttributeError:
+        # there's a weird edge case if you reference a form with a case id
+        # that explodes on the "version" property. might as well swallow that
+        # too.
+        pass
     raise ObjectDoesNotExist(_("Could not find %s with id %s") % (doc_type, doc_id))
