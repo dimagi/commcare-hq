@@ -26,7 +26,6 @@ def process_cases(sender, xform, **kwargs):
         case = cases[0]
         if case.location_ is not None:
             # should probably store this in computed_
-            # re-fetch the xform to avoid document update conflicts
             xform.location_ = list(case.location_)
             xform.save()
 
