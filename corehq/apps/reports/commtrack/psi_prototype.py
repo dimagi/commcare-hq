@@ -10,7 +10,7 @@ from dimagi.utils.couch.loosechange import map_reduce
 from dimagi.utils import parsing as dateparse
 import itertools
 from datetime import timedelta
-from corehq.apps.commtrack.models import CommtrackConfig
+from corehq.apps.commtrack.models import CommtrackConfig, Product
 from dimagi.utils.decorators.memoized import memoized
 
 class CommtrackReportMixin(ProjectReport, ProjectReportParametersMixin):
@@ -33,8 +33,7 @@ class CommtrackReportMixin(ProjectReport, ProjectReportParametersMixin):
     @property
     @memoized
     def products(self):
-        query = get_db().view('commtrack/products', startkey=[self.domain], endkey=[self.domain, {}], include_docs=True)
-        prods = [e['doc'] for e in query]
+        prods = Product.by_domain(self.domain, wrap=False)
         return sorted(prods, key=lambda p: p['name'])
 
     def ordered_products(self, ordering):
