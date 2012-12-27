@@ -1,6 +1,8 @@
 from datetime import datetime, timedelta
 import json
+import tempfile
 from django.core.cache import cache
+import os
 from corehq.apps.reports import util
 from corehq.apps.reports.standard import inspect, export, ProjectReport
 from corehq.apps.reports.standard.export import DeidExportReport
@@ -40,7 +42,7 @@ from django.views.decorators.http import (require_http_methods, require_POST,
 from couchforms.filters import instances
 from couchdbkit.exceptions import ResourceNotFound
 from fields import FilterUsersField
-from util import get_all_users_by_domain
+from util import get_all_users_by_domain, stream_qs
 from corehq.apps.hqsofabed.models import HQFormData
 from StringIO import StringIO
 from corehq.apps.app_manager.util import get_app_id
@@ -50,7 +52,6 @@ from soil import DownloadBase
 from soil.tasks import prepare_download
 from django.utils.translation import ugettext as _
 from django.utils.safestring import mark_safe
-from dimagi.utils.logging import notify_exception
 
 DATE_FORMAT = "%Y-%m-%d"
 
@@ -214,6 +215,10 @@ class CustomExportHelper(object):
                 self.custom_export.app_id = request.GET.get('app_id')
         
     def update_custom_export(self):
+        """
+        Updates custom_export object from the request
+        and saves to the db
+        """
         schema = ExportSchema.get(self.request.POST["schema"])
         self.custom_export.index = schema.index
         self.custom_export.schema_id = self.request.POST["schema"]
@@ -222,8 +227,6 @@ class CustomExportHelper(object):
         self.custom_export.is_safe = bool(self.request.POST.get('is_safe'))
 
         self.presave = bool(self.request.POST.get('presave'))
-        if self.presave:
-            HQGroupExportConfiguration.add_custom_export(self.domain, self.custom_export._id)
 
         table = self.request.POST["table"]
         cols = self.request.POST['order'].strip().split()
@@ -256,6 +259,13 @@ class CustomExportHelper(object):
         if self.export_type == 'form':
             self.custom_export.include_errors = bool(self.request.POST.get("include-errors"))
             self.custom_export.app_id = self.request.POST.get('app_id')
+
+        self.custom_export.save()
+
+        if self.presave:
+            HQGroupExportConfiguration.add_custom_export(self.domain, self.custom_export.get_id)
+        else:
+            HQGroupExportConfiguration.remove_custom_export(self.domain, self.custom_export.get_id)
 
     def get_response(self):
         table_config = self.custom_export.table_configuration[0]
@@ -381,7 +391,6 @@ def custom_export(req, domain):
 
     if req.method == "POST":
         helper.update_custom_export()
-        helper.custom_export.save()
         messages.success(req, "Custom export created! You can continue editing here.")
         return HttpResponseRedirect("%s?type=%s" % (reverse("edit_custom_export",
                                             args=[domain, helper.custom_export.get_id]), helper.export_type))
@@ -420,7 +429,6 @@ def edit_custom_export(req, domain, export_id):
         raise Http404()
     if req.method == "POST":
         helper.update_custom_export()
-        helper.custom_export.save()
     return helper.get_response()
 
 @login_or_digest
@@ -433,7 +441,7 @@ def hq_download_saved_export(req, domain, export_id):
     # to be the domain
     assert domain == export.configuration.index[0]
     return couchexport_views.download_saved_export(req, export_id)
-    
+
 @login_or_digest
 @require_form_export_permission
 @login_and_domain_required
@@ -453,10 +461,16 @@ def export_all_form_metadata(req, domain):
             else:              return getattr(formdata, key)
         return [_key_to_val(formdata, key) for key in headers]
     
-    temp = StringIO()
-    data = (_form_data_to_row(f) for f in HQFormData.objects.filter(domain=domain))
-    export_raw((("forms", headers),), (("forms", data),), temp)
-    return export_response(temp, format, "%s_forms" % domain)
+    fd, path = tempfile.mkstemp()
+    
+    data = (_form_data_to_row(f) for f in stream_qs(
+        HQFormData.objects.filter(domain=domain).order_by('received_on')
+    ))
+
+    with os.fdopen(fd, 'w') as temp:
+        export_raw((("forms", headers),), (("forms", data),), temp)
+
+    return export_response(open(path), format, "%s_forms" % domain)
     
 @require_form_export_permission
 @login_and_domain_required
