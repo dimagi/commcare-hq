@@ -391,7 +391,7 @@ class ReminderCallbackTestCase(TestCase):
         self.assertEqual(reminder.next_fire, datetime(year=2012, month=1, day=2, hour=7, minute=0))
         self.assertEqual(reminder.schedule_iteration_num, 2)
         self.assertEqual(reminder.current_event_sequence_num, 0)
-        self.assertEqual(reminder.last_fired, datetime(year=2012, month=1, day=1, hour=8, minute=1))
+        self.assertEqual(reminder.last_fired, CaseReminderHandler.now)
         
         ######################
         # Day2, 10:00 reminder
@@ -432,7 +432,7 @@ class ReminderCallbackTestCase(TestCase):
         self.assertEqual(reminder.next_fire, datetime(year=2012, month=1, day=3, hour=7, minute=0))
         self.assertEqual(reminder.schedule_iteration_num, 3)
         self.assertEqual(reminder.current_event_sequence_num, 0)
-        self.assertEqual(reminder.last_fired, datetime(year=2012, month=1, day=2, hour=8, minute=15))
+        self.assertEqual(reminder.last_fired, CaseReminderHandler.now)
         
         # Ensure that a missed call was logged
         missed_call_datetime = json_format_datetime(CaseReminderHandler.now)
@@ -490,7 +490,7 @@ class ReminderCallbackTestCase(TestCase):
         self.assertNotEqual(reminder, None)
         self.assertEqual(reminder.schedule_iteration_num, 4)
         self.assertEqual(reminder.current_event_sequence_num, 0)
-        self.assertEqual(reminder.last_fired, datetime(year=2012, month=1, day=3, hour=8, minute=15))
+        self.assertEqual(reminder.last_fired, CaseReminderHandler.now)
         self.assertEqual(reminder.active, False)
 
     @classmethod

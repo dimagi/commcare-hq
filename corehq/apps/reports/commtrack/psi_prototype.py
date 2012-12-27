@@ -94,7 +94,7 @@ class VisitReport(GenericTabularReport, CommtrackReportMixin, DatespanMixin):
     name = 'Visit Report'
     slug = 'visits'
     fields = ['corehq.apps.reports.fields.DatespanField',
-              'corehq.apps.reports.fields.LocationField']
+              'corehq.apps.reports.fields.AsyncLocationField']
 
     def header_text(self, slug=False):
         cols = [(key if slug else caption) for key, caption in OUTLET_METADATA]

@@ -80,6 +80,7 @@
     
     function method_changed() {
         value = $("#id_method").val();
+        recipient = $("#id_recipient").val();
         if (value == "sms") {
             $(".for_sms_survey").hide();
             $(".for_sms_callback").hide();
@@ -90,7 +91,7 @@
             $(".for_sms").hide();
             $(".for_ivr_survey").hide();
             $(".for_sms_survey").show();
-            if($("#id_recipient").val() == "USER") {
+            if(recipient == "USER" || recipient == "OWNER") {
                 $("#id_recipient").val("CASE");
             }
         } else if (value == "callback") {
@@ -98,7 +99,7 @@
             $(".for_sms_survey").hide();
             $(".for_ivr_survey").hide();
             $(".for_sms_callback").show();
-            if($("#id_recipient").val() == "USER") {
+            if(recipient == "USER" || recipient == "OWNER") {
                 $("#id_recipient").val("CASE");
             }
         } else if (value == "ivr_survey") {
@@ -106,7 +107,7 @@
             $(".for_sms_survey").hide();
             $(".for_sms_callback").hide();
             $(".for_ivr_survey").show();
-            if($("#id_recipient").val() == "USER") {
+            if(recipient == "USER" || recipient == "OWNER") {
                 $("#id_recipient").val("CASE");
             }
         }
@@ -403,6 +404,7 @@
                     <td>To</td>
                     <td>
                         <select name="recipient" id="id_recipient">
+                            <option value="OWNER" class="for_sms for_case_criteria" {% if form.recipient.value == "OWNER" %}selected="selected"{% endif %}>The case's owner(s)</option>
                             <option value="USER" class="for_sms for_case_criteria" {% if form.recipient.value == "USER" %}selected="selected"{% endif %}>The case's last submitting user</option>
                             <option value="CASE" class="for_case_criteria" {% if form.recipient.value == "CASE" %}selected="selected"{% endif %}>The case</option>
                             <option value="SURVEY_SAMPLE" class="for_on_datetime" {% if form.recipient.value == "SURVEY_SAMPLE" %}selected="selected"{% endif %}>Survey Sample</option>

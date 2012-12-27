@@ -62,13 +62,10 @@
             window.location = "{% url corehq.apps.app_manager.views.default domain %}";
         });
         $('.hq-help-template').each(function () {
-            var el = $(
-              '<a href="#" class="hq-help no-click">' +
-              '<i class="icon-question-sign" data-trigger="hover"></i></a>'
-            ).insertAfter(this);
-            for (var attr in {'content': 0, 'title': 0}) {
-                $('i', el).data(attr, $(this).data(attr));
-            }
+            COMMCAREHQ.makeHqHelp({
+                content: $(this).data('content'),
+                title: $(this).data('title')
+            }, false).insertAfter(this);
             $(this).remove();
         });
         $('.hq-help').hqHelp();
