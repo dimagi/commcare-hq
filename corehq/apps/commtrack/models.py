@@ -37,6 +37,22 @@ class Product(Document):
                           include_docs=True).first()
         return result
 
+    @classmethod
+    def by_domain(cls, domain, wrap=True):
+        """
+        Gets all products in a domain.
+        """
+        kwargs = dict(
+            view_name='commtrack/products',
+            startkey=[domain],
+            endkey=[domain, {}],
+            include_docs=True
+        )
+        if wrap:
+            return Product.view(**kwargs)
+        else:
+            return [row["doc"] for row in Product.view(wrap_doc=False, **kwargs)]
+
 class CommtrackActionConfig(DocumentSchema):
     action_type = StringProperty() # a value in ACTION_TYPES (could be converted to enum?)
     keyword = StringProperty()
