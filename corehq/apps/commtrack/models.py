@@ -1,4 +1,5 @@
 from couchdbkit.ext.django.schema import *
+from casexml.apps.case.models import CommCareCase
 
 # these are the allowable stock transaction types, listed in the
 # default ordering in which they are processed. processing order
@@ -96,3 +97,37 @@ class CommtrackConfig(Document):
     @property
     def actions_by_name(self):
         return dict((action_config.action_name, action_config) for action_config in self.actions)
+
+class StockStatus(object):
+    """
+    This is a wrapper/helper class to represent the current stock status
+    of a commtrack case.
+    """
+
+    def __init__(self, dict):
+        self.id = dict["_id"]
+        self.current_stock = dict["current_stock"]
+        self.stocked_out_since = dict["stocked_out_since"] or None
+        self.product_id = dict["product"]
+        self.location_path = dict["location_"]
+        self.server_modified_on = dict["server_modified_on"]
+
+        # computed
+        self.location_id = self.location_path[-1]
+
+    @classmethod
+    def from_case(cls, case):
+        return StockStatus(case._doc)
+
+    @classmethod
+    def by_domain(cls, domain, skip=0, limit=100):
+        extras = {"limit": limit} if limit else {}
+        return [StockStatus(row["value"]) for row in CommCareCase.get_db().view(
+            'commtrack/current_stock_status',
+            startkey=[domain],
+            endkey=[domain, {}],
+            reduce=False,
+            skip=skip,
+            **extras
+        )]
+

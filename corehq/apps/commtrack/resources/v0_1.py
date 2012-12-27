@@ -1,8 +1,9 @@
 from tastypie import fields
 from corehq.apps.api.resources.v0_1 import CustomResourceMeta
-from corehq.apps.commtrack.models import Product
+from corehq.apps.commtrack.models import Product, StockStatus
 from corehq.apps.api.util import get_object_or_not_exist
 from corehq.apps.api.resources import JsonResource
+from casexml.apps.case.models import CommCareCase
 
 """
 Implementation of the CommTrack APIs. For more information see:
@@ -30,4 +31,25 @@ class ProductResource(JsonResource):
 
     class Meta(CustomResourceMeta):
         resource_name = 'product'
+        limit = 0
+
+class StockStatusResource(JsonResource):
+
+    type = "stock_status"
+    id = fields.CharField(attribute='id', readonly=True, unique=True)
+    current_stock = fields.IntegerField(attribute='current_stock', readonly=True, null=True)
+    stocked_out_since = fields.DateTimeField(attribute='stocked_out_since', readonly=True, null=True)
+    product_id = fields.CharField(attribute='product_id', readonly=True)
+    location_id = fields.CharField(attribute='location_id', readonly=True)
+    modified_on = fields.DateTimeField(attribute='modified_on', readonly=True, null=True)
+
+    def obj_get(self, request, **kwargs):
+        case = get_object_or_not_exist(CommCareCase, kwargs["pk"], kwargs["domain"])
+        return StockStatus.from_case(case)
+
+    def obj_get_list(self, request, **kwargs):
+        return StockStatus.by_domain(kwargs['domain'])
+
+    class Meta(CustomResourceMeta):
+        resource_name = 'stock_status'
         limit = 0
