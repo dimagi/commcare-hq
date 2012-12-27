@@ -15,22 +15,6 @@
     {{ block.super }}
     <script type="text/javascript">
         $(function(){
-            var help_text = {
-                "Success Message": "You can optionally specify a template for the message that your CHWs receive upon successful submission of a form."
-                + "  In the template, you have access to the following variables gathered real-time from the server:" +
-                        "  $first_name, $name, $week, $today. Example: " +
-                        " Thanks $first_name! You have submitted $today forms today and $week forms since Monday."
-             };
-            $('.help_popover').popover({
-                placement: $(this).data('placement') || 'left',
-                title: function () {
-                    return $(this).attr('data-help-key');
-                },
-                content: function () {
-                    return help_text[$(this).attr('data-help-key')];
-                }
-            });
-
             var version_function = function () {
                 var i;
                 var options = {{ commcare_build_options|JSON }};
@@ -391,7 +375,7 @@
     </style>
 {% endblock %}
 {% block form-view %}
-    <h3 class="variable-app_name">{{ app.name|html_name }}</h3>
+    <h3 class="app-manager-title variable-app_name">{{ app.name|html_name }}</h3>
     {% if app.get_doc_type == "Application" %}
         <h4>Application Settings</h4>
     {% else %}
@@ -598,8 +582,11 @@
             {% endif %}
                 <tr>
                     <th>
-                        Success Message
-                        <span class="help_popover" data-help-key="Success Message"><span> <i class="icon icon-question-sign"></i></span></span>
+                        {% trans "Success Message" %}
+                        <span class="hq-help-template"
+                            data-title="{% trans "Success Message" %}"
+                            data-content="{% trans "You can optionally specify a template for the message that your CHWs receive upon successful submission of a form. In the template, you have access to the following variables gathered real-time from the server: $first_name, $name, $week, $today. Example: Thanks $first_name! You have submitted $today forms today and $week forms since Monday." %}"
+                        ></span>
                     </th>
                     <td>
                         {% if edit %}

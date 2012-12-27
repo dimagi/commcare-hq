@@ -133,14 +133,16 @@ var CommcareProperty = {
                 COMMCAREHQ.app_manager.on('change:commcareVersion', onChange);
             },
             render = function () {
-                var $td = $("<td />"),
+                var $td = $('<td></td>'),
                     v,
                     v_name,
                     i;
-                $("<th></th>").text(that.name + " ")
-                .append(
-                    $("<span></span>").append($("<i></i>").addClass('icon icon-question-sign').popover({title:that.name, content:that.description})
-                )).appendTo($tr);
+                $('<th class="span3"></th>').text(that.name + " ").append(
+                    COMMCAREHQ.makeHqHelp({
+                        title: that.name,
+                        content: that.description
+                    })
+                ).appendTo($tr);
                 if (edit) {
                     if (that.values === undefined) {
                         $input = $("<input type='text' />");

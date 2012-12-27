@@ -61,6 +61,14 @@
         }).on('hide', function () {
             window.location = "{% url corehq.apps.app_manager.views.default domain %}";
         });
+        $('.hq-help-template').each(function () {
+            COMMCAREHQ.makeHqHelp({
+                content: $(this).data('content'),
+                title: $(this).data('title')
+            }, false).insertAfter(this);
+            $(this).remove();
+        });
+        $('.hq-help').hqHelp();
     });
     $(function() {
         var hidden,
