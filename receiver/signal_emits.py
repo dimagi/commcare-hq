@@ -1,4 +1,7 @@
 # These are traditional signals that are emitted
+# todo: This page was copied from corehq's receiverwrapper/signals.py
+# todo: Looks like it never actually gets called from CommCare HQ's tests
+# todo: I'm not sure where it's used, but should sort out
 import logging
 import types
 from receiver.signals import form_received
