@@ -18,8 +18,6 @@ def process_cases(sender, xform, **kwargs):
             return case
         cases = [attach_domain(case) for case in cases]
 
-    map(lambda case: case.save(), cases)
-
     # HACK -- figure out how to do this more properly
     # todo: create a pillow for this
     if cases:
@@ -27,20 +25,20 @@ def process_cases(sender, xform, **kwargs):
         if case.location_ is not None:
             # should probably store this in computed_
             xform.location_ = list(case.location_)
-            xform.save()
 
     # handle updating the sync records for apps that use sync mode
     if hasattr(xform, "last_sync_token") and xform.last_sync_token:
         relevant_log = SyncLog.get(xform.last_sync_token)
         relevant_log.update_phone_lists(xform, cases)
 
-    # set flags for indicator pillows
+    # set flags for indicator pillows and save
     xform.initial_processing_complete = True
     xform.save()
     for case in cases:
         case.initial_processing_complete = True
         case.save()
-    
+
+
 successful_form_received.connect(process_cases)
 
 case_post_save = Signal(providing_args=["case"])
