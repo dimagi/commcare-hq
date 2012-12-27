@@ -1,4 +1,3 @@
-from django.core.exceptions import ObjectDoesNotExist
 from casexml.apps.case.models import CommCareCase
 from corehq.apps.domain.decorators import login_or_digest
 from corehq.apps.groups.models import Group
@@ -10,6 +9,7 @@ from tastypie.authorization import ReadOnlyAuthorization
 from tastypie.exceptions import BadRequest
 from tastypie.resources import Resource
 from tastypie.serializers import Serializer
+from corehq.apps.api.util import get_object_or_not_exist
 
 class CustomXMLSerializer(Serializer):
     def to_etree(self, data, options=None, name=None, depth=0):
@@ -104,12 +104,8 @@ class CommCareCaseResource(Resource):
         return bundle.obj.get_json()['indices']
 
     def obj_get(self, request, **kwargs):
-        case = CommCareCase.get(kwargs['pk'])
-        # stupid "security"
-        if case.domain == kwargs['domain'] and case.doc_type == 'CommCareCase':
-            return case
-        else:
-            raise ObjectDoesNotExist()
+        return get_object_or_not_exist(CommCareCase, kwargs['pk'],
+                                       kwargs['domain'])
 
     def obj_get_list(self, request, **kwargs):
         domain = kwargs['domain']
@@ -147,23 +143,9 @@ class XFormInstanceResource(Resource):
     uiversion = fields.CharField(attribute='uiversion')
     metadata = fields.DictField(attribute='metadata')
     md5 = fields.CharField(attribute='xml_md5')
-#    top_level_tags = fields.DictField(attribute='top_level_tags') # seems redundant
-
-    #properties = fields.ListField()
-
-    #def dehydrate_properties(self, bundle):
-    #    return bundle.obj.get_json()['properties']
 
     def obj_get(self, request, **kwargs):
-        domain = kwargs['domain']
-        form_id = kwargs['pk']
-
-        form = XFormInstance.get(form_id)
-        # stupid "security"
-        if form.domain == domain and form.doc_type == 'XFormInstance':
-            return form
-        else:
-            raise ObjectDoesNotExist()
+        return get_object_or_not_exist(XFormInstance, kwargs['pk'], kwargs['domain'])
 
     class Meta(CustomResourceMeta):
         resource_name = 'form'

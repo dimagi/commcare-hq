@@ -3,6 +3,7 @@ from tastypie import fields
 from tastypie.resources import Resource
 from corehq.apps.locations.models import Location, root_locations
 from corehq.apps.api.resources.v0_1 import CustomResourceMeta
+from corehq.apps.api.util import get_object_or_not_exist
 
 class LocationResource(Resource):
     type = "location"
@@ -16,23 +17,15 @@ class LocationResource(Resource):
     def obj_get(self, request, **kwargs):
         domain = kwargs['domain']
         location_id = kwargs['pk']
-        loc = Location.get(location_id)
-        # stupid "security"
-        if loc and loc.domain == domain and loc.doc_type == 'Location':
-            return loc
-        else:
-            raise ObjectDoesNotExist()
+        return get_object_or_not_exist(Location, location_id, domain)
 
     def obj_get_list(self, request, **kwargs):
         domain = kwargs['domain']
         parent_id = request.GET.get("parent_id", None)
         if parent_id:
-            parent = Location.get(parent_id)
-            if parent and parent.domain == domain and parent.doc_type == 'Location':
-                return parent.children
-            else:
-                raise ObjectDoesNotExist()
-        
+            parent = get_object_or_not_exist(Location, parent_id, domain)
+            return parent.children
+
         return root_locations(domain)
 
     class Meta(CustomResourceMeta):
