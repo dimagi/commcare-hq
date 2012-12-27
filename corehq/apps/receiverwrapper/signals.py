@@ -80,8 +80,7 @@ def create_form_repeat_records(sender, xform, **kwargs):
 
 def create_case_repeat_records(sender, case, **kwargs):
     from corehq.apps.receiverwrapper.models import CaseRepeater
-    if case.initial_processing_complete:
-        create_repeat_records(CaseRepeater, case)
+    create_repeat_records(CaseRepeater, case)
 
 def create_short_form_repeat_records(sender, xform, **kwargs):
     from corehq.apps.receiverwrapper.models import ShortFormRepeater

@@ -11,6 +11,7 @@ from django.test.client import Client
 
 case_id = "ABC123CASEID"
 instance_id = "XKVB636DFYL38FNX3D38WV5EH"
+update_instance_id = "ZYXKVB636DFYL38FNX3D38WV5"
 
 case_block = """
 <case>
@@ -25,7 +26,18 @@ case_block = """
 </case>
 """ % case_id
 
-xform_xml = """<?xml version='1.0' ?>
+update_block = """
+<case>
+    <case_id>%s</case_id>
+    <date_modified>2011-12-19</date_modified>
+    <update>
+        <case_name>ABC 234</case_name>
+    </update>
+</case>
+""" % case_id
+
+
+xform_xml_template = """<?xml version='1.0' ?>
 <data xmlns:jrm="http://dev.commcarehq.org/jr/xforms" xmlns="https://www.commcarehq.org/test/repeater/">
 	<woman_name>Alpha</woman_name>
 	<husband_name>Beta</husband_name>
@@ -39,7 +51,9 @@ xform_xml = """<?xml version='1.0' ?>
 	</meta>
 %s
 </data>
-""" % (instance_id, case_block)
+"""
+xform_xml = xform_xml_template % (instance_id, case_block)
+update_xform_xml = xform_xml_template % (update_instance_id, update_block)
 
 class RepeaterTest(TestCase):
     def setUp(self):
@@ -49,14 +63,17 @@ class RepeaterTest(TestCase):
         self.case_repeater.save()
         self.form_repeater = FormRepeater(domain=self.domain, url='form-repeater-url')
         self.form_repeater.save()
-        f = StringIO(xform_xml)
-        f.name = 'register.xml'
+        self.log = []
+        self.post_xml(xform_xml)
+
+    def post_xml(self, xml):
+        f = StringIO(xml)
+        f.name = 'form.xml'
         self.client.post(
             reverse('receiver_post', args=[self.domain]), {
                 'xml_submission_file': f
             }
         )
-        self.log = []
 
     def clear_log(self):
         for i in range(len(self.log)): self.log.pop()
@@ -123,6 +140,16 @@ class RepeaterTest(TestCase):
         for repeat_record in repeat_records:
             self.assertEqual(repeat_record.succeeded, True)
             self.assertEqual(repeat_record.next_check, None)
+
+
+        repeat_records = RepeatRecord.all(domain=self.domain, due_before=now)
+        self.assertEqual(len(repeat_records), 0)
+
+        self.post_xml(update_xform_xml)
+
+        repeat_records = RepeatRecord.all(domain=self.domain, due_before=now)
+        self.assertEqual(len(repeat_records), 2)
+
 
 class RepeaterLockTest(TestCase):
 
