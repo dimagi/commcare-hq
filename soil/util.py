@@ -33,7 +33,7 @@ def expose_download(payload, expiry, backend=None, **kwargs):
     you to rely on global defaults if you don't care how things
     are stored.
     """
-    if backend == None:
+    if backend is None:
         backend = get_default_backend()
     
     ref = backend.create(payload, expiry, **kwargs)
