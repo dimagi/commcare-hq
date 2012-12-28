@@ -92,6 +92,11 @@ class ExportWriter(object):
         self._current_primary_id += 1
 
     def write_row(self, table_name, headers):
+        """
+        Currently just calls the subclass's implementation
+        but if we were to add a universal validation step,
+        such a thing would happen here.
+        """
         return self._write_row(table_name, headers)
 
     def close(self):
