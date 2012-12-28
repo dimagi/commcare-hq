@@ -53,30 +53,13 @@ def build_latest_schema(schema_index):
         previous_export = None
     config = ExportConfiguration(get_db(), schema_index, 
                                  previous_export=previous_export)
-    schema = get_schema_new(config)
+    schema = config.get_latest_schema()
     if not schema:
         return None
     updated_checkpoint = ExportSchema(seq=current_seq, schema=schema, 
                                       index=schema_index)
     updated_checkpoint.save()
     return updated_checkpoint
-
-def get_schema_new(config):
-    last_export = config.last_checkpoint()
-    schema = dict(last_export.schema) if last_export else None
-    for doc in config.get_potentially_relevant_docs():
-        schema = extend_schema(schema, doc)
-    return schema
-
-def get_schema(docs, previous_export=None):
-    if previous_export is None:
-        return make_schema(docs)
-    else:
-        schema = previous_export.schema
-        for doc in docs:
-            extend_schema(schema, doc)
-        return [schema]
-
 
 class SchemaInferenceError(Exception):
     pass

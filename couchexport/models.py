@@ -79,7 +79,21 @@ class ExportSchema(Document, UnicodeMixIn):
     
     def __unicode__(self):
         return "%s: %s" % (json.dumps(self.index), self.seq)
-    
+
+    @classmethod
+    def wrap(cls, data):
+        # this isn't the cleanest nor is it perfect but in the event
+        # this doc traversed databases somehow and now has a bad seq
+        # id, make sure to just reset it to 0.
+        # This won't catch if the seq is bad but not greater than the
+        # current one).
+        ret = super(ExportSchema, cls).wrap(data)
+        current_seq = cls.get_db().info()["update_seq"]
+        if current_seq < ret.seq:
+            ret.seq = 0
+            ret.save()
+        return ret
+
     @classmethod
     def last(cls, index):
         return cls.view("couchexport/schema_checkpoints", 
@@ -408,7 +422,6 @@ class SavedExportSchema(BaseSavedExportSchema, UnicodeMixIn):
                 yield (table_index, self.tables_by_index[table_index].trim(data, doc, apply_transforms))
 
     def get_export_components(self, previous_export_id=None, filter=None):
-        from couchexport.export import get_schema_new
         from couchexport.export import ExportConfiguration
 
         database = get_db()
@@ -418,7 +431,7 @@ class SavedExportSchema(BaseSavedExportSchema, UnicodeMixIn):
             self.filter & filter)
 
         # get and checkpoint the latest schema
-        updated_schema = get_schema_new(config)
+        updated_schema = config.get_latest_schema()
         export_schema_checkpoint = ExportSchema(seq=config.current_seq,
             schema=updated_schema,
             index=config.schema_index)
