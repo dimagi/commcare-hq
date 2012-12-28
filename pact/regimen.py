@@ -27,6 +27,16 @@ type_keys = {DOT_ART: 'dot_a_%s', DOT_NONART: 'dot_n_%s'}
 digit_strings = ['one', 'two', 'three', 'four']
 
 def regimen_dict_from_choice(key_type, regimen_string):
+    """
+    Given a regimen string, "morning,noon,evening" return a dict of the appropriate update values
+    of the casedoc of this representation
+
+    key_type is ART or NONART
+
+    so if art will return 'artregimen': <int>, "dot_a_one": 0, "dot_a_two": "1", etc
+    if nonartregimen it'll be 'nonartregimen' and dot_n_one, etc.
+    """
+
     assert key_type in type_keys.keys(), 'the key_type must be ART or NONART'
 
     #ensure regimen_string is in PACT_REGIMEN_CHOICES_DICT
@@ -48,6 +58,10 @@ def regimen_dict_from_choice(key_type, regimen_string):
 
 
 def regimen_string_from_doc(drug_type, doc_dict):
+    """
+    For a dict of doc properties and a given drug_type (ART, NONART), calculate/confirm the
+    regimen string of the times of doses.
+    """
     assert drug_type in type_keys.keys(), "the drug type must be art or nonart"
     prefix = type_keys[drug_type]
 
@@ -70,8 +84,12 @@ def regimen_string_from_doc(drug_type, doc_dict):
 
 
 def string_from_regimen_props(freq, props=[]):
-    regimen_choices = PACT_REGIMEN_CHOICES[freq]
+    """
+    For a given set of properties, (dot_a_one, etc...)
 
+    return the comma separated string of the regimen frequency/dose times
+    morning,noon,evening...etc
+    """
     str_props = []
     for prop in props:
         if prop == "" or prop is None:

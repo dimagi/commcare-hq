@@ -20,6 +20,7 @@ from couchforms.models import XFormInstance
 from couchforms.util import post_xform_to_couch
 from dimagi.utils import make_time
 from dimagi.utils.printing import print_pretty_xml
+from pact.dot_data import get_dots_case_json, calculate_regimen_caseblock
 from pact.enums import PACT_DOMAIN
 from django.http import Http404, HttpResponse
 from casexml.apps.case.models import CommCareCase
@@ -190,13 +191,19 @@ def prepare_case_update_xml_block(casedoc, couch_user, update_dict, submit_date)
     make_update(update_lxml, update_dict)
     return case_lxml
 
-
-def recompute_dots_update(casedoc, submit_date=None):
+def recompute_dots_casedata(casedoc, couch_user, submit_date=None):
     """
-    On a DOT submission, recompute the DOT block and submit a case update xform
+    On a DOT submission, recompute the DOT block and submit a casedoc update xform
+    Recompute and reset the ART regimen and NONART regimen to whatever the server says it is, in the casedoc where there's an idiosyncracy with how the phone has it set.
     """
+    update_dict = {}
+#    assumes that regimen stuff is up to date
+#    update_dict = calculate_regimen_caseblock(casedoc)
+#    update_dict['pactid'] =  casedoc.pactid
 
-    pass
+    dots_data = get_dots_case_json(casedoc)
+    update_dict['dots'] =  simplejson.dumps(dots_data)
+    submit_case_update_form(casedoc, update_dict, couch_user, submit_date=submit_date)
 
 def submit_case_update_form(casedoc, update_dict, couch_user, submit_date=None):
     """
@@ -215,19 +222,13 @@ def submit_case_update_form(casedoc, update_dict, couch_user, submit_date=None):
 
     meta_block = generate_meta_block(couch_user, timestart=submit_date, timeend=submit_date)
     form.append(meta_block)
-    #    if include_dots:
-#        update_dict.update(case_doc.calculate_regimen_caseblock())
-#        dots_data = case_doc.get_dots_data()
-#        update_dict['dots'] =  simplejson.dumps(dots_data)
 
-#    caseblock = CaseBlock(casedoc._id, update=update_dict, close=False, date_modified=submit_date.strftime("%Y-%m-%dT%H:%M:%SZ"), version=V2)
-#    print caseblock.as_xml(format_datetime=isodate_string)
     update_block = prepare_case_update_xml_block(casedoc, couch_user, update_dict, submit_date)
     form.append(update_block)
 
     print etree.tostring(form, pretty_print=True)
     submission_xml_string = etree.tostring(form)
-    submit_xform('/a/pact/receiver', PACT_DOMAIN, submission_xml_string)
+#    submit_xform('/a/pact/receiver', PACT_DOMAIN, submission_xml_string)
 
 
 def isodate_string(date):
@@ -264,6 +265,7 @@ class PactAPI(DomainAPI):
     http_method_names = ['get', 'post', 'head', ]
 
     def get(self, *args, **kwargs):
+        print "in api get"
         if self.request.GET.get('case_id', None) is None:
             raise Http404
 
@@ -272,6 +274,8 @@ class PactAPI(DomainAPI):
             return HttpResponse("API Method unknown: no method", status=400)
         elif self.method == "schedule":
             scheds = case.get_schedules(raw_json=True)
+            if scheds is None:
+                scheds = []
 
             payload = simplejson.dumps(scheds)
             response = HttpResponse(payload, content_type="application/json")

@@ -1,17 +1,16 @@
 from optparse import make_option
-from django.core.management.base import BaseCommand, CommandError
+from django.core.management.base import BaseCommand
 import sys
 from datetime import datetime, timedelta
-from django.utils.safestring import mark_safe
 import simplejson
 from casexml.apps.case.models import CommCareCase
 from corehq.apps.api.es import CaseES
+from pact.dot_data import filter_obs_for_day
 from pact.enums import PACT_DOMAIN
 from pact.models import CObservation
-from pact.reports.dot_calendar import DOTCalendar, DOTCalendarReporter, obs_for_day, merge_dot_day
+from pact.reports.dot_calendar import  DOTCalendarReporter
 
 
-import simplejson
 copy_keys = ['note', 'day_index', 'day_slot', 'dose_number', 'total_doses', 'method','adherence', 'encounter_date']
 class CustomEncoder(simplejson.JSONEncoder):
     def default(self, obj):
@@ -88,7 +87,7 @@ class Command(BaseCommand):
             dcal = DOTCalendarReporter(casedoc, start_date=start_date, end_date=anchor_date)
             for d in range((anchor_date-start_date).days):
                 odate = start_date + timedelta(days=d)
-                day_obs = obs_for_day(odate.date(), dcal.dot_observation_range())
+                day_obs = filter_obs_for_day(odate.date(), dcal.dot_observation_range())
                 print len(day_obs)
 
                 merged = merge_dot_day(day_obs)

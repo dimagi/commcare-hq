@@ -3,15 +3,19 @@ import pdb
 import dateutil
 import os
 from django.test import TestCase
+import simplejson
+from casexml.apps.case.models import CommCareCase
 from corehq.apps.domain.models import Domain
 from couchforms.models import XFormInstance
-from pact.enums import PACT_DOTS_DATA_PROPERTY, PACT_DOMAIN
-from pact.reports.dot_calendar import query_observations, obs_for_day, merge_dot_day
+from pact.dot_data import filter_obs_for_day, query_observations, DOTDay, get_dots_case_json
+from pact.enums import PACT_DOTS_DATA_PROPERTY, PACT_DOMAIN, DOT_DAYS_INTERVAL
+from pact.models import PactPatientCase
 from pact.utils import submit_xform
 
 START_DATE = datetime.strptime("2012-11-17", "%Y-%m-%d")
 END_DATE = datetime.strptime("2012-12-17", "%Y-%m-%d")
 ANCHOR_DATE = datetime.strptime("2012-12-07", "%Y-%m-%d")
+#ANCHOR_DATE = datetime.strptime("7 Dec 2012 05:00:00 GMT", "%d %b %Y ")
 
 CASE_ID = "66a4f2d0e9d5467e34122514c341ed92"
 PILLBOX_ID = "a1811d7e-c968-4b63-aea5-6195ce0d8759"
@@ -43,6 +47,7 @@ class dotsSubmissionTests(TestCase):
             if XFormInstance.get_db().doc_exist(x):
                 doc = XFormInstance.get(x)
                 XFormInstance.get_db().delete_doc(doc)
+        CommCareCase.get_db().delete_doc(CASE_ID)
 
     def testSignal(self):
         """
@@ -72,10 +77,69 @@ class dotsSubmissionTests(TestCase):
         self.assertEquals(len(observed_dates), 1)
         self.assertEquals(len(art_nonart), 2)
 
-    def testDOTResubmissionWorkflow(self):
-        #submit form, check that it's 2x num of forms
-        #check case history
-        pass
+#    def testDOTResubmissionWorkflow(self):
+#        submit form, check that it's 2x num of forms
+#        check case history
+#        pass
+
+
+    def testDOTFormatConversion(self):
+        """
+        When a DOT submission comes in, it gets sliced into the CObservations
+        and put into the DOTDay format.
+
+        On resubmit/recompute, it's transmitted back into the packed json format and sent back to the phone and resubmitted with new data.
+        This test confirms that the conversion process works.
+        """
+        self.testSignal()
+
+        submitted = XFormInstance.get(PILLBOX_ID)
+        orig_data = getattr(submitted, PACT_DOTS_DATA_PROPERTY)['dots']
+        orig_anchor = orig_data['anchor']
+        del orig_data['anchor'] # can't reproduce gmt offset
+
+        observations = query_observations(CASE_ID, START_DATE, END_DATE)
+
+        #hack, bootstrap the labels manually
+        nonart_idx = [0,2,3]
+        art_idx = [0,1]
+        casedoc = PactPatientCase.get(CASE_ID)
+        casedoc.nonartregimen = 3
+        casedoc.dot_n_one = 0
+        casedoc.dot_n_two = 2
+        casedoc.dot_n_three = 3
+        casedoc.dot_n_four = None
+
+        casedoc.artregimen = 2
+        casedoc.dot_a_one = 0
+        casedoc.dot_a_two = 1
+        casedoc.dot_a_three = ''
+        casedoc.dot_a_four = None
+
+        computed_json = simplejson.loads(simplejson.dumps(get_dots_case_json(casedoc, anchor_date=ANCHOR_DATE)))
+        computed_anchor = computed_json['anchor']
+        del computed_json['anchor']
+
+
+        for k in orig_data.keys():
+            if k != 'days':
+#                print "%s:\n\t%s\n\t%s" % (k, orig_data[k], computed_json[k])
+                self.assertEquals(orig_data[k], computed_json[k])
+#            else:
+#                print '### Days ###"'
+#                for x in range(DOT_DAYS_INTERVAL):
+#                    obs_date = ANCHOR_DATE + timedelta(days=x)-timedelta(days=DOT_DAYS_INTERVAL)
+#                    print "%d: %s" % (x, obs_date.strftime("%m/%d/%Y"))
+#                    print "\to: %s\n\tc: %s\n" % (orig_data['days'][x], computed_json['days'][x])
+##                    print filter_obs_for_day(obs_date.date(), observations)
+
+        self.assertEquals(simplejson.dumps(orig_data), simplejson.dumps(computed_json))
+
+
+
+
+
+
 
     def testPillboxCheck(self):
         """
@@ -106,14 +170,14 @@ class dotsSubmissionTests(TestCase):
                     val_date = dateutil.parser.parse(v).date()
                     self.assertEquals(obs_date, val_date)
                 else:
-                    self.assertEquals(getattr(obs, k), v)
+                    self.assertEquals(getattr(obs, k), v, msg="Error, observation %s\n\t%s didn't match: %s != %s" % (simplejson.dumps(obs.to_json(), indent=4), k, getattr(obs, k), v))
 
         for d in range(td.days):
             this_day = START_DATE + timedelta(days=d)
-            day_submissions = obs_for_day(this_day.date(), observations)
-            day_data = merge_dot_day(day_submissions)
+            day_submissions = filter_obs_for_day(this_day.date(), observations)
+            day_data = DOTDay.merge_from_observations(day_submissions)
             if this_day.date() == START_DATE.date():
-                art_first = day_data['ART']['dose_dict'][1][0]
+                art_first = day_data.art.dose_dict[1][0]
                 art_first_check_props = {
                     "encounter_date": "2012-12-07T05:00:00Z",
                     "total_doses": 2,
@@ -138,7 +202,7 @@ class dotsSubmissionTests(TestCase):
                 }
                 check_obs_props(art_first, art_first_check_props)
 
-                non_art_first_1 = day_data['NONART']['dose_dict'][1][0]
+                non_art_first_1 = day_data.nonart.dose_dict[1][0]
                 non_art_first_1_props = {
                     "encounter_date": "2012-12-07T05:00:00Z",
                     "total_doses": 3,
@@ -163,7 +227,7 @@ class dotsSubmissionTests(TestCase):
                 }
                 check_obs_props(non_art_first_1, non_art_first_1_props)
 
-                non_art_first_2 = day_data['NONART']['dose_dict'][2][0]
+                non_art_first_2 = day_data.nonart.dose_dict[2][0]
                 non_art_first_2_props = {
                     "encounter_date": "2012-12-07T05:00:00Z",
                     "total_doses": 3,
@@ -189,8 +253,9 @@ class dotsSubmissionTests(TestCase):
                 check_obs_props(non_art_first_2, non_art_first_2_props)
 
             if this_day.date() == (ANCHOR_DATE - timedelta(days=1)).date():
-                self.assertEquals(len(day_data['ART']['dose_dict'].keys()), 1) # only filled ART one dose
-                art_slast = day_data['ART']['dose_dict'][0][0]
+                print day_data.art.dose_dict
+                self.assertEquals(len(day_data.art.dose_dict.keys()), 2) # two doses, one for the answered, another for unchecked
+                art_slast = day_data.art.dose_dict[0][0]
                 art_slast_props = {
                     "encounter_date": "2012-12-07T05:00:00Z",
                     "total_doses": 2,
@@ -215,7 +280,7 @@ class dotsSubmissionTests(TestCase):
                 }
                 check_obs_props(art_slast, art_slast_props)
 
-                nonart_slast0 = day_data['NONART']['dose_dict'][0][0]
+                nonart_slast0 = day_data.nonart.dose_dict[0][0]
                 non_art0 = {
                     "encounter_date": "2012-12-07T05:00:00Z",
                     "total_doses": 3,
@@ -240,7 +305,7 @@ class dotsSubmissionTests(TestCase):
                 }
                 check_obs_props(nonart_slast0, non_art0)
 
-                nonart_slast1 = day_data['NONART']['dose_dict'][1][0]
+                nonart_slast1 = day_data.nonart.dose_dict[1][0]
                 non_art1 = {
                     "encounter_date": "2012-12-07T05:00:00Z",
                     "total_doses": 3,
@@ -265,7 +330,7 @@ class dotsSubmissionTests(TestCase):
                 }
                 check_obs_props(nonart_slast1, non_art1)
 
-                nonart_slast2 = day_data['NONART']['dose_dict'][2][0]
+                nonart_slast2 = day_data.nonart.dose_dict[2][0]
                 non_art2 = {
                     "encounter_date": "2012-12-07T05:00:00Z",
                     "total_doses": 3,
@@ -291,8 +356,8 @@ class dotsSubmissionTests(TestCase):
                 check_obs_props(nonart_slast2, non_art2)
 
             if this_day.date() == ANCHOR_DATE.date():
-                self.assertEqual(len(day_data['NONART']['dose_dict'][0]), 1)
-                non_art_last = day_data['NONART']['dose_dict'][0][0]
+                self.assertEqual(len(day_data.nonart.dose_dict[0]), 1)
+                non_art_last = day_data.nonart.dose_dict[0][0]
                 non_art_last_props = {
                     "encounter_date": "2012-12-07T05:00:00Z",
                     "total_doses": 3,
@@ -317,7 +382,7 @@ class dotsSubmissionTests(TestCase):
                 }
                 check_obs_props(non_art_last, non_art_last_props)
 
-                non_art_last_noon = day_data['NONART']['dose_dict'][1][0]
+                non_art_last_noon = day_data.nonart.dose_dict[1][0]
                 non_art_last_noon_props = {
                     "encounter_date": "2012-12-07T05:00:00Z",
                     "total_doses": 3,

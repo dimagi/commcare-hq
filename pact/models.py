@@ -86,6 +86,20 @@ class PactPatientCase(CommCareCase):
             'dot_n_four': getattr(self, 'dot_n_four', '')
         }
 
+    @property
+    def nonart_labels(self):
+        for label in ['dot_n_one', 'dot_n_two', 'dot_n_three', 'dot_n_four']:
+            val = getattr(self, label, '')
+            if val != "" and val != None:
+                yield val
+
+    @property
+    def art_labels(self):
+        for label in ['dot_a_one', 'dot_a_two', 'dot_a_three', 'dot_a_four']:
+            val = getattr(self, label, '')
+            if val != "" and val != None:
+                yield val
+
 
     def get_schedules(self, raw_json=False, reversed=False):
         if raw_json:

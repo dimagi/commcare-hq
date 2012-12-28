@@ -41,7 +41,8 @@ function (doc) {
         //previously from using anchor_date, used observed_date, but pact wanted the anchor date to drive the date bounds.
 
         var case_id = get_case_id(doc);
-        if (drug_arr.length >= 2 && drug_arr[0] != 'unchecked') {
+        if (drug_arr.length >= 2) {
+        //if (drug_arr.length >= 2 && drug_arr[0] != 'unchecked') {
             obs_dict['adherence'] = drug_arr[0];
             obs_dict['method'] = drug_arr[1];
             if (drug_arr.length > 2) {

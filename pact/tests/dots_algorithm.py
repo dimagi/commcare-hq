@@ -1,10 +1,10 @@
 from datetime import datetime, timedelta
 import random
 from django.test import TestCase
+from pact.dot_data import cmp_observation, sort_observations
 from pact.enums import DOT_ADHERENCE_EMPTY, DOT_OBSERVATION_DIRECT, DOT_OBSERVATION_PILLBOX, DOT_OBSERVATION_SELF
 from pact.models import CObservation
 
-from pact.reports.dot_calendar import merge_dot_day, obs_for_day, cmp_observation, sort_observations
 
 def _observationGenerator(encounter_date, observation_date, adherence=DOT_ADHERENCE_EMPTY):
     return CObservation(encounter_date=encounter_date,

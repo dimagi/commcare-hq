@@ -7,119 +7,12 @@ from django import forms
 from django.forms.forms import Form
 from dimagi.utils import make_time
 from dimagi.utils.decorators.memoized import memoized
+from pact.dot_data import filter_obs_for_day, DOTDay
 from pact.enums import DAY_SLOTS_BY_IDX, DOT_ADHERENCE_EMPTY, DOT_ADHERENCE_PARTIAL, DOT_ADHERENCE_FULL, DOT_OBSERVATION_DIRECT, DOT_OBSERVATION_PILLBOX, DOT_OBSERVATION_SELF, DOT_ADHERENCE_UNCHECKED, DOT_ART, DOT_NONART
 from pact.models import CObservation
 import settings
 
 
-
-def obs_for_day(this_date, observations):
-    assert this_date.__class__ == date
-    #todo, normalize for timezone
-#    print "obs for day: %s" % this_date
-    ret = filter(lambda x: x['observed_date'].date() == this_date, observations)
-    return ret
-
-
-def query_observations(case_id, start_date, end_date):
-    """
-    Hit couch to get the CObservations for the given date range of the OBSERVED dates.
-    These are the actual observation day cells in which they filled in DOT data.
-    """
-    startkey = [case_id, 'observe_date', start_date.year, start_date.month, start_date.day]
-    endkey = [case_id, 'observe_date', end_date.year, end_date.month, end_date.day]
-    print "Running dots_observation_range"
-    print "%s-%s" % (startkey, endkey)
-    observations = CObservation.view('pact/dots_observations', startkey=startkey, endkey=endkey).all()
-    print "\t%d observations" % (len(observations))
-    return observations
-
-
-def cmp_observation(x, y):
-    """
-    for a given COBservation, do the following.
-    1: If it's an addendum/reconciliation trumps all
-    2: If it's direct, and other is not direct, the direct wins
-    3: If both direct, do by earliest date
-    4: If neither direct, do by earliest encounter_date regardless of method.
-
-    < -1
-    = 0
-    > 1
-
-    Assumes that x and y have the same observation date (cell in the DOT json array)
-    Encounter date is the date in which the date cell is observed.
-    """
-
-    assert x.observed_date.date() == y.observed_date.date()
-    #Reconcilation handling
-    if (hasattr(x, 'is_reconciliation') and getattr(x, 'is_reconciliation')) and (hasattr(y, 'is_reconciliation') and getattr(y, 'is_reconciliation')):
-        #sort by earlier date, so flip x,y
-        return cmp(y.submitted_date, x.submitted_date)
-#            if x.submitted_date > y.submitted_date:
-#                # result: x < y
-#                return -1
-#            elif x.submitted_date < y.submitted_date:
-#                # result: x > y
-#                return 1
-#            elif x.submitted_date == y.submitted_date:
-#                return 0
-    elif (hasattr(x, 'is_reconciliation') and getattr(x, 'is_reconciliation')) and (not hasattr(y,'is_reconciliation') or not getattr(y, 'is_reconciliation')):
-        # result: x > y
-        return 1
-    elif (not hasattr(x, 'is_reconciliation') or not getattr(x, 'is_reconciliation')) and (hasattr(y, 'is_reconciliation') and getattr(y, 'is_reconciliation')):
-        # result: x < y
-        return -1
-
-    if x.method == DOT_OBSERVATION_DIRECT and y.method == DOT_OBSERVATION_DIRECT:
-        #sort by earlier date, so flip x,y
-        return cmp(y.encounter_date, x.encounter_date)
-    elif x.method == DOT_OBSERVATION_DIRECT and y.method != DOT_OBSERVATION_DIRECT:
-        #result: x > y
-        return 1
-    elif x.method != DOT_OBSERVATION_DIRECT and y.method == DOT_OBSERVATION_DIRECT:
-        #result: x < y
-        return -1
-    else:
-        #sort by earlier date, so flip x,y
-        return cmp(y.encounter_date, x.encounter_date)
-
-def sort_observations(observations):
-    """
-    Method to sort observations to make sure that the "winner" is at index 0
-    """
-    return sorted(observations, cmp=cmp_observation, reverse=True) #key=lambda x: x.created_date, reverse=True)
-
-def merge_dot_day(day_observations):
-    """
-    Receive an array of CObservations and try to priority sort them and make a json-able array of ART and NON ART submissions
-    for DOT calendar display AND ota restore.
-    """
-    day_dict = {DOT_ART: {'total_doses':0, 'dose_dict': {} }, DOT_NONART: {'total_doses': 0, 'dose_dict': {}}}
-
-
-    for obs in day_observations:
-        if obs.is_art:
-            dict_to_use = day_dict[DOT_ART]
-        else:
-            dict_to_use = day_dict[DOT_NONART]
-
-
-        if dict_to_use['total_doses'] < obs.total_doses:
-            dict_to_use['total_doses'] = obs.total_doses
-
-        if dict_to_use['dose_dict'].get(obs.dose_number, None) is None:
-            dict_to_use['dose_dict'][obs.dose_number] = []
-        dict_to_use['dose_dict'][obs.dose_number].append(obs)
-
-    for drug_type, wrapper_dict in day_dict.items():
-        dose_dict = wrapper_dict['dose_dict']
-        for dose_num in dose_dict.keys():
-            observations = dose_dict[dose_num]
-            #reverse here because our cmp assigns increasing weight by comparison
-            observations = sort_observations(observations)
-            dose_dict[dose_num]=observations
-    return day_dict
 
 
 class DOTCalendarReporter(object):
@@ -188,8 +81,6 @@ class DOTCalendarReporter(object):
             cal = DOTCalendar(self.patient_casedoc, observations)
             yield cal.formatmonth(curryear, currmonth)
             currmonth += 1
-            print "currmonth: %s" % currmonth
-            print "curryear: %s" % curryear
             if currmonth == 13:
                 #roll over, flip year
                 curryear+=1
@@ -232,20 +123,6 @@ class DOTCalendar(HTMLCalendar):
             s = '%s %s' % (month_name[themonth], theyear)
         else:
             s = '%s' % month_name[themonth]
-        ret = []
-#        a = ret.append
-#        a('<tr>')
-#        a('<th colspan="7" class="month" style="text-align:center;">')
-#        a('<ul class="pager">')
-#        a('<li class="previous"><a href="?month=%d&year=%d">Previous</a></li>' % (prevmonth, prevyear))
-#        a('<li class="disabled">')
-#        a(s)
-#        a('</li>')
-#        a('<li class="next"><a href="?month=%d&year=%d">Next</a></li>' % (nextmonth, nextyear))
-#        a('</ul>')
-#        a('</th>')
-#        a('</tr>')
-#        return ''.join(ret)
         return '<tr><th colspan="7" class="month">%s</th></tr>' % s
 
 
@@ -261,20 +138,24 @@ class DOTCalendar(HTMLCalendar):
             else:
                 future=False
 
-            day_submissions = obs_for_day(this_day, self.observations)
-            if len(day_submissions) > 0:
+            day_observations = filter_obs_for_day(this_day, self.observations)
+            if len(day_observations) > 0:
                 cssclass += ' filled'
                 body = ['<div class="calendar-cell">']
-                day_data = merge_dot_day(day_submissions)
+                day_data = DOTDay.merge_from_observations(day_observations)
+                #day_data = merge_dot_day(day_observations)
 
-                for drug_type in day_data.keys():
+                #for drug_type in day_data.keys():
+                for dose_data in [day_data.nonart, day_data.art]:
                     body.append('')
                     body.append('<div class="drug-cell">')
-                    body.append('<div class="drug-label">%s</div>' % drug_type)
+                    body.append('<div class="drug-label">%s</div>' % dose_data.drug_class)
 
-                    drug_total = day_data[drug_type]['total_doses']
+                    #drug_total = day_data[drug_type]['total_doses']
+                    drug_total = dose_data.total_doses
 
-                    for dose_num, obs_list in day_data[drug_type]['dose_dict'].items():
+                    for dose_num, obs_list in dose_data.dose_dict.items():
+                    #for dose_num, obs_list in day_data[drug_type]['dose_dict'].items():
                         if len(obs_list) > 0:
                             obs = obs_list[0]
                             if obs.day_slot != '' and obs.day_slot is not None and obs.day_slot != -1:
