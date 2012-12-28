@@ -2,6 +2,7 @@ from datetime import datetime, timedelta
 import json
 import tempfile
 from django.core.cache import cache
+from django.core.servers.basehttp import FileWrapper
 import os
 from corehq.apps.reports import util
 from corehq.apps.reports.standard import inspect, export, ProjectReport
@@ -740,6 +741,10 @@ def case_details(request, domain, case_id):
     })
 
 def generate_case_export_payload(domain, include_closed, format, group, user_filter):
+    """
+    Returns a FileWrapper object, which only the file backend in django-soil supports
+
+    """
     view_name = 'hqcase/all_cases' if include_closed else 'hqcase/open_cases'
     key = [domain, {}, {}]
     cases = CommCareCase.view(view_name, startkey=key, endkey=key + [{}], reduce=False, include_docs=True)
@@ -747,14 +752,13 @@ def generate_case_export_payload(domain, include_closed, format, group, user_fil
     users = get_all_users_by_domain(domain, group=group, user_filter=user_filter)
     groups = Group.get_case_sharing_groups(domain)
 
-    #    if not group:
-    #        users.extend(CommCareUser.by_domain(domain, is_active=False))
-
-    workbook = WorkBook()
-    export_cases_and_referrals(cases, workbook, users=users, groups=groups)
-    export_users(users, workbook)
-    payload = workbook.format(format.slug)
-    return payload
+    fd, path = tempfile.mkstemp()
+    with os.fdopen(fd, 'wb') as file:
+        workbook = WorkBook(file, format)
+        export_cases_and_referrals(domain, cases, workbook, users=users, groups=groups)
+        export_users(users, workbook)
+        workbook.close()
+    return FileWrapper(open(path))
 
 @login_or_digest
 @require_case_export_permission
@@ -763,7 +767,6 @@ def generate_case_export_payload(domain, include_closed, format, group, user_fil
 def download_cases(request, domain):
     include_closed = json.loads(request.GET.get('include_closed', 'false'))
     format = Format.from_format(request.GET.get('format') or Format.XLS_2007)
-    view_name = 'hqcase/all_cases' if include_closed else 'hqcase/open_cases'
     group = request.GET.get('group', None)
     user_filter, _ = FilterUsersField.get_user_filter(request)
 
