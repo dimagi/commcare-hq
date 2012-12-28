@@ -9,6 +9,7 @@ from casexml.apps.case.models import CommCareCase
 from dimagi.utils.couch.database import get_db
 from dimagi.utils.couch.loosechange import map_reduce
 from corehq.apps.commtrack import sms
+from dimagi.utils.logging import notify_exception
 from corehq.apps.commtrack.helpers import make_supply_point
 
 def set_error(row, msg, override=False):
@@ -212,6 +213,7 @@ def process_loc(domain, loc, rows, data_cols):
             import_row(row, data_cols, domain)
             set_error(row, 'SUCCESS row imported')
         except Exception, e:
+            notify_exception(None, 'error during bulk stock report import')
             set_error(row, 'ERROR during import: %s' % str(e))
             set_error_bulk(rows, 'SKIPPED remaining rows due to unexpected error')
             break
