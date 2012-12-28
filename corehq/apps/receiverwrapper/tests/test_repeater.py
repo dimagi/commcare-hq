@@ -100,10 +100,11 @@ class RepeaterTest(TestCase):
 
         CommCareCase.get(case_id)
 
-        now = datetime.utcnow()
+        def now():
+            return datetime.utcnow()
 
 
-        repeat_records = RepeatRecord.all(domain=self.domain, due_before=now)
+        repeat_records = RepeatRecord.all(domain=self.domain, due_before=now())
         self.assertEqual(len(repeat_records), 2)
 
         self.clear_log()
@@ -118,9 +119,9 @@ class RepeaterTest(TestCase):
 
         self.clear_log()
 
-        in30min = now + timedelta(minutes=30)
+        in30min = now() + timedelta(minutes=30)
 
-        repeat_records = RepeatRecord.all(domain=self.domain, due_before=now + timedelta(minutes=15))
+        repeat_records = RepeatRecord.all(domain=self.domain, due_before=now() + timedelta(minutes=15))
         self.assertEqual(len(repeat_records), 0)
 
         repeat_records = RepeatRecord.all(domain=self.domain, due_before=in30min + timedelta(seconds=1))
@@ -142,12 +143,12 @@ class RepeaterTest(TestCase):
             self.assertEqual(repeat_record.next_check, None)
 
 
-        repeat_records = RepeatRecord.all(domain=self.domain, due_before=now)
+        repeat_records = RepeatRecord.all(domain=self.domain, due_before=now())
         self.assertEqual(len(repeat_records), 0)
 
         self.post_xml(update_xform_xml)
 
-        repeat_records = RepeatRecord.all(domain=self.domain, due_before=now)
+        repeat_records = RepeatRecord.all(domain=self.domain, due_before=now())
         self.assertEqual(len(repeat_records), 2)
 
 
