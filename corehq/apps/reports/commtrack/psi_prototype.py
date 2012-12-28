@@ -9,7 +9,7 @@ from dimagi.utils.couch.database import get_db
 from dimagi.utils.couch.loosechange import map_reduce
 from dimagi.utils import parsing as dateparse
 import itertools
-from datetime import timedelta
+from datetime import date, timedelta
 from corehq.apps.commtrack.models import CommtrackConfig
 from dimagi.utils.decorators.memoized import memoized
 
@@ -165,9 +165,9 @@ class StockReportExport(VisitReport):
 
         return [['stock reports', [filter_row(r) for r in rows]]]
 
-class SalesAndConsumptionReport(GenericTabularReport, CommtrackReportMixin, DatespanMixin):
-    OUTLETS_LIMIT = 200
+OUTLETS_LIMIT = 200
 
+class SalesAndConsumptionReport(GenericTabularReport, CommtrackReportMixin, DatespanMixin):
     name = 'Sales and Consumption Report'
     slug = 'sales_consumption'
     fields = ['corehq.apps.reports.fields.DatespanField',
@@ -182,7 +182,7 @@ class SalesAndConsumptionReport(GenericTabularReport, CommtrackReportMixin, Date
 
     @property
     def headers(self):
-        if len(self.outlets) > self.OUTLETS_LIMIT:
+        if len(self.outlets) > OUTLETS_LIMIT:
             return DataTablesHeader(DataTablesColumn('Too many outlets'))
 
         cols = [DataTablesColumn(caption) for key, caption in OUTLET_METADATA]
@@ -196,15 +196,15 @@ class SalesAndConsumptionReport(GenericTabularReport, CommtrackReportMixin, Date
 
     @property
     def rows(self):
-        if len(self.outlets) > self.OUTLETS_LIMIT:
+        if len(self.outlets) > OUTLETS_LIMIT:
             return [[
                     'This report is limited to <b>%(max)d</b> outlets. Your location filter includes <b>%(count)d</b> outlets. Please make your location filter more specific.' % {
                         'count': len(self.outlets),
-                        'max': self.OUTLETS_LIMIT,
+                        'max': OUTLETS_LIMIT,
                 }]]
 
         products = self.ordered_products(PRODUCT_ORDERING)
-        locs = Location.filter_by_type(self.domain, 'outlet', self.active_location)
+        locs = self.outlets
         reports = get_stock_reports(self.domain, self.active_location, self.datespan)
         reports_by_loc = map_reduce(lambda e: [(leaf_loc(e),)], data=reports, include_docs=True)
 
@@ -250,3 +250,68 @@ class SalesAndConsumptionReport(GenericTabularReport, CommtrackReportMixin, Date
             return data
 
         return [summary_row(site, reports_by_loc.get(site._id, [])) for site in locs]
+
+class StockOutReport(GenericTabularReport, CommtrackReportMixin, DatespanMixin):
+    name = 'Stock-out Report'
+    slug = 'stockouts'
+    fields = ['corehq.apps.reports.fields.AsyncLocationField']
+    exportable = True
+
+    @property
+    def outlets(self):
+        if not hasattr(self, '_locs'):
+            self._locs = Location.filter_by_type(self.domain, 'outlet', self.active_location)
+        return self._locs
+
+    @property
+    def headers(self):
+        if len(self.outlets) > OUTLETS_LIMIT:
+            return DataTablesHeader(DataTablesColumn('Too many outlets'))
+
+        cols = [caption for key, caption in OUTLET_METADATA]
+        for p in self.ordered_products(PRODUCT_ORDERING):
+            cols.append('%s: Days stocked out' % p['name'])
+        cols.append('All Products Combined: Days stocked out')
+        return DataTablesHeader(*(DataTablesColumn(c) for c in cols))
+
+    @property
+    def rows(self):
+        if len(self.outlets) > OUTLETS_LIMIT:
+            return [[
+                    'This report is limited to <b>%(max)d</b> outlets. Your location filter includes <b>%(count)d</b> outlets. Please make your location filter more specific.' % {
+                        'count': len(self.outlets),
+                        'max': OUTLETS_LIMIT,
+                }]]
+
+        products = self.ordered_products(PRODUCT_ORDERING)
+        def row(site):
+            data = [getattr(site, key) for key, caption in OUTLET_METADATA]
+
+            stockout_days = []
+            for p in products:
+                startkey = [str(self.domain), site._id, p['_id']]
+                endkey = startkey + [{}]
+
+                latest_state = get_db().view('commtrack/stock_product_state', startkey=endkey, endkey=startkey, descending=True).first()
+                if latest_state:
+                    doc = latest_state['value']
+                    so_date = doc['updated_unknown_properties']['stocked_out_since']
+                    if so_date:
+                        so_days = (date.today() - dateparse.string_to_datetime(so_date).date()).days + 1
+                    else:
+                        so_days = 0
+                else:
+                    so_days = None
+
+                if so_days is not None:
+                    stockout_days.append(so_days)
+                    data.append(so_days)
+                else:
+                    data.append(u'\u2014')
+
+            combined_stockout_days = min(stockout_days) if stockout_days else None
+            data.append(combined_stockout_days if combined_stockout_days is not None else u'\u2014')
+
+            return data
+
+        return [row(site) for site in self.outlets]
