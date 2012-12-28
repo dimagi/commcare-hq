@@ -1,5 +1,9 @@
 from couchdbkit.ext.django.schema import *
+from couchforms.models import XFormInstance
+from dimagi.utils import parsing as dateparse
+from datetime import datetime
 from casexml.apps.case.models import CommCareCase
+from copy import copy
 
 # these are the allowable stock transaction types, listed in the
 # default ordering in which they are processed. processing order
@@ -98,6 +102,15 @@ class CommtrackConfig(Document):
     def actions_by_name(self):
         return dict((action_config.action_name, action_config) for action_config in self.actions)
 
+
+def _view_shared(view_name, domain, location_id=None, skip=0, limit=100):
+    extras = {"limit": limit} if limit else {}
+    startkey = [domain, location_id] if location_id else [domain]
+    endkey = copy(startkey) + [{}]
+    return CommCareCase.get_db().view(
+        view_name, startkey=startkey, endkey=endkey,
+        reduce=False, skip=skip, **extras)
+
 class StockStatus(object):
     """
     This is a wrapper/helper class to represent the current stock status
@@ -121,13 +134,71 @@ class StockStatus(object):
 
     @classmethod
     def by_domain(cls, domain, skip=0, limit=100):
-        extras = {"limit": limit} if limit else {}
-        return [StockStatus(row["value"]) for row in CommCareCase.get_db().view(
-            'commtrack/current_stock_status',
-            startkey=[domain],
-            endkey=[domain, {}],
-            reduce=False,
-            skip=skip,
-            **extras
-        )]
+        return [StockStatus(row["value"]) for row in _view_shared(
+            'commtrack/current_stock_status', domain, skip=skip, limit=limit)]
 
+    @classmethod
+    def by_location(cls, domain, location_id, skip=0, limit=100):
+        return [StockStatus(row["value"]) for row in _view_shared(
+            'commtrack/current_stock_status', domain, location_id,
+            skip=skip, limit=limit)]
+
+class StockTransaction(object):
+    """
+    wrapper/helper for transactions
+    """
+
+    def __init__(self, dict):
+        self.value = dict.get('value')
+        self.action = dict.get('action')
+        self.location_id = dict.get('location_id')
+        self.product_id = dict.get('product')
+        self.product_entry_id = dict.get('product_entry')
+        self.received_on = dict.get('received_on')
+        self.inferred = dict.get('@inferred', False)
+
+    @classmethod
+    def by_domain(cls, domain, skip=0, limit=100):
+        return [StockTransaction(row["value"]) for row in _view_shared(
+            'commtrack/stock_transactions', domain, skip=skip, limit=limit)]
+
+    @classmethod
+    def by_location(cls, domain, location_id, skip=0, limit=100):
+        return [StockTransaction(row["value"]) for row in _view_shared(
+            'commtrack/stock_transactions', domain, location_id,
+            skip=skip, limit=limit)]
+
+# TODO: tweak this and get it working
+#class StockReport(object):
+#    """
+#    This is a wrapper around the couch xform doc that gets associated with
+#    stock reports to provide convenient access to the underlying structure.
+#    """
+#
+#    def __init__(self, form):
+#        # TODO: validation?
+#        self._form = form
+#
+#    @property
+#    def raw_form(self):
+#        return self._form._doc
+#
+#    @classmethod
+#    def get(cls, id):
+#        return StockReport(XFormInstance.get(id))
+#
+#    @classmethod
+#    def get_reports(cls, domain, location=None, datespan=None):
+#        # TODO: replace reports.commtrack.psi_prototype.get_stock_reports with this
+#        start = datespan.startdate if datespan else datetime.min()
+#        end = datespan.end_of_end_day if datespan else datetime.max()
+#        timestamp_start = dateparse.json_format_datetime(start)
+#        timestamp_end =  dateparse.json_format_datetime(end)
+#        loc_id = location._id if location else None
+#        startkey = [domain, loc_id, timestamp_start]
+#        endkey = [domain, loc_id, timestamp_end]
+#        return [StockReport(f) for f in \
+#                XFormInstance.view('commtrack/stock_reports',
+#                                   startkey=startkey,
+#                                   endkey=endkey,
+#                                   include_docs=True)]
