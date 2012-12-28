@@ -1,6 +1,11 @@
-from corehq.apps.api.es import XFormES
+from casexml.apps.case.models import CommCareCase
+from corehq.apps.api.es import XFormES, CaseES
 from django.core.management.base import NoArgsCommand
+from corehq.apps.users.models import CommCareUser
 from couchforms.models import XFormInstance
+from pact.api import recompute_dots_casedata
+from pact.models import PactPatientCase
+from pact.reports.dot import PactDOTPatientField
 from pact.signals import process_dots_submission
 from pact.utils import MISSING_DOTS_QUERY
 
@@ -15,38 +20,13 @@ class Command(NoArgsCommand):
     seen_doc_ids = {}
 
     def handle_noargs(self, **options):
-        xform_es = XFormES()
+        case_es = CaseES()
         offset = 0
+        dot_cases = PactDOTPatientField.get_pact_cases()
 
-        q = MISSING_DOTS_QUERY
-        q['size'] = CHUNK_SIZE
-
-        while True:
-#            q['from'] = offset
-            res = xform_es.run_query(q)
-            print "####### Query block total: %s" % res['hits']['total']
-            print res['hits']['hits']
-            if len(res['hits'].get('hits', [])) == 0:
-                break
-            else:
-                for hit in res['hits']['hits']:
-                    doc_id = hit['_id']
-                    if self.seen_doc_ids.has_key(doc_id):
-                        continue
-                    else:
-                        self.seen_doc_ids[doc_id ] =1
-
-                    xfdoc = XFormInstance.get(doc_id)
-
-                    #quick sanity check
-                    if hasattr(xfdoc, 'pact_dots_data'):
-                        delattr(xfdoc, 'pact_dots_data')
-                        xfdoc.save()
-                        print "deleting property"
-
-                    process_dots_submission(None, xfdoc, blocking=True)
-                    #print "getting doc_id: %s" % doc_id
-            offset += CHUNK_SIZE
-
-
+        for case_info in dot_cases:
+            case_id=case_info['_id']
+            casedoc = PactPatientCase.get(case_id)
+            ccuser = CommCareUser.get_by_username('pactimporter@pact.commcarehq.org')
+            recompute_dots_casedata(casedoc, ccuser, submit_date=None)
 
