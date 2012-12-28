@@ -1,6 +1,6 @@
 from django.conf import settings
 from django.utils import importlib
-from soil import FileDownload
+from soil import FileDownload, CachedDownload
 
 def get_default_backend():
     """
@@ -10,7 +10,14 @@ def get_default_backend():
     """
     if hasattr(settings, "SOIL_BACKEND"):
         # Trying to import the given backend, in case it's a dotted path
-        backend = settings.SOIL_BACKEND 
+        backend = settings.SOIL_BACKEND
+        try:
+            return {
+                'cache': CachedDownload,
+                'file': FileDownload,
+            }[backend]
+        except KeyError:
+            pass
         mod_path, cls_name = backend.rsplit('.', 1)
         try:
             mod = importlib.import_module(mod_path)
