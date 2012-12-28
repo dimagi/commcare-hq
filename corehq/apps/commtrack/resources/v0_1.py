@@ -49,7 +49,11 @@ class StockStatusResource(JsonResource):
         return StockStatus.from_case(case)
 
     def obj_get_list(self, request, **kwargs):
-        return StockStatus.by_domain(kwargs['domain'])
+        location_id = request.GET.get("location_id", None)
+        if location_id:
+            return StockStatus.by_location(kwargs['domain'], location_id)
+        else:
+            return StockStatus.by_domain(kwargs['domain'])
 
     class Meta(CustomResourceMeta):
         resource_name = 'stock_status'
@@ -68,7 +72,11 @@ class StockTransactionResource(JsonResource):
         raise NotImplementedError()
 
     def obj_get_list(self, request, **kwargs):
-        return StockTransaction.by_domain(kwargs['domain'])
+        location_id = request.GET.get("location_id", None)
+        if location_id:
+            return StockTransaction.by_location(kwargs['domain'], location_id)
+        else:
+            return StockTransaction.by_domain(kwargs['domain'])
 
     class Meta(CustomResourceMeta):
         resource_name = 'stock_transaction'
