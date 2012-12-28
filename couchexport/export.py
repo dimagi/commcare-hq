@@ -120,11 +120,9 @@ class ExportConfiguration(object):
 
     def get_latest_schema(self):
         last_export = self.last_checkpoint()
-        print last_export._id
         schema = dict(last_export.schema) if last_export else None
         doc_ids = self._ids_since(last_export.seq) if last_export else self.all_doc_ids
         for doc in self._iter_docs(doc_ids):
-            print "updating for %s" % doc['_id']
             schema = extend_schema(schema, doc)
         return schema
 
