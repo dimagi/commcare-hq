@@ -90,7 +90,7 @@ class ExportConfiguration(object):
             return self.all_doc_ids
 
     def _iter_docs(self, ids, chunksize=100):
-        for doc_ids in chunked(ids, 100):
+        for doc_ids in chunked(ids, chunksize):
             for doc in self.database.all_docs(keys=doc_ids, include_docs=True):
                 yield doc['doc']
 
