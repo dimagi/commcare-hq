@@ -49,24 +49,24 @@ class ExportWriter(object):
         self._current_primary_id = 0
         self.file = file
 
+        self._init()
+        self.table_name_generator = UniqueHeaderGenerator(self.max_table_name_size)
+        for table_name, table in header_table:
+            self.add_table(table_name, table[0])
+
+    def add_table(self, table_name, headers):
         def _clean_name(name):
             return re.sub(r"[[\\?*/:\]]", "-", name)
+        table_name_truncated = _clean_name(self.table_name_generator.next_unique(table_name))
 
-
-        self._init()
-        name_g = UniqueHeaderGenerator(self.max_table_name_size)
-        for table_name, table in header_table:
-            table_name_truncated = _clean_name(name_g.next_unique(table_name))
-
-            row = table[0]
-            # make sure we trim the headers
-            with UniqueHeaderGenerator(max_column_size) as g:
-                try:
-                    row.data = [g.next_unique(header) for header in row.data]
-                except AttributeError:
-                    row = [g.next_unique(header) for header in row]
-            self._init_table(table_name, table_name_truncated)
-            self._write_row(table_name, row)
+        # make sure we trim the headers
+        with UniqueHeaderGenerator(self.max_column_size) as g:
+            try:
+                headers.data = [g.next_unique(header) for header in headers.data]
+            except AttributeError:
+                headers = [g.next_unique(header) for header in headers]
+        self._init_table(table_name, table_name_truncated)
+        self.write_row(table_name, headers)
 
     def write(self, document_table, skip_first=False):
         """
@@ -87,11 +87,13 @@ class ExportWriter(object):
                 if row_has_id:
                     row.id = (self._current_primary_id,) + tuple(row.id[1:])
 
-                self._write_row(table_name, row)
+                self.write_row(table_name, row)
         
         self._current_primary_id += 1
-        
-        
+
+    def write_row(self, table_name, headers):
+        return self._write_row(table_name, headers)
+
     def close(self):
         """
         Close any open file references, do any cleanup.
