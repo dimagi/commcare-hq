@@ -234,7 +234,7 @@ def bug_report(req):
     else:
         report['copy_url'] = None
 
-    subject = u'CCHQ Bug Report ({domain}): {subject}'.format(**report)
+    subject = u'{subject} ({domain})'.format(**report)
     message = (
         u"username: {username}\n"
         u"domain: {domain}\n"
