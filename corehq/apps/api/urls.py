@@ -10,12 +10,12 @@ API_LIST = (
     ((0, 1), (
         v0_1.CommCareUserResource,
         v0_1.CommCareCaseResource,
-        v0_1.XFormInstanceResource
+        v0_1.XFormInstanceResource,
     )),
     ((0, 2), (
         v0_1.CommCareUserResource,
         v0_2.CommCareCaseResource,
-        v0_1.XFormInstanceResource
+        v0_1.XFormInstanceResource,
     )),
     ((0, 3), (
         v0_1.CommCareUserResource,
