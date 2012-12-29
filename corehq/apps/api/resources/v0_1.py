@@ -1,3 +1,4 @@
+
 import logging
 import pdb
 from django.core.exceptions import ObjectDoesNotExist
@@ -17,7 +18,8 @@ from tastypie.exceptions import BadRequest
 from tastypie.resources import Resource
 from tastypie.serializers import Serializer
 from dimagi.utils.decorators import inline
-
+from corehq.apps.api.util import get_object_or_not_exist
+from corehq.apps.api.resources import JsonResource
 
 class ElasticPaginator(Paginator):
     def get_slice(self, limit, offset):
@@ -86,6 +88,9 @@ class ElasticPaginator(Paginator):
             'meta': meta,
         }
 
+=======
+
+>>>>>>> master
 
 class CustomXMLSerializer(Serializer):
     def to_etree(self, data, options=None, name=None, depth=0):
@@ -119,14 +124,12 @@ class LoginAndDomainAuthentication(Authentication):
     def get_identifier(self, request):
         return request.couch_user.username
 
-
 class CustomResourceMeta(object):
     authorization = ReadOnlyAuthorization()
     authentication = LoginAndDomainAuthentication()
     serializer = CustomXMLSerializer()
 
-
-class CommCareUserResource(Resource):
+class CommCareUserResource(JsonResource):
     type = "user"
     id = fields.CharField(attribute='get_id', readonly=True, unique=True)
     username = fields.CharField(attribute='username', unique=True)
@@ -161,8 +164,9 @@ class CommCareUserResource(Resource):
     class Meta(CustomResourceMeta):
         resource_name = 'user'
 
+<<<<<<< HEAD
 
-class CommCareCaseResource(Resource):
+class CommCareCaseResource(JsonResource):
     type = "case"
     id = fields.CharField(attribute='get_id', readonly=True, unique=True)
     user_id = fields.CharField(attribute='user_id')
@@ -183,12 +187,8 @@ class CommCareCaseResource(Resource):
         return bundle.obj.get_json()['indices']
 
     def obj_get(self, request, **kwargs):
-        case = CommCareCase.get(kwargs['pk'])
-        # stupid "security"
-        if case.domain == kwargs['domain'] and case.doc_type == 'CommCareCase':
-            return case
-        else:
-            raise ObjectDoesNotExist()
+        return get_object_or_not_exist(CommCareCase, kwargs['pk'],
+                                       kwargs['domain'])
 
     def obj_get_list(self, request, **kwargs):
         domain = kwargs['domain']
@@ -215,8 +215,7 @@ class CommCareCaseResource(Resource):
     class Meta(CustomResourceMeta):
         resource_name = 'case'
 
-
-class XFormInstanceResource(Resource):
+class XFormInstanceResource(JsonResource):
     type = "form"
     id = fields.CharField(attribute='get_id', readonly=True, unique=True)
 
@@ -224,121 +223,14 @@ class XFormInstanceResource(Resource):
     type = fields.CharField(attribute='type')
     version = fields.CharField(attribute='version')
     uiversion = fields.CharField(attribute='uiversion')
-#    metadata = fields.DictField(attribute='metadata')
+    metadata = fields.DictField(attribute='metadata')
     received_on = fields.DateTimeField(attribute="received_on")
     md5 = fields.CharField(attribute='xml_md5')
-    #    top_level_tags = fields.DictField(attribute='top_level_tags') # seems redundant
-
-    #properties = fields.ListField()
-
-    #def dehydrate_properties(self, bundle):
-    #    return bundle.obj.get_json()['properties']
 
 
-    #source: https://github.com/llonchj/django-tastypie-elasticsearch
-    def get_sorting(self, request, key="order_by"):
-        order_by = request.GET.get(key)
-        if order_by:
-            l = []
-
-            items = [i.strip() for i in order_by.split(",")]
-            for item in items:
-                order = "asc"
-                if item.startswith("-"):
-                    item = item[1:]
-                    order = "desc"
-                l.append({item: order})
-            return l
-        return None
 
     def obj_get(self, request, **kwargs):
-        domain = kwargs['domain']
-        form_id = kwargs['pk']
-
-        form = XFormInstance.get(form_id)
-        # stupid "security"
-        if form.domain == domain and form.doc_type == 'XFormInstance':
-            return form
-        else:
-            raise ObjectDoesNotExist()
-
-    def obj_get_list(self, request, **kwargs):
-        domain = request.domain
-        sort = self.get_sorting(request)
-        if sort is None:
-            sort = [{'received_on': 'desc'}]
-
-        lucene_query = request.GET.get('qs', None)
-
-        @list
-        @inline
-        def get_filters():
-            yield {"term": {"domain": domain}}
-            #            if lucene_query is not None:
-#            yield dict(query_string=dict(query=lucene_query))
-        #                yield {"query_string": {"query": lucene_query}}
-            raw_filters = request.GET.get('q', '')
-            filters = raw_filters.split(',')
-            for f in filters:
-                kv = f.split(':')
-                if len(kv) != 2:
-                    continue
-                if kv[0].startswith('-'):
-                    yield {'not': {'term': {kv[0]: kv[1]}}}
-                else:
-                    yield {'term': {kv[0]: kv[1]}}
-
-
-        es_query = {
-            "query": {
-                "filtered": {
-                    "query": {
-                        "query_string": {"query": lucene_query},
-                    },
-                    "filter": {
-                        "and": get_filters
-                    }
-                },
-                #                           "term": {"domain": domain},
-                #                "bool": {
-                #                    "must": get_filters
-                #                },
-                },
-                'sort': sort,
-                'from': request.GET.get('offset', 0),
-                'size': request.GET.get('limit', 500)
-
-        }
-        if lucene_query is not None:
-            #es_query["filter"]["query"] = {"query_string": { "query" : lucene_query}}
-            pass
-
-        print simplejson.dumps(es_query, indent=4)
-        es_results = get_es().get('xforms/_search', data=es_query)
-
-        if es_results.has_key('error'):
-            logging.exception("Error in xform elasticsearch query: %s" % es_results['error'])
-            return {'Error': "No data"}
-
-
-        #        #transform the return value to something compatible with the report listing
-        #        ret = {
-        #            'skip': request.GET.get('offset', 0),
-        #            'limit': request.GET.get('limit', 10)
-        #            'rows': [{'doc': x['_source']} for x in es_results['hits']['hits']],
-        #            'total_rows': es_results['hits']['total']
-        #        }
-        #        return ret
-        #        return ret['hits']['hits']
-        #        print simplejson.dumps(es_results['hits']['hits'], indent=4)
-        print es_results['hits']['total']
-
-        #return [XFormInstance.wrap(x['_source']) for x in es_results['hits']['hits']]
-        return es_results
-
+        return get_object_or_not_exist(XFormInstance, kwargs['pk'], kwargs['domain'])
 
     class Meta(CustomResourceMeta):
         resource_name = 'form'
-        authorization = DjangoAuthorization()
-        authentication = LoginAndDomainAuthentication()
-        paginator_class = ElasticPaginator

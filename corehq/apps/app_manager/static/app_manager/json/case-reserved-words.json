@@ -17,5 +17,6 @@
     "referrals",
     "actions",
     "indices",
-    "index"
+    "index",
+    "initial_processing_complete"
 ]
