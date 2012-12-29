@@ -31,9 +31,10 @@
                 inputAttr: {placeholder: 'jr://file/commcare_media/audio/audio.mp3', 'data-name': 'media_audio'}
             }">
                 <span data-slug="add">{% trans "Add Audio..." %}</span>
+                <span data-slug="whyNotAdd">{% trans "Why can't I add audio?" %}</span>
                 <span data-slug="remove">{% trans "Remove Audio" %}</span>
+                <span data-slug="notAllowedButExists">{% trans "Error! This audio will be ignored." %}</span>
                 <span data-slug="notAllowed">{% trans "To hear audio, you must be in CommCare Sense mode or Numeric Selection mode" %}</span>
-                <span data-slug="notAllowedButExists">{% trans "but you have audio configured, which we'll have to ignore:" %}</span>
             </div>
         {% else %}
             {{ item.media_audio }}

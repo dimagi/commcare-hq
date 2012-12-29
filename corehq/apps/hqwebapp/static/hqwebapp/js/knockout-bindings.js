@@ -347,6 +347,7 @@ function ValueOrNoneUI(opts) {
     };
     self.exitInput = function (data, event) {
         self.setHasValue(false, event);
+        self.value('');
     };
 }
 

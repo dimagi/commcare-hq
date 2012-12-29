@@ -1,28 +1,56 @@
 <script type="text/html" id="value-or-none-ui-template">
     <div data-bind="visible: !hasValue()">
-        <a href="#" data-bind="enterInput: $data">
-            <span data-bind="text: messages.add"></span>
-        </a>
+        <div class="btn-group" data-bind="visible: allowed()">
+            <button class="btn btn-mini" data-bind="enterInput: $data">
+                <span data-bind="text: messages.add"></span>
+            </button>
+        </div>
+        <div></div>
+        <div class="btn-group" data-bind="visible: !allowed()">
+            <button class="btn btn-mini disabled" disabled="disabled">
+                <i class="icon icon-plus"></i>
+                <span data-bind="text: messages.add"></span>
+            </button>
+            <button class="btn btn-mini dropdown-toggle" data-toggle="dropdown">
+                <span class="caret"></span>
+            </button>
+            <ul class="dropdown-menu">
+                <li>
+                    <a href="#" data-bind="click: enterInput, text: messages.whyNotAdd"></a>
+                </li>
+            </ul>
+        </div>
     </div>
     <div data-bind="visible: hasValue">
-        <div data-bind="visible: allowed()">
-            <a href="#" data-bind="exitInput: $data"></a>
-            <input type="text" data-bind="value: inputValue, hasfocus: hasFocus, css: inputCss, attr: inputAttr, valueUpdate: 'textchange'"/>
-        </div>
         <div data-bind="visible: !allowed()">
             <div class="alert alert-error" data-bind="visible: value">
-                <strong data-bind="text: messages.notAllowed"></strong>
-                <span data-bind="text: messages.notAllowedButExists"></span>
+                <strong data-bind="text: messages.notAllowedButExists"></strong>
                 <div>
                     <code data-bind="text: value()"></code>
-                    <a href="#" data-bind="exitInput: $data">
+                    <a href="#" class="btn btn-mini btn-danger" data-bind="exitInput: $data">
                         <span data-bind="text: messages.remove"></span>
                     </a>
                 </div>
+                <div data-bind="text: messages.notAllowed"></div>
             </div>
-            <div class="alert alert-info" data-bind="visible: !value(),
-                text: messages.notAllowed">
+            <div class="alert alert-info" data-bind="visible: !value()">
+                <div data-bind="text: messages.notAllowed"></div>
+                <a href="#" class="btn btn-mini" data-bind="exitInput: $data">
+                    OK, close this
+                </a>
             </div>
+        </div>
+        <input type="text" data-bind="
+                visible: allowed(),
+                value: inputValue,
+                hasfocus: hasFocus,
+                css: inputCss,
+                attr: inputAttr, valueUpdate: 'textchange'
+        "/>
+        <div data-bind="visible: allowed()">
+            <a href="#" class="btn btn-mini btn-danger" data-bind="exitInput: $data">
+                <span data-bind="text: messages.remove"></span>
+            </a>
         </div>
     </div>
     <input type="hidden" data-bind="value: value, attr: {name: inputName}"/>

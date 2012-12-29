@@ -317,9 +317,10 @@
                                     inputName: 'form_filter'
                                 }">
                                     <span data-slug="add">{% trans "Add Display Condition..." %}</span>
+                                    <span data-slug="whyNotAdd">{% trans "Why can't I add a display condition?" %}</span>
                                     <span data-slug="remove">{% trans "Remove Display Condition" %}</span>
+                                    <span data-slug="notAllowedButExists">{% trans "Error! This display condition will be ignored." %}</span>
                                     <span data-slug="notAllowed">{% trans "To use display conditions in a module, (1) it must not put its forms on the first screen and (2) all its forms must require a case. " %}</span>
-                                    <span data-slug="notAllowedButExists">{% trans "It looks like you tried to configure one earlier, but we'll have to ignore it:" %}</span>
                                 </div>
                             {% else %}
                                 <code>{{ form.form_filter|default:'' }}</code>
