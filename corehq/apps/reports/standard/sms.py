@@ -13,7 +13,7 @@ from datetime import timedelta
 from corehq.apps.reports.util import format_datatables_data
 
 class MessagesReport(ProjectReport, ProjectReportParametersMixin, GenericTabularReport, DatespanMixin):
-    name = 'Messages Report'
+    name = ugettext_noop('SMS Usage')
     slug = 'messages'
     fields = ['corehq.apps.reports.fields.GroupField',
               'corehq.apps.reports.fields.DatespanField']
