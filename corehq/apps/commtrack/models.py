@@ -150,28 +150,27 @@ class StockStatus(DocumentSchema):
             'commtrack/current_stock_status', domain, location_id,
             skip=skip, limit=limit)]
 
-class StockTransaction(object):
+class StockTransaction(DocumentSchema):
     """
     wrapper/helper for transactions
     """
 
-    def __init__(self, dict):
-        self.value = dict.get('value')
-        self.action = dict.get('action')
-        self.location_id = dict.get('location_id')
-        self.product_id = dict.get('product')
-        self.product_entry_id = dict.get('product_entry')
-        self.received_on = dict.get('received_on')
-        self.inferred = dict.get('@inferred', False)
+    value = IntegerProperty()
+    action = StringProperty()
+    location_id = StringProperty()
+    product = StringProperty()
+    product_entry = StringProperty()
+    received_on = DateTimeProperty()
+    inferred = BooleanProperty(name='@inferred', default=False)
 
     @classmethod
     def by_domain(cls, domain, skip=0, limit=100):
-        return [StockTransaction(row["value"]) for row in _view_shared(
+        return [StockTransaction.wrap(row["value"]) for row in _view_shared(
             'commtrack/stock_transactions', domain, skip=skip, limit=limit)]
 
     @classmethod
     def by_location(cls, domain, location_id, skip=0, limit=100):
-        return [StockTransaction(row["value"]) for row in _view_shared(
+        return [StockTransaction.wrap(row["value"]) for row in _view_shared(
             'commtrack/stock_transactions', domain, location_id,
             skip=skip, limit=limit)]
 

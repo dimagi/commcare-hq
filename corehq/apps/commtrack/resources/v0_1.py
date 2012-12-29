@@ -62,9 +62,9 @@ class StockTransactionResource(JsonResource):
     type = "stock_transaction"
     value = fields.IntegerField(attribute='value', readonly=True)
     action = fields.CharField(attribute='action', readonly=True)
-    product_id = fields.CharField(attribute='product_id', readonly=True)
+    product_id = fields.CharField(attribute='product', readonly=True)
     location_id = fields.CharField(attribute='location_id', readonly=True)
-    product_entry_id = fields.CharField(attribute='product_entry_id', readonly=True)
+    product_entry_id = fields.CharField(attribute='product_entry', readonly=True)
     received_on = fields.DateTimeField(attribute='received_on', readonly=True)
     inferred = fields.BooleanField(attribute='inferred', readonly=True)
 
