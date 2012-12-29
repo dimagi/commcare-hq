@@ -2,11 +2,14 @@ from django.http import Http404
 from django.template.context import RequestContext
 import simplejson
 from corehq.apps.api.es import XFormES
+from corehq.apps.fixtures.models import FixtureDataItem, FixtureDataType
+from corehq.apps.groups.models import Group
 from corehq.apps.reports.datatables import DataTablesColumn, DataTablesHeader
 from corehq.apps.reports.generic import GenericTabularReport
 from corehq.apps.reports.standard import CustomProjectReport
 from dimagi.utils.decorators import inline
 from dimagi.utils.decorators.memoized import memoized
+from pact.enums import PACT_HP_GROUPNAME, PACT_DOMAIN, PACT_PROVIDER_FIXTURE_TAG
 from pact.forms.patient_form import PactPatientForm
 from pact.forms.weekly_schedule_form import ScheduleForm
 from pact.models import  PactPatientCase
@@ -104,6 +107,10 @@ class PactPatientInfoReport(PactDrilldownReportMixin,ESSortableMixin, GenericTab
             the_form = PactPatientForm(patient_doc)
             ret['patient_form'] = the_form
             self.report_template_path = "pact/patient/pactpatient_edit.html"
+        elif view_mode == 'providers':
+
+
+            self.report_template_path = "pact/patient/pactpatient_providers.html"
         else:
             raise Http404
         return ret

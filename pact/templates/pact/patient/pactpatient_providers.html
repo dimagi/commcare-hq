@@ -1,0 +1,239 @@
+{% extends "pact/patient/pactpatient_base.html" %}
+{% block patient-tab-container %}
+    <div id="providerblock">
+    <div class="span4">
+        <h3>Current Providers
+            &nbsp;<a class="btn btn-info" href="{{ pt_root_url }}&view=info">Cancel</a>
+            &nbsp;<button class="btn btn-success" data-bind="click:saveProviders">Save</button>
+        </h3>
+
+            <table class="table table-bordered table-striped">
+            <thead>
+            <tr>
+                <th class="span1"></th>
+                <th class="span4">Name</th>
+                <th class="span1"></th>
+            </tr>
+            </thead>
+            <tbody data-bind="foreach: selected_providers">
+            <tr>
+                <td>
+                    <p class="lead">
+                        <span data-bind="text:$index() + 1"></span>
+                    </p>
+                </td>
+                <td>
+                    <p class="lead">
+                        <button class="btn btn-danger" data-bind="click: $root.rmProvider"><i class="icon-minus-sign"></i></button> &nbsp;
+                        <span data-bind="text: first_name"></span> <span
+                            data-bind="text: last_name"></span>
+
+                    </p>
+                    <strong><span data-bind="text: role"></span></strong><br>
+                    <span data-bind="text: email"></span>
+
+                <td>
+                <p>
+                <button class="btn btn-info" data-bind="click: $root.providerUp, visible: $index() > 0"><i class="icon-chevron-up"></i></button>
+                </p>
+                <p>
+                <button class="btn btn-info" data-bind="click: $root.providerDown, visible: $parent.selected_providers().length > 1 && ($index() < ($parent.selected_providers().length - 1))"><i class="icon-chevron-down"></i></button>
+                </p>
+
+                </td>
+            </tr>
+            </tbody>
+        </table>
+    </div>
+    <div class="span6">
+        <h3>Provider List
+            <select data-bind="options: facilities, value: selectedFacility"> </select>
+        </h3>
+        {#        <select>#}
+        {#        <option value="volvo">Volvo</option>#}
+        {#        <option value="saab">Saab</option>#}
+        {#        <option value="mercedes">Mercedes</option>#}
+        {#        <option value="audi">Audi</option>#}
+        {#        </select>#}
+
+        <table class="table table-bordered table-striped">
+            <thead>
+            <tr>
+                <th class="span1"></th>
+                <th class="span4">Name</th>
+                <th>Info</th>
+            </tr>
+            </thead>
+            <tbody data-bind="foreach: providers">
+            <tr data-bind="visible: $root.facilityMatches($data)">
+                <td>
+                    <button class="btn btn-success" data-bind="click: $root.addProvider"><i class="icon-plus-sign"></i></button>
+                </td>
+                <td>
+                    <p class="lead">
+                        <span data-bind="text: first_name"></span> <span
+                            data-bind="text: last_name"></span>
+                    </p>
+                    <strong><span data-bind="text: role"></span></strong><br>
+                    <span data-bind="text: email"></span>
+
+                <td>
+                    <span data-bind="text: facility_name"></span><br>
+                    <address>
+                        <span data-bind="text: facility_address"></span><br>
+                    </address>
+                </td>
+            </tr>
+            </tbody>
+        </table>
+    </div>
+    </div>
+
+
+    <script type="text/javascript">
+
+        function ProviderModel(data) {
+            this.id = ko.observable(data.id);
+            this.first_name = ko.observable(data.first_name);
+            this.last_name = ko.observable(data.last_name);
+            this.email = ko.observable(data.email);
+            this.role = ko.observable(data.role);
+
+            this.facility_name = ko.observable(data.facility_name);
+            this.facility_address = ko.observable(data.facility_address);
+        }
+        var api_url = "{% url pactdata_1 domain=domain %}?case_id={{ patient_doc.get_id }}";
+        function ProviderListViewModel() {
+            // Data
+            var self = this;
+            self.selectedFacility = ko.observable("All Facilities");
+            self.providers = ko.observableArray([]);
+            self.facilities = ko.observableArray([]);
+
+            self.selected_providers = ko.observableArray([]);
+
+            $.getJSON(api_url + "&method=providers", function (providerData) {
+                console.log(providerData);
+                var mappedProviders = $.map(providerData['providers'], function (item) {
+                    return new ProviderModel(item);
+                });
+                self.providers(mappedProviders);
+                self.facilities(providerData['facilities']);
+                console.log("facilities set");
+            });
+
+
+
+            self.inSelectedProviders = function(item) {
+                //sanity check to see if it's in the active list
+                console.log("accesing selected");
+                console.log(self.selected_providers);
+                console.log(self.selected_providers());
+                for (var i = 0; i < self.selected_providers().length; i++) {
+                    if (item.id == self.selected_providers()[i].id()) {
+                        return true;
+                    }
+                }
+                return false;
+            };
+
+            self.providerUp = function(item) {
+                var idx = self.selected_providers().indexOf(item);
+                var up = idx - 1;
+                var arr = self.selected_providers();
+
+                var up_item = self.selected_providers()[up];
+                arr[up] = item;
+                arr[idx] = up_item;
+                self.selected_providers(arr);
+            };
+
+            self.providerDown = function(item) {
+                var idx = self.selected_providers().indexOf(item);
+                var down = idx + 1;
+                var arr = self.selected_providers();
+
+                var up_item = self.selected_providers()[down];
+                arr[down] = item;
+                arr[idx] = up_item;
+                self.selected_providers(arr);
+            };
+
+
+            self.facilityMatches = function(item) {
+                var facility = self.selectedFacility();
+                if (facility === undefined) {
+                    return true;
+                } else if (facility == 'All Facilities') {
+                    return true;
+                }
+
+{#                if (self.inSelectedProviders(item)) {#}
+{#                    return false;#}
+{#                }#}
+
+
+                if (facility != item.facility_name()) {
+                    return false;
+                } else if (facility == item.facility_name()) {
+                    return true;
+                }
+
+            };
+
+            self.facilityChanged = self.selectedFacility.subscribe(function (newFacility) {
+                {#                alert(newFacility);#}
+            });
+
+            self.addProvider = function(provider) {
+                if (self.selected_providers().length >= 9) {
+                    alert("Sorry, the limit for providers is 9");
+                    return;
+                }
+                self.selected_providers.push(provider);
+                var idx = self.providers().indexOf(provider);
+                var arr = self.providers();
+                arr.splice(idx, 1);
+                self.providers(arr);
+            };
+            self.rmProvider = function(provider) {
+                self.providers.push(provider);
+                var idx = self.selected_providers().indexOf(provider);
+                var arr = self.selected_providers();
+                arr.splice(idx, 1);
+                self.selected_providers(arr);
+            };
+
+            self.saveProviders = function() {
+                var arr = self.selected_providers();
+
+                var provider_ids = $.map(arr, function (item) {
+                    return item.id();
+                });
+                console.log(provider_ids);
+
+                var send_xhr = $.ajax({
+                    "type": "POST",
+                    "url":  api_url + "&method=providers",
+                    "data": ko.toJSON(provider_ids),
+                    "success": function(data) {
+                        console.log(data);
+                    }, //end success
+                    "error": function(data) {
+                        console.log(data);
+                    }
+                });
+
+            }
+
+        }
+
+        var providerView = new ProviderListViewModel();
+
+        $(function () {
+            ko.applyBindings(providerView, $("#providerblock")[0]);
+
+        });
+
+    </script>
+{% endblock %}

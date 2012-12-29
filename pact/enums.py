@@ -9,6 +9,12 @@ PACT_SCHEDULES_NAMESPACE = 'pact_weekly_schedule'
 
 PACT_DOTS_DATA_PROPERTY = "pact_dots_data_"
 
+XMLNS_PATIENT_UPDATE="http://dev.commcarehq.org/pact/patient_update"
+XMLNS_PATIENT_PROVIDER_UPDATE="http://dev.commcarehq.org/pact/patient_provider"
+
+PACT_PROVIDER_FIXTURE_TAG = 'provider'
+
+
 #Deprecated static sequence of time labels. needed to support legacy data pre labeling
 TIME_LABEL_LOOKUP = (
     (),

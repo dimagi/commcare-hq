@@ -16,12 +16,14 @@ from casexml.apps.case.xml import V2
 from corehq.apps.api.domainapi import DomainAPI
 from corehq.apps.api.es import XFormES, CaseES
 from corehq.apps.domain.decorators import login_and_domain_required
+from corehq.apps.fixtures.models import FixtureDataType, FixtureDataItem
+from corehq.apps.groups.models import Group
 from couchforms.models import XFormInstance
 from couchforms.util import post_xform_to_couch
 from dimagi.utils import make_time
 from dimagi.utils.printing import print_pretty_xml
 from pact.dot_data import get_dots_case_json, calculate_regimen_caseblock
-from pact.enums import PACT_DOMAIN
+from pact.enums import PACT_DOMAIN, XMLNS_PATIENT_UPDATE, PACT_PROVIDER_FIXTURE_TAG, PACT_HP_GROUPNAME
 from django.http import Http404, HttpResponse
 from casexml.apps.case.models import CommCareCase
 from pact.forms.patient_form import PactPatientForm
@@ -168,7 +170,7 @@ def generate_meta_block(couch_user, instance_id=None, timestart=None, timeend=No
 
     if instance_id is None:
         instance_id = uuid.uuid4().hex
-    meta_nsmap={'n0': 'http://openrosa.org/jr/xforms', None: "http://dev.commcarehq.org/pact/patientupdate"}
+    meta_nsmap={'n0': 'http://openrosa.org/jr/xforms' }
 
     meta_lxml = etree.Element("{%s}meta" % meta_nsmap['n0'], nsmap=meta_nsmap)
     sub_element(meta_lxml, '{%s}deviceID' % meta_nsmap['n0'], 'pact_case_updater')
@@ -205,7 +207,7 @@ def recompute_dots_casedata(casedoc, couch_user, submit_date=None):
     update_dict['dots'] =  simplejson.dumps(dots_data)
     submit_case_update_form(casedoc, update_dict, couch_user, submit_date=submit_date)
 
-def submit_case_update_form(casedoc, update_dict, couch_user, submit_date=None):
+def submit_case_update_form(casedoc, update_dict, couch_user, submit_date=None, xmlns=XMLNS_PATIENT_UPDATE):
     """
     Main entry point for submitting an update for a pact patient
 
@@ -218,7 +220,7 @@ def submit_case_update_form(casedoc, update_dict, couch_user, submit_date=None):
 
     if submit_date is None:
         submit_date = datetime.utcnow()
-    form = etree.Element("data", nsmap={None: "http://dev.commcarehq.org/pact/patientupdate", 'jrm': "http://dev.commcarehq.org/jr/xforms"})
+    form = etree.Element("data", nsmap={None: xmlns, 'jrm': "http://dev.commcarehq.org/jr/xforms"})
 
     meta_block = generate_meta_block(couch_user, timestart=submit_date, timeend=submit_date)
     form.append(meta_block)
@@ -280,6 +282,30 @@ class PactAPI(DomainAPI):
             payload = simplejson.dumps(scheds)
             response = HttpResponse(payload, content_type="application/json")
             return response
+        elif self.method == 'providers':
+            provider_type = FixtureDataType.by_domain_tag(PACT_DOMAIN, PACT_PROVIDER_FIXTURE_TAG).first()
+            fixture_type = provider_type._id
+
+            pact_hp_group = Group.by_name(PACT_DOMAIN, PACT_HP_GROUPNAME)
+            providers = FixtureDataItem.by_group(pact_hp_group)
+
+            #providers = sorted(providers, key=lambda x: (x.fields['facility_name'], x.fields['last_name']))
+            providers = sorted(providers, key=lambda x: x.fields['last_name'])
+
+            facilities = set()
+
+            for prov in providers:
+                facility = prov.fields['facility_name']
+                if facility is None:
+                    facility = 'N/A'
+                facilities.add(facility)
+            ret = {'facilities': ['All Facilities'] + sorted(list(facilities)),
+                   "providers": [x['fields'] for x in providers]}
+            resp = HttpResponse(simplejson.dumps(ret), content_type='application/json')
+            return resp
+
+
+
         else:
             return HttpResponse("API Method unknown", status=400)
 
@@ -315,6 +341,15 @@ class PactAPI(DomainAPI):
                 resp.write(str(form.errors))
                 resp.status_code = 406
                 return resp
+
+        elif self.method == 'providers':
+            print self.request.POST
+            resp.write("whatever")
+            resp.status_code=204
+            return resp
+
+
+
         elif self.method == "patient_edit":
             form = PactPatientForm(pdoc, data=self.request.POST)
             if form.is_valid():
