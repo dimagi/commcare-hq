@@ -111,35 +111,42 @@ def _view_shared(view_name, domain, location_id=None, skip=0, limit=100):
         view_name, startkey=startkey, endkey=endkey,
         reduce=False, skip=skip, **extras)
 
-class StockStatus(object):
+class StockStatus(DocumentSchema):
     """
     This is a wrapper/helper class to represent the current stock status
     of a commtrack case.
     """
 
-    def __init__(self, dict):
-        self.id = dict["_id"]
-        self.current_stock = dict["current_stock"]
-        self.stocked_out_since = dict["stocked_out_since"] or None
-        self.product_id = dict["product"]
-        self.location_path = dict["location_"]
-        self.server_modified_on = dict["server_modified_on"]
+    current_stock = StringProperty()
+    stocked_out_since = DateTimeProperty()
+    product = StringProperty()
+    location_path = StringListProperty(name="location_")
+    server_modified_on = DateTimeProperty()
 
-        # computed
-        self.location_id = self.location_path[-1]
+    @property
+    def location_id(self):
+        return self.location_path[-1]
 
     @classmethod
     def from_case(cls, case):
-        return StockStatus(case._doc)
+        return StockStatus.wrap(case._doc)
+
+    @classmethod
+    def wrap(cls, data):
+        # couchdbkit doesn't like passing empty strings (instead of nulls)
+        # to DateTimeProperty fields
+        if data.get('stocked_out_since', None) == '':
+            del data['stocked_out_since']
+        return super(StockStatus, cls).wrap(data) 
 
     @classmethod
     def by_domain(cls, domain, skip=0, limit=100):
-        return [StockStatus(row["value"]) for row in _view_shared(
+        return [StockStatus.wrap(row["value"]) for row in _view_shared(
             'commtrack/current_stock_status', domain, skip=skip, limit=limit)]
 
     @classmethod
     def by_location(cls, domain, location_id, skip=0, limit=100):
-        return [StockStatus(row["value"]) for row in _view_shared(
+        return [StockStatus.wrap(row["value"]) for row in _view_shared(
             'commtrack/current_stock_status', domain, location_id,
             skip=skip, limit=limit)]
 

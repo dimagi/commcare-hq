@@ -37,12 +37,12 @@ class ProductResource(JsonResource):
 class StockStatusResource(JsonResource):
 
     type = "stock_status"
-    id = fields.CharField(attribute='id', readonly=True, unique=True)
+    id = fields.CharField(attribute='_id', readonly=True, unique=True)
     current_stock = fields.IntegerField(attribute='current_stock', readonly=True, null=True)
     stocked_out_since = fields.DateTimeField(attribute='stocked_out_since', readonly=True, null=True)
-    product_id = fields.CharField(attribute='product_id', readonly=True)
+    product_id = fields.CharField(attribute='product', readonly=True)
     location_id = fields.CharField(attribute='location_id', readonly=True)
-    modified_on = fields.DateTimeField(attribute='modified_on', readonly=True, null=True)
+    modified_on = fields.DateTimeField(attribute='server_modified_on', readonly=True, null=True)
 
     def obj_get(self, request, **kwargs):
         case = get_object_or_not_exist(CommCareCase, kwargs["pk"], kwargs["domain"])
