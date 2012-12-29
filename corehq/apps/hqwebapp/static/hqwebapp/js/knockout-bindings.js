@@ -333,8 +333,6 @@ function ValueOrNoneUI(opts) {
             after;
         self.hasValue(hasValue);
         after = self.value();
-        console.log(before);
-        console.log(after);
         if (before !== after) {
             $(event.toElement).change();
         }
