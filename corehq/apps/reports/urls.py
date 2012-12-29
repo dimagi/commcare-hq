@@ -84,11 +84,11 @@ urlpatterns = patterns('corehq.apps.reports.views',
     url(r"^export/forms/all/$", 'export_all_form_metadata', name="export_all_form_metadata"),
     url(r'^download/cases/$', 'download_cases', name='download_cases'),
 
+    url(r'^psi_reports/$', 'psi_reports'),
+
     # TODO should this even be here?
     url(r'^phonelog/', include(phonelog_reports)),
 
     url(r'^custom/', include(custom_report_urls)),
     ProjectReportDispatcher.url_pattern(),
-
-    url(r'^yedi/psi/$', 'psi_reports'),
 )

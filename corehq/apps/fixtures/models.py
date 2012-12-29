@@ -160,7 +160,7 @@ class FixtureDataItem(Document):
         data_type_id = _id_from_doc(data_type)
         fixture_data_items = cls.by_data_type(domain, data_type_id).all()
         for fdi in fixture_data_items:
-            if fdi.fields["name"].lower() == name.lower():
+            if fdi.fields["name"].lower() == name.lower() or fdi.fields["id"].lower() == name.lower():
                 return fdi
         return None
 
