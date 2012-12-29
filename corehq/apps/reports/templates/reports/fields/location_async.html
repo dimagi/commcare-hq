@@ -1,6 +1,9 @@
 <label class="control-label">{{ control_name }}</label>
-<div class="controls" data-bind="foreach: selected_path">
-  <select data-bind="options: children, optionsText: 'display_name', value: selected_child"></select>
+<div class="controls">
+  <div data-bind="foreach: selected_path" style="display: inline-block;">
+    <select data-bind="options: children, optionsText: 'display_name', value: selected_child"></select>
+  </div>
+  <img id="loc_ajax" src="/static/formplayer/img/loading_small.gif" style="display: none;">
 </div>
 <input name="location_id" type="hidden" data-bind="value: selected_locid" />
 
@@ -10,7 +13,9 @@ var LOAD_LOCS_URL = '{{ api_root }}';
 
 function api_get_children(loc_uuid, callback) {
   var params = (loc_uuid ? {parent_id: loc_uuid} : {});
+  $('#loc_ajax').show();
   $.getJSON(LOAD_LOCS_URL, params, function(allData) {
+      $('#loc_ajax').hide();
       callback(allData.objects);
     });
 }
@@ -81,6 +86,7 @@ function LocationSelectViewModel() {
     this.root(new LocationModel({name: '_root', children: locs}, this));
     this.path_push(this.root());
 
+/* FIXME
     if (selected) {
       var sel_path = this.find_loc(selected);
       if (sel_path) {
@@ -89,6 +95,7 @@ function LocationSelectViewModel() {
         }
       }
     }
+*/
   }
 }
 
