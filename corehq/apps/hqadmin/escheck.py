@@ -31,7 +31,7 @@ def check_case_index():
     #xform_ids = [x['id'] for x in recent_xforms]
     for xform in recent_xforms:
         xform_id = xform['id']
-        #just check to see if any of these recent forms have an xform
+        #just check to see if any of these recent forms have a case associated with them - they should...
         casedoc = casedb.view('case/by_xform_id', reduce=False, include_docs=True, key=xform_id, limit=1).one()
         if casedoc is not None:
             #print casedoc.to_json().keys()
@@ -46,8 +46,6 @@ def check_case_index():
 
             try:
                 res = es['hqcases'].get('_search', data=case_id_query)
-                print couch_rev
-                print case_id
                 status=False
                 message="Not in sync"
 
@@ -70,4 +68,6 @@ def check_case_index():
                 message = "ES Error: %s" % ex
                 status=False
             return dict(case_status=status, case_message=message)
+    #this could be if there's 100 devicelogs that come in
+    return dict(case_status=True, case_message="No recent xforms with case ids - will try again later")
 

@@ -37,8 +37,6 @@ def check_es_index():
 
     if do_notify:
         notify_exception(None, message='\n'.join(message))
-    else:
-        print "OK!"
 
 
 @task
