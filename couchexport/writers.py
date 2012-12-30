@@ -4,7 +4,6 @@ from StringIO import StringIO
 import csv
 import json
 from django.template.loader import render_to_string
-from openpyxl import style
 
 class UniqueHeaderGenerator(object):
     def __init__(self, max_column_size=None):
