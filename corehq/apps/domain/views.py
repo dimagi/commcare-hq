@@ -10,12 +10,11 @@ from django.http import HttpResponseRedirect, HttpResponse, Http404
 
 from django.shortcuts import redirect
 
-from corehq.apps.domain.decorators import REDIRECT_FIELD_NAME, login_required_late_eval_of_LOGIN_URL, login_and_domain_required, domain_admin_required
+from corehq.apps.domain.decorators import login_required_late_eval_of_LOGIN_URL, domain_admin_required
 from corehq.apps.domain.forms import DomainGlobalSettingsForm,\
     DomainMetadataForm, SnapshotSettingsForm, SnapshotApplicationForm, DomainDeploymentForm
 from corehq.apps.domain.models import Domain, LICENSES
 from corehq.apps.domain.utils import get_domained_url, normalize_domain_name
-from corehq.apps.users.models import CouchUser
 from dimagi.utils.django.email import send_HTML_email
 
 from dimagi.utils.web import render_to_response, get_ip
@@ -33,8 +32,6 @@ from django.utils.translation import ugettext as _
 
 # Domain not required here - we could be selecting it for the first time. See notes domain.decorators
 # about why we need this custom login_required decorator
-from lib.django_user_registration.models import RegistrationProfile
-
 @login_required_late_eval_of_LOGIN_URL
 def select(request, domain_select_template='domain/select.html'):
 
@@ -44,47 +41,6 @@ def select(request, domain_select_template='domain/select.html'):
 
     return render_to_response(request, domain_select_template, {})
 
-
-########################################################################################################
-
-def _bool_to_yes_no( b ):
-    return 'Yes' if b else 'No'
-
-########################################################################################################
-
-def _dict_for_one_user( user, domain ):
-    retval = dict( id = user.id,
-                   username = user.username,
-                   first_name = user.first_name,
-                   last_name = user.last_name,
-                   is_active_auth = _bool_to_yes_no(user.is_active),
-                   last_login = user.last_login )
-
-    is_active_member = user.domain_membership.filter(domain = domain)[0].is_active
-    retval['is_active_member'] = _bool_to_yes_no(is_active_member)
-
-    # TODO: update this to use new couch user permissions scheme
-    # ct = ContentType.objects.get_for_model(Domain)
-    # is_domain_admin = user.permission_set.filter(content_type = ct,
-    #                                             object_id = domain.id,
-    #                                             name=Permissions.ADMINISTRATOR)
-    # retval['is_domain_admin'] = _bool_to_yes_no(is_domain_admin)
-    retval['is_domain_admin'] = False
-
-    # user is a unique get in the registrationprofile table; there can be at most
-    # one invite per user, so if there is any invite at all, it's safe to just grab
-    # the zero-th one
-    invite_status = user.registrationprofile_set.all()
-    if invite_status:
-        if invite_status[0].activation_key == RegistrationProfile.ACTIVATED:
-            val = 'Activated'
-        else:
-            val = 'Not activated'
-    else:
-        val = 'Admin added'
-    retval['invite_status'] = val
-
-    return retval
 
 @require_can_edit_web_users
 def domain_forwarding(request, domain):
