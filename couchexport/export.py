@@ -59,7 +59,7 @@ class ExportConfiguration(object):
         Gets view results for all documents matching this schema
         """
         return set([result['id'] for result in \
-                    self.database.view("couchexport/schema_index", 
+                    self.database.view("couchexport/schema_index",
                                        key=self.schema_index).all()])
 
     def _ids_since(self, seq):
@@ -125,7 +125,6 @@ class ExportConfiguration(object):
         for doc in self._iter_docs(doc_ids):
             schema = extend_schema(schema, doc)
         return schema
-
 
 class UnsupportedExportFormat(Exception):
     pass
@@ -378,7 +377,7 @@ def create_intermediate_tables(docs, schema, integer='#'):
             for key in d:
                 queue.append(path + (key,))
         elif isinstance(d, list):
-            for i,_ in enumerate(d):
+            for i, _ in enumerate(d):
                 queue.append(path + (i,))
         elif d != list_never_was:
             leaves.append((split_path(path), d))
@@ -401,28 +400,46 @@ class FormattedRow(object):
     
     The id should be an iterable (compound ids are supported). 
     """
-    def __init__(self, data, id=None, separator=".", id_index=0):
+    def __init__(self, data, id=None, separator=".", id_index=0,
+                 is_header_row=False):
         self.data = data
         self.id = id
         self.separator = separator
         self.id_index = id_index
-    
+        self.is_header_row = is_header_row
+
     def has_id(self):
         return self.id is not None
-    
+
     @property
     def formatted_id(self):
         if isinstance(self.id, basestring):
             return self.id
         return self.separator.join(map(unicode, self.id))
-    
+
+    def include_compound_id(self):
+        return len(self.compound_id) > 1
+
+    @property
+    def compound_id(self):
+        if isinstance(self.id, basestring):
+            return [self.id]
+        return self.id
+
     def get_data(self):
         if self.has_id():
             # tl;dr:
             # return self.data[:self.id_index] + [self.formatted_id] + data[self.id_index:]
+            if self.is_header_row:
+                id_block = self.compound_id
+            elif self.include_compound_id():
+                id_block = [self.formatted_id] + list(self.compound_id)
+            else:
+                id_block = [self.formatted_id]
+
             return itertools.chain(
                 itertools.islice(self.data, None, self.id_index),
-                [self.formatted_id],
+                id_block,
                 itertools.islice(self.data, self.id_index, None)
             )
         else:
@@ -460,14 +477,20 @@ def format_tables(tables, id_label='id', separator='.', include_headers=True,
     """
     answ = []
     assert include_data or include_headers, "This method is pretty useless if you don't include anything!"
-    
+
     for table_name, table in sorted(tables.items()):
         new_table = []
         keys = sorted(table.items()[0][1].keys()) # the keys for every row are the same
         
         if include_headers:
+            id_key = [id_label]
+            id_len = len(table.keys()[0]) # this is a proxy for the complexity of the ID
+            if id_len > 1:
+                id_key += ["{id}__{count}".format(id=id_label, count=i) \
+                           for i in range(id_len)]
             header_vals = [separator.join(key) for key in keys]
-            new_table.append(FormattedRow(header_vals, [id_label], separator))
+            new_table.append(FormattedRow(header_vals, id_key, separator,
+                                          is_header_row=True))
         
         if include_data:
             for id, row in sorted(table.items()):
