@@ -131,7 +131,6 @@ CRISPY_TEMPLATE_PACK = 'bootstrap'
 
 HQ_APPS = (
     'django_digest',
-    'django_user_registration',
     'rosetta',
     'auditcare',
     'djangocouch',
@@ -148,7 +147,6 @@ HQ_APPS = (
     'corehq.apps.hqcase',
     'corehq.apps.hqcouchlog',
     'corehq.apps.hqwebapp',
-    'corehq.apps.docs',
     'corehq.apps.hqmedia',
     'corehq.apps.locations',
     'corehq.apps.commtrack',
@@ -241,9 +239,6 @@ LOGIN_REDIRECT_URL='/'
 DOMAIN_MAX_REGISTRATION_REQUESTS_PER_DAY=99
 DOMAIN_SELECT_URL="/domain/select/"
 LOGIN_URL="/accounts/login/"
-# For the registration app
-# One week to confirm a registered user account
-ACCOUNT_ACTIVATION_DAYS=7
 # If a user tries to access domain admin pages but isn't a domain
 # administrator, here's where he/she is redirected
 DOMAIN_NOT_ADMIN_REDIRECT_PAGE_NAME="homepage"
