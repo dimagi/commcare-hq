@@ -4,12 +4,42 @@ from celery.schedules import crontab
 from celery.task import periodic_task, task
 from django.core.cache import cache
 from corehq.apps.domain.models import Domain
+from corehq.apps.hqadmin.escheck import check_cluster_health, check_case_index, CLUSTER_HEALTH
 from corehq.apps.reports.models import (ReportNotification,
     UnsupportedScheduledReportError, HQGroupExportConfiguration,
     CaseActivityReportCache)
 from couchexport.groupexports import export_for_group
+from dimagi.utils.logging import notify_exception
 
 logging = get_task_logger()
+
+@periodic_task(run_every=crontab(hour=[8,14], minute="0", day_of_week="*"))
+def check_es_index():
+    """
+    Verify that the Case and soon to be added XForm Elastic indices are up to date with what's in couch
+
+    This code is also called in the HQ admin page as well
+    """
+
+    es_status = {}
+    es_status.update(check_cluster_health())
+    es_status.update(check_case_index())
+
+    do_notify = False
+    message = []
+    if es_status[CLUSTER_HEALTH] == 'red':
+        do_notify=True
+        message.append("Cluster health is red - something is up with the ES machine")
+
+    if es_status['case_status'] == False:
+        do_notify=True
+        message.append("Elasticsearch Case Index Issue: %s" % es_status['case_message'])
+
+    if do_notify:
+        notify_exception(None, message='\n'.join(message))
+    else:
+        print "OK!"
+
 
 @task
 def send_report(notification_id):
