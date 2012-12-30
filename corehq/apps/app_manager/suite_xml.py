@@ -398,6 +398,7 @@ class SuiteGenerator(object):
                 for form in module.get_forms():
                     command = Command(id=self.id_strings.form_command(form))
                     if module.all_forms_require_a_case() and \
+                            not module.put_in_root and \
                             getattr(form, 'form_filter', None):
                         command.relevant = form.form_filter.replace('.', (
                             "instance('casedb')/casedb/case[@case_id="

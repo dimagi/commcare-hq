@@ -270,6 +270,7 @@ var CaseXML = (function () {
             this.questions = params.questions;
             this.edit = params.edit;
             this.save_url = params.save_url;
+            // `requires` in a ko observable so it can be read by another UI
             this.requires = params.requires;
             this.save_requires_url = params.save_requires_url;
             this.caseType = params.caseType;
@@ -463,8 +464,8 @@ var CaseXML = (function () {
             return $(root).find('[name="' + key + '"]').attr('value');
         }
         requires = $('[name="requires"]', this.subhome).val();
-        if (requires !== this.requires) {
-            this.requires = requires;
+        if (requires !== this.requires()) {
+            this.requires(requires);
             this.render();
         }
         $(".casexml .action").each(function () {

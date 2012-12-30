@@ -533,6 +533,10 @@ class Form(FormBase, IndexedSchema, NavMenuItemMediaMixin):
     def get_module(self):
         return self._parent
 
+    def all_other_forms_require_a_case(self):
+        m = self.get_module()
+        return all([form.requires == 'case' for form in m.get_forms() if form.id != self.id])
+
 class UserRegistrationForm(FormBase):
     username_path = StringProperty(default='username')
     password_path = StringProperty(default='password')
