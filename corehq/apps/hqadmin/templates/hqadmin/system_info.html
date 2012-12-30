@@ -125,7 +125,7 @@
                     <th>Memcached Status</th>
                     <th>Redis Status</th>
                     <th>RabbitMQ Status</th>
-                    <th>{#  Elasticsearch Status #}</th>
+                    <th>Elasticsearch Status</th>
                 </tr>
             </thead>
             <tbody>
@@ -145,7 +145,32 @@
                     {{ rabbitmq_status }}
                 </td>
                 <td>
-{#                    TBD#}
+                    <dl class="dl-horizontal">
+                    <dt>Cluster Status</dt>
+                        <dd>
+                            {% if cluster_health == "green" %}
+                                <span class="label label-success">Great</span>
+                            {% endif %}
+                            {% if cluster_health == "yellow" %}
+                                <span class="label label-warning">..aight</span>
+                            {% endif %}
+                            {% if cluster_health == "red" %}
+                                <span class="label label-important">Bad</span>
+                            {% endif %}
+                        </dd>
+                    <dt>Case Index</dt>
+                        <dd>{% if case_status %}
+                            <span class="label label-success">OK</span>
+                            {% else %}
+                            <span class="label label-important">Error</span>
+                            {% endif %}
+                            {{ case_message }}
+                        </dd>
+                    <dt>XForm Index</dt>
+                        <dd>TODO</dd>
+                    <dt>Exchange</dt>
+                        <dd>TODO</dd>
+                    </dl>
                 </td>
             </tr>
             </tbody>
