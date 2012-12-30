@@ -1,3 +1,4 @@
+import copy
 import pdb
 from corehq.pillows.case import UNKNOWN_DOMAIN, UNKNOWN_TYPE
 from corehq.pillows.core import DATE_FORMATS_ARR, DATE_FORMATS_STRING
@@ -7,32 +8,9 @@ import simplejson
 from couchforms.models import XFormInstance
 from pillowtop.listener import ElasticPillow
 from django.conf import settings
+from dimagi.utils.modules import to_function
 
-
-class StrippedXformPillow(ElasticPillow):
-    couch_db = XFormInstance.get_db()
-    couch_filter = "couchforms/xforms"
-    es_host = settings.ELASTICSEARCH_HOST
-    es_port = settings.ELASTICSEARCH_PORT
-    es_index = "xforms_clean"
-    es_type = "xform"
-
-    def change_transform(self, doc_dict):
-        """
-        strip all properties of the form except meta/submit info
-        """
-        for k in doc_dict['form']:
-            if k not in ['meta', 'Meta', '@uiVersion', '@version']:
-                try:
-                    del doc_dict['form'][k]
-                except:
-                    pass
-                    #todo: add geoip block here
-        return doc_dict
-
-    def change_transport(self, doc_dict):
-        #not ready yet!
-        return None
+from auditcare.utils import dict_diff
 
 
 class XFormPillowHandler(object):
@@ -159,14 +137,12 @@ class XFormPillow(AliasedElasticPillow):
     def __init__(self, **kwargs):
         super(XFormPillow, self).__init__(**kwargs)
 
+        #Pillow Handlers are custom processing classes that can add new mapping definitions beyond the
+        #default/core mapping types found in self.default_xform_mapping
+        #it also provides for more custom transform prior to transmission
         for full_str in getattr(settings, 'XFORM_PILLOW_HANDLERS', []):
-            comps = full_str.split('.')
-            handler_class_str = comps[-1]
-            mod_str = '.'.join(comps[0:-1])
-            mod = __import__(mod_str, {}, {}, [handler_class_str])
-            if hasattr(mod, handler_class_str):
-                handler_class = getattr(mod, handler_class_str)
-                self.xform_handlers.append(handler_class())
+            func = to_function(full_str)
+            self.xform_handlers.append(func())
         self.handler_domain_map = dict((x.domain, x) for x in self.xform_handlers)
 
     def calc_meta(self):
@@ -190,7 +166,6 @@ class XFormPillow(AliasedElasticPillow):
             return None
         else:
             if self.nodomain_check.has_key(doc_dict['_id']):
-#                print "no domain, but fixed %s [%s] %d" % (doc_dict['_id'], doc_dict['xmlns'], self.nodomain_check[doc_dict['_id']])
                 pass
             return domain
 
@@ -239,17 +214,20 @@ class XFormPillow(AliasedElasticPillow):
         if self.get_domain(doc_dict) is None:
             return None
         else:
+            doc_ret = dict.copy(doc_dict)
+            #print simplejson.dumps(doc_dict) == simplejson.dumps(doc_ret)
+#            removed, added, changed = dict_diff(doc_ret, doc_dict)
             # universal xform handler for timeStart
             # to address a touchforms issue
-            if doc_dict['form'].has_key('meta'):
-                if doc_dict['form']['meta'].get('timeEnd', None) == "":
-                    doc_dict['form']['meta']['timeEnd'] = None
-                if doc_dict['form']['meta'].get('timeStart', None) == "":
-                    doc_dict['form']['meta']['timeStart'] = None
+            if doc_ret['form'].has_key('meta'):
+                if doc_ret['form']['meta'].get('timeEnd', None) == "":
+                    doc_ret['form']['meta']['timeEnd'] = None
+                if doc_ret['form']['meta'].get('timeStart', None) == "":
+                    doc_ret['form']['meta']['timeStart'] = None
 
-            if self.handler_domain_map.has_key(doc_dict['domain']):
-                doc_dict = self.handler_domain_map[doc_dict['domain']].handle_transform(doc_dict)
-            return doc_dict
+            if self.handler_domain_map.has_key(doc_ret['domain']):
+                doc_ret = self.handler_domain_map[doc_ret['domain']].handle_transform(doc_ret)
+            return doc_ret
 
 
 

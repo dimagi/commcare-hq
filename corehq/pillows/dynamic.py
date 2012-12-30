@@ -9,14 +9,11 @@ def type_full_date(formats=DATE_FORMATS_STRING):
 
 def prop_subtype(prop_type, nested=False, dynamic=False):
     #schemalist, schemadict
-    ret = dict()
-    if nested:
-        ret['type'] = "nested"
-    else:
-        ret['type'] = "object"
-    ret['dynamic'] = dynamic
-    ret['properties'] = set_properties(prop_type)
-    return ret
+    return {
+        'type': 'nested' if nested else 'object',
+        'dynamic': dynamic,
+        'properties': set_properties(prop_type)
+    }
 
 
 simple_type_mapper = {
@@ -81,16 +78,11 @@ def set_properties(schema_class, custom_types=default_special_types):
     for prop_name, prop_type in schema_class.properties().items():
         if custom_types.has_key(prop_name):
             props_dict[prop_name] = custom_types[prop_name]
-            continue
-
-        if simple_type_mapper.has_key(prop_type.__class__):
+        elif simple_type_mapper.has_key(prop_type.__class__):
             props_dict[prop_name] = simple_type_mapper[prop_type.__class__]
-            continue
-
-        if complex_type_mapper.has_key(prop_type.__class__):
+        elif complex_type_mapper.has_key(prop_type.__class__):
             func = complex_type_mapper[prop_type.__class__]
             props_dict[prop_name] = func(prop_type._schema, nested=False, dynamic=False)
-            continue
     return props_dict
 
 
