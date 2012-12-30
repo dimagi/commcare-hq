@@ -1,2 +1,0 @@
-This is purely a test project to have the corehq codebase be testable in a django environment in isolation
-this should NOT be used as a high level project to run this code.  submodule the corehq codebase into your project.
