@@ -1,19 +1,24 @@
+from django.utils.translation import ugettext_noop
 from corehq.apps.fixtures.models import FixtureDataType, FixtureDataItem
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
 from corehq.apps.reports.dispatcher import CustomProjectReportDispatcher
+from corehq.apps.reports.fields import ReportField
 from corehq.apps.reports.generic import GenericTabularReport
-from corehq.apps.reports.standard import CustomProjectReport
+from corehq.apps.reports.standard import CustomProjectReport, DatespanMixin
 from corehq.apps.reports.util import make_form_couch_key
 from couchforms.models import XFormInstance
+from corehq.apps.reports.cache import CacheableRequestMixIn, request_cache
+import json
+
 
 def _get_unique_combinations(domain, place_types=None):
     if not place_types:
         return []
     place_data_types = {}
-    place_data_items = {}
+#    place_data_items = {}
     for pt in place_types:
         place_data_types[pt] = FixtureDataType.by_domain_tag(domain, pt).one()
-        place_data_items[pt] = FixtureDataItem.by_data_type(domain, place_data_types[pt])
+#        place_data_items[pt] = FixtureDataItem.by_data_type(domain, place_data_types[pt])
 
     fdis = []; base_type = ""
     for t in ["village", "block", "district", "state"]:
@@ -44,10 +49,9 @@ def _get_unique_combinations(domain, place_types=None):
 def psi_events(domain, query_dict):
     place_types = ['state', 'district']
     combos = _get_unique_combinations(domain, place_types=place_types)
-    forms = list(_get_forms(domain))
     return map(lambda c: event_stats(domain, c, query_dict.get("location", "")), combos)
 
-def event_stats(domain, place_dict, location=""):
+def event_stats(domain, place_dict, location="", datetime="None"):
     def ff_func(form):
         if place_dict["state"] and form.xpath('form/activity_state') != place_dict["state"]:
             return False
@@ -241,8 +245,8 @@ def _get_form(domain, action_filter=lambda a: True, form_filter=lambda f: True):
     except StopIteration:
         return None
 
-class PSIReport(GenericTabularReport, CustomProjectReport):
-    fields = ['corehq.apps.reports.fields.DatespanField']
+class PSIReport(GenericTabularReport, CustomProjectReport, DatespanMixin):
+    fields = ['corehq.apps.reports.fields.DatespanField','corehq.apps.reports.psi_reports.PlaceField',]
 
 class PSIEventsReport(PSIReport):
     name = "Event Demonstration Report"
@@ -399,3 +403,78 @@ class PSITSReport(PSIReport):
                 d["flw_training"].get("avg_difference"),
                 d["flw_training"].get("num_gt80"),
             ]
+
+def place_tree(domain):
+    fdis = []; base_type = ""
+    place_data_types = {}
+    place_data_items = {}
+    for pt in ["village", "block", "district", "state"]:
+        place_data_types[pt] = FixtureDataType.by_domain_tag(domain, pt).one()
+        place_data_items[pt] = FixtureDataItem.by_data_type(domain, place_data_types[pt].get_id).all()
+
+    pdis_by_id = {}
+    for pt, items in place_data_items.iteritems():
+        pdis_by_id.update(dict((pdi.fields['id'], pdi) for pdi in items))
+
+    tree_root = []
+    for item in place_data_items["state"]:
+        item._children = []
+        tree_root.append(item)
+
+    for item in place_data_items["district"]:
+        item._children = []
+        if item.fields.get('state_id', None):
+            parent = pdis_by_id[item.fields['state_id']]
+            try:
+                parent._children.append(item)
+            except AttributeError:
+                print "Error: %s -> %s(%s)" % (item.fields['id'], parent.fields['id'], parent.get_id)
+
+    for item in place_data_items["block"]:
+        item._children = []
+        if item.fields.get('district_id', None):
+            parent = pdis_by_id[item.fields['district_id']]
+            try:
+                parent._children.append(item)
+            except AttributeError:
+                print "Error: %s -> %s(%s)" % (item.fields['id'], parent.fields['id'], parent.get_id)
+
+    for item in place_data_items["village"]:
+        item._children = []
+        if item.fields.get('block_id', None):
+            parent = pdis_by_id[item.fields['block_id']]
+            try:
+                parent._children.append(item)
+            except AttributeError:
+                print "Error: %s -> %s(%s)" % (item.fields['id'], parent.fields['id'], parent.get_id)
+
+    return tree_root
+
+class PlaceField(ReportField):
+    name = ugettext_noop("State/District/Block/Village")
+    slug = "place"
+    template = "reports/fields/location.html"
+    is_cacheable = True
+
+    def update_context(self):
+        self.context.update(self._get_custom_context())
+
+    @request_cache('placefieldcontext')
+    def _get_custom_context(self):
+        all_locs = place_tree(self.domain)
+        def loc_to_json(loc):
+            return {
+                'name': loc.fields['name'],
+#                'type': loc.location_type,
+                'uuid': loc.get_id,
+                'children': [loc_to_json(child) for child in loc._children],
+                }
+        loc_json = [loc_to_json(root) for root in all_locs]
+
+        return {
+            'control_name': self.name,
+            'control_slug': self.slug,
+            'loc_id': self.request.GET.get('location_id'),
+            'locations': json.dumps(loc_json)
+        }
+
