@@ -1,6 +1,6 @@
 from corehq.apps.api.resources import v0_1, v0_2, v0_3
 from corehq.apps.commtrack.resources.v0_1 import ProductResource,\
-    StockStatusResource, StockTransactionResource
+    StockStatusResource, StockReportResource, FullStockTransactionResource
 from corehq.apps.locations.resources.v0_1 import LocationResource
 from django.conf.urls.defaults import *
 from tastypie.api import Api
@@ -26,7 +26,7 @@ API_LIST = (
 
 # eventually these will have to version too but this works for now
 COMMTRACK_RESOURCES = (LocationResource, ProductResource, StockStatusResource,
-                       StockTransactionResource)
+                       FullStockTransactionResource, StockReportResource)
 
 @inline
 def api_url_patterns():
