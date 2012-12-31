@@ -7,6 +7,7 @@ from corehq.apps.orgs.models import Organization
 from corehq.apps.reports import util
 from corehq.apps.groups.models import Group
 from corehq.apps.reports.models import HQUserType
+from corehq.apps.locations.models import Location
 from dimagi.utils.couch.database import get_db
 from dimagi.utils.dates import DateSpan
 from dimagi.utils.decorators.datespan import datespan_in_request
@@ -432,11 +433,26 @@ class AsyncLocationField(ReportField):
         api_root = reverse('api_dispatch_list', kwargs={'domain': self.domain,
                                                         'resource_name': 'location', 
                                                         'api_name': 'v0.3'})
+
+        # if a location is selected, we need to pre-populate its location hierarchy
+        # so that the data is available client-side to pre-populate the drop-downs
+        selected_loc_id = self.request.GET.get('location_id')
+        if selected_loc_id:
+            selected = Location.get(selected_loc_id)
+            lineage = list(Location.view('_all_docs', keys=selected.path, include_docs=True))
+
+            parent = {'children': loc_json}
+            for loc in lineage:
+                # find existing entry in the json tree that corresponds to this loc
+                this_loc = [k for k in parent['children'] if k['uuid'] == loc._id][0]
+                this_loc['children'] = [loc_to_json(loc) for loc in loc.children]
+                parent = this_loc
+
         return {
             'api_root': api_root,
             'control_name': self.name,
             'control_slug': self.slug,
-            'loc_id': self.request.GET.get('location_id'),
+            'loc_id': selected_loc_id,
             'locations': json.dumps(loc_json)
         }
         
