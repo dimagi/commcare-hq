@@ -10,7 +10,7 @@ from dimagi.utils.couch.loosechange import map_reduce
 from dimagi.utils import parsing as dateparse
 import itertools
 from datetime import date, timedelta
-from corehq.apps.commtrack.models import CommtrackConfig, Product
+from corehq.apps.commtrack.models import CommtrackConfig, Product, StockReport
 from dimagi.utils.decorators.memoized import memoized
 from casexml.apps.case.models import CommCareCase
 
@@ -63,15 +63,8 @@ def get_transactions(form_doc, include_inferred=True):
     return [tx for tx in txs if include_inferred or not tx.get('@inferred')]
 
 def get_stock_reports(domain, location, datespan):
-    timestamp_start = dateparse.json_format_datetime(datespan.startdate)
-    timestamp_end =  dateparse.json_format_datetime(datespan.end_of_end_day)
-    loc_id = location._id if location else None
-
-    startkey = [domain, loc_id, timestamp_start]
-    endkey = [domain, loc_id, timestamp_end]
-
-    query = get_db().view('commtrack/stock_reports', startkey=startkey, endkey=endkey, include_docs=True)
-    return [e['doc'] for e in query]
+    return [sr.raw_form for sr in \
+            StockReport.get_reports(domain, location, datespan)]
 
 def leaf_loc(form):
     return form['location_'][-1]
