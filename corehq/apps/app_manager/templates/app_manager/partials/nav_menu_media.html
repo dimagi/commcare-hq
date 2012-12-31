@@ -11,8 +11,7 @@
                 inputCss: {wide: true, 'jr-resource-field': true},
                 inputAttr: {placeholder: 'jr://file/commcare_media/image/image.png', 'data-name': 'media_image'}
             }">
-                <span data-slug="add">{% trans "Add Image..." %}</span>
-                <span data-slug="remove">{% trans "Remove Image" %}</span>
+                <span data-slug="add">{% trans "Add Image" %}</span>
             </div>
         {% else %}
             {{ item.media_image }}
@@ -30,9 +29,8 @@
                 inputCss: {wide: true, 'jr-resource-field': true},
                 inputAttr: {placeholder: 'jr://file/commcare_media/audio/audio.mp3', 'data-name': 'media_audio'}
             }">
-                <span data-slug="add">{% trans "Add Audio..." %}</span>
+                <span data-slug="add">{% trans "Add Audio" %}</span>
                 <span data-slug="whyNotAdd">{% trans "Why can't I add audio?" %}</span>
-                <span data-slug="remove">{% trans "Remove Audio" %}</span>
                 <span data-slug="helpText">{% trans "To hear audio on J2ME, you must be in CommCare Sense mode or Numeric Selection mode. (In ODK it will always work.)" %}</span>
             </div>
         {% else %}

@@ -312,7 +312,7 @@
                             {% trans "Display Condition" %}
                             <span class="hq-help-template"
                                 data-title="{% trans "Display Condition" %}"
-                                data-content="{% trans "You can specify an XPath to use as a display condition for this form. For example './edd > today()' means 'show this form if the selected case has an edd later than today'" %}"
+                                data-content="{% trans "The form will not appear in the form menu unless this condition is met." %}"
                             ></span>
                         </th>
                         <td id="form-filter">
@@ -323,11 +323,11 @@
                                     inputCss: {wide: true},
                                     inputName: 'form_filter'
                                 }">
-                                    <span data-slug="add">{% trans "Add Display Condition..." %}</span>
+                                    <span data-slug="add">{% trans "Add Display Condition" %}</span>
                                     <span data-slug="whyNotAdd">{% trans "Why can't I add a display condition?" %}</span>
-                                    <span data-slug="remove">{% trans "Remove Display Condition" %}</span>
-                                    <span data-slug="notAllowedButExists">{% trans "Error! This display condition will be ignored." %}</span>
-                                    <span data-slug="notAllowed">{% trans "To use display conditions in a module, (1) it must not put its forms on the first screen and (2) all its forms must require a case. " %}</span>
+                                    <span data-slug="notAllowedButExists">{% trans "Error! Display condition will be ignored." %}</span>
+                                    <span data-slug="notAllowed">{% trans 'To use display conditions in a module, (1) the module <strong>Menu</strong> setting must be set to <em>Put forms in a separate menu</em> and (2) all the forms in the module must require a case, which means registration forms must go in a seperate module.' %}</span>
+                                    <span data-slug="helpText">{% trans 'Similar to how you write display logic inside the form designer, except that you must enter <code>./</code> before a case property. <strong>For example</strong>: <code>./edd > today()</code> means "show this form if the selected case has an edd later than today". <a href="https://confluence.dimagi.com/display/commcarepublic/Common+Logic+and+Calculations#CommonLogicandCalculations-DisplayLogicforForms"><i class="icon icon-question-sign"></i> Click here for more help</a>' %}</span>
                                 </div>
                             {% else %}
                                 <code>{{ form.form_filter|default:'' }}</code>

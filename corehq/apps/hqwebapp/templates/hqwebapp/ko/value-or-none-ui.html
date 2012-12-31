@@ -1,22 +1,23 @@
+{% load i18n %}
 <script type="text/html" id="value-or-none-ui-template">
     <div data-bind="visible: !hasValue()">
         <div class="btn-group" data-bind="visible: allowed()">
             <button class="btn btn-mini" data-bind="enterInput: $data">
-                <span data-bind="text: messages.add"></span>
+                <span data-bind="html: messages.add"></span>
             </button>
         </div>
         <div></div>
         <div class="btn-group" data-bind="visible: !allowed()">
             <button class="btn btn-mini disabled" disabled="disabled">
                 <i class="icon icon-plus"></i>
-                <span data-bind="text: messages.add"></span>
+                <span data-bind="html: messages.add"></span>
             </button>
             <button class="btn btn-mini dropdown-toggle" data-toggle="dropdown">
                 <span class="caret"></span>
             </button>
             <ul class="dropdown-menu">
                 <li>
-                    <a href="#" data-bind="click: enterInput, text: messages.whyNotAdd"></a>
+                    <a href="#" data-bind="click: enterInput, html: messages.whyNotAdd"></a>
                 </li>
             </ul>
         </div>
@@ -24,19 +25,19 @@
     <div data-bind="visible: hasValue">
         <div data-bind="visible: !allowed()">
             <div class="alert alert-error" data-bind="visible: value">
-                <strong data-bind="text: messages.notAllowedButExists"></strong>
+                <strong data-bind="html: messages.notAllowedButExists"></strong>
                 <div>
                     <code data-bind="text: value()"></code>
                     <a href="#" class="btn btn-mini btn-danger" data-bind="exitInput: $data">
-                        <span data-bind="text: messages.remove"></span>
+                        {% trans "Delete" %}
                     </a>
                 </div>
-                <div data-bind="text: messages.notAllowed"></div>
+                <div data-bind="html: messages.notAllowed"></div>
             </div>
             <div class="alert alert-info" data-bind="visible: !value()">
-                <div data-bind="text: messages.notAllowed"></div>
+                <div data-bind="html: messages.notAllowed"></div>
                 <a href="#" class="btn btn-mini" data-bind="exitInput: $data">
-                    OK, close this
+                    {% trans "OK, close this" %}
                 </a>
             </div>
         </div>
@@ -48,13 +49,11 @@
                     attr: inputAttr, valueUpdate: 'textchange'
             "/>
             <a href="#" class="btn btn-mini btn-danger" data-bind="exitInput: $data">
-                <span data-bind="text: messages.remove"></span>
+                {% trans "Delete" %}
             </a>
-            <div class="alert alert-info" data-bind="visible: messages.helpText">
+            <div class="help-block" data-bind="visible: messages.helpText">
                 <i class="icon icon-info-sign"></i>
-                <span data-bind="
-                    html: messages.helpText
-                "></span>
+                <span data-bind="html: messages.helpText"></span>
             </div>
         </div>
     </div>
