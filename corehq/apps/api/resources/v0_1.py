@@ -21,76 +21,6 @@ from dimagi.utils.decorators import inline
 from corehq.apps.api.util import get_object_or_not_exist
 from corehq.apps.api.resources import JsonResource
 
-class ElasticPaginator(Paginator):
-    def get_slice(self, limit, offset):
-        """
-        Slices the result set to the specified ``limit`` & ``offset``.
-        """
-        if not self.objects.has_key('error'):
-            return self.objects['hits']['hits']
-        else:
-            return []
-
-    def get_count(self):
-        """
-        Returns a count of the total number of objects seen.
-        """
-
-        #        pdb.set_trace()
-        if self.objects.has_key('hits'):
-            return self.objects['hits']['total']
-        return 0
-
-
-    def page(self):
-        """
-        Generates all pertinent data about the requested page.
-
-        Handles getting the correct ``limit`` & ``offset``, then slices off
-        the correct set of results and returns all pertinent metadata.
-
-        objects are a RawES return set.
-
-        {
-        'took': int,
-        'timed_out': bool,
-        '_shards': {},
-        'hits': {
-                'total': int,
-                'max_score': int,
-                'hits': [] #results!
-            }
-        }
-        """
-        limit = self.get_limit()
-        offset = self.get_offset()
-        count = self.get_count()
-        objects = self.get_slice(limit, offset)
-        meta = {
-            'offset': offset,
-            'limit': limit,
-            'total_count': count,
-            'took': self.objects['took']
-        }
-
-        if limit:
-            meta['previous'] = self.get_previous(limit, offset)
-            meta['next'] = self.get_next(limit, offset, count)
-
-        #[XFormInstance.wrap(x['_source']) for x in es_results['hits']['hits']]
-
-        def wrap_forms(obs):
-            for x in obs:
-                yield XFormInstance.wrap(x['_source'])
-
-        return {
-            'objects': wrap_forms(objects),
-            'meta': meta,
-        }
-
-=======
-
->>>>>>> master
 
 class CustomXMLSerializer(Serializer):
     def to_etree(self, data, options=None, name=None, depth=0):
@@ -163,8 +93,6 @@ class CommCareUserResource(JsonResource):
 
     class Meta(CustomResourceMeta):
         resource_name = 'user'
-
-<<<<<<< HEAD
 
 class CommCareCaseResource(JsonResource):
     type = "case"
