@@ -14,7 +14,7 @@ from corehq.apps.users.decorators import require_permission
 from corehq.apps.users.export import export_users
 from corehq.apps.users.models import Permissions
 import couchexport
-from couchexport.export import UnsupportedExportFormat, export_raw
+from couchexport.export import UnsupportedExportFormat, export_raw, chunked
 from couchexport.util import SerializableFunction
 from couchforms.models import XFormInstance
 from dimagi.utils.couch.loosechange import parse_date
@@ -747,7 +747,18 @@ def generate_case_export_payload(domain, include_closed, format, group, user_fil
     """
     view_name = 'hqcase/all_cases' if include_closed else 'hqcase/open_cases'
     key = [domain, {}, {}]
-    cases = CommCareCase.view(view_name, startkey=key, endkey=key + [{}], reduce=False, include_docs=True)
+    case_ids = CommCareCase.view(view_name,
+        startkey=key,
+        endkey=key + [{}],
+        reduce=False,
+        include_docs=False,
+        wrapper=lambda r: r['id']
+    )
+    def stream_cases(all_case_ids):
+        for case_ids in chunked(all_case_ids, 500):
+            for case in CommCareCase.view('_all_docs', keys=case_ids, include_docs=True):
+                yield case
+
     # todo deal with cached user dict here
     users = get_all_users_by_domain(domain, group=group, user_filter=user_filter)
     groups = Group.get_case_sharing_groups(domain)
@@ -755,7 +766,7 @@ def generate_case_export_payload(domain, include_closed, format, group, user_fil
     fd, path = tempfile.mkstemp()
     with os.fdopen(fd, 'wb') as file:
         workbook = WorkBook(file, format)
-        export_cases_and_referrals(domain, cases, workbook, users=users, groups=groups)
+        export_cases_and_referrals(domain, stream_cases(case_ids), workbook, users=users, groups=groups)
         export_users(users, workbook)
         workbook.close()
     return FileWrapper(open(path))

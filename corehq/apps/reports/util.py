@@ -120,7 +120,7 @@ def get_all_users_by_domain(domain=None, group=None, individual=None,
             user_filter = HQUserType.use_defaults()
         users = []
         submitted_user_ids = get_all_userids_submitted(domain)
-        registered_user_ids = dict([(user.user_id, user)for user in CommCareUser.by_domain(domain)])
+        registered_user_ids = dict([(user.user_id, user) for user in CommCareUser.by_domain(domain)])
         for user_id in submitted_user_ids:
             if user_id in registered_user_ids and user_filter[HQUserType.REGISTERED].show:
                 user = registered_user_ids[user_id]
