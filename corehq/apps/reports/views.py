@@ -1,9 +1,7 @@
 from datetime import datetime, timedelta
 import json
 from django.core.cache import cache
-from corehq.apps.fixtures.models import FixtureDataType, FixtureDataItem
 from corehq.apps.reports import util
-from corehq.apps.reports.psi_reports import psi_events, psi_household_demonstrations, psi_sensitization_sessions, psi_training_sessions, PSIEventsReport
 from corehq.apps.reports.standard import inspect, export, ProjectReport
 from corehq.apps.reports.standard.export import DeidExportReport
 from corehq.apps.reports.export import ApplicationBulkExportHelper, CustomBulkExportHelper
