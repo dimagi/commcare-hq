@@ -175,36 +175,35 @@ class StockTransaction(DocumentSchema):
             skip=skip, limit=limit)]
 
 # TODO: tweak this and get it working
-#class StockReport(object):
-#    """
-#    This is a wrapper around the couch xform doc that gets associated with
-#    stock reports to provide convenient access to the underlying structure.
-#    """
-#
-#    def __init__(self, form):
-#        # TODO: validation?
-#        self._form = form
-#
-#    @property
-#    def raw_form(self):
-#        return self._form._doc
-#
-#    @classmethod
-#    def get(cls, id):
-#        return StockReport(XFormInstance.get(id))
-#
-#    @classmethod
-#    def get_reports(cls, domain, location=None, datespan=None):
-#        # TODO: replace reports.commtrack.psi_prototype.get_stock_reports with this
-#        start = datespan.startdate if datespan else datetime.min()
-#        end = datespan.end_of_end_day if datespan else datetime.max()
-#        timestamp_start = dateparse.json_format_datetime(start)
-#        timestamp_end =  dateparse.json_format_datetime(end)
-#        loc_id = location._id if location else None
-#        startkey = [domain, loc_id, timestamp_start]
-#        endkey = [domain, loc_id, timestamp_end]
-#        return [StockReport(f) for f in \
-#                XFormInstance.view('commtrack/stock_reports',
-#                                   startkey=startkey,
-#                                   endkey=endkey,
-#                                   include_docs=True)]
+class StockReport(object):
+    """
+    This is a wrapper around the couch xform doc that gets associated with
+    stock reports to provide convenient access to the underlying structure.
+    """
+
+    def __init__(self, form):
+        # TODO: validation?
+        self._form = form
+
+    @property
+    def raw_form(self):
+        return self._form._doc
+
+    @classmethod
+    def get(cls, id):
+        return StockReport(XFormInstance.get(id))
+
+    @classmethod
+    def get_reports(cls, domain, location=None, datespan=None):
+        start = datespan.startdate if datespan else datetime.min()
+        end = datespan.end_of_end_day if datespan else datetime.max()
+        timestamp_start = dateparse.json_format_datetime(start)
+        timestamp_end =  dateparse.json_format_datetime(end)
+        loc_id = location._id if location else None
+        startkey = [domain, loc_id, timestamp_start]
+        endkey = [domain, loc_id, timestamp_end]
+        return [StockReport(f) for f in \
+                XFormInstance.view('commtrack/stock_reports',
+                                   startkey=startkey,
+                                   endkey=endkey,
+                                   include_docs=True)]
