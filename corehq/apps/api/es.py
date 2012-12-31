@@ -61,7 +61,6 @@ class ESView(View):
         Returns the raw query json back, or None if there's an error
         """
         #todo: backend audit logging of all these types of queries
-        print simplejson.dumps(es_query, indent=4)
         es_results = self.es[self.index].get('_search', data=es_query)
         if es_results.has_key('error'):
             logging.exception("Error in %s elasticsearch query: %s" % (self.index, es_results['error']))
