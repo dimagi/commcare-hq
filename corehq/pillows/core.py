@@ -25,6 +25,7 @@ DATE_FORMATS_ARR = ["yyyy-MM-dd",
                    "yyyy-MM-dd'T'HH:mm:ss",
                    "yyyy-MM-dd' 'HH:mm:ss",
                    "yyyy-MM-dd' 'HH:mm:ss.SSSSSS",
+                   "mm/dd/yy' 'HH:mm:ss",
 ]
 #https://github.com/elasticsearch/elasticsearch/issues/2132
 #elasticsearch Illegal pattern component: t
