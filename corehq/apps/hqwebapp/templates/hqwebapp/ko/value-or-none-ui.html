@@ -40,17 +40,23 @@
                 </a>
             </div>
         </div>
-        <input type="text" data-bind="
-                visible: allowed(),
-                value: inputValue,
-                hasfocus: hasFocus,
-                css: inputCss,
-                attr: inputAttr, valueUpdate: 'textchange'
-        "/>
         <div data-bind="visible: allowed()">
+            <input type="text" data-bind="
+                    value: inputValue,
+                    hasfocus: hasFocus,
+                    css: inputCss,
+                    attr: inputAttr, valueUpdate: 'textchange'
+            "/>
             <a href="#" class="btn btn-mini btn-danger" data-bind="exitInput: $data">
                 <span data-bind="text: messages.remove"></span>
             </a>
+            <div class="alert alert-info">
+                <i class="icon icon-info-sign"></i>
+                <span data-bind="
+                    html: messages.helpText,
+                    visible: messages.helpText
+                "></span>
+            </div>
         </div>
     </div>
     <input type="hidden" data-bind="value: value, attr: {name: inputName}"/>

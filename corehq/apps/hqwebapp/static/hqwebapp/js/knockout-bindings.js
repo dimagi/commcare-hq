@@ -370,7 +370,7 @@ ko.bindingHandlers.valueOrNoneUI = {
             helper;
         opts.messages = opts.messages || {};
         $('span', element).each(function () {
-            opts.messages[$(this).data('slug')] = $(this).text();
+            opts.messages[$(this).data('slug')] = $(this).html();
             $(this).hide();
         });
         helper = new ValueOrNoneUI(opts);

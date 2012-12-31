@@ -25,7 +25,7 @@
         {% if edit %}
             <div data-bind="valueOrNoneUI: {
                 value: media_audio,
-                allowed: media_audio_allowed,
+                allowed: true,
                 inputName: 'media_audio',
                 inputCss: {wide: true, 'jr-resource-field': true},
                 inputAttr: {placeholder: 'jr://file/commcare_media/audio/audio.mp3', 'data-name': 'media_audio'}
@@ -33,8 +33,7 @@
                 <span data-slug="add">{% trans "Add Audio..." %}</span>
                 <span data-slug="whyNotAdd">{% trans "Why can't I add audio?" %}</span>
                 <span data-slug="remove">{% trans "Remove Audio" %}</span>
-                <span data-slug="notAllowedButExists">{% trans "Error! This audio will be ignored." %}</span>
-                <span data-slug="notAllowed">{% trans "To hear audio, you must be in CommCare Sense mode or Numeric Selection mode" %}</span>
+                <span data-slug="helpText">{% trans "To hear audio on J2ME, you must be in CommCare Sense mode or Numeric Selection mode. (In ODK it will always work.)" %}</span>
             </div>
         {% else %}
             {{ item.media_audio }}
