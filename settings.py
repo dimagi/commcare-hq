@@ -591,11 +591,13 @@ PROJECT_REPORT_MAP = SortedDict([
         'phonelog.reports.FormErrorReport',
         'phonelog.reports.DeviceLogDetailsReport'
     ]],
+    ["SMS", [
+        'corehq.apps.reports.standard.sms.MessagesReport',
+    ]],
     ["Commtrack", [
         'corehq.apps.reports.commtrack.psi_prototype.VisitReport',
         'corehq.apps.reports.commtrack.psi_prototype.SalesAndConsumptionReport',
         'corehq.apps.reports.commtrack.psi_prototype.StockReportExport',
-        'corehq.apps.reports.standard.sms.MessagesReport', # TODO: move to sms section?
     ]]
 ])
 
