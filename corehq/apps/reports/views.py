@@ -3,7 +3,7 @@ import json
 from django.core.cache import cache
 from corehq.apps.fixtures.models import FixtureDataType, FixtureDataItem
 from corehq.apps.reports import util
-from corehq.apps.reports.psi_reports import psi_events, psi_household_demonstrations, psi_sensitization_sessions, psi_training_sessions
+from corehq.apps.reports.psi_reports import psi_events, psi_household_demonstrations, psi_sensitization_sessions, psi_training_sessions, PSIEventsReport
 from corehq.apps.reports.standard import inspect, export, ProjectReport
 from corehq.apps.reports.standard.export import DeidExportReport
 from corehq.apps.reports.export import ApplicationBulkExportHelper, CustomBulkExportHelper
@@ -892,17 +892,3 @@ def clear_report_caches(request, domain):
     print "CLEARING CACHE FOR DOMAIN", domain
     print "ALL CACHES", cache.all()
     return HttpResponse("TESTING")
-
-@login_and_domain_required
-def psi_reports(request, domain, template="reports/psi/base.html"):
-    print request.GET
-#    psi_e = psi_events(domain, request.GET)
-#    psi_hd = psi_household_demonstrations(domain, request.GET)
-#    psi_ss = psi_sensitization_sessions(domain, request.GET)
-    psi_ts = psi_training_sessions(domain, request.GET)
-    import pprint
-    pp = pprint.PrettyPrinter(indent=2)
-    pp.pprint(psi_ts)
-#    return HttpResponse(request.GET)
-    context = {"domain": domain, "couch_user": request.couch_user,}
-    return render_to_response(request, template, context)

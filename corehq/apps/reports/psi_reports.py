@@ -1,6 +1,8 @@
 from corehq.apps.fixtures.models import FixtureDataType, FixtureDataItem
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
+from corehq.apps.reports.dispatcher import CustomProjectReportDispatcher
 from corehq.apps.reports.generic import GenericTabularReport
+from corehq.apps.reports.standard import CustomProjectReport
 from corehq.apps.reports.util import make_form_couch_key
 from couchforms.models import XFormInstance
 
@@ -25,7 +27,7 @@ def _get_unique_combinations(domain, place_types=None):
         comb = {}
         for pt in place_types:
             if base_type == pt:
-                comb[pt] = fdi.fields['name']
+                comb[pt] = fdi.fields['name'].lower()
             else:
                 p_id = fdi.fields.get(pt+"_id", None)
                 if p_id:
@@ -39,47 +41,10 @@ def _get_unique_combinations(domain, place_types=None):
 
     return combos
 
-def _get_place_mapping_to_fdi(domain, query_dict, place_types=None):
-    place_types = place_types or []
-    place_data_types = {}
-    for pt in place_types:
-        place_data_types[pt] = FixtureDataType.by_domain_tag(domain, pt).one()
-
-    places_map = {} # will contain a mapping of place type to the fdi that corresponds with the specified name of the place
-    for pt in place_types:
-        places_map[pt] = query_dict.get(pt, None)
-    for place_type, value in places_map.items():
-        places_map[place_type] = FixtureDataItem.by_data_type_and_name(domain, place_data_types[place_type], value)
-
-    return places_map, place_data_types
-
-def _get_related_fixture_items(domain, data_types, fixture_items, fixture_name, fixture_id_name):
-    # get the name of district
-    for fdi in fixture_items:
-        if not fdi:
-            continue
-
-        if fdi.data_type_id == data_types.get(fixture_name, None).get_id:
-            return fdi.fields['name']
-
-        d_id = fdi.fields.get(fixture_id_name, None)
-        if d_id:
-            district_item = FixtureDataItem.by_data_type_and_name(domain, data_types[fixture_name], d_id)
-            return district_item.fields['name']
-    return None
-
 def psi_events(domain, query_dict):
     place_types = ['state', 'district']
-#    import pprint
-#    pp = pprint.PrettyPrinter(indent=2)
-#    pp.pprint(_get_unique_combinations(domain, place_types=place_types))
-#    places, pdts = _get_place_mapping_to_fdi(domain, query_dict, place_types=place_types)
     combos = _get_unique_combinations(domain, place_types=place_types)
-#    import pprint
-#    pp = pprint.PrettyPrinter(indent=2)
-#    pp.pprint(combos)
     forms = list(_get_forms(domain))
-    print "forms: %s" % [f.get_id for f in forms]
     return map(lambda c: event_stats(domain, c, query_dict.get("location", "")), combos)
 
 def event_stats(domain, place_dict, location=""):
@@ -94,10 +59,6 @@ def event_stats(domain, place_dict, location=""):
         return form.form.get('@name', None) == 'Plays and Events'
 
     forms = list(_get_forms(domain, form_filter=ff_func))
-#    if forms:
-#        print "HERE LIE SOME FORMS"
-#    else:
-#        print "sigh"
     place_dict.update({
         "location": location,
         "num_male": reduce(lambda sum, f: sum + f.xpath('form/number_of_males'), forms, 0),
@@ -111,7 +72,6 @@ def event_stats(domain, place_dict, location=""):
 def psi_household_demonstrations(domain, query_dict):
     place_types = ['block', 'state', 'district', 'village']
     combos = _get_unique_combinations(domain, place_types=place_types)
-    print "length: %s" % len(combos)
     return map(lambda c: hd_stats(domain, c, query_dict.get("worker_type", "")), combos)
 
 def hd_stats(domain, place_dict, worker_type=""):
@@ -131,6 +91,7 @@ def hd_stats(domain, place_dict, worker_type=""):
 
     forms = list(_get_forms(domain, form_filter=ff_func))
     place_dict.update({
+        "worker_type": worker_type,
         "num_hh_demo": reduce(lambda sum, f: sum + _count_in_repeats(f.xpath('form/visits'), 'hh_covered'), forms, 0),
         "num_young": reduce(lambda sum, f: sum + _count_in_repeats(f.xpath('form/visits'), 'number_young_children_covered'), forms, 0),
         "num_leaflets": reduce(lambda sum, f: sum + _count_in_repeats(f.xpath('form/visits'), 'leaflets_distributed'), forms, 0),
@@ -141,16 +102,15 @@ def hd_stats(domain, place_dict, worker_type=""):
 def psi_sensitization_sessions(domain, query_dict):
     place_types = ['state', 'district', 'block']
     combos = _get_unique_combinations(domain, place_types=place_types)
-    print "length: %s" % len(combos)
     return map(lambda c: ss_stats(domain, c), combos)
 
 def ss_stats(domain, place_dict):
     def ff_func(form):
-        if place_dict["state"] and form.xpath('form/activity_state') != place_dict["state"]:
+        if place_dict["state"] and form.xpath('form/training_state') != place_dict["state"]:
             return False
-        if place_dict["district"] and form.xpath('form/activity_district') != place_dict["district"]:
+        if place_dict["district"] and form.xpath('form/training_district') != place_dict["district"]:
             return False
-        if place_dict["block"] and form.xpath('form/activity_block') != place_dict["block"]:
+        if place_dict["block"] and form.xpath('form/training_block') != place_dict["block"]:
             return False
         return form.form.get('@name', None) == 'Sensitization Session'
 
@@ -176,7 +136,6 @@ def ss_stats(domain, place_dict):
 def psi_training_sessions(domain, query_dict):
     place_types = ['state', 'district']
     combos = _get_unique_combinations(domain, place_types=place_types)
-    print "length: %s" % len(combos)
     return map(lambda c: ts_stats(domain, c, query_dict.get("training_type", "")), combos)
 
 def ts_stats(domain, place_dict, training_type=""):
@@ -191,12 +150,15 @@ def ts_stats(domain, place_dict, training_type=""):
         return form.form.get('@name', None) == 'Training Session'
 
     forms = list(_get_forms(domain, form_filter=ff_func))
+
+    all_forms = list(_get_forms(domain, form_filter=lambda f: f.form.get('@name', None) == 'Training Session'))
     private_forms = filter(lambda f: f.xpath('form/trainee_category') == 'private', forms)
     public_forms = filter(lambda f: f.xpath('form/trainee_category') == 'public', forms)
     dh_forms = filter(lambda f: f.xpath('form/trainee_category') == 'depot_holder', forms)
     flw_forms = filter(lambda f: f.xpath('form/trainee_category') == 'flw_training', forms)
 
     place_dict.update({
+        "training_type": training_type,
         "private_hcp": _indicators(private_forms, aa=True),
         "public_hcp": _indicators(public_forms, aa=True),
         "depot_training": _indicators(dh_forms),
@@ -217,7 +179,10 @@ def _indicators(forms, aa=False):
 
 def _num_trained(forms, doctor_type=None):
     def rf_func(data):
-        return data.get('doctor_type', None) == doctor_type if doctor_type else True
+        if data:
+            return data.get('doctor_type', None) == doctor_type if doctor_type else True
+        else:
+            return False
     return reduce(lambda sum, f: sum + len(list(_get_repeats(f.xpath('form/trainee_information'), repeat_filter=rf_func))), forms, 0)
 
 def _scores(forms):
@@ -226,15 +191,16 @@ def _scores(forms):
     for f in forms:
         trainees.extend(list(_get_repeats(f.xpath('form/trainee_information'))))
 
-    total_pre_scores = reduce(lambda sum, t: sum + int(t.get("pre_test_score", 0)), trainees, 0)
-    total_post_scores = reduce(lambda sum, t: sum + int(t.get("post_test_score", 0)), trainees, 0)
-    total_diffs = reduce(lambda sum, t: sum + (int(t.get("post_test_score", 0)) - int(t.get("pre_test_score", 0))), trainees, 0)
+    trainees = filter(lambda t: t, trainees)
+    total_pre_scores = reduce(lambda sum, t: sum + int(t.get("pre_test_score", 0) or 0), trainees, 0)
+    total_post_scores = reduce(lambda sum, t: sum + int(t.get("post_test_score", 0) or 0), trainees, 0)
+    total_diffs = reduce(lambda sum, t: sum + (int(t.get("post_test_score", 0) or 0) - int(t.get("pre_test_score", 0) or 0)), trainees, 0)
 
     return {
         "avg_pre_score": total_pre_scores/len(trainees) if trainees else "No Data",
         "avg_post_score": total_post_scores/len(trainees) if trainees else "No Data",
         "avg_difference": total_diffs/len(trainees) if trainees else "No Data",
-        "num_gt80": len(filter(lambda t: t.get("post_test_score", 0) >= 80.0, trainees))/len(trainees) if trainees else "No Data"
+        "num_gt80": len(filter(lambda t: t.get("post_test_score", 0) or 0 >= 80.0, trainees))/len(trainees) if trainees else "No Data"
     }
 
 def _get_repeats(data, repeat_filter=lambda r: True):
@@ -275,12 +241,13 @@ def _get_form(domain, action_filter=lambda a: True, form_filter=lambda f: True):
     except StopIteration:
         return None
 
-class PSIEventsReport(GenericTabularReport):
-    name = "DCC Activity Report"
-    slug = "hsph_dcc_activity"
-    fields = ['corehq.apps.reports.fields.FilterUsersField',
-              'corehq.apps.reports.fields.DatespanField',
-              'hsph.fields.NameOfDCCField']
+class PSIReport(GenericTabularReport, CustomProjectReport):
+    fields = ['corehq.apps.reports.fields.DatespanField']
+
+class PSIEventsReport(PSIReport):
+    name = "Event Demonstration Report"
+    slug = "event_demonstations"
+    section_name = "event demonstrations"
 
     @property
     def headers(self):
@@ -295,4 +262,140 @@ class PSIEventsReport(GenericTabularReport):
 
     @property
     def rows(self):
-        rows = []
+        event_data = psi_events(self.domain, {})
+        for d in event_data:
+            yield [
+                d.get("state"),
+                d.get("district"),
+                d.get("location"),
+                d.get("num_male"),
+                d.get("num_female") ,
+                d.get("num_total"),
+                d.get("num_leaflets"),
+                d.get("num_gifts")
+            ]
+
+class PSIHDReport(PSIReport):
+    name = "Household Demonstrations Report"
+    slug = "household_demonstations"
+    section_name = "household demonstrations"
+
+    @property
+    def headers(self):
+        return DataTablesHeader(DataTablesColumn("Name of State"),
+            DataTablesColumn("Name of District"),
+            DataTablesColumn("Name of Block"),
+            DataTablesColumn("Name of Town/Village"),
+            DataTablesColumn("Number of HH demos done"),
+            DataTablesColumn("Demonstration done by"),
+            DataTablesColumn("Number of 0-6 year old children"),
+            DataTablesColumn("Number of leaflets distributed"),
+            DataTablesColumn("Number of kits sold"))
+
+    @property
+    def rows(self):
+        hh_data = psi_household_demonstrations(self.domain, {})
+        for d in hh_data:
+            yield [
+                d.get("state"),
+                d.get("district"),
+                d.get("block"),
+                d.get("village"),
+                d.get("num_hh_demo") ,
+                d.get("worker_type"),
+                d.get("num_young"),
+                d.get("num_leaflets"),
+                d.get("num_kits"),
+            ]
+
+class PSISSReport(PSIReport):
+    name = "Sensitization Sessions Report"
+    slug = "sensitization_sessions"
+    section_name = "sensitization sessions"
+
+    @property
+    def headers(self):
+        return DataTablesHeader(DataTablesColumn("Name of State"),
+            DataTablesColumn("Name of District"),
+            DataTablesColumn("Name of Block"),
+            DataTablesColumn("Number of Sessions"),
+            DataTablesColumn("Ayush Trained"),
+            DataTablesColumn("MBBS Trained"),
+            DataTablesColumn("Asha Supervisors Trained"),
+            DataTablesColumn("Ashas Trained"),
+            DataTablesColumn("AWW Trained"),
+            DataTablesColumn("Other Trained"),
+            DataTablesColumn("VHND Attendees"))
+
+    @property
+    def rows(self):
+        hh_data = psi_sensitization_sessions(self.domain, {})
+        for d in hh_data:
+            yield [
+                d.get("state"),
+                d.get("district"),
+                d.get("block"),
+                d.get("num_sessions") ,
+                d.get("num_ayush_doctors"),
+                d.get("num_mbbs_doctors"),
+                d.get("num_asha_supervisors"),
+                d.get("num_ashas"),
+                d.get("num_awws"),
+                d.get("num_other"),
+                d.get("number_attendees"),
+            ]
+
+class PSITSReport(PSIReport):
+    name = "Training Sessions Report"
+    slug = "training_sessions"
+    section_name = "training sessions"
+
+    @property
+    def headers(self):
+        return DataTablesHeader(DataTablesColumn("Name of State"),
+            DataTablesColumn("Name of District"),
+            DataTablesColumn("Type of Training"),
+            DataTablesColumn("Private: Number of Trainings"),
+            DataTablesColumn("Private: Ayush trained"),
+            DataTablesColumn("Private: Allopathics trained"),
+            DataTablesColumn("Private: Learning change"),
+            DataTablesColumn("Private: Num > 80%"),
+            DataTablesColumn("Public: Number of Trainings"),
+            DataTablesColumn("Public: Ayush trained"),
+            DataTablesColumn("Public: Allopathics trained"),
+            DataTablesColumn("Public: Learning change"),
+            DataTablesColumn("Public: Num > 80%"),
+            DataTablesColumn("Depot: Number of Trainings"),
+#            DataTablesColumn("Depot: Personnel trained"),
+            DataTablesColumn("Depot: Learning change"),
+            DataTablesColumn("Depot: Num > 80%"),
+            DataTablesColumn("FLW: Number of Trainings"),
+#            DataTablesColumn("FLW: Personnel trained"),
+            DataTablesColumn("FLW: Learning change"),
+            DataTablesColumn("FLW: Num > 80%"))
+
+    @property
+    def rows(self):
+        hh_data = psi_training_sessions(self.domain, {})
+        for d in hh_data:
+            yield [
+                d.get("state"),
+                d.get("district"),
+                d.get("training_type"),
+                d["private_hcp"].get("num_trained"),
+                d["private_hcp"].get("num_ayush_trained"),
+                d["private_hcp"].get("num_allopathics_trained"),
+                d["private_hcp"].get("avg_difference"),
+                d["private_hcp"].get("num_gt80"),
+                d["public_hcp"].get("num_trained"),
+                d["public_hcp"].get("num_ayush_trained"),
+                d["public_hcp"].get("num_allopathics_trained"),
+                d["public_hcp"].get("avg_difference"),
+                d["public_hcp"].get("num_gt80"),
+                d["depot_training"].get("num_trained"),
+                d["depot_training"].get("avg_difference"),
+                d["depot_training"].get("num_gt80"),
+                d["flw_training"].get("num_trained"),
+                d["flw_training"].get("avg_difference"),
+                d["flw_training"].get("num_gt80"),
+            ]
