@@ -1507,7 +1507,8 @@ def save_copy(req, domain, app_id):
 
     if not errors:
         try:
-            copy = app.save_copy(comment=comment, user_id=req.couch_user.get_id)
+            copy = app.save_copy(comment=comment, user_id=req.couch_user.get_id,
+                                 previous_version=app.get_latest_saved())
         except Exception as e:
             copy = None
             if settings.DEBUG:
@@ -1523,7 +1524,6 @@ def save_copy(req, domain, app_id):
         report_utils.get_timezone(req.couch_user.user_id, domain)
     )
     lang, langs = get_langs(req, app)
-    print errors
     return json_response({
         "saved_app": copy,
         "error_html": render_to_string('app_manager/partials/build_errors.html', {
