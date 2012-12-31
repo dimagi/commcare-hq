@@ -3,15 +3,17 @@ from django.utils.translation import ugettext as _
 from corehq.apps.reports.standard import DatespanMixin, ProjectReport,\
     ProjectReportParametersMixin
 from corehq.apps.reports.generic import GenericTabularReport
-from corehq.apps.reports.datatables import DataTablesColumn, DataTablesHeader
+from corehq.apps.reports.datatables import DataTablesColumn, DataTablesHeader,\
+    DTSortType
 from dimagi.utils.web import get_url_base
 from django.core.urlresolvers import reverse
 from dimagi.utils.parsing import json_format_datetime
 from corehq.apps.sms.models import INCOMING, OUTGOING, SMSLog
 from datetime import timedelta
+from corehq.apps.reports.util import format_datatables_data
 
 class MessagesReport(ProjectReport, ProjectReportParametersMixin, GenericTabularReport, DatespanMixin):
-    name = 'Messages Report'
+    name = ugettext_noop('SMS Usage')
     slug = 'messages'
     fields = ['corehq.apps.reports.fields.GroupField',
               'corehq.apps.reports.fields.DatespanField']
@@ -21,17 +23,15 @@ class MessagesReport(ProjectReport, ProjectReportParametersMixin, GenericTabular
         "been verified. Phone numbers can be verified from the Settings and "
         "Users tab.")
 
-    _headers = [
-        ugettext_noop("User Name"),
-        ugettext_noop("Number of Messages Received"),
-        ugettext_noop("Number of Messages Sent"),
-        # ugettext_noop("Number of Error Messages Sent"), TODO
-        ugettext_noop("Number of Phone Numbers Used")
-    ]
-
     @property
     def headers(self):
-        return DataTablesHeader(*[DataTablesColumn(_(h)) for h in self._headers])
+        return DataTablesHeader(
+            DataTablesColumn(_("User Name")),
+            DataTablesColumn(_("Number of Messages Received"), sort_type=DTSortType.NUMERIC),
+            DataTablesColumn(_("Number of Messages Sent"), sort_type=DTSortType.NUMERIC),
+            # DataTablesColumn(_("Number of Error Messages Sent"), sort_type=DTSortType.NUMERIC), # TODO
+            DataTablesColumn(_("Number of Phone Numbers Used"), sort_type=DTSortType.NUMERIC),
+        )
 
     def get_user_link(self, user):
         user_link_template = '<a href="%(link)s">%(username)s</a>'
@@ -49,11 +49,13 @@ class MessagesReport(ProjectReport, ProjectReportParametersMixin, GenericTabular
             # to tomorrow
             enddate = self.datespan.enddate + timedelta(days=1)
             counts = _sms_count(user, self.datespan.startdate, enddate)
+            def _fmt(val):
+                return format_datatables_data(val, val)
             return [
                 self.get_user_link(user),
-                counts[OUTGOING],
-                counts[INCOMING],
-                len(user.get_verified_numbers())
+                _fmt(counts[OUTGOING]),
+                _fmt(counts[INCOMING]),
+                _fmt(len(user.get_verified_numbers()))
             ]
 
         return [
