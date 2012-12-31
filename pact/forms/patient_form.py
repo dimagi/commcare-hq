@@ -70,7 +70,6 @@ class PactPatientForm(Form):
         #to be called after validation
         ret = {}
         for name, value in self.cleaned_data.items():
-
             #to verify that the regimens changed calculate the dict of the freq+label ids.
             if name == CASE_ART_REGIMEN_PROP:
                 art_props = regimen_dict_from_choice(DOT_ART, value)

@@ -40,14 +40,20 @@
                         <th>HP Status</th>
                         <td>{{ patient_doc.get_hp_status_display }} </td>
                         <th>DOT Status</th>
-                        <td>{{ patient_doc.get_dot_status_display }} </td>
+                        <td>
+                            {% if patient_doc.is_dot %}
+                                <a href="/a/{{ domain }}/reports/custom/dots/?dot_patient={{ patient_doc.get_id }}"{{ patient_doc.get_dot_status_display }}>{{ patient_doc.get_dot_status_display }}</a>
+                            {% else %}
+                                Not DOT
+                            {% endif %}
+                        </td>
                     </tr>
                     <tr>
                         <th>ART Regimen</th>
-                        <td>{{ patient_doc.get_artregimen_display }}</td>
+                        <td>{{ patient_doc.art_regimen_label_string_display }}</td>
 
                         <th>Non ART Regimen</th>
-                        <td>{{ patient_doc.get_nonartregimen_display }}</td>
+                        <td>{{ patient_doc.nonart_regimen_label_string_display }}</td>
                     </tr>
                 
                 
@@ -68,7 +74,9 @@
     </div>
     <br>
     <div class="commit-group-heading">
-        <h4>Contact Information</h4>
+        <h4>Contact Information
+            &nbsp;<a class="btn btn-success" href="javascript:alert('link will take you to cloudcare')">Edit</a>
+        </h4>
     </div>
     <div class="commit-group">
         <table class="table">
@@ -117,19 +125,46 @@
                     </div>
                 </td>
             </tr>
-
         </table>
     </div>
-    <div class="commit-group">
+    <div class="commit-group row">
     <h4>Provider Information
         &nbsp;<a class="btn btn-success" href="{{ pt_root_url }}&view=providers">Edit</a>
     </h4>
-    Foo<br>
-    Bar<br>
+
+{#        Yes, this is copied from the editor page - if more time, would try to consolidate the rendering of this information#}
+        <table class="table table-bordered table-striped span5">
+            <thead>
+            <tr>
+                <th class="span1"></th>
+                <th class="span4">Name</th>
+                <th>Info</th>
+            </tr>
+            </thead>
+            <tbody>
+            {% for provider in patient_doc.get_providers %}
+            <tr>
+                <td>
+                    {{ forloop.counter }}
+                </td>
+                <td>
+                    <p class="lead">
+                        {{ provider.first_name }} {{ provider.last_name }}
+                    </p>
+                    <strong>{{ provider.role }}</strong><br>
+                    {{ provider.email }}
+
+                <td>
+                    {{ provider.facility_name }}<br>
+                    <address>
+                        {{ provider.facility_address }}
+                    </address>
+                </td>
+            </tr>
+            {% endfor %}
+            </tbody>
+        </table>
 
     </div>
 
-    <small>
-        <em>{% trans "Last Modified" %}: {{ patient_doc.date_modified|timesince }} ago</em>
-    </small>
 {% endblock %}

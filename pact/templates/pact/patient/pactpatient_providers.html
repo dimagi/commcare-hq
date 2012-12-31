@@ -1,10 +1,12 @@
 {% extends "pact/patient/pactpatient_base.html" %}
+{% load hq_shared_tags %}
 {% block patient-tab-container %}
     <div id="providerblock">
     <div class="span4">
         <h3>Current Providers
             &nbsp;<a class="btn btn-info" href="{{ pt_root_url }}&view=info">Cancel</a>
-            &nbsp;<button class="btn btn-success" data-bind="click:saveProviders">Save</button>
+            &nbsp;<button class="btn btn-success" data-bind="click:saveProviders, visible: showSave">Save</button>
+            <img src="{% static 'hqstyle/img/loading.gif' %}" alt="working..." data-bind="visible: is_loading"/>
         </h3>
 
             <table class="table table-bordered table-striped">
@@ -65,7 +67,7 @@
             </tr>
             </thead>
             <tbody data-bind="foreach: providers">
-            <tr data-bind="visible: $root.facilityMatches($data)">
+            <tr data-bind="visible: $root.showInAvailableProviders($data)">
                 <td>
                     <button class="btn btn-success" data-bind="click: $root.addProvider"><i class="icon-plus-sign"></i></button>
                 </td>
@@ -91,7 +93,6 @@
 
 
     <script type="text/javascript">
-
         function ProviderModel(data) {
             this.id = ko.observable(data.id);
             this.first_name = ko.observable(data.first_name);
@@ -106,31 +107,41 @@
         function ProviderListViewModel() {
             // Data
             var self = this;
+            self.is_loading = ko.observable(false);
             self.selectedFacility = ko.observable("All Facilities");
             self.providers = ko.observableArray([]);
             self.facilities = ko.observableArray([]);
+            self.original = ko.observableArray([]);
+            self.showSave = ko.observable(false);
 
             self.selected_providers = ko.observableArray([]);
 
             $.getJSON(api_url + "&method=providers", function (providerData) {
                 console.log(providerData);
+
+                var mappedSelected = $.map(providerData['case_providers'], function (item) {
+                    return new ProviderModel(item);
+                });
+                self.selected_providers(mappedSelected);
+
+                var originalSelected = $.map(providerData['case_providers'], function (item) {
+                    return new ProviderModel(item);
+                });
+
+                self.original(originalSelected);
+
                 var mappedProviders = $.map(providerData['providers'], function (item) {
                     return new ProviderModel(item);
                 });
                 self.providers(mappedProviders);
                 self.facilities(providerData['facilities']);
-                console.log("facilities set");
+
             });
 
-
-
             self.inSelectedProviders = function(item) {
-                //sanity check to see if it's in the active list
-                console.log("accesing selected");
-                console.log(self.selected_providers);
-                console.log(self.selected_providers());
+                //sanity check to see if it's in the active list, this does a scan though, nasty
                 for (var i = 0; i < self.selected_providers().length; i++) {
-                    if (item.id == self.selected_providers()[i].id()) {
+                    if (item.id() == self.selected_providers()[i].id()) {
                         return true;
                     }
                 }
@@ -160,7 +171,11 @@
             };
 
 
-            self.facilityMatches = function(item) {
+            self.showInAvailableProviders = function(item) {
+                if (self.inSelectedProviders(item)) {
+                    return false;
+                }
+
                 var facility = self.selectedFacility();
                 if (facility === undefined) {
                     return true;
@@ -168,9 +183,6 @@
                     return true;
                 }
 
-{#                if (self.inSelectedProviders(item)) {#}
-{#                    return false;#}
-{#                }#}
 
 
                 if (facility != item.facility_name()) {
@@ -183,6 +195,21 @@
 
             self.facilityChanged = self.selectedFacility.subscribe(function (newFacility) {
                 {#                alert(newFacility);#}
+            });
+
+
+            self.providersChanged = self.selected_providers.subscribe(function (data) {
+
+{#                todo: a more elegant way to do save state#}
+{#                console.log("providersChanged");#}
+{#                var updated_ids = $.map(data, function (item) {#}
+{#                    return item.id();#}
+{#                });#}
+{##}
+{#                var orig_ids = $.map(self.original(), function (item) {#}
+{#                    return item.id();#}
+{#                });#}
+                self.showSave(true);
             });
 
             self.addProvider = function(provider) {
@@ -204,35 +231,54 @@
                 self.selected_providers(arr);
             };
 
+            function csrfSafeMethod(method) {
+                // these HTTP methods do not require CSRF protection
+                return (/^(GET|HEAD|OPTIONS|TRACE)$/.test(method));
+            }
+
             self.saveProviders = function() {
+                self.is_loading(true);
+                self.showSave(false);
                 var arr = self.selected_providers();
+                var csrftoken = $.cookie('csrftoken');
 
                 var provider_ids = $.map(arr, function (item) {
                     return item.id();
                 });
                 console.log(provider_ids);
 
+                $.ajaxSetup({
+                    crossDomain: false, // obviates need for sameOrigin test
+                    beforeSend: function(xhr, settings) {
+                        if (!csrfSafeMethod(settings.type)) {
+                            xhr.setRequestHeader("X-CSRFToken", csrftoken);
+                        }
+                    }
+                });
+
                 var send_xhr = $.ajax({
                     "type": "POST",
                     "url":  api_url + "&method=providers",
-                    "data": ko.toJSON(provider_ids),
+                    "data": {selected_providers: ko.toJSON(provider_ids) },
                     "success": function(data) {
                         console.log(data);
                     }, //end success
                     "error": function(data) {
                         console.log(data);
+                    },
+                    "complete": function(data){
+                        self.is_loading(false);
+                        self.showSave(true);
                     }
                 });
 
             }
-
         }
 
         var providerView = new ProviderListViewModel();
 
         $(function () {
             ko.applyBindings(providerView, $("#providerblock")[0]);
-
         });
 
     </script>

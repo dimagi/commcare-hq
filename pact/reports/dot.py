@@ -1,4 +1,5 @@
-from datetime import datetime
+from datetime import datetime, timedelta
+import simplejson
 from casexml.apps.case.models import CommCareCase
 from corehq.apps.api.es import CaseES, XFormES
 from corehq.apps.hqcase.paginator import CasePaginator
@@ -11,7 +12,7 @@ from corehq.apps.reports.standard.inspect import CaseListReport, CaseDisplay, Ca
 from couchdbkit.resource import RequestFailed
 from couchforms.models import XFormInstance
 from dimagi.utils.decorators.memoized import memoized
-from pact.enums import PACT_DOMAIN, PACT_CASE_TYPE
+from pact.enums import PACT_DOMAIN, PACT_CASE_TYPE, XMLNS_DOTS_FORM
 from pact.reports.dot_calendar import DOTCalendarReporter
 
 
@@ -61,8 +62,8 @@ class PactDOTReport(GenericTabularReport, CustomProjectReport, ProjectReportPara
         ret['dot_case_id'] = self.request.GET['dot_patient']
         casedoc = CommCareCase.get(ret['dot_case_id'])
         ret['patient_case'] = casedoc
-        start_date_str = self.request.GET['startdate']
-        end_date_str = self.request.GET['enddate']
+        start_date_str = self.request.GET.get('startdate', (datetime.utcnow() - timedelta(days=7)).strftime('%Y-%m-%d'))
+        end_date_str = self.request.GET.get('enddate', datetime.utcnow().strftime("%Y-%m-%d"))
 
         start_date = datetime.strptime(start_date_str, "%Y-%m-%d")
         end_date = datetime.strptime(end_date_str, "%Y-%m-%d")
@@ -99,7 +100,9 @@ class PactDOTReport(GenericTabularReport, CustomProjectReport, ProjectReportPara
 
         res = xform_es.run_query(q)
 
-        ret['sorted_visits'] = [XFormInstance.wrap(x['_source']) for x in res['hits']['hits']]
+
+        #ugh, not storing all form data by default - need to get?
+        ret['sorted_visits'] = [XFormInstance.wrap(x['_source']) for x in filter(lambda x: x['_source']['xmlns'] == XMLNS_DOTS_FORM, res['hits']['hits'])]
         return ret
 
 

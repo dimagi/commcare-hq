@@ -3,13 +3,17 @@ from django.test.client import RequestFactory
 import os
 import simplejson
 import sys
+from casexml.apps.case.models import CommCareCase
 from corehq.apps.fixtures.views import UploadItemLists
+from corehq.apps.users.models import CommCareUser
 from couchforms.models import XFormInstance
+from pact.api import submit_case_update_form
 from pact.management.commands import PactMigrateCommand
 from pact.management.commands.constants import PACT_URL
 from pact.enums import PACT_DOMAIN, PACT_HP_GROUPNAME
 from openpyxl.workbook import Workbook
 import tempfile
+from pact.models import PactPatientCase
 
 exclude_fields = ['username', 'user_id', 'case_id_map', '_rev', 'actor_uuid', 'doc_type', 'new_user', 'base_type', 'name','title','affiliation']
 exclude_docs = ['e13a2696f84e4c089a038934dfd41387', '9cc7be3f10584b0bb3d6978ae012f4cc']
@@ -24,6 +28,7 @@ class Command(PactMigrateCommand):
         db = XFormInstance.get_db()
         items = db.view('fixtures/ownership', include_docs=True, reduce=False, startkey=['group by data_item', PACT_DOMAIN], endkey=['group by data_item', PACT_DOMAIN, {}]).all()
         for d in items:
+            print "deleting %s" % d
             db.delete_doc(d['doc'])
 
         case_provider_map = {}
@@ -58,12 +63,6 @@ class Command(PactMigrateCommand):
                 fields.update(actor_fields)
                 #print actor
 
-                cases = actor['case_id_map']
-                for case in cases:
-                    case_id = case[1]
-                    if not case_provider_map.has_key(case_id):
-                        case_provider_map[case_id] = []
-                    case_provider_map[case_id].append("%s %s: %s" % (actor['first_name'], actor['last_name'], actor['email']))
 
 #        for case, actors in case_provider_map.items():
 #            print "%s: %s" % (case, actors)
@@ -103,6 +102,15 @@ class Command(PactMigrateCommand):
                 if datarow[0] in exclude_docs:
                     continue
                 data_ws.append(datarow)
+                cases = actor['case_id_map']
+                for case in cases:
+                    case_id = case[1]
+                    if not case_provider_map.has_key(case_id):
+                        case_provider_map[case_id] = []
+                    case_provider_map[case_id].append(datarow)
+
+
+
         print "providers loaded into excel file, uploading"
 
         f, fname = tempfile.mkstemp(suffix='.xlsx')
@@ -120,8 +128,12 @@ class Command(PactMigrateCommand):
             posted=ul.post(req)
 #        os.remove(fname)
         #todo: post xform indicating affiliation
+            #case_provider_map[case_id].append("%s %s: %s" % (actor['first_name'], actor['last_name'], actor['email']))
 
+        cc_user = CommCareUser.get_by_username('pactimporter@pact.commcarehq.org')
+        for case_id, providers_arr in case_provider_map.items():
 
-
-
+            prov_ids = [x[0] for x in providers_arr]
+            casedoc = PactPatientCase.get(case_id)
+            casedoc.update_providers(cc_user, prov_ids)
 

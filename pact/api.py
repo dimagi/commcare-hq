@@ -1,36 +1,28 @@
 from datetime import datetime, time
+import logging
 import uuid
 import dateutil
 from lxml import etree
-import pdb
 import tempfile
-from xml.etree import ElementTree
 from django.core.servers.basehttp import FileWrapper
 from django.utils.decorators import method_decorator
-from django.views.decorators.csrf import csrf_protect
 from django_digest.decorators import httpdigest
 import simplejson
-from casexml.apps.case.signals import process_cases
-from casexml.apps.case.tests import CaseBlock
-from casexml.apps.case.xml import V2
 from corehq.apps.api.domainapi import DomainAPI
 from corehq.apps.api.es import XFormES, CaseES
 from corehq.apps.domain.decorators import login_and_domain_required
 from corehq.apps.fixtures.models import FixtureDataType, FixtureDataItem
 from corehq.apps.groups.models import Group
 from couchforms.models import XFormInstance
-from couchforms.util import post_xform_to_couch
-from dimagi.utils import make_time
-from dimagi.utils.printing import print_pretty_xml
-from pact.dot_data import get_dots_case_json, calculate_regimen_caseblock
-from pact.enums import PACT_DOMAIN, XMLNS_PATIENT_UPDATE, PACT_PROVIDER_FIXTURE_TAG, PACT_HP_GROUPNAME
+from pact.dot_data import get_dots_case_json
+from pact.enums import PACT_DOMAIN, XMLNS_PATIENT_UPDATE, PACT_PROVIDER_FIXTURE_TAG, PACT_HP_GROUPNAME, PACT_PROVIDERS_FIXTURE_CACHE_KEY
 from django.http import Http404, HttpResponse
-from casexml.apps.case.models import CommCareCase
 from pact.forms.patient_form import PactPatientForm
 from pact.forms.weekly_schedule_form import ScheduleForm, DAYS_OF_WEEK
 from pact.models import PactPatientCase, CDotWeeklySchedule
 from pact.reports import query_per_case_submissions_facet
 from pact.utils import pact_script_fields, case_script_field, submit_xform
+from django.core.cache import cache
 
 
 class PactFormAPI(DomainAPI):
@@ -230,7 +222,7 @@ def submit_case_update_form(casedoc, update_dict, couch_user, submit_date=None, 
 
     print etree.tostring(form, pretty_print=True)
     submission_xml_string = etree.tostring(form)
-#    submit_xform('/a/pact/receiver', PACT_DOMAIN, submission_xml_string)
+    submit_xform('/a/pact/receiver', PACT_DOMAIN, submission_xml_string)
 
 
 def isodate_string(date):
@@ -238,6 +230,32 @@ def isodate_string(date):
     return ""
 
 
+def get_all_providers(invalidate=False):
+    """
+    wrapper function to get all the providers for PACT and cache them.
+    ugly for now - the number of entries is small enough that loading all and scanning on checking is small enough overhead on a single page load.
+    """
+    if invalidate:
+        cache.delete(PACT_PROVIDERS_FIXTURE_CACHE_KEY)
+    raw_cached_fixtures = cache.get(PACT_PROVIDERS_FIXTURE_CACHE_KEY, None)
+    if raw_cached_fixtures is None:
+        #requery and cache
+        pact_hp_group = Group.by_name(PACT_DOMAIN, PACT_HP_GROUPNAME)
+        providers = FixtureDataItem.by_group(pact_hp_group)
+        cache.set(PACT_PROVIDERS_FIXTURE_CACHE_KEY, simplejson.dumps([x.to_json() for x in providers]))
+        return providers
+    else:
+        try:
+            json_data= simplejson.loads(raw_cached_fixtures)
+            #not necessary in the grand scheme of things - we could really just use raw JSON
+            return [FixtureDataItem.wrap(x) for x in json_data]
+        except Exception, ex:
+            logging.error("Error loading json from cache key %s: %s" % (PACT_PROVIDERS_FIXTURE_CACHE_KEY, ex))
+            return []
+
+#    cache.set('%s_casedoc' % self._id, simplejson.dumps(self._case), PACT_CACHE_TIMEOUT)
+#        xml_ret = cache.get('%s_schedule_xml' % self._id, None)
+        pass
 
 
 
@@ -286,11 +304,14 @@ class PactAPI(DomainAPI):
             provider_type = FixtureDataType.by_domain_tag(PACT_DOMAIN, PACT_PROVIDER_FIXTURE_TAG).first()
             fixture_type = provider_type._id
 
-            pact_hp_group = Group.by_name(PACT_DOMAIN, PACT_HP_GROUPNAME)
-            providers = FixtureDataItem.by_group(pact_hp_group)
+
+            providers = get_all_providers()
 
             #providers = sorted(providers, key=lambda x: (x.fields['facility_name'], x.fields['last_name']))
             providers = sorted(providers, key=lambda x: x.fields['last_name'])
+            providers_by_id = dict((x.fields['id'], x.fields) for x in providers)
+
+            case_providers = [providers_by_id.get(x, None) for x in case.get_provider_ids()]
 
             facilities = set()
 
@@ -300,7 +321,9 @@ class PactAPI(DomainAPI):
                     facility = 'N/A'
                 facilities.add(facility)
             ret = {'facilities': ['All Facilities'] + sorted(list(facilities)),
-                   "providers": [x['fields'] for x in providers]}
+                   "providers": [x['fields'] for x in providers],
+                   "case_providers": case_providers,
+                    }
             resp = HttpResponse(simplejson.dumps(ret), content_type='application/json')
             return resp
 
@@ -312,6 +335,7 @@ class PactAPI(DomainAPI):
     def post(self,  *args, **kwargs):
         pdoc = PactPatientCase.get(self.request.GET['case_id'])
         resp = HttpResponse()
+#        print self.request.META['HTTP_X_CSRFTOKEN']
         if self.method == "rm_schedule":
             if self.request.POST.has_key('rm_schedule'):
                 #hacky remove schedule method
@@ -343,9 +367,26 @@ class PactAPI(DomainAPI):
                 return resp
 
         elif self.method == 'providers':
-            print self.request.POST
-            resp.write("whatever")
-            resp.status_code=204
+            print "saving providers post"
+            print self.request.POST['selected_providers']
+            try:
+                submitted_provider_ids = simplejson.loads(self.request.POST['selected_providers'])
+                case_provider_ids = list(pdoc.get_provider_ids())
+
+                if submitted_provider_ids != case_provider_ids:
+                    try:
+                        pdoc.update_providers(self.request.couch_user, submitted_provider_ids)
+                        resp.write("success")
+                        resp.status_code=204
+                    except Exception, ex:
+                        resp.write("Error submitting: %s" % ex)
+                        resp.status_code=500
+                else:
+                    resp.write("")
+                    resp.status_code=304
+            except Exception, ex:
+                resp.write("Error submitting: %s" % ex)
+                resp.status_code=500
             return resp
 
 

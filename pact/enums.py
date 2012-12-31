@@ -8,6 +8,10 @@ PACT_CASE_TYPE = 'cc_path_client' # WRONG is cc_path_type
 PACT_SCHEDULES_NAMESPACE = 'pact_weekly_schedule'
 
 PACT_DOTS_DATA_PROPERTY = "pact_dots_data_"
+PACT_PROVIDERS_FIXTURE_CACHE_KEY = "CACHED_PACT_PROVIDERS_FIXTURES"
+
+XMLNS_DOTS_FORM = "http://dev.commcarehq.org/pact/dots_form"
+XMLNS_PROGRESS_NOTE = "http://dev.commcarehq.org/pact/progress_note"
 
 XMLNS_PATIENT_UPDATE="http://dev.commcarehq.org/pact/patient_update"
 XMLNS_PATIENT_PROVIDER_UPDATE="http://dev.commcarehq.org/pact/patient_provider"
@@ -50,17 +54,14 @@ GENDER_CHOICES = (
     )
 GENDER_CHOICES_DICT = dict(x for x in GENDER_CHOICES)
 
-#deprecated
-REGIMEN_CHOICES = (
-    ('None', '-- No Regimen --'),
-    (None, '-- No Regimen --'),
-    ('QD', 'QD - Once a day'),
-    ('BID', 'BID - Twice a day'),
-    ('QD-AM', 'QD - Once a day (Morning)'),
-    ('QD-PM', 'QD - Once a day (Evening)'),
-    ('TID', 'TID - Three times a day'),
-    ('QID', 'QID - Four times a day'),
-    )
+REGIMEN_CHOICES = {
+    0: "None",
+    1: "QD",
+    2: "BID",
+    3: "TID",
+    4: "QID"
+}
+
 
 #old deprecated
 #REGIMEN_CHOICES_DICT = dict(x for x in REGIMEN_CHOICES)

@@ -2,14 +2,10 @@ from calendar import HTMLCalendar
 from calendar import  month_name, monthrange
 from datetime import date, timedelta, datetime
 from itertools import groupby
-import pdb
-from django import forms
-from django.forms.forms import Form
 from dimagi.utils import make_time
 from dimagi.utils.decorators.memoized import memoized
-from pact.dot_data import filter_obs_for_day, DOTDay
-from pact.enums import DAY_SLOTS_BY_IDX, DOT_ADHERENCE_EMPTY, DOT_ADHERENCE_PARTIAL, DOT_ADHERENCE_FULL, DOT_OBSERVATION_DIRECT, DOT_OBSERVATION_PILLBOX, DOT_OBSERVATION_SELF, DOT_ADHERENCE_UNCHECKED, DOT_ART, DOT_NONART
-from pact.models import CObservation
+from pact.dot_data import filter_obs_for_day, DOTDay, query_observations
+from pact.enums import DAY_SLOTS_BY_IDX, DOT_ADHERENCE_EMPTY, DOT_ADHERENCE_PARTIAL, DOT_ADHERENCE_FULL, DOT_OBSERVATION_DIRECT, DOT_OBSERVATION_PILLBOX, DOT_OBSERVATION_SELF, DOT_ADHERENCE_UNCHECKED
 import settings
 
 
@@ -71,6 +67,8 @@ class DOTCalendarReporter(object):
 
         def endcur_in_obs(currmonth, curryear, observations):
             month_days = monthrange(curryear, currmonth)[1]
+            if len(observations) == 0:
+                return False
             if (curryear, currmonth) <= (observations[-1].observed_date.year, observations[-1].observed_date.month):
                 return True
             else:

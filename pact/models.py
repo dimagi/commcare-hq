@@ -8,7 +8,7 @@ from dimagi.utils.decorators.memoized import memoized
 from pact import enums
 
 from couchdbkit.schema.properties import ALLOWED_PROPERTY_TYPES
-from pact.enums import TIME_LABEL_LOOKUP, PACT_SCHEDULES_NAMESPACE, DOT_ART, DOT_NONART
+from pact.enums import TIME_LABEL_LOOKUP, PACT_SCHEDULES_NAMESPACE, DOT_ART, DOT_NONART, PACT_REGIMEN_CHOICES_FLAT_DICT, REGIMEN_CHOICES
 from pact.regimen import regimen_string_from_doc
 
 ALLOWED_PROPERTY_TYPES.add(partial)
@@ -49,24 +49,71 @@ class PactPatientCase(CommCareCase):
         for prop, source_dict in properties:
             setattr(self, 'get_%s_display' % prop, partial(self._get_display_string, prop, source_dict))
 
+
+    def update_providers(self, cc_user, provider_ids):
+        from pact.api import submit_case_update_form
+        for x in provider_ids:
+            print x
+        update_dict = dict(('provider%d' % ix, provider_id) for (ix, provider_id) in enumerate(provider_ids, start=1))
+        print update_dict
+        submit_case_update_form(self, update_dict, cc_user)
+
+
+    def get_provider_ids(self):
+        for x in range(1,10):
+            providerx = getattr(self, 'provider%d' % x, None)
+            if providerx is not None and providerx != "":
+                yield providerx
+
+    @property
+    def get_providers(self):
+        """
+        return a dict structure of proviers
+        """
+        from pact.api import get_all_providers
+        all_providers = get_all_providers()
+        pt_providers = list(self.get_provider_ids())
+        filtered= filter(lambda x: x.fields['id'] in pt_providers, all_providers)
+        return [x.fields for x in filtered]
+
+
     def _get_display_string(self, attr, display_dict):
         attr_val = getattr(self, attr, None)
         if attr_val is not None:
             return display_dict.get(attr_val, attr_val)
         else:
             return ""
+    def is_dot(self):
+        dot_status = getattr(self, 'dot_status', None)
+        print dot_status
+        if dot_status is None:
+            return False
+        else:
+            if dot_status.lower().startswith('dot'):
+                return True
+            else:
+                return None
 
     def art_regimen_label_string(self):
         """
-        representation of the labeled strings of the art regimen
+        representation of the labeled strings of the art regimen" morning,noon,evening
         """
         return regimen_string_from_doc(DOT_ART, self.to_json())
 
     def nonart_regimen_label_string(self):
         """
-        representation of the labeled strings of the nonart regimen
+        representation of the labeled strings of the nonart regimen: morning,noon,evening, etc
         """
         return regimen_string_from_doc(DOT_NONART, self.to_json())
+
+    def art_regimen_label_string_display(self):
+        regimen_string = regimen_string_from_doc(DOT_ART, self.to_json())
+        print "#%s#" % regimen_string
+        return "[%s] %s" % (REGIMEN_CHOICES[int(self.art_properties()[enums.CASE_ART_REGIMEN_PROP])], PACT_REGIMEN_CHOICES_FLAT_DICT[regimen_string])
+
+    def nonart_regimen_label_string_display(self):
+        regimen_string = regimen_string_from_doc(DOT_NONART, self.to_json())
+        return "[%s] %s" % (REGIMEN_CHOICES[int(self.nonart_properties()[enums.CASE_NONART_REGIMEN_PROP])], PACT_REGIMEN_CHOICES_FLAT_DICT[regimen_string])
 
     def art_properties(self):
         return {
@@ -197,13 +244,17 @@ class PactPatientCase(CommCareCase):
     def addresses(self):
         for ix in range(1,6):
             if hasattr(self, 'address%d' % ix) and hasattr(self, 'address%dtype' % ix):
-                yield {'id': ix, 'address': getattr(self, "address%d" % ix), "type": getattr(self, "address%dtype" % ix)}
+                address = getattr(self, "address%d" % ix, None)
+                if address is not None and address != "":
+                    yield {'id': ix, 'address': address, "type": getattr(self, "address%dtype" % ix)}
 
     @property
     def phones(self):
         for ix in range(1,6):
             if hasattr(self, 'Phone%d' % ix) and hasattr(self, 'Phone%dType' % ix):
-                yield {'id': ix, 'number': getattr(self, "Phone%d" % ix), "type": getattr(self, "Phone%dType" % ix)}
+                number = getattr(self, "Phone%d" % ix, None)
+                if number is not None and number != "":
+                    yield {'id': ix, 'number': number, "type": getattr(self, "Phone%dType" % ix)}
 
     class Meta:
         app_label='pact'
