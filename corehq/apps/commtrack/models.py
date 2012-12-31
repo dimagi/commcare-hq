@@ -174,7 +174,6 @@ class StockTransaction(DocumentSchema):
             'commtrack/stock_transactions', domain, location_id,
             skip=skip, limit=limit)]
 
-# TODO: tweak this and get it working
 class StockReport(object):
     """
     This is a wrapper around the couch xform doc that gets associated with
@@ -186,6 +185,35 @@ class StockReport(object):
         self._form = form
 
     @property
+    def id(self):
+        return self._form._id
+
+    @property
+    def user_id(self):
+        return self._form.metadata.userID
+
+    @property
+    def submitted_on(self):
+        return self._form.metadata.timeEnd
+
+    @property
+    def received_on(self):
+        return self._form.received_on
+
+    @property
+    def location_path(self):
+        return self._form.location_
+
+    @property
+    def location_id(self):
+        return self.location_path[-1]
+
+    @property
+    def transactions(self):
+        return [StockTransaction.wrap(t) for t in \
+                self._form.form.get('transaction', [])]
+
+    @property
     def raw_form(self):
         return self._form._doc
 
@@ -195,8 +223,8 @@ class StockReport(object):
 
     @classmethod
     def get_reports(cls, domain, location=None, datespan=None):
-        start = datespan.startdate if datespan else datetime.min()
-        end = datespan.end_of_end_day if datespan else datetime.max()
+        start = datespan.startdate if datespan else datetime(1900, 1, 1)
+        end = datespan.end_of_end_day if datespan else datetime.max
         timestamp_start = dateparse.json_format_datetime(start)
         timestamp_end =  dateparse.json_format_datetime(end)
         loc_id = location._id if location else None
