@@ -2,7 +2,7 @@ from celery.task import task, periodic_task
 import time
 from django.core.cache import cache
 from django.core.servers.basehttp import FileWrapper
-from soil import CachedDownload
+from soil import CachedDownload, FileDownload
 import uuid
 from celery.schedules import crontab
 from soil.heartbeat import write_file_heartbeat, write_cache_heartbeat
@@ -27,7 +27,7 @@ def prepare_download(download_id, payload_func, content_disposition, mimetype, e
     payload = payload_func()
     # I don't know if this is too sneaky/magical to be OK
     if isinstance(payload, FileWrapper):
-        backend = 'file'
+        backend = FileDownload
     else:
         backend = None
     expose_download(payload, expiry, mimetype=mimetype,
