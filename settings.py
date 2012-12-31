@@ -692,7 +692,6 @@ CUSTOM_REPORT_MAP = {
     "pact": {
         "PACT Reports": [
             "pact.reports.patient_list.PatientListDashboardReport",
-            #"pact.reports.patient.PactPatientReport",
             "pact.reports.dot.PactDOTReport",
             "pact.reports.patient.PactPatientInfoReport",
             "pact.reports.chw_list.PactCHWDashboard",
