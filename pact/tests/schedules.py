@@ -22,7 +22,7 @@ class BasicCaseTests(TestCase):
 
             int_start = int_end
             int_end = int_end+td_days
-            print "inserting week: %d" % counter
+#            print "inserting week: %d" % counter
             counter = counter + 1
 
         td_hours = timedelta(hours=4)
@@ -39,7 +39,7 @@ class BasicCaseTests(TestCase):
             tree.intersect(check_time.toordinal(), check_time.toordinal(), report_schedule)
             check_time = check_time + td_hours
             if check_time > start_check+td_days:
-                print "node hits per interval: %d" % self.node_hits
+                #print "node hits per interval: %d" % self.node_hits
                 self.node_hits = 0
                 start_check = check_time
 

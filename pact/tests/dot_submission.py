@@ -8,7 +8,7 @@ from casexml.apps.case.models import CommCareCase
 from corehq.apps.domain.models import Domain
 from couchforms.models import XFormInstance
 from pact.dot_data import filter_obs_for_day, query_observations, DOTDay, get_dots_case_json
-from pact.enums import PACT_DOTS_DATA_PROPERTY, PACT_DOMAIN, DOT_DAYS_INTERVAL
+from pact.enums import PACT_DOTS_DATA_PROPERTY, PACT_DOMAIN, DOT_DAYS_INTERVAL, XMLNS_DOTS_FORM, XMLNS_PATIENT_UPDATE_DOT
 from pact.models import PactPatientCase
 from pact.utils import submit_xform
 
@@ -43,19 +43,27 @@ class dotsSubmissionTests(TestCase):
             self.no_pillbox_form = fin.read()
 
     def tearDown(self):
-        for x in [PILLBOX_ID, NO_PILLBOX_ID]:
-            if XFormInstance.get_db().doc_exist(x):
-                doc = XFormInstance.get(x)
-                XFormInstance.get_db().delete_doc(doc)
+        for doc in XFormInstance.get_db().view('couchforms/by_xmlns', reduce=False,include_docs=True).all():
+            XFormInstance.get_db().delete_doc(doc['doc'])
         CommCareCase.get_db().delete_doc(CASE_ID)
+
 
     def testSignal(self):
         """
         Test to ensure that with a DOT submission the signal works
         """
+        start_count = len(XFormInstance.view('couchforms/by_xmlns', reduce=False).all())
+
+
         submit_xform(self.submit_url, self.domain.name, self.pillbox_form)
         submitted = XFormInstance.get(PILLBOX_ID)
         self.assertTrue(hasattr(submitted, PACT_DOTS_DATA_PROPERTY))
+
+        dot_count = XFormInstance.view('couchforms/by_xmlns', key=XMLNS_DOTS_FORM).all()[0]['value']
+        update_count = XFormInstance.view('couchforms/by_xmlns', key=XMLNS_PATIENT_UPDATE_DOT).all()[0]['value']
+
+        self.assertEquals(dot_count, update_count)
+        self.assertEquals(start_count+2,dot_count+update_count)
 
     def testNoPillboxCheck(self):
         """

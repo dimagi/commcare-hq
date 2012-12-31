@@ -14,6 +14,7 @@ XMLNS_DOTS_FORM = "http://dev.commcarehq.org/pact/dots_form"
 XMLNS_PROGRESS_NOTE = "http://dev.commcarehq.org/pact/progress_note"
 
 XMLNS_PATIENT_UPDATE="http://dev.commcarehq.org/pact/patient_update"
+XMLNS_PATIENT_UPDATE_DOT="http://dev.commcarehq.org/pact/patient_update_dot"
 XMLNS_PATIENT_PROVIDER_UPDATE="http://dev.commcarehq.org/pact/patient_provider"
 
 PACT_PROVIDER_FIXTURE_TAG = 'provider'

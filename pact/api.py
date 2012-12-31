@@ -15,7 +15,7 @@ from corehq.apps.fixtures.models import FixtureDataType, FixtureDataItem
 from corehq.apps.groups.models import Group
 from couchforms.models import XFormInstance
 from pact.dot_data import get_dots_case_json
-from pact.enums import PACT_DOMAIN, XMLNS_PATIENT_UPDATE, PACT_PROVIDER_FIXTURE_TAG, PACT_HP_GROUPNAME, PACT_PROVIDERS_FIXTURE_CACHE_KEY
+from pact.enums import PACT_DOMAIN, XMLNS_PATIENT_UPDATE, PACT_PROVIDER_FIXTURE_TAG, PACT_HP_GROUPNAME, PACT_PROVIDERS_FIXTURE_CACHE_KEY, XMLNS_DOTS_FORM, XMLNS_PATIENT_UPDATE_DOT
 from django.http import Http404, HttpResponse
 from pact.forms.patient_form import PactPatientForm
 from pact.forms.weekly_schedule_form import ScheduleForm, DAYS_OF_WEEK
@@ -117,7 +117,7 @@ class PactFormAPI(DomainAPI):
                     xml_str = db.fetch_attachment(data_row['_id'], 'form.xml').replace("<?xml version=\'1.0\' ?>", '').replace("<?xml version='1.0' encoding='UTF-8' ?>", '')
                     yield xml_str
                 except Exception, ex:
-                    print "error fetching attachment: %s" % ex
+                    logging.error("for downloader: error fetching attachment: %s" % ex)
 
             yield "</restoredata>"
 
@@ -189,15 +189,17 @@ def recompute_dots_casedata(casedoc, couch_user, submit_date=None):
     """
     On a DOT submission, recompute the DOT block and submit a casedoc update xform
     Recompute and reset the ART regimen and NONART regimen to whatever the server says it is, in the casedoc where there's an idiosyncracy with how the phone has it set.
+
+    This only updates the patient's casexml block with new dots data, and has no bearing on website display - whatever is pulled from the dots view is real.
     """
     update_dict = {}
 #    assumes that regimen stuff is up to date
-#    update_dict = calculate_regimen_caseblock(casedoc)
+#    update_dict = calculate_regimen_caseblock(casedoc) # this updates the artregimen,dot_a_one, etc
 #    update_dict['pactid'] =  casedoc.pactid
 
     dots_data = get_dots_case_json(casedoc)
     update_dict['dots'] =  simplejson.dumps(dots_data)
-    submit_case_update_form(casedoc, update_dict, couch_user, submit_date=submit_date)
+    submit_case_update_form(casedoc, update_dict, couch_user, submit_date=submit_date, xmlns=XMLNS_PATIENT_UPDATE_DOT)
 
 def submit_case_update_form(casedoc, update_dict, couch_user, submit_date=None, xmlns=XMLNS_PATIENT_UPDATE):
     """
@@ -220,7 +222,6 @@ def submit_case_update_form(casedoc, update_dict, couch_user, submit_date=None, 
     update_block = prepare_case_update_xml_block(casedoc, couch_user, update_dict, submit_date)
     form.append(update_block)
 
-    print etree.tostring(form, pretty_print=True)
     submission_xml_string = etree.tostring(form)
     submit_xform('/a/pact/receiver', PACT_DOMAIN, submission_xml_string)
 
@@ -285,7 +286,6 @@ class PactAPI(DomainAPI):
     http_method_names = ['get', 'post', 'head', ]
 
     def get(self, *args, **kwargs):
-        print "in api get"
         if self.request.GET.get('case_id', None) is None:
             raise Http404
 
@@ -361,14 +361,11 @@ class PactAPI(DomainAPI):
                 resp.status_code = 204
                 return resp
             else:
-                print form.errors
                 resp.write(str(form.errors))
                 resp.status_code = 406
                 return resp
 
         elif self.method == 'providers':
-            print "saving providers post"
-            print self.request.POST['selected_providers']
             try:
                 submitted_provider_ids = simplejson.loads(self.request.POST['selected_providers'])
                 case_provider_ids = list(pdoc.get_provider_ids())

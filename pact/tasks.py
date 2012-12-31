@@ -4,20 +4,25 @@ import traceback
 from celery.task import task, subtask
 from datetime import datetime
 import simplejson
+from corehq.apps.users.models import CommCareUser
 from couchforms.models import XFormInstance
 from pact.enums import PACT_DOTS_DATA_PROPERTY
 from pact.utils import get_case_id
 
+DOT_RECOMPUTE=True
+cc_user = CommCareUser.get_by_username('pactimporter@pact.commcarehq.org')
+
 @task(ignore_results=True)
-def recompute_dots_caseblock(case_id):
-    print "\trecompute_dots_caseblock %s" % case_id
-    # next get pact_id information first off
-#    pact_id = xform['form']['pact_id']
-#    pts= PactPatient.view('pactcarehq/patient_pact_ids', key=pact_id, include_docs=True).all()
-#    for pt in pts:
-#        pt._cache_case(invalidate=True)
-#        caseapi.recompute_dots_casedata(pt)
-    pass
+def recalculate_dots_data(case_id):
+    """
+    Recalculate the dots data and resubmit calling the pact api for dot recompute
+    """
+    from pact.models import PactPatientCase
+    from pact.api import recompute_dots_casedata
+    if DOT_RECOMPUTE:
+        print "recomputing!"
+        casedoc = PactPatientCase.get(case_id)
+        recompute_dots_casedata(casedoc, cc_user)
 
 
 @task(ignore_results=True)

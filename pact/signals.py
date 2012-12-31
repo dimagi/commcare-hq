@@ -1,5 +1,6 @@
 import pdb
 from celery.task.base import subtask
+from corehq.apps.users.models import CommCareUser
 from couchforms.signals import xform_saved
 import logging
 import simplejson
@@ -7,7 +8,7 @@ import simplejson
 from pact.enums import PACT_DOTS_DATA_PROPERTY
 from pact.utils import get_case_id
 from receiver.signals import successful_form_received
-from pact.tasks import recompute_dots_caseblock, eval_dots_block
+from pact.tasks import recalculate_dots_data, eval_dots_block
 import traceback
 from django.conf import settings
 
@@ -20,7 +21,7 @@ def process_dots_submission(sender, xform, **kwargs):
             return
 
             #grrr, if we were on celery 3.0, we could do this!
-        #        chain = eval_dots_block.s(xform.to_json()) | recompute_dots_caseblock.s(case_id)
+        #        chain = eval_dots_block.s(xform.to_json()) | recalculate_dots_data.s(case_id)
         #        chain()
 
         #2.4.5 subtasking:
@@ -28,9 +29,9 @@ def process_dots_submission(sender, xform, **kwargs):
         if BLOCKING:
             eval_dots_block(xform.to_json())
             case_id = get_case_id(xform)
-            recompute_dots_caseblock(case_id)
+            recalculate_dots_data(case_id)
         else:
-            eval_dots_block.delay(xform.to_json(), callback=subtask(recompute_dots_caseblock))
+            eval_dots_block.delay(xform.to_json(), callback=subtask(recalculate_dots_data))
 
     except Exception, ex:
         logging.error("Error processing the submission due to an unknown error: %s" % ex)
