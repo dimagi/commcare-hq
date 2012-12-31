@@ -50,11 +50,10 @@
             <a href="#" class="btn btn-mini btn-danger" data-bind="exitInput: $data">
                 <span data-bind="text: messages.remove"></span>
             </a>
-            <div class="alert alert-info">
+            <div class="alert alert-info" data-bind="visible: messages.helpText">
                 <i class="icon icon-info-sign"></i>
                 <span data-bind="
-                    html: messages.helpText,
-                    visible: messages.helpText
+                    html: messages.helpText
                 "></span>
             </div>
         </div>
