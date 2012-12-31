@@ -154,10 +154,10 @@
                 }));
             }
         {% else %}
+            /* form_requires needs to be a knockout observable so that
+             its value can be read by another UI (form filtering) */
+            var form_requires = ko.observable({{ form.requires|JSON }});
             if (!form_empty) {
-                /* form_requires needs to be a knockout observable so that
-                its value can be read by another UI (form filtering) */
-                var form_requires = ko.observable({{ form.requires|JSON }});
                 var casexml = new CaseXML({
                     home: $('#casexml_home'),
                     actions: {{ form.actions|JSON }},
