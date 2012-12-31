@@ -4,8 +4,11 @@ from copy import deepcopy
 import logging
 from django.http import HttpResponseRedirect, HttpResponse
 from django.core.urlresolvers import reverse
+import rawes
+from casexml.apps.case.models import CommCareCase
 from corehq.apps.builds.models import CommCareBuildConfig, BuildSpec
 from corehq.apps.domain.models import Domain
+from corehq.apps.hqadmin.escheck import check_cluster_health, check_case_index
 from corehq.apps.reports.datatables import DataTablesColumn, DataTablesHeader, DTSortType
 from corehq.apps.reports.util import make_form_couch_key
 from corehq.apps.sms.models import SMSLog
@@ -647,7 +650,7 @@ def system_info(request):
         vhost = amqp_parts[1]
         try:
             mq = Resource('http://%s' % mq_management_url, timeout=2)
-            vhost_dict = json.loads(mq.get('api/vhosts').body_string())
+            vhost_dict = json.loads(mq.get('api/vhosts', timeout=2).body_string())
             mq_status = "Offline"
             for d in vhost_dict:
                 if d['name'] == vhost:
@@ -682,8 +685,9 @@ def system_info(request):
 
 
     #elasticsearch status
-    #todo
-
+    #node status
+    context.update(check_cluster_health())
+    context.update(check_case_index())
 
     return render_to_response(request, "hqadmin/system_info.html", context)
 
