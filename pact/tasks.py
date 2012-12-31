@@ -20,7 +20,6 @@ def recalculate_dots_data(case_id):
     from pact.models import PactPatientCase
     from pact.api import recompute_dots_casedata
     if DOT_RECOMPUTE:
-        print "recomputing!"
         casedoc = PactPatientCase.get(case_id)
         recompute_dots_casedata(casedoc, cc_user)
 

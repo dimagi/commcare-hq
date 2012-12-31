@@ -27,6 +27,8 @@ from restkit.session import set_session
 
 set_session("gevent")
 
+from pact import tasks
+tasks.DOT_RECOMPUTE = False
 
 class Command(PactMigrateCommand):
     help = "OTA restore from pact server"
@@ -125,6 +127,9 @@ class Command(PactMigrateCommand):
 
 
     def handle(self, **options):
+        from pact.tasks import recalculate_dots_data
+
+        recalculate_dots_data('foo')
         self.purge = options['purge']
         domain_obj = Domain.get_by_name(PACT_DOMAIN)
         self.old_id_map = get_user_id_map()
