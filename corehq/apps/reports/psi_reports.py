@@ -10,10 +10,13 @@ from couchforms.models import XFormInstance
 from corehq.apps.reports.cache import CacheableRequestMixIn, request_cache
 import json
 
-
-def _get_unique_combinations(domain, place_types=None):
+def _get_unique_combinations(domain, place_types=None, place_id=None):
     if not place_types:
         return []
+    if place_id:
+        place_type_from_id = place_id.split(':')[0]
+        place_name = place_id.split(':')[1].lower()
+
     place_data_types = {}
 #    place_data_items = {}
     for pt in place_types:
@@ -29,6 +32,13 @@ def _get_unique_combinations(domain, place_types=None):
 
     combos = []
     for fdi in fdis:
+        if place_id:
+            if base_type == place_type_from_id:
+                if fdi.fields['name'].lower() != place_name:
+                    continue
+            else:
+                if fdi.fields.get(place_type_from_id+"_id", "").lower() != place_name:
+                    continue
         comb = {}
         for pt in place_types:
             if base_type == pt:
@@ -36,6 +46,8 @@ def _get_unique_combinations(domain, place_types=None):
             else:
                 p_id = fdi.fields.get(pt+"_id", None)
                 if p_id:
+                    if place_id and pt == place_type_from_id and p_id != place_name:
+                        continue
                     comb[pt] = p_id
 #                    for item in place_data_items[pt]:
 #                        if item.fields["id"] == p_id:
@@ -46,13 +58,15 @@ def _get_unique_combinations(domain, place_types=None):
 
     return combos
 
-def psi_events(domain, query_dict):
+def psi_events(domain, query_dict, startdate=None, enddate=None, place_id=None):
     place_types = ['state', 'district']
-    combos = _get_unique_combinations(domain, place_types=place_types)
+    combos = _get_unique_combinations(domain, place_types=place_types, place_id=place_id)
     return map(lambda c: event_stats(domain, c, query_dict.get("location", "")), combos)
 
-def event_stats(domain, place_dict, location="", datetime="None"):
+def event_stats(domain, place_dict, location="", startdate=None, enddate=None):
     def ff_func(form):
+        if form.form.get('@name', None) != 'Plays and Events':
+            return False
         if place_dict["state"] and form.xpath('form/activity_state') != place_dict["state"]:
             return False
         if place_dict["district"] and form.xpath('form/activity_district') != place_dict["district"]:
@@ -60,7 +74,7 @@ def event_stats(domain, place_dict, location="", datetime="None"):
         if location:
             if not form.xpath('form/event_location') == location:
                 return False
-        return form.form.get('@name', None) == 'Plays and Events'
+        return True
 
     forms = list(_get_forms(domain, form_filter=ff_func))
     place_dict.update({
@@ -73,13 +87,15 @@ def event_stats(domain, place_dict, location="", datetime="None"):
     })
     return place_dict
 
-def psi_household_demonstrations(domain, query_dict):
+def psi_household_demonstrations(domain, query_dict, startdate=None, enddate=None, place_id=None):
     place_types = ['block', 'state', 'district', 'village']
-    combos = _get_unique_combinations(domain, place_types=place_types)
+    combos = _get_unique_combinations(domain, place_types=place_types, place_id=place_id)
     return map(lambda c: hd_stats(domain, c, query_dict.get("worker_type", "")), combos)
 
-def hd_stats(domain, place_dict, worker_type=""):
+def hd_stats(domain, place_dict, worker_type="", startdate=None, enddate=None):
     def ff_func(form):
+        if form.form.get('@name', None) != 'Household Demonstration':
+            return False
         if place_dict["state"] and form.xpath('form/activity_state') != place_dict["state"]:
             return False
         if place_dict["district"] and form.xpath('form/activity_district') != place_dict["district"]:
@@ -91,7 +107,7 @@ def hd_stats(domain, place_dict, worker_type=""):
         if worker_type:
             if not form.xpath('form/demo_type') == worker_type:
                 return False
-        return form.form.get('@name', None) == 'Household Demonstration'
+        return True
 
     forms = list(_get_forms(domain, form_filter=ff_func))
     place_dict.update({
@@ -103,20 +119,22 @@ def hd_stats(domain, place_dict, worker_type=""):
         })
     return place_dict
 
-def psi_sensitization_sessions(domain, query_dict):
+def psi_sensitization_sessions(domain, query_dict, startdate=None, enddate=None, place_id=None):
     place_types = ['state', 'district', 'block']
-    combos = _get_unique_combinations(domain, place_types=place_types)
+    combos = _get_unique_combinations(domain, place_types=place_types, place_id=place_id)
     return map(lambda c: ss_stats(domain, c), combos)
 
-def ss_stats(domain, place_dict):
+def ss_stats(domain, place_dict, startdate=None, enddate=None):
     def ff_func(form):
+        if form.form.get('@name', None) != 'Sensitization Session':
+            return False
         if place_dict["state"] and form.xpath('form/training_state') != place_dict["state"]:
             return False
         if place_dict["district"] and form.xpath('form/training_district') != place_dict["district"]:
             return False
         if place_dict["block"] and form.xpath('form/training_block') != place_dict["block"]:
             return False
-        return form.form.get('@name', None) == 'Sensitization Session'
+        return True
 
     forms = list(_get_forms(domain, form_filter=ff_func))
 
@@ -137,13 +155,15 @@ def ss_stats(domain, place_dict):
     return place_dict
 
 
-def psi_training_sessions(domain, query_dict):
+def psi_training_sessions(domain, query_dict, startdate=None, enddate=None, place_id=None):
     place_types = ['state', 'district']
-    combos = _get_unique_combinations(domain, place_types=place_types)
+    combos = _get_unique_combinations(domain, place_types=place_types, place_id=place_id)
     return map(lambda c: ts_stats(domain, c, query_dict.get("training_type", "")), combos)
 
-def ts_stats(domain, place_dict, training_type=""):
+def ts_stats(domain, place_dict, training_type="", startdate=None, enddate=None):
     def ff_func(form):
+        if form.form.get('@name', None) != 'Training Session':
+            return False
         if place_dict["state"] and form.xpath('form/training_state') != place_dict["state"]:
             return False
         if place_dict["district"] and form.xpath('form/training_district') != place_dict["district"]:
@@ -151,7 +171,7 @@ def ts_stats(domain, place_dict, training_type=""):
         if training_type:
             if not form.xpath('form/training_type') == training_type:
                 return False
-        return form.form.get('@name', None) == 'Training Session'
+        return True
 
     forms = list(_get_forms(domain, form_filter=ff_func))
 
@@ -245,6 +265,9 @@ def _get_form(domain, action_filter=lambda a: True, form_filter=lambda f: True):
     except StopIteration:
         return None
 
+def within_time_period(form, startdate, enddate):
+    return True
+
 class PSIReport(GenericTabularReport, CustomProjectReport, DatespanMixin):
     fields = ['corehq.apps.reports.fields.DatespanField','corehq.apps.reports.psi_reports.PlaceField',]
 
@@ -266,7 +289,7 @@ class PSIEventsReport(PSIReport):
 
     @property
     def rows(self):
-        event_data = psi_events(self.domain, {})
+        event_data = psi_events(self.domain, {}, place_id=self.request.GET.get('location_id', ""))
         for d in event_data:
             yield [
                 d.get("state"),
@@ -298,7 +321,7 @@ class PSIHDReport(PSIReport):
 
     @property
     def rows(self):
-        hh_data = psi_household_demonstrations(self.domain, {})
+        hh_data = psi_household_demonstrations(self.domain, {}, place_id=self.request.GET.get('location_id', ""))
         for d in hh_data:
             yield [
                 d.get("state"),
@@ -333,7 +356,7 @@ class PSISSReport(PSIReport):
 
     @property
     def rows(self):
-        hh_data = psi_sensitization_sessions(self.domain, {})
+        hh_data = psi_sensitization_sessions(self.domain, {}, place_id=self.request.GET.get('location_id', ""))
         for d in hh_data:
             yield [
                 d.get("state"),
@@ -380,7 +403,9 @@ class PSITSReport(PSIReport):
 
     @property
     def rows(self):
-        hh_data = psi_training_sessions(self.domain, {})
+#        print self.datespan.startdate_param_utc
+#        print self.datespan.enddate_param_utc
+        hh_data = psi_training_sessions(self.domain, {}, place_id=self.request.GET.get('location_id', ""))
         for d in hh_data:
             yield [
                 d.get("state"),
@@ -419,10 +444,12 @@ def place_tree(domain):
     tree_root = []
     for item in place_data_items["state"]:
         item._children = []
+        item._place = "state"
         tree_root.append(item)
 
     for item in place_data_items["district"]:
         item._children = []
+        item._place = "district"
         if item.fields.get('state_id', None):
             parent = pdis_by_id[item.fields['state_id']]
             try:
@@ -432,6 +459,7 @@ def place_tree(domain):
 
     for item in place_data_items["block"]:
         item._children = []
+        item._place = "block"
         if item.fields.get('district_id', None):
             parent = pdis_by_id[item.fields['district_id']]
             try:
@@ -441,6 +469,7 @@ def place_tree(domain):
 
     for item in place_data_items["village"]:
         item._children = []
+        item._place = "village"
         if item.fields.get('block_id', None):
             parent = pdis_by_id[item.fields['block_id']]
             try:
@@ -466,7 +495,7 @@ class PlaceField(ReportField):
             return {
                 'name': loc.fields['name'],
 #                'type': loc.location_type,
-                'uuid': loc.get_id,
+                'uuid': "%s:%s" % (loc._place, loc.fields['name']),
                 'children': [loc_to_json(child) for child in loc._children],
                 }
         loc_json = [loc_to_json(root) for root in all_locs]
