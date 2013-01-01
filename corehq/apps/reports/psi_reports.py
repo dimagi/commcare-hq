@@ -61,7 +61,7 @@ def _get_unique_combinations(domain, place_types=None, place_id=None):
 def psi_events(domain, query_dict, startdate=None, enddate=None, place_id=None):
     place_types = ['state', 'district']
     combos = _get_unique_combinations(domain, place_types=place_types, place_id=place_id)
-    return map(lambda c: event_stats(domain, c, query_dict.get("location", "")), combos)
+    return map(lambda c: event_stats(domain, c, query_dict.get("location", ""), startdate=startdate, enddate=enddate), combos)
 
 def event_stats(domain, place_dict, location="", startdate=None, enddate=None):
     def ff_func(form):
@@ -74,9 +74,11 @@ def event_stats(domain, place_dict, location="", startdate=None, enddate=None):
         if location:
             if not form.xpath('form/event_location') == location:
                 return False
+        if startdate and enddate and not within_time_period(form, startdate, enddate):
+            return False
         return True
 
-    forms = list(_get_forms(domain, form_filter=ff_func))
+    forms = list(_get_forms(domain, form_filter=ff_func, startdate=startdate, enddate=enddate))
     place_dict.update({
         "location": location,
         "num_male": reduce(lambda sum, f: sum + f.xpath('form/number_of_males'), forms, 0),
@@ -90,7 +92,7 @@ def event_stats(domain, place_dict, location="", startdate=None, enddate=None):
 def psi_household_demonstrations(domain, query_dict, startdate=None, enddate=None, place_id=None):
     place_types = ['block', 'state', 'district', 'village']
     combos = _get_unique_combinations(domain, place_types=place_types, place_id=place_id)
-    return map(lambda c: hd_stats(domain, c, query_dict.get("worker_type", "")), combos)
+    return map(lambda c: hd_stats(domain, c, query_dict.get("worker_type", ""), startdate=startdate, enddate=enddate), combos)
 
 def hd_stats(domain, place_dict, worker_type="", startdate=None, enddate=None):
     def ff_func(form):
@@ -107,9 +109,11 @@ def hd_stats(domain, place_dict, worker_type="", startdate=None, enddate=None):
         if worker_type:
             if not form.xpath('form/demo_type') == worker_type:
                 return False
+        if startdate and enddate and not within_time_period(form, startdate, enddate):
+            return False
         return True
 
-    forms = list(_get_forms(domain, form_filter=ff_func))
+    forms = list(_get_forms(domain, form_filter=ff_func, startdate=startdate, enddate=enddate))
     place_dict.update({
         "worker_type": worker_type,
         "num_hh_demo": reduce(lambda sum, f: sum + _count_in_repeats(f.xpath('form/visits'), 'hh_covered'), forms, 0),
@@ -122,7 +126,7 @@ def hd_stats(domain, place_dict, worker_type="", startdate=None, enddate=None):
 def psi_sensitization_sessions(domain, query_dict, startdate=None, enddate=None, place_id=None):
     place_types = ['state', 'district', 'block']
     combos = _get_unique_combinations(domain, place_types=place_types, place_id=place_id)
-    return map(lambda c: ss_stats(domain, c), combos)
+    return map(lambda c: ss_stats(domain, c, startdate=startdate, enddate=enddate), combos)
 
 def ss_stats(domain, place_dict, startdate=None, enddate=None):
     def ff_func(form):
@@ -134,9 +138,11 @@ def ss_stats(domain, place_dict, startdate=None, enddate=None):
             return False
         if place_dict["block"] and form.xpath('form/training_block') != place_dict["block"]:
             return False
+        if startdate and enddate and not within_time_period(form, startdate, enddate):
+            return False
         return True
 
-    forms = list(_get_forms(domain, form_filter=ff_func))
+    forms = list(_get_forms(domain, form_filter=ff_func, startdate=startdate, enddate=enddate))
 
     def rf_func(data):
         return data.get('type_of_sensitization', None) == 'vhnd'
@@ -158,7 +164,7 @@ def ss_stats(domain, place_dict, startdate=None, enddate=None):
 def psi_training_sessions(domain, query_dict, startdate=None, enddate=None, place_id=None):
     place_types = ['state', 'district']
     combos = _get_unique_combinations(domain, place_types=place_types, place_id=place_id)
-    return map(lambda c: ts_stats(domain, c, query_dict.get("training_type", "")), combos)
+    return map(lambda c: ts_stats(domain, c, query_dict.get("training_type", ""), startdate=startdate, enddate=enddate), combos)
 
 def ts_stats(domain, place_dict, training_type="", startdate=None, enddate=None):
     def ff_func(form):
@@ -171,9 +177,11 @@ def ts_stats(domain, place_dict, training_type="", startdate=None, enddate=None)
         if training_type:
             if not form.xpath('form/training_type') == training_type:
                 return False
+        if startdate and enddate and not within_time_period(form, startdate, enddate):
+            return False
         return True
 
-    forms = list(_get_forms(domain, form_filter=ff_func))
+    forms = list(_get_forms(domain, form_filter=ff_func, startdate=startdate, enddate=enddate))
 
     all_forms = list(_get_forms(domain, form_filter=lambda f: f.form.get('@name', None) == 'Training Session'))
     private_forms = filter(lambda f: f.xpath('form/trainee_category') == 'private', forms)
@@ -239,19 +247,21 @@ def _count_in_repeats(data, what_to_count):
         data = [data]
     return reduce(lambda sum, d: sum + int(d.get(what_to_count, 0) or 0), data, 0)
 
-def _get_all_form_submissions(domain):
+def _get_all_form_submissions(domain, startdate=None, enddate=None):
     key = make_form_couch_key(domain)
+    startkey = key+[startdate] if startdate and enddate else key
+    endkey = key+[enddate] if startdate and enddate else key + [{}]
     submissions = XFormInstance.view('reports_forms/all_forms',
-        startkey=key,
-        endkey=key+[{}],
+        startkey=startkey,
+        endkey=endkey,
         include_docs=True,
         reduce=False
     )
     return submissions
 
 
-def _get_forms(domain, form_filter=lambda f: True):
-    for form in _get_all_form_submissions(domain):
+def _get_forms(domain, form_filter=lambda f: True, startdate=None, enddate=None):
+    for form in _get_all_form_submissions(domain, startdate=startdate, enddate=enddate):
         if form_filter(form):
             yield form
 
@@ -403,9 +413,9 @@ class PSITSReport(PSIReport):
 
     @property
     def rows(self):
-#        print self.datespan.startdate_param_utc
-#        print self.datespan.enddate_param_utc
-        hh_data = psi_training_sessions(self.domain, {}, place_id=self.request.GET.get('location_id', ""))
+        print "%s - %s" % (self.datespan.startdate_param_utc, self.datespan.enddate_param_utc)
+        hh_data = psi_training_sessions(self.domain, {}, place_id=self.request.GET.get('location_id', ""),
+            startdate=self.datespan.startdate_param_utc, enddate=self.datespan.enddate_param_utc)
         for d in hh_data:
             yield [
                 d.get("state"),
