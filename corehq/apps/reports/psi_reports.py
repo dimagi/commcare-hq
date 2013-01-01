@@ -18,10 +18,8 @@ def _get_unique_combinations(domain, place_types=None, place_id=None):
         place_name = place_id.split(':')[1].lower()
 
     place_data_types = {}
-#    place_data_items = {}
     for pt in place_types:
         place_data_types[pt] = FixtureDataType.by_domain_tag(domain, pt).one()
-#        place_data_items[pt] = FixtureDataItem.by_data_type(domain, place_data_types[pt])
 
     fdis = []; base_type = ""
     for t in ["village", "block", "district", "state"]:
@@ -49,9 +47,6 @@ def _get_unique_combinations(domain, place_types=None, place_id=None):
                     if place_id and pt == place_type_from_id and p_id != place_name:
                         continue
                     comb[pt] = p_id
-#                    for item in place_data_items[pt]:
-#                        if item.fields["id"] == p_id:
-#                            comb[pt] = item.fields['name']
                 else:
                     comb[pt] = None
         combos.append(comb)
@@ -74,8 +69,6 @@ def event_stats(domain, place_dict, location="", startdate=None, enddate=None):
         if location:
             if not form.xpath('form/event_location') == location:
                 return False
-        if startdate and enddate and not within_time_period(form, startdate, enddate):
-            return False
         return True
 
     forms = list(_get_forms(domain, form_filter=ff_func, startdate=startdate, enddate=enddate))
@@ -109,8 +102,6 @@ def hd_stats(domain, place_dict, worker_type="", startdate=None, enddate=None):
         if worker_type:
             if not form.xpath('form/demo_type') == worker_type:
                 return False
-        if startdate and enddate and not within_time_period(form, startdate, enddate):
-            return False
         return True
 
     forms = list(_get_forms(domain, form_filter=ff_func, startdate=startdate, enddate=enddate))
@@ -137,8 +128,6 @@ def ss_stats(domain, place_dict, startdate=None, enddate=None):
         if place_dict["district"] and form.xpath('form/training_district') != place_dict["district"]:
             return False
         if place_dict["block"] and form.xpath('form/training_block') != place_dict["block"]:
-            return False
-        if startdate and enddate and not within_time_period(form, startdate, enddate):
             return False
         return True
 
@@ -177,8 +166,6 @@ def ts_stats(domain, place_dict, training_type="", startdate=None, enddate=None)
         if training_type:
             if not form.xpath('form/training_type') == training_type:
                 return False
-        if startdate and enddate and not within_time_period(form, startdate, enddate):
-            return False
         return True
 
     forms = list(_get_forms(domain, form_filter=ff_func, startdate=startdate, enddate=enddate))
@@ -275,9 +262,6 @@ def _get_form(domain, action_filter=lambda a: True, form_filter=lambda f: True):
     except StopIteration:
         return None
 
-def within_time_period(form, startdate, enddate):
-    return True
-
 class PSIReport(GenericTabularReport, CustomProjectReport, DatespanMixin):
     fields = ['corehq.apps.reports.fields.DatespanField','corehq.apps.reports.psi_reports.PlaceField',]
 
@@ -299,7 +283,8 @@ class PSIEventsReport(PSIReport):
 
     @property
     def rows(self):
-        event_data = psi_events(self.domain, {}, place_id=self.request.GET.get('location_id', ""))
+        event_data = psi_events(self.domain, {}, place_id=self.request.GET.get('location_id', ""),
+            startdate=self.datespan.startdate_param_utc, enddate=self.datespan.enddate_param_utc)
         for d in event_data:
             yield [
                 d.get("state"),
@@ -331,7 +316,8 @@ class PSIHDReport(PSIReport):
 
     @property
     def rows(self):
-        hh_data = psi_household_demonstrations(self.domain, {}, place_id=self.request.GET.get('location_id', ""))
+        hh_data = psi_household_demonstrations(self.domain, {}, place_id=self.request.GET.get('location_id', ""),
+            startdate=self.datespan.startdate_param_utc, enddate=self.datespan.enddate_param_utc)
         for d in hh_data:
             yield [
                 d.get("state"),
@@ -366,7 +352,8 @@ class PSISSReport(PSIReport):
 
     @property
     def rows(self):
-        hh_data = psi_sensitization_sessions(self.domain, {}, place_id=self.request.GET.get('location_id', ""))
+        hh_data = psi_sensitization_sessions(self.domain, {}, place_id=self.request.GET.get('location_id', ""),
+            startdate=self.datespan.startdate_param_utc, enddate=self.datespan.enddate_param_utc)
         for d in hh_data:
             yield [
                 d.get("state"),
@@ -413,7 +400,6 @@ class PSITSReport(PSIReport):
 
     @property
     def rows(self):
-        print "%s - %s" % (self.datespan.startdate_param_utc, self.datespan.enddate_param_utc)
         hh_data = psi_training_sessions(self.domain, {}, place_id=self.request.GET.get('location_id', ""),
             startdate=self.datespan.startdate_param_utc, enddate=self.datespan.enddate_param_utc)
         for d in hh_data:
@@ -465,7 +451,8 @@ def place_tree(domain):
             try:
                 parent._children.append(item)
             except AttributeError:
-                print "Error: %s -> %s(%s)" % (item.fields['id'], parent.fields['id'], parent.get_id)
+                pass
+#                print "Error(District): %s -> %s(%s)" % (item.fields['id'], parent.fields['id'], parent.get_id)
 
     for item in place_data_items["block"]:
         item._children = []
@@ -475,7 +462,8 @@ def place_tree(domain):
             try:
                 parent._children.append(item)
             except AttributeError:
-                print "Error: %s -> %s(%s)" % (item.fields['id'], parent.fields['id'], parent.get_id)
+                pass
+#                print "Error(Block): %s -> %s(%s)" % (item.fields['id'], parent.fields['id'], parent.get_id)
 
     for item in place_data_items["village"]:
         item._children = []
@@ -485,7 +473,8 @@ def place_tree(domain):
             try:
                 parent._children.append(item)
             except AttributeError:
-                print "Error: %s -> %s(%s)" % (item.fields['id'], parent.fields['id'], parent.get_id)
+                pass
+#                print "Error(Village): %s -> %s(%s)" % (item.fields['id'], parent.fields['id'], parent.get_id)
 
     return tree_root
 
