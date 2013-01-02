@@ -1,1 +1,0 @@
-Third party django apps that were modified to work with our codebases.  If the eventual third party app is updated to work with say, the django version, or whatever issue we ran into, they should be used instead of our snapshot versions here.

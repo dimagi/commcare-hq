@@ -1,15 +1,9 @@
 from __future__ import absolute_import
-from xml.sax.saxutils import escape
 from functools import wraps
 import json
-from openpyxl.shared.exc import InvalidFileException
 import re
 import urllib
 from datetime import datetime
-import csv
-import io
-import logging
-import calendar
 
 from corehq.apps.registration.forms import NewWebUserRegistrationForm
 from corehq.apps.registration.utils import activate_new_user
@@ -20,21 +14,19 @@ from django.contrib.auth.models import User
 from django.contrib.auth.views import redirect_to_login
 from django.core.urlresolvers import reverse
 from django.db import transaction
-from django.http import Http404, HttpResponseRedirect, HttpResponse, HttpResponseForbidden, HttpResponseBadRequest
+from django.http import Http404, HttpResponseRedirect, HttpResponse, HttpResponseForbidden
 from django.template.loader import render_to_string
 from django.views.decorators.http import require_POST
 from django.contrib import messages
 from django_digest.decorators import httpdigest
 
-from dimagi.utils.web import render_to_response, json_response, get_url_base, get_ip
+from dimagi.utils.web import render_to_response, json_response, get_ip
 
-from corehq.apps.registration.user_registration_backend.forms import AdminRegistersUserForm,\
-    AdminInvitesUserForm
+from corehq.apps.registration.forms import AdminInvitesUserForm
 from corehq.apps.prescriptions.models import Prescription
-from corehq.apps.sms.views import get_sms_autocomplete_context
 from corehq.apps.domain.models import Domain
 from corehq.apps.users.decorators import require_permission
-from corehq.apps.users.forms import UserForm, CommCareAccountForm, ProjectSettingsForm
+from corehq.apps.users.forms import UserForm, ProjectSettingsForm
 from corehq.apps.users.models import CouchUser, Invitation, CommCareUser, WebUser, \
     RemoveWebUserRecord, UserRole, AdminUserRole
 from corehq.apps.domain.decorators import login_and_domain_required, require_superuser, domain_admin_required

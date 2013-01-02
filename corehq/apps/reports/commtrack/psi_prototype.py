@@ -14,12 +14,12 @@ from dimagi.utils.couch.database import get_db
 from dimagi.utils.couch.loosechange import map_reduce
 from dimagi.utils import parsing as dateparse
 import itertools
-from datetime import timedelta
-from corehq.apps.commtrack.models import CommtrackConfig
+from datetime import date, timedelta
+from corehq.apps.commtrack.models import CommtrackConfig, Product, StockReport
 from dimagi.utils.decorators.memoized import memoized
 from corehq.apps.reports.cache import request_cache
 import json
-
+from casexml.apps.case.models import CommCareCase
 
 class CommtrackReportMixin(ProjectReport, ProjectReportParametersMixin):
 
@@ -41,8 +41,7 @@ class CommtrackReportMixin(ProjectReport, ProjectReportParametersMixin):
     @property
     @memoized
     def products(self):
-        query = get_db().view('commtrack/products', startkey=[self.domain], endkey=[self.domain, {}], include_docs=True)
-        prods = [e['doc'] for e in query]
+        prods = Product.by_domain(self.domain, wrap=False)
         return sorted(prods, key=lambda p: p['name'])
 
     def ordered_products(self, ordering):
@@ -71,18 +70,15 @@ def get_transactions(form_doc, include_inferred=True):
     return [tx for tx in txs if include_inferred or not tx.get('@inferred')]
 
 def get_stock_reports(domain, location, datespan):
-    timestamp_start = dateparse.json_format_datetime(datespan.startdate)
-    timestamp_end =  dateparse.json_format_datetime(datespan.end_of_end_day)
-    loc_id = location._id if location else None
-
-    startkey = [domain, loc_id, timestamp_start]
-    endkey = [domain, loc_id, timestamp_end]
-
-    query = get_db().view('commtrack/stock_reports', startkey=startkey, endkey=endkey, include_docs=True)
-    return [e['doc'] for e in query]
+    return [sr.raw_form for sr in \
+            StockReport.get_reports(domain, location, datespan)]
 
 def leaf_loc(form):
     return form['location_'][-1]
+
+def child_loc(form, root):
+    path = form['location_']
+    return path[path.index(root._id) + 1]
 
 OUTLET_METADATA = [
     ('state', 'State'),
@@ -102,7 +98,8 @@ class VisitReport(GenericTabularReport, CommtrackReportMixin, DatespanMixin):
     name = 'Visit Report'
     slug = 'visits'
     fields = ['corehq.apps.reports.fields.DatespanField',
-              'corehq.apps.reports.fields.LocationField']
+              'corehq.apps.reports.fields.AsyncLocationField']
+    exportable = True
 
     def header_text(self, slug=False):
         cols = [(key if slug else caption) for key, caption in OUTLET_METADATA]
@@ -172,13 +169,14 @@ class StockReportExport(VisitReport):
 
         return [['stock reports', [filter_row(r) for r in rows]]]
 
-class SalesAndConsumptionReport(GenericTabularReport, CommtrackReportMixin, DatespanMixin):
-    OUTLETS_LIMIT = 200
+OUTLETS_LIMIT = 200
 
+class SalesAndConsumptionReport(GenericTabularReport, CommtrackReportMixin, DatespanMixin):
     name = 'Sales and Consumption Report'
     slug = 'sales_consumption'
     fields = ['corehq.apps.reports.fields.DatespanField',
-              'corehq.apps.reports.fields.LocationField']
+              'corehq.apps.reports.fields.AsyncLocationField']
+    exportable = True
 
     @property
     def outlets(self):
@@ -188,7 +186,7 @@ class SalesAndConsumptionReport(GenericTabularReport, CommtrackReportMixin, Date
 
     @property
     def headers(self):
-        if len(self.outlets) > self.OUTLETS_LIMIT:
+        if len(self.outlets) > OUTLETS_LIMIT:
             return DataTablesHeader(DataTablesColumn('Too many outlets'))
 
         cols = [DataTablesColumn(caption) for key, caption in OUTLET_METADATA]
@@ -202,15 +200,15 @@ class SalesAndConsumptionReport(GenericTabularReport, CommtrackReportMixin, Date
 
     @property
     def rows(self):
-        if len(self.outlets) > self.OUTLETS_LIMIT:
+        if len(self.outlets) > OUTLETS_LIMIT:
             return [[
                     'This report is limited to <b>%(max)d</b> outlets. Your location filter includes <b>%(count)d</b> outlets. Please make your location filter more specific.' % {
                         'count': len(self.outlets),
-                        'max': self.OUTLETS_LIMIT,
+                        'max': OUTLETS_LIMIT,
                 }]]
 
         products = self.ordered_products(PRODUCT_ORDERING)
-        locs = Location.filter_by_type(self.domain, 'outlet', self.active_location)
+        locs = self.outlets
         reports = get_stock_reports(self.domain, self.active_location, self.datespan)
         reports_by_loc = map_reduce(lambda e: [(leaf_loc(e),)], data=reports, include_docs=True)
 
@@ -257,6 +255,145 @@ class SalesAndConsumptionReport(GenericTabularReport, CommtrackReportMixin, Date
 
         return [summary_row(site, reports_by_loc.get(site._id, [])) for site in locs]
 
+class CumulativeSalesAndConsumptionReport(GenericTabularReport, CommtrackReportMixin, DatespanMixin):
+    name = 'Sales and Consumption Report, Cumulative'
+    slug = 'cumul_sales_consumption'
+    fields = ['corehq.apps.reports.fields.DatespanField',
+              'corehq.apps.reports.fields.AsyncLocationField']
+    exportable = True
+
+    @property
+    def children(self):
+        if not hasattr(self, '_locs'):
+            self._locs = self.active_location.children if self.active_location else []
+        return self._locs
+
+    @property
+    def headers(self):
+        if not self.children:
+            return DataTablesHeader(DataTablesColumn('No locations'))
+
+        cols = [
+            DataTablesColumn('Location'),
+            DataTablesColumn('Location Type'),
+            ]
+        for p in self.ordered_products(PRODUCT_ORDERING):
+            cols.append(DataTablesColumn('Total Stock on Hand (%s)' % p['name']))
+            cols.append(DataTablesColumn('Total Sales (%s)' % p['name']))
+            cols.append(DataTablesColumn('Total Consumption (%s)' % p['name']))
+
+        return DataTablesHeader(*cols)
+
+    @property
+    def rows(self):
+        if not self.children:
+            return [[
+                        'The location you\'ve chosen has no member locations. Choose an administrative location higher up in the hierarchy.'
+                    ]]
+
+        products = self.ordered_products(PRODUCT_ORDERING)
+        locs = self.children
+        reports = get_stock_reports(self.domain, self.active_location, self.datespan)
+        reports_by_loc = map_reduce(lambda e: [(child_loc(e, self.active_location),)], data=reports, include_docs=True)
+
+        startkey = [self.domain, self.active_location._id, 'CommCareCase']
+        product_cases = [c for c in CommCareCase.view('locations/linked_docs', startkey=startkey, endkey=startkey + [{}], include_docs=True)
+                         if c.type == 'supply-point-product']
+        product_cases_by_parent = map_reduce(lambda e: [(child_loc(e, self.active_location),)], data=product_cases, include_docs=True)
+
+        def summary_row(site, reports, product_cases):
+            all_transactions = list(itertools.chain(*(get_transactions(r) for r in reports)))
+            tx_by_product = map_reduce(lambda tx: [(tx['product'],)], data=all_transactions, include_docs=True)
+            cases_by_product = map_reduce(lambda c: [(c.product,)], data=product_cases, include_docs=True)
+
+            # feels not DRY
+            import urllib
+            site_url = '%s?%s' % (self.get_url(self.domain), urllib.urlencode({
+                'startdate': self.datespan.startdate_display,
+                'enddate': self.datespan.enddate_display,
+                'location_id': site._id,
+                }))
+            site_link = '<a href="%s">%s</a>' % (site_url, site.name)
+            data = [site_link, site.location_type]
+            for p in products:
+                tx_by_action = map_reduce(lambda tx: [(tx['action'], int(tx['value']))], data=tx_by_product.get(p['_id'], []))
+                subcases = cases_by_product.get(p['_id'])
+                stocks = [int(k) for k in (c.get_case_property('current_stock') for c in subcases) if k is not None]
+
+                data.append(sum(stocks) if stocks else u'\u2014')
+                data.append(sum(tx_by_action.get('sales', [])))
+                data.append(sum(tx_by_action.get('consumption', [])))
+
+            return data
+
+        return [summary_row(site,
+            reports_by_loc.get(site._id, []),
+            product_cases_by_parent.get(site._id, [])) for site in locs]
+
+class StockOutReport(GenericTabularReport, CommtrackReportMixin, DatespanMixin):
+    name = 'Stock-out Report'
+    slug = 'stockouts'
+    fields = ['corehq.apps.reports.fields.AsyncLocationField']
+    exportable = True
+
+    @property
+    def outlets(self):
+        if not hasattr(self, '_locs'):
+            self._locs = Location.filter_by_type(self.domain, 'outlet', self.active_location)
+        return self._locs
+
+    @property
+    def headers(self):
+        if len(self.outlets) > OUTLETS_LIMIT:
+            return DataTablesHeader(DataTablesColumn('Too many outlets'))
+
+        cols = [caption for key, caption in OUTLET_METADATA]
+        for p in self.ordered_products(PRODUCT_ORDERING):
+            cols.append('%s: Days stocked out' % p['name'])
+        cols.append('All Products Combined: Days stocked out')
+        return DataTablesHeader(*(DataTablesColumn(c) for c in cols))
+
+    @property
+    def rows(self):
+        if len(self.outlets) > OUTLETS_LIMIT:
+            return [[
+                        'This report is limited to <b>%(max)d</b> outlets. Your location filter includes <b>%(count)d</b> outlets. Please make your location filter more specific.' % {
+                            'count': len(self.outlets),
+                            'max': OUTLETS_LIMIT,
+                            }]]
+
+        products = self.ordered_products(PRODUCT_ORDERING)
+        def row(site):
+            data = [getattr(site, key) for key, caption in OUTLET_METADATA]
+
+            stockout_days = []
+            for p in products:
+                startkey = [str(self.domain), site._id, p['_id']]
+                endkey = startkey + [{}]
+
+                latest_state = get_db().view('commtrack/stock_product_state', startkey=endkey, endkey=startkey, descending=True).first()
+                if latest_state:
+                    doc = latest_state['value']
+                    so_date = doc['updated_unknown_properties']['stocked_out_since']
+                    if so_date:
+                        so_days = (date.today() - dateparse.string_to_datetime(so_date).date()).days + 1
+                    else:
+                        so_days = 0
+                else:
+                    so_days = None
+
+                if so_days is not None:
+                    stockout_days.append(so_days)
+                    data.append(so_days)
+                else:
+                    data.append(u'\u2014')
+
+            combined_stockout_days = min(stockout_days) if stockout_days else None
+            data.append(combined_stockout_days if combined_stockout_days is not None else u'\u2014')
+
+            return data
+
+        return [row(site) for site in self.outlets]
 
 def _get_unique_combinations(domain, place_types=None, place_id=None):
     if not place_types:
@@ -750,4 +887,3 @@ class PlaceField(ReportField):
             'loc_id': self.request.GET.get('location_id'),
             'locations': json.dumps(loc_json)
         }
-

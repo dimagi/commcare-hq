@@ -1,6 +1,7 @@
 from corehq.apps.users.models import CouchUser
 from django import forms
 from django.contrib.auth.models import User
+from corehq.apps.users.forms import RoleForm
 import re
 from corehq.apps.domain.forms import clean_password, max_pwd
 from django.core.validators import validate_email
@@ -136,3 +137,35 @@ class DomainRegistrationForm(forms.Form):
             if isinstance(self.cleaned_data[field], basestring):
                 self.cleaned_data[field] = self.cleaned_data[field].strip()
         return self.cleaned_data
+
+# From http://www.peterbe.com/plog/automatically-strip-whitespace-in-django-app_manager
+#
+# I'll put this in each app, so they can be standalone, but it should really go in some centralized 
+# part of the distro
+
+class _BaseForm(object):
+    def clean(self):
+        for field in self.cleaned_data:
+            if isinstance(self.cleaned_data[field], basestring):
+                self.cleaned_data[field] = self.cleaned_data[field].strip()
+        return self.cleaned_data
+
+
+class AdminInvitesUserForm(RoleForm, _BaseForm, forms.Form):
+    # As above. Need email now; still don't need domain. Don't need TOS. Do need the is_active flag,
+    # and do need to relabel some things.
+    email       =  forms.EmailField(label="Email Address",
+                                    max_length=User._meta.get_field('email').max_length)
+#    is_domain_admin = forms.BooleanField(label='User is a domain administrator', initial=False, required=False)
+    role = forms.ChoiceField(choices=(), label="Project Role")
+
+    def __init__(self, data=None, excluded_emails=None, *args, **kwargs):
+        super(AdminInvitesUserForm, self).__init__(data=data, *args, **kwargs)
+        self.excluded_emails = excluded_emails or []
+
+    def clean_email(self):
+        email = self.cleaned_data['email'].strip()
+        if email in self.excluded_emails:
+            raise forms.ValidationError("A user with this email address is already on this project.")
+        return email
+

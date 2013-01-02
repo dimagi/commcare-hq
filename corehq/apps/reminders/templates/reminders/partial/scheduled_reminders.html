@@ -5,16 +5,15 @@
     <script>
         $(function () {
             var reminders = [
-                {% for reminder in reminders %}
+                {% for data in reminder_data %}
                     {
-                        nickname: "{{ reminder.handler.nickname }}",
-                        date: "{{ reminder.next_fire.date }}",
-                        time: "{{ reminder.next_fire.time }}",
-                        username: "{{ reminder.user.raw_username }}",
-                        case_name: "{{ reminder.case.name }}",
-                        case_url: "{% if reminder.case %}{% url case_details domain reminder.case.get_id %}{% endif %}",
-                        recipient: "{{ reminder.handler.recipient }}",
-                        sample_name: "{% if reminder.handler.recipient == 'SURVEY_SAMPLE' %}{{ reminder.recipient.name }}{% endif %}"
+                        nickname: "{{ data.handler_name }}",
+                        date: "{{ data.next_fire.date }}",
+                        time: "{{ data.next_fire.time }}",
+                        case_name: "{{ data.case_name }}",
+                        case_url: "{% if data.case_id %}{% url case_details domain data.case_id %}{% endif %}",
+                        recipient_desc: "{{ data.recipient_desc }}",
+                        recipient_type: "{{ data.recipient_type }}",
                     },
                 {% endfor %}
                     null
@@ -24,20 +23,23 @@
             for (i = 0; i < reminders.length; i += 1) {
                 reminder = reminders[i];
                 if (reminder) {
+                    var recipient_text;
+                    if (reminder.recipient_type == "USER" || reminder.recipient_type == "OWNER" || reminder.recipient_type == "CASE") {
+                        var case_url = '<a href="' + reminder.case_url + '">' + reminder.case_name + '</a>';
+                        if (reminder.recipient_type == "CASE") {
+                            recipient_text = case_url;
+                        } else {
+                            recipient_text = reminder.recipient_desc + " for " + case_url;
+                        }
+                    } else {
+                        recipient_text = reminder.recipient_desc;
+                    }
                     $('.calendar [data-date="' + reminder.date + '"]').append(
                         $('<li/>').append(
-                            $('<p/>').text(reminder.time).addClass('time-header')
+                            $('<span/>').text(reminder.time).addClass('time-header')
                         ).append(
-                            $('<p/>').html(
-                                "send <u>" + reminder.nickname + "</u><br/>" + (
-                                    (reminder.recipient == "USER") ?
-                                    ("to <u>" + (reminder.username || "(?)") + '</u><br/> about <a href="' + reminder.case_url + '">' + (reminder.case_name || "(?)") + "</a>") : (
-                                        (reminder.recipient == "CASE") ?
-                                        ('to <a href="' + reminder.case_url + '">' + (reminder.case_name || "(?)") + "</a>") :
-                                        
-                                        ('to ' + reminder.sample_name)
-                                    )
-                                )
+                            $('<span/>').html(
+                                " <b>" + reminder.nickname + "</b> to " + recipient_text
                             )
                         )
                     );
