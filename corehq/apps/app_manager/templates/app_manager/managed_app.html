@@ -119,11 +119,13 @@
                                                    {% if form == selected_form %}class="variable-form_name"{% endif %}>
                                                     {{ form.name|html_trans:langs }}
                                                 </a>
+                                                {% if edit %}
                                                 <div class="edit-form-pencil">
                                                     <a href="{% url form_source domain app.id module.id form.id %}">
                                                         <span class="icon icon-pencil"></span>
                                                     </a>
                                                 </div>
+                                                {% endif %}
                                             </li>
                                         {% endfor %}
                                     {% endwith %}
