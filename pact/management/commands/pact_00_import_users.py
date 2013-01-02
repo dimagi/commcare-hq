@@ -46,7 +46,7 @@ class Command(PactMigrateCommand):
     def handle_noargs(self, **options):
 
         self.get_credentials()
-        purge_pact_users()
+        #purge_pact_users()
         pact_hp_group = get_or_create_pact_group()
         print "#### Getting actors json from server"
         actors_json = simplejson.loads(self.get_url(PACT_URL + 'hqmigration/actors/'))
