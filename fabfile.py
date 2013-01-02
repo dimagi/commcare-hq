@@ -214,7 +214,7 @@ def realstaging():
 
         'formsplayer': ['hqdjango1-staging.internal.commcarehq.org'],
         'lb': [], #todo on apache level config
-        'staticfiles': [], #['hqproxy0.internal.commcarehq.org'],
+        'staticfiles': ['hqproxy0.internal.commcarehq.org'],
         'deploy': ['hqdb-staging.internal.commcarehq.org'], #this is a stub becuaue we don't want to be prompted for a host or run deploy too many times
         'django_monolith': [] # fab complains if this doesn't exist
     }
@@ -420,10 +420,10 @@ def update_env(preindex=False):
     require('code_root', provided_by=('staging', 'production', 'india'))
     if preindex:
         root_to_use = env.code_root_preindex
-	env_to_use = env.virtualenv_root_preindex
+        env_to_use = env.virtualenv_root_preindex
     else:
         root_to_use = env.code_root
-	env_to_use = env.virtualenv_root
+        env_to_use = env.virtualenv_root
     requirements = posixpath.join(env.code_root, 'requirements')
     with cd(root_to_use):
         cmd = ['%s/bin/pip install' % env_to_use]
