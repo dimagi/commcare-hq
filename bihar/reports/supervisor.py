@@ -348,7 +348,7 @@ class EDDCalcReport(InputReport):
         {
             "name": "lmp",
             "type": "text",
-            "label": ugettext_noop("Enter LMP (YYYY-MM-DD)")
+            "label": ugettext_noop("Enter LMP (DD-MM-YYYY)")
         }
     ]
 
@@ -356,9 +356,9 @@ class EDDCalcReport(InputReport):
 
     def calc(self, input):
         try:
-            lmp_date = datetime.strptime(input["lmp"], "%Y-%m-%d")
+            lmp_date = datetime.strptime(input["lmp"], "%d-%m-%Y")
             edd_date = lmp_date + timedelta(days=280)
-            return [_("Estimated Date of Delivery: %s") % edd_date.strftime("%Y-%m-%d")]
+            return [_("Estimated Date of Delivery: %s") % edd_date.strftime("%d-%m-%Y")]
         except ValueError:
             self._headers = [" ", " "]
             return [_("Error: We can't parse your input, please try again"), self.form_html]
