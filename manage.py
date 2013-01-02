@@ -14,7 +14,6 @@ for d in submodules_list:
     if d == "__init__.py" or d == '.' or d == '..':
         continue
     sys.path.append(os.path.join(filedir,'submodules',d))
-sys.path.append(os.path.join(filedir,'submodules','core-hq-src','lib'))
 
 try:
     import settings # Assumed to be in the same directory.
