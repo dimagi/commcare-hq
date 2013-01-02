@@ -798,4 +798,8 @@ PILLOWTOPS = [
 #               'corehq.pillows.DevicelogPillow',
                ] + LOCAL_PILLOWTOPS
 
+XFORM_PILLOW_HANDLERS = ['pact.pillowhandler.PactHandler', ]
+
+
+
 REMOTE_APP_NAMESPACE = "%(domain)s.commcarehq.org"
