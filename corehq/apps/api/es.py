@@ -8,6 +8,7 @@ from corehq.apps.domain.decorators import login_and_domain_required
 from dimagi.utils.decorators import inline
 from corehq.elastic import get_es
 from django.views.generic import View
+from dimagi.utils.logging import notify_exception
 
 
 class ESView(View):
@@ -63,7 +64,7 @@ class ESView(View):
         #todo: backend audit logging of all these types of queries
         es_results = self.es[self.index].get('_search', data=es_query)
         if es_results.has_key('error'):
-            logging.exception("Error in %s elasticsearch query: %s" % (self.index, es_results['error']))
+            notify_exception("Error in %s elasticsearch query: %s" % (self.index, es_results['error']))
             #return {'Error': "No data"}
             return None
         return es_results
