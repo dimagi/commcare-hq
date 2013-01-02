@@ -186,7 +186,9 @@ def accept_invitation(request, domain, invitation_id):
             messages.success(request, "You have been added to the %s domain" % domain)
             return HttpResponseRedirect(reverse("domain_homepage", args=[domain,]))
         else:
+            mobile_user = CouchUser.from_django_user(request.user).is_commcare_user()
             return render_to_response(request, 'users/accept_invite.html', {'domain': domain,
+                                                                            'mobile_user': mobile_user,
                                                                             "invited_user": invitation.email if request.couch_user.username != invitation.email else ""})
     else:
         # if you're not authenticated we need you to fill out your information
