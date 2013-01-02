@@ -1,0 +1,680 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<h:html xmlns:h="http://www.w3.org/1999/xhtml" xmlns:orx="http://openrosa.org/jr/xforms" xmlns="http://www.w3.org/2002/xforms" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:jr="http://openrosa.org/javarosa">
+	<h:head>
+		<h:title>Registration</h:title>
+		<model>
+			<instance>
+				<data xmlns:jrm="http://dev.commcarehq.org/jr/xforms" xmlns="http://openrosa.org/formdesigner/AD50A3E3-5D5A-4379-97EF-8D538F3E3DBD" uiVersion="1" version="1" name="Registration">
+					<pactid />
+					<first_name />
+					<middle_name />
+					<last_name />
+					<dob />
+					<ssn />
+					<gender />
+					<race />
+					<is_latino />
+					<preferred_language />
+					<mass_health_expiration />
+					<hiv_care_clinic />
+					<hp_status />
+					<dot_status />
+					<dot_regimen_group>
+						<art_regimen_freq />
+						<art_qd_time />
+						<art_bid_times />
+						<art_tid_times />
+						<art_qid_times />
+						<non_art_regimen_freq />
+						<non_art_qd_time />
+						<non_art_bid_times />
+						<non_art_tid_times />
+						<non_art_qid_times />
+					</dot_regimen_group>
+					<full_name />
+					<art_regimen />
+					<non_art_regimen />
+				</data>
+			</instance>
+			<bind nodeset="/data/pactid" type="xsd:string" required="true()" />
+			<bind nodeset="/data/first_name" type="xsd:string" required="true()" />
+			<bind nodeset="/data/middle_name" type="xsd:string" />
+			<bind nodeset="/data/last_name" type="xsd:string" required="true()" />
+			<bind nodeset="/data/dob" type="xsd:date" />
+			<bind nodeset="/data/ssn" type="xsd:string" />
+			<bind nodeset="/data/gender" />
+			<bind nodeset="/data/race" />
+			<bind nodeset="/data/is_latino" required="true()" />
+			<bind nodeset="/data/preferred_language" />
+			<bind nodeset="/data/mass_health_expiration" type="xsd:date" />
+			<bind nodeset="/data/hiv_care_clinic" />
+			<bind nodeset="/data/hp_status" required="true()" />
+			<bind nodeset="/data/dot_status" required="true()" />
+			<bind nodeset="/data/dot_regimen_group" relevant="/data/dot_status != 'nodot'" />
+			<bind nodeset="/data/dot_regimen_group/art_regimen_freq" required="true()" />
+			<bind nodeset="/data/dot_regimen_group/art_qd_time" relevant="/data/dot_regimen_group/art_regimen_freq = 'qd'" required="true()" />
+			<bind nodeset="/data/dot_regimen_group/art_bid_times" relevant="/data/dot_regimen_group/art_regimen_freq = 'bid'" required="true()" />
+			<bind nodeset="/data/dot_regimen_group/art_tid_times" relevant="/data/dot_regimen_group/art_regimen_freq = 'tid'" required="true()" />
+			<bind nodeset="/data/dot_regimen_group/art_qid_times" relevant="/data/dot_regimen_group/art_regimen_freq = 'qid'" required="true()" />
+			<bind nodeset="/data/dot_regimen_group/non_art_regimen_freq" required="true()" />
+			<bind nodeset="/data/dot_regimen_group/non_art_qd_time" relevant="/data/dot_regimen_group/non_art_regimen_freq = 'qd'" required="true()" />
+			<bind nodeset="/data/dot_regimen_group/non_art_bid_times" relevant="/data/dot_regimen_group/non_art_regimen_freq = 'bid'" required="true()" />
+			<bind nodeset="/data/dot_regimen_group/non_art_tid_times" relevant="/data/dot_regimen_group/non_art_regimen_freq = 'tid'" required="true()" />
+			<bind nodeset="/data/dot_regimen_group/non_art_qid_times" relevant="/data/dot_regimen_group/non_art_regimen_freq = 'qid'" required="true()" />
+			<bind nodeset="/data/full_name" calculate="concat(/data/first_name,&quot;_&quot;, /data/last_name)" />
+			<bind nodeset="/data/art_regimen" calculate="if(/data/dot_regimen_group/art_regimen_freq = 'qd', /data/dot_regimen_group/art_qd_time, if(/data/dot_regimen_group/art_regimen_freq = 'bid', /data/dot_regimen_group/art_bid_times, if(/data/dot_regimen_group/art_regimen_freq = 'tid', /data/dot_regimen_group/art_tid_times, if(/data/dot_regimen_group/art_regimen_freq = 'qid', /data/dot_regimen_group/art_qid_times, ''))))" />
+			<bind nodeset="/data/non_art_regimen" calculate="if(/data/dot_regimen_group/non_art_regimen_freq = 'qd', /data/dot_regimen_group/non_art_qd_time, if(/data/dot_regimen_group/non_art_regimen_freq = 'bid', /data/dot_regimen_group/non_art_bid_times, if(/data/dot_regimen_group/non_art_regimen_freq = 'tid', /data/dot_regimen_group/non_art_tid_times, if(/data/dot_regimen_group/non_art_regimen_freq = 'qid', /data/dot_regimen_group/non_art_qid_times, ''))))" />
+			<itext>
+				<translation lang="en" default="">
+					<text id="pactid-label">
+						<value>Pact ID</value>
+					</text>
+					<text id="first_name-label">
+						<value>First name</value>
+					</text>
+					<text id="middle_name-label">
+						<value>Middle Name</value>
+					</text>
+					<text id="last_name-label">
+						<value>Last Name</value>
+					</text>
+					<text id="dob-label">
+						<value>Birthdate</value>
+					</text>
+					<text id="ssn-label">
+						<value>Social Security</value>
+					</text>
+					<text id="gender-label">
+						<value>Gender</value>
+					</text>
+					<text id="gender-f-label">
+						<value>Female</value>
+					</text>
+					<text id="gender-m-label">
+						<value>Male</value>
+					</text>
+					<text id="gender-u-label">
+						<value>Other/Undefined</value>
+					</text>
+					<text id="race-label">
+						<value>Race</value>
+					</text>
+					<text id="race-white-label">
+						<value>White</value>
+					</text>
+					<text id="race-black-or-africanamerican-label">
+						<value>Black or African American</value>
+					</text>
+					<text id="race-asian-label">
+						<value>Asian</value>
+					</text>
+					<text id="race-american-indian-alaska-nativ-label">
+						<value>American Indian/Alaska Native</value>
+					</text>
+					<text id="race-more-than-one-label">
+						<value>More than one race</value>
+					</text>
+					<text id="race-unknown-label">
+						<value>Unknown or not reported</value>
+					</text>
+					<text id="is_latino-label">
+						<value>Is Latino</value>
+					</text>
+					<text id="is_latino-true-label">
+						<value>Yes</value>
+					</text>
+					<text id="is_latino-false-label">
+						<value>No</value>
+					</text>
+					<text id="preferred_language-label">
+						<value>Preferred Language</value>
+					</text>
+					<text id="question7-english-label">
+						<value>English</value>
+					</text>
+					<text id="question7-spanish-label">
+						<value>Spanish</value>
+					</text>
+					<text id="question7-haitian_creole-label">
+						<value>Haitian Creole</value>
+					</text>
+					<text id="question7-portuguese-label">
+						<value>Portuguese</value>
+					</text>
+					<text id="mass_health_expiration-label">
+						<value>Mass Health Expiration Date</value>
+					</text>
+					<text id="hiv_care_clinic-label">
+						<value>HIV Care Clinic</value>
+					</text>
+					<text id="hiv_care_clinic-item140-label">
+						<value>item140</value>
+					</text>
+					<text id="hp_status-label">
+						<value>HP Status</value>
+					</text>
+					<text id="dot_status-HP1-label">
+						<value>Health Promoter 1</value>
+					</text>
+					<text id="dot_status-HP2-label">
+						<value>Health Promoter 2</value>
+					</text>
+					<text id="dot_status-HP3-label">
+						<value>Health Promoter 3</value>
+					</text>
+					<text id="dot_status-discharged-label">
+						<value>Discharged</value>
+					</text>
+					<text id="dot_status-label">
+						<value>DOT Status</value>
+					</text>
+					<text id="dot_status-DOT7-label">
+						<value>Directly Observed Therapy 7</value>
+					</text>
+					<text id="dot_status-DOT5-label">
+						<value>Directly Observed Therapy 5</value>
+					</text>
+					<text id="dot_status-DOT3-label2">
+						<value>Directly Observed Therapy 3</value>
+					</text>
+					<text id="dot_status-DOT1-label2">
+						<value>Directly Observed Therapy 1</value>
+					</text>
+					<text id="dot_status-nodot-label2">
+						<value>No DOT</value>
+					</text>
+					<text id="dot_regimen_group-label">
+						<value>DOT Regimens</value>
+					</text>
+					<text id="art_regimen_freq-label">
+						<value>ART Regimen</value>
+					</text>
+					<text id="art_regimen_freq-None-label">
+						<value>No Regimen</value>
+					</text>
+					<text id="art_regimen_freq-qd-label">
+						<value>QD - Once a day</value>
+					</text>
+					<text id="art_regimen_freq-bid-label">
+						<value>BID - Twice a day</value>
+					</text>
+					<text id="art_regimen_freq-tid-label">
+						<value>TID - Three times a day</value>
+					</text>
+					<text id="art_regimen_freq-qid-label">
+						<value>QID - Four times a day</value>
+					</text>
+					<text id="art_qd_time-label">
+						<value>ART QD Time</value>
+					</text>
+					<text id="art_qd_time-morning-label">
+						<value>Morning</value>
+					</text>
+					<text id="art_qd_time-noon-label">
+						<value>Noon</value>
+					</text>
+					<text id="art_qd_time-evening-label">
+						<value>Evening</value>
+					</text>
+					<text id="art_qd_time-bedtime-label">
+						<value>Bedtime</value>
+					</text>
+					<text id="art_bid_times-label">
+						<value>ART BID Times</value>
+					</text>
+					<text id="art_bid_time-morning_noon-label">
+						<value>Morning, Noon</value>
+					</text>
+					<text id="art_bid_time-morning_evening-label">
+						<value>Morning, Evening</value>
+					</text>
+					<text id="art_bid_time-morning_bedtime-label">
+						<value>Morning, Bedtime</value>
+					</text>
+					<text id="art_bid_time-noon_evening-label">
+						<value>Noon, Evening</value>
+					</text>
+					<text id="art_bid_time-noon_bedtime-label">
+						<value>Noon, Bedtime</value>
+					</text>
+					<text id="art_bid_time-evening_bedtim-label">
+						<value>Evening, Bedtime</value>
+					</text>
+					<text id="art_tid_times-label">
+						<value>ART TID Times</value>
+					</text>
+					<text id="art_tid_times-morning_noon_evening-label">
+						<value>Morning, Noon, Evening</value>
+					</text>
+					<text id="art_tid_times-morning_noon_bedtime-label">
+						<value>Morning, Noon, Bedtime</value>
+					</text>
+					<text id="art_tid_times-morning_evening_bedtime-label">
+						<value>Morning, Evening, Bedtime</value>
+					</text>
+					<text id="art_tid_times-noon_evening_bedtime-label">
+						<value>Noon, Evening, Bedtime</value>
+					</text>
+					<text id="art_qid_times-label2">
+						<value>ART QID Times</value>
+					</text>
+					<text id="art_qid_times-morning_noon_evening_bedtime-label">
+						<value>Morning, Noon, Evening, Bedtime</value>
+					</text>
+					<text id="non_art_regimen_freq-label">
+						<value>Non ART Regimen</value>
+					</text>
+					<text id="non_art_regimen_type-None-label">
+						<value>No Regimen</value>
+					</text>
+					<text id="non_art_regimen_type-qd-label">
+						<value>QD - Once a day</value>
+					</text>
+					<text id="non_art_regimen_type-bid-label">
+						<value>BID - Twice a day</value>
+					</text>
+					<text id="non_art_regimen_type-tid-label">
+						<value>TID - Three times a day</value>
+					</text>
+					<text id="non_art_regimen_type-qid-label">
+						<value>QID - Four times a day</value>
+					</text>
+					<text id="non_art_qd_time-label">
+						<value>Non ART QD Times</value>
+					</text>
+					<text id="non_art_qd_times-morning-label">
+						<value>Morning</value>
+					</text>
+					<text id="non_art_qd_times-noon-label">
+						<value>Noon</value>
+					</text>
+					<text id="non_art_qd_times-evening-label">
+						<value>Evening</value>
+					</text>
+					<text id="non_art_qd_times-bedtime-label">
+						<value>Bedtime</value>
+					</text>
+					<text id="non_art_bid_times-label">
+						<value>Non ART BID Times</value>
+					</text>
+					<text id="non_art_bid_times-morning_noon-label">
+						<value>Morning, Noon</value>
+					</text>
+					<text id="non_art_bid_times-morning_evening-label">
+						<value>Morning, Evening</value>
+					</text>
+					<text id="non_art_bid_times-morning_bedtim-label">
+						<value>Morning, Bedtime</value>
+					</text>
+					<text id="non_art_bid_times-noon_evening-label">
+						<value>Noon, Evening</value>
+					</text>
+					<text id="non_art_bid_times-noon_bedtime-label">
+						<value>Noon, Bedtime</value>
+					</text>
+					<text id="non_art_bid_times-evening_bedtime-label">
+						<value>Evening, Bedtime</value>
+					</text>
+					<text id="non_art_tid_times-label">
+						<value>Non ART TID Times</value>
+					</text>
+					<text id="non_art_tid_times-morning_noon_evening-label">
+						<value>Morning, Noon, Evening</value>
+					</text>
+					<text id="non_art_tid_times-morning_noon_bedtime-label">
+						<value>Morning, Noon, Bedtime</value>
+					</text>
+					<text id="non_art_tid_times-morning_evening_bedtime-label">
+						<value>Morning, Evening Bedtime</value>
+					</text>
+					<text id="non_art_tid_times-noon_evening_bedtime-label">
+						<value>Noon, Evening Bedtime</value>
+					</text>
+					<text id="non_art_qid_times-label">
+						<value>Non ART QID Time</value>
+					</text>
+					<text id="non_art_qid_times-morning_noon_evening_bedtime-label">
+						<value>Morning, Noon, Evening Bedtime</value>
+					</text>
+				</translation>
+			</itext>
+		</model>
+	</h:head>
+	<h:body>
+		<input ref="/data/pactid">
+			<label ref="jr:itext('pactid-label')" />
+		</input>
+		<input ref="/data/first_name">
+			<label ref="jr:itext('first_name-label')" />
+		</input>
+		<input ref="/data/middle_name">
+			<label ref="jr:itext('middle_name-label')" />
+		</input>
+		<input ref="/data/last_name">
+			<label ref="jr:itext('last_name-label')" />
+		</input>
+		<input ref="/data/dob">
+			<label ref="jr:itext('dob-label')" />
+		</input>
+		<input ref="/data/ssn">
+			<label ref="jr:itext('ssn-label')" />
+		</input>
+		<select1 ref="/data/gender">
+			<label ref="jr:itext('gender-label')" />
+			<item>
+				<label ref="jr:itext('gender-f-label')" />
+				<value>f</value>
+			</item>
+			<item>
+				<label ref="jr:itext('gender-m-label')" />
+				<value>m</value>
+			</item>
+			<item>
+				<label ref="jr:itext('gender-u-label')" />
+				<value>u</value>
+			</item>
+		</select1>
+		<select1 ref="/data/race">
+			<label ref="jr:itext('race-label')" />
+			<item>
+				<label ref="jr:itext('race-white-label')" />
+				<value>white</value>
+			</item>
+			<item>
+				<label ref="jr:itext('race-black-or-africanamerican-label')" />
+				<value>black-or-africanamerican</value>
+			</item>
+			<item>
+				<label ref="jr:itext('race-asian-label')" />
+				<value>asian</value>
+			</item>
+			<item>
+				<label ref="jr:itext('race-american-indian-alaska-nativ-label')" />
+				<value>american-indian-alaska-nativ</value>
+			</item>
+			<item>
+				<label ref="jr:itext('race-more-than-one-label')" />
+				<value>more-than-one</value>
+			</item>
+			<item>
+				<label ref="jr:itext('race-unknown-label')" />
+				<value>unknown</value>
+			</item>
+		</select1>
+		<select1 ref="/data/is_latino">
+			<label ref="jr:itext('is_latino-label')" />
+			<item>
+				<label ref="jr:itext('is_latino-true-label')" />
+				<value>true</value>
+			</item>
+			<item>
+				<label ref="jr:itext('is_latino-false-label')" />
+				<value>false</value>
+			</item>
+		</select1>
+		<select1 ref="/data/preferred_language">
+			<label ref="jr:itext('preferred_language-label')" />
+			<item>
+				<label ref="jr:itext('question7-english-label')" />
+				<value>english</value>
+			</item>
+			<item>
+				<label ref="jr:itext('question7-spanish-label')" />
+				<value>spanish</value>
+			</item>
+			<item>
+				<label ref="jr:itext('question7-haitian_creole-label')" />
+				<value>haitian_creole</value>
+			</item>
+			<item>
+				<label ref="jr:itext('question7-portuguese-label')" />
+				<value>portuguese</value>
+			</item>
+		</select1>
+		<input ref="/data/mass_health_expiration">
+			<label ref="jr:itext('mass_health_expiration-label')" />
+		</input>
+		<select1 ref="/data/hiv_care_clinic">
+			<label ref="jr:itext('hiv_care_clinic-label')" />
+			<item>
+				<label ref="jr:itext('hiv_care_clinic-item140-label')" />
+				<value>item140</value>
+			</item>
+		</select1>
+		<select1 ref="/data/hp_status">
+			<label ref="jr:itext('hp_status-label')" />
+			<item>
+				<label ref="jr:itext('dot_status-HP1-label')" />
+				<value>HP1</value>
+			</item>
+			<item>
+				<label ref="jr:itext('dot_status-HP2-label')" />
+				<value>HP2</value>
+			</item>
+			<item>
+				<label ref="jr:itext('dot_status-HP3-label')" />
+				<value>HP3</value>
+			</item>
+			<item>
+				<label ref="jr:itext('dot_status-discharged-label')" />
+				<value>discharged</value>
+			</item>
+		</select1>
+		<select1 ref="/data/dot_status">
+			<label ref="jr:itext('dot_status-label')" />
+			<item>
+				<label ref="jr:itext('dot_status-DOT7-label')" />
+				<value>DOT7</value>
+			</item>
+			<item>
+				<label ref="jr:itext('dot_status-DOT5-label')" />
+				<value>DOT5</value>
+			</item>
+			<item>
+				<label ref="jr:itext('dot_status-DOT3-label2')" />
+				<value>DOT3</value>
+			</item>
+			<item>
+				<label ref="jr:itext('dot_status-DOT1-label2')" />
+				<value>DOT1</value>
+			</item>
+			<item>
+				<label ref="jr:itext('dot_status-nodot-label2')" />
+				<value>nodot</value>
+			</item>
+		</select1>
+		<group ref="/data/dot_regimen_group">
+			<label ref="jr:itext('dot_regimen_group-label')" />
+			<select1 ref="/data/dot_regimen_group/art_regimen_freq">
+				<label ref="jr:itext('art_regimen_freq-label')" />
+				<item>
+					<label ref="jr:itext('art_regimen_freq-None-label')" />
+					<value>None</value>
+				</item>
+				<item>
+					<label ref="jr:itext('art_regimen_freq-qd-label')" />
+					<value>qd</value>
+				</item>
+				<item>
+					<label ref="jr:itext('art_regimen_freq-bid-label')" />
+					<value>bid</value>
+				</item>
+				<item>
+					<label ref="jr:itext('art_regimen_freq-tid-label')" />
+					<value>tid</value>
+				</item>
+				<item>
+					<label ref="jr:itext('art_regimen_freq-qid-label')" />
+					<value>qid</value>
+				</item>
+			</select1>
+			<select1 ref="/data/dot_regimen_group/art_qd_time">
+				<label ref="jr:itext('art_qd_time-label')" />
+				<item>
+					<label ref="jr:itext('art_qd_time-morning-label')" />
+					<value>morning</value>
+				</item>
+				<item>
+					<label ref="jr:itext('art_qd_time-noon-label')" />
+					<value>noon</value>
+				</item>
+				<item>
+					<label ref="jr:itext('art_qd_time-evening-label')" />
+					<value>evening</value>
+				</item>
+				<item>
+					<label ref="jr:itext('art_qd_time-bedtime-label')" />
+					<value>bedtime</value>
+				</item>
+			</select1>
+			<select1 ref="/data/dot_regimen_group/art_bid_times">
+				<label ref="jr:itext('art_bid_times-label')" />
+				<item>
+					<label ref="jr:itext('art_bid_time-morning_noon-label')" />
+					<value>morning_noon</value>
+				</item>
+				<item>
+					<label ref="jr:itext('art_bid_time-morning_evening-label')" />
+					<value>morning_evening</value>
+				</item>
+				<item>
+					<label ref="jr:itext('art_bid_time-morning_bedtime-label')" />
+					<value>morning_bedtime</value>
+				</item>
+				<item>
+					<label ref="jr:itext('art_bid_time-noon_evening-label')" />
+					<value>noon_evening</value>
+				</item>
+				<item>
+					<label ref="jr:itext('art_bid_time-noon_bedtime-label')" />
+					<value>noon_bedtime</value>
+				</item>
+				<item>
+					<label ref="jr:itext('art_bid_time-evening_bedtim-label')" />
+					<value>evening_bedtim</value>
+				</item>
+			</select1>
+			<select1 ref="/data/dot_regimen_group/art_tid_times">
+				<label ref="jr:itext('art_tid_times-label')" />
+				<item>
+					<label ref="jr:itext('art_tid_times-morning_noon_evening-label')" />
+					<value>morning_noon_evening</value>
+				</item>
+				<item>
+					<label ref="jr:itext('art_tid_times-morning_noon_bedtime-label')" />
+					<value>morning_noon_bedtime</value>
+				</item>
+				<item>
+					<label ref="jr:itext('art_tid_times-morning_evening_bedtime-label')" />
+					<value>morning_evening_bedtime</value>
+				</item>
+				<item>
+					<label ref="jr:itext('art_tid_times-noon_evening_bedtime-label')" />
+					<value>noon_evening_bedtime</value>
+				</item>
+			</select1>
+			<select1 ref="/data/dot_regimen_group/art_qid_times">
+				<label ref="jr:itext('art_qid_times-label2')" />
+				<item>
+					<label ref="jr:itext('art_qid_times-morning_noon_evening_bedtime-label')" />
+					<value>morning_noon_evening_bedtime</value>
+				</item>
+			</select1>
+			<select1 ref="/data/dot_regimen_group/non_art_regimen_freq">
+				<label ref="jr:itext('non_art_regimen_freq-label')" />
+				<item>
+					<label ref="jr:itext('non_art_regimen_type-None-label')" />
+					<value>None</value>
+				</item>
+				<item>
+					<label ref="jr:itext('non_art_regimen_type-qd-label')" />
+					<value>qd</value>
+				</item>
+				<item>
+					<label ref="jr:itext('non_art_regimen_type-bid-label')" />
+					<value>bid</value>
+				</item>
+				<item>
+					<label ref="jr:itext('non_art_regimen_type-tid-label')" />
+					<value>tid</value>
+				</item>
+				<item>
+					<label ref="jr:itext('non_art_regimen_type-qid-label')" />
+					<value>qid</value>
+				</item>
+			</select1>
+			<select1 ref="/data/dot_regimen_group/non_art_qd_time">
+				<label ref="jr:itext('non_art_qd_time-label')" />
+				<item>
+					<label ref="jr:itext('non_art_qd_times-morning-label')" />
+					<value>morning</value>
+				</item>
+				<item>
+					<label ref="jr:itext('non_art_qd_times-noon-label')" />
+					<value>noon</value>
+				</item>
+				<item>
+					<label ref="jr:itext('non_art_qd_times-evening-label')" />
+					<value>evening</value>
+				</item>
+				<item>
+					<label ref="jr:itext('non_art_qd_times-bedtime-label')" />
+					<value>bedtime</value>
+				</item>
+			</select1>
+			<select1 ref="/data/dot_regimen_group/non_art_bid_times">
+				<label ref="jr:itext('non_art_bid_times-label')" />
+				<item>
+					<label ref="jr:itext('non_art_bid_times-morning_noon-label')" />
+					<value>morning_noon</value>
+				</item>
+				<item>
+					<label ref="jr:itext('non_art_bid_times-morning_evening-label')" />
+					<value>morning_evening</value>
+				</item>
+				<item>
+					<label ref="jr:itext('non_art_bid_times-morning_bedtim-label')" />
+					<value>morning_bedtim</value>
+				</item>
+				<item>
+					<label ref="jr:itext('non_art_bid_times-noon_evening-label')" />
+					<value>noon_evening</value>
+				</item>
+				<item>
+					<label ref="jr:itext('non_art_bid_times-noon_bedtime-label')" />
+					<value>noon_bedtime</value>
+				</item>
+				<item>
+					<label ref="jr:itext('non_art_bid_times-evening_bedtime-label')" />
+					<value>evening_bedtime</value>
+				</item>
+			</select1>
+			<select1 ref="/data/dot_regimen_group/non_art_tid_times">
+				<label ref="jr:itext('non_art_tid_times-label')" />
+				<item>
+					<label ref="jr:itext('non_art_tid_times-morning_noon_evening-label')" />
+					<value>morning_noon_evening</value>
+				</item>
+				<item>
+					<label ref="jr:itext('non_art_tid_times-morning_noon_bedtime-label')" />
+					<value>morning_noon_bedtime</value>
+				</item>
+				<item>
+					<label ref="jr:itext('non_art_tid_times-morning_evening_bedtime-label')" />
+					<value>morning_evening_bedtime</value>
+				</item>
+				<item>
+					<label ref="jr:itext('non_art_tid_times-noon_evening_bedtime-label')" />
+					<value>noon_evening_bedtime</value>
+				</item>
+			</select1>
+			<select1 ref="/data/dot_regimen_group/non_art_qid_times">
+				<label ref="jr:itext('non_art_qid_times-label')" />
+				<item>
+					<label ref="jr:itext('non_art_qid_times-morning_noon_evening_bedtime-label')" />
+					<value>morning_noon_evening_bedtime</value>
+				</item>
+			</select1>
+		</group>
+	</h:body>
+</h:html>
