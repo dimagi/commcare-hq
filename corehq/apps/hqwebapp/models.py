@@ -154,8 +154,9 @@ class ApplicationsMenuItem(DropdownMenuItem):
 
     @classmethod
     def is_viewable(cls, request, domain):
-        return (domain is not None and request.couch_user.is_web_user() and
-                (request.couch_user.is_member_of(domain) or request.couch_user.is_superuser))
+        couch_user = request.couch_user
+        return (domain is not None and (couch_user.is_web_user() or couch_user.can_edit_apps()) and
+                (couch_user.is_member_of(domain) or couch_user.is_superuser))
 
 
 class CloudcareMenuItem(DropdownMenuItem):
