@@ -683,6 +683,22 @@ CUSTOM_REPORT_MAP = {
             "bihar.reports.indicators.reports.IndicatorClientList",
             "bihar.reports.indicators.reports.IndicatorCharts",
         ]
+    },
+    "psi": {
+        "Custom Reports": [
+            'corehq.apps.reports.commtrack.psi_prototype.PSIEventsReport',
+            'corehq.apps.reports.commtrack.psi_prototype.PSIHDReport',
+            'corehq.apps.reports.commtrack.psi_prototype.PSISSReport',
+            'corehq.apps.reports.commtrack.psi_prototype.PSITSReport',
+        ]
+    },
+    "psi-unicef": {
+        "Custom Reports": [
+            'corehq.apps.reports.commtrack.psi_prototype.PSIEventsReport',
+            'corehq.apps.reports.commtrack.psi_prototype.PSIHDReport',
+            'corehq.apps.reports.commtrack.psi_prototype.PSISSReport',
+            'corehq.apps.reports.commtrack.psi_prototype.PSITSReport',
+        ]
     }
     #    "test": [
     #        'corehq.apps.reports.deid.FormDeidExport',
