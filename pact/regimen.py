@@ -1,3 +1,4 @@
+import pdb
 from pact.enums import DAY_SLOTS_BY_TIME, PACT_REGIMEN_CHOICES, DAY_SLOTS_BY_IDX, DOT_ART, DOT_NONART, CASE_ART_REGIMEN_PROP, CASE_NONART_REGIMEN_PROP
 
 #def calculate_regimen_caseblock(self):
@@ -66,11 +67,15 @@ def regimen_string_from_doc(drug_type, doc_dict):
     prefix = type_keys[drug_type]
 
     if drug_type == DOT_ART:
-        freq = int(doc_dict.get(CASE_ART_REGIMEN_PROP, ''))
+        try:
+            freq = int(doc_dict.get(CASE_ART_REGIMEN_PROP, ''))
+        except ValueError:
+            return None
     elif drug_type == DOT_NONART:
-        freq = int(doc_dict.get(CASE_NONART_REGIMEN_PROP, ''))
-    if freq == '' or freq is None:
-        return None
+        try:
+            freq = int(doc_dict.get(CASE_NONART_REGIMEN_PROP, ''))
+        except ValueError:
+            return None
 
     props = []
     for digit in digit_strings:

@@ -68,13 +68,17 @@ class PactPatientCase(CommCareCase):
     @property
     def get_providers(self):
         """
-        return a dict structure of proviers
+        return a list of all the providers for this patient
         """
         from pact.api import get_all_providers
         all_providers = get_all_providers()
         pt_providers = list(self.get_provider_ids())
-        filtered= filter(lambda x: x.fields['id'] in pt_providers, all_providers)
-        return [x.fields for x in filtered]
+
+        providers_dict = dict((x.fields['id'], x.fields) for x in all_providers)
+        #filtered= filter(lambda x: x.fields['id'] in pt_providers, all_providers)
+        #return [x.fields for x in filtered]
+
+        return [providers_dict[x] for x in pt_providers]
 
 
     def _get_display_string(self, attr, display_dict):
@@ -108,12 +112,17 @@ class PactPatientCase(CommCareCase):
 
     def art_regimen_label_string_display(self):
         regimen_string = regimen_string_from_doc(DOT_ART, self.to_json())
-        print "#%s#" % regimen_string
-        return "[%s] %s" % (REGIMEN_CHOICES[int(self.art_properties()[enums.CASE_ART_REGIMEN_PROP])], PACT_REGIMEN_CHOICES_FLAT_DICT[regimen_string])
+        if regimen_string is None:
+            return "No regimen"
+        else:
+            return "[%s] %s" % (REGIMEN_CHOICES[int(self.art_properties()[enums.CASE_ART_REGIMEN_PROP])], PACT_REGIMEN_CHOICES_FLAT_DICT[regimen_string])
 
     def nonart_regimen_label_string_display(self):
         regimen_string = regimen_string_from_doc(DOT_NONART, self.to_json())
-        return "[%s] %s" % (REGIMEN_CHOICES[int(self.nonart_properties()[enums.CASE_NONART_REGIMEN_PROP])], PACT_REGIMEN_CHOICES_FLAT_DICT[regimen_string])
+        if regimen_string is None:
+            return "No regimen"
+        else:
+            return "[%s] %s" % (REGIMEN_CHOICES[int(self.nonart_properties()[enums.CASE_NONART_REGIMEN_PROP])], PACT_REGIMEN_CHOICES_FLAT_DICT[regimen_string])
 
     def art_properties(self):
         return {

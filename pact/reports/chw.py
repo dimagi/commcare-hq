@@ -1,13 +1,14 @@
 from django.http import Http404
 import simplejson
-from corehq.apps.api.es import XFormES
+from corehq.apps.api.es import XFormES, CaseES
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
 from corehq.apps.reports.generic import GenericTabularReport
 from corehq.apps.reports.standard import CustomProjectReport
 from corehq.apps.users.models import CommCareUser
 from dimagi.utils.decorators import inline
 from dimagi.utils.decorators.memoized import memoized
-from pact.reports import  PactDrilldownReportMixin, chw_schedule, ESSortableMixin
+from pact.enums import PACT_CASE_TYPE
+from pact.reports import  PactDrilldownReportMixin, chw_schedule, ESSortableMixin, query_per_case_submissions_facet
 from pact.utils import pact_script_fields, case_script_field
 
 
@@ -43,12 +44,40 @@ class PactCHWProfileReport(PactDrilldownReportMixin, ESSortableMixin,GenericTabu
     view_mode = 'info'
     ajax_pagination = True
     xform_es = XFormES()
+    case_es = CaseES()
     default_sort = {"received_on": "desc"}
 
     hide_filters = True
     filters = []
     #    fields = ['corehq.apps.reports.fields.FilterUsersField', 'corehq.apps.reports.fields.DatespanField',]
     #    hide_filters=False
+
+    def get_assigned_patients(self):
+
+        #get list of patients and their submissions on who this chw is assigned as primary hp
+
+        case_query = {
+            "filter": {
+                "and": [
+                    { "term": { "domain.exact": self.request.domain } },
+                    { "term": { "type": PACT_CASE_TYPE } },
+                    { "term": { "hp": self.get_user().raw_username } }
+                ]
+            },
+            "fields": [ "_id", "name", "pactid", "hp_status", "dot_status" ]
+        }
+        case_type = PACT_CASE_TYPE
+
+        chw_patients_res = self.case_es.run_query(case_query)
+        print chw_patients_res
+
+        case_ids = [x['fields']['_id'] for x in chw_patients_res['hits']['hits']]
+        #todo, facet this on num submits?
+
+        assigned_patients = [x['fields'] for x in chw_patients_res['hits']['hits']]
+        return sorted(assigned_patients, key=lambda x: int(x['pactid']))
+        #return assigned_patients
+
 
     def get_fields(self):
         if self.view_mode == 'submissions':
@@ -85,6 +114,7 @@ class PactCHWProfileReport(PactDrilldownReportMixin, ESSortableMixin,GenericTabu
         if self.view_mode == 'info':
             self.hide_filters = True
             self.report_template_path = "pact/chw/pact_chw_profile_info.html"
+            ret['assigned_patients'] = self.get_assigned_patients()
         elif self.view_mode == 'submissions':
             tabular_context = super(PactCHWProfileReport, self).report_context
             tabular_context.update(ret)
