@@ -1,6 +1,5 @@
 import dateutil
 from django.core.urlresolvers import reverse
-from django.utils.safestring import mark_safe
 from corehq.apps.groups.models import Group
 from corehq.apps.reports import util
 from corehq.apps.adm import utils as adm_utils
@@ -55,11 +54,9 @@ class CommCareUserMemoizer(object):
 
 class ProjectReportParametersMixin(object):
     """
-        All the paramaters necessary for the project reports.
+        All the parameters necessary for the project reports.
         Intended to be mixed in with a GenericReportView object.
     """
-    def __getattr__(self, item):
-        return super(ProjectReportParametersMixin, self).__getattribute__(item)
 
     @property
     @memoized
@@ -162,9 +159,6 @@ class DatespanMixin(object):
     """
     datespan_field = 'corehq.apps.reports.fields.DatespanField'
     datespan_default_days = 7
-
-    def __getattr__(self, item):
-        return super(DatespanMixin, self).__getattribute__(item)
 
     _datespan = None
     @property
