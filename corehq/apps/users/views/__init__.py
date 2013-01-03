@@ -262,10 +262,10 @@ def account(request, domain, couch_user_id, template="users/account.html"):
     # phone-numbers tab
     if request.method == "POST" and request.POST['form_type'] == "phone-numbers":
         phone_number = request.POST['phone_number']
-        if re.match(r'\d+', phone_number):
+        phone_number = re.sub('\s', '', phone_number)
+        if re.match(r'\d+$', phone_number):
             couch_user.add_phone_number(phone_number)
             couch_user.save()
-            #messages.success(request, 'Phone number added')
         else:
             messages.error(request, "Please enter digits only")
 
