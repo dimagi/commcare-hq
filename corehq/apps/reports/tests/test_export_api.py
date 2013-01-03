@@ -7,7 +7,7 @@ from corehq.apps.domain.shortcuts import create_domain
 from django.core.urlresolvers import reverse
 from corehq.apps.users.models import WebUser
 from couchforms.models import XFormInstance
-from couchexport.schema import get_docs
+from couchexport.export import ExportConfiguration
 
 FORM_TEMPLATE = """<?xml version='1.0' ?>
 <foo xmlns:jrm="http://openrosa.org/jr/xforms" xmlns="http://www.commcarehq.org/export/test">
@@ -40,19 +40,23 @@ def get_export_response(client, previous="", include_errors=False):
 
 class ExportTest(TestCase):
     
-    def setUp(self):
-        for form in get_docs([DOMAIN, "http://www.commcarehq.org/export/test"]):
+    def _clear_docs(self):
+        config = ExportConfiguration(XFormInstance.get_db(),
+                                     [DOMAIN, "http://www.commcarehq.org/export/test"])
+        for form in config.get_docs():
             XFormInstance.wrap(form).delete()
-        dom = create_domain(DOMAIN)
+
+    def setUp(self):
+        self._clear_docs()
+        create_domain(DOMAIN)
         self.couch_user = WebUser.create(None, "test", "foobar")
         self.couch_user.add_domain_membership(DOMAIN, is_admin=True)
         self.couch_user.save()
         
     def tearDown(self):
         self.couch_user.delete()
-        for form in get_docs([DOMAIN, "http://www.commcarehq.org/export/test"]):
-            XFormInstance.wrap(form).delete()
-        
+        self._clear_docs()
+
     def testExportTokens(self):
         c = Client()
         c.login(**{'username': 'test', 'password': 'foobar'})
