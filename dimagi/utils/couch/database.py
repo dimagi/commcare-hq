@@ -2,6 +2,7 @@ from time import sleep
 from couchdbkit.client import Database
 from django.conf import settings
 from restkit.errors import RequestFailed
+from dimagi.utils.chunked import chunked
 
 class DesignDoc(object):
     """Data structure representing a design doc"""
@@ -44,3 +45,8 @@ def get_view_names(database):
         for view_name in doc.views:
             views.append("%s/%s" % (doc.name, view_name))
     return views
+
+def iter_docs(database, ids, chunksize=100):
+    for doc_ids in chunked(ids, chunksize):
+        for doc in database.all_docs(keys=doc_ids, include_docs=True):
+            yield doc['doc']
