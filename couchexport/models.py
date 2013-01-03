@@ -149,8 +149,8 @@ class ExportSchema(Document, UnicodeMixIn):
 
     def _ids_by_timestamp(self, database):
         tag_as_list = force_tag_to_list(self.index)
-        startkey = tag_as_list + self.timestamp
-        endkey = tag_as_list + {}
+        startkey = tag_as_list + [self.timestamp.isoformat()]
+        endkey = tag_as_list + [{}]
         return set(
             [result['id'] for result in database.view(
                         "couchexport/schema_index",
@@ -471,13 +471,9 @@ class SavedExportSchema(BaseSavedExportSchema, UnicodeMixIn):
 
         # get and checkpoint the latest schema
         updated_schema = config.get_latest_schema()
-        export_schema_checkpoint = ExportSchema(seq=config.current_seq,
-            schema=updated_schema,
-            index=config.schema_index)
-        export_schema_checkpoint.save()
-
+        export_schema_checkpoint = config.create_new_checkpoint()
         return config, updated_schema, export_schema_checkpoint
-    
+
     def get_export_files(self, format=None, previous_export=None, filter=None, process=None, max_column_size=None, apply_transforms=True, **kwargs):
         from couchexport.export import get_writer, format_tables, create_intermediate_tables
 

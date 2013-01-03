@@ -20,9 +20,7 @@ def build_latest_schema(schema_index):
     schema = config.get_latest_schema()
     if not schema:
         return None
-    updated_checkpoint = ExportSchema(seq=current_seq, schema=schema, 
-                                      index=schema_index)
-    updated_checkpoint.save()
+    updated_checkpoint = config.create_new_checkpoint()
     return updated_checkpoint
 
 class SchemaInferenceError(Exception):

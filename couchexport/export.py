@@ -8,6 +8,7 @@ from couchexport import writers
 from soil import DownloadBase
 from dimagi.utils.decorators.memoized import memoized
 from couchexport.util import get_schema_index_view_keys
+from datetime import datetime
 
 class ExportConfiguration(object):
     """
@@ -23,6 +24,7 @@ class ExportConfiguration(object):
         self.previous_export = previous_export
         self.filter = filter
         self.current_seq = self.database.info()["update_seq"]
+        self.timestamp = datetime.utcnow()
         self.potentially_relevant_ids = self._potentially_relevant_ids()
         
     def include(self, document):
@@ -44,7 +46,6 @@ class ExportConfiguration(object):
                         reduce=False,
                         **get_schema_index_view_keys(self.schema_index)
                     ).all()])
-
 
     def _potentially_relevant_ids(self):
         return self.previous_export.get_new_ids() if self.previous_export \
@@ -74,6 +75,7 @@ class ExportConfiguration(object):
     def last_checkpoint(self):
         return self.previous_export or ExportSchema.last(self.schema_index)
 
+    @memoized
     def get_latest_schema(self):
         last_export = self.last_checkpoint()
         schema = dict(last_export.schema) if last_export else None
@@ -81,6 +83,13 @@ class ExportConfiguration(object):
         for doc in iter_docs(self.database, doc_ids):
             schema = extend_schema(schema, doc)
         return schema
+
+    def create_new_checkpoint(self):
+        checkpoint = ExportSchema(
+            seq=self.current_seq, schema=self.get_latest_schema(),
+            timestamp=self.timestamp, index=self.schema_index)
+        checkpoint.save()
+        return checkpoint
 
 class UnsupportedExportFormat(Exception):
     pass
@@ -197,12 +206,7 @@ def get_export_components(schema_index, previous_export_id=None, filter=None):
 
     # get and checkpoint the latest schema
     updated_schema = config.get_latest_schema()
-
-    export_schema_checkpoint = ExportSchema(seq=config.current_seq,
-        schema=updated_schema,
-        index=config.schema_index)
-
-    export_schema_checkpoint.save()
+    export_schema_checkpoint = config.create_new_checkpoint()
 
     return config, updated_schema, export_schema_checkpoint
 
