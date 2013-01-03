@@ -1,5 +1,6 @@
 from lxml import etree
 from eulxml.xmlmap import StringField, XmlObject, IntegerField, NodeListField, NodeField, StringListField
+from dimagi.utils.decorators.memoized import memoized
 
 class IdNode(XmlObject):
     id = StringField('@id')
@@ -301,7 +302,9 @@ class SuiteGenerator(object):
             )
 
     @property
+    @memoized
     def details(self):
+        r = []
         from corehq.apps.app_manager.detail_screen import get_column_generator
         if not self.app.use_custom_suite:
             for module in self.modules:
@@ -321,7 +324,8 @@ class SuiteGenerator(object):
                             pass
                         else:
                             # only yield the Detail if it has Fields
-                            yield d
+                            r.append(d)
+        return r
 
     def get_filter_xpath(self, module, delegation=False):
         from corehq.apps.app_manager.detail_screen import Filter
@@ -359,8 +363,18 @@ class SuiteGenerator(object):
                 filter_xpath=self.get_filter_xpath(module) if use_filter else ''
             )
             e.datum.value="./@case_id"
-            e.datum.detail_select=self.id_strings.detail(module=module, detail=module.get_detail('case_short'))
-            e.datum.detail_confirm=self.id_strings.detail(module=module, detail=module.get_detail('case_long'))
+
+            detail_ids = [detail.id for detail in self.details]
+
+            def get_detail_id_safe(detail_type):
+                detail_id = self.id_strings.detail(
+                    module=module,
+                    detail=module.get_detail(detail_type)
+                )
+                return detail_id if detail_id in detail_ids else None
+
+            e.datum.detail_select = get_detail_id_safe('case_short')
+            e.datum.detail_confirm = get_detail_id_safe('case_long')
 
         for module in self.modules:
             for form in module.get_forms():
