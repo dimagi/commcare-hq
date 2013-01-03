@@ -155,7 +155,37 @@ INDICATOR_SETS = [
             },
         ]
     },
-#    {"slug": "familyplanning", "name": _("Family Planning") },
+    {
+        "slug": "familyplanning",
+        "name": _("Family Planning"),
+        "indicators": [
+            {
+                "slug": "interested_in_fp",
+                "name": _("# Expressed interest in family planning / # deliveries in last 30 days"),
+                "calculation_class": "bihar.reports.indicators.calculations.FPCalculator"
+            },
+            {
+                "slug": "adopted_fp",
+                "name": _("# Adopted FP / # expressed interest in family planning & delivered in last 30 days"),
+                "calculation_class": "bihar.reports.indicators.calculations.AFPCalculator"
+            },
+            {
+                "slug": "exp_int_fp",
+                "name": _("# expressed interest in family planning / total # clients"),
+                "calculation_class": "bihar.reports.indicators.calculations.EFPCalculator"
+            },
+            {
+                "slug": "no_fp",
+                "name": _("clients who delivered in last 7 days and have not yet adopted FP"),
+                "calculation_class": "bihar.reports.indicators.calculations.NOFPCalculator"
+            },
+            {
+                "slug": "pregnant_fp",
+                "name": _("# clients who whose EDD is in 30 days and have expressed interest in FP"),
+                "calculation_class": "bihar.reports.indicators.calculations.PFPCalculator"
+            }
+        ]
+    },
 #    {"slug": "complimentaryfeeding", "name": _("Complimentary Feeding") },
     {
         "slug": "mortality",

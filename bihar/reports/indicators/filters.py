@@ -72,7 +72,10 @@ def no_ifa_tablets(case):
     return pregnancy_registered_last_month(case) and _ifa_tabs(case) > 0
 
 def format_date(d):
-    return d.strftime('%d-%m-%Y')
+    try:
+        return d.strftime('%d-%m-%Y')
+    except AttributeError:
+        return d
 
 def mother_pre_delivery_columns(case):
     return (case.name, getattr(case, "husband_name", DEFAULT_EMPTY),
