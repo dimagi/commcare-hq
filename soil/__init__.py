@@ -1,6 +1,7 @@
 import json
 import logging
 from django.core import cache
+from django.core.servers.basehttp import FileWrapper
 from django.core.urlresolvers import reverse
 from django.http import HttpResponse
 import uuid
@@ -157,6 +158,11 @@ class CachedDownload(DownloadBase):
     
     @classmethod
     def create(cls, payload, expiry, **kwargs):
+        if isinstance(payload, FileWrapper):
+            # I don't know of a way to stream to cache backend
+            # so it should fail hard and force the caller to unwrap rather than
+            # silently create a memory bottleneck here
+            raise ValueError("CachedDownload does not support a FileWrapper instance as a payload")
         download_id = uuid.uuid4().hex
         ret = cls(download_id, **kwargs)
         cache.get_cache(ret.cache_backend).set(download_id, payload, expiry)
@@ -190,5 +196,9 @@ class FileDownload(DownloadBase):
         fd, path = tempfile.mkstemp()
         os.chmod(path, GLOBAL_RW)
         with os.fdopen(fd, "wb") as f:
-            f.write(payload)
+            if isinstance(payload, FileWrapper):
+                for chunk in payload:
+                    f.write(chunk)
+            else:
+                f.write(payload)
         return cls(filename=path, **kwargs)

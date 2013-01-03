@@ -1,7 +1,8 @@
 from celery.task import task, periodic_task
 import time
 from django.core.cache import cache
-from soil import CachedDownload
+from django.core.servers.basehttp import FileWrapper
+from soil import CachedDownload, FileDownload
 import uuid
 from celery.schedules import crontab
 from soil.heartbeat import write_file_heartbeat, write_cache_heartbeat
@@ -20,12 +21,18 @@ def demo_sleep(download_id, howlong=5, expiry=1*60*60):
 @task
 def prepare_download(download_id, payload_func, content_disposition, mimetype, expiry=10*60*60):
     """
-    payload_func should be an instance of SerializableFunction.
+    payload_func should be an instance of SerializableFunction, and can return
+    either a string or a FileWrapper object
     """
     payload = payload_func()
+    # I don't know if this is too sneaky/magical to be OK
+    if isinstance(payload, FileWrapper):
+        backend = FileDownload
+    else:
+        backend = None
     expose_download(payload, expiry, mimetype=mimetype,
-                    content_disposition= content_disposition,
-                    download_id=download_id)
+                    content_disposition=content_disposition,
+                    download_id=download_id, backend=backend)
     
 
 @periodic_task(run_every=crontab(hour="*", minute="*", day_of_week="*"))
