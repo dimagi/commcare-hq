@@ -1,16 +1,17 @@
 from itertools import islice
 from couchdbkit.ext.django.schema import Document, IntegerProperty, DictProperty,\
-    Property, DocumentSchema, StringProperty, SchemaListProperty, ListProperty,\
+    DocumentSchema, StringProperty, SchemaListProperty, ListProperty,\
     StringListProperty, DateTimeProperty, SchemaProperty, BooleanProperty
 import json
 from StringIO import StringIO
 import couchexport
-from couchexport.util import SerializableFunctionProperty, SerializableFunction
+from couchexport.util import SerializableFunctionProperty
 from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.mixins import UnicodeMixIn
 from dimagi.utils.couch.database import get_db
 from soil import DownloadBase
 from couchdbkit.exceptions import ResourceNotFound
+from couchexport.properties import TimeStampProperty, JsonProperty
 
 class Format(object):
     """
@@ -57,26 +58,16 @@ class Format(object):
             raise ValueError("Unsupported export format: %s!" % format)
         return cls(format, **cls.FORMAT_DICT[format])
 
-class JsonProperty(Property):
-    """
-    A property that stores data in an arbitrary JSON object.
-    """
-    
-    def to_python(self, value):
-        return json.loads(value)
-
-    def to_json(self, value):
-        return json.dumps(value)
-
 class ExportSchema(Document, UnicodeMixIn):
     """
     An export schema that can store intermittent contents of the export so
     that the entire doc list doesn't have to be used to generate the export
     """
     index = JsonProperty()
-    seq = IntegerProperty()
+    seq = IntegerProperty() # deprecated
     schema = DictProperty()
-    
+    timestamp = TimeStampProperty()
+
     def __unicode__(self):
         return "%s: %s" % (json.dumps(self.index), self.seq)
 
@@ -92,6 +83,7 @@ class ExportSchema(Document, UnicodeMixIn):
         if current_seq < ret.seq:
             ret.seq = 0
             ret.save()
+        # TODO: handle seq -> datetime migration
         return ret
 
     @classmethod
