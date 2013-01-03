@@ -280,7 +280,7 @@ class SuiteGenerator(object):
                 this_list = last
             this_list.append(XFormResource(
                 id=self.id_strings.xform_resource(form_stuff['form']),
-                version=self.app.version,
+                version=form_stuff['form'].get_version(),
                 local=path,
                 remote=path,
             ))
