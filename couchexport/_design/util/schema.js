@@ -1,9 +1,9 @@
 function get_kind(obj) {
-        var c = uneval(obj)[0];
-        if (obj == null || obj == "") return 'null';
-        else if (c == '(') return 'dict';
-        else if (c == '[') return 'list';
-        else return "string";
+    var c = uneval(obj)[0];
+    if (obj == null || obj == "") return 'null';
+    else if (c == '(') return 'dict';
+    else if (c == '[') return 'list';
+    else return "string";
 }
 
 function get_export_tag_value(doc) {
@@ -21,6 +21,38 @@ function get_export_tag_value(doc) {
             }
         }
         return key;
+    }
+    return null;
+}
+
+function get_export_date_value(doc) {
+    if (doc["#export_tag"]) {
+        var property;
+        // this is the "generic" way to do this
+        if (doc["#export_date"]) {
+            property = doc["#export_date"];
+        } else {
+            // these are hacks to make this easier to work with current known
+            // supported projects, which are now grandfathered in.
+            var taggedLikeForm = function (tag) {
+                return tag === "xmlns";
+            };
+            var taggedLikeHQForm = function (tag) {
+                return tag.length === 2 && tag[0] === "domain" && tag[1] === "xmlns";
+            };
+            var taggedLikeHQCase = function (tag) {
+                return tag.length === 2 && tag[0] === "domain" && tag[1] === "type";
+            };
+            var tag = doc["#export_tag"];
+            if (taggedLikeForm(tag) || taggedLikeHQForm(tag)) {
+                property = "received_on";
+            } else if (taggedLikeHQCase(tag)) {
+                property = "server_modified_on";
+            }
+        }
+        if (property) {
+            return doc[property];
+        }
     }
     return null;
 }

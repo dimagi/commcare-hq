@@ -3,11 +3,11 @@ from couchexport.schema import extend_schema
 from django.conf import settings
 from couchexport.models import ExportSchema, Format
 from dimagi.utils.mixins import UnicodeMixIn
-from couchdbkit.consumer import Consumer
 from dimagi.utils.couch.database import get_db, iter_docs
 from couchexport import writers
 from soil import DownloadBase
 from dimagi.utils.decorators.memoized import memoized
+from couchexport.util import get_schema_index_view_keys
 
 class ExportConfiguration(object):
     """
@@ -39,35 +39,16 @@ class ExportConfiguration(object):
         Gets view results for all documents matching this schema
         """
         return set([result['id'] for result in \
-                    self.database.view("couchexport/schema_index",
-                                       key=self.schema_index).all()])
+                    self.database.view(
+                        "couchexport/schema_index",
+                        reduce=False,
+                        **get_schema_index_view_keys(self.schema_index)
+                    ).all()])
 
-    def _ids_since(self, seq):
-        if seq == 0:
-            return self.all_doc_ids
-
-        consumer = Consumer(self.database)
-        view_results = consumer.fetch(since=seq)
-        if view_results:
-            try:
-                include_ids = set([res["id"] for res in view_results["results"]])
-                possible_ids = self.all_doc_ids
-                return list(include_ids.intersection(possible_ids))
-            except TypeError, e:
-                if "string indices must be integers" in str(e):
-                    # this is our expected error use case. 
-                    raise Exception("Got the string integer thing again during export")
-        else:
-            # sometimes this comes back empty. I think it might be a bug
-            # in couchdbkit, but it's impossible to consistently reproduce.
-            # For now, just assume this is fine.
-            return []
 
     def _potentially_relevant_ids(self):
-        if self.previous_export is not None:
-            return self._ids_since(self.previous_export.seq)
-        else:
-            return self.all_doc_ids
+        return self.previous_export.get_new_ids() if self.previous_export \
+            else self.all_doc_ids
 
     def get_potentially_relevant_docs(self):
         return iter_docs(self.database, self.potentially_relevant_ids)
@@ -96,7 +77,7 @@ class ExportConfiguration(object):
     def get_latest_schema(self):
         last_export = self.last_checkpoint()
         schema = dict(last_export.schema) if last_export else None
-        doc_ids = self._ids_since(last_export.seq) if last_export else self.all_doc_ids
+        doc_ids = last_export.get_new_ids(self.database) if last_export else self.all_doc_ids
         for doc in iter_docs(self.database, doc_ids):
             schema = extend_schema(schema, doc)
         return schema

@@ -5,13 +5,15 @@ from couchdbkit.ext.django.schema import Document, IntegerProperty, DictProperty
 import json
 from StringIO import StringIO
 import couchexport
-from couchexport.util import SerializableFunctionProperty
+from couchexport.util import SerializableFunctionProperty,\
+    get_schema_index_view_keys, force_tag_to_list
 from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.mixins import UnicodeMixIn
-from dimagi.utils.couch.database import get_db
+from dimagi.utils.couch.database import get_db, iter_docs
 from soil import DownloadBase
 from couchdbkit.exceptions import ResourceNotFound
 from couchexport.properties import TimeStampProperty, JsonProperty
+from couchdbkit.consumer import Consumer
 
 class Format(object):
     """
@@ -64,7 +66,7 @@ class ExportSchema(Document, UnicodeMixIn):
     that the entire doc list doesn't have to be used to generate the export
     """
     index = JsonProperty()
-    seq = IntegerProperty() # deprecated
+    seq = IntegerProperty() # semi-deprecated
     schema = DictProperty()
     timestamp = TimeStampProperty()
 
@@ -113,6 +115,51 @@ class ExportSchema(Document, UnicodeMixIn):
     
     def get_columns(self, index):
         return self.table_dict[index].get_data()
+
+    def get_all_ids(self, database=None):
+        database = database or self.get_db()
+        return set(
+            [result['id'] for result in database.view(
+                        "couchexport/schema_index",
+                        reduce=False,
+                        **get_schema_index_view_keys(self.index)).all()])
+
+    def get_new_ids(self, database=None):
+        # TODO: deprecate/remove old way of doing this
+        database = database or self.get_db()
+        if self.timestamp:
+            return self._ids_by_timestamp(database)
+        else:
+            return self._ids_by_seq(database)
+
+    def _ids_by_seq(self, database):
+        if self.seq == 0:
+            return self.get_all_ids()
+
+        consumer = Consumer(database)
+        view_results = consumer.fetch(since=self.seq)
+        if view_results:
+            include_ids = set([res["id"] for res in view_results["results"]])
+            return include_ids.intersection(self.get_all_ids())
+        else:
+            # sometimes this comes back empty. I think it might be a bug
+            # in couchdbkit, but it's impossible to consistently reproduce.
+            # For now, just assume this is fine.
+            return set()
+
+    def _ids_by_timestamp(self, database):
+        tag_as_list = force_tag_to_list(self.index)
+        startkey = tag_as_list + self.timestamp
+        endkey = tag_as_list + {}
+        return set(
+            [result['id'] for result in database.view(
+                        "couchexport/schema_index",
+                        reduce=False,
+                        startkey=startkey,
+                        endkey=endkey)])
+
+    def get_new_docs(self, database=None):
+        return iter_docs(self.get_new_ids(database))
 
 class ExportColumn(DocumentSchema):
     """
