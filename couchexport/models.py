@@ -90,11 +90,24 @@ class ExportSchema(Document, UnicodeMixIn):
 
     @classmethod
     def last(cls, index):
-        return cls.view("couchexport/schema_checkpoints", 
-                        startkey=[json.dumps(index), {}],
-                        endkey=[json.dumps(index)],
-                        descending=True, limit=1,
-                        include_docs=True).one()
+        # search first by timestamp, then fall back to seq id
+        shared_kwargs = {
+            'descending': True,
+            'limit': 1,
+            'include_docs': True,
+        }
+        ret = cls.view("couchexport/schema_checkpoints",
+                       startkey=['by_timestamp', json.dumps(index), {}],
+                       endkey=['by_timestamp', json.dumps(index)],
+                       **shared_kwargs).one()
+        if ret and not ret.timestamp:
+            # we found a bunch of old checkpoints but they only
+            # had seq ids, so use those instead
+            ret = cls.view("couchexport/schema_checkpoints",
+                           startkey=['by_seq', json.dumps(index), {}],
+                           endkey=['by_seq', json.dumps(index)],
+                           **shared_kwargs).one()
+        return ret
                                  
     _tables = None
     @property
@@ -104,7 +117,7 @@ class ExportSchema(Document, UnicodeMixIn):
             headers = get_headers(self.schema, separator=".")
             self._tables = [(index, row[0]) for index, row in headers]
         return self._tables
-    
+
     @property
     def table_dict(self):
         return dict(self.tables)
