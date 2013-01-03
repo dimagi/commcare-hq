@@ -72,6 +72,7 @@
 	                        for (key in data.corrections) {
 	                            if (data.corrections.hasOwnProperty(key)) {
 	                                $form.find('[name="' + key + '"]').val(data.corrections[key]);
+	                                $(document).trigger('correction', [key, data.corrections[key]]);
 	                            }
 	                        }
                             if (data.hasOwnProperty('case_list-show')){

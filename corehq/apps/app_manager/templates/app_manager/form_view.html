@@ -2,8 +2,6 @@
 {% load xforms_extras %}
 {% load hq_shared_tags %}
 {% load i18n %}
-{% block js-inline %}{{ block.super }}
-{% endblock %}
 {% block js %}{{ block.super }}
     <script src="{% static 'hqwebapp/javascripts/knockout.mapping.js' %}"></script>
     <script src="{% static 'hqwebapp/js/knockout-bindings.js' %}"></script>
@@ -16,7 +14,10 @@
     {% endif %}
     <script src="{% static 'app_manager/js/langcodeValidator.js' %}"></script>
     <script src="{% static 'cloudcare/js/util.js' %}"></script>
-
+{% endblock %}
+{% block js-inline %}{{ block.super }}
+    {% include "hqwebapp/ko/value-or-none-ui.html" %}
+    {% include "app_manager/partials/nav_menu_media_js.html" with item=form %}
     <script>
         $(function(){
             (function styleSourcePopup() {
@@ -153,6 +154,9 @@
                 }));
             }
         {% else %}
+            /* form_requires needs to be a knockout observable so that
+             its value can be read by another UI (form filtering) */
+            var form_requires = ko.observable({{ form.requires|JSON }});
             if (!form_empty) {
                 var casexml = new CaseXML({
                     home: $('#casexml_home'),
@@ -160,7 +164,7 @@
                     questions: {{ xform_questions|JSON }},
                     edit: edit,
                     save_url: "{% url corehq.apps.app_manager.views.edit_form_actions app.domain app.id module.id nav_form.id %}",
-                    requires: "{{ form.requires }}",
+                    requires: form_requires,
                     reserved_words: {{ case_reserved_words_json|JSON }},
                     moduleCaseTypes: {{ module_case_types|JSON }},
                     caseType: {{ form.get_case_type|JSON }}
@@ -172,6 +176,21 @@
                 var cloudCareUrl = getCloudCareUrl("{% url cloudcare_main domain '' %}", "{{ app.id }}", "{{ module.id }}", "{{ nav_form.id }}") + "?preview=true";
                 $("#cloudcare-preview-url").attr("href", cloudCareUrl);
             }
+            {% if app.application_version != '1.0' %}
+                var allFormsRequireACase = {{ module.all_forms_require_a_case|BOOL }};
+                var putInRoot = {{ module.put_in_root|BOOL }};
+                var formFilter = {{ form.form_filter|JSON }};
+                var allOtherFormsRequireACase = {{ form.all_other_forms_require_a_case|BOOL }};
+                var formFilterAllowed = ko.computed(function () {
+                    return allOtherFormsRequireACase && form_requires() === 'case' && !putInRoot;
+                });
+                ko.applyBindings({
+                        formFilter: ko.observable(formFilter),
+                        formFilterAllowed: formFilterAllowed
+                    },
+                    $('#form-filter').get(0)
+                );
+            {% endif %}
         {% endif %}
         });
     </script>
@@ -272,9 +291,9 @@
         <div class="config">
             <form class="save-button-form" action="{% url corehq.apps.app_manager.views.edit_form_attr domain app.id form.get_unique_id 'all' %}">
                 <div class="save-button-holder"></div>
-                <table>
+                <table style="clear: both;">
                     <tr>
-                        <th>Form Name</th>
+                        <th>{% trans "Form Name" %}</th>
                         <td>
                             {% if edit %}
                                 {{ form.name|input_trans:langs|safe }}
@@ -283,9 +302,39 @@
                             {% endif %}
                         </td>
                     </tr>
-                    {% with form as item %}
-                        {% include "app_manager/partials/nav_menu_media.html" %}
-                    {% endwith %}
+                    {% include "app_manager/partials/nav_menu_media.html" with item=form %}
+                    {% if app.application_version != '1.0' %}
+                    <tr>
+                        <!-- the inline style is a short-term fix to
+                             some otherwise very awkward spacing
+                             and oddly placed help bubble-->
+                        <th style="width: 140px; text-align: left;">
+                            {% trans "Display Condition" %}
+                            <span class="hq-help-template"
+                                data-title="{% trans "Display Condition" %}"
+                                data-content="{% trans "The form will not appear in this module’s form menu unless this condition is met." %}"
+                            ></span>
+                        </th>
+                        <td id="form-filter">
+                            {% if edit %}
+                                <div data-bind="valueOrNoneUI: {
+                                    value: formFilter,
+                                    allowed: formFilterAllowed,
+                                    inputCss: {wide: true},
+                                    inputName: 'form_filter'
+                                }">
+                                    <span data-slug="add">{% trans "Add Display Condition" %}</span>
+                                    <span data-slug="whyNotAdd">{% trans "Why can't I add a display condition?" %}</span>
+                                    <span data-slug="notAllowedButExists">{% trans "Error! Display condition will be ignored." %}</span>
+                                    <span data-slug="notAllowed">{% trans 'To use display conditions in a module, (1) the module <strong>Menu</strong> setting must be set to <em>Put forms in a separate menu</em> and (2) all the forms in the module must require a case, which means registration forms must go in a seperate module.' %}</span>
+                                    <span data-slug="helpText">{% trans 'Similar to how you write display logic inside the form designer, except that you must enter <code>./</code> before a case property. <strong>For example</strong>: <code>./edd > today()</code> means "show this form if the selected case has an EDD later than today".<br/><a href="https://confluence.dimagi.com/display/commcarepublic/Common+Logic+and+Calculations#CommonLogicandCalculations-DisplayLogicforForms">Click here for more help</a>' %}</span>
+                                </div>
+                            {% else %}
+                                <code>{{ form.form_filter|default:'' }}</code>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endif %}
                 </table>
             </form>
         </div>

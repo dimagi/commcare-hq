@@ -29,6 +29,7 @@ from corehq.apps.users.util import cc_user_domain
 from corehq.util import bitly
 import current_builds
 from dimagi.utils.couch.undo import DeleteRecord, DELETED_SUFFIX
+from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.web import get_url_base, parse_int
 from copy import deepcopy
 from corehq.apps.domain.models import Domain, cached_property
@@ -520,6 +521,8 @@ class NavMenuItemMediaMixin(DocumentSchema):
 
 
 class Form(FormBase, IndexedSchema, NavMenuItemMediaMixin):
+    form_filter = StringProperty()
+
     def add_stuff_to_xform(self, xform):
         super(Form, self).add_stuff_to_xform(xform)
         xform.add_case_and_meta(self)
@@ -529,6 +532,10 @@ class Form(FormBase, IndexedSchema, NavMenuItemMediaMixin):
 
     def get_module(self):
         return self._parent
+
+    def all_other_forms_require_a_case(self):
+        m = self.get_module()
+        return all([form.requires == 'case' for form in m.get_forms() if form.id != self.id])
 
 class UserRegistrationForm(FormBase):
     username_path = StringProperty(default='username')
@@ -729,6 +736,10 @@ class Module(IndexedSchema, NavMenuItemMediaMixin):
                 ret = True
                 break
         return ret
+
+    @memoized
+    def all_forms_require_a_case(self):
+        return all([form.requires == 'case' for form in self.get_forms()])
 
 class VersioningError(Exception):
     """For errors that violate the principals of versioning in VersionedDoc"""
