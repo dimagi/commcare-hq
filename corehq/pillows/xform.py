@@ -79,6 +79,8 @@ class XFormPillow(AliasedElasticPillow):
                     "exact": {"type": "string", "index": "not_analyzed"}
                 }
             },
+            '@uiVersion': {"type": "string"},
+            '@version': {"type": "string"},
             "path": {"type": "string", "index": "not_analyzed"},
             "submit_ip": {"type": "ip"},
             "app_id": {"type": "string", "index": "not_analyzed"},
@@ -89,6 +91,7 @@ class XFormPillow(AliasedElasticPillow):
             'form': {
                 'dynamic': False,
                 'properties': {
+                    "#type": {"type": "string", "index": "not_analyzed"},
                     'case': {
                         'dynamic': False,
                         'properties': {
