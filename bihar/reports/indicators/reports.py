@@ -65,7 +65,7 @@ class IndicatorSummaryReport(GroupReferenceMixIn, BiharSummaryReport,
                     params
             ))
 
-        return [self.group.name] + \
+        return [self.group_display] + \
                [_nav_link(i) for i in self.summary_indicators]
 
     def get_indicator_value(self, indicator):
