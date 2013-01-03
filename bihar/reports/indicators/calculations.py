@@ -115,6 +115,10 @@ class DoneDueMixIn(SummaryValueMixIn):
     numerator_text = ugettext_noop("Done")
     denominator_text = ugettext_noop("Due")
 
+    @property
+    def sortkey(self):
+        return lambda case: self._numerator(case)
+
 class MotherPreDeliveryMixIn(object):
     """
     Meant to be used with IndicatorCalculators shared defaults for stuff that
@@ -136,10 +140,12 @@ class MotherPreDeliverySummaryMixIn(MotherPreDeliveryMixIn):
     provide extra shared defaults for clicking through the indicators.
     """
     def get_columns(self):
-        return super(MotherPreDeliverySummaryMixIn, self).get_columns() + (_(self.summary_header),)
+        cols = list(super(MotherPreDeliverySummaryMixIn, self).get_columns())
+        return cols[:-1] + [_(self.summary_header)] + [cols[-1]]
 
     def as_row(self, case):
-        return super(MotherPreDeliverySummaryMixIn, self).as_row(case) + (self.summary_value(case),)
+        cols = list(super(MotherPreDeliverySummaryMixIn, self).as_row(case))
+        return cols[:-1] + [self.summary_value(case)] + [cols[-1]]
 
 class MotherPostDeliveryMixIn(object):
     def get_columns(self):
@@ -297,6 +303,7 @@ class IDDayCalculator(HDDayCalculator):
 
     def _denominator(self, case):
         return 1 if _delivered_at_in_timeframe(case, ['private', 'public'], 30) else 0
+
 
 class IDNBCalculator(IDDayCalculator):
 
