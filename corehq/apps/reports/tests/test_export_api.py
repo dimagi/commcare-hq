@@ -8,6 +8,7 @@ from django.core.urlresolvers import reverse
 from corehq.apps.users.models import WebUser
 from couchforms.models import XFormInstance
 from couchexport.export import ExportConfiguration
+import time
 
 FORM_TEMPLATE = """<?xml version='1.0' ?>
 <foo xmlns:jrm="http://openrosa.org/jr/xforms" xmlns="http://www.commcarehq.org/export/test">
@@ -66,6 +67,9 @@ class ExportTest(TestCase):
         
         # data = data
         submit_form()
+
+        # now that this is time based we have to sleep first. this is annoying
+        time.sleep(2)
         resp = get_export_response(c)
         self.assertEqual(200, resp.status_code)
         self.assertTrue(resp.content is not None)
@@ -75,8 +79,9 @@ class ExportTest(TestCase):
         # data but no new data = redirect
         resp = get_export_response(c, prev_token)
         self.assertEqual(302, resp.status_code)
-        
+
         submit_form()
+        time.sleep(2)
         resp = get_export_response(c, prev_token)
         self.assertEqual(200, resp.status_code)
         self.assertTrue(resp.content is not None)
