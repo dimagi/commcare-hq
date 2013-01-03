@@ -1,6 +1,6 @@
 from django.conf import settings
 from django.utils import importlib
-from soil import FileDownload, CachedDownload
+from soil import FileDownload
 
 def get_default_backend():
     """

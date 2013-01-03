@@ -159,10 +159,10 @@ class CachedDownload(DownloadBase):
     @classmethod
     def create(cls, payload, expiry, **kwargs):
         if isinstance(payload, FileWrapper):
-            # I don't know of a way to stream to cache backend
-            # so it should fail hard and force the caller to unwrap rather than
-            # silently create a memory bottleneck here
-            raise ValueError("CachedDownload does not support a FileWrapper instance as a payload")
+            # I don't know what to do other than create a memory bottleneck here
+            # can revisit when loading a whole file into memory becomes a
+            # serious concern
+            payload = ''.join(payload)
         download_id = uuid.uuid4().hex
         ret = cls(download_id, **kwargs)
         cache.get_cache(ret.cache_backend).set(download_id, payload, expiry)
