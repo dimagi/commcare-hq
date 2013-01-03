@@ -14,7 +14,7 @@ from corehq.apps.users.decorators import require_permission
 from corehq.apps.users.export import export_users
 from corehq.apps.users.models import Permissions
 import couchexport
-from couchexport.export import UnsupportedExportFormat, export_raw, chunked
+from couchexport.export import UnsupportedExportFormat, export_raw
 from couchexport.util import SerializableFunction
 from couchforms.models import XFormInstance
 from dimagi.utils.couch.loosechange import parse_date
@@ -45,7 +45,6 @@ from couchdbkit.exceptions import ResourceNotFound
 from fields import FilterUsersField
 from util import get_all_users_by_domain, stream_qs
 from corehq.apps.hqsofabed.models import HQFormData
-from StringIO import StringIO
 from corehq.apps.app_manager.util import get_app_id
 from corehq.apps.groups.models import Group
 from corehq.apps.adm import utils as adm_utils
@@ -53,6 +52,7 @@ from soil import DownloadBase
 from soil.tasks import prepare_download
 from django.utils.translation import ugettext as _
 from django.utils.safestring import mark_safe
+from dimagi.utils.chunked import chunked
 
 DATE_FORMAT = "%Y-%m-%d"
 
