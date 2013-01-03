@@ -4,30 +4,10 @@ from django.conf import settings
 from couchexport.models import ExportSchema, Format
 from dimagi.utils.mixins import UnicodeMixIn
 from couchdbkit.consumer import Consumer
-from dimagi.utils.couch.database import get_db
+from dimagi.utils.couch.database import get_db, iter_docs
 from couchexport import writers
 from soil import DownloadBase
 from dimagi.utils.decorators.memoized import memoized
-
-def chunked(it, n):
-    """
-    >>> for nums in chunked(range(10), 4):
-    ...    print nums
-    (0, 1, 2, 3)
-    (4, 5, 6, 7)
-    (8, 9)
-    """
-    it = iter(it)
-    while True:
-        buffer = []
-        try:
-            for i in xrange(n):
-                buffer.append(it.next())
-            yield tuple(buffer)
-        except StopIteration:
-            if buffer:
-                yield tuple(buffer)
-            break
 
 class ExportConfiguration(object):
     """
@@ -89,13 +69,8 @@ class ExportConfiguration(object):
         else:
             return self.all_doc_ids
 
-    def _iter_docs(self, ids, chunksize=100):
-        for doc_ids in chunked(ids, chunksize):
-            for doc in self.database.all_docs(keys=doc_ids, include_docs=True):
-                yield doc['doc']
-
     def get_potentially_relevant_docs(self):
-        return self._iter_docs(self.potentially_relevant_ids)
+        return iter_docs(self.database, self.potentially_relevant_ids)
 
     def enum_docs(self):
         """
@@ -122,7 +97,7 @@ class ExportConfiguration(object):
         last_export = self.last_checkpoint()
         schema = dict(last_export.schema) if last_export else None
         doc_ids = self._ids_since(last_export.seq) if last_export else self.all_doc_ids
-        for doc in self._iter_docs(doc_ids):
+        for doc in iter_docs(self.database, doc_ids):
             schema = extend_schema(schema, doc)
         return schema
 
