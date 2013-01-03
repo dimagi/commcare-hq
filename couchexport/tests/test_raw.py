@@ -2,24 +2,8 @@ from StringIO import StringIO
 import json
 from django.test import TestCase
 import itertools
-from couchexport.export import export_raw, export_from_tables, chunked
-from couchexport.models import ExportSchema, Format
-
-class ExportSchemaTest(TestCase):
-    
-    def testSaveAndLoad(self):
-        index = ["foo", 2]
-        schema = ExportSchema(seq=5, index=index)
-        inner = {"dict": {"bar": 1, "baz": [2,3]},
-                 "list": ["foo", "bar"],
-                 "dictlist": [{"bip": 1, "bop": "blah"},
-                              {"bip": 2, "bop": "blah2"}],
-                 "item": "yoyoyo"}
-        schema.schema = inner
-        schema.save()
-        back = ExportSchema.get(schema.get_id)
-        self.assertEqual(inner, back.schema)
-        self.assertEqual(index, back.index)
+from couchexport.export import export_raw, export_from_tables
+from couchexport.models import Format
 
 class ExportRawTest(TestCase):
 
@@ -61,7 +45,3 @@ class ExportRawTest(TestCase):
                 tables[key] = itertools.chain([headers[key]], data[key])
 
             export_from_tables(tables.items(), buffer, format=Format.JSON)
-
-__test__ = {
-    'chunked': chunked,
-}
