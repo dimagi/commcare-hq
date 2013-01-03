@@ -255,6 +255,26 @@ def _newborn(case, days=None): # :(
     return is_pregnant_mother(case) and\
            (recently_delivered(case) or get_related_prop(case, 'birth_status') == "live_birth")
 
+def _recent_newborn(case, days=None):
+    def af(action):
+        if not days:
+            return True
+        now = dt.datetime.now()
+        return now - dt.timedelta(days=days) <= action.date <= now
+
+    def new_delivery(form):
+        return form.form.get('recently_delivered', "") == 'yes' or form.form.get('has_delivered', "") == 'yes'
+
+    return _get_form(case, action_filter=af, form_filter=new_delivery)
+
+def _adopted_fp(case):
+    def ff(f):
+        return f.form.get('post_partum_fp', "") == 'yes'
+    return _get_form(case, form_filter=ff) and getattr(case, 'family_planning_type', "") != 'no_fp_at_delivery'
+
+def _expecting_soon(case):
+    return is_pregnant_mother(case) and get_edd(case) and _in_timeframe(case.edd, -30)
+
 
 
 # NOTE: cases in, values out might not be the right API
@@ -334,7 +354,7 @@ class SimpleListMixin(object):
     def _numerator(self, case):
         return 0
 
-class S2SCalculator(SimpleListMixin, VWOCalculator):
+class S2SCalculator(FilterOnlyCalculator, VWOCalculator):
 
     def _denominator(self, case):
         return 1 if self._weak_baby(case) and _get_xpath_from_forms(case, "child_info/skin_to_skin") == 'no' else 0
@@ -344,7 +364,7 @@ class FVCalculator(S2SCalculator):
     def _denominator(self, case):
         return 1 if self._weak_baby(case) and _get_xpath_from_forms(case, "child_info/feed_vigour") == 'no' else 0
 
-class MMCalculator(SimpleListMixin, SummaryValueMixIn, MotherPreDeliverySummaryMixIn,
+class MMCalculator(FilterOnlyCalculator, SummaryValueMixIn, MotherPreDeliverySummaryMixIn,
                    MemoizingCalculatorMixIn, IndicatorCalculator):
 
     def _action_within_timeframe(self, action, days):
@@ -382,7 +402,7 @@ def _get_time_of_birth(form):
         )
     return time_of_birth
 
-class ComplicationsCalculator(SummaryValueMixIn, MotherPreDeliverySummaryMixIn,
+class ComplicationsCalculator(SummaryValueMixIn, MotherPostDeliverySummaryMixIn,
     MemoizingCalculatorMixIn, IndicatorCalculator):
     """
         DENOM: [
@@ -507,3 +527,38 @@ class ComplicationsCalculator(SummaryValueMixIn, MotherPreDeliverySummaryMixIn,
                     break
 
         return has_recent_complication, has_complication
+
+class FPCalculator(SummaryValueMixIn, MotherPreDeliverySummaryMixIn,
+                    MemoizingCalculatorMixIn, IndicatorCalculator):
+
+    def _numerator(self, case):
+        return 1 if getattr(case, 'couple_interested', None) == 'Yes' else 0
+
+    def _denominator(self, case):
+        return 1 if _recent_newborn(case, 300000) else 0
+
+class AFPCalculator(FPCalculator):
+
+    def _numerator(self, case):
+        return 1 if _adopted_fp(case) else 0
+
+    def _denominator(self, case):
+        fp_class = super(AFPCalculator, self)
+        return 1 if fp_class._denominator(case) and fp_class.numerator(case) else 0
+
+class EFPCalculator(FPCalculator):
+
+    def _denominator(self, case):
+        return 1 if is_pregnant_mother(case) else 0
+
+class NOFPCalculator(FilterOnlyCalculator, FPCalculator):
+
+    def _denominator(self, case):
+        return 1 if _recent_newborn(case, 7) and getattr(case, 'family_planning_type', "") != 'no_fp_at_delivery' else 0
+
+class PFPCalculator(NOFPCalculator):
+
+    def _denominator(self, case):
+        return 1 if _expecting_soon(case) and getattr(case, 'couple_interested', "") == "yes" else 0
+
+
