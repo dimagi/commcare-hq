@@ -59,7 +59,6 @@
             <div class="save-button-holder"></div>
             <table style="clear: both;">
                 {% if edit %}
-
                     <tr class="form editable">
                         <th>
                             Module Name
@@ -68,11 +67,8 @@
                             {{ module.name|input_trans:langs|safe }}
                         </td>
                     </tr>
-                    {% with module as item %}
-                        {% include "app_manager/partials/nav_menu_media.html" %}
-                    {% endwith %}
                     <tr class="form editable">
-                        <th>
+                        <th style="width: 140px;">
                             {% trans "Case Type" %}
 
                             <span class="hq-help-template"
@@ -155,6 +151,7 @@
                     </tr>
                     {% endif %}
                 {% endif %}
+                {% include "app_manager/partials/nav_menu_media.html" with item=module %}
                 {% include 'app_manager/partials/case_list_setting.html' with LABEL="Case List" DESC="Whether to have an item in the module's menu that lets you browse the case list without moving on to fill out a form." SLUG="case_list" case_list=module.case_list %}
                 {% if app.application_version != '1.0' and request.project.survey_management_enabled %}
                     {% include 'app_manager/partials/case_list_setting.html' with LABEL="Task List" DESC="Whether to have an item in the module's menu that lets you see all of your delegated tasks. Only makes sense if you're using a delegation workflow." SLUG="task_list" case_list=module.task_list %}
