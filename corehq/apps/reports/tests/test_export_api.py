@@ -9,6 +9,7 @@ from corehq.apps.users.models import WebUser
 from couchforms.models import XFormInstance
 from couchexport.export import ExportConfiguration
 import time
+from couchexport.models import ExportSchema
 
 FORM_TEMPLATE = """<?xml version='1.0' ?>
 <foo xmlns:jrm="http://openrosa.org/jr/xforms" xmlns="http://www.commcarehq.org/export/test">
@@ -58,6 +59,43 @@ class ExportTest(TestCase):
         self.couch_user.delete()
         self._clear_docs()
 
+    def testExportTokenMigration(self):
+        c = Client()
+        c.login(**{'username': 'test', 'password': 'foobar'})
+
+        submit_form()
+        time.sleep(1)
+        resp = get_export_response(c)
+        self.assertEqual(200, resp.status_code)
+        self.assertTrue(resp.content is not None)
+        self.assertTrue("X-CommCareHQ-Export-Token" in resp)
+
+        # blow away the timestamp property to ensure we're testing the
+        # migration case
+        prev_token = resp["X-CommCareHQ-Export-Token"]
+        prev_checkpoint = ExportSchema.get(prev_token)
+        assert prev_checkpoint.timestamp
+        prev_checkpoint.timestamp = None
+        prev_checkpoint.save()
+        prev_checkpoint = ExportSchema.get(prev_token)
+        assert not prev_checkpoint.timestamp 
+
+        # data but no new data = redirect
+        resp = get_export_response(c, prev_token)
+        self.assertEqual(302, resp.status_code)
+
+        submit_form()
+        time.sleep(1)
+        resp = get_export_response(c, prev_token)
+        self.assertEqual(200, resp.status_code)
+        self.assertTrue(resp.content is not None)
+        self.assertTrue("X-CommCareHQ-Export-Token" in resp)
+        prev_token = resp["X-CommCareHQ-Export-Token"]
+
+        full_data = get_export_response(c).content
+        partial_data = get_export_response(c, prev_token).content
+        self.assertTrue(len(full_data) > len(partial_data))
+
     def testExportTokens(self):
         c = Client()
         c.login(**{'username': 'test', 'password': 'foobar'})
@@ -69,7 +107,7 @@ class ExportTest(TestCase):
         submit_form()
 
         # now that this is time based we have to sleep first. this is annoying
-        time.sleep(2)
+        time.sleep(1)
         resp = get_export_response(c)
         self.assertEqual(200, resp.status_code)
         self.assertTrue(resp.content is not None)
@@ -81,7 +119,7 @@ class ExportTest(TestCase):
         self.assertEqual(302, resp.status_code)
 
         submit_form()
-        time.sleep(2)
+        time.sleep(1)
         resp = get_export_response(c, prev_token)
         self.assertEqual(200, resp.status_code)
         self.assertTrue(resp.content is not None)
