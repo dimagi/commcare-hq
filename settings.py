@@ -696,6 +696,8 @@ CUSTOM_REPORT_MAP = {
             #"pact.reports.CHWVisitsReport",
 #            "pact.reports.DOTReport",
 #            "pact.reports.PactExports",
+    ],
+    },
     "psi": {
         "Custom Reports": [
             'corehq.apps.reports.commtrack.psi_prototype.PSIEventsReport',
