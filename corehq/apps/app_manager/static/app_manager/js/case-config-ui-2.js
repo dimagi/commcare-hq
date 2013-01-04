@@ -256,7 +256,8 @@ var CaseXML = (function () {
     };
     var action_names = ["open_case", "update_case", "close_case", "case_preload"],
         CaseXML = function (params) {
-            var i, $form;
+            var i, $form,
+                ejs_urls = params.ejs_urls;
 
             this.home = params.home;
             this.actions = (function (a) {
@@ -274,33 +275,24 @@ var CaseXML = (function () {
             this.requires = params.requires;
             this.save_requires_url = params.save_requires_url;
             this.caseType = params.caseType;
-            this.template = new EJS({
-                url: "/static/app_manager/ejs/case-config-ui-2.ejs",
-                type: "["
-            });
-            this.condition_ejs = new EJS({
-                url: "/static/app_manager/ejs/condition.ejs",
-                type: "["
-            });
-            this.action_ejs = new EJS({
-                url: "/static/app_manager/ejs/action.ejs",
-                type: "["
-            });
-            this.options_ejs = new EJS({
-                url: "/static/app_manager/ejs/options.ejs",
-                type: "["
-            });
-            this.propertyList_ejs = new EJS({
-                url: "/static/app_manager/ejs/propertyList.ejs",
-                type: "["
-            });
+
+            function makeEJS(url) {
+                return new EJS({
+                    url: url,
+                    type: "["
+                });
+            }
+            for (var slug in ejs_urls) {
+                if (ejs_urls.hasOwnProperty(slug) && slug !== 'action_templates') {
+                    this[slug] = makeEJS(ejs_urls[slug]);
+                }
+            }
             this.action_templates = {};
             this.reserved_words = params.reserved_words;
             for (i = 0; i < action_names.length; i += 1) {
-                this.action_templates[action_names[i]] = new EJS({
-                    url: "/static/app_manager/ejs/actions/" + action_names[i] + ".ejs",
-                    type: "["
-                });
+                this.action_templates[action_names[i]] = makeEJS(
+                    ejs_urls.action_templates[action_names[i]]
+                );
             }
             //        $("#casexml-template").remove();
             $form = $('<form method="POST"/>').attr('action', this.save_url).append(
