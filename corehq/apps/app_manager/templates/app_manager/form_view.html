@@ -168,6 +168,21 @@
                     reserved_words: {{ case_reserved_words_json|JSON }},
                     moduleCaseTypes: {{ module_case_types|JSON }},
                     caseType: {{ form.get_case_type|JSON }}
+                    {% if app.application_version != '1.0' %}
+                    ,ejs_urls: {
+                        template: "{% static 'app_manager/ejs/case-config-ui-2.ejs' %}",
+                        condition_ejs: "{% static 'app_manager/ejs/condition.ejs' %}",
+                        action_ejs: "{% static 'app_manager/ejs/action.ejs' %}",
+                        options_ejs: "{% static 'app_manager/ejs/options.ejs' %}",
+                        propertyList_ejs: "{% static 'app_manager/ejs/propertyList.ejs' %}",
+                        action_templates: {
+                            open_case: "{% static 'app_manager/ejs/actions/open_case.ejs' %}",
+                            update_case: "{% static 'app_manager/ejs/actions/update_case.ejs' %}",
+                            case_preload: "{% static 'app_manager/ejs/actions/case_preload.ejs' %}",
+                            close_case: "{% static 'app_manager/ejs/actions/close_case.ejs' %}"
+                        }
+                    }
+                    {% endif %}
                 });
                 casexml.init();
 
