@@ -5,7 +5,7 @@ from couchexport.models import FakeSavedExportSchema
 from django.http import HttpResponse
 from StringIO import StringIO
 from unidecode import unidecode
-
+from couchexport.util import get_schema_index_view_keys
 
 def get_export_files(export_tag, format=None, previous_export_id=None, filter=None,
                      use_cache=True, max_column_size=2000, separator='|'):
@@ -86,7 +86,10 @@ def export_response(file, format, filename, checkpoint=None):
 def export_raw_data(export_tag, filename=None):
     # really this shouldn't be here, but keeping it for now                   
     from couchforms.models import XFormInstance
-    xform_instances = XFormInstance.view('couchexport/schema_index', key=export_tag, include_docs=True)
+    xform_instances = XFormInstance.view('couchexport/schema_index',
+                                         include_docs=True,
+                                         reduce=False,
+                                         **get_schema_index_view_keys(export_tag))
     f = StringIO()
     zipfile = ZipFile(f, 'w')
     for xform_instance in xform_instances:

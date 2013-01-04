@@ -1,9 +1,16 @@
 function(doc) {
-    // !code util/types.js
     // !code util/schema.js
-    tag = get_export_tag_value(doc); 
+    tag = getExportTagValue(doc);
     if (tag) {
-        emit(tag, null);
+        var key = [];
+        if (isArray(tag)) {
+            for (var i = 0; i < tag.length; i++) {
+                key.push(tag[i]);
+            }
+        } else {
+            key.push(tag);
+        }
+        key.push(getExportDateValue(doc));
+        emit(key, null);
     }
-    
 }

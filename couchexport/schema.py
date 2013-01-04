@@ -1,43 +1,7 @@
 from couchdbkit.client import Database
 from django.conf import settings
-from couchdbkit.consumer import Consumer
 from couchexport.models import ExportSchema
 from dimagi.utils.couch.database import get_db
-
-
-def get_docs(schema_index, previous_export=None, filter=None):
-    
-    def _filter(results):
-        if filter is None:
-            return results
-        return [doc for doc in results if filter(doc)]
-            
-    db = Database(settings.COUCH_DATABASE)
-    if previous_export is not None:
-        consumer = Consumer(db)
-        view_results = consumer.fetch(since=previous_export.seq)
-        if view_results:
-            try:
-                include_ids = set([res["id"] for res in view_results["results"]])
-                possible_ids = set([result['id'] for result in \
-                                    db.view("couchexport/schema_index", 
-                                            key=schema_index).all()])
-                ids_to_use = include_ids.intersection(possible_ids)
-                return _filter(res["doc"] for res in \
-                               db.all_docs(keys=list(ids_to_use), include_docs=True).all())
-            except Exception:
-                import logging
-                logging.exception("export failed! results: %s" % view_results) 
-                raise
-        else:
-            # sometimes this comes back empty. I think it might be a bug
-            # in couchdbkit, but it's impossible to consistently reproduce.
-            # For now, just assume this is fine.
-            return []
-    else: 
-        return _filter([result['doc'] for result in \
-                        db.view("couchexport/schema_index", 
-                                key=schema_index, include_docs=True).all()])
 
 def build_latest_schema(schema_index):
     """
@@ -56,9 +20,7 @@ def build_latest_schema(schema_index):
     schema = config.get_latest_schema()
     if not schema:
         return None
-    updated_checkpoint = ExportSchema(seq=current_seq, schema=schema, 
-                                      index=schema_index)
-    updated_checkpoint.save()
+    updated_checkpoint = config.create_new_checkpoint()
     return updated_checkpoint
 
 class SchemaInferenceError(Exception):

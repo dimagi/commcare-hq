@@ -1,16 +1,19 @@
 from itertools import islice
 from couchdbkit.ext.django.schema import Document, IntegerProperty, DictProperty,\
-    Property, DocumentSchema, StringProperty, SchemaListProperty, ListProperty,\
+    DocumentSchema, StringProperty, SchemaListProperty, ListProperty,\
     StringListProperty, DateTimeProperty, SchemaProperty, BooleanProperty
 import json
 from StringIO import StringIO
 import couchexport
-from couchexport.util import SerializableFunctionProperty, SerializableFunction
+from couchexport.util import SerializableFunctionProperty,\
+    get_schema_index_view_keys, force_tag_to_list
 from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.mixins import UnicodeMixIn
-from dimagi.utils.couch.database import get_db
+from dimagi.utils.couch.database import get_db, iter_docs
 from soil import DownloadBase
 from couchdbkit.exceptions import ResourceNotFound
+from couchexport.properties import TimeStampProperty, JsonProperty
+from couchdbkit.consumer import Consumer
 
 class Format(object):
     """
@@ -57,26 +60,16 @@ class Format(object):
             raise ValueError("Unsupported export format: %s!" % format)
         return cls(format, **cls.FORMAT_DICT[format])
 
-class JsonProperty(Property):
-    """
-    A property that stores data in an arbitrary JSON object.
-    """
-    
-    def to_python(self, value):
-        return json.loads(value)
-
-    def to_json(self, value):
-        return json.dumps(value)
-
 class ExportSchema(Document, UnicodeMixIn):
     """
     An export schema that can store intermittent contents of the export so
     that the entire doc list doesn't have to be used to generate the export
     """
     index = JsonProperty()
-    seq = IntegerProperty()
+    seq = IntegerProperty() # semi-deprecated
     schema = DictProperty()
-    
+    timestamp = TimeStampProperty()
+
     def __unicode__(self):
         return "%s: %s" % (json.dumps(self.index), self.seq)
 
@@ -92,15 +85,30 @@ class ExportSchema(Document, UnicodeMixIn):
         if current_seq < ret.seq:
             ret.seq = 0
             ret.save()
+        # TODO: handle seq -> datetime migration
         return ret
 
     @classmethod
     def last(cls, index):
-        return cls.view("couchexport/schema_checkpoints", 
-                        startkey=[json.dumps(index), {}],
-                        endkey=[json.dumps(index)],
-                        descending=True, limit=1,
-                        include_docs=True).one()
+        # search first by timestamp, then fall back to seq id
+        shared_kwargs = {
+            'descending': True,
+            'limit': 1,
+            'include_docs': True,
+            'reduce': False,
+        }
+        ret = cls.view("couchexport/schema_checkpoints",
+                       startkey=['by_timestamp', json.dumps(index), {}],
+                       endkey=['by_timestamp', json.dumps(index)],
+                       **shared_kwargs).one()
+        if ret and not ret.timestamp:
+            # we found a bunch of old checkpoints but they only
+            # had seq ids, so use those instead
+            ret = cls.view("couchexport/schema_checkpoints",
+                           startkey=['by_seq', json.dumps(index), {}],
+                           endkey=['by_seq', json.dumps(index)],
+                           **shared_kwargs).one()
+        return ret
                                  
     _tables = None
     @property
@@ -110,7 +118,7 @@ class ExportSchema(Document, UnicodeMixIn):
             headers = get_headers(self.schema, separator=".")
             self._tables = [(index, row[0]) for index, row in headers]
         return self._tables
-    
+
     @property
     def table_dict(self):
         return dict(self.tables)
@@ -121,6 +129,51 @@ class ExportSchema(Document, UnicodeMixIn):
     
     def get_columns(self, index):
         return self.table_dict[index].get_data()
+
+    def get_all_ids(self, database=None):
+        database = database or self.get_db()
+        return set(
+            [result['id'] for result in database.view(
+                        "couchexport/schema_index",
+                        reduce=False,
+                        **get_schema_index_view_keys(self.index)).all()])
+
+    def get_new_ids(self, database=None):
+        # TODO: deprecate/remove old way of doing this
+        database = database or self.get_db()
+        if self.timestamp:
+            return self._ids_by_timestamp(database)
+        else:
+            return self._ids_by_seq(database)
+
+    def _ids_by_seq(self, database):
+        if self.seq == 0:
+            return self.get_all_ids()
+
+        consumer = Consumer(database)
+        view_results = consumer.fetch(since=self.seq)
+        if view_results:
+            include_ids = set([res["id"] for res in view_results["results"]])
+            return include_ids.intersection(self.get_all_ids())
+        else:
+            # sometimes this comes back empty. I think it might be a bug
+            # in couchdbkit, but it's impossible to consistently reproduce.
+            # For now, just assume this is fine.
+            return set()
+
+    def _ids_by_timestamp(self, database):
+        tag_as_list = force_tag_to_list(self.index)
+        startkey = tag_as_list + [self.timestamp.isoformat()]
+        endkey = tag_as_list + [{}]
+        return set(
+            [result['id'] for result in database.view(
+                        "couchexport/schema_index",
+                        reduce=False,
+                        startkey=startkey,
+                        endkey=endkey)])
+
+    def get_new_docs(self, database=None):
+        return iter_docs(self.get_new_ids(database))
 
 class ExportColumn(DocumentSchema):
     """
@@ -432,13 +485,9 @@ class SavedExportSchema(BaseSavedExportSchema, UnicodeMixIn):
 
         # get and checkpoint the latest schema
         updated_schema = config.get_latest_schema()
-        export_schema_checkpoint = ExportSchema(seq=config.current_seq,
-            schema=updated_schema,
-            index=config.schema_index)
-        export_schema_checkpoint.save()
-
+        export_schema_checkpoint = config.create_new_checkpoint()
         return config, updated_schema, export_schema_checkpoint
-    
+
     def get_export_files(self, format=None, previous_export=None, filter=None, process=None, max_column_size=None, apply_transforms=True, **kwargs):
         from couchexport.export import get_writer, format_tables, create_intermediate_tables
 

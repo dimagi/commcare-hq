@@ -3,31 +3,12 @@ from couchexport.schema import extend_schema
 from django.conf import settings
 from couchexport.models import ExportSchema, Format
 from dimagi.utils.mixins import UnicodeMixIn
-from couchdbkit.consumer import Consumer
-from dimagi.utils.couch.database import get_db
+from dimagi.utils.couch.database import get_db, iter_docs
 from couchexport import writers
 from soil import DownloadBase
 from dimagi.utils.decorators.memoized import memoized
-
-def chunked(it, n):
-    """
-    >>> for nums in chunked(range(10), 4):
-    ...    print nums
-    (0, 1, 2, 3)
-    (4, 5, 6, 7)
-    (8, 9)
-    """
-    it = iter(it)
-    while True:
-        buffer = []
-        try:
-            for i in xrange(n):
-                buffer.append(it.next())
-            yield tuple(buffer)
-        except StopIteration:
-            if buffer:
-                yield tuple(buffer)
-            break
+from couchexport.util import get_schema_index_view_keys
+from datetime import datetime
 
 class ExportConfiguration(object):
     """
@@ -43,6 +24,7 @@ class ExportConfiguration(object):
         self.previous_export = previous_export
         self.filter = filter
         self.current_seq = self.database.info()["update_seq"]
+        self.timestamp = datetime.utcnow()
         self.potentially_relevant_ids = self._potentially_relevant_ids()
         
     def include(self, document):
@@ -59,43 +41,18 @@ class ExportConfiguration(object):
         Gets view results for all documents matching this schema
         """
         return set([result['id'] for result in \
-                    self.database.view("couchexport/schema_index",
-                                       key=self.schema_index).all()])
-
-    def _ids_since(self, seq):
-        if seq == 0:
-            return self.all_doc_ids
-
-        consumer = Consumer(self.database)
-        view_results = consumer.fetch(since=seq)
-        if view_results:
-            try:
-                include_ids = set([res["id"] for res in view_results["results"]])
-                possible_ids = self.all_doc_ids
-                return list(include_ids.intersection(possible_ids))
-            except TypeError, e:
-                if "string indices must be integers" in str(e):
-                    # this is our expected error use case. 
-                    raise Exception("Got the string integer thing again during export")
-        else:
-            # sometimes this comes back empty. I think it might be a bug
-            # in couchdbkit, but it's impossible to consistently reproduce.
-            # For now, just assume this is fine.
-            return []
+                    self.database.view(
+                        "couchexport/schema_index",
+                        reduce=False,
+                        **get_schema_index_view_keys(self.schema_index)
+                    ).all()])
 
     def _potentially_relevant_ids(self):
-        if self.previous_export is not None:
-            return self._ids_since(self.previous_export.seq)
-        else:
-            return self.all_doc_ids
-
-    def _iter_docs(self, ids, chunksize=100):
-        for doc_ids in chunked(ids, chunksize):
-            for doc in self.database.all_docs(keys=doc_ids, include_docs=True):
-                yield doc['doc']
+        return self.previous_export.get_new_ids() if self.previous_export \
+            else self.all_doc_ids
 
     def get_potentially_relevant_docs(self):
-        return self._iter_docs(self.potentially_relevant_ids)
+        return iter_docs(self.database, self.potentially_relevant_ids)
 
     def enum_docs(self):
         """
@@ -118,13 +75,21 @@ class ExportConfiguration(object):
     def last_checkpoint(self):
         return self.previous_export or ExportSchema.last(self.schema_index)
 
+    @memoized
     def get_latest_schema(self):
         last_export = self.last_checkpoint()
         schema = dict(last_export.schema) if last_export else None
-        doc_ids = self._ids_since(last_export.seq) if last_export else self.all_doc_ids
-        for doc in self._iter_docs(doc_ids):
+        doc_ids = last_export.get_new_ids(self.database) if last_export else self.all_doc_ids
+        for doc in iter_docs(self.database, doc_ids):
             schema = extend_schema(schema, doc)
         return schema
+
+    def create_new_checkpoint(self):
+        checkpoint = ExportSchema(
+            seq=self.current_seq, schema=self.get_latest_schema(),
+            timestamp=self.timestamp, index=self.schema_index)
+        checkpoint.save()
+        return checkpoint
 
 class UnsupportedExportFormat(Exception):
     pass
@@ -241,12 +206,7 @@ def get_export_components(schema_index, previous_export_id=None, filter=None):
 
     # get and checkpoint the latest schema
     updated_schema = config.get_latest_schema()
-
-    export_schema_checkpoint = ExportSchema(seq=config.current_seq,
-        schema=updated_schema,
-        index=config.schema_index)
-
-    export_schema_checkpoint.save()
+    export_schema_checkpoint = config.create_new_checkpoint()
 
     return config, updated_schema, export_schema_checkpoint
 
