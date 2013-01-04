@@ -36,7 +36,7 @@ class IndicatorSummaryReport(GroupReferenceMixIn, BiharSummaryReport,
     description = "Indicator details report"
     base_template_mobile = "bihar/indicator_summary.html"
     is_cacheable = True
-    
+
     @property
     def rendered_report_title(self):
         return _(self.indicator_set.name)
@@ -65,7 +65,7 @@ class IndicatorSummaryReport(GroupReferenceMixIn, BiharSummaryReport,
                     params
             ))
 
-        return [self.group.name] + \
+        return [self.group_display] + \
                [_nav_link(i) for i in self.summary_indicators]
 
     def get_indicator_value(self, indicator):
@@ -127,12 +127,18 @@ class IndicatorClientSelectNav(GroupReferenceMixIn, BiharSummaryReport,
     def count(self, indicator):
         return len([c for c in self.cases if indicator.filter(c)])
 
+def name_context(report):
+    return {'name': report._name}
+
 class IndicatorClientList(GroupReferenceMixIn, ConvenientBaseMixIn,
                           GenericTabularReport, CustomProjectReport,
                           IndicatorMixIn):
     slug = "indicatorclientlist"
     name = ugettext_noop("Client List") 
     is_cacheable = True
+    report_template_path = "bihar/client_listing.html"
+
+    extra_context_providers = [name_context]
 
     @property
     def _name(self):
