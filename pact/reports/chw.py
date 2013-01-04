@@ -47,6 +47,8 @@ class PactCHWProfileReport(PactDrilldownReportMixin, ESSortableMixin,GenericTabu
     case_es = CaseES()
     default_sort = {"received_on": "desc"}
 
+    name = "CHW Profile"
+
     hide_filters = True
     filters = []
     #    fields = ['corehq.apps.reports.fields.FilterUsersField', 'corehq.apps.reports.fields.DatespanField',]
@@ -95,12 +97,12 @@ class PactCHWProfileReport(PactDrilldownReportMixin, ESSortableMixin,GenericTabu
             return None
 
 
-    @property
-    def name(self):
-        if hasattr(self, 'request') and self.request.GET.has_key('chw_id'):
-            return "CHW Profile :: %s" % self.get_user().raw_username
-        else:
-            return "CHW Profile"
+#    @property
+#    def name(self):
+#        if hasattr(self, 'request') and self.request.GET.has_key('chw_id'):
+#            return "CHW Profile :: %s" % self.get_user().raw_username
+#        else:
+#            return "CHW Profile"
 
 
     @property

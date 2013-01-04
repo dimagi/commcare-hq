@@ -62,7 +62,10 @@
 			<bind nodeset="/data/dot_regimen_group/non_art_tid_times" relevant="/data/dot_regimen_group/non_art_regimen_freq = 'tid'" required="true()" />
 			<bind nodeset="/data/dot_regimen_group/non_art_qid_times" relevant="/data/dot_regimen_group/non_art_regimen_freq = 'qid'" required="true()" />
 			<bind nodeset="/data/full_name" calculate="concat(/data/first_name,&quot;_&quot;, /data/last_name)" />
-			<bind nodeset="/data/art_regimen" calculate="if(/data/dot_regimen_group/art_regimen_freq = 'qd', /data/dot_regimen_group/art_qd_time, if(/data/dot_regimen_group/art_regimen_freq = 'bid', /data/dot_regimen_group/art_bid_times, if(/data/dot_regimen_group/art_regimen_freq = 'tid', /data/dot_regimen_group/art_tid_times, if(/data/dot_regimen_group/art_regimen_freq = 'qid', /data/dot_regimen_group/art_qid_times, ''))))" />
+			<bind nodeset="/data/art_regimen" calculate="
+
+
+			if(/data/dot_regimen_group/art_regimen_freq = 'qd', /data/dot_regimen_group/art_qd_time, if(/data/dot_regimen_group/art_regimen_freq = 'bid', /data/dot_regimen_group/art_bid_times, if(/data/dot_regimen_group/art_regimen_freq = 'tid', /data/dot_regimen_group/art_tid_times, if(/data/dot_regimen_group/art_regimen_freq = 'qid', /data/dot_regimen_group/art_qid_times, ''))))" />
 			<bind nodeset="/data/non_art_regimen" calculate="if(/data/dot_regimen_group/non_art_regimen_freq = 'qd', /data/dot_regimen_group/non_art_qd_time, if(/data/dot_regimen_group/non_art_regimen_freq = 'bid', /data/dot_regimen_group/non_art_bid_times, if(/data/dot_regimen_group/non_art_regimen_freq = 'tid', /data/dot_regimen_group/non_art_tid_times, if(/data/dot_regimen_group/non_art_regimen_freq = 'qid', /data/dot_regimen_group/non_art_qid_times, ''))))" />
 			<itext>
 				<translation lang="en" default="">

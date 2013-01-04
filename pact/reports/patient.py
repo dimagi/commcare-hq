@@ -17,6 +17,14 @@ from pact.reports import  PactDrilldownReportMixin, ESSortableMixin
 from pact.utils import pact_script_fields
 
 
+#cloudcare urls:
+
+#pn:     /a/pact/cloudcare/apps/view/0ff529f53c26f44e1fa020e79afe0b1b/0/1/case/%(case_id)s/enter/
+#dot:     /a/pact/cloudcare/apps/view/0ff529f53c26f44e1fa020e79afe0b1b/0/2/case/%(case_id)s/enter/
+#bw:     /a/pact/cloudcare/apps/view/0ff529f53c26f44e1fa020e79afe0b1b/0/3/case/%(case_id)s/enter/
+#address: /a/pact/cloudcare/apps/view/0ff529f53c26f44e1fa020e79afe0b1b/0/4/case/%(case_id)s/enter/
+
+
 class PactPatientInfoReport(PactDrilldownReportMixin,ESSortableMixin, GenericTabularReport, CustomProjectReport):
     slug = "patient"
     description = "some patient"
@@ -30,18 +38,20 @@ class PactPatientInfoReport(PactDrilldownReportMixin,ESSortableMixin, GenericTab
         "received_on": "desc"
     }
 
+    name = "Patient Info"
+
     @memoized
     def get_case(self):
         return PactPatientCase.get(self.request.GET['patient_id'])
 
-    @property
-    def name(self):
-        if hasattr(self, 'request'):
-            if self.request.GET.get('patient_id', None) is not None:
-                case = self.get_case()
-                return "Patient Info :: %s" % case.name
-        else:
-            return "Patient Info"
+#    @property
+#    def name(self):
+#        if hasattr(self, 'request'):
+#            if self.request.GET.get('patient_id', None) is not None:
+#                case = self.get_case()
+#                return "Patient Info :: %s" % case.name
+#        else:
+#            return "Patient Info"
 
     def patient_submissions_query(self):
         #todo: remove and deprecate - unused

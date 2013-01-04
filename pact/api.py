@@ -25,6 +25,31 @@ from pact.utils import pact_script_fields, case_script_field, submit_xform
 from django.core.cache import cache
 
 
+def get_cloudcare_app():
+    """
+    Total hack function to get direct links to the cloud care application pages
+    """
+    "PACT Cloud"
+    from corehq.apps.cloudcare import api
+    apps = api.get_cloudcare_apps('pact')
+    #should filter by app['name']
+    #name: PACT Cloud
+    app = api.get_app('pact', apps[0]['_id'])
+    mod = app['modules'][0]
+    n=app['modules'][0]['name']#{'en': 'PACT Cloudcare'}
+    #>>> a['modules'][0]['forms'][0]['name']
+#{'en': 'Patient Registration'}
+
+
+
+
+
+
+
+
+
+
+
 class PactFormAPI(DomainAPI):
 
     xform_es = XFormES()
@@ -59,9 +84,11 @@ class PactFormAPI(DomainAPI):
 
         db = XFormInstance.get_db()
         username = self.request.user.username
+        print username
         if self.request.user.username == 'ctsims':
             username = 'rachel'
         username='cs783'
+        print username
 
         offset =0
         limit_count=200
@@ -87,6 +114,7 @@ class PactFormAPI(DomainAPI):
         query['script_fields'] = {}
         query['script_fields'].update(pact_script_fields())
         query['script_fields'].update(case_script_field())
+        print simplejson.dumps(query, indent=4)
 
         res = self.xform_es.run_query(query)
 
