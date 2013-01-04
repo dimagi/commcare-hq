@@ -178,7 +178,7 @@ class ReportDispatcher(View):
             for model in models:
                 if not dispatcher.permissions_check(model, request, domain=domain):
                     continue
-                report = to_function(model)
+                report = to_function(model, failhard=True)
                 if report.show_in_navigation(request, domain=domain):
                     if hasattr(report, 'override_navigation_list'):
                         section.extend(report.override_navigation_list(context))

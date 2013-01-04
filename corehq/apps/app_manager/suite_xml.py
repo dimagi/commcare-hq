@@ -1,5 +1,6 @@
 from lxml import etree
 from eulxml.xmlmap import StringField, XmlObject, IntegerField, NodeListField, NodeField, StringListField
+from dimagi.utils.decorators.memoized import memoized
 
 class IdNode(XmlObject):
     id = StringField('@id')
@@ -89,7 +90,7 @@ class DisplayNode(XmlObject):
 
 class Command(DisplayNode, IdNode):
     ROOT_NAME = 'command'
-
+    relevant = StringField('@relevant')
 
 class Instance(IdNode):
     ROOT_NAME = 'instance'
@@ -114,6 +115,7 @@ class Entry(XmlObject):
     form = StringField('form')
     command = NodeField('command', Command)
     instance = NodeField('instance', Instance)
+    instances = NodeListField('instance', Instance)
 
     datums = NodeListField('session/datum', SessionDatum)
     datum = NodeField('session/datum', SessionDatum)
@@ -278,7 +280,7 @@ class SuiteGenerator(object):
                 this_list = last
             this_list.append(XFormResource(
                 id=self.id_strings.xform_resource(form_stuff['form']),
-                version=self.app.version,
+                version=form_stuff['form'].get_version(),
                 local=path,
                 remote=path,
             ))
@@ -300,7 +302,9 @@ class SuiteGenerator(object):
             )
 
     @property
+    @memoized
     def details(self):
+        r = []
         from corehq.apps.app_manager.detail_screen import get_column_generator
         if not self.app.use_custom_suite:
             for module in self.modules:
@@ -320,7 +324,8 @@ class SuiteGenerator(object):
                             pass
                         else:
                             # only yield the Detail if it has Fields
-                            yield d
+                            r.append(d)
+        return r
 
     def get_filter_xpath(self, module, delegation=False):
         from corehq.apps.app_manager.detail_screen import Filter
@@ -342,7 +347,14 @@ class SuiteGenerator(object):
     @property
     def entries(self):
         def add_case_stuff(module, e, use_filter=False):
-            e.instance = Instance(id='casedb', src='jr://instance/casedb')
+            def get_instances():
+                yield Instance(id='casedb', src='jr://instance/casedb')
+                if any([form.form_filter for form in module.get_forms()]) and \
+                        module.all_forms_require_a_case():
+                    yield Instance(id='commcaresession', src='jr://instance/session')
+            e.instances.extend(get_instances())
+
+
             # I'm setting things individually instead of in the constructor so they appear in the correct order
             e.datum = SessionDatum()
             e.datum.id='case_id'
@@ -351,8 +363,18 @@ class SuiteGenerator(object):
                 filter_xpath=self.get_filter_xpath(module) if use_filter else ''
             )
             e.datum.value="./@case_id"
-            e.datum.detail_select=self.id_strings.detail(module=module, detail=module.get_detail('case_short'))
-            e.datum.detail_confirm=self.id_strings.detail(module=module, detail=module.get_detail('case_long'))
+
+            detail_ids = [detail.id for detail in self.details]
+
+            def get_detail_id_safe(detail_type):
+                detail_id = self.id_strings.detail(
+                    module=module,
+                    detail=module.get_detail(detail_type)
+                )
+                return detail_id if detail_id in detail_ids else None
+
+            e.datum.detail_select = get_detail_id_safe('case_short')
+            e.datum.detail_confirm = get_detail_id_safe('case_long')
 
         for module in self.modules:
             for form in module.get_forms():
@@ -388,7 +410,15 @@ class SuiteGenerator(object):
 
             def get_commands():
                 for form in module.get_forms():
-                    yield Command(id=self.id_strings.form_command(form))
+                    command = Command(id=self.id_strings.form_command(form))
+                    if module.all_forms_require_a_case() and \
+                            not module.put_in_root and \
+                            getattr(form, 'form_filter', None):
+                        command.relevant = form.form_filter.replace('.', (
+                            "instance('casedb')/casedb/case[@case_id="
+                            "instance('commcaresession')/session/data/case_id]"
+                        ))
+                    yield command
 
                 if module.case_list.show:
                     yield Command(id=self.id_strings.case_list_command(module))

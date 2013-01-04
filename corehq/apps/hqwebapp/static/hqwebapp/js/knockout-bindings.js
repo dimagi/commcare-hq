@@ -295,3 +295,90 @@ ko.bindingHandlers.bootstrapTabs = {
         }, 0);
     }
 };
+
+function ValueOrNoneUI(opts) {
+    /* Helper used with exitInput/enterInput */
+    var self = this;
+    function wrapObservable(o) {
+        if (ko.isObservable(o)) {
+            return o;
+        } else {
+            return ko.observable(o);
+        }
+    }
+    self.allowed = wrapObservable(opts.allowed);
+    self.inputValue = wrapObservable(opts.value || '');
+    self.hasValue = ko.observable(!!self.inputValue());
+    self.hasFocus = ko.observable();
+    self.messages = opts.messages;
+
+    self.inputName = opts.inputName;
+    self.inputCss = opts.inputCss;
+    self.inputAttr = opts.inputAttr;
+
+    self.value = ko.computed({
+        read: function () {
+            if (self.hasValue()) {
+                return self.inputValue() || '';
+            } else {
+                return '';
+            }
+        },
+        write: function (value) {
+            self.inputValue(value)
+        }
+    });
+    self.setHasValue = function (hasValue, event) {
+        var before = self.value(),
+            after;
+        self.hasValue(hasValue);
+        after = self.value();
+        if (before !== after) {
+            $(event.toElement).change();
+        }
+    };
+    self.enterInput = function (data, event) {
+        self.setHasValue(true, event);
+        if (self.allowed()) {
+            self.hasFocus(true);
+        }
+    };
+    self.exitInput = function (data, event) {
+        self.setHasValue(false, event);
+        self.value('');
+    };
+}
+
+function _makeClickHelper(fnName, icon) {
+    return {
+        init: function(element, valueAccessor, allBindingsAccessor, viewModel, bindingContext) {
+            var $el = $(element);
+            $('<i></i>').addClass(icon).prependTo($el);
+            return ko.bindingHandlers.click.init(element, function () {
+                return valueAccessor()[fnName];
+            }, allBindingsAccessor, viewModel, bindingContext);
+        }
+    };
+}
+
+ko.bindingHandlers.exitInput = _makeClickHelper('exitInput', 'icon icon-remove');
+ko.bindingHandlers.enterInput = _makeClickHelper('enterInput', 'icon icon-plus');
+
+ko.bindingHandlers.valueOrNoneUI = {
+    init: function(element, valueAccessor, allBindingsAccessor, viewModel, bindingContext) {
+        var opts = valueAccessor(),
+            helper;
+        opts.messages = opts.messages || {};
+        $('span', element).each(function () {
+            opts.messages[$(this).data('slug')] = $(this).html();
+            $(this).hide();
+        });
+        helper = new ValueOrNoneUI(opts);
+        var subElement = $('<div></div>').attr(
+            'data-bind',
+            "template: 'value-or-none-ui-template'"
+        ).appendTo(element);
+        ko.applyBindings(helper, subElement.get(0));
+        return {controlsDescendantBindings: true};
+    }
+};

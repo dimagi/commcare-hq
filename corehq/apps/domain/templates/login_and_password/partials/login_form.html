@@ -1,10 +1,11 @@
+{% load i18n %}
 <div class="page-header">
-    <h1>Welcome back to {% if domain %}{{ domain }}{% else %}CommCare HQ{% endif %}!<br />
+    <h1>{% trans "Welcome back to " %}{% if domain %}{{ domain }}{% else %}CommCare HQ{% endif %}!<br />
         <small>
         {% if next %}
-            You will be transferred to your original destination after you sign in.
+            {% trans "You will be transferred to your original destination after you sign in." %}
         {% else %}
-            Please sign in below to continue.
+            {% trans "Please sign in below to continue." %}
         {% endif %}
         </small>
     </h1>
@@ -33,14 +34,14 @@
                 {% endfor %}
                 {% if field.name == "password" %}
                     <p class="help-block">
-                        <a href="{% url password_reset_email %}"><i class="icon icon-question-sign"></i> Forgot your password?</a>
+                        <a href="{% url password_reset_email %}"><i class="icon icon-question-sign"></i> {% trans "Forgot your password?" %}</a>
                     </p>
                 {% endif %}
             </div>
         </div>
     {% endfor %}
     </fieldset>
-    <div class="form-actions"><button tabindex="3" type="submit" class="btn btn-primary btn-large">Sign In</button></div>
+    <div class="form-actions"><button tabindex="3" type="submit" class="btn btn-primary btn-large">{% trans "Sign In" %}</button></div>
 </form>
 <script type="text/javascript">
     $(function () {
