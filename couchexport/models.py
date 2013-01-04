@@ -95,6 +95,7 @@ class ExportSchema(Document, UnicodeMixIn):
             'descending': True,
             'limit': 1,
             'include_docs': True,
+            'reduce': False,
         }
         ret = cls.view("couchexport/schema_checkpoints",
                        startkey=['by_timestamp', json.dumps(index), {}],
