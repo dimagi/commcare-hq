@@ -205,6 +205,9 @@ class IdStrings(object):
     def homescreen_title(self):
         return 'homescreen.title'
 
+    def app_display_name(self):
+        return "app.display.name"
+
     def xform_resource(self, form):
         return form.unique_id
 
