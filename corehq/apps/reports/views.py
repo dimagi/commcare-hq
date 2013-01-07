@@ -44,7 +44,6 @@ from couchdbkit.exceptions import ResourceNotFound
 from fields import FilterUsersField
 from util import get_all_users_by_domain, stream_qs
 from corehq.apps.hqsofabed.models import HQFormData
-from StringIO import StringIO
 from corehq.apps.app_manager.util import get_app_id
 from corehq.apps.groups.models import Group
 from corehq.apps.adm import utils as adm_utils
