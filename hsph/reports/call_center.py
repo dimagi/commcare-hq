@@ -1,120 +1,245 @@
 import datetime
-from corehq.apps.reports.standard import DatespanMixin, ProjectReportParametersMixin, CustomProjectReport
+from corehq.apps.reports.basic import BasicTabularReport, Column
+from corehq.apps.reports.standard import (DatespanMixin,
+    ProjectReportParametersMixin, CustomProjectReport)
+from corehq.apps.reports.standard.inspect import CaseDisplay, CaseListReport
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
-from corehq.apps.reports.generic import GenericTabularReport
-from dimagi.utils.couch.database import get_db
+from corehq.apps.reports.datatables.DTSortType import NUMERIC
 from hsph.reports import HSPHSiteDataMixin
+from hsph.fields import NameOfCATIField
+from corehq.apps.reports.fields import FilterUsersField, DatespanField
+from couchdb_aggregate.fn import mean, unique_count
+from casexml.apps.case import const
+from dimagi.utils.decorators.memoized import memoized
 
-class HSPHCallCenterReport(GenericTabularReport, CustomProjectReport, ProjectReportParametersMixin, DatespanMixin):
-    fields = ['corehq.apps.reports.fields.DatespanField']
+
+def username(key, report):
+    return report.usernames[key[0]]
 
 
-class DCCActivityReport(HSPHCallCenterReport):
-    name = "DCC Activity Report"
-    slug = "hsph_dcc_activity"
-    fields = ['corehq.apps.reports.fields.FilterUsersField',
-              'corehq.apps.reports.fields.DatespanField',
-              'hsph.fields.NameOfDCCField']
+def datestring_minus_days(datestring, days):
+    date = datetime.datetime.strptime(datestring[:10], '%Y-%m-%d')
+    return (date - datetime.timedelta(days=days)).isoformat()
+
+
+def date_minus_11_days(couchkey):
+    return couchkey + [datestring_minus_days(couchkey[0], 11)]
+
+
+def date_minus_14_days(couchkey):
+    return couchkey + [datestring_minus_days(couchkey[0], 14)]
+
+
+class CATIPerformanceReport(CustomProjectReport, ProjectReportParametersMixin,
+                            DatespanMixin, BasicTabularReport):
+    name = "CATI Performance Report"
+    slug = "cati_performance"
+    field_classes = (FilterUsersField, DatespanField, NameOfCATIField)
+    group_name = "CATI"
+    
+    couch_view = "hsph/cati_performance_report"
+    
+    default_column_order = (
+        'catiName',
+        'followedUp',
+        'noFollowUpAfter4Days',
+        'transferredToManager',
+        'transferredToField',
+        'notClosedOrTransferredAfter13Days',
+        'workingDaysUniqueCount',
+        'followUpTime',
+        'followUpTimeMean'
+    )
+
+    catiName = Column(
+        "Name of CATI", calculate_fn=username)
+
+    followedUp = Column(
+        "No. of Births Followed Up", key='followedUp')
+
+    noFollowUpAfter4Days = Column(
+        "No. of Cases with No Follow Up for 4 Days",
+        key='noFollowUpAfter4Days',
+        endkey_fn=date_minus_11_days)
+
+    transferredToManager = Column(
+        "Transferred to Call Center Manager", key='transferredToManager')
+
+    transferredToField = Column(
+        "Transferred to Field", key='transferredToField')
+
+    notClosedOrTransferredAfter13Days = Column(
+        "CATI Timed Out", key='notClosedOrTransferredAfter13Days',
+        endkey_fn=date_minus_14_days)
+
+    workingDaysUniqueCount = Column(
+        "No. of Working Days", key='workingDays', reduce_fn=unique_count)
+
+    followUpTime = Column(
+        "Total Follow Up Time", key='followUpTime')
+
+    followUpTimeMean = Column(
+        "Average Follow Up Time", key='followUpTime', reduce_fn=mean)
 
     @property
-    def headers(self):
-        return DataTablesHeader(DataTablesColumn("Name of DCC"),
-            DataTablesColumn("Total Number of Births Followed Up"),
-            DataTablesColumn("Number of births transferred to field for home visits"),
-            DataTablesColumn("Number of follow up calls where no data could be recorded"),
-            DataTablesColumn("Number of working days"),
-            DataTablesColumn("Total time for follow up (min)"),
-            DataTablesColumn("Average time per follow up call (min)"))
+    def start_and_end_keys(self):
+        return ([self.datespan.startdate_param_utc],
+                [self.datespan.enddate_param_utc])
 
     @property
-    def rows(self):
-        rows = []
+    def keys(self):
         for user in self.users:
-            key = [user.get('user_id')]
-            data = get_db().view("hsph/dcc_activity_report",
-                    reduce=True,
-                    startkey=key+[self.datespan.startdate_param_utc],
-                    endkey=key+[self.datespan.enddate_param_utc]
-                ).all()
-            for item in data:
-                item = item.get('value', {})
-                total_time = avg_time = "--"
-                reg_time = item.get('totalRegistrationTime', None)
-                avg_reg_time = item.get('averageRegistrationLength', None)
-                if reg_time and avg_reg_time:
-                    reg_time = datetime.datetime.fromtimestamp(reg_time//1000)
-                    total_time = reg_time.strftime("%M:%S")
-                    avg_reg_time = datetime.datetime.fromtimestamp(avg_reg_time//1000)
-                    avg_time = avg_reg_time.strftime("%M:%S")
-
-                rows.append([user.get('username_in_report'),
-                             item.get('totalBirths', 0),
-                             item.get('numBirthsTransferred', 0),
-                             item.get('numCallsWaitlisted', 0),
-                             item.get('totalWorkingDays', 0),
-                             total_time,
-                             avg_time])
-
-        return rows
+            yield [user['user_id']]
 
 
-class CallCenterFollowUpSummaryReport(HSPHCallCenterReport, HSPHSiteDataMixin):
-    name = "Call Center Follow Up Summary"
-    slug = "hsph_dcc_followup_summary"
+class HSPHCaseDisplay(CaseDisplay):
+    
+    @property
+    def region(self):
+        try:
+            return self.report.get_region_name(self.case.region_id)
+        except AttributeError:
+            return ""
 
-    fields = ['corehq.apps.reports.fields.DatespanField',
-              'hsph.fields.SiteField']
+    @property
+    def district(self):
+        try:
+            return self.report.get_district_name(
+                self.case.region_id, self.case.district_id)
+        except AttributeError:
+            return ""
+
+    @property
+    def site(self):
+        try:
+            return self.report.get_site_name(
+                self.case.region_id, self.case.district_id,
+                self.case.site_number)
+        except AttributeError:
+            return ""
+
+    @property
+    def patient_id(self):
+        try:
+            return self.case.patient_id
+        except AttributeError:
+            return ""
+
+    @property
+    def status(self):
+        return "Closed" if self.case.closed else "Open"
+
+    @property
+    def mother_name(self):
+        return getattr(self.case, 'name_mother', '')
+
+    @property
+    def date_of_delivery_or_admission(self):
+        return str(getattr(self.case, 'filter_date', ''))
+
+    @property
+    def address(self):
+        return getattr(self.case, 'house_address', '')
+
+    @property
+    @memoized
+    def allocated_to(self):
+        if self.status == "Closed":
+            close_action = [a for a in self.case.actions if a.action_type ==
+                const.CASE_ACTION_CLOSE][0]
+
+            CATI_FOLLOW_UP_FORMS = (
+                "http://openrosa.org/formdesigner/A5B08D8F-139D-46C6-9FDF-B1AD176EAE1F",
+            )
+            if close_action.xform.xmlns in CATI_FOLLOW_UP_FORMS:
+                return 'CATI'
+            else:
+                return 'Field'
+
+        else:
+            follow_up_type = getattr(self.case, 'follow_up_type', '')
+            house_number = getattr(self.case, 'phone_house_number', '')
+            husband_number = getattr(self.case, 'phone_husband_number', '')
+            mother_number = getattr(self.case, 'phone_mother_number', '')
+            asha_number = getattr(self.case, 'phone_asha_number', '')
+
+            if follow_up_type != 'field_follow_up' and (house_number or
+                   husband_number or mother_number or asha_number):
+                return 'CATI'
+            else:
+                return 'Field'
+
+    @property
+    def allocated_start(self):
+        try:
+            delta = datetime.timedelta(days=8 if self.allocated_to == 'CATI' else 13)
+            return (self.case.filter_date + delta).isoformat()[:10]
+        except AttributeError:
+            return ""
+
+    @property
+    def allocated_end(self):
+        try:
+            delta = datetime.timedelta(days=13 if self.allocated_to == 'CATI' else 23)
+            return (self.case.filter_date + delta).isoformat()[:10]
+        except AttributeError:
+            return ""
+
+    @property
+    def outside_allocated_period(self):
+        if not (hasattr(self.case, 'filter_date') and
+                isinstance(self.case.filter_date, datetime.date)):
+            return ""
+
+        if self.case.closed_on:
+            compare_date = self.case.closed_on.date()
+        else:
+            compare_date = datetime.date.today()
+
+        return 'Yes' if (compare_date - self.case.filter_date).days > 23 else 'No'
+
+
+class CaseReport(CaseListReport, CustomProjectReport, HSPHSiteDataMixin):
+    name = 'Case Report'
+    slug = 'case_report'
 
     @property
     def headers(self):
-        return DataTablesHeader(DataTablesColumn("Region"),
+        return DataTablesHeader(
+            DataTablesColumn("Region"),
             DataTablesColumn("District"),
             DataTablesColumn("Site"),
-            DataTablesColumn("Total Number of Birth events with contact details"),
-            DataTablesColumn("Total number of births followed up"),
-            DataTablesColumn("Number of cases followed up at day 8th"),
-            DataTablesColumn("Number of cases followed up between day 9th to 13th"),
-            DataTablesColumn("Number of cases with contact details open at day 14th"),
-            DataTablesColumn("Number of cases with contact details transferred to Field management for home Visits"),
-            DataTablesColumn("Number of cases where no out comes could be recorded"))
+            DataTablesColumn("Patient ID"),
+            DataTablesColumn("Status"),
+            DataTablesColumn("Mother Name"),
+            DataTablesColumn("Date of Delivery or Admission"),
+            DataTablesColumn("Address of Patient"),
+            DataTablesColumn("Allocated To"),
+            DataTablesColumn("Allocated Start"),
+            DataTablesColumn("Allocated End"),
+            DataTablesColumn("Outside Allocated Period")
+        )
 
     @property
     def rows(self):
-        rows = []
-        if not self.selected_site_map:
-            self._selected_site_map = self.site_map
-        keys = self.generate_keys()
-        for key in keys:
-            data = get_db().view("hsph/dcc_followup_summary",
-                reduce=True,
-                startkey=key+[self.datespan.startdate_param_utc],
-                endkey=key+[self.datespan.enddate_param_utc]
-            ).all()
-            for item in data:
-                item = item.get('value')
-                if item:
-                    region, district, site = self.get_site_table_values(key)
 
-                    now = self.datespan.enddate
-                    day14 = now-datetime.timedelta(days=14)
-                    day14 = day14.strftime("%Y-%m-%d")
-                    day14_data = get_db().view("hsph/cases_by_birth_date",
-                                reduce=True,
-                                startkey=key,
-                                endkey=key+[day14]
-                            ).first()
-                    still_open_at_day14 = day14_data.get('value', 0) if day14_data else 0
+        for item in self.case_results['rows']:
+            disp = HSPHCaseDisplay(self, self.get_case(item))
 
-                    rows.append([
-                        region,
-                        district,
-                        site,
-                        item.get('totalBirthsWithContact', 0),
-                        item.get('totalBirths', 0),
-                        item.get('numCasesFollowedUpByDay8', 0),
-                        item.get('numCasesFollowedUpBetweenDays9and13', 0),
-                        still_open_at_day14,
-                        item.get('numCasesWithContactTransferredToField', 0),
-                        item.get('numCasesWithNoOutcomes', 0)
-                    ])
-        return rows
+            yield [
+                disp.region,
+                disp.district,
+                disp.site,
+                disp.patient_id,
+                disp.status,
+                disp.case_link,
+                disp.date_of_delivery_or_admission,
+                disp.address,
+                disp.allocated_to,
+                disp.allocated_start,
+                disp.allocated_end,
+                disp.outside_allocated_period
+            ]
+
+
+

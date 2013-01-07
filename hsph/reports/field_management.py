@@ -14,7 +14,7 @@ from hsph.reports import HSPHSiteDataMixin
 class HSPHFieldManagementReport(GenericTabularReport, CustomProjectReport, ProjectReportParametersMixin, DatespanMixin):
     fields = ['corehq.apps.reports.fields.FilterUsersField',
               'corehq.apps.reports.fields.DatespanField',
-              'hsph.fields.NameOfDCOField',
+              'hsph.fields.NameOfFIDAField',
               'hsph.fields.NameOfDCTLField']
 
     _selected_dctl = None
@@ -43,12 +43,12 @@ class HSPHFieldManagementReport(GenericTabularReport, CustomProjectReport, Proje
         return dctl_id, dctl_name
 
 class DCOActivityReport(HSPHFieldManagementReport):
-    name = "DCO Activity Report"
-    slug = "hsph_dco_activity"
+    name = "FIDA Activity Report"
+    slug = "hsph_fida_activity"
 
     @property
     def headers(self):
-        return DataTablesHeader(DataTablesColumn("Name of DCO"),
+        return DataTablesHeader(DataTablesColumn("Name of FIDA"),
             DataTablesColumn("Name of DCTL"),
             DataTablesColumn("No. Facilities Covered"),
             DataTablesColumn("No. of Facility Visits"),
@@ -122,7 +122,7 @@ class FieldDataCollectionActivityReport(HSPHFieldManagementReport):
     slug = "hsph_field_data"
     fields = ['corehq.apps.reports.fields.FilterUsersField',
               'corehq.apps.reports.fields.DatespanField',
-              'hsph.fields.NameOfDCOField',
+              'hsph.fields.NameOfFIDAField',
               'hsph.fields.NameOfDCTLField',
               'hsph.fields.FacilityField']
 
@@ -198,7 +198,7 @@ class HVFollowUpStatusReport(HSPHFieldManagementReport, HSPHSiteDataMixin):
     slug = "hsph_hv_status"
     fields = ['corehq.apps.reports.fields.FilterUsersField',
               'corehq.apps.reports.fields.DatespanField',
-              'hsph.fields.NameOfDCOField',
+              'hsph.fields.NameOfFIDAField',
               'hsph.fields.NameOfDCTLField',
               'hsph.fields.SiteField']
 
@@ -284,7 +284,7 @@ class HVFollowUpStatusSummaryReport(HVFollowUpStatusReport):
     slug = "hsph_hv_status_summary"
     fields = ['corehq.apps.reports.fields.FilterUsersField',
               'corehq.apps.reports.fields.DatespanField',
-              'hsph.fields.NameOfDCOField',
+              'hsph.fields.NameOfFIDAField',
               'hsph.fields.NameOfDCTLField',
               'hsph.fields.SelectCaseStatusField',
               'hsph.fields.SiteField']
