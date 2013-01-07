@@ -1,4 +1,5 @@
 from couchdbkit.ext.django.schema import *
+from dimagi.utils.couch.loosechange import map_reduce
 
 # these are the allowable stock transaction types, listed in the
 # default ordering in which they are processed. processing order
@@ -106,3 +107,7 @@ class CommtrackConfig(Document):
     @property
     def known_supply_point_types(self):
         return set(spt.name for spt in self.supply_point_types)
+
+    @property
+    def supply_point_categories(self):
+        return map_reduce(lambda spt: [(category, spt.name) for category in spt.categories], data=self.supply_point_types)

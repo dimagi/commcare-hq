@@ -57,8 +57,8 @@ class ReportField(CacheableRequestMixIn):
 
 class ReportSelectField(ReportField):
     slug = "generic_select"
-    template = "reports/fields/select_generic.html"
     name = ugettext_noop("Generic Select")
+    template = "reports/fields/select_generic.html"
     default_option = ugettext_noop("Select Something...")
     options = [dict(val="val", text="text")]
     cssId = "generic_select_box"
@@ -80,8 +80,18 @@ class ReportSelectField(ReportField):
             cssClasses=self.cssClasses,
             label=self.name,
             selected=self.selected,
-            use_combo_box=self.as_combo
+            use_combo_box=self.as_combo,
         )
+
+class ReportMultiSelectField(ReportSelectField):
+    template = "reports/fields/multiselect_generic.html"
+    selected = []
+    default_option = None
+
+    # enfore as_combo = False ?
+
+    def update_params(self):
+        self.selected = self.request.GET.getlist(self.slug)
 
 class MonthField(ReportField):
     slug = "month"

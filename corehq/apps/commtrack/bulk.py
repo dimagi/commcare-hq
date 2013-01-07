@@ -289,8 +289,10 @@ def import_location(domain, loc, known_loc_types):
     outlet_props = dict(loc)
     for k in ('outlet_name', 'outlet_code'):
         del outlet_props[k]
-    if outlet_props.get('outlet_type') not in known_loc_types:
-        yield 'fyi: type "%s" for outlet "%s" is not a known outlet type' % (outlet_props.get('outlet_type'), name)
+    if 'outlet_type' in outlet_props:
+        outlet_props['outlet_type'] = outlet_props['outlet_type'].strip()
+        if outlet_props['outlet_type'] not in known_loc_types:
+            yield 'fyi: type "%s" for outlet "%s" is not a known outlet type' % (outlet_props.get('outlet_type'), name)
 
     # check that sms code for outlet is unique
     code = loc['outlet_code'].lower()
