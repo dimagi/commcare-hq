@@ -168,8 +168,12 @@ class PactPatientInfoReport(PactDrilldownReportMixin,ESSortableMixin, GenericTab
                 }
             },
             "fields": [
+                "_id",
+                "received_on",
                 "form.meta.timeEnd",
-                "form.meta.username"
+                "form.meta.timeStart",
+                "form.meta.username",
+                "form.#type",
             ],
             "sort": self.get_sorting_block(),
             "size": self.pagination.count,
@@ -178,6 +182,7 @@ class PactPatientInfoReport(PactDrilldownReportMixin,ESSortableMixin, GenericTab
         }
 
         full_query['script_fields'] = pact_script_fields()
+        print simplejson.dumps(full_query)
         return self.xform_es.run_query(full_query)
 
 
