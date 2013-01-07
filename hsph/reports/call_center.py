@@ -8,7 +8,7 @@ from corehq.apps.reports.datatables.DTSortType import NUMERIC
 from hsph.reports import HSPHSiteDataMixin
 from hsph.fields import NameOfCATIField
 from corehq.apps.reports.fields import FilterUsersField, DatespanField
-from couchdb_aggregate.fn import mean, unique_count
+from couchdbkit_aggregate.fn import mean, unique_count
 from casexml.apps.case import const
 from dimagi.utils.decorators.memoized import memoized
 
@@ -205,7 +205,7 @@ class CaseReport(CaseListReport, CustomProjectReport, HSPHSiteDataMixin):
 
     @property
     def headers(self):
-        return DataTablesHeader(
+        headers = DataTablesHeader(
             DataTablesColumn("Region"),
             DataTablesColumn("District"),
             DataTablesColumn("Site"),
@@ -219,6 +219,8 @@ class CaseReport(CaseListReport, CustomProjectReport, HSPHSiteDataMixin):
             DataTablesColumn("Allocated End"),
             DataTablesColumn("Outside Allocated Period")
         )
+        headers.no_sort = True
+        return headers
 
     @property
     def rows(self):
