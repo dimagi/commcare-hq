@@ -8,6 +8,9 @@
     {% block pactpatient_header %}
             <div>
                 {% block patient_hat %}
+                    <h2>
+                    {{ patient_doc.pactid}}  <small>{{ patient_doc.last_name }},  {{ patient_doc.first_name }}</small>
+                    </h2>
                 {% endblock patient_hat %}
             </div>
     {% endblock pactpatient_header %}

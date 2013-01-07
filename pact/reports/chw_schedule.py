@@ -1,5 +1,6 @@
 from datetime import datetime, timedelta, timedelta
 import time
+from dateutil.parser import parser
 from django.core.cache import cache
 from django.http import HttpResponse
 import simplejson
@@ -120,6 +121,9 @@ def username_submissions(username, query_date, case_id=None):
     """
     Actually run query for username submissions
     todo: do terms for the pact_ids instead of individual term?
+
+
+    only DOT
     """
     xform_es = XFormES()
     query = {
@@ -129,37 +133,36 @@ def username_submissions(username, query_date, case_id=None):
 #            "form.pact_id",
 #            "form.encounter_date"
 #            "form.meta.username"
+#            "form.visit_type",
+#            "form.visit_kept",
+#            "form.contact_type",
+#            "form.observed_art",
+#            "form.observed_non_art",
+#            "form.observed_non_art_dose",
+#            "form.observed_art_dose",
 #        ],
         "script_fields" : {
-            "doc_id" : {
-                "script" : "_source._id"
-            },
-            "pact_id": {
-                "script": "_source.form.pact_id",
-            },
-            "encounter_date": {
-                "script": "_source.form.encounter_date",
-                },
+            "doc_id" : { "script" : "_source._id" },
+            "pact_id": { "script": "_source.form.pact_id", },
+            "encounter_date": { "script": "_source.form.encounter_date", },
+            "username": { "script": "_source.form.meta.username", },
 
-            "username": {
-                "script": "_source.form.meta.username",
-                },
-
+            "visit_type": { "script": "_source.form.visit_type", },
+            "visit_kept": { "script": "_source.form.visit_kept", },
+            "contact_type": { "script": "_source.form.contact_type", },
+            "observed_art": { "script": "_source.form.observed_art", },
+            "observed_non_art": { "script": "_source.form.observed_non_art", },
+            "observer_non_art_dose": { "script": "_source.form.observed_non_art_dose", },
+            "observed_art_dose": { "script": "_source.form.observed_art_dose", },
+            "pillbox_check": {"script": "_source.form.pillbox_check.check"}
         },
         "query": {
             "filtered": {
                 "filter": {
                     "and": [
-                        {
-                            "term": {
-                                "domain": "pact"
-                            }
-                        },
-                        {
-                            "term": {
-                                "form.meta.username": username
-                            }
-                        },
+                        { "term": { "domain.exact": "pact" } },
+                        { "term": { "form.meta.username": username } },
+                        { "term": { "form.#type": "dots_form" } },
                         {
                             "numeric_range": {
                                 "form.encounter_date": {
@@ -227,8 +230,7 @@ def get_schedule_tally(username, total_interval, override_date=None):
         #inefficient, but we need to get the patients in alpha order
         #patients = sorted(patients, key=lambda x: x.last_name)
 
-
-
+        dp = parser()
         for case_id in patient_case_ids:
             total_scheduled+=1
             #            searchkey = [str(username), str(pact_id), visit_date.year, visit_date.month, visit_date.day]
@@ -239,7 +241,14 @@ def get_schedule_tally(username, total_interval, override_date=None):
             #            submissions = []
             #ES Query
             if len(submissions) > 0:
-                print submissions
+                print submissions[0]['fields']
+                #calculate if pillbox checked
+                pillbox_check_data = simplejson.loads(submissions[0]['fields']['pillbox_check'])
+                anchor_date = dp.parse(pillbox_check_data['anchor'])
+                encounter_date = dp.parse(submissions[0]['fields']['encounter_date'])
+                submissions[0]['fields']['has_pillbox_check'] = anchor_date.date() == encounter_date.date()
+                #this works
+
                 visited.append(submissions[0]['fields'])
                 total_visited += 1
             else:
@@ -293,20 +302,22 @@ def chw_calendar_submit_report(request, username):
                         else:
                             rowdata.append('unscheduled')
                             #contact_type
-                        rowdata.append(v.form['contact_type'])
+                        rowdata.append(v['contact_type'])
 
                         #visit type
-                        rowdata.append(v.form['visit_type'])
+                        rowdata.append(v['visit_type'])
 
                         #visit kept
-                        rowdata.append(v.form['visit_kept'])
+                        rowdata.append(v['visit_kept'])
 
-                        rowdata.append(v.form['meta']['username'])
-                        if v.form['meta']['username'] == username:
+                        rowdata.append(v['meta']['username'])
+                        if v['meta']['username'] == username:
                             rowdata.append('assigned')
                         else:
                             rowdata.append('covered')
                         rowdata.append(v.get_id)
+
+                        print "%s: %s"% (cpt.pact_id, rowdata)
                     else:
                         rowdata.append('novisit')
                     csvdata.append(','.join(rowdata))
@@ -320,6 +331,5 @@ def chw_calendar_submit_report(request, username):
             (nowdate - timedelta(days=total_interval)).strftime("%Y-%m-%d"))
         resp.write('\n'.join(csvdata))
         return resp
-
     else:
         return return_context

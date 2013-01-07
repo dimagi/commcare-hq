@@ -6,7 +6,7 @@
 {#{% endblock extrahead %}#}
 
 {% block reportcontent %}
-    <h3>({{ patient_case.pactid }}) {{ patient_case.name }} DOT Report <small>{{ startdate }}-{{ enddate }}</small></h3>
+    <h3>({{ patient_case.pactid }}) {{ patient_case.name }} DOT Report <small>{{ startdate }}-{{ enddate }} &nbsp; <a href="{{ patient_case.get_info_url }}" target="_blank">Profile</a></small></h3>
     <small>Observations spanning <strong>visits</strong> during this time</small>
     <a id="legendpop" href="#" class="btn btn-info" rel="popover" data-content='<strong>Obs. Method</strong><br>
             <img src="{{ STATIC_URL }}pact/icons/plus.png">&nbsp;Direct<br>

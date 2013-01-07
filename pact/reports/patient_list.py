@@ -14,6 +14,7 @@ from corehq.apps.users.models import CommCareUser
 from dimagi.utils.decorators.memoized import memoized
 from pact.enums import PACT_DOMAIN, PACT_HP_CHOICES, PACT_DOT_CHOICES, PACT_CASE_TYPE
 from pact.reports import  ESSortableMixin, query_per_case_submissions_facet
+from pact.reports.dot import PactDOTReport
 from pact.reports.patient import PactPatientInfoReport
 
 
@@ -132,7 +133,7 @@ class PatientListDashboardReport(GenericTabularReport, ESSortableMixin, CustomPr
             yield self.format_date(row_field_dict.get("opened_on"))
             yield self.format_date(row_field_dict.get("modified_on"))
             yield row_field_dict.get("hp_status")
-            yield row_field_dict.get("dot_status")
+            yield self.pact_dot_link(row_field_dict['_id'], row_field_dict.get("dot_status"))
             #for closed on, do two checks:
             if row_field_dict.get('closed', False):
                 #it's closed
@@ -231,6 +232,20 @@ class PatientListDashboardReport(GenericTabularReport, ESSortableMixin, CustomPr
                 ))
         except NoReverseMatch:
             return "%s (bad ID format)" % name
+
+    def pact_dot_link(self, case_id, status):
+
+        if status is None or status == '':
+            return ''
+
+        try:
+            return html.mark_safe("<span class='label'>%s</span> <a class='ajax_dialog' href='%s'>Report</a>" % (
+                html.escape(status),
+                html.escape(
+                    PactDOTReport.get_url(*[self.domain]) + "?dot_patient=%s" % case_id),
+                ))
+        except NoReverseMatch:
+            return "%s (bad ID format)" % status
 
 
 

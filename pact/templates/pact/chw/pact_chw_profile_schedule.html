@@ -54,26 +54,71 @@
                     </div>
                     <div class="span7">
                         {% if visit %}
-                            <div class="alert alert-info">
-                                <strong>
-                                    <a href="#">
-{#                                  <a href="{% patient_url_from_form visit %}">#}
-                                        {% if visit.scheduled == "yes" %}
-                                            Scheduled
-                                        {% else %}
-                                            Unscheduled
-                                        {% endif %}
-                                        ({{ visit.form.visit_type|title }})
-                                    </a></strong>
-                                by
-                                {% if visit.form.meta.username == username %}
-                                    <strong>{{ visit.username }}</strong>
-                                {% else %}
-                                    <em>{{ visit.username }}</em>
-                                {% endif %}
-                                &nbsp;&nbsp;
-                                <a href="#">View {{ visit.doc_id }}</a>
-                            </div>
+                                <table class="table table-condensed">
+                                    <thead>
+                                    <th>Scheduled</th>
+                                    <th>Visit Kept</th>
+                                    <th>Type</th>
+                                    <th>Contact</th>
+                                    <th>by</th>
+                                    <th>Observed ART</th>
+                                    <th>Pillbox Check</th>
+                                    </thead>
+                                    <tbody>
+                                    <tr>
+                                        <td>
+                                            <div class="alert alert-info">
+                                            <h4>
+                                            {% if visit.scheduled == "yes" %}
+                                                Scheduled
+                                            {% else %}
+                                                Unscheduled
+                                            {% endif %}
+                                                &nbsp;<small><a href="{% url render_form_data domain visit.doc_id %}">View</a></small>
+                                            </h4>
+                                            </div>
+
+                                        </td>
+                                        <td>
+                                            {% if visit.visit_kept == "yes" %}
+                                            {# No – Client told PACT they’d miss it#}
+                                                Yes
+                                            {% endif %}
+                                            {% if visit.visit_kept == "notice" %}
+    {#                                            No – Client told PACT they’d miss it#}
+                                                No - Notice given
+                                            {% endif %}
+                                            {% if visit.scheduled == "pchanged" %}
+                                                Changed by PACT
+                                            {% endif %}
+
+                                            {% if visit.scheduled == "pcancelled" %}
+                                                Cancelled
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            {{ visit.visit_type|title }}
+                                        </td>
+                                        <td>
+                                            {{ visit.contact_type|title }}
+                                        </td>
+                                        <td>
+                                            {% if visit.form.meta.username == username %}
+                                                <strong>{{ visit.username }}</strong>
+                                            {% else %}
+                                                <em>{{ visit.username }}</em>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            {{ visit.observed_art }}
+                                        </td>
+                                        <td>
+                                            {{ visit.has_pillbox_check }}
+                                        </td>
+                                    </tr>
+
+                                    </tbody>
+                                </table>
                         {% else %}
                             <div class="alert alert-error"><h4>No Visit</h4></div>
                         {% endif %}

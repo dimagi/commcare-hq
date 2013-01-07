@@ -2,6 +2,7 @@ from datetime import datetime, time
 import logging
 import uuid
 import dateutil
+from django.core.urlresolvers import reverse
 from lxml import etree
 import tempfile
 from django.core.servers.basehttp import FileWrapper
@@ -10,6 +11,7 @@ from django_digest.decorators import httpdigest
 import simplejson
 from corehq.apps.api.domainapi import DomainAPI
 from corehq.apps.api.es import XFormES, CaseES
+from corehq.apps.app_manager.models import ApplicationBase
 from corehq.apps.domain.decorators import login_and_domain_required
 from corehq.apps.fixtures.models import FixtureDataType, FixtureDataItem
 from corehq.apps.groups.models import Group
@@ -25,18 +27,70 @@ from pact.utils import pact_script_fields, case_script_field, submit_xform
 from django.core.cache import cache
 
 
+#address edit
+#registration = Patient Registration
+PACT_CLOUD_APPNAME = "PACT Cloud"
+PACT_CLOUDCARE_MODULE = "PACT Cloudcare"
+
+FORM_PROGRESS_NOTE = "Progress Note"
+FORM_DOT = "DOT Form"
+FORM_BLOODWORK = "Bloodwork"
+FORM_ADDRESS = "Address and Phone Update"
+#CLOUDCARE_FORMS = { PATI}
+
+
 def get_cloudcare_app():
     """
     Total hack function to get direct links to the cloud care application pages
     """
-    "PACT Cloud"
+
+    def get_latest_build(domain, app_id):
+        build = ApplicationBase.view('app_manager/saved_app',
+                                     startkey=[domain, app_id, {}],
+                                     endkey=[domain, app_id],
+                                     descending=True,
+                                     limit=1).one()
+        return build._doc if build else None
+
     from corehq.apps.cloudcare import api
-    apps = api.get_cloudcare_apps('pact')
-    #should filter by app['name']
-    #name: PACT Cloud
-    app = api.get_app('pact', apps[0]['_id'])
-    mod = app['modules'][0]
-    n=app['modules'][0]['name']#{'en': 'PACT Cloudcare'}
+    apps = api.get_cloudcare_apps(PACT_DOMAIN)
+    filtered_app = filter(lambda x: x['name']==PACT_CLOUD_APPNAME, apps)
+    if len(filtered_app) != 1:
+        raise Exception ("Your hacky assumption failed for pact!")
+
+    app = api.get_app(PACT_DOMAIN, filtered_app[0]['_id'])
+    app_id = app['_id']
+#    print url_root
+
+    pact_cloudcare = filter(lambda x: x['name']['en'] == PACT_CLOUDCARE_MODULE, app['modules'])
+    forms = pact_cloudcare[0]['forms']
+    ret = dict((f['name']['en'], ix) for (ix, f) in enumerate(forms))
+
+    #url_root = reverse('cloudcare_get_app', kwargs={'app_id': app_id, "domain": PACT_DOMAIN})
+    #/a/pact/cloudcare/apps/view/0ff529f53c26f44e1fa020e79afe0b1b/0/1/case/%(case_id)s/enter/
+    url_root = '/a/%(domain)s/cloudcare/apps/view/%(build_id)s/%(module_id)s/%(form_id)s/case/%(case_id)s/enter/'
+    ret['url_root'] = url_root
+    ret['domain'] = PACT_DOMAIN
+    ret['app_id'] = app_id
+    latest_build = get_latest_build(PACT_DOMAIN, app_id)
+    if latest_build is not None:
+        latest_build_id = latest_build['_id']
+        ret['build_id'] = latest_build_id
+    ret['module_id'] = 0
+    return ret
+
+def get_cloudcare_url(case_id, mode):
+    app_dict = get_cloudcare_app()
+    url_root = app_dict['url_root']
+    build_id = app_dict['build_id']
+    module_id = app_dict['module_id']
+    return  url_root % dict(form_id=app_dict[mode], case_id=case_id, domain=PACT_DOMAIN, build_id=build_id, module_id=module_id)
+
+#    form_dict = dict((x['name'], ix) for (ix, x) in enumerate(forms))
+#    return form_dict
+
+    #n = app['modules'][0]['name']#{'en': 'PACT Cloudcare'}
+
     #>>> a['modules'][0]['forms'][0]['name']
 #{'en': 'Patient Registration'}
 

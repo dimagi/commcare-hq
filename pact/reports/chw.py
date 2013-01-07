@@ -1,3 +1,4 @@
+from django.core.urlresolvers import NoReverseMatch, reverse
 from django.http import Http404
 import simplejson
 from corehq.apps.api.es import XFormES, CaseES
@@ -5,6 +6,7 @@ from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
 from corehq.apps.reports.generic import GenericTabularReport
 from corehq.apps.reports.standard import CustomProjectReport
 from corehq.apps.users.models import CommCareUser
+from dimagi.utils import html
 from dimagi.utils.decorators import inline
 from dimagi.utils.decorators.memoized import memoized
 from pact.enums import PACT_CASE_TYPE
@@ -54,6 +56,23 @@ class PactCHWProfileReport(PactDrilldownReportMixin, ESSortableMixin,GenericTabu
     #    fields = ['corehq.apps.reports.fields.FilterUsersField', 'corehq.apps.reports.fields.DatespanField',]
     #    hide_filters=False
 
+
+    def pact_case_link(self, case_id):
+        #stop the madness
+        from pact.reports.patient import PactPatientInfoReport
+        try:
+            return PactPatientInfoReport.get_url(*[self.domain]) + "?patient_id=%s" % case_id
+        except NoReverseMatch:
+            return "#"
+
+    def pact_dot_link(self, case_id ):
+        from pact.reports.dot import PactDOTReport
+        try:
+            return PactDOTReport.get_url(*[self.domain]) + "?dot_patient=%s" % case_id
+        except NoReverseMatch:
+            return "#"
+
+
     def get_assigned_patients(self):
 
         #get list of patients and their submissions on who this chw is assigned as primary hp
@@ -71,12 +90,16 @@ class PactCHWProfileReport(PactDrilldownReportMixin, ESSortableMixin,GenericTabu
         case_type = PACT_CASE_TYPE
 
         chw_patients_res = self.case_es.run_query(case_query)
-        print chw_patients_res
 
         case_ids = [x['fields']['_id'] for x in chw_patients_res['hits']['hits']]
         #todo, facet this on num submits?
 
         assigned_patients = [x['fields'] for x in chw_patients_res['hits']['hits']]
+
+        for x in assigned_patients:
+            x['info_url'] = self.pact_case_link(x['_id'])
+            if x['dot_status'] is not None or x['dot_status'] != "":
+                x['dot_url'] = self.pact_dot_link(x['_id'])
         return sorted(assigned_patients, key=lambda x: int(x['pactid']))
         #return assigned_patients
 
@@ -148,6 +171,7 @@ class PactCHWProfileReport(PactDrilldownReportMixin, ESSortableMixin,GenericTabu
         query = self.xform_es.base_query(self.request.domain, start=self.pagination.start,
                                          size=self.pagination.count)
         query['fields'] = [
+            "_id",
             "form.#type",
 #            "form.encounter_date",
 #            "form.note.encounter_date",
@@ -180,8 +204,8 @@ class PactCHWProfileReport(PactDrilldownReportMixin, ESSortableMixin,GenericTabu
                 yield row_field_dict['script_pact_id']
                 yield row_field_dict['script_encounter_date']
                 yield row_field_dict["form.#type"].replace('_', ' ').title()
-                yield row_field_dict["received_on"].replace('_', ' ').title()
-
+                yield "%s %s" % (row_field_dict["received_on"].replace('_', ' ').title(),
+                html.mark_safe("<a class='ajax_dialog' href='%s'>View</a>" % ( reverse('render_form_data', args=[self.domain, row_field_dict['_id']]))))
             res = self.es_results
             if res.has_key('error'):
                 pass

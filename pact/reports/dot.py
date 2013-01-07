@@ -13,6 +13,7 @@ from couchdbkit.resource import RequestFailed
 from couchforms.models import XFormInstance
 from dimagi.utils.decorators.memoized import memoized
 from pact.enums import PACT_DOMAIN, PACT_CASE_TYPE, XMLNS_DOTS_FORM
+from pact.models import PactPatientCase
 from pact.reports.dot_calendar import DOTCalendarReporter
 
 
@@ -60,7 +61,7 @@ class PactDOTReport(GenericTabularReport, CustomProjectReport, ProjectReportPara
             self.report_template_path = "pact/dots/dots_report_nopatient.html"
             return ret
         ret['dot_case_id'] = self.request.GET['dot_patient']
-        casedoc = CommCareCase.get(ret['dot_case_id'])
+        casedoc = PactPatientCase.get(ret['dot_case_id'])
         ret['patient_case'] = casedoc
         start_date_str = self.request.GET.get('startdate', (datetime.utcnow() - timedelta(days=7)).strftime('%Y-%m-%d'))
         end_date_str = self.request.GET.get('enddate', datetime.utcnow().strftime("%Y-%m-%d"))

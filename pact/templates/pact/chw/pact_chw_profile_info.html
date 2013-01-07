@@ -36,9 +36,16 @@
         <tr>
         <th>{{ pt.pactid }}</th>
         <td>{{ pt.name }}</td>
-        <td>{{ pt.hp_status }}</td>
-        <td>{{ pt.dot_status }}</td>
-        <td></td>
+        <td> {{ pt.hp_status }} </td>
+
+        <td>
+            {% if pt.dot_url %}
+                <a href="{{ pt.dot_url }}">{{ pt.dot_status }}</a>
+            {% else %}
+                {{ pt.dot_status }}
+            {% endif %}
+        </td>
+        <td><a href="{{ pt.info_url }}">Profile</a></td>
         </tr>
     {% endfor %}
     </table>

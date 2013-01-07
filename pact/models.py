@@ -8,7 +8,7 @@ from dimagi.utils.decorators.memoized import memoized
 from pact import enums
 
 from couchdbkit.schema.properties import ALLOWED_PROPERTY_TYPES
-from pact.enums import TIME_LABEL_LOOKUP, PACT_SCHEDULES_NAMESPACE, DOT_ART, DOT_NONART, PACT_REGIMEN_CHOICES_FLAT_DICT, REGIMEN_CHOICES
+from pact.enums import TIME_LABEL_LOOKUP, PACT_SCHEDULES_NAMESPACE, DOT_ART, DOT_NONART, PACT_REGIMEN_CHOICES_FLAT_DICT, REGIMEN_CHOICES, PACT_DOMAIN
 from pact.regimen import regimen_string_from_doc
 
 ALLOWED_PROPERTY_TYPES.add(partial)
@@ -209,6 +209,15 @@ class PactPatientCase(CommCareCase):
         self['computed_'][PACT_SCHEDULES_NAMESPACE] = [x.to_json() for x in schedules]
         self.save()
 #        print schedules
+
+
+    def get_info_url(self):
+        from pact.reports.patient import PactPatientInfoReport
+        return PactPatientInfoReport.get_url( *[PACT_DOMAIN]) + "?patient_id=%s" % self._id
+
+    def get_dot_url(self):
+        from pact.reports.dot import PactDOTReport
+        return PactDOTReport.get_url(*[PACT_DOMAIN]) + "?dot_patient=%s" % self._id
 
 
 

@@ -1,3 +1,4 @@
+from django.core.urlresolvers import reverse
 from django.http import Http404
 from django.template.context import RequestContext
 import simplejson
@@ -7,8 +8,10 @@ from corehq.apps.groups.models import Group
 from corehq.apps.reports.datatables import DataTablesColumn, DataTablesHeader
 from corehq.apps.reports.generic import GenericTabularReport
 from corehq.apps.reports.standard import CustomProjectReport
+from dimagi.utils import html
 from dimagi.utils.decorators import inline
 from dimagi.utils.decorators.memoized import memoized
+from pact import api
 from pact.enums import PACT_HP_GROUPNAME, PACT_DOMAIN, PACT_PROVIDER_FIXTURE_TAG
 from pact.forms.patient_form import PactPatientForm
 from pact.forms.weekly_schedule_form import ScheduleForm
@@ -96,12 +99,15 @@ class PactPatientInfoReport(PactDrilldownReportMixin,ESSortableMixin, GenericTab
         ret = RequestContext(self.request)
         ret = {'patient_doc': patient_doc}
         #        ret.update(csrf(self.request))
-        ret['pt_root_url'] = PactPatientInfoReport.get_url(
-            *[self.request.domain]) + "?patient_id=%s" % self.request.GET['patient_id']
+        ret['pt_root_url'] = patient_doc.get_info_url()
         ret['view_mode'] = view_mode
 
         if view_mode == 'info':
             self.report_template_path = "pact/patient/pactpatient_info.html"
+            ret['cloudcare_addr_edit_url'] = api.get_cloudcare_url(patient_doc._id, api.FORM_ADDRESS)
+            ret['cloudcare_pn_url'] = api.get_cloudcare_url(patient_doc._id, api.FORM_PROGRESS_NOTE)
+            ret['cloudcare_dot_url'] = api.get_cloudcare_url(patient_doc._id, api.FORM_DOT)
+            ret['cloudcare_bw_url'] = api.get_cloudcare_url(patient_doc._id, api.FORM_BLOODWORK)
         elif view_mode == 'submissions':
             tabular_context = super(PactPatientInfoReport, self).report_context
             tabular_context.update(ret)
@@ -162,15 +168,6 @@ class PactPatientInfoReport(PactDrilldownReportMixin,ESSortableMixin, GenericTab
                 }
             },
             "fields": [
-                "form.#type",
-#                "form.encounter_date",
-#                "form.note.encounter_date",
-#                "form.case.case_id",
-#                "form.case.@case_id",
-#                "form.pact_id",
-#                "form.note.pact_id",
-                "received_on",
-                "form.meta.timeStart",
                 "form.meta.timeEnd",
                 "form.meta.username"
             ],
@@ -198,7 +195,22 @@ class PactPatientInfoReport(PactDrilldownReportMixin,ESSortableMixin, GenericTab
                 yield row_field_dict["form.#type"].replace('_', ' ').title()
                 yield row_field_dict.get("form.meta.username", "")
                 yield self.format_date(row_field_dict.get("form.meta.timeStart", ""))
-                yield self.format_date(row_field_dict["received_on"])
+#                yield self.format_date(row_field_dict["received_on"])
+                "_id",
+                "form.#type",
+                #                "form.encounter_date",
+                #                "form.note.encounter_date",
+                #                "form.case.case_id",
+                #                "form.case.@case_id",
+                #                "form.pact_id",
+                #                "form.note.pact_id",
+                "received_on",
+                "form.meta.timeStart",
+
+                yield "%s %s" % (row_field_dict["received_on"].replace('_', ' ').title(),
+                                 html.mark_safe("<a class='ajax_dialog' href='%s'>View</a>" % ( reverse('render_form_data', args=[self.domain, row_field_dict['_id']]))))
+
+
                 if row_field_dict["script_encounter_date"] != None:
                     yield row_field_dict["script_encounter_date"]
                 else:
