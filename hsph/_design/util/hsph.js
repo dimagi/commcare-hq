@@ -15,9 +15,8 @@ function isHSPHForm(doc) {
 }
 
 function isHSPHBirthCase(doc) {
-    return (doc.doc_type === 'CommCareCase'
-            && doc.domain === 'hsph'
-            && doc.type === "birth");
+    return (doc.doc_type === 'CommCareCase' && doc.domain === 'hsph' && 
+            doc.type === "birth");
 }
 
 function isDCOFollowUpReport(doc) {
@@ -70,7 +69,7 @@ function HSPHCaseEntry(doc) {
             self.data.birthEvent = true;
             
         }
-    }
+    };
 }
 
 function HSPHEntry(doc) {
@@ -128,9 +127,8 @@ function HSPHEntry(doc) {
         self.data.followupComplete = self.form.result_follow_up === "1";
         self.data.followupTransferred = self.form.result_field_management === "1";
         self.data.followupWaitlisted = self.form.result_wait_list === "1";
-        self.data.lostToFollowUp = (self.form.follow_up_type === 'lost_to_follow_up' ||
-                                    // old
-                                    self.form.follow_up_type === 'unknown');
+        self.data.lostToFollowUp = (self.form.follow_up_type === 'lost_to_follow_up');
+
         if (self.form.meta) {
             var dateAdmitted = (self.form.date_admission) ? new Date(self.form.date_admission) : new Date(self.form.meta.timeEnd);
             var timeEnd = new Date(self.form.meta.timeEnd);
