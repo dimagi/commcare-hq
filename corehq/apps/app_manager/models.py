@@ -1401,6 +1401,7 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
         id_strings = IdStrings()
         langs = [lang] + self.langs
         yield id_strings.homescreen_title(), self.name
+        yield id_strings.app_display_name(), self.name
         for module in self.get_modules():
             for detail in module.get_details():
                 if detail.type.startswith('case'):
