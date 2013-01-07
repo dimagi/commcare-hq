@@ -231,8 +231,8 @@ domain_admin_required = domain_admin_required_ex()
 cls_domain_admin_required = cls_to_view(additional_decorator=domain_admin_required)
 
 ########################################################################################################
-    
-require_superuser = permission_required("is_superuser")
+# couldn't figure how to call reverse, so login_url is the actual url
+require_superuser = permission_required("is_superuser", login_url='/no_permissions/')
 cls_require_superusers = cls_to_view(additional_decorator=require_superuser)
 
 def require_previewer(view_func):
