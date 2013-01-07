@@ -1,7 +1,7 @@
 from corehq.apps.reports.datatables import (DataTablesHeader, DataTablesColumn,
     DTSortType)
 from corehq.apps.reports.generic import GenericTabularReport
-from couchdb_aggregate import KeyView, AggregateView
+from couchdbkit_aggregate import KeyView, AggregateView
 from dimagi.utils.couch.database import get_db
 
 __all__ = ['Column', 'BasicTabularReport']
@@ -31,15 +31,17 @@ class Column(object):
                 pass
 
         if 'key' in couch_kwargs:
+            if 'sort_type' not in kwargs:
+                kwargs['sort_type'] = DTSortType.NUMERIC
+                kwargs['sortable'] = True
+
             key = couch_kwargs.pop('key')
             self.view = KeyView(key, **couch_kwargs)
         elif calculate_fn:
+            kwargs['sortable'] = False
             self.view = FunctionView(calculate_fn)
         else:
             raise Exception("Must specify either key or calculate_fn.")
-
-        if 'sort_type' not in kwargs:
-            kwargs['sort_type'] = DTSortType.NUMERIC
 
         self.data_tables_column = DataTablesColumn(name, *args, **kwargs)
 
