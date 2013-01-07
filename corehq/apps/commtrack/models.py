@@ -102,3 +102,7 @@ class CommtrackConfig(Document):
     @property
     def actions_by_name(self):
         return dict((action_config.action_name, action_config) for action_config in self.actions)
+
+    @property
+    def known_supply_point_types(self):
+        return set(spt.name for spt in self.supply_point_types)
