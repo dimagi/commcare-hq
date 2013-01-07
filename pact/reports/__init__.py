@@ -70,7 +70,6 @@ class ESSortableMixin(object):
             Override for pagination.
             Returns an integer.
         """
-        print "getting total records"
         res = self.es_results
         if res is not None:
             return res['hits'].get('total', 0)

@@ -182,7 +182,6 @@ class PactPatientInfoReport(PactDrilldownReportMixin,ESSortableMixin, GenericTab
         }
 
         full_query['script_fields'] = pact_script_fields()
-        print simplejson.dumps(full_query)
         return self.xform_es.run_query(full_query)
 
 
