@@ -1,4 +1,5 @@
 import datetime
+from corehq.apps.reports.generic import GenericTabularReport
 from corehq.apps.reports.basic import BasicTabularReport, Column
 from corehq.apps.reports.standard import (DatespanMixin,
     ProjectReportParametersMixin, CustomProjectReport)
@@ -11,6 +12,10 @@ from corehq.apps.reports.fields import FilterUsersField, DatespanField
 from couchdbkit_aggregate.fn import mean, unique_count
 from casexml.apps.case import const
 from dimagi.utils.decorators.memoized import memoized
+from dimagi.utils.couch.database import get_db
+
+def short_date_format(date):
+    return date.strftime('%d-%b')
 
 
 def username(key, report):
@@ -134,7 +139,7 @@ class HSPHCaseDisplay(CaseDisplay):
         return getattr(self.case, 'name_mother', '')
 
     @property
-    def date_of_delivery_or_admission(self):
+    def filter_date(self):
         return str(getattr(self.case, 'filter_date', ''))
 
     @property
@@ -173,7 +178,7 @@ class HSPHCaseDisplay(CaseDisplay):
     def allocated_start(self):
         try:
             delta = datetime.timedelta(days=8 if self.allocated_to == 'CATI' else 13)
-            return (self.case.filter_date + delta).isoformat()[:10]
+            return short_date_format(self.case.filter_date + delta)
         except AttributeError:
             return ""
 
@@ -181,7 +186,7 @@ class HSPHCaseDisplay(CaseDisplay):
     def allocated_end(self):
         try:
             delta = datetime.timedelta(days=13 if self.allocated_to == 'CATI' else 23)
-            return (self.case.filter_date + delta).isoformat()[:10]
+            return short_date_format(self.case.filter_date + delta)
         except AttributeError:
             return ""
 
@@ -202,6 +207,13 @@ class HSPHCaseDisplay(CaseDisplay):
 class CaseReport(CaseListReport, CustomProjectReport, HSPHSiteDataMixin):
     name = 'Case Report'
     slug = 'case_report'
+
+    fields = [
+        'corehq.apps.reports.fields.FilterUsersField',
+        'corehq.apps.reports.fields.SelectCaseOwnerField',
+        'corehq.apps.reports.fields.CaseTypeField',
+        'corehq.apps.reports.fields.SelectOpenCloseField',
+    ]
 
     @property
     def headers(self):
@@ -235,7 +247,7 @@ class CaseReport(CaseListReport, CustomProjectReport, HSPHSiteDataMixin):
                 disp.patient_id,
                 disp.status,
                 disp.case_link,
-                disp.date_of_delivery_or_admission,
+                disp.filter_date,
                 disp.address,
                 disp.allocated_to,
                 disp.allocated_start,
@@ -244,4 +256,67 @@ class CaseReport(CaseListReport, CustomProjectReport, HSPHSiteDataMixin):
             ]
 
 
+class CallCenterFollowUpSummaryReport(GenericTabularReport,
+        CustomProjectReport, ProjectReportParametersMixin, DatespanMixin,
+        HSPHSiteDataMixin):
+    name = "Call Center Follow Up Summary"
+    slug = "hsph_dcc_followup_summary"
+
+    fields = ['corehq.apps.reports.fields.DatespanField',
+              'hsph.fields.SiteField']
+
+    @property
+    def headers(self):
+        return DataTablesHeader(DataTablesColumn("Region"),
+            DataTablesColumn("District"),
+            DataTablesColumn("Site"),
+            DataTablesColumn("Total Number of Birth events with contact details"),
+            DataTablesColumn("Total number of births followed up"),
+            DataTablesColumn("Number of cases followed up at day 8th"),
+            DataTablesColumn("Number of cases followed up between day 9th to 13th"),
+            DataTablesColumn("Number of cases with contact details open at day 14th"),
+            DataTablesColumn("Number of cases with contact details transferred to Field management for home Visits"),
+            DataTablesColumn("Number of cases where no out comes could be recorded"))
+
+    @property
+    def rows(self):
+        db = get_db()
+        rows = []
+        if not self.selected_site_map:
+            self._selected_site_map = self.site_map
+        keys = self.generate_keys()
+        for key in keys:
+            data = db.view("hsph/dcc_followup_summary",
+                reduce=True,
+                startkey=key+[self.datespan.startdate_param_utc],
+                endkey=key+[self.datespan.enddate_param_utc]
+            ).all()
+            for item in data:
+                item = item.get('value')
+                if item:
+                    region, district, site = self.get_site_table_values(key)
+
+                    now = self.datespan.enddate
+                    day14 = now-datetime.timedelta(days=14)
+                    day14 = day14.strftime("%Y-%m-%d")
+                    day14_data = db.view("hsph/cases_by_birth_date",
+                                reduce=True,
+                                startkey=key,
+                                endkey=key+[day14]
+                            ).first()
+                    still_open_at_day14 = day14_data.get('value', 0) if day14_data else 0
+
+                    rows.append([
+                        region,
+                        district,
+                        site,
+                        item.get('totalBirthsWithContact', 0),
+                        item.get('totalBirths', 0),
+                        item.get('numCasesFollowedUpByDay8', 0),
+                        item.get('numCasesFollowedUpBetweenDays9and13', 0),
+                        still_open_at_day14,
+                        item.get('numCasesWithContactTransferredToField', 0),
+                        item.get('numCasesWithNoOutcomes', 0)
+                    ])
+        return rows
 

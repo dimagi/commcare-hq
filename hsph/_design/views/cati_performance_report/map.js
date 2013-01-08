@@ -1,5 +1,5 @@
 function(doc) {
-    //!code views/lib/emit_array.js
+    //!code util/emit_array.js
     //!code util/hsph.js
 
     if (!isHSPHBirthCase(doc)) {
