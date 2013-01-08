@@ -9,14 +9,20 @@ class SupplyPointTypeField(ReportMultiSelectField):
 
     @property
     def options(self):
-        config = CommtrackConfig.for_domain(self.domain)
-        categories = config.supply_point_categories
-        choices = [('_all', 'All Outlet Types')]
+        categories = supply_point_type_categories(self.domain)
+
+        def indent(type):
+            return (type, u'\u2013 %s' % type)
+
+        choices = []
+        choices.append(('_all', 'All Outlet Types'))
         for k, v in sorted(categories.items()):
+            if k.startswith('_'):
+                continue
             choices.append(('cat:%s' % k, k))
             for t in sorted(v):
-                choices.append((t, u'\u2013 %s' % t))
+                choices.append(indent(t))
         choices.append(('_oth', 'Other'))
-        for t in sorted(set(all_supply_point_types(self.domain)) - set(config.known_supply_point_types)):
-            choices.append((t, u'\u2013 %s' % t))
+        for t in sorted(categories['_oth']):
+            choices.append(indent(t))
         return [{'val': e[0], 'text': e[1]} for e in choices]

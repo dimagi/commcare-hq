@@ -11,6 +11,7 @@ from dimagi.utils import parsing as dateparse
 import itertools
 from datetime import date, timedelta
 from corehq.apps.commtrack.models import CommtrackConfig, Product
+from corehq.apps.commtrack.util import *
 from dimagi.utils.decorators.memoized import memoized
 from casexml.apps.case.models import CommCareCase
 
@@ -47,13 +48,29 @@ class CommtrackReportMixin(ProjectReport, ProjectReportParametersMixin):
     def ordered_actions(self, ordering):
         return sorted(self.actions, key=lambda a: (0, ordering.index(a)) if a in ordering else (1, a))
 
-    _location = None
     @property
     @memoized
     def active_location(self):
         loc_id = self.request_params.get('location_id')
         if loc_id:
             return Location.get(loc_id)
+
+    @property
+    @memoized
+    def active_outlet_types(self):
+        categories = supply_point_type_categories(self.domain)
+        selected = self.request.GET.getlist('outlet_type')
+
+        def types_for_sel(sel):
+            if sel == '_all':
+                return itertools.chain(*categories.values())
+            elif sel == '_oth':
+                return categories['_oth']
+            elif sel.startswith('cat:'):
+                return categories[sel[len('cat:'):]]
+            else:
+                return [sel]
+        return reduce(lambda a, b: a.union(b), (types_for_sel(sel) for sel in selected), set())
 
 def get_transactions(form_doc, include_inferred=True):
     from collections import Sequence
@@ -98,6 +115,7 @@ class VisitReport(GenericTabularReport, CommtrackReportMixin, DatespanMixin):
     name = 'Visit Report'
     slug = 'visits'
     fields = ['corehq.apps.reports.fields.DatespanField',
+              'corehq.apps.reports.commtrack.fields.SupplyPointTypeField',
               'corehq.apps.reports.fields.AsyncLocationField']
     exportable = True
 
