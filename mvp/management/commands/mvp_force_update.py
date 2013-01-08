@@ -3,6 +3,7 @@ import sys
 import gevent
 from restkit.session import set_session
 set_session("gevent")
+from gevent.pool import Pool
 
 from couchdbkit.exceptions import ResourceNotFound
 from django.core.management.base import LabelCommand
@@ -12,6 +13,8 @@ from couchforms.models import XFormInstance
 from dimagi.utils.couch.database import get_db
 from dimagi.utils.management.commands import prime_views
 from mvp.models import MVP
+
+POOL_SIZE = 10
 
 class Command(LabelCommand):
     help = "Update MVP indicators in existing cases and forms."
@@ -112,37 +115,39 @@ class Command(LabelCommand):
                 relevant_indicators, num_cases, domain, get_cases)
 
     def update_indicators(self, indicators, docs, domain):
+
+        def _update_doc(doc):
+            try:
+                is_update = doc.update_indicator(indicator)
+                if is_update:
+                    sys.stdout.write("N")
+                else:
+                    sys.stdout.write(".")
+            except ResourceNotFound:
+                sys.stdout.write("R")
+            except (DocumentMismatchError, DocumentNotInDomainError):
+                sys.stdout.write('-')
+            except Exception as e:
+                sys.stdout.write('!')
+            sys.stdout.flush()
+
         for indicator in indicators:
             print "Indicator %s v.%d, %s" % (indicator.slug, indicator.version, domain)
-            errors = list()
-            success = list()
+            pool = Pool(POOL_SIZE)
             for doc in docs:
-                try:
-                    is_update = doc.update_indicator(indicator)
-                    if is_update:
-                        success.append(doc.get_id)
-                        sys.stdout.write("N")
-                    else:
-                        sys.stdout.write(".")
-                except ResourceNotFound:
-                    sys.stdout.write("R")
-                except (DocumentMismatchError, DocumentNotInDomainError):
-                    sys.stdout.write('-')
-                except Exception as e:
-                    errors.append(e)
-                    sys.stdout.write('!')
-                sys.stdout.flush()
-            if errors:
-                print "There were %d errors updating indicator %s" % (len(errors), indicator.slug)
-                print "\n".join(["%s" % e for e in errors])
+                pool.spawn(_update_doc, doc)
+            pool.join() # blocking
             print "\n"
 
     def _throttle_updates(self, document_type, indicators, total_docs, domain, get_docs, limit=100):
+
         for skip in range(0, total_docs, limit):
             print "\n\nUpdating %s %d to %d of %d\n" % (document_type, skip, min(total_docs, skip+limit), total_docs)
             matching_docs = get_docs(skip, limit)
             self.update_indicators(indicators, matching_docs, domain)
             print "Priming views."
+            prime_pool = Pool(POOL_SIZE)
             prime_all = prime_views.Command()
-            prime_all.prime_everything()
+            prime_all.prime_everything(prime_pool, verbose=True)
+            prime_pool.join() # blocking
             print "\nViews have been primed."
