@@ -9,7 +9,6 @@ from dimagi.utils.web import render_to_response, json_response, get_url_base
 from corehq.apps.orgs.models import Organization, Team, DeleteTeamRecord
 from corehq.apps.domain.models import Domain
 from django.contrib import messages
-from dimagi.utils.couch.resource_conflict import repeat
 
 
 @require_superuser
@@ -195,21 +194,17 @@ def add_team(request, org):
 
 @require_superuser
 def join_team(request, org, team_id, couch_user_id):
-    def add_user():
-        team = Team.get(team_id)
-        if team:
-            team.add_member(couch_user_id)
-    repeat(add_user, 3)
+    team = Team.get(team_id)
+    if team:
+        team.add_member(couch_user_id)
     if 'redirect_url' in request.POST:
         return HttpResponseRedirect(reverse(request.POST['redirect_url'], args=(org, team_id)))
 
 @require_superuser
 def leave_team(request, org, team_id, couch_user_id):
-    def remove_user():
-        team = Team.get(team_id)
-        if team:
-            team.remove_member(couch_user_id)
-    repeat(remove_user, 3)
+    team = Team.get(team_id)
+    if team:
+        team.remove_member(couch_user_id)
     if 'redirect_url' in request.POST:
         return HttpResponseRedirect(reverse(request.POST['redirect_url'], args=(org, team_id)))
 
