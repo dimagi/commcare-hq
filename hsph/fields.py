@@ -1,5 +1,5 @@
 from corehq.apps.reports.fields import ReportField, ReportSelectField
-from corehq.apps.reports.fields import SelectMobileWorkerField, SelectFilteredMobileWorkerField
+from corehq.apps.reports.fields import SelectFilteredMobileWorkerField
 from corehq.apps.fixtures.models import FixtureDataType, FixtureDataItem
 
 
@@ -36,15 +36,18 @@ class SiteField(ReportField):
                 facs[region]["districts"][district]["sites"][site] = dict(name=fix.fields.get("site_name"))
         return facs
 
-class NameOfDCOField(SelectFilteredMobileWorkerField):
-    slug = "dco_name"
-    name = "Name of DCO"
-    group_names = ["DCO"]
+class NameOfFIDAField(SelectFilteredMobileWorkerField):
+    slug = "fida_name"
+    name = "Name of FIDA"
+    group_names = ["FIDA"]
 
-class NameOfDCCField(SelectFilteredMobileWorkerField):
-    slug = "dcc_name"
-    name = "Name of DCC"
-    group_names = ["DCC"]
+class NameOfCATIField(SelectFilteredMobileWorkerField):
+    slug = "cati_name"
+    name = "Name of CATI"
+    group_names = ["CATI"]
+    show_only_group_option = False
+    default_option = "All CATIs"
+    
 
 class NameOfCITLField(SelectFilteredMobileWorkerField):
     slug = "citl_name"
