@@ -33,4 +33,3 @@ class Command(LabelCommand):
                 print "set timestamp for %s" % index
             else:
                 print "%s all set" % index
-        
