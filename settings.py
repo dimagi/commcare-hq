@@ -431,6 +431,7 @@ COUCHDB_APPS = [
     'cloudcare',
     'commtrack',
     'couch', # This is necessary for abstract classes in dimagi.utils.couch.undo; otherwise breaks tests
+    'couchdbkit_aggregate',
     'couchforms',
     'couchexport',
     'hqadmin',
@@ -540,11 +541,11 @@ EMAIL_HOST_USER = EMAIL_LOGIN
 EMAIL_HOST_PASSWORD = EMAIL_PASSWORD
 EMAIL_USE_TLS = True
 
-NO_HTML_EMAIL_MESSAGE = """This is an email from CommCare HQ. You're seeing
-this message because your email client chose to display the plaintext version
-of an email that CommCare HQ can only provide in HTML.  Please set your email
-client to view this email in HTML or read this email in a client that supports
-HTML email.
+NO_HTML_EMAIL_MESSAGE = """
+This is an email from CommCare HQ. You're seeing this message because your
+email client chose to display the plaintext version of an email that CommCare
+HQ can only provide in HTML.  Please set your email client to view this email
+in HTML or read this email in a client that supports HTML email.
 
 Thanks,
 The CommCare HQ Team"""
@@ -628,6 +629,7 @@ CUSTOM_REPORT_MAP = {
             'hsph.reports.field_management.FieldDataCollectionActivityReport',
             'hsph.reports.field_management.HVFollowUpStatusReport',
             'hsph.reports.field_management.HVFollowUpStatusSummaryReport',
+            'hsph.reports.call_center.CaseReport',
             'hsph.reports.field_management.DCOProcessDataReport'
         ],
         'Project Management Reports': [
@@ -635,7 +637,7 @@ CUSTOM_REPORT_MAP = {
             'hsph.reports.project_management.ImplementationStatusDashboardReport'
         ],
         'Call Center Reports': [
-            'hsph.reports.call_center.DCCActivityReport',
+            'hsph.reports.call_center.CATIPerformanceReport',
             'hsph.reports.call_center.CallCenterFollowUpSummaryReport'
         ],
         'Data Summary Reports': [
