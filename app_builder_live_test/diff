@@ -1,0 +1,30 @@
+#!/bin/bash
+branch0=$1
+branch1=$2
+if [ "$1" = "" ]; then
+    echo './app_builder_live_test/diff [<control branch>] <new branch>'
+    exit
+fi
+if [ "$2" = "" ]; then
+    branch0=master
+    branch1=$1
+else
+    branch0=$1
+    branch1=$2
+fi
+
+echo "Preparing apps with branches $branch0 and $branch1"
+
+function build_apps {
+    branch=$1
+    cd submodules/core-hq-src/
+    git checkout $branch
+    cd ../..
+    echo "./manage.py build_apps app_builder_live_test/ $branch"
+    ./manage.py build_apps app_builder_live_test/ $branch
+}
+
+build_apps $branch0
+build_apps $branch1
+echo "diff -r app_builder_live_test/$branch0 app_builder_live_test/$branch1"
+diff -r app_builder_live_test/$branch0 app_builder_live_test/$branch1
