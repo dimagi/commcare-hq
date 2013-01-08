@@ -69,7 +69,9 @@ function(doc) {
     data.transferredToField = (doc.follow_up_type === 'field_follow_up');
 
     data.notClosedOrTransferredAfter13Days = !!(hasPhoneNumber(doc) &&
-        !(doc.closed_on || data.transferredToManager || data.transferredToField) &&
+        (!lastFollowUpTime || 
+            (!(doc.closed_on || data.transferredToManager || data.transferredToField) ||
+            filterDatePlus13 < lastFollowUpTime)) &&
         doc.filter_date
     );
 
