@@ -60,6 +60,8 @@ class CommtrackReportMixin(ProjectReport, ProjectReportParametersMixin):
     def active_outlet_types(self):
         categories = supply_point_type_categories(self.domain)
         selected = self.request.GET.getlist('outlet_type')
+        if not selected:
+            selected = ['_all']
 
         def types_for_sel(sel):
             if sel == '_all':
@@ -145,9 +147,12 @@ class VisitReport(GenericTabularReport, CommtrackReportMixin, DatespanMixin):
         reports = get_stock_reports(self.domain, self.active_location, self.datespan)
         locs = dict((loc._id, loc) for loc in Location.view('_all_docs', keys=[leaf_loc(r) for r in reports], include_docs=True))
 
+        # filter by outlet type
+        reports = filter(lambda r: locs[leaf_loc(r)].outlet_type in self.active_outlet_types, reports)
+
         def row(doc):
             transactions = dict(((tx['action'], tx['product']), tx['value']) for tx in get_transactions(doc, False))
-            location =  locs[leaf_loc(doc)]
+            location = locs[leaf_loc(doc)]
 
             data = [getattr(location, key) for key, caption in OUTLET_METADATA]
             data.extend([
@@ -193,14 +198,16 @@ class SalesAndConsumptionReport(GenericTabularReport, CommtrackReportMixin, Date
     name = 'Sales and Consumption Report'
     slug = 'sales_consumption'
     fields = ['corehq.apps.reports.fields.DatespanField',
+              'corehq.apps.reports.commtrack.fields.SupplyPointTypeField',
               'corehq.apps.reports.fields.AsyncLocationField']
     exportable = True
 
     @property
+    @memoized
     def outlets(self):
-        if not hasattr(self, '_locs'):
-            self._locs = Location.filter_by_type(self.domain, 'outlet', self.active_location)
-        return self._locs
+        locs = Location.filter_by_type(self.domain, 'outlet', self.active_location)
+        locs = [loc for loc in locs if loc.outlet_type in self.active_outlet_types]
+        return locs
 
     @property
     def headers(self):
@@ -277,14 +284,14 @@ class CumulativeSalesAndConsumptionReport(GenericTabularReport, CommtrackReportM
     name = 'Sales and Consumption Report, Cumulative'
     slug = 'cumul_sales_consumption'
     fields = ['corehq.apps.reports.fields.DatespanField',
+              'corehq.apps.reports.commtrack.fields.SupplyPointTypeField',
               'corehq.apps.reports.fields.AsyncLocationField']
     exportable = True
 
     @property
+    @memoized
     def children(self):
-        if not hasattr(self, '_locs'):
-            self._locs = self.active_location.children if self.active_location else []
-        return self._locs
+        return self.active_location.children if self.active_location else []
 
     @property
     def headers(self):
@@ -311,12 +318,14 @@ class CumulativeSalesAndConsumptionReport(GenericTabularReport, CommtrackReportM
 
         products = self.ordered_products(PRODUCT_ORDERING)
         locs = self.children
-        reports = get_stock_reports(self.domain, self.active_location, self.datespan)
+        active_outlets = set(loc._id for loc in self.active_location.descendants if loc.dynamic_properties().get('outlet_type') in self.active_outlet_types)
+
+        reports = filter(lambda r: leaf_loc(r) in active_outlets, get_stock_reports(self.domain, self.active_location, self.datespan))
         reports_by_loc = map_reduce(lambda e: [(child_loc(e, self.active_location),)], data=reports, include_docs=True)
 
         startkey = [self.domain, self.active_location._id, 'CommCareCase']
         product_cases = [c for c in CommCareCase.view('locations/linked_docs', startkey=startkey, endkey=startkey + [{}], include_docs=True)
-                         if c.type == 'supply-point-product']
+                         if c.type == 'supply-point-product' and leaf_loc(c) in active_outlets]
         product_cases_by_parent = map_reduce(lambda e: [(child_loc(e, self.active_location),)], data=product_cases, include_docs=True)
 
         def summary_row(site, reports, product_cases):
@@ -335,7 +344,7 @@ class CumulativeSalesAndConsumptionReport(GenericTabularReport, CommtrackReportM
             data = [site_link, site.location_type]
             for p in products:
                 tx_by_action = map_reduce(lambda tx: [(tx['action'], int(tx['value']))], data=tx_by_product.get(p['_id'], []))
-                subcases = cases_by_product.get(p['_id'])
+                subcases = cases_by_product.get(p['_id'], [])
                 stocks = [int(k) for k in (c.get_case_property('current_stock') for c in subcases) if k is not None]
 
                 data.append(sum(stocks) if stocks else u'\u2014')
@@ -351,14 +360,18 @@ class CumulativeSalesAndConsumptionReport(GenericTabularReport, CommtrackReportM
 class StockOutReport(GenericTabularReport, CommtrackReportMixin, DatespanMixin):
     name = 'Stock-out Report'
     slug = 'stockouts'
-    fields = ['corehq.apps.reports.fields.AsyncLocationField']
+    fields = ['corehq.apps.reports.commtrack.fields.SupplyPointTypeField',
+              'corehq.apps.reports.fields.AsyncLocationField']
     exportable = True
 
+    # TODO shared code with sales/consumption report (any report that reports one line
+    # per supply point) could be factored out into mixin
     @property
+    @memoized
     def outlets(self):
-        if not hasattr(self, '_locs'):
-            self._locs = Location.filter_by_type(self.domain, 'outlet', self.active_location)
-        return self._locs
+        locs = Location.filter_by_type(self.domain, 'outlet', self.active_location)
+        locs = [loc for loc in locs if loc.outlet_type in self.active_outlet_types]
+        return locs
 
     @property
     def headers(self):
