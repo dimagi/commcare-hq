@@ -45,13 +45,10 @@ def get_unique_dbs():
 
 def do_prime(app_label, design_doc_name, view_name, verbose=False):
     db = get_db(app_label)
-    if verbose:
-        sys.stdout.write('<')
-        sys.stdout.flush()
 #    print "start priming %s:%s/%s" % (app_label, design_doc_name, view_name)
     list(db.view('%s/%s' % (design_doc_name, view_name), limit=0))
     if verbose:
-        sys.stdout.write('>')
+        sys.stdout.write('.')
         sys.stdout.flush()
 #    print "done priming %s:%s/%s" % (app_label, design_doc_name, view_name)
 
@@ -68,7 +65,7 @@ class Command(BaseCommand):
 #            print "exited main app loop - repeating after %s pause" % REPEAT_INTERVAL
 #        print "done!"
 
-    def prime_everything(self, pool=None):
+    def prime_everything(self, pool, verbose=False):
         unique_dbs = get_unique_dbs()
         for app in unique_dbs:
             try:
@@ -84,11 +81,7 @@ class Command(BaseCommand):
                         views = design_doc.get('views', {})
                         #get the first view
                         for view_name in views.keys():
-                            if pool:
-                                pool.spawn(do_prime, app, design_doc_name, view_name)
-                            else:
-                                do_prime(app,design_doc_name, view_name, verbose=True)
-                            #and that's it for that design doc
+                            pool.spawn(do_prime, app, design_doc_name, view_name, verbose=verbose)
                             break
             except Exception, ex:
                 #print "Got an exception but ignoring: %s" % ex
