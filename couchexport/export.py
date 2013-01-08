@@ -16,7 +16,8 @@ class ExportConfiguration(object):
     some functions to actually facilitate the export from this config.
     """
     
-    def __init__(self, database, schema_index, previous_export=None, filter=None):
+    def __init__(self, database, schema_index, previous_export=None, filter=None,
+                 disable_checkpoints=False):
         self.database = database
         if len(schema_index) > 2:
             schema_index = schema_index[0:2]
@@ -26,7 +27,8 @@ class ExportConfiguration(object):
         self.current_seq = self.database.info()["update_seq"]
         self.timestamp = datetime.utcnow()
         self.potentially_relevant_ids = self._potentially_relevant_ids()
-        
+        self.disable_checkpoints = disable_checkpoints
+
     def include(self, document):
         """
         Returns True if the document should be included in the results,
@@ -73,7 +75,7 @@ class ExportConfiguration(object):
             yield doc
 
     def last_checkpoint(self):
-        return self.previous_export or ExportSchema.last(self.schema_index)
+        return None if self.disable_checkpoints else ExportSchema.last(self.schema_index)
 
     @memoized
     def get_latest_schema(self):
