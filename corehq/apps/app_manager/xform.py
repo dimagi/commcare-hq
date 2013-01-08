@@ -41,7 +41,11 @@ def _make_elem(tag, attr=None):
     return ET.Element(tag.format(**namespaces), dict([(key.format(**namespaces), val) for key,val in attr.items()]))
 
 class XPath(unicode):
-    pass
+    def slash(self, xpath):
+        if self:
+            return XPath(u'%s/%s' % (self, xpath))
+        else:
+            return XPath(xpath)
 
 class CaseIDXPath(XPath):
 
@@ -49,11 +53,15 @@ class CaseIDXPath(XPath):
         return CaseXPath(u"instance('casedb')/casedb/case[@case_id=%s]" % self)
 
 class CaseXPath(XPath):
+
+    def index_id(self, name):
+        return CaseIDXPath(self.slash(u'index').slash(name))
+
     def parent_id(self):
-        return CaseIDXPath(u"%s/index/parent" % self)
+        return self.index_id('parent')
 
     def property(self, property):
-        return XPath(u'%s/%s' % (self, property))
+        return self.slash(property)
 
 SESSION_CASE_ID = CaseIDXPath(u"instance('commcaresession')/session/data/case_id")
 
