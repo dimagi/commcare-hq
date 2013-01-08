@@ -446,6 +446,11 @@ class FormBase(DocumentSchema):
                 errors.append({'type': 'update_case uses reserved word', 'word': key})
             if not re.match(r'^[a-zA-Z][\w_-]*$', key):
                 errors.append({'type': 'update_case word illegal', 'word': key})
+
+
+        for subcase_action in self.actions.subcases:
+            if not subcase_action.case_type:
+                errors.append({'type': 'subcase has no case type'})
         try:
             valid_paths = set([question['value'] for question in self.get_questions(langs=[])])
         except XFormError as e:
