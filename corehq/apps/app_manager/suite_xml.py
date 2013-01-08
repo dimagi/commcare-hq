@@ -1,5 +1,6 @@
 from lxml import etree
 from eulxml.xmlmap import StringField, XmlObject, IntegerField, NodeListField, NodeField, StringListField
+from corehq.apps.app_manager.xform import SESSION_CASE_ID
 from dimagi.utils.decorators.memoized import memoized
 
 class IdNode(XmlObject):
@@ -417,10 +418,9 @@ class SuiteGenerator(object):
                     if module.all_forms_require_a_case() and \
                             not module.put_in_root and \
                             getattr(form, 'form_filter', None):
-                        command.relevant = form.form_filter.replace('.', (
-                            "instance('casedb')/casedb/case[@case_id="
-                            "instance('commcaresession')/session/data/case_id]"
-                        ))
+                        command.relevant = form.form_filter.replace('.',
+                            SESSION_CASE_ID.case()
+                        )
                     yield command
 
                 if module.case_list.show:
