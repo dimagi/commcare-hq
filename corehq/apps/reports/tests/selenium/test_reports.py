@@ -50,9 +50,9 @@ class ReportsTestCase(WebUserTestCase):
         return test
 
 report_names = (
-    'Case Activity',
-    'Submissions By Form',
     'Daily Form Activity',
+    'Submissions By Form',
+    'Case Activity',
     'Form Completion Time',
     'Form Completion vs. Submission Trends',
     'Worker Activity Times',
@@ -67,7 +67,9 @@ report_names = (
     'Application Status',
     'Raw Forms, Errors & Duplicates',
     'Errors & Warnings Summary',
-    'Device Log Details'
+    'Device Log Details',
+
+    'SMS Usage'
 )
 
 for report_name in report_names:
