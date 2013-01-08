@@ -1,11 +1,7 @@
-from corehq.apps.reports.views import datespan_default
 from corehq.apps.users.decorators import require_permission
 from corehq.apps.users.models import Permissions
-from dimagi.utils.modules import to_function
-from dimagi.utils.web import render_to_response
-from corehq.apps.domain.decorators import login_and_domain_required
 from django.core.urlresolvers import reverse
-from django.http import HttpResponseNotFound, Http404, HttpResponseRedirect
+from django.http import HttpResponseRedirect
 
 require_can_edit_data = require_permission(Permissions.edit_data)
 
