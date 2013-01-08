@@ -6,7 +6,7 @@ from corehq.apps.reports import util
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn, DTSortType
 from corehq.apps.reports.generic import GenericReportView
 from corehq.apps.reports.models import HQUserType
-from corehq.apps.reports.standard.inspect import CaseListMixin
+from corehq.apps.reports.standard.inspect import CaseListMixin, CaseDisplay
 from dimagi.utils.decorators.memoized import memoized
 from django.utils.translation import ugettext_noop
 
@@ -54,7 +54,7 @@ class CaseReassignmentInterface(CaseListMixin, DataInterface):
         checkbox = mark_safe('<input type="checkbox" class="selected-commcare-case" data-bind="event: {change: updateCaseSelection}" data-caseid="%(case_id)s" data-owner="%(owner)s" data-ownertype="%(owner_type)s" />')
         for row in self.case_results['rows']:
             case = self.get_case(row)
-            display = self.CaseDisplay(case)
+            display = CaseDisplay(self, case)
             yield [
                 checkbox % dict(case_id=case._id, owner=display.owner_id, owner_type=display.owner_type),
                 display.case_link,
