@@ -239,6 +239,9 @@ class CaseListMixin(ProjectInspectionReportParamsMixin, GenericTabularReport, Pr
         'corehq.apps.reports.fields.CaseTypeField',
         'corehq.apps.reports.fields.SelectOpenCloseField',
     ]
+    
+    def CaseDisplay(self, case):
+        return CaseDisplay(self, case)
 
     @property
     @memoized
@@ -367,7 +370,7 @@ class CaseListReport(CaseListMixin, ProjectInspectionReport):
         rows = []
         def _format_row(row):
             case = self.get_case(row)
-            display = CaseDisplay(self, case)
+            display = self.CaseDisplay(case)
 
             return [
                 display.case_type,
