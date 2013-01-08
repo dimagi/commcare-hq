@@ -279,6 +279,120 @@ class HVFollowUpStatusReport(HSPHFieldManagementReport, HSPHSiteDataMixin):
         return rows
 
 
+class HVFollowUpStatusSummaryReport(HVFollowUpStatusReport):
+    name = "Home Visit Follow Up Status Summary"
+    slug = "hsph_hv_status_summary"
+    fields = ['corehq.apps.reports.fields.FilterUsersField',
+              'corehq.apps.reports.fields.DatespanField',
+              'hsph.fields.NameOfFIDAField',
+              'hsph.fields.NameOfDCTLField',
+              'hsph.fields.SelectCaseStatusField',
+              'hsph.fields.SiteField']
+
+    _case_status = None
+    @property
+    def case_status(self):
+        if self._case_status is None:
+            self._case_status = self.request.GET.get(SelectCaseStatusField.slug, None)
+        return self._case_status
+
+    @property
+    def headers(self):
+        return DataTablesHeader(DataTablesColumn("Region"),
+            DataTablesColumn("District"),
+            DataTablesColumn("Site"),
+            DataTablesColumn("Unique Patient ID"),
+            DataTablesColumn("Home Visit Status"),
+            DataTablesColumn("Name of mother"),
+            DataTablesColumn("Address where mother can be reachable in next 10 days"),
+            DataTablesColumn("Assigned By"),
+            DataTablesColumn("Allocated Data Collector"),
+            DataTablesColumn("Allocated Start Date"),
+            DataTablesColumn("Allocated End Date"),
+            DataTablesColumn("Visited Date"),
+            DataTablesColumn("Start Time"),
+            DataTablesColumn("End Time"),
+            DataTablesColumn("Duration (min)"),
+            DataTablesColumn("Within Allocated Period"))
+
+    @property
+    def rows(self):
+        rows = []
+        data_not_found_text = 'unknown'
+        no_data_text = '--'
+
+        for user in self.users:
+            dctl_id, dctl_name = self.user_to_dctl(user)
+            if self.selected_dctl and (self.selected_dctl != dctl_id):
+                continue
+
+            if self.selected_site_map and self.case_status:
+                filter_by = "by_status_site"
+            elif self.case_status and not self.selected_site_map:
+                filter_by = "by_status"
+            elif self.selected_site_map and not self.case_status:
+                filter_by = "by_site"
+            else:
+                filter_by = "all"
+
+            prefix = [filter_by, user.get('user_id')]
+            if self.case_status:
+                prefix.append(self.case_status)
+
+            if self.selected_site_map:
+                keys = self.generate_keys(prefix=prefix)
+            else:
+                keys = [prefix]
+
+            for key in keys:
+                data = self.get_data(key, reduce=False)
+                for item in data:
+                    item = item.get('value', [])
+
+                    time_start = time_end = None
+                    total_time = allocated_period_default = no_data_text
+
+                    if item:
+                        region = item.get('region', data_not_found_text)
+                        district = item.get('district', data_not_found_text)
+                        site_num = item.get('siteNum', data_not_found_text)
+
+                        start_date = dateutil.parser.parse(item.get('startDate'))
+                        end_date = datetime.datetime.replace(dateutil.parser.parse(item.get('endDate')), tzinfo=pytz.utc)
+                        visited_date = item.get('visitedDate')
+
+                        if visited_date:
+                            visited_date = dateutil.parser.parse(visited_date)
+                            hv_form = XFormInstance.get(item.get('followupFormId'))
+                            if not isinstance(hv_form.get_form['meta'].get('timeEnd'), str):
+                                time_start = datetime.datetime.replace(hv_form.get_form['meta'].get('timeStart'), tzinfo=pytz.utc)
+                                time_end = datetime.datetime.replace(hv_form.get_form['meta'].get('timeEnd'), tzinfo=pytz.utc)
+                                total_time = time_end - time_start
+                                total_time = "%d:%d" % (round(total_time.seconds/60),
+                                                        total_time.seconds-round(total_time.seconds/60))
+                            allocated_period_default = "NO"
+
+                        rows.append([
+                            self.get_region_name(region),
+                            self.get_district_name(region, district),
+                            self.get_site_name(region, district, site_num),
+                            item.get('patientId', data_not_found_text),
+                            "CLOSED" if item.get('isClosed', False) else "OPEN",
+                            item.get('nameMother', data_not_found_text),
+                            item.get('address', data_not_found_text),
+                            dctl_name,
+                            user.get('username_in_report'),
+                            start_date.strftime('%d-%b'),
+                            end_date.strftime('%d-%b'),
+                            visited_date.strftime('%d-%b') if visited_date else no_data_text,
+                            time_start.strftime('%H:%M') if time_start else no_data_text,
+                            time_end.strftime('%H:%M') if time_end else no_data_text,
+                            total_time if total_time else no_data_text,
+                            "YES" if time_end and time_end < end_date else allocated_period_default
+                        ])
+        return rows
+
+
 class DCOProcessDataReport(HSPHFieldManagementReport, HSPHSiteDataMixin):
     name = "DCO Process Data Report"
     slug = "hsph_dco_process_data"
