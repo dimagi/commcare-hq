@@ -20,4 +20,5 @@ def get_object_or_not_exist(cls, doc_id, domain):
         # that explodes on the "version" property. might as well swallow that
         # too.
         pass
-    raise ObjectDoesNotExist(_("Could not find %s with id %s") % (doc_type, doc_id))
+    raise ObjectDoesNotExist(_("Could not find %(doc_type)s with id %(id)s") % \
+                                {"doc_type": doc_type, "id": doc_id})
