@@ -80,14 +80,14 @@ class ProjectReportParametersMixin(object):
         return FilterUsersField.get_user_filter(self.request)[0]
 
     @property
-    def group_name(self):
+    def group_id(self):
         return self.request_params.get('group', '')
 
     @property
     @memoized
     def group(self):
-        if self.group_name:
-            return Group.by_name(self.domain, self.group_name)
+        if self.group_id:
+            return Group.get(self.group_id)
         else:
             return None
 

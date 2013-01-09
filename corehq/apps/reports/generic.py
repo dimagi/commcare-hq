@@ -664,7 +664,7 @@ class GenericTabularReport(GenericReportView):
         @property
         shared_pagination_GET_params
             - this is where you select the GET parameters to pass to the paginator
-            - returns a list formatted like [dict(name='group', value=self.group_name)]
+            - returns a list formatted like [dict(name='group', value=self.group_id)]
     """
     # new class properties
     total_row = None
@@ -729,7 +729,7 @@ class GenericTabularReport(GenericReportView):
             Override.
             Should return a list of dicts with the name and value of the GET parameters
             that you'd like to pass to the server-side pagination.
-            ex: [dict(name='group', value=self.group_name)]
+            ex: [dict(name='group', value=self.group_id)]
         """
         return []
 
