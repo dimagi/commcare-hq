@@ -84,7 +84,7 @@ class CaseAPIHelper(object):
                         view_name,
                         startkey=key,
                         endkey=key + [{}],
-                        include_docs=True,
+                        include_docs=False,
                         reduce=False,
                     )]
 
