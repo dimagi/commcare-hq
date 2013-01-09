@@ -4,12 +4,11 @@ from django.views.decorators.http import require_POST
 from corehq.apps.domain.decorators import require_superuser
 from corehq.apps.registration.forms import DomainRegistrationForm
 from corehq.apps.orgs.forms import AddProjectForm, AddMemberForm, AddTeamForm, UpdateOrgInfo
-from corehq.apps.users.models import CouchUser, WebUser
+from corehq.apps.users.models import CouchUser, WebUser, UserRole
 from dimagi.utils.web import render_to_response, json_response, get_url_base
 from corehq.apps.orgs.models import Organization, Team, DeleteTeamRecord
 from corehq.apps.domain.models import Domain
 from django.contrib import messages
-from dimagi.utils.couch.resource_conflict import repeat
 
 
 @require_superuser
@@ -170,7 +169,7 @@ def orgs_team_members(request, org, team_id, template="orgs/orgs_team_members.ht
     domain_names = team.get_domains()
     domains = list()
     for name in domain_names:
-        domains.append([Domain.get_by_name(name), team.role_label(domain=name)])
+        domains.append([Domain.get_by_name(name), team.role_label(domain=name), UserRole.by_domain(name)])
 
     all_org_domains = Domain.get_by_organization(org)
     non_domains = [domain for domain in all_org_domains if domain.name not in domain_names]
@@ -195,21 +194,17 @@ def add_team(request, org):
 
 @require_superuser
 def join_team(request, org, team_id, couch_user_id):
-    def add_user():
-        team = Team.get(team_id)
-        if team:
-            team.add_member(couch_user_id)
-    repeat(add_user, 3)
+    team = Team.get(team_id)
+    if team:
+        team.add_member(couch_user_id)
     if 'redirect_url' in request.POST:
         return HttpResponseRedirect(reverse(request.POST['redirect_url'], args=(org, team_id)))
 
 @require_superuser
 def leave_team(request, org, team_id, couch_user_id):
-    def remove_user():
-        team = Team.get(team_id)
-        if team:
-            team.remove_member(couch_user_id)
-    repeat(remove_user, 3)
+    team = Team.get(team_id)
+    if team:
+        team.remove_member(couch_user_id)
     if 'redirect_url' in request.POST:
         return HttpResponseRedirect(reverse(request.POST['redirect_url'], args=(org, team_id)))
 
