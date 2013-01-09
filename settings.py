@@ -589,6 +589,7 @@ PROJECT_REPORT_MAP = SortedDict([
     ]],
     ["SMS", [
         'corehq.apps.reports.standard.sms.MessagesReport',
+        'corehq.apps.reports.standard.sms.MessageLogReport',
     ]],
     ["Commtrack", [
         'corehq.apps.reports.commtrack.psi_prototype.VisitReport',
@@ -705,6 +706,10 @@ CUSTOM_REPORT_MAP = {
     #    "test": [
     #        'corehq.apps.reports.deid.FormDeidExport',
     #    ]
+}
+
+MESSAGE_LOG_OPTIONS = {
+    "abbreviated_phone_number_domains" : ["mustmgh","mgh-cgh-uganda"],
 }
 
 BILLING_REPORT_MAP = {
