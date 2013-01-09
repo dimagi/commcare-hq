@@ -103,7 +103,7 @@ class ProjectReportParametersMixin(object):
     @memoized
     def users(self):
         return self.get_all_users_by_domain(
-            group=self.group,
+            group=self.group_id,
             individual=self.individual,
             user_filter=tuple(self.user_filter),
             simplified=True
