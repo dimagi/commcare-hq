@@ -294,7 +294,11 @@ var DetailScreenConfig = (function () {
             }
 
             function toTitleCase(str) {
-                return str.replace(/_/g, ' ').replace(/-/g, ' ').replace(/\w\S*/g, function (txt) {
+                return (str
+                    .replace(/_/g, ' ')
+                    .replace(/-/g, ' ')
+                    .replace(/\//g, ' ')
+                ).replace(/\w\S*/g, function (txt) {
                     return txt.charAt(0).toUpperCase() + txt.substr(1).toLowerCase();
                 });
             }
@@ -351,7 +355,11 @@ var DetailScreenConfig = (function () {
                 }
             }
             this.suggestedColumns.sortBy(function () {
-                return [this.model.val() === 'referral' ? 1 : 2, this.field.val()];
+                return [
+                    this.model.val() === 'referral' ? 1 : 2,
+                    /\//.test(this.field.val()) ? 2 : 1,
+                    this.field.val()
+                ];
             });
 
             this.saveButton = COMMCAREHQ.SaveButton.init({
@@ -501,7 +509,10 @@ var DetailScreenConfig = (function () {
                     if (this.edit) {
                         $('<div/>').append(this.saveButton.ui).appendTo($box);
                     }
-                    $table = $('<table/>').addClass('detail-screen-table').appendTo($box);
+                    $table = $('<table/>'
+                        ).addClass('detail-screen-table'
+                        ).css('clear', 'both'
+                        ).appendTo($box);
 
                     $tr = $('<tr/>').appendTo($table);
 

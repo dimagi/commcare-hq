@@ -1,4 +1,5 @@
 from StringIO import StringIO
+import functools
 import logging
 import uuid
 import zipfile
@@ -29,6 +30,7 @@ from corehq.apps.hqmedia import upload
 from corehq.apps.sms.views import get_sms_autocomplete_context
 from corehq.apps.users.decorators import require_permission
 from corehq.apps.users.models import Permissions, CommCareUser
+from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.logging import notify_exception
 from dimagi.utils.subprocess_timeout import ProcessTimedOut
 
@@ -516,9 +518,42 @@ def view_generic(req, domain, app_id=None, module_id=None, form_id=None, is_user
 
     case_properties = set()
     if module:
-        for _form in module.forms:
-            case_properties.update(_form.actions.update_case.update.keys())
-    case_properties = sorted(case_properties)
+        @memoized
+        def get_properties(case_type,
+                defaults=("name", "date-opened", "status"),
+                already_visited=()):
+
+            if case_type in already_visited:
+                return ()
+
+            get_properties_recursive = functools.partial(
+                get_properties,
+                already_visited=already_visited + (case_type,)
+            )
+
+            case_properties = set(defaults)
+            parent_types = set()
+
+            for _module in app.get_modules():
+                for _form in _module.get_forms():
+                    if module.case_type == case_type:
+                        case_properties.update(
+                            _form.actions.update_case.update.keys()
+                        )
+                    for subcase in _form.actions.subcases:
+                        if subcase.case_type == case_type:
+                            case_properties.update(
+                                subcase.case_properties.keys()
+                            )
+                            parent_types.add(_module.case_type)
+
+            for parent_type in parent_types:
+                for property in get_properties_recursive(parent_type):
+                    case_properties.add('parent/%s' % property)
+
+            return case_properties
+
+        case_properties = list(get_properties(module.case_type))
 
     context = {
         'domain': domain,
