@@ -74,6 +74,20 @@ class CommtrackReportMixin(ProjectReport, ProjectReportParametersMixin):
                 return [sel]
         return reduce(lambda a, b: a.union(b), (types_for_sel(sel) for sel in selected), set())
 
+    @property
+    @memoized
+    def active_products(self):
+        products = self.ordered_products(PRODUCT_ORDERING)
+
+        selected = self.request.GET.getlist('product')
+        if not selected:
+            selected = ['_all']
+
+        if '_all' in selected:
+            return products
+        else:
+            return filter(lambda p: p['_id'] in selected, products)
+
 def get_transactions(form_doc, include_inferred=True):
     from collections import Sequence
     txs = form_doc['form']['transaction']
@@ -128,7 +142,7 @@ class VisitReport(GenericTabularReport, CommtrackReportMixin, DatespanMixin):
             ('reporter' if slug else 'Reporter'),
         ])
         cfg = self.config
-        for p in self.ordered_products(PRODUCT_ORDERING):
+        for p in self.active_products:
             for a in self.ordered_actions(ACTION_ORDERING):
                 if slug:
                     cols.append('data: %s %s' % (cfg.actions_by_name[a].keyword, p['code']))
@@ -143,7 +157,7 @@ class VisitReport(GenericTabularReport, CommtrackReportMixin, DatespanMixin):
 
     @property
     def rows(self):
-        products = self.ordered_products(PRODUCT_ORDERING)
+        products = self.active_products
         reports = get_stock_reports(self.domain, self.active_location, self.datespan)
         locs = dict((loc._id, loc) for loc in Location.view('_all_docs', keys=[leaf_loc(r) for r in reports], include_docs=True))
 
@@ -199,6 +213,7 @@ class SalesAndConsumptionReport(GenericTabularReport, CommtrackReportMixin, Date
     slug = 'sales_consumption'
     fields = ['corehq.apps.reports.fields.DatespanField',
               'corehq.apps.reports.commtrack.fields.SupplyPointTypeField',
+              'corehq.apps.reports.commtrack.fields.ProductField',
               'corehq.apps.reports.fields.AsyncLocationField']
     exportable = True
 
@@ -215,7 +230,7 @@ class SalesAndConsumptionReport(GenericTabularReport, CommtrackReportMixin, Date
             return DataTablesHeader(DataTablesColumn('Too many outlets'))
 
         cols = [DataTablesColumn(caption) for key, caption in OUTLET_METADATA]
-        for p in self.ordered_products(PRODUCT_ORDERING):
+        for p in self.active_products:
             cols.append(DataTablesColumn('Stock on Hand (%s)' % p['name']))
             cols.append(DataTablesColumn('Total Sales (%s)' % p['name']))
             cols.append(DataTablesColumn('Total Consumption (%s)' % p['name']))
@@ -232,7 +247,7 @@ class SalesAndConsumptionReport(GenericTabularReport, CommtrackReportMixin, Date
                         'max': OUTLETS_LIMIT,
                 }]]
 
-        products = self.ordered_products(PRODUCT_ORDERING)
+        products = self.active_products
         locs = self.outlets
         reports = get_stock_reports(self.domain, self.active_location, self.datespan)
         reports_by_loc = map_reduce(lambda e: [(leaf_loc(e),)], data=reports, include_docs=True)
@@ -285,6 +300,7 @@ class CumulativeSalesAndConsumptionReport(GenericTabularReport, CommtrackReportM
     slug = 'cumul_sales_consumption'
     fields = ['corehq.apps.reports.fields.DatespanField',
               'corehq.apps.reports.commtrack.fields.SupplyPointTypeField',
+              'corehq.apps.reports.commtrack.fields.ProductField',
               'corehq.apps.reports.fields.AsyncLocationField']
     exportable = True
 
@@ -302,7 +318,7 @@ class CumulativeSalesAndConsumptionReport(GenericTabularReport, CommtrackReportM
             DataTablesColumn('Location'),
             DataTablesColumn('Location Type'),
         ]
-        for p in self.ordered_products(PRODUCT_ORDERING):
+        for p in self.active_products:
             cols.append(DataTablesColumn('Total Stock on Hand (%s)' % p['name']))
             cols.append(DataTablesColumn('Total Sales (%s)' % p['name']))
             cols.append(DataTablesColumn('Total Consumption (%s)' % p['name']))
@@ -316,7 +332,7 @@ class CumulativeSalesAndConsumptionReport(GenericTabularReport, CommtrackReportM
                     'The location you\'ve chosen has no member locations. Choose an administrative location higher up in the hierarchy.'
                 ]]
 
-        products = self.ordered_products(PRODUCT_ORDERING)
+        products = self.active_products
         locs = self.children
         active_outlets = set(loc._id for loc in self.active_location.descendants if loc.dynamic_properties().get('outlet_type') in self.active_outlet_types)
 
@@ -361,6 +377,7 @@ class StockOutReport(GenericTabularReport, CommtrackReportMixin, DatespanMixin):
     name = 'Stock-out Report'
     slug = 'stockouts'
     fields = ['corehq.apps.reports.commtrack.fields.SupplyPointTypeField',
+              'corehq.apps.reports.commtrack.fields.ProductField',
               'corehq.apps.reports.fields.AsyncLocationField']
     exportable = True
 
@@ -379,7 +396,7 @@ class StockOutReport(GenericTabularReport, CommtrackReportMixin, DatespanMixin):
             return DataTablesHeader(DataTablesColumn('Too many outlets'))
 
         cols = [caption for key, caption in OUTLET_METADATA]
-        for p in self.ordered_products(PRODUCT_ORDERING):
+        for p in self.active_products:
             cols.append('%s: Days stocked out' % p['name'])
         cols.append('All Products Combined: Days stocked out')
         return DataTablesHeader(*(DataTablesColumn(c) for c in cols))
@@ -393,7 +410,7 @@ class StockOutReport(GenericTabularReport, CommtrackReportMixin, DatespanMixin):
                         'max': OUTLETS_LIMIT,
                 }]]
 
-        products = self.ordered_products(PRODUCT_ORDERING)
+        products = self.active_products
         def row(site):
             data = [getattr(site, key) for key, caption in OUTLET_METADATA]
 
