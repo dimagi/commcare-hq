@@ -820,8 +820,9 @@ class GenericTabularReport(GenericReportView):
             Don't override.
             Override the properties headers and rows instead of this.
         """
-        assert isinstance(self.headers, (DataTablesHeader, list))
-        if isinstance(self.headers, list):
+        headers = self.headers # not all headers have been memoized
+        assert isinstance(headers, (DataTablesHeader, list))
+        if isinstance(headers, list):
             raise DeprecationWarning("Property 'headers' should be a DataTablesHeader object, not a list.")
 
         if self.ajax_pagination or self.needs_filters:
@@ -850,7 +851,7 @@ class GenericTabularReport(GenericReportView):
 
         context = dict(
             report_table=dict(
-                headers=self.headers,
+                headers=headers,
                 rows=rows,
                 total_row=self.total_row,
                 statistics_rows=self.statistics_rows,
