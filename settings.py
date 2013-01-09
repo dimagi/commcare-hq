@@ -2,10 +2,8 @@
 # vim: ai ts=4 sts=4 et sw=4 encoding=utf-8
 
 import os
-import logging
 from django.contrib import messages
-
-
+from django.utils.datastructures import SortedDict
 
 CACHE_BACKEND = 'memcached://127.0.0.1:11211/'
 
@@ -133,7 +131,6 @@ CRISPY_TEMPLATE_PACK = 'bootstrap'
 
 HQ_APPS = (
     'django_digest',
-    'django_user_registration',
     'rosetta',
     'auditcare',
     'djangocouch',
@@ -150,7 +147,6 @@ HQ_APPS = (
     'corehq.apps.hqcase',
     'corehq.apps.hqcouchlog',
     'corehq.apps.hqwebapp',
-    'corehq.apps.docs',
     'corehq.apps.hqmedia',
     'corehq.apps.locations',
     'corehq.apps.commtrack',
@@ -243,9 +239,6 @@ LOGIN_REDIRECT_URL='/'
 DOMAIN_MAX_REGISTRATION_REQUESTS_PER_DAY=99
 DOMAIN_SELECT_URL="/domain/select/"
 LOGIN_URL="/accounts/login/"
-# For the registration app
-# One week to confirm a registered user account
-ACCOUNT_ACTIVATION_DAYS=7
 # If a user tries to access domain admin pages but isn't a domain
 # administrator, here's where he/she is redirected
 DOMAIN_NOT_ADMIN_REDIRECT_PAGE_NAME="homepage"
@@ -438,6 +431,7 @@ COUCHDB_APPS = [
     'cloudcare',
     'commtrack',
     'couch', # This is necessary for abstract classes in dimagi.utils.couch.undo; otherwise breaks tests
+    'couchdbkit_aggregate',
     'couchforms',
     'couchexport',
     'hqadmin',
@@ -547,11 +541,11 @@ EMAIL_HOST_USER = EMAIL_LOGIN
 EMAIL_HOST_PASSWORD = EMAIL_PASSWORD
 EMAIL_USE_TLS = True
 
-NO_HTML_EMAIL_MESSAGE = """This is an email from CommCare HQ. You're seeing
-this message because your email client chose to display the plaintext version
-of an email that CommCare HQ can only provide in HTML.  Please set your email
-client to view this email in HTML or read this email in a client that supports
-HTML email.
+NO_HTML_EMAIL_MESSAGE = """
+This is an email from CommCare HQ. You're seeing this message because your
+email client chose to display the plaintext version of an email that CommCare
+HQ can only provide in HTML.  Please set your email client to view this email
+in HTML or read this email in a client that supports HTML email.
 
 Thanks,
 The CommCare HQ Team"""
@@ -568,39 +562,42 @@ APPSTORE_INTERFACE_MAP = {
     ]
 }
 
-PROJECT_REPORT_MAP = {
-    "Monitor Workers" : [
+PROJECT_REPORT_MAP = SortedDict([
+    ["Monitor Workers", [
         'corehq.apps.reports.standard.monitoring.DailyFormStatsReport',
         'corehq.apps.reports.standard.monitoring.SubmissionsByFormReport',
         'corehq.apps.reports.standard.monitoring.FormCompletionTimeReport',
         'corehq.apps.reports.standard.monitoring.CaseActivityReport',
         'corehq.apps.reports.standard.monitoring.FormCompletionVsSubmissionTrendsReport',
         'corehq.apps.reports.standard.monitoring.WorkerActivityTimes',
-    ],
-    "Inspect Data" : [
+    ]],
+    ["Inspect Data", [
         'corehq.apps.reports.standard.inspect.SubmitHistory',
         'corehq.apps.reports.standard.inspect.CaseListReport',
         'corehq.apps.reports.standard.inspect.MapReport',
-    ],
-    "Raw Data" : [
+    ]],
+    ["Raw Data", [
         'corehq.apps.reports.standard.export.ExcelExportReport',
         'corehq.apps.reports.standard.export.CaseExportReport',
         'corehq.apps.reports.standard.export.DeidExportReport',
-    ],
-    "Manage Deployments" : [
+    ]],
+    ["Manage Deployments", [
         'corehq.apps.reports.standard.deployments.ApplicationStatusReport',
         'corehq.apps.receiverwrapper.reports.SubmissionErrorReport',
         'phonelog.reports.FormErrorReport',
         'phonelog.reports.DeviceLogDetailsReport'
-    ],
-    "Commtrack": [
+    ]],
+    ["SMS", [
+        'corehq.apps.reports.standard.sms.MessagesReport',
+    ]],
+    ["Commtrack", [
         'corehq.apps.reports.commtrack.psi_prototype.VisitReport',
         'corehq.apps.reports.commtrack.psi_prototype.SalesAndConsumptionReport',
         'corehq.apps.reports.commtrack.psi_prototype.CumulativeSalesAndConsumptionReport',
         'corehq.apps.reports.commtrack.psi_prototype.StockOutReport',
         'corehq.apps.reports.commtrack.psi_prototype.StockReportExport',
-    ],
-}
+    ]]
+])
 
 CUSTOM_REPORT_MAP = {
     ## legacy custom reports. do not follow practices followed here
@@ -634,6 +631,7 @@ CUSTOM_REPORT_MAP = {
             'hsph.reports.field_management.FieldDataCollectionActivityReport',
             'hsph.reports.field_management.HVFollowUpStatusReport',
             'hsph.reports.field_management.HVFollowUpStatusSummaryReport',
+            'hsph.reports.call_center.CaseReport',
             'hsph.reports.field_management.DCOProcessDataReport'
         ],
         'Project Management Reports': [
@@ -641,7 +639,7 @@ CUSTOM_REPORT_MAP = {
             'hsph.reports.project_management.ImplementationStatusDashboardReport'
         ],
         'Call Center Reports': [
-            'hsph.reports.call_center.DCCActivityReport',
+            'hsph.reports.call_center.CATIPerformanceReport',
             'hsph.reports.call_center.CallCenterFollowUpSummaryReport'
         ],
         'Data Summary Reports': [
@@ -688,6 +686,22 @@ CUSTOM_REPORT_MAP = {
             "bihar.reports.indicators.reports.IndicatorClientSelectNav",
             "bihar.reports.indicators.reports.IndicatorClientList",
             "bihar.reports.indicators.reports.IndicatorCharts",
+        ]
+    },
+    "psi": {
+        "Custom Reports": [
+            'corehq.apps.reports.commtrack.psi_prototype.PSIEventsReport',
+            'corehq.apps.reports.commtrack.psi_prototype.PSIHDReport',
+            'corehq.apps.reports.commtrack.psi_prototype.PSISSReport',
+            'corehq.apps.reports.commtrack.psi_prototype.PSITSReport',
+        ]
+    },
+    "psi-unicef": {
+        "Custom Reports": [
+            'corehq.apps.reports.commtrack.psi_prototype.PSIEventsReport',
+            'corehq.apps.reports.commtrack.psi_prototype.PSIHDReport',
+            'corehq.apps.reports.commtrack.psi_prototype.PSISSReport',
+            'corehq.apps.reports.commtrack.psi_prototype.PSITSReport',
         ]
     }
     #    "test": [
