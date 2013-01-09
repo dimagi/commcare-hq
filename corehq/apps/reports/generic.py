@@ -664,7 +664,7 @@ class GenericTabularReport(GenericReportView):
         @property
         shared_pagination_GET_params
             - this is where you select the GET parameters to pass to the paginator
-            - returns a list formatted like [dict(name='group', value=self.group_name)]
+            - returns a list formatted like [dict(name='group', value=self.group_id)]
     """
     # new class properties
     total_row = None
@@ -729,7 +729,7 @@ class GenericTabularReport(GenericReportView):
             Override.
             Should return a list of dicts with the name and value of the GET parameters
             that you'd like to pass to the server-side pagination.
-            ex: [dict(name='group', value=self.group_name)]
+            ex: [dict(name='group', value=self.group_id)]
         """
         return []
 
@@ -820,8 +820,9 @@ class GenericTabularReport(GenericReportView):
             Don't override.
             Override the properties headers and rows instead of this.
         """
-        assert isinstance(self.headers, (DataTablesHeader, list))
-        if isinstance(self.headers, list):
+        headers = self.headers # not all headers have been memoized
+        assert isinstance(headers, (DataTablesHeader, list))
+        if isinstance(headers, list):
             raise DeprecationWarning("Property 'headers' should be a DataTablesHeader object, not a list.")
 
         if self.ajax_pagination or self.needs_filters:
@@ -850,7 +851,7 @@ class GenericTabularReport(GenericReportView):
 
         context = dict(
             report_table=dict(
-                headers=self.headers,
+                headers=headers,
                 rows=rows,
                 total_row=self.total_row,
                 statistics_rows=self.statistics_rows,

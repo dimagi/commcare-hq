@@ -62,7 +62,7 @@ class MessagesReport(ProjectReport, ProjectReportParametersMixin, GenericTabular
 
         return [
             _row(user) for user in self.get_all_users_by_domain(
-                group=self.group_name,
+                group=self.group_id,
                 individual=self.individual,
                 user_filter=tuple(self.user_filter),
                 simplified=False
