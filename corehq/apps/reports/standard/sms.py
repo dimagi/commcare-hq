@@ -50,10 +50,7 @@ class MessagesReport(ProjectReport, ProjectReportParametersMixin, GenericTabular
         def _row(user):
             # NOTE: this currently counts all messages from the user, whether
             # or not they were from verified numbers
-            # HACK: in order to make the endate inclusive we have to set it
-            # to tomorrow
-            enddate = self.datespan.enddate + timedelta(days=1)
-            counts = _sms_count(user, self.datespan.startdate, enddate)
+            counts = _sms_count(user, self.datespan.startdate_utc, self.datespan.enddate_utc)
             def _fmt(val):
                 return format_datatables_data(val, val)
             return [
@@ -123,7 +120,7 @@ class MessageLogReport(ProjectReport, ProjectReportParametersMixin, GenericTabul
     @property
     def rows(self):
         startdate = json_format_datetime(self.datespan.startdate_utc)
-        enddate = json_format_datetime(self.datespan.enddate_utc) # enddate_utc is inclusive
+        enddate = json_format_datetime(self.datespan.enddate_utc)
         data = SMSLog.by_domain_date(self.domain, startdate, enddate)
         result = []
         
