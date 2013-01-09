@@ -138,7 +138,7 @@ class MessageLogReport(ProjectReport, ProjectReportParametersMixin, GenericTabul
         
         for message in data:
             recipient_id = message.couch_recipient
-            if recipient_id is None:
+            if recipient_id in [None, ""]:
                 username = "-"
             elif recipient_id in username_map:
                 username = username_map.get(recipient_id)
