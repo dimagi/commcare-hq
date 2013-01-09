@@ -1,7 +1,8 @@
 from tastypie import fields
 from casexml.apps.case.models import CommCareCase
 from corehq.apps.api.resources.v0_1 import CustomResourceMeta
-from corehq.apps.cloudcare.api import get_filtered_cases, get_filters_from_request
+from corehq.apps.cloudcare.api import get_filtered_cases, get_filters_from_request,\
+    api_closed_to_status
 from corehq.apps.api.util import get_object_or_not_exist
 from corehq.apps.api.resources import JsonResource
 
@@ -37,8 +38,13 @@ class CommCareCaseResource(JsonResource):
 
     def obj_get_list(self, request, domain, **kwargs):
         user_id = request.GET.get('user_id')
+        status = api_closed_to_status(request.REQUEST.get('closed', 'false'))
         filters = get_filters_from_request(request, limit_top_level=self.fields)
-        return map(dict_object, get_filtered_cases(domain, user_id=user_id, filters=filters))
+        case_type = filters.get('properties/case_type', None)
+        return map(dict_object, get_filtered_cases(domain, status=status,
+                                                   case_type=case_type,
+                                                   user_id=user_id,
+                                                   filters=filters))
 
     class Meta(CustomResourceMeta):
         resource_name = 'case'

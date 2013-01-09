@@ -8,10 +8,20 @@ from casexml.apps.phone.caselogic import get_footprint
 from datetime import datetime
 from corehq.elastic import get_es
 import urllib
+from dimagi.utils.couch.database import iter_docs
+from dimagi.utils.chunked import chunked
 
 CASE_STATUS_OPEN = 'open'
 CASE_STATUS_CLOSED = 'closed'
 CASE_STATUS_ALL = 'all'
+
+def api_closed_to_status(closed_string):
+    # legacy api support
+    return {
+        'any': CASE_STATUS_ALL,
+        'true': CASE_STATUS_CLOSED,
+        'false': CASE_STATUS_OPEN,
+    }[closed_string]
 
 def closed_to_status(closed_bool):
     return {None: CASE_STATUS_ALL,
@@ -59,34 +69,41 @@ class CaseAPIHelper(object):
     Simple config object for querying the APIs
     """
     def __init__(self, status='open', case_type=None, ids_only=False,
-                 footprint=False):
+                 footprint=False, strip_history=False):
         if status not in [CASE_STATUS_ALL, CASE_STATUS_CLOSED, CASE_STATUS_OPEN]:
             raise ValueError("invalid case status %s" % status)
         self.status = status
         self.case_type = case_type
         self.ids_only = ids_only
         self.footprint = footprint
+        self.strip_history = strip_history
+
+    def iter_cases(self, ids):
+        database = CommCareCase.get_db()
+        if not self.strip_history:
+            for doc in iter_docs(database, ids):
+                yield CommCareCase.wrap(doc)
+        else:
+            for doc_ids in chunked(ids, 100):
+                for res in database.view("case/get_lite", keys=doc_ids,
+                                         include_docs=False):
+                    yield CommCareCase.wrap(res['value'])
 
     def get_all(self, domain):
         key = [domain, self.case_type or {}, {}]
         view_name = 'hqcase/open_cases' if self.status==CASE_STATUS_OPEN else 'hqcase/all_cases'
+        view_results = CommCareCase.get_db().view(
+            view_name,
+            startkey=key,
+            endkey=key + [{}],
+            include_docs=False,
+            reduce=False,
+        )
+        ids = [res["id"] for res in view_results]
         if not self.ids_only:
-            cases = CommCareCase.view(view_name,
-                startkey=key,
-                endkey=key + [{}],
-                include_docs=True,
-                reduce=False,
-            )
-            return [CaseAPIResult(couch_doc=case) for case in cases]
+            return [CaseAPIResult(couch_doc=case) for case in self.iter_cases(ids)]
         else:
-            return [CaseAPIResult(id=res["id"], id_only=True) \
-                    for res in CommCareCase.get_db().view(
-                        view_name,
-                        startkey=key,
-                        endkey=key + [{}],
-                        include_docs=False,
-                        reduce=False,
-                    )]
+            return [CaseAPIResult(id=id, id_only=True) for id in ids]
 
     def get_owned(self, domain, user_id):
         try:
@@ -119,45 +136,26 @@ class CaseAPIHelper(object):
 # returns a generator but internally batches couch requests
 # potentially doubling the batch-size each time in case it really is a lot of data
 
-def get_all_cases(domain, include_closed=False, case_type=None, ids_only=False):
-    """
-    Get all cases in a domain.
-    """
-    status = CASE_STATUS_ALL if include_closed else CASE_STATUS_OPEN
-    helper = CaseAPIHelper(status, case_type, ids_only)
-    return helper.get_all(domain)
 
-def get_owned_cases(domain, user_id, closed=False, footprint=False, ids_only=False):
-    """
-    Get all cases in a domain owned by a particular user.
-    """
-    helper = CaseAPIHelper(closed_to_status(closed), ids_only=ids_only,
-                           footprint=footprint)
-    return helper.get_owned(domain, user_id)
-
-def get_filtered_cases(domain, user_id=None, filters=None, footprint=False,
-                       ids_only=False):
+def get_filtered_cases(domain, status, user_id=None, case_type=None,
+                       filters=None, footprint=False, ids_only=False,
+                       strip_history=True):
 
     @inline
     def cases():
         """pre-filter cases based on user_id and (if possible) closed"""
-        closed = json.loads(filters.get('closed') or 'null')
-        case_type = filters.get('properties/case_type')
-
+        helper = CaseAPIHelper(status, case_type=case_type, ids_only=ids_only,
+                               footprint=footprint, strip_history=False)
         if user_id:
-            return get_owned_cases(domain, user_id, closed=closed, 
-                                   footprint=footprint)
+            return helper.get_owned(domain, user_id)
         else:
-            return get_all_cases(domain, include_closed=closed in (True, None),
-                                 case_type=case_type, ids_only=ids_only)
+            return helper.get_all(domain)
 
     if filters:
         def _filter(res):
             for path, val in filters.items():
-                # optimization hack: we secretly know that 'closed' is taken
-                # care of by the above calls, and that a filter value of None
-                # means don't filter
-                if val is None or path == 'closed':
+                # for now, a filter value of None means don't filter
+                if val is None:
                     continue
 
                 actual_val = safe_index(res.case_json, path.split("/"))
@@ -295,17 +293,10 @@ def get_filters_from_request(request, limit_top_level=None):
     if limit_top_level is not None:
         filters = dict([(key, val) for key, val in filters.items() if '/' in key or key in limit_top_level])
 
-    filters.update({
-        'user_id': None,
-        'closed': ({
-            'any': None,
-            'true': 'true',
-            'false': 'false',
-        }.get(filters.get('closed'), 'false')),
-        'format': None,
-        'footprint': None,
-        'ids_only': None,
-    })
+    for system_property in ['user_id', 'closed', 'format', 'footprint',
+                            'ids_only']:
+        if system_property in filters:
+            del filters[system_property]
     return filters
 
 def get_cloudcare_apps(domain):

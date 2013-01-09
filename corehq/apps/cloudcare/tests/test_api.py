@@ -6,7 +6,8 @@ from casexml.apps.case.xml import V2
 from casexml.apps.phone.xml import date_to_xml_string
 from corehq.apps.users.models import CommCareUser
 from corehq.apps.users.util import format_username
-from corehq.apps.cloudcare.api import get_all_cases, get_owned_cases
+from corehq.apps.cloudcare.api import get_filtered_cases, CASE_STATUS_OPEN, CASE_STATUS_ALL,\
+    CASE_STATUS_CLOSED
 import uuid
 
 TEST_DOMAIN = "test-domain"
@@ -105,51 +106,51 @@ class CaseAPITest(TestCase):
         return self.expectedClosedByUser * len(self.user_ids)
 
     def testGetAllOpen(self):
-        list = get_all_cases(self.domain, include_closed=False, case_type=None)
+        list = get_filtered_cases(self.domain, status=CASE_STATUS_OPEN)
         self.assertEqual(self.expectedOpen, len(list))
         self.assertListMatches(list, lambda c: not c['closed'])
 
     def testGetAllWithClosed(self):
-        list = get_all_cases(self.domain, include_closed=True, case_type=None)
+        list = get_filtered_cases(self.domain, status=CASE_STATUS_ALL)
         self.assertEqual(self.expectedOpen + self.expectedClosed, len(list))
 
     def testGetAllOpenWithType(self):
-        list = get_all_cases(self.domain, include_closed=False, case_type=self.test_type)
+        list = get_filtered_cases(self.domain, status=CASE_STATUS_OPEN, case_type=self.test_type)
         self.assertEqual(self.expectedOpenByType, len(list))
         self.assertListMatches(list, lambda c: not c['closed'] and c['properties']['case_type'] == self.test_type)
 
     def testGetAllWithClosedAndType(self):
-        list = get_all_cases(self.domain, include_closed=True, case_type=self.test_type)
+        list = get_filtered_cases(self.domain, status=CASE_STATUS_ALL, case_type=self.test_type)
         self.assertEqual(self.expectedOpenByType + self.expectedClosedByType, len(list))
         self.assertListMatches(list, lambda c: c['properties']['case_type'] == self.test_type)
 
     def testGetOwnedOpen(self):
-        list = get_owned_cases(self.domain, self.test_user_id, closed=False, footprint=False)
+        list = get_filtered_cases(self.domain, user_id=self.test_user_id, status=CASE_STATUS_OPEN, footprint=False)
         self.assertEqual(self.expectedOpenByUser, len(list))
         self.assertListMatches(list, lambda c: not c['closed'] and c['user_id'] == self.test_user_id)
 
     def testGetOwnedClosed(self):
-        list = get_owned_cases(self.domain, self.test_user_id, closed=True, footprint=False)
+        list = get_filtered_cases(self.domain, user_id=self.test_user_id, status=CASE_STATUS_CLOSED, footprint=False)
         self.assertEqual(self.expectedClosedByUser, len(list))
         self.assertListMatches(list, lambda c: c['closed'] and c['user_id'] == self.test_user_id)
 
     def testGetOwnedBoth(self):
-        list = get_owned_cases(self.domain, self.test_user_id, closed=None, footprint=False)
+        list = get_filtered_cases(self.domain, user_id=self.test_user_id, status=CASE_STATUS_ALL, footprint=False)
         self.assertEqual(self.expectedOpenByUser + self.expectedClosedByUser, len(list))
         self.assertListMatches(list, lambda c: c['user_id'] == self.test_user_id)
 
     def testGetOwnedOpenWithFootprint(self):
-        list = get_owned_cases(self.domain, self.test_user_id, closed=False, footprint=True)
+        list = get_filtered_cases(self.domain, user_id=self.test_user_id, status=CASE_STATUS_OPEN, footprint=True)
         self.assertEqual(self.expectedOpenByUserWithFootprint, len(list))
         self.assertListMatches(list, lambda c: not c['closed'] or c['user_id'] != self.test_user_id)
 
     def testGetOwnedClosedWithFootprint(self):
-        list = get_owned_cases(self.domain, self.test_user_id, closed=True, footprint=True)
+        list = get_filtered_cases(self.domain, user_id=self.test_user_id, status=CASE_STATUS_CLOSED, footprint=True)
         self.assertEqual(self.expectedClosedByUserWithFootprint, len(list))
         self.assertListMatches(list, lambda c: c['closed'] or c['user_id'] != self.test_user_id)
 
     def testGetOwnedBothWithFootprint(self):
-        list = get_owned_cases(self.domain, self.test_user_id, closed=None, footprint=True)
+        list = get_filtered_cases(self.domain, user_id=self.test_user_id, status=CASE_STATUS_ALL, footprint=True)
         self.assertEqual(self.expectedOpenByUserWithFootprint + self.expectedClosedByUserWithFootprint, len(list))
         # I don't think we can say anything super useful about this base set
 

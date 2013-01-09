@@ -10,7 +10,8 @@ from dimagi.utils.web import render_to_response, json_response, get_url_base
 from django.http import HttpResponseRedirect, HttpResponse, HttpResponseBadRequest, Http404
 from corehq.apps.app_manager.models import Application, ApplicationBase
 import json
-from corehq.apps.cloudcare.api import get_app, get_cloudcare_apps, get_filtered_cases, get_filters_from_request
+from corehq.apps.cloudcare.api import get_app, get_cloudcare_apps, get_filtered_cases, get_filters_from_request,\
+    api_closed_to_status
 from dimagi.utils.parsing import string_to_boolean
 from django.conf import settings
 from corehq.apps.cloudcare import touchforms_api 
@@ -171,8 +172,12 @@ def get_cases(request, domain):
     footprint = string_to_boolean(request.REQUEST.get("footprint", "false"))
     ids_only = string_to_boolean(request.REQUEST.get("ids_only", "false"))
     filters = get_filters_from_request(request)
-    cases = get_filtered_cases(domain, user_id=user_id, filters=filters, 
-                               footprint=footprint, ids_only=ids_only)
+    status = api_closed_to_status(request.REQUEST.get('closed', 'false'))
+    case_type = filters.get('properties/case_type', None)
+    cases = get_filtered_cases(domain, status=status, case_type=case_type,
+                               user_id=user_id, filters=filters,
+                               footprint=footprint, ids_only=ids_only,
+                               strip_history=True)
     return json_response(cases)
 
 @cloudcare_api
