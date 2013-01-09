@@ -295,7 +295,7 @@ class DateSpan(object):
             enddate = datetime.now(tz=timezone) 
         end = datetime(enddate.year, enddate.month, enddate.day)
         start = end - timedelta(days=days)
-        return DateSpan(start, end, format, inclusive)
+        return DateSpan(start, end, format, inclusive, timezone)
                     
     
     def parse(self, startdate_str, enddate_str, parse_format, display_format=None):
