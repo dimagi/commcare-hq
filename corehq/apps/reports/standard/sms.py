@@ -14,6 +14,8 @@ from corehq.apps.reports.util import format_datatables_data
 from corehq.apps.users.models import CouchUser
 from casexml.apps.case.models import CommCareCase
 from django.conf import settings
+from dimagi.utils.timezones import utils as tz_utils
+import pytz
 
 class MessagesReport(ProjectReport, ProjectReportParametersMixin, GenericTabularReport, DatespanMixin):
     name = ugettext_noop('SMS Usage')
@@ -159,8 +161,9 @@ class MessageLogReport(ProjectReport, ProjectReportParametersMixin, GenericTabul
             if abbreviate_phone_number and phone_number is not None:
                 phone_number = phone_number[0:5] if phone_number[0:1] == "+" else phone_number[0:4]
             
+            timestamp = tz_utils.adjust_datetime_to_timezone(message.date, pytz.utc.zone, self.timezone.zone)
             result.append([
-                self._fmt_timestamp(message.date),
+                self._fmt_timestamp(timestamp),
                 self._fmt(username),
                 self._fmt(phone_number),
                 self._fmt(direction_map.get(message.direction,"-")),
@@ -175,6 +178,6 @@ class MessageLogReport(ProjectReport, ProjectReportParametersMixin, GenericTabul
     def _fmt_timestamp(self, timestamp):
         return self.table_cell(
             timestamp,
-            timestamp.strftime("%d %b %Y, %H:%M:%S"),
+            timestamp.strftime("%Y-%m-%d %H:%M:%S"),
         )
 
