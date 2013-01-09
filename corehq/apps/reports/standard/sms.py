@@ -120,9 +120,8 @@ class MessageLogReport(ProjectReport, ProjectReportParametersMixin, GenericTabul
     
     @property
     def rows(self):
-        startdate = json_format_datetime(self.datespan.startdate)
-        enddate = self.datespan.enddate + timedelta(days=1) # Make end date inclusive
-        enddate = json_format_datetime(enddate)
+        startdate = json_format_datetime(self.datespan.startdate_utc)
+        enddate = json_format_datetime(self.datespan.enddate_utc) # enddate_utc is inclusive
         data = SMSLog.by_domain_date(self.domain, startdate, enddate)
         result = []
         
@@ -158,7 +157,7 @@ class MessageLogReport(ProjectReport, ProjectReportParametersMixin, GenericTabul
             
             phone_number = message.phone_number
             if abbreviate_phone_number and phone_number is not None:
-                phone_number = phone_number[0:5]
+                phone_number = phone_number[0:5] if phone_number[0:1] == "+" else phone_number[0:4]
             
             result.append([
                 self._fmt_timestamp(message.date),
