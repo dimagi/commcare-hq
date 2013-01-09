@@ -23,7 +23,7 @@ def status_to_closed_flags(status):
             CASE_STATUS_CLOSED: [True],
             CASE_STATUS_OPEN: [False]}[status]
 
-class CaseAPIResult():
+class CaseAPIResult(object):
     """
     The result of a case API query. Useful for abstracting out the difference
     between an id-only representation and a full_blown one.
@@ -54,7 +54,7 @@ class CaseAPIResult():
     def to_json(self):
         return self.id if self.id_only else self.case_json
 
-class CaseAPIHelper():
+class CaseAPIHelper(object):
     """
     Simple config object for querying the APIs
     """
