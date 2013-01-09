@@ -596,6 +596,8 @@ PROJECT_REPORT_MAP = {
     "Commtrack": [
         'corehq.apps.reports.commtrack.psi_prototype.VisitReport',
         'corehq.apps.reports.commtrack.psi_prototype.SalesAndConsumptionReport',
+        'corehq.apps.reports.commtrack.psi_prototype.CumulativeSalesAndConsumptionReport',
+        'corehq.apps.reports.commtrack.psi_prototype.StockOutReport',
         'corehq.apps.reports.commtrack.psi_prototype.StockReportExport',
     ],
 }
