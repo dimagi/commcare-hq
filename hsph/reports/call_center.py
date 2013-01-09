@@ -40,7 +40,7 @@ class CATIPerformanceReport(CustomProjectReport, ProjectReportParametersMixin,
     name = "CATI Performance Report"
     slug = "cati_performance"
     field_classes = (FilterUsersField, DatespanField, NameOfCATIField)
-    group_name = "CATI"
+    filter_group_name = "CATI"
     
     couch_view = "hsph/cati_performance_report"
     
