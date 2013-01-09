@@ -103,13 +103,15 @@ class CaseAPIHelper():
         def keys():
             for owner_id in owner_ids:
                 for bool in status_to_closed_flags(self.status):
-                    yield [owner_id, bool]
+                    yield [domain, owner_id, bool]
 
-        cases = CommCareCase.view('case/by_owner', keys=keys, include_docs=True, reduce=False)
+        # TODO: honor ids_only,
+        # use more efficient view
+        cases = CommCareCase.view('hqcase/by_owner', keys=keys, include_docs=True, reduce=False)
         if self.footprint:
             cases = get_footprint(cases).values()
         # demo_user cases!
-        return [case.get_json() for case in cases if case.domain == domain]
+        return [case.get_json() for case in cases]
 
 # todo: Make these api functions use generators for streaming
 # so that a limit call won't fetch more docs than it needs to
