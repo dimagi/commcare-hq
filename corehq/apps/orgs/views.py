@@ -1,3 +1,4 @@
+from couchdbkit import ResourceNotFound
 from django.core.urlresolvers import reverse
 from django.http import HttpResponse, HttpResponseRedirect, Http404, HttpResponseForbidden
 from django.views.decorators.http import require_POST
@@ -155,10 +156,10 @@ def orgs_team_members(request, org, team_id, template="orgs/orgs_team_members.ht
     teams = Team.get_by_org(org)
     current_domains = Domain.get_by_organization(org)
 
-    #check that the team exists
-    team = Team.get(team_id)
-    if team is None:
-        raise Http404("Group %s does not exist" % team_id)
+    try:
+        team = Team.get(team_id)
+    except ResourceNotFound:
+        raise Http404("Team %s does not exist" % team_id)
 
     #inspect the members of the team
     member_ids = team.get_member_ids()
@@ -182,6 +183,7 @@ def orgs_team_members(request, org, team_id, template="orgs/orgs_team_members.ht
     return render_to_response(request, template, vals)
 
 @require_superuser
+@require_POST
 def add_team(request, org):
     team_name = request.POST['team_name']
     team = Team.get_by_org_and_name(org, team_name)
@@ -193,18 +195,18 @@ def add_team(request, org):
 
 
 @require_superuser
+@require_POST
 def join_team(request, org, team_id, couch_user_id):
     team = Team.get(team_id)
-    if team:
-        team.add_member(couch_user_id)
+    team.add_member(couch_user_id)
     if 'redirect_url' in request.POST:
         return HttpResponseRedirect(reverse(request.POST['redirect_url'], args=(org, team_id)))
 
 @require_superuser
+@require_POST
 def leave_team(request, org, team_id, couch_user_id):
     team = Team.get(team_id)
-    if team:
-        team.remove_member(couch_user_id)
+    team.remove_member(couch_user_id)
     if 'redirect_url' in request.POST:
         return HttpResponseRedirect(reverse(request.POST['redirect_url'], args=(org, team_id)))
 
@@ -222,54 +224,62 @@ def delete_team(request, org, team_id):
         return HttpResponseForbidden()
 
 @require_superuser
+@require_POST
 def undo_delete_team(request, org, record_id):
     record = DeleteTeamRecord.get(record_id)
     record.undo()
     return HttpResponseRedirect(reverse('orgs_team_members', args=[org, record.doc_id]))
 
 @require_superuser
+@require_POST
 def add_domain_to_team(request, org, team_id, domain):
     team = Team.get(team_id)
-    if team:
-        team.add_domain_membership(domain)
-        team.save()
+    team.add_domain_membership(domain)
+    team.save()
     if 'redirect_url' in request.POST:
         return HttpResponseRedirect(reverse(request.POST['redirect_url'], args=(org, team_id)))
 
 @require_superuser
+@require_POST
 def remove_domain_from_team(request, org, team_id, domain):
     team = Team.get(team_id)
-    if team:
-        team.delete_domain_membership(domain)
-        team.save()
+    team.delete_domain_membership(domain)
+    team.save()
     if 'redirect_url' in request.POST:
         return HttpResponseRedirect(reverse(request.POST['redirect_url'], args=(org, team_id)))
 
 @require_superuser
-def set_team_permission_for_domain(request, org, team_id, domain, role_label):
-    team = Team.get(team_id)
-    if team:
+@require_POST
+def set_team_permission_for_domain(request, org, team_id):
+    domain = request.POST.get('domain', None)
+    role_label = request.POST.get('role_label', None)
+
+    if domain and role_label:
+        team = Team.get(team_id)
         team.set_role(domain, role_label)
         team.save()
+
+        dm = team.get_domain_membership(domain)
+        return json_response(UserRole.get(dm.role_id).name if not dm.is_admin else 'Admin')
     return HttpResponseRedirect(reverse('orgs_team_members', args=(org, team_id)))
 
 @require_superuser
+@require_POST
 def add_all_to_team(request, org, team_id):
     team = Team.get(team_id)
-    if team:
-        organization = Organization.get_by_name(org)
-        members = organization.members
-        for member in members:
-            team.add_member(member)
+    organization = Organization.get_by_name(org)
+    members = organization.members
+    for member in members:
+        team.add_member(member)
     if 'redirect_url' in request.POST:
         return HttpResponseRedirect(reverse(request.POST['redirect_url'], args=(org, team_id)))
 
 @require_superuser
+@require_POST
 def remove_all_from_team(request, org, team_id):
     team = Team.get(team_id)
-    if team:
-        member_ids = team.member_ids
-        for member in member_ids:
-            team.remove_member(member)
+    member_ids = team.member_ids
+    for member in member_ids:
+        team.remove_member(member)
     if 'redirect_url' in request.POST:
         return HttpResponseRedirect(reverse(request.POST['redirect_url'], args=(org, team_id)))
