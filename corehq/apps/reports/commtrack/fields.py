@@ -5,7 +5,7 @@ from corehq.apps.commtrack.util import *
 class SupplyPointTypeField(ReportMultiSelectField):
     slug = 'outlet_type'
     name = 'Outlet Type'
-    multiple = True
+    default_option = ['_all']
 
     @property
     def options(self):
@@ -26,3 +26,14 @@ class SupplyPointTypeField(ReportMultiSelectField):
         for t in sorted(categories['_oth']):
             choices.append(indent(t))
         return [{'val': e[0], 'text': e[1]} for e in choices]
+
+class ProductField(ReportMultiSelectField):
+    slug = 'product'
+    name = 'Product'
+    default_option = ['_all']
+
+    @property
+    def options(self):
+        choices = [{'text': e[0], 'val': e[1]} for e in sorted((p.name, p._id) for p in Product.by_domain(self.domain))]
+        choices.insert(0, {'text': 'All Products', 'val': '_all'})
+        return choices

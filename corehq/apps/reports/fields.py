@@ -18,7 +18,7 @@ from django.utils.translation import ugettext_noop
 from django.utils.translation import ugettext as _
 from corehq.apps.reports.cache import CacheableRequestMixIn, request_cache
 from django.core.urlresolvers import reverse
-
+import random
 
 """
     Note: Fields is being phased out in favor of filters.
@@ -67,6 +67,13 @@ class ReportSelectField(ReportField):
     hide_field = False
     as_combo = False
 
+    def __init__(self, *args, **kwargs):
+        super(ReportSelectField, self).__init__(*args, **kwargs)
+        # need to anonymize cssId so knockout bindings won't clobber each other
+        # when multiple select controls on screen at once
+        nonce = ''.join('%x' % random.randint(0, 15) for i in range(12))
+        self.cssId = '%s-%s' % (self.cssId, nonce)
+
     def update_params(self):
         self.selected = self.request.GET.get(self.slug)
 
@@ -86,12 +93,12 @@ class ReportSelectField(ReportField):
 class ReportMultiSelectField(ReportSelectField):
     template = "reports/fields/multiselect_generic.html"
     selected = []
-    default_option = None
+    default_option = []
 
     # enfore as_combo = False ?
 
     def update_params(self):
-        self.selected = self.request.GET.getlist(self.slug)
+        self.selected = self.request.GET.getlist(self.slug) or self.default_option
 
 class MonthField(ReportField):
     slug = "month"
