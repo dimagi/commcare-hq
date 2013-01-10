@@ -18,7 +18,7 @@ from django.utils.translation import ugettext_noop
 from django.utils.translation import ugettext as _
 from corehq.apps.reports.cache import CacheableRequestMixIn, request_cache
 from django.core.urlresolvers import reverse
-import random
+import uuid
 
 """
     Note: Fields is being phased out in favor of filters.
@@ -69,9 +69,9 @@ class ReportSelectField(ReportField):
 
     def __init__(self, *args, **kwargs):
         super(ReportSelectField, self).__init__(*args, **kwargs)
-        # need to anonymize cssId so knockout bindings won't clobber each other
+        # need to randomize cssId so knockout bindings won't clobber each other
         # when multiple select controls on screen at once
-        nonce = ''.join('%x' % random.randint(0, 15) for i in range(12))
+        nonce = uuid.uuid4().hex[-12:]
         self.cssId = '%s-%s' % (self.cssId, nonce)
 
     def update_params(self):
