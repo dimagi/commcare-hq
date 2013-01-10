@@ -86,6 +86,7 @@ class HealthCoordinatorReport(MVPIndicatorReport):
                     "under5_complicated_fever_facility_followup_proportion", # C - 32
                     "under5_complicated_fever_referred_proportion",
                     "under1_check_ups_proportion", # C - 9
+                    "under1_immunized_proportion", # A2 - 8
                 ]
             },
             {
