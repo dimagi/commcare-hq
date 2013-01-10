@@ -29,6 +29,7 @@
         {% endif %}
         </thead>
         <tbody>
+        {% block tabular-body %}
         {% if report_table.pagination.is_on %}
             <tr>
                 <td colspan="{{ report_table.headers.header|length }}" class="dataTables_empty">
@@ -46,6 +47,7 @@
                 {% endfor %}
             </tr>
         {% endfor %}
+        {% endblock %}
         </tbody>
         {% if report_table.total_row and report_table.rows %}
             <tfoot>
