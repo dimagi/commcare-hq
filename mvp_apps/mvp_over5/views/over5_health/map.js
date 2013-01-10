@@ -9,13 +9,13 @@ function (doc) {
 
         var visit_date = new Date(meta.timeEnd);
 
-        if (doc.form.num_other_positive) {
+        if (indicators.num_other_positive) {
             try {
-                var num_positive = (doc.form.num_other_positive) ? parseInt(doc.form.num_other_positive): 0;
-
+                var num_positive = (indicators.num_other_positive.value) ? parseInt(indicators.num_other_positive.value) : 0;
                 indicator_emits["over5_positive_rdt"] = num_positive;
-                if (num_positive > 0 && doc.form.num_antimalarials_other) {
-                    num_medicated = (doc.form.num_antimalarials_other) ? parseInt(doc.form.num_antimalarials_other) : 0;
+
+                if (num_positive > 0 && indicators.num_antimalarials_other) {
+                    num_medicated = (indicators.num_antimalarials_other.value) ? parseInt(indicators.num_antimalarials_other.value) : 0;
                     indicator_emits["over5_positive_rdt_medicated"] = num_medicated;
                 }
             } catch (e) {
