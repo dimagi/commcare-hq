@@ -94,7 +94,7 @@ PACT_HP_CHOICES_DICT = dict(x for x in PACT_HP_CHOICES)
 
 PACT_DOT_CHOICES = (
 #    ('DOT', 'DOT - Directly Observed Therapy (old)'),
-    ('DOT7', 'Directly Observed Therapy 7 (DOT-7)'),
+#    ('DOT7', 'Directly Observed Therapy 7 (DOT-7)'),
     ('DOT5', 'Directly Observed Therapy 5 (DOT-5)'),
     ('DOT3', 'Directly Observed Therapy 3 (DOT-3)'),
     ('DOT1', 'Directly Observed Therapy 1 (DOT-1)'),
