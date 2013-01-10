@@ -7,7 +7,7 @@ from corehq.apps.reports.standard.inspect import CaseDisplay, CaseListReport
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
 from corehq.apps.reports.datatables.DTSortType import NUMERIC
 from hsph.reports import HSPHSiteDataMixin
-from hsph.fields import NameOfCATIField
+from hsph.fields import NameOfCATIField, AllocatedToFilter
 from corehq.apps.reports.fields import FilterUsersField, DatespanField
 from couchdbkit_aggregate.fn import mean, unique_count
 from casexml.apps.case import const
@@ -40,6 +40,7 @@ class CATIPerformanceReport(CustomProjectReport, ProjectReportParametersMixin,
     name = "CATI Performance Report"
     slug = "cati_performance"
     field_classes = (FilterUsersField, DatespanField, NameOfCATIField)
+            
     filter_group_name = "CATI"
     
     couch_view = "hsph/cati_performance_report"
@@ -207,13 +208,16 @@ class HSPHCaseDisplay(CaseDisplay):
 class CaseReport(CaseListReport, CustomProjectReport, HSPHSiteDataMixin):
     name = 'Case Report'
     slug = 'case_report'
-
-    fields = [
+    
+    fields = (
         'corehq.apps.reports.fields.FilterUsersField',
-        'corehq.apps.reports.fields.SelectCaseOwnerField',
-        'corehq.apps.reports.fields.CaseTypeField',
+        'corehq.apps.reports.fields.DatespanField',
+        'hsph.fields.AllocatedToFilter',
+        'hsph.fields.SiteField',
         'corehq.apps.reports.fields.SelectOpenCloseField',
-    ]
+    )
+
+    default_case_type = 'birth'
 
     @property
     def headers(self):
@@ -235,25 +239,66 @@ class CaseReport(CaseListReport, CustomProjectReport, HSPHSiteDataMixin):
         return headers
 
     @property
+    def shared_pagination_GET_params(self):
+        params = super(CaseReport, self).shared_pagination_GET_params
+
+        slugs = [
+            AllocatedToFilter.slug,
+            'hsph_region',
+            'hsph_district',
+            'hsph_site'
+        ]
+
+        for slug in slugs:
+            params.append({
+                'name': slug,
+                'value': self.request_params.get(slug, '')
+            })
+
+        return params
+
+    @property
     def rows(self):
+        allocated_to = self.request_params.get(AllocatedToFilter.slug, '')
+        region_id = self.request_params.get('hsph_region')
+        district_id = self.request_params.get('hsph_district')
+        site_num = self.request_params.get('hsph_site')
 
-        for item in self.case_results['rows']:
-            disp = HSPHCaseDisplay(self, self.get_case(item))
+        def filter_case(disp):
+            if allocated_to and \
+               disp.allocated_to.lower() != allocated_to.lower():
+                return False
 
-            yield [
-                disp.region,
-                disp.district,
-                disp.site,
-                disp.patient_id,
-                disp.status,
-                disp.case_link,
-                disp.filter_date,
-                disp.address,
-                disp.allocated_to,
-                disp.allocated_start,
-                disp.allocated_end,
-                disp.outside_allocated_period
-            ]
+            if region_id and disp.case.region_id != region_id:
+                return False
+
+            if district_id and disp.case.district_id != district_id:
+                return False
+
+            if site_num and disp.case.site_number != site_num:
+                return False
+
+            return True
+
+        case_displays = (HSPHCaseDisplay(self, self.get_case(case))
+                         for case in self.case_results['rows'])
+
+        for disp in case_displays:
+            if filter_case(disp):
+                yield [
+                    disp.region,
+                    disp.district,
+                    disp.site,
+                    disp.patient_id,
+                    disp.status,
+                    disp.case_link,
+                    disp.filter_date,
+                    disp.address,
+                    disp.allocated_to,
+                    disp.allocated_start,
+                    disp.allocated_end,
+                    disp.outside_allocated_period
+                ]
 
 
 class CallCenterFollowUpSummaryReport(GenericTabularReport,
