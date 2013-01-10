@@ -132,7 +132,7 @@ class PatientListDashboardReport(GenericTabularReport, ESSortableMixin, CustomPr
             yield row_field_dict.get("hp", "---")
             yield self.format_date(row_field_dict.get("opened_on"))
             yield self.format_date(row_field_dict.get("modified_on"))
-            yield row_field_dict.get("hp_status")
+            yield self.render_hp_status(row_field_dict.get("hp_status"))
             yield self.pact_dot_link(row_field_dict['_id'], row_field_dict.get("dot_status"))
             #for closed on, do two checks:
             if row_field_dict.get('closed', False):
@@ -141,7 +141,7 @@ class PatientListDashboardReport(GenericTabularReport, ESSortableMixin, CustomPr
             else:
                 yield "Active"
 
-            yield facet_dict.get(row_field_dict['_id'], -1)
+            yield facet_dict.get(row_field_dict['_id'], 0)
 
         res = self.es_results
         if res.has_key('error'):
@@ -159,16 +159,8 @@ class PatientListDashboardReport(GenericTabularReport, ESSortableMixin, CustomPr
         full_query = {
             "filter": {
                 "and": [
-                    {
-                        "term": {
-                            "domain.exact": self.request.domain
-                        }
-                    },
-                    {
-                        "term": {
-                            "type": PACT_CASE_TYPE
-                        }
-                    }
+                    { "term": { "domain.exact": self.request.domain } },
+                    { "term": { "type": PACT_CASE_TYPE } }
                 ]
             },
             "fields": [
@@ -233,13 +225,24 @@ class PatientListDashboardReport(GenericTabularReport, ESSortableMixin, CustomPr
         except NoReverseMatch:
             return "%s (bad ID format)" % name
 
+    def render_hp_status(self, status):
+        if status is None or status == '':
+            return ''
+        else:
+            if status.lower() == 'discharged':
+                css = 'label'
+            else:
+                css = 'label label-info'
+            return '<span class="%s">%s</span>' % (css, status)
+
+
     def pact_dot_link(self, case_id, status):
 
         if status is None or status == '':
             return ''
 
         try:
-            return html.mark_safe("<span class='label'>%s</span> <a class='ajax_dialog' href='%s'>Report</a>" % (
+            return html.mark_safe("<span class='label label-info'>%s</span> <a class='ajax_dialog' href='%s'>Report</a>" % (
                 html.escape(status),
                 html.escape(
                     PactDOTReport.get_url(*[self.domain]) + "?dot_patient=%s" % case_id),
