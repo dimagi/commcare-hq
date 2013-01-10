@@ -28,6 +28,30 @@ function(doc) {
                 if (age < 365*MS_IN_DAY) {
                     indicator_entries['child under1'] = case_id;
 
+                    if (indicators.vaccination_status && indicators.vaccination_status.value) {
+                        var is_immunized = (indicators.vaccination_status.value === 'yes');
+                        if (is_immunized && indicators.vaccination_status_6weeks) {
+                            // start looking at timelines for vaccinations too.
+                            if (age >= 6*7*MS_IN_DAY) {
+                                // at least 6 weeks old
+                                is_immunized = is_immunized && (indicators.vaccination_status_6weeks.value === 'yes');
+                            }
+                            if (age >= 10*7*MS_IN_DAY && indicators.vaccination_status_10weeks) {
+                                is_immunized = is_immunized && (indicators.vaccination_status_10weeks.value === 'yes');
+                            }
+                            if (age >= 14*7*MS_IN_DAY && indicators.vaccination_status_14weeks) {
+                                is_immunized = is_immunized && (indicators.vaccination_status_14weeks.value === 'yes');
+                            }
+                            if (age >= 36*7*MS_IN_DAY && indicators.vaccination_status_36weeks) {
+                                is_immunized = is_immunized && (indicators.vaccination_status_36weeks.value === 'yes');
+                            }
+                        }
+
+                        if (is_immunized) {
+                            indicator_entries['child under1 immunized'] = case_id;
+                        }
+                    }
+
                     if (age < 180*MS_IN_DAY) {
                         indicator_entries['child under6mo'] = case_id;
                         if (indicators.exclusive_breastfeeding

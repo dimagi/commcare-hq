@@ -45,6 +45,22 @@ CHILD_VISIT_QUESTION_IDS = {
         'mvp-sauri': _make_qid('group_counseling.exclusive_breastfeeding', 1),
         'mvp-potou': _make_qid('group_counseling.exclusive_breastfeeding', 1),
     },
+    'vaccination_status': {
+        'mvp-sauri': _make_qid('group_counseling.vaccinations_up_to_date', 1),
+        'mvp-potou': _make_qid('patient_available.vaccination_birth', 1),
+    },
+    'vaccination_status_6weeks': {
+        'mvp-potou': _make_qid('patient_available.vaccination_6week', 1),
+    },
+    'vaccination_status_10weeks': {
+        'mvp-potou': _make_qid('patient_available.vaccination_10week', 1),
+    },
+    'vaccination_status_14weeks': {
+        'mvp-potou': _make_qid('patient_available.vaccination_14week', 1),
+    },
+    'vaccination_status_36weeks': {
+        'mvp-potou': _make_qid('patient_available.vaccination_36week', 1),
+    },
 }
 
 PREGNANCY_VISIT_QUESTION_IDS = {
@@ -85,6 +101,14 @@ HOUSEHOLD_VISIT_QUESTION_IDS = {
         'mvp-sauri': _make_qid('num_ec', 1),
         'mvp-potou': _make_qid('num_ec', 1),
     },
+    'num_other_positive': {
+        'mvp-sauri': _make_qid('num_other_positive', 1),
+        'mvp-potou': _make_qid('num_other_positive', 1),
+    },
+    'num_antimalarials_other': {
+        'mvp-sauri': _make_qid('num_antimalarials_other', 1),
+        'mvp-potou': _make_qid('num_antimalarials_other', 1),
+    }
 }
 
 CHILD_CLOSE_FORM_QUESTION_IDS = {

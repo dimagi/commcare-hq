@@ -56,6 +56,13 @@ COMPOSITE_INDICATORS = dict(
         numerator_slug="under1_visits",
         denominator_slug="under1_cases",
     ),
+    under1_immunized_proportion=dict(
+        description="Proportion of children under-1 reported as up-to-date on immunizations at " \
+                    "last visit during the time period",
+        title="% Under-1 up to date on immunizations",
+        numerator_slug="under1_immunization_up_to_date",
+        denominator_slug="under1_visits",
+    ),
     under5_fever_rdt_negative_medicated_proportion=dict(
         description="Proportion of Under-5s with negative RDT result who received antimalarial/ADT medication",
         title="% Under-5s w/ Negative RDT result who received antimalarial/ADT medication",
