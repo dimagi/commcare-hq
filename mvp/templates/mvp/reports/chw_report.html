@@ -1,0 +1,13 @@
+{% extends 'reports/async/tabular.html' %}
+{% block tabular-body %}
+    {% for row in report_table.rows %}
+        <tr {% if row.css_id %}id="{{ row.css_id }}"{% endif %}>
+            {% for col in row.data %}
+                <td class="{% if not col or col.html != None and not col.html %}null-entry{% endif %}">
+                    {% if col.html != None %}{{ col.html|safe }}{% else %}{{ col|safe }}{% endif %}
+                    <span title="{% if col.sort_key != "" %}{{ col.sort_key }}{% else %}{{ col }}{% endif %}"></span>
+                </td>
+            {% endfor %}
+        </tr>
+    {% endfor %}
+{% endblock %}
