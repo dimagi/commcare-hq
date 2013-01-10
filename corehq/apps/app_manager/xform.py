@@ -40,6 +40,24 @@ def _make_elem(tag, attr=None):
     attr = attr or {}
     return ET.Element(tag.format(**namespaces), dict([(key.format(**namespaces), val) for key,val in attr.items()]))
 
+class XPath(unicode):
+    pass
+
+class CaseIDXPath(XPath):
+
+    def case(self):
+        return CaseXPath(u"instance('casedb')/casedb/case[@case_id=%s]" % self)
+
+class CaseXPath(XPath):
+    def parent_id(self):
+        return CaseIDXPath(u"%s/index/parent" % self)
+
+    def property(self, property):
+        return XPath(u'%s/%s' % (self, property))
+
+SESSION_CASE_ID = CaseIDXPath(u"instance('commcaresession')/session/data/case_id")
+
+
 class WrappedNode(object):
     def __init__(self, xml, namespaces=namespaces):
         if isinstance(xml, basestring):
@@ -682,7 +700,7 @@ class XForm(WrappedNode):
             else:
                 self.add_bind(
                     nodeset="case/@case_id",
-                    calculate="instance('commcaresession')/session/data/case_id",
+                    calculate=SESSION_CASE_ID,
                 )
 
             if 'update_case' in actions or extra_updates:
@@ -700,7 +718,7 @@ class XForm(WrappedNode):
                     }.get(property, property)
                     self.add_setvalue(
                         ref=nodeset,
-                        value="instance('casedb')/casedb/case[@case_id=instance('commcaresession')/session/data/case_id]/%s" % property_xpath,
+                        value=SESSION_CASE_ID.case().property(property_xpath),
                     )
             if needs_casedb_instance:
                 self.add_instance('casedb', src='jr://instance/casedb')

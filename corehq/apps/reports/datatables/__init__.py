@@ -1,11 +1,5 @@
 from django.template.loader import render_to_string
-
-class DTSortType:
-    NUMERIC = "title-numeric"
-
-class DTSortDirection:
-    ASC = "asc"
-    DSC = "desc"
+from . import DTSortDirection
 
 class DataTablesColumn(object):
     rowspan = 1

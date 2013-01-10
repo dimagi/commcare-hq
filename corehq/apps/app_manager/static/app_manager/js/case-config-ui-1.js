@@ -10,7 +10,7 @@ var CaseXML = (function () {
             this.questions = params.questions;
             this.edit = params.edit;
             this.save_url = params.save_url;
-            this.requires = ko.unwrapObservable(params.requires);
+            this.requires = ko.utils.unwrapObservable(params.requires);
             this.save_requires_url = params.save_requires_url;
             this.template = new EJS({
                 url: "/static/app_manager/ejs/casexml.ejs",

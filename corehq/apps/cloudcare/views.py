@@ -6,12 +6,12 @@ from corehq.apps.cloudcare.touchforms_api import DELEGATION_STUB_CASE_TYPE
 from corehq.apps.domain.decorators import login_and_domain_required, login_or_digest_ex, domain_admin_required
 from corehq.apps.groups.models import Group
 from corehq.apps.users.models import CouchUser, CommCareUser
-from dimagi.utils.web import render_to_response, json_response, json_handler,\
-    get_url_base
+from dimagi.utils.web import render_to_response, json_response, get_url_base
 from django.http import HttpResponseRedirect, HttpResponse, HttpResponseBadRequest, Http404
 from corehq.apps.app_manager.models import Application, ApplicationBase
 import json
-from corehq.apps.cloudcare.api import get_owned_cases, get_app, get_cloudcare_apps, get_filtered_cases, get_filters_from_request
+from corehq.apps.cloudcare.api import get_app, get_cloudcare_apps, get_filtered_cases, get_filters_from_request,\
+    api_closed_to_status
 from dimagi.utils.parsing import string_to_boolean
 from django.conf import settings
 from corehq.apps.cloudcare import touchforms_api 
@@ -129,39 +129,6 @@ def form_context(request, domain, app_id, module_id, form_id):
         touchforms_api.get_full_context(domain, request.couch_user, 
                                         app, form_url, case_id, delegation=delegation))
         
-@login_and_domain_required
-def case_list(request, domain):
-    
-    apps = filter(lambda app: app.doc_type == "Application",
-                  ApplicationBase.view('app_manager/applications_brief', 
-                                       startkey=[domain], endkey=[domain, {}]))
-    
-    user_id = request.REQUEST.get("user_id", request.couch_user.get_id)
-    app_id = request.REQUEST.get("app_id", "")
-    module_id = int(request.REQUEST.get("module_id", "0"))
-    language = request.REQUEST.get("language", "en")
-    
-    if not app_id and apps:
-        app_id = apps[0].get_id
-    
-    if app_id:
-        app = Application.get(app_id)
-        case_short = app.modules[module_id].get_detail("case_short")
-        case_long = app.modules[module_id].get_detail("case_long")
-    else:
-        case_short=""
-        case_long=""
-    
-    return render_to_response(request, "cloudcare/list_cases.html", 
-                              {"domain": domain,
-                               "language": language,
-                               "user_id": user_id,
-                               "apps": apps,
-                               "case_short": json.dumps(case_short._doc),
-                               "case_long": json.dumps(case_long._doc),
-                               "cases": json.dumps(get_owned_cases(domain, user_id),
-                                                   default=json_handler)})
-
 
 cloudcare_api = login_or_digest_ex(allow_cc_users=True)
 
@@ -194,7 +161,6 @@ def get_groups(request, domain, user_id):
 @cloudcare_api
 def get_cases(request, domain):
 
-
     if request.couch_user.is_commcare_user():
         user_id = request.couch_user.get_id
     else:
@@ -204,9 +170,14 @@ def get_cases(request, domain):
         return HttpResponseBadRequest("Must specify user_id!")
 
     footprint = string_to_boolean(request.REQUEST.get("footprint", "false"))
+    ids_only = string_to_boolean(request.REQUEST.get("ids_only", "false"))
     filters = get_filters_from_request(request)
-    cases = get_filtered_cases(domain, user_id=user_id, filters=filters, 
-                               footprint=footprint)
+    status = api_closed_to_status(request.REQUEST.get('closed', 'false'))
+    case_type = filters.get('properties/case_type', None)
+    cases = get_filtered_cases(domain, status=status, case_type=case_type,
+                               user_id=user_id, filters=filters,
+                               footprint=footprint, ids_only=ids_only,
+                               strip_history=True)
     return json_response(cases)
 
 @cloudcare_api
