@@ -145,7 +145,7 @@ def get_filtered_cases(domain, status, user_id=None, case_type=None,
     def cases():
         """pre-filter cases based on user_id and (if possible) closed"""
         helper = CaseAPIHelper(status, case_type=case_type, ids_only=ids_only,
-                               footprint=footprint, strip_history=False)
+                               footprint=footprint, strip_history=strip_history)
         if user_id:
             return helper.get_owned(domain, user_id)
         else:
