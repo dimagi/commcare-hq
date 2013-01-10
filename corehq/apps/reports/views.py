@@ -2,6 +2,7 @@ from datetime import datetime, timedelta
 import json
 import tempfile
 from django.core.cache import cache
+from django.core.servers.basehttp import FileWrapper
 import os
 from corehq.apps.reports import util
 from corehq.apps.reports.standard import inspect, export, ProjectReport
@@ -29,7 +30,7 @@ from dimagi.utils.parsing import json_format_datetime, string_to_boolean
 from django.contrib.auth.decorators import permission_required
 from dimagi.utils.decorators.datespan import datespan_in_request
 from casexml.apps.case.models import CommCareCase
-from casexml.apps.case.export import export_cases_and_referrals
+from corehq.apps.hqcase.export import export_cases_and_referrals
 from corehq.apps.reports.display import xmlns_to_name
 from couchexport.schema import build_latest_schema
 from couchexport.models import ExportSchema, ExportColumn, SavedExportSchema,\
@@ -44,7 +45,6 @@ from couchdbkit.exceptions import ResourceNotFound
 from fields import FilterUsersField
 from util import get_all_users_by_domain, stream_qs
 from corehq.apps.hqsofabed.models import HQFormData
-from StringIO import StringIO
 from corehq.apps.app_manager.util import get_app_id
 from corehq.apps.groups.models import Group
 from corehq.apps.adm import utils as adm_utils
@@ -52,6 +52,7 @@ from soil import DownloadBase
 from soil.tasks import prepare_download
 from django.utils.translation import ugettext as _
 from django.utils.safestring import mark_safe
+from dimagi.utils.chunked import chunked
 
 DATE_FORMAT = "%Y-%m-%d"
 
@@ -72,7 +73,7 @@ require_can_view_all_reports = require_permission(Permissions.view_reports)
 @login_and_domain_required
 def default(request, domain, template="reports/reports_home.html"):
     user = request.couch_user
-    if not request.couch_user.is_web_user():
+    if not (request.couch_user.can_view_reports() or request.couch_user.get_viewable_reports()):
         raise Http404
 
     configs = ReportConfig.by_domain_and_owner(domain, user._id).all()
@@ -740,21 +741,35 @@ def case_details(request, domain, case_id):
     })
 
 def generate_case_export_payload(domain, include_closed, format, group, user_filter):
+    """
+    Returns a FileWrapper object, which only the file backend in django-soil supports
+
+    """
     view_name = 'hqcase/all_cases' if include_closed else 'hqcase/open_cases'
     key = [domain, {}, {}]
-    cases = CommCareCase.view(view_name, startkey=key, endkey=key + [{}], reduce=False, include_docs=True)
+    case_ids = CommCareCase.view(view_name,
+        startkey=key,
+        endkey=key + [{}],
+        reduce=False,
+        include_docs=False,
+        wrapper=lambda r: r['id']
+    )
+    def stream_cases(all_case_ids):
+        for case_ids in chunked(all_case_ids, 500):
+            for case in CommCareCase.view('_all_docs', keys=case_ids, include_docs=True):
+                yield case
+
     # todo deal with cached user dict here
     users = get_all_users_by_domain(domain, group=group, user_filter=user_filter)
     groups = Group.get_case_sharing_groups(domain)
 
-    #    if not group:
-    #        users.extend(CommCareUser.by_domain(domain, is_active=False))
-
-    workbook = WorkBook()
-    export_cases_and_referrals(cases, workbook, users=users, groups=groups)
-    export_users(users, workbook)
-    payload = workbook.format(format.slug)
-    return payload
+    fd, path = tempfile.mkstemp()
+    with os.fdopen(fd, 'wb') as file:
+        workbook = WorkBook(file, format)
+        export_cases_and_referrals(domain, stream_cases(case_ids), workbook, users=users, groups=groups)
+        export_users(users, workbook)
+        workbook.close()
+    return FileWrapper(open(path))
 
 @login_or_digest
 @require_case_export_permission
@@ -763,7 +778,6 @@ def generate_case_export_payload(domain, include_closed, format, group, user_fil
 def download_cases(request, domain):
     include_closed = json.loads(request.GET.get('include_closed', 'false'))
     format = Format.from_format(request.GET.get('format') or Format.XLS_2007)
-    view_name = 'hqcase/all_cases' if include_closed else 'hqcase/open_cases'
     group = request.GET.get('group', None)
     user_filter, _ = FilterUsersField.get_user_filter(request)
 

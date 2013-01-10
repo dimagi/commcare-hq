@@ -1,4 +1,5 @@
 {% extends login_template %}
+{% load i18n %}
 {% block title %}Domain Selection{% endblock title %}
 {% block js-inline  %}{{ block.super }}
     {% url eula as eula_url %}
@@ -11,6 +12,7 @@
                 <h1>Project Invitation <small>You've been invited to join <strong>{{ domain }}</strong>.</small></h1>
             </div>
             <div class="span8">
+                {% if not mobile_user %}
                 <form name="form" method="post" action="" class="form-horizontal">
                     {% csrf_token %}
                     {{ form.as_table }}
@@ -20,6 +22,10 @@
                     </fieldset>
                     <button type="submit" class="btn btn-primary btn-large">Accept Invitation</button>
                 </form>
+                {% else %}
+                    <p><strong>{% trans 'Note' %}:</strong> {% trans "You are signed in as a mobile user, to accept this invitation, you must be a web user." %}</p>
+                    <p>{% trans 'Please' %} <a href="?switch=true" class="btn">{% trans 'switch accounts' %}</a> {% trans 'or' %} <a href="?create=true" class="btn">{% trans "create a web account" %}</a></p>
+                {% endif %}
             </div>
             <div class="span4">
                 <aside class="well">

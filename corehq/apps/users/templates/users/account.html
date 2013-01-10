@@ -189,7 +189,7 @@
 
                                 {% endifnotequal %}
 
-                                <a class="btn btn-danger" data-toggle="modal" href="#delete_{{phone.number|urlencode}}"><i class="icon icon-remove icon-white"></i> Delete</a>
+                                <a class="btn btn-danger" data-toggle="modal" href="#delete_phonenumber_{{ forloop.counter }}"><i class="icon icon-remove icon-white"></i> Delete</a>
                             </div>
                         </div>
                     {% endfor %}
@@ -261,7 +261,7 @@
 
 {% block modals %}{{ block.super }}
     {% for phone_number in couch_user.phone_numbers %}
-        <div id="delete_{{phone_number|urlencode}}" class="modal hide fade">
+        <div id="delete_phonenumber_{{ forloop.counter }}" class="modal hide fade">
             <div class="modal-header">
                 <a class="close" data-dismiss="modal">&times;</a>
                 <h3>Delete +{{ phone_number }}?</h3>

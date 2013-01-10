@@ -664,7 +664,7 @@ class GenericTabularReport(GenericReportView):
         @property
         shared_pagination_GET_params
             - this is where you select the GET parameters to pass to the paginator
-            - returns a list formatted like [dict(name='group', value=self.group_name)]
+            - returns a list formatted like [dict(name='group', value=self.group_id)]
     """
     # new class properties
     total_row = None
@@ -729,7 +729,7 @@ class GenericTabularReport(GenericReportView):
             Override.
             Should return a list of dicts with the name and value of the GET parameters
             that you'd like to pass to the server-side pagination.
-            ex: [dict(name='group', value=self.group_name)]
+            ex: [dict(name='group', value=self.group_id)]
         """
         return []
 
@@ -820,32 +820,24 @@ class GenericTabularReport(GenericReportView):
             Don't override.
             Override the properties headers and rows instead of this.
         """
-        headers = self.headers
-        if not (isinstance(headers, DataTablesHeader) or isinstance(headers, list)):
-            raise ValueError("Property 'headers' should return a DataTablesHeader object or a list.")
+        headers = self.headers # not all headers have been memoized
+        assert isinstance(headers, (DataTablesHeader, list))
         if isinstance(headers, list):
-            raise DeprecationWarning("Property 'headers' should return a DataTablesHeader object, not a list.")
+            raise DeprecationWarning("Property 'headers' should be a DataTablesHeader object, not a list.")
 
-        if not self.ajax_pagination and not self.needs_filters:
-            rows = self.rows
-            try:
-                rows = list(rows)
-            except TypeError:
-                raise ValueError("Property 'rows' should return a list or iterable.")
-        else:
+        if self.ajax_pagination or self.needs_filters:
             rows = []
+        else:
+            rows = list(self.rows)
 
-        if self.total_row is not None and not isinstance(self.total_row, list):
-            raise ValueError("'total_row' should be a list.")
-        if self.statistics_rows is not None and not isinstance(self.statistics_rows, list) \
-                and not isinstance(self.statistics_rows[0], list):
-            raise ValueError("'statics row' should be a list of rows.")
+        if self.total_row is not None:
+            self.total_row = list(self.total_row)
+        if self.statistics_rows is not None:
+            self.statistics_rows = list(self.statistics_rows)
 
         pagination_spec = dict(is_on=self.ajax_pagination)
         if self.ajax_pagination:
-            shared_params = self.shared_pagination_GET_params
-            if not isinstance(shared_params, list):
-                raise ValueError("Property 'pagination_params' should return a list.")
+            shared_params = list(self.shared_pagination_GET_params)
             pagination_spec.update(
                 params=shared_params,
                 source=self.pagination_source,
@@ -854,9 +846,7 @@ class GenericTabularReport(GenericReportView):
 
         left_col = dict(is_fixed=self.fix_left_col)
         if self.fix_left_col:
-            spec = self.fixed_cols_spec
-            if not isinstance(spec, dict):
-                raise ValueError("Property 'fixed_cols_spec' should return a dict.")
+            spec = dict(self.fixed_cols_spec)
             left_col.update(fixed=spec)
 
         context = dict(

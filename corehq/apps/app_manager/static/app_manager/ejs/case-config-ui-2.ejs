@@ -5,15 +5,15 @@
                 [%= renderOptions([
                     {value: "none", label: "no case"},
                     {value: "case", label: "a case"}
-                ], requires, 'requires', false) %]
+                ], requires(), 'requires', false) %]
         </li>
     </ul>
     <ul>
-        [% if(requires == "none") { %]
+        [% if(requires() == "none") { %]
             [%= renderAction("open_case", "Opens a case") %]
         [% } %]
         [%= renderAction("update_case", "Updates the case") %]
-        [% if(requires != "none") { %]
+        [% if(requires() != "none") { %]
             [%= renderAction("case_preload", "Loads data from the case") %]
             [%= renderAction("close_case", "Closes the case") %]
         [% } %]

@@ -3,19 +3,10 @@
 {% load hq_shared_tags %}
 {% load timezone_tags %}
 
-{% block sms-js %}
-    {% include "imports/checklist.html" %}
-{% endblock %}
-
 {% block sms-js-inline %}
     <script type="text/javascript">
 
         $(function(){
-            $('.checklist').toChecklist({
-                addSearchBox : true,
-                showSelectedItems : true
-            });
-
             $("#sms-message").bind('keyup', function () {
                 var max_char = 160,
                         current_count = $(this).val().length,
