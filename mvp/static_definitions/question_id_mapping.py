@@ -71,8 +71,8 @@ PREGNANCY_VISIT_QUESTION_IDS = {
         'mvp-potou': _make_qid('group_referral_dangersign.last_anc_weeks', 2),
     },
     'referral_type': {
-        'mvp-sauri': _make_qid('group_referral_dangersign.referral_type', 1),
-        'mvp-potou': _make_qid('group_referral_dangersign.referral_type', 1),
+        'mvp-sauri': _make_qid('referral_type', 2),
+        'mvp-potou': _make_qid('referral_type', 2),
     },
 }
 
