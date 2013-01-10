@@ -158,6 +158,30 @@ class Command(PactMigrateCommand):
             pool.spawn(self.process_case, case_json)
         pool.join()
 
+
+    def get_instanceid_from_xml(self, xmlns, form_root):
+        tag_checks = {
+            '{http://openrosa.org/jr/xforms}meta': #NEW META
+                '{http://openrosa.org/jr/xforms}instanceID',
+            '{%s}Meta' % xmlns: #OLD META
+                '{%s}uid' % xmlns
+        }
+        def get_id(tag, node):
+            id_node = node.find(tag)
+            doc_id = id_node.text
+            return doc_id
+
+        doc_id = None
+        for meta, id_tag in tag_checks.items():
+            #iterate through old vs. new meta blocks to find it
+            metanode = form_root.find(meta)
+            if metanode is not None:
+                doc_id = get_id(id_tag, metanode)
+                break
+
+        return doc_id
+
+
     def process_xform_meta(self, action, xmlns, form_root ):
         tag_checks = {
             '{http://openrosa.org/jr/xforms}meta': #NEW META
@@ -273,12 +297,17 @@ class Command(PactMigrateCommand):
 
 
 
-    def process_xform_from_action(self, case_id, pact_id, action):
+    def process_xform_from_action(self, case_id, pact_id, action, ix, existing_xform_ids):
         """
         Get xform from server and process it with new userid and submit it to hq
         """
+
+        if action['xform_id'] in existing_xform_ids:
+#                print "\t[%s] %s/%s (%d/%d) :: skipped" % ( pactid, case_id, action['xform_id'], ix, len(remote_case_json['actions']))
+            return
+
         xform_xml = self.get_url(PACT_URL + "hqmigration/xform/%s/" % action['xform_id'])
-        if xform_xml is None:
+        if xform_xml is None or xform_xml == '':
             print "\t\tXForm ID [%s] not found, skipping" % (action['xform_id'])
             return
         xfroot = etree.fromstring(xform_xml)
@@ -286,12 +315,21 @@ class Command(PactMigrateCommand):
         nsmap = xfroot.nsmap
         xmlns = nsmap[None]
 
+        #sanity check: see if the xform_id is already in the list but also check if there's a divergence
+        #maybe do this on the other side?
+        doc_id = self.get_instanceid_from_xml(xmlns, xfroot)
+        print "\t[%s] %s/%s (%d/%d)" % (pact_id, case_id, action['xform_id'], ix, len(existing_xform_ids))
+        if doc_id in existing_xform_ids:
+            print "\twhoa, %s != %s - skipping because already seen" % (action['xform_id'], doc_id)
+
+
         self.process_xform_meta(action, xmlns, xfroot)
         self.fix_case_type(action, xmlns, xfroot)
         self.fix_case_id(case_id, pact_id, action, xmlns, xfroot)
 
         try:
-            self.submit_xform_rf(action, etree.tostring(xfroot))
+            #self.submit_xform_rf(action, etree.tostring(xfroot))
+            pass
         except Exception, ex:
             print "\t\tError: %s: %s" % (action['xform_id'], ex)
             #        print "Form %s submitted" % action['xform_id']
@@ -303,7 +341,7 @@ class Command(PactMigrateCommand):
         name = remote_case_json['name']
         case_type = 'cc_path_client' # remote_case_json['type']
         user_id = self.old_id_map.get(remote_case_json['user_id'], None)
-        ccuser = CommCareUser.get_by_username("%s@pact.commcarehq.org" % remote_case_json['primary_hp'])
+        ccuser = CommCareUser.get_by_username("%s@pact.commcarehq.org" % remote_case_json['hp'])
         owner_id = PACT_HP_GROUP_ID
         if ccuser is not None:
             primary_hp = ccuser._id
@@ -324,11 +362,7 @@ class Command(PactMigrateCommand):
             print "\tRegenerated case"
 
         for ix, action in enumerate(remote_case_json['actions']):
-            if action['xform_id'] in existing_xform_ids:
-#                print "\t[%s] %s/%s (%d/%d) :: skipped" % ( pactid, case_id, action['xform_id'], ix, len(remote_case_json['actions']))
-                continue
-            print "\t[%s] %s/%s (%d/%d)" % ( pactid, case_id, action['xform_id'], ix, len(remote_case_json['actions']))
-            self.process_xform_from_action(case_id, pactid, action)
+            self.process_xform_from_action(case_id, pactid, action, ix, existing_xform_ids)
 
         #todo: verify actions on migrated case
         print "########### Case %s completed ###################" % remote_case_json['_id']
