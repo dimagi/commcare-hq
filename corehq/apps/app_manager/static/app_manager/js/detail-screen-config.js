@@ -471,7 +471,18 @@ var DetailScreenConfig = (function () {
                 if (this.model === 'referral') {
                     $('<td/>').addClass('detail-screen-model').append(column.model.ui).appendTo($tr);
                 }
-                $('<td/>').addClass('detail-screen-field').append(column.field.ui.addClass('code')).appendTo($tr);
+                if (!column.field.edit) {
+                    var text = column.field.ui.text();
+                    var parts = text.split('/');
+                    // wrap all parts but the last in a label style
+                    for (var j = 0; j < parts.length - 1; j++) {
+                        parts[j] = '<span class="label label-info">' +
+                            parts[j] + '</span>'
+                    }
+                    parts[j] = '<code style="display: inline-block;">' + parts[j] + '</code>'
+                    column.field.ui.html(parts.join('<span style="color: #DDD;">/</span>'));
+                }
+                $('<td/>').addClass('detail-screen-field').append(column.field.ui).appendTo($tr);
                 $('<td/>').addClass('detail-screen-header').append(column.header.ui).appendTo($tr);
                 $('<td/>').addClass('detail-screen-format').append(column.format.ui).appendTo($tr);
                 $('<td/>').addClass('detail-screen-extra').append(column.$extra).appendTo($tr);
