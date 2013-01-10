@@ -1,8 +1,4 @@
-import logging
-from dimagi.utils.couch.database import get_db
 from dimagi.utils.decorators import inline
-from django.conf import settings
-import rawes
 from corehq.elastic import get_es
 from dimagi.utils.logging import notify_exception
 

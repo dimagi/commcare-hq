@@ -1,14 +1,12 @@
-import datetime
 from django.conf import settings
 from django.core.urlresolvers import reverse
 from django.http import HttpResponseNotFound, Http404, HttpResponseRedirect
 from django.template.loader import render_to_string
 from django.utils.safestring import mark_safe
 from django.views.generic.base import View
-from corehq.apps.domain.decorators import login_and_domain_required, cls_login_and_domain_required, cls_to_view
+from corehq.apps.domain.decorators import login_and_domain_required, cls_to_view
 from dimagi.utils.decorators.datespan import datespan_in_request
 from dimagi.utils.modules import to_function
-from django.utils.html import escape
 from django.utils.translation import ugettext as _
 
 datespan_default = datespan_in_request(
