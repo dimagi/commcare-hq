@@ -534,18 +534,18 @@ def view_generic(req, domain, app_id=None, module_id=None, form_id=None, is_user
             case_properties = set(defaults)
             parent_types = set()
 
-            for _module in app.get_modules():
-                for _form in _module.get_forms():
+            for module in app.get_modules():
+                for form in module.get_forms():
                     if module.case_type == case_type:
                         case_properties.update(
-                            _form.actions.update_case.update.keys()
+                            form.actions.update_case.update.keys()
                         )
-                    for subcase in _form.actions.subcases:
+                    for subcase in form.actions.subcases:
                         if subcase.case_type == case_type:
                             case_properties.update(
                                 subcase.case_properties.keys()
                             )
-                            parent_types.add(_module.case_type)
+                            parent_types.add(module.case_type)
 
             for parent_type in parent_types:
                 for property in get_properties_recursive(parent_type):
