@@ -623,12 +623,9 @@ class CaseDataInFormIndicatorDefinition(FormIndicatorDefinition):
     case_property = StringProperty()
 
     def get_value(self, doc):
-        form_data = doc.get_form
-        related_case_id = form_data.get('case', {}).get('@case_id')
-        if related_case_id:
-            case = self._get_related_case(doc)
-            if case is not None and hasattr(case, str(self.case_property)):
-                return getattr(case, str(self.case_property))
+        case = self._get_related_case(doc)
+        if case is not None and hasattr(case, str(self.case_property)):
+            return getattr(case, str(self.case_property))
         return None
 
     def _get_related_case(self, xform):
