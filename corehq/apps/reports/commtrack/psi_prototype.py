@@ -459,7 +459,7 @@ def _get_unique_combinations(domain, place_types=None, place_id=None):
     for fdi in fdis:
         if place_id:
             if base_type == place_type_from_id:
-                if fdi.fields['name'].lower() != place_name:
+                if fdi.fields['id'].lower() != place_name:
                     continue
             else:
                 if fdi.fields.get(place_type_from_id+"_id", "").lower() != place_name:
@@ -467,7 +467,7 @@ def _get_unique_combinations(domain, place_types=None, place_id=None):
         comb = {}
         for pt in place_types:
             if base_type == pt:
-                comb[pt] = fdi.fields['name'].lower()
+                comb[pt] = fdi.fields['id'].lower()
             else:
                 p_id = fdi.fields.get(pt+"_id", None)
                 if p_id:
@@ -921,7 +921,7 @@ class PlaceField(ReportField):
             return {
                 'name': loc.fields['name'],
                 #                'type': loc.location_type,
-                'uuid': "%s:%s" % (loc._place, loc.fields['name']),
+                'uuid': "%s:%s" % (loc._place, loc.fields['id']),
                 'children': [loc_to_json(child) for child in loc._children],
                 }
         loc_json = [loc_to_json(root) for root in all_locs]
