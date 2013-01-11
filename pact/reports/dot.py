@@ -34,14 +34,13 @@ class PactDOTPatientField(ReportSelectField):
     def get_pact_cases(cls):
         domain = PACT_DOMAIN
         case_es = CaseES()
-        query = case_es.base_query(domain, start=0, size=None)
+        fields = ['_id', 'name', 'pactid']
+        query = case_es.base_query(domain, terms={'type': PACT_CASE_TYPE}, fields=fields, start=0, size=None)
         query['filter']['and'].append({ "prefix": { "dot_status": "dot" } })
-        query['filter']['and'].append({ "term": { "type": PACT_CASE_TYPE } })
 
-        query['fields'] = ['_id', 'name', 'pactid']
         results = case_es.run_query(query)
         for res in results['hits']['hits']:
-            print res
+#            print res
             yield res['fields']
 
 class PactDOTReport(GenericTabularReport, CustomProjectReport, ProjectReportParametersMixin, DatespanMixin):
@@ -80,27 +79,10 @@ class PactDOTReport(GenericTabularReport, CustomProjectReport, ProjectReportPara
         q = xform_es.base_query(PACT_DOMAIN, size=None)
         lvisits = list(unique_visits)
         if len(lvisits) > 0:
-            q['filter']['and'].append({
-                        "ids": {
-                            "values": lvisits
-                        }
-                    }
-            )
+            q['filter']['and'].append({ "ids": { "values": lvisits } } )
         #todo double check pactid/caseid matches
-#        q['filter']['and'].append({ "term": {"pactid": casedoc.pactid} })
-#        q['fields'] =  [
-#                "form.#type",
-#                "form.encounter_date",
-#                "form.pact_id",
-#                "received_on",
-#                "form.meta.timeStart",
-#                "form.meta.timeEnd",
-#                "form.meta.username"
-#            ]
         q['sort'] = {'received_on': 'desc'}
-
         res = xform_es.run_query(q)
-
 
         #ugh, not storing all form data by default - need to get?
         ret['sorted_visits'] = [XFormInstance.wrap(x['_source']) for x in filter(lambda x: x['_source']['xmlns'] == XMLNS_DOTS_FORM, res['hits']['hits'])]

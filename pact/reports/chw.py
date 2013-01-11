@@ -74,21 +74,9 @@ class PactCHWProfileReport(PactDrilldownReportMixin, ESSortableMixin,GenericTabu
 
 
     def get_assigned_patients(self):
-
-        #get list of patients and their submissions on who this chw is assigned as primary hp
-
-        case_query = {
-            "filter": {
-                "and": [
-                    { "term": { "domain.exact": self.request.domain } },
-                    { "term": { "type": PACT_CASE_TYPE } },
-                    { "term": { "hp": self.get_user().raw_username } }
-                ]
-            },
-            "fields": [ "_id", "name", "pactid", "hp_status", "dot_status" ]
-        }
-        case_type = PACT_CASE_TYPE
-
+        """get list of patients and their submissions on who this chw is assigned as primary hp"""
+        fields = [ "_id", "name", "pactid", "hp_status", "dot_status" ]
+        case_query = self.case_es.base_query(self.request.domain, terms={'type': PACT_CASE_TYPE, 'hp': self.get_user().raw_username}, fields=fields)
         chw_patients_res = self.case_es.run_query(case_query)
 
         case_ids = [x['fields']['_id'] for x in chw_patients_res['hits']['hits']]
@@ -118,14 +106,6 @@ class PactCHWProfileReport(PactDrilldownReportMixin, ESSortableMixin,GenericTabu
             return self._user_doc
         else:
             return None
-
-
-#    @property
-#    def name(self):
-#        if hasattr(self, 'request') and self.request.GET.has_key('chw_id'):
-#            return "CHW Profile :: %s" % self.get_user().raw_username
-#        else:
-#            return "CHW Profile"
 
 
     @property
@@ -168,28 +148,18 @@ class PactCHWProfileReport(PactDrilldownReportMixin, ESSortableMixin,GenericTabu
     @property
     def es_results(self):
         user = self.get_user()
-        query = self.xform_es.base_query(self.request.domain, start=self.pagination.start,
-                                         size=self.pagination.count)
-        query['fields'] = [
+        fields = [
             "_id",
             "form.#type",
-#            "form.encounter_date",
-#            "form.note.encounter_date",
-#            "form.case.case_id",
-#            "form.case.@case_id",
-#            "form.pact_id",
-#            "form.note.pact_id",
             "received_on",
             "form.meta.timeStart",
             "form.meta.timeEnd"
         ]
-        query['filter']['and'].append({"term": {"form.meta.username": user.raw_username}})
+        query = self.xform_es.base_query(self.request.domain, terms={'form.meta.username': user.raw_username }, fields=fields, start=self.pagination.start, size=self.pagination.count)
         query['script_fields'] = {}
         query['script_fields'].update(pact_script_fields())
         query['script_fields'].update(case_script_field())
         query['sort'] = self.get_sorting_block()
-
-        print simplejson.dumps(query, indent=4)
         return self.xform_es.run_query(query)
 
     @property
@@ -212,42 +182,4 @@ class PactCHWProfileReport(PactDrilldownReportMixin, ESSortableMixin,GenericTabu
             else:
                 for result in res['hits']['hits']:
                     yield list(_format_row(result['fields']))
-
-
-
-    def my_submissions(self):
-        #todo: delete, unused
-        user = self.get_user()
-        query = {
-            "fields": [
-                "form.#type",
-                "form.encounter_date",
-                "form.note.encounter_date",
-                "form.case.case_id",
-                "form.case.@case_id",
-                "received_on",
-                "form.meta.timeStart",
-                "form.meta.timeEnd"
-            ],
-            "filter": {
-                "and": [
-                    {
-                        "term": {
-                            "domain.exact": "pact"
-                        }
-                    },
-                    {
-                        "term": {
-                            "form.meta.username": user.raw_username
-                        }
-                    }
-                ]
-            },
-            "sort": {
-                "received_on": "desc"
-            },
-            "size": 10,
-            "from": 0
-        }
-
 

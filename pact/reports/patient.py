@@ -56,40 +56,6 @@ class PactPatientInfoReport(PactDrilldownReportMixin,ESSortableMixin, GenericTab
 #        else:
 #            return "Patient Info"
 
-    def patient_submissions_query(self):
-        #todo: remove and deprecate - unused
-        query = {
-            "fields": [
-                "form.#type",
-                "form.encounter_date",
-                "form.note.encounter_date",
-                "form.case.case_id",
-                "form.case.@case_id",
-                "received_on",
-                "form.meta.timeStart",
-                "form.meta.timeEnd"
-            ],
-            "filter": {
-                "and": [
-                    {
-                        "term": {
-                            "domain.exact": "pact"
-                        }
-                    },
-                    {
-                        "query": {
-                            "query_string": {
-                                "query": "(form.case.case_id:{{ patient_doc.get_id }} OR form.case.@case_id:{{ patient_doc.get_id }})"},
-                        }
-                    }
-                ]
-            },
-            "sort": {
-                "received_on": "desc"
-            },
-            "size": 10,
-            "from": 0
-        }
 
 
     @property
@@ -147,6 +113,7 @@ class PactPatientInfoReport(PactDrilldownReportMixin,ESSortableMixin, GenericTab
         if not self.request.GET.has_key('patient_id'):
             return None
 
+        #a fuller query doing filtered+query vs simpler base_query filter
         full_query = {
             'query': {
                 "filtered": {
@@ -178,7 +145,6 @@ class PactPatientInfoReport(PactDrilldownReportMixin,ESSortableMixin, GenericTab
             "sort": self.get_sorting_block(),
             "size": self.pagination.count,
             "from": self.pagination.start
-
         }
 
         full_query['script_fields'] = pact_script_fields()

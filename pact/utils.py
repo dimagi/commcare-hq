@@ -68,6 +68,8 @@ def get_patient_display_cache(case_ids):
     """
     For a given set of case_ids, return name and pact_ids
     """
+    if len(case_ids) == 0:
+        return {}
     case_es = CaseES()
     query = {
         "fields": [
@@ -97,11 +99,11 @@ def get_patient_display_cache(case_ids):
                     }
                 }
             ]
-        }
+        },
+        "size": len(case_ids)
     }
-    print simplejson.dumps(query)
     res = case_es.run_query(query)
-    #print res['hits']['total']
+
     ret = {}
     if res is not None:
         for entry in res['hits']['hits']:

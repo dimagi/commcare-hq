@@ -82,13 +82,16 @@ def regimen_string_from_doc(drug_type, doc_dict):
         key = prefix % digit
         prop = doc_dict.get(key, '')
         if prop != '' and prop is not None:
-            props.append(int(prop))
+            try:
+                props.append(int(prop))
+            except:
+                pass
 
-    return string_from_regimen_props(freq, props=props)
+    return string_from_regimen_props(freq, props=props, suppress_errors=True)
 
 
 
-def string_from_regimen_props(freq, props=[]):
+def string_from_regimen_props(freq, props=[], suppress_errors=False):
     """
     For a given set of properties, (dot_a_one, etc...)
 
@@ -104,7 +107,12 @@ def string_from_regimen_props(freq, props=[]):
     if len(str_props) == freq:
         return ','.join(str_props)
     else:
-        raise Exception("Error, frequency %d given does not match properties %s" % (freq, props))
+        message = "Error, frequency %d given does not match properties %s" % (freq, props)
+        if suppress_errors:
+            return message
+        else:
+            raise Exception(message)
+
 
 
 

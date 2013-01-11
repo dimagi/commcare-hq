@@ -114,6 +114,8 @@ class PactPatientCase(CommCareCase):
         regimen_string = regimen_string_from_doc(DOT_ART, self.to_json())
         if regimen_string is None:
             return "No regimen"
+#        elif regimen_string.startswith('Error,'):
+#            return "[%s] %s" % (self.artregimen, regimen_string)
         else:
             return "[%s] %s" % (REGIMEN_CHOICES[int(self.art_properties()[enums.CASE_ART_REGIMEN_PROP])], PACT_REGIMEN_CHOICES_FLAT_DICT[regimen_string])
 
@@ -121,6 +123,8 @@ class PactPatientCase(CommCareCase):
         regimen_string = regimen_string_from_doc(DOT_NONART, self.to_json())
         if regimen_string is None:
             return "No regimen"
+        elif regimen_string.startswith('Error,'):
+            return "[%s] %s" % (self.nonartregimen, regimen_string)
         else:
             return "[%s] %s" % (REGIMEN_CHOICES[int(self.nonart_properties()[enums.CASE_NONART_REGIMEN_PROP])], PACT_REGIMEN_CHOICES_FLAT_DICT[regimen_string])
 

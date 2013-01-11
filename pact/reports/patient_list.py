@@ -108,7 +108,6 @@ class PatientListDashboardReport(GenericTabularReport, ESSortableMixin, CustomPr
 
     def case_submits_facet_dict(self, limit):
         case_type = PACT_CASE_TYPE
-
         query = query_per_case_submissions_facet(self.request.domain, limit=limit)
         results = self.xform_es.run_query(query)
         case_id_count_map = {}
@@ -156,14 +155,7 @@ class PatientListDashboardReport(GenericTabularReport, ESSortableMixin, CustomPr
     @property
     @memoized
     def es_results(self):
-        full_query = {
-            "filter": {
-                "and": [
-                    { "term": { "domain.exact": self.request.domain } },
-                    { "term": { "type": PACT_CASE_TYPE } }
-                ]
-            },
-            "fields": [
+        fields= [
                 "_id",
                 "name",
                 "pactid",
@@ -174,14 +166,9 @@ class PatientListDashboardReport(GenericTabularReport, ESSortableMixin, CustomPr
                 "dot_status",
                 "closed_on",
                 "closed"
-            ],
-            "sort": self.get_sorting_block(),
-            "size": self.pagination.count,
-            "from": self.pagination.start
-        }
-
-        #        #dot/hp check appends
-        #        query['filter']['and'].append()
+            ]
+        full_query = self.case_es.base_query(self.request.domain, terms={'type': PACT_CASE_TYPE }, fields=fields, start=self.pagination.start, size=self.pagination.count)
+        full_query['sort'] = self.get_sorting_block(),
 
 
         def status_filtering(slug, field, prefix, any_field):

@@ -1,4 +1,5 @@
 from datetime import datetime, timedelta, timedelta
+import pdb
 import time
 from dateutil.parser import parser
 from django.core.cache import cache
@@ -21,7 +22,6 @@ class CHWPatientSchedule(object):
         self.username = username
         self.intervals = intervaltrees
         self.raw_schedule = raw_schedule
-        #print "create for username %s" % (username)
 
     def scheduled_for_date(self, date_val):
         """
@@ -34,7 +34,6 @@ class CHWPatientSchedule(object):
         if not self.intervals.has_key(day_of_week):
             return []
         else:
-            #print 'has key for this day of the week %d' % (day_of_week)
             pass
         day_tree = self.intervals[day_of_week]
         results = []
@@ -51,7 +50,6 @@ class CHWPatientSchedule(object):
 
         #cached_schedules = cache.get("%s_schedule" % (chw_username), None)
         cached_schedules = None
-        print "chw_username: %s" % chw_username
 
         if override_date == None:
             nowdate = datetime.now()
@@ -96,12 +94,9 @@ class CHWPatientSchedule(object):
         return cls(chw_username, day_intervaltree, cached_arr)
 
 
-
-
 def query_submissions(username):
     xform_es = XFormES()
-    query = xform_es.base_query(PACT_DOMAIN, start=0, size=25)
-    query['fields'] = [
+    fields = [
         "form.#type",
         "form.encounter_date",
         "form.note.encounter_date",
@@ -113,81 +108,41 @@ def query_submissions(username):
         "form.meta.timeStart",
         "form.meta.timeEnd"
     ]
-    query['filter']['and'].append({"term": {"form.meta.username": username}})
+    query = xform_es.base_query(PACT_DOMAIN, terms={"form.meta.username": username}, fields=fields,
+                                start=0, size=25)
     return xform_es.run_query(query)
 
 
-def username_submissions(username, query_date, case_id=None):
+def dot_submits_by_username(username, case_id, query_date):
     """
     Actually run query for username submissions
     todo: do terms for the pact_ids instead of individual term?
-
-
-    only DOT
     """
     xform_es = XFormES()
-    query = {
-#        "fields": [
-#            "_id",
-#            "received_on",
-#            "form.pact_id",
-#            "form.encounter_date"
-#            "form.meta.username"
-#            "form.visit_type",
-#            "form.visit_kept",
-#            "form.contact_type",
-#            "form.observed_art",
-#            "form.observed_non_art",
-#            "form.observed_non_art_dose",
-#            "form.observed_art_dose",
-#        ],
-        "script_fields" : {
-            "doc_id" : { "script" : "_source._id" },
-            "pact_id": { "script": "_source.form.pact_id", },
-            "encounter_date": { "script": "_source.form.encounter_date", },
-            "username": { "script": "_source.form.meta.username", },
+    script_fields = {
+        "doc_id": {"script": "_source._id"},
+        "pact_id": {"script": "_source.form.pact_id", },
+        "encounter_date": {"script": "_source.form.encounter_date", },
+        "username": {"script": "_source.form.meta.username", },
 
-            "visit_type": { "script": "_source.form.visit_type", },
-            "visit_kept": { "script": "_source.form.visit_kept", },
-            "contact_type": { "script": "_source.form.contact_type", },
-            "observed_art": { "script": "_source.form.observed_art", },
-            "observed_non_art": { "script": "_source.form.observed_non_art", },
-            "observer_non_art_dose": { "script": "_source.form.observed_non_art_dose", },
-            "observed_art_dose": { "script": "_source.form.observed_art_dose", },
-            "pillbox_check": {"script": "_source.form.pillbox_check.check"}
-        },
-        "query": {
-            "filtered": {
-                "filter": {
-                    "and": [
-                        { "term": { "domain.exact": "pact" } },
-                        { "term": { "form.meta.username": username } },
-                        { "term": { "form.#type": "dots_form" } },
-                        {
-                            "numeric_range": {
-                                "form.encounter_date": {
-                                    "gte": query_date.strftime("%Y-%m-%d"),
-                                    "lte": query_date.strftime("%Y-%m-%d")
-                                }
-                            }
-                        }
-                    ]
-                }
-            }
-        },
-        "sort": {
-            "received_on": "asc"
-        },
-        "size": 1,
-        "from": 0
+        "visit_type": {"script": "_source.form.visit_type", },
+        "visit_kept": {"script": "_source.form.visit_kept", },
+        "contact_type": {"script": "_source.form.contact_type", },
+        "observed_art": {"script": "_source.form.observed_art", },
+        "observed_non_art": {"script": "_source.form.observed_non_art", },
+        "observer_non_art_dose": {"script": "_source.form.observed_non_art_dose", },
+        "observed_art_dose": {"script": "_source.form.observed_art_dose", },
+        "pillbox_check": {"script": "_source.form.pillbox_check.check"}
     }
 
-    if case_id is not None:
-        query['query']['filtered']["query"] = {
-                "query_string": {
-                    "query": "(form.case.case_id:%(case_id)s OR form.case.@case_id:%(case_id)s)" % dict(case_id=case_id)
-                }
-            }
+    query = xform_es.by_case_id_query(PACT_DOMAIN, case_id, terms={'form.meta.username': username,
+                                                                   'form.#type': 'dots_form'},
+                                      date_field='form.encounter_date', startdate=query_date,
+                                      enddate=query_date)
+    query['sort'] = {'received_on': 'asc'}
+    query['script_fields'] = script_fields
+    query['size'] = 1
+    query['from'] = 0
     res = xform_es.run_query(query)
     return res
 
@@ -232,22 +187,28 @@ def get_schedule_tally(username, total_interval, override_date=None):
 
         dp = parser()
         for case_id in patient_case_ids:
-            total_scheduled+=1
+            total_scheduled += 1
             #            searchkey = [str(username), str(pact_id), visit_date.year, visit_date.month, visit_date.day]
-            search_results = username_submissions(username, visit_date, case_id=case_id)
+            search_results = dot_submits_by_username(username, case_id, visit_date)
             submissions = search_results['hits']['hits']
-#            print "\tquerying submissions: %s: %s" % (username, visit_date)
+            #            print "\tquerying submissions: %s: %s" % (username, visit_date)
             #            submissions = XFormInstance.view('dotsview/dots_submits_by_chw_per_patient_date', key=searchkey, include_docs=True).all()
             #            submissions = []
             #ES Query
             if len(submissions) > 0:
-                print submissions[0]['fields']
+                #print submissions[0]['fields']
                 #calculate if pillbox checked
-                pillbox_check_data = simplejson.loads(submissions[0]['fields']['pillbox_check'])
-                anchor_date = dp.parse(pillbox_check_data['anchor'])
+
+
+                pillbox_check_str = submissions[0]['fields']['pillbox_check']
+                if len(pillbox_check_str) > 0:
+                    pillbox_check_data = simplejson.loads(pillbox_check_str)
+                    anchor_date = dp.parse(pillbox_check_data.get('anchor'))
+                else:
+                    pillbox_check_data = {}
+                    anchor_date = datetime.min
                 encounter_date = dp.parse(submissions[0]['fields']['encounter_date'])
-                submissions[0]['fields']['has_pillbox_check'] = anchor_date.date() == encounter_date.date()
-                #this works
+                submissions[0]['fields']['has_pillbox_check'] = 'Yes' if anchor_date.date() == encounter_date.date() else 'No'
 
                 visited.append(submissions[0]['fields'])
                 total_visited += 1
@@ -317,7 +278,6 @@ def chw_calendar_submit_report(request, username):
                             rowdata.append('covered')
                         rowdata.append(v.get_id)
 
-                        print "%s: %s"% (cpt.pact_id, rowdata)
                     else:
                         rowdata.append('novisit')
                     csvdata.append(','.join(rowdata))
