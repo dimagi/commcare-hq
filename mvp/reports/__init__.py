@@ -1,10 +1,43 @@
+import hashlib
+from django.core.cache import cache
+from django.http import HttpResponse
+import json
+from corehq.apps.indicators.models import DynamicIndicatorDefinition
+
 from corehq.apps.reports.standard import CustomProjectReport, ProjectReportParametersMixin
+from mvp.models import MVP
 
 class MVPIndicatorReport(CustomProjectReport, ProjectReportParametersMixin):
     """
         All MVP Reports with indicators should inherit from this.
     """
-    flush_layout = True
+    cache_indicators = True
     fields = ['corehq.apps.reports.fields.FilterUsersField',
               'corehq.apps.reports.fields.GroupField']
 
+
+    def indicator_cache_key(self, indicator_slug):
+        return hashlib.md5("%s:%s:%s:%s" % (self.slug, self.domain, indicator_slug,
+                                            self.request.META['QUERY_STRING'])).hexdigest()
+
+    def get_response_for_indicator(self, indicator):
+        raise NotImplementedError
+
+    @property
+    def partial_response(self):
+        indicator_slug = self.request.GET.get('indicator')
+        response = {
+            'error': True,
+            'message': 'Indicator could not be processed.'
+        }
+        cache_key = self.indicator_cache_key(indicator_slug)
+        cached_data = cache.get(cache_key)
+        if cached_data and self.cache_indicators:
+            response = cached_data
+        elif indicator_slug:
+            indicator = DynamicIndicatorDefinition.get_current(MVP.NAMESPACE, self.domain, indicator_slug,
+                wrap_correctly=True)
+            if indicator:
+                response = self.get_response_for_indicator(indicator)
+                cache.set(cache_key, response, 3600)
+        return HttpResponse(json.dumps(response))

@@ -68,7 +68,6 @@ var MVISIndicator = function (indicator) {
     self.show_only_numerators = (self.rowspan === 1);
 
     self.init = function () {
-        console.log("added to queue");
         self.loading_text("in queue.");
         queue.add(self);
     };

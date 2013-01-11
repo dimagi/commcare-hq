@@ -1,13 +1,50 @@
 {% extends 'reports/async/tabular.html' %}
+{% load hq_shared_tags %}
+{% load i18n %}
+{# I'm really doing a trial here to see if this method works. Datatables should probably get cleaned up a bit to allow these changes later... #}
 {% block tabular-body %}
     {% for row in report_table.rows %}
-        <tr {% if row.css_id %}id="{{ row.css_id }}"{% endif %}>
+        <tr>
             {% for col in row.data %}
-                <td class="{% if not col or col.html != None and not col.html %}null-entry{% endif %}">
-                    {% if col.html != None %}{{ col.html|safe }}{% else %}{{ col|safe }}{% endif %}
-                    <span title="{% if col.sort_key != "" %}{{ col.sort_key }}{% else %}{{ col }}{% endif %}"></span>
-                </td>
+                {% include 'reports/async/partials/tabular_cell.html' %}
             {% endfor %}
         </tr>
     {% endfor %}
+{% endblock %}
+{% block js %} {{ block.super }}
+    <script type="text/javascript" src="{% static 'hqstyle/js/jquery/plugins/jquery.ba-jqmq.min.js' %}"></script>
+    <script type="text/javascript" src="{% static 'mvp/ko/mvp.async_table.js' %}"></script>
+{% endblock %}
+{% block js-inline %} {{ block.super }}
+{% if not report.needs_filters %}
+<script type="text/javascript">
+{#    $(function () {#}
+{#        var indicator_table = new CHWIndicatorTable({#}
+{#            indicators: {{ indicators|JSON }},#}
+{#        });#}
+{##}
+{#        window.queue = $.jqmq({#}
+{#            delay: -1,#}
+{#            batch: 1,#}
+{#            callback: function( item ) {#}
+{#                item.is_loading = true;#}
+{#                $.ajax({#}
+{#                    url: item.load_url+window.location.search.replace( "?", "&" ),#}
+{#                    dataType: 'json',#}
+{#                    success: item.load_success,#}
+{#                    error: item.load_error#}
+{#                });#}
+{#            },#}
+{#            complete: function(){#}
+{#                // done#}
+{#            }#}
+{#        });#}
+{##}
+{#        indicator_table.init();#}
+{##}
+{##}
+{##}
+{#    });#}
+</script>
+{% endif %}
 {% endblock %}

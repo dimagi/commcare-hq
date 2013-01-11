@@ -1,10 +1,6 @@
 import datetime
-import hashlib
-from django.core.cache import cache
-from django.http import HttpResponse
 from django.utils.safestring import mark_safe
 import logging
-import json
 import numpy
 import pytz
 from corehq.apps.indicators.models import DynamicIndicatorDefinition, CombinedCouchViewIndicatorDefinition
@@ -18,6 +14,7 @@ class HealthCoordinatorReport(MVPIndicatorReport):
     slug = "health_coordinator"
     name = "MVIS Health Coordinator Report"
     report_template_path = "mvp/reports/health_coordinator.html"
+    flush_layout = True
     hide_filters = True
     fields = ['corehq.apps.reports.fields.FilterUsersField',
               'corehq.apps.reports.fields.GroupField']
@@ -228,29 +225,14 @@ class HealthCoordinatorReport(MVPIndicatorReport):
             numerators=self._format_row(row)
         )
 
-    @property
-    def partial_response(self):
-        indicator_slug = self.request.GET.get('indicator')
-        response = {
-            'error': True,
-            'message': 'Indicator could not be processed.'
+    def get_response_for_indicator(self, indicator):
+        retrospective = indicator.get_monthly_retrospective(user_ids=self.user_ids)
+        if isinstance(indicator, CombinedCouchViewIndicatorDefinition):
+            table = self.get_indicator_table(retrospective)
+        else:
+            table = self.get_indicator_row(retrospective)
+        return {
+            'table': table,
         }
-        cache_key = hashlib.md5("%s:%s:%s" % (self.domain, indicator_slug,
-                                              self.request.META['QUERY_STRING'])).hexdigest()
-        cached_data = cache.get(cache_key)
-        if cached_data:
-            response = cached_data
-        elif indicator_slug:
-            indicator = DynamicIndicatorDefinition.get_current(MVP.NAMESPACE, self.domain, indicator_slug,
-                wrap_correctly=True)
-            if indicator:
-                retrospective = indicator.get_monthly_retrospective(user_ids=self.user_ids)
-                if isinstance(indicator, CombinedCouchViewIndicatorDefinition):
-                    table = self.get_indicator_table(retrospective)
-                else:
-                    table = self.get_indicator_row(retrospective)
-                response = {
-                    'table': table,
-                }
-                cache.set(cache_key, response, 3600)
-        return HttpResponse(json.dumps(response))
+
+
