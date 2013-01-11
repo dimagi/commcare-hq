@@ -86,8 +86,10 @@ function LocationSelectViewModel() {
     this.root(new LocationModel({name: '_root', children: locs}, this));
     this.path_push(this.root());
 
-/* FIXME
     if (selected) {
+      // this relies on the hierarchy of the selected location being pre-populated
+      // in the initial locations set from the server (i.e., no location of the
+      // pre-selected location's lineage is loaded asynchronously
       var sel_path = this.find_loc(selected);
       if (sel_path) {
         for (var i = 1; i < sel_path.length; i++) {
@@ -95,7 +97,6 @@ function LocationSelectViewModel() {
         }
       }
     }
-*/
   }
 }
 

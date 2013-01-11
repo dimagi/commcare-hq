@@ -1,4 +1,5 @@
 from couchdbkit.ext.django.schema import *
+from dimagi.utils.couch.loosechange import map_reduce
 from couchforms.models import XFormInstance
 from dimagi.utils import parsing as dateparse
 from datetime import datetime
@@ -76,6 +77,10 @@ class CommtrackActionConfig(DocumentSchema):
     def action_name(self):
         return self.name or self.action_type
 
+class SupplyPointType(DocumentSchema):
+    name = StringProperty()
+    categories = StringListProperty()
+
 class CommtrackConfig(Document):
     domain = StringProperty()
 
@@ -87,6 +92,8 @@ class CommtrackConfig(Document):
     multiaction_enabled = BooleanProperty()
     multiaction_keyword = StringProperty() # if None, will attempt to parse
     # all messages as multi-action
+
+    supply_point_types = SchemaListProperty(SupplyPointType)
 
     @classmethod
     def for_domain(cls, domain):
@@ -102,6 +109,13 @@ class CommtrackConfig(Document):
     def actions_by_name(self):
         return dict((action_config.action_name, action_config) for action_config in self.actions)
 
+    @property
+    def known_supply_point_types(self):
+        return set(spt.name for spt in self.supply_point_types)
+
+    @property
+    def supply_point_categories(self):
+        return map_reduce(lambda spt: [(category, spt.name) for category in spt.categories], data=self.supply_point_types)
 
 def _view_shared(view_name, domain, location_id=None, skip=0, limit=100):
     extras = {"limit": limit} if limit else {}
@@ -235,3 +249,4 @@ class StockReport(object):
                                    startkey=startkey,
                                    endkey=endkey,
                                    include_docs=True)]
+
