@@ -1660,9 +1660,12 @@ def download_xform(req, domain, app_id, module_id, form_id):
     See Application.fetch_xform
 
     """
-    return HttpResponse(
-        req.app.fetch_xform(module_id, form_id)
-    )
+    try:
+        return HttpResponse(
+            req.app.fetch_xform(module_id, form_id)
+        )
+    except IndexError:
+        raise Http404()
 
 @safe_download
 def download_user_registration(req, domain, app_id):

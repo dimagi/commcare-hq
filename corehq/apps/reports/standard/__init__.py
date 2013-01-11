@@ -108,7 +108,7 @@ class ProjectReportParametersMixin(object):
         if self.filter_group_name and not (self.group_id or self.individual):
             group = Group.by_name(self.domain, self.filter_group_name)
         else:
-            group = self.group_id
+            group = self.group
 
         return self.get_all_users_by_domain(
             group=group,

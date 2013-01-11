@@ -247,12 +247,15 @@ def annotate_csv(data, columns):
     return f.getvalue()
 
 def import_locations(domain, f):
+    config = CommtrackConfig.for_domain(domain)
+    known_loc_types = config.known_supply_point_types
+
     data = list(csv.DictReader(f))
     for loc in data:
-        for m in import_location(domain, loc):
+        for m in import_location(domain, loc, known_loc_types):
             yield m
 
-def import_location(domain, loc):
+def import_location(domain, loc, known_loc_types):
     def _loc(*args, **kwargs):
         return make_loc(domain, *args, **kwargs)
 
@@ -286,6 +289,10 @@ def import_location(domain, loc):
     outlet_props = dict(loc)
     for k in ('outlet_name', 'outlet_code'):
         del outlet_props[k]
+    if 'outlet_type' in outlet_props:
+        outlet_props['outlet_type'] = outlet_props['outlet_type'].strip()
+        if outlet_props['outlet_type'] not in known_loc_types:
+            yield 'fyi: type "%s" for outlet "%s" is not a known outlet type' % (outlet_props.get('outlet_type'), name)
 
     # check that sms code for outlet is unique
     code = loc['outlet_code'].lower()
