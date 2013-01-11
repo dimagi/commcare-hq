@@ -5,6 +5,7 @@ from couchdbkit.ext.django.schema import Document, StringProperty, IntegerProper
 from couchdbkit.schema.base import DocumentSchema
 import datetime
 from couchdbkit.schema.properties import LazyDict
+import dateutil
 import numpy
 from casexml.apps.case.models import CommCareCase
 from couchforms.models import XFormInstance
@@ -121,7 +122,6 @@ class IndicatorDefinition(Document):
 
     @classmethod
     def get_current(cls, namespace, domain, slug, version=None, wrap=True, **kwargs):
-
         couch_key = cls._generate_couch_key(
             namespace=namespace,
             domain=domain,
@@ -136,13 +136,12 @@ class IndicatorDefinition(Document):
             descending=True,
             **couch_key
         ).first()
-
         if wrap:
             try:
                 doc_class = to_function(doc.get('value', "%s.%s" % (cls._class_path, cls.__name__)))
                 return doc_class.get(doc.get('id'))
             except Exception as e:
-                logging.error("Could not fetch indicator: %s" % e)
+                logging.error("No matching documents found for indicator %s: %s" % (slug, e))
                 return None
         return doc
 
@@ -170,7 +169,7 @@ class IndicatorDefinition(Document):
         all_indicators = list()
         for slug in all_slugs:
             indicator = cls.get_current(namespace, domain, slug, version=version, **kwargs)
-            if indicator:
+            if indicator and issubclass(indicator.__class__, cls):
                 all_indicators.append(indicator)
         return all_indicators
 
@@ -549,15 +548,16 @@ class DocumentIndicatorDefinition(IndicatorDefinition):
         if isinstance(existing_indicator, dict) or isinstance(existing_indicator, LazyDict):
             update_computed = existing_indicator.get('version') != self.version
         if update_computed:
-            computed[self.slug] = self._set_computed_indicator(document)
+            computed[self.slug] = self.get_doc_dict(document)
         return computed, update_computed
 
-    def _set_computed_indicator(self, document):
+    def get_doc_dict(self, document):
         return {
             'version': self.version,
             'value': self.get_clean_value(document),
             'multi_value': self._returns_multiple,
             'type': self.doc_type,
+            'updated': datetime.datetime.utcnow(),
         }
 
 
@@ -623,13 +623,38 @@ class CaseDataInFormIndicatorDefinition(FormIndicatorDefinition):
     case_property = StringProperty()
 
     def get_value(self, doc):
-        form_data = doc.get_form
+        case = self._get_related_case(doc)
+        if case is not None and hasattr(case, str(self.case_property)):
+            return getattr(case, str(self.case_property))
+        return None
+
+    def _get_related_case(self, xform):
+        form_data = xform.get_form
         related_case_id = form_data.get('case', {}).get('@case_id')
         if related_case_id:
-            case = CommCareCase.get(related_case_id)
-            if isinstance(case, CommCareCase) and hasattr(case, str(self.case_property)):
-                return getattr(case, str(self.case_property))
+            try:
+                return CommCareCase.get(related_case_id)
+            except Exception:
+                pass
         return None
+
+    def update_computed_namespace(self, computed, document):
+        computed, is_update = super(CaseDataInFormIndicatorDefinition,
+            self).update_computed_namespace(computed, document)
+        if not is_update:
+            # check to see if the related case has changed information
+            case = self._get_related_case(document)
+            if case is not None:
+                try:
+                    indicator_updated = computed.get(self.slug, {}).get('updated')
+                    if not isinstance(indicator_updated, datetime.datetime):
+                        indicator_updated = dateutil.parser.parse(indicator_updated)
+                    is_update = case.modified_on > indicator_updated
+                    if is_update:
+                        computed[self.slug] = self.get_doc_dict(document)
+                except ValueError:
+                    pass
+        return computed, is_update
 
 
 class CaseIndicatorDefinition(DocumentIndicatorDefinition):
@@ -679,10 +704,31 @@ class FormDataInCaseIndicatorDefinition(CaseIndicatorDefinition, FormDataIndicat
         for form in forms:
             if isinstance(form, XFormInstance):
                 form_data = form.get_form
-                existing_value[form.get_id] = dict(
-                    value=self.get_from_form(form_data, self.question_id),
-                    timeEnd=self.get_from_form(form_data, 'meta.timeEnd'),
-                    received_on=form.received_on
-                )
+                existing_value[form.get_id] = {
+                    'value': self.get_from_form(form_data, self.question_id),
+                    'timeEnd': self.get_from_form(form_data, 'meta.timeEnd'),
+                    'received_on': form.received_on,
+                }
         return existing_value
 
+    def update_computed_namespace(self, computed, document):
+        computed, is_update = super(FormDataInCaseIndicatorDefinition,
+            self).update_computed_namespace(computed, document)
+
+        if not is_update:
+            # check to see if more relevant forms have been added to the case since the last time
+            # this indicator was computed
+            case = self._get_related_case(document)
+            if case is not None:
+                try:
+                    value_list = computed.get(self.slug, {}).get('value', {})
+                    saved_form_ids = value_list.keys()
+                    related_forms = self.get_related_forms(document)
+                    current_ids = set([f._id for f in related_forms])
+                    is_update = len(current_ids.difference(saved_form_ids)) > 0
+                    if is_update:
+                        computed[self.slug] = self.get_doc_dict(document)
+                except Exception as e:
+                    logging.error("Error updating computed namespace for doc %s: %s" % (document._id, e))
+
+        return computed, is_update
