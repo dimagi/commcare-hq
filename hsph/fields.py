@@ -40,10 +40,12 @@ class NameOfFIDAField(SelectFilteredMobileWorkerField):
     slug = "fida_name"
     name = "Name of FIDA"
     group_names = ["FIDA"]
+    cssId = "fida_name"
 
 class NameOfCATIField(SelectFilteredMobileWorkerField):
     slug = "cati_name"
     name = "Name of CATI"
+    cssId = "cati_name"
     group_names = ["CATI"]
     show_only_group_option = False
     default_option = "All CATIs"
@@ -52,11 +54,13 @@ class NameOfCATIField(SelectFilteredMobileWorkerField):
 class NameOfCITLField(SelectFilteredMobileWorkerField):
     slug = "citl_name"
     name = "Name of CITL"
+    cssId = "citl_name"
     group_names = ["CITL"]
 
 class NameOfDCTLField(ReportSelectField):
     slug = "dctl_name"
     name = "Name of DCTL"
+    cssId = "dctl_name"
     domain = 'hsph'
     default_option = "All DCTLs..."
     cssClasses = "span3"
@@ -79,6 +83,20 @@ class NameOfDCTLField(ReportSelectField):
         for item in data_items:
             dctls[item.fields.get("id")] = item.get_users(wrap=False)
         return dctls
+
+from corehq.apps.reports.filters.base import BaseSingleOptionFilter
+
+class AllocatedToFilter(BaseSingleOptionFilter):
+    slug = "allocated_to"
+    label = "Allocated To"
+    cssId = 'allocated_to'
+    cssClasses = "span2"
+
+    options = [
+        ('cati', 'CATI'),
+        ('field', 'Field')
+    ]
+    default_text = "All"
 
 class SelectReferredInStatusField(ReportSelectField):
     slug = "referred_in_status"

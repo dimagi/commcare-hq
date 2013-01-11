@@ -2,9 +2,6 @@ from hsph.fields import SiteField
 
 class HSPHSiteDataMixin(object):
 
-    def __getattr__(self, item):
-        super(HSPHSiteDataMixin, self).__getattribute__(item)
-
     _site_map = None
     @property
     def site_map(self):
