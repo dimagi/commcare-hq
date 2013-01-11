@@ -3,7 +3,6 @@ from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth import authenticate, login
 from django.db import transaction
-from django.forms.forms import Form
 from django.http import HttpResponseRedirect
 from django.shortcuts import redirect
 from corehq.apps.domain.decorators import login_required_late_eval_of_LOGIN_URL

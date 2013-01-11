@@ -9,6 +9,7 @@ from casexml.apps.case.models import CommCareCase
 from dimagi.utils.couch.database import get_db
 from dimagi.utils.couch.loosechange import map_reduce
 from corehq.apps.commtrack import sms
+from dimagi.utils.logging import notify_exception
 from corehq.apps.commtrack.helpers import make_supply_point
 
 def set_error(row, msg, override=False):
@@ -212,6 +213,7 @@ def process_loc(domain, loc, rows, data_cols):
             import_row(row, data_cols, domain)
             set_error(row, 'SUCCESS row imported')
         except Exception, e:
+            notify_exception(None, 'error during bulk stock report import')
             set_error(row, 'ERROR during import: %s' % str(e))
             set_error_bulk(rows, 'SKIPPED remaining rows due to unexpected error')
             break
@@ -245,12 +247,15 @@ def annotate_csv(data, columns):
     return f.getvalue()
 
 def import_locations(domain, f):
+    config = CommtrackConfig.for_domain(domain)
+    known_loc_types = config.known_supply_point_types
+
     data = list(csv.DictReader(f))
     for loc in data:
-        for m in import_location(domain, loc):
+        for m in import_location(domain, loc, known_loc_types):
             yield m
 
-def import_location(domain, loc):
+def import_location(domain, loc, known_loc_types):
     def _loc(*args, **kwargs):
         return make_loc(domain, *args, **kwargs)
 
@@ -284,6 +289,10 @@ def import_location(domain, loc):
     outlet_props = dict(loc)
     for k in ('outlet_name', 'outlet_code'):
         del outlet_props[k]
+    if 'outlet_type' in outlet_props:
+        outlet_props['outlet_type'] = outlet_props['outlet_type'].strip()
+        if outlet_props['outlet_type'] not in known_loc_types:
+            yield 'fyi: type "%s" for outlet "%s" is not a known outlet type' % (outlet_props.get('outlet_type'), name)
 
     # check that sms code for outlet is unique
     code = loc['outlet_code'].lower()

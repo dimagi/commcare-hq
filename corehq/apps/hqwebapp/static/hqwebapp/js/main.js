@@ -140,7 +140,7 @@ var SaveButton = {
                 button.fire('change');
             };
         $form.find('*').change(fireChange);
-        $form.find('input, textarea').bind('textchange', fireChange);
+        $form.on('textchange', 'input, textarea', fireChange);
         return button;
     },
     message: {
@@ -161,6 +161,20 @@ var COMMCAREHQ = (function () {
             ADD:    'ui-icon ui-icon-plusthick',
             COPY:   'ui-icon ui-icon-copy',
             DELETE: 'ui-icon ui-icon-closethick'
+        },
+        makeHqHelp: function (opts, wrap) {
+            wrap = wrap === undefined ? true : wrap;
+            var el = $(
+                '<a href="#" class="hq-help no-click">' +
+                    '<i class="icon-question-sign" data-trigger="hover"></i></a>'
+            );
+            for (var attr in {'content': 0, 'title': 0}) {
+                $('i', el).data(attr, opts[attr]);
+            }
+            if (wrap) {
+                el.hqHelp();
+            }
+            return el;
         },
         initBlock: function ($elem) {
             $('.submit_on_click', $elem).click(function (e) {

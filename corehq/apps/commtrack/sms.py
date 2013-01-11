@@ -10,6 +10,7 @@ import logging
 from dimagi.utils.couch.loosechange import map_reduce
 from dimagi.utils.parsing import json_format_datetime
 from datetime import datetime
+from helpers import make_supply_point_product
 
 logger = logging.getLogger('commtrack.sms')
 
@@ -204,11 +205,32 @@ def looks_like_prod_code(code):
 def product_subcases(supply_point):
     """given a supply point, return all the sub-cases for each product stocked at that supply point
     actually returns a mapping: product doc id => sub-case id
+    ACTUALLY returns a dict that will create non-existent product sub-cases on demand
     """
     product_subcase_uuids = [ix.referenced_id for ix in supply_point.reverse_indices if ix.identifier == 'parent']
     product_subcases = CommCareCase.view('_all_docs', keys=product_subcase_uuids, include_docs=True)
     product_subcase_mapping = dict((subcase.dynamic_properties().get('product'), subcase._id) for subcase in product_subcases)
-    return product_subcase_mapping
+
+    def create_product_subcase(product_uuid):
+        return make_supply_point_product(supply_point, product_uuid)._id
+
+    class DefaultDict(dict):
+        """similar to collections.defaultdict(), but factory function has access
+        to 'key'
+        """
+        def __init__(self, factory, *args, **kwargs):
+            super(DefaultDict, self).__init__(*args, **kwargs)
+            self.factory = factory
+
+        def __getitem__(self, key):
+            if key in self:
+                val = self.get(key)
+            else:
+                val = self.factory(key)
+                self[key] = val
+            return val
+
+    return DefaultDict(create_product_subcase, product_subcase_mapping)
 
 def to_instance(data):
     """convert the parsed sms stock report into an instance like what would be

@@ -1,0 +1,16 @@
+{% load hq_shared_tags %}
+{% load i18n %}
+{% if not hide_field %}
+<label for="{{ select.cssId }}" class="control-label">{% trans select.label %}</label>
+<div class="controls">
+    <select id="{{ select.cssId }}" multiple="true" class="{{ select.cssClasses }}"
+            data-bind="options: select_params, optionsText: 'text', optionsValue: 'val', value: current_selection"
+            name="{{ slug }}">
+    </select>
+</div>
+<script type="text/javascript">
+    $(function () {
+        ko.applyBindings({select_params: {{ select.options|JSON }}, current_selection: ko.observableArray({{ select.selected|JSON }})}, $('#{{ select.cssId }}').parent().get(0));
+    });
+</script>
+{% endif %}

@@ -120,10 +120,10 @@ def get_all_users_by_domain(domain=None, group=None, individual=None,
             user_filter = HQUserType.use_defaults()
         users = []
         submitted_user_ids = get_all_userids_submitted(domain)
-        registered_user_ids = [user.user_id for user in CommCareUser.by_domain(domain)]
+        registered_user_ids = dict([(user.user_id, user) for user in CommCareUser.by_domain(domain)])
         for user_id in submitted_user_ids:
             if user_id in registered_user_ids and user_filter[HQUserType.REGISTERED].show:
-                user = CommCareUser.get_by_user_id(user_id)
+                user = registered_user_ids[user_id]
                 users.append(user)
             elif not user_id in registered_user_ids and \
                  (user_filter[HQUserType.ADMIN].show or
@@ -351,3 +351,28 @@ def set_report_announcements_for_user(request, couch_user):
             messages.info(request, announcement.as_html)
         except Exception as e:
             logging.error("Could not fetch Report Announcement: %s" % e)
+
+
+# Copied from http://djangosnippets.org/snippets/1170/
+def batch_qs(qs, batch_size=1000):
+    """
+    Returns a (start, end, total, queryset) tuple for each batch in the given
+    queryset.
+
+    Usage:
+        # Make sure to order your querset
+        article_qs = Article.objects.order_by('id')
+        for start, end, total, qs in batch_qs(article_qs):
+            print "Now processing %s - %s of %s" % (start + 1, end, total)
+            for article in qs:
+                print article.body
+    """
+    total = qs.count()
+    for start in range(0, total, batch_size):
+        end = min(start + batch_size, total)
+        yield (start, end, total, qs[start:end])
+
+def stream_qs(qs, batch_size=1000):
+    for _, _, _, qs in batch_qs(qs, batch_size):
+        for item in qs:
+            yield item

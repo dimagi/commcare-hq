@@ -1,14 +1,17 @@
 import xlrd
 from dimagi.utils.couch.database import get_db
 
-def get_case_properties(domain, case_type):
+def get_case_properties(domain, case_type=None):
     """
     For a given case type and domain, get all unique existing case properties,
     known and unknown
     """
+    key = [domain]
+    if case_type:
+        key.append(case_type)
     rows = get_db().view('hqcase/all_case_properties',
-                         startkey=[domain, case_type],
-                         endkey=[domain, case_type, {}], 
+                         startkey=key,
+                         endkey=key + [{}],
                          reduce=True, group=True, group_level=3).all()
     return [r['key'][2] for r in rows]
     

@@ -1084,6 +1084,8 @@ def edit_form_attr(req, domain, app_id, unique_form_id, attr):
     if should_edit("put_in_root"):
         put_in_root = req.POST['put_in_root']
         form.put_in_root = True if put_in_root == "True" else False
+    if should_edit('form_filter'):
+        form.form_filter = req.POST['form_filter']
 
     _handle_media_edits(req, form, should_edit, resp)
 
@@ -1507,7 +1509,8 @@ def save_copy(req, domain, app_id):
 
     if not errors:
         try:
-            copy = app.save_copy(comment=comment, user_id=req.couch_user.get_id)
+            copy = app.save_copy(comment=comment, user_id=req.couch_user.get_id,
+                                 previous_version=app.get_latest_saved())
         except Exception as e:
             copy = None
             if settings.DEBUG:
@@ -1523,7 +1526,6 @@ def save_copy(req, domain, app_id):
         report_utils.get_timezone(req.couch_user.user_id, domain)
     )
     lang, langs = get_langs(req, app)
-    print errors
     return json_response({
         "saved_app": copy,
         "error_html": render_to_string('app_manager/partials/build_errors.html', {
@@ -1658,9 +1660,12 @@ def download_xform(req, domain, app_id, module_id, form_id):
     See Application.fetch_xform
 
     """
-    return HttpResponse(
-        req.app.fetch_xform(module_id, form_id)
-    )
+    try:
+        return HttpResponse(
+            req.app.fetch_xform(module_id, form_id)
+        )
+    except IndexError:
+        raise Http404()
 
 @safe_download
 def download_user_registration(req, domain, app_id):

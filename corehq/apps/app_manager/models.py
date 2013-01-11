@@ -29,6 +29,7 @@ from corehq.apps.users.util import cc_user_domain
 from corehq.util import bitly
 import current_builds
 from dimagi.utils.couch.undo import DeleteRecord, DELETED_SUFFIX
+from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.web import get_url_base, parse_int
 from copy import deepcopy
 from corehq.apps.domain.models import Domain, cached_property
@@ -47,6 +48,7 @@ import tempfile
 import os
 from utilities.profile import profile as profile_decorator, profile
 import logging
+import hashlib
 
 MISSING_DEPENDECY = \
 """Aw shucks, someone forgot to install the google chart library
@@ -304,6 +306,7 @@ class FormBase(DocumentSchema):
     actions     = SchemaProperty(FormActions)
     show_count  = BooleanProperty(default=False)
     xmlns       = StringProperty()
+    version     = IntegerProperty()
     source      = FormSource()
     validation_cache = CouchCachedStringProperty(lambda self: "cache-%s-validation" % self.unique_id)
 
@@ -359,12 +362,14 @@ class FormBase(DocumentSchema):
     def get_case_type(self):
         return self._parent.case_type
 
+    def get_version(self):
+        return self.version if self.version else self.get_app().version
 
     def add_stuff_to_xform(self, xform):
         app = self.get_app()
         xform.exclude_languages(app.build_langs)
         xform.set_default_language(app.build_langs[0])
-        xform.set_version(self.get_app().version)
+        xform.set_version(self.get_version())
 
     def render_xform(self):
         xform = XForm(self.source)
@@ -520,6 +525,8 @@ class NavMenuItemMediaMixin(DocumentSchema):
 
 
 class Form(FormBase, IndexedSchema, NavMenuItemMediaMixin):
+    form_filter = StringProperty()
+
     def add_stuff_to_xform(self, xform):
         super(Form, self).add_stuff_to_xform(xform)
         xform.add_case_and_meta(self)
@@ -529,6 +536,10 @@ class Form(FormBase, IndexedSchema, NavMenuItemMediaMixin):
 
     def get_module(self):
         return self._parent
+
+    def all_other_forms_require_a_case(self):
+        m = self.get_module()
+        return all([form.requires == 'case' for form in m.get_forms() if form.id != self.id])
 
 class UserRegistrationForm(FormBase):
     username_path = StringProperty(default='username')
@@ -729,6 +740,10 @@ class Module(IndexedSchema, NavMenuItemMediaMixin):
                 ret = True
                 break
         return ret
+
+    @memoized
+    def all_forms_require_a_case(self):
+        return all([form.requires == 'case' for form in self.get_forms()])
 
 class VersioningError(Exception):
     """For errors that violate the principals of versioning in VersionedDoc"""
@@ -1204,9 +1219,10 @@ class ApplicationBase(VersionedDoc, SnapshotMixin):
         jadjar = jadjar.pack(self.create_all_files())
         return jadjar.jar
 
-    def save_copy(self, comment=None, user_id=None):
+    def save_copy(self, comment=None, user_id=None, previous_version=None):
         copy = super(ApplicationBase, self).save_copy()
 
+        copy.set_form_versions(previous_version)
         copy.create_jadjar(save=True)
 
         try:
@@ -1239,6 +1255,11 @@ class ApplicationBase(VersionedDoc, SnapshotMixin):
         )
         record.save()
         return record
+
+    def set_form_versions(self, previous_version):
+        # by default doing nothing here is fine.
+        pass
+
 #class Profile(DocumentSchema):
 #    features = DictProperty()
 #    properties = DictProperty()
@@ -1350,12 +1371,37 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
             form = self.get_module(module_id).get_form(form_id)
         return form.validate_form().render_xform().encode('utf-8')
 
+    def set_form_versions(self, previous_version):
+        # this will make builds slower, but they're async now so hopefully
+        # that's fine.
+
+        def _hash(val):
+            return hashlib.md5(val).hexdigest()
+
+        if previous_version:
+            for form_stuff in self.get_forms(bare=False):
+                form = form_stuff["form"]
+                try:
+                    previous_form = previous_version.get_form(form.unique_id)
+                    previous_hash = _hash(previous_version.fetch_xform(form=previous_form))
+
+                    # hack - temporarily set my version to the previous version
+                    # so that that's not treated as the diff
+                    form.version = previous_form.get_version()
+                    my_hash = _hash(self.fetch_xform(form=form))
+                    if previous_hash != my_hash:
+                        form.version = self.version
+                except KeyError:
+                    # if this is a new form just use my version
+                    form.version = self.version
+
     def _create_custom_app_strings(self, lang):
         def trans(d):
             return clean_trans(d, langs)
         id_strings = IdStrings()
         langs = [lang] + self.langs
         yield id_strings.homescreen_title(), self.name
+        yield id_strings.app_display_name(), self.name
         for module in self.get_modules():
             for detail in module.get_details():
                 if detail.type.startswith('case'):

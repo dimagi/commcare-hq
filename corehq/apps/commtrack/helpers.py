@@ -18,42 +18,40 @@ def make_product(domain, name, code):
     p.save()
     return p
 
-def make_supply_point(domain, location, code, all_products=True):
+# TODO use case-xml case creation workflow
+def make_supply_point(domain, location, code):
     c = CommCareCase()
     c.domain = domain
     c.site_code = code
     c.type = 'supply-point'
     c.bind_to_location(location)
     c.save()
-
-    products = []
-    if all_products:
-        products = get_db().view('commtrack/products', startkey=[domain], endkey=[domain, {}])
-    for p in products:
-        prod_id = p['id']
-        pc = CommCareCase()
-        pc.domain = domain
-        pc.type = 'supply-point-product'
-        pc.product = prod_id
-        ix = CommCareCaseIndex()
-        ix.identifier = 'parent'
-        ix.referenced_type = 'supply-point'
-        ix.referenced_id = c._id
-        pc.indices = [ix]
-        pc.bind_to_location(location)
-        pc.save()
-
     return c
+
+# TODO use case-xml case creation workflow
+def make_supply_point_product(supply_point_case, product_uuid):
+    pc = CommCareCase()
+    pc.domain = supply_point_case.domain
+    pc.type = 'supply-point-product'
+    pc.product = product_uuid
+    ix = CommCareCaseIndex()
+    ix.identifier = 'parent'
+    ix.referenced_type = 'supply-point'
+    ix.referenced_id = supply_point_case._id
+    pc.indices = [ix]
+    pc.location_ = supply_point_case.location_
+    pc.save()
+    return pc
 
 def make_psi_config(domain):
     c = CommtrackConfig(
         domain=domain,
         multiaction_enabled=True,
         multiaction_keyword='s',
-        actions = [
+        actions=[
             CommtrackActionConfig(
                 action_type='stockedoutfor',
-                keyword='so',
+                keyword='d',
                 caption='Stock-out Days'
             ),
             CommtrackActionConfig(
@@ -72,6 +70,21 @@ def make_psi_config(domain):
                 keyword='p',
                 caption='Placements'
             ),
+        ],
+        supply_point_types=[
+            SupplyPointType(name='CHC', categories=['Public']),
+            SupplyPointType(name='PHC', categories=['Public']),
+            SupplyPointType(name='SC', categories=['Public']),
+            SupplyPointType(name='MBBS', categories=['Private']),
+            SupplyPointType(name='Pediatrician', categories=['Private']),
+            SupplyPointType(name='AYUSH', categories=['Private']),
+            SupplyPointType(name='Medical Store / Chemist', categories=['Traditional']),
+            SupplyPointType(name='RMP', categories=['Traditional']),
+            SupplyPointType(name='Asha', categories=['Frontline Workers']),
+            SupplyPointType(name='AWW', categories=['Public', 'Frontline Workers']),
+            SupplyPointType(name='NGO', categories=['Non-traditional']),
+            SupplyPointType(name='CBO', categories=['Non-traditional']),
+            SupplyPointType(name='SHG', categories=['Non-traditional']),
         ]
     )
     c.save()

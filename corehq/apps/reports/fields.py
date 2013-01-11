@@ -7,16 +7,18 @@ from corehq.apps.orgs.models import Organization
 from corehq.apps.reports import util
 from corehq.apps.groups.models import Group
 from corehq.apps.reports.models import HQUserType
+from corehq.apps.locations.models import Location
 from dimagi.utils.couch.database import get_db
 from dimagi.utils.dates import DateSpan
 from dimagi.utils.decorators.datespan import datespan_in_request
-from corehq.apps.locations.models import location_tree
+from corehq.apps.locations.models import location_tree, root_locations
 import settings
 import json
 from django.utils.translation import ugettext_noop
 from django.utils.translation import ugettext as _
 from corehq.apps.reports.cache import CacheableRequestMixIn, request_cache
-
+from django.core.urlresolvers import reverse
+import uuid
 
 """
     Note: Fields is being phased out in favor of filters.
@@ -55,8 +57,8 @@ class ReportField(CacheableRequestMixIn):
 
 class ReportSelectField(ReportField):
     slug = "generic_select"
-    template = "reports/fields/select_generic.html"
     name = ugettext_noop("Generic Select")
+    template = "reports/fields/select_generic.html"
     default_option = ugettext_noop("Select Something...")
     options = [dict(val="val", text="text")]
     cssId = "generic_select_box"
@@ -64,6 +66,13 @@ class ReportSelectField(ReportField):
     selected = None
     hide_field = False
     as_combo = False
+
+    def __init__(self, *args, **kwargs):
+        super(ReportSelectField, self).__init__(*args, **kwargs)
+        # need to randomize cssId so knockout bindings won't clobber each other
+        # when multiple select controls on screen at once
+        nonce = uuid.uuid4().hex[-12:]
+        self.cssId = '%s-%s' % (self.cssId, nonce)
 
     def update_params(self):
         self.selected = self.request.GET.get(self.slug)
@@ -78,8 +87,18 @@ class ReportSelectField(ReportField):
             cssClasses=self.cssClasses,
             label=self.name,
             selected=self.selected,
-            use_combo_box=self.as_combo
+            use_combo_box=self.as_combo,
         )
+
+class ReportMultiSelectField(ReportSelectField):
+    template = "reports/fields/multiselect_generic.html"
+    selected = []
+    default_option = []
+
+    # enfore as_combo = False ?
+
+    def update_params(self):
+        self.selected = self.request.GET.getlist(self.slug) or self.default_option
 
 class MonthField(ReportField):
     slug = "month"
@@ -336,13 +355,20 @@ class SelectCaseOwnerField(SelectMobileWorkerField):
 
 class SelectFilteredMobileWorkerField(SelectMobileWorkerField):
     """
-        This is a little field for use when a client really wants to filter by individuals from a specific group.
-        Since by default we still want to show all the data, no filtering is done unless the special group filter is selected.
+        This is a little field for use when a client really wants to filter by
+        individuals from a specific group.  Since by default we still want to
+        show all the data, no filtering is done unless the special group filter
+        is selected.
     """
     slug = "select_filtered_mw"
     name = ugettext_noop("Select Mobile Worker")
     template = "reports/fields/select_filtered_mobile_worker.html"
-    default_option = ugettext_noop("Showing All Mobile Workers...")
+    default_option = ugettext_noop("All Mobile Workers...")
+
+    # Whether to display both the default option and "Only <group> Mobile
+    # Workers" or just the default option (useful when using a single
+    # group_name and changing default_option to All <group> Workers
+    show_only_group_option = True
 
     group_names = []
 
@@ -354,8 +380,9 @@ class SelectFilteredMobileWorkerField(SelectMobileWorkerField):
         for group in self.group_names:
             filtered_group = Group.by_name(self.domain, group)
             if filtered_group:
-                self.group_options.append(dict(group_id=filtered_group._id,
-                    name=_("Only %s Mobile Workers") % group))
+                if self.show_only_group_option:
+                    self.group_options.append(dict(group_id=filtered_group._id,
+                        name=_("Only %s Mobile Workers") % group))
                 self.users.extend(filtered_group.get_users(is_active=True, only_commcare=True))
 
     def update_context(self):
@@ -412,6 +439,48 @@ class LocationField(ReportField):
             'locations': json.dumps(loc_json)
         }
 
+class AsyncLocationField(ReportField):
+    name = ugettext_noop("Location")
+    slug = "location_async"
+    template = "reports/fields/location_async.html"
+
+    def update_context(self):
+        self.context.update(self._get_custom_context())
+
+    def _get_custom_context(self):
+        def loc_to_json(loc):
+            return {
+                'name': loc.name,
+                'location_type': loc.location_type,
+                'uuid': loc._id,
+            }
+        loc_json = [loc_to_json(loc) for loc in root_locations(self.domain)]
+        api_root = reverse('api_dispatch_list', kwargs={'domain': self.domain,
+                                                        'resource_name': 'location', 
+                                                        'api_name': 'v0.3'})
+
+        # if a location is selected, we need to pre-populate its location hierarchy
+        # so that the data is available client-side to pre-populate the drop-downs
+        selected_loc_id = self.request.GET.get('location_id')
+        if selected_loc_id:
+            selected = Location.get(selected_loc_id)
+            lineage = list(Location.view('_all_docs', keys=selected.path, include_docs=True))
+
+            parent = {'children': loc_json}
+            for loc in lineage:
+                # find existing entry in the json tree that corresponds to this loc
+                this_loc = [k for k in parent['children'] if k['uuid'] == loc._id][0]
+                this_loc['children'] = [loc_to_json(loc) for loc in loc.children]
+                parent = this_loc
+
+        return {
+            'api_root': api_root,
+            'control_name': self.name,
+            'control_slug': self.slug,
+            'loc_id': selected_loc_id,
+            'locations': json.dumps(loc_json)
+        }
+        
 class DeviceLogTagField(ReportField):
     slug = "logtag"
     errors_only_slug = "errors_only"
@@ -463,5 +532,3 @@ class DeviceLogDevicesField(DeviceLogFilterField):
     slug = "logdevice"
     view = "phonelog/devicelog_data_devices"
     filter_desc = ugettext_noop("Filter Logs by Device")
-
-

@@ -4,7 +4,7 @@ from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.forms import AdminPasswordChangeForm
 from django.contrib.auth.models import User
-from django.contrib.auth.views import login as django_login
+from django.contrib.auth.views import login as django_login, redirect_to_login
 from django.contrib.auth.views import logout as django_logout
 from django.contrib.sites.models import Site
 from django.http import HttpResponseRedirect, HttpResponse, Http404,\
@@ -161,8 +161,13 @@ def server_up(req):
         return HttpResponse('\n'.join(message), status=500)
 
 
-def no_permissions(request):
-    return redirect('registration_domain')
+def no_permissions(request, template_name="no_permission.html"):
+    next = request.GET.get('next', None)
+    if request.GET.get('switch', None) == 'true':
+        logout(request)
+        return redirect_to_login(next or request.path)
+
+    return render_to_response(request, template_name, {'next': next})
 
 def _login(req, domain, template_name):
     if req.user.is_authenticated() and req.method != "POST":
@@ -234,7 +239,7 @@ def bug_report(req):
     else:
         report['copy_url'] = None
 
-    subject = u'CCHQ Bug Report ({domain}): {subject}'.format(**report)
+    subject = u'{subject} ({domain})'.format(**report)
     message = (
         u"username: {username}\n"
         u"domain: {domain}\n"
