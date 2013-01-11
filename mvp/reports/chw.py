@@ -15,7 +15,6 @@ class CHWManagerReport(GenericTabularReport, MVPIndicatorReport, DatespanMixin):
     name = "CHW Manager Report"
     report_template_path = "mvp/reports/chw_report.html"
     fix_left_col = True
-#    cache_indicators = False
     fields = ['corehq.apps.reports.fields.FilterUsersField',
               'corehq.apps.reports.fields.GroupField',
               'corehq.apps.reports.fields.DatespanField']
@@ -48,7 +47,7 @@ class CHWManagerReport(GenericTabularReport, MVPIndicatorReport, DatespanMixin):
                 col_group.add_column(DataTablesColumn(
                     indicator.title or indicator.description,
                     rotate=True,
-                    expected=section.get('indicators', [])[j].get('expected')
+                    expected=section.get('indicators', [])[j].get('expected'),
                 ))
             sections.append(col_group)
         return DataTablesHeader(
@@ -79,11 +78,11 @@ class CHWManagerReport(GenericTabularReport, MVPIndicatorReport, DatespanMixin):
     @property
     def rows(self):
         rows = list()
-
+        d_text = lambda slug: mark_safe('<i class="icon icon-spinner status-%s"></i>' % slug)
         self.statistics_rows = [["Average"], ["Median"], ["Std. Dev."]]
 
         def _create_stat_cell(stat_type, slug):
-            stat_cell = self.table_cell(None, 'd')
+            stat_cell = self.table_cell(None, d_text(slug))
             stat_cell.update(
                 css_class="%s %s" % (stat_type, slug),
             )
@@ -99,7 +98,7 @@ class CHWManagerReport(GenericTabularReport, MVPIndicatorReport, DatespanMixin):
             row_data = [user.get('username_in_report')]
             for section in self.indicators:
                 for indicator in section:
-                    table_cell = self.table_cell(None, 'd')
+                    table_cell = self.table_cell(None, d_text(indicator.slug))
                     table_cell.update(
                         css_class=indicator.slug
                     )
@@ -194,19 +193,19 @@ class CHWManagerReport(GenericTabularReport, MVPIndicatorReport, DatespanMixin):
             value = indicator.get_value([user.get('user_id')], self.datespan)
             raw_values[user.get('user_id')] = value
             user_indices[user.get('user_id')] = u
-
         all_values = raw_values.values()
+
         if isinstance(all_values[0], dict):
             non_zero = [v.get('ratio')*100 for v in all_values if v.get('ratio') is not None]
         else:
             non_zero = [v for v in all_values if v > 0]
 
         avg = numpy.average(non_zero)
-        median = numpy.average(non_zero)
+        median = numpy.median(non_zero)
         std = numpy.std(non_zero)
 
         def _formatted_cell(val, val_text):
-            table_cell = self.table_cell(v, v_text)
+            table_cell = self.table_cell(v, val_text)
             table_cell.update(
                 unwrap=True,
             )

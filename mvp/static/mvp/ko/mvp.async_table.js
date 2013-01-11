@@ -44,6 +44,8 @@ var CHWIndicator = function (options) {
             self.median = data.median;
             self.std = data.std;
             self.apply_updates();
+        } else {
+            self.mark_as_error();
         }
         queue.next(false);
     };
@@ -57,9 +59,13 @@ var CHWIndicator = function (options) {
             // show retry message
             queue.add(self);
         } else {
-            // show error message
+            self.mark_as_error();
         }
         self.num_tries += 1;
+    };
+    
+    self.mark_as_error = function () {
+        $('.status-'+self.slug).replaceWith('<i class="icon icon-warning-sign"></i>');
     };
 
     self.apply_updates = function () {
@@ -73,16 +79,14 @@ var CHWIndicator = function (options) {
                 var formatted_data = self.data[user_id];
                 var user_index = self.user_indices[user_id];
                 new_data[user_index][self.index+1] = formatted_data;
-//                $('.'+user_id+' .'+self.slug).html(formatted_data);
             }
         }
         reportTables.datatable.fnClearTable();
         reportTables.datatable.fnAddData(new_data);
         reportTables.datatable.fnAdjustColumnSizing(true);
 
-//        console.log(reportTables.datatable.fnGetData());
-//        $('.average.'+self.slug).html(self.average);
-//        $('.median.'+self.slug).html(self.median);
-//        $('.std.'+self.slug).html(self.std);
+        $('.dataTables_scrollFoot .average.'+self.slug).html(self.average);
+        $('.dataTables_scrollFoot .median.'+self.slug).html(self.median);
+        $('.dataTables_scrollFoot .std.'+self.slug).html(self.std);
     };
 };

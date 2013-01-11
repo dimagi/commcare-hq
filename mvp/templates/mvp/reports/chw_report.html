@@ -18,33 +18,33 @@
 {% block js-inline %} {{ block.super }}
 {% if not report.needs_filters %}
 <script type="text/javascript">
-{#    $(function () {#}
-{#        var indicator_table = new CHWIndicatorTable({#}
-{#            indicators: {{ indicators|JSON }},#}
-{#        });#}
-{##}
-{#        window.queue = $.jqmq({#}
-{#            delay: -1,#}
-{#            batch: 1,#}
-{#            callback: function( item ) {#}
-{#                item.is_loading = true;#}
-{#                $.ajax({#}
-{#                    url: item.load_url+window.location.search.replace( "?", "&" ),#}
-{#                    dataType: 'json',#}
-{#                    success: item.load_success,#}
-{#                    error: item.load_error#}
-{#                });#}
-{#            },#}
-{#            complete: function(){#}
-{#                // done#}
-{#            }#}
-{#        });#}
-{##}
-{#        indicator_table.init();#}
-{##}
-{##}
-{##}
-{#    });#}
+    $(function () {
+        var indicator_table = new CHWIndicatorTable({
+            indicators: {{ indicators|JSON }},
+        });
+
+        window.queue = $.jqmq({
+            delay: -1,
+            batch: 1,
+            callback: function( item ) {
+                item.is_loading = true;
+                $.ajax({
+                    url: item.load_url+window.location.search.replace( "?", "&" ),
+                    dataType: 'json',
+                    success: item.load_success,
+                    error: item.load_error
+                });
+            },
+            complete: function(){
+                // done
+            }
+        });
+
+        indicator_table.init();
+
+
+
+    });
 </script>
 {% endif %}
 {% endblock %}
