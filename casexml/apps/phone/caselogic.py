@@ -5,14 +5,15 @@ from datetime import datetime
 from casexml.apps.case.models import CommCareCase
 from casexml.apps.case import const
 
-def get_footprint(initial_case_list):
+def get_footprint(initial_case_list, strip_history=False):
     """
     Get's the flat list of the footprint of cases based on a starting list.
     Walks all the referenced indexes recursively.
     """
     
     def children(case):
-        return [CommCareCase.get(index.referenced_id) \
+        return [CommCareCase.get(index.referenced_id,
+                                 strip_history=True) \
                 for index in case.indices]
     
     relevant_cases = {}
@@ -121,7 +122,7 @@ class CaseSyncOperation(object):
                                         _to_case_id_set(self.actual_relevant_cases) | \
                                         _to_case_id_set(self.phone_relevant_cases)])
         
-        self.all_potential_to_sync = filter(case_modified_elsewhere_since_sync, 
+        self.all_potential_to_sync = filter(case_modified_elsewhere_since_sync,
                                             list(self.all_potential_cases))
         
         # this is messy but forces uniqueness at the case_id level, without
@@ -141,6 +142,5 @@ def get_case_updates(user, last_sync):
     operation.  This returns a CaseSyncOperation object containing
     various properties about cases that should sync.
     """
-    
     return CaseSyncOperation(user, last_sync)
-    
+
