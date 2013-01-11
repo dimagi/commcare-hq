@@ -40,10 +40,7 @@
         {% for row in report_table.rows %}
             <tr>
                 {% for col in row %}
-                    <td class="{% if not col or col.html != None and not col.html %}null-entry{% endif %}">
-                        {% if col.html != None %}{{ col.html|safe }}{% else %}{{ col|safe }}{% endif %}
-                        <span title="{% if col.sort_key != "" %}{{ col.sort_key }}{% else %}{{ col }}{% endif %}"></span>
-                    </td>
+                    {% include 'reports/async/partials/tabular_cell.html' %}
                 {% endfor %}
             </tr>
         {% endfor %}
