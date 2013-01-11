@@ -267,6 +267,23 @@ class CommCareCase(CaseBase, IndexHoldingMixIn, ComputedDocumentMixin):
             }) for index in (self.indices if not reversed else self.reverse_indices)
         ])
 
+    @classmethod
+    def get(cls, id, strip_history=False, **kwargs):
+        if strip_history:
+            return cls.get_lite(id)
+        return super(CommCareCase, cls).get(id, **kwargs)
+
+    @classmethod
+    def get_lite(cls, id):
+        return cls.wrap(cls.get_db().view("case/get_lite", key=id,
+                                          include_docs=False).one()['value'])
+
+    @classmethod
+    def bulk_get_lite(cls, ids):
+        for res in cls.get_db().view("case/get_lite", keys=ids,
+                                 include_docs=False):
+            yield CommCareCase.wrap(res['value'])
+
     def get_preloader_dict(self):
         """
         Gets the case as a dictionary for use in touchforms preloader framework
