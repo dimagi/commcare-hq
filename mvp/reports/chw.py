@@ -15,6 +15,7 @@ class CHWManagerReport(GenericTabularReport, MVPIndicatorReport, DatespanMixin):
     name = "CHW Manager Report"
     report_template_path = "mvp/reports/chw_report.html"
     fix_left_col = True
+    emailable = False
     fields = ['corehq.apps.reports.fields.FilterUsersField',
               'corehq.apps.reports.fields.GroupField',
               'corehq.apps.reports.fields.DatespanField']
