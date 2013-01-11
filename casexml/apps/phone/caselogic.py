@@ -13,7 +13,7 @@ def get_footprint(initial_case_list, strip_history=False):
     
     def children(case):
         return [CommCareCase.get(index.referenced_id,
-                                 strip_history=True) \
+                                 strip_history=strip_history) \
                 for index in case.indices]
     
     relevant_cases = {}
