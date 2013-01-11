@@ -797,6 +797,12 @@ SELENIUM_APP_SETTING_DEFAULTS = {
     },
 }
 
+# Indicators
+INDICATOR_CONFIG = {
+    "mvp-sauri": ['mvp_indicators'],
+    "mvp-potou": ['mvp_indicators'],
+}
+
 PILLOWTOPS = [ 'corehq.pillows.CasePillow',
                'corehq.pillows.ExchangePillow',
                'corehq.pillows.AuditcarePillow',
