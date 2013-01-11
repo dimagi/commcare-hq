@@ -1,3 +1,4 @@
+from django.template.loader import render_to_string
 from django.utils.safestring import mark_safe
 import logging
 import numpy
@@ -12,7 +13,9 @@ from mvp.reports import MVPIndicatorReport
 class CHWManagerReport(GenericTabularReport, MVPIndicatorReport, DatespanMixin):
     slug = "chw_manager"
     name = "CHW Manager Report"
+    report_template_path = "mvp/reports/chw_report.html"
     fix_left_col = True
+    emailable = False
     fields = ['corehq.apps.reports.fields.FilterUsersField',
               'corehq.apps.reports.fields.GroupField',
               'corehq.apps.reports.fields.DatespanField']
@@ -45,7 +48,7 @@ class CHWManagerReport(GenericTabularReport, MVPIndicatorReport, DatespanMixin):
                 col_group.add_column(DataTablesColumn(
                     indicator.title or indicator.description,
                     rotate=True,
-                    expected=section.get('indicators', [])[j].get('expected')
+                    expected=section.get('indicators', [])[j].get('expected'),
                 ))
             sections.append(col_group)
         return DataTablesHeader(
@@ -54,76 +57,58 @@ class CHWManagerReport(GenericTabularReport, MVPIndicatorReport, DatespanMixin):
         )
 
     @property
+    def report_context(self):
+        context = super(CHWManagerReport, self).report_context
+        indicators = []
+        index = 0
+        for section in self.indicators:
+            for indicator in section:
+                indicators.append({
+                    'slug': indicator.slug,
+                    'load_url': "%s?indicator=%s" % (self.get_url(self.domain, render_as='partial'), indicator.slug),
+                    'index': index,
+                })
+                index += 1
+
+        context.update(
+            indicators=indicators,
+        )
+        return context
+
+
+    @property
     def rows(self):
         rows = list()
-
-        raw_values = dict()
-        for user in self.users:
-            for section in self.indicators:
-                for indicator in section:
-                    if indicator.slug not in raw_values:
-                        raw_values[indicator.slug] = list()
-                    value = indicator.get_value([user.get('user_id')], self.datespan)
-                    raw_values[indicator.slug].append(value)
-
-        averages = dict()
-        median = dict()
-        std_dev = dict()
+        d_text = lambda slug: mark_safe('<i class="icon icon-spinner status-%s"></i>' % slug)
         self.statistics_rows = [["Average"], ["Median"], ["Std. Dev."]]
-        for slug, values in raw_values.items():
-            if isinstance(values[0], dict):
-                non_zero = [v.get('ratio')*100 for v in values if v.get('ratio') is not None]
-            else:
-                non_zero = [v for v in values if v > 0]
-            averages[slug] = numpy.average(non_zero)
-            median[slug] = numpy.median(non_zero)
-            std_dev[slug] = numpy.std(non_zero)
 
-        for u, user in enumerate(self.users):
-            row = [user.get('username_in_report')]
-            for section in self.indicators:
-                for indicator in section:
-                    value = raw_values.get(indicator.slug, [])[u]
-                    avg = averages[indicator.slug]
-                    std = std_dev[indicator.slug]
-                    if isinstance(value, dict):
-                        ratio = value.get('ratio')
-                        v = ratio*100 if ratio else None
-                        v_text = "%.f%%" % (ratio*100) if ratio is not None else "--"
-                    else:
-                        v = value
-                        v_text = "%d" % value if value is not None else "--"
-
-                    if v > avg+(std*2) and v is not None:
-                        # more than two stds above average
-                        v_text = mark_safe('<span class="label label-success">%s</span>' % v_text)
-                    elif v < avg-(std*2) and v is not None:
-                        # more than two stds below average
-                        v_text = mark_safe('<span class="label label-important">%s</span>' % v_text)
-
-                    #for debugging
-                    if isinstance(value, dict) and v is not None:
-                        v_text = mark_safe("%s<br /> (%d/%d)" % (
-                            v_text,
-                            value.get('numerator', 0),
-                            value.get('denominator', 0)
-                        ))
-
-                    row.append(self.table_cell(v, v_text))
-            rows.append(row)
+        def _create_stat_cell(stat_type, slug):
+            stat_cell = self.table_cell(None, d_text(slug))
+            stat_cell.update(
+                css_class="%s %s" % (stat_type, slug),
+            )
+            return stat_cell
 
         for section in self.indicators:
             for indicator in section:
-                avg = averages[indicator.slug]
-                mdn = median[indicator.slug]
-                std = std_dev[indicator.slug]
-                if issubclass(indicator.__class__, CombinedCouchViewIndicatorDefinition):
-                    _fmt = lambda x: "%.f%%" % x if not numpy.isnan(x) else "--"
-                else:
-                    _fmt = lambda x: "%.f" % x if not numpy.isnan(x) else "--"
-                self.statistics_rows[0].append(self.table_cell(avg, _fmt(avg)))
-                self.statistics_rows[1].append(self.table_cell(mdn, _fmt(mdn)))
-                self.statistics_rows[2].append(self.table_cell(std, _fmt(std)))
+                self.statistics_rows[0].append(_create_stat_cell('average', indicator.slug))
+                self.statistics_rows[1].append(_create_stat_cell('median', indicator.slug))
+                self.statistics_rows[2].append(_create_stat_cell('std', indicator.slug))
+
+        for u, user in enumerate(self.users):
+            row_data = [user.get('username_in_report')]
+            for section in self.indicators:
+                for indicator in section:
+                    table_cell = self.table_cell(None, d_text(indicator.slug))
+                    table_cell.update(
+                        css_class=indicator.slug
+                    )
+                    row_data.append(table_cell)
+
+            rows.append({
+                'data': row_data,
+                'css_id': user.get('user_id'),
+            })
 
         return rows
 
@@ -200,3 +185,61 @@ class CHWManagerReport(GenericTabularReport, MVPIndicatorReport, DatespanMixin):
             )
         ]
 
+    def get_response_for_indicator(self, indicator):
+        raw_values = {}
+        user_indices = {}
+        formatted_values = {}
+
+        for u, user in enumerate(self.users):
+            value = indicator.get_value([user.get('user_id')], self.datespan)
+            raw_values[user.get('user_id')] = value
+            user_indices[user.get('user_id')] = u
+        all_values = raw_values.values()
+
+        if isinstance(all_values[0], dict):
+            non_zero = [v.get('ratio')*100 for v in all_values if v.get('ratio') is not None]
+        else:
+            non_zero = [v for v in all_values if v > 0]
+
+        avg = numpy.average(non_zero)
+        median = numpy.median(non_zero)
+        std = numpy.std(non_zero)
+
+        def _formatted_cell(val, val_text):
+            table_cell = self.table_cell(v, val_text)
+            table_cell.update(
+                unwrap=True,
+            )
+            return render_to_string("reports/async/partials/tabular_cell.html", { 'col': table_cell })
+
+        for user_id, value in raw_values.items():
+            if isinstance(value, dict):
+                ratio = value.get('ratio')
+                v = ratio*100 if ratio else None
+                v_text = "%.f%%" % (ratio*100) if ratio is not None else "--"
+            else:
+                v = value
+                v_text = "%d" % value if value is not None else "--"
+
+            if v > avg+(std*2) and v is not None:
+                # more than two stds above average
+                v_text = mark_safe('<span class="label label-success">%s</span>' % v_text)
+            elif v < avg-(std*2) and v is not None:
+                # more than two stds below average
+                v_text = mark_safe('<span class="label label-important">%s</span>' % v_text)
+
+            formatted_values[user_id] = _formatted_cell(v, v_text)
+
+        if issubclass(indicator.__class__, CombinedCouchViewIndicatorDefinition):
+            _fmt_stat = lambda x: "%.f%%" % x if not numpy.isnan(x) else "--"
+        else:
+            _fmt_stat = lambda x: "%.f" % x if not numpy.isnan(x) else "--"
+
+        return {
+            'slug': indicator.slug,
+            'data': formatted_values,
+            'average': _formatted_cell(avg, _fmt_stat(avg)),
+            'median': _formatted_cell(median, _fmt_stat(median)),
+            'std': _formatted_cell(std, _fmt_stat(std)),
+            'user_indices': user_indices,
+        }
