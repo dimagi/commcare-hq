@@ -90,9 +90,8 @@ class CaseAPIHelper(object):
                 yield CommCareCase.wrap(doc)
         else:
             for doc_ids in chunked(ids, 100):
-                for res in database.view("case/get_lite", keys=doc_ids,
-                                         include_docs=False):
-                    yield CommCareCase.wrap(res['value'])
+                for case in CommCareCase.bulk_get_lite(doc_ids):
+                    yield case
 
     def _case_results(self, case_id_list):
         def _filter(res):
