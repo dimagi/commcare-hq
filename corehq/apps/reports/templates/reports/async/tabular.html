@@ -60,7 +60,7 @@
                 {% for stats in report_table.statistics_rows %}
                     <tr>
                     {% for col in stats %}
-                        {% ifequal forloop.counter0 0 %}<th>{% else %}<td>{% endifequal %}
+                        {% ifequal forloop.counter0 0 %}<th>{% else %}<td{% if col.css_class %} class="{{ col.css_class }}"{% endif %}>{% endifequal %}
                             {% if col.html != None %}{{ col.html|safe }}{% else %}{{ col|safe }}{% endif %}
                         {% ifequal forloop.counter0 0 %}</th>{% else %}</td>{% endifequal %}
                     {% endfor %}
