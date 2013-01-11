@@ -11,6 +11,7 @@ from corehq.apps.cloudcare.api import get_filtered_cases, CASE_STATUS_OPEN, CASE
 import uuid
 
 TEST_DOMAIN = "test-domain"
+
 class CaseAPITest(TestCase):
     """
     Tests some of the Case API functions
@@ -79,12 +80,20 @@ class CaseAPITest(TestCase):
         return len(self.user_ids)
 
     @property
+    def expectedByType(self):
+        return self.expectedOpenByType + self.expectedClosedByType
+
+    @property
     def expectedOpenByUser(self):
         return len(self.case_types) * 2 # one per type and child type
 
     @property
     def expectedClosedByUser(self):
         return len(self.case_types)
+
+    @property
+    def expectedByUser(self):
+        return self.expectedOpenByUser + self.expectedClosedByUser
 
     @property
     def expectedOpenByUserWithFootprint(self):
@@ -121,7 +130,7 @@ class CaseAPITest(TestCase):
 
     def testGetAllWithClosedAndType(self):
         list = get_filtered_cases(self.domain, status=CASE_STATUS_ALL, case_type=self.test_type)
-        self.assertEqual(self.expectedOpenByType + self.expectedClosedByType, len(list))
+        self.assertEqual(self.expectedByType, len(list))
         self.assertListMatches(list, lambda c: c['properties']['case_type'] == self.test_type)
 
     def testGetOwnedOpen(self):
@@ -136,7 +145,7 @@ class CaseAPITest(TestCase):
 
     def testGetOwnedBoth(self):
         list = get_filtered_cases(self.domain, user_id=self.test_user_id, status=CASE_STATUS_ALL, footprint=False)
-        self.assertEqual(self.expectedOpenByUser + self.expectedClosedByUser, len(list))
+        self.assertEqual(self.expectedByUser, len(list))
         self.assertListMatches(list, lambda c: c['user_id'] == self.test_user_id)
 
     def testGetOwnedOpenWithFootprint(self):
@@ -154,19 +163,47 @@ class CaseAPITest(TestCase):
         self.assertEqual(self.expectedOpenByUserWithFootprint + self.expectedClosedByUserWithFootprint, len(list))
         # I don't think we can say anything super useful about this base set
 
+    def testFiltersOnAll(self):
+        list = get_filtered_cases(self.domain, status=CASE_STATUS_ALL,
+                                  filters={"properties/case_name": _type_to_name(self.test_type)})
+        self.assertEqual(self.expectedByType, len(list))
+        self.assertListMatches(list, lambda c: c['properties']['case_name'] == _type_to_name(self.test_type))
 
+    def testFiltersOnOwned(self):
+        list = get_filtered_cases(self.domain, user_id=self.test_user_id, status=CASE_STATUS_ALL,
+                                  filters={"properties/case_name": _type_to_name(self.test_type)})
+        self.assertEqual(2, len(list))
+        self.assertListMatches(list, lambda c: c['properties']['case_name'] == _type_to_name(self.test_type))
+
+    def testFiltersWithoutFootprint(self):
+        name = _type_to_name(_child_case_type(self.test_type))
+        list = get_filtered_cases(self.domain, user_id=self.test_user_id, status=CASE_STATUS_ALL,
+                                  footprint=False,
+                                  filters={"properties/case_name": name})
+        self.assertEqual(1, len(list))
+        self.assertListMatches(list, lambda c: c['properties']['case_name'] == name)
+
+    def testFiltersWithFootprint(self):
+        name = _type_to_name(_child_case_type(self.test_type))
+        list = get_filtered_cases(self.domain, user_id=self.test_user_id, status=CASE_STATUS_ALL,
+                                  footprint=True,
+                                  filters={"properties/case_name": name})
+        self.assertEqual(2, len(list))
+        # make sure at least one doesn't actually have the right property
+        # but was included in the footprint
+        self.assertEqual(1, len([c for c in list if c['properties']['case_name'] != name]))
 def _child_case_type(type):
     return "%s-child" % type
 
-def _id_to_name(id):
-    return "%s-name" % id
+def _type_to_name(type):
+    return "%s-name" % type
 
 def _create_case(user, type, close=False, **extras):
     case_id = uuid.uuid4().hex
     blocks = [CaseBlock(
         create=True,
         case_id=case_id,
-        case_name=_id_to_name(case_id),
+        case_name=_type_to_name(type),
         case_type=type,
         user_id=user.user_id,
         owner_id=user.user_id,

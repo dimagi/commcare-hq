@@ -56,10 +56,14 @@ class CaseAPIResult(object):
         return self._id
 
     @property
-    def case_json(self):
+    def couch_doc(self):
         if self._couch_doc is None:
             self._couch_doc = CommCareCase.get(self._id)
-        return self._couch_doc.get_json()
+        return self._couch_doc
+
+    @property
+    def case_json(self):
+        return self.couch_doc.get_json()
 
     def to_json(self):
         return self.id if self.id_only else self.case_json
@@ -69,7 +73,7 @@ class CaseAPIHelper(object):
     Simple config object for querying the APIs
     """
     def __init__(self, status='open', case_type=None, ids_only=False,
-                 footprint=False, strip_history=False):
+                 footprint=False, strip_history=False, filters=None):
         if status not in [CASE_STATUS_ALL, CASE_STATUS_CLOSED, CASE_STATUS_OPEN]:
             raise ValueError("invalid case status %s" % status)
         self.status = status
@@ -77,6 +81,7 @@ class CaseAPIHelper(object):
         self.ids_only = ids_only
         self.footprint = footprint
         self.strip_history = strip_history
+        self.filters = filters
 
     def iter_cases(self, ids):
         database = CommCareCase.get_db()
@@ -89,6 +94,38 @@ class CaseAPIHelper(object):
                                          include_docs=False):
                     yield CommCareCase.wrap(res['value'])
 
+    def _case_results(self, case_id_list):
+        def _filter(res):
+            if self.filters:
+                for path, val in self.filters.items():
+                    actual_val = safe_index(res.case_json, path.split("/"))
+                    if actual_val != val:
+                        # closed=false => case.closed == False
+                        if val in ('null', 'true', 'false'):
+                            if actual_val != json.loads(val):
+                                return False
+                        else:
+                            return False
+                return True
+
+        if not self.ids_only or self.filters or self.footprint:
+            # optimization hack - we know we'll need the full cases eventually
+            # so just grab them now.
+            base_results = [CaseAPIResult(couch_doc=case, id_only=self.ids_only) \
+                            for case in self.iter_cases(case_id_list)]
+        else:
+            base_results = [CaseAPIResult(id=id, id_only=True) for id in case_id_list]
+
+        if self.filters:
+            base_results = filter(_filter, base_results)
+
+        if self.footprint:
+            return [CaseAPIResult(couch_doc=case, id_only=self.ids_only) for case in \
+                    get_footprint([res.couch_doc for res in base_results], 
+                                  strip_history=self.strip_history).values()]
+        else:
+            return base_results
+
     def get_all(self, domain):
         key = [domain, self.case_type or {}, {}]
         view_name = 'hqcase/open_cases' if self.status==CASE_STATUS_OPEN else 'hqcase/all_cases'
@@ -100,10 +137,7 @@ class CaseAPIHelper(object):
             reduce=False,
         )
         ids = [res["id"] for res in view_results]
-        if not self.ids_only:
-            return [CaseAPIResult(couch_doc=case) for case in self.iter_cases(ids)]
-        else:
-            return [CaseAPIResult(id=id, id_only=True) for id in ids]
+        return self._case_results(ids)
 
     def get_owned(self, domain, user_id):
         try:
@@ -122,13 +156,10 @@ class CaseAPIHelper(object):
                 for bool in status_to_closed_flags(self.status):
                     yield [domain, owner_id, bool]
 
-        # TODO: honor ids_only,
-        # use more efficient view
-        cases = CommCareCase.view('hqcase/by_owner', keys=keys, include_docs=True, reduce=False)
-        if self.footprint:
-            cases = get_footprint(cases).values()
-        # demo_user cases!
-        return [case.get_json() for case in cases]
+        view_results = CommCareCase.view('hqcase/by_owner', keys=keys,
+                                         include_docs=False, reduce=False)
+        ids = [res["id"] for res in view_results]
+        return self._case_results(ids)
 
 # todo: Make these api functions use generators for streaming
 # so that a limit call won't fetch more docs than it needs to
@@ -141,36 +172,16 @@ def get_filtered_cases(domain, status, user_id=None, case_type=None,
                        filters=None, footprint=False, ids_only=False,
                        strip_history=True):
 
-    @inline
-    def cases():
-        """pre-filter cases based on user_id and (if possible) closed"""
-        helper = CaseAPIHelper(status, case_type=case_type, ids_only=ids_only,
-                               footprint=footprint, strip_history=strip_history)
-        if user_id:
-            return helper.get_owned(domain, user_id)
-        else:
-            return helper.get_all(domain)
+    # for now, a filter value of None means don't filter
+    filters = dict((k, v) for k, v in (filters or {}).items() if v is not None)
+    helper = CaseAPIHelper(status, case_type=case_type, ids_only=ids_only,
+                           footprint=footprint, strip_history=strip_history,
+                           filters=filters)
 
-    if filters:
-        def _filter(res):
-            for path, val in filters.items():
-                # for now, a filter value of None means don't filter
-                if val is None:
-                    continue
-
-                actual_val = safe_index(res.case_json, path.split("/"))
-
-                if actual_val != val:
-                    # closed=false => case.closed == False
-                    if val in ('null', 'true', 'false'):
-                        if actual_val != json.loads(val):
-                            return False
-                    else:
-                        return False
-
-            return True
-        cases = filter(_filter, cases)
-    return cases
+    if user_id:
+        return helper.get_owned(domain, user_id)
+    else:
+        return helper.get_all(domain)
 
 def es_filter_cases(domain, filters=None):
     """
