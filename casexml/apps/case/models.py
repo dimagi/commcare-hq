@@ -278,6 +278,12 @@ class CommCareCase(CaseBase, IndexHoldingMixIn, ComputedDocumentMixin):
         return cls.wrap(cls.get_db().view("case/get_lite", key=id,
                                           include_docs=False).one()['value'])
 
+    @classmethod
+    def bulk_get_lite(cls, ids):
+        for res in cls.get_db().view("case/get_lite", keys=ids,
+                                 include_docs=False):
+            yield CommCareCase.wrap(res['value'])
+
     def get_preloader_dict(self):
         """
         Gets the case as a dictionary for use in touchforms preloader framework
