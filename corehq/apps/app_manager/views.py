@@ -316,9 +316,11 @@ def get_form_view_context(request, form, langs, is_user_registration, messages=m
             messages.error(request, "Unexpected System Error: %s" % e)
 
         try:
-            xform.add_case_and_meta(form)
-            if settings.DEBUG and False:
-                xform.validate()
+            form_action_errors = form.validate_for_build()
+            if not form_action_errors:
+                xform.add_case_and_meta(form)
+                if settings.DEBUG and False:
+                    xform.validate()
         except CaseError as e:
             messages.error(request, "Error in Case Management: %s" % e)
         except XFormValidationError as e:
@@ -341,7 +343,7 @@ def get_form_view_context(request, form, langs, is_user_registration, messages=m
         'form_actions': form.actions.to_json(),
         'case_reserved_words_json': load_case_reserved_words(),
         'is_user_registration': is_user_registration,
-        'module_case_types': [{'module_name': module.name.get('en'), 'case_type': module.case_type} for module in form.get_app().modules if module.case_type] if not is_user_registration else None
+        'module_case_types': [{'module_name': module.name.get('en'), 'case_type': module.case_type} for module in form.get_app().modules if module.case_type] if not is_user_registration else None,
     }
 
 def get_langs(request, app):
@@ -1566,6 +1568,23 @@ def save_copy(req, domain, app_id):
         "error_html": render_to_string('app_manager/partials/build_errors.html', {
             'app': get_app(domain, app_id),
             'build_errors': errors,
+            'domain': domain,
+            'langs': langs,
+            'lang': lang
+        }),
+    })
+
+def validate_form_for_build(request, domain, app_id, unique_form_id):
+    app = get_app(domain, app_id)
+    form = app.get_form(unique_form_id)
+    errors = form.validate_for_build()
+    lang, langs = get_langs(request, app)
+    return json_response({
+        "error_html": render_to_string('app_manager/partials/build_errors.html', {
+            'app': app,
+            'form': form,
+            'build_errors': errors,
+            'not_actual_build': True,
             'domain': domain,
             'langs': langs,
             'lang': lang

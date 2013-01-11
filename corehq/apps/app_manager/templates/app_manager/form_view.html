@@ -209,6 +209,17 @@
         {% endif %}
         });
     </script>
+    <script>
+        $(function () {
+            var validation_url = '{% url validate_form_for_build domain app.id form.unique_id %}';
+            COMMCAREHQ.app_manager.fetchAndShowFormValidation = function () {
+                $.getJSON(validation_url, function (data) {
+                    $('#form_build_errors').html(data.error_html);
+                });
+            };
+            COMMCAREHQ.app_manager.fetchAndShowFormValidation();
+        });
+    </script>
 {% endblock %}
 {% block head %}
     {{ block.super }}
@@ -285,6 +296,8 @@
     {% endif %}
 {% endblock %}
 {% block form-view %}
+
+    <div id="form_build_errors"></div>
     {% if edit and not is_user_registration %}
         <div class="delete-me">
             <form action="{% url delete_form domain app.id module.id form.id %}" method="post">
