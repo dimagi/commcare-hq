@@ -109,7 +109,32 @@ class ExportSchema(Document, UnicodeMixIn):
                            endkey=['by_seq', json.dumps(index)],
                            **shared_kwargs).one()
         return ret
-                                 
+
+    @classmethod
+    def get_all_indices(cls):
+        ret = cls.get_db().view("couchexport/schema_checkpoints",
+                                startkey=['by_timestamp'],
+                                endkey=['by_timestamp', {}],
+                                reduce=True,
+                                group=True,
+                                group_level=2)
+        for row in ret:
+            index = row['key'][1]
+            try:
+                yield json.loads(index)
+            except ValueError:
+                # ignore this for now - should just be garbage data
+                # print "poorly formatted index key %s" % index
+                pass
+
+    @classmethod
+    def get_all_checkpoints(cls, index):
+        return cls.view("couchexport/schema_checkpoints",
+                        startkey=['by_timestamp', json.dumps(index)],
+                        endkey=['by_timestamp', json.dumps(index), {}],
+                        include_docs=True,
+                        reduce=False)
+
     _tables = None
     @property
     def tables(self):
