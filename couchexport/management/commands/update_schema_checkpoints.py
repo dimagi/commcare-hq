@@ -1,6 +1,5 @@
-from django.core.management.base import LabelCommand, CommandError
+from django.core.management.base import LabelCommand
 from couchexport.models import ExportSchema
-import json
 from couchexport.export import ExportConfiguration
 
 class Command(LabelCommand):
@@ -8,23 +7,7 @@ class Command(LabelCommand):
 
     def handle(self, *args, **options):
         db = ExportSchema.get_db()
-
-        def _get_all_indices():
-            ret = db.view("couchexport/schema_checkpoints",
-                          startkey=['by_timestamp'],
-                          endkey=['by_timestamp', {}],
-                          reduce=True,
-                          group=True,
-                          group_level=2)
-            for row in ret:
-                index = row['key'][1]
-                try:
-                    yield json.loads(index)
-                except ValueError:
-                    # ignore this for now - should just be garbage data
-                    print "poorly formatted index key %s" % index
-
-        for index in _get_all_indices():
+        for index in ExportSchema.get_all_indices():
             last = ExportSchema.last(index)
             if not last.timestamp:
                 config = ExportConfiguration(db, index, disable_checkpoints=True)
