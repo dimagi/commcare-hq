@@ -4,8 +4,8 @@ from couchexport.export import ExportConfiguration
 import json
 
 class Command(LabelCommand):
-    help = "Given a particular export index, all checkpoints referencing that " \
-           "index to use the schema."
+    help = "Given a particular export index, update all checkpoints " \
+           "referencing that index to use the latest schema."
     args = "<index>"
     label = "Index of the export to use, or 'all' to include all exports"
 
