@@ -138,10 +138,12 @@ class FixtureDataItem(Document):
             )
         )
         if wrap:
-            deleted_fixture_ids = set()
             results = cls.get_db().view('_all_docs', keys=list(fixture_ids), include_docs=True)
 
+            # sort the results into those corresponding to real documents
+            # and those corresponding to deleted or non-existent documents
             docs = []
+            deleted_fixture_ids = set()
 
             for result in results:
                 if result.get('doc'):
@@ -153,12 +155,16 @@ class FixtureDataItem(Document):
                     assert result['value']['deleted'] is True
                     deleted_fixture_ids.add(result['id'])
 
+            # fetch and delete ownership documents pointing
+            # to deleted or non-existent fixture documents
+            # this cleanup is necessary since we used to not do this
             bad_ownerships = FixtureOwnership.view('fixtures/ownership',
                 keys=[[user_domain, 'by data_item', fixture_id] for fixture_id in deleted_fixture_ids],
                 include_docs=True,
                 reduce=False
             ).all()
             FixtureOwnership.get_db().bulk_delete(bad_ownerships)
+
             return docs
         else:
             return fixture_ids
