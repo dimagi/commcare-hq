@@ -13,11 +13,10 @@
     var hierarchy = {{ hierarchy|safe }};
 
     function api_get_children(fdi_uuid, depth, callback) {
-        console.log(depth)
-        console.log(hierarchy[depth]);
         var params = (fdi_uuid ? {parent_id: fdi_uuid} : {});
         params["parent_ref_name"] = hierarchy[depth]["parent_ref"];
         params["child_type"] = hierarchy[depth]["id"];
+        params["references"] = hierarchy[depth]["references"];
         $('#fdi_ajax').show();
         $.getJSON(LOAD_FDIS_URL, params, function(allData) {
             $('#fdi_ajax').hide();
@@ -27,7 +26,6 @@
 
     $(function() {
         var fdis = {{ fdis|safe }};
-        console.log(fdis);
         var selected = '{{ selected_fdi_id|safe }}';
 
         var model = new FixtureSelectViewModel();
@@ -160,9 +158,8 @@
         };
 
         this.load = function(data) {
-{#            console.log(data);#}
-{#            console.log(data.fields);#}
-            this.name(data.fields['name'] || null);
+            if (data.fields.name == '_all') this.name('_all');
+            else if (this.depth > 0) this.name(data.fields[hierarchy[this.depth-1]["display"]] || null);
             this.type(data.data_type_id);
             this.uuid(data.uuid || null);
             if (data.children != null) {

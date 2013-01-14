@@ -484,6 +484,12 @@ class AsyncLocationField(ReportField):
 
 class AsyncDrillableField(ReportField):
     # todo: add documentation
+    """
+    example_hierarchy = [{"type": "state", "display": "name"},
+                         {"type": "district", "parent_ref": "state_id", "references": "id", "display": "name"},
+                         {"type": "block", "parent_ref": "district_id", "references": "id", "display": "name"},
+                         {"type": "village", "parent_ref": "block_id", "references": "id", "display": "name"}]
+    """
     template = "reports/fields/drillable_async.html"
     hierarchy = [] # a list of fixture data type names that representing different levels of the hierarchy. Starting with the root
 
@@ -504,6 +510,7 @@ class AsyncDrillableField(ReportField):
             self.fdts = [FixtureDataType.by_domain_tag(self.domain, h["type"]).one() for h in self.hierarchy]
         return self.fdts if index is None else self.fdts[index]
 
+    @property
     def api_root(self):
         return reverse('api_dispatch_list', kwargs={'domain': self.domain,
                                                         'resource_name': 'fixture',
@@ -548,21 +555,13 @@ class AsyncDrillableField(ReportField):
             siblings = list(FixtureDataItem.by_data_type(self.domain, self.data_types(0).get_id))
 
         return {
-            'api_root': self.api_root(),
+            'api_root': self.api_root,
             'control_name': self.name,
             'control_slug': self.slug,
             'selected_fdi_id': selected_fdi_id,
             'fdis': json.dumps([self.fdi_to_json(fdi) for fdi in siblings]),
             'hierarchy': self.full_hierarchy
         }
-
-class AsyncPlaceField(AsyncDrillableField):
-    name = "Place"
-    slug = "new_place"
-    hierarchy = [{"type": "state"},
-                 {"type": "district", "parent_ref": "state_id"},
-                 {"type": "block", "parent_ref": "district_id"},
-                 {"type": "village", "parent_ref": "block_id"}]
         
 class DeviceLogTagField(ReportField):
     slug = "logtag"
