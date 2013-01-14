@@ -146,5 +146,5 @@ class NoPostpartumCounseling(MotherPostDeliveryMixIn, MemoizingFilterCalculator,
 class NoFamilyPlanning(MotherPostDeliveryMixIn, MemoizingFilterCalculator,
                        IndicatorCalculator):
     def _filter(self, case):
-        return due_next_month(case) and getattr(case, 'couple_interested') == 'no'
+        return due_next_month(case) and getattr(case, 'couple_interested', None) == 'no'
 
