@@ -8,6 +8,7 @@ class FixtureResource(JsonResource):
     type = "fixture"
     fields = tp_f.DictField(attribute='fields', readonly=True, unique=True)
     fixture_type_id = tp_f.CharField(attribute='data_type_id', readonly=True)
+    uuid = tp_f.CharField(attribute='_id', readonly=True, unique=True)
 
     def obj_get(self, request, **kwargs):
         domain = kwargs['domain']
@@ -21,8 +22,8 @@ class FixtureResource(JsonResource):
         child_type = request.GET.get("child_type", None)
 
         if parent_id and parent_ref_name and child_type:
-            print "here"
-            l = list(FixtureDataItem.by_field_value(domain, child_type, parent_ref_name, parent_id))
+            parent_fdi = FixtureDataItem.get(parent_id)
+            l = list(FixtureDataItem.by_field_value(domain, child_type, parent_ref_name, parent_fdi.fields['id']))
             return l
         return []
 

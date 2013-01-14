@@ -155,8 +155,7 @@ class FixtureDataItem(Document):
     @classmethod
     def by_field_value(cls, domain, data_type, field_name, field_value):
         data_type_id = _id_from_doc(data_type)
-        print [domain, data_type, field_name, field_value]
-        return cls.view('fixtures/data_items_by_field_value', key=[domain, data_type, field_name, field_value],
+        return cls.view('fixtures/data_items_by_field_value', key=[domain, data_type_id, field_name, field_value],
                         reduce=False, include_docs=True)
 
 def _id_from_doc(doc_or_doc_id):

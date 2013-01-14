@@ -10,7 +10,7 @@
 <script type="text/javascript">
 
     var LOAD_FDIS_URL = '{{ api_root }}';
-    var hierarchy = {{ hierarchy|safe }}
+    var hierarchy = {{ hierarchy|safe }};
 
     function api_get_children(fdi_uuid, depth, callback) {
         console.log(depth)
@@ -27,6 +27,7 @@
 
     $(function() {
         var fdis = {{ fdis|safe }};
+        console.log(fdis);
         var selected = '{{ selected_fdi_id|safe }}';
 
         var model = new FixtureSelectViewModel();
@@ -55,7 +56,9 @@
 
         // uuid of currently selected fixture (or null)
         this.selected_fixtid = ko.computed(function() {
-            return this.selected_fixture() ? this.selected_fixture().uuid() : null;
+            var sf = this.selected_fixture();
+            if (sf) return hierarchy[sf.depth-1]["type"] + ":" + sf.uuid();
+            else return null;
         }, this);
 
         // add a new level of drill-down to the tree
@@ -122,7 +125,7 @@
         this.selected_child = ko.observable();
         // when a fixture is selected, update the drill-down tree
         this.selected_child.subscribe(function(val) {
-            if (val == null) {
+            if (val == null || val.depth >= hierarchy.length) {
                 return;
             }
 
@@ -157,11 +160,11 @@
         };
 
         this.load = function(data) {
-            console.log(data);
-            console.log(data.fields);
+{#            console.log(data);#}
+{#            console.log(data.fields);#}
             this.name(data.fields['name'] || null);
             this.type(data.data_type_id);
-            this.uuid(data.fields['id'] || null);
+            this.uuid(data.uuid || null);
             if (data.children != null) {
                 this.set_children(data.children);
             }
@@ -175,7 +178,7 @@
                 //'all choices' meta-entry; annoying that we have to stuff this in
                 //the children list, but all my attempts to make computed observables
                 //based of children() caused infinite loops.
-                children.splice(0, 0, {name: '_all', fields: {}});
+                children.splice(0, 0, {fields: {name: '_all'}});
             }
             this.children($.map(children, function(e) {
                 return new FixtureModel(e, root, fixt.depth + 1);
