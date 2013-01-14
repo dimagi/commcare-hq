@@ -3,6 +3,7 @@ from django.template.context import Context
 from django.template.loader import render_to_string
 import pytz
 from corehq.apps.domain.models import Domain, LICENSES
+from corehq.apps.fixtures.models import FixtureDataItem, FixtureDataType
 from corehq.apps.orgs.models import Organization
 from corehq.apps.reports import util
 from corehq.apps.groups.models import Group
@@ -480,6 +481,60 @@ class AsyncLocationField(ReportField):
             'loc_id': selected_loc_id,
             'locations': json.dumps(loc_json)
         }
+
+class AsyncDrillableField(ReportField):
+    template = "reports/fields/drillable_async.html"
+    hierarchy = [] # a list of fixture data type names that representing different levels of the hierarchy. Starting with the root
+
+    def update_context(self):
+        self.context.update(self._get_custom_context())
+
+    def fdi_to_json(self, fdi):
+        return {
+            'fixture_type': fdi.data_type_id,
+            'fields': fdi.fields,
+        }
+
+    fdts = {}
+    def data_types(self, index=None):
+        print self.fdts
+        if not self.fdts:
+            self.fdts = [FixtureDataType.by_domain_tag(self.domain, h["type"]).one() for h in self.hierarchy]
+        return self.fdts if index is None else self.fdts[index]
+
+    def api_root(self):
+        return reverse('api_dispatch_list', kwargs={'domain': self.domain,
+                                                        'resource_name': 'fixture',
+                                                        'api_name': 'v0.1'})
+
+    def full_hierarchy(self):
+        ret = []
+        for i, h in enumerate(self.hierarchy):
+            new_h = dict(h)
+            new_h['id'] = self.data_types(i).get_id
+            ret.append(new_h)
+        return ret
+
+    def _get_custom_context(self):
+        root_fdis = [self.fdi_to_json(fdi) for fdi in FixtureDataItem.by_data_type(self.domain, self.data_types(0).get_id)]
+        selected_fdi_id = self.request.GET.get('drill_id', None)
+
+        #todo: add functionality for generating parents in the hierarchy. For now the given id must be of a root item
+
+        return {
+            'api_root': self.api_root(),
+            'control_name': self.name,
+            'control_slug': self.slug,
+            'selected_fdi_id': selected_fdi_id,
+            'fdis': json.dumps(root_fdis),
+            'hierarchy': self.full_hierarchy()
+        }
+
+class AsyncPlaceField(AsyncDrillableField):
+    name = "Place"
+    slug = "new_place"
+    hierarchy = [{"type": "state"},
+                 {"type": "district", "parent_ref": "state_id"}]
         
 class DeviceLogTagField(ReportField):
     slug = "logtag"

@@ -1,6 +1,7 @@
 from corehq.apps.api.resources import v0_1, v0_2, v0_3
 from corehq.apps.commtrack.resources.v0_1 import ProductResource,\
     StockStatusResource, StockReportResource, FullStockTransactionResource
+from corehq.apps.fixtures.resources.v0_1 import FixtureResource
 from corehq.apps.locations.resources.v0_1 import LocationResource
 from django.conf.urls.defaults import *
 from tastypie.api import Api
@@ -36,6 +37,7 @@ def api_url_patterns():
             api.register(R())
         for R in COMMTRACK_RESOURCES:
             api.register(R())
+        api.register(FixtureResource())
         yield (r'^', include(api.urls))
 
 urlpatterns = patterns('',

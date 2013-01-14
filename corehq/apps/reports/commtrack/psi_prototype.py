@@ -690,7 +690,7 @@ def _get_form(domain, action_filter=lambda a: True, form_filter=lambda f: True):
         return None
 
 class PSIReport(GenericTabularReport, CustomProjectReport, DatespanMixin):
-    fields = ['corehq.apps.reports.fields.DatespanField','corehq.apps.reports.commtrack.psi_prototype.PlaceField',]
+    fields = ['corehq.apps.reports.fields.DatespanField','corehq.apps.reports.fields.AsyncPlaceField',]
 
 class PSIEventsReport(PSIReport):
     name = "Event Demonstration Report"

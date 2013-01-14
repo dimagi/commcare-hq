@@ -153,16 +153,11 @@ class FixtureDataItem(Document):
         return cls.view('fixtures/data_items_by_domain_type', key=[domain, data_type], reduce=False, include_docs=True)
 
     @classmethod
-    def by_data_type_and_name(cls, domain, data_type, name):
-        if not name or not data_type:
-            return None
-
+    def by_field_value(cls, domain, data_type, field_name, field_value):
         data_type_id = _id_from_doc(data_type)
-        fixture_data_items = cls.by_data_type(domain, data_type_id).all()
-        for fdi in fixture_data_items:
-            if fdi.fields["name"].lower() == name.lower() or fdi.fields["id"].lower() == name.lower():
-                return fdi
-        return None
+        print [domain, data_type, field_name, field_value]
+        return cls.view('fixtures/data_items_by_field_value', key=[domain, data_type, field_name, field_value],
+                        reduce=False, include_docs=True)
 
 def _id_from_doc(doc_or_doc_id):
     if isinstance(doc_or_doc_id, basestring):
