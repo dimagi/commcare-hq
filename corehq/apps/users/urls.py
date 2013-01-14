@@ -30,7 +30,6 @@ urlpatterns = patterns('corehq.apps.users.views',
     url(r'^web/role/$', 'post_user_role', name='post_user_role'),
 
     url(r'^httpdigest/?$', 'test_httpdigest'),
-    #url(r'my_groups/?$', 'my_groups', name='my_groups'),
 
     url(r'^user_domain_transfer/(?P<prescription_id>[\w-]+)/$', 'user_domain_transfer', name='user_domain_transfer'),
     url(r'^audit_logs/$', 'audit_logs', name='user_audit_logs')
