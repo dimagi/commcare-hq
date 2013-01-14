@@ -103,8 +103,19 @@ class GroupReferenceMixIn(object):
 
     @property
     @memoized
+    def all_owner_ids(self):
+        all_user_ids = [u._id for u in self.get_team_members()]
+        all_group_ids = [row['id'] for row in \
+                         Group.get_db().view('groups/by_user',
+                                             keys=all_user_ids,
+                                             include_docs=False)]
+        return set(all_user_ids).union(set(all_group_ids))
+
+    @property
+    @memoized
     def cases(self):
-        return CommCareCase.view('case/by_owner', key=[self.group_id, False],
+        keys = [[self.domain, owner_id, False] for owner_id in self.all_owner_ids]
+        return CommCareCase.view('hqcase/by_owner', keys=keys,
                                  include_docs=True, reduce=False)
 
     @property
