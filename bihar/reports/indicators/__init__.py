@@ -241,6 +241,21 @@ INDICATOR_SETS = [
                 "name": _("Infants died"),
                 "calculation_class": "bihar.reports.indicators.calculations.IMCalculator"
             },
+            {
+                "slug": "still_birth_public",
+                "name": _("Still Births at Government Hospital"),
+                "calculation_class": "bihar.reports.indicators.mortality.StillAtPublicHospital",
+            },
+            {
+                "slug": "still_birth_home",
+                "name": _("Still Births at Home"),
+                "calculation_class": "bihar.reports.indicators.mortality.StillAtHome",
+            },
+            {
+                "slug": "live_birth",
+                "name": _("Live Births"),
+                "calculation_class": "bihar.reports.indicators.mortality.LiveBirth",
+            },
         ]
     }
 ]
