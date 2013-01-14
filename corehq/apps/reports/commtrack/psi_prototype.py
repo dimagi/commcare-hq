@@ -440,12 +440,13 @@ class StockOutReport(GenericTabularReport, CommtrackReportMixin, DatespanMixin):
 
         return [row(site) for site in self.outlets]
 
-def _get_unique_combinations(domain, place_types=None, place_id=None):
+def _get_unique_combinations(domain, place_types=None, place=None):
     if not place_types:
         return []
-    if place_id:
-        place_type_from_id = place_id.split(':')[0]
-        place_name = place_id.split(':')[1].lower()
+    if place:
+        place_type = place[0]
+        place = FixtureDataItem.get(place[1])
+        place_name = place.fields['id']
 
     place_data_types = {}
     for pt in place_types:
@@ -457,32 +458,32 @@ def _get_unique_combinations(domain, place_types=None, place_id=None):
 
     combos = []
     for fdi in fdis:
-        if place_id:
-            if base_type == place_type_from_id:
-                if fdi.fields['name'].lower() != place_name:
+        if place:
+            if base_type == place_type:
+                if fdi.fields['id'] != place_name:
                     continue
             else:
-                if fdi.fields.get(place_type_from_id+"_id", "").lower() != place_name:
+                if fdi.fields.get(place_type+"_id", "").lower() != place_name:
                     continue
         comb = {}
         for pt in place_types:
             if base_type == pt:
-                comb[pt] = fdi.fields['name'].lower()
+                comb[pt] = str(fdi.fields['id'])
             else:
                 p_id = fdi.fields.get(pt+"_id", None)
                 if p_id:
-                    if place_id and pt == place_type_from_id and p_id != place_name:
+                    if place and pt == place_type and p_id != place_name:
                         continue
-                    comb[pt] = p_id
+                    comb[pt] = str(p_id)
                 else:
                     comb[pt] = None
         combos.append(comb)
 
     return combos
 
-def psi_events(domain, query_dict, startdate=None, enddate=None, place_id=None):
+def psi_events(domain, query_dict, startdate=None, enddate=None, place=None):
     place_types = ['state', 'district']
-    combos = _get_unique_combinations(domain, place_types=place_types, place_id=place_id)
+    combos = _get_unique_combinations(domain, place_types=place_types, place=place)
     return map(lambda c: event_stats(domain, c, query_dict.get("location", ""), startdate=startdate, enddate=enddate), combos)
 
 def event_stats(domain, place_dict, location="", startdate=None, enddate=None):
@@ -509,9 +510,9 @@ def event_stats(domain, place_dict, location="", startdate=None, enddate=None):
     })
     return place_dict
 
-def psi_household_demonstrations(domain, query_dict, startdate=None, enddate=None, place_id=None):
+def psi_household_demonstrations(domain, query_dict, startdate=None, enddate=None, place=None):
     place_types = ['block', 'state', 'district', 'village']
-    combos = _get_unique_combinations(domain, place_types=place_types, place_id=place_id)
+    combos = _get_unique_combinations(domain, place_types=place_types, place=place)
     return map(lambda c: hd_stats(domain, c, query_dict.get("worker_type", ""), startdate=startdate, enddate=enddate), combos)
 
 def hd_stats(domain, place_dict, worker_type="", startdate=None, enddate=None):
@@ -541,9 +542,9 @@ def hd_stats(domain, place_dict, worker_type="", startdate=None, enddate=None):
         })
     return place_dict
 
-def psi_sensitization_sessions(domain, query_dict, startdate=None, enddate=None, place_id=None):
+def psi_sensitization_sessions(domain, query_dict, startdate=None, enddate=None, place=None):
     place_types = ['state', 'district', 'block']
-    combos = _get_unique_combinations(domain, place_types=place_types, place_id=place_id)
+    combos = _get_unique_combinations(domain, place_types=place_types, place=place)
     return map(lambda c: ss_stats(domain, c, startdate=startdate, enddate=enddate), combos)
 
 def ss_stats(domain, place_dict, startdate=None, enddate=None):
@@ -577,9 +578,9 @@ def ss_stats(domain, place_dict, startdate=None, enddate=None):
     return place_dict
 
 
-def psi_training_sessions(domain, query_dict, startdate=None, enddate=None, place_id=None):
+def psi_training_sessions(domain, query_dict, startdate=None, enddate=None, place=None):
     place_types = ['state', 'district']
-    combos = _get_unique_combinations(domain, place_types=place_types, place_id=place_id)
+    combos = _get_unique_combinations(domain, place_types=place_types, place=place)
     return map(lambda c: ts_stats(domain, c, query_dict.get("training_type", ""), startdate=startdate, enddate=enddate), combos)
 
 def ts_stats(domain, place_dict, training_type="", startdate=None, enddate=None):
@@ -689,6 +690,12 @@ def _get_form(domain, action_filter=lambda a: True, form_filter=lambda f: True):
     except StopIteration:
         return None
 
+class StateDistrictField(AsyncDrillableField):
+    label = "State and District"
+    slug = "location"
+    hierarchy = [{"type": "state", "display": "name"},
+                 {"type": "district", "parent_ref": "state_id", "references": "id", "display": "name"},]
+
 class AsyncPlaceField(AsyncDrillableField):
     label = "Place"
     slug = "new_place"
@@ -700,7 +707,12 @@ class AsyncPlaceField(AsyncDrillableField):
 class PSIReport(GenericTabularReport, CustomProjectReport, DatespanMixin):
     fields = ['corehq.apps.reports.fields.DatespanField','corehq.apps.reports.commtrack.psi_prototype.AsyncPlaceField',]
 
+    def selected_fixture(self):
+        fixture = self.request.GET.get('fixture_id', "")
+        return fixture.split(':') if fixture else None
+
 class PSIEventsReport(PSIReport):
+    fields = ['corehq.apps.reports.fields.DatespanField','corehq.apps.reports.commtrack.psi_prototype.StateDistrictField',]
     name = "Event Demonstration Report"
     slug = "event_demonstations"
     section_name = "event demonstrations"
@@ -718,7 +730,7 @@ class PSIEventsReport(PSIReport):
 
     @property
     def rows(self):
-        event_data = psi_events(self.domain, {}, place_id=self.request.GET.get('location_id', ""),
+        event_data = psi_events(self.domain, {}, place=self.selected_fixture(),
             startdate=self.datespan.startdate_param_utc, enddate=self.datespan.enddate_param_utc)
         for d in event_data:
             yield [
@@ -751,7 +763,7 @@ class PSIHDReport(PSIReport):
 
     @property
     def rows(self):
-        hh_data = psi_household_demonstrations(self.domain, {}, place_id=self.request.GET.get('location_id', ""),
+        hh_data = psi_household_demonstrations(self.domain, {}, place=self.selected_fixture(),
             startdate=self.datespan.startdate_param_utc, enddate=self.datespan.enddate_param_utc)
         for d in hh_data:
             yield [
