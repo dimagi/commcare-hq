@@ -137,7 +137,6 @@ class NoPostpartumCounseling(MotherPostDeliveryMixIn, MemoizingFilterCalculator,
         # /data/family_planning_group/counsel_accessible = 'no'
         def _no_counseling(case):
             for form in get_forms(case, action_filter=lambda a: visit_is(a, 'bp')):
-                print "form"
                 if form.xpath('form/bp2/counsel_accessible') == 'no':
                     return True
             return False
