@@ -215,7 +215,7 @@ def _get_actions(case, action_filter=lambda a: True):
         if action_filter(action):
             yield action
 
-def _get_forms(case, action_filter=lambda a: True, form_filter=lambda f: True):
+def get_forms(case, action_filter=lambda a: True, form_filter=lambda f: True):
     for action in _get_actions(case, action_filter=action_filter):
         if getattr(action, 'xform', None) and form_filter(action.xform):
             yield action.xform
@@ -234,7 +234,7 @@ def _get_form(case, action_filter=lambda a: True, form_filter=lambda f: True):
     """
     returns the first form that passes through both filter functions
     """
-    gf = _get_forms(case, action_filter=action_filter, form_filter=form_filter)
+    gf = get_forms(case, action_filter=action_filter, form_filter=form_filter)
     try:
         return gf.next()
     except StopIteration:
