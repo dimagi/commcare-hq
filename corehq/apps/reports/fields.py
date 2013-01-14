@@ -7,6 +7,7 @@ from corehq.apps.fixtures.models import FixtureDataItem, FixtureDataType
 from corehq.apps.orgs.models import Organization
 from corehq.apps.reports import util
 from corehq.apps.groups.models import Group
+from corehq.apps.reports.filters.base import BaseReportFilter
 from corehq.apps.reports.models import HQUserType
 from corehq.apps.locations.models import Location
 from dimagi.utils.couch.database import get_db
@@ -482,7 +483,7 @@ class AsyncLocationField(ReportField):
             'locations': json.dumps(loc_json)
         }
 
-class AsyncDrillableField(ReportField):
+class AsyncDrillableField(BaseReportFilter):
     # todo: add documentation
     """
     example_hierarchy = [{"type": "state", "display": "name"},
@@ -492,9 +493,6 @@ class AsyncDrillableField(ReportField):
     """
     template = "reports/fields/drillable_async.html"
     hierarchy = [] # a list of fixture data type names that representing different levels of the hierarchy. Starting with the root
-
-    def update_context(self):
-        self.context.update(self._get_custom_context())
 
     def fdi_to_json(self, fdi):
         return {
@@ -525,7 +523,8 @@ class AsyncDrillableField(ReportField):
             ret.append(new_h)
         return ret
 
-    def _get_custom_context(self):
+    @property
+    def filter_context(self):
         f_id = self.request.GET.get('fixture_id', None)
         selected_fdi_type = f_id.split(':')[0] if f_id else None
         selected_fdi_id = f_id.split(':')[1] if f_id else None
@@ -556,7 +555,7 @@ class AsyncDrillableField(ReportField):
 
         return {
             'api_root': self.api_root,
-            'control_name': self.name,
+            'control_name': self.label,
             'control_slug': self.slug,
             'selected_fdi_id': selected_fdi_id,
             'fdis': json.dumps([self.fdi_to_json(fdi) for fdi in siblings]),

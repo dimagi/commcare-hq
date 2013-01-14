@@ -690,7 +690,7 @@ def _get_form(domain, action_filter=lambda a: True, form_filter=lambda f: True):
         return None
 
 class AsyncPlaceField(AsyncDrillableField):
-    name = "Place"
+    label = "Place"
     slug = "new_place"
     hierarchy = [{"type": "state", "display": "name"},
                  {"type": "district", "parent_ref": "state_id", "references": "id", "display": "name"},
