@@ -112,6 +112,26 @@ INDICATOR_SETS = [
                 "calculation_class": "bihar.reports.indicators.calculations.IDNBCalculator"
             },
             DELIVERIES,
+            {
+                "slug": "born_at_home",
+                "name": _("Live Births at Home / Total Live Birth (TLB)"),
+                "calculation_class": "bihar.reports.indicators.pregnancy_outcome.BornAtHomeCalculator",
+            },
+            {
+                "slug": "born_at_public_hospital",
+                "name": _("Live Births at Government Hospital / Total Live Birth (TLB)"),
+                "calculation_class": "bihar.reports.indicators.pregnancy_outcome.BornAtPublicHospital",
+            },
+            {
+                "slug": "born_in_transit",
+                "name": _("Live Births in Transit / Total Live Birth (TLB)"),
+                "calculation_class": "bihar.reports.indicators.pregnancy_outcome.BornInTransit",
+            },
+            {
+                "slug": "born_in_private_hospital",
+                "name": _("Live Births at Private Hospital / Total Live Birth (TLB)"),
+                "calculation_class": "bihar.reports.indicators.pregnancy_outcome.BornInPrivateHospital",
+            },
         ],
     },
     {
