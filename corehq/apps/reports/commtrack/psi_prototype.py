@@ -1,6 +1,7 @@
 from django.conf import settings
 from django.utils.translation import ugettext_noop
 from corehq.apps.fixtures.models import FixtureDataType, FixtureDataItem
+from corehq.apps.reports.basic import BasicTabularReport, Column
 from corehq.apps.reports.fields import ReportField, AsyncDrillableField
 from corehq.apps.reports.standard import ProjectReport, ProjectReportParametersMixin, DatespanMixin, CustomProjectReport
 from corehq.apps.reports.generic import GenericTabularReport
@@ -717,39 +718,49 @@ class PSIReport(GenericTabularReport, CustomProjectReport, DatespanMixin):
         fixture = self.request.GET.get('fixture_id', "")
         return fixture.split(':') if fixture else None
 
-class PSIEventsReport(PSIReport):
+class PSIEventsReport(BasicTabularReport, CustomProjectReport, DatespanMixin):
     fields = ['corehq.apps.reports.fields.DatespanField',
               'corehq.apps.reports.commtrack.psi_prototype.StateDistrictField',]
     name = "Event Demonstration Report"
     slug = "event_demonstations"
     section_name = "event demonstrations"
 
-    @property
-    def headers(self):
-        return DataTablesHeader(DataTablesColumn("Name of State"),
-            DataTablesColumn("Name of District"),
-            DataTablesColumn("Location"),
-            DataTablesColumn("Number of male attendees"),
-            DataTablesColumn("Number of female attendees"),
-            DataTablesColumn("Total number of attendees"),
-            DataTablesColumn("Total number of leaflets distributed"),
-            DataTablesColumn("Total number of gifts distributed"))
+    couch_view = 'reports/psi_events'
+
+    default_column_order = (
+        'state_name',
+        'district_name',
+        'males',
+        'females',
+        'attendees',
+        'leaflets',
+        'gifts',
+    )
+
+    state_name = Column("Name of State", calculate_fn=lambda key: key[0])
+
+    district_name = Column("Name of District", calculate_fn=lambda key: key[1])
+
+    males = Column("Number of male attendees", key='males')
+
+    females = Column("Number of female attendees", key='females')
+
+    attendees = Column("Total number of attendees", key='attendees')
+
+    leaflets = Column("Total number of leaflets distributed", key='leaflets')
+
+    gifts = Column("Total number of gifts distributed", key='gifts')
+
+    def start_and_end_keys(self):
+        return ([self.datespan.startdate_param_utc],
+                [self.datespan.enddate_param_utc])
 
     @property
-    def rows(self):
-        event_data = psi_events(self.domain, {}, place=self.selected_fixture(),
-            startdate=self.datespan.startdate_param_utc, enddate=self.datespan.enddate_param_utc)
-        for d in event_data:
-            yield [
-                d.get("state"),
-                d.get("district"),
-                d.get("location"),
-                d.get("num_male"),
-                d.get("num_female") ,
-                d.get("num_total"),
-                d.get("num_leaflets"),
-                d.get("num_gifts")
-            ]
+    def keys(self):
+        combos = _get_unique_combinations(self.domain, place_types=['state', 'district'], place=self.selected_fixture())
+
+        for c in combos:
+            yield [c['state'], c['district']]
 
 class PSIHDReport(PSIReport):
     name = "Household Demonstrations Report"
