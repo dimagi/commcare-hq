@@ -488,10 +488,10 @@ class CaseReminderHandler(Document):
         while now >= reminder.next_fire and reminder.active:
             iteration += 1
             # If it is a callback reminder, check the callback_timeout_intervals
-            if (reminder.method in ["callback", "callback_test", "survey"]) and len(reminder.current_event.callback_timeout_intervals) > 0:
+            if (reminder.method in [METHOD_SMS_CALLBACK, METHOD_SMS_CALLBACK_TEST, METHOD_SMS_SURVEY, METHOD_IVR_SURVEY]) and len(reminder.current_event.callback_timeout_intervals) > 0:
                 #reminder.callback_received is always False for surveys, so it only has an effect for callbacks
                 if reminder.callback_received or reminder.callback_try_count >= len(reminder.current_event.callback_timeout_intervals):
-                    if self.method == "survey" and self.submit_partial_forms and iteration > 1:
+                    if self.method == METHOD_SMS_SURVEY and self.submit_partial_forms and iteration > 1:
                         # This is to make sure we submit the unfinished forms even when fast-forwarding to the next event after system downtime
                         for session_id in reminder.xforms_session_ids:
                             submit_unfinished_form(session_id)

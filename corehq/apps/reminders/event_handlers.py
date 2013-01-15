@@ -191,6 +191,9 @@ def fire_sms_survey_event(reminder, handler, recipients, verified_numbers):
 
 def fire_ivr_survey_event(reminder, handler, recipients, verified_numbers):
     if handler.recipient == RECIPIENT_CASE:
+        if reminder.callback_try_count > 0 and CallLog.answered_call_exists(recipients[0].doc_type, recipients[0].get_id, reminder.last_fired):
+            reminder.callback_received = True
+            return True
         verified_number = verified_numbers[recipients[0].get_id]
         if verified_number is not None:
             initiate_outbound_call(verified_number, reminder.current_event.form_unique_id)

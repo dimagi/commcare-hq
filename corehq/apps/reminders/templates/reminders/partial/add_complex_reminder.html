@@ -491,7 +491,7 @@
                     <th class="for_sms_survey for_ivr_survey">
                         <div class="help_popover" data-help-key="Form">Form <i class="icon icon-question-sign"></i></div>
                     </th>
-                    <th class="for_sms_survey for_sms_callback">
+                    <th class="for_sms_survey for_sms_callback for_ivr_survey">
                         <div class="help_popover" data-help-key="Timeouts">Timeouts <i class="icon icon-question-sign"></i></div>
                     </th>
                     <th></th>
@@ -534,7 +534,7 @@
                             </select>
                         </div>
                     </td>
-                    <td class="for_sms_survey for_sms_callback"><input type="text" name="reminder_events.{{ forloop.counter }}.timeouts" value="{{ e.timeouts }}" /></td>
+                    <td class="for_sms_survey for_sms_callback for_ivr_survey"><input type="text" name="reminder_events.{{ forloop.counter }}.timeouts" value="{{ e.timeouts }}" /></td>
                     <td><span class="btn btn-danger remove_event"><i class="icon icon-white icon-remove"></i> Remove</span></td>
                 </tr>
                 {% endfor %}

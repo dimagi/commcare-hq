@@ -411,7 +411,7 @@ class ComplexCaseReminderForm(Form):
                         raise ValidationError("You have entered the same language twice for the same reminder event.");
                     message[language] = text
             
-            if len(e["timeouts"].strip()) == 0 or method not in [METHOD_SMS_CALLBACK, METHOD_SMS_SURVEY]:
+            if len(e["timeouts"].strip()) == 0 or method not in [METHOD_SMS_CALLBACK, METHOD_SMS_SURVEY, METHOD_IVR_SURVEY]:
                 timeouts_int = []
             else:
                 timeouts_str = e["timeouts"].split(",")
