@@ -1,17 +1,16 @@
-import copy
-import pdb
 from corehq.pillows.case import UNKNOWN_DOMAIN, UNKNOWN_TYPE
-from corehq.pillows.core import DATE_FORMATS_ARR, DATE_FORMATS_STRING
+from corehq.pillows.core import DATE_FORMATS_ARR
+from corehq.pillows.mappings.xform_mapping import XFORM_MAPPING
 from pillowtop.listener import AliasedElasticPillow
 import hashlib
 import simplejson
 from couchforms.models import XFormInstance
-from pillowtop.listener import ElasticPillow
 from django.conf import settings
 from dimagi.utils.modules import to_function
 
-from auditcare.utils import dict_diff
 
+UNKNOWN_VERSION = 'XXX'
+UNKNOWN_UIVERSION = 'XXX'
 
 class XFormPillowHandler(object):
     """
@@ -53,89 +52,7 @@ class XFormPillow(AliasedElasticPillow):
     nodomain_check = {}
 
     #type level mapping
-    default_xform_mapping = {
-        "date_detection": False,
-        "date_formats": DATE_FORMATS_ARR, #for parsing the explicitly defined dates
-        'ignore_malformed': True,
-        'dynamic': False,
-        "_meta": {
-            "created": '', #record keeping on the index.
-        },
-        "properties": {
-            "domain": {
-                "type": "multi_field",
-                "fields": {
-                    "domain": {"type": "string", "index": "analyzed"},
-                    "exact": {"type": "string", "index": "not_analyzed"}
-                    #exact is full text string match - hyphens get parsed in standard
-                    # analyzer
-                    # in queries you can access by domain.exact
-                }
-            },
-            "xmlns": {
-                "type": "multi_field",
-                "fields": {
-                    "xmlns": {"type": "string", "index": "analyzed"},
-                    "exact": {"type": "string", "index": "not_analyzed"}
-                }
-            },
-            '@uiVersion': {"type": "string"},
-            '@version': {"type": "string"},
-            "path": {"type": "string", "index": "not_analyzed"},
-            "submit_ip": {"type": "ip"},
-            "app_id": {"type": "string", "index": "not_analyzed"},
-            "received_on": {
-                "type": "date",
-                "format": DATE_FORMATS_STRING
-            },
-            'form': {
-                'dynamic': False,
-                'properties': {
-                    "#type": {"type": "string", "index": "not_analyzed"},
-                    'case': {
-                        'dynamic': False,
-                        'properties': {
-                            'date_modified': {
-                                "type": "date",
-                                "format": DATE_FORMATS_STRING
-                            },
-                            '@date_modified': {
-                                "type": "date",
-                                "format": DATE_FORMATS_STRING
-                            },
-
-                            "@case_id": {"type": "string", "index": "not_analyzed"},
-                            "@user_id": {"type": "string", "index": "not_analyzed"},
-                            "@xmlns": {"type": "string", "index": "not_analyzed"},
-
-
-                            "case_id": {"type": "string", "index": "not_analyzed"},
-                            "user_id": {"type": "string", "index": "not_analyzed"},
-                            "xmlns": {"type": "string", "index": "not_analyzed"},
-                        }
-                    },
-                    'meta': {
-                        'dynamic': False,
-                        'properties': {
-                            "timeStart": {
-                                "type": "date",
-                                "format": DATE_FORMATS_STRING
-                            },
-                            "timeEnd": {
-                                "type": "date",
-                                "format": DATE_FORMATS_STRING
-                            },
-                            "userID": {"type": "string", "index": "not_analyzed"},
-                            "deviceID": {"type": "string", "index": "not_analyzed"},
-                            "instanceID": {"type": "string", "index": "not_analyzed"},
-                            "username": {"type": "string", "index": "not_analyzed"}
-                        }
-                    },
-                },
-            },
-        }
-    }
-
+    default_xform_mapping = XFORM_MAPPING
 
     def __init__(self, **kwargs):
         super(XFormPillow, self).__init__(**kwargs)
@@ -177,8 +94,8 @@ class XFormPillow(AliasedElasticPillow):
         if domain is None:
             domain = UNKNOWN_DOMAIN
 
-        ui_version = doc_dict.get('form', {}).get('@uiVersion', 'XXX')
-        version = doc_dict.get('form', {}).get('@version', 'XXX')
+        ui_version = doc_dict.get('form', {}).get('@uiVersion', UNKNOWN_UIVERSION)
+        version = doc_dict.get('form', {}).get('@version', UNKNOWN_VERSION)
         xmlns = doc_dict.get('xmlns', 'http://%s' % UNKNOWN_TYPE )
         if xmlns is None:
             xmlns_str = UNKNOWN_TYPE

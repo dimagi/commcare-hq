@@ -1,12 +1,7 @@
 from casexml.apps.case.models import CommCareCase
-from corehq.pillows import dynamic
-from corehq.pillows.core import DATE_FORMATS_ARR, DATE_FORMATS_STRING
+from corehq.pillows.mappings.case_mapping import CASE_MAPPING, CASE_INDEX
 from pillowtop.listener import AliasedElasticPillow
-import hashlib
-import simplejson
-import logging
 import settings
-from datetime import datetime
 
 
 UNKNOWN_DOMAIN = "__nodomain__"
@@ -21,6 +16,8 @@ class CasePillow(AliasedElasticPillow):
     es_alias = "hqcases"
     es_type = "case"
     es_meta = {}
+    default_mapping = CASE_MAPPING
+    es_index = CASE_INDEX
 
     def calc_meta(self):
         """
@@ -28,8 +25,8 @@ class CasePillow(AliasedElasticPillow):
         so we just do a hash of the "prototype" instead to determined md5
         """
         if not hasattr(self, '_calc_meta'):
-            self._calc_meta = hashlib.md5(simplejson.dumps(
-                self.get_mapping_from_type({'domain': UNKNOWN_DOMAIN, 'type': UNKNOWN_TYPE}))).hexdigest()
+            #self._calc_meta = hashlib.md5(simplejson.dumps(self.get_mapping_from_type({'domain': UNKNOWN_DOMAIN, 'type': UNKNOWN_TYPE}))).hexdigest()
+            self._calc_meta = self.calc_mapping_hash(self.default_mapping)
         return self._calc_meta
 
     def get_mapping_from_type(self, doc_dict):
@@ -47,7 +44,7 @@ class CasePillow(AliasedElasticPillow):
         #all will be strings EXCEPT the core case properties which we need to explicitly define below.
         #that way date sort and ranges will work with canonical date formats for queries.
         return {
-            self.get_type_string(doc_dict): dynamic.case_mapping_generator()
+            self.get_type_string(doc_dict): CASE_MAPPING
         }
 
     def get_type_string(self, doc_dict):
