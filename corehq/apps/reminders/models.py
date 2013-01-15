@@ -395,7 +395,7 @@ class CaseReminderHandler(Document):
             schedule_iteration_num=1,
             current_event_sequence_num=0,
             callback_try_count=0,
-            callback_received=False,
+            skip_remaining_timeouts=False,
             sample_id=sample_id,
             xforms_session_ids=[],
         )
@@ -462,7 +462,7 @@ class CaseReminderHandler(Document):
         """
         reminder.current_event_sequence_num += 1
         reminder.callback_try_count = 0
-        reminder.callback_received = False
+        reminder.skip_remaining_timeouts = False
         reminder.xforms_session_ids = []
         if reminder.current_event_sequence_num >= len(self.events):
             reminder.current_event_sequence_num = 0
@@ -489,8 +489,7 @@ class CaseReminderHandler(Document):
             iteration += 1
             # If it is a callback reminder, check the callback_timeout_intervals
             if (reminder.method in [METHOD_SMS_CALLBACK, METHOD_SMS_CALLBACK_TEST, METHOD_SMS_SURVEY, METHOD_IVR_SURVEY]) and len(reminder.current_event.callback_timeout_intervals) > 0:
-                #reminder.callback_received is always False for surveys, so it only has an effect for callbacks
-                if reminder.callback_received or reminder.callback_try_count >= len(reminder.current_event.callback_timeout_intervals):
+                if reminder.skip_remaining_timeouts or reminder.callback_try_count >= len(reminder.current_event.callback_timeout_intervals):
                     if self.method == METHOD_SMS_SURVEY and self.submit_partial_forms and iteration > 1:
                         # This is to make sure we submit the unfinished forms even when fast-forwarding to the next event after system downtime
                         for session_id in reminder.xforms_session_ids:
@@ -810,7 +809,7 @@ class CaseReminder(Document, LockableMixIn):
     schedule_iteration_num = IntegerProperty()      # The current iteration through the cycle of self.handler.events
     current_event_sequence_num = IntegerProperty()  # The current event number (index to self.handler.events)
     callback_try_count = IntegerProperty()          # Keeps track of the number of times a callback has timed out
-    callback_received = BooleanProperty()           # True if the expected callback was received since the last SMS was sent, False if not
+    skip_remaining_timeouts = BooleanProperty()     # An event handling method can set this to True to skip the remaining timeout intervals for the current event
     start_condition_datetime = DateTimeProperty()   # The date and time matching the case property specified by the CaseReminderHandler.start_condition
     sample_id = StringProperty()
     xforms_session_ids = ListProperty(StringProperty)

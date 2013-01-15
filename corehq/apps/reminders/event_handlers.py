@@ -95,7 +95,7 @@ def fire_sms_callback_event(reminder, handler, recipients, verified_numbers):
         # If the callback has been received, skip sending the next timeout message
         if len(current_event.callback_timeout_intervals) > 0 and (reminder.callback_try_count > 0):
             if CallLog.inbound_call_exists(recipients[0].doc_type, recipients[0].get_id, reminder.last_fired):
-                reminder.callback_received = True
+                reminder.skip_remaining_timeouts = True
                 return True
             elif len(current_event.callback_timeout_intervals) == reminder.callback_try_count:
                 # On the last callback timeout, instead of sending the SMS again, log the missed callback
@@ -192,7 +192,7 @@ def fire_sms_survey_event(reminder, handler, recipients, verified_numbers):
 def fire_ivr_survey_event(reminder, handler, recipients, verified_numbers):
     if handler.recipient == RECIPIENT_CASE:
         if reminder.callback_try_count > 0 and CallLog.answered_call_exists(recipients[0].doc_type, recipients[0].get_id, reminder.last_fired):
-            reminder.callback_received = True
+            reminder.skip_remaining_timeouts = True
             return True
         verified_number = verified_numbers[recipients[0].get_id]
         if verified_number is not None:
