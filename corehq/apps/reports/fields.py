@@ -3,9 +3,11 @@ from django.template.context import Context
 from django.template.loader import render_to_string
 import pytz
 from corehq.apps.domain.models import Domain, LICENSES
+from corehq.apps.fixtures.models import FixtureDataItem, FixtureDataType
 from corehq.apps.orgs.models import Organization
 from corehq.apps.reports import util
 from corehq.apps.groups.models import Group
+from corehq.apps.reports.filters.base import BaseReportFilter
 from corehq.apps.reports.models import HQUserType
 from corehq.apps.locations.models import Location
 from dimagi.utils.couch.database import get_db
@@ -479,6 +481,85 @@ class AsyncLocationField(ReportField):
             'control_slug': self.slug,
             'loc_id': selected_loc_id,
             'locations': json.dumps(loc_json)
+        }
+
+class AsyncDrillableField(BaseReportFilter):
+    # todo: add documentation
+    """
+    example_hierarchy = [{"type": "state", "display": "name"},
+                         {"type": "district", "parent_ref": "state_id", "references": "id", "display": "name"},
+                         {"type": "block", "parent_ref": "district_id", "references": "id", "display": "name"},
+                         {"type": "village", "parent_ref": "block_id", "references": "id", "display": "name"}]
+    """
+    template = "reports/fields/drillable_async.html"
+    hierarchy = [] # a list of fixture data type names that representing different levels of the hierarchy. Starting with the root
+
+    def fdi_to_json(self, fdi):
+        return {
+            'fixture_type': fdi.data_type_id,
+            'fields': fdi.fields,
+            'uuid': fdi.get_id,
+            'children': getattr(fdi, '_children', None),
+        }
+
+    fdts = {}
+    def data_types(self, index=None):
+        if not self.fdts:
+            self.fdts = [FixtureDataType.by_domain_tag(self.domain, h["type"]).one() for h in self.hierarchy]
+        return self.fdts if index is None else self.fdts[index]
+
+    @property
+    def api_root(self):
+        return reverse('api_dispatch_list', kwargs={'domain': self.domain,
+                                                        'resource_name': 'fixture',
+                                                        'api_name': 'v0.1'})
+
+    @property
+    def full_hierarchy(self):
+        ret = []
+        for i, h in enumerate(self.hierarchy):
+            new_h = dict(h)
+            new_h['id'] = self.data_types(i).get_id
+            ret.append(new_h)
+        return ret
+
+    @property
+    def filter_context(self):
+        f_id = self.request.GET.get('fixture_id', None)
+        selected_fdi_type = f_id.split(':')[0] if f_id else None
+        selected_fdi_id = f_id.split(':')[1] if f_id else None
+
+        index = 0
+        if selected_fdi_id:
+            for i, h in enumerate(self.hierarchy[::-1]):
+                if h['type'] == selected_fdi_type:
+                    index = i
+
+            cur_fdi = FixtureDataItem.get(selected_fdi_id)
+            siblings = list(FixtureDataItem.by_data_type(self.domain, cur_fdi.data_type_id))
+            for i, h in enumerate(self.full_hierarchy[::-1]):
+                if i < index: continue
+                if h.get('parent_ref', None):
+                    ngdt_id = self.full_hierarchy[len(self.full_hierarchy) - (i+2)]['id']
+                    next_gen = list(FixtureDataItem.by_data_type(self.domain, ngdt_id))
+                else:
+                    next_gen = []
+
+                if next_gen:
+                    parent = [f for f in next_gen if f.fields['id'] == cur_fdi.fields[h['parent_ref']]][0]
+                    parent._children = [self.fdi_to_json(fdi) for fdi in siblings]
+                    cur_fdi, siblings = parent, next_gen
+
+        else:
+            siblings = list(FixtureDataItem.by_data_type(self.domain, self.data_types(0).get_id))
+
+        return {
+            'api_root': self.api_root,
+            'control_name': self.label,
+            'control_slug': self.slug,
+            'selected_fdi_id': selected_fdi_id,
+            'fdis': json.dumps([self.fdi_to_json(fdi) for fdi in siblings]),
+            'hierarchy': self.full_hierarchy
         }
         
 class DeviceLogTagField(ReportField):
