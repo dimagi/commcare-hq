@@ -1,15 +1,21 @@
-from dimagi.utils.decorators import inline
 from corehq.elastic import get_es
 from dimagi.utils.logging import notify_exception
 
+
 class CasePaginator():
-    def __init__(self, domain, params, case_type=None, owner_ids=None, user_ids=None, status=None):
+    def __init__(self, domain, params, case_type=None, owner_ids=None,
+                 user_ids=None, status=None, sort_key=None, sort_order=None,
+                 filter=None):
         self.domain = domain
         self.params = params
         self.case_type = case_type
         self.owner_ids = owner_ids
         self.user_ids = user_ids
         self.status = status or None
+        self.sort_key = sort_key or 'modified_on'
+        self.sort_order = sort_order or 'desc'
+        self.filter = filter
+
         assert self.status in ('open', 'closed', None)
 
     def results(self):
@@ -19,20 +25,11 @@ class CasePaginator():
         # so past a certain number just exclude
         MAX_IDS = 50
 
-        def join_None(string):
-            def _inner(things):
-                return string.join([thing or '""' for thing in things])
-
-            return _inner
-
         def _filter_gen(key, list):
             if list and len(list) < MAX_IDS:
-                for item in list:
-                    if item is not None:
-                        # elastic hates capital letters
-                        yield {"term": {key: item.lower()}} 
-                    else:
-                        yield {"term" :{key: ""}}
+                yield {"terms": {
+                    key: [item.lower() if item else "" for item in list]
+                }}
 
             # demo user hack
             elif list and "demo_user" not in list:
@@ -42,41 +39,19 @@ class CasePaginator():
             #these are not supported/implemented on the UI side, so ignoring (dmyung)
             pass
 
+        subterms = [self.filter] if self.filter else []
+        if self.case_type:
+            subterms.append({"term": {"type": self.case_type}})
 
-        @inline
-        def and_block():
-            subterms = []
-            if self.case_type:
-                subterms.append({"term": {"type": self.case_type}})
+        if self.status:
+            subterms.append({"term": {"closed": (self.status == 'closed')}})
 
-            if self.status:
-                if self.status == 'closed':
-                    is_closed = True
-                else:
-                    is_closed = False
-                subterms.append({"term": {"closed": is_closed}})
+        user_filters = list(_filter_gen('owner_id', self.owner_ids)) + \
+                       list(_filter_gen('user_id', self.owner_ids))
+        if user_filters:
+            subterms.append({'or': user_filters})
 
-            userGroupFilters = []
-            ofilters = list(_filter_gen('owner_id', self.owner_ids))
-            if len(ofilters) > 0:
-                userGroupFilters.append( {
-                    'or': {
-                        'filters': ofilters,
-                    }
-                })
-            ufilters = list(_filter_gen('user_id', self.owner_ids))
-            if len(ufilters) > 0:
-                userGroupFilters.append( {
-                    'or': {
-                        'filters': ufilters,
-                    }
-                })
-            if userGroupFilters:
-                subterms.append({'or': userGroupFilters})
-            if len(subterms) > 0:
-                return {'and': subterms}
-            else:
-                return {}
+        and_block = {'and': subterms} if subterms else {}
 
         es_query = {
             'query': {
@@ -88,7 +63,7 @@ class CasePaginator():
                 }
             },
             'sort': {
-                'modified_on': {'order': 'asc'}
+                self.sort_key: {'order': self.sort_order}
             },
             'from': self.params.start,
             'size': self.params.count,
