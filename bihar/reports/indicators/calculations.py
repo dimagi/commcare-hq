@@ -186,12 +186,15 @@ def _num_denom_count(cases, num_func, denom_func):
             num += num_diff
     return _num_denom(num, denom)
 
-def _delivered_in_timeframe(case, days):
+def delivered_in_timeframe(case, days):
     return is_pregnant_mother(case) and get_add(case) and _in_timeframe(case.add, days)
 
-def _delivered_at_in_timeframe(case, at, days):
+def delivered_at_in_timeframe(case, at, days):
     at = at if isinstance(at, list) else [at]
-    return getattr(case, 'birth_place', None) in at and _delivered_in_timeframe(case, days)
+    return getattr(case, 'birth_place', None) in at and delivered_in_timeframe(case, days)
+
+def delivered_in_timeframe_with_status(case, days, status):
+    return getattr(case, 'birth_status', None) == status and delivered_in_timeframe(case, days)
 
 def _get_tob(case): # only guaranteed to be accurate within 24 hours
     tob = get_related_prop(case, "time_of_birth") or get_add(case) # use add if time_of_birth can't be found
@@ -215,7 +218,7 @@ def _get_actions(case, action_filter=lambda a: True):
         if action_filter(action):
             yield action
 
-def _get_forms(case, action_filter=lambda a: True, form_filter=lambda f: True):
+def get_forms(case, action_filter=lambda a: True, form_filter=lambda f: True):
     for action in _get_actions(case, action_filter=action_filter):
         if getattr(action, 'xform', None) and form_filter(action.xform):
             yield action.xform
@@ -234,7 +237,7 @@ def _get_form(case, action_filter=lambda a: True, form_filter=lambda f: True):
     """
     returns the first form that passes through both filter functions
     """
-    gf = _get_forms(case, action_filter=action_filter, form_filter=form_filter)
+    gf = get_forms(case, action_filter=action_filter, form_filter=form_filter)
     try:
         return gf.next()
     except StopIteration:
@@ -297,12 +300,12 @@ class HDDayCalculator(SummaryValueMixIn, MotherPreDeliverySummaryMixIn,
         return 1 if _visited_in_timeframe_of_birth(case, 1) else 0
 
     def _denominator(self, case):
-        return 1 if _delivered_at_in_timeframe(case, 'home', 30) else 0
+        return 1 if delivered_at_in_timeframe(case, 'home', 30) else 0
 
 class IDDayCalculator(HDDayCalculator):
 
     def _denominator(self, case):
-        return 1 if _delivered_at_in_timeframe(case, ['private', 'public'], 30) else 0
+        return 1 if delivered_at_in_timeframe(case, ['private', 'public'], 30) else 0
 
 
 class IDNBCalculator(IDDayCalculator):

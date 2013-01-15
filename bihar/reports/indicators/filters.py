@@ -62,15 +62,6 @@ def due_next_month(case):
          
     return is_pregnant_mother(case) and _due_next_month(case)
 
-def no_bp_counseling(case):
-    return pregnancy_registered_last_month(case) and not has_visit(case, 'bp')
-
-def no_ifa_tablets(case):
-    def _ifa_tabs(case):
-        ifa = getattr(case, "ifa_tablets", None)
-        return int(ifa) if ifa else 0
-    return pregnancy_registered_last_month(case) and _ifa_tabs(case) > 0
-
 def format_date(d):
     try:
         return d.strftime('%d-%m-%Y')

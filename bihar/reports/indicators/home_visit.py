@@ -1,12 +1,12 @@
 from bihar.reports.indicators.calculations import DoneDueMixIn,\
     IndicatorCalculator, MemoizingCalculatorMixIn, MotherPreDeliverySummaryMixIn,\
     MotherPostDeliveryMixIn, MotherPreDeliveryMixIn, MemoizingFilterCalculator,\
-    MotherPostDeliverySummaryMixIn
-from bihar.reports.indicators.visits import visit_is
+    MotherPostDeliverySummaryMixIn, get_forms
+from bihar.reports.indicators.visits import visit_is, has_visit
 import datetime as dt
 from bihar.reports.indicators.filters import get_edd, is_pregnant_mother,\
     get_add, A_MONTH, due_next_month, delivered_last_month,\
-    pregnancy_registered_last_month, no_bp_counseling, no_ifa_tablets
+    pregnancy_registered_last_month
 
 GRACE_PERIOD = dt.timedelta(days=7)
 
@@ -88,9 +88,62 @@ class RecentRegistrationList(MotherPreDeliveryMixIn, MemoizingFilterCalculator,
 class NoBPList(MotherPreDeliveryMixIn, MemoizingFilterCalculator,
                              IndicatorCalculator):
     def _filter(self, case):
-        return no_bp_counseling(case)
+        return pregnancy_registered_last_month(case) and not has_visit(case, 'bp')
 
 class NoIFAList(MotherPreDeliveryMixIn, MemoizingFilterCalculator,
                              IndicatorCalculator):
     def _filter(self, case):
-        return no_ifa_tablets(case)
+        def _ifa_tabs(case):
+            ifa = getattr(case, "ifa_tablets", None)
+            return int(ifa) if ifa else 0
+        return pregnancy_registered_last_month(case) and _ifa_tabs(case) > 0
+
+class NoEmergencyPrep(MotherPostDeliveryMixIn, MemoizingFilterCalculator,
+                      IndicatorCalculator):
+    def _filter(self, case):
+        # filter by BP forms for cases with
+        # /data/bp2/maternal_danger_signs = 'no' and
+        # /data/bp2/danger_institution = 'no'
+        def _no_prep(case):
+            for form in get_forms(case, action_filter=lambda a: visit_is(a, 'bp')):
+                if form.xpath('form/bp2/maternal_danger_signs') == 'no' and \
+                        form.xpath('form/bp2/danger_institution') == 'no':
+                    return True
+            return False
+        return due_next_month(case) and _no_prep(case)
+
+class NoNewbornPrep(MotherPostDeliveryMixIn, MemoizingFilterCalculator,
+                      IndicatorCalculator):
+    def _filter(self, case):
+        # filter by BP forms for cases with
+        # /data/bp2/wrapping = 'no' and
+        # /data/bp2/skin_to_skin = 'no' and
+        # /data/bp2/immediate_breastfeeding = 'no' and
+        # /data/bp2/cord_care = 'no'
+        def _no_prep(case):
+            for form in get_forms(case, action_filter=lambda a: visit_is(a, 'bp')):
+                if form.xpath('form/bp2/wrapping') == 'no' and \
+                        form.xpath('form/bp2/skin_To_skin') == 'no' and \
+                        form.xpath('form/bp2/immediate_breastfeeding') == 'no' and \
+                        form.xpath('form/bp2/cord_care') == 'no':
+                    return True
+            return False
+        return due_next_month(case) and _no_prep(case)
+
+class NoPostpartumCounseling(MotherPostDeliveryMixIn, MemoizingFilterCalculator,
+                      IndicatorCalculator):
+    def _filter(self, case):
+        # filter by BP forms for cases with
+        # /data/family_planning_group/counsel_accessible = 'no'
+        def _no_counseling(case):
+            for form in get_forms(case, action_filter=lambda a: visit_is(a, 'bp')):
+                if form.xpath('form/bp2/counsel_accessible') == 'no':
+                    return True
+            return False
+        return due_next_month(case) and _no_counseling(case)
+
+class NoFamilyPlanning(MotherPostDeliveryMixIn, MemoizingFilterCalculator,
+                       IndicatorCalculator):
+    def _filter(self, case):
+        return due_next_month(case) and getattr(case, 'couple_interested', None) == 'no'
+
