@@ -459,7 +459,7 @@ def _get_unique_combinations(domain, place_types=None, place_id=None):
     for fdi in fdis:
         if place_id:
             if base_type == place_type_from_id:
-                if fdi.fields['id'].lower() != place_name:
+                if str(fdi.fields['id']) != place_name:
                     continue
             else:
                 if fdi.fields.get(place_type_from_id+"_id", "").lower() != place_name:
@@ -467,17 +467,16 @@ def _get_unique_combinations(domain, place_types=None, place_id=None):
         comb = {}
         for pt in place_types:
             if base_type == pt:
-                comb[pt] = fdi.fields['id'].lower()
+                comb[pt] = str(fdi.fields['id'])
             else:
                 p_id = fdi.fields.get(pt+"_id", None)
                 if p_id:
                     if place_id and pt == place_type_from_id and p_id != place_name:
                         continue
-                    comb[pt] = p_id
+                    comb[pt] = str(p_id)
                 else:
                     comb[pt] = None
         combos.append(comb)
-
     return combos
 
 def psi_events(domain, query_dict, startdate=None, enddate=None, place_id=None):
@@ -489,9 +488,9 @@ def event_stats(domain, place_dict, location="", startdate=None, enddate=None):
     def ff_func(form):
         if form.form.get('@name', None) != 'Plays and Events':
             return False
-        if place_dict["state"] and form.xpath('form/activity_state') != place_dict["state"]:
+        if place_dict["state"] and str(form.xpath('form/activity_state')) != place_dict["state"]:
             return False
-        if place_dict["district"] and form.xpath('form/activity_district') != place_dict["district"]:
+        if place_dict["district"] and str(form.xpath('form/activity_district')) != place_dict["district"]:
             return False
         if location:
             if not form.xpath('form/event_location') == location:
@@ -518,13 +517,13 @@ def hd_stats(domain, place_dict, worker_type="", startdate=None, enddate=None):
     def ff_func(form):
         if form.form.get('@name', None) != 'Household Demonstration':
             return False
-        if place_dict["state"] and form.xpath('form/activity_state') != place_dict["state"]:
+        if place_dict["state"] and str(form.xpath('form/activity_state')) != place_dict["state"]:
             return False
-        if place_dict["district"] and form.xpath('form/activity_district') != place_dict["district"]:
+        if place_dict["district"] and str(form.xpath('form/activity_district')) != place_dict["district"]:
             return False
-        if place_dict["block"] and form.xpath('form/activity_block') != place_dict["block"]:
+        if place_dict["block"] and str(form.xpath('form/activity_block')) != place_dict["block"]:
             return False
-        if place_dict["village"] and form.xpath('form/activity_village') != place_dict["village"]:
+        if place_dict["village"] and str(form.xpath('form/activity_village')) != place_dict["village"]:
             return False
         if worker_type:
             if not form.xpath('form/demo_type') == worker_type:
@@ -550,11 +549,11 @@ def ss_stats(domain, place_dict, startdate=None, enddate=None):
     def ff_func(form):
         if form.form.get('@name', None) != 'Sensitization Session':
             return False
-        if place_dict["state"] and form.xpath('form/training_state') != place_dict["state"]:
+        if place_dict["state"] and str(form.xpath('form/training_state')) != place_dict["state"]:
             return False
-        if place_dict["district"] and form.xpath('form/training_district') != place_dict["district"]:
+        if place_dict["district"] and str(form.xpath('form/training_district')) != place_dict["district"]:
             return False
-        if place_dict["block"] and form.xpath('form/training_block') != place_dict["block"]:
+        if place_dict["block"] and str(form.xpath('form/training_block')) != place_dict["block"]:
             return False
         return True
 
@@ -586,9 +585,9 @@ def ts_stats(domain, place_dict, training_type="", startdate=None, enddate=None)
     def ff_func(form):
         if form.form.get('@name', None) != 'Training Session':
             return False
-        if place_dict["state"] and form.xpath('form/training_state') != place_dict["state"]:
+        if place_dict["state"] and str(form.xpath('form/training_state')) != place_dict["state"]:
             return False
-        if place_dict["district"] and form.xpath('form/training_district') != place_dict["district"]:
+        if place_dict["district"] and str(form.xpath('form/training_district')) != place_dict["district"]:
             return False
         if training_type:
             if not form.xpath('form/training_type') == training_type:
