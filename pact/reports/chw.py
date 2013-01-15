@@ -9,7 +9,7 @@ from corehq.apps.users.models import CommCareUser
 from dimagi.utils import html
 from dimagi.utils.decorators import inline
 from dimagi.utils.decorators.memoized import memoized
-from pact.enums import PACT_CASE_TYPE
+from pact.enums import PACT_CASE_TYPE, PACT_DOMAIN
 from pact.reports import  PactDrilldownReportMixin, chw_schedule, ESSortableMixin, query_per_case_submissions_facet
 from pact.utils import pact_script_fields, case_script_field
 
@@ -45,8 +45,8 @@ class PactCHWProfileReport(PactDrilldownReportMixin, ESSortableMixin,GenericTabu
     description = "CHW Profile"
     view_mode = 'info'
     ajax_pagination = True
-    xform_es = XFormES()
-    case_es = CaseES()
+    xform_es = XFormES(PACT_DOMAIN)
+    case_es = CaseES(PACT_DOMAIN)
     default_sort = {"received_on": "desc"}
 
     name = "CHW Profile"
@@ -76,7 +76,7 @@ class PactCHWProfileReport(PactDrilldownReportMixin, ESSortableMixin,GenericTabu
     def get_assigned_patients(self):
         """get list of patients and their submissions on who this chw is assigned as primary hp"""
         fields = [ "_id", "name", "pactid", "hp_status", "dot_status" ]
-        case_query = self.case_es.base_query(self.request.domain, terms={'type': PACT_CASE_TYPE, 'hp': self.get_user().raw_username}, fields=fields)
+        case_query = self.case_es.base_query(terms={'type': PACT_CASE_TYPE, 'hp': self.get_user().raw_username}, fields=fields)
         chw_patients_res = self.case_es.run_query(case_query)
 
         case_ids = [x['fields']['_id'] for x in chw_patients_res['hits']['hits']]
@@ -126,8 +126,7 @@ class PactCHWProfileReport(PactDrilldownReportMixin, ESSortableMixin,GenericTabu
             self.report_template_path = "pact/chw/pact_chw_profile_submissions.html"
             return tabular_context
         elif self.view_mode == 'schedule':
-            scheduled_context = chw_schedule.chw_calendar_submit_report(self.request,
-                                                                        user_doc.raw_username)
+            scheduled_context = chw_schedule.chw_calendar_submit_report(self.request, user_doc.raw_username)
             ret.update(scheduled_context)
             self.report_template_path = "pact/chw/pact_chw_profile_schedule.html"
         else:
@@ -155,7 +154,7 @@ class PactCHWProfileReport(PactDrilldownReportMixin, ESSortableMixin,GenericTabu
             "form.meta.timeStart",
             "form.meta.timeEnd"
         ]
-        query = self.xform_es.base_query(self.request.domain, terms={'form.meta.username': user.raw_username }, fields=fields, start=self.pagination.start, size=self.pagination.count)
+        query = self.xform_es.base_query(terms={'form.meta.username': user.raw_username }, fields=fields, start=self.pagination.start, size=self.pagination.count)
         query['script_fields'] = {}
         query['script_fields'].update(pact_script_fields())
         query['script_fields'].update(case_script_field())

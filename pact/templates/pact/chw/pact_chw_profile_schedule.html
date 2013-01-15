@@ -16,15 +16,15 @@
             {% endif %}
         </div>
         <div class="span8 pull-right" style="text-align:right;">
-            <a href="{{ request.path }}?interval=1">Today</a> &nbsp;
-            <a href="{{ request.path }}?interval={% now "w" %}">Week to date</a> &nbsp;
-            <a href="{{ request.path }}?interval=7">7 days</a> &nbsp;
-            <a href="{{ request.path }}?interval={% now "j" %}">Month to date</a> &nbsp;
-            <a href="{{ request.path }}?interval=30">30 days</a>
+            <a href="{{ chw_root_url }}&view=schedule&interval=1">Today</a> &nbsp;
+            <a href="{{ chw_root_url }}&view=schedule&interval={% now "w" %}">Week to date</a> &nbsp;
+            <a href="{{ chw_root_url }}&view=schedule&interval=7">7 days</a> &nbsp;
+            <a href="{{ chw_root_url }}&view=schedule&interval={% now "j" %}">Month to date</a> &nbsp;
+            <a href="{{ chw_root_url }}&view=schedule&interval=30">30 days</a>
             <br>
-            <a href="{{ request.path }}?getcsv&interval=7">CSV 7</a>
-            <a href="{{ request.path }}?getcsv&interval={% now "j" %}">CSV MTD</a>&nbsp;
-            <a href="{{ request.path }}?getcsv&interval=30">CSV 30</a>
+            <a href="{{ chw_root_url }}&view=schedule&getcsv&interval=7">CSV 7</a>
+            <a href="{{ chw_root_url }}&view=schedule&getcsv&interval={% now "j" %}">CSV MTD</a>&nbsp;
+            <a href="{{ chw_root_url }}&view=schedule&getcsv&interval=30">CSV 30</a>
         </div>
     </div> <!-- end top row -->
     <div class="row-fluid">

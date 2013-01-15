@@ -1,9 +1,10 @@
 from functools import partial
 import uuid
+from dateutil.parser import parser
 import simplejson
 from casexml.apps.case.models import CommCareCase
-from corehq.apps.indicators.models import DocumentIndicatorDefinition, FormIndicatorDefinition
 from corehq.apps.users.models import CommCareUser
+from couchforms.models import XFormInstance
 from dimagi.utils.decorators.memoized import memoized
 from pact import enums
 
@@ -20,6 +21,38 @@ def make_uuid():
 from datetime import datetime, timedelta
 from couchdbkit.ext.django.schema import StringProperty, DateTimeProperty, BooleanProperty, Document, DateProperty, SchemaListProperty, IntegerProperty
 
+dp = parser()
+
+class DOTSubmission(XFormInstance):
+    @property
+    def has_pillbox_check(self):
+        pillbox_check_str = self.form['pillbox_check'].get('check', '')
+        if len(pillbox_check_str) > 0:
+            pillbox_check_data = simplejson.loads(pillbox_check_str)
+            anchor_date = dp.parse(pillbox_check_data.get('anchor', '0000-01-01'))
+        else:
+            pillbox_check_str = {}
+            anchor_date = datetime.min
+        encounter_date = self.form['encounter_date'] #datetime already from couch
+        return 'yes' if anchor_date.date() == encounter_date else 'no'
+
+    @property
+    def drilldown_url(self):
+        from pact.reports.dot import PactDOTReport
+        if self.form['case'].has_key('case_id'):
+            case_id = self.form['case'].get('case_id', None)
+        elif self.form['case'].has_key('@case_id'):
+            case_id = self.form['case'].get('@case_id', None)
+        else:
+            case_id = None
+
+        if case_id is not None:
+            return PactDOTReport.get_url(*[PACT_DOMAIN]) + "?dot_patient=%s&submit_id=%s" % (case_id, self._id)
+        else:
+            return "#"
+        pass
+    class Meta:
+        app_label='pact'
 
 
 class PactPatientCase(CommCareCase):
@@ -417,4 +450,3 @@ class CObservationAddendum(Document):
         app_label = 'pact'
 
 
-from .signals import *

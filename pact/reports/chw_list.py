@@ -57,7 +57,6 @@ class PactCHWDashboard(GenericTabularReport, ProjectReportParametersMixin, Custo
                                    reduce=False,
                                    include_docs=True,
                                    descending=True, limit=1)
-#            print v.params
             res = v.one()
             if res is None:
                 return None

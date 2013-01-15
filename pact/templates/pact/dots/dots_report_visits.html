@@ -10,6 +10,7 @@
             <th>Visit Type</th>
             <th>Visit Kept</th>
             <th>Scheduled</th>
+            <th>Pillbox Check</th>
             <th>Contact</th>
             <th class="span2">Observed ART</th>
             <th class="span2">Observed Non ART</th>
@@ -19,9 +20,9 @@
         {% for vdoc in sorted_visits %}
             <tr>
                 <td>
-                    <a href="{{ request.path }}?submit_id={{ vdoc.get_id }}&patient={{ patient.id }}&start={{ start_date|date:"Y-m-d" }}&end={{ end_date|date:"Y-m-d" }}">
+                    <a href="{{ vdoc.drilldown_url }}&startdate={{ vdoc.form.encounter_date|date:"Y-m-d" }}&enddate={{ vdoc.form.encounter_date|date:"Y-m-d" }}">
                         {{ vdoc.form.encounter_date|date:"m/d/Y" }}</a>
-                    <small>[<a href="#">Raw</a>]</small>
+                    <small>[<a href="{% url render_form_data domain vdoc.get_id %}">Raw</a>]</small>
 {#                    <small>[<a href="{% url show_submission vdoc.get_id %}">Raw</a>]</small>#}
                     {#                            {{ vdoc.form.case.update.dots.anchor }} commenting out to use this vs encounter date?#}
                 </td>
@@ -29,6 +30,7 @@
                 <td>{{ vdoc.form.visit_type|title }}</td>
                 <td>{{ vdoc.form.visit_kept|title }}</td>
                 <td>{{ vdoc.form.scheduled|title }}</td>
+                <td>{{ vdoc.has_pillbox_check|title }}</td>
                 <td>{{ vdoc.form.contact_type|title }}</td>
                 <td>{{ vdoc.form.observed_art|title }}
                     {% if vdoc.form.observed_art == "no" %}

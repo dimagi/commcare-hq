@@ -35,7 +35,7 @@ class PactPatientInfoReport(PactDrilldownReportMixin,ESSortableMixin, GenericTab
     hide_filters = True
     filters = []
     ajax_pagination = True
-    xform_es = XFormES()
+    xform_es = XFormES(PACT_DOMAIN)
 
     default_sort = {
         "received_on": "desc"
@@ -165,18 +165,6 @@ class PactPatientInfoReport(PactDrilldownReportMixin,ESSortableMixin, GenericTab
                 yield row_field_dict["form.#type"].replace('_', ' ').title()
                 yield row_field_dict.get("form.meta.username", "")
                 yield self.format_date(row_field_dict.get("form.meta.timeStart", ""))
-#                yield self.format_date(row_field_dict["received_on"])
-                "_id",
-                "form.#type",
-                #                "form.encounter_date",
-                #                "form.note.encounter_date",
-                #                "form.case.case_id",
-                #                "form.case.@case_id",
-                #                "form.pact_id",
-                #                "form.note.pact_id",
-                "received_on",
-                "form.meta.timeStart",
-
                 yield "%s %s" % (row_field_dict["received_on"].replace('_', ' ').title(),
                                  html.mark_safe("<a class='ajax_dialog' href='%s'>View</a>" % ( reverse('render_form_data', args=[self.domain, row_field_dict['_id']]))))
 

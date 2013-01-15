@@ -139,12 +139,16 @@ def query_observations(case_id, start_date, end_date):
     """
     startkey = [case_id, 'observe_date', start_date.year, start_date.month, start_date.day]
     endkey = [case_id, 'observe_date', end_date.year, end_date.month, end_date.day]
-    print "Running dots_observation_range"
-    print "%s-%s" % (startkey, endkey)
     observations = CObservation.view('pact/dots_observations', startkey=startkey, endkey=endkey).all()
-    print "\t%d observations" % (len(observations))
     return observations
 
+def query_observations_singledoc(doc_id):
+    """
+    Hit couch to get the CObservations for a single xform submission
+    """
+    key = ['doc_id', doc_id]
+    observations = CObservation.view('pact/dots_observations', key=key).all()
+    return observations
 
 def cmp_observation(x, y):
     """
@@ -259,7 +263,7 @@ def get_dots_case_json(casedoc, anchor_date=None):
     ]
 
     ret['days'] = []
-    #dmyung - hack to have iquery_observationst be timezone be relative specific to the eastern seaboard
+    #dmyung - hack to have query_observations be timezone be relative specific to the eastern seaboard
     #ret['anchor'] = isodate.strftime(datetime.now(tz=timezone(settings.TIME_ZONE)), "%d %b %Y")
     ret['anchor'] = anchor_date.strftime("%d %b %Y")
 

@@ -95,7 +95,7 @@ class CHWPatientSchedule(object):
 
 
 def query_submissions(username):
-    xform_es = XFormES()
+    xform_es = XFormES(PACT_DOMAIN)
     fields = [
         "form.#type",
         "form.encounter_date",
@@ -108,7 +108,7 @@ def query_submissions(username):
         "form.meta.timeStart",
         "form.meta.timeEnd"
     ]
-    query = xform_es.base_query(PACT_DOMAIN, terms={"form.meta.username": username}, fields=fields,
+    query = xform_es.base_query(terms={"form.meta.username": username}, fields=fields,
                                 start=0, size=25)
     return xform_es.run_query(query)
 
@@ -118,7 +118,7 @@ def dot_submits_by_username(username, case_id, query_date):
     Actually run query for username submissions
     todo: do terms for the pact_ids instead of individual term?
     """
-    xform_es = XFormES()
+    xform_es = XFormES(PACT_DOMAIN)
     script_fields = {
         "doc_id": {"script": "_source._id"},
         "pact_id": {"script": "_source.form.pact_id", },
@@ -132,7 +132,8 @@ def dot_submits_by_username(username, case_id, query_date):
         "observed_non_art": {"script": "_source.form.observed_non_art", },
         "observer_non_art_dose": {"script": "_source.form.observed_non_art_dose", },
         "observed_art_dose": {"script": "_source.form.observed_art_dose", },
-        "pillbox_check": {"script": "_source.form.pillbox_check.check"}
+        "pillbox_check": {"script": "_source.form.pillbox_check.check"},
+        "scheduled": {"script": "_source.form.scheduled"}
     }
 
     query = xform_es.by_case_id_query(PACT_DOMAIN, case_id, terms={'form.meta.username': username,
@@ -155,7 +156,6 @@ def get_schedule_tally(username, total_interval, override_date=None):
     schedul_tally_array = [visit_date, [(patient1, visit1), (patient2, visit2), (patient3, None), (patient4, visit4), ...]]
     where visit = XFormInstance
     """
-    xform_ex = XFormES()
     if override_date == None:
         nowdate = datetime.now()
         chw_schedule = CHWPatientSchedule.get_schedule(username)
@@ -241,11 +241,16 @@ def chw_calendar_submit_report(request, username):
     ret, patients, total_scheduled, total_visited = get_schedule_tally(username, total_interval)
     nowdate = datetime.now()
 
-    return_context['date_arr'] = ret
-    return_context['total_scheduled'] = total_scheduled
-    return_context['total_visited'] = total_visited
-    return_context['start_date'] = ret[0][0]
-    return_context['end_date'] = ret[-1][0]
+    if len(ret) > 0:
+        return_context['date_arr'] = ret
+        return_context['total_scheduled'] = total_scheduled
+        return_context['total_visited'] = total_visited
+        return_context['start_date'] = ret[0][0]
+        return_context['end_date'] = ret[-1][0]
+    else:
+        return_context['total_scheduled'] = 0
+        return_context['total_visited'] = 0
+
 
     if request.GET.get('getcsv', None) != None:
         csvdata = []
@@ -255,10 +260,10 @@ def chw_calendar_submit_report(request, username):
         for date, pt_visit in ret:
             if len(pt_visit) > 0:
                 for cpt, v in pt_visit:
-                    rowdata = [date.strftime('%Y-%m-%d'), username, cpt.pact_id]
+                    rowdata = [date.strftime('%Y-%m-%d'), username, cpt['pactid']]
                     if v != None:
                         #is scheduled
-                        if v.form['scheduled'] == 'yes':
+                        if v['scheduled'] == 'yes':
                             rowdata.append('scheduled')
                         else:
                             rowdata.append('unscheduled')
@@ -271,12 +276,12 @@ def chw_calendar_submit_report(request, username):
                         #visit kept
                         rowdata.append(v['visit_kept'])
 
-                        rowdata.append(v['meta']['username'])
-                        if v['meta']['username'] == username:
+                        rowdata.append(v['username'])
+                        if v['username'] == username:
                             rowdata.append('assigned')
                         else:
                             rowdata.append('covered')
-                        rowdata.append(v.get_id)
+                        rowdata.append(v['doc_id'])
 
                     else:
                         rowdata.append('novisit')

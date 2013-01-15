@@ -79,12 +79,12 @@ class PatientListDashboardReport(GenericTabularReport, ESSortableMixin, CustomPr
         'pact.reports.patient_list.HPStatusField',
         'pact.reports.patient_list.DOTStatus',
     ]
-    case_es = CaseES()
-    xform_es = XFormES()
+    case_es = CaseES(PACT_DOMAIN)
+    xform_es = XFormES(PACT_DOMAIN)
 
     def get_pact_cases(self):
         domain = PACT_DOMAIN
-        query = self.case_es.base_query(domain, start=0, size=None)
+        query = self.case_es.base_query(start=0, size=None)
 
         query['fields'] = ['_id', 'name', 'pactid']
         results = self.case_es.run_query(query)
@@ -167,7 +167,7 @@ class PatientListDashboardReport(GenericTabularReport, ESSortableMixin, CustomPr
                 "closed_on",
                 "closed"
             ]
-        full_query = self.case_es.base_query(self.request.domain, terms={'type': PACT_CASE_TYPE }, fields=fields, start=self.pagination.start, size=self.pagination.count)
+        full_query = self.case_es.base_query(terms={'type': PACT_CASE_TYPE }, fields=fields, start=self.pagination.start, size=self.pagination.count)
         full_query['sort'] = self.get_sorting_block(),
 
 
@@ -245,7 +245,6 @@ class PatientListDashboardReport(GenericTabularReport, ESSortableMixin, CustomPr
         Override the params and applies all the params of the originating view to the GET
         so as to get sorting working correctly with the context of the GET params
         """
-        print "shared pagination!"
         ret = []
         for k,v in self.request.GET.items():
             ret.append(dict(name=k, value=v))

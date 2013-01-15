@@ -106,8 +106,8 @@ def get_cloudcare_url(case_id, mode):
 
 class PactFormAPI(DomainAPI):
 
-    xform_es = XFormES()
-    case_es = CaseES()
+    xform_es = XFormES(PACT_DOMAIN)
+    case_es = CaseES(PACT_DOMAIN)
 
     @classmethod
     def allowed_domain(self, domain):
@@ -138,11 +138,9 @@ class PactFormAPI(DomainAPI):
 
         db = XFormInstance.get_db()
         username = self.request.user.username
-        print username
         if self.request.user.username == 'ctsims':
             username = 'rachel'
         username='cs783'
-        print username
 
         offset =0
         limit_count=200

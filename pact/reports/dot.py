@@ -1,4 +1,5 @@
 from datetime import datetime, timedelta
+from dateutil.parser import parser
 import simplejson
 from casexml.apps.case.models import CommCareCase
 from corehq.apps.api.es import CaseES, XFormES
@@ -13,7 +14,7 @@ from couchdbkit.resource import RequestFailed
 from couchforms.models import XFormInstance
 from dimagi.utils.decorators.memoized import memoized
 from pact.enums import PACT_DOMAIN, PACT_CASE_TYPE, XMLNS_DOTS_FORM
-from pact.models import PactPatientCase
+from pact.models import PactPatientCase, DOTSubmission
 from pact.reports.dot_calendar import DOTCalendarReporter
 
 
@@ -33,15 +34,16 @@ class PactDOTPatientField(ReportSelectField):
     @classmethod
     def get_pact_cases(cls):
         domain = PACT_DOMAIN
-        case_es = CaseES()
+        case_es = CaseES(PACT_DOMAIN)
         fields = ['_id', 'name', 'pactid']
-        query = case_es.base_query(domain, terms={'type': PACT_CASE_TYPE}, fields=fields, start=0, size=None)
+        query = case_es.base_query(terms={'type': PACT_CASE_TYPE}, fields=fields, start=0, size=None)
         query['filter']['and'].append({ "prefix": { "dot_status": "dot" } })
 
         results = case_es.run_query(query)
         for res in results['hits']['hits']:
-#            print res
             yield res['fields']
+
+
 
 class PactDOTReport(GenericTabularReport, CustomProjectReport, ProjectReportParametersMixin, DatespanMixin):
     name = "DOT Patient List"
@@ -59,6 +61,7 @@ class PactDOTReport(GenericTabularReport, CustomProjectReport, ProjectReportPara
         if not self.request.GET.has_key('dot_patient') or self.request.GET.get('dot_patient') == "":
             self.report_template_path = "pact/dots/dots_report_nopatient.html"
             return ret
+        submit_id = self.request.GET.get('submit_id', None)
         ret['dot_case_id'] = self.request.GET['dot_patient']
         casedoc = PactPatientCase.get(ret['dot_case_id'])
         ret['patient_case'] = casedoc
@@ -70,13 +73,14 @@ class PactDOTReport(GenericTabularReport, CustomProjectReport, ProjectReportPara
 
         ret['startdate'] = start_date_str
         ret['enddate'] = end_date_str
-        dcal = DOTCalendarReporter(casedoc, start_date=start_date, end_date=end_date)
+
+        dcal = DOTCalendarReporter(casedoc, start_date=start_date, end_date=end_date, submit_id=submit_id)
         ret['dot_calendar'] = dcal
 
         unique_visits = dcal.unique_xforms()
-        xform_es = XFormES()
+        xform_es = XFormES(PACT_DOMAIN)
 
-        q = xform_es.base_query(PACT_DOMAIN, size=None)
+        q = xform_es.base_query(size=len(unique_visits))
         lvisits = list(unique_visits)
         if len(lvisits) > 0:
             q['filter']['and'].append({ "ids": { "values": lvisits } } )
@@ -85,7 +89,7 @@ class PactDOTReport(GenericTabularReport, CustomProjectReport, ProjectReportPara
         res = xform_es.run_query(q)
 
         #ugh, not storing all form data by default - need to get?
-        ret['sorted_visits'] = [XFormInstance.wrap(x['_source']) for x in filter(lambda x: x['_source']['xmlns'] == XMLNS_DOTS_FORM, res['hits']['hits'])]
+        ret['sorted_visits'] = [DOTSubmission.wrap(x['_source']) for x in filter(lambda x: x['_source']['xmlns'] == XMLNS_DOTS_FORM, res['hits']['hits'])]
         return ret
 
 

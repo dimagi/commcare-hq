@@ -4,7 +4,7 @@ from datetime import date, timedelta, datetime
 from itertools import groupby
 from dimagi.utils import make_time
 from dimagi.utils.decorators.memoized import memoized
-from pact.dot_data import filter_obs_for_day, DOTDay, query_observations
+from pact.dot_data import filter_obs_for_day, DOTDay, query_observations, query_observations_singledoc
 from pact.enums import DAY_SLOTS_BY_IDX, DOT_ADHERENCE_EMPTY, DOT_ADHERENCE_PARTIAL, DOT_ADHERENCE_FULL, DOT_OBSERVATION_DIRECT, DOT_OBSERVATION_PILLBOX, DOT_OBSERVATION_SELF, DOT_ADHERENCE_UNCHECKED
 import settings
 
@@ -29,16 +29,23 @@ class DOTCalendarReporter(object):
         """
         get the entire range of observations for our given date range.
         """
-        case_id = self.patient_casedoc._id
-        observations = query_observations(case_id, self.start_date, self.end_date)
+        if self.single_submit is None:
+            case_id = self.patient_casedoc._id
+            observations = query_observations(case_id, self.start_date, self.end_date)
+        else:
+            observations = query_observations_singledoc(self.single_submit)
+
         return observations
 
-    def __init__(self, patient_casedoc, start_date=None, end_date=None):
+    def __init__(self, patient_casedoc, start_date=None, end_date=None, submit_id=None):
         """
         patient_casedoc is a CommCareCase document
+
+        if submit_id, just do that ONE submit
         """
         self.patient_casedoc = patient_casedoc
         self.start_date = start_date
+        self.single_submit = submit_id
         if end_date is None:
             self.end_date = make_time()
         else:
