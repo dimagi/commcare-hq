@@ -60,6 +60,10 @@ RECIPIENT_CASE = "CASE"
 RECIPIENT_SURVEY_SAMPLE = "SURVEY_SAMPLE"
 RECIPIENT_CHOICES = [RECIPIENT_USER, RECIPIENT_OWNER, RECIPIENT_CASE, RECIPIENT_SURVEY_SAMPLE]
 
+FIRE_TIME_DEFAULT = "DEFAULT"
+FIRE_TIME_CASE_PROPERTY = "CASE_PROPERTY"
+FIRE_TIME_CHOICES = [FIRE_TIME_DEFAULT, FIRE_TIME_CASE_PROPERTY]
+
 MATCH_EXACT = "EXACT"
 MATCH_REGEX = "REGEX"
 MATCH_ANY_VALUE = "ANY_VALUE"
@@ -73,6 +77,10 @@ SURVEY_METHOD_LIST = ["SMS","CATI"]
 
 UI_FREQUENCY_ADVANCED = "ADVANCED"
 UI_FREQUENCY_CHOICES = [UI_FREQUENCY_ADVANCED]
+
+# This time is used when the case property used to specify the reminder time isn't a valid time
+# TODO: Decide whether to keep this or retire the reminder
+DEFAULT_REMINDER_TIME = time(12, 0)
 
 def is_true_value(val):
     return val == 'ok' or val == 'OK'
@@ -138,6 +146,12 @@ class CaseReminderEvent(DocumentSchema):
     day_num                     See CaseReminderHandler, depends on event_interpretation.
 
     fire_time                   See CaseReminderHandler, depends on event_interpretation.
+    
+    fire_time_aux               Usage depends on fire_time_type.
+    
+    fire_time_type              FIRE_TIME_DEFAULT: the event will be scheduled at the time specified by fire_time.
+                                FIRE_TIME_CASE_PROPERTY: the event will be scheduled at the time specified by the 
+                                case property named in fire_time_aux.
 
     message                     The text to send along with language to send it, represented 
                                 as a dictionary: {"en": "Hello, {user.full_name}, you're having issues."}
@@ -152,6 +166,8 @@ class CaseReminderEvent(DocumentSchema):
     """
     day_num = IntegerProperty()
     fire_time = TimeProperty()
+    fire_time_aux = StringProperty()
+    fire_time_type = StringProperty(choices=FIRE_TIME_CHOICES, default=FIRE_TIME_DEFAULT)
     message = DictProperty()
     callback_timeout_intervals = ListProperty(IntegerProperty)
     form_unique_id = StringProperty()
@@ -328,7 +344,25 @@ class CaseReminderHandler(Document):
             endkey=[domain, handler_id, {}],
             include_docs=True,
         ).all()
-
+    
+    # For use with event_interpretation = EVENT_AS_SCHEDULE
+    def get_current_reminder_event_timestamp(self, reminder, recipient, case):
+        event = self.events[reminder.current_event_sequence_num]
+        if event.fire_time_type == FIRE_TIME_DEFAULT:
+            fire_time = event.fire_time
+        elif event.fire_time_type == FIRE_TIME_CASE_PROPERTY:
+            fire_time = case.get_case_property(event.fire_time_aux)
+            try:
+                fire_time = parse(fire_time).time()
+            except Exception:
+                fire_time = DEFAULT_REMINDER_TIME
+        else:
+            fire_time = DEFAULT_REMINDER_TIME
+        
+        day_offset = self.start_offset + (self.schedule_length * (reminder.schedule_iteration_num - 1)) + event.day_num
+        timestamp = datetime.combine(reminder.start_date, fire_time) + timedelta(days = day_offset)
+        return CaseReminderHandler.timestamp_to_utc(recipient, timestamp)
+    
     def spawn_reminder(self, case, now, recipient=None):
         """
         Creates a CaseReminder.
@@ -373,8 +407,7 @@ class CaseReminderHandler(Document):
             reminder.next_fire = now + timedelta(days=day_offset, hours=time_offset.hour, minutes=time_offset.minute, seconds=time_offset.second)
         else:
             # EVENT_AS_SCHEDULE
-            local_tmsp = datetime.combine(reminder.start_date, self.events[0].fire_time) + timedelta(days = (self.start_offset + self.events[0].day_num))
-            reminder.next_fire = CaseReminderHandler.timestamp_to_utc(recipient, local_tmsp)
+            reminder.next_fire = self.get_current_reminder_event_timestamp(reminder, recipient, case)
         return reminder
 
     @classmethod
@@ -450,6 +483,7 @@ class CaseReminderHandler(Document):
         return      void
         """
         case = reminder.case
+        recipient = reminder.recipient
         iteration = 0
         while now >= reminder.next_fire and reminder.active:
             iteration += 1
@@ -480,10 +514,7 @@ class CaseReminderHandler(Document):
                 reminder.next_fire += timedelta(days=day_offset, hours=time_offset.hour, minutes=time_offset.minute, seconds=time_offset.second)
             else:
                 # EVENT_AS_SCHEDULE
-                next_event = reminder.current_event
-                day_offset = self.start_offset + (self.schedule_length * (reminder.schedule_iteration_num - 1)) + next_event.day_num
-                reminder_datetime = datetime.combine(reminder.start_date, next_event.fire_time) + timedelta(days = day_offset)
-                reminder.next_fire = CaseReminderHandler.timestamp_to_utc(reminder.recipient, reminder_datetime)
+                reminder.next_fire = self.get_current_reminder_event_timestamp(reminder, recipient, case)
             
             # Set whether or not the reminder should still be active
             reminder.active = self.get_active(reminder, reminder.next_fire, case)
