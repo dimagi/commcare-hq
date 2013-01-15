@@ -432,6 +432,7 @@ COUCHDB_APPS = [
     'cloudcare',
     'commtrack',
     'couch', # This is necessary for abstract classes in dimagi.utils.couch.undo; otherwise breaks tests
+    'couchdbkit_aggregate',
     'couchforms',
     'couchexport',
     'hqadmin',
@@ -542,11 +543,11 @@ EMAIL_HOST_USER = EMAIL_LOGIN
 EMAIL_HOST_PASSWORD = EMAIL_PASSWORD
 EMAIL_USE_TLS = True
 
-NO_HTML_EMAIL_MESSAGE = """This is an email from CommCare HQ. You're seeing
-this message because your email client chose to display the plaintext version
-of an email that CommCare HQ can only provide in HTML.  Please set your email
-client to view this email in HTML or read this email in a client that supports
-HTML email.
+NO_HTML_EMAIL_MESSAGE = """
+This is an email from CommCare HQ. You're seeing this message because your
+email client chose to display the plaintext version of an email that CommCare
+HQ can only provide in HTML.  Please set your email client to view this email
+in HTML or read this email in a client that supports HTML email.
 
 Thanks,
 The CommCare HQ Team"""
@@ -590,10 +591,13 @@ PROJECT_REPORT_MAP = SortedDict([
     ]],
     ["SMS", [
         'corehq.apps.reports.standard.sms.MessagesReport',
+        'corehq.apps.reports.standard.sms.MessageLogReport',
     ]],
     ["Commtrack", [
         'corehq.apps.reports.commtrack.psi_prototype.VisitReport',
         'corehq.apps.reports.commtrack.psi_prototype.SalesAndConsumptionReport',
+        'corehq.apps.reports.commtrack.psi_prototype.CumulativeSalesAndConsumptionReport',
+        'corehq.apps.reports.commtrack.psi_prototype.StockOutReport',
         'corehq.apps.reports.commtrack.psi_prototype.StockReportExport',
     ]]
 ])
@@ -630,6 +634,7 @@ CUSTOM_REPORT_MAP = {
             'hsph.reports.field_management.FieldDataCollectionActivityReport',
             'hsph.reports.field_management.HVFollowUpStatusReport',
             'hsph.reports.field_management.HVFollowUpStatusSummaryReport',
+            'hsph.reports.call_center.CaseReport',
             'hsph.reports.field_management.DCOProcessDataReport'
         ],
         'Project Management Reports': [
@@ -637,7 +642,7 @@ CUSTOM_REPORT_MAP = {
             'hsph.reports.project_management.ImplementationStatusDashboardReport'
         ],
         'Call Center Reports': [
-            'hsph.reports.call_center.DCCActivityReport',
+            'hsph.reports.call_center.CATIPerformanceReport',
             'hsph.reports.call_center.CallCenterFollowUpSummaryReport'
         ],
         'Data Summary Reports': [
@@ -717,6 +722,10 @@ CUSTOM_REPORT_MAP = {
     #    "test": [
     #        'corehq.apps.reports.deid.FormDeidExport',
     #    ]
+}
+
+MESSAGE_LOG_OPTIONS = {
+    "abbreviated_phone_number_domains" : ["mustmgh","mgh-cgh-uganda"],
 }
 
 BILLING_REPORT_MAP = {
@@ -802,13 +811,18 @@ SELENIUM_APP_SETTING_DEFAULTS = {
     },
 }
 
-PILLOWTOPS = [
-                 'corehq.pillows.CasePillow',
-                 'corehq.pillows.XFormPillow',
-#               'corehq.pillows.ExchangePillow',
-#               'corehq.pillows.AuditcarePillow',
-#               'corehq.pillows.CouchlogPillow',
-#               'corehq.pillows.DevicelogPillow',
+
+INDICATOR_CONFIG = {
+    "mvp-sauri": ['mvp_indicators'],
+    "mvp-potou": ['mvp_indicators'],
+}
+
+PILLOWTOPS = [ 'corehq.pillows.CasePillow',
+			   'corehq.pillows.XFormPillow',
+               'corehq.pillows.ExchangePillow',
+#              'corehq.pillows.AuditcarePillow',
+#              'corehq.pillows.CouchlogPillow',
+#              'corehq.pillows.DevicelogPillow',
                ] + LOCAL_PILLOWTOPS
 
 XFORM_PILLOW_HANDLERS = ['pact.pillowhandler.PactHandler', ]

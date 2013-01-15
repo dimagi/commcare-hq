@@ -94,3 +94,6 @@
 [submodule "submodules/hqstyle-src"]
 	path = submodules/hqstyle-src
 	url = git://github.com/dimagi/hqstyle-src.git
+[submodule "submodules/couchdbkit-aggregate"]
+	path = submodules/couchdbkit-aggregate
+	url = git://github.com/dimagi/couchdbkit-aggregate.git
