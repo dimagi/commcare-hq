@@ -647,9 +647,9 @@ class CaseDataInFormIndicatorDefinition(FormIndicatorDefinition):
             if case is not None:
                 try:
                     indicator_updated = computed.get(self.slug, {}).get('updated')
-                    if not isinstance(indicator_updated, datetime.datetime):
+                    if indicator_updated and not isinstance(indicator_updated, datetime.datetime):
                         indicator_updated = dateutil.parser.parse(indicator_updated)
-                    is_update = case.modified_on > indicator_updated
+                    is_update = not indicator_updated or case.modified_on > indicator_updated
                     if is_update:
                         computed[self.slug] = self.get_doc_dict(document)
                 except ValueError:
