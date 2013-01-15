@@ -64,22 +64,22 @@ class CommtrackReportMixin(ProjectReport, ProjectReportParametersMixin):
 
     @property
     @memoized
-    def active_outlet_types(self):
+    def outlet_type_filter(self):
         categories = supply_point_type_categories(self.domain)
         selected = self.request.GET.getlist('outlet_type')
         if not selected:
             selected = ['_all']
 
         def types_for_sel(sel):
-            if sel == '_all':
-                return itertools.chain(*categories.values())
-            elif sel == '_oth':
+            if sel == '_oth':
                 return categories['_oth']
             elif sel.startswith('cat:'):
                 return categories[sel[len('cat:'):]]
             else:
                 return [sel]
-        return reduce(lambda a, b: a.union(b), (types_for_sel(sel) for sel in selected), set())
+        active_outlet_types = reduce(lambda a, b: a.union(b), (types_for_sel(sel) for sel in selected), set())
+
+        return lambda outlet_type: ('_all' in selected) or (outlet_type in active_outlet_types)
 
     @property
     @memoized
@@ -162,7 +162,7 @@ class VisitReport(GenericTabularReport, CommtrackReportMixin, DatespanMixin):
         locs = dict((loc._id, loc) for loc in Location.view('_all_docs', keys=[leaf_loc(r) for r in reports], include_docs=True))
 
         # filter by outlet type
-        reports = filter(lambda r: locs[leaf_loc(r)].outlet_type in self.active_outlet_types, reports)
+        reports = filter(lambda r: self.outlet_type_filter(locs[leaf_loc(r)].outlet_type), reports)
 
         def row(doc):
             transactions = dict(((tx['action'], tx['product']), tx['value']) for tx in get_transactions(doc, False))
@@ -221,7 +221,7 @@ class SalesAndConsumptionReport(GenericTabularReport, CommtrackReportMixin, Date
     @memoized
     def outlets(self):
         locs = Location.filter_by_type(self.domain, 'outlet', self.active_location)
-        locs = [loc for loc in locs if loc.outlet_type in self.active_outlet_types]
+        locs = filter(lambda loc: self.outlet_type_filter(loc.outlet_type), locs)
         return locs
 
     @property
@@ -332,7 +332,7 @@ class CumulativeSalesAndConsumptionReport(GenericTabularReport, CommtrackReportM
 
         products = self.active_products
         locs = self.children
-        active_outlets = set(loc._id for loc in self.active_location.descendants if loc.dynamic_properties().get('outlet_type') in self.active_outlet_types)
+        active_outlets = set(loc._id for loc in self.active_location.descendants if self.outlet_type_filter(loc.dynamic_properties().get('outlet_type')))
 
         reports = filter(lambda r: leaf_loc(r) in active_outlets, get_stock_reports(self.domain, self.active_location, self.datespan))
         reports_by_loc = map_reduce(lambda e: [(child_loc(e, self.active_location),)], data=reports, include_docs=True)
@@ -385,7 +385,7 @@ class StockOutReport(GenericTabularReport, CommtrackReportMixin, DatespanMixin):
     @memoized
     def outlets(self):
         locs = Location.filter_by_type(self.domain, 'outlet', self.active_location)
-        locs = [loc for loc in locs if loc.outlet_type in self.active_outlet_types]
+        locs = filter(lambda loc: self.outlet_type_filter(loc.outlet_type), locs)
         return locs
 
     @property
