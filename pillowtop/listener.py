@@ -56,6 +56,7 @@ class BasicPillow(object):
         Couch changes stream creation
         """
         logging.info("Starting pillow %s" % self.__class__)
+
         if USE_NEW_CHANGES:
             self.new_changes()
         else:
@@ -148,6 +149,8 @@ class BasicPillow(object):
         Process/transform doc_dict if needed - by default, return the doc_dict passed.
         """
         return doc_dict
+
+
     def change_transport(self, doc_dict):
         """
         Step three of the pillowtop processor:
@@ -171,17 +174,24 @@ class ElasticPillow(BasicPillow):
     # index to always have the latest version of the case based upon ALL changes done to it.
     allow_updates=True
 
-    def __init__(self):
+    def __init__(self, create_index=True):
+        """
+        create_index if the index doesn't exist on the ES cluster
+        """
+        if create_index:
+            if not self.index_exists():
+                self.create_index()
+
+    def index_exists(self):
         es = self.get_es()
-        if not es.head(self.es_index):
-            es.put(self.es_index, data=self.es_meta)
+        return es.head(self.es_index)
 
     def get_doc_path(self, doc_id):
         return "%s/%s/%s" % (self.es_index, self.es_type, doc_id)
 
     def get_index_mapping(self):
         es = self.get_es()
-        return es.get('%s/_mapping' % self.es_index)[self.es_index]
+        return es.get('%s/_mapping' % self.es_index).get(self.es_index, {})
 
     def set_mapping(self, type_string, mapping):
         es = self.get_es()
@@ -266,12 +276,33 @@ class AliasedElasticPillow(ElasticPillow):
     es_alias = ''
     es_index_prefix = ''
     seen_types = {}
+    es_index = ""
+
+    def check_alias(self):
+        """
+        Naive means to verify the alias of the current pillow iteration is matched.
+        If we go fancier with routing and multi-index aliases due to index splitting, this will need to be revisited.
+        """
+        es = self.get_es()
+        aliased_indexes = es[self.es_alias].get('_aliases')
+        return aliased_indexes.keys()
+
+    @classmethod
+    def calc_mapping_hash(cls, mapping):
+        return hashlib.md5(simplejson.dumps(mapping)).hexdigest()
+
 
     def __init__(self, **kwargs):
         super(AliasedElasticPillow, self).__init__(**kwargs)
         self.seen_types = self.get_index_mapping()
         logging.info("Pillowtop [%s] Retrieved mapping from ES" % self.get_name())
 
+#    @property
+#    def es_index(self):
+#        """
+#        The real index that this instance represents
+#        """
+#        return "%s_%s" % (self.es_index_prefix, self.calc_meta())
 
     def calc_meta(self):
         raise NotImplementedError("Need to implement your own meta calculator")
@@ -399,12 +430,7 @@ class AliasedElasticPillow(ElasticPillow):
 #            print tb
             return None
 
-    @property
-    def es_index(self):
-        """
-        The real index that this instance represents
-        """
-        return "%s_%s" % (self.es_index_prefix, self.calc_meta())
+
 
 
 
