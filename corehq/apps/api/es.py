@@ -25,8 +25,9 @@ class ESView(View):
     Access to the APIs can be done via url endpoints which are attached to the corehq.api.urls
 
     or programmatically via the self.run_query() method.
-    """
 
+    This current iteration of the ESView must require a domain for its usage for security purposes.
+    """
     #note - for security purposes, csrf protection is ENABLED
     #search POST queries must take the following format:
     #query={query_json}
@@ -38,9 +39,14 @@ class ESView(View):
     #or, call this programmatically to avoid CSRF issues.
 
     index = ""
-    es = get_es()
+    domain = ""
+    es = None
 
     http_method_names = ['get', 'post', 'head', ]
+
+    def __init__(self, domain):
+        self.domain=domain
+        self.es = get_es()
 
     def head(self, *args, **kwargs):
         raise NotImplementedError("Not implemented")
@@ -65,14 +71,31 @@ class ESView(View):
         Returns the raw query json back, or None if there's an error
         """
         #todo: backend audit logging of all these types of queries
+        if es_query.has_key('fields') or es_query.has_key('script_fields'):
+            #nasty hack to add domain field to query that does specific fields.
+            #do nothing if there's no field query because we get everything
+            fields = es_query.get('fields', [])
+            fields.append('domain')
+            es_query['fields'] = fields
+
         es_results = self.es[self.index].get('_search', data=es_query)
         if es_results.has_key('error'):
             notify_exception(
                 "Error in %s elasticsearch query: %s" % (self.index, es_results['error']))
             return None
+
+        for res in es_results['hits']['hits']:
+            res_domain = None
+            if res.has_key('_source'):
+                #check source
+                res_domain = res['_source'].get('domain', None)
+            elif res.has_key('fields'):
+                res_domain = res['fields'].get('domain', None)
+                #check fields
+            assert res_domain == self.domain, "Security check failed, search result domain did not match requester domain: %s != %s" % (res_domain, self.domain)
         return es_results
 
-    def base_query(self, domain, terms={}, fields=[], start=0, size=DEFAULT_SIZE):
+    def base_query(self, terms={}, fields=[], start=0, size=DEFAULT_SIZE):
         """
         The standard query to run across documents of a certain index.
         domain = exact match domain string
@@ -84,7 +107,7 @@ class ESView(View):
         query = {
             "filter": {
                 "and": [
-                    {"term": {"domain.exact": domain}}
+                    {"term": {"domain.exact": self.domain}}
                 ]
             },
             "from": start,

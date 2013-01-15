@@ -1,23 +1,13 @@
-
-import logging
-import pdb
-from django.core.exceptions import ObjectDoesNotExist
-from django.http import Http404
-import simplejson
-from tastypie.paginator import Paginator
 from casexml.apps.case.models import CommCareCase
 from corehq.apps.domain.decorators import login_or_digest
 from corehq.apps.groups.models import Group
 from corehq.apps.users.models import CommCareUser
-from corehq.elastic import get_es
 from couchforms.models import XFormInstance
 from tastypie import fields
 from tastypie.authentication import Authentication
-from tastypie.authorization import ReadOnlyAuthorization, DjangoAuthorization
+from tastypie.authorization import ReadOnlyAuthorization
 from tastypie.exceptions import BadRequest
-from tastypie.resources import Resource
 from tastypie.serializers import Serializer
-from dimagi.utils.decorators import inline
 from corehq.apps.api.util import get_object_or_not_exist
 from corehq.apps.api.resources import JsonResource
 
