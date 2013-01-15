@@ -440,12 +440,13 @@ class StockOutReport(GenericTabularReport, CommtrackReportMixin, DatespanMixin):
 
         return [row(site) for site in self.outlets]
 
-def _get_unique_combinations(domain, place_types=None, place_id=None):
+def _get_unique_combinations(domain, place_types=None, place=None):
     if not place_types:
         return []
-    if place_id:
-        place_type_from_id = place_id.split(':')[0]
-        place_name = place_id.split(':')[1].lower()
+    if place:
+        place_type = place[0]
+        place = FixtureDataItem.get(place[1])
+        place_name = place.fields['id']
 
     place_data_types = {}
     for pt in place_types:
@@ -457,12 +458,12 @@ def _get_unique_combinations(domain, place_types=None, place_id=None):
 
     combos = []
     for fdi in fdis:
-        if place_id:
-            if base_type == place_type_from_id:
-                if str(fdi.fields['id']) != place_name:
+        if place:
+            if base_type == place_type:
+                if fdi.fields['id'] != place_name:
                     continue
             else:
-                if fdi.fields.get(place_type_from_id+"_id", "").lower() != place_name:
+                if fdi.fields.get(place_type+"_id", "").lower() != place_name:
                     continue
         comb = {}
         for pt in place_types:
@@ -471,7 +472,7 @@ def _get_unique_combinations(domain, place_types=None, place_id=None):
             else:
                 p_id = fdi.fields.get(pt+"_id", None)
                 if p_id:
-                    if place_id and pt == place_type_from_id and p_id != place_name:
+                    if place and pt == place_type and p_id != place_name:
                         continue
                     comb[pt] = str(p_id)
                 else:
@@ -479,9 +480,9 @@ def _get_unique_combinations(domain, place_types=None, place_id=None):
         combos.append(comb)
     return combos
 
-def psi_events(domain, query_dict, startdate=None, enddate=None, place_id=None):
+def psi_events(domain, query_dict, startdate=None, enddate=None, place=None):
     place_types = ['state', 'district']
-    combos = _get_unique_combinations(domain, place_types=place_types, place_id=place_id)
+    combos = _get_unique_combinations(domain, place_types=place_types, place=place)
     return map(lambda c: event_stats(domain, c, query_dict.get("location", ""), startdate=startdate, enddate=enddate), combos)
 
 def event_stats(domain, place_dict, location="", startdate=None, enddate=None):
@@ -508,9 +509,9 @@ def event_stats(domain, place_dict, location="", startdate=None, enddate=None):
     })
     return place_dict
 
-def psi_household_demonstrations(domain, query_dict, startdate=None, enddate=None, place_id=None):
+def psi_household_demonstrations(domain, query_dict, startdate=None, enddate=None, place=None):
     place_types = ['block', 'state', 'district', 'village']
-    combos = _get_unique_combinations(domain, place_types=place_types, place_id=place_id)
+    combos = _get_unique_combinations(domain, place_types=place_types, place=place)
     return map(lambda c: hd_stats(domain, c, query_dict.get("worker_type", ""), startdate=startdate, enddate=enddate), combos)
 
 def hd_stats(domain, place_dict, worker_type="", startdate=None, enddate=None):
@@ -540,9 +541,9 @@ def hd_stats(domain, place_dict, worker_type="", startdate=None, enddate=None):
         })
     return place_dict
 
-def psi_sensitization_sessions(domain, query_dict, startdate=None, enddate=None, place_id=None):
+def psi_sensitization_sessions(domain, query_dict, startdate=None, enddate=None, place=None):
     place_types = ['state', 'district', 'block']
-    combos = _get_unique_combinations(domain, place_types=place_types, place_id=place_id)
+    combos = _get_unique_combinations(domain, place_types=place_types, place=place)
     return map(lambda c: ss_stats(domain, c, startdate=startdate, enddate=enddate), combos)
 
 def ss_stats(domain, place_dict, startdate=None, enddate=None):
@@ -576,9 +577,9 @@ def ss_stats(domain, place_dict, startdate=None, enddate=None):
     return place_dict
 
 
-def psi_training_sessions(domain, query_dict, startdate=None, enddate=None, place_id=None):
+def psi_training_sessions(domain, query_dict, startdate=None, enddate=None, place=None):
     place_types = ['state', 'district']
-    combos = _get_unique_combinations(domain, place_types=place_types, place_id=place_id)
+    combos = _get_unique_combinations(domain, place_types=place_types, place=place)
     return map(lambda c: ts_stats(domain, c, query_dict.get("training_type", ""), startdate=startdate, enddate=enddate), combos)
 
 def ts_stats(domain, place_dict, training_type="", startdate=None, enddate=None):
@@ -688,9 +689,22 @@ def _get_form(domain, action_filter=lambda a: True, form_filter=lambda f: True):
     except StopIteration:
         return None
 
+class StateDistrictField(AsyncDrillableField):
+    label = "State and District"
+    slug = "location"
+    hierarchy = [{"type": "state", "display": "name"},
+                 {"type": "district", "parent_ref": "state_id", "references": "id", "display": "name"},]
+
+class StateDistrictBlockField(AsyncDrillableField):
+    label = "State/District/Block"
+    slug = "location"
+    hierarchy = [{"type": "state", "display": "name"},
+                 {"type": "district", "parent_ref": "state_id", "references": "id", "display": "name"},
+                 {"type": "block", "parent_ref": "district_id", "references": "id", "display": "name"}]
+
 class AsyncPlaceField(AsyncDrillableField):
-    label = "Place"
-    slug = "new_place"
+    label = "State/District/Block/Village"
+    slug = "location"
     hierarchy = [{"type": "state", "display": "name"},
                  {"type": "district", "parent_ref": "state_id", "references": "id", "display": "name"},
                  {"type": "block", "parent_ref": "district_id", "references": "id", "display": "name"},
@@ -699,7 +713,13 @@ class AsyncPlaceField(AsyncDrillableField):
 class PSIReport(GenericTabularReport, CustomProjectReport, DatespanMixin):
     fields = ['corehq.apps.reports.fields.DatespanField','corehq.apps.reports.commtrack.psi_prototype.AsyncPlaceField',]
 
+    def selected_fixture(self):
+        fixture = self.request.GET.get('fixture_id', "")
+        return fixture.split(':') if fixture else None
+
 class PSIEventsReport(PSIReport):
+    fields = ['corehq.apps.reports.fields.DatespanField',
+              'corehq.apps.reports.commtrack.psi_prototype.StateDistrictField',]
     name = "Event Demonstration Report"
     slug = "event_demonstations"
     section_name = "event demonstrations"
@@ -717,7 +737,7 @@ class PSIEventsReport(PSIReport):
 
     @property
     def rows(self):
-        event_data = psi_events(self.domain, {}, place_id=self.request.GET.get('location_id', ""),
+        event_data = psi_events(self.domain, {}, place=self.selected_fixture(),
             startdate=self.datespan.startdate_param_utc, enddate=self.datespan.enddate_param_utc)
         for d in event_data:
             yield [
@@ -750,7 +770,7 @@ class PSIHDReport(PSIReport):
 
     @property
     def rows(self):
-        hh_data = psi_household_demonstrations(self.domain, {}, place_id=self.request.GET.get('location_id', ""),
+        hh_data = psi_household_demonstrations(self.domain, {}, place=self.selected_fixture(),
             startdate=self.datespan.startdate_param_utc, enddate=self.datespan.enddate_param_utc)
         for d in hh_data:
             yield [
@@ -769,6 +789,8 @@ class PSISSReport(PSIReport):
     name = "Sensitization Sessions Report"
     slug = "sensitization_sessions"
     section_name = "sensitization sessions"
+    fields = ['corehq.apps.reports.fields.DatespanField',
+              'corehq.apps.reports.commtrack.psi_prototype.StateDistrictBlockField',]
 
     @property
     def headers(self):
@@ -786,7 +808,7 @@ class PSISSReport(PSIReport):
 
     @property
     def rows(self):
-        hh_data = psi_sensitization_sessions(self.domain, {}, place_id=self.request.GET.get('location_id', ""),
+        hh_data = psi_sensitization_sessions(self.domain, {}, place=self.selected_fixture(),
             startdate=self.datespan.startdate_param_utc, enddate=self.datespan.enddate_param_utc)
         for d in hh_data:
             yield [
@@ -807,6 +829,8 @@ class PSITSReport(PSIReport):
     name = "Training Sessions Report"
     slug = "training_sessions"
     section_name = "training sessions"
+    fields = ['corehq.apps.reports.fields.DatespanField',
+              'corehq.apps.reports.commtrack.psi_prototype.StateDistrictField',]
 
     @property
     def headers(self):
@@ -834,7 +858,7 @@ class PSITSReport(PSIReport):
 
     @property
     def rows(self):
-        hh_data = psi_training_sessions(self.domain, {}, place_id=self.request.GET.get('location_id', ""),
+        hh_data = psi_training_sessions(self.domain, {}, place=self.selected_fixture(),
             startdate=self.datespan.startdate_param_utc, enddate=self.datespan.enddate_param_utc)
         for d in hh_data:
             yield [
@@ -858,84 +882,3 @@ class PSITSReport(PSIReport):
                 d["flw_training"].get("avg_difference"),
                 d["flw_training"].get("num_gt80"),
                 ]
-
-def place_tree(domain):
-    fdis = []; base_type = ""
-    place_data_types = {}
-    place_data_items = {}
-    for pt in ["village", "block", "district", "state"]:
-        place_data_types[pt] = FixtureDataType.by_domain_tag(domain, pt).one()
-        place_data_items[pt] = FixtureDataItem.by_data_type(domain, place_data_types[pt].get_id).all()
-
-    pdis_by_id = {}
-    for pt, items in place_data_items.iteritems():
-        pdis_by_id.update(dict((pdi.fields['id'], pdi) for pdi in items))
-
-    tree_root = []
-    for item in place_data_items["state"]:
-        item._children = []
-        item._place = "state"
-        tree_root.append(item)
-
-    for item in place_data_items["district"]:
-        item._children = []
-        item._place = "district"
-        if item.fields.get('state_id', None):
-            parent = pdis_by_id[item.fields['state_id']]
-            try:
-                parent._children.append(item)
-            except AttributeError:
-                pass
-            #                print "Error(District): %s -> %s(%s)" % (item.fields['id'], parent.fields['id'], parent.get_id)
-
-    for item in place_data_items["block"]:
-        item._children = []
-        item._place = "block"
-        if item.fields.get('district_id', None):
-            parent = pdis_by_id[item.fields['district_id']]
-            try:
-                parent._children.append(item)
-            except AttributeError:
-                pass
-            #                print "Error(Block): %s -> %s(%s)" % (item.fields['id'], parent.fields['id'], parent.get_id)
-
-    for item in place_data_items["village"]:
-        item._children = []
-        item._place = "village"
-        if item.fields.get('block_id', None):
-            parent = pdis_by_id[item.fields['block_id']]
-            try:
-                parent._children.append(item)
-            except AttributeError:
-                pass
-            #                print "Error(Village): %s -> %s(%s)" % (item.fields['id'], parent.fields['id'], parent.get_id)
-
-    return tree_root
-
-class PlaceField(ReportField):
-    name = ugettext_noop("State/District/Block/Village")
-    slug = "place"
-    template = "reports/fields/location.html"
-    is_cacheable = True
-
-    def update_context(self):
-        self.context.update(self._get_custom_context())
-
-    @request_cache('placefieldcontext')
-    def _get_custom_context(self):
-        all_locs = place_tree(self.domain)
-        def loc_to_json(loc):
-            return {
-                'name': loc.fields['name'],
-                #                'type': loc.location_type,
-                'uuid': "%s:%s" % (loc._place, loc.fields['id']),
-                'children': [loc_to_json(child) for child in loc._children],
-                }
-        loc_json = [loc_to_json(root) for root in all_locs]
-
-        return {
-            'control_name': self.name,
-            'control_slug': self.slug,
-            'loc_id': self.request.GET.get('location_id'),
-            'locations': json.dumps(loc_json)
-        }
