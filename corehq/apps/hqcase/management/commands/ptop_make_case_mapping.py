@@ -40,7 +40,7 @@ class Command(MappingOutputCommand):
         casepillow.default_mapping = m
         del(casepillow._calc_meta)
         output = []
-        output.append('CASE_INDEX=%s_%s' % (casepillow.es_index_prefix, casepillow.calc_meta()))
+        output.append('CASE_INDEX="%s_%s"' % (casepillow.es_index_prefix, casepillow.calc_meta()))
         output.append('CASE_MAPPING=%s' % m)
 
         with open(filepath, 'w') as outfile:
