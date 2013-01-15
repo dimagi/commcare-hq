@@ -2,6 +2,7 @@ import logging
 from django.core.mail import send_mail
 from django.core.management.base import  BaseCommand
 from casexml.apps.case.models import CommCareCase
+from corehq.apps.hqcase.management.commands.ptop_fast_reindexer import PtopReindexer
 from corehq.pillows import CasePillow, XFormPillow
 from couchforms.models import XFormInstance
 
@@ -11,71 +12,18 @@ POOL_SIZE = 15
 
 
 
-class Command(BaseCommand):
+class Command(PtopReindexer):
     help = "Fast reindex of case elastic index by using the case view and reindexing cases"
 
-    def handle(self, *args, **options):
-        confirm = raw_input("""
-    You have requested to do a xform elastic index reset via fast track.
-    This will IRREVERSIBLY REMOVE
-    ALL index data in the case index and will take a while to reload.
-    Are you sure you want to do this. Also you MUST have run_ptop disabled for this to run.
 
-    Type 'yes' to continue, or 'no' to cancel: """)
+    doc_class =XFormInstance
+    view_name = 'couchforms/by_xmlns'
+    pillow_class = XFormPillow
 
-        if confirm != 'yes':
-            print "Reset cancelled."
-            return
+    def custom_filter(self, view_row):
+        """
+        Custom filter if you want to do additional filtering based on the view
 
-        confirm_ptop = raw_input("""Are you sure you disabled run_ptop? """)
-        if confirm_ptop != "yes":
-            return
-
-        confirm_alias = raw_input("""Are you sure you are not blowing away a production index?""")
-        if confirm_alias != "yes":
-            return
-
-
-        #delete the existing index.
-        xform_pillow = XFormPillow()
-        print "Deleting index"
-        xform_pillow.delete_index()
-        print "Recreating index"
-        xform_pillow.create_index()
-        xform_pillow.seen_types = {}
-        print "Resetting CasePillow Checkpoint"
-
-        xform_pillow.reset_checkpoint()
-
-        db = XFormInstance.get_db()
-        start_num = 0
-
-        print "starting fast tracked reindexing"
-        chunk = db.view('couchforms/by_xmlns', reduce=False, limit=CHUNK_SIZE, skip=start_num)
-
-        #though this might cause some superfluous reindexes of docs,
-        # we're going to set the checkpoint BEFORE we start our operation so that any changes
-        # that happen to cases while we're doing our reindexing would not get skipped once we
-        # finish.
-        xform_pillow.set_checkpoint({ 'seq': xform_pillow.couch_db.info()['update_seq'] } )
-        def do_index(item):
-            print "Processing: %s" % item['id']
-            xform_pillow.processor(item, do_set_checkpoint=False)
-
-        try:
-            while len(chunk) > 0:
-                for item in chunk:
-                    if item['key'] == 'http://code.javarosa.org/devicereport':
-                        continue
-                    xform_pillow.processor(item, do_set_checkpoint=False)
-                start_num += CHUNK_SIZE
-                print "Grabbing next chunk: %d" % start_num
-                chunk = db.view('couchforms/by_xmlns', reduce=False, limit=CHUNK_SIZE, skip=start_num)
-
-            print "Index recreated - you may now restart run_ptop"
-            send_mail('[commcare-hq] Pillowtop XForm Reindex Complete',
-                "Case reindex complete for index %s - it may now be aliased to hqcases" % xform_pillow.es_index,
-                'hq-noreply@dimagi.com', ['commcarehq-dev@dimagi.com'], fail_silently=True)
-        except Exception, ex:
-            logging.exception("Case pillowtop fast reindex failed: %s" % ex)
-
+        Return true if to index, false if to SKIP
+        """
+        return view_row['key'] != 'http://code.javarosa.org/devicereport'
