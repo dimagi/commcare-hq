@@ -66,11 +66,11 @@ msgstr "Clients inactifs"
 
 #: .\submodules\bihar-reports\bihar\reports\supervisor.py:22
 msgid "ASHA"
-msgstr ""
+msgstr "ASHA"
 
 #: .\submodules\bihar-reports\bihar\reports\supervisor.py:23
 msgid "AWW"
-msgstr ""
+msgstr "AWW"
 
 #: .\submodules\bihar-reports\bihar\reports\supervisor.py:167
 msgid "Select Subcenter"
@@ -87,7 +87,7 @@ msgstr "Nom de l'équipe"
 
 #: .\submodules\bihar-reports\bihar\reports\supervisor.py:172
 msgid "AWCC"
-msgstr ""
+msgstr "AWCC"
 
 #: .\submodules\bihar-reports\bihar\reports\supervisor.py:206
 #: .\submodules\bihar-reports\bihar\templates\bihar\base_template_mobile.html.py:6
@@ -113,73 +113,73 @@ msgstr "Outils"
 
 #: .\submodules\bihar-reports\bihar\reports\supervisor.py:296
 msgid "Referrals"
-msgstr ""
+msgstr "Références"
 
 #: .\submodules\bihar-reports\bihar\reports\supervisor.py:306
 msgid "Public Facility"
-msgstr ""
+msgstr "Établissement public"
 
 #: .\submodules\bihar-reports\bihar\reports\supervisor.py:307
 msgid "Private Facility"
-msgstr ""
+msgstr "Établissement privé"
 
 #: .\submodules\bihar-reports\bihar\reports\supervisor.py:308
 msgid "Transport"
-msgstr ""
+msgstr "Transport"
 
 #: .\submodules\bihar-reports\bihar\reports\supervisor.py:342
 msgid "This calculation has not yet been implemented."
-msgstr ""
+msgstr "Ce calcul n'est pas encore pris en charge."
 
 #: .\submodules\bihar-reports\bihar\reports\supervisor.py:345
 msgid "EDD Calculator"
-msgstr ""
+msgstr "Calculatrice de la DPA"
 
 #: .\submodules\bihar-reports\bihar\reports\supervisor.py:351
 msgid "Enter LMP (DD-MM-YYYY)"
-msgstr ""
+msgstr "Entrez la DDR (JJ-MM-AAAA)"
 
 #: .\submodules\bihar-reports\bihar\reports\supervisor.py:361
 #, python-format
 msgid "Estimated Date of Delivery: %s"
-msgstr ""
+msgstr "Date présumée d'accouchement"
 
 #: .\submodules\bihar-reports\bihar\reports\supervisor.py:364
 #: .\submodules\bihar-reports\bihar\reports\supervisor.py:389
 msgid "Error: We can't parse your input, please try again"
-msgstr ""
+msgstr "Erreur: On ne peut pas analyser votre entrée. Veuillez essayer de nouveau."
 
 #: .\submodules\bihar-reports\bihar\reports\supervisor.py:368
 msgid "BMI Calculator"
-msgstr ""
+msgstr "Calculatrice de l'IMC"
 
 #: .\submodules\bihar-reports\bihar\reports\supervisor.py:374
 msgid "Enter weight in kilograms:"
-msgstr ""
+msgstr "Entrez le poids en kilogrammes:"
 
 #: .\submodules\bihar-reports\bihar\reports\supervisor.py:379
 msgid "Enter height in meters:"
-msgstr ""
+msgstr "Entrez la taille en mètres:"
 
 #: .\submodules\bihar-reports\bihar\reports\supervisor.py:393
 msgid "You are obese"
-msgstr ""
+msgstr "Vous êtes obèse"
 
 #: .\submodules\bihar-reports\bihar\reports\supervisor.py:395
 msgid "You are overweight"
-msgstr ""
+msgstr "Vous êtes en surpoids"
 
 #: .\submodules\bihar-reports\bihar\reports\supervisor.py:397
 msgid "You are normal weight"
-msgstr ""
+msgstr "Vous avez un poids normal"
 
 #: .\submodules\bihar-reports\bihar\reports\supervisor.py:399
 msgid "You are underweight"
-msgstr ""
+msgstr "Vous avez un poids insuffisant"
 
 #: .\submodules\bihar-reports\bihar\reports\supervisor.py:411
 msgid "no awc code found"
-msgstr ""
+msgstr "aucun code awc trouvé"
 
 #: .\submodules\bihar-reports\bihar\reports\indicators\__init__.py:19
 msgid "Pregnant woman who delivered"
@@ -234,39 +234,39 @@ msgstr "Femmes enceintes ayant accouché durant les 30 derniers jours"
 
 #: .\submodules\bihar-reports\bihar\reports\indicators\__init__.py:77
 msgid "Pregnancy Outcomes"
-msgstr ""
+msgstr "Issues de la grossesse"
 
 #: .\submodules\bihar-reports\bihar\reports\indicators\__init__.py:81
 msgid "Home Deliveries visited in 24 hours of Birth"
-msgstr ""
+msgstr "Accouchements à domicile visités dans 24 heures après l'accouchement"
 
 #: .\submodules\bihar-reports\bihar\reports\indicators\__init__.py:86
 msgid "Institutional Deliveries visited in 24 hours of Birth"
-msgstr ""
+msgstr "Accouchements dans un établissement de santé visités dans 24 heures depuis l'accouchement"
 
 #: .\submodules\bihar-reports\bihar\reports\indicators\__init__.py:91
 msgid "Institutional deliveries not breastfed within one hour"
-msgstr ""
+msgstr "Accouchements dans un établissement de santé sans allaitement maternel dans une heure"
 
 #: .\submodules\bihar-reports\bihar\reports\indicators\__init__.py:99
 msgid "Post-Partum Complications"
-msgstr ""
+msgstr "Complications du post-partum"
 
 #: .\submodules\bihar-reports\bihar\reports\indicators\__init__.py:103
 msgid "complications identified in first 24 hours"
-msgstr ""
+msgstr "complications identifiées dans les premières 24 heures"
 
 #: .\submodules\bihar-reports\bihar\reports\indicators\__init__.py:109
 msgid "complications identified within 3 days of birth"
-msgstr ""
+msgstr "complications identifiées dans 3 jours après l'accouchement"
 
 #: .\submodules\bihar-reports\bihar\reports\indicators\__init__.py:115
 msgid "complications identified within 5 days of birth"
-msgstr ""
+msgstr "complications identifiées dans 5 jours après l'accouchement"
 
 #: .\submodules\bihar-reports\bihar\reports\indicators\__init__.py:121
 msgid "complications identified within 7 days of birth"
-msgstr ""
+msgstr "complications identifiées dans 7 jours après l'accouchement"
 
 #: .\submodules\bihar-reports\bihar\reports\indicators\__init__.py:129
 msgid "Weak Newborn"
@@ -433,18 +433,18 @@ msgstr "Nom des travailleurs de première ligne"
 
 #: .\submodules\core-hq-src\corehq\apps\announcements\templates\announcements\partials\base_announcement.html.py:8
 msgid "Great! Please hide this message."
-msgstr ""
+msgstr "Bon! S'il vous plaît, cachez ce message."
 
 #: .\submodules\core-hq-src\corehq\apps\api\util.py:23
 #, python-format
 msgid "Could not find %(doc_type)s with id %(id)s"
-msgstr ""
+msgstr "On ne peut pas trouver %(doc_type)s avec id %(id)s"
 
 #: .\submodules\core-hq-src\corehq\apps\app_manager\templates\app_manager\app_view.html.py:585
 #: .\submodules\core-hq-src\corehq\apps\app_manager\templates\app_manager\app_view.html.py:587
 #, fuzzy
 msgid "Success Message"
-msgstr "Message"
+msgstr "Message de réussite"
 
 #: .\submodules\core-hq-src\corehq\apps\app_manager\templates\app_manager\app_view.html.py:588
 msgid ""
@@ -454,6 +454,11 @@ msgid ""
 "$name, $week, $today. Example: Thanks $first_name! You have submitted $today "
 "forms today and $week forms since Monday."
 msgstr ""
+"Vous pouvez facultativement préciser un modèle pour les messages reçues par vos relais communautaires "
+"lors de la réussite de la soumission d'un formulaire. Dans le modèle, vous avez accès à "
+"les variables ci-après obtenues en temps réel par le serveur: $first_name, "
+"$name, $week, $today. Exemple: Merci $first_name! Vous avez soumis $today "
+"formulaires aujourd'hui et $week formulaires depuis lundi."
 
 #: .\submodules\core-hq-src\corehq\apps\app_manager\templates\app_manager\apps_base.html.py:175
 #: .\submodules\core-hq-src\corehq\apps\hqwebapp\models.py:134
@@ -475,7 +480,7 @@ msgstr "Aller à : "
 
 #: .\submodules\core-hq-src\corehq\apps\app_manager\templates\app_manager\emulator.html.py:51
 msgid "Back to Release Manager"
-msgstr ""
+msgstr "Revenez en arrière au gestionnaire des versions"
 
 #: .\submodules\core-hq-src\corehq\apps\app_manager\templates\app_manager\emulator.html.py:54
 #, fuzzy
@@ -484,27 +489,27 @@ msgstr "activité"
 
 #: .\submodules\core-hq-src\corehq\apps\app_manager\templates\app_manager\emulator.html.py:54
 msgid "Will make"
-msgstr ""
+msgstr "Aller faire"
 
 #: .\submodules\core-hq-src\corehq\apps\app_manager\templates\app_manager\emulator.html.py:54
 msgid "real"
-msgstr ""
+msgstr "réel"
 
 #: .\submodules\core-hq-src\corehq\apps\app_manager\templates\app_manager\emulator.html.py:54
 msgid " submissions: will modify cases, register users, etc."
-msgstr ""
+msgstr " soumissions: ceci mmodifiera les cas, enregistrera des utilisateurs, etc."
 
 #: .\submodules\core-hq-src\corehq\apps\app_manager\templates\app_manager\emulator.html.py:69
 msgid "This might take a few minutes."
-msgstr ""
+msgstr "Ceci pourrait prendre quelques minutes."
 
 #: .\submodules\core-hq-src\corehq\apps\app_manager\templates\app_manager\emulator.html.py:70
 msgid "(Even after the loading bar has filled!)"
-msgstr ""
+msgstr "(Même après la barre de chargement est remplie!)"
 
 #: .\submodules\core-hq-src\corehq\apps\app_manager\templates\app_manager\emulator.html.py:72
 msgid "Behavior may differ from phone."
-msgstr ""
+msgstr "Comportement pourrait être différente d'un portable"
 
 #: .\submodules\core-hq-src\corehq\apps\app_manager\templates\app_manager\form_view.html.py:311
 #: .\submodules\core-hq-src\corehq\apps\reports\standard\monitoring.py:530
@@ -515,25 +520,27 @@ msgstr "Nom des travailleurs de première ligne"
 #: .\submodules\core-hq-src\corehq\apps\app_manager\templates\app_manager\form_view.html.py:327
 #: .\submodules\core-hq-src\corehq\apps\app_manager\templates\app_manager\form_view.html.py:329
 msgid "Display Condition"
-msgstr ""
+msgstr "Condition d'affichage"
 
 #: .\submodules\core-hq-src\corehq\apps\app_manager\templates\app_manager\form_view.html.py:330
 msgid ""
 "The form will not appear in this module’s form menu unless this condition is "
 "met."
 msgstr ""
+"Le formulaire ne sera pas affiché dans le menu du formulaire de ce module, sauf si cette condition est "
+"remplie."
 
 #: .\submodules\core-hq-src\corehq\apps\app_manager\templates\app_manager\form_view.html.py:341
 msgid "Add Display Condition"
-msgstr ""
+msgstr "Ajouter condition d'affichage"
 
 #: .\submodules\core-hq-src\corehq\apps\app_manager\templates\app_manager\form_view.html.py:342
 msgid "Why can't I add a display condition?"
-msgstr ""
+msgstr "Pourquoi est-ce que je ne peux pas ajouter une condition d'affichage?"
 
 #: .\submodules\core-hq-src\corehq\apps\app_manager\templates\app_manager\form_view.html.py:343
 msgid "Error! Display condition will be ignored."
-msgstr ""
+msgstr "Erreur! Condition d'affichage sera ignorée"
 
 #: .\submodules\core-hq-src\corehq\apps\app_manager\templates\app_manager\form_view.html.py:344
 msgid ""
@@ -542,6 +549,10 @@ msgid ""
 "forms in the module must require a case, which means registration forms must "
 "go in a seperate module."
 msgstr ""
+"Pour utiliser les conditions d'affichage dans une module, (1) le paramètre pour le module <strong>Menu</strong> "
+"devrait être réglé à <em>Put forms in a separate menu</em> et (2) tous les "
+"formulaires dans le module nécessitent un cas, et donc les formulaires d'enregistrement devraient "
+"être dans un autre module."
 
 #: .\submodules\core-hq-src\corehq\apps\app_manager\templates\app_manager\form_view.html.py:345
 msgid ""
@@ -553,17 +564,27 @@ msgid ""
 "+Calculations#CommonLogicandCalculations-DisplayLogicforForms\">Click here "
 "for more help</a>"
 msgstr ""
+"Semblable de la façon dans laquelle vous ecrivez la logique dans l'éditeur de formulaire, sauf que "
+"vous devrez entrer <code>./</code> avant la propriété du cas. <strong>Par exemple</"
+"strong>: <code>./dpa > today()</code> \"afficher ce formulaire si le cas "
+"selectionné a une DPA plus tard que'aujourd'hui\".<br/><a href=\"https://confluence.dimagi."
+"com/display/commcarepublic/Common+Logic+and"
+"+Calculations#CommonLogicandCalculations-DisplayLogicforForms\">Cliquez ici "
+"pour plus d'aide</a>"
+
 
 #: .\submodules\core-hq-src\corehq\apps\app_manager\templates\app_manager\form_view.html.py:431
 #: .\submodules\core-hq-src\corehq\apps\app_manager\templates\app_manager\form_view.html.py:433
 msgid "Cases and Referrals"
-msgstr ""
+msgstr "Cas et références"
 
 #: .\submodules\core-hq-src\corehq\apps\app_manager\templates\app_manager\form_view.html.py:434
 msgid ""
 "Cases and referrals are a way of preserving information across multiple "
 "interactions with CommCare on the mobile phone."
 msgstr ""
+"Cas et références sont une façon de garder de l'information à travers des interactions "
+"multiples avec CommCare sur le portable."
 
 #: .\submodules\core-hq-src\corehq\apps\app_manager\templates\app_manager\form_view.html.py:440
 #: .\submodules\core-hq-src\corehq\apps\app_manager\templates\app_manager\form_view.html.py:442
@@ -576,6 +597,8 @@ msgid ""
 "Cases are a way of preserving information across multiple interactions with "
 "CommCare on the mobile phone."
 msgstr ""
+"Les cas sont une façon de garder de l'information à travers des interactions multiples avec "
+"CommCare sur le portable."
 
 #: .\submodules\core-hq-src\corehq\apps\app_manager\templates\app_manager\form_view.html.py:465
 #, fuzzy
@@ -589,10 +612,14 @@ msgid ""
 "they came from. A great use of Child Cases is for tracking a newborn "
 "separately from its mother."
 msgstr ""
+"Avec les cas enfants, on peut ouvrir d'autres sortes des cas pour utiliser dans d'autres modules. Quand "
+"c'est possible, ils seront liés avec le cas actuel de sorte que vous sachiez toujours d'où "
+"ils viennent. Une bonne utilisation des cas enfants, c'est pour surveiller un nouveau-né "
+"dans une façon distincte séparément de sa mêre."
 
 #: .\submodules\core-hq-src\corehq\apps\app_manager\templates\app_manager\managed_app.html.py:30
 msgid "Edit in form designer"
-msgstr ""
+msgstr "Éditer dans l'éditeur de formulaire"
 
 #: .\submodules\core-hq-src\corehq\apps\app_manager\templates\app_manager\module_view.html.py:72
 #: .\submodules\core-hq-src\corehq\apps\app_manager\templates\app_manager\module_view.html.py:75
@@ -613,18 +640,26 @@ msgid ""
 "case called &quot;pregnant_mother&quot;, and another called &quot;"
 "routine_patient&quot;, etc."
 msgstr ""
+"par exemple &quot;femme_enceinte&quot;. La valeur que vous précisez pour la sorte de cas sera "
+"le nom pour la sorte de cas utilisée par ce module. Si vous ête en train de créer une "
+"application pour la première fois, vous pourrez nommer la sorte de cas n'importe "
+"quoi. Si vous voulez pouvoir interfacer avec les cas de d'autres modules, "
+"vous devrez utiliser le même nom pour la sorte de cas. Quand vous voir les données de cas "
+"en ligne, elles seront organisées par sorte de cas. Vous pourrez avoir un "
+"cas qu'on appelle &quot;femme_enceinte&quot;, et un autre qu'on appelle &quot;"
+"patient_routine&quot;, etc."
 
 #: .\submodules\core-hq-src\corehq\apps\app_manager\templates\app_manager\releases.html.py:115
 msgid "Make New Build"
-msgstr ""
+msgstr "Créer une nouvelle version"
 
 #: .\submodules\core-hq-src\corehq\apps\app_manager\templates\app_manager\releases.html.py:137
 msgid "Please wait while your CommCare Application builds"
-msgstr ""
+msgstr "Veuillez patienter pendant que votre application CommCare est créée"
 
 #: .\submodules\core-hq-src\corehq\apps\app_manager\templates\app_manager\releases.html.py:180
 msgid "Unsigned Jar"
-msgstr ""
+msgstr "jar non-signé"
 
 #: .\submodules\core-hq-src\corehq\apps\app_manager\templates\app_manager\releases.html.py:198
 #, fuzzy
@@ -633,7 +668,7 @@ msgstr "(Sans nom)"
 
 #: .\submodules\core-hq-src\corehq\apps\app_manager\templates\app_manager\releases.html.py:213
 msgid "Whoops, we couldn't get those builds for you. Could you try that again?"
-msgstr ""
+msgstr "Whoops, nous ne pourrions pas obtenir ces versions-là pour vous. Pourriez vous l'essayer encore une fois?"
 
 #: .\submodules\core-hq-src\corehq\apps\app_manager\templates\app_manager\releases.html.py:217
 #, fuzzy
@@ -642,11 +677,11 @@ msgstr "Afficher le formulaire"
 
 #: .\submodules\core-hq-src\corehq\apps\app_manager\templates\app_manager\releases.html.py:221
 msgid "This application currently has no builds"
-msgstr ""
+msgstr "Il n' y a actuellement aucunes versions de cette application"
 
 #: .\submodules\core-hq-src\corehq\apps\app_manager\templates\app_manager\releases.html.py:281
 msgid "Preview in Emulator"
-msgstr ""
+msgstr "Prévoir dans l'émulateur"
 
 #: .\submodules\core-hq-src\corehq\apps\app_manager\templates\app_manager\releases.html.py:289
 #, fuzzy
@@ -655,7 +690,7 @@ msgstr "Télécharger"
 
 #: .\submodules\core-hq-src\corehq\apps\app_manager\templates\app_manager\releases.html.py:301
 msgid "For help on how to install, see"
-msgstr ""
+msgstr "Pour de l'aide comment installer, voir"
 
 #: .\submodules\core-hq-src\corehq\apps\app_manager\templates\app_manager\releases.html.py:302
 #, fuzzy
@@ -664,27 +699,27 @@ msgstr "Sélectionnez un travailleur mobile"
 
 #: .\submodules\core-hq-src\corehq\apps\app_manager\templates\app_manager\releases.html.py:305
 msgid "If you have any issues with the installation, please refer to"
-msgstr ""
+msgstr "Si vous avez n'importe quelle question par rapport à l'installation, veuillez voir"
 
 #: .\submodules\core-hq-src\corehq\apps\app_manager\templates\app_manager\releases.html.py:306
 msgid "Troubleshooting Phone Problems"
-msgstr ""
+msgstr "Dépannage des problèmes des portables"
 
 #: .\submodules\core-hq-src\corehq\apps\app_manager\templates\app_manager\releases.html.py:316
 msgid "Download to CommCare ODK (Android)"
-msgstr ""
+msgstr "Télécharger à CommCare ODK (Android)"
 
 #: .\submodules\core-hq-src\corehq\apps\app_manager\templates\app_manager\releases.html.py:324
 msgid "Send to phone via SMS"
-msgstr ""
+msgstr "Envoyer vers le portable via SMS"
 
 #: .\submodules\core-hq-src\corehq\apps\app_manager\templates\app_manager\releases.html.py:334
 msgid "Send J2ME app"
-msgstr ""
+msgstr "Envoyer appli J2ME"
 
 #: .\submodules\core-hq-src\corehq\apps\app_manager\templates\app_manager\releases.html.py:337
 msgid "Send CommCare ODK app (Android)"
-msgstr ""
+msgstr "Envoyer appli CommCare ODK (Android)"
 
 #: .\submodules\core-hq-src\corehq\apps\app_manager\templates\app_manager\releases.html.py:344
 #, fuzzy
@@ -693,15 +728,15 @@ msgstr "Test d'envoi"
 
 #: .\submodules\core-hq-src\corehq\apps\app_manager\templates\app_manager\releases.html.py:355
 msgid "No URL was found for this app, try rebuilding."
-msgstr ""
+msgstr "Aucun URL a été trouvé pour cette appli. Essayez de le recréer."
 
 #: .\submodules\core-hq-src\corehq\apps\app_manager\templates\app_manager\partials\nav_menu_media.html.py:4
 msgid "Image"
-msgstr ""
+msgstr "Image"
 
 #: .\submodules\core-hq-src\corehq\apps\app_manager\templates\app_manager\partials\nav_menu_media.html.py:14
 msgid "Add Image"
-msgstr ""
+msgstr "Ajouter Image"
 
 #: .\submodules\core-hq-src\corehq\apps\app_manager\templates\app_manager\partials\nav_menu_media.html.py:22
 #, fuzzy
@@ -710,21 +745,23 @@ msgstr "Administration"
 
 #: .\submodules\core-hq-src\corehq\apps\app_manager\templates\app_manager\partials\nav_menu_media.html.py:32
 msgid "Add Audio"
-msgstr ""
+msgstr "Ajouter Audio"
 
 #: .\submodules\core-hq-src\corehq\apps\app_manager\templates\app_manager\partials\nav_menu_media.html.py:33
 msgid "Why can't I add audio?"
-msgstr ""
+msgstr "Pourquoi est-ce que je ne peux pas ajouter de l'audio?"
 
 #: .\submodules\core-hq-src\corehq\apps\app_manager\templates\app_manager\partials\nav_menu_media.html.py:34
 msgid ""
 "To hear audio on J2ME, you must be in CommCare Sense mode or Numeric "
 "Selection mode. (In ODK it will always work.)"
 msgstr ""
+"Pour entendre l'audio en J2ME, vous devez être dans la mode CommCare Sense ou la mode Sélection "
+"Numérique. (En ODK, ça marchera toujours.)"
 
 #: .\submodules\core-hq-src\corehq\apps\appstore\views.py:312
 msgid "You don't belong to that project"
-msgstr ""
+msgstr "Vous n'appartenez pas à ce projet"
 
 #: .\submodules\core-hq-src\corehq\apps\appstore\views.py:320
 #, fuzzy
@@ -743,11 +780,11 @@ msgstr "Objet supprimé avec succès."
 
 #: .\submodules\core-hq-src\corehq\apps\appstore\views.py:357
 msgid "You must specify a name for the new project"
-msgstr ""
+msgstr "Vous devez préciser un nom pour le nouveau projet"
 
 #: .\submodules\core-hq-src\corehq\apps\appstore\templates\appstore\appstore_base.html.py:252
 msgid "Searching for"
-msgstr ""
+msgstr "Cherchant"
 
 #: .\submodules\core-hq-src\corehq\apps\appstore\templates\appstore\appstore_base.html.py:253
 #, fuzzy
@@ -757,7 +794,7 @@ msgstr "Annuler"
 #: .\submodules\core-hq-src\corehq\apps\appstore\templates\appstore\appstore_base.html.py:268
 #: .\submodules\core-hq-src\corehq\apps\appstore\templates\appstore\appstore_base.html.py:294
 msgid "Highest Rated"
-msgstr ""
+msgstr "Les mieux notés"
 
 #: .\submodules\core-hq-src\corehq\apps\appstore\templates\appstore\appstore_base.html.py:271
 #: .\submodules\core-hq-src\corehq\apps\appstore\templates\appstore\appstore_base.html.py:295
@@ -767,7 +804,7 @@ msgstr "Télécharger"
 
 #: .\submodules\core-hq-src\corehq\apps\appstore\templates\appstore\appstore_base.html.py:293
 msgid "Newest"
-msgstr ""
+msgstr "Les plus nouveaux"
 
 #: .\submodules\core-hq-src\corehq\apps\appstore\templates\appstore\appstore_base.html.py:321
 #, fuzzy
@@ -782,29 +819,29 @@ msgstr "Affichage"
 
 #: .\submodules\core-hq-src\corehq\apps\appstore\templates\appstore\appstore_base.html.py:325
 msgid "Unapprove"
-msgstr ""
+msgstr "Désavouer"
 
 #: .\submodules\core-hq-src\corehq\apps\appstore\templates\appstore\appstore_base.html.py:327
 msgid "Approve"
-msgstr ""
+msgstr "Approuver"
 
 #: .\submodules\core-hq-src\corehq\apps\appstore\templates\appstore\appstore_base.html.py:336
 msgid "By"
-msgstr ""
+msgstr "Par"
 
 #: .\submodules\core-hq-src\corehq\apps\appstore\templates\appstore\appstore_base.html.py:365
 msgid "No results were found for your query"
-msgstr ""
+msgstr "Aucuns résultats trouvé pour votre question"
 
 #: .\submodules\core-hq-src\corehq\apps\appstore\templates\appstore\appstore_base.html.py:374
 #, fuzzy
 msgid "Previous"
-msgstr "Aperçu"
+msgstr "Précédent"
 
 #: .\submodules\core-hq-src\corehq\apps\appstore\templates\appstore\appstore_base.html.py:379
 #: .\submodules\core-hq-src\corehq\apps\reports\templates\reports\filters\drilldown_options.html.py:24
 msgid "Next"
-msgstr ""
+msgstr "Prochain"
 
 #: .\submodules\core-hq-src\corehq\apps\appstore\templates\appstore\deployment_info.html.py:31
 #: .\submodules\core-hq-src\corehq\apps\appstore\templates\appstore\project_info.html.py:84
@@ -822,7 +859,7 @@ msgstr "Langues"
 
 #: .\submodules\core-hq-src\corehq\apps\appstore\templates\appstore\media_files.html.py:19
 msgid "Multimedia Files"
-msgstr ""
+msgstr "Fichiers multimédias"
 
 #: .\submodules\core-hq-src\corehq\apps\appstore\templates\appstore\media_files.html.py:30
 #: .\submodules\core-hq-src\corehq\apps\reports\templates\reports\partials\saved_custom_exports.html.py:6
@@ -842,7 +879,7 @@ msgstr "Licence"
 #: .\submodules\core-hq-src\corehq\apps\appstore\templates\appstore\media_files.html.py:38
 #: .\submodules\core-hq-src\corehq\apps\hqmedia\templates\hqmedia\partials\hqm_upload_form.html.py:14
 msgid "Author"
-msgstr ""
+msgstr "Auteur"
 
 #: .\submodules\core-hq-src\corehq\apps\appstore\templates\appstore\media_files.html.py:42
 #: .\submodules\core-hq-src\corehq\apps\reports\fields.py:246
@@ -857,11 +894,11 @@ msgstr "Notes d'attribution"
 
 #: .\submodules\core-hq-src\corehq\apps\appstore\templates\appstore\media_files.html.py:52
 msgid "This app contains no multimedia files"
-msgstr ""
+msgstr "Cette appli n'ont pas des fichiers multimédias"
 
 #: .\submodules\core-hq-src\corehq\apps\appstore\templates\appstore\media_files.html.py:55
 msgid "This app doesn't share it's multimedia files"
-msgstr ""
+msgstr "Cette appli ne partage pas ces fichiers multimédias"
 
 #: .\submodules\core-hq-src\corehq\apps\appstore\templates\appstore\project_info.html.py:61
 msgid "by"
@@ -898,12 +935,12 @@ msgstr "Téléchargements"
 
 #: .\submodules\core-hq-src\corehq\apps\appstore\templates\appstore\project_info.html.py:131
 msgid "Browse Multimedia"
-msgstr ""
+msgstr "Parcourir multimédia"
 
 #: .\submodules\core-hq-src\corehq\apps\appstore\templates\appstore\project_info.html.py:143
 #, fuzzy
 msgid "Preview this app"
-msgstr "Donnez votre avis sur cette application"
+msgstr "Avoir un aperçu de cette application"
 
 #: .\submodules\core-hq-src\corehq\apps\appstore\templates\appstore\project_info.html.py:146
 msgid "Media"
@@ -963,6 +1000,8 @@ msgid ""
 "You are currently logged in as a CloudCare user. Please sign out and login "
 "as a normal user to download apps"
 msgstr ""
+"Vous vous connectez actuellement en tant qu'utilisateur CloudCare. Veuillez déconnecter et vous connecter "
+"en tant qu'utilisateur normal pour télécharger des applis"
 
 #: .\submodules\core-hq-src\corehq\apps\appstore\templates\appstore\project_info.html.py:193
 #: .\submodules\core-hq-src\corehq\apps\domain\templates\domain\copy_snapshot.html.py:16
@@ -1044,11 +1083,11 @@ msgstr "est distribué sous la licence "
 
 #: .\submodules\core-hq-src\corehq\apps\appstore\templates\appstore\project_info.html.py:317
 msgid "Please view the"
-msgstr ""
+msgstr "Veuillez voir les"
 
 #: .\submodules\core-hq-src\corehq\apps\appstore\templates\appstore\project_info.html.py:317
 msgid "licenses for this app's media files"
-msgstr ""
+msgstr "licences pour les fichiers multimédias de cette appli"
 
 #: .\submodules\core-hq-src\corehq\apps\appstore\templates\appstore\project_info.html.py:322
 #, fuzzy
@@ -1065,11 +1104,11 @@ msgstr "Refuser"
 
 #: .\submodules\core-hq-src\corehq\apps\appstore\templates\appstore\partials\view_wiki.html.py:6
 msgid "Check out the "
-msgstr ""
+msgstr "Consulter le"
 
 #: .\submodules\core-hq-src\corehq\apps\appstore\templates\appstore\partials\view_wiki.html.py:8
 msgid " to get more information on how to get started with CommCare."
-msgstr ""
+msgstr " pour obtenir plus d'information comment démarrer avec CommCare."
 
 #: .\submodules\core-hq-src\corehq\apps\builds\templates\builds\all.html.py:7
 msgid "Build Number"
@@ -1083,6 +1122,7 @@ msgstr "Durée"
 msgid ""
 "That app is no longer valid. Try using the navigation links to select an app."
 msgstr ""
+"Cette appli n'est plus valable. Essayez d'utiliser les liens de navigation pour choisir une appli."
 
 #: .\submodules\core-hq-src\corehq\apps\cloudcare\templates\cloudcare\cloudcare_home.html.py:102
 msgid "Loading"
@@ -1131,7 +1171,7 @@ msgstr "Nom du projet"
 #: .\submodules\core-hq-src\corehq\apps\domain\forms.py:18
 #: .\submodules\core-hq-src\corehq\apps\domain\forms.py:52
 msgid "e.g. MCH, HIV, etc."
-msgstr ""
+msgstr "par exemple SMI, VIH, etc."
 
 #: .\submodules\core-hq-src\corehq\apps\domain\forms.py:21
 #, fuzzy
@@ -1140,11 +1180,11 @@ msgstr "Publié le"
 
 #: .\submodules\core-hq-src\corehq\apps\domain\forms.py:25
 msgid "A brief description of the application (max. 200 characters)"
-msgstr ""
+msgstr "Une description brève de l'application (200 caractères au maximum)"
 
 #: .\submodules\core-hq-src\corehq\apps\domain\forms.py:27
 msgid "A detailed technical description of the app design"
-msgstr ""
+msgstr "Une description technique détaillée de la conception de l'appli"
 
 #: .\submodules\core-hq-src\corehq\apps\domain\forms.py:28
 #: .\submodules\core-hq-src\corehq\apps\domain\forms.py:170
@@ -1154,17 +1194,19 @@ msgstr "Gérer les déploiements"
 
 #: .\submodules\core-hq-src\corehq\apps\domain\forms.py:31
 msgid "e.g. CHW, ASHA, RA, etc"
-msgstr ""
+msgstr "par exemple, RC, ASHA, etc"
 
 #: .\submodules\core-hq-src\corehq\apps\domain\forms.py:33
 msgid ""
 "Enter any special instructions to users here. This will be shown just before "
 "users copy your project."
 msgstr ""
+"Entrez des instructions spéciales pour des utilisateurs ici. Ceux-ci seront affichées juste avant "
+"que les utilisateurs copient votre projet."
 
 #: .\submodules\core-hq-src\corehq\apps\domain\forms.py:49
 msgid "Title"
-msgstr ""
+msgstr "Titre"
 
 #: .\submodules\core-hq-src\corehq\apps\domain\forms.py:50
 #, fuzzy
@@ -1175,44 +1217,47 @@ msgstr "(Sans nom)"
 msgid ""
 "All un-licensed multimedia files in your project will be given this license"
 msgstr ""
+"On donnera ce license à tous les fichiers multimédias sans licence dans votre projet"
 
 #: .\submodules\core-hq-src\corehq\apps\domain\forms.py:57
 msgid "A high-level overview of your project as a whole"
-msgstr ""
+msgstr "Un aperçu au niveau élévé de votre projet entier"
 
 #: .\submodules\core-hq-src\corehq\apps\domain\forms.py:60
 msgid "A brief description of your project (max. 200 characters)"
-msgstr ""
+msgstr "Une description courte de votre projet (200 caractères au maximum)"
 
 #: .\submodules\core-hq-src\corehq\apps\domain\forms.py:61
 msgid "Share all multimedia?"
-msgstr ""
+msgstr "Partager tous les multimédias"
 
 #: .\submodules\core-hq-src\corehq\apps\domain\forms.py:62
 msgid "This will allow any user to see and use all multimedia in this project"
-msgstr ""
+msgstr "Ceci permettra n'import quel utlisateur de voir et d'utiliser tous les multimédias dans ce projet"
 
 #: .\submodules\core-hq-src\corehq\apps\domain\forms.py:63
 msgid "Exchange image"
-msgstr ""
+msgstr "Image Exchange"
 
 #: .\submodules\core-hq-src\corehq\apps\domain\forms.py:64
 msgid ""
 "An optional image to show other users your logo or what your app looks like"
 msgstr ""
+"Une image facultative pour afficher à d'autres utilisateurs votre logo ou l'apprence de votre appli"
 
 #: .\submodules\core-hq-src\corehq\apps\domain\forms.py:65
 msgid "Content Distribution Agreement"
-msgstr ""
+msgstr "Accord sur la distribution du contenu"
 
 #: .\submodules\core-hq-src\corehq\apps\domain\forms.py:67
 msgid "Immediately publish?"
-msgstr ""
+msgstr "Publier tout de suite"
 
 #: .\submodules\core-hq-src\corehq\apps\domain\forms.py:68
 msgid ""
 "If this is selected, the project will be published when you submit this form"
 msgstr ""
+"Si ceci est selectionné, ce projet sera publié lors que vous soumettez ce formulaire"
 
 #: .\submodules\core-hq-src\corehq\apps\domain\forms.py:120
 #, fuzzy
