@@ -109,11 +109,11 @@ class Group(UndoableDocument):
         return cls.view('groups/by_name', key=[domain, name], include_docs=True).one()
 
     @classmethod
-    def by_user(cls, user, wrap=True, include_names=False):
+    def by_user(cls, user_or_user_id, wrap=True, include_names=False):
         try:
-            user_id = user.user_id
+            user_id = user_or_user_id.user_id
         except AttributeError:
-            user_id = user
+            user_id = user_or_user_id
         results = cls.view('groups/by_user', key=user_id, include_docs=wrap)
         if wrap:
             return results
