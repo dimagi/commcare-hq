@@ -6,12 +6,20 @@ from couchexport.models import Format
 import tempfile
 import os
 from soil.util import expose_download
+from couchexport.export import SchemaMismatchException
 
 logging = get_task_logger()
 
 @task
 def export_async(custom_export, download_id, format=None, filename=None, **kwargs):
-    tmp, checkpoint = custom_export.get_export_files(format=format, process=export_async, **kwargs)
+    try:
+        tmp, checkpoint = custom_export.get_export_files(format=format, process=export_async, **kwargs)
+    except SchemaMismatchException, e:
+        msg = "Export failed for custom export {id}. Index is {index}. The specific error is {msg}."
+        raise Exception(msg.format(id=custom_export._id,
+                                   index=custom_export.index,
+                                   msg=str(e)))
+
     try:
         format = tmp.format
     except AttributeError:
