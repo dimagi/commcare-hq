@@ -4,10 +4,9 @@ Hierachical data is stored as described in:
 http://probablyprogramming.com/2008/07/04/storing-hierarchical-data-in-couchdb
 """
 from __future__ import absolute_import
-import re
 from couchdbkit.ext.django.schema import *
 from corehq.apps.users.models import CouchUser, CommCareUser
-from dimagi.utils.couch.undo import UndoableDocument, DeleteDocRecord, DELETED_SUFFIX
+from dimagi.utils.couch.undo import UndoableDocument, DeleteDocRecord
 
 class Group(UndoableDocument):
     """
