@@ -1,6 +1,7 @@
 from django.conf import settings
 from django.utils.translation import ugettext_noop
 from corehq.apps.fixtures.models import FixtureDataType, FixtureDataItem
+from corehq.apps.reports.basic import BasicTabularReport, Column
 from corehq.apps.reports.fields import ReportField, AsyncDrillableField
 from corehq.apps.reports.standard import ProjectReport, ProjectReportParametersMixin, DatespanMixin, CustomProjectReport
 from corehq.apps.reports.generic import GenericTabularReport
@@ -34,7 +35,7 @@ class CommtrackReportMixin(ProjectReport, ProjectReportParametersMixin):
             else:
                 domain = Domain.get_by_name(domain)
                 return domain.commtrack_enabled
-    
+
     @property
     def config(self):
         return CommtrackConfig.for_domain(self.domain)
@@ -148,7 +149,7 @@ class VisitReport(GenericTabularReport, CommtrackReportMixin, DatespanMixin):
                     cols.append('data: %s %s' % (cfg.actions_by_name[a].keyword, p['code']))
                 else:
                     cols.append('%s (%s)' % (cfg.actions_by_name[a].caption, p['name']))
-        
+
         return cols
 
     @property
@@ -480,103 +481,6 @@ def _get_unique_combinations(domain, place_types=None, place=None):
         combos.append(comb)
     return combos
 
-def psi_events(domain, query_dict, startdate=None, enddate=None, place=None):
-    place_types = ['state', 'district']
-    combos = _get_unique_combinations(domain, place_types=place_types, place=place)
-    return map(lambda c: event_stats(domain, c, query_dict.get("location", ""), startdate=startdate, enddate=enddate), combos)
-
-def event_stats(domain, place_dict, location="", startdate=None, enddate=None):
-    def ff_func(form):
-        if form.form.get('@name', None) != 'Plays and Events':
-            return False
-        if place_dict["state"] and str(form.xpath('form/activity_state')) != place_dict["state"]:
-            return False
-        if place_dict["district"] and str(form.xpath('form/activity_district')) != place_dict["district"]:
-            return False
-        if location:
-            if not form.xpath('form/event_location') == location:
-                return False
-        return True
-
-    forms = list(_get_forms(domain, form_filter=ff_func, startdate=startdate, enddate=enddate))
-    place_dict.update({
-        "location": location,
-        "num_male": reduce(lambda sum, f: sum + f.xpath('form/number_of_males'), forms, 0),
-        "num_female": reduce(lambda sum, f: sum + f.xpath('form/number_of_females'), forms, 0),
-        "num_total": reduce(lambda sum, f: sum + f.xpath('form/number_of_attendees'), forms, 0),
-        "num_leaflets": reduce(lambda sum, f: sum + f.xpath('form/number_of_leaflets'), forms, 0),
-        "num_gifts": reduce(lambda sum, f: sum + f.xpath('form/number_of_gifts'), forms, 0)
-    })
-    return place_dict
-
-def psi_household_demonstrations(domain, query_dict, startdate=None, enddate=None, place=None):
-    place_types = ['block', 'state', 'district', 'village']
-    combos = _get_unique_combinations(domain, place_types=place_types, place=place)
-    return map(lambda c: hd_stats(domain, c, query_dict.get("worker_type", ""), startdate=startdate, enddate=enddate), combos)
-
-def hd_stats(domain, place_dict, worker_type="", startdate=None, enddate=None):
-    def ff_func(form):
-        if form.form.get('@name', None) != 'Household Demonstration':
-            return False
-        if place_dict["state"] and str(form.xpath('form/activity_state')) != place_dict["state"]:
-            return False
-        if place_dict["district"] and str(form.xpath('form/activity_district')) != place_dict["district"]:
-            return False
-        if place_dict["block"] and str(form.xpath('form/activity_block')) != place_dict["block"]:
-            return False
-        if place_dict["village"] and str(form.xpath('form/activity_village')) != place_dict["village"]:
-            return False
-        if worker_type:
-            if not form.xpath('form/demo_type') == worker_type:
-                return False
-        return True
-
-    forms = list(_get_forms(domain, form_filter=ff_func, startdate=startdate, enddate=enddate))
-    place_dict.update({
-        "worker_type": worker_type,
-        "num_hh_demo": reduce(lambda sum, f: sum + _count_in_repeats(f.xpath('form/visits'), 'hh_covered'), forms, 0),
-        "num_young": reduce(lambda sum, f: sum + _count_in_repeats(f.xpath('form/visits'), 'number_young_children_covered'), forms, 0),
-        "num_leaflets": reduce(lambda sum, f: sum + _count_in_repeats(f.xpath('form/visits'), 'leaflets_distributed'), forms, 0),
-        "num_kits": reduce(lambda sum, f: sum + _count_in_repeats(f.xpath('form/visits'), 'kits_sold'), forms, 0),
-        })
-    return place_dict
-
-def psi_sensitization_sessions(domain, query_dict, startdate=None, enddate=None, place=None):
-    place_types = ['state', 'district', 'block']
-    combos = _get_unique_combinations(domain, place_types=place_types, place=place)
-    return map(lambda c: ss_stats(domain, c, startdate=startdate, enddate=enddate), combos)
-
-def ss_stats(domain, place_dict, startdate=None, enddate=None):
-    def ff_func(form):
-        if form.form.get('@name', None) != 'Sensitization Session':
-            return False
-        if place_dict["state"] and str(form.xpath('form/training_state')) != place_dict["state"]:
-            return False
-        if place_dict["district"] and str(form.xpath('form/training_district')) != place_dict["district"]:
-            return False
-        if place_dict["block"] and str(form.xpath('form/training_block')) != place_dict["block"]:
-            return False
-        return True
-
-    forms = list(_get_forms(domain, form_filter=ff_func, startdate=startdate, enddate=enddate))
-
-    def rf_func(data):
-        return data.get('type_of_sensitization', None) == 'vhnd'
-
-    place_dict.update({
-        "num_sessions": reduce(lambda sum, f: sum + _count_in_repeats(f.xpath('form/training_sessions'), 'number_of_blm_attended'), forms, 0) +
-                        reduce(lambda sum, f: sum + len(list(_get_repeats(f.xpath('form/training_sessions'), repeat_filter=rf_func))), forms, 0),
-        "num_ayush_doctors": reduce(lambda sum, f: sum + _count_in_repeats(f.xpath('form/training_sessions'), 'num_ayush_doctors'), forms, 0),
-        "num_mbbs_doctors": reduce(lambda sum, f: sum + _count_in_repeats(f.xpath('form/training_sessions'), 'num_mbbs_doctors'), forms, 0),
-        "num_asha_supervisors": reduce(lambda sum, f: sum + _count_in_repeats(f.xpath('form/training_sessions'), 'num_asha_supervisors'), forms, 0),
-        "num_ashas": reduce(lambda sum, f: sum + _count_in_repeats(f.xpath('form/training_sessions'), 'num_ashas'), forms, 0),
-        "num_awws": reduce(lambda sum, f: sum + _count_in_repeats(f.xpath('form/training_sessions'), 'num_awws'), forms, 0),
-        "num_other": reduce(lambda sum, f: sum + _count_in_repeats(f.xpath('form/training_sessions'), 'num_other'), forms, 0),
-        "number_attendees": reduce(lambda sum, f: sum + _count_in_repeats(f.xpath('form/training_sessions'), 'number_attendees'), forms, 0),
-        })
-    return place_dict
-
-
 def psi_training_sessions(domain, query_dict, startdate=None, enddate=None, place=None):
     place_types = ['state', 'district']
     combos = _get_unique_combinations(domain, place_types=place_types, place=place)
@@ -710,12 +614,17 @@ class AsyncPlaceField(AsyncDrillableField):
                  {"type": "block", "parent_ref": "district_id", "references": "id", "display": "name"},
                  {"type": "village", "parent_ref": "block_id", "references": "id", "display": "name"}]
 
-class PSIReport(GenericTabularReport, CustomProjectReport, DatespanMixin):
+class PSIReport(BasicTabularReport, CustomProjectReport, DatespanMixin):
     fields = ['corehq.apps.reports.fields.DatespanField','corehq.apps.reports.commtrack.psi_prototype.AsyncPlaceField',]
 
     def selected_fixture(self):
         fixture = self.request.GET.get('fixture_id', "")
         return fixture.split(':') if fixture else None
+
+    @property
+    def start_and_end_keys(self):
+        return ([self.datespan.startdate_param_utc],
+                [self.datespan.enddate_param_utc])
 
 class PSIEventsReport(PSIReport):
     fields = ['corehq.apps.reports.fields.DatespanField',
@@ -724,32 +633,38 @@ class PSIEventsReport(PSIReport):
     slug = "event_demonstations"
     section_name = "event demonstrations"
 
-    @property
-    def headers(self):
-        return DataTablesHeader(DataTablesColumn("Name of State"),
-            DataTablesColumn("Name of District"),
-            DataTablesColumn("Location"),
-            DataTablesColumn("Number of male attendees"),
-            DataTablesColumn("Number of female attendees"),
-            DataTablesColumn("Total number of attendees"),
-            DataTablesColumn("Total number of leaflets distributed"),
-            DataTablesColumn("Total number of gifts distributed"))
+    couch_view = 'reports/psi_events'
+
+    default_column_order = (
+        'state_name',
+        'district_name',
+        'males',
+        'females',
+        'attendees',
+        'leaflets',
+        'gifts',
+    )
+
+    state_name = Column("State", calculate_fn=lambda key, _: key[0])
+
+    district_name = Column("District", calculate_fn=lambda key, _: key[1])
+
+    males = Column("Number of male attendees", key='males')
+
+    females = Column("Number of female attendees", key='females')
+
+    attendees = Column("Total number of attendees", key='attendees')
+
+    leaflets = Column("Total number of leaflets distributed", key='leaflets')
+
+    gifts = Column("Total number of gifts distributed", key='gifts')
 
     @property
-    def rows(self):
-        event_data = psi_events(self.domain, {}, place=self.selected_fixture(),
-            startdate=self.datespan.startdate_param_utc, enddate=self.datespan.enddate_param_utc)
-        for d in event_data:
-            yield [
-                d.get("state"),
-                d.get("district"),
-                d.get("location"),
-                d.get("num_male"),
-                d.get("num_female") ,
-                d.get("num_total"),
-                d.get("num_leaflets"),
-                d.get("num_gifts")
-            ]
+    def keys(self):
+        combos = _get_unique_combinations(self.domain, place_types=['state', 'district'], place=self.selected_fixture())
+
+        for c in combos:
+            yield [c['state'], c['district']]
 
 class PSIHDReport(PSIReport):
     name = "Household Demonstrations Report"
@@ -757,33 +672,44 @@ class PSIHDReport(PSIReport):
     section_name = "household demonstrations"
 
     @property
-    def headers(self):
-        return DataTablesHeader(DataTablesColumn("Name of State"),
-            DataTablesColumn("Name of District"),
-            DataTablesColumn("Name of Block"),
-            DataTablesColumn("Name of Town/Village"),
-            DataTablesColumn("Number of HH demos done"),
-            DataTablesColumn("Demonstration done by"),
-            DataTablesColumn("Number of 0-6 year old children"),
-            DataTablesColumn("Number of leaflets distributed"),
-            DataTablesColumn("Number of kits sold"))
+    def keys(self):
+        combos = _get_unique_combinations(self.domain,
+            place_types=['state', 'district', "block", "village"], place=self.selected_fixture())
 
-    @property
-    def rows(self):
-        hh_data = psi_household_demonstrations(self.domain, {}, place=self.selected_fixture(),
-            startdate=self.datespan.startdate_param_utc, enddate=self.datespan.enddate_param_utc)
-        for d in hh_data:
-            yield [
-                d.get("state"),
-                d.get("district"),
-                d.get("block"),
-                d.get("village"),
-                d.get("num_hh_demo") ,
-                d.get("worker_type"),
-                d.get("num_young"),
-                d.get("num_leaflets"),
-                d.get("num_kits"),
-                ]
+        for c in combos:
+            yield [c['state'], c['district'], c["block"], c["village"]]
+
+    couch_view = 'reports/psi_hd'
+
+    default_column_order = (
+        'state_name',
+        'district_name',
+        "block_name",
+        "village_name",
+        'demonstrations',
+#        'worker_type',
+        'children',
+        'leaflets',
+        'kits',
+    )
+
+    state_name = Column("State", calculate_fn=lambda key, _: key[0])
+
+    district_name = Column("District", calculate_fn=lambda key, _: key[1])
+
+    block_name = Column("Block", calculate_fn=lambda key, _: key[2])
+
+    village_name = Column("Village", calculate_fn=lambda key, _: key[3])
+
+    demonstrations = Column("Number of demonstrations done", key="demonstrations")
+
+#    worker_type #todo
+
+    children = Column("Number of 0-6 year old children", key="children")
+
+    leaflets = Column("Total number of leaflets distributed", key='leaflets')
+
+    kits = Column("Number of kits sold", key="kits")
 
 class PSISSReport(PSIReport):
     name = "Sensitization Sessions Report"
@@ -793,37 +719,50 @@ class PSISSReport(PSIReport):
               'corehq.apps.reports.commtrack.psi_prototype.StateDistrictBlockField',]
 
     @property
-    def headers(self):
-        return DataTablesHeader(DataTablesColumn("Name of State"),
-            DataTablesColumn("Name of District"),
-            DataTablesColumn("Name of Block"),
-            DataTablesColumn("Number of Sessions"),
-            DataTablesColumn("Ayush Trained"),
-            DataTablesColumn("MBBS Trained"),
-            DataTablesColumn("Asha Supervisors Trained"),
-            DataTablesColumn("Ashas Trained"),
-            DataTablesColumn("AWW Trained"),
-            DataTablesColumn("Other Trained"),
-            DataTablesColumn("VHND Attendees"))
+    def keys(self):
+        combos = _get_unique_combinations(self.domain,
+            place_types=['state', 'district', "block"], place=self.selected_fixture())
 
-    @property
-    def rows(self):
-        hh_data = psi_sensitization_sessions(self.domain, {}, place=self.selected_fixture(),
-            startdate=self.datespan.startdate_param_utc, enddate=self.datespan.enddate_param_utc)
-        for d in hh_data:
-            yield [
-                d.get("state"),
-                d.get("district"),
-                d.get("block"),
-                d.get("num_sessions") ,
-                d.get("num_ayush_doctors"),
-                d.get("num_mbbs_doctors"),
-                d.get("num_asha_supervisors"),
-                d.get("num_ashas"),
-                d.get("num_awws"),
-                d.get("num_other"),
-                d.get("number_attendees"),
-                ]
+        for c in combos:
+            yield [c['state'], c['district'], c["block"]]
+
+    couch_view = 'reports/psi_ss'
+
+    default_column_order = (
+        'state_name',
+        'district_name',
+        "block_name",
+        'sessions',
+        'ayush_doctors',
+        "mbbs_doctors",
+        "asha_supervisors",
+        "ashas",
+        "awws",
+        "other",
+        "attendees",
+    )
+
+    state_name = Column("State", calculate_fn=lambda key, _: key[0])
+
+    district_name = Column("District", calculate_fn=lambda key, _: key[1])
+
+    block_name = Column("Block", calculate_fn=lambda key, _: key[2])
+
+    sessions = Column("Number of Sessions", key="sessions")
+
+    ayush_doctors = Column("Ayush Trained", key="ayush_doctors")
+
+    mbbs_doctors = Column("MBBS Trained", key="mbbs_doctors")
+
+    asha_supervisors = Column("Asha Supervisors Trained", key="asha_supervisors")
+
+    ashas = Column("Ashas trained", key="ashas")
+
+    awws = Column("AWW Trained", key="awws")
+
+    other = Column("Other Trained", key="other")
+
+    attendees = Column("VHND Attendees", key='attendees')
 
 class PSITSReport(PSIReport):
     name = "Training Sessions Report"
