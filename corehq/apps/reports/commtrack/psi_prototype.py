@@ -695,9 +695,16 @@ class StateDistrictField(AsyncDrillableField):
     hierarchy = [{"type": "state", "display": "name"},
                  {"type": "district", "parent_ref": "state_id", "references": "id", "display": "name"},]
 
+class StateDistrictBlockField(AsyncDrillableField):
+    label = "State/District/Block"
+    slug = "location"
+    hierarchy = [{"type": "state", "display": "name"},
+                 {"type": "district", "parent_ref": "state_id", "references": "id", "display": "name"},
+                 {"type": "block", "parent_ref": "district_id", "references": "id", "display": "name"}]
+
 class AsyncPlaceField(AsyncDrillableField):
-    label = "Place"
-    slug = "new_place"
+    label = "State/District/Block/Village"
+    slug = "location"
     hierarchy = [{"type": "state", "display": "name"},
                  {"type": "district", "parent_ref": "state_id", "references": "id", "display": "name"},
                  {"type": "block", "parent_ref": "district_id", "references": "id", "display": "name"},
@@ -711,7 +718,8 @@ class PSIReport(GenericTabularReport, CustomProjectReport, DatespanMixin):
         return fixture.split(':') if fixture else None
 
 class PSIEventsReport(PSIReport):
-    fields = ['corehq.apps.reports.fields.DatespanField','corehq.apps.reports.commtrack.psi_prototype.StateDistrictField',]
+    fields = ['corehq.apps.reports.fields.DatespanField',
+              'corehq.apps.reports.commtrack.psi_prototype.StateDistrictField',]
     name = "Event Demonstration Report"
     slug = "event_demonstations"
     section_name = "event demonstrations"
@@ -781,6 +789,8 @@ class PSISSReport(PSIReport):
     name = "Sensitization Sessions Report"
     slug = "sensitization_sessions"
     section_name = "sensitization sessions"
+    fields = ['corehq.apps.reports.fields.DatespanField',
+              'corehq.apps.reports.commtrack.psi_prototype.StateDistrictBlockField',]
 
     @property
     def headers(self):
@@ -798,7 +808,7 @@ class PSISSReport(PSIReport):
 
     @property
     def rows(self):
-        hh_data = psi_sensitization_sessions(self.domain, {}, place_id=self.request.GET.get('location_id', ""),
+        hh_data = psi_sensitization_sessions(self.domain, {}, place=self.selected_fixture(),
             startdate=self.datespan.startdate_param_utc, enddate=self.datespan.enddate_param_utc)
         for d in hh_data:
             yield [
@@ -819,6 +829,8 @@ class PSITSReport(PSIReport):
     name = "Training Sessions Report"
     slug = "training_sessions"
     section_name = "training sessions"
+    fields = ['corehq.apps.reports.fields.DatespanField',
+              'corehq.apps.reports.commtrack.psi_prototype.StateDistrictField',]
 
     @property
     def headers(self):
@@ -846,7 +858,7 @@ class PSITSReport(PSIReport):
 
     @property
     def rows(self):
-        hh_data = psi_training_sessions(self.domain, {}, place_id=self.request.GET.get('location_id', ""),
+        hh_data = psi_training_sessions(self.domain, {}, place=self.selected_fixture(),
             startdate=self.datespan.startdate_param_utc, enddate=self.datespan.enddate_param_utc)
         for d in hh_data:
             yield [
@@ -923,31 +935,3 @@ def place_tree(domain):
             #                print "Error(Village): %s -> %s(%s)" % (item.fields['id'], parent.fields['id'], parent.get_id)
 
     return tree_root
-
-class PlaceField(ReportField):
-    name = ugettext_noop("State/District/Block/Village")
-    slug = "place"
-    template = "reports/fields/location.html"
-    is_cacheable = True
-
-    def update_context(self):
-        self.context.update(self._get_custom_context())
-
-    @request_cache('placefieldcontext')
-    def _get_custom_context(self):
-        all_locs = place_tree(self.domain)
-        def loc_to_json(loc):
-            return {
-                'name': loc.fields['name'],
-                #                'type': loc.location_type,
-                'uuid': "%s:%s" % (loc._place, loc.fields['id']),
-                'children': [loc_to_json(child) for child in loc._children],
-                }
-        loc_json = [loc_to_json(root) for root in all_locs]
-
-        return {
-            'control_name': self.name,
-            'control_slug': self.slug,
-            'loc_id': self.request.GET.get('location_id'),
-            'locations': json.dumps(loc_json)
-        }
