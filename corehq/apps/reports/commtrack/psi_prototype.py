@@ -478,7 +478,6 @@ def _get_unique_combinations(domain, place_types=None, place=None):
                 else:
                     comb[pt] = None
         combos.append(comb)
-
     return combos
 
 def psi_events(domain, query_dict, startdate=None, enddate=None, place=None):
@@ -490,9 +489,9 @@ def event_stats(domain, place_dict, location="", startdate=None, enddate=None):
     def ff_func(form):
         if form.form.get('@name', None) != 'Plays and Events':
             return False
-        if place_dict["state"] and form.xpath('form/activity_state') != place_dict["state"]:
+        if place_dict["state"] and str(form.xpath('form/activity_state')) != place_dict["state"]:
             return False
-        if place_dict["district"] and form.xpath('form/activity_district') != place_dict["district"]:
+        if place_dict["district"] and str(form.xpath('form/activity_district')) != place_dict["district"]:
             return False
         if location:
             if not form.xpath('form/event_location') == location:
@@ -519,13 +518,13 @@ def hd_stats(domain, place_dict, worker_type="", startdate=None, enddate=None):
     def ff_func(form):
         if form.form.get('@name', None) != 'Household Demonstration':
             return False
-        if place_dict["state"] and form.xpath('form/activity_state') != place_dict["state"]:
+        if place_dict["state"] and str(form.xpath('form/activity_state')) != place_dict["state"]:
             return False
-        if place_dict["district"] and form.xpath('form/activity_district') != place_dict["district"]:
+        if place_dict["district"] and str(form.xpath('form/activity_district')) != place_dict["district"]:
             return False
-        if place_dict["block"] and form.xpath('form/activity_block') != place_dict["block"]:
+        if place_dict["block"] and str(form.xpath('form/activity_block')) != place_dict["block"]:
             return False
-        if place_dict["village"] and form.xpath('form/activity_village') != place_dict["village"]:
+        if place_dict["village"] and str(form.xpath('form/activity_village')) != place_dict["village"]:
             return False
         if worker_type:
             if not form.xpath('form/demo_type') == worker_type:
@@ -551,11 +550,11 @@ def ss_stats(domain, place_dict, startdate=None, enddate=None):
     def ff_func(form):
         if form.form.get('@name', None) != 'Sensitization Session':
             return False
-        if place_dict["state"] and form.xpath('form/training_state') != place_dict["state"]:
+        if place_dict["state"] and str(form.xpath('form/training_state')) != place_dict["state"]:
             return False
-        if place_dict["district"] and form.xpath('form/training_district') != place_dict["district"]:
+        if place_dict["district"] and str(form.xpath('form/training_district')) != place_dict["district"]:
             return False
-        if place_dict["block"] and form.xpath('form/training_block') != place_dict["block"]:
+        if place_dict["block"] and str(form.xpath('form/training_block')) != place_dict["block"]:
             return False
         return True
 
@@ -587,9 +586,9 @@ def ts_stats(domain, place_dict, training_type="", startdate=None, enddate=None)
     def ff_func(form):
         if form.form.get('@name', None) != 'Training Session':
             return False
-        if place_dict["state"] and form.xpath('form/training_state') != place_dict["state"]:
+        if place_dict["state"] and str(form.xpath('form/training_state')) != place_dict["state"]:
             return False
-        if place_dict["district"] and form.xpath('form/training_district') != place_dict["district"]:
+        if place_dict["district"] and str(form.xpath('form/training_district')) != place_dict["district"]:
             return False
         if training_type:
             if not form.xpath('form/training_type') == training_type:
@@ -941,7 +940,7 @@ class PlaceField(ReportField):
             return {
                 'name': loc.fields['name'],
                 #                'type': loc.location_type,
-                'uuid': "%s:%s" % (loc._place, loc.fields['name']),
+                'uuid': "%s:%s" % (loc._place, loc.fields['id']),
                 'children': [loc_to_json(child) for child in loc._children],
                 }
         loc_json = [loc_to_json(root) for root in all_locs]

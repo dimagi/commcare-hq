@@ -64,8 +64,8 @@ def explode_cases(request, domain, template="hqcase/explode_cases.html"):
         except ValueError:
             messages.error(request, 'factor must be an int; was: %s' % factor)
         else:
-            keys = [[owner_id, False] for owner_id in user.get_owner_ids()]
-            for case in CommCareCase.view('case/by_owner',
+            keys = [[domain, owner_id, False] for owner_id in user.get_owner_ids()]
+            for case in CommCareCase.view('hqcase/by_owner',
                 keys=keys,
                 include_docs=True,
                 reduce=False
