@@ -1,7 +1,7 @@
 from django.conf import settings
 from django.utils.translation import ugettext_noop
 from corehq.apps.fixtures.models import FixtureDataType, FixtureDataItem
-from corehq.apps.reports.fields import ReportField
+from corehq.apps.reports.fields import ReportField, AsyncDrillableField
 from corehq.apps.reports.standard import ProjectReport, ProjectReportParametersMixin, DatespanMixin, CustomProjectReport
 from corehq.apps.reports.generic import GenericTabularReport
 from corehq.apps.domain.models import Domain
@@ -688,8 +688,16 @@ def _get_form(domain, action_filter=lambda a: True, form_filter=lambda f: True):
     except StopIteration:
         return None
 
+class AsyncPlaceField(AsyncDrillableField):
+    label = "Place"
+    slug = "new_place"
+    hierarchy = [{"type": "state", "display": "name"},
+                 {"type": "district", "parent_ref": "state_id", "references": "id", "display": "name"},
+                 {"type": "block", "parent_ref": "district_id", "references": "id", "display": "name"},
+                 {"type": "village", "parent_ref": "block_id", "references": "id", "display": "name"}]
+
 class PSIReport(GenericTabularReport, CustomProjectReport, DatespanMixin):
-    fields = ['corehq.apps.reports.fields.DatespanField','corehq.apps.reports.commtrack.psi_prototype.PlaceField',]
+    fields = ['corehq.apps.reports.fields.DatespanField','corehq.apps.reports.commtrack.psi_prototype.AsyncPlaceField',]
 
 class PSIEventsReport(PSIReport):
     name = "Event Demonstration Report"
