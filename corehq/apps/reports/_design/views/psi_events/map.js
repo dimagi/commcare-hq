@@ -1,6 +1,6 @@
 function (doc) {
     //!code util/emit_array.js
-    if(doc.doc_type == 'XFormInstance' && (doc.domain == 'psi' || doc.domain == 'psi-unicef')) {
+    if (doc.doc_type === 'XFormInstance' && (doc.domain === 'psi' || doc.domain === 'psi-unicef')) {
         var form = doc.form;
 
         if (form["@name"] !== 'Plays and Events') {
@@ -19,4 +19,4 @@ function (doc) {
 
         emit_array([form.activity_state, form.activity_district], [opened_on], data);
     }
-};
+}
