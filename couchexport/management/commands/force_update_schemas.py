@@ -1,7 +1,7 @@
 from django.core.management.base import LabelCommand, CommandError
 from couchexport.models import ExportSchema
-from couchexport.export import ExportConfiguration
 import json
+from couchexport.tasks import rebuild_schemas
 
 class Command(LabelCommand):
     help = "Given a particular export index, update all checkpoints " \
@@ -16,14 +16,7 @@ class Command(LabelCommand):
             to_update = ExportSchema.get_all_indices()
         else:
             to_update = [json.loads(index_in)]
-        
-        db = ExportSchema.get_db()
+
         for index in to_update:
-            all_checkpoints = ExportSchema.get_all_checkpoints(index)
-            config = ExportConfiguration(db, index, disable_checkpoints=True)
-            latest = config.create_new_checkpoint()
-            for cp in all_checkpoints:
-                cp.schema = latest.schema
-                cp.save()
-            else:
-                print "processed %s checkpoints matching %s" % (len(all_checkpoints), index)
+            processed = rebuild_schemas(index)
+            print "processed %s checkpoints matching %s" % (processed, index)

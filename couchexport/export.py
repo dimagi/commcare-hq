@@ -247,7 +247,7 @@ unknown_type = None
 def fit_to_schema(doc, schema):
 
     def log(msg):
-        raise SchemaMismatchException("doc-schema mismatch: %s" % msg)
+        raise SchemaMismatchException("doc-schema mismatch: %s (%s)" % (msg, doc))
 
     if schema is None:
         if doc:

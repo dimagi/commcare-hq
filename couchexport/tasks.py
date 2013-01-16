@@ -2,16 +2,26 @@ from celery.log import get_task_logger
 from unidecode import unidecode
 from celery.task import task
 import zipfile
-from couchexport.models import Format
+from couchexport.models import Format, ExportSchema
 import tempfile
 import os
 from soil.util import expose_download
+from couchexport.export import SchemaMismatchException, ExportConfiguration
 
 logging = get_task_logger()
 
 @task
 def export_async(custom_export, download_id, format=None, filename=None, **kwargs):
-    tmp, checkpoint = custom_export.get_export_files(format=format, process=export_async, **kwargs)
+    try:
+        tmp, checkpoint = custom_export.get_export_files(format=format, process=export_async, **kwargs)
+    except SchemaMismatchException, e:
+        # fire off a delayed force update to prevent this from happening again
+        rebuild_schemas.delay(custom_export.index)
+        msg = "Export failed for custom export {id}. Index is {index}. The specific error is {msg}."
+        raise Exception(msg.format(id=custom_export._id,
+                                   index=custom_export.index,
+                                   msg=str(e)))
+
     try:
         format = tmp.format
     except AttributeError:
@@ -19,6 +29,21 @@ def export_async(custom_export, download_id, format=None, filename=None, **kwarg
     if not filename:
         filename = custom_export.name
     return cache_file_to_be_served(tmp, checkpoint, download_id, format, filename)
+
+@task
+def rebuild_schemas(index):
+    """
+    Resets the schema for all checkpoints to the latest version based off the
+    current document structure. Returns the number of checkpoints updated.
+    """
+    db = ExportSchema.get_db()
+    all_checkpoints = ExportSchema.get_all_checkpoints(index)
+    config = ExportConfiguration(db, index, disable_checkpoints=True)
+    latest = config.create_new_checkpoint()
+    for cp in all_checkpoints:
+        cp.schema = latest.schema
+        cp.save()
+    return len(all_checkpoints)
 
 @task
 def bulk_export_async(bulk_export_helper, download_id,
