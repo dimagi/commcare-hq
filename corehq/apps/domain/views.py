@@ -131,7 +131,7 @@ def project_settings(request, domain, template="domain/admin/project_settings.ht
        'deployment_info_form' not in request.POST:
         # deal with saving the settings data
         if user_sees_meta:
-            form = DomainMetadataForm(request.POST)
+            form = DomainMetadataForm(request.POST, user=request.couch_user)
         else:
             form = DomainGlobalSettingsForm(request.POST)
         if form.is_valid():
@@ -141,7 +141,7 @@ def project_settings(request, domain, template="domain/admin/project_settings.ht
                 messages.error(request, "There seems to have been an error saving your settings. Please try again!")
     else:
         if user_sees_meta:
-            form = DomainMetadataForm(initial={
+            form = DomainMetadataForm(user=request.couch_user, initial={
                 'default_timezone': domain.default_timezone,
                 'case_sharing': json.dumps(domain.case_sharing),
                 'project_type': domain.project_type,

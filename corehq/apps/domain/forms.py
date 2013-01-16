@@ -147,7 +147,14 @@ class DomainMetadataForm(DomainGlobalSettingsForm, SnapshotSettingsMixin):
         choices=(('basic', 'Basic'), ('plus', 'Plus'), ('full', 'Full')))
     is_test = ChoiceField(label='Test Project', choices=(('false', 'Real'), ('true', 'Test')))
     survey_management_enabled = BooleanField(label='Survey Management Enabled', required=False)
-    commtrack_enabled = BooleanField(label='CommTrack Enabled', required=False)
+    commtrack_enabled = BooleanField(label='CommTrack Enabled', required=False, help_text='CommTrack is a CommCareHQ module for logistics, inventory tracking, and supply chain management. It is still under active development. Do not enable for your domain unless you\'re actively piloting it.')
+
+    def __init__(self, *args, **kwargs):
+        user = kwargs.pop('user', None)
+        super(DomainMetadataForm, self).__init__(*args, **kwargs)
+        if not (user and user.is_previewer):
+            # commtrack is pre-release
+            self.fields['commtrack_enabled'].widget = forms.HiddenInput()
 
     def save(self, request, domain):
         res = DomainGlobalSettingsForm.save(self, request, domain)

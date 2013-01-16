@@ -88,10 +88,11 @@
         {% if request.couch_user.is_domain_admin %} <!-- TODO refine user roles? -->
         <li class="nav-header">CommTrack</li>
         <li><a href="{% url domain_commtrack_settings domain %}">Project Settings</a></li>
-        <li><a href="{% url domain_snapshot_settings domain %}">Manage Products</a></li>
-        <li><a href="{% url domain_snapshot_settings domain %}">Manage Locations</a></li>
+        <li><a href="#">Manage Products (todo)</a></li>
+        <li><a href="#">Manage Locations (todo)</a></li>
         {% endif %}
     {% endif %}
+
     </ul>
 </nav>
 {% endblock %}
