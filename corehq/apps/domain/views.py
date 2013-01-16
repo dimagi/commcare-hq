@@ -147,13 +147,14 @@ def project_settings(request, domain, template="domain/admin/project_settings.ht
                 'project_type': domain.project_type,
                 'customer_type': domain.customer_type,
                 'is_test': json.dumps(domain.is_test),
-                'survey_management_enabled' : domain.survey_management_enabled,
+                'survey_management_enabled': domain.survey_management_enabled,
+                'commtrack_enabled': domain.commtrack_enabled,
             })
         else:
             form = DomainGlobalSettingsForm(initial={
                 'default_timezone': domain.default_timezone,
                 'case_sharing': json.dumps(domain.case_sharing)
-                })
+            })
 
     if request.method == 'POST' and 'deployment_info_form' in request.POST:
         deployment_form = DomainDeploymentForm(request.POST)
@@ -198,6 +199,7 @@ def project_settings(request, domain, template="domain/admin/project_settings.ht
         deployment_form=deployment_form,
         languages=domain.readable_languages(),
         applications=domain.applications(),
+        commtrack_enabled=domain.commtrack_enabled,
         autocomplete_fields=('project_type', 'phone_model', 'user_type', 'city', 'country', 'region'),
         billing_info_form=billing_info_form,
         billing_info_partial=billing_info_partial,
@@ -476,4 +478,24 @@ def manage_multimedia(request, domain):
             'type': m.doc_type
                    } for m in media],
         'licenses': LICENSES.items()
-                                                                     })
+                                                                           })
+
+@domain_admin_required
+def commtrack_settings(request, domain):
+    domain = Domain.get_by_name(domain)
+
+    return render_to_response(request, 'domain/admin/commtrack_settings.html', dict(
+            domain=domain.name,
+        ))
+
+"""
+        form=form,
+        deployment_form=deployment_form,
+        languages=domain.readable_languages(),
+        applications=domain.applications(),
+        autocomplete_fields=('project_type', 'phone_model', 'user_type', 'city', 'country', 'region'),
+        billing_info_form=billing_info_form,
+        billing_info_partial=billing_info_partial,
+        billing_enabled=billing_enabled
+    ))
+"""

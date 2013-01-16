@@ -147,6 +147,7 @@ class DomainMetadataForm(DomainGlobalSettingsForm, SnapshotSettingsMixin):
         choices=(('basic', 'Basic'), ('plus', 'Plus'), ('full', 'Full')))
     is_test = ChoiceField(label='Test Project', choices=(('false', 'Real'), ('true', 'Test')))
     survey_management_enabled = BooleanField(label='Survey Management Enabled', required=False)
+    commtrack_enabled = BooleanField(label='CommTrack Enabled', required=False)
 
     def save(self, request, domain):
         res = DomainGlobalSettingsForm.save(self, request, domain)
@@ -157,6 +158,7 @@ class DomainMetadataForm(DomainGlobalSettingsForm, SnapshotSettingsMixin):
             domain.customer_type = self.cleaned_data['customer_type']
             domain.is_test = self.cleaned_data['is_test'] == 'true'
             domain.survey_management_enabled = self.cleaned_data.get('survey_management_enabled', False)
+            domain.commtrack_enabled = self.cleaned_data.get('commtrack_enabled', False)
             domain.save()
             return True
         except Exception:

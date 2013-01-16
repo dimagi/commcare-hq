@@ -16,6 +16,7 @@ from dimagi.utils.couch.database import get_db
 from itertools import chain
 from langcodes import langs as all_langs
 from collections import defaultdict
+from corehq.apps.commtrack.models import CommtrackConfig
 
 lang_lookup = defaultdict(str)
 
@@ -669,6 +670,12 @@ class Domain(Document, HQBillingDomainMixin, SnapshotMixin):
     def public_deployments(cls):
         return Domain.view('domain/with_deployment', include_docs=True).all()
 
+    @property
+    def commtrack_settings(self):
+        if self.commtrack_enabled:
+            return CommtrackConfig.for_domain(self.name)
+        else:
+            return None
 
 ##############################################################################################################
 #
