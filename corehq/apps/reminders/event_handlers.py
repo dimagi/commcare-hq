@@ -10,6 +10,7 @@ from corehq.apps.users.models import CouchUser
 from corehq.apps.sms.models import CallLog, EventLog, MISSED_EXPECTED_CALLBACK
 from django.conf import settings
 from corehq.apps.app_manager.models import Form
+from corehq.apps.ivr.api import initiate_outbound_call
 
 """
 This module defines the methods that will be called from CaseReminderHandler.fire()

@@ -207,7 +207,8 @@ class CallLog(MessageLog):
         calls = cls.view("sms/by_recipient",
                     startkey=[caller_doc_type, caller_id, "CallLog", OUTGOING, start_timestamp],
                     endkey=[caller_doc_type, caller_id, "CallLog", OUTGOING, end_timestamp],
-                    reduce=False).all()
+                    reduce=False,
+                    include_docs=True).all()
         result = False
         for call in calls:
             if call.answered:
