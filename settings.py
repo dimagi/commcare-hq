@@ -691,20 +691,20 @@ CUSTOM_REPORT_MAP = {
     },
     "psi": {
         "Custom Reports": [
-            'corehq.apps.reports.commtrack.psi_prototype.PSIEventsReport',
-            'corehq.apps.reports.commtrack.psi_prototype.PSIHDReport',
-            'corehq.apps.reports.commtrack.psi_prototype.PSISSReport',
-            'corehq.apps.reports.commtrack.psi_prototype.PSITSReport',
+            'psi.reports.PSIEventsReport',
+            'psi.reports.PSIHDReport',
+            'psi.reports.PSISSReport',
+            'psi.reports.PSITSReport',
         ]
     },
     "psi-unicef": {
         "Custom Reports": [
-            'corehq.apps.reports.commtrack.psi_prototype.PSIEventsReport',
-            'corehq.apps.reports.commtrack.psi_prototype.PSIHDReport',
-            'corehq.apps.reports.commtrack.psi_prototype.PSISSReport',
-            'corehq.apps.reports.commtrack.psi_prototype.PSITSReport',
+            'psi.reports.PSIEventsReport',
+            'psi.reports.PSIHDReport',
+            'psi.reports.PSISSReport',
+            'psi.reports.PSITSReport',
         ]
-    }
+    },
     #    "test": [
     #        'corehq.apps.reports.deid.FormDeidExport',
     #    ]
