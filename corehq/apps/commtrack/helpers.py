@@ -48,7 +48,7 @@ def make_psi_config(domain):
         domain=domain,
         multiaction_enabled=True,
         multiaction_keyword='s',
-        actions = [
+        actions=[
             CommtrackActionConfig(
                 action_type='stockedoutfor',
                 keyword='d',
@@ -70,6 +70,21 @@ def make_psi_config(domain):
                 keyword='p',
                 caption='Placements'
             ),
+        ],
+        supply_point_types=[
+            SupplyPointType(name='CHC', categories=['Public']),
+            SupplyPointType(name='PHC', categories=['Public']),
+            SupplyPointType(name='SC', categories=['Public']),
+            SupplyPointType(name='MBBS', categories=['Private']),
+            SupplyPointType(name='Pediatrician', categories=['Private']),
+            SupplyPointType(name='AYUSH', categories=['Private']),
+            SupplyPointType(name='Medical Store / Chemist', categories=['Traditional']),
+            SupplyPointType(name='RMP', categories=['Traditional']),
+            SupplyPointType(name='Asha', categories=['Frontline Workers']),
+            SupplyPointType(name='AWW', categories=['Public', 'Frontline Workers']),
+            SupplyPointType(name='NGO', categories=['Non-traditional']),
+            SupplyPointType(name='CBO', categories=['Non-traditional']),
+            SupplyPointType(name='SHG', categories=['Non-traditional']),
         ]
     )
     c.save()

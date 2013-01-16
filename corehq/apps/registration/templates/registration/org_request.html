@@ -6,7 +6,7 @@
 <script type="text/javascript">
     $(function() {
         $("#termsOfServiceDomainModal").on("show", function() {
-            $(this).find(".modal-body").load("{% url tos %}");
+            $(this).find(".modal-body").load("{% url eula %}");
         });
     });
 </script>
@@ -34,7 +34,7 @@ Create a New Organization
                 <div class="control-group{% if field.errors %} error{% endif %}">
                     <label class="control-label" for="{{ field.id }}">{{ field.label }}</label>
                     <div class="controls">
-                        {% ifnotequal field.name 'tos_confirmed' %}
+                        {% ifnotequal field.name 'eula_confirmed' %}
                         {{ field }}
                         {% else %}
                         <label class="checkbox">{{ field }} I have read and agree to the <a data-toggle="modal" data-target="#termsOfServiceDomainModal" href="#termsOfServiceDomainModal">CommCare HQ Terms of Service</a>.</label>

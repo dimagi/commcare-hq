@@ -273,7 +273,7 @@ class GenericReportView(CacheableRequestMixIn):
             fields = self.fields
         for field in fields or []:
             if isinstance(field, basestring):
-                klass = to_function(field)
+                klass = to_function(field, failhard=True)
             else:
                 klass = field
             filters.append(klass(self.request, self.domain, self.timezone))

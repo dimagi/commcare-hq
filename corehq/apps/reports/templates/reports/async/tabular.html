@@ -29,6 +29,7 @@
         {% endif %}
         </thead>
         <tbody>
+        {% block tabular-body %}
         {% if report_table.pagination.is_on %}
             <tr>
                 <td colspan="{{ report_table.headers.header|length }}" class="dataTables_empty">
@@ -39,13 +40,11 @@
         {% for row in report_table.rows %}
             <tr>
                 {% for col in row %}
-                    <td class="{% if not col or col.html != None and not col.html %}null-entry{% endif %}">
-                        {% if col.html != None %}{{ col.html|safe }}{% else %}{{ col|safe }}{% endif %}
-                        <span title="{% if col.sort_key != "" %}{{ col.sort_key }}{% else %}{{ col }}{% endif %}"></span>
-                    </td>
+                    {% include 'reports/async/partials/tabular_cell.html' %}
                 {% endfor %}
             </tr>
         {% endfor %}
+        {% endblock %}
         </tbody>
         {% if report_table.total_row and report_table.rows %}
             <tfoot>
@@ -61,7 +60,7 @@
                 {% for stats in report_table.statistics_rows %}
                     <tr>
                     {% for col in stats %}
-                        {% ifequal forloop.counter0 0 %}<th>{% else %}<td>{% endifequal %}
+                        {% ifequal forloop.counter0 0 %}<th>{% else %}<td{% if col.css_class %} class="{{ col.css_class }}"{% endif %}>{% endifequal %}
                             {% if col.html != None %}{{ col.html|safe }}{% else %}{{ col|safe }}{% endif %}
                         {% ifequal forloop.counter0 0 %}</th>{% else %}</td>{% endifequal %}
                     {% endfor %}

@@ -10,7 +10,7 @@
         {{ col.title }}
     {% if col.rotate %}</div>{% endif %}
     {% if col.expected %}
-        <div class="expected">{{ col.expected }}</div>
+        <div class="expected header-popover" data-title="Expected Value for {{ col.title }}" data-content="The expected value for this column is '{{ col.expected }}'">{{ col.expected }}</div>
     {% endif %}
     {% if col.help_text %}
         <i class="icon-white icon-question-sign"></i>
