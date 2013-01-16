@@ -13,6 +13,8 @@ from dimagi.utils.timezones.forms import TimeZoneChoiceField
 from django.template.loader import render_to_string
 from django.utils.translation import ugettext_noop
 
+import corehq.apps.commtrack.util as commtrack_util
+
 class SnapshotSettingsMixin(forms.Form):
     project_type = CharField(label=ugettext_noop("Project Category"), required=False,
         help_text=ugettext_noop("e.g. MCH, HIV, etc."))
@@ -166,6 +168,8 @@ class DomainMetadataForm(DomainGlobalSettingsForm, SnapshotSettingsMixin):
             domain.is_test = self.cleaned_data['is_test'] == 'true'
             domain.survey_management_enabled = self.cleaned_data.get('survey_management_enabled', False)
             domain.commtrack_enabled = self.cleaned_data.get('commtrack_enabled', False)
+            if domain.commtrack_enabled and not domain.commtrack_settings:
+                commtrack_util.bootstrap_default(domain.name)
             domain.save()
             return True
         except Exception:
