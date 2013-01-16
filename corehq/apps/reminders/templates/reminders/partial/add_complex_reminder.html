@@ -47,7 +47,7 @@
         font-weight: normal;
     }
     .time_type {
-        width: 100px;
+        width: 125px;
     }
 </style>
 {% endblock %}
@@ -507,7 +507,7 @@
                             <option value="CASE_PROPERTY" {% if e.time_type == "CASE_PROPERTY" %}selected="selected"{% endif %}>Case Property</option>
                         </select>
                     </td>
-                    <td><input type="text" class="short" name="reminder_events.{{ forloop.counter }}.time" value="{{ e.time }}" /></td>
+                    <td><input type="text" class="input-medium" name="reminder_events.{{ forloop.counter }}.time" value="{{ e.time }}" /></td>
                     <td class="for_sms for_sms_callback">
                         {% for message_num, message in e.messages.items %}
                         <div>
@@ -534,7 +534,7 @@
                             </select>
                         </div>
                     </td>
-                    <td class="for_sms_survey for_sms_callback for_ivr_survey"><input type="text" name="reminder_events.{{ forloop.counter }}.timeouts" value="{{ e.timeouts }}" /></td>
+                    <td class="for_sms_survey for_sms_callback for_ivr_survey"><input type="text" class="input-small" name="reminder_events.{{ forloop.counter }}.timeouts" value="{{ e.timeouts }}" /></td>
                     <td><span class="btn btn-danger remove_event"><i class="icon icon-white icon-remove"></i> Remove</span></td>
                 </tr>
                 {% endfor %}
