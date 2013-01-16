@@ -94,3 +94,6 @@
 [submodule "submodules/couchdbkit-aggregate"]
 	path = submodules/couchdbkit-aggregate
 	url = git://github.com/dimagi/couchdbkit-aggregate.git
+[submodule "submodules/psi-reports"]
+	path = submodules/psi-reports
+	url = git://github.com/dimagi/psi-reports.git
