@@ -95,6 +95,11 @@ class CommtrackReportMixin(ProjectReport, ProjectReportParametersMixin):
         else:
             return filter(lambda p: p['_id'] in selected, products)
 
+    # a setting that hides supply points that have no data. mostly for PSI weirdness
+    # of how they're managing their locations. don't think it's a good idea for
+    # commtrack in general
+    HIDE_NODATA_LOCS = True
+
 def get_transactions(form_doc, include_inferred=True):
     from collections import Sequence
     txs = form_doc['form']['transaction']
@@ -258,6 +263,7 @@ class SalesAndConsumptionReport(GenericTabularReport, CommtrackReportMixin, Date
 
             data = [getattr(site, key) for key, caption in OUTLET_METADATA]
             stockouts = {}
+            inactive_site = True
             for p in products:
                 tx_by_action = map_reduce(lambda tx: [(tx['action'], int(tx['value']))], data=tx_by_product.get(p['_id'], []))
 
@@ -270,6 +276,7 @@ class SalesAndConsumptionReport(GenericTabularReport, CommtrackReportMixin, Date
                 if latest_state:
                     stock = latest_state['updated_unknown_properties']['current_stock']
                     as_of = dateparse.string_to_datetime(latest_state['server_date']).strftime('%Y-%m-%d')
+                    inactive_site = False
 
                 stockout_dates = set()
                 for state in product_states:
@@ -291,9 +298,12 @@ class SalesAndConsumptionReport(GenericTabularReport, CommtrackReportMixin, Date
             combined_stockout_days = len(reduce(lambda a, b: a.intersection(b), stockouts.values()))
             data.append(combined_stockout_days)
 
+            if self.HIDE_NODATA_LOCS and inactive_site:
+                return None
+
             return data
 
-        return [summary_row(site, reports_by_loc.get(site._id, [])) for site in locs]
+        return filter(lambda r: r, (summary_row(site, reports_by_loc.get(site._id, [])) for site in locs))
 
 class CumulativeSalesAndConsumptionReport(GenericTabularReport, CommtrackReportMixin, DatespanMixin):
     name = 'Sales and Consumption Report, Cumulative'
@@ -412,6 +422,7 @@ class StockOutReport(GenericTabularReport, CommtrackReportMixin, DatespanMixin):
             data = [getattr(site, key) for key, caption in OUTLET_METADATA]
 
             stockout_days = []
+            inactive_site = True
             for p in products:
                 startkey = [str(self.domain), site._id, p['_id']]
                 endkey = startkey + [{}]
@@ -424,6 +435,7 @@ class StockOutReport(GenericTabularReport, CommtrackReportMixin, DatespanMixin):
                         so_days = (date.today() - dateparse.string_to_datetime(so_date).date()).days + 1
                     else:
                         so_days = 0
+                    inactive_site = False
                 else:
                     so_days = None
 
@@ -436,9 +448,12 @@ class StockOutReport(GenericTabularReport, CommtrackReportMixin, DatespanMixin):
             combined_stockout_days = min(stockout_days) if stockout_days else None
             data.append(combined_stockout_days if combined_stockout_days is not None else u'\u2014')
 
+            if self.HIDE_NODATA_LOCS and inactive_site:
+                return None
+            
             return data
 
-        return [row(site) for site in self.outlets]
+        return filter(lambda r: r, (row(site) for site in self.outlets))
 
 def _get_unique_combinations(domain, place_types=None, place=None):
     if not place_types:
