@@ -7,7 +7,7 @@ from django.core.exceptions import ValidationError
 from django.forms import Form
 import simplejson
 from corehq.apps.api.es import CaseES
-from pact.enums import PACT_HP_CHOICES, PACT_DOT_CHOICES, PACT_REGIMEN_CHOICES, GENDER_CHOICES, PACT_RACE_CHOICES, PACT_HIV_CLINIC_CHOICES, PACT_LANGUAGE_CHOICES, CASE_NONART_REGIMEN_PROP, CASE_ART_REGIMEN_PROP, DOT_ART, DOT_NONART
+from pact.enums import PACT_HP_CHOICES, PACT_DOT_CHOICES, PACT_REGIMEN_CHOICES, GENDER_CHOICES, PACT_RACE_CHOICES, PACT_HIV_CLINIC_CHOICES, PACT_LANGUAGE_CHOICES, CASE_NONART_REGIMEN_PROP, CASE_ART_REGIMEN_PROP, DOT_ART, DOT_NONART, PACT_DOMAIN
 from django.forms import widgets
 from pact.regimen import regimen_string_from_doc, regimen_dict_from_choice
 
@@ -45,11 +45,11 @@ class PactPatientForm(Form):
 
     patient_notes = forms.CharField(widget = widgets.Textarea(attrs={'cols':80,'rows':5}), required=False)
 
-    def __init__(self, casedoc, *args, **kwargs):
+    def __init__(self, request, casedoc, *args, **kwargs):
         super(PactPatientForm, self).__init__(*args, **kwargs)
         self.casedoc = casedoc
         self.fields['hp'].choices = get_hp_choices()
-        self.case_es = CaseES()
+        self.case_es = CaseES(request.domain)
         for name, field in self.fields.items():
             print "%s: %s" % (name, getattr(self.casedoc, name, ''))
 

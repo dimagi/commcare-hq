@@ -86,7 +86,7 @@ class PactPatientInfoReport(PactDrilldownReportMixin,ESSortableMixin, GenericTab
             ret['schedule_fields'] = simplejson.dumps(the_form.fields.keys())
             self.report_template_path = "pact/patient/pactpatient_schedule.html"
         elif view_mode == 'edit':
-            the_form = PactPatientForm(patient_doc)
+            the_form = PactPatientForm(self.request, patient_doc)
             ret['patient_form'] = the_form
             self.report_template_path = "pact/patient/pactpatient_edit.html"
         elif view_mode == 'providers':

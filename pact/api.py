@@ -452,6 +452,13 @@ class PactAPI(DomainAPI):
 
                 if submitted_provider_ids != case_provider_ids:
                     try:
+                        #len difference
+                        submitted_len = len(submitted_provider_ids)
+                        case_len = len(case_provider_ids)
+                        if submitted_len < case_len:
+                            for x in range(case_len-submitted_len):
+                                submitted_provider_ids.append('')
+                        print submitted_provider_ids
                         pdoc.update_providers(self.request.couch_user, submitted_provider_ids)
                         resp.write("success")
                         resp.status_code=204
@@ -469,7 +476,7 @@ class PactAPI(DomainAPI):
 
 
         elif self.method == "patient_edit":
-            form = PactPatientForm(pdoc, data=self.request.POST)
+            form = PactPatientForm(self.request, pdoc, data=self.request.POST)
             if form.is_valid():
                 update_data = form.clean_changed_data
                 submit_case_update_form(pdoc, update_data, self.request.couch_user)
