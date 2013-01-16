@@ -208,6 +208,7 @@ HQ_APPS = (
     'mvp_apps',
     'pathfinder',
     'pathindia',
+    'psi',
 )
 
 TEST_APPS = (
@@ -468,6 +469,7 @@ COUCHDB_APPS = [
     'mvp',
     'pathfinder',
     'pathindia',
+    'psi',
 ]
 
 
