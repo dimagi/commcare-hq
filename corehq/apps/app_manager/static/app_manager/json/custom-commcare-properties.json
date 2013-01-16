@@ -85,6 +85,16 @@
     "requires": "{$parent.case_sharing}='false'",
     "contingent_default": [{"condition": "{$parent.case_sharing}='true'", "value": "sync"}]
 }, {
+    "name": "Auto-Sync Frequency",
+    "description": "Automatically trigger a two-way sync on a regular schedule",
+    "id": "cc-autosync-freq",
+    "values": ["freq-never", "freq-daily", "freq-weekly"],
+    "value_names": ["Disabled", "Daily","Weekly"],
+    "default": "freq-never",
+    "requires": "{properties.server-tether}='sync'",
+    "values_txt": "When auto-sync is enabled CommCare will attempt to submit forms and synchronize the user's data after logging in with the frequency chosen.",
+    "since": "2.0"
+}, {
     "name": "OTA Restore Tolerance",
     "description": "Whether OTA Restore is tolerant of failures, ambiguity, duplicate registrations, etc (and proceeds as best it can), or whether it fails immediately in these cases.",
     "id": "restore-tolerance",
