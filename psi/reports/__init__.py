@@ -44,7 +44,7 @@ class PSIEventsReport(PSIReport):
     slug = "event_demonstations"
     section_name = "event demonstrations"
 
-    couch_view = 'reports/psi_events'
+    couch_view = 'psi/events'
 
     default_column_order = (
         'state_name',
@@ -90,7 +90,7 @@ class PSIHDReport(PSIReport):
         for c in combos:
             yield [c['state'], c['district'], c["block"], c["village"]]
 
-    couch_view = 'reports/psi_hd'
+    couch_view = 'psi/household_demonstrations'
 
     default_column_order = (
         'state_name',
@@ -137,7 +137,7 @@ class PSISSReport(PSIReport):
         for c in combos:
             yield [c['state'], c['district'], c["block"]]
 
-    couch_view = 'reports/psi_ss'
+    couch_view = 'psi/sensitization'
 
     default_column_order = (
         'state_name',
