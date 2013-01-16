@@ -62,9 +62,7 @@ def data_types(request, domain, data_type_id):
             return json_response(strip_json(data_type))
 
         elif request.method == 'DELETE':
-            for item in FixtureDataItem.by_data_type(domain, data_type.get_id):
-                item.delete()
-            data_type.delete()
+            data_type.recursive_delete()
             return json_response({})
 
     elif data_type_id is None:
@@ -76,6 +74,11 @@ def data_types(request, domain, data_type_id):
 
         elif request.method == 'GET':
             return json_response([strip_json(x) for x in FixtureDataType.by_domain(domain)])
+
+        elif request.method == 'DELETE':
+            for data_type in FixtureDataType.by_domain(domain):
+                data_type.recursive_delete()
+            return json_response({})
 
     return HttpResponseBadRequest()
 
@@ -119,7 +122,7 @@ def data_items(request, domain, data_type_id, data_item_id):
     elif request.method == 'DELETE' and data_item_id:
         o = FixtureDataItem.get(data_item_id)
         assert(o.domain == domain and o.data_type.get_id == data_type_id)
-        o.delete()
+        o.delete_recursive()
         return json_response({})
     else:
         return HttpResponseBadRequest()
