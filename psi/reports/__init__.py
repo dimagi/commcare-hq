@@ -1,7 +1,9 @@
+from corehq.apps.fixtures.models import FixtureDataItem, FixtureDataType
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
 from corehq.apps.reports.standard import CustomProjectReport, DatespanMixin
 from corehq.apps.reports.basic import BasicTabularReport, Column
 from corehq.apps.reports.fields import AsyncDrillableField
+from dimagi.utils.decorators.memoized import memoized
 from util import get_unique_combinations, psi_training_sessions
 
 class StateDistrictField(AsyncDrillableField):
@@ -77,6 +79,16 @@ class PSIEventsReport(PSIReport):
         for c in combos:
             yield [c['state'], c['district']]
 
+@memoized
+def get_village_fdt(domain):
+    return FixtureDataType.by_domain_tag(domain, 'village').one()
+
+def get_village_name(key, req):
+    village_fdt = get_village_fdt(req.domain)
+    id = key[3]
+    village_fdi = FixtureDataItem.by_field_value(req.domain, village_fdt, 'id', float(id)).one()
+    return village_fdi.fields.get("name", id) if village_fdi else id
+
 class PSIHDReport(PSIReport):
     name = "Household Demonstrations Report"
     slug = "household_demonstations"
@@ -110,7 +122,7 @@ class PSIHDReport(PSIReport):
 
     block_name = Column("Block", calculate_fn=lambda key, _: key[2])
 
-    village_name = Column("Village", calculate_fn=lambda key, _: key[3])
+    village_name = Column("Village", calculate_fn=get_village_name)
 
     demonstrations = Column("Number of demonstrations done", key="demonstrations")
 
