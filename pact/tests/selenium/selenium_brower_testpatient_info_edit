@@ -1,0 +1,172 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+<head profile="http://selenium-ide.openqa.org/profiles/test-case">
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<link rel="selenium.base" href="http://localhost:8000/a/pact/reports/" />
+<title>Patient Info Edit</title>
+</head>
+<body>
+<table cellpadding="1" cellspacing="1" border="1">
+<thead>
+<tr><td rowspan="1" colspan="3">Patient Info Edit</td></tr>
+</thead><tbody>
+<tr>
+	<td>open</td>
+	<td>/a/pact/reports/custom/patient/?patient_id=66a4f2d0e9d5467e34122514c341ed92</td>
+	<td></td>
+</tr>
+<tr>
+	<td>verifyTextNotPresent</td>
+	<td>selenium edit 12345</td>
+	<td></td>
+</tr>
+<tr>
+	<td>clickAndWait</td>
+	<td>id=btn_pt_edit</td>
+	<td></td>
+</tr>
+<tr>
+	<td>type</td>
+	<td>id=id_patient_notes</td>
+	<td>selenium edit foobar12345</td>
+</tr>
+<tr>
+	<td>click</td>
+	<td>id=submit_button</td>
+	<td></td>
+</tr>
+<tr>
+	<td>verifyTextPresent</td>
+	<td>selenium edit foobar12345</td>
+	<td></td>
+</tr>
+<tr>
+	<td>verifyTextNotPresent</td>
+	<td>Jonathan Pincus </td>
+	<td></td>
+</tr>
+<tr>
+	<td>clickAndWait</td>
+	<td>id=btn_provider_edit</td>
+	<td></td>
+</tr>
+<tr>
+	<td>select</td>
+	<td>css=select</td>
+	<td>label=Codman Square Health Center</td>
+</tr>
+<tr>
+	<td>click</td>
+	<td>//div[@id='providerblock']/div[2]/table/tbody/tr[84]/td/button</td>
+	<td></td>
+</tr>
+<tr>
+	<td>click</td>
+	<td>id=btn_provider_save</td>
+	<td></td>
+</tr>
+<tr>
+	<td>clickAndWait</td>
+	<td>link=Info</td>
+	<td></td>
+</tr>
+<tr>
+	<td>verifyTextPresent</td>
+	<td>Jonathan Pincus </td>
+	<td></td>
+</tr>
+<tr>
+	<td>clickAndWait</td>
+	<td>id=btn_provider_edit</td>
+	<td></td>
+</tr>
+<tr>
+	<td>click</td>
+	<td>//div[@id='providerblock']/div/table/tbody/tr[3]/td[2]/p/button</td>
+	<td></td>
+</tr>
+<tr>
+	<td>click</td>
+	<td>id=btn_provider_save</td>
+	<td></td>
+</tr>
+<tr>
+	<td>clickAndWait</td>
+	<td>link=Info</td>
+	<td></td>
+</tr>
+<tr>
+	<td>verifyTextNotPresent</td>
+	<td>Jonathan Pincus </td>
+	<td></td>
+</tr>
+<tr>
+	<td>verifyTextNotPresent</td>
+	<td>new schedule added selenium</td>
+	<td></td>
+</tr>
+<tr>
+	<td>clickAndWait</td>
+	<td>link=Schedule</td>
+	<td></td>
+</tr>
+<tr>
+	<td>select</td>
+	<td>id=id_sunday</td>
+	<td>label=ctsims</td>
+</tr>
+<tr>
+	<td>select</td>
+	<td>id=id_monday</td>
+	<td>label=ctsims</td>
+</tr>
+<tr>
+	<td>select</td>
+	<td>id=id_wednesday</td>
+	<td>label=ctsims</td>
+</tr>
+<tr>
+	<td>select</td>
+	<td>id=id_saturday</td>
+	<td>label=ctsims</td>
+</tr>
+<tr>
+	<td>type</td>
+	<td>id=id_comment</td>
+	<td>new schedule added selenium</td>
+</tr>
+<tr>
+	<td>click</td>
+	<td>id=btn_schedule_submit</td>
+	<td></td>
+</tr>
+<tr>
+	<td>verifyTextPresent</td>
+	<td>new schedule added selenium</td>
+	<td></td>
+</tr>
+<tr>
+	<td>verifyTextPresent</td>
+	<td>ctsims 	ctsims 	--- 	ctsims 	--- 	--- 	ctsims</td>
+	<td></td>
+</tr>
+<tr>
+	<td>click</td>
+	<td>id=btn_remove_last_schedule</td>
+	<td></td>
+</tr>
+<tr>
+	<td>assertAlert</td>
+	<td>Removed, I hope you know what you're doing</td>
+	<td></td>
+</tr>
+<tr>
+	<td>clickAndWait</td>
+	<td>link=Info</td>
+	<td></td>
+</tr>
+
+</tbody></table>
+</body>
+</html>

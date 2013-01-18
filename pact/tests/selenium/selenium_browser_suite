@@ -9,6 +9,9 @@
 <table id="suiteTable" cellpadding="1" cellspacing="1" border="1" class="selenium"><tbody>
 <tr><td><b>Test Suite</b></td></tr>
 <tr><td><a href="selenium_browser_suite">Report Views</a></td></tr>
+<tr><td><a href="selenium_browser_report_views">Test Patient View</a></td></tr>
+<tr><td><a href="selenium_brower_testpatient_info_edit">Patient Info Edit</a></td></tr>
+<tr><td><a href="selenium_brower_testpatient_cloudcare">Patient Cloudcare</a></td></tr>
 </tbody></table>
 </body>
 </html>

@@ -1,0 +1,182 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+<head profile="http://selenium-ide.openqa.org/profiles/test-case">
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<link rel="selenium.base" href="http://localhost:8000/a/pact/reports/" />
+<title>Test Patient View</title>
+</head>
+<body>
+<table cellpadding="1" cellspacing="1" border="1">
+<thead>
+<tr><td rowspan="1" colspan="3">Test Patient View</td></tr>
+</thead><tbody>
+<tr>
+	<td>open</td>
+	<td>/a/pact/reports/custom/patient/?patient_id=66a4f2d0e9d5467e34122514c341ed92&amp;view=submissions</td>
+	<td></td>
+</tr>
+<tr>
+	<td>clickAndWait</td>
+	<td>link=All Patients</td>
+	<td></td>
+</tr>
+<tr>
+	<td>clickAndWait</td>
+	<td>id=apply-filters</td>
+	<td></td>
+</tr>
+<tr>
+	<td>click</td>
+	<td>css=th.header.headerSortDown &gt; div</td>
+	<td></td>
+</tr>
+<tr>
+	<td>clickAndWait</td>
+	<td>link=Test Patient</td>
+	<td></td>
+</tr>
+<tr>
+	<td>clickAndWait</td>
+	<td>link=Edit</td>
+	<td></td>
+</tr>
+<tr>
+	<td>clickAndWait</td>
+	<td>link=Cancel</td>
+	<td></td>
+</tr>
+<tr>
+	<td>clickAndWait</td>
+	<td>link=Schedule</td>
+	<td></td>
+</tr>
+<tr>
+	<td>clickAndWait</td>
+	<td>link=Submissions</td>
+	<td></td>
+</tr>
+<tr>
+	<td>click</td>
+	<td>//div[@id='DataTables_Table_0_wrapper']/div[2]/div/div/table/thead/tr/th/div</td>
+	<td></td>
+</tr>
+<tr>
+	<td>click</td>
+	<td>//div[@id='DataTables_Table_0_wrapper']/div[2]/div/div/table/thead/tr/th/div</td>
+	<td></td>
+</tr>
+<tr>
+	<td>click</td>
+	<td>css=th.span2.header &gt; div</td>
+	<td></td>
+</tr>
+<tr>
+	<td>click</td>
+	<td>//div[@id='DataTables_Table_0_wrapper']/div[2]/div/div/table/thead/tr/th[2]/div</td>
+	<td></td>
+</tr>
+<tr>
+	<td>click</td>
+	<td>//div[@id='DataTables_Table_0_wrapper']/div[2]/div/div/table/thead/tr/th[3]/div</td>
+	<td></td>
+</tr>
+<tr>
+	<td>click</td>
+	<td>//div[@id='DataTables_Table_0_wrapper']/div[2]/div/div/table/thead/tr/th[3]/div</td>
+	<td></td>
+</tr>
+<tr>
+	<td>click</td>
+	<td>//div[@id='DataTables_Table_0_wrapper']/div[2]/div/div/table/thead/tr/th[4]/div</td>
+	<td></td>
+</tr>
+<tr>
+	<td>click</td>
+	<td>//div[@id='DataTables_Table_0_wrapper']/div[2]/div/div/table/thead/tr/th[4]/div</td>
+	<td></td>
+</tr>
+<tr>
+	<td>click</td>
+	<td>link=Next →</td>
+	<td></td>
+</tr>
+<tr>
+	<td>click</td>
+	<td>link=Next →</td>
+	<td></td>
+</tr>
+<tr>
+	<td>click</td>
+	<td>link=Next →</td>
+	<td></td>
+</tr>
+<tr>
+	<td>click</td>
+	<td>link=Next →</td>
+	<td></td>
+</tr>
+<tr>
+	<td>click</td>
+	<td>link=Next →</td>
+	<td></td>
+</tr>
+<tr>
+	<td>click</td>
+	<td>link=Next →</td>
+	<td></td>
+</tr>
+<tr>
+	<td>click</td>
+	<td>link=Next →</td>
+	<td></td>
+</tr>
+<tr>
+	<td>click</td>
+	<td>link=Next →</td>
+	<td></td>
+</tr>
+<tr>
+	<td>click</td>
+	<td>link=Next →</td>
+	<td></td>
+</tr>
+<tr>
+	<td>select</td>
+	<td>name=DataTables_Table_0_length</td>
+	<td>label=100 per page</td>
+</tr>
+<tr>
+	<td>click</td>
+	<td>link=1</td>
+	<td></td>
+</tr>
+<tr>
+	<td>click</td>
+	<td>//div[@id='DataTables_Table_0_wrapper']/div[2]/div/div/table/thead/tr/th[4]/div</td>
+	<td></td>
+</tr>
+<tr>
+	<td>clickAndWait</td>
+	<td>link=View</td>
+	<td></td>
+</tr>
+<tr>
+	<td>click</td>
+	<td>link=Raw XML</td>
+	<td></td>
+</tr>
+<tr>
+	<td>click</td>
+	<td>link=Cases</td>
+	<td></td>
+</tr>
+<tr>
+	<td>click</td>
+	<td>link=Form Data</td>
+	<td></td>
+</tr>
+
+</tbody></table>
+</body>
+</html>
