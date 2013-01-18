@@ -43,41 +43,6 @@ def get_unique_combinations(domain, place_types=None, place=None):
         combos.append(comb)
     return combos
 
-def psi_training_sessions(domain, query_dict, startdate=None, enddate=None, place=None):
-    place_types = ['state', 'district']
-    combos = get_unique_combinations(domain, place_types=place_types, place=place)
-    return map(lambda c: ts_stats(domain, c, query_dict.get("training_type", ""), startdate=startdate, enddate=enddate), combos)
-
-def ts_stats(domain, place_dict, training_type="", startdate=None, enddate=None):
-    def ff_func(form):
-        if form.form.get('@name', None) != 'Training Session':
-            return False
-        if place_dict["state"] and str(form.xpath('form/training_state')) != place_dict["state"]:
-            return False
-        if place_dict["district"] and str(form.xpath('form/training_district')) != place_dict["district"]:
-            return False
-        if training_type:
-            if not form.xpath('form/training_type') == training_type:
-                return False
-        return True
-
-    forms = list(get_forms(domain, form_filter=ff_func, startdate=startdate, enddate=enddate))
-
-    all_forms = list(get_forms(domain, form_filter=lambda f: f.form.get('@name', None) == 'Training Session'))
-    private_forms = filter(lambda f: f.xpath('form/trainee_category') == 'private', forms)
-    public_forms = filter(lambda f: f.xpath('form/trainee_category') == 'public', forms)
-    dh_forms = filter(lambda f: f.xpath('form/trainee_category') == 'depot_holder', forms)
-    flw_forms = filter(lambda f: f.xpath('form/trainee_category') == 'flw_training', forms)
-
-    place_dict.update({
-        "training_type": training_type,
-        "private_hcp": _indicators(private_forms, aa=True),
-        "public_hcp": _indicators(public_forms, aa=True),
-        "depot_training": _indicators(dh_forms),
-        "flw_training": _indicators(flw_forms),
-        })
-    return place_dict
-
 def _indicators(forms, aa=False):
     ret = { "num_forms": len(forms),
             "num_trained": _num_trained(forms)}
@@ -145,7 +110,7 @@ def get_forms(domain, form_filter=lambda f: True, startdate=None, enddate=None):
         if form_filter(form):
             yield form
 
-def get_form(domain, action_filter=lambda a: True, form_filter=lambda f: True):
+def get_form(domain, form_filter=lambda f: True):
     """
     returns the first form that passes through the form filter function
     """
