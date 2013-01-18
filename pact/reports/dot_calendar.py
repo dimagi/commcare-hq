@@ -151,6 +151,7 @@ class DOTCalendar(HTMLCalendar):
                 #day_data = merge_dot_day(day_observations)
 
                 #for drug_type in day_data.keys():
+                day_notes = set()
                 for dose_data in [day_data.nonart, day_data.art]:
                     body.append('')
                     body.append('<div class="drug-cell">')
@@ -158,11 +159,13 @@ class DOTCalendar(HTMLCalendar):
 
                     #drug_total = day_data[drug_type]['total_doses']
                     drug_total = dose_data.total_doses
-
                     for dose_num, obs_list in dose_data.dose_dict.items():
-                    #for dose_num, obs_list in day_data[drug_type]['dose_dict'].items():
                         if len(obs_list) > 0:
                             obs = obs_list[0]
+
+                            if obs.day_note is not None and len(obs.day_note) > 0:
+                                day_notes.add(obs.day_note)
+
                             if obs.day_slot != '' and obs.day_slot is not None and obs.day_slot != -1:
                                 day_slot_string = DAY_SLOTS_BY_IDX.get(int(obs.day_slot), 'Unknown').title()
                                 body.append('<div class="time-label">%s</div>' % day_slot_string)
@@ -193,7 +196,7 @@ class DOTCalendar(HTMLCalendar):
                                 elif obs.method == DOT_OBSERVATION_SELF:
 #                                    body.append('<span class="label">Self</span>')
                                     body.append('<img src="%spact/icons/minus.png">' % settings.STATIC_URL)
-                            body.append('&nbsp;</div>') #close time-cell
+                            body.append('&nbsp;</div> <!-- close time-cell -->') #close time-cell
 #                            body.append('&nbsp;</div>') #close observation
                         else:
                             #empty observations for this dose_num
@@ -203,8 +206,15 @@ class DOTCalendar(HTMLCalendar):
                             body.append("empty! &nbsp;</div>")
 #                            body.append('&nbsp;</div>')
 
-                        body.append('&nbsp;</div>') #close observation
-                    body.append('&nbsp;</div>') # close calendar-cell
+                        body.append('&nbsp;</div> <!-- close observation -->') #close observation
+
+                    body.append('&nbsp;</div> <!-- close calendar cell -->') # close calendar-cell
+                if len(day_notes) > 0 :
+                    print list(day_notes)
+                    body.append('<div class="date-notes-block">')
+                    body.append('<i class="icon-info-sign"></i>&nbsp;')
+                    body.append('<small>%s</small>' % ('<br>'.join(day_notes)))
+                    body.append('</div> <!-- end notes -->')
                 return self.day_cell(cssclass, '%d %s' % (day, ''.join(body)))
 
             if weekday < 5 and not future:
