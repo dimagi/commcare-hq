@@ -4,8 +4,8 @@
     <div id="providerblock">
     <div class="span4">
         <h3>Current Providers
-            &nbsp;<a class="btn btn-info" href="{{ pt_root_url }}&view=info">Cancel</a>
-            &nbsp;<button class="btn btn-success" data-bind="click:saveProviders, visible: showSave">Save</button>
+            &nbsp;<a id="btn_provider_cancel" class="btn btn-info" href="{{ pt_root_url }}&view=info">Cancel</a>
+            &nbsp;<button id="btn_provider_save" class="btn btn-success" data-bind="click:saveProviders, visible: showSave">Save</button>
             <img src="{% static 'hqstyle/img/loading.gif' %}" alt="working..." data-bind="visible: is_loading"/>
         </h3>
 

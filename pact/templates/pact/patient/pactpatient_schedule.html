@@ -35,7 +35,7 @@
             </tr>
             </tbody>
         </table>
-        <button data-bind="click:removeLast">Remove Last</button>
+        <button id="btn_remove_last_schedule" data-bind="click:removeLast">Remove Last</button>
         <hr>
         <form id="new_schedule_form">
 {#            action="{% url pactdata_1 domain=domain %}?case_id={{ patient_doc.get_id }}&method=schedule" method="POST">#}
@@ -43,7 +43,7 @@
 {#            {% csrf_token %}#}
 {#            {{ csrf_token }}#}
             {{ schedule_form.as_p }}
-            <button type="submit">Save</button>
+            <button id="btn_schedule_submit" type="submit">Save</button>
         </form>
     </div>
     <script type="text/javascript">
