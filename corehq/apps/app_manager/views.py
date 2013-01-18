@@ -738,7 +738,9 @@ def new_module(req, domain, app_id):
     module_id = module.id
     app.new_form(module_id, "Untitled Form", lang)
     app.save()
-    return back_to_main(**locals())
+    response = back_to_main(**locals())
+    response.set_cookie('suppress_build_errors', 'yes')
+    return response
 
 @require_POST
 @require_can_edit_apps
@@ -751,7 +753,9 @@ def new_form(req, domain, app_id, module_id):
     app.save()
     # add form_id to locals()
     form_id = form.id
-    return back_to_main(**locals())
+    response = back_to_main(**locals())
+    response.set_cookie('suppress_build_errors', 'yes')
+    return response
 
 @require_POST
 @require_can_edit_apps

@@ -217,7 +217,11 @@
                     $('#form_build_errors').html(data.error_html);
                 });
             };
-            COMMCAREHQ.app_manager.fetchAndShowFormValidation();
+            if ($.cookie('suppress_build_errors')) {
+                $.cookie('suppress_build_errors', null, {path: '/'});
+            } else {
+                COMMCAREHQ.app_manager.fetchAndShowFormValidation();
+            }
         });
     </script>
 {% endblock %}
