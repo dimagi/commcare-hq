@@ -1,3 +1,4 @@
+from corehq.apps.fixtures.models import FixtureDataItem, FixtureDataType
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
 from corehq.apps.reports.standard import CustomProjectReport, DatespanMixin
 from corehq.apps.reports.basic import BasicTabularReport, Column
@@ -77,6 +78,15 @@ class PSIEventsReport(PSIReport):
         for c in combos:
             yield [c['state'], c['district']]
 
+village_fdt = None
+def get_village_name(key, req):
+    global village_fdt
+    if not village_fdt:
+        village_fdt = FixtureDataType.by_domain_tag(req.domain, 'village').one()
+    id = key[3]
+    village_fdi = FixtureDataItem.by_field_value(req.domain, village_fdt, 'id', float(id)).one()
+    return village_fdi.fields.get("name", id) if village_fdi else id
+
 class PSIHDReport(PSIReport):
     name = "Household Demonstrations Report"
     slug = "household_demonstations"
@@ -110,7 +120,7 @@ class PSIHDReport(PSIReport):
 
     block_name = Column("Block", calculate_fn=lambda key, _: key[2])
 
-    village_name = Column("Village", calculate_fn=lambda key, _: key[3])
+    village_name = Column("Village", calculate_fn=get_village_name)
 
     demonstrations = Column("Number of demonstrations done", key="demonstrations")
 
