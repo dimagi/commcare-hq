@@ -52,7 +52,7 @@ function (doc) {
                 // emit the score_diff for each repeat. We do this because we want an average and each form may
                 // not have the same number of repeats and the reduce views' average wouldn't be correct,
                 var score_diff = (trainees[i].post_test_score || 0) - (trainees[i].pre_test_score || 0);
-                emit([form.training_state, form.training_district, slug+'_avg_diff', opened_on, i], score_diff);
+                emit([form.training_state, form.training_district, slug+'_avg_diff', opened_on], score_diff);
             }
             data[slug+"_gt80"] = num_gt80;
             emit_array([form.training_state, form.training_district], [opened_on], data);
