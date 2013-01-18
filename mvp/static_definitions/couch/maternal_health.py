@@ -19,7 +19,7 @@ MATERNAL_HEALTH_INDICATORS = dict(
             pregnant_women=dict(
                 description="No. of Pregnant women at 4 months of gestation during time frame.",
                 title="# Pregnant Women at 4 Months of Gestation",
-                enddate_shift=150,
+                enddate_shift=120,
                 indicator_key="pregnancy",
             ),
         )

@@ -16,7 +16,7 @@ function (doc) {
             var edd_date = new Date(edd);
             var difference = edd_date.getTime() - visit_date.getTime();
 
-            if (edd_date >= visit_date && difference <= 150*MS_IN_DAY && indicators.cur_num_anc) {
+            if (edd_date >= visit_date && difference <= 120*MS_IN_DAY && indicators.cur_num_anc) {
                 try {
                     var cur_anc = (indicators.cur_num_anc.value) ? parseInt(indicators) : 0;
                     if (cur_anc === 0) {
