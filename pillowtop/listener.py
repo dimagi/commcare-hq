@@ -113,7 +113,7 @@ class BasicPillow(object):
         """
         self.changes_seen+=1
         if self.changes_seen % CHECKPOINT_FREQUENCY == 0 and do_set_checkpoint:
-            logging.info("(%s) setting checkpoint: %d" % (self.get_checkpoint_doc_name(), change['seq']))
+            logging.info("(%s) setting checkpoint: %s" % (self.get_checkpoint_doc_name(), change['seq']))
             self.set_checkpoint(change)
 
         try:
@@ -169,6 +169,7 @@ class ElasticPillow(BasicPillow):
     es_index = ""
     es_type = ""
     es_meta = {}
+    bulk=False
 
     # Note - we allow for for existence because we do not care - we want the ES
     # index to always have the latest version of the case based upon ALL changes done to it.
@@ -237,6 +238,58 @@ class ElasticPillow(BasicPillow):
         head_result = es.head(doc_path)
         return head_result
 
+    def bulk_builder(self, changes):
+        """
+        http://www.elasticsearch.org/guide/reference/api/bulk.html
+        bulk loader follows the following:
+        { "index" : { "_index" : "test", "_type" : "type1", "_id" : "1" } }\n
+        { "field1" : "value1" }\n
+        """
+        for change in changes:
+            try:
+                t = self.change_trigger(change)
+                if t is not None:
+                    tr = self.change_transform(t)
+                    if tr is not None:
+                        self.change_transport(tr)
+
+                        yield {"index": {"_index": self.es_index, "_type": self.es_type, "_id": tr['_id']}}
+                        yield tr
+            except Exception, ex:
+            #            logging.error("Error on change: %s, %s" % (change['id'], ex))
+                print "Error on change: %s, %s" % (change['id'], ex)
+
+
+
+    def process_bulk(self, changes):
+        self.allow_updates=False
+        self.bulk=True
+        es = self.get_es()
+        bulk_payload = '\n'.join(map(simplejson.dumps, self.bulk_builder(changes)))+"\n"
+        es.post('_bulk', data=bulk_payload)
+
+
+    def processor(self, change, do_set_checkpoint=True):
+        """
+        Parent processsor for a pillow class - this should not be overridden.
+        This workflow is made for the situation where 1 change yields 1 transport/transaction
+        """
+        self.changes_seen+=1
+        if self.changes_seen % CHECKPOINT_FREQUENCY == 0 and do_set_checkpoint:
+            logging.info("(%s) setting checkpoint: %d" % (self.get_checkpoint_doc_name(), change['seq']))
+            self.set_checkpoint(change)
+
+        try:
+            t = self.change_trigger(change)
+            if t is not None:
+                tr = self.change_transform(t)
+                if tr is not None:
+                    self.change_transport(tr)
+        except Exception, ex:
+        #            logging.error("Error on change: %s, %s" % (change['id'], ex))
+            print "Error on change: %s, %s" % (change['id'], ex)
+
+
     def change_transport(self, doc_dict):
         """
         Default elastic pillow for a given doc to a type.
@@ -250,7 +303,7 @@ class ElasticPillow(BasicPillow):
             else:
                 can_put = not self.doc_exists(doc_dict['_id'])
 
-            if can_put:
+            if can_put and not self.bulk:
                 res = es.put(doc_path,  data = doc_dict)
                 if res.get('status', 0) == 400:
                     logging.error("Pillowtop Error [%s]:\n%s\n\tDoc id: %s\n\t%s" % (self.get_name(),
@@ -287,9 +340,8 @@ class AliasedElasticPillow(ElasticPillow):
         aliased_indexes = es[self.es_alias].get('_aliases')
         return aliased_indexes.keys()
 
-    @classmethod
-    def calc_mapping_hash(cls, mapping):
-        return hashlib.md5(simplejson.dumps(mapping)).hexdigest()
+    def calc_mapping_hash(self, mapping):
+        return hashlib.md5(simplejson.dumps(mapping, sort_keys=True)).hexdigest()
 
 
     def __init__(self, **kwargs):
@@ -306,6 +358,29 @@ class AliasedElasticPillow(ElasticPillow):
 
     def calc_meta(self):
         raise NotImplementedError("Need to implement your own meta calculator")
+
+
+    def bulk_builder(self, changes):
+        """
+        http://www.elasticsearch.org/guide/reference/api/bulk.html
+        bulk loader follows the following:
+        { "index" : { "_index" : "test", "_type" : "type1", "_id" : "1" } }\n
+        { "field1" : "value1" }\n
+        """
+        for change in changes:
+            try:
+                t = self.change_trigger(change)
+                if t is not None:
+                    tr = self.change_transform(t)
+                    if tr is not None:
+                        self.change_transport(tr)
+
+                        yield {"index": {"_index": self.es_index, "_type": self.get_type_string(tr), "_id": tr['_id']}}
+                        yield tr
+            except Exception, ex:
+            #            logging.error("Error on change: %s, %s" % (change['id'], ex))
+                print "Error on change: %s, %s" % (change['id'], ex)
+
 
 
     def type_exists(self, doc_dict, server=False):
@@ -407,9 +482,9 @@ class AliasedElasticPillow(ElasticPillow):
             if self.allow_updates:
                 can_put = True
             else:
-                can_put = not self.doc_exists(doc_dict['_id'])
+                can_put = not self.doc_exists(doc_dict)
 
-            if can_put:
+            if can_put and not self.bulk:
                 res = es.put(doc_path, data=doc_dict)
 #                did_put = datetime.utcnow()
                 if res.get('status', 0) == 400:
@@ -425,9 +500,8 @@ class AliasedElasticPillow(ElasticPillow):
 #                print "\ttype_to_submit: %d ms" % ms_from_timedelta(did_put-got_type)
 
         except Exception, ex:
-            logging.error("PillowTop [%s]: transporting change data doc_id: %s to elasticsearch error: %s" % (self.get_name(), doc_dict['_id'], ex))
-#            tb = traceback.format_exc()
-#            print tb
+            tb = traceback.format_exc()
+            logging.error("PillowTop [%s]: transporting change data doc_id: %s to elasticsearch error: %s\ntraceback: %s\n" % (self.get_name(), doc_dict['_id'], ex, tb))
             return None
 
 
