@@ -1,10 +1,10 @@
 from corehq.apps.fixtures.models import FixtureDataItem, FixtureDataType
-from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
 from corehq.apps.reports.standard import CustomProjectReport, DatespanMixin
 from corehq.apps.reports.basic import BasicTabularReport, Column
 from corehq.apps.reports.fields import AsyncDrillableField
+from util import get_unique_combinations
+from couchdbkit_aggregate.fn import mean
 from dimagi.utils.decorators.memoized import memoized
-from util import get_unique_combinations, psi_training_sessions
 
 class StateDistrictField(AsyncDrillableField):
     label = "State and District"
@@ -163,7 +163,7 @@ class PSISSReport(PSIReport):
         "awws",
         "other",
         "attendees",
-        )
+    )
 
     state_name = Column("State", calculate_fn=lambda key, _: key[0])
 
@@ -195,52 +195,60 @@ class PSITSReport(PSIReport):
               'psi.reports.StateDistrictField',]
 
     @property
-    def headers(self):
-        return DataTablesHeader(DataTablesColumn("Name of State"),
-            DataTablesColumn("Name of District"),
-            DataTablesColumn("Type of Training"),
-            DataTablesColumn("Private: Number of Trainings"),
-            DataTablesColumn("Private: Ayush trained"),
-            DataTablesColumn("Private: Allopathics trained"),
-            DataTablesColumn("Private: Learning change"),
-            DataTablesColumn("Private: Num > 80%"),
-            DataTablesColumn("Public: Number of Trainings"),
-            DataTablesColumn("Public: Ayush trained"),
-            DataTablesColumn("Public: Allopathics trained"),
-            DataTablesColumn("Public: Learning change"),
-            DataTablesColumn("Public: Num > 80%"),
-            DataTablesColumn("Depot: Number of Trainings"),
-            #            DataTablesColumn("Depot: Personnel trained"),
-            DataTablesColumn("Depot: Learning change"),
-            DataTablesColumn("Depot: Num > 80%"),
-            DataTablesColumn("FLW: Number of Trainings"),
-            #            DataTablesColumn("FLW: Personnel trained"),
-            DataTablesColumn("FLW: Learning change"),
-            DataTablesColumn("FLW: Num > 80%"))
+    def keys(self):
+        combos = get_unique_combinations(self.domain,
+            place_types=['state', 'district'], place=self.selected_fixture())
 
-    @property
-    def rows(self):
-        hh_data = psi_training_sessions(self.domain, {}, place=self.selected_fixture(),
-            startdate=self.datespan.startdate_param_utc, enddate=self.datespan.enddate_param_utc)
-        for d in hh_data:
-            yield [
-                d.get("state"),
-                d.get("district"),
-                d.get("training_type"),
-                d["private_hcp"].get("num_trained"),
-                d["private_hcp"].get("num_ayush_trained"),
-                d["private_hcp"].get("num_allopathics_trained"),
-                d["private_hcp"].get("avg_difference"),
-                d["private_hcp"].get("num_gt80"),
-                d["public_hcp"].get("num_trained"),
-                d["public_hcp"].get("num_ayush_trained"),
-                d["public_hcp"].get("num_allopathics_trained"),
-                d["public_hcp"].get("avg_difference"),
-                d["public_hcp"].get("num_gt80"),
-                d["depot_training"].get("num_trained"),
-                d["depot_training"].get("avg_difference"),
-                d["depot_training"].get("num_gt80"),
-                d["flw_training"].get("num_trained"),
-                d["flw_training"].get("avg_difference"),
-                d["flw_training"].get("num_gt80"),
-                ]
+        for c in combos:
+            yield [c['state'], c['district']]
+
+    couch_view = 'psi/training'
+
+    default_column_order = (
+        'state_name',
+        'district_name',
+
+        "priv_trained",
+        "priv_ayush_trained",
+        "priv_allo_trained",
+        "priv_avg_diff",
+        "priv_gt80",
+
+        "pub_trained",
+        "pub_ayush_trained",
+        "pub_allo_trained",
+        "pub_avg_diff",
+        "pub_gt80",
+
+        "dep_trained",
+        "dep_avg_diff",
+        "dep_gt80",
+
+        "flw_trained",
+        "flw_avg_diff",
+        "flw_gt80",
+    )
+
+    state_name = Column("State", calculate_fn=lambda key, _: key[0])
+
+    district_name = Column("District", calculate_fn=lambda key, _: key[1])
+
+    priv_trained = Column("Private: Number of Trainings", key="priv_trained")
+    priv_ayush_trained = Column("Private: Ayush trained", key="priv_ayush_trained")
+    priv_allo_trained = Column("Private: Allopathics trained", key="priv_allo_trained")
+    priv_avg_diff = Column("Private: Learning changed", key="priv_avg_diff", reduce_fn=mean)
+    priv_gt80 = Column("Private: Num > 80%", key="priv_gt80")
+
+    pub_trained = Column("Public: Number of Trainings", key="pub_trained")
+    pub_ayush_trained = Column("Public: Ayush trained", key="pub_ayush_trained")
+    pub_allo_trained = Column("Public: Allopathics trained", key="pub_allo_trained")
+    pub_avg_diff = Column("Public: Learning changed", key="pub_avg_diff", reduce_fn=mean)
+    pub_gt80 = Column("Public: Num > 80%", key="pub_gt80")
+
+    dep_trained = Column("Depot: Number of Trainings", key="dep_trained")
+    dep_avg_diff = Column("Depot: Learning changed", key="dep_avg_diff", reduce_fn=mean)
+    dep_gt80 = Column("Depot: Num > 80%", key="dep_gt80")
+
+    flw_trained = Column("FLW: Number of Trainings", key="flw_trained")
+    flw_avg_diff = Column("FLW: Learning changed", key="flw_avg_diff", reduce_fn=mean)
+    flw_gt80 = Column("FLW: Num > 80%", key="flw_gt80")
