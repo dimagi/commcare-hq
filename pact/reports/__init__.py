@@ -82,7 +82,6 @@ class ESSortableMixin(object):
         Override the params and applies all the params of the originating view to the GET
         so as to get sorting working correctly with the context of the GET params
         """
-        print "shared pagination!"
         ret = []
         for k,v in self.request.GET.items():
             ret.append(dict(name=k, value=v))
