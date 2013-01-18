@@ -1,6 +1,6 @@
 from corehq.pillows.case import UNKNOWN_DOMAIN, UNKNOWN_TYPE
 from corehq.pillows.core import DATE_FORMATS_ARR
-from corehq.pillows.mappings.xform_mapping import XFORM_MAPPING
+from corehq.pillows.mappings.xform_mapping import XFORM_MAPPING, XFORM_INDEX
 from pillowtop.listener import AliasedElasticPillow
 import hashlib
 import simplejson
@@ -40,9 +40,9 @@ class XFormPillow(AliasedElasticPillow):
     es_index_prefix = "xforms"
     es_alias = "xforms"
     es_type = "xform"
+    es_index = XFORM_INDEX
 
     es_meta = {
-        "date_formats": DATE_FORMATS_ARR
     }
     xform_handlers = []
 
@@ -71,8 +71,7 @@ class XFormPillow(AliasedElasticPillow):
         so we just do a hash of the "prototype" instead to determind md5
         """
         if not hasattr(self, '_calc_meta'):
-            self._calc_meta = hashlib.md5(simplejson.dumps(
-                self.get_mapping_from_type({'_id': 'default', 'domain': 'default', 'type': 'default'}))).hexdigest()
+            self._calc_meta = self.calc_mapping_hash(self.default_xform_mapping)
         return self._calc_meta
 
     def get_domain(self, doc_dict):

@@ -1,3 +1,5 @@
+import hashlib
+import simplejson
 from casexml.apps.case.models import CommCareCase
 from corehq.pillows.mappings.case_mapping import CASE_MAPPING, CASE_INDEX
 from pillowtop.listener import AliasedElasticPillow
@@ -16,8 +18,8 @@ class CasePillow(AliasedElasticPillow):
     es_alias = "hqcases"
     es_type = "case"
     es_meta = {}
-    default_mapping = CASE_MAPPING
     es_index = CASE_INDEX
+    default_mapping = CASE_MAPPING
 
     def calc_meta(self):
         """
@@ -25,7 +27,6 @@ class CasePillow(AliasedElasticPillow):
         so we just do a hash of the "prototype" instead to determined md5
         """
         if not hasattr(self, '_calc_meta'):
-            #self._calc_meta = hashlib.md5(simplejson.dumps(self.get_mapping_from_type({'domain': UNKNOWN_DOMAIN, 'type': UNKNOWN_TYPE}))).hexdigest()
             self._calc_meta = self.calc_mapping_hash(self.default_mapping)
         return self._calc_meta
 
@@ -60,4 +61,5 @@ class CasePillow(AliasedElasticPillow):
             'domain': domain.lower(),
             'case_type': case_type.lower(),
         }
+        print ret
         return ret
