@@ -208,6 +208,7 @@ class XFormES(ESView):
                 range_query['numeric_range'][date_field]["gte"] = startdate.strftime(date_format)
             if enddate is not None:
                 range_query['numeric_range'][date_field]["lte"] = enddate.strftime(date_format)
+            query['query']['filtered']['filter']['and'].append(range_query)
 
         for k, v in terms.items():
             query['query']['filtered']['filter']['and'].append({"term": {k: v}})
