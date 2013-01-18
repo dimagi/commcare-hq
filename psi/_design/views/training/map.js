@@ -47,7 +47,9 @@ function (doc) {
             var trainees = get_repeats(form.trainee_information, function(t) { return t; });
             var num_gt80 = 0;
             for (var i = 0; i < trainees.length; i++) {
-                if (trainees[i].post_test_score >= 80) num_gt80++;
+                if (trainees[i].post_test_score >= 80) {
+                    num_gt80++;
+                }
 
                 // emit the score_diff for each repeat. We do this because we want an average and each form may
                 // not have the same number of repeats and the reduce views' average wouldn't be correct,

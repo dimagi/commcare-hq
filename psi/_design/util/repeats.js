@@ -18,7 +18,9 @@ function isArray(obj) {
 }
 
 function get_repeats(data, repeat_filter) {
-    if (!isArray(data)) data = [data];
+    if (!isArray(data)) {
+        data = [data];
+    }
     ret = [];
     for (var i = 0; i < data.length; i++) {
         if (repeat_filter(data[i])) ret.push(data[i]);
@@ -27,7 +29,9 @@ function get_repeats(data, repeat_filter) {
 }
 
 function count_in_repeats(data, what_to_count) {
-    if (!isArray(data)) data = [data];
+    if (!isArray(data)) {
+        data = [data];
+    }
     var total = 0;
     for (var i = 0; i < data.length; i++) {
        total += parseInt(data[i][what_to_count], 10) || 0;
