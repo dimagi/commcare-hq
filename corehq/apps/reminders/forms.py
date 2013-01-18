@@ -6,7 +6,12 @@ from django.forms.fields import *
 from django.forms.forms import Form
 from django.forms import Field, Widget, Select, TextInput
 from django.utils.datastructures import DotExpandedDict
-from .models import REPEAT_SCHEDULE_INDEFINITELY, CaseReminderEvent, RECIPIENT_USER, RECIPIENT_CASE, RECIPIENT_SURVEY_SAMPLE, RECIPIENT_OWNER, MATCH_EXACT, MATCH_REGEX, MATCH_ANY_VALUE, EVENT_AS_SCHEDULE, EVENT_AS_OFFSET, SurveySample, CaseReminderHandler
+from .models import REPEAT_SCHEDULE_INDEFINITELY, CaseReminderEvent,\
+RECIPIENT_USER, RECIPIENT_CASE, RECIPIENT_SURVEY_SAMPLE, RECIPIENT_OWNER,\
+MATCH_EXACT, MATCH_REGEX, MATCH_ANY_VALUE, EVENT_AS_SCHEDULE, EVENT_AS_OFFSET,\
+SurveySample, CaseReminderHandler, FIRE_TIME_DEFAULT, FIRE_TIME_CASE_PROPERTY,\
+METHOD_SMS, METHOD_SMS_CALLBACK, METHOD_SMS_SURVEY, METHOD_IVR_SURVEY,\
+CASE_CRITERIA
 from dimagi.utils.parsing import string_to_datetime
 from dimagi.utils.timezones.forms import TimeZoneChoiceField
 from dateutil.parser import parse
@@ -116,7 +121,6 @@ class CaseReminderForm(Form):
         return message
 
 class EventWidget(Widget):
-    method = None
     
     def value_from_datadict(self, data, files, name, *args, **kwargs):
         reminder_events_raw = {}
@@ -129,8 +133,6 @@ class EventWidget(Widget):
         if len(event_dict) > 0:
             for key in sorted(event_dict["reminder_events"].iterkeys()):
                 events.append(event_dict["reminder_events"][key])
-        
-        self.method = data["method"]
         
         return events
 
@@ -149,65 +151,8 @@ class EventListField(Field):
         self.help_text = help_text
     
     def clean(self, value):
-        events = []
-        for e in value:
-            try:
-                day = int(e["day"])
-                assert day >= 0
-            except (ValueError, AssertionError):
-                raise ValidationError("Day must be specified and must be a non-negative number.")
-            
-            pattern = re.compile("\d{1,2}:\d\d")
-            if pattern.match(e["time"]):
-                try:
-                    time = string_to_datetime(e["time"]).time()
-                except Exception:
-                    raise ValidationError("Please enter a valid time from 00:00 to 23:59.")
-            else:
-                raise ValidationError("Time must be in the format HH:MM.")
-            
-            message = {}
-            if self.widget.method == "sms" or self.widget.method == "callback":
-                for key in e["messages"]:
-                    language = e["messages"][key]["language"]
-                    text = e["messages"][key]["text"]
-                    if len(language.strip()) == 0:
-                        raise ValidationError("Please enter a language code.")
-                    if len(text.strip()) == 0:
-                        raise ValidationError("Please enter a message.")
-                    if language in message:
-                        raise ValidationError("You have entered the same language twice for the same reminder event.");
-                    message[language] = text
-            
-            if len(e["timeouts"].strip()) == 0 or self.widget.method not in ["callback", "survey"]:
-                timeouts_int = []
-            else:
-                timeouts_str = e["timeouts"].split(",")
-                timeouts_int = []
-                for t in timeouts_str:
-                    try:
-                        timeouts_int.append(int(t))
-                    except Exception:
-                        raise ValidationError("Timeout intervals must be a list of comma-separated numbers.")
-            
-            form_unique_id = None
-            if self.widget.method in ["survey", "ivr_survey"]:
-                form_unique_id = e.get("survey", None)
-                if form_unique_id is None:
-                    raise ValidationError("Please create a form for the survey first, and then create the reminder definition.")
-            
-            events.append(CaseReminderEvent(
-                day_num = day
-               ,fire_time = time
-               ,message = message
-               ,callback_timeout_intervals = timeouts_int
-               ,form_unique_id = form_unique_id
-            ))
-        
-        if len(events) == 0:
-            raise ValidationError("You must have at least one reminder event.")
-        
-        return events
+        # See clean_events() method in the form for validation
+        return value
 
 class ComplexCaseReminderForm(Form):
     """
@@ -238,6 +183,7 @@ class ComplexCaseReminderForm(Form):
     start_datetime_time = CharField(required=False)
     frequency = CharField()
     sample_id = CharField(required=False)
+    enable_advanced_time_choices = BooleanField(required=False)
     
     def __init__(self, *args, **kwargs):
         super(ComplexCaseReminderForm, self).__init__(*args, **kwargs)
@@ -265,15 +211,19 @@ class ComplexCaseReminderForm(Form):
             else:
                 self.initial["start_choice"] = START_ON_DATE
         
-        
+        enable_advanced_time_choices = False
         # Populate events
         events = []
         if "events" in initial:
             for e in initial["events"]:
                 ui_event = {
-                    "day"       : e.day_num
-                   ,"time"      : "%02d:%02d" % (e.fire_time.hour, e.fire_time.minute)
+                    "day"       : e.day_num,
+                    "time"      : e.fire_time_aux if e.fire_time_type == FIRE_TIME_CASE_PROPERTY else "%02d:%02d" % (e.fire_time.hour, e.fire_time.minute),
+                    "time_type" : e.fire_time_type,
                 }
+                
+                if e.fire_time_type != FIRE_TIME_DEFAULT:
+                    enable_advanced_time_choices = True
                 
                 messages = {}
                 counter = 1
@@ -292,6 +242,7 @@ class ComplexCaseReminderForm(Form):
                 events.append(ui_event)
         
         self.initial["events"] = events
+        self.initial["enable_advanced_time_choices"] = enable_advanced_time_choices
     
     def clean_max_iteration_count(self):
         if self.cleaned_data.get("iteration_type") == ITERATE_FIXED_NUMBER:
@@ -414,6 +365,85 @@ class ComplexCaseReminderForm(Form):
             raise ValidationError("Please enter a positive number.")
         
         return value
+    
+    def clean_events(self):
+        value = self.cleaned_data.get("events")
+        method = self.cleaned_data.get("method")
+        event_interpretation = self.cleaned_data.get("event_interpretation")
+        start_condition_type = self.cleaned_data.get("start_condition_type")
+        enable_advanced_time_choices = self.cleaned_data.get("enable_advanced_time_choices")
+        events = []
+        for e in value:
+            try:
+                day = int(e["day"])
+                assert day >= 0
+            except (ValueError, AssertionError):
+                raise ValidationError("Day must be specified and must be a non-negative number.")
+            
+            if enable_advanced_time_choices and start_condition_type == CASE_CRITERIA and event_interpretation == EVENT_AS_SCHEDULE:
+                fire_time_type = e["time_type"]
+            else:
+                fire_time_type = FIRE_TIME_DEFAULT
+            
+            if fire_time_type == FIRE_TIME_CASE_PROPERTY:
+                time = None
+                fire_time_aux = e["time"].strip()
+                if len(fire_time_aux) == 0:
+                    raise ValidationError("Please enter the case property from which to pull the time.")
+            else:
+                validate_time(e["time"])
+                try:
+                    time = parse(e["time"]).time()
+                except Exception:
+                    raise ValidationError("Please enter a valid time from 00:00 to 23:59.")
+                fire_time_aux = None
+            
+            message = {}
+            if method in [METHOD_SMS, METHOD_SMS_CALLBACK]:
+                for key in e["messages"]:
+                    language = e["messages"][key]["language"].strip()
+                    text = e["messages"][key]["text"].strip()
+                    if len(language) == 0:
+                        raise ValidationError("Please enter a language code.")
+                    if len(text) == 0:
+                        raise ValidationError("Please enter a message.")
+                    if language in message:
+                        raise ValidationError("You have entered the same language twice for the same reminder event.");
+                    message[language] = text
+            
+            if len(e["timeouts"].strip()) == 0 or method not in [METHOD_SMS_CALLBACK, METHOD_SMS_SURVEY, METHOD_IVR_SURVEY]:
+                timeouts_int = []
+            else:
+                timeouts_str = e["timeouts"].split(",")
+                timeouts_int = []
+                for t in timeouts_str:
+                    try:
+                        t = int(t)
+                        assert t > 0
+                        timeouts_int.append(t)
+                    except (ValueError, AssertionError):
+                        raise ValidationError("Timeout intervals must be a list of positive numbers separated by commas.")
+            
+            form_unique_id = None
+            if method in [METHOD_SMS_SURVEY, METHOD_IVR_SURVEY]:
+                form_unique_id = e.get("survey", None)
+                if form_unique_id is None:
+                    raise ValidationError("Please create a form for the survey first, and then create the reminder definition.")
+            
+            events.append(CaseReminderEvent(
+                day_num = day,
+                fire_time = time,
+                message = message,
+                callback_timeout_intervals = timeouts_int,
+                form_unique_id = form_unique_id,
+                fire_time_type = fire_time_type,
+                fire_time_aux = fire_time_aux,
+            ))
+        
+        if len(events) == 0:
+            raise ValidationError("You must have at least one reminder event.")
+        
+        return events
     
     def clean(self):
         cleaned_data = super(ComplexCaseReminderForm, self).clean()

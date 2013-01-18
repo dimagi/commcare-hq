@@ -58,6 +58,8 @@ class ProjectReportParametersMixin(object):
         Intended to be mixed in with a GenericReportView object.
     """
 
+    filter_group_name = None
+
     @property
     @memoized
     def CommCareUser(self):
@@ -65,6 +67,7 @@ class ProjectReportParametersMixin(object):
 
     @memoized
     def get_all_users_by_domain(self, group=None, individual=None, user_filter=None, simplified=False):
+
         return list(util.get_all_users_by_domain(
             domain=self.domain,
             group=group,
@@ -102,8 +105,13 @@ class ProjectReportParametersMixin(object):
     @property
     @memoized
     def users(self):
+        if self.filter_group_name and not (self.group_id or self.individual):
+            group = Group.by_name(self.domain, self.filter_group_name)
+        else:
+            group = self.group
+
         return self.get_all_users_by_domain(
-            group=self.group,
+            group=group,
             individual=self.individual,
             user_filter=tuple(self.user_filter),
             simplified=True
