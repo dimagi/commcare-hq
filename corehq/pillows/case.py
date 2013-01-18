@@ -61,5 +61,4 @@ class CasePillow(AliasedElasticPillow):
             'domain': domain.lower(),
             'case_type': case_type.lower(),
         }
-        print ret
         return ret
