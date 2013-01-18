@@ -1,6 +1,7 @@
 # coding=utf-8
 from collections import defaultdict
 from datetime import datetime
+from functools import wraps
 import types
 from django.core.cache import cache
 from django.utils.encoding import force_unicode
@@ -880,6 +881,12 @@ class VersionedDoc(Document):
             return self.doc_type
 
 
+def full_hq_url(method):
+    @wraps(method)
+    def _inner(self):
+        return "%s%s" % (self.url_base, method(self))
+    return property(_inner)
+
 class ApplicationBase(VersionedDoc, SnapshotMixin):
     """
     Abstract base class for Application and RemoteApp.
@@ -1063,36 +1070,30 @@ class ApplicationBase(VersionedDoc, SnapshotMixin):
     def url_base(self):
         return get_url_base()
 
-    @property
+    @full_hq_url
     def post_url(self):
-        return "%s%s" % (
-            self.url_base,
-            reverse('receiver_post_with_app_id', args=[self.domain, self.copy_of or self.get_id])
-        )
+        return reverse('receiver_post_with_app_id', args=[self.domain, self.copy_of or self.get_id])
 
-    @property
+    @full_hq_url
     def ota_restore_url(self):
-        return "%s%s" % (
-            self.url_base,
-            reverse('corehq.apps.ota.views.restore', args=[self.domain])
-        )
+        return reverse('corehq.apps.ota.views.restore', args=[self.domain])
 
-    @property
+    @full_hq_url
+    def form_record_url(self):
+        return '/a/%s/api/custom/pact_formdata/v1/' % self.domain
+
+    @full_hq_url
     def hq_profile_url(self):
-        return "%s%s?latest=true" % (
-            self.url_base,
+        return "%s?latest=true" % (
             reverse('download_profile', args=[self.domain, self._id])
         )
     @property
     def profile_loc(self):
         return "jr://resource/profile.xml"
 
-    @property
+    @full_hq_url
     def jar_url(self):
-        return "%s%s" % (
-            self.url_base,
-            reverse('corehq.apps.app_manager.views.download_jar', args=[self.domain, self._id]),
-        )
+        return reverse('corehq.apps.app_manager.views.download_jar', args=[self.domain, self._id])
 
     @classmethod
     def platform_options(cls):
@@ -1175,13 +1176,10 @@ class ApplicationBase(VersionedDoc, SnapshotMixin):
             errors.append({'type': 'error', 'message': 'unexpected error: %s' % e})
         return errors
 
-    @property
+    @full_hq_url
     def odk_profile_url(self):
 
-        return "%s%s" % (
-            get_url_base(),
-            reverse('corehq.apps.app_manager.views.download_odk_profile', args=[self.domain, self._id]),
-        )
+        return reverse('corehq.apps.app_manager.views.download_odk_profile', args=[self.domain, self._id]),
 
     @property
     def odk_profile_display_url(self):
@@ -1351,12 +1349,10 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
         else:
             return get_url_base()
 
-    @property
+    @full_hq_url
     def suite_url(self):
-        return "%s%s" % (
-            self.url_base,
-            reverse('download_suite', args=[self.domain, self.get_id])
-        )
+        return reverse('download_suite', args=[self.domain, self.get_id])
+
     @property
     def suite_loc(self):
         return "suite.xml"
@@ -1807,7 +1803,15 @@ class RemoteApp(ApplicationBase):
             profile_xml = WrappedNode(profile)
 
             def set_property(key, value):
-                profile_xml.find('property[@key="%s"]' % key).attrib['value'] = value
+                node = profile_xml.find('property[@key="%s"]' % key)
+                print "node %r" % node
+                if node.xml is None:
+                    from lxml import etree as ET
+                    node = ET.Element('property')
+                    profile_xml.xml.insert(0, node)
+                    node.attrib['key'] = key
+
+                node.attrib['value'] = value
 
             def set_attribute(key, value):
                 profile_xml.attrib[key] = value
@@ -1823,6 +1827,7 @@ class RemoteApp(ApplicationBase):
                 set_property("ota-restore-url", self.ota_restore_url)
                 set_property("PostURL", self.post_url)
                 set_property("cc_user_domain", cc_user_domain(self.domain))
+                set_property('form-record-url', self.form_record_url)
                 reset_suite_remote_url()
 
             if self.build_langs:
