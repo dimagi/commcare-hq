@@ -230,6 +230,7 @@ def bug_report(req):
         'app_id',
         )])
 
+    report['user_agent'] = req.META['HTTP_USER_AGENT']
     report['datetime'] = datetime.utcnow()
 
     report['time_description'] = u'just now' if report['now'] else u'earlier: {when}'.format(**report)
@@ -247,6 +248,7 @@ def bug_report(req):
         u"copy url: {copy_url}\n"
         u"datetime: {datetime}\n"
         u"error occured: {time_description}\n"
+        u"User Agent: {user_agent}\n"
         u"Message:\n\n"
         u"{message}\n"
         ).format(**report)
