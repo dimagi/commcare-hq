@@ -84,9 +84,12 @@
             {% endfor %}
         </ul>
         <p class="help-inline">
-            For more information on build errors, please see
+            {% if not_actual_build %}
+                {% trans "Build errors prevent you from building your application in the Release Manager." %}
+            {% endif %}
+            {% trans "For more information on build errors, please see" %}
             <a href="https://confluence.dimagi.com/display/commcarepublic/Errors+Building+an+Application" target="_blank">
-                Errors Building an Application
+                {% trans "Errors Building an Application" %}
             </a>
         </p>
     </div>
