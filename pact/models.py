@@ -450,3 +450,4 @@ class CObservationAddendum(Document):
         app_label = 'pact'
 
 
+from signals import *
