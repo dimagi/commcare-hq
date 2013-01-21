@@ -69,7 +69,7 @@ def redirect_to_default(req, domain=None):
         else:
             domains = Domain.active_for_user(req.user)
         if   0 == len(domains) and not req.user.is_superuser:
-            return no_permissions(req)
+            return redirect('registration_domain')
         elif 1 == len(domains):
             if domains[0]:
                 domain = domains[0].name
@@ -161,8 +161,8 @@ def server_up(req):
         return HttpResponse('\n'.join(message), status=500)
 
 
-def no_permissions(request, template_name="no_permission.html"):
-    next = request.GET.get('next', None)
+def no_permissions(request, redirect_to=None, template_name="no_permission.html"):
+    next = redirect_to or request.GET.get('next', None)
     if request.GET.get('switch', None) == 'true':
         logout(request)
         return redirect_to_login(next or request.path)
