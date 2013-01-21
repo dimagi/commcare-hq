@@ -68,4 +68,5 @@ domain_settings = patterns('corehq.apps.domain.views',
                            url(r'^snapshots/$', 'snapshot_settings', name='domain_snapshot_settings'),
                            url(r'^snapshots/new/$', 'create_snapshot', name='domain_create_snapshot'),
                            url(r'^multimedia/$', 'manage_multimedia', name='domain_manage_multimedia'),
+                           url(r'^commtrack/$', 'commtrack_settings', name='domain_commtrack_settings'),
                            )
