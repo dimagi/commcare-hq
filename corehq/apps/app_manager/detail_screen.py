@@ -1,5 +1,4 @@
-from corehq.apps.app_manager import suite_xml as sx, xform
-from corehq.apps.app_manager.xform import SESSION_CASE_ID, CaseXPath
+from corehq.apps.app_manager import suite_xml as sx
 
 def get_column_generator(app, module, detail, column):
     return get_class_for_format(column.format)(app, module, detail, column)
