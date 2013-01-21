@@ -40,6 +40,11 @@
                             uses cases but doesn't have a
                             case type defined.
                         {% endif %}
+                        {% if error.type == "subcase has no case type" %}
+                            Child case specifies no module
+                            in form
+                            {% include "app_manager/partials/form_error_message.html" %}
+                        {% endif %}
                         {% if error.type == "form error" %}
                             One or more forms are invalid: check all your forms for error messages.
                         {% endif %}

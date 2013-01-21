@@ -18,7 +18,7 @@ import commcare_translations
 from corehq.apps.app_manager import fixtures, xform, suite_xml
 from corehq.apps.app_manager.suite_xml import IdStrings
 from corehq.apps.app_manager.templatetags.xforms_extras import clean_trans
-from corehq.apps.app_manager.xform import XForm, parse_xml as _parse_xml, namespaces as NS, XFormError, XFormValidationError, WrappedNode
+from corehq.apps.app_manager.xform import XForm, parse_xml as _parse_xml, namespaces as NS, XFormError, XFormValidationError, WrappedNode, CaseXPath
 from corehq.apps.appstore.models import SnapshotMixin
 from corehq.apps.builds.models import CommCareBuild, BuildSpec, CommCareBuildConfig, BuildRecord
 from corehq.apps.hqmedia.models import HQMediaMixin
@@ -446,6 +446,11 @@ class FormBase(DocumentSchema):
                 errors.append({'type': 'update_case uses reserved word', 'word': key})
             if not re.match(r'^[a-zA-Z][\w_-]*$', key):
                 errors.append({'type': 'update_case word illegal', 'word': key})
+
+
+        for subcase_action in self.actions.subcases:
+            if not subcase_action.case_type:
+                errors.append({'type': 'subcase has no case type'})
         try:
             valid_paths = set([question['value'] for question in self.get_questions(langs=[])])
         except XFormError as e:
@@ -597,7 +602,15 @@ class DetailColumn(IndexedSchema):
         Convert special names like date-opened to their casedb xpath equivalent (e.g. @date_opened).
         Only ever called by 2.0 apps.
         """
-        return CASE_PROPERTY_MAP.get(self.field, self.field)
+        parts = self.field.split('/')
+        parts[-1] = CASE_PROPERTY_MAP.get(parts[-1], parts[-1])
+        property = parts.pop()
+        indexes = parts
+
+        case = CaseXPath('')
+        for index in indexes:
+            case = case.index_id(index).case()
+        return case.property(property)
 
     @classmethod
     def wrap(cls, data):
