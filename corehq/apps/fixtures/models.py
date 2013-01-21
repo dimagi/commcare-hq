@@ -22,6 +22,11 @@ class FixtureDataType(Document):
     def by_domain_tag(cls, domain, tag):
         return cls.view('fixtures/data_types_by_domain_tag', key=[domain, tag], reduce=False, include_docs=True)
 
+    def recursive_delete(self):
+        for item in FixtureDataItem.by_data_type(self.domain, self.get_id):
+            item.delete_recursive()
+        self.delete()
+
 class FixtureDataItem(Document):
     domain = StringProperty()
     data_type_id = StringProperty()
@@ -41,7 +46,7 @@ class FixtureDataItem(Document):
 
     def remove_owner(self, owner, owner_type):
         for ownership in FixtureOwnership.view('fixtures/ownership',
-            key=['by data_item and ' + owner_type, self.domain, self.get_id, owner.get_id],
+            key=[self.domain, 'by data_item and ' + owner_type, self.get_id, owner.get_id],
             reduce=False,
             include_docs=True
         ):
@@ -79,7 +84,7 @@ class FixtureDataItem(Document):
     def get_groups(self, wrap=True):
         group_ids = set(
             get_db().view('fixtures/ownership',
-                key=['group by data_item', self.domain, self.get_id],
+                key=[self.domain, 'group by data_item', self.get_id],
                 reduce=False,
                 wrapper=lambda r: r['value']
             )
@@ -92,7 +97,7 @@ class FixtureDataItem(Document):
     def get_users(self, wrap=True, include_groups=False):
         user_ids = set(
             get_db().view('fixtures/ownership',
-                key=['user by data_item', self.domain, self.get_id],
+                key=[self.domain, 'user by data_item', self.get_id],
                 reduce=False,
                 wrapper=lambda r: r['value']
             )
@@ -126,21 +131,48 @@ class FixtureDataItem(Document):
             user_domain = user.domain
 
         fixture_ids = set(
-            get_db().view('fixtures/ownership',
-                keys=[['data_item by user', user_domain, user_id]] + [['data_item by group', user_domain, group_id] for group_id in group_ids],
+            FixtureOwnership.get_db().view('fixtures/ownership',
+                keys=[[user_domain, 'data_item by user', user_id]] + [[user_domain, 'data_item by group', group_id] for group_id in group_ids],
                 reduce=False,
                 wrapper=lambda r: r['value'],
             )
         )
         if wrap:
-            return cls.view('_all_docs', keys=list(fixture_ids), include_docs=True)
+            results = cls.get_db().view('_all_docs', keys=list(fixture_ids), include_docs=True)
+
+            # sort the results into those corresponding to real documents
+            # and those corresponding to deleted or non-existent documents
+            docs = []
+            deleted_fixture_ids = set()
+
+            for result in results:
+                if result.get('doc'):
+                    docs.append(cls.wrap(result['doc']))
+                elif result.get('error'):
+                    assert result['error'] == 'not_found'
+                    deleted_fixture_ids.add(result['key'])
+                else:
+                    assert result['value']['deleted'] is True
+                    deleted_fixture_ids.add(result['id'])
+
+            # fetch and delete ownership documents pointing
+            # to deleted or non-existent fixture documents
+            # this cleanup is necessary since we used to not do this
+            bad_ownerships = FixtureOwnership.view('fixtures/ownership',
+                keys=[[user_domain, 'by data_item', fixture_id] for fixture_id in deleted_fixture_ids],
+                include_docs=True,
+                reduce=False
+            ).all()
+            FixtureOwnership.get_db().bulk_delete(bad_ownerships)
+
+            return docs
         else:
             return fixture_ids
 
     @classmethod
     def by_group(cls, group, wrap=True):
         fixture_ids = get_db().view('fixtures/ownership',
-            key=['data_item by group', group.domain, group.get_id],
+            key=[group.domain, 'data_item by group', group.get_id],
             reduce=False,
             wrapper=lambda r: r['value'],
         ).all()
@@ -150,13 +182,21 @@ class FixtureDataItem(Document):
     @classmethod
     def by_data_type(cls, domain, data_type):
         data_type_id = _id_from_doc(data_type)
-        return cls.view('fixtures/data_items_by_domain_type', key=[domain, data_type], reduce=False, include_docs=True)
+        return cls.view('fixtures/data_items_by_domain_type', key=[domain, data_type_id], reduce=False, include_docs=True)
 
     @classmethod
     def by_field_value(cls, domain, data_type, field_name, field_value):
         data_type_id = _id_from_doc(data_type)
         return cls.view('fixtures/data_items_by_field_value', key=[domain, data_type_id, field_name, field_value],
                         reduce=False, include_docs=True)
+
+    def delete_ownerships(self):
+        ownerships = FixtureOwnership.by_item_id(self.get_id, self.domain)
+        FixtureOwnership.get_db().bulk_delete(ownerships)
+
+    def delete_recursive(self):
+        self.delete_ownerships()
+        self.delete()
 
 def _id_from_doc(doc_or_doc_id):
     if isinstance(doc_or_doc_id, basestring):
@@ -170,3 +210,17 @@ class FixtureOwnership(Document):
     data_item_id = StringProperty()
     owner_id = StringProperty()
     owner_type = StringProperty(choices=['user', 'group'])
+
+    @classmethod
+    def by_item_id(cls, item_id, domain):
+
+        startkey = [domain, 'by data_item', item_id]
+
+        ownerships = cls.view('fixtures/ownership',
+            startkey=startkey,
+            endkey=startkey + [{}],
+            include_docs=True,
+            reduce=False,
+        ).all()
+
+        return ownerships
