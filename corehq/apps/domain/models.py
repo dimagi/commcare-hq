@@ -577,11 +577,11 @@ class Domain(Document, HQBillingDomainMixin, SnapshotMixin):
                 self.organization_doc().title,
                 self.copied_from.display_name()
             )
-        if self.slug and self.organization:
+        if self.organization:
             return format_html(
                 '{0} &gt; {1}',
                 self.organization_doc().title,
-                self.slug
+                self.slug or self.name
             )
         else:
             return self.name
