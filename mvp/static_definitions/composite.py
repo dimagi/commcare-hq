@@ -193,7 +193,7 @@ COMPOSITE_INDICATORS = dict(
                     "4 months of gestation this time period",
         title="% Pregnant women reporting no Antenatal Care visit by 4 months of gestation",
         numerator_slug="no_anc",
-        denominator_slug="pregnant_women"
+        denominator_slug="anc_visit_120"
     ),
     facility_births_proportion=dict(
         description="Proportion of Births delivered in a Health Facility during the time period",
