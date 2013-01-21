@@ -210,7 +210,6 @@ class DOTCalendar(HTMLCalendar):
 
                     body.append('&nbsp;</div> <!-- close calendar cell -->') # close calendar-cell
                 if len(day_notes) > 0 :
-                    print list(day_notes)
                     body.append('<div class="date-notes-block">')
                     body.append('<i class="icon-info-sign"></i>&nbsp;')
                     body.append('<small>%s</small>' % ('<br>'.join(day_notes)))
