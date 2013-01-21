@@ -26,7 +26,7 @@ urlpatterns = patterns('corehq.apps.users.views',
     url(r'^web/undo_remove/(?P<record_id>[\w-]+)/$', 'undo_remove_web_user', name='undo_remove_web_user'),
     url(r'^web/invite/$', 'invite_web_user', name='invite_web_user'),
     url(r'^web/$', 'web_users', name='web_users'),
-    url(r'^join/(?P<invitation_id>[\w-]+)/$', 'accept_invitation', name='accept_invitation'),
+    url(r'^join/(?P<invitation_id>[\w-]+)/$', 'accept_invitation', name='domain_accept_invitation'),
     url(r'^web/role/$', 'post_user_role', name='post_user_role'),
 
     url(r'^httpdigest/?$', 'test_httpdigest'),

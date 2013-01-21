@@ -1,13 +1,18 @@
+from datetime import datetime
 from couchdbkit import ResourceNotFound
+from django.contrib.auth.views import redirect_to_login
 from django.core.urlresolvers import reverse
+from django.db import transaction
 from django.http import HttpResponse, HttpResponseRedirect, Http404, HttpResponseForbidden
 from django.views.decorators.http import require_POST
 from corehq.apps.domain.decorators import require_superuser
-from corehq.apps.registration.forms import DomainRegistrationForm
-from corehq.apps.orgs.forms import AddProjectForm, AddMemberForm, AddTeamForm, UpdateOrgInfo
+from corehq.apps.hqwebapp.views import logout
+from corehq.apps.registration.forms import DomainRegistrationForm, NewWebUserRegistrationForm
+from corehq.apps.orgs.forms import AddProjectForm, InviteMemberForm, AddTeamForm, UpdateOrgInfo
+from corehq.apps.registration.utils import activate_new_user
 from corehq.apps.users.models import CouchUser, WebUser, UserRole
 from dimagi.utils.web import render_to_response, json_response, get_url_base
-from corehq.apps.orgs.models import Organization, Team, DeleteTeamRecord
+from corehq.apps.orgs.models import Organization, Team, DeleteTeamRecord, OrgInvitation
 from corehq.apps.domain.models import Domain
 from django.contrib import messages
 
@@ -19,18 +24,19 @@ def orgs_base(request, template="orgs/orgs_base.html"):
     return render_to_response(request, template, vals)
 
 @require_superuser
-def orgs_landing(request, org, template="orgs/orgs_landing.html", form=None, add_form=None, add_member_form=None, add_team_form=None, update_form=None):
+def orgs_landing(request, org, template="orgs/orgs_landing.html", form=None, add_form=None, invite_member_form=None,
+                 add_team_form=None, update_form=None):
     organization = Organization.get_by_name(org)
 
     reg_form_empty = not form
     add_form_empty = not add_form
-    add_member_form_empty = not add_member_form
+    invite_member_form_empty = not invite_member_form
     add_team_form_empty = not add_team_form
     update_form_empty = not update_form
 
     reg_form = form or DomainRegistrationForm(initial={'org': organization.name})
     add_form = add_form or AddProjectForm(org)
-    add_member_form = add_member_form or AddMemberForm(org)
+    invite_member_form = invite_member_form or InviteMemberForm(org)
     add_team_form = add_team_form or AddTeamForm(org)
 
     update_form = update_form or UpdateOrgInfo(initial={'org_title': organization.title, 'email': organization.email, 'url': organization.url, 'location': organization.location})
@@ -38,8 +44,11 @@ def orgs_landing(request, org, template="orgs/orgs_landing.html", form=None, add
     current_teams = Team.get_by_org(org)
     current_domains = Domain.get_by_organization(org)
     members = [WebUser.get_by_user_id(user_id) for user_id in organization.members]
-    vals = dict( org=organization, domains=current_domains, reg_form=reg_form,
-                 add_form=add_form, reg_form_empty=reg_form_empty, add_form_empty=add_form_empty, update_form=update_form, update_form_empty=update_form_empty, add_member_form=add_member_form, add_member_form_empty=add_member_form_empty, add_team_form=add_team_form, add_team_form_empty=add_team_form_empty, teams=current_teams, members=members)
+    vals = dict(org=organization, domains=current_domains, reg_form=reg_form, add_form=add_form,
+                reg_form_empty=reg_form_empty, add_form_empty=add_form_empty, update_form=update_form,
+                update_form_empty=update_form_empty, invite_member_form=invite_member_form,
+                invite_member_form_empty=invite_member_form_empty, add_team_form=add_team_form,
+                add_team_form_empty=add_team_form_empty, teams=current_teams, members=members)
     return render_to_response(request, template, vals)
 
 @require_superuser
@@ -103,20 +112,76 @@ def orgs_add_project(request, org):
     return HttpResponseRedirect(reverse('orgs_landing', args=[org]))
 
 @require_superuser
-def orgs_add_member(request, org):
+def invite_member(request, org):
     if request.method == "POST":
-        form = AddMemberForm(org, request.POST)
+        form = InviteMemberForm(org, request.POST)
         if form.is_valid():
-            username = form.cleaned_data['member_email']
-            user_id = CouchUser.get_by_username(username).userID
-            organization = Organization.get_by_name(org)
-            organization.add_member(user_id)
-            messages.success(request, "Member Added!")
+            data = form.cleaned_data
+            data["invited_by"] = request.couch_user.user_id
+            data["invited_on"] = datetime.utcnow()
+            data["organization"] = org
+            invite = OrgInvitation(**data)
+            invite.save()
+            invite.send_activation_email()
+            messages.success(request, "Invitation sent to %s" % invite.email)
         else:
             messages.error(request, "Unable to add member")
-            return orgs_landing(request, org, add_member_form=form)
+            return orgs_landing(request, org, invite_member_form=form)
     return HttpResponseRedirect(reverse('orgs_landing', args=[org]))
 
+@transaction.commit_on_success
+def accept_invitation(request, org, invitation_id):
+    if request.GET.get('switch') == 'true':
+        logout(request)
+        return redirect_to_login(request.path)
+    if request.GET.get('create') == 'true':
+        logout(request)
+        return HttpResponseRedirect(request.path)
+    invitation = OrgInvitation.get(invitation_id)
+    assert(invitation.organization == org)
+    if invitation.is_accepted:
+        messages.error(request, "Sorry, that invitation has already been used up. "
+                                "If you feel this is a mistake please ask the inviter for "
+                                "another invitation.")
+        return HttpResponseRedirect(reverse("login"))
+    if request.user.is_authenticated():
+        # if you are already authenticated, just add this user to the organization
+        if request.couch_user.username != invitation.email:
+            messages.error(request,
+                "The invited user %s and your user %s do not match!" % (invitation.email, request.couch_user.username))
+
+        if request.method == "POST":
+            couch_user = CouchUser.from_django_user(request.user)
+            organization = Organization.get_by_name(org)
+            organization.add_member(couch_user.get_id)
+            invitation.is_accepted = True
+            invitation.save()
+            messages.success(request, "You have been added to the %s organization" % org)
+            return HttpResponseRedirect(reverse('orgs_landing', args=[org]))
+        else:
+            mobile_user = CouchUser.from_django_user(request.user).is_commcare_user()
+            return render_to_response(request, 'orgs/orgs_accept_invite.html',
+                {   "org": org,
+                    "mobile_user": mobile_user,
+                    "invited_user": invitation.email if request.couch_user.username != invitation.email else ""})
+    else:
+        # if you're not authenticated we need you to fill out your information
+        if request.method == "POST":
+            form = NewWebUserRegistrationForm(request.POST)
+            if form.is_valid():
+                user = activate_new_user(form)
+                user.save()
+                organization = Organization.get_by_name(org)
+                organization.add_member(user.get_id)
+                invitation.is_accepted = True
+                invitation.save()
+                messages.success(request, "User account for %s created! You may now login." % form.cleaned_data["email"])
+                messages.success(request, "You have been added to the %s organization" % org)
+                return HttpResponseRedirect(reverse("login"))
+        else:
+            form = NewWebUserRegistrationForm(initial={'email': invitation.email})
+
+        return render_to_response(request, "orgs/orgs_accept_invite.html", {"form": form})
 
 @require_superuser
 def orgs_add_team(request, org):

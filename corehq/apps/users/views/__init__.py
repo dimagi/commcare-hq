@@ -27,8 +27,8 @@ from corehq.apps.prescriptions.models import Prescription
 from corehq.apps.domain.models import Domain
 from corehq.apps.users.decorators import require_permission
 from corehq.apps.users.forms import UserForm, ProjectSettingsForm
-from corehq.apps.users.models import CouchUser, Invitation, CommCareUser, WebUser, \
-    RemoveWebUserRecord, UserRole, AdminUserRole
+from corehq.apps.users.models import CouchUser, CommCareUser, WebUser, \
+    RemoveWebUserRecord, UserRole, AdminUserRole, DomainInvitation
 from corehq.apps.domain.decorators import login_and_domain_required, require_superuser, domain_admin_required
 from corehq.apps.orgs.models import Team
 from corehq.apps.reports.util import get_possible_reports
@@ -106,7 +106,7 @@ def web_users(request, domain, template="users/web_users.html"):
         key = 'user-role:%s' % r.get_id if r.get_id else r.get_qualified_id()
         role_labels[key] = r.name
 
-    invitations = Invitation.by_domain(domain)
+    invitations = DomainInvitation.by_domain(domain)
     for invitation in invitations:
         invitation.role_label = role_labels.get(invitation.role, "")
 
@@ -163,7 +163,7 @@ def accept_invitation(request, domain, invitation_id):
     if request.GET.get('create') == 'true':
         logout(request)
         return HttpResponseRedirect(request.path)
-    invitation = Invitation.get(invitation_id)
+    invitation = DomainInvitation.get(invitation_id)
     assert(invitation.domain == domain)
     if invitation.is_accepted:
         messages.error(request, "Sorry, that invitation has already been used up. "
@@ -222,7 +222,7 @@ def invite_web_user(request, domain, template="users/invite_web_user.html"):
             data["invited_by"] = request.couch_user.user_id
             data["invited_on"] = datetime.utcnow()
             data["domain"] = domain
-            invite = Invitation(**data)
+            invite = DomainInvitation(**data)
             invite.save()
             invite.send_activation_email()
             messages.success(request, "Invitation sent to %s" % invite.email)
