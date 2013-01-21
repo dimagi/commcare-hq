@@ -40,6 +40,9 @@
             if (update.hasOwnProperty('commcare-version')) {
                 COMMCAREHQ.app_manager.setCommcareVersion(update['commcare-version']);
             }
+            if (COMMCAREHQ.app_manager.fetchAndShowFormValidation) {
+                COMMCAREHQ.app_manager.fetchAndShowFormValidation();
+            }
             COMMCAREHQ.updateDOM(update);
         }
         COMMCAREHQ.app_manager.updateDOM = updateDOM;
