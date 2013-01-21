@@ -35,8 +35,9 @@ class PactDOTPatientField(ReportSelectField):
     def get_pact_cases(cls):
         domain = PACT_DOMAIN
         case_es = CaseES(PACT_DOMAIN)
+        total_count = CommCareCase.get_db().view('hqcase/types_by_domain', key=["pact", "cc_path_client"]).first().get('value', 100)
         fields = ['_id', 'name', 'pactid']
-        query = case_es.base_query(terms={'type': PACT_CASE_TYPE}, fields=fields, start=0, size=None)
+        query = case_es.base_query(terms={'type': PACT_CASE_TYPE}, fields=fields, start=0, size=total_count)
         query['filter']['and'].append({ "prefix": { "dot_status": "dot" } })
 
         results = case_es.run_query(query)
