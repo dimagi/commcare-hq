@@ -99,7 +99,9 @@ def fire_sms_callback_event(reminder, handler, recipients, verified_numbers):
         
         # If the callback has been received, skip sending the next timeout message
         if len(current_event.callback_timeout_intervals) > 0 and (reminder.callback_try_count > 0):
-            if CallLog.inbound_call_exists(recipients[0].doc_type, recipients[0].get_id, reminder.last_fired):
+            # If last_fired is None, it means that the reminder fired for the first time on a timeout interval. So we just want
+            # to either log the missed callback if it's the last timeout, or fire the sms if not
+            if reminder.last_fired is not None and CallLog.inbound_call_exists(recipients[0].doc_type, recipients[0].get_id, reminder.last_fired):
                 reminder.skip_remaining_timeouts = True
                 return True
             elif len(current_event.callback_timeout_intervals) == reminder.callback_try_count:
@@ -200,7 +202,9 @@ def fire_ivr_survey_event(reminder, handler, recipients, verified_numbers):
         if len(recipients) == 0:
             return True
         
-        if reminder.callback_try_count > 0 and CallLog.answered_call_exists(recipients[0].doc_type, recipients[0].get_id, reminder.last_fired):
+        # If last_fired is None, it means that the reminder fired for the first time on a timeout interval. So we can
+        # skip the lookup for the answered call since no call went out yet.
+        if reminder.last_fired is not None and reminder.callback_try_count > 0 and CallLog.answered_call_exists(recipients[0].doc_type, recipients[0].get_id, reminder.last_fired):
             reminder.skip_remaining_timeouts = True
             return True
         verified_number = verified_numbers[recipients[0].get_id]
