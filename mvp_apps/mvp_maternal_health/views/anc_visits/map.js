@@ -16,16 +16,19 @@ function (doc) {
             var edd_date = new Date(edd);
             var difference = edd_date.getTime() - visit_date.getTime();
 
-            if (edd_date >= visit_date && difference <= 120*MS_IN_DAY && indicators.cur_num_anc) {
-                try {
-                    var cur_anc = (indicators.cur_num_anc.value) ? parseInt(indicators) : 0;
-                    if (cur_anc === 0) {
-                        indicator_emits["no_anc"] = case_id;
-                    }
-                } catch (e) {
-                    if (indicators.cur_num_anc.value === "" || indicators.cur_num_anc.value === "no") {
-                        // handle sauri case
-                        indicator_emits["no_anc"] = case_id;
+            if (edd_date >= visit_date && difference <= 120*MS_IN_DAY) {
+                indicator_emits["anc_visit_120"] = case_id;
+                if (indicators.cur_num_anc) {
+                    try {
+                        var cur_anc = (indicators.cur_num_anc.value) ? parseInt(indicators) : 0;
+                        if (cur_anc === 0) {
+                            indicator_emits["no_anc"] = case_id;
+                        }
+                    } catch (e) {
+                        if (indicators.cur_num_anc.value === "" || indicators.cur_num_anc.value === "no") {
+                            // handle sauri case
+                            indicator_emits["no_anc"] = case_id;
+                        }
                     }
                 }
             }

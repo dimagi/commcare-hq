@@ -14,14 +14,6 @@ MATERNAL_HEALTH_INDICATORS = dict(
                 title="# Pregnant Women Referred for Danger Signs",
                 indicator_key="danger_sign referred",
             )
-        ),
-        pregnancies_by_edd=dict(
-            pregnant_women=dict(
-                description="No. of Pregnant women at 4 months of gestation during time frame.",
-                title="# Pregnant Women at 4 Months of Gestation",
-                enddate_shift=120,
-                indicator_key="pregnancy",
-            ),
         )
     )
 )
@@ -42,6 +34,11 @@ COUNT_UNIQUE_MATERNAL_HEALTH_INDICATORS = dict(
                 description="No. of Pregnant women who did not have an ANC visit by 4 months of gestation time",
                 title="# Pregnant women who did not have an ANC visit by 4 months of gestation time",
                 indicator_key="no_anc"
+            ),
+            anc_visit_120=dict(
+                description="No. of Pregnant women who received a visit by 4 months of gestation",
+                title="# Pregnant women who received a visit by 4 months of gestation",
+                indicator_key="anc_visit_120"
             ),
             edd_soon_visit=dict(
                 description="No. of Pregnant women who have at least one visit by 8 months of gestation",
