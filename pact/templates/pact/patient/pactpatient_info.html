@@ -8,9 +8,9 @@
                             &nbsp;<a id="btn_pt_edit" class="btn btn-success" href="{{ pt_root_url }}&view=edit">Edit</a>
                     &nbsp;&nbsp;
 
-                    &nbsp;<a class="btn" target="_blank" href="{{ cloudcare_pn_url }}">New Progress Note</a>
-                    &nbsp;<a class="btn" target="_blank" href="{{ cloudcare_dot_url }}">New DOT</a>
-                    &nbsp;<a class="btn" target="_blank" href="{{ cloudcare_bw_url }}">New Bloodwork</a>
+                    &nbsp;<a class="btn" {% if notabs %}target="_blank"{% endif %} href="{{ cloudcare_pn_url }}">New Progress Note</a>
+                    &nbsp;<a class="btn" {% if notabs %}target="_blank"{% endif %} href="{{ cloudcare_dot_url }}">New DOT</a>
+                    &nbsp;<a class="btn" {% if notabs %}target="_blank"{% endif %} href="{{ cloudcare_bw_url }}">New Bloodwork</a>
                 </h4>
             </div>
             <div class="commit-group">
@@ -87,7 +87,7 @@
     <br>
     <div class="commit-group-heading">
         <h4>Contact Information
-            &nbsp;<a id="btn_contact_edit" class="btn btn-success" target="_blank" href="{{ cloudcare_addr_edit_url }}">Edit</a>
+            &nbsp;<a id="btn_contact_edit" class="btn btn-success" {% if notabs %}target="_blank"{% endif %} href="{{ cloudcare_addr_edit_url }}">Edit</a>
         </h4>
     </div>
     <div class="commit-group">

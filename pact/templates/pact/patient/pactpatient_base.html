@@ -21,13 +21,13 @@
                 <ul class="nav nav-pills">
                     {% block patient-tab-controller %}
                         <li {% if view_mode == "info" or view_mode == "edit" %}class="active"{% endif %}>
-                            <a href="{{ pt_root_url }}" >{% trans "Info" %}</a></li>
+                            <a href="{{ pt_root_url }}{% if notabs %}&notabs{% endif %}" >{% trans "Info" %}</a></li>
 
                         <li {% if view_mode == "schedule" %}class="active"{% endif %}>
-                            <a href="{{ pt_root_url }}&view=schedule" >{% trans "Schedule" %}</a>
+                            <a href="{{ pt_root_url }}&view=schedule{% if notabs %}&notabs{% endif %}" >{% trans "Schedule" %}</a>
                         </li>
                         <li {% if view_mode == "submissions" %}class="active"{% endif %}>
-                            <a href="{{ pt_root_url }}&view=submissions" >{% trans "Submissions" %}</a>
+                            <a href="{{ pt_root_url }}&view=submissions{% if notabs %}&notabs{% endif %}" >{% trans "Submissions" %}</a>
                         </li>
                     {% endblock patient-tab-controller %}
                 </ul>
