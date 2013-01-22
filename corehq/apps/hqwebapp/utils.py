@@ -1,6 +1,8 @@
 import datetime
 from datetime import timedelta
 from django.conf import settings
+from django.contrib import messages
+from django.contrib.auth.views import redirect_to_login
 
 from django.core.paginator import Paginator, InvalidPage, EmptyPage
 
@@ -11,7 +13,11 @@ from django.core.paginator import Paginator, InvalidPage, EmptyPage
 
 
 #get members under this supervisor for this group
-def get_members_for_supervisor(organization, supervisor_user):    
+from django.core.urlresolvers import reverse
+from django.http import HttpResponseRedirect
+from corehq.apps.hqwebapp.views import logout
+
+def get_members_for_supervisor(organization, supervisor_user):
     pass
 
 def get_supervisor_roles(user):
@@ -207,4 +213,21 @@ def get_post_redirect(request, get_callback, post_callback,
     elif request.method == "POST": 
         if post_template_name: return post_callback(request, post_template_name)        
         else:                  return post_callback(request)
-    raise Exception("Request method could not be matched.  Expected a GET or a POST.")        
+    raise Exception("Request method could not be matched.  Expected a GET or a POST.")
+
+def check_for_redirect(request):
+    if request.GET.get('switch') == 'true':
+        logout(request)
+        return redirect_to_login(request.path)
+    if request.GET.get('create') == 'true':
+        logout(request)
+        return HttpResponseRedirect(request.path)
+    return False
+
+def check_for_accepted(request, invitation):
+    if invitation.is_accepted:
+        messages.error(request, "Sorry, that invitation has already been used up. "
+                                "If you feel this is a mistake please ask the inviter for "
+                                "another invitation.")
+        return HttpResponseRedirect(reverse("login"))
+    return False

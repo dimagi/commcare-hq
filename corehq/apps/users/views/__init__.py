@@ -4,6 +4,7 @@ import json
 import re
 import urllib
 from datetime import datetime
+from corehq.apps.hqwebapp.utils import check_for_accepted, check_for_redirect
 
 from corehq.apps.registration.forms import NewWebUserRegistrationForm
 from corehq.apps.registration.utils import activate_new_user
@@ -157,19 +158,17 @@ def post_user_role(request, domain):
 
 @transaction.commit_on_success
 def accept_invitation(request, domain, invitation_id):
-    if request.GET.get('switch') == 'true':
-        logout(request)
-        return redirect_to_login(request.path)
-    if request.GET.get('create') == 'true':
-        logout(request)
-        return HttpResponseRedirect(request.path)
+    r = check_for_redirect(request)
+    if r:
+        return r
+
     invitation = DomainInvitation.get(invitation_id)
     assert(invitation.domain == domain)
-    if invitation.is_accepted:
-        messages.error(request, "Sorry, that invitation has already been used up. "
-                                "If you feel this is a mistake please ask the inviter for "
-                                "another invitation.")
-        return HttpResponseRedirect(reverse("login"))
+
+    r = check_for_accepted(request, invitation)
+    if r:
+        return r
+
     if request.user.is_authenticated():
         # if you are already authenticated, just add the domain to your
         # list of domains

@@ -1,16 +1,15 @@
 from datetime import datetime
 from couchdbkit import ResourceNotFound
-from django.contrib.auth.views import redirect_to_login
 from django.core.urlresolvers import reverse
 from django.db import transaction
 from django.http import HttpResponse, HttpResponseRedirect, Http404, HttpResponseForbidden
 from django.views.decorators.http import require_POST
 from corehq.apps.domain.decorators import require_superuser
-from corehq.apps.hqwebapp.views import logout
+from corehq.apps.hqwebapp.utils import check_for_accepted, check_for_redirect
 from corehq.apps.registration.forms import DomainRegistrationForm, NewWebUserRegistrationForm
 from corehq.apps.orgs.forms import AddProjectForm, InviteMemberForm, AddTeamForm, UpdateOrgInfo
 from corehq.apps.registration.utils import activate_new_user
-from corehq.apps.users.models import CouchUser, WebUser, UserRole
+from corehq.apps.users.models import CouchUser, WebUser, UserRole, DomainInvitation
 from dimagi.utils.web import render_to_response, json_response, get_url_base
 from corehq.apps.orgs.models import Organization, Team, DeleteTeamRecord, OrgInvitation
 from corehq.apps.domain.models import Domain
@@ -131,19 +130,17 @@ def invite_member(request, org):
 
 @transaction.commit_on_success
 def accept_invitation(request, org, invitation_id):
-    if request.GET.get('switch') == 'true':
-        logout(request)
-        return redirect_to_login(request.path)
-    if request.GET.get('create') == 'true':
-        logout(request)
-        return HttpResponseRedirect(request.path)
-    invitation = OrgInvitation.get(invitation_id)
+    r = check_for_redirect(request)
+    if r:
+        return r
+
+    invitation = DomainInvitation.get(invitation_id)
     assert(invitation.organization == org)
-    if invitation.is_accepted:
-        messages.error(request, "Sorry, that invitation has already been used up. "
-                                "If you feel this is a mistake please ask the inviter for "
-                                "another invitation.")
-        return HttpResponseRedirect(reverse("login"))
+
+    r = check_for_accepted(request, invitation)
+    if r:
+        return r
+
     if request.user.is_authenticated():
         # if you are already authenticated, just add this user to the organization
         if request.couch_user.username != invitation.email:
