@@ -12,9 +12,10 @@ import simplejson
 from corehq.apps.api.domainapi import DomainAPI
 from corehq.apps.api.es import XFormES, CaseES
 from corehq.apps.app_manager.models import ApplicationBase
-from corehq.apps.domain.decorators import login_and_domain_required
+from corehq.apps.domain.decorators import login_and_domain_required, login_or_digest
 from corehq.apps.fixtures.models import FixtureDataType, FixtureDataItem
 from corehq.apps.groups.models import Group
+from corehq.apps.users.models import CouchUser
 from couchforms.models import XFormInstance
 from pact.dot_data import get_dots_case_json
 from pact.enums import PACT_DOMAIN, XMLNS_PATIENT_UPDATE, PACT_PROVIDER_FIXTURE_TAG, PACT_HP_GROUPNAME, PACT_PROVIDERS_FIXTURE_CACHE_KEY, XMLNS_DOTS_FORM, XMLNS_PATIENT_UPDATE_DOT
@@ -121,26 +122,20 @@ class PactFormAPI(DomainAPI):
     def api_name(cls):
         return "pact_formdata"
 
-#    @method_decorator(login_and_domain_required)
-    def dispatch(self, *args, **kwargs):
-        req = args[0]
-        if not self.allowed_domain(req.domain):
-            raise Http404
-        ret =  super(PactFormAPI, self).dispatch(*args, **kwargs)
-        return ret
-
-    @httpdigest()
-#    def progress_note_download(self):
+    #@method_decorator(login_or_digest)
+    @method_decorator(httpdigest)
+    @method_decorator(login_or_digest)
     def get(self, *args, **kwargs):
         """
         Download prior progress note submissions for local access
         """
 
         db = XFormInstance.get_db()
-        username = self.request.user.username
-        if self.request.user.username == 'ctsims':
-            username = 'rachel'
-        username='cs783'
+        couch_user = CouchUser.from_django_user(self.request.user)
+        username = couch_user.raw_username
+        if username == 'ctsims':
+            username='cs783'
+
 
         offset =0
         limit_count=200
@@ -491,8 +486,7 @@ class PactAPI(DomainAPI):
         raise NotImplementedError("Not implemented")
 
 
-    @method_decorator(login_and_domain_required)
-#    @method_decorator(csrf_protect)
+    @method_decorator(login_or_digest)
     def dispatch(self, *args, **kwargs):
         req = args[0]
         self.method = req.GET.get('method', None)
