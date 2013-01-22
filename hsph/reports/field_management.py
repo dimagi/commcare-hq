@@ -35,7 +35,7 @@ class HSPHFieldManagementReport(GenericTabularReport, CustomProjectReport, Proje
     def user_to_dctl(self, user):
         dctl_name = "Unknown DCTL"
         dctl_id = None
-        data_items = FixtureDataItem.by_user(user, domain=self.domain).all()
+        data_items = list(FixtureDataItem.by_user(user, domain=self.domain))
         for item in data_items:
             if item.data_type_id == self.dctl_fixture:
                 dctl_id = item.fields.get('id')
