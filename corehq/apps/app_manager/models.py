@@ -958,7 +958,15 @@ class VersionedDoc(Document):
             return self.doc_type
 
 
-def full_hq_url(method):
+def absolute_url_property(method):
+    """
+    Helper for the various fully qualified application URLs
+    Turns a method returning an unqualified URL
+    into a property returning a fully qualified URL
+    (e.g., '/my_url/' => 'https://www.commcarehq.org/my_url/')
+    Expects `self.url_base` to be fully qualified url base
+
+    """
     @wraps(method)
     def _inner(self):
         return "%s%s" % (self.url_base, method(self))
@@ -1147,19 +1155,19 @@ class ApplicationBase(VersionedDoc, SnapshotMixin):
     def url_base(self):
         return get_url_base()
 
-    @full_hq_url
+    @absolute_url_property
     def post_url(self):
         return reverse('receiver_post_with_app_id', args=[self.domain, self.copy_of or self.get_id])
 
-    @full_hq_url
+    @absolute_url_property
     def ota_restore_url(self):
         return reverse('corehq.apps.ota.views.restore', args=[self.domain])
 
-    @full_hq_url
+    @absolute_url_property
     def form_record_url(self):
         return '/a/%s/api/custom/pact_formdata/v1/' % self.domain
 
-    @full_hq_url
+    @absolute_url_property
     def hq_profile_url(self):
         return "%s?latest=true" % (
             reverse('download_profile', args=[self.domain, self._id])
@@ -1168,7 +1176,7 @@ class ApplicationBase(VersionedDoc, SnapshotMixin):
     def profile_loc(self):
         return "jr://resource/profile.xml"
 
-    @full_hq_url
+    @absolute_url_property
     def jar_url(self):
         return reverse('corehq.apps.app_manager.views.download_jar', args=[self.domain, self._id])
 
@@ -1253,7 +1261,7 @@ class ApplicationBase(VersionedDoc, SnapshotMixin):
             errors.append({'type': 'error', 'message': 'unexpected error: %s' % e})
         return errors
 
-    @full_hq_url
+    @absolute_url_property
     def odk_profile_url(self):
 
         return reverse('corehq.apps.app_manager.views.download_odk_profile', args=[self.domain, self._id]),
@@ -1426,7 +1434,7 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
         else:
             return get_url_base()
 
-    @full_hq_url
+    @absolute_url_property
     def suite_url(self):
         return reverse('download_suite', args=[self.domain, self.get_id])
 
