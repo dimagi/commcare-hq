@@ -1,5 +1,5 @@
 from django.http import HttpResponse, HttpResponseRedirect, Http404
-from corehq.apps.domain.decorators import require_superuser
+from corehq.apps.domain.decorators import require_superuser, domain_admin_required
 from corehq.apps.domain.models import Domain
 from corehq.apps.commtrack.management.commands import bootstrap_psi
 from corehq.apps.commtrack.models import Product
@@ -16,7 +16,7 @@ from couchdbkit import ResourceNotFound
 
 DEFAULT_PRODUCT_LIST_LIMIT = 10
 
-# TODO need an access decorator
+@domain_admin_required # TODO: will probably want less restrictive permission
 def product_list(request, domain, template="commtrack/manage/products.html"):
     page = request.GET.get('page', 1)
     limit = request.GET.get('limit', DEFAULT_PRODUCT_LIST_LIMIT)
@@ -39,7 +39,7 @@ def product_list(request, domain, template="commtrack/manage/products.html"):
     )
     return render_to_response(request, template, context)
 
-# TODO need an access decorator
+@domain_admin_required # TODO: will probably want less restrictive permission
 def product_fetch(request, domain):
     page = int(request.GET.get('page', 1))
     limit = int(request.GET.get('limit', DEFAULT_PRODUCT_LIST_LIMIT))
@@ -61,7 +61,7 @@ def product_fetch(request, domain):
         product_list=[product_data(p) for p in products],
     )), 'text/json')
 
-# TODO need an access decorator
+@domain_admin_required # TODO: will probably want less restrictive permission
 def product_edit(request, domain, prod_id=None): 
     if prod_id:
         try:
