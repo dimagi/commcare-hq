@@ -488,16 +488,6 @@ def commtrack_settings(request, domain):
 
     return render_to_response(request, 'domain/admin/commtrack_settings.html', dict(
             domain=domain.name,
+            #form=form,
         ))
 
-"""
-        form=form,
-        deployment_form=deployment_form,
-        languages=domain.readable_languages(),
-        applications=domain.applications(),
-        autocomplete_fields=('project_type', 'phone_model', 'user_type', 'city', 'country', 'region'),
-        billing_info_form=billing_info_form,
-        billing_info_partial=billing_info_partial,
-        billing_enabled=billing_enabled
-    ))
-"""
