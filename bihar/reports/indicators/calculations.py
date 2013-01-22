@@ -1,11 +1,10 @@
-from collections import defaultdict
 from couchdbkit import ResourceNotFound
-from bihar.reports.indicators.filters import A_MONTH, is_pregnant_mother, is_newborn_child, get_add, get_edd,\
+from bihar.reports.indicators.filters import is_pregnant_mother, is_newborn_child, get_add, get_edd,\
     mother_pre_delivery_columns, mother_post_delivery_columns
 from dimagi.utils.couch.safe_index import safe_index
 from dimagi.utils.parsing import string_to_datetime
 import datetime as dt
-from bihar.reports.indicators.visits import visit_is, get_related_prop
+from bihar.reports.indicators.visits import get_related_prop
 from dimagi.utils.decorators.memoized import memoized
 from django.utils.translation import ugettext_noop
 from django.utils.translation import ugettext as _
@@ -402,23 +401,6 @@ class IMCalculator(MMCalculator):
             return 1 if action else 0
         return 0
 
-def _get_time_of_birth(form):
-    if form.xpath('form/child_info'):
-        try:
-            time_of_birth = form.xpath('form/child_info/case/update/time_of_birth')
-            assert time_of_birth is not None
-            return time_of_birth
-        except AssertionError:
-            try:
-                return safe_index(
-                    form.xpath('form/child_info')[0],
-                    'case/update/time_of_birth'.split('/')
-                )
-            except IndexError, KeyError:
-                notify_exception(None, "Problem getting time of birth from %s. Child info is %s" % \
-                                 (form, form.xpath('form/child_info')))
-    return None
-
 class ComplicationsCalculator(SummaryValueMixIn, MotherPostDeliverySummaryMixIn,
     MemoizingCalculatorMixIn, IndicatorCalculator):
     """
@@ -535,7 +517,7 @@ class ComplicationsCalculator(SummaryValueMixIn, MotherPostDeliverySummaryMixIn,
             for form in self.get_forms_with_complications(case):
                 has_complication = True
                 if form.xmlns == self.DELIVERY:
-                    add = _get_time_of_birth(form)
+                    add = form.xpath('form/add')
                 else:
                     add = get_add(case)
                 add = string_to_datetime(add).date()
