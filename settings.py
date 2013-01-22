@@ -209,6 +209,7 @@ HQ_APPS = (
     'pathfinder',
     'pathindia',
     'pact',
+    'psi',
 )
 
 TEST_APPS = (
@@ -470,6 +471,7 @@ COUCHDB_APPS = [
     'pathfinder',
     'pathindia',
     'pact',
+    'psi',
 ]
 
 
@@ -705,18 +707,18 @@ CUSTOM_REPORT_MAP = {
     },
     "psi": {
         "Custom Reports": [
-            'corehq.apps.reports.commtrack.psi_prototype.PSIEventsReport',
-            'corehq.apps.reports.commtrack.psi_prototype.PSIHDReport',
-            'corehq.apps.reports.commtrack.psi_prototype.PSISSReport',
-            'corehq.apps.reports.commtrack.psi_prototype.PSITSReport',
+            'psi.reports.PSIEventsReport',
+            'psi.reports.PSIHDReport',
+            'psi.reports.PSISSReport',
+            'psi.reports.PSITSReport',
         ]
     },
     "psi-unicef": {
         "Custom Reports": [
-            'corehq.apps.reports.commtrack.psi_prototype.PSIEventsReport',
-            'corehq.apps.reports.commtrack.psi_prototype.PSIHDReport',
-            'corehq.apps.reports.commtrack.psi_prototype.PSISSReport',
-            'corehq.apps.reports.commtrack.psi_prototype.PSITSReport',
+            'psi.reports.PSIEventsReport',
+            'psi.reports.PSIHDReport',
+            'psi.reports.PSISSReport',
+            'psi.reports.PSITSReport',
         ]
     }
     #    "test": [
@@ -820,9 +822,6 @@ INDICATOR_CONFIG = {
 PILLOWTOPS = [ 'corehq.pillows.CasePillow',
 			   'corehq.pillows.XFormPillow',
                'corehq.pillows.ExchangePillow',
-#              'corehq.pillows.AuditcarePillow',
-#              'corehq.pillows.CouchlogPillow',
-#              'corehq.pillows.DevicelogPillow',
                ] + LOCAL_PILLOWTOPS
 
 XFORM_PILLOW_HANDLERS = ['pact.pillowhandler.PactHandler', ]
