@@ -26,7 +26,7 @@
                     ref_long: {{ module.details.3|JSON }}
                 },
                 properties: {
-                    'case': ["name", "date-opened", "status", "external-id"].concat({{ case_properties|JSON }}),
+                    'case': {{ case_properties|JSON }},
                     referral: ["id", "type", "date-due", "date-created"]
                 },
                 lang: {{ lang|JSON }},

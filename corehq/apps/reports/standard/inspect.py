@@ -144,7 +144,9 @@ class CaseDisplay(object):
 
     @property
     def owner_display(self):
-        username = self.report.usernames.get(self.user_id, self.user_not_found_display(self.user_id))
+        username = (self.report.usernames.get(self.user_id) or
+                    self.user_not_found_display(self.user_id))
+
         if self.owning_group and self.owning_group.name:
             return '<span class="label label-inverse">%s</span>' % self.owning_group.name
         else:

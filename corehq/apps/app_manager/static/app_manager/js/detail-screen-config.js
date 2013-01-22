@@ -294,7 +294,11 @@ var DetailScreenConfig = (function () {
             }
 
             function toTitleCase(str) {
-                return str.replace(/_/g, ' ').replace(/-/g, ' ').replace(/\w\S*/g, function (txt) {
+                return (str
+                    .replace(/_/g, ' ')
+                    .replace(/-/g, ' ')
+                    .replace(/\//g, ' ')
+                ).replace(/\w\S*/g, function (txt) {
                     return txt.charAt(0).toUpperCase() + txt.substr(1).toLowerCase();
                 });
             }
@@ -351,7 +355,11 @@ var DetailScreenConfig = (function () {
                 }
             }
             this.suggestedColumns.sortBy(function () {
-                return [this.model.val() === 'referral' ? 1 : 2, this.field.val()];
+                return [
+                    this.model.val() === 'referral' ? 1 : 2,
+                    /\//.test(this.field.val()) ? 2 : 1,
+                    this.field.val()
+                ];
             });
 
             this.saveButton = COMMCAREHQ.SaveButton.init({
@@ -463,7 +471,18 @@ var DetailScreenConfig = (function () {
                 if (this.model === 'referral') {
                     $('<td/>').addClass('detail-screen-model').append(column.model.ui).appendTo($tr);
                 }
-                $('<td/>').addClass('detail-screen-field').append(column.field.ui.addClass('code')).appendTo($tr);
+                if (!column.field.edit) {
+                    var text = column.field.ui.text();
+                    var parts = text.split('/');
+                    // wrap all parts but the last in a label style
+                    for (var j = 0; j < parts.length - 1; j++) {
+                        parts[j] = '<span class="label label-info">' +
+                            parts[j] + '</span>'
+                    }
+                    parts[j] = '<code style="display: inline-block;">' + parts[j] + '</code>'
+                    column.field.ui.html(parts.join('<span style="color: #DDD;">/</span>'));
+                }
+                $('<td/>').addClass('detail-screen-field').append(column.field.ui).appendTo($tr);
                 $('<td/>').addClass('detail-screen-header').append(column.header.ui).appendTo($tr);
                 $('<td/>').addClass('detail-screen-format').append(column.format.ui).appendTo($tr);
                 $('<td/>').addClass('detail-screen-extra').append(column.$extra).appendTo($tr);
@@ -501,7 +520,10 @@ var DetailScreenConfig = (function () {
                     if (this.edit) {
                         $('<div/>').append(this.saveButton.ui).appendTo($box);
                     }
-                    $table = $('<table/>').addClass('detail-screen-table').appendTo($box);
+                    $table = $('<table/>'
+                        ).addClass('detail-screen-table'
+                        ).css('clear', 'both'
+                        ).appendTo($box);
 
                     $tr = $('<tr/>').appendTo($table);
 

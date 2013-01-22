@@ -190,6 +190,31 @@ class CallLog(MessageLog):
             return (reduced[0]['value'] > 0)
         else:
             return False
+    
+    @classmethod
+    def answered_call_exists(cls, caller_doc_type, caller_id, after_timestamp):
+        """
+        Checks to see if an outbound call exists for the given caller that was successfully answered.
+        
+        caller_doc_type The doc_type of the caller (e.g., "CommCareCase").
+        caller_id       The _id of the caller's document.
+        after_timestamp The datetime after which to check for the existence of a call.
+        
+        return          True if a call exists in the CallLog, False if not.
+        """
+        start_timestamp = json_format_datetime(after_timestamp)
+        end_timestamp = json_format_datetime(datetime.utcnow())
+        calls = cls.view("sms/by_recipient",
+                    startkey=[caller_doc_type, caller_id, "CallLog", OUTGOING, start_timestamp],
+                    endkey=[caller_doc_type, caller_id, "CallLog", OUTGOING, end_timestamp],
+                    reduce=False,
+                    include_docs=True).all()
+        result = False
+        for call in calls:
+            if call.answered:
+                result = True
+                break
+        return result
 
 class EventLog(Document):
     domain                      = StringProperty()

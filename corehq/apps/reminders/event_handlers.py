@@ -10,6 +10,7 @@ from corehq.apps.users.models import CouchUser
 from corehq.apps.sms.models import CallLog, EventLog, MISSED_EXPECTED_CALLBACK
 from django.conf import settings
 from corehq.apps.app_manager.models import Form
+from corehq.apps.ivr.api import initiate_outbound_call
 
 """
 This module defines the methods that will be called from CaseReminderHandler.fire()
@@ -92,10 +93,16 @@ def fire_sms_event(reminder, handler, recipients, verified_numbers):
 def fire_sms_callback_event(reminder, handler, recipients, verified_numbers):
     current_event = reminder.current_event
     if handler.recipient in [RECIPIENT_CASE, RECIPIENT_USER]:
+        # If there are no recipients, just move to the next reminder event
+        if len(recipients) == 0:
+            return True
+        
         # If the callback has been received, skip sending the next timeout message
         if len(current_event.callback_timeout_intervals) > 0 and (reminder.callback_try_count > 0):
-            if CallLog.inbound_call_exists(recipients[0].doc_type, recipients[0].get_id, reminder.last_fired):
-                reminder.callback_received = True
+            # If last_fired is None, it means that the reminder fired for the first time on a timeout interval. So we just want
+            # to either log the missed callback if it's the last timeout, or fire the sms if not
+            if reminder.last_fired is not None and CallLog.inbound_call_exists(recipients[0].doc_type, recipients[0].get_id, reminder.last_fired):
+                reminder.skip_remaining_timeouts = True
                 return True
             elif len(current_event.callback_timeout_intervals) == reminder.callback_try_count:
                 # On the last callback timeout, instead of sending the SMS again, log the missed callback
@@ -191,6 +198,15 @@ def fire_sms_survey_event(reminder, handler, recipients, verified_numbers):
 
 def fire_ivr_survey_event(reminder, handler, recipients, verified_numbers):
     if handler.recipient == RECIPIENT_CASE:
+        # If there are no recipients, just move to the next reminder event
+        if len(recipients) == 0:
+            return True
+        
+        # If last_fired is None, it means that the reminder fired for the first time on a timeout interval. So we can
+        # skip the lookup for the answered call since no call went out yet.
+        if reminder.last_fired is not None and reminder.callback_try_count > 0 and CallLog.answered_call_exists(recipients[0].doc_type, recipients[0].get_id, reminder.last_fired):
+            reminder.skip_remaining_timeouts = True
+            return True
         verified_number = verified_numbers[recipients[0].get_id]
         if verified_number is not None:
             initiate_outbound_call(verified_number, reminder.current_event.form_unique_id)

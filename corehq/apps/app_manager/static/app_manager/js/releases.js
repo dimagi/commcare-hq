@@ -135,13 +135,6 @@ function ReleasesMain(o) {
             comment: comment
         }).success(function (data) {
                 $('#build-errors-wrapper').html(data.error_html);
-                $('#build-errors').each(function () {
-                    var specialMessage = $('span', this)[0];
-                    var defaultMessage = $('span', this)[1];
-                    if ($.trim($(specialMessage).text())) {
-                        $(defaultMessage).hide();
-                    }
-                });
                 if (data.saved_app) {
                     self.addSavedApp(SavedApp(data.saved_app), true);
                 }
