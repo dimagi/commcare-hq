@@ -940,6 +940,9 @@ pre code {
   max-height: 340px;
   overflow-y: scroll;
 }
+code {
+  color: #333333;
+}
 form {
   margin: 0 0 18px;
 }
@@ -3421,7 +3424,7 @@ ul.icons li [class*=" icon-"] {
 .open {
   *z-index: 1000;
 }
-.open  > .dropdown-menu {
+.open > .dropdown-menu {
   display: block;
 }
 .pull-right > .dropdown-menu {
