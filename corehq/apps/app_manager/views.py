@@ -1,4 +1,5 @@
 from StringIO import StringIO
+import functools
 import logging
 import uuid
 import zipfile
@@ -29,6 +30,7 @@ from corehq.apps.hqmedia import upload
 from corehq.apps.sms.views import get_sms_autocomplete_context
 from corehq.apps.users.decorators import require_permission
 from corehq.apps.users.models import Permissions, CommCareUser
+from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.logging import notify_exception
 from dimagi.utils.subprocess_timeout import ProcessTimedOut
 
@@ -314,9 +316,11 @@ def get_form_view_context(request, form, langs, is_user_registration, messages=m
             messages.error(request, "Unexpected System Error: %s" % e)
 
         try:
-            xform.add_case_and_meta(form)
-            if settings.DEBUG and False:
-                xform.validate()
+            form_action_errors = form.validate_for_build()
+            if not form_action_errors:
+                xform.add_case_and_meta(form)
+                if settings.DEBUG and False:
+                    xform.validate()
         except CaseError as e:
             messages.error(request, "Error in Case Management: %s" % e)
         except XFormValidationError as e:
@@ -339,7 +343,7 @@ def get_form_view_context(request, form, langs, is_user_registration, messages=m
         'form_actions': form.actions.to_json(),
         'case_reserved_words_json': load_case_reserved_words(),
         'is_user_registration': is_user_registration,
-        'module_case_types': [{'module_name': module.name.get('en'), 'case_type': module.case_type} for module in form.get_app().modules if module.case_type] if not is_user_registration else None
+        'module_case_types': [{'module_name': module.name.get('en'), 'case_type': module.case_type} for module in form.get_app().modules if module.case_type] if not is_user_registration else None,
     }
 
 def get_langs(request, app):
@@ -516,9 +520,42 @@ def view_generic(req, domain, app_id=None, module_id=None, form_id=None, is_user
 
     case_properties = set()
     if module:
-        for _form in module.forms:
-            case_properties.update(_form.actions.update_case.update.keys())
-    case_properties = sorted(case_properties)
+        @memoized
+        def get_properties(case_type,
+                defaults=("name", "date-opened", "status"),
+                already_visited=()):
+
+            if case_type in already_visited:
+                return ()
+
+            get_properties_recursive = functools.partial(
+                get_properties,
+                already_visited=already_visited + (case_type,)
+            )
+
+            case_properties = set(defaults)
+            parent_types = set()
+
+            for module in app.get_modules():
+                for form in module.get_forms():
+                    if module.case_type == case_type:
+                        case_properties.update(
+                            form.actions.update_case.update.keys()
+                        )
+                    for subcase in form.actions.subcases:
+                        if subcase.case_type == case_type:
+                            case_properties.update(
+                                subcase.case_properties.keys()
+                            )
+                            parent_types.add(module.case_type)
+
+            for parent_type in parent_types:
+                for property in get_properties_recursive(parent_type):
+                    case_properties.add('parent/%s' % property)
+
+            return case_properties
+
+        case_properties = list(get_properties(module.case_type))
 
     context = {
         'domain': domain,
@@ -701,7 +738,9 @@ def new_module(req, domain, app_id):
     module_id = module.id
     app.new_form(module_id, "Untitled Form", lang)
     app.save()
-    return back_to_main(**locals())
+    response = back_to_main(**locals())
+    response.set_cookie('suppress_build_errors', 'yes')
+    return response
 
 @require_POST
 @require_can_edit_apps
@@ -714,7 +753,9 @@ def new_form(req, domain, app_id, module_id):
     app.save()
     # add form_id to locals()
     form_id = form.id
-    return back_to_main(**locals())
+    response = back_to_main(**locals())
+    response.set_cookie('suppress_build_errors', 'yes')
+    return response
 
 @require_POST
 @require_can_edit_apps
@@ -1531,6 +1572,23 @@ def save_copy(req, domain, app_id):
         "error_html": render_to_string('app_manager/partials/build_errors.html', {
             'app': get_app(domain, app_id),
             'build_errors': errors,
+            'domain': domain,
+            'langs': langs,
+            'lang': lang
+        }),
+    })
+
+def validate_form_for_build(request, domain, app_id, unique_form_id):
+    app = get_app(domain, app_id)
+    form = app.get_form(unique_form_id)
+    errors = form.validate_for_build()
+    lang, langs = get_langs(request, app)
+    return json_response({
+        "error_html": render_to_string('app_manager/partials/build_errors.html', {
+            'app': app,
+            'form': form,
+            'build_errors': errors,
+            'not_actual_build': True,
             'domain': domain,
             'langs': langs,
             'lang': lang

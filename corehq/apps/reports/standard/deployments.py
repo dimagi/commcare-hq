@@ -45,7 +45,8 @@ class ApplicationStatusReport(DeploymentsReport):
                 endkey=key,
                 include_docs=True,
                 descending=True,
-                reduce=False
+                reduce=False,
+                limit=1,
             ).first()
 
             if data:

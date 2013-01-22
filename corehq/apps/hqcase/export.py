@@ -27,7 +27,7 @@ def export_cases_and_referrals(domain, cases, workbook, users=None, groups=None)
         "followup_on",
         "closed",
     )
-    case_dynamic_keys = sorted(get_case_properties(domain))
+    case_dynamic_keys = get_case_properties(domain)
     case_rows = []
     referral_rows = []
 

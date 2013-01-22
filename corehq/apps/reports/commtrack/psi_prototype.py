@@ -1,15 +1,10 @@
 from django.conf import settings
-from django.utils.translation import ugettext_noop
-from corehq.apps.fixtures.models import FixtureDataType, FixtureDataItem
-from corehq.apps.reports.fields import ReportField, AsyncDrillableField
 from corehq.apps.reports.standard import ProjectReport, ProjectReportParametersMixin, DatespanMixin, CustomProjectReport
 from corehq.apps.reports.generic import GenericTabularReport
 from corehq.apps.domain.models import Domain
-from corehq.apps.reports.util import make_form_couch_key
 from corehq.apps.users.models import CommCareUser
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
 from corehq.apps.locations.models import Location
-from couchforms.models import XFormInstance
 from dimagi.utils.couch.database import get_db
 from dimagi.utils.couch.loosechange import map_reduce
 from dimagi.utils import parsing as dateparse
@@ -34,7 +29,7 @@ class CommtrackReportMixin(ProjectReport, ProjectReportParametersMixin):
             else:
                 domain = Domain.get_by_name(domain)
                 return domain.commtrack_enabled
-    
+
     @property
     def config(self):
         return CommtrackConfig.for_domain(self.domain)
@@ -153,7 +148,7 @@ class VisitReport(GenericTabularReport, CommtrackReportMixin, DatespanMixin):
                     cols.append('data: %s %s' % (cfg.actions_by_name[a].keyword, p['code']))
                 else:
                     cols.append('%s (%s)' % (cfg.actions_by_name[a].caption, p['name']))
-        
+
         return cols
 
     @property
@@ -897,3 +892,5 @@ class PSITSReport(PSIReport):
                 d["flw_training"].get("avg_difference"),
                 d["flw_training"].get("num_gt80"),
                 ]
+
+

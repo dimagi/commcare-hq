@@ -20,7 +20,6 @@ from dimagi.utils.web import render_to_response, json_request
 from dimagi.utils.parsing import string_to_boolean
 from corehq.apps.reports.cache import CacheableRequestMixIn, request_cache
 
-
 class GenericReportView(CacheableRequestMixIn):
     """
         A generic report structure for viewing a report
@@ -623,6 +622,10 @@ class GenericReportView(CacheableRequestMixIn):
 
     @classmethod
     def get_url(cls, domain=None, render_as=None, **kwargs):
+        # NOTE: I'm pretty sure this doesn't work if you ever pass in render_as
+        # but leaving as is for now, as it should be obvious as soon as that 
+        # breaks something
+
         if isinstance(cls, cls):
             domain = getattr(cls, 'domain')
             render_as = getattr(cls, 'rendered_as')
@@ -631,7 +634,7 @@ class GenericReportView(CacheableRequestMixIn):
                              ', '.join(cls.dispatcher.allowed_renderings()))
         url_args = [domain] if domain is not None else []
         if render_as is not None:
-            url_args.append(render_as+'/')
+            url_args.append(render_as)
         return reverse(cls.dispatcher.name(), args=url_args+[cls.slug])
 
     @classmethod

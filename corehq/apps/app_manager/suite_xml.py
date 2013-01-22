@@ -458,7 +458,7 @@ class SuiteGenerator(object):
             'menus',
             'fixtures'
         ])
-        return suite.serializeDocument()
+        return suite.serializeDocument(pretty=True)
 
 def generate_suite(app):
     g = SuiteGenerator(app)

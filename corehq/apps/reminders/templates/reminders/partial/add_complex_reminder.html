@@ -46,6 +46,9 @@
         font-size: 12px;
         font-weight: normal;
     }
+    .time_type {
+        width: 125px;
+    }
 </style>
 {% endblock %}
 
@@ -59,18 +62,21 @@
                         $(this).find("input").attr("name", "reminder_events." + i + ".day");
                         break;
                     case 1:
-                        $(this).find("input").attr("name", "reminder_events." + i + ".time");
+                        $(this).find("select").attr("name", "reminder_events." + i + ".time_type");
                         break;
                     case 2:
+                        $(this).find("input").attr("name", "reminder_events." + i + ".time");
+                        break;
+                    case 3:
                         $(this).find("div").each(function(k) {
                             $(this).find(".language").attr("name", "reminder_events." + i + ".messages." + (k + 1) + ".language");
                             $(this).find(".message").attr("name", "reminder_events." + i + ".messages." + (k + 1) + ".text");
                         });
                         break;
-                    case 3:
+                    case 4:
                         $(this).find("select").attr("name", "reminder_events." + i + ".survey");
                         break;
-                    case 4:
+                    case 5:
                         $(this).find("input").attr("name", "reminder_events." + i + ".timeouts");
                         break;
                 }
@@ -122,6 +128,7 @@
             $(".for_schedule_based").hide();
             $(".for_offset_based").show();
         }
+        enable_advanced_time_changed();
     }
     
     function start_choice_changed() {
@@ -158,6 +165,7 @@
             }
         }
         method_changed();
+        enable_advanced_time_changed();
     }
     
     function recipient_changed() {
@@ -173,6 +181,14 @@
             $("#id_until").show();
         } else {
             $("#id_until").hide();
+        }
+    }
+    
+    function enable_advanced_time_changed() {
+        if($("#id_enable_advanced_time_choices").is(":checked") && $("#id_start_condition_type").val() == "CASE_CRITERIA" && $("#id_event_interpretation").val() == "SCHEDULE") {
+            $(".for_advanced_times").show();
+        } else {
+            $(".for_advanced_times").hide();
         }
     }
     
@@ -199,7 +215,10 @@
                                "after that date. Also, if this case property is set to 'OK', the reminder for that case will automatically be deactivated.",
             "Stop": "A reminder will stop sending if its trigger condition is no longer true. Also, you can use the below stop conditions to deactivate a reminder. Whichever of these stop "+
                     "conditions comes first will deactivate an active reminder.",
-            "Partial Form Submission": "NOTE: If a partial form submission occurs, no case actions (create, update, or close) will be performed in order to protect data integrity."
+            "Partial Form Submission": "NOTE: If a partial form submission occurs, no case actions (create, update, or close) will be performed in order to protect data integrity.",
+            "Advanced Reminder Time Choices": "Enable this option to specify reminder times in advanced ways, such as specifying the time to send in a case property. This applies only to " +
+                                              "schedule-based (not offset-based) schedules.",
+            "Time Type": "Use 'Default' to specify the time of day to send (hh:mm). Use 'Case Property' to specify the case property that contains the time of day to send."
         };
 
         $('.help_popover').popover({
@@ -283,6 +302,10 @@
             recipient_changed();
         });
         
+        $("#id_enable_advanced_time_choices").change(function() {
+            enable_advanced_time_changed();
+        });
+        
         // Run on change methods
         
         method_changed();
@@ -292,6 +315,7 @@
         start_condition_type_changed();
         recipient_changed();
         use_until_changed();
+        enable_advanced_time_changed();
     });
 </script>
 {% endblock %}
@@ -454,6 +478,9 @@
                         <div class="help_popover for_schedule_based" data-help-key="Day">Day <i class="icon icon-question-sign"></i></div>
                         <div class="help_popover for_offset_based" data-help-key="Days to Wait">Days to Wait <i class="icon icon-question-sign"></i></div>
                     </th>
+                    <th class="for_advanced_times">
+                        <div class="help_popover" data-help-key="Time Type">Time Type <i class="icon icon-question-sign"></i></div>
+                    </th>
                     <th>
                         <div class="help_popover for_schedule_based" data-help-key="Time">Time <i class="icon icon-question-sign"></i></div>
                         <div class="help_popover for_offset_based" data-help-key="Time to Wait">Time to Wait <i class="icon icon-question-sign"></i></div>
@@ -464,7 +491,7 @@
                     <th class="for_sms_survey for_ivr_survey">
                         <div class="help_popover" data-help-key="Form">Form <i class="icon icon-question-sign"></i></div>
                     </th>
-                    <th class="for_sms_survey for_sms_callback">
+                    <th class="for_sms_survey for_sms_callback for_ivr_survey">
                         <div class="help_popover" data-help-key="Timeouts">Timeouts <i class="icon icon-question-sign"></i></div>
                     </th>
                     <th></th>
@@ -474,7 +501,13 @@
                 {% for e in form.events.value %}
                 <tr>
                     <td><input type="text" class="short" name="reminder_events.{{ forloop.counter }}.day" value="{{ e.day }}" /></td>
-                    <td><input type="text" class="short" name="reminder_events.{{ forloop.counter }}.time" value="{{ e.time }}" /></td>
+                    <td class="for_advanced_times">
+                        <select name="reminder_events.{{ forloop.counter }}.time_type" class="time_type">
+                            <option value="DEFAULT" {% if e.time_type != "CASE_PROPERTY" %}selected="selected"{% endif %}>Default</option>
+                            <option value="CASE_PROPERTY" {% if e.time_type == "CASE_PROPERTY" %}selected="selected"{% endif %}>Case Property</option>
+                        </select>
+                    </td>
+                    <td><input type="text" class="input-medium" name="reminder_events.{{ forloop.counter }}.time" value="{{ e.time }}" /></td>
                     <td class="for_sms for_sms_callback">
                         {% for message_num, message in e.messages.items %}
                         <div>
@@ -501,7 +534,7 @@
                             </select>
                         </div>
                     </td>
-                    <td class="for_sms_survey for_sms_callback"><input type="text" name="reminder_events.{{ forloop.counter }}.timeouts" value="{{ e.timeouts }}" /></td>
+                    <td class="for_sms_survey for_sms_callback for_ivr_survey"><input type="text" class="input-small" name="reminder_events.{{ forloop.counter }}.timeouts" value="{{ e.timeouts }}" /></td>
                     <td><span class="btn btn-danger remove_event"><i class="icon icon-white icon-remove"></i> Remove</span></td>
                 </tr>
                 {% endfor %}
@@ -562,6 +595,12 @@
                     <tr>
                         <td>{{ form.submit_partial_forms }}</td>
                         <td>Submit the current state of forms on the last survey timeout <span class="help_popover" data-help-key="Partial Form Submission"><i class="icon icon-question-sign"></i></span></td>
+                    </tr>
+                </tbody>
+                <tbody>
+                    <tr>
+                        <td>{{ form.enable_advanced_time_choices }}</td>
+                        <td>Enable advanced reminder time choices <span class="help_popover" data-help-key="Advanced Reminder Time Choices"><i class="icon icon-question-sign"></i></span></td>
                     </tr>
                 </tbody>
             </table>
