@@ -13,7 +13,7 @@ class FixtureResource(JsonResource):
     type = "fixture"
     fields = tp_f.DictField(attribute='fields', readonly=True, unique=True)
     fixture_type = tp_f.CharField(attribute='fixture_type', readonly=True)
-    uuid = tp_f.CharField(attribute='_id', readonly=True, unique=True)
+    fixture_id = tp_f.CharField(attribute='_id', readonly=True, unique=True)
 
     def obj_get(self, request, **kwargs):
         return convert_fdt(get_object_or_not_exist(FixtureDataItem, kwargs['pk'], kwargs['domain']))
