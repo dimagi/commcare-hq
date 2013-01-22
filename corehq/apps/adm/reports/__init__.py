@@ -55,7 +55,7 @@ class ADMSectionView(GenericReportView):
         return "%s%s" % (url, "%s/" % subreport if subreport else "")
 
 
-class DefaultReportADMSectionView(GenericTabularReport, ADMSectionView, ProjectReportParametersMixin, DatespanMixin):
+class DefaultReportADMSectionView(ADMSectionView, GenericTabularReport, ProjectReportParametersMixin, DatespanMixin):
 
     section_name = ugettext_noop("Active Data Management")
     app_slug = "adm"
