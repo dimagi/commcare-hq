@@ -401,23 +401,6 @@ class IMCalculator(MMCalculator):
             return 1 if action else 0
         return 0
 
-def _get_time_of_birth(form):
-    if form.xpath('form/child_info'):
-        try:
-            time_of_birth = form.xpath('form/child_info/case/update/time_of_birth')
-            assert time_of_birth is not None
-            return time_of_birth
-        except AssertionError:
-            try:
-                return safe_index(
-                    form.xpath('form/child_info')[0],
-                    'case/update/time_of_birth'.split('/')
-                )
-            except (IndexError, KeyError):
-                notify_exception(None, "Problem getting time of birth from %s. Child info is %s" % \
-                                 (form, form.xpath('form/child_info')))
-    return None
-
 class ComplicationsCalculator(SummaryValueMixIn, MotherPostDeliverySummaryMixIn,
     MemoizingCalculatorMixIn, IndicatorCalculator):
     """
@@ -534,7 +517,7 @@ class ComplicationsCalculator(SummaryValueMixIn, MotherPostDeliverySummaryMixIn,
             for form in self.get_forms_with_complications(case):
                 has_complication = True
                 if form.xmlns == self.DELIVERY:
-                    add = _get_time_of_birth(form)
+                    add = form.xpath('form/add')
                 else:
                     add = get_add(case)
                 add = string_to_datetime(add).date()
