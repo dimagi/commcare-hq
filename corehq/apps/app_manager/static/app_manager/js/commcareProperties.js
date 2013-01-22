@@ -21,7 +21,7 @@ var CommcareProperty = {
                     variable,
                     value,
                     i,
-                    repr = [];
+                    conditions = [];
                 for (i = 0; i < parts.length; i += 1) {
                     result = parse_part.exec(parts[i]);
                     if (result === null) {
@@ -31,7 +31,7 @@ var CommcareProperty = {
                         variable = result[2];
                         value = result[3];
                         try {
-                            repr.push({variable: settings[type][variable], value: value});
+                            conditions.push({variable: settings[type][variable], value: value});
                         } catch (e) {
                             console.error("Error finding {" + type + "." + variable + "}");
                         }
@@ -39,15 +39,16 @@ var CommcareProperty = {
                 }
                 return {
                     check: function () {
-                        var i;
-                        for (i = 0; i < repr.length; i += 1) {
-                            if (repr[i].variable.val() !== repr[i].value) {
+                        var i, c;
+                        for (i = 0; i < conditions.length; i += 1) {
+                            c = conditions[i];
+                            if (c.variable.getImpliedValue() !== c.value) {
                                 return false;
                             }
                         }
                         return true;
                     },
-                    variables: repr.map(function (p) { return p.variable; })
+                    variables: conditions.map(function (p) { return p.variable; })
                 };
 
             },
