@@ -12,16 +12,19 @@ API_LIST = (
         v0_1.CommCareUserResource,
         v0_1.CommCareCaseResource,
         v0_1.XFormInstanceResource,
+        FixtureResource,
     )),
     ((0, 2), (
         v0_1.CommCareUserResource,
         v0_2.CommCareCaseResource,
         v0_1.XFormInstanceResource,
+        FixtureResource,
     )),
     ((0, 3), (
         v0_1.CommCareUserResource,
         v0_3.CommCareCaseResource,
         v0_1.XFormInstanceResource,
+        FixtureResource,
     ))
 )
 
@@ -37,7 +40,6 @@ def api_url_patterns():
             api.register(R())
         for R in COMMTRACK_RESOURCES:
             api.register(R())
-        api.register(FixtureResource())
         yield (r'^', include(api.urls))
 
 urlpatterns = patterns('',
