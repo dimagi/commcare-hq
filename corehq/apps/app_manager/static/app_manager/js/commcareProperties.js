@@ -25,7 +25,7 @@ var CommcareProperty = {
                 for (i = 0; i < parts.length; i += 1) {
                     result = parse_part.exec(parts[i]);
                     if (result === null) {
-                        console.log("Unable to parse '" + parts[i] + "'");
+                        console.error("Unable to parse '" + parts[i] + "'");
                     } else {
                         type = result[1];
                         variable = result[2];
@@ -33,7 +33,7 @@ var CommcareProperty = {
                         try {
                             repr.push({variable: settings[type][variable], value: value});
                         } catch (e) {
-                            console.log("Error finding {" + type + "." + variable + "}");
+                            console.error("Error finding {" + type + "." + variable + "}");
                         }
                     }
                 }
