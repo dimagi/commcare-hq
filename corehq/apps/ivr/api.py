@@ -65,10 +65,13 @@ def incoming(phone_number, backend_module, gateway_session_id, ivr_event, input_
             elif response.event.type == "form-complete":
                 hang_up = True
         
+        input_length = None
         if len(ivr_responses) == 0:
             hang_up = True
+        elif responses[-1].event.datatype == "select":
+            input_length = 1
         
-        return HttpResponse(backend_module.get_http_response_string(gateway_session_id, ivr_responses, collect_input=(not hang_up), hang_up=hang_up))
+        return HttpResponse(backend_module.get_http_response_string(gateway_session_id, ivr_responses, collect_input=(not hang_up), hang_up=hang_up, input_length=input_length))
     
     # If not processed, just log the call
     

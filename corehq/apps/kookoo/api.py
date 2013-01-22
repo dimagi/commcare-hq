@@ -12,7 +12,7 @@ class InvalidPhoneNumberException(Exception):
 
 API_ID = "KOOKOO"
 
-def get_http_response_string(gateway_session_id, ivr_responses, collect_input=False, hang_up=True):
+def get_http_response_string(gateway_session_id, ivr_responses, collect_input=False, hang_up=True, input_length=None):
     xml_string = ""
     for response in ivr_responses:
         text_to_say = response["text_to_say"]
@@ -23,8 +23,12 @@ def get_http_response_string(gateway_session_id, ivr_responses, collect_input=Fa
         elif text_to_say is not None:
             xml_string += "<playtext>%s</playtext>" % escape(text_to_say)
     
+    input_length_str = ""
+    if input_length is not None:
+        input_length_str = 'l="%s"' % input_length
+    
     if collect_input:
-        xml_string = '<collectdtmf o="5000">' + xml_string + '</collectdtmf>'
+        xml_string = '<collectdtmf %s o="5000">%s</collectdtmf>' % (input_length_str, xml_string)
     
     if hang_up:
         xml_string += "<hangup/>"
