@@ -1,11 +1,11 @@
 import datetime
+from corehq.apps.groups.models import Group
 from corehq.apps.reports.generic import GenericTabularReport
 from corehq.apps.reports.basic import BasicTabularReport, Column
 from corehq.apps.reports.standard import (DatespanMixin,
     ProjectReportParametersMixin, CustomProjectReport)
 from corehq.apps.reports.standard.inspect import CaseDisplay, CaseListReport
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
-from corehq.apps.reports.datatables.DTSortType import NUMERIC
 from hsph.reports import HSPHSiteDataMixin
 from hsph.fields import NameOfCATIField, AllocatedToFilter
 from corehq.apps.reports.fields import FilterUsersField, DatespanField
@@ -205,15 +205,17 @@ class HSPHCaseDisplay(CaseDisplay):
         return 'Yes' if (compare_date - self.case.filter_date).days > 23 else 'No'
 
 
-class CaseReport(CaseListReport, CustomProjectReport, HSPHSiteDataMixin):
+class CaseReport(CaseListReport, CustomProjectReport, HSPHSiteDataMixin,
+                 DatespanMixin):
     name = 'Case Report'
     slug = 'case_report'
     
     fields = (
         'corehq.apps.reports.fields.FilterUsersField',
         'corehq.apps.reports.fields.DatespanField',
-        'hsph.fields.AllocatedToFilter',
         'hsph.fields.SiteField',
+        #'hsph.fields.AllocatedToFilter',
+        #'hsph.fields.DCTLAndFIDAFilter',
         'corehq.apps.reports.fields.SelectOpenCloseField',
     )
 
@@ -239,6 +241,61 @@ class CaseReport(CaseListReport, CustomProjectReport, HSPHSiteDataMixin):
         return headers
 
     @property
+    def case_filter(self):
+        #allocated_to = self.request_params.get(AllocatedToFilter.slug, '')
+        region_id = self.request_params.get('hsph_region', '')
+        district_id = self.request_params.get('hsph_district', '')
+        site_num = str(self.request_params.get('hsph_site', ''))
+        
+        filters = [{
+            'range': {
+                'opened_on': {
+                    "from": self.datespan.startdate_param_utc,
+                    "to": self.datespan.enddate_param_utc
+                }
+            }
+        }]
+
+        #if allocated_to:
+            #filters.append({'term': {'allocated_to': allocated_to}})
+
+        if site_num:
+            filters.append({'term': {'site_number': site_num.lower()}})
+        if district_id:
+            filters.append({'term': {'district_id': district_id.lower()}})
+        if region_id:
+            filters.append({'term': {'region_id': region_id.lower()}})
+        
+        return {'and': filters} if filters else {}
+
+        #def allocated_to(self):
+            #if self.status == "Closed":
+                #close_action = [a for a in self.case.actions if a.action_type ==
+                    #const.CASE_ACTION_CLOSE][0]
+
+                #CATI_FOLLOW_UP_FORMS = (
+                    #"http://openrosa.org/formdesigner/A5B08D8F-139D-46C6-9FDF-B1AD176EAE1F",
+                #)
+                #if close_action.xform.xmlns in CATI_FOLLOW_UP_FORMS:
+                    #return 'CATI'
+                #else:
+                    #return 'Field'
+
+            #else:
+                #follow_up_type = getattr(self.case, 'follow_up_type', '')
+                #house_number = getattr(self.case, 'phone_house_number', '')
+                #husband_number = getattr(self.case, 'phone_husband_number', '')
+                #mother_number = getattr(self.case, 'phone_mother_number', '')
+                #asha_number = getattr(self.case, 'phone_asha_number', '')
+
+                #if follow_up_type != 'field_follow_up' and (house_number or
+                       #husband_number or mother_number or asha_number):
+                    #return 'CATI'
+                #else:
+                    #return 'Field'
+
+
+    @property
     def shared_pagination_GET_params(self):
         params = super(CaseReport, self).shared_pagination_GET_params
 
@@ -246,7 +303,11 @@ class CaseReport(CaseListReport, CustomProjectReport, HSPHSiteDataMixin):
             AllocatedToFilter.slug,
             'hsph_region',
             'hsph_district',
-            'hsph_site'
+            'hsph_site',
+            'dctl_fida_dctl',
+            'dctl_fida_fida',
+            'startdate',
+            'enddate'
         ]
 
         for slug in slugs:
@@ -258,47 +319,37 @@ class CaseReport(CaseListReport, CustomProjectReport, HSPHSiteDataMixin):
         return params
 
     @property
+    def user_ids(self):
+        fida_user_id = self.request_params.get('dctl_fida_fida', None)
+        dctl_group_id = self.request_params.get('dctl_fida_dctl', None)
+
+        if fida_user_id:
+            return [fida_user_id]
+        elif dctl_group_id:
+            return Group.get(dctl_group_id).get_user_ids()
+        else:
+            return super(CaseReport, self).user_ids
+
+    @property
     def rows(self):
-        allocated_to = self.request_params.get(AllocatedToFilter.slug, '')
-        region_id = self.request_params.get('hsph_region')
-        district_id = self.request_params.get('hsph_district')
-        site_num = self.request_params.get('hsph_site')
-
-        def filter_case(disp):
-            if allocated_to and \
-               disp.allocated_to.lower() != allocated_to.lower():
-                return False
-
-            if region_id and disp.case.region_id != region_id:
-                return False
-
-            if district_id and disp.case.district_id != district_id:
-                return False
-
-            if site_num and disp.case.site_number != site_num:
-                return False
-
-            return True
-
         case_displays = (HSPHCaseDisplay(self, self.get_case(case))
                          for case in self.case_results['rows'])
 
         for disp in case_displays:
-            if filter_case(disp):
-                yield [
-                    disp.region,
-                    disp.district,
-                    disp.site,
-                    disp.patient_id,
-                    disp.status,
-                    disp.case_link,
-                    disp.filter_date,
-                    disp.address,
-                    disp.allocated_to,
-                    disp.allocated_start,
-                    disp.allocated_end,
-                    disp.outside_allocated_period
-                ]
+            yield [
+                disp.region,
+                disp.district,
+                disp.site,
+                disp.patient_id,
+                disp.status,
+                disp.case_link,
+                disp.filter_date,
+                disp.address,
+                disp.allocated_to,
+                disp.allocated_start,
+                disp.allocated_end,
+                disp.outside_allocated_period
+            ]
 
 
 class CallCenterFollowUpSummaryReport(GenericTabularReport,

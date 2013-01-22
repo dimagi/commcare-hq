@@ -1,10 +1,12 @@
 from corehq.apps.groups.models import Group
-from corehq.apps.reports import util
-from corehq.apps.reports.standard import CustomProjectReport, ProjectReportParametersMixin, DatespanMixin
-from corehq.apps.reports.datatables import DataTablesColumn, DataTablesHeader, DTSortType
+from corehq.apps.reports.standard import (CustomProjectReport,
+    ProjectReportParametersMixin, DatespanMixin)
+from corehq.apps.reports.datatables import (DataTablesColumn, DataTablesHeader,
+    DTSortType)
 from corehq.apps.reports.generic import GenericTabularReport
 from dimagi.utils.couch.database import get_db
-from hsph.fields import FacilityStatusField, IHForCHFField, SiteField, NameOfDCTLField
+from hsph.fields import (FacilityStatusField, IHForCHFField, SiteField,
+    NameOfDCTLField)
 from hsph.reports import HSPHSiteDataMixin
 from dimagi.utils.timezones import utils as tz_utils
 

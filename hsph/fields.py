@@ -84,7 +84,53 @@ class NameOfDCTLField(ReportSelectField):
             dctls[item.fields.get("id")] = item.get_users(wrap=False)
         return dctls
 
-from corehq.apps.reports.filters.base import BaseSingleOptionFilter
+from corehq.apps.reports.filters.base import (BaseSingleOptionFilter,
+    BaseDrilldownOptionFilter)
+from corehq.apps.groups.models import Group
+from django.utils.translation import ugettext as _
+
+
+class DCTLAndFIDAFilter(BaseDrilldownOptionFilter):
+
+    slug = 'dctl_fida'
+    label = "DCTL"
+
+    @classmethod
+    def get_group(cls, dctl):
+        return Group.by_name(
+            'hsph', 'Call Center - %s' % dctl.raw_username.capitalize())
+
+    @classmethod
+    def get_labels(self):
+        return [
+            (_('DCTL'), _("Select a DCTL"), 'dctl'),
+            (_('FIDA'), _("Select a FIDA"), 'fida')
+        ]
+
+    @property
+    def drilldown_map(self):
+
+        data_type = FixtureDataType.by_domain_tag('hsph', 'site').first()
+        data_items = FixtureDataItem.by_data_type('hsph', data_type._id).all()
+
+        dctl_usernames = []
+        for item in data_items:
+            users = list(item.get_users())
+            if not users:
+                continue
+
+            dctl = users[0]
+            dctl_group = self.get_group(dctl)
+            
+            if dctl_group:
+                if dctl.raw_username not in dctl_usernames:
+                    dctl_usernames.append(dctl.raw_username)
+                    yield {
+                        'val': dctl_group._id,
+                        'text': dctl.raw_username,
+                        'next': [dict(val=u._id, text=u.raw_username)
+                                 for u in dctl_group.get_users()]
+                    }
 
 class AllocatedToFilter(BaseSingleOptionFilter):
     slug = "allocated_to"
@@ -97,6 +143,8 @@ class AllocatedToFilter(BaseSingleOptionFilter):
         ('field', 'Field')
     ]
     default_text = "All"
+
+
 
 class SelectReferredInStatusField(ReportSelectField):
     slug = "referred_in_status"
