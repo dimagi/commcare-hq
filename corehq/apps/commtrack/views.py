@@ -1,8 +1,9 @@
-from django.http import HttpResponse, HttpResponseRedirect
+from django.http import HttpResponse, HttpResponseRedirect, Http404
 from corehq.apps.domain.decorators import require_superuser
 from corehq.apps.domain.models import Domain
 from corehq.apps.commtrack.management.commands import bootstrap_psi
 from corehq.apps.commtrack.models import Product
+from corehq.apps.commtrack.forms import ProductForm
 from soil.util import expose_download
 import uuid
 from django.core.urlresolvers import reverse
@@ -11,6 +12,7 @@ from django.contrib import messages
 from corehq.apps.commtrack.tasks import import_locations_async,\
     import_stock_reports_async
 import json
+from couchdbkit import ResourceNotFound
 
 DEFAULT_PRODUCT_LIST_LIMIT = 10
 
@@ -60,8 +62,32 @@ def product_fetch(request, domain):
     )), 'text/json')
 
 # TODO need an access decorator
-def product_edit(request, domain, prod_id=None):
-    pass
+def product_edit(request, domain, prod_id=None): 
+    if prod_id:
+        try:
+            product = Product.get(prod_id)
+        except ResourceNotFound:
+            raise Http404
+    else:
+        product = Product(domain=domain)
+
+    if request.method == "POST":
+        form = ProductForm(product, request.POST)
+        if form.is_valid():
+            form.save()
+            messages.success(request, 'Product saved!')
+            return HttpResponseRedirect(reverse('commtrack_product_list', kwargs={'domain': domain}))
+    else:
+        form = ProductForm(product)
+
+    context = {
+        'domain': domain,
+        'product': product,
+        'form': form,
+    }
+
+    template="commtrack/manage/product.html"
+    return render_to_response(request, template, context)
 
 @require_superuser
 def bootstrap(request, domain):
