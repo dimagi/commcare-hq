@@ -9,6 +9,7 @@ from bihar.reports.indicators.visits import visit_is, get_related_prop
 from dimagi.utils.decorators.memoized import memoized
 from django.utils.translation import ugettext_noop
 from django.utils.translation import ugettext as _
+from dimagi.utils.logging import notify_exception
 
 EMPTY = (0,0)
 
@@ -402,15 +403,21 @@ class IMCalculator(MMCalculator):
         return 0
 
 def _get_time_of_birth(form):
-    try:
-        time_of_birth = form.xpath('form/child_info/case/update/time_of_birth')
-        assert time_of_birth is not None
-    except AssertionError:
-        time_of_birth = safe_index(
-            form.xpath('form/child_info')[0],
-            'case/update/time_of_birth'.split('/')
-        )
-    return time_of_birth
+    if form.xpath('form/child_info'):
+        try:
+            time_of_birth = form.xpath('form/child_info/case/update/time_of_birth')
+            assert time_of_birth is not None
+            return time_of_birth
+        except AssertionError:
+            try:
+                return safe_index(
+                    form.xpath('form/child_info')[0],
+                    'case/update/time_of_birth'.split('/')
+                )
+            except IndexError:
+                notify_exception(None, "Problem getting time of birth from %s. Child info is %s" % \
+                                 (form, form.xpath('form/child_info')))
+    return None
 
 class ComplicationsCalculator(SummaryValueMixIn, MotherPostDeliverySummaryMixIn,
     MemoizingCalculatorMixIn, IndicatorCalculator):
