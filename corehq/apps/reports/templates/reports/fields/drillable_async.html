@@ -160,8 +160,8 @@
         this.load = function(data) {
             if (data.fields.name == '_all') this.name('_all');
             else if (this.depth > 0) this.name(data.fields[hierarchy[this.depth-1]["display"]] || null);
-            this.type(data.data_type_id);
-            this.uuid(data.fixture_id || null);
+            this.type(data.fixture_type);
+            this.uuid(data.id || null);
             if (data.children != null) {
                 this.set_children(data.children);
             }

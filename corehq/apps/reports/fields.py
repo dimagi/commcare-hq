@@ -498,7 +498,7 @@ class AsyncDrillableField(BaseReportFilter):
         return {
             'fixture_type': fdi.data_type_id,
             'fields': fdi.fields,
-            'fixture_id': fdi.get_id,
+            'id': fdi.get_id,
             'children': getattr(fdi, '_children', None),
         }
 
