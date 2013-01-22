@@ -87,8 +87,8 @@
     {% if commtrack_enabled %}
         {% if request.couch_user.is_domain_admin %} <!-- TODO refine user roles? -->
         <li class="nav-header">CommTrack</li>
-        <li><a href="{% url domain_commtrack_settings domain %}">Project Settings</a></li>
-        <li><a href="{% url commtrack_product_list domain %}">Manage Products (todo)</a></li>
+        <li><a href="{% url domain_commtrack_settings domain %}">Project Settings (todo)</a></li>
+        <li><a href="{% url commtrack_product_list domain %}">Manage Products</a></li>
         <li><a href="#">Manage Locations (todo)</a></li>
         {% endif %}
     {% endif %}

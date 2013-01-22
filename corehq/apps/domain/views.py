@@ -192,7 +192,6 @@ def project_settings(request, domain, template="domain/admin/project_settings.ht
         billing_info_form = None
         billing_info_partial = None
 
-
     return render_to_response(request, template, dict(
         domain=domain.name,
         form=form,
