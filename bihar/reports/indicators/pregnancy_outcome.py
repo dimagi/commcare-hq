@@ -1,10 +1,10 @@
 from bihar.reports.indicators.calculations import MemoizingCalculatorMixIn,\
     MotherPostDeliverySummaryMixIn, IndicatorCalculator,\
-    delivered_in_timeframe_with_status
+    delivered_in_timeframe_with_status, SummaryValueMixIn
 
 
 class LiveBirthCalculator(MotherPostDeliverySummaryMixIn, MemoizingCalculatorMixIn,
-                          IndicatorCalculator):
+                          SummaryValueMixIn, IndicatorCalculator):
 
     def _denominator(self, case):
         return 1 if delivered_in_timeframe_with_status(case, 30, 'live_birth') else 0

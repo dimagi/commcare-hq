@@ -40,7 +40,7 @@ class ConvenientBaseMixIn(object):
     flush_layout = True
     mobile_enabled = True
     fields = []
-    
+
     extra_context_providers = [shared_bihar_context]
 
     # for the lazy
@@ -254,13 +254,27 @@ class MainNavReport(BiharSummaryReport, IndicatorConfigMixIn):
 class WorkerRankSelectionReport(SubCenterSelectionReport):
     slug = "workerranks"
     name = ugettext_noop("Worker Rank Table")
-    
+    # The subreport URL is hard coded here until there's an easier
+    # way to get this from configuration
+    WORKER_RANK_SLUG = 'worker_rank_table'
+
     def _row(self, group, rank):
-        # HACK: hard code this for now until there's an easier 
-        # way to get this from configuration
-        args = [self.domain, self.render_next] if self.render_next else [self.domain]
-        url = SupervisorReportsADMSection.get_url(domain=self.domain, render_as=self.render_next,
-                                                  subreport="worker_rank_table")
+        def _get_url():
+            # HACK: hard(ish) code get_url until we fix the render_as bug
+            url = SupervisorReportsADMSection.get_url(domain=self.domain,
+                                                      subreport=self.WORKER_RANK_SLUG)
+            # /a/[domain]/reports/adm/[section]/[subreport]/
+            # needs to become
+            # /a/[domain]/reports/adm/[render_as]/[section]/[subreport]/
+            if self.render_next:
+                section_chunk = "/{section}/".format(section=SupervisorReportsADMSection.slug)
+                section_with_rendering = "/{render_as}{section_chunk}".format(
+                    render_as=self.render_next, section_chunk=section_chunk
+                )
+                url = url.replace(section_chunk, section_with_rendering)
+            return url
+
+        url = _get_url()
         end = datetime.today().date()
         start = end - timedelta(days=30)
         params = {
