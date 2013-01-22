@@ -198,7 +198,10 @@ def project_settings(request, domain, template="domain/admin/project_settings.ht
         deployment_form=deployment_form,
         languages=domain.readable_languages(),
         applications=domain.applications(),
-        commtrack_enabled=domain.commtrack_enabled,
+        commtrack_enabled=domain.commtrack_enabled,  # ideally the template gets access to the domain doc through
+            # some other means. otherwise it has to be supplied to every view reachable in that sidebar (every
+            # view whose template extends users_base.html); mike says he's refactoring all of this imminently, so
+            # i will not worry about it until he is done
         autocomplete_fields=('project_type', 'phone_model', 'user_type', 'city', 'country', 'region'),
         billing_info_form=billing_info_form,
         billing_info_partial=billing_info_partial,
