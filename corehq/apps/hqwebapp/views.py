@@ -69,7 +69,7 @@ def redirect_to_default(req, domain=None):
         else:
             domains = Domain.active_for_user(req.user)
         if   0 == len(domains) and not req.user.is_superuser:
-            return no_permissions(req)
+            return redirect('registration_domain')
         elif 1 == len(domains):
             if domains[0]:
                 domain = domains[0].name
@@ -161,8 +161,8 @@ def server_up(req):
         return HttpResponse('\n'.join(message), status=500)
 
 
-def no_permissions(request, template_name="no_permission.html"):
-    next = request.GET.get('next', None)
+def no_permissions(request, redirect_to=None, template_name="no_permission.html"):
+    next = redirect_to or request.GET.get('next', None)
     if request.GET.get('switch', None) == 'true':
         logout(request)
         return redirect_to_login(next or request.path)
@@ -230,6 +230,7 @@ def bug_report(req):
         'app_id',
         )])
 
+    report['user_agent'] = req.META['HTTP_USER_AGENT']
     report['datetime'] = datetime.utcnow()
 
     report['time_description'] = u'just now' if report['now'] else u'earlier: {when}'.format(**report)
@@ -247,6 +248,7 @@ def bug_report(req):
         u"copy url: {copy_url}\n"
         u"datetime: {datetime}\n"
         u"error occured: {time_description}\n"
+        u"User Agent: {user_agent}\n"
         u"Message:\n\n"
         u"{message}\n"
         ).format(**report)

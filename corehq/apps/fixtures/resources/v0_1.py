@@ -11,9 +11,7 @@ class FixtureResource(JsonResource):
     uuid = tp_f.CharField(attribute='_id', readonly=True, unique=True)
 
     def obj_get(self, request, **kwargs):
-        domain = kwargs['domain']
-        fixture_id = kwargs['fixture_id']
-        return get_object_or_not_exist(FixtureDataItem, fixture_id, domain)
+        return get_object_or_not_exist(FixtureDataItem, kwargs['pk'], kwargs['domain'])
 
     def obj_get_list(self, request, **kwargs):
         domain = kwargs['domain']

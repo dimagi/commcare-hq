@@ -3,6 +3,7 @@ import re
 from django import forms
 
 from django.forms.fields import ChoiceField, CharField, BooleanField
+from django.forms.widgets import  Select
 from django.utils.encoding import smart_str
 
 from corehq.apps.domain.models import LICENSES
@@ -51,6 +52,7 @@ class SnapshotSettingsForm(SnapshotSettingsMixin):
     project_type = CharField(label=ugettext_noop("Project Category"), required=True,
         help_text=ugettext_noop("e.g. MCH, HIV, etc."))
     license = ChoiceField(label=ugettext_noop("License"), required=True, choices=LICENSES.items(),
+        widget=Select(attrs={'class': 'input-xxlarge'}),
         help_text=render_to_string('domain/partials/license_explanations.html',
             {'extra': ugettext_noop("All un-licensed multimedia files in your project will be given this license")}))
     description = CharField(label=ugettext_noop("Long Description"), required=False, widget=forms.Textarea,
