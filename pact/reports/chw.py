@@ -100,7 +100,6 @@ class PactCHWProfileReport(PactDrilldownReportMixin, ESSortableMixin,GenericTabu
 
     @memoized
     def get_user(self):
-        print self.request.GET.keys()
         if hasattr(self, 'request') and self.request.GET.has_key('chw_id'):
             self._user_doc = CommCareUser.get(self.request.GET['chw_id'])
             return self._user_doc
@@ -137,11 +136,12 @@ class PactCHWProfileReport(PactDrilldownReportMixin, ESSortableMixin,GenericTabu
     #submission stuff
     @property
     def headers(self):
-        return DataTablesHeader(DataTablesColumn("Pact ID", sortable=False, span=2),
-                                DataTablesColumn("Encounter Date", sortable=False, span=2),
-
-                                DataTablesColumn("Form", prop_name="form.#type", sortable=True, span=2),
-                                DataTablesColumn("Received", prop_name="received_on", sortable=True, span=2),
+        return DataTablesHeader(
+                    DataTablesColumn("Show Form", sortable=False, span=1),
+                    DataTablesColumn("Pact ID", sortable=False, span=1),
+                    DataTablesColumn("Received", prop_name="received_on", sortable=True, span=1),
+                    DataTablesColumn("Encounter Date", sortable=False, span=1),
+                    DataTablesColumn("Form", prop_name="form.#type", sortable=True, span=1),
         )
 
     @property
@@ -170,11 +170,11 @@ class PactCHWProfileReport(PactDrilldownReportMixin, ESSortableMixin,GenericTabu
         """
         if self.get_user() is not None:
             def _format_row(row_field_dict):
+                yield html.mark_safe("<a class='ajax_dialog' href='%s'>View</a>" % ( reverse('render_form_data', args=[self.domain, row_field_dict['_id']])))
                 yield row_field_dict['script_pact_id']
-                yield row_field_dict['script_encounter_date']
-                yield row_field_dict["form.#type"].replace('_', ' ').title()
-                yield "%s %s" % (row_field_dict["received_on"].replace('_', ' ').title(),
-                html.mark_safe("<a class='ajax_dialog' href='%s'>View</a>" % ( reverse('render_form_data', args=[self.domain, row_field_dict['_id']]))))
+                yield self.format_date(row_field_dict["received_on"].replace('_', ' ').title())
+                yield self.format_date(row_field_dict['script_encounter_date'])
+                yield row_field_dict["form.#type"].replace('_', ' ').title().strip()
             res = self.es_results
             if res.has_key('error'):
                 pass

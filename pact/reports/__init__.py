@@ -11,20 +11,11 @@ class PactPatientDispatcher(CustomProjectReportDispatcher):
 #    map_name = 'ADM_SECTION_MAP'
 
     def dispatch(self, request, *args, **kwargs):
-#        print "PactPatientDispatcher"
         ret =  super(PactPatientDispatcher, self).dispatch(request, *args, **kwargs)
         return ret
 
     def get_reports(self, domain):
-#        print "PactPatientDispatcher get_reports"
-#        print self.report_map.get(domain, {})
         return self.report_map.get(domain, {})
-
-#    @classmethod
-#    def pattern(cls):
-##        base = r'^(?:{renderings}/)?(?P<report_slug>[\w_]+)/(?:(?P<pt_case_id>[\w_]+))/(?:(?P<subreport_slug>[\w_]+)/)?$'
-##        print "got pattern"
-#        return base.format(renderings=cls._rendering_pattern())
 
 
 class ESSortableMixin(object):
@@ -85,6 +76,7 @@ class ESSortableMixin(object):
         ret = []
         for k,v in self.request.GET.items():
             ret.append(dict(name=k, value=v))
+
         return ret
 
 

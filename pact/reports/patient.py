@@ -1,6 +1,8 @@
+from dateutil.parser import parse
 from django.core.urlresolvers import reverse
 from django.http import Http404
 from django.template.context import RequestContext
+from django.utils.timesince import timesince
 import simplejson
 from corehq.apps.api.es import XFormES
 from corehq.apps.fixtures.models import FixtureDataItem, FixtureDataType
@@ -46,17 +48,6 @@ class PactPatientInfoReport(PactDrilldownReportMixin,ESSortableMixin, GenericTab
     @memoized
     def get_case(self):
         return PactPatientCase.get(self.request.GET['patient_id'])
-
-#    @property
-#    def name(self):
-#        if hasattr(self, 'request'):
-#            if self.request.GET.get('patient_id', None) is not None:
-#                case = self.get_case()
-#                return "Patient Info :: %s" % case.name
-#        else:
-#            return "Patient Info"
-
-
 
     @property
     def report_context(self):
@@ -104,11 +95,13 @@ class PactPatientInfoReport(PactDrilldownReportMixin,ESSortableMixin, GenericTab
 
     @property
     def headers(self):
-        return DataTablesHeader(DataTablesColumn("Form", prop_name="form.#type", span=1),
-                                DataTablesColumn("CHW", prop_name="form.meta.username", span=2),
-                                DataTablesColumn("Created Date", prop_name="form.meta.timeStart", span=2),
-                                DataTablesColumn("Received", prop_name="received_on", span=2),
-                                DataTablesColumn("Encounter Date", sortable=False, span=2),
+        return DataTablesHeader(
+            DataTablesColumn("Show Form", sortable=False, span=1),
+            DataTablesColumn("Received", prop_name="received_on", span=1),
+            DataTablesColumn("Created Date", prop_name="form.meta.timeStart", span=1),
+            DataTablesColumn("Encounter Date", sortable=False, span=1),
+            DataTablesColumn("Form", prop_name="form.#type", span=1),
+            DataTablesColumn("CHW", prop_name="form.meta.username", span=1)
         )
 
     @property
@@ -128,11 +121,7 @@ class PactPatientInfoReport(PactDrilldownReportMixin,ESSortableMixin, GenericTab
                     },
                     "filter": {
                         "and": [
-                            {
-                                "term": {
-                                    "domain.exact": self.request.domain
-                                }
-                            }
+                            { "term": { "domain.exact": self.request.domain } }
                         ]
                     }
                 }
@@ -154,6 +143,8 @@ class PactPatientInfoReport(PactDrilldownReportMixin,ESSortableMixin, GenericTab
         return self.xform_es.run_query(full_query)
 
 
+
+
     @property
     def rows(self):
         """
@@ -161,21 +152,24 @@ class PactPatientInfoReport(PactDrilldownReportMixin,ESSortableMixin, GenericTab
             Returns 2D list of rows.
             [['row1'],[row2']]
         """
+
+
         if self.request.GET.has_key('patient_id'):
             rows = []
 
             def _format_row(row_field_dict):
-                yield row_field_dict["form.#type"].replace('_', ' ').title()
-                yield row_field_dict.get("form.meta.username", "")
+                yield html.mark_safe("<a class='ajax_dialog' href='%s'>View</a>" % ( reverse('render_form_data', args=[self.domain, row_field_dict['_id']])))
+                yield self.format_date(row_field_dict["received_on"].replace('_', ' '))
                 yield self.format_date(row_field_dict.get("form.meta.timeStart", ""))
-                yield "%s %s" % (row_field_dict["received_on"].replace('_', ' ').title(),
-                                 html.mark_safe("<a class='ajax_dialog' href='%s'>View</a>" % ( reverse('render_form_data', args=[self.domain, row_field_dict['_id']]))))
-
-
                 if row_field_dict["script_encounter_date"] != None:
                     yield row_field_dict["script_encounter_date"]
                 else:
                     yield "---"
+                yield row_field_dict["form.#type"].replace('_', ' ').title()
+                yield row_field_dict.get("form.meta.username", "")
+
+
+
 
             res = self.es_results
             if res.has_key('error'):
