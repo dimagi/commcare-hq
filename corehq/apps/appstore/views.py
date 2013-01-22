@@ -1,34 +1,21 @@
 import copy
 from datetime import datetime
 import json
-import logging
 from urllib import urlencode
 from django.contrib.auth.decorators import login_required
 from django.core.urlresolvers import reverse
 from django.http import Http404, HttpResponseRedirect, HttpResponse
 from django.template.loader import render_to_string
-from django.views.decorators.http import require_POST
-from restkit.errors import RequestFailed
 from corehq.apps.appstore.forms import AddReviewForm
 from corehq.apps.appstore.models import Review
-from corehq.apps.domain.decorators import login_and_domain_required, require_superuser
-from corehq.apps.hqmedia.utils import most_restrictive
+from corehq.apps.domain.decorators import require_superuser
 from corehq.apps.registration.forms import DomainRegistrationForm
-from corehq.apps.users.models import Permissions, CouchUser
+from corehq.apps.users.models import CouchUser
 from corehq.elastic import get_es
-from dimagi.utils.logging import notify_exception
-from dimagi.utils.web import render_to_response, json_response, get_url_base
-from corehq.apps.orgs.models import Organization
-from corehq.apps.domain.models import Domain, LICENSES
-from dimagi.utils.couch.database import get_db
+from dimagi.utils.web import render_to_response
+from corehq.apps.domain.models import Domain
 from django.contrib import messages
-from django.conf import settings
-from corehq.apps.reports.views import datespan_default
-from corehq.apps.hqmedia import utils
-from corehq.apps.app_manager.models import Application
-from django.shortcuts import redirect
 from django.utils.translation import ugettext as _
-import rawes
 
 PER_PAGE = 9
 SNAPSHOT_FACETS = ['project_type', 'license', 'region', 'author']
@@ -56,7 +43,6 @@ def project_info(request, domain, template="appstore/project_info.html"):
         raise Http404()
 
     if request.method == "POST" and dom.copied_from.name not in request.couch_user.get_domains():
-        versioned = True
         form = AddReviewForm(request.POST)
         if form.is_valid():
             title = form.cleaned_data['review_title']
@@ -291,7 +277,6 @@ def approve_app(request, domain):
     elif request.GET.get('approve') == 'false':
         domain.is_approved = False
         domain.save()
-    meta = request.META
     return HttpResponseRedirect(request.META.get('HTTP_REFERER') or reverse('appstore'))
 
 @login_required
