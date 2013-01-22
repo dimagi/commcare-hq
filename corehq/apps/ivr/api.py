@@ -58,17 +58,22 @@ def incoming(phone_number, backend_module, gateway_session_id, ivr_event, input_
         
         ivr_responses = []
         hang_up = False
+        last_response = None
         for response in responses:
+            last_response = response
             if response.event.type == "question":
                 ivr_responses.append({"text_to_say" : response.event.caption,
                                       "audio_file_url" : convert_media_path_to_hq_url(response.event.caption, app) if response.event.caption.startswith("jr://") else None})
             elif response.event.type == "form-complete":
                 hang_up = True
         
+        input_length = None
         if len(ivr_responses) == 0:
             hang_up = True
+        elif last_response.event.datatype == "select":
+            input_length = 1
         
-        return HttpResponse(backend_module.get_http_response_string(gateway_session_id, ivr_responses, collect_input=(not hang_up), hang_up=hang_up))
+        return HttpResponse(backend_module.get_http_response_string(gateway_session_id, ivr_responses, collect_input=(not hang_up), hang_up=hang_up, input_length=input_length))
     
     # If not processed, just log the call
     
