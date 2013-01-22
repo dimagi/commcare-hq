@@ -42,7 +42,8 @@ class DomainAPI(View):
     def head(self, *args, **kwargs):
         raise NotImplementedError("Not implemented")
 
-    @method_decorator(login_and_domain_required)
+    #security/login constraint methods are the implementors' decision - the @method_doctorator trumps subclasses in this case
+    #@method_decorator(login_and_domain_required)
     def dispatch(self, *args, **kwargs):
         req = args[0]
         if not self.allowed_domain(req.domain):
