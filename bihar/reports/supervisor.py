@@ -254,14 +254,13 @@ class MainNavReport(BiharSummaryReport, IndicatorConfigMixIn):
 class WorkerRankSelectionReport(SubCenterSelectionReport):
     slug = "workerranks"
     name = ugettext_noop("Worker Rank Table")
+    # The subreport URL is hard coded here until there's an easier
+    # way to get this from configuration
     WORKER_RANK_SLUG = 'worker_rank_table'
-    
-    def _row(self, group, rank):
-        # HACK 1: hard code the subreport for now until there's an easier
-        # way to get this from configuration
 
-        # HACK 2: hard(ish) code get_url until we fix the render_as bug
+    def _row(self, group, rank):
         def _get_url():
+            # HACK: hard(ish) code get_url until we fix the render_as bug
             url = SupervisorReportsADMSection.get_url(domain=self.domain,
                                                       subreport=self.WORKER_RANK_SLUG)
             # /a/[domain]/reports/adm/[section]/[subreport]/
