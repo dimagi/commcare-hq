@@ -1,6 +1,11 @@
+{% load i18n %}
 {% load xforms_extras %}{% if build_errors %}
     <div class="alert alert-warning alert-block">
-        <p>Build Failed!</p>
+        {% if not_actual_build %}
+            <p>{% trans "Build errors in this form:" %}</p>
+        {% else %}
+            <p>{% trans "Build Failed!" %}</p>
+        {% endif %}
         <ul id="build-errors">
             {% for error in build_errors %}
                 <li>
@@ -40,6 +45,10 @@
                             uses cases but doesn't have a
                             case type defined.
                         {% endif %}
+                        {% if error.type == "subcase has no case type" %}
+                            Child case specifies no module
+                            in form {% include "app_manager/partials/form_error_message.html" %}
+                        {% endif %}
                         {% if error.type == "form error" %}
                             One or more forms are invalid: check all your forms for error messages.
                         {% endif %}
@@ -54,16 +63,14 @@
                         {% endif %}
                         {% if error.type == "update_case uses reserved word" %}
                             Case Update uses reserved word "{{ error.word }}"
-                            in form
-                            {% include "app_manager/partials/form_error_message.html" %}
+                            in form {% include "app_manager/partials/form_error_message.html" %}
                         {% endif %}
                         {% if error.type == "update_case word illegal" %}
                             Case Update "{{ error.word }}" should start with a letter and only contain letters, numbers, '-', and '_'
                             in form {% include "app_manager/partials/form_error_message.html" %}
                         {% endif %}
                         {% if error.type == "path error" %}
-                            The case configuration in form
-                            {% include "app_manager/partials/form_error_message.html" %}
+                            The case configuration in form {% include "app_manager/partials/form_error_message.html" %}
                             contains the invalid path "{{ error.path }}".
                         {% endif %}
                         {% if error.type == "remote error" %}
@@ -73,14 +80,16 @@
                             One of your languages is empty. Check your <a href="{% url view_app domain app.id %}">app settings</a>.
                         {% endif %}
                     </span>
-                    <span>{{ error.message }}</span>
                 </li>
             {% endfor %}
         </ul>
         <p class="help-inline">
-            For more information on build errors, please see
+            {% if not_actual_build %}
+                {% trans "Build errors prevent you from building your application in the Release Manager." %}
+            {% endif %}
+            {% trans "For more information on build errors, please see" %}
             <a href="https://confluence.dimagi.com/display/commcarepublic/Errors+Building+an+Application" target="_blank">
-                Errors Building an Application
+                {% trans "Errors Building an Application" %}
             </a>
         </p>
     </div>

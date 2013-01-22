@@ -19,7 +19,7 @@ import commcare_translations
 from corehq.apps.app_manager import fixtures, xform, suite_xml
 from corehq.apps.app_manager.suite_xml import IdStrings
 from corehq.apps.app_manager.templatetags.xforms_extras import clean_trans
-from corehq.apps.app_manager.xform import XForm, parse_xml as _parse_xml, namespaces as NS, XFormError, XFormValidationError, WrappedNode
+from corehq.apps.app_manager.xform import XForm, parse_xml as _parse_xml, namespaces as NS, XFormError, XFormValidationError, WrappedNode, CaseXPath
 from corehq.apps.appstore.models import SnapshotMixin
 from corehq.apps.builds.models import CommCareBuild, BuildSpec, CommCareBuildConfig, BuildRecord
 from corehq.apps.hqmedia.models import HQMediaMixin
@@ -220,6 +220,14 @@ class FormActions(DocumentSchema):
 
     subcases        = SchemaListProperty(OpenSubCaseAction)
 
+    def all_property_names(self):
+        names = set()
+        names.update(self.update_case.update.keys())
+        names.update(self.case_preload.preload.values())
+        for subcase in self.subcases:
+            names.update(subcase.case_properties.keys())
+        return names
+
 class FormSource(object):
     def __get__(self, form, form_cls):
         unique_id = form.get_unique_id()
@@ -346,6 +354,62 @@ class FormBase(DocumentSchema):
             raise XFormValidationError(self.validation_cache)
         return self
 
+    def validate_for_build(self):
+        errors = []
+        needs_case_type = False
+        needs_case_detail = False
+        needs_referral_detail = False
+
+        try:
+            module = self.get_module()
+        except AttributeError:
+            module = None
+            form_type = 'user_registration'
+        else:
+            form_type = 'module_form'
+
+        meta = {
+            'form_type': form_type,
+            'module': {"id": module.id, "name": module.name} if module else {},
+            'form': {"id": self.id if hasattr(self, 'id') else None, "name": self.name}
+        }
+
+        errors_ = self.check_actions()
+        for error_ in errors_:
+            error_.update(meta)
+        errors.extend(errors_)
+
+        try:
+            _parse_xml(self.source)
+        except XFormError as e:
+            errors.append(dict(
+                type="invalid xml",
+                message=unicode(e),
+                **meta
+            ))
+        except ValueError:
+            logging.error("Failed: _parse_xml(string=%r)" % self.source)
+            raise
+
+
+
+        if self.requires_case():
+            needs_case_detail = True
+            needs_case_type = True
+        if self.requires_case_type():
+            needs_case_type = True
+        if self.requires_referral():
+            needs_referral_detail = True
+
+        if module:
+            if needs_case_type and not module.case_type:
+                errors.append({'type': "no case type", "module": {"id": module.id, "name": module.name}})
+            if needs_case_detail and not module.get_detail('case_short').columns:
+                errors.append({'type': "no case detail", "module": {"id": module.id, "name": module.name}})
+            if needs_referral_detail and not module.get_detail('ref_short').columns:
+                errors.append({'type': "no ref detail", "module": {"id": module.id, "name": module.name}})
+        return errors
+
     def get_unique_id(self):
         """
         Return unique_id if it exists, otherwise initialize it
@@ -442,11 +506,16 @@ class FormBase(DocumentSchema):
         # reserved_words are hard-coded in three different places! Very lame of me
         # Here, case-config-ui-*.js, and module_view.html
         reserved_words = load_case_reserved_words()
-        for key in self.actions['update_case'].update:
+        for key in self.actions.all_property_names():
             if key in reserved_words:
                 errors.append({'type': 'update_case uses reserved word', 'word': key})
             if not re.match(r'^[a-zA-Z][\w_-]*$', key):
                 errors.append({'type': 'update_case word illegal', 'word': key})
+
+
+        for subcase_action in self.actions.subcases:
+            if not subcase_action.case_type:
+                errors.append({'type': 'subcase has no case type'})
         try:
             valid_paths = set([question['value'] for question in self.get_questions(langs=[])])
         except XFormError as e:
@@ -598,7 +667,15 @@ class DetailColumn(IndexedSchema):
         Convert special names like date-opened to their casedb xpath equivalent (e.g. @date_opened).
         Only ever called by 2.0 apps.
         """
-        return CASE_PROPERTY_MAP.get(self.field, self.field)
+        parts = self.field.split('/')
+        parts[-1] = CASE_PROPERTY_MAP.get(parts[-1], parts[-1])
+        property = parts.pop()
+        indexes = parts
+
+        case = CaseXPath('')
+        for index in indexes:
+            case = case.index_id(index).case()
+        return case.property(property)
 
     @classmethod
     def wrap(cls, data):
@@ -1691,64 +1768,11 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
             if not module.forms:
                 errors.append({'type': "no forms", "module": {"id": module.id, "name": module.name}})
 
-        for obj in self.get_forms(bare=False):
-            needs_case_type = False
-            needs_case_detail = False
-            needs_referral_detail = False
-
-            module = obj.get('module')
-            form = obj.get('form')
-            form_type = obj.get('type')
-            meta = dict(
-                form_type=form_type,
-                module={"id": module.id, "name": module.name} if module else {},
-                form={"id": form.id if hasattr(form, 'id') else None, "name": form.name}
-            )
-            errors_ = form.check_actions()
-            for error_ in errors_:
-                error_.update(meta)
-            errors.extend(errors_)
-
-            try:
-                _parse_xml(form.source)
-            except XFormError as e:
-                errors.append(dict(
-                    type="invalid xml",
-                    message=unicode(e),
-                    **meta
-                ))
-            except ValueError:
-                logging.error("Failed: _parse_xml(string=%r)" % form.source)
-                raise
-#            else:
-#                xform = XForm(form.source)
-#                missing_languages = set(self.build_langs).difference(xform.get_languages())
-#                if missing_languages:
-#                    errors.append(dict(
-#                        type='missing languages',
-#                        missing_languages=missing_languages,
-#                        **meta
-#                    ))
-
-
-            xmlns_count[form.xmlns] += 1
-            if form.requires_case():
-                needs_case_detail = True
-                needs_case_type = True
-            if form.requires_case_type():
-                needs_case_type = True
-            if form.requires_referral():
-                needs_referral_detail = True
-
-            if module:
-                if needs_case_type and not module.case_type:
-                    errors.append({'type': "no case type", "module": {"id": module.id, "name": module.name}})
-                if needs_case_detail and not module.get_detail('case_short').columns:
-                    errors.append({'type': "no case detail", "module": {"id": module.id, "name": module.name}})
-                if needs_referral_detail and not module.get_detail('ref_short').columns:
-                    errors.append({'type': "no ref detail", "module": {"id": module.id, "name": module.name}})
+        for form in self.get_forms():
+            errors.extend(form.validate_for_build())
 
             # make sure that there aren't duplicate xmlns's
+            xmlns_count[form.xmlns] += 1
             for xmlns in xmlns_count:
                 if xmlns_count[xmlns] > 1:
                     errors.append({'type': "duplicate xmlns", "xmlns": xmlns})
