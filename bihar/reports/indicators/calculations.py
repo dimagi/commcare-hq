@@ -414,7 +414,7 @@ def _get_time_of_birth(form):
                     form.xpath('form/child_info')[0],
                     'case/update/time_of_birth'.split('/')
                 )
-            except IndexError:
+            except IndexError, KeyError:
                 notify_exception(None, "Problem getting time of birth from %s. Child info is %s" % \
                                  (form, form.xpath('form/child_info')))
     return None
