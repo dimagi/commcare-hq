@@ -8,6 +8,7 @@ from corehq.apps.hqmedia.models import HQMediaMapItem
 from django.http import HttpResponse
 from django.conf import settings
 from dimagi.utils.web import get_url_base
+from touchforms.formplayer.api import current_question
 
 IVR_EVENT_NEW_CALL = "NEW_CALL"
 IVR_EVENT_INPUT = "INPUT"
@@ -20,6 +21,28 @@ def convert_media_path_to_hq_url(path, app):
     else:
         url_base = get_url_base()
         return url_base + HQMediaMapItem.format_match_map(path, media_type=media.media_type, media_id=media.multimedia_id)["url"] + "foo.wav"
+
+"""
+Return True if answer is a valid response to question, False if not.
+(question is the XformsResponse object for the question)
+"""
+def validate_answer(answer, question):
+    if question.event.datatype == "select":
+        try:
+            assert answer is not None
+            answer = int(answer)
+            assert answer >= 1 and answer <= len(question.event.choices)
+            return True
+        except (ValueError, AssertionError):
+            return False
+    else:
+        try:
+            assert answer is not None
+            if isinstance(answer, basestring):
+                assert len(answer.strip()) > 0
+            return True
+        except AssertionError:
+            return False
 
 def incoming(phone_number, backend_module, gateway_session_id, ivr_event, input_data=None):
     # Look up the call if one already exists
@@ -52,26 +75,33 @@ def incoming(phone_number, backend_module, gateway_session_id, ivr_event, input_
             
             session, responses = start_session(recipient.domain, recipient, app, module, form, case_id, yield_responses=True)
         elif ivr_event == IVR_EVENT_INPUT:
-            responses = _get_responses(recipient.domain, recipient._id, input_data, yield_responses=True)
+            session = XFormsSession.view("smsforms/open_sessions_by_connection",
+                                         key=[recipient.domain, recipient._id],
+                                         include_docs=True).one()
+            current_q = current_question(session.session_id)
+            if validate_answer(input_data, current_q):
+                responses = _get_responses(recipient.domain, recipient._id, input_data, yield_responses=True)
+            else:
+                responses = [current_q]
         else:
             responses = []
         
         ivr_responses = []
         hang_up = False
-        last_response = None
         for response in responses:
-            last_response = response
             if response.event.type == "question":
                 ivr_responses.append({"text_to_say" : response.event.caption,
                                       "audio_file_url" : convert_media_path_to_hq_url(response.event.caption, app) if response.event.caption.startswith("jr://") else None})
             elif response.event.type == "form-complete":
                 hang_up = True
         
-        input_length = None
         if len(ivr_responses) == 0:
             hang_up = True
-        elif last_response.event.datatype == "select":
+        
+        if len(responses) > 0 and responses[-1].event.type == "question" and responses[-1].event.datatype == "select":
             input_length = 1
+        else:
+            input_length = None
         
         return HttpResponse(backend_module.get_http_response_string(gateway_session_id, ivr_responses, collect_input=(not hang_up), hang_up=hang_up, input_length=input_length))
     

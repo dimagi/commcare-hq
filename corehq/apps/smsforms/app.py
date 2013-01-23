@@ -77,7 +77,7 @@ def _get_responses(domain, recipient, text, yield_responses=False):
         session.save()
         # TODO auth
         if yield_responses:
-            return tfsms.next_responses(session.session_id, text, auth=None)
+            return list(tfsms.next_responses(session.session_id, text, auth=None))
         else:
             return _responses_to_text(tfsms.next_responses(session.session_id, text, auth=None))
 
