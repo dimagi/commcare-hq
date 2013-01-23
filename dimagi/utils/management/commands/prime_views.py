@@ -1,3 +1,4 @@
+from couchdbkit.exceptions import ResourceNotFound
 from gevent import monkey; monkey.patch_all()
 import sys
 import gevent
@@ -46,10 +47,15 @@ def get_unique_dbs():
 def do_prime(app_label, design_doc_name, view_name, verbose=False):
     db = get_db(app_label)
 #    print "start priming %s:%s/%s" % (app_label, design_doc_name, view_name)
-    list(db.view('%s/%s' % (design_doc_name, view_name), limit=0))
-    if verbose:
-        sys.stdout.write('.')
-        sys.stdout.flush()
+    try:
+        list(db.view('%s/%s' % (design_doc_name, view_name), limit=0))
+        if verbose:
+            sys.stdout.write('.')
+            sys.stdout.flush()
+    except ResourceNotFound:
+        if verbose:
+            sys.stdout.write('!=>%s/%s/%s' % (app_label,design_doc_name, view_name))
+            sys.stdout.flush()
 #    print "done priming %s:%s/%s" % (app_label, design_doc_name, view_name)
 
 class Command(BaseCommand):
