@@ -42,7 +42,7 @@ COMPOSITE_INDICATORS = dict(
                     " for complicated fever",
         title="% Under-5 attending follow-up at facility after complicated fever referral",
         numerator_slug="under5_complicated_fever_facility_followup",
-        denominator_slug="under5_complicated_fever",
+        denominator_slug="under5_complicated_fever_case",
     ),
     under5_complicated_fever_referred_proportion=dict(
         description="Proportion of Under-5s with complicated fever who were referred to clinic or hospital",

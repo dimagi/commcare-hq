@@ -10,7 +10,7 @@ function (doc) {
                 visit_date = new Date(meta.timeEnd),
                 case_id = get_case_id(doc);
 
-            if (age >= 180*MS_IN_DAY && age < 1770*MS_IN_DAY && indicators.muac.value) {
+            if (age > 180*MS_IN_DAY && age < 1770*MS_IN_DAY && indicators.muac.value) {
                 // MUAC reading taken during visit
                 indicator_entries["muac_reading"] = 1;
                 try {

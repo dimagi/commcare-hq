@@ -48,6 +48,15 @@ CHW_VISIT_ACTIVE_CASES_INDICATORS = dict(
     )
 )
 
+CHW_VISIT_INDICATORS = dict(
+    app=APP_NAME,
+    indicators=dict(
+        all_visit_forms=dict(
+
+        ),
+    ),
+)
+
 CHW_VISITS_UNIQUE_COUNT_INDICATORS = dict(
     app=APP_NAME,
     indicators=dict(

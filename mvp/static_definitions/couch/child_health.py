@@ -96,6 +96,11 @@ CHILD_HEALTH_INDICATORS = dict(
                 title="# Under-5 who attended follow-up at facility, referred for complicated fever",
                 indicator_key="under5_complicated_fever facility_followup"
             ),
+            under5_complicated_fever_case=dict(
+                description="No. of Under-5s with Complicated Fever",
+                title="# Under-5s w/ Complicated Fever",
+                indicator_key="under5_complicated_fever"
+            ),
         ),
     )
 )
