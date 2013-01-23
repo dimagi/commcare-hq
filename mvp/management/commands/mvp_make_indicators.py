@@ -4,7 +4,8 @@ from corehq.apps.indicators.models import (CaseDataInFormIndicatorDefinition, Fo
 from mvp.models import MVP
 from mvp.static_definitions.question_id_mapping import (CHILD_CLOSE_FORM_QUESTION_IDS, CHILD_VISIT_QUESTION_IDS,
                                                         HOUSEHOLD_VISIT_QUESTION_IDS, PREGNANCY_VISIT_QUESTION_IDS,
-                                                        PREGNANCY_CLOSE_FORM_QUESTION_IDS)
+                                                        PREGNANCY_CLOSE_FORM_QUESTION_IDS,
+                                                        CHILD_REGISTRATION_QUESTION_IDS)
 
 class Command(LabelCommand):
     help = "Create the indicator definitions necessary to compute MVP Indicators."
@@ -17,6 +18,10 @@ class Command(LabelCommand):
                 MVP.NAMESPACE,
                 domain
             )
+
+            # Registration forms
+            self.create_form_alias_indicators(CHILD_REGISTRATION_QUESTION_IDS,
+                MVP.REGISTRATION_FORMS.get('child_registration'), domain, shared_args)
 
             # All the visit forms
             self.create_form_alias_indicators(CHILD_VISIT_QUESTION_IDS,
