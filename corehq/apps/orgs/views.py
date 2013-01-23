@@ -1,18 +1,15 @@
 from datetime import datetime
 from couchdbkit import ResourceNotFound
-from django.contrib.auth.views import redirect_to_login
 from django.core.urlresolvers import reverse
 from django.db import transaction
 from django.http import HttpResponse, HttpResponseRedirect, Http404, HttpResponseForbidden
 from django.views.decorators.http import require_POST
 from corehq.apps.domain.decorators import require_superuser
 from corehq.apps.hqwebapp.utils import InvitationView
-from corehq.apps.hqwebapp.views import logout
-from corehq.apps.registration.forms import DomainRegistrationForm, NewWebUserRegistrationForm
+from corehq.apps.registration.forms import DomainRegistrationForm
 from corehq.apps.orgs.forms import AddProjectForm, InviteMemberForm, AddTeamForm, UpdateOrgInfo
-from corehq.apps.registration.utils import activate_new_user
-from corehq.apps.users.models import CouchUser, WebUser, UserRole
-from dimagi.utils.web import render_to_response, json_response, get_url_base
+from corehq.apps.users.models import WebUser, UserRole
+from dimagi.utils.web import render_to_response, json_response
 from corehq.apps.orgs.models import Organization, Team, DeleteTeamRecord, OrgInvitation
 from corehq.apps.domain.models import Domain
 from django.contrib import messages

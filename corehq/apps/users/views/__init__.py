@@ -6,13 +6,9 @@ import urllib
 from datetime import datetime
 from corehq.apps.hqwebapp.utils import InvitationView
 
-from corehq.apps.registration.forms import NewWebUserRegistrationForm
-from corehq.apps.registration.utils import activate_new_user
 from dimagi.utils.couch.database import get_db
-from django.contrib.auth import logout
 from django.contrib.auth.forms import PasswordChangeForm, SetPasswordForm
 from django.contrib.auth.models import User
-from django.contrib.auth.views import redirect_to_login
 from django.core.urlresolvers import reverse
 from django.db import transaction
 from django.http import Http404, HttpResponseRedirect, HttpResponse, HttpResponseForbidden

@@ -218,23 +218,6 @@ def get_post_redirect(request, get_callback, post_callback,
         else:                  return post_callback(request)
     raise Exception("Request method could not be matched.  Expected a GET or a POST.")
 
-def check_for_redirect(request):
-    if request.GET.get('switch') == 'true':
-        logout(request)
-        return redirect_to_login(request.path)
-    if request.GET.get('create') == 'true':
-        logout(request)
-        return HttpResponseRedirect(request.path)
-    return False
-
-def check_for_accepted(request, invitation):
-    if invitation.is_accepted:
-        messages.error(request, "Sorry, that invitation has already been used up. "
-                                "If you feel this is a mistake please ask the inviter for "
-                                "another invitation.")
-        return HttpResponseRedirect(reverse("login"))
-    return False
-
 class InvitationView():
     inv_type = Invitation
     template = ""
