@@ -2,6 +2,10 @@ from datetime import datetime
 from couchdbkit.ext.django.schema import StringProperty, Document,\
     DateTimeProperty, BooleanProperty, IntegerProperty
 
+XFORMS_SESSION_SMS = "SMS"
+XFORMS_SESSION_IVR = "IVR"
+XFORMS_SESSION_TYPES = [XFORMS_SESSION_SMS, XFORMS_SESSION_IVR]
+
 class XFormsSession(Document):
     """
     Keeps information about an SMS XForm session. 
@@ -21,6 +25,7 @@ class XFormsSession(Document):
     app_id = StringProperty()
     submission_id = StringProperty()
     survey_incentive = StringProperty()
+    session_type = StringProperty(choices=XFORMS_SESSION_TYPES, default=XFORMS_SESSION_SMS)
     
     def __unicode__(self):
         return 'Form %(form)s in domain %(domain)s. Last modified: %(mod)s' % \
@@ -38,10 +43,8 @@ class XFormsSession(Document):
     @classmethod
     def latest_by_session_id(cls, id):
         return XFormsSession.view("smsforms/sessions_by_touchforms_id", 
-                                  descending=True,
-                                  endkey=[id,],
-                                  startkey=[id, {}],
-                                  limit=1,
+                                  startkey=[id],
+                                  endkey=[id, {}],
                                   include_docs=True).one()
     
         

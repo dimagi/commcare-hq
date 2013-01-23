@@ -1,0 +1,32 @@
+{% extends "users/users_base.html" %}
+{% load hq_shared_tags %}
+{% load hqstyle_tags %}
+{% block js %}{{ block.super }}
+    <script src="{% static 'hqwebapp/javascripts/jquery.textchange.min.js' %}"></script>
+    <script src="{% static 'users/js/key_filters.js' %}"></script>
+    <script src="{% static 'hqwebapp/js/ui-element.js' %}"></script>
+{% endblock %}
+{% block js-inline %} {{ block.super }}
+    <script type="text/javascript">
+    </script>
+{% endblock %}
+
+{% block subsection-title %}
+        <li>
+            <a href="{% url commtrack_product_list domain %}">CommTrack Products</a>
+            <span class="divider">&gt;</span>
+        </li>
+        <li class="active">
+            <a href="#">{% if product.get_id %}{{ product.name }}{% else %}new product{% endif %}</a>
+        </li>
+{% endblock %}
+
+{% block user-view %}
+            <form class="form form-horizontal" name="product" method="post">
+                {% bootstrap_form_errors form %}
+                {% include 'hqstyle/forms/basic_fieldset.html' %}
+                <div class="form-actions"><button type="submit" class="btn btn-primary">{% if product.get_id %}Update{% else %}Create{% endif %} Product</button></div>
+            </form>
+
+{% endblock %}
+

@@ -1,7 +1,6 @@
 from celery.task import task
 from django.core.cache import cache
-import uuid
-from soil import CachedDownload, DownloadBase
+from soil import DownloadBase
 from corehq.apps.commtrack import bulk
 from soil.util import expose_download
 from corehq.apps.commtrack.management.commands.import_locations import import_locations
