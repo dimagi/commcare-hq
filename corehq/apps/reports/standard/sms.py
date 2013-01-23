@@ -156,7 +156,7 @@ class MessageLogReport(ProjectReport, ProjectReportParametersMixin, GenericTabul
             
             phone_number = message.phone_number
             if abbreviate_phone_number and phone_number is not None:
-                phone_number = phone_number[0:5] if phone_number[0:1] == "+" else phone_number[0:4]
+                phone_number = phone_number[0:7] if phone_number[0:1] == "+" else phone_number[0:6]
             
             timestamp = tz_utils.adjust_datetime_to_timezone(message.date, pytz.utc.zone, self.timezone.zone)
             result.append([
