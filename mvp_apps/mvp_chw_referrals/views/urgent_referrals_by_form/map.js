@@ -9,7 +9,9 @@ function(doc) {
 
         if (indicators.referral_type && indicators.referral_type.value) {
             // referral_type indicator is present
-            is_emergency = contained_in_indicator_value(indicators.referral_type, "emergency");
+            is_emergency = (contained_in_indicator_value(indicators.referral_type, "emergency")
+                || contained_in_indicator_value(indicators.referral_type, "basic")
+                || contained_in_indicator_value(indicators.referral_type, "immediate"));
 
         }
 
