@@ -2,7 +2,7 @@ from datetime import datetime
 from corehq.apps.sms.models import CallLog, INCOMING, OUTGOING
 from corehq.apps.sms.mixin import VerifiedNumber
 from corehq.apps.smsforms.app import start_session, _get_responses
-from corehq.apps.smsforms.models import XFormsSession
+from corehq.apps.smsforms.models import XFormsSession, XFORMS_SESSION_IVR
 from corehq.apps.app_manager.models import get_app, Form
 from corehq.apps.hqmedia.models import HQMediaMapItem
 from django.http import HttpResponse
@@ -66,24 +66,25 @@ def incoming(phone_number, backend_module, gateway_session_id, ivr_event, input_
                 #TODO: Need a way to choose the case when it's a user that's playing the form
                 case_id = None
             
-            sessions = XFormsSession.view("smsforms/open_sessions_by_connection",
-                                         key=[recipient.domain, recipient._id],
-                                         include_docs=True).all()
-            for session in sessions:
-                session.end(False)
-                session.save()
-            
-            session, responses = start_session(recipient.domain, recipient, app, module, form, case_id, yield_responses=True)
+            session, responses = start_session(recipient.domain, recipient, app, module, form, case_id, yield_responses=True, session_type=XFORMS_SESSION_IVR)
+            call_log_entry.xforms_session_id = session.session_id
+            call_log_entry.save()
         elif ivr_event == IVR_EVENT_INPUT:
-            session = XFormsSession.view("smsforms/open_sessions_by_connection",
-                                         key=[recipient.domain, recipient._id],
-                                         include_docs=True).one()
-            current_q = current_question(session.session_id)
-            if validate_answer(input_data, current_q):
-                responses = _get_responses(recipient.domain, recipient._id, input_data, yield_responses=True)
+            if call_log_entry.xforms_session_id is not None:
+                current_q = current_question(call_log_entry.xforms_session_id)
+                if validate_answer(input_data, current_q):
+                    responses = _get_responses(recipient.domain, recipient._id, input_data, yield_responses=True, session_id=call_log_entry.xforms_session_id)
+                else:
+                    responses = [current_q]
             else:
-                responses = [current_q]
+                responses = []
         else:
+            if call_log_entry.xforms_session_id is not None:
+                # Hang up and process disconnect
+                session = XFormsSession.latest_by_session_id(call_log_entry.xforms_session_id)
+                if session.end_time is None:
+                    session.end(completed=False)
+                    session.save()
             responses = []
         
         ivr_responses = []
