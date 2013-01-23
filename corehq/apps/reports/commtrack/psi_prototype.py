@@ -298,7 +298,7 @@ class SalesAndConsumptionReport(GenericTabularReport, CommtrackReportMixin, Date
 
             return data
 
-        return filter(lambda r: r, (summary_row(site, reports_by_loc.get(site._id, [])) for site in locs))
+        return filter(None, (summary_row(site, reports_by_loc.get(site._id, [])) for site in locs))
 
 class CumulativeSalesAndConsumptionReport(GenericTabularReport, CommtrackReportMixin, DatespanMixin):
     name = 'Sales and Consumption Report, Cumulative'
@@ -448,5 +448,5 @@ class StockOutReport(GenericTabularReport, CommtrackReportMixin, DatespanMixin):
             
             return data
 
-        return filter(lambda r: r, (row(site) for site in self.outlets))
+        return filter(None, (row(site) for site in self.outlets))
 

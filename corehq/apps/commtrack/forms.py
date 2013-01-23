@@ -42,11 +42,16 @@ class ProductForm(forms.Form):
 
         return code.lower()
 
-    def save(self):
-        try:
-            for field in ('name', 'code', 'category', 'description'):
-                setattr(self.product, field, self.cleaned_data[field])
-            self.product.save()
-            return True
-        except Exception:
-            return False
+    def save(self, instance=None, commit=True):
+        if self.errors:
+            raise ValueError('form does not validate')
+
+        product = instance or self.product
+
+        for field in ('name', 'code', 'category', 'description'):
+            setattr(product, field, self.cleaned_data[field])
+
+        if commit:
+            product.save()
+
+        return product
