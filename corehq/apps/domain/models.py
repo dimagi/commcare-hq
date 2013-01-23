@@ -669,6 +669,20 @@ class Domain(Document, HQBillingDomainMixin, SnapshotMixin):
     def public_deployments(cls):
         return Domain.view('domain/with_deployment', include_docs=True).all()
 
+    @classmethod
+    def get_module_by_name(cls, domain_name):
+        """
+        import and return the python module corresponding to domain_name, or
+        None if it doesn't exist.
+        
+        """
+        domain_module_map = getattr(settings, 'DOMAIN_MODULE_MAP', {})
+        module_name = domain_module_map.get(domain_name, domain_name)
+
+        try:
+            return __import__(module_name) if module_name else None
+        except ImportError:
+            return None
 
 ##############################################################################################################
 #
