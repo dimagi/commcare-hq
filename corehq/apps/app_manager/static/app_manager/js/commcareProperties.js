@@ -107,7 +107,8 @@ var CommcareProperty = {
                     requiresCondition = parseCondition(that.requires),
                     onChange,
                     onSave,
-                    variables = [];
+                    variables = [],
+                    v;
                 onChange = function () {
                     var version = that.since || "1.1",
                         versionOK = COMMCAREHQ.app_manager.checkCommcareVersion(version),
@@ -128,8 +129,8 @@ var CommcareProperty = {
                 };
 
                 Array.prototype.push.apply(variables, requiresCondition.variables);
-                for (i = 0; i < that.contingent_default.length; i++) {
-                    var v = parseCondition(that.contingent_default[i].condition).variables;
+                for (i = 0; i < that.contingent_default.length; i += 1) {
+                    v = parseCondition(that.contingent_default[i].condition).variables;
                     Array.prototype.push.apply(variables, v);
                 }
                 for (i = 0; i < variables.length; i += 1) {
@@ -274,7 +275,7 @@ var CommcareSettings = {
                     var el = $('#case-sharing-select'),
                         that = {
                             val: function () {
-                                return el.val()
+                                return el.val();
                             },
                             getImpliedValue: function () {
                                 return that.val();
