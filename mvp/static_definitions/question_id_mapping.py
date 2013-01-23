@@ -68,6 +68,10 @@ CHILD_REGISTRATION_QUESTION_IDS = {
         'mvp-sauri': _make_qid('delivered_in_facility', 1),
         'mvp-potou': _make_qid('delivered_in_facility', 1),
     },
+    'weight_at_birth': {
+        'mvp-sauri': _make_qid('weight_at_birth', 1),
+        'mvp-potou': _make_qid('weight_at_birth', 1),
+    },
 }
 
 PREGNANCY_VISIT_QUESTION_IDS = {
