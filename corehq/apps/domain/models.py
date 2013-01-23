@@ -565,7 +565,7 @@ class Domain(Document, HQBillingDomainMixin, SnapshotMixin):
     def display_name(self):
         if self.is_snapshot:
             return "Snapshot of %s" % self.copied_from.display_name()
-        if self.organization:
+        if self.slug and self.organization:
             return self.slug
         else:
             return self.name
@@ -581,7 +581,7 @@ class Domain(Document, HQBillingDomainMixin, SnapshotMixin):
             return format_html(
                 '{0} &gt; {1}',
                 self.organization_doc().title,
-                self.slug
+                self.slug or self.name
             )
         else:
             return self.name

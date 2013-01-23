@@ -34,25 +34,23 @@ This project will be given a new name within this organization. You may leave it
             raise forms.ValidationError('This project does not exist.')
         return data
 
-class AddMemberForm(forms.Form):
-    member_email = forms.CharField(label = "User Email", max_length=25)
+class InviteMemberForm(forms.Form):
+    email = forms.CharField(label = "User Email")
 
     def __init__(self, org_name, *args, **kwargs):
         self.org_name = org_name
-        super(AddMemberForm, self).__init__(*args, **kwargs)
+        super(InviteMemberForm, self).__init__(*args, **kwargs)
 
-    def clean_member_email(self):
-        data = self.cleaned_data['member_email'].strip().lower()
+    def clean_email(self):
+        data = self.cleaned_data['email'].strip().lower()
         validate_email(data)
-        exists = CouchUser.get_by_username(data)
 
-        if not exists:
-            raise forms.ValidationError('User not found!')
-
-        org = Organization.get_by_name(self.org_name)
-        for id in org.members:
-            if id == exists.get_id:
-                raise forms.ValidationError('User is already part of this organization!')
+        existing_member = CouchUser.get_by_username(data)
+        if existing_member:
+            org = Organization.get_by_name(self.org_name)
+            for id in org.members:
+                if id == existing_member.get_id:
+                    raise forms.ValidationError('User is already part of this organization!')
 
         return data
 

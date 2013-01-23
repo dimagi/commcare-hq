@@ -1,0 +1,13 @@
+Hi!
+
+{{ inviter }} has invited you to join the {{ organization }} organization at CommCareHQ.
+
+CommCareHQ is a tool that helps manage community health worker programs around the world.
+
+To accept this invitation go to: {{ url }}
+
+If you think this is a mistake, you can go ahead and ignore this email. To find out more about CommCareHQ visit http://www.commcarehq.org/.
+
+Thanks for using our site!
+
+-The CommCareHQ team

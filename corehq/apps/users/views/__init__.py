@@ -4,14 +4,11 @@ import json
 import re
 import urllib
 from datetime import datetime
+from corehq.apps.hqwebapp.utils import InvitationView
 
-from corehq.apps.registration.forms import NewWebUserRegistrationForm
-from corehq.apps.registration.utils import activate_new_user
 from dimagi.utils.couch.database import get_db
-from django.contrib.auth import logout
 from django.contrib.auth.forms import PasswordChangeForm, SetPasswordForm
 from django.contrib.auth.models import User
-from django.contrib.auth.views import redirect_to_login
 from django.core.urlresolvers import reverse
 from django.db import transaction
 from django.http import Http404, HttpResponseRedirect, HttpResponse, HttpResponseForbidden
@@ -27,8 +24,8 @@ from corehq.apps.prescriptions.models import Prescription
 from corehq.apps.domain.models import Domain
 from corehq.apps.users.decorators import require_permission
 from corehq.apps.users.forms import UserForm, ProjectSettingsForm
-from corehq.apps.users.models import CouchUser, Invitation, CommCareUser, WebUser, \
-    RemoveWebUserRecord, UserRole, AdminUserRole
+from corehq.apps.users.models import CouchUser, CommCareUser, WebUser, \
+    RemoveWebUserRecord, UserRole, AdminUserRole, DomainInvitation
 from corehq.apps.domain.decorators import login_and_domain_required, require_superuser, domain_admin_required
 from corehq.apps.orgs.models import Team
 from corehq.apps.reports.util import get_possible_reports
@@ -106,7 +103,7 @@ def web_users(request, domain, template="users/web_users.html"):
         key = 'user-role:%s' % r.get_id if r.get_id else r.get_qualified_id()
         role_labels[key] = r.name
 
-    invitations = Invitation.by_domain(domain)
+    invitations = DomainInvitation.by_domain(domain)
     for invitation in invitations:
         invitation.role_label = role_labels.get(invitation.role, "")
 
@@ -155,58 +152,33 @@ def post_user_role(request, domain):
     role.save()
     return json_response(role)
 
+class UserInvitationView(InvitationView):
+    inv_type = DomainInvitation
+    template = "users/accept_invite.html"
+    need = ["domain"]
+
+    def added_context(self):
+        return {'domain': self.domain}
+
+    def validate_invitation(self, invitation):
+        assert invitation.domain == self.domain
+
+    @property
+    def success_msg(self):
+        return "You have been added to the %s domain" % self.domain
+
+    @property
+    def redirect_to_on_success(self):
+        return reverse("domain_homepage", args=[self.domain,])
+
+    def invite(self, invitation, user):
+        user.add_domain_membership(domain=self.domain)
+        user.set_role(self.domain, invitation.role)
+        user.save()
+
 @transaction.commit_on_success
 def accept_invitation(request, domain, invitation_id):
-    if request.GET.get('switch') == 'true':
-        logout(request)
-        return redirect_to_login(request.path)
-    if request.GET.get('create') == 'true':
-        logout(request)
-        return HttpResponseRedirect(request.path)
-    invitation = Invitation.get(invitation_id)
-    assert(invitation.domain == domain)
-    if invitation.is_accepted:
-        messages.error(request, "Sorry, that invitation has already been used up. "
-                                "If you feel this is a mistake please ask the inviter for "
-                                "another invitation.")
-        return HttpResponseRedirect(reverse("login"))
-    if request.user.is_authenticated():
-        # if you are already authenticated, just add the domain to your
-        # list of domains
-        if request.couch_user.username != invitation.email:
-            messages.error(request, "The invited user %s and your user %s do not match!" % (invitation.email, request.couch_user.username))
-
-        if request.method == "POST":
-            couch_user = CouchUser.from_django_user(request.user)
-            couch_user.add_domain_membership(domain=domain)
-            couch_user.set_role(domain, invitation.role)
-            couch_user.save()
-            invitation.is_accepted = True
-            invitation.save()
-            messages.success(request, "You have been added to the %s domain" % domain)
-            return HttpResponseRedirect(reverse("domain_homepage", args=[domain,]))
-        else:
-            mobile_user = CouchUser.from_django_user(request.user).is_commcare_user()
-            return render_to_response(request, 'users/accept_invite.html', {'domain': domain,
-                                                                            'mobile_user': mobile_user,
-                                                                            "invited_user": invitation.email if request.couch_user.username != invitation.email else ""})
-    else:
-        # if you're not authenticated we need you to fill out your information
-        if request.method == "POST":
-            form = NewWebUserRegistrationForm(request.POST)
-            if form.is_valid():
-                user = activate_new_user(form, is_domain_admin=False, domain=invitation.domain)
-                user.set_role(domain, invitation.role)
-                user.save()
-                invitation.is_accepted = True
-                invitation.save()
-                messages.success(request, "User account for %s created! You may now login." % form.cleaned_data["email"])
-                return HttpResponseRedirect(reverse("login"))
-        else:
-            form = NewWebUserRegistrationForm(initial={'email': invitation.email})
-
-        return render_to_response(request, "users/accept_invite.html", {"form": form})
-
+    return UserInvitationView()(request, invitation_id, domain=domain)
 
 @require_can_edit_web_users
 def invite_web_user(request, domain, template="users/invite_web_user.html"):
@@ -222,7 +194,7 @@ def invite_web_user(request, domain, template="users/invite_web_user.html"):
             data["invited_by"] = request.couch_user.user_id
             data["invited_on"] = datetime.utcnow()
             data["domain"] = domain
-            invite = Invitation(**data)
+            invite = DomainInvitation(**data)
             invite.save()
             invite.send_activation_email()
             messages.success(request, "Invitation sent to %s" % invite.email)

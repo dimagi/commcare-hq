@@ -1,13 +1,16 @@
+from datetime import datetime
 from couchdbkit import ResourceNotFound
 from django.core.urlresolvers import reverse
+from django.db import transaction
 from django.http import HttpResponse, HttpResponseRedirect, Http404, HttpResponseForbidden
 from django.views.decorators.http import require_POST
 from corehq.apps.domain.decorators import require_superuser
+from corehq.apps.hqwebapp.utils import InvitationView
 from corehq.apps.registration.forms import DomainRegistrationForm
-from corehq.apps.orgs.forms import AddProjectForm, AddMemberForm, AddTeamForm, UpdateOrgInfo
-from corehq.apps.users.models import CouchUser, WebUser, UserRole
-from dimagi.utils.web import render_to_response, json_response, get_url_base
-from corehq.apps.orgs.models import Organization, Team, DeleteTeamRecord
+from corehq.apps.orgs.forms import AddProjectForm, InviteMemberForm, AddTeamForm, UpdateOrgInfo
+from corehq.apps.users.models import WebUser, UserRole
+from dimagi.utils.web import render_to_response, json_response
+from corehq.apps.orgs.models import Organization, Team, DeleteTeamRecord, OrgInvitation
 from corehq.apps.domain.models import Domain
 from django.contrib import messages
 
@@ -19,18 +22,19 @@ def orgs_base(request, template="orgs/orgs_base.html"):
     return render_to_response(request, template, vals)
 
 @require_superuser
-def orgs_landing(request, org, template="orgs/orgs_landing.html", form=None, add_form=None, add_member_form=None, add_team_form=None, update_form=None):
+def orgs_landing(request, org, template="orgs/orgs_landing.html", form=None, add_form=None, invite_member_form=None,
+                 add_team_form=None, update_form=None):
     organization = Organization.get_by_name(org)
 
     reg_form_empty = not form
     add_form_empty = not add_form
-    add_member_form_empty = not add_member_form
+    invite_member_form_empty = not invite_member_form
     add_team_form_empty = not add_team_form
     update_form_empty = not update_form
 
     reg_form = form or DomainRegistrationForm(initial={'org': organization.name})
     add_form = add_form or AddProjectForm(org)
-    add_member_form = add_member_form or AddMemberForm(org)
+    invite_member_form = invite_member_form or InviteMemberForm(org)
     add_team_form = add_team_form or AddTeamForm(org)
 
     update_form = update_form or UpdateOrgInfo(initial={'org_title': organization.title, 'email': organization.email, 'url': organization.url, 'location': organization.location})
@@ -38,8 +42,11 @@ def orgs_landing(request, org, template="orgs/orgs_landing.html", form=None, add
     current_teams = Team.get_by_org(org)
     current_domains = Domain.get_by_organization(org)
     members = [WebUser.get_by_user_id(user_id) for user_id in organization.members]
-    vals = dict( org=organization, domains=current_domains, reg_form=reg_form,
-                 add_form=add_form, reg_form_empty=reg_form_empty, add_form_empty=add_form_empty, update_form=update_form, update_form_empty=update_form_empty, add_member_form=add_member_form, add_member_form_empty=add_member_form_empty, add_team_form=add_team_form, add_team_form_empty=add_team_form_empty, teams=current_teams, members=members)
+    vals = dict(org=organization, domains=current_domains, reg_form=reg_form, add_form=add_form,
+                reg_form_empty=reg_form_empty, add_form_empty=add_form_empty, update_form=update_form,
+                update_form_empty=update_form_empty, invite_member_form=invite_member_form,
+                invite_member_form_empty=invite_member_form_empty, add_team_form=add_team_form,
+                add_team_form_empty=add_team_form_empty, teams=current_teams, members=members)
     return render_to_response(request, template, vals)
 
 @require_superuser
@@ -103,20 +110,49 @@ def orgs_add_project(request, org):
     return HttpResponseRedirect(reverse('orgs_landing', args=[org]))
 
 @require_superuser
-def orgs_add_member(request, org):
+def invite_member(request, org):
     if request.method == "POST":
-        form = AddMemberForm(org, request.POST)
+        form = InviteMemberForm(org, request.POST)
         if form.is_valid():
-            username = form.cleaned_data['member_email']
-            user_id = CouchUser.get_by_username(username).userID
-            organization = Organization.get_by_name(org)
-            organization.add_member(user_id)
-            messages.success(request, "Member Added!")
+            data = form.cleaned_data
+            data["invited_by"] = request.couch_user.user_id
+            data["invited_on"] = datetime.utcnow()
+            data["organization"] = org
+            invite = OrgInvitation(**data)
+            invite.save()
+            invite.send_activation_email()
+            messages.success(request, "Invitation sent to %s" % invite.email)
         else:
             messages.error(request, "Unable to add member")
-            return orgs_landing(request, org, add_member_form=form)
+            return orgs_landing(request, org, invite_member_form=form)
     return HttpResponseRedirect(reverse('orgs_landing', args=[org]))
 
+class OrgInvitationView(InvitationView):
+    inv_type = OrgInvitation
+    template = "orgs/orgs_accept_invite.html"
+    need = ["organization"]
+
+    def added_context(self):
+        return {'organization': self.organization}
+
+    def validate_invitation(self, invitation):
+        assert invitation.organization == self.organization
+
+    @property
+    def success_msg(self):
+        return "You have been added to the %s organization" % self.organization
+
+    @property
+    def redirect_to_on_success(self):
+        return reverse("orgs_landing", args=[self.organization,])
+
+    def invite(self, invitation, user):
+        org = Organization.get_by_name(self.organization)
+        org.add_member(user.get_id)
+
+@transaction.commit_on_success
+def accept_invitation(request, org, invitation_id):
+    return OrgInvitationView()(request, invitation_id, organization=org)
 
 @require_superuser
 def orgs_add_team(request, org):
