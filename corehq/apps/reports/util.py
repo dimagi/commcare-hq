@@ -3,7 +3,6 @@ from django.contrib import messages
 import logging
 from corehq.apps.announcements.models import ReportAnnouncement
 from corehq.apps.groups.models import Group
-from corehq.apps.reports.decorators import cache_users
 from corehq.apps.reports.display import xmlns_to_name
 from corehq.apps.reports.models import HQUserType, TempCommCareUser
 from corehq.apps.users.models import CommCareUser, CouchUser
@@ -91,8 +90,6 @@ def get_group_params(domain, group='', users=None, user_id_only=False, **kwargs)
     return group, users
 
 
-cache_users_by_domain = cache_users()
-#@cache_users_by_domain
 def get_all_users_by_domain(domain=None, group=None, individual=None,
                             user_filter=None, simplified=False, CommCareUser=None):
     """

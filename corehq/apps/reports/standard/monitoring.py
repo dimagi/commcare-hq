@@ -1,6 +1,5 @@
 from _collections import defaultdict
 import datetime
-import logging
 import dateutil
 from django.core.urlresolvers import reverse
 import numpy

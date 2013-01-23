@@ -161,7 +161,7 @@ class ReportDispatcher(View):
 
     @classmethod
     def allowed_renderings(cls):
-        return ['json', 'async', 'filters', 'export', 'mobile', 'email', 'clear_cache', 'partial']
+        return ['json', 'async', 'filters', 'export', 'mobile', 'email', 'partial']
 
     @classmethod
     def report_navigation_list(cls, context):
