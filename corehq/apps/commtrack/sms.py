@@ -45,7 +45,7 @@ class StockReport(object):
     def __init__(self, domain, v):
         self.domain = domain
         self.v = v
-        self.C = CommtrackConfig.for_domain(domain.name)
+        self.C = domain.commtrack_settings
 
     # TODO sms parsing could really use unit tests
     def parse(self, text, location=None):
