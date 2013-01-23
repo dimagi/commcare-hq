@@ -1,15 +1,17 @@
 from datetime import datetime
 from couchdbkit import ResourceNotFound
+from django.contrib.auth.views import redirect_to_login
 from django.core.urlresolvers import reverse
 from django.db import transaction
 from django.http import HttpResponse, HttpResponseRedirect, Http404, HttpResponseForbidden
 from django.views.decorators.http import require_POST
 from corehq.apps.domain.decorators import require_superuser
-from corehq.apps.hqwebapp.utils import check_for_accepted, check_for_redirect
+from corehq.apps.hqwebapp.utils import InvitationView
+from corehq.apps.hqwebapp.views import logout
 from corehq.apps.registration.forms import DomainRegistrationForm, NewWebUserRegistrationForm
 from corehq.apps.orgs.forms import AddProjectForm, InviteMemberForm, AddTeamForm, UpdateOrgInfo
 from corehq.apps.registration.utils import activate_new_user
-from corehq.apps.users.models import CouchUser, WebUser, UserRole, DomainInvitation
+from corehq.apps.users.models import CouchUser, WebUser, UserRole
 from dimagi.utils.web import render_to_response, json_response, get_url_base
 from corehq.apps.orgs.models import Organization, Team, DeleteTeamRecord, OrgInvitation
 from corehq.apps.domain.models import Domain
@@ -128,57 +130,32 @@ def invite_member(request, org):
             return orgs_landing(request, org, invite_member_form=form)
     return HttpResponseRedirect(reverse('orgs_landing', args=[org]))
 
+class OrgInvitationView(InvitationView):
+    inv_type = OrgInvitation
+    template = "orgs/orgs_accept_invite.html"
+    need = ["organization"]
+
+    def added_context(self):
+        return {'organization': self.organization}
+
+    def validate_invitation(self, invitation):
+        assert invitation.organization == self.organization
+
+    @property
+    def success_msg(self):
+        return "You have been added to the %s organization" % self.organization
+
+    @property
+    def redirect_to_on_success(self):
+        return reverse("orgs_landing", args=[self.organization,])
+
+    def invite(self, invitation, user):
+        org = Organization.get_by_name(self.organization)
+        org.add_member(user.get_id)
+
 @transaction.commit_on_success
 def accept_invitation(request, org, invitation_id):
-    r = check_for_redirect(request)
-    if r:
-        return r
-
-    invitation = DomainInvitation.get(invitation_id)
-    assert(invitation.organization == org)
-
-    r = check_for_accepted(request, invitation)
-    if r:
-        return r
-
-    if request.user.is_authenticated():
-        # if you are already authenticated, just add this user to the organization
-        if request.couch_user.username != invitation.email:
-            messages.error(request,
-                "The invited user %s and your user %s do not match!" % (invitation.email, request.couch_user.username))
-
-        if request.method == "POST":
-            couch_user = CouchUser.from_django_user(request.user)
-            organization = Organization.get_by_name(org)
-            organization.add_member(couch_user.get_id)
-            invitation.is_accepted = True
-            invitation.save()
-            messages.success(request, "You have been added to the %s organization" % org)
-            return HttpResponseRedirect(reverse('orgs_landing', args=[org]))
-        else:
-            mobile_user = CouchUser.from_django_user(request.user).is_commcare_user()
-            return render_to_response(request, 'orgs/orgs_accept_invite.html',
-                {   "org": org,
-                    "mobile_user": mobile_user,
-                    "invited_user": invitation.email if request.couch_user.username != invitation.email else ""})
-    else:
-        # if you're not authenticated we need you to fill out your information
-        if request.method == "POST":
-            form = NewWebUserRegistrationForm(request.POST)
-            if form.is_valid():
-                user = activate_new_user(form)
-                user.save()
-                organization = Organization.get_by_name(org)
-                organization.add_member(user.get_id)
-                invitation.is_accepted = True
-                invitation.save()
-                messages.success(request, "User account for %s created! You may now login." % form.cleaned_data["email"])
-                messages.success(request, "You have been added to the %s organization" % org)
-                return HttpResponseRedirect(reverse("login"))
-        else:
-            form = NewWebUserRegistrationForm(initial={'email': invitation.email})
-
-        return render_to_response(request, "orgs/orgs_accept_invite.html", {"form": form})
+    return OrgInvitationView()(request, invitation_id, organization=org)
 
 @require_superuser
 def orgs_add_team(request, org):

@@ -35,7 +35,7 @@ This project will be given a new name within this organization. You may leave it
         return data
 
 class InviteMemberForm(forms.Form):
-    email = forms.CharField(label = "User Email", max_length=25)
+    email = forms.CharField(label = "User Email")
 
     def __init__(self, org_name, *args, **kwargs):
         self.org_name = org_name
