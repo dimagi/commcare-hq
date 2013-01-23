@@ -162,6 +162,7 @@ class CallLog(MessageLog):
     answered = BooleanProperty(default=False)
     duration = IntegerProperty() # Length of the call in seconds
     gateway_session_id = StringProperty() # This is the session id returned from the backend
+    xforms_session_id = StringProperty()
     error = BooleanProperty(default=False)
     error_message = StringProperty()
     

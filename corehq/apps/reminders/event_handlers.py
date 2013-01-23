@@ -168,7 +168,7 @@ def fire_sms_survey_event(reminder, handler, recipients, verified_numbers):
                         continue
                 
                 # Close all currently open sessions
-                sessions = XFormsSession.view("smsforms/open_sessions_by_connection",
+                sessions = XFormsSession.view("smsforms/open_sms_sessions_by_connection",
                                              key=[reminder.domain, recipient.get_id],
                                              include_docs=True).all()
                 for session in sessions:
