@@ -1,14 +1,12 @@
-import datetime
 from django.conf import settings
 from django.core.urlresolvers import reverse
 from django.http import HttpResponseNotFound, Http404, HttpResponseRedirect
 from django.template.loader import render_to_string
 from django.utils.safestring import mark_safe
 from django.views.generic.base import View
-from corehq.apps.domain.decorators import login_and_domain_required, cls_login_and_domain_required, cls_to_view
+from corehq.apps.domain.decorators import login_and_domain_required, cls_to_view
 from dimagi.utils.decorators.datespan import datespan_in_request
 from dimagi.utils.modules import to_function
-from django.utils.html import escape
 from django.utils.translation import ugettext as _
 
 datespan_default = datespan_in_request(
@@ -93,7 +91,7 @@ class ReportDispatcher(View):
         reports = self.get_reports(domain)
         for key, report_model_paths in reports.items():
             for model_path in report_model_paths:
-                report_class = to_function(model_path)
+                report_class = to_function(model_path, failhard=True)
                 if report_class.slug == report_slug:
                     return report_class
 
@@ -136,7 +134,7 @@ class ReportDispatcher(View):
 
         for key, report_model_paths in reports.items():
             for model_path in report_model_paths:
-                report_class = to_function(model_path)
+                report_class = to_function(model_path, failhard=True)
                 if report_class.slug == current_slug:
                     report = report_class(request, domain=domain, **report_kwargs)
                     report.rendered_as = render_as

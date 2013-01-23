@@ -241,6 +241,8 @@ class CaseListMixin(ProjectInspectionReportParamsMixin, GenericTabularReport, Pr
         'corehq.apps.reports.fields.CaseTypeField',
         'corehq.apps.reports.fields.SelectOpenCloseField',
     ]
+
+    case_filter = {}
     
     @property
     @memoized
@@ -251,7 +253,8 @@ class CaseListMixin(ProjectInspectionReportParamsMixin, GenericTabularReport, Pr
             case_type=self.case_type,
             owner_ids=self.case_owners,
             user_ids=self.user_ids,
-            status=self.case_status
+            status=self.case_status,
+            filter=self.case_filter
         ).results()
 
     @property
