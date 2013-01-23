@@ -21,43 +21,43 @@ var CommcareProperty = {
                     variable,
                     value,
                     i,
-                    repr = [];
+                    conditions = [];
                 for (i = 0; i < parts.length; i += 1) {
                     result = parse_part.exec(parts[i]);
                     if (result === null) {
-                        console.log("Unable to parse '" + parts[i] + "'");
+                        console.error("Unable to parse '" + parts[i] + "'");
                     } else {
                         type = result[1];
                         variable = result[2];
                         value = result[3];
                         try {
-                            repr.push({variable: settings[type][variable], value: value});
+                            conditions.push({variable: settings[type][variable], value: value});
                         } catch (e) {
-                            console.log("Error finding {" + type + "." + variable + "}");
+                            console.error("Error finding {" + type + "." + variable + "}");
                         }
                     }
                 }
                 return {
                     check: function () {
-                        var i;
-                        for (i = 0; i < repr.length; i += 1) {
-                            if (repr[i].variable.val() !== repr[i].value) {
+                        var i, c;
+                        for (i = 0; i < conditions.length; i += 1) {
+                            c = conditions[i];
+                            if (c.variable.getImpliedValue() !== c.value) {
                                 return false;
                             }
                         }
                         return true;
                     },
-                    variables: repr.map(function (p) { return p.variable; })
+                    variables: conditions.map(function (p) { return p.variable; })
                 };
 
             },
 
             getDefault = function () {
-                var i = 0,
-                    contingent_default = that.contingent_default || [];
-                for (i = 0; i < contingent_default.length; i += 1) {
-                    if (parseCondition(contingent_default[i].condition)) {
-                        return contingent_default[i].value;
+                var i;
+                for (i = 0; i < that.contingent_default.length; i += 1) {
+                    if (parseCondition(that.contingent_default[i].condition).check()) {
+                        return that.contingent_default[i].value;
                     }
                 }
                 return that['default'];
@@ -106,7 +106,9 @@ var CommcareProperty = {
                 var i,
                     requiresCondition = parseCondition(that.requires),
                     onChange,
-                    onSave;
+                    onSave,
+                    variables = [],
+                    v;
                 onChange = function () {
                     var version = that.since || "1.1",
                         versionOK = COMMCAREHQ.app_manager.checkCommcareVersion(version),
@@ -120,13 +122,20 @@ var CommcareProperty = {
                         is_enabled = false;
                     }
                     enabled(is_enabled, disabled_message);
+                    that.fire('change');
                 };
                 onSave = function () {
                     that.save();
                 };
-                for (i = 0; i < requiresCondition.variables.length; i += 1) {
-                    requiresCondition.variables[i].on('change', onChange);
-                    requiresCondition.variables[i].on('save', onSave);
+
+                Array.prototype.push.apply(variables, requiresCondition.variables);
+                for (i = 0; i < that.contingent_default.length; i += 1) {
+                    v = parseCondition(that.contingent_default[i].condition).variables;
+                    Array.prototype.push.apply(variables, v);
+                }
+                for (i = 0; i < variables.length; i += 1) {
+                    variables[i].on('change', onChange);
+                    variables[i].on('save', onSave);
                 }
                 // bootstrap
                 onChange();
@@ -184,6 +193,12 @@ var CommcareProperty = {
                 }
                 return $home.append($tr);
             },
+            getImpliedValue = function () {
+                /* differs from val in that it returns the implied value
+                    even if the widget is not enabled (instead of null)
+                 */
+                return value || getDefault();
+            },
             val = function (v) {
                 var theDefault = that['default'];
                 if (v === undefined) {
@@ -207,8 +222,10 @@ var CommcareProperty = {
                 }
             };
         eventize(that);
+        that.contingent_default = that.contingent_default || [];
         that.render = render;
         that.val = val;
+        that.getImpliedValue = getImpliedValue;
         that.enabled = enabled;
         that.save = save;
         return that;
@@ -258,7 +275,10 @@ var CommcareSettings = {
                     var el = $('#case-sharing-select'),
                         that = {
                             val: function () {
-                                return el.val()
+                                return el.val();
+                            },
+                            getImpliedValue: function () {
+                                return that.val();
                             }
                         };
                     eventize(that);
