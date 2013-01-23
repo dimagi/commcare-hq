@@ -22,11 +22,11 @@ def convert_media_path_to_hq_url(path, app):
         url_base = get_url_base()
         return url_base + HQMediaMapItem.format_match_map(path, media_type=media.media_type, media_id=media.multimedia_id)["url"] + "foo.wav"
 
-"""
-Return True if answer is a valid response to question, False if not.
-(question is the XformsResponse object for the question)
-"""
 def validate_answer(answer, question):
+    """
+    Return True if answer is a valid response to question, False if not.
+    (question is expected to be the XFormsResponse object for the question)
+    """
     if question.event.datatype == "select":
         try:
             assert answer is not None
