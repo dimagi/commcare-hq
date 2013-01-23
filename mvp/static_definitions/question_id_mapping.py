@@ -63,6 +63,13 @@ CHILD_VISIT_QUESTION_IDS = {
     },
 }
 
+CHILD_REGISTRATION_QUESTION_IDS = {
+    'delivered_in_facility': {
+        'mvp-sauri': _make_qid('delivered_in_facility', 1),
+        'mvp-potou': _make_qid('delivered_in_facility', 1),
+    },
+}
+
 PREGNANCY_VISIT_QUESTION_IDS = {
     'immediate_danger_sign': {
         'mvp-sauri': _make_qid('patient_available.immediate_danger_sign', 1),
