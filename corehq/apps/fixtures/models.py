@@ -1,4 +1,3 @@
-from collections import defaultdict
 from xml.etree import ElementTree
 from corehq.apps.users.models import CommCareUser
 from couchdbkit.ext.django.schema import Document, DictProperty, StringProperty, StringListProperty

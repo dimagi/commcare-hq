@@ -1,5 +1,5 @@
 from casexml.apps.case.xml import V2_NAMESPACE
-from corehq.apps.app_manager.const import APP_V1, APP_V2
+from corehq.apps.app_manager.const import APP_V1
 from lxml import etree as ET
 import formtranslate.api
 

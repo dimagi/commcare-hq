@@ -619,7 +619,7 @@ class GenericReportView(CacheableRequestMixIn):
                              ', '.join(cls.dispatcher.allowed_renderings()))
         url_args = [domain] if domain is not None else []
         if render_as is not None:
-            url_args.append(render_as)
+            url_args.append(render_as+'/')
         return reverse(cls.dispatcher.name(), args=url_args+[cls.slug])
 
     @classmethod
