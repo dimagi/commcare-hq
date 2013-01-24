@@ -1,4 +1,4 @@
-from .models import XFormsSession
+from .models import XFormsSession, XFORMS_SESSION_SMS
 from datetime import datetime
 from corehq.apps.cloudcare.touchforms_api import get_session_data
 from touchforms.formplayer.api import XFormsConfig, DigestAuth, get_raw_instance
@@ -17,7 +17,7 @@ AUTH = DigestAuth(settings.TOUCHFORMS_API_USER,
                   settings.TOUCHFORMS_API_PASSWORD)
 
 # If yield_responses is True, the list of xforms responses is returned, otherwise the text prompt for each is returned
-def start_session(domain, contact, app, module, form, case_id=None, yield_responses=False):
+def start_session(domain, contact, app, module, form, case_id=None, yield_responses=False, session_type=XFORMS_SESSION_SMS):
     """
     Starts a session in touchforms and saves the record in the database.
     
@@ -51,7 +51,8 @@ def start_session(domain, contact, app, module, form, case_id=None, yield_respon
                             start_time=now, modified_time=now, 
                             form_xmlns=form.xmlns,
                             completed=False, domain=domain,
-                            app_id=app.get_id, user_id=contact.get_id)
+                            app_id=app.get_id, user_id=contact.get_id,
+                            session_type=session_type)
     session.save()
     if yield_responses:
         return (session, responses)
@@ -61,7 +62,7 @@ def start_session(domain, contact, app, module, form, case_id=None, yield_respon
 def get_responses(msg):
     return _get_responses(msg.domain, msg.couch_recipient, msg.text)
 
-def _get_responses(domain, recipient, text, yield_responses=False):
+def _get_responses(domain, recipient, text, yield_responses=False, session_id=None):
     """
     Try to process this message like a session-based submission against
     an xform.
@@ -69,15 +70,19 @@ def _get_responses(domain, recipient, text, yield_responses=False):
     Returns a list of responses if there are any.
     """
         # assumes couch_recipient is the connection_id
-    session = XFormsSession.view("smsforms/open_sessions_by_connection", 
-                                 key=[domain, recipient],
-                                 include_docs=True).one()
+    if session_id is not None:
+        session = XFormsSession.latest_by_session_id(session_id)
+    else:
+        # The IVR workflow passes the session id, the SMS workflow grabs the open sms session
+        session = XFormsSession.view("smsforms/open_sms_sessions_by_connection", 
+                                     key=[domain, recipient],
+                                     include_docs=True).one()
     if session:
         session.modified_time = datetime.utcnow()
         session.save()
         # TODO auth
         if yield_responses:
-            return tfsms.next_responses(session.session_id, text, auth=None)
+            return list(tfsms.next_responses(session.session_id, text, auth=None))
         else:
             return _responses_to_text(tfsms.next_responses(session.session_id, text, auth=None))
 

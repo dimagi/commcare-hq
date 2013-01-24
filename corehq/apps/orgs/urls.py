@@ -6,9 +6,10 @@ urlpatterns = patterns('corehq.apps.orgs.views',
     url(r'^(?P<org>[\w\.-]+)/get_data/$', 'get_data', name='get_data'),
     url(r'^(?P<org>[\w\.-]+)/add_project/$', 'orgs_add_project', name='orgs_add_project'),
     url(r'^(?P<org>[\w\.-]+)/new_project/$', 'orgs_new_project', name='orgs_new_project'),
-    url(r'^(?P<org>[\w\.-]+)/add_member/$', 'orgs_add_member', name='orgs_add_member'),
+    url(r'^(?P<org>[\w\.-]+)/invite_member/$', 'invite_member', name='orgs_invite_member'),
     url(r'^(?P<org>[\w\.-]+)/add_team/$', 'orgs_add_team', name='orgs_add_team'),
     url(r'^(?P<org>[\w\.-]+)/logo/$', 'orgs_logo', name='orgs_logo'),
+
     url(r'^(?P<org>[\w\.-]+)/teams/$', 'orgs_teams', name='orgs_teams'),
     url(r'^(?P<org>[\w\.-]+)/teams/add_team$', 'add_team', name='add_team'),
     url(r'^(?P<org>[\w\.-]+)/teams/(?P<team_id>[ \w-]+)/$', 'orgs_team_members', name='orgs_team_members'),
@@ -20,5 +21,7 @@ urlpatterns = patterns('corehq.apps.orgs.views',
     url(r'^(?P<org>[\w\.-]+)/teams/(?P<team_id>[ \w-]+)/delete_team$', 'delete_team', name='delete_team'),
     url(r'^(?P<org>[\w\.-]+)/teams/(?P<record_id>[ \w-]+)/undo_delete_team', 'undo_delete_team', name='undo_delete_team'),
     url(r'^(?P<org>[\w\.-]+)/teams/(?P<team_id>[ \w-]+)/(?P<couch_user_id>[\w-]+)/join_team$', 'join_team', name='join_team'),
-    url(r'^(?P<org>[\w\.-]+)/teams/(?P<team_id>[ \w-]+)/(?P<couch_user_id>[\w-]+)/leave_team$', 'leave_team', name='leave_team')
+    url(r'^(?P<org>[\w\.-]+)/teams/(?P<team_id>[ \w-]+)/(?P<couch_user_id>[\w-]+)/leave_team$', 'leave_team', name='leave_team'),
+
+    url(r'^(?P<org>[\w\.-]+)/join/(?P<invitation_id>[ \w-]+)/$', 'accept_invitation', name='orgs_accept_invitation'),
 )

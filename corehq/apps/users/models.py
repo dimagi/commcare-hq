@@ -1526,14 +1526,10 @@ class Invitation(Document):
     """
     When we invite someone to a domain it gets stored here.
     """
-    domain = StringProperty()
     email = StringProperty()
-#    is_domain_admin = BooleanProperty()
     invited_by = StringProperty()
     invited_on = DateTimeProperty()
     is_accepted = BooleanProperty(default=False)
-
-    role = StringProperty()
 
     _inviter = None
     def get_inviter(self):
@@ -1545,15 +1541,22 @@ class Invitation(Document):
         return self._inviter
 
     def send_activation_email(self):
+        raise NotImplementedError
 
+
+class DomainInvitation(Invitation):
+    domain = StringProperty()
+    role = StringProperty()
+    doc_type = "Invitation"
+
+    def send_activation_email(self):
         url = "http://%s%s" % (Site.objects.get_current().domain,
-                               reverse("accept_invitation", args=[self.domain, self.get_id]))
+                               reverse("domain_accept_invitation", args=[self.domain, self.get_id]))
         params = {"domain": self.domain, "url": url, "inviter": self.get_inviter().formatted_name}
         text_content = render_to_string("domain/email/domain_invite.txt", params)
         html_content = render_to_string("domain/email/domain_invite.html", params)
         subject = 'Invitation from %s to join CommCareHQ' % self.get_inviter().formatted_name
-        send_HTML_email(subject, self.email, html_content,
-                        text_content=text_content)
+        send_HTML_email(subject, self.email, html_content, text_content=text_content)
 
     @classmethod
     def by_domain(cls, domain, is_active=True):
@@ -1565,7 +1568,6 @@ class Invitation(Document):
             endkey=key + [{}],
             include_docs=True,
         ).all()
-
 
 class RemoveWebUserRecord(DeleteRecord):
     user_id = StringProperty()

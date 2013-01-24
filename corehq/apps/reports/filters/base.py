@@ -168,14 +168,16 @@ class BaseDrilldownOptionFilter(BaseReportFilter):
                 'slug': label[2],
                 'level': level,
             })
+
+        drilldown_map = list(self.drilldown_map)
         return {
-            'option_map': self.drilldown_map,
+            'option_map': drilldown_map,
             'controls': controls,
             'selected': self.selected,
             'use_last': self.use_only_last,
             'notifications': self.final_notifications,
             'empty_text': self.drilldown_empty_text,
-            'is_empty': not bool(self.drilldown_map),
+            'is_empty': not drilldown_map,
         }
 
     @property

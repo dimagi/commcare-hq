@@ -58,6 +58,7 @@ class ProjectReportParametersMixin(object):
         Intended to be mixed in with a GenericReportView object.
     """
 
+    default_case_type = None
     filter_group_name = None
 
     @property
@@ -139,7 +140,7 @@ class ProjectReportParametersMixin(object):
 
     @property
     def case_type(self):
-        return self.request_params.get('case_type', '')
+        return self.default_case_type or self.request_params.get('case_type', '')
 
     @property
     def case_status(self):

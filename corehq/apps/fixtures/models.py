@@ -1,4 +1,3 @@
-from collections import defaultdict
 from xml.etree import ElementTree
 from corehq.apps.users.models import CommCareUser
 from couchdbkit.ext.django.schema import Document, DictProperty, StringProperty, StringListProperty
@@ -183,6 +182,10 @@ class FixtureDataItem(Document):
     def by_data_type(cls, domain, data_type):
         data_type_id = _id_from_doc(data_type)
         return cls.view('fixtures/data_items_by_domain_type', key=[domain, data_type_id], reduce=False, include_docs=True)
+
+    @classmethod
+    def by_domain(cls, domain):
+        return cls.view('fixtures/data_items_by_domain_type', startkey=[domain], endkey=[domain, {}], reduce=False, include_docs=True)
 
     @classmethod
     def by_field_value(cls, domain, data_type, field_name, field_value):

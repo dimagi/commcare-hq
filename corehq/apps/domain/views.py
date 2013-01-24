@@ -131,7 +131,7 @@ def project_settings(request, domain, template="domain/admin/project_settings.ht
        'deployment_info_form' not in request.POST:
         # deal with saving the settings data
         if user_sees_meta:
-            form = DomainMetadataForm(request.POST)
+            form = DomainMetadataForm(request.POST, user=request.couch_user)
         else:
             form = DomainGlobalSettingsForm(request.POST)
         if form.is_valid():
@@ -141,19 +141,20 @@ def project_settings(request, domain, template="domain/admin/project_settings.ht
                 messages.error(request, "There seems to have been an error saving your settings. Please try again!")
     else:
         if user_sees_meta:
-            form = DomainMetadataForm(initial={
+            form = DomainMetadataForm(user=request.couch_user, initial={
                 'default_timezone': domain.default_timezone,
                 'case_sharing': json.dumps(domain.case_sharing),
                 'project_type': domain.project_type,
                 'customer_type': domain.customer_type,
                 'is_test': json.dumps(domain.is_test),
-                'survey_management_enabled' : domain.survey_management_enabled,
+                'survey_management_enabled': domain.survey_management_enabled,
+                'commtrack_enabled': domain.commtrack_enabled,
             })
         else:
             form = DomainGlobalSettingsForm(initial={
                 'default_timezone': domain.default_timezone,
                 'case_sharing': json.dumps(domain.case_sharing)
-                })
+            })
 
     if request.method == 'POST' and 'deployment_info_form' in request.POST:
         deployment_form = DomainDeploymentForm(request.POST)
@@ -191,13 +192,16 @@ def project_settings(request, domain, template="domain/admin/project_settings.ht
         billing_info_form = None
         billing_info_partial = None
 
-
     return render_to_response(request, template, dict(
         domain=domain.name,
         form=form,
         deployment_form=deployment_form,
         languages=domain.readable_languages(),
         applications=domain.applications(),
+        commtrack_enabled=domain.commtrack_enabled,  # ideally the template gets access to the domain doc through
+            # some other means. otherwise it has to be supplied to every view reachable in that sidebar (every
+            # view whose template extends users_base.html); mike says he's refactoring all of this imminently, so
+            # i will not worry about it until he is done
         autocomplete_fields=('project_type', 'phone_model', 'user_type', 'city', 'country', 'region'),
         billing_info_form=billing_info_form,
         billing_info_partial=billing_info_partial,
@@ -476,4 +480,14 @@ def manage_multimedia(request, domain):
             'type': m.doc_type
                    } for m in media],
         'licenses': LICENSES.items()
-                                                                     })
+                                                                           })
+
+@domain_admin_required
+def commtrack_settings(request, domain):
+    domain = Domain.get_by_name(domain)
+
+    return render_to_response(request, 'domain/admin/commtrack_settings.html', dict(
+            domain=domain.name,
+            #form=form,
+        ))
+
