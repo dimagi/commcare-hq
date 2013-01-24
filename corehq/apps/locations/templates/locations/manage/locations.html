@@ -48,6 +48,8 @@ $(function() {
         </div>
     </div>
 
+    <hr />
+
     <style>
 
 #location_tree {
@@ -91,10 +93,6 @@ $(function() {
   background-color: #eef;
 }
 
-.loc_header_text {
-  cursor: pointer;
-}
-
     </style>
 
     <script type="text/html" id="location-template">
@@ -102,7 +100,7 @@ $(function() {
       <!-- header bar -->
       <div class="loc_header" data-bind="if: name() != '_root'">
         <a class="loc_edit btn btn-primary" href="http://google.com">Edit</a>
-        <span class="loc_header_text" data-bind="click: toggle"> <!-- want to make entire row clickable, but overrides click on 'edit' button -->
+        <span data-bind="click: toggle, style: { cursor: (can_have_children() ? 'pointer' : 'default') }"> <!-- want to make entire row clickable, but overrides click on 'edit' button -->
           <span data-bind="if: can_have_children"><a class="label" data-bind="css: { 'icon-plus': !expanded(), 'icon-minus': expanded() }"></a></span>
           <span class="loc_name" data-bind="text: name"></span> <span class="loc_type">(<span data-bind="text: type"></span>)</span>
         </span>
@@ -130,7 +128,7 @@ $(function() {
         </div>
 
         <!-- create child button -->
-        <a class="btn btn-success loc_child" href="#"><i class="icon icon-white icon-plus"></i> New location <span data-bind="text: (name() == '_root' ? 'at top level' : 'in ' + name())"></span></a>
+        <a class="btn btn-success loc_child" href="#"><i class="icon icon-white icon-plus"></i> <span data-bind="text: new_child_caption"></span></a>
 
       </div>
 

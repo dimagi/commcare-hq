@@ -11,7 +11,16 @@ function LocationTreeViewModel() {
     
     this.root = ko.observable();
     
-    // search for a location within the tree by uuid; return path to location if found
+    // TODO this should reference location type settings for domain
+    this.location_types = [
+        {type: 'state', allowed_parents: [null]},
+        {type: 'district', allowed_parents: ['state']},
+        {type: 'block', allowed_parents: ['district']},
+        {type: 'village', allowed_parents: ['block']},
+        {type: 'outlet', allowed_parents: ['village', 'block']},
+    ];
+
+    // search for a location within the tree by uuid; return path to location if found (not used atm)
     this.find_loc = function(uuid, loc) {
         loc = loc || this.root();
         
@@ -57,12 +66,7 @@ function LocationModel(data, root, depth) {
         }, this);
     
     this.toggle = function() {
-        if (!this.can_have_children()) {
-            this.expanded(false);
-            return;
-        }
-
-        this.expanded(!this.expanded());
+        this.expanded(!this.expanded() && this.can_have_children());
     }
 
     this.load = function(data) {
@@ -73,8 +77,7 @@ function LocationModel(data, root, depth) {
             this.set_children(data.children);
         }
 
-        // TODO this should reference location type settings for domain
-        if (this.type() == 'outlet') {
+        if (this.allowed_child_types().length == 0) {
             this.can_have_children(false);
         }
     }
@@ -99,6 +102,30 @@ function LocationModel(data, root, depth) {
                 }
             });
     }
-    
+   
+    this.allowed_child_types = function() {
+        var loc = this;
+        var types = [];
+        $.each(root.location_types, function(i, loc_type) {
+                $.each(loc_type.allowed_parents, function(i, parent_type) {
+                        if (loc.type() == parent_type) {
+                            types.push(loc_type.type);
+                        }
+                    });
+            });
+        return types;
+    };
+
+    this.allowed_child_type = function() {
+        var types = this.allowed_child_types();
+        return (types.length == 1 ? types[0] : null);
+    }
+
+    this.new_child_caption = ko.computed(function() {
+            var child_type = this.allowed_child_type();
+            var top_level = (this.name() == '_root');
+            return 'New ' + (child_type || 'location') + (top_level ? ' at top level' : ' in ' + this.name() + ' ' + this.type());
+        }, this);
+ 
     this.load(data);
 }
