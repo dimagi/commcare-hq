@@ -263,10 +263,13 @@ class ReportConfig(Document):
     @property
     @memoized
     def url(self):
-        from django.core.urlresolvers import reverse
-        
-        return reverse(self._dispatcher.name(), kwargs=self.view_kwargs) \
-                + '?' + self.query_string
+        try:
+            from django.core.urlresolvers import reverse
+            
+            return reverse(self._dispatcher.name(), kwargs=self.view_kwargs) \
+                    + '?' + self.query_string
+        except Exception:
+            return "#"
 
     @property
     @memoized
@@ -281,10 +284,13 @@ class ReportConfig(Document):
 
     @property
     def report_name(self):
-        if self.report is None:
-            return _("Deleted Report")
-        else:
-            return _(self.report.name)
+        try:
+            if self.report is None:
+                return _("Deleted Report")
+            else:
+                return _(self.report.name)
+        except Exception:
+            return _("Unsupported Report")
 
     @property
     def full_name(self):
@@ -315,11 +321,14 @@ class ReportConfig(Document):
         Get the report's HTML content as rendered by the static view format.
 
         """
-        if self.report is None:
-            return _("The report used to create this scheduled report is no"
-                     " longer available on CommCare HQ.  Please delete this"
-                     " scheduled report and create a new one using an available"
-                     " report.")
+        try:
+            if self.report is None:
+                return _("The report used to create this scheduled report is no"
+                         " longer available on CommCare HQ.  Please delete this"
+                         " scheduled report and create a new one using an available"
+                         " report.")
+        except Exception:
+            pass
 
         from django.http import HttpRequest, QueryDict
         request = HttpRequest()
@@ -330,9 +339,12 @@ class ReportConfig(Document):
 
         request.GET = QueryDict(self.query_string + '&filterSet=true')
 
-        response = self._dispatcher.dispatch(request, render_as='email',
-                                             **self.view_kwargs)
-        return json.loads(response.content)['report']
+        try:
+            response = self._dispatcher.dispatch(request, render_as='email',
+                **self.view_kwargs)
+            return json.loads(response.content)['report']
+        except:
+            return _("An error occurred while generating this report.")
 
 
 class UnsupportedScheduledReportError(Exception):

@@ -578,7 +578,7 @@ def edit_scheduled_report(request, domain, scheduled_report_id=None,
     user_id = request.couch_user._id
 
     configs = ReportConfig.by_domain_and_owner(domain, user_id).all()
-    config_choices = [(c._id, c.full_name) for c in configs if c.report.emailable]
+    config_choices = [(c._id, c.full_name) for c in configs if c.report and c.report.emailable]
 
     if not config_choices:
         return render_to_response(request, template, context)
@@ -681,15 +681,12 @@ def get_scheduled_report_response(couch_user, domain, scheduled_report_id,
     notification = ReportNotification.get(scheduled_report_id)
 
     report_outputs = []
-    try:
-        for config in notification.configs:
-            report_outputs.append({
-                'title': config.full_name,
-                'url': config.url,
-                'content': config.get_report_content()
-            })
-    except UnsupportedScheduledReportError:
-        pass
+    for config in notification.configs:
+        report_outputs.append({
+            'title': config.full_name,
+            'url': config.url,
+            'content': config.get_report_content()
+        })
     
     return render_to_response(request, "reports/report_email.html", {
         "reports": report_outputs,
