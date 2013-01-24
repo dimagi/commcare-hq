@@ -57,6 +57,11 @@ function LocationModel(data, root, depth) {
         }, this);
     
     this.toggle = function() {
+        if (!this.can_have_children()) {
+            this.expanded(false);
+            return;
+        }
+
         this.expanded(!this.expanded());
     }
 

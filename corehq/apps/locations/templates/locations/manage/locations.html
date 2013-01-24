@@ -48,20 +48,60 @@ $(function() {
         </div>
     </div>
 
+    <style>
+
+#location_tree {
+  margin-left: -2em;
+}
+
+.loc_children {
+  margin-left: 2em;
+  margin-bottom: 1.5em;
+}
+
+.loc_child {
+  margin-top: .5em;
+}
+
+.loc_name {
+  font-weight: bold;
+}
+
+.loc_type {
+  color: #777;
+  font-variant: small-caps;
+  font-weight: bold;
+}
+
+.no_children {
+  font-style: italic;
+}
+
+    </style>
+
     <script type="text/html" id="location-template">
+      <!-- header bar -->
       <div data-bind="if: name() != '_root'">
-        <span data-bind="if: can_have_children"><a data-bind="click: toggle, text: (expanded() ? '[-]' : '[+]')"></a></span>
-        <span data-bind="text: name"></span> (<span data-bind="text: type"></span>)
+        <span data-bind="click: toggle">
+          <span data-bind="if: can_have_children"><a class="label" data-bind="css: { 'icon-plus': !expanded(), 'icon-minus': expanded() }"></a></span>
+          <span class="loc_name" data-bind="text: name"></span> <span class="loc_type">(<span data-bind="text: type"></span>)</span>
+        </span>
         <a class="btn btn-primary" href="#">Edit</a>
       </div>
-      <div data-bind="visible: children_status() == 'loading'">
-        <img src="{% static 'hqwebapp/img/ajax-loader.gif' %}" alt="loading indicator" /> Loading&hellip;
-      </div>
-      <div data-bind="if: expanded">
-        <ul data-bind="foreach: children">
-          <li data-bind="template: { name: 'location-template' }"></li>
-        </ul>
-        <a class="btn btn-success" href="#"><i class="icon icon-white icon-plus"></i> New location <span data-bind="text: (name() == '_root' ? 'at top level' : 'in ' + name())"></span></a>
+      <!-- child content -->
+      <div class="loc_children" data-bind="visible: expanded">
+        <!-- loader bar -->
+        <div class="loc_child" data-bind="visible: children_status() == 'loading'">
+          <img src="{% static 'hqwebapp/img/ajax-loader.gif' %}" alt="loading indicator" /> Loading&hellip;
+        </div>
+        <!-- child entries -->
+        <div data-bind="foreach: children">
+          <div class="loc_child" data-bind="template: { name: 'location-template' }"></div>
+        </div>
+        <!-- no children message -->
+        <div class="loc_child no_children" data-bind="visible: children_status() == 'loaded' && children().length == 0, text: (name() == '_root' ? 'No locations created in this project yet' : 'No sub-locations inside ' + name())"></div>
+        <!-- create child button -->
+        <a class="btn btn-success loc_child" href="#"><i class="icon icon-white icon-plus"></i> New location <span data-bind="text: (name() == '_root' ? 'at top level' : 'in ' + name())"></span></a>
       </div>
     </script>
 
