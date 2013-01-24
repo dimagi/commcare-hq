@@ -1,0 +1,49 @@
+{% extends "users/users_base.html" %}
+{% load i18n %}
+{% load hq_shared_tags %}
+{% load crispy_forms_tags %}
+
+{% block js %}{{ block.super }}
+    <script src="{% static 'users/js/key_filters.js' %}"></script>
+    <script src="{% static 'locations/ko/location_tree.async.js' %}"></script>
+{% endblock %}
+
+{% block js-inline %}{{ block.super }}
+    <script type="text/javascript">
+
+var LOAD_LOCS_URL = '{{ api_root }}';
+
+$(function() {
+
+/*
+  var model = new LocationTreeViewModel();
+  ko.applyBindings(model, $('#location_tree')[0]);
+  model.load();
+*/
+
+});
+
+    </script>
+{% endblock %}
+
+{% block subsection-title %}
+  <li>
+    <a href="{% url manage_locations domain %}">Locations</a>
+    <span class="divider">&gt;</span>
+  </li>
+  <li class="active">
+    <a href="#">{% if location.get_id %}{{ location.name }} {{ location.location_type }}{% else %}new location{% endif %}</a>
+  </li>
+{% endblock %}
+
+{% block user-view %}
+<div>
+
+    {% crispy form %}
+
+</div>
+{% endblock %}
+
+{% block modals %}{{ block.super }}
+    
+{% endblock %}

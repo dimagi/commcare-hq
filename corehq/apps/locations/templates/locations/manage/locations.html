@@ -116,11 +116,12 @@ $(function() {
       <!-- child content -->
       <div class="loc_children" data-bind="visible: expanded">
 
-        <!-- loader bar -->
+        <!-- ajax spinner -->
         <div class="loc_child" data-bind="visible: children_status() == 'loading'">
           <img src="{% static 'hqwebapp/img/ajax-loader.gif' %}" alt="loading indicator" /> Loading&hellip;
         </div>
 
+        <!-- ajax content -->
         <div data-bind="fadeVisible: children_status() == 'loaded'">
 
           <!-- child entries -->
@@ -128,8 +129,8 @@ $(function() {
             <div class="loc_child" data-bind="template: { name: 'location-template' }"></div>
           </div>
 
-          <!-- no children message -->
-          <div class="loc_child no_children" data-bind="visible: children_status() == 'loaded' && children().length == 0, text: no_children_caption"></div>
+          <!-- 'no children' message -->
+          <div class="loc_child no_children" data-bind="visible: children().length == 0, text: no_children_caption"></div>
 
         </div>
 
