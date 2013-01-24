@@ -23,7 +23,7 @@ class LocTypeWidget(forms.Widget):
 class LocationForm(forms.Form):
     parent_id = forms.CharField(label='Parent', required=False, widget=ParentLocWidget())
     name = forms.CharField(max_length=100)
-    location_type = forms.CharField(label='Type', widget=LocTypeWidget())
+    location_type = forms.CharField(widget=LocTypeWidget())
 
     def __init__(self, location, *args, **kwargs):
         self.location = location
