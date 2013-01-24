@@ -209,6 +209,10 @@ class UploadItemLists(TemplateView):
             data_types = workbook.get_worksheet(title='types')
         except KeyError:
             return HttpResponseBadRequest("Workbook does not have a sheet called 'types'")
+
+        data_types_to_save = []
+        data_items_to_save = []
+
         try:
             for dt in data_types:
                 data_type = FixtureDataType(
@@ -216,8 +220,12 @@ class UploadItemLists(TemplateView):
                     name=dt['name'],
                     tag=dt['tag'],
                     fields=dt['field'],
+                    # I need to give it a uuid now
+                    # because I'm going to reference
+                    # its uuid before saving it
+                    _id=FixtureDataType.get_db().server.next_uuid()
                 )
-                data_type.save()
+                data_types_to_save.append(data_type)
                 data_items = workbook.get_worksheet(data_type.tag)
                 for di in data_items:
                     data_item = FixtureDataItem(
@@ -225,7 +233,7 @@ class UploadItemLists(TemplateView):
                         data_type_id=data_type.get_id,
                         fields=di['field']
                     )
-                    data_item.save()
+                    data_items_to_save.append(data_item)
                     for group_name in di.get('group', []):
                         group = Group.by_name(self.domain, group_name)
                         if group:
@@ -242,7 +250,12 @@ class UploadItemLists(TemplateView):
         except Exception as e:
             notify_exception(request)
             messages.error(request, "Fixture upload could not complete due to the following error: %s" % e)
-
+        else:
+            for data_type in data_types_to_save:
+                for duplicate in FixtureDataType.by_domain_tag(domain=self.domain, tag=data_type.tag):
+                    duplicate.recursive_delete()
+            FixtureDataType.bulk_save(data_types_to_save)
+            FixtureDataItem.bulk_save(data_items_to_save)
         return HttpResponseRedirect(reverse('fixture_view', args=[self.domain]))
 
     @method_decorator(require_can_edit_fixtures)

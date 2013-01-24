@@ -1,5 +1,6 @@
 {% extends base_template %}
 {% load hq_shared_tags %}
+{% load i18n %}
 
 {% block oldstyle_tag %}{% endblock %}
 {% block oldstyle_imports %}{% endblock %}
@@ -39,6 +40,9 @@
         <div class="span2">&nbsp;</div>
         <div class="span9" data-bind="">
             <div class="well" data-bind="visible: !data_types().length && loading" style="text-align: center;">Loading...</div>
+            <div data-bind="visible: data_types().length">
+                {% trans "Number of fixtures: " %}<span data-bind="text: data_types().length"></span>
+            </div>
             <!-- ko foreach: data_types -->
             <section class="well" data-bind="css: {selected: editing() || aboutToDelete()}">
                 <hgroup>
