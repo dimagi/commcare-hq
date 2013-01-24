@@ -87,7 +87,7 @@ def get_village_name(key, req):
     village_fdt = get_village_fdt(req.domain)
     id = key[3]
     village_fdi = FixtureDataItem.by_field_value(req.domain, village_fdt, 'id', float(id)).one()
-    return village_fdi.fields.get("name", id) if village_fdi else id
+    return "%s (%s)" % (village_fdi.fields.get("name", id), id) if village_fdi else id
 
 class PSIHDReport(PSIReport):
     name = "Household Demonstrations Report"
