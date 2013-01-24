@@ -33,3 +33,15 @@ def load_locs_json(domain, selected_loc_id=None):
 
     return loc_json
   
+# hard-coded for now
+def allowed_child_types(domain, parent_id):
+    parent_type = Location.get(parent_id).location_type if parent_id else None
+
+    return {
+        None: ['state'],
+        'state': ['district'],
+        'district': ['block'],
+        'block': ['village', 'outlet'],
+        'village': ['outlet'],
+        'outlet': [],
+     }[parent_type]
