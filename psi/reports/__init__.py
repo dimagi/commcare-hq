@@ -43,6 +43,7 @@ class PSIEventsReport(PSIReport):
     fields = ['corehq.apps.reports.fields.DatespanField',
               'psi.reports.StateDistrictField',]
     name = "Event Demonstration Report"
+    exportable = True
     slug = "event_demonstations"
     section_name = "event demonstrations"
 
@@ -91,6 +92,7 @@ def get_village_name(key, req):
 
 class PSIHDReport(PSIReport):
     name = "Household Demonstrations Report"
+    exportable = True
     slug = "household_demonstations"
     section_name = "household demonstrations"
 
@@ -136,6 +138,7 @@ class PSIHDReport(PSIReport):
 
 class PSISSReport(PSIReport):
     name = "Sensitization Sessions Report"
+    exportable = True
     slug = "sensitization_sessions"
     section_name = "sensitization sessions"
     fields = ['corehq.apps.reports.fields.DatespanField',
@@ -189,6 +192,7 @@ class PSISSReport(PSIReport):
 
 class PSITSReport(PSIReport):
     name = "Training Sessions Report"
+    exportable = True
     slug = "training_sessions"
     section_name = "training sessions"
     fields = ['corehq.apps.reports.fields.DatespanField',
