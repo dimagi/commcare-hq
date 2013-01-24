@@ -98,6 +98,7 @@ $(function() {
     </style>
 
     <script type="text/html" id="location-template">
+
       <!-- header bar -->
       <div class="loc_header" data-bind="if: name() != '_root'">
         <a class="loc_edit btn btn-primary" href="http://google.com">Edit</a>
@@ -107,21 +108,32 @@ $(function() {
         </span>
         <div style="clear: both;"></div>
       </div>
+
       <!-- child content -->
       <div class="loc_children" data-bind="visible: expanded">
+
         <!-- loader bar -->
         <div class="loc_child" data-bind="visible: children_status() == 'loading'">
           <img src="{% static 'hqwebapp/img/ajax-loader.gif' %}" alt="loading indicator" /> Loading&hellip;
         </div>
-        <!-- child entries -->
-        <div data-bind="foreach: children">
-          <div class="loc_child" data-bind="template: { name: 'location-template' }"></div>
+
+        <div data-bind="fadeVisible: children_status() == 'loaded'">
+
+          <!-- child entries -->
+          <div data-bind="foreach: children">
+            <div class="loc_child" data-bind="template: { name: 'location-template' }"></div>
+          </div>
+
+          <!-- no children message -->
+          <div class="loc_child no_children" data-bind="visible: children_status() == 'loaded' && children().length == 0, text: (name() == '_root' ? 'No locations created in this project yet' : 'No sub-locations inside ' + name())"></div>
+
         </div>
-        <!-- no children message -->
-        <div class="loc_child no_children" data-bind="visible: children_status() == 'loaded' && children().length == 0, text: (name() == '_root' ? 'No locations created in this project yet' : 'No sub-locations inside ' + name())"></div>
+
         <!-- create child button -->
         <a class="btn btn-success loc_child" href="#"><i class="icon icon-white icon-plus"></i> New location <span data-bind="text: (name() == '_root' ? 'at top level' : 'in ' + name())"></span></a>
+
       </div>
+
     </script>
 
     <div id="location_tree">
