@@ -1,0 +1,36 @@
+{% load hq_shared_tags %}
+
+<div style="width: 350px;">
+  <div style="float: right"><button class="btn btn-primary" data-bind="click: function(m) { m.editing(!m.editing()); }, text: (editing() ? 'Done' : 'Change')"></button></div>
+  <div data-bind="visible: !editing()" style="font-size: 150%; font-weight: bold;">
+    <div data-bind="if: selected_location"><span data-bind="with: selected_location"><span data-bind="text: name"></span> <span data-bind="text: type"></span></span></div>
+    <div data-bind="if: !selected_location()"><i>top level</i></div>
+  </div>
+  <div data-bind="visible: editing" class="drilldown">
+    <div data-bind="foreach: selected_path">
+      <div data-bind="style: { marginLeft: (20 * depth) + 'px' }">
+        <select data-bind="options: children, optionsText: 'display_name', value: selected_child"></select>
+      </div>
+    </div>
+    <img id="loc_ajax" data-bind="style: { marginLeft: (20 * selected_path().length) + 'px' }" src="{% static 'formplayer/img/loading_small.gif' %}" style="display: none;">
+  </div>
+  <input name="{{ name }}" type="hidden" data-bind="value: selected_locid" />
+</div>
+
+<script type="text/javascript" src="{% static 'locations/ko/location_drilldown.async.js' %}"></script>
+<script type="text/javascript">
+
+$(function() {
+
+  var locs = {{ locations|JSON }};
+  var selected = '{{ value }}';
+  
+  var model = new LocationSelectViewModel('\u2026', false);
+  model.editing = ko.observable(false);
+  ko.applyBindings(model, $('#loc_form')[0]);
+  model.load(locs, selected);
+
+});
+
+</script>
+

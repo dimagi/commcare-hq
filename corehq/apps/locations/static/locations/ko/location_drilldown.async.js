@@ -8,8 +8,11 @@ function api_get_children(loc_uuid, callback) {
     });
 }
 
-function LocationSelectViewModel() {
+function LocationSelectViewModel(default_caption, auto_drill) {
   var model = this;
+
+  this.default_caption = default_caption || 'All';
+  this.auto_drill = (auto_drill == null ? true : auto_drill);
 
   this.root = ko.observable();
   this.selected_path = ko.observableArray();
@@ -32,7 +35,7 @@ function LocationSelectViewModel() {
   // add a new level of drill-down to the tree
   this.path_push = function(loc) {
     this.selected_path.push(loc);
-    if (loc.num_children() == 1) {
+    if (this.auto_drill && loc.num_children() == 1) {
       loc.selected_child(loc.get_child(0));
     }
   }
@@ -87,7 +90,7 @@ function LocationModel(data, root, depth) {
   this.children_loaded = false;
   
   this.display_name = ko.computed(function() {
-      return this.name() == '_all' ? 'All' : this.name();
+      return this.name() == '_all' ? root.default_caption : this.name();
     }, this);
 
   this.selected_child = ko.observable();

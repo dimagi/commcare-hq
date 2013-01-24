@@ -1,12 +1,21 @@
 from django import forms
 from corehq.apps.locations.models import Location
-from crispy_forms.helper import FormHelper
-from crispy_forms.layout import Submit
+from django.template.loader import get_template
+from django.template import Context
+from corehq.apps.locations.util import load_locs_json
+
+class ParentLocWidget(forms.Widget):
+    def render(self, name, value, attrs=None):
+        return get_template('locations/manage/partials/parent_loc_widget.html').render(Context({
+                    'name': name,
+                    'value': value,
+                    'locations': load_locs_json(self.domain, value),
+                }))
 
 class LocationForm(forms.Form):
+    parent_id = forms.CharField(label='Parent', required=False, widget=ParentLocWidget())
     name = forms.CharField(max_length=100)
-    location_type = forms.CharField(max_length=50)
-    parent_id = forms.CharField(required=False)
+    location_type = forms.CharField(label='Type', max_length=50)
 
     def __init__(self, location, *args, **kwargs):
         self.location = location
@@ -16,13 +25,9 @@ class LocationForm(forms.Form):
         except Exception:
             pass
 
-        self.helper = FormHelper()
-        self.helper.form_id = 'location'
-        self.helper.form_class = 'form form-horizontal'
-        self.helper.form_method = 'post'
-        self.helper.add_input(Submit('submit', 'Update' if self.location._id else 'Create'))
-
         super(LocationForm, self).__init__(*args, **kwargs)
+
+        self.fields['parent_id'].widget.domain = self.location.domain
 
     def save(self, instance=None, commit=True):
         if self.errors:
@@ -38,4 +43,3 @@ class LocationForm(forms.Form):
             location.save()
 
         return location
-

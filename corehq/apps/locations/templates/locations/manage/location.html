@@ -1,27 +1,16 @@
 {% extends "users/users_base.html" %}
 {% load i18n %}
 {% load hq_shared_tags %}
-{% load crispy_forms_tags %}
+{% load hqstyle_tags %}
 
 {% block js %}{{ block.super }}
     <script src="{% static 'users/js/key_filters.js' %}"></script>
-    <script src="{% static 'locations/ko/location_tree.async.js' %}"></script>
 {% endblock %}
 
 {% block js-inline %}{{ block.super }}
     <script type="text/javascript">
 
 var LOAD_LOCS_URL = '{{ api_root }}';
-
-$(function() {
-
-/*
-  var model = new LocationTreeViewModel();
-  ko.applyBindings(model, $('#location_tree')[0]);
-  model.load();
-*/
-
-});
 
     </script>
 {% endblock %}
@@ -39,7 +28,36 @@ $(function() {
 {% block user-view %}
 <div>
 
-    {% crispy form %}
+  <form id="loc_form" class="form form-horizontal" name="product" method="post">
+    {% bootstrap_form_errors form %}
+    <fieldset>
+      {% if legend %}<legend>{{ legend }}</legend>{% endif %}
+      {% for field in form.visible_fields %}
+      <div class="control-group{% if field.errors %} error{% endif %}"{% if field.field.widget.attrs.bindparent %} data-bind="{{ field.field.widget.attrs.bindparent }}"{% endif %}>
+        <label class="control-label" for="id_{{ field.name }}">
+          {{ field.label }}
+        </label>
+        <div class="controls">
+
+          {{ field }}
+
+          {% for error in field.errors %}
+          <span class="help-inline">{{ error }}</span>
+          {% endfor %}
+          {% if field.errors|length == 0 and field.field.required %}
+          <span class="help-inline"><small class="label">REQUIRED</small></span>
+          {% endif %}
+          {% if field.help_text %}
+          <p class="help-block">
+            {{ field.help_text }}
+          </p>
+          {% endif %}
+        </div>
+      </div>
+      {% endfor %}
+    </fieldset>
+    <div class="form-actions"><button type="submit" class="btn btn-primary">{% if location.get_id %}Update{% else %}Create{% endif %} Location</button></div>
+  </form>
 
 </div>
 {% endblock %}
