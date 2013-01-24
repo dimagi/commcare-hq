@@ -115,6 +115,7 @@ class ApplicationsMenuItem(DropdownMenuItem):
             reduce=False,
             startkey=key,
             endkey=key+[{}],
+            stale='update_after',
         ).all()
         submenu_context = []
         if not apps:

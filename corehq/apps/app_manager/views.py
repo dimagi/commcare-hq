@@ -27,7 +27,6 @@ from corehq.apps.app_manager.xform import XFormError, XFormValidationError, Case
     XForm, parse_xml
 from corehq.apps.builds.models import CommCareBuildConfig, BuildSpec
 from corehq.apps.hqmedia import upload
-from corehq.apps.sms.views import get_sms_autocomplete_context
 from corehq.apps.users.decorators import require_permission
 from corehq.apps.users.models import Permissions, CommCareUser
 from dimagi.utils.decorators.memoized import memoized
@@ -364,9 +363,11 @@ def get_langs(request, app):
 
 def get_apps_base_context(request, domain, app):
 
-    applications = []
-    for _app in ApplicationBase.view('app_manager/applications_brief', startkey=[domain], endkey=[domain, {}]):
-        applications.append(_app)
+    applications = ApplicationBase.view('app_manager/applications_brief',
+        startkey=[domain],
+        endkey=[domain, {}],
+        stale='update_after',
+    ).all()
 
     lang, langs = get_langs(request, app)
 
@@ -384,6 +385,7 @@ def get_apps_base_context(request, domain, app):
             endkey=[domain, app.id],
             descending=True,
             limit=1,
+            stale='update_after',
         ).one()
         latest_app_version = latest_app_version.version if latest_app_version else -1
         for _lang in app.langs:
@@ -402,7 +404,6 @@ def get_apps_base_context(request, domain, app):
         'latest_app_version': latest_app_version,
         'app': app
     }
-    context.update(get_sms_autocomplete_context(request, domain))
     context.update({
         'URL_BASE': get_url_base(),
         'edit': edit,
