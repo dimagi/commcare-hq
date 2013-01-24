@@ -17,17 +17,12 @@
   <input name="{{ name }}" type="hidden" data-bind="value: selected_locid" />
 </div>
 
-<script type="text/javascript" src="{% static 'locations/ko/location_drilldown.async.js' %}"></script>
 <script type="text/javascript">
 
 $(function() {
 
   var locs = {{ locations|JSON }};
   var selected = '{{ value }}';
-  
-  var model = new LocationSelectViewModel('\u2026', false);
-  model.editing = ko.observable(false);
-  ko.applyBindings(model, $('#loc_form')[0]);
   model.load(locs, selected);
 
 });

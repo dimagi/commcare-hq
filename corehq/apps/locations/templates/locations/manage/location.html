@@ -5,6 +5,7 @@
 
 {% block js %}{{ block.super }}
     <script src="{% static 'users/js/key_filters.js' %}"></script>
+    <script type="text/javascript" src="{% static 'locations/ko/location_drilldown.async.js' %}"></script>
 {% endblock %}
 
 {% block js-inline %}{{ block.super }}
@@ -27,6 +28,24 @@ var LOAD_LOCS_URL = '{{ api_root }}';
 
 {% block user-view %}
 <div>
+
+  <!-- can't go in js-inline, because needs to initialize stuff that the field templates reference -->
+  <script>
+$(function() {
+
+  model = new LocationSelectViewModel('\u2026', false, function(loc) { return loc.can_have_children(); });
+
+  model.editing = ko.observable(false);
+  model.allowed_child_types = ko.computed(function() {
+      var active_loc = (this.selected_location() || this.root());
+      return (active_loc ? active_loc.allowed_child_types() : []);
+    }, model);
+  model.loc_type = ko.observable();
+
+  ko.applyBindings(model, $('#loc_form')[0]);
+
+});
+  </script>
 
   <form id="loc_form" class="form form-horizontal" name="product" method="post">
     {% bootstrap_form_errors form %}

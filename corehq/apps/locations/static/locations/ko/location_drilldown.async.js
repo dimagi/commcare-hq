@@ -8,14 +8,24 @@ function api_get_children(loc_uuid, callback) {
     });
 }
 
-function LocationSelectViewModel(default_caption, auto_drill) {
+function LocationSelectViewModel(default_caption, auto_drill, loc_filter) {
   var model = this;
 
   this.default_caption = default_caption || 'All';
   this.auto_drill = (auto_drill == null ? true : auto_drill);
+  this.loc_filter = loc_filter || function(loc) { return true; };
 
   this.root = ko.observable();
   this.selected_path = ko.observableArray();
+
+  // TODO this should reference location type settings for domain
+  this.location_types = [
+    {type: 'state', allowed_parents: [null]},
+    {type: 'district', allowed_parents: ['state']},
+    {type: 'block', allowed_parents: ['district']},
+    {type: 'village', allowed_parents: ['block']},
+    {type: 'outlet', allowed_parents: ['village', 'block']},
+  ];
 
   // currently selected location in the tree (or null)
   this.selected_location = ko.computed(function() {
@@ -150,7 +160,8 @@ function LocationModel(data, root, depth) {
       children.splice(0, 0, {name: '_all'});
     }
     this.children($.map(children, function(e) {
-        return new LocationModel(e, root, loc.depth + 1);
+        var child = new LocationModel(e, root, loc.depth + 1);
+        return (root.loc_filter(child) ? child : null);
       }));
     this.children_loaded = true;
   }
@@ -161,6 +172,24 @@ function LocationModel(data, root, depth) {
         callback(loc);
       });
   }
+
+    //warning: duplicate code with location_tree.async.js
+  this.allowed_child_types = ko.computed(function() {
+          var loc = this;
+          var types = [];
+          $.each(root.location_types, function(i, loc_type) {
+                  $.each(loc_type.allowed_parents, function(i, parent_type) {
+                          if (loc.type() == parent_type) {
+                              types.push(loc_type.type);
+                          }
+                      });
+              });
+          return types;
+      }, this);
+
+    this.can_have_children = ko.computed(function() {
+            return (this.allowed_child_types().length > 0);
+        }, this);
 
   this.load(data);
 }

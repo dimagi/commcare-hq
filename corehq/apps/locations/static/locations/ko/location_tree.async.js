@@ -55,7 +55,6 @@ function LocationModel(data, root, depth) {
     this.uuid = ko.observable();
     this.children = ko.observableArray();
     this.depth = depth || 0;
-    this.can_have_children = ko.observable(true);
     this.children_status = ko.observable('not_loaded');
     this.expanded = ko.observable(false);
     
@@ -75,10 +74,6 @@ function LocationModel(data, root, depth) {
         this.uuid(data.uuid);
         if (data.children != null) {
             this.set_children(data.children);
-        }
-
-        if (this.allowed_child_types().length == 0) {
-            this.can_have_children(false);
         }
     }
     
@@ -115,6 +110,10 @@ function LocationModel(data, root, depth) {
             });
         return types;
     };
+
+    this.can_have_children = ko.computed(function() {
+            return (this.allowed_child_types().length > 0);
+        }, this);
 
     this.allowed_child_type = function() {
         var types = this.allowed_child_types();
