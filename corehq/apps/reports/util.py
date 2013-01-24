@@ -3,7 +3,6 @@ from django.contrib import messages
 import logging
 from corehq.apps.announcements.models import ReportAnnouncement
 from corehq.apps.groups.models import Group
-from corehq.apps.reports.decorators import cache_users
 from corehq.apps.reports.display import xmlns_to_name
 from corehq.apps.reports.models import HQUserType, TempCommCareUser
 from corehq.apps.users.models import CommCareUser, CouchUser
@@ -91,8 +90,6 @@ def get_group_params(domain, group='', users=None, user_id_only=False, **kwargs)
     return group, users
 
 
-cache_users_by_domain = cache_users()
-#@cache_users_by_domain
 def get_all_users_by_domain(domain=None, group=None, individual=None,
                             user_filter=None, simplified=False, CommCareUser=None):
     """
@@ -298,13 +295,17 @@ def create_export_filter(request, domain, export_type='form'):
     return filter
 
 def get_possible_reports(domain):
+    from corehq.apps.reports.dispatcher import (ProjectReportDispatcher,
+        CustomProjectReportDispatcher)
     reports = []
-    report_map = []
-    report_map.extend(settings.PROJECT_REPORT_MAP.items())
-    report_map.extend(settings.CUSTOM_REPORT_MAP.get(domain, {}).items())
+    report_map = ProjectReportDispatcher().get_reports(domain) + \
+                 CustomProjectReportDispatcher().get_reports(domain)
     for heading, models in report_map:
         for model in models:
-            reports.append({'path': model, 'name': to_function(model).name})
+            reports.append({
+                'path': model.__module__ + '.' + model.__name__, 
+                'name': model.name
+            })
     return reports
 
 def format_relative_date(date, tz=pytz.utc):
