@@ -127,5 +127,13 @@ function LocationModel(data, root, depth) {
             return 'New ' + (child_type || 'location') + (top_level ? ' at top level' : ' in ' + this.name() + ' ' + this.type());
         }, this);
  
+    this.no_children_caption = ko.computed(function() {
+            var child_type = this.allowed_child_type();
+            var top_level = (this.name() == '_root');
+
+            // TODO replace 'location' with proper type as applicable (what about pluralization?)
+            return (top_level ? 'No locations created in this project yet' : 'No sub-locations inside ' + this.name());
+        }, this);
+
     this.load(data);
 }
