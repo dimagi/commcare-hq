@@ -44,7 +44,7 @@ class LocationForm(forms.Form):
     def clean_parent_id(self):
         parent_id = self.cleaned_data['parent_id']
 
-        if self.cur_parent_id is not None and self.cur_parent_id != parent_id:
+        if self.location._id is not None and self.cur_parent_id != parent_id:
             raise forms.ValidationError('Sorry, you cannot move locations around yet!')
 
         self.cleaned_data['parent'] = Location.get(parent_id) if parent_id else None
@@ -53,7 +53,7 @@ class LocationForm(forms.Form):
     def clean_name(self):
         name = self.cleaned_data['name']
 
-        parent = self.cleaned_data['parent']
+        parent = self.cleaned_data.get('parent')
         siblings = [loc for loc in (parent.children if parent else root_locations(self.location.domain)) if loc._id != self.location._id]
         if name in [loc.name for loc in siblings]:
             raise forms.ValidationError('name conflicts with another location with this parent')
@@ -63,7 +63,7 @@ class LocationForm(forms.Form):
     def clean_location_type(self):
         loc_type = self.cleaned_data['location_type']
 
-        child_types = allowed_child_types(self.location.domain, self.cleaned_data['parent'])
+        child_types = allowed_child_types(self.location.domain, self.cleaned_data.get('parent'))
         # neither of these should be seen in normal usage
         if not child_types:
             raise forms.ValidationError('the selected parent location cannot have sub-locations!')
