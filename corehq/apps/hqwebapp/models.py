@@ -1,6 +1,5 @@
 from django.template.loader import render_to_string
 from django.utils.safestring import mark_safe, mark_for_escaping
-from corehq.apps.users.views import _redirect_users_to
 from dimagi.utils.couch.database import get_db
 from dimagi.utils.decorators.memoized import memoized
 from django.core.urlresolvers import reverse
@@ -115,6 +114,7 @@ class ApplicationsMenuItem(DropdownMenuItem):
             reduce=False,
             startkey=key,
             endkey=key+[{}],
+            stale='update_after',
         ).all()
         submenu_context = []
         if not apps:
@@ -186,6 +186,7 @@ class ProjectSettingsMenuItem(DropdownMenuItem):
     @property
     @memoized
     def url(self):
+        from corehq.apps.users.views import _redirect_users_to
         return _redirect_users_to(self.request, self.domain) or reverse("homepage")
 
     @property

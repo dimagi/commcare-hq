@@ -504,42 +504,47 @@ class AsyncDrillableField(BaseReportFilter):
             ret.append(new_h)
         return ret
 
+    def generate_lineage(self, leaf_type, leaf_item_id):
+        leaf_fdi = FixtureDataItem.get(leaf_item_id)
+
+        for i, h in enumerate(self.hierarchy[::-1]):
+            if h["type"] == leaf_type:
+                index = i
+
+        lineage = [leaf_fdi]
+        for i, h in enumerate(self.full_hierarchy[::-1]):
+            if i < index or i >= len(self.hierarchy)-1: continue
+            real_index = len(self.hierarchy) - (i+1)
+            lineage.insert(0, FixtureDataItem.by_field_value(self.domain, self.data_types(real_index - 1),
+                h["references"], lineage[0].fields[h["parent_ref"]]).one())
+
+        return lineage
+
     @property
     def filter_context(self):
+        root_fdis = [self.fdi_to_json(f) for f in FixtureDataItem.by_data_type(self.domain, self.data_types(0).get_id)]
+
         f_id = self.request.GET.get('fixture_id', None)
         selected_fdi_type = f_id.split(':')[0] if f_id else None
         selected_fdi_id = f_id.split(':')[1] if f_id else None
 
-        index = 0
         if selected_fdi_id:
-            for i, h in enumerate(self.hierarchy[::-1]):
-                if h['type'] == selected_fdi_type:
-                    index = i
-
-            cur_fdi = FixtureDataItem.get(selected_fdi_id)
-            siblings = list(FixtureDataItem.by_data_type(self.domain, cur_fdi.data_type_id))
-            for i, h in enumerate(self.full_hierarchy[::-1]):
-                if i < index: continue
-                if h.get('parent_ref', None):
-                    ngdt_id = self.full_hierarchy[len(self.full_hierarchy) - (i+2)]['id']
-                    next_gen = list(FixtureDataItem.by_data_type(self.domain, ngdt_id))
-                else:
-                    next_gen = []
-
-                if next_gen:
-                    parent = [f for f in next_gen if f.fields['id'] == cur_fdi.fields[h['parent_ref']]][0]
-                    parent._children = [self.fdi_to_json(fdi) for fdi in siblings]
-                    cur_fdi, siblings = parent, next_gen
-
-        else:
-            siblings = list(FixtureDataItem.by_data_type(self.domain, self.data_types(0).get_id))
+            index = 0
+            lineage = self.generate_lineage(selected_fdi_type, selected_fdi_id)
+            parent = {'children': root_fdis}
+            for i, fdi in enumerate(lineage[:-1]):
+                this_fdi = [f for f in parent['children'] if f['id'] == fdi.get_id][0]
+                next_h = self.hierarchy[i+1]
+                this_fdi['children'] = [self.fdi_to_json(f) for f in FixtureDataItem.by_field_value(self.domain,
+                                        self.data_types(i+1), next_h["parent_ref"], fdi.fields[next_h["references"]])]
+                parent = this_fdi
 
         return {
             'api_root': self.api_root,
             'control_name': self.label,
             'control_slug': self.slug,
             'selected_fdi_id': selected_fdi_id,
-            'fdis': json.dumps([self.fdi_to_json(fdi) for fdi in siblings]),
+            'fdis': json.dumps(root_fdis),
             'hierarchy': self.full_hierarchy
         }
         

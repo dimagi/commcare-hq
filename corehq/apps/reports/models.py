@@ -164,7 +164,9 @@ class ReportConfig(Document):
             reduce=False,
             include_docs=include_docs,
             startkey=key,
-            endkey=key + [{}])
+            endkey=key + [{}],
+            stale='update_after',
+        )
    
     @classmethod
     def default(self):
@@ -375,7 +377,9 @@ class ReportNotification(Document):
             reduce=False,
             startkey=key,
             endkey=key + [{}],
-            include_docs=True)
+            include_docs=True,
+            stale='update_after',
+        )
 
     @property
     def all_recipient_emails(self):

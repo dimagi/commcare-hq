@@ -15,8 +15,8 @@
         if (!{{ add_form_empty|JSON }}) {
             $('#add_project_modal').modal({show:true});
         }
-        if (!{{ add_member_form_empty|JSON }}) {
-            $('#add_member_modal').modal({show:true});
+        if (!{{ invite_member_form_empty|JSON }}) {
+            $('#invite_member_modal').modal({show:true});
         }
         if (!{{ add_team_form_empty|JSON }}) {
             $('#add_team_modal').modal({show:true});
@@ -29,7 +29,7 @@
         $("#add_project_btn").tooltip({title:"Add Existing Project", placement:"top"});
         $("#create_project_btn").tooltip({title:"Create New Project", placement:"top"});
         $("#add_team_btn").tooltip({title:"Create New Team", placement:"top"});
-        $("#add_member_btn").tooltip({title:"Add New Member", placement:"top"});
+        $("#invite_member_btn").tooltip({title:"Invite New Member", placement:"top"});
 
         $('#load_data').click(function (e) {
             e.preventDefault();
@@ -131,7 +131,7 @@
             <div class="span5">
                 <ul class="nav nav-list">
                     <li class="nav-header">
-                        <h2>Members <a href="#add_member_modal" id="add_member_btn" class="btn btn-success" data-toggle="modal"><i class="icon-plus"></i></a></h2>
+                        <h2>Members <a href="#invite_member_modal" id="invite_member_btn" class="btn btn-success" data-toggle="modal"><i class="icon-plus"></i></a></h2>
                     </li>
                     {% for member in members %}
                     <li><h3>{{ member.username }}{% if member.first_name and member.last_name %} <small>({{ member.full_name }})</small>{% endif %}</h3></li>
@@ -242,21 +242,21 @@
             </form>
         </div>
 
-        <div id="add_member_modal" class="modal hide fade">
+        <div id="invite_member_modal" class="modal hide fade">
             <div class="modal-header">
                 <a class="close" data-dismiss="modal">&times;</a>
-                <h3>Add a new member to {{ org.title }}</h3>
+                <h3>{% trans "Invite a user to " %}{{ org.title }}</h3>
             </div>
-            <form class="form-horizontal" method="post" action="{% url orgs_add_member org.name %}">
+            <form class="form-horizontal" method="post" action="{% url orgs_invite_member org.name %}">
                 <div class="modal-body">
                     <fieldset>
-                        {% bootstrap_form_errors add_member_form %}
-                        {% bootstrap_fieldset add_member_form %}
+                        {% bootstrap_form_errors invite_member_form %}
+                        {% bootstrap_fieldset invite_member_form %}
                     </fieldset>
                 </div>
                 <div class="modal-footer">
-                    <a href="#" data-dismiss="modal" class="btn">Cancel</a>
-                    <button type="submit" class="btn btn-primary">Add Member</button>
+                    <a href="#" data-dismiss="modal" class="btn">{% trans "Cancel" %}</a>
+                    <button type="submit" class="btn btn-primary">{% trans "Invite Member" %}</button>
                 </div>
             </form>
         </div>

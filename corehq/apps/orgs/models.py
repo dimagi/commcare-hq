@@ -1,6 +1,10 @@
 from couchdbkit.ext.django.schema import *
-from corehq.apps.users.models import WebUser, MultiMembershipMixin
+from django.contrib.sites.models import Site
+from django.core.urlresolvers import reverse
+from django.template.loader import render_to_string
+from corehq.apps.users.models import WebUser, MultiMembershipMixin, Invitation
 from dimagi.utils.couch.undo import UndoableDocument, DeleteDocRecord
+from dimagi.utils.django.email import send_HTML_email
 
 
 class Organization(Document):
@@ -21,14 +25,19 @@ class Organization(Document):
         result = cls.view("orgs/by_name",
             key=name,
             reduce=False,
-            include_docs=True).first()
+            include_docs=True,
+            stale='update_after',
+        ).one()
         return result
 
     @classmethod
     def get_all(cls):
+        """This will eventually be a big operation"""
         result = cls.view("orgs/by_name",
             reduce=False,
-            include_docs=True).all()
+            include_docs=True,
+            stale='update_after',
+        ).all()
         return result
 
     def get_logo(self):
@@ -127,3 +136,16 @@ class Team(UndoableDocument, MultiMembershipMixin):
 class DeleteTeamRecord(DeleteDocRecord):
     def get_doc(self):
         return Team.get(self.doc_id)
+
+class OrgInvitation(Invitation):
+    doc_type = "Invitation"
+    organization = StringProperty()
+
+    def send_activation_email(self):
+        url = "http://%s%s" % (Site.objects.get_current().domain,
+                               reverse("orgs_accept_invitation", args=[self.organization, self.get_id]))
+        params = {"organization": self.organization, "url": url, "inviter": self.get_inviter().formatted_name}
+        text_content = render_to_string("orgs/email/org_invite.txt", params)
+        html_content = render_to_string("orgs/email/org_invite.html", params)
+        subject = 'Invitation from %s to join CommCareHQ' % self.get_inviter().formatted_name
+        send_HTML_email(subject, self.email, html_content, text_content=text_content)

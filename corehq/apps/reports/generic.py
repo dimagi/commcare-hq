@@ -482,10 +482,6 @@ class GenericReportView(CacheableRequestMixIn):
         )
         self.context.update(self._validate_context_dict(self.report_context))
 
-    def generate_cache_key(self, func_name):
-        raise NotImplementedError("This is very broken!")
-        return "%s:%s" % (self.__class__.__name__, func_name)
-
     @property
     @request_cache("default")
     def view_response(self):
@@ -609,17 +605,6 @@ class GenericReportView(CacheableRequestMixIn):
         """
         raise Http404
 
-    @property
-    def clear_cache_response(self):
-        renderings = self.dispatcher.allowed_renderings()
-        try:
-            del renderings[renderings.index('clear_cache')]
-        except Exception:
-            pass
-        for render in renderings:
-            cache_key = self.generate_cache_key("%s_response" % render)
-        return HttpResponse("Clearing cache")
-
     @classmethod
     def get_url(cls, domain=None, render_as=None, **kwargs):
         # NOTE: I'm pretty sure this doesn't work if you ever pass in render_as
@@ -634,7 +619,7 @@ class GenericReportView(CacheableRequestMixIn):
                              ', '.join(cls.dispatcher.allowed_renderings()))
         url_args = [domain] if domain is not None else []
         if render_as is not None:
-            url_args.append(render_as)
+            url_args.append(render_as+'/')
         return reverse(cls.dispatcher.name(), args=url_args+[cls.slug])
 
     @classmethod

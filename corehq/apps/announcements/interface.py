@@ -44,7 +44,8 @@ class BaseHQAnnouncementsAdminInterface(BaseCRUDAdminInterface):
             reduce=False,
             include_docs=True,
             startkey=key,
-            endkey=key+[{}]
+            endkey=key + [{}],
+            stale='update_after',
         ).all()
         return data
 

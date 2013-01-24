@@ -196,12 +196,12 @@ def form_session_handler(v, text):
     from corehq.apps.reminders.models import SurveyKeyword
     
     # Handle incoming sms
-    session = XFormsSession.view("smsforms/open_sessions_by_connection",
+    session = XFormsSession.view("smsforms/open_sms_sessions_by_connection",
                                  key=[v.domain, v.owner_id],
                                  include_docs=True).one()
-        
+    
     text_words = text.upper().split()
-        
+    
     # Respond to "#START <keyword>" command
     if len(text_words) > 0 and text_words[0] == "#START":
         if len(text_words) > 1:

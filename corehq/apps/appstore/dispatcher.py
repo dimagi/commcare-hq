@@ -1,12 +1,12 @@
 import datetime
 from corehq.apps.domain.decorators import cls_require_previewer
 from corehq.apps.domain.models import Domain
-from corehq.apps.reports.dispatcher import ReportDispatcher, ProjectReportDispatcher
+from corehq.apps.reports.dispatcher import ReportDispatcher
 from corehq.apps.reports.views import datespan_default
 
 class AppstoreDispatcher(ReportDispatcher):
     prefix = 'appstore_interface'
-    map_name = 'APPSTORE_INTERFACE_MAP'
+    map_name = 'APPSTORE_INTERFACES'
 
     @cls_require_previewer
     @datespan_default

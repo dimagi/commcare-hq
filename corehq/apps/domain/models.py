@@ -223,9 +223,11 @@ class Domain(Document, HQBillingDomainMixin, SnapshotMixin):
         if couch_user:
             domain_names = couch_user.get_domains()
             return Domain.view("domain/by_status",
-                                    keys=[[is_active, d] for d in domain_names],
-                                    reduce=False,
-                                    include_docs=True).all()
+                keys=[[is_active, d] for d in domain_names],
+                reduce=False,
+                include_docs=True,
+                stale='update_after',
+            ).all()
         else:
             return []
 
@@ -372,9 +374,11 @@ class Domain(Document, HQBillingDomainMixin, SnapshotMixin):
                     return None
 
         result = cls.view("domain/domains",
-                            key=name,
-                            reduce=False,
-                            include_docs=True).first()
+            key=name,
+            reduce=False,
+            include_docs=True,
+            stale='update_after',
+        ).first()
         return result
 
     @classmethod
@@ -566,7 +570,7 @@ class Domain(Document, HQBillingDomainMixin, SnapshotMixin):
     def display_name(self):
         if self.is_snapshot:
             return "Snapshot of %s" % self.copied_from.display_name()
-        if self.organization:
+        if self.slug and self.organization:
             return self.slug
         else:
             return self.name
@@ -582,7 +586,7 @@ class Domain(Document, HQBillingDomainMixin, SnapshotMixin):
             return format_html(
                 '{0} &gt; {1}',
                 self.organization_doc().title,
-                self.slug
+                self.slug or self.name
             )
         else:
             return self.name
@@ -669,6 +673,21 @@ class Domain(Document, HQBillingDomainMixin, SnapshotMixin):
     @classmethod
     def public_deployments(cls):
         return Domain.view('domain/with_deployment', include_docs=True).all()
+
+    @classmethod
+    def get_module_by_name(cls, domain_name):
+        """
+        import and return the python module corresponding to domain_name, or
+        None if it doesn't exist.
+        
+        """
+        domain_module_map = getattr(settings, 'DOMAIN_MODULE_MAP', {})
+        module_name = domain_module_map.get(domain_name, domain_name)
+
+        try:
+            return __import__(module_name) if module_name else None
+        except ImportError:
+            return None
 
     @property
     def commtrack_settings(self):
