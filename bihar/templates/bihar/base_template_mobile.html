@@ -1,0 +1,8 @@
+{% extends "reports/mobile/mobile_report_base.html" %}
+{% load hq_shared_tags %}
+{% load i18n %}
+{% block mobile-nav %}
+    <ul class="nav pull-right">
+        <li><a href="{{ home }}">{% trans 'Main Menu' %}</a></li>
+    </ul>
+{% endblock %}
