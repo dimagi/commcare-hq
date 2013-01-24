@@ -101,7 +101,11 @@ class Group(UndoableDocument):
     
     @classmethod
     def by_domain(cls, domain):
-        return cls.view('groups/by_domain', key=domain, include_docs=True)
+        return cls.view('groups/by_domain',
+            key=domain,
+            include_docs=True,
+            stale='update_after',
+        ).all()
 
     @classmethod
     def by_name(cls, domain, name):
@@ -133,7 +137,12 @@ class Group(UndoableDocument):
     @classmethod
     def get_reporting_groups(cls, domain):
         key = ['^Reporting', domain]
-        return cls.view('groups/by_name', startkey=key, endkey=key + [{}], include_docs=True)
+        return cls.view('groups/by_name',
+            startkey=key,
+            endkey=key + [{}],
+            include_docs=True,
+            stale='update_after',
+        ).all()
 
 
     def create_delete_record(self, *args, **kwargs):

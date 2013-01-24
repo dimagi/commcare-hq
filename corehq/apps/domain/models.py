@@ -223,9 +223,11 @@ class Domain(Document, HQBillingDomainMixin, SnapshotMixin):
         if couch_user:
             domain_names = couch_user.get_domains()
             return Domain.view("domain/by_status",
-                                    keys=[[is_active, d] for d in domain_names],
-                                    reduce=False,
-                                    include_docs=True).all()
+                keys=[[is_active, d] for d in domain_names],
+                reduce=False,
+                include_docs=True,
+                stale='update_after',
+            ).all()
         else:
             return []
 
@@ -372,9 +374,11 @@ class Domain(Document, HQBillingDomainMixin, SnapshotMixin):
                     return None
 
         result = cls.view("domain/domains",
-                            key=name,
-                            reduce=False,
-                            include_docs=True).first()
+            key=name,
+            reduce=False,
+            include_docs=True,
+            stale='update_after',
+        ).first()
         return result
 
     @classmethod

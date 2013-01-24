@@ -249,8 +249,9 @@ class DeidExportReport(FormExportReportBase):
         return SavedExportSchema.view("couchexport/saved_export_schemas",
             startkey=startkey,
             limit=1,
-            include_docs=False
-        ).all() > 0
+            include_docs=False,
+            stale='update_after',
+        ).count() > 0
 
 
     def get_saved_exports(self):

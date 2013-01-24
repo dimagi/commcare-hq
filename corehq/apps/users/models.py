@@ -766,6 +766,7 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, UnicodeMixIn):
             reduce=reduce,
             startkey=key,
             endkey=key + [{}],
+            stale='update_after',
             **extra_args
         ).all()
 
