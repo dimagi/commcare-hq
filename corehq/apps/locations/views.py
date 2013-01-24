@@ -17,3 +17,9 @@ def locations_list(request, domain):
                                                          'api_name': 'v0.3'})
     }
     return render_to_response(request, 'locations/manage/locations.html', context)
+
+@domain_admin_required # TODO: will probably want less restrictive permission
+def location_edit(request, domain, loc_id=None):
+    parent_id = request.GET.get('parent')
+
+    assert False, (loc_id, parent_id)

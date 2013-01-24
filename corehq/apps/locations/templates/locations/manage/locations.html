@@ -11,6 +11,12 @@
     <script type="text/javascript">
 
 var LOAD_LOCS_URL = '{{ api_root }}';
+var NEW_LOC_URL = '{% url create_location domain %}';
+
+function loc_edit_url(loc_id) {
+    var template = '{% url edit_location domain "-locid-" %}';
+    return template.replace('-locid-', loc_id);
+}
 
 $(function() {
 
@@ -42,8 +48,8 @@ $(function() {
     <div class="row-fluid">
         <div class="span12">
             <div class="btn-toolbar">
-                <a class="btn" href="{% url upload_commcare_users domain %}">Bulk Import</a>
-                <a class="btn" href="{% url upload_commcare_users domain %}">Bulk Export</a>
+                <a class="btn" href="#">Bulk Import</a>
+                <a class="btn" href="#">Bulk Export</a>
             </div>
         </div>
     </div>
@@ -99,7 +105,7 @@ $(function() {
 
       <!-- header bar -->
       <div class="loc_header" data-bind="if: name() != '_root'">
-        <a class="loc_edit btn btn-primary" href="http://google.com">Edit</a>
+        <a class="loc_edit btn btn-primary" data-bind="attr: { href: loc_edit_url(uuid()) }">Edit</a>
         <span data-bind="click: toggle, style: { cursor: (can_have_children() ? 'pointer' : 'default') }"> <!-- want to make entire row clickable, but overrides click on 'edit' button -->
           <span data-bind="if: can_have_children"><a class="label" data-bind="css: { 'icon-plus': !expanded(), 'icon-minus': expanded() }"></a></span>
           <span class="loc_name" data-bind="text: name"></span> <span class="loc_type">(<span data-bind="text: type"></span>)</span>
@@ -128,7 +134,7 @@ $(function() {
         </div>
 
         <!-- create child button -->
-        <a class="btn btn-success loc_child" href="#"><i class="icon icon-white icon-plus"></i> <span data-bind="text: new_child_caption"></span></a>
+        <a class="btn btn-success loc_child" data-bind="attr: { href: NEW_LOC_URL + '?parent=' + (uuid() || '') }"><i class="icon icon-white icon-plus"></i> <span data-bind="text: new_child_caption"></span></a>
 
       </div>
 
