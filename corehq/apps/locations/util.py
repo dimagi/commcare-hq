@@ -34,8 +34,8 @@ def load_locs_json(domain, selected_loc_id=None):
     return loc_json
   
 # hard-coded for now
-def allowed_child_types(domain, parent_id):
-    parent_type = Location.get(parent_id).location_type if parent_id else None
+def allowed_child_types(domain, parent):
+    parent_type = parent.location_type if parent else None
 
     return {
         None: ['state'],
