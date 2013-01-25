@@ -76,7 +76,7 @@ class PactCHWProfileReport(PactDrilldownReportMixin, ESSortableMixin,GenericTabu
     def get_assigned_patients(self):
         """get list of patients and their submissions on who this chw is assigned as primary hp"""
         fields = [ "_id", "name", "pactid", "hp_status", "dot_status" ]
-        case_query = self.case_es.base_query(terms={'type': PACT_CASE_TYPE, 'hp': self.get_user().raw_username}, fields=fields)
+        case_query = self.case_es.base_query(terms={'type': PACT_CASE_TYPE, 'hp': self.get_user().raw_username}, fields=fields, size=100)
         chw_patients_res = self.case_es.run_query(case_query)
 
         case_ids = [x['fields']['_id'] for x in chw_patients_res['hits']['hits']]
