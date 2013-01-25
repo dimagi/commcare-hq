@@ -24,7 +24,7 @@ class Command(LabelCommand):
     domains = None
 
     def handle(self, *args, **options):
-        self.domains = MVP.DOMAINS
+        self.domains = [args[0]] if len(args) > 0 and args[0] != "all" else MVP.DOMAINS
         forms = {}
         forms.update(MVP.CLOSE_FORMS)
         forms.update(MVP.VISIT_FORMS)
@@ -35,25 +35,21 @@ class Command(LabelCommand):
         process_forms = True
         process_cases = True
 
-        self.start_at_record = 0
-
-        if len(args) > 0 and args[0] != "all":
-            self.domains = [args[0]]
+        self.start_at_record = int(args[3]) if len(args) > 3 else 0
 
         if len(args) > 1 and args[1] != "all":
-            process_cases = args[1] == "case"
-            process_forms = args[1] == "form"
+            document = args[1]
+            process_cases = document == "case"
+            process_forms = document == "form"
 
         if len(args) > 2 and args[2] != "all":
+            document_type = args[2]
             if process_cases:
-                cases = [args[2]]
+                cases = [document_type]
             elif process_forms:
-                final_forms = forms.get(args[2], {})
+                final_forms = forms.get(document_type, {})
                 forms.clear()
-                forms[args[2]] = final_forms
-
-        if len(args) > 3:
-            self.start_at_record = int(args[3])
+                forms[document_type] = final_forms
 
         if process_forms:
             for form_type, xmlns in forms.items():
