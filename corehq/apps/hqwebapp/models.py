@@ -102,7 +102,10 @@ class ProjectInfoMenuItem(DropdownMenuItem):
 
     @classmethod
     def is_viewable(cls, request, domain):
-        return domain and request.project.is_snapshot
+        if hasattr(request, 'project'):
+            return domain and request.project.is_snapshot
+        else:
+            return False
 
 
 class ManageDataMenuItem(DropdownMenuItem):
