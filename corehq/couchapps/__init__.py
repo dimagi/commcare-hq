@@ -19,11 +19,14 @@ def sync_design_docs(db, temp=None):
         print "synced couchapp %s in couchdb" % d
         if temp:
             # found in the innards of couchdbkit
-            view_names = db[docid].get('views', {}).keys()
-            if len(view_names) > 0:
-                print 'Triggering view rebuild'
-                view = '%s/%s' % (design_name, view_names[0])
-                list(db.view(view, limit=0))
+            try:
+                view_names = db[docid].get('views', {}).keys()
+                if len(view_names) > 0:
+                    print 'Triggering view rebuild'
+                    view = '%s/%s' % (design_name, view_names[0])
+                    list(db.view(view, limit=0))
+            except Exception, ex:
+                print "\tError trying to sync couchapp %s, but ignoring %s" % (docid, ex)
 
 def catch_signal(app, **kwargs):
     """Function used by syncdb signal"""
