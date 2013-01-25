@@ -6,6 +6,7 @@
     <script src="{% static 'hqwebapp/javascripts/jquery-ui/jquery-ui-1.8.16.min.js' %}"></script>
     <script src="{% static 'users/js/key_filters.js' %}"></script>
     <script src="{% static 'locations/ko/location_tree.async.js' %}"></script>
+    <link rel="stylesheet" href="{% static 'locations/style/manage.css' %}">
 {% endblock %}
 
 {% block js-inline %}{{ block.super }}
@@ -61,58 +62,6 @@ $(function() {
     </div>
 
     <hr />
-
-    <style>
-
-#location_tree {
-  margin-left: -2em;
-  width: 500px;
-}
-
-.loc_children {
-  /* total indent 2em */
-  margin-left: 1.0em;
-  border-width: 0 0 0 0.4em;
-  padding-left: 0.6em;
-
-  margin-bottom: 1.5em;
-
-  border-style: solid;
-  border-color: red;
-}
-
-.loc_child {
-  margin-top: .5em;
-}
-
-.loc_name {
-  font-size: 110%;
-  font-weight: bold;
-}
-
-.loc_type {
-  color: #777;
-  font-variant: small-caps;
-  font-weight: bold;
-}
-
-.no_children {
-  font-style: italic;
-}
-
-.loc_edit {
-  float: right;
-}
-
-.loc_header {
-  padding: 2px;
-}
-
-.loc_header:hover {
-  background-color: #eef;
-}
-
-    </style>
 
     <script type="text/html" id="location-template">
 
