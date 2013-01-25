@@ -3,16 +3,22 @@ from corehq.apps.domain.decorators import require_superuser, domain_admin_requir
 from corehq.apps.domain.models import Domain
 from corehq.apps.locations.models import Location
 from corehq.apps.locations.forms import LocationForm
+from corehq.apps.locations.util import load_locs_json
 from django.core.urlresolvers import reverse
 from dimagi.utils.web import render_to_response, get_url_base
 from django.contrib import messages
 import json
 from couchdbkit import ResourceNotFound
+import urllib
 
 @domain_admin_required # TODO: will probably want less restrictive permission
 def locations_list(request, domain):
+    selected_id = request.GET.get('selected')
+
     context = {
         'domain': domain,
+        'selected_id': selected_id,
+        'locations': load_locs_json(domain, selected_id),
         'api_root': reverse('api_dispatch_list', kwargs={'domain': domain,
                                                          'resource_name': 'location', 
                                                          'api_name': 'v0.3'})
@@ -36,7 +42,10 @@ def location_edit(request, domain, loc_id=None):
         if form.is_valid():
             form.save()
             messages.success(request, 'Location saved!')
-            return HttpResponseRedirect(reverse('manage_locations', kwargs={'domain': domain}))
+            return HttpResponseRedirect('%s?%s' % (
+                    reverse('manage_locations', kwargs={'domain': domain}),
+                    urllib.urlencode({'selected': form.location._id})
+                ))
     else:
         form = LocationForm(location)
 

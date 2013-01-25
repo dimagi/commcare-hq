@@ -13,6 +13,9 @@
 var LOAD_LOCS_URL = '{{ api_root }}';
 var NEW_LOC_URL = '{% url create_location domain %}';
 
+var locs = {{ locations|JSON }};
+var selected_loc = {{ selected_id|JSON }};
+
 function loc_edit_url(loc_id) {
     var template = '{% url edit_location domain "-locid-" %}';
     return template.replace('-locid-', loc_id);
@@ -22,7 +25,7 @@ $(function() {
 
   var model = new LocationTreeViewModel();
   ko.applyBindings(model, $('#location_tree')[0]);
-  model.load();
+  model.load(locs, selected_loc);
 
 });
 

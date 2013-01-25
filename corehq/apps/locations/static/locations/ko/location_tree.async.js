@@ -20,7 +20,7 @@ function LocationTreeViewModel() {
         {type: 'outlet', allowed_parents: ['village', 'block']},
     ];
 
-    // search for a location within the tree by uuid; return path to location if found (not used atm)
+    // search for a location within the tree by uuid; return path to location if found
     this.find_loc = function(uuid, loc) {
         loc = loc || this.root();
         
@@ -40,11 +40,23 @@ function LocationTreeViewModel() {
         }
     }
     
-    // load location hierarchy
-    this.load = function(locs) {
+    // load location hierarchy and set initial expansion
+    this.load = function(locs, selected) {
         this.root(new LocationModel({name: '_root', children: locs}, this));
         this.root().expanded(true);
-    }
+        
+        if (selected) {
+            // this relies on the hierarchy of the selected location being pre-populated
+            // in the initial locations set from the server (i.e., no location of the
+            // pre-selected location's lineage is loaded asynchronously
+            var sel_path = this.find_loc(selected);
+            if (sel_path) {
+                for (var i = 1; i < sel_path.length; i++) {
+                    sel_path[i - 1].expanded(true);
+                }
+            }
+        }
+    }        
 }
 
 function LocationModel(data, root, depth) {
