@@ -144,6 +144,8 @@ function (doc) {
                 //doing a direct string interpretation due to timezone issues, at the time of creation on the phone, the DATE is correct, regardless of time taken.  So comparing by the individual
                 //date components is the most accurate way to fly here.
 
+
+
                 var new_drug_obs = {};
                 new_drug_obs['doc_id'] = doc._id;
                 //new_drug_obs['patient'] = doc.form['case']['case_id'];
@@ -155,7 +157,41 @@ function (doc) {
                 new_drug_obs['completed_date'] = doc.form['meta']['timeEnd'];
                 new_drug_obs['anchor_date'] = toISOString(encounter_date);
                 new_drug_obs['day_index'] = -1;
-                new_drug_obs['day_note'] = "No check, from form";
+                var day_note = "No check, from form";
+                //new_drug_obs['day_note'] = "No check, from form";
+
+                function generate_day_data(build_obs, is_art, form_obs, static_block) {
+                    //reconstruct the full day of a submission based upon the preload regimen values
+                    //if the form data is already submitted, then form_obs will be the "slot"
+                    //in the static_art_dose_data index, so we skip over that.
+                    var static_slots = ['a', 'b', 'c', 'd'];
+                    var int_regimen = 0;
+                    if (is_art) {
+                        int_regimen = parseInt(doc.form['preload']['artregimen']);
+                    } else {
+                        int_regimen = parseInt(doc.form['preload']['nonartregimen']);
+                    }
+
+                    for (var r = 0; r < int_regimen; r++) {
+                        var slot = static_slots[r];
+                        log("generate_day_data: " + is_art + " loop: " + r +" " + slot);
+                        var dose = static_block[slot]['dose'];
+                        if (dose !== undefined) {
+                            var patlabel = -1;
+                            if (dose['patlabel'] !== undefined) {
+                                patlabel = parseInt(dose['patlabel']);
+                            }
+                            //now see if the box is filled out
+                            build_obs['is_art'] = is_art;
+                            build_obs['total_doses'] = int_regimen;
+                            var unchecked = ["unchecked","pillbox",day_note, patlabel];
+
+                            if (r != form_obs) {
+                                do_observation(doc, encounter_date, encounter_date, unchecked, eval(uneval(build_obs)));
+                            }
+                        }
+                    }
+                }
 
                 function determine_day_slot(dose_data, selected_idx) {
                     //dose_data = doc.form['static_non_art_dose_data'] | doc.form['static_art_dose_data']
@@ -175,41 +211,65 @@ function (doc) {
                     return -1;
                 }
 
-                var form_day_slot = -1;
 
-                //non_art
-                if (doc.form['pillbox_check']['nonartbox'] != "") {
-                    new_drug_obs['is_art'] = false;
-                    new_drug_obs['total_doses'] = parseInt(doc.form['case']['update']['nonartregimen']);
-                    new_drug_obs['dose_number'] = parseInt(doc.form['pillbox_check']['nonartbox']);
+                function emit_form_pillbox_obs(is_art, form_obs) {
+                    log("begin emit_form_pillbox_obs");
 
-                    form_day_slot = determine_day_slot(doc.form['static_non_art_dose_data'], parseInt(doc.form['pillbox_check']['nonartbox']));
-                    if (form_day_slot >= 0) {
-                        new_drug_obs['day_slot'] = form_day_slot;
+                    var regimen_type = "";
+                    var regimen_box = "";
+                    var static_key = "";
+                    var now_key = "";
+                    if (is_art) {
+                        regimen_type = "artregimen";
+                        regimen_box = "artbox";
+                        static_key = "static_art_dose_data";
+                        now_key = "artnow";
+                    } else {
+                        regimen_type = "nonartregimen";
+                        regimen_box = "nonartbox";
+                        static_key = "static_non_art_dose_data";
+                        now_key = "nonartnow";
                     }
+                    log('emit_form_pillbox_obs: got keys');
+                    form_obs['is_art'] = is_art;
+                    form_obs['total_doses'] = parseInt(doc.form['preload'][regimen_type]);
+                    form_obs['dose_number'] = parseInt(doc.form['pillbox_check'][regimen_box]);
+                    log('emit_form_pillbox_obs: got dose and dose_numbe');
 
-                    new_drug_obs['observed_date'] = toISOString(encounter_date);
-                    var non_art_dispense = eval(doc.form['pillbox_check']['nonartnow']);
-                    if (non_art_dispense != null) {
-                        do_observation(doc, encounter_date, encounter_date, non_art_dispense, eval(uneval(new_drug_obs)));
+//                    if (emit_day_slot >= 0) {
+//                        form_obs['day_slot'] = emit_day_slot;
+//                    }
+
+                    form_obs['observed_date'] = toISOString(encounter_date);
+                    var form_dispense = eval(doc.form['pillbox_check'][now_key]);
+                    if (form_dispense !== undefined) {
+                        log('emit_form_pillbox_obs: form_dispense is not undefined');
+                        form_dispense.push(day_note);
+
+                        var emit_day_slot = determine_day_slot(doc.form[static_key], parseInt(doc.form['pillbox_check'][regimen_box]));
+                        form_dispense.push(emit_day_slot);
+                        do_observation(doc, encounter_date, encounter_date, form_dispense, eval(uneval(form_obs)));
+                        log('emit_form_pillbox_obs: emitted');
+                        log('emit_form_pillbox_obs: ' + form_obs['dose_number']);
+                        return form_obs['dose_number'];
                     }
+                    return -1;
                 }
 
-                //art
-                if (doc.form['pillbox_check']['artbox'] != "") {
-                    new_drug_obs['is_art'] = true;
-                    new_drug_obs['total_doses'] = parseInt(doc.form['case']['update']['artregimen']);
-                    new_drug_obs['dose_number'] = parseInt(doc.form['pillbox_check']['artbox']);
-                    new_drug_obs['observed_date'] = toISOString(encounter_date);
-                    form_day_slot = determine_day_slot(doc.form['static_art_dose_data'], parseInt(doc.form['pillbox_check']['artbox']));
-                    if (form_day_slot >= 0) {
-                        new_drug_obs['day_slot'] = form_day_slot;
-                    }
-                    var art_dispense = eval(doc.form['pillbox_check']['artnow']);
-                    if (art_dispense != null) {
-                        do_observation(doc, encounter_date, encounter_date, art_dispense, eval(uneval(new_drug_obs)));
-                    }
-                }
+
+                log('pre non_art_submit');
+                var non_art_submit = emit_form_pillbox_obs(false, new_drug_obs);
+                log('post non_art_submit');
+                generate_day_data(new_drug_obs, false, non_art_submit, doc.form['static_non_art_dose_data']);
+                log('post non_art_submit generate_day_data');
+
+                log('pre art_submit');
+                var art_submit = emit_form_pillbox_obs(true, new_drug_obs);
+                log('post art_submit');
+                generate_day_data(new_drug_obs, true, art_submit, doc.form['static_art_dose_data']);
+                log('post art_submit generate_day_data');
+
+
 
             }
         }
