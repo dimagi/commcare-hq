@@ -2,7 +2,7 @@ from django import forms
 from corehq.apps.locations.models import Location, root_locations
 from django.template.loader import get_template
 from django.template import Template, Context
-from corehq.apps.locations.util import load_locs_json, allowed_child_types
+from corehq.apps.locations.util import load_locs_json, allowed_child_types, location_custom_properties
 
 class ParentLocWidget(forms.Widget):
     def render(self, name, value, attrs=None):
@@ -27,12 +27,24 @@ class LocationForm(forms.Form):
 
     def __init__(self, location, *args, **kwargs):
         self.location = location
+
+        # seed form data from couch doc
         kwargs['initial'] = self.location._doc
         kwargs['initial']['parent_id'] = self.cur_parent_id
 
         super(LocationForm, self).__init__(*args, **kwargs)
-
         self.fields['parent_id'].widget.domain = self.location.domain
+        
+        # custom properties
+        for potential_type in allowed_child_types(self.location.domain, self.location.parent):
+            # i think it might be better to make each loc_type's custom properties as a separate form?
+            for p in location_custom_properties(self.location.domain, potential_type):
+                name = 'prop__%s__%s' % (potential_type, p)
+                self.fields[name] = forms.CharField(
+                    label=p,
+                    initial=getattr(self.location, p, None),
+                    required=False
+                )
 
     @property
     def cur_parent_id(self):
@@ -87,6 +99,14 @@ class LocationForm(forms.Form):
         for field in ('name', 'location_type'):
             setattr(location, field, self.cleaned_data[field])
         location.lineage = Location(parent=self.cleaned_data['parent_id']).lineage
+
+        for k, v in self.cleaned_data.iteritems():
+            if not k.startswith('prop__'):
+                continue
+
+            _, loc_type, prop_name = k.split('__')
+            if loc_type == self.location.location_type:
+                setattr(location, prop_name, v)
 
         if commit:
             location.save()

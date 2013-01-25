@@ -45,3 +45,23 @@ def allowed_child_types(domain, parent):
         'village': ['outlet'],
         'outlet': [],
      }[parent_type]
+
+# hard-coded for now
+def location_custom_properties(domain, loc_type):
+    try:
+        return {
+            'outlet': [
+                'outlet_code',
+                'outlet_type',
+                'address',
+                'landmark',
+                'contact_name',
+                'contact_phone',
+            ],
+            'village': [
+                'village_size',
+                'village_class',
+            ],
+        }[loc_type]
+    except KeyError:
+        return []

@@ -44,6 +44,15 @@ $(function() {
       return (active_loc ? active_loc.allowed_child_types() : []);
     }, model);
   model.loc_type = ko.observable();
+  model.loc_type.subscribe(function(val) {
+      // wow this is ghetto
+      var custom_controls = $('#loc_form .controls [name^="prop__"]');
+      $.each(custom_controls, function(i, e) {
+          var loc_type = $(e).attr('name').split('__')[1];
+          var $container = $(e).parent().parent();
+          $container[loc_type == val ? 'show' : 'hide']();
+        });
+    });
 
   ko.applyBindings(model, $('#loc_form')[0]);
 
