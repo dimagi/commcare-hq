@@ -13,7 +13,7 @@ function (doc) {
             for (var d in danger_signs) {
                 var danger_sign_data = danger_signs[d];
                 var visit_danger_signs = get_danger_signs(danger_sign_data.value);
-                if (visit_danger_signs.indexOf('fever') >= 0 && visit_danger_signs !== 'fever') {
+                if (visit_danger_signs.indexOf('fever') >= 0 && visit_danger_signs.length > 1) {
                     var fever_date = new Date(danger_sign_data.timeEnd);
                     emit_special(doc, fever_date, {"under5_complicated_fever": doc._id}, []);
                     for (var h in hospital_visits) {
