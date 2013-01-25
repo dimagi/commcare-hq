@@ -3,6 +3,7 @@
 {% load hq_shared_tags %}
 
 {% block js %}{{ block.super }}
+    <script src="{% static 'hqwebapp/javascripts/jquery-ui/jquery-ui-1.8.16.min.js' %}"></script>
     <script src="{% static 'users/js/key_filters.js' %}"></script>
     <script src="{% static 'locations/ko/location_tree.async.js' %}"></script>
 {% endblock %}
@@ -116,7 +117,7 @@ $(function() {
     <script type="text/html" id="location-template">
 
       <!-- header bar -->
-      <div class="loc_header" data-bind="if: name() != '_root'">
+      <div class="loc_header" data-bind="if: name() != '_root', bind_element: null">
         <a class="loc_edit btn btn-primary" data-bind="attr: { href: loc_edit_url(uuid()) }">Edit</a>
         <span data-bind="click: toggle, style: { cursor: (can_have_children() ? 'pointer' : 'default') }"> <!-- want to make entire row clickable, but overrides click on 'edit' button -->
           <span data-bind="if: can_have_children"><a class="label" data-bind="css: { 'icon-plus': !expanded(), 'icon-minus': expanded() }"></a></span>

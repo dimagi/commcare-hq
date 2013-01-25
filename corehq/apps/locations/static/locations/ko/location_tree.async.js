@@ -44,7 +44,7 @@ function LocationTreeViewModel() {
     this.load = function(locs, selected) {
         this.root(new LocationModel({name: '_root', children: locs}, this));
         this.root().expanded(true);
-        
+
         if (selected) {
             // this relies on the hierarchy of the selected location being pre-populated
             // in the initial locations set from the server (i.e., no location of the
@@ -54,7 +54,11 @@ function LocationTreeViewModel() {
                 for (var i = 1; i < sel_path.length; i++) {
                     sel_path[i - 1].expanded(true);
                 }
+
+                // highlight the initially selected
+                $(sel_path.slice(-1)[0].$e).effect('highlight', {color: '#ff6'}, 15000);
             }
+            
         }
     }        
 }
@@ -148,3 +152,17 @@ function LocationModel(data, root, depth) {
 
     this.load(data);
 }
+
+ko.bindingHandlers.bind_element = {
+    init: function(element, valueAccessor, allBindingsAccessor, viewModel, bindingContext) {
+        var field = valueAccessor() || '$e';
+        if (viewModel[field]) {
+            console.log('warning: element already bound');
+            return;
+        }
+        viewModel[field] = element;
+        if (viewModel.onBind) {
+            viewModel.onBind(bindingContext);
+        }
+    },
+};
