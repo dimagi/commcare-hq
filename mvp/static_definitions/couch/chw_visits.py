@@ -107,6 +107,12 @@ CHW_VISITS_UNIQUE_COUNT_INDICATORS = dict(
                 title="# Under-1 receiving check-ups",
                 indicator_key="child under1",
             ),
+            under1_visits_6weeks=dict(
+                description="No. of children Under-1 receiving on-time scheduled check-ups during the time period",
+                title="# Under-1 receiving check-ups",
+                fixed_datespan_days=42,
+                indicator_key="child under1",
+            ),
             under1_immunization_up_to_date=dict(
                 description="No. of children Under-1 with up-to-date immunizations at visit during this time period",
                 title="# Under-1 up-to-date immunizations",
