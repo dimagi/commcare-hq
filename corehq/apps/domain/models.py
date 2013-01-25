@@ -356,7 +356,7 @@ class Domain(Document, HQBillingDomainMixin, SnapshotMixin):
         return self.name
 
     @classmethod
-    def get_by_name(cls, name):
+    def get_by_name(cls, name, strict=False):
         if not name:
             # get_by_name should never be called with name as None (or '', etc)
             # I fixed the code in such a way that if I raise a ValueError
@@ -372,12 +372,14 @@ class Domain(Document, HQBillingDomainMixin, SnapshotMixin):
                 else:
                     notify_exception(None, '%r is not a valid domain name' % name)
                     return None
-
+        extra_args = {'stale': 'update_after'} if not strict else {}
         result = cls.view("domain/domains",
             key=name,
             reduce=False,
             include_docs=True,
+            **extra_args
         ).first()
+
         return result
 
     @classmethod
