@@ -14,7 +14,7 @@
             && (indicators.pregnancy_termination && indicators.pregnancy_termination.value)) {
             // woman died and there is a termination date
             var termination_date = new Date(indicators.pregnancy_termination.value);
-            if (close_date > termination_date) {
+            if (close_date >= termination_date) {
                 var difference = close_date.getTime() - termination_date.getTime();
                 if (difference <= 42*MS_IN_DAY) {
                     indicator_keys.push("maternal_death");
