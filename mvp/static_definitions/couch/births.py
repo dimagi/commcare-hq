@@ -47,6 +47,13 @@ ACTIVE_CHILD_CASES_BY_AGE_INDICATORS = dict(
                 indicator_key="",
                 max_age_in_days=365,
             ),
+            under1_cases_6weeks=dict(
+                description="No. of children Under 1 year of age.",
+                title="# Under-1s",
+                indicator_key="",
+                fixed_datespan_days=42,
+                max_age_in_days=365,
+            ),
             num_births_recorded=dict(
                 description="Number of births recorded during the time period.",
                 title="# Births",

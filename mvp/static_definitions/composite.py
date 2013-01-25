@@ -53,8 +53,8 @@ COMPOSITE_INDICATORS = dict(
     under1_check_ups_proportion=dict(
         description="Proportion of children Under-1 receiving on-time scheduled check-ups during the time period",
         title="% Under-1 receiving check-ups",
-        numerator_slug="under1_visits",
-        denominator_slug="under1_cases",
+        numerator_slug="under1_visits_6weeks",
+        denominator_slug="under1_cases_6weeks",
     ),
     under1_immunized_proportion=dict(
         description="Proportion of children under-1 reported as up-to-date on immunizations at " \
