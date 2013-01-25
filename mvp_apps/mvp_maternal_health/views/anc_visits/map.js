@@ -33,37 +33,11 @@ function (doc) {
                 }
             }
 
-            if (edd_date >= visit_date && difference <= one_month_ms &&
-                indicators.num_anc && indicators.prev_num_anc &&
-                (indicators.last_anc_date || indicators.last_anc_weeks)) {
-                var num_ancs = (indicators.num_anc.value) ? parseInt(indicators.num_anc.value) : 0,
-                    prev_num_ancs = (indicators.prev_num_anc.value) ? parseInt(indicators.prev_num_anc.value) : 0;
-
+            if (edd_date >= visit_date && difference <= one_month_ms && indicators.cur_num_anc) {
                 // EDD is happening within one month of this form's visit date.
                 indicator_emits["visit"] = case_id;
-                var count_anc = false;
-
-                if (indicators.last_anc_weeks && indicators.last_anc_weeks.value) {
-                    // dealing with weeks ago
-                    var anc_weeks = parseInt(indicators.last_anc_weeks.value);
-                    if (anc_weeks <= 40) {
-                        // weeks within time frame
-                        count_anc = true;
-                    }
-                } else if(indicators.last_anc_date && indicators.last_anc_date.value) {
-                    var last_anc_date = new Date(indicators.last_anc_date.value);
-                    var anc_difference = edd_date.getTime() - last_anc_date.getTime();
-                    if (edd_date > last_anc_date
-                        && anc_difference <= gestation_ms
-                        && anc_difference >= one_month_ms) {
-                        count_anc = true;
-                    }
-                }
-                var anc_total = prev_num_ancs;
-                if (count_anc) {
-                    anc_total += num_ancs;
-                }
-                if (anc_total > 3) {
+                var cur_num_anc = (indicators.cur_num_anc.value) ? parseInt(indicators.cur_num_anc.value) : 0;
+                if (cur_num_anc > 3) {
                     indicator_emits["anc4"] = case_id;
                 }
             }
