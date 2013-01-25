@@ -260,7 +260,7 @@ def app_settings(request, domain):
     if request.method == 'GET':
         apps = get_cloudcare_apps(domain)
         access = ApplicationAccess.get_template_json(domain, apps)
-        groups = Group.by_domain(domain).all()
+        groups = Group.by_domain(domain)
 
         return render_to_response(request, 'cloudcare/config.html', {
             'domain': domain,
