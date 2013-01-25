@@ -161,7 +161,7 @@ function LocationModel(data, root, depth) {
     }
     this.children($.map(children, function(e) {
         var child = new LocationModel(e, root, loc.depth + 1);
-        return (root.loc_filter(child) ? child : null);
+        return (child.filter() ? child : null);
       }));
     this.children_loaded = true;
   }
@@ -173,7 +173,7 @@ function LocationModel(data, root, depth) {
       });
   }
 
-    //warning: duplicate code with location_tree.async.js
+  //warning: duplicate code with location_tree.async.js
   this.allowed_child_types = ko.computed(function() {
           var loc = this;
           var types = [];
@@ -187,9 +187,13 @@ function LocationModel(data, root, depth) {
           return types;
       }, this);
 
-    this.can_have_children = ko.computed(function() {
-            return (this.allowed_child_types().length > 0);
-        }, this);
+  this.can_have_children = ko.computed(function() {
+          return (this.allowed_child_types().length > 0);
+      }, this);
+  
+  this.filter = function() {
+      return this.name() == '_all' || root.loc_filter(this);
+  }
 
   this.load(data);
 }
