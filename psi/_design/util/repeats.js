@@ -18,6 +18,7 @@ function isArray(obj) {
 }
 
 function get_repeats(data, repeat_filter) {
+    repeat_filter = (typeof repeat_filter === "undefined") ? function(r) {return r} : repeat_filter;
     if (!isArray(data)) {
         data = [data];
     }
@@ -28,10 +29,19 @@ function get_repeats(data, repeat_filter) {
     return ret;
 }
 
-function count_in_repeats(data, what_to_count) {
-    if (!isArray(data)) {
-        data = [data];
+function get_from_repeats(data, what_to_get, repeat_filter) {
+    repeat_filter = (typeof repeat_filter === "undefined") ? function(r) {return r} : repeat_filter;
+    data = get_repeats(data, repeat_filter);
+    ret = [];
+    for (var i = 0; i < data.length; i++) {
+        ret.push(data[i][what_to_get]);
     }
+    return ret;
+}
+
+function count_in_repeats(data, what_to_count, repeat_filter) {
+    repeat_filter = (typeof repeat_filter === "undefined") ? function(r) {return r} : repeat_filter;
+    data = get_repeats(data, repeat_filter);
     var total = 0;
     for (var i = 0; i < data.length; i++) {
        total += parseInt(data[i][what_to_count], 10) || 0;
