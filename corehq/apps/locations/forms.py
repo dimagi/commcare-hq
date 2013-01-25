@@ -48,6 +48,10 @@ class LocationForm(forms.Form):
 
         if self.location._id is not None and self.cur_parent_id != parent_id:
             raise forms.ValidationError('Sorry, you cannot move locations around yet!')
+        # TODO:
+        # * allow moving of existing locs (requires background task to update
+        #   loc path properties in all descendants and linked docs
+        # * sanity check for re-parentage to self or descendant
 
         self.cleaned_data['parent'] = Location.get(parent_id) if parent_id else None
         return parent_id

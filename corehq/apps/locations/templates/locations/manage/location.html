@@ -33,7 +33,10 @@ var LOAD_LOCS_URL = '{{ api_root }}';
   <script>
 $(function() {
 
-  model = new LocationSelectViewModel('\u2026', false, function(loc) { return loc.can_have_children(); });
+  var loc_id = {{ location.get_id|JSON }};
+  model = new LocationSelectViewModel('\u2026', false, function(loc) {
+      return loc.uuid() != loc_id && loc.can_have_children();
+    });
 
   model.editing = ko.observable(false);
   model.allowed_child_types = ko.computed(function() {
