@@ -8,6 +8,7 @@ from django.utils.translation import ugettext as _
 from django.utils.translation import ugettext_noop
 
 def require_couch_user(fn):
+    """Meant to be used only on the is_viewable method"""
     @wraps(fn)
     def inner(cls, request, *args, **kwargs):
         try:
