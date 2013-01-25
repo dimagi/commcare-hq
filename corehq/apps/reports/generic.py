@@ -239,13 +239,14 @@ class GenericReportView(CacheableRequestMixIn):
     def template_async_base(self):
         return ((self.base_template_async or "reports/async/default.html")
                                         if self.asynchronous else self.template_base)
-
-    _template_report = None
     @property
+    @memoized
     def template_report(self):
-        if self._template_report is None:
-            self._template_report = self.report_template_path or "reports/async/basic.html"
-        return self._template_report
+        original_template = self.report_template_path or "reports/async/basic.html"
+        if self.is_rendered_as_email:
+            self.context.update(original_template=original_template)
+            return "reports/async/email_report.html"
+        return original_template
 
     @property
     @memoized
@@ -525,8 +526,6 @@ class GenericReportView(CacheableRequestMixIn):
         content of the report. It is intended for use by the report scheduler.
         """
         self.is_rendered_as_email = True
-        self.context.update(original_template=self.template_report)
-        self._template_report = "reports/async/email_report.html"
         return self.async_response
 
     @property
