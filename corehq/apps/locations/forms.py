@@ -43,6 +43,8 @@ class LocationForm(forms.Form):
 
     def clean_parent_id(self):
         parent_id = self.cleaned_data['parent_id']
+        if not parent_id:
+            parent_id = None # normalize ''
 
         if self.location._id is not None and self.cur_parent_id != parent_id:
             raise forms.ValidationError('Sorry, you cannot move locations around yet!')
