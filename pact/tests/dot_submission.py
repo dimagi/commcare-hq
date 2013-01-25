@@ -74,13 +74,26 @@ class dotsSubmissionTests(TestCase):
         self.assertTrue(hasattr(submitted, PACT_DOTS_DATA_PROPERTY))
         observations = query_observations(CASE_ID, START_DATE, END_DATE)
         observed_dates = set()
-        #assume to be two
+        #assume to be five - 3,2 same as the regimen count, we are refilling empties
+        self.assertEqual(5, len(observations), msg="Observations do not match regimen count")
         art_nonart = set()
         for obs in observations:
             observed_dates.add(obs.observed_date)
             self.assertEquals(obs.day_note, "No check, from form") #magic string from the view to indicate a generated DOT observation from form data.
             art_nonart.add(obs.is_art)
             self.assertEquals(obs.doc_id, NO_PILLBOX_ID)
+
+        art = filter(lambda x: x.is_art, observations)
+        self.assertEquals(2, len(art))
+        art_answered = filter(lambda x: x.adherence != "unchecked", art)
+        self.assertEquals(1, len(art_answered))
+
+
+        nonart = filter(lambda x: not x.is_art, observations)
+        self.assertEquals(3, len(nonart))
+        nonart_answered = filter(lambda x: x.adherence != "unchecked", nonart)
+        self.assertEquals(1, len(nonart_answered))
+
         #this only does SINGLE observations for art and non art
         self.assertEquals(len(observed_dates), 1)
         self.assertEquals(len(art_nonart), 2)
