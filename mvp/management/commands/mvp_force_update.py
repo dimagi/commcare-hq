@@ -18,42 +18,51 @@ POOL_SIZE = 10
 
 class Command(LabelCommand):
     help = "Update MVP indicators in existing cases and forms."
-    args = "<indicator type> <case type or xmlns>"
+    args = "<domain> <case or form> <case or form type> <start at record #>"
     label = ""
+    start_at_record = 0
+    domains = None
 
     def handle(self, *args, **options):
-        do_forms = True
-        do_cases = True
-        specific_case_or_form = None
-        if len(args) > 0:
-            indicator_type = args[0]
-            if 'all' in indicator_type:
-                pass
-            elif 'forms' in indicator_type:
-                do_cases = False
-            elif 'cases' in indicator_type:
-                do_forms = False
-            if len(args) > 1:
-                specific_case_or_form = args[1]
+        self.domains = MVP.DOMAINS
+        forms = {}
+        forms.update(MVP.CLOSE_FORMS)
+        forms.update(MVP.VISIT_FORMS)
+        forms.update(MVP.REGISTRATION_FORMS)
 
-        if do_forms:
-            if specific_case_or_form:
-                print "\n\n Getting Forms With XMLNS: %s" % specific_case_or_form
-                self.update_indicators_for_xmlns(specific_case_or_form)
-            else:
-                for form_slug, xmlns in MVP.CLOSE_FORMS.items():
-                    print "\n\nGetting Close Forms of Type %s" % form_slug
-                    self.update_indicators_for_xmlns(xmlns)
-                for form_slug, xmlns in MVP.VISIT_FORMS.items():
-                    print "\n\nGetting Visit Forms of Type %s" % form_slug
-                    self.update_indicators_for_xmlns(xmlns)
+        cases = ['child', 'pregnancy', 'household']
 
-        if do_cases:
-            case_types = ['child', 'pregnancy', 'household']
-            if specific_case_or_form:
-                case_types = [specific_case_or_form]
-            for type in case_types:
-                for domain in MVP.DOMAINS:
+        process_forms = True
+        process_cases = True
+
+        self.start_at_record = 0
+
+        if len(args) > 0 and args[0] != "all":
+            self.domains = [args[0]]
+
+        if len(args) > 1 and args[1] != "all":
+            process_cases = args[1] == "case"
+            process_forms = args[1] == "form"
+
+        if len(args) > 2 and args[2] != "all":
+            if process_cases:
+                cases = [args[2]]
+            elif process_forms:
+                final_forms = forms.get(args[2], {})
+                forms.clear()
+                forms[args[2]] = final_forms
+
+        if len(args) > 3:
+            self.start_at_record = int(args[3])
+
+        if process_forms:
+            for form_type, xmlns in forms.items():
+                print "\n\nGetting Forms of Type %s and XMLNS %s" % (form_type, xmlns)
+                self.update_indicators_for_xmlns(xmlns)
+
+        if process_cases:
+            for type in cases:
+                for domain in self.domains:
                     self.update_indicators_for_case_type(type, domain)
 
     def update_indicators_for_xmlns(self, xmlns):
@@ -72,7 +81,7 @@ class Command(LabelCommand):
         ).all()
 
         print "Found %d forms with matching XMLNS %s" % (num_forms, xmlns)
-        for domain in MVP.DOMAINS:
+        for domain in self.domains:
             relevant_indicators = FormIndicatorDefinition.get_all(
                 namespace=MVP.NAMESPACE,
                 domain=domain,
@@ -141,7 +150,7 @@ class Command(LabelCommand):
 
     def _throttle_updates(self, document_type, indicators, total_docs, domain, get_docs, limit=100):
 
-        for skip in range(0, total_docs, limit):
+        for skip in range(self.start_at_record, total_docs, limit):
             print "\n\nUpdating %s %d to %d of %d\n" % (document_type, skip, min(total_docs, skip+limit), total_docs)
             matching_docs = get_docs(skip, limit)
             self.update_indicators(indicators, matching_docs, domain)
