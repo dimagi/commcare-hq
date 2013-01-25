@@ -174,7 +174,6 @@ function (doc) {
 
                     for (var r = 0; r < int_regimen; r++) {
                         var slot = static_slots[r];
-                        log("generate_day_data: " + is_art + " loop: " + r +" " + slot);
                         var dose = static_block[slot]['dose'];
                         if (dose !== undefined) {
                             var patlabel = -1;
@@ -213,7 +212,6 @@ function (doc) {
 
 
                 function emit_form_pillbox_obs(is_art, form_obs) {
-                    log("begin emit_form_pillbox_obs");
 
                     var regimen_type = "";
                     var regimen_box = "";
@@ -230,11 +228,9 @@ function (doc) {
                         static_key = "static_non_art_dose_data";
                         now_key = "nonartnow";
                     }
-                    log('emit_form_pillbox_obs: got keys');
                     form_obs['is_art'] = is_art;
                     form_obs['total_doses'] = parseInt(doc.form['preload'][regimen_type]);
                     form_obs['dose_number'] = parseInt(doc.form['pillbox_check'][regimen_box]);
-                    log('emit_form_pillbox_obs: got dose and dose_numbe');
 
 //                    if (emit_day_slot >= 0) {
 //                        form_obs['day_slot'] = emit_day_slot;
@@ -243,31 +239,22 @@ function (doc) {
                     form_obs['observed_date'] = toISOString(encounter_date);
                     var form_dispense = eval(doc.form['pillbox_check'][now_key]);
                     if (form_dispense !== undefined) {
-                        log('emit_form_pillbox_obs: form_dispense is not undefined');
                         form_dispense.push(day_note);
 
                         var emit_day_slot = determine_day_slot(doc.form[static_key], parseInt(doc.form['pillbox_check'][regimen_box]));
                         form_dispense.push(emit_day_slot);
                         do_observation(doc, encounter_date, encounter_date, form_dispense, eval(uneval(form_obs)));
-                        log('emit_form_pillbox_obs: emitted');
-                        log('emit_form_pillbox_obs: ' + form_obs['dose_number']);
                         return form_obs['dose_number'];
                     }
                     return -1;
                 }
 
 
-                log('pre non_art_submit');
                 var non_art_submit = emit_form_pillbox_obs(false, new_drug_obs);
-                log('post non_art_submit');
                 generate_day_data(new_drug_obs, false, non_art_submit, doc.form['static_non_art_dose_data']);
-                log('post non_art_submit generate_day_data');
 
-                log('pre art_submit');
                 var art_submit = emit_form_pillbox_obs(true, new_drug_obs);
-                log('post art_submit');
                 generate_day_data(new_drug_obs, true, art_submit, doc.form['static_art_dose_data']);
-                log('post art_submit generate_day_data');
 
 
 
