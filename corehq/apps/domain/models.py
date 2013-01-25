@@ -377,7 +377,6 @@ class Domain(Document, HQBillingDomainMixin, SnapshotMixin):
             key=name,
             reduce=False,
             include_docs=True,
-            stale='update_after',
         ).first()
         return result
 
