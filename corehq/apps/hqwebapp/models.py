@@ -1,3 +1,4 @@
+from functools import wraps
 from django.template.loader import render_to_string
 from django.utils.safestring import mark_safe, mark_for_escaping
 from dimagi.utils.couch.database import get_db
@@ -5,6 +6,19 @@ from dimagi.utils.decorators.memoized import memoized
 from django.core.urlresolvers import reverse
 from django.utils.translation import ugettext as _
 from django.utils.translation import ugettext_noop
+
+def require_couch_user(fn):
+    """Meant to be used only on the is_viewable method"""
+    @wraps(fn)
+    def inner(cls, request, *args, **kwargs):
+        try:
+            request.couch_user
+        except AttributeError:
+            return False
+        else:
+            return fn(cls, request, *args, **kwargs)
+
+    return inner
 
 class DropdownMenuItem(object):
     title = None
@@ -76,6 +90,7 @@ class ReportsMenuItem(DropdownMenuItem):
     css_id = "project_reports"
 
     @classmethod
+    @require_couch_user
     def is_viewable(cls, request, domain):
         return domain and not request.project.is_snapshot and (request.couch_user.can_view_reports() or request.couch_user.get_viewable_reports())
 
@@ -96,6 +111,7 @@ class ManageDataMenuItem(DropdownMenuItem):
     css_id = "manage_data"
 
     @classmethod
+    @require_couch_user
     def is_viewable(cls, request, domain):
         return domain and request.couch_user.can_edit_data()
 
@@ -153,6 +169,7 @@ class ApplicationsMenuItem(DropdownMenuItem):
         }))
 
     @classmethod
+    @require_couch_user
     def is_viewable(cls, request, domain):
         couch_user = request.couch_user
         return (domain is not None and (couch_user.is_web_user() or couch_user.can_edit_apps()) and
@@ -165,6 +182,7 @@ class CloudcareMenuItem(DropdownMenuItem):
     css_id = "cloudcare"
 
     @classmethod
+    @require_couch_user
     def is_viewable(cls, request, domain):
         return domain and request.couch_user.can_edit_data()
 
@@ -175,6 +193,7 @@ class MessagesMenuItem(DropdownMenuItem):
     css_id = "messages"
 
     @classmethod
+    @require_couch_user
     def is_viewable(cls, request, domain):
         return domain and not request.project.is_snapshot and not request.couch_user.is_commcare_user()
 
@@ -201,6 +220,7 @@ class ProjectSettingsMenuItem(DropdownMenuItem):
         return _("Settings & Users")
 
     @classmethod
+    @require_couch_user
     def is_viewable(cls, request, domain):
         return domain is not None and request.couch_user
 
@@ -236,6 +256,7 @@ class AdminReportsMenuItem(DropdownMenuItem):
         return submenu_context
 
     @classmethod
+    @require_couch_user
     def is_viewable(cls, request, domain):
         return request.couch_user.is_superuser
 
@@ -267,6 +288,7 @@ class ManageSurveysMenuItem(DropdownMenuItem):
     css_id = "manage_surveys"
 
     @classmethod
+    @require_couch_user
     def is_viewable(cls, request, domain):
         return domain and request.couch_user.can_edit_data() and request.project.survey_management_enabled
 
