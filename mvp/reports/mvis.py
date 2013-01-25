@@ -4,6 +4,7 @@ import logging
 import numpy
 import pytz
 from corehq.apps.indicators.models import DynamicIndicatorDefinition, CombinedCouchViewIndicatorDefinition
+from dimagi.utils.decorators.memoized import memoized
 from mvp.models import MVP
 from mvp.reports import MVPIndicatorReport
 
@@ -25,6 +26,13 @@ class HealthCoordinatorReport(MVPIndicatorReport):
         return pytz.utc
 
     @property
+    @memoized
+    def template_report(self):
+        if self.is_rendered_as_email:
+            self.report_template_path = "mvp/reports/health_coordinator_email.html"
+        return super(HealthCoordinatorReport, self).template_report
+
+    @property
     def report_context(self):
         report_matrix = []
         month_headers = None
@@ -34,8 +42,10 @@ class HealthCoordinatorReport(MVPIndicatorReport):
             for slug in category_group['indicator_slugs']:
                 indicator = DynamicIndicatorDefinition.get_current(MVP.NAMESPACE, self.domain, slug, wrap_correctly=True)
                 if indicator:
-#                    retrospective = indicator.get_monthly_retrospective(user_ids=self.user_ids)
-                    retrospective = indicator.get_monthly_retrospective(return_only_dates=True)
+                    if self.is_rendered_as_email:
+                        retrospective = indicator.get_monthly_retrospective(user_ids=self.user_ids)
+                    else:
+                        retrospective = indicator.get_monthly_retrospective(return_only_dates=True)
                     if not month_headers:
                         month_headers = self.get_month_headers(retrospective)
 
