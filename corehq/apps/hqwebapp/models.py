@@ -200,7 +200,9 @@ class MessagesMenuItem(DropdownMenuItem):
     @classmethod
     @require_couch_user
     def is_viewable(cls, request, domain):
-        return domain and not request.project.is_snapshot and not request.couch_user.is_commcare_user()
+        return domain and \
+            (hasattr(request, 'project') and not request.project.is_snapshot) and \
+            not request.couch_user.is_commcare_user()
 
 
 class ProjectSettingsMenuItem(DropdownMenuItem):
@@ -295,5 +297,6 @@ class ManageSurveysMenuItem(DropdownMenuItem):
     @classmethod
     @require_couch_user
     def is_viewable(cls, request, domain):
-        return domain and request.couch_user.can_edit_data() and request.project.survey_management_enabled
+        return domain and request.couch_user.can_edit_data() and \
+            (hasattr(request, 'project') and request.project.survey_management_enabled)
 
