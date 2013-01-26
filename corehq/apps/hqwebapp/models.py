@@ -92,7 +92,9 @@ class ReportsMenuItem(DropdownMenuItem):
     @classmethod
     @require_couch_user
     def is_viewable(cls, request, domain):
-        return domain and not request.project.is_snapshot and (request.couch_user.can_view_reports() or request.couch_user.get_viewable_reports())
+        return domain and \
+            (hasattr(request, 'project') and not request.project.is_snapshot) and \
+            (request.couch_user.can_view_reports() or request.couch_user.get_viewable_reports())
 
 
 class ProjectInfoMenuItem(DropdownMenuItem):
