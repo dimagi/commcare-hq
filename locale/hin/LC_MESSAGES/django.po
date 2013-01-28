@@ -68,7 +68,7 @@ msgstr "आशा"
 
 #: .\submodules\bihar-reports\bihar\reports\supervisor.py:23
 msgid "AWW"
-msgstr "ऑगनवाड़ी सेविका"
+msgstr "ऑगनवाड़ी सेविका"
 
 #: .\submodules\bihar-reports\bihar\reports\supervisor.py:167
 msgid "Select Subcenter"
@@ -85,7 +85,7 @@ msgstr "टीम का नाम"
 
 #: .\submodules\bihar-reports\bihar\reports\supervisor.py:172
 msgid "AWCC"
-msgstr "ऑगनवाड़ी केंद्र संख्या"
+msgstr "ऑगनवाड़ी केंद्र संख्या"
 
 #: .\submodules\bihar-reports\bihar\reports\supervisor.py:206
 #: .\submodules\bihar-reports\bihar\templates\bihar\base_template_mobile.html.py:6
@@ -130,7 +130,7 @@ msgstr "इस समय केलकुलेशन संभव नही ह�
 
 #: .\submodules\bihar-reports\bihar\reports\supervisor.py:345
 msgid "EDD Calculator"
-msgstr "ईड़ीड़ी केलकुलेटर"
+msgstr "ईड़ीड़ी केलकुलेटर"
 
 #: .\submodules\bihar-reports\bihar\reports\supervisor.py:351
 #, fuzzy
@@ -177,7 +177,7 @@ msgstr "वज़न कम है"
 
 #: .\submodules\bihar-reports\bihar\reports\supervisor.py:411
 msgid "no awc code found"
-msgstr "ऑगनवाड़ी कोड़ संख्या नही मिली"
+msgstr "ऑगनवाड़ी कोड़ संख्या नही मिली"
 
 #: .\submodules\bihar-reports\bihar\reports\indicators\__init__.py:19
 msgid "Pregnant woman who delivered"
@@ -289,25 +289,25 @@ msgstr "परिवार नियोजन"
 
 #: .\submodules\bihar-reports\bihar\reports\indicators\__init__.py:164
 msgid "# Expressed interest in family planning / # deliveries in last 30 days"
-msgstr ""
+msgstr "# परिवार नियोजन मे रुची दिखाया / # पिछले ३० दिनों मे प्रसव"
 
 #: .\submodules\bihar-reports\bihar\reports\indicators\__init__.py:169
 msgid ""
 "# Adopted FP / # expressed interest in family planning & delivered in last "
 "30 days"
-msgstr ""
+msgstr "# परिवार नियोजन अपनाया / # परिवार नियोजन मे रुची दिखाया & पिछले ३० दिनों मे प्रसव"
 
 #: .\submodules\bihar-reports\bihar\reports\indicators\__init__.py:174
 msgid "# expressed interest in family planning / total # clients"
-msgstr ""
+msgstr "# परिवार नियोजन मे रुची दिखाया / कुल # लाभार्थी"
 
 #: .\submodules\bihar-reports\bihar\reports\indicators\__init__.py:179
 msgid "clients who delivered in last 7 days and have not yet adopted FP"
-msgstr ""
+msgstr "# लाभार्थी जिनका प्रसव पिछले 7 दिनों मे हो गया है और अब तक परिवार नियोजन नही अपनाया"
 
 #: .\submodules\bihar-reports\bihar\reports\indicators\__init__.py:184
 msgid "# clients who whose EDD is in 30 days and have expressed interest in FP"
-msgstr ""
+msgstr "# लाभार्थी जिनकी प्रसव की संभावित तारीख ३० दिनों के अंदर है और जिन्होने परिवार नियोजन मे रुची दिखायी है"
 
 #: .\submodules\bihar-reports\bihar\reports\indicators\__init__.py:192
 msgid "Mortality"
@@ -365,7 +365,7 @@ msgstr "पति का नाम"
 
 #: .\submodules\bihar-reports\bihar\reports\indicators\calculations.py:128
 msgid "EDD"
-msgstr "ईड़ीड़ी"
+msgstr "ईड़ीड़ी"
 
 #: .\submodules\bihar-reports\bihar\reports\indicators\calculations.py:152
 msgid "ADD"
