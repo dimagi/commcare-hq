@@ -223,9 +223,11 @@ class Domain(Document, HQBillingDomainMixin, SnapshotMixin):
         if couch_user:
             domain_names = couch_user.get_domains()
             return Domain.view("domain/by_status",
-                                    keys=[[is_active, d] for d in domain_names],
-                                    reduce=False,
-                                    include_docs=True).all()
+                keys=[[is_active, d] for d in domain_names],
+                reduce=False,
+                include_docs=True,
+                stale='update_after',
+            ).all()
         else:
             return []
 
@@ -354,7 +356,7 @@ class Domain(Document, HQBillingDomainMixin, SnapshotMixin):
         return self.name
 
     @classmethod
-    def get_by_name(cls, name):
+    def get_by_name(cls, name, strict=False):
         if not name:
             # get_by_name should never be called with name as None (or '', etc)
             # I fixed the code in such a way that if I raise a ValueError
@@ -370,11 +372,14 @@ class Domain(Document, HQBillingDomainMixin, SnapshotMixin):
                 else:
                     notify_exception(None, '%r is not a valid domain name' % name)
                     return None
-
+        extra_args = {'stale': 'update_after'} if not strict else {}
         result = cls.view("domain/domains",
-                            key=name,
-                            reduce=False,
-                            include_docs=True).first()
+            key=name,
+            reduce=False,
+            include_docs=True,
+            **extra_args
+        ).first()
+
         return result
 
     @classmethod
@@ -669,6 +674,21 @@ class Domain(Document, HQBillingDomainMixin, SnapshotMixin):
     @classmethod
     def public_deployments(cls):
         return Domain.view('domain/with_deployment', include_docs=True).all()
+
+    @classmethod
+    def get_module_by_name(cls, domain_name):
+        """
+        import and return the python module corresponding to domain_name, or
+        None if it doesn't exist.
+        
+        """
+        domain_module_map = getattr(settings, 'DOMAIN_MODULE_MAP', {})
+        module_name = domain_module_map.get(domain_name, domain_name)
+
+        try:
+            return __import__(module_name) if module_name else None
+        except ImportError:
+            return None
 
     @property
     def commtrack_settings(self):

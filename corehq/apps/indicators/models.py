@@ -718,12 +718,11 @@ class FormDataInCaseIndicatorDefinition(CaseIndicatorDefinition, FormDataIndicat
         if not is_update:
             # check to see if more relevant forms have been added to the case since the last time
             # this indicator was computed
-            case = self._get_related_case(document)
-            if case is not None:
+            related_forms = self.get_related_forms(document)
+            if related_forms:
                 try:
                     value_list = computed.get(self.slug, {}).get('value', {})
                     saved_form_ids = value_list.keys()
-                    related_forms = self.get_related_forms(document)
                     current_ids = set([f._id for f in related_forms])
                     is_update = len(current_ids.difference(saved_form_ids)) > 0
                     if is_update:
