@@ -48,7 +48,8 @@ if [ $? -eq 0 ]; then
         libevent-dev python-setuptools  \
         postgresql memcached \
         nodejs npm \
-        gdebi-core
+        gdebi-core \
+        apache2
 
     sudo apt-get build-dep -y python-psycopg2 python-lxml
 
@@ -70,7 +71,7 @@ else
     sudo yum install -y git gcc gcc-c++ make libtool zlib-devel openssl-devel \
         rubygem-rake ruby-rdoc curl-devel openssl-devel libicu-devel \
         postgresql postgresql-devel postgresql-lib postgresql-server libtool \
-        python-devel yum-utils
+        python-devel yum-utils httpd
 
     # CouchDB
     sudo yum install -y erlang libicu-devel openssl-devel curl-devel make \
