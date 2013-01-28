@@ -1,6 +1,4 @@
-import pdb
 import uuid
-from dateutil import parser
 from django.test import TestCase
 from pact.lib.quicksect import IntervalNode
 from datetime import datetime, timedelta
@@ -173,9 +171,7 @@ class ScheduleTests(TestCase):
         test_patient = PactPatientCase()
         test_patient.computed_ = {}
         test_patient.set_schedule(CDotWeeklySchedule.wrap(NEW_SCHEDULE))
-        pdb.set_trace()
         schedules = test_patient.get_schedules()
-        pdb.set_trace()
 
         self.assertEqual(len(schedules), 1)
 

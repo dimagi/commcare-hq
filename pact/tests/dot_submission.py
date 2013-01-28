@@ -1,5 +1,4 @@
 from datetime import datetime, timedelta
-import pdb
 import dateutil
 import os
 from django.test import TestCase
@@ -8,7 +7,7 @@ from casexml.apps.case.models import CommCareCase
 from corehq.apps.domain.models import Domain
 from couchforms.models import XFormInstance
 from pact.dot_data import filter_obs_for_day, query_observations, DOTDay, get_dots_case_json
-from pact.enums import PACT_DOTS_DATA_PROPERTY, PACT_DOMAIN, DOT_DAYS_INTERVAL, XMLNS_DOTS_FORM, XMLNS_PATIENT_UPDATE_DOT
+from pact.enums import PACT_DOTS_DATA_PROPERTY, PACT_DOMAIN, XMLNS_DOTS_FORM, XMLNS_PATIENT_UPDATE_DOT
 from pact.models import PactPatientCase
 from pact.utils import submit_xform
 
