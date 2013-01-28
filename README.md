@@ -199,7 +199,7 @@ deploy of CommCare HQ, follow these steps:
 6. Run the commands from "Set up your django environment" above, except instead
    of ./manage.py, use
 
-       /home/cchq/www/worldbank/code_root/python_env/bin/python manage.py 
+       /home/cchq/www/<my_environment>/code_root/python_env/bin/python manage.py 
 
 7. Deploy
     
