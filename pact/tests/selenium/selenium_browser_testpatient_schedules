@@ -1,0 +1,172 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+<head profile="http://selenium-ide.openqa.org/profiles/test-case">
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<link rel="selenium.base" href="http://localhost:8000/" />
+<title>selenium_browser_testpatient_schedules</title>
+</head>
+<body>
+<table cellpadding="1" cellspacing="1" border="1">
+<thead>
+<tr><td rowspan="1" colspan="3">selenium_browser_testpatient_schedules</td></tr>
+</thead><tbody>
+<tr>
+	<td>open</td>
+	<td>/a/pact/reports/custom/patient/?patient_id=66a4f2d0e9d5467e34122514c341ed92</td>
+	<td></td>
+</tr>
+<tr>
+	<td>waitForTextPresent</td>
+	<td>Information</td>
+	<td></td>
+</tr>
+<tr>
+	<td>clickAndWait</td>
+	<td>link=Schedule</td>
+	<td></td>
+</tr>
+<tr>
+	<td>waitForTextPresent</td>
+	<td>present</td>
+	<td></td>
+</tr>
+<tr>
+	<td>select</td>
+	<td>id=id_monday</td>
+	<td>label=ctsims</td>
+</tr>
+<tr>
+	<td>select</td>
+	<td>id=id_wednesday</td>
+	<td>label=cs783</td>
+</tr>
+<tr>
+	<td>select</td>
+	<td>id=id_wednesday</td>
+	<td>label=ctsims</td>
+</tr>
+<tr>
+	<td>select</td>
+	<td>id=id_friday</td>
+	<td>label=ctsims</td>
+</tr>
+<tr>
+	<td>type</td>
+	<td>id=id_comment</td>
+	<td>adding new schedule selenium</td>
+</tr>
+<tr>
+	<td>click</td>
+	<td>id=btn_schedule_submit</td>
+	<td></td>
+</tr>
+<tr>
+	<td>clickAndWait</td>
+	<td>link=Schedule</td>
+	<td></td>
+</tr>
+<tr>
+	<td>waitForTextPresent</td>
+	<td>testing missing submission flags</td>
+	<td></td>
+</tr>
+<tr>
+	<td>verifyTextPresent</td>
+	<td>adding new schedule selenium</td>
+	<td></td>
+</tr>
+<tr>
+	<td>select</td>
+	<td>id=id_wednesday</td>
+	<td>label=ac381</td>
+</tr>
+<tr>
+	<td>select</td>
+	<td>id=id_monday</td>
+	<td>label=ac381</td>
+</tr>
+<tr>
+	<td>select</td>
+	<td>id=id_sunday</td>
+	<td>label=ac381</td>
+</tr>
+<tr>
+	<td>select</td>
+	<td>id=id_friday</td>
+	<td>label=ctsims</td>
+</tr>
+<tr>
+	<td>type</td>
+	<td>id=id_comment</td>
+	<td>Adding second new schedule selenium</td>
+</tr>
+<tr>
+	<td>click</td>
+	<td>id=btn_schedule_submit</td>
+	<td></td>
+</tr>
+<tr>
+	<td>waitForTextPresent</td>
+	<td>testing missing submission flags</td>
+	<td></td>
+</tr>
+<tr>
+	<td>verifyTextPresent</td>
+	<td>Adding second new schedule selenium</td>
+	<td></td>
+</tr>
+<tr>
+	<td>verifyTextPresent</td>
+	<td>adding new schedule selenium</td>
+	<td></td>
+</tr>
+<tr>
+	<td>storeElementPresent</td>
+	<td>javascript{var date = new Date();date.getDate() + '/' + (date.getMonth()+1) + '/' + date.getFullYear()}</td>
+	<td>date_today</td>
+</tr>
+<tr>
+	<td>echo</td>
+	<td>storedVars['date_today']</td>
+	<td></td>
+</tr>
+<tr>
+	<td>click</td>
+	<td>id=id_friday</td>
+	<td></td>
+</tr>
+<tr>
+	<td>verifyTextPresent</td>
+	<td>${date_today}</td>
+	<td></td>
+</tr>
+<tr>
+	<td>click</td>
+	<td>id=btn_remove_last_schedule</td>
+	<td></td>
+</tr>
+<tr>
+	<td>verifyTextPresent</td>
+	<td>present</td>
+	<td></td>
+</tr>
+<tr>
+	<td>verifyTextNotPresent</td>
+	<td>Adding second new schedule selenium</td>
+	<td></td>
+</tr>
+<tr>
+	<td>click</td>
+	<td>id=btn_remove_last_schedule</td>
+	<td></td>
+</tr>
+<tr>
+	<td>verifyTextNotPresent</td>
+	<td>adding new schedule selenium</td>
+	<td></td>
+</tr>
+
+</tbody></table>
+</body>
+</html>
