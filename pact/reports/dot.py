@@ -1,18 +1,10 @@
 from datetime import datetime, timedelta
-from dateutil.parser import parser
-import simplejson
 from casexml.apps.case.models import CommCareCase
 from corehq.apps.api.es import CaseES, XFormES
-from corehq.apps.hqcase.paginator import CasePaginator
-from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
-from corehq.apps.reports.fields import SelectMobileWorkerField, ReportSelectField
+from corehq.apps.reports.fields import  ReportSelectField
 from corehq.apps.reports.generic import GenericTabularReport
 from corehq.apps.reports.standard import CustomProjectReport, ProjectReportParametersMixin, DatespanMixin
-from corehq.apps.reports.standard.inspect import CaseListReport, CaseDisplay, CaseListMixin
 
-from couchdbkit.resource import RequestFailed
-from couchforms.models import XFormInstance
-from dimagi.utils.decorators.memoized import memoized
 from pact.enums import PACT_DOMAIN, PACT_CASE_TYPE, XMLNS_DOTS_FORM
 from pact.models import PactPatientCase, DOTSubmission
 from pact.reports.dot_calendar import DOTCalendarReporter

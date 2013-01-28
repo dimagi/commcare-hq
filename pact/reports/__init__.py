@@ -1,14 +1,13 @@
 import dateutil
 from corehq.apps.reports.dispatcher import CustomProjectReportDispatcher
-from corehq.apps.reports.standard import CustomProjectReport
-from pact.utils import case_script_field
+
 
 class PactPatientDispatcher(CustomProjectReportDispatcher):
     prefix = 'pactpatient'
-#    map_name = ''
+    #    map_name = ''
 
-#    prefix = 'adm_section'
-#    map_name = 'ADM_SECTION_MAP'
+    #    prefix = 'adm_section'
+    #    map_name = 'ADM_SECTION_MAP'
 
     def dispatch(self, request, *args, **kwargs):
         ret =  super(PactPatientDispatcher, self).dispatch(request, *args, **kwargs)
@@ -102,38 +101,11 @@ class PactDrilldownReportMixin(object):
     @classmethod
     def show_in_navigation(cls, request, *args, **kwargs):
         return False
-#
+        #
 #    @property
 #    def report_context(self):
 #        raise NotImplementedError("Todo")
 
 
-def query_per_case_submissions_facet(domain, username=None, limit=100):
-    """
-    Xform query to get count facet by case_id
-    """
-    query = {
-        "facets": {
-            "case_submissions": {
-                "terms": {
-#                    "field": "form.case.case_id",
-                    "script_field": case_script_field()['script_case_id']['script'],
-                    "size": limit
-                },
-                "facet_filter": {
-                    "and": [
-                        {
-                            "term": {
-                                "domain.exact": domain
-                            }
-                        }
-                    ]
-                }
-            }
-        },
-        "size": 0
-    }
 
-    if username is not None:
-        query['facets']['case_submissions']['facet_filter']['and'].append({ "term": { "form.meta.username": username } })
-    return query
+

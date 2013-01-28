@@ -23,8 +23,7 @@ from django.http import Http404, HttpResponse
 from pact.forms.patient_form import PactPatientForm
 from pact.forms.weekly_schedule_form import ScheduleForm, DAYS_OF_WEEK
 from pact.models import PactPatientCase, CDotWeeklySchedule
-from pact.reports import query_per_case_submissions_facet
-from pact.utils import pact_script_fields, case_script_field, submit_xform
+from pact.utils import pact_script_fields, case_script_field, submit_xform, query_per_case_submissions_facet
 from django.core.cache import cache
 
 

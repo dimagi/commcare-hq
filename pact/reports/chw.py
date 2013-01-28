@@ -10,14 +10,14 @@ from dimagi.utils import html
 from dimagi.utils.decorators import inline
 from dimagi.utils.decorators.memoized import memoized
 from pact.enums import PACT_CASE_TYPE, PACT_DOMAIN
-from pact.reports import  PactDrilldownReportMixin, chw_schedule, ESSortableMixin, query_per_case_submissions_facet
+from . import chw_schedule
+from pact.reports import PactDrilldownReportMixin, ESSortableMixin
 from pact.utils import pact_script_fields, case_script_field
 
 
 class XFormDisplay(object):
     def __init__(self, result_row):
         self.result_row = result_row
-
 
     @property
     def pact_id(self):

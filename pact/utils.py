@@ -54,6 +54,36 @@ def case_script_field():
     }
 
 
+def query_per_case_submissions_facet(domain, username=None, limit=100):
+    """
+    Xform query to get count facet by case_id
+    """
+    query = {
+        "facets": {
+            "case_submissions": {
+                "terms": {
+                    #                    "field": "form.case.case_id",
+                    "script_field": case_script_field()['script_case_id']['script'],
+                    "size": limit
+                },
+                "facet_filter": {
+                    "and": [
+                        {
+                            "term": {
+                                "domain.exact": domain
+                            }
+                        }
+                    ]
+                }
+            }
+        },
+        "size": 0
+    }
+
+    if username is not None:
+        query['facets']['case_submissions']['facet_filter']['and'].append({ "term": { "form.meta.username": username } })
+    return query
+
 def get_case_id(xform):
     if xform['form'].has_key('case'):
         if xform['form']['case'].has_key('case_id'):

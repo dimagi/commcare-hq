@@ -13,9 +13,10 @@ from django.utils import html
 from corehq.apps.users.models import CommCareUser
 from dimagi.utils.decorators.memoized import memoized
 from pact.enums import PACT_DOMAIN, PACT_HP_CHOICES, PACT_DOT_CHOICES, PACT_CASE_TYPE
-from pact.reports import  ESSortableMixin, query_per_case_submissions_facet
 from pact.reports.dot import PactDOTReport
+from pact.reports import ESSortableMixin
 from pact.reports.patient import PactPatientInfoReport
+from pact.utils import query_per_case_submissions_facet
 
 
 class PactPrimaryHPField(ReportSelectField):

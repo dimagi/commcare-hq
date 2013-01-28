@@ -1,24 +1,19 @@
-from dateutil.parser import parse
 from django.core.urlresolvers import reverse
 from django.http import Http404
 from django.template.context import RequestContext
-from django.utils.timesince import timesince
 import simplejson
 from corehq.apps.api.es import XFormES
-from corehq.apps.fixtures.models import FixtureDataItem, FixtureDataType
-from corehq.apps.groups.models import Group
 from corehq.apps.reports.datatables import DataTablesColumn, DataTablesHeader
 from corehq.apps.reports.generic import GenericTabularReport
 from corehq.apps.reports.standard import CustomProjectReport
 from dimagi.utils import html
-from dimagi.utils.decorators import inline
 from dimagi.utils.decorators.memoized import memoized
 from pact import api
-from pact.enums import PACT_HP_GROUPNAME, PACT_DOMAIN, PACT_PROVIDER_FIXTURE_TAG
+from pact.enums import  PACT_DOMAIN
 from pact.forms.patient_form import PactPatientForm
 from pact.forms.weekly_schedule_form import ScheduleForm
 from pact.models import  PactPatientCase
-from pact.reports import  PactDrilldownReportMixin, ESSortableMixin
+from pact.reports import PactDrilldownReportMixin, ESSortableMixin
 from pact.utils import pact_script_fields
 
 
