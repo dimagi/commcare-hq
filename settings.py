@@ -124,6 +124,7 @@ DEFAULT_APPS = (
     'couchdbkit.ext.django',
     'crispy_forms',
     'django.contrib.markup',
+    'gunicorn'
 )
 
 CRISPY_TEMPLATE_PACK = 'bootstrap'
