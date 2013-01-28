@@ -239,13 +239,14 @@ class GenericReportView(CacheableRequestMixIn):
     def template_async_base(self):
         return ((self.base_template_async or "reports/async/default.html")
                                         if self.asynchronous else self.template_base)
-
-    _template_report = None
     @property
+    @memoized
     def template_report(self):
-        if self._template_report is None:
-            self._template_report = self.report_template_path or "reports/async/basic.html"
-        return self._template_report
+        original_template = self.report_template_path or "reports/async/basic.html"
+        if self.is_rendered_as_email:
+            self.context.update(original_template=original_template)
+            return "reports/async/email_report.html"
+        return original_template
 
     @property
     @memoized
@@ -482,10 +483,6 @@ class GenericReportView(CacheableRequestMixIn):
         )
         self.context.update(self._validate_context_dict(self.report_context))
 
-    def generate_cache_key(self, func_name):
-        raise NotImplementedError("This is very broken!")
-        return "%s:%s" % (self.__class__.__name__, func_name)
-
     @property
     @request_cache("default")
     def view_response(self):
@@ -529,8 +526,6 @@ class GenericReportView(CacheableRequestMixIn):
         content of the report. It is intended for use by the report scheduler.
         """
         self.is_rendered_as_email = True
-        self.context.update(original_template=self.template_report)
-        self._template_report = "reports/async/email_report.html"
         return self.async_response
 
     @property
@@ -608,17 +603,6 @@ class GenericReportView(CacheableRequestMixIn):
             (Great if you have a giant report with annoying, complex indicators.)
         """
         raise Http404
-
-    @property
-    def clear_cache_response(self):
-        renderings = self.dispatcher.allowed_renderings()
-        try:
-            del renderings[renderings.index('clear_cache')]
-        except Exception:
-            pass
-        for render in renderings:
-            cache_key = self.generate_cache_key("%s_response" % render)
-        return HttpResponse("Clearing cache")
 
     @classmethod
     def get_url(cls, domain=None, render_as=None, **kwargs):

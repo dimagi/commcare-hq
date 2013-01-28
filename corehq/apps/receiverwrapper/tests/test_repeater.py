@@ -124,11 +124,11 @@ class RepeaterTest(TestCase):
         repeat_records = RepeatRecord.all(domain=self.domain, due_before=now() + timedelta(minutes=15))
         self.assertEqual(len(repeat_records), 0)
 
-        repeat_records = RepeatRecord.all(domain=self.domain, due_before=in30min + timedelta(seconds=1))
+        repeat_records = RepeatRecord.all(domain=self.domain, due_before=in30min + timedelta(seconds=2))
         self.assertEqual(len(repeat_records), 2)
 
         for repeat_record in repeat_records:
-            self.assertLess(abs(in30min - repeat_record.next_check), timedelta(seconds=1))
+            self.assertLess(abs(in30min - repeat_record.next_check), timedelta(seconds=2))
             repeat_record.fire(post_fn=self.make_post_fn([404, 200]))
             repeat_record.save()
 

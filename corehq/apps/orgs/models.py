@@ -25,14 +25,19 @@ class Organization(Document):
         result = cls.view("orgs/by_name",
             key=name,
             reduce=False,
-            include_docs=True).first()
+            include_docs=True,
+            stale='update_after',
+        ).one()
         return result
 
     @classmethod
     def get_all(cls):
+        """This will eventually be a big operation"""
         result = cls.view("orgs/by_name",
             reduce=False,
-            include_docs=True).all()
+            include_docs=True,
+            stale='update_after',
+        ).all()
         return result
 
     def get_logo(self):

@@ -380,7 +380,7 @@ class _AuthorizableMixin(IsMemberOfMixin):
                     raise self.Inconsistent("Domain '%s' is in domain_memberships but not domains" % domain)
                 return
 
-        domain_obj = Domain.get_by_name(domain)
+        domain_obj = Domain.get_by_name(domain, strict=True)
         if not domain_obj:
             domain_obj = Domain(is_active=True, name=domain, date_created=datetime.utcnow())
             domain_obj.save()
@@ -766,6 +766,7 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, UnicodeMixIn):
             reduce=reduce,
             startkey=key,
             endkey=key + [{}],
+            stale='update_after',
             **extra_args
         ).all()
 
