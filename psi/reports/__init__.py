@@ -225,10 +225,12 @@ class PSITSReport(PSIReport):
         "pub_gt80",
 
         "dep_trained",
+        "dep_pers_trained",
         "dep_avg_diff",
         "dep_gt80",
 
         "flw_trained",
+        "flw_pers_trained",
         "flw_avg_diff",
         "flw_gt80",
     )
@@ -250,9 +252,11 @@ class PSITSReport(PSIReport):
     pub_gt80 = Column("Public: Num > 80%", key="pub_gt80")
 
     dep_trained = Column("Depot: Number of Trainings", key="dep_trained")
+    dep_pers_trained = Column("Depot: Number of Personnel Trained", key="dep_pers_trained")
     dep_avg_diff = Column("Depot: Learning changed", key="dep_avg_diff", reduce_fn=mean)
     dep_gt80 = Column("Depot: Num > 80%", key="dep_gt80")
 
     flw_trained = Column("FLW: Number of Trainings", key="flw_trained")
+    flw_pers_trained = Column("FLW: Number of Personnel Trained", key="flw_pers_trained")
     flw_avg_diff = Column("FLW: Learning changed", key="flw_avg_diff", reduce_fn=mean)
     flw_gt80 = Column("FLW: Num > 80%", key="flw_gt80")

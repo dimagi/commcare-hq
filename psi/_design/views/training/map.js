@@ -3,7 +3,7 @@ function (doc) {
     //!code util/repeats.js
 
     if (doc.doc_type === 'XFormInstance' && (doc.domain === 'psi' || doc.domain === 'psi-unicef')) {
-        var form = doc.form;
+        var form = eval(uneval(doc.form));
 
         if (form["@name"] !== 'Training Session') {
             return;
@@ -11,20 +11,59 @@ function (doc) {
 
         var opened_on = form.meta.timeEnd;
 
+        // format form correctly
+        var sub_doc_names = {
+            allopathic: ["allopathic_doctors"],
+            ayush: ["ayush", "ayush_bams", "ayush_bhms", "ayush_bums", "ayush_dhms", "ayush_dams", "ayush_others"],
+            depot_holder: ["depot_ngo", "depot_cbo", "depot_shg", "depot_others"],
+            flw_training: ["flw_asha", "flw_anm", "flw_aww", "flw_asha_supervisor", "flw_others"]
+        };
+
+        var merge_sub_docs = function(doc_name, sub_docs) {
+            var num_trained = 0;
+            var total_pre_score = 0;
+            var total_post_score = 0;
+            var num_80_percent = 0;
+
+            for (var i = 0; i < sub_docs.length; i++) {
+                var tag = sub_docs[i];
+                if (tag === "allopathic_doctors") {
+                    tag = "allopathic";
+                }
+                var doc = form[tag];
+                if (doc) {
+                    var nt = (parseInt(doc[tag+"_number_trained"], 10)||0) + (parseInt(doc[tag+"_num_trained"], 10)||0);
+                    num_trained += nt;
+                    num_80_percent += parseInt(doc[tag+"_num_80_percent"], 10) || 0;
+                    total_pre_score += (parseFloat(doc[tag+"_avg_pre_score"]) || 0) * nt;
+                    total_post_score += (parseFloat(doc[tag+"_avg_post_score"]) || 0) * nt;
+                }
+            }
+
+            return {
+                num_trained: num_trained,
+                avg_pre_score: total_pre_score / (num_trained || 1),
+                avg_post_score: total_post_score / (num_trained || 1),
+                avg_diff: (total_post_score - total_pre_score) / (num_trained || 1),
+                num_80_percent: num_80_percent
+            };
+        };
+
+        for (var key in sub_doc_names) {
+            if (sub_doc_names.hasOwnProperty(key)) {
+                form["_" + key] = merge_sub_docs(key, sub_doc_names[key]);
+            }
+        }
+
         var trainee_categories = ['private', 'public', 'depot_holder', 'flw_training'];
         var category_key_slugs = {
             private: 'priv',
             public: 'pub',
-            depot_training: 'dep',
+            depot_holder: 'dep',
             flw_training: 'flw'
         };
 
-        var num_trained = function(doctor_type) {
-            return get_repeats(form.trainee_information, function(data) {
-                return data.doctor_type == doctor_type;
-            }).length;
-        };
-
+        // determine which slug or substring to use for the specific trainee_category
         var tc = form.trainee_category;
         var slug = false;
         for (var i = 0; i < trainee_categories.length; i++) {
@@ -39,24 +78,20 @@ function (doc) {
             data[slug+"_trained"] = 1;
 
             if (tc === 'private' || tc === 'public') {
-                data[slug+"_allo_trained"] = num_trained('allopathic');
-                data[slug+"_ayush_trained"] = num_trained('ayush');
+                var al_f = form["_allopathic"];
+                var ay_f = form["_ayush"];
+                var al_num = al_f["num_trained"];
+                var ay_num = ay_f["num_trained"];
+                data[slug+"_allo_trained"] = al_num;
+                data[slug+"_ayush_trained"] = ay_num;
+                data[slug+"_avg_diff"] = (al_f["avg_diff"] * al_num) + (ay_f["avg_diff"] * ay_num) / (al_num + ay_num || 1);
+                data[slug+"_gt80"] = al_f["num_80_percent"] + al_f["num_80_percent"];
             }
-
-            //scores
-            var trainees = get_repeats(form.trainee_information, function(t) { return t; });
-            var num_gt80 = 0;
-            for (var i = 0; i < trainees.length; i++) {
-                if (trainees[i].post_test_score >= 80) {
-                    num_gt80++;
-                }
-
-                // emit the score_diff for each repeat. We do this because we want an average and each form may
-                // not have the same number of repeats and the reduce views' average wouldn't be correct,
-                var score_diff = (trainees[i].post_test_score || 0) - (trainees[i].pre_test_score || 0);
-                emit([form.training_state, form.training_district, slug+'_avg_diff', opened_on], score_diff);
+            else {
+                data[slug+"_pers_trained"] = form["_" + tc]["num_trained"];
+                data[slug+"_avg_diff"] = form["_" + tc]["avg_diff"];
+                data[slug+"_gt80"] = form["_"+tc]["num_80_percent"];
             }
-            data[slug+"_gt80"] = num_gt80;
             emit_array([form.training_state, form.training_district], [opened_on], data);
         }
     }
