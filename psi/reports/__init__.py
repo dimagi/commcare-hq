@@ -176,17 +176,17 @@ class PSISSReport(PSIReport):
 
     sessions = Column("Number of Sessions", key="sessions")
 
-    ayush_doctors = Column("Ayush Trained", key="ayush_doctors")
+    ayush_doctors = Column("Ayush Sensitized", key="ayush_doctors")
 
-    mbbs_doctors = Column("MBBS Trained", key="mbbs_doctors")
+    mbbs_doctors = Column("MBBS Sensitized", key="mbbs_doctors")
 
-    asha_supervisors = Column("Asha Supervisors Trained", key="asha_supervisors")
+    asha_supervisors = Column("Asha Supervisors Sensitized", key="asha_supervisors")
 
-    ashas = Column("Ashas trained", key="ashas")
+    ashas = Column("Ashas Sensitized", key="ashas")
 
-    awws = Column("AWW Trained", key="awws")
+    awws = Column("AWW Sensitized", key="awws")
 
-    other = Column("Other Trained", key="other")
+    other = Column("Other Sensitized", key="other")
 
     attendees = Column("VHND Attendees", key='attendees')
 
