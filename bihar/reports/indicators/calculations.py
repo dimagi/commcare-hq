@@ -67,7 +67,8 @@ class IndicatorCalculator(CalculatorBase):
             denom_diff = self.denominator(case)
             if denom_diff:
                 denom += denom_diff
-                num_diff = self.numerator(case)
+                # evil people sometimes return None here
+                num_diff = self.numerator(case) or 0
                 assert num_diff <= denom_diff
                 # this is to prevent the numerator from ever passing the denominator
                 # though is probably not totally accurate
