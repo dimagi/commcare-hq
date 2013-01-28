@@ -77,14 +77,6 @@ UNICEL_CONFIG = {"username": "Dimagi",
                  "password": "******",
                  "sender": "Promo" }
 
-####### Custom reports ########
-
-CUSTOM_REPORT_MAP = {
-    "domain_name": [
-        'path.to.CustomReport',
-    ]
-}
-
 ####### Domain sync / de-id ########
 
 DOMAIN_SYNCS = { 
