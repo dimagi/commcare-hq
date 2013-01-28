@@ -415,6 +415,7 @@ class PactAPI(DomainAPI):
             if self.request.POST.has_key('rm_schedule'):
                 #hacky remove schedule method
                 pdoc.rm_schedule()
+                pdoc.save()
                 resp.status_code = 204
                 return resp
 
@@ -433,6 +434,7 @@ class PactAPI(DomainAPI):
                 sched.created_by = self.request.user.username
                 sched.deprecated = False
                 pdoc.set_schedule(sched)
+                pdoc.save()
                 resp.status_code = 204
                 return resp
             else:

@@ -1,7 +1,32 @@
+import pdb
+import uuid
+from dateutil import parser
 from django.test import TestCase
 from pact.lib.quicksect import IntervalNode
 from datetime import datetime, timedelta
 from pact.models import PactPatientCase, CDotWeeklySchedule
+import pytz
+utc=pytz.UTC
+
+NEW_START_DATE = "2013-01-26T13:01:30Z"
+NEW_SCHEDULE = {
+    "comment": "",
+    "doc_type": "CDotWeeklySchedule",
+    "schedule_id": uuid.uuid4().hex,
+    "edited_by": None,
+    "monday": 'ctsims',
+    "started": NEW_START_DATE,
+    "deprecated": False,
+    "tuesday": "ctsims",
+    "friday": None,
+    "wednesday": 'ctsims',
+    "thursday": None,
+    "ended": None,
+    "sunday": None,
+    "created_by": "cm326",
+    "saturday": None
+}
+
 
 WEEKLY_SCHEDULE_KEY = 'pact_weekly_schedule'
 WEEKLY_SCHEDULE_EXAMPLES = [
@@ -100,7 +125,7 @@ WEEKLY_SCHEDULE_EXAMPLES = [
         }
     ]
 
-class BasicCaseTests(TestCase):
+class ScheduleTests(TestCase):
     def setUp(self):
         pass
 
@@ -141,23 +166,73 @@ class BasicCaseTests(TestCase):
                 start_check = check_time
 
 
+    def testCreatePatientSchedule(self):
+        """
+        Single schedule create/remove
+        """
+        test_patient = PactPatientCase()
+        test_patient.computed_ = {}
+        test_patient.set_schedule(CDotWeeklySchedule.wrap(NEW_SCHEDULE))
+        pdb.set_trace()
+        schedules = test_patient.get_schedules()
+        pdb.set_trace()
 
-    def testPatientSchedule(self):
+        self.assertEqual(len(schedules), 1)
+
+        self.assertIsNone(schedules[0]['ended'])
+        self.assertEquals(schedules[0]['started'].isoformat()[0:10], datetime.utcnow().isoformat()[0:10])
+
+
+        test_patient.rm_schedule()
+        updated_schedules = test_patient.get_schedules()
+
+        self.assertEqual(len(updated_schedules), 0)
+
+
+    def testExtendingPatientSchedule(self):
+        def fmt_datetime(dt):
+            """Hacky timezone somewhat aware way to get date outputs right"""
+            return utc.localize(dt).strftime("%Y-%m-%dT%H:%M:%SZ")
+            #return dt.strftime("%Y-%m-%dT%H:%M:%SZ")
+
 
         test_patient = PactPatientCase()
         test_patient.computed_ = {}
 
-        test_patient.computed_[WEEKLY_SCHEDULE_KEY] = [CDotWeeklySchedule.wrap(x) for x in WEEKLY_SCHEDULE_EXAMPLES]
+        #hand make it
+        #test_patient.computed_[WEEKLY_SCHEDULE_KEY] = [CDotWeeklySchedule.wrap(x) for x in WEEKLY_SCHEDULE_EXAMPLES]
+        test_patient.computed_[WEEKLY_SCHEDULE_KEY] = WEEKLY_SCHEDULE_EXAMPLES
+
+        #verify that tail is <date> - null
+        api_schedules =  test_patient.get_schedules(raw_json=True)
+        self.assertIsNone(api_schedules[-1]['ended'])
+        self.assertEquals(api_schedules[-1]['started'], '2011-02-25T14:05:32Z')
+
+        self.assertEquals(len(api_schedules), len(WEEKLY_SCHEDULE_EXAMPLES))
+
+        #add a new schedule, verify tail is <date>-present, and [-2] is <datex> - <datey>
 
 
-        #add a new schedule, verify tail is x-present, and [-2] is x-x
+        test_patient.set_schedule(CDotWeeklySchedule.wrap(NEW_SCHEDULE))
 
-        new_schedule = None
+        updated_schedules =  test_patient.get_schedules(raw_json=True)
+        self.assertIsNone(updated_schedules[-1]['ended'])
+        self.assertEquals(len(updated_schedules), len(WEEKLY_SCHEDULE_EXAMPLES)+1)
+        #pdb.set_trace()
 
+        self.assertEquals(updated_schedules[-1]['started'][0:10], datetime.utcnow().isoformat()[0:10])
 
+        self.assertIsNotNone(updated_schedules[-2]['ended'])
+        print updated_schedules[-2]['ended']
+        print datetime.utcnow().isoformat()
+        self.assertLess(updated_schedules[-2]['ended'], datetime.utcnow().isoformat())
 
+        ### remove tail
 
+        test_patient.rm_schedule()
 
-
-        pass
+        removed_schedules = test_patient.get_schedules(raw_json=True)
+        self.assertEquals(len(removed_schedules), len(WEEKLY_SCHEDULE_EXAMPLES))
+        self.assertIsNone(removed_schedules[-1]['ended'])
+        self.assertEquals(removed_schedules[-1]['started'], '2011-02-25T14:05:32Z')
 

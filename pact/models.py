@@ -207,45 +207,50 @@ class PactPatientCase(CommCareCase):
             if reversed:
                 ret.reverse()
             return ret
+        else:
+            return []
     def rm_schedule(self):
         """
-        Remove the tail from the schedule
+        Remove the tail from the schedule - does not save doc
         """
-        schedules= self.get_schedules()[:-1]
+        schedules = self.get_schedules()[:-1]
+        self._recompute_schedules(schedules)
+
+    def _recompute_schedules(self, schedules):
+        for ix, curr_sched in enumerate(schedules):
+            #ensure that current ended is <= next ended
+            next_sched = None
+            if ix < len(schedules) - 1:
+                next_sched = schedules[ix+1]
+            else:
+                #we are at the end
+                if curr_sched.ended is not None:
+                    curr_sched.ended = None
+                    schedules[ix] = curr_sched
+
+            if next_sched is not None:
+                if curr_sched.ended is None:
+                    #not good, there's a next
+                    curr_sched.ended = next_sched.started - timedelta(seconds=1)
+                    schedules[ix] = curr_sched
+                if curr_sched.ended <= next_sched.started:
+                    #ok, good
+                    pass
         self['computed_'][PACT_SCHEDULES_NAMESPACE] = [x.to_json() for x in schedules]
-        self.save()
 
     def set_schedule(self, new_schedule):
-        """set the schedule as head of the schedule by accepting a cdotweeklychedule"""
+        """set the schedule as head of the schedule by accepting a cdotweeklychedule, does not save doc"""
+        assert isinstance(new_schedule, CDotWeeklySchedule), "setting schedule instance must be a CDotWeeklySchedule class"
         #first, set all the others to inactive
         schedules = self.get_schedules()
         new_schedule.deprecated=False
         if new_schedule.started == None or new_schedule.started <= datetime.utcnow():
             new_schedule.started=datetime.utcnow()
         #recompute and make sure all schedules are closed time intervals
-        for ix, curr_sched in enumerate(schedules):
-            #ensure that current ended is <= next ended
-            next_sched = None
-            if ix < len(schedules) - 1:
-                next_sched = schedules[ix+1]
-
-            if next_sched is not None:
-                if curr_sched.ended is None:
-                    #not good, there's a next
-                    curr_sched.ended = next_sched.started - timedelta(seconds=1)
-                if curr_sched.ended <= next_sched.started:
-                    #ok, good
-                    pass
-            else:
-                #we're at the end
-                #do nothing, assume it was created OK
-                #curr_sched.deprecated=False
-                pass
-
         schedules.append(new_schedule)
-        self['computed_'][PACT_SCHEDULES_NAMESPACE] = [x.to_json() for x in schedules]
-        self.save()
-#        print schedules
+        self._recompute_schedules(schedules)
+
+
 
 
     def get_info_url(self):
