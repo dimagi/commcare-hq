@@ -53,7 +53,7 @@ individual project sites when necessary.
   when using a virtualenv created with `--no-site-packages` or when the
   `egenix-mx-base` Python package is not already installed. To fix this, install
   `egenix-mx-base` (`sudo apt-get install python-egenix-mxdatetime` on Ubuntu)
-  and use `virtualenv --with-site-packages` instead.
+  and use `virtualenv --system-site-packages` instead.
 
 + On Mac OS X, pip doesn't install the `libmagic` dependency for `python-magic`
   properly. To fix this, run `brew install libmagic`.
@@ -65,6 +65,10 @@ individual project sites when necessary.
   follow [these instructions](http://obroll.com/install-python-pil-python-image-library-on-ubuntu-11-10-oneiric/). 
   (If you don't do this, the only thing that won't work is uploading of JPEGs to
   the CommCare Exchange.)
+
++ If you have an authentication error running `./manage.py syncdb` the first
+  time, open `pg_hba.conf` (`/etc/postgresql/9.1/main/pg_hba.conf` on Ubuntu)
+  and change the line "local all all peer" to "local all all md5".
 
 #### Configuration for Elasticsearch
 
@@ -105,9 +109,10 @@ writeable.
 
 ### Set up your django environment
 
-    ./manage.py syncdb
-    ./manage.py migrate
-    ./manage.py collectstatic
+    # you may have to run syncdb twice to get past a transient error
+    ./manage.py syncdb --noinput
+    ./manage.py migrate --noinput
+    ./manage.py collectstatic --noinput
 
     # this will do some basic setup, create a superuser, and create a project
     ./manage.py bootstrap <project-name> <email> <password>
