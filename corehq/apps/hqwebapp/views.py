@@ -61,8 +61,11 @@ def not_found(request, template_name='404.html'):
 
 def redirect_to_default(req, domain=None):
     if not req.user.is_authenticated():
-        # this actually gets hijacked by the static site, but is necessary
-        url = reverse('corehq.apps.hqwebapp.views.landing_page')
+        if domain != None:
+            url = reverse('domain_login', args=[domain])
+        else:
+            # this actually gets hijacked by the static site, but is necessary
+            url = reverse('corehq.apps.hqwebapp.views.landing_page')
     else:
         if domain:
             domain = normalize_domain_name(domain)
