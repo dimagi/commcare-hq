@@ -117,7 +117,6 @@ def india():
     env.home = '/home/commcarehq/'
     env.root = root = '/home/commcarehq'
     env.environment = 'india'
-    env.log_root   = posixpath.join(root, 'log')
     env.code_branch = 'master'
     env.sudo_user = 'commcarehq'
     env.hosts = ['220.226.209.82']
@@ -229,7 +228,7 @@ def upgrade_packages():
 def what_os():
     with settings(warn_only=True):
         require('environment', provided_by=('staging','production'))
-        if env.host_os_map is None:
+        if getattr(env, 'host_os_map', None) is None:
             #prior use case of setting a env.remote_os did not work when doing multiple hosts with different os! Need to keep state per host!
             env.host_os_map = defaultdict(lambda: '')
         if env.host_os_map[env.host_string] == '':
@@ -385,8 +384,8 @@ def update_env(preindex=False):
 
 @roles('lb')
 def touch_apache():
-    """Touch apache and supervisor conf files to trigger reload. Also calls supervisorctl update
-    to load latest supervisor.conf """
+    """Touch apache conf files to trigger reload."""
+
     require('code_root', provided_by=('staging', 'production'))
     apache_path = posixpath.join(posixpath.join(env.services, 'apache'), 'apache.conf')
     sudo('touch %s' % apache_path, user=env.sudo_user)
@@ -395,8 +394,11 @@ def touch_apache():
 
 @roles('django_celery', 'django_app', 'django_monolith')
 def touch_supervisor():
-    """ touch apache and supervisor conf files to trigger reload. Also calls supervisorctl update
-     to load latest supervisor.conf """
+    """
+    touch supervisor conf files to trigger reload. Also calls supervisorctl
+    update to load latest supervisor.conf
+    
+    """
     require('code_root', provided_by=('staging', 'production'))
     supervisor_path = posixpath.join(posixpath.join(env.services, 'supervisor'), 'supervisor.conf')
     sudo('touch %s' % supervisor_path, user=env.sudo_user)
@@ -535,7 +537,7 @@ def fix_locale_perms():
     """ Fix the permissions on the locale directory """
     require('root', provided_by=('staging', 'production'))
     _set_apache_user()
-    locale_dir = '%s/commcare-hq/locale/' % env.code_root
+    locale_dir = '%s/locale/' % env.code_root
     sudo('chown -R %s %s' % (env.sudo_user, locale_dir), user=env.sudo_user)
     sudo('chgrp -R %s %s' % (env.apache_user, locale_dir), user=env.sudo_user)
     sudo('chmod -R g+w %s' % (locale_dir), user=env.sudo_user)
