@@ -152,6 +152,7 @@ HQ_APPS = (
     'couchforms',
     'couchexport',
     'couchlog',
+    'dimagi.utils',
     'formtranslate',
     'receiver',
     'langcodes',
@@ -210,9 +211,7 @@ HQ_APPS = (
     'psi',
 )
 
-TEST_APPS = (
-    'dimagi.utils',
-)
+TEST_APPS = ()
 REFLEXIVE_URL_BASE = "localhost:8000"
 
 INSTALLED_APPS = DEFAULT_APPS + HQ_APPS
