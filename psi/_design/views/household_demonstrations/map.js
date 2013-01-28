@@ -10,10 +10,10 @@ function (doc) {
         }
 
         var data = {
-            demonstrations: count_in_repeats(form.visits, "hh_covered"),
-            children: count_in_repeats(form.visits, "number_young_children_covered"),
-            leaflets: count_in_repeats(form.visits, "leaflets_distributed"),
-            kits: count_in_repeats(form.visits, "kits_sold")
+            demonstrations: parseInt(form["hh_covered"], 10) || 0,
+            children: parseInt(form["number_young_children_covered"], 10) || 0,
+            leaflets: parseInt(form["leaflets_distributed"], 10) || 0,
+            kits: parseInt(form["kits_sold"], 10) || 0
         };
 
         var opened_on = form.meta.timeEnd;
