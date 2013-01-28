@@ -284,9 +284,9 @@ def bootstrap():
     # copy localsettings in case any management commands we want to run now
     # would error otherwise
     with cd(env.code_root):
-        sudo('cp localsettings.example.py localsettings.py')
+        sudo('cp -n localsettings.example.py localsettings.py')
     with cd(env.code_root_preindex):
-        sudo('cp localsettings.example.py localsettings.py')
+        sudo('cp -n localsettings.example.py localsettings.py')
 
     update_code()
     execute(create_virtualenvs)
