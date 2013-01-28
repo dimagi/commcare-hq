@@ -58,6 +58,9 @@ individual project sites when necessary.
 + On Mac OS X, pip doesn't install the `libmagic` dependency for `python-magic`
   properly. To fix this, run `brew install libmagic`.
 
++ On Mac OS X, libevent may not be installed already, which the Python `gevent` library requires. The error message
+  will be a clang error that file `event.h` is not found. To fix this using Homebrew, run `brew install libevent`.
+
 + To install PIL (Python Image Library) correctly on Ubuntu, you may need to
   follow [these instructions](http://obroll.com/install-python-pil-python-image-library-on-ubuntu-11-10-oneiric/). 
   (If you don't do this, the only thing that won't work is uploading of JPEGs to
