@@ -3,7 +3,6 @@
 
 import os
 from django.contrib import messages
-from django.utils.datastructures import SortedDict
 
 CACHE_BACKEND = 'memcached://127.0.0.1:11211/'
 
@@ -219,18 +218,6 @@ REFLEXIVE_URL_BASE = "localhost:8000"
 
 INSTALLED_APPS = DEFAULT_APPS + HQ_APPS
 
-MENU_ITEMS = (
-    "corehq.apps.hqwebapp.models.ProjectInfoMenuItem",
-    "corehq.apps.hqwebapp.models.ReportsMenuItem",
-    "corehq.apps.hqwebapp.models.ManageDataMenuItem",
-    "corehq.apps.hqwebapp.models.ApplicationsMenuItem",
-    "corehq.apps.hqwebapp.models.CloudcareMenuItem",
-    "corehq.apps.hqwebapp.models.MessagesMenuItem",
-    "corehq.apps.hqwebapp.models.ProjectSettingsMenuItem",
-    "corehq.apps.hqwebapp.models.AdminReportsMenuItem",
-    "corehq.apps.hqwebapp.models.ExchangeMenuItem",
-    "corehq.apps.hqwebapp.models.ManageSurveysMenuItem",
-)
 
 # after login, django redirects to this URL
 # rather than the default 'accounts/profile'
@@ -394,7 +381,7 @@ ELASTICSEARCH_PORT = 9200
 
 try:
     #try to see if there's an environmental variable set for local_settings
-    if os.environ.has_key('CUSTOMSETTINGS') and os.environ['CUSTOMSETTINGS'] == "demo":
+    if os.environ.get('CUSTOMSETTINGS', None) == "demo":
         # this sucks, but is a workaround for supporting different settings
         # in the same environment
         from settings_demo import *
@@ -554,222 +541,23 @@ in HTML or read this email in a client that supports HTML email.
 Thanks,
 The CommCare HQ Team"""
 
-DATA_INTERFACE_MAP = {
-    'Case Management' : [
-        'corehq.apps.data_interfaces.interfaces.CaseReassignmentInterface',
-        'corehq.apps.importer.base.ImportCases',
-    ]
-}
-APPSTORE_INTERFACE_MAP = {
-    'App Store' : [
-        'corehq.apps.appstore.interfaces.CommCareExchangeAdvanced'
-    ]
-}
-
-PROJECT_REPORT_MAP = SortedDict([
-    ["Monitor Workers", [
-        'corehq.apps.reports.standard.monitoring.DailyFormStatsReport',
-        'corehq.apps.reports.standard.monitoring.SubmissionsByFormReport',
-        'corehq.apps.reports.standard.monitoring.FormCompletionTimeReport',
-        'corehq.apps.reports.standard.monitoring.CaseActivityReport',
-        'corehq.apps.reports.standard.monitoring.FormCompletionVsSubmissionTrendsReport',
-        'corehq.apps.reports.standard.monitoring.WorkerActivityTimes',
-    ]],
-    ["Inspect Data", [
-        'corehq.apps.reports.standard.inspect.SubmitHistory',
-        'corehq.apps.reports.standard.inspect.CaseListReport',
-        'corehq.apps.reports.standard.inspect.MapReport',
-    ]],
-    ["Raw Data", [
-        'corehq.apps.reports.standard.export.ExcelExportReport',
-        'corehq.apps.reports.standard.export.CaseExportReport',
-        'corehq.apps.reports.standard.export.DeidExportReport',
-    ]],
-    ["Manage Deployments", [
-        'corehq.apps.reports.standard.deployments.ApplicationStatusReport',
-        'corehq.apps.receiverwrapper.reports.SubmissionErrorReport',
-        'phonelog.reports.FormErrorReport',
-        'phonelog.reports.DeviceLogDetailsReport'
-    ]],
-    ["SMS", [
-        'corehq.apps.reports.standard.sms.MessagesReport',
-        'corehq.apps.reports.standard.sms.MessageLogReport',
-    ]],
-    ["Commtrack", [
-        'corehq.apps.reports.commtrack.psi_prototype.VisitReport',
-        'corehq.apps.reports.commtrack.psi_prototype.SalesAndConsumptionReport',
-        'corehq.apps.reports.commtrack.psi_prototype.CumulativeSalesAndConsumptionReport',
-        'corehq.apps.reports.commtrack.psi_prototype.StockOutReport',
-        'corehq.apps.reports.commtrack.psi_prototype.StockReportExport',
-    ]]
-])
-
-CUSTOM_REPORT_MAP = {
-    ## legacy custom reports. do not follow practices followed here
-    "pathfinder": {
-        'Custom Reports': [
-            'pathfinder.models.PathfinderHBCReport',
-            'pathfinder.models.PathfinderProviderReport',
-            'pathfinder.models.PathfinderWardSummaryReport'
-        ]
-    },
-    "dca-malawi": {
-        'Custom Reports': [
-            'dca.reports.ProjectOfficerReport',
-            'dca.reports.PortfolioComparisonReport',
-            'dca.reports.PerformanceReport',
-            'dca.reports.PerformanceRatiosReport'
-        ]
-    },
-    "eagles-fahu": {
-        'Custom Reports': [
-            'dca.reports.ProjectOfficerReport',
-            'dca.reports.PortfolioComparisonReport',
-            'dca.reports.PerformanceReport',
-            'dca.reports.PerformanceRatiosReport'
-        ],
-    },
-    ## end legacy custom reports
-    "hsph": {
-        'Field Management Reports': [
-            'hsph.reports.field_management.DCOActivityReport',
-            'hsph.reports.field_management.FieldDataCollectionActivityReport',
-            'hsph.reports.field_management.HVFollowUpStatusReport',
-            'hsph.reports.field_management.HVFollowUpStatusSummaryReport',
-            'hsph.reports.call_center.CaseReport',
-            'hsph.reports.field_management.DCOProcessDataReport'
-        ],
-        'Project Management Reports': [
-            'hsph.reports.project_management.ProjectStatusDashboardReport',
-            'hsph.reports.project_management.ImplementationStatusDashboardReport'
-        ],
-        'Call Center Reports': [
-            'hsph.reports.call_center.CATIPerformanceReport',
-            'hsph.reports.call_center.CallCenterFollowUpSummaryReport'
-        ],
-        'Data Summary Reports': [
-            'hsph.reports.data_summary.PrimaryOutcomeReport',
-            'hsph.reports.data_summary.SecondaryOutcomeReport'
-        ]
-    },
-    "pathindia": {
-        'Custom Reports': [
-            'pathindia.reports.PathIndiaKrantiReport'
-        ]
-    },
-    "mvp-sauri": {
-        "Custom Reports": [
-            'mvp.reports.mvis.HealthCoordinatorReport',
-            'mvp.reports.chw.CHWManagerReport'
-        ]
-    },
-    "mvp-potou": {
-        "Custom Reports": [
-            'mvp.reports.mvis.HealthCoordinatorReport',
-            'mvp.reports.chw.CHWManagerReport'
-        ]
-    },
-    # todo: giovanni, you should fix this report at some point.
-    "a5288": {
-        "Custom Reports": ["a5288.reports.MissedCallbackReport"]
-    },
-    "a5288-test": {
-        "Custom Reports": ["a5288.reports.MissedCallbackReport"]
-    },
-    "care-bihar": {
-        "Custom Reports": [
-            "bihar.reports.supervisor.MainNavReport",
-            "bihar.reports.supervisor.WorkerRankSelectionReport",
-            "bihar.reports.supervisor.DueListReport",
-            "bihar.reports.supervisor.ToolsNavReport",
-            "bihar.reports.supervisor.ReferralListReport",
-            "bihar.reports.supervisor.EDDCalcReport",
-            "bihar.reports.supervisor.BMICalcReport",
-            "bihar.reports.supervisor.SubCenterSelectionReport",
-            "bihar.reports.indicators.reports.IndicatorNav",
-            "bihar.reports.indicators.reports.IndicatorSummaryReport",
-            "bihar.reports.indicators.reports.IndicatorClientSelectNav",
-            "bihar.reports.indicators.reports.IndicatorClientList",
-            "bihar.reports.indicators.reports.IndicatorCharts",
-        ]
-    },
-    "pact": {
-        "PACT Reports": [
-            "pact.reports.patient_list.PatientListDashboardReport",
-            "pact.reports.dot.PactDOTReport",
-            "pact.reports.patient.PactPatientInfoReport",
-            "pact.reports.chw_list.PactCHWDashboard",
-            "pact.reports.chw.PactCHWProfileReport",
-            #"pact.reports.CHWVisitsReport",
-#            "pact.reports.DOTReport",
-#            "pact.reports.PactExports",
-    ],
-    },
-    "psi": {
-        "Custom Reports": [
-            'psi.reports.PSIEventsReport',
-            'psi.reports.PSIHDReport',
-            'psi.reports.PSISSReport',
-            'psi.reports.PSITSReport',
-        ]
-    },
-    "psi-unicef": {
-        "Custom Reports": [
-            'psi.reports.PSIEventsReport',
-            'psi.reports.PSIHDReport',
-            'psi.reports.PSISSReport',
-            'psi.reports.PSITSReport',
-        ]
-    }
-    #    "test": [
-    #        'corehq.apps.reports.deid.FormDeidExport',
-    #    ]
+# mapping of domains to modules for those that aren't identical
+DOMAIN_MODULE_MAP = {
+    'a5288-test': 'a5288',
+    'care-bihar': 'bihar',
+    'dca-malawi': 'dca',
+    'eagles-fahu': 'dca',
+    'mvp-potou': 'mvp',
+    'mvp-sauri': 'mvp',
+    'psi-unicef': 'psi'
 }
 
 MESSAGE_LOG_OPTIONS = {
     "abbreviated_phone_number_domains" : ["mustmgh","mgh-cgh-uganda"],
 }
 
-BILLING_REPORT_MAP = {
-    "Manage SMS Backend Rates": [
-        "hqbilling.reports.backend_rates.DimagiRateReport",
-        "hqbilling.reports.backend_rates.MachRateReport",
-        "hqbilling.reports.backend_rates.TropoRateReport",
-        "hqbilling.reports.backend_rates.UnicelRateReport"
-    ],
-    "Billing Details": [
-        "hqbilling.reports.details.SMSDetailReport",
-        "hqbilling.reports.details.MonthlyBillReport"
-    ],
-    "Billing Tools": [
-        "hqbilling.reports.tools.BillableCurrencyReport",
-        "hqbilling.reports.tools.TaxRateReport"
-    ]
-}
 
-ADM_SECTION_MAP = {
-    "Supervisor Report": [
-        'corehq.apps.adm.reports.supervisor.SupervisorReportsADMSection',
-    ],
-}
 
-ADM_ADMIN_INTERFACE_MAP = {
-    "ADM Default Columns": [
-        'corehq.apps.adm.admin.columns.ReducedADMColumnInterface',
-        'corehq.apps.adm.admin.columns.DaysSinceADMColumnInterface',
-        'corehq.apps.adm.admin.columns.ConfigurableADMColumnInterface'
-    ],
-    "ADM Default Reports": [
-        'corehq.apps.adm.admin.reports.ADMReportAdminInterface',
-    ]
-}
-
-ANNOUNCEMENTS_ADMIN_INTERFACE_MAP = {
-    "Manage Announcements": [
-        'corehq.apps.announcements.interface.ManageGlobalHQAnnouncementsInterface',
-        'corehq.apps.announcements.interface.ManageReportAnnouncementsInterface',
-    ]
-}
 
 MESSAGE_TAGS = {
     messages.INFO: 'alert-info',
