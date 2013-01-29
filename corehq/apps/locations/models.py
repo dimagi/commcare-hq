@@ -2,6 +2,7 @@ from couchdbkit.ext.django.schema import *
 import itertools
 from dimagi.utils.couch.database import get_db
 from django import forms
+from django.core.urlresolvers import reverse
 
 class Location(Document):
     domain = StringProperty()
@@ -48,6 +49,11 @@ class Location(Document):
         else:
             return Location.get(self.lineage[0])
 
+    def siblings(self, parent=None):
+        if not parent:
+            parent = self.parent
+        return [loc for loc in (parent.children if parent else root_locations(self.domain)) if loc._id != self._id]
+
     @property
     def path(self):
         _path = list(reversed(self.lineage))
@@ -87,8 +93,7 @@ class Location(Document):
 def location_tree(domain):
     """build a hierarchical tree of the entire location structure for a domain"""
     # this is going to be extremely slow as the number of locations gets big
-    locs = Location.view('locations/hierarchy', startkey=[domain], endkey=[domain, {}],
-                         reduce=False, include_docs=True).all()
+    locs = all_locations(domain)
     locs.sort(key=lambda l: l.path) # parents must appear before their children; couch should
     # return docs in the correct order, but, just to be safe...
     locs_by_id = dict((l._id, l) for l in locs)
@@ -116,6 +121,10 @@ def root_locations(domain):
 
     ids = [res['key'][-1] for res in results]
     return [Location.get(id) for id in ids]
+
+def all_locations(domain):
+    return Location.view('locations/hierarchy', startkey=[domain], endkey=[domain, {}],
+                         reduce=False, include_docs=True).all()
 
 class CustomProperty(Document):
     name = StringProperty()
@@ -150,5 +159,21 @@ class CustomProperty(Document):
 
         return self.field_type()(**kwargs)
 
-    def custom_validate(self, loc, val):
-        pass
+    def custom_validate(self, loc, val, prop_name):
+        self.validate_uniqueness(loc, val, prop_name)
+
+    def validate_uniqueness(self, loc, val, prop_name):
+        val = val.lower() # case-insensitive comparison
+
+        uniqueness_set = []
+        if self.unique == 'global':
+            uniqueness_set = [l for l in all_locations(loc.domain) if l._id != loc._id]
+        elif self.unique == 'siblings':
+            uniqueness_set = loc.siblings()
+
+        unique_conflict = [l for l in uniqueness_set if val == getattr(l, prop_name, None)]
+        if unique_conflict:
+            conflict_loc = unique_conflict[0]
+            raise ValueError('value must be unique; conflicts with <a href="%s">%s %s</a>' %
+                             (reverse('edit_location', kwargs={'domain': loc.domain, 'loc_id': conflict_loc._id}),
+                              conflict_loc.name, conflict_loc.location_type))

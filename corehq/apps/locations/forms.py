@@ -3,6 +3,7 @@ from corehq.apps.locations.models import Location, root_locations
 from django.template.loader import get_template
 from django.template import Template, Context
 from corehq.apps.locations.util import load_locs_json, allowed_child_types, location_custom_properties
+from django.utils.safestring import mark_safe
 
 class ParentLocWidget(forms.Widget):
     def render(self, name, value, attrs=None):
@@ -67,8 +68,7 @@ class LocationForm(forms.Form):
     def clean_name(self):
         name = self.cleaned_data['name']
 
-        parent = self.cleaned_data.get('parent')
-        siblings = [loc for loc in (parent.children if parent else root_locations(self.location.domain)) if loc._id != self.location._id]
+        siblings = self.location.siblings(self.cleaned_data.get('parent'))
         if name in [loc.name for loc in siblings]:
             raise forms.ValidationError('name conflicts with another location with this parent')
 
@@ -133,10 +133,11 @@ class LocationCustomPropertiesSubForm(forms.Form):
                 def clean_custom():
                     try:
                         val = self.cleaned_data[p.name]
-                        p.custom_validate(self.location, val)
+                        if val is not None:
+                            p.custom_validate(self.location, val, p.name)
                         return val
                     except Exception, e:
-                        raise forms.ValidationError(str(e))
+                        raise forms.ValidationError(mark_safe(str(e)))
                 return clean_custom
         raise AttributeError
 
