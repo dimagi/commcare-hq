@@ -35,6 +35,10 @@ class BasicPillow(object):
     changes_seen = 0
 
     def old_changes(self):
+        """
+        Couchdbkit < 0.6.0 changes feed listener
+        http://couchdbkit.org/docs/changes_consumer.html
+        """
         from couchdbkit import  Consumer
         c = Consumer(self.couch_db, backend='gevent')
         while True:
@@ -46,8 +50,12 @@ class BasicPillow(object):
                 gevent.sleep(5)
 
     def new_changes(self):
-         with ChangesStream(self.couch_db, feed='continuous', heartbeat=True, since=self.since,
-             filter=self.couch_filter) as st:
+        """
+        Couchdbkit > 0.6.0 changes feed listener handler (api changes after this)
+        http://couchdbkit.org/docs/changes.html
+        """
+        with ChangesStream(self.couch_db, feed='continuous', heartbeat=True, since=self.since,
+            filter=self.couch_filter) as st:
             for c in st:
                 self.processor(c)
 
