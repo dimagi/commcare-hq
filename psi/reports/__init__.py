@@ -1,10 +1,12 @@
 from corehq.apps.fixtures.models import FixtureDataItem, FixtureDataType
 from corehq.apps.reports.standard import CustomProjectReport, DatespanMixin
 from corehq.apps.reports.basic import BasicTabularReport, Column
-from corehq.apps.reports.fields import AsyncDrillableField
+from corehq.apps.reports.fields import AsyncDrillableField, ReportSelectField
 from util import get_unique_combinations
 from couchdbkit_aggregate.fn import mean
 from dimagi.utils.decorators.memoized import memoized
+
+DEMO_TYPES = {"asha", "aww", "anm", "ngo", "cbo", "vhnd"}
 
 class StateDistrictField(AsyncDrillableField):
     label = "State and District"
@@ -26,6 +28,18 @@ class AsyncPlaceField(AsyncDrillableField):
                  {"type": "district", "parent_ref": "state_id", "references": "id", "display": "name"},
                  {"type": "block", "parent_ref": "district_id", "references": "id", "display": "name"},
                  {"type": "village", "parent_ref": "block_id", "references": "id", "display": "name"}]
+
+
+class DemoTypeField(ReportSelectField):
+    slug = "demo_type"
+    name = "Worker Type"
+    cssId = "demo_type_select"
+    cssClasses = "span6"
+    default_option = "All Worker Types"
+
+    def update_params(self):
+        self.selected = self.request.GET.get(self.slug,'')
+        self.options = [{'val': dt, 'text': dt} for dt in DEMO_TYPES]
 
 class PSIReport(BasicTabularReport, CustomProjectReport, DatespanMixin):
     fields = ['corehq.apps.reports.fields.DatespanField','psi.reports.AsyncPlaceField',]
@@ -95,6 +109,9 @@ class PSIHDReport(PSIReport):
     exportable = True
     slug = "household_demonstations"
     section_name = "household demonstrations"
+    fields = ['corehq.apps.reports.fields.DatespanField',
+              'psi.reports.AsyncPlaceField',
+              'psi.reports.DemoTypeField',]
 
     @property
     def keys(self):
@@ -102,7 +119,12 @@ class PSIHDReport(PSIReport):
             place_types=['state', 'district', "block", "village"], place=self.selected_fixture())
 
         for c in combos:
-            yield [c['state'], c['district'], c["block"], c["village"]]
+            selected_demo_type = self.request.GET.get('demo_type', "")
+            if selected_demo_type:
+                yield [c['state'], c['district'], c["block"], c["village"], selected_demo_type]
+            else:
+                for dt in DEMO_TYPES:
+                    yield [c['state'], c['district'], c["block"], c["village"], dt]
 
     couch_view = 'psi/household_demonstrations'
 
@@ -111,8 +133,8 @@ class PSIHDReport(PSIReport):
         'district_name',
         "block_name",
         "village_name",
+        "demo_type",
         'demonstrations',
-        #        'worker_type',
         'children',
         'leaflets',
         'kits',
@@ -126,9 +148,9 @@ class PSIHDReport(PSIReport):
 
     village_name = Column("Village", calculate_fn=get_village_name)
 
-    demonstrations = Column("Number of demonstrations done", key="demonstrations")
+    demo_type = Column("Worker Type", calculate_fn=lambda key, _: key[4])
 
-    #    worker_type #todo
+    demonstrations = Column("Number of demonstrations done", key="demonstrations")
 
     children = Column("Number of 0-6 year old children", key="children")
 
