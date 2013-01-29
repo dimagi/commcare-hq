@@ -19,6 +19,10 @@ function (doc) {
             attendees: parseInt(form["number_attendees"], 10) || 0
         };
 
+        if (form["type_of_sensitization"] === 'vhnd') {
+            data["sessions"] += 1;
+        }
+
         var opened_on = form.meta.timeEnd;
 
         emit_array([form.training_state, form.training_district, form.training_block], [opened_on], data);
