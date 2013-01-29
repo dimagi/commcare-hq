@@ -131,8 +131,7 @@ class BasicPillow(object):
                 if tr is not None:
                     self.change_transport(tr)
         except Exception, ex:
-#            logging.error("Error on change: %s, %s" % (change['id'], ex))
-            print "Error on change: %s, %s" % (change['id'], ex)
+            logging.error("Error on change: %s, %s" % (change['id'], ex))
 
 
     def change_trigger(self, changes_dict):
@@ -264,10 +263,7 @@ class ElasticPillow(BasicPillow):
                         yield {"index": {"_index": self.es_index, "_type": self.es_type, "_id": tr['_id']}}
                         yield tr
             except Exception, ex:
-            #            logging.error("Error on change: %s, %s" % (change['id'], ex))
-                print "Error on change: %s, %s" % (change['id'], ex)
-
-
+                logging.error("Error on change: %s, %s" % (change['id'], ex))
 
     def process_bulk(self, changes):
         self.allow_updates=False
@@ -294,8 +290,7 @@ class ElasticPillow(BasicPillow):
                 if tr is not None:
                     self.change_transport(tr)
         except Exception, ex:
-        #            logging.error("Error on change: %s, %s" % (change['id'], ex))
-            print "Error on change: %s, %s" % (change['id'], ex)
+            logging.error("Error on change: %s, %s" % (change['id'], ex))
 
 
     def change_transport(self, doc_dict):
@@ -386,8 +381,7 @@ class AliasedElasticPillow(ElasticPillow):
                         yield {"index": {"_index": self.es_index, "_type": self.get_type_string(tr), "_id": tr['_id']}}
                         yield tr
             except Exception, ex:
-            #            logging.error("Error on change: %s, %s" % (change['id'], ex))
-                print "Error on change: %s, %s" % (change['id'], ex)
+                logging.error("Error on change: %s, %s" % (change['id'], ex))
 
 
 
