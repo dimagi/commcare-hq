@@ -384,7 +384,7 @@ class FormBase(DocumentSchema):
         except XFormError as e:
             errors.append(dict(
                 type="invalid xml",
-                message=unicode(e),
+                message=unicode(e) if self.source else '',
                 **meta
             ))
         except ValueError:
@@ -1770,7 +1770,7 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
                 errors.append({'type': 'empty lang'})
 
         if not self.modules:
-            errors.append({"type": "no modules"})
+            errors.append({'type': "no modules"})
         for module in self.get_modules():
             if not module.forms:
                 errors.append({'type': "no forms", "module": {"id": module.id, "name": module.name}})
