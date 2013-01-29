@@ -142,7 +142,7 @@ msgstr "Entrez la DDR (JJ-MM-AAAA)"
 #: .\submodules\bihar-reports\bihar\reports\supervisor.py:361
 #, python-format
 msgid "Estimated Date of Delivery: %s"
-msgstr "Date présumée d'accouchement"
+msgstr "Date présumée d'accouchement: %s"
 
 #: .\submodules\bihar-reports\bihar\reports\supervisor.py:364
 #: .\submodules\bihar-reports\bihar\reports\supervisor.py:389
