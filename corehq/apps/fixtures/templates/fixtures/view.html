@@ -38,10 +38,11 @@
 {% block content %}
     <div class="row-fluid hidden" style="margin-top: 25px;" id="fixtures-ui">
         <div class="span2">&nbsp;</div>
-        <div class="span9" data-bind="">
+        <div class="span9">
+            <a href="{% url upload_item_lists domain %}">Upload Item Lists</a>
             <div class="well" data-bind="visible: !data_types().length && loading" style="text-align: center;">Loading...</div>
             <div data-bind="visible: data_types().length">
-                {% trans "Number of fixtures: " %}<span data-bind="text: data_types().length"></span>
+                {% trans "Number of fixtures types: " %}<span data-bind="text: data_types().length"></span>
             </div>
             <!-- ko foreach: data_types -->
             <section class="well" data-bind="css: {selected: editing() || aboutToDelete()}">

@@ -4,10 +4,12 @@ import csv
 from corehq.apps.domain.decorators import login_and_domain_required
 from corehq.apps.fixtures.models import FixtureDataType, FixtureDataItem
 from corehq.apps.groups.models import Group
+from corehq.apps.users.bulkupload import GroupMemoizer
 from corehq.apps.users.decorators import require_permission
 from corehq.apps.users.models import CommCareUser, Permissions
 from corehq.apps.users.util import normalize_username
-from dimagi.utils.excel import WorkbookJSONReader
+from dimagi.utils.couch.bulk import CouchTransaction
+from dimagi.utils.excel import WorkbookJSONReader, WorksheetNotFound
 from dimagi.utils.logging import notify_exception
 from dimagi.utils.web import json_response, render_to_response
 from dimagi.utils.decorators.view import get_file
@@ -62,7 +64,8 @@ def data_types(request, domain, data_type_id):
             return json_response(strip_json(data_type))
 
         elif request.method == 'DELETE':
-            data_type.recursive_delete()
+            with CouchTransaction() as transaction:
+                data_type.recursive_delete(transaction)
             return json_response({})
 
     elif data_type_id is None:
@@ -76,8 +79,9 @@ def data_types(request, domain, data_type_id):
             return json_response([strip_json(x) for x in FixtureDataType.by_domain(domain)])
 
         elif request.method == 'DELETE':
-            for data_type in FixtureDataType.by_domain(domain):
-                data_type.recursive_delete()
+            with CouchTransaction() as transaction:
+                for data_type in FixtureDataType.by_domain(domain):
+                    data_type.recursive_delete(transaction)
             return json_response({})
 
     return HttpResponseBadRequest()
@@ -206,26 +210,29 @@ class UploadItemLists(TemplateView):
             return HttpResponseBadRequest("Error processing your Excel (.xlsx) file")
 
         try:
-            data_types = workbook.get_worksheet(title='types')
-        except KeyError:
-            return HttpResponseBadRequest("Workbook does not have a sheet called 'types'")
+            self._run_upload(request, workbook)
+        except WorksheetNotFound as e:
+            return HttpResponseBadRequest("Workbook does not have a sheet called '%s'" % e.title)
+        except Exception as e:
+            notify_exception(request)
+            messages.error(request, "Fixture upload could not complete due to the following error: %s" % e)
 
-        data_types_to_save = []
-        data_items_to_save = []
+        return HttpResponseRedirect(reverse('fixture_view', args=[self.domain]))
 
-        try:
+    def _run_upload(self, request, workbook):
+        group_memoizer = GroupMemoizer(self.domain)
+
+        data_types = workbook.get_worksheet(title='types')
+
+        with CouchTransaction() as transaction:
             for dt in data_types:
                 data_type = FixtureDataType(
                     domain=self.domain,
                     name=dt['name'],
                     tag=dt['tag'],
                     fields=dt['field'],
-                    # I need to give it a uuid now
-                    # because I'm going to reference
-                    # its uuid before saving it
-                    _id=FixtureDataType.get_db().server.next_uuid()
                 )
-                data_types_to_save.append(data_type)
+                transaction.save(data_type)
                 data_items = workbook.get_worksheet(data_type.tag)
                 for di in data_items:
                     data_item = FixtureDataItem(
@@ -233,11 +240,11 @@ class UploadItemLists(TemplateView):
                         data_type_id=data_type.get_id,
                         fields=di['field']
                     )
-                    data_items_to_save.append(data_item)
+                    transaction.save(data_item)
                     for group_name in di.get('group', []):
-                        group = Group.by_name(self.domain, group_name)
+                        group = group_memoizer.by_name(group_name)
                         if group:
-                            data_item.add_group(group)
+                            data_item.add_group(group, transaction=transaction)
                         else:
                             messages.error(request, "Unknown group: %s" % group_name)
                     for raw_username in di.get('user', []):
@@ -247,16 +254,10 @@ class UploadItemLists(TemplateView):
                             data_item.add_user(user)
                         else:
                             messages.error(request, "Unknown user: %s" % raw_username)
-        except Exception as e:
-            notify_exception(request)
-            messages.error(request, "Fixture upload could not complete due to the following error: %s" % e)
-        else:
-            for data_type in data_types_to_save:
+            for data_type in transaction.preview_save(cls=FixtureDataType):
                 for duplicate in FixtureDataType.by_domain_tag(domain=self.domain, tag=data_type.tag):
-                    duplicate.recursive_delete()
-            FixtureDataType.bulk_save(data_types_to_save)
-            FixtureDataItem.bulk_save(data_items_to_save)
-        return HttpResponseRedirect(reverse('fixture_view', args=[self.domain]))
+                    duplicate.recursive_delete(transaction)
+
 
     @method_decorator(require_can_edit_fixtures)
     def dispatch(self, request, domain, *args, **kwargs):
