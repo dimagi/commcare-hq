@@ -25,7 +25,7 @@ from corehq.apps.users.views import _users_context, require_can_edit_web_users, 
 
 from dimagi.utils.web import render_to_response, get_url_base
 from dimagi.utils.decorators.view import get_file
-from dimagi.utils.excel import Excel2007DictReader, WorkbookJSONReader
+from dimagi.utils.excel import Excel2007DictReader, WorkbookJSONReader, WorksheetNotFound
 
 DEFAULT_USER_LIST_LIMIT = 10
 
@@ -226,10 +226,10 @@ class UploadCommCareUsers(TemplateView):
 
         try:
             self.user_specs = self.workbook.get_worksheet(title='users')
-        except KeyError:
+        except WorksheetNotFound:
             try:
                 self.user_specs = self.workbook.get_worksheet()
-            except IndexError:
+            except WorksheetNotFound:
                 return HttpResponseBadRequest("Workbook has no worksheets")
 
         try:

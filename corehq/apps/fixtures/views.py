@@ -204,18 +204,26 @@ class UploadItemLists(TemplateView):
     def post(self, request):
         """View's dispatch method automatically calls this"""
 
+        def error_redirect():
+            return HttpResponseRedirect(reverse('upload_item_lists', args=[self.domain]))
+
         try:
             workbook = WorkbookJSONReader(request.file)
         except AttributeError:
-            return HttpResponseBadRequest("Error processing your Excel (.xlsx) file")
+            messages.error(request, "Error processing your Excel (.xlsx) file")
+            return error_redirect()
+
+
 
         try:
             self._run_upload(request, workbook)
         except WorksheetNotFound as e:
-            return HttpResponseBadRequest("Workbook does not have a sheet called '%s'" % e.title)
+            messages.error(request, "Workbook does not have a sheet called '%s'" % e.title)
+            return error_redirect()
         except Exception as e:
             notify_exception(request)
             messages.error(request, "Fixture upload could not complete due to the following error: %s" % e)
+            return error_redirect()
 
         return HttpResponseRedirect(reverse('fixture_view', args=[self.domain]))
 
