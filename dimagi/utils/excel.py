@@ -142,6 +142,11 @@ class IteratorJSONReader(object):
 
         obj[field] = value
 
+class WorksheetNotFound(Exception):
+    def __init__(self, title):
+        self.title = title
+        super(WorksheetNotFound, self).__init__()
+
 class WorksheetJSONReader(IteratorJSONReader):
     def __init__(self, worksheet):
         width = 0
@@ -187,11 +192,20 @@ class WorkbookJSONReader(object):
         if title is not None and index is not None:
             raise TypeError("Can only get worksheet by title *or* index")
         if title:
-            return self.worksheets_by_title[title]
+            try:
+                return self.worksheets_by_title[title]
+            except KeyError:
+                raise WorksheetNotFound(title=title)
         elif index:
-            return self.worksheets[index]
+            try:
+                return self.worksheets[index]
+            except IndexError:
+                raise WorksheetNotFound(title=index)
         else:
-            return self.worksheets[0]
+            try:
+                return self.worksheets[0]
+            except IndexError:
+                raise WorksheetNotFound(title=0)
 
 # Utils for writing
 
