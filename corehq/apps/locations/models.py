@@ -163,7 +163,12 @@ class CustomProperty(Document):
         self.validate_uniqueness(loc, val, prop_name)
 
     def validate_uniqueness(self, loc, val, prop_name):
-        val = val.lower() # case-insensitive comparison
+        def normalize(val):
+            try:
+                return val.lower() # case-insensitive comparison
+            except AttributeError:
+                return val
+        val = normalize(val)
 
         uniqueness_set = []
         if self.unique == 'global':
@@ -171,7 +176,7 @@ class CustomProperty(Document):
         elif self.unique == 'siblings':
             uniqueness_set = loc.siblings()
 
-        unique_conflict = [l for l in uniqueness_set if val == getattr(l, prop_name, None)]
+        unique_conflict = [l for l in uniqueness_set if val == normalize(getattr(l, prop_name, None))]
         if unique_conflict:
             conflict_loc = unique_conflict[0]
             raise ValueError('value must be unique; conflicts with <a href="%s">%s %s</a>' %
