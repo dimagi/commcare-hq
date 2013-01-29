@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2013-01-28 09:14-0500\n"
+"POT-Creation-Date: 2013-01-29 14:12-0500\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -224,7 +224,6 @@ msgid "Pregnant woman not received IFA tablets"
 msgstr "गर्भवती जिन्हे IFA की गोलीयॉ नही मिली"
 
 #: .\submodules\bihar-reports\bihar\reports\indicators\__init__.py:75
-#, fuzzy
 msgid ""
 "Woman due for delivery within 30 days who have not done preparation for "
 "Emergency Maternal Care"
@@ -233,7 +232,6 @@ msgstr ""
 "नहीं की(और अलग किये गये लाभार्थी को अगले स्क्रीन मे दिखाऐं)"
 
 #: .\submodules\bihar-reports\bihar\reports\indicators\__init__.py:80
-#, fuzzy
 msgid ""
 "Woman due for delivery within 30 days who have not done preparation for "
 "immediate new-born care"
@@ -242,7 +240,6 @@ msgstr ""
 "अलग किये गये लाभार्थी को अगले स्क्रीन मे दिखाऐं)"
 
 #: .\submodules\bihar-reports\bihar\reports\indicators\__init__.py:85
-#, fuzzy
 msgid ""
 "Woman due for delivery within 30 days who have not been counselled on "
 "Immediate Post-Partum Family Planning"
@@ -251,7 +248,6 @@ msgstr ""
 "समझाया गया? (और अलग किये गये लाभार्थी को अगले स्क्रीन मे दिखाऐं)"
 
 #: .\submodules\bihar-reports\bihar\reports\indicators\__init__.py:90
-#, fuzzy
 msgid ""
 "Woman due for delivery within 30 days who have not showed interest to adopt "
 "Family planning methods"
@@ -389,34 +385,38 @@ msgstr "घर पर हुए मृत जन्म"
 msgid "Live Births"
 msgstr "जीवित जन्म"
 
-#: .\submodules\bihar-reports\bihar\reports\indicators\calculations.py:102
+#: .\submodules\bihar-reports\bihar\reports\indicators\calculations.py:103
+#: .\submodules\core-hq-src\corehq\apps\reports\standard\ivr.py:102
+#: .\submodules\core-hq-src\corehq\apps\reports\standard\ivr.py:112
 msgid "Yes"
 msgstr "हॉ"
 
-#: .\submodules\bihar-reports\bihar\reports\indicators\calculations.py:103
+#: .\submodules\bihar-reports\bihar\reports\indicators\calculations.py:104
+#: .\submodules\core-hq-src\corehq\apps\reports\standard\ivr.py:102
+#: .\submodules\core-hq-src\corehq\apps\reports\standard\ivr.py:112
 msgid "No"
 msgstr "नहीं"
 
-#: .\submodules\bihar-reports\bihar\reports\indicators\calculations.py:104
+#: .\submodules\bihar-reports\bihar\reports\indicators\calculations.py:105
 #: .\submodules\core-hq-src\corehq\apps\reports\templates\reports\partials\hqexport_group_table.html.py:20
 #: .\submodules\core-hq-src\corehq\apps\reports\templates\reports\partials\hqexport_group_table.html.py:21
 msgid "N/A"
 msgstr "लागु नही"
 
-#: .\submodules\bihar-reports\bihar\reports\indicators\calculations.py:114
+#: .\submodules\bihar-reports\bihar\reports\indicators\calculations.py:115
 msgid "Visit Status"
 msgstr "गृह-भ्रमण कि स्थिति"
 
-#: .\submodules\bihar-reports\bihar\reports\indicators\calculations.py:115
+#: .\submodules\bihar-reports\bihar\reports\indicators\calculations.py:116
 msgid "Done"
 msgstr "समाप्त"
 
-#: .\submodules\bihar-reports\bihar\reports\indicators\calculations.py:116
+#: .\submodules\bihar-reports\bihar\reports\indicators\calculations.py:117
 msgid "Due"
 msgstr "बॉकी"
 
-#: .\submodules\bihar-reports\bihar\reports\indicators\calculations.py:128
-#: .\submodules\bihar-reports\bihar\reports\indicators\calculations.py:152
+#: .\submodules\bihar-reports\bihar\reports\indicators\calculations.py:129
+#: .\submodules\bihar-reports\bihar\reports\indicators\calculations.py:153
 #: .\submodules\core-hq-src\corehq\apps\domain\forms.py:25
 #: .\submodules\core-hq-src\corehq\apps\reports\standard\inspect.py:334
 #: .\submodules\core-hq-src\corehq\apps\reports\templates\reports\base_template.html.py:111
@@ -426,25 +426,25 @@ msgstr "बॉकी"
 msgid "Name"
 msgstr "नाम"
 
-#: .\submodules\bihar-reports\bihar\reports\indicators\calculations.py:128
-#: .\submodules\bihar-reports\bihar\reports\indicators\calculations.py:152
+#: .\submodules\bihar-reports\bihar\reports\indicators\calculations.py:129
+#: .\submodules\bihar-reports\bihar\reports\indicators\calculations.py:153
 msgid "Husband's Name"
 msgstr "पति का नाम"
 
-#: .\submodules\bihar-reports\bihar\reports\indicators\calculations.py:128
+#: .\submodules\bihar-reports\bihar\reports\indicators\calculations.py:129
 msgid "EDD"
 msgstr "ईड़ीड़ी"
 
-#: .\submodules\bihar-reports\bihar\reports\indicators\calculations.py:152
+#: .\submodules\bihar-reports\bihar\reports\indicators\calculations.py:153
 msgid "ADD"
 msgstr "प्रसव की तारीख"
 
-#: .\submodules\bihar-reports\bihar\reports\indicators\calculations.py:485
+#: .\submodules\bihar-reports\bihar\reports\indicators\calculations.py:486
 #, python-format
 msgid "Identified in %s days"
 msgstr "%s दिन में पहचान कर लिया गया"
 
-#: .\submodules\bihar-reports\bihar\reports\indicators\calculations.py:487
+#: .\submodules\bihar-reports\bihar\reports\indicators\calculations.py:488
 #, python-format
 msgid "Identified in %s hours"
 msgstr "%s घंटे में पहचान कर लिया गया"
@@ -494,47 +494,47 @@ msgid "Manage Deployments"
 msgstr ""
 
 #: .\submodules\core-hq-src\corehq\__init__.py:34
-msgid "SMS"
+msgid "CommConnect"
 msgstr ""
 
-#: .\submodules\core-hq-src\corehq\__init__.py:38
+#: .\submodules\core-hq-src\corehq\__init__.py:39
 #: .\submodules\core-hq-src\corehq\apps\reports\__init__.py:12
 msgid "Commtrack"
 msgstr ""
 
-#: .\submodules\core-hq-src\corehq\__init__.py:51
+#: .\submodules\core-hq-src\corehq\__init__.py:52
 msgid "Case Management"
 msgstr ""
 
-#: .\submodules\core-hq-src\corehq\__init__.py:61
+#: .\submodules\core-hq-src\corehq\__init__.py:62
 msgid "Supervisor Report"
 msgstr ""
 
-#: .\submodules\core-hq-src\corehq\__init__.py:69
+#: .\submodules\core-hq-src\corehq\__init__.py:70
 msgid "ADM Default Columns"
 msgstr ""
 
-#: .\submodules\core-hq-src\corehq\__init__.py:74
+#: .\submodules\core-hq-src\corehq\__init__.py:75
 msgid "ADM Default Reports"
 msgstr ""
 
-#: .\submodules\core-hq-src\corehq\__init__.py:84
+#: .\submodules\core-hq-src\corehq\__init__.py:85
 msgid "Manage Announcements"
 msgstr ""
 
-#: .\submodules\core-hq-src\corehq\__init__.py:93
+#: .\submodules\core-hq-src\corehq\__init__.py:94
 msgid "Manage SMS Backend Rates"
 msgstr ""
 
-#: .\submodules\core-hq-src\corehq\__init__.py:99
+#: .\submodules\core-hq-src\corehq\__init__.py:100
 msgid "Billing Details"
 msgstr ""
 
-#: .\submodules\core-hq-src\corehq\__init__.py:103
+#: .\submodules\core-hq-src\corehq\__init__.py:104
 msgid "Billing Tools"
 msgstr ""
 
-#: .\submodules\core-hq-src\corehq\__init__.py:112
+#: .\submodules\core-hq-src\corehq\__init__.py:113
 msgid "App Store"
 msgstr ""
 
@@ -1807,6 +1807,7 @@ msgid "Error Type"
 msgstr ""
 
 #: .\submodules\core-hq-src\corehq\apps\receiverwrapper\reports.py:62
+#: .\submodules\core-hq-src\corehq\apps\reports\standard\ivr.py:37
 msgid "Error Message"
 msgstr ""
 
@@ -2112,6 +2113,7 @@ msgstr ""
 
 #: .\submodules\core-hq-src\corehq\apps\reports\filters\forms.py:661
 #: .\submodules\core-hq-src\corehq\apps\reports\standard\inspect.py:60
+#: .\submodules\core-hq-src\corehq\apps\reports\standard\ivr.py:33
 #: .\submodules\core-hq-src\corehq\apps\reports\templates\reports\reportdata\excel_export_data.html.py:167
 msgid "Form"
 msgstr ""
@@ -2221,6 +2223,58 @@ msgstr ""
 
 #: .\submodules\core-hq-src\corehq\apps\reports\standard\inspect.py:453
 msgid "Maps"
+msgstr ""
+
+#: .\submodules\core-hq-src\corehq\apps\reports\standard\ivr.py:21
+msgid "Call Log"
+msgstr ""
+
+#: .\submodules\core-hq-src\corehq\apps\reports\standard\ivr.py:29
+#: .\submodules\core-hq-src\corehq\apps\reports\standard\sms.py:113
+msgid "Timestamp"
+msgstr ""
+
+#: .\submodules\core-hq-src\corehq\apps\reports\standard\ivr.py:30
+#: .\submodules\core-hq-src\corehq\apps\reports\standard\sms.py:34
+#: .\submodules\core-hq-src\corehq\apps\reports\standard\sms.py:114
+#, fuzzy
+msgid "User Name"
+msgstr "टीम का नाम"
+
+#: .\submodules\core-hq-src\corehq\apps\reports\standard\ivr.py:31
+#: .\submodules\core-hq-src\corehq\apps\reports\standard\sms.py:115
+msgid "Phone Number"
+msgstr ""
+
+#: .\submodules\core-hq-src\corehq\apps\reports\standard\ivr.py:32
+#: .\submodules\core-hq-src\corehq\apps\reports\standard\sms.py:116
+msgid "Direction"
+msgstr ""
+
+#: .\submodules\core-hq-src\corehq\apps\reports\standard\ivr.py:34
+msgid "Answered"
+msgstr ""
+
+#: .\submodules\core-hq-src\corehq\apps\reports\standard\ivr.py:35
+msgid "Duration"
+msgstr ""
+
+#: .\submodules\core-hq-src\corehq\apps\reports\standard\ivr.py:36
+msgid "Error"
+msgstr ""
+
+#: .\submodules\core-hq-src\corehq\apps\reports\standard\ivr.py:41
+msgid "Gateway - Session Id"
+msgstr ""
+
+#: .\submodules\core-hq-src\corehq\apps\reports\standard\ivr.py:57
+#: .\submodules\core-hq-src\corehq\apps\reports\standard\sms.py:130
+msgid "Incoming"
+msgstr ""
+
+#: .\submodules\core-hq-src\corehq\apps\reports\standard\ivr.py:58
+#: .\submodules\core-hq-src\corehq\apps\reports\standard\sms.py:131
+msgid "Outgoing"
 msgstr ""
 
 #: .\submodules\core-hq-src\corehq\apps\reports\standard\monitoring.py:104
@@ -2431,12 +2485,6 @@ msgid ""
 "verified. Phone numbers can be verified from the Settings and Users tab."
 msgstr ""
 
-#: .\submodules\core-hq-src\corehq\apps\reports\standard\sms.py:34
-#: .\submodules\core-hq-src\corehq\apps\reports\standard\sms.py:114
-#, fuzzy
-msgid "User Name"
-msgstr "टीम का नाम"
-
 #: .\submodules\core-hq-src\corehq\apps\reports\standard\sms.py:35
 msgid "Number of Messages Received"
 msgstr ""
@@ -2453,28 +2501,8 @@ msgstr ""
 msgid "Message Log"
 msgstr ""
 
-#: .\submodules\core-hq-src\corehq\apps\reports\standard\sms.py:113
-msgid "Timestamp"
-msgstr ""
-
-#: .\submodules\core-hq-src\corehq\apps\reports\standard\sms.py:115
-msgid "Phone Number"
-msgstr ""
-
-#: .\submodules\core-hq-src\corehq\apps\reports\standard\sms.py:116
-msgid "Direction"
-msgstr ""
-
 #: .\submodules\core-hq-src\corehq\apps\reports\standard\sms.py:117
 msgid "Message"
-msgstr ""
-
-#: .\submodules\core-hq-src\corehq\apps\reports\standard\sms.py:130
-msgid "Incoming"
-msgstr ""
-
-#: .\submodules\core-hq-src\corehq\apps\reports\standard\sms.py:131
-msgid "Outgoing"
 msgstr ""
 
 #: .\submodules\core-hq-src\corehq\apps\reports\templates\reports\base_template.html.py:68
