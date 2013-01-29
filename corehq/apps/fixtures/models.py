@@ -43,7 +43,7 @@ class FixtureDataItem(Document):
 
     def add_owner(self, owner, owner_type, transaction=None):
         assert(owner.domain == self.domain)
-        with transaction or CouchTransaction():
+        with transaction or CouchTransaction() as transaction:
             o = FixtureOwnership(domain=self.domain, owner_type=owner_type, owner_id=owner.get_id, data_item_id=self.get_id)
             transaction.save(o)
         return o
