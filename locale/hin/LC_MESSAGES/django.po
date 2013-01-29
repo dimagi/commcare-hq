@@ -277,19 +277,19 @@ msgstr "अस्पताल मे हुए प्रसव जिसमे �
 
 #: .\submodules\bihar-reports\bihar\reports\indicators\__init__.py:117
 msgid "Live Births at Home / Total Live Birth (TLB)"
-msgstr ""
+msgstr "घर पर हुए जीवित जन्म/कुल जीवित जन्म"
 
 #: .\submodules\bihar-reports\bihar\reports\indicators\__init__.py:122
 msgid "Live Births at Government Hospital / Total Live Birth (TLB)"
-msgstr ""
+msgstr "सरकारी हॉस्पिटल में हुए जीवित जन्म/कुल जीवित जन्म"
 
 #: .\submodules\bihar-reports\bihar\reports\indicators\__init__.py:127
 msgid "Live Births in Transit / Total Live Birth (TLB)"
-msgstr ""
+msgstr "यात्रा के दौरान हुए जीवित जन्म/कुल जीवित जन्म"
 
 #: .\submodules\bihar-reports\bihar\reports\indicators\__init__.py:132
 msgid "Live Births at Private Hospital / Total Live Birth (TLB)"
-msgstr ""
+msgstr "निजी हॉस्पिटल में हुए जीवित जन्म/कुल जीवित जन्म"
 
 #: .\submodules\bihar-reports\bihar\reports\indicators\__init__.py:139
 msgid "Post-Partum Complications"
@@ -379,15 +379,15 @@ msgstr "शिशु मृत्यु"
 
 #: .\submodules\bihar-reports\bihar\reports\indicators\__init__.py:246
 msgid "Still Births at Government Hospital"
-msgstr ""
+msgstr "सरकारी हॉस्पिटल में हुए मृत जन्म"
 
 #: .\submodules\bihar-reports\bihar\reports\indicators\__init__.py:251
 msgid "Still Births at Home"
-msgstr ""
+msgstr "घर पर हुए मृत जन्म"
 
 #: .\submodules\bihar-reports\bihar\reports\indicators\__init__.py:256
 msgid "Live Births"
-msgstr ""
+msgstr "जीवित जन्म"
 
 #: .\submodules\bihar-reports\bihar\reports\indicators\calculations.py:102
 msgid "Yes"
