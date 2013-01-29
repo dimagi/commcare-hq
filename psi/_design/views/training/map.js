@@ -2,12 +2,12 @@ function (doc) {
     //!code util/emit_array.js
 
     if (doc.doc_type === 'XFormInstance' && (doc.domain === 'psi' || doc.domain === 'psi-unicef')) {
-        var form = eval(uneval(doc.form));
-
-        if (form["@name"] !== 'Training Session') {
+        if (doc.form["@name"] !== 'Training Session') {
             return;
         }
 
+        var form = eval(uneval(doc.form));
+        
         var opened_on = form.meta.timeEnd;
 
         // format form correctly
