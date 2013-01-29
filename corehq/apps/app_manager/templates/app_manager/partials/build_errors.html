@@ -12,9 +12,7 @@
                     <i class="icon icon-exclamation-sign"></i>
                     <span>
                         {% if error.type == "invalid xml" %}
-                            {% if error.form.content %}
-                                Invalid xml in form
-                            {% else %}
+                            {% if not error.message %}
                                 Blank form
                             {% endif %}
                             {% include "app_manager/partials/form_error_message.html" %}

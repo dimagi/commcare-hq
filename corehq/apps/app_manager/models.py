@@ -374,11 +374,6 @@ class FormBase(DocumentSchema):
             'form': {"id": self.id if hasattr(self, 'id') else None, "name": self.name}
         }
 
-        errors_ = self.check_actions()
-        for error_ in errors_:
-            error_.update(meta)
-        errors.extend(errors_)
-
         try:
             _parse_xml(self.source)
         except XFormError as e:
@@ -390,8 +385,10 @@ class FormBase(DocumentSchema):
         except ValueError:
             logging.error("Failed: _parse_xml(string=%r)" % self.source)
             raise
-
-
+        else:
+            for error in self.check_actions():
+                error.update(meta)
+                errors.append(error)
 
         if self.requires_case():
             needs_case_detail = True
