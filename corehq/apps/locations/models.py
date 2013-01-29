@@ -123,7 +123,7 @@ class CustomProperty(Document):
     label = StringProperty()
     required = BooleanProperty()
     help_text = StringProperty()
-    unique = None # enum - none, sibling, global
+    unique = StringProperty()
 
     def field_type(self):
         return getattr(forms, '%sField' % (self.datatype or 'Char'))
@@ -150,3 +150,5 @@ class CustomProperty(Document):
 
         return self.field_type()(**kwargs)
 
+    def custom_validate(self, loc, val):
+        pass

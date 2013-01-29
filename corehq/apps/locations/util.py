@@ -55,6 +55,7 @@ def location_custom_properties(domain, loc_type):
                     name='outlet_code',
                     label='SMS Code',
                     required=True,
+                    unique='global',
                 ),
                 CustomProperty(
                     name='outlet_type',
@@ -107,7 +108,13 @@ def location_custom_properties(domain, loc_type):
                 ),
                 CustomProperty(
                     name='village_class',
+                    datatype='Choice',
                     label='Village Class',
+                    choices={'mode': 'static', 'args': [
+                            'small',
+                            'medium',
+                            'large',
+                        ]},
                 ),
             ],
         }[loc_type]

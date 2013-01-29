@@ -118,9 +118,25 @@ class LocationForm(forms.Form):
 
 class LocationCustomPropertiesSubForm(forms.Form):
     def __init__(self, location, potential_type, *args, **kwargs):
+        self.location = location
+        self.properties = location_custom_properties(location.domain, potential_type)
+
         kwargs['prefix'] = 'props_%s' % potential_type
         super(LocationCustomPropertiesSubForm, self).__init__(*args, **kwargs)
 
-        for p in location_custom_properties(location.domain, potential_type):
+        for p in self.properties:
             self.fields[p.name] = p.field(getattr(location, p.name, None))
+
+    def __getattr__(self, attr):
+        for p in self.properties:
+            if attr == 'clean_%s' % p.name:
+                def clean_custom():
+                    try:
+                        val = self.cleaned_data[p.name]
+                        p.custom_validate(self.location, val)
+                        return val
+                    except Exception, e:
+                        raise forms.ValidationError(str(e))
+                return clean_custom
+        raise AttributeError
 
