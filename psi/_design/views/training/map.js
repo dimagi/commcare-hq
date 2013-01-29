@@ -1,6 +1,5 @@
 function (doc) {
     //!code util/emit_array.js
-    //!code util/repeats.js
 
     if (doc.doc_type === 'XFormInstance' && (doc.domain === 'psi' || doc.domain === 'psi-unicef')) {
         var form = eval(uneval(doc.form));
