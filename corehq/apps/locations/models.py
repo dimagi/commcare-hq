@@ -129,12 +129,24 @@ class CustomProperty(Document):
         return getattr(forms, '%sField' % (self.datatype or 'Char'))
 
     def field(self, initial=None):
-        return self.field_type()(
+        kwargs = dict(
             label=self.label,
             required=(self.required if self.required is not None else False),
             help_text=self.help_text,
             initial=initial,
         )
 
-#custom
-#choices (value, caption)
+        choices = getattr(self, 'choices', None)
+        if choices:
+            if choices['mode'] == 'static':
+                def mk_choice(spec):
+                    return spec if hasattr(spec, '__iter__') else (spec, spec)
+                choices = [mk_choice(c) for c in choices['args']]
+            elif choices['mode'] == 'fixture':
+                raise RuntimeError('choices from fixture not supported yet')
+            else:
+                raise ValueError('unknown choices mode [%s]' % choices['mode'])
+            kwargs['choices'] = choices
+
+        return self.field_type()(**kwargs)
+
