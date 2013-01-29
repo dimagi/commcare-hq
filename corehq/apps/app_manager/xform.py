@@ -12,7 +12,7 @@ def parse_xml(string):
     try:
         return ET.fromstring(string, parser=ET.XMLParser(encoding="utf-8", remove_comments=True))
     except ET.ParseError, e:
-        raise XFormError("Problem parsing an XForm." + ("The parsing error is: %s" % e if e.message else ""))
+        raise XFormError("Error parsing XML" + (": %s" % e if e.message else ""))
 
 class XFormError(Exception):
     pass
