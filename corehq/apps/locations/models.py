@@ -1,6 +1,7 @@
 from couchdbkit.ext.django.schema import *
 import itertools
 from dimagi.utils.couch.database import get_db
+from django import forms
 
 class Location(Document):
     domain = StringProperty()
@@ -115,3 +116,25 @@ def root_locations(domain):
 
     ids = [res['key'][-1] for res in results]
     return [Location.get(id) for id in ids]
+
+class CustomProperty(Document):
+    name = StringProperty()
+    datatype = StringProperty()
+    label = StringProperty()
+    required = BooleanProperty()
+    help_text = StringProperty()
+    unique = None # enum - none, sibling, global
+
+    def field_type(self):
+        return getattr(forms, '%sField' % (self.datatype or 'Char'))
+
+    def field(self, initial=None):
+        return self.field_type()(
+            label=self.label,
+            required=(self.required if self.required is not None else False),
+            help_text=self.help_text,
+            initial=initial,
+        )
+
+#custom
+#choices (value, caption)

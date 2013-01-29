@@ -19,32 +19,28 @@ class LocTypeWidget(forms.Widget):
                     'value': value,
                 }))
 
-
 class LocationForm(forms.Form):
     parent_id = forms.CharField(label='Parent', required=False, widget=ParentLocWidget())
     name = forms.CharField(max_length=100)
     location_type = forms.CharField(widget=LocTypeWidget())
 
-    def __init__(self, location, *args, **kwargs):
+    def __init__(self, location, bound_data=None, *args, **kwargs):
         self.location = location
 
+        kwargs['prefix'] = 'main'
         # seed form data from couch doc
         kwargs['initial'] = self.location._doc
         kwargs['initial']['parent_id'] = self.cur_parent_id
 
-        super(LocationForm, self).__init__(*args, **kwargs)
+        super(LocationForm, self).__init__(bound_data, *args, **kwargs)
         self.fields['parent_id'].widget.domain = self.location.domain
         
         # custom properties
+        self.sub_forms = {}
         for potential_type in allowed_child_types(self.location.domain, self.location.parent):
-            # i think it might be better to make each loc_type's custom properties as a separate form?
-            for p in location_custom_properties(self.location.domain, potential_type):
-                name = 'prop__%s__%s' % (potential_type, p)
-                self.fields[name] = forms.CharField(
-                    label=p,
-                    initial=getattr(self.location, p, None),
-                    required=False
-                )
+            subform = LocationCustomPropertiesSubForm(self.location, potential_type, bound_data)
+            if subform.fields:
+                self.sub_forms[potential_type] = subform
 
     @property
     def cur_parent_id(self):
@@ -90,6 +86,16 @@ class LocationForm(forms.Form):
 
         return loc_type
 
+    def clean(self):
+        super(LocationForm, self).clean()
+
+        subform = self.sub_forms[self.cleaned_data['location_type']]
+        if not subform.is_valid():
+            raise forms.ValidationError('Error in location properties')
+        self.cleaned_data.update(('prop:%s' % k, v) for k, v in subform.cleaned_data.iteritems())
+
+        return self.cleaned_data
+
     def save(self, instance=None, commit=True):
         if self.errors:
             raise ValueError('form does not validate')
@@ -101,14 +107,20 @@ class LocationForm(forms.Form):
         location.lineage = Location(parent=self.cleaned_data['parent_id']).lineage
 
         for k, v in self.cleaned_data.iteritems():
-            if not k.startswith('prop__'):
-                continue
-
-            _, loc_type, prop_name = k.split('__')
-            if loc_type == self.location.location_type:
+            if k.startswith('prop:'):
+                prop_name = k[len('prop:'):]
                 setattr(location, prop_name, v)
 
         if commit:
             location.save()
 
         return location
+
+class LocationCustomPropertiesSubForm(forms.Form):
+    def __init__(self, location, potential_type, *args, **kwargs):
+        kwargs['prefix'] = 'props_%s' % potential_type
+        super(LocationCustomPropertiesSubForm, self).__init__(*args, **kwargs)
+
+        for p in location_custom_properties(location.domain, potential_type):
+            self.fields[p.name] = p.field(getattr(location, p.name, None))
+

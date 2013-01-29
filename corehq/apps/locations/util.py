@@ -1,4 +1,4 @@
-from corehq.apps.locations.models import Location, root_locations
+from corehq.apps.locations.models import Location, root_locations, CustomProperty
 
 def load_locs_json(domain, selected_loc_id=None):
     """initialize a json location tree for drill-down controls on
@@ -51,17 +51,45 @@ def location_custom_properties(domain, loc_type):
     try:
         return {
             'outlet': [
-                'outlet_code',
-                'outlet_type',
-                'address',
-                'landmark',
-                'contact_name',
-                'contact_phone',
+                CustomProperty(
+                    name='outlet_code',
+                    label='SMS Code',
+                    required=True,
+                ),
+                CustomProperty(
+                    name='outlet_type',
+                    label='Outlet Type',
+                    required=True,
+                ),
+                CustomProperty(
+                    name='address',
+                    label='Address',
+                ),
+                CustomProperty(
+                    name='landmark',
+                    label='Landmark',
+                ),
+                CustomProperty(
+                    name='contact_name',
+                    label='Contact Name',
+                ),
+                CustomProperty(
+                    name='contact_phone',
+                    label='Contact Phone',
+                ),
             ],
             'village': [
-                'village_size',
-                'village_class',
+                CustomProperty(
+                    name='village_size',
+                    datatype='Integer',
+                    label='Village Size',
+                ),
+                CustomProperty(
+                    name='village_class',
+                    label='Village Class',
+                ),
             ],
         }[loc_type]
     except KeyError:
         return []
+
