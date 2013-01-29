@@ -117,12 +117,10 @@ def india():
     env.home = '/home/commcarehq/'
     env.root = root = '/home/commcarehq'
     env.environment = 'india'
-    env.log_root   = posixpath.join(root, 'log')
     env.code_branch = 'master'
     env.sudo_user = 'commcarehq'
     env.hosts = ['220.226.209.82']
     env.user = prompt("Username: ", default=env.user)
-    env.service_manager = "supervisor"
     env.server_port = '8001'
 
     _setup_path()
@@ -229,7 +227,7 @@ def upgrade_packages():
 def what_os():
     with settings(warn_only=True):
         require('environment', provided_by=('staging','production'))
-        if env.host_os_map is None:
+        if getattr(env, 'host_os_map', None) is None:
             #prior use case of setting a env.remote_os did not work when doing multiple hosts with different os! Need to keep state per host!
             env.host_os_map = defaultdict(lambda: '')
         if env.host_os_map[env.host_string] == '':
@@ -282,23 +280,44 @@ def bootstrap():
     require('root', provided_by=('staging', 'production'))
     sudo('mkdir -p %(root)s' % env, shell=False, user=env.sudo_user)
     execute(clone_repo)
+    
+    # copy localsettings in case any management commands we want to run now
+    # would error otherwise
+    with cd(env.code_root):
+        sudo('cp -n localsettings.example.py localsettings.py')
+    with cd(env.code_root_preindex):
+        sudo('cp -n localsettings.example.py localsettings.py')
+
     update_code()
-    execute(create_virtualenv)
-    execute(update_env)
+    execute(create_virtualenvs)
+    execute(update_virtualenv)
     execute(setup_dirs)
     execute(generate_supervisorconf_file)
-    execute(fix_locale_perms)
+    execute(update_apache_conf)
+    #execute(fix_locale_perms)
+
+@task
+def unbootstrap():
+    """Delete cloned repos and virtualenvs"""
+
+    require('code_root', 'code_root_preindex', 'virtualenv_root',
+            'virtualenv_root_preindex')
+    
+    with settings(warn_only=True):
+        sudo(('rm -rf %(virtualenv_root)s %(virtualenv_root_preindex)s'
+              '%(code_root)s %(code_root_preindex)s') % env, user=env.sudo_user)
 
 
 #@parallel
 @roles('django_celery', 'django_app', 'staticfiles', 'django_monolith') #'django_public','formsplayer'
-def create_virtualenv():
+def create_virtualenvs():
     """ setup virtualenv on remote host """
-    require('virtualenv_root', provided_by=('staging', 'production', 'india'))
-    with settings(warn_only=True):
-        sudo('rm -rf %(virtualenv_root)s' % env, user=env.sudo_user)
-    args = '--clear --distribute --no-site-packages'
+    require('virtualenv_root', 'virtualenv_root_preindex', 
+            provided_by=('staging', 'production', 'india'))
+    
+    args = '--distribute --no-site-packages'
     sudo('virtualenv %s %s' % (args, env.virtualenv_root), user=env.sudo_user)
+    sudo('virtualenv %s %s' % (args, env.virtualenv_root_preindex), user=env.sudo_user)
 
 
 #@parallel
@@ -309,8 +328,9 @@ def clone_repo():
         with cd(env.root):
             if not files.exists(env.code_root):
                 sudo('git clone %(code_repo)s %(code_root)s' % env, user=env.sudo_user)
-            with cd(env.code_root):
-                sudo('git submodule init', user=env.sudo_user)
+            
+            if not files.exists(env.code_root_preindex):
+                sudo('git clone %(code_repo)s %(code_root_preindex)s' % env, user=env.sudo_user)
 
 
 @task
@@ -319,7 +339,7 @@ def preindex_views():
     with cd(env.code_root_preindex):
         #update the codebase of the preindex dir...
         update_code(preindex=True)
-        update_env(preindex=True) #no update to env - the actual deploy will do - this may break if a new dependency is introduced in preindex
+        update_virtualenv(preindex=True) #no update to env - the actual deploy will do - this may break if a new dependency is introduced in preindex
 
         sudo('echo "%(virtualenv_root_preindex)s/bin/python %(code_root_preindex)s/manage.py \
              sync_prepare_couchdb_multi 8 %(user)s" | at -t `date -d "5 seconds" \
@@ -352,7 +372,7 @@ def deploy():
 
     try:
         execute(update_code)
-        execute(update_env)
+        execute(update_virtualenv)
         execute(clear_services_dir)
         upload_and_set_supervisor_config()
         execute(migrate)
@@ -366,15 +386,15 @@ def deploy():
 @task
 @roles('django_app','django_celery','staticfiles', 'django_public', 'django_monolith')#,'formsplayer')
 @parallel
-def update_env(preindex=False):
+def update_virtualenv(preindex=False):
     """ update external dependencies on remote host assumes you've done a code update"""
     require('code_root', provided_by=('staging', 'production', 'india'))
     if preindex:
         root_to_use = env.code_root_preindex
-	env_to_use = env.virtualenv_root_preindex
+        env_to_use = env.virtualenv_root_preindex
     else:
         root_to_use = env.code_root
-	env_to_use = env.virtualenv_root
+        env_to_use = env.virtualenv_root
     requirements = posixpath.join(env.code_root, 'requirements')
     with cd(root_to_use):
         cmd = ['%s/bin/pip install' % env_to_use]
@@ -385,8 +405,8 @@ def update_env(preindex=False):
 
 @roles('lb')
 def touch_apache():
-    """Touch apache and supervisor conf files to trigger reload. Also calls supervisorctl update
-    to load latest supervisor.conf """
+    """Touch apache conf files to trigger reload."""
+
     require('code_root', provided_by=('staging', 'production'))
     apache_path = posixpath.join(posixpath.join(env.services, 'apache'), 'apache.conf')
     sudo('touch %s' % apache_path, user=env.sudo_user)
@@ -395,8 +415,11 @@ def touch_apache():
 
 @roles('django_celery', 'django_app', 'django_monolith')
 def touch_supervisor():
-    """ touch apache and supervisor conf files to trigger reload. Also calls supervisorctl update
-     to load latest supervisor.conf """
+    """
+    touch supervisor conf files to trigger reload. Also calls supervisorctl
+    update to load latest supervisor.conf
+    
+    """
     require('code_root', provided_by=('staging', 'production'))
     supervisor_path = posixpath.join(posixpath.join(env.services, 'supervisor'), 'supervisor.conf')
     sudo('touch %s' % supervisor_path, user=env.sudo_user)
@@ -535,7 +558,7 @@ def fix_locale_perms():
     """ Fix the permissions on the locale directory """
     require('root', provided_by=('staging', 'production'))
     _set_apache_user()
-    locale_dir = '%s/commcare-hq/locale/' % env.code_root
+    locale_dir = '%s/locale/' % env.code_root
     sudo('chown -R %s %s' % (env.sudo_user, locale_dir), user=env.sudo_user)
     sudo('chgrp -R %s %s' % (env.apache_user, locale_dir), user=env.sudo_user)
     sudo('chmod -R g+w %s' % (locale_dir), user=env.sudo_user)
@@ -629,6 +652,22 @@ def _supervisor_command(command):
     #elif what_os() == 'ubuntu':
         #cmd_exec = "/usr/local/bin/supervisorctl"
     sudo('supervisorctl %s' % (command), shell=False)
+
+def update_apache_conf():
+    require('code_root', 'server_port')
+
+    with cd(env.code_root):
+        tmp = posixpath.join('/', 'tmp', 'cchq_%s' % uuid.uuid4().hex)
+        sudo('%s/bin/python manage.py mkapacheconf %s > %s'
+              % (env.virtualenv_root, env.server_port, tmp))
+        #sudo('cp -f %s /etc/apache2/sites-available/cchq' % tmp)
+
+    with settings(warn_only=True):
+        sudo('a2dissite 000-default')
+
+    sudo('a2enmod proxy_http')
+    sudo('a2ensite cchq')
+
 
 
 # tests
