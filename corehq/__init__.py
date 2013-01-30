@@ -1,5 +1,5 @@
 from corehq.apps.reports.standard import (monitoring, inspect, export,
-    deployments, sms)
+    deployments, sms, ivr)
 import corehq.apps.receiverwrapper.reports as receiverwrapper
 import phonelog.reports as phonelog
 from corehq.apps.reports.commtrack import psi_prototype
@@ -31,9 +31,10 @@ REPORTS = (
         phonelog.FormErrorReport,
         phonelog.DeviceLogDetailsReport
     )),
-    (_("SMS"), (
+    (_("CommConnect"), (
         sms.MessagesReport,
         sms.MessageLogReport,
+        ivr.CallLogReport,
     )),
     (_("Commtrack"), (
         psi_prototype.VisitReport,

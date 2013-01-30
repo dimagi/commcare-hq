@@ -2,6 +2,7 @@ from xml.etree import ElementTree
 from corehq.apps.users.models import CommCareUser
 from couchdbkit.ext.django.schema import Document, DictProperty, StringProperty, StringListProperty
 from corehq.apps.groups.models import Group
+from dimagi.utils.couch.bulk import CouchTransaction
 from dimagi.utils.couch.database import get_db
 
 class FixtureTypeCheckError(Exception):
@@ -21,10 +22,13 @@ class FixtureDataType(Document):
     def by_domain_tag(cls, domain, tag):
         return cls.view('fixtures/data_types_by_domain_tag', key=[domain, tag], reduce=False, include_docs=True)
 
-    def recursive_delete(self):
+    def recursive_delete(self, transaction):
+        item_ids = []
         for item in FixtureDataItem.by_data_type(self.domain, self.get_id):
-            item.delete_recursive()
-        self.delete()
+            transaction.delete(item)
+            item_ids.append(item.get_id)
+        transaction.delete_all(FixtureOwnership.for_all_item_ids(item_ids, self.domain))
+        transaction.delete(self)
 
 class FixtureDataItem(Document):
     domain = StringProperty()
@@ -37,10 +41,11 @@ class FixtureDataItem(Document):
             self._data_type = FixtureDataType.get(self.data_type_id)
         return self._data_type
 
-    def add_owner(self, owner, owner_type):
+    def add_owner(self, owner, owner_type, transaction=None):
         assert(owner.domain == self.domain)
-        o = FixtureOwnership(domain=self.domain, owner_type=owner_type, owner_id=owner.get_id, data_item_id=self.get_id)
-        o.save()
+        with transaction or CouchTransaction() as transaction:
+            o = FixtureOwnership(domain=self.domain, owner_type=owner_type, owner_id=owner.get_id, data_item_id=self.get_id)
+            transaction.save(o)
         return o
 
     def remove_owner(self, owner, owner_type):
@@ -51,14 +56,14 @@ class FixtureDataItem(Document):
         ):
             ownership.delete()
 
-    def add_user(self, user):
-        return self.add_owner(user, 'user')
+    def add_user(self, user, transaction=None):
+        return self.add_owner(user, 'user', transaction=transaction)
 
     def remove_user(self, user):
         return self.remove_owner(user, 'user')
 
-    def add_group(self, group):
-        return self.add_owner(group, 'group')
+    def add_group(self, group, transaction=None):
+        return self.add_owner(group, 'group', transaction=transaction)
 
     def remove_group(self, group):
         return self.remove_owner(group, 'group')
@@ -157,11 +162,7 @@ class FixtureDataItem(Document):
             # fetch and delete ownership documents pointing
             # to deleted or non-existent fixture documents
             # this cleanup is necessary since we used to not do this
-            bad_ownerships = FixtureOwnership.view('fixtures/ownership',
-                keys=[[user_domain, 'by data_item', fixture_id] for fixture_id in deleted_fixture_ids],
-                include_docs=True,
-                reduce=False
-            ).all()
+            bad_ownerships = FixtureOwnership.for_all_item_ids(deleted_fixture_ids, user_domain)
             FixtureOwnership.get_db().bulk_delete(bad_ownerships)
 
             return docs
@@ -193,13 +194,13 @@ class FixtureDataItem(Document):
         return cls.view('fixtures/data_items_by_field_value', key=[domain, data_type_id, field_name, field_value],
                         reduce=False, include_docs=True)
 
-    def delete_ownerships(self):
+    def delete_ownerships(self, transaction):
         ownerships = FixtureOwnership.by_item_id(self.get_id, self.domain)
-        FixtureOwnership.get_db().bulk_delete(ownerships)
+        transaction.delete_all(ownerships)
 
-    def delete_recursive(self):
-        self.delete_ownerships()
-        self.delete()
+    def delete_recursive(self, transaction):
+        self.delete_ownerships(transaction)
+        transaction.delete(self)
 
 def _id_from_doc(doc_or_doc_id):
     if isinstance(doc_or_doc_id, basestring):
@@ -216,14 +217,20 @@ class FixtureOwnership(Document):
 
     @classmethod
     def by_item_id(cls, item_id, domain):
-
-        startkey = [domain, 'by data_item', item_id]
-
         ownerships = cls.view('fixtures/ownership',
-            startkey=startkey,
-            endkey=startkey + [{}],
+            key=[domain, 'by data_item', item_id],
             include_docs=True,
             reduce=False,
+        ).all()
+
+        return ownerships
+
+    @classmethod
+    def for_all_item_ids(cls, item_ids, domain):
+        ownerships = FixtureOwnership.view('fixtures/ownership',
+            keys=[[domain, 'by data_item', item_id] for item_id in item_ids],
+            include_docs=True,
+            reduce=False
         ).all()
 
         return ownerships

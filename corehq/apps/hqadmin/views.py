@@ -284,7 +284,10 @@ def _cacheable_domain_activity_report(request):
 
         for form in forms:
             user_id = form.get('user_id')
-            time = string_to_datetime(form['submission_time']).replace(tzinfo = None)
+            try:
+                time = string_to_datetime(form['submission_time']).replace(tzinfo = None)
+            except ValueError:
+                continue
             if user_id in domain['users']:
                 for i, date in enumerate(dates):
                     if time > date:

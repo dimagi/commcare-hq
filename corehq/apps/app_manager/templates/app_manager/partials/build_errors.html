@@ -12,9 +12,7 @@
                     <i class="icon icon-exclamation-sign"></i>
                     <span>
                         {% if error.type == "invalid xml" %}
-                            {% if error.form.content %}
-                                Invalid xml in form
-                            {% else %}
+                            {% if not error.message %}
                                 Blank form
                             {% endif %}
                             {% include "app_manager/partials/form_error_message.html" %}
@@ -74,16 +72,19 @@
                             contains the invalid path "{{ error.path }}".
                         {% endif %}
                         {% if error.type == "remote error" %}
-                            Remote Error: {{ error.message }}
+                            Remote Error:
                         {% endif %}
                         {% if error.type == "empty lang" %}
                             One of your languages is empty. Check your <a href="{% url view_app domain app.id %}">app settings</a>.
                         {% endif %}
+                        {# And then show the optional `message` regardless #}
+                        <span>{{ error.message }}</span>
                     </span>
                 </li>
             {% endfor %}
         </ul>
         <p class="help-inline">
+            <small>
             {% if not_actual_build %}
                 {% trans "Build errors prevent you from building your application in the Release Manager." %}
             {% endif %}
@@ -91,6 +92,7 @@
             <a href="https://confluence.dimagi.com/display/commcarepublic/Errors+Building+an+Application" target="_blank">
                 {% trans "Errors Building an Application" %}
             </a>
+            </small>
         </p>
     </div>
 {% endif %}
