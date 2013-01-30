@@ -52,6 +52,14 @@
             uploadFormParams: ['license', 'author', 'attribution-notes']
         });
         hqaudio_uploader.render();
+
+        $(".multimedia-map .accordion-group").on('show', toggleIcon);
+        $(".multimedia-map .accordion-group").on('hide', toggleIcon);
+        function toggleIcon () {
+            var $icon = $(this).find('.accordion-heading .icon');
+            $icon.toggleClass('icon-double-angle-right');
+            $icon.toggleClass('icon-double-angle-right');
+        }
     </script>
 {% endblock %}
 
@@ -81,7 +89,7 @@
     </div>
 </div>
 
-    <div class="accordion multimedia_map" id="references-list">
+    <div class="accordion multimedia-map" id="references-list">
         {% include "hqmedia/partials/image_list.html" with ko_item="form_images" media_title="Form Images" css_id="imageRefs" item_info=multimedia.references.form_media.images %}
         {% include "hqmedia/partials/image_list.html" with ko_item="menu_icons" media_title="Menu Icons" css_id="iconRefs" item_info=multimedia.references.menu_media.icons %}
         {% include "hqmedia/partials/audio_list.html" with ko_item="form_audio" media_title="Form Audio" css_id="audioRefs" item_info=multimedia.references.form_media.audio %}

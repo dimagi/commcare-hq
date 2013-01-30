@@ -1,7 +1,7 @@
 {% load i18n %}
 <div class="accordion-group">
     <div class="accordion-heading">
-        <h3><a class="accordion-toggle" data-toggle="collapse" href="#{{ css_id }}">
+        <h3><a class="accordion-toggle collapsed" data-toggle="collapse" href="#{{ css_id }}"><i class="icon icon-double-angle-right"></i>
             {{ media_title }}
             <span style="display: block">
             {% if item_info.matched > 0 %}<span class="label label-success">{{ item_info.matched }} {% trans 'matched' %}</span>{% endif %}
