@@ -55,3 +55,29 @@
         }
     }
 }
+.multimedia-map .accordion-group {
+    margin-bottom: 1em;
+}
+
+.multimedia-map .accordion-heading {
+    a:hover {
+        text-decoration: none;
+    }
+
+    h3 {
+        margin: 0;
+    }
+
+    .accordion-toggle {
+        .animation-fade(background-color, .2s);
+        background-color: desaturate(lighten(@blue, 60), 50);
+        &.collapsed {
+            background-color: transparent;
+        }
+    }
+    &:hover {
+        .animation-fade(background-color, .2s);
+        background-color: desaturate(lighten(@blue, 60), 20);
+    }
+
+}

@@ -66,16 +66,19 @@
 
                 switch (inside ? placement.split(' ')[1] : placement) {
                     case 'bottom':
-                        tp = {top: pos.top + pos.height, left: pos.left + pos.width / 2 - actualWidth / 2}
+                        tp = {top: pos.top + actualHeight - pos.height*1.5, left: pos.left + pos.width / 2 - actualWidth / 2}
                         break
                     case 'top':
-                        tp = {top: pos.top - actualHeight, left: pos.left + pos.width / 2 - actualWidth / 2}
+                        // broken
+                        tp = {top: pos.top - actualHeight + pos.height*1.5, left: pos.left + pos.width / 2 - actualWidth / 2}
                         break
                     case 'left':
-                        tp = {top: pos.top + pos.height / 2 - actualHeight / 2, left: pos.left - actualWidth}
+                        // broken
+                        tp = {top:pos.top - actualHeight, left: pos.left - actualWidth}
                         break
                     case 'right':
-                        tp = {top: pos.top + pos.height / 2 - actualHeight / 2, left: pos.left + pos.width}
+                        // broken
+                        tp = {top: pos.top - actualHeight + (this.$element.height()*2), left: pos.left + pos.width}
                         break
                 }
 
