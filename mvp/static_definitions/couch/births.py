@@ -3,16 +3,16 @@ APP_NAME = "mvp_births"
 BIRTH_INDICATORS = dict(
     app=APP_NAME,
     indicators=dict(
-        child_registrations=dict(
+        child_cases_by_status=dict(
             num_births_registered=dict(
                 description="No. of Births Registered",
                 title="# Births Registered",
-                indicator_key="registration"
+                indicator_key="dob delivered"
             ),
             num_births_registered_in_facility=dict(
                 description="No. of Births delivered in a Health Facility during the time period",
                 title="# Births delivered in Health Facility",
-                indicator_key="facility_delivery"
+                indicator_key="dob delivered_in_facility"
             ),
         ),
     )
@@ -88,8 +88,7 @@ ACTIVE_CHILD_CASES_BY_AGE_INDICATORS = dict(
                 indicator_key="opened_on",
                 is_dob_in_datespan=True,
                 show_active_only=False,
-            ),
-
+            )
         )
     )
 )
