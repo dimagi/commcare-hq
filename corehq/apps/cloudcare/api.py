@@ -191,6 +191,7 @@ def es_filter_cases(domain, filters=None):
         # this class is currently pretty customized to serve exactly
         # this API. one day it may be worth reconciling our ES interfaces
         # but today is not that day.
+        # To be replaced by CaseES framework.
         RESERVED_KEYS = ('date_modified_start', 'date_modified_end', 
                          'server_date_modified_start', 'server_date_modified_end', 
                          'limit')

@@ -7,10 +7,10 @@ from tastypie import fields
 from tastypie.authentication import Authentication
 from tastypie.authorization import ReadOnlyAuthorization
 from tastypie.exceptions import BadRequest
-from tastypie.resources import Resource
 from tastypie.serializers import Serializer
 from corehq.apps.api.util import get_object_or_not_exist
 from corehq.apps.api.resources import JsonResource
+
 
 class CustomXMLSerializer(Serializer):
     def to_etree(self, data, options=None, name=None, depth=0):
@@ -21,9 +21,9 @@ class CustomXMLSerializer(Serializer):
             etree.remove(id)
         return etree
 
+
 class LoginAndDomainAuthentication(Authentication):
     def is_authenticated(self, request, **kwargs):
-
         PASSED_AUTH = 'is_authenticated'
 
         @login_or_digest
@@ -100,6 +100,7 @@ class CommCareCaseResource(JsonResource):
 
     def dehydrate_properties(self, bundle):
         return bundle.obj.get_json()['properties']
+
     def dehydrate_indices(self, bundle):
         return bundle.obj.get_json()['indices']
 
@@ -110,21 +111,20 @@ class CommCareCaseResource(JsonResource):
     def obj_get_list(self, request, **kwargs):
         domain = kwargs['domain']
         closed_only = {
-            'true': True,
-            'false': False,
-            'any': True
-        }[request.GET.get('closed', 'false')]
+                          'true': True,
+                          'false': False,
+                          'any': True
+                      }[request.GET.get('closed', 'false')]
         case_type = request.GET.get('case_type')
-
 
         key = [domain]
         if case_type:
             key.append(case_type)
         cases = CommCareCase.view('hqcase/all_cases' if closed_only else 'hqcase/open_cases',
-            startkey=key,
-            endkey=key + [{}],
-            include_docs=True,
-            reduce=False,
+                                  startkey=key,
+                                  endkey=key + [{}],
+                                  include_docs=True,
+                                  reduce=False,
         ).all()
 
         return list(cases)
@@ -142,7 +142,10 @@ class XFormInstanceResource(JsonResource):
     version = fields.CharField(attribute='version')
     uiversion = fields.CharField(attribute='uiversion')
     metadata = fields.DictField(attribute='metadata')
+    received_on = fields.DateTimeField(attribute="received_on")
     md5 = fields.CharField(attribute='xml_md5')
+
+
 
     def obj_get(self, request, **kwargs):
         return get_object_or_not_exist(XFormInstance, kwargs['pk'], kwargs['domain'])
