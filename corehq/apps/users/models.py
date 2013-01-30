@@ -29,12 +29,11 @@ from casexml.apps.phone.models import User as CaseXMLUser
 from corehq.apps.domain.shortcuts import create_user
 from corehq.apps.domain.utils import normalize_domain_name
 from corehq.apps.domain.models import LicenseAgreement
-from corehq.apps.users.util import normalize_username, user_data_from_registration_form, format_username, raw_username, cc_user_domain
+from corehq.apps.users.util import normalize_username, user_data_from_registration_form, format_username, raw_username
 from corehq.apps.users.xml import group_fixture
 from corehq.apps.sms.mixin import CommCareMobileContactMixin, VerifiedNumber, PhoneNumberInUseException, InvalidFormatException
 from couchforms.models import XFormInstance
 
-from dimagi.utils.couch.database import get_db
 from dimagi.utils.couch.undo import DeleteRecord, DELETED_SUFFIX
 from dimagi.utils.django.email import send_HTML_email
 from dimagi.utils.mixins import UnicodeMixIn
@@ -240,22 +239,23 @@ class AdminUserRole(UserRole):
 class DomainMembershipError(Exception):
     pass
 
-class DomainMembership(DocumentSchema):
+class Membership(DocumentSchema):
+#   If we find a need for making UserRoles more general and decoupling it from domain then most of the role stuff from
+#   Domain membership can be put in here
+    is_admin = BooleanProperty(default=False)
+
+class DomainMembership(Membership):
     """
     Each user can have multiple accounts on the
     web domain. This is primarily for Dimagi staff.
     """
 
     domain = StringProperty()
-    is_admin = BooleanProperty(default=False)
-    # old permissions
-    # permissions = StringListProperty()
-    # permissions_data = DictProperty()
-    last_login = DateTimeProperty()
-    date_joined = DateTimeProperty()
+    # i don't think the following two lines are ever actually used
+#    last_login = DateTimeProperty()
+#    date_joined = DateTimeProperty()
     timezone = StringProperty(default=getattr(settings, "TIME_ZONE", "UTC"))
     override_global_tz = BooleanProperty(default=False)
-
     role_id = StringProperty()
 
     @property
@@ -318,6 +318,17 @@ class DomainMembership(DocumentSchema):
 
     class Meta:
         app_label = 'users'
+
+class TeamMembership(Membership):
+    team_id = StringProperty()
+
+class OrgMembership(Membership):
+    organization = StringProperty()
+    team_memberships = SchemaListProperty(TeamMembership)   # could also go under user, but I like the idea of all the
+    # org-related stuff being in one place
+
+class OrgMembershipError(Exception):
+    pass
 
 class CustomDomainMembership(DomainMembership):
     custom_role = SchemaProperty(UserRole)
@@ -398,7 +409,7 @@ class _AuthorizableMixin(IsMemberOfMixin):
         for i, dm in enumerate(self.domain_memberships):
             if dm.domain == domain:
                 if create_record:
-                    record = RemoveWebUserRecord(
+                    record = DomainRemovalRecord(
                         domain=domain,
                         user_id=self.user_id,
                         domain_membership=dm,
@@ -1353,7 +1364,64 @@ class CommCareUser(CouchUser, CommCareMobileContactMixin, SingleMembershipMixin)
         return lang
 
 
-class WebUser(CouchUser, MultiMembershipMixin):
+class OrgMembershipMixin(DocumentSchema):
+    org_memberships = SchemaListProperty(OrgMembership)
+
+    @property
+    def organizations(self):
+        return [om.organization for om in self.org_memberships]
+
+    def is_member_of_org(self, org_qs):
+        """
+        takes either a organization name or an organization object and returns whether the user is part of that org
+        """
+        try:
+            org = org_qs.name
+        except Exception:
+            org = org_qs
+        return org in self.organizations
+
+    def get_org_membership(self, org):
+        for om in self.org_memberships:
+            if om.organization == org:
+                return om
+        return None
+
+    def add_org_membership(self, org, **kwargs):
+        from corehq.apps.orgs.models import  Organization
+        if self.get_org_membership(org):
+            return
+
+        organization = Organization.get_by_name(org)
+        if not organization:
+            raise OrgMembershipError("Cannot add org membership -- Organization does not exist")
+
+        self.org_memberships.append(OrgMembership(organization=organization, **kwargs))
+
+    def delete_org_membership(self, org, create_record=False):
+        record = None
+        for i, om in enumerate(self.org_memberships):
+            if om.organization == org:
+                if create_record:
+                    record = OrgRemovalRecord(org_membership = om, user_id=self.user_id)
+                del self.org_memberships[i]
+                break
+        if create_record:
+            if record:
+                record.save()
+                return record
+            else:
+                raise OrgMembershipError("Cannot delete org membership -- Organization does not exist")
+
+    def is_org_admin(self, org):
+        om = self.get_org_membership(org)
+        return om and om.is_admin
+
+    def is_member_of_team(self, org, team):
+        om = self.get_org_membership(org)
+
+
+class WebUser(CouchUser, MultiMembershipMixin, OrgMembershipMixin):
     teams = StringListProperty()
 
     #do sync and create still work?
@@ -1524,9 +1592,6 @@ class InvalidUser(FakeUser):
 # Django  models go here
 #
 class Invitation(Document):
-    """
-    When we invite someone to a domain it gets stored here.
-    """
     email = StringProperty()
     invited_by = StringProperty()
     invited_on = DateTimeProperty()
@@ -1546,6 +1611,9 @@ class Invitation(Document):
 
 
 class DomainInvitation(Invitation):
+    """
+    When we invite someone to a domain it gets stored here.
+    """
     domain = StringProperty()
     role = StringProperty()
     doc_type = "Invitation"
@@ -1570,7 +1638,7 @@ class DomainInvitation(Invitation):
             include_docs=True,
         ).all()
 
-class RemoveWebUserRecord(DeleteRecord):
+class DomainRemovalRecord(DeleteRecord):
     user_id = StringProperty()
     domain_membership = SchemaProperty(DomainMembership)
 
@@ -1578,6 +1646,16 @@ class RemoveWebUserRecord(DeleteRecord):
         user = WebUser.get_by_user_id(self.user_id)
         user.add_domain_membership(**self.domain_membership._doc)
         user.save()
+
+class OrgRemovalRecord(DeleteRecord):
+    user_id = StringProperty()
+    org_membership = SchemaProperty(OrgMembership)
+
+    def undo(self):
+        user = WebUser.get_by_user_id(self.user_id)
+        user.add_org_membershipt(**self.domain_membership._doc)
+        user.save()
+
 
 from .signals import *
 from corehq.apps.domain.models import Domain
