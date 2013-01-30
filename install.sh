@@ -37,6 +37,7 @@ command -v apt-get > /dev/null 2>&1
 if [ $? -eq 0 ]; then
     PM=apt-ubuntu
 
+    sudo apt-get install -y python-software-properties
     ## PPA to get latest versions of nodejs and npm
     if [[ ! $(sudo grep -r "chris-lea/node\.js" /etc/apt/) ]]; then
         sudo add-apt-repository -y ppa:chris-lea/node.js
@@ -47,12 +48,13 @@ if [ $? -eq 0 ]; then
         libevent-dev python-setuptools  \
         postgresql memcached \
         nodejs npm \
-        gdebi-core python-software-properties
+        gdebi-core \
+        apache2
 
     sudo apt-get build-dep -y python-psycopg2 python-lxml
 
     # Dependencies for CouchDB and building it
-    sudo apt-get install g++ curl build-essential \
+    sudo apt-get install -y g++ curl build-essential \
         erlang-base erlang-dev erlang-eunit erlang-nox \
         libmozjs185-dev libicu-dev libcurl4-gnutls-dev libtool
 
@@ -69,7 +71,7 @@ else
     sudo yum install -y git gcc gcc-c++ make libtool zlib-devel openssl-devel \
         rubygem-rake ruby-rdoc curl-devel openssl-devel libicu-devel \
         postgresql postgresql-devel postgresql-lib postgresql-server libtool \
-        python-devel yum-utils
+        python-devel yum-utils httpd
 
     # CouchDB
     sudo yum install -y erlang libicu-devel openssl-devel curl-devel make \
@@ -96,7 +98,8 @@ sudo npm install npm
 #sudo npm install less uglify-js -g
 
 sudo pip install --upgrade pip
-sudo pip install virtualenv virtualenvwrapper
+sudo pip install virtualenv virtualenvwrapper supervisor
+echo_supervisord_conf | sudo tee /etc/supervisord.conf
 
 if [[ ! $(grep virtualenvwrapper ~/.bashrc) ]]; then
     echo "source /usr/local/bin/virtualenvwrapper.sh" >> ~/.bashrc
@@ -105,21 +108,34 @@ fi
 
 ## Install Java ##
 if [ ! -d /usr/lib/jvm/jdk1.7.0 ]; then
-    tar -xvzf jdk.tar.gz
+    tar -xzf jdk.tar.gz
     sudo mkdir /usr/lib/jvm
     sudo rm -r /usr/lib/jvm/jdk1.7.0/
     sudo mv ./jdk1.7.0* /usr/lib/jvm/jdk1.7.0
+
+    sudo update-alternatives --install "/usr/bin/java" "java" "/usr/lib/jvm/jdk1.7.0/bin/java" 
+    sudo update-alternatives --install "/usr/bin/javac" "javac" "/usr/lib/jvm/jdk1.7.0/bin/javac" 1
+    sudo update-alternatives --install "/usr/bin/javaws" "javaws" "/usr/lib/jvm/jdk1.7.0/bin/javaws" 1
+
+    sudo update-alternatives --config java
 
 fi
 
 ## Install Jython ##
 if [ ! -d /usr/local/lib/jython ]; then
+    if [ ! -f jython_installer-2.5.2.jar ]; then
+        wget http://downloads.sourceforge.net/project/jython/jython/2.5.2/jython_installer-2.5.2.jar
+    fi
+
     # Set /usr/local/lib/jython as the target directory
     sudo java -jar jython_installer-2.5.2.jar
 
     sudo ln -s /usr/local/lib/jython/bin/jython /usr/local/bin/
 
-    wget http://peak.telecommunity.com/dist/ez_setup.py
+    if [ ! -f ez_setup.py ]; then
+        wget http://peak.telecommunity.com/dist/ez_setup.py
+    fi
+
     sudo jython ez_setup.py
 fi
 
@@ -130,7 +146,7 @@ if [ ! -f /etc/init.d/couchdb ]; then
         wget http://apache.mirrors.pair.com/couchdb/releases/1.2.0/apache-couchdb-1.2.0.tar.gz
     fi
 
-    tar xvzf apache-couchdb-1.2.0.tar.gz
+    tar xzf apache-couchdb-1.2.0.tar.gz
     cd apache-couchdb-1.2.0
     if [ "$PM" = "apt-ubuntu" ]; then
         ./configure
@@ -157,6 +173,31 @@ if [ ! -f /etc/init.d/couchdb ]; then
     sudo chown -R couchdb:couchdb /usr/local/var/log/couchdb
     sudo chown -R couchdb:couchdb /usr/local/var/lib/couchdb
     sudo chown -R couchdb:couchdb /usr/local/var/run/couchdb
+fi
+
+## Install couchdb-lucene
+if [ ! -f /etc/init.d/couchdb-lucene ]; then
+    if [ ! -f couchdb-lucene-0.8.0-dist.zip ]; then
+        wget https://github.com/downloads/rnewson/couchdb-lucene/couchdb-lucene-0.8.0-dist.zip
+    fi
+
+    unzip couchdb-lucene-0.8.0-dist.zip
+    sudo cp couchdb-lucene-0.8.0 /usr/local
+    rm -r couchdb-lucene-0.8.0
+    sudo cp /usr/local/couchdb-lucene-0.8.0/tools/etc/init.d/couchdb-lucene/couchdb-lucene /etc/init.d/
+fi
+
+if [[ ! $(grep _fti /usr/local/etc/couchdb/local.ini) ]]; then
+    config=/usr/local/etc/couchdb/local.ini
+    sudo sed -i '/\[couchdb\]/ a\os_process_timeout=60000' $config
+
+    echo "
+[external]
+fti=/usr/bin/python /usr/local/couchdb-lucene-0.8.0/tools/couchdb-external-hook.py
+
+[httpd_db_handlers]
+_fti = {couch_httpd_external, handle_external_req, <<\"fti\">>}
+" | sudo tee -a $config
 fi
 
 ## Install elastic-search ##
@@ -193,7 +234,7 @@ if [ ! -f /etc/init.d/elasticsearch ]; then
     fi
 fi
 
-# We do this at the end in case anything above (such as gdebi elasticsearch.deb) 
+# We do this again at the end in case anything above (such as gdebi elasticsearch.deb) 
 # installs a system java package and changes the configured java install path,
 # which we don't want
 
@@ -206,6 +247,7 @@ sudo update-alternatives --config java
 ## Ensure services start on startup ##
 if [ "$PM" = "apt-ubuntu" ]; then
     sudo update-rc.d couchdb defaults
+    sudo update-rc.d couchdb-lucene defaults
 
     # these should already be on by default
     sudo update-rc.d elasticsearch defaults
@@ -216,11 +258,13 @@ elif [ "$PM" = "yum-rhel" ]; then
     sudo chkconfig --add elasticsearch
     sudo chkconfig --add memcached
     sudo chkconfig --add postgresql
+    sudo chkconfig --add couchdb-lucene
 
     sudo chkconfig couchdb on
     sudo chkconfig elasticsearch on
     sudo chkconfig memcached on
     sudo chkconfig postgresql on
+    sudo chkconfig couchdb-lucene on
 fi
 
 ## Ensure services are running ##

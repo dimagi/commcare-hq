@@ -53,7 +53,7 @@ individual project sites when necessary.
   when using a virtualenv created with `--no-site-packages` or when the
   `egenix-mx-base` Python package is not already installed. To fix this, install
   `egenix-mx-base` (`sudo apt-get install python-egenix-mxdatetime` on Ubuntu)
-  and use `virtualenv --with-site-packages` instead.
+  and use `virtualenv --system-site-packages` instead.
 
 + On Mac OS X, pip doesn't install the `libmagic` dependency for `python-magic`
   properly. To fix this, run `brew install libmagic`.
@@ -65,6 +65,10 @@ individual project sites when necessary.
   follow [these instructions](http://obroll.com/install-python-pil-python-image-library-on-ubuntu-11-10-oneiric/). 
   (If you don't do this, the only thing that won't work is uploading of JPEGs to
   the CommCare Exchange.)
+
++ If you have an authentication error running `./manage.py syncdb` the first
+  time, open `pg_hba.conf` (`/etc/postgresql/9.1/main/pg_hba.conf` on Ubuntu)
+  and change the line "local all all peer" to "local all all md5".
 
 #### Configuration for Elasticsearch
 
@@ -105,9 +109,10 @@ writeable.
 
 ### Set up your django environment
 
-    ./manage.py syncdb
-    ./manage.py migrate
-    ./manage.py collectstatic
+    # you may have to run syncdb twice to get past a transient error
+    ./manage.py syncdb --noinput
+    ./manage.py migrate --noinput
+    ./manage.py collectstatic --noinput
 
     # this will do some basic setup, create a superuser, and create a project
     ./manage.py bootstrap <project-name> <email> <password>
@@ -120,9 +125,9 @@ writeable.
     curl -XPOST 'http://localhost:9200/_aliases' -d \
         '{ "actions": [ {"add": {"index": "hqcases_<long_string>", "alias": "hqcases"}}]}'
 
-    # If run_ptop didn't output anything like hqcases_<long_string>, go to
-    # http://localhost:9200/_status?pretty=true and find it near the top of the
-    # page and use that to run the above command.
+    # If run_ptop didn't output anything like hqcases_<long_string>, run 
+    curl -GET 'http://localhost:9200/_status?pretty=true' and find it near the
+    top of the output
     # 
     # Any potential future changes to the HQ code that change the case index
     # mapping type for elasticsearch require you to repeat this step. This
@@ -140,6 +145,8 @@ following contents:
 Running CommCare HQ
 -------------------
 
+### Development
+
 If your installation didn't set up the helper processes required by CommCare HQ
 to automatically run on system startup, you need to run them manually:
 
@@ -147,18 +154,61 @@ to automatically run on system startup, you need to run them manually:
     /path/to/unzipped/elasticsearch/bin/elasticsearch &
     /path/to/couchdb/bin/couchdb &
 
-Then run
+Then run the following separately:
 
-    ./run.sh
+    # Asynchronous task scheduler
+    ./manage.py celeryd --verbosity=2 --beat --statedb=celery.db --events
 
-Or for debugging,
+    # Keeps elasticsearch index in sync
+    ./manage.py run_ptop
 
-    ./run.sh --werkzeug
+    # only necessary if you want to use CloudCare
+    jython submodules/touchforms-src/touchforms/backend/xformserver.py
 
-For a robust setup, you will want to use something like
-[supervisor](http://supervisord.org/) to manage processes.  You can see the
-supervisor configs for [CommCareHQ.org](http://www.commcarehq.org) in the
-`services/` directory.
+    ./manage.py runserver --werkzeug
+
+### Production
+
+We use [Fabric](http://fabfile.org) for deploy automation and
+[supervisor](http://supervisord.org) for process control.  For a production
+deploy of CommCare HQ, follow these steps:
+
+1. Create a new user on your server
+
+        adduser cchq
+        # add your user as a sudoer by running `sudo visudo` and copying the
+        # root=ALL line
+
+
+2. Fork the Github repo and add an environment definition like
+   [this](https://github.com/dimagi/commcare-hq/commit/875092d54988ce8b56dac8755acc82c1a98ceb72),
+   changing `env.home` to '/home/cchq', `env.environment` to whatever name you want,
+   `env.sudo_user` to 'cchq', and `env.hosts` and
+   `env.roledefs['django_monolith']` to contain the IP of your server.
+
+3. Clone your forked Github repo to your local machine.
+
+4. Enter a virtualenv with fabric installed or just do
+
+        sudo pip install fabric
+
+5. Clone repo and set up virtualenvs and other production-specific configs
+
+        fab <my_environment> bootstrap
+
+6. Run the commands from "Set up your django environment" above, except instead
+   of ./manage.py, use
+
+       /home/cchq/www/<my_environment>/code_root/python_env/bin/python manage.py 
+
+7. Deploy
+    
+        # reindexes CouchDB views so they can be swapped with the old ones
+        # without long wait times the next time they are hit
+        fab <my_environment> preindex_views
+
+        # check out latest code and restart server processes 
+        fab <my_environment> deploy
 
 
 Building CommCare Mobile Apps
