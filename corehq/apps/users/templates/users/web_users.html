@@ -147,11 +147,36 @@
             <thead>
                 <tr>
                     <th></th>
-                    <th>Edit Web Users</th>
-                    <th>Edit {% commcare_user %}s</th>
-                    <th>Edit Data</th>
-                    <th>Edit Apps</th>
-                    <th>View Reports</th>
+                    <th>
+                      Edit {% hq_web_user %}s
+                      <span class="hq-help-template"
+                            data-title="Edit {% hq_web_user %}s"
+                            data-content="{% trans "Specify web user access permissions; invite new web users to the domain; manage account settings for web users." %}"></span>
+                    </th>
+                    <th>
+                      Edit {% commcare_user %}s
+                      <span class="hq-help-template"
+                            data-title="Edit {% commcare_user %}s"
+                            data-content="{% trans "Manage account settings for mobile workers; create accounts for mobile workers; archive and/or delete mobile users." %}"></span>
+                    </th>
+                    <th>
+                      Edit Data
+                      <span class="hq-help-template"
+                            data-title="Edit Data"
+                            data-content="{% trans "View, export, and edit form and case data; reassign cases." %}"></span>
+                    </th>
+                    <th>
+                      Edit Apps
+                      <span class="hq-help-template"
+                            data-title="Edit Apps"
+                            data-content="{% trans "Modify the structure and configuration of the application." %}"></span>
+                    </th>
+                    <th>
+                      View Reports
+                      <span class="hq-help-template"
+                            data-title="View Reports"
+                            data-content="{% trans "See all CommCareHQ performance reports." %}"></span>
+                    </th>
                     <th data-bind="visible: allowEdit"></th>
                 </tr>
             </thead>

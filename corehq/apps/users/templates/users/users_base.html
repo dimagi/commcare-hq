@@ -13,6 +13,14 @@
                     $(this).parent().addClass('active');
                 }
             });
+            $('.hq-help-template').each(function () {
+                COMMCAREHQ.makeHqHelp({
+                    content: $(this).data('content'),
+                    title: $(this).data('title')
+                }, false).insertAfter(this);
+                $(this).remove();
+            });
+            $('.hq-help').hqHelp();
             var activeTabCookie = 'active_tab',
                 last_active_tab = $.cookie(activeTabCookie);
             if(last_active_tab) {
