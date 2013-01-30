@@ -28,6 +28,34 @@
                 $(this).html(body);
             }
         });
+
+        // Add clickable links for user
+        var maybe_username = {{ username|JSON }};
+        var user_template = ':username <a href=":case_list_url">(Case List)</a> <a href=":submit_history_url">(Submit History)</a>'
+        var case_list_url = "{% url project_report_dispatcher domain 'case_list' %}";
+        var submit_history_url = "{% url project_report_dispatcher domain 'submit_history' %}";
+        
+        $("[data-field=user_id]").each(function() {
+            var user_id = $(this).text().trim();
+            if ( maybe_username ) {
+                var params = $.param({individual: user_id});
+                var body = user_template
+                             .replace(":username", maybe_username)
+                             .replace(":case_list_url", case_list_url + "?" + params)
+                             .replace(":submit_history_url", submit_history_url + "?" + params);
+                $(this).html(body);
+            }
+        });
+
+        // Add readable owner name
+        var maybe_owner_name = {{ owner_name|JSON }};
+        $("[data-field=owner_id]").each(function() {
+            console.log('yo');
+            if ( maybe_owner_name ) {
+                console.log('hey');
+                $(this).html(maybe_owner_name);
+            }
+        });
     });
     </script>
 {% endblock %}
