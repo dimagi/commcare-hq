@@ -220,7 +220,6 @@ class HQMediaMatcher():
         return matched_images, matched_audio, unknown_files, errors
 
     def match_file(self, uploaded_file, replace_existing_media=True, **kwargs):
-        print "MATCH FILE"
         errors = []
         try:
             if self.specific_params and self.specific_params['media_type'][0].startswith('CommCare'):
