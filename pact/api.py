@@ -17,6 +17,7 @@ from corehq.apps.fixtures.models import FixtureDataType, FixtureDataItem
 from corehq.apps.groups.models import Group
 from corehq.apps.users.models import CouchUser
 from couchforms.models import XFormInstance
+import localsettings
 from pact.dot_data import get_dots_case_json
 from pact.enums import PACT_DOMAIN, XMLNS_PATIENT_UPDATE, PACT_PROVIDER_FIXTURE_TAG, PACT_HP_GROUPNAME, PACT_PROVIDERS_FIXTURE_CACHE_KEY, XMLNS_DOTS_FORM, XMLNS_PATIENT_UPDATE_DOT
 from django.http import Http404, HttpResponse
@@ -115,9 +116,8 @@ class PactFormAPI(DomainAPI):
         db = XFormInstance.get_db()
         couch_user = CouchUser.from_django_user(self.request.user)
         username = couch_user.raw_username
-        if username == 'ctsims':
-            username='cs783'
-
+        if hasattr(localsettings, 'debug_pact_user'):
+            username = getattr(localsettings, 'debug_pact_user')(username)
 
         offset =0
         limit_count=200
