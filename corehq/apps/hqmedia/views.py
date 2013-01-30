@@ -122,7 +122,8 @@ def media_from_path(request, domain, app_id, file_path):
     for section, types in multimedia['references'].items():
         for media_type, info in types.items():
             for media_map in info['maps']:
-                 if media_map['path'][10:] == file_path and media_map.get('url'):
+                # [10:] is to remove the 'jr://file/'
+                if media_map['path'][10:] == file_path and media_map.get('url'):
                     return HttpResponseRedirect(media_map['url'])
 
     raise Http404('No Media Found')
