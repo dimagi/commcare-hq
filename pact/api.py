@@ -86,23 +86,6 @@ def get_cloudcare_url(case_id, mode):
     module_id = app_dict['module_id']
     return  url_root % dict(form_id=app_dict[mode], case_id=case_id, domain=PACT_DOMAIN, build_id=build_id, module_id=module_id)
 
-#    form_dict = dict((x['name'], ix) for (ix, x) in enumerate(forms))
-#    return form_dict
-
-    #n = app['modules'][0]['name']#{'en': 'PACT Cloudcare'}
-
-    #>>> a['modules'][0]['forms'][0]['name']
-#{'en': 'Patient Registration'}
-
-
-
-
-
-
-
-
-
-
 
 class PactFormAPI(DomainAPI):
 
@@ -160,7 +143,7 @@ class PactFormAPI(DomainAPI):
         query['script_fields'] = {}
         query['script_fields'].update(pact_script_fields())
         query['script_fields'].update(case_script_field())
-        print simplejson.dumps(query, indent=4)
+#        print simplejson.dumps(query, indent=4)
 
         res = self.xform_es.run_query(query)
 
@@ -192,14 +175,10 @@ class PactFormAPI(DomainAPI):
                     yield xml_str
                 except Exception, ex:
                     logging.error("for downloader: error fetching attachment: %s" % ex)
-
             yield "</restoredata>"
-
 
         def return_tmpfile():
             temp_xml = tempfile.TemporaryFile()
-#        temp_xml.write("<restoredata>\n")
-#        temp_xml.write("</restoredata>")
             length = temp_xml.tell()
             temp_xml.seek(0)
             wrapper = FileWrapper(temp_xml)
@@ -240,7 +219,7 @@ def generate_meta_block(couch_user, instance_id=None, timestart=None, timeend=No
 
     meta_lxml = etree.Element("{%s}meta" % meta_nsmap['n0'], nsmap=meta_nsmap)
     sub_element(meta_lxml, '{%s}deviceID' % meta_nsmap['n0'], 'pact_case_updater')
-    sub_element(meta_lxml, '{%s}userId' % meta_nsmap['n0'], couch_user.get_id)
+    sub_element(meta_lxml, '{%s}userID' % meta_nsmap['n0'], couch_user.get_id)
     sub_element(meta_lxml, '{%s}timeStart' % meta_nsmap['n0'], timestart.strftime('%Y-%m-%dT%H:%M:%SZ'))
     sub_element(meta_lxml, '{%s}timeEnd' % meta_nsmap['n0'], timeend.strftime('%Y-%m-%dT%H:%M:%SZ'))
     sub_element(meta_lxml, '{%s}instanceID' % meta_nsmap['n0'], instance_id)
@@ -257,6 +236,7 @@ def prepare_case_update_xml_block(casedoc, couch_user, update_dict, submit_date)
     case_lxml = etree.Element('{%s}case' % case_nsmap['n1'], nsmap=case_nsmap, case_id=casedoc._id, user_id=couch_user._id, date_modified=submit_date.strftime("%Y-%m-%dT%H:%M:%SZ"))
     update_lxml = etree.SubElement(case_lxml, '{%s}update' % case_nsmap['n1'])
     make_update(update_lxml, update_dict)
+
     return case_lxml
 
 def recompute_dots_casedata(casedoc, couch_user, submit_date=None):
@@ -289,7 +269,6 @@ def submit_case_update_form(casedoc, update_dict, couch_user, submit_date=None, 
     if submit_date is None:
         submit_date = datetime.utcnow()
     form = etree.Element("data", nsmap={None: xmlns, 'jrm': "http://dev.commcarehq.org/jr/xforms"})
-
     meta_block = generate_meta_block(couch_user, timestart=submit_date, timeend=submit_date)
     form.append(meta_block)
 

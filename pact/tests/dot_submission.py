@@ -5,6 +5,7 @@ from django.test import TestCase
 import simplejson
 from casexml.apps.case.models import CommCareCase
 from corehq.apps.domain.models import Domain
+from corehq.apps.users.models import CommCareUser
 from couchforms.models import XFormInstance
 from pact.dot_data import filter_obs_for_day, query_observations, DOTDay, get_dots_case_json
 from pact.enums import PACT_DOTS_DATA_PROPERTY, PACT_DOMAIN, XMLNS_DOTS_FORM, XMLNS_PATIENT_UPDATE_DOT
@@ -19,6 +20,7 @@ ANCHOR_DATE = datetime.strptime("2012-12-07", "%Y-%m-%d")
 CASE_ID = "66a4f2d0e9d5467e34122514c341ed92"
 PILLBOX_ID = "a1811d7e-c968-4b63-aea5-6195ce0d8759"
 NO_PILLBOX_ID = "83bfe01c-9f96-4e25-a1ad-f8164defa5d1"
+CTSIMS_ID = 'ff6c662bfc2a448dadc9084056a4abdf'
 
 class dotsSubmissionTests(TestCase):
     def setUp(self):
@@ -30,6 +32,8 @@ class dotsSubmissionTests(TestCase):
         self.domain.save()
 
         self.submit_url = '/a/%s/receiver' % self.domain.name
+
+        self.user = CommCareUser.create(self.domain.name, 'ctsims', 'mockmock', uuid=CTSIMS_ID)
 
         self.pillbox_form = ""
         with open(os.path.join(os.path.abspath(os.path.dirname(__file__)), 'dots_data',
@@ -45,6 +49,7 @@ class dotsSubmissionTests(TestCase):
         for doc in XFormInstance.get_db().view('couchforms/by_xmlns', reduce=False,include_docs=True).all():
             XFormInstance.get_db().delete_doc(doc['doc'])
         CommCareCase.get_db().delete_doc(CASE_ID)
+        self.user.delete()
 
 
     def testSignal(self):
@@ -63,6 +68,14 @@ class dotsSubmissionTests(TestCase):
 
         self.assertEquals(dot_count, update_count)
         self.assertEquals(start_count+2,dot_count+update_count)
+
+
+        casedoc = CommCareCase.get(CASE_ID)
+        self.assertEqual(casedoc.xform_ids[-2], PILLBOX_ID)
+        computed_submit = XFormInstance.get(casedoc.xform_ids[-1])
+        self.assertEqual(computed_submit.xmlns, XMLNS_PATIENT_UPDATE_DOT)
+
+
 
     def testNoPillboxCheck(self):
         """

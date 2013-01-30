@@ -1,26 +1,20 @@
-import pdb
 from celery.task.base import subtask
-from corehq.apps.users.models import CommCareUser
-from couchforms.signals import xform_saved
-import logging
-import simplejson
-#from pactpatient import caseapi
-from pact.enums import PACT_DOTS_DATA_PROPERTY
+from corehq.apps.users.models import  CouchUser
+from dimagi.utils.logging import notify_exception
 from pact.utils import get_case_id
 from receiver.signals import successful_form_received
 from pact.tasks import recalculate_dots_data, eval_dots_block
 import traceback
-from django.conf import settings
 
+#placeholder for doing blocking vs. async via celery
 BLOCKING = True
 
 def process_dots_submission(sender, xform, **kwargs):
     try:
-#        pdb.set_trace()
         if xform.xmlns != "http://dev.commcarehq.org/pact/dots_form":
             return
 
-            #grrr, if we were on celery 3.0, we could do this!
+        #grrr, if we were on celery 3.0, we could do this!
         #        chain = eval_dots_block.s(xform.to_json()) | recalculate_dots_data.s(case_id)
         #        chain()
 
@@ -29,14 +23,16 @@ def process_dots_submission(sender, xform, **kwargs):
         if BLOCKING:
             eval_dots_block(xform.to_json())
             case_id = get_case_id(xform)
-            recalculate_dots_data(case_id)
+            #get user from xform
+            user_id = xform.metadata.userID
+            cc_user = CouchUser.get_by_user_id(user_id)
+            recalculate_dots_data(case_id, cc_user)
         else:
             eval_dots_block.delay(xform.to_json(), callback=subtask(recalculate_dots_data))
 
     except Exception, ex:
-        logging.error("Error processing the submission due to an unknown error: %s" % ex)
         tb = traceback.format_exc()
-        print tb
+        notify_exception("Error processing PACT DOT submission due to an unknown error: %s\n\tTraceback: %s" % (ex, tb))
 
 #xform_saved.connect(process_dots_submission)
 successful_form_received.connect(process_dots_submission)
