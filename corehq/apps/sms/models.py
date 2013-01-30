@@ -165,6 +165,7 @@ class CallLog(MessageLog):
     xforms_session_id = StringProperty()
     error = BooleanProperty(default=False)
     error_message = StringProperty()
+    submit_partial_form = BooleanProperty(default=False) # True to submit a partial form on hangup if it's not completed yet
     
     def __unicode__(self):
         to_from = (self.direction == INCOMING) and "from" or "to"

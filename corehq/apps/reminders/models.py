@@ -22,7 +22,6 @@ from corehq.apps.sms.mixin import VerifiedNumber
 from couchdbkit.exceptions import ResourceConflict
 from corehq.apps.sms.util import create_task, close_task, update_task
 from corehq.apps.smsforms.app import submit_unfinished_form
-from corehq.apps.ivr.api import initiate_outbound_call
 from dimagi.utils.couch import LockableMixIn
 from dimagi.utils.couch.database import get_db
 

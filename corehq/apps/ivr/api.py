@@ -9,6 +9,7 @@ from django.http import HttpResponse
 from django.conf import settings
 from dimagi.utils.web import get_url_base
 from touchforms.formplayer.api import current_question
+from corehq.apps.smsforms.app import submit_unfinished_form
 
 IVR_EVENT_NEW_CALL = "NEW_CALL"
 IVR_EVENT_INPUT = "INPUT"
@@ -83,8 +84,11 @@ def incoming(phone_number, backend_module, gateway_session_id, ivr_event, input_
                 # Hang up and process disconnect
                 session = XFormsSession.latest_by_session_id(call_log_entry.xforms_session_id)
                 if session.end_time is None:
-                    session.end(completed=False)
-                    session.save()
+                    if call_log_entry.submit_partial_form:
+                        submit_unfinished_form(session.session_id)
+                    else:
+                        session.end(completed=False)
+                        session.save()
             responses = []
         
         ivr_responses = []
@@ -140,7 +144,7 @@ def incoming(phone_number, backend_module, gateway_session_id, ivr_event, input_
     
     return HttpResponse("")
 
-def initiate_outbound_call(verified_number, form_unique_id):
+def initiate_outbound_call(verified_number, form_unique_id, submit_partial_form):
     call_log_entry = CallLog(
         couch_recipient_doc_type = verified_number.owner_doc_type,
         couch_recipient          = verified_number.owner_id,
@@ -149,6 +153,7 @@ def initiate_outbound_call(verified_number, form_unique_id):
         date                     = datetime.utcnow(),
         domain                   = verified_number.domain,
         form_unique_id           = form_unique_id,
+        submit_partial_form      = submit_partial_form,
     )
     backend = verified_number.ivr_backend
     kwargs = backend.outbound_params
