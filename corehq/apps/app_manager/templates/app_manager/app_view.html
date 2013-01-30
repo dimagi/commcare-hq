@@ -607,16 +607,17 @@
         <h4><a href="{% url app_summary domain app.id %}" class="btn btn-primary">Application Summary</a></h4>
 
         <div class="scary-settings-toggle">
-            <a href="#"><span class="ui-icon"></span>Application Multimedia</a>
+            <a href="#"><span class="ui-icon"></span>{% trans 'Application Multimedia' %}</a>
         </div>
         {% if multimedia %}
         <div class="scary-settings multimedia">
             {% if edit %}
-                <h3 style="text-align: left;">Manage Multimedia</h3>
-                <p>View, upload, and download your application's multimedia</p>
-                <p><a target="_blank" class="btn btn-primary" style="color: #ffffff; text-decoration: none;" href="{% url hqmedia_references domain app.get_id %}"><i class="icon icon-check"></i> Multimedia Reference Checker</a> (opens in a new window)</p>
+                <h3 style="text-align: left;">{% trans 'Manage Multimedia' %}</h3>
+                <p>{% blocktrans %}View, upload, and download your application's multimedia{% endblocktrans %}</p>
+                <p><a target="_blank" class="btn btn-primary" style="color: #ffffff; text-decoration: none;" href="{% url hqmedia_references domain app.get_id %}"><i class="icon icon-check"></i>
+                    {% blocktrans %}Multimedia Reference Checker</a> (opens in a new window){% endblocktrans %}</p>
             {% endif %}
-            <h3 style="margin-top: 1em; text-align: left;">Download Multimedia Zip</h3>
+            <h3 style="margin-top: 1em; text-align: left;">{% trans 'Download Multimedia Zip' %}</h3>
             {% include "hqmedia/partials/multimedia_zip_notice.html" %}
         </div>
         {% endif %}
