@@ -41,6 +41,14 @@ CHILD_VISIT_QUESTION_IDS = {
         'mvp-sauri': _make_qid('patient_available.muac', 1),
         'mvp-potou': _make_qid('patient_available.muac', 1),
     },
+    'last_muac': {
+        'mvp-sauri': _make_qid('last_muac', 1),
+        'mvp-potou': _make_qid('last_muac', 1),
+    },
+    'cur_muac': {
+        'mvp-sauri': _make_qid('cur_muac', 1),
+        'mvp-potou': _make_qid('cur_muac', 1),
+    },
     'exclusive_breastfeeding': {
         'mvp-sauri': _make_qid('group_counseling.exclusive_breastfeeding', 1),
         'mvp-potou': _make_qid('group_counseling.exclusive_breastfeeding', 1),
