@@ -730,7 +730,6 @@ def case_details(request, domain, case_id):
     try:
         owner_name = CommCareUser.get_by_user_id(case.owner_id, domain).raw_username
     except Exception:
-        print 'nope'
         try:
             owning_group = Group.get(case.owner_id)
             owner_name = owning_group.display_name if owning_group.domain == domain else ''

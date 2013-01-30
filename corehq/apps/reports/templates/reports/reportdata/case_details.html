@@ -50,9 +50,7 @@
         // Add readable owner name
         var maybe_owner_name = {{ owner_name|JSON }};
         $("[data-field=owner_id]").each(function() {
-            console.log('yo');
             if ( maybe_owner_name ) {
-                console.log('hey');
                 $(this).html(maybe_owner_name);
             }
         });
