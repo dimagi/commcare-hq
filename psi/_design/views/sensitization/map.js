@@ -1,6 +1,5 @@
 function (doc) {
     //!code util/emit_array.js
-    //!code util/repeats.js
 
     if (doc.doc_type === 'XFormInstance' && (doc.domain === 'psi' || doc.domain === 'psi-unicef')) {
         var form = doc.form;
@@ -10,18 +9,19 @@ function (doc) {
         }
 
         var data = {
-            sessions: count_in_repeats(form.training_sessions, "number_of_blm_attended") +
-                        get_repeats(form.training_sessions, function(data) {
-                            return data['type_of_sensitization'] === 'vhnd';
-                        }).length,
-            ayush_doctors: count_in_repeats(form.training_sessions, "num_ayush_doctors"),
-            mbbs_doctors: count_in_repeats(form.training_sessions, "num_mbbs_doctors"),
-            asha_supervisors: count_in_repeats(form.training_sessions, "num_asha_supervisors"),
-            ashas: count_in_repeats(form.training_sessions, "num_ashas"),
-            awws: count_in_repeats(form.training_sessions, "num_awws"),
-            other: count_in_repeats(form.training_sessions, "num_other"),
-            attendees: count_in_repeats(form.training_sessions, "number_attendees")
+            sessions: parseInt(form["number_of_blm_attended"], 10) || 0,
+            ayush_doctors: parseInt(form["num_ayush_doctors"], 10) || 0,
+            mbbs_doctors: parseInt(form["num_mbbs_doctors"], 10) || 0,
+            asha_supervisors: parseInt(form["num_asha_supervisors"], 10) || 0,
+            ashas: parseInt(form["num_ashas"], 10) || 0,
+            awws: parseInt(form["num_awws"], 10) || 0,
+            other: parseInt(form["num_other"], 10) || 0,
+            attendees: parseInt(form["number_attendees"], 10) || 0
         };
+
+        if (form["type_of_sensitization"] === 'vhnd') {
+            data["sessions"] += 1;
+        }
 
         var opened_on = form.meta.timeEnd;
 
