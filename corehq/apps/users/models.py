@@ -1396,7 +1396,7 @@ class OrgMembershipMixin(DocumentSchema):
         if not organization:
             raise OrgMembershipError("Cannot add org membership -- Organization does not exist")
 
-        self.org_memberships.append(OrgMembership(organization=organization, **kwargs))
+        self.org_memberships.append(OrgMembership(organization=org, **kwargs))
 
     def delete_org_membership(self, org, create_record=False):
         record = None
@@ -1436,6 +1436,14 @@ class WebUser(CouchUser, MultiMembershipMixin, OrgMembershipMixin):
     def is_global_admin(self):
         # override this function to pass global admin rights off to django
         return self.is_superuser
+
+    @classmethod
+    def by_org(cls, org):
+        print org
+        return cls.view("users/by_organization",
+            key=org,
+            include_docs=True,
+        )
 
     @classmethod
     def create(cls, domain, username, password, email=None, uuid='', date='', **kwargs):

@@ -17,9 +17,6 @@ class Organization(Document):
     location = StringProperty()
     logo_filename = StringProperty()
 
-
-    members = StringListProperty()
-
     @classmethod
     def get_by_name(cls, name):
         result = cls.view("orgs/by_name",
@@ -49,11 +46,11 @@ class Organization(Document):
     def __str__(self):
         return self.title
 
-    def add_member(self, guid):
-        if guid not in self.members:
-            self.members.append(guid)
-            self.save()
-        return self.members
+    def all_members(self):
+        from corehq.apps.users.models import WebUser
+        wwww = WebUser.by_org(self.name).all()
+        print [w.get_id for w in wwww]
+        return wwww
 
 
 class Team(UndoableDocument, MultiMembershipMixin):
@@ -138,7 +135,7 @@ class DeleteTeamRecord(DeleteDocRecord):
         return Team.get(self.doc_id)
 
 class OrgInvitation(Invitation):
-    doc_type = "Invitation"
+    doc_type = "OrgInvitation"
     organization = StringProperty()
 
     def send_activation_email(self):
