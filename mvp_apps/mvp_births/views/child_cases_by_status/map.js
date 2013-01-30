@@ -3,7 +3,7 @@ function (doc) {
     if (isChildCase(doc)) {
         var indicator_entries_open = {},
             indicator_entries_closed = {},
-            indicator_entries_dob = {};
+            indicators_dob = [];
 
         var status = (doc.closed) ? "closed" : "open";
 
@@ -15,11 +15,18 @@ function (doc) {
                 opened_on_date = new Date(doc.opened_on);
 
             if (is_delivered) {
-                indicator_entries_dob["dob delivered"] = dob_date;
+                indicators_dob.push("dob delivered");
             }
             if (is_delivered_in_facility) {
-                indicator_entries_dob["dob delivered_in_facility"] = dob_date;
+                indicators_dob.push("dob delivered_in_facility");
             }
+
+            try {
+                emit_standard(doc, new Date(dob_date), indicators_dob, [doc._id]);
+            } catch (e) {
+                // just in case the date parsing fails miserably.
+            }
+
 
 
             indicator_entries_open["opened_on"] = dob_date;
@@ -35,7 +42,6 @@ function (doc) {
                 }
             }
             emit_special(doc, opened_on_date, indicator_entries_open, [doc._id]);
-            emit_special(doc, dob_date, indicator_entries_dob, [doc._id]);
 
             if (doc.closed_on) {
                 var closed_on_date = new Date(doc.closed_on);
