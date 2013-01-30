@@ -110,6 +110,7 @@ def staging():
     env.db = '%s_%s' % (env.project, env.environment)
     _setup_path()
     env.user = prompt("Username: ", default='dimagivm')
+    env.es_endpoint = 'localhost'
 
 @task
 def india():
@@ -146,6 +147,7 @@ def india():
     }
     env.jython_home = '/usr/local/lib/jython'
     env.roles = ['django_monolith']
+    env.es_endpoint = 'localhost'
 
 @task
 def production():
@@ -182,12 +184,54 @@ def production():
     env.host_os_map = None # e.g. 'ubuntu' or 'redhat'.  Gets autopopulated by what_os() if you don't know what it is or don't want to specify.
     env.db = '%s_%s' % (env.project, env.environment)
     env.roles = ['deploy', ]
+    env.es_endpoint = 'hqes0.internal.commcarehq.org'''
+
+    env.jython_home = '/usr/local/lib/jython'
+    _setup_path()
+
+@task
+def realstaging():
+    """ use production environment on remote host"""
+    env.code_branch = 'pact-dev'
+    env.sudo_user = 'cchq'
+    env.environment = 'staging'
+    env.server_port = '9010'
+
+    #env.hosts = None
+    env.roledefs = {
+        'couch': ['hqdb-staging.internal.commcarehq.org'],
+        'pg': ['hqdb-staging.internal.commcarehq.org'],
+        'rabbitmq': ['hqdb-staging.internal.commcarehq.org'],
+        'sofabed': ['hqdb-staging.internal.commcarehq.org'], #todo, right now group it with celery
+        'django_celery': ['hqdb-staging.internal.commcarehq.org'],
+        'django_app': ['hqdjango0-staging.internal.commcarehq.org','hqdjango1-staging.internal.commcarehq.org'],
+        'django_public': ['hqdjango0-staging.internal.commcarehq.org',],
+        'django_pillowtop': ['hqdb-staging.internal.commcarehq.org'],
+
+        'remote_es': ['hqdb-staging.internal.commcarehq.org','hqdjango0-staging.internal.commcarehq.org',],
+
+        'formsplayer': ['hqdjango1-staging.internal.commcarehq.org'],
+        'lb': [], #todo on apache level config
+        'staticfiles': ['hqproxy0.internal.commcarehq.org'],
+        'deploy': ['hqdb-staging.internal.commcarehq.org'], #this is a stub becuaue we don't want to be prompted for a host or run deploy too many times
+        'django_monolith': [] # fab complains if this doesn't exist
+    }
+
+    env.es_endpoint = 'hqdjango1-staging.internal.commcarehq.org'''
+
+    env.server_name = 'commcare-hq-staging'
+    env.settings = '%(project)s.localsettings' % env
+    env.host_os_map = None # e.g. 'ubuntu' or 'redhat'.  Gets autopopulated by what_os() if you don't know what it is or don't want to specify.
+    env.db = '%s_%s' % (env.project, env.environment)
+    env.roles = ['deploy', ]
 
     env.jython_home = '/usr/local/lib/jython'
     _setup_path()
     
+    
 
 @task
+@roles('django_app','django_celery','staticfiles')
 def install_packages():
     """Install packages, given a list of package names"""
     require('environment', provided_by=('staging', 'production'))
@@ -275,6 +319,7 @@ def create_db():
 
 
 @task
+@parallel
 def bootstrap():
     """Initialize remote host environment (virtualenv, deploy, update) """
     require('root', provided_by=('staging', 'production'))
@@ -292,7 +337,6 @@ def bootstrap():
     execute(create_virtualenvs)
     execute(update_virtualenv)
     execute(setup_dirs)
-    execute(generate_supervisorconf_file)
     execute(update_apache_conf)
     #execute(fix_locale_perms)
 
@@ -316,8 +360,8 @@ def create_virtualenvs():
             provided_by=('staging', 'production', 'india'))
     
     args = '--distribute --no-site-packages'
-    sudo('virtualenv %s %s' % (args, env.virtualenv_root), user=env.sudo_user)
-    sudo('virtualenv %s %s' % (args, env.virtualenv_root_preindex), user=env.sudo_user)
+    sudo('cd && virtualenv %s %s' % (args, env.virtualenv_root), user=env.sudo_user, shell=True)
+    sudo('cd && virtualenv %s %s' % (args, env.virtualenv_root_preindex), user=env.sudo_user, shell=True)
 
 
 #@parallel
@@ -326,7 +370,8 @@ def clone_repo():
     """ clone a new copy of the git repository """
     with settings(warn_only=True):
         with cd(env.root):
-            if not files.exists(env.code_root):
+            exists_results = sudo('ls -d %(code_root)s' % env, user=env.sudo_user)
+            if exists_results.strip() != env['code_root']:
                 sudo('git clone %(code_repo)s %(code_root)s' % env, user=env.sudo_user)
             
             if not files.exists(env.code_root_preindex):
@@ -577,7 +622,6 @@ def _upload_supervisor_conf_file(filename):
     upload_dict["template"] = posixpath.join(os.path.dirname(__file__), 'services', 'templates', filename)
     upload_dict["destination"] = '/tmp/%s.blah' % filename
     upload_dict["enabled"] =  posixpath.join(env.services, u'supervisor/%s' % filename)
-    upload_dict["main_supervisor_conf_dir"] = '/etc'
 
     files.upload_template(upload_dict["template"], upload_dict["destination"], context=env, use_sudo=False)
     sudo('chown -R %s %s' % (env.sudo_user, upload_dict["destination"]), shell=False)
@@ -588,7 +632,8 @@ def _upload_supervisor_conf_file(filename):
 @roles('django_celery', 'django_monolith')
 def upload_celery_supervisorconf():
     _upload_supervisor_conf_file('supervisor_celery.conf')
-    _upload_supervisor_conf_file('supervisor_celerybeat.conf')
+    if env.environment == 'production': #hacky hack
+        _upload_supervisor_conf_file('supervisor_celerybeat.conf')
     _upload_supervisor_conf_file('supervisor_celerymon.conf')
     _upload_supervisor_conf_file('supervisor_couchdb_lucene.conf') #to be deprecated
 
@@ -629,21 +674,8 @@ def upload_and_set_supervisor_config():
     execute(upload_elasticsearch_supervisorconf)
     execute(upload_django_public_supervisorconf)
     execute(upload_formsplayer_supervisorconf)
-    #generate_supervisorconf_file()
 
-def generate_supervisorconf_file():
-    #regenerate a brand new supervisor conf file from scratch.
-    #Set the line in the supervisord config file that points to our project's supervisor directory with conf files
-    replace_dict = {}
-    replace_dict["main_supervisor_conf_dir"] = '/etc'
-    replace_dict["tmp"] = posixpath.join('/','tmp', "supervisord_%s.tmp" % uuid.uuid4().hex)
 
-    #create brand new one
-    sudo("echo_supervisord_conf > %(tmp)s" % replace_dict)
-    files.uncomment(replace_dict['tmp'], "^;\[include\]", use_sudo=True, char=';')
-    files.sed(replace_dict["tmp"], ";files = relative/directory/\*\.ini", "files = %s/supervisor/*.conf" % env.services, use_sudo=True)
-    #sudo('mv -f %(tmp)s %(main_supervisor_conf_dir)s/supervisord.conf' % replace_dict)
-    sudo('cp -f %(tmp)s %(main_supervisor_conf_dir)s/supervisord.conf' % replace_dict)
 
 def _supervisor_command(command):
     require('hosts', provided_by=('staging', 'production'))
