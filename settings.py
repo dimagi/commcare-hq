@@ -379,6 +379,9 @@ LOGSTASH_HOST = 'localhost'
 ELASTICSEARCH_HOST = 'localhost'
 ELASTICSEARCH_PORT = 9200
 
+#for production this ought to be set to true on your configured couch instance
+COUCH_HTTPS=False
+
 try:
     #try to see if there's an environmental variable set for local_settings
     if os.environ.get('CUSTOMSETTINGS', None) == "demo":
@@ -396,7 +399,7 @@ except ImportError:
 
 ####### Couch Forms & Couch DB Kit Settings #######
 from settingshelper import get_dynamic_db_settings, make_couchdb_tuple
-_dynamic_db_settings = get_dynamic_db_settings(COUCH_SERVER_ROOT, COUCH_USERNAME, COUCH_PASSWORD, COUCH_DATABASE_NAME, INSTALLED_APPS)
+_dynamic_db_settings = get_dynamic_db_settings(COUCH_SERVER_ROOT, COUCH_USERNAME, COUCH_PASSWORD, COUCH_DATABASE_NAME, INSTALLED_APPS, use_https=COUCH_HTTPS)
 
 # create local server and database configs
 COUCH_SERVER = _dynamic_db_settings["COUCH_SERVER"]
@@ -612,8 +615,7 @@ PILLOWTOPS = [ 'corehq.pillows.CasePillow',
                'corehq.pillows.ExchangePillow',
                ] + LOCAL_PILLOWTOPS
 
+#Custom workflow for indexing xform data beyond the standard properties
 XFORM_PILLOW_HANDLERS = ['pact.pillowhandler.PactHandler', ]
-
-
 
 REMOTE_APP_NAMESPACE = "%(domain)s.commcarehq.org"
