@@ -32,7 +32,7 @@ ko.bindingHandlers.previewHQImageButton = {
             var $previewButton = $('<a target="_blank" class="btn btn-info" />');
             $previewButton.attr('href', url);
             $previewButton.text('Preview Image');
-            $previewButton.popover({
+            $previewButton.popout({
                 title: 'Click to open in new window',
                 content: '<img src="'+url+'" alt="preview image" />',
                 html: true,
@@ -152,8 +152,11 @@ ko.bindingHandlers.uploadMediaModal = {
 
 var MultimediaMap = function (data, jplayerSwfPath) {
     var self = this;
-    self.image_refs = ko.observableArray();
-    self.audio_refs = ko.observableArray();
+    self.form_images = ko.observableArray();
+    self.form_audio = ko.observableArray();
+    self.menu_icons = ko.observableArray();
+    self.menu_audio = ko.observableArray();
+
     self.by_path = {};
     self.has_ref = false;
 
@@ -192,18 +195,19 @@ var MultimediaMap = function (data, jplayerSwfPath) {
         }
     });
 
+    function _map_media_to_observable(media_map, media_type, observable) {
+        _.each(media_map, function(ref) {
+            var refObj = new HQMediaRef(ref, media_type);
+            observable.push(refObj);
+            self.by_path[ref.uid] = refObj;
+        });
+    }
 
-    _.each(data.images, function(ref) {
-        var refObj = new HQMediaRef(ref, "Image")
-;        self.image_refs.push(refObj);
-        self.by_path[ref.uid] = refObj;
-    });
+    _map_media_to_observable(data.references.form_media.images.maps, "Image", self.form_images);
+    _map_media_to_observable(data.references.menu_media.icons.maps, "Image", self.menu_icons);
+    _map_media_to_observable(data.references.form_media.audio.maps, "Audio", self.form_audio);
+    _map_media_to_observable(data.references.menu_media.audio.maps, "Audio", self.menu_audio);
 
-    _.each(data.audio, function(ref) {
-        var refObj = new HQMediaRef(ref, "Audio");
-        self.audio_refs.push(refObj);
-        self.by_path[ref.uid] = refObj;
-    });
 },
 
 HQMediaRef = function(mediaRef, type) {
