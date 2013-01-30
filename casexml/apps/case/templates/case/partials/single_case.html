@@ -10,6 +10,7 @@
 </thead>
 <tbody>
     <tr><td>name</td><td>{{ case.name }}</td></tr>
+    <tr><td>case_id</td><td>{{ case.case_id }}</td></tr>
     <tr><td>opened_on</td><td>{%  utc_to_timezone case.opened_on timezone %}</td></tr>
     <tr><td>modified_on</td><td>{% utc_to_timezone case.modified_on timezone %}</td></tr>
     <tr><td>type</td><td><code>{{ case.type }}</code></td></tr>
