@@ -85,7 +85,7 @@ def incoming(phone_number, backend_module, gateway_session_id, ivr_event, input_
                 session = XFormsSession.latest_by_session_id(call_log_entry.xforms_session_id)
                 if session.end_time is None:
                     if call_log_entry.submit_partial_form:
-                        submit_unfinished_form(session.session_id)
+                        submit_unfinished_form(session.session_id, call_log_entry.include_case_side_effects)
                     else:
                         session.end(completed=False)
                         session.save()
@@ -144,7 +144,7 @@ def incoming(phone_number, backend_module, gateway_session_id, ivr_event, input_
     
     return HttpResponse("")
 
-def initiate_outbound_call(verified_number, form_unique_id, submit_partial_form):
+def initiate_outbound_call(verified_number, form_unique_id, submit_partial_form, include_case_side_effects):
     call_log_entry = CallLog(
         couch_recipient_doc_type = verified_number.owner_doc_type,
         couch_recipient          = verified_number.owner_id,
@@ -154,6 +154,7 @@ def initiate_outbound_call(verified_number, form_unique_id, submit_partial_form)
         domain                   = verified_number.domain,
         form_unique_id           = form_unique_id,
         submit_partial_form      = submit_partial_form,
+        include_case_side_effects = include_case_side_effects,
     )
     backend = verified_number.ivr_backend
     kwargs = backend.outbound_params

@@ -180,6 +180,7 @@ def add_complex_reminder_schedule(request, domain, handler_id=None):
             h.until = form.cleaned_data["until"]
             h.events = form.cleaned_data["events"]
             h.submit_partial_forms = form.cleaned_data["submit_partial_forms"]
+            h.include_case_side_effects = form.cleaned_data["include_case_side_effects"]
             h.ui_frequency = form.cleaned_data["frequency"]
             h.start_condition_type = form.cleaned_data["start_condition_type"]
             if form.cleaned_data["start_condition_type"] == "ON_DATETIME":
@@ -210,6 +211,7 @@ def add_complex_reminder_schedule(request, domain, handler_id=None):
                 "until"                 : h.until,
                 "events"                : h.events,
                 "submit_partial_forms"  : h.submit_partial_forms,
+                "include_case_side_effects" : h.include_case_side_effects,
                 "start_condition_type"  : h.start_condition_type,
                 "start_datetime_date"   : str(h.start_datetime.date()) if isinstance(h.start_datetime, datetime) else None,
                 "start_datetime_time"   : str(h.start_datetime.time()) if isinstance(h.start_datetime, datetime) else None,

@@ -293,6 +293,12 @@ class CaseReminderHandler(Document):
     # If this is True, on the last survey timeout, instead of resending the current question, 
     # it will submit the form for the recipient with whatever is completed up to that point.
     submit_partial_forms = BooleanProperty(default=False)
+    
+    # Only applies when submit_partial_forms is True.
+    # If this is True, partial form submissions will be allowed to create / update / close cases.
+    # If this is False, partial form submissions will just submit the form without case create / update / close.
+    include_case_side_effects = BooleanProperty(default=False)
+    
     survey_incentive = StringProperty()
     
     # start condition
@@ -492,7 +498,7 @@ class CaseReminderHandler(Document):
                     if self.method == METHOD_SMS_SURVEY and self.submit_partial_forms and iteration > 1:
                         # This is to make sure we submit the unfinished forms even when fast-forwarding to the next event after system downtime
                         for session_id in reminder.xforms_session_ids:
-                            submit_unfinished_form(session_id)
+                            submit_unfinished_form(session_id, self.include_case_side_effects)
                 else:
                     reminder.next_fire = reminder.next_fire + timedelta(minutes = reminder.current_event.callback_timeout_intervals[reminder.callback_try_count])
                     reminder.callback_try_count += 1

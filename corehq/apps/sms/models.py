@@ -166,6 +166,7 @@ class CallLog(MessageLog):
     error = BooleanProperty(default=False)
     error_message = StringProperty()
     submit_partial_form = BooleanProperty(default=False) # True to submit a partial form on hangup if it's not completed yet
+    include_case_side_effects = BooleanProperty(default=False)
     
     def __unicode__(self):
         to_from = (self.direction == INCOMING) and "from" or "to"

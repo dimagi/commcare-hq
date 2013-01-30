@@ -128,7 +128,7 @@ def fire_sms_survey_event(reminder, handler, recipients, verified_numbers):
             if handler.submit_partial_forms and (reminder.callback_try_count == len(reminder.current_event.callback_timeout_intervals)):
                 # Submit partial form completions
                 for session_id in reminder.xforms_session_ids:
-                    submit_unfinished_form(session_id)
+                    submit_unfinished_form(session_id, handler.include_case_side_effects)
             else:
                 # Resend current question
                 for session_id in reminder.xforms_session_ids:
@@ -209,7 +209,7 @@ def fire_ivr_survey_event(reminder, handler, recipients, verified_numbers):
             return True
         verified_number = verified_numbers[recipients[0].get_id]
         if verified_number is not None:
-            initiate_outbound_call(verified_number, reminder.current_event.form_unique_id, handler.submit_partial_forms)
+            initiate_outbound_call(verified_number, reminder.current_event.form_unique_id, handler.submit_partial_forms, handler.include_case_side_effects)
             return True
         else:
             return False

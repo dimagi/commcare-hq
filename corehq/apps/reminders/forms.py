@@ -179,6 +179,7 @@ class ComplexCaseReminderForm(Form):
     schedule_length = CharField()
     events = EventListField()
     submit_partial_forms = BooleanField(required=False)
+    include_case_side_effects = BooleanField(required=False)
     start_datetime_date = CharField(required=False)
     start_datetime_time = CharField(required=False)
     frequency = CharField()
