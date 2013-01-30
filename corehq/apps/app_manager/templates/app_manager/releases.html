@@ -364,24 +364,11 @@
                     {% if multimedia %}
                         <div class="accordion-group">
                             <div class="accordion-heading">
-                                <a class="accordion-toggle" href="{% if multimedia.notice %}#{{ saved_app.id }}_multimedia{% else %}{% url download_multimedia_zip domain app.id %}{% endif %}" {% if multimedia.notice %}data-toggle="collapse" data-target="#{{ saved_app.id }}_multimedia"{% endif %}>Download Multimedia Zip</a>
+                                <a class="accordion-toggle" href="#{{ saved_app.id }}_multimedia" data-toggle="collapse" data-target="#{{ saved_app.id }}_multimedia">Download Multimedia</a>
                             </div>
                             <div class="accordion-body collapse" id="{{ saved_app.id }}_multimedia">
                                 <div class="accordion-inner">
-                                    {% if multimedia.missing_image_refs > 0 or multimedia.missing_audio_refs > 0 %}
-                                        <p>
-                                            Your multimedia zip is missing {{ multimedia.missing_image_refs }} image reference{{ multimedia.missing_image_refs|pluralize }} and
-                                            {{ multimedia.missing_audio_refs }} audio reference{{ multimedia.missing_audio_refs|pluralize }}. Your app will likely crash unless this
-                                            is resolved.
-                                        </p>
-                                    {% endif %}
-                                    {% if multimedia.errors %}
-                                        <p>
-                                            Your application contains errors, therefore, your multimedia could not properly be assembled. Please fix your errors and any missing
-                                            multimedia references that are found afterward before using this file.
-                                        </p>
-                                    {% endif %}
-                                    <a class="btn btn-warning" href="{% url download_multimedia_zip domain app.id %}">Download Anyway</a>
+                                    {% include 'hqmedia/partials/multimedia_zip_notice.html' %}
                                 </div>
                             </div>
                         </div>
