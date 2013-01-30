@@ -337,7 +337,6 @@ def bootstrap():
     execute(create_virtualenvs)
     execute(update_virtualenv)
     execute(setup_dirs)
-    execute(generate_supervisorconf_file)
     execute(update_apache_conf)
     #execute(fix_locale_perms)
 
@@ -636,7 +635,7 @@ def upload_celery_supervisorconf():
     if env.environment == 'production': #hacky hack
         _upload_supervisor_conf_file('supervisor_celerybeat.conf')
     _upload_supervisor_conf_file('supervisor_celerymon.conf')
-#    _upload_supervisor_conf_file('supervisor_couchdb_lucene.conf') #to be deprecated
+    _upload_supervisor_conf_file('supervisor_couchdb_lucene.conf') #to be deprecated
 
     #in reality this also should be another machine if the number of listeners gets too high
     _upload_supervisor_conf_file('supervisor_pillowtop.conf')
@@ -676,11 +675,6 @@ def upload_and_set_supervisor_config():
     execute(upload_django_public_supervisorconf)
     execute(upload_formsplayer_supervisorconf)
 
-def generate_supervisorconf_file():
-    """
-    deprecated - this is handled by salt now
-    """
-    pass
 
 
 def _supervisor_command(command):
