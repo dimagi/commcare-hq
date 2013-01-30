@@ -17,8 +17,8 @@
     <tr><td>closed_on</td><td>{% utc_to_timezone case.closed_on timezone %}</td></tr>
     <tr><td>domain</td><td>{{ case.domain }}</td></tr>
     <tr><td>external_id</td><td>{{ case.external_id }}</td></tr>
-    <tr><td>user_id</td><td>{{ case.user_id }}</td></tr>
-    <tr><td>owner_id</td><td>{{ case.owner_id }}</td></tr>
+    <tr><td>user_id</td><td><span class="user_id">{{ case.user_id }}</span></td></tr>
+    <tr><td>owner_id</td><td><span class="user_id">{{ case.owner_id }}</span></td></tr>
     <tr><td>forms</td><td>{% for form_id in case.xform_ids %}
     <p class="xform_ref" data-formid="{{ form_id }}">{% form_inline_display form_id %}</p>
     {% if not forloop.first %}<br>{% endif %}
