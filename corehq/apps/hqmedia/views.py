@@ -88,54 +88,43 @@ def choose_media(request, domain, app_id):
 
 @require_can_edit_apps
 def media_urls(request, domain, app_id):
+    # IS THIS USED?????
+    # I rewrote it so it actually produces _something_, but is it useful???
     app = get_app(domain, app_id)
-    refs, missing_refs = app.get_template_map(request.GET.getlist('path[]'))
+    multimedia = app.get_media_references()
     pathUrls = {}
-    for ref in refs:
-        pathUrls[ref['path']] = ref
+    for section, types in multimedia['references'].items():
+        for media_type, info in types.items():
+            for m in info['maps']:
+                if m.get('path'):
+                    pathUrls[m['path']] = m
 
     return HttpResponse(simplejson.dumps(pathUrls))
 
 @require_can_edit_apps
 def media_map(request, domain, app_id):
     app = get_app(domain, app_id)
-    sorted_images, sorted_audio, has_error = utils.get_sorted_multimedia_refs(app)
-
-    images, missing_image_refs = app.get_template_map(sorted_images)
-    audio, missing_audio_refs = app.get_template_map(sorted_audio)
+    multimedia = app.get_media_references()
 
     return render_to_response(request, "hqmedia/map.html", {
         "domain": domain,
         "app": app,
-        "multimedia": {
-         "images": images,
-         "audio": audio,
-         "has_error": has_error
-        },
-        "missing_image_refs": missing_image_refs,
-        "missing_audio_refs": missing_audio_refs
+        "multimedia": multimedia,
     })
 
 def media_from_path(request, domain, app_id, file_path):
+    # Not sure what the intentions were for this. I didn't see it getting used anywhere.
+    # Rewrote it to use new media refs.
+    # Yedi, care to comment?
     app = get_app(domain, app_id)
-    sorted_images, sorted_audio, has_error = utils.get_sorted_multimedia_refs(app)
+    multimedia = app.get_media_references()
 
-    images, _ = app.get_template_map(sorted_images)
-    audio, _ = app.get_template_map(sorted_audio)
+    for section, types in multimedia['references'].items():
+        for media_type, info in types.items():
+            for media_map in info['maps']:
+                 if media_map['path'][10:] == file_path and media_map.get('url'):
+                    return HttpResponseRedirect(media_map['url'])
 
-    for i in images:
-        i['type'] = 'CommCareImage'
-
-    for a in audio:
-        a['type'] = 'CommCareAudio'
-
-    media = images + audio
-    for m in media:
-        if m['path'][10:] == file_path: # [10:] is to remove the 'jr://file/'
-            if m.get('m_id', ""):
-                return download_media(request, m['type'], m['m_id'])
-            else:
-                raise Http404('No Media Found')
     raise Http404('No Media Found')
 
 @require_can_edit_apps
