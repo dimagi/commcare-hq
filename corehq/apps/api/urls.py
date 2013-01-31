@@ -5,6 +5,7 @@ from corehq.apps.commtrack.resources.v0_1 import ProductResource,\
 from corehq.apps.fixtures.resources.v0_1 import FixtureResource
 from corehq.apps.locations.resources.v0_1 import LocationResource
 from django.conf.urls.defaults import *
+from django.http import HttpResponseNotFound
 from tastypie.api import Api
 from corehq.apps.api.es import XFormES
 from dimagi.utils.decorators import inline
@@ -34,10 +35,14 @@ API_LIST = (
 COMMTRACK_RESOURCES = (LocationResource, ProductResource, StockStatusResource,
                        FullStockTransactionResource, StockReportResource)
 
+class CommCareHqApi(Api):
+    def top_level(self, request, api_name=None, **kwargs):
+        return HttpResponseNotFound()
+
 @inline
 def api_url_patterns():
     for version, resources in API_LIST:
-        api = Api(api_name=r'v%d\.%d' % version)
+        api = CommCareHqApi(api_name=r'v%d\.%d' % version)
         for R in resources:
             api.register(R())
         for R in COMMTRACK_RESOURCES:
