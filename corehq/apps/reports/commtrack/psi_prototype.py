@@ -118,7 +118,7 @@ OUTLET_METADATA = [
     ('district', 'District'),
     ('block', 'Block'),
     ('village', 'Village'),
-    ('outlet_id', 'Outlet ID'),
+    ('site_code', 'Outlet Code'),
     ('name', 'Outlet'),
     ('contact_phone', 'Contact Phone'),
     ('outlet_type', 'Outlet Type'),
@@ -194,7 +194,7 @@ class StockReportExport(VisitReport):
 
         exclude_cols = set()
         for i, h in enumerate(headers):
-            if not (h.startswith('data:') or h in ('outlet_id', 'reporter', 'date')):
+            if not (h.startswith('data:') or h in ('site_code', 'reporter', 'date')):
                 exclude_cols.add(i)
 
         def clean_cell(val):

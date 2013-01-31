@@ -3,7 +3,6 @@ from django.core.cache import cache
 from soil import DownloadBase
 from corehq.apps.commtrack import bulk
 from soil.util import expose_download
-from corehq.apps.commtrack.management.commands.import_locations import import_locations
 
 @task
 def import_locations_async(download_id, domain, file_ref_id):

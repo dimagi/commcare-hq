@@ -19,10 +19,9 @@ def make_product(domain, name, code):
     return p
 
 # TODO use case-xml case creation workflow
-def make_supply_point(domain, location, code):
+def make_supply_point(domain, location):
     c = CommCareCase()
     c.domain = domain
-    c.site_code = code
     c.type = 'supply-point'
     c.bind_to_location(location)
     c.save()
