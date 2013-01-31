@@ -56,7 +56,7 @@
         <a href="{% url orgs_landing org.name %}">{{ org.name }} ({{ org.title }})</a>
     </li>
     <li>
-        <span class="divider">&gt;</span><a href="#">Editing Team "{{ team.name }}"</a>
+        <span class="divider">&gt;</span><a href="#">{% if admin %}Editing {% endif %}Team "{{ team.name }}"</a>
     </li>
 </ul>
 {% endblock %}
@@ -72,13 +72,14 @@
 <!--{% endblock %}-->
 
 {% block team-info %}
-
+{% if admin %}
     <div class="btn-toolbar">
         <!--<a href="#editTeamSettings" class="btn" data-toggle="modal"><i class="icon icon-pencil"></i> Edit Settings</a>-->
         <form name="delete_group" style="margin-right: 45px;" class="pull-right" action="{% url delete_team org.name team.get_id %}" method="post">
             <button class="btn btn-danger" type="submit"><i class="icon icon-white icon-remove"></i> Delete Team "{{ team.name }}"</button>
         </form>
     </div>
+{% endif %}
 
     <div class="modal hide fade" id="editTeamSettings">
         <div class="modal-header">
@@ -90,11 +91,11 @@
 {% endblock %}
 
 {% block team-view %}
-<div class="container"><h2>Manage Team Members</h2><br/>
+<div class="container">{% if admin %}<h2>Manage Team Members</h2><br/>{% endif %}
 <div class="row-fluid">
     <div class="span6" id="members">
         <h3>Organization Members in Team
-        {% if members|length %}
+        {% if admin and members|length %}
         <form name="clear_team" class="pull-right" action="{% url remove_all_from_team org.name team.get_id %}" method="post">
             <input type="hidden" name="redirect_url" value="orgs_team_members" />
             <button class="btn btn-danger" type="submit">Remove All</button>
@@ -103,13 +104,18 @@
         </h3><br/>
         <div class="well">
             {% for member in members %}
-            <form class="group-bubble" name="leave_team" action="{% url leave_team org.name team.get_id member.user_id %}" method="post">
-                <input type="hidden" name="redirect_url" value="orgs_team_members" />
-                <button type="submit" class="btn btn-primary"><i class="icon icon-white icon-minus"></i> {{ member.raw_username }}</button>
-            </form>
+            {% if admin %}
+                <form class="group-bubble" name="leave_team" action="{% url leave_team org.name team.get_id member.user_id %}" method="post">
+                    <input type="hidden" name="redirect_url" value="orgs_team_members" />
+                    <button type="submit" class="btn btn-primary"><i class="icon icon-white icon-minus"></i> {{ member.raw_username }}</button>
+                </form>
+            {% else %}
+                <h4>{{ member.raw_username }}</h4>
+            {% endif %}
             {% endfor %}
         </div>
     </div>
+    {% if admin %}
     <div class="span6" id="non-members">
         <h3>Available Organization Members
         {% if nonmembers|length %}
@@ -128,10 +134,11 @@
             {% endfor %}
         </div>
     </div>
+    {% endif %}
 </div>
-    <hr/>
+<hr />
 </div>
-<div class="container"><h2>Manage Team Projects</h2><br/>
+<div class="container">{% if admin %}<h2>Manage Team Projects</h2><br/>{% endif %}
 <div class="row-fluid">
     <div class="span6" id="domains">
         <h3>Team Projects
@@ -140,6 +147,7 @@
         <!--</form>--></h3><br/>
         <div class="well">
             {% for domain, role, roles in team_domains %}
+            {% if admin %}
             <form class="group-bubble" name="remove_domain" action="{% url remove_domain_from_team org.name team.get_id domain.name %}" method="post">
                 <input type="hidden" name="redirect_url" value="orgs_team_members" />
                 <div class="btn-toolbar">
@@ -160,9 +168,13 @@
                 </div>
                 </div>
             </form>
+            {% else %}
+                <a href="{% url domain_homepage domain %}"><h4>{{ domain.display_name }}</h4></a>
+            {% endif %}
             {% endfor %}
         </div>
     </div>
+    {% if admin %}
     <div class="span6" id="non-domains">
         <h3>Available Projects
         <!--<form name="add_all_domains_to_team" class="pull-right" action="" method="post">-->
@@ -178,7 +190,8 @@
             {% endfor %}
         </div>
     </div>
-</div>
+    {% endif %}
+{% if admin %}</div>{% endif %} <!-- class="container" text: Manage Team Projects -->
 </div>
 {% endblock %}
 
