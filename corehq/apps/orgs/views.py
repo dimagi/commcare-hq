@@ -43,7 +43,7 @@ def orgs_landing(request, org, template="orgs/orgs_landing.html", form=None, add
 
     current_teams = Team.get_by_org(org)
     current_domains = Domain.get_by_organization(org)
-    members = organization.all_members()
+    members = organization.get_members()
     admin = request.couch_user.is_org_admin(org) or request.couch_user.is_superuser
 
     vals = dict(org=organization, domains=current_domains, reg_form=reg_form, add_form=add_form,
@@ -208,7 +208,7 @@ def orgs_team_members(request, org, team_id, template="orgs/orgs_team_members.ht
     all_org_domains = Domain.get_by_organization(org)
     non_domains = [domain for domain in all_org_domains if domain.name not in domain_names]
 
-    all_org_members = organization.all_members()
+    all_org_members = organization.get_members()
     non_members = [member for member in all_org_members if member.user_id not in [m.user_id for m in members]]
 
     admin = request.couch_user.is_org_admin(org) or request.couch_user.is_superuser
@@ -303,7 +303,7 @@ def set_team_permission_for_domain(request, org, team_id):
 @require_POST
 def add_all_to_team(request, org, team_id):
     organization = Organization.get_by_name(org)
-    members = organization.all_members()
+    members = organization.get_members()
     for member in members:
         member.add_to_team(org, team_id)
         member.save()
