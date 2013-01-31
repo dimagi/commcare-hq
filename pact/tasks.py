@@ -1,10 +1,7 @@
-import logging
-import pdb
 import traceback
 from celery.task import task, subtask
 from datetime import datetime
 import simplejson
-from corehq.apps.users.models import CommCareUser
 from couchforms.models import XFormInstance
 from dimagi.utils.logging import notify_exception
 from pact.enums import PACT_DOTS_DATA_PROPERTY
@@ -26,7 +23,7 @@ def recalculate_dots_data(case_id, cc_user):
             recompute_dots_casedata(casedoc, cc_user)
         except Exception, ex:
             tb = traceback.format_exc()
-            notify_exception(None, message="PACT error recomputing DOTS case block: %s" % ex)
+            notify_exception(None, message="PACT error recomputing DOTS case block: %s\n%s" % (ex, tb))
 
 
 @task(ignore_results=True)

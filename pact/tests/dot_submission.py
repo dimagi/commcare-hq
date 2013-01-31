@@ -122,7 +122,7 @@ class dotsSubmissionTests(TestCase):
             self.assertEquals(obs.day_note, "No check, from form") #magic string from the view to indicate a generated DOT observation from form data.
             art_nonart.add(obs.is_art)
             self.assertEquals(obs.doc_id, bundle['xform_id'])
-            print obs.to_json()
+            #print obs.to_json()
 
         art = filter(lambda x: x.is_art, observations)
         self.assertEquals(2, len(art))
@@ -149,20 +149,20 @@ class dotsSubmissionTests(TestCase):
             obs_date = enddate - timedelta(days=day_delta)
             ret_index = DOT_DAYS_INTERVAL - day_delta -1
 
-            print obs_date.strftime("%Y-%m-%d")
+            #print obs_date.strftime("%Y-%m-%d")
 
             day_arr = case_json['days'][ret_index]
             nonart_day_data = day_arr[0]
             art_day_data = day_arr[1]
 
-            if obs_date.date() == encounter_date:
-                print "\tespecially no pillbox check days"
-                print nonart_day_data
-                print art_day_data
+            #if obs_date.date() == encounter_date:
+                #print "\tespecially no pillbox check days"
+                #print nonart_day_data
+                #print art_day_data
 
             self.assertEquals(len(nonart_day_data), 3)
             self.assertEquals(len(art_day_data), 2)
-            print "\tsuccess"
+            #print "\tsuccess"
 
 
 
