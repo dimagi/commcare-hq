@@ -1375,6 +1375,8 @@ class OrgMembershipMixin(DocumentSchema):
             org = org_name_or_model.name
         except Exception:
             org = org_name_or_model
+        print org
+        print self.organizations
         return org in self.organizations
 
     def get_org_membership(self, org):

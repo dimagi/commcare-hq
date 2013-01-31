@@ -64,11 +64,11 @@
 {% block page-title %}
         <div class="container">
 <ul class="breadcrumb">
+    {% if request.couch_user.is_superuser %}<a href="{% url orgs_base %}">{% endif %}
+    <li><strong>Organizations</strong></li>
+    {% if request.couch_user.is_superuser %}</a>{% endif %}
     <li>
-        <strong>Organizations</strong> <span class="divider">&gt;</span>
-    </li>
-    <li>
-
+        <span class="divider">&gt;</span>
         <a href="{% url orgs_landing org.name %}">{{ org.name }} ({{ org.title }})</a>
     </li>
 </ul>
@@ -88,7 +88,9 @@
             <!-- possibly bad to add http to front of url.  How else to make link absolute? -->
             <p>URL: {% if org.url %}<a href="http://{{ org.url }}" target="_blank">{{ org.url }}</a>{% else %} None{% endif %}</p>
             <p>Location: {{ org.location }}</p>
-            <a href="#update_info_modal" class="btn" data-toggle="modal">Update Info</a>
+            {% if admin %}
+                <a href="#update_info_modal" class="btn" data-toggle="modal">Update Info</a>
+            {% endif %}
         </div>
                 <div class="span7" style="padding-top:30px">
 
@@ -110,7 +112,7 @@
         <div class="row-fluid">
             <div class="span4">
                 <ul class="nav nav-list">
-                    <li class="nav-header"><h2>Projects <a href="#add_project_modal" id="add_project_btn" class="btn btn-success" data-toggle="modal"><i class="icon-plus"></i></a> <a href="#create_project_modal" id="create_project_btn" class="btn btn-success" data-toggle="modal"><i class="icon-pencil"></i></a></h2></li>
+                    <li class="nav-header"><h2>Projects{% if admin %} <a href="#add_project_modal" id="add_project_btn" class="btn btn-success" data-toggle="modal"><i class="icon-plus"></i></a> <a href="#create_project_modal" id="create_project_btn" class="btn btn-success" data-toggle="modal"><i class="icon-pencil"></i></a>{% endif %}</h2></li>
                     {% for domain in domains %}
                     <li><a href="{% url domain_homepage domain %}"><h3>{{ domain.display_name }}</h3></a></li>
                     {% endfor %}
@@ -120,7 +122,7 @@
             <div class="span3">
                 <div class="nav nav-list">
                     <li class="nav-header">
-                        <h2>Teams <a href="#add_team_modal" id="add_team_btn" class="btn btn-success" data-toggle="modal"><i class="icon-plus"></i></a></h2>
+                        <h2>Teams{% if admin %} <a href="#add_team_modal" id="add_team_btn" class="btn btn-success" data-toggle="modal"><i class="icon-plus"></i></a>{% endif %}</h2>
                     </li>
                     {% for team in teams %}
                     <li><a href="{% url orgs_team_members org.name team.get_id %}"><h3>{{ team.name }}</h3></a></li>
@@ -131,7 +133,7 @@
             <div class="span5">
                 <ul class="nav nav-list">
                     <li class="nav-header">
-                        <h2>Members <a href="#invite_member_modal" id="invite_member_btn" class="btn btn-success" data-toggle="modal"><i class="icon-plus"></i></a></h2>
+                        <h2>Members{% if admin %} <a href="#invite_member_modal" id="invite_member_btn" class="btn btn-success" data-toggle="modal"><i class="icon-plus"></i></a>{% endif %}</h2>
                     </li>
                     {% for member in members %}
                     <li><h3>{{ member.username }}{% if member.first_name and member.last_name %} <small>({{ member.full_name }})</small>{% endif %}</h3></li>
@@ -148,7 +150,7 @@
 {% endblock %}
 
 {% block modals %}{{ block.super }}
-    {% if user.is_superuser %}
+    {% if admin %}
         <div id="create_project_modal" class="modal hide fade">
             <div class="modal-header">
                 <a class="close" data-dismiss="modal">&times;</a>
