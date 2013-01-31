@@ -350,7 +350,8 @@ def set_report_announcements_for_user(request, couch_user):
     for announcement_id in announce_ids:
         try:
             announcement = ReportAnnouncement.get(announcement_id)
-            messages.info(request, announcement.as_html)
+            if announcement.show_to_new_users or (announcement.date_created > couch_user.created_on):
+                messages.info(request, announcement.as_html)
         except Exception as e:
             logging.error("Could not fetch Report Announcement: %s" % e)
 

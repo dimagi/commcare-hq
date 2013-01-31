@@ -1,4 +1,4 @@
-from couchdbkit.ext.django.schema import Document, StringProperty, DateTimeProperty, StringListProperty
+from couchdbkit.ext.django.schema import Document, StringProperty, DateTimeProperty, StringListProperty, BooleanProperty
 from django.template.loader import render_to_string
 from corehq.apps.announcements.crud import HQAnnouncementCRUDManager
 from corehq.apps.crud.models import AdminCRUDDocumentMixin
@@ -13,6 +13,7 @@ class HQAnnouncement(Document, AdminCRUDDocumentMixin):
     highlighted_selectors = StringListProperty()
     date_created = DateTimeProperty()
     valid_until = DateTimeProperty()
+    show_to_new_users = BooleanProperty(default=False)
 
     base_doc = "HQAnnouncement"
 
