@@ -32,6 +32,11 @@ CTSIMS_ID = 'ff6c662bfc2a448dadc9084056a4abdf'
 
 class dotsSubmissionTests(TestCase):
     def setUp(self):
+        for doc in XFormInstance.get_db().view('couchforms/by_xmlns', reduce=False, include_docs=True).all():
+            #purge all xforms prior to start
+            if doc['doc']['xmlns'] in [XMLNS_DOTS_FORM, XMLNS_PATIENT_UPDATE_DOT]:
+                XFormInstance.get_db().delete_doc(doc['doc'])
+
         two_weeks = timedelta(days=14)
         self.domain = Domain()
         self.domain.name = PACT_DOMAIN
@@ -69,17 +74,18 @@ class dotsSubmissionTests(TestCase):
 
 
     def tearDown(self):
-        for doc in XFormInstance.get_db().view('couchforms/by_xmlns', reduce=False, include_docs=True).all():
-            XFormInstance.get_db().delete_doc(doc['doc'])
+
         CommCareCase.get_db().delete_doc(CASE_ID)
-        self.user.delete()
+        CommCareUser.get_db().delete_doc(CTSIMS_ID)
+        self.user = None
 
 
     def testSignal(self):
         """
         Test to ensure that with a DOT submission the signal works
         """
-        start_count = len(XFormInstance.view('couchforms/by_xmlns', reduce=False).all())
+        start_dot = len(XFormInstance.view('couchforms/by_xmlns', key=XMLNS_DOTS_FORM, reduce=False).all())
+        start_update = len(XFormInstance.view('couchforms/by_xmlns', key=XMLNS_PATIENT_UPDATE_DOT, reduce=False).all())
 
         submit_xform(self.submit_url, self.domain.name, self.pillbox_form)
         submitted = XFormInstance.get(PILLBOX_ID)
@@ -88,8 +94,21 @@ class dotsSubmissionTests(TestCase):
         dot_count = XFormInstance.view('couchforms/by_xmlns', key=XMLNS_DOTS_FORM).all()[0]['value']
         update_count = XFormInstance.view('couchforms/by_xmlns', key=XMLNS_PATIENT_UPDATE_DOT).all()[0]['value']
 
+        print "testSignal"
+#        ======================================================================
+#    FAIL: testDOTFormatConversion (pact.tests.dot_submission.dotsSubmissionTests)
+#    ----------------------------------------------------------------------
+#    Traceback (most recent call last):
+#    File "submodules/pact-src/pact/tests/dot_submission.py", line 184, in testDOTFormatConversion
+#    self.testSignal()
+#File "submodules/pact-src/pact/tests/dot_submission.py", line 92, in testSignal
+#self.assertEquals(start_count + 2, dot_count + update_count)
+#AssertionError: 3 != 2
+
+
         self.assertEquals(dot_count, update_count)
-        self.assertEquals(start_count + 2, dot_count + update_count)
+        print XFormInstance.view('couchforms/by_xmlns').all()
+        self.assertEquals(start_dot+start_update + 2, dot_count + update_count)
 
         casedoc = CommCareCase.get(CASE_ID)
         self.assertEqual(casedoc.xform_ids[-2], PILLBOX_ID)
