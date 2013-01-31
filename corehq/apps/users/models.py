@@ -319,13 +319,9 @@ class DomainMembership(Membership):
     class Meta:
         app_label = 'users'
 
-class TeamMembership(Membership):
-    team_id = StringProperty()
-
 class OrgMembership(Membership):
     organization = StringProperty()
-    team_memberships = SchemaListProperty(TeamMembership)   # could also go under user, but I like the idea of all the
-    # org-related stuff being in one place
+    team_ids = SetProperty() # a set of ids corresponding to which teams the user is a member of
 
 class OrgMembershipError(Exception):
     pass
@@ -1371,14 +1367,14 @@ class OrgMembershipMixin(DocumentSchema):
     def organizations(self):
         return [om.organization for om in self.org_memberships]
 
-    def is_member_of_org(self, org_qs):
+    def is_member_of_org(self, org_name_or_model):
         """
         takes either a organization name or an organization object and returns whether the user is part of that org
         """
         try:
-            org = org_qs.name
+            org = org_name_or_model.name
         except Exception:
-            org = org_qs
+            org = org_name_or_model
         return org in self.organizations
 
     def get_org_membership(self, org):
@@ -1394,7 +1390,7 @@ class OrgMembershipMixin(DocumentSchema):
 
         organization = Organization.get_by_name(org)
         if not organization:
-            raise OrgMembershipError("Cannot add org membership -- Organization does not exist")
+            raise OrgMembershipError("Cannot add org membership -- Organization %s does not exist" % org)
 
         self.org_memberships.append(OrgMembership(organization=org, **kwargs))
 
@@ -1411,19 +1407,35 @@ class OrgMembershipMixin(DocumentSchema):
                 record.save()
                 return record
             else:
-                raise OrgMembershipError("Cannot delete org membership -- Organization does not exist")
+                raise OrgMembershipError("Cannot delete org membership -- Organization %s does not exist" % org)
 
     def is_org_admin(self, org):
         om = self.get_org_membership(org)
         return om and om.is_admin
 
-    def is_member_of_team(self, org, team):
+    def is_member_of_team(self, org, team_id):
         om = self.get_org_membership(org)
+        return om and team_id in om.team_ids
 
+    def add_to_team(self, org, team_id):
+        om = self.get_org_membership(org)
+        if not om:
+            raise OrgMembershipError("Cannot add team -- %s is not a member of the %s organization" %
+                                     (self.username, org))
+
+        from corehq.apps.orgs.models import Team
+        team = Team.get(team_id)
+        if not team or team.organization != org:
+            raise OrgMembershipError("Cannot add team -- Team(%s) does not exist in organization %s" % (team_id, org))
+
+        om.team_ids.add(team_id)
+
+    def remove_from_team(self, org, team_id):
+        om = self.get_org_membership(org)
+        if om:
+            om.team_ids.discard(team_id)
 
 class WebUser(CouchUser, MultiMembershipMixin, OrgMembershipMixin):
-    teams = StringListProperty()
-
     #do sync and create still work?
 
     def sync_from_old_couch_user(self, old_couch_user):
@@ -1438,12 +1450,15 @@ class WebUser(CouchUser, MultiMembershipMixin, OrgMembershipMixin):
         return self.is_superuser
 
     @classmethod
-    def by_org(cls, org):
-        print org
-        return cls.view("users/by_organization",
-            key=org,
+    def by_organization(cls, org, team_id=None):
+        key = [org] if team_id is None else [org, team_id]
+        users = cls.view("users/by_org_and_team",
+            startkey=key,
+            endkey=key + [{}],
             include_docs=True,
-        )
+        ).all()
+        # return a list of users with the duplicates removed
+        return dict([(u.get_id, u) for u in users]).values()
 
     @classmethod
     def create(cls, domain, username, password, email=None, uuid='', date='', **kwargs):
@@ -1466,16 +1481,20 @@ class WebUser(CouchUser, MultiMembershipMixin, OrgMembershipMixin):
     def projects(self):
         return map(Domain.get_by_name, self.get_domains())
 
-    def get_domains(self):
+    def get_teams(self, ids_only=False):
         from corehq.apps.orgs.models import Team
+        teams = []
+        for om in self.org_memberships:
+            teams.extend([Team.get(t_id) for t_id in om.team_ids] if not ids_only else om.team_ids)
+        return teams
+
+    def get_domains(self):
         domains = [dm.domain for dm in self.domain_memberships]
-        if self.teams:
-            for team_name, team_id in self.teams:
-                team = Team.get(team_id)
-                team_domains = [dm.domain for dm in team.domain_memberships]
-                for domain in team_domains:
-                    if domain not in domains:
-                        domains.append(domain)
+        for team in self.get_teams():
+            team_domains = [dm.domain for dm in team.domain_memberships]
+            for domain in team_domains:
+                if domain not in domains:
+                    domains.append(domain)
         return domains
 
     @memoized
@@ -1493,10 +1512,9 @@ class WebUser(CouchUser, MultiMembershipMixin, OrgMembershipMixin):
         if dm:
             dm_list.append([dm, ''])
 
-        for team_name, team_id in self.teams:
-            team = Team.get(team_id)
+        for team in self.get_teams():
             if team.get_domain_membership(domain) and team.get_domain_membership(domain).role:
-                dm_list.append([team.get_domain_membership(domain), '(' + team_name + ')'])
+                dm_list.append([team.get_domain_membership(domain), '(' + team.name + ')'])
 
         #now find out which dm has the highest permissions
         if dm_list:

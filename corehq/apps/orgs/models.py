@@ -48,57 +48,15 @@ class Organization(Document):
 
     def all_members(self):
         from corehq.apps.users.models import WebUser
-        wwww = WebUser.by_org(self.name).all()
-        print [w.get_id for w in wwww]
-        return wwww
+        return WebUser.by_organization(self.name)
 
 
 class Team(UndoableDocument, MultiMembershipMixin):
     name = StringProperty()
     organization = StringProperty()
-    member_ids = StringListProperty()
 
-#    def add_member(self, guid):
-#    #consistency check to make sure member is not already on the team
-#        if guid in self.members:
-#            return False
-#        self.members.append(guid)
-#        self.save()
-#        return self.members
-
-    def add_member(self, couch_user_id):
-        from corehq.apps.users.models import WebUser
-        if not isinstance(couch_user_id, basestring):
-            couch_user_id = couch_user_id.user_id
-        if couch_user_id not in self.member_ids:
-            self.member_ids.append(couch_user_id)
-            user = WebUser.get_by_user_id(couch_user_id)
-            user.teams.append([self.name, self.get_id])
-            user.save()
-        self.save()
-
-    def remove_member(self, couch_user_id):
-        from corehq.apps.users.models import WebUser
-        if couch_user_id in self.member_ids:
-            for i in range(0,len(self.member_ids)):
-                if self.member_ids[i] == couch_user_id:
-                    del self.member_ids[i]
-                    user = WebUser.get_by_user_id(couch_user_id)
-                    user.teams.remove([self.name, self.get_id])
-                    self.save()
-                    user.save()
-                    return
-
-    def get_member_ids(self, is_active=True):
-        return [user.user_id for user in self.get_members(is_active)]
-
-    def get_members(self, is_active=True):
-        users = [WebUser.get_by_user_id(user_id) for user_id in self.member_ids]
-        users = [user for user in users if not user.is_deleted()]
-        if is_active is True:
-            return [user for user in users if user.is_active]
-        else:
-            return users
+    def get_members(self):
+        return WebUser.by_organization(self.organization, team_id=self.get_id)
 
     @classmethod
     def get_by_org_and_name(cls, org_name, name):
