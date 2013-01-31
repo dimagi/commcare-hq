@@ -29,12 +29,11 @@ from casexml.apps.phone.models import User as CaseXMLUser
 from corehq.apps.domain.shortcuts import create_user
 from corehq.apps.domain.utils import normalize_domain_name
 from corehq.apps.domain.models import LicenseAgreement
-from corehq.apps.users.util import normalize_username, user_data_from_registration_form, format_username, raw_username, cc_user_domain
+from corehq.apps.users.util import normalize_username, user_data_from_registration_form, format_username, raw_username
 from corehq.apps.users.xml import group_fixture
 from corehq.apps.sms.mixin import CommCareMobileContactMixin, VerifiedNumber, PhoneNumberInUseException, InvalidFormatException
 from couchforms.models import XFormInstance
 
-from dimagi.utils.couch.database import get_db
 from dimagi.utils.couch.undo import DeleteRecord, DELETED_SUFFIX
 from dimagi.utils.django.email import send_HTML_email
 from dimagi.utils.mixins import UnicodeMixIn
@@ -240,22 +239,23 @@ class AdminUserRole(UserRole):
 class DomainMembershipError(Exception):
     pass
 
-class DomainMembership(DocumentSchema):
+class Membership(DocumentSchema):
+#   If we find a need for making UserRoles more general and decoupling it from domain then most of the role stuff from
+#   Domain membership can be put in here
+    is_admin = BooleanProperty(default=False)
+
+class DomainMembership(Membership):
     """
     Each user can have multiple accounts on the
     web domain. This is primarily for Dimagi staff.
     """
 
     domain = StringProperty()
-    is_admin = BooleanProperty(default=False)
-    # old permissions
-    # permissions = StringListProperty()
-    # permissions_data = DictProperty()
-    last_login = DateTimeProperty()
-    date_joined = DateTimeProperty()
+    # i don't think the following two lines are ever actually used
+#    last_login = DateTimeProperty()
+#    date_joined = DateTimeProperty()
     timezone = StringProperty(default=getattr(settings, "TIME_ZONE", "UTC"))
     override_global_tz = BooleanProperty(default=False)
-
     role_id = StringProperty()
 
     @property
@@ -318,6 +318,13 @@ class DomainMembership(DocumentSchema):
 
     class Meta:
         app_label = 'users'
+
+class OrgMembership(Membership):
+    organization = StringProperty()
+    team_ids = SetProperty() # a set of ids corresponding to which teams the user is a member of
+
+class OrgMembershipError(Exception):
+    pass
 
 class CustomDomainMembership(DomainMembership):
     custom_role = SchemaProperty(UserRole)
@@ -398,7 +405,7 @@ class _AuthorizableMixin(IsMemberOfMixin):
         for i, dm in enumerate(self.domain_memberships):
             if dm.domain == domain:
                 if create_record:
-                    record = RemoveWebUserRecord(
+                    record = DomainRemovalRecord(
                         domain=domain,
                         user_id=self.user_id,
                         domain_membership=dm,
@@ -1353,9 +1360,82 @@ class CommCareUser(CouchUser, CommCareMobileContactMixin, SingleMembershipMixin)
         return lang
 
 
-class WebUser(CouchUser, MultiMembershipMixin):
-    teams = StringListProperty()
+class OrgMembershipMixin(DocumentSchema):
+    org_memberships = SchemaListProperty(OrgMembership)
 
+    @property
+    def organizations(self):
+        return [om.organization for om in self.org_memberships]
+
+    def is_member_of_org(self, org_name_or_model):
+        """
+        takes either a organization name or an organization object and returns whether the user is part of that org
+        """
+        try:
+            org = org_name_or_model.name
+        except Exception:
+            org = org_name_or_model
+        return org in self.organizations
+
+    def get_org_membership(self, org):
+        for om in self.org_memberships:
+            if om.organization == org:
+                return om
+        return None
+
+    def add_org_membership(self, org, **kwargs):
+        from corehq.apps.orgs.models import  Organization
+        if self.get_org_membership(org):
+            return
+
+        organization = Organization.get_by_name(org)
+        if not organization:
+            raise OrgMembershipError("Cannot add org membership -- Organization %s does not exist" % org)
+
+        self.org_memberships.append(OrgMembership(organization=org, **kwargs))
+
+    def delete_org_membership(self, org, create_record=False):
+        record = None
+        for i, om in enumerate(self.org_memberships):
+            if om.organization == org:
+                if create_record:
+                    record = OrgRemovalRecord(org_membership = om, user_id=self.user_id)
+                del self.org_memberships[i]
+                break
+        if create_record:
+            if record:
+                record.save()
+                return record
+            else:
+                raise OrgMembershipError("Cannot delete org membership -- Organization %s does not exist" % org)
+
+    def is_org_admin(self, org):
+        om = self.get_org_membership(org)
+        return om and om.is_admin
+
+    def is_member_of_team(self, org, team_id):
+        om = self.get_org_membership(org)
+        return om and team_id in om.team_ids
+
+    def add_to_team(self, org, team_id):
+        om = self.get_org_membership(org)
+        if not om:
+            raise OrgMembershipError("Cannot add team -- %s is not a member of the %s organization" %
+                                     (self.username, org))
+
+        from corehq.apps.orgs.models import Team
+        team = Team.get(team_id)
+        if not team or team.organization != org:
+            raise OrgMembershipError("Cannot add team -- Team(%s) does not exist in organization %s" % (team_id, org))
+
+        om.team_ids.add(team_id)
+
+    def remove_from_team(self, org, team_id):
+        om = self.get_org_membership(org)
+        if om:
+            om.team_ids.discard(team_id)
+
+class WebUser(CouchUser, MultiMembershipMixin, OrgMembershipMixin):
     #do sync and create still work?
 
     def sync_from_old_couch_user(self, old_couch_user):
@@ -1368,6 +1448,17 @@ class WebUser(CouchUser, MultiMembershipMixin):
     def is_global_admin(self):
         # override this function to pass global admin rights off to django
         return self.is_superuser
+
+    @classmethod
+    def by_organization(cls, org, team_id=None):
+        key = [org] if team_id is None else [org, team_id]
+        users = cls.view("users/by_org_and_team",
+            startkey=key,
+            endkey=key + [{}],
+            include_docs=True,
+        ).all()
+        # return a list of users with the duplicates removed
+        return dict([(u.get_id, u) for u in users]).values()
 
     @classmethod
     def create(cls, domain, username, password, email=None, uuid='', date='', **kwargs):
@@ -1390,16 +1481,20 @@ class WebUser(CouchUser, MultiMembershipMixin):
     def projects(self):
         return map(Domain.get_by_name, self.get_domains())
 
-    def get_domains(self):
+    def get_teams(self, ids_only=False):
         from corehq.apps.orgs.models import Team
+        teams = []
+        for om in self.org_memberships:
+            teams.extend([Team.get(t_id) for t_id in om.team_ids] if not ids_only else om.team_ids)
+        return teams
+
+    def get_domains(self):
         domains = [dm.domain for dm in self.domain_memberships]
-        if self.teams:
-            for team_name, team_id in self.teams:
-                team = Team.get(team_id)
-                team_domains = [dm.domain for dm in team.domain_memberships]
-                for domain in team_domains:
-                    if domain not in domains:
-                        domains.append(domain)
+        for team in self.get_teams():
+            team_domains = [dm.domain for dm in team.domain_memberships]
+            for domain in team_domains:
+                if domain not in domains:
+                    domains.append(domain)
         return domains
 
     @memoized
@@ -1417,10 +1512,9 @@ class WebUser(CouchUser, MultiMembershipMixin):
         if dm:
             dm_list.append([dm, ''])
 
-        for team_name, team_id in self.teams:
-            team = Team.get(team_id)
+        for team in self.get_teams():
             if team.get_domain_membership(domain) and team.get_domain_membership(domain).role:
-                dm_list.append([team.get_domain_membership(domain), '(' + team_name + ')'])
+                dm_list.append([team.get_domain_membership(domain), '(' + team.name + ')'])
 
         #now find out which dm has the highest permissions
         if dm_list:
@@ -1524,9 +1618,6 @@ class InvalidUser(FakeUser):
 # Django  models go here
 #
 class Invitation(Document):
-    """
-    When we invite someone to a domain it gets stored here.
-    """
     email = StringProperty()
     invited_by = StringProperty()
     invited_on = DateTimeProperty()
@@ -1546,6 +1637,9 @@ class Invitation(Document):
 
 
 class DomainInvitation(Invitation):
+    """
+    When we invite someone to a domain it gets stored here.
+    """
     domain = StringProperty()
     role = StringProperty()
     doc_type = "Invitation"
@@ -1570,7 +1664,7 @@ class DomainInvitation(Invitation):
             include_docs=True,
         ).all()
 
-class RemoveWebUserRecord(DeleteRecord):
+class DomainRemovalRecord(DeleteRecord):
     user_id = StringProperty()
     domain_membership = SchemaProperty(DomainMembership)
 
@@ -1578,6 +1672,16 @@ class RemoveWebUserRecord(DeleteRecord):
         user = WebUser.get_by_user_id(self.user_id)
         user.add_domain_membership(**self.domain_membership._doc)
         user.save()
+
+class OrgRemovalRecord(DeleteRecord):
+    user_id = StringProperty()
+    org_membership = SchemaProperty(OrgMembership)
+
+    def undo(self):
+        user = WebUser.get_by_user_id(self.user_id)
+        user.add_org_membershipt(**self.domain_membership._doc)
+        user.save()
+
 
 from .signals import *
 from corehq.apps.domain.models import Domain
