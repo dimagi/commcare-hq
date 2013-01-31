@@ -6,7 +6,7 @@ from util import get_unique_combinations
 from couchdbkit_aggregate.fn import mean
 from dimagi.utils.decorators.memoized import memoized
 
-DEMO_TYPES = {"asha", "aww", "anm", "ngo", "cbo", "vhnd"}
+DEMO_TYPES = ["asha", "aww", "anm", "ngo", "cbo", "vhnd"]
 
 class StateDistrictField(AsyncDrillableField):
     label = "State and District"
