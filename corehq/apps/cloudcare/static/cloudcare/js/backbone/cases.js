@@ -4,9 +4,11 @@ if (typeof cloudCare === 'undefined') {
 
 cloudCare.EMPTY = '---';
 
-var _caseListLoadError = function () {
+var _caseListLoadError = function (response) {
     hideLoadingCallback();
-    showError("Unable to load the case list. Please try again and report an issue if this problem persists.",
+    showError("Unable to load the case list. If you are using a filter " +
+              "expression please double check the syntax and try again. " +
+              "Please report an issue if this problem persists.",
               $("#cloudcare-notifications"));
 };
 
