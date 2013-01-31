@@ -26,6 +26,9 @@ EMAIL_PASSWORD = "******"
 EMAIL_SMTP_HOST = "smtp.gmail.com"
 EMAIL_SMTP_PORT = 587
 
+# Print emails to console so there is no danger of spamming, but you can still get registration URLs
+EMAIL_BACKEND='django.core.mail.backends.console.EmailBackend'
+
 ADMINS = (('HQ Dev Team', 'commcarehq-dev+www-notifications@dimagi.com'),)
 BUG_REPORT_RECIPIENTS = ['commcarehq-support@dimagi.com']
 NEW_DOMAIN_RECIPIENTS = ['commcarehq-dev+newdomain@dimagi.com']
