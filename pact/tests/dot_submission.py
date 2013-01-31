@@ -1,4 +1,5 @@
 from datetime import datetime, timedelta
+import pdb
 import dateutil
 import os
 from django.test import TestCase
@@ -8,10 +9,12 @@ from corehq.apps.domain.models import Domain
 from corehq.apps.users.models import CommCareUser
 from couchforms.models import XFormInstance
 from pact.dot_data import filter_obs_for_day, query_observations, DOTDay, get_dots_case_json
-from pact.enums import PACT_DOTS_DATA_PROPERTY, PACT_DOMAIN, XMLNS_DOTS_FORM, XMLNS_PATIENT_UPDATE_DOT
+from pact.enums import PACT_DOTS_DATA_PROPERTY, PACT_DOMAIN, XMLNS_DOTS_FORM, XMLNS_PATIENT_UPDATE_DOT, DOT_DAYS_INTERVAL, DOT_NONART, DOT_ART
 from pact.models import PactPatientCase
+from pact.regimen import regimen_dict_from_choice
 from pact.utils import submit_xform
 
+NO_PILLBOX_ID = "83bfe01c-9f96-4e25-a1ad-f8164defa5d1"
 START_DATE = datetime.strptime("2012-11-17", "%Y-%m-%d")
 END_DATE = datetime.strptime("2012-12-17", "%Y-%m-%d")
 ANCHOR_DATE = datetime.strptime("2012-12-07", "%Y-%m-%d")
@@ -19,7 +22,12 @@ ANCHOR_DATE = datetime.strptime("2012-12-07", "%Y-%m-%d")
 
 CASE_ID = "66a4f2d0e9d5467e34122514c341ed92"
 PILLBOX_ID = "a1811d7e-c968-4b63-aea5-6195ce0d8759"
-NO_PILLBOX_ID = "83bfe01c-9f96-4e25-a1ad-f8164defa5d1"
+
+NO_PILLBOX_ID2 = "ea30a77d-389c-4743-b9ae-16e0bdf057de"
+START_DATE2 = datetime.strptime("2013-01-01", "%Y-%m-%d")
+END_DATE2 = datetime.strptime("2013-1-30", "%Y-%m-%d")
+ANCHOR_DATE2 = datetime.strptime("2013-1-22", "%Y-%m-%d")
+
 CTSIMS_ID = 'ff6c662bfc2a448dadc9084056a4abdf'
 
 class dotsSubmissionTests(TestCase):
@@ -35,6 +43,16 @@ class dotsSubmissionTests(TestCase):
 
         self.user = CommCareUser.create(self.domain.name, 'ctsims', 'mockmock', uuid=CTSIMS_ID)
 
+        nonart_case_regimens = regimen_dict_from_choice(DOT_NONART, "morning,evening,bedtime")
+        art_case_regimens = regimen_dict_from_choice(DOT_ART, "morning,noon")
+        props= {'_id': CASE_ID}
+        props.update(nonart_case_regimens)
+        props.update(art_case_regimens)
+        case = CommCareCase(**props)
+        case.save()
+
+        #generate CaseDoc
+
         self.pillbox_form = ""
         with open(os.path.join(os.path.abspath(os.path.dirname(__file__)), 'dots_data',
                                '01_pillbox.xml')) as fin:
@@ -44,9 +62,14 @@ class dotsSubmissionTests(TestCase):
         with open(os.path.join(os.path.abspath(os.path.dirname(__file__)), 'dots_data',
                                '02_no_pillbox.xml')) as fin:
             self.no_pillbox_form = fin.read()
+        self.no_pillbox_form2 = ""
+        with open(os.path.join(os.path.abspath(os.path.dirname(__file__)), 'dots_data',
+                               '03_no_pillbox.xml')) as fin:
+            self.no_pillbox_form2 = fin.read()
+
 
     def tearDown(self):
-        for doc in XFormInstance.get_db().view('couchforms/by_xmlns', reduce=False,include_docs=True).all():
+        for doc in XFormInstance.get_db().view('couchforms/by_xmlns', reduce=False, include_docs=True).all():
             XFormInstance.get_db().delete_doc(doc['doc'])
         CommCareCase.get_db().delete_doc(CASE_ID)
         self.user.delete()
@@ -58,7 +81,6 @@ class dotsSubmissionTests(TestCase):
         """
         start_count = len(XFormInstance.view('couchforms/by_xmlns', reduce=False).all())
 
-
         submit_xform(self.submit_url, self.domain.name, self.pillbox_form)
         submitted = XFormInstance.get(PILLBOX_ID)
         self.assertTrue(hasattr(submitted, PACT_DOTS_DATA_PROPERTY))
@@ -67,8 +89,7 @@ class dotsSubmissionTests(TestCase):
         update_count = XFormInstance.view('couchforms/by_xmlns', key=XMLNS_PATIENT_UPDATE_DOT).all()[0]['value']
 
         self.assertEquals(dot_count, update_count)
-        self.assertEquals(start_count+2,dot_count+update_count)
-
+        self.assertEquals(start_count + 2, dot_count + update_count)
 
         casedoc = CommCareCase.get(CASE_ID)
         self.assertEqual(casedoc.xform_ids[-2], PILLBOX_ID)
@@ -76,30 +97,37 @@ class dotsSubmissionTests(TestCase):
         self.assertEqual(computed_submit.xmlns, XMLNS_PATIENT_UPDATE_DOT)
 
 
-
-    def testNoPillboxCheck(self):
+    def testNoPillboxCheckFirst(self):
         """
         Test the dot map function that the no-pillbox checker is faithfully returning DOT data in the calendar thanks to the view
         """
-        submit_xform(self.submit_url, self.domain.name, self.no_pillbox_form)
-        submitted = XFormInstance.get(NO_PILLBOX_ID)
+        bundle = {"xml": self.no_pillbox_form, "start_date": START_DATE, "end_date": END_DATE, "xform_id": NO_PILLBOX_ID, "anchor_date": END_DATE}
+        self._doTestNoPillbox(bundle)
+
+    def testNoPillboxCheckSecond(self):
+        bundle = {"xml": self.no_pillbox_form2, "start_date": START_DATE2, "end_date": END_DATE2, "xform_id": NO_PILLBOX_ID2, "anchor_date": END_DATE2}
+        self._doTestNoPillbox(bundle)
+
+    def _doTestNoPillbox(self, bundle):
+        submit_xform(self.submit_url, self.domain.name, bundle['xml'])
+        submitted = XFormInstance.get(bundle['xform_id'])
         self.assertTrue(hasattr(submitted, PACT_DOTS_DATA_PROPERTY))
-        observations = query_observations(CASE_ID, START_DATE, END_DATE)
+        observations = query_observations(CASE_ID, bundle['start_date'], bundle['end_date'])
         observed_dates = set()
         #assume to be five - 3,2 same as the regimen count, we are refilling empties
-        self.assertEqual(5, len(observations), msg="Observations do not match regimen count")
+        self.assertEqual(5, len(observations), msg="Observations do not match regimen count: %d != %d" % ( 5, len(observations)))
         art_nonart = set()
         for obs in observations:
             observed_dates.add(obs.observed_date)
             self.assertEquals(obs.day_note, "No check, from form") #magic string from the view to indicate a generated DOT observation from form data.
             art_nonart.add(obs.is_art)
-            self.assertEquals(obs.doc_id, NO_PILLBOX_ID)
+            self.assertEquals(obs.doc_id, bundle['xform_id'])
+            #print obs.to_json()
 
         art = filter(lambda x: x.is_art, observations)
         self.assertEquals(2, len(art))
         art_answered = filter(lambda x: x.adherence != "unchecked", art)
         self.assertEquals(1, len(art_answered))
-
 
         nonart = filter(lambda x: not x.is_art, observations)
         self.assertEquals(3, len(nonart))
@@ -109,11 +137,40 @@ class dotsSubmissionTests(TestCase):
         #this only does SINGLE observations for art and non art
         self.assertEquals(len(observed_dates), 1)
         self.assertEquals(len(art_nonart), 2)
+        # inspect the regenerated submission and ensure the built xml block is correctly filled.
 
-#    def testDOTResubmissionWorkflow(self):
-#        submit form, check that it's 2x num of forms
-#        check case history
-#        pass
+        case_json = get_dots_case_json(PactPatientCase.get(CASE_ID), anchor_date=bundle['anchor_date'])
+        enddate = bundle['anchor_date'] # anchor date of this submission
+        #encounter_date = datetime.strptime(submitted.form['encounter_date'], '%Y-%m-%d')
+        encounter_date = submitted.form['encounter_date']
+
+        #print simplejson.dumps(case_json, indent=4)
+        for day_delta in range(DOT_DAYS_INTERVAL):
+            obs_date = enddate - timedelta(days=day_delta)
+            ret_index = DOT_DAYS_INTERVAL - day_delta -1
+
+            #print obs_date.strftime("%Y-%m-%d")
+
+            day_arr = case_json['days'][ret_index]
+            nonart_day_data = day_arr[0]
+            art_day_data = day_arr[1]
+
+            #if obs_date.date() == encounter_date:
+                #print "\tespecially no pillbox check days"
+                #print nonart_day_data
+                #print art_day_data
+
+            self.assertEquals(len(nonart_day_data), 3)
+            self.assertEquals(len(art_day_data), 2)
+            #print "\tsuccess"
+
+
+
+
+            #day_data = DOTDay.merge_from_observations(day_arr)
+            #ret['days'].append(day_data.to_case_json(casedoc))
+
+
 
 
     def testDOTFormatConversion(self):
@@ -134,8 +191,8 @@ class dotsSubmissionTests(TestCase):
         observations = query_observations(CASE_ID, START_DATE, END_DATE)
 
         #hack, bootstrap the labels manually
-        nonart_idx = [0,2,3]
-        art_idx = [0,1]
+        nonart_idx = [0, 2, 3]
+        art_idx = [0, 1]
         casedoc = PactPatientCase.get(CASE_ID)
         casedoc.nonartregimen = 3
         casedoc.dot_n_one = 0
@@ -149,29 +206,24 @@ class dotsSubmissionTests(TestCase):
         casedoc.dot_a_three = ''
         casedoc.dot_a_four = None
 
-        computed_json = simplejson.loads(simplejson.dumps(get_dots_case_json(casedoc, anchor_date=ANCHOR_DATE)))
+        computed_json = simplejson.loads(
+            simplejson.dumps(get_dots_case_json(casedoc, anchor_date=ANCHOR_DATE)))
         computed_anchor = computed_json['anchor']
         del computed_json['anchor']
 
-
         for k in orig_data.keys():
             if k != 'days':
-#                print "%s:\n\t%s\n\t%s" % (k, orig_data[k], computed_json[k])
+            #                print "%s:\n\t%s\n\t%s" % (k, orig_data[k], computed_json[k])
                 self.assertEquals(orig_data[k], computed_json[k])
-#            else:
-#                print '### Days ###"'
-#                for x in range(DOT_DAYS_INTERVAL):
-#                    obs_date = ANCHOR_DATE + timedelta(days=x)-timedelta(days=DOT_DAYS_INTERVAL)
-#                    print "%d: %s" % (x, obs_date.strftime("%m/%d/%Y"))
-#                    print "\to: %s\n\tc: %s\n" % (orig_data['days'][x], computed_json['days'][x])
-##                    print filter_obs_for_day(obs_date.date(), observations)
+            #            else:
+            #                print '### Days ###"'
+            #                for x in range(DOT_DAYS_INTERVAL):
+            #                    obs_date = ANCHOR_DATE + timedelta(days=x)-timedelta(days=DOT_DAYS_INTERVAL)
+            #                    print "%d: %s" % (x, obs_date.strftime("%m/%d/%Y"))
+            #                    print "\to: %s\n\tc: %s\n" % (orig_data['days'][x], computed_json['days'][x])
+            ##                    print filter_obs_for_day(obs_date.date(), observations)
 
         self.assertEquals(simplejson.dumps(orig_data), simplejson.dumps(computed_json))
-
-
-
-
-
 
 
     def testPillboxCheck(self):
@@ -203,7 +255,10 @@ class dotsSubmissionTests(TestCase):
                     val_date = dateutil.parser.parse(v).date()
                     self.assertEquals(obs_date, val_date)
                 else:
-                    self.assertEquals(getattr(obs, k), v, msg="Error, observation %s\n\t%s didn't match: %s != %s" % (simplejson.dumps(obs.to_json(), indent=4), k, getattr(obs, k), v))
+                    self.assertEquals(getattr(obs, k), v,
+                                      msg="Error, observation %s\n\t%s didn't match: %s != %s" % (
+                                      simplejson.dumps(obs.to_json(), indent=4), k, getattr(obs, k),
+                                      v))
 
         for d in range(td.days):
             this_day = START_DATE + timedelta(days=d)
@@ -286,8 +341,9 @@ class dotsSubmissionTests(TestCase):
                 check_obs_props(non_art_first_2, non_art_first_2_props)
 
             if this_day.date() == (ANCHOR_DATE - timedelta(days=1)).date():
-                print day_data.art.dose_dict
-                self.assertEquals(len(day_data.art.dose_dict.keys()), 2) # two doses, one for the answered, another for unchecked
+                #print day_data.art.dose_dict
+                self.assertEquals(len(day_data.art.dose_dict.keys()),
+                                  2) # two doses, one for the answered, another for unchecked
                 art_slast = day_data.art.dose_dict[0][0]
                 art_slast_props = {
                     "encounter_date": "2012-12-07T05:00:00Z",

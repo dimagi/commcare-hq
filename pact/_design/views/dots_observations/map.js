@@ -183,6 +183,7 @@ function (doc) {
                             //now see if the box is filled out
                             build_obs['is_art'] = is_art;
                             build_obs['total_doses'] = int_regimen;
+                            build_obs['dose_number'] = r;
                             var unchecked = ["unchecked","pillbox",day_note, patlabel];
 
                             if (r != form_obs) {
