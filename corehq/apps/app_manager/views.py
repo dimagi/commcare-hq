@@ -6,6 +6,7 @@ import zipfile
 from diff_match_patch import diff_match_patch
 from django.template.loader import render_to_string
 import hashlib
+from webob import html_escape
 from corehq.apps.app_manager.const import APP_V1
 from corehq.apps.app_manager.success_message import SuccessMessage
 from corehq.apps.domain.models import Domain
@@ -300,11 +301,14 @@ def get_form_view_context(request, form, langs, is_user_registration, messages=m
         except AppError as e:
             messages.error(request, "Error in application: %s" % e)
         except XFormValidationError as e:
-            message = unicode(e)
             # Don't display the first two lines which say "Parsing form..." and 'Title: "{form_name}"'
-            messages.error(request, "Validation Error:\n")
-            for msg in message.split("\n")[2:]:
-                messages.error(request, "%s" % msg)
+            message = '\n'.join(unicode(e).split('\n')[2:])
+            message = "Validation Error: \n" + message
+
+            messages.error(request,
+                html_escape(message).replace('\n', '<br/>'),
+                extra_tags='html',
+            )
         except XFormError as e:
             messages.error(request, "Error in form: %s" % e)
         # any other kind of error should fail hard, but for now there are too many for that to be practical
