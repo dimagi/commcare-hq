@@ -6,7 +6,6 @@ import zipfile
 from diff_match_patch import diff_match_patch
 from django.template.loader import render_to_string
 import hashlib
-from webob import html_escape
 from corehq.apps.app_manager.const import APP_V1
 from corehq.apps.app_manager.success_message import SuccessMessage
 from corehq.apps.domain.models import Domain
@@ -15,7 +14,7 @@ from couchexport.models import Format
 from couchexport.writers import Excel2007ExportWriter
 from dimagi.utils.couch.database import get_db
 from dimagi.utils.couch.resource_conflict import retry_resource
-from django.utils import simplejson
+from django.utils import simplejson, html
 from django.utils.http import urlencode as django_urlencode
 import os
 import re
@@ -306,7 +305,7 @@ def get_form_view_context(request, form, langs, is_user_registration, messages=m
             message = "Validation Error: \n" + message
 
             messages.error(request,
-                html_escape(message).replace('\n', '<br/>'),
+                html.escape(message).replace('\n', '<br/>'),
                 extra_tags='html',
             )
         except XFormError as e:
