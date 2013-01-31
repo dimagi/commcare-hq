@@ -1,4 +1,3 @@
-from api import PactAPI
 from pact.reports import patient_list, dot, patient, chw_list, chw
 
 CUSTOM_REPORTS = (
