@@ -25,7 +25,8 @@ def recalculate_dots_data(case_id, cc_user):
             casedoc = PactPatientCase.get(case_id)
             recompute_dots_casedata(casedoc, cc_user)
         except Exception, ex:
-            notify_exception("PACT error recomputing DOTS case block: %s" % ex)
+            tb = traceback.format_exc()
+            notify_exception(None, message="PACT error recomputing DOTS case block: %s" % ex)
 
 
 @task(ignore_results=True)
@@ -63,7 +64,9 @@ def eval_dots_block(xform_json, callback=None):
     except Exception, ex:
         #if this gets triggered, that's ok because web entry don't got them
         tb = traceback.format_exc()
-        notify_exception("PACT error evaluating DOTS block docid %s, %s\n\tTraceback: %s" % (xform_json['_id'], ex, tb))
+        notify_exception(None, message="PACT error evaluating DOTS block docid %s, %s\n\tTraceback: %s" % (xform_json['_id'], ex, tb))
+#        print "PACT error evaluating DOTS block docid %s, %s\n\tTraceback: %s" % (xform_json['_id'], ex, tb)
+
 
 
     if callback is not None and do_continue:

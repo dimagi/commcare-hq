@@ -32,7 +32,7 @@ def process_dots_submission(sender, xform, **kwargs):
 
     except Exception, ex:
         tb = traceback.format_exc()
-        notify_exception("Error processing PACT DOT submission due to an unknown error: %s\n\tTraceback: %s" % (ex, tb))
+        notify_exception(None, message="Error processing PACT DOT submission due to an unknown error: %s\n\tTraceback: %s" % (ex, tb))
 
 #xform_saved.connect(process_dots_submission)
 successful_form_received.connect(process_dots_submission)

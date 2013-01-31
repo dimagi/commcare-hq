@@ -79,7 +79,7 @@ class DOTDay(object):
         return dot_day
 
 
-    def to_case_json(self, casedoc):
+    def to_case_json(self, casedoc, regimen_labels):
 #        pass
 #    def get_day_elements(casedoc, day_data):
         """
@@ -87,27 +87,38 @@ class DOTDay(object):
 
         This is the transmitted representation and the phone's representation of DOT data.
         """
+
+        def get_obs_for_dosenum(obs_list, dose_num, label):
+            if len(obs_list) > 0:
+                obs = obs_list[0]
+                day_slot = label
+                if obs.day_slot != '' and obs.day_slot is not None:
+                    day_slot = obs.day_slot
+                if obs.day_note != None and len(obs.day_note) > 0 and obs.day_note != "[AddendumEntry]":
+                    day_note = obs.day_note
+                else:
+                    day_note = ''
+
+                return [obs.adherence, obs.method, day_note, day_slot] #todo, add regimen_item
+
+                #one and done per array
+            else:
+                #return pristine unchecked
+                return ['unchecked', 'pillbox', '', label]
+
+
         ret = []
-#        for drug_type in [DOT_NONART,DOT_ART]:
-        for dose_data in [self.nonart, self.art]:
+        for ix, dose_data in enumerate([self.nonart, self.art]):
             drug_arr = []
+            labels_arr = regimen_labels[ix]
             #for dose_num, obs_list in day_data[drug_type]['dose_dict'].items():
             dose_nums = dose_data.dose_dict.keys()
             dose_nums.sort()
             for dose_num in dose_nums:
+                #for each dose num in the observed array of the drug type, there maybe more than one observation
                 obs_list = dose_data.dose_dict[dose_num]
-                for obs in obs_list:
-                    day_slot = -1
-                    if obs.day_slot != '' and obs.day_slot is not None:
-                        day_slot = obs.day_slot
-                    if obs.day_note != None and len(obs.day_note) > 0 and obs.day_note != "[AddendumEntry]":
-                        day_note = obs.day_note
-                    else:
-                        day_note = ''
+                drug_arr.append(get_obs_for_dosenum(obs_list, dose_num, labels_arr[dose_num]))
 
-                    drug_arr.append([obs.adherence, obs.method, day_note, day_slot]) #todo, add regimen_item
-                    #one and done per array
-                    break
 
             #don't fill because we're looking at what was submitted.
             if len(drug_arr) <= dose_data.total_doses:
@@ -136,6 +147,7 @@ def query_observations(case_id, start_date, end_date):
     """
     Hit couch to get the CObservations for the given date range of the OBSERVED dates.
     These are the actual observation day cells in which they filled in DOT data.
+    args: start_date and end_date as datetime objects
     """
     startkey = [case_id, 'observe_date', start_date.year, start_date.month, start_date.day]
     endkey = [case_id, 'observe_date', end_date.year, end_date.month, end_date.day]
@@ -272,7 +284,7 @@ def get_dots_case_json(casedoc, anchor_date=None):
         obs_date = enddate - timedelta(days=delta)
         day_arr = filter_obs_for_day(obs_date.date(), observations)
         day_data = DOTDay.merge_from_observations(day_arr)
-        ret['days'].append(day_data.to_case_json(casedoc))
+        ret['days'].append(day_data.to_case_json(casedoc, ret['regimen_labels']))
     ret['days'].reverse()
     return ret
 
