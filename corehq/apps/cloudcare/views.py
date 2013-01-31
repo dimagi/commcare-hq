@@ -7,7 +7,8 @@ from corehq.apps.domain.decorators import login_and_domain_required, login_or_di
 from corehq.apps.groups.models import Group
 from corehq.apps.users.models import CouchUser, CommCareUser
 from dimagi.utils.web import render_to_response, json_response, get_url_base
-from django.http import HttpResponseRedirect, HttpResponse, HttpResponseBadRequest, Http404
+from django.http import HttpResponseRedirect, HttpResponse, HttpResponseBadRequest, Http404,\
+    HttpResponseServerError
 from corehq.apps.app_manager.models import Application, ApplicationBase
 import json
 from corehq.apps.cloudcare.api import get_app, get_cloudcare_apps, get_filtered_cases, get_filters_from_request,\
@@ -199,9 +200,14 @@ def filter_cases(request, domain, app_id, module_id):
         "properties/case_type": case_type,
         "footprint": True
     }
+
     result = touchforms_api.filter_cases(domain, request.couch_user, 
                                          xpath, additional_filters, 
                                          auth=DjangoAuth(auth_cookie))
+    if result.get('status', None) == 'error':
+        return HttpResponseServerError(
+            result.get("message", _("Something went wrong filtering your cases.")))
+
     case_ids = result.get("cases", [])
     cases = [CommCareCase.get(id) for id in case_ids]
     cases = [c.get_json() for c in cases if c]
