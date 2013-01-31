@@ -46,7 +46,7 @@ class Organization(Document):
     def __str__(self):
         return self.title
 
-    def all_members(self):
+    def get_members(self):
         from corehq.apps.users.models import WebUser
         return WebUser.by_organization(self.name)
 
