@@ -61,10 +61,9 @@ def _users_context(request, domain):
     web_users = WebUser.by_domain(domain)
     teams = Team.get_by_domain(domain)
     for team in teams:
-        for member_id in team.member_ids:
-            team_user = WebUser.get(member_id)
-            if team_user.get_id not in [web_user.get_id for web_user in web_users]:
-                web_users.append(team_user)
+        for user in team.get_members():
+            if user.get_id not in [web_user.get_id for web_user in web_users]:
+                web_users.append(user)
 
     for user in [couch_user] + list(web_users):
         user.current_domain = domain
