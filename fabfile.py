@@ -359,6 +359,9 @@ def update_code(preindex=False):
         sudo('git submodule sync', user=env.sudo_user)
         sudo('git submodule update --init --recursive', user=env.sudo_user)
 
+@roles('pg', 'django_monolith')
+def mail_admins(subject, message):
+    sudo('%(virtualenv_root)s/bin/python manage.py mail_admins --subject "%s" "%s"' % (env, subject, message), user=env.sudo_user)
 
 @task
 def deploy():
@@ -378,9 +381,15 @@ def deploy():
         execute(migrate)
         execute(_do_collectstatic)
         execute(version_static)
+    except Exception:
+        execute(mail_admins, "Deploy failed", "You had better check the logs.")
+        raise
+    else:
+        execute(mail_admins, "Deploy successful", "Cheers.")
     finally:
         # hopefully bring the server back to life if anything goes wrong
         execute(services_restart)
+
 
 
 @task
