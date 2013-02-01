@@ -208,7 +208,7 @@ class StockReportExport(VisitReport):
 
         return [['stock reports', [filter_row(r) for r in rows]]]
 
-OUTLETS_LIMIT = 200
+OUTLETS_LIMIT = 500
 
 class SalesAndConsumptionReport(GenericTabularReport, CommtrackReportMixin, DatespanMixin):
     name = 'Sales and Consumption Report'
