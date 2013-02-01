@@ -80,12 +80,6 @@ def project_info(request, domain, template="appstore/project_info.html"):
 
     images = set()
     audio = set()
-#    for app in dom.applications():
-#        if app.doc_type == 'Application':
-#            app = Application.get(app._id)
-#            sorted_images, sorted_audio, has_error = utils.get_sorted_multimedia_refs(app)
-#            images.update(i['url'] for i in app.get_template_map(sorted_images)[0] if i['url'])
-#            audio.update(a['url'] for a in app.get_template_map(sorted_audio)[0] if a['url'])
 
     # get facets
     results = es_snapshot_query({}, SNAPSHOT_FACETS)

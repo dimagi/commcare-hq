@@ -1,25 +1,33 @@
 {% load multimedia_tags %}
+{% load i18n %}
 
-{% if multimedia.images or multimedia.audio %}
-    <p>This .zip file is structured to match the multimedia paths referenced in your CommCare application.</p>
-    <p><a class="btn btn-large btn-primary" style="color: #ffffff; text-decoration: none;" href="{% url download_multimedia_zip domain app.get_id  %}">Download ZIP</a></p>
+{% if multimedia.references.form_media.images.maps or multimedia.references.form_media.audio.maps or multimedia.references.menu_media.icons.maps or multimedia.references.menu_media.audio.maps %}
+    <p>{% blocktrans %}This .zip file is structured to match the multimedia paths referenced in your CommCare Application.{% endblocktrans %}</p>
+
+    <p>
+        {% if multimedia.for_errors or multimedia.missing_refs %}
+            <a class="btn btn-warning" style="color: #ffffff;" href="{% url download_multimedia_zip domain app.get_id  %}"><i class="icon icon-white icon-bolt"></i> {% trans 'Download Incomplete ZIP' %}</a>
+        {% else %}
+            <a class="btn btn-primary" style="color: #ffffff;" href="{% url download_multimedia_zip domain app.get_id  %}"><i class="icon icon-white icon-download-alt"></i> {% trans 'Download ZIP' %}</a>
+        {% endif %}
+    </p>
 {% else %}
-    {% if multimedia.has_error %}
-        <div class="alert alert-error">This application contains forms with errors&mdash;we cannot pull any multimedia references from those forms.</div>
-        <div class="alert alert-info">In forms without errors, multimedia references could not be found.</div>
-    {% else %}
-        <div class="alert alert-info">This application currently does not contain any multimedia references.</div>
-    {% endif %}
+    <div class="alert alert-info">{% blocktrans %}This application currently does not contain any multimedia references.{% endblocktrans %}</div>
 {% endif %}
-{% if missing_audio_refs > 0 or missing_image_refs > 0 %}
-    <div class="alert alert-info">
-        <p><strong>This .zip file is missing references to files made by your application.</strong></p>
-        <ul>
-            <li><img src="{{ STATIC_URL }}hqmedia/img/image.png" alt="image reference" /> {% missing_refs missing_image_refs "Image" %}</li>
-            <li><img src="{{ STATIC_URL }}hqmedia/img/audio.png" alt="audio reference" /> {% missing_refs missing_audio_refs "Audio" %}</li>
-        </ul>
-    </div>
-    {% if multimedia.has_error %}
-        <div class="alert alert-error">Please also note that this application contains forms with errors&mdash;multimedia references may not be complete or may be missing.</div>
-    {% endif %}
+{% if multimedia.form_errors %}
+    <div class="alert alert-error"><i class="icon icon-warning-sign"></i> {% blocktrans %}<strong>Warning:</strong>
+        This application contains forms with errors&mdash;we cannot pull any multimedia references from those forms.
+    {% endblocktrans %}</div>
+{% endif %}
+{% if multimedia.missing_refs %}
+    <div class="alert alert-warning">
+        <p>
+            <i class="icon icon-warning-sign"></i> {% blocktrans %}<strong>Note:</strong> This application is
+            missing references, so this zip will be incomplete.
+        </p>
+        <p>
+            Please make sure all of your application's multimedia references are linked to media files before
+            starting your Application, or it might be unstable.
+        </p>
+    {% endblocktrans %}</div>
 {% endif %}

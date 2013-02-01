@@ -56,10 +56,6 @@ urlpatterns = patterns('corehq.apps.app_manager.views',
     # multimedia stuff
     url(r'^multimedia/(?P<app_id>[\w-]+)/download/$',
         'multimedia_list_download', name='multimedia_list_download'),
-#    url(r'^multimedia/upload/(?P<kind>[\w-]+)/(?P<app_id>[\w-]+)/$',
-#        'multimedia_upload', name='multimedia_upload'),
-#    url(r'^multimedia_map/(?P<app_id>[\w-]+)/$',
-#        'multimedia_map', name='multimedia_map'),
     (r'^(?P<app_id>[\w-]+)/multimedia/', include(hqmedia_urls)),
 
  url(r'^edit_module_detail_screens/(?P<app_id>[\w-]+)/(?P<module_id>[\w-]+)/$',    'edit_module_detail_screens',
