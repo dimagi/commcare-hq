@@ -45,6 +45,12 @@ def validate_answer(answer, question):
         except AssertionError:
             return False
 
+def format_ivr_response(text, app):
+    return {
+        "text_to_say" : text,
+        "audio_file_url" : convert_media_path_to_hq_url(text, app) if text.startswith("jr://") else None,
+    }
+
 def incoming(phone_number, backend_module, gateway_session_id, ivr_event, input_data=None):
     # Look up the call if one already exists
     call_log_entry = CallLog.view("sms/call_by_session",
@@ -94,19 +100,28 @@ def incoming(phone_number, backend_module, gateway_session_id, ivr_event, input_
         ivr_responses = []
         hang_up = False
         for response in responses:
-            if response.event.type == "question":
-                ivr_responses.append({"text_to_say" : response.event.caption,
-                                      "audio_file_url" : convert_media_path_to_hq_url(response.event.caption, app) if response.event.caption.startswith("jr://") else None})
+            if response.is_error:
+                if response.text_prompt is None:
+                    ivr_responses = []
+                    break
+                else:
+                    ivr_responses.append(format_ivr_response(response.text_prompt, app))
+            elif response.event.type == "question":
+                ivr_responses.append(format_ivr_response(response.event.caption, app))
             elif response.event.type == "form-complete":
                 hang_up = True
         
         if len(ivr_responses) == 0:
             hang_up = True
         
-        if len(responses) > 0 and responses[-1].event.type == "question" and responses[-1].event.datatype == "select":
-            input_length = 1
-        else:
-            input_length = None
+        # Set input_length to let the ivr gateway know how many digits we need to collect
+        input_length = None
+        if len(responses) > 0:
+            # Have to get the current question again, since the last XFormsResponse in responses
+            # may not have an event if it was a response to a constraint error
+            current_q = current_question(call_log_entry.xforms_session_id)
+            if current_q.event.type == "question" and current_q.event.datatype == "select":
+                input_length = 1
         
         return HttpResponse(backend_module.get_http_response_string(gateway_session_id, ivr_responses, collect_input=(not hang_up), hang_up=hang_up, input_length=input_length))
     
