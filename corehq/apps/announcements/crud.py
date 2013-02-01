@@ -8,7 +8,7 @@ class HQAnnouncementCRUDManager(BaseAdminHQTabularCRUDManager):
     """
     @property
     def properties_in_row(self):
-        return ["title", "summary", "date_created", "valid_until"]
+        return ["title", "summary", "date_created", "valid_until", "show_to_new_users"]
 
     def format_property(self, key, property):
         if isinstance(property, datetime.datetime):

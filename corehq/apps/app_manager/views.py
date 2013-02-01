@@ -14,7 +14,7 @@ from couchexport.models import Format
 from couchexport.writers import Excel2007ExportWriter
 from dimagi.utils.couch.database import get_db
 from dimagi.utils.couch.resource_conflict import retry_resource
-from django.utils import simplejson
+from django.utils import simplejson, html
 from django.utils.http import urlencode as django_urlencode
 import os
 import re
@@ -300,11 +300,14 @@ def get_form_view_context(request, form, langs, is_user_registration, messages=m
         except AppError as e:
             messages.error(request, "Error in application: %s" % e)
         except XFormValidationError as e:
-            message = unicode(e)
             # Don't display the first two lines which say "Parsing form..." and 'Title: "{form_name}"'
-            messages.error(request, "Validation Error:\n")
-            for msg in message.split("\n")[2:]:
-                messages.error(request, "%s" % msg)
+            message = '\n'.join(unicode(e).split('\n')[2:])
+            message = "Validation Error: \n" + message
+
+            messages.error(request,
+                html.escape(message).replace('\n', '<br/>'),
+                extra_tags='html',
+            )
         except XFormError as e:
             messages.error(request, "Error in form: %s" % e)
         # any other kind of error should fail hard, but for now there are too many for that to be practical

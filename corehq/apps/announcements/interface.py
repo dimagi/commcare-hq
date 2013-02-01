@@ -27,6 +27,7 @@ class BaseHQAnnouncementsAdminInterface(BaseCRUDAdminInterface):
             DataTablesColumn("Summary"),
             DataTablesColumn("Date Created"),
             DataTablesColumn("Valid Until"),
+            DataTablesColumn("Show to new users?"),
             DataTablesColumn("Edit"),
         )
 

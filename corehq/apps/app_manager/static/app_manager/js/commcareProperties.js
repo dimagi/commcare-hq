@@ -1,4 +1,4 @@
-/*globals $, console, JSON, COMMCAREHQ, eventize */
+/*globals $, console, JSON, COMMCAREHQ, eventize, setTimeout */
 
 
 
@@ -82,8 +82,12 @@ var CommcareProperty = {
                         $tr.hide();
                     }
                 }
-
                 if (edit) {
+                    if (that.initComplete && $input.val() !== displayValue) {
+                        setTimeout(function () {
+                            that.fire('change');
+                        }, 0);
+                    }
                     $input.val(displayValue);
                 } else {
                     if (that.values === undefined) {
@@ -122,7 +126,6 @@ var CommcareProperty = {
                         is_enabled = false;
                     }
                     enabled(is_enabled, disabled_message);
-                    that.fire('change');
                 };
                 onSave = function () {
                     that.save();
@@ -221,6 +224,7 @@ var CommcareProperty = {
                     that.fire('save');
                 }
             };
+        that.initComplete = false;
         eventize(that);
         that.contingent_default = that.contingent_default || [];
         that.render = render;
@@ -302,6 +306,9 @@ var CommcareSettings = {
                 for (i = 0; i < that.length; i += 1) {
                     that[i].render();
                     that[i].on('change', onChange);
+                }
+                for (i = 0; i < that.length; i += 1) {
+                    that[i].initComplete = true;
                 }
                 return $.unique($homes);
             },

@@ -1394,6 +1394,16 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
             data['build_langs'] = data['langs']
         return super(Application, cls).wrap(data)
 
+    def revert_to_copy(self, copy):
+        app = super(Application, self).revert_to_copy(copy)
+
+        for form in app.get_forms():
+            # reset the form's validation cache, since the form content is
+            # likely to have changed in the revert!
+            form.validation_cache = None
+
+        return app
+
     def register_pre_save(self, fn):
         if not hasattr(self, '_PRE_SAVE'):
             self._PRE_SAVE = []

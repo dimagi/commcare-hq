@@ -25,7 +25,7 @@ from corehq.apps.domain.models import Domain
 from corehq.apps.users.decorators import require_permission
 from corehq.apps.users.forms import UserForm, ProjectSettingsForm
 from corehq.apps.users.models import CouchUser, CommCareUser, WebUser, \
-    RemoveWebUserRecord, UserRole, AdminUserRole, DomainInvitation
+    DomainRemovalRecord, UserRole, AdminUserRole, DomainInvitation
 from corehq.apps.domain.decorators import login_and_domain_required, require_superuser, domain_admin_required
 from corehq.apps.orgs.models import Team
 from corehq.apps.reports.util import get_possible_reports
@@ -129,7 +129,7 @@ def remove_web_user(request, domain, couch_user_id):
 
 @require_can_edit_web_users
 def undo_remove_web_user(request, domain, record_id):
-    record = RemoveWebUserRecord.get(record_id)
+    record = DomainRemovalRecord.get(record_id)
     record.undo()
     messages.success(request, 'You have successfully restored {username}.'.format(
         username=WebUser.get_by_user_id(record.user_id).username

@@ -466,12 +466,12 @@ cloudCare.AppView = Backbone.View.extend({
                     success: function () {
                         self._clearFormPlayer();
                         self.showModule(selectedModule);
-                        showSuccess("Form successfully saved.", $("#cloudcare-main"), 2500);
+                        showSuccess("Form successfully saved.", $("#cloudcare-notifications"), 2500);
                     }
                 });
             };
             data["onerror"] = function (resp) {
-                showError(resp.message, $("#cloudcare-main"));
+                showError(resp.message, $("#cloudcare-notifications"));
             };
             var sess = new WebFormSession(data);
             // TODO: probably shouldn't hard code these divs

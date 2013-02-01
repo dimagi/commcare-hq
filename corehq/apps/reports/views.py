@@ -31,6 +31,7 @@ from django.contrib.auth.decorators import permission_required
 from dimagi.utils.decorators.datespan import datespan_in_request
 from casexml.apps.case.models import CommCareCase
 from corehq.apps.hqcase.export import export_cases_and_referrals
+from corehq.apps.users.models import CommCareUser
 from corehq.apps.reports.display import xmlns_to_name
 from couchexport.schema import build_latest_schema
 from couchexport.models import ExportSchema, ExportColumn, SavedExportSchema,\
@@ -723,9 +724,28 @@ def case_details(request, domain, case_id):
                          "%s: %s" % (form.received_on.date(), 
                                      xmlns_to_name(domain, form.xmlns, get_app_id(form)))) \
                         for form in case.get_forms())
+
+
+                        
+    try:
+        owner_name = CommCareUser.get_by_user_id(case.owner_id, domain).raw_username
+    except Exception:
+        try:
+            owning_group = Group.get(case.owner_id)
+            owner_name = owning_group.display_name if owning_group.domain == domain else ''
+        except Exception:
+            owner_name = None
+
+    try:
+        username = CommCareUser.get_by_user_id(case.user_id, domain).raw_username
+    except Exception:
+        username = None
+
     return render_to_response(request, "reports/reportdata/case_details.html", {
         "domain": domain,
         "case_id": case_id,
+        "username": username, 
+        "owner_name": owner_name,
         "form_lookups": form_lookups,
         "slug":inspect.CaseListReport.slug,
         "report": dict(
