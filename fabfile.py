@@ -632,7 +632,10 @@ def _upload_supervisor_conf_file(filename):
 @roles('django_celery', 'django_monolith')
 def upload_celery_supervisorconf():
     _upload_supervisor_conf_file('supervisor_celery.conf')
-    if env.environment == 'production': #hacky hack
+
+    #hacky hack to not
+    #have staging environments send out reminders
+    if env.environment not in ['staging', 'realstaging']:
         _upload_supervisor_conf_file('supervisor_celerybeat.conf')
     _upload_supervisor_conf_file('supervisor_celerymon.conf')
     _upload_supervisor_conf_file('supervisor_couchdb_lucene.conf') #to be deprecated
