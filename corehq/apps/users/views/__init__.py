@@ -77,12 +77,12 @@ def _users_context(request, domain):
 
 @login_and_domain_required
 def users(request, domain):
-    redirect = _redirect_users_to(request, domain)
+    redirect = redirect_users_to(request, domain)
     if not redirect:
         raise Http404
     return HttpResponseRedirect(redirect)
 
-def _redirect_users_to(request, domain):
+def redirect_users_to(request, domain):
     redirect = None
     # good ol' public domain...
     if not isinstance(request.couch_user, PublicUser):
