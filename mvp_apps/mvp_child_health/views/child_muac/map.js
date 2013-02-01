@@ -3,37 +3,39 @@ function (doc) {
     if(isChildVisitForm(doc)) {
         var indicators = get_indicators(doc);
 
-        if (indicators.child_dob && indicators.child_dob.value) {
+        if (indicators.child_dob && indicators.child_dob.value &&
+            indicators.last_muac && indicators.last_muac.value) {
             var meta = doc.form.meta,
-                indicator_entries = {},
+                last_muac_indicators = {},
+                visit_indicators = {},
                 age = get_age_from_dob(indicators.child_dob.value, meta.timeEnd),
+                last_muac_date = new Date(indicators.last_muac.value),
                 visit_date = new Date(meta.timeEnd),
                 case_id = get_case_id(doc);
 
-            if (age > 180*MS_IN_DAY && age < 1770*MS_IN_DAY && indicators.muac.value) {
-                // MUAC reading taken during visit
-                indicator_entries["muac_reading"] = 1;
-                try {
-                    var muac_value = parseFloat(indicators.muac.value);
-                    if (muac_value < 125.0) {
-                        indicator_entries["muac_wasting"] = 1;
-                    }
-                } catch (err) {
-                    log("MUAC value could not be obtained");
-                }
-
-                if (doc.form.last_muac) {
-                    var last_muac = new Date(doc.form.last_muac);
-                    if (last_muac <= visit_date) {
-                        var difference = visit_date.getTime() - last_muac.getTime();
-                        if (difference <= 90*MS_IN_DAY){
-                            indicator_entries["routine_muac"] = case_id;
+            if (age >= 180*MS_IN_DAY && age < 1770*MS_IN_DAY) {
+                if (indicators.cur_muac && indicators.cur_muac.value) {
+                    try {
+                        var cur_muac = parseFloat(indicators.cur_muac.value);
+                        last_muac_indicators["muac_reading"] = case_id;
+                        if (cur_muac < 125.0) {
+                            last_muac_indicators["muac_wasting"] = case_id;
                         }
+                    } catch (e) {
+                        // do nothing
+                    }
+                }
+                if (visit_date >= last_muac_date
+                    && indicators.muac && indicators.muac.value) {
+                    var visit_diff = visit_date.getTime() - last_muac_date.getTime();
+                    if (visit_diff < 90*MS_IN_DAY) {
+                        visit_indicators["routine_muac"] = case_id;
                     }
                 }
             }
-            emit_special(doc, visit_date, indicator_entries, [doc._id]);
-        }
 
+            emit_special(doc, last_muac_date, last_muac_indicators, [doc._id]);
+            emit_special(doc, visit_date, visit_indicators, [doc._id]);
+        }
     }
 }

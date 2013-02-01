@@ -19,8 +19,8 @@ class HealthCoordinatorReport(MVPIndicatorReport):
     hide_filters = True
     fields = ['corehq.apps.reports.fields.FilterUsersField',
               'corehq.apps.reports.fields.GroupField']
-    emailable = False
-
+    emailable = True
+    
     @property
     def timezone(self):
         return pytz.utc

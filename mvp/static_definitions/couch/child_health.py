@@ -3,19 +3,6 @@ APP_NAME = "mvp_child_health"
 CHILD_HEALTH_INDICATORS = dict(
     app=APP_NAME,
     indicators=dict(
-        child_muac=dict(
-            child_muac_wasting=dict(
-                description="No. children aged 6-59 months with moderate or severe wasting (MUAC < 125)"
-                            " at last MUAC reading this time period",
-                title="# 6-59 month Children with MUAC < 125",
-                indicator_key="muac_wasting"
-            ),
-            child_muac_reading=dict(
-                description="No. children aged 6-59 months with MUAC reading this time period",
-                title="# 6-59 month Children with MUAC reading",
-                indicator_key="muac_reading"
-            ),
-        ),
         under5_child_health=dict(
             num_under5_visits=dict(
                 description="No. of Under-5s Visited",
@@ -114,7 +101,18 @@ COUNT_UNIQUE_CHILD_HEALTH_INDICATORS=dict(
                             " MUAC readings during the time period",
                 title="# Under5s receiving on-time MUAC (90 days)",
                 indicator_key="routine_muac"
-            )
+            ),
+            child_muac_wasting=dict(
+                description="No. children aged 6-59 months with moderate or severe wasting (MUAC < 125)"
+                            " at last MUAC reading this time period",
+                title="# 6-59 month Children with MUAC < 125",
+                indicator_key="muac_wasting"
+            ),
+            child_muac_reading=dict(
+                description="No. children aged 6-59 months with MUAC reading this time period",
+                title="# 6-59 month Children with MUAC reading",
+                indicator_key="muac_reading"
+            ),
         ),
     )
 )

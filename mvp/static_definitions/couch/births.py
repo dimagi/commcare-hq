@@ -3,16 +3,16 @@ APP_NAME = "mvp_births"
 BIRTH_INDICATORS = dict(
     app=APP_NAME,
     indicators=dict(
-        child_registrations=dict(
+        child_cases_by_status=dict(
             num_births_registered=dict(
                 description="No. of Births Registered",
                 title="# Births Registered",
-                indicator_key="registration"
+                indicator_key="dob delivered"
             ),
             num_births_registered_in_facility=dict(
                 description="No. of Births delivered in a Health Facility during the time period",
                 title="# Births delivered in Health Facility",
-                indicator_key="facility_delivery"
+                indicator_key="dob delivered_in_facility"
             ),
         ),
     )
@@ -21,18 +21,6 @@ BIRTH_INDICATORS = dict(
 COUNT_UNIQUE_BIRTH_INDICATORS = dict(
     app=APP_NAME,
     indicators=dict(
-        child_registrations=dict(
-            birth_weight_registration=dict(
-                description="Number of births reported with weight recorded during time period",
-                title="# birth registrations w/ weight recorded",
-                indicator_key="birth_weight"
-            ),
-            low_birth_weight=dict(
-                description="No. of low birth weight (<2.5 kg) babies born during the time period",
-                title="# low birth weight (<2.5 kg) births",
-                indicator_key="birth_weight low"
-            ),
-        ),
     )
 )
 
@@ -89,7 +77,20 @@ ACTIVE_CHILD_CASES_BY_AGE_INDICATORS = dict(
                 is_dob_in_datespan=True,
                 show_active_only=False,
             ),
-
+            birth_weight_registration=dict(
+                description="Number of births reported with weight recorded during time period",
+                title="# birth registrations w/ weight recorded",
+                indicator_key="opened_on weight_recorded",
+                is_dob_in_datespan=True,
+                show_active_only=False,
+            ),
+            low_birth_weight=dict(
+                description="No. of low birth weight (<2.5 kg) babies born during the time period",
+                title="# low birth weight (<2.5 kg) births",
+                indicator_key="opened_on low_birth_weight",
+                is_dob_in_datespan=True,
+                show_active_only=False,
+            ),
         )
     )
 )

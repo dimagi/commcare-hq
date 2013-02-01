@@ -26,11 +26,11 @@ CHILD_VISIT_QUESTION_IDS = {
         'mvp-potou': _make_qid('patient_available.referral_follow_on.rdt_result', 1),
     },
     'fever_medication': {
-        'mvp-sauri': _make_qid('patient_available.fever_medication', 1),
+        'mvp-sauri': _make_qid('fever_medication', 2),
         'mvp-potou': _make_qid('patient_available.medication_type', 1),
     },
     'diarrhea_medication': {
-        'mvp-sauri': _make_qid('patient_available.diarrhea_medication', 1),
+        'mvp-sauri': _make_qid('diarrhea_medication', 2),
         'mvp-potou': _make_qid('patient_available.medication_type', 1),
     },
     'referral_type': {
@@ -40,6 +40,14 @@ CHILD_VISIT_QUESTION_IDS = {
     'muac': {
         'mvp-sauri': _make_qid('patient_available.muac', 1),
         'mvp-potou': _make_qid('patient_available.muac', 1),
+    },
+    'last_muac': {
+        'mvp-sauri': _make_qid('last_muac', 1),
+        'mvp-potou': _make_qid('last_muac', 1),
+    },
+    'cur_muac': {
+        'mvp-sauri': _make_qid('cur_muac', 1),
+        'mvp-potou': _make_qid('cur_muac', 1),
     },
     'exclusive_breastfeeding': {
         'mvp-sauri': _make_qid('group_counseling.exclusive_breastfeeding', 1),
@@ -102,7 +110,7 @@ PREGNANCY_VISIT_QUESTION_IDS = {
         'mvp-potou': _make_qid('group_referral_dangersign.last_anc_weeks', 2),
     },
     'referral_type': {
-        'mvp-sauri': _make_qid('group_referral_dangersign.referral_type', 3),
+        'mvp-sauri': _make_qid('group_referral_dangersign.referral_type', 4),
         'mvp-potou': _make_qid('referral_type', 2),
     },
 }
