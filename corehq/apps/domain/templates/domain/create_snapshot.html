@@ -56,12 +56,17 @@
                 numberOfMonths: 2
             });
         });
+
+        $("#save-button").on("click", function(){
+            $("#id_publish_on_submit").val("no");
+            $("#snapshot-form").submit();
+        });
     });
 </script>
 {% endblock %}
 
 {% block user-view %}
-<form class="form-horizontal" enctype="multipart/form-data" method="post" action="{% url domain_create_snapshot domain %}" id="snapshot_form">
+<form id="snapshot-form" class="form-horizontal" enctype="multipart/form-data" method="post" action="{% url domain_create_snapshot domain %}" id="snapshot_form">
     <fieldset>
         {% bootstrap_form_errors form %}
         {% bootstrap_fieldset form "Publishing new version of your project to Commcare Exchange" %}
@@ -82,8 +87,12 @@
             <h3>Application: {{ app.name }}</h3>
             {% bootstrap_fieldset app_form %}
         {% endfor %}
+        <input type="hidden" name="publish_on_submit" value="yes" id="id_publish_on_submit">
     </fieldset>
 
-    <div class="form-actions"><button type="submit" class="btn btn-primary">Publish Project</button></div>
+    <div class="form-actions">
+        <a id="save-button" class="btn">{% trans "Save and Publish Later" %}</a>
+        <button type="submit" class="btn btn-primary">{% trans "Publish Now" %}</button>
+    </div>
 </form>
 {% endblock %}>

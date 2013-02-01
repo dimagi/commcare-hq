@@ -337,7 +337,7 @@ def create_snapshot(request, domain):
         new_domain.multimedia_included = request.POST.get('share_multimedia', '') == 'on'
 
         new_domain.is_approved = False
-        publish_on_submit = request.POST.get('publish_on_submit', False)
+        publish_on_submit = request.POST.get('publish_on_submit', "no") == "yes"
 
         image = form.cleaned_data['image']
         if image:
