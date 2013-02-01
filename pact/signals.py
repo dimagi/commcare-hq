@@ -1,15 +1,15 @@
-from celery.task.base import subtask
 from corehq.apps.users.models import  CouchUser
 from dimagi.utils.logging import notify_exception
 from pact.utils import get_case_id
 from receiver.signals import successful_form_received
-from pact.tasks import recalculate_dots_data, eval_dots_block
 import traceback
 
 #placeholder for doing blocking vs. async via celery
 BLOCKING = True
 
 def process_dots_submission(sender, xform, **kwargs):
+    from celery.task.base import subtask
+    from pact.tasks import recalculate_dots_data, eval_dots_block
     try:
         if xform.xmlns != "http://dev.commcarehq.org/pact/dots_form":
             return
