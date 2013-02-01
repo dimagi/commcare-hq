@@ -1,8 +1,5 @@
 from django.http import Http404
-from django.utils.decorators import method_decorator
-from django.views.decorators.csrf import csrf_protect
 from django.views.generic import View
-from corehq.apps.domain.decorators import login_and_domain_required
 
 class DomainAPI(View):
     """
@@ -43,7 +40,6 @@ class DomainAPI(View):
         raise NotImplementedError("Not implemented")
 
     #security/login constraint methods are the implementors' decision - the @method_doctorator trumps subclasses in this case
-    #@method_decorator(login_and_domain_required)
     def dispatch(self, *args, **kwargs):
         req = args[0]
         if not self.allowed_domain(req.domain):

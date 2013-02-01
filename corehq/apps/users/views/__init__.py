@@ -25,7 +25,7 @@ from corehq.apps.domain.models import Domain
 from corehq.apps.users.decorators import require_permission
 from corehq.apps.users.forms import UserForm, ProjectSettingsForm
 from corehq.apps.users.models import CouchUser, CommCareUser, WebUser, \
-    DomainRemovalRecord, UserRole, AdminUserRole, DomainInvitation
+    DomainRemovalRecord, UserRole, AdminUserRole, DomainInvitation, PublicUser
 from corehq.apps.domain.decorators import login_and_domain_required, require_superuser, domain_admin_required
 from corehq.apps.orgs.models import Team
 from corehq.apps.reports.util import get_possible_reports
@@ -84,12 +84,14 @@ def users(request, domain):
 
 def _redirect_users_to(request, domain):
     redirect = None
-    user = CouchUser.get_by_user_id(request.couch_user._id, domain)
-    if user:
-        if user.has_permission(domain, 'edit_commcare_users'):
-            redirect = reverse("commcare_users", args=[domain])
-        else:
-            redirect = reverse("user_account", args=[domain, request.couch_user._id])
+    # good ol' public domain...
+    if not isinstance(request.couch_user, PublicUser):
+        user = CouchUser.get_by_user_id(request.couch_user._id, domain)
+        if user:
+            if user.has_permission(domain, 'edit_commcare_users'):
+                redirect = reverse("commcare_users", args=[domain])
+            else:
+                redirect = reverse("user_account", args=[domain, request.couch_user._id])
     return redirect
 
 @require_can_edit_web_users
