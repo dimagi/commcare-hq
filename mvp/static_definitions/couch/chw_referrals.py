@@ -26,14 +26,14 @@ CHW_REFERRAL_INDICATORS = dict(
                             "of referral / treatment during the time period",
                 title="# Urgent Referrals w/ Followup within 2 days",
                 indicator_key="urgent_referral_followup"
-            )
-        ),
-        urgent_referrals_by_form=dict(
+            ),
             num_urgent_referrals=dict(
                 description="No. of Urgent Referrals",
                 title="# Urgent Referrals",
-                indicator_key="urgent_referral"
+                indicator_key="urgent_or_treatment"
             ),
+        ),
+        urgent_referrals_by_form=dict(
             num_urgent_treatment_referral=dict(
                 description="No. of Cases Urgently referred OR Treated by CHW",
                 title="# Cases Urgently referred OR Treated by CHW",

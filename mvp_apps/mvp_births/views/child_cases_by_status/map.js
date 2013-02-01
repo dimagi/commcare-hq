@@ -21,19 +21,14 @@ function (doc) {
                 indicators_dob.push("dob delivered_in_facility");
             }
 
-            try {
-                emit_standard(doc, new Date(dob_date), indicators_dob, [doc._id]);
-            } catch (e) {
-                // just in case the date parsing fails miserably.
-            }
-
-
-
             indicator_entries_open["opened_on"] = dob_date;
             indicator_entries_open["opened_on "+status] = dob_date;
             if (weight_at_birth) {
                 try {
                     var weight = parseFloat(weight_at_birth);
+                    if (weight > 0) {
+                        indicator_entries_open["opened_on weight_recorded"] = dob_date;
+                    }
                     if (weight < 2.5) {
                         indicator_entries_open["opened_on low_birth_weight"] = dob_date;
                     }
@@ -41,7 +36,14 @@ function (doc) {
                     // pass
                 }
             }
+
+
             emit_special(doc, opened_on_date, indicator_entries_open, [doc._id]);
+            try {
+                emit_standard(doc, new Date(dob_date), indicators_dob, [doc._id]);
+            } catch (e) {
+                // just in case the date parsing fails miserably.
+            }
 
             if (doc.closed_on) {
                 var closed_on_date = new Date(doc.closed_on);

@@ -24,6 +24,7 @@ function(doc) {
 
             for (var f = 0; f < self.flagged.length; f++) {
                 var flagged_visit = self.flagged[f];
+                emit_standard(doc, flagged_visit, ["urgent_or_treatment"], [doc._id]);
                 _compareVisitAndFlagged(flagged_visit);
             }
         };
