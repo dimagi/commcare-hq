@@ -263,7 +263,6 @@ def create_snapshot(request, domain):
                     'publish': True,
                     'name': original.name,
                     'description': original.description,
-                    'short_description': original.short_description,
                     'deployment_date': original.deployment_date,
                     'user_type': original.user_type,
                     'attribution_notes': original.attribution_notes,
@@ -369,7 +368,6 @@ def create_snapshot(request, domain):
             if request.POST.get("%s-publish" % original_id, False):
                 application.name = request.POST["%s-name" % original_id]
                 application.description = request.POST["%s-description" % original_id]
-                application.short_description = request.POST["%s-short_description" % original_id]
                 date_picked = request.POST["%s-deployment_date" % original_id]
                 try:
                     date_picked = dateutil.parser.parse(date_picked)

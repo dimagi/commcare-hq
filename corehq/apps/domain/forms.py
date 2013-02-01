@@ -23,11 +23,8 @@ class SnapshotSettingsMixin(forms.Form):
 class SnapshotApplicationForm(forms.Form):
     publish = BooleanField(label=ugettext_noop("Publish?"), required=False)
     name = CharField(label=ugettext_noop("Name"), required=True)
-    short_description = CharField(label=ugettext_noop("Short Description"), required=False,
-        max_length=200, widget=forms.Textarea,
-        help_text=ugettext_noop("A brief description of the application (max. 200 characters)"))
-    description = CharField(label=ugettext_noop("Long Description"), required=False, widget=forms.Textarea,
-        help_text=ugettext_noop("A detailed technical description of the app design"))
+    description = CharField(label=ugettext_noop("Description"), required=False, widget=forms.Textarea,
+        help_text=ugettext_noop("A detailed technical description of the application"))
     deployment_date = CharField(label=ugettext_noop("Deployment date"), required=False)
     phone_model = CharField(label=ugettext_noop("Phone model"), required=False)
     user_type = CharField(label=ugettext_noop("User type"), required=False,
@@ -40,7 +37,6 @@ class SnapshotApplicationForm(forms.Form):
         self.fields.keyOrder = [
             'publish',
             'name',
-            'short_description',
             'description',
             'deployment_date',
             'phone_model',
