@@ -285,7 +285,7 @@ class DeviceLogDetailsReport(PhonelogReport):
             if log_tag in self.tag_labels:
                 tag_classes.append(self.tag_labels[log_tag])
 
-            goto_key = [self.domain, "tag_username", log_tag, username, item['key'][-1]]
+            goto_key = [self.domain, "tag", log_tag, item['key'][-1]]
 
             log_tag_format = '<a href="%(url)s" class="%(classes)s"%(extra_params)s data-datatable-tooltip="right" data-datatable-tooltip-text="%(tooltip)s">%(text)s</a>' % {
                 "url": "%s?goto=%s" % (self.get_url(domain=self.domain), html.escape(json.dumps(goto_key))),
