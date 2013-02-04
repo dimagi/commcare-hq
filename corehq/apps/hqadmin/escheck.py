@@ -47,7 +47,6 @@ def check_xform_index():
 
 def _get_latest_xforms(limit=100):
     db = XFormInstance.get_db()
-    #query case stuff
     recent_xforms = db.view('hqadmin/forms_over_time', reduce=False, limit=100, descending=True)
     return recent_xforms
 
@@ -91,6 +90,7 @@ def _check_es_rev(index, doc_id, couch_rev):
 def check_case_index():
     """
     Verify couch case view and ES views are up to date with the latest xform to update a case, and that the revs are in sync.
+    Query recent xforms and their cases, as this is a more accurate way to get case changes in the wild with existing working views
     """
     casedb = CommCareCase.get_db()
     recent_xforms = _get_latest_xforms()
@@ -99,7 +99,6 @@ def check_case_index():
         #just check to see if any of these recent forms have a case associated with them - they should...
         casedoc = casedb.view('case/by_xform_id', reduce=False, include_docs=True, key=xform_id, limit=1).one()
         if casedoc is not None:
-            #print casedoc.to_json().keys()
             couch_rev = casedoc['doc']['_rev']
             doc_id = casedoc['doc']['_id']
             return _check_es_rev(CasePillow.es_alias, doc_id, couch_rev)
