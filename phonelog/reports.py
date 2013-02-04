@@ -18,6 +18,8 @@ from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.timezones import utils as tz_utils
 from dimagi.utils.web import json_request, get_url_base
 
+logger = logging.getLogger(__name__)
+
 class PhonelogReport(DeploymentsReport, DatespanMixin):
     fields = ['corehq.apps.reports.fields.FilterUsersField',
               'corehq.apps.reports.fields.GroupField',
@@ -142,29 +144,33 @@ class DeviceLogDetailsReport(PhonelogReport):
     @property
     def selected_devices(self):
         if self._selected_devices is None:
-            self._selected_devices = self.request.GET.getlist(DeviceLogDevicesField.slug)
+            self._selected_devices = set(self.request.GET.getlist(DeviceLogDevicesField.slug))
         return self._selected_devices
 
     _devices_for_users = None
     @property
     def devices_for_users(self):
         if self._devices_for_users is None:
-            device_ids_for_username = defaultdict(lambda: [])
+            device_ids_for_username = defaultdict(set)
 
-            for __, device_id, username in get_db().view('phonelog/device_log_users',
+            for datum in get_db().view('phonelog/device_log_users',
                                                          startkey=[self.domain],
                                                          endkey=[self.domain, {}],
                                                          reduce=False):
-                device_ids_for_username[username].append(device_id)
+                # Begin dependency on particulars of view output
+                username = datum['key'][2]
+                device_id = datum['key'][1]
+                # end dependency
+                device_ids_for_username[username].add(device_id)
 
-            _devices_for_users = [device_id for user in self.device_log_users
-                                            for device_id in device_ids_for_username[user]]
+            self._devices_for_users = set([device_id for user in self.device_log_users
+                                                     for device_id in device_ids_for_username[user]])
             
-        return _devices_for_users
+        return self._devices_for_users
 
     @property
     def devices(self):
-        return self.devices_for_users + self.selected_devices
+        return self.devices_for_users | self.selected_devices
 
     _goto_key = None
     @property
@@ -232,7 +238,7 @@ class DeviceLogDetailsReport(PhonelogReport):
                                                                     for device in self.devices]
             elif (not self.selected_tags) and self.devices:
                 key_set = [[self.domain, "device", device] for device in self.devices]
-            elif (not self.devices) and (not self.device_log_users) and self.selected_tags:
+            elif self.selected_tags and (not self.devices):
                 key_set = [[self.domain, "tag", tag] for tag in self.selected_tags]
             else:
                 key_set = [[self.domain, "basic"]]
