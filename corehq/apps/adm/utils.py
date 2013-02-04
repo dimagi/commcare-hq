@@ -1,8 +1,8 @@
+from django.conf import settings
 
 def show_adm_nav(domain, request):
-    return domain and\
-           (hasattr(request, 'project') and not request.project.is_snapshot) and\
-           (request.couch_user.can_view_reports() or request.couch_user.get_viewable_reports())
+    enabled_projects = settings.ADM_ENABLED_PROJECTS if hasattr(settings, 'ADM_ENABLED_PROJECTS') else []
+    return domain in enabled_projects
 
 
 def standard_start_end_key(key, datespan=None):
