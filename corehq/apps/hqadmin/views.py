@@ -645,7 +645,6 @@ def system_info(request):
     context['redis_status'] = redis_status
     context['redis_results'] = redis_results
 
-    print "rabbitmq start"
     #rabbitmq status
     mq_status = "Unknown"
     if settings.BROKER_URL.startswith('amqp'):
@@ -665,7 +664,6 @@ def system_info(request):
         mq_status = "Not configured"
     context['rabbitmq_status'] = mq_status
 
-    print "rabbitmq end"
 
     #memcached_status
     mc = cache.get_cache('default')
@@ -691,15 +689,10 @@ def system_info(request):
 
     #elasticsearch status
     #node status
-    print "es1"
     context.update(check_cluster_health())
-    print "es2"
     context.update(check_case_index())
-    print "es3"
     context.update(check_xform_index())
-    print "es4"
     context.update(check_exchange_index())
-    print "es5"
 
     return render_to_response(request, "hqadmin/system_info.html", context)
 
