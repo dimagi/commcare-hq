@@ -29,10 +29,6 @@ def check_exchange_index():
     else:
         return {"%s_status" % ExchangePillow.es_index: False, "%s_message" % ExchangePillow.es_index: "Exchange stale" }
 
-
-
-    pass
-
 def check_xform_index():
     latest_xforms = _get_latest_xforms()
 
