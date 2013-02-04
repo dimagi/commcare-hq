@@ -8,7 +8,7 @@ import rawes
 from casexml.apps.case.models import CommCareCase
 from corehq.apps.builds.models import CommCareBuildConfig, BuildSpec
 from corehq.apps.domain.models import Domain
-from corehq.apps.hqadmin.escheck import check_cluster_health, check_case_index
+from corehq.apps.hqadmin.escheck import check_cluster_health, check_case_index, check_xform_index, check_exchange_index
 from corehq.apps.reports.datatables import DataTablesColumn, DataTablesHeader, DTSortType
 from corehq.apps.reports.util import make_form_couch_key
 from corehq.apps.sms.models import SMSLog
@@ -691,6 +691,8 @@ def system_info(request):
     #node status
     context.update(check_cluster_health())
     context.update(check_case_index())
+    context.update(check_xform_index())
+    context.update(check_exchange_index())
 
     return render_to_response(request, "hqadmin/system_info.html", context)
 
