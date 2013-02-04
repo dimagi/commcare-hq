@@ -221,7 +221,8 @@
                                               "form submission occurs. If not selected, the system will submit the form on a partial form submission, but ignore any case create, update, or close actions.",
             "Advanced Reminder Time Choices": "Enable this option to specify reminder times in advanced ways, such as specifying the time to send in a case property. This applies only to " +
                                               "schedule-based (not offset-based) schedules.",
-            "Time Type": "Use 'Default' to specify the time of day to send (hh:mm). Use 'Case Property' to specify the case property that contains the time of day to send."
+            "Time Type": "Use 'Default' to specify the time of day to send (hh:mm). Use 'Case Property' to specify the case property that contains the time of day to send.",
+            "Question Retries": "An IVR Survey will only allow this many invalid responses to a question before disconnecting the call."
         };
 
         $('.help_popover').popover({
@@ -599,17 +600,26 @@
                         <td>{{ form.submit_partial_forms }}</td>
                         <td>Submit partial forms <span class="help_popover" data-help-key="Partial Form Submission"><i class="icon icon-question-sign"></i></span></td>
                     </tr>
-                </tbody>
-                <tbody>
                     <tr>
                         <td>{{ form.include_case_side_effects }}</td>
                         <td>Include case side effects for partial form submissions <span class="help_popover" data-help-key="Side Effects For Partial Forms"><i class="icon icon-question-sign"></i></span></td>
                     </tr>
-                </tbody>
-                <tbody>
                     <tr>
                         <td>{{ form.enable_advanced_time_choices }}</td>
                         <td>Enable advanced reminder time choices <span class="help_popover" data-help-key="Advanced Reminder Time Choices"><i class="icon icon-question-sign"></i></span></td>
+                    </tr>
+                    <tr>
+                        <td></td>
+                        <td>
+                            Retry an IVR Survey question
+                            <select name="max_question_retries" id="id_max_question_retries" class="input-mini">
+                                {% for k, v in form.fields.max_question_retries.choices %}
+                                <option value="{{ k }}" {% if k == form.max_question_retries.value %}selected="selected"{% endif %}>{{ v }}</option>
+                                {% endfor %}
+                            </select>
+                            time(s) before hanging up
+                            <span class="help_popover" data-help-key="Max Question Retries"><i class="icon icon-question-sign"></i></span>
+                        </td>
                     </tr>
                 </tbody>
             </table>

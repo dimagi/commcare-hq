@@ -3,7 +3,7 @@ import json
 from django.core.urlresolvers import reverse
 from django.http import HttpResponseRedirect, Http404, HttpResponse, HttpResponseBadRequest
 from corehq.apps.reminders.forms import CaseReminderForm, ComplexCaseReminderForm, SurveyForm, SurveySampleForm, EditContactForm
-from corehq.apps.reminders.models import CaseReminderHandler, CaseReminderEvent, REPEAT_SCHEDULE_INDEFINITELY, EVENT_AS_OFFSET, EVENT_AS_SCHEDULE, SurveyKeyword, Survey, SurveySample, SURVEY_METHOD_LIST, SurveyWave, ON_DATETIME, RECIPIENT_SURVEY_SAMPLE
+from corehq.apps.reminders.models import CaseReminderHandler, CaseReminderEvent, REPEAT_SCHEDULE_INDEFINITELY, EVENT_AS_OFFSET, EVENT_AS_SCHEDULE, SurveyKeyword, Survey, SurveySample, SURVEY_METHOD_LIST, SurveyWave, ON_DATETIME, RECIPIENT_SURVEY_SAMPLE, QUESTION_RETRY_CHOICES
 from corehq.apps.users.decorators import require_permission
 from corehq.apps.users.models import CouchUser, CommCareUser, Permissions
 from dimagi.utils.web import render_to_response
@@ -183,6 +183,7 @@ def add_complex_reminder_schedule(request, domain, handler_id=None):
             h.include_case_side_effects = form.cleaned_data["include_case_side_effects"]
             h.ui_frequency = form.cleaned_data["frequency"]
             h.start_condition_type = form.cleaned_data["start_condition_type"]
+            h.max_question_retries = form.cleaned_data["max_question_retries"]
             if form.cleaned_data["start_condition_type"] == "ON_DATETIME":
                 dt = parse(form.cleaned_data["start_datetime_date"]).date()
                 tm = parse(form.cleaned_data["start_datetime_time"]).time()
@@ -218,11 +219,13 @@ def add_complex_reminder_schedule(request, domain, handler_id=None):
                 "frequency"             : h.ui_frequency,
                 "sample_id"             : h.sample_id,
                 "use_until"             : "Y" if h.until is not None else "N",
+                "max_question_retries"  : h.max_question_retries,
             }
         else:
             initial = {
                 "events"    : [CaseReminderEvent(day_num=0, fire_time=time(0,0), message={"":""}, callback_timeout_intervals=[], form_unique_id=None)],
                 "use_until" : "N",
+                "max_question_retries" : QUESTION_RETRY_CHOICES[-1],
             }
         
         form = ComplexCaseReminderForm(initial=initial)

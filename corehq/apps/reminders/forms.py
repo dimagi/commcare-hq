@@ -11,7 +11,7 @@ RECIPIENT_USER, RECIPIENT_CASE, RECIPIENT_SURVEY_SAMPLE, RECIPIENT_OWNER,\
 MATCH_EXACT, MATCH_REGEX, MATCH_ANY_VALUE, EVENT_AS_SCHEDULE, EVENT_AS_OFFSET,\
 SurveySample, CaseReminderHandler, FIRE_TIME_DEFAULT, FIRE_TIME_CASE_PROPERTY,\
 METHOD_SMS, METHOD_SMS_CALLBACK, METHOD_SMS_SURVEY, METHOD_IVR_SURVEY,\
-CASE_CRITERIA
+CASE_CRITERIA, QUESTION_RETRY_CHOICES
 from dimagi.utils.parsing import string_to_datetime
 from dimagi.utils.timezones.forms import TimeZoneChoiceField
 from dateutil.parser import parse
@@ -185,6 +185,7 @@ class ComplexCaseReminderForm(Form):
     frequency = CharField()
     sample_id = CharField(required=False)
     enable_advanced_time_choices = BooleanField(required=False)
+    max_question_retries = ChoiceField(choices=((n,n) for n in QUESTION_RETRY_CHOICES))
     
     def __init__(self, *args, **kwargs):
         super(ComplexCaseReminderForm, self).__init__(*args, **kwargs)
@@ -366,6 +367,10 @@ class ComplexCaseReminderForm(Form):
             raise ValidationError("Please enter a positive number.")
         
         return value
+    
+    def clean_max_question_retries(self):
+        # Django already validates that it's in the list of choices, just cast it to an int
+        return int(self.cleaned_data["max_question_retries"])
     
     def clean_events(self):
         value = self.cleaned_data.get("events")

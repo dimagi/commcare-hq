@@ -60,6 +60,9 @@ def incoming(phone_number, backend_module, gateway_session_id, ivr_event, input_
                                   include_docs=True,
                                   limit=1).one()
     
+    answer_is_valid = False # This will be set to True if IVR validation passes
+    error_occurred = True # This will be set to False if touchforms validation passes (i.e., no form constraints fail)
+    
     if call_log_entry is not None:
         form = Form.get_form(call_log_entry.form_unique_id)
         app = form.get_app()
@@ -75,13 +78,14 @@ def incoming(phone_number, backend_module, gateway_session_id, ivr_event, input_
             
             session, responses = start_session(recipient.domain, recipient, app, module, form, case_id, yield_responses=True, session_type=XFORMS_SESSION_IVR)
             call_log_entry.xforms_session_id = session.session_id
-            call_log_entry.save()
         elif ivr_event == IVR_EVENT_INPUT:
-            if call_log_entry.xforms_session_id is not None:
+            if call_log_entry.xforms_session_id is not None and (call_log_entry.max_question_retries is None or call_log_entry.current_question_retry_count <= call_log_entry.max_question_retries):
                 current_q = current_question(call_log_entry.xforms_session_id)
                 if validate_answer(input_data, current_q):
+                    answer_is_valid = True
                     responses = _get_responses(recipient.domain, recipient._id, input_data, yield_responses=True, session_id=call_log_entry.xforms_session_id)
                 else:
+                    call_log_entry.current_question_retry_count += 1
                     responses = [current_q]
             else:
                 responses = []
@@ -101,6 +105,8 @@ def incoming(phone_number, backend_module, gateway_session_id, ivr_event, input_
         hang_up = False
         for response in responses:
             if response.is_error:
+                error_occurred = True
+                call_log_entry.current_question_retry_count += 1
                 if response.text_prompt is None:
                     ivr_responses = []
                     break
@@ -110,6 +116,13 @@ def incoming(phone_number, backend_module, gateway_session_id, ivr_event, input_
                 ivr_responses.append(format_ivr_response(response.event.caption, app))
             elif response.event.type == "form-complete":
                 hang_up = True
+        
+        if answer_is_valid and not error_occurred:
+            call_log_entry.current_question_retry_count = 0
+        
+        if call_log_entry.max_question_retries is not None and call_log_entry.current_question_retry_count > call_log_entry.max_question_retries:
+            # Force hang-up
+            ivr_responses = []
         
         if len(ivr_responses) == 0:
             hang_up = True
@@ -123,6 +136,7 @@ def incoming(phone_number, backend_module, gateway_session_id, ivr_event, input_
             if current_q.event.type == "question" and current_q.event.datatype == "select":
                 input_length = 1
         
+        call_log_entry.save()
         return HttpResponse(backend_module.get_http_response_string(gateway_session_id, ivr_responses, collect_input=(not hang_up), hang_up=hang_up, input_length=input_length))
     
     # If not processed, just log the call
@@ -159,7 +173,7 @@ def incoming(phone_number, backend_module, gateway_session_id, ivr_event, input_
     
     return HttpResponse("")
 
-def initiate_outbound_call(verified_number, form_unique_id, submit_partial_form, include_case_side_effects):
+def initiate_outbound_call(verified_number, form_unique_id, submit_partial_form, include_case_side_effects, max_question_retries):
     call_log_entry = CallLog(
         couch_recipient_doc_type = verified_number.owner_doc_type,
         couch_recipient          = verified_number.owner_id,
@@ -170,6 +184,8 @@ def initiate_outbound_call(verified_number, form_unique_id, submit_partial_form,
         form_unique_id           = form_unique_id,
         submit_partial_form      = submit_partial_form,
         include_case_side_effects = include_case_side_effects,
+        max_question_retries     = max_question_retries,
+        current_question_retry_count = 0,
     )
     backend = verified_number.ivr_backend
     kwargs = backend.outbound_params

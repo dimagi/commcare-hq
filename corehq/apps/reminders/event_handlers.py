@@ -209,7 +209,7 @@ def fire_ivr_survey_event(reminder, handler, recipients, verified_numbers):
             return True
         verified_number = verified_numbers[recipients[0].get_id]
         if verified_number is not None:
-            initiate_outbound_call(verified_number, reminder.current_event.form_unique_id, handler.submit_partial_forms, handler.include_case_side_effects)
+            initiate_outbound_call(verified_number, reminder.current_event.form_unique_id, handler.submit_partial_forms, handler.include_case_side_effects, handler.max_question_retries)
             return True
         else:
             return False

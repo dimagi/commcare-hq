@@ -77,6 +77,8 @@ SURVEY_METHOD_LIST = ["SMS","CATI"]
 UI_FREQUENCY_ADVANCED = "ADVANCED"
 UI_FREQUENCY_CHOICES = [UI_FREQUENCY_ADVANCED]
 
+QUESTION_RETRY_CHOICES = [1, 2, 3, 4, 5]
+
 # This time is used when the case property used to specify the reminder time isn't a valid time
 # TODO: Decide whether to keep this or retire the reminder
 DEFAULT_REMINDER_TIME = time(12, 0)
@@ -298,6 +300,11 @@ class CaseReminderHandler(Document):
     # If this is True, partial form submissions will be allowed to create / update / close cases.
     # If this is False, partial form submissions will just submit the form without case create / update / close.
     include_case_side_effects = BooleanProperty(default=False)
+    
+    # Only applies for method = "ivr_survey" right now.
+    # This is the maximum number of times that it will retry asking a question with an invalid response before hanging
+    # up. This is meant to prevent long running calls.
+    max_question_retries = IntegerProperty(choices=QUESTION_RETRY_CHOICES, default=QUESTION_RETRY_CHOICES[-1])
     
     survey_incentive = StringProperty()
     
