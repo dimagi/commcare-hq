@@ -112,6 +112,7 @@ class DeviceLogDetailsReport(PhonelogReport):
         return DataTablesHeader(DataTablesColumn("Date", span=1, sort_direction=[DTSortDirection.DSC,DTSortDirection.ASC]),
                                 DataTablesColumn("Log Type", span=1),
                                 DataTablesColumn("Logged in Username", span=2),
+                                DataTablesColumn("Device Users", span=2),
                                 DataTablesColumn("Device ID", span=2),
                                 DataTablesColumn("Message", span=5),
                                 DataTablesColumn("App Version", span=1))
