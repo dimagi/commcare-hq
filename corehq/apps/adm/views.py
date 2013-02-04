@@ -1,9 +1,9 @@
 from django.http import HttpResponseRedirect
 from corehq.apps.crud.views import BaseAdminCRUDFormView
-from corehq.apps.domain.decorators import require_superuser, domain_admin_required
+from corehq.apps.domain.decorators import require_superuser, domain_admin_required, login_and_domain_required
 from dimagi.utils.web import render_to_response
 
-@domain_admin_required
+@login_and_domain_required
 def default_adm_report(request, domain, template="adm/base_template.html", **kwargs):
     from corehq.apps.adm.reports import ADMSectionView
     context = dict(
