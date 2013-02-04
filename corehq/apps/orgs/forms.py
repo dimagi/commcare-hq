@@ -97,4 +97,3 @@ class UpdateOrgInfo(OrganizationRegistrationForm):
         # Value of 'kind' is irrelevant in this context
         super(UpdateOrgInfo, self).__init__(*args, **kwargs)
         del self.fields['org_name']
-        del self.fields['tos_confirmed']
