@@ -43,17 +43,11 @@ function(doc) {
                 }
 
                 // Single Parameters
-                emit([doc.domain, "username", logged_in_user, entry['@date']], entry);
                 emit([doc.domain, "tag", entry.type, entry['@date']], entry);
                 emit([doc.domain, "device", doc.form.device_id, entry['@date']], entry);
 
                 // Coupled Parameters
-                emit([doc.domain, "tag_username", entry.type, logged_in_user, entry['@date']], entry);
                 emit([doc.domain, "tag_device", entry.type, doc.form.device_id, entry['@date']], entry);
-                emit([doc.domain, "username_device", logged_in_user, doc.form.device_id, entry['@date']], entry);
-
-                // Tripled Parameters
-                emit([doc.domain, "tag_username_device", entry.type, logged_in_user, doc.form.device_id, entry['@date']], entry);
             }
 
         }
