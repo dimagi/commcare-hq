@@ -129,7 +129,6 @@ class Command(PactMigrateCommand):
     def handle(self, **options):
         from pact.tasks import recalculate_dots_data
 
-        recalculate_dots_data('foo')
         self.purge = options['purge']
         domain_obj = Domain.get_by_name(PACT_DOMAIN)
         self.old_id_map = get_user_id_map()
@@ -350,17 +349,21 @@ class Command(PactMigrateCommand):
 
         #check if case already exists:
         existing_xform_ids = []
+        remote_xform_ids = remote_case_json['xform_ids']
         if CommCareCase.get_db().doc_exist(case_id):
             print "\tCase ID %s already exists in DB" % case_id
             local_case = CommCareCase.get(case_id)
-            existing_xform_ids = local_case.xform_ids
+            local_existing = local_case.xform_ids
+            existing_xform_ids = list(set(local_existing+local_case))
         else:
             #make new blank case
             new_block = base_create_block(pactid, case_id, user_id, name, case_type, owner_id, primary_hp, remote_case_json['demographics'])
             opened_date = datetime.strptime(remote_case_json['opened_on'], '%Y-%m-%dT%H:%M:%SZ')
             res = self.submit_case_create_block(opened_date, new_block)
+            existing_xform_ids = existing_xform_ids
             print "\tRegenerated case"
 
+#            existing_xform_ids = local_case.xform_ids
         for ix, action in enumerate(remote_case_json['actions']):
             self.process_xform_from_action(case_id, pactid, action, ix, existing_xform_ids)
 
