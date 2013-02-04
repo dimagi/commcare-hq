@@ -9,5 +9,11 @@ function(doc) {
         }
       }
     }
+    if (doc.form.user_subreport) {
+      for (var i in doc.form.user_subreport.user) {
+        var username = doc.form.user_subreport.user[i].username;
+        emit([doc.domain, doc.form.device_id, username], null);
+      }
+    }
   }
 }
