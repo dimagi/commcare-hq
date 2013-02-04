@@ -18,12 +18,13 @@ class Organization(Document):
     logo_filename = StringProperty()
 
     @classmethod
-    def get_by_name(cls, name):
+    def get_by_name(cls, name, strict=False):
+        extra_args = {'stale': 'update_after'} if not strict else {}
         result = cls.view("orgs/by_name",
             key=name,
             reduce=False,
             include_docs=True,
-            stale='update_after',
+            **extra_args
         ).one()
         return result
 

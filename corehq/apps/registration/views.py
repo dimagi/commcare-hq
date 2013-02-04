@@ -42,7 +42,6 @@ def register_user(request):
         vals = dict(form = form)
         return render_to_response(request, 'registration/create_new_user.html', vals)
 
-@require_superuser
 @transaction.commit_on_success
 @login_required_late_eval_of_LOGIN_URL
 def register_org(request, template="registration/org_request.html"):
@@ -63,6 +62,10 @@ def register_org(request, template="registration/org_request.html"):
 
             org = Organization(name=name, title=title, location=location, email=email, url=url, logo_filename=logo_filename)
             org.save()
+
+            request.couch_user.add_org_membership(org.name, is_admin=True)
+            request.couch_user.save()
+
             if logo:
                 org.put_attachment(content=logo.read(), name=logo.name)
 

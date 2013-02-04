@@ -1384,11 +1384,11 @@ class OrgMembershipMixin(DocumentSchema):
         return None
 
     def add_org_membership(self, org, **kwargs):
-        from corehq.apps.orgs.models import  Organization
+        from corehq.apps.orgs.models import Organization
         if self.get_org_membership(org):
             return
 
-        organization = Organization.get_by_name(org)
+        organization = Organization.get_by_name(org, strict=True)
         if not organization:
             raise OrgMembershipError("Cannot add org membership -- Organization %s does not exist" % org)
 
