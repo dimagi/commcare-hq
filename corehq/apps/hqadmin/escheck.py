@@ -68,7 +68,8 @@ def _check_es_rev(index, doc_id, couch_rev):
         if res.has_key('hits'):
             if res['hits'].get('total', 0) == 0:
                 status=False
-                message="Not in sync - case_id"
+                #if doc doesn't exist it's def. not in sync
+                message="Not in sync %s" % index
             elif res['hits'].has_key('hits'):
                 fields = res['hits']['hits'][0]['fields']
                 if fields['_rev'] == couch_rev:
@@ -76,6 +77,7 @@ def _check_es_rev(index, doc_id, couch_rev):
                     message="%s OK" % index
                 else:
                     status=False
+                    #less likely, but if it's there but the rev is off
                     message="Not in sync - %s stale" % index
         else:
             status=False
