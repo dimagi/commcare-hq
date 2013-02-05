@@ -426,7 +426,6 @@ def change_my_password(request, domain, template="users/change_my_password.html"
 
 
 def _handle_user_form(request, domain, couch_user=None):
-    from corehq.apps.reports.util import get_possible_reports
     context = {}
     if couch_user:
         create_user = False
@@ -478,7 +477,7 @@ def _handle_user_form(request, domain, couch_user=None):
                         initial = role.get_qualified_id()
                     form.initial['role'] = initial
                 else:
-                    form.initial['role'] = couch_user.get_role(domain).get_qualified_id() or ''
+                    form.initial['role'] = couch_user.get_role(domain, include_teams=False).get_qualified_id() or ''
 
     if not can_change_admin_status:
         del form.fields['role']
