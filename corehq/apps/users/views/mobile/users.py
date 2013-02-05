@@ -15,6 +15,7 @@ from django.utils.decorators import method_decorator
 from django.views.decorators.http import require_POST
 from django.contrib import messages
 from django.views.generic.base import TemplateView
+from django.shortcuts import render
 
 from corehq.apps.users.forms import CommCareAccountForm
 from corehq.apps.users.models import CommCareUser
@@ -23,7 +24,7 @@ from corehq.apps.users.bulkupload import create_or_update_users_and_groups, chec
 from corehq.apps.users.tasks import bulk_upload_async
 from corehq.apps.users.views import _users_context, require_can_edit_web_users, require_can_edit_commcare_users
 
-from dimagi.utils.web import render_to_response, get_url_base
+from dimagi.utils.web import get_url_base
 from dimagi.utils.decorators.view import get_file
 from dimagi.utils.excel import Excel2007DictReader, WorkbookJSONReader, WorksheetNotFound
 
@@ -53,7 +54,7 @@ def base_view(request, domain, template="users/mobile/users_list.html"):
         show_case_sharing=request.project.case_sharing_included(),
         pagination_limit_options=range(DEFAULT_USER_LIST_LIMIT, 51, DEFAULT_USER_LIST_LIMIT)
     )
-    return render_to_response(request, template, context)
+    return render(request, template, context)
 
 @require_can_edit_commcare_users
 def user_list(request, domain):
@@ -196,7 +197,7 @@ def add_commcare_account(request, domain, template="users/add_commcare_account.h
         form = CommCareAccountForm()
     context.update(form=form)
     context.update(only_numeric=(request.project.password_format() == 'n'))
-    return render_to_response(request, template, context)
+    return render(request, template, context)
 
 class UploadCommCareUsers(TemplateView):
 

@@ -1,4 +1,6 @@
 from django.http import HttpResponse, HttpResponseRedirect, Http404
+from django.shortcuts import render
+
 from corehq.apps.domain.decorators import require_superuser, domain_admin_required
 from corehq.apps.domain.models import Domain
 from corehq.apps.commtrack.management.commands import bootstrap_psi
@@ -7,7 +9,7 @@ from corehq.apps.commtrack.forms import ProductForm
 from soil.util import expose_download
 import uuid
 from django.core.urlresolvers import reverse
-from dimagi.utils.web import render_to_response, get_url_base
+from dimagi.utils.web import get_url_base
 from django.contrib import messages
 from corehq.apps.commtrack.tasks import import_locations_async,\
     import_stock_reports_async
@@ -37,7 +39,7 @@ def product_list(request, domain, template="commtrack/manage/products.html"):
         show_inactive=show_inactive,
         pagination_limit_options=range(DEFAULT_PRODUCT_LIST_LIMIT, 51, DEFAULT_PRODUCT_LIST_LIMIT)
     )
-    return render_to_response(request, template, context)
+    return render(request, template, context)
 
 @domain_admin_required # TODO: will probably want less restrictive permission
 def product_fetch(request, domain):
@@ -87,7 +89,7 @@ def product_edit(request, domain, prod_id=None):
     }
 
     template="commtrack/manage/product.html"
-    return render_to_response(request, template, context)
+    return render(request, template, context)
 
 @require_superuser
 def bootstrap(request, domain):

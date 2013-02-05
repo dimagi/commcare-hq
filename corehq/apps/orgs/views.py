@@ -4,23 +4,25 @@ from django.core.urlresolvers import reverse
 from django.db import transaction
 from django.http import HttpResponse, HttpResponseRedirect, Http404, HttpResponseForbidden
 from django.views.decorators.http import require_POST
+from django.shortcuts import render
+from django.contrib import messages
+
 from corehq.apps.domain.decorators import require_superuser
 from corehq.apps.hqwebapp.utils import InvitationView
 from corehq.apps.orgs.decorators import org_admin_required, org_member_required
 from corehq.apps.registration.forms import DomainRegistrationForm
 from corehq.apps.orgs.forms import AddProjectForm, InviteMemberForm, AddTeamForm, UpdateOrgInfo
 from corehq.apps.users.models import WebUser, UserRole
-from dimagi.utils.web import render_to_response, json_response
+from dimagi.utils.web import json_response
 from corehq.apps.orgs.models import Organization, Team, DeleteTeamRecord, OrgInvitation
 from corehq.apps.domain.models import Domain
-from django.contrib import messages
 
 
 @require_superuser
 def orgs_base(request, template="orgs/orgs_base.html"):
     organizations = Organization.get_all()
     vals = dict(orgs = organizations)
-    return render_to_response(request, template, vals)
+    return render(request, template, vals)
 
 @org_member_required
 def orgs_landing(request, org, template="orgs/orgs_landing.html", form=None, add_form=None, invite_member_form=None,
@@ -51,7 +53,7 @@ def orgs_landing(request, org, template="orgs/orgs_landing.html", form=None, add
                 update_form_empty=update_form_empty, invite_member_form=invite_member_form,
                 invite_member_form_empty=invite_member_form_empty, add_team_form=add_team_form,
                 add_team_form_empty=add_team_form_empty, teams=current_teams, members=members, admin=admin)
-    return render_to_response(request, template, vals)
+    return render(request, template, vals)
 
 @require_superuser
 def get_data(request, org):
@@ -182,7 +184,7 @@ def orgs_teams(request, org, template="orgs/orgs_teams.html"):
     teams = Team.get_by_org(org)
     current_domains = Domain.get_by_organization(org)
     vals = dict(org=organization, teams=teams, domains=current_domains)
-    return render_to_response(request, template, vals)
+    return render(request, template, vals)
 
 @org_member_required
 def orgs_team_members(request, org, team_id, template="orgs/orgs_team_members.html"):
@@ -215,7 +217,7 @@ def orgs_team_members(request, org, team_id, template="orgs/orgs_team_members.ht
 
     vals = dict(org=organization, team=team, teams=teams, members=members, nonmembers=non_members,
         domains=current_domains, team_domains=domains, team_nondomains=non_domains, admin=admin)
-    return render_to_response(request, template, vals)
+    return render(request, template, vals)
 
 @org_admin_required
 @require_POST

@@ -1,10 +1,11 @@
 from couchdbkit import ResourceNotFound
 from django.http import HttpResponseBadRequest, HttpResponse, Http404
 from django.views.decorators.http import require_GET
+from django.shortcuts import render
+
 from corehq.apps.api.models import require_api_user
 from corehq.apps.builds.models import CommCareBuild
 from corehq.apps.domain.decorators import require_superuser
-from dimagi.utils.web import render_to_response
 
 @require_api_user
 def post(request):
@@ -41,4 +42,4 @@ def get(request, version, build_number, path):
 @require_superuser
 def get_all(request):
     builds = sorted(CommCareBuild.all_builds(), key=lambda build: build.time)
-    return render_to_response(request, 'builds/all.html', {'builds': builds})
+    return render(request, 'builds/all.html', {'builds': builds})

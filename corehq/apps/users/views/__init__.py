@@ -12,12 +12,13 @@ from django.contrib.auth.models import User
 from django.core.urlresolvers import reverse
 from django.db import transaction
 from django.http import Http404, HttpResponseRedirect, HttpResponse, HttpResponseForbidden
+from django.shortcuts import render
 from django.template.loader import render_to_string
 from django.views.decorators.http import require_POST
 from django.contrib import messages
 from django_digest.decorators import httpdigest
 
-from dimagi.utils.web import render_to_response, json_response, get_ip
+from dimagi.utils.web import json_response, get_ip
 
 from corehq.apps.registration.forms import AdminInvitesUserForm
 from corehq.apps.prescriptions.models import Prescription
@@ -114,7 +115,7 @@ def web_users(request, domain, template="users/web_users.html"):
         'report_list': get_possible_reports(domain),
         'invitations': invitations
     })
-    return render_to_response(request, template, context)
+    return render(request, template, context)
 
 @require_can_edit_web_users
 @require_POST
@@ -206,7 +207,7 @@ def invite_web_user(request, domain, template="users/invite_web_user.html"):
     context.update(
         registration_form=form
     )
-    return render_to_response(request, template, context)
+    return render(request, template, context)
 
 @require_permission_to_edit_user
 def account(request, domain, couch_user_id, template="users/account.html"):
@@ -228,7 +229,7 @@ def account(request, domain, couch_user_id, template="users/account.html"):
 
     if couch_user.is_deleted():
         if couch_user.is_commcare_user():
-            return render_to_response(request, 'users/deleted_account.html', context)
+            return render(request, 'users/deleted_account.html', context)
         else:
             raise Http404
 
@@ -284,7 +285,7 @@ def account(request, domain, couch_user_id, template="users/account.html"):
 
     # for basic tab
     context.update(_handle_user_form(request, domain, couch_user))
-    return render_to_response(request, template, context)
+    return render(request, template, context)
 
 
 
@@ -361,7 +362,7 @@ def domain_accounts(request, domain, couch_user_id, template="users/domain_accou
         couch_user.save()
         messages.success(request,'Domain added')
     context.update({"user": request.user})
-    return render_to_response(request, template, context)
+    return render(request, template, context)
 
 @require_POST
 @require_superuser
@@ -421,7 +422,7 @@ def change_my_password(request, domain, template="users/change_my_password.html"
     context.update({
         'form': form,
     })
-    return render_to_response(request, template, context)
+    return render(request, template, context)
 
 
 def _handle_user_form(request, domain, couch_user=None):
@@ -530,7 +531,7 @@ def user_domain_transfer(request, domain, prescription, template="users/domain_t
             'commcare_users': users,
             'target_domain': target_domain
         })
-        return render_to_response(request, template, context)
+        return render(request, template, context)
 
 @require_superuser
 def audit_logs(request, domain):

@@ -8,7 +8,7 @@ from corehq.apps import receiverwrapper
 from django.core.urlresolvers import reverse
 from django.http import HttpResponseRedirect, HttpResponse, Http404
 
-from django.shortcuts import redirect
+from django.shortcuts import redirect, render
 
 from corehq.apps.domain.decorators import login_required_late_eval_of_LOGIN_URL, domain_admin_required
 from corehq.apps.domain.forms import DomainGlobalSettingsForm,\
@@ -17,7 +17,7 @@ from corehq.apps.domain.models import Domain, LICENSES
 from corehq.apps.domain.utils import get_domained_url, normalize_domain_name
 from dimagi.utils.django.email import send_HTML_email
 
-from dimagi.utils.web import render_to_response, get_ip
+from dimagi.utils.web import get_ip
 from corehq.apps.users.views import require_can_edit_web_users
 from corehq.apps.receiverwrapper.forms import FormRepeaterForm
 from corehq.apps.receiverwrapper.models import FormRepeater, CaseRepeater, ShortFormRepeater
@@ -39,7 +39,7 @@ def select(request, domain_select_template='domain/select.html'):
     if not domains_for_user:
         return redirect('registration_domain')
 
-    return render_to_response(request, domain_select_template, {})
+    return render(request, domain_select_template, {})
 
 
 @require_can_edit_web_users
@@ -47,7 +47,7 @@ def domain_forwarding(request, domain):
     form_repeaters = FormRepeater.by_domain(domain)
     case_repeaters = CaseRepeater.by_domain(domain)
     short_form_repeaters = ShortFormRepeater.by_domain(domain)
-    return render_to_response(request, "domain/admin/domain_forwarding.html", {
+    return render(request, "domain/admin/domain_forwarding.html", {
         "domain": domain,
         "repeaters": (
             ("FormRepeater", form_repeaters),
@@ -108,7 +108,7 @@ def add_repeater(request, domain, repeater_type):
             return HttpResponseRedirect(reverse("corehq.apps.domain.views.domain_forwarding", args=[domain]))
     else:
         form = FormRepeaterForm()
-    return render_to_response(request, "domain/admin/add_form_repeater.html", {
+    return render(request, "domain/admin/add_form_repeater.html", {
         "domain": domain,
         "form": form,
         "repeater_type": repeater_type,
@@ -192,7 +192,7 @@ def project_settings(request, domain, template="domain/admin/project_settings.ht
         billing_info_form = None
         billing_info_partial = None
 
-    return render_to_response(request, template, dict(
+    return render(request, template, dict(
         domain=domain.name,
         form=form,
         deployment_form=deployment_form,
@@ -217,7 +217,7 @@ def autocomplete_fields(request, field):
 def snapshot_settings(request, domain):
     domain = Domain.get_by_name(domain)
     snapshots = domain.snapshots()
-    return render_to_response(request, 'domain/snapshot_settings.html',
+    return render(request, 'domain/snapshot_settings.html',
                 {"project": domain, 'domain': domain.name, 'snapshots': list(snapshots), 'published_snapshot': domain.published_snapshot()})
 
 @domain_admin_required
@@ -271,7 +271,7 @@ def create_snapshot(request, domain):
                 }, prefix=app.id)))
             else:
                 app_forms.append((app, SnapshotApplicationForm(initial={'publish': (published_snapshot is None or published_snapshot == domain)}, prefix=app.id)))
-        return render_to_response(request, 'domain/create_snapshot.html',
+        return render(request, 'domain/create_snapshot.html',
             {'domain': domain.name,
              'form': form,
              #'latest_applications': latest_applications,
@@ -288,7 +288,7 @@ def create_snapshot(request, domain):
             publishing_apps = publishing_apps or request.POST.get("%s-publish" % app.id, False)
         if not publishing_apps:
             messages.error(request, "Cannot publish a project without applications to CommCare Exchange")
-            return render_to_response(request, 'domain/create_snapshot.html',
+            return render(request, 'domain/create_snapshot.html',
                 {'domain': domain.name,
                  'form': form,
                  'app_forms': app_forms,
@@ -297,7 +297,7 @@ def create_snapshot(request, domain):
         current_user = request.couch_user
         if not current_user.is_eula_signed():
             messages.error(request, 'You must agree to our eula to publish a project to Exchange')
-            return render_to_response(request, 'domain/create_snapshot.html',
+            return render(request, 'domain/create_snapshot.html',
                 {'domain': domain.name,
                  'form': form,
                  'app_forms': app_forms,
@@ -305,7 +305,7 @@ def create_snapshot(request, domain):
 
         if not form.is_valid():
             messages.error(request, _("There are some problems with your form. Please address these issues and try again."))
-            return render_to_response(request, 'domain/create_snapshot.html',
+            return render(request, 'domain/create_snapshot.html',
                     {'domain': domain.name,
                      'form': form,
                      #'latest_applications': latest_applications,
@@ -387,7 +387,7 @@ def create_snapshot(request, domain):
                 application.delete()
 
         if new_domain is None:
-            return render_to_response(request, 'domain/snapshot_settings.html',
+            return render(request, 'domain/snapshot_settings.html',
                     {'domain': domain.name,
                      'form': form,
                      #'latest_applications': latest_applications,
@@ -468,7 +468,7 @@ def manage_multimedia(request, domain):
             m_file.save()
         messages.success(request, "Multimedia updated successfully!")
 
-    return render_to_response(request, 'domain/admin/media_manager.html', {'domain': domain,
+    return render(request, 'domain/admin/media_manager.html', {'domain': domain,
         'media': [{
             'license': m.license.type if m.license else 'public',
             'shared': domain in m.shared_by,
@@ -484,7 +484,7 @@ def manage_multimedia(request, domain):
 def commtrack_settings(request, domain):
     domain = Domain.get_by_name(domain)
 
-    return render_to_response(request, 'domain/admin/commtrack_settings.html', dict(
+    return render(request, 'domain/admin/commtrack_settings.html', dict(
             domain=domain.name,
             #form=form,
         ))
