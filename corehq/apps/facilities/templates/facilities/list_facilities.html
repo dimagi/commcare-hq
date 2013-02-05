@@ -1,0 +1,74 @@
+{% extends 'facilities/base.html' %}
+{% load i18n %}
+
+{% block main_column %}
+    <h2>
+    {% if registry %}
+        {% url view_or_update_registry registry.get_id as registry_url %}
+        {% blocktrans with registry.name as registry_name %}
+        Facilities from <a href="{{ registry_url }}">{{ registry_name }}</a>
+        {% endblocktrans %}
+    {% else %}
+        {% trans 'All Facilities' %}
+    {% endif %}
+
+    </h2>
+
+    <table class="table table-striped table-bordered">
+        <thead>
+            <tr>
+                <th>{% trans 'Name' %}</th>
+                <th>{% trans 'Coordinates ' %}</th>
+                <th>{% trans 'Identifiers' %}</th>
+                <th>{% trans 'Properties' %}</th>
+                <th>{% trans 'Active' %}</th>
+
+                <th>{% trans 'Remote updated at' %}</th>
+                <th>{% trans 'Remote created at' %}</th>
+                <th>{% trans 'Last local edit/sync' %}</th>
+
+                {% if not registry %}
+                <th>Registry<th>
+                {% endif %}
+
+            </tr>
+        </thead>
+        {% for facility in facilities %}
+        <tr>
+
+            {% with f=facility.data %}
+            <td>
+                <a href="{{ f.url }}">{{ f.name }}</a>
+                (<a href="{% url view_or_update_facility facility.get_id %}">{% trans 'edit' %}</a>)
+            </td>
+            <td>{{ f.coordinates }}</td>
+            <td>
+                <ul>
+                    {% for id in f.identifiers %}
+                    <li>
+                        {% trans 'agency' %}:{{ id.agency }},
+                        {% trans 'id' %}:{{ id.id }},
+                        {% trans 'context' %}:{{ id.context }}
+                    </li>
+                    {% endfor %}
+                </ul>
+            </td>
+            <td>{{ f.properties }}</td>
+            <td>{{ f.active }}</td>
+            <td>{{ f.updatedAt }}</td>
+            <td>{{ f.createdAt }}</td>
+            {% endwith %}
+
+            <td>
+                <span class="{% if facility.synced_at == facility.sync_attempted_at %}text-success{% else %}text-success{% endif %}">
+                    {{ facility.sync_attempted_at }}
+                </span>
+            </td>
+            
+            {% if not registry %}
+            <td>{{ facility.registry_id }}</td>
+            {% endif %}
+        </tr>
+        {% endfor %}
+    </table>
+{% endblock %}
