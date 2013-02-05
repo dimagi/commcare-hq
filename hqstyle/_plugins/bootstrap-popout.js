@@ -66,7 +66,7 @@
 
                 switch (inside ? placement.split(' ')[1] : placement) {
                     case 'bottom':
-                        tp = {top: pos.top + actualHeight - pos.height*1.5, left: pos.left + pos.width / 2 - actualWidth / 2}
+                        tp = {top: pos.top + pos.height, left: pos.left + pos.width / 2 - actualWidth / 2}
                         break
                     case 'top':
                         // broken
