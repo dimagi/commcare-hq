@@ -1525,7 +1525,7 @@ class WebUser(CouchUser, MultiMembershipMixin, OrgMembershipMixin):
             return False
 
     @memoized
-    def get_role(self, domain=None):
+    def get_role(self, domain=None, include_teams=True):
         """
         Get the role object for this user
 
@@ -1537,6 +1537,9 @@ class WebUser(CouchUser, MultiMembershipMixin, OrgMembershipMixin):
 
         if self.is_global_admin():
             return AdminUserRole(domain=domain)
+
+        if not include_teams:
+            return super(WebUser, self).get_role(domain)
 
         dm_list = list()
 
