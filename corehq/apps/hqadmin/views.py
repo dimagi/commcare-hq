@@ -8,7 +8,7 @@ import rawes
 from casexml.apps.case.models import CommCareCase
 from corehq.apps.builds.models import CommCareBuildConfig, BuildSpec
 from corehq.apps.domain.models import Domain
-from corehq.apps.hqadmin.escheck import check_cluster_health, check_case_index
+from corehq.apps.hqadmin.escheck import check_cluster_health, check_case_index, check_xform_index, check_exchange_index
 from corehq.apps.reports.datatables import DataTablesColumn, DataTablesHeader, DTSortType
 from corehq.apps.reports.util import make_form_couch_key
 from corehq.apps.sms.models import SMSLog
@@ -284,7 +284,10 @@ def _cacheable_domain_activity_report(request):
 
         for form in forms:
             user_id = form.get('user_id')
-            time = string_to_datetime(form['submission_time']).replace(tzinfo = None)
+            try:
+                time = string_to_datetime(form['submission_time']).replace(tzinfo = None)
+            except ValueError:
+                continue
             if user_id in domain['users']:
                 for i, date in enumerate(dates):
                     if time > date:
@@ -688,6 +691,8 @@ def system_info(request):
     #node status
     context.update(check_cluster_health())
     context.update(check_case_index())
+    context.update(check_xform_index())
+    context.update(check_exchange_index())
 
     return render_to_response(request, "hqadmin/system_info.html", context)
 

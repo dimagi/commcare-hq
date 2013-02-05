@@ -14,7 +14,7 @@ from couchexport.models import Format
 from couchexport.writers import Excel2007ExportWriter
 from dimagi.utils.couch.database import get_db
 from dimagi.utils.couch.resource_conflict import retry_resource
-from django.utils import simplejson
+from django.utils import simplejson, html
 from django.utils.http import urlencode as django_urlencode
 import os
 import re
@@ -300,11 +300,21 @@ def get_form_view_context(request, form, langs, is_user_registration, messages=m
         except AppError as e:
             messages.error(request, "Error in application: %s" % e)
         except XFormValidationError as e:
-            message = unicode(e)
             # Don't display the first two lines which say "Parsing form..." and 'Title: "{form_name}"'
-            messages.error(request, "Validation Error:\n")
-            for msg in message.split("\n")[2:]:
-                messages.error(request, "%s" % msg)
+            # ... and if possible split the third line that looks like e.g. "org.javarosa.xform.parse.XFormParseException: Select question has no choices"
+            # and just return the undecorated string
+            message_lines = unicode(e).split('\n')[2:]
+            if len(message_lines) > 0 and ':' in message_lines[0]:
+                message = ' '.join(message_lines[0].split(':')[1:])
+            else:
+                message = '\n'.join(message_lines)
+                
+            message = "Validation Error: " + message
+
+            messages.error(request,
+                html.escape(message).replace('\n', '<br/>'),
+                extra_tags='html',
+            )
         except XFormError as e:
             messages.error(request, "Error in form: %s" % e)
         # any other kind of error should fail hard, but for now there are too many for that to be practical
@@ -447,16 +457,11 @@ def release_manager(request, domain, app_id, template='app_manager/releases.html
         'users_cannot_share': users_cannot_share,
     })
     if not app.is_remote_app():
-        sorted_images, sorted_audio, has_error = utils.get_sorted_multimedia_refs(app)
-        multimedia_images, missing_image_refs = app.get_template_map(sorted_images)
-        multimedia_audio, missing_audio_refs = app.get_template_map(sorted_audio)
-        if len(multimedia_images) > 0 or len(multimedia_audio) > 0 or has_error:
-            context.update(dict(multimedia={
-                'missing_image_refs': missing_image_refs,
-                'missing_audio_refs': missing_audio_refs,
-                'errors': has_error,
-                'notice': bool(has_error or missing_image_refs > 0  or missing_audio_refs > 0)
-            }))
+        # Multimedia is not supported for remote applications at this time.
+        multimedia = app.get_media_references()
+        context.update({
+            'multimedia': multimedia,
+        })
     response = render_to_response(request, template, context)
     response.set_cookie('lang', _encode_if_unicode(context['lang']))
     return response
@@ -579,27 +584,20 @@ def view_generic(req, domain, app_id=None, module_id=None, form_id=None, is_user
 
     if app and app.get_doc_type() == 'Application':
         try:
-            images, audio, has_error = utils.get_multimedia_filenames(app)
+            multimedia = app.get_media_references()
         except ProcessTimedOut as e:
             notify_exception(req)
             messages.warning(req,
                 "We were unable to check if your forms had errors. "
                 "Refresh the page and we will try again."
             )
-            images, audio, has_error = [], [], True
-            multimedia_images, missing_image_refs = [], 0
-            multimedia_audio, missing_audio_refs = [], 0
-        else:
-            multimedia_images, missing_image_refs = app.get_template_map(images, req=req)
-            multimedia_audio, missing_audio_refs = app.get_template_map(audio, req=req)
-        context.update({
-            'missing_image_refs': missing_image_refs,
-            'missing_audio_refs': missing_audio_refs,
-            'multimedia': {
-                'images': multimedia_images,
-                'audio': multimedia_audio,
-                'has_error': has_error
+            multimedia = {
+                'references': {},
+                'form_errors': True,
+                'missing_refs': False,
             }
+        context.update({
+            'multimedia': multimedia,
         })
 
     if form:
@@ -1197,76 +1195,6 @@ def multimedia_list_download(req, domain, app_id):
     set_file_download(response, 'list.txt')
     response.write("\n".join(sorted(set(filelist))))
     return response
-
-@require_can_edit_apps
-def multimedia_upload(request, domain, kind, app_id):
-    app = get_app(domain, app_id)
-    if request.method == 'POST':
-        request.upload_handlers.insert(0, upload.HQMediaFileUploadHandler(request, domain))
-        cache_handler = upload.HQMediaUploadCacheHandler.handler_from_request(request, domain)
-        response_errors = {}
-        try:
-            if kind == 'zip':
-                form = HQMediaZipUploadForm(data=request.POST, files=request.FILES)
-            elif kind == 'file':
-                form = HQMediaFileUploadForm(data=request.POST, files=request.FILES)
-            else:
-                return Http404()
-            if form.is_valid():
-                extra_data = form.save(domain, app, request.user.username, cache_handler)
-                if cache_handler:
-                    cache_handler.delete()
-                if extra_data:
-                    completion_cache = upload.HQMediaUploadSuccessCacheHandler.handler_from_request(request, domain)
-                    if kind=='zip' and completion_cache:
-                        completion_cache.data = extra_data
-                        completion_cache.save()
-                    elif kind=='file' and completion_cache:
-                        completion_cache.data = extra_data
-                        completion_cache.save()
-                return HttpResponse(simplejson.dumps(extra_data))
-            else:
-                response_errors = form.errors
-        except TypeError:
-            pass
-        if response_errors:
-            cache_handler.defaults()
-            cache_handler.data['error_list'] = response_errors
-            cache_handler.save()
-        return HttpResponse(simplejson.dumps(response_errors))
-
-    form = HQMediaZipUploadForm()
-    progress_id = uuid.uuid4()
-
-    return render_to_response(request, "hqmedia/upload_zip.html",
-            {"domain": domain,
-             "app": app,
-             "zipform": form,
-             "progress_id": progress_id,
-             "progress_id_varname": upload.HQMediaCacheHandler.X_PROGRESS_ID})
-
-@require_can_edit_apps
-def multimedia_map(request, domain, app_id):
-    app = get_app(domain, app_id)
-    sorted_images, sorted_audio, has_error = utils.get_sorted_multimedia_refs(app)
-
-    images, missing_image_refs = app.get_template_map(sorted_images, domain)
-    audio, missing_audio_refs = app.get_template_map(sorted_audio, domain)
-
-    fileform = HQMediaFileUploadForm()
-
-    return render_to_response(request, "hqmedia/multimedia_map.html",
-                              {"domain": domain,
-                               "app": app,
-                               "multimedia": {
-                                   "images": images,
-                                   "audio": audio,
-                                   "has_error": has_error
-                               },
-                               "fileform": fileform,
-                               "progress_id_varname": upload.HQMediaCacheHandler.X_PROGRESS_ID,
-                               "missing_image_refs": missing_image_refs,
-                               "missing_audio_refs": missing_audio_refs})
 
 @require_GET
 @login_and_domain_required
