@@ -160,9 +160,9 @@ def delete_facility(request, id):
     registry_id = facility.registry_id
     try:
         facility.delete()
+        messages.success(request, "Facility successfully deleted!")
     except Exception:
         messages.error(request, "Error deleting facility!")
         notify_exception(request, "Error deleting facility {0}".format(id))
 
-    messages.success(request, "Facility successfully deleted!")
     return HttpResponseRedirect(reverse(list_facilities, args=(registry_id,)))
