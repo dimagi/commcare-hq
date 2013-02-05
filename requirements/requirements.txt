@@ -44,5 +44,5 @@ numpy==1.6.2
 socketpool==0.5.2
 markdown==2.2.1
 
--e git://github.com/dimagi/freddy.git@a9408f22b6adb57e03dcbdade1105828c7d28f5d#egg=freddy
+-e git://github.com/dimagi/freddy.git@eff1f8d23942cb0a4544ecd70ddba7fdeb63d941#egg=freddy
 
