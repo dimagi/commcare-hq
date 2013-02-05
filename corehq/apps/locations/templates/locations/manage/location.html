@@ -12,6 +12,7 @@
     <script type="text/javascript">
 
 var LOAD_LOCS_URL = '{{ api_root }}';
+var loc_id = {{ location.get_id|JSON }};
 
     </script>
 {% endblock %}
@@ -53,6 +54,16 @@ $(function() {
         });
     });
 
+  $('#loc_form').submit(function() {
+      if (loc_id != null && model.selected_locid() != model.orig_parent_id) {
+        $('#reparenting').modal();
+        return false;
+      }
+    });
+  $('#move_confirm').click(function() {
+      document.forms['loc_form'].submit();  // jquery method of submitting doesn't work
+    });
+
   ko.applyBindings(model, $('#loc_form')[0]);
 
 });
@@ -77,4 +88,22 @@ $(function() {
 
 {% block modals %}{{ block.super }}
     
+<div id="reparenting" class="modal hide fade">
+  <div class="modal-header">
+    <a class="close" data-dismiss="modal">&times;</a>
+    <h3>Move Location?</h3>
+  </div>
+  <form class="form form-horizontal hq-form" name="verify_move_location" action="" method="post">
+    <div class="modal-body">
+      <p>You've changed this location's parent.</p>
+      <p>If you move this location, all the data submitted for this location must be updated as well. This will take some time. Reports will not show the correct figures for this location until this process is complete.</p>
+    </div>
+    <div class="modal-footer">
+      <a href="#" data-dismiss="modal" class="btn">Cancel</a>
+      <button id="move_confirm" type="submit" class="btn btn-primary">Move</button>
+    </div>
+  </form>
+</div>
+
 {% endblock %}
+

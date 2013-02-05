@@ -38,6 +38,8 @@ class LocationForm(forms.Form):
         
         # custom properties
         self.sub_forms = {}
+        # TODO think i need to change this to iterate over all types, since the parent
+        # can be changed dynamically
         for potential_type in allowed_child_types(self.location.domain, self.location.parent):
             subform = LocationCustomPropertiesSubForm(self.location, potential_type, bound_data)
             if subform.fields:
@@ -54,15 +56,21 @@ class LocationForm(forms.Form):
         parent_id = self.cleaned_data['parent_id']
         if not parent_id:
             parent_id = None # normalize ''
+        parent = Location.get(parent_id) if parent_id else None
+        self.cleaned_data['parent'] = parent
 
         if self.location._id is not None and self.cur_parent_id != parent_id:
-            raise forms.ValidationError('Sorry, you cannot move locations around yet!')
-        # TODO:
-        # * allow moving of existing locs (requires background task to update
-        #   loc path properties in all descendants and linked docs
-        # * sanity check for re-parentage to self or descendant
+            # location is being re-parented
 
-        self.cleaned_data['parent'] = Location.get(parent_id) if parent_id else None
+            # should not happen in normal usage
+            if parent and self.location._id in parent.path:
+                raise forms.ValidationError('error: location being re-parented to self or descendant')
+
+            if self.location.descendants:
+                raise forms.ValidationError('only locations that have no sub-locations can be moved to a different parent')
+
+            self.cleaned_data['reparented'] = True
+
         return parent_id
 
     def clean_name(self):
@@ -89,10 +97,11 @@ class LocationForm(forms.Form):
     def clean(self):
         super(LocationForm, self).clean()
 
-        subform = self.sub_forms[self.cleaned_data['location_type']]
-        if not subform.is_valid():
-            raise forms.ValidationError('Error in location properties')
-        self.cleaned_data.update(('prop:%s' % k, v) for k, v in subform.cleaned_data.iteritems())
+        subform = self.sub_forms.get(self.cleaned_data.get('location_type'))
+        if subform:
+            if not subform.is_valid():
+                raise forms.ValidationError('Error in location properties')
+            self.cleaned_data.update(('prop:%s' % k, v) for k, v in subform.cleaned_data.iteritems())
 
         return self.cleaned_data
 
@@ -113,6 +122,11 @@ class LocationForm(forms.Form):
 
         if commit:
             location.save()
+
+        if self.cleaned_data.get('reparented'):
+            print 'reparenting...'
+            # todo add logic here
+            pass
 
         return location
 
