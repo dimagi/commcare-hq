@@ -159,14 +159,8 @@
                         <dt>{% trans 'Phone model' %}</dt>
                         <dd>{{ app.phone_model }}</dd>
                     {% endif %}
-                    {% if app.short_description %}
-                        <dt>{% trans 'Short Description' %}</dt>
-                        <dd>
-                            {{ app.short_description }}
-                        </dd>
-                    {% endif %}
                     {% if app.description %}
-                        <dt>{% trans 'Long Description' %}</dt>
+                        <dt>{% trans 'Description' %}</dt>
                         <dd>
                             {{ app.description }}
                         </dd>

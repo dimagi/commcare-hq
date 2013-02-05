@@ -159,17 +159,30 @@
                             {% endif %}
                         </dd>
                     <dt>Case Index</dt>
-                        <dd>{% if case_status %}
+                        <dd>{% if hqcases_status %}
                             <span class="label label-success">OK</span>
                             {% else %}
-                            <span class="label label-important">Error</span>
+                            <span class="label label-important">Bad</span>
                             {% endif %}
-                            {{ case_message }}
+                            {{ hqcases_message }}
                         </dd>
                     <dt>XForm Index</dt>
-                        <dd>TODO</dd>
+                        <dd>{% if xforms_status %}
+                            <span class="label label-success">OK</span>
+                            {% else %}
+                            <span class="label label-important">Bad</span>
+                            {% endif %}
+                            {{ xforms_message }}
+                        </dd>
+
                     <dt>Exchange</dt>
-                        <dd>TODO</dd>
+                        <dd>{% if cc_exchange_status %}
+                            <span class="label label-success">OK</span>
+                            {% else %}
+                            <span class="label label-important">Bad</span>
+                            {% endif %}
+                            {{ cc_exchange_message }}
+                        </dd>
                     </dl>
                 </td>
             </tr>
