@@ -1,6 +1,7 @@
 from datetime import datetime, date, timedelta
-from dimagi.utils.web import render_to_response
 from django.http import HttpResponse
+from django.shortcuts import render
+
 from dimagi.utils.couch.database import get_db
 import logging
 import itertools
@@ -65,7 +66,7 @@ def devices(request, domain, template='phonelog/devicelist.html', context=None):
     context = context or {}
     entries = overview_list(get_db(), domain)
     context.update({'entries': entries, 'domain': domain, 'is_tabular': True})
-    return render_to_response(request, template, context)
+    return render(request, template, context)
 
 @login_and_domain_required
 def device_log(request, domain, device, template='phonelog/devicelogs.html', context=None):
@@ -222,7 +223,7 @@ def device_log(request, domain, device, template='phonelog/devicelogs.html', con
         'is_tabular': True
     })
 
-    return render_to_response(request, template, context)
+    return render(request, template, context)
 
 @login_and_domain_required
 def device_log_raw(request, domain, device, template='phonelog/devicelogs_raw.html', 
@@ -239,7 +240,7 @@ def device_log_raw(request, domain, device, template='phonelog/devicelogs_raw.ht
         "device": device
     })
     
-    return render_to_response(request, template, context)
+    return render(request, template, context)
 
 def parse_isodate(datestr):
     return datetime.strptime(datestr[:19], '%Y-%m-%dT%H:%M:%S')
