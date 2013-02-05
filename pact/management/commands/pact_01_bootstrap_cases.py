@@ -123,6 +123,7 @@ class Command(PactMigrateCommand):
         print "all cases pooled for purge"
         pool.join()
         print "Cases Purged"
+        sys.exit()
 
 
 
@@ -156,6 +157,7 @@ class Command(PactMigrateCommand):
             #            self.process_case(case_json)
             pool.spawn(self.process_case, case_json)
         pool.join()
+        print "Migration completed %s" % datetime.utcnow().isoformat()
 
 
     def get_instanceid_from_xml(self, xmlns, form_root):
@@ -296,13 +298,13 @@ class Command(PactMigrateCommand):
 
 
 
-    def process_xform_from_action(self, case_id, pact_id, action, ix, existing_xform_ids):
+    def process_xform_from_action(self, case_id, pact_id, action, ix, existing_xform_ids, total_remote):
         """
         Get xform from server and process it with new userid and submit it to hq
         """
 
         if action['xform_id'] in existing_xform_ids:
-#                print "\t[%s] %s/%s (%d/%d) :: skipped" % ( pactid, case_id, action['xform_id'], ix, len(remote_case_json['actions']))
+            print "\t\t[%s] %s/%s (%d/%d) :: skipped" % (pact_id, case_id, action['xform_id'], ix, total_remote)
             return
 
         xform_xml = self.get_url(PACT_URL + "hqmigration/xform/%s/" % action['xform_id'])
@@ -317,7 +319,7 @@ class Command(PactMigrateCommand):
         #sanity check: see if the xform_id is already in the list but also check if there's a divergence
         #maybe do this on the other side?
         doc_id = self.get_instanceid_from_xml(xmlns, xfroot)
-        print "\t[%s] %s/%s (%d/%d)" % (pact_id, case_id, action['xform_id'], ix, len(existing_xform_ids))
+        print "\t[%s] %s/%s (%d/%d)" % (pact_id, case_id, action['xform_id'], ix, total_remote)
         if doc_id in existing_xform_ids:
             print "\twhoa, %s != %s - skipping because already seen" % (action['xform_id'], doc_id)
 
@@ -327,11 +329,9 @@ class Command(PactMigrateCommand):
         self.fix_case_id(case_id, pact_id, action, xmlns, xfroot)
 
         try:
-            #self.submit_xform_rf(action, etree.tostring(xfroot))
-            pass
+            self.submit_xform_rf(action, etree.tostring(xfroot))
         except Exception, ex:
             print "\t\tError: %s: %s" % (action['xform_id'], ex)
-            #        print "Form %s submitted" % action['xform_id']
 
     def process_case(self, remote_case_json):
         print "############## Starting Case %s ##################" % remote_case_json['_id']
@@ -360,12 +360,12 @@ class Command(PactMigrateCommand):
             new_block = base_create_block(pactid, case_id, user_id, name, case_type, owner_id, primary_hp, remote_case_json['demographics'])
             opened_date = datetime.strptime(remote_case_json['opened_on'], '%Y-%m-%dT%H:%M:%SZ')
             res = self.submit_case_create_block(opened_date, new_block)
-            existing_xform_ids = existing_xform_ids
+            #existing_xform_ids = remote_xform_ids
             print "\tRegenerated case"
 
 #            existing_xform_ids = local_case.xform_ids
         for ix, action in enumerate(remote_case_json['actions']):
-            self.process_xform_from_action(case_id, pactid, action, ix, existing_xform_ids)
+            self.process_xform_from_action(case_id, pactid, action, ix, existing_xform_ids, len(remote_xform_ids))
 
         #todo: verify actions on migrated case
         print "########### Case %s completed ###################" % remote_case_json['_id']
