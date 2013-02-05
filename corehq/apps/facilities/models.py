@@ -153,7 +153,7 @@ class Facility(Document):
         extended_properties = core_properties.pop('properties', {})
 
         return freddy.Facility(
-            is_new=not self.synced_at, registry=self.registry.remote_registry,
+            new=not self.synced_at, registry=self.registry.remote_registry,
             properties=extended_properties, **core_properties)
 
     def delete(self, delete_remote=False, *args, **kwargs):
