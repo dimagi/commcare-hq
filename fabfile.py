@@ -406,7 +406,10 @@ def update_code(preindex=False):
 
 @roles('pg', 'django_monolith')
 def mail_admins(subject, message):
-    sudo('%(virtualenv_root)s/bin/python manage.py mail_admins --subject "%s" "%s"' % (env, subject, message), user=env.sudo_user)
+    sudo('%(virtualenv_root)s/bin/python manage.py mail_admins --subject "%(subject)s" "%(message)s"' % {'virtualenv_root': env,
+                                                                                                         'subject':subject,
+                                                                                                         'message':message }, 
+         user=env.sudo_user)
 
 @task
 def deploy():
