@@ -4,10 +4,11 @@ try:
     from .test_bugs import *
     from .test_exclusion import *
     from .test_from_xform import *
+    from .test_indexes import *
     from .test_multi_case_submits import *
     from .test_ota_restore import *
+    from .test_rebuild import *
     from .test_v2_parsing import *
-    from .test_indexes import *
 except ImportError, e:
     # for some reason the test harness squashes these so log them here for clarity
     # otherwise debugging is a pain

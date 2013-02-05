@@ -410,7 +410,7 @@ class CommCareCase(CaseBase, IndexHoldingMixIn, ComputedDocumentMixin):
                                                                   mod_date,
                                                                   xformdoc,
                                                                   case_update.get_update_action())
-            self.apply_updates(update_action)
+            self._apply_action(update_action)
             self.actions.append(update_action)
         
         if case_update.closes_case():
@@ -418,9 +418,9 @@ class CommCareCase(CaseBase, IndexHoldingMixIn, ComputedDocumentMixin):
                                                                  mod_date, 
                                                                  xformdoc,
                                                                  case_update.get_close_action())
-            self.apply_close(close_action)
+            self._apply_action(close_action)
             self.actions.append(close_action)
-        
+
         if case_update.has_referrals():
             if const.REFERRAL_ACTION_OPEN in case_update.referral_block:
                 referrals = Referral.from_block(mod_date, case_update.referral_block)
@@ -448,11 +448,21 @@ class CommCareCase(CaseBase, IndexHoldingMixIn, ComputedDocumentMixin):
                                                                  xformdoc,
                                                                  case_update.get_index_action())
             self.actions.append(index_action)
-            self.update_indices(index_action.indices)
-        
+            self._apply_action(index_action)
+
         # finally override any explicit properties from the update
         if case_update.user_id:     self.user_id = case_update.user_id
         if case_update.version:     self.version = case_update.version
+
+    def _apply_action(self, action):
+        if action.action_type == const.CASE_ACTION_UPDATE:
+            self.apply_updates(action)
+        elif action.action_type == const.CASE_ACTION_INDEX:
+            self.update_indices(action.indices)
+        elif action.action_type == const.CASE_ACTION_CLOSE:
+            self.apply_close(action)
+        else:
+            raise ValueError("Can't apply action of type %s" % action.action_type)
 
         
     def apply_updates(self, update_action):
@@ -475,6 +485,14 @@ class CommCareCase(CaseBase, IndexHoldingMixIn, ComputedDocumentMixin):
         if not self.closed:
             submission = get_close_case_xml(time=datetime.utcnow(), case_id=self._id)
             spoof_submission(submit_url, submission, name="close.xml")
+
+    def rebuild(self):
+        """
+        Rebuilds the case state from its actions
+        """
+        assert self.actions[0].action_type == const.CASE_ACTION_CREATE
+        for i in range(1, len(self.actions)):
+            self._apply_action(self.actions[i])
 
     def force_close_referral(self, submit_url, referral):
         if not referral.closed:
