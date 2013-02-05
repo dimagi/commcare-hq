@@ -158,6 +158,7 @@ class ComplexCaseReminderForm(Form):
     """
     A form used to create/edit CaseReminderHandlers with any type of schedule.
     """
+    active = BooleanField(required=False)
     nickname = CharField(error_messages={"required":"Please enter the name of this reminder definition."})
     start_condition_type = CharField()
     case_type = CharField(required=False)

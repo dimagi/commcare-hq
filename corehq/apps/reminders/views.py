@@ -164,6 +164,7 @@ def add_complex_reminder_schedule(request, domain, handler_id=None):
                 if h.start_condition_type != form.cleaned_data["start_condition_type"]:
                     for reminder in h.get_reminders():
                         reminder.retire()
+            h.active = form.cleaned_data["active"]
             h.case_type = form.cleaned_data["case_type"]
             h.nickname = form.cleaned_data["nickname"]
             h.default_lang = form.cleaned_data["default_lang"]
@@ -196,6 +197,7 @@ def add_complex_reminder_schedule(request, domain, handler_id=None):
     else:
         if h is not None:
             initial = {
+                "active"                : h.active,
                 "case_type"             : h.case_type,
                 "nickname"              : h.nickname,
                 "default_lang"          : h.default_lang,
@@ -226,6 +228,7 @@ def add_complex_reminder_schedule(request, domain, handler_id=None):
                 "events"    : [CaseReminderEvent(day_num=0, fire_time=time(0,0), message={"":""}, callback_timeout_intervals=[], form_unique_id=None)],
                 "use_until" : "N",
                 "max_question_retries" : QUESTION_RETRY_CHOICES[-1],
+                "active" : True,
             }
         
         form = ComplexCaseReminderForm(initial=initial)

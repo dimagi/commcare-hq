@@ -282,6 +282,7 @@ class CaseReminderHandler(Document):
     ui_type         The type of UI to use for editing this CaseReminderHandler (see UI_CHOICES)
     """
     domain = StringProperty()
+    active = BooleanProperty(default=True)
     case_type = StringProperty()
     nickname = StringProperty()
     default_lang = StringProperty()
@@ -640,7 +641,7 @@ class CaseReminderHandler(Document):
         except Exception:
             user = None
         
-        if case.closed or case.type != self.case_type or (self.recipient == RECIPIENT_USER and not user):
+        if not self.active or case.closed or case.type != self.case_type or (self.recipient == RECIPIENT_USER and not user):
             if reminder:
                 reminder.retire()
         else:
@@ -722,11 +723,11 @@ class CaseReminderHandler(Document):
             # TODO: Need to support sending directly to users / cases without case criteria being set
             recipient = None
         
-        if reminder is not None and reminder.start_condition_datetime != self.start_datetime:
+        if reminder is not None and (reminder.start_condition_datetime != self.start_datetime or not self.active):
             reminder.retire()
             reminder = None
         
-        if reminder is None:
+        if reminder is None and self.active:
             reminder = self.spawn_reminder(None, self.start_datetime, recipient)
             reminder.start_condition_datetime = self.start_datetime
             self.set_next_fire(reminder, now) # This will fast-forward to the next event that does not occur in the past
