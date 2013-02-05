@@ -28,7 +28,7 @@ python-dateutil==1.5
 python-magic==0.4.2
 python-memcached==1.47
 pytz==2011b
-requests==0.13.9
+requests==1.1.0
 south==0.7.3
 sorl-thumbnail==11.12
 tropo-webapi-python==0.1.3
@@ -39,7 +39,10 @@ simplejson==2.6.1
 GitPython==0.3.2.RC1
 gitdb==0.5.4
 gevent==0.13.8
-rawes==0.2
+rawes==0.3.6
 numpy==1.6.2
 socketpool==0.5.2
 markdown==2.2.1
+
+-e git://github.com/dimagi/freddy.git@a9408f22b6adb57e03dcbdade1105828c7d28f5d#egg=freddy
+
