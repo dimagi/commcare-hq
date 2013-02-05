@@ -11,6 +11,10 @@ from corehq.apps.sms.models import CallLog, EventLog, MISSED_EXPECTED_CALLBACK
 from django.conf import settings
 from corehq.apps.app_manager.models import Form
 from corehq.apps.ivr.api import initiate_outbound_call
+from datetime import timedelta
+
+DEFAULT_OUTBOUND_RETRY_INTERVAL = 5
+DEFAULT_OUTBOUND_RETRIES = 2
 
 """
 This module defines the methods that will be called from CaseReminderHandler.fire()
@@ -209,8 +213,16 @@ def fire_ivr_survey_event(reminder, handler, recipients, verified_numbers):
             return True
         verified_number = verified_numbers[recipients[0].get_id]
         if verified_number is not None:
-            initiate_outbound_call(verified_number, reminder.current_event.form_unique_id, handler.submit_partial_forms, handler.include_case_side_effects, handler.max_question_retries)
-            return True
+            if initiate_outbound_call(verified_number, reminder.current_event.form_unique_id, handler.submit_partial_forms, handler.include_case_side_effects, handler.max_question_retries):
+                return True
+            else:
+                reminder.error_retry_count += 1
+                if reminder.error_retry_count > getattr(settings, "IVR_OUTBOUND_RETRIES", DEFAULT_OUTBOUND_RETRIES):
+                    return True
+                else:
+                    reminder.next_fire += timedelta(minutes=getattr(settings, "IVR_OUTBOUND_RETRY_INTERVAL", DEFAULT_OUTBOUND_RETRY_INTERVAL))
+                    reminder.save()
+                    return False
         else:
             return False
     else:

@@ -173,6 +173,7 @@ def incoming(phone_number, backend_module, gateway_session_id, ivr_event, input_
     
     return HttpResponse("")
 
+# Returns True if the call was queued successfully, or False if an error occurred.
 def initiate_outbound_call(verified_number, form_unique_id, submit_partial_form, include_case_side_effects, max_question_retries):
     call_log_entry = CallLog(
         couch_recipient_doc_type = verified_number.owner_doc_type,
@@ -192,7 +193,7 @@ def initiate_outbound_call(verified_number, form_unique_id, submit_partial_form,
     module = __import__(backend.outbound_module, fromlist=["initiate_outbound_call"])
     call_log_entry.backend_api = module.API_ID
     call_log_entry.save()
-    module.initiate_outbound_call(call_log_entry, **kwargs)
+    return module.initiate_outbound_call(call_log_entry, **kwargs)
 
 
 

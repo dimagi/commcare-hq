@@ -497,6 +497,7 @@ class CaseReminderHandler(Document):
         case = reminder.case
         recipient = reminder.recipient
         iteration = 0
+        reminder.error_retry_count = 0
         while now >= reminder.next_fire and reminder.active:
             iteration += 1
             # If it is a callback reminder, check the callback_timeout_intervals
@@ -825,6 +826,7 @@ class CaseReminder(Document, LockableMixIn):
     start_condition_datetime = DateTimeProperty()   # The date and time matching the case property specified by the CaseReminderHandler.start_condition
     sample_id = StringProperty()
     xforms_session_ids = ListProperty(StringProperty)
+    error_retry_count = IntegerProperty(default=0)
     
     @property
     def handler(self):
