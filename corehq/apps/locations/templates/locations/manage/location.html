@@ -1,0 +1,80 @@
+{% extends "users/users_base.html" %}
+{% load i18n %}
+{% load hq_shared_tags %}
+{% load hqstyle_tags %}
+
+{% block js %}{{ block.super }}
+    <script src="{% static 'users/js/key_filters.js' %}"></script>
+    <script type="text/javascript" src="{% static 'locations/ko/location_drilldown.async.js' %}"></script>
+{% endblock %}
+
+{% block js-inline %}{{ block.super }}
+    <script type="text/javascript">
+
+var LOAD_LOCS_URL = '{{ api_root }}';
+
+    </script>
+{% endblock %}
+
+{% block subsection-title %}
+  <li>
+    <a href="{% url manage_locations domain %}">Locations</a>
+    <span class="divider">&gt;</span>
+  </li>
+  <li class="active">
+    <a href="#">{% if location.get_id %}{{ location.name }} {{ location.location_type }}{% else %}new location{% endif %}</a>
+  </li>
+{% endblock %}
+
+{% block user-view %}
+<div>
+
+  <!-- can't go in js-inline, because needs to initialize stuff that the field templates reference -->
+  <script>
+$(function() {
+
+  var loc_id = {{ location.get_id|JSON }};
+  model = new LocationSelectViewModel('\u2026', false, function(loc) {
+      return loc.uuid() != loc_id && loc.can_have_children();
+    });
+
+  model.editing = ko.observable(false);
+  model.allowed_child_types = ko.computed(function() {
+      var active_loc = (this.selected_location() || this.root());
+      return (active_loc ? active_loc.allowed_child_types() : []);
+    }, model);
+  model.loc_type = ko.observable();
+  model.loc_type.subscribe(function(val) {
+      var subforms = $('.custom_subform');
+      $.each(subforms, function(i, e) {
+          var $e = $(e);
+          var loc_type = $e.attr('loctype');
+          $e[loc_type == val ? 'show' : 'hide']();
+        });
+    });
+
+  ko.applyBindings(model, $('#loc_form')[0]);
+
+});
+  </script>
+
+  <form id="loc_form" class="form form-horizontal" name="product" method="post">
+    {% bootstrap_form_errors form %}
+    {% include 'hqstyle/forms/basic_fieldset.html' %}
+
+    {% if form.sub_forms %}<hr/ >{% endif %}
+    {% for loc_type, subform in form.sub_forms.items %}
+    <div style="display: none;" class="custom_subform" loctype="{{ loc_type }}">
+      {% include 'hqstyle/forms/basic_fieldset.html' with form=subform %}
+    </div>
+    {% endfor %}
+
+    <div class="form-actions"><button type="submit" class="btn btn-primary">{% if location.get_id %}Update{% else %}Create{% endif %} Location</button></div>
+  </form>
+
+</div>
+{% endblock %}
+
+{% block modals %}{{ block.super }}
+    
+{% endblock %}

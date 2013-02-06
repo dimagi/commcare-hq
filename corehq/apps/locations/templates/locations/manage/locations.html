@@ -1,0 +1,115 @@
+{% extends "users/users_base.html" %}
+{% load i18n %}
+{% load hq_shared_tags %}
+
+{% block js %}{{ block.super }}
+    <script src="{% static 'hqwebapp/javascripts/jquery-ui/jquery-ui-1.8.16.min.js' %}"></script>
+    <script src="{% static 'users/js/key_filters.js' %}"></script>
+    <script src="{% static 'locations/ko/location_tree.async.js' %}"></script>
+    <link rel="stylesheet" href="{% static 'locations/style/manage.css' %}">
+{% endblock %}
+
+{% block js-inline %}{{ block.super }}
+    <script type="text/javascript">
+
+var LOAD_LOCS_URL = '{{ api_root }}';
+var NEW_LOC_URL = '{% url create_location domain %}';
+
+var locs = {{ locations|JSON }};
+var selected_loc = {{ selected_id|JSON }};
+
+function loc_edit_url(loc_id) {
+    var template = '{% url edit_location domain "-locid-" %}';
+    return template.replace('-locid-', loc_id);
+}
+
+$(function() {
+
+  var model = new LocationTreeViewModel();
+  ko.applyBindings(model, $('#location_tree')[0]);
+  model.load(locs, selected_loc);
+
+});
+
+    </script>
+{% endblock %}
+
+{% block subsection-title %}
+    <li class="active">
+        <a href="#">Locations</a>
+    </li>
+{% endblock %}
+
+{% block user-view %}
+<header>
+    <div class="row-fluid">
+        <div class="span8">
+            <h2>Manage Locations</h2>
+        </div>
+    </div>
+</header>
+<div>
+
+    <div class="row-fluid">
+        <div class="span12">
+            <div class="btn-toolbar">
+              <!-- not supported yet!
+                <a class="btn" href="#">Bulk Import</a>
+                <a class="btn" href="#">Bulk Export</a>
+                -->
+            </div>
+        </div>
+    </div>
+
+    <hr />
+
+    <script type="text/html" id="location-template">
+
+      <!-- header bar -->
+      <div class="loc_header" data-bind="if: name() != '_root', bind_element: null">
+        <a class="loc_edit btn btn-primary" data-bind="attr: { href: loc_edit_url(uuid()) }">Edit</a>
+        <span data-bind="click: toggle, style: { cursor: (can_have_children() ? 'pointer' : 'default') }"> <!-- want to make entire row clickable, but overrides click on 'edit' button -->
+          <span data-bind="if: can_have_children"><a class="label" data-bind="css: { 'icon-plus': !expanded(), 'icon-minus': expanded() }"></a></span>
+          <span class="loc_name" data-bind="text: name"></span> <span class="loc_type">(<span data-bind="text: type"></span>)</span>
+        </span>
+        <div style="clear: both;"></div>
+      </div>
+
+      <!-- child content -->
+      <div class="loc_children" data-bind="visible: expanded, style: { borderColor: 'rgba(0, 0, 255, ' + Math.min(.08 * depth, .5) + ')' }">
+
+        <!-- ajax spinner -->
+        <div class="loc_child" data-bind="visible: children_status() == 'loading'">
+          <img src="{% static 'hqwebapp/img/ajax-loader.gif' %}" alt="loading indicator" /> Loading&hellip;
+        </div>
+
+        <!-- ajax content -->
+        <div data-bind="fadeVisible: children_status() == 'loaded'">
+
+          <!-- child entries -->
+          <div data-bind="foreach: children">
+            <div class="loc_child" data-bind="template: { name: 'location-template' }"></div>
+          </div>
+
+          <!-- 'no children' message -->
+          <div class="loc_child no_children" data-bind="visible: children().length == 0, text: no_children_caption"></div>
+
+        </div>
+
+        <!-- create child button -->
+        <a class="btn btn-success loc_child" data-bind="attr: { href: NEW_LOC_URL + '?parent=' + (uuid() || '') }"><i class="icon icon-white icon-plus"></i> <span data-bind="text: new_child_caption"></span></a>
+
+      </div>
+
+    </script>
+
+    <div id="location_tree">
+      <div data-bind="template: { name: 'location-template', if: root, data: root }"></div>
+    </div>
+
+</div>
+{% endblock %}
+
+{% block modals %}{{ block.super }}
+    
+{% endblock %}
