@@ -113,11 +113,14 @@ def child_loc(form, root):
     path = form['location_']
     return path[path.index(root._id) + 1]
 
-OUTLET_METADATA = [
+HIERARCHY = [
     ('state', 'State'),
     ('district', 'District'),
     ('block', 'Block'),
     ('village', 'Village'),
+]
+
+OUTLET_METADATA = [
     ('site_code', 'Outlet Code'),
     ('name', 'Outlet'),
     ('contact_phone', 'Contact Phone'),
@@ -126,6 +129,23 @@ OUTLET_METADATA = [
 
 ACTION_ORDERING = ['stockonhand', 'sales', 'receipts', 'stockedoutfor']
 PRODUCT_ORDERING = ['PSI kit', 'non-PSI kit', 'ORS', 'Zinc']
+
+def outlet_headers(slug=False):
+    return [(key if slug else caption) for key, caption in HIERARCHY + OUTLET_METADATA]
+
+def outlet_metadata(loc, ancestors):
+    lineage = dict((anc.location_type, anc.name) for anc in (ancestors[anc_id] for anc_id in loc.lineage))
+    row = []
+    row += [lineage.get(key, u'\u2014') for key, caption in HIERARCHY]
+    row += [getattr(loc, key) for key, caption in OUTLET_METADATA]
+    return row
+
+def load_locs(loc_ids):
+    return dict((loc._id, loc) for loc in Location.view('_all_docs', keys=list(loc_ids), include_docs=True))
+
+def load_all_loc_hierarchy(locs):
+    ancestor_loc_ids = reduce(lambda a, b: a.union(b), (loc.lineage for loc in locs), set())
+    return load_locs(ancestor_loc_ids)
 
 class VisitReport(GenericTabularReport, CommtrackReportMixin, DatespanMixin):
     name = 'Visit Report'
@@ -137,7 +157,7 @@ class VisitReport(GenericTabularReport, CommtrackReportMixin, DatespanMixin):
     emailable = True
 
     def header_text(self, slug=False):
-        cols = [(key if slug else caption) for key, caption in OUTLET_METADATA]
+        cols = outlet_headers(slug)
         cols.extend([
             ('date' if slug else 'Date'),
             ('reporter' if slug else 'Reporter'),
@@ -160,7 +180,8 @@ class VisitReport(GenericTabularReport, CommtrackReportMixin, DatespanMixin):
     def rows(self):
         products = self.active_products
         reports = get_stock_reports(self.domain, self.active_location, self.datespan)
-        locs = dict((loc._id, loc) for loc in Location.view('_all_docs', keys=[leaf_loc(r) for r in reports], include_docs=True))
+        locs = load_locs(leaf_loc(r) for r in reports)
+        ancestry = load_all_loc_hierarchy(locs.values())
 
         # filter by outlet type
         reports = filter(lambda r: self.outlet_type_filter(locs[leaf_loc(r)].outlet_type), reports)
@@ -169,7 +190,7 @@ class VisitReport(GenericTabularReport, CommtrackReportMixin, DatespanMixin):
             transactions = dict(((tx['action'], tx['product']), tx['value']) for tx in get_transactions(doc, False))
             location = locs[leaf_loc(doc)]
 
-            data = [getattr(location, key) for key, caption in OUTLET_METADATA]
+            data = outlet_metadata(location, ancestry)
             data.extend([
                 dateparse.string_to_datetime(doc['received_on']).strftime('%Y-%m-%d'),
                 CommCareUser.get(doc['form']['meta']['userID']).username_in_report,
@@ -228,18 +249,23 @@ class SalesAndConsumptionReport(GenericTabularReport, CommtrackReportMixin, Date
         return locs
 
     @property
+    @memoized
+    def ancestry(self):
+        return load_all_loc_hierarchy(self.outlets)
+
+    @property
     def headers(self):
         if len(self.outlets) > OUTLETS_LIMIT:
             return DataTablesHeader(DataTablesColumn('Too many outlets'))
 
-        cols = [DataTablesColumn(caption) for key, caption in OUTLET_METADATA]
+        cols = outlet_headers()
         for p in self.active_products:
-            cols.append(DataTablesColumn('Stock on Hand (%s)' % p['name']))
-            cols.append(DataTablesColumn('Total Sales (%s)' % p['name']))
-            cols.append(DataTablesColumn('Total Consumption (%s)' % p['name']))
-        cols.append(DataTablesColumn('Stock-out days (all products combined)'))
+            cols.append('Stock on Hand (%s)' % p['name'])
+            cols.append('Total Sales (%s)' % p['name'])
+            cols.append('Total Consumption (%s)' % p['name'])
+        cols.append('Stock-out days (all products combined)')
 
-        return DataTablesHeader(*cols)
+        return DataTablesHeader(*(DataTablesColumn(c) for c in cols))
 
     @property
     def rows(self):
@@ -251,7 +277,6 @@ class SalesAndConsumptionReport(GenericTabularReport, CommtrackReportMixin, Date
                 }]]
 
         products = self.active_products
-        locs = self.outlets
         reports = get_stock_reports(self.domain, self.active_location, self.datespan)
         reports_by_loc = map_reduce(lambda e: [(leaf_loc(e),)], data=reports, include_docs=True)
 
@@ -259,7 +284,7 @@ class SalesAndConsumptionReport(GenericTabularReport, CommtrackReportMixin, Date
             all_transactions = list(itertools.chain(*(get_transactions(r) for r in reports)))
             tx_by_product = map_reduce(lambda tx: [(tx['product'],)], data=all_transactions, include_docs=True)
 
-            data = [getattr(site, key) for key, caption in OUTLET_METADATA]
+            data = outlet_metadata(site, self.ancestry)
             stockouts = {}
             inactive_site = True
             for p in products:
@@ -301,7 +326,7 @@ class SalesAndConsumptionReport(GenericTabularReport, CommtrackReportMixin, Date
 
             return data
 
-        return filter(None, (summary_row(site, reports_by_loc.get(site._id, [])) for site in locs))
+        return filter(None, (summary_row(site, reports_by_loc.get(site._id, [])) for site in self.outlets))
 
 class CumulativeSalesAndConsumptionReport(GenericTabularReport, CommtrackReportMixin, DatespanMixin):
     name = 'Sales and Consumption Report, Cumulative'
@@ -399,11 +424,16 @@ class StockOutReport(GenericTabularReport, CommtrackReportMixin, DatespanMixin):
         return locs
 
     @property
+    @memoized
+    def ancestry(self):
+        return load_all_loc_hierarchy(self.outlets)
+
+    @property
     def headers(self):
         if len(self.outlets) > OUTLETS_LIMIT:
             return DataTablesHeader(DataTablesColumn('Too many outlets'))
 
-        cols = [caption for key, caption in OUTLET_METADATA]
+        cols = outlet_headers()
         for p in self.active_products:
             cols.append('%s: Days stocked out' % p['name'])
         cols.append('All Products Combined: Days stocked out')
@@ -419,7 +449,7 @@ class StockOutReport(GenericTabularReport, CommtrackReportMixin, DatespanMixin):
 
         products = self.active_products
         def row(site):
-            data = [getattr(site, key) for key, caption in OUTLET_METADATA]
+            data = outlet_metadata(site, self.ancestry)
 
             stockout_days = []
             inactive_site = True
