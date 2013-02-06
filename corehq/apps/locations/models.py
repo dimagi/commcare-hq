@@ -14,6 +14,7 @@ class Location(Document):
     # TODO: in future, support multiple types of parentage with
     # independent hierarchies
     lineage = StringListProperty()
+    previous_parents = StringListProperty()
 
     def __init__(self, *args, **kwargs):
         if 'parent' in kwargs:

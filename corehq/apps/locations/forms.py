@@ -69,7 +69,7 @@ class LocationForm(forms.Form):
             if self.location.descendants:
                 raise forms.ValidationError('only locations that have no sub-locations can be moved to a different parent')
 
-            self.cleaned_data['reparented'] = True
+            self.cleaned_data['orig_parent_id'] = self.cur_parent_id
 
         return parent_id
 
@@ -120,12 +120,22 @@ class LocationForm(forms.Form):
                 prop_name = k[len('prop:'):]
                 setattr(location, prop_name, v)
 
+        orig_parent_id = self.cleaned_data.get('orig_parent_id')
+        reparented = orig_parent_id is not None
+        if reparented:
+            location.flag_post_move = True
+            location.previous_parents.append(orig_parent_id)
+
+        # HACK
+        # not sure where this is getting set, but it shouldn't be in the doc
+        del location._doc['parent_id']
+
         if commit:
             location.save()
 
-        if self.cleaned_data.get('reparented'):
-            print 'reparenting...'
-            # todo add logic here
+        if reparented:
+            # post-location move processing here
+            # (none for now; do it as a batch job)
             pass
 
         return location
