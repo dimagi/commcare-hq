@@ -38,6 +38,8 @@ class LocationForm(forms.Form):
         
         # custom properties
         self.sub_forms = {}
+        # TODO think i need to change this to iterate over all types, since the parent
+        # can be changed dynamically
         for potential_type in allowed_child_types(self.location.domain, self.location.parent):
             subform = LocationCustomPropertiesSubForm(self.location, potential_type, bound_data)
             if subform.fields:
@@ -54,15 +56,20 @@ class LocationForm(forms.Form):
         parent_id = self.cleaned_data['parent_id']
         if not parent_id:
             parent_id = None # normalize ''
+        parent = Location.get(parent_id) if parent_id else None
+        self.cleaned_data['parent'] = parent
 
         if self.location._id is not None and self.cur_parent_id != parent_id:
-            raise forms.ValidationError('Sorry, you cannot move locations around yet!')
-        # TODO:
-        # * allow moving of existing locs (requires background task to update
-        #   loc path properties in all descendants and linked docs
-        # * sanity check for re-parentage to self or descendant
+            # location is being re-parented
 
-        self.cleaned_data['parent'] = Location.get(parent_id) if parent_id else None
+            if parent and self.location._id in parent.path:
+                assert False, 'location being re-parented to self or descendant'
+
+            if self.location.descendants:
+                raise forms.ValidationError('only locations that have no sub-locations can be moved to a different parent')
+
+            self.cleaned_data['orig_parent_id'] = self.cur_parent_id
+
         return parent_id
 
     def clean_name(self):
@@ -78,21 +85,22 @@ class LocationForm(forms.Form):
         loc_type = self.cleaned_data['location_type']
 
         child_types = allowed_child_types(self.location.domain, self.cleaned_data.get('parent'))
-        # neither of these should be seen in normal usage
+
         if not child_types:
-            raise forms.ValidationError('the selected parent location cannot have sub-locations!')
+            assert False, 'the selected parent location cannot have sub-locations!'
         elif loc_type not in child_types:
-            raise forms.ValidationError('not valid for the select parent location')
+            assert False, 'not valid for the select parent location'
 
         return loc_type
 
     def clean(self):
         super(LocationForm, self).clean()
 
-        subform = self.sub_forms[self.cleaned_data['location_type']]
-        if not subform.is_valid():
-            raise forms.ValidationError('Error in location properties')
-        self.cleaned_data.update(('prop:%s' % k, v) for k, v in subform.cleaned_data.iteritems())
+        subform = self.sub_forms.get(self.cleaned_data.get('location_type'))
+        if subform:
+            if not subform.is_valid():
+                raise forms.ValidationError('Error in location properties')
+            self.cleaned_data.update(('prop:%s' % k, v) for k, v in subform.cleaned_data.iteritems())
 
         return self.cleaned_data
 
@@ -111,8 +119,23 @@ class LocationForm(forms.Form):
                 prop_name = k[len('prop:'):]
                 setattr(location, prop_name, v)
 
+        orig_parent_id = self.cleaned_data.get('orig_parent_id')
+        reparented = orig_parent_id is not None
+        if reparented:
+            location.flag_post_move = True
+            location.previous_parents.append(orig_parent_id)
+
+        # HACK
+        # not sure where this is getting set, but it shouldn't be in the doc
+        del location._doc['parent_id']
+
         if commit:
             location.save()
+
+        if reparented:
+            # post-location move processing here
+            # (none for now; do it as a batch job)
+            pass
 
         return location
 

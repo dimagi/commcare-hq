@@ -52,7 +52,7 @@ def location_custom_properties(domain, loc_type):
         return {
             'outlet': [
                 CustomProperty(
-                    name='outlet_code',
+                    name='site_code',
                     label='SMS Code',
                     required=True,
                     unique='global',

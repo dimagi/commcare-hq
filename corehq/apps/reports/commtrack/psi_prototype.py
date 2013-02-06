@@ -118,7 +118,7 @@ OUTLET_METADATA = [
     ('district', 'District'),
     ('block', 'Block'),
     ('village', 'Village'),
-    ('outlet_id', 'Outlet ID'),
+    ('site_code', 'Outlet Code'),
     ('name', 'Outlet'),
     ('contact_phone', 'Contact Phone'),
     ('outlet_type', 'Outlet Type'),
@@ -134,6 +134,7 @@ class VisitReport(GenericTabularReport, CommtrackReportMixin, DatespanMixin):
               'corehq.apps.reports.commtrack.fields.SupplyPointTypeField',
               'corehq.apps.reports.fields.AsyncLocationField']
     exportable = True
+    emailable = True
 
     def header_text(self, slug=False):
         cols = [(key if slug else caption) for key, caption in OUTLET_METADATA]
@@ -185,6 +186,7 @@ class StockReportExport(VisitReport):
     name = 'Stock Reports Export'
     slug = 'bulk_export'
     exportable = True
+    emailable = False
 
     @property
     def export_table(self):
@@ -194,7 +196,7 @@ class StockReportExport(VisitReport):
 
         exclude_cols = set()
         for i, h in enumerate(headers):
-            if not (h.startswith('data:') or h in ('outlet_id', 'reporter', 'date')):
+            if not (h.startswith('data:') or h in ('site_code', 'reporter', 'date')):
                 exclude_cols.add(i)
 
         def clean_cell(val):
@@ -206,7 +208,7 @@ class StockReportExport(VisitReport):
 
         return [['stock reports', [filter_row(r) for r in rows]]]
 
-OUTLETS_LIMIT = 200
+OUTLETS_LIMIT = 500
 
 class SalesAndConsumptionReport(GenericTabularReport, CommtrackReportMixin, DatespanMixin):
     name = 'Sales and Consumption Report'
@@ -216,6 +218,7 @@ class SalesAndConsumptionReport(GenericTabularReport, CommtrackReportMixin, Date
               'corehq.apps.reports.commtrack.fields.ProductField',
               'corehq.apps.reports.fields.AsyncLocationField']
     exportable = True
+    emailable = True
 
     @property
     @memoized
@@ -308,6 +311,7 @@ class CumulativeSalesAndConsumptionReport(GenericTabularReport, CommtrackReportM
               'corehq.apps.reports.commtrack.fields.ProductField',
               'corehq.apps.reports.fields.AsyncLocationField']
     exportable = True
+    emailable = True
 
     @property
     @memoized
@@ -383,6 +387,7 @@ class StockOutReport(GenericTabularReport, CommtrackReportMixin, DatespanMixin):
               'corehq.apps.reports.commtrack.fields.ProductField',
               'corehq.apps.reports.fields.AsyncLocationField']
     exportable = True
+    emailable = True
 
     # TODO shared code with sales/consumption report (any report that reports one line
     # per supply point) could be factored out into mixin

@@ -5,12 +5,12 @@ from corehq.apps.commtrack.models import *
 from corehq.apps.sms.mixin import VerifiedNumber, strip_plus
 from corehq.apps.locations.models import Location
 from corehq.apps.users.models import CouchUser
-from casexml.apps.case.models import CommCareCase
 from dimagi.utils.couch.database import get_db
 from dimagi.utils.couch.loosechange import map_reduce
 from corehq.apps.commtrack import sms
 from dimagi.utils.logging import notify_exception
 from corehq.apps.commtrack.helpers import make_supply_point
+from corehq.apps.commtrack.util import get_supply_point
 
 def set_error(row, msg, override=False):
     """set an error message on a stock report to be imported"""
@@ -34,9 +34,8 @@ def import_stock_reports(domain, f):
     except Exception, e:
         raise RuntimeError(str(e))
 
-    locs_by_id = dict((loc.outlet_id, loc) for loc in Location.filter_by_type(domain, 'outlet'))
     for row in data:
-        validate_row(row, domain, data_cols, locs_by_id)
+        validate_row(row, domain, data_cols)
 
     # abort if any location codes are invalid
     if any(not row.get('loc') for row in data):
@@ -55,12 +54,12 @@ def validate_headers(domain, headers):
     and stock actions/products are valid (and parse the action/product info out
     of the header text
     """
-    META_COLS = ['outlet_id', 'outlet_code', 'date', 'reporter', 'phone']
+    META_COLS = ['site_code', 'outlet_code', 'date', 'reporter', 'phone']
 
     if 'reporter' not in headers and 'phone' not in headers:
         raise RuntimeError('"reporter" or "phone" column required')
-    if 'outlet_id' not in headers and 'outlet_code' not in headers:
-        raise RuntimeError('"outlet_id" or "outlet_code" column required')
+    if 'outlet_code' not in headers and 'site_code' not in headers:
+        raise RuntimeError('"outlet_code" column required')
     if 'date' not in headers:
         raise RuntimeError('"date" column required')
 
@@ -104,34 +103,16 @@ def validate_data_header(header, actions, products):
         'product': products[prod_code],
     }
 
-def validate_row(row, domain, data_cols, locs_by_id):
+def validate_row(row, domain, data_cols):
     """pre-validate the information in a particular import row: valid location,
     reporting user, and data formats
     """
     # identify location
-    loc_id = row.get('outlet_id')
-    loc_code = row.get('outlet_code')
-    loc_from_id, loc_from_code = None, None
-    if loc_id:
-        loc_from_id = locs_by_id.get(loc_id) # loc object
-        if loc_from_id is None:
-            set_error(row, 'ERROR location id is invalid')
-            return
-        # convert location to supply point case
-        case_id = [case for case in loc_from_id.linked_docs('CommCareCase') if case['type'] == 'supply-point'][0]['_id']
-        loc_from_id = CommCareCase.get(case_id)
-    if loc_code:
-        loc_code = loc_code.lower()
-        loc_from_code = CommCareCase.view('commtrack/locations_by_code',
-                                          key=[domain, loc_code],
-                                          include_docs=True).first()
-        if loc_from_code is None:
-            set_error(row, 'ERROR location code is invalid')
-            return
-    if loc_from_id and loc_from_code and loc_from_id._id != loc_from_code._id:
-        set_error(row, 'ERROR location id and code refer to different locations')
+    loc_code = row.get('outlet_code') or row.get('site_code')
+    row['loc'] = get_supply_point(domain, loc_code)['case']
+    if row['loc'] is None:
+        set_error(row, 'ERROR location code is invalid')
         return
-    row['loc'] = loc_from_code or loc_from_id
 
     # identify user
     phone = row.get('phone')
@@ -286,8 +267,12 @@ def import_location(domain, loc, known_loc_types):
         yield 'outlet %s exists; skipping...' % name
         return
 
+    if 'outlet_code' in loc:
+        loc['site_code'] = loc['outlet_code']
+        del loc['outlet_code']
+
     outlet_props = dict(loc)
-    for k in ('outlet_name', 'outlet_code'):
+    for k in ('outlet_name',):
         del outlet_props[k]
     if 'outlet_type' in outlet_props:
         outlet_props['outlet_type'] = outlet_props['outlet_type'].strip()
@@ -295,15 +280,14 @@ def import_location(domain, loc, known_loc_types):
             yield 'fyi: type "%s" for outlet "%s" is not a known outlet type' % (outlet_props.get('outlet_type'), name)
 
     # check that sms code for outlet is unique
-    code = loc['outlet_code'].lower()
-    if get_db().view('commtrack/locations_by_code',
-                     key=[domain, code],
-                     include_docs=True).one():
+    code = loc['site_code']
+    existing_loc = get_supply_point(domain, code)['location']
+    if existing_loc:
         yield 'code %s for outlet %s already in use! outlet NOT created' % (code, name)
         return
 
     outlet = _loc(name=name, location_type='outlet', parent=parent, **outlet_props)
-    make_supply_point(domain, outlet, code)
+    make_supply_point(domain, outlet)
     yield 'created outlet %s' % name
 
 def make_loc(domain, *args, **kwargs):
