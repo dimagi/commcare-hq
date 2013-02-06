@@ -62,9 +62,8 @@ class LocationForm(forms.Form):
         if self.location._id is not None and self.cur_parent_id != parent_id:
             # location is being re-parented
 
-            # should not happen in normal usage
             if parent and self.location._id in parent.path:
-                raise forms.ValidationError('error: location being re-parented to self or descendant')
+                assert False, 'location being re-parented to self or descendant'
 
             if self.location.descendants:
                 raise forms.ValidationError('only locations that have no sub-locations can be moved to a different parent')
@@ -86,11 +85,11 @@ class LocationForm(forms.Form):
         loc_type = self.cleaned_data['location_type']
 
         child_types = allowed_child_types(self.location.domain, self.cleaned_data.get('parent'))
-        # neither of these should be seen in normal usage
+
         if not child_types:
-            raise forms.ValidationError('the selected parent location cannot have sub-locations!')
+            assert False, 'the selected parent location cannot have sub-locations!'
         elif loc_type not in child_types:
-            raise forms.ValidationError('not valid for the select parent location')
+            assert False, 'not valid for the select parent location'
 
         return loc_type
 
