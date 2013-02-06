@@ -73,9 +73,9 @@ class PSIEventsReport(PSIReport):
         'gifts',
         )
 
-    state_name = Column("State", calculate_fn=lambda key, _: key[0])
+    state_name = Column("State", calculate_fn=lambda key, _: key[1])
 
-    district_name = Column("District", calculate_fn=lambda key, _: key[1])
+    district_name = Column("District", calculate_fn=lambda key, _: key[2])
 
     males = Column("Number of male attendees", key='males')
 
@@ -92,7 +92,7 @@ class PSIEventsReport(PSIReport):
         combos = get_unique_combinations(self.domain, place_types=['state', 'district'], place=self.selected_fixture())
 
         for c in combos:
-            yield [c['state'], c['district']]
+            yield [self.domain, c['state'], c['district']]
 
 @memoized
 def get_village_fdt(domain):
@@ -104,10 +104,10 @@ def get_village(req, id):
     return FixtureDataItem.by_field_value(req.domain, village_fdt, 'id', float(id)).one()
 
 def get_village_name(key, req):
-    return get_village(req, key[3]).fields.get("name", id)
+    return get_village(req, key[4]).fields.get("name", id)
 
 def get_village_class(key, req):
-    return get_village(req, key[3]).fields.get("village_class", "No data")
+    return get_village(req, key[4]).fields.get("village_class", "No data")
 
 class PSIHDReport(PSIReport):
     name = "Household Demonstrations Report"
@@ -126,10 +126,10 @@ class PSIHDReport(PSIReport):
         for c in combos:
             selected_demo_type = self.request.GET.get('demo_type', "")
             if selected_demo_type:
-                yield [c['state'], c['district'], c["block"], c["village"], selected_demo_type]
+                yield [self.domain, c['state'], c['district'], c["block"], c["village"], selected_demo_type]
             else:
                 for dt in DEMO_TYPES:
-                    yield [c['state'], c['district'], c["block"], c["village"], dt]
+                    yield [self.domain, c['state'], c['district'], c["block"], c["village"], dt]
 
     couch_view = 'psi/household_demonstrations'
 
@@ -147,19 +147,19 @@ class PSIHDReport(PSIReport):
         'kits',
         )
 
-    state_name = Column("State", calculate_fn=lambda key, _: key[0])
+    state_name = Column("State", calculate_fn=lambda key, _: key[1])
 
-    district_name = Column("District", calculate_fn=lambda key, _: key[1])
+    district_name = Column("District", calculate_fn=lambda key, _: key[2])
 
-    block_name = Column("Block", calculate_fn=lambda key, _: key[2])
+    block_name = Column("Block", calculate_fn=lambda key, _: key[3])
 
     village_name = Column("Village", calculate_fn=get_village_name)
 
-    village_code = Column("Village Code", calculate_fn=lambda key, _: key[3])
+    village_code = Column("Village Code", calculate_fn=lambda key, _: key[4])
 
     village_class = Column("Village Class", calculate_fn =get_village_class)
 
-    demo_type = Column("Worker Type", calculate_fn=lambda key, _: key[4])
+    demo_type = Column("Worker Type", calculate_fn=lambda key, _: key[5])
 
     demonstrations = Column("Number of demonstrations done", key="demonstrations")
 
@@ -183,7 +183,7 @@ class PSISSReport(PSIReport):
             place_types=['state', 'district', "block"], place=self.selected_fixture())
 
         for c in combos:
-            yield [c['state'], c['district'], c["block"]]
+            yield [self.domain, c['state'], c['district'], c["block"]]
 
     couch_view = 'psi/sensitization'
 
@@ -201,11 +201,11 @@ class PSISSReport(PSIReport):
         "attendees",
     )
 
-    state_name = Column("State", calculate_fn=lambda key, _: key[0])
+    state_name = Column("State", calculate_fn=lambda key, _: key[1])
 
-    district_name = Column("District", calculate_fn=lambda key, _: key[1])
+    district_name = Column("District", calculate_fn=lambda key, _: key[2])
 
-    block_name = Column("Block", calculate_fn=lambda key, _: key[2])
+    block_name = Column("Block", calculate_fn=lambda key, _: key[3])
 
     sessions = Column("Number of Sessions", key="sessions")
 
@@ -237,7 +237,7 @@ class PSITSReport(PSIReport):
             place_types=['state', 'district'], place=self.selected_fixture())
 
         for c in combos:
-            yield [c['state'], c['district']]
+            yield [self.domain, c['state'], c['district']]
 
     couch_view = 'psi/training'
 
@@ -268,9 +268,9 @@ class PSITSReport(PSIReport):
         "flw_gt80",
     )
 
-    state_name = Column("State", calculate_fn=lambda key, _: key[0])
+    state_name = Column("State", calculate_fn=lambda key, _: key[1])
 
-    district_name = Column("District", calculate_fn=lambda key, _: key[1])
+    district_name = Column("District", calculate_fn=lambda key, _: key[2])
 
     priv_trained = Column("Private: Number of Trainings", key="priv_trained")
     priv_ayush_trained = Column("Private: Ayush trained", key="priv_ayush_trained")

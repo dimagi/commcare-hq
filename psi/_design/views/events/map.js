@@ -17,6 +17,6 @@ function (doc) {
 
         var opened_on = form.meta.timeEnd;
 
-        emit_array([form.activity_state, form.activity_district], [opened_on], data);
+        emit_array([doc.domain, form.activity_state, form.activity_district], [opened_on], data);
     }
 }
