@@ -130,7 +130,7 @@ class DOTDay(object):
                 #hack, in cases where we have zero data, put in the current regimen delta count
                 delta = max_doses - dose_data.total_doses
                 for x in range(0, delta):
-                    drug_arr.append(["unchecked", "pillbox", '', -1])
+                    drug_arr.append(["unchecked", "pillbox", '', labels_arr[x] if x < len(labels_arr) else -1])
             ret.append(drug_arr)
         return ret
 
