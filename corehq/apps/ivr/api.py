@@ -61,7 +61,7 @@ def incoming(phone_number, backend_module, gateway_session_id, ivr_event, input_
                                   limit=1).one()
     
     answer_is_valid = False # This will be set to True if IVR validation passes
-    error_occurred = True # This will be set to False if touchforms validation passes (i.e., no form constraints fail)
+    error_occurred = False # This will be set to False if touchforms validation passes (i.e., no form constraints fail)
     
     if call_log_entry is not None:
         form = Form.get_form(call_log_entry.form_unique_id)
@@ -79,7 +79,7 @@ def incoming(phone_number, backend_module, gateway_session_id, ivr_event, input_
             session, responses = start_session(recipient.domain, recipient, app, module, form, case_id, yield_responses=True, session_type=XFORMS_SESSION_IVR)
             call_log_entry.xforms_session_id = session.session_id
         elif ivr_event == IVR_EVENT_INPUT:
-            if call_log_entry.xforms_session_id is not None and (call_log_entry.max_question_retries is None or call_log_entry.current_question_retry_count <= call_log_entry.max_question_retries):
+            if call_log_entry.xforms_session_id is not None:
                 current_q = current_question(call_log_entry.xforms_session_id)
                 if validate_answer(input_data, current_q):
                     answer_is_valid = True
@@ -90,15 +90,6 @@ def incoming(phone_number, backend_module, gateway_session_id, ivr_event, input_
             else:
                 responses = []
         else:
-            if call_log_entry.xforms_session_id is not None:
-                # Hang up and process disconnect
-                session = XFormsSession.latest_by_session_id(call_log_entry.xforms_session_id)
-                if session.end_time is None:
-                    if call_log_entry.submit_partial_form:
-                        submit_unfinished_form(session.session_id, call_log_entry.include_case_side_effects)
-                    else:
-                        session.end(completed=False)
-                        session.save()
             responses = []
         
         ivr_responses = []
@@ -127,11 +118,22 @@ def incoming(phone_number, backend_module, gateway_session_id, ivr_event, input_
         if len(ivr_responses) == 0:
             hang_up = True
         
-        # Set input_length to let the ivr gateway know how many digits we need to collect
         input_length = None
-        if len(responses) > 0:
+        
+        if hang_up:
+            if call_log_entry.xforms_session_id is not None:
+                # Process disconnect
+                session = XFormsSession.latest_by_session_id(call_log_entry.xforms_session_id)
+                if session.end_time is None:
+                    if call_log_entry.submit_partial_form:
+                        submit_unfinished_form(session.session_id, call_log_entry.include_case_side_effects)
+                    else:
+                        session.end(completed=False)
+                        session.save()
+        else:
+            # Set input_length to let the ivr gateway know how many digits we need to collect.
             # Have to get the current question again, since the last XFormsResponse in responses
-            # may not have an event if it was a response to a constraint error
+            # may not have an event if it was a response to a constraint error.
             current_q = current_question(call_log_entry.xforms_session_id)
             if current_q.event.type == "question" and current_q.event.datatype == "select":
                 input_length = 1
