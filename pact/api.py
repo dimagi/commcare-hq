@@ -276,7 +276,7 @@ def submit_case_update_form(casedoc, update_dict, couch_user, submit_date=None, 
     form.append(update_block)
 
     submission_xml_string = etree.tostring(form)
-    submit_xform('/a/pact/receiver', PACT_DOMAIN, submission_xml_string)
+    return submit_xform('/a/pact/receiver', PACT_DOMAIN, submission_xml_string)
 
 
 def isodate_string(date):
