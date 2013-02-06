@@ -40,7 +40,7 @@
 {% block user-view %}
     <div>
         {% if project.organization %}
-            <h3>This project is managed by the {{ project.organization|capfirst }} organization.</h3>
+            <h3>This project is managed by the <a href="{% url orgs_landing project.organization %}">{{ project.organization|capfirst }}</a> organization.</h3>
         {% else %}
             <h3>{% trans "This project is not managed by an organization" %}</h3>
             <button class="btn" data-toggle="modal" data-target="#org-request">
