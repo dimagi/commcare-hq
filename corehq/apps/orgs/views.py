@@ -98,6 +98,11 @@ def orgs_add_project(request, org):
     form = AddProjectForm(org, request.POST)
     if form.is_valid():
         domain_name = form.cleaned_data['domain_name']
+
+        if not request.couch_user.is_domain_admin(domain_name):
+            messages.error(request, 'You must be an admin of this project in order to add it to your organization')
+            return orgs_landing(request, org, add_form=form)
+
         dom = Domain.get_by_name(domain_name)
         dom.organization = org
         dom.slug = form.cleaned_data['domain_slug']
@@ -320,3 +325,6 @@ def remove_all_from_team(request, org, team_id):
         member.save()
     if 'redirect_url' in request.POST:
         return HttpResponseRedirect(reverse(request.POST['redirect_url'], args=(org, team_id)))
+
+def search_orgs(request):
+    return json_response([{'title': o.title, 'name': o.name} for o in Organization.get_all()])
