@@ -11,61 +11,83 @@ from corehq.apps.domain.models import LICENSES
 
 MULTIMEDIA_PREFIX = "jr://file/"
 IMAGE_MIMETYPES = ["image/jpeg", "image/gif", "image/png"]
-AUDIO_MIMETYPES = ["audio/mpeg", "audio/mpeg3"]
+AUDIO_MIMETYPES = ["audio/mpeg", "audio/mpeg3", "audio/wav", "audio/x-wav"]
 ZIP_MIMETYPES = ["application/zip"]
 
-def get_sorted_multimedia_refs(app):
-    images = {}
-    audio_files = {}
-    has_error = False
+def get_application_media(app):
+    from corehq.apps.app_manager.models import Application
+    if not isinstance(app, Application):
+        raise ValueError("You must pass in an Application object.")
+
+    form_media = {
+        'images': set(),
+        'audio': set(),
+    }
+    form_errors = False
+    menu_media = {
+        'icons': set(),
+        'audio': set(),
+    }
+
+    def _add_menu_media(item):
+        if item.media_image:
+            menu_media['icons'].add(item.media_image.strip())
+        if item.media_audio:
+            menu_media['audio'].add(item.media_audio.strip())
 
     for m in app.get_modules():
+        _add_menu_media(m)
         for f in m.get_forms():
+            _add_menu_media(f)
             try:
                 parsed = f.wrapped_xform()
                 if not parsed.exists():
                     continue
                 f.validate_form()
-                for i in parsed.image_references:
-                    if i not in images:
-                        images[i] = []
-                    images[i].append((m,f))
-                for i in parsed.audio_references:
-                    if i not in audio_files:
-                        audio_files[i] = []
-                    audio_files[i].append((m,f))
+                for image in parsed.image_references:
+                    if image:
+                        form_media['images'].add(image.strip())
+                for audio in parsed.audio_references:
+                    if audio:
+                        form_media['audio'].add(audio.strip())
             except (XFormValidationError, XFormError):
-                has_error = True
-    sorted_images = SortedDict()
-    sorted_audio = SortedDict()
-    for k in sorted(images):
-        if k:
-            sorted_images[k] = images[k]
-    for k in sorted(audio_files):
-        if k:
-            sorted_audio[k] = audio_files[k]
-    return sorted_images, sorted_audio, has_error
+                form_errors = True
+
+    return {
+        'form_media': form_media,
+        'menu_media': menu_media,
+    }, form_errors
+
 
 def get_multimedia_filenames(app):
-    images = []
-    audio_files = []
-    has_error = False
+    images = set()
+    audio = set()
+
+    def _add_menu_media(item):
+        if item.media_image:
+            images.add(item.media_image.strip())
+        if item.media_audio:
+            audio.add(item.media_audio.strip())
+
     for m in app.get_modules():
+        _add_menu_media(m)
         for f in m.get_forms():
+            _add_menu_media(f)
             try:
                 parsed = f.wrapped_xform()
                 if not parsed.exists():
                     continue
                 f.validate_form()
                 for i in parsed.image_references:
-                    if i and i not in images:
-                        images.append(i)
+                    images.add(i.strip())
                 for a in parsed.audio_references:
-                    if a and a not in audio_files:
-                        audio_files.append(a)
+                    audio.add(a.strip())
             except (XFormValidationError, XFormError):
-                has_error = True
-    return images, audio_files, has_error
+                pass
+    return {
+        'images': list(images),
+        'audio': list(audio),
+    }
 
 def most_restrictive(licenses):
     """
@@ -112,7 +134,9 @@ class HQMediaMatcher():
             self.specific_params = specific_params
         self.match_filename = match_filename
         if not self.specific_params:
-            self.image_paths, self.audio_paths, _ = get_multimedia_filenames(app)
+            files = get_multimedia_filenames(app)
+            self.image_paths = files['images']
+            self.audio_paths = files['audio']
             if self.match_filename:
                 self.images = [os.path.basename(i.replace(MULTIMEDIA_PREFIX, '').lower().strip())
                                for i in self.image_paths]

@@ -297,9 +297,11 @@ def create_export_filter(request, domain, export_type='form'):
 def get_possible_reports(domain):
     from corehq.apps.reports.dispatcher import (ProjectReportDispatcher,
         CustomProjectReportDispatcher)
+    from corehq.apps.adm.dispatcher import ADMSectionDispatcher
     reports = []
     report_map = ProjectReportDispatcher().get_reports(domain) + \
-                 CustomProjectReportDispatcher().get_reports(domain)
+                 CustomProjectReportDispatcher().get_reports(domain) +\
+                 ADMSectionDispatcher().get_reports(domain)
     for heading, models in report_map:
         for model in models:
             reports.append({
@@ -350,7 +352,8 @@ def set_report_announcements_for_user(request, couch_user):
     for announcement_id in announce_ids:
         try:
             announcement = ReportAnnouncement.get(announcement_id)
-            messages.info(request, announcement.as_html)
+            if announcement.show_to_new_users or (announcement.date_created > couch_user.created_on):
+                messages.info(request, announcement.as_html)
         except Exception as e:
             logging.error("Could not fetch Report Announcement: %s" % e)
 

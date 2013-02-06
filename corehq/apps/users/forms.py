@@ -89,7 +89,7 @@ class UserForm(RoleForm):
     first_name = forms.CharField(max_length=50, required=False)
     last_name = forms.CharField(max_length=50, required=False)
     email = forms.EmailField(label=_("E-mail"), max_length=75, required=False)
-    language = LanguageField(required=False)
+    language = LanguageField(required=False, help_text=_("CloudCare only: write in the language code to set the language this user sees in CloudCare applications. This does not affect the default language of mobile applications."))
     role = forms.ChoiceField(choices=(), required=False)
     
     

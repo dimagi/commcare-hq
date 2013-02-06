@@ -1,0 +1,60 @@
+{% extends 'hqmedia/partials/media_list.html' %}
+{% load i18n %}
+{% block manage_item %}
+    <a data-bind="click: uploadNewImage,
+                        uploadMediaButton: has_ref,
+                        uploadMediaButtonParams: {type: type, uid: uid}">{% trans 'Update' %}</a>
+
+    <div class="modal hide fade hqm-modal-image" data-bind="uploadMediaModal: has_ref,
+                        uploadMediaModalParams: {type: type, uid: uid}">
+        <div class="modal-header">
+            <a class="close" data-dismiss="modal">&times;</a>
+            <h3>{% blocktrans %}<span class="upload-state">Upload</span> Image{% endblocktrans %} <small data-bind="text: path"></small></h3>
+        </div>
+        <div class="modal-body form form-horizontal">
+            <div class="control-group" data-bind="previewHQImage: url" >
+                <label class="control-label">{% trans 'Current Image' %}</label>
+                <div class="controls"></div>
+            </div>
+            <div class="upload-form-placeholder"></div>
+            <div class="control-group">
+                <label class="control-label">{% trans 'Search for Images' %}</label>
+                <div class="controls">
+                    <form data-bind="submit: searchForImages">
+                        <div class="control-group">
+                            <p><input type="text" name="q" placeholder="{% trans 'Search...' %}" data-bind="value: query" /></p>
+                            <button type="submit" class="btn">{% trans 'Search for shared images' %}</button>
+                        </div>
+                    </form>
+                    <!-- ko if: searched -->
+                    <div class="well">
+                        <div data-bind="if: searching() > 0" style="text-align: center;">
+                            <img src="/static/formdesigner/images/ajax-loader.gif" />
+                        </div>
+                        <div data-bind="if: searching() == 0">
+                            <ul data-bind="foreach: imageOptions" class="thumbnails">
+                                <li class="span3">
+                                    <div class="thumbnail">
+                                        <img data-bind="attr: {src: url}" />
+                                        <div data-bind="foreach: tags">
+                                            <span class="label label-info" data-bind="text: $data"></span>
+                                        </div>
+                                        <h6 data-bind="text: license">
+                                        </h6>
+                                        <a href="#" class="btn" data-bind="click: choose">{% trans 'Use this image' %}</a>
+                                    </div>
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+                    <!-- /ko -->
+                </div>
+            </div>
+
+        </div>
+        <div class="modal-footer">
+            <a href="#" data-dismiss="modal" class="btn">{% trans 'Close' %}</a>
+        </div>
+    </div>
+{% endblock %}
+{% block preview_button %}<div data-bind="previewHQImageButton: url"></div>{% endblock %}

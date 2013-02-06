@@ -11,6 +11,8 @@ class HQAnnouncementForm(BaseAdminCRUDForm):
     summary = forms.CharField(label="Summary",
         widget=Textarea()
     )
+    show_to_new_users = forms.BooleanField(label="Show to new users?", initial=False, required=False)
+    
 #    highlighted_selectors = hq_fields.CSVListField(label="Highlighted Selectors",
 #        help_text="A comma separated list of css selectors to highlight",
 #        required=False,

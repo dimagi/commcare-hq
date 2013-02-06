@@ -1,7 +1,8 @@
 {% extends "hqwebapp/centered.html" %}
 {% load hq_shared_tags %}
+{% load i18n %}
 
-{% block title %}Bulk Upload of Multimedia{% endblock title %}
+{% block title %}{% trans 'Bulk Upload of Multimedia' %}{% endblock title %}
 
 {% block js %} {{ block.super }}
     {% include 'hqmedia/includes/yui_upload.html' %}
@@ -83,13 +84,20 @@
                         $view = $('<a style="margin-bottom:6px;" target="_blank" class="btn btn-info btn-mini" />');
                     $view.text('Preview');
                     if (is_audio) {
-                        $view.popover({title: 'Click to open in new tab',
+                        $view.popout({
+                            title: 'Click to open in new tab',
                             content: 'Audio not currently available for on-the-fly preview.',
-                            placement: 'bottom'});
+                            placement: 'bottom',
+                            trigger: 'hover'
+                        });
                     } else {
-                        $view.popover({title: 'Click to open in new tab',
-                                       content: '<img src="'+matches[i].url+'" alt="'+matches[i].path+'" />',
-                                       placement: 'bottom'});
+                        $view.popout({
+                            title: 'Click to open in new tab',
+                            html: true,
+                            content: '<img src="'+matches[i].url+'" height="195" alt="'+matches[i].path+'" />',
+                            placement: 'bottom',
+                            trigger: 'hover'
+                        });
                     }
                     $view.attr('href', matches[i].url);
                     $name.text(matches[i].upload_path);
@@ -108,60 +116,61 @@
 
 {% block centered-content %}
     <ul class="breadcrumb">
-        <li><a href="{% url view_app domain app.get_id %}">Application "{{ app.name }}"</a> <span class="divider">&gt;</span></li>
-        <li><a href="{% url hqmedia_references domain app.get_id %}">Multimedia Reference Checker</a> <span class="divider">&gt;</span></li>
-        <li class="active"><a href="{% url hqmedia_bulk_upload domain app.get_id %}">Bulk Upload</a></li>
+        <li><a href="{% url view_app domain app.get_id %}">{% trans 'Application' %} "{{ app.name }}"</a> <span class="divider">&gt;</span></li>
+        <li><a href="{% url hqmedia_references domain app.get_id %}">{% trans 'Multimedia Reference Checker' %}</a> <span class="divider">&gt;</span></li>
+        <li class="active"><a href="{% url hqmedia_bulk_upload domain app.get_id %}">{% trans 'Bulk Upload' %}</a></li>
     </ul>
     <div class="page-header">
-        <h1>Multimedia Bulk Upload</h1>
+        <h1><i class="icon icon-cloud-upload"></i> {% trans 'Multimedia Bulk Upload' %}</h1>
     </div>
-    <p>Use this tool to upload ZIP files of your multimedia, so you don't have to upload each file one-by-one.</p>
-    <p>The bulk uploader will compare the file paths in your form with the file paths in your zip to find a matching file.</p>
-    <p>For example, <strong>jr://file/commcare/images/hin/image.jpg</strong> and your zip's <strong>commcare/images/hin/image.jpg</strong> file would match, but it would not match <strong>commcare/images/image.jpg</strong>.</p>
+    <p>{% blocktrans %}Use this tool to upload ZIP files of your multimedia, so you don't have to
+        upload each file one-by-one.{% endblocktrans %}</p>
+    <p>{% blocktrans %}The bulk uploader will compare the file paths in your form with the file paths
+        in your zip to find a matching file.{% endblocktrans %}</p>
+    <p>{% blocktrans %}For example, <code>jr://file/commcare/images/hin/image.jpg</code> and your zip's
+        <code>commcare/images/hin/image.jpg</code> file would match, but it would <strong>not</strong> match
+        <code>commcare/images/image.jpg</code>.{% endblocktrans %}</p>
     
     <div id="hqmedia-upload">
         <div class="btn-toolbar">
             <div class="hqm-overlay" style="position:absolute; z-index:2"></div>
-            <a class="hqm-select btn btn-primary" href="#" style="z-index:1;">Select Files</a>
-            <a class="hqm-upload-button-helper btn disabled" href="#hqm-upload-modal" onclick="return false;" data-toggle="modal">Upload Files</a>
+            <a class="hqm-select btn btn-primary" href="#" style="z-index:1;">{% trans 'Select Files' %}</a>
+            <a class="hqm-upload-button-helper btn disabled" href="#hqm-upload-modal" onclick="return false;" data-toggle="modal"><i class="icon icon-cloud-upload"></i> {% trans 'Upload Files' %}</a>
         </div>
         <div id="hqm-upload-modal" class="hide modal fade">
             <div class="modal-header">
                 <a class="close" href="#" data-dismiss="modal">&times;</a>
-                <h3>Please select the license you wish to upload these files under.</h3>
+                <h3>{% trans 'Please select the license you wish to upload these files under' %}</h3>
             </div>
-            <div class="modal-body form-horizontal hqm-upload-form">
-                <div class="control-group">
+            <div class="form-horizontal hqm-upload-form">
+                <div class="modal-body">
                     {% include 'hqmedia/partials/hqm_upload_form.html' %}
-                    <br />
-                    <div class="controls">
-                        <a class="hqm-upload-button btn disabled" data-dismiss="modal" onclick="return false;">Upload Files</a>
-                    </div>
+                </div>
+                <div class="modal-footer">
+                    <a class="hqm-upload-button btn disabled" data-dismiss="modal" onclick="return false;"><i class="icon icon-cloud-upload"></i>
+                        {% trans 'Continue with Upload' %}</a> <a href="#" data-dismiss="modal" class="btn">{% trans 'Cancel' %}</a>
                 </div>
             </div>
-            <div class="modal-footer">
-                <a href="#" data-dismiss="modal" class="btn">Close</a>
-            </div>
         </div>
-        <h3>Bulk Upload File Queue</h3>
+        <h3>{% trans 'Bulk Upload File Queue' %}</h3>
         <table class="table table-striped table-bordered hqm-upload-list">
             <thead>
                 <tr>
-                    <th class="span2">Filename</th>
-                    <th class="span1">Size</th>
-                    <th class="span2">Upload Progress</th>
-                    <th class="span2">Match Status</th>
-                    <th class="span5">Details</th>
+                    <th class="span2">{% trans 'Filename' %}</th>
+                    <th class="span1">{% trans 'Size' %}</th>
+                    <th class="span2">{% trans 'Upload Progress' %}</th>
+                    <th class="span2">{% trans 'Match Status' %}</th>
+                    <th class="span5">{% trans 'Details' %}</th>
                 </tr>
             </thead>
             <tbody class="queue">
                 <tr class="hqm-empty_queue-notice">
-                    <td colspan="5">Select files above to add to the queue.</td>
+                    <td colspan="5">{% blocktrans %}Select files above to add to the queue.{% endblocktrans %}</td>
                 </tr>
             </tbody>
             <thead>
                 <tr class="hqm-uploaded-notice hide">
-                    <th colspan="5" >Uploaded Files</th>
+                    <th colspan="5">{% trans 'Uploaded Files' %}</th>
                 </tr>
             </thead>
             <tbody class="done">
