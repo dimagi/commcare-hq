@@ -23,7 +23,6 @@ from pact.enums import PACT_DOMAIN, XMLNS_PATIENT_UPDATE, PACT_PROVIDER_FIXTURE_
 from django.http import Http404, HttpResponse
 from pact.forms.patient_form import PactPatientForm
 from pact.forms.weekly_schedule_form import ScheduleForm, DAYS_OF_WEEK
-from pact.models import PactPatientCase, CDotWeeklySchedule
 from pact.utils import pact_script_fields, case_script_field, submit_xform, query_per_case_submissions_facet
 from django.core.cache import cache
 
@@ -335,6 +334,7 @@ class PactAPI(DomainAPI):
     http_method_names = ['get', 'post', 'head', ]
 
     def get(self, *args, **kwargs):
+        from pact.models import PactPatientCase, CDotWeeklySchedule
         if self.request.GET.get('case_id', None) is None:
             raise Http404
 
@@ -382,6 +382,8 @@ class PactAPI(DomainAPI):
             return HttpResponse("API Method unknown", status=400)
 
     def post(self,  *args, **kwargs):
+        from pact.models import PactPatientCase, CDotWeeklySchedule
+
         pdoc = PactPatientCase.get(self.request.GET['case_id'])
         resp = HttpResponse()
         if self.method == "rm_schedule":
