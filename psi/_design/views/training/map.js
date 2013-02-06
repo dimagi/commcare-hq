@@ -91,7 +91,7 @@ function (doc) {
                 data[slug+"_avg_diff"] = form["_" + tc]["avg_diff"];
                 data[slug+"_gt80"] = form["_"+tc]["num_80_percent"];
             }
-            emit_array([form.training_state, form.training_district], [opened_on], data);
+            emit_array([doc.domain, form.training_state, form.training_district], [opened_on], data);
         }
     }
 }
