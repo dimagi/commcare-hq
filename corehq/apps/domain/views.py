@@ -223,7 +223,7 @@ def org_settings(request, domain):
     domain = Domain.get_by_name(domain)
     return render_to_response(request, 'domain/orgs_settings.html', {
         "project": domain, 'domain': domain.name,
-        "organization": getattr(domain, "organization", None)
+        "organization": Organization.get_by_name(getattr(domain, "organization", None))
     })
 
 
