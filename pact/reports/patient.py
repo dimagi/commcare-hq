@@ -8,7 +8,6 @@ from corehq.apps.reports.generic import GenericTabularReport
 from corehq.apps.reports.standard import CustomProjectReport
 from dimagi.utils import html
 from dimagi.utils.decorators.memoized import memoized
-from pact import api
 from pact.enums import  PACT_DOMAIN
 from pact.forms.patient_form import PactPatientForm
 from pact.forms.weekly_schedule_form import ScheduleForm
@@ -46,6 +45,7 @@ class PactPatientInfoReport(PactDrilldownReportMixin,ESSortableMixin, GenericTab
 
     @property
     def report_context(self):
+        from pact import api
         patient_doc = self.get_case()
         view_mode = self.request.GET.get('view', 'info')
         notabs = True if not self.request.GET.get('notabs', False) else False

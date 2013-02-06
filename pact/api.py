@@ -61,7 +61,6 @@ def get_cloudcare_app():
 
     app = api.get_app(PACT_DOMAIN, filtered_app[0]['_id'])
     app_id = app['_id']
-#    print url_root
 
     pact_cloudcare = filter(lambda x: x['name']['en'] == PACT_CLOUDCARE_MODULE, app['modules'])
     forms = pact_cloudcare[0]['forms']
@@ -89,7 +88,6 @@ def get_cloudcare_url(case_id, mode):
 
 
 class PactFormAPI(DomainAPI):
-
     xform_es = XFormES(PACT_DOMAIN)
     case_es = CaseES(PACT_DOMAIN)
 
@@ -105,7 +103,6 @@ class PactFormAPI(DomainAPI):
     def api_name(cls):
         return "pact_formdata"
 
-    #@method_decorator(login_or_digest)
     @method_decorator(httpdigest)
     @method_decorator(login_or_digest)
     def get(self, *args, **kwargs):
@@ -143,7 +140,6 @@ class PactFormAPI(DomainAPI):
         query['script_fields'] = {}
         query['script_fields'].update(pact_script_fields())
         query['script_fields'].update(case_script_field())
-#        print simplejson.dumps(query, indent=4)
 
         res = self.xform_es.run_query(query)
 
@@ -388,7 +384,6 @@ class PactAPI(DomainAPI):
     def post(self,  *args, **kwargs):
         pdoc = PactPatientCase.get(self.request.GET['case_id'])
         resp = HttpResponse()
-#        print self.request.META['HTTP_X_CSRFTOKEN']
         if self.method == "rm_schedule":
             if self.request.POST.has_key('rm_schedule'):
                 #hacky remove schedule method
@@ -433,7 +428,6 @@ class PactAPI(DomainAPI):
                         if submitted_len < case_len:
                             for x in range(case_len-submitted_len):
                                 submitted_provider_ids.append('')
-                        print submitted_provider_ids
                         pdoc.update_providers(self.request.couch_user, submitted_provider_ids)
                         resp.write("success")
                         resp.status_code=204
