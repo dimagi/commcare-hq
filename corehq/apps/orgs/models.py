@@ -111,6 +111,7 @@ class OrgRequest(Document):
     domain = StringProperty()
     requested_by = StringProperty()
     requested_on = DateTimeProperty()
+    seen = BooleanProperty(default=False)
 
     @classmethod
     def get_requests(cls, organization, domain=None, user_id=None):

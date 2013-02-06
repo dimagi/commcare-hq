@@ -389,7 +389,7 @@ class Domain(Document, HQBillingDomainMixin, SnapshotMixin):
             endkey=[organization, {}],
             reduce=False,
             include_docs=True)
-        return result
+        return result.all()
 
     @classmethod
     def get_by_organization_and_slug(cls, organization, slug):
@@ -397,7 +397,7 @@ class Domain(Document, HQBillingDomainMixin, SnapshotMixin):
                           key=[organization, slug],
                           reduce=False,
                           include_docs=True)
-        return result
+        return result.all()
 
     @classmethod
     def get_or_create_with_name(cls, name, is_active=False):

@@ -1,0 +1,7 @@
+{# Must only be used on the orgs_landing page. It relies on javascript and modals defined on that page #}
+<span style="padding-right: 1em;">You have a request from {{ requesting_user }} to manage the project <b>{{ org_req.domain}}</b></span>
+<button id="req-manage-project-btn" data-project="{{ org_req.domain }}" class="btn" href="#">Manage Project {{ org_req.domain }}</button>
+<form style="display: inline;" action="{% url orgs_seen org.name %}" method="post">
+    <input type="hidden" name="request_id" value="{{ org_req.get_id }}">
+    <button type="submit" class="btn btn-danger" href="#">Dismiss</button>
+</form>

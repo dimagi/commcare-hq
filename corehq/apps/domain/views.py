@@ -515,5 +515,5 @@ def org_request(request, domain):
         else:
             messages.error(request, "You've already submitted a request to this organization")
     else:
-        messages.error(request, "This organization does not exist")
+        messages.error(request, "The organization '%s' does not exist" % org_name)
     return HttpResponseRedirect(reverse('domain_org_settings', args=[domain]))

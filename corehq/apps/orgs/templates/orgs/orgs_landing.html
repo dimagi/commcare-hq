@@ -5,7 +5,7 @@
 
 {% block js-inline %}{{ block.super }}
 <script xmlns="http://www.w3.org/1999/html">
-        $(function(){
+    $(function(){
         if (!{{ reg_form_empty|JSON }}) {
             $('#create_project_modal').modal({show:true});
         }
@@ -45,9 +45,12 @@
             });
         });
 
-
-
+        $('#req-manage-project-btn').on("click", function() {
+            var apm = $('#add_project_modal');
+            apm.find('#id_domain_name').val($(this).attr("data-project"));
+            apm.modal({show:true});
         });
+    });
     </script>
 {% endblock %}
 
