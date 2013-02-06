@@ -98,11 +98,16 @@ class PSIEventsReport(PSIReport):
 def get_village_fdt(domain):
     return FixtureDataType.by_domain_tag(domain, 'village').one()
 
-def get_village_name(key, req):
+@memoized
+def get_village(req, id):
     village_fdt = get_village_fdt(req.domain)
-    id = key[3]
-    village_fdi = FixtureDataItem.by_field_value(req.domain, village_fdt, 'id', float(id)).one()
-    return "%s (%s)" % (village_fdi.fields.get("name", id), id) if village_fdi else id
+    return FixtureDataItem.by_field_value(req.domain, village_fdt, 'id', float(id)).one()
+
+def get_village_name(key, req):
+    return get_village(req, key[3]).fields.get("name", id)
+
+def get_village_class(key, req):
+    return get_village(req, key[3]).fields.get("village_class", "No data")
 
 class PSIHDReport(PSIReport):
     name = "Household Demonstrations Report"
@@ -133,6 +138,8 @@ class PSIHDReport(PSIReport):
         'district_name',
         "block_name",
         "village_name",
+        "village_code",
+        "village_class",
         "demo_type",
         'demonstrations',
         'children',
@@ -147,6 +154,10 @@ class PSIHDReport(PSIReport):
     block_name = Column("Block", calculate_fn=lambda key, _: key[2])
 
     village_name = Column("Village", calculate_fn=get_village_name)
+
+    village_code = Column("Village Code", calculate_fn=lambda key, _: key[3])
+
+    village_class = Column("Village Class", calculate_fn =get_village_class)
 
     demo_type = Column("Worker Type", calculate_fn=lambda key, _: key[4])
 
@@ -208,7 +219,7 @@ class PSISSReport(PSIReport):
 
     awws = Column("AWW Sensitized", key="awws")
 
-    other = Column("Other Sensitized", key="other")
+    other = Column("Others (ANM, MPW, etc.)", key="other")
 
     attendees = Column("VHND Attendees", key='attendees')
 
