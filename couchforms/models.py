@@ -43,12 +43,27 @@ class Metadata(DocumentSchema):
     deviceID = StringProperty()
     deprecatedID = StringProperty()
     username = StringProperty()
-    
+
 class XFormInstance(Document, UnicodeMixIn, ComputedDocumentMixin):
     """An XForms instance."""
     xmlns = StringProperty()
     received_on = DateTimeProperty()
     partial_submission = BooleanProperty(default=False) # Used to tag forms that were forcefully submitted without a touchforms session completing normally
+
+    @classmethod
+    def get_appropriate_subclass(cls, doc_id):
+        """
+        Will return an instance of XFormArchived, XFormInstance, XFormDeleted, etc, according to doc_type.
+        This could/should be made more generic by not caring about subclassing, and more explicit by
+        using a registry instead of globals()
+        """
+        doc = cls.get_db().get(doc_id)
+        doc_type = doc['doc_type']
+        if doc_type in globals():
+            subclass = globals()[doc_type]
+            if issubclass(subclass, cls):
+                return subclass.wrap(doc)
+        raise ResourceNotFound(doc_id)
     
     @property
     def get_form(self):
