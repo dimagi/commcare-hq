@@ -154,9 +154,10 @@ class DeviceLogDetailsReport(PhonelogReport):
             device_ids_for_username = defaultdict(set)
 
             for datum in get_db().view('phonelog/device_log_users',
-                                                         startkey=[self.domain],
-                                                         endkey=[self.domain, {}],
-                                                         reduce=False):
+                                       startkey=[self.domain],
+                                       endkey=[self.domain, {}],
+                                       group=True,
+                                       reduce=True):
                 # Begin dependency on particulars of view output
                 username = datum['key'][2]
                 device_id = datum['key'][1]
