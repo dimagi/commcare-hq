@@ -41,4 +41,9 @@ class MVPIndicatorReport(CustomProjectReport, ProjectReportParametersMixin):
                 response = self.get_response_for_indicator(indicator)
                 if response is not None:
                     cache.set(cache_key, response, 3600)
+                else:
+                    response = {
+                        'error': True,
+                        'message': 'This Indicator is currently undergoing updates. Please check back shortly.'
+                    }
         return HttpResponse(json.dumps(response))
