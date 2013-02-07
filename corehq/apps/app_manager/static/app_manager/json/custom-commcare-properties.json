@@ -209,5 +209,5 @@
     "default": "5",
     "requires": "{properties.server-tether}='sync'",
     "values_txt": "When this many days have passed without the user syncing CommCare will trigger a warning",
-    "since": "2.1"
+    "since": "2.4"
 }]
