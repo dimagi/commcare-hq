@@ -172,7 +172,22 @@ def outlet_metadata(loc, ancestors):
     lineage = dict((anc.location_type, anc) for anc in (ancestors[anc_id] for anc_id in loc.lineage))
     def loc_prop(anc_type, prop_name, default=u'\u2014'):
         l = lineage.get(anc_type) if anc_type else loc
-        return getattr(l, prop_name, default) if l else default
+        val = getattr(l, prop_name, default) if l else default
+
+        # hack to keep stock report export for old data working
+        if prop_name == 'site_code' and val == default:
+            try:
+                startkey = [loc.domain, loc._id]
+                supply_point = CommCareCase.view('commtrack/supply_point_by_loc',
+                                                 startkey=startkey,
+                                                 endkey=startkey + [{}],
+                                                 include_docs=True).one()
+                val = supply_point.site_code
+            except Exception:
+                val = '**ERROR**'
+        # end hack
+
+        return val
 
     row = []
     row += [loc_prop(f['key'], 'name') for f in HIERARCHY]
