@@ -92,6 +92,9 @@ function HQReportDataTables(options) {
                     iLeftColumns: self.fixColsNumLeft,
                     iLeftWidth: self.fixColsWidth
                 } );
+            $(window).on('resize', function () {
+                datatable.fnAdjustColumnSizing();
+            } );
 
 
             var $dataTablesFilter = $(".dataTables_filter");
