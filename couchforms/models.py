@@ -18,6 +18,26 @@ from couchforms.signals import submission_error_received, xform_archived
 from dimagi.utils.mixins import UnicodeMixIn
 from couchforms.const import ATTACHMENT_NAME
 
+def doc_types():
+    """
+    Mapping of doc_type attributes in CouchDB to the class that should be instantiated.
+    """
+    return {
+        'XFormInstance': XFormInstance,
+        'XFormArchived': XFormArchived,
+        'XFormDeprecated': XFormDeprecated,
+        'XFormDuplicate': XFormDuplicate,
+    }
+
+def get(doc_id):
+    # This logic is independent of couchforms; when it moves elsewhere, 
+    # please use the most appropriate alternative to get a DB handle.
+    db = XFormInstance.get_db()
+    doc = db.get(doc_id)
+    if doc['doc_type'] in doc_types():
+        return doc_types()[doc['doc_type']].wrap(doc)
+    raise ResourceNotFound(doc_id)
+
 class Metadata(DocumentSchema):
     """
     Metadata of an xform, from a meta block structured like:
@@ -43,7 +63,7 @@ class Metadata(DocumentSchema):
     deviceID = StringProperty()
     deprecatedID = StringProperty()
     username = StringProperty()
-    
+
 class XFormInstance(Document, UnicodeMixIn, ComputedDocumentMixin):
     """An XForms instance."""
     xmlns = StringProperty()
