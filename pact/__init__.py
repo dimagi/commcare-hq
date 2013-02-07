@@ -9,5 +9,3 @@ CUSTOM_REPORTS = (
         chw.PactCHWProfileReport,
         )),
     )
-
-from pact import api
