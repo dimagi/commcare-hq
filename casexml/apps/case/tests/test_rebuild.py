@@ -1,11 +1,8 @@
 from django.test import TestCase
 from casexml.apps.case.models import CommCareCase, CommCareCaseAction
-from casexml.apps.case.util import post_case_blocks
-from casexml.apps.case.xml import V2
-from casexml.apps.case.tests.util import CaseBlock
-import uuid
 from datetime import datetime, timedelta
-from copy import copy, deepcopy
+from copy import copy
+from casexml.apps.case.tests.util import post_util
 
 class CaseRebuildTest(TestCase):
 
@@ -31,8 +28,8 @@ class CaseRebuildTest(TestCase):
             self.fail(msg)
 
     def testActionEquality(self):
-        case_id = _post_util(create=True)
-        _post_util(case_id=case_id, p1='p1', p2='p2')
+        case_id = post_util(create=True)
+        post_util(case_id=case_id, p1='p1', p2='p2')
 
         case = CommCareCase.get(case_id)
         self.assertEqual(2, len(case.actions)) # create + update
@@ -57,9 +54,9 @@ class CaseRebuildTest(TestCase):
         self.assertTrue(copy != orig)
 
     def testBasicRebuild(self):
-        case_id = _post_util(create=True)
-        _post_util(case_id=case_id, p1='p1-1', p2='p2-1')
-        _post_util(case_id=case_id, p2='p2-2', p3='p3-2')
+        case_id = post_util(create=True)
+        post_util(case_id=case_id, p1='p1-1', p2='p2-1')
+        post_util(case_id=case_id, p2='p2-2', p3='p3-2')
 
         # check initial state
         case = CommCareCase.get(case_id)
@@ -82,9 +79,9 @@ class CaseRebuildTest(TestCase):
         self.assertEqual(case.p3, 'p3-2') # new
 
     def testReconcileActions(self):
-        case_id = _post_util(create=True)
-        _post_util(case_id=case_id, p1='p1-1', p2='p2-1')
-        _post_util(case_id=case_id, p2='p2-2', p3='p3-2')
+        case_id = post_util(create=True)
+        post_util(case_id=case_id, p1='p1-1', p2='p2-1')
+        post_util(case_id=case_id, p2='p2-2', p3='p3-2')
         case = CommCareCase.get(case_id)
 
         # make sure we timestamp everything so they have the right order
@@ -92,7 +89,7 @@ class CaseRebuildTest(TestCase):
         for i, a in enumerate(case.actions):
             a.server_date = now + timedelta(seconds=i)
 
-        original_actions = deepcopy(case.actions)
+        original_actions = [copy(a) for a in case.actions]
         self._assertListEqual(original_actions, case.actions)
 
         # test reordering
@@ -108,20 +105,3 @@ class CaseRebuildTest(TestCase):
         case.reconcile_actions()
         self._assertListEqual(original_actions, case.actions)
 
-DEFAULT_TYPE = 'test'
-
-def _post_util(create=False, case_id=None, user_id=None, owner_id=None,
-               case_type=None, version=V2, **kwargs):
-
-    uid = lambda: uuid.uuid4().hex 
-    case_id = case_id or uid()
-    block = CaseBlock(create=create,
-                      case_id=case_id,
-                      user_id=user_id or uid(),
-                      owner_id=owner_id or uid(),
-                      case_type=case_type or DEFAULT_TYPE,
-                      version=version,
-                      update=kwargs).as_xml()
-    post_case_blocks([block])
-    return case_id
-    
