@@ -115,30 +115,68 @@ def child_loc(form, root):
     return path[ix + 1]
 
 HIERARCHY = [
-    ('state', 'State'),
-    ('district', 'District'),
-    ('block', 'Block'),
-    ('village', 'Village'),
+    {
+        'key': 'state',
+        'caption': 'State'
+    },
+    {
+        'key': 'district',
+        'caption': 'District'
+    },
+    {
+        'key': 'block',
+        'caption': 'Block'
+    },
+    {
+        'key': 'village',
+        'caption': 'Village'
+    },
 ]
 
-OUTLET_METADATA = [
-    ('site_code', 'Outlet Code'),
-    ('name', 'Outlet'),
-    ('contact_phone', 'Contact Phone'),
-    ('outlet_type', 'Outlet Type'),
+LOC_METADATA = [
+    {
+        'key': 'village_class',
+        'caption': 'Village Class',
+        'anc_type': 'village'
+    },
+    {
+        'key': 'village_size',
+        'caption': 'Village Size',
+        'anc_type': 'village'
+    },
+    {
+        'key': 'site_code',
+        'caption': 'Outlet Code',
+    },
+    {
+        'key': 'name',
+        'caption': 'Outlet',
+    },
+    {
+        'key': 'contact_phone',
+        'caption': 'Contact Phone',
+    },
+    {
+        'key': 'outlet_type',
+        'caption': 'Outlet Type',
+    },
 ]
 
 ACTION_ORDERING = ['stockonhand', 'sales', 'receipts', 'stockedoutfor']
 PRODUCT_ORDERING = ['PSI kit', 'non-PSI kit', 'ORS', 'Zinc']
 
 def outlet_headers(slug=False):
-    return [(key if slug else caption) for key, caption in HIERARCHY + OUTLET_METADATA]
+    return [f['key' if slug else 'caption'] for f in HIERARCHY + LOC_METADATA]
 
 def outlet_metadata(loc, ancestors):
-    lineage = dict((anc.location_type, anc.name) for anc in (ancestors[anc_id] for anc_id in loc.lineage))
+    lineage = dict((anc.location_type, anc) for anc in (ancestors[anc_id] for anc_id in loc.lineage))
+    def loc_prop(anc_type, prop_name, default=u'\u2014'):
+        l = lineage.get(anc_type) if anc_type else loc
+        return getattr(l, prop_name, default) if l else default
+
     row = []
-    row += [lineage.get(key, u'\u2014') for key, caption in HIERARCHY]
-    row += [getattr(loc, key) for key, caption in OUTLET_METADATA]
+    row += [loc_prop(f['key'], 'name') for f in HIERARCHY]
+    row += [loc_prop(f.get('anc_type'), f['key']) for f in LOC_METADATA]
     return row
 
 def load_locs(loc_ids):
