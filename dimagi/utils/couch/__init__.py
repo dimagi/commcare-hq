@@ -30,7 +30,7 @@ class LockableMixIn(DocumentSchema):
         self.lock_date = None
         self.save()
 
-def LooselyEqualDocumentSchema(DocumentSchema):
+class LooselyEqualDocumentSchema(DocumentSchema):
     """
     A DocumentSchema that will pass equality and hash checks if its
     contents are the same as another document.
@@ -40,6 +40,6 @@ def LooselyEqualDocumentSchema(DocumentSchema):
         if isinstance(other, self.__class__):
             return self._doc == other._doc
 
-    def __hash__(self, other):
-        hash(json.dumps(self._doc, sort_keys=True))
+    def __hash__(self):
+        return hash(json.dumps(self._doc, sort_keys=True))
 
