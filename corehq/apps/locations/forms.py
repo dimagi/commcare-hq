@@ -4,6 +4,7 @@ from django.template.loader import get_template
 from django.template import Template, Context
 from corehq.apps.locations.util import load_locs_json, allowed_child_types, location_custom_properties
 from django.utils.safestring import mark_safe
+from corehq.apps.locations.signals import location_created, location_edited
 
 class ParentLocWidget(forms.Widget):
     def render(self, name, value, attrs=None):
@@ -109,6 +110,7 @@ class LocationForm(forms.Form):
             raise ValueError('form does not validate')
 
         location = instance or self.location
+        is_new = location._id is None
 
         for field in ('name', 'location_type'):
             setattr(location, field, self.cleaned_data[field])
@@ -131,6 +133,11 @@ class LocationForm(forms.Form):
 
         if commit:
             location.save()
+
+        if is_new:
+            location_created.send(sender='loc_mgmt', loc=location)
+        else:
+            location_edited.send(sender='loc_mgmt', loc=location, moved=reparented)
 
         if reparented:
             # post-location move processing here

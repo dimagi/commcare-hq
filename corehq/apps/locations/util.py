@@ -76,6 +76,8 @@ def location_custom_properties(domain, loc_type):
                             'NGO',
                             'CBO',
                             'SHG',
+                            'Pan Store',
+                            'General Store',
                             'Other',
                         ]},
                 ),

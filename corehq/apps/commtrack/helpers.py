@@ -84,6 +84,8 @@ def make_psi_config(domain):
             SupplyPointType(name='NGO', categories=['Non-traditional']),
             SupplyPointType(name='CBO', categories=['Non-traditional']),
             SupplyPointType(name='SHG', categories=['Non-traditional']),
+            SupplyPointType(name='Pan Store', categories=['Traditional']),
+            SupplyPointType(name='General Store', categories=['Traditional']),
         ]
     )
     c.save()
