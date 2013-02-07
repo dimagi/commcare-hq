@@ -19,6 +19,7 @@ from copy import copy
 import itertools
 from dimagi.utils.couch.database import get_db
 from couchdbkit.exceptions import ResourceNotFound
+import json
 
 """
 Couch models for commcare cases.  
@@ -65,8 +66,8 @@ class CommCareCaseAction(DocumentSchema):
         
         def _couchify(d):
             return dict((k, couchable_property(v)) for k, v in d.items())
-                        
-        ret.server_date = datetime.utcnow()
+
+        ret.server_date = xformdoc.received_on
         ret.updated_known_properties = _couchify(action.get_known_properties())
         ret.updated_unknown_properties = _couchify(action.dynamic_properties)
         ret.indices = [CommCareCaseIndex.from_case_index_update(i) for i in action.indices]
@@ -90,6 +91,19 @@ class CommCareCaseAction(DocumentSchema):
             cache.set(key, id, 12*60*60)
         return id
 
+    def __eq__(self, other):
+        if isinstance(other, CommCareCaseAction):
+            return self._doc == other._doc
+        return False
+
+    def __hash__(self):
+        return hash(json.dumps(self._doc, sort_keys=True))
+
+    def __repr__(self):
+        return "{xform}: {type} - {date} ({server_date})".format(
+            xform=self.xform_id, type=self.action_type,
+            date=self.date, server_date=self.server_date
+        )
 
     class Meta:
         app_label = 'case'
@@ -485,6 +499,34 @@ class CommCareCase(CaseBase, IndexHoldingMixIn, ComputedDocumentMixin):
         if not self.closed:
             submission = get_close_case_xml(time=datetime.utcnow(), case_id=self._id)
             spoof_submission(submit_url, submission, name="close.xml")
+
+    def reconcile_actions(self):
+        """
+        Runs through the action list and tries to reconcile things that seem
+        off (for example, out-of-order submissions, duplicate actions, etc.).
+
+        This method fails hard if anything goes wrong so it's up to the caller
+        to deal with that. It will raise assertion errors if this happens.
+        """
+        def _check_preconditions():
+            for a in self.actions:
+                assert a.server_date is not None
+
+        def _type_sort(action_type):
+            """
+            Consistent ordering for action types
+            """
+            return const.CASE_ACTIONS.index(action_type)
+
+        _check_preconditions()
+        deduplicated_actions = list(set(self.actions))
+        sorted_actions = sorted(
+            deduplicated_actions,
+            key=lambda a: (a.server_date, a.xform_id, _type_sort(a.action_type))
+        )
+        if sorted_actions:
+            assert sorted_actions[0].action_type == const.CASE_ACTION_CREATE
+        self.actions = sorted_actions
 
     def rebuild(self):
         """
