@@ -4,7 +4,7 @@ from corehq.apps.reports.generic import GenericTabularReport
 from corehq.apps.domain.models import Domain
 from corehq.apps.users.models import CommCareUser
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
-from corehq.apps.locations.models import Location
+from corehq.apps.locations.models import Location, root_locations, all_locations
 from dimagi.utils.couch.database import get_db
 from dimagi.utils.couch.loosechange import map_reduce
 from dimagi.utils import parsing as dateparse
@@ -111,7 +111,8 @@ def leaf_loc(form):
 
 def child_loc(form, root):
     path = form['location_']
-    return path[path.index(root._id) + 1]
+    ix = path.index(root._id) if root else -1
+    return path[ix + 1]
 
 HIERARCHY = [
     ('state', 'State'),
@@ -341,7 +342,12 @@ class CumulativeSalesAndConsumptionReport(GenericTabularReport, CommtrackReportM
     @property
     @memoized
     def children(self):
-        return self.active_location.children if self.active_location else []
+        return self.active_location.children if self.active_location else root_locations(self.domain)
+
+    @property
+    @memoized
+    def descendants(self):
+        return self.active_location.descendants if self.active_location else all_locations(self.domain)
 
     @property
     def headers(self):
@@ -366,12 +372,12 @@ class CumulativeSalesAndConsumptionReport(GenericTabularReport, CommtrackReportM
 
         products = self.active_products
         locs = self.children
-        active_outlets = set(loc._id for loc in self.active_location.descendants if self.outlet_type_filter(loc.dynamic_properties().get('outlet_type')))
+        active_outlets = set(loc._id for loc in self.descendants if self.outlet_type_filter(loc.dynamic_properties().get('outlet_type')))
 
         reports = filter(lambda r: leaf_loc(r) in active_outlets, get_stock_reports(self.domain, self.active_location, self.datespan))
         reports_by_loc = map_reduce(lambda e: [(child_loc(e, self.active_location),)], data=reports, include_docs=True)
 
-        startkey = [self.domain, self.active_location._id, 'CommCareCase']
+        startkey = [self.domain, self.active_location._id if self.active_location else None, 'CommCareCase']
         product_cases = [c for c in CommCareCase.view('locations/linked_docs', startkey=startkey, endkey=startkey + [{}], include_docs=True)
                          if c.type == 'supply-point-product' and leaf_loc(c) in active_outlets]
         product_cases_by_parent = map_reduce(lambda e: [(child_loc(e, self.active_location),)], data=product_cases, include_docs=True)

@@ -5,6 +5,8 @@ from dimagi.utils import parsing as dateparse
 from datetime import datetime
 from casexml.apps.case.models import CommCareCase
 from copy import copy
+from django.dispatch import receiver
+from corehq.apps.locations.signals import location_created
 
 # these are the allowable stock transaction types, listed in the
 # default ordering in which they are processed. processing order
@@ -249,4 +251,12 @@ class StockReport(object):
                                    startkey=startkey,
                                    endkey=endkey,
                                    include_docs=True)]
+
+@receiver(location_created)
+def post_loc_created(sender, loc=None, **kwargs):
+    from corehq.apps.commtrack.helpers import make_supply_point
+
+    # TODO check domain for commtrack-enabled flag
+    if loc.location_type == 'outlet': # TODO 'outlet' is PSI-specific
+        make_supply_point(loc.domain, loc)
 
