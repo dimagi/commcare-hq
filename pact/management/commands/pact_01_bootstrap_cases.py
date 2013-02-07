@@ -321,7 +321,8 @@ class Command(PactMigrateCommand):
         doc_id = self.get_instanceid_from_xml(xmlns, xfroot)
         print "\t[%s] %s/%s (%d/%d)" % (pact_id, case_id, action['xform_id'], ix, total_remote)
         if doc_id in existing_xform_ids:
-            print "\twhoa, %s != %s - skipping because already seen" % (action['xform_id'], doc_id)
+            print "\t\twhoa, %s != %s - skipping because already seen" % (action['xform_id'], doc_id)
+            return
 
 
         self.process_xform_meta(action, xmlns, xfroot)
