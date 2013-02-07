@@ -49,6 +49,11 @@ def api_url_patterns():
             api.register(R())
         yield (r'^', include(api.urls))
     yield url(r'^v0.1/xform_es/$', XFormES.as_domain_specific_view())
+    # HACK: fix circular import here, to fix later
+    try:
+        from pact.api import PactAPI
+    except ImportError:
+        pass # maybe pact isn't installed
     for view_class in DomainAPI.__subclasses__():
         yield url(r'^custom/%s/v%s/$' % (view_class.api_name(), view_class.api_version()), view_class.as_view(), name="%s_%s" % (view_class.api_name(), view_class.api_version()))
 
