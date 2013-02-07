@@ -204,10 +204,11 @@
     "name": "Unsynced Time Limit",
     "description": "Days allowed without syncing before triggering a warning",
     "id": "unsent-time-limit",
-    "values": ["1", "5", "7", "14", "30"],
-    "value_names": ["1 Day", "5 Days", "One Week", "Two Weeks", "One Month"],
+    "values": ["-1", "1", "5", "7", "14", "30"],
+    "value_names": ["Never", "1 Day", "5 Days", "One Week", "Two Weeks", "One Month"],
     "default": "5",
     "requires": "{properties.server-tether}='sync'",
+    "contingent_default": [{"condition": "{properties.server-tether}='push-only'", "value": "-1"}],
     "values_txt": "When this many days have passed without the user syncing CommCare will trigger a warning",
     "since": "2.4"
 }]
