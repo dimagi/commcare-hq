@@ -39,5 +39,6 @@ class MVPIndicatorReport(CustomProjectReport, ProjectReportParametersMixin):
                 wrap_correctly=True)
             if indicator:
                 response = self.get_response_for_indicator(indicator)
-                cache.set(cache_key, response, 3600)
+                if response is not None:
+                    cache.set(cache_key, response, 3600)
         return HttpResponse(json.dumps(response))

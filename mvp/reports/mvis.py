@@ -236,13 +236,15 @@ class HealthCoordinatorReport(MVPIndicatorReport):
         )
 
     def get_response_for_indicator(self, indicator):
-        retrospective = indicator.get_monthly_retrospective(user_ids=self.user_ids)
-        if isinstance(indicator, CombinedCouchViewIndicatorDefinition):
-            table = self.get_indicator_table(retrospective)
-        else:
-            table = self.get_indicator_row(retrospective)
-        return {
-            'table': table,
-        }
+        if indicator:
+            retrospective = indicator.get_monthly_retrospective(user_ids=self.user_ids)
+            if isinstance(indicator, CombinedCouchViewIndicatorDefinition):
+                table = self.get_indicator_table(retrospective)
+            else:
+                table = self.get_indicator_row(retrospective)
+            return {
+                'table': table,
+            }
+        return None
 
 
