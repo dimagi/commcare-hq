@@ -354,7 +354,7 @@ class Command(PactMigrateCommand):
             print "\tCase ID %s already exists in DB" % case_id
             local_case = CommCareCase.get(case_id)
             local_existing = local_case.xform_ids
-            existing_xform_ids = list(set(local_existing+local_case))
+            existing_xform_ids = list(set(local_existing+local_case.xform_ids))
         else:
             #make new blank case
             new_block = base_create_block(pactid, case_id, user_id, name, case_type, owner_id, primary_hp, remote_case_json['demographics'])
