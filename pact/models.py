@@ -88,7 +88,6 @@ class PactPatientCase(CommCareCase):
         for x in provider_ids:
             print x
         update_dict = dict(('provider%d' % ix, provider_id) for (ix, provider_id) in enumerate(provider_ids, start=1))
-        print update_dict
         submit_case_update_form(self, update_dict, cc_user)
 
 
