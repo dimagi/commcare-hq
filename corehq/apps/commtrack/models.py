@@ -254,9 +254,14 @@ class StockReport(object):
 
 @receiver(location_created)
 def post_loc_created(sender, loc=None, **kwargs):
+    # circular imports
     from corehq.apps.commtrack.helpers import make_supply_point
+    from corehq.apps.domain.models import Domain
 
-    # TODO check domain for commtrack-enabled flag
+    if not Domain.get_by_name(loc.domain).commtrack_enabled:
+        return
+
+    # exclude non-leaf locs
     if loc.location_type == 'outlet': # TODO 'outlet' is PSI-specific
         make_supply_point(loc.domain, loc)
 
