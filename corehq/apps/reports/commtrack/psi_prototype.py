@@ -395,6 +395,7 @@ class CumulativeSalesAndConsumptionReport(GenericTabularReport, CommtrackReportM
         cols = [
             DataTablesColumn('Location'),
             DataTablesColumn('Location Type'),
+            DataTablesColumn('# outlets'),
         ]
         for p in self.active_products:
             cols.append(DataTablesColumn('Total Stock on Hand (%s)' % p['name']))
@@ -410,17 +411,25 @@ class CumulativeSalesAndConsumptionReport(GenericTabularReport, CommtrackReportM
 
         products = self.active_products
         locs = self.children
-        active_outlets = set(loc._id for loc in self.descendants if self.outlet_type_filter(loc.dynamic_properties().get('outlet_type')))
+        active_outlets = [loc for loc in self.descendants if self.outlet_type_filter(loc.dynamic_properties().get('outlet_type'))]
+        active_outlet_ids = set(loc._id for loc in active_outlets)
 
-        reports = filter(lambda r: leaf_loc(r) in active_outlets, get_stock_reports(self.domain, self.active_location, self.datespan))
+        aggregation_sites = set(loc._id for loc in locs)
+        def get_aggregation_site(outlet):
+            for k in outlet.path:
+                if k in aggregation_sites:
+                    return k
+        outlets_by_aggregation_site = map_reduce(lambda e: [(get_aggregation_site(e),)], data=active_outlets)
+
+        reports = filter(lambda r: leaf_loc(r) in active_outlet_ids, get_stock_reports(self.domain, self.active_location, self.datespan))
         reports_by_loc = map_reduce(lambda e: [(child_loc(e, self.active_location),)], data=reports, include_docs=True)
 
         startkey = [self.domain, self.active_location._id if self.active_location else None, 'CommCareCase']
         product_cases = [c for c in CommCareCase.view('locations/linked_docs', startkey=startkey, endkey=startkey + [{}], include_docs=True)
-                         if c.type == 'supply-point-product' and leaf_loc(c) in active_outlets]
+                         if c.type == 'supply-point-product' and leaf_loc(c) in active_outlet_ids]
         product_cases_by_parent = map_reduce(lambda e: [(child_loc(e, self.active_location),)], data=product_cases, include_docs=True)
 
-        def summary_row(site, reports, product_cases):
+        def summary_row(site, reports, product_cases, outlets):
             all_transactions = list(itertools.chain(*(get_transactions(r) for r in reports)))
             tx_by_product = map_reduce(lambda tx: [(tx['product'],)], data=all_transactions, include_docs=True)
             cases_by_product = map_reduce(lambda c: [(c.product,)], data=product_cases, include_docs=True)
@@ -433,7 +442,7 @@ class CumulativeSalesAndConsumptionReport(GenericTabularReport, CommtrackReportM
                 'location_id': site._id,
             }))
             site_link = '<a href="%s">%s</a>' % (site_url, site.name)
-            data = [site_link, site.location_type]
+            data = [site_link, site.location_type, len(outlets)]
             for p in products:
                 tx_by_action = map_reduce(lambda tx: [(tx['action'], int(tx['value']))], data=tx_by_product.get(p['_id'], []))
                 subcases = cases_by_product.get(p['_id'], [])
@@ -447,7 +456,9 @@ class CumulativeSalesAndConsumptionReport(GenericTabularReport, CommtrackReportM
 
         return [summary_row(site,
                             reports_by_loc.get(site._id, []),
-                            product_cases_by_parent.get(site._id, [])) for site in locs]
+                            product_cases_by_parent.get(site._id, []),
+                            outlets_by_aggregation_site.get(site._id, []),
+                        ) for site in locs]
 
 class StockOutReport(GenericTabularReport, CommtrackReportMixin, DatespanMixin):
     name = 'Stock-out Report'
