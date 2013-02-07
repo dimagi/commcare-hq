@@ -3,6 +3,7 @@ from dimagi.utils.couch.delete import delete
 from dimagi.utils.couch.safe_index import safe_index
 from couchdbkit.ext.django.schema import DateTimeProperty, DocumentSchema
 from couchdbkit.exceptions import ResourceConflict
+import json
 
 LOCK_EXPIRATION = timedelta(hours = 1)
 
@@ -28,3 +29,17 @@ class LockableMixIn(DocumentSchema):
         assert self.lock_date is not None
         self.lock_date = None
         self.save()
+
+def LooselyEqualDocumentSchema(DocumentSchema):
+    """
+    A DocumentSchema that will pass equality and hash checks if its
+    contents are the same as another document.
+    """
+
+    def __eq__(self, other):
+        if isinstance(other, self.__class__):
+            return self._doc == other._doc
+
+    def __hash__(self, other):
+        hash(json.dumps(self._doc, sort_keys=True))
+
