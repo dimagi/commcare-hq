@@ -499,6 +499,11 @@ class CaseReminderHandler(Document):
         recipient = reminder.recipient
         iteration = 0
         reminder.error_retry_count = 0
+        
+        # Reset next_fire to its last scheduled fire time in case there were any error retries
+        if reminder.last_scheduled_fire_time is not None:
+            reminder.next_fire = reminder.last_scheduled_fire_time
+        
         while now >= reminder.next_fire and reminder.active:
             iteration += 1
             # If it is a callback reminder, check the callback_timeout_intervals
@@ -531,6 +536,9 @@ class CaseReminderHandler(Document):
             
             # Set whether or not the reminder should still be active
             reminder.active = self.get_active(reminder, reminder.next_fire, case)
+        
+        # Preserve the current next fire time since next_fire can be manipulated for error retries
+        reminder.last_scheduled_fire_time = reminder.next_fire
     
     def get_active(self, reminder, now, case):
         schedule_not_finished = not (self.max_iteration_count != REPEAT_SCHEDULE_INDEFINITELY and reminder.schedule_iteration_num > self.max_iteration_count)
@@ -828,6 +836,7 @@ class CaseReminder(Document, LockableMixIn):
     sample_id = StringProperty()
     xforms_session_ids = ListProperty(StringProperty)
     error_retry_count = IntegerProperty(default=0)
+    last_scheduled_fire_time = DateTimeProperty()
     
     @property
     def handler(self):
