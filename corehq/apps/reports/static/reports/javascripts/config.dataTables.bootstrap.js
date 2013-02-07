@@ -46,8 +46,8 @@ function HQReportDataTables(options) {
 
             if(self.ajaxSource) {
                 params.bServerSide = true;
+                params.bProcessing = true;
                 params.sAjaxSource = self.ajaxSource;
-                params.bSort = false;
                 params.bFilter = $(this).data('filter') || false;
                 params.fnServerParams = function ( aoData ) {
                     for (var p in self.ajaxParams) {

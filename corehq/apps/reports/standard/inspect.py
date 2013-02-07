@@ -243,7 +243,7 @@ class CaseListMixin(ProjectInspectionReportParamsMixin, GenericTabularReport, Pr
     ]
 
     case_filter = {}
-    
+
     @property
     @memoized
     def case_results(self):

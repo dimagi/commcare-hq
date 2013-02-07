@@ -99,12 +99,14 @@
     </div>
 </div>
 
+{% if admin %}
 <div class="container">
 <form class="well form-inline" method="post" action="{% url add_team org.name %}" style="margin-left: 150px;">
     <input type="text" placeholder="Team Name" id="id_team_name" name="team_name" />
     <button class="btn btn-success" type="submit">Create Team</button>
 </form>
 </div>
+{% endif %}
 {% endblock %}
 {% endblock %}
 

@@ -16,6 +16,7 @@ from corehq.apps.domain.decorators import require_superuser,\
     login_and_domain_required
 from corehq.apps.domain.utils import normalize_domain_name, get_domain_from_url
 from corehq.apps.hqwebapp.forms import EmailAuthenticationForm, CloudCareAuthenticationForm
+from corehq.apps.users.models import CouchUser
 from corehq.apps.users.util import format_username
 from dimagi.utils.logging import notify_exception
 
@@ -60,8 +61,11 @@ def not_found(request, template_name='404.html'):
 
 def redirect_to_default(req, domain=None):
     if not req.user.is_authenticated():
-        # this actually gets hijacked by the static site, but is necessary
-        url = reverse('corehq.apps.hqwebapp.views.landing_page')
+        if domain != None:
+            url = reverse('domain_login', args=[domain])
+        else:
+            # this actually gets hijacked by the static site, but is necessary
+            url = reverse('corehq.apps.hqwebapp.views.landing_page')
     else:
         if domain:
             domain = normalize_domain_name(domain)
@@ -228,7 +232,7 @@ def bug_report(req):
         'when',
         'message',
         'app_id',
-        )])
+    )])
 
     report['user_agent'] = req.META['HTTP_USER_AGENT']
     report['datetime'] = datetime.utcnow()
@@ -240,9 +244,17 @@ def bug_report(req):
     else:
         report['copy_url'] = None
 
+    try:
+        couch_user = CouchUser.get_by_username(report['username'])
+        full_name = couch_user.full_name
+    except Exception:
+        full_name = None
+    report['full_name'] = full_name
+
     subject = u'{subject} ({domain})'.format(**report)
     message = (
         u"username: {username}\n"
+        u"full name: {full_name}\n"
         u"domain: {domain}\n"
         u"url: {url}\n"
         u"copy url: {copy_url}\n"
@@ -253,8 +265,10 @@ def bug_report(req):
         u"{message}\n"
         ).format(**report)
 
-
-    reply_to = report['username']
+    if full_name and not any([c in full_name for c in '<>"']):
+        reply_to = '"{full_name}" <{username}>'.format(**report)
+    else:
+        reply_to = report['username']
 
     # if the person looks like a commcare user, fogbugz can't reply
     # to their email, so just use the default

@@ -182,8 +182,7 @@
     "default": "no",
     "values_txt": "When loose media mode is set to yes, CommCare will search for alternative media formats for any media that it cannot play. If CommCare attempts to play a file at jr://file/media/prompt_one.mp3 and mp3 files are not supported, the media directory will be searched for other files named prompt_one with alternative extensions which may be supported, for instance prompt_one.wav, and play that instead.",
     "since": "1.3"
-},
-{
+}, {
     "name": "Multimedia Validation",
     "description": "Whether CommCare should validate that all external multimedia is installed before letting the user run the app.",
     "id": "cc-content-valid",
@@ -192,4 +191,23 @@
     "default": "no",
     "values_txt": "If multimedia validation is enabled, CommCare will perform an additional check after installing your app to ensure that all of your multimedia is present on the phone before allowing the app to run. It is recommended for deployment, but will make your app unable to run if multimedia is enabled.",
     "since": "2.0"
+}, {
+    "name": "Unsent Form Limit",
+    "description": "Number of unsent forms on phone before triggering warning text",
+    "id": "unsent-number-limit",
+    "values": ["5", "10", "20", "40", "80", "160"],
+    "value_names": ["5", "10", "20", "40", "80", "160"],
+    "default": "5",
+    "values_txt": "When the phone has this number of unsynced forms stored locally CommCare will trigger a warning",
+    "since": "2.1"
+}, {
+    "name": "Unsynced Time Limit",
+    "description": "Days allowed without syncing before triggering a warning",
+    "id": "unsent-time-limit",
+    "values": ["1", "5", "7", "14", "30"],
+    "value_names": ["1 Day", "5 Days", "One Week", "Two Weeks", "One Month"],
+    "default": "5",
+    "requires": "{properties.server-tether}='sync'",
+    "values_txt": "When this many days have passed without the user syncing CommCare will trigger a warning",
+    "since": "2.1"
 }]

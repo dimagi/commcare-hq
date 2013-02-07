@@ -56,6 +56,7 @@ function HQMediaUploader(options) {
                         showSelectContainer(true);
                         $(self.uploadElem+' .hqm-upload-list').text('');
                         $(self.uploadElem+' .hqm-file_selected_only').addClass('hide');
+                        $(self.uploadElem+' .hqm-no_file_selected').removeClass('hide');
                     });
                 }
 
@@ -94,6 +95,7 @@ function HQMediaUploader(options) {
                         $(self.uploadElem+' .hqm-upload-list').html(output);
 
                         $(self.uploadElem+' .hqm-file_selected_only').removeClass('hide');
+                        $(self.uploadElem+' .hqm-no_file_selected').addClass('hide');
                         $(self.uploadElem+' .hqm-upload-form').removeClass('hide');
                         $(self.uploadElem+" .control-group").removeClass('success').removeClass('error');
                         $(self.uploadElem+' .control-group .hqm-status').text('');
@@ -105,6 +107,7 @@ function HQMediaUploader(options) {
                             showUploadButton(false);
                             showCancelButton(false);
                             $(self.uploadElem+' .hqm-file_selected_only').addClass('hide');
+                            $(self.uploadElem+' .hqm-no_file_selected').removeClass('hide');
                             return false;
                         });
                         showSelectContainer(false);
@@ -209,6 +212,7 @@ function HQMediaUploader(options) {
                 uploader.clearFileList();
                 if (self.singleFileUpload) {
                     $(self.uploadElem+' .hqm-file_selected_only').addClass('hide');
+                    $(self.uploadElem+' .hqm-no_file_selected').removeClass('hide');
                     $(self.uploadElem+' .control-group .hqm-status').text('')
                 }
             }

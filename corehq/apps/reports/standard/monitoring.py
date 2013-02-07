@@ -10,7 +10,7 @@ from corehq.apps.reports.standard import ProjectReportParametersMixin, \
 from corehq.apps.reports.filters.forms import CompletionOrSubmissionTimeFilter, FormsByApplicationFilter, SingleFormByApplicationFilter
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn, DTSortType, DataTablesColumnGroup
 from corehq.apps.reports.generic import GenericTabularReport
-from corehq.apps.reports.util import make_form_couch_key, friendly_timedelta
+from corehq.apps.reports.util import make_form_couch_key, friendly_timedelta, format_datatables_data
 from dimagi.utils.couch.database import get_db
 from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.parsing import json_format_datetime
@@ -439,12 +439,12 @@ class FormCompletionTimeReport(WorkerMonitoringReportTableBase, DatespanMixin):
         if self.selected_xmlns['xmlns'] is None:
             return DataTablesHeader(DataTablesColumn(_("No Form Selected"), sortable=False))
         return DataTablesHeader(DataTablesColumn(_("User")),
-            DataTablesColumn(_("Average")),
-            DataTablesColumn(_("Median")),
-            DataTablesColumn(_("Std. Dev.")),
-            DataTablesColumn(_("Shortest")),
-            DataTablesColumn(_("Longest")),
-            DataTablesColumn(_("No. of Forms")))
+            DataTablesColumn(_("Average"), sort_type=DTSortType.NUMERIC),
+            DataTablesColumn(_("Median"), sort_type=DTSortType.NUMERIC),
+            DataTablesColumn(_("Std. Dev."), sort_type=DTSortType.NUMERIC),
+            DataTablesColumn(_("Shortest"), sort_type=DTSortType.NUMERIC),
+            DataTablesColumn(_("Longest"), sort_type=DTSortType.NUMERIC),
+            DataTablesColumn(_("No. of Forms"), sort_type=DTSortType.NUMERIC))
 
     @property
     def rows(self):
@@ -461,17 +461,20 @@ class FormCompletionTimeReport(WorkerMonitoringReportTableBase, DatespanMixin):
             duration = datetime.timedelta(seconds=int((val_in_ms + 500)/1000))
             return friendly_timedelta(duration)
 
+        def _fmt(pretty_fn, val):
+            return format_datatables_data(pretty_fn(val), val)
+
         durations = []
         totalcount = 0
         for user in self.users:
             stats = self.get_user_data(user.get('user_id'))
             rows.append([self.get_user_link(user),
-                         stats['error_msg'] if stats['error_msg'] else to_minutes(stats['avg']),
-                         to_minutes(stats['med']),
-                         to_minutes(stats['std']),
-                         to_minutes(stats["min"]),
-                         to_minutes(stats["max"]),
-                         stats["count"]
+                         stats['error_msg'] if stats['error_msg'] else _fmt(to_minutes, stats['avg']),
+                         _fmt(to_minutes, stats['med']),
+                         _fmt(to_minutes, stats['std']),
+                         _fmt(to_minutes, stats["min"]),
+                         _fmt(to_minutes, stats["max"]),
+                         _fmt(lambda x: x, stats["count"])
             ])
             durations.extend(stats['durations'])
             totalcount += stats["count"]

@@ -664,7 +664,7 @@ class SurveySampleForm(Form):
             
             try:
                 worksheet = workbook.get_worksheet()
-            except IndexError:
+            except WorksheetNotFound:
                 raise ValidationError("Workbook has no worksheets.")
             
             contacts = []

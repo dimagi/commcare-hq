@@ -4,6 +4,14 @@ if (typeof cloudCare === 'undefined') {
 
 cloudCare.EMPTY = '---';
 
+var _caseListLoadError = function (response) {
+    hideLoadingCallback();
+    showError("Unable to load the case list. If you are using a filter " +
+              "expression please double check the syntax and try again. " +
+              "Please report an issue if this problem persists.",
+              $("#cloudcare-notifications"));
+};
+
 cloudCare.CASE_PROPERTY_MAP = {
     // IMPORTANT: if you edit this you probably want to also edit
     // the corresponding map in the app_manager
@@ -172,7 +180,10 @@ cloudCare.CaseListView = Backbone.View.extend({
         } else if (this.options.caseUrl) {
             this.caseList.setUrl(this.options.caseUrl);
             showLoading();
-            this.caseList.fetch({success: hideLoadingCallback});
+            this.caseList.fetch({
+                success: hideLoadingCallback,
+                error: _caseListLoadError
+            });
         }
     },
     render: function () {
@@ -326,7 +337,10 @@ cloudCare.CaseMainView = Backbone.View.extend({
     
     fetchCaseList: function () {
         showLoading();
-        this.listView.caseList.fetch({success: hideLoadingCallback});
+        this.listView.caseList.fetch({
+            success: hideLoadingCallback,
+            error: _caseListLoadError
+        });
     },
     
     render: function () {

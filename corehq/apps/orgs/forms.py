@@ -48,8 +48,8 @@ class InviteMemberForm(forms.Form):
         existing_member = CouchUser.get_by_username(data)
         if existing_member:
             org = Organization.get_by_name(self.org_name)
-            for id in org.members:
-                if id == existing_member.get_id:
+            for member in org.get_members():
+                if member.get_id == existing_member.get_id:
                     raise forms.ValidationError('User is already part of this organization!')
 
         return data
@@ -97,4 +97,3 @@ class UpdateOrgInfo(OrganizationRegistrationForm):
         # Value of 'kind' is irrelevant in this context
         super(UpdateOrgInfo, self).__init__(*args, **kwargs)
         del self.fields['org_name']
-        del self.fields['tos_confirmed']

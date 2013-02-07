@@ -374,24 +374,21 @@ class FormBase(DocumentSchema):
             'form': {"id": self.id if hasattr(self, 'id') else None, "name": self.name}
         }
 
-        errors_ = self.check_actions()
-        for error_ in errors_:
-            error_.update(meta)
-        errors.extend(errors_)
-
         try:
             _parse_xml(self.source)
         except XFormError as e:
             errors.append(dict(
                 type="invalid xml",
-                message=unicode(e),
+                message=unicode(e) if self.source else '',
                 **meta
             ))
         except ValueError:
             logging.error("Failed: _parse_xml(string=%r)" % self.source)
             raise
-
-
+        else:
+            for error in self.check_actions():
+                error.update(meta)
+                errors.append(error)
 
         if self.requires_case():
             needs_case_detail = True
@@ -1018,7 +1015,6 @@ class ApplicationBase(VersionedDoc, SnapshotMixin):
     # exchange properties
     cached_properties = DictProperty()
     description = StringProperty()
-    short_description = StringProperty()
     deployment_date = DateTimeProperty()
     phone_model = StringProperty()
     user_type = StringProperty()
@@ -1050,6 +1046,9 @@ class ApplicationBase(VersionedDoc, SnapshotMixin):
         if data.has_key('original_doc'):
             data['copy_history'] = [data.pop('original_doc')]
             should_save = True
+
+        # if description is empty, replace it with the short description if it exists
+        data["description"] = data.get("description", None) or data.get("short_description", None)
 
         self = super(ApplicationBase, cls).wrap(data)
         if not self.build_spec or self.build_spec.is_null():
@@ -1396,6 +1395,16 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
         if not data.get('build_langs'):
             data['build_langs'] = data['langs']
         return super(Application, cls).wrap(data)
+
+    def revert_to_copy(self, copy):
+        app = super(Application, self).revert_to_copy(copy)
+
+        for form in app.get_forms():
+            # reset the form's validation cache, since the form content is
+            # likely to have changed in the revert!
+            form.validation_cache = None
+
+        return app
 
     def register_pre_save(self, fn):
         if not hasattr(self, '_PRE_SAVE'):
@@ -1770,7 +1779,7 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
                 errors.append({'type': 'empty lang'})
 
         if not self.modules:
-            errors.append({"type": "no modules"})
+            errors.append({'type': "no modules"})
         for module in self.get_modules():
             if not module.forms:
                 errors.append({'type': "no forms", "module": {"id": module.id, "name": module.name}})

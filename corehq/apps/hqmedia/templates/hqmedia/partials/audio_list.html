@@ -1,0 +1,52 @@
+{% extends 'hqmedia/partials/media_list.html' %}
+{% load i18n %}
+{% block manage_item %}
+    <a data-bind="click: uploadNewAudio, uploadMediaButton: has_ref, uploadMediaButtonParams: {type: type, uid: uid}">{% trans 'Update' %}</a>
+    <div class="modal hide fade hqm-modal-audio" data-bind="uploadMediaModal: has_ref, uploadMediaModalParams: {type: type, uid: uid}">
+        <div class="modal-header">
+            <a class="close" data-dismiss="modal">&times;</a>
+            <h3>{% blocktrans %}<span class="upload-state">Upload</span> Audio{% endblocktrans %} <small data-bind="text: path"></small></h3>
+        </div>
+        <div class="modal-body form form-horizontal">
+            <div class="upload-form-placeholder"></div>
+
+            <div class="control-group">
+                <label class="control-label">{% trans "Search for related audio" %}</label>
+                <div class="controls">
+                    <form data-bind="submit: searchForAudio">
+                        <div class="control-group">
+                            <p><input type="text" name="q" placeholder="{% trans 'Search...' %}" data-bind="value: query" /></p>
+                            <button type="submit" class="btn">{% trans 'Search for shared audio' %}</button>
+                        </div>
+                    </form>
+                    <!-- ko if: searched -->
+                    <div class="well">
+                        <div data-bind="if: searching() > 0" style="text-align: center;">
+                            <img src="/static/formdesigner/images/ajax-loader.gif" />
+                        </div>
+                        <div data-bind="if: searching() == 0">
+                            <ul data-bind="foreach: audioOptions" class="thumbnails">
+                                <li class="span3">
+                                    <div class="thumbnail">
+                                        <div data-bind="previewHQAudioButton: url, HQAudioIsPlaying: $root.is_audio_playing, previewHQAudioParams: {uid: uid}"></div>
+                                        <div data-bind="foreach: tags">
+                                            <span class="label label-info" data-bind="text: $data"></span>
+                                        </div>
+                                        <h6 data-bind="text: license"></h6>
+                                        <a href="#" class="btn" data-bind="click: choose">{% trans 'Use this audio' %}</a>
+                                    </div>
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+                    <!-- /ko -->
+                </div>
+            </div>
+
+        </div>
+        <div class="modal-footer">
+            <a href="#" data-dismiss="modal" class="btn">{% trans 'Close' %}</a>
+        </div>
+    </div>
+{% endblock %}
+{% block preview_button %}<div data-bind="previewHQAudioButton: url, HQAudioIsPlaying: $root.is_audio_playing, previewHQAudioParams: {uid: uid}"></div>{% endblock %}

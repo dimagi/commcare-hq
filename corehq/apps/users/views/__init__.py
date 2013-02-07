@@ -25,7 +25,7 @@ from corehq.apps.domain.models import Domain
 from corehq.apps.users.decorators import require_permission
 from corehq.apps.users.forms import UserForm, ProjectSettingsForm
 from corehq.apps.users.models import CouchUser, CommCareUser, WebUser, \
-    RemoveWebUserRecord, UserRole, AdminUserRole, DomainInvitation
+    DomainRemovalRecord, UserRole, AdminUserRole, DomainInvitation, PublicUser
 from corehq.apps.domain.decorators import login_and_domain_required, require_superuser, domain_admin_required
 from corehq.apps.orgs.models import Team
 from corehq.apps.reports.util import get_possible_reports
@@ -61,10 +61,9 @@ def _users_context(request, domain):
     web_users = WebUser.by_domain(domain)
     teams = Team.get_by_domain(domain)
     for team in teams:
-        for member_id in team.member_ids:
-            team_user = WebUser.get(member_id)
-            if team_user.get_id not in [web_user.get_id for web_user in web_users]:
-                web_users.append(team_user)
+        for user in team.get_members():
+            if user.get_id not in [web_user.get_id for web_user in web_users]:
+                web_users.append(user)
 
     for user in [couch_user] + list(web_users):
         user.current_domain = domain
@@ -77,19 +76,21 @@ def _users_context(request, domain):
 
 @login_and_domain_required
 def users(request, domain):
-    redirect = _redirect_users_to(request, domain)
+    redirect = redirect_users_to(request, domain)
     if not redirect:
         raise Http404
     return HttpResponseRedirect(redirect)
 
-def _redirect_users_to(request, domain):
+def redirect_users_to(request, domain):
     redirect = None
-    user = CouchUser.get_by_user_id(request.couch_user._id, domain)
-    if user:
-        if user.has_permission(domain, 'edit_commcare_users'):
-            redirect = reverse("commcare_users", args=[domain])
-        else:
-            redirect = reverse("user_account", args=[domain, request.couch_user._id])
+    # good ol' public domain...
+    if not isinstance(request.couch_user, PublicUser):
+        user = CouchUser.get_by_user_id(request.couch_user._id, domain)
+        if user:
+            if user.has_permission(domain, 'edit_commcare_users'):
+                redirect = reverse("commcare_users", args=[domain])
+            else:
+                redirect = reverse("user_account", args=[domain, request.couch_user._id])
     return redirect
 
 @require_can_edit_web_users
@@ -129,7 +130,7 @@ def remove_web_user(request, domain, couch_user_id):
 
 @require_can_edit_web_users
 def undo_remove_web_user(request, domain, record_id):
-    record = RemoveWebUserRecord.get(record_id)
+    record = DomainRemovalRecord.get(record_id)
     record.undo()
     messages.success(request, 'You have successfully restored {username}.'.format(
         username=WebUser.get_by_user_id(record.user_id).username
@@ -424,7 +425,6 @@ def change_my_password(request, domain, template="users/change_my_password.html"
 
 
 def _handle_user_form(request, domain, couch_user=None):
-    from corehq.apps.reports.util import get_possible_reports
     context = {}
     if couch_user:
         create_user = False
@@ -476,7 +476,7 @@ def _handle_user_form(request, domain, couch_user=None):
                         initial = role.get_qualified_id()
                     form.initial['role'] = initial
                 else:
-                    form.initial['role'] = couch_user.get_role(domain).get_qualified_id() or ''
+                    form.initial['role'] = couch_user.get_role(domain, include_teams=False).get_qualified_id() or ''
 
     if not can_change_admin_status:
         del form.fields['role']
