@@ -400,7 +400,7 @@ class CumulativeSalesAndConsumptionReport(GenericTabularReport, CommtrackReportM
     @property
     @memoized
     def descendants(self):
-        return self.active_location.descendants if self.active_location else all_locations(self.domain)
+        return filter(lambda loc: loc.location_type == 'outlet', self.active_location.descendants if self.active_location else all_locations(self.domain))
 
     @property
     def headers(self):
@@ -410,7 +410,7 @@ class CumulativeSalesAndConsumptionReport(GenericTabularReport, CommtrackReportM
         cols = [
             DataTablesColumn('Location'),
             DataTablesColumn('Location Type'),
-            DataTablesColumn('# outlets'),
+            DataTablesColumn('# reporting outlets'),
         ]
         for p in self.active_products:
             cols.append(DataTablesColumn('Total Stock on Hand (%s)' % p['name']))
@@ -449,6 +449,9 @@ class CumulativeSalesAndConsumptionReport(GenericTabularReport, CommtrackReportM
             tx_by_product = map_reduce(lambda tx: [(tx['product'],)], data=all_transactions, include_docs=True)
             cases_by_product = map_reduce(lambda c: [(c.product,)], data=product_cases, include_docs=True)
 
+            num_outlets = len(outlets)
+            num_active_outlets = len(set(leaf_loc(r) for r in reports))
+
             # feels not DRY
             import urllib
             site_url = '%s?%s' % (self.get_url(self.domain), urllib.urlencode({
@@ -457,7 +460,11 @@ class CumulativeSalesAndConsumptionReport(GenericTabularReport, CommtrackReportM
                 'location_id': site._id,
             }))
             site_link = '<a href="%s">%s</a>' % (site_url, site.name)
-            data = [site_link, site.location_type, len(outlets)]
+            data = [
+                site_link,
+                site.location_type,
+                '%d of %d' % (num_active_outlets, num_outlets),
+            ]
             for p in products:
                 tx_by_action = map_reduce(lambda tx: [(tx['action'], int(tx['value']))], data=tx_by_product.get(p['_id'], []))
                 subcases = cases_by_product.get(p['_id'], [])
