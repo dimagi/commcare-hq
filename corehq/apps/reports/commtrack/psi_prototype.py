@@ -339,6 +339,13 @@ class SalesAndConsumptionReport(GenericTabularReport, CommtrackReportMixin, Date
         reports = get_stock_reports(self.domain, self.active_location, self.datespan)
         reports_by_loc = map_reduce(lambda e: [(leaf_loc(e),)], data=reports, include_docs=True)
 
+        mk_key = lambda dt: [self.domain, dateparse.json_format_datetime(dt), self.active_location._id if self.active_location else None]
+        all_product_states = get_db().view('commtrack/stock_product_state', startkey=mk_key(self.datespan.startdate), endkey=mk_key(self.datespan.end_of_end_day))
+        def _emit(o):
+            loc_id, prod_id, state = o['value']
+            yield ((loc_id, prod_id), state)
+        product_state_buckets = map_reduce(_emit, lambda v: sorted(v, key=lambda e: e['server_date']), data=all_product_states)
+
         def summary_row(site, reports):
             all_transactions = list(itertools.chain(*(get_transactions(r) for r in reports)))
             tx_by_product = map_reduce(lambda tx: [(tx['product'],)], data=all_transactions, include_docs=True)
@@ -349,12 +356,8 @@ class SalesAndConsumptionReport(GenericTabularReport, CommtrackReportMixin, Date
             for p in products:
                 tx_by_action = map_reduce(lambda tx: [(tx['action'], int(tx['value']))], data=tx_by_product.get(p['_id'], []))
 
-                startkey = [str(self.domain), site._id, p['_id'], dateparse.json_format_datetime(self.datespan.startdate)]
-                endkey =   [str(self.domain), site._id, p['_id'], dateparse.json_format_datetime(self.datespan.end_of_end_day)]
-
-                # list() is necessary or else get a weird error
-                product_states = list(get_db().view('commtrack/stock_product_state', startkey=startkey, endkey=endkey))
-                latest_state = product_states[-1]['value'] if product_states else None
+                product_states = product_state_buckets.get((site._id, p['_id']), [])
+                latest_state = product_states[-1] if product_states else None
                 if latest_state:
                     stock = latest_state['updated_unknown_properties']['current_stock']
                     as_of = dateparse.string_to_datetime(latest_state['server_date']).strftime('%Y-%m-%d')
@@ -362,11 +365,10 @@ class SalesAndConsumptionReport(GenericTabularReport, CommtrackReportMixin, Date
 
                 stockout_dates = set()
                 for state in product_states:
-                    doc = state['value']
-                    stocked_out_since = doc['updated_unknown_properties']['stocked_out_since']
+                    stocked_out_since = state['updated_unknown_properties']['stocked_out_since']
                     if stocked_out_since:
                         so_start = max(dateparse.string_to_datetime(stocked_out_since).date(), self.datespan.startdate.date())
-                        so_end = dateparse.string_to_datetime(doc['server_date']).date() # TODO deal with time zone issues
+                        so_end = dateparse.string_to_datetime(state['server_date']).date() # TODO deal with time zone issues
                         dt = so_start
                         while dt < so_end:
                             stockout_dates.add(dt)
