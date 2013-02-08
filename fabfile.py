@@ -403,7 +403,7 @@ def update_code(preindex=False):
         sudo('git submodule sync', user=env.sudo_user)
         sudo('git submodule update --init --recursive', user=env.sudo_user)
         # remove all .pyc files in the project
-        sudo("find . -name '*.pyc' -delete")
+        sudo("find . -name '*.pyc' -delete", user=env.sudo_user)
 
 @roles('pg', 'django_monolith')
 def mail_admins(subject, message):
