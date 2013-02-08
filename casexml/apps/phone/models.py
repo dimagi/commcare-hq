@@ -202,7 +202,7 @@ class SyncLog(Document, UnicodeMixIn, ConfigurableAssertionMixin):
                             case_state = self.get_case_state(case.get_id)
                         else:
                             self._assert(self.phone_has_dependent_case(case._id),
-                                    "phone doesn't have referenced case" % case._id)
+                                         "phone doesn't have referenced case: %s" % case._id)
                             case_state = self.get_dependent_case_state(case.get_id)
                         # reconcile indices
                         case_state.update_indices(action.indices)
