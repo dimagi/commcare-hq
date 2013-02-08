@@ -578,7 +578,11 @@ class CaseReminderHandler(Document):
         verified_numbers = {}
         for r in recipients:
             try:
-                verified_number = r.get_verified_number()
+                contact_verified_numbers = r.get_verified_numbers(False)
+                if len(contact_verified_numbers) > 0:
+                    verified_number = sorted(contact_verified_numbers.iteritems())[0][1]
+                else:
+                    verified_number = None
             except Exception:
                 verified_number = None
             verified_numbers[r.get_id] = verified_number
