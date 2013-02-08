@@ -17,7 +17,6 @@ Server layout:
 """
 import uuid
 from fabric.context_managers import settings, cd
-from fabric.decorators import hosts
 from fabric.operations import require, local, prompt
 
 import os, sys
@@ -403,6 +402,8 @@ def update_code(preindex=False):
         sudo('git pull', user=env.sudo_user)
         sudo('git submodule sync', user=env.sudo_user)
         sudo('git submodule update --init --recursive', user=env.sudo_user)
+        # remove all .pyc files in the project
+        sudo("find . -name '*.pyc' -delete")
 
 @roles('pg', 'django_monolith')
 def mail_admins(subject, message):
