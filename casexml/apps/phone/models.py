@@ -101,7 +101,7 @@ class SyncLog(Document, UnicodeMixIn, ConfigurableAssertionMixin):
 
     @classmethod
     def wrap(cls, data):
-        ret = cls.wrap(data)
+        ret = super(SyncLog, cls).wrap(data)
         if hasattr(ret, 'has_assert_errors'):
             ret.strict = False
         return ret
