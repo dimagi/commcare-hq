@@ -1,7 +1,7 @@
 from django.test import TestCase
 from casexml.apps.case.models import CommCareCase, CommCareCaseAction
 from datetime import datetime, timedelta
-from copy import copy
+from copy import copy, deepcopy
 from casexml.apps.case.tests.util import post_util
 
 class CaseRebuildTest(TestCase):
@@ -89,7 +89,7 @@ class CaseRebuildTest(TestCase):
         for i, a in enumerate(case.actions):
             a.server_date = now + timedelta(seconds=i)
 
-        original_actions = [copy(a) for a in case.actions]
+        original_actions = [deepcopy(a) for a in case.actions]
         self._assertListEqual(original_actions, case.actions)
 
         # test reordering
@@ -105,3 +105,18 @@ class CaseRebuildTest(TestCase):
         case.reconcile_actions()
         self._assertListEqual(original_actions, case.actions)
 
+        # test duplication, even when dates are off
+        case.actions = original_actions + [deepcopy(case.actions[2])]
+        case.actions[-1].server_date = case.actions[-1].server_date + timedelta(seconds=1)
+        self._assertListNotEqual(original_actions, case.actions)
+        case.reconcile_actions()
+        self._assertListEqual(original_actions, case.actions)
+
+        # test duplication with different properties is actually
+        # treated differently
+        case.actions = original_actions + [deepcopy(case.actions[2])]
+        case.actions[-1].updated_unknown_properties['new'] = 'mismatch'
+        self.assertEqual(4, len(case.actions))
+        self._assertListNotEqual(original_actions, case.actions)
+        case.reconcile_actions()
+        self._assertListNotEqual(original_actions, case.actions)
