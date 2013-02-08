@@ -231,9 +231,6 @@ def annotate_csv(data, columns):
     return f.getvalue()
 
 def import_locations(domain, f):
-    config = CommtrackConfig.for_domain(domain)
-    known_loc_types = config.known_supply_point_types
-
     r = csv.DictReader(f)
     data = list(r)
 
@@ -248,13 +245,10 @@ def import_locations(domain, f):
     property_fields = fields[len(hierarchy_fields):]
 
     for loc in data:
-        for m in import_location(domain, loc, hierarchy_fields, property_fields, known_loc_types):
+        for m in import_location(domain, loc, hierarchy_fields, property_fields):
             yield m
 
-def import_location(domain, loc_row, hierarchy_fields, property_fields, known_loc_types):
-    def _loc(*args, **kwargs):
-        return make_loc(domain, *args, **kwargs)
-
+def import_location(domain, loc_row, hierarchy_fields, property_fields):
     def get_by_name(loc_name, loc_type, parent):
         # TODO: could cache the results of this for speed
         existing = Location.filter_by_type(domain, loc_type, parent)
@@ -320,12 +314,10 @@ def import_location(domain, loc_row, hierarchy_fields, property_fields, known_lo
 
         parent = child
 
-# TODO proper relationship checking
-
-
 
 # TODO i think the parent param will not be necessary once the TODO in LocationForm.__init__ is done
 def make_form(domain, parent, data):
+    """simulate a POST payload from the location create/edit page"""
     location = Location(domain=domain, parent=parent)
     def make_payload(k, v):
         if hasattr(k, '__iter__'):
@@ -337,7 +329,3 @@ def make_form(domain, parent, data):
     payload = dict(make_payload(k, v) for k, v in data.iteritems())
     return LocationForm(location, payload)
 
-def make_loc(domain, *args, **kwargs):
-    loc = Location(domain=domain, *args, **kwargs)
-    loc.save()
-    return loc
