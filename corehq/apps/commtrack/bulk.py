@@ -273,18 +273,19 @@ def import_location(domain, loc_row, hierarchy_fields, property_fields, known_lo
     if 'outlet_code' in property_fields:
         properties['site_code'] = properties['outlet_code']
         del properties['outlet_code']
-    terminal_type = hierarchy_fields[-1]
+    terminal_type = hierarchy[-1][0]
 
     # create parent hierarchy if it does not exist
     parent = None
     for loc_type, loc_name in hierarchy:
+        row_name = '%s %s' % (parent.name, parent.location_type) if parent else '-root-'
+
         # are we at the leaf loc?
         is_terminal = (loc_type == terminal_type)
 
         if not loc_name:
             # name is empty; this level of hierarchy is skipped
             if is_terminal and any(properties.values()):
-                row_name = '%s %s' % (parent.name, parent.location_type) if parent else '-root-'
                 yield 'warning: %s properties specified on row that won\'t create a %s! (%s)' % (terminal_type, terminal_type, row_name)
             continue
 
@@ -293,6 +294,10 @@ def import_location(domain, loc_row, hierarchy_fields, property_fields, known_lo
             if is_terminal:
                 yield '%s %s exists; skipping...' % (loc_type, loc_name)
         else:
+            if loc_type not in allowed_child_types(domain, parent):
+                yield 'error: %s %s cannot be child of %s' % (loc_type, loc_name, row_name)
+                return
+
             data = {
                 'name': loc_name,
                 'location_type': loc_type,
@@ -306,7 +311,8 @@ def import_location(domain, loc_row, hierarchy_fields, property_fields, known_lo
                 child = form.save()
                 yield 'created %s %s' % (loc_type, loc_name)
             else:
-                forms = [form] + form.sub_forms.values()
+                # TODO move this to LocationForm somehow
+                forms = filter(None, [form, form.sub_forms.get(loc_type)])
                 for k, v in itertools.chain(*(f.errors.iteritems() for f in forms)):
                     if k != '__all__':
                         yield 'error in %s %s; %s: %s' % (loc_type, loc_name, k, v)
