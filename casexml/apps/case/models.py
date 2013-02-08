@@ -525,6 +525,7 @@ class CommCareCase(CaseBase, IndexHoldingMixIn, ComputedDocumentMixin):
                 a1doc = copy(a1._doc)
                 a2doc = copy(a2._doc)
                 a2doc['server_date'] = a1doc['server_date']
+                a2doc['date'] = a1doc['date']
                 return a1doc == a2doc
 
             ret = []

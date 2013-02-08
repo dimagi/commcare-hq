@@ -69,7 +69,7 @@ class ConfigurableAssertionMixin(object):
             assert conditional, msg
         elif not conditional:
             logging.warn("assertion failed: %s" % msg)
-
+            self.has_assert_errors = True
 
 class SyncLog(Document, UnicodeMixIn, ConfigurableAssertionMixin):
     """
@@ -96,8 +96,15 @@ class SyncLog(Document, UnicodeMixIn, ConfigurableAssertionMixin):
 
     # The owner ids property keeps track of what ids the phone thinks it's the owner
     # of. This typically includes the user id, as well as all groups that that user
-    # is a member of. 
+    # is a member of.
     owner_ids_on_phone = StringListProperty()
+
+    @classmethod
+    def wrap(cls, data):
+        ret = super(SyncLog, cls).wrap(data)
+        if hasattr(ret, 'has_assert_errors'):
+            ret.strict = False
+        return ret
 
     @classmethod
     def last_for_user(cls, user_id):

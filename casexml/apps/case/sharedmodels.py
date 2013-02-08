@@ -1,11 +1,12 @@
 from couchdbkit.ext.django.schema import *
 from dimagi.utils.mixins import UnicodeMixIn
+from dimagi.utils.couch import LooselyEqualDocumentSchema
 
 """
 Shared models live here to avoid cyclical import issues
 """
 
-class CommCareCaseIndex(DocumentSchema, UnicodeMixIn):
+class CommCareCaseIndex(LooselyEqualDocumentSchema, UnicodeMixIn):
     """
     In CaseXML v2 we support indices, which link a case to other cases.
     """
