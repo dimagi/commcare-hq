@@ -1,5 +1,5 @@
 # needed to build gevent from source
-Cython==0.17.4
+#Cython==0.17.4
 
 restkit==4.2.0
 couchdbkit==0.5.7
@@ -41,7 +41,8 @@ xlrd==0.7.3
 simplejson==2.6.1
 GitPython==0.3.2.RC1
 gitdb==0.5.4
--e git+git://github.com/SiteSupport/gevent.git@1.0rc2#egg=gevent
+#-e git+git://github.com/SiteSupport/gevent.git@1.0rc2#egg=gevent
+gevent==0.13.8
 rawes==0.3.6
 numpy==1.6.2
 socketpool==0.5.2
