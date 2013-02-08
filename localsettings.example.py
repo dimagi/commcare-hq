@@ -6,12 +6,15 @@ DATABASES = {
         'ENGINE': 'django.db.backends.postgresql_psycopg2',
         'NAME': 'commcarehq',
         'USER': 'postgres',
-        'PASSWORD': '******'
+        'PASSWORD': '******',
+        'HOST': 'localhost',
+        'PORT': '5432'
     }
 }
 
 ####### Couch Config ######
-COUCH_SERVER_ROOT = '127.0.0.1:5984'
+COUCH_HTTPS = True #recommended production value if enabling https
+COUCH_SERVER_ROOT = '127.0.0.1:5984' #6984 for https couch
 COUCH_USERNAME = 'admin'
 COUCH_PASSWORD = '********'
 COUCH_DATABASE_NAME = 'commcarehq'
@@ -22,6 +25,9 @@ EMAIL_LOGIN = "notifications@dimagi.com"
 EMAIL_PASSWORD = "******"
 EMAIL_SMTP_HOST = "smtp.gmail.com"
 EMAIL_SMTP_PORT = 587
+
+# Print emails to console so there is no danger of spamming, but you can still get registration URLs
+EMAIL_BACKEND='django.core.mail.backends.console.EmailBackend'
 
 ADMINS = (('HQ Dev Team', 'commcarehq-dev+www-notifications@dimagi.com'),)
 BUG_REPORT_RECIPIENTS = ['commcarehq-support@dimagi.com']
@@ -77,14 +83,6 @@ UNICEL_CONFIG = {"username": "Dimagi",
                  "password": "******",
                  "sender": "Promo" }
 
-####### Custom reports ########
-
-CUSTOM_REPORT_MAP = {
-    "domain_name": [
-        'path.to.CustomReport',
-    ]
-}
-
 ####### Domain sync / de-id ########
 
 DOMAIN_SYNCS = { 
@@ -99,6 +97,8 @@ DOMAIN_SYNC_APP_NAME_MAP = { "app_name": "new_app_name" }
 
 XFORMS_PLAYER_URL = 'http://127.0.0.1:4444'
 
+# email and password for an admin django user, such as one created with
+# ./manage.py bootstrap <project-name> <email> <password>
 TOUCHFORMS_API_USER = 'admin@example.com'
 TOUCHFORMS_API_PASSWORD = 'password'
 

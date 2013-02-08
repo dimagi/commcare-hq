@@ -17,6 +17,7 @@ django-tastypie==0.9.11
 djtables==0.1.1
 egenix-mx-base==3.2.5
 eulxml==0.18.0
+gunicorn==0.15.0
 lxml==2.3
 mock==0.8.0
 mocker==1.1

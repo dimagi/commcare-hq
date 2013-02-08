@@ -110,6 +110,7 @@ def staging():
     env.db = '%s_%s' % (env.project, env.environment)
     _setup_path()
     env.user = prompt("Username: ", default='dimagivm')
+    env.es_endpoint = 'localhost'
 
 @task
 def india():
@@ -117,12 +118,10 @@ def india():
     env.home = '/home/commcarehq/'
     env.root = root = '/home/commcarehq'
     env.environment = 'india'
-    env.log_root   = posixpath.join(root, 'log')
     env.code_branch = 'master'
     env.sudo_user = 'commcarehq'
     env.hosts = ['220.226.209.82']
     env.user = prompt("Username: ", default=env.user)
-    env.service_manager = "supervisor"
     env.server_port = '8001'
 
     _setup_path()
@@ -148,6 +147,7 @@ def india():
     }
     env.jython_home = '/usr/local/lib/jython'
     env.roles = ['django_monolith']
+    env.es_endpoint = 'localhost'
 
 @task
 def production():
@@ -184,12 +184,54 @@ def production():
     env.host_os_map = None # e.g. 'ubuntu' or 'redhat'.  Gets autopopulated by what_os() if you don't know what it is or don't want to specify.
     env.db = '%s_%s' % (env.project, env.environment)
     env.roles = ['deploy', ]
+    env.es_endpoint = 'hqes0.internal.commcarehq.org'''
+
+    env.jython_home = '/usr/local/lib/jython'
+    _setup_path()
+
+@task
+def realstaging():
+    """ use production environment on remote host"""
+    env.code_branch = 'pact-dev'
+    env.sudo_user = 'cchq'
+    env.environment = 'staging'
+    env.server_port = '9010'
+
+    #env.hosts = None
+    env.roledefs = {
+        'couch': ['hqdb-staging.internal.commcarehq.org'],
+        'pg': ['hqdb-staging.internal.commcarehq.org'],
+        'rabbitmq': ['hqdb-staging.internal.commcarehq.org'],
+        'sofabed': ['hqdb-staging.internal.commcarehq.org'], #todo, right now group it with celery
+        'django_celery': ['hqdb-staging.internal.commcarehq.org'],
+        'django_app': ['hqdjango0-staging.internal.commcarehq.org','hqdjango1-staging.internal.commcarehq.org'],
+        'django_public': ['hqdjango0-staging.internal.commcarehq.org',],
+        'django_pillowtop': ['hqdb-staging.internal.commcarehq.org'],
+
+        'remote_es': ['hqdb-staging.internal.commcarehq.org','hqdjango0-staging.internal.commcarehq.org',],
+
+        'formsplayer': ['hqdjango1-staging.internal.commcarehq.org'],
+        'lb': [], #todo on apache level config
+        'staticfiles': ['hqproxy0.internal.commcarehq.org'],
+        'deploy': ['hqdb-staging.internal.commcarehq.org'], #this is a stub becuaue we don't want to be prompted for a host or run deploy too many times
+        'django_monolith': [] # fab complains if this doesn't exist
+    }
+
+    env.es_endpoint = 'hqdjango1-staging.internal.commcarehq.org'''
+
+    env.server_name = 'commcare-hq-staging'
+    env.settings = '%(project)s.localsettings' % env
+    env.host_os_map = None # e.g. 'ubuntu' or 'redhat'.  Gets autopopulated by what_os() if you don't know what it is or don't want to specify.
+    env.db = '%s_%s' % (env.project, env.environment)
+    env.roles = ['deploy', ]
 
     env.jython_home = '/usr/local/lib/jython'
     _setup_path()
     
+    
 
 @task
+@roles('django_app','django_celery','staticfiles')
 def install_packages():
     """Install packages, given a list of package names"""
     require('environment', provided_by=('staging', 'production'))
@@ -229,7 +271,7 @@ def upgrade_packages():
 def what_os():
     with settings(warn_only=True):
         require('environment', provided_by=('staging','production'))
-        if env.host_os_map is None:
+        if getattr(env, 'host_os_map', None) is None:
             #prior use case of setting a env.remote_os did not work when doing multiple hosts with different os! Need to keep state per host!
             env.host_os_map = defaultdict(lambda: '')
         if env.host_os_map[env.host_string] == '':
@@ -277,28 +319,49 @@ def create_db():
 
 
 @task
+@parallel
 def bootstrap():
     """Initialize remote host environment (virtualenv, deploy, update) """
     require('root', provided_by=('staging', 'production'))
     sudo('mkdir -p %(root)s' % env, shell=False, user=env.sudo_user)
     execute(clone_repo)
+    
+    # copy localsettings in case any management commands we want to run now
+    # would error otherwise
+    with cd(env.code_root):
+        sudo('cp -n localsettings.example.py localsettings.py')
+    with cd(env.code_root_preindex):
+        sudo('cp -n localsettings.example.py localsettings.py')
+
     update_code()
-    execute(create_virtualenv)
-    execute(update_env)
+    execute(create_virtualenvs)
+    execute(update_virtualenv)
     execute(setup_dirs)
-    execute(generate_supervisorconf_file)
-    execute(fix_locale_perms)
+    execute(update_apache_conf)
+    #execute(fix_locale_perms)
+
+@task
+def unbootstrap():
+    """Delete cloned repos and virtualenvs"""
+
+    require('code_root', 'code_root_preindex', 'virtualenv_root',
+            'virtualenv_root_preindex')
+    
+    with settings(warn_only=True):
+        sudo(('rm -rf %(virtualenv_root)s %(virtualenv_root_preindex)s'
+              '%(code_root)s %(code_root_preindex)s') % env, user=env.sudo_user)
 
 
 #@parallel
 @roles('django_celery', 'django_app', 'staticfiles', 'django_monolith') #'django_public','formsplayer'
-def create_virtualenv():
+def create_virtualenvs():
     """ setup virtualenv on remote host """
-    require('virtualenv_root', provided_by=('staging', 'production', 'india'))
-    with settings(warn_only=True):
-        sudo('rm -rf %(virtualenv_root)s' % env, user=env.sudo_user)
-    args = '--clear --distribute --no-site-packages'
-    sudo('virtualenv %s %s' % (args, env.virtualenv_root), user=env.sudo_user)
+    require('virtualenv_root', 'virtualenv_root_preindex', 
+            provided_by=('staging', 'production', 'india'))
+    
+    args = '--distribute --no-site-packages'
+    sudo('cd && virtualenv %s %s' % (args, env.virtualenv_root), user=env.sudo_user, shell=True)
+    sudo('cd && virtualenv %s %s' % (args, env.virtualenv_root_preindex), user=env.sudo_user, shell=True)
 
 
 #@parallel
@@ -307,10 +370,12 @@ def clone_repo():
     """ clone a new copy of the git repository """
     with settings(warn_only=True):
         with cd(env.root):
-            if not files.exists(env.code_root):
+            exists_results = sudo('ls -d %(code_root)s' % env, user=env.sudo_user)
+            if exists_results.strip() != env['code_root']:
                 sudo('git clone %(code_repo)s %(code_root)s' % env, user=env.sudo_user)
-            with cd(env.code_root):
-                sudo('git submodule init', user=env.sudo_user)
+            
+            if not files.exists(env.code_root_preindex):
+                sudo('git clone %(code_repo)s %(code_root_preindex)s' % env, user=env.sudo_user)
 
 
 @task
@@ -319,7 +384,7 @@ def preindex_views():
     with cd(env.code_root_preindex):
         #update the codebase of the preindex dir...
         update_code(preindex=True)
-        update_env(preindex=True) #no update to env - the actual deploy will do - this may break if a new dependency is introduced in preindex
+        update_virtualenv(preindex=True) #no update to env - the actual deploy will do - this may break if a new dependency is introduced in preindex
 
         sudo('echo "%(virtualenv_root_preindex)s/bin/python %(code_root_preindex)s/manage.py \
              sync_prepare_couchdb_multi 8 %(user)s" | at -t `date -d "5 seconds" \
@@ -339,6 +404,14 @@ def update_code(preindex=False):
         sudo('git submodule sync', user=env.sudo_user)
         sudo('git submodule update --init --recursive', user=env.sudo_user)
 
+@roles('pg', 'django_monolith')
+def mail_admins(subject, message):
+    with cd(env.code_root):
+        sudo('%(virtualenv_root)s/bin/python manage.py mail_admins --subject "%(subject)s" "%(message)s"' % \
+                {'virtualenv_root': env.virtualenv_root,
+                 'subject':subject,
+                 'message':message },
+             user=env.sudo_user)
 
 @task
 def deploy():
@@ -352,29 +425,35 @@ def deploy():
 
     try:
         execute(update_code)
-        execute(update_env)
+        execute(update_virtualenv)
         execute(clear_services_dir)
         upload_and_set_supervisor_config()
         execute(migrate)
         execute(_do_collectstatic)
         execute(version_static)
+    except Exception:
+        execute(mail_admins, "Deploy failed", "You had better check the logs.")
+        raise
+    else:
+        execute(mail_admins, "Deploy successful", "Cheers.")
     finally:
         # hopefully bring the server back to life if anything goes wrong
         execute(services_restart)
 
 
+
 @task
 @roles('django_app','django_celery','staticfiles', 'django_public', 'django_monolith')#,'formsplayer')
 @parallel
-def update_env(preindex=False):
+def update_virtualenv(preindex=False):
     """ update external dependencies on remote host assumes you've done a code update"""
     require('code_root', provided_by=('staging', 'production', 'india'))
     if preindex:
         root_to_use = env.code_root_preindex
-	env_to_use = env.virtualenv_root_preindex
+        env_to_use = env.virtualenv_root_preindex
     else:
         root_to_use = env.code_root
-	env_to_use = env.virtualenv_root
+        env_to_use = env.virtualenv_root
     requirements = posixpath.join(env.code_root, 'requirements')
     with cd(root_to_use):
         cmd = ['%s/bin/pip install' % env_to_use]
@@ -385,8 +464,8 @@ def update_env(preindex=False):
 
 @roles('lb')
 def touch_apache():
-    """Touch apache and supervisor conf files to trigger reload. Also calls supervisorctl update
-    to load latest supervisor.conf """
+    """Touch apache conf files to trigger reload."""
+
     require('code_root', provided_by=('staging', 'production'))
     apache_path = posixpath.join(posixpath.join(env.services, 'apache'), 'apache.conf')
     sudo('touch %s' % apache_path, user=env.sudo_user)
@@ -395,8 +474,11 @@ def touch_apache():
 
 @roles('django_celery', 'django_app', 'django_monolith')
 def touch_supervisor():
-    """ touch apache and supervisor conf files to trigger reload. Also calls supervisorctl update
-     to load latest supervisor.conf """
+    """
+    touch supervisor conf files to trigger reload. Also calls supervisorctl
+    update to load latest supervisor.conf
+    
+    """
     require('code_root', provided_by=('staging', 'production'))
     supervisor_path = posixpath.join(posixpath.join(env.services, 'supervisor'), 'supervisor.conf')
     sudo('touch %s' % supervisor_path, user=env.sudo_user)
@@ -535,7 +617,7 @@ def fix_locale_perms():
     """ Fix the permissions on the locale directory """
     require('root', provided_by=('staging', 'production'))
     _set_apache_user()
-    locale_dir = '%s/commcare-hq/locale/' % env.code_root
+    locale_dir = '%s/locale/' % env.code_root
     sudo('chown -R %s %s' % (env.sudo_user, locale_dir), user=env.sudo_user)
     sudo('chgrp -R %s %s' % (env.apache_user, locale_dir), user=env.sudo_user)
     sudo('chmod -R g+w %s' % (locale_dir), user=env.sudo_user)
@@ -554,7 +636,6 @@ def _upload_supervisor_conf_file(filename):
     upload_dict["template"] = posixpath.join(os.path.dirname(__file__), 'services', 'templates', filename)
     upload_dict["destination"] = '/tmp/%s.blah' % filename
     upload_dict["enabled"] =  posixpath.join(env.services, u'supervisor/%s' % filename)
-    upload_dict["main_supervisor_conf_dir"] = '/etc'
 
     files.upload_template(upload_dict["template"], upload_dict["destination"], context=env, use_sudo=False)
     sudo('chown -R %s %s' % (env.sudo_user, upload_dict["destination"]), shell=False)
@@ -565,7 +646,11 @@ def _upload_supervisor_conf_file(filename):
 @roles('django_celery', 'django_monolith')
 def upload_celery_supervisorconf():
     _upload_supervisor_conf_file('supervisor_celery.conf')
-    _upload_supervisor_conf_file('supervisor_celerybeat.conf')
+
+    #hacky hack to not
+    #have staging environments send out reminders
+    if env.environment not in ['staging', 'realstaging']:
+        _upload_supervisor_conf_file('supervisor_celerybeat.conf')
     _upload_supervisor_conf_file('supervisor_celerymon.conf')
     _upload_supervisor_conf_file('supervisor_couchdb_lucene.conf') #to be deprecated
 
@@ -606,21 +691,8 @@ def upload_and_set_supervisor_config():
     execute(upload_elasticsearch_supervisorconf)
     execute(upload_django_public_supervisorconf)
     execute(upload_formsplayer_supervisorconf)
-    #generate_supervisorconf_file()
 
-def generate_supervisorconf_file():
-    #regenerate a brand new supervisor conf file from scratch.
-    #Set the line in the supervisord config file that points to our project's supervisor directory with conf files
-    replace_dict = {}
-    replace_dict["main_supervisor_conf_dir"] = '/etc'
-    replace_dict["tmp"] = posixpath.join('/','tmp', "supervisord_%s.tmp" % uuid.uuid4().hex)
 
-    #create brand new one
-    sudo("echo_supervisord_conf > %(tmp)s" % replace_dict)
-    files.uncomment(replace_dict['tmp'], "^;\[include\]", use_sudo=True, char=';')
-    files.sed(replace_dict["tmp"], ";files = relative/directory/\*\.ini", "files = %s/supervisor/*.conf" % env.services, use_sudo=True)
-    #sudo('mv -f %(tmp)s %(main_supervisor_conf_dir)s/supervisord.conf' % replace_dict)
-    sudo('cp -f %(tmp)s %(main_supervisor_conf_dir)s/supervisord.conf' % replace_dict)
 
 def _supervisor_command(command):
     require('hosts', provided_by=('staging', 'production'))
@@ -629,6 +701,22 @@ def _supervisor_command(command):
     #elif what_os() == 'ubuntu':
         #cmd_exec = "/usr/local/bin/supervisorctl"
     sudo('supervisorctl %s' % (command), shell=False)
+
+def update_apache_conf():
+    require('code_root', 'server_port')
+
+    with cd(env.code_root):
+        tmp = posixpath.join('/', 'tmp', 'cchq_%s' % uuid.uuid4().hex)
+        sudo('%s/bin/python manage.py mkapacheconf %s > %s'
+              % (env.virtualenv_root, env.server_port, tmp))
+        #sudo('cp -f %s /etc/apache2/sites-available/cchq' % tmp)
+
+    with settings(warn_only=True):
+        sudo('a2dissite 000-default')
+
+    sudo('a2enmod proxy_http')
+    sudo('a2ensite cchq')
+
 
 
 # tests
