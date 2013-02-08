@@ -462,7 +462,9 @@ class CumulativeSalesAndConsumptionReport(GenericTabularReport, CommtrackReportM
             cases_by_product = map_reduce(lambda c: [(c.product,)], data=product_cases, include_docs=True)
 
             num_outlets = len(outlets)
-            num_active_outlets = len(set(leaf_loc(r) for r in reports))
+            product_ids = set(p['_id'] for p in products)
+            relevant_reports = [r for r in reports if any(tx['product'] in product_ids for tx in get_transactions(r))]
+            num_active_outlets = len(set(leaf_loc(r) for r in relevant_reports))
 
             # feels not DRY
             import urllib
