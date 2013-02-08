@@ -90,6 +90,11 @@ class CommtrackReportMixin(ProjectReport, ProjectReportParametersMixin):
         else:
             return filter(lambda p: p['_id'] in selected, products)
 
+    @property
+    @memoized
+    def aggregate_by(self):
+        return self.request.GET.get('agg_type')
+
     # a setting that hides supply points that have no data. mostly for PSI weirdness
     # of how they're managing their locations. don't think it's a good idea for
     # commtrack in general
@@ -388,11 +393,10 @@ class CumulativeSalesAndConsumptionReport(GenericTabularReport, CommtrackReportM
     fields = ['corehq.apps.reports.fields.DatespanField',
               'corehq.apps.reports.commtrack.fields.SupplyPointTypeField',
               'corehq.apps.reports.commtrack.fields.ProductField',
-              'corehq.apps.reports.fields.AsyncLocationField']
+              'corehq.apps.reports.fields.AsyncLocationField',
+              'corehq.apps.reports.commtrack.fields.LocationTypeField']
     exportable = True
     emailable = True
-
-    agg_type = 'block'
 
     # TODO support aggregation by 'N-levels down' (the locations at which might have varying loc types) as well as by subloc type?
 
@@ -403,7 +407,7 @@ class CumulativeSalesAndConsumptionReport(GenericTabularReport, CommtrackReportM
 
     @property
     def aggregation_locs(self):
-        return self._descendants(self.agg_type)
+        return self._descendants(self.aggregate_by)
 
     @property
     def leaf_locs(self):
@@ -412,7 +416,7 @@ class CumulativeSalesAndConsumptionReport(GenericTabularReport, CommtrackReportM
     @property
     @memoized
     def metadata(self):
-        return [f for f in LOC_METADATA if f.get('anc_type', 'outlet') == self.agg_type]
+        return [f for f in LOC_METADATA if f.get('anc_type', 'outlet') == self.aggregate_by]
 
     @property
     def headers(self):
@@ -435,7 +439,7 @@ class CumulativeSalesAndConsumptionReport(GenericTabularReport, CommtrackReportM
     @property
     def rows(self):
         if not self.aggregation_locs:
-            return [['There are no locations of type "%s" inside the selected location. Choose an administrative location higher up in the hierarchy.' % self.agg_type]]
+            return [['There are no locations of type "%s" inside the selected location. Choose an administrative location higher up in the hierarchy.' % self.aggregate_by]]
 
         products = self.active_products
         locs = self.aggregation_locs
