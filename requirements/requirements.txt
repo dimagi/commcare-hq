@@ -31,6 +31,7 @@ python-dateutil==1.5
 python-magic==0.4.2
 python-memcached==1.47
 pytz==2011b
+raven==3.1.9
 requests==1.1.0
 south==0.7.3
 sorl-thumbnail==11.12
