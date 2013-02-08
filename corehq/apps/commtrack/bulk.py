@@ -11,6 +11,9 @@ from corehq.apps.commtrack import sms
 from dimagi.utils.logging import notify_exception
 from corehq.apps.commtrack.helpers import make_supply_point
 from corehq.apps.commtrack.util import get_supply_point
+from corehq.apps.locations.util import defined_location_types, allowed_child_types
+from corehq.apps.locations.forms import LocationForm
+import itertools
 
 def set_error(row, msg, override=False):
     """set an error message on a stock report to be imported"""
@@ -231,12 +234,24 @@ def import_locations(domain, f):
     config = CommtrackConfig.for_domain(domain)
     known_loc_types = config.known_supply_point_types
 
-    data = list(csv.DictReader(f))
+    r = csv.DictReader(f)
+    data = list(r)
+
+    fields = r.fieldnames
+    hierarchy_fields = []
+    loc_types = defined_location_types(domain)
+    for field in fields:
+        if field in loc_types:
+            hierarchy_fields.append(field)
+        else:
+            break
+    property_fields = fields[len(hierarchy_fields):]
+
     for loc in data:
-        for m in import_location(domain, loc, known_loc_types):
+        for m in import_location(domain, loc, hierarchy_fields, property_fields, known_loc_types):
             yield m
 
-def import_location(domain, loc, known_loc_types):
+def import_location(domain, loc_row, hierarchy_fields, property_fields, known_loc_types):
     def _loc(*args, **kwargs):
         return make_loc(domain, *args, **kwargs)
 
@@ -248,47 +263,73 @@ def import_location(domain, loc, known_loc_types):
         except IndexError:
             return None
 
-    HIERARCHY_FIELDS = ('state', 'district', 'block')
-    hierarchy = [(p, loc[p]) for p in HIERARCHY_FIELDS]
+    def get_cell(field):
+        val = loc_row[field].strip()
+        return val if val else None
+
+    hierarchy = [(p, get_cell(p)) for p in hierarchy_fields]
+    properties = dict((p, get_cell(p)) for p in property_fields)
+    # backwards compatibility
+    if 'outlet_code' in property_fields:
+        properties['site_code'] = properties['outlet_code']
+        del properties['outlet_code']
+    terminal_type = hierarchy_fields[-1]
 
     # create parent hierarchy if it does not exist
     parent = None
-    for anc_type, anc_name in hierarchy:
-        child = get_by_name(anc_name, anc_type, parent)
-        if not child:
-            child = _loc(name=anc_name, location_type=anc_type, parent=parent)
-            yield 'created %s %s' % (anc_type, anc_name)
+    for loc_type, loc_name in hierarchy:
+        # are we at the leaf loc?
+        is_terminal = (loc_type == terminal_type)
+
+        if not loc_name:
+            # name is empty; this level of hierarchy is skipped
+            if is_terminal and any(properties.values()):
+                row_name = '%s %s' % (parent.name, parent.location_type) if parent else '-root-'
+                yield 'warning: %s properties specified on row that won\'t create a %s! (%s)' % (terminal_type, terminal_type, row_name)
+            continue
+
+        child = get_by_name(loc_name, loc_type, parent)
+        if child:
+            if is_terminal:
+                yield '%s %s exists; skipping...' % (loc_type, loc_name)
+        else:
+            data = {
+                'name': loc_name,
+                'location_type': loc_type,
+                'parent_id': parent._id if parent else None,
+            }
+            if is_terminal:
+                data.update(((terminal_type, k), v) for k, v in properties.iteritems())
+
+            form = make_form(domain, parent, data)
+            if form.is_valid():
+                child = form.save()
+                yield 'created %s %s' % (loc_type, loc_name)
+            else:
+                forms = [form] + form.sub_forms.values()
+                for k, v in itertools.chain(*(f.errors.iteritems() for f in forms)):
+                    if k != '__all__':
+                        yield 'error in %s %s; %s: %s' % (loc_type, loc_name, k, v)
+                return
+
         parent = child
 
-    name = loc['outlet_name']
-    # check if outlet already exists
-    outlet = get_by_name(name, 'outlet', parent)
-    if outlet:
-        yield 'outlet %s exists; skipping...' % name
-        return
+# TODO proper relationship checking
 
-    if 'outlet_code' in loc:
-        loc['site_code'] = loc['outlet_code']
-        del loc['outlet_code']
 
-    outlet_props = dict(loc)
-    for k in ('outlet_name',):
-        del outlet_props[k]
-    if 'outlet_type' in outlet_props:
-        outlet_props['outlet_type'] = outlet_props['outlet_type'].strip()
-        if outlet_props['outlet_type'] not in known_loc_types:
-            yield 'fyi: type "%s" for outlet "%s" is not a known outlet type' % (outlet_props.get('outlet_type'), name)
 
-    # check that sms code for outlet is unique
-    code = loc['site_code']
-    existing_loc = get_supply_point(domain, code)['location']
-    if existing_loc:
-        yield 'code %s for outlet %s already in use! outlet NOT created' % (code, name)
-        return
-
-    outlet = _loc(name=name, location_type='outlet', parent=parent, **outlet_props)
-    make_supply_point(domain, outlet)
-    yield 'created outlet %s' % name
+# TODO i think the parent param will not be necessary once the TODO in LocationForm.__init__ is done
+def make_form(domain, parent, data):
+    location = Location(domain=domain, parent=parent)
+    def make_payload(k, v):
+        if hasattr(k, '__iter__'):
+            prefix, propname = k
+            prefix = 'props_%s' % prefix
+        else:
+            prefix, propname = 'main', k
+        return ('%s-%s' % (prefix, propname), v)
+    payload = dict(make_payload(k, v) for k, v in data.iteritems())
+    return LocationForm(location, payload)
 
 def make_loc(domain, *args, **kwargs):
     loc = Location(domain=domain, *args, **kwargs)
