@@ -392,19 +392,26 @@ class CumulativeSalesAndConsumptionReport(GenericTabularReport, CommtrackReportM
     exportable = True
     emailable = True
 
-    @property
+    agg_type = 'village'
+
+    # TODO support aggregation by 'N-levels down' (the locations at which might have varying loc types) as well as by subloc type?
+
     @memoized
-    def children(self):
-        return self.active_location.children if self.active_location else root_locations(self.domain)
+    def _descendants(self, loc_type=None):
+        locs = self.active_location.descendants if self.active_location else all_locations(self.domain)
+        return filter(lambda loc: loc_type is None or loc.location_type == loc_type, locs)
 
     @property
-    @memoized
-    def descendants(self):
-        return filter(lambda loc: loc.location_type == 'outlet', self.active_location.descendants if self.active_location else all_locations(self.domain))
+    def aggregation_locs(self):
+        return self._descendants(self.agg_type)
+
+    @property
+    def leaf_locs(self):
+        return self._descendants('outlet')
 
     @property
     def headers(self):
-        if not self.children:
+        if not self.aggregation_locs:
             return DataTablesHeader(DataTablesColumn('No locations'))
 
         cols = [
@@ -421,15 +428,16 @@ class CumulativeSalesAndConsumptionReport(GenericTabularReport, CommtrackReportM
 
     @property
     def rows(self):
-        if not self.children:
-            return [['The location you\'ve chosen has no member locations. Choose an administrative location higher up in the hierarchy.']]
+        if not self.aggregation_locs:
+            return [['There are no locations of type "%s" inside the selected location. Choose an administrative location higher up in the hierarchy.' % self.agg_type]]
 
         products = self.active_products
-        locs = self.children
-        active_outlets = [loc for loc in self.descendants if self.outlet_type_filter(loc.dynamic_properties().get('outlet_type'))]
-        active_outlet_ids = set(loc._id for loc in active_outlets)
+        locs = self.aggregation_locs
+        active_outlets = [loc for loc in self.leaf_locs if self.outlet_type_filter(loc.dynamic_properties().get('outlet_type'))]
 
+        active_outlet_ids = set(loc._id for loc in active_outlets)
         aggregation_sites = set(loc._id for loc in locs)
+
         def get_aggregation_site(outlet):
             for k in outlet.path:
                 if k in aggregation_sites:
@@ -437,12 +445,16 @@ class CumulativeSalesAndConsumptionReport(GenericTabularReport, CommtrackReportM
         outlets_by_aggregation_site = map_reduce(lambda e: [(get_aggregation_site(e),)], data=active_outlets)
 
         reports = filter(lambda r: leaf_loc(r) in active_outlet_ids, get_stock_reports(self.domain, self.active_location, self.datespan))
-        reports_by_loc = map_reduce(lambda e: [(child_loc(e, self.active_location),)], data=reports, include_docs=True)
+        def get_aggregators(report):
+            for k in report['location_']:
+                if k in aggregation_sites:
+                    yield (k,)
+        reports_by_loc = map_reduce(get_aggregators, data=reports, include_docs=True)
 
         startkey = [self.domain, self.active_location._id if self.active_location else None, 'CommCareCase']
         product_cases = [c for c in CommCareCase.view('locations/linked_docs', startkey=startkey, endkey=startkey + [{}], include_docs=True)
                          if c.type == 'supply-point-product' and leaf_loc(c) in active_outlet_ids]
-        product_cases_by_parent = map_reduce(lambda e: [(child_loc(e, self.active_location),)], data=product_cases, include_docs=True)
+        product_cases_by_parent = map_reduce(get_aggregators, data=product_cases, include_docs=True)
 
         def summary_row(site, reports, product_cases, outlets):
             all_transactions = list(itertools.chain(*(get_transactions(r) for r in reports)))
