@@ -7,5 +7,11 @@ function(doc) {
                 emit([doc.domain, user], null);
             }
         }
+        if (doc.form.user_subreport) {
+            for (var i in doc.form.user_subreport.user) {
+                var username = doc.form.user_subreport.user[i].username;
+                emit([doc.domain, username], null);
+            }
+        }
     }
 }

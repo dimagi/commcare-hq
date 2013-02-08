@@ -2,6 +2,7 @@ import datetime
 import json
 import logging
 import dateutil
+from collections import defaultdict
 from django.conf import settings
 from django.core.urlresolvers import reverse
 from django.utils import html
@@ -16,6 +17,8 @@ from dimagi.utils.couch.database import get_db
 from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.timezones import utils as tz_utils
 from dimagi.utils.web import json_request, get_url_base
+
+logger = logging.getLogger(__name__)
 
 class PhonelogReport(DeploymentsReport, DatespanMixin):
     fields = ['corehq.apps.reports.fields.FilterUsersField',
@@ -111,6 +114,7 @@ class DeviceLogDetailsReport(PhonelogReport):
         return DataTablesHeader(DataTablesColumn("Date", span=1, sort_direction=[DTSortDirection.DSC,DTSortDirection.ASC]),
                                 DataTablesColumn("Log Type", span=1),
                                 DataTablesColumn("Logged in Username", span=2),
+                                DataTablesColumn("Device Users", span=2),
                                 DataTablesColumn("Device ID", span=2),
                                 DataTablesColumn("Message", span=5),
                                 DataTablesColumn("App Version", span=1))
@@ -136,12 +140,38 @@ class DeviceLogDetailsReport(PhonelogReport):
             self._selected_tags = self.request.GET.getlist(DeviceLogTagField.slug)
         return self._selected_tags
 
-    _devices = None
+    _selected_devices = None
+    @property
+    def selected_devices(self):
+        if self._selected_devices is None:
+            self._selected_devices = set(self.request.GET.getlist(DeviceLogDevicesField.slug))
+        return self._selected_devices
+
+    _devices_for_users = None
+    @property
+    def devices_for_users(self):
+        if self._devices_for_users is None:
+            device_ids_for_username = defaultdict(set)
+
+            for datum in get_db().view('phonelog/device_log_users',
+                                       startkey=[self.domain],
+                                       endkey=[self.domain, {}],
+                                       group=True,
+                                       reduce=True):
+                # Begin dependency on particulars of view output
+                username = datum['key'][2]
+                device_id = datum['key'][1]
+                # end dependency
+                device_ids_for_username[username].add(device_id)
+
+            self._devices_for_users = set([device_id for user in self.device_log_users
+                                                     for device_id in device_ids_for_username[user]])
+            
+        return self._devices_for_users
+
     @property
     def devices(self):
-        if self._devices is None:
-            self._devices = self.request.GET.getlist(DeviceLogDevicesField.slug)
-        return self._devices
+        return self.devices_for_users | self.selected_devices
 
     _goto_key = None
     @property
@@ -202,28 +232,14 @@ class DeviceLogDetailsReport(PhonelogReport):
             ).all()
             rows.extend(self._create_rows(data, self.goto_key))
         else:
-            if self.errors_only and self.device_log_users:
-                key_set = [[self.domain, "errors_only", username] for username in self.device_log_users]
-            elif self.errors_only:
+            if self.errors_only:
                 key_set = [[self.domain, "all_errors_only"]]
-            elif self.selected_tags and self.device_log_users and self.devices:
-                key_set = [[self.domain, "tag_username_device", tag, username, device] for tag in self.selected_tags
-                                                                        for username in self.device_log_users
-                                                                        for device in self.devices]
-            elif (not self.devices) and self.selected_tags and self.device_log_users:
-                key_set = [[self.domain, "tag_username", tag, username] for tag in self.selected_tags
-                                                                        for username in self.device_log_users]
-            elif (not self.device_log_users) and self.selected_tags and self.devices:
+            elif self.selected_tags and self.devices:
                 key_set = [[self.domain, "tag_device", tag, device] for tag in self.selected_tags
                                                                     for device in self.devices]
-            elif (not self.selected_tags) and self.device_log_users and self.devices:
-                key_set = [[self.domain, "username_device", username, device] for username in self.device_log_users
-                                                                              for device in self.devices]
-            elif (not self.device_log_users) and (not self.selected_tags) and self.devices:
+            elif (not self.selected_tags) and self.devices:
                 key_set = [[self.domain, "device", device] for device in self.devices]
-            elif (not self.devices) and (not self.selected_tags) and self.device_log_users:
-                key_set = [[self.domain, "username", username] for username in self.device_log_users]
-            elif (not self.devices) and (not self.device_log_users) and self.selected_tags:
+            elif self.selected_tags and (not self.devices):
                 key_set = [[self.domain, "tag", tag] for tag in self.selected_tags]
             else:
                 key_set = [[self.domain, "basic"]]
@@ -255,13 +271,22 @@ class DeviceLogDetailsReport(PhonelogReport):
                 "username": username
             }
 
+            device_users = entry.get('device_users', [])
+            device_users_fmt = ', '.join([ 
+                '<a href="%(url)s">%(username)s</a>' % { "url": "%s?%s=%s&%s" % (self.get_url(domain=self.domain),
+                                                                                 DeviceLogUsersField.slug,
+                                                                                 username,
+                                                                                 user_query),
+                                                         "username": username }
+                for username in device_users
+            ])
 
             log_tag = entry.get('type','unknown')
             tag_classes = ["label"]
             if log_tag in self.tag_labels:
                 tag_classes.append(self.tag_labels[log_tag])
 
-            goto_key = [self.domain, "tag_username", log_tag, username, item['key'][-1]]
+            goto_key = [self.domain, "tag", log_tag, item['key'][-1]]
 
             log_tag_format = '<a href="%(url)s" class="%(classes)s"%(extra_params)s data-datatable-tooltip="right" data-datatable-tooltip-text="%(tooltip)s">%(text)s</a>' % {
                 "url": "%s?goto=%s" % (self.get_url(domain=self.domain), html.escape(json.dumps(goto_key))),
@@ -287,6 +312,7 @@ class DeviceLogDetailsReport(PhonelogReport):
             row_set.append([self.table_cell(date, date_fmt),
                             self.table_cell(log_tag, log_tag_format),
                             self.table_cell(username, username_fmt),
+                            self.table_cell(device_users, device_users_fmt),
                             self.table_cell(device, device_fmt),
                             self.table_cell(entry.get('msg', '')),
                             self.table_cell(version, ver_format)])
