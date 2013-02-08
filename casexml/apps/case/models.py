@@ -527,16 +527,15 @@ class CommCareCase(CaseBase, IndexHoldingMixIn, ComputedDocumentMixin):
                 a2doc['server_date'] = a1doc['server_date']
                 return a1doc == a2doc
 
-            # really (form, type) is unique so pick winners based on that
-            # when they disagree, choose the _earlier_ one as this is the
-            # one that is likely timestamped with the form's date
-
             ret = []
             for a in action_list:
                 found_actions = [other for other in ret if actions_match(a, other)]
                 if found_actions:
                     assert len(found_actions) == 1
                     match = found_actions[0]
+                    # when they disagree, choose the _earlier_ one as this is
+                    # the one that is likely timestamped with the form's date
+                    # (and therefore being processed later in absolute time)
                     ret[ret.index(match)] = a if a.server_date < match.server_date else match
                 else:
                     ret.append(a)
