@@ -1,3 +1,6 @@
+# needed to build gevent from source
+Cython==0.17.4
+
 restkit==4.2.0
 couchdbkit==0.5.7
 celery==2.4.5
@@ -38,11 +41,9 @@ xlrd==0.7.3
 simplejson==2.6.1
 GitPython==0.3.2.RC1
 gitdb==0.5.4
-gevent==0.13.8
+-e git+git://github.com/SiteSupport/gevent.git@1.0rc2#egg=gevent
 rawes==0.3.6
 numpy==1.6.2
 socketpool==0.5.2
 markdown==2.2.1
-
 -e git://github.com/dimagi/freddy.git@a6d24d201f3595a6be767f3679547d5de76b344a#egg=freddy
-
