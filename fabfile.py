@@ -213,7 +213,7 @@ def realstaging():
         'formsplayer': ['hqdjango1-staging.internal.commcarehq.org'],
         'lb': [], #todo on apache level config
         'staticfiles': ['hqproxy0.internal.commcarehq.org'],
-        'deploy': ['hqdb-staging.internal.commcarehq.org'], #this is a stub becuaue we don't want to be prompted for a host or run deploy too many times
+        'deploy': ['hqdb-staging.internal.commcarehq.org'], #this is a stub because we don't want to be prompted for a host or run deploy too many times
         'django_monolith': [] # fab complains if this doesn't exist
     }
 
@@ -456,7 +456,7 @@ def update_virtualenv(preindex=False):
         env_to_use = env.virtualenv_root
     requirements = posixpath.join(env.code_root, 'requirements')
     with cd(root_to_use):
-        cmd = ['%s/bin/pip install' % env_to_use]
+        cmd = ['source %s/bin/activate && pip install' % env_to_use]
         cmd += ['--requirement %s' % posixpath.join(requirements, 'prod-requirements.txt')]
         cmd += ['--requirement %s' % posixpath.join(requirements, 'requirements.txt')]
         sudo(' '.join(cmd), user=env.sudo_user)
