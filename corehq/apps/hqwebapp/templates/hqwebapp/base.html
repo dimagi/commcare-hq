@@ -145,6 +145,7 @@
                         </div>
                     {% endfor %}
                 {% endif %}
+
                 {% endblock %}
                 <h1 class="page-header">
                     {% block page-title %}
@@ -158,7 +159,7 @@
         </div>
 
         <footer>
-            <a href="http://www.dimagi.com/" class="footer-left"><img src="{% static 'hqstyle/img/powered-by-dimagi.png' %}" class="powered" alt="Powered by Diamgi, Inc." /></a>
+            <a href="http://www.dimagi.com/" class="footer-left"><img src="{% static 'hqstyle/img/powered-by-dimagi.png' %}" class="powered" alt="Powered by Dimagi, Inc." /></a>
 
             {% if user.is_authenticated %}
             <div class="footer-right">
