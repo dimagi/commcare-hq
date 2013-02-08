@@ -5,6 +5,8 @@ from django.contrib.auth.views import password_reset
 from django.shortcuts import render_to_response
 from django.template import RequestContext
 
+from corehq.apps.domain.forms import ConfidentialPasswordResetForm
+
 #
 # After much reading, I discovered that Django matches URLs derived from the environment
 # variable PATH_INFO. This is set by your webserver, so any misconfiguration there will
@@ -40,6 +42,9 @@ def exception_safe_password_reset(request, *args, **kwargs):
 def auth_pages_path(page):
     return {'template_name':'login_and_password/' + page}
 
+def extend(d1, d2):
+    return dict(d1.items() + d2.items())
+
 urlpatterns =\
     patterns('corehq.apps.domain.views',
         url(r'^domain/select/$', 'select', name='domain_select'),
@@ -49,7 +54,9 @@ urlpatterns =\
         url(r'^accounts/password_change/$', 'password_change', auth_pages_path('password_change_form.html'), name='password_change'),
         url(r'^accounts/password_change_done/$', 'password_change_done', auth_pages_path('password_change_done.html') ),
 
-        url(r'^accounts/password_reset_email/$', exception_safe_password_reset, auth_pages_path('password_reset_form.html'), name='password_reset_email'),
+        url(r'^accounts/password_reset_email/$', exception_safe_password_reset, extend(auth_pages_path('password_reset_form.html'), 
+                                                                                       { 'password_reset_form': ConfidentialPasswordResetForm }),
+                                                                                name='password_reset_email'),
         url(r'^accounts/password_reset_email/done/$', 'password_reset_done', auth_pages_path('password_reset_done.html') ),
 
         url(r'^accounts/password_reset_confirm/(?P<uidb36>[0-9A-Za-z]+)-(?P<token>.+)/$', 'password_reset_confirm', auth_pages_path('password_reset_confirm.html'), name="confirm_password_reset" ),

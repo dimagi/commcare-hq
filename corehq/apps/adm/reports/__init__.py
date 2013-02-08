@@ -18,6 +18,7 @@ class ADMSectionView(GenericReportView):
     hide_filters = True
     emailable = True
 
+
     # adm-specific stuff
     adm_slug = None
     
@@ -60,6 +61,7 @@ class DefaultReportADMSectionView(GenericTabularReport, ADMSectionView, ProjectR
     section_name = ugettext_noop("Active Data Management")
     app_slug = "adm"
     dispatcher = ADMSectionDispatcher
+    fix_left_col = True
 
     fields = ['corehq.apps.reports.fields.FilterUsersField',
               'corehq.apps.reports.fields.GroupField',

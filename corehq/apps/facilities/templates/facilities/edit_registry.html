@@ -1,0 +1,7 @@
+{% extends 'facilities/base.html' %}
+{% load crispy_forms_tags %}
+
+{% block main_column %}
+    <h2>{{ action }} Facility Registry</h2>
+    {% crispy form %}
+{% endblock %}

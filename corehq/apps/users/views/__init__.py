@@ -4,7 +4,7 @@ import json
 import re
 import urllib
 from datetime import datetime
-from corehq.apps.hqwebapp.utils import InvitationView
+from couchdbkit.exceptions import ResourceNotFound
 
 from dimagi.utils.couch.database import get_db
 from django.contrib.auth.forms import PasswordChangeForm, SetPasswordForm
@@ -22,6 +22,7 @@ from dimagi.utils.web import render_to_response, json_response, get_ip
 from corehq.apps.registration.forms import AdminInvitesUserForm
 from corehq.apps.prescriptions.models import Prescription
 from corehq.apps.domain.models import Domain
+from corehq.apps.hqwebapp.utils import InvitationView
 from corehq.apps.users.decorators import require_permission
 from corehq.apps.users.forms import UserForm, ProjectSettingsForm
 from corehq.apps.users.models import CouchUser, CommCareUser, WebUser, \
@@ -211,7 +212,11 @@ def invite_web_user(request, domain, template="users/invite_web_user.html"):
 @require_permission_to_edit_user
 def account(request, domain, couch_user_id, template="users/account.html"):
     context = _users_context(request, domain)
-    couch_user = CouchUser.get_by_user_id(couch_user_id, domain)
+    try:
+        couch_user = CouchUser.get_by_user_id(couch_user_id, domain)
+    except ResourceNotFound:
+        raise Http404
+
     if not couch_user:
         raise Http404
 

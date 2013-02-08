@@ -3,7 +3,7 @@ Tests for applications in the 'corpora' domain.
 
 """
 
-from testcases import CloudCareTestCase
+from .testcases import CloudCareTestCase
 import random
 
 
