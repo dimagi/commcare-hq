@@ -19,6 +19,7 @@ from copy import copy
 import itertools
 from dimagi.utils.couch.database import get_db
 from couchdbkit.exceptions import ResourceNotFound
+from dimagi.utils.couch import LooselyEqualDocumentSchema
 
 """
 Couch models for commcare cases.  
@@ -40,7 +41,7 @@ class CaseBase(Document):
     class Meta:
         app_label = 'case'
 
-class CommCareCaseAction(DocumentSchema):
+class CommCareCaseAction(LooselyEqualDocumentSchema):
     """
     An atomic action on a case. Either a create, update, or close block in
     the xml.
@@ -65,8 +66,8 @@ class CommCareCaseAction(DocumentSchema):
         
         def _couchify(d):
             return dict((k, couchable_property(v)) for k, v in d.items())
-                        
-        ret.server_date = datetime.utcnow()
+
+        ret.server_date = xformdoc.received_on
         ret.updated_known_properties = _couchify(action.get_known_properties())
         ret.updated_unknown_properties = _couchify(action.dynamic_properties)
         ret.indices = [CommCareCaseIndex.from_case_index_update(i) for i in action.indices]
@@ -90,6 +91,11 @@ class CommCareCaseAction(DocumentSchema):
             cache.set(key, id, 12*60*60)
         return id
 
+    def __repr__(self):
+        return "{xform}: {type} - {date} ({server_date})".format(
+            xform=self.xform_id, type=self.action_type,
+            date=self.date, server_date=self.server_date
+        )
 
     class Meta:
         app_label = 'case'
@@ -471,7 +477,7 @@ class CommCareCase(CaseBase, IndexHoldingMixIn, ComputedDocumentMixin):
         """
         for k, v in update_action.updated_known_properties.items():
             setattr(self, k, v)
-        
+
         for item in update_action.updated_unknown_properties:
             if item not in const.CASE_TAGS:
                 self[item] = couchable_property(update_action.updated_unknown_properties[item])
@@ -486,6 +492,66 @@ class CommCareCase(CaseBase, IndexHoldingMixIn, ComputedDocumentMixin):
             submission = get_close_case_xml(time=datetime.utcnow(), case_id=self._id)
             spoof_submission(submit_url, submission, name="close.xml")
 
+    def reconcile_actions(self, rebuild=False):
+        """
+        Runs through the action list and tries to reconcile things that seem
+        off (for example, out-of-order submissions, duplicate actions, etc.).
+
+        This method fails hard if anything goes wrong so it's up to the caller
+        to deal with that. It will raise assertion errors if this happens.
+        """
+        def _check_preconditions():
+            for a in self.actions:
+                assert a.server_date is not None and a.xform_id is not None
+
+        def _type_sort(action_type):
+            """
+            Consistent ordering for action types
+            """
+            return const.CASE_ACTIONS.index(action_type)
+
+        _check_preconditions()
+
+        # this would normally work except we only recently started using the
+        # form timestamp as the modificaiton date so we have to do something
+        # fancier to deal with old data
+        deduplicated_actions = list(set(self.actions))
+        def further_deduplicate(action_list):
+            def actions_match(a1, a2):
+                # if everything but the server_date match, the actions match.
+                # this will allow for multiple case blocks to be submitted
+                # against the same case in the same form so long as they
+                # are different
+                a1doc = copy(a1._doc)
+                a2doc = copy(a2._doc)
+                a2doc['server_date'] = a1doc['server_date']
+                return a1doc == a2doc
+
+            ret = []
+            for a in action_list:
+                found_actions = [other for other in ret if actions_match(a, other)]
+                if found_actions:
+                    assert len(found_actions) == 1
+                    match = found_actions[0]
+                    # when they disagree, choose the _earlier_ one as this is
+                    # the one that is likely timestamped with the form's date
+                    # (and therefore being processed later in absolute time)
+                    ret[ret.index(match)] = a if a.server_date < match.server_date else match
+                else:
+                    ret.append(a)
+            return ret
+
+        deduplicated_actions = further_deduplicate(deduplicated_actions)
+        sorted_actions = sorted(
+            deduplicated_actions,
+            key=lambda a: (a.server_date, a.xform_id, _type_sort(a.action_type))
+        )
+        if sorted_actions:
+            assert sorted_actions[0].action_type == const.CASE_ACTION_CREATE
+        self.actions = sorted_actions
+        if rebuild:
+            self.rebuild()
+
     def rebuild(self):
         """
         Rebuilds the case state from its actions
@@ -493,6 +559,7 @@ class CommCareCase(CaseBase, IndexHoldingMixIn, ComputedDocumentMixin):
         assert self.actions[0].action_type == const.CASE_ACTION_CREATE
         for i in range(1, len(self.actions)):
             self._apply_action(self.actions[i])
+        self.xform_ids = list(set([a.xform_id for a in self.actions]))
 
     def force_close_referral(self, submit_url, referral):
         if not referral.closed:

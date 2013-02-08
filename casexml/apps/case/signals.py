@@ -2,12 +2,21 @@ from django.dispatch.dispatcher import Signal
 from receiver.signals import successful_form_received
 from casexml.apps.phone.models import SyncLog
 
-def process_cases(sender, xform, **kwargs):
-    """Creates or updates case objects which live outside of the form"""
+def process_cases(sender, xform, reconcile=False, **kwargs):
+    """
+    Creates or updates case objects which live outside of the form.
+
+    If reconcile is true it will perform an additional step of
+    reconciling the case update history after the case is processed.
+    """
     # recursive import fail
     from casexml.apps.case.xform import get_or_update_cases
-    # avoid Document conflicts
     cases = get_or_update_cases(xform).values()
+
+    if reconcile:
+        for c in cases:
+            c.reconcile_actions(rebuild=True)
+
     # attach domain if it's there
     if hasattr(xform, "domain"):
         domain = xform.domain
@@ -29,7 +38,12 @@ def process_cases(sender, xform, **kwargs):
     # handle updating the sync records for apps that use sync mode
     if hasattr(xform, "last_sync_token") and xform.last_sync_token:
         relevant_log = SyncLog.get(xform.last_sync_token)
+        # in reconciliation mode, things can be unexpected
+        relevant_log.strict = not reconcile
         relevant_log.update_phone_lists(xform, cases)
+        if reconcile:
+            relevant_log.reconcile_cases()
+            relevant_log.save()
 
     # set flags for indicator pillows and save
     xform.initial_processing_complete = True

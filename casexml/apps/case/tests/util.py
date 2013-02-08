@@ -16,6 +16,7 @@ from dimagi.utils.parsing import json_format_datetime
 from casexml.apps.phone.xml import date_to_xml_string
 
 from casexml.apps.phone.restore import generate_restore_payload
+from casexml.apps.case.util import post_case_blocks
 
 def bootstrap_case_from_xml(test_class, filename, case_id_override=None,
                                  referral_id_override=None):
@@ -362,3 +363,20 @@ def check_user_has_case(testcase, user, case_block, should_have=True,
         testcase.fail("Block for case_id '%s' doesn't appear in ota restore for user '%s':%s" \
                       % (case_id, user.username, extra_info()))
     return match
+
+DEFAULT_TEST_TYPE = 'test'
+
+def post_util(create=False, case_id=None, user_id=None, owner_id=None,
+               case_type=None, version=V2, **kwargs):
+
+    uid = lambda: uuid.uuid4().hex
+    case_id = case_id or uid()
+    block = CaseBlock(create=create,
+                      case_id=case_id,
+                      user_id=user_id or uid(),
+                      owner_id=owner_id or uid(),
+                      case_type=case_type or DEFAULT_TEST_TYPE,
+                      version=version,
+                      update=kwargs).as_xml()
+    post_case_blocks([block])
+    return case_id
