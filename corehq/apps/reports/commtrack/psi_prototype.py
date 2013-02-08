@@ -90,6 +90,11 @@ class CommtrackReportMixin(ProjectReport, ProjectReportParametersMixin):
         else:
             return filter(lambda p: p['_id'] in selected, products)
 
+    @property
+    @memoized
+    def aggregate_by(self):
+        return self.request.GET.get('agg_type')
+
     # a setting that hides supply points that have no data. mostly for PSI weirdness
     # of how they're managing their locations. don't think it's a good idea for
     # commtrack in general
@@ -334,6 +339,13 @@ class SalesAndConsumptionReport(GenericTabularReport, CommtrackReportMixin, Date
         reports = get_stock_reports(self.domain, self.active_location, self.datespan)
         reports_by_loc = map_reduce(lambda e: [(leaf_loc(e),)], data=reports, include_docs=True)
 
+        mk_key = lambda dt: [self.domain, dateparse.json_format_datetime(dt), self.active_location._id if self.active_location else None]
+        all_product_states = get_db().view('commtrack/stock_product_state', startkey=mk_key(self.datespan.startdate), endkey=mk_key(self.datespan.end_of_end_day))
+        def _emit(o):
+            loc_id, prod_id, state = o['value']
+            yield ((loc_id, prod_id), state)
+        product_state_buckets = map_reduce(_emit, lambda v: sorted(v, key=lambda e: e['server_date']), data=all_product_states)
+
         def summary_row(site, reports):
             all_transactions = list(itertools.chain(*(get_transactions(r) for r in reports)))
             tx_by_product = map_reduce(lambda tx: [(tx['product'],)], data=all_transactions, include_docs=True)
@@ -344,12 +356,8 @@ class SalesAndConsumptionReport(GenericTabularReport, CommtrackReportMixin, Date
             for p in products:
                 tx_by_action = map_reduce(lambda tx: [(tx['action'], int(tx['value']))], data=tx_by_product.get(p['_id'], []))
 
-                startkey = [str(self.domain), site._id, p['_id'], dateparse.json_format_datetime(self.datespan.startdate)]
-                endkey =   [str(self.domain), site._id, p['_id'], dateparse.json_format_datetime(self.datespan.end_of_end_day)]
-
-                # list() is necessary or else get a weird error
-                product_states = list(get_db().view('commtrack/stock_product_state', startkey=startkey, endkey=endkey))
-                latest_state = product_states[-1]['value'] if product_states else None
+                product_states = product_state_buckets.get((site._id, p['_id']), [])
+                latest_state = product_states[-1] if product_states else None
                 if latest_state:
                     stock = latest_state['updated_unknown_properties']['current_stock']
                     as_of = dateparse.string_to_datetime(latest_state['server_date']).strftime('%Y-%m-%d')
@@ -357,11 +365,10 @@ class SalesAndConsumptionReport(GenericTabularReport, CommtrackReportMixin, Date
 
                 stockout_dates = set()
                 for state in product_states:
-                    doc = state['value']
-                    stocked_out_since = doc['updated_unknown_properties']['stocked_out_since']
+                    stocked_out_since = state['updated_unknown_properties']['stocked_out_since']
                     if stocked_out_since:
                         so_start = max(dateparse.string_to_datetime(stocked_out_since).date(), self.datespan.startdate.date())
-                        so_end = dateparse.string_to_datetime(doc['server_date']).date() # TODO deal with time zone issues
+                        so_end = dateparse.string_to_datetime(state['server_date']).date() # TODO deal with time zone issues
                         dt = so_start
                         while dt < so_end:
                             stockout_dates.add(dt)
@@ -388,48 +395,61 @@ class CumulativeSalesAndConsumptionReport(GenericTabularReport, CommtrackReportM
     fields = ['corehq.apps.reports.fields.DatespanField',
               'corehq.apps.reports.commtrack.fields.SupplyPointTypeField',
               'corehq.apps.reports.commtrack.fields.ProductField',
-              'corehq.apps.reports.fields.AsyncLocationField']
+              'corehq.apps.reports.fields.AsyncLocationField',
+              'corehq.apps.reports.commtrack.fields.LocationTypeField']
     exportable = True
     emailable = True
 
-    @property
+    # TODO support aggregation by 'N-levels down' (the locations at which might have varying loc types) as well as by subloc type?
+
     @memoized
-    def children(self):
-        return self.active_location.children if self.active_location else root_locations(self.domain)
+    def _descendants(self, loc_type=None):
+        locs = self.active_location.descendants if self.active_location else all_locations(self.domain)
+        return filter(lambda loc: loc_type is None or loc.location_type == loc_type, locs)
+
+    @property
+    def aggregation_locs(self):
+        return self._descendants(self.aggregate_by)
+
+    @property
+    def leaf_locs(self):
+        return self._descendants('outlet')
 
     @property
     @memoized
-    def descendants(self):
-        return self.active_location.descendants if self.active_location else all_locations(self.domain)
+    def metadata(self):
+        return [f for f in LOC_METADATA if f.get('anc_type', 'outlet') == self.aggregate_by]
 
     @property
     def headers(self):
-        if not self.children:
+        if not self.aggregation_locs:
             return DataTablesHeader(DataTablesColumn('No locations'))
 
         cols = [
-            DataTablesColumn('Location'),
-            DataTablesColumn('Location Type'),
-            DataTablesColumn('# outlets'),
+            'Location',
+            'Location Type',
+            '# reporting outlets',
         ]
+        cols.extend(f['caption'] for f in self.metadata)
         for p in self.active_products:
-            cols.append(DataTablesColumn('Total Stock on Hand (%s)' % p['name']))
-            cols.append(DataTablesColumn('Total Sales (%s)' % p['name']))
-            cols.append(DataTablesColumn('Total Consumption (%s)' % p['name']))
+            cols.append('Total Stock on Hand (%s)' % p['name'])
+            cols.append('Total Sales (%s)' % p['name'])
+            cols.append('Total Consumption (%s)' % p['name'])
 
-        return DataTablesHeader(*cols)
+        return DataTablesHeader(*(DataTablesColumn(c) for c in cols))
 
     @property
     def rows(self):
-        if not self.children:
-            return [['The location you\'ve chosen has no member locations. Choose an administrative location higher up in the hierarchy.']]
+        if not self.aggregation_locs:
+            return [['There are no locations of type "%s" inside the selected location. Choose an administrative location higher up in the hierarchy.' % self.aggregate_by]]
 
         products = self.active_products
-        locs = self.children
-        active_outlets = [loc for loc in self.descendants if self.outlet_type_filter(loc.dynamic_properties().get('outlet_type'))]
-        active_outlet_ids = set(loc._id for loc in active_outlets)
+        locs = self.aggregation_locs
+        active_outlets = [loc for loc in self.leaf_locs if self.outlet_type_filter(loc.dynamic_properties().get('outlet_type'))]
 
+        active_outlet_ids = set(loc._id for loc in active_outlets)
         aggregation_sites = set(loc._id for loc in locs)
+
         def get_aggregation_site(outlet):
             for k in outlet.path:
                 if k in aggregation_sites:
@@ -437,17 +457,26 @@ class CumulativeSalesAndConsumptionReport(GenericTabularReport, CommtrackReportM
         outlets_by_aggregation_site = map_reduce(lambda e: [(get_aggregation_site(e),)], data=active_outlets)
 
         reports = filter(lambda r: leaf_loc(r) in active_outlet_ids, get_stock_reports(self.domain, self.active_location, self.datespan))
-        reports_by_loc = map_reduce(lambda e: [(child_loc(e, self.active_location),)], data=reports, include_docs=True)
+        def get_aggregators(report):
+            for k in report['location_']:
+                if k in aggregation_sites:
+                    yield (k,)
+        reports_by_loc = map_reduce(get_aggregators, data=reports, include_docs=True)
 
         startkey = [self.domain, self.active_location._id if self.active_location else None, 'CommCareCase']
         product_cases = [c for c in CommCareCase.view('locations/linked_docs', startkey=startkey, endkey=startkey + [{}], include_docs=True)
                          if c.type == 'supply-point-product' and leaf_loc(c) in active_outlet_ids]
-        product_cases_by_parent = map_reduce(lambda e: [(child_loc(e, self.active_location),)], data=product_cases, include_docs=True)
+        product_cases_by_parent = map_reduce(get_aggregators, data=product_cases, include_docs=True)
 
         def summary_row(site, reports, product_cases, outlets):
             all_transactions = list(itertools.chain(*(get_transactions(r) for r in reports)))
             tx_by_product = map_reduce(lambda tx: [(tx['product'],)], data=all_transactions, include_docs=True)
             cases_by_product = map_reduce(lambda c: [(c.product,)], data=product_cases, include_docs=True)
+
+            num_outlets = len(outlets)
+            product_ids = set(p['_id'] for p in products)
+            relevant_reports = [r for r in reports if any(tx['product'] in product_ids for tx in get_transactions(r))]
+            num_active_outlets = len(set(leaf_loc(r) for r in relevant_reports))
 
             # feels not DRY
             import urllib
@@ -457,7 +486,12 @@ class CumulativeSalesAndConsumptionReport(GenericTabularReport, CommtrackReportM
                 'location_id': site._id,
             }))
             site_link = '<a href="%s">%s</a>' % (site_url, site.name)
-            data = [site_link, site.location_type, len(outlets)]
+            data = [
+                site_link,
+                site.location_type,
+                '%d of %d' % (num_active_outlets, num_outlets),
+            ]
+            data.extend(getattr(site, f['key'], u'\u2014') for f in self.metadata)
             for p in products:
                 tx_by_action = map_reduce(lambda tx: [(tx['action'], int(tx['value']))], data=tx_by_product.get(p['_id'], []))
                 subcases = cases_by_product.get(p['_id'], [])
