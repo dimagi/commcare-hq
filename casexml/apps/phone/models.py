@@ -1,8 +1,11 @@
 from couchdbkit.ext.django.schema import *
 from dimagi.utils.mixins import UnicodeMixIn
+from dimagi.utils.couch import LooselyEqualDocumentSchema
 from casexml.apps.case import const
 from casexml.apps.case.sharedmodels import CommCareCaseIndex, IndexHoldingMixIn
 from casexml.apps.phone.checksum import Checksum, CaseStateHash
+import logging
+
 
 class User(object):
     """ 
@@ -41,7 +44,7 @@ class User(object):
                    user_data={})
     
 
-class CaseState(DocumentSchema, IndexHoldingMixIn):
+class CaseState(LooselyEqualDocumentSchema, IndexHoldingMixIn):
     """
     Represents the state of a case on a phone.
     """
@@ -53,9 +56,22 @@ class CaseState(DocumentSchema, IndexHoldingMixIn):
     def from_case(cls, case):
         return cls(case_id=case.get_id,
                          indices=case.indices)
-    
 
-class SyncLog(Document, UnicodeMixIn):
+class ConfigurableAssertionMixin(object):
+    """
+    Provides a ._assert() function that can be configured using a class-level
+    flag called 'strict'
+    """
+    strict = True
+
+    def _assert(self, conditional, msg=""):
+        if self.strict:
+            assert conditional, msg
+        elif not conditional:
+            logging.warn("assertion failed: %s" % msg)
+
+
+class SyncLog(Document, UnicodeMixIn, ConfigurableAssertionMixin):
     """
     A log of a single sync operation.
     """
@@ -66,23 +82,23 @@ class SyncLog(Document, UnicodeMixIn):
     last_seq = IntegerProperty()        # the last_seq of couch during this sync
     
     # we need to store a mapping of cases to indices for generating the footprint
-    
+
     # The cases_on_phone property represents the state of all cases the server thinks
     # the phone has on it and cares about.
-     
-    
+
+
     # The dependant_cases_on_phone property represents the possible list of cases
     # also on the phone because they are referenced by a real case's index (or 
     # a dependent case's index). This list is not necessarily a perfect reflection
     # of what's on the phone, but is guaranteed to be after pruning
     cases_on_phone = SchemaListProperty(CaseState)
     dependent_cases_on_phone = SchemaListProperty(CaseState)
-    
+
     # The owner ids property keeps track of what ids the phone thinks it's the owner
     # of. This typically includes the user id, as well as all groups that that user
     # is a member of. 
     owner_ids_on_phone = StringListProperty()
-    
+
     @classmethod
     def last_for_user(cls, user_id):
         return SyncLog.view("phone/sync_logs_by_user", 
@@ -114,9 +130,9 @@ class SyncLog(Document, UnicodeMixIn):
         """
         filtered_list = [case for case in self.cases_on_phone if case.case_id == case_id]
         if filtered_list:
-            assert len(filtered_list) == 1, \
-                   "Should be exactly 0 or 1 cases on phone but were %s for %s" % \
-                   (len(filtered_list), case_id)
+            self._assert(len(filtered_list) == 1, \
+                         "Should be exactly 0 or 1 cases on phone but were %s for %s" % \
+                         (len(filtered_list), case_id))
             return filtered_list[0]
         return None
     
@@ -133,9 +149,9 @@ class SyncLog(Document, UnicodeMixIn):
         """
         filtered_list = [case for case in self.dependent_cases_on_phone if case.case_id == case_id]
         if filtered_list:
-            assert len(filtered_list) == 1, \
-                   "Should be exactly 0 or 1 dependent cases on phone but were %s for %s" % \
-                   (len(filtered_list), case_id)
+            self._assert(len(filtered_list) == 1, \
+                         "Should be exactly 0 or 1 dependent cases on phone but were %s for %s" % \
+                         (len(filtered_list), case_id))
             return filtered_list[0]
         return None
     
@@ -167,12 +183,14 @@ class SyncLog(Document, UnicodeMixIn):
             for action in actions:
                 try: 
                     if action.action_type == const.CASE_ACTION_CREATE:
-                        assert(not self.phone_has_case(case.get_id))
+                        self._assert(not self.phone_has_case(case._id),
+                                'phone has case being created: %s' % case._id)
                         if self._phone_owns(action):
                             self.cases_on_phone.append(CaseState(case_id=case.get_id, 
                                                                  indices=[]))
                     elif action.action_type == const.CASE_ACTION_UPDATE:
-                        assert(self.phone_has_case(case.get_id))
+                        self._assert(self.phone_has_case(case.get_id),
+                                "phone doesn't have case being updated: %s" % case._id)
                         if not self._phone_owns(action):
                             # only action necessary here is in the case of 
                             # reassignment to an owner the phone doesn't own
@@ -183,7 +201,8 @@ class SyncLog(Document, UnicodeMixIn):
                         if self.phone_has_case(case.get_id):
                             case_state = self.get_case_state(case.get_id)
                         else:
-                            assert(self.phone_has_dependent_case(case.get_id))
+                            self._assert(self.phone_has_dependent_case(case._id),
+                                    "phone doesn't have referenced case" % case._id)
                             case_state = self.get_dependent_case_state(case.get_id)
                         # reconcile indices
                         case_state.update_indices(action.indices)
@@ -230,6 +249,14 @@ class SyncLog(Document, UnicodeMixIn):
             
     def get_state_hash(self):
         return CaseStateHash(Checksum(self.get_footprint_of_cases_on_phone()).hexdigest())
+
+    def reconcile_cases(self):
+        """
+        Goes through the cases expected to be on the phone and reconciles
+        any duplicate records.
+        """
+        self.cases_on_phone = list(set(self.cases_on_phone))
+        self.dependent_cases_on_phone = list(set(self.dependent_cases_on_phone))
 
     def __unicode__(self):
         return "%s synced on %s (%s)" % (self.user_id, self.date.date(), self.get_id)
