@@ -392,7 +392,7 @@ class CumulativeSalesAndConsumptionReport(GenericTabularReport, CommtrackReportM
     exportable = True
     emailable = True
 
-    agg_type = 'village'
+    agg_type = 'block'
 
     # TODO support aggregation by 'N-levels down' (the locations at which might have varying loc types) as well as by subloc type?
 
@@ -410,21 +410,27 @@ class CumulativeSalesAndConsumptionReport(GenericTabularReport, CommtrackReportM
         return self._descendants('outlet')
 
     @property
+    @memoized
+    def metadata(self):
+        return [f for f in LOC_METADATA if f.get('anc_type', 'outlet') == self.agg_type]
+
+    @property
     def headers(self):
         if not self.aggregation_locs:
             return DataTablesHeader(DataTablesColumn('No locations'))
 
         cols = [
-            DataTablesColumn('Location'),
-            DataTablesColumn('Location Type'),
-            DataTablesColumn('# reporting outlets'),
+            'Location',
+            'Location Type',
+            '# reporting outlets',
         ]
+        cols.extend(f['caption'] for f in self.metadata)
         for p in self.active_products:
-            cols.append(DataTablesColumn('Total Stock on Hand (%s)' % p['name']))
-            cols.append(DataTablesColumn('Total Sales (%s)' % p['name']))
-            cols.append(DataTablesColumn('Total Consumption (%s)' % p['name']))
+            cols.append('Total Stock on Hand (%s)' % p['name'])
+            cols.append('Total Sales (%s)' % p['name'])
+            cols.append('Total Consumption (%s)' % p['name'])
 
-        return DataTablesHeader(*cols)
+        return DataTablesHeader(*(DataTablesColumn(c) for c in cols))
 
     @property
     def rows(self):
@@ -479,6 +485,7 @@ class CumulativeSalesAndConsumptionReport(GenericTabularReport, CommtrackReportM
                 site.location_type,
                 '%d of %d' % (num_active_outlets, num_outlets),
             ]
+            data.extend(getattr(site, f['key'], u'\u2014') for f in self.metadata)
             for p in products:
                 tx_by_action = map_reduce(lambda tx: [(tx['action'], int(tx['value']))], data=tx_by_product.get(p['_id'], []))
                 subcases = cases_by_product.get(p['_id'], [])
