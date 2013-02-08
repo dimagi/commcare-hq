@@ -1,5 +1,5 @@
 from casexml.apps.case.signals import process_cases
-from couchforms.models import XFormError
+from couchforms.models import XFormError, XFormInstance
 from dimagi.utils.couch.database import iter_docs
 
 
@@ -28,3 +28,8 @@ def reprocess_form_cases(form):
     successfully processed.
     """
     process_cases(None, form, reconcile=True)
+    # mark cleaned up now that we've reprocessed it
+    if form.doc_type != 'XFormInstance':
+        form = XFormInstance.get(form._id)
+        form.doc_type = 'XFormInstance'
+        form.save()
