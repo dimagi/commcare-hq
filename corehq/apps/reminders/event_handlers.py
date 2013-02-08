@@ -30,8 +30,8 @@ Each method accepts the following parameters:
     recipients          A list of recipients to send the content to. At the moment, this
                         will be list of CommCareUsers or CommCareCases.
                         
-    verified_numbers    A dictionary of recipient.get_id : recipient.get_verified_number()
-                        If the recipient doesn't have a VerifiedNumber entry, None is the 
+    verified_numbers    A dictionary of recipient.get_id : <first non-pending verified number>
+                        If the recipient doesn't have a verified VerifiedNumber entry, None is the 
                         corresponding value.
 
 Any changes to the reminder object made by the event handler method will be saved
