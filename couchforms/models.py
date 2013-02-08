@@ -7,7 +7,7 @@ import couchforms.const as const
 from dimagi.utils.indicators import ComputedDocumentMixin
 from dimagi.utils.parsing import string_to_datetime
 from couchdbkit.schema.properties_proxy import SchemaListProperty
-from couchforms.safe_index import safe_index
+from dimagi.utils.couch.safe_index import safe_index
 from xml.etree import ElementTree
 from django.utils.datastructures import SortedDict
 from couchdbkit.resource import ResourceNotFound
