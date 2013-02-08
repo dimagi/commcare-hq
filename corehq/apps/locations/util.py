@@ -32,6 +32,15 @@ def load_locs_json(domain, selected_loc_id=None):
             parent = this_loc
 
     return loc_json
+
+def defined_location_types(domain):
+    return [
+        'block',
+        'district',
+        'outlet',
+        'state',
+        'village',
+    ]
   
 # hard-coded for now
 def allowed_child_types(domain, parent):
