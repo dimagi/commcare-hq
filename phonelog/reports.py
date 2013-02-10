@@ -17,13 +17,21 @@ from dimagi.utils.couch.database import get_db
 from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.timezones import utils as tz_utils
 from dimagi.utils.web import json_request, get_url_base
+from django.utils.translation import ugettext_noop
 
 logger = logging.getLogger(__name__)
+
+DATA_NOTICE = ugettext_noop(
+        "This report may not always show the latest log data but will "
+        "be updated over time")
 
 class PhonelogReport(DeploymentsReport, DatespanMixin):
     fields = ['corehq.apps.reports.fields.FilterUsersField',
               'corehq.apps.reports.fields.GroupField',
               'corehq.apps.reports.fields.DatespanField']
+
+    special_notice = DATA_NOTICE
+
 
 
 class FormErrorReport(DeploymentsReport, DatespanMixin):
@@ -32,6 +40,8 @@ class FormErrorReport(DeploymentsReport, DatespanMixin):
     fields = ['corehq.apps.reports.fields.FilterUsersField',
               'corehq.apps.reports.fields.GroupField',
               'corehq.apps.reports.fields.DatespanField']
+
+    special_notice = DATA_NOTICE
 
     @property
     def headers(self):
