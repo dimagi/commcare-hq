@@ -1,22 +1,14 @@
-import datetime
 import json
 import logging
-import dateutil
 from collections import defaultdict
-from django.conf import settings
-from django.core.urlresolvers import reverse
 from django.utils import html
-import pytz
-from corehq.apps.reports import util
 from corehq.apps.reports.standard import DatespanMixin
 from corehq.apps.reports.standard.deployments import DeploymentsReport
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn, DTSortType, DTSortDirection
 from corehq.apps.reports.fields import DeviceLogTagField, DeviceLogUsersField, DeviceLogDevicesField
-from corehq.apps.reports.models import HQUserType, TempCommCareUser
 from dimagi.utils.couch.database import get_db
 from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.timezones import utils as tz_utils
-from dimagi.utils.web import json_request, get_url_base
 from django.utils.translation import ugettext_noop
 
 logger = logging.getLogger(__name__)
