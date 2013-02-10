@@ -1,29 +1,29 @@
-import datetime
 import json
 import logging
-import dateutil
 from collections import defaultdict
-from django.conf import settings
-from django.core.urlresolvers import reverse
 from django.utils import html
-import pytz
-from corehq.apps.reports import util
 from corehq.apps.reports.standard import DatespanMixin
 from corehq.apps.reports.standard.deployments import DeploymentsReport
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn, DTSortType, DTSortDirection
 from corehq.apps.reports.fields import DeviceLogTagField, DeviceLogUsersField, DeviceLogDevicesField
-from corehq.apps.reports.models import HQUserType, TempCommCareUser
 from dimagi.utils.couch.database import get_db
 from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.timezones import utils as tz_utils
-from dimagi.utils.web import json_request, get_url_base
+from django.utils.translation import ugettext_noop
 
 logger = logging.getLogger(__name__)
+
+DATA_NOTICE = ugettext_noop(
+        "This report may not always show the latest log data but will "
+        "be updated over time")
 
 class PhonelogReport(DeploymentsReport, DatespanMixin):
     fields = ['corehq.apps.reports.fields.FilterUsersField',
               'corehq.apps.reports.fields.GroupField',
               'corehq.apps.reports.fields.DatespanField']
+
+    special_notice = DATA_NOTICE
+
 
 
 class FormErrorReport(DeploymentsReport, DatespanMixin):
@@ -32,6 +32,8 @@ class FormErrorReport(DeploymentsReport, DatespanMixin):
     fields = ['corehq.apps.reports.fields.FilterUsersField',
               'corehq.apps.reports.fields.GroupField',
               'corehq.apps.reports.fields.DatespanField']
+
+    special_notice = DATA_NOTICE
 
     @property
     def headers(self):
@@ -55,7 +57,8 @@ class FormErrorReport(DeploymentsReport, DatespanMixin):
             data = get_db().view("phonelog/devicelog_data",
                     reduce=True,
                     startkey=key+[self.datespan.startdate_param_utc],
-                    endkey=key+[self.datespan.enddate_param_utc]
+                    endkey=key+[self.datespan.enddate_param_utc],
+                    stale='update_after'
                 ).first()
             warning_count = 0
             error_count = 0
@@ -74,7 +77,8 @@ class FormErrorReport(DeploymentsReport, DatespanMixin):
             data = get_db().view("reports_forms/all_forms",
                 startkey=key + [self.datespan.startdate_param_utc],
                 endkey=key + [self.datespan.enddate_param_utc, {}],
-                reduce=True
+                reduce=True,
+                stale='update_after'
             ).all()
             form_count = data[0]['value'] if data else 0
             username_formatted = '<a href="%(url)s?%(query_string)s%(error_slug)s=True&%(username_slug)s=%(raw_username)s">%(username)s</a>' % {
@@ -157,7 +161,8 @@ class DeviceLogDetailsReport(PhonelogReport):
                                        startkey=[self.domain],
                                        endkey=[self.domain, {}],
                                        group=True,
-                                       reduce=True):
+                                       reduce=True,
+                                       stale='update_after'):
                 # Begin dependency on particulars of view output
                 username = datum['key'][2]
                 device_id = datum['key'][1]
@@ -228,7 +233,8 @@ class DeviceLogDetailsReport(PhonelogReport):
                 startkey=[self.domain, "basic", self.goto_key[-1]],
                 limit=self.limit,
                 reduce=False,
-                descending=True
+                descending=True,
+                stale='update_after',
             ).all()
             rows.extend(self._create_rows(data, self.goto_key))
         else:
@@ -248,7 +254,8 @@ class DeviceLogDetailsReport(PhonelogReport):
                 data = get_db().view(view,
                     startkey=key+[self.datespan.startdate_param_utc],
                     endkey=key+[self.datespan.enddate_param_utc, {}],
-                    reduce=False
+                    reduce=False,
+                    stale='update_after',
                 ).all()
                 rows.extend(self._create_rows(data))
         return rows

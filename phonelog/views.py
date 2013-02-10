@@ -10,8 +10,16 @@ from corehq.apps.domain.decorators import login_and_domain_required
 GAP_THRESHOLD = 3 #minutes
 
 def device_list(db, domain):
-    device_times = db.view('phonelog/device_log_first_last', group=True, startkey=[domain], endkey=[domain, {}])
-    device_users = db.view('phonelog/device_log_users', group=True, startkey=[domain], endkey=[domain, {}])
+    device_times = db.view('phonelog/device_log_first_last',
+                           group=True,
+                           startkey=[domain],
+                           endkey=[domain, {}],
+                           stale='update_after')
+    device_users = db.view('phonelog/device_log_users',
+                           group=True,
+                           startkey=[domain],
+                           endkey=[domain, {}],
+                           stale='update_after')
 
     dev_users = {}
     for row in device_users:
@@ -84,7 +92,8 @@ def device_log(request, domain, device, template='phonelog/devicelogs.html', con
 
     logdata = db.view('phonelog/device_logs',
                       limit=limit, skip=skip, 
-                      descending=True, endkey=[device], startkey=[device, {}])
+                      descending=True, endkey=[device], startkey=[device, {}],
+                      stale='update_after')
     logdata = list(logdata)
     logdata.reverse()
 
@@ -111,7 +120,8 @@ def device_log(request, domain, device, template='phonelog/devicelogs.html', con
         return tuple(sorted(d.iteritems(), key=lambda (k, v): k))
 
     dup_index = db.view('phonelog/device_log_uniq', group=True,
-                        keys=[[device, pure_log_entry(row)] for row in logdata])
+                        keys=[[device, pure_log_entry(row)] for row in logdata],
+                        stale='update_after')
     dup_index = dict((frozendict(row['key'][1]), row['value']) for row in dup_index)
 
     def get_short_version(version):
@@ -228,7 +238,9 @@ def device_log(request, domain, device, template='phonelog/devicelogs.html', con
 def device_log_raw(request, domain, device, template='phonelog/devicelogs_raw.html', 
                    context=None):
     
-    logs = get_db().view("phonelog/device_log_first_last", key=[domain, device], reduce=False)
+    logs = get_db().view("phonelog/device_log_first_last",
+                         key=[domain, device], reduce=False,
+                         stale='update_after')
     def fmt_log(log):
         return {"received_on": parse_isodate(log["value"]),
                 "id": log["id"]}
