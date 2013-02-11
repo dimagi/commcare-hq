@@ -380,7 +380,8 @@ def submissions_errors(request, template="hqadmin/submissions_errors_report.html
         data = get_db().view("phonelog/devicelog_data",
             reduce=True,
             startkey=key+[datespan.startdate_param_utc],
-            endkey=key+[datespan.enddate_param_utc]
+            endkey=key+[datespan.enddate_param_utc],
+            stale='update_after',
         ).first()
         num_errors = 0
         num_warnings = 0
