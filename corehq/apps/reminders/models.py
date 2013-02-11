@@ -22,7 +22,6 @@ from corehq.apps.sms.mixin import VerifiedNumber
 from couchdbkit.exceptions import ResourceConflict
 from corehq.apps.sms.util import create_task, close_task, update_task
 from corehq.apps.smsforms.app import submit_unfinished_form
-from corehq.apps.ivr.api import initiate_outbound_call
 from dimagi.utils.couch import LockableMixIn
 from dimagi.utils.couch.database import get_db
 
@@ -77,6 +76,8 @@ SURVEY_METHOD_LIST = ["SMS","CATI"]
 
 UI_FREQUENCY_ADVANCED = "ADVANCED"
 UI_FREQUENCY_CHOICES = [UI_FREQUENCY_ADVANCED]
+
+QUESTION_RETRY_CHOICES = [1, 2, 3, 4, 5]
 
 # This time is used when the case property used to specify the reminder time isn't a valid time
 # TODO: Decide whether to keep this or retire the reminder
@@ -281,6 +282,7 @@ class CaseReminderHandler(Document):
     ui_type         The type of UI to use for editing this CaseReminderHandler (see UI_CHOICES)
     """
     domain = StringProperty()
+    active = BooleanProperty(default=True)
     case_type = StringProperty()
     nickname = StringProperty()
     default_lang = StringProperty()
@@ -294,6 +296,17 @@ class CaseReminderHandler(Document):
     # If this is True, on the last survey timeout, instead of resending the current question, 
     # it will submit the form for the recipient with whatever is completed up to that point.
     submit_partial_forms = BooleanProperty(default=False)
+    
+    # Only applies when submit_partial_forms is True.
+    # If this is True, partial form submissions will be allowed to create / update / close cases.
+    # If this is False, partial form submissions will just submit the form without case create / update / close.
+    include_case_side_effects = BooleanProperty(default=False)
+    
+    # Only applies for method = "ivr_survey" right now.
+    # This is the maximum number of times that it will retry asking a question with an invalid response before hanging
+    # up. This is meant to prevent long running calls.
+    max_question_retries = IntegerProperty(choices=QUESTION_RETRY_CHOICES, default=QUESTION_RETRY_CHOICES[-1])
+    
     survey_incentive = StringProperty()
     
     # start condition
@@ -485,6 +498,12 @@ class CaseReminderHandler(Document):
         case = reminder.case
         recipient = reminder.recipient
         iteration = 0
+        reminder.error_retry_count = 0
+        
+        # Reset next_fire to its last scheduled fire time in case there were any error retries
+        if reminder.last_scheduled_fire_time is not None:
+            reminder.next_fire = reminder.last_scheduled_fire_time
+        
         while now >= reminder.next_fire and reminder.active:
             iteration += 1
             # If it is a callback reminder, check the callback_timeout_intervals
@@ -493,7 +512,7 @@ class CaseReminderHandler(Document):
                     if self.method == METHOD_SMS_SURVEY and self.submit_partial_forms and iteration > 1:
                         # This is to make sure we submit the unfinished forms even when fast-forwarding to the next event after system downtime
                         for session_id in reminder.xforms_session_ids:
-                            submit_unfinished_form(session_id)
+                            submit_unfinished_form(session_id, self.include_case_side_effects)
                 else:
                     reminder.next_fire = reminder.next_fire + timedelta(minutes = reminder.current_event.callback_timeout_intervals[reminder.callback_try_count])
                     reminder.callback_try_count += 1
@@ -517,6 +536,9 @@ class CaseReminderHandler(Document):
             
             # Set whether or not the reminder should still be active
             reminder.active = self.get_active(reminder, reminder.next_fire, case)
+        
+        # Preserve the current next fire time since next_fire can be manipulated for error retries
+        reminder.last_scheduled_fire_time = reminder.next_fire
     
     def get_active(self, reminder, now, case):
         schedule_not_finished = not (self.max_iteration_count != REPEAT_SCHEDULE_INDEFINITELY and reminder.schedule_iteration_num > self.max_iteration_count)
@@ -556,7 +578,11 @@ class CaseReminderHandler(Document):
         verified_numbers = {}
         for r in recipients:
             try:
-                verified_number = r.get_verified_number()
+                contact_verified_numbers = r.get_verified_numbers(False)
+                if len(contact_verified_numbers) > 0:
+                    verified_number = sorted(contact_verified_numbers.iteritems())[0][1]
+                else:
+                    verified_number = None
             except Exception:
                 verified_number = None
             verified_numbers[r.get_id] = verified_number
@@ -627,7 +653,7 @@ class CaseReminderHandler(Document):
         except Exception:
             user = None
         
-        if case.closed or case.type != self.case_type or (self.recipient == RECIPIENT_USER and not user):
+        if not self.active or case.closed or case.type != self.case_type or (self.recipient == RECIPIENT_USER and not user):
             if reminder:
                 reminder.retire()
         else:
@@ -709,11 +735,11 @@ class CaseReminderHandler(Document):
             # TODO: Need to support sending directly to users / cases without case criteria being set
             recipient = None
         
-        if reminder is not None and reminder.start_condition_datetime != self.start_datetime:
+        if reminder is not None and (reminder.start_condition_datetime != self.start_datetime or not self.active):
             reminder.retire()
             reminder = None
         
-        if reminder is None:
+        if reminder is None and self.active:
             reminder = self.spawn_reminder(None, self.start_datetime, recipient)
             reminder.start_condition_datetime = self.start_datetime
             self.set_next_fire(reminder, now) # This will fast-forward to the next event that does not occur in the past
@@ -813,6 +839,8 @@ class CaseReminder(Document, LockableMixIn):
     start_condition_datetime = DateTimeProperty()   # The date and time matching the case property specified by the CaseReminderHandler.start_condition
     sample_id = StringProperty()
     xforms_session_ids = ListProperty(StringProperty)
+    error_retry_count = IntegerProperty(default=0)
+    last_scheduled_fire_time = DateTimeProperty()
     
     @property
     def handler(self):

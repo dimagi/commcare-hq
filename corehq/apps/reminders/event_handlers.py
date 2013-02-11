@@ -11,6 +11,10 @@ from corehq.apps.sms.models import CallLog, EventLog, MISSED_EXPECTED_CALLBACK
 from django.conf import settings
 from corehq.apps.app_manager.models import Form
 from corehq.apps.ivr.api import initiate_outbound_call
+from datetime import timedelta
+
+DEFAULT_OUTBOUND_RETRY_INTERVAL = 5
+DEFAULT_OUTBOUND_RETRIES = 2
 
 """
 This module defines the methods that will be called from CaseReminderHandler.fire()
@@ -26,8 +30,8 @@ Each method accepts the following parameters:
     recipients          A list of recipients to send the content to. At the moment, this
                         will be list of CommCareUsers or CommCareCases.
                         
-    verified_numbers    A dictionary of recipient.get_id : recipient.get_verified_number()
-                        If the recipient doesn't have a VerifiedNumber entry, None is the 
+    verified_numbers    A dictionary of recipient.get_id : <first non-pending verified number>
+                        If the recipient doesn't have a verified VerifiedNumber entry, None is the 
                         corresponding value.
 
 Any changes to the reminder object made by the event handler method will be saved
@@ -128,7 +132,7 @@ def fire_sms_survey_event(reminder, handler, recipients, verified_numbers):
             if handler.submit_partial_forms and (reminder.callback_try_count == len(reminder.current_event.callback_timeout_intervals)):
                 # Submit partial form completions
                 for session_id in reminder.xforms_session_ids:
-                    submit_unfinished_form(session_id)
+                    submit_unfinished_form(session_id, handler.include_case_side_effects)
             else:
                 # Resend current question
                 for session_id in reminder.xforms_session_ids:
@@ -209,8 +213,16 @@ def fire_ivr_survey_event(reminder, handler, recipients, verified_numbers):
             return True
         verified_number = verified_numbers[recipients[0].get_id]
         if verified_number is not None:
-            initiate_outbound_call(verified_number, reminder.current_event.form_unique_id)
-            return True
+            if initiate_outbound_call(verified_number, reminder.current_event.form_unique_id, handler.submit_partial_forms, handler.include_case_side_effects, handler.max_question_retries):
+                return True
+            else:
+                reminder.error_retry_count += 1
+                if reminder.error_retry_count > getattr(settings, "IVR_OUTBOUND_RETRIES", DEFAULT_OUTBOUND_RETRIES):
+                    return True
+                else:
+                    reminder.next_fire += timedelta(minutes=getattr(settings, "IVR_OUTBOUND_RETRY_INTERVAL", DEFAULT_OUTBOUND_RETRY_INTERVAL))
+                    reminder.save()
+                    return False
         else:
             return False
     else:

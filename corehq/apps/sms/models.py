@@ -165,6 +165,10 @@ class CallLog(MessageLog):
     xforms_session_id = StringProperty()
     error = BooleanProperty(default=False)
     error_message = StringProperty()
+    submit_partial_form = BooleanProperty(default=False) # True to submit a partial form on hangup if it's not completed yet
+    include_case_side_effects = BooleanProperty(default=False)
+    max_question_retries = IntegerProperty() # Max number of times to retry a question with an invalid response before hanging up
+    current_question_retry_count = IntegerProperty(default=0) # A counter of the number of invalid responses for the current question
     
     def __unicode__(self):
         to_from = (self.direction == INCOMING) and "from" or "to"

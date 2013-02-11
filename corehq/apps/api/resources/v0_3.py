@@ -1,6 +1,9 @@
 from corehq.apps.cloudcare.api import es_filter_cases
-from . import v0_2 
+from . import v0_2, v0_1
 from corehq.apps.api.resources.v0_2 import dict_object
+from corehq.apps.api.util import object_does_not_exist
+from couchforms import models as couchforms_models
+from couchdbkit.exceptions import ResourceNotFound
 from tastypie import fields
 
 class CaseListFilters(object):
@@ -35,3 +38,26 @@ class CommCareCaseResource(v0_2.CommCareCaseResource):
         return map(dict_object, es_filter_cases(domain, filters=filters.filters))
 
     
+class XFormInstanceResource(v0_1.XFormInstanceResource):
+    archived = fields.CharField(readonly=True)
+
+    def dehydrate_archived(self, bundle):
+        return isinstance(bundle.obj, couchforms_models.XFormArchived)
+    
+    def obj_get(self, request, **kwargs):
+        domain = kwargs['domain']
+        doc_id = kwargs['pk']
+        doc_type = 'XFormInstance'
+        # Logic borrowed from util.get_object_or_not_exist
+        try:
+            doc = couchforms_models.get(doc_id)
+            if doc and doc.domain == domain:
+                return doc
+        except ResourceNotFound:
+            pass # covered by the below
+        except AttributeError:
+            # there's a weird edge case if you reference a form with a case id
+            # that explodes on the "version" property. might as well swallow that
+            # too.
+            pass
+        raise object_does_not_exist(doc_type, doc_id)

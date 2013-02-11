@@ -611,6 +611,16 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, UnicodeMixIn):
     _user = None
     _user_checked = False
 
+    @classmethod
+    def wrap(cls, data, should_save=False):
+        if data.has_key("organizations"):
+            del data["organizations"]
+            should_save = True
+        couch_user = super(CouchUser, cls).wrap(data)
+        if should_save:
+            couch_user.save()
+        return couch_user
+
     class AccountTypeError(Exception):
         pass
 
