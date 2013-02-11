@@ -88,25 +88,6 @@ ANNOUNCEMENTS_ADMIN_INTERFACES = (
     )),
 )
 
-from hqbilling.reports import backend_rates, details, tools
-
-BILLING_REPORTS = (
-    (_("Manage SMS Backend Rates"), (
-        backend_rates.DimagiRateReport,
-        backend_rates.MachRateReport,
-        backend_rates.TropoRateReport,
-        backend_rates.UnicelRateReport
-    )),
-    (_("Billing Details"), (
-        details.SMSDetailReport,
-        details.MonthlyBillReport
-    )),
-    (_("Billing Tools"), (
-        tools.BillableCurrencyReport,
-        tools.TaxRateReport
-    ))
-)
-
 from corehq.apps.appstore.interfaces import CommCareExchangeAdvanced
 
 APPSTORE_INTERFACES = (

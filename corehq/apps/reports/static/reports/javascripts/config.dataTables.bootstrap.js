@@ -39,9 +39,7 @@ function HQReportDataTables(options) {
                 sPaginationType: self.paginationType,
                 iDisplayLength: self.defaultRows,
                 bAutoWidth: self.autoWidth,
-                sScrollX: "100%",
-                "sScrollXInner": "150%",
-                "bScrollCollapse": true,
+                sScrollX: "100%"
             };
 
             if(self.ajaxSource) {
@@ -92,6 +90,9 @@ function HQReportDataTables(options) {
                     iLeftColumns: self.fixColsNumLeft,
                     iLeftWidth: self.fixColsWidth
                 } );
+            $(window).on('resize', function () {
+                datatable.fnAdjustColumnSizing();
+            } );
 
 
             var $dataTablesFilter = $(".dataTables_filter");

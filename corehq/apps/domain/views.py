@@ -215,7 +215,7 @@ def autocomplete_fields(request, field):
 
 @domain_admin_required
 def snapshot_settings(request, domain):
-    domain = Domain.get_by_name(domain)
+    domain = Domain.get_by_name(domain, strict=True)
     snapshots = domain.snapshots()
     return render(request, 'domain/snapshot_settings.html',
                 {"project": domain, 'domain': domain.name, 'snapshots': list(snapshots), 'published_snapshot': domain.published_snapshot()})

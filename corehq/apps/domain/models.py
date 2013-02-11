@@ -74,6 +74,10 @@ class HQBillingAddress(DocumentSchema):
     address = ListProperty()
     name = StringProperty()
 
+    # used to bill client
+    is_sms_billable = BooleanProperty()
+    billable_client = StringProperty()
+
     @property
     def html_address(self):
         template = """<address>

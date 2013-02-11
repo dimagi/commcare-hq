@@ -5,6 +5,7 @@ from django import forms
 from django.forms.fields import ChoiceField, CharField, BooleanField
 from django.forms.widgets import  Select
 from django.utils.encoding import smart_str
+from django.contrib.auth.forms import PasswordResetForm
 
 from corehq.apps.domain.models import LICENSES
 
@@ -13,6 +14,7 @@ from dimagi.utils.timezones.fields import TimeZoneField
 from dimagi.utils.timezones.forms import TimeZoneChoiceField
 from django.template.loader import render_to_string
 from django.utils.translation import ugettext_noop
+
 
 import corehq.apps.commtrack.util as commtrack_util
 
@@ -206,3 +208,12 @@ def clean_password(txt):
     if not pwd_pattern.match(txt):
         raise forms.ValidationError('Password may only contain letters, numbers, hyphens, and underscores')
     return txt
+
+class ConfidentialPasswordResetForm(PasswordResetForm):
+    def clean_email(self):
+        try:
+            return super(ConfidentialPasswordResetForm, self).clean_email()
+        except forms.ValidationError:
+            # The base class throws various emails that give away information about the user;
+            # we can pretend all is well since the save() method is safe for missing users.
+            return self.cleaned_data['email']

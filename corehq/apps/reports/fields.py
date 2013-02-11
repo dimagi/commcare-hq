@@ -14,6 +14,7 @@ from dimagi.utils.couch.database import get_db
 from dimagi.utils.dates import DateSpan
 from dimagi.utils.decorators.datespan import datespan_in_request
 from corehq.apps.locations.models import location_tree, root_locations
+from corehq.apps.locations.util import load_locs_json
 import settings
 import json
 from django.utils.translation import ugettext_noop
@@ -450,37 +451,17 @@ class AsyncLocationField(ReportField):
         self.context.update(self._get_custom_context())
 
     def _get_custom_context(self):
-        def loc_to_json(loc):
-            return {
-                'name': loc.name,
-                'location_type': loc.location_type,
-                'uuid': loc._id,
-            }
-        loc_json = [loc_to_json(loc) for loc in root_locations(self.domain)]
         api_root = reverse('api_dispatch_list', kwargs={'domain': self.domain,
                                                         'resource_name': 'location', 
                                                         'api_name': 'v0.3'})
-
-        # if a location is selected, we need to pre-populate its location hierarchy
-        # so that the data is available client-side to pre-populate the drop-downs
         selected_loc_id = self.request.GET.get('location_id')
-        if selected_loc_id:
-            selected = Location.get(selected_loc_id)
-            lineage = list(Location.view('_all_docs', keys=selected.path, include_docs=True))
-
-            parent = {'children': loc_json}
-            for loc in lineage:
-                # find existing entry in the json tree that corresponds to this loc
-                this_loc = [k for k in parent['children'] if k['uuid'] == loc._id][0]
-                this_loc['children'] = [loc_to_json(loc) for loc in loc.children]
-                parent = this_loc
 
         return {
             'api_root': api_root,
             'control_name': self.name,
             'control_slug': self.slug,
             'loc_id': selected_loc_id,
-            'locations': json.dumps(loc_json)
+            'locations': json.dumps(load_locs_json(self.domain, selected_loc_id)),
         }
 
 class AsyncDrillableField(BaseReportFilter):
@@ -580,7 +561,9 @@ class DeviceLogTagField(ReportField):
         selected_tags = self.request.GET.getlist(self.slug)
         show_all = bool(not selected_tags)
         self.context['default_on'] = show_all
-        data = get_db().view('phonelog/device_log_tags', group=True)
+        data = get_db().view('phonelog/device_log_tags',
+                             group=True,
+                             stale='update_after')
         tags = [dict(name=item['key'],
                     show=bool(show_all or item['key'] in selected_tags))
                     for item in data]
@@ -601,7 +584,9 @@ class DeviceLogFilterField(ReportField):
         data = get_db().view(self.view,
             startkey = [self.domain],
             endkey = [self.domain, {}],
-            group=True)
+            group=True,
+            stale='update_after',
+        )
         filters = [dict(name=item['key'][-1],
                     show=bool(show_all or item['key'][-1] in selected))
                         for item in data]

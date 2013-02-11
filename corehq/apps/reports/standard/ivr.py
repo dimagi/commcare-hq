@@ -1,11 +1,13 @@
 from django.utils.translation import ugettext_noop
 from django.utils.translation import ugettext as _
+from django.core.urlresolvers import reverse
 from corehq.apps.reports.standard import DatespanMixin, ProjectReport,\
     ProjectReportParametersMixin
 from corehq.apps.reports.generic import GenericTabularReport
 from corehq.apps.reports.datatables import DataTablesColumn, DataTablesHeader
 from dimagi.utils.parsing import json_format_datetime
 from corehq.apps.sms.models import INCOMING, OUTGOING, CallLog
+from corehq.apps.smsforms.models import XFormsSession
 from corehq.apps.reports.util import format_datatables_data
 from corehq.apps.users.models import CouchUser
 from casexml.apps.case.models import CommCareCase
@@ -31,6 +33,7 @@ class CallLogReport(ProjectReport, ProjectReportParametersMixin, GenericTabularR
             DataTablesColumn(_("Phone Number")),
             DataTablesColumn(_("Direction")),
             DataTablesColumn(_("Form")),
+            DataTablesColumn(_("View Submission")),
             DataTablesColumn(_("Answered")),
             DataTablesColumn(_("Duration")),
             DataTablesColumn(_("Error")),
@@ -101,12 +104,19 @@ class CallLogReport(ProjectReport, ProjectReportParametersMixin, GenericTabularR
             else:
                 answered = _("Yes") if call.answered else _("No")
             
+            if call.xforms_session_id is None:
+                submission_id = None
+            else:
+                session = XFormsSession.latest_by_session_id(call.xforms_session_id)
+                submission_id = session.submission_id
+            
             row = [
                 self._fmt_timestamp(timestamp),
                 self._fmt(username),
                 self._fmt(phone_number),
                 self._fmt(direction_map.get(call.direction,"-")),
                 self._fmt(form_name),
+                self._fmt("-") if submission_id is None else self._fmt_submission_link(submission_id),
                 self._fmt(answered),
                 self._fmt(call.duration),
                 self._fmt(_("Yes") if call.error else _("No")),
@@ -131,4 +141,10 @@ class CallLogReport(ProjectReport, ProjectReportParametersMixin, GenericTabularR
             timestamp,
             timestamp.strftime("%Y-%m-%d %H:%M:%S"),
         )
+    
+    def _fmt_submission_link(self, submission_id):
+        url = reverse("render_form_data", args=[self.domain, submission_id])
+        display_text = _("View Submission")
+        return self.table_cell(display_text, '<a href="%s">%s</a>' % (url, display_text))
+
 

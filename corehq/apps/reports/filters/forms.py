@@ -1,15 +1,17 @@
+import copy
 from couchdbkit.schema.properties import LazyDict
 from django.template.loader import render_to_string
 from django.utils.safestring import mark_safe
+import re
 from corehq.apps.reports.filters.base import BaseDrilldownOptionFilter, BaseSingleOptionFilter
 from dimagi.utils.couch.database import get_db
 from dimagi.utils.decorators.memoized import memoized
-from settings import REMOTE_APP_NAMESPACE
 
 # For translations
 from django.utils.translation import ugettext as _
 from django.utils.translation import ugettext_noop
 
+REMOTE_APP_WILDCARD = "http://(.+).commcarehq.org"
 
 class FormsByApplicationFilter(BaseDrilldownOptionFilter):
     """
@@ -271,8 +273,6 @@ class FormsByApplicationFilter(BaseDrilldownOptionFilter):
         std_app_forms = set(self.application_forms)
         other_forms = list(all_forms.difference(std_app_forms))
 
-        remote_app_namespace = REMOTE_APP_NAMESPACE % {'domain': self.domain}
-
         key = ["", self.domain]
         remote_app_data = get_db().view('reports_apps/remote',
             reduce=False,
@@ -281,13 +281,13 @@ class FormsByApplicationFilter(BaseDrilldownOptionFilter):
         ).all()
         remote_apps = dict([(d['id'], d['value']) for d in remote_app_data])
 
-
         for form in other_forms:
             if form:
                 xmlns, app_id = self.split_xmlns_app_key(form)
-                if app_id in remote_apps.keys() or remote_app_namespace in xmlns:
+                remote_xmlns = re.search(REMOTE_APP_WILDCARD, xmlns)
+                if app_id in remote_apps.keys() or remote_xmlns:
                     if app_id in remote_apps.keys():
-                        app_info = remote_apps[app_id]
+                        app_info = copy.copy(remote_apps[app_id])
                     else:
                         app_info = {
                             'app': {
@@ -303,7 +303,7 @@ class FormsByApplicationFilter(BaseDrilldownOptionFilter):
                     # the module and form names from the xmlns.
                     module_desc = xmlns.split('/')
                     form_name = self.get_unknown_form_name(xmlns, app_id=app_id if app_id else None, none_if_not_found=True)
-                    if remote_app_namespace in xmlns:
+                    if remote_xmlns:
                         module_name = module_desc[-2] if len(module_desc) > 1 else None
                         if not form_name:
                             form_name = module_desc[-1] if module_desc else None
@@ -322,7 +322,6 @@ class FormsByApplicationFilter(BaseDrilldownOptionFilter):
                         'xmlns': xmlns,
                     })
                     result[form] = app_info
-
         return result
 
     @property
