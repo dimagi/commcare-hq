@@ -29,6 +29,7 @@ var CHWIndicator = function (options) {
     self.data = null;
     self.average = null;
     self.median = null;
+    self.total = null;
     self.std = null;
 
     self.init = function () {
@@ -41,6 +42,7 @@ var CHWIndicator = function (options) {
             self.data = data.data;
             self.user_indices = data.user_indices;
             self.average = data.average;
+            self.total = data.total;
             self.median = data.median;
             self.std = data.std;
             self.apply_updates();
@@ -69,9 +71,6 @@ var CHWIndicator = function (options) {
     };
 
     self.apply_updates = function () {
-        console.log("\nNEW");
-        console.log(self.index);
-        console.log('--');
         var new_data = reportTables.datatable.fnGetData();
         for (var user_id in self.data) {
             if (self.data.hasOwnProperty(user_id) &&
@@ -85,6 +84,7 @@ var CHWIndicator = function (options) {
         reportTables.datatable.fnAddData(new_data);
         reportTables.datatable.fnAdjustColumnSizing(true);
 
+        $('.dataTables_scrollFoot .total.'+self.slug).html(self.total);
         $('.dataTables_scrollFoot .average.'+self.slug).html(self.average);
         $('.dataTables_scrollFoot .median.'+self.slug).html(self.median);
         $('.dataTables_scrollFoot .std.'+self.slug).html(self.std);
