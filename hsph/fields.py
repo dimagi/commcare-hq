@@ -46,7 +46,7 @@ class NameOfCATIField(SelectFilteredMobileWorkerField):
     slug = "cati_name"
     name = "Name of CATI"
     cssId = "cati_name"
-    group_names = ["CATI"]
+    group_names = ["Role - CATI"]
     show_only_group_option = False
     default_option = "All CATIs"
     
