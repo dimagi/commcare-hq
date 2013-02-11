@@ -699,18 +699,22 @@ def system_info(request):
 @require_superuser
 def noneulized_users(request, template="hqadmin/noneulized_users.html"):
     context = get_hqadmin_base_context(request)
-    users = WebUser.view("users/web_users_by_domain",
-        reduce=False,
-        include_docs=True
-    ).all()
 
     days = request.GET.get("days", None)
     days = int(days) if days else 60
+    days_ago = datetime.now() - timedelta(days=days)
 
-    def no_eula(user):
-        return user.last_login > datetime.now() - timedelta(days=days) and not user.eula.signed and not user.is_dimagi
+    def dt_handler(obj): # http://stackoverflow.com/questions/455580/json-datetime-between-python-and-javascript
+        return obj.isoformat() if isinstance(obj, datetime) else None
 
-    context.update({"users": filter(no_eula, users), "days": days})
+    users = WebUser.view("eula_report/noneulized_users",
+        reduce=False,
+        include_docs=True,
+        startkey =["WebUser", json.dumps(days_ago, default=dt_handler)],
+        endkey =["WebUser", {}]
+    ).all()
+
+    context.update({"users": filter(lambda user: not user.is_dimagi, users), "days": days})
 
     headers = DataTablesHeader(
         DataTablesColumn("Username"),
