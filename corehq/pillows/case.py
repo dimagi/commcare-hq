@@ -10,7 +10,7 @@ UNKNOWN_DOMAIN = "__nodomain__"
 UNKNOWN_TYPE = "__notype__"
 
 class CasePillow(AliasedElasticPillow):
-    couch_db = CommCareCase.get_db()
+    document_class = CommCareCase
     couch_filter = "case/casedocs"
     es_host = settings.ELASTICSEARCH_HOST
     es_port = settings.ELASTICSEARCH_PORT
