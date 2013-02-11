@@ -45,9 +45,11 @@ def get_application_media(app):
                     continue
                 f.validate_form()
                 for image in parsed.image_references:
-                    form_media['images'].add(image.strip())
+                    if image:
+                        form_media['images'].add(image.strip())
                 for audio in parsed.audio_references:
-                    form_media['audio'].add(audio.strip())
+                    if audio:
+                        form_media['audio'].add(audio.strip())
             except (XFormValidationError, XFormError):
                 form_errors = True
 

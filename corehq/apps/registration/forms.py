@@ -63,8 +63,6 @@ class OrganizationRegistrationForm(forms.Form):
     location = forms.CharField(label='Organization Location:', max_length=25, required=False)
     logo = forms.ImageField(label='Organization Logo:', required=False)
 
-    tos_confirmed = forms.BooleanField(required=False, label="Terms of Service") # Must be set to False to have the clean_*() routine called
-
     def clean_org_name(self):
         data = self.cleaned_data['org_name'].strip().lower()
         if not re.match("^%s$" % new_org_re, data):
@@ -98,12 +96,6 @@ class OrganizationRegistrationForm(forms.Form):
     def clean_logo(self):
         data = self.cleaned_data['logo']
         #resize image to fit in website nicely
-        return data
-
-    def clean_tos_confirmed(self):
-        data = self.cleaned_data['tos_confirmed']
-        if data != True:
-            raise forms.ValidationError('You must agree to our Terms Of Service in order to create your own project.')
         return data
 
     def clean(self):

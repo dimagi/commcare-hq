@@ -1015,7 +1015,6 @@ class ApplicationBase(VersionedDoc, SnapshotMixin):
     # exchange properties
     cached_properties = DictProperty()
     description = StringProperty()
-    short_description = StringProperty()
     deployment_date = DateTimeProperty()
     phone_model = StringProperty()
     user_type = StringProperty()
@@ -1047,6 +1046,9 @@ class ApplicationBase(VersionedDoc, SnapshotMixin):
         if data.has_key('original_doc'):
             data['copy_history'] = [data.pop('original_doc')]
             should_save = True
+
+        # if description is empty, replace it with the short description if it exists
+        data["description"] = data.get("description", None) or data.get("short_description", None)
 
         self = super(ApplicationBase, cls).wrap(data)
         if not self.build_spec or self.build_spec.is_null():

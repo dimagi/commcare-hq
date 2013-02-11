@@ -513,7 +513,7 @@ class Domain(Document, HQBillingDomainMixin, SnapshotMixin):
             if copy is None:
                 return None
             copy.is_snapshot = True
-            copy.organization = self.organization
+            copy.organization = self.organization # i don't think we want this?
             copy.snapshot_time = datetime.now()
             del copy.deployment
             copy.save()

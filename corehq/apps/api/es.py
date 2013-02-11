@@ -1,7 +1,7 @@
 import logging
 import pdb
 from django.http import HttpResponse
-from django.utils.decorators import method_decorator
+from django.utils.decorators import method_decorator, classonlymethod
 from django.views.decorators.csrf import csrf_protect
 import simplejson
 from corehq.apps.domain.decorators import login_and_domain_required
@@ -63,6 +63,23 @@ class ESView(View):
         ret = super(ESView, self).dispatch(*args, **kwargs)
         return ret
 
+    @classonlymethod
+    def as_view(cls, **initkwargs):
+        """
+        Django as_view cannot be used since the constructor requires information only present in the request.
+        """
+        raise Exception('as_view not supported for domain-specific ESView')
+        
+    @classonlymethod
+    def as_domain_specific_view(cls, **initkwargs):
+        """
+        Creates a simple domain-specific class-based view for passing through ES requests.
+        """
+        def view(request, domain, *args, **kwargs):
+            self = cls(domain)
+            return self.dispatch(request, domain, *args, **kwargs)
+        
+        return view
 
     def run_query(self, es_query):
         """
@@ -126,8 +143,7 @@ class ESView(View):
         """
         size = self.request.GET.get('size', DEFAULT_SIZE)
         start = self.request.GET.get('start', 0)
-        domain = self.request.domain
-        query_results = self.run_query(self.base_query(domain, start=start, size=size))
+        query_results = self.run_query(self.base_query(start=start, size=size))
         query_output = simplejson.dumps(query_results, indent=self.indent)
         response = HttpResponse(query_output, content_type="application/json")
         return response

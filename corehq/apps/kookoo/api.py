@@ -38,6 +38,8 @@ def get_http_response_string(gateway_session_id, ivr_responses, collect_input=Fa
 """
 Expected kwargs:
     api_key
+
+Returns True if the call was queued successfully, or False if an error occurred.
 """
 def initiate_outbound_call(call_log_entry, *args, **kwargs):
     phone_number = call_log_entry.phone_number
@@ -69,6 +71,7 @@ def initiate_outbound_call(call_log_entry, *args, **kwargs):
             message = child.text
     
     if status == "queued":
+        call_log_entry.error = False
         call_log_entry.gateway_session_id = "KOOKOO-" + message
     elif status == "error":
         call_log_entry.error = True
@@ -78,5 +81,5 @@ def initiate_outbound_call(call_log_entry, *args, **kwargs):
         call_log_entry.error_message = "Unknown status received from Kookoo."
     
     call_log_entry.save()
-
+    return not call_log_entry.error
 

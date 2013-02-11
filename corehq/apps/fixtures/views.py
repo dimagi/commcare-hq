@@ -126,7 +126,8 @@ def data_items(request, domain, data_type_id, data_item_id):
     elif request.method == 'DELETE' and data_item_id:
         o = FixtureDataItem.get(data_item_id)
         assert(o.domain == domain and o.data_type.get_id == data_type_id)
-        o.delete_recursive()
+        with CouchTransaction() as transaction:
+            o.recursive_delete(transaction)
         return json_response({})
     else:
         return HttpResponseBadRequest()

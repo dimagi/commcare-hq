@@ -5,6 +5,7 @@ from django import forms
 from django.forms.fields import ChoiceField, CharField, BooleanField
 from django.forms.widgets import  Select
 from django.utils.encoding import smart_str
+from django.contrib.auth.forms import PasswordResetForm
 
 from corehq.apps.domain.models import LICENSES
 
@@ -13,6 +14,7 @@ from dimagi.utils.timezones.fields import TimeZoneField
 from dimagi.utils.timezones.forms import TimeZoneChoiceField
 from django.template.loader import render_to_string
 from django.utils.translation import ugettext_noop
+
 
 import corehq.apps.commtrack.util as commtrack_util
 
@@ -23,11 +25,8 @@ class SnapshotSettingsMixin(forms.Form):
 class SnapshotApplicationForm(forms.Form):
     publish = BooleanField(label=ugettext_noop("Publish?"), required=False)
     name = CharField(label=ugettext_noop("Name"), required=True)
-    short_description = CharField(label=ugettext_noop("Short Description"), required=False,
-        max_length=200, widget=forms.Textarea,
-        help_text=ugettext_noop("A brief description of the application (max. 200 characters)"))
-    description = CharField(label=ugettext_noop("Long Description"), required=False, widget=forms.Textarea,
-        help_text=ugettext_noop("A detailed technical description of the app design"))
+    description = CharField(label=ugettext_noop("Description"), required=False, widget=forms.Textarea,
+        help_text=ugettext_noop("A detailed technical description of the application"))
     deployment_date = CharField(label=ugettext_noop("Deployment date"), required=False)
     phone_model = CharField(label=ugettext_noop("Phone model"), required=False)
     user_type = CharField(label=ugettext_noop("User type"), required=False,
@@ -40,7 +39,6 @@ class SnapshotApplicationForm(forms.Form):
         self.fields.keyOrder = [
             'publish',
             'name',
-            'short_description',
             'description',
             'deployment_date',
             'phone_model',
@@ -68,8 +66,6 @@ class SnapshotSettingsForm(SnapshotSettingsMixin):
         help_text=ugettext_noop("An optional image to show other users your logo or what your app looks like"))
     cda_confirmed = BooleanField(required=False, label=ugettext_noop("Content Distribution Agreement"),
         help_text=render_to_string('domain/partials/cda_modal.html'))
-    publish_on_submit = BooleanField(required=False, label=ugettext_noop("Immediately publish?"),
-        help_text=ugettext_noop("If this is selected, the project will be published when you submit this form"))
 
     def __init__(self, *args, **kw):
         super(SnapshotSettingsForm, self).__init__(*args, **kw)
@@ -82,13 +78,12 @@ class SnapshotSettingsForm(SnapshotSettingsMixin):
             'image',
             'share_multimedia',
             'license',
-            'publish_on_submit',
             'cda_confirmed',]
 
     def clean_cda_confirmed(self):
         data_cda = self.cleaned_data['cda_confirmed']
-        data_publish = self.cleaned_data['publish_on_submit']
-        if data_publish is True and data_cda is False:
+        data_publish = self.data.get('publish_on_submit', "no") == "yes"
+        if data_publish and data_cda is False:
             raise forms.ValidationError('You must agree to our Content Distribution Agreement to publish your project.')
         return data_cda
 
@@ -213,3 +208,12 @@ def clean_password(txt):
     if not pwd_pattern.match(txt):
         raise forms.ValidationError('Password may only contain letters, numbers, hyphens, and underscores')
     return txt
+
+class ConfidentialPasswordResetForm(PasswordResetForm):
+    def clean_email(self):
+        try:
+            return super(ConfidentialPasswordResetForm, self).clean_email()
+        except forms.ValidationError:
+            # The base class throws various emails that give away information about the user;
+            # we can pretend all is well since the save() method is safe for missing users.
+            return self.cleaned_data['email']

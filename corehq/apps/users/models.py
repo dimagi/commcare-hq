@@ -611,6 +611,16 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, UnicodeMixIn):
     _user = None
     _user_checked = False
 
+    @classmethod
+    def wrap(cls, data, should_save=False):
+        if data.has_key("organizations"):
+            del data["organizations"]
+            should_save = True
+        couch_user = super(CouchUser, cls).wrap(data)
+        if should_save:
+            couch_user.save()
+        return couch_user
+
     class AccountTypeError(Exception):
         pass
 
@@ -1384,11 +1394,11 @@ class OrgMembershipMixin(DocumentSchema):
         return None
 
     def add_org_membership(self, org, **kwargs):
-        from corehq.apps.orgs.models import  Organization
+        from corehq.apps.orgs.models import Organization
         if self.get_org_membership(org):
             return
 
-        organization = Organization.get_by_name(org)
+        organization = Organization.get_by_name(org, strict=True)
         if not organization:
             raise OrgMembershipError("Cannot add org membership -- Organization %s does not exist" % org)
 
@@ -1525,7 +1535,7 @@ class WebUser(CouchUser, MultiMembershipMixin, OrgMembershipMixin):
             return False
 
     @memoized
-    def get_role(self, domain=None):
+    def get_role(self, domain=None, include_teams=True):
         """
         Get the role object for this user
 
@@ -1537,6 +1547,9 @@ class WebUser(CouchUser, MultiMembershipMixin, OrgMembershipMixin):
 
         if self.is_global_admin():
             return AdminUserRole(domain=domain)
+
+        if not include_teams:
+            return super(WebUser, self).get_role(domain)
 
         dm_list = list()
 

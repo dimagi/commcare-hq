@@ -26,7 +26,7 @@ def orgs_base(request, template="orgs/orgs_base.html"):
 @org_member_required
 def orgs_landing(request, org, template="orgs/orgs_landing.html", form=None, add_form=None, invite_member_form=None,
                  add_team_form=None, update_form=None):
-    organization = Organization.get_by_name(org)
+    organization = Organization.get_by_name(org, strict=True)
 
     reg_form_empty = not form
     add_form_empty = not add_form

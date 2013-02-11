@@ -297,9 +297,11 @@ def create_export_filter(request, domain, export_type='form'):
 def get_possible_reports(domain):
     from corehq.apps.reports.dispatcher import (ProjectReportDispatcher,
         CustomProjectReportDispatcher)
+    from corehq.apps.adm.dispatcher import ADMSectionDispatcher
     reports = []
     report_map = ProjectReportDispatcher().get_reports(domain) + \
-                 CustomProjectReportDispatcher().get_reports(domain)
+                 CustomProjectReportDispatcher().get_reports(domain) +\
+                 ADMSectionDispatcher().get_reports(domain)
     for heading, models in report_map:
         for model in models:
             reports.append({
