@@ -13,7 +13,7 @@ function(doc) {
     }
 
     function differenceInDays(time1, time2) {
-        return Math.floor((time1 - time2) / (24 * 3600 * 1000));
+        return Math.ceil((time1 - time2) / (24 * 3600 * 1000));
     }
 
     function daysSinceEpoch(date) {
