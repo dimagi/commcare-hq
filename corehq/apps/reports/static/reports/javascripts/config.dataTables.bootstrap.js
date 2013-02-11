@@ -39,9 +39,7 @@ function HQReportDataTables(options) {
                 sPaginationType: self.paginationType,
                 iDisplayLength: self.defaultRows,
                 bAutoWidth: self.autoWidth,
-                sScrollX: "100%",
-                "sScrollXInner": (self.fixColumns) ? "150%" : "100%",
-                "bScrollCollapse": true,
+                sScrollX: "100%"
             };
 
             if(self.ajaxSource) {
