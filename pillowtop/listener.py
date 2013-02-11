@@ -30,9 +30,13 @@ def ms_from_timedelta(td):
 
 
 class BasicPillow(object):
-    couch_filter = None # string for filter if needed
-    couch_db = None #couchdbkit Database Object
+    couch_filter = None  # string for filter if needed
+    document_class = None  # couchdbkit Document class
     changes_seen = 0
+
+    @property
+    def couch_db(self):
+        return self.document_class.get_db()
 
     def old_changes(self):
         """
