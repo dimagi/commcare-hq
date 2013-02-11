@@ -40,7 +40,7 @@ function HQReportDataTables(options) {
                 iDisplayLength: self.defaultRows,
                 bAutoWidth: self.autoWidth,
                 sScrollX: "100%",
-                "sScrollXInner": "150%",
+                "sScrollXInner": (self.fixColumns) ? "150%" : "100%",
                 "bScrollCollapse": true,
             };
 
