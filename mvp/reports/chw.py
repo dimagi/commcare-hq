@@ -20,8 +20,6 @@ class CHWManagerReport(GenericTabularReport, MVPIndicatorReport, DatespanMixin):
               'corehq.apps.reports.fields.GroupField',
               'corehq.apps.reports.fields.DatespanField']
 
-    cache_indicators = False
-
     @property
     @memoized
     def indicators(self):
