@@ -20,6 +20,8 @@ class CHWManagerReport(GenericTabularReport, MVPIndicatorReport, DatespanMixin):
               'corehq.apps.reports.fields.GroupField',
               'corehq.apps.reports.fields.DatespanField']
 
+    cache_indicators = False
+
     @property
     @memoized
     def indicators(self):
@@ -80,7 +82,7 @@ class CHWManagerReport(GenericTabularReport, MVPIndicatorReport, DatespanMixin):
     def rows(self):
         rows = list()
         d_text = lambda slug: mark_safe('<i class="icon icon-spinner status-%s"></i>' % slug)
-        self.statistics_rows = [["Average"], ["Median"], ["Std. Dev."]]
+        self.statistics_rows = [["Average"], ["Median"], ["Std. Dev."], ["Totals"]]
 
         def _create_stat_cell(stat_type, slug):
             stat_cell = self.table_cell(None, d_text(slug))
@@ -94,6 +96,7 @@ class CHWManagerReport(GenericTabularReport, MVPIndicatorReport, DatespanMixin):
                 self.statistics_rows[0].append(_create_stat_cell('average', indicator.slug))
                 self.statistics_rows[1].append(_create_stat_cell('median', indicator.slug))
                 self.statistics_rows[2].append(_create_stat_cell('std', indicator.slug))
+                self.statistics_rows[3].append(_create_stat_cell('total', indicator.slug))
 
         for u, user in enumerate(self.users):
             row_data = [user.get('username_in_report')]
@@ -190,6 +193,18 @@ class CHWManagerReport(GenericTabularReport, MVPIndicatorReport, DatespanMixin):
         user_indices = {}
         formatted_values = {}
 
+        def _formatted_cell(val, val_text):
+            table_cell = self.table_cell(v, val_text)
+            table_cell.update(
+                unwrap=True,
+                )
+            return render_to_string("reports/async/partials/tabular_cell.html", { 'col': table_cell })
+
+        if issubclass(indicator.__class__, CombinedCouchViewIndicatorDefinition):
+            _fmt_stat = lambda x: "%.f%%" % x if not numpy.isnan(x) else "--"
+        else:
+            _fmt_stat = lambda x: "%.f" % x if not numpy.isnan(x) else "--"
+
         for u, user in enumerate(self.users):
             value = indicator.get_value([user.get('user_id')], self.datespan)
             raw_values[user.get('user_id')] = value
@@ -198,25 +213,27 @@ class CHWManagerReport(GenericTabularReport, MVPIndicatorReport, DatespanMixin):
 
         if isinstance(all_values[0], dict):
             non_zero = [v.get('ratio')*100 for v in all_values if v.get('ratio') is not None]
+            d_nonzero = [v.get('denominator') for v in all_values if v.get('ratio') is not None]
+            n_nonzero = [v.get('numerator') for v in all_values if v.get('ratio') is not None]
+            d_sum = sum(d_nonzero)
+            n_sum = sum(n_nonzero)
+            total_ratio = float(n_sum) / float(d_sum) * 100 if d_sum > 0 else None
+            total = "%.f%% (%d/%d)" % (total_ratio, n_sum, d_sum) if total_ratio is not None else "---"
         else:
             non_zero = [v for v in all_values if v > 0]
+            nz_sum = sum(non_zero)
+            total = _formatted_cell(nz_sum, _fmt_stat(nz_sum))
 
         avg = numpy.average(non_zero)
         median = numpy.median(non_zero)
         std = numpy.std(non_zero)
 
-        def _formatted_cell(val, val_text):
-            table_cell = self.table_cell(v, val_text)
-            table_cell.update(
-                unwrap=True,
-            )
-            return render_to_string("reports/async/partials/tabular_cell.html", { 'col': table_cell })
-
         for user_id, value in raw_values.items():
             if isinstance(value, dict):
                 ratio = value.get('ratio')
                 v = ratio*100 if ratio else None
-                v_text = "%.f%%" % (ratio*100) if ratio is not None else "--"
+                v_text = "%.f%% (%d/%d)" % ((ratio*100), value.get('numerator'), value.get('denominator')) if ratio is \
+                    not None else "--"
             else:
                 v = value
                 v_text = "%d" % value if value is not None else "--"
@@ -230,16 +247,12 @@ class CHWManagerReport(GenericTabularReport, MVPIndicatorReport, DatespanMixin):
 
             formatted_values[user_id] = _formatted_cell(v, v_text)
 
-        if issubclass(indicator.__class__, CombinedCouchViewIndicatorDefinition):
-            _fmt_stat = lambda x: "%.f%%" % x if not numpy.isnan(x) else "--"
-        else:
-            _fmt_stat = lambda x: "%.f" % x if not numpy.isnan(x) else "--"
-
         return {
             'slug': indicator.slug,
             'data': formatted_values,
+            'user_indices': user_indices,
+            'total': total,
             'average': _formatted_cell(avg, _fmt_stat(avg)),
             'median': _formatted_cell(median, _fmt_stat(median)),
-            'std': _formatted_cell(std, _fmt_stat(std)),
-            'user_indices': user_indices,
+            'std': _formatted_cell(std, _fmt_stat(std))
         }
