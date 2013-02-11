@@ -55,7 +55,10 @@ class CaseState(LooselyEqualDocumentSchema, IndexHoldingMixIn):
     @classmethod
     def from_case(cls, case):
         return cls(case_id=case.get_id,
-                         indices=case.indices)
+                   indices=case.indices)
+
+    def __repr__(self):
+        return "case state: %s (%s)" % (self.case_id, self.indices)
 
 class ConfigurableAssertionMixin(object):
     """
@@ -236,7 +239,9 @@ class SyncLog(Document, UnicodeMixIn, ConfigurableAssertionMixin):
         queue = list(case_state for case_state in self.cases_on_phone)
         while queue:
             case_state = queue.pop()
-            if case_state.case_id not in relevant_cases:
+            # I don't actually understand why something is coming back None
+            # here, but we can probably just ignore it.
+            if case_state is not None and case_state.case_id not in relevant_cases:
                 relevant_cases.add(case_state.case_id)
                 queue.extend(children(case_state))
         return relevant_cases

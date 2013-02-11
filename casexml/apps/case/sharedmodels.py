@@ -35,7 +35,10 @@ class CommCareCaseIndex(LooselyEqualDocumentSchema, UnicodeMixIn):
     
     def __cmp__(self, other):
         return cmp(unicode(self), unicode(other))
-        
+
+    def __repr__(self):
+        return str(self)
+
 class IndexHoldingMixIn(object):
     """
     Since multiple objects need this functionality, implement it as a mixin
