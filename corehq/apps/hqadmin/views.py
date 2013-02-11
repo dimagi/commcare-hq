@@ -704,13 +704,10 @@ def noneulized_users(request, template="hqadmin/noneulized_users.html"):
     days = int(days) if days else 60
     days_ago = datetime.now() - timedelta(days=days)
 
-    def dt_handler(obj): # http://stackoverflow.com/questions/455580/json-datetime-between-python-and-javascript
-        return obj.isoformat() if isinstance(obj, datetime) else None
-
     users = WebUser.view("eula_report/noneulized_users",
         reduce=False,
         include_docs=True,
-        startkey =["WebUser", json.dumps(days_ago, default=dt_handler)],
+        startkey =["WebUser", days_ago.strftime("%Y-%m-%dT%H:%M:%SZ")],
         endkey =["WebUser", {}]
     ).all()
 
