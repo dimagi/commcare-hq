@@ -370,7 +370,7 @@ class SelectFilteredMobileWorkerField(SelectMobileWorkerField):
 
     # Whether to display both the default option and "Only <group> Mobile
     # Workers" or just the default option (useful when using a single
-    # group_name and changing default_option to All <group> Workers
+    # group_name and changing default_option to All <group> Workers)
     show_only_group_option = True
 
     group_names = []
