@@ -12,7 +12,7 @@ from corehq.apps.hqadmin.escheck import check_cluster_health, check_case_index, 
 from corehq.apps.reports.datatables import DataTablesColumn, DataTablesHeader, DTSortType
 from corehq.apps.reports.util import make_form_couch_key
 from corehq.apps.sms.models import SMSLog
-from corehq.apps.users.models import  CommCareUser
+from corehq.apps.users.models import  CommCareUser, CouchUser, WebUser
 from couchforms.models import XFormInstance
 from dimagi.utils.couch.database import get_db
 from collections import defaultdict
@@ -696,3 +696,29 @@ def system_info(request):
 
     return render_to_response(request, "hqadmin/system_info.html", context)
 
+@require_superuser
+def noneulized_users(request, template="hqadmin/noneulized_users.html"):
+    context = get_hqadmin_base_context(request)
+    users = WebUser.view("users/web_users_by_domain",
+        reduce=False,
+        include_docs=True
+    ).all()
+
+    days = request.GET.get("days", None)
+    days = int(days) if days else 60
+
+    def no_eula(user):
+        return user.last_login > datetime.now() - timedelta(days=days) and not user.eula.signed and not user.is_dimagi
+
+    context.update({"users": filter(no_eula, users), "days": days})
+
+    headers = DataTablesHeader(
+        DataTablesColumn("Username"),
+        DataTablesColumn("Date of Last Login"),
+        DataTablesColumn("couch_id"),
+    )
+    context['layout_flush_content'] = True
+    context["headers"] = headers
+    context["aoColumns"] = headers.render_aoColumns
+
+    return render_to_response(request, template, context)
