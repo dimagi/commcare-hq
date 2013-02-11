@@ -219,8 +219,6 @@ def create_or_update_users_and_groups(domain, user_specs, group_specs):
                 except Exception, e:
 #                    if settings.DEBUG:
 #                        raise
-                    if isinstance(e, DatabaseError):
-                        transaction.rollback()
                     status_row['flag'] = 'error: %s' % e
                     
             ret["rows"].append(status_row)

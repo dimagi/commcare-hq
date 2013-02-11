@@ -142,15 +142,20 @@ class CaseDisplay(object):
     def user_not_found_display(self, user_id):
         return _("Unknown [%s]") % user_id
 
+    @memoized
+    def _get_username(self, user_id):
+        username = self.report.usernames.get(user_id)
+        if not username:
+            user = CommCareUser.get_by_user_id(user_id)
+            username = user.username if user else self.user_not_found_display(user_id)
+        return username
+
     @property
     def owner_display(self):
-        username = (self.report.usernames.get(self.user_id) or
-                    self.user_not_found_display(self.user_id))
-
         if self.owning_group and self.owning_group.name:
             return '<span class="label label-inverse">%s</span>' % self.owning_group.name
         else:
-            return username
+            return self._get_username(self.user_id)
 
     @property
     def closed_display(self):
@@ -231,7 +236,7 @@ class CaseDisplay(object):
                 owner_id = action.get_user_id()
         if not owner_id:
             return _("No data")
-        return self.report.usernames.get(owner_id, self.user_not_found_display(owner_id))
+        return self._get_username(owner_id)
 
 class CaseListMixin(ProjectInspectionReportParamsMixin, GenericTabularReport, ProjectReportParametersMixin):
 
@@ -320,7 +325,6 @@ class CaseListReport(CaseListMixin, ProjectInspectionReport):
 
     @property
     def report_context(self):
-        shared_params = super(CaseListReport, self).shared_pagination_GET_params
         rep_context = super(CaseListReport, self).report_context
         rep_context.update(
             filter=settings.LUCENE_ENABLED
