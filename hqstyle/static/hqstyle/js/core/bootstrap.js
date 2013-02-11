@@ -1790,10 +1790,12 @@
         height: this.$element[0].offsetHeight
       })
 
+      var is_visible = ($(window).height() + $(window).scrollTop()) > (pos.top + pos.height + this.$menu.height());
+
       this.$menu
         .insertAfter(this.$element)
         .css({
-          top: pos.top + pos.height
+          top: (is_visible) ? pos.top + pos.height : pos.top - this.$menu.height() - parseInt(this.$element.css('line-height'), 10)
         , left: pos.left
         })
         .show()
