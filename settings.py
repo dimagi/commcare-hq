@@ -99,6 +99,7 @@ TEMPLATE_CONTEXT_PROCESSORS = [
     'django.core.context_processors.static',
     "corehq.util.context_processors.base_template", # sticks the base template inside all responses
     "corehq.util.context_processors.google_analytics",
+    "corehq.util.context_processors.raven",
 ]
 
 TEMPLATE_DIRS = [
@@ -124,8 +125,9 @@ DEFAULT_APPS = (
     'couchdbkit.ext.django',
     'crispy_forms',
     'django.contrib.markup',
-    'gunicorn'
-    )
+    'gunicorn',
+    'raven.contrib.django.raven_compat',
+)
 
 CRISPY_TEMPLATE_PACK = 'bootstrap'
 
@@ -164,6 +166,7 @@ HQ_APPS = (
     'corehq.apps.migration',
     'corehq.apps.app_manager',
     'corehq.apps.orgs',
+    'corehq.apps.facilities',
     'corehq.apps.fixtures',
     'corehq.apps.importer',
     'corehq.apps.reminders',
@@ -212,7 +215,7 @@ HQ_APPS = (
     'pathindia',
     'pact',
     'psi',
-    )
+)
 
 TEST_APPS = ()
 REFLEXIVE_URL_BASE = "localhost:8000"
@@ -432,6 +435,7 @@ COUCHDB_APPS = [
     'couchexport',
     'hqadmin',
     'domain',
+    'facilities',
     'forms',
     'fixtures',
     'groups',

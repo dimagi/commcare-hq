@@ -17,7 +17,6 @@ Server layout:
 """
 import uuid
 from fabric.context_managers import settings, cd
-from fabric.decorators import hosts
 from fabric.operations import require, local, prompt
 
 import os, sys
@@ -213,7 +212,7 @@ def realstaging():
         'formsplayer': ['hqdjango1-staging.internal.commcarehq.org'],
         'lb': [], #todo on apache level config
         'staticfiles': ['hqproxy0.internal.commcarehq.org'],
-        'deploy': ['hqdb-staging.internal.commcarehq.org'], #this is a stub becuaue we don't want to be prompted for a host or run deploy too many times
+        'deploy': ['hqdb-staging.internal.commcarehq.org'], #this is a stub because we don't want to be prompted for a host or run deploy too many times
         'django_monolith': [] # fab complains if this doesn't exist
     }
 
@@ -403,13 +402,17 @@ def update_code(preindex=False):
         sudo('git pull', user=env.sudo_user)
         sudo('git submodule sync', user=env.sudo_user)
         sudo('git submodule update --init --recursive', user=env.sudo_user)
+        # remove all .pyc files in the project
+        sudo("find . -name '*.pyc' -delete", user=env.sudo_user)
 
 @roles('pg', 'django_monolith')
 def mail_admins(subject, message):
-    sudo('%(virtualenv_root)s/bin/python manage.py mail_admins --subject "%(subject)s" "%(message)s"' % {'virtualenv_root': env,
-                                                                                                         'subject':subject,
-                                                                                                         'message':message }, 
-         user=env.sudo_user)
+    with cd(env.code_root):
+        sudo('%(virtualenv_root)s/bin/python manage.py mail_admins --subject "%(subject)s" "%(message)s"' % \
+                {'virtualenv_root': env.virtualenv_root,
+                 'subject':subject,
+                 'message':message },
+             user=env.sudo_user)
 
 @task
 def deploy():
@@ -454,7 +457,7 @@ def update_virtualenv(preindex=False):
         env_to_use = env.virtualenv_root
     requirements = posixpath.join(env.code_root, 'requirements')
     with cd(root_to_use):
-        cmd = ['%s/bin/pip install' % env_to_use]
+        cmd = ['source %s/bin/activate && pip install' % env_to_use]
         cmd += ['--requirement %s' % posixpath.join(requirements, 'prod-requirements.txt')]
         cmd += ['--requirement %s' % posixpath.join(requirements, 'requirements.txt')]
         sudo(' '.join(cmd), user=env.sudo_user)

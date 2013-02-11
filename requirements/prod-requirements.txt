@@ -3,4 +3,3 @@ git+git://github.com/dimagi/django-cpserver.git
 celerymon==1.0.3
 redis==2.6.2
 django-redis==2.2
-
