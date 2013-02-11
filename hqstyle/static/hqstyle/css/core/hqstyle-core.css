@@ -6265,6 +6265,9 @@ footer a:hover {
   border-left-color: #ffffff;
   bottom: -10px;
 }
+.popover {
+  color: #333333;
+}
 .thumbnails {
   margin-left: -20px;
   list-style: none;
