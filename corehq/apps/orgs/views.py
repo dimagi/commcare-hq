@@ -43,7 +43,7 @@ def orgs_landing(request, org, template="orgs/orgs_landing.html", form=None, add
                                                         'url': organization.url, 'location': organization.location})
 
     current_teams = Team.get_by_org(org)
-    current_domains = Domain.get_by_organization(org)
+    current_domains = Domain.get_by_organization(org).all()
     members = organization.get_members()
     admin = request.couch_user.is_org_admin(org) or request.couch_user.is_superuser
 
@@ -197,7 +197,7 @@ def orgs_logo(request, org, template="orgs/orgs_logo.html"):
 def orgs_teams(request, org, template="orgs/orgs_teams.html"):
     organization = Organization.get_by_name(org)
     teams = Team.get_by_org(org)
-    current_domains = Domain.get_by_organization(org)
+    current_domains = Domain.get_by_organization(org).all()
     vals = dict(org=organization, teams=teams, domains=current_domains)
     return render_to_response(request, template, vals)
 
@@ -206,7 +206,7 @@ def orgs_team_members(request, org, team_id, template="orgs/orgs_team_members.ht
     #organization and teams
     organization = Organization.get_by_name(org)
     teams = Team.get_by_org(org)
-    current_domains = Domain.get_by_organization(org)
+    current_domains = Domain.get_by_organization(org).all()
 
     try:
         team = Team.get(team_id)
@@ -222,7 +222,7 @@ def orgs_team_members(request, org, team_id, template="orgs/orgs_team_members.ht
     for name in domain_names:
         domains.append([Domain.get_by_name(name), team.role_label(domain=name), UserRole.by_domain(name)])
 
-    all_org_domains = Domain.get_by_organization(org)
+    all_org_domains = Domain.get_by_organization(org).all()
     non_domains = [domain for domain in all_org_domains if domain.name not in domain_names]
 
     all_org_members = organization.get_members()

@@ -8,7 +8,7 @@ from corehq.apps import receiverwrapper
 from django.core.urlresolvers import reverse
 from django.http import HttpResponseRedirect, HttpResponse, Http404
 
-from django.shortcuts import redirect
+from django.shortcuts import redirect, render
 
 from corehq.apps.domain.decorators import login_required_late_eval_of_LOGIN_URL, domain_admin_required
 from corehq.apps.domain.forms import DomainGlobalSettingsForm,\
@@ -221,7 +221,7 @@ def snapshot_settings(request, domain):
 @domain_admin_required
 def org_settings(request, domain):
     domain = Domain.get_by_name(domain)
-    return render_to_response(request, 'domain/orgs_settings.html', {
+    return render(request, 'domain/orgs_settings.html', {
         "project": domain, 'domain': domain.name,
         "organization": Organization.get_by_name(getattr(domain, "organization", None))
     })
