@@ -596,6 +596,9 @@ SMS_BACKENDS = {
     '999': 'MOBILE_BACKEND_TEST', # +999 is an unused country code
 }
 
+IVR_OUTBOUND_RETRIES = 3
+IVR_OUTBOUND_RETRY_INTERVAL = 10
+
 SELENIUM_APP_SETTING_DEFAULTS = {
     'cloudcare': {
         # over-generous defaults for now
