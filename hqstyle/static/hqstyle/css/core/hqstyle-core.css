@@ -3343,6 +3343,20 @@ ul.icons li [class*=" icon-"] {
 .icon-folder-open-alt:before {
   content: "\f115";
 }
+@font-face {
+  font-family: 'CommCareFont';
+  src: url('../font/commcarefont-webfont.woff') format('woff'), url('../font/commcarefont-webfont.ttf') format('truetype');
+  font-weight: normal;
+  font-style: normal;
+}
+[class^="icon-hq-"],
+[class*=" icon-hq-"] {
+  font-family: CommCareFont;
+}
+.icon-hq-flower:before {
+  content: "\2698";
+  font-size: 1.3em;
+}
 .header .icon-white:before {
   content: "\f105";
   color: #a5c0de;
