@@ -1,8 +1,3 @@
-// SPRITES
-// Glyphs and icons for buttons, nav, and more
-// -------------------------------------------
-
-
 // ICONS
 // -----
 
@@ -14,12 +9,35 @@
 // For the white version of the  icons, just add the .icon-white class:
 // <i class="i icon-inbox icon-white"></i>
 
+@CommCareFontPath: "../font";
+
+@font-face {
+  font-family: 'CommCareFont';
+  src: url('@{CommCareFontPath}/commcarefont-webfont.woff') format('woff'),
+        url('@{CommCareFontPath}/commcarefont-webfont.ttf') format('truetype');
+  font-weight: normal;
+  font-style: normal;
+}
+
+[class^="icon-hq-"],
+[class*=" icon-hq-"] {
+  font-family: CommCareFont;
+}
+
+.icon-hq-flower:before { content: "\2698"; font-size: 1.3em; }
+
 .header .icon-white:before {
-    content: "\f105";
+    content: "\f105"; // fontawesome icon-angle-right
     color: desaturate(lighten(@blue, 40), 30);
 }
-.headerSortUp .icon-white:before    { content: "\f102"; color: inherit; }
-.headerSortDown .icon-white:before  { content: "\f103"; color: inherit; }
+.headerSortUp .icon-white:before {
+  content: "\f102"; // fontawesome icon-double-angle-up
+  color: inherit;
+}
+.headerSortDown .icon-white:before {
+  content: "\f103"; // fontawesome icon-double-angle-down
+  color: inherit;
+}
 
 th.header > div {
     cursor: pointer;
