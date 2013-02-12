@@ -71,7 +71,11 @@ class Command(LabelCommand):
         while True:
             try:
                 last_checkpoint = Checkpoint.get_last_checkpoint(CHECKPOINT_ID)
-                c.wait(heartbeat=5000, since=last_checkpoint, cb=sync_if_necessary)
+                kwargs = {"heartbeat": 5000,
+                          "cb": sync_if_necessary}
+                if last_checkpoint is not None:
+                    kwargs["since"] = last_checkpoint
+                c.wait(**kwargs)
                        
             except Exception, e:
                 time.sleep(10)
