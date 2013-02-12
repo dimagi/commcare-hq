@@ -321,7 +321,7 @@ class DomainMembership(Membership):
 
 class OrgMembership(Membership):
     organization = StringProperty()
-    team_ids = SetProperty() # a set of ids corresponding to which teams the user is a member of
+    team_ids = StringListProperty(default=[]) # a set of ids corresponding to which teams the user is a member of
 
 class OrgMembershipError(Exception):
     pass
@@ -1402,6 +1402,7 @@ class OrgMembershipMixin(DocumentSchema):
         if not organization:
             raise OrgMembershipError("Cannot add org membership -- Organization %s does not exist" % org)
 
+        kwargs.pop("organization", None) # prevents next line from raising an error due to two organization values being given to OrgMembership
         self.org_memberships.append(OrgMembership(organization=org, **kwargs))
 
     def delete_org_membership(self, org, create_record=False):
@@ -1691,7 +1692,8 @@ class OrgRemovalRecord(DeleteRecord):
 
     def undo(self):
         user = WebUser.get_by_user_id(self.user_id)
-        user.add_org_membershipt(**self.domain_membership._doc)
+        some_args = self.org_membership._doc
+        user.add_org_membership(some_args["organization"], **some_args)
         user.save()
 
 
