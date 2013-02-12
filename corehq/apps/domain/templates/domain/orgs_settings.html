@@ -1,0 +1,81 @@
+{% extends "users/users_base.html" %}
+{% load hqstyle_tags %}
+{% load i18n %}
+
+
+{% block subsection-title %}
+    <li class="active">
+        <a href="#">Organization Settings</a>
+    </li>
+{% endblock %}
+
+{% block js-inline  %}{{ block.super }}
+<script type="text/javascript">
+// autocomplete for the orgs request form -- referenced: https://github.com/twitter/bootstrap/pull/3682
+    $(function() {
+        var labels, mapped;
+        $('#org-input').typeahead({
+            source: function(query, callback) {
+                $.get('{% url search_orgs %}', { q: query }, function(data) {
+                    labels = [];
+                    mapped = {};
+
+                    $.each(data, function (i, org) {
+                        mapped[org.title] = org.name;
+                        labels.push(org.title);
+                    });
+
+                    callback(labels);
+                });
+            },
+
+            updater: function (org) {
+                return mapped[org];
+            }
+        })
+    });
+</script>
+{% endblock %}
+
+{% block user-view %}
+    <div>
+        {% if project.organization %}
+            <h3>This project is managed by the <a href="{% url orgs_landing project.organization %}">{{ organization.title|capfirst }}</a> organization.</h3>
+        {% else %}
+            <h3>{% trans "This project is not managed by an organization" %}</h3>
+            <button class="btn" data-toggle="modal" data-target="#org-request">
+                Send project management request to an organization</button>
+        {% endif %}
+    </div>
+{% endblock %}
+
+{% block modals %}{{ block.super }}
+    <div class="modal hide fade" id="org-request">
+        <div class="modal-header">
+            <a class="close" data-dismiss="modal">&times;</a>
+            <h4>Send request to an Organization to manage this project</h4>
+        </div>
+        <form class="form-horizontal" id="org-request-form" action="{% url domain_org_request domain %}" method="POST">
+            <div class="modal-body" style="height: 18em;">
+                <fieldset>
+                    <div class="control-group">
+                        <label class="control-label" for="org-input">Search for organization:</label>
+                        <div class="controls">
+                            <input id="org-input" type="text" name="org_name" autocomplete="off">
+                        </div>
+                    </div>
+                    <div class="row-fluid">
+                        <span class="span1"><span class="label label-info">Info</span></span>
+                        <span class="span11">
+                            The admins of this organization will be notified about your project management request. They will then have the opportunity to add your project to their organization
+                        </span>
+                    </div>
+                </fieldset>
+            </div>
+            <div class="modal-footer">
+                <button type="submit" href="#" class="btn btn-primary">Submit Request</button>
+                <a href="#" data-dismiss="modal" class="btn">Cancel</a>
+            </div>
+        </form>
+    </div>
+{% endblock %}
