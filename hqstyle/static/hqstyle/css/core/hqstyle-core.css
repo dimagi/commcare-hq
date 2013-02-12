@@ -2375,66 +2375,6 @@ table th[class*="span"],
   -moz-border-radius: 2px;
   border-radius: 2px;
 }
-.icon-hq,
-.icon-hq-white {
-  display: inline-block;
-  width: 17px;
-  height: 14px;
-}
-.icon-hq {
-  background-image: url('../../img/commcare-glyphs.png');
-}
-.icon-hq-white {
-  background-image: url('../../img/commcare-glyphs-white.png');
-}
-.icon-hq-logo {
-  background-position: 0      0;
-}
-.icon-hq-person {
-  background-position: -24px 0;
-}
-.icon-hq-doublechevron {
-  background-position: 0 -24px;
-}
-.headerSortUp .icon-hq-doublechevron {
-  background-position: 0 -46px;
-}
-.headerSortDown .icon-hq-doublechevron {
-  background-position: -24px -46px;
-}
-th.header > div {
-  cursor: pointer;
-}
-.icon-hq-triangle-up {
-  background-position: 0 -46px;
-}
-.icon-hq-triangle-down {
-  background-position: -24px -46px;
-}
-.hq-help {
-  position: relative;
-  width: 40px;
-  overflow: visible;
-}
-.hq-help i {
-  font-size: 20px;
-  line-height: 25px;
-  width: 25px;
-  text-decoration: none;
-  position: absolute;
-  top: -30%;
-  left: 6.666666666666667px;
-}
-.hq-help:hover i,
-.hq-help.on i {
-  font-size: 30px;
-  text-decoration: none;
-  left: 4.666666666666667px;
-  color: #46a546;
-}
-.hq-help .popover {
-  color: #333333;
-}
 /*  Font Awesome 3.0
     the iconic font designed for use with Twitter Bootstrap
     -------------------------------------------------------
@@ -3402,6 +3342,45 @@ ul.icons li [class*=" icon-"] {
 }
 .icon-folder-open-alt:before {
   content: "\f115";
+}
+.header .icon-white:before {
+  content: "\f105";
+  color: #a5c0de;
+}
+.headerSortUp .icon-white:before {
+  content: "\f102";
+  color: inherit;
+}
+.headerSortDown .icon-white:before {
+  content: "\f103";
+  color: inherit;
+}
+th.header > div {
+  cursor: pointer;
+}
+.hq-help {
+  position: relative;
+  width: 40px;
+  overflow: visible;
+}
+.hq-help i {
+  font-size: 20px;
+  line-height: 25px;
+  width: 25px;
+  text-decoration: none;
+  position: absolute;
+  top: -30%;
+  left: 6.666666666666667px;
+}
+.hq-help:hover i,
+.hq-help.on i {
+  font-size: 30px;
+  text-decoration: none;
+  left: 4.666666666666667px;
+  color: #46a546;
+}
+.hq-help .popover {
+  color: #333333;
 }
 .dropup,
 .dropdown {
