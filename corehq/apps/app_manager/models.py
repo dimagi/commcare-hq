@@ -1159,6 +1159,10 @@ class ApplicationBase(VersionedDoc, SnapshotMixin):
         return reverse('receiver_post_with_app_id', args=[self.domain, self.copy_of or self.get_id])
 
     @absolute_url_property
+    def key_server_url(self):
+        return reverse('key_server_url', args=[self.domain])
+
+    @absolute_url_property
     def ota_restore_url(self):
         return reverse('corehq.apps.ota.views.restore', args=[self.domain])
 
@@ -1565,6 +1569,7 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
             'suite_url': self.suite_url,
             'suite_loc': self.suite_loc,
             'post_url': self.post_url,
+            'key_server_url': self.key_server_url,
             'post_test_url': self.post_url,
             'ota_restore_url': self.ota_restore_url,
             'cc_user_domain': cc_user_domain(self.domain)

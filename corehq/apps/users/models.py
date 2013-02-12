@@ -1557,10 +1557,9 @@ class WebUser(CouchUser, MultiMembershipMixin, OrgMembershipMixin):
         if dm:
             dm_list.append([dm, ''])
 
-        for team_name, team_id in self.teams:
-            team = Team.get(team_id)
+        for team in self.get_teams():
             if team.get_domain_membership(domain) and team.get_domain_membership(domain).role:
-                dm_list.append([team.get_domain_membership(domain), ' (' + team_name + ')'])
+                dm_list.append([team.get_domain_membership(domain), ' (' + team.name + ')'])
 
         #now find out which dm has the highest permissions
         if dm_list:

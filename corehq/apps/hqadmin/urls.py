@@ -15,5 +15,5 @@ urlpatterns = patterns('corehq.apps.hqadmin.views',
     url(r'^submissions_errors/$', 'submissions_errors', name='global_submissions_errors'),
     url(r'^domains/update/$', 'update_domains', name="domain_update"),
     url(r'^domains/download/$', 'domain_list_download', name="domain_list_download"),
-    
+    url(r'^noneulized_users/$', 'noneulized_users', name="noneulized_users"),
 )

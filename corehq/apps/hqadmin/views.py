@@ -12,7 +12,7 @@ from corehq.apps.hqadmin.escheck import check_cluster_health, check_case_index, 
 from corehq.apps.reports.datatables import DataTablesColumn, DataTablesHeader, DTSortType
 from corehq.apps.reports.util import make_form_couch_key
 from corehq.apps.sms.models import SMSLog
-from corehq.apps.users.models import  CommCareUser
+from corehq.apps.users.models import  CommCareUser, CouchUser, WebUser
 from couchforms.models import XFormInstance
 from dimagi.utils.couch.database import get_db
 from collections import defaultdict
@@ -380,7 +380,8 @@ def submissions_errors(request, template="hqadmin/submissions_errors_report.html
         data = get_db().view("phonelog/devicelog_data",
             reduce=True,
             startkey=key+[datespan.startdate_param_utc],
-            endkey=key+[datespan.enddate_param_utc]
+            endkey=key+[datespan.enddate_param_utc],
+            stale='update_after',
         ).first()
         num_errors = 0
         num_warnings = 0
@@ -696,3 +697,30 @@ def system_info(request):
 
     return render_to_response(request, "hqadmin/system_info.html", context)
 
+@require_superuser
+def noneulized_users(request, template="hqadmin/noneulized_users.html"):
+    context = get_hqadmin_base_context(request)
+
+    days = request.GET.get("days", None)
+    days = int(days) if days else 60
+    days_ago = datetime.now() - timedelta(days=days)
+
+    users = WebUser.view("eula_report/noneulized_users",
+        reduce=False,
+        include_docs=True,
+        startkey =["WebUser", days_ago.strftime("%Y-%m-%dT%H:%M:%SZ")],
+        endkey =["WebUser", {}]
+    ).all()
+
+    context.update({"users": filter(lambda user: not user.is_dimagi, users), "days": days})
+
+    headers = DataTablesHeader(
+        DataTablesColumn("Username"),
+        DataTablesColumn("Date of Last Login"),
+        DataTablesColumn("couch_id"),
+    )
+    context['layout_flush_content'] = True
+    context["headers"] = headers
+    context["aoColumns"] = headers.render_aoColumns
+
+    return render_to_response(request, template, context)
