@@ -30,6 +30,7 @@
         $("#create_project_btn").tooltip({title: "Create New Project", placement: "top"});
         $("#add_team_btn").tooltip({title: "Create New Team", placement: "top"});
         $("#invite_member_btn").tooltip({title: "Invite New Member", placement: "top"});
+        $('#remove-member-btn').tooltip({title: 'Remove This Member', placement: 'top'});
 
         $('#load_data').click(function (e) {
             e.preventDefault();
@@ -48,7 +49,16 @@
             var apm = $('#add_project_modal');
             apm.find('#id_domain_name').val($(this).attr("data-project"));
             apm.modal({show: true});
+            return false;
         });
+
+        $('.remove-member-btn').on('click', function() {
+            $('#removing-member').text($(this).attr('data-member'));
+            $('#removing-member-id').val($(this).attr('data-member_id'));
+            $('#remove-member-modal').modal({show: true});
+            return false;
+        });
+
     });
     </script>
 {% endblock %}
@@ -114,7 +124,16 @@
         <div class="row-fluid">
             <div class="span4">
                 <ul class="nav nav-list">
-                    <li class="nav-header"><h2>Projects{% if admin %} <a href="#add_project_modal" id="add_project_btn" class="btn btn-success" data-toggle="modal"><i class="icon-plus"></i></a> <a href="#create_project_modal" id="create_project_btn" class="btn btn-success" data-toggle="modal"><i class="icon-pencil"></i></a>{% endif %}</h2></li>
+                    <li class="nav-header"><h2>Projects
+                        {% if admin %}
+                            <a href="#add_project_modal" id="add_project_btn" class="btn btn-success" data-toggle="modal">
+                                <i class="icon-plus"></i>
+                            </a>
+                            <a href="#create_project_modal" id="create_project_btn" class="btn btn-success" data-toggle="modal">
+                                <i class="icon-pencil"></i>
+                            </a>
+                        {% endif %}</h2>
+                    </li>
                     {% for domain in domains %}
                     <li><a href="{% url domain_homepage domain %}"><h3>{{ domain.display_name }}</h3></a></li>
                     {% endfor %}
@@ -124,7 +143,13 @@
             <div class="span3">
                 <div class="nav nav-list">
                     <li class="nav-header">
-                        <h2>Teams{% if admin %} <a href="#add_team_modal" id="add_team_btn" class="btn btn-success" data-toggle="modal"><i class="icon-plus"></i></a>{% endif %}</h2>
+                        <h2>Teams
+                            {% if admin %}
+                                <a href="#add_team_modal" id="add_team_btn" class="btn btn-success" data-toggle="modal">
+                                    <i class="icon-plus"></i>
+                                </a>
+                            {% endif %}
+                        </h2>
                     </li>
                     {% for team in teams %}
                     <li><a href="{% url orgs_team_members org.name team.get_id %}"><h3>{{ team.name }}</h3></a></li>
@@ -135,10 +160,25 @@
             <div class="span5">
                 <ul class="nav nav-list">
                     <li class="nav-header">
-                        <h2>Members{% if admin %} <a href="#invite_member_modal" id="invite_member_btn" class="btn btn-success" data-toggle="modal"><i class="icon-plus"></i></a>{% endif %}</h2>
+                        <h2>Members
+                            {% if admin %}
+                                <a href="#invite_member_modal" id="invite_member_btn" class="btn btn-success" data-toggle="modal">
+                                    <i class="icon-plus"></i>
+                                </a>
+                            {% endif %}
+                        </h2>
                     </li>
                     {% for member in members %}
-                    <li><h3>{{ member.username }}{% if member.first_name and member.last_name %} <small>({{ member.full_name }})</small>{% endif %}</h3></li>
+                    <li><h3>{{ member.username }}
+                        {% if admin %}
+                            <a href="#" class="remove-member-btn btn btn-danger" data-member="{{ member.username }}" data-member_id="{{ member.get_id }}">
+                                <i class="icon-remove"></i>
+                            </a>
+                        {% endif %}
+{#                        {% if member.first_name and member.last_name %} #}
+{#                            <small>({{ member.full_name }})</small>#}
+{#                        {% endif %}#}
+                    </h3></li>
                     {% endfor %}
                 </ul>
 
@@ -280,6 +320,20 @@
                 <div class="modal-footer">
                     <a href="#" data-dismiss="modal" class="btn">Cancel</a>
                     <button type="submit" class="btn btn-primary">Add Team</button>
+                </div>
+            </form>
+        </div>
+
+        <div id="remove-member-modal" class="modal hide fade">
+            <form class="form-horizontal" method="post" action="{% url orgs_remove_member org.name %}">
+                <div class="modal-body">
+                    <a class="close" data-dismiss="modal">&times;</a>
+                    <h3>Remove <span id="removing-member"></span> from {{ org.title }}?</h3>
+                    <input id="removing-member-id" type="hidden" name="member_id" value="" />
+                </div>
+                <div class="modal-footer">
+                    <a href="#" data-dismiss="modal" class="btn">Cancel</a>
+                    <button type="submit" class="btn btn-primary">Remove Member</button>
                 </div>
             </form>
         </div>
