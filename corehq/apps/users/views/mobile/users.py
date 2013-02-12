@@ -311,7 +311,6 @@ def download_commcare_users(request, domain):
                             'Please name them before continuing: {}'),
             mark_safe(', '.join(group_links))
         )
-        print msg
         messages.error(request,
             msg,
             extra_tags='html',
