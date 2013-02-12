@@ -277,7 +277,6 @@ def delete_team(request, org, team_id):
         return HttpResponseForbidden()
 
 @org_admin_required
-@require_POST
 def undo_delete_team(request, org, record_id):
     record = DeleteTeamRecord.get(record_id)
     record.undo()
