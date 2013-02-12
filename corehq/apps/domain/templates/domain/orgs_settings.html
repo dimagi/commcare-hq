@@ -9,16 +9,6 @@
     </li>
 {% endblock %}
 
-{% block head %}{{ block.super }}
-    <style type="text/css">
-        #org-request {
-            max-height: 48em;
-        }
-        #org-request .modal-body {
-            height: 18em;
-        }
-    </style>
-{% endblock %}
 {% block js-inline  %}{{ block.super }}
 <script type="text/javascript">
 // autocomplete for the orgs request form -- referenced: https://github.com/twitter/bootstrap/pull/3682
@@ -66,7 +56,7 @@
             <h4>Send request to an Organization to manage this project</h4>
         </div>
         <form class="form-horizontal" id="org-request-form" action="{% url domain_org_request domain %}" method="POST">
-            <div class="modal-body">
+            <div class="modal-body" style="height: 18em;">
                 <fieldset>
                     <div class="control-group">
                         <label class="control-label" for="org-input">Search for organization:</label>
