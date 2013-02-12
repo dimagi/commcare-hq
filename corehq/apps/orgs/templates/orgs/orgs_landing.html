@@ -4,32 +4,32 @@
 {% load i18n %}
 
 {% block js-inline %}{{ block.super }}
-<script xmlns="http://www.w3.org/1999/html">
-        $(function(){
+<script>
+    $(function () {
         if (!{{ reg_form_empty|JSON }}) {
-            $('#create_project_modal').modal({show:true});
+            $('#create_project_modal').modal({show: true});
         }
         if (!{{ update_form_empty|JSON }}) {
-            $('#update_info_modal').modal({show:true});
+            $('#update_info_modal').modal({show: true});
         }
         if (!{{ add_form_empty|JSON }}) {
-            $('#add_project_modal').modal({show:true});
+            $('#add_project_modal').modal({show: true});
         }
         if (!{{ invite_member_form_empty|JSON }}) {
-            $('#invite_member_modal').modal({show:true});
+            $('#invite_member_modal').modal({show: true});
         }
         if (!{{ add_team_form_empty|JSON }}) {
-            $('#add_team_modal').modal({show:true});
+            $('#add_team_modal').modal({show: true});
         }
         $("#openTOS").click(function(e) {
             $("#tosBox").slideDown();
             return false;
-        })
+        });
 
-        $("#add_project_btn").tooltip({title:"Add Existing Project", placement:"top"});
-        $("#create_project_btn").tooltip({title:"Create New Project", placement:"top"});
-        $("#add_team_btn").tooltip({title:"Create New Team", placement:"top"});
-        $("#invite_member_btn").tooltip({title:"Invite New Member", placement:"top"});
+        $("#add_project_btn").tooltip({title: "Add Existing Project", placement: "top"});
+        $("#create_project_btn").tooltip({title: "Create New Project", placement: "top"});
+        $("#add_team_btn").tooltip({title: "Create New Team", placement: "top"});
+        $("#invite_member_btn").tooltip({title: "Invite New Member", placement: "top"});
 
         $('#load_data').click(function (e) {
             e.preventDefault();
@@ -38,16 +38,18 @@
                 data: '',
                 dataType: 'json',
                 success: function(data) {
-//                    console.log(data)
                     $('#data-container').html(JSON.stringify(data))
                 }
 
             });
         });
 
-
-
+        $('#req-manage-project-btn').on("click", function() {
+            var apm = $('#add_project_modal');
+            apm.find('#id_domain_name').val($(this).attr("data-project"));
+            apm.modal({show: true});
         });
+    });
     </script>
 {% endblock %}
 

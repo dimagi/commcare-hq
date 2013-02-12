@@ -24,4 +24,5 @@ urlpatterns = patterns('corehq.apps.orgs.views',
     url(r'^(?P<org>[\w\.-]+)/teams/(?P<team_id>[ \w-]+)/(?P<couch_user_id>[\w-]+)/leave_team$', 'leave_team', name='leave_team'),
 
     url(r'^(?P<org>[\w\.-]+)/join/(?P<invitation_id>[ \w-]+)/$', 'accept_invitation', name='orgs_accept_invitation'),
+    url(r'^(?P<org>[\w\.-]+)/seen_request/$', 'seen_request', name='orgs_seen'),
 )
