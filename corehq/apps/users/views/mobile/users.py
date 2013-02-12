@@ -298,24 +298,32 @@ def download_commcare_users(request, domain):
     try:
         dump_users_and_groups(response, domain)
     except GroupNameError as e:
-        group_urls = [reverse('group_members', args=[domain, group.get_id])
-                      for group in e.blank_groups]
+        group_urls = [
+            reverse('group_members', args=[domain, group.get_id])
+            for group in e.blank_groups
+        ]
 
         def make_link(url, i):
-            return format_html('<a href="{}">{}</a>',
-                               url, _('Blank Group %s') % i)
-        enumerate(group_urls)
-        group_links = [make_link(url, i + 1)
-                       for i, url in enumerate(group_urls)]
-        msg = format_html(_('The following groups have no name. '
-                            'Please name them before continuing: {}'),
+            return format_html(
+                '<a href="{}">{}</a>',
+                url,
+                _('Blank Group %s') % i
+            )
+
+        group_links = [
+            make_link(url, i + 1)
+            for i, url in enumerate(group_urls)
+        ]
+        msg = format_html(
+            _(
+                'The following groups have no name. '
+                'Please name them before continuing: {}'
+            ),
             mark_safe(', '.join(group_links))
         )
-        messages.error(request,
-            msg,
-            extra_tags='html',
-        )
+        messages.error(request, msg, extra_tags='html')
         return HttpResponseRedirect(
-            reverse('upload_commcare_users', args=[domain]))
+            reverse('upload_commcare_users', args=[domain])
+        )
 
     return response
