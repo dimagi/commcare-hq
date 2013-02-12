@@ -17,17 +17,21 @@ class DeleteDocRecord(DeleteRecord):
         doc.save()
 
 class UndoableDocument(Document):
-    def soft_delete(self):
+    def soft_delete(self, domain_included=True):
         if not self.doc_type.endswith(DELETED_SUFFIX):
             self.doc_type += DELETED_SUFFIX
             try:
                 domain = self.domain
             except Exception:
                 domain = None
+            extra_args = {}
+            if domain_included:
+                extra_args["domain"] = self.domain
+
             record = self.create_delete_record(
-                domain=self.domain,
                 doc_id=self.get_id,
-                datetime=datetime.utcnow()
+                datetime=datetime.utcnow(),
+                **extra_args
             )
             record.save()
             self.save()
