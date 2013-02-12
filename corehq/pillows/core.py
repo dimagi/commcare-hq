@@ -8,7 +8,7 @@ from pillowtop.listener import ElasticPillow
 from casexml.apps.case.models import CommCareCase
 from corehq.apps.domain.models import Domain
 import logging
-import settings
+from django.conf import settings
 from datetime import datetime
 
 
