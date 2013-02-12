@@ -78,8 +78,6 @@ class ESSortableMixin(object):
 
         return ret
 
-
-
 class PactDrilldownReportMixin(object):
     # this is everything that's shared amongst the Bihar supervision reports
     # this class is an amalgamation of random behavior and is just
