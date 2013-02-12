@@ -14,39 +14,16 @@
 // For the white version of the  icons, just add the .icon-white class:
 // <i class="i icon-inbox icon-white"></i>
 
-.icon-hq,
-.icon-hq-white {
-  display: inline-block;
-  width: 17px;
-  height: 14px;
+.header .icon-white:before {
+    content: "\f105";
+    color: desaturate(lighten(@blue, 40), 30);
 }
-
-.icon-hq {
-  background-image: url('@{hqImageDirectory}commcare-glyphs.png');
-}
-.icon-hq-white {
-  background-image: url('@{hqImageDirectory}commcare-glyphs-white.png');
-}
-
-// CommCare Specific Icons
-.icon-hq-logo          {background-position: 0      0;}
-.icon-hq-person        {background-position: -24px  0;}
-
-.icon-hq-doublechevron {background-position: 0      -24px;}
-
-.headerSortUp .icon-hq-doublechevron{
-    .icon-hq-triangle-up();
-}
-.headerSortDown .icon-hq-doublechevron{
-    .icon-hq-triangle-down();
-}
+.headerSortUp .icon-white:before    { content: "\f102"; color: inherit; }
+.headerSortDown .icon-white:before  { content: "\f103"; color: inherit; }
 
 th.header > div {
     cursor: pointer;
 }
-
-.icon-hq-triangle-up   {background-position: 0      -46px;}
-.icon-hq-triangle-down {background-position: -24px  -46px;}
 
 .hq-help {
     position: relative;
