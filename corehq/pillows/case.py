@@ -3,7 +3,7 @@ import simplejson
 from casexml.apps.case.models import CommCareCase
 from corehq.pillows.mappings.case_mapping import CASE_MAPPING, CASE_INDEX
 from pillowtop.listener import AliasedElasticPillow
-import settings
+from django.conf import settings
 
 
 UNKNOWN_DOMAIN = "__nodomain__"
