@@ -1,31 +1,33 @@
 import json
-from couchexport.models import Format
 import csv
 import io
 import uuid
-import logging
-from django.template.context import RequestContext
-from django.template.loader import render_to_string
-import math
-from openpyxl.shared.exc import InvalidFileException
+from django.utils.safestring import mark_safe
 
+from openpyxl.shared.exc import InvalidFileException
 from django.core.urlresolvers import reverse
-from django.http import Http404, HttpResponseRedirect, HttpResponse, HttpResponseForbidden, HttpResponseBadRequest
+from django.http import HttpResponseRedirect, HttpResponse,\
+    HttpResponseForbidden, HttpResponseBadRequest
 from django.utils.decorators import method_decorator
+from django.utils.translation import ugettext as _
 from django.views.decorators.http import require_POST
 from django.contrib import messages
 from django.views.generic.base import TemplateView
 
+from couchexport.models import Format
 from corehq.apps.users.forms import CommCareAccountForm
 from corehq.apps.users.models import CommCareUser
 from corehq.apps.groups.models import Group
-from corehq.apps.users.bulkupload import create_or_update_users_and_groups, check_headers, dump_users_and_groups
+from corehq.apps.users.bulkupload import create_or_update_users_and_groups,\
+    check_headers, dump_users_and_groups, GroupNameError
 from corehq.apps.users.tasks import bulk_upload_async
-from corehq.apps.users.views import _users_context, require_can_edit_web_users, require_can_edit_commcare_users
-
-from dimagi.utils.web import render_to_response, get_url_base
+from corehq.apps.users.views import _users_context, require_can_edit_web_users,\
+    require_can_edit_commcare_users
+from dimagi.utils.html import format_html
+from dimagi.utils.web import render_to_response
 from dimagi.utils.decorators.view import get_file
-from dimagi.utils.excel import Excel2007DictReader, WorkbookJSONReader, WorksheetNotFound
+from dimagi.utils.excel import WorkbookJSONReader, WorksheetNotFound
+
 
 DEFAULT_USER_LIST_LIMIT = 10
 
@@ -198,6 +200,7 @@ def add_commcare_account(request, domain, template="users/add_commcare_account.h
     context.update(only_numeric=(request.project.password_format() == 'n'))
     return render_to_response(request, template, context)
 
+
 class UploadCommCareUsers(TemplateView):
 
     template_name = 'users/upload_commcare_users.html'
@@ -292,6 +295,28 @@ def download_commcare_users(request, domain):
     response = HttpResponse(mimetype=Format.from_format('xlsx').mimetype)
     response['Content-Disposition'] = 'attachment; filename=%s_users.xlsx' % domain
 
-    dump_users_and_groups(response, domain)
+    try:
+        dump_users_and_groups(response, domain)
+    except GroupNameError as e:
+        group_urls = [reverse('group_members', args=[domain, group.get_id])
+                      for group in e.blank_groups]
+
+        def make_link(url, i):
+            return format_html('<a href="{}">{}</a>',
+                               url, _('Blank Group %s') % i)
+        enumerate(group_urls)
+        group_links = [make_link(url, i + 1)
+                       for i, url in enumerate(group_urls)]
+        msg = format_html(_('The following groups have no name. '
+                            'Please name them before continuing: {}'),
+            mark_safe(', '.join(group_links))
+        )
+        print msg
+        messages.error(request,
+            msg,
+            extra_tags='html',
+        )
+        return HttpResponseRedirect(
+            reverse('upload_commcare_users', args=[domain]))
 
     return response
