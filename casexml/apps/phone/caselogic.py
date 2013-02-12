@@ -69,9 +69,10 @@ class CaseSyncOperation(object):
                 case_actions = CommCareCase.get_db().view('case/actions_by_case', key=case._id).all()
                 actions_sorted = sorted(case_actions, key=lambda x: x['value']['seq'])
                 for action in actions_sorted:
-                    server_date = datetime.strptime(action['value'].get('server_date', None), '%Y-%m-%dT%H:%M:%SZ')
+                    server_date_string = action['value'].get('server_date', None)
+                    server_date = datetime.strptime(server_date_string, '%Y-%m-%dT%H:%M:%SZ') \
+                                    if server_date_string else None
                     sync_log_id = action['value'].get('sync_log_id', None)
-
                     if server_date and \
                        server_date >= last_sync.date and \
                        sync_log_id != last_sync.get_id:
