@@ -33,6 +33,8 @@ from corehq.apps.orgs.models import Team
 from corehq.apps.reports.util import get_possible_reports
 from corehq.apps.sms import verify as smsverify
 
+from django.utils.translation import ugettext_noop as _
+
 require_can_edit_web_users = require_permission('edit_web_users')
 require_can_edit_commcare_users = require_permission('edit_commcare_users')
 
@@ -380,12 +382,35 @@ def add_domain_membership(request, domain, couch_user_id, domain_name):
     return HttpResponseRedirect(reverse("user_account", args=(domain, couch_user_id)))
 
 @require_POST
-@require_superuser
 def delete_domain_membership(request, domain, couch_user_id, domain_name):
-    user = WebUser.get_by_user_id(couch_user_id, domain)
-    user.delete_domain_membership(domain_name)
-    user.save()
-    return HttpResponseRedirect(reverse("user_account", args=(domain, couch_user_id )))
+    removing_self = request.couch_user.get_id == couch_user_id
+    user = WebUser.get_by_user_id(couch_user_id, domain_name)
+
+    # don't let a user remove another user's domain membership if they're not the admin of the domain or a superuser
+    if not removing_self and not (request.couch_user.is_domain_admin(domain_name) or request.couch_user.is_superuser):
+        messages.error(request, _("You don't have the permission to remove this user's membership"))
+
+    elif user.is_domain_admin(domain_name): # don't let a domain admin be removed from the domain
+        if removing_self:
+            error_msg = _("Unable remove membership because you are the admin of %s" % domain_name)
+        else:
+            error_msg = _("Unable remove membership because %s is the admin of %s" % (user.username, domain_name))
+        messages.error(request, error_msg)
+        
+    else:
+        user.delete_domain_membership(domain_name)
+        user.save()
+
+        if removing_self:
+            success_msg = _("You are no longer a part of the %s project space" % domain_name)
+        else:
+            success_msg = _("%s is no longer a part of the %s project space" % (user.username, domain_name))
+        messages.success(request, success_msg)
+
+        if removing_self and not user.is_member_of(domain):
+            return HttpResponseRedirect(reverse("homepage"))
+
+    return HttpResponseRedirect(reverse("user_account", args=(domain, couch_user_id)))
 
 @login_and_domain_required
 def change_password(request, domain, login_id, template="users/partial/reset_password.html"):
