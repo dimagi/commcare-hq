@@ -1,6 +1,7 @@
 from corehq.apps.fixtures.models import FixtureDataItem, FixtureDataType
 from corehq.apps.reports.util import make_form_couch_key
 from couchforms.models import XFormInstance
+import logging
 
 
 def get_unique_combinations(domain, place_types=None, place=None):
@@ -26,7 +27,11 @@ def get_unique_combinations(domain, place_types=None, place=None):
                 if fdi.fields['id'] != place_name:
                     continue
             else:
-                if fdi.fields.get(place_type+"_id", "").lower() != place_name:
+                rel_type_name = fdi.fields.get(place_type+"_id", "")
+                if not rel_type_name:
+                    logging.error("PSI Reports Error: fixture_id: %s -- place_type: %s" % (fdi.get_id, place_type))
+                    continue
+                if rel_type_name.lower() != place_name:
                     continue
         comb = {}
         for pt in place_types:
