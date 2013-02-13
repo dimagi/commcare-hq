@@ -89,6 +89,9 @@ class Team(UndoableDocument, MultiMembershipMixin):
     def create_delete_record(self, *args, **kwargs):
         return DeleteTeamRecord(*args, **kwargs)
 
+    def soft_delete(self):
+        return super(Team, self).soft_delete(domain_included=False)
+
 class DeleteTeamRecord(DeleteDocRecord):
     def get_doc(self):
         return Team.get(self.doc_id)
