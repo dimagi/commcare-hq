@@ -1,4 +1,5 @@
 import logging
+import json
 import pdb
 from django.http import HttpResponse
 from django.utils.decorators import method_decorator, classonlymethod
@@ -320,6 +321,7 @@ class ESQuerySet(object):
         else:
             raise TypeError('Unsupported type: %s', type(idx))
 
+RESERVED_QUERY_PARAMS=set(['limit', 'offset', 'q', '_search'])
 
 def es_search(request, domain):
     payload = {
@@ -330,13 +332,22 @@ def es_search(request, domain):
         },
     }
 
-    # ?query=<json>
-    if 'query' in request.GET:
-        payload['query'] = json.loads(request.GET['q'])
+    # ?_search=<json> for providing raw ES query, which is nonetheless restricted here
+    # NOTE: The fields actually analyzed into ES indices differ somewhat from the raw
+    # XML / JSON.
+    if '_search' in request.GET:
+        additions = json.loads(request.GET['_search'])
+        payload['filter']['and'] = payload['filter']['and'] + additions.get('filter', {}).get('and', [])
+        if 'query' in additions:
+            payload['query'] = additions['query']
 
     # ?q=<lucene>
     if 'q' in request.GET:
         payload['query'] = payload.get('query', {})
         payload['query']['query_string'] = {'query': request.GET['q']} # A bit indirect?
+
+    # filters are actually going to be a more common case
+    for key in set(request.GET.keys()) - RESERVED_QUERY_PARAMS:
+        payload["filter"]["and"].append({"term": {key: request.GET[key]}})
 
     return payload
