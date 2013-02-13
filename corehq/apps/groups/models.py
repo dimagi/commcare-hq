@@ -1,8 +1,3 @@
-"""
-Couch Groups for Users
-Hierachical data is stored as described in: 
-http://probablyprogramming.com/2008/07/04/storing-hierarchical-data-in-couchdb
-"""
 from __future__ import absolute_import
 from couchdbkit.ext.django.schema import *
 from corehq.apps.users.models import CouchUser, CommCareUser
@@ -108,8 +103,16 @@ class Group(UndoableDocument):
         ).all()
 
     @classmethod
-    def by_name(cls, domain, name):
-        return cls.view('groups/by_name', key=[domain, name], include_docs=True).one()
+    def by_name(cls, domain, name, one=True):
+        result = cls.view('groups/by_name',
+            key=[domain, name],
+            include_docs=True,
+            stale='update_after',
+        )
+        if one:
+            return result.one()
+        else:
+            return result
 
     @classmethod
     def by_user(cls, user_or_user_id, wrap=True, include_names=False):

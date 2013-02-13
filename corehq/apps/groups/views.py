@@ -15,11 +15,25 @@ require_can_edit_groups = require_permission(Permissions.edit_commcare_users)
 @require_can_edit_groups
 def add_group(request, domain):
     group_name = request.POST['group_name']
-    group = Group.view("groups/by_name", key=group_name)
-    if not group:
+    if not group_name:
+        messages.error(request, _(
+            "We could not create the group; "
+            "please give it a name first"
+        ))
+        return HttpResponseRedirect(request.META['HTTP_REFERER'])
+    group = Group.by_name(domain, group_name, one=False).first()
+    if group:
+        messages.warning(request, _(
+            "A group with this name already exists: instead of making "
+            "a new one, we've brought you to the existing one."
+        ))
+    else:
         group = Group(name=group_name, domain=domain)
         group.save()
-    return HttpResponseRedirect(reverse("group_members", args=(domain, group.get_id)))
+
+    return HttpResponseRedirect(
+        reverse("group_members", args=(domain, group.get_id))
+    )
 
 @require_POST
 @require_can_edit_groups
@@ -49,8 +63,15 @@ def edit_group(request, domain, group_id):
         name = request.POST.get('name')
         case_sharing = request.POST.get('case_sharing')
         reporting = request.POST.get('reporting')
-        if name is not None:
-            group.name = name
+        if name is not None and group.name != name:
+            dupe = Group.by_name(domain, name, one=False).first()
+            if dupe:
+                messages.warning(request, _(
+                    "We didn't rename your group because there's already "
+                    "another group with that name."
+                ))
+            else:
+                group.name = name
         if case_sharing in ('true', 'false'):
             group.case_sharing = json.loads(case_sharing)
         if reporting in ('true', 'false'):
