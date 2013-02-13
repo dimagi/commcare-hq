@@ -6,7 +6,7 @@
 <script type="text/javascript">
     $(function() {
         $("#termsOfServiceDomainModal").on("show", function() {
-            $(this).find(".modal-body").load("{% url eula %}");
+            $(this).find(".modal-body").load("{% url eula_basic %}");
         });
     });
 </script>

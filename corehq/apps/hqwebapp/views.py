@@ -293,3 +293,18 @@ def bug_report(req):
         return HttpResponseRedirect(reverse('homepage'))
 
     return HttpResponse()
+
+
+def render_static(request, template):
+    """
+    Takes an html file and renders it Commcare HQ's styling
+    """
+    return render(request, "hqwebapp/blank.html", {'tmpl': template})
+
+
+def eula(request):
+    return render_static(request, "eula.html")
+
+def cda(request):
+    return render_static(request, "cda.html")
+
