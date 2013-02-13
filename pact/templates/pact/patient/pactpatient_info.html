@@ -53,6 +53,7 @@
                             {% endif %}
                         </td>
                     </tr>
+                    {% if patient_doc.is_dot %}
                     <tr>
                         <th>ART Regimen</th>
                         <td>{{ patient_doc.art_regimen_label_string_display }}</td>
@@ -60,8 +61,8 @@
                         <th>Non ART Regimen</th>
                         <td>{{ patient_doc.nonart_regimen_label_string_display }}</td>
                     </tr>
-                
-                
+                    {% endif %}
+
                     <tr>
                         <th class="span3">MassHealth Expiration</th>
                         <td>
