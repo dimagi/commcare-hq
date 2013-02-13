@@ -1,11 +1,9 @@
 import logging
-import json
+import simplejson
 import six
-import pdb
 from django.http import HttpResponse
 from django.utils.decorators import method_decorator, classonlymethod
 from django.views.decorators.csrf import csrf_protect
-import simplejson
 from corehq.apps.domain.decorators import login_and_domain_required
 from dimagi.utils.decorators import inline
 from corehq.elastic import get_es
@@ -337,7 +335,7 @@ def es_search(request, domain):
     # NOTE: The fields actually analyzed into ES indices differ somewhat from the raw
     # XML / JSON.
     if '_search' in request.GET:
-        additions = json.loads(request.GET['_search'])
+        additions = simplejson.loads(request.GET['_search'])
         payload['filter']['and'] = payload['filter']['and'] + additions.get('filter', {}).get('and', [])
         if 'query' in additions:
             payload['query'] = additions['query']
