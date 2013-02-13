@@ -8,6 +8,26 @@ from django.utils.translation import ugettext as _
 from django.utils.translation import ugettext_noop
 
 
+def format_submenu_context(title, url=None, html=None,
+                           is_header=False, is_divider=False):
+    return {
+        'title': title,
+        'url': url,
+        'html': html,
+        'is_header': is_header,
+        'is_divider': is_divider,
+    }
+
+
+def format_second_level_context(title, url, menu):
+    return {
+        'title': title,
+        'url': url,
+        'is_second_level': True,
+        'submenu': menu,
+    }
+
+
 class DropdownMenuItem(object):
     title = None
     view = None
@@ -73,23 +93,6 @@ class DropdownMenuItem(object):
     def is_active(self):
         return self._request.get_full_path().startswith(self.url or "")
 
-    def _format_submenu_context(self, title, url=None, html=None,
-                                is_header=False, is_divider=False):
-        return {
-            'title': title,
-            'url': url,
-            'html': html,
-            'is_header': is_header,
-            'is_divider': is_divider,
-        }
-
-    def _format_second_level_context(self, title, url, menu):
-        return {
-            'title': title,
-            'url': url,
-            'is_second_level': True,
-            'submenu': menu,
-        }
 
 
 class ReportsMenuItem(DropdownMenuItem):
@@ -144,24 +147,24 @@ class ApplicationsMenuItem(DropdownMenuItem):
         if not apps:
             return submenu_context
 
-        submenu_context.append(self._format_submenu_context(_('My Applications'), is_header=True))
+        submenu_context.append(format_submenu_context(_('My Applications'), is_header=True))
         for app in apps:
             app_info = app['value']
             if app_info:
                 url = reverse('view_app', args=[self.domain, app_info['_id']])
                 app_name = mark_safe("%s" % mark_for_escaping(app_info['name'] or '(Untitled)'))
-                submenu_context.append(self._format_submenu_context(app_name, url=url))
+                submenu_context.append(format_submenu_context(app_name, url=url))
 
         if self.couch_user.can_edit_apps():
-            submenu_context.append(self._format_submenu_context(None, is_divider=True))
+            submenu_context.append(format_submenu_context(None, is_divider=True))
             newapp_options = [
-                self._format_submenu_context(None, html=self._new_app_link(_('Blank Application'))),
-                self._format_submenu_context(None, html=self._new_app_link(_('RemoteApp (Advanced Users Only)'),
+                format_submenu_context(None, html=self._new_app_link(_('Blank Application'))),
+                format_submenu_context(None, html=self._new_app_link(_('RemoteApp (Advanced Users Only)'),
                     is_remote=True)),
             ]
-            newapp_options.append(self._format_submenu_context(_('Visit CommCare Exchange to copy existing app...'),
+            newapp_options.append(format_submenu_context(_('Visit CommCare Exchange to copy existing app...'),
                 url=reverse('appstore')))
-            submenu_context.append(self._format_second_level_context(
+            submenu_context.append(format_second_level_context(
                 _('New Application...'),
                 '#',
                 newapp_options
@@ -176,11 +179,11 @@ class ApplicationsMenuItem(DropdownMenuItem):
             'action_text': title,
         }))
 
-    @property 
+    @property
     def is_viewable(self):
         couch_user = self.couch_user
         return (self.domain and couch_user and
-                (couch_user.is_web_user() or couch_user.can_edit_apps()) and 
+                (couch_user.is_web_user() or couch_user.can_edit_apps()) and
                 (couch_user.is_member_of(self.domain) or couch_user.is_superuser))
 
 
@@ -189,7 +192,7 @@ class CloudcareMenuItem(DropdownMenuItem):
     view = "corehq.apps.cloudcare.views.default"
     css_id = "cloudcare"
 
-    @property 
+    @property
     def is_viewable(self):
         return self.domain and self.couch_user.can_edit_data()
 
@@ -199,7 +202,7 @@ class MessagesMenuItem(DropdownMenuItem):
     view = "corehq.apps.sms.views.messaging"
     css_id = "messages"
 
-    @property    
+    @property 
     def is_viewable(self):
         return (self.domain and self.project and not self.project.is_snapshot and
                 not self.couch_user.is_commcare_user())
@@ -222,7 +225,7 @@ class ProjectSettingsMenuItem(DropdownMenuItem):
 
     @property
     def title(self):
-        if not (self.couch_user.can_edit_commcare_users() or 
+        if not (self.couch_user.can_edit_commcare_users() or
                 self.couch_user.can_edit_web_users()):
             return _("Settings")
         return _("Settings & Users")
@@ -241,27 +244,27 @@ class AdminReportsMenuItem(DropdownMenuItem):
     @memoized
     def submenu_items(self):
         submenu_context = [
-            self._format_submenu_context(_("Reports"), is_header=True),
-            self._format_submenu_context(_("Admin Reports"), url=reverse("default_admin_report")),
-            self._format_submenu_context(_("System Info"), url=reverse("system_info")),
-            self._format_submenu_context(_("Management"), is_header=True),
-            self._format_submenu_context(mark_for_escaping(_("ADM Reports & Columns")),
+            format_submenu_context(_("Reports"), is_header=True),
+            format_submenu_context(_("Admin Reports"), url=reverse("default_admin_report")),
+            format_submenu_context(_("System Info"), url=reverse("system_info")),
+            format_submenu_context(_("Management"), is_header=True),
+            format_submenu_context(mark_for_escaping(_("ADM Reports & Columns")),
                 url=reverse("default_adm_admin_interface")),
-#            self._format_submenu_context(mark_for_escaping("HQ Announcements"),
+#            format_submenu_context(mark_for_escaping("HQ Announcements"),
 #                url=reverse("default_announcement_admin")),
         ]
         try:
-            submenu_context.append(self._format_submenu_context(mark_for_escaping(_("Billing")),
+            submenu_context.append(format_submenu_context(mark_for_escaping(_("Billing")),
                 url=reverse("billing_default")))
         except Exception:
             pass
         submenu_context.extend([
-            self._format_submenu_context(None, is_divider=True),
-            self._format_submenu_context(_("Django Admin"), url="/admin")
+            format_submenu_context(None, is_divider=True),
+            format_submenu_context(_("Django Admin"), url="/admin")
         ])
         return submenu_context
 
-    @property 
+    @property
     def is_viewable(self):
         return self.couch_user and self.couch_user.is_superuser
 
@@ -277,8 +280,8 @@ class ExchangeMenuItem(DropdownMenuItem):
         submenu_context = None
         if self.domain and self.couch_user.is_domain_admin(self.domain):
             submenu_context = [
-                self._format_submenu_context(_("CommCare Exchange"), url=reverse("appstore")),
-                self._format_submenu_context(_("Publish this project"),
+                format_submenu_context(_("CommCare Exchange"), url=reverse("appstore")),
+                format_submenu_context(_("Publish this project"),
                     url=reverse("domain_snapshot_settings", args=[self.domain]))
             ]
         return submenu_context
@@ -294,6 +297,6 @@ class ManageSurveysMenuItem(DropdownMenuItem):
 
     @property
     def is_viewable(self):
-        return (self.domain and self.couch_user.can_edit_data() and 
+        return (self.domain and self.couch_user.can_edit_data() and
                 self.project.survey_management_enabled)
 
