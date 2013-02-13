@@ -27,7 +27,6 @@ from fabric import utils
 import posixpath
 from collections import defaultdict
 
-
 PROJECT_ROOT = os.path.dirname(__file__)
 RSYNC_EXCLUDE = (
     '.DS_Store',
@@ -455,7 +454,7 @@ def update_virtualenv(preindex=False):
     else:
         root_to_use = env.code_root
         env_to_use = env.virtualenv_root
-    requirements = posixpath.join(env.code_root, 'requirements')
+    requirements = posixpath.join(root_to_use, 'requirements')
     with cd(root_to_use):
         cmd = ['source %s/bin/activate && pip install' % env_to_use]
         cmd += ['--requirement %s' % posixpath.join(requirements, 'prod-requirements.txt')]
