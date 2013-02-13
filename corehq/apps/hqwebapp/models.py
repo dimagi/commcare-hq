@@ -2,7 +2,6 @@ from functools import wraps
 from django.template.loader import render_to_string
 from django.utils.safestring import mark_safe, mark_for_escaping
 from dimagi.utils.couch.database import get_db
-from dimagi.utils.decorators.memoized import memoized
 from django.core.urlresolvers import reverse
 from django.utils.translation import ugettext as _
 from django.utils.translation import ugettext_noop
@@ -43,7 +42,7 @@ class DropdownMenuItem(object):
         self._request = request
     
     @property
-    def submenu_items(self):
+    def dropdown_items(self):
         return []
  
     @property
@@ -76,11 +75,10 @@ class DropdownMenuItem(object):
             'title': mark_for_escaping(self.title),
             'css_id': self.css_id,
             'is_active': self.is_active,
-            'submenu': self.submenu_items,
+            'submenu': self.dropdown_items,
         }
     
     @property
-    @memoized
     def url(self):
         if self.domain:
             try:
@@ -133,8 +131,7 @@ class ApplicationsMenuItem(DropdownMenuItem):
     css_id = "applications"
 
     @property
-    @memoized
-    def submenu_items(self):
+    def dropdown_items(self):
         # todo async refresh submenu when on the applications page and you change the application name
         key = [self.domain]
         apps = get_db().view('app_manager/applications_brief',
@@ -213,14 +210,12 @@ class ProjectSettingsMenuItem(DropdownMenuItem):
     css_id = "project_settings"
 
     @property
-    @memoized
     def url(self):
         from corehq.apps.users.views import redirect_users_to
         return redirect_users_to(self._request, self.domain) or reverse("homepage")
 
     @property
-    @memoized
-    def submenu_items(self):
+    def dropdown_items(self):
         return []
 
     @property
@@ -241,8 +236,7 @@ class AdminReportsMenuItem(DropdownMenuItem):
     css_id = "admin_tab"
 
     @property
-    @memoized
-    def submenu_items(self):
+    def dropdown_items(self):
         submenu_context = [
             format_submenu_context(_("Reports"), is_header=True),
             format_submenu_context(_("Admin Reports"), url=reverse("default_admin_report")),
@@ -275,8 +269,7 @@ class ExchangeMenuItem(DropdownMenuItem):
     css_id = "exchange_tab"
 
     @property
-    @memoized
-    def submenu_items(self):
+    def dropdown_items(self):
         submenu_context = None
         if self.domain and self.couch_user.is_domain_admin(self.domain):
             submenu_context = [
