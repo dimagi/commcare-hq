@@ -46,6 +46,7 @@ gitdb==0.5.4
 gevent==0.13.8
 rawes==0.3.6
 numpy==1.6.2
+six==1.2.0
 socketpool==0.5.2
 markdown==2.2.1
 -e git://github.com/dimagi/freddy.git@a6d24d201f3595a6be767f3679547d5de76b344a#egg=freddy
