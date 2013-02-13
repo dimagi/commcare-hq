@@ -315,7 +315,7 @@ function ValueOrNoneUI(opts) {
 
 
     self.allowed = wrapObservable(opts.allowed);
-    self.inputValue = wrapObservable(opts.value);
+    self.inputValue = wrapObservable(opts.value || '');
     self.hasValue = ko.observable(!!self.inputValue());
     self.hasFocus = ko.observable();
 
