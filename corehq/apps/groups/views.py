@@ -1,13 +1,16 @@
 import json
-from corehq.apps.users.models import Permissions
+
 from django.contrib import messages
 from django.core.urlresolvers import reverse
 from django.http import HttpResponseRedirect, HttpResponseForbidden
 from django.views.decorators.http import require_POST
+from django.utils.translation import ugettext as _
+
+from corehq.apps.users.models import Permissions
 from corehq.apps.groups.models import Group, DeleteGroupRecord
 from corehq.apps.users.decorators import require_permission
 from dimagi.utils.couch.resource_conflict import repeat
-from django.utils.translation import ugettext as _
+
 
 require_can_edit_groups = require_permission(Permissions.edit_commcare_users)
 
@@ -42,7 +45,10 @@ def delete_group(request, domain, group_id):
     if group.domain == domain:
         record = group.soft_delete()
         if record:
-            messages.success(request, 'You have deleted a group. <a href="{url}" class="post-link">Undo</a>'.format(
+            messages.success(request, _(
+                "You have deleted a group. "
+                '<a href="{url}" class="post-link">Undo</a>'
+            ).format(
                 url=reverse('undo_delete_group', args=[domain, record.get_id])
             ), extra_tags="html")
         return HttpResponseRedirect(reverse("all_groups", args=(domain, )))
@@ -54,7 +60,9 @@ def delete_group(request, domain, group_id):
 def undo_delete_group(request, domain, record_id):
     record = DeleteGroupRecord.get(record_id)
     record.undo()
-    return HttpResponseRedirect(reverse('group_members', args=[domain, record.doc_id]))
+    return HttpResponseRedirect(
+        reverse('group_members', args=[domain, record.doc_id])
+    )
 
 @require_can_edit_groups
 def edit_group(request, domain, group_id):
@@ -77,7 +85,9 @@ def edit_group(request, domain, group_id):
         if reporting in ('true', 'false'):
             group.reporting = json.loads(reporting)
         group.save()
-        return HttpResponseRedirect(reverse("group_members", args=[domain, group_id]))
+        return HttpResponseRedirect(
+            reverse("group_members", args=[domain, group_id])
+        )
     else:
         return HttpResponseForbidden()
 
@@ -90,7 +100,9 @@ def update_group_data(request, domain, group_id):
         group.metadata = updated_data
         group.save()
         messages.success(request, _("Group '%s' data updated!") % group.name)
-        return HttpResponseRedirect(reverse("group_members", args=[domain, group_id]))
+        return HttpResponseRedirect(
+            reverse("group_members", args=[domain, group_id])
+        )
     else:
         return HttpResponseForbidden()
 
@@ -102,9 +114,13 @@ def join_group(request, domain, group_id, couch_user_id):
                 group.add_user(couch_user_id)
     repeat(add_user, 3)
     if 'redirect_url' in request.POST:
-        return HttpResponseRedirect(reverse(request.POST['redirect_url'], args=(domain, group_id)))
+        return HttpResponseRedirect(
+            reverse(request.POST['redirect_url'], args=(domain, group_id))
+        )
     else:
-        return HttpResponseRedirect(reverse("group_membership", args=(domain, couch_user_id)))
+        return HttpResponseRedirect(
+            reverse("group_membership", args=(domain, couch_user_id))
+        )
 
 @require_can_edit_groups
 def leave_group(request, domain, group_id, couch_user_id):
@@ -114,6 +130,10 @@ def leave_group(request, domain, group_id, couch_user_id):
             group.remove_user(couch_user_id)
     repeat(remove_user, 3)
     if 'redirect_url' in request.POST:
-        return HttpResponseRedirect(reverse(request.POST['redirect_url'], args=(domain, group_id)))
+        return HttpResponseRedirect(
+            reverse(request.POST['redirect_url'], args=(domain, group_id))
+        )
     else:
-        return HttpResponseRedirect(reverse("group_membership", args=(domain, couch_user_id)))
+        return HttpResponseRedirect(
+            reverse("group_membership", args=(domain, couch_user_id))
+        )
