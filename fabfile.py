@@ -27,7 +27,6 @@ from fabric import utils
 import posixpath
 from collections import defaultdict
 
-bfile
 PROJECT_ROOT = os.path.dirname(__file__)
 RSYNC_EXCLUDE = (
     '.DS_Store',
