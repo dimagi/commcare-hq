@@ -1,12 +1,8 @@
-"""
-Couch Groups for Users
-Hierachical data is stored as described in: 
-http://probablyprogramming.com/2008/07/04/storing-hierarchical-data-in-couchdb
-"""
 from __future__ import absolute_import
 from couchdbkit.ext.django.schema import *
 from corehq.apps.users.models import CouchUser, CommCareUser
 from dimagi.utils.couch.undo import UndoableDocument, DeleteDocRecord
+
 
 class Group(UndoableDocument):
     """
@@ -58,7 +54,10 @@ class Group(UndoableDocument):
         """
         group_id = group._id
         if group_id in self.path:
-            raise Exception("Group %s is already a member of %s" % (self._id, group_id))
+            raise Exception("Group %s is already a member of %s" % (
+                self.get_id,
+                group_id,
+            ))
         new_path = [group_id]
         new_path.extend(self.path)
         self.path = new_path
@@ -77,7 +76,10 @@ class Group(UndoableDocument):
         """
         group_id = group._id
         if group_id not in self.path:
-            raise Exception("Group %s is not a member of %s" % (self._id, group_id))
+            raise Exception("Group %s is not a member of %s" % (
+                self.get_id,
+                group_id
+            ))
         index = 0
         for i in range(0,len(self.path)):
             if self.path[i] == group_id:
@@ -93,7 +95,10 @@ class Group(UndoableDocument):
         users = [CouchUser.get_by_user_id(user_id) for user_id in self.users]
         users = [user for user in users if not user.is_deleted()]
         if only_commcare is True:
-            users = [user for user in users if user.__class__ == CommCareUser().__class__]
+            users = [
+                user for user in users
+                if user.__class__ == CommCareUser().__class__
+            ]
         if is_active is True:
             return [user for user in users if user.is_active]
         else:
@@ -108,8 +113,16 @@ class Group(UndoableDocument):
         ).all()
 
     @classmethod
-    def by_name(cls, domain, name):
-        return cls.view('groups/by_name', key=[domain, name], include_docs=True).one()
+    def by_name(cls, domain, name, one=True):
+        result = cls.view('groups/by_name',
+            key=[domain, name],
+            include_docs=True,
+            stale='update_after',
+        )
+        if one:
+            return result.one()
+        else:
+            return result
 
     @classmethod
     def by_user(cls, user_or_user_id, wrap=True, include_names=False):
@@ -133,7 +146,6 @@ class Group(UndoableDocument):
         else:
             return [group._id for group in all_groups if group.case_sharing]
 
-
     @classmethod
     def get_reporting_groups(cls, domain):
         key = ['^Reporting', domain]
@@ -143,7 +155,6 @@ class Group(UndoableDocument):
             include_docs=True,
             stale='update_after',
         ).all()
-
 
     def create_delete_record(self, *args, **kwargs):
         return DeleteGroupRecord(*args, **kwargs)
@@ -159,13 +170,21 @@ class Group(UndoableDocument):
     def user_in_group(cls, user_id, group_id):
         if not user_id or not group_id:
             return False
-        c = cls.get_db().view('groups/by_user', key=user_id, startkey_docid=group_id, endkey_docid=group_id).count()
+        c = cls.get_db().view('groups/by_user',
+            key=user_id,
+            startkey_docid=group_id,
+            endkey_docid=group_id
+        ).count()
         if c == 0:
             return False
         elif c == 1:
             return True
         else:
-            raise Exception("This should just logically not be possible unless the group has the user in there twice")
+            raise Exception(
+                "This should just logically not be possible unless the group "
+                "has the user in there twice"
+            )
+
 
 class DeleteGroupRecord(DeleteDocRecord):
     def get_doc(self):
