@@ -247,7 +247,7 @@ def recompute_dots_casedata(casedoc, couch_user, submit_date=None):
 #    update_dict['pactid'] =  casedoc.pactid
 
     dots_data = get_dots_case_json(casedoc)
-    update_dict['dots'] =  simplejson.dumps(dots_data)
+    update_dict['dots'] = simplejson.dumps(dots_data)
     submit_case_update_form(casedoc, update_dict, couch_user, submit_date=submit_date, xmlns=XMLNS_PATIENT_UPDATE_DOT)
 
 def submit_case_update_form(casedoc, update_dict, couch_user, submit_date=None, xmlns=XMLNS_PATIENT_UPDATE):
