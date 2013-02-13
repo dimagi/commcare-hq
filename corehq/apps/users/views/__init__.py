@@ -378,11 +378,23 @@ def add_domain_membership(request, domain, couch_user_id, domain_name):
     return HttpResponseRedirect(reverse("user_account", args=(domain, couch_user_id)))
 
 @require_POST
-@require_superuser
 def delete_domain_membership(request, domain, couch_user_id, domain_name):
-    user = WebUser.get_by_user_id(couch_user_id, domain)
-    user.delete_domain_membership(domain_name)
-    user.save()
+    removing_self = request.couch_user.get_id == couch_user_id
+    user = WebUser.get_by_user_id(couch_user_id, domain_name)
+    subj_text = "you are" if removing_self else "%s is" % user.username
+
+    if not removing_self and not (request.couch_user.is_domain_admin(domain_name) or request.couch_user.is_superuser):
+        messages.error(request, "You don't have the permission to remove this user's membership")
+    elif user.is_domain_admin(domain_name):
+        messages.error(request, "Unable remove membership because %s the admin of %s" % (subj_text, domain_name))
+    else:
+        user.delete_domain_membership(domain_name)
+        user.save()
+
+        messages.success(request, "%s no longer a part of the %s project space" % (subj_text.capitalize(), domain_name))
+        if removing_self and not user.is_member_of(domain):
+            return HttpResponseRedirect(reverse("homepage"))
+
     return HttpResponseRedirect(reverse("user_account", args=(domain, couch_user_id )))
 
 @login_and_domain_required
