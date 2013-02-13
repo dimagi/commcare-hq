@@ -1,5 +1,4 @@
 import csv
-from collections import defaultdict
 from corehq.apps.locations.models import Location
 from corehq.apps.locations.forms import LocationForm
 from corehq.apps.locations.util import defined_location_types, allowed_child_types
@@ -12,20 +11,30 @@ class LocationCache(object):
 
     def __init__(self, domain):
         self.domain = domain
-        # {type: {parent: {name: location}}}
-        self._existing_by_type = defaultdict(lambda: defaultdict(lambda: None))
+        # {(type,parent): {name: location}}
+        self._existing_by_type = {}
+        # {id: location}
+        self._existing_by_id = {}
+
+    def get(self, id):
+        if id not in self._existing_by_id:
+            self._existing_by_id[id] = Location.get(id)
+        return self._existing_by_id[id]
 
     def get_by_name(self, loc_name, loc_type, parent):
-        if self._existing_by_type[loc_type][parent] is None:
+        key = (loc_type, parent)
+        if key not in self._existing_by_type:
             existing = Location.filter_by_type(self.domain, loc_type, parent)
-            self._existing_by_type[loc_type][parent] = dict((l.name, l) for l in existing)
-        return self._existing_by_type[loc_type][parent].get(loc_name, None)
+            self._existing_by_type[key] = dict((l.name, l) for l in existing)
+            self._existing_by_id.update(dict((l._id, l) for l in existing))
+        return self._existing_by_type[key].get(loc_name, None)
 
     def add(self, location):
-        for id in location.lineage:
+        for id in location.lineage + [location._id, None]:
             # this just mimics the behavior in the couch view
-            if self._existing_by_type[location.location_type][id] is not None:
-                self._existing_by_type[location.location_type][id][location.name] = location
+            key = (location.location_type, id)
+            if key in self._existing_by_type:
+                self._existing_by_type[key][location.name] = location
 
 def import_locations(domain, f):
     r = csv.DictReader(f)
