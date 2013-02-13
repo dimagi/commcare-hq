@@ -15,7 +15,7 @@ from corehq.apps.domain.forms import DomainGlobalSettingsForm,\
     DomainMetadataForm, SnapshotSettingsForm, SnapshotApplicationForm, DomainDeploymentForm
 from corehq.apps.domain.models import Domain, LICENSES
 from corehq.apps.domain.utils import get_domained_url, normalize_domain_name
-from corehq.apps.orgs.models import Organization, OrgRequest
+from corehq.apps.orgs.models import Organization, OrgRequest, Team
 from dimagi.utils.django.email import send_HTML_email
 
 from dimagi.utils.web import render_to_response, get_ip
@@ -221,9 +221,22 @@ def snapshot_settings(request, domain):
 @domain_admin_required
 def org_settings(request, domain):
     domain = Domain.get_by_name(domain)
+
+    org_users = []
+    teams = Team.get_by_domain(domain.name)
+    for team in teams:
+        for user in team.get_members():
+            user.team_id = team.get_id
+            user.team = team.name
+            org_users.append(user)
+
+    for user in org_users:
+        user.current_domain = domain.name
+
     return render(request, 'domain/orgs_settings.html', {
         "project": domain, 'domain': domain.name,
-        "organization": Organization.get_by_name(getattr(domain, "organization", None))
+        "organization": Organization.get_by_name(getattr(domain, "organization", None)),
+        "org_users": org_users
     })
 
 

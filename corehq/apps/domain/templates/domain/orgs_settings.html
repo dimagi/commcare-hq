@@ -1,5 +1,6 @@
 {% extends "users/users_base.html" %}
 {% load hqstyle_tags %}
+{% load hq_shared_tags %}
 {% load i18n %}
 
 
@@ -41,6 +42,9 @@
     <div>
         {% if project.organization %}
             <h3>This project is managed by the <a href="{% url orgs_landing project.organization %}">{{ organization.title|capfirst }}</a> organization.</h3>
+            <hr />
+            <h3>{% hq_web_user %}s from {{ organization.title|capfirst }}</h3>
+            {% include 'domain/partials/orgs_user_list.html' with users=org_users remove_included=0 %}
         {% else %}
             <h3>{% trans "This project is not managed by an organization" %}</h3>
             <button class="btn" data-toggle="modal" data-target="#org-request">

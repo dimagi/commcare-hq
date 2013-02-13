@@ -64,6 +64,7 @@ def _users_context(request, domain):
     for team in teams:
         for user in team.get_members():
             if user.get_id not in [web_user.get_id for web_user in web_users]:
+                user.from_team = True
                 web_users.append(user)
 
     for user in [couch_user] + list(web_users):
