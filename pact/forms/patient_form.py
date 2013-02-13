@@ -1,4 +1,3 @@
-import pdb
 from django import forms
 
 #from the models, we have this, (couchmodels.py)
@@ -51,8 +50,6 @@ class PactPatientForm(Form):
         self.fields['hp'].choices = get_hp_choices()
         self.case_es = CaseES(request.domain)
         for name, field in self.fields.items():
-            print "%s: %s" % (name, getattr(self.casedoc, name, ''))
-
             if name == CASE_ART_REGIMEN_PROP:
                 #these really should be a widget of some type
                 #dereference the artregimen, dot_a_one...etc to become the comma separated regimen string for the form
@@ -81,7 +78,6 @@ class PactPatientForm(Form):
                     ret.update(nonart_props)
             else:
                 if getattr(self.casedoc, name, '') != value:
-#                    print "%s: %s != %s" % (name, getattr(self.casedoc, name, None), value)
                     ret[name] = value
         return ret
 

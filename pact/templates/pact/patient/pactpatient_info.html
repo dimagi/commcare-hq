@@ -8,9 +8,9 @@
                             &nbsp;<a id="btn_pt_edit" class="btn btn-success" href="{{ pt_root_url }}&view=edit">Edit</a>
                     &nbsp;&nbsp;
 
-                    &nbsp;<a class="btn" {% if notabs %}target="_blank"{% endif %} href="{{ cloudcare_pn_url }}">New Progress Note</a>
-                    &nbsp;<a class="btn" {% if notabs %}target="_blank"{% endif %} href="{{ cloudcare_dot_url }}">New DOT</a>
-                    &nbsp;<a class="btn" {% if notabs %}target="_blank"{% endif %} href="{{ cloudcare_bw_url }}">New Bloodwork</a>
+                    &nbsp;<a class="btn" {% if not notabs %}target="_blank"{% endif %} href="{{ cloudcare_pn_url }}">New Progress Note</a>
+                    &nbsp;<a class="btn" {% if not notabs %}target="_blank"{% endif %} href="{{ cloudcare_dot_url }}">New DOT</a>
+                    &nbsp;<a class="btn" {% if not notabs %}target="_blank"{% endif %} href="{{ cloudcare_bw_url }}">New Bloodwork</a>
                 </h4>
             </div>
             <div class="commit-group">
@@ -53,6 +53,7 @@
                             {% endif %}
                         </td>
                     </tr>
+                    {% if patient_doc.is_dot %}
                     <tr>
                         <th>ART Regimen</th>
                         <td>{{ patient_doc.art_regimen_label_string_display }}</td>
@@ -60,8 +61,8 @@
                         <th>Non ART Regimen</th>
                         <td>{{ patient_doc.nonart_regimen_label_string_display }}</td>
                     </tr>
-                
-                
+                    {% endif %}
+
                     <tr>
                         <th class="span3">MassHealth Expiration</th>
                         <td>

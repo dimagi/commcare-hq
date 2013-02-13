@@ -85,8 +85,6 @@ class PactPatientCase(CommCareCase):
 
     def update_providers(self, cc_user, provider_ids):
         from pact.api import submit_case_update_form
-        for x in provider_ids:
-            print x
         update_dict = dict(('provider%d' % ix, provider_id) for (ix, provider_id) in enumerate(provider_ids, start=1))
         submit_case_update_form(self, update_dict, cc_user)
 
@@ -121,7 +119,6 @@ class PactPatientCase(CommCareCase):
             return ""
     def is_dot(self):
         dot_status = getattr(self, 'dot_status', None)
-        print dot_status
         if dot_status is None:
             return False
         else:
@@ -275,9 +272,6 @@ class PactPatientCase(CommCareCase):
                 return False
             if x.started > datetime.utcnow():
                 return False
-
-            print "made it to the end somehow..."
-            print '\n'.join(x.weekly_arr)
             return False
 
         if computed.has_key(PACT_SCHEDULES_NAMESPACE):
@@ -288,10 +282,9 @@ class PactPatientCase(CommCareCase):
             future = filter(lambda x: x.deprecated and x.started > datetime.utcnow(), schedule_arr)
             past.reverse()
 
-#            print current
-            if len(current) > 1:
-                for x in current:
-                    print '\n'.join(x.weekly_arr())
+            # if len(current) > 1:
+            #     for x in current:
+            #         print '\n'.join(x.weekly_arr())
 
             ret['current_schedule'] = current[0]
             ret['past_schedules'] = past
