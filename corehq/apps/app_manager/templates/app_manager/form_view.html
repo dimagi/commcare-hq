@@ -17,7 +17,7 @@
 {% endblock %}
 {% block js-inline %}{{ block.super }}
     {% include "hqwebapp/ko/value-or-none-ui.html" %}
-    {% include "app_manager/partials/nav_menu_media_js.html" with item=form %}
+    {% include "app_manager/partials/nav_menu_media_js.html" with item=form image_default="jr://file/commcare/image/form_name.png" audio_default="jr://file/commcare/audio/form_name.mp3" %}
     <script>
         $(function(){
             (function styleSourcePopup() {

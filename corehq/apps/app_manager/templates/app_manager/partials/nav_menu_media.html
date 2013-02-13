@@ -5,11 +5,12 @@
     <td class="commcare-feature" data-since-version="1.3" id="media_image">
         {% if edit %}
             <div data-bind="valueOrNoneUI: {
-                value: media_image,
+                value: mediaImage,
                 allowed: true,
+                defaultValue: defaultImageValue,
                 inputName: 'media_image',
                 inputCss: {wide: true, 'jr-resource-field': true},
-                inputAttr: {placeholder: 'jr://file/commcare/media/image/image.png', 'data-name': 'media_image'}
+                inputAttr: {'data-name': 'media_image'}
             }">
                 <span data-slug="add">{% trans "Add Image" %}</span>
             </div>
@@ -23,11 +24,12 @@
     <td class="commcare-feature" data-since-version="1.3" id="media_audio">
         {% if edit %}
             <div data-bind="valueOrNoneUI: {
-                value: media_audio,
+                value: mediaAudio,
                 allowed: true,
-                inputName: 'media_audio',
+                defaultValue: defaultAudioValue,
+                inputName: 'mediaAudio',
                 inputCss: {wide: true, 'jr-resource-field': true},
-                inputAttr: {placeholder: 'jr://file/commcare/media/audio/audio.mp3', 'data-name': 'media_audio'}
+                inputAttr: {'data-name': 'media_audio'}
             }">
                 <span data-slug="add">{% trans "Add Audio" %}</span>
                 <span data-slug="whyNotAdd">{% trans "Why can't I add audio?" %}</span>
