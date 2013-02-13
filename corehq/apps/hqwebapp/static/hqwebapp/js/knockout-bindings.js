@@ -319,9 +319,7 @@ function ValueOrNoneUI(opts) {
     self.hasValue = ko.observable(!!self.inputValue());
     self.hasFocus = ko.observable();
 
-    if (!self.inputValue()) {
-        self.inputValue(self.defaultValue);
-    }
+    // make the input get preloaded with the defaultValue
     self.hasFocus.subscribe(function (value) {
         if (!self.inputValue()) {
             self.inputValue(self.defaultValue);
