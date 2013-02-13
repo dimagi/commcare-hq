@@ -7,32 +7,48 @@ from django.core.urlresolvers import reverse
 from django.utils.translation import ugettext as _
 from django.utils.translation import ugettext_noop
 
-def require_couch_user(fn):
-    """Meant to be used only on the is_viewable method"""
-    @wraps(fn)
-    def inner(cls, request, *args, **kwargs):
-        try:
-            request.couch_user
-        except AttributeError:
-            return False
-        else:
-            return fn(cls, request, *args, **kwargs)
-
-    return inner
 
 class DropdownMenuItem(object):
     title = None
     view = None
     css_id = None
 
-    def __init__(self, request, domain):
-        self.request = request
+    def __init__(self, request, domain=None, couch_user=None, project=None):
         self.domain = domain
-        if self.title is None:
-            raise NotImplementedError("A title is required")
-        if self.view is None:
-            raise NotImplementedError("A view is required")
+        self.couch_user = couch_user
+        self.project = project
+       
+        # This should not be considered as part of the subclass API unless it
+        # is necessary. Try to add new explicit parameters instead.
+        self._request = request
+    
+    @property
+    def submenu_items(self):
+        return []
+ 
+    @property
+    def is_viewable(self):
+        """
+        Whether the tab should be displayed.  Subclass implementations can skip
+        checking whether domain, couch_user, or project is not None before
+        accessing an attribute of them -- this property is accessed in
+        real_is_viewable and wrapped in a try block that returns False in the
+        case of an AttributeError for any of those variables.
 
+        """
+        raise NotImplementedError()
+
+    @property
+    def real_is_viewable(self):
+        try:
+            return self.is_viewable
+        except AttributeError as e:
+            import re
+            if not re.search('domain|couch_user|project', e.args[0]):
+                raise
+
+            return False
+    
     @property
     def menu_context(self):
         return {
@@ -42,10 +58,20 @@ class DropdownMenuItem(object):
             'is_active': self.is_active,
             'submenu': self.submenu_items,
         }
+    
+    @property
+    @memoized
+    def url(self):
+        if self.domain:
+            try:
+                return reverse(self.view, args=[self.domain])
+            except Exception:
+                pass
+        return reverse(self.view)
 
     @property
-    def submenu_items(self):
-        return []
+    def is_active(self):
+        return self._request.get_full_path().startswith(self.url or "")
 
     def _format_submenu_context(self, title, url=None, html=None,
                                 is_header=False, is_divider=False):
@@ -65,36 +91,17 @@ class DropdownMenuItem(object):
             'submenu': menu,
         }
 
-    @property
-    @memoized
-    def url(self):
-        if self.domain:
-            try:
-                return reverse(self.view, args=[self.domain])
-            except Exception:
-                pass
-        return reverse(self.view)
-
-    @property
-    def is_active(self):
-        return self.request.get_full_path().startswith(self.url or "")
-
-    @classmethod
-    def is_viewable(cls, request, domain):
-        raise NotImplementedError
-
 
 class ReportsMenuItem(DropdownMenuItem):
     title = ugettext_noop("Reports")
     view = "corehq.apps.reports.views.default"
     css_id = "project_reports"
 
-    @classmethod
-    @require_couch_user
-    def is_viewable(cls, request, domain):
-        return domain and \
-            (hasattr(request, 'project') and not request.project.is_snapshot) and \
-            (request.couch_user.can_view_reports() or request.couch_user.get_viewable_reports())
+    @property
+    def is_viewable(self):
+        return (self.domain and self.project and not self.project.is_snapshot and
+                (self.couch_user.can_view_reports() or
+                 self.couch_user.get_viewable_reports))
 
 
 class ProjectInfoMenuItem(DropdownMenuItem):
@@ -102,12 +109,9 @@ class ProjectInfoMenuItem(DropdownMenuItem):
     view = "corehq.apps.appstore.views.project_info"
     css_id = "project_info"
 
-    @classmethod
-    def is_viewable(cls, request, domain):
-        if hasattr(request, 'project'):
-            return domain and request.project.is_snapshot
-        else:
-            return False
+    @property
+    def is_viewable(self):
+        return self.project and self.project.is_snapshot
 
 
 class ManageDataMenuItem(DropdownMenuItem):
@@ -115,10 +119,9 @@ class ManageDataMenuItem(DropdownMenuItem):
     view = "corehq.apps.data_interfaces.views.default"
     css_id = "manage_data"
 
-    @classmethod
-    @require_couch_user
-    def is_viewable(cls, request, domain):
-        return domain and request.couch_user.can_edit_data()
+    @property
+    def is_viewable(self):
+        return self.domain and self.couch_user.can_edit_data()
 
 
 class ApplicationsMenuItem(DropdownMenuItem):
@@ -149,7 +152,7 @@ class ApplicationsMenuItem(DropdownMenuItem):
                 app_name = mark_safe("%s" % mark_for_escaping(app_info['name'] or '(Untitled)'))
                 submenu_context.append(self._format_submenu_context(app_name, url=url))
 
-        if self.request.couch_user.can_edit_apps():
+        if self.couch_user.can_edit_apps():
             submenu_context.append(self._format_submenu_context(None, is_divider=True))
             newapp_options = [
                 self._format_submenu_context(None, html=self._new_app_link(_('Blank Application'))),
@@ -173,12 +176,12 @@ class ApplicationsMenuItem(DropdownMenuItem):
             'action_text': title,
         }))
 
-    @classmethod
-    @require_couch_user
-    def is_viewable(cls, request, domain):
-        couch_user = request.couch_user
-        return (domain is not None and (couch_user.is_web_user() or couch_user.can_edit_apps()) and
-                (couch_user.is_member_of(domain) or couch_user.is_superuser))
+    @property 
+    def is_viewable(self):
+        couch_user = self.couch_user
+        return (self.domain and couch_user and
+                (couch_user.is_web_user() or couch_user.can_edit_apps()) and 
+                (couch_user.is_member_of(self.domain) or couch_user.is_superuser))
 
 
 class CloudcareMenuItem(DropdownMenuItem):
@@ -186,10 +189,9 @@ class CloudcareMenuItem(DropdownMenuItem):
     view = "corehq.apps.cloudcare.views.default"
     css_id = "cloudcare"
 
-    @classmethod
-    @require_couch_user
-    def is_viewable(cls, request, domain):
-        return domain and request.couch_user.can_edit_data()
+    @property 
+    def is_viewable(self):
+        return self.domain and self.couch_user.can_edit_data()
 
 
 class MessagesMenuItem(DropdownMenuItem):
@@ -197,12 +199,10 @@ class MessagesMenuItem(DropdownMenuItem):
     view = "corehq.apps.sms.views.messaging"
     css_id = "messages"
 
-    @classmethod
-    @require_couch_user
-    def is_viewable(cls, request, domain):
-        return domain and \
-            (hasattr(request, 'project') and not request.project.is_snapshot) and \
-            not request.couch_user.is_commcare_user()
+    @property    
+    def is_viewable(self):
+        return (self.domain and self.project and not self.project.is_snapshot and
+                not self.couch_user.is_commcare_user())
 
 
 class ProjectSettingsMenuItem(DropdownMenuItem):
@@ -213,7 +213,7 @@ class ProjectSettingsMenuItem(DropdownMenuItem):
     @memoized
     def url(self):
         from corehq.apps.users.views import redirect_users_to
-        return redirect_users_to(self.request, self.domain) or reverse("homepage")
+        return redirect_users_to(self._request, self.domain) or reverse("homepage")
 
     @property
     @memoized
@@ -222,15 +222,14 @@ class ProjectSettingsMenuItem(DropdownMenuItem):
 
     @property
     def title(self):
-        if not (self.request.couch_user.can_edit_commcare_users() or self.request.couch_user.can_edit_web_users()):
+        if not (self.couch_user.can_edit_commcare_users() or 
+                self.couch_user.can_edit_web_users()):
             return _("Settings")
         return _("Settings & Users")
 
-    @classmethod
-    @require_couch_user
-    def is_viewable(cls, request, domain):
-        return domain is not None and request.couch_user
-
+    @property
+    def is_viewable(self):
+        return self.domain and self.couch_user
 
 
 class AdminReportsMenuItem(DropdownMenuItem):
@@ -262,10 +261,9 @@ class AdminReportsMenuItem(DropdownMenuItem):
         ])
         return submenu_context
 
-    @classmethod
-    @require_couch_user
-    def is_viewable(cls, request, domain):
-        return request.couch_user.is_superuser
+    @property 
+    def is_viewable(self):
+        return self.couch_user and self.couch_user.is_superuser
 
 
 class ExchangeMenuItem(DropdownMenuItem):
@@ -277,7 +275,7 @@ class ExchangeMenuItem(DropdownMenuItem):
     @memoized
     def submenu_items(self):
         submenu_context = None
-        if self.domain and self.request.couch_user.is_domain_admin(self.domain):
+        if self.domain and self.couch_user.is_domain_admin(self.domain):
             submenu_context = [
                 self._format_submenu_context(_("CommCare Exchange"), url=reverse("appstore")),
                 self._format_submenu_context(_("Publish this project"),
@@ -285,18 +283,17 @@ class ExchangeMenuItem(DropdownMenuItem):
             ]
         return submenu_context
 
-    @classmethod
-    def is_viewable(cls, request, domain):
-        return not getattr(request, 'couch_user', False) or not request.couch_user.is_commcare_user()
+    @property
+    def is_viewable(self):
+        return not self.couch_user.is_commcare_user()
 
 class ManageSurveysMenuItem(DropdownMenuItem):
     title = ugettext_noop("Manage Surveys")
     view = "corehq.apps.reminders.views.sample_list"
     css_id = "manage_surveys"
 
-    @classmethod
-    @require_couch_user
-    def is_viewable(cls, request, domain):
-        return domain and request.couch_user.can_edit_data() and \
-            (hasattr(request, 'project') and request.project.survey_management_enabled)
+    @property
+    def is_viewable(self):
+        return (self.domain and self.couch_user.can_edit_data() and 
+                self.project.survey_management_enabled)
 
