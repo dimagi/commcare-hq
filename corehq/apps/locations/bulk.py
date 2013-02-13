@@ -1,31 +1,8 @@
 import csv
-from collections import defaultdict
 from corehq.apps.locations.models import Location
 from corehq.apps.locations.forms import LocationForm
 from corehq.apps.locations.util import defined_location_types, allowed_child_types
 import itertools
-
-class LocationCache(object):
-    """
-    Used to cache locations in memory during a bulk upload for optimization
-    """
-
-    def __init__(self, domain):
-        self.domain = domain
-        # {type: {parent: {name: location}}}
-        self._existing_by_type = defaultdict(lambda: defaultdict(lambda: None))
-
-    def get_by_name(self, loc_name, loc_type, parent):
-        if self._existing_by_type[loc_type][parent] is None:
-            existing = Location.filter_by_type(self.domain, loc_type, parent)
-            self._existing_by_type[loc_type][parent] = dict((l.name, l) for l in existing)
-        return self._existing_by_type[loc_type][parent].get(loc_name, None)
-
-    def add(self, location):
-        for id in location.lineage:
-            # this just mimics the behavior in the couch view
-            if self._existing_by_type[location.location_type][id] is not None:
-                self._existing_by_type[location.location_type][id][location.name] = location
 
 def import_locations(domain, f):
     r = csv.DictReader(f)
@@ -41,14 +18,18 @@ def import_locations(domain, f):
             break
     property_fields = fields[len(hierarchy_fields):]
 
-    loc_cache = LocationCache(domain)
     for loc in data:
-        for m in import_location(domain, loc, hierarchy_fields, property_fields, loc_cache):
+        for m in import_location(domain, loc, hierarchy_fields, property_fields):
             yield m
 
-def import_location(domain, loc_row, hierarchy_fields, property_fields, loc_cache=None):
-    if loc_cache is None:
-        loc_cache = LocationCache(domain)
+def import_location(domain, loc_row, hierarchy_fields, property_fields):
+    def get_by_name(loc_name, loc_type, parent):
+        # TODO: could cache the results of this for speed
+        existing = Location.filter_by_type(domain, loc_type, parent)
+        try:
+            return [l for l in existing if l.name == loc_name][0]
+        except IndexError:
+            return None
 
     def get_cell(field):
         val = loc_row[field].strip()
@@ -76,7 +57,7 @@ def import_location(domain, loc_row, hierarchy_fields, property_fields, loc_cach
                 yield 'warning: %s properties specified on row that won\'t create a %s! (%s)' % (terminal_type, terminal_type, row_name)
             continue
 
-        child = loc_cache.get_by_name(loc_name, loc_type, parent)
+        child = get_by_name(loc_name, loc_type, parent)
         if child:
             if is_terminal:
                 yield '%s %s exists; skipping...' % (loc_type, loc_name)
@@ -94,10 +75,8 @@ def import_location(domain, loc_row, hierarchy_fields, property_fields, loc_cach
                 data.update(((terminal_type, k), v) for k, v in properties.iteritems())
 
             form = make_form(domain, parent, data)
-            form.strict = False # optimization hack to turn off strict validation
             if form.is_valid():
                 child = form.save()
-                loc_cache.add(child)
                 yield 'created %s %s' % (loc_type, loc_name)
             else:
                 # TODO move this to LocationForm somehow
