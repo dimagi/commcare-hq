@@ -9,7 +9,8 @@ from django.contrib.auth.views import logout as django_logout
 from django.contrib.sites.models import Site
 from django.http import HttpResponseRedirect, HttpResponse, Http404,\
     HttpResponseServerError, HttpResponseNotFound
-from django.shortcuts import redirect
+from django.shortcuts import redirect, render
+
 from corehq.apps.app_manager.models import BUG_REPORTS_DOMAIN
 from corehq.apps.app_manager.models import import_app
 from corehq.apps.domain.decorators import require_superuser,\
@@ -20,7 +21,7 @@ from corehq.apps.users.models import CouchUser
 from corehq.apps.users.util import format_username
 from dimagi.utils.logging import notify_exception
 
-from dimagi.utils.web import render_to_response, get_url_base
+from dimagi.utils.web import get_url_base
 from django.core.urlresolvers import reverse
 from corehq.apps.domain.models import Domain
 from django.core.mail.message import EmailMessage
@@ -122,7 +123,7 @@ def password_change(req):
     else:
         password_form = AdminPasswordChangeForm(user_to_edit)
     template_name = "password_change.html"
-    return render_to_response(req, template_name, {"form": password_form})
+    return render(req, template_name, {"form": password_form})
 
 
 def server_up(req):
@@ -171,7 +172,7 @@ def no_permissions(request, redirect_to=None, template_name="no_permission.html"
         logout(request)
         return redirect_to_login(next or request.path)
 
-    return render_to_response(request, template_name, {'next': next})
+    return render(request, template_name, {'next': next})
 
 def _login(req, domain, template_name):
     if req.user.is_authenticated() and req.method != "POST":

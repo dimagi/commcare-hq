@@ -20,8 +20,9 @@ from couchforms.models import XFormInstance
 from dimagi.utils.couch.loosechange import parse_date
 from dimagi.utils.decorators import inline
 from dimagi.utils.export import WorkBook
-from dimagi.utils.web import json_request, json_response, render_to_response
+from dimagi.utils.web import json_request, json_response
 from django.http import HttpResponseRedirect, HttpResponse, HttpResponseBadRequest, Http404, HttpResponseForbidden
+from django.shortcuts import render
 from django.core.urlresolvers import reverse
 from corehq.apps.domain.decorators import login_and_domain_required, login_or_digest
 import couchforms.views as couchforms_views
@@ -100,7 +101,7 @@ def default(request, domain, template="reports/reports_home.html"):
     if request.couch_user:
         util.set_report_announcements_for_user(request, user)
 
-    return render_to_response(request, template, context)
+    return render(request, template, context)
 
 @login_or_digest
 @require_form_export_permission
@@ -279,7 +280,7 @@ class CustomExportHelper(object):
                     return True
             return False
 
-        return render_to_response(self.request, "reports/reportdata/customize_export.html", {
+        return render(self.request, "reports/reportdata/customize_export.html", {
             "saved_export": self.custom_export,
             "deid_options": CustomExportHelper.DEID.options,
             "presave": self.presave,
@@ -582,7 +583,7 @@ def edit_scheduled_report(request, domain, scheduled_report_id=None,
     config_choices = [(c._id, c.full_name) for c in configs if c.report and c.report.emailable]
 
     if not config_choices:
-        return render_to_response(request, template, context)
+        return render(request, template, context)
 
     web_users = WebUser.view('users/web_users_by_domain', reduce=False,
                                key=domain, include_docs=True).all()
@@ -628,7 +629,7 @@ def edit_scheduled_report(request, domain, scheduled_report_id=None,
         context['form_action'] = "Edit"
         context['report']['title'] = "Edit Scheduled Report"
 
-    return render_to_response(request, template, context)
+    return render(request, template, context)
 
 @login_and_domain_required
 @require_POST
@@ -689,7 +690,7 @@ def get_scheduled_report_response(couch_user, domain, scheduled_report_id,
             'content': config.get_report_content()
         })
     
-    return render_to_response(request, "reports/report_email.html", {
+    return render(request, "reports/report_email.html", {
         "reports": report_outputs,
         "domain": notification.domain,
         "couch_user": notification.owner._id,
@@ -741,7 +742,7 @@ def case_details(request, domain, case_id):
     except Exception:
         username = None
 
-    return render_to_response(request, "reports/reportdata/case_details.html", {
+    return render(request, "reports/reportdata/case_details.html", {
         "domain": domain,
         "case_id": case_id,
         "username": username, 
@@ -849,7 +850,7 @@ def form_data(request, domain, instance_id):
     is_archived = instance.doc_type == "XFormArchived"
     if is_archived:
         messages.info(request, _("This form is archived. To restore it, click 'Restore this form' at the bottom of the page."))
-    return render_to_response(request, "reports/reportdata/form_data.html",
+    return render(request, "reports/reportdata/form_data.html",
                               dict(domain=domain,
                                    instance=instance,
                                    cases=cases,

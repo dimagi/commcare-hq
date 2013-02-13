@@ -6,9 +6,10 @@ from corehq.apps.cloudcare.touchforms_api import DELEGATION_STUB_CASE_TYPE
 from corehq.apps.domain.decorators import login_and_domain_required, login_or_digest_ex, domain_admin_required
 from corehq.apps.groups.models import Group
 from corehq.apps.users.models import CouchUser, CommCareUser
-from dimagi.utils.web import render_to_response, json_response, get_url_base
+from dimagi.utils.web import json_response, get_url_base
 from django.http import HttpResponseRedirect, HttpResponse, HttpResponseBadRequest, Http404,\
     HttpResponseServerError
+from django.shortcuts import render
 from corehq.apps.app_manager.models import Application, ApplicationBase
 import json
 from corehq.apps.cloudcare.api import get_app, get_cloudcare_apps, get_filtered_cases, get_filters_from_request,\
@@ -117,7 +118,7 @@ def cloudcare_main(request, domain, urlPath):
        "maps_api_key": settings.GMAPS_API_KEY
     }
     context.update(_url_context())
-    return render_to_response(request, "cloudcare/cloudcare_home.html", context)
+    return render(request, "cloudcare/cloudcare_home.html", context)
 
 
 @login_and_domain_required
@@ -151,7 +152,7 @@ def view_case(request, domain, case_id=None):
         'domain': domain,
         'case_spec': case_spec
     })
-    return render_to_response(request, 'cloudcare/view_case.html', context)
+    return render(request, 'cloudcare/view_case.html', context)
 
 @cloudcare_api
 def get_groups(request, domain, user_id):
@@ -280,7 +281,7 @@ def app_settings(request, domain):
         access = ApplicationAccess.get_template_json(domain, apps)
         groups = Group.by_domain(domain)
 
-        return render_to_response(request, 'cloudcare/config.html', {
+        return render(request, 'cloudcare/config.html', {
             'domain': domain,
             'apps': apps,
             'groups': groups,

@@ -4,6 +4,8 @@ from copy import deepcopy
 import logging
 from django.http import HttpResponseRedirect, HttpResponse
 from django.core.urlresolvers import reverse
+from django.shortcuts import render
+
 import rawes
 from casexml.apps.case.models import CommCareCase
 from corehq.apps.builds.models import CommCareBuildConfig, BuildSpec
@@ -19,7 +21,7 @@ from collections import defaultdict
 from corehq.apps.domain.decorators import  require_superuser
 from dimagi.utils.decorators.datespan import datespan_in_request
 from dimagi.utils.parsing import json_format_datetime, string_to_datetime
-from dimagi.utils.web import json_response, render_to_response
+from dimagi.utils.web import json_response
 from django.views.decorators.cache import cache_page
 from couchexport.export import export_raw, export_from_tables
 from couchexport.shortcuts import export_response
@@ -109,7 +111,7 @@ def domain_list(request):
     )
     context["headers"] = headers
     context["aoColumns"] = headers.render_aoColumns
-    return render_to_response(request, "hqadmin/domain_list.html", context)
+    return render(request, "hqadmin/domain_list.html", context)
 
 @require_superuser
 def active_users(request):
@@ -228,7 +230,7 @@ def global_report(request, template="hqadmin/global.html", as_export=False):
 
     context['hide_filters'] = True
 
-    return render_to_response(request, template, context)
+    return render(request, template, context)
 
 @require_superuser
 def commcare_version_report(request, template="hqadmin/commcare_version.html"):
@@ -256,7 +258,7 @@ def commcare_version_report(request, template="hqadmin/commcare_version.html"):
     context = get_hqadmin_base_context(request)
     context.update({'tables': tables})
     context['hide_filters'] = True
-    return render_to_response(request, template, context)
+    return render(request, template, context)
 
 
 @cache_page(60*5)
@@ -309,7 +311,7 @@ def domain_activity_report(request, template="hqadmin/domain_activity_report.htm
     headers.add_column(DataTablesColumn("All Users"))
     context["headers"] = headers
     context["aoColumns"] = headers.render_aoColumns
-    return render_to_response(request, template, context)
+    return render(request, template, context)
 
 @datespan_default
 @require_superuser
@@ -341,7 +343,7 @@ def message_log_report(request):
     })
 
     context['layout_flush_content'] = True
-    return render_to_response(request, "hqadmin/message_log_report.html", context)
+    return render(request, "hqadmin/message_log_report.html", context)
 
 def _get_emails():
     return [r['key'] for r in get_db().view('hqadmin/emails').all()]
@@ -414,7 +416,7 @@ def submissions_errors(request, template="hqadmin/submissions_errors_report.html
     context["headers"] = headers
     context["aoColumns"] = headers.render_aoColumns
 
-    return render_to_response(request, template, context)
+    return render(request, template, context)
 
 @require_superuser
 @get_file("file")
@@ -500,7 +502,7 @@ def update_domains(request):
     )
     context["headers"] = headers
     context["aoColumns"] = headers.render_aoColumns
-    return render_to_response(request, "hqadmin/domain_update_properties.html", context)
+    return render(request, "hqadmin/domain_update_properties.html", context)
 
 @require_superuser
 def domain_list_download(request):
@@ -695,7 +697,7 @@ def system_info(request):
     context.update(check_xform_index())
     context.update(check_exchange_index())
 
-    return render_to_response(request, "hqadmin/system_info.html", context)
+    return render(request, "hqadmin/system_info.html", context)
 
 @require_superuser
 def noneulized_users(request, template="hqadmin/noneulized_users.html"):

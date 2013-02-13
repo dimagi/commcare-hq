@@ -3,7 +3,7 @@ from datetime import datetime
 from couchdbkit.exceptions import ResourceNotFound
 from couchdbkit.ext.django.schema import *
 from django.http import Http404, HttpResponseForbidden
-from dimagi.utils.web import render_to_response
+from django.shortcuts import render
 
 class PrescriptionDateOutOfRange(Exception):
     pass
@@ -60,7 +60,7 @@ class Prescription(Document):
                 except PrescriptionUnauthorized:
                     return HttpResponseForbidden()
                 except PrescriptionDateOutOfRange:
-                    return render_to_response(request, 'prescriptions/date_out_of_range.html', {
+                    return render(request, 'prescriptions/date_out_of_range.html', {
                         'now': now,
                         'prescription': prescription,
                     })
