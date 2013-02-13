@@ -2,7 +2,9 @@ from datetime import datetime
 from couchdbkit import ResourceNotFound
 from django.core.urlresolvers import reverse
 from django.db import transaction
-from django.http import HttpResponse, HttpResponseRedirect, Http404, HttpResponseForbidden
+from django.http import HttpResponse, HttpResponseRedirect, Http404, \
+    HttpResponseForbidden
+from django.template.loader import render_to_string
 from django.views.decorators.http import require_POST
 from django.shortcuts import render
 from django.contrib import messages
@@ -12,9 +14,10 @@ from corehq.apps.hqwebapp.utils import InvitationView
 from corehq.apps.orgs.decorators import org_admin_required, org_member_required
 from corehq.apps.registration.forms import DomainRegistrationForm
 from corehq.apps.orgs.forms import AddProjectForm, InviteMemberForm, AddTeamForm, UpdateOrgInfo
-from corehq.apps.users.models import WebUser, UserRole
+from corehq.apps.users.models import WebUser, UserRole, OrgRemovalRecord
 from dimagi.utils.web import json_response
-from corehq.apps.orgs.models import Organization, Team, DeleteTeamRecord, OrgInvitation
+from corehq.apps.orgs.models import Organization, Team, DeleteTeamRecord, \
+    OrgInvitation, OrgRequest
 from corehq.apps.domain.models import Domain
 
 
@@ -44,9 +47,18 @@ def orgs_landing(request, org, template="orgs/orgs_landing.html", form=None, add
                                                         'url': organization.url, 'location': organization.location})
 
     current_teams = Team.get_by_org(org)
-    current_domains = Domain.get_by_organization(org)
+    current_domains = Domain.get_by_organization(org).all()
     members = organization.get_members()
     admin = request.couch_user.is_org_admin(org) or request.couch_user.is_superuser
+
+    # display a notification for each org request that hasn't previously been seen
+    if request.couch_user.is_org_admin(org):
+        for req in OrgRequest.get_requests(org):
+            if req.seen or req.domain in [d.name for d in current_domains]:
+                continue
+            messages.info(request, render_to_string("orgs/partials/org_request_notification.html",
+                {"requesting_user": WebUser.get(req.requested_by).username, "org_req": req, "org": organization}),
+                extra_tags="html")
 
     vals = dict(org=organization, domains=current_domains, reg_form=reg_form, add_form=add_form,
                 reg_form_empty=reg_form_empty, add_form_empty=add_form_empty, update_form=update_form,
@@ -100,6 +112,13 @@ def orgs_add_project(request, org):
     form = AddProjectForm(org, request.POST)
     if form.is_valid():
         domain_name = form.cleaned_data['domain_name']
+
+        if not request.couch_user.is_domain_admin(domain_name):
+            org_requests = filter(lambda r: r.domain == domain_name, OrgRequest.get_requests(org))
+            if not org_requests:
+                messages.error(request, 'You must be an admin of this project in order to add it to your organization')
+                return orgs_landing(request, org, add_form=form)
+
         dom = Domain.get_by_name(domain_name)
         dom.organization = org
         dom.slug = form.cleaned_data['domain_slug']
@@ -182,7 +201,7 @@ def orgs_logo(request, org, template="orgs/orgs_logo.html"):
 def orgs_teams(request, org, template="orgs/orgs_teams.html"):
     organization = Organization.get_by_name(org)
     teams = Team.get_by_org(org)
-    current_domains = Domain.get_by_organization(org)
+    current_domains = Domain.get_by_organization(org).all()
     vals = dict(org=organization, teams=teams, domains=current_domains)
     return render(request, template, vals)
 
@@ -191,7 +210,7 @@ def orgs_team_members(request, org, team_id, template="orgs/orgs_team_members.ht
     #organization and teams
     organization = Organization.get_by_name(org)
     teams = Team.get_by_org(org)
-    current_domains = Domain.get_by_organization(org)
+    current_domains = Domain.get_by_organization(org).all()
 
     try:
         team = Team.get(team_id)
@@ -207,7 +226,7 @@ def orgs_team_members(request, org, team_id, template="orgs/orgs_team_members.ht
     for name in domain_names:
         domains.append([Domain.get_by_name(name), team.role_label(domain=name), UserRole.by_domain(name)])
 
-    all_org_domains = Domain.get_by_organization(org)
+    all_org_domains = Domain.get_by_organization(org).all()
     non_domains = [domain for domain in all_org_domains if domain.name not in domain_names]
 
     all_org_members = organization.get_members()
@@ -262,7 +281,6 @@ def delete_team(request, org, team_id):
         return HttpResponseForbidden()
 
 @org_admin_required
-@require_POST
 def undo_delete_team(request, org, record_id):
     record = DeleteTeamRecord.get(record_id)
     record.undo()
@@ -322,3 +340,38 @@ def remove_all_from_team(request, org, team_id):
         member.save()
     if 'redirect_url' in request.POST:
         return HttpResponseRedirect(reverse(request.POST['redirect_url'], args=(org, team_id)))
+
+def search_orgs(request):
+    return json_response([{'title': o.title, 'name': o.name} for o in Organization.get_all()])
+
+@org_admin_required
+@require_POST
+def seen_request(request, org):
+    req_id = request.POST.get('request_id', None)
+    org_req = OrgRequest.get(req_id)
+    if org_req and org_req.organization == org:
+        org_req.seen = True
+        org_req.save()
+    return HttpResponseRedirect(reverse("orgs_landing", args=[org]))
+
+@org_admin_required
+@require_POST
+def remove_member(request, org):
+    member_id = request.POST.get("member_id", None)
+    if member_id == request.couch_user.get_id and not request.couch_user.is_superuser:
+        messages.error(request, "You cannot remove yourself from an organization")
+    else:
+        member = WebUser.get(member_id)
+        record = member.delete_org_membership(org, create_record=True)
+        member.save()
+        messages.success(request, 'You have removed {m} from the organization {o}. <a href="{url}" class="post-link">Undo</a>'.format(
+            url=reverse('undo_remove_member', args=[org, record.get_id]), m=member.username, o=org
+        ), extra_tags="html")
+    return HttpResponseRedirect(reverse("orgs_landing", args=[org]))
+
+@org_admin_required
+def undo_remove_member(request, org, record_id):
+    record = OrgRemovalRecord.get(record_id)
+    record.undo()
+    return HttpResponseRedirect(reverse('orgs_landing', args=[org]))
+

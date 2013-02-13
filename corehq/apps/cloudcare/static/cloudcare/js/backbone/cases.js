@@ -196,7 +196,7 @@ cloudCare.CaseListView = Backbone.View.extend({
             $('<th/>').appendTo(theadrow);
         }
         _(self.detailsShort.get("columns")).each(function (col) {
-            $("<th />").append('<i class="icon-hq-white icon-hq-doublechevron"></i> ').append(localize(col.header, self.options.language)).appendTo(theadrow);
+            $("<th />").append('<i class="icon-white"></i> ').append(localize(col.header, self.options.language)).appendTo(theadrow);
         });
         var tbody = $("<tbody />").appendTo(table);
         _(self.caseList.models).each(function(item){

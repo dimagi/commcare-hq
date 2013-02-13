@@ -3,14 +3,14 @@ import simplejson
 from casexml.apps.case.models import CommCareCase
 from corehq.pillows.mappings.case_mapping import CASE_MAPPING, CASE_INDEX
 from pillowtop.listener import AliasedElasticPillow
-import settings
+from django.conf import settings
 
 
 UNKNOWN_DOMAIN = "__nodomain__"
 UNKNOWN_TYPE = "__notype__"
 
 class CasePillow(AliasedElasticPillow):
-    couch_db = CommCareCase.get_db()
+    document_class = CommCareCase
     couch_filter = "case/casedocs"
     es_host = settings.ELASTICSEARCH_HOST
     es_port = settings.ELASTICSEARCH_PORT

@@ -15,6 +15,7 @@ from corehq.apps.domain.forms import DomainGlobalSettingsForm,\
     DomainMetadataForm, SnapshotSettingsForm, SnapshotApplicationForm, DomainDeploymentForm
 from corehq.apps.domain.models import Domain, LICENSES
 from corehq.apps.domain.utils import get_domained_url, normalize_domain_name
+from corehq.apps.orgs.models import Organization, OrgRequest, Team
 from dimagi.utils.django.email import send_HTML_email
 
 from dimagi.utils.web import get_ip
@@ -120,9 +121,6 @@ def legacy_domain_name(request, domain, path):
 
 @domain_admin_required
 def project_settings(request, domain, template="domain/admin/project_settings.html"):
-    class _NeverFailForm(object):
-            def is_valid(self):              return True
-            def save(self, request, domain): return True
     domain = Domain.get_by_name(domain)
     user_sees_meta = request.couch_user.is_previewer()
 
@@ -219,6 +217,28 @@ def snapshot_settings(request, domain):
     snapshots = domain.snapshots()
     return render(request, 'domain/snapshot_settings.html',
                 {"project": domain, 'domain': domain.name, 'snapshots': list(snapshots), 'published_snapshot': domain.published_snapshot()})
+
+@domain_admin_required
+def org_settings(request, domain):
+    domain = Domain.get_by_name(domain)
+
+    org_users = []
+    teams = Team.get_by_domain(domain.name)
+    for team in teams:
+        for user in team.get_members():
+            user.team_id = team.get_id
+            user.team = team.name
+            org_users.append(user)
+
+    for user in org_users:
+        user.current_domain = domain.name
+
+    return render(request, 'domain/orgs_settings.html', {
+        "project": domain, 'domain': domain.name,
+        "organization": Organization.get_by_name(getattr(domain, "organization", None)),
+        "org_users": org_users
+    })
+
 
 @domain_admin_required
 def create_snapshot(request, domain):
@@ -489,3 +509,22 @@ def commtrack_settings(request, domain):
             #form=form,
         ))
 
+@require_POST
+@domain_admin_required
+def org_request(request, domain):
+    org_name = request.POST.get("org_name", None)
+    org = Organization.get_by_name(org_name)
+    if org:
+        org_request = OrgRequest.get_requests(org_name, domain=domain, user_id=request.couch_user.get_id)
+        if not org_request:
+            org_request = OrgRequest(organization=org_name, domain=domain,
+                requested_by=request.couch_user.get_id, requested_on=datetime.datetime.utcnow())
+            org_request.save()
+            messages.success(request,
+                "Your request was submitted. The admin of organization %s can now choose to manage the project %s" %
+                (org_name, domain))
+        else:
+            messages.error(request, "You've already submitted a request to this organization")
+    else:
+        messages.error(request, "The organization '%s' does not exist" % org_name)
+    return HttpResponseRedirect(reverse('domain_org_settings', args=[domain]))

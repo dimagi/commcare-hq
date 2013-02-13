@@ -1,0 +1,59 @@
+{% load i18n %}
+<table class="table table-striped table-bordered">
+    <thead>
+    <tr>
+        <th>{% trans "E-mail" %}</th>
+        {% block extra_headers %}
+        {% endblock %}
+        <th>{% trans "Role" %}</th>
+        <th>{% trans "Name" %}</th>
+        <th>{% trans "Phone Numbers" %}</th>
+        {% if remove_included %}<th>{% trans "Remove" %}</th>{% endif %}
+    </tr>
+    </thead>
+    <tbody>
+    {% for user in users %}
+        <tr>
+        {% block email_td %}
+            <td>
+                {% if not user.from_team %}<a href="{% url user_account domain user.couch_id %}">
+                    {% else %}<a href="{% url domain_org_settings domain %}">{% endif %}
+                {{ user.html_username|safe }}
+                </a>
+            </td>
+        {% endblock %}
+        {% block extra_tds %}
+        {% endblock %}
+        {% block role_td %}
+            <td>{% if user.role_label %}{{ user.role_label }}{% else %}<h6>(No Name)</h6>{% endif %}</td>
+        {% endblock %}
+        {% block name_td %}
+            <td>{{ user.first_name }} {{ user.last_name }}</td>
+        {% endblock %}
+        {% block numbers_td %}
+            <td>
+                {% if user.phone_numbers %}
+                    +{{ user.default_phone_number }}
+                    {% if user.phone_numbers.1 %}
+                        (and more)
+                    {% endif %}
+                {% else %}{% endif %}
+            </td>
+        {% endblock %}
+        {% block remove_td %}
+            {% if remove_included %}
+            <td>
+                {% ifnotequal request.user.username user.username %}
+                    <form style="margin-bottom: 0;" action="{% url remove_web_user domain user.user_id %}" method="post">
+                        <button type="submit" class="btn btn-danger{% if user.from_team %} disabled" disabled="disabled {% endif %}">
+                            <i class="icon icon-white icon-remove"></i> Remove Membership
+                        </button>
+                    </form>
+                {% endifnotequal %}
+            </td>
+            {% endif %}
+        {% endblock %}
+        </tr>
+    {% endfor %}
+    </tbody>
+</table>

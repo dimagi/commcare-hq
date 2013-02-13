@@ -15,7 +15,7 @@ from dimagi.utils.dates import DateSpan
 from dimagi.utils.decorators.datespan import datespan_in_request
 from corehq.apps.locations.models import location_tree, root_locations
 from corehq.apps.locations.util import load_locs_json
-import settings
+from django.conf import settings
 import json
 from django.utils.translation import ugettext_noop
 from django.utils.translation import ugettext as _

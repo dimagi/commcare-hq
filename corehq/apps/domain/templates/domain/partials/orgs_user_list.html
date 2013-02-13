@@ -1,0 +1,10 @@
+{% extends 'domain/partials/user_list.html' %}
+{% block extra_headers %}
+    <th>Team</th>
+{% endblock %}
+{% block extra_tds %}
+    <td><a href="{% url orgs_team_members organization.name user.team_id %}">{{ user.team }}</a></td>
+{% endblock %}
+{% block email_td %}
+    <td>{{ user.html_username|safe }}</td>
+{% endblock %}

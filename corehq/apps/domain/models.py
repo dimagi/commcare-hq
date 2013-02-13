@@ -74,10 +74,6 @@ class HQBillingAddress(DocumentSchema):
     address = ListProperty()
     name = StringProperty()
 
-    # used to bill client
-    is_sms_billable = BooleanProperty()
-    billable_client = StringProperty()
-
     @property
     def html_address(self):
         template = """<address>
@@ -113,6 +109,10 @@ class HQBillingDomainMixin(DocumentSchema):
     billing_address = SchemaProperty(HQBillingAddress)
     billing_number = StringProperty()
     currency_code = StringProperty(default=settings.DEFAULT_CURRENCY)
+
+    # used to bill client
+    is_sms_billable = BooleanProperty()
+    billable_client = StringProperty()
 
     def update_billing_info(self, **kwargs):
         self.billing_number = kwargs.get('phone_number','')
