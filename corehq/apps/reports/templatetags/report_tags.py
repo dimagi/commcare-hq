@@ -28,10 +28,6 @@ def report_list(context, dispatcher):
         to generate a Report List.
     """
     if isinstance(dispatcher, basestring):
-        try:
-            dispatcher = to_function(dispatcher)
-        except Exception:
-            raise ValueError("The ReportDispatcher provided could not be found when generating the Report List.")
-    if not issubclass(dispatcher, ReportDispatcher):
-        raise ValueError("The dispatcher provided is not a valid subclass of ReportDispatcher.")
+        dispatcher = to_function(dispatcher)
+
     return dispatcher.report_navigation_list(context)

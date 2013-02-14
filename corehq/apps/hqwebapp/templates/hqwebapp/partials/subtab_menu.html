@@ -1,0 +1,15 @@
+{% load i18n %}
+
+{% if subtabs %}
+<nav class="hq-subsection-navbar">
+    <ul class="nav">
+        {% for subtab in subtabs %}
+        <li {% if subtab.active %}class="active"{% endif %}>
+            <a href="{{ subtab.url }}">
+                {{ subtab.title }}
+            </a> <div class="arrow"></div>
+        </li>
+        {% endfor %}
+    </ul>
+</nav>
+{% endif %}

@@ -50,15 +50,6 @@
     </script>
 {% endblock %}
 
-{% block subsection-navigation %}
-<nav class="hq-subsection-navbar">
-    <ul class="nav">
-        <li {% ifequal report.app_slug 'reports' %}class="active"{% endifequal %}><a href="{% url reports_home domain %}">{% trans  "Project Reports" %}</a> <div class="arrow"></div></li>
-        <li {% ifequal report.app_slug 'adm' %}class="active"{% endifequal %}><a href="{% url default_adm_report domain %}">{% trans  "Active Data Management" %}</a> <div class="arrow"></div></li>
-    </ul>
-</nav>
-{% endblock %}
-
 {% block sidebar %}{% include "reports/partials/report_list.html" %}{% endblock %}
 {% block report_filter_actions %}
 <div id="savedReports">

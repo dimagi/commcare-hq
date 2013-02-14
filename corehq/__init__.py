@@ -98,16 +98,15 @@ APPSTORE_INTERFACES = (
 
 from corehq.apps.hqwebapp.models import *
 
-MENU_ITEMS = (
-    ProjectInfoMenuItem,
-    ReportsMenuItem,
-    ManageDataMenuItem,
-    ApplicationsMenuItem,
-    CloudcareMenuItem,
-    MessagesMenuItem,
-    ProjectSettingsMenuItem,
-    AdminReportsMenuItem,
-    ExchangeMenuItem,
-    ManageSurveysMenuItem,
+TABS = (
+    ProjectInfoTab,
+    ReportsTab,
+    ManageDataTab,
+    ApplicationsTab,
+    CloudcareTab,
+    MessagesTab,
+    ProjectSettingsTab,
+    AdminReportsTab,
+    ExchangeTab,
+    ManageSurveysTab,
 )
-

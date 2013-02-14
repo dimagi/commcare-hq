@@ -1,10 +1,15 @@
-from functools import wraps
+from django.conf import settings
 from django.template.loader import render_to_string
 from django.utils.safestring import mark_safe, mark_for_escaping
-from dimagi.utils.couch.database import get_db
 from django.core.urlresolvers import reverse
 from django.utils.translation import ugettext as _
 from django.utils.translation import ugettext_noop
+
+from dimagi.utils.couch.database import get_db
+
+from corehq.apps.reports.dispatcher import ProjectReportDispatcher
+from corehq.apps.adm.dispatcher import ADMSectionDispatcher
+from corehq.apps.data_interfaces.dispatcher import DataInterfaceDispatcher
 
 
 def format_submenu_context(title, url=None, html=None,
@@ -27,12 +32,21 @@ def format_second_level_context(title, url, menu):
     }
 
 
-class DropdownMenuItem(object):
+class UITab(object):
     title = None
     view = None
-    css_id = None
+    subtab_classes = None
 
     def __init__(self, request, domain=None, couch_user=None, project=None):
+        # todo: domain object for commtrack
+
+        if self.subtab_classes:
+            self.subtabs = [cls(request, domain=domain, couch_user=couch_user,
+                                project=project)
+                            for cls in self.subtab_classes]
+        else:
+            self.subtabs = None
+
         self.domain = domain
         self.couch_user = couch_user
         self.project = project
@@ -40,9 +54,14 @@ class DropdownMenuItem(object):
         # This should not be considered as part of the subclass API unless it
         # is necessary. Try to add new explicit parameters instead.
         self._request = request
+
     
     @property
     def dropdown_items(self):
+        return []
+
+    @property
+    def sidebar_items(self):
         return []
  
     @property
@@ -59,24 +78,17 @@ class DropdownMenuItem(object):
 
     @property
     def real_is_viewable(self):
-        try:
-            return self.is_viewable
-        except AttributeError as e:
-            import re
-            if not re.search('domain|couch_user|project', e.args[0]):
-                raise
+        if self.subtabs:
+            return any(st.real_is_viewable for st in self.subtabs)
+        else:
+            try:
+                return self.is_viewable
+            except AttributeError as e:
+                import re
+                if not re.search('domain|couch_user|project', e.args[0]):
+                    raise
 
-            return False
-    
-    @property
-    def menu_context(self):
-        return {
-            'url': self.url,
-            'title': mark_for_escaping(self.title),
-            'css_id': self.css_id,
-            'is_active': self.is_active,
-            'submenu': self.dropdown_items,
-        }
+                return False
     
     @property
     def url(self):
@@ -85,18 +97,30 @@ class DropdownMenuItem(object):
                 return reverse(self.view, args=[self.domain])
             except Exception:
                 pass
-        return reverse(self.view)
+        
+        try:
+            return reverse(self.view)
+        except Exception:
+            return None
 
     @property
     def is_active(self):
         return self._request.get_full_path().startswith(self.url or "")
 
+    @property
+    def css_id(self):
+        return self.__class__.__name__
 
 
-class ReportsMenuItem(DropdownMenuItem):
+class ReportsTab(UITab):
     title = ugettext_noop("Reports")
     view = "corehq.apps.reports.views.default"
-    css_id = "project_reports"
+    subtab_classes = (ProjectReportsTab, ADMReportsTab)
+
+
+class ProjectReportsTab(UITab):
+    title = ugettext_noop("Project Reports")
+    view = "corehq.apps.reports.views.default"
 
     @property
     def is_viewable(self):
@@ -104,31 +128,79 @@ class ReportsMenuItem(DropdownMenuItem):
                 (self.couch_user.can_view_reports() or
                  self.couch_user.get_viewable_reports))
 
+    @property
+    def sidebar_items(self):
+        context = {
+            'request': self.request,
+            'domain': self.domain,
+        }
 
-class ProjectInfoMenuItem(DropdownMenuItem):
+        project_reports = ProjectReportDispatcher.report_navigation_items(
+            context)
+        custom_reports = CustomProjectReportDispatcher.report_navigation_items(
+            context)
+
+        return project_reports + custom_reports
+
+
+        if not adm_enabled:
+            return project_reports
+        else:
+            adm_reports = ADMSectionDispatcher.report_navigation_items(context)
+            return [
+                {'title': _("Active Data Management"),
+                 'active': None,
+                 'url': reverse('reports_home', args=[self.domain]),
+                 'items': adm_reports},
+                {'title': _("Project Reports"),
+                 'active': None,
+                 'url': reverse('default_adm_report', args=[self.domain]),
+                 'items': project_reports + custom_reports}
+            ]
+
+
+class ADMReportsTab(UITab):
+    title = ugettext_noop("Active Data Management")
+    view = "corehq.apps.adm.views.default_adm_report"
+
+    @property
+    def is_viewable(self):
+        adm_enabled_projects = getattr(settings, 'ADM_ENABLED_PROJECTS', [])
+
+        return (self.domain and not self.project.is_snapshot and 
+                self.domain in adm_enabled_projects and
+                  (self.couch_user.can_view_reports() or
+                   self.couch_user.get_viewable_reports()))
+
+
+class ProjectInfoTab(UITab):
     title = ugettext_noop("Project Info")
     view = "corehq.apps.appstore.views.project_info"
-    css_id = "project_info"
 
     @property
     def is_viewable(self):
         return self.project and self.project.is_snapshot
 
 
-class ManageDataMenuItem(DropdownMenuItem):
+class ManageDataTab(UITab):
     title = ugettext_noop("Manage Data")
     view = "corehq.apps.data_interfaces.views.default"
-    css_id = "manage_data"
 
     @property
     def is_viewable(self):
         return self.domain and self.couch_user.can_edit_data()
 
+    @property
+    def sidebar_items(self):
+        return DataInterfaceDispatcher.report_navigation_items({
+            'request': self.request,
+            'domain': self.domain
+        })
 
-class ApplicationsMenuItem(DropdownMenuItem):
+        
+class ApplicationsTab(UITab):
     title = ugettext_noop("Applications")
     view = "corehq.apps.app_manager.views.default"
-    css_id = "applications"
 
     @property
     def dropdown_items(self):
@@ -184,30 +256,27 @@ class ApplicationsMenuItem(DropdownMenuItem):
                 (couch_user.is_member_of(self.domain) or couch_user.is_superuser))
 
 
-class CloudcareMenuItem(DropdownMenuItem):
+class CloudcareTab(UITab):
     title = ugettext_noop("CloudCare")
     view = "corehq.apps.cloudcare.views.default"
-    css_id = "cloudcare"
 
     @property
     def is_viewable(self):
         return self.domain and self.couch_user.can_edit_data()
 
 
-class MessagesMenuItem(DropdownMenuItem):
+class MessagesTab(UITab):
     title = ugettext_noop("Messages")
     view = "corehq.apps.sms.views.messaging"
-    css_id = "messages"
 
-    @property 
+    @property
     def is_viewable(self):
         return (self.domain and self.project and not self.project.is_snapshot and
                 not self.couch_user.is_commcare_user())
 
 
-class ProjectSettingsMenuItem(DropdownMenuItem):
+class ProjectSettingsTab(UITab):
     view = "corehq.apps.users.views.users"
-    css_id = "project_settings"
 
     @property
     def url(self):
@@ -230,10 +299,9 @@ class ProjectSettingsMenuItem(DropdownMenuItem):
         return self.domain and self.couch_user
 
 
-class AdminReportsMenuItem(DropdownMenuItem):
+class AdminReportsTab(UITab):
     title = ugettext_noop("Admin")
     view = "corehq.apps.hqadmin.views.default"
-    css_id = "admin_tab"
 
     @property
     def dropdown_items(self):
@@ -263,10 +331,9 @@ class AdminReportsMenuItem(DropdownMenuItem):
         return self.couch_user and self.couch_user.is_superuser
 
 
-class ExchangeMenuItem(DropdownMenuItem):
+class ExchangeTab(UITab):
     title = ugettext_noop("Exchange")
     view = "corehq.apps.appstore.views.appstore"
-    css_id = "exchange_tab"
 
     @property
     def dropdown_items(self):
@@ -283,13 +350,11 @@ class ExchangeMenuItem(DropdownMenuItem):
     def is_viewable(self):
         return not self.couch_user.is_commcare_user()
 
-class ManageSurveysMenuItem(DropdownMenuItem):
+class ManageSurveysTab(UITab):
     title = ugettext_noop("Manage Surveys")
     view = "corehq.apps.reminders.views.sample_list"
-    css_id = "manage_surveys"
 
     @property
     def is_viewable(self):
         return (self.domain and self.couch_user.can_edit_data() and
                 self.project.survey_management_enabled)
-

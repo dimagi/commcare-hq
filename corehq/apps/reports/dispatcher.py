@@ -134,7 +134,7 @@ class ReportDispatcher(View):
         return ['json', 'async', 'filters', 'export', 'mobile', 'email', 'partial']
 
     @classmethod
-    def report_navigation_list(cls, context):
+    def report_navigation_sections(cls, context):
         request = context.get('request')
         domain = context.get('domain') or getattr(request, 'domain', None)
 
@@ -143,32 +143,32 @@ class ReportDispatcher(View):
         current_slug = context.get('report',{}).get('slug','')
 
         reports = dispatcher.get_reports(domain)
-        for key, report_group in reports:
-            section = []
+        for section_name, report_group in reports:
+            report_contexts = []
             for report in report_group:
                 class_name = report.__module__ + '.' + report.__name__
                 if not dispatcher.permissions_check(class_name, request, domain=domain):
                     continue
                 if report.show_in_navigation(request, domain=domain):
                     if hasattr(report, 'override_navigation_list'):
-                        section.extend(report.override_navigation_list(context))
+                        report_contexts.extend(report.override_navigation_list(context))
                     else:
-                        selected_report = bool(report.slug == current_slug)
-                        section.append({
+                        report_contexts.append({
                             'is_report': True,
-                            'is_active': selected_report,
+                            'is_active': report.slug == current_slug,
                             'url': report.get_url(domain=domain),
                             'description': report.description,
                             'icon': report.icon,
                             'title': report.name,
                         })
-            if section:
-                nav_context.append({
-                    'header': _(key),
-                })
-                nav_context.extend(section)
+            if report_contexts:
+                nav_context.append((section_name, report_contexts))
+        return nav_context
+
+    @classmethod
+    def report_navigation_list(cls, context):
         return mark_safe(render_to_string("reports/standard/partials/navigation_items.html", {
-            'navs': nav_context
+            'sections': cls.report_navigation_sections(context)
         }))
 
     @classmethod

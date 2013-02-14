@@ -1,4 +1,8 @@
-{% load menu_tags %}{% load i18n %}{% load hq_shared_tags %}{% load raven %}<!DOCTYPE html>
+{% load menu_tags %}
+{% load i18n %}
+{% load hq_shared_tags %}
+{% load raven %}
+<!DOCTYPE html>
 <html lang="en">
     <head>
         <meta charset="utf-8"/>
@@ -113,7 +117,8 @@
                     {% endif %}
                     </div>
                 </div>
-                {% endblock %}
+                {% format_subtab_menu %}
+                {% endblock header-section %}
             </header>
 
             {% if request.project.is_snapshot %}
@@ -267,7 +272,7 @@
         {% endblock %}
 
         {% if RAVEN %}
-            <script>Raven.config('{% sentry_public_dsn 'http' %}').install()</script>
+            <script>Raven.config('{% sentry_public_dsn "http" %}').install()</script>
         {% endif %}
         {% block js-inline %}
             {% if request.couch_user and not request.couch_user.is_eula_signed %}

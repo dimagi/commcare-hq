@@ -1,13 +1,11 @@
 import logging
 from django.core.urlresolvers import reverse
 from django.utils.safestring import mark_safe
-from corehq.apps.adm import utils
 from corehq.apps.adm.dispatcher import ADMSectionDispatcher
 from corehq.apps.adm.models import REPORT_SECTION_OPTIONS, ADMReport
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn, DTSortType
 from corehq.apps.reports.generic import GenericReportView, GenericTabularReport
 from corehq.apps.reports.standard import DatespanMixin, ProjectReportParametersMixin
-from dimagi.utils.couch.database import get_db
 from dimagi.utils.decorators.memoized import memoized
 from django.utils.translation import ugettext as _, ugettext_noop
 
@@ -40,10 +38,6 @@ class ADMSectionView(GenericReportView):
     @property
     def subreport_data(self):
         raise NotImplementedError
-
-    @property
-    def show_subsection_navigation(self):
-        return utils.show_adm_nav(self.domain, self.request)
 
     @property
     def default_report_url(self):

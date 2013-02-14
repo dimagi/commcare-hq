@@ -93,7 +93,6 @@ def default(request, domain, template="reports/reports_home.html"):
             is_async=True,
             app_slug="reports",
             section_name=ProjectReport.section_name,
-            show_subsection_navigation=adm_utils.show_adm_nav(domain, request)
         ),
     )
 
@@ -572,7 +571,6 @@ def edit_scheduled_report(request, domain, scheduled_report_id=None,
             'default_url': reverse('reports_home', args=(domain,)),
             'is_async': False,
             'section_name': ProjectReport.section_name,
-            'show_subsection_navigation': adm_utils.show_adm_nav(domain, request)
         }
     }
     
