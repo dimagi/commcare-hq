@@ -6,6 +6,8 @@ from django.http import HttpResponse, Http404
 from django.template.context import RequestContext
 import json
 from django.template.loader import render_to_string
+from django.shortcuts import render
+
 import pytz
 from corehq.apps.reports.models import ReportConfig
 from corehq.apps.reports import util
@@ -16,7 +18,7 @@ from couchexport.shortcuts import export_response
 from dimagi.utils.couch.pagination import DatatablesParams
 from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.modules import to_function
-from dimagi.utils.web import render_to_response, json_request
+from dimagi.utils.web import json_request
 from dimagi.utils.parsing import string_to_boolean
 from corehq.apps.reports.cache import CacheableRequestMixIn, request_cache
 
@@ -497,7 +499,7 @@ class GenericReportView(CacheableRequestMixIn):
             self.update_report_context()
             template = self.template_report
         self.set_announcements()
-        return render_to_response(self.request, template, self.context)
+        return render(self.request, template, self.context)
 
     
     @property
@@ -514,9 +516,7 @@ class GenericReportView(CacheableRequestMixIn):
                                       "to the report config.")
         async_context = self._async_context()
         self.context.update(async_context)
-        return render_to_response(self.request, 
-                                  self.mobile_template_base,
-                                  self.context)
+        return render(self.request, self.mobile_template_base, self.context)
     
     @property
     @request_cache("email")

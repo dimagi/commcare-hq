@@ -89,6 +89,9 @@ class Team(UndoableDocument, MultiMembershipMixin):
     def create_delete_record(self, *args, **kwargs):
         return DeleteTeamRecord(*args, **kwargs)
 
+    def soft_delete(self):
+        return super(Team, self).soft_delete(domain_included=False)
+
 class DeleteTeamRecord(DeleteDocRecord):
     def get_doc(self):
         return Team.get(self.doc_id)
@@ -105,3 +108,27 @@ class OrgInvitation(Invitation):
         html_content = render_to_string("orgs/email/org_invite.html", params)
         subject = 'Invitation from %s to join CommCareHQ' % self.get_inviter().formatted_name
         send_HTML_email(subject, self.email, html_content, text_content=text_content)
+
+class OrgRequest(Document):
+    doc_type = "OrgRequest"
+    organization = StringProperty()
+    domain = StringProperty()
+    requested_by = StringProperty()
+    requested_on = DateTimeProperty()
+    seen = BooleanProperty(default=False)
+
+    @classmethod
+    def get_requests(cls, organization, domain=None, user_id=None):
+        key = [organization]
+        if domain:
+            key.append(domain)
+        if user_id:
+            key.append(user_id)
+
+        results = cls.view("orgs/org_requests",
+            startkey=key,
+            endkey=key + [{}],
+            reduce=False,
+            include_docs=True,
+        )
+        return results.all() if not user_id else results.one()

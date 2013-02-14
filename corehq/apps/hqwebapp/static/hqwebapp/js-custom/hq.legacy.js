@@ -10,6 +10,20 @@ var COMMCAREHQ = (function () {
                 $.postGo($(this).attr('href'), {});
             });
         },
+        makeHqHelp: function (opts, wrap) {
+            wrap = wrap === undefined ? true : wrap;
+            var el = $(
+                '<a href="#" class="hq-help no-click">' +
+                    '<i class="icon-question-sign" data-trigger="hover"></i></a>'
+            );
+            for (var attr in {'content': 0, 'title': 0}) {
+                $('i', el).data(attr, opts[attr]);
+            }
+            if (wrap) {
+                el.hqHelp();
+            }
+            return el;
+        },
         updateDOM: function (update) {
             var key;
             for (key in update) {

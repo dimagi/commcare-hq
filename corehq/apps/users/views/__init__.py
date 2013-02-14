@@ -12,12 +12,13 @@ from django.contrib.auth.models import User
 from django.core.urlresolvers import reverse
 from django.db import transaction
 from django.http import Http404, HttpResponseRedirect, HttpResponse, HttpResponseForbidden
+from django.shortcuts import render
 from django.template.loader import render_to_string
 from django.views.decorators.http import require_POST
 from django.contrib import messages
 from django_digest.decorators import httpdigest
 
-from dimagi.utils.web import render_to_response, json_response, get_ip
+from dimagi.utils.web import json_response, get_ip
 
 from corehq.apps.registration.forms import AdminInvitesUserForm
 from corehq.apps.prescriptions.models import Prescription
@@ -31,6 +32,8 @@ from corehq.apps.domain.decorators import login_and_domain_required, require_sup
 from corehq.apps.orgs.models import Team
 from corehq.apps.reports.util import get_possible_reports
 from corehq.apps.sms import verify as smsverify
+
+from django.utils.translation import ugettext_noop as _
 
 require_can_edit_web_users = require_permission('edit_web_users')
 require_can_edit_commcare_users = require_permission('edit_commcare_users')
@@ -64,6 +67,7 @@ def _users_context(request, domain):
     for team in teams:
         for user in team.get_members():
             if user.get_id not in [web_user.get_id for web_user in web_users]:
+                user.from_team = True
                 web_users.append(user)
 
     for user in [couch_user] + list(web_users):
@@ -115,7 +119,7 @@ def web_users(request, domain, template="users/web_users.html"):
         'report_list': get_possible_reports(domain),
         'invitations': invitations
     })
-    return render_to_response(request, template, context)
+    return render(request, template, context)
 
 @require_can_edit_web_users
 @require_POST
@@ -207,7 +211,7 @@ def invite_web_user(request, domain, template="users/invite_web_user.html"):
     context.update(
         registration_form=form
     )
-    return render_to_response(request, template, context)
+    return render(request, template, context)
 
 @require_permission_to_edit_user
 def account(request, domain, couch_user_id, template="users/account.html"):
@@ -233,7 +237,7 @@ def account(request, domain, couch_user_id, template="users/account.html"):
 
     if couch_user.is_deleted():
         if couch_user.is_commcare_user():
-            return render_to_response(request, 'users/deleted_account.html', context)
+            return render(request, 'users/deleted_account.html', context)
         else:
             raise Http404
 
@@ -289,7 +293,7 @@ def account(request, domain, couch_user_id, template="users/account.html"):
 
     # for basic tab
     context.update(_handle_user_form(request, domain, couch_user))
-    return render_to_response(request, template, context)
+    return render(request, template, context)
 
 
 
@@ -366,7 +370,7 @@ def domain_accounts(request, domain, couch_user_id, template="users/domain_accou
         couch_user.save()
         messages.success(request,'Domain added')
     context.update({"user": request.user})
-    return render_to_response(request, template, context)
+    return render(request, template, context)
 
 @require_POST
 @require_superuser
@@ -378,12 +382,35 @@ def add_domain_membership(request, domain, couch_user_id, domain_name):
     return HttpResponseRedirect(reverse("user_account", args=(domain, couch_user_id)))
 
 @require_POST
-@require_superuser
 def delete_domain_membership(request, domain, couch_user_id, domain_name):
-    user = WebUser.get_by_user_id(couch_user_id, domain)
-    user.delete_domain_membership(domain_name)
-    user.save()
-    return HttpResponseRedirect(reverse("user_account", args=(domain, couch_user_id )))
+    removing_self = request.couch_user.get_id == couch_user_id
+    user = WebUser.get_by_user_id(couch_user_id, domain_name)
+
+    # don't let a user remove another user's domain membership if they're not the admin of the domain or a superuser
+    if not removing_self and not (request.couch_user.is_domain_admin(domain_name) or request.couch_user.is_superuser):
+        messages.error(request, _("You don't have the permission to remove this user's membership"))
+
+    elif user.is_domain_admin(domain_name): # don't let a domain admin be removed from the domain
+        if removing_self:
+            error_msg = _("Unable remove membership because you are the admin of %s" % domain_name)
+        else:
+            error_msg = _("Unable remove membership because %s is the admin of %s" % (user.username, domain_name))
+        messages.error(request, error_msg)
+        
+    else:
+        user.delete_domain_membership(domain_name)
+        user.save()
+
+        if removing_self:
+            success_msg = _("You are no longer a part of the %s project space" % domain_name)
+        else:
+            success_msg = _("%s is no longer a part of the %s project space" % (user.username, domain_name))
+        messages.success(request, success_msg)
+
+        if removing_self and not user.is_member_of(domain):
+            return HttpResponseRedirect(reverse("homepage"))
+
+    return HttpResponseRedirect(reverse("user_account", args=(domain, couch_user_id)))
 
 @login_and_domain_required
 def change_password(request, domain, login_id, template="users/partial/reset_password.html"):
@@ -426,7 +453,7 @@ def change_my_password(request, domain, template="users/change_my_password.html"
     context.update({
         'form': form,
     })
-    return render_to_response(request, template, context)
+    return render(request, template, context)
 
 
 def _handle_user_form(request, domain, couch_user=None):
@@ -534,7 +561,7 @@ def user_domain_transfer(request, domain, prescription, template="users/domain_t
             'commcare_users': users,
             'target_domain': target_domain
         })
-        return render_to_response(request, template, context)
+        return render(request, template, context)
 
 @require_superuser
 def audit_logs(request, domain):

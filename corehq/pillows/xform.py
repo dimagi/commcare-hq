@@ -33,7 +33,7 @@ class XFormPillowHandler(object):
 
 
 class XFormPillow(AliasedElasticPillow):
-    couch_db = XFormInstance.get_db()
+    document_class = XFormInstance
     couch_filter = "couchforms/xforms"
     es_host = settings.ELASTICSEARCH_HOST
     es_port = settings.ELASTICSEARCH_PORT

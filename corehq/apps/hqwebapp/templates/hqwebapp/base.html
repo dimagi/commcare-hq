@@ -1,4 +1,4 @@
-{% load menu_tags %}{% load i18n %}{% load hq_shared_tags %}<!DOCTYPE html>
+{% load menu_tags %}{% load i18n %}{% load hq_shared_tags %}{% load raven %}<!DOCTYPE html>
 <html lang="en">
     <head>
         <meta charset="utf-8"/>
@@ -12,11 +12,7 @@
 
         {# this should eventually be moved to the end of the page #}
         <script src="{% static 'hqstyle/js/jquery/jquery-1.7.1.min.js' %}"></script>
-        {% if DEBUG %}
-            <script type="text/javascript" src="{% static 'hqwebapp/javascripts/knockout-2.1.0.js' %}"></script>
-        {% else %}
-            <script type="text/javascript" src="{% static 'hqwebapp/javascripts/knockout-2.1.0.debug.js' %}"></script>
-        {% endif %}
+        <script type="text/javascript" src="{% static 'hqwebapp/javascripts/knockout-2.1.0.debug.js' %}"></script>
         <script type="text/javascript" src="{% static 'hqwebapp/javascripts/underscore-1.3.1.js' %}"></script>
         <script type="text/javascript" src="{% static 'hqwebapp/ko/global.handlers.js' %}"></script>
 
@@ -58,7 +54,7 @@
                                 {% if request.couch_user and request.couch_user.is_web_user %}
                                 <div class="btn-group">
                                     <a class="btn btn-project dropdown-toggle" data-toggle="dropdown" href="#">
-                                        <i class="icon-hq-white icon-hq-logo"></i>
+                                        <i class="icon-hq-flower"></i>
                                         {% if domain %}
                                             {% ifequal domain 'public' %}
                                                 CommCare HQ Demo Project
@@ -84,7 +80,7 @@
 
                                 <div class="btn-group">
                                     <a class="btn btn-primary dropdown-toggle" data-toggle="dropdown" href="#">
-                                        <i class="icon-hq-white icon-hq-person"></i>
+                                        <i class="icon-user"></i>
                                         {% if user.first_name %}
                                             {{ user.first_name }} {{ user.last_name }}
                                         {% else %}
@@ -173,6 +169,8 @@
                     &nbsp;|&nbsp;
                     <a href="http://www.commcarehq.org/home">Learn more about CommCare HQ</a>.
                 {% endif %}
+                <br />
+                <a href="{% url eula %}">CommCare HQ's End User License Agreement</a>
             </div>
 
             {% if user.is_authenticated %}
@@ -263,8 +261,14 @@
         <script src="{% static 'hqwebapp/js-custom/hqhandler.form.bugReport.js' %}"></script>
         <script src="{% static 'hqwebapp/js-custom/hq.helpers.js' %}"></script>
         <script src="{% static 'hqwebapp/js/jquery.cookie.js' %}"></script>
+        {% if RAVEN %}
+            <script src="{% static 'hqwebapp/javascripts/raven.min.js' %}"></script>
+        {% endif %}
         {% endblock %}
 
+        {% if RAVEN %}
+            <script>Raven.config('{% sentry_public_dsn 'http' %}').install()</script>
+        {% endif %}
         {% block js-inline %}
             {% if request.couch_user and not request.couch_user.is_eula_signed %}
                 {% url eula as eula_url %}

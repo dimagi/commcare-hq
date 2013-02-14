@@ -6,13 +6,14 @@ from corehq.apps.cloudcare.touchforms_api import DELEGATION_STUB_CASE_TYPE
 from corehq.apps.domain.decorators import login_and_domain_required, login_or_digest_ex, domain_admin_required
 from corehq.apps.groups.models import Group
 from corehq.apps.users.models import CouchUser, CommCareUser
-from dimagi.utils.web import render_to_response, json_response, get_url_base
+from dimagi.utils.web import json_response, get_url_base
 from django.http import HttpResponseRedirect, HttpResponse, HttpResponseBadRequest, Http404,\
     HttpResponseServerError
+from django.shortcuts import render
 from corehq.apps.app_manager.models import Application, ApplicationBase
 import json
 from corehq.apps.cloudcare.api import get_app, get_cloudcare_apps, get_filtered_cases, get_filters_from_request,\
-    api_closed_to_status
+    api_closed_to_status, CaseAPIResult
 from dimagi.utils.parsing import string_to_boolean
 from django.conf import settings
 from corehq.apps.cloudcare import touchforms_api 
@@ -117,7 +118,7 @@ def cloudcare_main(request, domain, urlPath):
        "maps_api_key": settings.GMAPS_API_KEY
     }
     context.update(_url_context())
-    return render_to_response(request, "cloudcare/cloudcare_home.html", context)
+    return render(request, "cloudcare/cloudcare_home.html", context)
 
 
 @login_and_domain_required
@@ -151,7 +152,7 @@ def view_case(request, domain, case_id=None):
         'domain': domain,
         'case_spec': case_spec
     })
-    return render_to_response(request, 'cloudcare/view_case.html', context)
+    return render(request, 'cloudcare/view_case.html', context)
 
 @cloudcare_api
 def get_groups(request, domain, user_id):
@@ -170,15 +171,27 @@ def get_cases(request, domain):
     if not user_id and not request.couch_user.is_web_user():
         return HttpResponseBadRequest("Must specify user_id!")
 
-    footprint = string_to_boolean(request.REQUEST.get("footprint", "false"))
     ids_only = string_to_boolean(request.REQUEST.get("ids_only", "false"))
-    filters = get_filters_from_request(request)
-    status = api_closed_to_status(request.REQUEST.get('closed', 'false'))
-    case_type = filters.get('properties/case_type', None)
-    cases = get_filtered_cases(domain, status=status, case_type=case_type,
-                               user_id=user_id, filters=filters,
-                               footprint=footprint, ids_only=ids_only,
-                               strip_history=True)
+    case_id = request.REQUEST.get("case_id", "")
+    if case_id:
+        # short circuit everything else and just return the case
+        # NOTE: this allows any user in the domain to access any case given
+        # they know its ID, which is slightly different from the previous
+        # behavior (can only access things you own + footprint). If we want to
+        # change this contract we would need to update this to check the
+        # owned case list + footprint
+        case = CommCareCase.get(case_id)
+        assert case.domain == domain
+        cases = [CaseAPIResult(id=case_id, couch_doc=case, id_only=ids_only)]
+    else:
+        footprint = string_to_boolean(request.REQUEST.get("footprint", "false"))
+        filters = get_filters_from_request(request)
+        status = api_closed_to_status(request.REQUEST.get('closed', 'false'))
+        case_type = filters.get('properties/case_type', None)
+        cases = get_filtered_cases(domain, status=status, case_type=case_type,
+                                   user_id=user_id, filters=filters,
+                                   footprint=footprint, ids_only=ids_only,
+                                   strip_history=True)
     return json_response(cases)
 
 @cloudcare_api
@@ -268,7 +281,7 @@ def app_settings(request, domain):
         access = ApplicationAccess.get_template_json(domain, apps)
         groups = Group.by_domain(domain)
 
-        return render_to_response(request, 'cloudcare/config.html', {
+        return render(request, 'cloudcare/config.html', {
             'domain': domain,
             'apps': apps,
             'groups': groups,

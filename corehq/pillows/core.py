@@ -8,7 +8,7 @@ from pillowtop.listener import ElasticPillow
 from casexml.apps.case.models import CommCareCase
 from corehq.apps.domain.models import Domain
 import logging
-import settings
+from django.conf import settings
 from datetime import datetime
 
 
@@ -35,21 +35,21 @@ DATE_FORMATS_STRING = '||'.join(DATE_FORMATS_ARR)
 class AuditcarePillow(LogstashMonitoringPillow):
     endpoint_host = settings.LOGSTASH_HOST
     endpoint_port = settings.LOGSTASH_AUDITCARE_PORT
-    couch_db = AuditEvent.get_db()
+    document_class = AuditEvent
     couch_filter = 'auditcare/auditdocs'
 
 
 class CouchlogPillow(LogstashMonitoringPillow):
     endpoint_host = settings.LOGSTASH_HOST
     endpoint_port = settings.LOGSTASH_COUCHLOG_PORT
-    couch_db = ExceptionRecord.get_db()
+    document_class = ExceptionRecord
     couch_filter = 'couchlog/couchlogs'
 
 
 class DevicelogPillow(LogstashMonitoringPillow):
     endpoint_host = settings.LOGSTASH_HOST
     endpoint_port = settings.LOGSTASH_DEVICELOG_PORT
-    couch_db = XFormInstance.get_db()
+    document_class = XFormInstance
     couch_filter = 'couchforms/devicelogs'
 
 

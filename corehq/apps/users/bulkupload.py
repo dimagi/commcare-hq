@@ -1,15 +1,11 @@
 from StringIO import StringIO
-from collections import defaultdict
-from couchdbkit.exceptions import MultipleResultsFound, ResourceNotFound, NoResultFound
-from django.contrib import messages
+from couchdbkit.exceptions import MultipleResultsFound, ResourceNotFound
 from corehq.apps.groups.models import Group
 from corehq.apps.users.util import normalize_username, raw_username
 from corehq.apps.users.models import CommCareUser
-from django.db.utils import DatabaseError
-from django.db import transaction
 from couchexport.writers import Excel2007ExportWriter
-from dimagi.utils.excel import flatten_json, json_to_headers, alphanumeric_sort_key
-import settings
+from dimagi.utils.excel import flatten_json, json_to_headers, \
+    alphanumeric_sort_key
 
 required_headers = set(['username'])
 allowed_headers = set(['password', 'phone-number', 'user_id', 'name', 'group', 'data', 'language']) | required_headers
@@ -28,6 +24,7 @@ def check_headers(user_specs):
     if messages:
         raise Exception('\n'.join(messages))
 
+
 class GroupMemoizer(object):
     """
 
@@ -41,9 +38,7 @@ class GroupMemoizer(object):
         self.domain = domain
 
     def load_all(self):
-        group_set = set()
         for group in Group.by_domain(self.domain):
-            group_set.add(group)
             self.add_group(group)
 
     def add_group(self, new_group):
@@ -227,8 +222,19 @@ def create_or_update_users_and_groups(domain, user_specs, group_specs):
     
     return ret
 
-def dump_users_and_groups(response, domain):
 
+class GroupNameError(Exception):
+    def __init__(self, blank_groups):
+        self.blank_groups = blank_groups
+
+    @property
+    def message(self):
+        return "The following group ids have a blank name: %s." % (
+            ', '.join([group.get_id for group in self.blank_groups])
+        )
+
+
+def dump_users_and_groups(response, domain):
     file = StringIO()
     writer = Excel2007ExportWriter()
 
@@ -239,7 +245,17 @@ def dump_users_and_groups(response, domain):
     group_data_keys = set()
     group_dicts = []
     group_memoizer = GroupMemoizer(domain=domain)
-    group_memoizer.load_all()
+    # load groups manually instead of calling group_memoizer.load_all()
+    # so that we can detect blank groups
+    blank_groups = set()
+    for group in Group.by_domain(domain):
+        if group.name:
+            group_memoizer.add_group(group)
+        else:
+            blank_groups.add(group)
+
+    if blank_groups:
+        raise GroupNameError(blank_groups=blank_groups)
 
     for user in users:
         data = user.user_data

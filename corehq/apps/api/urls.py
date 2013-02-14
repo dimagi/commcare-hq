@@ -1,5 +1,5 @@
 from corehq.apps.api.domainapi import DomainAPI
-from corehq.apps.api.resources import v0_1, v0_2, v0_3
+from corehq.apps.api.resources import v0_1, v0_2, v0_3, v0_4
 from corehq.apps.commtrack.resources.v0_1 import ProductResource,\
     StockStatusResource, StockReportResource, FullStockTransactionResource
 from corehq.apps.fixtures.resources.v0_1 import FixtureResource
@@ -28,6 +28,12 @@ API_LIST = (
         v0_3.CommCareCaseResource,
         v0_3.XFormInstanceResource,
         FixtureResource,
+    )),
+    ((0, 4), (
+        v0_1.CommCareUserResource,
+        v0_3.CommCareCaseResource,
+        v0_4.XFormInstanceResource,
+        FixtureResource
     ))
 )
 

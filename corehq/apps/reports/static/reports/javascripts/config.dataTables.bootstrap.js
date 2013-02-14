@@ -39,9 +39,7 @@ function HQReportDataTables(options) {
                 sPaginationType: self.paginationType,
                 iDisplayLength: self.defaultRows,
                 bAutoWidth: self.autoWidth,
-                sScrollX: "100%",
-                "sScrollXInner": "150%",
-                "bScrollCollapse": true,
+                sScrollX: "100%"
             };
 
             if(self.ajaxSource) {
@@ -156,6 +154,7 @@ jQuery.fn.dataTableExt.oSort['title-numeric-asc']  = function(a,b) {
     y = parseFloat(y[1]);
     return ((x < y) ? -1 : ((x > y) ?  1 : 0));
 };
+
 jQuery.fn.dataTableExt.oSort['title-numeric-desc'] = function(a,b) {
     var x = a.match(/title="*(-?[0-9]+)/);
     var y = b.match(/title="*(-?[0-9]+)/);
@@ -166,5 +165,21 @@ jQuery.fn.dataTableExt.oSort['title-numeric-desc'] = function(a,b) {
 
     x = parseFloat(x[1]);
     y = parseFloat(y[1]);
+    return ((x < y) ?  1 : ((x > y) ? -1 : 0));
+};
+
+jQuery.fn.dataTableExt.oSort['title-date-asc']  = function(a,b) {
+    var x = a.match(/title="*(.+)"/);
+    var y = b.match(/title="*(.+)"/);
+    x = new Date(x[1]);
+    y = new Date(y[1]);
+    return ((x < y) ? -1 : ((x > y) ?  1 : 0));
+};
+
+jQuery.fn.dataTableExt.oSort['title-date-desc']  = function(a,b) {
+    var x = a.match(/title="*(.+)"/);
+    var y = b.match(/title="*(.+)"/);
+    x = new Date(x[1]);
+    y = new Date(y[1]);
     return ((x < y) ?  1 : ((x > y) ? -1 : 0));
 };

@@ -110,6 +110,10 @@ class HQBillingDomainMixin(DocumentSchema):
     billing_number = StringProperty()
     currency_code = StringProperty(default=settings.DEFAULT_CURRENCY)
 
+    # used to bill client
+    is_sms_billable = BooleanProperty()
+    billable_client = StringProperty()
+
     def update_billing_info(self, **kwargs):
         self.billing_number = kwargs.get('phone_number','')
         self.billing_address.update_billing_address(**kwargs)

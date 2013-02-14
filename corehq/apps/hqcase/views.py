@@ -12,9 +12,10 @@ from corehq.apps.users.models import CommCareUser
 from dimagi.utils.parsing import json_format_datetime
 from django.contrib import messages
 from django.http import HttpResponse
+from django.shortcuts import render
+
 from casexml.apps.case.models import CommCareCase
 from corehq.apps.domain.decorators import login_and_domain_required, require_superuser
-from dimagi.utils.web import render_to_response
 from corehq.apps.users.util import user_id_to_username
 from django.template.loader import render_to_string
 from receiver.util import spoof_submission
@@ -51,7 +52,7 @@ def open_cases_json(request, domain):
 
 @login_and_domain_required
 def open_cases(request, domain, template="hqcase/open_cases.html"):
-    return render_to_response(request, template, {"domain": domain})
+    return render(request, template, {"domain": domain})
 
 @require_superuser
 def explode_cases(request, domain, template="hqcase/explode_cases.html"):
@@ -79,7 +80,7 @@ def explode_cases(request, domain, template="hqcase/explode_cases.html"):
                     submit_case_blocks(case_block, domain)
             messages.success(request, "All of %s's cases were exploded by a factor of %d" % (user.raw_username, factor))
 
-    return render_to_response(request, template, {
+    return render(request, template, {
         'domain': domain,
         'users': CommCareUser.by_domain(domain),
     })

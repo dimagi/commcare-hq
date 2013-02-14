@@ -1,9 +1,9 @@
 import logging
-import pdb
+import simplejson
+import six
 from django.http import HttpResponse
 from django.utils.decorators import method_decorator, classonlymethod
 from django.views.decorators.csrf import csrf_protect
-import simplejson
 from corehq.apps.domain.decorators import login_and_domain_required
 from dimagi.utils.decorators import inline
 from corehq.elastic import get_es
@@ -229,3 +229,124 @@ class XFormES(ESView):
         for k, v in terms.items():
             query['query']['filtered']['filter']['and'].append({"term": {k: v}})
         return query
+
+class ESQuerySet(object):
+    """
+    An abstract representation of an elastic search query,
+    modeled somewhat after Django's QuerySet but with
+    the only important goal being compatibility
+    with Tastypie's classes. Key capabilities, by piece of
+    Tastypie:
+
+    Pagination:
+
+    - `__getitem__([start:stop])` which should efficiently pass the bounds on to ES
+    - `count()` which should efficiently ask ES for the total matching (regardless of slice)
+
+    Sorting:
+
+    - Meh?
+
+    Serialization:
+
+    - `__iter__()`
+    
+    """
+
+    # Also note https://github.com/llonchj/django-tastypie-elasticsearch/ which is
+    # not very mature, plus this code below may involve Dimagic-specific assumptions
+    
+    def __init__(self, es_client, payload=None, model=None):
+        """
+        Instantiate with an entire ElasticSearch payload,
+        since "query", "filter", etc, all exist alongside
+        each other.
+        """
+        self.es_client = es_client
+        self.payload = payload
+        self.model = model
+        self.__results = None
+
+    def with_fields(self, es_client=None, payload=None, model=None):
+        "Clones this queryset, optionally changing some fields"
+        return ESQuerySet(es_client=es_client or self.es_client,
+                          payload=payload or self.payload,
+                          model=model or self.model)
+        
+    @property
+    def results(self):
+        if self.__results is None:
+            self.__results = self.es_client.run_query(self.payload)
+        return self.__results
+
+    def count(self):
+        # Just asks ES for the count by limiting results to zero, leveraging slice implementation
+        return self[0:0].results['hits']['total']
+
+    def __len__(self):
+        # Note that this differs from `count` in that it actually performs the query and measures
+        # only those objects returned
+        return len(self.results['hits']['hits'])
+
+    def __iter__(self):
+        for jvalue in self.results['hits']['hits']:
+            if self.model:
+                # HACK: ideally would not assume that the model class has a `wrap` method, but just call constructor
+                yield self.model.wrap(jvalue['_source']) 
+            else:
+                yield jvalue['_source']
+
+    def __getitem__(self, idx):
+        if isinstance(idx, slice):
+            if idx.start < 0 or idx.stop < 0:
+                # This actually could be supported with varying degrees of efficiency
+                raise NotImplementedError('Negative index in slice not supported.')
+
+            new_payload = dict(self.payload)
+            new_payload['from'] = new_payload.get('from', 0) + (idx.start or 0)
+
+            if idx.stop is not None:
+                new_payload['size'] = max(0, idx.stop - (idx.start or 0))
+
+            return self.with_fields(payload=new_payload)
+
+        elif isinstance(idx, six.integer_types):
+            if idx >= 0:
+                # Leverage efficicent backend slicing
+                return list(self[idx:idx+1])[0]
+            else:
+                # This actually could be supported with varying degrees of efficiency
+                raise NotImplementedError('Negative index not supported.')
+        else:
+            raise TypeError('Unsupported type: %s', type(idx))
+
+RESERVED_QUERY_PARAMS=set(['limit', 'offset', 'q', '_search'])
+
+def es_search(request, domain):
+    payload = {
+        "filter": {
+            "and": [
+                {"term": {"domain.exact": domain}}
+            ]
+        },
+    }
+
+    # ?_search=<json> for providing raw ES query, which is nonetheless restricted here
+    # NOTE: The fields actually analyzed into ES indices differ somewhat from the raw
+    # XML / JSON.
+    if '_search' in request.GET:
+        additions = simplejson.loads(request.GET['_search'])
+        payload['filter']['and'] = payload['filter']['and'] + additions.get('filter', {}).get('and', [])
+        if 'query' in additions:
+            payload['query'] = additions['query']
+
+    # ?q=<lucene>
+    if 'q' in request.GET:
+        payload['query'] = payload.get('query', {})
+        payload['query']['query_string'] = {'query': request.GET['q']} # A bit indirect?
+
+    # filters are actually going to be a more common case
+    for key in set(request.GET.keys()) - RESERVED_QUERY_PARAMS:
+        payload["filter"]["and"].append({"term": {key: request.GET[key]}})
+
+    return payload

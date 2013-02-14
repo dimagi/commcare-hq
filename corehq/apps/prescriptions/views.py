@@ -1,16 +1,17 @@
 import json
 from django.core.urlresolvers import reverse
 from django.http import HttpResponseRedirect
+from django.shortcuts import render
 from django.views.decorators.http import require_POST
+
 from corehq.apps.domain.decorators import require_superuser
 from corehq.apps.prescriptions.forms import PrescriptionForm
 from corehq.apps.prescriptions.models import Prescription
-from dimagi.utils.web import render_to_response
 
 @require_superuser
 def all_prescriptions(request, template='prescriptions/all.html'):
     prescriptions = Prescription.all()
-    return render_to_response(request, template, {
+    return render(request, template, {
         'prescriptions': prescriptions,
     })
 
@@ -42,7 +43,7 @@ def add_prescription(request, prescription_id=None, template='prescriptions/add.
             })
         else:
             form = PrescriptionForm()
-    return render_to_response(request, template, {
+    return render(request, template, {
         'form': form,
     })
 
