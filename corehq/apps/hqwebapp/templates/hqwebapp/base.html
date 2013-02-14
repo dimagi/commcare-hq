@@ -271,7 +271,7 @@
         {% endif %}
         {% block js-inline %}
             {% if request.couch_user and not request.couch_user.is_eula_signed %}
-                {% url eula as eula_url %}
+                {% url eula_basic as eula_url %}
                 {% include 'hqstyle/partials/load_into_modal.html' with modal_id="eulaModal" load_from=eula_url %}
                 <script type="text/javascript">
                     $(window).load(function(){
