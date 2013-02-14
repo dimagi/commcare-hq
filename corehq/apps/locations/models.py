@@ -31,6 +31,9 @@ class Location(Document):
 
         super(Document, self).__init__(*args, **kwargs)
 
+    def __repr__(self):
+        return "%s (%s)" % (self.name, self.location_type)
+
     @classmethod
     def filter_by_type(cls, domain, loc_type, root_loc=None):
         loc_id = root_loc._id if root_loc else None
