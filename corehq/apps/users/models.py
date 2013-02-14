@@ -597,7 +597,7 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, UnicodeMixIn):
     base_doc = 'CouchUser'
     device_ids = ListProperty()
     phone_numbers = ListProperty()
-    created_on = DateTimeProperty()
+    created_on = DateTimeProperty(default=datetime(year=1900, month=1, day=1))
 #    For now, 'status' is things like:
 #        ('auto_created',     'Automatically created from form submission.'),
 #        ('phone_registered', 'Registered from phone'),
