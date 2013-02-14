@@ -33,7 +33,7 @@ from corehq.apps.orgs.models import Team
 from corehq.apps.reports.util import get_possible_reports
 from corehq.apps.sms import verify as smsverify
 
-from django.utils.translation import ugettext_noop as _
+from django.utils.translation import ugettext as _, ugettext_noop
 
 require_can_edit_web_users = require_permission('edit_web_users')
 require_can_edit_commcare_users = require_permission('edit_commcare_users')
@@ -392,9 +392,12 @@ def delete_domain_membership(request, domain, couch_user_id, domain_name):
 
     elif user.is_domain_admin(domain_name): # don't let a domain admin be removed from the domain
         if removing_self:
-            error_msg = _("Unable remove membership because you are the admin of %s" % domain_name)
+            error_msg = ugettext_noop("Unable remove membership because you are the admin of %s" % domain_name)
         else:
-            error_msg = _("Unable remove membership because %s is the admin of %s" % (user.username, domain_name))
+            error_msg = ugettext_noop("Unable remove membership because %(user)s is the admin of %(domain)s" % {
+                'user': user.username,
+                'domain': domain_name
+            })
         messages.error(request, error_msg)
         
     else:
@@ -402,9 +405,12 @@ def delete_domain_membership(request, domain, couch_user_id, domain_name):
         user.save()
 
         if removing_self:
-            success_msg = _("You are no longer a part of the %s project space" % domain_name)
+            success_msg = ugettext_noop("You are no longer a part of the %s project space" % domain_name)
         else:
-            success_msg = _("%s is no longer a part of the %s project space" % (user.username, domain_name))
+            success_msg = ugettext_noop("%(user)s is no longer a part of the %(domain)s project space" % {
+                'user': user.username,
+                'domain': domain_name
+            })
         messages.success(request, success_msg)
 
         if removing_self and not user.is_member_of(domain):
