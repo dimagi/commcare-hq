@@ -132,7 +132,7 @@ class CHWManagerReport(GenericTabularReport, MVPIndicatorReport, DatespanMixin):
                     dict(slug="facility_births_proportion", expected="100%"),
                     dict(slug="newborn_7day_visit_proportion", expected="100%"),
                     dict(slug="neonate_routine_visit_past7days", expected="100%"),
-                ]
+                    ]
             ),
             dict(
                 title="Under-5s",
@@ -204,6 +204,7 @@ class CHWManagerReport(GenericTabularReport, MVPIndicatorReport, DatespanMixin):
             _fmt_stat = lambda x: "%.f" % x if not numpy.isnan(x) else "--"
 
         for u, user in enumerate(self.users):
+            self.datespan.inclusive = False
             value = indicator.get_value([user.get('user_id')], self.datespan)
             raw_values[user.get('user_id')] = value
             user_indices[user.get('user_id')] = u

@@ -52,7 +52,11 @@ CHW_VISIT_INDICATORS = dict(
     app=APP_NAME,
     indicators=dict(
         all_visit_forms=dict(
-
+            household_visits=dict(
+                description="No. of household visits",
+                title="# Household Visits",
+                indicator_key="household",
+            ),
         ),
     ),
 )
@@ -72,11 +76,6 @@ CHW_VISITS_UNIQUE_COUNT_INDICATORS = dict(
                 title="# Household Visits",
                 indicator_key="household",
                 fixed_datespan_months=1,
-            ),
-            household_visits=dict(
-                description="No. of household visits",
-                title="# Household Visits",
-                indicator_key="household",
             ),
             pregnancy_visits_6weeks=dict(
                 description="No. of pregnancy visits in the past 6 weeks",
