@@ -30,7 +30,7 @@ class LocationCache(object):
         return self._existing_by_type[key].get(loc_name, None)
 
     def add(self, location):
-        for id in location.lineage + [location._id, None]:
+        for id in location.path + [None]:
             # this just mimics the behavior in the couch view
             key = (location.location_type, id)
             if key in self._existing_by_type:
@@ -51,6 +51,7 @@ def import_locations(domain, f):
     property_fields = fields[len(hierarchy_fields):]
 
     loc_cache = LocationCache(domain)
+    ret = []
     for loc in data:
         for m in import_location(domain, loc, hierarchy_fields, property_fields, loc_cache):
             yield m
