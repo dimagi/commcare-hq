@@ -230,7 +230,7 @@ class DateSpan(object):
     def adjust_to_utc(self, date):
         localized = self.timezone.localize(date)
         offset = localized.strftime("%z")
-        return date - timedelta(hours=int(offset[0:3]), minutes=int(offset[0]+offset[3:5]), seconds=1)
+        return date - timedelta(hours=int(offset[0:3]), minutes=int(offset[0] + offset[3:5]))
 
     @property
     def end_of_end_day(self):
