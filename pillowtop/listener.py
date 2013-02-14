@@ -8,25 +8,28 @@ import rawes
 import gevent
 from django.conf import settings
 from dimagi.utils.decorators.memoized import memoized
+
 requests_log = logging.getLogger("requests")
 requests_log.setLevel(logging.ERROR)
 
 import couchdbkit
-if couchdbkit.version_info < (0,6,0):
-    USE_NEW_CHANGES=False
+
+if couchdbkit.version_info < (0, 6, 0):
+    USE_NEW_CHANGES = False
 else:
     from couchdbkit.changes import ChangesStream
-    USE_NEW_CHANGES=True
+
+    USE_NEW_CHANGES = True
 
 CHECKPOINT_FREQUENCY = 100
 WAIT_HEARTBEAT = 10000
+
 
 def ms_from_timedelta(td):
     """
     Given a timedelta object, returns a float representing milliseconds
     """
     return (td.seconds * 1000) + (td.microseconds / 1000.0)
-
 
 
 class BasicPillow(object):
@@ -43,12 +46,13 @@ class BasicPillow(object):
         Couchdbkit < 0.6.0 changes feed listener
         http://couchdbkit.org/docs/changes_consumer.html
         """
-        from couchdbkit import  Consumer
+        from couchdbkit import Consumer
+
         c = Consumer(self.couch_db, backend='gevent')
         while True:
             try:
                 c.wait(self.parsing_processor, since=self.since, filter=self.couch_filter,
-                    heartbeat=WAIT_HEARTBEAT, feed='continuous', timeout=30000)
+                       heartbeat=WAIT_HEARTBEAT, feed='continuous', timeout=30000)
             except Exception, ex:
                 logging.exception("Exception in form listener: %s, sleeping and restarting" % ex)
                 gevent.sleep(5)
@@ -59,7 +63,7 @@ class BasicPillow(object):
         http://couchdbkit.org/docs/changes.html
         """
         with ChangesStream(self.couch_db, feed='continuous', heartbeat=True, since=self.since,
-            filter=self.couch_filter) as st:
+                           filter=self.couch_filter) as st:
             for c in st:
                 self.processor(c)
 
@@ -123,9 +127,10 @@ class BasicPillow(object):
         Parent processsor for a pillow class - this should not be overridden.
         This workflow is made for the situation where 1 change yields 1 transport/transaction
         """
-        self.changes_seen+=1
+        self.changes_seen += 1
         if self.changes_seen % CHECKPOINT_FREQUENCY == 0 and do_set_checkpoint:
-            logging.info("(%s) setting checkpoint: %s" % (self.get_checkpoint_doc_name(), change['seq']))
+            logging.info(
+                "(%s) setting checkpoint: %s" % (self.get_checkpoint_doc_name(), change['seq']))
             self.set_checkpoint(change)
 
         try:
@@ -167,8 +172,8 @@ class BasicPillow(object):
         Step three of the pillowtop processor:
         Finish transport of doc if needed. Your subclass should implement this
         """
-        raise NotImplementedError("Error, this pillowtop subclass has not been configured to do anything!")
-
+        raise NotImplementedError(
+            "Error, this pillowtop subclass has not been configured to do anything!")
 
 
 class ElasticPillow(BasicPillow):
@@ -180,11 +185,11 @@ class ElasticPillow(BasicPillow):
     es_index = ""
     es_type = ""
     es_meta = {}
-    bulk=False
+    bulk = False
 
     # Note - we allow for for existence because we do not care - we want the ES
     # index to always have the latest version of the case based upon ALL changes done to it.
-    allow_updates=True
+    allow_updates = True
 
     def __init__(self, create_index=True):
         """
@@ -264,16 +269,17 @@ class ElasticPillow(BasicPillow):
                     if tr is not None:
                         self.change_transport(tr)
 
-                        yield {"index": {"_index": self.es_index, "_type": self.es_type, "_id": tr['_id']}}
+                        yield {
+                        "index": {"_index": self.es_index, "_type": self.es_type, "_id": tr['_id']}}
                         yield tr
             except Exception, ex:
                 logging.error("Error on change: %s, %s" % (change['id'], ex))
 
     def process_bulk(self, changes):
-        self.allow_updates=False
-        self.bulk=True
+        self.allow_updates = False
+        self.bulk = True
         es = self.get_es()
-        bulk_payload = '\n'.join(map(simplejson.dumps, self.bulk_builder(changes)))+"\n"
+        bulk_payload = '\n'.join(map(simplejson.dumps, self.bulk_builder(changes))) + "\n"
         es.post('_bulk', data=bulk_payload)
 
 
@@ -282,9 +288,10 @@ class ElasticPillow(BasicPillow):
         Parent processsor for a pillow class - this should not be overridden.
         This workflow is made for the situation where 1 change yields 1 transport/transaction
         """
-        self.changes_seen+=1
+        self.changes_seen += 1
         if self.changes_seen % CHECKPOINT_FREQUENCY == 0 and do_set_checkpoint:
-            logging.info("(%s) setting checkpoint: %d" % (self.get_checkpoint_doc_name(), change['seq']))
+            logging.info(
+                "(%s) setting checkpoint: %d" % (self.get_checkpoint_doc_name(), change['seq']))
             self.set_checkpoint(change)
 
         try:
@@ -311,15 +318,19 @@ class ElasticPillow(BasicPillow):
                 can_put = not self.doc_exists(doc_dict['_id'])
 
             if can_put and not self.bulk:
-                res = es.put(doc_path,  data = doc_dict)
+                res = es.put(doc_path, data=doc_dict)
                 if res.get('status', 0) == 400:
-                    logging.error("Pillowtop Error [%s]:\n%s\n\tDoc id: %s\n\t%s" % (self.get_name(),
-                                     res.get('error', "No error message"),
-                                     doc_dict['_id'], doc_dict.keys()))
+                    logging.error(
+                        "Pillowtop Error [%s]:\n%s\n\tDoc id: %s\n\t%s" % (self.get_name(),
+                                                                           res.get('error',
+                                                                                   "No error message"),
+                                                                           doc_dict['_id'],
+                                                                           doc_dict.keys()))
         except Exception, ex:
             logging.error("PillowTop [%s]: transporting change data to elasticsearch error: %s",
-                (self.get_name(), ex))
+                          (self.get_name(), ex))
             return None
+
 
 class AliasedElasticPillow(ElasticPillow):
     """
@@ -356,12 +367,12 @@ class AliasedElasticPillow(ElasticPillow):
         self.seen_types = self.get_index_mapping()
         logging.info("Pillowtop [%s] Retrieved mapping from ES" % self.get_name())
 
-#    @property
-#    def es_index(self):
-#        """
-#        The real index that this instance represents
-#        """
-#        return "%s_%s" % (self.es_index_prefix, self.calc_meta())
+    #    @property
+    #    def es_index(self):
+    #        """
+    #        The real index that this instance represents
+    #        """
+    #        return "%s_%s" % (self.es_index_prefix, self.calc_meta())
 
     def calc_meta(self):
         raise NotImplementedError("Need to implement your own meta calculator")
@@ -382,11 +393,11 @@ class AliasedElasticPillow(ElasticPillow):
                     if tr is not None:
                         self.change_transport(tr)
 
-                        yield {"index": {"_index": self.es_index, "_type": self.get_type_string(tr), "_id": tr['_id']}}
+                        yield {"index": {"_index": self.es_index, "_type": self.get_type_string(tr),
+                                         "_id": tr['_id']}}
                         yield tr
             except Exception, ex:
                 logging.error("Error on change: %s, %s" % (change['id'], ex))
-
 
 
     def type_exists(self, doc_dict, server=False):
@@ -405,11 +416,12 @@ class AliasedElasticPillow(ElasticPillow):
         #ES 0.20 has the index HEAD API.  While we're on 0.19, we will need to poll the index
         # metadata
         if server:
-            type_path = "%(index)s/%(type_string)s" % ( { 'index': self.es_index, 'type_string': type_string, })
+            type_path = "%(index)s/%(type_string)s" % (
+            {'index': self.es_index, 'type_string': type_string, })
             head_result = es.head(type_path)
             self.seen_types[type_string] = head_result
             return head_result
-        ##################
+            ##################
 
         #####
         #0.19 method, get the mapping from the index
@@ -467,22 +479,24 @@ class AliasedElasticPillow(ElasticPillow):
         Override the elastic transport to go to the index + the type being a string between the
         domain and case type
         """
-#        start = datetime.utcnow()
+        #        start = datetime.utcnow()
         try:
             es = self.get_es()
             if not self.type_exists(doc_dict):
                 #if type is never seen, apply mapping for said type
                 type_mapping = self.get_mapping_from_type(doc_dict)
                 #update metadata
-                type_mapping[self.get_type_string(doc_dict)]['_meta']['created'] = datetime.isoformat(datetime.utcnow())
+                type_mapping[self.get_type_string(doc_dict)]['_meta'][
+                    'created'] = datetime.isoformat(datetime.utcnow())
                 mapping_res = self.set_mapping(self.get_type_string(doc_dict), type_mapping)
                 if mapping_res.get('ok', False) and mapping_res.get('acknowledged', False):
                     #API confirms OK, trust it.
-                    logging.info("Mapping set: [%s] %s" % (self.get_type_string(doc_dict), mapping_res))
+                    logging.info(
+                        "Mapping set: [%s] %s" % (self.get_type_string(doc_dict), mapping_res))
                     #manually update in memory dict
                     self.seen_types[self.get_type_string(doc_dict)] = {}
 
-#            got_type = datetime.utcnow()
+                #            got_type = datetime.utcnow()
             doc_path = self.get_doc_path_typed(doc_dict)
 
             if self.allow_updates:
@@ -492,7 +506,7 @@ class AliasedElasticPillow(ElasticPillow):
 
             if can_put and not self.bulk:
                 res = es.put(doc_path, data=doc_dict)
-#                did_put = datetime.utcnow()
+                #                did_put = datetime.utcnow()
                 if res.get('status', 0) == 400:
                     logging.error(
                         "Pillowtop Error [%(case_type)s]:\n%(es_message)s\n\tDoc id: %(doc_id)s\n\t%(doc_keys)s" % dict(
@@ -501,18 +515,16 @@ class AliasedElasticPillow(ElasticPillow):
                             doc_id=doc_dict['_id'],
                             doc_keys=doc_dict.keys()))
 
-#                print "%s [%s]" % (self.get_type_string(doc_dict), doc_dict['_id'])
-#                print "\tget_type: %d ms" % ms_from_timedelta(got_type-start)
-#                print "\ttype_to_submit: %d ms" % ms_from_timedelta(did_put-got_type)
+                #                print "%s [%s]" % (self.get_type_string(doc_dict), doc_dict['_id'])
+                #                print "\tget_type: %d ms" % ms_from_timedelta(got_type-start)
+                #                print "\ttype_to_submit: %d ms" % ms_from_timedelta(did_put-got_type)
 
         except Exception, ex:
             tb = traceback.format_exc()
-            logging.error("PillowTop [%s]: transporting change data doc_id: %s to elasticsearch error: %s\ntraceback: %s\n" % (self.get_name(), doc_dict['_id'], ex, tb))
+            logging.error(
+                "PillowTop [%s]: transporting change data doc_id: %s to elasticsearch error: %s\ntraceback: %s\n" % (
+                self.get_name(), doc_dict['_id'], ex, tb))
             return None
-
-
-
-
 
 
 class NetworkPillow(BasicPillow):
@@ -528,7 +540,7 @@ class NetworkPillow(BasicPillow):
         try:
             address = (self.endpoint_host, self.endpoint_port)
             if self.transport_type == 'tcp':
-               stype = socket.SOCK_STREAM
+                stype = socket.SOCK_STREAM
             elif self.transport_type == 'udp':
                 stype = socket.SOCK_DGRAM
             sock = socket.socket(type=stype)
@@ -536,18 +548,23 @@ class NetworkPillow(BasicPillow):
             sock.send(simplejson.dumps(doc_dict), timeout=1)
             return 1
         except Exception, ex:
-            logging.error("PillowTop [%s]: transport to network socket error: %s" % (self .get_name(), ex))
+            logging.error(
+                "PillowTop [%s]: transport to network socket error: %s" % (self.get_name(), ex))
             return None
+
 
 class LogstashMonitoringPillow(NetworkPillow):
     """
     This is a logstash endpoint (but really just TCP) for our production monitoring/aggregation
     of log information.
     """
+
     def __init__(self):
         if settings.DEBUG:
             #In a dev environment don't care about these
-            logging.info("[%s] Settings are DEBUG, suppressing the processing of these feeds" % self.get_name())
+            logging.info(
+                "[%s] Settings are DEBUG, suppressing the processing of these feeds" % self.get_name())
+
     def processor(self, change):
         if settings.DEBUG:
             return {}
