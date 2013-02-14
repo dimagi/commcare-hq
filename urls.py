@@ -83,7 +83,10 @@ urlpatterns = patterns('',
     (r'^translations/', include('corehq.apps.translations.urls')),
     (r'^500/$', 'django.views.generic.simple.direct_to_template', {'template': '500.html'}),
     (r'^404/$', 'django.views.generic.simple.direct_to_template', {'template': '404.html'}),
-    url(r'^eula/$', 'django.views.generic.simple.direct_to_template', {'template': 'eula.html'}, name='eula'),
+    url(r'^eula_basic/$', 'django.views.generic.simple.direct_to_template', {'template': 'eula.html'}, name='eula_basic'),
+    url(r'^eula/$', 'corehq.apps.hqwebapp.views.eula', name='eula'),
+    url(r'^exchange/cda_basic/$', 'django.views.generic.simple.direct_to_template', {'template': 'cda.html'}, name='cda_basic'),
+    url(r'^exchange/cda/$', 'corehq.apps.hqwebapp.views.cda', name='cda'),
 ) + patterns('', *LOCAL_APP_URLS)
 
 # django rosetta support if configured
