@@ -1439,12 +1439,12 @@ class OrgMembershipMixin(DocumentSchema):
         if not team or team.organization != org:
             raise OrgMembershipError("Cannot add team -- Team(%s) does not exist in organization %s" % (team_id, org))
 
-        om.team_ids.add(team_id)
+        om.team_ids.append(team_id)
 
     def remove_from_team(self, org, team_id):
         om = self.get_org_membership(org)
         if om:
-            om.team_ids.discard(team_id)
+            om.team_ids.remove(team_id)
 
 class WebUser(CouchUser, MultiMembershipMixin, OrgMembershipMixin):
     #do sync and create still work?
