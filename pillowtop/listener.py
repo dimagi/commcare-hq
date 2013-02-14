@@ -21,7 +21,7 @@ else:
 
     USE_NEW_CHANGES = True
 
-CHECKPOINT_FREQUENCY = 100
+CHECKPOINT_FREQUENCY = 10
 WAIT_HEARTBEAT = 10000
 
 
@@ -92,7 +92,7 @@ class BasicPillow(object):
         else:
             checkpoint_doc = {
                 "_id": doc_name,
-                "seq": 0
+                "seq": "0"
                 #todo: bigcouch changes seq are [num, string] arrs, num is meaningless,string is meaningful
             }
             self.couch_db.save_doc(checkpoint_doc)
@@ -101,7 +101,7 @@ class BasicPillow(object):
     def reset_checkpoint(self):
         checkpoint_doc = self.get_checkpoint()
         checkpoint_doc['old_seq'] = checkpoint_doc['seq']
-        checkpoint_doc['seq'] = 0
+        checkpoint_doc['seq'] = "0"
         self.couch_db.save_doc(checkpoint_doc)
 
 
@@ -291,7 +291,7 @@ class ElasticPillow(BasicPillow):
         self.changes_seen += 1
         if self.changes_seen % CHECKPOINT_FREQUENCY == 0 and do_set_checkpoint:
             logging.info(
-                "(%s) setting checkpoint: %d" % (self.get_checkpoint_doc_name(), change['seq']))
+                "(%s) setting checkpoint: %s" % (self.get_checkpoint_doc_name(), change['seq']))
             self.set_checkpoint(change)
 
         try:
@@ -514,11 +514,6 @@ class AliasedElasticPillow(ElasticPillow):
                             es_message=res.get('error', "No error message"),
                             doc_id=doc_dict['_id'],
                             doc_keys=doc_dict.keys()))
-
-                #                print "%s [%s]" % (self.get_type_string(doc_dict), doc_dict['_id'])
-                #                print "\tget_type: %d ms" % ms_from_timedelta(got_type-start)
-                #                print "\ttype_to_submit: %d ms" % ms_from_timedelta(did_put-got_type)
-
         except Exception, ex:
             tb = traceback.format_exc()
             logging.error(
