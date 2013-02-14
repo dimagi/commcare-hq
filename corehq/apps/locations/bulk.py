@@ -22,7 +22,7 @@ class LocationCache(object):
         return self._existing_by_id[id]
 
     def get_by_name(self, loc_name, loc_type, parent):
-        key = (loc_type, parent)
+        key = (loc_type, parent._id if parent else None)
         if key not in self._existing_by_type:
             existing = Location.filter_by_type(self.domain, loc_type, parent)
             self._existing_by_type[key] = dict((l.name, l) for l in existing)
