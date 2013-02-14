@@ -17,6 +17,7 @@ class XFormInstanceResource(v0_3.XFormInstanceResource):
         """
         Exactly copied from https://github.com/toastdriven/django-tastypie/blob/v0.9.11/tastypie/resources.py#L1018
         (BSD licensed) and modified to pass the kwargs to `get_resource_list_uri`
+        (tracked by https://github.com/toastdriven/django-tastypie/pull/815)
         """        
         objects = self.obj_get_list(request=request, **self.remove_api_resource_names(kwargs))
         sorted_objects = self.apply_sorting(objects, options=request.GET)
