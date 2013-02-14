@@ -1,3 +1,5 @@
+import re
+
 from corehq.apps.api.domainapi import DomainAPI
 from corehq.apps.api.resources import v0_1, v0_2, v0_3, v0_4
 from corehq.apps.commtrack.resources.v0_1 import ProductResource,\
@@ -45,10 +47,32 @@ class CommCareHqApi(Api):
     def top_level(self, request, api_name=None, **kwargs):
         return HttpResponseNotFound()
 
+        @property
+        def urls(self):
+            """
+            Exactly copied from https://github.com/toastdriven/django-tastypie/blob/v0.9.11/tastypie/api.py#L84
+            (BSD-licensed) and hotfixed for https://github.com/toastdriven/django-tastypie/issues/816
+            """
+            api_name_regex = re.escape(self.api_name)
+            
+            pattern_list = [
+                url(r"^(?P<api_name>%s)%s$" % (api_name_regex, trailing_slash()), self.wrap_view('top_level'), name="api_%s_top_level" % self.api_name),
+            ]
+            
+            for name in sorted(self._registry.keys()):
+                self._registry[name].api_name = self.api_name
+                pattern_list.append((r"^(?P<api_name>%s)/" % api_name_regex, include(self._registry[name].urls)))
+                
+            urlpatterns = self.override_urls() + patterns('',
+                *pattern_list
+            )
+            return urlpatterns
+    
+
 @inline
 def api_url_patterns():
     for version, resources in API_LIST:
-        api = CommCareHqApi(api_name=r'v%d\.%d' % version)
+        api = CommCareHqApi(api_name='v%d.%d' % version)
         for R in resources:
             api.register(R())
         for R in COMMTRACK_RESOURCES:
