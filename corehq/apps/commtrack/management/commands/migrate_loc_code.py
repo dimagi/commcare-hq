@@ -3,6 +3,7 @@ from optparse import make_option
 from corehq.apps.domain.models import Domain
 from corehq.apps.locations.models import Location
 from casexml.apps.case.models import CommCareCase
+from dimagi.utils.couch.loosechange import map_reduce
 import sys
 
 class Command(BaseCommand):
@@ -18,7 +19,7 @@ class Command(BaseCommand):
             self.stderr.write('domain required\n')
             return
 
-        self.stdout.write('Migrating...\n')
+        self.println('Migrating...')
 
         supply_point_cases = CommCareCase.get_db().view(
             'commtrack/supply_point_by_loc',
@@ -38,4 +39,21 @@ class Command(BaseCommand):
             if old_code and not new_code:
                 loc.site_code = old_code
                 loc.save()
-                self.stdout.write('migrated %s (%s)\n' % (loc.name, loc.site_code))
+                self.println('migrated %s (%s)' % (loc.name, loc.site_code))
+
+        self.println('Verifying code uniqueness...')
+
+        all_codes = Location.get_db().view('commtrack/locations_by_code',
+                                           startkey=[domain], endkey=[domain, {}])
+        locs_by_code = map_reduce(lambda e: [(e['key'][-1].lower(), e['id'])], data=all_codes)
+        for code, loc_ids in locs_by_code.iteritems():
+            if len(loc_ids) == 1:
+                continue
+
+            self.println('duplicate code [%s]' % code)
+            locs = Location.view('_all_docs', keys=loc_ids, include_docs=True)
+            for loc in locs:
+                self.println('  %s [%s]' % (loc.name, loc._id))
+
+    def println(self, msg):
+        self.stdout.write(msg + '\n')
