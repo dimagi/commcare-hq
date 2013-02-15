@@ -1,7 +1,7 @@
 {% extends "reports/async/summary_tabular.html" %}
 {% load hq_shared_tags %}
 {% load i18n %}
-{% block pretable %}
+{% block posttable %}
 <dl class="dl-horizontal">
 {% for member in team_members %}
     <dt>{% trans member.user_data.role %}</dt>
