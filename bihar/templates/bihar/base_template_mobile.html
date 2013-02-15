@@ -6,3 +6,7 @@
         <li><a href="{{ home }}">{% trans 'Main Menu' %}</a></li>
     </ul>
 {% endblock %}
+{% block mobile-footer %}
+    <img src="{% static 'bihar/img/logo.png' %}" style="width: 239px;"/>
+    {{ block.super }}
+{% endblock %}
