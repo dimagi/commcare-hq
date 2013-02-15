@@ -4,3 +4,10 @@
 {% block pretable %}
     {{ name }}
 {% endblock %}
+{% block reporttable %}
+    {% if report_table.rows %}
+    {{ block.super }}
+    {% else %}
+    <p class="muted">{% trans "Sorry, there are no clients matching this report" %}</p>
+    {% endif %}
+{% endblock %}
