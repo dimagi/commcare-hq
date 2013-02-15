@@ -46,19 +46,10 @@
 </script>
 {% endblock %}
 
-{% block page-title %}
-<ul class="breadcrumb">
+{% block breadcrumb %}{{ block.super }}
     <li>
-        <strong>Organizations</strong> <span class="divider">&gt;</span>
+        <span class="divider">&gt;</span><a href="#">{% if admin %}Editing {% endif %}"{{ team.name }}"</a>
     </li>
-    <li>
-
-        <a href="{% url orgs_landing org.name %}">{{ org.name }} ({{ org.title }})</a>
-    </li>
-    <li>
-        <span class="divider">&gt;</span><a href="#">{% if admin %}Editing {% endif %}Team "{{ team.name }}"</a>
-    </li>
-</ul>
 {% endblock %}
 
 {% block team-header %}

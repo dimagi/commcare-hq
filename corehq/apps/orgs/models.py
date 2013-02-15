@@ -40,9 +40,9 @@ class Organization(Document):
 
     def get_logo(self):
         if self.logo_filename:
-            return (self.fetch_attachment(self.logo_filename), self._attachments[self.logo_filename]['content_type'])
+            return self.fetch_attachment(self.logo_filename), self._attachments[self.logo_filename]['content_type']
         else:
-            return None
+            return None, None
 
     def __str__(self):
         return self.title
