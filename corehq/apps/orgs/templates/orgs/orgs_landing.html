@@ -76,9 +76,9 @@
 {% block page-title %}
         <div class="container">
 <ul class="breadcrumb">
-    {% if request.couch_user.is_superuser %}<a href="{% url orgs_base %}">{% endif %}
-    <li><strong>Organizations</strong></li>
-    {% if request.couch_user.is_superuser %}</a>{% endif %}
+    <li>{% if request.couch_user.is_superuser %}<a href="{% url orgs_base %}">{% endif %}
+    <strong>Organizations</strong>
+    {% if request.couch_user.is_superuser %}</a>{% endif %}</li>
     <li>
         <span class="divider">&gt;</span>
         <a href="{% url orgs_landing org.name %}">{{ org.name }} ({{ org.title }})</a>
