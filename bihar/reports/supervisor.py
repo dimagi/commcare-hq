@@ -433,8 +433,7 @@ def default_nav_link(nav_report, i, report_cls):
                         details=url)
 
 def get_awcc(group):
-    default_none = _('no awcc')
-    return group.metadata.get("awc-code", default_none) or default_none
+    return group.metadata.get("awc-code") or _('no awcc')
 
 def url_and_params(urlbase, params):
     assert "?" not in urlbase
