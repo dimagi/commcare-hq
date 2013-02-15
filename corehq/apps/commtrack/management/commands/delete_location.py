@@ -56,12 +56,12 @@ class Command(BaseCommand):
             if path is not None:
                 break
 
-        if (not domain or ref.domain != domain) or (not path or path[:len(ref.path)] != ref.path):
+        if domain and domain == ref.domain and path and path[:len(ref.path)] == ref.path:
+            self.db.delete_doc(id)
+            self.println('deleted %s' % id)
+        else:
             self.stderr.write('sanity check failed (%s)!\n' % id)
-            return
         
-        self.db.delete_doc(id)
-        self.println('deleted %s' % id)
 
     def println(self, msg):
         self.stdout.write(msg + '\n')
