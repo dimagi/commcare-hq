@@ -75,17 +75,17 @@ class IndicatorSummaryReport(GroupReferenceMixIn, BiharSummaryReport,
 
     def get_chart(self, indicator):
         # this is a serious hack for now
-        piecls = 'sparkpie'
+        pie_class = 'sparkpie'
         split = self.get_indicator_value(indicator).split("/")
         chart_template = (
             '<a href="#" data-numerator="{num}" '
-            'data-denominator="{denom}" class="{piecls}"></a>'
+            'data-denominator="{denom}" class="{pie_class}"></a>'
         )
         if len(split) == 2:
             return format_html(chart_template, num=split[0],
                                denom=int(split[1]) - int(split[0]),
-                               piecls=piecls)
-        return '' # no chart
+                               pie_class=pie_class)
+        return ''  # no chart
 
 
 class IndicatorCharts(MockEmptyReport):
