@@ -9,4 +9,34 @@
 {% for team in teams %}
     <a href="{% url orgs_team_members org.name team.get_id %}"><h3>{{ team.name }}</h3></a>
 {% endfor %}
+
+<form class="form-horizontal" method="post" action="{% url orgs_add_team org.name %}">
+    <div class="well well-small">
+        <input name="team" id="team" type="text" placeholder="New Team Name" />
+        <button type="submit" id="add_team_btn" class="btn btn-info">
+            <i class="icon-plus"></i> Add Team
+        </button>
+    </div>
+</form>
+{% endblock %}
+
+{% block modals %}
+{#    <div id="add_team_modal" class="modal hide fade">#}
+{#    <div class="modal-header">#}
+{#        <a class="close" data-dismiss="modal">&times;</a>#}
+{#        <h3>Add a new team to {{ org.title }}</h3>#}
+{#    </div>#}
+{#    <form class="form-horizontal" method="post" action="{% url orgs_add_team org.name %}">#}
+{#        <div class="modal-body">#}
+{#            <fieldset>#}
+{#                {% bootstrap_form_errors add_team_form %}#}
+{#                {% bootstrap_fieldset add_team_form %}#}
+{#            </fieldset>#}
+{#        </div>#}
+{#        <div class="modal-footer">#}
+{#            <a href="#" data-dismiss="modal" class="btn">Cancel</a>#}
+{#            <button type="submit" class="btn btn-primary">Add Team</button>#}
+{#        </div>#}
+{#    </form>#}
+{#    </div>#}
 {% endblock %}

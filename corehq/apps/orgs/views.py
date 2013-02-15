@@ -63,20 +63,27 @@ def orgs_landing(request, org, template="orgs/orgs_landing.html", form=None, add
     # admin = request.couch_user.is_org_admin(org) or request.couch_user.is_superuser
 
     ctxt = base_context(request, organization)
+    potential_domains = []
 
     # display a notification for each org request that hasn't previously been seen
     if request.couch_user.is_org_admin(org):
-        for req in OrgRequest.get_requests(org):
+        requests = OrgRequest.get_requests(org)
+        for req in requests:
             if req.seen or req.domain in [d.name for d in ctxt["domains"]]:
                 continue
             messages.info(request, render_to_string("orgs/partials/org_request_notification.html",
                 {"requesting_user": WebUser.get(req.requested_by).username, "org_req": req, "org": organization}),
                 extra_tags="html")
 
+        # get the existing domains that an org admin would add to the organization
+        potential_domains = request.couch_user.domains
+        potential_domains.extend([req.domain for req in requests])
+        potential_domains = list(set(filter(lambda d: d not in ctxt["domains"], potential_domains)))
+
     ctxt.update(dict(reg_form=reg_form, add_form=add_form, reg_form_empty=reg_form_empty, add_form_empty=add_form_empty,
                 update_form=update_form, update_form_empty=update_form_empty, invite_member_form=invite_member_form,
                 invite_member_form_empty=invite_member_form_empty, add_team_form=add_team_form, tab="projects",
-                add_team_form_empty=add_team_form_empty))
+                add_team_form_empty=add_team_form_empty, potential_domains=potential_domains))
     return render(request, template, ctxt)
 
 @org_member_required

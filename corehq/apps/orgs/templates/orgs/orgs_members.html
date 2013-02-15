@@ -1,5 +1,8 @@
 {% extends "orgs/orgs_landing.html" %}
 {% load i18n %}
+{% load hq_shared_tags %}
+{% load hqstyle_tags %}
+
 {% block carded-content %}
 {#{% if admin %}#}
 {#    <a href="#invite_member_modal" id="invite_member_btn" class="btn btn-success" data-toggle="modal">#}
@@ -7,15 +10,62 @@
 {#    </a>#}
 {#{% endif %}#}
 {% for member in members %}
-<h3>{{ member.username }}
-{#    {% if admin %}#}
-{#        <a href="#" class="remove-member-btn btn btn-danger" data-member="{{ member.username }}" data-member_id="{{ member.get_id }}">#}
-{#            <i class="icon-remove"></i>#}
-{#        </a>#}
-{#    {% endif %}#}
-    {% if member.first_name and member.last_name %}
-        <small>({{ member.full_name }})</small>
-    {% endif %}
-</h3>
+    <div>
+        <strong>
+            {{ member.username }}
+            {% if member.first_name and member.last_name %}
+                <small>({{ member.full_name }})</small>
+            {% endif %}
+        </strong>
+        <a href="#" class="remove-member-btn btn btn-danger" data-member="{{ member.username }}" data-member_id="{{ member.get_id }}">
+            <i class="icon-trash"></i> Remove Member
+        </a>
+    </div>
 {% endfor %}
+
+{% if admin %}
+    <div class="well well-small">
+        <form class="form-inline" style="margin: 0;" method="post" action="{% url orgs_invite_member org.name %}">
+            <input id="id_email" name="email" type="text" placeholder="Member's email address" />
+            <button type="submit" href="#invite_member_modal" id="invite_member_btn" class="btn btn-info" data-toggle="modal">
+                <i class="icon-plus"></i> Invite Member
+            </button>
+        </form>
+    </div>
+{% endif %}
+{% endblock %}
+
+{% block modals %}
+{#    <div id="invite_member_modal" class="modal hide fade">#}
+{#        <div class="modal-header">#}
+{#            <a class="close" data-dismiss="modal">&times;</a>#}
+{#            <h3>{% trans "Invite a user to " %}{{ org.title }}</h3>#}
+{#        </div>#}
+{#        <form class="form-horizontal" method="post" action="{% url orgs_invite_member org.name %}">#}
+{#            <div class="modal-body">#}
+{#                <fieldset>#}
+{#                    {% bootstrap_form_errors invite_member_form %}#}
+{#                    {% bootstrap_fieldset invite_member_form %}#}
+{#                </fieldset>#}
+{#            </div>#}
+{#            <div class="modal-footer">#}
+{#                <a href="#" data-dismiss="modal" class="btn">{% trans "Cancel" %}</a>#}
+{#                <button type="submit" class="btn btn-primary">{% trans "Invite Member" %}</button>#}
+{#            </div>#}
+{#        </form>#}
+{#    </div>#}
+
+<div id="remove-member-modal" class="modal hide fade">
+    <form class="form-horizontal" method="post" action="{% url orgs_remove_member org.name %}">
+        <div class="modal-body">
+            <a class="close" data-dismiss="modal">&times;</a>
+            <h3>Remove <span id="removing-member"></span> from {{ org.title }}?</h3>
+            <input id="removing-member-id" type="hidden" name="member_id" value="" />
+        </div>
+        <div class="modal-footer">
+            <a href="#" data-dismiss="modal" class="btn">Cancel</a>
+            <button type="submit" class="btn btn-primary">Remove Member</button>
+        </div>
+    </form>
+</div>
 {% endblock %}
