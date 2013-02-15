@@ -17,8 +17,6 @@ class Command(BaseCommand):
             self.stderr.write('location uuid required\n')
             return
 
-        self.println('Deleting...')
-
         try:
             loc = Location.get(loc_uuid)
             if not loc or loc.doc_type != 'Location':
