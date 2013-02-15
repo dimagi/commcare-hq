@@ -92,12 +92,12 @@ CHILD_HEALTH_INDICATORS = dict(
     )
 )
 
-COUNT_UNIQUE_CHILD_HEALTH_INDICATORS=dict(
+COUNT_UNIQUE_CHILD_HEALTH_INDICATORS = dict(
     app=APP_NAME,
     indicators=dict(
         child_muac=dict(
             child_muac_routine=dict(
-                description="No. of children aged 6-59 months receiving on-time routine (every 90 days)"\
+                description="No. of children aged 6-59 months receiving on-time routine (every 90 days)"
                             " MUAC readings during the time period",
                 title="# Under5s receiving on-time MUAC (90 days)",
                 indicator_key="routine_muac"
@@ -114,5 +114,18 @@ COUNT_UNIQUE_CHILD_HEALTH_INDICATORS=dict(
                 indicator_key="muac_reading"
             ),
         ),
+    )
+)
+
+SUM_LAST_UNIQUE_CHILD_HEALTH_INDICATORS = dict(
+    app=APP_NAME,
+    indicators=dict(
+        child_muac=dict(
+            active_gam_cases=dict(
+                description="No. of Active GAM cases within time period",
+                title="# of Active GAM Cases",
+                indicator_key="active_gam"
+            )
+        )
     )
 )

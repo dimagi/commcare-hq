@@ -16,8 +16,14 @@ function(doc) {
                         emit_special(doc, flagged_date, {urgent_referral_followup_days: difference}, [doc._id]);
                         if (difference <= 2) {
                             emit_standard(doc, flagged_date, ["urgent_referral_followup"], [doc._id]);
+                        } else if (difference <= 7) {
+                            emit_standard(doc, flagged_date, ["urgent_referral_followup_late"], [doc._id]);
+                        } else {
+                            emit_standard(doc, flagged_date, ["urgent_referral_followup_none"], [doc._id]);
                         }
                         return;
+                    } else if (n == (self.normal.length - 1)) {
+                        emit_standard(doc, flagged_date, ["urgent_referral_followup_none"], [doc._id]);
                     }
                 }
             }
