@@ -1,0 +1,12 @@
+{% extends "orgs/orgs_landing.html" %}
+{% load i18n %}
+{% block carded-content %}
+{#{% if admin %}#}
+{#    <a href="#add_team_modal" id="add_team_btn" class="btn btn-success" data-toggle="modal">#}
+{#        <i class="icon-plus"></i>#}
+{#    </a>#}
+{#{% endif %}#}
+{% for team in teams %}
+    <a href="{% url orgs_team_members org.name team.get_id %}"><h3>{{ team.name }}</h3></a>
+{% endfor %}
+{% endblock %}

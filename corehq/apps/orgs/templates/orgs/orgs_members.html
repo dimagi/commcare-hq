@@ -1,0 +1,21 @@
+{% extends "orgs/orgs_landing.html" %}
+{% load i18n %}
+{% block carded-content %}
+{#{% if admin %}#}
+{#    <a href="#invite_member_modal" id="invite_member_btn" class="btn btn-success" data-toggle="modal">#}
+{#        <i class="icon-plus"></i>#}
+{#    </a>#}
+{#{% endif %}#}
+{% for member in members %}
+<h3>{{ member.username }}
+{#    {% if admin %}#}
+{#        <a href="#" class="remove-member-btn btn btn-danger" data-member="{{ member.username }}" data-member_id="{{ member.get_id }}">#}
+{#            <i class="icon-remove"></i>#}
+{#        </a>#}
+{#    {% endif %}#}
+    {% if member.first_name and member.last_name %}
+        <small>({{ member.full_name }})</small>
+    {% endif %}
+</h3>
+{% endfor %}
+{% endblock %}

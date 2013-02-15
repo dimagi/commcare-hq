@@ -15,11 +15,22 @@ from corehq.apps.orgs.decorators import org_admin_required, org_member_required
 from corehq.apps.registration.forms import DomainRegistrationForm
 from corehq.apps.orgs.forms import AddProjectForm, InviteMemberForm, AddTeamForm, UpdateOrgInfo
 from corehq.apps.users.models import WebUser, UserRole, OrgRemovalRecord
+from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.web import json_response
 from corehq.apps.orgs.models import Organization, Team, DeleteTeamRecord, \
     OrgInvitation, OrgRequest
 from corehq.apps.domain.models import Domain
 
+@memoized
+def base_context(request, organization):
+    return {
+        "org": organization,
+        "teams": Team.get_by_org(organization.name),
+        "domains": Domain.get_by_organization(organization.name).all(),
+        "members": organization.get_members(),
+        "admin": request.couch_user.is_org_admin(organization.name) or request.couch_user.is_superuser,
+
+    }
 
 @require_superuser
 def orgs_base(request, template="orgs/orgs_base.html"):
@@ -29,7 +40,7 @@ def orgs_base(request, template="orgs/orgs_base.html"):
 
 @org_member_required
 def orgs_landing(request, org, template="orgs/orgs_landing.html", form=None, add_form=None, invite_member_form=None,
-                 add_team_form=None, update_form=None):
+                 add_team_form=None, update_form=None, tab=None):
     organization = Organization.get_by_name(org, strict=True)
 
     reg_form_empty = not form
@@ -46,26 +57,41 @@ def orgs_landing(request, org, template="orgs/orgs_landing.html", form=None, add
     update_form = update_form or UpdateOrgInfo(initial={'org_title': organization.title, 'email': organization.email,
                                                         'url': organization.url, 'location': organization.location})
 
-    current_teams = Team.get_by_org(org)
-    current_domains = Domain.get_by_organization(org).all()
-    members = organization.get_members()
-    admin = request.couch_user.is_org_admin(org) or request.couch_user.is_superuser
+    # current_teams = Team.get_by_org(org)
+    # current_domains = Domain.get_by_organization(org).all()
+    # members = organization.get_members()
+    # admin = request.couch_user.is_org_admin(org) or request.couch_user.is_superuser
+
+    ctxt = base_context(request, organization)
 
     # display a notification for each org request that hasn't previously been seen
     if request.couch_user.is_org_admin(org):
         for req in OrgRequest.get_requests(org):
-            if req.seen or req.domain in [d.name for d in current_domains]:
+            if req.seen or req.domain in [d.name for d in ctxt["domains"]]:
                 continue
             messages.info(request, render_to_string("orgs/partials/org_request_notification.html",
                 {"requesting_user": WebUser.get(req.requested_by).username, "org_req": req, "org": organization}),
                 extra_tags="html")
 
-    vals = dict(org=organization, domains=current_domains, reg_form=reg_form, add_form=add_form,
-                reg_form_empty=reg_form_empty, add_form_empty=add_form_empty, update_form=update_form,
-                update_form_empty=update_form_empty, invite_member_form=invite_member_form,
-                invite_member_form_empty=invite_member_form_empty, add_team_form=add_team_form,
-                add_team_form_empty=add_team_form_empty, teams=current_teams, members=members, admin=admin)
-    return render(request, template, vals)
+    ctxt.update(dict(reg_form=reg_form, add_form=add_form, reg_form_empty=reg_form_empty, add_form_empty=add_form_empty,
+                update_form=update_form, update_form_empty=update_form_empty, invite_member_form=invite_member_form,
+                invite_member_form_empty=invite_member_form_empty, add_team_form=add_team_form, tab="projects",
+                add_team_form_empty=add_team_form_empty))
+    return render(request, template, ctxt)
+
+@org_member_required
+def orgs_members(request, org, template="orgs/orgs_members.html"):
+    organization = Organization.get_by_name(org, strict=True)
+    ctxt = base_context(request, organization)
+    ctxt["tab"] = "members"
+    return render(request, template, ctxt)
+
+@org_member_required
+def orgs_teams(request, org, template="orgs/orgs_teams-new.html"):
+    organization = Organization.get_by_name(org, strict=True)
+    ctxt = base_context(request, organization)
+    ctxt["tab"] = "teams"
+    return render(request, template, ctxt)
 
 @require_superuser
 def get_data(request, org):
@@ -194,14 +220,6 @@ def orgs_logo(request, org, template="orgs/orgs_logo.html"):
     organization = Organization.get_by_name(org)
     image, type = organization.get_logo()
     return HttpResponse(image, content_type=type if image else 'image/gif')
-
-@org_member_required
-def orgs_teams(request, org, template="orgs/orgs_teams.html"):
-    organization = Organization.get_by_name(org)
-    teams = Team.get_by_org(org)
-    current_domains = Domain.get_by_organization(org).all()
-    vals = dict(org=organization, teams=teams, domains=current_domains)
-    return render(request, template, vals)
 
 @org_member_required
 def orgs_team_members(request, org, team_id, template="orgs/orgs_team_members.html"):
