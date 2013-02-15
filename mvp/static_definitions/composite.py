@@ -59,7 +59,7 @@ COMPOSITE_INDICATORS = dict(
     under1_immunized_proportion=dict(
         description="Proportion of children under-1 reported as up-to-date on immunizations at " \
                     "last visit during the time period",
-        title="% Under-1 up to date on immunizations",
+        title="% of Under-1 with up-to-date immunization",
         numerator_slug="under1_immunization_up_to_date",
         denominator_slug="under1_visits",
     ),
@@ -132,13 +132,6 @@ COMPOSITE_INDICATORS = dict(
         numerator_slug="neonate_visits_7days",
         denominator_slug="neonate_cases_7days"
     ),
-    urgent_referrals_proportion=dict(
-        description="Proportion of urgent referrals (codes A, E, B) or treatment receiving CHW "\
-                    "follow-up within 2 days of referral / treatment during the time period",
-        title="% Referred / Treated receiving on-time follow-up (within 2 days)",
-        numerator_slug="urgent_referral_followups",
-        denominator_slug="num_urgent_referrals"
-    ),
     newborn_7day_visit_proportion=dict(
         description=" Proportion of newborns receiving first CHW check-up within 7 days of " \
                     "birth during the time period",
@@ -154,23 +147,24 @@ COMPOSITE_INDICATORS = dict(
     ),
 
     # Followups
-    on_time_followups_proportion=dict(
-        description="Proportion of Referred / Treated receiving on-time follow-up (within 2 days)",
+    urgent_referrals_proportion=dict(
+        description="Proportion of urgent referrals (codes A, E, B) or treatment receiving CHW " \
+                    "follow-up within 2 days of referral / treatment during the time period",
         title="% Referred / Treated receiving on-time follow-up (within 2 days)",
-        numerator_slug="num_on_time_followups",
-        denominator_slug="num_urgent_treatment_referral",
+        numerator_slug="urgent_referral_followups",
+        denominator_slug="num_urgent_referrals"
     ),
     late_followups_proportion=dict(
         description="Proportion of Referred / Treated receiving LATE follow-up (within 3-7 days)",
         title="% Referred / Treated receiving LATE follow-up (within 3-7 days)",
         numerator_slug="num_late_followups",
-        denominator_slug="num_urgent_treatment_referral",
+        denominator_slug="num_urgent_referrals",
     ),
     no_followups_proportion=dict(
         description="Proportion of Referred / Treated receiving NO follow-up",
         title="% Referred / Treated receiving NO follow-up",
         numerator_slug="num_none_followups",
-        denominator_slug="num_urgent_treatment_referral",
+        denominator_slug="num_urgent_referrals",
     ),
 
     # Maternal Health
