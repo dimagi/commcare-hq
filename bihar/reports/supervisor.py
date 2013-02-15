@@ -202,15 +202,15 @@ class SubCenterSelectionReport(ConvenientBaseMixIn, GenericTabularReport,
         
     def _row(self, group, rank):
         
-        def _link(g):
+        def _awcc_link(g):
             params = copy(self.request_params)
             params["group"] = g.get_id
-            return format_html(u'<a href="{details}">{group}</a>',
-                group=g.name,
+            return format_html(u'<a href="{details}">{awcc}</a>',
+                awcc=get_awcc(g),
                 details=url_and_params(self.next_report_class.get_url(domain=self.domain,
                                                                       render_as=self.render_next),
                                        params))
-        return [_link(group), get_awcc(group)]
+        return [group.name, _awcc_link(group)]
             
 
 class MainNavReport(BiharSummaryReport, IndicatorConfigMixIn):
@@ -282,13 +282,13 @@ class WorkerRankSelectionReport(SubCenterSelectionReport):
             "startdate": start.strftime("%Y-%m-%d"),
             "enddate": end.strftime("%Y-%m-%d")
         }
-        def _link(g):
+        def _awcc_link(g):
             params["group"] = g.get_id
-            return format_html(u'<a href="{details}">{group}</a>',
-                group=g.name,
+            return format_html(u'<a href="{details}">{awcc}</a>',
+                awcc=get_awcc(g),
                 details=url_and_params(url,
                                        params))
-        return [_link(group), get_awcc(group)]
+        return [group.name, _awcc_link(group)]
     
 
 class DueListReport(MockEmptyReport):
@@ -433,7 +433,8 @@ def default_nav_link(nav_report, i, report_cls):
                         details=url)
 
 def get_awcc(group):
-    return group.metadata.get("awc-code", _('no awc code found'))
+    default_none = _('no awcc')
+    return group.metadata.get("awc-code", default_none) or default_none
 
 def url_and_params(urlbase, params):
     assert "?" not in urlbase
