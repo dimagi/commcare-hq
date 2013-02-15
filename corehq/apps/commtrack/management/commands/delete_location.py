@@ -30,12 +30,18 @@ class Command(BaseCommand):
         startkey = [loc.domain] + loc.path
         locs = Location.view('locations/hierarchy', startkey=startkey, endkey=startkey + [{}], reduce=False, include_docs=True)
         for k in locs:
+            if k._id == loc._id:
+                # don't delete orig loc until very end, so we can resume task if interrupted
+                continue
+
             self.delete_doc(k, loc)
 
         startkey = [loc.domain, loc._id]
         linked = self.db.view('locations/linked_docs', startkey=startkey, endkey=startkey + [{}], include_docs=True)
         for k in linked:
             self.delete_doc(k['doc'], loc)
+
+        self.delete_doc(loc, loc)
 
     def delete_doc(self, doc, ref):
         id = doc['_id']
@@ -57,6 +63,7 @@ class Command(BaseCommand):
                 break
 
         if domain and domain == ref.domain and path and path[:len(ref.path)] == ref.path:
+            # DANGER!!
             self.db.delete_doc(id)
             self.println('deleted %s' % id)
         else:
