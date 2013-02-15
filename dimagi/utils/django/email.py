@@ -8,7 +8,7 @@ is only supported in HTML. Please set your email client to display this message
 in HTML, or use an email client that supports HTML emails.
 """
 
-def send_HTML_email(subject, recipient, html_content, text_content=None):
+def send_HTML_email(subject, recipient, html_content, text_content=None, cc=None):
     if not text_content:
         text_content = getattr(settings, 'NO_HTML_EMAIL_MESSAGE',
                                NO_HTML_EMAIL_MESSAGE)
@@ -34,6 +34,6 @@ def send_HTML_email(subject, recipient, html_content, text_content=None):
                                 use_tls=True,
                                 fail_silently=False)
     
-    msg = EmailMultiAlternatives(subject, text_content, email_return_path, [recipient], headers=from_header, connection=connection)
+    msg = EmailMultiAlternatives(subject, text_content, email_return_path, [recipient], headers=from_header, connection=connection, cc=cc)
     msg.attach_alternative(html_content, "text/html")
     msg.send()
