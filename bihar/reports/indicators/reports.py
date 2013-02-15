@@ -78,8 +78,8 @@ class IndicatorSummaryReport(GroupReferenceMixIn, BiharSummaryReport,
         pie_class = 'sparkpie'
         split = self.get_indicator_value(indicator).split("/")
         chart_template = (
-            '<a href="#" data-numerator="{num}" '
-            'data-denominator="{denom}" class="{pie_class}"></a>'
+            '<span data-numerator="{num}" '
+            'data-denominator="{denom}" class="{pie_class}"></span>'
         )
         if len(split) == 2:
             return format_html(chart_template, num=split[0],
