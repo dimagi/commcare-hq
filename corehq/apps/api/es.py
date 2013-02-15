@@ -336,7 +336,10 @@ def es_search(request, domain):
     # XML / JSON.
     if '_search' in request.GET:
         additions = simplejson.loads(request.GET['_search'])
-        payload['filter']['and'] = payload['filter']['and'] + additions.get('filter', {}).get('and', [])
+
+        if 'filter' in additions:
+            payload['filter']['and'].append(additions['filter'])
+
         if 'query' in additions:
             payload['query'] = additions['query']
 
