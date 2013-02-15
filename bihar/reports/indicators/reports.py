@@ -12,6 +12,7 @@ from bihar.reports.indicators.mixins import IndicatorSetMixIn, IndicatorMixIn
 
 DEFAULT_EMPTY = "?"
 
+
 class IndicatorNav(GroupReferenceMixIn, BiharNavReport):
     name = ugettext_noop("Indicator Options")
     slug = "indicatornav"
@@ -27,6 +28,7 @@ class IndicatorNav(GroupReferenceMixIn, BiharNavReport):
     @property
     def rendered_report_title(self):
         return self.group_display
+
 
 class IndicatorSummaryReport(GroupReferenceMixIn, BiharSummaryReport,
                              IndicatorSetMixIn):
@@ -56,7 +58,7 @@ class IndicatorSummaryReport(GroupReferenceMixIn, BiharSummaryReport,
             params = copy(self.request_params)
             params['indicator'] = indicator.slug
             del params['next_report']
-            return format_html(u'<a href="{next}">{chart}{val}</a>',
+            return format_html(u'{chart}<a href="{next}">{val}</a>',
                 val=self.get_indicator_value(indicator),
                 chart=self.get_chart(indicator),
                 next=url_and_params(
@@ -73,15 +75,18 @@ class IndicatorSummaryReport(GroupReferenceMixIn, BiharSummaryReport,
 
     def get_chart(self, indicator):
         # this is a serious hack for now
-        piecls = 'sparkpie'
+        pie_class = 'sparkpie'
         split = self.get_indicator_value(indicator).split("/")
-        chart_template = '<span data-numerator="{num}" ' \
-            'data-denominator="{denom}" class="{piecls}"></span>'
+        chart_template = (
+            '<a href="#" data-numerator="{num}" '
+            'data-denominator="{denom}" class="{pie_class}"></a>'
+        )
         if len(split) == 2:
             return format_html(chart_template, num=split[0],
                                denom=int(split[1]) - int(split[0]),
-                               piecls=piecls)
-        return '' # no chart
+                               pie_class=pie_class)
+        return ''  # no chart
+
 
 class IndicatorCharts(MockEmptyReport):
     name = ugettext_noop("Charts")
@@ -127,8 +132,10 @@ class IndicatorClientSelectNav(GroupReferenceMixIn, BiharSummaryReport,
     def count(self, indicator):
         return len([c for c in self.cases if indicator.filter(c)])
 
+
 def name_context(report):
     return {'name': report._name}
+
 
 class IndicatorClientList(GroupReferenceMixIn, ConvenientBaseMixIn,
                           GenericTabularReport, CustomProjectReport,
