@@ -48,14 +48,14 @@ class PactPatientInfoReport(PactDrilldownReportMixin,ESSortableMixin, GenericTab
         from pact import api
         patient_doc = self.get_case()
         view_mode = self.request.GET.get('view', 'info')
-        notabs = True if not self.request.GET.get('notabs', False) else False
+        # notabs = True if not self.request.GET.get('notabs', False) else False
 
         ret = RequestContext(self.request)
         ret = {'patient_doc': patient_doc}
         #        ret.update(csrf(self.request))
         ret['pt_root_url'] = patient_doc.get_info_url()
-        if notabs:
-            ret['pt_root_url'] += "&notabs"
+        # if notabs:
+        #     ret['pt_root_url'] += "&notabs"
         ret['view_mode'] = view_mode
 
         if view_mode == 'info':

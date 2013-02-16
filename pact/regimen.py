@@ -1,4 +1,3 @@
-import pdb
 from pact.enums import DAY_SLOTS_BY_TIME, PACT_REGIMEN_CHOICES, DAY_SLOTS_BY_IDX, DOT_ART, DOT_NONART, CASE_ART_REGIMEN_PROP, CASE_NONART_REGIMEN_PROP
 
 #def calculate_regimen_caseblock(self):
@@ -42,8 +41,13 @@ def regimen_dict_from_choice(key_type, regimen_string):
 
     #ensure regimen_string is in PACT_REGIMEN_CHOICES_DICT
     #get integer day slot from DAY_SLOTS_BY_TIME[str]
-    regimen_split = regimen_string.split(',')
-    regimen_freq = len(regimen_split)
+    if len(regimen_string) > 0:
+        regimen_split = regimen_string.split(',')
+        regimen_freq = len(regimen_split)
+    else:
+        regimen_freq = 0
+        regimen_split = []
+
     day_key_prefix = type_keys[key_type]
     if key_type == DOT_ART:
         key_type_string = CASE_ART_REGIMEN_PROP
@@ -51,7 +55,7 @@ def regimen_dict_from_choice(key_type, regimen_string):
         key_type_string = CASE_NONART_REGIMEN_PROP
     ret = { key_type_string: str(regimen_freq) }
     for x in range(0, 4):
-        if x < len(regimen_split):
+        if x < regimen_freq:
             ret[day_key_prefix % digit_strings[x]] = str(DAY_SLOTS_BY_TIME.get(regimen_split[x], None))
         else:
             ret[day_key_prefix % digit_strings[x]] = ""
