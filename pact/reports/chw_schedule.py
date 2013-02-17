@@ -156,7 +156,7 @@ def get_schedule_tally(username, total_interval, override_date=None):
     schedul_tally_array = [visit_date, [(patient1, visit1), (patient2, visit2), (patient3, None), (patient4, visit4), ...]]
     where visit = XFormInstance
     """
-    if override_date == None:
+    if override_date is None:
         nowdate = datetime.now()
         chw_schedule = CHWPatientSchedule.get_schedule(username)
     else:
@@ -215,6 +215,7 @@ def get_schedule_tally(username, total_interval, override_date=None):
             else:
             #ok, so no submission from this chw, let's see if there's ANY from anyone on this day.
             #                other_submissions = XFormInstance.view('pactcarehq/all_submits_by_patient_date', key=[str(pact_id), visit_date.year, visit_date.month, visit_date.day, 'http://dev.commcarehq.org/pact/dots_form' ], include_docs=True).all()
+                print "todo, check other submissions"
                 other_submissions = []
                 if len(other_submissions) > 0:
                     visited.append(other_submissions[0])
@@ -233,12 +234,20 @@ def chw_calendar_submit_report(request, username):
     user = request.user
     total_interval = 30
     if request.GET.has_key('interval'):
+        end_date = None
         try:
             total_interval = int(request.GET['interval'])
         except:
             pass
+    else:
+        start_date_str = request.GET.get('startdate', (datetime.utcnow() - timedelta(days=7)).strftime('%Y-%m-%d'))
+        end_date_str = request.GET.get('enddate', datetime.utcnow().strftime('%Y-%m-%d'))
 
-    ret, patients, total_scheduled, total_visited = get_schedule_tally(username, total_interval)
+        end_date = datetime.strptime(end_date_str, '%Y-%m-%d')
+        start_date = datetime.strptime(start_date_str, '%Y-%m-%d')
+        total_interval = (end_date - start_date).days
+
+    ret, patients, total_scheduled, total_visited = get_schedule_tally(username, total_interval, override_date=end_date)
     nowdate = datetime.now()
 
     if len(ret) > 0:
@@ -251,50 +260,4 @@ def chw_calendar_submit_report(request, username):
         return_context['total_scheduled'] = 0
         return_context['total_visited'] = 0
 
-
-    if request.GET.get('getcsv', None) != None:
-        csvdata = []
-        csvdata.append(','.join(
-            ['visit_date', 'assigned_chw', 'pact_id', 'is_scheduled', 'contact_type', 'visit_type',
-             'visit_kept', 'submitted_by', 'visit_id']))
-        for date, pt_visit in ret:
-            if len(pt_visit) > 0:
-                for cpt, v in pt_visit:
-                    rowdata = [date.strftime('%Y-%m-%d'), username, cpt['pactid']]
-                    if v != None:
-                        #is scheduled
-                        if v['scheduled'] == 'yes':
-                            rowdata.append('scheduled')
-                        else:
-                            rowdata.append('unscheduled')
-                            #contact_type
-                        rowdata.append(v['contact_type'])
-
-                        #visit type
-                        rowdata.append(v['visit_type'])
-
-                        #visit kept
-                        rowdata.append(v['visit_kept'])
-
-                        rowdata.append(v['username'])
-                        if v['username'] == username:
-                            rowdata.append('assigned')
-                        else:
-                            rowdata.append('covered')
-                        rowdata.append(v['doc_id'])
-
-                    else:
-                        rowdata.append('novisit')
-                    csvdata.append(','.join(rowdata))
-            else:
-                csvdata.append(','.join([date.strftime('%Y-%m-%d'), 'nopatients']))
-
-        resp = HttpResponse()
-
-        resp['Content-Disposition'] = 'attachment; filename=chw_schedule_%s-%s_to_%s.csv' % (
-            username, datetime.now().strftime("%Y-%m-%d"),
-            (nowdate - timedelta(days=total_interval)).strftime("%Y-%m-%d"))
-        resp.write('\n'.join(csvdata))
-        return resp
-    else:
-        return return_context
+    return return_context

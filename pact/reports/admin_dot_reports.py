@@ -1,4 +1,5 @@
 from datetime import datetime, timedelta
+import logging
 import uuid
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
 from corehq.apps.reports.generic import GenericTabularReport
@@ -12,6 +13,8 @@ class PactDOTAdminPatientField(PactDOTPatientField):
     name = "DOT Patient"
     default_option = "All Patients"
 
+COUCH_CHUNK_LIMIT = 500
+COUCH_MAX_LIMIT = 1000
 
 class PactDOTAdminReport(GenericTabularReport, CustomProjectReport):
     fields = ['pact.reports.admin_dot_reports.PactDOTAdminPatientField',
@@ -23,11 +26,6 @@ class PactDOTAdminReport(GenericTabularReport, CustomProjectReport):
     report_template_path = "pact/admin/pact_dot_admin.html"
 
     def tabular_data(self, mode, case_id, start_date, end_date):#, limit=50, skip=0):
-        print "##########tabular data!"
-        print case_id
-        print mode
-        print start_date
-        print end_date
         try:
             case_doc = PactPatientCase.get(case_id)
             pactid = case_doc.pactid
@@ -37,6 +35,7 @@ class PactDOTAdminReport(GenericTabularReport, CustomProjectReport):
             pactid = None
 
         if case_doc is not None:
+            #patient is selected
             if mode == 'all':
                 start_date = end_date - timedelta(1000)
                 startkey = [case_id, 'anchor_date', start_date.year,
@@ -52,23 +51,19 @@ class PactDOTAdminReport(GenericTabularReport, CustomProjectReport):
                 csv_filename = 'dots_csv_pt_%s-%s_to_%s.csv' % (
                     pactid, start_date.strftime("%Y-%m-%d"), end_date.strftime("%Y-%m-%d"))
         elif case_doc is None:
-            if mode == 'all':
-                start_date = end_date - timedelta(1000)
-                startkey = [start_date.year, start_date.month, start_date.day]
-                endkey = [end_date.year, end_date.month, end_date.day]
-                csv_filename = 'dots_csv_pt_all.csv'
-            else:
-                startkey = [start_date.year, start_date.month, start_date.day]
-                endkey = [end_date.year, end_date.month, end_date.day]
-                csv_filename = 'dots_csv_pt_all-%s_to_%s.csv' % (
-                    start_date.strftime("%Y-%m-%d"), end_date.strftime("%Y-%m-%d"))
-                #heading
-        print startkey
-        print endkey
-        view_results = CObservation.view('pact/dots_observations', startkey=startkey, endkey=endkey)#, limit=limit, skip=skip)
-
-        for v in view_results:
-            yield v
+            #patient is not selected, do all patients
+            startkey = [start_date.year, start_date.month, start_date.day]
+            endkey = [end_date.year, end_date.month, end_date.day]
+        skip = 0
+        view_results = CObservation.view('pact/dots_observations', startkey=startkey, endkey=endkey, limit=COUCH_CHUNK_LIMIT, skip=skip).all()
+        while len(view_results) > 0:
+            if skip > COUCH_MAX_LIMIT:
+                logging.error("Pact DOT admin query: Too much data returned for query %s-%s" % (startkey, endkey))
+                break
+            for v in view_results:
+                yield v
+            skip += COUCH_CHUNK_LIMIT
+            view_results = CObservation.view('pact/dots_observations', startkey=startkey, endkey=endkey, limit=COUCH_CHUNK_LIMIT, skip=skip).all()
 
     @property
     def headers(self):
@@ -102,7 +97,9 @@ class PactDOTAdminReport(GenericTabularReport, CustomProjectReport):
             [['row1'],[row2']]
         """
         case_id = self.request.GET.get('dot_patient', '')
-        start_date_str = self.request.GET.get('startdate', (datetime.utcnow() - timedelta(days=7)).strftime('%Y-%m-%d'))
+        start_date_str = self.request.GET.get('startdate',
+                                              (datetime.utcnow() - timedelta(days=7)).strftime(
+                                                  '%Y-%m-%d'))
         end_date_str = self.request.GET.get('enddate', datetime.utcnow().strftime('%Y-%m-%d'))
 
         if case_id == '':
@@ -111,18 +108,15 @@ class PactDOTAdminReport(GenericTabularReport, CustomProjectReport):
         else:
             mode = ''
 
-        for num, obs in enumerate(self.tabular_data(mode, case_id, datetime.strptime(start_date_str, '%Y-%m-%d'), datetime.strptime(end_date_str, '%Y-%m-%d'))):#, limit=self.pagination.count, skip=self.pagination.start)):
+        ret = []
+        for num, obs in enumerate(self.tabular_data(mode, case_id, datetime.strptime(start_date_str, '%Y-%m-%d'), datetime.strptime(end_date_str, '%Y-%m-%d'))):
             dict_obj = obs.to_json()
             row = [dict_obj[x.prop_name].encode('utf-8') if isinstance(dict_obj[x.prop_name], unicode) else dict_obj[x.prop_name] for x in self.headers]
             yield row
-
-    @property
-    def total_records(self):
-        """
-            Override for pagination.
-            Returns an integer.
-        """
-        return 1000
+            #ret.append(row)
+        # print "rows"
+        # print len(ret)
+        # return ret
 
 
     @property

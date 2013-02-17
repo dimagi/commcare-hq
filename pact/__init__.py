@@ -7,7 +7,7 @@ CUSTOM_REPORTS = (
         patient.PactPatientInfoReport,
         chw_list.PactCHWDashboard,
         chw.PactCHWProfileReport,
-        admin_reports.PactAdminReport,
+        # admin_reports.PactAdminReport, #TODO
         admin_dot_reports.PactDOTAdminReport,
         admin_chw_reports.PactCHWAdminReport,
         )),
