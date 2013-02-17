@@ -26,13 +26,7 @@ def send_HTML_email(subject, recipient, html_content, text_content=None, cc=None
     if email_from is None:
         email_from = email_return_path
     from_header = {'From': email_from}  # From-header
-    connection = get_connection(backend='django.core.mail.backends.smtp.EmailBackend',
-                                username=settings.EMAIL_LOGIN,
-                                port=settings.EMAIL_SMTP_PORT,
-                                host=settings.EMAIL_SMTP_HOST,
-                                password=settings.EMAIL_PASSWORD,
-                                use_tls=True,
-                                fail_silently=False)
+    connection = get_connection()
     
     msg = EmailMultiAlternatives(subject, text_content, email_return_path, [recipient], headers=from_header, connection=connection, cc=cc)
     msg.attach_alternative(html_content, "text/html")
