@@ -11,7 +11,7 @@ class MobileAuthTest(TestCase):
         domain = 'test'
         now_plus_30 = now + timedelta(days=30)
         record = new_key_record(None, None, now=now)
-        xml = get_mobile_auth_payload([record], domain, issued=now)
+        xml = get_mobile_auth_payload([record], domain, now=now)
         check_xml_line_by_line(self, xml, """
             <OpenRosaResponse xmlns="http://openrosa.org/http/response">
                 <message nature="submit_success">Here are your keys!</message>

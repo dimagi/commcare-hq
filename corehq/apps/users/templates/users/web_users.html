@@ -73,46 +73,8 @@
         <a class="btn btn-success" href="{% url invite_web_user domain %}"><i class="icon icon-white icon-plus"></i> Invite {% hq_web_user %}</a>
     </div>
 
-    <table class="table table-striped table-bordered">
-        <thead>
-            <tr>
-                <th>{% trans "E-mail" %}</th>
-                <th>{% trans "Role" %}</th>
-                <th>{% trans "Name" %}</th>
-                <th>{% trans "Phone Numbers" %}</th>
-                <th>{% trans "Remove" %}</th>
-            </tr>
-        </thead>
-        <tbody>
-        {% for user in web_users %}
-            <tr>
-                <td>
-                    <a href="{% url user_account domain user.couch_id %}">
-                        {{ user.html_username|safe }}
-                    </a>
-                </td>
-                <td>{% if user.role_label %}{{ user.role_label }}{% else %}<h6>(No Name)</h6>{% endif %}</td>
-                <td>{{ user.first_name }} {{ user.last_name }}</td>
-                <td>
-                    {% if user.phone_numbers %}
-                        +{{ user.default_phone_number }}
-                        {% if user.phone_numbers.1 %}
-                            (and more)
-                        {% endif %}
-                    {% else %}{% endif %}
-                </td>
-                <td>
-                    {% ifnotequal request.user.username user.username %}
-                    <form style="margin-bottom: 0;" action="{% url remove_web_user domain user.user_id %}" method="post">
-                        <button type="submit" class="btn btn-danger"><i class="icon icon-white icon-remove"></i> Remove Membership</button>
-                    </form>
-                    {% endifnotequal %}
-                </td>
-            </tr>
-        {% endfor %}
-        </tbody>
-    </table>
-    
+    {% include 'domain/partials/user_list.html' with users=web_users remove_included=1 %}
+
     {% if invitations %}
     <h2>Pending Invitations</h2>
     <table class="table table-striped table-bordered">
@@ -147,11 +109,36 @@
             <thead>
                 <tr>
                     <th></th>
-                    <th>Edit Web Users</th>
-                    <th>Edit {% commcare_user %}s</th>
-                    <th>Edit Data</th>
-                    <th>Edit Apps</th>
-                    <th>View Reports</th>
+                    <th>
+                      Edit {% hq_web_user %}s
+                      <span class="hq-help-template"
+                            data-title="Edit {% hq_web_user %}s"
+                            data-content="{% trans "Specify web user access permissions; invite new web users to the domain; manage account settings for web users." %}"></span>
+                    </th>
+                    <th>
+                      Edit {% commcare_user %}s
+                      <span class="hq-help-template"
+                            data-title="Edit {% commcare_user %}s"
+                            data-content="{% trans "Manage account settings for mobile workers; create accounts for mobile workers; archive and/or delete mobile users." %}"></span>
+                    </th>
+                    <th>
+                      Edit Data
+                      <span class="hq-help-template"
+                            data-title="Edit Data"
+                            data-content="{% trans "View, export, and edit form and case data; reassign cases." %}"></span>
+                    </th>
+                    <th>
+                      Edit Apps
+                      <span class="hq-help-template"
+                            data-title="Edit Apps"
+                            data-content="{% trans "Modify the structure and configuration of the application." %}"></span>
+                    </th>
+                    <th>
+                      View Reports
+                      <span class="hq-help-template"
+                            data-title="View Reports"
+                            data-content="{% trans "See all CommCareHQ performance reports." %}"></span>
+                    </th>
                     <th data-bind="visible: allowEdit"></th>
                 </tr>
             </thead>

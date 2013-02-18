@@ -23,7 +23,5 @@ urlpatterns = patterns('corehq.apps.appstore.views',
     url(r'^(?P<domain>[\w\.-]+)/importapp/$', 'import_app', name='import_app_from_snapshot'),
     url(r'^(?P<domain>[\w\.-]+)/image/$', 'project_image', name='appstore_project_image'),
     url(r'^(?P<domain>[\w\.-]+)/multimedia/$', 'media_files', name='media_files'),
-
-    url(r'^cda/$', direct_to_template, {'template': 'cda.html'}, name='cda'),
 )
 

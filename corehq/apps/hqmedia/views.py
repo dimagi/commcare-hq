@@ -7,10 +7,11 @@ from django.contrib.sites.models import Site
 from django.http import HttpResponse, Http404, HttpResponseRedirect
 from django.utils import simplejson
 from django.views.decorators.http import require_POST
+from django.shortcuts import render
+
 import zipfile
 from corehq.apps.hqmedia import utils
 from corehq.apps.app_manager.models import get_app
-from dimagi.utils.web import render_to_response
 from corehq.apps.hqmedia.models import CommCareImage, CommCareAudio
 
 X_PROGRESS_ERROR = 'Server Error: You must provide X-Progress-ID header or query param.'
@@ -106,7 +107,7 @@ def media_map(request, domain, app_id):
     app = get_app(domain, app_id)
     multimedia = app.get_media_references()
 
-    return render_to_response(request, "hqmedia/map.html", {
+    return render(request, "hqmedia/map.html", {
         "domain": domain,
         "app": app,
         "multimedia": multimedia,
@@ -132,7 +133,7 @@ def media_from_path(request, domain, app_id, file_path):
 def upload(request, domain, app_id):
     app = get_app(domain, app_id)
     DNS_name = "http://"+Site.objects.get(id = settings.SITE_ID).domain
-    return render_to_response(request, "hqmedia/bulk_upload.html",
+    return render(request, "hqmedia/bulk_upload.html",
             {"domain": domain,
              "app": app,
              "DNS_name": DNS_name})

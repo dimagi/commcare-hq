@@ -33,7 +33,7 @@ from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.logging import notify_exception
 from dimagi.utils.subprocess_timeout import ProcessTimedOut
 
-from dimagi.utils.web import render_to_response, json_response, json_request
+from dimagi.utils.web import json_response, json_request
 
 from corehq.apps.app_manager.forms import NewXFormForm, NewModuleForm
 from corehq.apps.hqmedia.forms import HQMediaZipUploadForm, HQMediaFileUploadForm
@@ -43,6 +43,8 @@ from corehq.apps.domain.decorators import login_and_domain_required, login_or_di
 
 from django.http import HttpResponseRedirect
 from django.core.urlresolvers import reverse, RegexURLResolver
+from django.shortcuts import render
+
 from corehq.apps.app_manager.models import Application, get_app, DetailColumn, Form, FormActions,\
     AppError, load_case_reserved_words, ApplicationBase, DeleteFormRecord, DeleteModuleRecord, DeleteApplicationRecord, EXAMPLE_DOMAIN, str_to_cls, validate_lang, SavedAppBuild
 
@@ -223,7 +225,7 @@ def import_app(req, domain, template="app_manager/import_app.html"):
         else:
             app = None
 
-        return render_to_response(req, template, {'domain': domain, 'app': app})
+        return render(req, template, {'domain': domain, 'app': app})
 
 @require_can_edit_apps
 @require_POST
@@ -462,7 +464,7 @@ def release_manager(request, domain, app_id, template='app_manager/releases.html
         context.update({
             'multimedia': multimedia,
         })
-    response = render_to_response(request, template, context)
+    response = render(request, template, context)
     response.set_cookie('lang', _encode_if_unicode(context['lang']))
     return response
 
@@ -641,7 +643,7 @@ def view_generic(req, domain, app_id=None, module_id=None, form_id=None, is_user
             "app_build_spec_label" : app_build_spec_label,
             "app_version" : app.application_version,
         })
-    response = render_to_response(req, template, context)
+    response = render(req, template, context)
     response.set_cookie('lang', _encode_if_unicode(context['lang']))
     return response
 
@@ -703,7 +705,7 @@ def form_designer(req, domain, app_id, module_id=None, form_id=None, is_user_reg
     context.update({
         'edit': True,
     })
-    return render_to_response(req, 'app_manager/form_designer.html', context)
+    return render(req, 'app_manager/form_designer.html', context)
 
 
 
@@ -1569,7 +1571,7 @@ def download_index(req, domain, app_id, template="app_manager/download_index.htm
         files = [(path[len('files/'):], req.app.fetch_attachment(path)) for path in req.app._attachments if path.startswith('files/')]
     else:
         files = sorted(req.app.create_all_files().items())
-    return render_to_response(req, template, {
+    return render(req, template, {
         'app': req.app,
         'files': files,
     })
@@ -1603,7 +1605,7 @@ def download_profile(req, domain, app_id):
     )
 
 def odk_install(req, domain, app_id):
-    return render_to_response(req, "app_manager/odk_install.html",
+    return render(req, "app_manager/odk_install.html",
             {"domain": domain, "app": get_app(domain, app_id)})
 
 def odk_qr_code(req, domain, app_id):
@@ -1764,7 +1766,7 @@ def emulator_page(req, domain, app_id, template):
     build_path = "/builds/{version}/{build_number}/Generic/WebDemo/".format(
         **copied_app.get_preview_build()._doc
     )
-    return render_to_response(req, template, {
+    return render(req, template, {
         'domain': domain,
         'app': app,
         'build_path': build_path,
@@ -1894,6 +1896,6 @@ def summary(request, domain, app_id, should_edit=True):
     context['summary'] = True
 
     if should_edit:
-        return render_to_response(request, "app_manager/summary.html", context)
+        return render(request, "app_manager/summary.html", context)
     else:
-        return render_to_response(request, "app_manager/exchange_summary.html", context)
+        return render(request, "app_manager/exchange_summary.html", context)

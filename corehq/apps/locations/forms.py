@@ -26,6 +26,7 @@ class LocationForm(forms.Form):
     name = forms.CharField(max_length=100)
     location_type = forms.CharField(widget=LocTypeWidget())
 
+    strict = True # optimization hack: strict or loose validation 
     def __init__(self, location, bound_data=None, *args, **kwargs):
         self.location = location
 
@@ -76,9 +77,10 @@ class LocationForm(forms.Form):
     def clean_name(self):
         name = self.cleaned_data['name']
 
-        siblings = self.location.siblings(self.cleaned_data.get('parent'))
-        if name in [loc.name for loc in siblings]:
-            raise forms.ValidationError('name conflicts with another location with this parent')
+        if self.strict:
+            siblings = self.location.siblings(self.cleaned_data.get('parent'))
+            if name in [loc.name for loc in siblings]:
+                raise forms.ValidationError('name conflicts with another location with this parent')
 
         return name
 

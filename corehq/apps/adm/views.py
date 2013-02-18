@@ -1,8 +1,10 @@
 from django.http import HttpResponseRedirect
+from django.shortcuts import render
+
 from corehq.apps.crud.views import BaseAdminCRUDFormView
 from corehq.apps.domain.decorators import (require_superuser,
     login_and_domain_required)
-from dimagi.utils.web import render_to_response
+from corehq.apps.domain.decorators import require_superuser, domain_admin_required, login_and_domain_required
 
 @login_and_domain_required
 def default_adm_report(request, domain, template="adm/base_template.html", **kwargs):
@@ -19,7 +21,7 @@ def default_adm_report(request, domain, template="adm/base_template.html", **kwa
             section_name=ADMSectionView.section_name,
         )
     )
-    return render_to_response(request, template, context)
+    return render(request, template, context)
 
 @require_superuser
 def default_adm_admin(request):

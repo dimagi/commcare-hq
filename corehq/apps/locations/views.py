@@ -5,7 +5,8 @@ from corehq.apps.locations.models import Location
 from corehq.apps.locations.forms import LocationForm
 from corehq.apps.locations.util import load_locs_json
 from django.core.urlresolvers import reverse
-from dimagi.utils.web import render_to_response, get_url_base
+from django.shortcuts import render
+from dimagi.utils.web import get_url_base
 from django.contrib import messages
 import json
 from couchdbkit import ResourceNotFound
@@ -23,7 +24,7 @@ def locations_list(request, domain):
                                                          'resource_name': 'location', 
                                                          'api_name': 'v0.3'})
     }
-    return render_to_response(request, 'locations/manage/locations.html', context)
+    return render(request, 'locations/manage/locations.html', context)
 
 @domain_admin_required # TODO: will probably want less restrictive permission
 def location_edit(request, domain, loc_id=None):
@@ -57,5 +58,5 @@ def location_edit(request, domain, loc_id=None):
         'location': location,
         'form': form,
     }
-    return render_to_response(request, 'locations/manage/location.html', context)
+    return render(request, 'locations/manage/location.html', context)
 

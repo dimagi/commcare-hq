@@ -1,6 +1,5 @@
 import os.path
 from django.http import HttpResponseRedirect
-from dimagi.utils.web import render_to_response
 from casexml.apps.case.models import CommCareCase, const
 from casexml.apps.phone.xml import get_case_xml
 from corehq.apps.hqcase.utils import submit_case_blocks
@@ -15,7 +14,9 @@ from corehq.apps.users.decorators import require_permission
 from corehq.apps.users.models import Permissions
 from soil.util import expose_download
 from soil import DownloadBase
+
 from django.contrib import messages
+from django.shortcuts import render
 from django.utils.translation import ugettext as _
 
 require_can_edit_data = require_permission(Permissions.edit_data)
@@ -62,7 +63,7 @@ def excel_config(request, domain):
                             case_types.append(row['key'][1])
 
                     if len(case_types) > 0:
-                        return render_to_response(request, "importer/excel_config.html", {
+                        return render(request, "importer/excel_config.html", {
                                                     'named_columns': named_columns, 
                                                     'columns': columns,
                                                     'case_types': case_types,
@@ -138,7 +139,7 @@ def excel_fields(request, domain):
     except:
         pass                    
     
-    return render_to_response(request, "importer/excel_fields.html", {
+    return render(request, "importer/excel_fields.html", {
                                 'named_columns': named_columns,
                                 'case_type': case_type,                                                               
                                 'search_column': search_column, 
@@ -311,7 +312,7 @@ def excel_commit(request, domain):
     except KeyError:
         pass            
     
-    return render_to_response(request, "importer/excel_commit.html", {
+    return render(request, "importer/excel_commit.html", {
                                 'match_count': match_count,
                                 'no_match_count': no_match_count,
                                 'too_many_matches': too_many_matches,

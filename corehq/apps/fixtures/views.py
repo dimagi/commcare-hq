@@ -11,13 +11,15 @@ from corehq.apps.users.util import normalize_username
 from dimagi.utils.couch.bulk import CouchTransaction
 from dimagi.utils.excel import WorkbookJSONReader, WorksheetNotFound
 from dimagi.utils.logging import notify_exception
-from dimagi.utils.web import json_response, render_to_response
+from dimagi.utils.web import json_response
 from dimagi.utils.decorators.view import get_file
+
 from django.contrib import messages
 from django.core.urlresolvers import reverse
 from django.http import HttpResponse, HttpResponseBadRequest, HttpResponseRedirect
 from django.utils.decorators import method_decorator
 from django.views.generic.base import TemplateView
+from django.shortcuts import render
 
 
 require_can_edit_fixtures = require_permission(Permissions.edit_data)
@@ -186,7 +188,7 @@ def users(request, domain):
 
 @require_can_edit_fixtures
 def view(request, domain, template='fixtures/view.html'):
-    return render_to_response(request, template, {
+    return render(request, template, {
         'domain': domain
     })
 

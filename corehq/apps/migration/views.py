@@ -3,6 +3,8 @@ import json
 from django.views.decorators.http import require_POST
 import re
 from django.http import HttpResponse
+from django.shortcuts import render
+
 import restkit
 from corehq.apps.domain.decorators import require_superuser
 from corehq.apps.groups.models import Group
@@ -17,7 +19,7 @@ from corehq.apps.users.models import CommCareUser
 from corehq.apps.users.util import normalize_username
 from couchforms.models import XFormInstance
 from dimagi.utils.couch.database import get_db
-from dimagi.utils.web import json_response, render_to_response
+from dimagi.utils.web import json_response
 from receiver.util import spoof_submission
 
 
@@ -194,7 +196,7 @@ def resubmit_for_users(request, domain):
                 return json_response(id_mapping)
     else:
         if request.GET.get('debug'):
-            return render_to_response(request, 'migration/resubmit_for_users_debug.html', {
+            return render(request, 'migration/resubmit_for_users_debug.html', {
                 'domain': domain
             })
         else:
@@ -204,7 +206,7 @@ def resubmit_for_users(request, domain):
                 result = Task.AsyncResult(task_id)
                 return json_response({'task_id': task_id, 'state': result.state, 'info': result.info})
             else:
-                return render_to_response(request, 'migration/resubmit_for_users.html', {
+                return render(request, 'migration/resubmit_for_users.html', {
                     'domain': domain
                 })
 
