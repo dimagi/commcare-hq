@@ -159,7 +159,6 @@ class DefaultReportADMSectionView(GenericTabularReport, ADMSectionView, ProjectR
             report_slug = key[-2]
             if cls.show_subreport_in_navigation(report_slug):
                 subreport_context.append({
-                    'is_report': True,
                     'is_active': current_slug == report_slug,
                     'url': cls.get_url(domain=domain, subreport=report_slug),
                     'description': entry.get('description', ''),

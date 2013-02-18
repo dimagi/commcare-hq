@@ -134,12 +134,13 @@ class ReportDispatcher(View):
         return ['json', 'async', 'filters', 'export', 'mobile', 'email', 'partial']
 
     @classmethod
-    def report_navigation_sections(cls, context):
+    def navigation_sections(cls, context):
         request = context.get('request')
         domain = context.get('domain') or getattr(request, 'domain', None)
 
         nav_context = []
-        dispatcher = cls()
+
+        dispatcher = cls()  # uhoh
         current_slug = context.get('report',{}).get('slug','')
 
         reports = dispatcher.get_reports(domain)
@@ -154,7 +155,6 @@ class ReportDispatcher(View):
                         report_contexts.extend(report.override_navigation_list(context))
                     else:
                         report_contexts.append({
-                            'is_report': True,
                             'is_active': report.slug == current_slug,
                             'url': report.get_url(domain=domain),
                             'description': report.description,
@@ -164,12 +164,6 @@ class ReportDispatcher(View):
             if report_contexts:
                 nav_context.append((section_name, report_contexts))
         return nav_context
-
-    @classmethod
-    def report_navigation_list(cls, context):
-        return mark_safe(render_to_string("reports/standard/partials/navigation_items.html", {
-            'sections': cls.report_navigation_sections(context)
-        }))
 
     @classmethod
     def url_pattern(cls):

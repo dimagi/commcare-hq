@@ -6,10 +6,16 @@ from django.utils.translation import ugettext as _
 from django.utils.translation import ugettext_noop
 
 from dimagi.utils.couch.database import get_db
+from dimagi.utils.decorators.memoized import memoized
 
-from corehq.apps.reports.dispatcher import ProjectReportDispatcher
-from corehq.apps.adm.dispatcher import ADMSectionDispatcher
+from corehq.apps.reports.dispatcher import (ProjectReportDispatcher,
+    CustomProjectReportDispatcher)
+from corehq.apps.adm.dispatcher import (ADMAdminInterfaceDispatcher,
+    ADMSectionDispatcher)
 from corehq.apps.data_interfaces.dispatcher import DataInterfaceDispatcher
+from hqbilling.dispatcher import BillingInterfaceDispatcher
+from corehq.apps.announcements.dispatcher import (
+    HQAnnouncementAdminInterfaceDispatcher)
 
 
 def format_submenu_context(title, url=None, html=None,
@@ -37,6 +43,8 @@ class UITab(object):
     view = None
     subtab_classes = None
 
+    dispatcher = None
+
     def __init__(self, request, domain=None, couch_user=None, project=None):
         # todo: domain object for commtrack
 
@@ -58,11 +66,21 @@ class UITab(object):
     
     @property
     def dropdown_items(self):
+        # todo: add default implementation which looks at sidebar_items and
+        # sees which ones have is_dropdown_visible or something like that.
+        # Also make it work for tabs with subtabs.
         return []
 
     @property
     def sidebar_items(self):
-        return []
+        if self.dispatcher:
+            context = {
+                'request': self._request,
+                'domain': self.domain,
+            }
+            return self.dispatcher.navigation_sections(context)
+        else:
+            return []
  
     @property
     def is_viewable(self):
@@ -77,6 +95,7 @@ class UITab(object):
         raise NotImplementedError()
 
     @property
+    @memoized
     def real_is_viewable(self):
         if self.subtabs:
             return any(st.real_is_viewable for st in self.subtabs)
@@ -91,6 +110,7 @@ class UITab(object):
                 return False
     
     @property
+    @memoized
     def url(self):
         if self.domain:
             try:
@@ -104,18 +124,19 @@ class UITab(object):
             return None
 
     @property
+    @memoized
     def is_active(self):
-        return self._request.get_full_path().startswith(self.url or "")
+        if self.subtabs and any(st.is_active for st in self.subtabs):
+            return True
+
+        if self.url:
+            return self._request.get_full_path().startswith(self.url)
+        else:
+            return False
 
     @property
     def css_id(self):
         return self.__class__.__name__
-
-
-class ReportsTab(UITab):
-    title = ugettext_noop("Reports")
-    view = "corehq.apps.reports.views.default"
-    subtab_classes = (ProjectReportsTab, ADMReportsTab)
 
 
 class ProjectReportsTab(UITab):
@@ -124,53 +145,65 @@ class ProjectReportsTab(UITab):
 
     @property
     def is_viewable(self):
+
         return (self.domain and self.project and not self.project.is_snapshot and
                 (self.couch_user.can_view_reports() or
                  self.couch_user.get_viewable_reports))
 
     @property
+    def is_active(self):
+        # HACK. We need a more overarching way to avoid doing things this way
+        if 'adm' in self._request.get_full_path():
+            return False
+
+        return super(ProjectReportsTab, self).is_active
+
+    @property
     def sidebar_items(self):
         context = {
-            'request': self.request,
+            'request': self._request,
             'domain': self.domain,
         }
+        
+        tools = [(_("Tools"), [
+            {'title': 'My Saved Reports',
+             'url': reverse('saved_reports', args=[self.domain]),
+             'icon': 'icon-tasks'}
+        ])]
 
-        project_reports = ProjectReportDispatcher.report_navigation_items(
+        project_reports = ProjectReportDispatcher.navigation_sections(
             context)
-        custom_reports = CustomProjectReportDispatcher.report_navigation_items(
+        custom_reports = CustomProjectReportDispatcher.navigation_sections(
             context)
 
-        return project_reports + custom_reports
-
-
-        if not adm_enabled:
-            return project_reports
-        else:
-            adm_reports = ADMSectionDispatcher.report_navigation_items(context)
-            return [
-                {'title': _("Active Data Management"),
-                 'active': None,
-                 'url': reverse('reports_home', args=[self.domain]),
-                 'items': adm_reports},
-                {'title': _("Project Reports"),
-                 'active': None,
-                 'url': reverse('default_adm_report', args=[self.domain]),
-                 'items': project_reports + custom_reports}
-            ]
+        return tools + project_reports + custom_reports
 
 
 class ADMReportsTab(UITab):
     title = ugettext_noop("Active Data Management")
     view = "corehq.apps.adm.views.default_adm_report"
+    dispatcher = ADMSectionDispatcher
 
     @property
     def is_viewable(self):
         adm_enabled_projects = getattr(settings, 'ADM_ENABLED_PROJECTS', [])
 
-        return (self.domain and not self.project.is_snapshot and 
+        return (self.domain and not self.project.is_snapshot and
                 self.domain in adm_enabled_projects and
                   (self.couch_user.can_view_reports() or
                    self.couch_user.get_viewable_reports()))
+
+    @property
+    def is_active(self):
+        project_reports_url = reverse(ReportsTab.view, args=[self.domain])
+        return (super(ADMReportsTab, self).is_active and self.domain and
+                self._request.get_full_path() != project_reports_url)
+
+
+class ReportsTab(UITab):
+    title = ugettext_noop("Reports")
+    view = "corehq.apps.reports.views.default"
+    subtab_classes = (ProjectReportsTab, ADMReportsTab)
 
 
 class ProjectInfoTab(UITab):
@@ -185,17 +218,11 @@ class ProjectInfoTab(UITab):
 class ManageDataTab(UITab):
     title = ugettext_noop("Manage Data")
     view = "corehq.apps.data_interfaces.views.default"
+    dispatcher = DataInterfaceDispatcher
 
     @property
     def is_viewable(self):
         return self.domain and self.couch_user.can_edit_data()
-
-    @property
-    def sidebar_items(self):
-        return DataInterfaceDispatcher.report_navigation_items({
-            'request': self.request,
-            'domain': self.domain
-        })
 
         
 class ApplicationsTab(UITab):
@@ -267,21 +294,30 @@ class CloudcareTab(UITab):
 
 class MessagesTab(UITab):
     title = ugettext_noop("Messages")
-    view = "corehq.apps.sms.views.messaging"
+    view = "corehq.apps.sms.views.default"
 
     @property
     def is_viewable(self):
         return (self.domain and self.project and not self.project.is_snapshot and
                 not self.couch_user.is_commcare_user())
 
+    @property
+    def sidebar_items(self):
+        return [(_("Messaging"), [
+            {'title': _('Message History'),
+             'url': reverse('messaging', args=[self.domain])},
+            {'title': _('Compose SMS Message'),
+             'url': reverse('sms_compose_message', args=[self.domain])}
+        ])]
+
 
 class ProjectSettingsTab(UITab):
-    view = "corehq.apps.users.views.users"
+    view = "corehq.apps.settings.views.default"
 
-    @property
-    def url(self):
-        from corehq.apps.users.views import redirect_users_to
-        return redirect_users_to(self._request, self.domain) or reverse("homepage")
+    #@property
+    #def url(self):
+        #from corehq.apps.users.views import redirect_users_to
+        #return redirect_users_to(self._request, self.domain) or reverse("homepage")
 
     @property
     def dropdown_items(self):
@@ -300,8 +336,78 @@ class ProjectSettingsTab(UITab):
 
 
 class AdminReportsTab(UITab):
+    title = ugettext_noop("Admin Reports")
+    view = "corehq.apps.hqadmin.views.default"
+
+    @property
+    def sidebar_items(self):
+        # todo: convert these to dispatcher-style like other reports
+        return [
+            (_('Administrative Reports'), [
+                {'title': _('Domain List'),
+                 'url': reverse('domain_list')},
+                {'title': _('Domain Activity Report'),
+                 'url': reverse('domain_activity_report')},
+                {'title': _('Message Logs Across All Domains'),
+                 'url': reverse('message_log_report')},
+                {'title': _('Global Statistics'),
+                 'url': reverse('global_report')},
+                {'title': _('CommCare Versions'),
+                 'url': reverse('commcare_version_report')},
+                {'title': _('Submissions & Error Statistics per Domain'),
+                 'url': reverse('global_submissions_errors')},
+                {'title': _('System Info'),
+                 'url': reverse('system_info')},
+            ]),
+            (_('Administrative Operations'), [
+                {'title': _('View/Update Domain Information'),
+                 'url': reverse('domain_update')}
+            ])
+        ]
+    
+    @property
+    def is_viewable(self):
+        return self.couch_user and self.couch_user.is_superuser
+
+
+class GlobalADMConfigTab(UITab):
+    title = ugettext_noop("Global ADM Report Configuration")
+    view = "corehq.apps.adm.views.default_adm_admin"
+    dispatcher = ADMAdminInterfaceDispatcher
+
+    @property
+    def is_viewable(self):
+        return self.couch_user and self.couch_user.is_superuser
+
+class BillingTab(UITab):
+    title = ugettext_noop("Billing")
+    view = "billing_default"
+    dispatcher = BillingInterfaceDispatcher
+
+    @property
+    def is_viewable(self):
+        return self.couch_user and self.couch_user.is_superuser
+
+
+class AnnouncementsTab(UITab):
+    title = ugettext_noop("Announcements")
+    view = "corehq.apps.announcements.views.default_announcement"
+    dispatcher = HQAnnouncementAdminInterfaceDispatcher
+
+    @property
+    def is_viewable(self):
+        return self.couch_user and self.couch_user.is_superuser
+
+
+class AdminTab(UITab):
     title = ugettext_noop("Admin")
     view = "corehq.apps.hqadmin.views.default"
+    subtab_classes = (
+        AdminReportsTab,
+        GlobalADMConfigTab,
+        BillingTab,
+        AnnouncementsTab
+    )
 
     @property
     def dropdown_items(self):
@@ -349,6 +455,7 @@ class ExchangeTab(UITab):
     @property
     def is_viewable(self):
         return not self.couch_user.is_commcare_user()
+
 
 class ManageSurveysTab(UITab):
     title = ugettext_noop("Manage Surveys")

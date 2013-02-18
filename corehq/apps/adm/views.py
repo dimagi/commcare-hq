@@ -4,7 +4,6 @@ from django.shortcuts import render
 from corehq.apps.crud.views import BaseAdminCRUDFormView
 from corehq.apps.domain.decorators import (require_superuser,
     login_and_domain_required)
-from corehq.apps.domain.decorators import require_superuser, domain_admin_required, login_and_domain_required
 
 @login_and_domain_required
 def default_adm_report(request, domain, template="adm/base_template.html", **kwargs):

@@ -1,4 +1,5 @@
 {% extends 'hqwebapp/base.html' %}
+{% load menu_tags %}
 
 {# stuff to override old styles -- remove when everything is migrated over #}
 {% block oldstyle_tag %}{% endblock %}
@@ -11,7 +12,9 @@
 {% block content %}
     <div class="row-fluid">
         <div class="sidebar span2">
-            {% block sidebar %}{% endblock %}
+            {% block sidebar %}
+            {% format_sidebar %}
+            {% endblock %}
         </div>
         <div class="hq-{% if layout_flush_content %}flush-{% endif %}content span10">
             {% block main_column %}{% endblock %}

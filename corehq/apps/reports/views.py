@@ -73,7 +73,11 @@ require_case_view_permission = require_permission(Permissions.view_report, 'core
 require_can_view_all_reports = require_permission(Permissions.view_reports)
 
 @login_and_domain_required
-def default(request, domain, template="reports/reports_home.html"):
+def default(request, domain):
+    return HttpResponseRedirect(reverse(saved_reports, args=[domain]))
+
+@login_and_domain_required
+def saved_reports(request, domain, template="reports/reports_home.html"):
     user = request.couch_user
     if not (request.couch_user.can_view_reports() or request.couch_user.get_viewable_reports()):
         raise Http404
