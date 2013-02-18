@@ -1,7 +1,5 @@
-from couchexport.models import GroupExportConfiguration, SavedBasicExport,\
-    SavedExportSchema
+from couchexport.models import GroupExportConfiguration, SavedBasicExport
 from couchdbkit.exceptions import ResourceNotFound
-from couchexport.export import export
 from datetime import datetime
 import os
 import json
@@ -24,9 +22,11 @@ def export_for_group(export_id, output_dir):
             if not saved: 
                 saved = SavedBasicExport(configuration=config)
                 saved.save()
-        
             saved.put_attachment(payload, config.filename)
             saved.last_updated = datetime.utcnow()
+            # force update the config in case it changed.
+            # redundant in the create case
+            saved.configuration = config
             saved.save()
         else:
             with open(os.path.join(output_dir, config.filename), "wb") as f:
