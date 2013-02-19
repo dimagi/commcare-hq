@@ -2,7 +2,6 @@ import dateutil
 from django.core.urlresolvers import reverse
 from corehq.apps.groups.models import Group
 from corehq.apps.reports import util
-from corehq.apps.adm import utils as adm_utils
 from corehq.apps.reports.dispatcher import ProjectReportDispatcher, CustomProjectReportDispatcher
 from corehq.apps.reports.fields import FilterUsersField
 from corehq.apps.reports.generic import GenericReportView
@@ -16,17 +15,13 @@ DATE_FORMAT = "%Y-%m-%d"
 class ProjectReport(GenericReportView):
     # overriding properties from GenericReportView
     section_name = ugettext_noop("Project Reports")
-    app_slug = 'reports'
+    base_template = 'reports/base_template.html'
     dispatcher = ProjectReportDispatcher
     asynchronous = True
 
     @property
     def default_report_url(self):
         return reverse('reports_home', args=[self.request.project])
-
-    @property
-    def show_subsection_navigation(self):
-        return adm_utils.show_adm_nav(self.domain, self.request)
 
     def set_announcements(self):
         if self.request.couch_user:

@@ -7,7 +7,7 @@ from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
 
 class BaseHQAnnouncementsAdminInterface(BaseCRUDAdminInterface):
     section_name = "HQ Announcements"
-    app_slug = 'announcements'
+    base_template = 'reports/base_template.html'
     dispatcher = HQAnnouncementAdminInterfaceDispatcher
 
     crud_form_update_url = "/announcements/form/"

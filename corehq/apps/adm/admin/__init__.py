@@ -5,7 +5,7 @@ from corehq.apps.crud.interface import BaseCRUDAdminInterface
 class BaseADMAdminInterface(BaseCRUDAdminInterface):
     # overrides
     section_name = "Global ADM Report Configuration"
-    app_slug = 'adm'
+    base_template = 'reports/base_template.html'
     dispatcher = ADMAdminInterfaceDispatcher
 
     crud_item_type = "ADM Item"
