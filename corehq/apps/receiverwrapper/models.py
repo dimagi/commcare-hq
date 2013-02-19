@@ -1,20 +1,47 @@
+from datetime import datetime, timedelta
+import json
+
+from couchdbkit.ext.django.schema import *
+from django.core.cache import cache
+import socket
+import hashlib
+
 from casexml.apps.case.models import CommCareCase
 from casexml.apps.case.xml import V2, LEGAL_VERSIONS
+
 from couchforms.models import XFormInstance
 from dimagi.utils.parsing import json_format_datetime
-from couchdbkit.ext.django.schema import *
 from dimagi.utils.mixins import UnicodeMixIn
-from datetime import datetime, timedelta
 from dimagi.utils.post import simple_post
-import json
 from dimagi.utils.couch import LockableMixIn
 
+
 repeater_types = {}
+
 
 def register_repeater_type(cls):
     repeater_types[cls.__name__] = cls
     return cls
+
+
+def simple_post_with_cached_timeout(data, url, expiry=60*60, *args, **kwargs):
+    # no control characters (e.g. '/') in keys
+    key = hashlib.md5(
+        '{} timeout {}'.format(__name__, url)
+    ).hexdigest()
+
+    if cache.get(key) == 'timeout':
+        raise socket.timeout('recently timed out, not retrying')
+    try:
+        return simple_post(data, url, *args, **kwargs)
+    except socket.timeout:
+        cache.set(key, 'timeout', expiry)
+        raise
+
+
 DELETED = "-Deleted"
+
+
 class Repeater(Document, UnicodeMixIn):
     base_doc = 'Repeater'
 
@@ -182,7 +209,7 @@ class RepeatRecord(Document, LockableMixIn):
         return self.repeater.get_payload(self)
 
     def fire(self, max_tries=3, post_fn=None):
-        post_fn = post_fn or simple_post
+        post_fn = post_fn or simple_post_with_cached_timeout
         if self.try_now():
             # we don't use celery's version of retry because
             # we want to override the success/fail each try
@@ -200,4 +227,3 @@ class RepeatRecord(Document, LockableMixIn):
                 self.update_failure()
 
 # import signals
-from corehq.apps.receiverwrapper import signals
