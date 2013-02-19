@@ -1,14 +1,15 @@
 from functools import wraps
-from celery.log import get_task_logger
-from celery.task import periodic_task
-from datetime import datetime, timedelta
-from django.core.cache import cache
-from corehq.apps.receiverwrapper.models import RepeatRecord, FormRepeater
-from couchdbkit.exceptions import ResourceConflict
-from couchforms.models import XFormInstance
-from dimagi.utils.parsing import json_format_datetime, ISO_MIN
 
-logging = get_task_logger()
+from datetime import datetime, timedelta
+
+from celery.task import periodic_task
+from celery.utils.log import get_task_logger
+from django.core.cache import cache
+
+from corehq.apps.receiverwrapper.models import RepeatRecord
+
+
+logger = get_task_logger(__name__)
 
 def run_only_once(fn):
     """
@@ -31,7 +32,7 @@ def run_only_once(fn):
             finally:
                 release_lock()
         else:
-            logging.debug("%s is already running; aborting" % fn_name)
+            logger.debug("%s is already running; aborting" % fn_name)
     return _fn
 
 @periodic_task(run_every=timedelta(minutes=1))
