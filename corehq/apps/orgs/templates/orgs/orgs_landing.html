@@ -103,7 +103,7 @@
                 <p><i class="icon-link"></i> {% if org.url %}<a href="http://{{ org.url }}" target="_blank">{{ org.url }}</a>{% else %} None{% endif %}</p>
                 <p><i class="icon-map-marker"></i> {{ org.location }}</p>
                 {% if admin %}
-                    <a href="#update_info_modal" class="btn" data-toggle="modal"><i class="icon-edit"></i> Update Info</a>
+                    <a href="#update_info_modal" class="btn" data-toggle="modal"><i class="icon-edit"></i> {% trans "Update Info" %}</a>
                 {% endif %}
             </div>
             <hr />
@@ -116,12 +116,12 @@
                     </div>
                     <div class="span4">
                         <a href="{% url orgs_teams org.name %}">
-                            <h2>{{ teams|length }} <small>Teams</small></h2>
+                            <h2>{{ teams|length }} <small>{% trans "Teams" %}</small></h2>
                         </a>
                     </div>
                     <div class="span4">
                         <a href="{% url orgs_members org.name %}">
-                            <h2>{{ members|length }} <small>Members</small></h2>
+                            <h2>{{ members|length }} <small>{% trans "Members" %}</small></h2>
                         </a>
                     </div>
                 </div>
@@ -131,13 +131,13 @@
         <div class="span9">
             <ul class="nav nav-tabs">
                 <li{% ifequal tab "projects" %} class="active"{% endifequal %}>
-                    <a href="{% url orgs_landing org.name %}">Projects</a>
+                    <a href="{% url orgs_landing org.name %}">{% trans "Projects" %}</a>
                 </li>
                 <li{% ifequal tab "teams" %} class="active"{% endifequal %}>
-                    <a href="{% url orgs_teams org.name %}">Teams</a>
+                    <a href="{% url orgs_teams org.name %}">{% trans "Teams" %}</a>
                 </li>
                 <li{% ifequal tab "members" %} class="active"{% endifequal %}>
-                    <a href="{% url orgs_members org.name %}">Members</a>
+                    <a href="{% url orgs_members org.name %}">{% trans "Members" %}</a>
                 </li>
                 <span class="pull-right">
                     {% block top-right %}
@@ -157,10 +157,10 @@
                     <div class="well well-small form-horizontal">
                         <input id="prelim_add_project" type="text" placeholder="Name of an existing project" />
                         <a href="#add_project_modal" id="add_project_btn" class="btn btn-info" data-toggle="modal">
-                            <i class="icon-plus"></i> Add Existing Project
+                            <i class="icon-plus"></i> {% trans "Add Existing Project" %}
                         </a> or
                         <a href="#create_project_modal" id="create_project_btn" class="btn" data-toggle="modal">
-                            <i class="icon-pencil"></i> Add New Project
+                            <i class="icon-pencil"></i> {% trans "Add New Project" %}
                         </a>
                     </div>
                 {% endif %}
@@ -184,8 +184,8 @@
                     </fieldset>
                 </div>
                 <div class="modal-footer">
-                    <a href="#" data-dismiss="modal" class="btn">Cancel</a>
-                    <button type="submit" class="btn btn-primary">Update</button>
+                    <a href="#" data-dismiss="modal" class="btn">{% trans "Cancel" %}</a>
+                    <button type="submit" class="btn btn-primary">{% trans "Update" %}</button>
                 </div>
             </form>
         </div>
@@ -200,7 +200,7 @@
                 <form class="form-horizontal" action="{% url orgs_new_project org.name %}" method="post">
                     <div class="modal-body">
                         <fieldset>
-                            <legend>Create a new project within this organization</legend>
+                            <legend>{% trans "Create a new project within this organization" %}</legend>
                             {% for global_error in reg_form.non_field_errors %}
                             <div class="alert alert-error">
                                 {{ global_error }}
@@ -229,8 +229,8 @@
                     </div>
 
                     <div class="modal-footer">
-                        <a href="#" data-dismiss="modal" class="btn">Cancel</a>
-                        <button type="submit" class="btn btn-primary">Create New Project</button>
+                        <a href="#" data-dismiss="modal" class="btn">{% trans "Cancel" %}</a>
+                        <button type="submit" class="btn btn-primary">{% trans "Create New Project" %}</button>
                     </div>
                 </form>
             </div>
@@ -238,7 +238,7 @@
             <div id="add_project_modal" class="modal hide fade">
                 <div class="modal-header">
                     <a class="close" data-dismiss="modal">&times;</a>
-                    <h3>Manage an existing project</h3>
+                    <h3>{% trans "Manage an existing project" %}</h3>
                 </div>
                 <form class="form-horizontal" method="post" action="{% url orgs_add_project org.name %}">
                     <div class="modal-body">
@@ -248,8 +248,8 @@
                         </fieldset>
                     </div>
                     <div class="modal-footer">
-                        <a href="#" data-dismiss="modal" class="btn">Cancel</a>
-                        <button type="submit" class="btn btn-primary">Add Project</button>
+                        <a href="#" data-dismiss="modal" class="btn">{% trans "Cancel" %}</a>
+                        <button type="submit" class="btn btn-primary">{% trans "Add Project" %}</button>
                     </div>
                 </form>
             </div>
