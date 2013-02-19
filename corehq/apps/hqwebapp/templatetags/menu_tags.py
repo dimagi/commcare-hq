@@ -50,7 +50,6 @@ def format_main_menu(parser, token):
 @register.simple_tag(takes_context=True)
 def format_subtab_menu(context):
     active_tab = context.get('active_tab', None)
-    print active_tab
     if active_tab and active_tab.subtabs:
         subtabs = [t for t in active_tab.subtabs if t.is_viewable]
     else:
