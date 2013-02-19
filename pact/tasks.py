@@ -1,16 +1,19 @@
 import traceback
-from celery.task import task, subtask
 from datetime import datetime
+
+from celery.task import task
 import simplejson
+
 from couchforms.models import XFormInstance
 from dimagi.utils.logging import notify_exception
 from pact.enums import PACT_DOTS_DATA_PROPERTY
 from pact.utils import get_case_id
 
+
 DOT_RECOMPUTE=True
 #cc_user = CommCareUser.get_by_username('pactimporter@pact.commcarehq.org')
 
-@task(ignore_results=True)
+@task(ignore_result=True)
 def recalculate_dots_data(case_id, cc_user):
     """
     Recalculate the dots data and resubmit calling the pact api for dot recompute
@@ -26,7 +29,7 @@ def recalculate_dots_data(case_id, cc_user):
             notify_exception(None, message="PACT error recomputing DOTS case block: %s\n%s" % (ex, tb))
 
 
-@task(ignore_results=True)
+@task(ignore_result=True)
 def eval_dots_block(xform_json, callback=None):
     """
     Evaluate the dots block in the xform submission and put it in the computed_ block for the xform.
@@ -63,8 +66,3 @@ def eval_dots_block(xform_json, callback=None):
         tb = traceback.format_exc()
         notify_exception(None, message="PACT error evaluating DOTS block docid %s, %s\n\tTraceback: %s" % (xform_json['_id'], ex, tb))
 #        print "PACT error evaluating DOTS block docid %s, %s\n\tTraceback: %s" % (xform_json['_id'], ex, tb)
-
-
-
-    if callback is not None and do_continue:
-        subtask(callback).delay(case_id)
