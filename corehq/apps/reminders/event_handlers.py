@@ -7,11 +7,12 @@ from corehq.apps.sms.api import send_sms, send_sms_to_verified_number
 from corehq.apps.smsforms.app import start_session
 from corehq.apps.sms.util import format_message_list
 from corehq.apps.users.models import CouchUser
-from corehq.apps.sms.models import CallLog, EventLog, MISSED_EXPECTED_CALLBACK
+from corehq.apps.sms.models import CallLog, ExpectedCallbackEventLog, CALLBACK_PENDING, CALLBACK_RECEIVED, CALLBACK_MISSED
 from django.conf import settings
 from corehq.apps.app_manager.models import Form
 from corehq.apps.ivr.api import initiate_outbound_call
 from datetime import timedelta
+from dimagi.utils.parsing import json_format_datetime
 
 DEFAULT_OUTBOUND_RETRY_INTERVAL = 5
 DEFAULT_OUTBOUND_RETRIES = 2
@@ -102,23 +103,39 @@ def fire_sms_callback_event(reminder, handler, recipients, verified_numbers):
             return True
         
         # If the callback has been received, skip sending the next timeout message
-        if len(current_event.callback_timeout_intervals) > 0 and (reminder.callback_try_count > 0):
-            # If last_fired is None, it means that the reminder fired for the first time on a timeout interval. So we just want
-            # to either log the missed callback if it's the last timeout, or fire the sms if not
+        if reminder.callback_try_count > 0:
+            # Lookup the expected callback event
+            if reminder.event_initiation_timestamp is None:
+                event = None
+            else:
+                event = ExpectedCallbackEventLog.view("sms/expected_callback_event",
+                                                      key=[reminder.domain, json_format_datetime(reminder.event_initiation_timestamp), recipients[0].get_id],
+                                                      include_docs=True,
+                                                      limit=1).one()
+            
+            # NOTE: If last_fired is None, it means that the reminder fired for the first time on a timeout interval
             if reminder.last_fired is not None and CallLog.inbound_call_exists(recipients[0].doc_type, recipients[0].get_id, reminder.last_fired):
                 reminder.skip_remaining_timeouts = True
+                if event is not None:
+                    event.status = CALLBACK_RECEIVED
+                    event.save()
                 return True
-            elif len(current_event.callback_timeout_intervals) == reminder.callback_try_count:
+            elif reminder.callback_try_count >= len(current_event.callback_timeout_intervals):
                 # On the last callback timeout, instead of sending the SMS again, log the missed callback
-                event = EventLog(
-                    domain                   = reminder.domain,
-                    date                     = handler.get_now(),
-                    event_type               = MISSED_EXPECTED_CALLBACK,
-                    couch_recipient_doc_type = recipients[0].doc_type,
-                    couch_recipient          = recipients[0].get_id,
-                )
-                event.save()
+                if event is not None:
+                    event.status = CALLBACK_MISSED
+                    event.save()
                 return True
+        else:
+            # It's the first time sending the sms, so create an expected callback event
+            event = ExpectedCallbackEventLog(
+                domain                   = reminder.domain,
+                date                     = reminder.event_initiation_timestamp,
+                couch_recipient_doc_type = recipients[0].doc_type,
+                couch_recipient          = recipients[0].get_id,
+                status                   = CALLBACK_PENDING,
+            )
+            event.save()
         
         return fire_sms_event(reminder, handler, recipients, verified_numbers)
     else:
