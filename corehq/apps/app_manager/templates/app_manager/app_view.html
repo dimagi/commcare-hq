@@ -549,7 +549,13 @@
                      </td>
                  </tr>
                 {% endif %}
-                {% if user.is_superuser %}
+                {% if user.is_superuser and app.use_custom_suite %}
+                    {% comment %}
+                        This used to be always visible to superuser, but it was
+                        a horrible idea and is only used in one project. I added
+                        `and app.use_custom_suite` above without changing the
+                        redundant checks below.
+                    {% endcomment %}
                 <tbody class="superuser-only">
                     <tr>
                         <th><label for="use-custom-suite-select">Custom Suite File</label></th>

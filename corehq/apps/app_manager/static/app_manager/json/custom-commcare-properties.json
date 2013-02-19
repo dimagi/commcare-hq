@@ -8,6 +8,7 @@
     "values_txt": "After login, the application will look at the profile's defined reference for the authoritative location of the newest version. This check will occur with some periodicity since the last successful check based on this property. freq-never disables the automatic check.",
     "since": "1.3"
 }, {
+    "disabled": true,
     "name": "Purge Frequency",
     "description": "How often the phone should attempt to purge any cached storage which may have expired",
     "id": "purge-freq",
@@ -53,12 +54,14 @@
     "value_names": ["Never", "Short", "Full"],
     "group": "log"
 }, {
-    "name": "Record Submission Format",
-    "description": "What CommCare does with forms once they are completed and parsed. Useful for disabling form sending in non-connected environments.",
+    "name": "Send Data",
+    "description": "Whether or not the phone collects, saves, and sends data.",
     "id": "cc-send-procedure",
     "default": "cc-send-http",
-    "values": ["cc-send-http", "cc-send-file", "cc-send-none"],
-    "value_names": ["Send Via HTTP", "Save to the File System", "Never Send or Save Data (NOT RECOMMENDED)"]
+    "values": ["cc-send-http", "cc-send-none"],
+    "//values": ["cc-send-file"],
+    "value_names": ["Yes", "No (NOT RECOMMENDED)"],
+    "//value_names": ["Save to the File System"]
 }, {
     "name": "Password Format",
     "description": "What format user's passwords take",
@@ -95,6 +98,7 @@
     "values_txt": "When auto-sync is enabled CommCare will attempt to submit forms and synchronize the user's data after logging in with the frequency chosen.",
     "since": "2.0"
 }, {
+    "disabled": true,
     "name": "OTA Restore Tolerance",
     "description": "Whether OTA Restore is tolerant of failures, ambiguity, duplicate registrations, etc (and proceeds as best it can), or whether it fails immediately in these cases.",
     "id": "restore-tolerance",
@@ -174,6 +178,7 @@
     "contingent_default": [{"condition": "{features.sense}='true'", "value": "audio"}],
     "group": "sense"
 }, {
+    "disabled": true,
     "name": "Loose Media Mode",
     "description": "Whether CommCare should search for alternative formats of incompatible media files.",
     "id": "loose_media",
