@@ -4,12 +4,13 @@ from datetime import datetime, timedelta
 import json
 from django.core.urlresolvers import reverse
 from django.http import Http404, HttpResponse
+from django.shortcuts import render
+
 from corehq.apps.domain.decorators import login_and_domain_required
 from corehq.apps.reports.util import make_form_couch_key
 from corehq.apps.users.models import CouchUser, CommCareUser
 from couchforms.models import XFormInstance
 from dimagi.utils.parsing import string_to_datetime, json_format_datetime
-from dimagi.utils.web import render_to_response
 from corehq.apps.users.util import user_id_to_username
 
 DOMAIN = "dodoma"
@@ -30,7 +31,7 @@ def household_verification(request, domain):
         raise Http404
     report = call_as_view(_household_verification_json, request.GET, domain=domain)
     report['name'] = "Household Verification"
-    return render_to_response(request, 'reports/async/tabular.html', {
+    return render(request, 'reports/async/tabular.html', {
         "domain": domain,
         "report": report,
         "report_base": "reports/base_template.html"

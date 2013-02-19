@@ -4,7 +4,7 @@ from django.contrib import messages
 from django.contrib.auth import authenticate, login
 from django.db import transaction
 from django.http import HttpResponseRedirect
-from django.shortcuts import redirect
+from django.shortcuts import redirect, render
 from corehq.apps.domain.decorators import login_required_late_eval_of_LOGIN_URL
 from corehq.apps.domain.models import Domain
 from corehq.apps.orgs.views import orgs_landing
@@ -12,7 +12,7 @@ from corehq.apps.registration.models import RegistrationRequest
 from corehq.apps.registration.forms import NewWebUserRegistrationForm, DomainRegistrationForm, OrganizationRegistrationForm
 from corehq.apps.registration.utils import *
 from dimagi.utils.couch.resource_conflict import retry_resource
-from dimagi.utils.web import render_to_response, get_ip
+from dimagi.utils.web import get_ip
 from corehq.apps.domain.decorators import require_superuser
 from corehq.apps.orgs.models import Organization
 
@@ -40,7 +40,7 @@ def register_user(request):
             form = NewWebUserRegistrationForm() # An unbound form
 
         vals = dict(form = form)
-        return render_to_response(request, 'registration/create_new_user.html', vals)
+        return render(request, 'registration/create_new_user.html', vals)
 
 @transaction.commit_on_success
 @login_required_late_eval_of_LOGIN_URL
@@ -76,7 +76,7 @@ def register_org(request, template="registration/org_request.html"):
         form = OrganizationRegistrationForm() # An unbound form
 
     vals = dict(form=form)
-    return render_to_response(request, template, vals)
+    return render(request, template, vals)
 
 
 
@@ -92,7 +92,7 @@ def register_domain(request):
         domains_for_user = Domain.active_for_user(request.user, is_active=False)
         if len(domains_for_user) > 0:
             vals = dict(requested_domain=domains_for_user[0])
-            return render_to_response(request, 'registration/confirmation_waiting.html', vals)
+            return render(request, 'registration/confirmation_waiting.html', vals)
 
     if request.method == 'POST': # If the form has been submitted...
         nextpage = request.POST.get('next')
@@ -104,13 +104,13 @@ def register_domain(request):
             if reqs_today >= max_req:
                 vals = {'error_msg':'Number of domains requested today exceeds limit ('+str(max_req)+') - contact Dimagi',
                         'show_homepage_link': 1 }
-                return render_to_response(request, 'error.html', vals)
+                return render(request, 'error.html', vals)
 
             request_new_domain(request, form, org, is_new)
             requested_domain = form.cleaned_data['domain_name']
             if is_new:
                 vals = dict(alert_message="An email has been sent to %s." % request.user.username, requested_domain=requested_domain)
-                return render_to_response(request, 'registration/confirmation_sent.html', vals)
+                return render(request, 'registration/confirmation_sent.html', vals)
             else:
                 messages.success(request, '<strong>The project {project_name} was successfully created!</strong> An email has been sent to {username} for your records.'.format(
                     username=request.user.username,
@@ -131,7 +131,7 @@ def register_domain(request):
 
     vals = dict(form=form, is_new=is_new)
 
-    return render_to_response(request, 'registration/domain_request.html', vals)
+    return render(request, 'registration/domain_request.html', vals)
 
 @transaction.commit_on_success
 @login_required_late_eval_of_LOGIN_URL
@@ -158,13 +158,13 @@ def resend_confirmation(request):
             vals = {'error_msg':'There was a problem with your request',
                     'error_details':sys.exc_info(),
                     'show_homepage_link': 1 }
-            return render_to_response(request, 'error.html', vals)
+            return render(request, 'error.html', vals)
         else:
             vals = dict(alert_message="An email has been sent to %s." % dom_req.new_user_username, requested_domain=dom_req.domain)
-            return render_to_response(request, 'registration/confirmation_sent.html', vals)
+            return render(request, 'registration/confirmation_sent.html', vals)
 
     vals = dict(requested_domain=dom_req.domain)
-    return render_to_response(request, 'registration/confirmation_resend.html', vals)
+    return render(request, 'registration/confirmation_resend.html', vals)
 
 @transaction.commit_on_success
 def confirm_domain(request, guid=None):
@@ -175,7 +175,7 @@ def confirm_domain(request, guid=None):
         vals['message_subtitle'] = 'Account Activation Failed'
         vals['message_body'] = 'An account activation key was not provided. If you think this is an error, please contact the system administrator.'
         vals['is_error'] = True
-        return render_to_response(request, 'registration/confirmation_complete.html', vals)
+        return render(request, 'registration/confirmation_complete.html', vals)
 
     # Does guid exist in the system?
     req = RegistrationRequest.get_by_guid(guid)
@@ -184,7 +184,7 @@ def confirm_domain(request, guid=None):
         vals['message_subtitle'] = 'Account Activation Failed'
         vals['message_body'] = 'The account activation key "%s" provided is invalid. If you think this is an error, please contact the system administrator.'  % guid
         vals['is_error'] = True
-        return render_to_response(request, 'registration/confirmation_complete.html', vals)
+        return render(request, 'registration/confirmation_complete.html', vals)
 
     # Has guid already been confirmed?
     vals['requested_domain'] = req.domain
@@ -194,7 +194,7 @@ def confirm_domain(request, guid=None):
         vals['message_title'] = 'Already Activated'
         vals['message_body'] = 'Your account %s has already been activated. No further validation is required.' % req.new_user_username
         vals['is_error'] = False
-        return render_to_response(request, 'registration/confirmation_complete.html', vals)
+        return render(request, 'registration/confirmation_complete.html', vals)
 
     # Set confirm time and IP; activate domain and new user who is in the
     req.confirm_time = datetime.utcnow()
@@ -210,7 +210,7 @@ def confirm_domain(request, guid=None):
     vals['message_subtitle'] = 'Thank you for activating your account, %s!' % requesting_user.first_name
     vals['message_body'] = 'Your account has been successfully activated. Thank you for taking the time to confirm your email address: %s.' % requesting_user.username
     vals['is_error'] = False
-    return render_to_response(request, 'registration/confirmation_complete.html', vals)
+    return render(request, 'registration/confirmation_complete.html', vals)
 
 @retry_resource(3)
 def eula_agreement(request):

@@ -6,6 +6,8 @@ from django.http import HttpResponse, Http404
 from django.template.context import RequestContext
 import json
 from django.template.loader import render_to_string
+from django.shortcuts import render
+
 import pytz
 from corehq.apps.reports.models import ReportConfig
 from corehq.apps.reports import util
@@ -16,7 +18,7 @@ from couchexport.shortcuts import export_response
 from dimagi.utils.couch.pagination import DatatablesParams
 from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.modules import to_function
-from dimagi.utils.web import render_to_response, json_request
+from dimagi.utils.web import json_request
 from dimagi.utils.parsing import string_to_boolean
 from corehq.apps.reports.cache import CacheableRequestMixIn, request_cache
 
@@ -62,7 +64,6 @@ class GenericReportView(CacheableRequestMixIn):
     name = None         # string. the name of the report that shows up in the heading and the
     slug = None         # string. the report_slug_in_the_url
     section_name = None # string. ex: "Reports"
-    app_slug = None     # string. ex: 'reports' or 'manage'
     dispatcher = None   # ReportDispatcher subclass
 
     # Code can expect `fields` to be an iterable even when empty (never None)
@@ -227,7 +228,7 @@ class GenericReportView(CacheableRequestMixIn):
     @property
     @memoized
     def template_base(self):
-        return self.base_template or "%s/base_template.html" % self.app_slug
+        return self.base_template
 
     @property
     @memoized
@@ -316,17 +317,6 @@ class GenericReportView(CacheableRequestMixIn):
         return None
 
     @property
-    def show_subsection_navigation(self):
-        """
-            Override this to show subsection navigation directly under the top navigation bar.
-            Use the subsection-navigation block in the template to specify what the subsection navigation should
-            look like.
-
-            First use of this is to separate ADM and Project Reports in the Reports tab.
-        """
-        return False
-
-    @property
     def template_context(self):
         """
             Intention: Override if necessary.
@@ -407,7 +397,6 @@ class GenericReportView(CacheableRequestMixIn):
                 section_name=self.section_name,
                 slug=self.slug,
                 sub_slug=None,
-                app_slug=self.app_slug,
                 type=self.dispatcher.prefix,
                 url_root=self.url_root,
                 is_async=self.asynchronous,
@@ -465,9 +454,6 @@ class GenericReportView(CacheableRequestMixIn):
                     zone=self.timezone.zone
                 ))
         self.context.update(self._validate_context_dict(self.template_context))
-        self.context['report'].update(
-            show_subsection_navigation=self.show_subsection_navigation
-        )
 
     def update_report_context(self):
         """
@@ -497,7 +483,7 @@ class GenericReportView(CacheableRequestMixIn):
             self.update_report_context()
             template = self.template_report
         self.set_announcements()
-        return render_to_response(self.request, template, self.context)
+        return render(self.request, template, self.context)
 
     
     @property
@@ -514,9 +500,7 @@ class GenericReportView(CacheableRequestMixIn):
                                       "to the report config.")
         async_context = self._async_context()
         self.context.update(async_context)
-        return render_to_response(self.request, 
-                                  self.mobile_template_base,
-                                  self.context)
+        return render(self.request, self.mobile_template_base, self.context)
     
     @property
     @request_cache("email")

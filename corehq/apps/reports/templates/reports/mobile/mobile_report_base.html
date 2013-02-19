@@ -4,9 +4,7 @@
 {% block content %} 
     <div class="navbar">
         <div class="navbar-inner">
-            <a class="brand" href="{% block home-link %}/{% endblock %}">
-                <img src="{% static 'hqstyle/img/commcare-logo-mobile.png' %}" alt="CommCare HQ Mobile" />
-            </a>
+            <img class="brand" src="{% static 'hqstyle/img/commcare-logo-mobile.png' %}" alt="CommCare HQ Mobile" />
             <h1 class="page-title">{% trans title %}</h1>
             {% block mobile-nav %}
             {% endblock %}

@@ -11,11 +11,13 @@
 <body>
 <div class="container-fluid">
     {% block content %}{% endblock %}
+    {% block mobile-footer %}
     <footer>
         <small>{% trans "CommCare HQ Mobile is Copyright" %} &copy; {% now "Y" %} <a href="http://www.dimagi.com/">Dimagi, Inc.</a></small>
         <br>
         <small><a href="{% url logout %}">{% trans "Logout" %}</a></small>
     </footer>
+    {% endblock %}
 </div>
 {% block js %}{% endblock %}
 </body>

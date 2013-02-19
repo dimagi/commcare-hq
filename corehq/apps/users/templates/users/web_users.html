@@ -73,46 +73,8 @@
         <a class="btn btn-success" href="{% url invite_web_user domain %}"><i class="icon icon-white icon-plus"></i> Invite {% hq_web_user %}</a>
     </div>
 
-    <table class="table table-striped table-bordered">
-        <thead>
-            <tr>
-                <th>{% trans "E-mail" %}</th>
-                <th>{% trans "Role" %}</th>
-                <th>{% trans "Name" %}</th>
-                <th>{% trans "Phone Numbers" %}</th>
-                <th>{% trans "Remove" %}</th>
-            </tr>
-        </thead>
-        <tbody>
-        {% for user in web_users %}
-            <tr>
-                <td>
-                    <a href="{% url user_account domain user.couch_id %}">
-                        {{ user.html_username|safe }}
-                    </a>
-                </td>
-                <td>{% if user.role_label %}{{ user.role_label }}{% else %}<h6>(No Name)</h6>{% endif %}</td>
-                <td>{{ user.first_name }} {{ user.last_name }}</td>
-                <td>
-                    {% if user.phone_numbers %}
-                        +{{ user.default_phone_number }}
-                        {% if user.phone_numbers.1 %}
-                            (and more)
-                        {% endif %}
-                    {% else %}{% endif %}
-                </td>
-                <td>
-                    {% ifnotequal request.user.username user.username %}
-                    <form style="margin-bottom: 0;" action="{% url remove_web_user domain user.user_id %}" method="post">
-                        <button type="submit" class="btn btn-danger"><i class="icon icon-white icon-remove"></i> Remove Membership</button>
-                    </form>
-                    {% endifnotequal %}
-                </td>
-            </tr>
-        {% endfor %}
-        </tbody>
-    </table>
-    
+    {% include 'domain/partials/user_list.html' with users=web_users remove_included=1 %}
+
     {% if invitations %}
     <h2>Pending Invitations</h2>
     <table class="table table-striped table-bordered">

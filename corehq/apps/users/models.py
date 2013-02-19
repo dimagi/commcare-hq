@@ -597,7 +597,7 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, UnicodeMixIn):
     base_doc = 'CouchUser'
     device_ids = ListProperty()
     phone_numbers = ListProperty()
-    created_on = DateTimeProperty()
+    created_on = DateTimeProperty(default=datetime(year=1900, month=1, day=1))
 #    For now, 'status' is things like:
 #        ('auto_created',     'Automatically created from form submission.'),
 #        ('phone_registered', 'Registered from phone'),
@@ -1439,12 +1439,12 @@ class OrgMembershipMixin(DocumentSchema):
         if not team or team.organization != org:
             raise OrgMembershipError("Cannot add team -- Team(%s) does not exist in organization %s" % (team_id, org))
 
-        om.team_ids.add(team_id)
+        om.team_ids.append(team_id)
 
     def remove_from_team(self, org, team_id):
         om = self.get_org_membership(org)
         if om:
-            om.team_ids.discard(team_id)
+            om.team_ids.remove(team_id)
 
 class WebUser(CouchUser, MultiMembershipMixin, OrgMembershipMixin):
     #do sync and create still work?
@@ -1664,7 +1664,7 @@ class DomainInvitation(Invitation):
         text_content = render_to_string("domain/email/domain_invite.txt", params)
         html_content = render_to_string("domain/email/domain_invite.html", params)
         subject = 'Invitation from %s to join CommCareHQ' % self.get_inviter().formatted_name
-        send_HTML_email(subject, self.email, html_content, text_content=text_content)
+        send_HTML_email(subject, self.email, html_content, text_content=text_content, cc=[self.get_inviter().get_email()])
 
     @classmethod
     def by_domain(cls, domain, is_active=True):
