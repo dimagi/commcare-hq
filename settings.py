@@ -558,6 +558,7 @@ The CommCare HQ Team"""
 # mapping of domains to modules for those that aren't identical
 DOMAIN_MODULE_MAP = {
     'a5288-test': 'a5288',
+    'a5288-study': 'a5288',
     'care-bihar': 'bihar',
     'dca-malawi': 'dca',
     'eagles-fahu': 'dca',
