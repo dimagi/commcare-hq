@@ -29,7 +29,6 @@ class PactDOTAdminReport(GenericTabularReport, CustomProjectReport):
         try:
             case_doc = PactPatientCase.get(case_id)
             pactid = case_doc.pactid
-            print "got casedoc and pactid"
         except:
             case_doc = None
             pactid = None

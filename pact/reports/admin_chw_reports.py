@@ -19,15 +19,9 @@ class PactCHWAdminReport(GenericTabularReport, CustomProjectReport):
     report_template_path = "pact/admin/pact_chw_schedule_admin.html"
 
     def tabular_data(self, mode, case_id, start_date, end_date):#, limit=50, skip=0):
-        print "##########tabular data!"
-        print case_id
-        print mode
-        print start_date
-        print end_date
         try:
             case_doc = PactPatientCase.get(case_id)
             pactid = case_doc.pactid
-            print "got casedoc and pactid"
         except:
             case_doc = None
             pactid = None
@@ -59,8 +53,6 @@ class PactCHWAdminReport(GenericTabularReport, CustomProjectReport):
                 csv_filename = 'dots_csv_pt_all-%s_to_%s.csv' % (
                     start_date.strftime("%Y-%m-%d"), end_date.strftime("%Y-%m-%d"))
                 #heading
-        print startkey
-        print endkey
         view_results = CObservation.view('pact/dots_observations', startkey=startkey, endkey=endkey)#, limit=limit, skip=skip)
 
         for v in view_results:
@@ -99,7 +91,6 @@ class PactCHWAdminReport(GenericTabularReport, CustomProjectReport):
 
         #this is ugly, but we're repeating the work of the template for rendering the row data
         for visit_date, patient_visits in user_context['date_arr']:
-            print visit_date
             if len(patient_visits) > 0:
                 for patient_case, visit in patient_visits:
                     rowdata = [visit_date.strftime('%Y-%m-%d')]
@@ -151,11 +142,9 @@ class PactCHWAdminReport(GenericTabularReport, CustomProjectReport):
         """
         user_id = self.request.GET.get('individual', None)
 
-        print "user_id: #%s#" % user_id
         if user_id is None or user_id == '':
             #all users
             user_docs = CommCareUser.by_domain(PACT_DOMAIN)
-            print user_docs
         else:
             user_docs = [CommCareUser.get(user_id)]
 
