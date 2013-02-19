@@ -13,7 +13,7 @@
 {% endblock %}
 {% block js-inline %}
     {{ block.super }}
-    <script type="text/javascript">
+    <script>
         $(function(){
             var version_function = function () {
                 var i;
@@ -395,7 +395,7 @@
                         {% endif %}
                     </td>
                 </tr>
-                <tr>
+                <tr {% if app.application_version == "2.0" %}class="hide"{% endif %}>
                     <th>App Version</th>
                     <td>
                         {% if edit %}
