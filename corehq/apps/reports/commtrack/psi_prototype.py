@@ -321,6 +321,7 @@ class SalesAndConsumptionReport(GenericTabularReport, CommtrackReportMixin, Date
         for p in self.active_products:
             cols.append('Stock on Hand (%s)' % p['name'])
             cols.append('Total Sales (%s)' % p['name'])
+            cols.append('Total Receipts (%s)' % p['name'])
             cols.append('Total Consumption (%s)' % p['name'])
         cols.append('Stock-out days (all products combined)')
 
@@ -377,6 +378,7 @@ class SalesAndConsumptionReport(GenericTabularReport, CommtrackReportMixin, Date
 
                 data.append('%s (%s)' % (stock, as_of) if latest_state else u'\u2014')
                 data.append(sum(tx_by_action.get('sales', [])))
+                data.append(sum(tx_by_action.get('receipts', [])))
                 data.append(sum(tx_by_action.get('consumption', [])))
 
             combined_stockout_days = len(reduce(lambda a, b: a.intersection(b), stockouts.values()))
@@ -434,6 +436,7 @@ class CumulativeSalesAndConsumptionReport(GenericTabularReport, CommtrackReportM
         for p in self.active_products:
             cols.append('Total Stock on Hand (%s)' % p['name'])
             cols.append('Total Sales (%s)' % p['name'])
+            cols.append('Total Receipts (%s)' % p['name'])
             cols.append('Total Consumption (%s)' % p['name'])
 
         return DataTablesHeader(*(DataTablesColumn(c) for c in cols))
@@ -499,6 +502,7 @@ class CumulativeSalesAndConsumptionReport(GenericTabularReport, CommtrackReportM
 
                 data.append(sum(stocks) if stocks else u'\u2014')
                 data.append(sum(tx_by_action.get('sales', [])))
+                data.append(sum(tx_by_action.get('receipts', [])))
                 data.append(sum(tx_by_action.get('consumption', [])))
 
             return data
