@@ -6,7 +6,7 @@ from corehq.apps.domain.decorators import (require_superuser,
     login_and_domain_required)
 
 @login_and_domain_required
-def default_adm_report(request, domain, template="adm/base_template.html", **kwargs):
+def default_adm_report(request, domain, template="reports/base_template.html", **kwargs):
     from corehq.apps.adm.reports import ADMSectionView
     context = dict(
         domain=domain,
@@ -15,7 +15,6 @@ def default_adm_report(request, domain, template="adm/base_template.html", **kwa
             title="Select a Report to View",
             show=True,
             slug=None,
-            app_slug="adm",
             is_async=True,
             section_name=ADMSectionView.section_name,
         )

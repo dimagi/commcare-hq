@@ -15,7 +15,7 @@ DATE_FORMAT = "%Y-%m-%d"
 class ProjectReport(GenericReportView):
     # overriding properties from GenericReportView
     section_name = ugettext_noop("Project Reports")
-    app_slug = 'reports'
+    base_template = 'reports/base_template.html'
     dispatcher = ProjectReportDispatcher
     asynchronous = True
 

@@ -11,7 +11,7 @@ from django.utils.translation import ugettext as _, ugettext_noop
 
 class ADMSectionView(GenericReportView):
     section_name = ugettext_noop("Active Data Management")
-    app_slug = "adm"
+    base_template = "reports/base_template.html"
     dispatcher = ADMSectionDispatcher
     hide_filters = True
     emailable = True
@@ -53,7 +53,7 @@ class ADMSectionView(GenericReportView):
 class DefaultReportADMSectionView(GenericTabularReport, ADMSectionView, ProjectReportParametersMixin, DatespanMixin):
 
     section_name = ugettext_noop("Active Data Management")
-    app_slug = "adm"
+    base_template = "reports/base_template.html"
     dispatcher = ADMSectionDispatcher
     fix_left_col = True
 

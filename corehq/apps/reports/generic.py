@@ -64,7 +64,6 @@ class GenericReportView(CacheableRequestMixIn):
     name = None         # string. the name of the report that shows up in the heading and the
     slug = None         # string. the report_slug_in_the_url
     section_name = None # string. ex: "Reports"
-    app_slug = None     # string. ex: 'reports' or 'manage'
     dispatcher = None   # ReportDispatcher subclass
 
     # Code can expect `fields` to be an iterable even when empty (never None)
@@ -229,7 +228,7 @@ class GenericReportView(CacheableRequestMixIn):
     @property
     @memoized
     def template_base(self):
-        return self.base_template or "%s/base_template.html" % self.app_slug
+        return self.base_template
 
     @property
     @memoized
@@ -398,7 +397,6 @@ class GenericReportView(CacheableRequestMixIn):
                 section_name=self.section_name,
                 slug=self.slug,
                 sub_slug=None,
-                app_slug=self.app_slug,
                 type=self.dispatcher.prefix,
                 url_root=self.url_root,
                 is_async=self.asynchronous,
