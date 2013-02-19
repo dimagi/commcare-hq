@@ -13,7 +13,7 @@ from dimagi.utils.couch.database import get_db
 
 class AppstoreInterface(GenericReportView):
     section_name = "CommCare Exchange"
-    app_slug = 'appstore'
+    base_template = 'appstore/base_template.html'
     asynchronous = True
     exportable = False
     dispatcher = AppstoreDispatcher

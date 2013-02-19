@@ -1,15 +1,17 @@
 {% load i18n %}
+
 <ul class="nav" role="menu">
-    {% for menu in menu_items %}
-        <li {% if menu.css_id %}id="mainmenu-{{ menu.css_id }}"{% endif %}
-            class="{% if menu.submenu %}dropdown{% endif %}{% if menu.is_active %} active{% endif %}">
-            <a {% if menu.submenu %}class="dropdown-toggle" data-toggle="dropdown"{% endif %}
-               href="{{ menu.url }}">
-                {% trans menu.title %}{% if menu.submenu %} <b class="caret"></b>{% endif %}
+    {% for tab in tabs %}
+    {% with tab.dropdown_items as items %}
+        <li id="mainmenu-{{ tab.css_id }}"
+            class="{% if items %}dropdown{% endif %}{% if tab.is_active %} active{% endif %}">
+            <a {% if items %}class="dropdown-toggle" data-toggle="dropdown"{% endif %}
+               href="{{ tab.url }}">
+                {% trans tab.title %}{% if items %} <b class="caret"></b>{% endif %}
             </a>
-            {% if menu.submenu %}
+            {% if items %}
                 <ul class="dropdown-menu">
-                    {% for sub in menu.submenu %}
+                    {% for sub in items %}
                         {% if sub.is_second_level %}
                             <li class="dropdown-submenu">
                                 <a href="{{ sub.url }}">{{ sub.title }}</a>
@@ -30,5 +32,6 @@
                 </ul>
             {% endif %}
         </li>
+    {% endwith %}
     {% endfor %}
 </ul>

@@ -64,7 +64,6 @@ class GenericReportView(CacheableRequestMixIn):
     name = None         # string. the name of the report that shows up in the heading and the
     slug = None         # string. the report_slug_in_the_url
     section_name = None # string. ex: "Reports"
-    app_slug = None     # string. ex: 'reports' or 'manage'
     dispatcher = None   # ReportDispatcher subclass
 
     # Code can expect `fields` to be an iterable even when empty (never None)
@@ -229,7 +228,7 @@ class GenericReportView(CacheableRequestMixIn):
     @property
     @memoized
     def template_base(self):
-        return self.base_template or "%s/base_template.html" % self.app_slug
+        return self.base_template
 
     @property
     @memoized
@@ -318,17 +317,6 @@ class GenericReportView(CacheableRequestMixIn):
         return None
 
     @property
-    def show_subsection_navigation(self):
-        """
-            Override this to show subsection navigation directly under the top navigation bar.
-            Use the subsection-navigation block in the template to specify what the subsection navigation should
-            look like.
-
-            First use of this is to separate ADM and Project Reports in the Reports tab.
-        """
-        return False
-
-    @property
     def template_context(self):
         """
             Intention: Override if necessary.
@@ -409,7 +397,6 @@ class GenericReportView(CacheableRequestMixIn):
                 section_name=self.section_name,
                 slug=self.slug,
                 sub_slug=None,
-                app_slug=self.app_slug,
                 type=self.dispatcher.prefix,
                 url_root=self.url_root,
                 is_async=self.asynchronous,
@@ -467,9 +454,6 @@ class GenericReportView(CacheableRequestMixIn):
                     zone=self.timezone.zone
                 ))
         self.context.update(self._validate_context_dict(self.template_context))
-        self.context['report'].update(
-            show_subsection_navigation=self.show_subsection_navigation
-        )
 
     def update_report_context(self):
         """
