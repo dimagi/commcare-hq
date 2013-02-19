@@ -7,21 +7,23 @@ import tempfile
 from subprocess import PIPE
 from restkit import Resource, BasicAuth
 
+
 def post_authenticated_data(data, url, username, password):
     """
     Post basic authenticated data, using restkit
     """ 
     auth = BasicAuth(username, password)
     r = Resource(url, filters=[auth, ])
-    return (r.post(payload=data).body_string(), None)
+    return r.post(payload=data).body_string(), None
+
 
 def post_unauthenticated_data(data, url):
     """
-    Post basic unauthenticated data, using restkit instead of the post_data method.
+    Post basic unauthenticated data, using restkit instead of the post_data
+    method.
     """
     r = Resource(url, filters=[])
-    return (r.post(payload=data).body_string(), None)
-
+    return r.post(payload=data).body_string(), None
 
 
 def post_authenticated_file(filename, url, username, password):
@@ -33,7 +35,8 @@ def post_authenticated_file(filename, url, username, password):
         return post_authenticated_data(file.read(), url, username, password)
     finally:
         file.close()
-    
+
+
 def tmpfile(*args, **kwargs):
     fd, path = tempfile.mkstemp(*args, **kwargs)
     return (os.fdopen(fd, 'w'), path)
@@ -57,16 +60,20 @@ def simple_post(data, url, content_type="text/xml", timeout=60):
     conn = Connection(up.netloc, timeout=timeout)
     conn.request('POST', up.path, data, headers)
     return conn.getresponse()
-    
+
+
 def post_data(data, url, curl_command="curl", use_curl=False, 
               content_type="text/xml", path=None, use_chunked=False, 
-              is_odk=False, attachments=[]):
+              is_odk=False, attachments=None):
     """
     Do a POST of data with some options.  Returns a tuple of the response
     from the server and any errors
 
-    if it's ODK, then also process any additional attachments that are an array of tuples of the name and the path
+    if it's ODK, then also process any additional attachments that are an array
+    of tuples of the name and the path
+
     """
+    attachments = attachments or []
     results = None
     errors = None
 
@@ -119,9 +126,11 @@ def post_data(data, url, curl_command="curl", use_curl=False,
     except Exception, e:
         errors = str(e)
 
-    return (results,errors)
-        
-def post_file(filename, url, curl_command="curl", use_curl=False, content_type = "text/xml"):
+    return results, errors
+
+
+def post_file(filename, url, curl_command="curl", use_curl=False,
+              content_type="text/xml"):
     """
     Do a POST from file with some options.  Returns a tuple of the response
     from the server and any errors.
