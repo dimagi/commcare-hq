@@ -103,10 +103,6 @@ class UITab(object):
             try:
                 return self.is_viewable
             except AttributeError as e:
-                import re
-                if not re.search('domain|couch_user|project', e.args[0]):
-                    raise
-
                 return False
     
     @property
