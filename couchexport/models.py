@@ -596,6 +596,9 @@ class ExportConfiguration(DocumentSchema):
     def filename(self):
         return "%s.%s" % (self.name, Format.from_format(self.format).extension)
 
+    def __repr__(self):
+        return ('%s (%s)' % (self.name, self.index)).encode('utf-8')
+
 class GroupExportConfiguration(Document):
     """
     An export configuration allows you to setup a collection of exports
