@@ -22,12 +22,6 @@
             $('#add_team_modal').modal({show: true});
         }
 
-        $("#add_project_btn").tooltip({title: "Add Existing Project", placement: "top"});
-        $("#create_project_btn").tooltip({title: "Create New Project", placement: "top"});
-        $("#add_team_btn").tooltip({title: "Create New Team", placement: "top"});
-        $("#invite_member_btn").tooltip({title: "Invite New Member", placement: "top"});
-        $('#remove-member-btn').tooltip({title: 'Remove This Member', placement: 'top'});
-
         $('#load_data').click(function (e) {
             e.preventDefault();
             $.ajax({
@@ -77,6 +71,7 @@
 <!--{% endblock %}-->
 
 {% block page-title %}
+<div class="container">
 <ul class="breadcrumb">
     {% block breadcrumb %}
     <li>{% if request.couch_user.is_superuser %}<a href="{% url orgs_base %}">{% endif %}
@@ -88,6 +83,7 @@
     </li>
     {% endblock %}
 </ul>
+</div>
 {% endblock %}
 
 {% block centered-content %}
@@ -102,10 +98,10 @@
             </h2>
             <hr />
             <div>
-                <p>Email: {% if org.email %}<a href="mailto:{{ org.email }}">{{ org.email }}</a>{% else %} None{% endif %}</p>
+                <p><i class="icon-envelope"></i> {% if org.email %}<a href="mailto:{{ org.email }}">{{ org.email }}</a>{% else %} None{% endif %}</p>
                 <!-- possibly bad to add http to front of url.  How else to make link absolute? -->
-                <p>URL: {% if org.url %}<a href="http://{{ org.url }}" target="_blank">{{ org.url }}</a>{% else %} None{% endif %}</p>
-                <p>Location: {{ org.location }}</p>
+                <p><i class="icon-link"></i> {% if org.url %}<a href="http://{{ org.url }}" target="_blank">{{ org.url }}</a>{% else %} None{% endif %}</p>
+                <p><i class="icon-map-marker"></i> {{ org.location }}</p>
                 {% if admin %}
                     <a href="#update_info_modal" class="btn" data-toggle="modal"><i class="icon-edit"></i> Update Info</a>
                 {% endif %}
@@ -143,11 +139,20 @@
                 <li{% ifequal tab "members" %} class="active"{% endifequal %}>
                     <a href="{% url orgs_members org.name %}">Members</a>
                 </li>
+                <span class="pull-right">
+                    {% block top-right %}
+                    {% endblock %}
+                </span>
             </ul>
             {% block carded-content %}
+                <table data-provides="rowlink" class="table table-striped" style="border-collapse:collapse">
                 {% for domain in domains %}
-                    <a href="{% url domain_homepage domain %}"><h3>{{ domain.display_name }}</h3></a>
+                    <tr><td style="border-top: none;">
+                        <a href="{% url domain_homepage domain %}"><strong>{{ domain.display_name }}</strong></a>
+                    </td></tr>
                 {% endfor %}
+                </table>
+
                 {% if admin %}
                     <div class="well well-small form-horizontal">
                         <input id="prelim_add_project" type="text" placeholder="Name of an existing project" />
@@ -166,49 +171,6 @@
 
 {% block modals %}{{ block.super }}
     {% if admin %}
-        <div id="create_project_modal" class="modal hide fade">
-            <div class="modal-header">
-                <a class="close" data-dismiss="modal">&times;</a>
-                <h3>Create new Project for {{ org.title }}</h3>
-            </div>
-            <form class="form-horizontal" action="{% url orgs_new_project org.name %}" method="post">
-                <div class="modal-body">
-                    <fieldset>
-                        <legend>Create a new project within this organization</legend>
-                        {% for global_error in reg_form.non_field_errors %}
-                        <div class="alert alert-error">
-                            {{ global_error }}
-                        </div>
-                        {% endfor %}
-                        {% for field in reg_form.visible_fields %}
-                        <div class="control-group{% if field.errors %} error{% endif %}">
-                            <label class="control-label" for="{{ field.id }}">{{ field.label }}</label>
-                            <div class="controls">
-                                {{ field }}
-                                <span class="help-inline"></span>
-                                {% for error in field.errors %}
-                                <span class="help-inline">{{ error }}</span>
-                                {% endfor %}
-                                {% if field.help_text %}
-                                <p class="help-block">
-                                    {{ field.help_text }}
-                                </p>
-                                {% endif %}
-                            </div>
-                        </div>
-                        {% endfor %}
-                    </fieldset>
-                    <input type="hidden" name="next" value="{% url orgs_landing org.name %}">
-                    <input type="hidden" name="org" value="{{ org.name }}">
-                </div>
-
-                <div class="modal-footer">
-                    <a href="#" data-dismiss="modal" class="btn">Cancel</a>
-                    <button type="submit" class="btn btn-primary">Create New Project</button>
-                </div>
-            </form>
-        </div>
-
         <div id="update_info_modal" class="modal hide fade">
             <div class="modal-header">
                 <a class="close" data-dismiss="modal">&times;</a>
@@ -227,24 +189,70 @@
                 </div>
             </form>
         </div>
-
-        <div id="add_project_modal" class="modal hide fade">
-            <div class="modal-header">
-                <a class="close" data-dismiss="modal">&times;</a>
-                <h3>Manage an existing project</h3>
-            </div>
-            <form class="form-horizontal" method="post" action="{% url orgs_add_project org.name %}">
-                <div class="modal-body">
-                    <fieldset>
-                        {% bootstrap_form_errors add_form %}
-                        {% bootstrap_fieldset add_form "Add an existing project to this organization" %}
-                    </fieldset>
-                </div>
-                <div class="modal-footer">
-                    <a href="#" data-dismiss="modal" class="btn">Cancel</a>
-                    <button type="submit" class="btn btn-primary">Add Project</button>
-                </div>
-            </form>
-        </div>
     {% endif %}
+    {% block org-modals %}
+        {% if admin %}
+            <div id="create_project_modal" class="modal hide fade">
+                <div class="modal-header">
+                    <a class="close" data-dismiss="modal">&times;</a>
+                    <h3>Create new Project for {{ org.title }}</h3>
+                </div>
+                <form class="form-horizontal" action="{% url orgs_new_project org.name %}" method="post">
+                    <div class="modal-body">
+                        <fieldset>
+                            <legend>Create a new project within this organization</legend>
+                            {% for global_error in reg_form.non_field_errors %}
+                            <div class="alert alert-error">
+                                {{ global_error }}
+                            </div>
+                            {% endfor %}
+                            {% for field in reg_form.visible_fields %}
+                            <div class="control-group{% if field.errors %} error{% endif %}">
+                                <label class="control-label" for="{{ field.id }}">{{ field.label }}</label>
+                                <div class="controls">
+                                    {{ field }}
+                                    <span class="help-inline"></span>
+                                    {% for error in field.errors %}
+                                    <span class="help-inline">{{ error }}</span>
+                                    {% endfor %}
+                                    {% if field.help_text %}
+                                    <p class="help-block">
+                                        {{ field.help_text }}
+                                    </p>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </fieldset>
+                        <input type="hidden" name="next" value="{% url orgs_landing org.name %}">
+                        <input type="hidden" name="org" value="{{ org.name }}">
+                    </div>
+
+                    <div class="modal-footer">
+                        <a href="#" data-dismiss="modal" class="btn">Cancel</a>
+                        <button type="submit" class="btn btn-primary">Create New Project</button>
+                    </div>
+                </form>
+            </div>
+
+            <div id="add_project_modal" class="modal hide fade">
+                <div class="modal-header">
+                    <a class="close" data-dismiss="modal">&times;</a>
+                    <h3>Manage an existing project</h3>
+                </div>
+                <form class="form-horizontal" method="post" action="{% url orgs_add_project org.name %}">
+                    <div class="modal-body">
+                        <fieldset>
+                            {% bootstrap_form_errors add_form %}
+                            {% bootstrap_fieldset add_form "Add an existing project to this organization" %}
+                        </fieldset>
+                    </div>
+                    <div class="modal-footer">
+                        <a href="#" data-dismiss="modal" class="btn">Cancel</a>
+                        <button type="submit" class="btn btn-primary">Add Project</button>
+                    </div>
+                </form>
+            </div>
+        {% endif %}
+    {% endblock %}
 {% endblock %}

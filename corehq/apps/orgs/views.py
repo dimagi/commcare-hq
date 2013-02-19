@@ -22,14 +22,16 @@ from corehq.apps.orgs.models import Organization, Team, DeleteTeamRecord, \
 from corehq.apps.domain.models import Domain
 
 @memoized
-def base_context(request, organization):
+def base_context(request, organization, update_form=None):
     return {
         "org": organization,
         "teams": Team.get_by_org(organization.name),
         "domains": Domain.get_by_organization(organization.name).all(),
         "members": organization.get_members(),
         "admin": request.couch_user.is_org_admin(organization.name) or request.couch_user.is_superuser,
-
+        "update_form_empty": not update_form,
+        "update_form": update_form or UpdateOrgInfo(initial={'org_title': organization.title, 'email': organization.email,
+                                                            'url': organization.url, 'location': organization.location})
     }
 
 @require_superuser
@@ -47,22 +49,13 @@ def orgs_landing(request, org, template="orgs/orgs_landing.html", form=None, add
     add_form_empty = not add_form
     invite_member_form_empty = not invite_member_form
     add_team_form_empty = not add_team_form
-    update_form_empty = not update_form
 
     reg_form = form or DomainRegistrationForm(initial={'org': organization.name})
     add_form = add_form or AddProjectForm(org)
     invite_member_form = invite_member_form or InviteMemberForm(org)
     add_team_form = add_team_form or AddTeamForm(org)
 
-    update_form = update_form or UpdateOrgInfo(initial={'org_title': organization.title, 'email': organization.email,
-                                                        'url': organization.url, 'location': organization.location})
-
-    # current_teams = Team.get_by_org(org)
-    # current_domains = Domain.get_by_organization(org).all()
-    # members = organization.get_members()
-    # admin = request.couch_user.is_org_admin(org) or request.couch_user.is_superuser
-
-    ctxt = base_context(request, organization)
+    ctxt = base_context(request, organization, update_form=update_form)
     potential_domains = []
 
     # display a notification for each org request that hasn't previously been seen
@@ -81,9 +74,9 @@ def orgs_landing(request, org, template="orgs/orgs_landing.html", form=None, add
         potential_domains = list(set(filter(lambda d: d not in ctxt["domains"], potential_domains)))
 
     ctxt.update(dict(reg_form=reg_form, add_form=add_form, reg_form_empty=reg_form_empty, add_form_empty=add_form_empty,
-                update_form=update_form, update_form_empty=update_form_empty, invite_member_form=invite_member_form,
-                invite_member_form_empty=invite_member_form_empty, add_team_form=add_team_form, tab="projects",
-                add_team_form_empty=add_team_form_empty, potential_domains=potential_domains))
+                invite_member_form=invite_member_form, invite_member_form_empty=invite_member_form_empty,
+                add_team_form=add_team_form, add_team_form_empty=add_team_form_empty, tab="projects",
+                potential_domains=potential_domains))
     return render(request, template, ctxt)
 
 @org_member_required
@@ -94,7 +87,7 @@ def orgs_members(request, org, template="orgs/orgs_members.html"):
     return render(request, template, ctxt)
 
 @org_member_required
-def orgs_teams(request, org, template="orgs/orgs_teams-new.html"):
+def orgs_teams(request, org, template="orgs/orgs_teams.html"):
     organization = Organization.get_by_name(org, strict=True)
     ctxt = base_context(request, organization)
     ctxt["tab"] = "teams"
@@ -211,16 +204,21 @@ def accept_invitation(request, org, invitation_id):
 @org_admin_required
 @require_POST
 def orgs_add_team(request, org):
-    form = AddTeamForm(org, request.POST)
-    if form.is_valid():
-        team_name = form.cleaned_data['team']
-        team = Team(name=team_name, organization=org)
-        team.save()
-        messages.success(request, "Team Added!")
-    else:
-        messages.error(request, "Unable to add team")
-        return orgs_landing(request, org, add_team_form=form)
-    return HttpResponseRedirect(reverse('orgs_landing', args=[org]))
+    team_name = request.POST.get("team", None)
+    if not team_name:
+        messages.error(request, 'You must specify a team name')
+        return HttpResponseRedirect(reverse('orgs_teams', args=[org]))
+
+    org_teams = Team.get_by_org(org)
+    for t in org_teams:
+        if t.name == team_name:
+            messages.error(request, 'A team with that name already exists.')
+            return HttpResponseRedirect(reverse('orgs_teams', args=[org]))
+
+    team = Team(name=team_name, organization=org)
+    team.save()
+    messages.success(request, "Team Added!")
+    return HttpResponseRedirect(reverse('orgs_teams', args=[org]))
 
 @org_member_required
 def orgs_logo(request, org, template="orgs/orgs_logo.html"):
@@ -230,78 +228,73 @@ def orgs_logo(request, org, template="orgs/orgs_logo.html"):
 
 @org_member_required
 def orgs_team_members(request, org, team_id, template="orgs/orgs_team_members.html"):
-    #organization and teams
     organization = Organization.get_by_name(org)
-    teams = Team.get_by_org(org)
-    current_domains = Domain.get_by_organization(org).all()
+
+    ctxt = base_context(request, organization)
+    ctxt["tab"] = "teams"
 
     try:
         team = Team.get(team_id)
     except ResourceNotFound:
         raise Http404("Team %s does not exist" % team_id)
 
-    members = team.get_members()
-    members.sort(key=lambda user: user.username)
+    team_members = team.get_members()
+    team_members.sort(key=lambda user: user.username)
 
     #inspect the domains of the team
     domain_names = team.get_domains()
-    domains = list()
+    team_domains = list()
     for name in domain_names:
-        domains.append([Domain.get_by_name(name), team.role_label(domain=name), UserRole.by_domain(name)])
+        team_domains.append([Domain.get_by_name(name), team.role_label(domain=name), UserRole.by_domain(name)])
 
-    all_org_domains = Domain.get_by_organization(org).all()
-    non_domains = [domain for domain in all_org_domains if domain.name not in domain_names]
+    nonmembers = [m.username for m in filter(lambda m: m.username not in [tm.username for tm in team_members], ctxt["members"])]
+    nondomains = [d.name for d in filter(lambda d: d.name not in [td[0].name for td in team_domains], ctxt["domains"])]
 
-    all_org_members = organization.get_members()
-    non_members = [member for member in all_org_members if member.user_id not in [m.user_id for m in members]]
-
-    admin = request.couch_user.is_org_admin(org) or request.couch_user.is_superuser
-
-    vals = dict(org=organization, team=team, teams=teams, members=members, nonmembers=non_members,
-        domains=current_domains, team_domains=domains, team_nondomains=non_domains, admin=admin)
-    return render(request, template, vals)
+    ctxt.update(dict(team=team, team_members=team_members, nonmembers=nonmembers,
+                     team_domains=team_domains, nondomains=nondomains))
+    return render(request, template, ctxt)
 
 @org_admin_required
 @require_POST
-def add_team(request, org):
-    team_name = request.POST['team_name']
-    team = Team.get_by_org_and_name(org, team_name)
-    if not team:
-        team = Team(name=team_name, organization=org)
-        team.is_global_admin()
-        team.save()
-    return HttpResponseRedirect(reverse("orgs_team_members", args=(org, team.get_id)))
-
-@org_admin_required
-@require_POST
-def join_team(request, org, team_id, couch_user_id):
-    user = WebUser.get(couch_user_id)
-    user.add_to_team(org, team_id)
-    user.save()
-    if 'redirect_url' in request.POST:
-        return HttpResponseRedirect(reverse(request.POST['redirect_url'], args=(org, team_id)))
-
-@org_admin_required
-@require_POST
-def leave_team(request, org, team_id, couch_user_id):
-    user = WebUser.get(couch_user_id)
-    user.remove_from_team(org, team_id)
-    user.save()
-    if 'redirect_url' in request.POST:
-        return HttpResponseRedirect(reverse(request.POST['redirect_url'], args=(org, team_id)))
-
-@org_admin_required
-@require_POST
-def delete_team(request, org, team_id):
-    team = Team.get(team_id)
-    if team.organization == org:
-        record = team.soft_delete()
-        messages.success(request, 'You have deleted a team. <a href="{url}" class="post-link">Undo</a>'.format(
-            url=reverse('undo_delete_team', args=[org, record.get_id])
-        ), extra_tags="html")
-        return HttpResponseRedirect(reverse("orgs_teams", args=(org, )))
+def join_team(request, org, team_id):
+    username = request.POST.get("username", None)
+    if not username:
+        messages.error(request, "You must specify a member's email address")
     else:
-        return HttpResponseForbidden()
+        user = WebUser.get_by_username(username)
+        user.add_to_team(org, team_id)
+        user.save()
+    return HttpResponseRedirect(reverse(request.POST.get('redirect_url', 'orgs_team_members'), args=(org, team_id)))
+
+@org_admin_required
+@require_POST
+def leave_team(request, org, team_id):
+    username = request.POST.get("username", None)
+    if not username:
+        messages.error(request, "You must specify a member's email address")
+    else:
+        user = WebUser.get_by_username(username)
+        user.remove_from_team(org, team_id)
+        user.save()
+    return HttpResponseRedirect(reverse(request.POST.get('redirect_url', 'orgs_team_members'), args=(org, team_id)))
+
+@org_admin_required
+@require_POST
+def delete_team(request, org):
+    team_id = request.POST.get("team_id", None)
+    if team_id:
+        team = Team.get(team_id)
+        if team.organization == org:
+            record = team.soft_delete()
+            messages.success(request, 'You have deleted a team. <a href="{url}" class="post-link">Undo</a>'.format(
+                url=reverse('undo_delete_team', args=[org, record.get_id])
+            ), extra_tags="html")
+        else:
+            messages.error(request, "This team doesn't exist")
+    else:
+        messages.error(request, "You must specify a team to delete")
+
+    return HttpResponseRedirect(reverse("orgs_teams", args=(org, )))
 
 @org_admin_required
 def undo_delete_team(request, org, record_id):
@@ -311,21 +304,29 @@ def undo_delete_team(request, org, record_id):
 
 @org_admin_required
 @require_POST
-def add_domain_to_team(request, org, team_id, domain):
-    team = Team.get(team_id)
-    team.add_domain_membership(domain)
-    team.save()
-    if 'redirect_url' in request.POST:
-        return HttpResponseRedirect(reverse(request.POST['redirect_url'], args=(org, team_id)))
+def add_domain_to_team(request, org, team_id):
+    domain = request.POST.get("project_name", None)
+    if not domain:
+        messages.error(request, "You must specify a project name")
+    else:
+        team = Team.get(team_id)
+        team.add_domain_membership(domain)
+        team.save()
+    return HttpResponseRedirect(reverse(request.POST.get('redirect_url', 'orgs_team_members'), args=(org, team_id)))
+
 
 @org_admin_required
 @require_POST
-def remove_domain_from_team(request, org, team_id, domain):
-    team = Team.get(team_id)
-    team.delete_domain_membership(domain)
-    team.save()
-    if 'redirect_url' in request.POST:
-        return HttpResponseRedirect(reverse(request.POST['redirect_url'], args=(org, team_id)))
+def remove_domain_from_team(request, org, team_id):
+    domain = request.POST.get("project_name", None)
+    if not domain:
+        messages.error(request, "You must specify a project name")
+    else:
+        team = Team.get(team_id)
+        team.delete_domain_membership(domain)
+        team.save()
+    return HttpResponseRedirect(reverse(request.POST.get('redirect_url', 'orgs_team_members'), args=(org, team_id)))
+
 
 @org_admin_required
 @require_POST
@@ -350,8 +351,8 @@ def add_all_to_team(request, org, team_id):
     for member in members:
         member.add_to_team(org, team_id)
         member.save()
-    if 'redirect_url' in request.POST:
-        return HttpResponseRedirect(reverse(request.POST['redirect_url'], args=(org, team_id)))
+    return HttpResponseRedirect(reverse(request.POST.get('redirect_url', 'orgs_team_members'), args=(org, team_id)))
+
 
 @org_admin_required
 @require_POST
@@ -361,8 +362,8 @@ def remove_all_from_team(request, org, team_id):
     for member in members:
         member.remove_from_team(org, team_id)
         member.save()
-    if 'redirect_url' in request.POST:
-        return HttpResponseRedirect(reverse(request.POST['redirect_url'], args=(org, team_id)))
+    return HttpResponseRedirect(reverse(request.POST.get('redirect_url', 'orgs_team_members'), args=(org, team_id)))
+
 
 def search_orgs(request):
     return json_response([{'title': o.title, 'name': o.name} for o in Organization.get_all()])

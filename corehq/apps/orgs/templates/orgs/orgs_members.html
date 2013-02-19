@@ -9,19 +9,21 @@
 {#        <i class="icon-plus"></i>#}
 {#    </a>#}
 {#{% endif %}#}
-{% for member in members %}
-    <div>
-        <strong>
-            {{ member.username }}
-            {% if member.first_name and member.last_name %}
-                <small>({{ member.full_name }})</small>
-            {% endif %}
-        </strong>
-        <a href="#" class="remove-member-btn btn btn-danger" data-member="{{ member.username }}" data-member_id="{{ member.get_id }}">
-            <i class="icon-trash"></i> Remove Member
-        </a>
-    </div>
-{% endfor %}
+<table class="table table-striped" style="border-collapse:collapse">
+    {% for member in members %}
+        <tr><td style="border-top: none;">
+            <strong>
+                {{ member.username }}
+                {% if member.first_name and member.last_name %}
+                    <small>({{ member.full_name }})</small>
+                {% endif %}
+            </strong>
+            <a href="#" class="remove-member-btn text-error" data-member="{{ member.username }}" data-member_id="{{ member.get_id }}">
+                (Remove)
+            </a>
+        </td></tr>
+    {% endfor %}
+</table>
 
 {% if admin %}
     <div class="well well-small">
@@ -35,7 +37,7 @@
 {% endif %}
 {% endblock %}
 
-{% block modals %}
+{% block org-modals %}
 {#    <div id="invite_member_modal" class="modal hide fade">#}
 {#        <div class="modal-header">#}
 {#            <a class="close" data-dismiss="modal">&times;</a>#}
