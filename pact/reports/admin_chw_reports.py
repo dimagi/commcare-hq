@@ -1,5 +1,4 @@
-from datetime import datetime, timedelta
-import uuid
+from datetime import timedelta
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
 from corehq.apps.reports.generic import GenericTabularReport
 from corehq.apps.reports.standard import CustomProjectReport
@@ -7,7 +6,6 @@ from corehq.apps.users.models import CommCareUser
 from pact.enums import PACT_DOMAIN
 from pact.models import PactPatientCase, CObservation
 from pact.reports import chw_schedule
-from pact.reports.dot import PactDOTPatientField
 
 
 class PactCHWAdminReport(GenericTabularReport, CustomProjectReport):
