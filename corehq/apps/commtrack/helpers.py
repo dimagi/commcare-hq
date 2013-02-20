@@ -2,6 +2,7 @@ from casexml.apps.case.models import CommCareCase
 from casexml.apps.case.sharedmodels import CommCareCaseIndex
 from corehq.apps.commtrack.models import Product, CommtrackConfig,\
     CommtrackActionConfig, SupplyPointType
+from corehq.apps.commtrack import const
 
 """
 helper code to populate the various commtrack models, for ease of
@@ -20,7 +21,7 @@ def make_product(domain, name, code):
 def make_supply_point(domain, location):
     c = CommCareCase()
     c.domain = domain
-    c.type = 'supply-point'
+    c.type = const.SUPPLY_POINT_CASE_TYPE
     c.bind_to_location(location)
     c.save()
     return c
@@ -29,11 +30,11 @@ def make_supply_point(domain, location):
 def make_supply_point_product(supply_point_case, product_uuid):
     pc = CommCareCase()
     pc.domain = supply_point_case.domain
-    pc.type = 'supply-point-product'
+    pc.type = const.SUPPLY_POINT_PRODUCT_CASE_TYPE
     pc.product = product_uuid
     ix = CommCareCaseIndex()
     ix.identifier = 'parent'
-    ix.referenced_type = 'supply-point'
+    ix.referenced_type = const.SUPPLY_POINT_CASE_TYPE
     ix.referenced_id = supply_point_case._id
     pc.indices = [ix]
     pc.location_ = supply_point_case.location_
