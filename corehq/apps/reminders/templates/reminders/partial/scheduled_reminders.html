@@ -74,7 +74,7 @@
         .calendar {
             margin-left: 0px;
         }
-        h1 {
+        h1.reminders-header {
             text-align: left;
             padding-left: 50px;
         }
@@ -88,7 +88,7 @@
 {% endblock %}
 
 {% block reminders_content %}
-    <h1>Reminder Calendar</h1>
+    <h1 class="reminders-header">Reminder Calendar</h1>
     {% include "hqwebapp/partials/time-notice.html" %}
     <div id='scheduled-reminders-container'>
         <table class="calendar">

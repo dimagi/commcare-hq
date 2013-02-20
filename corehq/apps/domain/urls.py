@@ -65,7 +65,7 @@ urlpatterns =\
 
 
 domain_settings = patterns('corehq.apps.domain.views',
-                           url(r'^$', 'project_settings', name="domain_project_settings"),
+                           url(r'^settings/$', 'project_settings', name="domain_project_settings"),
                            url(r'^forwarding/$', 'domain_forwarding', name='domain_forwarding'),
                            url(r'^forwarding/new/(?P<repeater_type>\w+)/$', 'add_repeater', name='add_repeater'),
                            url(r'^forwarding/test/$', 'test_repeater', name='test_repeater'),
