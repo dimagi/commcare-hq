@@ -14,32 +14,6 @@ from . import chw_schedule
 from pact.reports import PactDrilldownReportMixin, ESSortableMixin
 from pact.utils import pact_script_fields, case_script_field
 
-
-class XFormDisplay(object):
-    def __init__(self, result_row):
-        self.result_row = result_row
-
-    @property
-    def pact_id(self):
-        pass
-
-    @property
-    def case_id(self):
-        pass
-
-    @property
-    def form_type(self):
-        pass
-
-    @property
-    def encounter_date(self):
-        pass
-
-    @property
-    def received_on(self):
-        pass
-
-
 class PactCHWProfileReport(PactDrilldownReportMixin, ESSortableMixin,GenericTabularReport, CustomProjectReport):
     slug = "chw_profile"
     description = "CHW Profile"
