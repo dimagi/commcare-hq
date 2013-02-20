@@ -431,6 +431,7 @@ class CumulativeSalesAndConsumptionReport(GenericTabularReport, CommtrackReportM
             'Location',
             'Location Type',
             '# reporting outlets',
+            'total # outlets',
         ]
         cols.extend(f['caption'] for f in self.metadata)
         for p in self.active_products:
@@ -482,17 +483,18 @@ class CumulativeSalesAndConsumptionReport(GenericTabularReport, CommtrackReportM
             num_active_outlets = len(set(leaf_loc(r) for r in relevant_reports))
 
             # feels not DRY
-            import urllib
-            site_url = '%s?%s' % (self.get_url(self.domain), urllib.urlencode({
-                'startdate': self.datespan.startdate_display,
-                'enddate': self.datespan.enddate_display,
-                'location_id': site._id,
-            }))
-            site_link = '<a href="%s">%s</a>' % (site_url, site.name)
+ #           import urllib
+ #           site_url = '%s?%s' % (self.get_url(self.domain), urllib.urlencode({
+ #               'startdate': self.datespan.startdate_display,
+ #               'enddate': self.datespan.enddate_display,
+ #               'location_id': site._id,
+ #           }))
+ #           site_link = '<a href="%s"><span>%s</span></a>' % (site_url, site.name)
             data = [
-                site_link,
+                site.name, #site_link,
                 site.location_type,
-                '%d of %d' % (num_active_outlets, num_outlets),
+                num_active_outlets,
+                num_outlets,
             ]
             data.extend(getattr(site, f['key'], u'\u2014') for f in self.metadata)
             for p in products:
@@ -512,6 +514,17 @@ class CumulativeSalesAndConsumptionReport(GenericTabularReport, CommtrackReportM
                             product_cases_by_parent.get(site._id, []),
                             outlets_by_aggregation_site.get(site._id, []),
                         ) for site in locs]
+
+#    @property
+#    def export_table(self):
+#        rows = []
+#        rows.append([h.html for h in self.headers.header])
+#        def fixrow(r):
+#            return r
+#        rows.extend(fixrow(r) for r in self.rows)
+#        return [['cumulative sales and consumption', rows]]
+
+
 
 class StockOutReport(GenericTabularReport, CommtrackReportMixin, DatespanMixin):
     name = 'Stock-out Report'
