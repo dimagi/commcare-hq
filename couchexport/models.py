@@ -14,6 +14,7 @@ from soil import DownloadBase
 from couchdbkit.exceptions import ResourceNotFound
 from couchexport.properties import TimeStampProperty, JsonProperty
 from couchdbkit.consumer import Consumer
+from dimagi.utils.logging import notify_exception
 
 class Format(object):
     """
@@ -66,26 +67,46 @@ class ExportSchema(Document, UnicodeMixIn):
     that the entire doc list doesn't have to be used to generate the export
     """
     index = JsonProperty()
-    seq = IntegerProperty() # semi-deprecated
+    seq = StringProperty() # semi-deprecated
     schema = DictProperty()
     timestamp = TimeStampProperty()
 
     def __unicode__(self):
         return "%s: %s" % (json.dumps(self.index), self.seq)
 
+    @property
+    def is_bigcouch(self):
+        try:
+            int(self.seq)
+            return False
+        except ValueError:
+            return True
+
     @classmethod
     def wrap(cls, data):
-        # this isn't the cleanest nor is it perfect but in the event
-        # this doc traversed databases somehow and now has a bad seq
-        # id, make sure to just reset it to 0.
-        # This won't catch if the seq is bad but not greater than the
-        # current one).
         ret = super(ExportSchema, cls).wrap(data)
-        current_seq = cls.get_db().info()["update_seq"]
-        if current_seq < ret.seq:
-            ret.seq = 0
-            ret.save()
-        # TODO: handle seq -> datetime migration
+        if not ret.timestamp:
+            # these won't work on bigcouch so we want to know if this happens
+            notify_exception(
+                None,
+                'an export without a timestamp was accessed! (%s)' % ret._id
+            )
+            # this isn't the cleanest nor is it perfect but in the event
+            # this doc traversed databases somehow and now has a bad seq
+            # id, make sure to just reset it to 0.
+            # This won't catch if the seq is bad but not greater than the
+            # current one).
+            current_seq = cls.get_db().info()["update_seq"]
+            try:
+                if int(current_seq) < int(ret.seq):
+                    ret.seq = "0"
+                    ret.save()
+            except ValueError:
+                # seqs likely weren't ints (e.g. bigcouch)
+                # this should never be possible (anything on bigcouch should
+                # have a timestamp) so let's fail hard
+                raise Exception('export %s is in a bad state (no timestamp or integer seq)' % ret._id)
+        # TODO? handle seq -> datetime migration
         return ret
 
     @classmethod
@@ -172,7 +193,7 @@ class ExportSchema(Document, UnicodeMixIn):
             return self._ids_by_seq(database)
 
     def _ids_by_seq(self, database):
-        if self.seq == 0:
+        if self.seq == "0" or self.seq is None:
             return self.get_all_ids()
 
         consumer = Consumer(database)

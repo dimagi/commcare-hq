@@ -7,7 +7,7 @@ class ExportSchemaTest(TestCase):
 
     def testSaveAndLoad(self):
         index = ["foo", 2]
-        schema = ExportSchema(seq=5, index=index)
+        schema = ExportSchema(seq="5", index=index)
         inner = {"dict": {"bar": 1, "baz": [2,3]},
                  "list": ["foo", "bar"],
                  "dictlist": [{"bip": 1, "bop": "blah"},
@@ -23,18 +23,18 @@ class ExportSchemaTest(TestCase):
         indices = ["a string", ["a", "list"]]
         for index in indices:
             self.assertEqual(None, ExportSchema.last(index))
-            schema1 = ExportSchema(seq=2, index=index)
+            schema1 = ExportSchema(seq="2", index=index)
             schema1.save()
             self.assertEqual(schema1._id, ExportSchema.last(index)._id)
-            schema2 = ExportSchema(seq=3, index=index)
+            schema2 = ExportSchema(seq="3", index=index)
             schema2.save()
             self.assertEqual(schema2._id, ExportSchema.last(index)._id)
             # by design, if something has a timestamp it always wins out, even
             # if something has a higher seq
-            schema3 = ExportSchema(seq=1, index=index, timestamp=datetime.utcnow())
+            schema3 = ExportSchema(seq="1", index=index, timestamp=datetime.utcnow())
             schema3.save()
             self.assertEqual(schema3._id, ExportSchema.last(index)._id)
             time.sleep(.1)
-            schema4 = ExportSchema(seq=1, index=index, timestamp=datetime.utcnow())
+            schema4 = ExportSchema(seq="1", index=index, timestamp=datetime.utcnow())
             schema4.save()
             self.assertEqual(schema4._id, ExportSchema.last(index)._id)

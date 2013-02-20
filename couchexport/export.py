@@ -88,7 +88,7 @@ class ExportConfiguration(object):
 
     def create_new_checkpoint(self):
         checkpoint = ExportSchema(
-            seq=self.current_seq, schema=self.get_latest_schema(),
+            seq=str(self.current_seq), schema=self.get_latest_schema(),
             timestamp=self.timestamp, index=self.schema_index)
         checkpoint.save()
         return checkpoint
@@ -165,7 +165,6 @@ def export(schema_index, file, format=Format.XLS_2007,
     Exports data from couch documents matching a given tag to a file. 
     Returns true if it finds data, otherwise nothing
     """
-
     config, updated_schema, export_schema_checkpoint = get_export_components(schema_index,
                                                                     previous_export_id, filter)
     # transform docs onto output and save
