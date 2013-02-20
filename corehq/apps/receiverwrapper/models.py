@@ -27,7 +27,7 @@ def register_repeater_type(cls):
 def simple_post_with_cached_timeout(data, url, expiry=60*60, *args, **kwargs):
     # no control characters (e.g. '/') in keys
     key = hashlib.md5(
-        '{} timeout {}'.format(__name__, url)
+        '{0} timeout {1}'.format(__name__, url)
     ).hexdigest()
 
     if cache.get(key) == 'timeout':
