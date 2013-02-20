@@ -1,9 +1,7 @@
-
-from corehq.apps.users.models import CommCareUser
 from casexml.apps.case.models import CommCareCase
 from casexml.apps.case.sharedmodels import CommCareCaseIndex
-from corehq.apps.commtrack.models import *
-from dimagi.utils.couch.database import get_db
+from corehq.apps.commtrack.models import Product, CommtrackConfig,\
+    CommtrackActionConfig, SupplyPointType
 
 """
 helper code to populate the various commtrack models, for ease of
