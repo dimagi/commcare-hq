@@ -355,26 +355,6 @@ class CaseListReport(CaseListMixin, ProjectInspectionReport):
         return headers
 
     @property
-    @memoized
-    def paginator_results(self):
-        """This is no longer called by anything"""
-        def _compare_cases(x, y):
-            x = x.get('key', [])
-            y = y.get('key', [])
-            try:
-                x = x[-1]
-                y = y[-1]
-            except Exception:
-                x = ""
-                y = ""
-            return cmp(x, y)
-        is_open = self.request.GET.get(SelectOpenCloseField.slug)
-        filters = [CaseListFilter(self.domain, case_owner, case_type=self.case_type, open_case=is_open)
-                   for case_owner in self.case_owners]
-        paginator = FilteredPaginator(filters, _compare_cases)
-        return paginator
-
-    @property
     def rows(self):
         rows = []
         def _format_row(row):
