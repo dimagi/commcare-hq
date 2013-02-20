@@ -19,7 +19,7 @@ function (doc) {
             attendees: parseInt(form["number_attendees"], 10) || 0
         };
 
-        if (form["type_of_sensitization"] === 'vhnd') {
+        if (form["type_of_sensitization"] === 'vhnd' || (form["type_of_sensitization"] === 'blm' && data["sessions"] < 1)) {
             data["sessions"] += 1;
         }
 
