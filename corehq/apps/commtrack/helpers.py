@@ -3,11 +3,21 @@ from casexml.apps.case.sharedmodels import CommCareCaseIndex
 from corehq.apps.commtrack.models import Product, CommtrackConfig,\
     CommtrackActionConfig, SupplyPointType
 from corehq.apps.commtrack import const
+from casexml.apps.case.tests.util import CaseBlock
+from casexml.apps.case.xml import V2
+import uuid
+from corehq.apps.hqcase.utils import submit_case_blocks
+from xml.etree import ElementTree
 
 """
 helper code to populate the various commtrack models, for ease of
 development/testing, before we have proper UIs and imports
 """
+
+def get_commtrack_user_id(domain):
+    # abstracted out in case we one day want to back this
+    # by a real user, but for now it's like demo_user
+    return const.COMMTRACK_USERNAME
 
 def make_product(domain, name, code):
     p = Product()
@@ -19,9 +29,18 @@ def make_product(domain, name, code):
 
 # TODO use case-xml case creation workflow
 def make_supply_point(domain, location):
-    c = CommCareCase()
-    c.domain = domain
-    c.type = const.SUPPLY_POINT_CASE_TYPE
+    # a supply point is currently just a case with a special type
+    id = uuid.uuid4().hex
+    caseblock = CaseBlock(
+        case_id=id,
+        create=True,
+        version=V2,
+        user_id=get_commtrack_user_id(domain),
+        case_type=const.SUPPLY_POINT_CASE_TYPE,
+    )
+    casexml = ElementTree.tostring(caseblock.as_xml())
+    submit_case_blocks(casexml, domain)
+    c = CommCareCase.get(id)
     c.bind_to_location(location)
     c.save()
     return c
