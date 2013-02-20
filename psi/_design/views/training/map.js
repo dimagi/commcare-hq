@@ -26,10 +26,10 @@ function (doc) {
 
             for (var i = 0; i < sub_docs.length; i++) {
                 var tag = sub_docs[i];
+                var doc = form[tag];
                 if (tag === "allopathic_doctors") {
                     tag = "allopathic";
                 }
-                var doc = form[tag];
                 if (doc) {
                     var nt = (parseInt(doc[tag+"_number_trained"], 10)||0) + (parseInt(doc[tag+"_num_trained"], 10)||0);
                     num_trained += nt;
