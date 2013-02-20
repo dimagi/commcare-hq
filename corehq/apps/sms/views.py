@@ -22,6 +22,10 @@ from corehq.apps.reports import util as report_utils
 from django.views.decorators.csrf import csrf_exempt
 
 @login_and_domain_required
+def default(request, domain):
+    return HttpResponseRedirect(reverse(messaging, args=[domain]))
+
+@login_and_domain_required
 def messaging(request, domain, template="sms/default.html"):
     context = get_sms_autocomplete_context(request, domain)
     context['domain'] = domain

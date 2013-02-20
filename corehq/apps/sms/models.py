@@ -19,10 +19,6 @@ DIRECTION_CHOICES = (
     (INCOMING, "Incoming"),
     (OUTGOING, "Outgoing"))
 
-MISSED_EXPECTED_CALLBACK = "CALLBACK_MISSED"
-
-EVENT_TYPE_CHOICES = [MISSED_EXPECTED_CALLBACK]
-
 class MessageLog(Document, UnicodeMixIn):
     base_doc                    = "MessageLog"
     couch_recipient_doc_type    = StringProperty() # "CommCareCase" or "CouchUser"
@@ -222,12 +218,18 @@ class CallLog(MessageLog):
         return result
 
 class EventLog(Document):
+    base_doc                    = "EventLog"
     domain                      = StringProperty()
     date                        = DateTimeProperty()
     couch_recipient_doc_type    = StringProperty()
     couch_recipient             = StringProperty()
-    event_type                  = StringProperty(choices=EVENT_TYPE_CHOICES)
 
+CALLBACK_PENDING = "PENDING"
+CALLBACK_RECEIVED = "RECEIVED"
+CALLBACK_MISSED = "MISSED"
+
+class ExpectedCallbackEventLog(EventLog):
+    status = StringProperty(choices=[CALLBACK_PENDING,CALLBACK_RECEIVED,CALLBACK_MISSED])
 
 class MessageLogOld(models.Model):
     couch_recipient    = models.TextField()

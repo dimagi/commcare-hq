@@ -14,7 +14,7 @@
 {% endblock %}
 {% block js-inline %}{{ block.super }}
     {% include "hqwebapp/ko/value-or-none-ui.html" %}
-    {% include "app_manager/partials/nav_menu_media_js.html" with item=module %}
+    {% include "app_manager/partials/nav_menu_media_js.html" with item=module image_default="jr://file/commcare/image/module_name.png" audio_default="jr://file/commcare/audio/module_name.mp3" %}
     <script>
         $(function () {
             var $home = $("#detail-screen-config");

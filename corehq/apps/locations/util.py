@@ -64,7 +64,7 @@ def location_custom_properties(domain, loc_type):
                     name='site_code',
                     label='SMS Code',
                     required=True,
-                    # unique='global', # temporarily commented out for performance reasons
+                    unique='global',
                 ),
                 CustomProperty(
                     name='outlet_type',

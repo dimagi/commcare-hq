@@ -2,9 +2,11 @@
 <script>
     $(function () {
         var viewModel = {
-            media_image: ko.observable({{ item.media_image|JSON }}),
-            media_audio: ko.observable({{ item.media_audio|JSON }}),
-            media_audio_allowed: {{ app.profile.features.sense|JSON }} == "true"
+            mediaImage: ko.observable({{ item.media_image|JSON }}),
+            defaultImageValue: {{ image_default|JSON }},
+            mediaAudio: ko.observable({{ item.media_audio|JSON }}),
+            defaultAudioValue: {{ audio_default|JSON }},
+            mediaAudioAllowed: {{ app.profile.features.sense|JSON }} == "true"
         };
 
         ko.applyBindings(viewModel, $('#media_image').get(0));
