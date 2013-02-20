@@ -52,7 +52,7 @@
             </div>
             <form class="form-horizontal" method="post" action="{% url join_team org.name team.get_id %}" method="post">
                 <div class="well well-small">
-                    <input name="username" type="text" placeholder="Member's email address" data-provide="typeahead" data-source='{{ nonmembers|JSON }}' />
+                    <input name="username" type="text" placeholder="Member's email address" data-provide="typeahead" data-source='{{ nonmembers|JSON }}' autocomplete="off" />
                     <button type="submit" id="add_team_btn" class="btn btn-info">
                         <i class="icon-plus"></i> {% trans "Add" %}
                     </button>
@@ -90,7 +90,7 @@
             </div>
             <form class="form-horizontal" method="post" action="{% url add_domain_to_team org.name team.get_id %}" method="post">
                 <div class="well well-small">
-                    <input name="project_name" type="text" placeholder="Project Name" data-provide="typeahead" data-source='{{ nondomains|JSON }}' />
+                    <input name="project_name" type="text" placeholder="Project Name" data-provide="typeahead" data-source='{{ nondomains|JSON }}' autocomplete="off" />
                     <button type="submit" id="add_domain_btn" class="btn btn-info">
                         <i class="icon-plus"></i> {% trans "Add" %}
                     </button>
