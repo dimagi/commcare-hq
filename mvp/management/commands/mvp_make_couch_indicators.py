@@ -8,12 +8,17 @@ from mvp.models import (MVP, MVPDaysSinceLastTransmission, MVPChildCasesByAgeInd
                         MVPActiveCasesIndicatorDefinition)
 
 from mvp.static_definitions.composite import COMPOSITE_INDICATORS
-from mvp.static_definitions.couch.births import BIRTH_INDICATORS, ACTIVE_CHILD_CASES_BY_AGE_INDICATORS, COUNT_UNIQUE_BIRTH_INDICATORS
-from mvp.static_definitions.couch.child_health import CHILD_HEALTH_INDICATORS, COUNT_UNIQUE_CHILD_HEALTH_INDICATORS
+from mvp.static_definitions.couch.births import (BIRTH_INDICATORS, ACTIVE_CHILD_CASES_BY_AGE_INDICATORS,
+                                                 COUNT_UNIQUE_BIRTH_INDICATORS)
+from mvp.static_definitions.couch.child_health import (CHILD_HEALTH_INDICATORS, COUNT_UNIQUE_CHILD_HEALTH_INDICATORS,
+                                                       SUM_LAST_UNIQUE_CHILD_HEALTH_INDICATORS)
 from mvp.static_definitions.couch.chw_referrals import CHW_REFERRAL_INDICATORS, MEDIAN_CHW_REFERRAL_INDICATORS
-from mvp.static_definitions.couch.chw_visits import CHW_VISIT_ACTIVE_CASES_INDICATORS, CHW_VISITS_UNIQUE_COUNT_INDICATORS, CHW_VISIT_INDICATORS
+from mvp.static_definitions.couch.chw_visits import (CHW_VISIT_ACTIVE_CASES_INDICATORS,
+                                                     CHW_VISITS_UNIQUE_COUNT_INDICATORS, CHW_VISIT_INDICATORS)
 from mvp.static_definitions.couch.deaths import DEATH_INDICATORS
-from mvp.static_definitions.couch.maternal_health import MATERNAL_HEALTH_INDICATORS, SUM_LAST_UNIQUE_MATERNAL_HEALTH_INDICATORS, COUNT_UNIQUE_MATERNAL_HEALTH_INDICATORS
+from mvp.static_definitions.couch.maternal_health import (MATERNAL_HEALTH_INDICATORS,
+                                                          SUM_LAST_UNIQUE_MATERNAL_HEALTH_INDICATORS,
+                                                          COUNT_UNIQUE_MATERNAL_HEALTH_INDICATORS)
 from mvp.static_definitions.couch.over5 import OVER5_HEALTH_INDICATORS
 
 SIMPLE_COUCH_VIEW_INDICATORS = [
@@ -52,6 +57,7 @@ COUNT_UNIQUE_INDICATORS = [
 # use with SumLastEmittedCouchIndicatorDef
 SUM_LAST_UNIQUE_INICATORS = [
     SUM_LAST_UNIQUE_MATERNAL_HEALTH_INDICATORS,
+    SUM_LAST_UNIQUE_CHILD_HEALTH_INDICATORS
 ]
 
 class Command(LabelCommand):
