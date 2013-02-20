@@ -33,7 +33,7 @@ def make_supply_point_product(supply_point_case, product_uuid):
     pc.type = const.SUPPLY_POINT_PRODUCT_CASE_TYPE
     pc.product = product_uuid
     ix = CommCareCaseIndex()
-    ix.identifier = 'parent'
+    ix.identifier = const.PARENT_CASE_REF
     ix.referenced_type = const.SUPPLY_POINT_CASE_TYPE
     ix.referenced_id = supply_point_case._id
     pc.indices = [ix]
