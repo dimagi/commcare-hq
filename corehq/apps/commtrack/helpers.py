@@ -27,7 +27,6 @@ def make_product(domain, name, code):
     p.save()
     return p
 
-# TODO use case-xml case creation workflow
 def make_supply_point(domain, location):
     # a supply point is currently just a case with a special type
     id = uuid.uuid4().hex
