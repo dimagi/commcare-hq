@@ -69,7 +69,6 @@ class CasePaginator():
             'size': self.params.count,
         }
         es_results = get_es().get('hqcases/_search', data=es_query)
-
         if es_results.has_key('error'):
             notify_exception(None, "Error in case list elasticsearch query: %s" % es_results['error'])
             return {

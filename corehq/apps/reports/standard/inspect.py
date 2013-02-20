@@ -256,7 +256,7 @@ class CaseListMixin(ProjectInspectionReportParamsMixin, GenericTabularReport, Pr
             domain=self.domain,
             params=self.pagination,
             case_type=self.case_type,
-            owner_ids=self.case_owners,
+            owner_ids=self.case_owners if self.is_owner_set() else None,
             user_ids=self.user_ids,
             status=self.case_status,
             filter=self.case_filter
@@ -265,6 +265,9 @@ class CaseListMixin(ProjectInspectionReportParamsMixin, GenericTabularReport, Pr
     @property
     def total_records(self):
         return self.case_results['total_rows']
+
+    def is_owner_set(self):
+        return bool(self.individual)
 
     @property
     @memoized
