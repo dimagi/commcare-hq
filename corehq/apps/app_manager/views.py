@@ -682,7 +682,8 @@ def user_registration_source(req, domain, app_id):
     return form_designer(req, domain, app_id, is_user_registration=True)
 
 @login_and_domain_required
-def form_designer(req, domain, app_id, module_id=None, form_id=None, is_user_registration=False):
+def form_designer(req, domain, app_id, module_id=None, form_id=None,
+                  is_user_registration=False):
     app = get_app(domain, app_id)
 
     if is_user_registration:
@@ -697,13 +698,11 @@ def form_designer(req, domain, app_id, module_id=None, form_id=None, is_user_reg
         except IndexError:
             return bail(req, domain, app_id, not_found="form")
 
-
-
-
     context = get_apps_base_context(req, domain, app)
     context.update(locals())
     context.update({
         'edit': True,
+        'nav_form': form if not is_user_registration else '',
     })
     return render(req, 'app_manager/form_designer.html', context)
 
