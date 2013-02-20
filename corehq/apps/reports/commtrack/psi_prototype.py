@@ -170,8 +170,18 @@ LOC_METADATA = [
 ACTION_ORDERING = ['stockonhand', 'sales', 'receipts', 'stockedoutfor']
 PRODUCT_ORDERING = ['PSI kit', 'non-PSI kit', 'ORS', 'Zinc']
 
-def outlet_headers(slug=False):
-    return [f['key' if slug else 'caption'] for f in HIERARCHY + LOC_METADATA]
+def _outlet_headers(terminal='outlet'):
+    loc_types = [f['key'] for f in HIERARCHY] + ['outlet']
+    active_loc_types = loc_types[:loc_types.index(terminal)+1]
+
+    hierarchy = HIERARCHY[:len(active_loc_types)]
+    metadata = [f for f in LOC_METADATA if f.get('anc_type', 'outlet') in active_loc_types]
+
+    return (hierarchy, metadata)
+
+def outlet_headers(slug=False, terminal='outlet'):
+    hierarchy, metadata = _outlet_headers(terminal)
+    return [f['key' if slug else 'caption'] for f in hierarchy + metadata]
 
 def outlet_metadata(loc, ancestors):
     lineage = dict((anc.location_type, anc) for anc in (ancestors[anc_id] for anc_id in loc.lineage))
@@ -197,6 +207,21 @@ def outlet_metadata(loc, ancestors):
     row = []
     row += [loc_prop(f['key'], 'name') for f in HIERARCHY]
     row += [loc_prop(f.get('anc_type'), f['key']) for f in LOC_METADATA]
+    return row
+
+def site_metadata(loc, ancestors):
+    lineage = dict((anc.location_type, anc) for anc in (ancestors[anc_id] for anc_id in loc.lineage))
+    def loc_prop(anc_type, prop_name, default=u'\u2014'):
+        l = lineage.get(anc_type) if anc_type and anc_type != loc.location_type else loc
+        return getattr(l, prop_name, default) if l else default
+
+    hierarchy, metadata = _outlet_headers(terminal=loc.location_type)
+
+    row = []
+    for h in hierarchy:
+        row.append(loc_prop(h['key'], 'name'))
+    for h in metadata:
+        row.append(loc_prop(h.get('anc_type'), h['key']))
     return row
 
 def load_locs(loc_ids):
@@ -419,21 +444,19 @@ class CumulativeSalesAndConsumptionReport(GenericTabularReport, CommtrackReportM
 
     @property
     @memoized
-    def metadata(self):
-        return [f for f in LOC_METADATA if f.get('anc_type', 'outlet') == self.aggregate_by]
+    def ancestry(self):
+        return load_all_loc_hierarchy(self.aggregation_locs)
 
     @property
     def headers(self):
         if not self.aggregation_locs:
             return DataTablesHeader(DataTablesColumn('No locations'))
 
-        cols = [
-            'Location',
-            'Location Type',
+        cols = outlet_headers(terminal=self.aggregate_by)
+        cols.extend([
             '# reporting outlets',
             'total # outlets',
-        ]
-        cols.extend(f['caption'] for f in self.metadata)
+        ])
         for p in self.active_products:
             cols.append('Total Stock on Hand (%s)' % p['name'])
             cols.append('Total Sales (%s)' % p['name'])
@@ -482,21 +505,11 @@ class CumulativeSalesAndConsumptionReport(GenericTabularReport, CommtrackReportM
             relevant_reports = [r for r in reports if any(tx['product'] in product_ids for tx in get_transactions(r))]
             num_active_outlets = len(set(leaf_loc(r) for r in relevant_reports))
 
-            # feels not DRY
- #           import urllib
- #           site_url = '%s?%s' % (self.get_url(self.domain), urllib.urlencode({
- #               'startdate': self.datespan.startdate_display,
- #               'enddate': self.datespan.enddate_display,
- #               'location_id': site._id,
- #           }))
- #           site_link = '<a href="%s"><span>%s</span></a>' % (site_url, site.name)
-            data = [
-                site.name, #site_link,
-                site.location_type,
+            data = site_metadata(site, self.ancestry)
+            data.extend([
                 num_active_outlets,
                 num_outlets,
-            ]
-            data.extend(getattr(site, f['key'], u'\u2014') for f in self.metadata)
+            ])
             for p in products:
                 tx_by_action = map_reduce(lambda tx: [(tx['action'], int(tx['value']))], data=tx_by_product.get(p['_id'], []))
                 subcases = cases_by_product.get(p['_id'], [])
