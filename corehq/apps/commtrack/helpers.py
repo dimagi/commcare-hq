@@ -44,7 +44,6 @@ def make_supply_point(domain, location):
     c.save()
     return c
 
-# TODO use case-xml case creation workflow
 def make_supply_point_product(supply_point_case, product_uuid):
     domain = supply_point_case.domain
     id = uuid.uuid4().hex
