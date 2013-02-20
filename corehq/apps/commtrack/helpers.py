@@ -46,15 +46,25 @@ def make_supply_point(domain, location):
 
 # TODO use case-xml case creation workflow
 def make_supply_point_product(supply_point_case, product_uuid):
-    pc = CommCareCase()
-    pc.domain = supply_point_case.domain
-    pc.type = const.SUPPLY_POINT_PRODUCT_CASE_TYPE
-    pc.product = product_uuid
-    ix = CommCareCaseIndex()
-    ix.identifier = const.PARENT_CASE_REF
-    ix.referenced_type = const.SUPPLY_POINT_CASE_TYPE
-    ix.referenced_id = supply_point_case._id
-    pc.indices = [ix]
+    domain = supply_point_case.domain
+    id = uuid.uuid4().hex
+    caseblock = CaseBlock(
+        case_id=id,
+        create=True,
+        version=V2,
+        user_id=get_commtrack_user_id(domain),
+        case_type=const.SUPPLY_POINT_PRODUCT_CASE_TYPE,
+        update={
+            "product": product_uuid
+        },
+        index={
+            const.PARENT_CASE_REF: (const.SUPPLY_POINT_CASE_TYPE,
+                                    supply_point_case._id),
+        }
+    )
+    casexml = ElementTree.tostring(caseblock.as_xml())
+    submit_case_blocks(casexml, domain)
+    pc = CommCareCase.get(id)
     pc.location_ = supply_point_case.location_
     pc.save()
     return pc
