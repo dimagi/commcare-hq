@@ -10,7 +10,7 @@
 }
 .hq-oldstyle #main_container {
   padding: 10px;
-  width: 1000px;
+  width: 100%;
 }
 .hq-oldstyle select {
   height: auto;
@@ -166,7 +166,6 @@
   padding: 1em;
 }
 .hq-oldstyle .sidebar {
-  width: 200px !important;
   padding: 1em;
 }
 .hq-oldstyle .sidebar a {
@@ -208,23 +207,9 @@
   background-color: #ccc;
   border: 1px solid #bbb;
 }
-.hq-oldstyle .sidebar-wrapper {
-  display: table;
-  width: 100%;
-}
-.hq-oldstyle .sidebar,
-.hq-oldstyle .sidebar + * {
-  display: table-cell;
-  border-top: none;
-  vertical-align: top;
-}
 .hq-oldstyle .sidebar + * {
   border: none;
-  padding: 1em;
-}
-.hq-oldstyle .sidebar {
-  border-left: none;
-  border-bottom: none;
+  padding: 1em 2.7% 1em 0;
 }
 .hq-oldstyle form table td {
   padding: .25em;

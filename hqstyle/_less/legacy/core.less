@@ -12,7 +12,7 @@
 
     #main_container {
         padding: 10px;
-        width: 1000px;
+        width: 100%;
     }
 }
 
@@ -163,7 +163,6 @@
         padding: 1em;
     }
     .sidebar {
-        width: 200px !important;
         padding: 1em;
     }
     .sidebar a {
@@ -207,22 +206,9 @@
     }
 
     /* make join .sidebar and .sidebar + * horizontally */
-    .sidebar-wrapper {
-        display: table;
-        width: 100%;
-    }
-    .sidebar, .sidebar + * {
-        display: table-cell;
-        border-top: none;
-        vertical-align: top;
-    }
     .sidebar + * {
         border: none;
-        padding: 1em;
-    }
-    .sidebar {
-        border-left: none;
-        border-bottom: none;
+        padding: 1em 2.7% 1em 0;
     }
 
     form table td {
