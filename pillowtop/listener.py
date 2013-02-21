@@ -397,7 +397,8 @@ class AliasedElasticPillow(ElasticPillow):
         """
         Verify whether the server has indexed this type
 
-        We can assume at startup that the mapping from the server is loaded, so in memory will be up to date.
+        We can assume at startup that the mapping from the server is loaded,
+        so in memory will be up to date.
 
         server = False:
             if true, override to always call server
@@ -442,14 +443,17 @@ class AliasedElasticPillow(ElasticPillow):
 
     def assume_alias(self):
         """
-        todo: for this instance, have the index that represents this index receive the alias itself as well.
-        This presents a management issue later if we route out additional indexes/aliases that we automate this carefully.
+        todo: for this instance, have the index that represents this index
+        receive the alias itself as well.
+        This presents a management issue later if we route out additional
+        indexes/aliases that we automate this carefully.
         """
         pass
 
     def get_name(self):
         """
-        Gets the doc_name in which to set the checkpoint for itself, based upon class name and the hashed name representation.
+        Gets the doc_name in which to set the checkpoint for itself, based upon
+        class name and the hashed name representation.
         """
         return "%s.%s.%s" % (self.__module__, self.__class__.__name__, self.calc_meta())
 
