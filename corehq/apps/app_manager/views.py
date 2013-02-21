@@ -703,6 +703,7 @@ def form_designer(req, domain, app_id, module_id=None, form_id=None,
     context.update({
         'edit': True,
         'nav_form': form if not is_user_registration else '',
+        'formdesigner': True,
     })
     return render(req, 'app_manager/form_designer.html', context)
 
