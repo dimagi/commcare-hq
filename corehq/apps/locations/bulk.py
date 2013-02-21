@@ -50,6 +50,10 @@ def import_locations(domain, f):
             break
     property_fields = fields[len(hierarchy_fields):]
 
+    if not hierarchy_fields:
+        yield 'missing location hierarchy-related fields in left columns. aborting import'
+        return
+
     loc_cache = LocationCache(domain)
     for loc in data:
         for m in import_location(domain, loc, hierarchy_fields, property_fields, loc_cache):

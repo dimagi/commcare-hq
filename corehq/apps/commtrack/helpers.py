@@ -1,14 +1,22 @@
-
-from corehq.apps.users.models import CommCareUser
 from casexml.apps.case.models import CommCareCase
-from casexml.apps.case.sharedmodels import CommCareCaseIndex
-from corehq.apps.commtrack.models import *
-from dimagi.utils.couch.database import get_db
+from corehq.apps.commtrack.models import Product, CommtrackConfig,\
+    CommtrackActionConfig, SupplyPointType
+from corehq.apps.commtrack import const
+from casexml.apps.case.tests.util import CaseBlock
+from casexml.apps.case.xml import V2
+import uuid
+from corehq.apps.hqcase.utils import submit_case_blocks
+from xml.etree import ElementTree
 
 """
 helper code to populate the various commtrack models, for ease of
 development/testing, before we have proper UIs and imports
 """
+
+def get_commtrack_user_id(domain):
+    # abstracted out in case we one day want to back this
+    # by a real user, but for now it's like demo_user
+    return const.COMMTRACK_USERNAME
 
 def make_product(domain, name, code):
     p = Product()
@@ -18,26 +26,47 @@ def make_product(domain, name, code):
     p.save()
     return p
 
-# TODO use case-xml case creation workflow
 def make_supply_point(domain, location):
-    c = CommCareCase()
-    c.domain = domain
-    c.type = 'supply-point'
+    # a supply point is currently just a case with a special type
+    id = uuid.uuid4().hex
+    user_id = get_commtrack_user_id(domain)
+    username = const.COMMTRACK_USERNAME
+    caseblock = CaseBlock(
+        case_id=id,
+        create=True,
+        version=V2,
+        user_id=user_id,
+        case_type=const.SUPPLY_POINT_CASE_TYPE,
+    )
+    casexml = ElementTree.tostring(caseblock.as_xml())
+    submit_case_blocks(casexml, domain, username, user_id)
+    c = CommCareCase.get(id)
     c.bind_to_location(location)
     c.save()
     return c
 
-# TODO use case-xml case creation workflow
 def make_supply_point_product(supply_point_case, product_uuid):
-    pc = CommCareCase()
-    pc.domain = supply_point_case.domain
-    pc.type = 'supply-point-product'
-    pc.product = product_uuid
-    ix = CommCareCaseIndex()
-    ix.identifier = 'parent'
-    ix.referenced_type = 'supply-point'
-    ix.referenced_id = supply_point_case._id
-    pc.indices = [ix]
+    domain = supply_point_case.domain
+    id = uuid.uuid4().hex
+    user_id = get_commtrack_user_id(domain)
+    username = const.COMMTRACK_USERNAME
+    caseblock = CaseBlock(
+        case_id=id,
+        create=True,
+        version=V2,
+        user_id=user_id,
+        case_type=const.SUPPLY_POINT_PRODUCT_CASE_TYPE,
+        update={
+            "product": product_uuid
+        },
+        index={
+            const.PARENT_CASE_REF: (const.SUPPLY_POINT_CASE_TYPE,
+                                    supply_point_case._id),
+        }
+    )
+    casexml = ElementTree.tostring(caseblock.as_xml())
+    submit_case_blocks(casexml, domain, username, user_id)
+    pc = CommCareCase.get(id)
     pc.location_ = supply_point_case.location_
     pc.save()
     return pc

@@ -38,7 +38,7 @@ def run_only_once(fn):
 @periodic_task(run_every=timedelta(minutes=1))
 def check_repeaters():
     now = datetime.utcnow()
-    
+
     repeat_records = RepeatRecord.all(due_before=now)
     for repeat_record in repeat_records:
         if repeat_record.acquire_lock(now):

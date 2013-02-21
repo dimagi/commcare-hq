@@ -1,21 +1,21 @@
 from django.conf import settings
-from corehq.apps.reports.standard import ProjectReport, ProjectReportParametersMixin, DatespanMixin, CustomProjectReport
+from corehq.apps.reports.standard import ProjectReport, ProjectReportParametersMixin, DatespanMixin
 from corehq.apps.reports.generic import GenericTabularReport
 from corehq.apps.domain.models import Domain
 from corehq.apps.users.models import CommCareUser
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
-from corehq.apps.locations.models import Location, root_locations, all_locations
+from corehq.apps.locations.models import Location, all_locations
 from dimagi.utils.couch.database import get_db
 from dimagi.utils.couch.loosechange import map_reduce
 from dimagi.utils import parsing as dateparse
 import itertools
 from datetime import date, timedelta
 from corehq.apps.commtrack.models import CommtrackConfig, Product, StockReport
-from corehq.apps.commtrack.util import *
 from dimagi.utils.decorators.memoized import memoized
-from corehq.apps.reports.cache import request_cache
-import json
+import urllib
 from casexml.apps.case.models import CommCareCase
+from corehq.apps.commtrack import const
+from corehq.apps.commtrack.util import supply_point_type_categories
 
 class CommtrackReportMixin(ProjectReport, ProjectReportParametersMixin):
 
@@ -170,8 +170,18 @@ LOC_METADATA = [
 ACTION_ORDERING = ['stockonhand', 'sales', 'receipts', 'stockedoutfor']
 PRODUCT_ORDERING = ['PSI kit', 'non-PSI kit', 'ORS', 'Zinc']
 
-def outlet_headers(slug=False):
-    return [f['key' if slug else 'caption'] for f in HIERARCHY + LOC_METADATA]
+def _outlet_headers(terminal='outlet'):
+    loc_types = [f['key'] for f in HIERARCHY] + ['outlet']
+    active_loc_types = loc_types[:loc_types.index(terminal)+1]
+
+    hierarchy = HIERARCHY[:len(active_loc_types)]
+    metadata = [f for f in LOC_METADATA if f.get('anc_type', 'outlet') in active_loc_types]
+
+    return (hierarchy, metadata)
+
+def outlet_headers(slug=False, terminal='outlet'):
+    hierarchy, metadata = _outlet_headers(terminal)
+    return [f['key' if slug else 'caption'] for f in hierarchy + metadata]
 
 def outlet_metadata(loc, ancestors):
     lineage = dict((anc.location_type, anc) for anc in (ancestors[anc_id] for anc_id in loc.lineage))
@@ -197,6 +207,21 @@ def outlet_metadata(loc, ancestors):
     row = []
     row += [loc_prop(f['key'], 'name') for f in HIERARCHY]
     row += [loc_prop(f.get('anc_type'), f['key']) for f in LOC_METADATA]
+    return row
+
+def site_metadata(loc, ancestors):
+    lineage = dict((anc.location_type, anc) for anc in (ancestors[anc_id] for anc_id in loc.lineage))
+    def loc_prop(anc_type, prop_name, default=u'\u2014'):
+        l = lineage.get(anc_type) if anc_type and anc_type != loc.location_type else loc
+        return getattr(l, prop_name, default) if l else default
+
+    hierarchy, metadata = _outlet_headers(terminal=loc.location_type)
+
+    row = []
+    for h in hierarchy:
+        row.append(loc_prop(h['key'], 'name'))
+    for h in metadata:
+        row.append(loc_prop(h.get('anc_type'), h['key']))
     return row
 
 def load_locs(loc_ids):
@@ -321,6 +346,7 @@ class SalesAndConsumptionReport(GenericTabularReport, CommtrackReportMixin, Date
         for p in self.active_products:
             cols.append('Stock on Hand (%s)' % p['name'])
             cols.append('Total Sales (%s)' % p['name'])
+            cols.append('Total Receipts (%s)' % p['name'])
             cols.append('Total Consumption (%s)' % p['name'])
         cols.append('Stock-out days (all products combined)')
 
@@ -377,6 +403,7 @@ class SalesAndConsumptionReport(GenericTabularReport, CommtrackReportMixin, Date
 
                 data.append('%s (%s)' % (stock, as_of) if latest_state else u'\u2014')
                 data.append(sum(tx_by_action.get('sales', [])))
+                data.append(sum(tx_by_action.get('receipts', [])))
                 data.append(sum(tx_by_action.get('consumption', [])))
 
             combined_stockout_days = len(reduce(lambda a, b: a.intersection(b), stockouts.values()))
@@ -417,23 +444,23 @@ class CumulativeSalesAndConsumptionReport(GenericTabularReport, CommtrackReportM
 
     @property
     @memoized
-    def metadata(self):
-        return [f for f in LOC_METADATA if f.get('anc_type', 'outlet') == self.aggregate_by]
+    def ancestry(self):
+        return load_all_loc_hierarchy(self.aggregation_locs)
 
     @property
     def headers(self):
         if not self.aggregation_locs:
             return DataTablesHeader(DataTablesColumn('No locations'))
 
-        cols = [
-            'Location',
-            'Location Type',
+        cols = outlet_headers(terminal=self.aggregate_by)
+        cols.extend([
             '# reporting outlets',
-        ]
-        cols.extend(f['caption'] for f in self.metadata)
+            'total # outlets',
+        ])
         for p in self.active_products:
             cols.append('Total Stock on Hand (%s)' % p['name'])
             cols.append('Total Sales (%s)' % p['name'])
+            cols.append('Total Receipts (%s)' % p['name'])
             cols.append('Total Consumption (%s)' % p['name'])
 
         return DataTablesHeader(*(DataTablesColumn(c) for c in cols))
@@ -465,7 +492,7 @@ class CumulativeSalesAndConsumptionReport(GenericTabularReport, CommtrackReportM
 
         startkey = [self.domain, self.active_location._id if self.active_location else None, 'CommCareCase']
         product_cases = [c for c in CommCareCase.view('locations/linked_docs', startkey=startkey, endkey=startkey + [{}], include_docs=True)
-                         if c.type == 'supply-point-product' and leaf_loc(c) in active_outlet_ids]
+                         if c.type == const.SUPPLY_POINT_PRODUCT_CASE_TYPE and leaf_loc(c) in active_outlet_ids]
         product_cases_by_parent = map_reduce(get_aggregators, data=product_cases, include_docs=True)
 
         def summary_row(site, reports, product_cases, outlets):
@@ -478,20 +505,11 @@ class CumulativeSalesAndConsumptionReport(GenericTabularReport, CommtrackReportM
             relevant_reports = [r for r in reports if any(tx['product'] in product_ids for tx in get_transactions(r))]
             num_active_outlets = len(set(leaf_loc(r) for r in relevant_reports))
 
-            # feels not DRY
-            import urllib
-            site_url = '%s?%s' % (self.get_url(self.domain), urllib.urlencode({
-                'startdate': self.datespan.startdate_display,
-                'enddate': self.datespan.enddate_display,
-                'location_id': site._id,
-            }))
-            site_link = '<a href="%s">%s</a>' % (site_url, site.name)
-            data = [
-                site_link,
-                site.location_type,
-                '%d of %d' % (num_active_outlets, num_outlets),
-            ]
-            data.extend(getattr(site, f['key'], u'\u2014') for f in self.metadata)
+            data = site_metadata(site, self.ancestry)
+            data.extend([
+                num_active_outlets,
+                num_outlets,
+            ])
             for p in products:
                 tx_by_action = map_reduce(lambda tx: [(tx['action'], int(tx['value']))], data=tx_by_product.get(p['_id'], []))
                 subcases = cases_by_product.get(p['_id'], [])
@@ -499,6 +517,7 @@ class CumulativeSalesAndConsumptionReport(GenericTabularReport, CommtrackReportM
 
                 data.append(sum(stocks) if stocks else u'\u2014')
                 data.append(sum(tx_by_action.get('sales', [])))
+                data.append(sum(tx_by_action.get('receipts', [])))
                 data.append(sum(tx_by_action.get('consumption', [])))
 
             return data
@@ -508,6 +527,8 @@ class CumulativeSalesAndConsumptionReport(GenericTabularReport, CommtrackReportM
                             product_cases_by_parent.get(site._id, []),
                             outlets_by_aggregation_site.get(site._id, []),
                         ) for site in locs]
+
+
 
 class StockOutReport(GenericTabularReport, CommtrackReportMixin, DatespanMixin):
     name = 'Stock-out Report'
