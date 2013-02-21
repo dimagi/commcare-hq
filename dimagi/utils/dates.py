@@ -1,10 +1,6 @@
 from datetime import date, datetime, timedelta, time
 from calendar import month_name
-try:
-    from celery.log import get_task_logger
-except ImportError:
-    # changed in celery 3.0
-    from celery.utils.log import get_task_logger
+from celery.utils.log import get_task_logger
 import dateutil
 import pytz
 from dimagi.utils.logging import log_exception
@@ -119,7 +115,7 @@ class DateSpan(object):
         """
             For un-pickling the DateSpan object.
         """
-        logging = get_task_logger() # logging is likely to happen within celery
+        logging = get_task_logger(__name__) # logging is likely to happen within celery
         try:
             self.startdate = dateutil.parser.parse(state.get('startdate'))
             self.enddate = dateutil.parser.parse(state.get('enddate'))
