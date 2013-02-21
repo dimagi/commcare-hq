@@ -6,7 +6,6 @@ from corehq.apps.hqcase.utils import submit_case_blocks
 from corehq.apps.importer import base
 from corehq.apps.importer.util import ExcelFile, get_case_properties
 from couchdbkit.exceptions import MultipleResultsFound, NoResultFound
-from tempfile import mkstemp
 from django.views.decorators.http import require_POST
 from datetime import datetime, date
 from xlrd import xldate_as_tuple
