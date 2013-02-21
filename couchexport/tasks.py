@@ -1,4 +1,4 @@
-from celery.log import get_task_logger
+from celery.utils.log import get_task_logger
 from unidecode import unidecode
 from celery.task import task
 import zipfile
@@ -8,7 +8,7 @@ import os
 from soil.util import expose_download
 from couchexport.export import SchemaMismatchException, ExportConfiguration
 
-logging = get_task_logger()
+logging = get_task_logger(__name__)
 
 @task
 def export_async(custom_export, download_id, format=None, filename=None, **kwargs):
