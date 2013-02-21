@@ -367,13 +367,6 @@ class AliasedElasticPillow(ElasticPillow):
         self.seen_types = self.get_index_mapping()
         logging.info("Pillowtop [%s] Retrieved mapping from ES" % self.get_name())
 
-    #    @property
-    #    def es_index(self):
-    #        """
-    #        The real index that this instance represents
-    #        """
-    #        return "%s_%s" % (self.es_index_prefix, self.calc_meta())
-
     def calc_meta(self):
         raise NotImplementedError("Need to implement your own meta calculator")
 
@@ -459,17 +452,6 @@ class AliasedElasticPillow(ElasticPillow):
         Gets the doc_name in which to set the checkpoint for itself, based upon class name and the hashed name representation.
         """
         return "%s.%s.%s" % (self.__module__, self.__class__.__name__, self.calc_meta())
-
-    def calc_meta(self):
-        """
-        Calculate an md5 sum based upon the state of the inbuilt meta (mapping) of the type you want to index on this pillow.
-
-        simplejson.dumps(dict) is actually fairly good at syntactical/ordering of keys - only substantive content changes alter the hash.
-
-        """
-        if not hasattr(self, '_calc_meta'):
-            self._calc_meta = hashlib.md5(simplejson.dumps(self.es_meta)).hexdigest()
-        return self._calc_meta
 
     def get_mapping_from_type(self, doc_dict):
         raise NotImplementedError("This must be implemented in this subclass!")
