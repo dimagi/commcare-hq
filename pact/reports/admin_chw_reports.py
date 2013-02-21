@@ -1,4 +1,5 @@
 from datetime import timedelta
+from couchdbkit import ResourceNotFound
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
 from corehq.apps.reports.generic import GenericTabularReport
 from corehq.apps.reports.standard import CustomProjectReport
@@ -15,46 +16,6 @@ class PactCHWAdminReport(GenericTabularReport, CustomProjectReport):
     emailable = True
     exportable = True
     report_template_path = "pact/admin/pact_chw_schedule_admin.html"
-
-    def tabular_data(self, mode, case_id, start_date, end_date):#, limit=50, skip=0):
-        try:
-            case_doc = PactPatientCase.get(case_id)
-            pactid = case_doc.pactid
-        except:
-            case_doc = None
-            pactid = None
-
-        if case_doc is not None:
-            if mode == 'all':
-                start_date = end_date - timedelta(1000)
-                startkey = [case_id, 'anchor_date', start_date.year,
-                            start_date.month, start_date.day]
-                endkey = [case_id, 'anchor_date', end_date.year, end_date.month,
-                          end_date.day]
-                csv_filename = 'dots_csv_pt_%s.csv' % (pactid)
-            else:
-                startkey = [case_id, 'anchor_date', start_date.year,
-                            start_date.month, start_date.day]
-                endkey = [case_id, 'anchor_date', end_date.year, end_date.month,
-                          end_date.day]
-                csv_filename = 'dots_csv_pt_%s-%s_to_%s.csv' % (
-                    pactid, start_date.strftime("%Y-%m-%d"), end_date.strftime("%Y-%m-%d"))
-        elif case_doc is None:
-            if mode == 'all':
-                start_date = end_date - timedelta(1000)
-                startkey = [start_date.year, start_date.month, start_date.day]
-                endkey = [end_date.year, end_date.month, end_date.day]
-                csv_filename = 'dots_csv_pt_all.csv'
-            else:
-                startkey = [start_date.year, start_date.month, start_date.day]
-                endkey = [end_date.year, end_date.month, end_date.day]
-                csv_filename = 'dots_csv_pt_all-%s_to_%s.csv' % (
-                    start_date.strftime("%Y-%m-%d"), end_date.strftime("%Y-%m-%d"))
-                #heading
-        view_results = CObservation.view('pact/dots_observations', startkey=startkey, endkey=endkey)#, limit=limit, skip=skip)
-
-        for v in view_results:
-            yield v
 
     @property
     def headers(self):
