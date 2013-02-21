@@ -528,15 +528,6 @@ class CumulativeSalesAndConsumptionReport(GenericTabularReport, CommtrackReportM
                             outlets_by_aggregation_site.get(site._id, []),
                         ) for site in locs]
 
-#    @property
-#    def export_table(self):
-#        rows = []
-#        rows.append([h.html for h in self.headers.header])
-#        def fixrow(r):
-#            return r
-#        rows.extend(fixrow(r) for r in self.rows)
-#        return [['cumulative sales and consumption', rows]]
-
 
 
 class StockOutReport(GenericTabularReport, CommtrackReportMixin, DatespanMixin):
