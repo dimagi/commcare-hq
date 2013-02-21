@@ -3,6 +3,7 @@
 {% load url_extras %}
 {% load hq_shared_tags %}
 {% load i18n %}
+
 {% block head %}{{ block.super }}
 <style>
     .edit-form-pencil {
@@ -31,18 +32,22 @@
                 placement: 'left'
             });
             $('.edit-form-li').each(function () {
-                $(this).mouseenter(function () {
+                if ($(this).is('.selected') && {{ formdesigner|JSON }}) {
                     $(this).find('.edit-form-pencil').show();
-                }).mouseleave(function () {
-                    $(this).find('.edit-form-pencil').hide();
-                });
+                } else {
+                    $(this).mouseenter(function () {
+                        $(this).find('.edit-form-pencil').show();
+                    }).mouseleave(function () {
+                        $(this).find('.edit-form-pencil').hide();
+                    });
+                }
             });
         });
     </script>
     {% endif %}
 {% endblock %}
 {% block app-content %}
-    <div id="langs" class="container">
+    <div id="langs" style="border-bottom: 1px solid #eee;">
         {% if not app.is_remote_app %}
         Language:
         <select class="code" name="lang">
@@ -58,15 +63,15 @@
         {% endif %}
         {% include 'app_manager/partials/release-manager-nav.html' %}
     </div>
-    <div id="modules-form-view-wrapper" class="sidebar-wrapper">
-        <div id="modules" class="sidebar">
+    <div class="sidebar-wrapper row-fluid hq-double-col">
+        <div id="modules" class="sidebar span2">
         <!--h2 id="modules-header">Modules</h2-->
         <h2 {% if not module and not form and not release_manager %}class="selected"{% endif %}>
             <a href="{% url view_app domain app.id %}?edit={{ edit|BOOL }}" class="variable-app_name">{{ app.name|html_name }}
             </a>
         </h2>
             {% if app.get_doc_type == "Application" %}
-                <ul {% if edit %}class="sortable"{% endif %}>
+                <ul class="{% if edit %}sortable {% endif %}">
                     {% if edit %}
                         <li class="sort-action">
                             <form method="post"
@@ -156,7 +161,7 @@
                 </ul>
             {% endif %}
         </div>
-        <div class="next-to-sidebar">
+        <div class="next-to-sidebar span10">
             {% block form-view %}
 
             {% endblock %}
