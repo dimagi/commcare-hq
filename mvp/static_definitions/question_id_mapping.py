@@ -62,7 +62,7 @@ CHILD_VISIT_QUESTION_IDS = {
     'exclusive_breastfeeding': {
         'mvp-sauri': _make_qid('group_counseling.exclusive_breastfeeding', 1),
         'mvp-potou': _make_qid('group_counseling.exclusive_breastfeeding', 1),
-        'mvp-potou': _make_qid('group_counseling.exclusive_breastfeeding', 1),
+        'mvp-bonsaaso': _make_qid('group_counseling.exclusive_breastfeeding', 1),
     },
     'vaccination_status': {
         'mvp-sauri': _make_qid('group_counseling.vaccinations_up_to_date', 1),
