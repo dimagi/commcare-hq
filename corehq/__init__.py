@@ -106,7 +106,7 @@ TABS = (
     CloudcareTab,
     MessagesTab,
     RemindersTab,
-    ProjectSettingsTab,
+    SettingsTab,
     AdminTab,
     ExchangeTab,
     ManageSurveysTab,

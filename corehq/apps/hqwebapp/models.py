@@ -339,7 +339,7 @@ class RemindersTab(UITab):
         return self.domain.commtrack_enabled
 
 
-class ProjectSettingsTab(UITab):
+class SettingsTab(UITab):
     view = "corehq.apps.settings.views.default"
 
     @property
@@ -459,6 +459,8 @@ class ProjectSettingsTab(UITab):
                       'urlname': 'add_repeater'}
                  ]}
             ]))
+
+
 
         return items
 

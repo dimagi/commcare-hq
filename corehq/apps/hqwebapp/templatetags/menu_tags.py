@@ -69,7 +69,12 @@ def format_sidebar(context):
     active_tab = context.get('active_tab', None)
     request = context['request']
 
+    sections = None
+
     if active_tab and active_tab.subtabs:
+        # if active_tab is active then at least one of its subtabs should have
+        # is_active == True, but we guard against the possibility of this not
+        # being the case by setting sections = None above
         for s in active_tab.subtabs:
             if s.is_active:
                 sections = s.sidebar_items
