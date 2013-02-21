@@ -360,6 +360,7 @@ class SettingsTab(UITab):
     @property
     def sidebar_items(self):
         items = []
+ 
 
         if self.couch_user.can_edit_commcare_users:
             def commcare_username(request=None, couch_user=None, **context):
@@ -461,6 +462,17 @@ class SettingsTab(UITab):
             ]))
 
 
+        if self.domain.commtrack_enabled:
+            items.append((_('CommTrack'), [
+                {'title': _('Project Settings'),
+                 'url': reverse('domain_commtrack_settings',
+                     args=[self.domain.name])},
+                {'title': _('Manage Products'),
+                 'url': reverse('commtrack_product_list',
+                     args=[self.domain.name])},
+                {'title': _('Manage Locations'),
+                 'url': reverse('manage_locations', args=[self.domain.name])}
+            ]))
 
         return items
 
