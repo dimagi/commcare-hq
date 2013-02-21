@@ -9,7 +9,7 @@ from django.core.cache import cache
 from corehq.apps.receiverwrapper.models import RepeatRecord
 
 
-logger = get_task_logger(__name__)
+logging = get_task_logger(__name__)
 
 def run_only_once(fn):
     """
@@ -32,7 +32,7 @@ def run_only_once(fn):
             finally:
                 release_lock()
         else:
-            logger.debug("%s is already running; aborting" % fn_name)
+            logging.debug("%s is already running; aborting" % fn_name)
     return _fn
 
 @periodic_task(run_every=timedelta(minutes=1))
