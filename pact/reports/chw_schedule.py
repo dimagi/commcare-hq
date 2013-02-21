@@ -90,30 +90,10 @@ class CHWPatientSchedule(object):
 
             daytree.insert(get_seconds(startdate), get_seconds(enddate), other=case_id)
             day_intervaltree[day_of_week] = daytree
-            #cached_schedules[chw_username] = CHWPatientSchedule(chw_username, day_intervaltree, chw_schedules)
         return cls(chw_username, day_intervaltree, cached_arr)
 
 
-def query_submissions(username):
-    xform_es = XFormES(PACT_DOMAIN)
-    fields = [
-        "form.#type",
-        "form.encounter_date",
-        "form.note.encounter_date",
-        "form.case.case_id",
-        "form.case.@case_id",
-        "form.pact_id",
-        "form.note.pact_id",
-        "received_on",
-        "form.meta.timeStart",
-        "form.meta.timeEnd"
-    ]
-    query = xform_es.base_query(terms={"form.meta.username": username}, fields=fields,
-                                start=0, size=25)
-    return xform_es.run_query(query)
-
-
-def dot_submits_by_username(username, case_id, query_date):
+def dots_submissions_by_case(case_id, query_date, username=None):
     """
     Actually run query for username submissions
     todo: do terms for the pact_ids instead of individual term?
@@ -136,8 +116,10 @@ def dot_submits_by_username(username, case_id, query_date):
         "scheduled": {"script": "_source.form.scheduled"}
     }
 
-    query = xform_es.by_case_id_query(PACT_DOMAIN, case_id, terms={'form.meta.username': username,
-                                                                   'form.#type': 'dots_form'},
+    term_block = {'form.#type': 'dots_form'}
+    if username is not None:
+        term_block['form.meta.username'] = username
+    query = xform_es.by_case_id_query(PACT_DOMAIN, case_id, terms=term_block,
                                       date_field='form.encounter_date', startdate=query_date,
                                       enddate=query_date)
     query['sort'] = {'received_on': 'asc'}
@@ -188,13 +170,8 @@ def get_schedule_tally(username, total_interval, override_date=None):
         dp = parser()
         for case_id in patient_case_ids:
             total_scheduled += 1
-            #            searchkey = [str(username), str(pact_id), visit_date.year, visit_date.month, visit_date.day]
-            search_results = dot_submits_by_username(username, case_id, visit_date)
+            search_results = dots_submissions_by_case(case_id, visit_date, username=username)
             submissions = search_results['hits']['hits']
-            #            print "\tquerying submissions: %s: %s" % (username, visit_date)
-            #            submissions = XFormInstance.view('dotsview/dots_submits_by_chw_per_patient_date', key=searchkey, include_docs=True).all()
-            #            submissions = []
-            #ES Query
             if len(submissions) > 0:
                 #print submissions[0]['fields']
                 #calculate if pillbox checked
@@ -213,10 +190,9 @@ def get_schedule_tally(username, total_interval, override_date=None):
                 visited.append(submissions[0]['fields'])
                 total_visited += 1
             else:
-            #ok, so no submission from this chw, let's see if there's ANY from anyone on this day.
-            #                other_submissions = XFormInstance.view('pactcarehq/all_submits_by_patient_date', key=[str(pact_id), visit_date.year, visit_date.month, visit_date.day, 'http://dev.commcarehq.org/pact/dots_form' ], include_docs=True).all()
-                print "todo, check other submissions"
-                other_submissions = []
+                #ok, so no submission from this chw, let's see if there's ANY from anyone on this day.
+                search_results = dots_submissions_by_case(case_id, visit_date)
+                other_submissions = search_results['hits']['hits']
                 if len(other_submissions) > 0:
                     visited.append(other_submissions[0])
                     total_visited += 1
@@ -229,15 +205,12 @@ def get_schedule_tally(username, total_interval, override_date=None):
 def chw_calendar_submit_report(request, username):
     """Calendar view of submissions by CHW, overlaid with their scheduled visits, and whether they made them or not."""
     return_context = {}
-    all_patients = request.GET.get("all_patients", False)
     return_context['username'] = username
-    user = request.user
     total_interval = 30
-    if request.GET.has_key('interval'):
-        end_date = None
+    if 'interval' in request.GET:
         try:
             total_interval = int(request.GET['interval'])
-        except:
+        except ValueError:
             pass
     else:
         start_date_str = request.GET.get('startdate', (datetime.utcnow() - timedelta(days=7)).strftime('%Y-%m-%d'))
@@ -248,7 +221,6 @@ def chw_calendar_submit_report(request, username):
         total_interval = (end_date - start_date).days
 
     ret, patients, total_scheduled, total_visited = get_schedule_tally(username, total_interval, override_date=end_date)
-    nowdate = datetime.now()
 
     if len(ret) > 0:
         return_context['date_arr'] = ret
