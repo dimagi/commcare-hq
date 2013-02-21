@@ -5,7 +5,7 @@ from dimagi.utils.parsing import json_format_datetime
 from django.template.loader import render_to_string
 from receiver.util import spoof_submission
 
-def submit_case_blocks(case_blocks, domain, username="", user_id="system"):
+def submit_case_blocks(case_blocks, domain, username="system", user_id=""):
     now = json_format_datetime(datetime.datetime.utcnow())
     if not isinstance(case_blocks, basestring):
         case_blocks = ''.join(case_blocks)
