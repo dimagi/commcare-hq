@@ -59,6 +59,10 @@
                     </div>
                 </div>
             {% endfor %}
+
+            {% for hidden in form.hidden_fields %}
+                {{ hidden }}
+            {% endfor %}
         </fieldset>
         {% if is_new %}<div class="alert alert-info"><strong>You will be emailed a request to confirm your email address.</strong> In order to open your project, you must first confirm your email.</div>{% endif %}
         <div class="form-actions"{% if not is_new %} style="margin-top:24px; padding-top:18px;"{% endif %}><button type="submit" class="btn btn-primary btn-large">{% if is_new %}Request{% else %}Create{% endif %} Project</button></div>
