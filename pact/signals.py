@@ -8,7 +8,6 @@ import traceback
 BLOCKING = True
 
 def process_dots_submission(sender, xform, **kwargs):
-    from celery.task.base import subtask
     from pact.tasks import recalculate_dots_data, eval_dots_block
     try:
         if xform.xmlns != "http://dev.commcarehq.org/pact/dots_form":
@@ -19,16 +18,12 @@ def process_dots_submission(sender, xform, **kwargs):
         #        chain()
 
         #2.4.5 subtasking:
-#        blocking =  kwargs.get("blocking", False)
-        if BLOCKING:
-            eval_dots_block(xform.to_json())
-            case_id = get_case_id(xform)
-            #get user from xform
-            user_id = xform.metadata.userID
-            cc_user = CouchUser.get_by_user_id(user_id)
-            recalculate_dots_data(case_id, cc_user)
-        else:
-            eval_dots_block.delay(xform.to_json(), callback=subtask(recalculate_dots_data))
+        eval_dots_block(xform.to_json())
+        case_id = get_case_id(xform)
+        #get user from xform
+        user_id = xform.metadata.userID
+        cc_user = CouchUser.get_by_user_id(user_id)
+        recalculate_dots_data(case_id, cc_user)
 
     except Exception, ex:
         tb = traceback.format_exc()
