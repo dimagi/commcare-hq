@@ -179,11 +179,9 @@ deploy of CommCare HQ, follow these steps:
         # add your user as a sudoer by running `sudo visudo` and copying the
         # root=ALL line
 
-
-2. Fork the Github repo and add an environment definition like
-   [this](https://github.com/dimagi/commcare-hq/commit/875092d54988ce8b56dac8755acc82c1a98ceb72),
-   changing `env.home` to '/home/cchq', `env.environment` to whatever name you want,
-   `env.sudo_user` to 'cchq', and `env.hosts` and
+2. Fork the Github repo and add an environment definition by copying the `india`
+   function and changing `env.home` to '/home/cchq', `env.environment` to
+   whatever name you want, `env.sudo_user` to 'cchq', and `env.hosts` and
    `env.roledefs['django_monolith']` to contain the IP of your server.
 
 3. Clone your forked Github repo to your local machine.
