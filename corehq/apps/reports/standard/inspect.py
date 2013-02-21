@@ -16,7 +16,7 @@ from corehq.apps.reports.fields import SelectOpenCloseField, SelectMobileWorkerF
 from corehq.apps.reports.generic import GenericTabularReport
 from corehq.apps.users.models import CommCareUser
 from dimagi.utils.couch.database import get_db
-from dimagi.utils.couch.pagination import CouchFilter, FilteredPaginator
+from dimagi.utils.couch.pagination import CouchFilter
 from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.timezones import utils as tz_utils
 from corehq.apps.groups.models import Group
@@ -256,7 +256,7 @@ class CaseListMixin(ProjectInspectionReportParamsMixin, GenericTabularReport, Pr
             domain=self.domain,
             params=self.pagination,
             case_type=self.case_type,
-            owner_ids=self.case_owners if self.is_owner_set() else None,
+            owner_ids=self.case_owners,
             user_ids=self.user_ids,
             status=self.case_status,
             filter=self.case_filter
@@ -265,9 +265,6 @@ class CaseListMixin(ProjectInspectionReportParamsMixin, GenericTabularReport, Pr
     @property
     def total_records(self):
         return self.case_results['total_rows']
-
-    def is_owner_set(self):
-        return bool(self.individual)
 
     @property
     @memoized
