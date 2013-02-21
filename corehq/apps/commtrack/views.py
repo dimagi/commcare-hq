@@ -106,8 +106,12 @@ def bootstrap(request, domain):
 @require_superuser
 def location_import(request, domain):
     if request.method == "POST":
+        upload = request.FILES.get('locs')
+        if not upload:
+            return HttpResponse('no file uploaded')
+
         # stash this in soil to make it easier to pass to celery
-        file_ref = expose_download(request.FILES['locs'].read(),
+        file_ref = expose_download(upload.read(),
                                    expiry=1*60*60)
         download_id = uuid.uuid4().hex
         import_locations_async.delay(download_id, domain, file_ref.download_id)
