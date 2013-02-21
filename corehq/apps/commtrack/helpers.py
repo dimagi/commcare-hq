@@ -1,5 +1,4 @@
 from casexml.apps.case.models import CommCareCase
-from casexml.apps.case.sharedmodels import CommCareCaseIndex
 from corehq.apps.commtrack.models import Product, CommtrackConfig,\
     CommtrackActionConfig, SupplyPointType
 from corehq.apps.commtrack import const
@@ -30,15 +29,17 @@ def make_product(domain, name, code):
 def make_supply_point(domain, location):
     # a supply point is currently just a case with a special type
     id = uuid.uuid4().hex
+    user_id = get_commtrack_user_id(domain)
+    username = const.COMMTRACK_USERNAME
     caseblock = CaseBlock(
         case_id=id,
         create=True,
         version=V2,
-        user_id=get_commtrack_user_id(domain),
+        user_id=user_id,
         case_type=const.SUPPLY_POINT_CASE_TYPE,
     )
     casexml = ElementTree.tostring(caseblock.as_xml())
-    submit_case_blocks(casexml, domain)
+    submit_case_blocks(casexml, domain, username, user_id)
     c = CommCareCase.get(id)
     c.bind_to_location(location)
     c.save()
@@ -47,11 +48,13 @@ def make_supply_point(domain, location):
 def make_supply_point_product(supply_point_case, product_uuid):
     domain = supply_point_case.domain
     id = uuid.uuid4().hex
+    user_id = get_commtrack_user_id(domain)
+    username = const.COMMTRACK_USERNAME
     caseblock = CaseBlock(
         case_id=id,
         create=True,
         version=V2,
-        user_id=get_commtrack_user_id(domain),
+        user_id=user_id,
         case_type=const.SUPPLY_POINT_PRODUCT_CASE_TYPE,
         update={
             "product": product_uuid
@@ -62,7 +65,7 @@ def make_supply_point_product(supply_point_case, product_uuid):
         }
     )
     casexml = ElementTree.tostring(caseblock.as_xml())
-    submit_case_blocks(casexml, domain)
+    submit_case_blocks(casexml, domain, username, user_id)
     pc = CommCareCase.get(id)
     pc.location_ = supply_point_case.location_
     pc.save()
