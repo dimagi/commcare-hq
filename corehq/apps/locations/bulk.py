@@ -55,7 +55,6 @@ def import_locations(domain, f):
         return
 
     loc_cache = LocationCache(domain)
-    ret = []
     for loc in data:
         for m in import_location(domain, loc, hierarchy_fields, property_fields, loc_cache):
             yield m

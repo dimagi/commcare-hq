@@ -73,19 +73,23 @@
         <!--<li></li>-->
     <!--</ul>-->
 <!--{% endblock %}-->
+
 {% block page-title %}
-        <div class="container">
+<div class="container">
 <ul class="breadcrumb">
-    {% if request.couch_user.is_superuser %}<a href="{% url orgs_base %}">{% endif %}
-    <li><strong>Organizations</strong></li>
-    {% if request.couch_user.is_superuser %}</a>{% endif %}
+    {% block breadcrumb %}
+    <li>{% if request.couch_user.is_superuser %}<a href="{% url orgs_base %}">{% endif %}
+    <strong>Organizations</strong>
+    {% if request.couch_user.is_superuser %}</a>{% endif %}</li>
     <li>
         <span class="divider">&gt;</span>
         <a href="{% url orgs_landing org.name %}">{{ org.name }} ({{ org.title }})</a>
     </li>
+    {% endblock %}
 </ul>
-        </div>
+</div>
 {% endblock %}
+
 
 {% block centered-content %}
     <section>
@@ -104,8 +108,7 @@
                 <a href="#update_info_modal" class="btn" data-toggle="modal">Update Info</a>
             {% endif %}
         </div>
-                <div class="span7" style="padding-top:30px">
-
+                <div class="span7">
                     <div class="span2">
                         <h1>{{ domains|length }} <small>Projects</small></h1>
                     </div>

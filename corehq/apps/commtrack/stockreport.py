@@ -3,12 +3,12 @@ from casexml.apps.case.tests.util import CaseBlock
 from casexml.apps.case.xml import V2
 from lxml import etree
 from lxml.builder import ElementMaker
-from datetime import datetime, date, timedelta
+from datetime import date, timedelta
 from receiver.util import spoof_submission
 from corehq.apps.receiverwrapper.util import get_submit_url
-from corehq.apps.commtrack.models import *
 from dimagi.utils.couch.loosechange import map_reduce
 import logging
+from corehq.apps.commtrack.models import CommtrackConfig
 
 logger = logging.getLogger('commtrack.incoming')
 

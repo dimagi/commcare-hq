@@ -62,13 +62,6 @@
 
 {% block title %} - Report: {{ report.title|default:"Project Reports"|safe }}{% endblock %}
 
-{% block header-section %} {{ block.super }}
-    {% if report.show_subsection_navigation %}
-        {% block subsection-navigation %}
-        {% endblock %}
-    {% endif %}
-{% endblock %}
-
 {% block page-title %}
     <ul class="breadcrumb">
         <li>
@@ -87,7 +80,6 @@
     </ul>
 {% endblock %}
 
-{% block sidebar %}{% endblock %}
 {% block main_column %}
     <div class="hq-accordion-control{% if report.is_async%} hide{% endif %}" id="reportFiltersAccordion">
         <div class="accordion-heading">

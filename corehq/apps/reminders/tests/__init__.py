@@ -3,7 +3,7 @@ from django.test.testcases import TestCase
 from casexml.apps.case.models import CommCareCase
 from corehq.apps.reminders.models import *
 from corehq.apps.users.models import CouchUser, CommCareUser
-from corehq.apps.sms.models import CallLog, EventLog, MISSED_EXPECTED_CALLBACK
+from corehq.apps.sms.models import CallLog, ExpectedCallbackEventLog, CALLBACK_RECEIVED, CALLBACK_PENDING, CALLBACK_MISSED
 from corehq.apps.sms.mixin import VerifiedNumber
 from dimagi.utils.parsing import json_format_datetime
 from dimagi.utils.couch import LOCK_EXPIRATION
@@ -373,6 +373,12 @@ class ReminderCallbackTestCase(TestCase):
         self.assertEqual(reminder.current_event_sequence_num, 1)
         self.assertEqual(reminder.last_fired, CaseReminderHandler.now)
         
+        event = ExpectedCallbackEventLog.view("sms/expected_callback_event",
+                                              key=["test", json_format_datetime(datetime(year=2012, month=1, day=1, hour=8, minute=1)), self.user_id],
+                                              include_docs=True).one()
+        self.assertNotEqual(event, None)
+        self.assertEqual(event.status, CALLBACK_PENDING)
+        
         # Create a callback
         c = CallLog(
             couch_recipient_doc_type    = "CommCareUser",
@@ -392,6 +398,12 @@ class ReminderCallbackTestCase(TestCase):
         self.assertEqual(reminder.schedule_iteration_num, 2)
         self.assertEqual(reminder.current_event_sequence_num, 0)
         self.assertEqual(reminder.last_fired, CaseReminderHandler.now)
+        
+        event = ExpectedCallbackEventLog.view("sms/expected_callback_event",
+                                              key=["test", json_format_datetime(datetime(year=2012, month=1, day=1, hour=8, minute=1)), self.user_id],
+                                              include_docs=True).one()
+        self.assertNotEqual(event, None)
+        self.assertEqual(event.status, CALLBACK_RECEIVED)
         
         ######################
         # Day2, 10:00 reminder
@@ -414,6 +426,12 @@ class ReminderCallbackTestCase(TestCase):
         self.assertEqual(reminder.current_event_sequence_num, 1)
         self.assertEqual(reminder.last_fired, CaseReminderHandler.now)
         
+        event = ExpectedCallbackEventLog.view("sms/expected_callback_event",
+                                              key=["test", json_format_datetime(datetime(year=2012, month=1, day=2, hour=8, minute=1)), self.user_id],
+                                              include_docs=True).one()
+        self.assertNotEqual(event, None)
+        self.assertEqual(event.status, CALLBACK_PENDING)
+        
         # Day2, 11:15 timeout (should move on to next timeout)
         CaseReminderHandler.now = datetime(year=2012, month=1, day=2, hour=8, minute=15)
         CaseReminderHandler.fire_reminders()
@@ -423,6 +441,12 @@ class ReminderCallbackTestCase(TestCase):
         self.assertEqual(reminder.schedule_iteration_num, 2)
         self.assertEqual(reminder.current_event_sequence_num, 1)
         self.assertEqual(reminder.last_fired, CaseReminderHandler.now)
+        
+        event = ExpectedCallbackEventLog.view("sms/expected_callback_event",
+                                              key=["test", json_format_datetime(datetime(year=2012, month=1, day=2, hour=8, minute=1)), self.user_id],
+                                              include_docs=True).one()
+        self.assertNotEqual(event, None)
+        self.assertEqual(event.status, CALLBACK_PENDING)
         
         # Day2, 11:45 timeout (should move on to next day)
         CaseReminderHandler.now = datetime(year=2012, month=1, day=2, hour=8, minute=45)
@@ -434,13 +458,11 @@ class ReminderCallbackTestCase(TestCase):
         self.assertEqual(reminder.current_event_sequence_num, 0)
         self.assertEqual(reminder.last_fired, CaseReminderHandler.now)
         
-        # Ensure that a missed call was logged
-        missed_call_datetime = json_format_datetime(CaseReminderHandler.now)
-        missed_call = EventLog.view("sms/event_by_domain_date_recipient",
-                        key=["test", missed_call_datetime, "CommCareUser", self.user_id],
-                        include_docs=True).one()
-        self.assertNotEqual(missed_call, None)
-        self.assertEqual(missed_call.event_type, MISSED_EXPECTED_CALLBACK)
+        event = ExpectedCallbackEventLog.view("sms/expected_callback_event",
+                                              key=["test", json_format_datetime(datetime(year=2012, month=1, day=2, hour=8, minute=1)), self.user_id],
+                                              include_docs=True).one()
+        self.assertNotEqual(event, None)
+        self.assertEqual(event.status, CALLBACK_MISSED)
         
         ######################
         # Day3, 10:00 reminder
@@ -463,6 +485,12 @@ class ReminderCallbackTestCase(TestCase):
         self.assertEqual(reminder.current_event_sequence_num, 1)
         self.assertEqual(reminder.last_fired, CaseReminderHandler.now)
         
+        event = ExpectedCallbackEventLog.view("sms/expected_callback_event",
+                                              key=["test", json_format_datetime(datetime(year=2012, month=1, day=3, hour=8, minute=1)), self.user_id],
+                                              include_docs=True).one()
+        self.assertNotEqual(event, None)
+        self.assertEqual(event.status, CALLBACK_PENDING)
+        
         # Day3, 11:15 timeout (should move on to next timeout)
         CaseReminderHandler.now = datetime(year=2012, month=1, day=3, hour=8, minute=15)
         CaseReminderHandler.fire_reminders()
@@ -472,6 +500,12 @@ class ReminderCallbackTestCase(TestCase):
         self.assertEqual(reminder.schedule_iteration_num, 3)
         self.assertEqual(reminder.current_event_sequence_num, 1)
         self.assertEqual(reminder.last_fired, CaseReminderHandler.now)
+        
+        event = ExpectedCallbackEventLog.view("sms/expected_callback_event",
+                                              key=["test", json_format_datetime(datetime(year=2012, month=1, day=3, hour=8, minute=1)), self.user_id],
+                                              include_docs=True).one()
+        self.assertNotEqual(event, None)
+        self.assertEqual(event.status, CALLBACK_PENDING)
         
         # Create a callback (with phone_number missing country code)
         c = CallLog(
@@ -492,6 +526,12 @@ class ReminderCallbackTestCase(TestCase):
         self.assertEqual(reminder.current_event_sequence_num, 0)
         self.assertEqual(reminder.last_fired, CaseReminderHandler.now)
         self.assertEqual(reminder.active, False)
+        
+        event = ExpectedCallbackEventLog.view("sms/expected_callback_event",
+                                              key=["test", json_format_datetime(datetime(year=2012, month=1, day=3, hour=8, minute=1)), self.user_id],
+                                              include_docs=True).one()
+        self.assertNotEqual(event, None)
+        self.assertEqual(event.status, CALLBACK_RECEIVED)
 
     @classmethod
     def tearDownClass(cls):

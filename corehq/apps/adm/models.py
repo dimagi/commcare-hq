@@ -3,18 +3,24 @@ import pytz
 import dateutil
 from couchdbkit.ext.django.schema import *
 from casexml.apps.case.models import CommCareCase
-from corehq.apps.adm import utils
 from corehq.apps.adm.admin.crud import *
 from corehq.apps.crud.models import AdminCRUDDocumentMixin
 from corehq.apps.groups.models import Group
 from dimagi.utils.couch.database import get_db
 from dimagi.utils.dates import DateSpan
-from dimagi.utils.decorators.classproperty import classproperty
 from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.modules import to_function
 from dimagi.utils.timezones import utils as tz_utils
 from corehq.apps.users.models import CommCareUser
 from copy import copy
+
+def standard_start_end_key(key, datespan=None):
+    startkey_suffix = [datespan.startdate_param_utc] if datespan else []
+    endkey_suffix = [datespan.enddate_param_utc] if datespan else [{}]
+    return dict(
+        startkey=key+startkey_suffix,
+        endkey=key+endkey_suffix
+    )
 
 KEY_TYPE_OPTIONS = [('user_id', "User"), ("case_type", "Case Type")]
 REPORT_SECTION_OPTIONS = [("supervisor", "Supervisor Report")]
@@ -260,7 +266,7 @@ class CouchViewADMColumn(BaseADMColumn):
         self.key_kwargs.update(self._format_keywords_in_kwargs(**kwargs))
 
     def get_couch_view_data(self, key, datespan=None):
-        data = self.view_results(**utils.standard_start_end_key(key, datespan))
+        data = self.view_results(**standard_start_end_key(key, datespan))
         return data.all() if data else None
 
     def view_results(self, reduce=False, **kwargs):
@@ -305,7 +311,7 @@ class ReducedADMColumn(CouchViewADMColumn, NumericalADMColumnMixin, IgnoreDatesp
         # their owner ids in your query
         keys = [key] if not self.is_user_column else self._expand_user_key(key)
         def _val(key, datespan): 
-            start_end = utils.standard_start_end_key(key, datespan)
+            start_end = standard_start_end_key(key, datespan)
             data = self.view_results(reduce=True, **start_end).first()
             value = data.get('value', 0) if data \
                 else 0 if self.returns_numerical else None

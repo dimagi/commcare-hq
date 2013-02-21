@@ -1,12 +1,6 @@
 from datetime import datetime
 from optparse import make_option
 from django.core.management.base import NoArgsCommand
-import logging
-from django.core.mail import send_mail
-from django.core.management.base import  BaseCommand
-from casexml.apps.case.models import CommCareCase
-from corehq.pillows import CasePillow, XFormPillow
-from couchforms.models import XFormInstance
 from dimagi.utils.logging import notify_exception
 
 CHUNK_SIZE=500
@@ -105,7 +99,7 @@ class PtopReindexer(NoArgsCommand):
         print "starting fast tracked reindexing from seq %d" % start_num
         chunk = db.view(self.view_name, reduce=False, limit=CHUNK_SIZE, skip=start_num)
 
-        #though this might cause some superfluous reindexes of docs,
+        # though this might cause some superfluous reindexes of docs,
         # we're going to set the checkpoint BEFORE we start our operation so that any changes
         # that happen to cases while we're doing our reindexing would not get skipped once we
         # finish.
@@ -134,7 +128,7 @@ class PtopReindexer(NoArgsCommand):
 #                      "Case reindex complete for index %s - it may now be aliased" % pillow.es_index,
 #                      'hq-noreply@dimagi.com', ['commcarehq-dev@dimagi.com'], fail_silently=True)
         except Exception, ex:
-            notify_exception("XForm pillowtop fast reindex failed: %s" % ex)
+            notify_exception(None, "XForm pillowtop fast reindex failed: %s" % ex)
         end = datetime.utcnow()
 
         print "done in %s seconds" % (end - start).seconds

@@ -1,21 +1,21 @@
 from django.conf import settings
-from corehq.apps.reports.standard import ProjectReport, ProjectReportParametersMixin, DatespanMixin, CustomProjectReport
+from corehq.apps.reports.standard import ProjectReport, ProjectReportParametersMixin, DatespanMixin
 from corehq.apps.reports.generic import GenericTabularReport
 from corehq.apps.domain.models import Domain
 from corehq.apps.users.models import CommCareUser
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
-from corehq.apps.locations.models import Location, root_locations, all_locations
+from corehq.apps.locations.models import Location, all_locations
 from dimagi.utils.couch.database import get_db
 from dimagi.utils.couch.loosechange import map_reduce
 from dimagi.utils import parsing as dateparse
 import itertools
 from datetime import date, timedelta
 from corehq.apps.commtrack.models import CommtrackConfig, Product, StockReport
-from corehq.apps.commtrack.util import *
 from dimagi.utils.decorators.memoized import memoized
-from corehq.apps.reports.cache import request_cache
-import json
+import urllib
 from casexml.apps.case.models import CommCareCase
+from corehq.apps.commtrack import const
+from corehq.apps.commtrack.util import supply_point_type_categories
 
 class CommtrackReportMixin(ProjectReport, ProjectReportParametersMixin):
 
@@ -492,7 +492,7 @@ class CumulativeSalesAndConsumptionReport(GenericTabularReport, CommtrackReportM
 
         startkey = [self.domain, self.active_location._id if self.active_location else None, 'CommCareCase']
         product_cases = [c for c in CommCareCase.view('locations/linked_docs', startkey=startkey, endkey=startkey + [{}], include_docs=True)
-                         if c.type == 'supply-point-product' and leaf_loc(c) in active_outlet_ids]
+                         if c.type == const.SUPPLY_POINT_PRODUCT_CASE_TYPE and leaf_loc(c) in active_outlet_ids]
         product_cases_by_parent = map_reduce(get_aggregators, data=product_cases, include_docs=True)
 
         def summary_row(site, reports, product_cases, outlets):
