@@ -82,7 +82,6 @@
             $toggleLink = $("#apps-menu-toggle a"),
             down = 'ui-icon-carat-1-s',
             up = 'ui-icon-carat-1-n';
-        $appsMenu.addClass('ui-corner-top');
 
         function setHidden(val) {
             hidden = val;
@@ -90,11 +89,7 @@
             $toggleIcon.addClass(hidden ? down : up)
                     .removeClass(hidden ? up : down);
             $toggleLink.text(hidden ? "Change Apps" : "Hide");
-            if (hidden) {
-                $appsMenuBorder.addClass('ui-corner-top');
-            } else {
-                $appsMenuBorder.removeClass('ui-corner-top');
-            }
+
         }
         setHidden(JSON.parse($.cookie('appsMenuHidden') || "true"));
         $toggleDiv.addClass('ui-corner-bottom');
