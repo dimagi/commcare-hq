@@ -9,8 +9,9 @@ from django.core.urlresolvers import reverse
 from django.http import HttpResponseRedirect, HttpResponse, Http404
 
 from django.shortcuts import redirect, render
+from corehq.apps.domain.calculations import CALCS, CALC_FNS
 
-from corehq.apps.domain.decorators import login_required_late_eval_of_LOGIN_URL, domain_admin_required
+from corehq.apps.domain.decorators import login_required_late_eval_of_LOGIN_URL, domain_admin_required, require_superuser
 from corehq.apps.domain.forms import DomainGlobalSettingsForm,\
     DomainMetadataForm, SnapshotSettingsForm, SnapshotApplicationForm, DomainDeploymentForm, DomainInternalForm
 from corehq.apps.domain.models import Domain, LICENSES
@@ -18,7 +19,7 @@ from corehq.apps.domain.utils import get_domained_url, normalize_domain_name
 from corehq.apps.orgs.models import Organization, OrgRequest, Team
 from dimagi.utils.django.email import send_HTML_email
 
-from dimagi.utils.web import get_ip
+from dimagi.utils.web import get_ip, json_response
 from corehq.apps.users.views import require_can_edit_web_users
 from corehq.apps.receiverwrapper.forms import FormRepeaterForm
 from corehq.apps.receiverwrapper.models import FormRepeater, CaseRepeater, ShortFormRepeater
@@ -239,7 +240,7 @@ def org_settings(request, domain):
         "org_users": org_users
     })
 
-@domain_admin_required
+@require_superuser
 def internal_settings(request, domain, template='domain/internal_settings.html'):
     domain = Domain.get_by_name(domain)
 
@@ -267,7 +268,25 @@ def internal_settings(request, domain, template='domain/internal_settings.html')
             "custom_eula": 'true' if domain.internal.custom_eula else 'false',
             "can_use_data": 'true' if domain.internal.can_use_data else 'false',
         })
-    return render(request, template, {"form": internal_form, "project": domain, "domain": domain.name})
+
+        return render(request, template, {"project": domain, "domain": domain.name, "form": internal_form, 'active': 'settings'})
+
+@require_superuser
+def internal_calculations(request, domain, template="domain/internal_calculations.html"):
+    domain = Domain.get_by_name(domain)
+    return render(request, template, {"project": domain, "domain": domain.name, "calcs": CALCS, 'active': 'calcs'})
+
+@require_superuser
+def calculated_properties(request, domain):
+    calc_tag = request.GET.get("calc_tag", '').split('--')
+    extra_arg = calc_tag[1] if len(calc_tag) > 1 else ''
+    calc_tag = calc_tag[0]
+
+    if not calc_tag or calc_tag not in CALC_FNS.keys():
+        data = {"error": 'This tag does not exist'}
+    else:
+        data = CALC_FNS[calc_tag](domain, extra_arg)
+    return json_response(data)
 
 @domain_admin_required
 def create_snapshot(request, domain):

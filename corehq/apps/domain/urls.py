@@ -79,4 +79,6 @@ domain_settings = patterns('corehq.apps.domain.views',
                            url(r'^organization/$', 'org_settings', name='domain_org_settings'),
                            url(r'^organization/request/$', 'org_request', name='domain_org_request'),
                            url(r'internal/$', 'internal_settings', name='domain_internal_settings'),
+                           url(r'internal/calculations/$', 'internal_calculations', name='domain_internal_calculations'),
+                           url(r'internal/calculated_properties/$', 'calculated_properties', name='calculated_properties'),
                            )
