@@ -6,7 +6,7 @@ from django.conf import settings
 from django.contrib.auth.models import AnonymousUser
 from django.db import models
 from couchdbkit.ext.django.schema import Document, StringProperty,\
-    BooleanProperty, DateTimeProperty, IntegerProperty, DocumentSchema, SchemaProperty, DictProperty, ListProperty
+    BooleanProperty, DateTimeProperty, IntegerProperty, DocumentSchema, SchemaProperty, DictProperty, ListProperty, StringListProperty
 from django.utils.safestring import mark_safe
 from corehq.apps.appstore.models import Review, SnapshotMixin
 from dimagi.utils.html import format_html
@@ -19,6 +19,10 @@ from collections import defaultdict
 from corehq.apps.commtrack.models import CommtrackConfig
 
 lang_lookup = defaultdict(str)
+
+DATA_DICT = settings.INTERNAL_DATA
+AREA_CHOICES = [a["name"] for a in DATA_DICT["area"]]
+SUB_AREA_CHOICES = reduce(list.__add__, [a["sub_areas"] for a in DATA_DICT["area"]], [])
 
 for lang in all_langs:
     lang_lookup[lang['three']] = lang['names'][0] # arbitrarily using the first name if there are multiple
@@ -139,6 +143,27 @@ class LicenseAgreement(DocumentSchema):
     user_id = StringProperty()
     user_ip = StringProperty()
 
+
+class InternalProperties(DocumentSchema):
+    """
+    Project properties that should only be visible/editable by superusers
+    """
+    sf_contract_id = StringProperty()
+    sf_account_id = StringProperty()
+    commcare_edition = StringProperty(choices=["standard", "plus", "advanced"])
+    services = StringProperty(choices=["basic", "plus", "full", "custom"])
+    real_space = BooleanProperty()
+    initiative = StringListProperty()
+    project_state = StringProperty(choices=["POC", "transition", "at-scale"])
+    self_started = BooleanProperty()
+    area = StringProperty(choices=AREA_CHOICES)
+    sub_area = StringProperty(choices=SUB_AREA_CHOICES)
+    using_adm = BooleanProperty()
+    using_call_center = BooleanProperty()
+    custom_eula = BooleanProperty()
+    can_use_data = BooleanProperty()
+
+
 class Domain(Document, HQBillingDomainMixin, SnapshotMixin):
     """Domain is the highest level collection of people/stuff
        in the system.  Pretty much everything happens at the
@@ -187,6 +212,14 @@ class Domain(Document, HQBillingDomainMixin, SnapshotMixin):
     migrations = SchemaProperty(DomainMigrations)
 
     cached_properties = DictProperty()
+
+    internal = SchemaProperty(InternalProperties)
+
+    # extra user specified properties
+    tags = StringListProperty()
+    area = StringProperty(choices=AREA_CHOICES)
+    sub_area = StringProperty(choices=SUB_AREA_CHOICES)
+    launch_date = DateTimeProperty
 
     # to be eliminated from projects and related documents when they are copied for the exchange
     _dirty_fields = ('admin_password', 'admin_password_charset', 'city', 'country', 'region', 'customer_type')
