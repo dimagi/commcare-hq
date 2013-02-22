@@ -109,7 +109,10 @@ def initiate_outbound_call(call_log_entry, *args, **kwargs):
         call_log_entry.error = True
         call_log_entry.error_message = "Unknown status received from Kookoo."
     
-    if call_log_entry.use_precached_first_response and not call_log_entry.error:
+    if call_log_entry.error:
+        call_log_entry.use_precached_first_response = False
+    
+    if call_log_entry.use_precached_first_response:
         call_log_entry.first_response = get_http_response_string(call_log_entry.gateway_session_id, ivr_responses, collect_input=True, hang_up=False, input_length=input_length)
     
     call_log_entry.save()
