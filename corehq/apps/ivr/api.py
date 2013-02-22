@@ -134,7 +134,10 @@ def incoming(phone_number, backend_module, gateway_session_id, ivr_event, input_
             # Set input_length to let the ivr gateway know how many digits we need to collect.
             # Have to get the current question again, since the last XFormsResponse in responses
             # may not have an event if it was a response to a constraint error.
-            current_q = current_question(call_log_entry.xforms_session_id)
+            if error_occurred:
+                current_q = current_question(call_log_entry.xforms_session_id)
+            else:
+                current_q = responses[-1]
             if current_q.event.type == "question" and current_q.event.datatype == "select":
                 input_length = 1
         
