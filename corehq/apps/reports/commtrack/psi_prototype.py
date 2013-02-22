@@ -339,6 +339,9 @@ class SalesAndConsumptionReport(GenericTabularReport, CommtrackReportMixin, Date
 
     @property
     def headers(self):
+        if self.request.GET.get('filterSet') == 'false':
+            return DataTablesHeader()
+
         if len(self.outlets) > OUTLETS_LIMIT:
             return DataTablesHeader(DataTablesColumn('Too many outlets'))
 
@@ -561,6 +564,9 @@ class StockOutReport(GenericTabularReport, CommtrackReportMixin, DatespanMixin):
 
     @property
     def headers(self):
+        if self.request.GET.get('filterSet') == 'false':
+            return DataTablesHeader()
+
         if len(self.outlets) > OUTLETS_LIMIT:
             return DataTablesHeader(DataTablesColumn('Too many outlets'))
 
