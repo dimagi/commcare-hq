@@ -31,8 +31,13 @@ def get_http_response_string(gateway_session_id, ivr_responses, collect_input=Fa
     if input_length is not None:
         input_length_str = 'l="%s"' % input_length
     
+    if input_length == 1:
+        timeout = "3000"
+    else:
+        timeout = "5000"
+    
     if collect_input:
-        xml_string = '<collectdtmf %s o="5000">%s</collectdtmf>' % (input_length_str, xml_string)
+        xml_string = '<collectdtmf %s o="%s">%s</collectdtmf>' % (input_length_str, timeout, xml_string)
     
     if hang_up:
         xml_string += "<hangup/>"
