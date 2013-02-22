@@ -12,7 +12,7 @@ from django.shortcuts import redirect, render
 
 from corehq.apps.domain.decorators import login_required_late_eval_of_LOGIN_URL, domain_admin_required
 from corehq.apps.domain.forms import DomainGlobalSettingsForm,\
-    DomainMetadataForm, SnapshotSettingsForm, SnapshotApplicationForm, DomainDeploymentForm
+    DomainMetadataForm, SnapshotSettingsForm, SnapshotApplicationForm, DomainDeploymentForm, DomainInternalForm
 from corehq.apps.domain.models import Domain, LICENSES
 from corehq.apps.domain.utils import get_domained_url, normalize_domain_name
 from corehq.apps.orgs.models import Organization, OrgRequest, Team
@@ -239,6 +239,35 @@ def org_settings(request, domain):
         "org_users": org_users
     })
 
+@domain_admin_required
+def internal_settings(request, domain, template='domain/internal_settings.html'):
+    domain = Domain.get_by_name(domain)
+
+    if request.method == 'POST':
+        internal_form = DomainInternalForm(request.POST)
+        if internal_form.is_valid():
+            internal_form.save(domain)
+            messages.success(request, "The internal information for project %s was successfully updated!" % domain.name)
+        else:
+            messages.error(request, "There seems to have been an error. Please try again!")
+    else:
+        internal_form = DomainInternalForm(initial={
+            "sf_contract_id": domain.internal.sf_contract_id,
+            "sf_account_id": domain.internal.sf_account_id,
+            "commcare_edition": domain.internal.commcare_edition,
+            "services": domain.internal.services,
+            "real_space": 'true' if domain.internal.real_space else 'false',
+            "initiative": domain.internal.initiative,
+            "project_state": domain.internal.project_state,
+            "self_started": 'true' if domain.internal.self_started else 'false',
+            "area": domain.internal.area,
+            "sub_area": domain.internal.sub_area,
+            "using_adm": 'true' if domain.internal.using_adm else 'false',
+            "using_call_center": 'true' if domain.internal.using_call_center else 'false',
+            "custom_eula": 'true' if domain.internal.custom_eula else 'false',
+            "can_use_data": 'true' if domain.internal.can_use_data else 'false',
+        })
+    return render(request, template, {"form": internal_form, "project": domain, "domain": domain.name})
 
 @domain_admin_required
 def create_snapshot(request, domain):

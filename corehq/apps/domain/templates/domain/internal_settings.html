@@ -1,0 +1,33 @@
+{% extends "users/users_base.html" %}
+{% load hqstyle_tags %}
+{% load hq_shared_tags %}
+{% load i18n %}
+
+
+{% block subsection-title %}
+    <li class="active">
+        <a href="#">Internal Project Information</a>
+    </li>
+{% endblock %}
+
+{% block user-view %}
+    <ul class="nav nav-tabs" id="internal-settings-tabs">
+        <li><a href="#internal-settings" data-toggle="tab">Settings</a></li>
+        <li><a href="#calculations" data-toggle="tab">Calculated Attributes</a></li>
+    </ul>
+    <div class="tab-content" id="settings">
+        <section class="tab-pane" id="internal-settings">
+            <form class="form-horizontal" method="post">
+                {% bootstrap_form_errors form %}
+                {% bootstrap_fieldset form "Internal Settings" %}
+                <div class="form-actions">
+                    <button type="submit" class="btn btn-primary">{% trans "Update Project Information" %}</button>
+                </div>
+            </form>
+        </section>
+        <section class="tab-pane" id="calculations">
+            YO!
+        </section>
+    </div>
+
+{% endblock %}

@@ -124,17 +124,18 @@ class HQBillingDomainMixin(DocumentSchema):
         self.currency_code = kwargs.get('currency_code', settings.DEFAULT_CURRENCY)
 
 
-class Deployment(DocumentSchema):
+class UpdatableSchema():
+    def update(self, new_dict):
+        for kw in new_dict:
+            self[kw] = new_dict[kw]
+
+class Deployment(DocumentSchema, UpdatableSchema):
     date = DateTimeProperty()
     city = StringProperty()
     country = StringProperty()
     region = StringProperty() # e.g. US, LAC, SA, Sub-saharn Africa, East Africa, West Africa, Southeast Asia)
     description = StringProperty()
     public = BooleanProperty(default=False)
-
-    def update(self, new_dict):
-        for kw in new_dict:
-            self[kw] = new_dict[kw]
 
 class LicenseAgreement(DocumentSchema):
     signed = BooleanProperty(default=False)
@@ -143,21 +144,20 @@ class LicenseAgreement(DocumentSchema):
     user_id = StringProperty()
     user_ip = StringProperty()
 
-
-class InternalProperties(DocumentSchema):
+class InternalProperties(DocumentSchema, UpdatableSchema):
     """
     Project properties that should only be visible/editable by superusers
     """
     sf_contract_id = StringProperty()
     sf_account_id = StringProperty()
-    commcare_edition = StringProperty(choices=["standard", "plus", "advanced"])
-    services = StringProperty(choices=["basic", "plus", "full", "custom"])
+    commcare_edition = StringProperty(choices=["", "standard", "plus", "advanced"], default="")
+    services = StringProperty(choices=["", "basic", "plus", "full", "custom"], default="")
     real_space = BooleanProperty()
     initiative = StringListProperty()
-    project_state = StringProperty(choices=["POC", "transition", "at-scale"])
+    project_state = StringProperty(choices=["", "POC", "transition", "at-scale"], default="")
     self_started = BooleanProperty()
-    area = StringProperty(choices=AREA_CHOICES)
-    sub_area = StringProperty(choices=SUB_AREA_CHOICES)
+    area = StringProperty(choices=AREA_CHOICES + [""], default="")
+    sub_area = StringProperty(choices=SUB_AREA_CHOICES + [""], default="")
     using_adm = BooleanProperty()
     using_call_center = BooleanProperty()
     custom_eula = BooleanProperty()
@@ -603,6 +603,10 @@ class Domain(Document, HQBillingDomainMixin, SnapshotMixin):
 
     def update_deployment(self, **kwargs):
         self.deployment.update(kwargs)
+        self.save()
+
+    def update_internal(self, **kwargs):
+        self.internal.update(kwargs)
         self.save()
 
     def display_name(self):
