@@ -59,6 +59,8 @@ def initiate_outbound_call(call_log_entry, *args, **kwargs):
     app = form.get_app()
     module = form.get_module()
     
+    # Only precache the first response if it's not an only-label form, otherwise we could end up
+    # submitting the form regardless of whether the person actually answers the call.
     if form_requires_input(form):
         recipient = call_log_entry.recipient
         case_id = get_case_id(call_log_entry)
