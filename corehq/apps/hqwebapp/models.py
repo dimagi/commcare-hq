@@ -339,7 +339,7 @@ class RemindersTab(UITab):
         return self.domain.commtrack_enabled
 
 
-class SettingsTab(UITab):
+class ProjectSettingsTab(UITab):
     view = "corehq.apps.settings.views.default"
 
     @property
