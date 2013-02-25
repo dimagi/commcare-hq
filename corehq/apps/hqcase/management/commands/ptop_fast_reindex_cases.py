@@ -11,4 +11,3 @@ class Command(PtopReindexer):
     doc_class = CommCareCase
     view_name = 'case/by_owner'
     pillow_class = CasePillow
-    es_timeout = 600
