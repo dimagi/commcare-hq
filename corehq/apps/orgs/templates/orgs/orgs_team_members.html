@@ -27,12 +27,6 @@
     </script>
 {% endblock %}
 
-{% block breadcrumb %}{{ block.super }}
-    <li>
-        <span class="divider">&gt;</span><a href="#">{% if admin %}Editing {% endif %}"{{ team.name }}"</a>
-    </li>
-{% endblock %}
-
 {% block carded-content %}
     <div class="row-fluid">
         <div class="span6" id="members">
@@ -43,7 +37,10 @@
                         <input type="hidden" name="username" value="{{ member.username }}" />
                         <strong>{{ member.raw_username }}</strong>
                         {% if admin %}
-                            <a href="#" class="text-error form-submit-link">({% trans "remove" %})</a>
+{#                            <a href="#" class="text-error form-submit-link">({% trans "remove" %})</a>#}
+                            <button type="submit" class="btn btn-danger pull-right">
+                                <i class="icon-remove"></i> {% trans 'Remove' %}
+                            </button>
                         {% endif %}
                     </form>
                 {% empty %}
@@ -52,10 +49,12 @@
             </div>
             <form class="form-horizontal" method="post" action="{% url join_team org.name team.get_id %}" method="post">
                 <div class="well well-small">
-                    <input name="username" type="text" placeholder="Member's email address" data-provide="typeahead" data-source='{{ nonmembers|JSON }}' autocomplete="off" />
-                    <button type="submit" id="add_team_btn" class="btn btn-info">
-                        <i class="icon-plus"></i> {% trans "Add" %}
-                    </button>
+                    <div class="input-append">
+                        <input name="username" type="text" placeholder="Member's email address" data-provide="typeahead" data-source='{{ nonmembers|JSON }}' autocomplete="off" />
+                        <button type="submit" id="add_team_btn" class="btn btn-info">
+                            <i class="icon-plus"></i> {% trans "Add" %}
+                        </button>
+                    </div>
                 </div>
             </form>
         </div>
@@ -63,26 +62,32 @@
             <h3>{% trans "Projects" %}</h3>
             <div class="well">
                 {% for domain, role, roles in team_domains %}
-                    <form class="form-inline" name="remove_domain" action="{% url remove_domain_from_team org.name team.get_id %}" method="post">
+                    <form class="form-inline clearfix" name="remove_domain" action="{% url remove_domain_from_team org.name team.get_id %}" method="post">
                         <input type="hidden" name="project_name" value="{{ domain.name }}" />
                         <strong><a href="{% url domain_homepage domain %}">{{ domain.display_name }}</a></strong>
                         {% if admin %}
-                            <a href="#" class="text-error form-submit-link">({% trans "remove" %})</a>
+                            <div class="btn-toolbar pull-right" style="margin: 0;">
+                                <div class="btn-group" style="vertical-align: middle;">
+                                    <a href="#" class="btn btn-inverse dropdown-toggle" data-toggle="dropdown"><i class="icon icon-white icon-lock"></i>
+                                        <span class="role-dropdown" data-domain="{{ domain }}">{% if role %}{{ role }}{% else %}None{% endif %}</span>
+                                        <span class="caret"></span>
+                                    </a>
+                                    <ul class="role-menu dropdown-menu">
+                                        <li><a class="role-change-btn" data-domain="{{ domain }}" data-role="admin" href="#">Admin</a></li>
+                                        {% with 'user-role:' as role_prefix %}
+                                            {% for rl in roles %}
+                                                <li><a class="role-change-btn" data-domain="{{ domain }}" data-role="{{ role_prefix|add:rl.get_id }}" href="#">{{ rl.name }}</a></li>
+                                            {% endfor %}
+                                        {% endwith %}
+                                    </ul>
+                                </div>
+                                <div class="btn-group">
+                                    <button type="submit" class="btn btn-danger">
+                                        <i class="icon-remove"></i> {% trans "Remove" %}
+                                    </button>
+                                </div>
+                            </div>
                         {% endif %}
-                        <div class="btn-group" style="vertical-align: middle;">
-                            <a href="#" class="btn btn-inverse dropdown-toggle" data-toggle="dropdown"><i class="icon icon-white icon-lock"></i>
-                                <span class="role-dropdown" data-domain="{{ domain }}">{% if role %}{{ role }}{% else %}None{% endif %}</span>
-                                <span class="caret"></span>
-                            </a>
-                            <ul class="role-menu dropdown-menu">
-                                <li><a class="role-change-btn" data-domain="{{ domain }}" data-role="admin" href="#">Admin</a></li>
-                                {% with 'user-role:' as role_prefix %}
-                                    {% for rl in roles %}
-                                        <li><a class="role-change-btn" data-domain="{{ domain }}" data-role="{{ role_prefix|add:rl.get_id }}" href="#">{{ rl.name }}</a></li>
-                                    {% endfor %}
-                                {% endwith %}
-                            </ul>
-                        </div>
                     </form>
                 {% empty %}
                     <p class="muted">{% trans "No projects have been added to this team" %}</p>
@@ -90,22 +95,24 @@
             </div>
             <form class="form-horizontal" method="post" action="{% url add_domain_to_team org.name team.get_id %}" method="post">
                 <div class="well well-small">
-                    <input name="project_name" type="text" placeholder="Project Name" data-provide="typeahead" data-source='{{ nondomains|JSON }}' autocomplete="off" />
-                    <button type="submit" id="add_domain_btn" class="btn btn-info">
-                        <i class="icon-plus"></i> {% trans "Add" %}
-                    </button>
+                    <div class="input-append">
+                        <input name="project_name" type="text" placeholder="Project Name" data-provide="typeahead" data-source='{{ nondomains|JSON }}' autocomplete="off" />
+                        <button type="submit" id="add_domain_btn" class="btn btn-info">
+                            <i class="icon-plus"></i> {% trans "Add" %}
+                        </button>
+                    </div>
                 </div>
             </form>
         </div>
     </div>
-{% endblock %}
 
-{% block top-right %}
     {% if admin and members|length %}
+    <div class="form-actions">
         <form name="delete_group" style="margin: 0;" action="{% url delete_team org.name %}" method="post">
             <input type="hidden" name="team_id" value={{ team.get_id }} />
             <button class="btn btn-danger" type="submit"><i class="icon icon-white icon-remove"></i> {% trans "Delete Team" %} "{{ team.name }}"</button>
         </form>
+    </div>
     {% endif %}
 {% endblock %}
 

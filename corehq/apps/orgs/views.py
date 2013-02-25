@@ -83,6 +83,7 @@ def orgs_landing(request, org, template="orgs/orgs_landing.html", form=None, add
 def orgs_members(request, org, template="orgs/orgs_members.html"):
     organization = Organization.get_by_name(org, strict=True)
     ctxt = base_context(request, organization)
+    ctxt["org_admins"] = [member.username for member in ctxt["members"] if member.is_org_admin(org)]
     ctxt["tab"] = "members"
     return render(request, template, ctxt)
 
@@ -276,6 +277,8 @@ def leave_team(request, org, team_id):
         user = WebUser.get_by_username(username)
         user.remove_from_team(org, team_id)
         user.save()
+        messages.success(request, render_to_string('orgs/partials/undo_leave_team.html',
+                                                   {"team_id": team_id, "org": org, "user": user}), extra_tags="html")
     return HttpResponseRedirect(reverse(request.POST.get('redirect_url', 'orgs_team_members'), args=(org, team_id)))
 
 @org_admin_required
@@ -325,6 +328,8 @@ def remove_domain_from_team(request, org, team_id):
         team = Team.get(team_id)
         team.delete_domain_membership(domain)
         team.save()
+        messages.success(request, render_to_string('orgs/partials/undo_remove_domain_from_team.html',
+                                                   {"team_id": team_id, "org": org, "dom": domain}), extra_tags="html")
     return HttpResponseRedirect(reverse(request.POST.get('redirect_url', 'orgs_team_members'), args=(org, team_id)))
 
 
