@@ -5,7 +5,7 @@ from corehq.apps.reports.util import make_form_couch_key
 from dimagi.utils.couch.database import get_db
 
 CALC_ORDER = [
-    'num_web_users', 'num_mobile_users', 'forms', 'cases', 'active_mobile_users', 'active_cases', 'cases_in_last--30',
+    'num_web_users', 'num_mobile_users', 'forms', 'cases', 'mobile_users--active', 'mobile_users--inactive', 'active_cases', 'cases_in_last--30',
     'cases_in_last--60', 'cases_in_last--90', 'cases_in_last--120', 'active', 'first_form_submission',
     'last_form_submission', 'has_app', 'web_users', 'active_apps'
 ]
@@ -15,7 +15,8 @@ CALCS = {
     'num_mobile_users': "# mobile users",
     'forms': "# forms",
     'cases': "# cases",
-    'active_mobile_users': "# active mobile users",
+    'mobile_users--active': "# active mobile users",
+    'mobile_users--inactive': "# inactive mobile users",
     'active_cases': "# active cases",
     'cases_in_last--30': "# cases seen last 30 days",
     'cases_in_last--60': "# cases seen last 60 days",
@@ -38,8 +39,8 @@ def num_mobile_users(domain, *args):
     row = get_db().view('users/by_domain', startkey=[domain], endkey=[domain, {}]).one()
     return {"value": row["value"] if row else 0}
 
-def active_mobile_users(domain, *args):
-    key = ["active", domain, 'CommCareUser']
+def mobile_users(domain, active):
+    key = ["active" if active == "active" else "inactive", domain, 'CommCareUser']
     row = get_db().view('users/by_domain', startkey=key, endkey=key+[{}]).one()
     return {"value": row["value"] if row else 0}
 
@@ -99,7 +100,7 @@ CALC_FNS = {
     "num_mobile_users": num_mobile_users,
     "forms": forms,
     "cases": cases,
-    "active_mobile_users": active_mobile_users,
+    "mobile_users": mobile_users,
     "active_cases": not_implemented,
     "cases_in_last": cases_in_last,
     "active": active,
