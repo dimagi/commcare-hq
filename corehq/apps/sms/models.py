@@ -165,6 +165,8 @@ class CallLog(MessageLog):
     include_case_side_effects = BooleanProperty(default=False)
     max_question_retries = IntegerProperty() # Max number of times to retry a question with an invalid response before hanging up
     current_question_retry_count = IntegerProperty(default=0) # A counter of the number of invalid responses for the current question
+    use_precached_first_response = BooleanProperty(default=False)
+    first_response = StringProperty()
     
     def __unicode__(self):
         to_from = (self.direction == INCOMING) and "from" or "to"
