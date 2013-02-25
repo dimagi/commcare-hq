@@ -244,9 +244,6 @@ class DomainInternalForm(forms.Form, SubAreaMixin):
     can_use_data = ChoiceField(label=ugettext_noop("Data Usage?"), choices=tf_choices('Yes', 'No'), required=False)
 
     def save(self, domain):
-        import pprint
-        pp = pprint.PrettyPrinter(indent=2)
-        pp.pprint(dict(DATA_DICT))
         domain.update_internal(sf_contract_id=self.cleaned_data['sf_contract_id'],
             sf_account_id=self.cleaned_data['sf_account_id'],
             commcare_edition=self.cleaned_data['commcare_edition'],
