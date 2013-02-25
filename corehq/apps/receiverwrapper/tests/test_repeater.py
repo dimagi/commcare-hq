@@ -119,16 +119,16 @@ class RepeaterTest(TestCase):
 
         self.clear_log()
 
-        in30min = now() + timedelta(minutes=30)
+        next_check_time = now() + timedelta(minutes=60)
 
         repeat_records = RepeatRecord.all(domain=self.domain, due_before=now() + timedelta(minutes=15))
         self.assertEqual(len(repeat_records), 0)
 
-        repeat_records = RepeatRecord.all(domain=self.domain, due_before=in30min + timedelta(seconds=2))
+        repeat_records = RepeatRecord.all(domain=self.domain, due_before=next_check_time + timedelta(seconds=2))
         self.assertEqual(len(repeat_records), 2)
 
         for repeat_record in repeat_records:
-            self.assertLess(abs(in30min - repeat_record.next_check), timedelta(seconds=2))
+            self.assertLess(abs(next_check_time - repeat_record.next_check), timedelta(seconds=2))
             repeat_record.fire(post_fn=self.make_post_fn([404, 200]))
             repeat_record.save()
 
@@ -137,7 +137,7 @@ class RepeaterTest(TestCase):
         self.assertEqual(self.log[3][:2], (self.case_repeater.url, 200))
         check_xml_line_by_line(self, self.log[3][2], case_block)
 
-        repeat_records = RepeatRecord.all(domain=self.domain, due_before=in30min)
+        repeat_records = RepeatRecord.all(domain=self.domain, due_before=next_check_time)
         for repeat_record in repeat_records:
             self.assertEqual(repeat_record.succeeded, True)
             self.assertEqual(repeat_record.next_check, None)

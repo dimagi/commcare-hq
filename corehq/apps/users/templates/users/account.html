@@ -68,22 +68,6 @@
     </script>
 {% endblock %}
 
-{% block web_users_indicator %}
-    {% if couch_user.user_id != request.couch_user.user_id and not couch_user.is_commcare_user %}
-        <ul class="nav nav-list">
-            <li class="active"><a href="#">{{ couch_user.html_username|safe }}</a></li>
-        </ul>
-    {% endif %}
-{% endblock %}
-
-{% block commcare_users_indicator %}
-    {% if couch_user.user_id != request.couch_user.user_id and couch_user.is_commcare_user %}
-        <ul class="nav nav-list">
-            <li class="active"><a href="#">{{ couch_user.username_in_report|safe }}</a></li>
-        </ul>
-    {% endif %}
-{% endblock %}
-
 {% block subsection-title %}
     {% if couch_user.user_id != request.couch_user.user_id %}
         <li>

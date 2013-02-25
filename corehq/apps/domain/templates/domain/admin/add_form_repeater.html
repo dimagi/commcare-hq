@@ -47,12 +47,6 @@
     </li>
 {% endblock %}
 
-{% block forwarding_indicator %}
-    <ul class="nav nav-list">
-        <li class="active"><a href="#">Forward {% if repeater_type == "FormRepeater" %}Forms{% else %}Cases{% endif %}</a></li>
-    </ul>
-{% endblock %}
-
 {% block user-view %}
 <form class="form form-horizontal" method="post" action="">
     {% bootstrap_form_errors form %}
