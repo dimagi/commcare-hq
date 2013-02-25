@@ -19,6 +19,21 @@
 </style>
 {% endblock %}
 
+{% block subsection-title %}
+    <li>
+        <a href="#">Keywords</a> <span class="divider">&gt;</span>
+    </li>
+    {% if keyword.get_id %}
+    <li class="active">
+        <a href="{% url edit_keyword domain keyword.get_id %}">{{ keyword.keyword }}</a>
+    </li>
+    {% else %}
+    <li class="active">
+        <a href="{% url add_keyword domain %}">New Keyword</a>
+    </li>
+    {% endif %}
+{% endblock %}
+
 {% block keyword_nav %}
 <ul class="nav nav-list">
     {% if keyword.get_id %}
@@ -29,9 +44,7 @@
 </ul>
 {% endblock %}
 
-{% block reminders_content %}
-
-<br />
+{% block main_column %}
 <ul class="errorlist">
     {% for e in errors %}
     <li>{{ e }}</li>

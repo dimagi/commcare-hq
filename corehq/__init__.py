@@ -7,6 +7,13 @@ from corehq.apps.reports.commtrack import psi_prototype
 from django.utils.translation import ugettext_noop as _
 
 REPORTS = (
+    (_("Commtrack"), (
+        psi_prototype.VisitReport,
+        psi_prototype.SalesAndConsumptionReport,
+        psi_prototype.CumulativeSalesAndConsumptionReport,
+        psi_prototype.StockOutReport,
+        psi_prototype.StockReportExport,
+    )),
     (_("Monitor Workers"), (
         monitoring.DailyFormStatsReport,
         monitoring.SubmissionsByFormReport,
@@ -36,13 +43,6 @@ REPORTS = (
         sms.MessageLogReport,
         ivr.CallLogReport,
     )),
-    (_("Commtrack"), (
-        psi_prototype.VisitReport,
-        psi_prototype.SalesAndConsumptionReport,
-        psi_prototype.CumulativeSalesAndConsumptionReport,
-        psi_prototype.StockOutReport,
-        psi_prototype.StockReportExport,
-    ))
 )
 
 from corehq.apps.data_interfaces.interfaces import CaseReassignmentInterface
@@ -105,6 +105,7 @@ TABS = (
     ApplicationsTab,
     CloudcareTab,
     MessagesTab,
+    RemindersTab,
     ProjectSettingsTab,
     AdminTab,
     ExchangeTab,
