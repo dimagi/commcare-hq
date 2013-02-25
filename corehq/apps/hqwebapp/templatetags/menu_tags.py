@@ -13,11 +13,10 @@ class MainMenuNode(template.Node):
         request = context['request']
         couch_user = getattr(request, 'couch_user', None)
         project = getattr(request, 'project', None)
-        try:
-            domain = Domain.get_by_name(context.get('domain'))
-            module = Domain.get_module_by_name(domain.name)
-        except (ValueError, AttributeError):
-            domain = None
+        domain = context.get('domain')
+        if domain:
+            module = Domain.get_module_by_name(domain)
+        else:
             module = None
 
         tabs = corehq.TABS + getattr(module, 'TABS', ())
