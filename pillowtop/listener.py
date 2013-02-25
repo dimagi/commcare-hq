@@ -185,6 +185,7 @@ class ElasticPillow(BasicPillow):
     es_index = ""
     es_type = ""
     es_meta = {}
+    es_timeout = 30 # in seconds
     bulk = False
 
     # Note - we allow for for existence because we do not care - we want the ES
@@ -216,7 +217,8 @@ class ElasticPillow(BasicPillow):
 
     @memoized
     def get_es(self):
-        return rawes.Elastic('%s:%s' % (self.es_host, self.es_port))
+        return rawes.Elastic('%s:%s' % (self.es_host, self.es_port),
+                             timeout=self.es_timeout)
 
     def delete_index(self):
         """
