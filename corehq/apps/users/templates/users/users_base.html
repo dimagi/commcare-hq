@@ -1,5 +1,6 @@
 {% extends "hqwebapp/two_column.html" %}
 {% load hq_shared_tags %}
+{% load i18n %}
 {% block js %} {{ block.super }}
     <script type="text/javascript" src="{% static 'hqwebapp/js-custom/hq.legacy.js' %}"></script>
 {% endblock %}
@@ -86,6 +87,9 @@
         <li><a href="{% url domain_project_settings domain %}">Project Settings</a></li>
         <li><a href="{% url domain_snapshot_settings domain %}">CommCare Exchange</a></li>
         <li><a href="{% url domain_manage_multimedia domain %}">Multimedia Sharing</a></li>
+        {% endif %}
+        {% if request.couch_user.is_superuser %}
+            <li><a href="{% url domain_internal_settings domain %}">Internal Settings</a></li>
         {% endif %}
         <li><a href="{% url domain_forwarding domain %}">Data Forwarding</a>
             {% block forwarding_indicator %}{% endblock %}
