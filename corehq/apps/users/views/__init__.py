@@ -213,6 +213,9 @@ def invite_web_user(request, domain, template="users/invite_web_user.html"):
     )
     return render(request, template, context)
 
+def my_account(request, domain, couch_user_id=None):
+    return account(request, domain, request.couch_user._id)
+
 @require_permission_to_edit_user
 def account(request, domain, couch_user_id, template="users/account.html"):
     context = _users_context(request, domain)
@@ -264,9 +267,6 @@ def account(request, domain, couch_user_id, template="users/account.html"):
         # scheduled reports tab
     context.update({
         'phone_numbers_extended': couch_user.phone_numbers_extended(request.couch_user),
-
-        # for commcare-accounts tab
-        # "other_commcare_accounts": other_commcare_accounts,
     })
 
     #project settings tab
@@ -558,7 +558,7 @@ def user_domain_transfer(request, domain, prescription, template="users/domain_t
         from corehq.apps.app_manager.models import VersionedDoc
         # apps from the *target* domain
         apps = VersionedDoc.view('app_manager/applications_brief', startkey=[target_domain], endkey=[target_domain, {}])
-        # useres from the *originating* domain
+        # users from the *originating* domain
         users = list(CommCareUser.by_domain(domain))
         users.extend(CommCareUser.by_domain(domain, is_active=False))
         context = _users_context(request, domain)
