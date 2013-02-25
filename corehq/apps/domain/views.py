@@ -11,9 +11,7 @@ from django.http import HttpResponseRedirect, HttpResponse, Http404
 from django.shortcuts import redirect, render
 from corehq.apps.domain.calculations import CALCS, CALC_FNS, CALC_ORDER
 
-from corehq.apps.domain.decorators import (domain_admin_required,
-    login_required_late_eval_of_LOGIN_URL, require_superuser,
-    login_and_domain_required)
+from corehq.apps.domain.decorators import login_required_late_eval_of_LOGIN_URL, domain_admin_required, require_superuser
 from corehq.apps.domain.forms import DomainGlobalSettingsForm,\
     DomainMetadataForm, SnapshotSettingsForm, SnapshotApplicationForm, DomainDeploymentForm, DomainInternalForm
 from corehq.apps.domain.models import Domain, LICENSES
@@ -242,7 +240,6 @@ def org_settings(request, domain):
         "org_users": org_users
     })
 
-@login_and_domain_required
 @require_superuser
 def internal_settings(request, domain, template='domain/internal_settings.html'):
     domain = Domain.get_by_name(domain)
@@ -274,13 +271,11 @@ def internal_settings(request, domain, template='domain/internal_settings.html')
 
         return render(request, template, {"project": domain, "domain": domain.name, "form": internal_form, 'active': 'settings'})
 
-@login_and_domain_required
 @require_superuser
 def internal_calculations(request, domain, template="domain/internal_calculations.html"):
     domain = Domain.get_by_name(domain)
     return render(request, template, {"project": domain, "domain": domain.name, "calcs": CALCS, "order": CALC_ORDER, 'active': 'calcs'})
 
-@login_and_domain_required
 @require_superuser
 def calculated_properties(request, domain):
     calc_tag = request.GET.get("calc_tag", '').split('--')
