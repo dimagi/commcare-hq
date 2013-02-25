@@ -1,7 +1,19 @@
+from datetime import datetime, timedelta
+from django.template.loader import render_to_string
+from corehq.apps.domain.models import Domain
+from corehq.apps.reports.util import make_form_couch_key
 from dimagi.utils.couch.database import get_db
 
+CALC_ORDER = [
+    'num_web_users', 'num_mobile_users', 'forms', 'cases', 'active_mobile_users', 'active_cases', 'cases_in_last--30',
+    'cases_in_last--60', 'cases_in_last--90', 'cases_in_last--120', 'active', 'first_form_submission',
+    'last_form_submission', 'has_app', 'web_users', 'active_apps'
+]
+
 CALCS = {
-    'mobile_users': "# mobile users",
+    'num_web_users': "# web users",
+    'num_mobile_users': "# mobile users",
+    'forms': "# forms",
     'cases': "# cases",
     'active_mobile_users': "# active mobile users",
     'active_cases': "# active cases",
@@ -17,29 +29,83 @@ CALCS = {
     'active_apps': "list of active apps",
 }
 
-def web_users(domain, *args):
+def num_web_users(domain, *args):
     key = ["active", domain, 'WebUser']
-    row = get_db().view('users/by_domain', startkey=key, endkey=key+[{}]).first()
+    row = get_db().view('users/by_domain', startkey=key, endkey=key+[{}]).one()
     return {"value": row["value"] if row else 0}
 
-def mobile_users(domain, *args):
+def num_mobile_users(domain, *args):
+    row = get_db().view('users/by_domain', startkey=[domain], endkey=[domain, {}]).one()
+    return {"value": row["value"] if row else 0}
+
+def active_mobile_users(domain, *args):
     key = ["active", domain, 'CommCareUser']
-    row = get_db().view('users/by_domain', startkey=key, endkey=key+[{}]).first()
+    row = get_db().view('users/by_domain', startkey=key, endkey=key+[{}]).one()
     return {"value": row["value"] if row else 0}
 
-def ppass(domain, *args):
-    return {"value": "not implemented"}
+def cases(domain, *args):
+    row = get_db().view("hqcase/types_by_domain", startkey=[domain], endkey=[domain, {}]).one()
+    return {"value": row["value"] if row else 0}
+
+DATE_FORMAT = '%Y-%m-%dT%H:%M:%SZ'
+
+def cases_in_last(domain, days):
+    now = datetime.now()
+    then = (now - timedelta(days=int(days))).strftime(DATE_FORMAT)
+    now = now.strftime(DATE_FORMAT)
+
+    row = get_db().view("hqcase/all_cases", startkey=[domain, {}, {}, then], endkey=[domain, {}, {}, now]).one()
+    return {"value": row["value"] if row else 0}
+
+def forms(domain, *args):
+    key = make_form_couch_key(domain)
+    row = get_db().view("reports_forms/all_forms", startkey=key, endkey=key+[{}]).one()
+    return {"value": row["value"] if row else 0}
+
+def active(domain, *args):
+    now = datetime.now()
+    then = (now - timedelta(days=30)).strftime(DATE_FORMAT)
+    now = now.strftime(DATE_FORMAT)
+
+    key = ['submission', domain]
+    row = get_db().view("hqcase/all_cases", startkey=key+[then], endkey=key+[now]).all()
+    return {"value": 'yes' if row else 'no'}
+
+def first_form_submission(domain, *args):
+    key = make_form_couch_key(domain)
+    row = get_db().view("reports_forms/all_forms", reduce=False, startkey=key, endkey=key+[{}]).first()
+    return {"value": row["value"]["submission_time"] if row else "No submissions"}
+
+def last_form_submission(domain, *args):
+    key = make_form_couch_key(domain)
+    row = get_db().view("reports_forms/all_forms", reduce=False, startkey=key, endkey=key+[{}]).all()[-1]
+    return {"value": row["value"]["submission_time"] if row else "No submissions"}
+
+def has_app(domain, *args):
+    domain = Domain.get_by_name(domain)
+    apps = domain.applications()
+    return {"value": 'yes' if len(apps) > 0 else 'no'}
+
+def app_list(domain, *args):
+    domain = Domain.get_by_name(domain)
+    apps = domain.applications()
+    return {"value": render_to_string("domain/partials/app_list.html", {"apps": apps, "domain": domain.name})}
+
+def not_implemented(domain, *args):
+    return {"value": '<p class="text-error">not implemented</p>'}
 
 CALC_FNS = {
-    "mobile_users": mobile_users,
-    "cases": ppass,
-    "active_mobile_users": ppass,
-    "active_cases": ppass,
-    "cases_in_last": ppass,
-    "active": ppass,
-    "first_form_submission": ppass,
-    "last_form_submission": ppass,
-    "has_app": ppass,
-    "web_users": web_users,
-    "active_apps": ppass,
+    'num_web_users': num_web_users,
+    "num_mobile_users": num_mobile_users,
+    "forms": forms,
+    "cases": cases,
+    "active_mobile_users": active_mobile_users,
+    "active_cases": not_implemented,
+    "cases_in_last": cases_in_last,
+    "active": active,
+    "first_form_submission": first_form_submission,
+    "last_form_submission": last_form_submission,
+    "has_app": has_app,
+    "web_users": not_implemented,
+    "active_apps": app_list,
 }

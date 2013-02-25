@@ -9,7 +9,7 @@ from django.core.urlresolvers import reverse
 from django.http import HttpResponseRedirect, HttpResponse, Http404
 
 from django.shortcuts import redirect, render
-from corehq.apps.domain.calculations import CALCS, CALC_FNS
+from corehq.apps.domain.calculations import CALCS, CALC_FNS, CALC_ORDER
 
 from corehq.apps.domain.decorators import login_required_late_eval_of_LOGIN_URL, domain_admin_required, require_superuser
 from corehq.apps.domain.forms import DomainGlobalSettingsForm,\
@@ -274,7 +274,7 @@ def internal_settings(request, domain, template='domain/internal_settings.html')
 @require_superuser
 def internal_calculations(request, domain, template="domain/internal_calculations.html"):
     domain = Domain.get_by_name(domain)
-    return render(request, template, {"project": domain, "domain": domain.name, "calcs": CALCS, 'active': 'calcs'})
+    return render(request, template, {"project": domain, "domain": domain.name, "calcs": CALCS, "order": CALC_ORDER, 'active': 'calcs'})
 
 @require_superuser
 def calculated_properties(request, domain):

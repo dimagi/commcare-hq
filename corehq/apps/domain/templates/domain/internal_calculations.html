@@ -13,8 +13,6 @@
 
             $calc_btn.html('Loading...');
             $.get("{% url calculated_properties domain %}", {calc_tag: calc_tag}, function(data) {
-                console.log(data);
-                console.log(calc_tag);
                 if (!data.error) {
                     $('#calc-' + calc_tag).html(data.value);
                     $calc_btn.addClass('btn-success');
@@ -51,9 +49,9 @@
     <div class="form-actions container">
         <button type="submit" id="load-all-btn" class="btn btn-primary">Load EVERYTHING</button>
     </div>
-    {% for calc_tag, name in calcs.items %}
+    {% for calc_tag in order %}
         <div class="row-fluid calc-group">
-            <div class="span2"><p style="text-align: right">{{ name }}</p></div>
+            <div class="span2"><p style="text-align: right">{{ calcs|dict_lookup:calc_tag }}{{ name }}</p></div>
             <div id="calc-{{ calc_tag }}" class="well well-small span4 calc-display"></div>
             <div class="span6">
                 <button class="btn btn-info load-calc-btn" data-calc-tag="{{ calc_tag }}">Load Property</button>
