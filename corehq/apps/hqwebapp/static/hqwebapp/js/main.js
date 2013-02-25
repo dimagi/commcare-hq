@@ -206,7 +206,7 @@ var COMMCAREHQ = (function () {
 
             $(".button", $elem).button().wrap('<span />');
             $("input[type='submit']", $elem).button();
-            $("input[type='text'], input[type='password'], textarea", $elem);//.addClass('shadow').addClass('ui-corner-all');
+            $("input[type='text'], input[type='password'], textarea", $elem);
             $('.container', $elem).addClass('ui-widget ui-widget-content');
             $('.config', $elem).wrap('<div />').parent().addClass('container block ui-corner-all');
 
@@ -304,7 +304,7 @@ $(function () {
 
     $(".message").addClass('ui-state-highlight ui-corner-all').addClass("shadow");
 
-    $('#main_container').addClass('ui-corner-all container shadow');
+    $('#main_container').addClass('container shadow');
     (function () {
         var formIsOpen = false,
             footer = $('footer'),
@@ -394,7 +394,6 @@ $(function () {
         });
     }());
 
-    $(".sidebar").addClass('ui-widget ui-widget-content');
     $(".sidebar h2").addClass('ui-corner-all');
     $(".sidebar ul li").addClass('ui-corner-all');
     $(".sidebar ul li div").addClass('ui-corner-top');

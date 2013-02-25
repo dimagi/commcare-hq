@@ -194,8 +194,8 @@ class RepeatRecord(Document, LockableMixIn):
         if self.last_checked:
             window = self.next_check - self.last_checked
             window += (window // 2) # window *= 1.5
-        if window < timedelta(minutes=30):
-            window = timedelta(minutes=30)
+        if window < timedelta(minutes=60):
+            window = timedelta(minutes=60)
 
         self.last_checked = now
         self.next_check = self.last_checked + window

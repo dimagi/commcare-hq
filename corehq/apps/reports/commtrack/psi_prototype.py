@@ -339,6 +339,9 @@ class SalesAndConsumptionReport(GenericTabularReport, CommtrackReportMixin, Date
 
     @property
     def headers(self):
+        if self.request.GET.get('filterSet') == 'false':
+            return DataTablesHeader()
+
         if len(self.outlets) > OUTLETS_LIMIT:
             return DataTablesHeader(DataTablesColumn('Too many outlets'))
 
@@ -449,6 +452,9 @@ class CumulativeSalesAndConsumptionReport(GenericTabularReport, CommtrackReportM
 
     @property
     def headers(self):
+        if not self.aggregate_by:
+            return DataTablesHeader(DataTablesColumn('No \'Aggregate by\''))
+
         if not self.aggregation_locs:
             return DataTablesHeader(DataTablesColumn('No locations'))
 
@@ -467,6 +473,9 @@ class CumulativeSalesAndConsumptionReport(GenericTabularReport, CommtrackReportM
 
     @property
     def rows(self):
+        if not self.aggregate_by:
+            return [['Choose a location type to aggregate by.']]
+
         if not self.aggregation_locs:
             return [['There are no locations of type "%s" inside the selected location. Choose an administrative location higher up in the hierarchy.' % self.aggregate_by]]
 
@@ -555,6 +564,9 @@ class StockOutReport(GenericTabularReport, CommtrackReportMixin, DatespanMixin):
 
     @property
     def headers(self):
+        if self.request.GET.get('filterSet') == 'false':
+            return DataTablesHeader()
+
         if len(self.outlets) > OUTLETS_LIMIT:
             return DataTablesHeader(DataTablesColumn('Too many outlets'))
 
