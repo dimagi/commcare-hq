@@ -55,7 +55,6 @@ def create_from_request(request, delay=True):
     From an inbound request (representing an incoming message), 
     create a message (log) object with the right fields populated.
     """
-    print "create from request"
     sender = request.REQUEST[InboundParams.SENDER]
     message = request.REQUEST[InboundParams.MESSAGE]
     timestamp = request.REQUEST.get(InboundParams.TIMESTAMP, "")
