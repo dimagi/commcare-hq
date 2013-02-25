@@ -89,7 +89,7 @@ class ExportSchema(Document, UnicodeMixIn):
             # these won't work on bigcouch so we want to know if this happens
             notify_exception(
                 None,
-                'an export without a timestamp was accessed! (%s)' % ret._id
+                'an export without a timestamp was accessed! %s (%s)' % (ret.index, ret._id)
             )
             # this isn't the cleanest nor is it perfect but in the event
             # this doc traversed databases somehow and now has a bad seq
