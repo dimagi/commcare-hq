@@ -217,7 +217,8 @@ class ElasticPillow(BasicPillow):
 
     @memoized
     def get_es(self):
-        return rawes.Elastic('%s:%s' % (self.es_host, self.es_port), self.es_timeout)
+        return rawes.Elastic('%s:%s' % (self.es_host, self.es_port),
+                             timeout=self.es_timeout)
 
     def delete_index(self):
         """
