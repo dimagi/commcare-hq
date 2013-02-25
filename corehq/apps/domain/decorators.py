@@ -146,6 +146,10 @@ def cls_to_view(additional_decorator=None):
         return __outer__
     return decorator
 
+# when requiring a specific domain
+def require_domain(domain):
+    return login_and_domain_required_ex(require_domain=domain)
+
 
 ########################################################################################################
 #
@@ -203,8 +207,7 @@ login_required_late_eval_of_LOGIN_URL = login_required_ex()
 def domain_admin_required_ex( redirect_page_name = None ):
     if redirect_page_name is None:
         redirect_page_name = getattr(settings, 'DOMAIN_NOT_ADMIN_REDIRECT_PAGE_NAME', 'homepage')                                                                                                 
-    def _outer(view_func):
-        @wraps(view_func)
+    def _outer( view_func ): 
         def _inner(request, domain, *args, **kwargs):
             if not hasattr(request, 'couch_user'):
                 raise Http404
@@ -214,6 +217,11 @@ def domain_admin_required_ex( redirect_page_name = None ):
             if not request.couch_user.is_domain_admin(domain_name):
                 return HttpResponseRedirect(reverse(redirect_page_name))
             return view_func(request, domain_name, *args, **kwargs)
+
+        _inner.__name__ = view_func.__name__
+        _inner.__doc__ = view_func.__doc__
+        _inner.__module__ = view_func.__module__
+        _inner.__dict__.update(view_func.__dict__)
         
         return _inner
     return _outer

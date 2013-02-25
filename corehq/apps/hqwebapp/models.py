@@ -61,6 +61,7 @@ class UITab(object):
         # is necessary. Try to add new explicit parameters instead.
         self._request = request
 
+    
     @property
     def dropdown_items(self):
         # todo: add default implementation which looks at sidebar_items and
@@ -138,6 +139,7 @@ class ProjectReportsTab(UITab):
 
     @property
     def is_viewable(self):
+
         return (self.domain and self.project and not self.project.is_snapshot and
                 (self.couch_user.can_view_reports() or
                  self.couch_user.get_viewable_reports))
@@ -183,7 +185,7 @@ class ADMReportsTab(UITab):
 
         adm_enabled_projects = getattr(settings, 'ADM_ENABLED_PROJECTS', [])
 
-        return (self.project.is_snapshot and
+        return (not self.project.is_snapshot and
                 self.domain in adm_enabled_projects and
                   (self.couch_user.can_view_reports() or
                    self.couch_user.get_viewable_reports()))
@@ -330,6 +332,11 @@ class RemindersTab(UITab):
 
 class ProjectSettingsTab(UITab):
     view = "corehq.apps.settings.views.default"
+
+    #@property
+    #def url(self):
+        #from corehq.apps.users.views import redirect_users_to
+        #return redirect_users_to(self._request, self.domain) or reverse("homepage")
 
     @property
     def dropdown_items(self):
@@ -518,7 +525,6 @@ class GlobalADMConfigTab(UITab):
     @property
     def is_viewable(self):
         return self.couch_user and self.couch_user.is_superuser
-
 
 class BillingTab(UITab):
     title = ugettext_noop("Billing")
