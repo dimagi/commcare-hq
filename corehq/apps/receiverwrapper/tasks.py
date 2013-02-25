@@ -35,7 +35,7 @@ def run_only_once(fn):
             logging.debug("%s is already running; aborting" % fn_name)
     return _fn
 
-@periodic_task(run_every=timedelta(minutes=1))
+@periodic_task(run_every=timedelta(minutes=10))
 def check_repeaters():
     now = datetime.utcnow()
 
