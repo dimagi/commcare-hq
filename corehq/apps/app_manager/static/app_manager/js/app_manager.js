@@ -28,8 +28,7 @@
         return versionGE(COMMCAREHQ.app_manager.commcareVersion, version);
     };
     COMMCAREHQ.app_manager.init = function (args) {
-        var lastAppVersion = args.lastAppVersion,
-            appVersion = args.appVersion,
+        var appVersion = args.appVersion,
             edit = args.edit;
 
         function updateDOM(update) {

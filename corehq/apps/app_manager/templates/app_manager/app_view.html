@@ -606,10 +606,10 @@
     {% if app.get_doc_type == "Application" %}
         <h4><a href="{% url app_summary domain app.id %}" class="btn btn-primary">Application Summary</a></h4>
 
+        {% if multimedia %}
         <div class="scary-settings-toggle">
             <a href="#"><span class="ui-icon"></span>{% trans 'Application Multimedia' %}</a>
         </div>
-        {% if multimedia %}
         <div class="scary-settings multimedia">
             {% if edit %}
                 <h3 style="text-align: left;">{% trans 'Manage Multimedia' %}</h3>
@@ -621,7 +621,7 @@
             {% include "hqmedia/partials/multimedia_zip_notice.html" %}
         </div>
         {% endif %}
-        
+
         <div class="scary-settings-toggle" id="user-interface-translations">
             <a href="#"><span class="ui-icon"></span>User Interface Translations</a>
         </div>

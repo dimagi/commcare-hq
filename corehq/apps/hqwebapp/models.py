@@ -442,8 +442,8 @@ class SettingsTab(UITab):
                     return _("Forward Form Stubs")
                 elif repeater_type == 'CaseRepeater':
                     return _("Forward Cases")
-                
-            items.append((_('Project Administration'), [
+
+            administration = [
                 {'title': _('Project Settings'),
                  'url': reverse('domain_project_settings',
                      args=[self.domain.name])},
@@ -452,15 +452,25 @@ class SettingsTab(UITab):
                      args=[self.domain.name])},
                 {'title': _('Multimedia Sharing'),
                  'url': reverse('domain_manage_multimedia',
-                     args=[self.domain.name])},
+                     args=[self.domain.name])}
+            ]
+
+            if self.couch_user.is_superuser:
+                administration.append({
+                    'title': _('Internal Settings'),
+                    'url': reverse('domain_internal_settings',
+                        args=[self.domain.name])
+                })
+
+            administration.extend([
                 {'title': _('Data Forwarding'),
                  'url': reverse('domain_forwarding', args=[self.domain.name]),
                  'children': [
                      {'title': forward_name,
                       'urlname': 'add_repeater'}
                  ]}
-            ]))
-
+            ])
+            items.append((_('Project Administration'), administration))
 
         if self.domain.commtrack_enabled:
             items.append((_('CommTrack'), [
