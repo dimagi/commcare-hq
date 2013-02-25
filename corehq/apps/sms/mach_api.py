@@ -1,5 +1,5 @@
 import logging
-from corehq.apps.sms.util import clean_outgoing_sms_text
+from corehq.apps.sms.util import clean_outgoing_sms_text, create_billable_for_sms
 import urllib
 from django.conf import settings
 import urllib2
@@ -20,15 +20,7 @@ def send(msg, delay=True):
     # TODO, check response
     resp = urllib2.urlopen(url).read()
     msg.save()
-    try:
-        # attempt to bill client
-        from hqbilling.tasks import bill_client_for_sms
-        from hqbilling.models import MachSMSBillable
-        if delay:
-            bill_client_for_sms.delay(MachSMSBillable, msg.get_id, **dict(response=resp))
-        else:
-            bill_client_for_sms(MachSMSBillable, msg.get_id, **dict(response=resp))
-    except Exception as e:
-        logging.debug("MACH API contacted, errors in billing. Error: %s" % e)
+
+    create_billable_for_sms(msg, API_ID, delay=delay, response=resp)
 
     return resp
