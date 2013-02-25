@@ -112,7 +112,6 @@
     });
     $(function () {
         COMMCAREHQ.app_manager.init({
-            lastAppVersion: {{ latest_app_version }},
             appVersion: {% if app.version %}{{ app.version }}{% else %}-1{% endif %},
             edit: {{ edit|JSON }},
             commcareVersion: {{ app.commcare_minor_release|JSON }}
