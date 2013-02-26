@@ -82,7 +82,7 @@ class SyncLog(Document, UnicodeMixIn, ConfigurableAssertionMixin):
     date = DateTimeProperty()
     user_id = StringProperty()
     previous_log_id = StringProperty()  # previous sync log, forming a chain
-    last_seq = IntegerProperty()        # the last_seq of couch during this sync
+    last_seq = StringProperty()         # the last_seq of couch during this sync
     
     # we need to store a mapping of cases to indices for generating the footprint
 
