@@ -11,7 +11,7 @@ class AddProjectForm(forms.Form):
     domain_name = forms.CharField(label="Project name")
     domain_slug = forms.CharField(label="Project alias", required=False, help_text="""
 This project will be given a new name within this organization. You may leave it the same or choose a new name.
-""", required=False)
+""")
 
     def __init__(self, org_name, *args, **kwargs):
         self.org_name = org_name
