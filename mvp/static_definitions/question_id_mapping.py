@@ -12,7 +12,7 @@ CHILD_VISIT_QUESTION_IDS = {
     'immediate_danger_sign': {
         'mvp-sauri': _make_qid('patient_available.immediate_danger_sign', 1),
         'mvp-potou': _make_qid('patient_available.immediate_danger_sign', 1),
-        'mvp-ruhiira': _make_qid('immediate_danger_sign', 1),
+        'mvp-ruhiira': _make_qid('patient_available.immediate_danger_sign', 1),
     },
     'emergency_danger_sign': {
         'mvp-sauri': _make_qid('patient_available.emergency_danger_sign', 1),
@@ -91,12 +91,12 @@ CHILD_REGISTRATION_QUESTION_IDS = {
     'delivered_in_facility': {
         'mvp-sauri': _make_qid('delivered_in_facility', 1),
         'mvp-potou': _make_qid('delivered_in_facility', 1),
-        'mvp-ruhiira': _make_qid('delivered_in_facility', 1),  # confirmation required
+        'mvp-ruhiira': _make_qid('delivered_in_facility', 1),
     },
     'weight_at_birth': {
         'mvp-sauri': _make_qid('weight_at_birth', 1),
         'mvp-potou': _make_qid('weight_at_birth', 1),
-        'mvp-ruhiira': _make_qid('weight_at_birth', 1),  # confirmation required
+        'mvp-ruhiira': _make_qid('weight_at_birth', 1),
     },
 }
 
