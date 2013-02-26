@@ -6,7 +6,9 @@ import urllib2
 
 API_ID = "MACH"
 
-def send(msg, delay=True):
+DEFAULT_SENDER_ID = "DIMAGI"
+
+def send(msg, delay=True, *args, **kwargs):
     """
     Sends a message via mach's API
     """
@@ -14,6 +16,7 @@ def send(msg, delay=True):
     context = {
         'message': outgoing_sms_text,
         'phone_number': urllib.quote(msg.phone_number),
+        'sender_id': urllib.quote(kwargs.get("sender_id", DEFAULT_SENDER_ID)),
     }
     url = "%s?%s" % (settings.SMS_GATEWAY_URL, settings.SMS_GATEWAY_PARAMS % context)
     # just opening the url is enough to send the message
