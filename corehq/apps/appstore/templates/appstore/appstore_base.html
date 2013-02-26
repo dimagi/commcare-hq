@@ -335,7 +335,7 @@
                         </a>
                         <small style="display: block;">{% trans "By" %}
                             {% if app.organization %}
-                                {{ app.organization_doc.title }}
+                                {{ app.get_organization.title }}
                             {% else %}
                                 {{ app.author }}
                             {% endif %}

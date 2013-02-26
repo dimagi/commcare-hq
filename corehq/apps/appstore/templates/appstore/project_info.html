@@ -60,7 +60,7 @@
             {{ project.title }}
             <small>{% trans "by" %}
                 {% if project.organization %}
-                <a href="{% url orgs_landing project.organization %}">{{ project.organization_doc.title }}</a>
+                <a href="{% url orgs_landing project.organization %}">{{ project.get_organization.title }}</a>
                 {% else %}
                     {{ project.author }}
                 {% endif %}

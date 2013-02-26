@@ -9,7 +9,7 @@ from corehq.apps.users.models import CouchUser
 
 class AddProjectForm(forms.Form):
     domain_name = forms.CharField(label="Project name")
-    domain_slug = forms.CharField(label="New project name", help_text="""
+    domain_slug = forms.CharField(label="Project alias", required=False, help_text="""
 This project will be given a new name within this organization. You may leave it the same or choose a new name.
 """)
 
