@@ -1,6 +1,11 @@
 from datetime import date, datetime, timedelta, time
 from calendar import month_name
-from celery.utils.log import get_task_logger
+try:
+    # < 3.0
+    from celery.log import get_task_logger
+except ImportError:
+    # >= 3.0
+    from celery.utils.log import get_task_logger
 import dateutil
 import pytz
 from dimagi.utils.logging import log_exception
