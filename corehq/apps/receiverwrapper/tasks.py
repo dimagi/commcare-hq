@@ -35,13 +35,38 @@ def run_only_once(fn):
             logging.debug("%s is already running; aborting" % fn_name)
     return _fn
 
-@periodic_task(run_every=timedelta(minutes=10))
+CHECK_REPEATERS_INTERVAL = timedelta(minutes=1)
+@periodic_task(run_every=CHECK_REPEATERS_INTERVAL)
 def check_repeaters():
-    now = datetime.utcnow()
+    start = datetime.utcnow()
+    number_locked = 0
+    LIMIT = 100
+    print 'check repeaters'
+    while True:
+        # take LIMIT records off the top
+        # the assumption is that they all get 'popped' in the for loop
+        # the only exception I can see is if there's a problem with the
+        # locking, a large number of locked tasks could pile up at the top,
+        # so make a provision for that worst case
+        repeat_records = RepeatRecord.all(
+            due_before=start,
+            limit=LIMIT + number_locked
+        )
+        print repeat_records.count()
+        if repeat_records.count() <= number_locked:
+            # don't keep spinning if there's nothing left to fetch
+            return
 
-    repeat_records = RepeatRecord.all(due_before=now)
-    for repeat_record in repeat_records:
-        if repeat_record.acquire_lock(now):
-            repeat_record.fire()
-            repeat_record.save()
-            repeat_record.release_lock()
+        for repeat_record in repeat_records:
+            now = datetime.utcnow()
+
+            # abort if taking too long, so the next task can take over
+            if now - start > CHECK_REPEATERS_INTERVAL:
+                return
+
+            if repeat_record.acquire_lock(start):
+                repeat_record.fire()
+                repeat_record.save()
+                repeat_record.release_lock()
+            else:
+                number_locked += 1
