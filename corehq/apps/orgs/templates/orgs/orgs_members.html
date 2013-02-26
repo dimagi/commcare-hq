@@ -14,9 +14,11 @@
                 {% endif %}
                 {% if member.username in org_admins %} <span class="label">Admin</span>{% endif %}
             </strong>
-            <a href="#" class="btn btn-danger remove-member-btn pull-right" data-member="{{ member.username }}" data-member_id="{{ member.get_id }}">
-                <i class="icon-remove"></i> {% trans "Remove Member" %}
-            </a>
+            {% if admin %}
+                <a href="#" class="btn btn-danger remove-member-btn pull-right" data-member="{{ member.username }}" data-member_id="{{ member.get_id }}">
+                    <i class="icon-remove"></i> {% trans "Remove Member" %}
+                </a>
+            {% endif %}
         </td></tr>
     {% endfor %}
 </table>

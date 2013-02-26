@@ -10,16 +10,18 @@
 {% endfor %}
 </table>
 
-<form class="form-horizontal" method="post" action="{% url orgs_add_team org.name %}">
-    <div class="well well-small">
-        <div class="input-append">
-            <input name="team" id="team" type="text" placeholder="New Team Name" />
-            <button type="submit" id="add_team_btn" class="btn btn-info">
-                <i class="icon-plus"></i> {% trans "Add Team" %}
-            </button>
+{% if admin %}
+    <form class="form-horizontal" method="post" action="{% url orgs_add_team org.name %}">
+        <div class="well well-small">
+            <div class="input-append">
+                <input name="team" id="team" type="text" placeholder="New Team Name" />
+                <button type="submit" id="add_team_btn" class="btn btn-info">
+                    <i class="icon-plus"></i> {% trans "Add Team" %}
+                </button>
+            </div>
         </div>
-    </div>
-</form>
+    </form>
+{% endif %}
 {% endblock %}
 
 {% block org-modals %}

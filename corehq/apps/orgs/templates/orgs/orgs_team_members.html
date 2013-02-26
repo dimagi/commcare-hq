@@ -47,6 +47,7 @@
                     <p class="muted">{% trans "No members have been added to this team" %}</p>
                 {% endfor %}
             </div>
+            {% if admin %}
             <form class="form-horizontal" method="post" action="{% url join_team org.name team.get_id %}" method="post">
                 <div class="well well-small">
                     <div class="input-append">
@@ -57,6 +58,7 @@
                     </div>
                 </div>
             </form>
+            {% endif %}
         </div>
         <div class="span6" id="domains">
             <h3>{% trans "Projects" %}</h3>
@@ -93,6 +95,7 @@
                     <p class="muted">{% trans "No projects have been added to this team" %}</p>
                 {% endfor %}
             </div>
+            {% if admin %}
             <form class="form-horizontal" method="post" action="{% url add_domain_to_team org.name team.get_id %}" method="post">
                 <div class="well well-small">
                     <div class="input-append">
@@ -103,6 +106,7 @@
                     </div>
                 </div>
             </form>
+            {% endif %}
         </div>
     </div>
 
