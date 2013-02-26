@@ -417,6 +417,10 @@ class Domain(Document, HQBillingDomainMixin, SnapshotMixin):
             **extra_args
         ).first()
 
+        if result is None and not strict:
+            # on the off chance this is a brand new domain, try with strict
+            return cls.get_by_name(name, strict=True)
+
         return result
 
     @classmethod
