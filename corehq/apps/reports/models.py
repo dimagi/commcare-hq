@@ -345,7 +345,8 @@ class ReportConfig(Document):
             response = self._dispatcher.dispatch(request, render_as='email',
                 **self.view_kwargs)
             return json.loads(response.content)['report']
-        except:
+        except Exception:
+            notify_exception(None, "Error generating report")
             return _("An error occurred while generating this report.")
 
 

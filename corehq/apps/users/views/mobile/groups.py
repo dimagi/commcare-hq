@@ -13,9 +13,6 @@ def _get_sorted_groups(domain):
         key=lambda group: alphanumeric_sort_key(group.name)
     )
 
-"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
-GROUP VIEWS
-"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 @require_can_edit_commcare_users
 def all_groups(request, domain, template="groups/all_groups.html"):
     context = _users_context(request, domain)
@@ -48,9 +45,6 @@ def group_members(request, domain, group_id, template="groups/group_members.html
                     })
     return render(request, template, context)
 
-#@require_domain_admin
-#def my_groups(request, domain, template="groups/groups.html"):
-#    return group_membership(request, domain, request.couch_user._id, template)
 
 @require_can_edit_commcare_users
 def group_membership(request, domain, couch_user_id, template="groups/groups.html"):

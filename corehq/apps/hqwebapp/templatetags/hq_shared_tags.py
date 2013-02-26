@@ -36,13 +36,6 @@ def array_lookup(array, index):
     if index < len(array):
         return array[index]
     
-@register.filter
-def attribute_lookup(obj, attr):
-    '''Get an attribute from an object.'''
-    if (hasattr(obj, attr)):
-        return getattr(obj, attr)
-    
-
 @register.simple_tag
 def dict_as_query_string(dict, prefix=""):
     '''Convert a dictionary to a query string, minus the initial ?'''

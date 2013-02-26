@@ -1996,13 +1996,8 @@ def get_app(domain, app_id, wrap_cls=None, latest=False):
             app = get_db().get(app_id)
         except Exception:
             raise Http404
-
-    if domain:
-        try:    Domain.get_by_name(domain)
-        except: raise Http404
-
-        if app['domain'] != domain:
-            raise Http404
+    if domain and app['domain'] != domain:
+        raise Http404
     cls = wrap_cls or {
         'Application': Application,
         'Application-Deleted': Application,

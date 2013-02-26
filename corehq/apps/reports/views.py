@@ -49,7 +49,6 @@ from util import get_all_users_by_domain, stream_qs
 from corehq.apps.hqsofabed.models import HQFormData
 from corehq.apps.app_manager.util import get_app_id
 from corehq.apps.groups.models import Group
-from corehq.apps.adm import utils as adm_utils
 from soil import DownloadBase
 from soil.tasks import prepare_download
 from django.utils.translation import ugettext as _
@@ -73,7 +72,11 @@ require_case_view_permission = require_permission(Permissions.view_report, 'core
 require_can_view_all_reports = require_permission(Permissions.view_reports)
 
 @login_and_domain_required
-def default(request, domain, template="reports/reports_home.html"):
+def default(request, domain):
+    return HttpResponseRedirect(reverse(saved_reports, args=[domain]))
+
+@login_and_domain_required
+def saved_reports(request, domain, template="reports/reports_home.html"):
     user = request.couch_user
     if not (request.couch_user.can_view_reports() or request.couch_user.get_viewable_reports()):
         raise Http404
@@ -92,9 +95,7 @@ def default(request, domain, template="reports/reports_home.html"):
             show=user.can_view_reports() or user.get_viewable_reports(),
             slug=None,
             is_async=True,
-            app_slug="reports",
             section_name=ProjectReport.section_name,
-            show_subsection_navigation=adm_utils.show_adm_nav(domain, request)
         ),
     )
 
@@ -573,7 +574,6 @@ def edit_scheduled_report(request, domain, scheduled_report_id=None,
             'default_url': reverse('reports_home', args=(domain,)),
             'is_async': False,
             'section_name': ProjectReport.section_name,
-            'show_subsection_navigation': adm_utils.show_adm_nav(domain, request)
         }
     }
     

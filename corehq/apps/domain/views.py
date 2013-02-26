@@ -9,16 +9,19 @@ from django.core.urlresolvers import reverse
 from django.http import HttpResponseRedirect, HttpResponse, Http404
 
 from django.shortcuts import redirect, render
+from corehq.apps.domain.calculations import CALCS, CALC_FNS, CALC_ORDER
 
-from corehq.apps.domain.decorators import login_required_late_eval_of_LOGIN_URL, domain_admin_required
+from corehq.apps.domain.decorators import (domain_admin_required,
+    login_required_late_eval_of_LOGIN_URL, require_superuser,
+    login_and_domain_required)
 from corehq.apps.domain.forms import DomainGlobalSettingsForm,\
-    DomainMetadataForm, SnapshotSettingsForm, SnapshotApplicationForm, DomainDeploymentForm
+    DomainMetadataForm, SnapshotSettingsForm, SnapshotApplicationForm, DomainDeploymentForm, DomainInternalForm
 from corehq.apps.domain.models import Domain, LICENSES
 from corehq.apps.domain.utils import get_domained_url, normalize_domain_name
 from corehq.apps.orgs.models import Organization, OrgRequest, Team
 from dimagi.utils.django.email import send_HTML_email
 
-from dimagi.utils.web import get_ip
+from dimagi.utils.web import get_ip, json_response
 from corehq.apps.users.views import require_can_edit_web_users
 from corehq.apps.receiverwrapper.forms import FormRepeaterForm
 from corehq.apps.receiverwrapper.models import FormRepeater, CaseRepeater, ShortFormRepeater
@@ -239,6 +242,56 @@ def org_settings(request, domain):
         "org_users": org_users
     })
 
+@login_and_domain_required
+@require_superuser
+def internal_settings(request, domain, template='domain/internal_settings.html'):
+    domain = Domain.get_by_name(domain)
+
+    if request.method == 'POST':
+        internal_form = DomainInternalForm(request.POST)
+        if internal_form.is_valid():
+            internal_form.save(domain)
+            messages.success(request, "The internal information for project %s was successfully updated!" % domain.name)
+        else:
+            messages.error(request, "There seems to have been an error. Please try again!")
+    else:
+        internal_form = DomainInternalForm(initial={
+            "sf_contract_id": domain.internal.sf_contract_id,
+            "sf_account_id": domain.internal.sf_account_id,
+            "commcare_edition": domain.internal.commcare_edition,
+            "services": domain.internal.services,
+            "real_space": 'true' if domain.internal.real_space else 'false',
+            "initiative": domain.internal.initiative,
+            "project_state": domain.internal.project_state,
+            "self_started": 'true' if domain.internal.self_started else 'false',
+            "area": domain.internal.area,
+            "sub_area": domain.internal.sub_area,
+            "using_adm": 'true' if domain.internal.using_adm else 'false',
+            "using_call_center": 'true' if domain.internal.using_call_center else 'false',
+            "custom_eula": 'true' if domain.internal.custom_eula else 'false',
+            "can_use_data": 'true' if domain.internal.can_use_data else 'false',
+        })
+
+        return render(request, template, {"project": domain, "domain": domain.name, "form": internal_form, 'active': 'settings'})
+
+@login_and_domain_required
+@require_superuser
+def internal_calculations(request, domain, template="domain/internal_calculations.html"):
+    domain = Domain.get_by_name(domain)
+    return render(request, template, {"project": domain, "domain": domain.name, "calcs": CALCS, "order": CALC_ORDER, 'active': 'calcs'})
+
+@login_and_domain_required
+@require_superuser
+def calculated_properties(request, domain):
+    calc_tag = request.GET.get("calc_tag", '').split('--')
+    extra_arg = calc_tag[1] if len(calc_tag) > 1 else ''
+    calc_tag = calc_tag[0]
+
+    if not calc_tag or calc_tag not in CALC_FNS.keys():
+        data = {"error": 'This tag does not exist'}
+    else:
+        data = CALC_FNS[calc_tag](domain, extra_arg)
+    return json_response(data)
 
 @domain_admin_required
 def create_snapshot(request, domain):

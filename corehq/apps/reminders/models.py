@@ -6,7 +6,7 @@ from couchdbkit.ext.django.schema import *
 from django.conf import settings
 from casexml.apps.case.models import CommCareCase
 from corehq.apps.sms.api import send_sms, send_sms_to_verified_number
-from corehq.apps.sms.models import CallLog, EventLog, MISSED_EXPECTED_CALLBACK, CommConnectCase
+from corehq.apps.sms.models import CallLog, CommConnectCase
 from corehq.apps.users.models import CommCareUser, CouchUser
 from corehq.apps.groups.models import Group
 import logging
@@ -477,6 +477,7 @@ class CaseReminderHandler(Document):
         reminder.callback_try_count = 0
         reminder.skip_remaining_timeouts = False
         reminder.xforms_session_ids = []
+        reminder.event_initiation_timestamp = None
         if reminder.current_event_sequence_num >= len(self.events):
             reminder.current_event_sequence_num = 0
             reminder.schedule_iteration_num += 1
@@ -586,6 +587,10 @@ class CaseReminderHandler(Document):
             except Exception:
                 verified_number = None
             verified_numbers[r.get_id] = verified_number
+        
+        # Set the event initiation timestamp if we're not on any timeouts
+        if reminder.callback_try_count == 0:
+            reminder.event_initiation_timestamp = self.get_now()
         
         # Call the appropriate event handler
         event_handler = EVENT_HANDLER_MAP.get(self.method)
@@ -841,6 +846,9 @@ class CaseReminder(Document, LockableMixIn):
     xforms_session_ids = ListProperty(StringProperty)
     error_retry_count = IntegerProperty(default=0)
     last_scheduled_fire_time = DateTimeProperty()
+    event_initiation_timestamp = DateTimeProperty() # The date and time that the event was started (which is the same throughout all timeouts)
+    error = BooleanProperty(default=False)
+    error_msg = StringProperty()
     
     @property
     def handler(self):

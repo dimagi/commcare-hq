@@ -1,70 +1,107 @@
-from functools import wraps
+from django.conf import settings
 from django.template.loader import render_to_string
 from django.utils.safestring import mark_safe, mark_for_escaping
-from dimagi.utils.couch.database import get_db
-from dimagi.utils.decorators.memoized import memoized
 from django.core.urlresolvers import reverse
 from django.utils.translation import ugettext as _
 from django.utils.translation import ugettext_noop
 
-def require_couch_user(fn):
-    """Meant to be used only on the is_viewable method"""
-    @wraps(fn)
-    def inner(cls, request, *args, **kwargs):
-        try:
-            request.couch_user
-        except AttributeError:
-            return False
-        else:
-            return fn(cls, request, *args, **kwargs)
+from dimagi.utils.couch.database import get_db
+from dimagi.utils.decorators.memoized import memoized
 
-    return inner
+from corehq.apps.reports.dispatcher import (ProjectReportDispatcher,
+    CustomProjectReportDispatcher)
+from corehq.apps.adm.dispatcher import (ADMAdminInterfaceDispatcher,
+    ADMSectionDispatcher)
+from corehq.apps.data_interfaces.dispatcher import DataInterfaceDispatcher
+from hqbilling.dispatcher import BillingInterfaceDispatcher
+from corehq.apps.announcements.dispatcher import (
+    HQAnnouncementAdminInterfaceDispatcher)
 
-class DropdownMenuItem(object):
+
+def format_submenu_context(title, url=None, html=None,
+                           is_header=False, is_divider=False):
+    return {
+        'title': title,
+        'url': url,
+        'html': html,
+        'is_header': is_header,
+        'is_divider': is_divider,
+    }
+
+
+def format_second_level_context(title, url, menu):
+    return {
+        'title': title,
+        'url': url,
+        'is_second_level': True,
+        'submenu': menu,
+    }
+
+
+class UITab(object):
     title = None
     view = None
-    css_id = None
+    subtab_classes = None
 
-    def __init__(self, request, domain):
-        self.request = request
+    dispatcher = None
+
+    def __init__(self, request, domain=None, couch_user=None, project=None):
+        if self.subtab_classes:
+            self.subtabs = [cls(request, domain=domain, couch_user=couch_user,
+                                project=project)
+                            for cls in self.subtab_classes]
+        else:
+            self.subtabs = None
+
         self.domain = domain
-        if self.title is None:
-            raise NotImplementedError("A title is required")
-        if self.view is None:
-            raise NotImplementedError("A view is required")
+        self.couch_user = couch_user
+        self.project = project
+       
+        # This should not be considered as part of the subclass API unless it
+        # is necessary. Try to add new explicit parameters instead.
+        self._request = request
 
     @property
-    def menu_context(self):
-        return {
-            'url': self.url,
-            'title': mark_for_escaping(self.title),
-            'css_id': self.css_id,
-            'is_active': self.is_active,
-            'submenu': self.submenu_items,
-        }
-
-    @property
-    def submenu_items(self):
+    def dropdown_items(self):
+        # todo: add default implementation which looks at sidebar_items and
+        # sees which ones have is_dropdown_visible or something like that.
+        # Also make it work for tabs with subtabs.
         return []
 
-    def _format_submenu_context(self, title, url=None, html=None,
-                                is_header=False, is_divider=False):
-        return {
-            'title': title,
-            'url': url,
-            'html': html,
-            'is_header': is_header,
-            'is_divider': is_divider,
-        }
+    @property
+    def sidebar_items(self):
+        if self.dispatcher:
+            context = {
+                'request': self._request,
+                'domain': self.domain,
+            }
+            return self.dispatcher.navigation_sections(context)
+        else:
+            return []
+ 
+    @property
+    def is_viewable(self):
+        """
+        Whether the tab should be displayed.  Subclass implementations can skip
+        checking whether domain, couch_user, or project is not None before
+        accessing an attribute of them -- this property is accessed in
+        real_is_viewable and wrapped in a try block that returns False in the
+        case of an AttributeError for any of those variables.
 
-    def _format_second_level_context(self, title, url, menu):
-        return {
-            'title': title,
-            'url': url,
-            'is_second_level': True,
-            'submenu': menu,
-        }
+        """
+        raise NotImplementedError()
 
+    @property
+    @memoized
+    def real_is_viewable(self):
+        if self.subtabs:
+            return any(st.real_is_viewable for st in self.subtabs)
+        else:
+            try:
+                return self.is_viewable
+            except AttributeError as e:
+                return False
+    
     @property
     @memoized
     def url(self):
@@ -73,62 +110,128 @@ class DropdownMenuItem(object):
                 return reverse(self.view, args=[self.domain])
             except Exception:
                 pass
-        return reverse(self.view)
-
-    @property
-    def is_active(self):
-        return self.request.get_full_path().startswith(self.url or "")
-
-    @classmethod
-    def is_viewable(cls, request, domain):
-        raise NotImplementedError
-
-
-class ReportsMenuItem(DropdownMenuItem):
-    title = ugettext_noop("Reports")
-    view = "corehq.apps.reports.views.default"
-    css_id = "project_reports"
-
-    @classmethod
-    @require_couch_user
-    def is_viewable(cls, request, domain):
-        return domain and \
-            (hasattr(request, 'project') and not request.project.is_snapshot) and \
-            (request.couch_user.can_view_reports() or request.couch_user.get_viewable_reports())
-
-
-class ProjectInfoMenuItem(DropdownMenuItem):
-    title = ugettext_noop("Project Info")
-    view = "corehq.apps.appstore.views.project_info"
-    css_id = "project_info"
-
-    @classmethod
-    def is_viewable(cls, request, domain):
-        if hasattr(request, 'project'):
-            return domain and request.project.is_snapshot
-        else:
-            return False
-
-
-class ManageDataMenuItem(DropdownMenuItem):
-    title = ugettext_noop("Manage Data")
-    view = "corehq.apps.data_interfaces.views.default"
-    css_id = "manage_data"
-
-    @classmethod
-    @require_couch_user
-    def is_viewable(cls, request, domain):
-        return domain and request.couch_user.can_edit_data()
-
-
-class ApplicationsMenuItem(DropdownMenuItem):
-    title = ugettext_noop("Applications")
-    view = "corehq.apps.app_manager.views.default"
-    css_id = "applications"
+        
+        try:
+            return reverse(self.view)
+        except Exception:
+            return None
 
     @property
     @memoized
-    def submenu_items(self):
+    def is_active(self):
+        if self.subtabs and any(st.is_active for st in self.subtabs):
+            return True
+
+        if self.url:
+            return self._request.get_full_path().startswith(self.url)
+        else:
+            return False
+
+    @property
+    def css_id(self):
+        return self.__class__.__name__
+
+
+class ProjectReportsTab(UITab):
+    title = ugettext_noop("Project Reports")
+    view = "corehq.apps.reports.views.default"
+
+    @property
+    def is_viewable(self):
+        return (self.domain and self.project and not self.project.is_snapshot and
+                (self.couch_user.can_view_reports() or
+                 self.couch_user.get_viewable_reports))
+
+    @property
+    def is_active(self):
+        # HACK. We need a more overarching way to avoid doing things this way
+        if 'adm' in self._request.get_full_path():
+            return False
+
+        return super(ProjectReportsTab, self).is_active
+
+    @property
+    def sidebar_items(self):
+        context = {
+            'request': self._request,
+            'domain': self.domain,
+        }
+        
+        tools = [(_("Tools"), [
+            {'title': 'My Saved Reports',
+             'url': reverse('saved_reports', args=[self.domain]),
+             'icon': 'icon-tasks'}
+        ])]
+
+        project_reports = ProjectReportDispatcher.navigation_sections(
+            context)
+        custom_reports = CustomProjectReportDispatcher.navigation_sections(
+            context)
+
+        return tools + project_reports + custom_reports
+
+
+class ADMReportsTab(UITab):
+    title = ugettext_noop("Active Data Management")
+    view = "corehq.apps.adm.views.default_adm_report"
+    dispatcher = ADMSectionDispatcher
+
+    @property
+    def is_viewable(self):
+        if not self.project or self.project.commtrack_enabled:
+            return False
+
+        adm_enabled_projects = getattr(settings, 'ADM_ENABLED_PROJECTS', [])
+
+        return (not self.project.is_snapshot and
+                self.domain in adm_enabled_projects and
+                  (self.couch_user.can_view_reports() or
+                   self.couch_user.get_viewable_reports()))
+
+    @property
+    def is_active(self):
+        if not self.domain:
+            return False
+
+        project_reports_url = reverse(ReportsTab.view, args=[self.domain])
+        return (super(ADMReportsTab, self).is_active and self.domain and
+                self._request.get_full_path() != project_reports_url)
+
+
+class ReportsTab(UITab):
+    title = ugettext_noop("Reports")
+    view = "corehq.apps.reports.views.default"
+    subtab_classes = (ProjectReportsTab, ADMReportsTab)
+
+
+class ProjectInfoTab(UITab):
+    title = ugettext_noop("Project Info")
+    view = "corehq.apps.appstore.views.project_info"
+
+    @property
+    def is_viewable(self):
+        return self.project and self.project.is_snapshot
+
+
+class ManageDataTab(UITab):
+    title = ugettext_noop("Manage Data")
+    view = "corehq.apps.data_interfaces.views.default"
+    dispatcher = DataInterfaceDispatcher
+
+    @property
+    def is_viewable(self):
+        if self.project.commtrack_enabled:
+            return False
+
+        return self.domain and self.couch_user.can_edit_data()
+
+        
+class ApplicationsTab(UITab):
+    title = ugettext_noop("Applications")
+    view = "corehq.apps.app_manager.views.default"
+
+    @property
+    def dropdown_items(self):
         # todo async refresh submenu when on the applications page and you change the application name
         key = [self.domain]
         apps = get_db().view('app_manager/applications_brief',
@@ -141,24 +244,24 @@ class ApplicationsMenuItem(DropdownMenuItem):
         if not apps:
             return submenu_context
 
-        submenu_context.append(self._format_submenu_context(_('My Applications'), is_header=True))
+        submenu_context.append(format_submenu_context(_('My Applications'), is_header=True))
         for app in apps:
             app_info = app['value']
             if app_info:
                 url = reverse('view_app', args=[self.domain, app_info['_id']])
                 app_name = mark_safe("%s" % mark_for_escaping(app_info['name'] or '(Untitled)'))
-                submenu_context.append(self._format_submenu_context(app_name, url=url))
+                submenu_context.append(format_submenu_context(app_name, url=url))
 
-        if self.request.couch_user.can_edit_apps():
-            submenu_context.append(self._format_submenu_context(None, is_divider=True))
+        if self.couch_user.can_edit_apps():
+            submenu_context.append(format_submenu_context(None, is_divider=True))
             newapp_options = [
-                self._format_submenu_context(None, html=self._new_app_link(_('Blank Application'))),
-                self._format_submenu_context(None, html=self._new_app_link(_('RemoteApp (Advanced Users Only)'),
+                format_submenu_context(None, html=self._new_app_link(_('Blank Application'))),
+                format_submenu_context(None, html=self._new_app_link(_('RemoteApp (Advanced Users Only)'),
                     is_remote=True)),
             ]
-            newapp_options.append(self._format_submenu_context(_('Visit CommCare Exchange to copy existing app...'),
+            newapp_options.append(format_submenu_context(_('Visit CommCare Exchange to copy existing app...'),
                 url=reverse('appstore')))
-            submenu_context.append(self._format_second_level_context(
+            submenu_context.append(format_second_level_context(
                 _('New Application...'),
                 '#',
                 newapp_options
@@ -173,130 +276,334 @@ class ApplicationsMenuItem(DropdownMenuItem):
             'action_text': title,
         }))
 
-    @classmethod
-    @require_couch_user
-    def is_viewable(cls, request, domain):
-        couch_user = request.couch_user
-        return (domain is not None and (couch_user.is_web_user() or couch_user.can_edit_apps()) and
-                (couch_user.is_member_of(domain) or couch_user.is_superuser))
+    @property
+    def is_viewable(self):
+        if self.project.commtrack_enabled:
+            return False
+
+        couch_user = self.couch_user
+        return (self.domain and couch_user and
+                (couch_user.is_web_user() or couch_user.can_edit_apps()) and
+                (couch_user.is_member_of(self.domain) or couch_user.is_superuser))
 
 
-class CloudcareMenuItem(DropdownMenuItem):
+class CloudcareTab(UITab):
     title = ugettext_noop("CloudCare")
     view = "corehq.apps.cloudcare.views.default"
-    css_id = "cloudcare"
 
-    @classmethod
-    @require_couch_user
-    def is_viewable(cls, request, domain):
-        return domain and request.couch_user.can_edit_data()
+    @property
+    def is_viewable(self):
+        return self.domain and self.couch_user.can_edit_data()
 
 
-class MessagesMenuItem(DropdownMenuItem):
+class MessagesTab(UITab):
     title = ugettext_noop("Messages")
-    view = "corehq.apps.sms.views.messaging"
-    css_id = "messages"
-
-    @classmethod
-    @require_couch_user
-    def is_viewable(cls, request, domain):
-        return domain and \
-            (hasattr(request, 'project') and not request.project.is_snapshot) and \
-            not request.couch_user.is_commcare_user()
-
-
-class ProjectSettingsMenuItem(DropdownMenuItem):
-    view = "corehq.apps.users.views.users"
-    css_id = "project_settings"
+    view = "corehq.apps.sms.views.default"
 
     @property
-    @memoized
-    def url(self):
-        from corehq.apps.users.views import redirect_users_to
-        return redirect_users_to(self.request, self.domain) or reverse("homepage")
+    def is_viewable(self):
+        return (self.domain and self.project and not self.project.is_snapshot and
+                not self.couch_user.is_commcare_user())
 
     @property
-    @memoized
-    def submenu_items(self):
+    def sidebar_items(self):
+        return [(_("Messaging"), [
+            {'title': _('Message History'),
+             'url': reverse('messaging', args=[self.domain])},
+            {'title': _('Compose SMS Message'),
+             'url': reverse('sms_compose_message', args=[self.domain])}
+        ])]
+
+
+class RemindersTab(UITab):
+    title = ugettext_noop("Reminders")
+    view = "corehq.apps.reminders.views.default"
+
+    @property
+    def dropdown_items(self):
+        return []
+
+    @property
+    def is_viewable(self):
+        return self.project.commtrack_enabled
+
+
+class ProjectSettingsTab(UITab):
+    view = "corehq.apps.settings.views.default"
+
+    @property
+    def dropdown_items(self):
         return []
 
     @property
     def title(self):
-        if not (self.request.couch_user.can_edit_commcare_users() or self.request.couch_user.can_edit_web_users()):
+        if not (self.couch_user.can_edit_commcare_users() or
+                self.couch_user.can_edit_web_users()):
             return _("Settings")
         return _("Settings & Users")
 
-    @classmethod
-    @require_couch_user
-    def is_viewable(cls, request, domain):
-        return domain is not None and request.couch_user
-
-
-
-class AdminReportsMenuItem(DropdownMenuItem):
-    title = ugettext_noop("Admin")
-    view = "corehq.apps.hqadmin.views.default"
-    css_id = "admin_tab"
+    @property
+    def is_viewable(self):
+        return self.domain and self.couch_user
 
     @property
-    @memoized
-    def submenu_items(self):
+    def sidebar_items(self):
+        items = []
+ 
+        if self.couch_user.can_edit_commcare_users:
+            def commcare_username(request=None, couch_user=None, **context):
+                if (couch_user.user_id != request.couch_user.user_id and
+                    couch_user.is_commcare_user()):
+                    username = couch_user.username_in_report
+                    if couch_user.is_deleted():
+                        username += " (%s)" % _("Deleted")
+                    return mark_safe(username)
+                else:
+                    return None
+
+            items.append((_('Mobile Users'), [
+                {'title': _('Mobile Workers'),
+                 'url': reverse('commcare_users', args=[self.domain]),
+                 'children': [
+                     {'title': commcare_username,
+                      'urlname': 'commcare_user_account'},
+                     {'title': _('New Mobile Worker'),
+                      'urlname': 'add_commcare_account'},
+                     {'title': _('Bulk Upload'),
+                      'urlname': 'upload_commcare_users'},
+                     {'title': _('Transfer Mobile Workers'),
+                      'urlname': 'user_domain_transfer'},
+                 ]},
+
+                {'title': _('Groups'),
+                 'url': reverse('all_groups', args=[self.domain]),
+                 'children': [
+                     {'title': lambda **context: (
+                         "%s %s" % (_("Editing"), context['group'].name)),
+                      'urlname': 'group_members'},
+                     {'title': _('Membership Info'),
+                      'urlname': 'group_membership'}
+                 ]}
+            ]))
+
+        if self.couch_user.can_edit_web_users:
+            def web_username(request=None, couch_user=None, **context):
+                if (couch_user.user_id != request.couch_user.user_id and
+                    not couch_user.is_commcare_user()):
+                    username = couch_user.html_username()
+                    if couch_user.is_deleted():
+                        username += " (%s)" % _("Deleted")
+                    return mark_safe(username)
+                else:
+                    return None
+
+            items.append((_('CommCare HQ Users'), [
+                {'title': _('Web Users'),
+                 'url': reverse('web_users', args=[self.domain]),
+                 'children': [
+                     {'title': _("Invite Web User"),
+                      'urlname': 'invite_web_user'},
+                     {'title': web_username,
+                      'urlname': 'user_account'}
+                 ]}
+            ]))
+
+        items.append((_('My Account'), [
+            {'title': _('My Account Settings'),
+             'url': reverse('my_account', args=[self.domain])},
+            {'title': _('Change My Password'),
+             'url': reverse('change_my_password', args=[self.domain])}
+        ]))
+
+        if self.couch_user.is_domain_admin:
+            items.append((_('CloudCare Settings'), [
+                {'title': _('App Access'),
+                 'url': reverse('cloudcare_app_settings',
+                             args=[self.domain])}
+            ]))
+
+        if self.couch_user.can_edit_web_users:
+            def forward_name(repeater_type=None, **context):
+                if repeater_type == 'FormRepeater':
+                    return _("Forward Forms")
+                elif repeater_type == 'ShortFormRepeater':
+                    return _("Forward Form Stubs")
+                elif repeater_type == 'CaseRepeater':
+                    return _("Forward Cases")
+
+            administration = [
+                {'title': _('Project Settings'),
+                 'url': reverse('domain_project_settings',
+                     args=[self.domain])},
+                {'title': _('CommCare Exchange'),
+                 'url': reverse('domain_snapshot_settings',
+                     args=[self.domain])},
+                {'title': _('Multimedia Sharing'),
+                 'url': reverse('domain_manage_multimedia',
+                     args=[self.domain])}
+            ]
+
+            if self.couch_user.is_superuser:
+                administration.append({
+                    'title': _('Internal Settings'),
+                    'url': reverse('domain_internal_settings',
+                        args=[self.domain])
+                })
+
+            administration.extend([
+                {'title': _('Data Forwarding'),
+                 'url': reverse('domain_forwarding', args=[self.domain]),
+                 'children': [
+                     {'title': forward_name,
+                      'urlname': 'add_repeater'}
+                 ]}
+            ])
+            items.append((_('Project Administration'), administration))
+
+        if self.project.commtrack_enabled:
+            items.append((_('CommTrack'), [
+                {'title': _('Project Settings'),
+                 'url': reverse('domain_commtrack_settings',
+                     args=[self.domain])},
+                {'title': _('Manage Products'),
+                 'url': reverse('commtrack_product_list',
+                     args=[self.domain])},
+                {'title': _('Manage Locations'),
+                 'url': reverse('manage_locations', args=[self.domain])}
+            ]))
+
+        return items
+
+
+class AdminReportsTab(UITab):
+    title = ugettext_noop("Admin Reports")
+    view = "corehq.apps.hqadmin.views.default"
+
+    @property
+    def sidebar_items(self):
+        # todo: convert these to dispatcher-style like other reports
+        return [
+            (_('Administrative Reports'), [
+                {'title': _('Domain List'),
+                 'url': reverse('domain_list')},
+                {'title': _('Domain Activity Report'),
+                 'url': reverse('domain_activity_report')},
+                {'title': _('Message Logs Across All Domains'),
+                 'url': reverse('message_log_report')},
+                {'title': _('Global Statistics'),
+                 'url': reverse('global_report')},
+                {'title': _('CommCare Versions'),
+                 'url': reverse('commcare_version_report')},
+                {'title': _('Submissions & Error Statistics per Domain'),
+                 'url': reverse('global_submissions_errors')},
+                {'title': _('System Info'),
+                 'url': reverse('system_info')},
+            ]),
+            (_('Administrative Operations'), [
+                {'title': _('View/Update Domain Information'),
+                 'url': reverse('domain_update')}
+            ])
+        ]
+    
+    @property
+    def is_viewable(self):
+        return self.couch_user and self.couch_user.is_superuser
+
+
+class GlobalADMConfigTab(UITab):
+    title = ugettext_noop("Global ADM Report Configuration")
+    view = "corehq.apps.adm.views.default_adm_admin"
+    dispatcher = ADMAdminInterfaceDispatcher
+
+    @property
+    def is_viewable(self):
+        return self.couch_user and self.couch_user.is_superuser
+
+
+class BillingTab(UITab):
+    title = ugettext_noop("Billing")
+    view = "billing_default"
+    dispatcher = BillingInterfaceDispatcher
+
+    @property
+    def is_viewable(self):
+        return self.couch_user and self.couch_user.is_superuser
+
+
+class AnnouncementsTab(UITab):
+    title = ugettext_noop("Announcements")
+    view = "corehq.apps.announcements.views.default_announcement"
+    dispatcher = HQAnnouncementAdminInterfaceDispatcher
+
+    @property
+    def is_viewable(self):
+        return self.couch_user and self.couch_user.is_superuser
+
+
+class AdminTab(UITab):
+    title = ugettext_noop("Admin")
+    view = "corehq.apps.hqadmin.views.default"
+    subtab_classes = (
+        AdminReportsTab,
+        GlobalADMConfigTab,
+        BillingTab,
+        AnnouncementsTab
+    )
+
+    @property
+    def dropdown_items(self):
         submenu_context = [
-            self._format_submenu_context(_("Reports"), is_header=True),
-            self._format_submenu_context(_("Admin Reports"), url=reverse("default_admin_report")),
-            self._format_submenu_context(_("System Info"), url=reverse("system_info")),
-            self._format_submenu_context(_("Management"), is_header=True),
-            self._format_submenu_context(mark_for_escaping(_("ADM Reports & Columns")),
+            format_submenu_context(_("Reports"), is_header=True),
+            format_submenu_context(_("Admin Reports"), url=reverse("default_admin_report")),
+            format_submenu_context(_("System Info"), url=reverse("system_info")),
+            format_submenu_context(_("Management"), is_header=True),
+            format_submenu_context(mark_for_escaping(_("ADM Reports & Columns")),
                 url=reverse("default_adm_admin_interface")),
-#            self._format_submenu_context(mark_for_escaping("HQ Announcements"),
+#            format_submenu_context(mark_for_escaping("HQ Announcements"),
 #                url=reverse("default_announcement_admin")),
         ]
         try:
-            submenu_context.append(self._format_submenu_context(mark_for_escaping(_("Billing")),
+            submenu_context.append(format_submenu_context(mark_for_escaping(_("Billing")),
                 url=reverse("billing_default")))
         except Exception:
             pass
         submenu_context.extend([
-            self._format_submenu_context(None, is_divider=True),
-            self._format_submenu_context(_("Django Admin"), url="/admin")
+            format_submenu_context(None, is_divider=True),
+            format_submenu_context(_("Django Admin"), url="/admin")
         ])
         return submenu_context
 
-    @classmethod
-    @require_couch_user
-    def is_viewable(cls, request, domain):
-        return request.couch_user.is_superuser
+    @property
+    def is_viewable(self):
+        return self.couch_user and self.couch_user.is_superuser
 
 
-class ExchangeMenuItem(DropdownMenuItem):
+class ExchangeTab(UITab):
     title = ugettext_noop("Exchange")
     view = "corehq.apps.appstore.views.appstore"
-    css_id = "exchange_tab"
 
     @property
-    @memoized
-    def submenu_items(self):
+    def dropdown_items(self):
         submenu_context = None
-        if self.domain and self.request.couch_user.is_domain_admin(self.domain):
+        if self.domain and self.couch_user.is_domain_admin(self.domain):
             submenu_context = [
-                self._format_submenu_context(_("CommCare Exchange"), url=reverse("appstore")),
-                self._format_submenu_context(_("Publish this project"),
-                    url=reverse("domain_snapshot_settings", args=[self.domain]))
+                format_submenu_context(_("CommCare Exchange"), url=reverse("appstore")),
+                format_submenu_context(_("Publish this project"),
+                    url=reverse("domain_snapshot_settings",
+                        args=[self.domain]))
             ]
         return submenu_context
 
-    @classmethod
-    def is_viewable(cls, request, domain):
-        return not getattr(request, 'couch_user', False) or not request.couch_user.is_commcare_user()
+    @property
+    def is_viewable(self):
+        return not self.couch_user.is_commcare_user()
 
-class ManageSurveysMenuItem(DropdownMenuItem):
+
+class ManageSurveysTab(UITab):
     title = ugettext_noop("Manage Surveys")
     view = "corehq.apps.reminders.views.sample_list"
-    css_id = "manage_surveys"
 
-    @classmethod
-    @require_couch_user
-    def is_viewable(cls, request, domain):
-        return domain and request.couch_user.can_edit_data() and \
-            (hasattr(request, 'project') and request.project.survey_management_enabled)
-
+    @property
+    def is_viewable(self):
+        return (self.domain and self.couch_user.can_edit_data() and
+                self.project.survey_management_enabled)

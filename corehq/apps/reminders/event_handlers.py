@@ -7,14 +7,20 @@ from corehq.apps.sms.api import send_sms, send_sms_to_verified_number
 from corehq.apps.smsforms.app import start_session
 from corehq.apps.sms.util import format_message_list
 from corehq.apps.users.models import CouchUser
-from corehq.apps.sms.models import CallLog, EventLog, MISSED_EXPECTED_CALLBACK
+from corehq.apps.sms.models import CallLog, ExpectedCallbackEventLog, CALLBACK_PENDING, CALLBACK_RECEIVED, CALLBACK_MISSED
 from django.conf import settings
 from corehq.apps.app_manager.models import Form
 from corehq.apps.ivr.api import initiate_outbound_call
 from datetime import timedelta
+from dimagi.utils.parsing import json_format_datetime
 
 DEFAULT_OUTBOUND_RETRY_INTERVAL = 5
 DEFAULT_OUTBOUND_RETRIES = 2
+
+ERROR_RENDERING_MESSAGE = "Error rendering templated message for language '%s'. Please check message syntax."
+ERROR_NO_VERIFIED_NUMBER = "Recipient has no phone number."
+ERROR_NO_OTHER_NUMBERS = "Recipient has no phone number."
+ERROR_FORM = "Can't load form. Please check configuration."
 
 """
 This module defines the methods that will be called from CaseReminderHandler.fire()
@@ -55,10 +61,11 @@ def fire_sms_event(reminder, handler, recipients, verified_numbers):
             try:
                 message = Message.render(message, case=reminder.case.case_properties())
             except Exception:
-                raise_warning() # Error in rendering template message, check syntax
                 if len(recipients) == 1:
+                    raise_error(reminder, ERROR_RENDERING_MESSAGE % lang)
                     return False
                 else:
+                    raise_warning() # ERROR_RENDERING_MESSAGE
                     continue
             
             verified_number = verified_numbers[recipient.get_id]
@@ -75,13 +82,19 @@ def fire_sms_event(reminder, handler, recipients, verified_numbers):
                 
                 if phone_number is None:
                     result = False
-                    raise_warning() # CouchUser has no VerifiedNumber and no other numbers
+                    if len(recipients) == 1:
+                        raise_error(reminder, ERROR_NO_OTHER_NUMBERS)
+                    else:
+                        raise_warning() # ERROR_NO_OTHER_NUMBERS
                 else:
                     result = send_sms(reminder.domain, recipient.get_id, phone_number, message)
                     if not result:
                         raise_warning() # Could not send SMS
             else:
-                raise_warning() # Recipient has no VerifiedNumber
+                if len(recipients) == 1:
+                    raise_error(reminder, ERROR_NO_VERIFIED_NUMBER)
+                else:
+                    raise_warning() # ERROR_NO_VERIFIED_NUMBER
                 result = False
             
             if len(recipients) == 1:
@@ -102,23 +115,39 @@ def fire_sms_callback_event(reminder, handler, recipients, verified_numbers):
             return True
         
         # If the callback has been received, skip sending the next timeout message
-        if len(current_event.callback_timeout_intervals) > 0 and (reminder.callback_try_count > 0):
-            # If last_fired is None, it means that the reminder fired for the first time on a timeout interval. So we just want
-            # to either log the missed callback if it's the last timeout, or fire the sms if not
+        if reminder.callback_try_count > 0:
+            # Lookup the expected callback event
+            if reminder.event_initiation_timestamp is None:
+                event = None
+            else:
+                event = ExpectedCallbackEventLog.view("sms/expected_callback_event",
+                                                      key=[reminder.domain, json_format_datetime(reminder.event_initiation_timestamp), recipients[0].get_id],
+                                                      include_docs=True,
+                                                      limit=1).one()
+            
+            # NOTE: If last_fired is None, it means that the reminder fired for the first time on a timeout interval
             if reminder.last_fired is not None and CallLog.inbound_call_exists(recipients[0].doc_type, recipients[0].get_id, reminder.last_fired):
                 reminder.skip_remaining_timeouts = True
+                if event is not None:
+                    event.status = CALLBACK_RECEIVED
+                    event.save()
                 return True
-            elif len(current_event.callback_timeout_intervals) == reminder.callback_try_count:
+            elif reminder.callback_try_count >= len(current_event.callback_timeout_intervals):
                 # On the last callback timeout, instead of sending the SMS again, log the missed callback
-                event = EventLog(
-                    domain                   = reminder.domain,
-                    date                     = handler.get_now(),
-                    event_type               = MISSED_EXPECTED_CALLBACK,
-                    couch_recipient_doc_type = recipients[0].doc_type,
-                    couch_recipient          = recipients[0].get_id,
-                )
-                event.save()
+                if event is not None:
+                    event.status = CALLBACK_MISSED
+                    event.save()
                 return True
+        else:
+            # It's the first time sending the sms, so create an expected callback event
+            event = ExpectedCallbackEventLog(
+                domain                   = reminder.domain,
+                date                     = reminder.event_initiation_timestamp,
+                couch_recipient_doc_type = recipients[0].doc_type,
+                couch_recipient          = recipients[0].get_id,
+                status                   = CALLBACK_PENDING,
+            )
+            event.save()
         
         return fire_sms_event(reminder, handler, recipients, verified_numbers)
     else:
@@ -158,17 +187,18 @@ def fire_sms_survey_event(reminder, handler, recipients, verified_numbers):
                 app = form.get_app()
                 module = form.get_module()
             except Exception as e:
-                raise_warning() # Can't load form, check config
+                raise_error(reminder, ERROR_FORM)
                 return False
             
             # Start a touchforms session for each recipient
             for recipient in recipients:
                 verified_number = verified_numbers[recipient.get_id]
                 if verified_number is None:
-                    raise_warning() # Recipient is missing a verified number
                     if len(recipients) == 1:
+                        raise_error(reminder, ERROR_NO_VERIFIED_NUMBER)
                         return False
                     else:
+                        raise_warning() # ERROR_NO_VERIFIED_NUMBER
                         continue
                 
                 # Close all currently open sessions
@@ -224,18 +254,26 @@ def fire_ivr_survey_event(reminder, handler, recipients, verified_numbers):
                     reminder.save()
                     return False
         else:
+            raise_error(reminder, ERROR_NO_VERIFIED_NUMBER)
             return False
     else:
         # TODO: Implement ivr survey for RECIPIENT_USER, RECIPIENT_OWNER, and RECIPIENT_SURVEY_SAMPLE
         return False
 
 """
-This method is meant to report runtime errors which are caused by configuration errors to a project contact.
+This method is meant to report runtime warnings which are caused by configuration errors to a project contact.
 """
 def raise_warning():
     # For now, just a stub.
     pass
 
+"""
+Put the reminder in an error state, which filters it out of the reminders queue.
+"""
+def raise_error(reminder, error_msg):
+    reminder.error = True
+    reminder.error_msg = error_msg
+    reminder.save()
 
 # The dictionary which maps an event type to its event handling method
 

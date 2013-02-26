@@ -157,7 +157,7 @@ class HQMediaMatcher():
     def owner(self):
         project = Domain.get_by_name(self.domain)
         if project.organization:
-            return project.organization_doc()
+            return project.get_organization()
         else:
             return CouchUser.get_by_username(self.username)
 

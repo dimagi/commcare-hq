@@ -8,22 +8,6 @@
 </style>
 {% endblock %}
 
-{% block web_users_indicator %}
-{% if couch_user.user_id != request.couch_user.user_id and not couch_user.is_commcare_user %}
-<ul>
-    <li class="selected">{{ couch_user.html_username|safe }} (Deleted)</li>
-</ul>
-{% endif %}
-{% endblock %}
-{% block commcare_users_indicator %}
-{% if couch_user.user_id != request.couch_user.user_id and couch_user.is_commcare_user %}
-<ul>
-    <li class="selected">{{ couch_user.html_username|safe }} (Deleted)</li>
-</ul>
-{% endif %}
-{% endblock %}
-
-
 {% block user-view %}
 <h1>Deleted User</h1>
 <p>Whoa! I don't even know how you got here! But I guess since you're here...</p>

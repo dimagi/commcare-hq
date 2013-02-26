@@ -16,6 +16,7 @@ class Organization(Document):
     url = StringProperty()
     location = StringProperty()
     logo_filename = StringProperty()
+    verified = BooleanProperty(default=False)
 
     @classmethod
     def get_by_name(cls, name, strict=False):
@@ -40,9 +41,9 @@ class Organization(Document):
 
     def get_logo(self):
         if self.logo_filename:
-            return (self.fetch_attachment(self.logo_filename), self._attachments[self.logo_filename]['content_type'])
+            return self.fetch_attachment(self.logo_filename), self._attachments[self.logo_filename]['content_type']
         else:
-            return None
+            return None, None
 
     def __str__(self):
         return self.title

@@ -98,11 +98,12 @@ def orgs_update_info(request, org):
             logo = form.cleaned_data['logo']
             if organization.logo_filename:
                 organization.delete_attachment(organization.logo_filename)
-                organization.logo_filename = logo.name
+            organization.logo_filename = logo.name
 
         organization.save()
         if logo:
             organization.put_attachment(content=logo.read(), name=logo.name)
+        return HttpResponseRedirect(reverse('orgs_landing', args=[org]))
     else:
         return orgs_landing(request, org, update_form=form)
 
@@ -191,11 +192,8 @@ def orgs_add_team(request, org):
 @org_member_required
 def orgs_logo(request, org, template="orgs/orgs_logo.html"):
     organization = Organization.get_by_name(org)
-    if organization.logo_filename:
-        image = organization.get_logo()
-    else:
-        image = None
-    return HttpResponse(image, content_type='image/gif')
+    image, type = organization.get_logo()
+    return HttpResponse(image, content_type=type if image else 'image/gif')
 
 @org_member_required
 def orgs_teams(request, org, template="orgs/orgs_teams.html"):
@@ -374,4 +372,15 @@ def undo_remove_member(request, org, record_id):
     record = OrgRemovalRecord.get(record_id)
     record.undo()
     return HttpResponseRedirect(reverse('orgs_landing', args=[org]))
+
+@require_superuser
+def verify_org(request, org):
+    organization = Organization.get_by_name(org)
+    if request.POST.get('verify') == 'true':
+        organization.verified = True
+        organization.save()
+    elif request.POST.get('verify') == 'false':
+        organization.verified = False
+        organization.save()
+    return HttpResponseRedirect(request.META.get('HTTP_REFERER') or reverse('orgs_base'))
 

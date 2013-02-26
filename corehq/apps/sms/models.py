@@ -19,10 +19,6 @@ DIRECTION_CHOICES = (
     (INCOMING, "Incoming"),
     (OUTGOING, "Outgoing"))
 
-MISSED_EXPECTED_CALLBACK = "CALLBACK_MISSED"
-
-EVENT_TYPE_CHOICES = [MISSED_EXPECTED_CALLBACK]
-
 class MessageLog(Document, UnicodeMixIn):
     base_doc                    = "MessageLog"
     couch_recipient_doc_type    = StringProperty() # "CommCareCase" or "CouchUser"
@@ -169,6 +165,8 @@ class CallLog(MessageLog):
     include_case_side_effects = BooleanProperty(default=False)
     max_question_retries = IntegerProperty() # Max number of times to retry a question with an invalid response before hanging up
     current_question_retry_count = IntegerProperty(default=0) # A counter of the number of invalid responses for the current question
+    use_precached_first_response = BooleanProperty(default=False)
+    first_response = StringProperty()
     
     def __unicode__(self):
         to_from = (self.direction == INCOMING) and "from" or "to"
@@ -222,12 +220,18 @@ class CallLog(MessageLog):
         return result
 
 class EventLog(Document):
+    base_doc                    = "EventLog"
     domain                      = StringProperty()
     date                        = DateTimeProperty()
     couch_recipient_doc_type    = StringProperty()
     couch_recipient             = StringProperty()
-    event_type                  = StringProperty(choices=EVENT_TYPE_CHOICES)
 
+CALLBACK_PENDING = "PENDING"
+CALLBACK_RECEIVED = "RECEIVED"
+CALLBACK_MISSED = "MISSED"
+
+class ExpectedCallbackEventLog(EventLog):
+    status = StringProperty(choices=[CALLBACK_PENDING,CALLBACK_RECEIVED,CALLBACK_MISSED])
 
 class MessageLogOld(models.Model):
     couch_recipient    = models.TextField()

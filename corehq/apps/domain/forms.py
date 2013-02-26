@@ -7,16 +7,20 @@ from django.forms.widgets import  Select
 from django.utils.encoding import smart_str
 from django.contrib.auth.forms import PasswordResetForm
 
-from corehq.apps.domain.models import LICENSES
+from corehq.apps.domain.models import LICENSES, DATA_DICT, AREA_CHOICES, SUB_AREA_CHOICES
 
 from corehq.apps.users.models import WebUser
 from dimagi.utils.timezones.fields import TimeZoneField
 from dimagi.utils.timezones.forms import TimeZoneChoiceField
 from django.template.loader import render_to_string
 from django.utils.translation import ugettext_noop
+from django.utils.translation import ugettext as _
 
 
 import corehq.apps.commtrack.util as commtrack_util
+
+def tf_choices(true_txt, false_txt):
+    return (('false', false_txt), ('true', true_txt))
 
 class SnapshotSettingsMixin(forms.Form):
     project_type = CharField(label=ugettext_noop("Project Category"), required=False,
@@ -115,9 +119,29 @@ class SnapshotSettingsForm(SnapshotSettingsMixin):
 
 ########################################################################################################
 
+class SubAreaMixin():
+    def clean_sub_area(self):
+        area = self.cleaned_data['area']
+        sub_area = self.cleaned_data['sub_area']
+
+        if area:
+            if sub_area:
+                raise forms.ValidationError(_('You may not specify a sub area when the project has no specified area'))
+        else:
+            return None
+
+        sub_areas = []
+        for a in DATA_DICT["area"]:
+            if a["name"] == area:
+                sub_areas = a["sub_areas"]
+
+        if sub_area and sub_area not in sub_areas:
+            raise forms.ValidationError(_('This is not a valid sub-area for the area %s') % area)
+        return sub_area
+
 class DomainGlobalSettingsForm(forms.Form):
     default_timezone = TimeZoneChoiceField(label=ugettext_noop("Default Timezone"), initial="UTC")
-    case_sharing = ChoiceField(label=ugettext_noop("Case Sharing"), choices=(('false', 'Off'), ('true', 'On')))
+    case_sharing = ChoiceField(label=ugettext_noop("Case Sharing"), choices=tf_choices('On', 'Off'))
 
     def clean_default_timezone(self):
         data = self.cleaned_data['default_timezone']
@@ -144,7 +168,7 @@ class DomainGlobalSettingsForm(forms.Form):
 class DomainMetadataForm(DomainGlobalSettingsForm, SnapshotSettingsMixin):
     customer_type = ChoiceField(label='Customer Type',
         choices=(('basic', 'Basic'), ('plus', 'Plus'), ('full', 'Full')))
-    is_test = ChoiceField(label='Test Project', choices=(('false', 'Real'), ('true', 'Test')))
+    is_test = ChoiceField(label='Test Project', choices=tf_choices('Test', 'Real'))
     survey_management_enabled = BooleanField(label='Survey Management Enabled', required=False)
     commtrack_enabled = BooleanField(label='CommTrack Enabled', required=False, help_text='CommTrack is a CommCareHQ module for logistics, inventory tracking, and supply chain management. It is still under active development. Do not enable for your domain unless you\'re actively piloting it.')
 
@@ -179,7 +203,7 @@ class DomainDeploymentForm(forms.Form):
         help_text=ugettext_noop("e.g. US, LAC, SA, Sub-Saharan Africa, Southeast Asia, etc."))
     deployment_date = CharField(label=ugettext_noop("Deployment date"), required=False)
     description = CharField(label=ugettext_noop("Description"), required=False, widget=forms.Textarea)
-    public = ChoiceField(label=ugettext_noop("Make Public?"), choices=(('false', 'No'), ('true', 'Yes')), required=False)
+    public = ChoiceField(label=ugettext_noop("Make Public?"), choices=tf_choices('Yes', 'No'), required=False)
 
     def save(self, domain):
         try:
@@ -192,6 +216,51 @@ class DomainDeploymentForm(forms.Form):
             return True
         except Exception:
             return False
+
+def tuple_of_copies(a_list, blank=True):
+    ret = [(item, item) for item in a_list]
+    if blank:
+        ret.insert(0, ('', '---'))
+    return tuple(ret)
+
+class DomainInternalForm(forms.Form, SubAreaMixin):
+    sf_contract_id = CharField(label=ugettext_noop("Salesforce Contract ID"), required=False)
+    sf_account_id = CharField(label=ugettext_noop("Salesforce Account ID"), required=False)
+    commcare_edition = ChoiceField(label=ugettext_noop("Commcare Edition"), required=False,
+                                   choices=tuple_of_copies(["standard", "plus", "advanced"]))
+    services = ChoiceField(label=ugettext_noop("Services"), required=False,
+                           choices=tuple_of_copies(["basic", "plus", "full", "custom"]))
+    real_space = ChoiceField(label=ugettext_noop("Real Space?"), choices=tf_choices('Yes', 'No'), required=False)
+    initiative = forms.MultipleChoiceField(label=ugettext_noop("Initiative"), widget=forms.CheckboxSelectMultiple(),
+                                           choices=tuple_of_copies(DATA_DICT["initiatives"], blank=False), required=False)
+    project_state = ChoiceField(label=ugettext_noop("Project State"), required=False,
+                                choices=tuple_of_copies(["POC", "transition", "at-scale"]))
+    self_started = ChoiceField(label=ugettext_noop("Self Started?"), choices=tf_choices('Yes', 'No'), required=False)
+    area = ChoiceField(label=ugettext_noop("Area"), required=False, choices=tuple_of_copies(AREA_CHOICES))
+    sub_area = ChoiceField(label=ugettext_noop("Sub-Area"), required=False, choices=tuple_of_copies(SUB_AREA_CHOICES))
+    using_adm = ChoiceField(label=ugettext_noop("Using ADM?"), choices=tf_choices('Yes', 'No'), required=False)
+    using_call_center = ChoiceField(label=ugettext_noop("Using Call Center?"), choices=tf_choices('Yes', 'No'), required=False)
+    custom_eula = ChoiceField(label=ugettext_noop("Custom Eula?"), choices=tf_choices('Yes', 'No'), required=False)
+    can_use_data = ChoiceField(label=ugettext_noop("Data Usage?"), choices=tf_choices('Yes', 'No'), required=False)
+
+    def save(self, domain):
+        domain.update_internal(sf_contract_id=self.cleaned_data['sf_contract_id'],
+            sf_account_id=self.cleaned_data['sf_account_id'],
+            commcare_edition=self.cleaned_data['commcare_edition'],
+            services=self.cleaned_data['services'],
+            real_space=self.cleaned_data['real_space'] == 'true',
+            initiative=self.cleaned_data['initiative'],
+            project_state=self.cleaned_data['project_state'],
+            self_started=self.cleaned_data['self_started'] == 'true',
+            area=self.cleaned_data['area'],
+            sub_area=self.cleaned_data['sub_area'],
+            using_adm=self.cleaned_data['using_adm'] == 'true',
+            using_call_center=self.cleaned_data['using_call_center'] == 'true',
+            custom_eula=self.cleaned_data['custom_eula'] == 'true',
+            can_use_data=self.cleaned_data['can_use_data'] == 'true',
+        )
+
+
 
 
 ########################################################################################################
