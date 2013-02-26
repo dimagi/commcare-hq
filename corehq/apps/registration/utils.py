@@ -50,9 +50,9 @@ def request_new_domain(request, form, org, new_user=True):
         is_active=False,
         date_created=datetime.utcnow())
 
-
     if org:
         new_domain.organization = org
+        new_domain.slug = new_domain.name.split(':')[1]
 
     if not new_user:
         new_domain.is_active = True
