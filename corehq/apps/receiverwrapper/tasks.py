@@ -39,9 +39,9 @@ CHECK_REPEATERS_INTERVAL = timedelta(minutes=1)
 @periodic_task(run_every=CHECK_REPEATERS_INTERVAL)
 def check_repeaters():
     start = datetime.utcnow()
-    number_locked = 0
     LIMIT = 100
     while True:
+        number_locked = 0
         # take LIMIT records off the top
         # the assumption is that they all get 'popped' in the for loop
         # the only exception I can see is if there's a problem with the
