@@ -37,7 +37,7 @@ def get_case_element(case, updates, version="1.0"):
     if case is None: 
         logging.error("Can't generate case xml for empty case!")
         return ""
-    
+
     generator = get_generator(version, case)
     root = generator.get_root_element()
     

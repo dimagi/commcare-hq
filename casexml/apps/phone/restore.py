@@ -58,7 +58,7 @@ def generate_restore_payload(user, restore_id="", version="1.0", state_hash=""):
                          for op in sync_operation.actual_cases_to_sync]
     
     
-    last_seq = get_db().info()["update_seq"]
+    last_seq = str(get_db().info()["update_seq"])
     
     # create a sync log for this
     previous_log_id = last_sync.get_id if last_sync else None
