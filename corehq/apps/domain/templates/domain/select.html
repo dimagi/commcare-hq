@@ -9,13 +9,15 @@
     <div class="page-header">
         <h1>{% trans "Dashboard" %}</h1>
     </div>
-    <div class="span8">
+    <div class="span4">
         <h2>{% trans "My Projects" %}</h2>
-        <p>{% trans "The following is a list of projects that your account is associated with:" %}</p>
         {% list_my_domains request %}
+    </div>
+    <div class="span4">
+    {% if request.couch_user.organizations %}
         <h2>{% trans "My Organizations" %}</h2>
-        <p>{% trans "The following is a list of organizations that your account is associated with:" %}</p>
         {% list_my_orgs request %}
+    {% endif %}
     </div>
     <div class="span4">
         <aside class="well">
