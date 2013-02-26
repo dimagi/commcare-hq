@@ -41,7 +41,6 @@ def check_repeaters():
     start = datetime.utcnow()
     number_locked = 0
     LIMIT = 100
-    print 'check repeaters'
     while True:
         # take LIMIT records off the top
         # the assumption is that they all get 'popped' in the for loop
@@ -52,7 +51,6 @@ def check_repeaters():
             due_before=start,
             limit=LIMIT + number_locked
         )
-        print repeat_records.count()
         if repeat_records.count() <= number_locked:
             # don't keep spinning if there's nothing left to fetch
             return
