@@ -47,6 +47,7 @@
                     <p class="muted">{% trans "No members have been added to this team" %}</p>
                 {% endfor %}
             </div>
+        
             {% if admin %}
             <form class="form-horizontal" method="post" action="{% url join_team org.name team.get_id %}" method="post">
                 <div class="well well-small">

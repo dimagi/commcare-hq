@@ -1,12 +1,6 @@
 {% extends "users/users_base.html" %}
 {% load hq_shared_tags %}
 
-{% block web_users_indicator %}
-    <ul>
-        <li class="selected">Transfer {% commcare_user %}s</li>
-    </ul>
-{% endblock %}
-
 {% block user-view %}
     <form class="form form-horizontal" action="" method="post">
         <fieldset>
