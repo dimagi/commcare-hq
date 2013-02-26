@@ -45,7 +45,7 @@
 
                             <div class="btn-toolbar pull-right">
                                 <div class="btn-group">
-                                {% if request.project.organization %}
+                                {% if request.project.organization and request.couch_user.is_web_user %}
                                     <a href="{% url orgs_landing request.project.organization %}" class="btn btn-info">{{ request.project.organization_doc.title }}</a>
                                     {% comment %}TODO: Add a drop-down list of organizations the current user is a member of?{% endcomment %}
                                 {% endif %}
