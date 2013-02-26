@@ -1377,6 +1377,10 @@ class OrgMembershipMixin(DocumentSchema):
     def organizations(self):
         return [om.organization for om in self.org_memberships]
 
+    def get_organizations(self):
+        from corehq.apps.orgs.models import Organization
+        return [Organization.get_by_name(org) for org in self.organizations]
+
     def is_member_of_org(self, org_name_or_model):
         """
         takes either a organization name or an organization object and returns whether the user is part of that org
