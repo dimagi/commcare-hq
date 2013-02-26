@@ -16,6 +16,7 @@ class Organization(Document):
     url = StringProperty()
     location = StringProperty()
     logo_filename = StringProperty()
+    verified = BooleanProperty(default=False)
 
     @classmethod
     def get_by_name(cls, name, strict=False):
