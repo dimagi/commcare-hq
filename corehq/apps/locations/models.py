@@ -8,6 +8,7 @@ class Location(Document):
     domain = StringProperty()
     name = StringProperty()
     location_type = StringProperty()
+    site_code = StringProperty() # should be unique, not yet enforced
 
     # a list of doc ids, referring to the parent location, then the
     # grand-parent, and so on up to the root location in the hierarchy
