@@ -79,6 +79,12 @@ class CommtrackActionConfig(DocumentSchema):
     def action_name(self):
         return self.name or self.action_type
 
+class CommtrackRequisitionConfig(DocumentSchema):
+    # placeholder class for when this becomes fancier
+
+    enabled = BooleanProperty(default=False)
+
+
 class SupplyPointType(DocumentSchema):
     name = StringProperty()
     categories = StringListProperty()
@@ -96,6 +102,8 @@ class CommtrackConfig(Document):
     # all messages as multi-action
 
     supply_point_types = SchemaListProperty(SupplyPointType)
+
+    requisition_config = SchemaProperty(CommtrackRequisitionConfig)
 
     @classmethod
     def for_domain(cls, domain):
@@ -118,6 +126,10 @@ class CommtrackConfig(Document):
     @property
     def supply_point_categories(self):
         return map_reduce(lambda spt: [(category, spt.name) for category in spt.categories], data=self.supply_point_types)
+
+    @property
+    def requisitions_enabled(self):
+        return self.requisition_config.enabled
 
 def _view_shared(view_name, domain, location_id=None, skip=0, limit=100):
     extras = {"limit": limit} if limit else {}
