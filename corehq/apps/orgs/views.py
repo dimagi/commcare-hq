@@ -373,3 +373,14 @@ def undo_remove_member(request, org, record_id):
     record.undo()
     return HttpResponseRedirect(reverse('orgs_landing', args=[org]))
 
+@require_superuser
+def verify_org(request, org):
+    organization = Organization.get_by_name(org)
+    if request.POST.get('verify') == 'true':
+        organization.verified = True
+        organization.save()
+    elif request.POST.get('verify') == 'false':
+        organization.verified = False
+        organization.save()
+    return HttpResponseRedirect(request.META.get('HTTP_REFERER') or reverse('orgs_base'))
+

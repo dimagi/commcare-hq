@@ -2,12 +2,11 @@ import logging
 from django.conf import settings
 
 from dimagi.utils.modules import try_import, to_function
-from corehq.apps.sms.util import clean_phone_number
+from corehq.apps.sms.util import clean_phone_number, create_billable_for_sms, format_message_list
 from corehq.apps.sms.models import SMSLog, OUTGOING, INCOMING
 from corehq.apps.sms.mixin import MobileBackend, VerifiedNumber
 from datetime import datetime
 
-from corehq.apps.sms.util import format_message_list
 from corehq.apps.smsforms.models import XFormsSession
 from corehq.apps.smsforms.app import _get_responses, start_session
 from corehq.apps.app_manager.models import get_app, Form
@@ -128,7 +127,7 @@ def start_session_from_keyword(survey_keyword, verified_number):
         print e
         print "ERROR: Exception raised while starting survey for keyword " + survey_keyword.keyword + ", domain " + verified_number.domain
 
-def incoming(phone_number, text, backend_api, timestamp=None, domain_scope=None):
+def incoming(phone_number, text, backend_api, timestamp=None, domain_scope=None, delay=True):
     """
     entry point for incoming sms
 
@@ -161,6 +160,8 @@ def incoming(phone_number, text, backend_api, timestamp=None, domain_scope=None)
         msg.couch_recipient             = v.owner_id
         msg.domain                      = v.domain
     msg.save()
+
+    create_billable_for_sms(msg, backend_api, delay=delay)
     
     if v is not None:
         for h in settings.SMS_HANDLERS:
@@ -178,7 +179,6 @@ def incoming(phone_number, text, backend_api, timestamp=None, domain_scope=None)
 
             if was_handled:
                 break
-
     else:
         import verify
         verify.process_verification(phone_number, text)
@@ -353,3 +353,5 @@ def form_session_handler(v, text):
 def fallback_handler(v, text):
     send_sms_to_verified_number(v, 'could not understand your message. please check keyword.')
     return True
+
+

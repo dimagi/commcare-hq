@@ -299,22 +299,32 @@ ko.bindingHandlers.bootstrapTabs = {
 function ValueOrNoneUI(opts) {
     /* Helper used with exitInput/enterInput */
     var self = this;
-    function wrapObservable(o) {
+    var wrapObservable = function (o) {
         if (ko.isObservable(o)) {
             return o;
         } else {
             return ko.observable(o);
         }
-    }
+    };
+
+    self.messages = opts.messages;
+    self.inputName = opts.inputName;
+    self.inputCss = opts.inputCss;
+    self.inputAttr = opts.inputAttr;
+    self.defaultValue = opts.defaultValue;
+
+
     self.allowed = wrapObservable(opts.allowed);
     self.inputValue = wrapObservable(opts.value || '');
     self.hasValue = ko.observable(!!self.inputValue());
     self.hasFocus = ko.observable();
-    self.messages = opts.messages;
 
-    self.inputName = opts.inputName;
-    self.inputCss = opts.inputCss;
-    self.inputAttr = opts.inputAttr;
+    // make the input get preloaded with the defaultValue
+    self.hasFocus.subscribe(function (value) {
+        if (!self.inputValue()) {
+            self.inputValue(self.defaultValue);
+        }
+    });
 
     self.value = ko.computed({
         read: function () {

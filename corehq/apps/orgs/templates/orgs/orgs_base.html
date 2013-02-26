@@ -7,13 +7,27 @@
         <h4> List of all organizations</h4>
         <hr/>
         {% for org in orgs %}
-        <a href="{% url orgs_landing org.name %}"> {{ org.name }} ({{ org.title }})</a>
-        {% if org.logo_filename %}
-        <img src="{% url orgs_logo org.name %}" alt="Logo" />
-        {% else %}
-        <br/>
-        {% endif %}
-        <br/>
+            <div class="row-fluid">
+                <div class="span1">
+                    <form class="form-inline pull-right" method="POST" action="{% url verify_org org.name %}">
+                        {% if org.verified %}
+                            <input type="hidden" name="verify" value="false" />
+                            <button type="submit" class="btn btn-warning">Unverify</button>
+                        {% else %}
+                            <input type="hidden" name="verify" value="true" />
+                            <button type="submit" class="btn btn-primary">Verify</button>
+                        {% endif %}
+                    </form>
+                </div>
+                <div class="span11">
+                    <a href="{% url orgs_landing org.name %}"> {{ org.name }} ({{ org.title }})</a>
+                    {% if org.logo_filename %}
+                        <img style="max-width: 8em" src="{% url orgs_logo org.name %}" alt="Logo" />
+                    {% else %}
+                        <br/>
+                    {% endif %}
+                </div>
+            </div>
         {% endfor %}
 
 {% endblock %}

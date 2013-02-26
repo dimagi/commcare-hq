@@ -65,7 +65,7 @@ urlpatterns =\
 
 
 domain_settings = patterns('corehq.apps.domain.views',
-                           url(r'^$', 'project_settings', name="domain_project_settings"),
+                           url(r'^settings/$', 'project_settings', name="domain_project_settings"),
                            url(r'^forwarding/$', 'domain_forwarding', name='domain_forwarding'),
                            url(r'^forwarding/new/(?P<repeater_type>\w+)/$', 'add_repeater', name='add_repeater'),
                            url(r'^forwarding/test/$', 'test_repeater', name='test_repeater'),
@@ -78,4 +78,7 @@ domain_settings = patterns('corehq.apps.domain.views',
                            url(r'^commtrack/$', 'commtrack_settings', name='domain_commtrack_settings'),
                            url(r'^organization/$', 'org_settings', name='domain_org_settings'),
                            url(r'^organization/request/$', 'org_request', name='domain_org_request'),
+                           url(r'^internal/$', 'internal_settings', name='domain_internal_settings'),
+                           url(r'^internal/calculations/$', 'internal_calculations', name='domain_internal_calculations'),
+                           url(r'^internal/calculated_properties/$', 'calculated_properties', name='calculated_properties'),
                            )

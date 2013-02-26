@@ -1,16 +1,14 @@
 from datetime import datetime
-from celery.log import get_task_logger
 from celery.schedules import crontab
 from celery.task import periodic_task, task
-from corehq.apps.domain.models import Domain
+from celery.utils.log import get_task_logger
 from corehq.apps.hqadmin.escheck import check_cluster_health, check_case_index, CLUSTER_HEALTH, check_xform_index, check_exchange_index
 from corehq.apps.reports.models import (ReportNotification,
-    UnsupportedScheduledReportError, HQGroupExportConfiguration,
-    CaseActivityReportCache)
+    UnsupportedScheduledReportError, HQGroupExportConfiguration )
 from couchexport.groupexports import export_for_group
 from dimagi.utils.logging import notify_exception
 
-logging = get_task_logger()
+logging = get_task_logger(__name__)
 
 @periodic_task(run_every=crontab(hour=[8,14], minute="0", day_of_week="*"))
 def check_es_index():
