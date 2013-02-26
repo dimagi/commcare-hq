@@ -215,7 +215,7 @@ def initiate_outbound_call(verified_number, form_unique_id, submit_partial_form,
         current_question_retry_count = 0,
     )
     backend = verified_number.ivr_backend
-    kwargs = backend.outbound_params
+    kwargs = backend.get_cleaned_outbound_params()
     module = __import__(backend.outbound_module, fromlist=["initiate_outbound_call"])
     call_log_entry.backend_api = module.API_ID
     call_log_entry.save()
