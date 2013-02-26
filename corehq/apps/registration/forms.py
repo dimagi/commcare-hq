@@ -117,9 +117,7 @@ class DomainRegistrationForm(forms.Form):
             raise forms.ValidationError('Only lowercase letters and numbers allowed. Single hyphens may be used to separate words.')
         if 'org' in self.cleaned_data and self.cleaned_data['org']:
             org_name = self.cleaned_data['org']
-            conflict = Domain.get_by_organization_and_slug(org_name, data) or Domain.get_by_organization_and_slug(org_name, data.replace('-', '.'))
-        else:
-            conflict = Domain.get_by_name(data) or Domain.get_by_name(data.replace('-', '.'))
+        conflict = Domain.get_by_name(data) or Domain.get_by_name(data.replace('-', '.'))
         if conflict:
             raise forms.ValidationError('Project name already taken---please try another')
         return data
