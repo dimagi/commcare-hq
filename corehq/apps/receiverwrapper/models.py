@@ -169,13 +169,14 @@ class RepeatRecord(Document, LockableMixIn):
         return self.repeater.url
 
     @classmethod
-    def all(cls, domain=None, due_before=None):
+    def all(cls, domain=None, due_before=None, limit=None):
         json_now = json_format_datetime(due_before or datetime.utcnow())
         repeat_records = RepeatRecord.view("receiverwrapper/repeat_records_by_next_check",
             startkey=[domain],
             endkey=[domain, json_now, {}],
             include_docs=True,
             reduce=False,
+            limit=limit,
         )
         return repeat_records
 
