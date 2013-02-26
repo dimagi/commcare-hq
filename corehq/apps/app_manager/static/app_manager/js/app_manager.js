@@ -191,30 +191,6 @@
             $(this.my_dialog).dialog('open');
         });
 
-        // Module Config Edit
-
-        function makeUneditable(row) {
-            $(row).removeClass('selected');
-            $(row).find('.immutable').show().prev().hide().autocomplete('close');
-        }
-        $('tr.editable').click(function (e) {
-            if (!$(this).hasClass('selected')) {
-                var $row = $(this).closest('tr'),
-                    $table;
-                $row.focus();
-                $table = $(this).closest('table');
-                $('tr.editable').each(function () {
-                    makeUneditable(this);
-                });
-                $row.addClass('selected');
-                $row.find('.immutable').hide().prev().show().trigger('change');
-            }
-            return false;
-        });
-        $('html').click(function (e) {
-            makeUneditable($('tr.editable'));
-        });
-
         // Auto set input and select values according to the following 'div.immutable'
         $('select').each(function () {
             var val = $(this).next('div.immutable').text();
@@ -229,46 +205,6 @@
                 $(this).attr('value', val);
             }
         });
-
-        // autosave forms have one input only, and when that input loses focus,
-        // the form is automatically sent AJAX style
-
-        $(".autosave").closest('form').append($("<span />"));
-        $(".autosave").closest('.form').append("<td />");
-        $(".autosave").closest_form().each(function () {
-            $(this).submit(function () {
-                var $form = $(this);
-                $form.children().last().text('saving...');
-                if ($form.find('[name="ajax"]').val() === "false") {
-                    return true;
-                } else {
-                    $.ajax({
-                        type: 'POST',
-                        url: $form.attr('action') || $form.attr('data-action'),
-                        data: $form.my_serialize(),
-                        success: function (data) {
-                            COMMCAREHQ.app_manager.updateDOM(data.update);
-                            $form.children().last().text('saved').delay(1000).fadeOut('slow', function () {$(this).text('').show(); });
-                        },
-                        dataType: 'json',
-                        error: function () {
-                            $form.children().last().text('Error occurred');
-                        }
-                    });
-                    return false;
-                }
-            });
-        });
-        $(".autosave").live('change', function () {
-            $(this).closest_form().submit();
-        });
-
-
-    //    $('.index').change(function () {
-    //        // really annoying hack: the delete dialog is stored at bottom of page so is not found by the above
-    //        var uuid = $(this).closest('tr').find('.delete_link').attr('data-uuid');
-    //        $('.delete_dialog[data-uuid="' + uuid + '"]').find('[name="index"]').val($(this).text());
-    //    });
 
         $('.index').change(function () {
             // make sure that column_id changes when index changes (after drag-drop)
