@@ -1899,7 +1899,7 @@ legend + .control-group {
 .checkbox {
   line-height: 21.599999999999998px;
 }
-.alert form {
+.alert form:last-child {
   margin-bottom: 0;
 }
 table {
