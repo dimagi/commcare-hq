@@ -91,10 +91,10 @@ def send_message_via_backend(msg, backend=None, onerror=lambda: None):
             # verification, thus the backend is None. it's best to only call
             # send_sms_to_verified_number on truly verified contacts, though
 
-        backend.backend_module.send(msg, **backend.outbound_params)
+        backend.backend_module.send(msg, **backend.get_cleaned_outbound_params())
 
         try:
-            msg.backend_api = backend_module.API_ID
+            msg.backend_api = backend.backend_module.API_ID
         except Exception:
             pass
         msg.save()
@@ -141,7 +141,6 @@ def incoming(phone_number, text, backend_api, timestamp=None, domain_scope=None,
     """
     phone_number = clean_phone_number(phone_number)
     v = VerifiedNumber.by_phone(phone_number)
- 
     if domain_scope:
         # only process messages for phones known to be associated with this domain
         if v is None or v.domain != domain_scope:

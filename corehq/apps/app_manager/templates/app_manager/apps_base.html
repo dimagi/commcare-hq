@@ -10,7 +10,6 @@
 {% block head %}{{ block.super }}
     <link rel="stylesheet" href="{% static 'hqstyle/css/legacy/app_manager.css' %}"/>
     {% include "imports/jqmodal.html" %}
-    <link href="{% static 'formdesigner/css/chosen.css' %}" rel="stylesheet" />
     <style>
         .hq-oldstyle .nav-pills .active > a {
             color: white;
@@ -37,7 +36,6 @@
     <script src="{% static 'langcodes/js/langcodes.js' %}"></script>
     <script src="{% static 'app_manager/js/app_manager.js' %}"></script>
     <script src="{% static 'hqwebapp/js/lib/jquery.textchange.min.js' %}"></script>
-    <script src="{% static 'formdesigner/js/chosen.jquery.min.js' %}"></script>
 {% endblock %}
 
 {% block js-inline %}{{ block.super }}

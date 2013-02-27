@@ -1,9 +1,7 @@
 from corehq.apps.domain.models import Domain
-from corehq.apps.commtrack.models import *
 from casexml.apps.case.models import CommCareCase
 from corehq.apps.locations.models import Location
 from corehq.apps.commtrack import stockreport, const
-from dimagi.utils.couch.database import get_db
 from corehq.apps.sms.api import send_sms_to_verified_number
 from lxml import etree
 import logging
@@ -12,6 +10,7 @@ from dimagi.utils.parsing import json_format_datetime
 from datetime import datetime
 from helpers import make_supply_point_product
 from corehq.apps.commtrack.util import get_supply_point
+from corehq.apps.commtrack.models import Product, CommtrackConfig
 
 logger = logging.getLogger('commtrack.sms')
 

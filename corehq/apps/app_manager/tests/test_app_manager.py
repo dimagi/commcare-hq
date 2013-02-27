@@ -9,7 +9,7 @@ import os
 from django.test import TestCase
 from corehq.apps.app_manager.models import Application, DetailColumn, import_app, APP_V1
 from corehq.apps.builds.models import CommCareBuild, BuildSpec
-from corehq.apps.domain.models import Domain
+from corehq.apps.domain.shortcuts import create_domain
 
 class AppManagerTest(TestCase):
     with open(os.path.join(os.path.dirname(__file__), "data", "itext_form.xml")) as f:
@@ -17,7 +17,7 @@ class AppManagerTest(TestCase):
 
     def setUp(self):
         self.domain = 'test-domain'
-        Domain.get_or_create_with_name(self.domain)
+        create_domain(self.domain)
         self.app = Application.new_app("test_domain", "TestApp", application_version=APP_V1)
 
         for i in range(3):

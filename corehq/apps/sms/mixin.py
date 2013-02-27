@@ -27,6 +27,12 @@ class VerifiedNumber(Document):
     ivr_backend_id  = StringProperty() # points to a MobileBackend
     verified        = BooleanProperty()
     
+    def __repr__(self):
+        return '{phone} in {domain} (owned by {owner})'.format(
+            phone=self.phone_number, domain=self.domain,
+            owner=self.owner_id
+        )
+
     @property
     def backend(self):
         return MobileBackend.load(self.backend_id)
@@ -131,6 +137,11 @@ class MobileBackend(Document):
             raise RuntimeError('could not find outbound module %s' % self.outbound_module)
         return module
 
+    def get_cleaned_outbound_params(self):
+        # for passing to functions, ensure the keys are all strings
+        return dict((str(k), v) for k, v in self.outbound_params.items())
+
+
 class CommCareMobileContactMixin(object):
     """
     Defines a mixin to manage a mobile contact's information. This mixin must be used with
@@ -167,7 +178,6 @@ class CommCareMobileContactMixin(object):
         return  the VerifiedNumber entry
         """
         verified = self.get_verified_numbers(True)
-
         if not phone:
             # for backwards compatibility with code that assumes only one verified phone #
             if len(verified) > 0:
