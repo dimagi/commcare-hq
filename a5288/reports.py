@@ -20,17 +20,8 @@ class MissedCallbackReport(CustomProjectReport, GenericTabularReport):
     flush_layout = True
     
     def get_past_two_weeks(self):
-        if self.request.couch_user.is_commcare_user():
-            time_zone = self.request.couch_user.get_time_zone()
-        else:
-            time_zone = None
-        
         now = datetime.utcnow()
-        if time_zone is None:
-            local_datetime = now
-        else:
-            local_datetime = tz_utils.adjust_datetime_to_timezone(now, pytz.utc.zone, pytz.timezone(time_zone).zone)
-        
+        local_datetime = tz_utils.adjust_datetime_to_timezone(now, pytz.utc.zone, self.timezone.zone)
         return [(local_datetime + timedelta(days = x)).date() for x in range(-14, 0)]
     
     @property
@@ -64,14 +55,15 @@ class MissedCallbackReport(CustomProjectReport, GenericTabularReport):
             if group_id is None or group_id == case.owner_id:
                 data[case._id] = {
                     "name" : case.name,
-                    "time_zone" : pytz.timezone(case.get_case_property("time_zone")),
+                    "time_zone" : case.get_case_property("time_zone"),
                     "dates" : [None for x in range(14)],
                 }
         
         dates = self.get_past_two_weeks()
+        date_strings = [date.strftime("%Y-%m-%d") for date in dates]
+        
         start_date = dates[0] - timedelta(days=1)
         end_date = dates[-1] + timedelta(days=2)
-        date_strings = [date.strftime("%Y-%m-%d") for date in dates]
         
         start_utc_timestamp = json_format_datetime(start_date)
         end_utc_timestamp = json_format_datetime(end_date)
@@ -83,7 +75,7 @@ class MissedCallbackReport(CustomProjectReport, GenericTabularReport):
         
         for event in expected_callback_events:
             if event.couch_recipient in data:
-                event_date = tz_utils.adjust_datetime_to_timezone(event.date, pytz.utc.zone, data[event.couch_recipient]["time_zone"].zone).date()
+                event_date = tz_utils.adjust_datetime_to_timezone(event.date, pytz.utc.zone, data[event.couch_recipient]["time_zone"]).date()
                 event_date = event_date.strftime("%Y-%m-%d")
                 if event_date in date_strings:
                     data[event.couch_recipient]["dates"][date_strings.index(event_date)] = event.status
