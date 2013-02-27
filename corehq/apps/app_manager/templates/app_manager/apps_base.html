@@ -76,10 +76,10 @@
             $appsMenu = $("#apps-menu"),
             $appsMenuBorder = $("#apps-menu-border"),
             $toggleDiv = $("#apps-menu-toggle"),
-            $toggleIcon = $("#apps-menu-toggle div.ui-icon"),
+            $toggleIcon = $("#apps-menu-toggle i"),
             $toggleLink = $("#apps-menu-toggle a"),
-            down = 'ui-icon-carat-1-s',
-            up = 'ui-icon-carat-1-n';
+            down = 'icon-chevron-down',
+            up = 'icon-chevron-up';
 
         function setHidden(val) {
             hidden = val;
@@ -190,7 +190,7 @@
                             {% ifequal a.id app.id %}selected="" class="variable-app_name" {% endifequal %}>
                         {{ a.name }}
                         {% if a.get_doc_type == "RemoteApp" %}(remote){% endif %}
-                        {% if a.application_version == '2.0' %}(2.x){% endif %}
+                        {% if a.application_version == '1.0' %}(CommCare 1.x){% endif %}
                     </option>
                     {% endfor %}
                 </select>
@@ -199,7 +199,7 @@
                 {% if edit and app %}
                 <li>
                     <form action="{% url corehq.apps.app_manager.views.delete_app domain app.id %}" method="POST">
-                        <span class="ui-icon ui-icon-trash"></span>
+                        <i class="icon-trash"></i>
                         <a href="#" class="submit">Delete this application</a>
                     </form>
                 </li>
@@ -208,14 +208,17 @@
         </div>
         <div id="apps-menu-border"></div>
         <div id="title-bar">
-            <div id="apps-menu-toggle"><div class="ui-icon"></div><a href="#"></a></div>
+            <div id="apps-menu-toggle">
+                <i></i>
+                <a href="#"></a>
+            </div>
             <div id="app-info">
                 {% if app %}
                     <ul>
                         <li>
                             <strong id="app_name" class="variable-app_name">{{ app.name }}</strong>
                             {% if app.get_doc_type == "RemoteApp" %}<strong>(remote)</strong>{% endif %}
-                            {% if app.application_version == "2.0" %}<strong>(2.x)</strong>{% endif %}
+                            {% if app.application_version == "1.0" %}<strong>(CommCare 1.x)</strong>{% endif %}
                             version <span id="version" class="variable-version">{{ app.version }}</span>
                         </li>
                     </ul>

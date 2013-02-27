@@ -5,7 +5,8 @@
 
 {% block js %}{{ block.super }}
     {% if app.get_doc_type == "Application" %}
-        <script src="{% static 'app_manager/js/commcareProperties.js' %}"></script>
+        <script src="{% static 'app_manager/js/commcareProperties.js' %}"
+                xmlns="http://www.w3.org/1999/html"></script>
         <script src="{% static 'translations/js/translations.js' %}"></script>
     {% endif %}
     <script src="{% static 'hqwebapp/js/knockout-bindings.js' %}"></script>
@@ -176,67 +177,30 @@
         <script>
             $(function () {
                 var saveURL = "{% url edit_commcare_profile domain app.id %}",
-                    defaultHome = $('#other-commcare-settings'),
-                    senseHome = $('#commcare-sense-properties'),
-                    logHome = $('#log-properties'),
-                    languageHome = $('#language-properties'),
+                    groupMapping = {
+                        'sense': '#commcare-sense-properties',
+                        'log': '#log-properties',
+                        'language': '#language-properties',
+                        'default': '#other-commcare-settings'
+                    },
                     $block,
                     saveButtonHolder = $('#commcare-settings .save-button-holder');
                 $.get('{% url corehq.apps.app_manager.views.commcare_profile domain app.id %}', function (initialValues) {
                     initialValues = JSON.parse(initialValues);
                     $.get('{% static "app_manager/json/custom-commcare-properties.json" %}', function (profile_spec) {
-
                         var settings = CommcareSettings.wrap(
-                                profile_spec,
-                                initialValues,
-                                function (p) {
-                                    if (p.group === 'sense') {
-                                        return senseHome;
-                                    } else if (p.group === 'log') {
-                                        return logHome;
-                                    } else if (p.group === 'language') {
-                                        return languageHome;
-                                    }
-                                    return defaultHome;
-                                },
-                                saveURL,
-                                {% if edit %}true{% else %}false{% endif %},
-                                saveButtonHolder
+                            profile_spec,
+                            initialValues,
+                            function (p) {
+                                return $(groupMapping[p.group] || groupMapping['default']);
+                            },
+                            saveURL,
+                            {% if edit %}true{% else %}false{% endif %},
+                            saveButtonHolder
                         );
                         $block = settings.render();
                         $block.find('[name="cur_locale"]').addClass('langcodes');
                         COMMCAREHQ.initBlock($block);
-                    });
-                });
-            });
-            $(function () {
-                $('.scary-settings').each(function () {
-                    var $scarySettings = $(this).addClass('ui-corner-bottom'),
-                        $toggleBar = $(this).prev(".scary-settings-toggle").addClass('ui-corner-top'),
-                        $toggleLink = $toggleBar.find('a'),
-                        hidden = true;
-                    function setHidden(h) {
-                        var closedIcon = 'ui-icon-triangle-1-e',
-                            openedIcon = 'ui-icon-triangle-1-s',
-                            openedClass = 'scary-settings-toggle-open';
-                        if (hidden != h) {
-                            $scarySettings.slideToggle();
-                        } else if (hidden) {
-                            $scarySettings.hide();
-                        }
-                        hidden = h;
-                        if (hidden) {
-                            $toggleBar.find('.ui-icon').addClass(closedIcon).removeClass(openedIcon);
-                            $toggleBar.removeClass(openedClass, 1000);
-                        } else {
-                            $toggleBar.find('.ui-icon').addClass(openedIcon).removeClass(closedIcon);
-                            $toggleBar.addClass(openedClass);
-                        }
-                    }
-                    setHidden(hidden);
-                    $toggleLink.click(function () {
-                        setHidden(!hidden);
-                        return false;
                     });
                 });
             });
@@ -372,267 +336,68 @@
             margin-bottom: 1em;
             clear: right;
         }
+        .tab-pane {
+            min-height: 600px;
+        }
     </style>
 {% endblock %}
 {% block form-view %}
     <h3 class="app-manager-title variable-app_name">{{ app.name|html_name }}</h3>
-    {% if app.get_doc_type == "Application" %}
-        <h4>Application Settings</h4>
-    {% else %}
-        <h4>Remote Setup</h4>
-    {% endif %}
-    <form class="save-button-form" id="app-settings" method="post" action="{% url edit_app_attr domain app.id 'all' %}">
-        <div class="config">
-            <div class="save-button-holder"></div>
-            <table>
-                <tr>
-                    <th>Name</th>
-                    <td>
-                        {% if edit %}
-                            <input type="text" class="wide" name="name" value="{{ app.name }}" />
-                        {% else %}
-                            {{ app.name }}
-                        {% endif %}
-                    </td>
-                </tr>
-                <tr {% if app.application_version == "2.0" %}class="hide"{% endif %}>
-                    <th>App Version</th>
-                    <td>
-                        {% if edit %}
-                            <select name="application_version" data-value="{{ app.application_version }}" id="app_version">
-                                <option value="1.0">1.x</option>
-                                <option value="2.0">2.x</option>
-                            </select>
-                        {% else %}
-                            {{ app.application_version }}
-                        {% endif %}
-                    </td>
-                </tr>
-                <tr>
-                    <th>CommCare Version</th>
-                    <td>
-                        {% if edit %}
-                            <select name="build_spec" data-value="{{ app.build_spec.to_string }}" id="commcare_version">
-                            </select>
-                        {% else %}
-                            {{ app.get_build_label }}
-                        {% endif %}
-                    </td>
-                </tr>
-                <tr>
-                    <th>J2ME Platform</th>
-                    <td>
-                        {% if edit %}
-                            <select name="platform" data-value="{{ app.platform }}">
-                                {% for option in app.platform_options %}
-                                    <option value="{{ option.value }}">{{ option.label }}</option>
-                                {% endfor %}
-                            </select>
-                        {% else %}
-                            {{ app.platform }}
-                        {% endif %}
-                    </td>
-                </tr>
-                <tr>
-                    <th>Text Input</th>
-                    <td>
-                        {% if edit %}
-                            <select name="text_input" data-value="{{ app.text_input }}">
-                                <option value="roman">* Default (Roman)</option>
-                                <option value="native">Native (International)</option>
-                                <option value="custom-keys">Custom Keys{% if app.commcare_version == '1.0' %} [requires CommCare 1.3 or above]{% endif %}</option>
-                            </select>
-                        {% else %}
-                            {% if app.text_input == "native"%}
-                                Native (International)
-                                {% else %}{% if app.text_input == "custom-keys" %}
-                                    Custom Keys
-                                {% else %}
-                                    Default (Roman)
-                                {% endif %}{% endif %}
-                        {% endif %}
-                        <aside id="custom-keys-help">
-                            <span class="ui-icon ui-icon-arrowthick-1-e"></span>
-                            <p>Customize through <a href="#custom-keys-example">User Interface Translations</a>.</p>
-                            <div id="custom-keys-example">
-                                <h2>Example:</h2>
-                                <ul>
-                                    <li><span>polish.TextField.charactersKey1</span><span>.,</span><li>
-                                    <li><span>polish.TextField.charactersKey2</span><span>abc2</span><li>
-                                    <li><span>polish.TextField.charactersKey3</span><span>def3</span><li>
-                                    <li><span>polish.TextField.charactersKey4</span><span>ghi4</span><li>
-                                    <li><span>polish.TextField.charactersKey5</span><span>jkl5</span><li>
-                                    <li><span>polish.TextField.charactersKey6</span><span>mno6</span><li>
-                                    <li><span>polish.TextField.charactersKey7</span><span>pqrs7</span><li>
-                                    <li><span>polish.TextField.charactersKey8</span><span>tuv8</span><li>
-                                    <li><span>polish.TextField.charactersKey9</span><span>wxyz9</span><li>
-                                    <li><span>polish.TextField.charactersKey0</span><span> 0</span><li>
-                                </ul>
-                            </div>
-                        </aside>
-                    </td>
-                </tr>
-                <tr>
-                    <th>Admin Password</th>
-                    <td>
-                        {% if edit %}
-                            <input type="password" id="app_admin_password" name="admin_password"/>
-                        {% else %}
-                            ********
-                        {% endif %}
-                    </td>
-                </tr>
-            {% if app.get_doc_type == "RemoteApp" %}
-                <tr>
-                    <th>Profile URL</th>
-                    <td>
-                        {% if edit %}
-                            <input type="text" class="code wide" name="profile_url" value="{{ app.profile_url }}"/>
-                        {% else %}
-                            {{ app.profile_url }}
-                        {% endif %}
-                    </td>
-                </tr>
-                <tr>
-                    <th>Auto-manage URLs</th>
-                    <td>
-                        {% if edit %}
-                        <select name="manage_urls" data-value="{{ app.manage_urls|JSON }}">
-                            <option value="false">* Off</option>
-                            <option value="true">On</option>
-                        </select>
-                        {% else %}
-                        {% if app.manage_urls %}On{% else %}Off{% endif %}
-                        {% endif %}
-                    </td>
-                </tr>
-            {% endif %}
-            {% if app.get_doc_type == "Application" %}
-                <tr>
-                    <th><label for="show-user-registration-select">Custom User Registration</label></th>
-                    <td>
-                        {% if edit %}
-                                <select id="show-user-registration-select" name="show_user_registration" data-value="{{ app.show_user_registration|JSON }}">
-                                    <option value="false">* Don't Use</option>
-                                    <option value="true">Use</option>
-                                </select>
-                        {% else %}
-                            {% if not app.show_user_registration %}Don't Use{% else %}Use{% endif %}
-                        {% endif %}
-                    </td>
-                </tr>
-                {% if app.application_version == '2.0' %}
-                <tr>
-                    <th><label for="case-sharing-select">Case Sharing</label></th>
-                    <td>
-                        {% if edit %}
-                            <select id="case-sharing-select" name="case_sharing" data-value="{{ app.case_sharing|JSON }}">
-                                <option value="false">* Off</option>
-                                <option value="true">On</option>
-                            </select>
-                        {% else %}
-                            {% if app.case_sharing %}On{% else %}Off{% endif %}
-                        {% endif %}
-                    </td>
-                </tr>
-                <tr>
-                     <th><label for="cloudcare-enabled-select">CloudCare Enabled?</label></th>
-                     <td>
-                         {% if edit %}
-                             <select id="cloudcare-enabled-select" name="cloudcare_enabled" data-value="{{ app.cloudcare_enabled|JSON }}">
-                                 <option value="false">No</option>
-                                 <option value="true">Yes</option>
-                             </select>
-                         {% else %}
-                             {% if app.cloudcare_enabled %}Yes{% else %}No{% endif %}
-                         {% endif %}
-                     </td>
-                 </tr>
+    <ul class="nav nav-tabs">
+        <li class="active">
+            <a href="#app-settings" data-toggle="tab">
+                {% if app.get_doc_type == "Application" %}
+                    {% trans "Application Settings" %}
+                {% else %}
+                    {% trans "Remote Setup" %}
                 {% endif %}
-                {% if user.is_superuser and app.use_custom_suite %}
-                    {% comment %}
-                        This used to be always visible to superuser, but it was
-                        a horrible idea and is only used in one project. I added
-                        `and app.use_custom_suite` above without changing the
-                        redundant checks below.
-                    {% endcomment %}
-                <tbody class="superuser-only">
-                    <tr>
-                        <th><label for="use-custom-suite-select">Custom Suite File</label></th>
-                        <td>
-                            {% if edit %}
-                                    <select id="use-custom-suite-select" name="use_custom_suite" data-value="{{ app.use_custom_suite|JSON }}">
-                                        <option value="false">* Don't Use</option>
-                                        <option value="true">Use</option>
-                                    </select>
-                            {% else %}
-                                {% if not app.use_custom_suite %}Don't Use{% else %}Use{% endif %}
-                            {% endif %}
-                        </td>
-                    </tr>
-                    {% if app.use_custom_suite %}
-                    <tr>
-                        <th><label for="custom-suite-textarea">Custom Suite</label></th>
-                        <td>
-                            {% if edit %}
-                                <textarea id="custom-suite-textarea" name="custom_suite">{{ app.custom_suite }}</textarea>
-                            {% else %}
-                                {{ app.custom_suite }}
-                            {% endif %}
-                        </td>
-                    </tr>
-                    {% endif %}
-                    
-                </tbody>
-                {% endif %}
-            {% endif %}
-                <tr>
-                    <th>
-                        {% trans "Success Message" %}
-                        <span class="hq-help-template"
-                            data-title="{% trans "Success Message" %}"
-                            data-content="{% trans "You can optionally specify a template for the message that your CHWs receive upon successful submission of a form. In the template, you have access to the following variables gathered real-time from the server: $first_name, $name, $week, $today. Example: Thanks $first_name! You have submitted $today forms today and $week forms since Monday." %}"
-                        ></span>
-                    </th>
-                    <td>
-                        {% if edit %}
-                            <textarea name="success_message" style="width:100%;height:50px;">{{ app.success_message|trans:langs }}</textarea>
-                        {% else %}
-                            <p>{{ app.success_message|trans:langs }}</p>
-                        {% endif %}
-                    </td>
-                </tr>
-            </table>
-        </div>
-    </form>
-        <h4>Supported Languages</h4>
-        <div class="config" id="supported-languages">
-            {% include "app_manager/partials/supported-languages.html" %}
-        </div>
-    {% if app.get_doc_type == "Application" %}
-        <h4><a href="{% url app_summary domain app.id %}" class="btn btn-primary">Application Summary</a></h4>
+            </a>
+        </li>
 
-        {% if multimedia %}
-        <div class="scary-settings-toggle">
-            <a href="#"><span class="ui-icon"></span>{% trans 'Application Multimedia' %}</a>
-        </div>
-        <div class="scary-settings multimedia">
-            {% if edit %}
-                <h3 style="text-align: left;">{% trans 'Manage Multimedia' %}</h3>
-                <p>{% blocktrans %}View, upload, and download your application's multimedia{% endblocktrans %}</p>
-                <p><a target="_blank" class="btn btn-primary" style="color: #ffffff; text-decoration: none;" href="{% url hqmedia_references domain app.get_id %}"><i class="icon icon-check"></i>
-                    {% blocktrans %}Multimedia Reference Checker</a> (opens in a new window){% endblocktrans %}</p>
-            {% endif %}
-            <h3 style="margin-top: 1em; text-align: left;">{% trans 'Download Multimedia Zip' %}</h3>
-            {% include "hqmedia/partials/multimedia_zip_notice.html" %}
-        </div>
+        <li><a href="#languages-and-translations" data-toggle="tab">{% trans "Languages" %}</a></li>
+
+        {% if app.get_doc_type == 'Application' %}
+        <li><a href="#multimedia" data-toggle="tab">{% trans "Multimedia" %}</a></li>
+        <li><a href="{% url app_summary domain app.id %}">{% trans "Application Summary" %}</a></li>
         {% endif %}
+    </ul>
+    <div class="tab-content">
+        <div class="tab-pane active" id="app-settings">
+            {% include "app_manager/partials/app-settings.html" %}
+            <h2>CommCare Properties</h2>
+            <div class="tab-pane" id="commcare-settings">
+                <div class="save-button-holder clearfix"></div>
+                <form class="form-horizontal">
+                    <fieldset id="log-properties">
+                        <legend>{% trans "Logging" %}</legend>
+                    </fieldset>
 
-        <div class="scary-settings-toggle" id="user-interface-translations">
-            <a href="#"><span class="ui-icon"></span>User Interface Translations</a>
+                    <fieldset id="commcare-sense-properties">
+                        <legend>{% trans "CommCare UI Settings" %}</legend>
+                    </fieldset>
+
+                    <fieldset id="other-commcare-settings">
+                        <legend>{% trans "CommCare Properties" %}</legend>
+                    </fieldset>
+                </form>
+            </div>
+
+            <div>
+                <form method="get" action='{% url import_app domain %}' style="font-size: .8em; text-align: right;">
+                    <input type="hidden" name="app" value="{{ app.id }}"/>
+                    Copy this app to project: <input type="text" name="domain" />
+                    <input type="submit" value="Copy" />
+                </form>
+            </div>
         </div>
-        <div class="scary-settings">
+        <div id="languages-and-translations" class="tab-pane">
+            <div id="supported-languages">
+                <h2>Supported Languages</h2>
+                {% include "app_manager/partials/supported-languages.html" %}
+            </div>
+            {% if app.get_doc_type == "Application" %}
             <div id="translations_ui">
+                <h2>CommCare Translations</h2>
                 <p>
                     For J2ME (Nokia) refer to
                     <a target="_blank" href="https://bitbucket.org/commcare/javarosa/src/default/j2me/shared-resources/resources/messages_default.txt">JavaRosa translations</a>
@@ -645,31 +410,26 @@
                 </p>
                 <br/>
             </div>
+            {% endif %}
         </div>
 
-        <div class="scary-settings-toggle"><a href="#"><span class="ui-icon"></span>CommCare Settings</a></div>
-        <div class="scary-settings" id="commcare-settings">
-            <div class="save-button-holder"></div>
-            <h4>Logging</h4>
-            <table class="config">
-                <tbody id="log-properties"></tbody>
-            </table>
-            <h4>CommCare UI Settings</h4>
-            <table class="config">
-                <tbody id="commcare-sense-properties"></tbody>
-            </table>
-            <h4>CommCare Properties</h4>
-            <table class="config">
-                <tbody id="other-commcare-settings"></tbody>
-            </table>
-        </div>
-        
-    {% endif %}
-    <div>
-        <form method="get" action='{% url import_app domain %}' style="font-size: .8em; text-align: right;">
-            <input type="hidden" name="app" value="{{ app.id }}"/>
-            Copy this app to project: <input type="text" name="domain" />
-            <input type="submit" value="Copy" />
-        </form>
+        {% if app.get_doc_type == "Application" %}
+
+            <div class="tab-pane multimedia" id="multimedia">
+                {% if multimedia %}
+                    {% if edit %}
+                        <h3 style="text-align: left;">{% trans 'Manage Multimedia' %}</h3>
+                        <p>{% blocktrans %}View, upload, and download your application's multimedia{% endblocktrans %}</p>
+                        <p><a target="_blank" class="btn btn-primary" style="color: #ffffff; text-decoration: none;" href="{% url hqmedia_references domain app.get_id %}"><i class="icon icon-check"></i>
+                            {% blocktrans %}Multimedia Reference Checker</a> (opens in a new window){% endblocktrans %}</p>
+                    {% endif %}
+                    <h3 style="margin-top: 1em; text-align: left;">{% trans 'Download Multimedia Zip' %}</h3>
+                    {% include "hqmedia/partials/multimedia_zip_notice.html" %}
+                {% else %}
+                    {% blocktrans %}No Multimedia{% endblocktrans %}
+                {% endif %}
+            </div>
+
+        {% endif %}
     </div>
 {% endblock %}

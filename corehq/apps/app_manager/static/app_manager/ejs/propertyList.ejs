@@ -1,8 +1,7 @@
 <table>
     <tr>
-        <th></th>
-        <th>Question</th>
-        <th>Case Property</th>
+        <th class="span6">Question</th>
+        <th class="span6">Case Property</th>
     </tr>
 
     [% for(var key in map) { %]
@@ -11,7 +10,6 @@
             var propertyName = keyType === "nodeset" ? map[key] : key;
         %]
         <tr class="action-update">
-            <td></td>
             <td>
                 [%= casexml.renderOptions(casexml.getQuestions("all"), nodeset, 'action-update-value') %]
             </td>
@@ -43,7 +41,6 @@
     [% } %]
     [% if (casexml.edit) { %]
         <tr class="action-update">
-            <td></td>
             <td>
                 [%= casexml.renderOptions(casexml.getQuestions("all"), "", 'action-update-value') %]
             </td>

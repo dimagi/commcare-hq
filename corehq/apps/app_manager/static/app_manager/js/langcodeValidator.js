@@ -92,7 +92,7 @@ var LangcodeValidator = (function () {
                 return;
             }
             var i, j, langcode, sughtml, sug,
-                $table = $("<table></table>"),
+                $table = $('<table class="table table-striped"></table>'),
                 $row,
                 $a,
                 $links,
@@ -154,14 +154,11 @@ var LangcodeValidator = (function () {
                 }
                 getChangeCustomLanguageLink(langcode).appendTo($links);
 
-//                if (j === 0) {
-//                    $links = "";
-//                }
                 $row = $("<tr></tr>");
                 $("<td/>").html(this.validation.isValid[langcode] ?
                     langcode : '<strike>' + langcode + '</strike>').appendTo($row);
                 $('<td/>').append(
-                    $('<span/>').addClass(this.validation.isValid[langcode] ? 'ui-icon ui-icon-check' : 'ui-icon ui-icon-alert')
+                    $('<i/>').addClass(this.validation.isValid[langcode] ? 'icon-ok' : 'icon-exclamation-sign')
                 ).appendTo($row);
                 $("<td/>").html(this.validation.name[langcode] || "").appendTo($row);
                 if (this.edit) {

@@ -91,15 +91,14 @@
         $('#form-tabs').show();
         $('#forms').tab('show');
 
-        $(".warning").before($('<div />').addClass('ui-icon ui-icon-alert').css('float', 'left'));
-
         $('.sortable .sort-action').addClass('sort-disabled');
+        $('.drag_handle').addClass(COMMCAREHQ.icons.GRIP);
         $('.sortable').each(function () {
             if ($(this).children().not('.sort-disabled').size() < 2) {
                 var $sortable = $(this);
                 $('.drag_handle', this).each(function () {
                     if ($(this).closest('.sortable')[0] === $sortable[0]) {
-                        $(this).removeClass('drag_handle').css({cursor: "auto"}).find('.ui-icon').css({backgroundImage: "none"});
+                        $(this).removeClass('drag_handle').css({cursor: "auto"}).css({color: "transparent"});
                     }
                 });
             }
@@ -138,8 +137,7 @@
                             $form.append('<input type="hidden" name="to"   value="' + to.toString()   + '" />');
 
                             // disable sortable
-                            $sortable.find('.drag_handle .ui-icon').hide('slow');
-    //                        $sortable.find('.drag_handle .ui-icon').removeClass('ui-icon').addClass('disabled-ui-icon');
+                            $sortable.find('.drag_handle').hide('slow');
                             $sortable.sortable('option', 'disabled', true);
                             if ($form.find('input[name="ajax"]').first().val() === "true") {
                                 resetIndexes($sortable);
@@ -147,8 +145,7 @@
                                     COMMCAREHQ.app_manager.updateDOM(JSON.parse(data).update);
                                     // re-enable sortable
                                     $sortable.sortable('option', 'disabled', false);
-                                    $sortable.find('.drag_handle .ui-icon').show(1000);
-    //                                $sortable.find('.drag_handle .disabled-ui-icon').removeClass('disabled-ui-icon').addClass('ui-icon');
+                                    $sortable.find('.drag_handle').show(1000);
                                 });
                             } else {
                                 $form.submit();
@@ -214,7 +211,7 @@
         COMMCAREHQ.app_manager.on('change:commcareVersion', function () {
             $('.commcare-feature').each(function () {
                 var version = '' + $(this).data('since-version') || '1.1',
-                    upgradeMessage = $('<div class="upgrade-message"/>'),
+                    upgradeMessage = $('<span class="upgrade-message"/>'),
                     area = $(this);
 
                 if (COMMCAREHQ.app_manager.checkCommcareVersion(version)) {
@@ -223,9 +220,9 @@
                 } else {
                     area.find('*').hide();
                     upgradeMessage.append(
-                        $('<span/>').addClass('ui-icon ui-icon-arrowthick-1-w')
+                        $('<i></i>').addClass('icon-arrow-left')
                     ).append(
-                        $('<span/>').text('Requires CommCare ' + version)
+                        $('<span></span>').text(' Requires CommCare ' + version)
                     ).appendTo(area);
                 }
             });

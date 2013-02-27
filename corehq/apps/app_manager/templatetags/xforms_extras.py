@@ -40,7 +40,7 @@ def html_name(name):
 
 @register.filter
 def input_trans(name, langs=["default"]):
-    template='<input class="wide" type="text" name="name" value="%(value)s" placeholder="%(placeholder)s" />'
+    template='<input type="text" name="name" value="%(value)s" placeholder="%(placeholder)s" />'
     for lang in langs:
         if lang in name:
             if langs and lang == langs[0]:

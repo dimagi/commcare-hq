@@ -1,17 +1,11 @@
 {% load xforms_extras %}
 {% load hq_shared_tags %}
 {% load i18n %}
-<tr>
-    <th>
-        {% trans LABEL %}
-        <span class="hq-help-template"
-            data-title="{% trans LABEL %}"
-            data-content="{% trans DESC %}"
-        ></span>
-    </th>
-    {% if edit %}
-        <td>
-            <select class="code" type="text" name="{{ SLUG }}-show" data-value="{% if case_list.show %}true{% else %}false{% endif %}">
+<div class="control-group">
+    <label class="control-label">{% trans LABEL %}</label>
+    <div class="controls">
+        {% if edit %}
+            <select type="text" name="{{ SLUG }}-show" data-value="{% if case_list.show %}true{% else %}false{% endif %}">
                 <option value="false">Don't Show</option>
                 <option value="true">Show</option>
             </select>
@@ -27,14 +21,16 @@
                     $('[name="{{ SLUG }}-show"]').change(updateCaseListLabel).each(updateCaseListLabel);
                 });
             </script>
-        </td>
-    {% else %}
-        <td>
+        {% else %}
             {% if not case_list.show %}
                 Don't Show
             {% else %}
                 Show with label: {{ case_list.label|trans:langs }}
             {% endif %}
-        </td>
-    {% endif %}
-</tr>
+        {% endif %}
+        <span class="hq-help-template"
+              data-title="{% trans LABEL %}"
+              data-content="{% trans DESC %}"
+        ></span>
+    </div>
+</div>

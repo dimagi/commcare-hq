@@ -11,7 +11,7 @@ var CommcareProperty = {
             $input,
             disabledMessage,
             $disabledMessage,
-            $tr = $("<tr />"),
+            $tr = $('<div class="control-group" />'),
             needsToBeSaved = false,
             parseCondition = function (condition) {
                 var parts = condition ? condition.split('&&') : [],
@@ -120,7 +120,7 @@ var CommcareProperty = {
                         disabled_message;
                     if (!versionOK) {
                         is_enabled = false;
-                        disabled_message = '<span class="ui-icon ui-icon-arrowthick-1-w"></span>Upgrade to CommCare ' + version + '!';
+                        disabled_message = '<i class="icon-arrow-left"></i> Upgrade to CommCare ' + version + '!';
                     }
                     if (!requiresCondition.check()) {
                         is_enabled = false;
@@ -145,16 +145,11 @@ var CommcareProperty = {
                 COMMCAREHQ.app_manager.on('change:commcareVersion', onChange);
             },
             render = function () {
-                var $td = $('<td></td>'),
+                var $td = $('<div class="controls"></div>'),
                     v,
                     v_name,
                     i;
-                $('<th class="span3"></th>').text(that.name + " ").append(
-                    COMMCAREHQ.makeHqHelp({
-                        title: that.name,
-                        content: that.description
-                    })
-                ).appendTo($tr);
+                $('<label class="control-label"></label>').text(that.name + " ").appendTo($tr);
                 if (edit) {
                     if (that.values === undefined) {
                         $input = $("<input type='text' />");
@@ -171,16 +166,20 @@ var CommcareProperty = {
                         that.save();
                     }).bind('textchange', function () {
                         that.fire('change');
-                    }).appendTo($td);
+                    }).addClass('span3').appendTo($td);
                     // initialize value without saving to server
 
                 } else {
                     $input = $("<span />").appendTo($td);
                 }
+                COMMCAREHQ.makeHqHelp({
+                    title: that.name,
+                    content: that.description
+                }).appendTo($td);
                 $disabledMessage = $('<span style="display: inline-block;"/>').appendTo($td).css({
                     width: '250px',
                     verticalAlign: 'top',
-                    paddingLeft: '5px'
+                    paddingLeft: '30px'
                 });
                 that.val(initialValue || null);
                 initRequires();

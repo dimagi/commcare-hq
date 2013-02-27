@@ -5,11 +5,7 @@
 .detail-screen-table td {
     word-wrap: break-word;
 }
-.detail-screen-table input[type="text"] {
-    width: 100%;
-}
 .detail-screen-table select {
-    font-size: .8em;
 }
 .detail-screen-table th, .detail-screen-table td {
     padding: 5px;
@@ -17,7 +13,6 @@
 }
 
 .detail-screen-table th.detail-screen-checkbox {
-    font-size: .8em;
     text-decoration: underline;
     cursor: pointer;
 }
@@ -28,7 +23,6 @@
     width: 21px;
 }
 .detail-screen-table .detail-screen-model {
-    font-size: .9em;
     width: 70px;
     padding-left: 0;
     padding-right: 0;
@@ -40,19 +34,14 @@
     width: 100px;
 }
 .detail-screen-table .detail-screen-format {
-    font-size: .9em;
     padding: 0 10px;
-    width: 87px;
 }
 .detail-screen-table .detail-screen-extra {
-    width: 100px;
 }
 .detail-screen-table .detail-screen-extra textarea,
 .detail-screen-table .detail-screen-extra input {
-    width: 90px;
 }
 .detail-screen-table .detail-screen-late-flag {
-    width: 100px;
 }
 .detail-screen-table .detail-screen-suggestion {
     color: #888;

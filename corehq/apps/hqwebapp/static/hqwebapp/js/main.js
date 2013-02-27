@@ -43,7 +43,7 @@ var SaveButton = {
             }).addClass('btn btn-success'),
             $saving: $('<span/>').text(SaveButton.message.SAVING).addClass('btn disabled'),
             $saved: $('<span/>').text(SaveButton.message.SAVED).addClass('btn disabled'),
-            ui: $('<div/>').css({float: 'right'}),
+            ui: $('<div/>').addClass('pull-right'),
             setStateWhenReady: function (state) {
                 if (this.state === 'saving') {
                     this.nextState = state;
@@ -157,10 +157,10 @@ var COMMCAREHQ = (function () {
     'use strict';
     return {
         icons: {
-            GRIP:   'ui-icon ui-icon-arrowthick-2-n-s',
-            ADD:    'ui-icon ui-icon-plusthick',
-            COPY:   'ui-icon ui-icon-copy',
-            DELETE: 'ui-icon ui-icon-closethick'
+            GRIP:   'icon-resize-vertical',
+            ADD:    'icon-plus',
+            COPY:   'icon-copy',
+            DELETE: 'icon-remove'
         },
         makeHqHelp: function (opts, wrap) {
             wrap = wrap === undefined ? true : wrap;
@@ -295,16 +295,14 @@ function setUpIeWarning() {
 
 $(function () {
     'use strict';
-    $('.delete_link').iconify('ui-icon-closethick');
+    $('.delete_link').iconify('icon-closethick');
     $(".delete_link").addClass("dialog_opener");
     $(".delete_dialog").addClass("dialog");
-    $('.new_link').iconify('ui-icon-plusthick');
-    $('.edit_link').iconify('ui-icon-pencil');
-    $('.drag_handle').iconify(COMMCAREHQ.icons.GRIP);
+    $('.new_link').iconify('icon-plus');
+    $('.edit_link').iconify('icon-pencil');
 
     $(".message").addClass('ui-state-highlight ui-corner-all').addClass("shadow");
 
-    $('#main_container').addClass('container shadow');
     (function () {
         var formIsOpen = false,
             footer = $('footer'),

@@ -128,7 +128,7 @@
                             ).appendTo(select);
                         }
                     }
-                    console.log(username_question, password_question);
+
                     if (!username_question) {
                         $('<p class="warning">You have no <strong>username</strong> field.</p>').appendTo(home);
                     }
@@ -310,55 +310,48 @@
         <div class="delete-me">
             <form action="{% url delete_form domain app.id module.id form.id %}" method="post">
                 <a class="submit" href="#">
-                    <span class="ui-icon ui-icon-trash"></span>
+                    <i class="icon-trash"></i>
                     Delete this form
                 </a>
             </form>
         </div>
     {% endif %}
+    <div class="page-header">
     {% if is_user_registration %}
-        <h3 class="app-manager-title">User Registration</h3>
+        <h1 class="app-manager-title">User Registration</h1>
     {% else %}
-        <h3 class="app-manager-title variable-form_name">{{ form.name|html_trans:langs|safe }}</h3>
+        <h1 class="app-manager-title variable-form_name">{{ form.name|html_trans:langs|safe }}</h1>
     {% endif %}
+    </div>
 
     {% if nav_form %}
-        <h4>Form Settings</h4>
-        <div class="config">
-            <form class="save-button-form" action="{% url corehq.apps.app_manager.views.edit_form_attr domain app.id form.get_unique_id 'all' %}">
-                <div class="save-button-holder"></div>
-                <table style="clear: both;">
-                    <tr>
-                        <th>{% trans "Form Name" %}</th>
-                        <td>
-                            {% if edit %}
-                                {{ form.name|input_trans:langs|safe }}
-                            {% else %}
-                                {{ form.name|html_trans:langs|safe }}
-                            {% endif %}
-                        </td>
-                    </tr>
-                    {% include "app_manager/partials/nav_menu_media.html" with item=form %}
-                    {% if app.application_version != '1.0' %}
-                    <tr>
-                        <!-- the inline style is a short-term fix to
-                             some otherwise very awkward spacing
-                             and oddly placed help bubble-->
-                        <th style="width: 140px; text-align: left;">
+        <h2>Form Settings</h2>
+            <form class="form-horizontal save-button-form" action="{% url corehq.apps.app_manager.views.edit_form_attr domain app.id form.get_unique_id 'all' %}">
+                <div class="save-button-holder clearfix"></div>
+                <div class="control-group">
+                    <label class="control-label">{% trans "Form Name" %}</label>
+                    <div class="controls">
+                        {% if edit %}
+                            {{ form.name|input_trans:langs|safe }}
+                        {% else %}
+                            {{ form.name|html_trans:langs|safe }}
+                        {% endif %}
+                    </div>
+                </div>
+                {% include "app_manager/partials/nav_menu_media.html" with item=form %}
+                {% if app.application_version != '1.0' %}
+                    <div class="control-group">
+                        <label class="control-label">
                             {% trans "Display Condition" %}
-                            <span class="hq-help-template"
-                                data-title="{% trans "Display Condition" %}"
-                                data-content="{% trans "The form will not appear in this module’s form menu unless this condition is met." %}"
-                            ></span>
-                        </th>
-                        <td id="form-filter">
+                        </label>
+                        <div id="form-filter" class="controls row-fluid">
                             {% if edit %}
                                 <div data-bind="valueOrNoneUI: {
                                     value: formFilter,
                                     allowed: formFilterAllowed,
                                     inputCss: {wide: true},
                                     inputName: 'form_filter'
-                                }">
+                                }" class="span7">
                                     <span data-slug="add">{% trans "Add Display Condition" %}</span>
                                     <span data-slug="whyNotAdd">{% trans "Why can't I add a display condition?" %}</span>
                                     <span data-slug="notAllowedButExists">{% trans "Error! Display condition will be ignored." %}</span>
@@ -368,20 +361,23 @@
                             {% else %}
                                 <code>{{ form.form_filter|default:'' }}</code>
                             {% endif %}
-                        </td>
-                    </tr>
-                    {% endif %}
-                </table>
+                            <span class="hq-help-template"
+                                  data-title="{% trans "Display Condition" %}"
+                                  data-content="{% trans "The form will not appear in this module’s form menu unless this condition is met." %}"
+                            ></span>
+
+                        </div>
+                    </div>
+                {% endif %}
             </form>
-        </div>
     {% endif %}
 
     {% if edit %}
-        <h4>Form Questions (XForm)</h4>
-        <div class="config" id="xform-links">
+        <h2>Form Questions (XForm)</h2>
+        <div id="xform-links">
             <ul>
                 <li>
-                    <a href="./source/"><span class="ui-icon ui-icon-pencil"></span>{% if form.source %}Edit{% else %}Create{% endif %}</a>
+                    <a href="./source/"><i class="icon-pencil"></i> {% if form.source %}Edit{% else %}Create{% endif %}</a>
                 </li><li>
                     <a id="xform-source-opener" class="dialog_opener {% if not form.source %}disabled{% endif %}"
                     {% if is_user_registration %}
@@ -389,7 +385,7 @@
                     {% else %}
                        href="{% url get_xform_source domain app.id module.id form.id %}">
                     {% endif %}
-                        <span class="ui-icon ui-icon-search"></span>
+                        <i class="icon-search"></i>
                         View
                     </a>
                     <div class="xml-source dialog" title="XML Source">
@@ -410,7 +406,7 @@
                         </div>
                     </div>
                 </li><li>
-                    <a class="dialog_opener" href="#"><span class="ui-icon ui-icon-arrowthick-1-n"></span>Upload</a>
+                    <a class="dialog_opener" href="#"><i class="icon-arrow-up"></i>Upload</a>
                     <div class="dialog" title="Upload XForm">
                         <form action="{% url corehq.apps.app_manager.views.edit_form_attr domain app.id form.get_unique_id 'xform' %}" method="POST" enctype="multipart/form-data">
                             <input type="file" id="xform_file_input" name="xform" />
@@ -423,12 +419,12 @@
                             href="{% url get_user_registration_source domain app.id %}?download=true"
                         {% else %}
                             href="{% url get_xform_source domain app.id module.id form.id %}?download=true"
-                        {% endif %}><span class="ui-icon ui-icon-arrowthick-1-s"></span>Download</a>
+                        {% endif %}><i class="icon-arrow-down"></i>Download</a>
                 </li>
 {% if app.application_version == '2.0' %}
                 <li><a {% if not form.source or is_user_registration %}class="disabled"{% endif %}
                             id="cloudcare-preview-url" href="#"
-                        ><span class="ui-icon ui-icon-play"></span>Try in CloudCare</a>
+                        ><i class="icon-play"></i>Try in CloudCare</a>
                 </li>
 {% endif %}
             </ul>
@@ -436,8 +432,9 @@
     {% endif %}
 
     {% if form.source %}
-        <h4>Language Checker</h4>
-        <div class="config">
+        <h2>Language Checker</h2>
+        <div>
+            <p>This form contains the following languages:</p>
             <div id="langcode_validator">
                 <p>This form does not use internationalized text.</p>
             </div>
@@ -445,27 +442,29 @@
     {% endif %}
     {% if form.source %}
         {% if is_user_registration %}
-            <h4>User Registration Properties</h4>
+            <h2>User Registration Properties</h2>
             <div id="user_reg_home" class="config"></div>
         {% else %}
             {% if app.application_version == '1.0' %}
-                <h4>{% trans "Cases and Referrals" %}
+                <header class="clearfix">
+                    <h2 class="pull-left">{% trans "Cases and Referrals" %}</h2>
                     <span class="hq-help-template"
-                        data-title="{% trans "Cases and Referrals" %}"
-                        data-content="{% trans "Cases and referrals are a way of preserving information across multiple interactions with CommCare on the mobile phone." %}"
+                          data-title="{% trans "Cases and Referrals" %}"
+                          data-content="{% trans "Cases and referrals are a way of preserving information across multiple interactions with CommCare on the mobile phone." %}"
                     ></span>
-                </h4>
-                <div class="casexml config" id="casexml_home">
+                </header>
+                <div class="casexml" id="casexml_home">
                 </div>
             {% else %}
-                <h4>{% trans "Case Configuration" %}
+                <header class="clearfix">
+                    <h2 class="pull-left">{% trans "Case Configuration" %}</h2>
                     <span class="hq-help-template"
-                       data-title="{% trans "Case Configuration" %}"
-                       data-content="{% trans "Cases are a way of preserving information across multiple interactions with CommCare on the mobile phone." %}"
-                    </span>
-                </h4>
+                          data-title="{% trans "Case Configuration" %}"
+                          data-content="{% trans "Cases are a way of preserving information across multiple interactions with CommCare on the mobile phone." %}"
+                    ></span>
+                </header>
                 <span class="label label-info indent">The app builder for 2.0 apps currently doesn't support referrals</span>
-                <div class="casexml config" id="casexml_home">
+                <div class="casexml" id="casexml_home">
                     <script type="text/html" id="remove-subcase-modal-template">
                         <div class="modal-header">
                             <a href="#" class="close" data-dismiss="modal">×</a>
@@ -480,13 +479,12 @@
                         </div>
                     </script>
                     <div id="case-config-ko">
-                        <hr/>
-                        <h4>CommCare 2.0 Child Cases <sup>beta</sup>
+                        <h3>CommCare 2.0 Child Cases <sup>beta</sup>
                             <span class="hq-help-template"
                                 data-title="{% trans "Child Cases" %}"
                                 data-content="{% trans "Child Cases let you open other types of cases for use in other modules. When possible, they'll be linked to the current case so you'll always know where they came from. A great use of Child Cases is for tracking a newborn separately from its mother." %}"
                             </span>
-                        </h4>
+                        </h3>
                         <div data-bind="foreach: subcases" class="indent form">
                             <div>
                                 <i class="icon-ok"></i>

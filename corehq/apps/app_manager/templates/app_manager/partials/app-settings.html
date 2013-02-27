@@ -1,0 +1,221 @@
+{% load i18n %}
+{% load hq_shared_tags %}
+{% load xforms_extras %}
+<form class="form-horizontal save-button-form" method="post" action="{% url edit_app_attr domain app.id 'all' %}">
+    <div class="save-button-holder clearfix"></div>
+    <fieldset>
+        <legend>{% trans "Applications Settings" %}</legend>
+        <div class="control-group">
+            <label class="control-label">{% trans "Name" %}</label>
+            <div class="controls">
+                {% if edit %}
+                    <input type="text" name="name" value="{{ app.name }}" />
+                {% else %}
+                    {{ app.name }}
+                {% endif %}
+            </div>
+        </div>
+        <div class="control-group{% if app.application_version == "2.0" %} hide{% endif %}">
+            <label class="control-label">{% trans "App Version" %}</label>
+            <div class="controls">
+                {% if edit %}
+                    <select name="application_version" class="span3" data-value="{{ app.application_version }}" id="app_version">
+                        <option value="1.0">1.x</option>
+                        <option value="2.0">2.x</option>
+                    </select>
+                {% else %}
+                    {{ app.application_version }}
+                {% endif %}
+            </div>
+        </div>
+        <div class="control-group">
+            <label class="control-label">{% trans "CommCare Version" %}</label>
+            <div class="controls">
+                {% if edit %}
+                    <select name="build_spec" class="span3" data-value="{{ app.build_spec.to_string }}" id="commcare_version">
+                    </select>
+                {% else %}
+                    {{ app.get_build_label }}
+                {% endif %}
+            </div>
+        </div>
+        <div class="control-group">
+            <label class="control-label">{% trans "J2ME Platform" %}</label>
+            <div class="controls">
+                {% if edit %}
+                    <select name="platform" class="span3" data-value="{{ app.platform }}">
+                        {% for option in app.platform_options %}
+                            <option value="{{ option.value }}">{{ option.label }}</option>
+                        {% endfor %}
+                    </select>
+                {% else %}
+                    {{ app.platform }}
+                {% endif %}
+            </div>
+        </div>
+        <div class="control-group">
+            <label class="control-label">{% trans "Text Input" %}</label>
+            <div class="controls">
+                {% if edit %}
+                    <select name="text_input" class="span3" data-value="{{ app.text_input }}">
+                        <option value="roman">* Default (Roman)</option>
+                        <option value="native">Native (International)</option>
+                        <option value="custom-keys">Custom Keys{% if app.commcare_version == '1.0' %} [requires CommCare 1.3 or above]{% endif %}</option>
+                    </select>
+                {% else %}
+                    {% if app.text_input == "native"%}
+                        Native (International)
+                        {% else %}{% if app.text_input == "custom-keys" %}
+                            Custom Keys
+                        {% else %}
+                            Default (Roman)
+                        {% endif %}{% endif %}
+                {% endif %}
+                <aside id="custom-keys-help">
+                    <i class="icon-arrow-right"></i>
+                    <p>Customize through <a href="#custom-keys-example">User Interface Translations</a>.</p>
+                    <div id="custom-keys-example">
+                        <h2>Example:</h2>
+                        <ul>
+                            <li><span>polish.TextField.charactersKey1</span><span>.,</span><li>
+                            <li><span>polish.TextField.charactersKey2</span><span>abc2</span><li>
+                            <li><span>polish.TextField.charactersKey3</span><span>def3</span><li>
+                            <li><span>polish.TextField.charactersKey4</span><span>ghi4</span><li>
+                            <li><span>polish.TextField.charactersKey5</span><span>jkl5</span><li>
+                            <li><span>polish.TextField.charactersKey6</span><span>mno6</span><li>
+                            <li><span>polish.TextField.charactersKey7</span><span>pqrs7</span><li>
+                            <li><span>polish.TextField.charactersKey8</span><span>tuv8</span><li>
+                            <li><span>polish.TextField.charactersKey9</span><span>wxyz9</span><li>
+                            <li><span>polish.TextField.charactersKey0</span><span> 0</span><li>
+                        </ul>
+                    </div>
+                </aside>
+            </div>
+        </div>
+        <div class="control-group">
+            <label class="control-label">{% trans "Admin Password" %}</label>
+            <div class="controls">
+                {% if edit %}
+                    <input type="password" id="app_admin_password" name="admin_password"/>
+                {% else %}
+                    ********
+                {% endif %}
+            </div>
+        </div>
+        {% if app.get_doc_type == "RemoteApp" %}
+            <div class="control-group">
+                <label class="control-label">{% trans "Profile URL" %}</label>
+                <div class="controls">
+                    {% if edit %}
+                        <input type="text" class="code wide" name="profile_url" value="{{ app.profile_url }}"/>
+                    {% else %}
+                        {{ app.profile_url }}
+                    {% endif %}
+                </div>
+            </div>
+            <div class="control-group">
+                <label class="control-label">{% trans "Auto-manage URLs" %}</label>
+                <div class="controls">
+                    {% if edit %}
+                        <select name="manage_urls" class="span3" data-value="{{ app.manage_urls|JSON }}">
+                            <option value="false">* Off</option>
+                            <option value="true">On</option>
+                        </select>
+                    {% else %}
+                        {% if app.manage_urls %}On{% else %}Off{% endif %}
+                    {% endif %}
+                </div>
+            </div>
+        {% endif %}
+        {% if app.get_doc_type == "Application" %}
+            <div class="control-group">
+                <label class="control-label" for="show-user-registration-select">{% trans "Allow User Registration from Phone" %}</label>
+                <div class="controls">
+                    {% if edit %}
+                        <select id="show-user-registration-select" name="show_user_registration" class="span3" data-value="{{ app.show_user_registration|JSON }}">
+                            <option value="true">Yes</option>
+                            <option value="false">* No</option>
+                        </select>
+                    {% else %}
+                        {% if not app.show_user_registration %}No{% else %}Yes{% endif %}
+                    {% endif %}
+                </div>
+            </div>
+            {% if app.application_version == '2.0' %}
+                <div class="control-group">
+                    <label class="control-label" for="case-sharing-select">{% trans "Case Sharing" %}</label>
+                    <div class="controls">
+                        {% if edit %}
+                            <select id="case-sharing-select" name="case_sharing" class="span3" data-value="{{ app.case_sharing|JSON }}">
+                                <option value="true">Yes</option>
+                                <option value="false">* No</option>
+                            </select>
+                        {% else %}
+                            {% if app.case_sharing %}Yes{% else %}* No{% endif %}
+                        {% endif %}
+                    </div>
+                </div>
+                <div class="control-group">
+                    <label class="control-label" for="cloudcare-enabled-select">{% trans "CloudCare Enabled" %}</label>
+                    <div class="controls">
+                        {% if edit %}
+                            <select id="cloudcare-enabled-select" name="cloudcare_enabled" class="span3" data-value="{{ app.cloudcare_enabled|JSON }}">
+                                <option value="true">Yes</option>
+                                <option value="false">No</option>
+                            </select>
+                        {% else %}
+                            {% if app.cloudcare_enabled %}Yes{% else %}No{% endif %}
+                        {% endif %}
+                    </div>
+                </div>
+            {% endif %}
+            {% if user.is_superuser and app.use_custom_suite %}
+                {% comment %}
+                                This used to be always visible to superuser, but it was
+                                a horrible idea and is only used in one project. I added
+                                `and app.use_custom_suite` above without changing the
+                                redundant checks below.
+                            {% endcomment %}
+                <div class="control-group">
+                    <label class="control-label" for="use-custom-suite-select">{% trans "Custom Suite File" %}</label>
+                    <div class="controls">
+                        {% if edit %}
+                            <select id="use-custom-suite-select" name="use_custom_suite" class="span3" data-value="{{ app.use_custom_suite|JSON }}">
+                                <option value="true">Yes</option>
+                                <option value="false">* No</option>
+                            </select>
+                        {% else %}
+                            {% if not app.use_custom_suite %}* No{% else %}Yes{% endif %}
+                        {% endif %}
+                    </div>
+                </div>
+                {% if app.use_custom_suite %}
+                    <div class="control-group">
+                        <label class="control-label" for="custom-suite-textarea">{% trans "Custom Suite" %}</label>
+                        <div class="controls">
+                            {% if edit %}
+                                <textarea id="custom-suite-textarea" name="custom_suite">{{ app.custom_suite }}</textarea>
+                            {% else %}
+                                {{ app.custom_suite }}
+                            {% endif %}
+                        </div>
+                    </div>
+                {% endif %}
+            {% endif %}
+        {% endif %}
+        <div class="control-group">
+            <label class="control-label">{% trans "Success Message" %}</label>
+            <div class="controls">
+                {% if edit %}
+                    <textarea name="success_message">{{ app.success_message|trans:langs }}</textarea>
+                {% else %}
+                    <p>{{ app.success_message|trans:langs }}</p>
+                {% endif %}
+                <span class="hq-help-template"
+                      data-title="{% trans "Success Message" %}"
+                      data-content="{% trans "You can optionally specify a template for the message that your CHWs receive upon successful submission of a form. In the template, you have access to the following variables gathered real-time from the server: $first_name, $name, $week, $today. Example: Thanks $first_name! You have submitted $today forms today and $week forms since Monday." %}"
+                        ></span>
+            </div>
+        </div>
+    </fieldset>
+</form>
