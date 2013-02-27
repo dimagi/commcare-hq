@@ -21,7 +21,7 @@ def handle(verified_contact, text):
         return False
 
     try:
-        data = StockReport(domain, verified_contact).parse(text.lower())
+        data = StockReportHelper(domain, verified_contact).parse(text.lower())
         if not data:
             return False
     except Exception, e:
@@ -39,7 +39,7 @@ def process(domain, data):
     
     stockreport.process(domain, inst_xml)
 
-class StockReport(object):
+class StockReportHelper(object):
     """a helper object for parsing raw stock report texts"""
 
     def __init__(self, domain, v):
