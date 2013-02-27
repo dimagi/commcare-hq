@@ -660,7 +660,7 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, UnicodeMixIn):
         app_label = 'users'
 
     def __unicode__(self):
-        return "%s %s" % (self.__class__.__name__, self.get_id)
+        return "<%s '%s'>" % (self.__class__.__name__, self.get_id)
 
     def __getattr__(self, item):
         if item == 'current_domain':
