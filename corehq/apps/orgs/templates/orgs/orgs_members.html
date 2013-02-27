@@ -15,9 +15,11 @@
                 {% if member.username in org_admins %} <span class="label">Admin</span>{% endif %}
             </strong>
             {% if admin %}
+                {% ifnotequal member.username request.couch_user.username %}
                 <a href="#" class="btn btn-danger remove-member-btn pull-right" data-member="{{ member.username }}" data-member_id="{{ member.get_id }}">
                     <i class="icon-remove"></i> {% trans "Remove Member" %}
                 </a>
+                {% endifnotequal %}
             {% endif %}
         </td></tr>
     {% endfor %}
@@ -46,8 +48,8 @@
             <input id="removing-member-id" type="hidden" name="member_id" value="" />
         </div>
         <div class="modal-footer">
-            <a href="#" data-dismiss="modal" class="btn">>{% trans "Cancel" %}</a>
-            <button type="submit" class="btn btn-primary">>{% trans "Remove Member" %}</button>
+            <a href="#" data-dismiss="modal" class="btn">{% trans "Cancel" %}</a>
+            <button type="submit" class="btn btn-primary">{% trans "Remove Member" %}</button>
         </div>
     </form>
 </div>
