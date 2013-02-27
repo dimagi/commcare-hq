@@ -32,6 +32,7 @@
             $('#agree-button').click(function() {
                 var form = $("#" + $(this).attr('data-form'));
                 form.submit();
+                $(this).prop('disabled', true).addClass('disabled')
             });
         });
     </script>
@@ -293,7 +294,7 @@
         </div>
         <div class="modal-footer">
             <a href="#" data-dismiss="modal" class="btn">{% trans "Cancel" %}</a>
-            <button type="submit" class="btn btn-primary">{% trans "Post" %}</button>
+            <button type="submit" class="btn btn-primary disable-on-submit">{% trans "Post" %}</button>
         </div>
     </form>
 </div>
