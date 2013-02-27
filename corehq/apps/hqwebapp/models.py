@@ -278,9 +278,6 @@ class ApplicationsTab(UITab):
 
     @property
     def is_viewable(self):
-        if self.project.commtrack_enabled:
-            return False
-
         couch_user = self.couch_user
         return (self.domain and couch_user and
                 (couch_user.is_web_user() or couch_user.can_edit_apps()) and
