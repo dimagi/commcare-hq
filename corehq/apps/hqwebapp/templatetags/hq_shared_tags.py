@@ -55,11 +55,6 @@ def concat(str1, str2):
     """Concatenate two strings"""
     return "%s%s" % (str1, str2)
 
-@register.simple_tag
-def build_url(relative_path, request=None):
-    """Attempt to build a URL from within a template"""
-    return build_url_util(relative_path, request)
-
 try:
     from resource_versions import resource_versions
 except (ImportError, SyntaxError):
