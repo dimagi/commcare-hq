@@ -3,7 +3,9 @@ from couchdbkit.exceptions import ResourceNotFound
 from datetime import datetime
 import os
 import json
-from couchexport.tasks import Temp
+from couchexport.tasks import Temp, rebuild_schemas
+from couchexport.export import SchemaMismatchException
+from dimagi.utils.logging import notify_exception
 
 def export_for_group(export_id, output_dir):
     try:
@@ -12,7 +14,18 @@ def export_for_group(export_id, output_dir):
         raise Exception("Couldn't find an export with id %s" % export_id)
     
     for config, schema in config.all_exports:
-        tmp, _ = schema.get_export_files(format=config.format)
+        try:
+            tmp, _ = schema.get_export_files(format=config.format)
+        except SchemaMismatchException, e:
+            # fire off a delayed force update to prevent this from happening again
+            rebuild_schemas.delay(config.index)
+            msg = "Saved export failed for group export {index}. The specific error is {msg}."
+            notify_exception(None, msg.format(index=config.index,
+                                              msg=str(e)))
+            # TODO: do we care enough to notify the user?
+            # This is typically only called by things like celerybeat.
+            continue
+
         payload = Temp(tmp).payload
         if output_dir == "couch":
             saved = SavedBasicExport.view("couchexport/saved_exports", 
