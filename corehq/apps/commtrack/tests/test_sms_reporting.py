@@ -8,11 +8,12 @@ from corehq.apps.commtrack.sms import handle
 from casexml.apps.case.models import CommCareCase
 from corehq.apps.sms.backend import test
 
-class StockReportTest(TestCase):
+class CommTrackTest(TestCase):
+    requisitions_enabled = False # can be overridden
 
     def setUp(self):
         self.backend = test.bootstrap(TEST_BACKEND, to_console=True)
-        self.domain = bootstrap_domain()
+        self.domain = bootstrap_domain(requisitions_enabled=self.requisitions_enabled)
         self.user = bootstrap_user()
         self.verified_number = self.user.get_verified_number()
         self.loc = make_loc('loc1')
@@ -24,7 +25,11 @@ class StockReportTest(TestCase):
             self.spps[p.code] = make_supply_point_product(self.sp, p._id)
 
     def tearDown(self):
+        self.backend.delete()
+        self.user.delete()
         self.domain.delete() # domain delete cascades to everything else
+
+class StockReportTest(CommTrackTest):
 
     def testStockReport(self):
         amounts = {
@@ -41,3 +46,19 @@ class StockReportTest(TestCase):
         for code, amt in amounts.items():
             spp = CommCareCase.get(self.spps[code]._id)
             self.assertEqual(str(amt), spp.current_stock)
+
+class StockRequisitionTest(CommTrackTest):
+    requisitions_enabled = True
+
+    def testRequisition(self):
+        amounts = {
+            'pp': 10,
+            'pq': 20,
+            'pr': 30,
+        }
+        # soh loc1 pp 10 pq 20...
+        handled = handle(self.verified_number, 'req {loc} {report}'.format(
+            loc='loc1',
+            report=' '.join('%s %s' % (k, v) for k, v in amounts.items())
+        ))
+        self.assertTrue(handled)

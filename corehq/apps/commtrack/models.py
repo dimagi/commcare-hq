@@ -30,6 +30,23 @@ ACTION_TYPES = [
     'stockout',
 ]
 
+REQUISITION_ACTION_TYPES = [
+    # request a product
+    'request',
+
+    # approve a requisition (it is allowed to be filled)
+    # using this is configurable and optional
+    'approval',
+
+    # fill a requisition (the order is ready)
+    'fill',
+
+    # receive the sock (closes the requisition)
+    # NOTE: it's not totally clear if this is necessary or
+    # should be built into the regular receipt workflow.
+    'receipts',
+]
+
 class Product(Document):
     domain = StringProperty()
     name = StringProperty()
@@ -84,6 +101,10 @@ class CommtrackRequisitionConfig(DocumentSchema):
 
     enabled = BooleanProperty(default=False)
 
+    # requisitions have their own sets of actions
+    actions = SchemaListProperty(CommtrackActionConfig)
+    
+
 
 class SupplyPointType(DocumentSchema):
     name = StringProperty()
@@ -112,12 +133,31 @@ class CommtrackConfig(Document):
                           include_docs=True).one()
         return result
 
+    def all_actions(self):
+        if self.requisitions_enabled:
+            return self.actions + self.requisition_config.actions
+        return self.actions
+
+    def _keywords(self, action_list, multi):
+        return dict((action_config._keyword(multi), action_config.action_name) \
+                    for action_config in action_list)
+
     def keywords(self, multi=False):
-        return dict((action_config._keyword(multi), action_config.action_name) for action_config in self.actions)
+        return self._keywords(self.actions, multi)
+
+    def all_keywords(self, multi=False):
+        return self._keywords(self.all_actions(), multi)
+
+    def _by_name(self, action_list):
+        return dict((action_config.action_name, action_config) for action_config in action_list)
 
     @property
     def actions_by_name(self):
-        return dict((action_config.action_name, action_config) for action_config in self.actions)
+        return self._by_name(self.actions)
+
+    @property
+    def all_actions_by_name(self):
+        return self._by_name(self.all_actions())
 
     @property
     def known_supply_point_types(self):

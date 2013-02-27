@@ -52,10 +52,10 @@ class StockReportHelper(object):
         """take in a text and return the parsed stock transactions"""
         args = text.split()
 
-        if args[0] in self.C.keywords():
+        if args[0] in self.C.all_keywords():
             # single action sms
             # TODO: support single-action by product, as well as by action?
-            action = self.C.keywords()[args[0]]
+            action = self.C.all_keywords()[args[0]]
             args = args[1:]
 
             if not location:
@@ -272,7 +272,7 @@ def send_confirmation(v, data):
     static_loc = Location.get(data['location'].location_[-1])
     location_name = static_loc.name
 
-    action_to_code = dict((v, k) for k, v in C.keywords().iteritems())
+    action_to_code = dict((v, k) for k, v in C.all_keywords().iteritems())
     tx_by_action = map_reduce(lambda tx: [(tx['action'],)], data=data['transactions'], include_docs=True)
     def summarize_action(action, txs):
         def fragment(tx):

@@ -16,10 +16,7 @@ def bootstrap_domain(domain_name=TEST_DOMAIN, requisitions_enabled=False):
     domain_obj = create_domain(domain_name)
     domain_obj.commtrack_enabled = True
     domain_obj.save()
-    config = bootstrap_default(domain_name)
-    if requisitions_enabled:
-        config.requisition_config.enabled = True
-        config.save()
+    bootstrap_default(domain_name, requisitions_enabled)
     return domain_obj
 
 

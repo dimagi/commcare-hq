@@ -33,7 +33,7 @@ def process(domain, instance):
 
     # ensure transaction types are processed in the correct order
     def transaction_order(tx):
-        return [action.action_name for action in config.actions].index(tx['action'])
+        return [action.action_name for action in config.all_actions()].index(tx['action'])
     transactions.sort(key=transaction_order)
     # apply all transactions to each product case in bulk
     transactions_by_product = map_reduce(lambda tx: [(tx['case_id'],)], data=transactions, include_docs=True)
@@ -64,7 +64,7 @@ def tx_from_xml(tx, config):
         'value': int(tx.find(_('value')).text),
         'inferred': tx.attrib.get('inferred') == 'true',
     }
-    data['base_action'] = config.actions_by_name[data['action']].action_type
+    data['base_action'] = config.all_actions_by_name[data['action']].action_type
     return data
 
 def tx_to_xml(tx, E=None):
