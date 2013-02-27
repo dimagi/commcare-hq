@@ -450,7 +450,7 @@
                     <h2 class="pull-left">{% trans "Cases and Referrals" %}</h2>
                     <span class="hq-help-template"
                           data-title="{% trans "Cases and Referrals" %}"
-                          data-content="{% trans "Cases and referrals are a way of preserving information across multiple interactions with CommCare on the mobile phone." %}"
+                          data-content="{% trans "Cases give you a way to track patients, farms, etc. over time.  You can choose to save data from a form to the case, which will store the data locally on the phone to use later." %}"
                     ></span>
                 </header>
                 <div class="casexml" id="casexml_home">
@@ -460,7 +460,7 @@
                     <h2 class="pull-left">{% trans "Case Configuration" %}</h2>
                     <span class="hq-help-template"
                           data-title="{% trans "Case Configuration" %}"
-                          data-content="{% trans "Cases are a way of preserving information across multiple interactions with CommCare on the mobile phone." %}"
+                          data-content="{% trans "Cases give you a way to track patients, farms, etc. over time.  You can choose to save data from a form to the case, which will store the data locally on the phone to use later." %}"
                     ></span>
                 </header>
                 <span class="label label-info indent">The app builder for 2.0 apps currently doesn't support referrals</span>
@@ -479,12 +479,14 @@
                         </div>
                     </script>
                     <div id="case-config-ko">
-                        <h3>CommCare 2.0 Child Cases <sup>beta</sup>
+                        <header class="clearfix">
+                            <h3 class="pull-left">CommCare 2.0 Child Cases</h3>
                             <span class="hq-help-template"
-                                data-title="{% trans "Child Cases" %}"
-                                data-content="{% trans "Child Cases let you open other types of cases for use in other modules. When possible, they'll be linked to the current case so you'll always know where they came from. A great use of Child Cases is for tracking a newborn separately from its mother." %}"
-                            </span>
-                        </h3>
+                                  data-title="{% trans "Child Cases" %}"
+                                  data-content="{% trans "Child Cases let you open other types of cases for use in other modules. When possible, they'll be linked to the current case so you'll always know where they came from. A great use of Child Cases is for tracking a newborn separately from its mother." %}"
+                            ></span>
+                        </header>
+
                         <div data-bind="foreach: subcases" class="indent form">
                             <div>
                                 <i class="icon-ok"></i>
