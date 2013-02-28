@@ -498,15 +498,42 @@ def manage_multimedia(request, domain):
             'type': m.doc_type
                    } for m in media],
         'licenses': LICENSES.items()
-                                                                           })
+    })
 
 @domain_admin_required
 def commtrack_settings(request, domain):
     domain = Domain.get_by_name(domain)
+    settings = domain.commtrack_settings
+
+    if request.POST:
+        from corehq.apps.commtrack.models import CommtrackActionConfig
+
+        payload = json.loads(request.POST.get('json'))
+
+        settings.multiaction_keyword = payload['keyword']
+        def mk_action(action):
+            action['action_type'] = action['type']
+            del action['type']
+            return CommtrackActionConfig(**action)
+        settings.actions = [mk_action(a) for a in payload['actions']]
+        settings.save()
+
+    def settings_to_json(config):
+        return {
+            'keyword': config.multiaction_keyword,
+            'actions': [action_to_json(a) for a in config.actions],
+        }
+    def action_to_json(action):
+        return {
+            'type': action.action_type,
+            'keyword': action.keyword,
+            'name': action.action_name,
+            'caption': action.caption,
+        }
 
     return render(request, 'domain/admin/commtrack_settings.html', dict(
             domain=domain.name,
-            #form=form,
+            settings=settings_to_json(settings),
         ))
 
 @require_POST
