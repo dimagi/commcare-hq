@@ -1,13 +1,17 @@
 import logging
 import calendar
 import copy
-from couchdbkit.ext.django.schema import Document, StringProperty, IntegerProperty, ListProperty, DateTimeProperty
-from couchdbkit.schema.base import DocumentSchema
-import datetime
-from couchdbkit.schema.properties import LazyDict
 import dateutil
 import numpy
+import datetime
+from couchdbkit.ext.django.schema import Document, StringProperty, IntegerProperty, ListProperty, DateTimeProperty
+from couchdbkit.schema.base import DocumentSchema
+from couchdbkit.schema.properties import LazyDict
 from casexml.apps.case.models import CommCareCase
+from corehq.apps.crud.models import AdminCRUDDocumentMixin
+from corehq.apps.indicators.admin.crud import (IndicatorAdminCRUDManager,
+                                               FormAliasIndicatorAdminCRUDManager,
+                                               FormLabelIndicatorAdminCRUDManager)
 from couchforms.models import XFormInstance
 from dimagi.utils.couch.database import get_db
 from dimagi.utils.dates import DateSpan, add_months, months_between
@@ -21,7 +25,7 @@ class DocumentMismatchError(Exception):
     pass
 
 
-class IndicatorDefinition(Document):
+class IndicatorDefinition(Document, AdminCRUDDocumentMixin):
     """
         An Indicator Definition defines how to compute the indicator that lives
         in the namespaced computed_ property of a case or form.
@@ -32,6 +36,8 @@ class IndicatorDefinition(Document):
     version = IntegerProperty()
     class_path = StringProperty()
     last_modified = DateTimeProperty()
+
+    _admin_crud_class = IndicatorAdminCRUDManager
 
     _class_path = "corehq.apps.indicators.models"
     _returns_multiple = False
@@ -172,6 +178,16 @@ class IndicatorDefinition(Document):
             if indicator and issubclass(indicator.__class__, cls):
                 all_indicators.append(indicator)
         return all_indicators
+
+    @classmethod
+    def get_all_of_type(cls, namespace, domain):
+        key = ["type", namespace, domain, cls.__name__]
+        return cls.view(cls.indicator_list_view(),
+                        reduce = False,
+                        include_docs = True,
+                        startkey=key,
+                        endkey=key+[{}]
+        ).all()
 
 
 class DynamicIndicatorDefinition(IndicatorDefinition):
@@ -517,7 +533,7 @@ class CombinedCouchViewIndicatorDefinition(DynamicIndicatorDefinition):
         return combined_retro
 
 
-class DocumentIndicatorDefinition(IndicatorDefinition):
+class BaseDocumentIndicatorDefinition(IndicatorDefinition):
     """
         This IndicatorDefinition expects to get a value from a couchdbkit Document and then
         save that value in the computed_ property of that Document.
@@ -580,7 +596,7 @@ class FormDataIndicatorDefinitionMixin(DocumentSchema):
         return form_data
 
 
-class FormIndicatorDefinition(DocumentIndicatorDefinition, FormDataIndicatorDefinitionMixin):
+class FormIndicatorDefinition(BaseDocumentIndicatorDefinition, FormDataIndicatorDefinitionMixin):
     """
         This Indicator Definition defines an indicator that will live in the computed_ property of an XFormInstance
         document. The 'doc' passed through get_value and get_clean_value should be an XFormInstance.
@@ -599,6 +615,30 @@ class FormIndicatorDefinition(DocumentIndicatorDefinition, FormDataIndicatorDefi
         return ["namespace", "domain", "xmlns", "slug"]
 
 
+class FormLabelIndicatorDefinition(FormIndicatorDefinition):
+    """
+        This indicator definition labels the forms of a certain XMLNS with the slug provided as its type.
+        This type is used as a way to label that form in couch views.
+        For example, I want an XMLNS of http://domain.commcarehq.org/child/visit/ to map to child_visit_form.
+    """
+    _admin_crud_class = FormLabelIndicatorAdminCRUDManager
+
+    def get_value(self, doc):
+        return self.slug
+
+    @classmethod
+    def get_label_for_xmlns(cls, namespace, domain, xmlns):
+        key = [namespace, domain, xmlns]
+        label = cls.get_db().view("indicators/form_labels",
+                                   reduce=False,
+                                   descending=True,
+                                   limit=1,
+                                   startkey=key + [{}],
+                                   endkey=key
+        ).one()
+        return label['value'] if label else ""
+
+
 class FormDataAliasIndicatorDefinition(FormIndicatorDefinition):
     """
         This Indicator Definition is targeted for the scenarios where you have an indicator report across multiple
@@ -607,6 +647,8 @@ class FormDataAliasIndicatorDefinition(FormIndicatorDefinition):
         as a computed_ indicator.
     """
     question_id = StringProperty()
+
+    _admin_crud_class = FormAliasIndicatorAdminCRUDManager
 
     def get_value(self, doc):
         form_data = doc.get_form
@@ -657,7 +699,7 @@ class CaseDataInFormIndicatorDefinition(FormIndicatorDefinition):
         return computed, is_update
 
 
-class CaseIndicatorDefinition(DocumentIndicatorDefinition):
+class CaseIndicatorDefinition(BaseDocumentIndicatorDefinition):
     """
         This Indicator Definition defines an indicator that will live in the computed_ property of a CommCareCase
         document. The 'doc' passed through get_value and get_clean_value should be a CommCareCase.
