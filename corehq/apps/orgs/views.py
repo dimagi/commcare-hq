@@ -418,5 +418,9 @@ def verify_org(request, org):
 def public(request, org, template='orgs/public.html'):
     organization = Organization.get_by_name(org, strict=True)
     ctxt = base_context(request, organization)
+    ctxt["snapshots"] = []
+    for dom in ctxt["domains"]:
+        if dom.published_snapshot() and dom.published_snapshot().is_approved:
+            ctxt["snapshots"].append(dom.published_snapshot())
     return render(request, template, ctxt)
 

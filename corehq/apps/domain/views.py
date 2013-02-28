@@ -306,6 +306,7 @@ def create_snapshot(request, domain):
                 'license': domain.license,
                 'publish_on_submit': True,
             })
+
         snapshots = list(domain.snapshots())
         published_snapshot = snapshots[0] if snapshots else domain
         published_apps = {}
@@ -316,7 +317,7 @@ def create_snapshot(request, domain):
                 'project_type': published_snapshot.project_type,
                 'license': published_snapshot.license,
                 'title': published_snapshot.title,
-                'author': published_snapshot.author,
+                # 'author': published_snapshot.author,
                 'share_multimedia': published_snapshot.multimedia_included,
                 'description': published_snapshot.description,
                 'short_description': published_snapshot.short_description,
@@ -327,6 +328,7 @@ def create_snapshot(request, domain):
                     published_apps[app._id] = app
                 else:
                     published_apps[app.copied_from._id] = app
+
         app_forms = []
         for app in domain.applications():
             app = app.get_latest_saved() or app
@@ -344,21 +346,29 @@ def create_snapshot(request, domain):
                 }, prefix=app.id)))
             else:
                 app_forms.append((app, SnapshotApplicationForm(initial={'publish': (published_snapshot is None or published_snapshot == domain)}, prefix=app.id)))
+
+        can_publish_as_org = domain.get_organization() and request.couch_user.is_org_admin(domain.get_organization().name)
         return render(request, 'domain/create_snapshot.html',
             {'domain': domain.name,
              'form': form,
              #'latest_applications': latest_applications,
              'app_forms': app_forms,
+             'can_publish_as_org': can_publish_as_org,
+             'published_as_org': published_snapshot.publisher == 'organization',
+             'author': published_snapshot.author,
              'autocomplete_fields': ('project_type', 'phone_model', 'user_type', 'city', 'country', 'region')})
+
     elif request.method == 'POST':
         form = SnapshotSettingsForm(request.POST, request.FILES)
         form.dom = domain
+
         app_forms = []
         publishing_apps = False
         for app in domain.applications():
             app = app.get_latest_saved() or app
             app_forms.append((app, SnapshotApplicationForm(request.POST, prefix=app.id)))
             publishing_apps = publishing_apps or request.POST.get("%s-publish" % app.id, False)
+
         if not publishing_apps:
             messages.error(request, "Cannot publish a project without applications to CommCare Exchange")
             return render(request, 'domain/create_snapshot.html',
@@ -406,8 +416,10 @@ def create_snapshot(request, domain):
         new_domain.short_description = request.POST['short_description']
         new_domain.project_type = request.POST['project_type']
         new_domain.title = request.POST['title']
-        new_domain.author = request.POST['author']
         new_domain.multimedia_included = request.POST.get('share_multimedia', '') == 'on'
+        new_domain.publisher = request.POST['publisher']
+        print new_domain.publisher
+        new_domain.author = request.POST.get('author', None)
 
         new_domain.is_approved = False
         publish_on_submit = request.POST.get('publish_on_submit', "no") == "yes"

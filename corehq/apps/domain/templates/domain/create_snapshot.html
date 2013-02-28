@@ -61,6 +61,14 @@
             $('#id_publish_on_submit').val('no');
             $('#snapshot-form').submit();
         });
+
+        $('input:radio[name="publisher"]').change(function() {
+            if ($(this).val() == 'user') {
+                $('#author-input').show(250);
+            } else {
+                $('#author-input').hide(250);
+            }
+        });
     });
 </script>
 {% endblock %}
@@ -80,6 +88,27 @@
                     <p class="help-block">
                         If you upload an image, it will automatically erase the current image and use that instead.
                     </p>
+                </div>
+            </div>
+        {% endif %}
+        {% if can_publish_as_org %}
+            <div class="control-group">
+                <div class="control-label"><label>{% trans "Publishing as" %}</label></div>
+                <div class="controls">
+                    <label class="radio">
+                        <input type="radio" name="publisher" id="as_user" value="user" {% if not published_as_org %}checked{% endif %}>
+                        {% trans "A user" %}: <strong>{{ request.couch_user.username }}</strong>
+                    </label>
+                    <label class="radio">
+                        <input type="radio" name="publisher" id="as_org" value="organization" {% if published_as_org %}checked{% endif %}>
+                        {% trans "An organization" %}: <strong>{{ request.project.get_organization.title }}</strong>
+                    </label>
+                </div>
+            </div>
+            <div class="control-group" id="author-input">
+                <div class="control-label"><label>{% trans "Publishing on behalf of" %}</label></div>
+                <div class="controls">
+                    <input type="text" name="author" value={{ author }} placeholder="{% trans "Name to display as the author" %}" />
                 </div>
             </div>
         {% endif %}

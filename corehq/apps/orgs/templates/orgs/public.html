@@ -1,4 +1,4 @@
-{# The initial stub for a public facing orgs page. Not currently in use #}
+{# todo: make this look good #}
 {% extends "hqwebapp/centered.html" %}
 {% load hq_shared_tags %}
 {% load hqstyle_tags %}
@@ -35,6 +35,16 @@
                     </div>
                 </div>
             </div>
+        </div>
+        <div class="span9">
+            {% if snapshots %}
+                <h3>Applications published by the {{ org.title }} organization:</h3>
+                {% for snapshot in snapshots %}
+                    <div><a href="{% url project_info snapshot.name %}">{{ snapshot.title }}</a></div>
+                {% endfor %}
+            {% else %}
+                <h3>The {{ org.title }} organization has no published applications.</h3>
+            {% endif %}
         </div>
     </div>
 {% endblock %}
