@@ -77,6 +77,18 @@ ADM_ADMIN_INTERFACES = (
     ))
 )
 
+from corehq.apps.indicators.admin import document_indicators
+
+INDICATOR_ADMIN_INTERFACES = (
+    (_("Form Based Indicators"), (
+        document_indicators.FormLabelIndicatorDefinitionAdminInterface,
+        document_indicators.FormAliasIndicatorDefinitionAdminInterface,
+    )),
+    (_("Couch Based Indicators"), (
+
+    )),
+)
+
 from corehq.apps.announcements.interface import (
     ManageGlobalHQAnnouncementsInterface,
     ManageReportAnnouncementsInterface)
