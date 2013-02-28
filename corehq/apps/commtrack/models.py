@@ -7,6 +7,7 @@ from casexml.apps.case.models import CommCareCase
 from copy import copy
 from django.dispatch import receiver
 from corehq.apps.locations.signals import location_created
+from corehq.apps.commtrack.const import RequisitionActions
 
 # these are the allowable stock transaction types, listed in the
 # default ordering in which they are processed. processing order
@@ -32,19 +33,19 @@ ACTION_TYPES = [
 
 REQUISITION_ACTION_TYPES = [
     # request a product
-    'request',
+    RequisitionActions.REQUEST,
 
     # approve a requisition (it is allowed to be filled)
     # using this is configurable and optional
-    'approval',
+    RequisitionActions.APPROVAL,
 
     # fill a requisition (the order is ready)
-    'fill',
+    RequisitionActions.FILL,
 
     # receive the sock (closes the requisition)
     # NOTE: it's not totally clear if this is necessary or
     # should be built into the regular receipt workflow.
-    'receipts',
+    RequisitionActions.RECEIPTS,
 ]
 
 class Product(Document):
