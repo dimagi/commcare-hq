@@ -297,6 +297,7 @@ class CouchIndicatorDef(DynamicIndicatorDefinition):
 
         if datespan:
             datespan = copy.copy(datespan)
+            datespan.enddate = datespan.enddate.replace(hour=23, minute=59, second=59, microsecond=999999)
             if self.fixed_datespan_days:
                 datespan.startdate = datespan.enddate - datetime.timedelta(days=self.fixed_datespan_days)
             if self.fixed_datespan_months:
