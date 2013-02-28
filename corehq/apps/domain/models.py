@@ -179,6 +179,7 @@ class Domain(Document, HQBillingDomainMixin, SnapshotMixin):
     organization = StringProperty()
     slug = StringProperty() # the slug for this project namespaced within an organization
     eula = SchemaProperty(LicenseAgreement)
+    creating_user = StringProperty() # username of the user who created this domain
 
     # domain metadata
     project_type = StringProperty() # e.g. MCH, HIV
