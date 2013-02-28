@@ -34,6 +34,20 @@
                 form.submit();
                 $(this).prop('disabled', true).addClass('disabled')
             });
+
+            // show downloads info div
+            $('#downloads-btn').click(function() {
+                var open =  $(this).attr('data-open') == 'true';
+                if (open) {
+                    $('#downloads-info').hide(500);
+                    $(this).attr('data-open', 'false');
+                    $("#downloads-btn-append").text('>>');
+                } else {
+                    $('#downloads-info').show(500);
+                    $(this).attr('data-open', 'true');
+                    $("#downloads-btn-append").text('<<');
+                }
+            });
         });
     </script>
 {% endblock %}
@@ -124,8 +138,26 @@
     <dd>{{ project.get_license_display }}</dd>
     <dt>{% trans 'Downloads' %}</dt>
     <dd>
-{#        This version: {{ project.copies|length }};#}
-        <!-- All versions: -->{{ project.downloads }}
+        <!-- This version: -->
+        {% if copies %}
+            <button class="btn btn-mini btn-info" data-open='false' id="downloads-btn">
+                {{ copies|length }} Downloads <span id="downloads-btn-append">>></span>
+            </button>
+            <div style="margin-top: 1em;" class="well well-small hide" id="downloads-info">
+                <table class="table">
+                    <tr><th style="border-top: 0;">Project</th><th style="border-top: 0;">Downloaded by</th></tr>
+                    {% for copy in copies %}
+                        <tr>
+                            <td>{{ copy.display_name }}</td>
+                            <td>{{ copy.creating_user|default:"No data" }}</td>
+                        </tr>
+                    {% endfor %}
+                </table>
+            </div>
+        {% else %}
+            None
+        {% endif %}
+{#        <!-- All versions: -->{{ project.downloads }}#}
     </dd>
     {% if project.multimedia_included and project.has_media %}
         <dd>
