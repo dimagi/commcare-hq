@@ -86,6 +86,9 @@ class CommtrackActionConfig(DocumentSchema):
     name = StringProperty() # defaults to action_type
     caption = StringProperty()
 
+    def __repr__(self):
+        return '{action_type}: {caption} ({keyword})'.format(**self._doc)
+
     def _keyword(self, multi):
         if multi:
             k = self.multiaction_keyword or self.keyword
