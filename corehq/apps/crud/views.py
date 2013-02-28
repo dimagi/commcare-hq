@@ -16,6 +16,7 @@ class BaseAdminCRUDFormView(TemplateView):
 
     @method_decorator(require_superuser)
     def dispatch(self, request, *args, **kwargs):
+        self.request = request
         form_type = kwargs.get('form_type')
         action = kwargs.get('action', 'new')
         item_id = kwargs.get("item_id")

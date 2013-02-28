@@ -1,4 +1,5 @@
 import datetime
+from django.conf import settings
 from django.template.loader import render_to_string
 from django.utils.safestring import mark_safe
 from corehq.apps.crud.models import BaseAdminHQTabularCRUDManager
@@ -28,6 +29,10 @@ class IndicatorAdminCRUDManager(BaseAdminHQTabularCRUDManager):
     def format_property(self, key, property):
         if isinstance(property, datetime.datetime):
             return property.strftime("%d %B %Y")
+        if key == "namespace":
+            available_namespaces = dict(getattr(settings,
+                                                'INDICATOR_NAMESPACES', {}).get(self.document_instance.domain))
+            return available_namespaces.get(property)
         return super(IndicatorAdminCRUDManager, self).format_property(key, property)
 
     def create(self, **kwargs):
@@ -68,4 +73,58 @@ class FormAliasIndicatorAdminCRUDManager(BaseFormIndicatorAdminCRUDManager):
     def properties_in_row(self):
         original_props = super(FormAliasIndicatorAdminCRUDManager, self).properties_in_row
         return original_props[:3] + ["question_id"] + original_props[-2:]
+
+
+class CaseDataInFormIndicatorAdminCRUDManager(BaseFormIndicatorAdminCRUDManager):
+
+    @property
+    def properties_in_row(self):
+        original_props = super(CaseDataInFormIndicatorAdminCRUDManager, self).properties_in_row
+        return original_props[:3] + ["case_property"] + original_props[-2:]
+
+
+class FormDataInCaseAdminCRUDManager(BaseFormIndicatorAdminCRUDManager):
+
+    @property
+    def properties_in_row(self):
+        original_props = super(FormDataInCaseAdminCRUDManager, self).properties_in_row
+        return original_props[:2] + ["case_type", "xmlns", "question_id"] + original_props[-2:]
+
+
+class BaseDynamicIndicatorCRUDManager(IndicatorAdminCRUDManager):
+
+    @property
+    def properties_in_row(self):
+        original_props = super(BaseDynamicIndicatorCRUDManager, self).properties_in_row
+        return original_props[:2] + ["title", "description"] + original_props[-2:]
+
+
+class CouchIndicatorCRUDManager(BaseDynamicIndicatorCRUDManager):
+
+    @property
+    def properties_in_row(self):
+        original_props = super(CouchIndicatorCRUDManager, self).properties_in_row
+        return original_props[:4] + ["couch_view", "indicator_key", "startdate_shift"] + original_props[-2:]
+
+    def format_property(self, key, property):
+        if key == "startdate_shift":
+            return mark_safe(render_to_string("indicators/partials/time_shift_summary.html", {
+                "startdate_shift": self.document_instance.startdate_shift,
+                "enddate_shift": self.document_instance.enddate_shift,
+                "fixed_datespan_days": self.document_instance.fixed_datespan_days,
+                "fixed_datespan_months": self.document_instance.fixed_datespan_months,
+            }))
+        if key == "indicator_key":
+            return property or '<span class="label">None</span>'
+        return super(CouchIndicatorCRUDManager, self).format_property(key, property)
+
+
+class CombinedCouchIndicatorCRUDManager(BaseDynamicIndicatorCRUDManager):
+
+    @property
+    def properties_in_row(self):
+        original_props = super(CombinedCouchIndicatorCRUDManager, self).properties_in_row
+        return original_props[:4] + ["numerator_slug", "denominator_slug"] + original_props[-2:]
+
+
 

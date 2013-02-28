@@ -11,7 +11,7 @@ from casexml.apps.case.models import CommCareCase
 from corehq.apps.crud.models import AdminCRUDDocumentMixin
 from corehq.apps.indicators.admin.crud import (IndicatorAdminCRUDManager,
                                                FormAliasIndicatorAdminCRUDManager,
-                                               FormLabelIndicatorAdminCRUDManager)
+                                               FormLabelIndicatorAdminCRUDManager, CaseDataInFormIndicatorAdminCRUDManager, FormDataInCaseAdminCRUDManager, CouchIndicatorCRUDManager, BaseDynamicIndicatorCRUDManager, CombinedCouchIndicatorCRUDManager)
 from couchforms.models import XFormInstance
 from dimagi.utils.couch.database import get_db
 from dimagi.utils.dates import DateSpan, add_months, months_between
@@ -195,6 +195,8 @@ class DynamicIndicatorDefinition(IndicatorDefinition):
     title = StringProperty()
     base_doc = "DynamicIndicatorDefinition"
 
+    _admin_crud_class = BaseDynamicIndicatorCRUDManager
+
     @classmethod
     def indicator_list_view(cls):
         return "indicators/dynamic_indicator_definitions"
@@ -269,6 +271,8 @@ class CouchIndicatorDef(DynamicIndicatorDefinition):
     enddate_shift = IntegerProperty(default=0)
     fixed_datespan_days = IntegerProperty(default=0)
     fixed_datespan_months = IntegerProperty(default=0)
+
+    _admin_crud_class = CouchIndicatorCRUDManager
 
     @property
     @memoized
@@ -431,6 +435,7 @@ class CouchIndicatorDef(DynamicIndicatorDefinition):
             ))
         return retrospective
 
+
 class NoGroupCouchIndicatorDefBase(CouchIndicatorDef):
     """
         Use this base for all CouchViewIndicatorDefinitions that have views which are not simply
@@ -491,6 +496,8 @@ class SumLastEmittedCouchIndicatorDef(NoGroupCouchIndicatorDefBase):
 class CombinedCouchViewIndicatorDefinition(DynamicIndicatorDefinition):
     numerator_slug = StringProperty()
     denominator_slug = StringProperty()
+
+    _admin_crud_class = CombinedCouchIndicatorCRUDManager
 
     @property
     @memoized
@@ -664,6 +671,8 @@ class CaseDataInFormIndicatorDefinition(FormIndicatorDefinition):
     """
     case_property = StringProperty()
 
+    _admin_crud_class = CaseDataInFormIndicatorAdminCRUDManager
+
     def get_value(self, doc):
         case = self._get_related_case(doc)
         if case is not None and hasattr(case, str(self.case_property)):
@@ -726,6 +735,8 @@ class FormDataInCaseIndicatorDefinition(CaseIndicatorDefinition, FormDataIndicat
     """
     question_id = StringProperty()
     _returns_multiple = True
+
+    _admin_crud_class = FormDataInCaseAdminCRUDManager
 
     def get_related_forms(self, case):
         if not isinstance(case, CommCareCase):

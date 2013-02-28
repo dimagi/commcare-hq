@@ -26,3 +26,4 @@ def default_admin(request, domain, template="reports/base_template.html", **kwar
 class IndicatorAdminCRUDFormView(BaseAdminCRUDFormView):
     base_loc = "corehq.apps.indicators.admin.forms"
     form_request_manager = IndicatorCRUDFormRequestManager
+

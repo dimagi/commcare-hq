@@ -1,14 +1,14 @@
 from corehq.apps.indicators.admin import BaseIndicatorAdminInterface
 from corehq.apps.indicators.admin.forms import (FormDataAliasIndicatorDefinitionForm,
-                                                FormLabelIndicatorDefinitionForm)
+                                                FormLabelIndicatorDefinitionForm, CaseDataInFormIndicatorDefinitionForm, FormDataInCaseForm)
 from corehq.apps.indicators.models import (FormDataAliasIndicatorDefinition,
-                                           FormLabelIndicatorDefinition)
+                                           FormLabelIndicatorDefinition, CaseDataInFormIndicatorDefinition, FormDataInCaseIndicatorDefinition)
 from corehq.apps.reports.datatables import DataTablesColumn
 
 
 class FormLabelIndicatorDefinitionAdminInterface(BaseIndicatorAdminInterface):
     name = "Form Label Indicators"
-    description = "desc needed"
+    description = "desc needed" #todo
     slug = "form_label"
     document_class = FormLabelIndicatorDefinition
     form_class = FormLabelIndicatorDefinitionForm
@@ -22,7 +22,7 @@ class FormLabelIndicatorDefinitionAdminInterface(BaseIndicatorAdminInterface):
 
 class FormAliasIndicatorDefinitionAdminInterface(BaseIndicatorAdminInterface):
     name = "Form Alias Indicators"
-    description = "desc needed"
+    description = "desc needed" #todo
     slug = "form_alias"
     document_class = FormDataAliasIndicatorDefinition
     form_class = FormDataAliasIndicatorDefinitionForm
@@ -34,3 +34,33 @@ class FormAliasIndicatorDefinitionAdminInterface(BaseIndicatorAdminInterface):
         header.insert_column(DataTablesColumn("Question ID"), -3)
         return header
 
+
+class CaseDataInFormAdminInterface(BaseIndicatorAdminInterface):
+    name = "Related Case Property Indicators"
+    description = "" #todo
+    slug = "form_case_data"
+    document_class = CaseDataInFormIndicatorDefinition
+    form_class = CaseDataInFormIndicatorDefinitionForm
+
+    @property
+    def headers(self):
+        header = super(CaseDataInFormAdminInterface, self).headers
+        header.insert_column(DataTablesColumn("XMLNS or Label"), -3)
+        header.insert_column(DataTablesColumn("Case Property"), -3)
+        return header
+
+
+class FormDataInCaseAdminInterface(BaseIndicatorAdminInterface):
+    name = "Related Form Question ID Indicators"
+    description = "todo" #todo
+    slug = "case_form_data"
+    document_class = FormDataInCaseIndicatorDefinition
+    form_class = FormDataInCaseForm
+
+    @property
+    def headers(self):
+        header = super(FormDataInCaseAdminInterface, self).headers
+        header.insert_column(DataTablesColumn("Case Type"), -3)
+        header.insert_column(DataTablesColumn("XMLNS or Label"), -3)
+        header.insert_column(DataTablesColumn("Question ID"), -3)
+        return header
