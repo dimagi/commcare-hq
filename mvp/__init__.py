@@ -7,8 +7,13 @@ CUSTOM_REPORTS = (
     )),
 )
 
+from mvp.indicator_admin import custom
+
 INDICATOR_ADMIN_INTERFACES = (
-    ('Custom Indicator Types', (
-       # todo fill this in
+    ('MVP Custom Indicators', (
+       custom.MVPDaysSinceLastTransmissionAdminInterface,
+       custom.MVPActiveCasesAdminInterface,
+       custom.MVPChildCasesByAgeAdminInterface,
     )),
 )
+

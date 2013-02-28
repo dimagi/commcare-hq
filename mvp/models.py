@@ -7,6 +7,8 @@ import pytz
 from corehq.apps.indicators.models import DynamicIndicatorDefinition, NoGroupCouchIndicatorDefBase
 from corehq.apps.reports.util import make_form_couch_key
 from dimagi.utils.couch.database import get_db
+from mvp.indicator_admin.crud import MVPActiveCasesCRUDManager, MVPChildCasesByAgeCRUDManager
+
 
 class MVP(object):
     NAMESPACE = "mvp_indicators"
@@ -70,6 +72,8 @@ class MVPActiveCasesIndicatorDefinition(NoGroupCouchIndicatorDefBase):
     _class_path = CLASS_PATH
     case_type = StringProperty()
 
+    _admin_crud_class = MVPActiveCasesCRUDManager
+
     def _get_cases_by_status(self, status, user_id, datespan):
         datespan = self._apply_datespan_shifts(datespan)
         key_prefix = [status]
@@ -124,6 +128,8 @@ class MVPChildCasesByAgeIndicatorDefinition(MVPActiveCasesIndicatorDefinition):
     min_age_in_days = IntegerProperty(default=0)
     show_active_only = BooleanProperty(default=True)
     is_dob_in_datespan = BooleanProperty(default=False)
+
+    _admin_crud_class = MVPChildCasesByAgeCRUDManager
 
     def get_value_by_status(self, status, user_id, datespan):
         cases = self._get_cases_by_status(status, user_id, datespan)
