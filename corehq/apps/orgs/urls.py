@@ -29,3 +29,8 @@ urlpatterns = patterns('corehq.apps.orgs.views',
     url(r'^(?P<org>[\w\.-]+)/seen_request/$', 'seen_request', name='orgs_seen'),
     url(r'^(?P<org>[\w\.-]+)/verify_org/$', 'verify_org', name='verify_org'),
 )
+
+organizations_urls = patterns('corehq.apps.orgs.views',
+    url(r'^$', 'orgs_base', name='orgs_base'),
+    url(r'^(?P<org>[\w\.-]+)/$', 'public', name='orgs_public'),
+)

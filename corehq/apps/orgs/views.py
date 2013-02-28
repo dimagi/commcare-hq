@@ -415,3 +415,8 @@ def verify_org(request, org):
         organization.save()
     return HttpResponseRedirect(request.META.get('HTTP_REFERER') or reverse('orgs_base'))
 
+def public(request, org, template='orgs/public.html'):
+    organization = Organization.get_by_name(org, strict=True)
+    ctxt = base_context(request, organization)
+    return render(request, template, ctxt)
+
