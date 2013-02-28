@@ -139,13 +139,15 @@
     <dt>{% trans 'Downloads' %}</dt>
     <dd>
         <!-- This version: -->
-        {% if copies %}
+        {% if project.downloads %}
             <button class="btn btn-mini btn-info" data-open='false' id="downloads-btn">
-                {{ copies|length }} Downloads <span id="downloads-btn-append">>></span>
+                {{ project.downloads }} {% trans "Downloads" %} <span id="downloads-btn-append">>></span>
             </button>
             <div style="margin-top: 1em;" class="well well-small hide" id="downloads-info">
+                {% if copies %}
                 <table class="table">
-                    <tr><th style="border-top: 0;">Project</th><th style="border-top: 0;">Downloaded by</th></tr>
+                    <tr><th style="border-top: 0;">{% trans "Project" %}</th>
+                        <th style="border-top: 0;">{% trans "Downloaded by" %}</th></tr>
                     {% for copy in copies %}
                         <tr>
                             <td>{{ copy.display_name }}</td>
@@ -153,9 +155,12 @@
                         </tr>
                     {% endfor %}
                 </table>
+                {% else %}
+                    {% trans "No Downloads Information" %}
+                {% endif %}
             </div>
         {% else %}
-            None
+            {% trans "None" %}
         {% endif %}
 {#        <!-- All versions: -->{{ project.downloads }}#}
     </dd>
