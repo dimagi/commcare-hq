@@ -225,8 +225,16 @@ class Domain(Document, HQBillingDomainMixin, SnapshotMixin):
     # to be eliminated from projects and related documents when they are copied for the exchange
     _dirty_fields = ('admin_password', 'admin_password_charset', 'city', 'country', 'region', 'customer_type')
 
+    def save(self, **params):
+        import traceback
+        print 'Saving domain: %s' % self.name
+        for line in traceback.format_stack():
+            print line.strip()
+        super(Domain, self).save(**params)
+
     @classmethod
     def wrap(cls, data):
+        print 'Wrapping domain: %s' % data['name']
         # for domains that still use original_doc
         should_save = False
         if 'original_doc' in data:
