@@ -141,7 +141,7 @@ class ProjectReportsTab(UITab):
     def is_viewable(self):
         return (self.domain and self.project and not self.project.is_snapshot and
                 (self.couch_user.can_view_reports() or
-                 self.couch_user.get_viewable_reports))
+                 self.couch_user.get_viewable_reports()))
 
     @property
     def is_active(self):
@@ -289,9 +289,6 @@ class ApplicationsTab(UITab):
 
     @property
     def is_viewable(self):
-        if self.project.commtrack_enabled:
-            return False
-
         couch_user = self.couch_user
         return (self.domain and couch_user and
                 (couch_user.is_web_user() or couch_user.can_edit_apps()) and
@@ -361,7 +358,7 @@ class ProjectSettingsTab(UITab):
     def sidebar_items(self):
         items = []
  
-        if self.couch_user.can_edit_commcare_users:
+        if self.couch_user.can_edit_commcare_users():
             def commcare_username(request=None, couch_user=None, **context):
                 if (couch_user.user_id != request.couch_user.user_id and
                     couch_user.is_commcare_user()):
@@ -397,7 +394,7 @@ class ProjectSettingsTab(UITab):
                  ]}
             ]))
 
-        if self.couch_user.can_edit_web_users:
+        if self.couch_user.can_edit_web_users():
             def web_username(request=None, couch_user=None, **context):
                 if (couch_user.user_id != request.couch_user.user_id and
                     not couch_user.is_commcare_user()):
@@ -426,14 +423,14 @@ class ProjectSettingsTab(UITab):
              'url': reverse('change_my_password', args=[self.domain])}
         ]))
 
-        if self.couch_user.is_domain_admin:
+        if self.couch_user.is_domain_admin():
             items.append((_('CloudCare Settings'), [
                 {'title': _('App Access'),
                  'url': reverse('cloudcare_app_settings',
                              args=[self.domain])}
             ]))
 
-        if self.couch_user.can_edit_web_users:
+        if self.couch_user.can_edit_web_users():
             def forward_name(repeater_type=None, **context):
                 if repeater_type == 'FormRepeater':
                     return _("Forward Forms")
