@@ -1,9 +1,7 @@
 import logging
-import restkit
-from restkit.resource import Resource
+from datetime import datetime
 import hashlib
 import os
-import pdb
 import traceback
 from requests import ConnectionError
 import simplejson
@@ -11,7 +9,6 @@ from gevent import socket
 import rawes
 import gevent
 from django.conf import settings
-import logging
 from dimagi.utils.decorators.memoized import memoized
 
 requests_log = logging.getLogger("requests")
@@ -49,29 +46,16 @@ class PillowtopNetworkError(Exception):
     pass
 
 
-def old_changes(pillow):
-    from couchdbkit import Server, Consumer
 
-    c = Consumer(pillow.couch_db, backend='gevent')
-    while True:
-        try:
-            c.wait(pillow.parsing_processor, since=pillow.since, filter=pillow.couch_filter,
-                   heartbeat=WAIT_HEARTBEAT, feed='continuous', timeout=30000)
-        except Exception, ex:
-            logging.exception("Exception in form listener: %s, sleeping and restarting" % ex)
-            gevent.sleep(5)
-
-
-def new_changes(pillow):
-    with ChangesStream(pillow.couch_db, feed='continuous', heartbeat=True, since=pillow.since,
-                       filter=pillow.couch_filter) as st:
-        for c in st:
-            pillow.processor(c)
-
+def ms_from_timedelta(td):
+    """
+    Given a timedelta object, returns a float representing milliseconds
+    """
+    return (td.seconds * 1000) + (td.microseconds / 1000.0)
 
 class BasicPillow(object):
-    couch_filter = None # string for filter if needed
-    couch_db = None #couchdbkit Database Object
+    couch_filter = None  # string for filter if needed
+    document_class = None  # couchdbkit Document class
     changes_seen = 0
 
     @property
@@ -83,8 +67,7 @@ class BasicPillow(object):
         Couchdbkit < 0.6.0 changes feed listener
         http://couchdbkit.org/docs/changes_consumer.html
         """
-        from couchdbkit import Consumer
-
+        from couchdbkit import  Consumer
         c = Consumer(self.couch_db, backend='gevent')
         while True:
             try:
@@ -109,10 +92,11 @@ class BasicPillow(object):
         Couch changes stream creation
         """
         logging.info("Starting pillow %s" % self.__class__)
+
         if USE_NEW_CHANGES:
-            new_changes(self)
+            self.new_changes()
         else:
-            old_changes(self)
+            self.old_changes()
 
     @memoized
     def get_name(self):
@@ -149,7 +133,7 @@ class BasicPillow(object):
     def reset_checkpoint(self):
         checkpoint_doc = self.get_checkpoint()
         checkpoint_doc['old_seq'] = checkpoint_doc['seq']
-        checkpoint_doc['seq'] = 0
+        checkpoint_doc['seq'] = "0"
         self.couch_db.save_doc(checkpoint_doc)
 
     @property
@@ -176,15 +160,17 @@ class BasicPillow(object):
         """
         self.changes_seen += 1
         if self.changes_seen % CHECKPOINT_FREQUENCY == 0 and do_set_checkpoint:
-            logging.info("(%s) setting checkpoint: %d" % (self.get_checkpoint_doc_name(),
-                                                          change['seq']))
+            logging.info("(%s) setting checkpoint: %s" % (self.get_checkpoint_doc_name(), change['seq']))
             self.set_checkpoint(change)
 
-        t = self.change_trigger(change)
-        if t is not None:
-            tr = self.change_transform(t)
-            if tr is not None:
-                self.change_transport(tr)
+        try:
+            t = self.change_trigger(change)
+            if t is not None:
+                tr = self.change_transform(t)
+                if tr is not None:
+                    self.change_transport(tr)
+        except Exception, ex:
+            logging.error("Error on change: %s, %s" % (change['id'], ex))
 
 
     def change_trigger(self, changes_dict):
@@ -228,6 +214,8 @@ class ElasticPillow(BasicPillow):
     es_index = ""
     es_type = ""
     es_meta = {}
+    es_timeout = 30 # in seconds
+    bulk=False
 
     # Note - we allow for for existence because we do not care - we want the ES
     # index to always have the latest version of the case based upon ALL changes done to it.
@@ -282,7 +270,8 @@ class ElasticPillow(BasicPillow):
 
     @memoized
     def get_es(self):
-        return rawes.Elastic('%s:%s' % (self.es_host, self.es_port))
+        return rawes.Elastic('%s:%s' % (self.es_host, self.es_port),
+                             timeout=self.es_timeout)
 
     def delete_index(self):
         """
@@ -436,6 +425,17 @@ class ElasticPillow(BasicPillow):
 
 
 class AliasedElasticPillow(ElasticPillow):
+    """
+    This pillow class defines it as being alias-able. That is, when you query it, you use an Alias to access it.
+
+    This could be for varying reasons -  to make an index by certain metadata into its own index for performance/separation reasons
+
+    Or, for our initial use case, needing to version/update the index mappings on the fly with minimal disruption.
+
+
+    The workflow for altering an AliasedElasticPillow is that if you know you made a change, the pillow will create a new
+    Index witha new md5sum as its suffix. Once it's finished indexing, you will need to flip the alias over to it.
+    """
     es_alias = ''
     es_index_prefix = ''
     seen_types = {}
@@ -509,7 +509,6 @@ class AliasedElasticPillow(ElasticPillow):
     def type_exists(self, doc_dict, server=False):
         """
         Verify whether the server has indexed this type
-
         We can assume at startup that the mapping from the server is loaded,
         so in memory will be up to date.
 
@@ -557,10 +556,8 @@ class AliasedElasticPillow(ElasticPillow):
             self.__module__, self.__class__.__name__, self.calc_meta(),
             os.uname()[1].replace('.', '_'))
 
-    def calc_meta(self):
-        if not hasattr(self, '_calc_meta'):
-            self._calc_meta = hashlib.md5(simplejson.dumps(self.es_meta)).hexdigest()
-        return self._calc_meta
+    def get_mapping_from_type(self, doc_dict):
+        raise NotImplementedError("This must be implemented in this subclass!")
 
     def change_transport(self, doc_dict):
         """
@@ -586,6 +583,11 @@ class AliasedElasticPillow(ElasticPillow):
 
                     #            got_type = datetime.utcnow()
             doc_path = self.get_doc_path_typed(doc_dict)
+
+            if self.allow_updates:
+                can_put = True
+            else:
+                can_put = not self.doc_exists(doc_dict)
 
             if can_put and not self.bulk:
                 res = self.put_robust(doc_path, data=doc_dict)
