@@ -139,7 +139,7 @@
     <dt>{% trans 'Downloads' %}</dt>
     <dd>
         <!-- This version: -->
-        {% if project.downloads %}
+        {% if project.copies and request.couch_user.is_superuser %}
             <button class="btn btn-mini btn-info" data-open='false' id="downloads-btn">
                 {{ project.downloads }} {% trans "Downloads" %} <span id="downloads-btn-append">>></span>
             </button>
@@ -160,7 +160,7 @@
                 {% endif %}
             </div>
         {% else %}
-            {% trans "None" %}
+            {{ project.downloads }}
         {% endif %}
 {#        <!-- All versions: -->{{ project.downloads }}#}
     </dd>
