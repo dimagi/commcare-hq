@@ -6,3 +6,9 @@ CUSTOM_REPORTS = (
         chw.CHWManagerReport
     )),
 )
+
+INDICATOR_ADMIN_INTERFACES = (
+    ('Custom Indicator Types', (
+       # todo fill this in
+    )),
+)
