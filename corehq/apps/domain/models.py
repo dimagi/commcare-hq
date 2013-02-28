@@ -225,16 +225,8 @@ class Domain(Document, HQBillingDomainMixin, SnapshotMixin):
     # to be eliminated from projects and related documents when they are copied for the exchange
     _dirty_fields = ('admin_password', 'admin_password_charset', 'city', 'country', 'region', 'customer_type')
 
-    def save(self, **params):
-        import traceback
-        print 'Saving domain: %s' % self.name
-        for line in traceback.format_stack():
-            print line.strip()
-        super(Domain, self).save(**params)
-
     @classmethod
     def wrap(cls, data):
-        print 'Wrapping domain: %s' % data['name']
         # for domains that still use original_doc
         should_save = False
         if 'original_doc' in data:
@@ -251,14 +243,14 @@ class Domain(Document, HQBillingDomainMixin, SnapshotMixin):
                 data["license"] = "cc"
                 should_save = True
 
-        if not 'creating_user' in data:
-            should_save = True
-            from corehq.apps.users.models import CouchUser
-            admins = CouchUser.view("users/admins_by_domain", key=data["name"], reduce=False, include_docs=True).all()
-            if len(admins) == 1:
-                data["creating_user"] = admins[0].username
-            else:
-                data["creating_user"] = None
+        # if not 'creating_user' in data:
+        #     should_save = True
+        #     from corehq.apps.users.models import CouchUser
+        #     admins = CouchUser.view("users/admins_by_domain", key=data["name"], reduce=False, include_docs=True).all()
+        #     if len(admins) == 1:
+        #         data["creating_user"] = admins[0].username
+        #     else:
+        #         data["creating_user"] = None
 
         self = super(Domain, cls).wrap(data)
         if self.get_id:

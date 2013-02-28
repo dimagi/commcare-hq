@@ -172,13 +172,6 @@ def appstore(request, template="appstore/appstore_base.html"):
     results = es_snapshot_query(params, SNAPSHOT_FACETS)
     d_results = [Domain.wrap(res['_source']) for res in results.get('hits', {}).get('hits', [])]
 
-    # d_results = [res['_source'] for res in results.get('hits', {}).get('hits', [])]
-    # import pprint
-    # pp = pprint.PrettyPrinter(indent=2)
-    # pp.pprint([d["name"] for d in d_results])
-    # d_results = dict([(d["name"], d) for d in d_results]).values()
-    # d_results = [Domain.wrap(d) for d in d_results]
-
     sort_by = request.GET.get('sort_by', None)
     if sort_by == 'best':
         d_results = Domain.popular_sort(d_results)
