@@ -28,15 +28,14 @@ def process(domain, instance):
     root = etree.fromstring(instance)
     transactions = unpack_transactions(root, config)
 
-    case_ids = [tx['case_id'] for tx in transactions]
+    case_ids = [tx.case_id for tx in transactions]
     cases = dict((c._id, c) for c in CommCareCase.view('_all_docs', keys=case_ids, include_docs=True))
 
     # ensure transaction types are processed in the correct order
-    def transaction_order(tx):
-        return [action.action_name for action in config.all_actions()].index(tx['action'])
-    transactions.sort(key=transaction_order)
+    transactions.sort(key=lambda x: x.order)
+
     # apply all transactions to each product case in bulk
-    transactions_by_product = map_reduce(lambda tx: [(tx['case_id'],)], data=transactions, include_docs=True)
+    transactions_by_product = map_reduce(lambda tx: [(tx.case_id,)], data=transactions, include_docs=True)
 
     for product_id, txs in transactions_by_product.iteritems():
         product_case = cases[product_id]
@@ -51,21 +50,32 @@ def process(domain, instance):
     submit_time = root.find('.//%s' % _('timeStart', META_XMLNS)).text
     spoof_submission(get_submit_url(domain), submission, headers={'HTTP_X_SUBMIT_TIME': submit_time})
 
-# TODO: make a transaction class
+class StockTransaction(object):
+    def __init__(self, config, product_id, case_id, action_name, value, inferred):
+        self.config = config
+        self.product_id = product_id
+        self.case_id = case_id
+        self.action_name = action_name
+        self.value = value
+        self.inferred = inferred
+        self.action_config = self.config.all_actions_by_name[self.action_name]
+
+        # used for sorting - the order this appears in the config
+        self.order = [action.action_name for action in config.all_actions()].index(self.action_name)
+
+    @classmethod
+    def from_xml(cls, tx, config):
+        data = {
+            'product_id': tx.find(_('product')).text,
+            'case_id': tx.find(_('product_entry')).text,
+            'value': int(tx.find(_('value')).text),
+            'inferred': tx.attrib.get('inferred') == 'true',
+            'action_name': tx.find(_('action')).text,
+        }
+        return StockTransaction(config=config, **data)
 
 # TODO: tag all transactions with 'order in which processed' info -- especially
 # needed for the reconciliation transactions
-
-def tx_from_xml(tx, config):
-    data = {
-        'product_id': tx.find(_('product')).text,
-        'case_id': tx.find(_('product_entry')).text,
-        'action': tx.find(_('action')).text,
-        'value': int(tx.find(_('value')).text),
-        'inferred': tx.attrib.get('inferred') == 'true',
-    }
-    data['base_action'] = config.all_actions_by_name[data['action']].action_type
-    return data
 
 def tx_to_xml(tx, E=None):
     if not E:
@@ -83,7 +93,7 @@ def tx_to_xml(tx, E=None):
     )
 
 def unpack_transactions(root, config):
-    return [tx_from_xml(tx, config) for tx in root.findall(_('transaction'))]
+    return [StockTransaction.from_xml(tx, config) for tx in root.findall(_('transaction'))]
 
 def process_product_transactions(case, txs):
     """process all the transactions from a stock report for an individual
@@ -94,7 +104,7 @@ def process_product_transactions(case, txs):
     current_state = StockState(case)
     reconciliations = []
     for tx in txs:
-        recon = current_state.update(tx['base_action'], tx['value'])
+        recon = current_state.update(tx.action_config.action_type, tx.value)
         if recon:
             reconciliations.append(tx_to_xml(recon))
     return current_state.to_case_block(), reconciliations
@@ -107,7 +117,7 @@ class StockState(object):
         self.stocked_out_since = props.get('stocked_out_since') # date
         # worry about consumption rates later
         
-    def update(self, action, value):
+    def update(self, action_type, value):
         """given the current stock state for a product at a location, update
         with the incoming datapoint
         
@@ -123,19 +133,19 @@ class StockState(object):
                 'inferred': True,
             }
 
-        if action == 'stockout' or (action == 'stockedoutfor' and value > 0):
+        if action_type == 'stockout' or (action_type == 'stockedoutfor' and value > 0):
             self.current_stock = 0
-            days_stocked_out = (value - 1) if action == 'stockedoutfor' else 0
+            days_stocked_out = (value - 1) if action_type == 'stockedoutfor' else 0
             self.stocked_out_since = date.today() - timedelta(days=days_stocked_out)
         else:
 
-            if action in ('stockonhand', 'prevstockonhand'):
+            if action_type in ('stockonhand', 'prevstockonhand'):
                 if self.current_stock != value:
                     reconciliation_transaction = mk_reconciliation(value - self.current_stock)
                 self.current_stock = value
-            elif action == 'receipts':
+            elif action_type == 'receipts':
                 self.current_stock += value
-            elif action == 'consumption':
+            elif action_type == 'consumption':
                 self.current_stock -= value
 
             # data normalization
