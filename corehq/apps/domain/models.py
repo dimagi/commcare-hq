@@ -242,6 +242,16 @@ class Domain(Document, HQBillingDomainMixin, SnapshotMixin):
             if data.get("license", None) == "public":
                 data["license"] = "cc"
                 should_save = True
+
+        if not data.has_key('creating_user'):
+            should_save = True
+            from corehq.apps.users.models import CouchUser
+            admins = CouchUser.view("users/admins_by_domain", key=data["name"], reduce=False, include_docs=True).all()
+            if len(admins) == 1:
+                data["creating_user"] = admins[0].username
+            else:
+                data["creating_user"] = None
+
         self = super(Domain, cls).wrap(data)
         if self.get_id:
             self.apply_migrations()
