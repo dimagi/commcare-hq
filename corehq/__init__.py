@@ -77,6 +77,28 @@ ADM_ADMIN_INTERFACES = (
     ))
 )
 
+from corehq.apps.indicators.admin import document_indicators, couch_indicators, dynamic_indicators
+
+INDICATOR_ADMIN_INTERFACES = (
+    (_("Form Based Indicators"), (
+        document_indicators.FormLabelIndicatorDefinitionAdminInterface,
+        document_indicators.FormAliasIndicatorDefinitionAdminInterface,
+        document_indicators.CaseDataInFormAdminInterface,
+    )),
+    (_("Case Based Indicators"), (
+        document_indicators.FormDataInCaseAdminInterface,
+    )),
+    (_("Dynamic Indicators"), (
+        dynamic_indicators.CombinedIndicatorAdminInterface,
+    )),
+    (_("Couch Based Indicators"), (
+        couch_indicators.CouchIndicatorAdminInterface,
+        couch_indicators.CountUniqueCouchIndicatorAdminInterface,
+        couch_indicators.MedianCouchIndicatorAdminInterface,
+        couch_indicators.SumLastEmittedCouchIndicatorAdminInterface,
+    )),
+)
+
 from corehq.apps.announcements.interface import (
     ManageGlobalHQAnnouncementsInterface,
     ManageReportAnnouncementsInterface)
