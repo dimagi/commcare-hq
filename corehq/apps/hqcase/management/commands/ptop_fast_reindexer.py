@@ -242,17 +242,16 @@ class PtopReindexer(NoArgsCommand):
             else:
                 bulk_slice = self.full_view_data[start:]
 
-            bulk_start = datetime.utcnow()
             retries = 0
             while retries < MAX_TRIES:
                 try:
+                    bulk_start = datetime.utcnow()
                     self.pillow.process_bulk(bulk_slice)
                     break
                 except Exception, ex:
                     retries += 1
-                    retry_time = (bulk_end - bulk_start).seconds + retries * RETRY_TIME_DELAY_FACTOR
+                    retry_time = (datetime.utcnow() - bulk_start).seconds + retries * RETRY_TIME_DELAY_FACTOR
                     print "\t%s: Exception sending slice %d:%d, %s, retrying in %s seconds" % (datetime.now().isoformat(), start, end, ex, retry_time)
-                    bulk_end = datetime.utcnow()
                     time.sleep(retry_time)
                     print "\t%s: Retrying again %d:%d..." % (datetime.now().isoformat(), start, end)
             start += self.chunk_size
