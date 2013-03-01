@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 # vim: ai ts=4 sts=4 et sw=4 encoding=utf-8
+from collections import defaultdict
 
 import os
 from django.contrib import messages
@@ -76,7 +77,12 @@ TEMPLATE_LOADERS = (
     'django.template.loaders.app_directories.load_template_source',
     'django.template.loaders.eggs.Loader',
     #     'django.template.loaders.eggs.load_template_source',
-    )
+)
+if not DEBUG:
+    TEMPLATE_LOADERS = [
+        ('django.template.loaders.cached.Loader', TEMPLATE_LOADERS),
+    ]
+
 
 MIDDLEWARE_CLASSES = [
     'django.middleware.common.CommonMiddleware',
@@ -93,13 +99,14 @@ MIDDLEWARE_CLASSES = [
 ROOT_URLCONF = "urls"
 
 TEMPLATE_CONTEXT_PROCESSORS = [
-    "django.core.context_processors.auth",
+    "django.contrib.auth.context_processors.auth",
     "django.core.context_processors.debug",
     "django.core.context_processors.i18n",
     "django.core.context_processors.media",
     "django.core.context_processors.request",
     "django.contrib.messages.context_processors.messages",
     'django.core.context_processors.static',
+    "corehq.util.context_processors.current_url_name",
     "corehq.util.context_processors.base_template", # sticks the base template inside all responses
     "corehq.util.context_processors.google_analytics",
     "corehq.util.context_processors.raven",
@@ -307,7 +314,7 @@ XFORMS_PLAYER_URL = "http://localhost:4444/"  # touchform's setting
 SUPPORT_EMAIL = "commcarehq-support@dimagi.com"
 COUCHLOG_BLUEPRINT_HOME = "%s%s" % (STATIC_URL, "hqwebapp/stylesheets/blueprint/")
 COUCHLOG_DATATABLES_LOC = "%s%s" % (
-STATIC_URL, "hqwebapp/datatables-1.9/js/jquery.dataTables.min.js")
+STATIC_URL, "hqwebapp/js/lib/datatables-1.9/js/jquery.dataTables.min.js")
 
 # These allow HQ to override what shows up in couchlog (add a domain column)
 COUCHLOG_TABLE_CONFIG = {"id_column": 0,
@@ -388,6 +395,9 @@ ELASTICSEARCH_PORT = 9200
 
 #for production this ought to be set to true on your configured couch instance
 COUCH_HTTPS = False
+
+# this should be overridden in localsettings
+INTERNAL_DATA = defaultdict(list)
 
 try:
     #try to see if there's an environmental variable set for local_settings
