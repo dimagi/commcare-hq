@@ -1,6 +1,7 @@
 from datetime import datetime, timedelta
 import logging
 import uuid
+from couchdbkit import ResourceNotFound
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
 from corehq.apps.reports.generic import GenericTabularReport
 from corehq.apps.reports.standard import CustomProjectReport
@@ -28,27 +29,13 @@ class PactDOTAdminReport(GenericTabularReport, CustomProjectReport):
     def tabular_data(self, mode, case_id, start_date, end_date):#, limit=50, skip=0):
         try:
             case_doc = PactPatientCase.get(case_id)
-            pactid = case_doc.pactid
-        except:
+        except ResourceNotFound:
             case_doc = None
-            pactid = None
 
         if case_doc is not None:
             #patient is selected
-            if mode == 'all':
-                start_date = end_date - timedelta(1000)
-                startkey = [case_id, 'anchor_date', start_date.year,
-                            start_date.month, start_date.day]
-                endkey = [case_id, 'anchor_date', end_date.year, end_date.month,
-                          end_date.day]
-                csv_filename = 'dots_csv_pt_%s.csv' % (pactid)
-            else:
-                startkey = [case_id, 'anchor_date', start_date.year,
-                            start_date.month, start_date.day]
-                endkey = [case_id, 'anchor_date', end_date.year, end_date.month,
-                          end_date.day]
-                csv_filename = 'dots_csv_pt_%s-%s_to_%s.csv' % (
-                    pactid, start_date.strftime("%Y-%m-%d"), end_date.strftime("%Y-%m-%d"))
+            startkey = [case_id, 'anchor_date', start_date.year, start_date.month, start_date.day]
+            endkey = [case_id, 'anchor_date', end_date.year, end_date.month, end_date.day]
         elif case_doc is None:
             #patient is not selected, do all patients
             startkey = [start_date.year, start_date.month, start_date.day]
@@ -107,25 +94,20 @@ class PactDOTAdminReport(GenericTabularReport, CustomProjectReport):
         else:
             mode = ''
 
-        ret = []
         for num, obs in enumerate(self.tabular_data(mode, case_id, datetime.strptime(start_date_str, '%Y-%m-%d'), datetime.strptime(end_date_str, '%Y-%m-%d'))):
             dict_obj = obs.to_json()
             row = [dict_obj[x.prop_name].encode('utf-8') if isinstance(dict_obj[x.prop_name], unicode) else dict_obj[x.prop_name] for x in self.headers]
             yield row
-            #ret.append(row)
-        # print "rows"
-        # print len(ret)
-        # return ret
 
-
-    @property
-    def shared_pagination_GET_params(self):
-        """
-        Override the params and applies all the params of the originating view to the GET
-        so as to get sorting working correctly with the context of the GET params
-        """
-        ret = []
-        for k, v in self.request.GET.items():
-            ret.append(dict(name=k, value=v))
-        return ret
+    #
+    # @property
+    # def shared_pagination_GET_params(self):
+    #     """
+    #     Override the params and applies all the params of the originating view to the GET
+    #     so as to get sorting working correctly with the context of the GET params
+    #     """
+    #     ret = []
+    #     for k, v in self.request.GET.items():
+    #         ret.append(dict(name=k, value=v))
+    #     return ret
 
