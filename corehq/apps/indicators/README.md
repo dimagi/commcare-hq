@@ -12,7 +12,7 @@ You can split the indicators into two categories:
 Document Indicators are stored inside of the `computed_` property of an `XFormInstance` or `CommCareCase`. Each
 indicator is namespaced, and the result looks something like:
 
-`
+```javascript
 computed_: {
     namepspace: {
         indicator_slug: {
@@ -24,7 +24,7 @@ computed_: {
         }
     }
 }
-`
+```
 
 ### Versioning
 
