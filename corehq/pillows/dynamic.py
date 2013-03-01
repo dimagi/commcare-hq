@@ -1,5 +1,4 @@
-from couchdbkit import StringProperty, BooleanProperty, IntegerProperty, FloatProperty, DecimalProperty, ListProperty, DictProperty, StringListProperty, SchemaListProperty, SchemaDictProperty, DateProperty, DateTimeProperty
-import simplejson
+from couchdbkit import StringProperty, BooleanProperty, IntegerProperty, FloatProperty, DecimalProperty, DictProperty, StringListProperty, SchemaListProperty, SchemaDictProperty, DateProperty, DateTimeProperty
 from casexml.apps.case.models import CommCareCase
 from corehq.pillows.core import DATE_FORMATS_ARR, DATE_FORMATS_STRING
 
@@ -67,6 +66,7 @@ case_special_types = {
     "name":type_exact_match_string("name", dual=True),
     "xform_ids": {"type": "string", "index": "not_analyzed"},
     "xform_id": {"type": "string", "index": "not_analyzed"},
+    "actions": {"dynamic": False, "type": "object"},
     #to extend, use this and add special date formats here...
 }
 
