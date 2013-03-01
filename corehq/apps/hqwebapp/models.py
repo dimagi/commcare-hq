@@ -140,7 +140,7 @@ class ProjectReportsTab(UITab):
     def is_viewable(self):
         return (self.domain and self.project and not self.project.is_snapshot and
                 (self.couch_user.can_view_reports() or
-                 self.couch_user.get_viewable_reports))
+                 self.couch_user.get_viewable_reports()))
 
     @property
     def is_active(self):
