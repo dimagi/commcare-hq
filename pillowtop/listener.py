@@ -2,6 +2,7 @@ import logging
 from datetime import datetime
 import hashlib
 import os
+import pdb
 import traceback
 from requests import ConnectionError
 import simplejson
@@ -28,14 +29,18 @@ WAIT_HEARTBEAT = 10000
 RETRY_INTERVAL = 5
 MAX_RETRIES = 5
 
-INDEX_REINDEX_SETTINGS = {"index": {"refresh_interval": "-1", "merge.policy.merge_factor": 20,
+INDEX_REINDEX_SETTINGS = {"index": {"refresh_interval": "900s",
+                                    "merge.policy.merge_factor": 20,
                                     "store.throttle.max_bytes_per_sec": "1mb",
                                     "store.throttle.type": "merge",
-                                    "index.number_of_replicas": "0"}}
-INDEX_STANDARD_SETTINGS = {"index": {"refresh_interval": "10s", "merge.policy.merge_factor": 20,
+                                    "number_of_replicas": "0"}
+}
+INDEX_STANDARD_SETTINGS = {"index": {"refresh_interval": "10s",
+                                     "merge.policy.merge_factor": 10,
                                      "store.throttle.max_bytes_per_sec": "5mb",
                                      "store.throttle.type": "node",
-                                     "index.number_of_replicas": "0"}}
+                                     "number_of_replicas": "0"}
+}
 
 
 class PillowtopIndexingError(Exception):
@@ -46,12 +51,12 @@ class PillowtopNetworkError(Exception):
     pass
 
 
-
 def ms_from_timedelta(td):
     """
     Given a timedelta object, returns a float representing milliseconds
     """
     return (td.seconds * 1000) + (td.microseconds / 1000.0)
+
 
 class BasicPillow(object):
     couch_filter = None  # string for filter if needed
@@ -67,7 +72,8 @@ class BasicPillow(object):
         Couchdbkit < 0.6.0 changes feed listener
         http://couchdbkit.org/docs/changes_consumer.html
         """
-        from couchdbkit import  Consumer
+        from couchdbkit import Consumer
+
         c = Consumer(self.couch_db, backend='gevent')
         while True:
             try:
@@ -101,7 +107,7 @@ class BasicPillow(object):
     @memoized
     def get_name(self):
         return "%s.%s.%s" % (
-        self.__module__, self.__class__.__name__, os.uname()[1].replace('.', '_'))
+            self.__module__, self.__class__.__name__, os.uname()[1].replace('.', '_'))
 
     def get_checkpoint_doc_name(self):
         return "pillowtop_%s" % self.get_name()
@@ -160,7 +166,8 @@ class BasicPillow(object):
         """
         self.changes_seen += 1
         if self.changes_seen % CHECKPOINT_FREQUENCY == 0 and do_set_checkpoint:
-            logging.info("(%s) setting checkpoint: %s" % (self.get_checkpoint_doc_name(), change['seq']))
+            logging.info(
+                "(%s) setting checkpoint: %s" % (self.get_checkpoint_doc_name(), change['seq']))
             self.set_checkpoint(change)
 
         try:
@@ -215,7 +222,7 @@ class ElasticPillow(BasicPillow):
     es_type = ""
     es_meta = {}
     es_timeout = 30 # in seconds
-    bulk=False
+    bulk = False
 
     # Note - we allow for for existence because we do not care - we want the ES
     # index to always have the latest version of the case based upon ALL changes done to it.
@@ -237,7 +244,7 @@ class ElasticPillow(BasicPillow):
                 return res
             except ConnectionError, ex:
                 logging.error("[%s] Error connecting to ES %s:%s: %s" % (
-                self.get_name(), es.host, es.port, ex))
+                    self.get_name(), es.host, es.port, ex))
                 logging.debug(
                     "[%s] Retry attempt in %s seconds" % (self.get_name(), RETRY_INTERVAL))
                 gevent.sleep(RETRY_INTERVAL)
@@ -258,14 +265,13 @@ class ElasticPillow(BasicPillow):
         """
         Normal indexing configuration
         """
-        return self.update_settings(INDEX_REINDEX_SETTINGS)
+        return self.update_settings(INDEX_STANDARD_SETTINGS)
 
     def get_index_mapping(self):
         es = self.get_es()
         return es.get('%s/_mapping' % self.es_index).get(self.es_index, {})
 
     def set_mapping(self, type_string, mapping):
-        es = self.get_es()
         return self.put_robust("%s/%s/_mapping" % (self.es_index, type_string), data=mapping)
 
     @memoized
@@ -285,7 +291,6 @@ class ElasticPillow(BasicPillow):
         """
         Rebuild an index after a delete
         """
-        es = self.get_es()
         self.put_robust(self.es_index, data=self.es_meta)
 
     def change_trigger(self, changes_dict):
@@ -333,7 +338,7 @@ class ElasticPillow(BasicPillow):
             except Exception, ex:
                 logging.error("Error on change: %s, %s" % (change['id'], ex))
 
-    def process_bulk(self, changes, retries=10):
+    def process_bulk(self, changes):
         self.allow_updates = False
         self.bulk = True
         es = self.get_es()
@@ -378,7 +383,7 @@ class ElasticPillow(BasicPillow):
             except ConnectionError, ex:
                 current_tries += 1
                 logging.error("[%s] put_robust error %s attempt %d/%d" % (
-                self.get_name(), ex, current_tries, retries))
+                    self.get_name(), ex, current_tries, retries))
                 gevent.sleep(RETRY_INTERVAL)
 
                 if current_tries == retries:
@@ -401,6 +406,7 @@ class ElasticPillow(BasicPillow):
                 raise PillowtopIndexingError(error_message)
             else:
                 logging.error(error_message)
+        return res
 
     def change_transport(self, doc_dict):
         """
@@ -566,7 +572,6 @@ class AliasedElasticPillow(ElasticPillow):
         """
         #        start = datetime.utcnow()
         try:
-            es = self.get_es()
             if not self.type_exists(doc_dict):
                 #if type is never seen, apply mapping for said type
                 type_mapping = self.get_mapping_from_type(doc_dict)
@@ -580,8 +585,8 @@ class AliasedElasticPillow(ElasticPillow):
                         "Mapping set: [%s] %s" % (self.get_type_string(doc_dict), mapping_res))
                     #manually update in memory dict
                     self.seen_types[self.get_type_string(doc_dict)] = {}
+                    #got_type = datetime.utcnow()
 
-                    #            got_type = datetime.utcnow()
             doc_path = self.get_doc_path_typed(doc_dict)
 
             if self.allow_updates:
