@@ -297,22 +297,24 @@ class CouchIndicatorDef(DynamicIndicatorDefinition):
 
         if datespan:
             datespan = copy.copy(datespan)
+            datespan.enddate = datespan.enddate.replace(hour=23, minute=59, second=59, microsecond=999999)
             if self.fixed_datespan_days:
-                datespan.startdate = datespan.enddate - datetime.timedelta(days=self.fixed_datespan_days)
+                datespan.startdate = datespan.enddate - datetime.timedelta(days=self.fixed_datespan_days,
+                                                                           microseconds=-1)
             if self.fixed_datespan_months:
                 start_year, start_month = add_months(datespan.enddate.year, datespan.enddate.month,
                     -self.fixed_datespan_months)
                 try:
                     datespan.startdate = datetime.datetime(start_year, start_month, datespan.enddate.day,
                         datespan.enddate.hour, datespan.enddate.minute, datespan.enddate.second,
-                        datespan.enddate.microsecond)
+                        datespan.enddate.microsecond) + datetime.timedelta(microseconds=1)
                 except ValueError:
                     # day is out of range for month
                     datespan.startdate = self.get_last_day_of_month(start_year, start_month)
 
             datespan.startdate = datespan.startdate + datetime.timedelta(days=self.startdate_shift)
             datespan.enddate = datespan.enddate + datetime.timedelta(days=self.enddate_shift)
-
+            
         return datespan
 
     def get_results_with_key(self, key, user_id=None, datespan=None, date_group_level=None, reduce=False):

@@ -70,8 +70,14 @@ def static(url):
 
 @register.simple_tag
 def get_report_analytics_tag(request):
+    # todo: change this to takes_context=True and check the active_tab context
+    # variable to see exactly whether the reports tab is active
     if 'reports' in request.path_info:
-        report_name = request.path_info.split('reports/')[1][:-1].replace('_', ' ')
+        try:
+            report_name = request.path_info.split('reports/')[1][:-1].replace('_', ' ')
+        except IndexError:
+            return ''
+
         return "_gaq.push(['_setCustomVar', 2, 'report', '%s', 3]);\n_gaq.push(['_trackEvent', 'Viewed Report', '%s']);" % (report_name, report_name)
     return ''
 
