@@ -1,4 +1,5 @@
-from datetime import datetime, time
+from datetime import datetime
+import time
 from optparse import make_option
 import pdb
 from django.core.management.base import NoArgsCommand
@@ -10,7 +11,7 @@ CHUNK_SIZE = 500
 POOL_SIZE = 15
 
 MAX_TRIES = 10
-RETRY_TIME_DELAY_FACTOR = 2
+RETRY_TIME_DELAY_FACTOR = 10
 
 
 class PtopReindexer(NoArgsCommand):
@@ -249,11 +250,13 @@ class PtopReindexer(NoArgsCommand):
                     break
                 except Exception, ex:
                     retries += 1
-                    print "\tException sending slice %d:%d, %s, retrying..." % (start, end, ex)
+                    retry_time = (bulk_end - bulk_start).seconds + retries * RETRY_TIME_DELAY_FACTOR
+                    print "\t%s: Exception sending slice %d:%d, %s, retrying in %s seconds" % (datetime.now().isoformat(), start, end, ex, retry_time)
                     bulk_end = datetime.utcnow()
-                    time.sleep((bulk_end - bulk_start).seconds + retries * RETRY_TIME_DELAY_FACTOR)
-            start +=self.chunk_size
-            end +=self.chunk_size
+                    time.sleep(retry_time)
+                    print "\t%s: Retrying again %d:%d..." % (datetime.now().isoformat(), start, end)
+            start += self.chunk_size
+            end += self.chunk_size
 
 
 
