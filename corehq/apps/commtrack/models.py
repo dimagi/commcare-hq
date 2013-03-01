@@ -100,6 +100,15 @@ class CommtrackActionConfig(DocumentSchema):
     def action_name(self):
         return self.name or self.action_type
 
+    @property
+    def is_stock(self):
+        # NOTE: assumes ACTION_TYPES and REQUISITION_ACTION_TYPES don't overlap
+        return self.action_type in ACTION_TYPES
+
+    @property
+    def is_requisition(self):
+        return self.action_type in REQUISITION_ACTION_TYPES
+
 class CommtrackRequisitionConfig(DocumentSchema):
     # placeholder class for when this becomes fancier
 
@@ -162,6 +171,13 @@ class CommtrackConfig(Document):
     @property
     def all_actions_by_name(self):
         return self._by_name(self.all_actions())
+
+    @property
+    def all_actions_by_type(self):
+        return dict((action_config.action_type, action_config) for action_config in self.all_actions())
+
+    def get_action_by_type(self, action_type):
+        return self.all_actions_by_type[action_type]
 
     @property
     def known_supply_point_types(self):

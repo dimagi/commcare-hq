@@ -2,6 +2,11 @@ from corehq.apps.locations.models import Location
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.commtrack.util import bootstrap_default
 from corehq.apps.users.models import CommCareUser
+from corehq.apps.sms.backend import test
+from django.utils.unittest.case import TestCase
+from corehq.apps.commtrack.helpers import make_supply_point,\
+    make_supply_point_product
+from corehq.apps.commtrack.models import Product
 
 TEST_DOMAIN = 'commtrack-test'
 TEST_LOCATION_TYPE = 'location'
@@ -32,3 +37,25 @@ def make_loc(code, name=None, domain=TEST_DOMAIN, type=TEST_LOCATION_TYPE):
     loc = Location(site_code=code, name=name, domain=domain, type=type)
     loc.save()
     return loc
+
+class CommTrackTest(TestCase):
+    requisitions_enabled = False # can be overridden
+
+    def setUp(self):
+        self.backend = test.bootstrap(TEST_BACKEND, to_console=True)
+        self.domain = bootstrap_domain(requisitions_enabled=self.requisitions_enabled)
+        self.user = bootstrap_user()
+        self.verified_number = self.user.get_verified_number()
+        self.loc = make_loc('loc1')
+        self.sp = make_supply_point(self.domain.name, self.loc)
+        self.products = Product.by_domain(self.domain.name)
+        self.assertEqual(3, len(self.products))
+        self.spps = {}
+        for p in self.products:
+            self.spps[p.code] = make_supply_point_product(self.sp, p._id)
+
+    def tearDown(self):
+        self.backend.delete()
+        self.user.delete()
+        self.domain.delete() # domain delete cascades to everything else
+
