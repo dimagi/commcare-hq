@@ -1,13 +1,17 @@
 import logging
 import calendar
 import copy
-from couchdbkit.ext.django.schema import Document, StringProperty, IntegerProperty, ListProperty, DateTimeProperty
-from couchdbkit.schema.base import DocumentSchema
-import datetime
-from couchdbkit.schema.properties import LazyDict
 import dateutil
 import numpy
+import datetime
+from couchdbkit.ext.django.schema import Document, StringProperty, IntegerProperty, ListProperty, DateTimeProperty
+from couchdbkit.schema.base import DocumentSchema
+from couchdbkit.schema.properties import LazyDict
 from casexml.apps.case.models import CommCareCase
+from corehq.apps.crud.models import AdminCRUDDocumentMixin
+from corehq.apps.indicators.admin.crud import (IndicatorAdminCRUDManager,
+                                               FormAliasIndicatorAdminCRUDManager,
+                                               FormLabelIndicatorAdminCRUDManager, CaseDataInFormIndicatorAdminCRUDManager, FormDataInCaseAdminCRUDManager, CouchIndicatorCRUDManager, BaseDynamicIndicatorCRUDManager, CombinedCouchIndicatorCRUDManager)
 from couchforms.models import XFormInstance
 from dimagi.utils.couch.database import get_db
 from dimagi.utils.dates import DateSpan, add_months, months_between
@@ -21,7 +25,7 @@ class DocumentMismatchError(Exception):
     pass
 
 
-class IndicatorDefinition(Document):
+class IndicatorDefinition(Document, AdminCRUDDocumentMixin):
     """
         An Indicator Definition defines how to compute the indicator that lives
         in the namespaced computed_ property of a case or form.
@@ -32,6 +36,8 @@ class IndicatorDefinition(Document):
     version = IntegerProperty()
     class_path = StringProperty()
     last_modified = DateTimeProperty()
+
+    _admin_crud_class = IndicatorAdminCRUDManager
 
     _class_path = "corehq.apps.indicators.models"
     _returns_multiple = False
@@ -173,11 +179,23 @@ class IndicatorDefinition(Document):
                 all_indicators.append(indicator)
         return all_indicators
 
+    @classmethod
+    def get_all_of_type(cls, namespace, domain):
+        key = ["type", namespace, domain, cls.__name__]
+        return cls.view(cls.indicator_list_view(),
+                        reduce = False,
+                        include_docs = True,
+                        startkey=key,
+                        endkey=key+[{}]
+        ).all()
+
 
 class DynamicIndicatorDefinition(IndicatorDefinition):
     description = StringProperty()
     title = StringProperty()
     base_doc = "DynamicIndicatorDefinition"
+
+    _admin_crud_class = BaseDynamicIndicatorCRUDManager
 
     @classmethod
     def indicator_list_view(cls):
@@ -254,6 +272,8 @@ class CouchIndicatorDef(DynamicIndicatorDefinition):
     fixed_datespan_days = IntegerProperty(default=0)
     fixed_datespan_months = IntegerProperty(default=0)
 
+    _admin_crud_class = CouchIndicatorCRUDManager
+
     @property
     @memoized
     def group_results_in_retrospective(self):
@@ -277,22 +297,24 @@ class CouchIndicatorDef(DynamicIndicatorDefinition):
 
         if datespan:
             datespan = copy.copy(datespan)
+            datespan.enddate = datespan.enddate.replace(hour=23, minute=59, second=59, microsecond=999999)
             if self.fixed_datespan_days:
-                datespan.startdate = datespan.enddate - datetime.timedelta(days=self.fixed_datespan_days)
+                datespan.startdate = datespan.enddate - datetime.timedelta(days=self.fixed_datespan_days,
+                                                                           microseconds=-1)
             if self.fixed_datespan_months:
                 start_year, start_month = add_months(datespan.enddate.year, datespan.enddate.month,
                     -self.fixed_datespan_months)
                 try:
                     datespan.startdate = datetime.datetime(start_year, start_month, datespan.enddate.day,
                         datespan.enddate.hour, datespan.enddate.minute, datespan.enddate.second,
-                        datespan.enddate.microsecond)
+                        datespan.enddate.microsecond) + datetime.timedelta(microseconds=1)
                 except ValueError:
                     # day is out of range for month
                     datespan.startdate = self.get_last_day_of_month(start_year, start_month)
 
             datespan.startdate = datespan.startdate + datetime.timedelta(days=self.startdate_shift)
             datespan.enddate = datespan.enddate + datetime.timedelta(days=self.enddate_shift)
-
+            
         return datespan
 
     def get_results_with_key(self, key, user_id=None, datespan=None, date_group_level=None, reduce=False):
@@ -415,6 +437,7 @@ class CouchIndicatorDef(DynamicIndicatorDefinition):
             ))
         return retrospective
 
+
 class NoGroupCouchIndicatorDefBase(CouchIndicatorDef):
     """
         Use this base for all CouchViewIndicatorDefinitions that have views which are not simply
@@ -476,6 +499,8 @@ class CombinedCouchViewIndicatorDefinition(DynamicIndicatorDefinition):
     numerator_slug = StringProperty()
     denominator_slug = StringProperty()
 
+    _admin_crud_class = CombinedCouchIndicatorCRUDManager
+
     @property
     @memoized
     def numerator(self):
@@ -517,7 +542,7 @@ class CombinedCouchViewIndicatorDefinition(DynamicIndicatorDefinition):
         return combined_retro
 
 
-class DocumentIndicatorDefinition(IndicatorDefinition):
+class BaseDocumentIndicatorDefinition(IndicatorDefinition):
     """
         This IndicatorDefinition expects to get a value from a couchdbkit Document and then
         save that value in the computed_ property of that Document.
@@ -580,7 +605,7 @@ class FormDataIndicatorDefinitionMixin(DocumentSchema):
         return form_data
 
 
-class FormIndicatorDefinition(DocumentIndicatorDefinition, FormDataIndicatorDefinitionMixin):
+class FormIndicatorDefinition(BaseDocumentIndicatorDefinition, FormDataIndicatorDefinitionMixin):
     """
         This Indicator Definition defines an indicator that will live in the computed_ property of an XFormInstance
         document. The 'doc' passed through get_value and get_clean_value should be an XFormInstance.
@@ -599,6 +624,30 @@ class FormIndicatorDefinition(DocumentIndicatorDefinition, FormDataIndicatorDefi
         return ["namespace", "domain", "xmlns", "slug"]
 
 
+class FormLabelIndicatorDefinition(FormIndicatorDefinition):
+    """
+        This indicator definition labels the forms of a certain XMLNS with the slug provided as its type.
+        This type is used as a way to label that form in couch views.
+        For example, I want an XMLNS of http://domain.commcarehq.org/child/visit/ to map to child_visit_form.
+    """
+    _admin_crud_class = FormLabelIndicatorAdminCRUDManager
+
+    def get_value(self, doc):
+        return self.slug
+
+    @classmethod
+    def get_label_for_xmlns(cls, namespace, domain, xmlns):
+        key = [namespace, domain, xmlns]
+        label = cls.get_db().view("indicators/form_labels",
+                                   reduce=False,
+                                   descending=True,
+                                   limit=1,
+                                   startkey=key + [{}],
+                                   endkey=key
+        ).one()
+        return label['value'] if label else ""
+
+
 class FormDataAliasIndicatorDefinition(FormIndicatorDefinition):
     """
         This Indicator Definition is targeted for the scenarios where you have an indicator report across multiple
@@ -607,6 +656,8 @@ class FormDataAliasIndicatorDefinition(FormIndicatorDefinition):
         as a computed_ indicator.
     """
     question_id = StringProperty()
+
+    _admin_crud_class = FormAliasIndicatorAdminCRUDManager
 
     def get_value(self, doc):
         form_data = doc.get_form
@@ -621,6 +672,8 @@ class CaseDataInFormIndicatorDefinition(FormIndicatorDefinition):
         This should probably get rewritten to handle forms that update more than one type of case or for sub-cases.
     """
     case_property = StringProperty()
+
+    _admin_crud_class = CaseDataInFormIndicatorAdminCRUDManager
 
     def get_value(self, doc):
         case = self._get_related_case(doc)
@@ -657,7 +710,7 @@ class CaseDataInFormIndicatorDefinition(FormIndicatorDefinition):
         return computed, is_update
 
 
-class CaseIndicatorDefinition(DocumentIndicatorDefinition):
+class CaseIndicatorDefinition(BaseDocumentIndicatorDefinition):
     """
         This Indicator Definition defines an indicator that will live in the computed_ property of a CommCareCase
         document. The 'doc' passed through get_value and get_clean_value should be a CommCareCase.
@@ -684,6 +737,8 @@ class FormDataInCaseIndicatorDefinition(CaseIndicatorDefinition, FormDataIndicat
     """
     question_id = StringProperty()
     _returns_multiple = True
+
+    _admin_crud_class = FormDataInCaseAdminCRUDManager
 
     def get_related_forms(self, case):
         if not isinstance(case, CommCareCase):

@@ -130,7 +130,7 @@ def orgs_update_info(request, org):
         organization.save()
         if logo:
             organization.put_attachment(content=logo.read(), name=logo.name)
-        return HttpResponseRedirect(reverse('orgs_landing', args=[org]))
+        return HttpResponseRedirect(request.META.get('HTTP_REFERER') or reverse('orgs_landing', args=[org]))
     else:
         return orgs_landing(request, org, update_form=form)
 
@@ -173,7 +173,7 @@ def invite_member(request, org):
     else:
         messages.error(request, "Unable to add member")
         return orgs_landing(request, org, invite_member_form=form)
-    return HttpResponseRedirect(reverse('orgs_landing', args=[org]))
+    return HttpResponseRedirect(reverse('orgs_members', args=[org]))
 
 class OrgInvitationView(InvitationView):
     inv_type = OrgInvitation
@@ -311,6 +311,8 @@ def add_domain_to_team(request, org, team_id):
     domain = request.POST.get("project_name", None)
     if not domain:
         messages.error(request, "You must specify a project name")
+    elif domain not in [d.name for d in Domain.get_by_organization(org)]:
+        messages.error(request, "You cannot add a domain that isn't managed by this organization")
     else:
         team = Team.get(team_id)
         team.add_domain_membership(domain)
@@ -396,13 +398,13 @@ def remove_member(request, org):
         messages.success(request, 'You have removed {m} from the organization {o}. <a href="{url}" class="post-link">Undo</a>'.format(
             url=reverse('undo_remove_member', args=[org, record.get_id]), m=member.username, o=org
         ), extra_tags="html")
-    return HttpResponseRedirect(reverse("orgs_landing", args=[org]))
+    return HttpResponseRedirect(reverse("orgs_members", args=[org]))
 
 @org_admin_required
 def undo_remove_member(request, org, record_id):
     record = OrgRemovalRecord.get(record_id)
     record.undo()
-    return HttpResponseRedirect(reverse('orgs_landing', args=[org]))
+    return HttpResponseRedirect(reverse('orgs_members', args=[org]))
 
 @require_superuser
 def verify_org(request, org):

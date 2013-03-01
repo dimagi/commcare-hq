@@ -48,7 +48,8 @@ def request_new_domain(request, form, org, new_user=True, slug=''):
 
     new_domain = Domain(name=form.cleaned_data['domain_name'],
         is_active=False,
-        date_created=datetime.utcnow())
+        date_created=datetime.utcnow(),
+        creating_user=current_user.username)
 
     if org:
         new_domain.organization = org

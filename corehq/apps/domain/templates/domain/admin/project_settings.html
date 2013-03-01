@@ -4,12 +4,12 @@
 {% load i18n %}
 
 {% block js %}{{ block.super }}
-<script type="text/javascript" src="{% static 'hqwebapp/javascripts/jquery-ui-datepicker/jquery-ui-1.8.17.custom.datepicker.min.js' %}"></script>
+<script type="text/javascript" src="{% static 'hqwebapp/js/lib/jquery-ui-datepicker/jquery-ui-1.8.17.custom.datepicker.min.js' %}"></script>
 {% endblock %}
 
 {% block head %}
 {{ block.super }}
-<link rel="stylesheet" href="{% static 'hqwebapp/javascripts/jquery-ui-datepicker/datepicker-theme/jquery-ui-1.8.17.custom.css' %}" />
+<link rel="stylesheet" href="{% static 'hqwebapp/js/lib/jquery-ui-datepicker/datepicker-theme/jquery-ui-1.8.17.custom.css' %}" />
 {% endblock %}
 
 {% block js-inline %} {{ block.super }}
