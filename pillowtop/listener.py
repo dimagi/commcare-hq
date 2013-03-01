@@ -344,11 +344,11 @@ class ElasticPillow(BasicPillow):
         es = self.get_es()
         bstart = datetime.utcnow()
         bulk_payload = '\n'.join(map(simplejson.dumps, self.bulk_builder(changes))) + "\n"
-        logging.debug(
+        logging.info(
             "prepare_bulk,%s" % str(ms_from_timedelta(datetime.utcnow() - bstart) / 1000.0))
         send_start = datetime.utcnow()
         es.post('_bulk', data=bulk_payload)
-        logging.debug(
+        logging.info(
             "send_bulk,%s" % str(ms_from_timedelta(datetime.utcnow() - send_start) / 1000.0))
 
     def processor(self, change, do_set_checkpoint=True):
