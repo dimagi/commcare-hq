@@ -31,7 +31,7 @@ class MissedCallbackReport(CustomProjectReport, GenericTabularReport):
             DataTablesColumn(_("Total Indicated")),
             DataTablesColumn(_("Total Pending")),
         ]
-        args += [DataTablesColumn(date.strftime("%Y-%m-%d")) for date in self.get_past_two_weeks()]
+        args += [DataTablesColumn(date.strftime("%b %d")) for date in self.get_past_two_weeks()]
         return DataTablesHeader(*args)
     
     @property
