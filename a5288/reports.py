@@ -16,7 +16,6 @@ class MissedCallbackReport(CustomProjectReport, GenericTabularReport):
     name = ugettext_noop("Missed Callbacks")
     slug = "missed_callbacks"
     description = ugettext_noop("Summarizes two weeks of SMS / Callback interactions for all participants.")
-    hide_filters = True
     flush_layout = True
     
     def get_past_two_weeks(self):
