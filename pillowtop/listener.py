@@ -412,6 +412,8 @@ class ElasticPillow(BasicPillow):
         """
         Default elastic pillow for a given doc to a type.
         """
+        if self.bulk:
+            return
         try:
             es = self.get_es()
             doc_path = self.get_doc_path(doc_dict['_id'])
@@ -421,7 +423,7 @@ class ElasticPillow(BasicPillow):
             else:
                 can_put = not self.doc_exists(doc_dict['_id'])
 
-            if can_put and not self.bulk:
+            if can_put:
                 res = self.put_robust(doc_path, data=doc_dict)
                 return res
         except Exception, ex:
@@ -570,7 +572,6 @@ class AliasedElasticPillow(ElasticPillow):
         Override the elastic transport to go to the index + the type being a string between the
         domain and case type
         """
-        #        start = datetime.utcnow()
         try:
             if not self.type_exists(doc_dict):
                 #if type is never seen, apply mapping for said type
@@ -587,16 +588,17 @@ class AliasedElasticPillow(ElasticPillow):
                     self.seen_types[self.get_type_string(doc_dict)] = {}
                     #got_type = datetime.utcnow()
 
-            doc_path = self.get_doc_path_typed(doc_dict)
+            if not self.bulk:
+                doc_path = self.get_doc_path_typed(doc_dict)
 
-            if self.allow_updates:
-                can_put = True
-            else:
-                can_put = not self.doc_exists(doc_dict)
+                if self.allow_updates:
+                    can_put = True
+                else:
+                    can_put = not self.doc_exists(doc_dict)
 
-            if can_put and not self.bulk:
-                res = self.put_robust(doc_path, data=doc_dict)
-                return res
+                if can_put and not self.bulk:
+                    res = self.put_robust(doc_path, data=doc_dict)
+                    return res
         except Exception, ex:
             tb = traceback.format_exc()
             logging.error(
