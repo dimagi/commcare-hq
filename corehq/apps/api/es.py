@@ -45,7 +45,7 @@ class ESView(View):
     http_method_names = ['get', 'post', 'head', ]
 
     def __init__(self, domain):
-        self.domain=domain
+        self.domain=domain.lower()
         self.es = get_es()
 
     def head(self, *args, **kwargs):
@@ -179,10 +179,24 @@ class CaseES(ESView):
 class XFormES(ESView):
     index = "xforms"
 
+    #ret = super(ESView, self).dispatch(*args, **kwargs)
+
+    def base_query(self, terms={}, doc_type='xforminstance', fields=[], start=0, size=DEFAULT_SIZE):
+        """
+        Somewhat magical enforcement that the basic query for XForms will only return XFormInstance
+        docs by default.
+        """
+        new_terms = terms
+        if 'doc_type' not in new_terms:
+            #let the terms override the kwarg - the query terms trump the magic
+            new_terms['doc_type'] = doc_type
+        print new_terms
+        return super(ESView, self).base_query(terms=new_terms, fields=fields, start=start, size=size)
+
+
 
     @classmethod
-    def by_case_id_query(cls, domain, case_id, terms={}, date_field=None, startdate=None,
-                         enddate=None, date_format='%Y-%m-%d'):
+    def by_case_id_query(cls, domain, case_id, terms={}, doc_type='xforminstance', date_field=None, startdate=None, enddate=None, date_format='%Y-%m-%d'):
         """
         Run a case_id query on both case properties (supporting old and new) for xforms.
 
@@ -192,6 +206,7 @@ class XFormES(ESView):
         domain: string domain, required exact
         case_id: string
         terms: k,v of additional filters to apply as terms and block of filter
+        doc_type: explicit xforminstance doc_type term query (only search active, legit items)
         date_field: string property of the xform submission you want to do date filtering, be sure to make sure that the field in question is indexed as a datetime
         startdate, enddate: datetime interval values
         date_format: string of the date format to filter based upon, defaults to yyyy-mm-dd
@@ -201,7 +216,8 @@ class XFormES(ESView):
                 "filtered": {
                     "filter": {
                         "and": [
-                            {"term": {"domain.exact": domain}},
+                            {"term": {"domain.exact": domain.lower()}},
+                            {"term": {"doc_type": doc_type}},
                         ]
                     },
                     "query": {
@@ -227,7 +243,7 @@ class XFormES(ESView):
             query['query']['filtered']['filter']['and'].append(range_query)
 
         for k, v in terms.items():
-            query['query']['filtered']['filter']['and'].append({"term": {k: v}})
+            query['query']['filtered']['filter']['and'].append({"term": {k.lower(): v.lower()}})
         return query
 
 class ESQuerySet(object):
