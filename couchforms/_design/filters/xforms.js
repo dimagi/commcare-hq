@@ -3,5 +3,18 @@
  */
 function(doc, req)
 {
-    return (doc["doc_type"] == "XFormInstance" && doc['xmlns'] !== "http://code.javarosa.org/devicereport");
+	if (doc['xmlns'] == "http://code.javarosa.org/devicereport") {
+		return false;
+	}
+    var doc_type = doc["doc_type"];
+
+    switch (doc_type) {
+        case "XFormInstance":
+        case "XFormArchived":
+        case "XFormDeprecated":
+        case "XFormDuplicate":
+            return true;
+        default:
+            return false;
+    }
 }
