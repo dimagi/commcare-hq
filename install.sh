@@ -172,13 +172,12 @@ fi
 
 ## Install couchdb-lucene
 if [ ! -f /etc/init.d/couchdb-lucene ]; then
-    if [ ! -f couchdb-lucene-0.8.0-dist.zip ]; then
-        wget https://github.com/downloads/rnewson/couchdb-lucene/couchdb-lucene-0.8.0-dist.zip
+    if [ ! -f v0.8.0.zip ]; then
+        wget https://github.com/rnewson/couchdb-lucene/archive/v0.8.0.zip
     fi
 
-    unzip couchdb-lucene-0.8.0-dist.zip
-    sudo cp couchdb-lucene-0.8.0 /usr/local
-    rm -r couchdb-lucene-0.8.0
+    unzip v0.8.0.zip
+    sudo mv couchdb-lucene-0.8.0 /usr/local
     sudo cp /usr/local/couchdb-lucene-0.8.0/tools/etc/init.d/couchdb-lucene/couchdb-lucene /etc/init.d/
 fi
 
