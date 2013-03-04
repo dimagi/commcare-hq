@@ -292,19 +292,19 @@ def setup_server():
     sudo("easy_install -U pip", user=env.sudo_user)
     sudo("pip install -U virtualenv", user=env.sudo_user)
     upgrade_packages()
-    execute(create_db_user)
-    execute(create_db)
+    execute(create_pg_user)
+    execute(create_pg_db)
 
 
 @roles('pg')
-def create_db_user():
+def create_pg_user():
     """Create the Postgres user."""
     require('environment', provided_by=('staging', 'production'))
     sudo('createuser -D -R %(sudo_user)s' % env, user='postgres')
 
 
 @roles('pg')
-def create_db():
+def create_pg_db():
     """Create the Postgres database."""
     require('environment', provided_by=('staging', 'production'))
     sudo('createdb -O %(sudo_user)s %(db)s' % env, user='postgres')
