@@ -90,6 +90,9 @@ A virtualenv is not required, but it may make your life easier.
 
 ### Downloading and configuring CommCare HQ
 
+(If you are setting up a production install of CommCare HQ, start from "Running
+CommCare HQ".)
+
 Once all the dependencies are in order, please do the following:
 
     git clone git@github.com:dimagi/commcare-hq.git
@@ -117,18 +120,17 @@ writeable.
     # this will do some basic setup, create a superuser, and create a project
     ./manage.py bootstrap <project-name> <email> <password>
 
-    # To set up elasticsearch indexes, first run:
+    # To set up elasticsearch indexes, first run (and then kill):
     ./manage.py run_ptop
+    
+    # then run
+    curl -GET 'http://localhost:9200/_status?pretty=true'
 
-    # Note the hqcases_<long_string> part in the output of the above
-    # command, and run:
+    # Note the hqcases_<long_string> part near the top of the output of the
+    # above command, and run:
     curl -XPOST 'http://localhost:9200/_aliases' -d \
         '{ "actions": [ {"add": {"index": "hqcases_<long_string>", "alias": "hqcases"}}]}'
 
-    # If run_ptop didn't output anything like hqcases_<long_string>, run 
-    curl -GET 'http://localhost:9200/_status?pretty=true' and find it near the
-    top of the output
-    # 
     # Any potential future changes to the HQ code that change the case index
     # mapping type for elasticsearch require you to repeat this step. This
     # process will be improved.
@@ -194,10 +196,13 @@ deploy of CommCare HQ, follow these steps:
 
         fab <my_environment> bootstrap
 
-6. Run the commands from "Set up your django environment" above, except instead
-   of ./manage.py, use
+6. Ensure you have copied `localsettings.example.py` to `localsettings.py` in
+   `/home/cchq/www/my_environment/code_root` and made the changes described
+   under 'Downloading and configuring CommCare HQ', then copy it to
+   `code_root_preindex/localsettings.py` as well.  Then run the commands from
+   "Set up your django environment" above, except instead of ./manage.py, use
 
-       /home/cchq/www/my_environment/code_root/python_env/bin/python manage.py 
+        /home/cchq/www/my_environment/code_root/python_env/bin/python manage.py 
 
 7. Deploy
     

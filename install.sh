@@ -25,7 +25,7 @@ COUCHDB_DB="foodb"
 
 ## Misc settings
 
-ES_VERSION=0.19.12
+ES_VERSION=0.20.5
 
 if [ ! -f jdk.tar.gz ]; then
     echo "Please read the top of this file."
@@ -205,7 +205,7 @@ if [ ! -f /etc/init.d/elasticsearch ]; then
     if [ "$PM" = "apt-ubuntu" ]; then
         file=elasticsearch-$ES_VERSION.deb
         if [ ! -f $file ]; then
-            wget https://github.com/downloads/elasticsearch/elasticsearch/$file
+            wget https://download.elasticsearch.org/elasticsearch/elasticsearch/$file
         fi
         sudo gdebi --n $file
 

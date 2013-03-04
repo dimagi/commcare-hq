@@ -13,7 +13,7 @@ DATABASES = {
 }
 
 ####### Couch Config ######
-COUCH_HTTPS = True #recommended production value if enabling https
+COUCH_HTTPS = False # recommended production value is True if enabling https
 COUCH_SERVER_ROOT = '127.0.0.1:5984' #6984 for https couch
 COUCH_USERNAME = 'admin'
 COUCH_PASSWORD = '********'

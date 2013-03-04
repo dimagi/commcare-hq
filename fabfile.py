@@ -323,8 +323,8 @@ def bootstrap():
     sudo('mkdir -p %(root)s' % env, shell=False, user=env.sudo_user)
     execute(clone_repo)
     
-    # copy localsettings in case any management commands we want to run now
-    # would error otherwise
+    # copy localsettings if it doesn't already exist in case any management
+    # commands we want to run now would error otherwise
     with cd(env.code_root):
         sudo('cp -n localsettings.example.py localsettings.py')
     with cd(env.code_root_preindex):
@@ -701,21 +701,22 @@ def _supervisor_command(command):
         #cmd_exec = "/usr/local/bin/supervisorctl"
     sudo('supervisorctl %s' % (command), shell=False)
 
+@task
 def update_apache_conf():
     require('code_root', 'server_port')
 
     with cd(env.code_root):
         tmp = posixpath.join('/', 'tmp', 'cchq_%s' % uuid.uuid4().hex)
         sudo('%s/bin/python manage.py mkapacheconf %s > %s'
-              % (env.virtualenv_root, env.server_port, tmp))
+              % (env.virtualenv_root, env.server_port, tmp), user=env.sudo_user)
         #sudo('cp -f %s /etc/apache2/sites-available/cchq' % tmp)
 
     with settings(warn_only=True):
-        sudo('a2dissite 000-default')
+        sudo('a2dissite 000-default', user=env.sudo_user)
+        sudo('a2dissite default', user=env.sudo_user)
 
-    sudo('a2enmod proxy_http')
-    sudo('a2ensite cchq')
-
+    sudo('a2enmod proxy_http', user=env.sudo_user)
+    sudo('a2ensite cchq', user=env.suod_user)
 
 
 # tests
