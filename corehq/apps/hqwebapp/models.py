@@ -4,6 +4,7 @@ from django.utils.safestring import mark_safe, mark_for_escaping
 from django.core.urlresolvers import reverse
 from django.utils.translation import ugettext as _
 from django.utils.translation import ugettext_noop
+from corehq.apps.indicators.dispatcher import IndicatorAdminInterfaceDispatcher
 
 from dimagi.utils.couch.database import get_db
 from dimagi.utils.decorators.memoized import memoized
@@ -140,7 +141,7 @@ class ProjectReportsTab(UITab):
     def is_viewable(self):
         return (self.domain and self.project and not self.project.is_snapshot and
                 (self.couch_user.can_view_reports() or
-                 self.couch_user.get_viewable_reports))
+                 self.couch_user.get_viewable_reports()))
 
     @property
     def is_active(self):
@@ -197,11 +198,21 @@ class ADMReportsTab(UITab):
         return (super(ADMReportsTab, self).is_active and self.domain and
                 self._request.get_full_path() != project_reports_url)
 
+class IndicatorAdminTab(UITab):
+    title = ugettext_noop("Administer Indicators")
+    view = "corehq.apps.indicators.views.default_admin"
+    dispatcher = IndicatorAdminInterfaceDispatcher
+
+    @property
+    def is_viewable(self):
+        indicator_enabled_projects = getattr(settings, 'INDICATOR_ENABLED_PROJECTS', [])
+        return self.couch_user.can_edit_data and self.domain in indicator_enabled_projects
+
 
 class ReportsTab(UITab):
     title = ugettext_noop("Reports")
     view = "corehq.apps.reports.views.default"
-    subtab_classes = (ProjectReportsTab, ADMReportsTab)
+    subtab_classes = (ProjectReportsTab, ADMReportsTab, IndicatorAdminTab)
 
 
 class ProjectInfoTab(UITab):
@@ -347,7 +358,7 @@ class ProjectSettingsTab(UITab):
     def sidebar_items(self):
         items = []
  
-        if self.couch_user.can_edit_commcare_users:
+        if self.couch_user.can_edit_commcare_users():
             def commcare_username(request=None, couch_user=None, **context):
                 if (couch_user.user_id != request.couch_user.user_id and
                     couch_user.is_commcare_user()):
@@ -383,7 +394,7 @@ class ProjectSettingsTab(UITab):
                  ]}
             ]))
 
-        if self.couch_user.can_edit_web_users:
+        if self.couch_user.can_edit_web_users():
             def web_username(request=None, couch_user=None, **context):
                 if (couch_user.user_id != request.couch_user.user_id and
                     not couch_user.is_commcare_user()):
@@ -412,14 +423,14 @@ class ProjectSettingsTab(UITab):
              'url': reverse('change_my_password', args=[self.domain])}
         ]))
 
-        if self.couch_user.is_domain_admin:
+        if self.couch_user.is_domain_admin():
             items.append((_('CloudCare Settings'), [
                 {'title': _('App Access'),
                  'url': reverse('cloudcare_app_settings',
                              args=[self.domain])}
             ]))
 
-        if self.couch_user.can_edit_web_users:
+        if self.couch_user.can_edit_web_users():
             def forward_name(repeater_type=None, **context):
                 if repeater_type == 'FormRepeater':
                     return _("Forward Forms")
