@@ -131,23 +131,17 @@ writeable.
     curl -XPOST 'http://localhost:9200/_aliases' -d \
         '{ "actions": [ {"add": {"index": "hqcases_<long_string>", "alias": "hqcases"}}]}'
 
-    # Any potential future changes to the HQ code that change the case index
-    # mapping type for elasticsearch require you to repeat this step. This
-    # process will be improved.
-
 To enable CloudCare, ensure that `TOUCHFORMS_API_USER` and
 `TOUCHFORMS_API_PASSWORD` in `localsettings.py` are the credentials of the
-django admin user you created above and then create the file
-`submodules/touchforms-src/touchforms/backend/localsettings.py` with the
-following contents:
+django admin user you created above (with manage.py bootstrap) and then create
+the file `submodules/touchforms-src/touchforms/backend/localsettings.py` with
+the following contents:
 
     URL_ROOT = 'http://localhost:8000/a/{{DOMAIN}}'
 
 
 Running CommCare HQ
 -------------------
-
-### Development
 
 If your installation didn't set up the helper processes required by CommCare HQ
 to automatically run on system startup, you need to run them manually:
@@ -168,51 +162,6 @@ Then run the following separately:
     jython submodules/touchforms-src/touchforms/backend/xformserver.py
 
     ./manage.py runserver --werkzeug
-
-### Production
-
-We use [Fabric](http://fabfile.org) for deploy automation and
-[supervisor](http://supervisord.org) for process control.  For a production
-deploy of CommCare HQ, follow these steps:
-
-1. Create a new user on your server
-
-        adduser cchq
-        # add your user as a sudoer by running `sudo visudo` and copying the
-        # root=ALL line
-
-2. Fork the Github repo and add an environment definition by copying the `india`
-   function and changing `env.home` to '/home/cchq', `env.environment` to
-   whatever name you want, `env.sudo_user` to 'cchq', and `env.hosts` and
-   `env.roledefs['django_monolith']` to contain the IP of your server.
-
-3. Clone your forked Github repo to your local machine.
-
-4. Enter a virtualenv with fabric installed or just do
-
-        sudo pip install fabric
-
-5. Clone repo and set up virtualenvs and other production-specific configs
-
-        fab <my_environment> bootstrap
-
-6. Ensure you have copied `localsettings.example.py` to `localsettings.py` in
-   `/home/cchq/www/my_environment/code_root` and made the changes described
-   under 'Downloading and configuring CommCare HQ', then copy it to
-   `code_root_preindex/localsettings.py` as well.  Then run the commands from
-   "Set up your django environment" above, except instead of ./manage.py, use
-
-        /home/cchq/www/my_environment/code_root/python_env/bin/python manage.py 
-
-7. Deploy
-    
-        # reindexes CouchDB views so they can be swapped with the old ones
-        # without long wait times the next time they are hit
-        fab <my_environment> preindex_views
-
-        # check out latest code and restart server processes 
-        fab <my_environment> deploy
-
 
 Building CommCare Mobile Apps
 -----------------------------
