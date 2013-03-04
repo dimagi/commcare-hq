@@ -157,12 +157,10 @@ def register_domain(request, domain_type=None):
 @transaction.commit_on_success
 @login_required_late_eval_of_LOGIN_URL
 def resend_confirmation(request):
-    dom_req = None
     try:
         dom_req = RegistrationRequest.get_request_for_username(request.user.username)
     except Exception:
-        pass
-
+        dom_req = None
 
     if not dom_req:
         inactive_domains_for_user = Domain.active_for_user(request.user, is_active=False)
@@ -172,7 +170,7 @@ def resend_confirmation(request):
                 domain.save()
         return redirect('domain_select')
 
-    if request.method == 'POST': # If the form has been submitted...
+    if request.method == 'POST':
         try:
             send_domain_registration_email(dom_req.new_user_username, dom_req.domain, dom_req.activation_guid)
         except Exception:
@@ -184,8 +182,9 @@ def resend_confirmation(request):
             vals = dict(alert_message="An email has been sent to %s." % dom_req.new_user_username, requested_domain=dom_req.domain)
             return render(request, 'registration/confirmation_sent.html', vals)
 
-    vals = dict(requested_domain=dom_req.domain)
-    return render(request, 'registration/confirmation_resend.html', vals)
+    return render(request, 'registration/confirmation_resend.html', {
+        'requested_domain': dom_req.domain
+    })
 
 @transaction.commit_on_success
 def confirm_domain(request, guid=None):
