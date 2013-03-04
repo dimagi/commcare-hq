@@ -1,6 +1,6 @@
 $.prototype.iconify = function (icon) {
     'use strict';
-    var $icon = $("<div/>").addClass('ui-icon ' + icon).css('float', 'left');
+    var $icon = $("<i/>").addClass(icon).css('float', 'left');
     $(this).css('width', "16px").prepend($icon);
 };
 
@@ -295,7 +295,7 @@ function setUpIeWarning() {
 
 $(function () {
     'use strict';
-    $('.delete_link').iconify('icon-closethick');
+    $('.delete_link').iconify('icon-remove');
     $(".delete_link").addClass("dialog_opener");
     $(".delete_dialog").addClass("dialog");
     $('.new_link').iconify('icon-plus');

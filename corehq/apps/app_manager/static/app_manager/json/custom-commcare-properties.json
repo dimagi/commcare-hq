@@ -79,7 +79,7 @@
     "values_txt": "Set to skip if your deployment does not require users to register with the server. Note that this will likely result in OTA Restore and other features being unavailable.",
     "default": "required"
 }, {
-    "name": "Server Tethering Mode",
+    "name": "Sync Mode",
     "description": "Whether the server attempts to synchronize data with the phone, or only attempt to return data on demand.",
     "id": "server-tether",
     "values": ["push-only", "sync"],
