@@ -342,7 +342,9 @@
     </style>
 {% endblock %}
 {% block form-view %}
-    <h3 class="app-manager-title variable-app_name">{{ app.name|html_name }}</h3>
+    <div class="page-header">
+        <h1 class="app-manager-title variable-app_name">{{ app.name|html_name }}</h1>
+    </div>
     <ul class="nav nav-tabs">
         <li class="active">
             <a href="#app-settings" data-toggle="tab">
