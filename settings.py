@@ -574,7 +574,9 @@ DOMAIN_MODULE_MAP = {
     'eagles-fahu': 'dca',
     'mvp-potou': 'mvp',
     'mvp-sauri': 'mvp',
-    'psi-unicef': 'psi'
+    'mvp-bonsaaso': 'mvp',
+    'mvp-ruhiira': 'mvp',
+    'psi-unicef': 'psi',
 }
 
 MESSAGE_LOG_OPTIONS = {
