@@ -36,10 +36,11 @@ var settings = {{ settings|JSON }};
 <h3>SMS Keywords</h3>
 
 <fieldset>
-  <div class="control-group">
+  <div class="control-group" data-bind="css: { 'error': keyword_error }">
     <label class="control-label" for="keyword_stock_report">Stock Report</label>
     <div class="controls">
       <input id="keyword_stock_report" type="text" data-bind="value: keyword"/>
+      <div class="help-inline" data-bind="text: keyword_error"></div>
     </div>
   </div>
 </fieldset>
@@ -63,11 +64,13 @@ var settings = {{ settings|JSON }};
       <td>
         <i class="icon-sort sortable-handle"></i>
       </td>
-      <td>
+      <td class="control-group" data-bind="css: { 'error': caption_error }">
         <input data-bind="value: caption" type="text" />
+        <div class="help-inline" data-bind="text: caption_error"></div>
       </td>
-      <td>
+      <td class="control-group" data-bind="css: { 'error': keyword_error }">
         <input data-bind="value: keyword" type="text" />
+        <div class="help-inline" data-bind="text: keyword_error"></div>
       </td>
       <td>
         <select data-bind="value: type, options: $root.action_types, optionsText: 'label', optionsValue: 'value'"></select>

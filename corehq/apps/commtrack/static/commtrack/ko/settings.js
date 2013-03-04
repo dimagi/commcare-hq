@@ -3,7 +3,7 @@ $(function() {
         
         var model = new CommtrackSettingsViewModel();
         $('#settings').submit(function() {
-                model.presubmit();
+                return model.presubmit();
             });
 
         ko.applyBindings(model);
@@ -15,6 +15,8 @@ function CommtrackSettingsViewModel() {
     this.keyword = ko.observable();
     this.actions = ko.observableArray();
     this.json_payload = ko.observable();
+
+    this.keyword_error = ko.observable();
 
     this.action_types = [
         {label: 'Stock on hand', value: 'stockonhand'},
@@ -41,7 +43,28 @@ function CommtrackSettingsViewModel() {
         settings.actions.push(new ActionModel({}));
     }
 
+    this.validate = function() {
+        var valid = true;
+
+        if (!this.keyword()) {
+            this.keyword_error('required');
+            valid = false;
+        }
+
+        $.each(this.actions(), function(i, e) {
+                if (!e.validate()) {
+                    valid = false;
+                }
+            });
+
+        return valid;
+    }
+
     this.presubmit = function() {
+        if (!this.validate()) {
+            return false;
+        }
+        
         payload = ko.toJS(this);
         delete payload.action_types;
         delete payload.json_payload;
@@ -52,8 +75,26 @@ function CommtrackSettingsViewModel() {
 
 function ActionModel(data) {
     this.keyword = ko.observable(data.keyword);
-    this.name = ko.observable(data.name);
     this.caption = ko.observable(data.caption);
     this.type = ko.observable(data.type);
+    this.name = data.name;
+
+    this.keyword_error = ko.observable();
+    this.caption_error = ko.observable();
+
+    this.validate = function() {
+        valid = true;
+
+        if (!this.keyword()) {
+            this.keyword_error('required');
+            valid = false;
+        }
+        if (!this.caption()) {
+            this.caption_error('required');
+            valid = false;
+        }
+
+        return valid;
+    }
 }
 
