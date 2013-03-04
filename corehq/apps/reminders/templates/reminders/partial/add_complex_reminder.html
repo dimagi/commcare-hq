@@ -3,8 +3,8 @@
 
 {% block head %}{{ block.super }}
 
-<script language="javascript" type="text/javascript" src="{% static 'hqwebapp/javascripts/jquery-ui/jquery-ui-1.8.16.min.js' %}"></script>
-<link rel="stylesheet" href="{% static 'hqwebapp/javascripts/jquery-ui/jquery-ui-redmond-1.8.16.css' %}">
+<script language="javascript" type="text/javascript" src="{% static 'hqwebapp/js/lib/jquery-ui/jquery-ui-1.8.16.min.js' %}"></script>
+<link rel="stylesheet" href="{% static 'hqwebapp/js/lib/jquery-ui/jquery-ui-redmond-1.8.16.css' %}">
 
 <style type="text/css">
     h2 {
@@ -324,6 +324,21 @@
 </script>
 {% endblock %}
 
+{% block subsection-title %}
+    <li>
+        <a href="#">Reminder Definitions</a> <span class="divider">&gt;</span>
+    </li>
+    {% if handler_id %}
+    <li class="active">
+        <a href="{% url edit_complex domain handler_id %}">{{ form.nickname.value }}</a>
+    </li>
+    {% else %}
+    <li class="active">
+        <a href="{% url add_complex_reminder_schedule domain %}">New Reminder Definition</a>
+    </li>
+    {% endif %}
+{% endblock %}
+
 {% block reminder_definition_nav %}
 <ul class="nav nav-list">
     {% if handler_id %}
@@ -334,9 +349,8 @@
 </ul>
 {% endblock %}
 
-{% block reminders_content %}
+{% block main_column %}
 <form action="" method="post">
-    <br />
     <table id="reminder_info" class="parameter_table">
         <tbody>
             <tr>

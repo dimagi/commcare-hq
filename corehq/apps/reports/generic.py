@@ -1,6 +1,6 @@
 from StringIO import StringIO
 import datetime
-from celery.log import get_task_logger
+from celery.utils.log import get_task_logger
 from django.core.urlresolvers import reverse
 from django.http import HttpResponse, Http404
 from django.template.context import RequestContext
@@ -132,7 +132,7 @@ class GenericReportView(CacheableRequestMixIn):
         """
             For pickling the report when passing it to Celery.
         """
-        logging = get_task_logger() # logging is likely to happen within celery.
+        logging = get_task_logger(__name__) # logging is likely to happen within celery.
         # pickle only what the report needs from the request object
 
         request = dict(
@@ -163,7 +163,7 @@ class GenericReportView(CacheableRequestMixIn):
         """
             For unpickling a pickled report.
         """
-        logging = get_task_logger() # logging lis likely to happen within celery.
+        logging = get_task_logger(__name__) # logging lis likely to happen within celery.
         self.domain = state.get('domain')
         self.context = state.get('context', {})
 
@@ -370,8 +370,12 @@ class GenericReportView(CacheableRequestMixIn):
         """
         Whether a report needs filters. A shortcut for hide_filters is false and 
         filter_set is false.
+        If no filters are used, False is automatically returned.
         """
-        return not self.hide_filters and not self.filter_set
+        if len(self.fields) == 0:
+            return False
+        else:
+            return not self.hide_filters and not self.filter_set
     
     def _validate_context_dict(self, property):
         if not isinstance(property, dict):

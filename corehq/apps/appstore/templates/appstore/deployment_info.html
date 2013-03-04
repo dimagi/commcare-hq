@@ -17,7 +17,7 @@
                     {{ domain.name }}
                     <small>by
                         {% if domain.organization %}
-                            <a href="{% url orgs_landing domain.organization %}">{{ domain.organization_doc.title }}</a>
+                            <a href="{% url orgs_landing domain.organization %}">{{ domain.get_organization.title }}</a>
                         {% else %}
                             {{ domain.author }}
                         {% endif %}

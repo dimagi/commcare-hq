@@ -1,4 +1,5 @@
 from corehq.apps.locations.models import Location, root_locations, CustomProperty
+from couchdbkit import ResourceNotFound
 
 def load_locs_json(domain, selected_loc_id=None):
     """initialize a json location tree for drill-down controls on
@@ -135,3 +136,46 @@ def location_custom_properties(domain, loc_type):
     except KeyError:
         return []
 
+def lookup_by_property(domain, prop_name, val, scope, root=None):
+    if root and not isinstance(root, basestring):
+        root = root._id
+
+    index_view = 'locations/prop_index_%s' % prop_name
+
+    startkey = [domain, val]
+    if scope == 'global':
+        startkey.append(None)
+    elif scope == 'descendant':
+        startkey.append(root)
+    elif scope == 'child':
+        startkey.extend([root, 1])
+    else:
+        raise ValueError('invalid scope type')
+
+    return set(row['id'] for row in Location.get_db().view(index_view, startkey=startkey, endkey=startkey + [{}]))
+
+def property_uniqueness(domain, loc, prop_name, val, scope='global'):
+    def normalize(val):
+        try:
+            return val.lower() # case-insensitive comparison
+        except AttributeError:
+            return val
+    val = normalize(val)
+
+    try:
+        if scope == 'siblings':
+            _scope = 'child'
+            root = loc.parent
+        else:
+            _scope = scope
+            root = None
+        return lookup_by_property(domain, prop_name, val, _scope, root) - set([loc._id])
+    except ResourceNotFound:
+        # property is not indexed
+        uniqueness_set = []
+        if scope == 'global':
+            uniqueness_set = [l for l in all_locations(loc.domain) if l._id != loc._id]
+        elif scope == 'siblings':
+            uniqueness_set = loc.siblings()
+
+        return set(l._id for l in uniqueness_set if val == normalize(getattr(l, prop_name, None)))

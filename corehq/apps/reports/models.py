@@ -5,13 +5,14 @@ import pytz
 from corehq.apps import reports
 from corehq.apps.reports.display import xmlns_to_name
 from couchdbkit.ext.django.schema import *
-from corehq.apps.users.models import WebUser, CommCareUser
+from corehq.apps.users.models import WebUser, CommCareUser, CouchUser
 from couchexport.models import SavedExportSchema, GroupExportConfiguration
 from couchexport.util import SerializableFunction
 import couchforms
 from dimagi.utils.couch.database import get_db
 from dimagi.utils.decorators.memoized import memoized
 from django.conf import settings
+from django.core.validators import validate_email
 from corehq.apps.reports.dispatcher import (ProjectReportDispatcher,
     CustomProjectReportDispatcher)
 from corehq.apps.adm.dispatcher import ADMSectionDispatcher
@@ -316,7 +317,10 @@ class ReportConfig(Document):
     @property
     @memoized
     def owner(self):
-        return WebUser.get(self.owner_id)
+        try:
+            return WebUser.get_by_user_id(self.owner_id)
+        except CouchUser.AccountTypeError:
+            return CommCareUser.get_by_user_id(self.owner_id)
 
     def get_report_content(self):
         """
@@ -345,7 +349,8 @@ class ReportConfig(Document):
             response = self._dispatcher.dispatch(request, render_as='email',
                 **self.view_kwargs)
             return json.loads(response.content)['report']
-        except:
+        except Exception:
+            notify_exception(None, "Error generating report")
             return _("An error occurred while generating this report.")
 
 
@@ -401,7 +406,15 @@ class ReportNotification(Document):
 
         emails = []
         if self.send_to_owner:
-            emails.append(self.owner.username)
+            if self.owner.is_web_user():
+                emails.append(self.owner.username)
+            else:
+                email = self.owner.get_email()
+                try:
+                    validate_email(email)
+                    emails.append(email)
+                except Exception:
+                    pass
         emails.extend(self.recipient_emails)
         return emails
 
@@ -409,7 +422,10 @@ class ReportNotification(Document):
     @memoized
     def owner(self):
         id = self.owner_id if self.owner_id else self.user_ids[0]
-        return WebUser.get(id)
+        try:
+            return WebUser.get_by_user_id(id)
+        except CouchUser.AccountTypeError:
+            return CommCareUser.get_by_user_id(id)
 
     @property
     @memoized

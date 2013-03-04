@@ -16,7 +16,7 @@ from corehq.apps.reports.fields import SelectOpenCloseField, SelectMobileWorkerF
 from corehq.apps.reports.generic import GenericTabularReport
 from corehq.apps.users.models import CommCareUser
 from dimagi.utils.couch.database import get_db
-from dimagi.utils.couch.pagination import CouchFilter, FilteredPaginator
+from dimagi.utils.couch.pagination import CouchFilter
 from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.timezones import utils as tz_utils
 from corehq.apps.groups.models import Group
@@ -350,26 +350,6 @@ class CaseListReport(CaseListMixin, ProjectInspectionReport):
             }
 
         return headers
-
-    @property
-    @memoized
-    def paginator_results(self):
-        """This is no longer called by anything"""
-        def _compare_cases(x, y):
-            x = x.get('key', [])
-            y = y.get('key', [])
-            try:
-                x = x[-1]
-                y = y[-1]
-            except Exception:
-                x = ""
-                y = ""
-            return cmp(x, y)
-        is_open = self.request.GET.get(SelectOpenCloseField.slug)
-        filters = [CaseListFilter(self.domain, case_owner, case_type=self.case_type, open_case=is_open)
-                   for case_owner in self.case_owners]
-        paginator = FilteredPaginator(filters, _compare_cases)
-        return paginator
 
     @property
     def rows(self):

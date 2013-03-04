@@ -17,6 +17,11 @@ from dimagi.utils.parsing import json_format_datetime
 DEFAULT_OUTBOUND_RETRY_INTERVAL = 5
 DEFAULT_OUTBOUND_RETRIES = 2
 
+ERROR_RENDERING_MESSAGE = "Error rendering templated message for language '%s'. Please check message syntax."
+ERROR_NO_VERIFIED_NUMBER = "Recipient has no phone number."
+ERROR_NO_OTHER_NUMBERS = "Recipient has no phone number."
+ERROR_FORM = "Can't load form. Please check configuration."
+
 """
 This module defines the methods that will be called from CaseReminderHandler.fire()
 when a reminder event fires.
@@ -56,10 +61,11 @@ def fire_sms_event(reminder, handler, recipients, verified_numbers):
             try:
                 message = Message.render(message, case=reminder.case.case_properties())
             except Exception:
-                raise_warning() # Error in rendering template message, check syntax
                 if len(recipients) == 1:
+                    raise_error(reminder, ERROR_RENDERING_MESSAGE % lang)
                     return False
                 else:
+                    raise_warning() # ERROR_RENDERING_MESSAGE
                     continue
             
             verified_number = verified_numbers[recipient.get_id]
@@ -76,13 +82,19 @@ def fire_sms_event(reminder, handler, recipients, verified_numbers):
                 
                 if phone_number is None:
                     result = False
-                    raise_warning() # CouchUser has no VerifiedNumber and no other numbers
+                    if len(recipients) == 1:
+                        raise_error(reminder, ERROR_NO_OTHER_NUMBERS)
+                    else:
+                        raise_warning() # ERROR_NO_OTHER_NUMBERS
                 else:
                     result = send_sms(reminder.domain, recipient.get_id, phone_number, message)
                     if not result:
                         raise_warning() # Could not send SMS
             else:
-                raise_warning() # Recipient has no VerifiedNumber
+                if len(recipients) == 1:
+                    raise_error(reminder, ERROR_NO_VERIFIED_NUMBER)
+                else:
+                    raise_warning() # ERROR_NO_VERIFIED_NUMBER
                 result = False
             
             if len(recipients) == 1:
@@ -175,17 +187,18 @@ def fire_sms_survey_event(reminder, handler, recipients, verified_numbers):
                 app = form.get_app()
                 module = form.get_module()
             except Exception as e:
-                raise_warning() # Can't load form, check config
+                raise_error(reminder, ERROR_FORM)
                 return False
             
             # Start a touchforms session for each recipient
             for recipient in recipients:
                 verified_number = verified_numbers[recipient.get_id]
                 if verified_number is None:
-                    raise_warning() # Recipient is missing a verified number
                     if len(recipients) == 1:
+                        raise_error(reminder, ERROR_NO_VERIFIED_NUMBER)
                         return False
                     else:
+                        raise_warning() # ERROR_NO_VERIFIED_NUMBER
                         continue
                 
                 # Close all currently open sessions
@@ -241,18 +254,26 @@ def fire_ivr_survey_event(reminder, handler, recipients, verified_numbers):
                     reminder.save()
                     return False
         else:
+            raise_error(reminder, ERROR_NO_VERIFIED_NUMBER)
             return False
     else:
         # TODO: Implement ivr survey for RECIPIENT_USER, RECIPIENT_OWNER, and RECIPIENT_SURVEY_SAMPLE
         return False
 
 """
-This method is meant to report runtime errors which are caused by configuration errors to a project contact.
+This method is meant to report runtime warnings which are caused by configuration errors to a project contact.
 """
 def raise_warning():
     # For now, just a stub.
     pass
 
+"""
+Put the reminder in an error state, which filters it out of the reminders queue.
+"""
+def raise_error(reminder, error_msg):
+    reminder.error = True
+    reminder.error_msg = error_msg
+    reminder.save()
 
 # The dictionary which maps an event type to its event handling method
 

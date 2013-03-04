@@ -10,7 +10,6 @@
 {% block head %}{{ block.super }}
     <link rel="stylesheet" href="{% static 'hqstyle/css/legacy/app_manager.css' %}"/>
     {% include "imports/jqmodal.html" %}
-    <link href="{% static 'formdesigner/css/chosen.css' %}" rel="stylesheet" />
     <style>
         .hq-oldstyle .nav-pills .active > a {
             color: white;
@@ -36,8 +35,7 @@
     <script src="{% static 'hqwebapp/js/ui-element.js' %}"></script>
     <script src="{% static 'langcodes/js/langcodes.js' %}"></script>
     <script src="{% static 'app_manager/js/app_manager.js' %}"></script>
-    <script src="{% static 'hqwebapp/javascripts/jquery.textchange.min.js' %}"></script>
-    <script src="{% static 'formdesigner/js/chosen.jquery.min.js' %}"></script>
+    <script src="{% static 'hqwebapp/js/lib/jquery.textchange.min.js' %}"></script>
 {% endblock %}
 
 {% block js-inline %}{{ block.super }}
@@ -82,7 +80,6 @@
             $toggleLink = $("#apps-menu-toggle a"),
             down = 'ui-icon-carat-1-s',
             up = 'ui-icon-carat-1-n';
-        $appsMenu.addClass('ui-corner-top');
 
         function setHidden(val) {
             hidden = val;
@@ -90,11 +87,7 @@
             $toggleIcon.addClass(hidden ? down : up)
                     .removeClass(hidden ? up : down);
             $toggleLink.text(hidden ? "Change Apps" : "Hide");
-            if (hidden) {
-                $appsMenuBorder.addClass('ui-corner-top');
-            } else {
-                $appsMenuBorder.removeClass('ui-corner-top');
-            }
+
         }
         setHidden(JSON.parse($.cookie('appsMenuHidden') || "true"));
         $toggleDiv.addClass('ui-corner-bottom');
@@ -117,7 +110,6 @@
     });
     $(function () {
         COMMCAREHQ.app_manager.init({
-            lastAppVersion: {{ latest_app_version }},
             appVersion: {% if app.version %}{{ app.version }}{% else %}-1{% endif %},
             edit: {{ edit|JSON }},
             commcareVersion: {{ app.commcare_minor_release|JSON }}
@@ -252,6 +244,8 @@
             <div style="padding: 1em; text-align: center">
                 <p style="font-size: 1.5em">
                     Welcome to the CommCare Application Builder.
+                    Before you begin, check out the
+                    <a target="_blank" href="https://confluence.dimagi.com/display/commcarepublic/Beginner+Tutorial">Beginner Tutorial</a>.
                 </p>
                 <form action="{% url new_app domain %}">
                     <input type="hidden" name="type" value="Application">

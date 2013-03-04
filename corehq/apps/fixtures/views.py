@@ -1,7 +1,13 @@
 import json
-import logging
-import csv
-from corehq.apps.domain.decorators import login_and_domain_required
+from couchdbkit import ResourceNotFound
+
+from django.contrib import messages
+from django.core.urlresolvers import reverse
+from django.http import HttpResponseBadRequest, HttpResponseRedirect, Http404
+from django.utils.decorators import method_decorator
+from django.views.generic.base import TemplateView
+from django.shortcuts import render
+
 from corehq.apps.fixtures.models import FixtureDataType, FixtureDataItem
 from corehq.apps.groups.models import Group
 from corehq.apps.users.bulkupload import GroupMemoizer
@@ -13,13 +19,6 @@ from dimagi.utils.excel import WorkbookJSONReader, WorksheetNotFound
 from dimagi.utils.logging import notify_exception
 from dimagi.utils.web import json_response
 from dimagi.utils.decorators.view import get_file
-
-from django.contrib import messages
-from django.core.urlresolvers import reverse
-from django.http import HttpResponse, HttpResponseBadRequest, HttpResponseRedirect
-from django.utils.decorators import method_decorator
-from django.views.generic.base import TemplateView
-from django.shortcuts import render
 
 
 require_can_edit_fixtures = require_permission(Permissions.edit_data)
@@ -50,7 +49,10 @@ def _to_kwargs(req):
 def data_types(request, domain, data_type_id):
     
     if data_type_id:
-        data_type = FixtureDataType.get(data_type_id)
+        try:
+            data_type = FixtureDataType.get(data_type_id)
+        except ResourceNotFound:
+            raise Http404()
 
         assert(data_type.doc_type == FixtureDataType._doc_type)
         assert(data_type.domain == domain)
@@ -115,7 +117,10 @@ def data_items(request, domain, data_type_id, data_item_id):
     elif request.method == 'GET' and data_item_id is None:
         return json_response([prepare_item(x) for x in FixtureDataItem.by_data_type(domain, data_type_id)])
     elif request.method == 'GET' and data_item_id:
-        o = FixtureDataItem.get(data_item_id)
+        try:
+            o = FixtureDataItem.get(data_item_id)
+        except ResourceNotFound:
+            raise Http404()
         assert(o.domain == domain and o.data_type.get_id == data_type_id)
         return json_response(prepare_item(o))
     elif request.method == 'PUT' and data_item_id:
@@ -235,13 +240,19 @@ class UploadItemLists(TemplateView):
 
         data_types = workbook.get_worksheet(title='types')
 
+        def _get_or_raise(container, attr, message):
+            try:
+                return container[attr]
+            except KeyError:
+                raise Exception(message.format(attr=attr))
         with CouchTransaction() as transaction:
             for dt in data_types:
+                err_msg = "Workbook 'types' has no column '{attr}'"
                 data_type = FixtureDataType(
                     domain=self.domain,
-                    name=dt['name'],
-                    tag=dt['tag'],
-                    fields=dt['field'],
+                    name=_get_or_raise(dt, 'name', err_msg),
+                    tag=_get_or_raise(dt, 'tag', err_msg),
+                    fields=_get_or_raise(dt, 'field', err_msg),
                 )
                 transaction.save(data_type)
                 data_items = workbook.get_worksheet(data_type.tag)

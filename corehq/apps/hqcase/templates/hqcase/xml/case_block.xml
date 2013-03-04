@@ -4,8 +4,8 @@
         <deviceID />
         <timeStart>{{ time }}</timeStart>
         <timeEnd>{{ time }}</timeEnd>
-        <username>system</username>
-        <userID />
+        <username>{{ username }}</username>
+        <userID>{{ user_id }}</userID>
         <uid>{{ uid }}</uid>
     </meta>
     {{ case_block|safe }}

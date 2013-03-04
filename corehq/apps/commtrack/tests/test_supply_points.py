@@ -1,8 +1,9 @@
 from django.utils.unittest.case import TestCase
-from corehq.apps.commtrack.helpers import make_supply_point
+from corehq.apps.commtrack.helpers import make_supply_point,\
+    get_commtrack_user_id
 from corehq.apps.commtrack import const
 from corehq.apps.commtrack.tests.util import make_loc, TEST_DOMAIN
-
+from datetime import datetime
 
 class SupplyPointTest(TestCase):
 
@@ -18,5 +19,11 @@ class SupplyPointTest(TestCase):
         self.assertEqual(TEST_DOMAIN, sp.domain)
         self.assertEqual(const.SUPPLY_POINT_CASE_TYPE, sp.type)
         self.assertEqual([self.loc._id], sp.location_)
-        # rest to be fleshed out once making supply points does more
+        self.assertEqual(get_commtrack_user_id(TEST_DOMAIN), sp.user_id)
+        self.assertEqual(None, sp.owner_id)
+        self.assertFalse(sp.closed)
+        self.assertTrue(len(sp.actions) > 0)
+        for dateprop in ('opened_on', 'modified_on', 'server_modified_on'):
+            self.assertTrue(getattr(sp, dateprop) is not None)
+            self.assertTrue(isinstance(getattr(sp, dateprop), datetime))
 

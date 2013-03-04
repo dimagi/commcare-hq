@@ -389,7 +389,7 @@
                     <th>Name</th>
                     <td>
                         {% if edit %}
-                            <input type="text" name="name" value="{{ app.name }}" />
+                            <input type="text" class="wide" name="name" value="{{ app.name }}" />
                         {% else %}
                             {{ app.name }}
                         {% endif %}
@@ -440,7 +440,7 @@
                             <select name="text_input" data-value="{{ app.text_input }}">
                                 <option value="roman">* Default (Roman)</option>
                                 <option value="native">Native (International)</option>
-                                <option value="custom-keys">Custom Keys [requires CommCare 1.3 or above]</option>
+                                <option value="custom-keys">Custom Keys{% if app.commcare_version == '1.0' %} [requires CommCare 1.3 or above]{% endif %}</option>
                             </select>
                         {% else %}
                             {% if app.text_input == "native"%}
@@ -606,10 +606,10 @@
     {% if app.get_doc_type == "Application" %}
         <h4><a href="{% url app_summary domain app.id %}" class="btn btn-primary">Application Summary</a></h4>
 
+        {% if multimedia %}
         <div class="scary-settings-toggle">
             <a href="#"><span class="ui-icon"></span>{% trans 'Application Multimedia' %}</a>
         </div>
-        {% if multimedia %}
         <div class="scary-settings multimedia">
             {% if edit %}
                 <h3 style="text-align: left;">{% trans 'Manage Multimedia' %}</h3>
@@ -621,7 +621,7 @@
             {% include "hqmedia/partials/multimedia_zip_notice.html" %}
         </div>
         {% endif %}
-        
+
         <div class="scary-settings-toggle" id="user-interface-translations">
             <a href="#"><span class="ui-icon"></span>User Interface Translations</a>
         </div>

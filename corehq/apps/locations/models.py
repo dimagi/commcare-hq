@@ -8,6 +8,7 @@ class Location(Document):
     domain = StringProperty()
     name = StringProperty()
     location_type = StringProperty()
+    site_code = StringProperty() # should be unique, not yet enforced
 
     # a list of doc ids, referring to the parent location, then the
     # grand-parent, and so on up to the root location in the hierarchy
@@ -164,7 +165,8 @@ class CustomProperty(Document):
         return self.field_type()(**kwargs)
 
     def custom_validate(self, loc, val, prop_name):
-        self.validate_uniqueness(loc, val, prop_name)
+        if self.unique:
+            self.validate_uniqueness(loc, val, prop_name)
 
     def validate_uniqueness(self, loc, val, prop_name):
         def normalize(val):
@@ -174,15 +176,11 @@ class CustomProperty(Document):
                 return val
         val = normalize(val)
 
-        uniqueness_set = []
-        if self.unique == 'global':
-            uniqueness_set = [l for l in all_locations(loc.domain) if l._id != loc._id]
-        elif self.unique == 'siblings':
-            uniqueness_set = loc.siblings()
+        from corehq.apps.locations.util import property_uniqueness
+        conflict_ids = property_uniqueness(loc.domain, loc, prop_name, val, self.unique)
 
-        unique_conflict = [l for l in uniqueness_set if val == normalize(getattr(l, prop_name, None))]
-        if unique_conflict:
-            conflict_loc = unique_conflict[0]
+        if conflict_ids:
+            conflict_loc = Location.get(conflict_ids.pop())
             raise ValueError('value must be unique; conflicts with <a href="%s">%s %s</a>' %
                              (reverse('edit_location', kwargs={'domain': loc.domain, 'loc_id': conflict_loc._id}),
                               conflict_loc.name, conflict_loc.location_type))

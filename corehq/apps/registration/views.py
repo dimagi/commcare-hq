@@ -124,7 +124,9 @@ def register_domain(request, domain_type=None):
                 return render(request, 'error.html', vals)
 
             request_new_domain(
-                request, form, org, new_user=is_new, domain_type=domain_type)
+                request, form, org, new_user=is_new, domain_type=domain_type,
+                slug=request.POST.get('domain_name') if org else None)
+
             requested_domain = form.cleaned_data['domain_name']
             if is_new:
                 vals = dict(alert_message="An email has been sent to %s." % request.user.username, requested_domain=requested_domain)

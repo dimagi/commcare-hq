@@ -1,14 +1,15 @@
 from functools import wraps
-from celery.log import get_task_logger
-from celery.task import periodic_task
-from datetime import datetime, timedelta
-from django.core.cache import cache
-from corehq.apps.receiverwrapper.models import RepeatRecord, FormRepeater
-from couchdbkit.exceptions import ResourceConflict
-from couchforms.models import XFormInstance
-from dimagi.utils.parsing import json_format_datetime, ISO_MIN
 
-logging = get_task_logger()
+from datetime import datetime, timedelta
+
+from celery.task import periodic_task
+from celery.utils.log import get_task_logger
+from django.core.cache import cache
+
+from corehq.apps.receiverwrapper.models import RepeatRecord
+
+
+logging = get_task_logger(__name__)
 
 def run_only_once(fn):
     """
@@ -34,13 +35,36 @@ def run_only_once(fn):
             logging.debug("%s is already running; aborting" % fn_name)
     return _fn
 
-@periodic_task(run_every=timedelta(minutes=1))
+CHECK_REPEATERS_INTERVAL = timedelta(minutes=1)
+@periodic_task(run_every=CHECK_REPEATERS_INTERVAL)
 def check_repeaters():
-    now = datetime.utcnow()
-    
-    repeat_records = RepeatRecord.all(due_before=now)
-    for repeat_record in repeat_records:
-        if repeat_record.acquire_lock(now):
-            repeat_record.fire()
-            repeat_record.save()
-            repeat_record.release_lock()
+    start = datetime.utcnow()
+    LIMIT = 100
+    while True:
+        number_locked = 0
+        # take LIMIT records off the top
+        # the assumption is that they all get 'popped' in the for loop
+        # the only exception I can see is if there's a problem with the
+        # locking, a large number of locked tasks could pile up at the top,
+        # so make a provision for that worst case
+        repeat_records = RepeatRecord.all(
+            due_before=start,
+            limit=LIMIT + number_locked
+        )
+        if repeat_records.count() <= number_locked:
+            # don't keep spinning if there's nothing left to fetch
+            return
+
+        for repeat_record in repeat_records:
+            now = datetime.utcnow()
+
+            # abort if taking too long, so the next task can take over
+            if now - start > CHECK_REPEATERS_INTERVAL:
+                return
+
+            if repeat_record.acquire_lock(start):
+                repeat_record.fire()
+                repeat_record.save()
+                repeat_record.release_lock()
+            else:
+                number_locked += 1
