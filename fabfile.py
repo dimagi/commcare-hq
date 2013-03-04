@@ -75,6 +75,7 @@ def _setup_path():
     env.virtualenv_root_preindex = posixpath.join(env.root, 'python_env_preindex')
     env.services = posixpath.join(env.home, 'services')
     env.jython_home = '/usr/local/lib/jython'
+    env.db = '%s_%s' % (env.project, env.environment)
 
 @task
 def _set_apache_user():
@@ -106,7 +107,6 @@ def staging():
     env.hosts = ['192.168.56.1']
     env.settings = '%(project)s.localsettings' % env
     env.host_os_map = None
-    env.db = '%s_%s' % (env.project, env.environment)
     _setup_path()
     env.user = prompt("Username: ", default='dimagivm')
     env.es_endpoint = 'localhost'
@@ -180,7 +180,6 @@ def production():
     env.server_name = 'commcare-hq-production'
     env.settings = '%(project)s.localsettings' % env
     env.host_os_map = None # e.g. 'ubuntu' or 'redhat'.  Gets autopopulated by what_os() if you don't know what it is or don't want to specify.
-    env.db = '%s_%s' % (env.project, env.environment)
     env.roles = ['deploy', ]
     env.es_endpoint = 'hqes0.internal.commcarehq.org'''
 
@@ -219,7 +218,6 @@ def realstaging():
     env.server_name = 'commcare-hq-staging'
     env.settings = '%(project)s.localsettings' % env
     env.host_os_map = None # e.g. 'ubuntu' or 'redhat'.  Gets autopopulated by what_os() if you don't know what it is or don't want to specify.
-    env.db = '%s_%s' % (env.project, env.environment)
     env.roles = ['deploy', ]
 
     _setup_path()
