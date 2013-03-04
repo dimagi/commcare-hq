@@ -16,6 +16,7 @@ from corehq.apps.domain.forms import DomainGlobalSettingsForm,\
 from corehq.apps.domain.models import Domain, LICENSES
 from corehq.apps.domain.utils import get_domained_url, normalize_domain_name
 from corehq.apps.orgs.models import Organization, OrgRequest, Team
+from corehq.apps.commtrack.util import all_sms_codes
 from dimagi.utils.django.email import send_HTML_email
 
 from dimagi.utils.web import get_ip
@@ -531,9 +532,15 @@ def commtrack_settings(request, domain):
             'caption': action.caption,
         }
 
+    def other_sms_codes():
+        for k, v in all_sms_codes(domain.name).iteritems():
+            if v[0] == 'product':
+                yield (k, (v[0], v[1].name))
+
     return render(request, 'domain/admin/commtrack_settings.html', dict(
             domain=domain.name,
             settings=settings_to_json(settings),
+            other_sms_codes=dict(other_sms_codes()),
         ))
 
 @require_POST

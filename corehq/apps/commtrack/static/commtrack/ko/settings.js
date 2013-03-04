@@ -44,15 +44,19 @@ function CommtrackSettingsViewModel() {
     }
 
     this.validate = function() {
+        var that = this;
         var valid = true;
 
         if (!this.keyword()) {
             this.keyword_error('required');
             valid = false;
         }
+        if (!this.validate_sms(this, 'keyword', 'command', 'stock_report')) {
+            valid = false;
+        }
 
         $.each(this.actions(), function(i, e) {
-                if (!e.validate()) {
+                if (!e.validate(that)) {
                     valid = false;
                 }
             });
@@ -71,6 +75,42 @@ function CommtrackSettingsViewModel() {
 
         this.json_payload(JSON.stringify(payload));
     };
+
+    this.all_sms_codes = function() {
+        keywords = [];
+
+        $.each(other_sms_codes, function(k, v) {
+                keywords.push({keyword: k, type: v[0], name: 'product "' + v[1] + '"', id: null});
+            });
+
+        keywords.push({keyword: this.keyword(), type: 'command', name: 'stock report', id: 'stock_report'});
+
+        $.each(this.actions(), function(i, e) {
+                keywords.push({keyword: e.keyword, type: 'action', name: e.caption, id: i});
+            });
+
+        return keywords;
+    }
+
+    this.sms_code_uniqueness = function(keyword, type, id) {
+        var conflict = null;
+        $.each(this.all_sms_codes(), function(i, e) {
+                if (keyword == e.keyword && type != e.type && id != e.id) {
+                    conflict = e;
+                    return false;
+                }
+            });
+        return conflict;
+    }
+
+    this.validate_sms = function(model, attr, type, id) {
+        var conflict = this.sms_code_uniqueness(model[attr](), type, id);
+        if (conflict) {
+            model[attr + '_error']('conficts with ' + conflict.name);
+            return false;
+        }
+        return true;
+    }
 }
 
 function ActionModel(data) {
@@ -82,7 +122,7 @@ function ActionModel(data) {
     this.keyword_error = ko.observable();
     this.caption_error = ko.observable();
 
-    this.validate = function() {
+    this.validate = function(root) {
         valid = true;
 
         if (!this.keyword()) {
@@ -91,6 +131,10 @@ function ActionModel(data) {
         }
         if (!this.caption()) {
             this.caption_error('required');
+            valid = false;
+        }
+
+        if (!root.validate_sms(this, 'keyword', 'action', root.actions().indexOf(this))) {
             valid = false;
         }
 
