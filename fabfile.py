@@ -74,6 +74,7 @@ def _setup_path():
     env.virtualenv_root = posixpath.join(env.root, 'python_env')
     env.virtualenv_root_preindex = posixpath.join(env.root, 'python_env_preindex')
     env.services = posixpath.join(env.home, 'services')
+    env.jython_home = '/usr/local/lib/jython'
 
 @task
 def _set_apache_user():
@@ -143,7 +144,6 @@ def india():
 
         'django_monolith': ['220.226.209.82'],
     }
-    env.jython_home = '/usr/local/lib/jython'
     env.roles = ['django_monolith']
     env.es_endpoint = 'localhost'
 
@@ -184,7 +184,6 @@ def production():
     env.roles = ['deploy', ]
     env.es_endpoint = 'hqes0.internal.commcarehq.org'''
 
-    env.jython_home = '/usr/local/lib/jython'
     _setup_path()
 
 @task
@@ -223,7 +222,6 @@ def realstaging():
     env.db = '%s_%s' % (env.project, env.environment)
     env.roles = ['deploy', ]
 
-    env.jython_home = '/usr/local/lib/jython'
     _setup_path()
     
     
