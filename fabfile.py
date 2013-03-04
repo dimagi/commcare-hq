@@ -37,6 +37,7 @@ RSYNC_EXCLUDE = (
     )
 env.project = 'commcare-hq'
 env.code_repo = 'git://github.com/dimagi/commcare-hq.git'
+env.code_branch = 'master'
 env.home = "/home/cchq"
 env.selenium_url = 'http://jenkins.dimagi.com/job/commcare-hq-post-deploy/buildWithParameters?token=%(token)s&TARGET=%(environment)s'
 
@@ -116,7 +117,6 @@ def india():
     """Our production server in India."""
     env.home = '/home/commcarehq/'
     env.environment = 'india'
-    env.code_branch = 'master'
     env.sudo_user = 'commcarehq'
     env.hosts = ['220.226.209.82']
     env.user = prompt("Username: ", default=env.user)
@@ -149,7 +149,6 @@ def india():
 @task
 def production():
     """ use production environment on remote host"""
-    env.code_branch = 'master'
     env.sudo_user = 'cchq'
     env.environment = 'production'
     env.django_port = '9010'
