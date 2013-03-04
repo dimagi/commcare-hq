@@ -163,7 +163,8 @@
     "values": ["cc-su-auto", "cc-su-man"],
     "value_names": ["Automatic", "Manual"],
     "values_txt": "If automatic is enabled, forms will attempt to send on their own without intervention from the user. If manual is enabled, the user must manually decide when to attempt to send forms.",
-    "default": "cc-su-man",
+    "default": "cc-su-auto",
+    "commcare_default": "cc-su-man",
     "contingent_default": [{"condition": "{features.sense}='true'", "value": "cc-su-auto"}],
     "group": "sense"
 }, {
@@ -174,7 +175,8 @@
     "values": ["cycle", "audio"],
     "value_names": ["Cycle", "Audio"],
     "values_txt": "cycle cycles through available languages. audio plays the question's audio if available. NOTE: If audio is selected, a question's audio will not be played by default when the question is displayed.",
-    "default": "cycle",
+    "default": "audio",
+    "commcare_default": "cycle",
     "contingent_default": [{"condition": "{features.sense}='true'", "value": "audio"}],
     "group": "sense"
 }, {
