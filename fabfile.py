@@ -101,7 +101,7 @@ def staging():
     env.code_branch = 'develop'
     env.sudo_user = 'commcare-hq'
     env.environment = 'staging'
-    env.server_port = '9002'
+    env.django_port = '9002'
     env.server_name = 'noneset'
     env.hosts = ['192.168.56.1']
     env.settings = '%(project)s.localsettings' % env
@@ -121,7 +121,7 @@ def india():
     env.sudo_user = 'commcarehq'
     env.hosts = ['220.226.209.82']
     env.user = prompt("Username: ", default=env.user)
-    env.server_port = '8001'
+    env.django_port = '8001'
 
     _setup_path()
     env.virtualenv_root = posixpath.join(root, '.virtualenvs/commcarehq')
@@ -153,7 +153,7 @@ def production():
     env.code_branch = 'master'
     env.sudo_user = 'cchq'
     env.environment = 'production'
-    env.server_port = '9010'
+    env.django_port = '9010'
 
     #env.hosts = None
     env.roledefs = {
@@ -192,7 +192,7 @@ def realstaging():
     env.code_branch = 'pact-dev'
     env.sudo_user = 'cchq'
     env.environment = 'staging'
-    env.server_port = '9010'
+    env.django_port = '9010'
 
     #env.hosts = None
     env.roledefs = {
@@ -701,12 +701,12 @@ def _supervisor_command(command):
 
 @task
 def update_apache_conf():
-    require('code_root', 'server_port')
+    require('code_root', 'django_port')
 
     with cd(env.code_root):
         tmp = posixpath.join('/', 'tmp', 'cchq_%s' % uuid.uuid4().hex)
         sudo('%s/bin/python manage.py mkapacheconf %s > %s'
-              % (env.virtualenv_root, env.server_port, tmp), user=env.sudo_user)
+              % (env.virtualenv_root, env.django_port, tmp), user=env.sudo_user)
         #sudo('cp -f %s /etc/apache2/sites-available/cchq' % tmp)
 
     with settings(warn_only=True):
