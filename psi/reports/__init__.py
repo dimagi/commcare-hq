@@ -42,6 +42,7 @@ class DemoTypeField(ReportSelectField):
         self.options = [{'val': dt, 'text': dt} for dt in DEMO_TYPES]
 
 class PSIReport(BasicTabularReport, CustomProjectReport, DatespanMixin):
+    update_after = True
     fields = ['corehq.apps.reports.fields.DatespanField','psi.reports.AsyncPlaceField',]
 
     def selected_fixture(self):
