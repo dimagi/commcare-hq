@@ -61,9 +61,9 @@
             {{ project.title }}
             <small>{% trans "by" %}
                 {% ifequal project.publisher 'organization' %}
-                <a href="{% url orgs_landing project.organization %}">
+{#                <a href="{% url orgs_public project.organization %}">#}
                     {{ project.get_organization.title }}
-                </a>
+{#                </a>#}
                 {% else %}
                     {{ project.author|default:published_by.full_name }}
                 {% endifequal %}

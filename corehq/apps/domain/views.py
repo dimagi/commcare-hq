@@ -295,8 +295,9 @@ def calculated_properties(request, domain):
 
 @domain_admin_required
 def create_snapshot(request, domain):
+    # todo: refactor function into smaller pieces
     domain = Domain.get_by_name(domain)
-    #latest_applications = [app.get_latest_saved() or app for app in domain.applications()]
+    can_publish_as_org = domain.get_organization() and request.couch_user.is_org_admin(domain.get_organization().name)
     if request.method == 'GET':
         form = SnapshotSettingsForm(initial={
                 'default_timezone': domain.default_timezone,
@@ -317,7 +318,6 @@ def create_snapshot(request, domain):
                 'project_type': published_snapshot.project_type,
                 'license': published_snapshot.license,
                 'title': published_snapshot.title,
-                # 'author': published_snapshot.author,
                 'share_multimedia': published_snapshot.multimedia_included,
                 'description': published_snapshot.description,
                 'short_description': published_snapshot.short_description,
@@ -347,11 +347,9 @@ def create_snapshot(request, domain):
             else:
                 app_forms.append((app, SnapshotApplicationForm(initial={'publish': (published_snapshot is None or published_snapshot == domain)}, prefix=app.id)))
 
-        can_publish_as_org = domain.get_organization() and request.couch_user.is_org_admin(domain.get_organization().name)
         return render(request, 'domain/create_snapshot.html',
             {'domain': domain.name,
              'form': form,
-             #'latest_applications': latest_applications,
              'app_forms': app_forms,
              'can_publish_as_org': can_publish_as_org,
              'published_as_org': published_snapshot.publisher == 'organization',
@@ -374,6 +372,9 @@ def create_snapshot(request, domain):
             return render(request, 'domain/create_snapshot.html',
                 {'domain': domain.name,
                  'form': form,
+                 'can_publish_as_org': can_publish_as_org,
+                 'published_as_org': request.POST.get('publisher', '') == 'organization',
+                 'author': request.POST.get('author', ''),
                  'app_forms': app_forms,
                  'autocomplete_fields': ('project_type', 'phone_model', 'user_type', 'city', 'country', 'region')})
 
@@ -383,6 +384,9 @@ def create_snapshot(request, domain):
             return render(request, 'domain/create_snapshot.html',
                 {'domain': domain.name,
                  'form': form,
+                 'can_publish_as_org': can_publish_as_org,
+                 'published_as_org': request.POST.get('publisher', '') == 'organization',
+                 'author': request.POST.get('author', ''),
                  'app_forms': app_forms,
                  'autocomplete_fields': ('project_type', 'phone_model', 'user_type', 'city', 'country', 'region')})
 
@@ -391,7 +395,9 @@ def create_snapshot(request, domain):
             return render(request, 'domain/create_snapshot.html',
                     {'domain': domain.name,
                      'form': form,
-                     #'latest_applications': latest_applications,
+                     'can_publish_as_org': can_publish_as_org,
+                     'published_as_org': request.POST.get('publisher', '') == 'organization',
+                     'author': request.POST.get('author', ''),
                      'app_forms': app_forms,
                      'autocomplete_fields': ('project_type', 'phone_model', 'user_type', 'city', 'country', 'region')})
 
@@ -418,7 +424,7 @@ def create_snapshot(request, domain):
         new_domain.title = request.POST['title']
         new_domain.multimedia_included = request.POST.get('share_multimedia', '') == 'on'
         new_domain.publisher = request.POST['publisher']
-        print new_domain.publisher
+
         new_domain.author = request.POST.get('author', None)
 
         new_domain.is_approved = False
@@ -475,7 +481,9 @@ def create_snapshot(request, domain):
             return render(request, 'domain/snapshot_settings.html',
                     {'domain': domain.name,
                      'form': form,
-                     #'latest_applications': latest_applications,
+                     'can_publish_as_org': can_publish_as_org,
+                     'published_as_org': request.POST.get('publisher', '') == 'organization',
+                     'author': request.POST.get('author', ''),
                      'app_forms': app_forms,
                      'error_message': _('Version creation failed; please try again')})
 
