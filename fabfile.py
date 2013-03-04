@@ -115,7 +115,6 @@ def staging():
 def india():
     """Our production server in India."""
     env.home = '/home/commcarehq/'
-    env.root = root = '/home/commcarehq'
     env.environment = 'india'
     env.code_branch = 'master'
     env.sudo_user = 'commcarehq'
@@ -124,8 +123,8 @@ def india():
     env.django_port = '8001'
 
     _setup_path()
-    env.virtualenv_root = posixpath.join(root, '.virtualenvs/commcarehq')
-    env.virtualenv_root_preindex = posixpath.join(root, '.virtualenvs/commcarehq_preindex')
+    env.virtualenv_root = posixpath.join(env.home, '.virtualenvs/commcarehq')
+    env.virtualenv_root_preindex = posixpath.join(env.home, '.virtualenvs/commcarehq_preindex')
 
     env.roledefs = {
         'couch': [],
