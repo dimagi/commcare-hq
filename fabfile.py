@@ -306,7 +306,7 @@ def setup_server():
 def create_db_user():
     """Create the Postgres user."""
     require('environment', provided_by=('staging', 'production'))
-    sudo('createuser -D -A -R %(sudo_user)s' % env, user='postgres')
+    sudo('createuser -D -R %(sudo_user)s' % env, user='postgres')
 
 
 @roles('pg')
