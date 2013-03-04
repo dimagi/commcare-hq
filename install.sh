@@ -5,14 +5,9 @@
 # - ensures all necessary processes will run on startup
 # - creates databases 
 #
-# Before running, you must download the following files to the script's
-# directory: 
-#  - the JDK 7 tar.gz from
-#    http://www.oracle.com/technetwork/java/javase/downloads/index.html and
-#    save it as jdk.tar.gz
-# 
-# When installing Jython, accept the default options and enter
-# /usr/local/lib/jython when prompted for the target directory.
+# Before running, you must download the JDK 7 tar.gz from
+# http://www.oracle.com/technetwork/java/javase/downloads/index.html and save
+# it as jdk.tar.gz in the same directory as this script.
 
 
 # Database settings; change these if desired
@@ -128,7 +123,7 @@ if [ ! -d /usr/local/lib/jython ]; then
     fi
 
     # Set /usr/local/lib/jython as the target directory
-    sudo java -jar jython_installer-2.5.2.jar
+    sudo java -jar jython_installer-2.5.2.jar --silent -d /usr/local/lib/jython
 
     sudo ln -s /usr/local/lib/jython/bin/jython /usr/local/bin/
 
