@@ -65,6 +65,8 @@ class ColumnCollector(type):
     """
     def __new__(cls, name, bases, attrs):
         columns = {}
+        for base in bases:
+            columns.update(getattr(base, 'columns', {}))
         for attr_name, attr in attrs.items():
             if isinstance(attr, Column):
                 columns[attr_name] = attr
