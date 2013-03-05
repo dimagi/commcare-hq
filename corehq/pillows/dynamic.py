@@ -62,8 +62,8 @@ default_special_types = {
 }
 
 case_special_types = {
-    "domain":type_exact_match_string("domain", dual=True),
-    "name":type_exact_match_string("name", dual=True),
+    "domain": type_exact_match_string("domain", dual=True),
+    "name": type_exact_match_string("name", dual=True),
     "xform_ids": {"type": "string", "index": "not_analyzed"},
     "xform_id": {"type": "string", "index": "not_analyzed"},
     "actions": {"dynamic": False, "type": "object"},
@@ -95,7 +95,7 @@ def set_properties(schema_class, custom_types=default_special_types):
 #but try to always add to mapping additional properties of dicts we didn't expect (from DictProperties)
 DEFAULT_MAPPING_WRAPPER = {
         "date_detection": False,
-        'dynamic': True,
+        'dynamic': False,
         "date_formats": DATE_FORMATS_ARR, #for parsing the explicitly defined dates
         "_meta": {"created": None},
         "properties": {}

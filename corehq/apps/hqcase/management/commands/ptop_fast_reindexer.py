@@ -110,7 +110,7 @@ class PtopReindexer(NoArgsCommand):
 
         #Write sequence file to disk
         with open(self.get_seq_filename(), 'w') as fout:
-            fout.write(current_db_seq)
+            fout.write(str(current_db_seq))
 
         #load entire view to disk
         print "Getting full view list: %s" % datetime.utcnow().isoformat()
