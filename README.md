@@ -42,7 +42,7 @@ individual project sites when necessary.
   JavaScript or CSS styling, see [CommCare HQ Style](https://github.com/dimagi/hqstyle-src).
 
  [couchdb]: http://wiki.apache.org/couchdb/Installation
- [postgres]: http://jython.org/downloads.html
+ [postgres]: http://www.postgresql.org/download/
  [elasticsearch]: http://www.elasticsearch.org/download/
  [jython]: http://jython.org/downloads.html
 
