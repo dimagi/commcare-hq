@@ -67,6 +67,9 @@ case_special_types = {
     "xform_ids": {"type": "string", "index": "not_analyzed"},
     "xform_id": {"type": "string", "index": "not_analyzed"},
     "actions": {"dynamic": False, "type": "object"},
+
+    "referrals": {"enabled": False, "type": "object"},
+    "computed_": {"enabled": False, "type": "object"},
     #to extend, use this and add special date formats here...
 }
 
