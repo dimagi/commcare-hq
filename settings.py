@@ -631,9 +631,11 @@ INDICATOR_CONFIG = {
     "mvp-potou": ['mvp_indicators'],
 }
 
-PILLOWTOPS = ['corehq.pillows.CasePillow',
-              'corehq.pillows.XFormPillow',
-              'corehq.pillows.ExchangePillow',
+PILLOWTOPS = [
+                'corehq.pillows.FullCasePillow',
+                'corehq.pillows.CasePillow',
+                'corehq.pillows.XFormPillow',
+                'corehq.pillows.ExchangePillow',
              ] + LOCAL_PILLOWTOPS
 
 #Custom workflow for indexing xform data beyond the standard properties
