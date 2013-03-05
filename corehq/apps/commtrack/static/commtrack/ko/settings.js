@@ -44,6 +44,8 @@ function CommtrackSettingsViewModel() {
     }
 
     this.validate = function() {
+        this.keyword_error(null);
+
         var that = this;
         var valid = true;
 
@@ -86,7 +88,7 @@ function CommtrackSettingsViewModel() {
         keywords.push({keyword: this.keyword(), type: 'command', name: 'stock report', id: 'stock_report'});
 
         $.each(this.actions(), function(i, e) {
-                keywords.push({keyword: e.keyword, type: 'action', name: e.caption, id: i});
+                keywords.push({keyword: e.keyword(), type: 'action', name: e.caption(), id: i});
             });
 
         return keywords;
@@ -95,7 +97,7 @@ function CommtrackSettingsViewModel() {
     this.sms_code_uniqueness = function(keyword, type, id) {
         var conflict = null;
         $.each(this.all_sms_codes(), function(i, e) {
-                if (keyword == e.keyword && type != e.type && id != e.id) {
+                if (keyword == e.keyword && !(type == e.type && id == e.id)) {
                     conflict = e;
                     return false;
                 }
@@ -123,6 +125,9 @@ function ActionModel(data) {
     this.caption_error = ko.observable();
 
     this.validate = function(root) {
+        this.keyword_error(null);
+        this.caption_error(null);
+
         valid = true;
 
         if (!this.keyword()) {
