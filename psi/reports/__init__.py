@@ -145,12 +145,15 @@ class PSIEventsReport(PSIReport):
     @property
     def default_column_order(self):
         return self.initial_column_order + (
+        'events',
         'males',
         'females',
         'attendees',
         'leaflets',
         'gifts',
     )
+
+    events = Column("Number of events", key='events')
 
     males = Column("Number of male attendees", key='males')
 
