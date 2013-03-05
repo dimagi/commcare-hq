@@ -568,6 +568,9 @@ class BaseDocumentIndicatorDefinition(IndicatorDefinition):
             return None
 
     def update_computed_namespace(self, computed, document):
+        """
+            Returns True if this document should be updated and saved with the new indicator definition.
+        """
         update_computed = True
         existing_indicator = computed.get(self.slug)
         if isinstance(existing_indicator, dict) or isinstance(existing_indicator, LazyDict):
