@@ -4,9 +4,8 @@
 {% load i18n %}
 
 {% block js %}{{ block.super }}
+    <script src="{% static 'app_manager/js/commcaresettings.js' %}"></script>
     {% if app.get_doc_type == "Application" %}
-        <script src="{% static 'app_manager/js/commcareProperties.js' %}"
-                xmlns="http://www.w3.org/1999/html"></script>
         <script src="{% static 'translations/js/translations.js' %}"></script>
     {% endif %}
     <script src="{% static 'hqwebapp/js/knockout-bindings.js' %}"></script>
@@ -15,46 +14,21 @@
 {% block js-inline %}
     {{ block.super }}
     <script>
-        $(function(){
-            var version_function = function () {
-                var i;
-                var options = {{ commcare_build_options|JSON }};
-                var app_version = $(this).val();
-                var version = options[app_version];
-                var commcare_versions = version['options'];
-                var commcare_version_val = $('#commcare_version').val() || {{ app_build_spec_string|JSON }};
+    COMMCAREHQ.appView = {
+        settings: {
+            sections: {{ settings_layout|JSON }},
+            values: {{ settings_values|JSON }},
+            urls: {
+                save: '{% url edit_commcare_settings domain app.id %}'
+            },
+            edit: {{ edit|BOOL }}
+        }
+    };
 
-                var commcare_version_label = $('#commcare_version option:selected').text() || {{ app_build_spec_label|JSON }};
-                var superuser = {{ user.is_superuser|BOOL }};
-                $('#commcare_version').find('option').remove().end().find('optgroup').remove().end();
-                for (i = 0; i < commcare_versions.length; i++) {
-                    var option = commcare_versions[i];
-                    var superuser_option = option['superuser_only'];
-                    if (superuser || !(superuser_option)) {
-                        var option_val = version["builds"][i];
-                        var option_label = version["labels"][i];
-                        $('#commcare_version').append('<option value="' + option_val + '">' + option_label + '</option>');
-                    }
-                }
-                var standard_build = false;
-                for (i = 0; i < commcare_versions.length; i++) {
-                    if (commcare_version_val === version["builds"][i]) {
-                        standard_build = true;
-                    }
-                }
-                if (!standard_build && commcare_version_val != null) {
-                    $('#commcare_version').append(
-                        $('<optgroup label="Custom">').append('<option value="' + commcare_version_val + '">' + commcare_version_label + '</option>')
-                    );
-                }
-                $('#commcare_version').val(commcare_version_val);
-
-            };
-
-            $('#app_version').change(version_function);
-            $('#app_version').each(version_function);
-
-        });
+    $(function () {
+        var settings = new CommcareSettings(COMMCAREHQ.appView.settings);
+        ko.applyBindings(settings, $('#commcare-settings').get(0));
+    });
     </script>
     {% if app %}
     <script>
@@ -157,9 +131,6 @@
                 }
             });
         };
-        $(function () {
-            $('#app_admin_password').password_setter({title: 'Admin Password'});
-        });
     </script>
     {% if app.doc_type == "Application" %}
         <script>
@@ -174,102 +145,7 @@
                 });
             });
         </script>
-        <script>
-            $(function () {
-                var saveURL = "{% url edit_commcare_profile domain app.id %}",
-                    groupMapping = {
-                        'sense': '#commcare-sense-properties',
-                        'log': '#log-properties',
-                        'language': '#language-properties',
-                        'default': '#other-commcare-settings'
-                    },
-                    $block,
-                    saveButtonHolder = $('#commcare-settings .save-button-holder');
-                $.get('{% url corehq.apps.app_manager.views.commcare_profile domain app.id %}', function (initialValues) {
-                    initialValues = JSON.parse(initialValues);
-                    $.get('{% static "app_manager/json/custom-commcare-properties.json" %}', function (profile_spec) {
-                        var settings = CommcareSettings.wrap(
-                            profile_spec,
-                            initialValues,
-                            function (p) {
-                                return $(groupMapping[p.group] || groupMapping['default']);
-                            },
-                            saveURL,
-                            {% if edit %}true{% else %}false{% endif %},
-                            saveButtonHolder
-                        );
-                        $block = settings.render();
-                        $block.find('[name="cur_locale"]').addClass('langcodes');
-                        COMMCAREHQ.initBlock($block);
-                    });
-                });
-            });
-            $(function () {
-                $('#show-user-registration-select').change(function () {
-                    if (JSON.parse($(this).val())) {
-                        $('#user-registration-nav-link').slideDown();
-                    } else {
-                        $('#user-registration-nav-link').slideUp();
-                    }
-                });
-            });
-        </script>
     {% endif %}
-    <script>
-        $(function(){
-            $("#view_source").click(function(){
-                $.get($(this).attr('href'), function(data){
-                    $("#app_source").text(data);
-                });
-            });
-//            $('.langcodes').langcodes();
-        });
-        $(function () {
-            var appSettings = $("#app-settings"),
-                textInput = appSettings.find('[name="text_input"]'),
-                buildSpec = appSettings.find('[name="build_spec"]'),
-                customKeysExampleOpener = appSettings.find('a[href="#custom-keys-example"]'),
-                customKeysExample = $('#custom-keys-example');
-            
-            var onChangeBuildSpec = function () {
-                var build = buildSpec.val().split('.'),
-                    customKeys = textInput.find('[value="custom-keys"]');
-                build = [parseInt(build[0]), parseInt(build[1])];
-                if (build[0] <= 1 && build[1] < 3) {
-                    customKeys.attr('disabled', 'true');
-                    if (textInput.val() == 'custom-keys') {
-                        textInput.val('roman');
-                        textInput.trigger('change');
-                    }
-                } else {
-                    customKeys.removeAttr('disabled');
-                }
-            };
-            // proxy for this existing.
-            if (buildSpec.val()) {
-                onChangeBuildSpec();
-	            buildSpec.change(onChangeBuildSpec);
-            }
-            var customKeysHelp = $('#custom-keys-help');
-            customKeysExample.hide();
-            customKeysHelp.hide();
-            var onChangeTextInput = function () {
-                if (textInput.val() == 'custom-keys') {
-                    customKeysHelp.slideDown();
-                } else {
-                    customKeysExample.hide();
-                    customKeysHelp.slideUp();
-                }
-            };
-            onChangeTextInput();
-            textInput.change(onChangeTextInput);
-
-            customKeysExampleOpener.click(function (e) {
-                e.preventDefault();
-                customKeysExample.slideToggle();
-            });
-        });
-    </script>
 {% endblock %}
 
 {% block head %}{{ block.super }}
@@ -332,13 +208,6 @@
         .password-setter-popup input[type='password'] {
             width: 40px;
         }
-        .save-button-holder {
-            margin-bottom: 1em;
-            clear: right;
-        }
-        .tab-pane {
-            min-height: 600px;
-        }
     </style>
 {% endblock %}
 {% block form-view %}
@@ -360,30 +229,11 @@
 
         {% if app.get_doc_type == 'Application' %}
         <li><a href="#multimedia" data-toggle="tab">{% trans "Multimedia" %}</a></li>
-        <li><a href="{% url app_summary domain app.id %}">{% trans "Application Summary" %}</a></li>
         {% endif %}
     </ul>
     <div class="tab-content">
         <div class="tab-pane active" id="app-settings">
             {% include "app_manager/partials/app-settings.html" %}
-            <h2>CommCare Properties</h2>
-            <div class="tab-pane" id="commcare-settings">
-                <div class="save-button-holder clearfix"></div>
-                <form class="form-horizontal">
-                    <fieldset id="log-properties">
-                        <legend>{% trans "Logging" %}</legend>
-                    </fieldset>
-
-                    <fieldset id="commcare-sense-properties">
-                        <legend>{% trans "CommCare UI Settings" %}</legend>
-                    </fieldset>
-
-                    <fieldset id="other-commcare-settings">
-                        <legend>{% trans "CommCare Properties" %}</legend>
-                    </fieldset>
-                </form>
-            </div>
-
             <div>
                 <form method="get" action='{% url import_app domain %}' style="font-size: .8em; text-align: right;">
                     <input type="hidden" name="app" value="{{ app.id }}"/>
@@ -416,7 +266,6 @@
         </div>
 
         {% if app.get_doc_type == "Application" %}
-
             <div class="tab-pane multimedia" id="multimedia">
                 {% if multimedia %}
                     {% if edit %}

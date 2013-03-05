@@ -43,7 +43,7 @@ from django.core.urlresolvers import reverse, RegexURLResolver
 from django.shortcuts import render
 
 from corehq.apps.app_manager.models import Application, get_app, DetailColumn, Form, FormActions,\
-    AppError, load_case_reserved_words, ApplicationBase, DeleteFormRecord, DeleteModuleRecord, DeleteApplicationRecord, EXAMPLE_DOMAIN, str_to_cls, validate_lang, SavedAppBuild
+    AppError, load_case_reserved_words, ApplicationBase, DeleteFormRecord, DeleteModuleRecord, DeleteApplicationRecord, EXAMPLE_DOMAIN, str_to_cls, validate_lang, SavedAppBuild, load_commcare_settings_layout
 
 from corehq.apps.app_manager.models import DETAIL_TYPES, import_app as import_app_util
 from django.utils.http import urlencode
@@ -355,6 +355,57 @@ def get_form_view_context(request, form, langs, is_user_registration, messages=m
 
 
 def get_app_view_context(request, app):
+    try:
+        profile = app.profile
+    except AttributeError:
+        profile = {}
+    context = {
+        'settings_layout': load_commcare_settings_layout(app.get_doc_type()),
+        'settings_values': {
+            'properties': profile.get('properties', {}),
+            'features': profile.get('features', {}),
+            'hq': dict([
+                (attr, app[attr])
+                for attr in app.properties() if not hasattr(app[attr], 'pop')
+            ]),
+            '$parent': {
+                'doc_type': app.get_doc_type()
+            }
+        }
+    }
+    context['settings_values']['hq']['build_spec'] = app.build_spec.to_string()
+
+
+    commcare_build_options = {}
+    build_config = CommCareBuildConfig.fetch()
+    for version in [app.application_version]:
+        options = build_config.get_menu(version)
+        options_labels = list()
+        options_builds = list()
+        for option in options:
+            options_labels.append(option.get_label())
+            options_builds.append(option.build.to_string())
+            commcare_build_options[version] = {"options" : options, "labels" : options_labels, "builds" : options_builds}
+
+    (build_spec_setting,) = filter(
+        lambda x: x['type'] == 'hq' and x['id'] == 'build_spec',
+        [setting for section in context['settings_layout']
+            for setting in section['settings']]
+    )
+    build_spec_setting['values'] = options_builds
+    build_spec_setting['value_names'] = options_labels
+    build_spec_setting['default'] = build_config.get_default(app.application_version).to_string()
+
+    app_build_spec_string = app.build_spec.to_string()
+    app_build_spec_label = app.build_spec.get_label()
+
+    context.update({
+        "commcare_build_options" : commcare_build_options,
+        "app_build_spec_string" : app_build_spec_string,  # todo: remove
+        "app_build_spec_label" : app_build_spec_label,  # todo: remove
+        "app_version" : app.application_version,  # todo: remove
+    })
+
     if app and app.get_doc_type() == 'Application':
         try:
             multimedia = app.get_media_references()
@@ -369,11 +420,10 @@ def get_app_view_context(request, app):
                 'form_errors': True,
                 'missing_refs': False,
             }
-        return {
+        context.update({
             'multimedia': multimedia,
-        }
-    else:
-        return {}
+        })
+    return context
 
 def get_langs(request, app):
     lang = request.GET.get('lang',
@@ -605,29 +655,6 @@ def view_generic(req, domain, app_id=None, module_id=None, form_id=None, is_user
         'force_edit': force_edit,
         'error':error,
         'app': app,
-        })
-    if app:
-        if True:
-            # decided to do Application and RemoteApp the same way; might change later
-            commcare_build_options = {}
-            build_config = CommCareBuildConfig.fetch()
-            for version in ['1.0', '2.0']:
-                options = build_config.get_menu(version)
-                options_labels = list()
-                options_builds = list()
-                for option in options:
-                    options_labels.append(option.get_label())
-                    options_builds.append(option.build.to_string())
-                    commcare_build_options[version] = {"options" : options, "labels" : options_labels, "builds" : options_builds}
-
-        app_build_spec_string = app.build_spec.to_string()
-        app_build_spec_label = app.build_spec.get_label()
-
-        context.update({
-            "commcare_build_options" : commcare_build_options,
-            "app_build_spec_string" : app_build_spec_string,
-            "app_build_spec_label" : app_build_spec_label,
-            "app_version" : app.application_version,
         })
     response = render(req, template, context)
     response.set_cookie('lang', _encode_if_unicode(context['lang']))
@@ -1190,19 +1217,35 @@ def commcare_profile(req, domain, app_id):
     app = get_app(domain, app_id)
     return HttpResponse(json.dumps(app.profile))
 
+
 @require_POST
 @require_can_edit_apps
-def edit_commcare_profile(req, domain, app_id):
+def edit_commcare_settings(request, domain, app_id):
+    sub_responses = (
+        edit_commcare_profile(request, domain, app_id),
+        edit_app_attr(request, domain, app_id, 'all'),
+    )
+    response = {}
+    for sub_response in sub_responses:
+        response.update(
+            json.loads(sub_response.content)
+        )
+    return json_response(response)
+
+@require_POST
+@require_can_edit_apps
+def edit_commcare_profile(request, domain, app_id):
     try:
-        profile = json.loads(req.POST.get('profile'))
+        settings = json.loads(request.raw_post_data)
     except TypeError:
         return HttpResponseBadRequest(json.dumps({
-            'reason': "Must have a param called profile set to: {\"properites\": {...}, \"features\": {...}}"
+            'reason': 'POST body must be of the form:'
+                      '{"properties": {...}, "features": {...}}'
         }))
     app = get_app(domain, app_id)
     changed = defaultdict(dict)
     for type in ["features", "properties"]:
-        for name, value in profile.get(type, {}).items():
+        for name, value in settings.get(type, {}).items():
             if type not in app.profile:
                 app.profile[type] = {}
             app.profile[type][name] = value
@@ -1210,6 +1253,7 @@ def edit_commcare_profile(req, domain, app_id):
     response_json = {"status": "ok", "changed": changed}
     app.save(response_json)
     return json_response(response_json)
+
 
 @require_POST
 @require_can_edit_apps
@@ -1324,13 +1368,15 @@ def delete_app_lang(req, domain, app_id):
 
 @require_POST
 @require_can_edit_apps
-def edit_app_attr(req, domain, app_id, attr):
+def edit_app_attr(request, domain, app_id, attr):
     """
     Called to edit any (supported) app attribute, given by attr
 
     """
     app = get_app(domain, app_id)
-    lang = req.COOKIES.get('lang', (app.langs or ['en'])[0])
+    lang = request.COOKIES.get('lang', (app.langs or ['en'])[0])
+
+    hq_settings = json.loads(request.raw_post_data)['hq']
 
     attributes = [
         'all',
@@ -1350,38 +1396,41 @@ def edit_app_attr(req, domain, app_id, attr):
         return HttpResponseBadRequest()
 
     def should_edit(attribute):
-        return attribute == attr or ('all' == attr and req.POST.has_key(attribute))
+        return attribute == attr or ('all' == attr and attribute in hq_settings)
     resp = {"update": {}}
     # For either type of app
-    if should_edit("recipients"):
-        recipients = req.POST['recipients']
-        app.recipients = recipients
+    easy_attrs = (
+        ('application_version', None),
+        ('build_spec', BuildSpec.from_string),
+        ('case_sharing', None),
+        ('cloudcare_enabled', None),
+        ('manage_urls', None),
+        ('name', None),
+        ('platform', None),
+        ('recipients', None),
+        ('show_user_registration', None),
+        ('text_input', None),
+        ('use_custom_suite', None),
+    )
+    for attribute, transformation in easy_attrs:
+        if should_edit(attribute):
+            value = hq_settings[attribute]
+            if transformation:
+                value = transformation(value)
+            setattr(app, attribute, value)
+
     if should_edit("name"):
-        name = req.POST["name"]
-        app.name = name
-        resp['update'].update({'.variable-app_name': name})
+        resp['update'].update({'.variable-app_name': hq_settings['name']})
+
     if should_edit("success_message"):
-        success_message = req.POST['success_message']
+        success_message = hq_settings['success_message']
         app.success_message[lang] = success_message
-    if should_edit("use_commcare_sense"):
-        use_commcare_sense = json.loads(req.POST.get('use_commcare_sense', 'false'))
-        app.use_commcare_sense = use_commcare_sense
-    if should_edit("text_input"):
-        text_input = req.POST['text_input']
-        app.text_input = text_input
-    if should_edit("platform"):
-        platform = req.POST['platform']
-        app.platform = platform
+
     if should_edit("build_spec"):
-        build_spec = req.POST['build_spec']
-        app.build_spec = BuildSpec.from_string(build_spec)
         resp['update']['commcare-version'] = app.commcare_minor_release
-    if should_edit("show_user_registration"):
-        app.show_user_registration = bool(json.loads(req.POST['show_user_registration']))
-    if should_edit("use_custom_suite"):
-        app.use_custom_suite = bool(json.loads(req.POST['use_custom_suite']))
+
     if should_edit("admin_password"):
-        admin_password = req.POST.get('admin_password')
+        admin_password = hq_settings.get('admin_password')
         if admin_password:
             app.set_admin_password(admin_password)
 
@@ -1389,13 +1438,7 @@ def edit_app_attr(req, domain, app_id, attr):
     if should_edit("cloudcare_enabled"):
         if app.get_doc_type() not in ("Application",):
             raise Exception("App type %s does not support cloudcare" % app.get_doc_type())
-        app.cloudcare_enabled = bool(json.loads(req.POST['cloudcare_enabled']))
 
-    if should_edit("application_version"):
-        app.application_version = req.POST['application_version']
-
-    if should_edit('case_sharing'):
-        app.case_sharing = bool(json.loads(req.POST['case_sharing']))
 
     def require_remote_app():
         if app.get_doc_type() not in ("RemoteApp",):
@@ -1404,15 +1447,15 @@ def edit_app_attr(req, domain, app_id, attr):
     # For RemoteApps
     if should_edit("profile_url"):
         require_remote_app()
-        app['profile_url'] = req.POST['profile_url']
+        app['profile_url'] = hq_settings['profile_url']
     if should_edit("manage_urls"):
         require_remote_app()
-        app.manage_urls = bool(json.loads(req.POST['manage_urls']))
 
     app.save(resp)
     # this is a put_attachment, so it has to go after everything is saved
     if should_edit("custom_suite"):
-        app.set_custom_suite(req.POST['custom_suite'])
+        app.set_custom_suite(hq_settings['custom_suite'])
+
     return HttpResponse(json.dumps(resp))
 
 

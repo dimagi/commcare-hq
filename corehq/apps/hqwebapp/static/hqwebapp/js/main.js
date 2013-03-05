@@ -69,6 +69,7 @@ var SaveButton = {
                 } else if (state === 'retry') {
                     this.ui.append(this.$retry);
                 }
+                this.fire('state:change');
             },
             ajaxOptions: function (options) {
                 var options = options || {},

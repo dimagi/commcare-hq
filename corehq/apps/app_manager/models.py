@@ -7,6 +7,7 @@ from django.core.cache import cache
 from django.utils.encoding import force_unicode
 from django.utils.safestring import mark_safe
 import re
+from django.utils.translation import ugettext_noop
 from corehq.apps.app_manager.const import APP_V1, APP_V2
 from couchdbkit.exceptions import BadValueError
 from couchdbkit.ext.django.schema import *
@@ -16,12 +17,12 @@ from django.core.urlresolvers import reverse
 from django.http import Http404
 from restkit.errors import ResourceError
 import commcare_translations
-from corehq.apps.app_manager import fixtures, xform, suite_xml
+from corehq.apps.app_manager import fixtures, suite_xml
 from corehq.apps.app_manager.suite_xml import IdStrings
 from corehq.apps.app_manager.templatetags.xforms_extras import clean_trans
-from corehq.apps.app_manager.xform import XForm, parse_xml as _parse_xml, namespaces as NS, XFormError, XFormValidationError, WrappedNode, CaseXPath
+from corehq.apps.app_manager.xform import XForm, parse_xml as _parse_xml, XFormError, XFormValidationError, WrappedNode, CaseXPath
 from corehq.apps.appstore.models import SnapshotMixin
-from corehq.apps.builds.models import CommCareBuild, BuildSpec, CommCareBuildConfig, BuildRecord
+from corehq.apps.builds.models import BuildSpec, CommCareBuildConfig, BuildRecord
 from corehq.apps.hqmedia.models import HQMediaMixin
 from corehq.apps.reports.templatetags.timezone_tags import utc_to_timezone
 from corehq.apps.translations.models import TranslationMixin
@@ -33,7 +34,7 @@ from dimagi.utils.couch.undo import DeleteRecord, DELETED_SUFFIX
 from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.web import get_url_base, parse_int
 from copy import deepcopy
-from corehq.apps.domain.models import Domain, cached_property
+from corehq.apps.domain.models import cached_property
 from django.template.loader import render_to_string
 from urllib2 import urlopen
 from urlparse import urljoin
@@ -47,7 +48,7 @@ import json
 from couchdbkit.resource import ResourceNotFound
 import tempfile
 import os
-from utilities.profile import profile as profile_decorator, profile
+
 import logging
 import hashlib
 
@@ -81,17 +82,77 @@ def _rename_key(dct, old, new):
         dct[new] = dct[old]
         del dct[old]
 
+@memoized
 def load_case_reserved_words():
     with open(os.path.join(os.path.dirname(__file__), 'static', 'app_manager', 'json', 'case-reserved-words.json')) as f:
         return json.load(f)
 
+@memoized
 def load_default_user_registration():
     with open(os.path.join(os.path.dirname(__file__), 'data', 'register_user.xhtml')) as f:
         return f.read()
 
-def load_custom_commcare_properties():
-    with open(os.path.join(os.path.dirname(__file__), 'static', 'app_manager', 'json', 'custom-commcare-properties.json')) as f:
-        return json.load(f)
+
+def load_custom_commcare_settings():
+    import yaml
+    path = os.path.join(os.path.dirname(__file__), 'static', 'app_manager', 'json')
+    settings = []
+    with open(os.path.join(path,
+                           'commcare-profile-settings.yaml')) as f:
+        for setting in yaml.load(f):
+            if not setting.get('type'):
+                setting['type'] = 'properties'
+            settings.append(setting)
+
+    with open(os.path.join(path, 'commcare-app-settings.yaml')) as f:
+        for setting in yaml.load(f):
+            if not setting.get('type'):
+                setting['type'] = 'hq'
+            settings.append(setting)
+    for setting in settings:
+        if not setting.get('widget'):
+            setting['widget'] = 'select'
+        # i18n; not statically analyzable
+        setting['name'] = ugettext_noop(setting['name'])
+    return settings
+
+
+def load_commcare_settings_layout(doc_type):
+    import yaml
+    settings = dict([
+        ('{0}.{1}'.format(setting.get('type'), setting.get('id')), setting)
+        for setting in load_custom_commcare_settings()
+    ])
+    path = os.path.join(os.path.dirname(__file__), 'static', 'app_manager', 'json')
+    with open(os.path.join(path, 'commcare-settings-layout.yaml')) as f:
+        layout = yaml.load(f)
+
+    for section in layout:
+        # i18n; not statically analyzable
+        section['title'] = ugettext_noop(section['title'])
+        for i, key in enumerate(section['settings']):
+            setting = settings.pop(key)
+            if doc_type == 'Application' or setting['type'] == 'hq':
+                section['settings'][i] = setting
+            else:
+                section['settings'][i] = None
+        section['settings'] = filter(None, section['settings'])
+        for setting in section['settings']:
+            setting['value'] = None
+
+    if settings:
+        raise Exception(
+            "CommCare settings layout should mention "
+            "all the available settings. "
+            "The following settings went unmentioned: %s" % (
+                ', '.join(settings.keys())
+            )
+        )
+    return layout
+
+if not settings.DEBUG:
+    load_custom_commcare_settings = memoized(load_custom_commcare_settings)
+    load_commcare_settings_layout = memoized(load_commcare_settings_layout)
 
 def authorize_xform_edit(view):
     def authorized_view(request, xform_id):
@@ -1183,15 +1244,6 @@ class ApplicationBase(VersionedDoc, SnapshotMixin):
     def jar_url(self):
         return reverse('corehq.apps.app_manager.views.download_jar', args=[self.domain, self._id])
 
-    @classmethod
-    def platform_options(cls):
-        return [
-            {'label': 'Nokia S40 (default)', 'value': 'nokia/s40'},
-            {'label': 'Nokia S60', 'value': 'nokia/s60'},
-            {'label': 'WinMo', 'value': 'winmo'},
-            {'label': 'Generic', 'value': 'generic'},
-        ]
-
     def get_jar_path(self):
         build = self.get_build()
         if self.text_input == 'custom-keys' and build.minor_release() < (1,3):
@@ -1550,13 +1602,13 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
         app_profile.update(self.profile)
         # the following code is to let HQ override CommCare defaults
         # impetus: Weekly Logging should be Short (HQ override) instead of Never (CommCare default)
-        # property.default is assumed to also be the CommCare default unless there's a property.commcare_default
-        all_properties = load_custom_commcare_properties()
-        for property in all_properties:
-            type = property.get('type', 'properties')
-            if property['id'] not in app_profile[type]:
-                if property.has_key('commcare_default') and property['commcare_default'] != property['default']:
-                    app_profile[type][property['id']] = property['default']
+        # setting.default is assumed to also be the CommCare default unless there's a setting.commcare_default
+        all_settings = load_custom_commcare_settings()
+        for setting in all_settings:
+            type = setting['type']
+            if type in ('properties', 'features') and setting['id'] not in app_profile[type]:
+                if 'commcare_default' in setting and setting['commcare_default'] != setting['default']:
+                    app_profile[type][setting['id']] = setting['default']
 
         if self.case_sharing:
             app_profile['properties']['server-tether'] = 'sync'
