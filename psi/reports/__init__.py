@@ -38,8 +38,35 @@ class DemoTypeField(ReportSelectField):
     default_option = "All Worker Types"
 
     def update_params(self):
-        self.selected = self.request.GET.get(self.slug,'')
+        self.selected = self.request.GET.get(self.slug, '')
         self.options = [{'val': dt, 'text': dt} for dt in DEMO_TYPES]
+
+class AggregateAtField(ReportSelectField):
+    """
+        To Use: SUbclass and specify what the field options should be
+    """
+    slug = "aggregate_at"
+    name = "Aggregate at what level"
+    cssId = "aggregate_at_select"
+    cssClasses = "span6"
+    # default_option = "All Worker Types"
+
+    @property
+    def default_option(self):
+        return "Default: %s" % self.field_opts[-1]
+
+    def update_params(self):
+        self.selected = self.request.GET.get(self.slug, '')
+        self.options = [{'val': f.lower(), 'text': f} for f in [fo for fo in self.field_opts if fo != self.selected]]
+
+class AASD(AggregateAtField):
+    field_opts = ["State", "District"]
+
+class AASDB(AggregateAtField):
+    field_opts = ["State", "District", "Block"]
+
+class AASDBV(AggregateAtField):
+    field_opts = ["State", "District", "Block", "Village"]
 
 @memoized
 def get_village_fdt(domain):
@@ -104,7 +131,8 @@ class PSIReport(BasicTabularReport, CustomProjectReport, DatespanMixin):
 
 class PSIEventsReport(PSIReport):
     fields = ['corehq.apps.reports.fields.DatespanField',
-              'psi.reports.StateDistrictField',]
+              'psi.reports.StateDistrictField',
+              'psi.reports.AASD',]
     name = "Event Demonstration Report"
     exportable = True
     emailable = True
@@ -142,7 +170,8 @@ class PSIHDReport(PSIReport):
     section_name = "household demonstrations"
     fields = ['corehq.apps.reports.fields.DatespanField',
               'psi.reports.AsyncPlaceField',
-              'psi.reports.DemoTypeField',]
+              'psi.reports.DemoTypeField',
+              'psi.reports.AASDBV',]
     default_aggregation = 'village'
 
     def __init__(self, request, **kwargs):
@@ -198,7 +227,8 @@ class PSISSReport(PSIReport):
     slug = "sensitization_sessions"
     section_name = "sensitization sessions"
     fields = ['corehq.apps.reports.fields.DatespanField',
-              'psi.reports.StateDistrictBlockField',]
+              'psi.reports.StateDistrictBlockField',
+              'psi.reports.AASDB',]
     default_aggregation = 'block'
 
     couch_view = 'psi/sensitization'
@@ -239,7 +269,8 @@ class PSITSReport(PSIReport):
     slug = "training_sessions"
     section_name = "training sessions"
     fields = ['corehq.apps.reports.fields.DatespanField',
-              'psi.reports.StateDistrictField',]
+              'psi.reports.StateDistrictField',
+              'psi.reports.AASD',]
     default_aggregation = 'district'
 
     couch_view = 'psi/training'
