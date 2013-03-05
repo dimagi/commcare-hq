@@ -1,6 +1,6 @@
 from corehq.apps.fixtures.models import FixtureDataItem, FixtureDataType
 from corehq.apps.reports.standard import CustomProjectReport, DatespanMixin
-from corehq.apps.reports.basic import BasicTabularReport, Column
+from corehq.apps.reports.basic import BasicTabularReport, Column, FunctionView
 from corehq.apps.reports.fields import AsyncDrillableField, ReportSelectField
 from util import get_unique_combinations
 from couchdbkit_aggregate.fn import mean
@@ -81,7 +81,7 @@ class PSIReport(BasicTabularReport, CustomProjectReport, DatespanMixin):
     def place_types(self):
         opts = ['state', 'district', 'block', 'village']
         agg_at = self.request.GET.get('aggregate_at', None)
-        agg_at = agg_at if agg_at and opts.index(agg_at) > opts.index(self.default_aggregation) else self.default_aggregation
+        agg_at = agg_at if agg_at and opts.index(agg_at) <= opts.index(self.default_aggregation) else self.default_aggregation
         return opts[:opts.index(agg_at) + 1]
 
     @property
@@ -144,6 +144,19 @@ class PSIHDReport(PSIReport):
               'psi.reports.AsyncPlaceField',
               'psi.reports.DemoTypeField',]
     default_aggregation = 'village'
+
+    def __init__(self, request, **kwargs):
+        """
+            This is necessary because the demo_type column's calculate_functions needs to have information from the
+            request. (to determine place types) Since columns are only initialized when the class is defined (using the
+            ColumnCollector metaclass), the demo_type column needs to be initialized here when it has access to request
+        """
+        super(PSIHDReport, self).__init__(request, **kwargs)
+        calculate_fn = lambda key, _: key[len(self.place_types)+1]
+        self.columns['demo_type'] = Column("Worker Type", calculate_fn=calculate_fn)
+        self.columns['demo_type'].view = FunctionView(calculate_fn=calculate_fn)
+        self.function_views['demo_type'] = self.columns['demo_type'].view
+
 
     @property
     def keys(self):
