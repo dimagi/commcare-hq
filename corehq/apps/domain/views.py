@@ -512,10 +512,29 @@ def commtrack_settings(request, domain):
         payload = json.loads(request.POST.get('json'))
 
         settings.multiaction_keyword = payload['keyword']
+
+        def make_action_name(caption, actions):
+            existing = filter(None, [a.get('name') for a in actions])
+            name = ''.join(c.lower() if c.isalpha() else '_' for c in caption)
+            disambig = 1
+
+            def _name():
+                return name + ('_%s' % disambig if disambig > 1 else '')
+
+            while _name() in existing:
+                disambig += 1
+
+            return _name()
+
         def mk_action(action):
             action['action_type'] = action['type']
             del action['type']
+
+            if not action.get('name'):
+                action['name'] = make_action_name(action['caption'], payload['actions'])
+
             return CommtrackActionConfig(**action)
+
         settings.actions = [mk_action(a) for a in payload['actions']]
         settings.save()
 
