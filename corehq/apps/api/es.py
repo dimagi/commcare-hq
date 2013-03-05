@@ -190,8 +190,7 @@ class XFormES(ESView):
         if 'doc_type' not in new_terms:
             #let the terms override the kwarg - the query terms trump the magic
             new_terms['doc_type'] = doc_type
-        print new_terms
-        return super(ESView, self).base_query(terms=new_terms, fields=fields, start=start, size=size)
+        return super(XFormES, self).base_query(terms=new_terms, fields=fields, start=start, size=size)
 
 
 
