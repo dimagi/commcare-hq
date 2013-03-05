@@ -11,7 +11,9 @@ CHUNK_SIZE = 500
 POOL_SIZE = 15
 
 MAX_TRIES = 10
-RETRY_TIME_DELAY_FACTOR = 10
+RETRY_DELAY = 60
+RETRY_TIME_DELAY_FACTOR = 15
+
 
 
 class PtopReindexer(NoArgsCommand):
@@ -227,7 +229,7 @@ class PtopReindexer(NoArgsCommand):
                     retries += 1
                     print "\tException sending single item %s, %s, retrying..." % (item['id'], ex)
                     load_end = datetime.utcnow()
-                    time.sleep((load_end - load_start).seconds + retries * RETRY_TIME_DELAY_FACTOR)
+                    time.sleep(RETRY_DELAY + retries * RETRY_TIME_DELAY_FACTOR)
 
     def load_bulk(self):
         #chunk
