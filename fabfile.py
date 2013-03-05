@@ -296,15 +296,15 @@ def setup_server():
     execute(create_pg_db)
 
 
-@roles('pg')
+@roles('pg', 'django_monolith')
 @task
 def create_pg_user():
     """Create the Postgres user."""
     require('environment', provided_by=('staging', 'production'))
-    sudo('createuser -D -R %(sudo_user)s' % env, user='postgres')
+    sudo('createuser -D -R -P -s  %(sudo_user)s' % env, user='postgres')
 
 
-@roles('pg')
+@roles('pg', 'django_monolith')
 @task
 def create_pg_db():
     """Create the Postgres database."""
@@ -702,17 +702,18 @@ def update_apache_conf():
     require('code_root', 'django_port')
 
     with cd(env.code_root):
-        tmp = posixpath.join('/', 'tmp', 'cchq_%s' % uuid.uuid4().hex)
+        tmp = "/tmp/cchq"
         sudo('%s/bin/python manage.py mkapacheconf %s > %s'
               % (env.virtualenv_root, env.django_port, tmp), user=env.sudo_user)
-        #sudo('cp -f %s /etc/apache2/sites-available/cchq' % tmp)
+        sudo('cp -f %s /etc/apache2/sites-available/cchq' % tmp, user='root')
 
     with settings(warn_only=True):
-        sudo('a2dissite 000-default', user=env.sudo_user)
-        sudo('a2dissite default', user=env.sudo_user)
+        sudo('a2dissite 000-default', user='root')
+        sudo('a2dissite default', user='root')
 
-    sudo('a2enmod proxy_http', user=env.sudo_user)
-    sudo('a2ensite cchq', user=env.suod_user)
+    sudo('a2enmod proxy_http', user='root')
+    sudo('a2ensite cchq', user='root')
+    sudo('service apache2 reload', user='root')
 
 
 # tests

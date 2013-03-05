@@ -32,6 +32,9 @@ file as `jdk.tar.gz` in the same directory before running `install.sh`.
     chmod +x install.sh
     ./install.sh
 
+If the script asks you to choose a Java installation, be sure to select the
+option for `/usr/lib/jvm/jdk1.7.0`.
+
 ### Create a CouchDB database
 
     curl -X PUT http://localhost:5984/commcarehq
@@ -93,15 +96,15 @@ def myserver():
 Replace both occurrences of `myserver` above with a name for your deployment
 and both occurences of `<my server ip>` with the IP address of your server.
 
-You can almost just copy or rename the `def india()` block, but note that it
-contains some legacy settings that are removed above.
-
 ### Create Postgres user and database
 
-This will create the `cchq` Postgres user (or whatever you have specified as
-`env.sudo_user`) and `commcare-hq_myserver` database on the remote server by
-SSH-ing in and running the necessary commands.  Be sure to specify the name of
-the user you created above when prompted for a username.
+Now we will run our first fabric task. For all fabric tasks, be sure to specify
+the name of the user you created above when prompted for a username.
+
+This will prompt you for a password to create a `cchq` Postgres user (or
+whatever username you have specified as `env.sudo_user`), and create a
+`commcare-hq_myserver` database on the remote server by SSH-ing in and running
+the necessary commands.
 
    fab myserver create_pg_user
    fab myserver create_pg_db
@@ -120,7 +123,8 @@ files and delegate the rest to the Django process.
 
 Log in to the remote server as the user you created and edit
 `/home/cchq/www/myserver/code_root/localsettings.py` to set your Django database
-settings.  The relevant part should look something like this:
+settings.  The relevant part should look something like this (where `myserver`
+is the name you used above):
 
 ```python
 DATABASES = {
@@ -128,12 +132,13 @@ DATABASES = {
         'ENGINE': 'django.db.backends.postgresql_psycopg2',
         'NAME': 'commcare-hq_myserver',
         'USER': 'cchq',  # change this if you used a different username
-        'PASSWORD': '<password you used for the cchq account>',
+        'PASSWORD': '<password you used in create_pg_user',
         'HOST': 'localhost',
         'PORT': '5432'
     }
 }
 
+COUCH_HTTPS = False
 COUCH_SERVER_ROOT = '127.0.0.1:5984'
 COUCH_USERNAME = ''
 COUCH_PASSWORD = ''
@@ -141,7 +146,14 @@ COUCH_DATABASE_NAME = 'commcarehq'
 ```
 
 Also make sure that the directory or directories containing `LOG_FILE` and
-`DJANGO_LOG_FILE` exist and are writeable by the cchq user. 
+`DJANGO_LOG_FILE` exist and are writeable by the cchq user.
+
+The default localsettings is configured for HTTPS.  We don't currently provide
+any support for setting up the SSL certificates required to use HTTPs. Most
+things will work without changing these settings, but some things will break if
+you have HTTPS configured without an SSL certificate.  In order to avoid this,
+edit `localsettings.py` and ensure that `DEFAULT_PROTOCOL` is `http` and not
+`https`.
 
 ### Sync HQ with databases
 
@@ -160,19 +172,54 @@ Once you have a completed `localsettings.py` (the one in `code_root`, not the
 one in `touchforms/backend/` mentioned in the README), be sure to copy it to
 `/home/cchq/www/myserver/code_root_preindex/localsettings.py`.
 
+### Configure Supervisor
+
+We use [Supervisor](http://supervisord.org/) to start and manage all of the helper
+processes for HQ.  Supervisor and its upstart script are automatically installed
+by `install.sh`, but we need to configure supervisor with our process
+definitions.  To do this, edit `/etc/supervisord.conf` on the remote machine and
+replace the last two lines
+
+    ;[include]
+    ;files = relative/directory/*.ini
+
+with
+
+    [include]
+    files = /home/cchq/services/supervisor/*.conf
+
+Then run
+
+    sudo supervisorctl reload
+
 ### Start HQ
 
 Back on your local machine, run the following from your local checkout:
 
+    fab myserver preindex_views
     fab myserver deploy
 
-This uses [Supervisor](http://supervisord.org/) to start and manage all of the helper
-processes for HQ.
+The last part of the deploy (services_restart) will fail due to our inability to
+reproduce some implicit fact about our production setup on CommCareHQ.org that
+allows it succeed there.  To deal with this, just log in to the remote server
+and run the following after every deploy:
 
-If you have a large amount of data, intend to stay up to date with code changes to
-CommCare HQ, and don't want users to have long page load times when they visit
-a page that involves a view whose code changed, you may want to run this before
-every deploy:
+    sudo supervisorctl stop all
+    sudo supervisorctl update
+    sudo supervisorctl reload
+    sudo supervisorctl start all
 
-    fab myserver preindex_views
+You can see the status of all HQ processes by running `sudo supervisorctl status`.
+Some processes which aren't necessary in a single-server deployment may have
+failed because we didn't bother to set them up.
 
+### Congrats!
+
+You now have a working production installation of CommCare HQ.  
+
+There may be additional changes necessary to `localsettings.py` in order to
+enable certain features like SMS sending.  
+
+See the bottom of the README for instructions on how to enable building CommCare
+mobile apps from CommCare HQ (remember to use the full path to the Python binary
+for the code_root virtualenv when running manage.py commands).

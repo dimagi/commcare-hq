@@ -90,9 +90,6 @@ A virtualenv is not required, but it may make your life easier.
 
 ### Downloading and configuring CommCare HQ
 
-(If you are setting up a production install of CommCare HQ, start from "Running
-CommCare HQ".)
-
 Once all the dependencies are in order, please do the following:
 
     git clone git@github.com:dimagi/commcare-hq.git
@@ -120,7 +117,8 @@ writeable.
     # this will do some basic setup, create a superuser, and create a project
     ./manage.py bootstrap <project-name> <email> <password>
 
-    # To set up elasticsearch indexes, first run (and then kill):
+    # To set up elasticsearch indexes, first run (and then kill once you see the
+    "Starting pillow" lines):
     ./manage.py run_ptop
     
     # then run

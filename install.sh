@@ -93,8 +93,12 @@ sudo npm install npm
 #sudo npm install less uglify-js -g
 
 sudo pip install --upgrade pip
-sudo pip install virtualenv virtualenvwrapper supervisor
+# 3.0b1 has a bug that affects our fabfile
+sudo pip install virtualenv virtualenvwrapper supervisor==3.0a10
 echo_supervisord_conf | sudo tee /etc/supervisord.conf
+
+curl -L https://gist.github.com/raw/1213031/929e578faae2ad3bcb29b03d116bcb09e1932221/supervisord.conf | sudo tee /etc/init/supervisord.conf && sudo start supervisord
+
 
 if [[ ! $(grep virtualenvwrapper ~/.bashrc) ]]; then
     echo "source /usr/local/bin/virtualenvwrapper.sh" >> ~/.bashrc
