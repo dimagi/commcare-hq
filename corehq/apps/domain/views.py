@@ -507,7 +507,7 @@ def commtrack_settings(request, domain):
     settings = domain.commtrack_settings
 
     if request.POST:
-        from corehq.apps.commtrack.models import CommtrackActionConfig
+        from corehq.apps.commtrack.models import CommtrackActionConfig, LocationType
 
         payload = json.loads(request.POST.get('json'))
 
@@ -535,15 +535,21 @@ def commtrack_settings(request, domain):
 
             return CommtrackActionConfig(**action)
 
+        def mk_loctype(loctype):
+            loctype['allowed_parents'] = [p or '' for p in loctype['allowed_parents']]
+            return LocationType(**loctype)
+
         #TODO add server-side input validation here (currently validated on client)
 
         settings.actions = [mk_action(a) for a in payload['actions']]
+        settings.location_types = [mk_loctype(l) for l in payload['loc_types']]
         settings.save()
 
     def settings_to_json(config):
         return {
             'keyword': config.multiaction_keyword,
             'actions': [action_to_json(a) for a in config.actions],
+            'loc_types': [loctype_to_json(l) for l in config.location_types],
         }
     def action_to_json(action):
         return {
@@ -551,6 +557,11 @@ def commtrack_settings(request, domain):
             'keyword': action.keyword,
             'name': action.action_name,
             'caption': action.caption,
+        }
+    def loctype_to_json(loctype):
+        return {
+            'name': loctype.name,
+            'allowed_parents': [p or None for p in loctype.allowed_parents],
         }
 
     def other_sms_codes():

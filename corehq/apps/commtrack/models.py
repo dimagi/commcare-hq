@@ -79,6 +79,10 @@ class CommtrackActionConfig(DocumentSchema):
     def action_name(self):
         return self.name or self.action_type
 
+class LocationType(DocumentSchema):
+    name = StringProperty()
+    allowed_parents = StringListProperty()
+
 class SupplyPointType(DocumentSchema):
     name = StringProperty()
     categories = StringListProperty()
@@ -95,6 +99,7 @@ class CommtrackConfig(Document):
     multiaction_keyword = StringProperty() # if None, will attempt to parse
     # all messages as multi-action
 
+    location_types = SchemaListProperty(LocationType)
     supply_point_types = SchemaListProperty(SupplyPointType)
 
     @classmethod

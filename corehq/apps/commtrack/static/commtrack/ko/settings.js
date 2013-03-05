@@ -34,6 +34,9 @@ function CommtrackSettingsViewModel() {
         this.actions($.map(data.actions, function(e) {
                     return new ActionModel(e);
                 }));
+        this.loc_types($.map(data.loc_types, function(e) {
+                    return new LocationTypeModel(e);
+                }));
     }
 
     var settings = this;
@@ -52,11 +55,12 @@ function CommtrackSettingsViewModel() {
 
     this.new_loctype = function() {
         var new_loctype = new LocationTypeModel({}, this);
+        new_loctype.onBind = function() {
+            var $inp = $(this.$e).find('.loctype_name');
+            $inp.focus();
+            setTimeout(function() { $inp.select(); }, 0);
+        }
         settings.loc_types.push(new_loctype);
-
-        var $inp = $(new_loctype.$e).find('.loctype_name');
-        $inp.focus();
-        $inp.select();
     }
 
     this.validate = function() {
@@ -104,10 +108,7 @@ function CommtrackSettingsViewModel() {
             return false;
         }
         
-        payload = ko.toJS(this);
-        delete payload.action_types;
-        delete payload.json_payload;
-
+        payload = this.to_json();
         this.json_payload(JSON.stringify(payload));
     };
 
@@ -146,6 +147,14 @@ function CommtrackSettingsViewModel() {
         }
         return true;
     }
+
+    this.to_json = function() {
+        return {
+            keyword: this.keyword(),
+            actions: $.map(this.actions(), function(e) { return e.to_json(); }),
+            loc_types: $.map(this.loc_types(), function(e) { return e.to_json(); }),
+        };
+    }
 }
 
 function ActionModel(data) {
@@ -177,6 +186,15 @@ function ActionModel(data) {
         }
 
         return valid;
+    }
+
+    this.to_json = function() {
+        return {
+            keyword: this.keyword(),
+            caption: this.caption(),
+            type: this.type(),
+            name: this.name
+        };
     }
 }
 
@@ -213,6 +231,13 @@ function LocationTypeModel(data, root) {
         }
 
         return valid;
+    }
+
+    this.to_json = function() {
+        return {
+            name: this.name(),
+            allowed_parents: this.allowed_parents()
+        };
     }
 }
 
