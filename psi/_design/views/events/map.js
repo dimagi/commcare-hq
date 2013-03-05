@@ -8,6 +8,7 @@ function (doc) {
         }
 
         var data = {
+            events: 1,
             males: form.number_of_males || 0,
             females: form.number_of_females || 0,
             attendees: form.number_of_attendees || 0,
