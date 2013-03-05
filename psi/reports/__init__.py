@@ -41,61 +41,6 @@ class DemoTypeField(ReportSelectField):
         self.selected = self.request.GET.get(self.slug,'')
         self.options = [{'val': dt, 'text': dt} for dt in DEMO_TYPES]
 
-class PSIReport(BasicTabularReport, CustomProjectReport, DatespanMixin):
-    update_after = True
-    fields = ['corehq.apps.reports.fields.DatespanField','psi.reports.AsyncPlaceField',]
-
-    def selected_fixture(self):
-        fixture = self.request.GET.get('fixture_id', "")
-        return fixture.split(':') if fixture else None
-
-    @property
-    def start_and_end_keys(self):
-        return ([self.datespan.startdate_param_utc],
-                [self.datespan.enddate_param_utc])
-
-class PSIEventsReport(PSIReport):
-    fields = ['corehq.apps.reports.fields.DatespanField',
-              'psi.reports.StateDistrictField',]
-    name = "Event Demonstration Report"
-    exportable = True
-    emailable = True
-    slug = "event_demonstations"
-    section_name = "event demonstrations"
-
-    couch_view = 'psi/events'
-
-    default_column_order = (
-        'state_name',
-        'district_name',
-        'males',
-        'females',
-        'attendees',
-        'leaflets',
-        'gifts',
-        )
-
-    state_name = Column("State", calculate_fn=lambda key, _: key[1])
-
-    district_name = Column("District", calculate_fn=lambda key, _: key[2])
-
-    males = Column("Number of male attendees", key='males')
-
-    females = Column("Number of female attendees", key='females')
-
-    attendees = Column("Total number of attendees", key='attendees')
-
-    leaflets = Column("Total number of leaflets distributed", key='leaflets')
-
-    gifts = Column("Total number of gifts distributed", key='gifts')
-
-    @property
-    def keys(self):
-        combos = get_unique_combinations(self.domain, place_types=['state', 'district'], place=self.selected_fixture())
-
-        for c in combos:
-            yield [self.domain, c['state'], c['district']]
-
 @memoized
 def get_village_fdt(domain):
     return FixtureDataType.by_domain_tag(domain, 'village').one()
@@ -111,44 +56,9 @@ def get_village_name(key, req):
 def get_village_class(key, req):
     return get_village(req, key[4]).fields.get("village_class", "No data")
 
-class PSIHDReport(PSIReport):
-    name = "Household Demonstrations Report"
-    exportable = True
-    emailable = True
-    slug = "household_demonstations"
-    section_name = "household demonstrations"
-    fields = ['corehq.apps.reports.fields.DatespanField',
-              'psi.reports.AsyncPlaceField',
-              'psi.reports.DemoTypeField',]
-
-    @property
-    def keys(self):
-        combos = get_unique_combinations(self.domain,
-            place_types=['state', 'district', "block", "village"], place=self.selected_fixture())
-
-        for c in combos:
-            selected_demo_type = self.request.GET.get('demo_type', "")
-            if selected_demo_type:
-                yield [self.domain, c['state'], c['district'], c["block"], c["village"], selected_demo_type]
-            else:
-                for dt in DEMO_TYPES:
-                    yield [self.domain, c['state'], c['district'], c["block"], c["village"], dt]
-
-    couch_view = 'psi/household_demonstrations'
-
-    default_column_order = (
-        'state_name',
-        'district_name',
-        "block_name",
-        "village_name",
-        "village_code",
-        "village_class",
-        "demo_type",
-        'demonstrations',
-        'children',
-        'leaflets',
-        'kits',
-        )
+class PSIReport(BasicTabularReport, CustomProjectReport, DatespanMixin):
+    update_after = True
+    fields = ['corehq.apps.reports.fields.DatespanField','psi.reports.AsyncPlaceField',]
 
     state_name = Column("State", calculate_fn=lambda key, _: key[1])
 
@@ -161,6 +71,102 @@ class PSIHDReport(PSIReport):
     village_code = Column("Village Code", calculate_fn=lambda key, _: key[4])
 
     village_class = Column("Village Class", calculate_fn =get_village_class)
+
+    def selected_fixture(self):
+        fixture = self.request.GET.get('fixture_id', "")
+        return fixture.split(':') if fixture else None
+
+    @property
+    @memoized
+    def place_types(self):
+        opts = ['state', 'district', 'block', 'village']
+        agg_at = self.request.GET.get('aggregate_at', None)
+        agg_at = agg_at if agg_at and opts.index(agg_at) > opts.index(self.default_aggregation) else self.default_aggregation
+        return opts[:opts.index(agg_at) + 1]
+
+    @property
+    def initial_column_order(self):
+        ret = tuple([col + '_name' for col in self.place_types[:3]])
+        if len(self.place_types) > 3:
+            ret += ('village_name', 'village_code', 'village_class')
+        return ret
+
+    @property
+    def start_and_end_keys(self):
+        return ([self.datespan.startdate_param_utc],
+                [self.datespan.enddate_param_utc])
+
+    @property
+    def keys(self):
+        combos = get_unique_combinations(self.domain, place_types=self.place_types, place=self.selected_fixture())
+        for c in combos:
+            yield [self.domain] + [c[pt] for pt in self.place_types]
+
+class PSIEventsReport(PSIReport):
+    fields = ['corehq.apps.reports.fields.DatespanField',
+              'psi.reports.StateDistrictField',]
+    name = "Event Demonstration Report"
+    exportable = True
+    emailable = True
+    slug = "event_demonstations"
+    section_name = "event demonstrations"
+    default_aggregation = 'district'
+
+    couch_view = 'psi/events'
+
+    @property
+    def default_column_order(self):
+        return self.initial_column_order + (
+        'males',
+        'females',
+        'attendees',
+        'leaflets',
+        'gifts',
+    )
+
+    males = Column("Number of male attendees", key='males')
+
+    females = Column("Number of female attendees", key='females')
+
+    attendees = Column("Total number of attendees", key='attendees')
+
+    leaflets = Column("Total number of leaflets distributed", key='leaflets')
+
+    gifts = Column("Total number of gifts distributed", key='gifts')
+
+class PSIHDReport(PSIReport):
+    name = "Household Demonstrations Report"
+    exportable = True
+    emailable = True
+    slug = "household_demonstations"
+    section_name = "household demonstrations"
+    fields = ['corehq.apps.reports.fields.DatespanField',
+              'psi.reports.AsyncPlaceField',
+              'psi.reports.DemoTypeField',]
+    default_aggregation = 'village'
+
+    @property
+    def keys(self):
+        combos = get_unique_combinations(self.domain, place_types=self.place_types, place=self.selected_fixture())
+        selected_demo_type = self.request.GET.get('demo_type', "")
+        for c in combos:
+            if selected_demo_type:
+                yield [self.domain] + [c[pt] for pt in self.place_types] + [selected_demo_type]
+            else:
+                for dt in DEMO_TYPES:
+                    yield [self.domain] + [c[pt] for pt in self.place_types] + [dt]
+
+    couch_view = 'psi/household_demonstrations'
+
+    @property
+    def default_column_order(self):
+        return self.initial_column_order + (
+            "demo_type",
+            'demonstrations',
+            'children',
+            'leaflets',
+            'kits',
+        )
 
     demo_type = Column("Worker Type", calculate_fn=lambda key, _: key[5])
 
@@ -180,36 +186,22 @@ class PSISSReport(PSIReport):
     section_name = "sensitization sessions"
     fields = ['corehq.apps.reports.fields.DatespanField',
               'psi.reports.StateDistrictBlockField',]
-
-    @property
-    def keys(self):
-        combos = get_unique_combinations(self.domain,
-            place_types=['state', 'district', "block"], place=self.selected_fixture())
-
-        for c in combos:
-            yield [self.domain, c['state'], c['district'], c["block"]]
+    default_aggregation = 'block'
 
     couch_view = 'psi/sensitization'
 
-    default_column_order = (
-        'state_name',
-        'district_name',
-        "block_name",
-        'sessions',
-        'ayush_doctors',
-        "mbbs_doctors",
-        "asha_supervisors",
-        "ashas",
-        "awws",
-        "other",
-        "attendees",
-    )
-
-    state_name = Column("State", calculate_fn=lambda key, _: key[1])
-
-    district_name = Column("District", calculate_fn=lambda key, _: key[2])
-
-    block_name = Column("Block", calculate_fn=lambda key, _: key[3])
+    @property
+    def default_column_order(self):
+        return self.initial_column_order + (
+            'sessions',
+            'ayush_doctors',
+            "mbbs_doctors",
+            "asha_supervisors",
+            "ashas",
+            "awws",
+            "other",
+            "attendees",
+        )
 
     sessions = Column("Number of Sessions", key="sessions")
 
@@ -235,47 +227,35 @@ class PSITSReport(PSIReport):
     section_name = "training sessions"
     fields = ['corehq.apps.reports.fields.DatespanField',
               'psi.reports.StateDistrictField',]
-
-    @property
-    def keys(self):
-        combos = get_unique_combinations(self.domain,
-            place_types=['state', 'district'], place=self.selected_fixture())
-
-        for c in combos:
-            yield [self.domain, c['state'], c['district']]
+    default_aggregation = 'district'
 
     couch_view = 'psi/training'
 
-    default_column_order = (
-        'state_name',
-        'district_name',
+    @property
+    def default_column_order(self):
+        return self.initial_column_order + (
+            "priv_trained",
+            "priv_ayush_trained",
+            "priv_allo_trained",
+            "priv_avg_diff",
+            "priv_gt80",
 
-        "priv_trained",
-        "priv_ayush_trained",
-        "priv_allo_trained",
-        "priv_avg_diff",
-        "priv_gt80",
+            "pub_trained",
+            "pub_ayush_trained",
+            "pub_allo_trained",
+            "pub_avg_diff",
+            "pub_gt80",
 
-        "pub_trained",
-        "pub_ayush_trained",
-        "pub_allo_trained",
-        "pub_avg_diff",
-        "pub_gt80",
+            "dep_trained",
+            "dep_pers_trained",
+            "dep_avg_diff",
+            "dep_gt80",
 
-        "dep_trained",
-        "dep_pers_trained",
-        "dep_avg_diff",
-        "dep_gt80",
-
-        "flw_trained",
-        "flw_pers_trained",
-        "flw_avg_diff",
-        "flw_gt80",
-    )
-
-    state_name = Column("State", calculate_fn=lambda key, _: key[1])
-
-    district_name = Column("District", calculate_fn=lambda key, _: key[2])
+            "flw_trained",
+            "flw_pers_trained",
+            "flw_avg_diff",
+            "flw_gt80",
+        )
 
     priv_trained = Column("Private: Number of Trainings", key="priv_trained")
     priv_ayush_trained = Column("Private: Ayush trained", key="priv_ayush_trained")
