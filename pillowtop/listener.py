@@ -434,15 +434,19 @@ class ElasticPillow(BasicPillow):
 
 class AliasedElasticPillow(ElasticPillow):
     """
-    This pillow class defines it as being alias-able. That is, when you query it, you use an Alias to access it.
+    This pillow class defines it as being alias-able. That is, when you query it, you use an
+    Alias to access it.
 
-    This could be for varying reasons -  to make an index by certain metadata into its own index for performance/separation reasons
+    This could be for varying reasons -  to make an index by certain metadata into its own index
+    for performance/separation reasons
 
-    Or, for our initial use case, needing to version/update the index mappings on the fly with minimal disruption.
+    Or, for our initial use case, needing to version/update the index mappings on the fly with
+    minimal disruption.
 
 
-    The workflow for altering an AliasedElasticPillow is that if you know you made a change, the pillow will create a new
-    Index witha new md5sum as its suffix. Once it's finished indexing, you will need to flip the alias over to it.
+    The workflow for altering an AliasedElasticPillow is that if you know you made a change, the
+    pillow will create a new Index with a new md5sum as its suffix. Once it's finished indexing,
+    you will need to flip the alias over to it.
     """
     es_alias = ''
     es_index_prefix = ''
@@ -452,7 +456,8 @@ class AliasedElasticPillow(ElasticPillow):
     def check_alias(self):
         """
         Naive means to verify the alias of the current pillow iteration is matched.
-        If we go fancier with routing and multi-index aliases due to index splitting, this will need to be revisited.
+        If we go fancier with routing and multi-index aliases due to index splitting, this
+        will need to be revisited.
         """
         es = self.get_es()
         aliased_indexes = es[self.es_alias].get('_aliases')
@@ -469,8 +474,8 @@ class AliasedElasticPillow(ElasticPillow):
         es = self.get_es()
         if es.head(self.es_alias):
             #remove all existing aliases - this is destructive and could be harmful, but for current
-            #uses, it is legal - in a more delicate routing arrangement, a configuration file of some sort
-            #should be in use.
+            #uses, it is legal - in a more delicate routing arrangement, a configuration file of
+            # some sort should be in use.
             alias_indices = es[self.es_alias].get('_status')['indices'].keys()
 
             remove_actions = [{"remove": {"index": x, "alias": self.es_alias}} for x in
@@ -528,7 +533,10 @@ class AliasedElasticPillow(ElasticPillow):
 
         if server:
             type_path = "%(index)s/%(type_string)s" % (
-                {'index': self.es_index, 'type_string': type_string, })
+                {
+                    'index': self.es_index,
+                    'type_string': type_string
+                })
             head_result = es.head(type_path)
             self.seen_types[type_string] = head_result
             return head_result
@@ -536,7 +544,7 @@ class AliasedElasticPillow(ElasticPillow):
             return type_string in self.seen_types
 
     def get_type_string(self, doc_dict):
-        raise NotImplementedError("Please implement acustom type string resolver")
+        raise NotImplementedError("Please implement a custom type string resolver")
 
     def get_doc_path_typed(self, doc_dict):
         return "%(index)s/%(type_string)s/%(id)s" % (
