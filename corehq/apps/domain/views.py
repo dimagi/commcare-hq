@@ -535,6 +535,8 @@ def commtrack_settings(request, domain):
 
             return CommtrackActionConfig(**action)
 
+        #TODO add server-side input validation here (currently validated on client)
+
         settings.actions = [mk_action(a) for a in payload['actions']]
         settings.save()
 
