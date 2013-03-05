@@ -297,6 +297,7 @@ def setup_server():
 
 
 @roles('pg')
+@task
 def create_pg_user():
     """Create the Postgres user."""
     require('environment', provided_by=('staging', 'production'))
@@ -304,6 +305,7 @@ def create_pg_user():
 
 
 @roles('pg')
+@task
 def create_pg_db():
     """Create the Postgres database."""
     require('environment', provided_by=('staging', 'production'))
