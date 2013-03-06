@@ -35,3 +35,9 @@ class StockRequisitionTest(CommTrackTest):
             report=' '.join('%s %s' % (k, v) for k, v in amounts.items())
         ))
         self.assertTrue(handled)
+        for code, amt in amounts.items():
+            spp = CommCareCase.get(self.spps[code]._id)
+            # make sure the index was created
+            [req_ref] = spp.reverse_indices
+            req_case = CommCareCase.get(req_ref.referenced_id)
+            self.assertEqual(str(amt), req_case.amount_requested)

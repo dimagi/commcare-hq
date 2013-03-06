@@ -3,12 +3,14 @@ from casexml.apps.case.tests.util import CaseBlock
 from casexml.apps.case.xml import V2
 from lxml import etree
 from lxml.builder import ElementMaker
+from xml import etree as legacy_etree
 from datetime import date, timedelta
 from receiver.util import spoof_submission
 from corehq.apps.receiverwrapper.util import get_submit_url
 from dimagi.utils.couch.loosechange import map_reduce
 import logging
 from corehq.apps.commtrack.models import CommtrackConfig
+from corehq.apps.commtrack.requisitions import RequisitionState
 
 logger = logging.getLogger('commtrack.incoming')
 
@@ -54,8 +56,11 @@ def process(domain, instance):
             root.append(recon)
         root.append(case_block)
 
-        # TODO: then do the same for the requisitions
-        # req_txs = requisition_transactions_by_product.get(product_id, [])
+        # do the same for the requisitions
+        req_txs = requisition_transactions_by_product.get(product_id, [])
+        req = RequisitionState.from_transactions(product_case, req_txs)
+        case_block = etree.fromstring(req.to_xml())
+        root.append(case_block)
 
     submission = etree.tostring(root)
     logger.debug('submitting: %s' % submission)
@@ -206,8 +211,7 @@ class StockState(object):
             update=dict((k, convert_prop(getattr(self, k))) for k in props)
         ).as_xml()
         # convert xml.etree to lxml
-        from xml.etree import ElementTree
-        case_update = etree.fromstring(ElementTree.tostring(case_update))
+        case_update = etree.fromstring(legacy_etree.ElementTree.tostring(case_update))
 
         return case_update
 
