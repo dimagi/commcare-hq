@@ -1,11 +1,10 @@
 from datetime import datetime
 import time
 from optparse import make_option
-import pdb
+import sys
+
 from django.core.management.base import NoArgsCommand
 import simplejson
-import sys
-from dimagi.utils.logging import notify_exception
 
 CHUNK_SIZE = 500
 POOL_SIZE = 15
@@ -13,8 +12,6 @@ POOL_SIZE = 15
 MAX_TRIES = 10
 RETRY_DELAY = 60
 RETRY_TIME_DELAY_FACTOR = 15
-
-
 
 class PtopReindexer(NoArgsCommand):
     help = "View based elastic reindexer"

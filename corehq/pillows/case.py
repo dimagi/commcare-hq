@@ -1,5 +1,6 @@
 from casexml.apps.case.models import CommCareCase
 from corehq.pillows.mappings.case_mapping import CASE_MAPPING, CASE_INDEX
+from dimagi.utils.decorators.memoized import memoized
 from pillowtop.listener import AliasedElasticPillow
 from django.conf import settings
 
@@ -35,15 +36,14 @@ class CasePillow(AliasedElasticPillow):
     es_index = CASE_INDEX
     default_mapping = CASE_MAPPING
 
+    @memoized
     def calc_meta(self):
         """
         override of the meta calculator since we're separating out all the types,
         so we just do a hash of the "prototype" instead to determined md5
         """
-        if not hasattr(self, '_calc_meta'):
-            self._calc_meta = self.calc_mapping_hash({"es_meta": self.es_meta,
+        return self.calc_mapping_hash({"es_meta": self.es_meta,
                                                       "mapping": self.default_mapping})
-        return self._calc_meta
 
     def get_mapping_from_type(self, doc_dict):
         """

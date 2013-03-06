@@ -175,6 +175,13 @@ class CaseES(ESView):
     """
     index = "hqcases"
 
+class FullCaseES(ESView):
+    """
+    Fully indexed case index elasticsearch endpoint.
+    """
+    index = "full_cases"
+
+
 
 class XFormES(ESView):
     index = "xforms"
@@ -244,6 +251,9 @@ class XFormES(ESView):
         for k, v in terms.items():
             query['query']['filtered']['filter']['and'].append({"term": {k.lower(): v.lower()}})
         return query
+
+class FullXFormES(XFormES):
+    index = 'full_xforms'
 
 class ESQuerySet(object):
     """
