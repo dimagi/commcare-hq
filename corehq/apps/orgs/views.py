@@ -287,10 +287,11 @@ def delete_team(request, org):
     team_id = request.POST.get("team_id", None)
     if team_id:
         team = Team.get(team_id)
+        # team_name = team.name
         if team.organization == org:
             record = team.soft_delete()
-            messages.success(request, 'You have deleted a team. <a href="{url}" class="post-link">Undo</a>'.format(
-                url=reverse('undo_delete_team', args=[org, record.get_id])
+            messages.success(request, 'You have deleted team <strong>{team_name}</strong>. <a href="{url}" class="post-link">Undo</a>'.format(
+                team_name=team.name, url=reverse('undo_delete_team', args=[org, record.get_id])
             ), extra_tags="html")
         else:
             messages.error(request, "This team doesn't exist")

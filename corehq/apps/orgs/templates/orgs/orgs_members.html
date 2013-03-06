@@ -8,9 +8,10 @@
     {% for member in members %}
         <tr><td style="border-top: none;">
             <strong>
-                {{ member.username }}
                 {% if member.first_name and member.last_name %}
-                    <small>({{ member.full_name }})</small>
+                    {{ member.full_name }} <small>({{ member.username }})</small>
+                {% else %}
+                    {{ member.username }}
                 {% endif %}
                 {% if member.username in org_admins %} <span class="label">Admin</span>{% endif %}
             </strong>
