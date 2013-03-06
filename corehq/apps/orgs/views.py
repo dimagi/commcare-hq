@@ -77,7 +77,7 @@ def orgs_landing(request, org, template="orgs/orgs_landing.html", form=None, add
         user_domains = request.couch_user.domains or []
         req_domains = [req.domain for req in requests]
         user_domains = format_domains(user_domains)
-        req_domains = format_domains(req_domains, [d.name for d in user_domains])
+        req_domains = format_domains(req_domains, [d.name for d in user_domains if d])
 
     ctxt.update(dict(reg_form=reg_form, add_form=add_form, reg_form_empty=reg_form_empty, add_form_empty=add_form_empty,
                 invite_member_form=invite_member_form, invite_member_form_empty=invite_member_form_empty,
