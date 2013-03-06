@@ -1,6 +1,8 @@
-from corehq.apps.api.es import XFormES
 from django.core.management.base import NoArgsCommand
+
+from corehq.apps.api.es import FullXFormES
 from couchforms.models import XFormInstance
+from pact.enums import PACT_DOMAIN
 from pact.signals import process_dots_submission
 from pact.utils import MISSING_DOTS_QUERY
 
@@ -15,7 +17,7 @@ class Command(NoArgsCommand):
     seen_doc_ids = {}
 
     def handle_noargs(self, **options):
-        xform_es = XFormES()
+        xform_es = FullXFormES(PACT_DOMAIN)
         offset = 0
 
         q = MISSING_DOTS_QUERY

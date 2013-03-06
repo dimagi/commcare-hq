@@ -1,13 +1,11 @@
 from django.core.urlresolvers import NoReverseMatch, reverse
 from django.http import Http404
-import simplejson
-from corehq.apps.api.es import XFormES, CaseES
+from corehq.apps.api.es import FullCaseES, FullXFormES
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
 from corehq.apps.reports.generic import GenericTabularReport
 from corehq.apps.reports.standard import CustomProjectReport
 from corehq.apps.users.models import CommCareUser
 from dimagi.utils import html
-from dimagi.utils.decorators import inline
 from dimagi.utils.decorators.memoized import memoized
 from pact.enums import PACT_CASE_TYPE, PACT_DOMAIN
 from . import chw_schedule
@@ -19,8 +17,8 @@ class PactCHWProfileReport(PactDrilldownReportMixin, ESSortableMixin,GenericTabu
     description = "CHW Profile"
     view_mode = 'info'
     ajax_pagination = True
-    xform_es = XFormES(PACT_DOMAIN)
-    case_es = CaseES(PACT_DOMAIN)
+    xform_es = FullXFormES(PACT_DOMAIN)
+    case_es = FullCaseES(PACT_DOMAIN)
     default_sort = {"received_on": "desc"}
 
     name = "CHW Profile"

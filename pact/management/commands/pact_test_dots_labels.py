@@ -4,7 +4,7 @@ import sys
 from datetime import datetime, timedelta
 import simplejson
 from casexml.apps.case.models import CommCareCase
-from corehq.apps.api.es import CaseES
+from corehq.apps.api.es import FullCaseES
 from pact.dot_data import filter_obs_for_day
 from pact.enums import PACT_DOMAIN
 from pact.models import CObservation
@@ -68,7 +68,7 @@ class Command(BaseCommand):
             self.stderr.write("Enter an id")
             sys.exit()
         else:
-            case_es = CaseES()
+            case_es = FullCaseES()
 
             q = case_es.base_query(PACT_DOMAIN)
             if id_type == "pact_id":

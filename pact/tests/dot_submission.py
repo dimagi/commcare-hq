@@ -190,6 +190,27 @@ class dotsSubmissionTests(TestCase):
             #ret['days'].append(day_data.to_case_json(casedoc))
 
 
+    def testPillboxCheckOdd(self):
+        doc_id = '871d1324033f463bafadd714ed5337ca'
+        filename = '04_pillbox_should.xml'
+
+        with open(os.path.join(os.path.abspath(os.path.dirname(__file__)), 'dots_data', filename)) as fin:
+            form = fin.read()
+
+
+        start = datetime.strptime("2013-02-28", "%Y-%m-%d")
+        end = datetime.strptime("2013-03-01", "%Y-%m-%d")
+
+        bundle = {"xml": form, "start_date": start, "end_date": end, "xform_id": doc_id, "anchor_date": end}
+        submit_xform(self.submit_url, self.domain.name, bundle['xml'])
+        submitted = XFormInstance.get(bundle['xform_id'])
+        self.assertTrue(hasattr(submitted, PACT_DOTS_DATA_PROPERTY))
+        observations = query_observations(CASE_ID, bundle['start_date'], bundle['end_date'])
+        pdb.set_trace()
+
+
+
+
 
 
     def testDOTFormatConversion(self):

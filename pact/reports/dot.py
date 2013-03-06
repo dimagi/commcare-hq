@@ -1,8 +1,8 @@
 from datetime import datetime, timedelta
 import uuid
 from casexml.apps.case.models import CommCareCase
-from corehq.apps.api.es import CaseES, XFormES
-from corehq.apps.reports.fields import ReportSelectField
+from corehq.apps.api.es import FullCaseES, FullXFormES
+from corehq.apps.reports.fields import  ReportSelectField
 from corehq.apps.reports.generic import GenericTabularReport
 from corehq.apps.reports.standard import CustomProjectReport, ProjectReportParametersMixin, DatespanMixin
 
@@ -28,12 +28,15 @@ class PactDOTPatientField(ReportSelectField):
 
     @classmethod
     def get_pact_cases(cls):
-        domain = PACT_DOMAIN
-        case_es = CaseES(PACT_DOMAIN)
+        #query couch to get reduce count of all PACT cases
+        case_es = FullCaseES(PACT_DOMAIN)
         total_count = CommCareCase.get_db().view('hqcase/types_by_domain',
-                                                 key=["pact", "cc_path_client"]).first().get('value',100)
+                                                 key=["pact", PACT_CASE_TYPE]).first().get('value', 100)
         fields = ['_id', 'name', 'pactid']
-        query = case_es.base_query(terms={'type': PACT_CASE_TYPE}, fields=fields, start=0, size=total_count)
+        query = case_es.base_query(terms={'type': PACT_CASE_TYPE},
+                                   fields=fields,
+                                   start=0,
+                                   size=total_count)
         query['filter']['and'].append({"prefix": {"dot_status": "dot"}})
 
         results = case_es.run_query(query)
@@ -77,7 +80,7 @@ class PactDOTReport(GenericTabularReport, CustomProjectReport, ProjectReportPara
         ret['dot_calendar'] = dcal
 
         unique_visits = dcal.unique_xforms()
-        xform_es = XFormES(PACT_DOMAIN)
+        xform_es = FullXFormES(PACT_DOMAIN)
 
         q = xform_es.base_query(size=len(unique_visits))
         lvisits = list(unique_visits)

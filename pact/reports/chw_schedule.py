@@ -1,12 +1,11 @@
-from datetime import datetime, timedelta, timedelta
-import pdb
+from datetime import datetime, timedelta
 import time
 from dateutil.parser import parser
 from django.core.cache import cache
 from django.http import HttpResponse
 import simplejson
 from casexml.apps.case.models import CommCareCase
-from corehq.apps.api.es import XFormES
+from corehq.apps.api.es import FullXFormES
 from pact.enums import PACT_DOMAIN
 from pact.lib.quicksect import IntervalNode
 from pact.utils import get_patient_display_cache
@@ -98,7 +97,7 @@ def dots_submissions_by_case(case_id, query_date, username=None):
     Actually run query for username submissions
     todo: do terms for the pact_ids instead of individual term?
     """
-    xform_es = XFormES(PACT_DOMAIN)
+    xform_es = FullXFormES(PACT_DOMAIN)
     script_fields = {
         "doc_id": {"script": "_source._id"},
         "pact_id": {"script": "_source.form.pact_id", },
