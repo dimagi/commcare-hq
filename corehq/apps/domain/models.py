@@ -177,7 +177,7 @@ class Domain(Document, HQBillingDomainMixin, SnapshotMixin):
     default_timezone = StringProperty(default=getattr(settings, "TIME_ZONE", "UTC"))
     case_sharing = BooleanProperty(default=False)
     organization = StringProperty()
-    slug = StringProperty() # the slug for this project namespaced within an organization
+    hr_name = StringProperty() # the human-readable name for this project within an organization
     eula = SchemaProperty(LicenseAgreement)
     creating_user = StringProperty() # username of the user who created this domain
 
@@ -444,9 +444,9 @@ class Domain(Document, HQBillingDomainMixin, SnapshotMixin):
         return result
 
     @classmethod
-    def get_by_organization_and_slug(cls, organization, slug):
+    def get_by_organization_and_hrname(cls, organization, hr_name):
         result = cls.view("domain/by_organization",
-                          key=[organization, slug],
+                          key=[organization, hr_name],
                           reduce=False,
                           include_docs=True)
         return result
@@ -627,8 +627,8 @@ class Domain(Document, HQBillingDomainMixin, SnapshotMixin):
     def display_name(self):
         if self.is_snapshot:
             return "Snapshot of %s" % self.copied_from.display_name()
-        if self.slug and self.organization:
-            return self.slug
+        if self.hr_name and self.organization:
+            return self.hr_name
         else:
             return self.name
 
@@ -643,7 +643,7 @@ class Domain(Document, HQBillingDomainMixin, SnapshotMixin):
             return format_html(
                 '{0} &gt; {1}',
                 self.get_organization().title,
-                self.slug or self.name
+                self.hr_name or self.name
             )
         else:
             return self.name

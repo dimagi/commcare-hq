@@ -44,7 +44,7 @@
 
         $('.edit-project-btn').on('click', function() {
             $('#updating-project').val($(this).attr('data-project'));
-            $('#updating-project-slug').val($(this).attr('data-slug'));
+            $('#updating-project-hrname').val($(this).attr('data-hrname'));
             $('#edit-project-modal').modal({show: true});
             return false;
         });
@@ -88,7 +88,7 @@
                     {% ifnotequal domain.name domain.display_name %}<small>({{ domain.name }})</small>{% endifnotequal %}
                 </a>
                 {% if admin %}
-                    <a href="#" class="btn edit-project-btn pull-right" data-project="{{ domain.name }}" data-slug="{{ domain.slug|default:domain.name }}">
+                    <a href="#" class="btn edit-project-btn pull-right" data-project="{{ domain.name }}" data-hrname="{{ domain.hrname|default:domain.name }}">
                         <i class="icon icon-pencil"></i> {% trans "Edit Project Info" %}
                     </a>
                 {% endif %}
@@ -206,9 +206,9 @@
                     <div class="modal-body">
                         <input id="updating-project" type="hidden" name="domain" value="" />
                         <div class="control-group">
-                            <label class="control-label" for="updating-project-slug">{% trans "New Display Name" %}</label>
+                            <label class="control-label" for="updating-project-hrname">{% trans "New Display Name" %}</label>
                             <div class="controls">
-                                <input type="text" id="updating-project-slug" name="slug" />
+                                <input type="text" id="updating-project-hrname" name="hr_name" />
                             </div>
                         </div>
                     </div>
