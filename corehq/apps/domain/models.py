@@ -252,6 +252,10 @@ class Domain(Document, HQBillingDomainMixin, SnapshotMixin):
         #     else:
         #         data["creating_user"] = None
 
+        if 'slug' in data and data["slug"]:
+            data["hr_name"] = data["slug"]
+            del data["slug"]
+
         self = super(Domain, cls).wrap(data)
         if self.get_id:
             self.apply_migrations()
