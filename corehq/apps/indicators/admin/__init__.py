@@ -1,7 +1,7 @@
-from django.conf import settings
 from django.core.urlresolvers import reverse
 from corehq.apps.crud.interface import BaseCRUDAdminInterface
 from corehq.apps.indicators.dispatcher import IndicatorAdminInterfaceDispatcher
+from corehq.apps.indicators.utils import get_namespaces
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
 from dimagi.utils.decorators.memoized import memoized
 
@@ -9,12 +9,11 @@ from dimagi.utils.decorators.memoized import memoized
 class BaseIndicatorAdminInterface(BaseCRUDAdminInterface):
     section_name = "Administer Indicators"
     base_template = 'reports/base_template.html'
+    report_template_path = "indicators/interfaces/indicator_admin.html"
     dispatcher = IndicatorAdminInterfaceDispatcher
 
     crud_item_type = "Indicator Definition"
     crud_form_update_url = "/indicators/form/"
-
-    namespace_map = "INDICATOR_NAMESPACES"
 
     def validate_document_class(self):
         from corehq.apps.indicators.models import IndicatorDefinition
@@ -46,9 +45,7 @@ class BaseIndicatorAdminInterface(BaseCRUDAdminInterface):
     @property
     @memoized
     def indicator_namespaces(self):
-        available_namespaces = getattr(settings, self.namespace_map, {})
-        domain_namespaces = available_namespaces.get(self.domain, ())
-        return [n[0] for n in domain_namespaces]
+        return get_namespaces(self.domain)
 
     @property
     @memoized
