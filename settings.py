@@ -632,10 +632,13 @@ INDICATOR_CONFIG = {
 }
 
 PILLOWTOPS = [
-                'corehq.pillows.FullCasePillow',
-                'corehq.pillows.CasePillow',
-                'corehq.pillows.XFormPillow',
-                'corehq.pillows.ExchangePillow',
+                'corehq.pillows.case.CasePillow',
+                'corehq.pillows.fullcase.FullCasePillow',
+
+                'corehq.pillows.xform.XFormPillow',
+                'corehq.pillows.fullxform.FullXFormPillow',
+
+                'corehq.pillows.exchange.ExchangePillow',
              ] + LOCAL_PILLOWTOPS
 
 #Custom workflow for indexing xform data beyond the standard properties
