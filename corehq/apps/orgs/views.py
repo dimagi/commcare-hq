@@ -136,10 +136,27 @@ def orgs_update_info(request, org):
 
 @org_admin_required
 @require_POST
+def orgs_update_project(request, org):
+    domain = Domain.get_by_name(request.POST.get('domain', ""))
+    new_slug = request.POST.get('slug', "")
+    if domain and new_slug:
+        if domain.organization != org:
+            messages.error(request, "The project %s isn't a part of this organization" % domain.name)
+        else:
+            old_slug = domain.slug
+            domain.slug = new_slug
+            domain.save()
+            messages.success(request, "The projects display name has been changed from %s to %s" % (old_slug, new_slug))
+    else:
+        messages.error(request, "Could not edit project information -- missing new display name")
+
+    return HttpResponseRedirect(reverse("orgs_landing", args=(org, )))
+
+@org_admin_required
+@require_POST
 def orgs_update_team(request, org):
     team_id = request.POST.get('team_id', "")
     new_team_name = request.POST.get('team_name', "")
-    print request.POST
     if team_id and new_team_name:
         team = Team.get(team_id)
         old_team_name = team.name
@@ -147,10 +164,9 @@ def orgs_update_team(request, org):
         team.save()
         messages.success(request, "Team %s has been renamed to %s" % (old_team_name, team.name))
     else:
-        messages.error(request, "Could not edit team information -- missing team name")
+        messages.error(request, "Could not edit team information -- missing new team name")
 
     return HttpResponseRedirect(reverse("orgs_teams", args=(org, )))
-
 
 @org_admin_required
 @require_POST

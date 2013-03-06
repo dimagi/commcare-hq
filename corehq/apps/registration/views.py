@@ -106,7 +106,7 @@ def register_domain(request):
                         'show_homepage_link': 1 }
                 return render(request, 'error.html', vals)
 
-            request_new_domain(request, form, org, is_new, slug=form.cleaned_data['domain_name'] if org else None)
+            request_new_domain(request, form, org, is_new)
             requested_domain = form.cleaned_data['domain_name']
             if is_new:
                 vals = dict(alert_message="An email has been sent to %s." % request.user.username, requested_domain=requested_domain)

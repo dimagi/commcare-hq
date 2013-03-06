@@ -115,11 +115,6 @@ class DomainRegistrationForm(forms.Form):
         data = self.cleaned_data['domain_name'].strip().lower()
         if not re.match("^%s$" % new_domain_re, data):
             raise forms.ValidationError('Only lowercase letters and numbers allowed. Single hyphens may be used to separate words.')
-        if 'org' in self.cleaned_data and self.cleaned_data['org']:
-            org_name = self.cleaned_data['org']
-            if Domain.get_by_organization_and_slug(org_name, data):
-                raise forms.ValidationError('Project alias already exists in org --- please try another name')
-            data = '{org_name}:{domain_name}'.format(org_name=org_name, domain_name=data)
 
         conflict = Domain.get_by_name(data) or Domain.get_by_name(data.replace('-', '.'))
         if conflict:
