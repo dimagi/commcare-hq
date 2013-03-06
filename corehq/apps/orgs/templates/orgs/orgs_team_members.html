@@ -22,7 +22,17 @@
                         }
                 );
                 return false;
-            })
+            });
+
+            $('#add-member').select2({
+                placeholder: "Member's email address",
+                allowClear: true
+            });
+
+            $('#add-project').select2({
+                placeholder: "Project Name",
+                allowClear: true
+            });
         });
     </script>
 {% endblock %}
@@ -54,12 +64,15 @@
             {% if admin %}
             <form class="form-horizontal" method="post" action="{% url join_team org.name team.get_id %}" method="post">
                 <div class="well well-small">
-                    <div class="input-append">
-                        <input name="username" type="text" placeholder="Member's email address" data-provide="typeahead" data-source='{{ nonmembers|JSON }}' autocomplete="off" />
-                        <button type="submit" id="add_team_btn" class="btn btn-info disable-on-submit">
-                            <i class="icon-plus"></i> {% trans "Add" %}
-                        </button>
-                    </div>
+                    <select id="add-member" name="username" class="input-xlarge">
+                        <option value=""></option>
+                        {% for member in nonmembers %}
+                            <option value="{{ member.username }}">{{ member.display_name|default:member.username }}</option>
+                        {% endfor %}
+                    </select>
+                    <button type="submit" id="add_team_btn" class="btn btn-info disable-on-submit">
+                        <i class="icon-plus"></i> {% trans "Add" %}
+                    </button>
                 </div>
             </form>
             {% endif %}
@@ -102,12 +115,15 @@
             {% if admin %}
             <form class="form-horizontal" method="post" action="{% url add_domain_to_team org.name team.get_id %}" method="post">
                 <div class="well well-small">
-                    <div class="input-append">
-                        <input name="project_name" type="text" placeholder="Project Name" data-provide="typeahead" data-source='{{ nondomains|JSON }}' autocomplete="off" />
-                        <button type="submit" id="add_domain_btn" class="btn btn-info disable-on-submit">
-                            <i class="icon-plus"></i> {% trans "Add" %}
-                        </button>
-                    </div>
+                    <select id="add-project" name="project_name" class="input-xlarge">
+                        <option value=""></option>
+                        {% for dom in nondomains %}
+                            <option value="{{ dom.name }}">{{ dom.display_name }}</option>
+                        {% endfor %}
+                    </select>
+                    <button type="submit" id="add_domain_btn" class="btn btn-info disable-on-submit">
+                        <i class="icon-plus"></i> {% trans "Add" %}
+                    </button>
                 </div>
             </form>
             {% endif %}

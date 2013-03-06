@@ -236,10 +236,13 @@ def org_settings(request, domain):
     for user in org_users:
         user.current_domain = domain.name
 
+    all_orgs = Organization.get_all()
+
     return render(request, 'domain/orgs_settings.html', {
         "project": domain, 'domain': domain.name,
         "organization": Organization.get_by_name(getattr(domain, "organization", None)),
-        "org_users": org_users
+        "org_users": org_users,
+        "all_orgs": all_orgs,
     })
 
 @login_and_domain_required
