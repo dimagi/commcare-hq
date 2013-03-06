@@ -1,14 +1,10 @@
 {% extends 'hqwebapp/two_column.html' %}
-
 {% load hq_shared_tags %}
+{% load i18n %}
 
 {% block head %}
     {{ block.super }}
     <style>
-        h1 {
-            font-size: 2em;
-            text-align: center;
-        }
         #scheduled-reminders-container {
             margin: 10px;
         }
@@ -87,14 +83,22 @@
             <li class="nav-header">Reminders</li>
             <li{% ifequal request.path_info default_url %} class="active"{% endifequal %}><a href="{{ default_url }}">Reminder Definitions</a></li>
             {% block reminder_definition_nav %}{% endblock %}
-            <li{% is_url_active request scheduled_reminders_url %}><a href="{{ scheduled_reminders_url }}">Scheduled Reminders</a></li>
+            <li{% is_url_active request scheduled_reminders_url %}><a href="{{ scheduled_reminders_url }}">Reminder Calendar</a></li>
             <li{% is_url_active request keywords_url %}><a href="{{ keywords_url }}">Keywords</a></li>
             {% block keyword_nav %}{% endblock %}
         </ul>
     </nav>
 {% endblock %}
 
-{% block main_column %}
-    {% block reminders_content %}
+{% block page-title %}
+    <ul class="breadcrumb">
+        <li>
+            <a href="{% url reminders_default domain %}"><strong>{% trans 'Reminders' %}</strong></a> <span class="divider">&gt;</span>
+        </li>
+        {% block subsection-title %}
+        {% endblock %}
+    </ul>
     {% endblock %}
+
+{% block main_column %}
 {% endblock %}

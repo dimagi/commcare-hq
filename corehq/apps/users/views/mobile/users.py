@@ -22,14 +22,17 @@ from corehq.apps.groups.models import Group
 from corehq.apps.users.bulkupload import create_or_update_users_and_groups,\
     check_headers, dump_users_and_groups, GroupNameError
 from corehq.apps.users.tasks import bulk_upload_async
-from corehq.apps.users.views import _users_context, require_can_edit_web_users,\
-    require_can_edit_commcare_users
+from corehq.apps.users.views import (_users_context, require_can_edit_web_users,
+    require_can_edit_commcare_users, account as users_account)
 from dimagi.utils.html import format_html
 from dimagi.utils.decorators.view import get_file
 from dimagi.utils.excel import WorkbookJSONReader, WorksheetNotFound
 
 
 DEFAULT_USER_LIST_LIMIT = 10
+
+def account(*args, **kwargs):
+    return users_account(*args, **kwargs)
 
 @require_can_edit_commcare_users
 def base_view(request, domain, template="users/mobile/users_list.html"):
@@ -82,7 +85,7 @@ def user_list(request, domain):
         user_data = dict(
             user_id=user.user_id,
             status="" if user.is_active else "Archived",
-            edit_url=reverse('user_account', args=[domain, user.user_id]),
+            edit_url=reverse('commcare_user_account', args=[domain, user.user_id]),
             username=user.raw_username,
             full_name=user.full_name,
             joined_on=user.date_joined.strftime("%d %b %Y"),

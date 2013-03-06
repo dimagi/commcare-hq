@@ -51,6 +51,29 @@ def format_ivr_response(text, app):
         "audio_file_url" : convert_media_path_to_hq_url(text, app) if text.startswith("jr://") else None,
     }
 
+def get_case_id(call_log_entry):
+    if call_log_entry.couch_recipient_doc_type == "CommCareCase":
+        case_id = call_log_entry.couch_recipient
+    else:
+        #TODO: Need a way to choose the case when it's a user that's playing the form.
+        case_id = None
+    
+    return case_id
+
+def get_input_length(question):
+    if question.event.type == "question" and question.event.datatype == "select":
+        return 1
+    else:
+        return None
+
+# Returns True if the form has at least one question that requires input
+def form_requires_input(form):
+    for question in form.get_questions([]):
+        if question["tag"] not in ("trigger", "label", "hidden"):
+            return True
+    
+    return False
+
 def incoming(phone_number, backend_module, gateway_session_id, ivr_event, input_data=None):
     # Look up the call if one already exists
     call_log_entry = CallLog.view("sms/call_by_session",
@@ -64,18 +87,16 @@ def incoming(phone_number, backend_module, gateway_session_id, ivr_event, input_
     error_occurred = False # This will be set to False if touchforms validation passes (i.e., no form constraints fail)
     
     if call_log_entry is not None:
+        if ivr_event == IVR_EVENT_NEW_CALL and call_log_entry.use_precached_first_response:
+            return HttpResponse(call_log_entry.first_response)
+        
         form = Form.get_form(call_log_entry.form_unique_id)
         app = form.get_app()
         module = form.get_module()
         recipient = call_log_entry.recipient
         
         if ivr_event == IVR_EVENT_NEW_CALL:
-            if recipient.doc_type == "CommCareCase":
-                case_id = recipient._id
-            else:
-                #TODO: Need a way to choose the case when it's a user that's playing the form
-                case_id = None
-            
+            case_id = get_case_id(call_log_entry)
             session, responses = start_session(recipient.domain, recipient, app, module, form, case_id, yield_responses=True, session_type=XFORMS_SESSION_IVR)
             call_log_entry.xforms_session_id = session.session_id
         elif ivr_event == IVR_EVENT_INPUT:
@@ -134,9 +155,12 @@ def incoming(phone_number, backend_module, gateway_session_id, ivr_event, input_
             # Set input_length to let the ivr gateway know how many digits we need to collect.
             # Have to get the current question again, since the last XFormsResponse in responses
             # may not have an event if it was a response to a constraint error.
-            current_q = current_question(call_log_entry.xforms_session_id)
-            if current_q.event.type == "question" and current_q.event.datatype == "select":
-                input_length = 1
+            if error_occurred:
+                current_q = current_question(call_log_entry.xforms_session_id)
+            else:
+                current_q = responses[-1]
+            
+            input_length = get_input_length(current_q)
         
         call_log_entry.save()
         return HttpResponse(backend_module.get_http_response_string(gateway_session_id, ivr_responses, collect_input=(not hang_up), hang_up=hang_up, input_length=input_length))
@@ -191,7 +215,7 @@ def initiate_outbound_call(verified_number, form_unique_id, submit_partial_form,
         current_question_retry_count = 0,
     )
     backend = verified_number.ivr_backend
-    kwargs = backend.outbound_params
+    kwargs = backend.get_cleaned_outbound_params()
     module = __import__(backend.outbound_module, fromlist=["initiate_outbound_call"])
     call_log_entry.backend_api = module.API_ID
     call_log_entry.save()

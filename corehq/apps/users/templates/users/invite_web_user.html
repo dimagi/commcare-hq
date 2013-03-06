@@ -2,12 +2,6 @@
 {% load hq_shared_tags %}
 {% load hqstyle_tags %}
 
-{% block web_users_indicator %}
-<ul class="nav nav-list">
-    <li class="active"><a href="#">Invite {% hq_web_user %}</a></li>
-</ul>
-{% endblock %}
-
 {% block subsection-title %}
     <li>
         <a href="{% url web_users domain %}">{% hq_web_user %}s</a> <span class="divider">&gt;</span>

@@ -847,6 +847,8 @@ class CaseReminder(Document, LockableMixIn):
     error_retry_count = IntegerProperty(default=0)
     last_scheduled_fire_time = DateTimeProperty()
     event_initiation_timestamp = DateTimeProperty() # The date and time that the event was started (which is the same throughout all timeouts)
+    error = BooleanProperty(default=False)
+    error_msg = StringProperty()
     
     @property
     def handler(self):

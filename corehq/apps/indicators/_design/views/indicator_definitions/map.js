@@ -9,5 +9,6 @@ function (doc) {
         if (doc.base_doc === "FormIndicatorDefinition") {
             emit(["namespace domain xmlns slug", doc.namespace, doc.domain, doc.xmlns, doc.slug, doc.version], class_path);
         }
+        emit(["type", doc.namespace, doc.domain, doc.doc_type, doc.version], class_path);
     }
 }

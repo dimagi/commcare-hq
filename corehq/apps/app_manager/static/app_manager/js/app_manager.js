@@ -28,8 +28,7 @@
         return versionGE(COMMCAREHQ.app_manager.commcareVersion, version);
     };
     COMMCAREHQ.app_manager.init = function (args) {
-        var lastAppVersion = args.lastAppVersion,
-            appVersion = args.appVersion,
+        var appVersion = args.appVersion,
             edit = args.edit;
 
         function updateDOM(update) {
@@ -89,20 +88,8 @@
             }());
         }
 
-        $('.sidebar').addClass('ui-corner-bl');
         $('#form-tabs').show();
         $('#forms').tab('show');
-//        $("#form-tabs").tabs({
-//            cookie: {},
-//            select: function (event, ui) {
-//                if (ui.index === 1 && getVar('edit_mode')) {
-//                    // make sure the Make New Build button is set correctly
-//                    resetMakeNewBuild();
-//                }
-//            }
-//        }).removeClass('ui-corner-all').removeClass('ui-widget-content').show();
-//        $("#form-tabs > ul").removeClass('ui-corner-all').removeClass('ui-widget-content');
-
 
         $(".warning").before($('<div />').addClass('ui-icon ui-icon-alert').css('float', 'left'));
 

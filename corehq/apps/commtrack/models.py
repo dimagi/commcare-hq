@@ -83,6 +83,11 @@ class LocationType(DocumentSchema):
     name = StringProperty()
     allowed_parents = StringListProperty()
 
+class CommtrackRequisitionConfig(DocumentSchema):
+    # placeholder class for when this becomes fancier
+
+    enabled = BooleanProperty(default=False)
+
 class SupplyPointType(DocumentSchema):
     name = StringProperty()
     categories = StringListProperty()
@@ -101,6 +106,8 @@ class CommtrackConfig(Document):
 
     location_types = SchemaListProperty(LocationType)
     supply_point_types = SchemaListProperty(SupplyPointType)
+
+    requisition_config = SchemaProperty(CommtrackRequisitionConfig)
 
     @classmethod
     def for_domain(cls, domain):
@@ -123,6 +130,10 @@ class CommtrackConfig(Document):
     @property
     def supply_point_categories(self):
         return map_reduce(lambda spt: [(category, spt.name) for category in spt.categories], data=self.supply_point_types)
+
+    @property
+    def requisitions_enabled(self):
+        return self.requisition_config.enabled
 
 def _view_shared(view_name, domain, location_id=None, skip=0, limit=100):
     extras = {"limit": limit} if limit else {}

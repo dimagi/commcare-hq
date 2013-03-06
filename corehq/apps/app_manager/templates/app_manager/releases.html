@@ -6,7 +6,7 @@
 {% load timezone_tags %}
 {% load i18n %}
 {% block js %}{{ block.super }}
-    <script src="{% static 'hqwebapp/javascripts/knockout.mapping.js' %}"></script>
+    <script src="{% static 'hqwebapp/js/lib/knockout.mapping.js' %}"></script>
     <script src="{% static 'hqwebapp/js/knockout-bindings.js' %}"></script>
     <script src="{% static 'app_manager/js/releases.js' %}"></script>
 {% endblock %}
@@ -308,12 +308,36 @@
                             </div>
                         </div>
                     </div>
-
                     <div class="accordion-group">
                         <div class="accordion-heading">
-                            <a class="accordion-toggle" data-bind="openJqm: $root.url('odk', id)">
+                            <a class="accordion-toggle">
                                 {% trans "Download to CommCare ODK (Android)" %}
                             </a>
+                        </div>
+                        <div class="accordion-body collapse">
+                            <div class="accordion-inner">
+                                <p>
+                                    <span data-bind="visible: short_odk_url()">
+                                        {% blocktrans %}
+                                            Install by typing the following URL
+                                            into the application install screen:
+                                        {% endblocktrans %}
+                                        <a data-bind="
+                                            attr: {href: short_odk_url()},
+                                            text: short_odk_url()
+                                        "></a>
+                                    </span>
+                                    <span class="text-warning" data-bind="visible: !short_odk_url()">
+                                        {% trans "No short code available; try making another build." %}
+                                    </span>
+                                </p>
+                                <p>
+                                    {% trans "Or" %}
+                                    <a href="#" data-bind="openJqm: $root.url('odk', id)">
+                                    {% trans "scan the bar code" %}
+                                    </a>
+                                </p>
+                            </div>
                         </div>
                     </div>
 

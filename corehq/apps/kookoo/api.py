@@ -6,6 +6,10 @@ from xml.etree.ElementTree import XML
 from dimagi.utils.web import get_url_base
 from django.core.urlresolvers import reverse
 from xml.sax.saxutils import escape
+from corehq.apps.smsforms.app import start_session
+from corehq.apps.smsforms.models import XFORMS_SESSION_IVR
+from corehq.apps.ivr.api import get_case_id, format_ivr_response, get_input_length, form_requires_input
+from corehq.apps.app_manager.models import Form
 
 class InvalidPhoneNumberException(Exception):
     pass
@@ -27,8 +31,13 @@ def get_http_response_string(gateway_session_id, ivr_responses, collect_input=Fa
     if input_length is not None:
         input_length_str = 'l="%s"' % input_length
     
+    if input_length == 1:
+        timeout = "3000"
+    else:
+        timeout = "5000"
+    
     if collect_input:
-        xml_string = '<collectdtmf %s o="5000">%s</collectdtmf>' % (input_length_str, xml_string)
+        xml_string = '<collectdtmf %s o="%s">%s</collectdtmf>' % (input_length_str, timeout, xml_string)
     
     if hang_up:
         xml_string += "<hangup/>"
@@ -50,6 +59,26 @@ def initiate_outbound_call(call_log_entry, *args, **kwargs):
         phone_number = "0" + phone_number[2:]
     else:
         raise InvalidPhoneNumberException("Kookoo can only send to Indian phone numbers.")
+    
+    form = Form.get_form(call_log_entry.form_unique_id)
+    app = form.get_app()
+    module = form.get_module()
+    
+    # Only precache the first response if it's not an only-label form, otherwise we could end up
+    # submitting the form regardless of whether the person actually answers the call.
+    if form_requires_input(form):
+        recipient = call_log_entry.recipient
+        case_id = get_case_id(call_log_entry)
+        session, responses = start_session(recipient.domain, recipient, app, module, form, case_id, yield_responses=True, session_type=XFORMS_SESSION_IVR)
+        
+        ivr_responses = []
+        for response in responses:
+            ivr_responses.append(format_ivr_response(response.event.caption, app))
+        
+        input_length = get_input_length(responses[-1])
+        
+        call_log_entry.use_precached_first_response = True
+        call_log_entry.xforms_session_id = session.session_id
     
     url_base = get_url_base()
     
@@ -79,6 +108,12 @@ def initiate_outbound_call(call_log_entry, *args, **kwargs):
     else:
         call_log_entry.error = True
         call_log_entry.error_message = "Unknown status received from Kookoo."
+    
+    if call_log_entry.error:
+        call_log_entry.use_precached_first_response = False
+    
+    if call_log_entry.use_precached_first_response:
+        call_log_entry.first_response = get_http_response_string(call_log_entry.gateway_session_id, ivr_responses, collect_input=True, hang_up=False, input_length=input_length)
     
     call_log_entry.save()
     return not call_log_entry.error

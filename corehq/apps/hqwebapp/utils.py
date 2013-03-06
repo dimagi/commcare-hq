@@ -185,20 +185,6 @@ def paginate(request, data, rows_per_page=25):
         data_pages = paginator.page(paginator.num_pages)
     return data_pages
 
-def build_url(relative_path, request=None):
-    '''Attempt to build a fully qualified url.  It will first try to back
-       it out of the request object, if specified.  Failing that it will 
-       look for a django setting: SERVER_ROOT_URL.  Failing that, it defaults
-       to localhost:8000.
-    '''
-    if request:
-        return request.build_absolute_uri(relative_path)
-    elif hasattr(settings, "SERVER_ROOT_URL"):
-        return "%s%s" % (settings.SERVER_ROOT_URL, relative_path)
-    else:
-        return "http://localhost:8000%s" % relative_path
-        
-        
 def get_post_redirect(request, get_callback, post_callback,
                       get_template_name = None, post_template_name = None):
     """
