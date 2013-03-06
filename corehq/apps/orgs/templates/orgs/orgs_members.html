@@ -30,7 +30,7 @@
         <form class="form-inline" style="margin: 0;" method="post" action="{% url orgs_invite_member org.name %}">
             <div class="input-append">
                 <input id="id_email" name="email" type="text" placeholder="Member's email address" />
-                <button type="submit" id="invite_member_btn" class="btn btn-info">
+                <button type="submit" id="invite_member_btn" class="btn btn-info disable-on-submit">
                     <i class="icon-plus"></i> {% trans "Invite Member" %}
                 </button>
             </div>
@@ -49,7 +49,7 @@
         </div>
         <div class="modal-footer">
             <a href="#" data-dismiss="modal" class="btn">{% trans "Cancel" %}</a>
-            <button type="submit" class="btn btn-primary">{% trans "Remove Member" %}</button>
+            <button type="submit" class="btn btn-primary disable-on-submit">{% trans "Remove Member" %}</button>
         </div>
     </form>
 </div>

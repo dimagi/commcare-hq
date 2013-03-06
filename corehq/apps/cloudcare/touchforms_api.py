@@ -46,7 +46,8 @@ class SessionDataHelper(object):
             'app_version': '2.0',
             'username': self.couch_user.raw_username,
             'user_id': self.couch_user.get_id,
-            "domain": self.domain,
+            'domain': self.domain,
+            'user_data': self.couch_user.user_data if self.couch_user.is_commcare_user() else {}
         }
         if self.case_id:
             if self.delegation:

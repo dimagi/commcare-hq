@@ -370,8 +370,12 @@ class GenericReportView(CacheableRequestMixIn):
         """
         Whether a report needs filters. A shortcut for hide_filters is false and 
         filter_set is false.
+        If no filters are used, False is automatically returned.
         """
-        return not self.hide_filters and not self.filter_set
+        if len(self.fields) == 0:
+            return False
+        else:
+            return not self.hide_filters and not self.filter_set
     
     def _validate_context_dict(self, property):
         if not isinstance(property, dict):

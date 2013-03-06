@@ -72,6 +72,8 @@ def project_info(request, domain, template="appstore/project_info.html"):
     else:
         form = AddReviewForm()
 
+    copies = dom.copies_of_parent()
+
     reviews = Review.get_by_app(dom.copied_from._id)
     average_rating = Review.get_average_rating_by_app(dom.copied_from._id)
     num_ratings = Review.get_num_ratings_by_app(dom.copied_from._id)
@@ -94,6 +96,7 @@ def project_info(request, domain, template="appstore/project_info.html"):
         "applications": dom.full_applications(include_builds=False),
         "form": form,
         "published_by": published_by,
+        "copies": copies,
         "reviews": reviews,
         "average_rating": average_rating,
         "num_ratings": num_ratings,

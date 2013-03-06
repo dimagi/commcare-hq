@@ -9,7 +9,7 @@ from corehq.apps.reports.standard import inspect, export, ProjectReport
 from corehq.apps.reports.standard.export import DeidExportReport
 from corehq.apps.reports.export import ApplicationBulkExportHelper, CustomBulkExportHelper
 from corehq.apps.reports.models import (ReportConfig, ReportNotification,
-    FormExportSchema, HQGroupExportConfiguration, UnsupportedScheduledReportError)
+    FormExportSchema, HQGroupExportConfiguration)
 from corehq.apps.users.decorators import require_permission
 from corehq.apps.users.export import export_users
 from corehq.apps.users.models import Permissions

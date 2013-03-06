@@ -311,6 +311,8 @@ def add_domain_to_team(request, org, team_id):
     domain = request.POST.get("project_name", None)
     if not domain:
         messages.error(request, "You must specify a project name")
+    elif domain not in [d.name for d in Domain.get_by_organization(org)]:
+        messages.error(request, "You cannot add a domain that isn't managed by this organization")
     else:
         team = Team.get(team_id)
         team.add_domain_membership(domain)
