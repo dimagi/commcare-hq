@@ -52,7 +52,6 @@ def post_xform_to_couch(instance, attachments={}):
 
     attachments is a dictionary of the request.FILES that are not the xform.  Key is the parameter name, and the value is the django MemoryFile object stream.
     """
-    # check settings for authentication credentials
     try:
         response, errors = post_from_settings(instance)
         if not _has_errors(response, errors):
