@@ -41,14 +41,14 @@
 {% block user-view %}
     <div>
         {% if project.organization %}
-            <h3>This project is managed by the <a href="{% url orgs_landing project.organization %}">{{ organization.title|capfirst }}</a> organization.</h3>
+            <h3>This project is a part of the <a href="{% url orgs_landing project.organization %}">{{ organization.title|capfirst }}</a> organization.</h3>
             <hr />
             <h3>{% hq_web_user %}s from {{ organization.title|capfirst }}</h3>
             {% include 'domain/partials/orgs_user_list.html' with users=org_users remove_included=0 %}
         {% else %}
-            <h3>{% trans "This project is not managed by an organization" %}</h3>
+            <h3>{% trans "This project is not a part of any organization" %}</h3>
             <button class="btn" data-toggle="modal" data-target="#org-request">
-                Send project management request to an organization</button>
+                {% trans "Request to add this project to an organization" %}</button>
         {% endif %}
     </div>
 {% endblock %}
@@ -57,28 +57,28 @@
     <div class="modal hide fade" id="org-request">
         <div class="modal-header">
             <a class="close" data-dismiss="modal">&times;</a>
-            <h4>Send request to an Organization to manage this project</h4>
+            <h4>{% trans "Send request to an organization to add this project" %}</h4>
         </div>
         <form class="form-horizontal" id="org-request-form" action="{% url domain_org_request domain %}" method="POST">
             <div class="modal-body" style="height: 18em;">
                 <fieldset>
                     <div class="control-group">
-                        <label class="control-label" for="org-input">Search for organization:</label>
+                        <label class="control-label" for="org-input">{% trans "Search for organization" %}:</label>
                         <div class="controls">
                             <input id="org-input" type="text" name="org_name" autocomplete="off">
                         </div>
                     </div>
                     <div class="row-fluid">
-                        <span class="span1"><span class="label label-info">Info</span></span>
+                        <span class="span1"><span class="label label-info">{% trans "Info" %}</span></span>
                         <span class="span11">
-                            The admins of this organization will be notified about your project management request. They will then have the opportunity to add your project to their organization
+                            {% trans "The admins of this organization will be notified about your request. They will then have the opportunity to add your project to the organization" %}
                         </span>
                     </div>
                 </fieldset>
             </div>
             <div class="modal-footer">
-                <button type="submit" href="#" class="btn btn-primary">Submit Request</button>
-                <a href="#" data-dismiss="modal" class="btn">Cancel</a>
+                <button type="submit" href="#" class="btn btn-primary disable-on-submit">{% trans "Submit Request" %}</button>
+                <a href="#" data-dismiss="modal" class="btn">{% trans "Cancel" %}</a>
             </div>
         </form>
     </div>

@@ -53,8 +53,7 @@ def request_new_domain(request, form, org, new_user=True, slug=''):
 
     if org:
         new_domain.organization = org
-        if slug:
-            new_domain.slug = slug
+        new_domain.slug = new_domain.name
 
     if not new_user:
         new_domain.is_active = True

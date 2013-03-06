@@ -27,6 +27,10 @@
     </script>
 {% endblock %}
 
+{% block append-to-title %}
+    <small><strong> - {{ team.name }}</strong></small>
+{% endblock %}
+
 {% block carded-content %}
     <div class="row-fluid">
         <div class="span6" id="members">

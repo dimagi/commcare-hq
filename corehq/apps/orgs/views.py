@@ -111,7 +111,7 @@ def orgs_update_info(request, org):
     organization = Organization.get_by_name(org)
     form = UpdateOrgInfo(request.POST, request.FILES)
     if form.is_valid():
-        logo = None
+        # logo = None
         if form.cleaned_data['org_title'] or organization.title:
             organization.title = form.cleaned_data['org_title']
         if form.cleaned_data['email'] or organization.email:
@@ -121,18 +121,52 @@ def orgs_update_info(request, org):
         if form.cleaned_data['location'] or organization.location:
             organization.location = form.cleaned_data['location']
             #logo not working, need to look into this
-        if form.cleaned_data['logo']:
-            logo = form.cleaned_data['logo']
-            if organization.logo_filename:
-                organization.delete_attachment(organization.logo_filename)
-            organization.logo_filename = logo.name
+        # if form.cleaned_data['logo']:
+        #     logo = form.cleaned_data['logo']
+        #     if organization.logo_filename:
+        #         organization.delete_attachment(organization.logo_filename)
+        #     organization.logo_filename = logo.name
 
         organization.save()
-        if logo:
-            organization.put_attachment(content=logo.read(), name=logo.name)
+        # if logo:
+        #     organization.put_attachment(content=logo.read(), name=logo.name)
         return HttpResponseRedirect(request.META.get('HTTP_REFERER') or reverse('orgs_landing', args=[org]))
     else:
         return orgs_landing(request, org, update_form=form)
+
+@org_admin_required
+@require_POST
+def orgs_update_project(request, org):
+    domain = Domain.get_by_name(request.POST.get('domain', ""))
+    new_slug = request.POST.get('slug', "")
+    if domain and new_slug:
+        if domain.organization != org:
+            messages.error(request, "The project %s isn't a part of this organization" % domain.name)
+        else:
+            old_slug = domain.slug
+            domain.slug = new_slug
+            domain.save()
+            messages.success(request, "The projects display name has been changed from %s to %s" % (old_slug, new_slug))
+    else:
+        messages.error(request, "Could not edit project information -- missing new display name")
+
+    return HttpResponseRedirect(reverse("orgs_landing", args=(org, )))
+
+@org_admin_required
+@require_POST
+def orgs_update_team(request, org):
+    team_id = request.POST.get('team_id', "")
+    new_team_name = request.POST.get('team_name', "")
+    if team_id and new_team_name:
+        team = Team.get(team_id)
+        old_team_name = team.name
+        team.name = new_team_name
+        team.save()
+        messages.success(request, "Team %s has been renamed to %s" % (old_team_name, team.name))
+    else:
+        messages.error(request, "Could not edit team information -- missing new team name")
+
+    return HttpResponseRedirect(reverse("orgs_teams", args=(org, )))
 
 @org_admin_required
 @require_POST
@@ -287,10 +321,11 @@ def delete_team(request, org):
     team_id = request.POST.get("team_id", None)
     if team_id:
         team = Team.get(team_id)
+        # team_name = team.name
         if team.organization == org:
             record = team.soft_delete()
-            messages.success(request, 'You have deleted a team. <a href="{url}" class="post-link">Undo</a>'.format(
-                url=reverse('undo_delete_team', args=[org, record.get_id])
+            messages.success(request, 'You have deleted team <strong>{team_name}</strong>. <a href="{url}" class="post-link">Undo</a>'.format(
+                team_name=team.name, url=reverse('undo_delete_team', args=[org, record.get_id])
             ), extra_tags="html")
         else:
             messages.error(request, "This team doesn't exist")
@@ -316,6 +351,8 @@ def add_domain_to_team(request, org, team_id):
     else:
         team = Team.get(team_id)
         team.add_domain_membership(domain)
+        read_only_role = UserRole.by_domain_and_name(domain, 'Read Only').one()
+        team.set_role(domain, 'user-role:%s' % read_only_role.get_id)
         team.save()
     return HttpResponseRedirect(reverse(request.POST.get('redirect_url', 'orgs_team_members'), args=(org, team_id)))
 

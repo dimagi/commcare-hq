@@ -42,10 +42,10 @@
             return false;
         });
 
-        $('.remove-member-btn').on('click', function() {
-            $('#removing-member').text($(this).attr('data-member'));
-            $('#removing-member-id').val($(this).attr('data-member_id'));
-            $('#remove-member-modal').modal({show: true});
+        $('.edit-project-btn').on('click', function() {
+            $('#updating-project').val($(this).attr('data-project'));
+            $('#updating-project-slug').val($(this).attr('data-slug'));
+            $('#edit-project-modal').modal({show: true});
             return false;
         });
 
@@ -54,13 +54,15 @@
         $('#prelim_add_project').change(function() {
             $("#add_project_modal").find('[name="domain_name"]').val($(this).val())
         });
-
     });
-    </script>
+</script>
 {% endblock %}
 
 {% block centered-content %}
-    <h2>{{ org.title }} <small>({{ org.name }})</small></h2>
+    <h2>
+        {{ org.title }} <small>({{ org.name }})</small>
+        {% block append-to-title %}{% endblock %}
+    </h2>
     <ul class="nav nav-tabs">
         <li{% ifequal tab "projects" %} class="active"{% endifequal %}>
             <a href="{% url orgs_landing org.name %}">{% trans "Projects" %} ({{ domains|length }})</a>
@@ -73,7 +75,7 @@
         </li>
         <span class="pull-right">
             {% if admin %}
-                <a href="#update_info_modal" class="btn" data-toggle="modal"><i class="icon-edit"></i> {% trans "Update Info" %}</a>
+                <a href="#update_info_modal" class="btn btn-primary" data-toggle="modal"><i class="icon-edit"></i> {% trans "Update Info" %}</a>
             {% endif %}
         </span>
     </ul>
@@ -81,7 +83,15 @@
         <table data-provides="rowlink" class="table table-striped" style="border-collapse:collapse">
         {% for domain in domains %}
             <tr><td style="border-top: none;">
-                <a href="{% url domain_homepage domain %}"><strong>{{ domain.display_name }}</strong></a>
+                <a href="{% url domain_homepage domain %}">
+                    <strong>{{ domain.display_name }}</strong>
+                    {% ifnotequal domain.name domain.display_name %}<small>({{ domain.name }})</small>{% endifnotequal %}
+                </a>
+                {% if admin %}
+                    <a href="#" class="btn edit-project-btn pull-right" data-project="{{ domain.name }}" data-slug="{{ domain.slug|default:domain.name }}">
+                        <i class="icon icon-pencil"></i> {% trans "Edit Project Info" %}
+                    </a>
+                {% endif %}
             </td></tr>
         {% endfor %}
         </table>
@@ -183,6 +193,28 @@
                     <div class="modal-footer">
                         <a href="#" data-dismiss="modal" class="btn">{% trans "Cancel" %}</a>
                         <button type="submit" class="btn btn-primary disable-on-submit">{% trans "Add Project" %}</button>
+                    </div>
+                </form>
+            </div>
+
+            <div id="edit-project-modal" class="modal hide fade">
+                <div class="modal-header">
+                    <a class="close" data-dismiss="modal">&times;</a>
+                    <h3>{% trans "Change Project Display Name" %}</h3>
+                </div>
+                <form class="form-horizontal" method="post" action="{% url orgs_update_project org.name %}">
+                    <div class="modal-body">
+                        <input id="updating-project" type="hidden" name="domain" value="" />
+                        <div class="control-group">
+                            <label class="control-label" for="updating-project-slug">{% trans "New Display Name" %}</label>
+                            <div class="controls">
+                                <input type="text" id="updating-project-slug" name="slug" />
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <a href="#" data-dismiss="modal" class="btn">{% trans "Cancel" %}</a>
+                        <button type="submit" class="btn btn-primary disable-on-submit">{% trans "Update Project Info" %}</button>
                     </div>
                 </form>
             </div>
