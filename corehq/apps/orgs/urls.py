@@ -13,6 +13,7 @@ urlpatterns = patterns('corehq.apps.orgs.views',
     url(r'^(?P<org>[\w\.-]+)/members/$', 'orgs_members', name='orgs_members'),
 
     url(r'^(?P<org>[\w\.-]+)/teams/$', 'orgs_teams', name='orgs_teams'),
+    url(r'^(?P<org>[\w\.-]+)/update_team_info/$', 'orgs_update_team', name='orgs_update_team'),
     url(r'^(?P<org>[\w\.-]+)/teams/(?P<team_id>[ \w-]+)/$', 'orgs_team_members', name='orgs_team_members'),
     url(r'^(?P<org>[\w\.-]+)/teams/(?P<team_id>[ \w-]+)/add_all$', 'add_all_to_team', name='add_all_to_team'),
     url(r'^(?P<org>[\w\.-]+)/teams/(?P<team_id>[ \w-]+)/remove_all$', 'remove_all_from_team', name='remove_all_from_team'),

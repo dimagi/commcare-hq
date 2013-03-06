@@ -42,25 +42,20 @@
             return false;
         });
 
-        $('.remove-member-btn').on('click', function() {
-            $('#removing-member').text($(this).attr('data-member'));
-            $('#removing-member-id').val($(this).attr('data-member_id'));
-            $('#remove-member-modal').modal({show: true});
-            return false;
-        });
-
         $('#prelim_add_project').typeahead({source: {{ potential_domains|JSON }}});
 
         $('#prelim_add_project').change(function() {
             $("#add_project_modal").find('[name="domain_name"]').val($(this).val())
         });
-
     });
-    </script>
+</script>
 {% endblock %}
 
 {% block centered-content %}
-    <h2>{{ org.title }} <small>({{ org.name }})</small></h2>
+    <h2>
+        {{ org.title }} <small>({{ org.name }})</small>
+        {% block append-to-title %}{% endblock %}
+    </h2>
     <ul class="nav nav-tabs">
         <li{% ifequal tab "projects" %} class="active"{% endifequal %}>
             <a href="{% url orgs_landing org.name %}">{% trans "Projects" %} ({{ domains|length }})</a>
@@ -73,7 +68,7 @@
         </li>
         <span class="pull-right">
             {% if admin %}
-                <a href="#update_info_modal" class="btn" data-toggle="modal"><i class="icon-edit"></i> {% trans "Update Info" %}</a>
+                <a href="#update_info_modal" class="btn btn-primary" data-toggle="modal"><i class="icon-edit"></i> {% trans "Update Info" %}</a>
             {% endif %}
         </span>
     </ul>

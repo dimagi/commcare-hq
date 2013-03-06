@@ -111,7 +111,7 @@ def orgs_update_info(request, org):
     organization = Organization.get_by_name(org)
     form = UpdateOrgInfo(request.POST, request.FILES)
     if form.is_valid():
-        logo = None
+        # logo = None
         if form.cleaned_data['org_title'] or organization.title:
             organization.title = form.cleaned_data['org_title']
         if form.cleaned_data['email'] or organization.email:
@@ -121,18 +121,36 @@ def orgs_update_info(request, org):
         if form.cleaned_data['location'] or organization.location:
             organization.location = form.cleaned_data['location']
             #logo not working, need to look into this
-        if form.cleaned_data['logo']:
-            logo = form.cleaned_data['logo']
-            if organization.logo_filename:
-                organization.delete_attachment(organization.logo_filename)
-            organization.logo_filename = logo.name
+        # if form.cleaned_data['logo']:
+        #     logo = form.cleaned_data['logo']
+        #     if organization.logo_filename:
+        #         organization.delete_attachment(organization.logo_filename)
+        #     organization.logo_filename = logo.name
 
         organization.save()
-        if logo:
-            organization.put_attachment(content=logo.read(), name=logo.name)
+        # if logo:
+        #     organization.put_attachment(content=logo.read(), name=logo.name)
         return HttpResponseRedirect(request.META.get('HTTP_REFERER') or reverse('orgs_landing', args=[org]))
     else:
         return orgs_landing(request, org, update_form=form)
+
+@org_admin_required
+@require_POST
+def orgs_update_team(request, org):
+    team_id = request.POST.get('team_id', "")
+    new_team_name = request.POST.get('team_name', "")
+    print request.POST
+    if team_id and new_team_name:
+        team = Team.get(team_id)
+        old_team_name = team.name
+        team.name = new_team_name
+        team.save()
+        messages.success(request, "Team %s has been renamed to %s" % (old_team_name, team.name))
+    else:
+        messages.error(request, "Could not edit team information -- missing team name")
+
+    return HttpResponseRedirect(reverse("orgs_teams", args=(org, )))
+
 
 @org_admin_required
 @require_POST
