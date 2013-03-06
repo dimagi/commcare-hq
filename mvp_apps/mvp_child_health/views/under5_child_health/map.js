@@ -29,7 +29,8 @@ function(doc) {
                     zinc_received = (diarrhea_medication && diarrhea_medication.indexOf('zinc') >= 0);
 
                 try {
-                    var danger_signs = get_danger_signs(indicators.immediate_danger_sign.value);
+                    var danger_signs = get_danger_signs(indicators.immediate_danger_sign.value),
+                        emergency_signs = get_danger_signs(indicators.emergency_danger_sign.value);
                     if (danger_signs.indexOf('fever') >= 0) {
                         if (danger_signs.length === 1) {
                             uncomplicated_fever = true;
@@ -40,7 +41,7 @@ function(doc) {
                     if (danger_signs.indexOf('diarrhea') >= 0 && danger_signs.length === 1) {
                         diarrhea_only = true;
                     }
-                    if (danger_signs.length > 0) {
+                    if (danger_signs.length > 0 || emergency_signs.length > 0) {
                         indicator_keys.push("under5_danger_signs");
                     }
                 } catch (err) {
