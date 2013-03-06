@@ -5,7 +5,7 @@ from django.core.validators import MinLengthValidator
 from django.forms import MultipleChoiceField
 from django.forms.util import ErrorList
 from corehq.apps.crud.models import BaseAdminCRUDForm
-from corehq.apps.indicators.models import FormDataAliasIndicatorDefinition, FormLabelIndicatorDefinition, CaseDataInFormIndicatorDefinition, FormDataInCaseIndicatorDefinition, CouchIndicatorDef, CountUniqueCouchIndicatorDef, MedianCouchIndicatorDef, CombinedCouchViewIndicatorDefinition, SumLastEmittedCouchIndicatorDef, DynamicIndicatorDefinition
+from corehq.apps.indicators.models import FormDataAliasIndicatorDefinition, FormLabelIndicatorDefinition, CaseDataInFormIndicatorDefinition, FormDataInCaseIndicatorDefinition, CouchIndicatorDef, CountUniqueCouchIndicatorDef, MedianCouchIndicatorDef, CombinedCouchViewIndicatorDefinition, SumLastEmittedCouchIndicatorDef, DynamicIndicatorDefinition, NoGroupCouchIndicatorDefBase
 from corehq.apps.indicators.utils import get_namespaces, get_namespace_name
 from corehq.apps.users.models import Permissions
 from dimagi.utils.decorators.memoized import memoized
@@ -95,7 +95,25 @@ class CouchIndicatorForm(BaseDynamicIndicatorForm):
     fixed_datespan_days = forms.IntegerField(label="Fix Datespan by Days", required=False)
     fixed_datespan_months = forms.IntegerField(label="Fix Datespan by Months", required=False)
 
+    change_doc_type = forms.BooleanField(label="Change Indicator Type?", required=False, initial=False)
+    doc_type_choices = forms.CharField(label="Choose Indicator Type", required=False, widget=forms.Select(choices=[]))
+
     doc_class = CouchIndicatorDef
+
+    def __init__(self, *args, **kwargs):
+        super(CouchIndicatorForm, self).__init__(*args, **kwargs)
+        if self.existing_object:
+            self.fields['doc_type_choices'].widget.choices = [(d.__name__, d.get_nice_name())
+                                                              for d in self.available_doc_types]
+        else:
+            del self.fields['change_doc_type']
+            del self.fields['doc_type_choices']
+
+    @property
+    def available_doc_types(self):
+        subclasses = set([CouchIndicatorDef, CountUniqueCouchIndicatorDef,
+                      MedianCouchIndicatorDef, SumLastEmittedCouchIndicatorDef])
+        return subclasses.difference([self.doc_class])
 
     def clean_fixed_datespan_days(self):
         if 'fixed_datespan_days' in self.cleaned_data:
@@ -104,6 +122,17 @@ class CouchIndicatorForm(BaseDynamicIndicatorForm):
     def clean_fixed_datespan_months(self):
         if 'fixed_datespan_months' in self.cleaned_data:
             return abs(self.cleaned_data['fixed_datespan_months'])
+
+    def clean_doc_type_choices(self):
+        if ('doc_type_choices' in self.cleaned_data
+            and 'change_doc_type' in self.cleaned_data
+            and self.cleaned_data['change_doc_type']):
+            subclass_to_class = dict([(d.__name__, d) for d in self.available_doc_types])
+            if self.existing_object:
+                self.existing_object.doc_type = self.cleaned_data['doc_type_choices']
+                self.existing_object.save()
+            return self.cleaned_data['doc_type_choices']
+
 
 
 class CountUniqueCouchIndicatorForm(CouchIndicatorForm):
@@ -153,7 +182,7 @@ class CombinedIndicatorForm(BaseDynamicIndicatorForm):
 class BulkCopyIndicatorsForm(forms.Form):
     destination_domain = forms.CharField(label="Destination Project Space")
     indicator_ids = MultipleChoiceField(
-        label="Indicators(s)",
+        label="Indicator(s)",
         validators=[MinLengthValidator(1)])
     override_existing = forms.BooleanField(label="Override Existing",
                                            help_text="Override properties of existing indicators with the same"

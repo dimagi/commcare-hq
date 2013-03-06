@@ -36,6 +36,7 @@ def default_admin(request, domain, template="reports/base_template.html", **kwar
 
 class IndicatorAdminCRUDFormView(BaseAdminCRUDFormView):
     base_loc = "corehq.apps.indicators.admin.forms"
+    template_name = "indicators/forms/crud.add_indicator.html"
     form_request_manager = IndicatorCRUDFormRequestManager
 
 
@@ -59,7 +60,6 @@ class BulkCopyIndicatorsView(TemplateView):
                                           couch_user=request.couch_user, indicator_class=self.indicator_class)
             if form.is_valid():
                 status = form.copy_indicators()
-                print "STATUS", status
         else:
             form = BulkCopyIndicatorsForm(domain=self.domain,
                                           couch_user=request.couch_user, indicator_class=self.indicator_class)
@@ -69,4 +69,5 @@ class BulkCopyIndicatorsView(TemplateView):
             "status": status,
             "domain": self.domain,
             "indicator_type": self.indicator_class.__name__,
+            "indicator_name": self.indicator_class.get_nice_name(),
         })

@@ -15,6 +15,10 @@ class BaseIndicatorAdminInterface(BaseCRUDAdminInterface):
     crud_item_type = "Indicator Definition"
     crud_form_update_url = "/indicators/form/"
 
+    @property
+    def crud_item_type(self):
+        return self.document_class.get_nice_name()
+
     def validate_document_class(self):
         from corehq.apps.indicators.models import IndicatorDefinition
         if self.document_class is None or not issubclass(self.document_class, IndicatorDefinition):

@@ -22,10 +22,10 @@
 {% block centered-content %}
     <ul class="breadcrumb">
         <li><a href="{% url default_indicator_admin domain %}">{% trans 'Administer Indicators' %}</a> <span class="divider">&gt;</span></li>
-        <li class="active"><a href="{% url indicator_bulk_copy domain indicator_type %}">{% trans 'Bulk Copy Indicators of Type' %} {{ indicator_type }}</a></li>
+        <li class="active"><a href="{% url indicator_bulk_copy domain indicator_type %}">{% trans 'Bulk Copy Indicators:' %} {{ indicator_name }}</a></li>
     </ul>
     <div class="page-header">
-        <h1>{% trans 'Bulk Copy Indicators' %}  <small>{{ indicator_type }}</small></h1>
+        <h1>{% trans 'Bulk Copy Indicators' %}  <small>{{ indicator_name }}</small></h1>
     </div>
     <div class="row">
         <div class="span12">

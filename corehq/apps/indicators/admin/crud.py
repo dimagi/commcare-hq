@@ -11,6 +11,7 @@ class IndicatorCRUDFormRequestManager(CRUDFormRequestManager):
     """
         Form request manager for Indicator CRUD forms.
     """
+
     def _get_form(self):
         if self.request.method == 'POST' and not self.success:
             return self.form_class(self.request.POST, doc_id=self.doc_id, domain=self.request.domain)
