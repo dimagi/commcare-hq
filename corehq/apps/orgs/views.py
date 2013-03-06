@@ -351,6 +351,8 @@ def add_domain_to_team(request, org, team_id):
     else:
         team = Team.get(team_id)
         team.add_domain_membership(domain)
+        read_only_role = UserRole.by_domain_and_name(domain, 'Read Only').one()
+        team.set_role(domain, 'user-role:%s' % read_only_role.get_id)
         team.save()
     return HttpResponseRedirect(reverse(request.POST.get('redirect_url', 'orgs_team_members'), args=(org, team_id)))
 
