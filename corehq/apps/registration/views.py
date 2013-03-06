@@ -60,7 +60,7 @@ def register_org(request, template="registration/org_request.html"):
             # else:
             #     logo_filename = ''
 
-            org = Organization(name=name, title=title, location=location, email=email, url=url, logo_filename=logo_filename)
+            org = Organization(name=name, title=title, location=location, email=email, url=url)
             org.save()
 
             request.couch_user.add_org_membership(org.name, is_admin=True)
