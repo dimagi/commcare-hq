@@ -13,7 +13,7 @@ DATABASES = {
 }
 
 ####### Couch Config ######
-COUCH_HTTPS = True #recommended production value if enabling https
+COUCH_HTTPS = False # recommended production value is True if enabling https
 COUCH_SERVER_ROOT = '127.0.0.1:5984' #6984 for https couch
 COUCH_USERNAME = 'admin'
 COUCH_PASSWORD = '********'
@@ -40,8 +40,8 @@ DEBUG = False
 TEMPLATE_DEBUG = DEBUG
 
 # log directories must exist and be writeable!
-DJANGO_LOG_FILE = "/var/log/commcare-hq/commcare-hq.django.log"
-LOG_FILE = "/var/log/commcare-hq/commcare-hq.log"
+DJANGO_LOG_FILE = "/tmp/commcare-hq.django.log"
+LOG_FILE = "/tmp/commcare-hq.log"
 
 SEND_BROKEN_LINK_EMAILS = True
 CELERY_SEND_TASK_ERROR_EMAILS = True
@@ -65,7 +65,7 @@ JAR_SIGN = dict(
 
 ####### XEP stuff - TODO: remove this section when we retire XEP ########
 
-REFLEXIVE_URL_BASE = "https://localhost:8001"
+REFLEXIVE_URL_BASE = "http://localhost:8001"
 def get_url_base():
     return REFLEXIVE_URL_BASE
 GET_URL_BASE  = 'settings.get_url_base'

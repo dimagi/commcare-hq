@@ -37,6 +37,7 @@ RSYNC_EXCLUDE = (
     )
 env.project = 'commcare-hq'
 env.code_repo = 'git://github.com/dimagi/commcare-hq.git'
+env.code_branch = 'master'
 env.home = "/home/cchq"
 env.selenium_url = 'http://jenkins.dimagi.com/job/commcare-hq-post-deploy/buildWithParameters?token=%(token)s&TARGET=%(environment)s'
 
@@ -74,6 +75,8 @@ def _setup_path():
     env.virtualenv_root = posixpath.join(env.root, 'python_env')
     env.virtualenv_root_preindex = posixpath.join(env.root, 'python_env_preindex')
     env.services = posixpath.join(env.home, 'services')
+    env.jython_home = '/usr/local/lib/jython'
+    env.db = '%s_%s' % (env.project, env.environment)
 
 @task
 def _set_apache_user():
@@ -100,12 +103,11 @@ def staging():
     env.code_branch = 'develop'
     env.sudo_user = 'commcare-hq'
     env.environment = 'staging'
-    env.server_port = '9002'
+    env.django_port = '9002'
     env.server_name = 'noneset'
     env.hosts = ['192.168.56.1']
     env.settings = '%(project)s.localsettings' % env
     env.host_os_map = None
-    env.db = '%s_%s' % (env.project, env.environment)
     _setup_path()
     env.user = prompt("Username: ", default='dimagivm')
     env.es_endpoint = 'localhost'
@@ -114,17 +116,15 @@ def staging():
 def india():
     """Our production server in India."""
     env.home = '/home/commcarehq/'
-    env.root = root = '/home/commcarehq'
     env.environment = 'india'
-    env.code_branch = 'master'
     env.sudo_user = 'commcarehq'
     env.hosts = ['220.226.209.82']
     env.user = prompt("Username: ", default=env.user)
-    env.server_port = '8001'
+    env.django_port = '8001'
 
     _setup_path()
-    env.virtualenv_root = posixpath.join(root, '.virtualenvs/commcarehq')
-    env.virtualenv_root_preindex = posixpath.join(root, '.virtualenvs/commcarehq_preindex')
+    env.virtualenv_root = posixpath.join(env.home, '.virtualenvs/commcarehq')
+    env.virtualenv_root_preindex = posixpath.join(env.home, '.virtualenvs/commcarehq_preindex')
 
     env.roledefs = {
         'couch': [],
@@ -143,17 +143,15 @@ def india():
 
         'django_monolith': ['220.226.209.82'],
     }
-    env.jython_home = '/usr/local/lib/jython'
     env.roles = ['django_monolith']
     env.es_endpoint = 'localhost'
 
 @task
 def production():
     """ use production environment on remote host"""
-    env.code_branch = 'master'
     env.sudo_user = 'cchq'
     env.environment = 'production'
-    env.server_port = '9010'
+    env.django_port = '9010'
 
     #env.hosts = None
     env.roledefs = {
@@ -180,11 +178,9 @@ def production():
     env.server_name = 'commcare-hq-production'
     env.settings = '%(project)s.localsettings' % env
     env.host_os_map = None # e.g. 'ubuntu' or 'redhat'.  Gets autopopulated by what_os() if you don't know what it is or don't want to specify.
-    env.db = '%s_%s' % (env.project, env.environment)
     env.roles = ['deploy', ]
     env.es_endpoint = 'hqes0.internal.commcarehq.org'''
 
-    env.jython_home = '/usr/local/lib/jython'
     _setup_path()
 
 @task
@@ -193,7 +189,7 @@ def realstaging():
     env.code_branch = 'pact-dev'
     env.sudo_user = 'cchq'
     env.environment = 'staging'
-    env.server_port = '9010'
+    env.django_port = '9010'
 
     #env.hosts = None
     env.roledefs = {
@@ -220,10 +216,8 @@ def realstaging():
     env.server_name = 'commcare-hq-staging'
     env.settings = '%(project)s.localsettings' % env
     env.host_os_map = None # e.g. 'ubuntu' or 'redhat'.  Gets autopopulated by what_os() if you don't know what it is or don't want to specify.
-    env.db = '%s_%s' % (env.project, env.environment)
     env.roles = ['deploy', ]
 
-    env.jython_home = '/usr/local/lib/jython'
     _setup_path()
     
     
@@ -298,19 +292,21 @@ def setup_server():
     sudo("easy_install -U pip", user=env.sudo_user)
     sudo("pip install -U virtualenv", user=env.sudo_user)
     upgrade_packages()
-    execute(create_db_user)
-    execute(create_db)
+    execute(create_pg_user)
+    execute(create_pg_db)
 
 
-@roles('pg')
-def create_db_user():
+@roles('pg', 'django_monolith')
+@task
+def create_pg_user():
     """Create the Postgres user."""
     require('environment', provided_by=('staging', 'production'))
-    sudo('createuser -D -A -R %(sudo_user)s' % env, user='postgres')
+    sudo('createuser -D -R -P -s  %(sudo_user)s' % env, user='postgres')
 
 
-@roles('pg')
-def create_db():
+@roles('pg', 'django_monolith')
+@task
+def create_pg_db():
     """Create the Postgres database."""
     require('environment', provided_by=('staging', 'production'))
     sudo('createdb -O %(sudo_user)s %(db)s' % env, user='postgres')
@@ -323,12 +319,12 @@ def bootstrap():
     sudo('mkdir -p %(root)s' % env, shell=False, user=env.sudo_user)
     execute(clone_repo)
     
-    # copy localsettings in case any management commands we want to run now
-    # would error otherwise
+    # copy localsettings if it doesn't already exist in case any management
+    # commands we want to run now would error otherwise
     with cd(env.code_root):
-        sudo('cp -n localsettings.example.py localsettings.py')
+        sudo('cp -n localsettings.example.py localsettings.py', user=env.sudo_user)
     with cd(env.code_root_preindex):
-        sudo('cp -n localsettings.example.py localsettings.py')
+        sudo('cp -n localsettings.example.py localsettings.py', user=env.sudo_user)
 
     update_code()
     execute(create_virtualenvs)
@@ -701,21 +697,23 @@ def _supervisor_command(command):
         #cmd_exec = "/usr/local/bin/supervisorctl"
     sudo('supervisorctl %s' % (command), shell=False)
 
+@task
 def update_apache_conf():
-    require('code_root', 'server_port')
+    require('code_root', 'django_port')
 
     with cd(env.code_root):
-        tmp = posixpath.join('/', 'tmp', 'cchq_%s' % uuid.uuid4().hex)
+        tmp = "/tmp/cchq"
         sudo('%s/bin/python manage.py mkapacheconf %s > %s'
-              % (env.virtualenv_root, env.server_port, tmp))
-        #sudo('cp -f %s /etc/apache2/sites-available/cchq' % tmp)
+              % (env.virtualenv_root, env.django_port, tmp), user=env.sudo_user)
+        sudo('cp -f %s /etc/apache2/sites-available/cchq' % tmp, user='root')
 
     with settings(warn_only=True):
-        sudo('a2dissite 000-default')
+        sudo('a2dissite 000-default', user='root')
+        sudo('a2dissite default', user='root')
 
-    sudo('a2enmod proxy_http')
-    sudo('a2ensite cchq')
-
+    sudo('a2enmod proxy_http', user='root')
+    sudo('a2ensite cchq', user='root')
+    sudo('service apache2 reload', user='root')
 
 
 # tests
