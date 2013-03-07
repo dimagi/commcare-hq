@@ -14,6 +14,11 @@
 </script>
 {% endblock %}
 
+{% block reports-css %}
+<link rel="stylesheet" href="{% static 'hqwebapp/js/lib/jquery-ui-datepicker/datepicker-theme/jquery-ui-1.8.17.custom.css' %}" />
+<link rel="stylesheet" href="{% static 'hqwebapp/js/lib/jquery-ui/multiselect/ui.multiselect.css' %}" />
+{% endblock %}
+
 {% block main_column %}
     <div class="row-fluid">
         <div class="span12">
