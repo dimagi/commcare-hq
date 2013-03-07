@@ -9,12 +9,14 @@ from dimagi.utils.modules import to_function
 class BaseAdminCRUDFormView(TemplateView):
     template_name = "crud/forms/crud.add_item.html"
     base_loc = None
+    form_request_manager = CRUDFormRequestManager
 
     def is_form_class_valid(self, form_class):
         return True
 
     @method_decorator(require_superuser)
     def dispatch(self, request, *args, **kwargs):
+        self.request = request
         form_type = kwargs.get('form_type')
         action = kwargs.get('action', 'new')
         item_id = kwargs.get("item_id")
@@ -29,7 +31,7 @@ class BaseAdminCRUDFormView(TemplateView):
 
         if self.is_form_class_valid(form_class):
             try:
-                form_manager = CRUDFormRequestManager(request, form_class, self.template_name,
+                form_manager = self.form_request_manager(request, form_class, self.template_name,
                     doc_id=item_id, delete=bool(action == 'delete'))
                 return HttpResponse(form_manager.json_response)
             except CRUDActionError as e:

@@ -56,12 +56,12 @@ class OrganizationRegistrationForm(forms.Form):
     form for creating an organization for the first time
     """
 
-    org_name = forms.CharField(label='Organization ID:', max_length=25, help_text='i.e. - worldbank')
     org_title = forms.CharField(label='Organization Title:', max_length=25, help_text='i.e. - The World Bank')
+    org_name = forms.CharField(label='Organization ID:', max_length=25, help_text='i.e. - worldbank')
     email = forms.CharField(label='Organization Email:', max_length=35, required=False)
     url = forms.CharField(label='Organization Homepage:', max_length=35, required=False)
     location = forms.CharField(label='Organization Location:', max_length=25, required=False)
-    logo = forms.ImageField(label='Organization Logo:', required=False)
+    # logo = forms.ImageField(label='Organization Logo:', required=False)
 
     def clean_org_name(self):
         data = self.cleaned_data['org_name'].strip().lower()
@@ -93,10 +93,10 @@ class OrganizationRegistrationForm(forms.Form):
         data = self.cleaned_data['location']
         return data
 
-    def clean_logo(self):
-        data = self.cleaned_data['logo']
-        #resize image to fit in website nicely
-        return data
+    # def clean_logo(self):
+    #     data = self.cleaned_data['logo']
+    #     #resize image to fit in website nicely
+    #     return data
 
     def clean(self):
         for field in self.cleaned_data:
@@ -115,11 +115,6 @@ class DomainRegistrationForm(forms.Form):
         data = self.cleaned_data['domain_name'].strip().lower()
         if not re.match("^%s$" % new_domain_re, data):
             raise forms.ValidationError('Only lowercase letters and numbers allowed. Single hyphens may be used to separate words.')
-        if 'org' in self.cleaned_data and self.cleaned_data['org']:
-            org_name = self.cleaned_data['org']
-            if Domain.get_by_organization_and_slug(org_name, data):
-                raise forms.ValidationError('Project alias already exists in org --- please try another name')
-            data = '{org_name}:{domain_name}'.format(org_name=org_name, domain_name=data)
 
         conflict = Domain.get_by_name(data) or Domain.get_by_name(data.replace('-', '.'))
         if conflict:

@@ -27,6 +27,10 @@
     </script>
 {% endblock %}
 
+{% block append-to-title %}
+    <small><strong> - {{ team.name }}</strong></small>
+{% endblock %}
+
 {% block carded-content %}
     <div class="row-fluid">
         <div class="span6" id="members">
@@ -37,8 +41,7 @@
                         <input type="hidden" name="username" value="{{ member.username }}" />
                         <strong>{{ member.raw_username }}</strong>
                         {% if admin %}
-{#                            <a href="#" class="text-error form-submit-link">({% trans "remove" %})</a>#}
-                            <button type="submit" class="btn btn-danger pull-right">
+                            <button type="submit" class="btn btn-danger pull-right disable-on-submit">
                                 <i class="icon-remove"></i> {% trans 'Remove' %}
                             </button>
                         {% endif %}
@@ -53,7 +56,7 @@
                 <div class="well well-small">
                     <div class="input-append">
                         <input name="username" type="text" placeholder="Member's email address" data-provide="typeahead" data-source='{{ nonmembers|JSON }}' autocomplete="off" />
-                        <button type="submit" id="add_team_btn" class="btn btn-info">
+                        <button type="submit" id="add_team_btn" class="btn btn-info disable-on-submit">
                             <i class="icon-plus"></i> {% trans "Add" %}
                         </button>
                     </div>
@@ -85,7 +88,7 @@
                                     </ul>
                                 </div>
                                 <div class="btn-group">
-                                    <button type="submit" class="btn btn-danger">
+                                    <button type="submit" class="btn btn-danger disable-on-submit">
                                         <i class="icon-remove"></i> {% trans "Remove" %}
                                     </button>
                                 </div>
@@ -101,7 +104,7 @@
                 <div class="well well-small">
                     <div class="input-append">
                         <input name="project_name" type="text" placeholder="Project Name" data-provide="typeahead" data-source='{{ nondomains|JSON }}' autocomplete="off" />
-                        <button type="submit" id="add_domain_btn" class="btn btn-info">
+                        <button type="submit" id="add_domain_btn" class="btn btn-info disable-on-submit">
                             <i class="icon-plus"></i> {% trans "Add" %}
                         </button>
                     </div>
@@ -115,7 +118,7 @@
     <div class="form-actions">
         <form name="delete_group" style="margin: 0;" action="{% url delete_team org.name %}" method="post">
             <input type="hidden" name="team_id" value={{ team.get_id }} />
-            <button class="btn btn-danger" type="submit"><i class="icon icon-white icon-remove"></i> {% trans "Delete Team" %} "{{ team.name }}"</button>
+            <button class="btn btn-danger disable-on-submit" type="submit"><i class="icon icon-white icon-remove"></i> {% trans "Delete Team" %} "{{ team.name }}"</button>
         </form>
     </div>
     {% endif %}

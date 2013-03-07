@@ -175,7 +175,16 @@ class UserRole(Document):
     @classmethod
     def by_domain(cls, domain):
         return cls.view('users/roles_by_domain',
-            key=domain,
+            startkey=[domain],
+            endkey=[domain, {}],
+            include_docs=True,
+            reduce=False,
+        )
+
+    @classmethod
+    def by_domain_and_name(cls, domain, name):
+        return cls.view('users/roles_by_domain',
+            key=[domain, name],
             include_docs=True,
             reduce=False,
         )
@@ -458,7 +467,7 @@ class _AuthorizableMixin(IsMemberOfMixin):
             return False
 
     @memoized
-    def get_role(self, domain=None):
+    def get_role(self, domain=None, checking_global_admin=True):
         """
         Get the role object for this user
 
@@ -470,7 +479,7 @@ class _AuthorizableMixin(IsMemberOfMixin):
             else:
                 domain = None
 
-        if self.is_global_admin():
+        if checking_global_admin and self.is_global_admin():
             return AdminUserRole(domain=domain)
         if self.is_member_of(domain): #need to have a way of seeing is_member_of
             return self.get_domain_membership(domain).role
@@ -505,7 +514,7 @@ class _AuthorizableMixin(IsMemberOfMixin):
             except (AttributeError, KeyError):
                 return None
         try:
-            return self.get_role(domain).name
+            return self.get_role(domain, checking_global_admin=False).name
         except TypeError:
             return "Unknown User"
         except DomainMembershipError:
@@ -1540,7 +1549,7 @@ class WebUser(CouchUser, MultiMembershipMixin, OrgMembershipMixin):
             return False
 
     @memoized
-    def get_role(self, domain=None, include_teams=True):
+    def get_role(self, domain=None, include_teams=True, checking_global_admin=True):
         """
         Get the role object for this user
 
@@ -1550,7 +1559,7 @@ class WebUser(CouchUser, MultiMembershipMixin, OrgMembershipMixin):
             # default to current_domain for django templates
             domain = self.current_domain
 
-        if self.is_global_admin():
+        if checking_global_admin and self.is_global_admin():
             return AdminUserRole(domain=domain)
 
         if not include_teams:
@@ -1613,7 +1622,7 @@ class PublicUser(FakeUser):
         self.domain_memberships = [dm]
 
     @memoized
-    def get_role(self, domain=None):
+    def get_role(self, domain=None, checking_global_admin=None):
         assert(domain == self.domain)
         return super(PublicUser, self).get_role(domain)
 

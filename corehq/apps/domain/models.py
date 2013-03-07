@@ -231,7 +231,7 @@ class Domain(Document, HQBillingDomainMixin, SnapshotMixin):
     def wrap(cls, data):
         # for domains that still use original_doc
         should_save = False
-        if data.has_key('original_doc'):
+        if 'original_doc' in data:
             original_doc = data['original_doc']
             del data['original_doc']
             should_save = True
@@ -240,10 +240,20 @@ class Domain(Document, HQBillingDomainMixin, SnapshotMixin):
                 data['copy_history'] = [original_doc._id]
 
         # for domains that have a public domain license
-        if data.has_key("license"):
+        if 'license' in data:
             if data.get("license", None) == "public":
                 data["license"] = "cc"
                 should_save = True
+
+        # if not 'creating_user' in data:
+        #     should_save = True
+        #     from corehq.apps.users.models import CouchUser
+        #     admins = CouchUser.view("users/admins_by_domain", key=data["name"], reduce=False, include_docs=True).all()
+        #     if len(admins) == 1:
+        #         data["creating_user"] = admins[0].username
+        #     else:
+        #         data["creating_user"] = None
+
         self = super(Domain, cls).wrap(data)
         if self.get_id:
             self.apply_migrations()

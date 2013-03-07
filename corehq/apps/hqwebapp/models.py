@@ -4,6 +4,7 @@ from django.utils.safestring import mark_safe, mark_for_escaping
 from django.core.urlresolvers import reverse
 from django.utils.translation import ugettext as _
 from django.utils.translation import ugettext_noop
+from corehq.apps.indicators.dispatcher import IndicatorAdminInterfaceDispatcher
 
 from dimagi.utils.couch.database import get_db
 from dimagi.utils.decorators.memoized import memoized
@@ -197,11 +198,21 @@ class ADMReportsTab(UITab):
         return (super(ADMReportsTab, self).is_active and self.domain and
                 self._request.get_full_path() != project_reports_url)
 
+class IndicatorAdminTab(UITab):
+    title = ugettext_noop("Administer Indicators")
+    view = "corehq.apps.indicators.views.default_admin"
+    dispatcher = IndicatorAdminInterfaceDispatcher
+
+    @property
+    def is_viewable(self):
+        indicator_enabled_projects = getattr(settings, 'INDICATOR_ENABLED_PROJECTS', [])
+        return self.couch_user.can_edit_data and self.domain in indicator_enabled_projects
+
 
 class ReportsTab(UITab):
     title = ugettext_noop("Reports")
     view = "corehq.apps.reports.views.default"
-    subtab_classes = (ProjectReportsTab, ADMReportsTab)
+    subtab_classes = (ProjectReportsTab, ADMReportsTab, IndicatorAdminTab)
 
 
 class ProjectInfoTab(UITab):

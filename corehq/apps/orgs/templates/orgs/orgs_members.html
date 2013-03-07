@@ -3,14 +3,28 @@
 {% load hq_shared_tags %}
 {% load hqstyle_tags %}
 
+{% block js-inline %}{{ block.super }}
+<script>
+    $(function () {
+        $('.remove-member-btn').on('click', function() {
+            $('#removing-member').text($(this).attr('data-member'));
+            $('#removing-member-id').val($(this).attr('data-member_id'));
+            $('#remove-member-modal').modal({show: true});
+            return false;
+        });
+    });
+</script>
+{% endblock %}
+
 {% block carded-content %}
 <table class="table table-striped" style="border-collapse:collapse">
     {% for member in members %}
         <tr><td style="border-top: none;">
             <strong>
-                {{ member.username }}
                 {% if member.first_name and member.last_name %}
-                    <small>({{ member.full_name }})</small>
+                    {{ member.full_name }} <small>({{ member.username }})</small>
+                {% else %}
+                    {{ member.username }}
                 {% endif %}
                 {% if member.username in org_admins %} <span class="label">Admin</span>{% endif %}
             </strong>
@@ -30,7 +44,7 @@
         <form class="form-inline" style="margin: 0;" method="post" action="{% url orgs_invite_member org.name %}">
             <div class="input-append">
                 <input id="id_email" name="email" type="text" placeholder="Member's email address" />
-                <button type="submit" id="invite_member_btn" class="btn btn-info">
+                <button type="submit" id="invite_member_btn" class="btn btn-info disable-on-submit">
                     <i class="icon-plus"></i> {% trans "Invite Member" %}
                 </button>
             </div>
@@ -49,7 +63,7 @@
         </div>
         <div class="modal-footer">
             <a href="#" data-dismiss="modal" class="btn">{% trans "Cancel" %}</a>
-            <button type="submit" class="btn btn-primary">{% trans "Remove Member" %}</button>
+            <button type="submit" class="btn btn-primary disable-on-submit">{% trans "Remove Member" %}</button>
         </div>
     </form>
 </div>
