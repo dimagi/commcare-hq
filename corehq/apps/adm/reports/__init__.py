@@ -1,22 +1,21 @@
 import logging
 from django.core.urlresolvers import reverse
 from django.utils.safestring import mark_safe
-from corehq.apps.adm import utils
 from corehq.apps.adm.dispatcher import ADMSectionDispatcher
 from corehq.apps.adm.models import REPORT_SECTION_OPTIONS, ADMReport
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn, DTSortType
 from corehq.apps.reports.generic import GenericReportView, GenericTabularReport
 from corehq.apps.reports.standard import DatespanMixin, ProjectReportParametersMixin
-from dimagi.utils.couch.database import get_db
 from dimagi.utils.decorators.memoized import memoized
 from django.utils.translation import ugettext as _, ugettext_noop
 
 class ADMSectionView(GenericReportView):
     section_name = ugettext_noop("Active Data Management")
-    app_slug = "adm"
+    base_template = "reports/base_template.html"
     dispatcher = ADMSectionDispatcher
     hide_filters = True
     emailable = True
+
 
     # adm-specific stuff
     adm_slug = None
@@ -41,10 +40,6 @@ class ADMSectionView(GenericReportView):
         raise NotImplementedError
 
     @property
-    def show_subsection_navigation(self):
-        return utils.show_adm_nav(self.domain, self.request)
-
-    @property
     def default_report_url(self):
         return reverse('default_adm_report', args=[self.request.project])
 
@@ -58,8 +53,9 @@ class ADMSectionView(GenericReportView):
 class DefaultReportADMSectionView(GenericTabularReport, ADMSectionView, ProjectReportParametersMixin, DatespanMixin):
 
     section_name = ugettext_noop("Active Data Management")
-    app_slug = "adm"
+    base_template = "reports/base_template.html"
     dispatcher = ADMSectionDispatcher
+    fix_left_col = True
 
     fields = ['corehq.apps.reports.fields.FilterUsersField',
               'corehq.apps.reports.fields.GroupField',
@@ -163,7 +159,6 @@ class DefaultReportADMSectionView(GenericTabularReport, ADMSectionView, ProjectR
             report_slug = key[-2]
             if cls.show_subreport_in_navigation(report_slug):
                 subreport_context.append({
-                    'is_report': True,
                     'is_active': current_slug == report_slug,
                     'url': cls.get_url(domain=domain, subreport=report_slug),
                     'description': entry.get('description', ''),

@@ -2,7 +2,7 @@
 {% load i18n %}
 {% block title %}{% trans "Invitation to join the " %}{{ invite_to }} {{ invite_type }}{% endblock title %}
 {% block js-inline  %}{{ block.super }}
-    {% url eula as eula_url %}
+    {% url eula_basic as eula_url %}
     {% include 'hqstyle/partials/load_into_modal.html' with modal_id="eulaModal" load_from=eula_url %}
 {% endblock %}
 {% block login-content %}

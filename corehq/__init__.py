@@ -7,6 +7,13 @@ from corehq.apps.reports.commtrack import psi_prototype
 from django.utils.translation import ugettext_noop as _
 
 REPORTS = (
+    (_("Commtrack"), (
+        psi_prototype.VisitReport,
+        psi_prototype.SalesAndConsumptionReport,
+        psi_prototype.CumulativeSalesAndConsumptionReport,
+        psi_prototype.StockOutReport,
+        psi_prototype.StockReportExport,
+    )),
     (_("Monitor Workers"), (
         monitoring.DailyFormStatsReport,
         monitoring.SubmissionsByFormReport,
@@ -36,13 +43,6 @@ REPORTS = (
         sms.MessageLogReport,
         ivr.CallLogReport,
     )),
-    (_("Commtrack"), (
-        psi_prototype.VisitReport,
-        psi_prototype.SalesAndConsumptionReport,
-        psi_prototype.CumulativeSalesAndConsumptionReport,
-        psi_prototype.StockOutReport,
-        psi_prototype.StockReportExport,
-    ))
 )
 
 from corehq.apps.data_interfaces.interfaces import CaseReassignmentInterface
@@ -77,6 +77,28 @@ ADM_ADMIN_INTERFACES = (
     ))
 )
 
+from corehq.apps.indicators.admin import document_indicators, couch_indicators, dynamic_indicators
+
+INDICATOR_ADMIN_INTERFACES = (
+    (_("Form Based Indicators"), (
+        document_indicators.FormLabelIndicatorDefinitionAdminInterface,
+        document_indicators.FormAliasIndicatorDefinitionAdminInterface,
+        document_indicators.CaseDataInFormAdminInterface,
+    )),
+    (_("Case Based Indicators"), (
+        document_indicators.FormDataInCaseAdminInterface,
+    )),
+    (_("Dynamic Indicators"), (
+        dynamic_indicators.CombinedIndicatorAdminInterface,
+    )),
+    (_("Couch Based Indicators"), (
+        couch_indicators.CouchIndicatorAdminInterface,
+        couch_indicators.CountUniqueCouchIndicatorAdminInterface,
+        couch_indicators.MedianCouchIndicatorAdminInterface,
+        couch_indicators.SumLastEmittedCouchIndicatorAdminInterface,
+    )),
+)
+
 from corehq.apps.announcements.interface import (
     ManageGlobalHQAnnouncementsInterface,
     ManageReportAnnouncementsInterface)
@@ -86,25 +108,6 @@ ANNOUNCEMENTS_ADMIN_INTERFACES = (
         ManageGlobalHQAnnouncementsInterface,
         ManageReportAnnouncementsInterface
     )),
-)
-
-from hqbilling.reports import backend_rates, details, tools
-
-BILLING_REPORTS = (
-    (_("Manage SMS Backend Rates"), (
-        backend_rates.DimagiRateReport,
-        backend_rates.MachRateReport,
-        backend_rates.TropoRateReport,
-        backend_rates.UnicelRateReport
-    )),
-    (_("Billing Details"), (
-        details.SMSDetailReport,
-        details.MonthlyBillReport
-    )),
-    (_("Billing Tools"), (
-        tools.BillableCurrencyReport,
-        tools.TaxRateReport
-    ))
 )
 
 from corehq.apps.appstore.interfaces import CommCareExchangeAdvanced
@@ -117,16 +120,16 @@ APPSTORE_INTERFACES = (
 
 from corehq.apps.hqwebapp.models import *
 
-MENU_ITEMS = (
-    ProjectInfoMenuItem,
-    ReportsMenuItem,
-    ManageDataMenuItem,
-    ApplicationsMenuItem,
-    CloudcareMenuItem,
-    MessagesMenuItem,
-    ProjectSettingsMenuItem,
-    AdminReportsMenuItem,
-    ExchangeMenuItem,
-    ManageSurveysMenuItem,
+TABS = (
+    ProjectInfoTab,
+    ReportsTab,
+    ManageDataTab,
+    ApplicationsTab,
+    CloudcareTab,
+    MessagesTab,
+    RemindersTab,
+    ProjectSettingsTab,
+    AdminTab,
+    ExchangeTab,
+    ManageSurveysTab,
 )
-

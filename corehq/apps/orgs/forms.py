@@ -9,7 +9,7 @@ from corehq.apps.users.models import CouchUser
 
 class AddProjectForm(forms.Form):
     domain_name = forms.CharField(label="Project name")
-    domain_slug = forms.CharField(label="New project name", help_text="""
+    domain_slug = forms.CharField(label="Project display name", required=False, help_text="""
 This project will be given a new name within this organization. You may leave it the same or choose a new name.
 """)
 
@@ -19,6 +19,8 @@ This project will be given a new name within this organization. You may leave it
 
     def clean_domain_slug(self):
         data = self.cleaned_data['domain_slug'].strip().lower()
+        if not data:
+            data = self.cleaned_data['domain_name'].strip().lower()
 
         if not re.match("^%s$" % new_domain_re, data):
             raise forms.ValidationError('Only lowercase letters and numbers allowed. Single hyphens may be used to separate words.')

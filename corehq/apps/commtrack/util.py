@@ -1,5 +1,7 @@
 from dimagi.utils.couch.database import get_db
 from corehq.apps.commtrack.models import *
+from corehq.apps.locations.models import Location
+from casexml.apps.case.models import CommCareCase
 import itertools
 
 def all_supply_point_types(domain):
@@ -23,6 +25,22 @@ def all_sms_codes(domain):
 
     sms_codes = zip(('action', 'product', 'command'), (actions, products, commands))
     return dict(itertools.chain(*([(k.lower(), (type, v)) for k, v in codes.iteritems()] for type, codes in sms_codes)))
+
+def get_supply_point(domain, site_code):
+    loc = Location.view('commtrack/locations_by_code',
+                        key=[domain, site_code.lower()],
+                        include_docs=True).first()
+    if loc:
+        case = CommCareCase.view('commtrack/supply_point_by_loc',
+                                 key=[domain, loc._id],
+                                 include_docs=True).first()
+    else:
+        case = None
+
+    return {
+        'case': case,
+        'location': loc,
+    }
 
 def make_product(domain, name, code):
     p = Product()

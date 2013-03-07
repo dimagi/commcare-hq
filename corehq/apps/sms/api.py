@@ -2,12 +2,11 @@ import logging
 from django.conf import settings
 
 from dimagi.utils.modules import try_import, to_function
-from corehq.apps.sms.util import clean_phone_number
+from corehq.apps.sms.util import clean_phone_number, create_billable_for_sms, format_message_list
 from corehq.apps.sms.models import SMSLog, OUTGOING, INCOMING
 from corehq.apps.sms.mixin import MobileBackend, VerifiedNumber
 from datetime import datetime
 
-from corehq.apps.sms.util import format_message_list
 from corehq.apps.smsforms.models import XFormsSession
 from corehq.apps.smsforms.app import _get_responses, start_session
 from corehq.apps.app_manager.models import get_app, Form
@@ -92,10 +91,10 @@ def send_message_via_backend(msg, backend=None, onerror=lambda: None):
             # verification, thus the backend is None. it's best to only call
             # send_sms_to_verified_number on truly verified contacts, though
 
-        backend.backend_module.send(msg, **backend.outbound_params)
+        backend.backend_module.send(msg, **backend.get_cleaned_outbound_params())
 
         try:
-            msg.backend_api = backend_module.API_ID
+            msg.backend_api = backend.backend_module.API_ID
         except Exception:
             pass
         msg.save()
@@ -128,7 +127,7 @@ def start_session_from_keyword(survey_keyword, verified_number):
         print e
         print "ERROR: Exception raised while starting survey for keyword " + survey_keyword.keyword + ", domain " + verified_number.domain
 
-def incoming(phone_number, text, backend_api, timestamp=None, domain_scope=None):
+def incoming(phone_number, text, backend_api, timestamp=None, domain_scope=None, delay=True):
     """
     entry point for incoming sms
 
@@ -142,7 +141,6 @@ def incoming(phone_number, text, backend_api, timestamp=None, domain_scope=None)
     """
     phone_number = clean_phone_number(phone_number)
     v = VerifiedNumber.by_phone(phone_number)
- 
     if domain_scope:
         # only process messages for phones known to be associated with this domain
         if v is None or v.domain != domain_scope:
@@ -161,6 +159,8 @@ def incoming(phone_number, text, backend_api, timestamp=None, domain_scope=None)
         msg.couch_recipient             = v.owner_id
         msg.domain                      = v.domain
     msg.save()
+
+    create_billable_for_sms(msg, backend_api, delay=delay)
     
     if v is not None:
         for h in settings.SMS_HANDLERS:
@@ -178,7 +178,6 @@ def incoming(phone_number, text, backend_api, timestamp=None, domain_scope=None)
 
             if was_handled:
                 break
-
     else:
         import verify
         verify.process_verification(phone_number, text)
@@ -353,3 +352,5 @@ def form_session_handler(v, text):
 def fallback_handler(v, text):
     send_sms_to_verified_number(v, 'could not understand your message. please check keyword.')
     return True
+
+

@@ -1,9 +1,7 @@
 from corehq.apps.domain.models import Domain
-from corehq.apps.commtrack.models import *
 from casexml.apps.case.models import CommCareCase
 from corehq.apps.locations.models import Location
-from corehq.apps.commtrack import stockreport
-from dimagi.utils.couch.database import get_db
+from corehq.apps.commtrack import stockreport, const
 from corehq.apps.sms.api import send_sms_to_verified_number
 from lxml import etree
 import logging
@@ -11,6 +9,8 @@ from dimagi.utils.couch.loosechange import map_reduce
 from dimagi.utils.parsing import json_format_datetime
 from datetime import datetime
 from helpers import make_supply_point_product
+from corehq.apps.commtrack.util import get_supply_point
+from corehq.apps.commtrack.models import Product, CommtrackConfig
 
 logger = logging.getLogger('commtrack.sms')
 
@@ -176,13 +176,10 @@ class StockReport(object):
             
     def location_from_code(self, loc_code):
         """return the supply point case referenced by loc_code"""
-        loc_code = loc_code.lower()
-        loc = get_db().view('commtrack/locations_by_code',
-                            key=[self.domain.name, loc_code],
-                            include_docs=True).first()
-        if loc is None:
+        result = get_supply_point(self.domain.name, loc_code)['case']
+        if not result:
             raise RuntimeError('invalid location code "%s"' % loc_code)
-        return CommCareCase.get(loc['id'])
+        return result
 
     def product_from_code(self, prod_code):
         """return the product doc referenced by prod_code"""
@@ -207,7 +204,7 @@ def product_subcases(supply_point):
     actually returns a mapping: product doc id => sub-case id
     ACTUALLY returns a dict that will create non-existent product sub-cases on demand
     """
-    product_subcase_uuids = [ix.referenced_id for ix in supply_point.reverse_indices if ix.identifier == 'parent']
+    product_subcase_uuids = [ix.referenced_id for ix in supply_point.reverse_indices if ix.identifier == const.PARENT_CASE_REF]
     product_subcases = CommCareCase.view('_all_docs', keys=product_subcase_uuids, include_docs=True)
     product_subcase_mapping = dict((subcase.dynamic_properties().get('product'), subcase._id) for subcase in product_subcases)
 
@@ -272,7 +269,8 @@ def truncate(text, maxlen, ellipsis='...'):
 def send_confirmation(v, data):
     C = CommtrackConfig.for_domain(v.domain)
 
-    location_name = Location.get(data['location'].location_[-1]).name
+    static_loc = Location.get(data['location'].location_[-1])
+    location_name = static_loc.name
 
     action_to_code = dict((v, k) for k, v in C.keywords().iteritems())
     tx_by_action = map_reduce(lambda tx: [(tx['action'],)], data=data['transactions'], include_docs=True)
@@ -283,7 +281,7 @@ def send_confirmation(v, data):
         return '%s %s' % (action_to_code[action].upper(), ' '.join(sorted(fragment(tx) for tx in txs)))
 
     msg = 'received stock report for %s(%s) %s' % (
-        data['location'].site_code,
+        static_loc.site_code,
         truncate(location_name, 20),
         ' '.join(sorted(summarize_action(a, txs) for a, txs in tx_by_action.iteritems()))
     )

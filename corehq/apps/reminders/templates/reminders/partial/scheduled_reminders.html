@@ -74,10 +74,6 @@
         .calendar {
             margin-left: 0px;
         }
-        h1 {
-            text-align: left;
-            padding-left: 50px;
-        }
         li {
             list-style-type: none;
         }
@@ -87,8 +83,13 @@
     </style>
 {% endblock %}
 
-{% block reminders_content %}
-    <h1>Reminder Calendar</h1>
+{% block subsection-title %}
+<li class="active">
+    <a href="#">Reminder Calendar</a>
+</li>
+{% endblock %}
+
+{% block main_column %}
     {% include "hqwebapp/partials/time-notice.html" %}
     <div id='scheduled-reminders-container'>
         <table class="calendar">

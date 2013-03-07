@@ -4,7 +4,7 @@
 <label for="{{ select.cssId }}" class="control-label">{% trans select.label %}</label>
 <div class="controls">
     <select id="{{ select.cssId }}" multiple="true" class="{{ select.cssClasses }}"
-            data-bind="options: select_params, optionsText: 'text', optionsValue: 'val', value: current_selection"
+            data-bind="options: select_params, optionsText: 'text', optionsValue: 'val', selectedOptions: current_selection"
             name="{{ slug }}">
     </select>
 </div>

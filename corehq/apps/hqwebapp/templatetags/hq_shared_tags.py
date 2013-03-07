@@ -36,13 +36,6 @@ def array_lookup(array, index):
     if index < len(array):
         return array[index]
     
-@register.filter
-def attribute_lookup(obj, attr):
-    '''Get an attribute from an object.'''
-    if (hasattr(obj, attr)):
-        return getattr(obj, attr)
-    
-
 @register.simple_tag
 def dict_as_query_string(dict, prefix=""):
     '''Convert a dictionary to a query string, minus the initial ?'''
@@ -62,11 +55,6 @@ def concat(str1, str2):
     """Concatenate two strings"""
     return "%s%s" % (str1, str2)
 
-@register.simple_tag
-def build_url(relative_path, request=None):
-    """Attempt to build a URL from within a template"""
-    return build_url_util(relative_path, request)
-
 try:
     from resource_versions import resource_versions
 except (ImportError, SyntaxError):
@@ -82,8 +70,14 @@ def static(url):
 
 @register.simple_tag
 def get_report_analytics_tag(request):
+    # todo: change this to takes_context=True and check the active_tab context
+    # variable to see exactly whether the reports tab is active
     if 'reports' in request.path_info:
-        report_name = request.path_info.split('reports/')[1][:-1].replace('_', ' ')
+        try:
+            report_name = request.path_info.split('reports/')[1][:-1].replace('_', ' ')
+        except IndexError:
+            return ''
+
         return "_gaq.push(['_setCustomVar', 2, 'report', '%s', 3]);\n_gaq.push(['_trackEvent', 'Viewed Report', '%s']);" % (report_name, report_name)
     return ''
 
@@ -134,6 +128,19 @@ def list_my_domains(request):
     lst.append('</ul>')
 
     return "".join(lst)
+
+@register.simple_tag
+def list_my_orgs(request):
+    org_list = request.couch_user.get_organizations()
+    lst = list()
+    lst.append('<ul class="nav nav-pills nav-stacked">')
+    for org in org_list:
+        default_url = reverse("orgs_landing", args=[org.name])
+        lst.append('<li><a href="%s">%s</a></li>' % (default_url, org.title))
+    lst.append('</ul>')
+
+    return "".join(lst)
+
 
 @register.simple_tag
 def commcare_user():

@@ -79,7 +79,7 @@ class IndicatorPillowBase(BasicPillow):
 
 
 class CaseIndicatorPillow(IndicatorPillowBase):
-    couch_db = CommCareCase.get_db()
+    document_class = CommCareCase
     indicator_document_type = CommCareCase
     only_use_fresh_docs = False
     # todo: should maybe use this filter here? it takes so long to update, though...
@@ -132,7 +132,7 @@ class CaseIndicatorPillow(IndicatorPillowBase):
 
 
 class FormIndicatorPillow(IndicatorPillowBase):
-    couch_db = XFormInstance.get_db()
+    document_class = XFormInstance
     indicator_document_type = XFormInstance
     # todo: should maybe use this filter here? it takes so long to update, though...
     # couch_filter = "indicators/indicatorless_xforms"

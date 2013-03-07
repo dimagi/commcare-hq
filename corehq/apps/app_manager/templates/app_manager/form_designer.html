@@ -1,20 +1,19 @@
-{% extends 'app_manager/apps_base.html'%}
+{% extends 'app_manager/managed_app.html'%}
 {% load xforms_extras %}
 {% load hq_shared_tags %}
 
 {% block js %}{{ block.super }}
-    <script src="{% static 'formdesigner/js/jquery.jstree.js' %}"></script>
-    <script src="{% static 'formdesigner/js/jquery.fancybox-1.3.4.pack.js' %}"></script>
-    <script src="{% static 'formdesigner/js/chosen.jquery.min.js' %}"></script>
-    <script src="{% static 'formdesigner/js/jquery-ui-timepicker-addon.js' %}"></script>
-    <script src="{% static 'formdesigner/js/sha1.js' %}"></script>
-    <script src="{% static 'formdesigner/js/diff_match_patch.js' %}"></script>
-    <script src="{% static 'formdesigner/lib/xpath/lib/biginteger.js' %}"></script>
-    <script src="{% static 'formdesigner/lib/xpath/lib/schemeNumber.js' %}"></script>
-    <script src="{% static 'formdesigner/lib/xpath/models.js' %}"></script>
-    <script src="{% static 'formdesigner/lib/xpath/xpath.js' %}"></script>
-
-    <script src="{% static 'formdesigner/js/XMLWriter-1.0.0.js' %}"></script>
+    <script src="{% static 'formdesigner/js/lib/jquery.jstree.js' %}"></script>
+    <script src="{% static 'formdesigner/js/lib/jquery.fancybox-1.3.4.pack.js' %}"></script>
+    <script src="{% static 'formdesigner/js/lib/chosen.jquery.min.js' %}"></script>
+    <script src="{% static 'formdesigner/js/lib/jquery-ui-timepicker-addon.js' %}"></script>
+    <script src="{% static 'formdesigner/js/lib/sha1.js' %}"></script>
+    <script src="{% static 'formdesigner/js/lib/diff_match_patch.js' %}"></script>
+    <script src="{% static 'formdesigner/js/lib/xpath/lib/biginteger.js' %}"></script>
+    <script src="{% static 'formdesigner/js/lib/xpath/lib/schemeNumber.js' %}"></script>
+    <script src="{% static 'formdesigner/js/lib/xpath/models.js' %}"></script>
+    <script src="{% static 'formdesigner/js/lib/xpath/xpath.js' %}"></script>
+    <script src="{% static 'formdesigner/js/lib/XMLWriter-1.0.0.js' %}"></script>
     <script src="{% static 'formdesigner/js/ui.js' %}"></script>
     <script src="{% static 'formdesigner/js/util.js' %}"></script>
     <script src="{% static 'formdesigner/js/model.js' %}"></script>
@@ -23,7 +22,7 @@
 {% include 'hqmedia/includes/yui_upload.html' %}
 {#<script type="text/javascript" src="{% static 'hqmedia/js/hqmedia.uploader.js' %}"></script>#}
 <script type="text/javascript" src="{% static 'hqmedia/js/jquery.jplayer.min.js' %}"></script>
-<script type="text/javascript" src="{% static 'hqwebapp/javascripts/underscore-1.3.1.js' %}"></script>
+<script type="text/javascript" src="{% static 'hqwebapp/js/lib/underscore-1.3.1.js' %}"></script>
 {#<script type="text/javascript" src="{% static 'hqmedia/js/hqmedia.multimedia_map.js' %}"></script>#}
 {% endblock %}
 
@@ -75,7 +74,7 @@
             formdesigner.launch({
                 rootElement: $("#formdesigner"),
                 staticPrefix: '/static/formdesigner/',
-                iconUrl: '/static/hqwebapp/javascripts/jquery-ui/images/ui-icons_469bdd_256x240.png',
+                iconUrl: '/static/hqwebapp/js/lib/jquery-ui/images/ui-icons_469bdd_256x240.png',
                 saveUrl: '{% url edit_form_attr domain app.id form.get_unique_id "xform" %}',
                 patchUrl: '{% url patch_xform domain app.id form.get_unique_id %}',
                 saveType: 'patch',
@@ -138,19 +137,6 @@
     </style>
 {% endblock %}
 
-{% block app-content %}
-    {% include 'app_manager/partials/release-manager-nav.html' %}
-    <div id="breadcrumbs">
-        <ul>
-            <li><a href="{% url view_app domain app.id %}?edit=true">{{ app.name }}</a></li>
-            {% if is_user_registration %}
-                <li><a href="../?edit=true">User Registration</a></li>
-            {% else %}
-                <li><a href="{% url view_module domain app.id module.id%}?edit=true">{{ module.name|trans:langs }}</a></li>
-                <li><a href="../?edit=true">{{ form.name|trans:langs }}</a></li>
-            {% endif %}
-            <li>Form Editor</li>
-        </ul>
-    </div>
+{% block form-view %}
     <div id="formdesigner"></div>
 {% endblock %}

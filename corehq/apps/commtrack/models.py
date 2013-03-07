@@ -5,6 +5,8 @@ from dimagi.utils import parsing as dateparse
 from datetime import datetime
 from casexml.apps.case.models import CommCareCase
 from copy import copy
+from django.dispatch import receiver
+from corehq.apps.locations.signals import location_created
 
 # these are the allowable stock transaction types, listed in the
 # default ordering in which they are processed. processing order
@@ -77,6 +79,12 @@ class CommtrackActionConfig(DocumentSchema):
     def action_name(self):
         return self.name or self.action_type
 
+class CommtrackRequisitionConfig(DocumentSchema):
+    # placeholder class for when this becomes fancier
+
+    enabled = BooleanProperty(default=False)
+
+
 class SupplyPointType(DocumentSchema):
     name = StringProperty()
     categories = StringListProperty()
@@ -94,6 +102,8 @@ class CommtrackConfig(Document):
     # all messages as multi-action
 
     supply_point_types = SchemaListProperty(SupplyPointType)
+
+    requisition_config = SchemaProperty(CommtrackRequisitionConfig)
 
     @classmethod
     def for_domain(cls, domain):
@@ -116,6 +126,10 @@ class CommtrackConfig(Document):
     @property
     def supply_point_categories(self):
         return map_reduce(lambda spt: [(category, spt.name) for category in spt.categories], data=self.supply_point_types)
+
+    @property
+    def requisitions_enabled(self):
+        return self.requisition_config.enabled
 
 def _view_shared(view_name, domain, location_id=None, skip=0, limit=100):
     extras = {"limit": limit} if limit else {}
@@ -249,4 +263,17 @@ class StockReport(object):
                                    startkey=startkey,
                                    endkey=endkey,
                                    include_docs=True)]
+
+@receiver(location_created)
+def post_loc_created(sender, loc=None, **kwargs):
+    # circular imports
+    from corehq.apps.commtrack.helpers import make_supply_point
+    from corehq.apps.domain.models import Domain
+
+    if not Domain.get_by_name(loc.domain).commtrack_enabled:
+        return
+
+    # exclude non-leaf locs
+    if loc.location_type == 'outlet': # TODO 'outlet' is PSI-specific
+        make_supply_point(loc.domain, loc)
 

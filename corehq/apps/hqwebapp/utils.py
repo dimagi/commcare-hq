@@ -5,11 +5,12 @@ from django.contrib import messages
 from django.contrib.auth.views import redirect_to_login
 from django.core.urlresolvers import reverse
 from django.http import HttpResponseRedirect
+from django.shortcuts import render
+
 from corehq.apps.hqwebapp.views import logout
 from corehq.apps.registration.forms import NewWebUserRegistrationForm
 from corehq.apps.registration.utils import activate_new_user
 from corehq.apps.users.models import Invitation, CouchUser
-from dimagi.utils.web import render_to_response
 
 from django.core.paginator import Paginator, InvalidPage, EmptyPage
 
@@ -184,20 +185,6 @@ def paginate(request, data, rows_per_page=25):
         data_pages = paginator.page(paginator.num_pages)
     return data_pages
 
-def build_url(relative_path, request=None):
-    '''Attempt to build a fully qualified url.  It will first try to back
-       it out of the request object, if specified.  Failing that it will 
-       look for a django setting: SERVER_ROOT_URL.  Failing that, it defaults
-       to localhost:8000.
-    '''
-    if request:
-        return request.build_absolute_uri(relative_path)
-    elif hasattr(settings, "SERVER_ROOT_URL"):
-        return "%s%s" % (settings.SERVER_ROOT_URL, relative_path)
-    else:
-        return "http://localhost:8000%s" % relative_path
-        
-        
 def get_post_redirect(request, get_callback, post_callback,
                       get_template_name = None, post_template_name = None):
     """
@@ -285,7 +272,7 @@ class InvitationView():
                     'mobile_user': mobile_user,
                     "invited_user": invitation.email if request.couch_user.username != invitation.email else "",
                 })
-                return render_to_response(request, self.template, context)
+                return render(request, self.template, context)
         else:
             if request.method == "POST":
                 form = NewWebUserRegistrationForm(request.POST)
@@ -299,5 +286,5 @@ class InvitationView():
             else:
                 form = NewWebUserRegistrationForm(initial={'email': invitation.email})
 
-        return render_to_response(request, self.template, {"form": form})
+        return render(request, self.template, {"form": form})
 

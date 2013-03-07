@@ -6,6 +6,7 @@
     <property key="ota-restore-url-testing" value="{{ ota_restore_url }}"/>
     <property key="PostURL" value="{{ post_url }}" force="true"/>
     <property key="PostTestURL" value="{{ post_test_url }}" force="true"/>
+    <property key="key_server" value="{{ key_server_url }}"/>
     <property key="cur_locale" value="{{ app.build_langs.0 }}"/>
     <property key="cc_user_domain" value="{{ cc_user_domain }}"/>
     <property key="jr_openrosa_api" value="1.0"/>

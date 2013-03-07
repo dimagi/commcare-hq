@@ -45,9 +45,11 @@ def get_application_media(app):
                     continue
                 f.validate_form()
                 for image in parsed.image_references:
-                    form_media['images'].add(image.strip())
+                    if image:
+                        form_media['images'].add(image.strip())
                 for audio in parsed.audio_references:
-                    form_media['audio'].add(audio.strip())
+                    if audio:
+                        form_media['audio'].add(audio.strip())
             except (XFormValidationError, XFormError):
                 form_errors = True
 
@@ -155,7 +157,7 @@ class HQMediaMatcher():
     def owner(self):
         project = Domain.get_by_name(self.domain)
         if project.organization:
-            return project.organization_doc()
+            return project.get_organization()
         else:
             return CouchUser.get_by_username(self.username)
 

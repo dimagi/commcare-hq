@@ -65,6 +65,8 @@ class ColumnCollector(type):
     """
     def __new__(cls, name, bases, attrs):
         columns = {}
+        for base in bases:
+            columns.update(getattr(base, 'columns', {}))
         for attr_name, attr in attrs.items():
             if isinstance(attr, Column):
                 columns[attr_name] = attr
@@ -90,6 +92,7 @@ class ColumnCollector(type):
 
 class BasicTabularReport(GenericTabularReport):
     __metaclass__ = ColumnCollector
+    update_after = False
 
     @property
     def fields(self):
@@ -103,13 +106,14 @@ class BasicTabularReport(GenericTabularReport):
 
     @property
     def rows(self):
+        kwargs = {'stale': 'update_after'} if self.update_after else {}
         startkey, endkey = self.start_and_end_keys
-        kwargs = {
+        kwargs.update({
             'db': get_db(),
             'couch_view': getattr(self, 'couch_view', None),
             'startkey': startkey,
             'endkey': endkey
-        }
+        })
 
         for key in self.keys:
             row = self.View.view(key, **kwargs)

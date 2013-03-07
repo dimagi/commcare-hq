@@ -89,11 +89,17 @@ def _get_responses(domain, recipient, text, yield_responses=False, session_id=No
 def _responses_to_text(responses):
     return [r.text_prompt for r in responses if r.text_prompt]
 
-# Gets the raw instance of the session's form, strips out any case action blocks, and submits it.
-# This is used with sms surveys to save all questions answered so far in a session that needs to close, 
-# making sure that there are no side-effects to the case on submit.
-# The form is only submitted if the smsforms session has not yet completed.
-def submit_unfinished_form(session_id):
+"""
+Gets the raw instance of the session's form and submits it. This is used with
+sms and ivr surveys to save all questions answered so far in a session that 
+needs to close.
+
+If include_case_side_effects is False, no case create / update / close actions
+will be performed, but the form will still be submitted.
+
+The form is only submitted if the smsforms session has not yet completed.
+"""
+def submit_unfinished_form(session_id, include_case_side_effects=False):
     session = XFormsSession.latest_by_session_id(session_id)
     if session is not None and session.end_time is None:
         # Get and clean the raw xml
@@ -105,12 +111,14 @@ def submit_unfinished_form(session_id):
         current_timstamp = json_format_datetime(datetime.utcnow())
         for child in root:
             if case_tag_regex.match(child.tag) is not None:
-                # Found the case tag, now remove all children
+                # Found the case tag
                 case_element = child
                 case_element.set("date_modified", current_timstamp)
-                child_elements = [case_action for case_action in case_element]
-                for case_action in child_elements:
-                    case_element.remove(case_action)
+                if not include_case_side_effects:
+                    # Remove case actions (create, update, close)
+                    child_elements = [case_action for case_action in case_element]
+                    for case_action in child_elements:
+                        case_element.remove(case_action)
             elif meta_tag_regex.match(child.tag) is not None:
                 # Found the meta tag, now set the value for timeEnd
                 for meta_child in child:

@@ -6,10 +6,10 @@
     {% include "imports/datatables.html" %}
     <script src="{% static 'reports/javascripts/config.dataTables.bootstrap.js' %}"></script>
     {% include "imports/flot.html" %}
-    <script src="{% static 'hqwebapp/javascripts/jquery-ui-datepicker/jquery-ui-1.8.17.custom.datepicker.min.js' %}"></script>
+    <script src="{% static 'hqwebapp/js/lib/jquery-ui-datepicker/jquery-ui-1.8.17.custom.datepicker.min.js' %}"></script>
     <script src="{% static 'hqwebapp/js-custom/hq.legacy.js' %}"></script>
-    <script src="{% static 'hqwebapp/javascripts/jquery.history.js' %}"></script>
-    <script src="{% static 'hqwebapp/javascripts/knockout.mapping.js' %}"></script>
+    <script src="{% static 'hqwebapp/js/lib/jquery.history.js' %}"></script>
+    <script src="{% static 'hqwebapp/js/lib/knockout.mapping.js' %}"></script>
     <script src="{% static 'hqwebapp/js/knockout-bindings.js' %}"></script>
     <script src="{% static 'reports/javascripts/datepicker.js' %}"></script>
     <script src="{% static 'reports/javascripts/reports.config.js' %}"></script>
@@ -56,18 +56,11 @@
 {% block head %}
     {{ block.super }}
     {% block reports-css %}
-    <link rel="stylesheet" href="{% static 'hqwebapp/javascripts/jquery-ui-datepicker/datepicker-theme/jquery-ui-1.8.17.custom.css' %}" />
+    <link rel="stylesheet" href="{% static 'hqwebapp/js/lib/jquery-ui-datepicker/datepicker-theme/jquery-ui-1.8.17.custom.css' %}" />
     {% endblock %}
 {% endblock %}
 
 {% block title %} - Report: {{ report.title|default:"Project Reports"|safe }}{% endblock %}
-
-{% block header-section %} {{ block.super }}
-    {% if report.show_subsection_navigation %}
-        {% block subsection-navigation %}
-        {% endblock %}
-    {% endif %}
-{% endblock %}
 
 {% block page-title %}
     <ul class="breadcrumb">
@@ -87,7 +80,6 @@
     </ul>
 {% endblock %}
 
-{% block sidebar %}{% endblock %}
 {% block main_column %}
     <div class="hq-accordion-control{% if report.is_async%} hide{% endif %}" id="reportFiltersAccordion">
         <div class="accordion-heading">

@@ -198,7 +198,7 @@ class FixtureDataItem(Document):
         ownerships = FixtureOwnership.by_item_id(self.get_id, self.domain)
         transaction.delete_all(ownerships)
 
-    def delete_recursive(self, transaction):
+    def recursive_delete(self, transaction):
         self.delete_ownerships(transaction)
         transaction.delete(self)
 

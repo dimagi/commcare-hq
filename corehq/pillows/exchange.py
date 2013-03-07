@@ -3,7 +3,7 @@ from corehq.apps.domain.models import Domain
 from pillowtop.listener import ElasticPillow
 
 class ExchangePillow(ElasticPillow):
-    couch_db = Domain.get_db()
+    document_class = Domain
     couch_filter = "domain/all_domains"
     es_host = settings.ELASTICSEARCH_HOST
     es_port = settings.ELASTICSEARCH_PORT

@@ -3,7 +3,7 @@ from couchdbkit.ext.django.schema import *
 
 from django.contrib.auth.models import get_hexdigest, check_password
 from django.http import HttpResponse
-import settings
+from django.conf import settings
 
 class ApiUser(Document):
     password = StringProperty()

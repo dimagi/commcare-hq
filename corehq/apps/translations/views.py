@@ -1,9 +1,10 @@
-# Create your views here.
 import json
 from django.http import Http404, HttpResponseForbidden
 from django.views.decorators.http import require_GET, require_POST
+from django.shortcuts import render
+
 from corehq.apps.translations.models import Translation, TranslationMixin
-from dimagi.utils.web import json_response, json_request, render_to_response
+from dimagi.utils.web import json_response, json_request
 
 def validate_trans_doc(trans, request, domain=None):
     if trans.doc_type == "TranslationDoc":
@@ -49,7 +50,7 @@ def edit(request, template="translations/edit.html"):
 
     trans = TranslationMixin.get(doc_id)
     validate_trans_doc(trans)
-    return render_to_response(request, template, {
+    return render(request, template, {
         "translations_json": json.dumps(trans.translations[lang]),
         "doc_id": doc_id,
         "lang": lang

@@ -6,7 +6,7 @@ from django.conf import settings
 from django.contrib.auth.models import AnonymousUser
 from django.db import models
 from couchdbkit.ext.django.schema import Document, StringProperty,\
-    BooleanProperty, DateTimeProperty, IntegerProperty, DocumentSchema, SchemaProperty, DictProperty, ListProperty
+    BooleanProperty, DateTimeProperty, IntegerProperty, DocumentSchema, SchemaProperty, DictProperty, ListProperty, StringListProperty
 from django.utils.safestring import mark_safe
 from corehq.apps.appstore.models import Review, SnapshotMixin
 from dimagi.utils.html import format_html
@@ -19,6 +19,10 @@ from collections import defaultdict
 from corehq.apps.commtrack.models import CommtrackConfig
 
 lang_lookup = defaultdict(str)
+
+DATA_DICT = settings.INTERNAL_DATA
+AREA_CHOICES = [a["name"] for a in DATA_DICT["area"]]
+SUB_AREA_CHOICES = reduce(list.__add__, [a["sub_areas"] for a in DATA_DICT["area"]], [])
 
 for lang in all_langs:
     lang_lookup[lang['three']] = lang['names'][0] # arbitrarily using the first name if there are multiple
@@ -110,13 +114,22 @@ class HQBillingDomainMixin(DocumentSchema):
     billing_number = StringProperty()
     currency_code = StringProperty(default=settings.DEFAULT_CURRENCY)
 
+    # used to bill client
+    is_sms_billable = BooleanProperty()
+    billable_client = StringProperty()
+
     def update_billing_info(self, **kwargs):
         self.billing_number = kwargs.get('phone_number','')
         self.billing_address.update_billing_address(**kwargs)
         self.currency_code = kwargs.get('currency_code', settings.DEFAULT_CURRENCY)
 
 
-class Deployment(DocumentSchema):
+class UpdatableSchema():
+    def update(self, new_dict):
+        for kw in new_dict:
+            self[kw] = new_dict[kw]
+
+class Deployment(DocumentSchema, UpdatableSchema):
     date = DateTimeProperty()
     city = StringProperty()
     country = StringProperty()
@@ -124,16 +137,32 @@ class Deployment(DocumentSchema):
     description = StringProperty()
     public = BooleanProperty(default=False)
 
-    def update(self, new_dict):
-        for kw in new_dict:
-            self[kw] = new_dict[kw]
-
 class LicenseAgreement(DocumentSchema):
     signed = BooleanProperty(default=False)
     type = StringProperty()
     date = DateTimeProperty()
     user_id = StringProperty()
     user_ip = StringProperty()
+
+class InternalProperties(DocumentSchema, UpdatableSchema):
+    """
+    Project properties that should only be visible/editable by superusers
+    """
+    sf_contract_id = StringProperty()
+    sf_account_id = StringProperty()
+    commcare_edition = StringProperty(choices=["", "standard", "plus", "advanced"], default="")
+    services = StringProperty(choices=["", "basic", "plus", "full", "custom"], default="")
+    real_space = BooleanProperty()
+    initiative = StringListProperty()
+    project_state = StringProperty(choices=["", "POC", "transition", "at-scale"], default="")
+    self_started = BooleanProperty()
+    area = StringProperty(choices=AREA_CHOICES + [""], default="")
+    sub_area = StringProperty(choices=SUB_AREA_CHOICES + [""], default="")
+    using_adm = BooleanProperty()
+    using_call_center = BooleanProperty()
+    custom_eula = BooleanProperty()
+    can_use_data = BooleanProperty()
+
 
 class Domain(Document, HQBillingDomainMixin, SnapshotMixin):
     """Domain is the highest level collection of people/stuff
@@ -150,6 +179,7 @@ class Domain(Document, HQBillingDomainMixin, SnapshotMixin):
     organization = StringProperty()
     slug = StringProperty() # the slug for this project namespaced within an organization
     eula = SchemaProperty(LicenseAgreement)
+    creating_user = StringProperty() # username of the user who created this domain
 
     # domain metadata
     project_type = StringProperty() # e.g. MCH, HIV
@@ -184,6 +214,14 @@ class Domain(Document, HQBillingDomainMixin, SnapshotMixin):
 
     cached_properties = DictProperty()
 
+    internal = SchemaProperty(InternalProperties)
+
+    # extra user specified properties
+    tags = StringListProperty()
+    area = StringProperty(choices=AREA_CHOICES)
+    sub_area = StringProperty(choices=SUB_AREA_CHOICES)
+    launch_date = DateTimeProperty
+
     # to be eliminated from projects and related documents when they are copied for the exchange
     _dirty_fields = ('admin_password', 'admin_password_charset', 'city', 'country', 'region', 'customer_type')
 
@@ -191,7 +229,7 @@ class Domain(Document, HQBillingDomainMixin, SnapshotMixin):
     def wrap(cls, data):
         # for domains that still use original_doc
         should_save = False
-        if data.has_key('original_doc'):
+        if 'original_doc' in data:
             original_doc = data['original_doc']
             del data['original_doc']
             should_save = True
@@ -200,10 +238,20 @@ class Domain(Document, HQBillingDomainMixin, SnapshotMixin):
                 data['copy_history'] = [original_doc._id]
 
         # for domains that have a public domain license
-        if data.has_key("license"):
+        if 'license' in data:
             if data.get("license", None) == "public":
                 data["license"] = "cc"
                 should_save = True
+
+        # if not 'creating_user' in data:
+        #     should_save = True
+        #     from corehq.apps.users.models import CouchUser
+        #     admins = CouchUser.view("users/admins_by_domain", key=data["name"], reduce=False, include_docs=True).all()
+        #     if len(admins) == 1:
+        #         data["creating_user"] = admins[0].username
+        #     else:
+        #         data["creating_user"] = None
+
         self = super(Domain, cls).wrap(data)
         if self.get_id:
             self.apply_migrations()
@@ -380,6 +428,10 @@ class Domain(Document, HQBillingDomainMixin, SnapshotMixin):
             **extra_args
         ).first()
 
+        if result is None and not strict:
+            # on the off chance this is a brand new domain, try with strict
+            return cls.get_by_name(name, strict=True)
+
         return result
 
     @classmethod
@@ -554,18 +606,22 @@ class Domain(Document, HQBillingDomainMixin, SnapshotMixin):
         results = get_db().search('domain/snapshot_search', q=json.dumps(query), limit=limit, skip=skip, stale='ok')
         return map(cls.get, [r['id'] for r in results]), results.total_rows
 
-    def organization_doc(self):
+    def get_organization(self):
         from corehq.apps.orgs.models import Organization
         return Organization.get_by_name(self.organization)
 
     def organization_title(self):
         if self.organization:
-            return self.organization_doc().title
+            return self.get_organization().title
         else:
             return ''
 
     def update_deployment(self, **kwargs):
         self.deployment.update(kwargs)
+        self.save()
+
+    def update_internal(self, **kwargs):
+        self.internal.update(kwargs)
         self.save()
 
     def display_name(self):
@@ -580,13 +636,13 @@ class Domain(Document, HQBillingDomainMixin, SnapshotMixin):
         if self.is_snapshot:
             return format_html(
                 "Snapshot of {0} &gt; {1}",
-                self.organization_doc().title,
+                self.get_organization().title,
                 self.copied_from.display_name()
             )
         if self.organization:
             return format_html(
                 '{0} &gt; {1}',
-                self.organization_doc().title,
+                self.get_organization().title,
                 self.slug or self.name
             )
         else:

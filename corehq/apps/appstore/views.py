@@ -6,13 +6,14 @@ from django.contrib.auth.decorators import login_required
 from django.core.urlresolvers import reverse
 from django.http import Http404, HttpResponseRedirect, HttpResponse
 from django.template.loader import render_to_string
+from django.shortcuts import render
+
 from corehq.apps.appstore.forms import AddReviewForm
 from corehq.apps.appstore.models import Review
 from corehq.apps.domain.decorators import require_superuser
 from corehq.apps.registration.forms import DomainRegistrationForm
 from corehq.apps.users.models import CouchUser
 from corehq.elastic import get_es
-from dimagi.utils.web import render_to_response
 from corehq.apps.domain.models import Domain
 from django.contrib import messages
 from django.utils.translation import ugettext as _
@@ -71,6 +72,8 @@ def project_info(request, domain, template="appstore/project_info.html"):
     else:
         form = AddReviewForm()
 
+    copies = dom.copies_of_parent()
+
     reviews = Review.get_by_app(dom.copied_from._id)
     average_rating = Review.get_average_rating_by_app(dom.copied_from._id)
     num_ratings = Review.get_num_ratings_by_app(dom.copied_from._id)
@@ -88,11 +91,12 @@ def project_info(request, domain, template="appstore/project_info.html"):
     pb_id = dom.cda.user_id
     published_by = CouchUser.get_by_user_id(pb_id) if pb_id else None
 
-    return render_to_response(request, template, {
+    return render(request, template, {
         "project": dom,
         "applications": dom.full_applications(include_builds=False),
         "form": form,
         "published_by": published_by,
+        "copies": copies,
         "reviews": reviews,
         "average_rating": average_rating,
         "num_ratings": num_ratings,
@@ -192,7 +196,7 @@ def appstore(request, template="appstore/appstore_base.html"):
         sortables=facets_sortables,
         query_str=request.META['QUERY_STRING'],
         search_query = params.get('search', [""])[0])
-    return render_to_response(request, template, vals)
+    return render(request, template, vals)
 
 def appstore_api(request):
     params, facets = parse_args_for_es(request)
@@ -357,7 +361,7 @@ def deployment_info(request, domain, template="appstore/deployment_info.html"):
     results = es_deployments_query({}, DEPLOYMENT_FACETS)
     facets_sortables = generate_sortables_from_facets(results, {}, inverse_dict(DEPLOYMENT_MAPPING))
 
-    return render_to_response(request, template, {'domain': dom,
+    return render(request, template, {'domain': dom,
                                                   'search_url': reverse('deployments'),
                                                   'url_base': reverse('deployments'),
                                                   'sortables': facets_sortables})
@@ -384,7 +388,7 @@ def deployments(request, template="appstore/deployments.html"):
              'query_str': request.META['QUERY_STRING'],
              'search_url': reverse('deployments'),
              'search_query': params.get('search', [""])[0]}
-    return render_to_response(request, template, vals)
+    return render(request, template, vals)
 
 def deployments_api(request):
     params, facets = parse_args_for_es(request)
@@ -418,7 +422,7 @@ def media_files(request, domain, template="appstore/media_files.html"):
     if not can_view_app(request, dom):
         raise Http404()
 
-    return render_to_response(request, template, {
+    return render(request, template, {
         "project": dom,
         "url_base": reverse('appstore')
     })

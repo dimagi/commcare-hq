@@ -1,17 +1,21 @@
 from couchdbkit.ext.django.schema import *
 import itertools
 from dimagi.utils.couch.database import get_db
+from django import forms
+from django.core.urlresolvers import reverse
 
 class Location(Document):
     domain = StringProperty()
     name = StringProperty()
     location_type = StringProperty()
+    site_code = StringProperty() # should be unique, not yet enforced
 
     # a list of doc ids, referring to the parent location, then the
     # grand-parent, and so on up to the root location in the hierarchy
     # TODO: in future, support multiple types of parentage with
     # independent hierarchies
     lineage = StringListProperty()
+    previous_parents = StringListProperty()
 
     def __init__(self, *args, **kwargs):
         if 'parent' in kwargs:
@@ -27,6 +31,9 @@ class Location(Document):
             del kwargs['parent']
 
         super(Document, self).__init__(*args, **kwargs)
+
+    def __repr__(self):
+        return "%s (%s)" % (self.name, self.location_type)
 
     @classmethod
     def filter_by_type(cls, domain, loc_type, root_loc=None):
@@ -46,6 +53,11 @@ class Location(Document):
             return None
         else:
             return Location.get(self.lineage[0])
+
+    def siblings(self, parent=None):
+        if not parent:
+            parent = self.parent
+        return [loc for loc in (parent.children if parent else root_locations(self.domain)) if loc._id != self._id]
 
     @property
     def path(self):
@@ -86,8 +98,7 @@ class Location(Document):
 def location_tree(domain):
     """build a hierarchical tree of the entire location structure for a domain"""
     # this is going to be extremely slow as the number of locations gets big
-    locs = Location.view('locations/hierarchy', startkey=[domain], endkey=[domain, {}],
-                         reduce=False, include_docs=True).all()
+    locs = all_locations(domain)
     locs.sort(key=lambda l: l.path) # parents must appear before their children; couch should
     # return docs in the correct order, but, just to be safe...
     locs_by_id = dict((l._id, l) for l in locs)
@@ -115,3 +126,61 @@ def root_locations(domain):
 
     ids = [res['key'][-1] for res in results]
     return [Location.get(id) for id in ids]
+
+def all_locations(domain):
+    return Location.view('locations/hierarchy', startkey=[domain], endkey=[domain, {}],
+                         reduce=False, include_docs=True).all()
+
+class CustomProperty(Document):
+    name = StringProperty()
+    datatype = StringProperty()
+    label = StringProperty()
+    required = BooleanProperty()
+    help_text = StringProperty()
+    unique = StringProperty()
+
+    def field_type(self):
+        return getattr(forms, '%sField' % (self.datatype or 'Char'))
+
+    def field(self, initial=None):
+        kwargs = dict(
+            label=self.label,
+            required=(self.required if self.required is not None else False),
+            help_text=self.help_text,
+            initial=initial,
+        )
+
+        choices = getattr(self, 'choices', None)
+        if choices:
+            if choices['mode'] == 'static':
+                def mk_choice(spec):
+                    return spec if hasattr(spec, '__iter__') else (spec, spec)
+                choices = [mk_choice(c) for c in choices['args']]
+            elif choices['mode'] == 'fixture':
+                raise RuntimeError('choices from fixture not supported yet')
+            else:
+                raise ValueError('unknown choices mode [%s]' % choices['mode'])
+            kwargs['choices'] = choices
+
+        return self.field_type()(**kwargs)
+
+    def custom_validate(self, loc, val, prop_name):
+        if self.unique:
+            self.validate_uniqueness(loc, val, prop_name)
+
+    def validate_uniqueness(self, loc, val, prop_name):
+        def normalize(val):
+            try:
+                return val.lower() # case-insensitive comparison
+            except AttributeError:
+                return val
+        val = normalize(val)
+
+        from corehq.apps.locations.util import property_uniqueness
+        conflict_ids = property_uniqueness(loc.domain, loc, prop_name, val, self.unique)
+
+        if conflict_ids:
+            conflict_loc = Location.get(conflict_ids.pop())
+            raise ValueError('value must be unique; conflicts with <a href="%s">%s %s</a>' %
+                             (reverse('edit_location', kwargs={'domain': loc.domain, 'loc_id': conflict_loc._id}),
+                              conflict_loc.name, conflict_loc.location_type))

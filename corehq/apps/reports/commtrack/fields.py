@@ -1,6 +1,7 @@
-from corehq.apps.reports.fields import ReportMultiSelectField
+from corehq.apps.reports.fields import ReportMultiSelectField, ReportSelectField
 from corehq.apps.commtrack.models import *
 from corehq.apps.commtrack.util import *
+from corehq.apps.locations.util import defined_location_types
 
 class SupplyPointTypeField(ReportMultiSelectField):
     slug = 'outlet_type'
@@ -37,3 +38,12 @@ class ProductField(ReportMultiSelectField):
         choices = [{'text': e[0], 'val': e[1]} for e in sorted((p.name, p._id) for p in Product.by_domain(self.domain))]
         choices.insert(0, {'text': 'All Products', 'val': '_all'})
         return choices
+
+class LocationTypeField(ReportSelectField):
+    slug = 'agg_type'
+    name = 'Aggregate by'
+    default_option = 'choose location type...'
+
+    @property
+    def options(self):
+        return [{'text': k, 'val': k} for k in defined_location_types(self.domain)]

@@ -19,12 +19,6 @@
     </script>
 {% endblock %}
 
-{% block commcare_users_indicator %}
-    <ul class="nav nav-list">
-        <li class="active"><a href="#">New {% commcare_user %}</a></li>
-    </ul>
-{% endblock %}
-
 {% block subsection-title %}
     <li>
         <a href="{% url commcare_users domain %}">{% commcare_user %}s</a> <span class="divider">&gt;</span>

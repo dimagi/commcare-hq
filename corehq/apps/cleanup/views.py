@@ -4,6 +4,7 @@ from collections import defaultdict
 from couchdbkit.exceptions import ResourceNotFound
 
 from django.contrib import messages
+from django.shortcuts import render
 from django.core.urlresolvers import reverse
 from django.http import HttpResponseRedirect, HttpResponse
 from django.views.decorators.http import require_POST, require_GET
@@ -13,7 +14,7 @@ from dimagi.utils.couch.undo import DELETED_SUFFIX
 from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.make_uuid import random_hex
 from dimagi.utils.couch.database import get_db
-from dimagi.utils.web import render_to_response, json_request, json_response
+from dimagi.utils.web import json_request, json_response
 
 from casexml.apps.case.models import CommCareCase
 
@@ -32,7 +33,7 @@ require_can_cleanup = require_permission(Permissions.edit_data)
 
 @require_can_cleanup
 def submissions(request, domain, template="cleanup/submissions.html"):
-    return render_to_response(request, template, {'domain': domain})
+    return render(request, template, {'domain': domain})
 
 @require_can_cleanup
 def submissions_json(request, domain):
@@ -140,7 +141,7 @@ def relabel_submissions(request, domain):
 
 @require_can_cleanup
 def cases(request, domain, template="cleanup/cases.html"):
-    return render_to_response(request, template, {'domain': domain})
+    return render(request, template, {'domain': domain})
 
 @require_can_cleanup
 def cases_json(request, domain):
@@ -250,7 +251,7 @@ def change_submissions_app_id(request, domain):
 @require_superuser
 def delete_all_data(request, domain, template="cleanup/delete_all_data.html"):
     if request.method == 'GET':
-        return render_to_response(request, template, {
+        return render(request, template, {
             'domain': domain
         })
     key = make_form_couch_key(domain)
@@ -326,7 +327,7 @@ def reassign_cases_to_correct_owner(request, domain, template='cleanup/reassign_
     if request.GET.get('ajax'):
         return json_response(log)
     else:
-        return render_to_response(request, template, {
+        return render(request, template, {
             'domain': domain,
             'results': log
         })

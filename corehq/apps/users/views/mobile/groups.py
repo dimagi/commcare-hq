@@ -1,9 +1,11 @@
 from django.http import Http404
+from django.shortcuts import render
+
 from corehq.apps.groups.models import Group
 from corehq.apps.users.models import CouchUser, CommCareUser
 from corehq.apps.users.views import _users_context, require_can_edit_commcare_users
 from dimagi.utils.excel import alphanumeric_sort_key
-from dimagi.utils.web import render_to_response, json_response, get_url_base, get_ip
+from dimagi.utils.web import json_response, get_url_base, get_ip
 
 def _get_sorted_groups(domain):
     return sorted(
@@ -11,9 +13,6 @@ def _get_sorted_groups(domain):
         key=lambda group: alphanumeric_sort_key(group.name)
     )
 
-"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
-GROUP VIEWS
-"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 @require_can_edit_commcare_users
 def all_groups(request, domain, template="groups/all_groups.html"):
     context = _users_context(request, domain)
@@ -22,7 +21,7 @@ def all_groups(request, domain, template="groups/all_groups.html"):
         'domain': domain,
         'all_groups': all_groups
     })
-    return render_to_response(request, template, context)
+    return render(request, template, context)
 
 @require_can_edit_commcare_users
 def group_members(request, domain, group_id, template="groups/group_members.html"):
@@ -44,11 +43,8 @@ def group_members(request, domain, group_id, template="groups/group_members.html
                     "members": members,
                     "nonmembers": nonmembers,
                     })
-    return render_to_response(request, template, context)
+    return render(request, template, context)
 
-#@require_domain_admin
-#def my_groups(request, domain, template="groups/groups.html"):
-#    return group_membership(request, domain, request.couch_user._id, template)
 
 @require_can_edit_commcare_users
 def group_membership(request, domain, couch_user_id, template="groups/groups.html"):
@@ -71,4 +67,4 @@ def group_membership(request, domain, couch_user_id, template="groups/groups.htm
                     "groups": my_groups,
                     "other_groups": other_groups,
                     "couch_user":couch_user })
-    return render_to_response(request, template, context)
+    return render(request, template, context)

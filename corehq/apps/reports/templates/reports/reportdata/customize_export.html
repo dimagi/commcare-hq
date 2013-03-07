@@ -74,9 +74,6 @@
         })
     </script>
 {% endblock %}
-{% block js %}{{ block.super }}
-    <!--<script src="{{ STATIC_URL }}hqwebapp/js/dialogs.js"></script>-->
-{% endblock %}
 
 {% block page-title %}
     <ul class="breadcrumb">
@@ -122,21 +119,20 @@
                     </select>
                 </div>
             </div>
-            {% if saved_export.type == 'form' %}
             <div class="control-group">
-                <label for="include-errors-checkbox" class="control-label"></label>
                 <div class="controls">
+            {% if saved_export.type == 'form' %}
                     <label class="checkbox">
                         <input type="checkbox" name="include-errors" id="include-errors-checkbox" value="include-errors" {% if saved_export.include_errors %}checked="yes"{% endif %}/>
                         {% trans "Include duplicates and other unprocessed forms" %}
                     </label>
+            {% endif %}
                     <label class="checkbox">
                         <input type="checkbox" name="presave" id="presave-checkbox" value="presave" {% if presave %}checked="yes"{% endif %}/>
                         {% trans "Save this report daily?" %}
                     </label>
                 </div>
             </div>
-            {% endif %}
         </fieldset>
         <fieldset>
             <legend>{% trans "Export Fields" %}</legend>

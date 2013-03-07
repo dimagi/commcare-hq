@@ -1,6 +1,6 @@
 from datetime import datetime, date, timedelta
 import logging
-from corehq.apps.sms.util import clean_phone_number, clean_outgoing_sms_text
+from corehq.apps.sms.util import clean_phone_number, clean_outgoing_sms_text, create_billable_for_sms
 from corehq.apps.sms.api import incoming
 from django.conf import settings
 from urllib2 import urlopen
@@ -77,18 +77,7 @@ def create_from_request(request, delay=True):
     if is_unicode:
         message = message.decode("hex").decode("utf_16_be")
 
-    log = incoming(sender, message, API_ID, timestamp=actual_timestamp)
-
-    try:
-        # attempt to bill client
-        from hqbilling.tasks import bill_client_for_sms
-        from hqbilling.models import UnicelSMSBillable
-        if delay:
-            bill_client_for_sms.delay(UnicelSMSBillable, log._id)
-        else:
-            bill_client_for_sms(UnicelSMSBillable, log._id)
-    except Exception as e:
-        logging.debug("UNICEL API contacted, errors in billing. Error: %s" % e)
+    log = incoming(sender, message, API_ID, timestamp=actual_timestamp, delay=delay)
 
     return log
     
@@ -121,16 +110,8 @@ def send(message, delay=True):
     except Exception:
         data = None
     message.save()
-    try:
-        # attempt to bill client
-        from hqbilling.tasks import bill_client_for_sms
-        from hqbilling.models import UnicelSMSBillable
-        if delay:
-            bill_client_for_sms.delay(UnicelSMSBillable, message.get_id, **dict(response=data))
-        else:
-            bill_client_for_sms(UnicelSMSBillable, message.get_id, **dict(response=data))
-    except Exception as e:
-        logging.debug("UNICEL API contacted, errors in billing. Error: %s" % e)
+
+    create_billable_for_sms(message, API_ID, delay=delay, response=data)
 
     return data
 

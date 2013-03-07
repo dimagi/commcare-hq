@@ -1,7 +1,6 @@
 from StringIO import StringIO
 import functools
 import logging
-import uuid
 import zipfile
 from diff_match_patch import diff_match_patch
 from django.template.loader import render_to_string
@@ -14,7 +13,7 @@ from couchexport.models import Format
 from couchexport.writers import Excel2007ExportWriter
 from dimagi.utils.couch.database import get_db
 from dimagi.utils.couch.resource_conflict import retry_resource
-from django.utils import simplejson, html
+from django.utils import html
 from django.utils.http import urlencode as django_urlencode
 import os
 import re
@@ -26,23 +25,23 @@ from corehq.apps.hqmedia import utils
 from corehq.apps.app_manager.xform import XFormError, XFormValidationError, CaseError,\
     XForm, parse_xml
 from corehq.apps.builds.models import CommCareBuildConfig, BuildSpec
-from corehq.apps.hqmedia import upload
 from corehq.apps.users.decorators import require_permission
 from corehq.apps.users.models import Permissions, CommCareUser
 from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.logging import notify_exception
 from dimagi.utils.subprocess_timeout import ProcessTimedOut
 
-from dimagi.utils.web import render_to_response, json_response, json_request
+from dimagi.utils.web import json_response, json_request
 
 from corehq.apps.app_manager.forms import NewXFormForm, NewModuleForm
-from corehq.apps.hqmedia.forms import HQMediaZipUploadForm, HQMediaFileUploadForm
 from corehq.apps.reports import util as report_utils
 
 from corehq.apps.domain.decorators import login_and_domain_required, login_or_digest
 
 from django.http import HttpResponseRedirect
 from django.core.urlresolvers import reverse, RegexURLResolver
+from django.shortcuts import render
+
 from corehq.apps.app_manager.models import Application, get_app, DetailColumn, Form, FormActions,\
     AppError, load_case_reserved_words, ApplicationBase, DeleteFormRecord, DeleteModuleRecord, DeleteApplicationRecord, EXAMPLE_DOMAIN, str_to_cls, validate_lang, SavedAppBuild
 
@@ -54,8 +53,6 @@ from django.conf import settings
 from dimagi.utils.web import get_url_base
 
 import json
-import urllib
-import urlparse
 from collections import defaultdict
 from couchdbkit.resource import ResourceNotFound
 from corehq.apps.app_manager.decorators import safe_download
@@ -223,7 +220,7 @@ def import_app(req, domain, template="app_manager/import_app.html"):
         else:
             app = None
 
-        return render_to_response(req, template, {'domain': domain, 'app': app})
+        return render(req, template, {'domain': domain, 'app': app})
 
 @require_can_edit_apps
 @require_POST
@@ -274,6 +271,7 @@ def default(req, domain):
 
     """
     return view_app(req, domain)
+
 
 def get_form_view_context(request, form, langs, is_user_registration, messages=messages):
     xform_questions = []
@@ -355,6 +353,28 @@ def get_form_view_context(request, form, langs, is_user_registration, messages=m
         'module_case_types': [{'module_name': module.name.get('en'), 'case_type': module.case_type} for module in form.get_app().modules if module.case_type] if not is_user_registration else None,
     }
 
+
+def get_app_view_context(request, app):
+    if app and app.get_doc_type() == 'Application':
+        try:
+            multimedia = app.get_media_references()
+        except ProcessTimedOut as e:
+            notify_exception(request)
+            messages.warning(request, (
+                "We were unable to check if your forms had errors. "
+                "Refresh the page and we will try again."
+            ))
+            multimedia = {
+                'references': {},
+                'form_errors': True,
+                'missing_refs': False,
+            }
+        return {
+            'multimedia': multimedia,
+        }
+    else:
+        return {}
+
 def get_langs(request, app):
     lang = request.GET.get('lang',
         request.COOKIES.get('lang', app.langs[0] if hasattr(app, 'langs') and app.langs else '')
@@ -370,6 +390,7 @@ def get_langs(request, app):
             lang = (app.langs or ['en'])[0]
         langs = [lang] + app.langs
     return lang, langs
+
 
 def get_apps_base_context(request, domain, app):
 
@@ -390,38 +411,22 @@ def get_apps_base_context(request, domain, app):
         timezone = None
 
     if app:
-        latest_app_version = ApplicationBase.view('app_manager/saved_app',
-            startkey=[domain, app.id, {}],
-            endkey=[domain, app.id],
-            descending=True,
-            limit=1,
-            stale='update_after',
-        ).one()
-        latest_app_version = latest_app_version.version if latest_app_version else -1
         for _lang in app.langs:
             try:
                 SuccessMessage(app.success_message.get(_lang, ''), '').check_message()
             except Exception as e:
                 messages.error(request, "Your success message is malformed: %s is not a keyword" % e)
-    else:
-        latest_app_version = -1
-    context = {
+
+    return {
         'lang': lang,
         'langs': langs,
         'domain': domain,
         'edit': edit,
         'applications': applications,
-        'latest_app_version': latest_app_version,
-        'app': app
-    }
-    context.update({
+        'app': app,
         'URL_BASE': get_url_base(),
-        'edit': edit,
-        'latest_app_version': latest_app_version,
         'timezone': timezone,
-    })
-
-    return context
+    }
 
 @login_and_domain_required
 def paginate_releases(request, domain, app_id):
@@ -462,7 +467,7 @@ def release_manager(request, domain, app_id, template='app_manager/releases.html
         context.update({
             'multimedia': multimedia,
         })
-    response = render_to_response(request, template, context)
+    response = render(request, template, context)
     response.set_cookie('lang', _encode_if_unicode(context['lang']))
     return response
 
@@ -513,7 +518,6 @@ def view_generic(req, domain, app_id=None, module_id=None, form_id=None, is_user
     if app and app.copy_of:
         # don't fail hard.
         return HttpResponseRedirect(reverse("corehq.apps.app_manager.views.view_app", args=[domain,app.copy_of]))
-
 
     # grandfather in people who set commcare sense earlier
     if app and 'use_commcare_sense' in app:
@@ -582,31 +586,15 @@ def view_generic(req, domain, app_id=None, module_id=None, form_id=None, is_user
     if app and not module and hasattr(app, 'translations'):
         context.update({"translations": app.translations.get(context['lang'], {})})
 
-    if app and app.get_doc_type() == 'Application':
-        try:
-            multimedia = app.get_media_references()
-        except ProcessTimedOut as e:
-            notify_exception(req)
-            messages.warning(req,
-                "We were unable to check if your forms had errors. "
-                "Refresh the page and we will try again."
-            )
-            multimedia = {
-                'references': {},
-                'form_errors': True,
-                'missing_refs': False,
-            }
-        context.update({
-            'multimedia': multimedia,
-        })
-
     if form:
-        template="app_manager/form_view.html"
+        template = "app_manager/form_view.html"
         context.update(get_form_view_context(req, form, context['langs'], is_user_registration))
     elif module:
-        template="app_manager/module_view.html"
+        template = "app_manager/module_view.html"
     else:
-        template="app_manager/app_view.html"
+        template = "app_manager/app_view.html"
+        context.update(get_app_view_context(req, app))
+
     error = req.GET.get('error', '')
 
     force_edit = False
@@ -641,7 +629,7 @@ def view_generic(req, domain, app_id=None, module_id=None, form_id=None, is_user
             "app_build_spec_label" : app_build_spec_label,
             "app_version" : app.application_version,
         })
-    response = render_to_response(req, template, context)
+    response = render(req, template, context)
     response.set_cookie('lang', _encode_if_unicode(context['lang']))
     return response
 
@@ -680,7 +668,8 @@ def user_registration_source(req, domain, app_id):
     return form_designer(req, domain, app_id, is_user_registration=True)
 
 @login_and_domain_required
-def form_designer(req, domain, app_id, module_id=None, form_id=None, is_user_registration=False):
+def form_designer(req, domain, app_id, module_id=None, form_id=None,
+                  is_user_registration=False):
     app = get_app(domain, app_id)
 
     if is_user_registration:
@@ -695,15 +684,14 @@ def form_designer(req, domain, app_id, module_id=None, form_id=None, is_user_reg
         except IndexError:
             return bail(req, domain, app_id, not_found="form")
 
-
-
-
     context = get_apps_base_context(req, domain, app)
     context.update(locals())
     context.update({
         'edit': True,
+        'nav_form': form if not is_user_registration else '',
+        'formdesigner': True,
     })
-    return render_to_response(req, 'app_manager/form_designer.html', context)
+    return render(req, 'app_manager/form_designer.html', context)
 
 
 
@@ -1569,7 +1557,7 @@ def download_index(req, domain, app_id, template="app_manager/download_index.htm
         files = [(path[len('files/'):], req.app.fetch_attachment(path)) for path in req.app._attachments if path.startswith('files/')]
     else:
         files = sorted(req.app.create_all_files().items())
-    return render_to_response(req, template, {
+    return render(req, template, {
         'app': req.app,
         'files': files,
     })
@@ -1603,7 +1591,7 @@ def download_profile(req, domain, app_id):
     )
 
 def odk_install(req, domain, app_id):
-    return render_to_response(req, "app_manager/odk_install.html",
+    return render(req, "app_manager/odk_install.html",
             {"domain": domain, "app": get_app(domain, app_id)})
 
 def odk_qr_code(req, domain, app_id):
@@ -1764,7 +1752,7 @@ def emulator_page(req, domain, app_id, template):
     build_path = "/builds/{version}/{build_number}/Generic/WebDemo/".format(
         **copied_app.get_preview_build()._doc
     )
-    return render_to_response(req, template, {
+    return render(req, template, {
         'domain': domain,
         'app': app,
         'build_path': build_path,
@@ -1894,6 +1882,6 @@ def summary(request, domain, app_id, should_edit=True):
     context['summary'] = True
 
     if should_edit:
-        return render_to_response(request, "app_manager/summary.html", context)
+        return render(request, "app_manager/summary.html", context)
     else:
-        return render_to_response(request, "app_manager/exchange_summary.html", context)
+        return render(request, "app_manager/exchange_summary.html", context)

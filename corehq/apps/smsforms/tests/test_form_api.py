@@ -2,12 +2,12 @@ from django.test import TestCase
 import os
 import json
 from corehq.apps.app_manager.models import import_app
-from corehq.apps.domain.models import Domain
 from corehq.apps.smsforms.app import start_session
 from corehq.apps.smsforms.tests.util import MockContact, CONTACT_ID, q_and_a
 from corehq.apps.smsforms.models import XFormsSession
 from couchforms.models import XFormInstance
 from casexml.apps.case.models import CommCareCase
+from corehq.apps.domain.shortcuts import create_domain
 
 class FormplayerApiTest(TestCase):
     # NOTE: this will only work if the formplayer is running
@@ -15,7 +15,7 @@ class FormplayerApiTest(TestCase):
     def setUp(self):
         # bootstrap domain and a sample app
         self.domain = 'test-domain'
-        Domain.get_or_create_with_name(self.domain)
+        create_domain(self.domain)
         self.contact = MockContact(id=CONTACT_ID, username="smsform_contact",
                                    language="en")
         

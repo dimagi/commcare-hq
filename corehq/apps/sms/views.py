@@ -8,17 +8,22 @@ import re
 from django.contrib.auth import authenticate
 from django.core.urlresolvers import reverse
 from django.http import HttpResponse, HttpResponseRedirect, HttpResponseBadRequest
+from django.shortcuts import render
+
 from corehq.apps.sms.api import send_sms, incoming, send_sms_with_backend
 from corehq.apps.users.models import CouchUser
 from corehq.apps.users import models as user_models
 from corehq.apps.sms.models import SMSLog, INCOMING
 from corehq.apps.groups.models import Group
-from dimagi.utils.web import render_to_response
 from corehq.apps.domain.decorators import login_and_domain_required, login_or_digest, domain_admin_required
 from dimagi.utils.couch.database import get_db
 from django.contrib import messages
 from corehq.apps.reports import util as report_utils
 from django.views.decorators.csrf import csrf_exempt
+
+@login_and_domain_required
+def default(request, domain):
+    return HttpResponseRedirect(reverse(messaging, args=[domain]))
 
 @login_and_domain_required
 def messaging(request, domain, template="sms/default.html"):
@@ -30,7 +35,7 @@ def messaging(request, domain, template="sms/default.html"):
     context['timezone'] = tz
     context['timezone_now'] = datetime.now(tz=tz)
     context['layout_flush_content'] = True
-    return render_to_response(request, template, context)
+    return render(request, template, context)
 
 @login_and_domain_required
 def compose_message(request, domain, template="sms/compose.html"):
@@ -40,7 +45,7 @@ def compose_message(request, domain, template="sms/compose.html"):
     tz = report_utils.get_timezone(request.couch_user.user_id, domain)
     context['timezone'] = tz
     context['timezone_now'] = datetime.now(tz=tz)
-    return render_to_response(request, template, context)
+    return render(request, template, context)
 
 def post(request, domain):
     """
@@ -201,7 +206,7 @@ def message_test(request, domain, phone_number):
     context['timezone_now'] = datetime.now(tz=tz)
     context['layout_flush_content'] = True
     context['phone_number'] = phone_number
-    return render_to_response(request, "sms/message_tester.html", context)
+    return render(request, "sms/message_tester.html", context)
 
 @csrf_exempt
 @login_or_digest

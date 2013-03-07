@@ -82,6 +82,8 @@ class CommCareUserResource(JsonResource):
             return list(CommCareUser.by_domain(domain))
 
     class Meta(CustomResourceMeta):
+        list_allowed_methods = ['get']
+        detail_allowed_methods = ['get']
         resource_name = 'user'
 
 class CommCareCaseResource(JsonResource):
@@ -131,6 +133,8 @@ class CommCareCaseResource(JsonResource):
 
 
     class Meta(CustomResourceMeta):
+        list_allowed_methods = ['get']
+        detail_allowed_methods = ['get']
         resource_name = 'case'
 
 class XFormInstanceResource(JsonResource):
@@ -145,10 +149,10 @@ class XFormInstanceResource(JsonResource):
     received_on = fields.DateTimeField(attribute="received_on")
     md5 = fields.CharField(attribute='xml_md5')
 
-
-
     def obj_get(self, request, **kwargs):
         return get_object_or_not_exist(XFormInstance, kwargs['pk'], kwargs['domain'])
 
     class Meta(CustomResourceMeta):
+        list_allowed_methods = []
+        detail_allowed_methods = ['get']
         resource_name = 'form'

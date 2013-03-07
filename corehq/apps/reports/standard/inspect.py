@@ -16,7 +16,7 @@ from corehq.apps.reports.fields import SelectOpenCloseField, SelectMobileWorkerF
 from corehq.apps.reports.generic import GenericTabularReport
 from corehq.apps.users.models import CommCareUser
 from dimagi.utils.couch.database import get_db
-from dimagi.utils.couch.pagination import CouchFilter, FilteredPaginator
+from dimagi.utils.couch.pagination import CouchFilter
 from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.timezones import utils as tz_utils
 from corehq.apps.groups.models import Group
@@ -142,15 +142,20 @@ class CaseDisplay(object):
     def user_not_found_display(self, user_id):
         return _("Unknown [%s]") % user_id
 
+    @memoized
+    def _get_username(self, user_id):
+        username = self.report.usernames.get(user_id)
+        if not username:
+            user = CommCareUser.get_by_user_id(user_id)
+            username = user.username if user else self.user_not_found_display(user_id)
+        return username
+
     @property
     def owner_display(self):
-        username = (self.report.usernames.get(self.user_id) or
-                    self.user_not_found_display(self.user_id))
-
         if self.owning_group and self.owning_group.name:
             return '<span class="label label-inverse">%s</span>' % self.owning_group.name
         else:
-            return username
+            return self._get_username(self.user_id)
 
     @property
     def closed_display(self):
@@ -231,7 +236,7 @@ class CaseDisplay(object):
                 owner_id = action.get_user_id()
         if not owner_id:
             return _("No data")
-        return self.report.usernames.get(owner_id, self.user_not_found_display(owner_id))
+        return self._get_username(owner_id)
 
 class CaseListMixin(ProjectInspectionReportParamsMixin, GenericTabularReport, ProjectReportParametersMixin):
 
@@ -320,7 +325,6 @@ class CaseListReport(CaseListMixin, ProjectInspectionReport):
 
     @property
     def report_context(self):
-        shared_params = super(CaseListReport, self).shared_pagination_GET_params
         rep_context = super(CaseListReport, self).report_context
         rep_context.update(
             filter=settings.LUCENE_ENABLED
@@ -346,26 +350,6 @@ class CaseListReport(CaseListMixin, ProjectInspectionReport):
             }
 
         return headers
-
-    @property
-    @memoized
-    def paginator_results(self):
-        """This is no longer called by anything"""
-        def _compare_cases(x, y):
-            x = x.get('key', [])
-            y = y.get('key', [])
-            try:
-                x = x[-1]
-                y = y[-1]
-            except Exception:
-                x = ""
-                y = ""
-            return cmp(x, y)
-        is_open = self.request.GET.get(SelectOpenCloseField.slug)
-        filters = [CaseListFilter(self.domain, case_owner, case_type=self.case_type, open_case=is_open)
-                   for case_owner in self.case_owners]
-        paginator = FilteredPaginator(filters, _compare_cases)
-        return paginator
 
     @property
     def rows(self):
