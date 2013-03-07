@@ -186,8 +186,6 @@ class FullCaseES(ESView):
 class XFormES(ESView):
     index = "xforms"
 
-    #ret = super(ESView, self).dispatch(*args, **kwargs)
-
     def base_query(self, terms={}, doc_type='xforminstance', fields=[], start=0, size=DEFAULT_SIZE):
         """
         Somewhat magical enforcement that the basic query for XForms will only return XFormInstance

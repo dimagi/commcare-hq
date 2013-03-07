@@ -173,10 +173,6 @@ class PtopReindexer(NoArgsCommand):
             print "Recreating index"
             self.pillow.create_index()
             self.pillow.seen_types = {}
-
-            #print "Resetting %s Checkpoint" % self.doc_class.__name__
-            #self.pillow.reset_checkpoint()
-
             self.load_from_view()
         else:
             if self.runfile is None:
