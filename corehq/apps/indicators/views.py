@@ -45,9 +45,8 @@ class BulkCopyIndicatorsView(TemplateView):
     template_name = "indicators/forms/copy_to_domain.html"
 
     @method_decorator(require_edit_indicators)
-    def dispatch(self, request, *args, **kwargs):
-        self.domain = args[0]
-        indicator_type = kwargs.get('indicator_type')
+    def dispatch(self, request, domain, indicator_type=None, *args, **kwargs):
+        self.domain = domain
         try:
             self.indicator_class = to_function("%s.%s" % (self.indicator_loc, indicator_type))
         except AttributeError:
