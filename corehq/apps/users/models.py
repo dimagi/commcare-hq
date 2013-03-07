@@ -175,7 +175,16 @@ class UserRole(Document):
     @classmethod
     def by_domain(cls, domain):
         return cls.view('users/roles_by_domain',
-            key=domain,
+            startkey=[domain],
+            endkey=[domain, {}],
+            include_docs=True,
+            reduce=False,
+        )
+
+    @classmethod
+    def by_domain_and_name(cls, domain, name):
+        return cls.view('users/roles_by_domain',
+            key=[domain, name],
             include_docs=True,
             reduce=False,
         )
