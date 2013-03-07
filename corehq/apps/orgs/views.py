@@ -138,15 +138,15 @@ def orgs_update_info(request, org):
 @require_POST
 def orgs_update_project(request, org):
     domain = Domain.get_by_name(request.POST.get('domain', ""))
-    new_slug = request.POST.get('slug', "")
-    if domain and new_slug:
+    new_hr_name = request.POST.get('hr_name', "")
+    if domain and new_hr_name:
         if domain.organization != org:
             messages.error(request, "The project %s isn't a part of this organization" % domain.name)
         else:
-            old_slug = domain.slug
-            domain.slug = new_slug
+            old_hr_name = domain.hr_name
+            domain.hr_name = new_hr_name
             domain.save()
-            messages.success(request, "The projects display name has been changed from %s to %s" % (old_slug, new_slug))
+            messages.success(request, "The projects display name has been changed from %s to %s" % (old_hr_name, new_hr_name))
     else:
         messages.error(request, "Could not edit project information -- missing new display name")
 
@@ -183,7 +183,7 @@ def orgs_add_project(request, org):
 
         dom = Domain.get_by_name(domain_name)
         dom.organization = org
-        dom.slug = form.cleaned_data['domain_slug']
+        dom.hr_name = form.cleaned_data['domain_hrname']
         dom.save()
         messages.success(request, "Project Added!")
     else:
