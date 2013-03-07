@@ -2,7 +2,7 @@ from datetime import datetime
 from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
-from django.views.decorators.http import require_http_methods
+from django.views.decorators.http import require_POST
 from django.contrib.auth.forms import AdminPasswordChangeForm
 from django.contrib.auth.models import User
 from django.contrib.auth.views import login as django_login, redirect_to_login
@@ -224,7 +224,7 @@ def debug_notify(request):
     return HttpResponse("Email should have been sent")
 
 @login_required()
-@require_http_methods(["POST"])
+@require_POST
 def bug_report(req):
     report = dict([(key, req.POST.get(key, '')) for key in (
         'subject',
