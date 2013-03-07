@@ -56,8 +56,8 @@ class OrganizationRegistrationForm(forms.Form):
     form for creating an organization for the first time
     """
 
-    org_title = forms.CharField(label='Organization Title:', max_length=25, help_text='i.e. - The World Bank')
-    org_name = forms.CharField(label='Organization ID:', max_length=25, help_text='i.e. - worldbank')
+    org_title = forms.CharField(label='Organization Title:', max_length=25, help_text='e.g. - Dimagi Inc')
+    org_name = forms.CharField(label='Organization ID:', max_length=25, help_text='e.g. - dimagi')
     email = forms.CharField(label='Organization Email:', max_length=35, required=False)
     url = forms.CharField(label='Organization Homepage:', max_length=35, required=False)
     location = forms.CharField(label='Organization Location:', max_length=25, required=False)
