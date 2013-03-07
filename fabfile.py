@@ -167,7 +167,7 @@ def production():
         'remote_es': ['hqdb.internal.commcarehq.org', 'hqdjango0.internal.commcarehq.org',
                       'hqdjango1.internal.commcarehq.org', 'hqdjango2.internal.commcarehq.org'],
 
-        'formsplayer': ['hqdjango0.internal.commcarehq.org'],
+        'formsplayer': ['hqdb.internal.commcarehq.org'],
         'lb': [], #todo on apache level config
         'staticfiles': ['hqproxy0.internal.commcarehq.org'],
         'deploy': ['hqdb.internal.commcarehq.org'], #this is a stub becuaue we don't want to be prompted for a host or run deploy too many times
