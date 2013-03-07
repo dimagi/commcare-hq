@@ -109,7 +109,7 @@
         <div class="control-group{% if published_as_org %} hide{% endif %}" id="author-input">
             <div class="control-label"><label>{% trans "Publishing on behalf of" %}</label></div>
             <div class="controls">
-                <input type="text" name="author" value="{{ author }}" placeholder="{% trans "Name to display as the author" %}" />
+                <input type="text" name="author" value="{{ author|default:"" }}" placeholder="{% trans "Name to display as the author" %}" />
             </div>
         </div>
         {% for app, app_form in app_forms %}
