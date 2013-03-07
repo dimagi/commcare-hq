@@ -193,6 +193,20 @@ def orgs_add_project(request, org):
 
 @org_admin_required
 @require_POST
+def orgs_remove_project(request, org):
+    domain = request.POST.get("project_name", None)
+    if not domain:
+        messages.error(request, "You must specify a project name")
+    else:
+        domain = Domain.get_by_name(domain)
+        domain.organization = None
+        domain.save()
+        messages.success(request, render_to_string('orgs/partials/undo_remove_project.html',
+                                                   {"org": org, "dom": domain}), extra_tags="html")
+    return HttpResponseRedirect(reverse(request.POST.get('redirect_url', 'orgs_landing'), args=(org,)))
+
+@org_admin_required
+@require_POST
 def invite_member(request, org):
     form = InviteMemberForm(org, request.POST)
     if form.is_valid():
