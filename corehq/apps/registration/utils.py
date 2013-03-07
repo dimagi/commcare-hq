@@ -36,8 +36,7 @@ def activate_new_user(form, is_domain_admin=True, domain=None, ip=None):
 
     return new_user
 
-def request_new_domain(request, form, org, domain_type=None, new_user=True,
-                       slug=''):
+def request_new_domain(request, form, org, domain_type=None, new_user=True):
     now = datetime.utcnow()
     current_user = CouchUser.from_django_user(request.user)
 
