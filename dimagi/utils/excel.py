@@ -161,8 +161,20 @@ class WorksheetJSONReader(IteratorJSONReader):
             else:
                 width += 1
         def iterator():
+            def _convert_float(value):
+                """
+                excel doesn't distinguish between 1 and 1.0
+                if it can be an integer assume it is
+                """
+                if isinstance(value, float) and int(value) == value:
+                    return int(value)
+                else:
+                    return value
             for row in self.worksheet.iter_rows():
-                cell_values = [cell.internal_value for cell in row[:width]]
+                cell_values = [
+                    _convert_float(cell.internal_value)
+                    for cell in row[:width]
+                ]
                 if not any(cell_values):
                     break
                 yield cell_values
