@@ -396,7 +396,7 @@ def custom_export(req, domain):
     if req.method == "POST":
         helper.update_custom_export()
         messages.success(req, "Custom export created! You can continue editing here.")
-        return get_report_url(helper.export_type, domain)
+        return _redirect_to_export_home(helper.export_type, domain)
 
     schema = build_latest_schema(export_tag)
 
@@ -433,7 +433,7 @@ def edit_custom_export(req, domain, export_id):
     if req.method == "POST":
         helper.update_custom_export()
         messages.success(req, "Custom export saved!")
-        return get_report_url(helper.export_type, domain)
+        return _redirect_to_export_home(helper.export_type, domain)
     else:
         return helper.get_response()
 
@@ -491,9 +491,9 @@ def delete_custom_export(req, domain, export_id):
         return HttpResponseRedirect(req.META['HTTP_REFERER'])
     saved_export.delete()
     messages.success(req, "Custom export was deleted.")
-    return get_report_url(saved_export.type, domain)
+    return _redirect_to_export_home(saved_export.type, domain)
 
-def get_report_url(type, domain):
+def _redirect_to_export_home(type, domain):
     if type == "form":
         return HttpResponseRedirect(export.ExcelExportReport.get_url(domain=domain))
     else:
