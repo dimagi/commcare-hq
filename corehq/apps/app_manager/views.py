@@ -160,8 +160,12 @@ def get_user_registration_source(req, domain, app_id):
     return _get_xform_source(req, app, form, filename="User Registration.xml")
 
 def xform_display(req, domain, form_unique_id):
-    form, app = Form.get_form(form_unique_id, and_app=True)
-    if domain != app.domain: raise Http404
+    try:
+        form, app = Form.get_form(form_unique_id, and_app=True)
+    except ResourceNotFound:
+        raise Http404()
+    if domain != app.domain:
+        raise Http404()
     langs = [req.GET.get('lang')] + app.langs
 
     questions = form.get_questions(langs)
@@ -170,8 +174,12 @@ def xform_display(req, domain, form_unique_id):
 
 @login_and_domain_required
 def form_casexml(req, domain, form_unique_id):
-    form, app = Form.get_form(form_unique_id, and_app=True)
-    if domain != app.domain: raise Http404
+    try:
+        form, app = Form.get_form(form_unique_id, and_app=True)
+    except ResourceNotFound:
+        raise Http404()
+    if domain != app.domain:
+        raise Http404()
     return HttpResponse(form.create_casexml())
 
 @login_or_digest
@@ -1128,9 +1136,12 @@ def edit_form_attr(req, domain, app_id, unique_form_id, attr):
 def rename_language(req, domain, form_unique_id):
     old_code = req.POST.get('oldCode')
     new_code = req.POST.get('newCode')
-    form, app = Form.get_form(form_unique_id, and_app=True)
+    try:
+        form, app = Form.get_form(form_unique_id, and_app=True)
+    except ResourceConflict:
+        raise Http404()
     if app.domain != domain:
-        raise Http404
+        raise Http404()
     try:
         form.rename_xform_language(old_code, new_code)
         app.save()
