@@ -330,7 +330,12 @@ class FormBase(DocumentSchema):
 
     @classmethod
     def get_form(cls, form_unique_id, and_app=False):
-        d = get_db().view('app_manager/xforms_index', key=form_unique_id).one()['value']
+
+        d = get_db().view('app_manager/xforms_index', key=form_unique_id).one()
+        if d:
+            d = d['value']
+        else:
+            raise ResourceNotFound()
         # unpack the dict into variables app_id, module_id, form_id
         app_id, unique_id = [d[key] for key in ('app_id', 'unique_id')]
 

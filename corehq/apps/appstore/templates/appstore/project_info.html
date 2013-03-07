@@ -144,6 +144,14 @@
                 {{ project.downloads }} {% trans "Downloads" %} <span id="downloads-btn-append">>></span>
             </button>
             <div style="margin-top: 1em;" class="well well-small hide" id="downloads-info">
+                <div class="alert">
+                    <button type="button" class="close" data-dismiss="alert">&times;</button>
+                    <strong>Note:</strong> <p>This a beta feature displayed to super users only</p>
+                    <p>Currently this list only shows new projects that were copied directly from this publication.
+                    It does not yet show projects who downloaded apps from this publication.</p>
+                    <p>We also don't have 'Downloaded By' data for many existing domains.</p>
+                </div>
+
                 {% if copies %}
                 <table class="table">
                     <tr><th style="border-top: 0;">{% trans "Project" %}</th>

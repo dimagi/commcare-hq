@@ -68,10 +68,16 @@ var getCaseFilterUrl = function(urlRoot, appId, moduleId, special) {
 };
 
 var showError = function (message, location, autoHideTime) {
+    if (message === undefined) {
+        message = "sorry, there was an error";
+    }
     _show(message, location, autoHideTime, "alert alert-error");
 };
 
 var showSuccess = function (message, location, autoHideTime) {
+    if (message === undefined) {
+        message = "success";
+    }
     _show(message, location, autoHideTime, "alert alert-success");
 };
 

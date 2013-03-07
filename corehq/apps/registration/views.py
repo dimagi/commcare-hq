@@ -67,11 +67,11 @@ def register_org(request, template="registration/org_request.html"):
             email = form.cleaned_data["email"]
             url = form.cleaned_data["url"]
             location = form.cleaned_data["location"]
-            logo = form.cleaned_data["logo"]
-            if logo:
-                logo_filename = logo.name
-            else:
-                logo_filename = ''
+            # logo = form.cleaned_data["logo"]
+            # if logo:
+            #     logo_filename = logo.name
+            # else:
+            #     logo_filename = ''
 
             org = Organization(name=name, title=title, location=location, email=email, url=url, logo_filename=logo_filename)
             org.save()
@@ -79,8 +79,8 @@ def register_org(request, template="registration/org_request.html"):
             request.couch_user.add_org_membership(org.name, is_admin=True)
             request.couch_user.save()
 
-            if logo:
-                org.put_attachment(content=logo.read(), name=logo.name)
+            # if logo:
+            #     org.put_attachment(content=logo.read(), name=logo.name)
 
             if referer_url:
                 return redirect(referer_url)
@@ -124,8 +124,7 @@ def register_domain(request, domain_type=None):
                 return render(request, 'error.html', vals)
 
             request_new_domain(
-                request, form, org, new_user=is_new, domain_type=domain_type,
-                slug=request.POST.get('domain_name') if org else None)
+                request, form, org, new_user=is_new, domain_type=domain_type)
 
             requested_domain = form.cleaned_data['domain_name']
             if is_new:
