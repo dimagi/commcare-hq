@@ -192,7 +192,7 @@ class CHWManagerReport(GenericTabularReport, MVPIndicatorReport, DatespanMixin):
         formatted_values = {}
 
         def _formatted_cell(val, val_text):
-            table_cell = self.table_cell(v, val_text)
+            table_cell = self.table_cell(val, val_text)
             table_cell.update(
                 unwrap=True,
                 )
@@ -209,42 +209,44 @@ class CHWManagerReport(GenericTabularReport, MVPIndicatorReport, DatespanMixin):
             raw_values[user.get('user_id')] = value
             user_indices[user.get('user_id')] = u
         all_values = raw_values.values()
-
-        if isinstance(all_values[0], dict):
-            non_zero = [v.get('ratio')*100 for v in all_values if v.get('ratio') is not None]
-            d_nonzero = [v.get('denominator') for v in all_values if v.get('ratio') is not None]
-            n_nonzero = [v.get('numerator') for v in all_values if v.get('ratio') is not None]
-            d_sum = sum(d_nonzero)
-            n_sum = sum(n_nonzero)
-            total_ratio = float(n_sum) / float(d_sum) * 100 if d_sum > 0 else None
-            total = "%.f%% (%d/%d)" % (total_ratio, n_sum, d_sum) if total_ratio is not None else "---"
-        else:
-            non_zero = [v for v in all_values if v > 0]
-            nz_sum = sum(non_zero)
-            total = _formatted_cell(nz_sum, _fmt_stat(nz_sum))
-
-        avg = numpy.average(non_zero)
-        median = numpy.median(non_zero)
-        std = numpy.std(non_zero)
-
-        for user_id, value in raw_values.items():
-            if isinstance(value, dict):
-                ratio = value.get('ratio')
-                v = ratio*100 if ratio else None
-                v_text = "%.f%% (%d/%d)" % ((ratio*100), value.get('numerator'), value.get('denominator')) if ratio is \
-                    not None else "--"
+        if all_values:
+            if isinstance(all_values[0], dict):
+                non_zero = [v.get('ratio') * 100 for v in all_values if v.get('ratio') is not None]
+                d_nonzero = [v.get('denominator') for v in all_values if v.get('ratio') is not None]
+                n_nonzero = [v.get('numerator') for v in all_values if v.get('ratio') is not None]
+                d_sum = sum(d_nonzero)
+                n_sum = sum(n_nonzero)
+                total_ratio = float(n_sum) / float(d_sum) * 100 if d_sum > 0 else None
+                total = "%.f%% (%d/%d)" % (total_ratio, n_sum, d_sum) if total_ratio is not None else "---"
             else:
-                v = value
-                v_text = "%d" % value if value is not None else "--"
+                non_zero = [v for v in all_values if v > 0]
+                nz_sum = sum(non_zero)
+                total = _formatted_cell(nz_sum, _fmt_stat(nz_sum))
 
-            if v > avg+(std*2) and v is not None:
-                # more than two stds above average
-                v_text = mark_safe('<span class="label label-success">%s</span>' % v_text)
-            elif v < avg-(std*2) and v is not None:
-                # more than two stds below average
-                v_text = mark_safe('<span class="label label-important">%s</span>' % v_text)
+            avg = numpy.average(non_zero)
+            median = numpy.median(non_zero)
+            std = numpy.std(non_zero)
 
-            formatted_values[user_id] = _formatted_cell(v, v_text)
+            for user_id, value in raw_values.items():
+                if isinstance(value, dict):
+                    ratio = value.get('ratio')
+                    v = ratio*100 if ratio else None
+                    v_text = "%.f%% (%d/%d)" % ((ratio*100), value.get('numerator'), value.get('denominator')) if ratio is \
+                        not None else "--"
+                else:
+                    v = value
+                    v_text = "%d" % value if value is not None else "--"
+
+                if v > avg+(std*2) and v is not None:
+                    # more than two stds above average
+                    v_text = mark_safe('<span class="label label-success">%s</span>' % v_text)
+                elif v < avg-(std*2) and v is not None:
+                    # more than two stds below average
+                    v_text = mark_safe('<span class="label label-important">%s</span>' % v_text)
+
+                formatted_values[user_id] = _formatted_cell(v, v_text)
+        else:
+            total = avg = median = std = 0
 
         return {
             'slug': indicator.slug,
