@@ -54,6 +54,8 @@ def excel_config(request, domain):
                     messages.error(request, _('Sorry, your spreadsheet is too big. '
                                               'Please reduce the number of '
                                               'rows to less than %s and try again') % MAX_ALLOWED_ROWS)
+                elif row_count == 0:
+                    messages.error(request, 'Your spreadsheet is empty. Please try again with a different spreadsheet.')
                 else:
                     # get case types in this domain
                     case_types = []

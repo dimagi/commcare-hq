@@ -46,7 +46,7 @@ class ExcelFile(object):
     def get_header_columns(self):
         sheet = self.get_first_sheet()
         
-        if sheet:
+        if sheet and sheet.ncols > 0:
             columns = []
             
             # get columns 
