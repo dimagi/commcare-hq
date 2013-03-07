@@ -60,6 +60,7 @@ class FacilityRegistry(Document):
         try:
             ours_existing = {}
             self.syncing = True
+            self.save()
 
             for our_f in Facility.by_registry(self._id).all():
                 if our_f.synced_at:
@@ -149,7 +150,6 @@ class Facility(Document):
     @property
     def remote_facility(self):
         core_properties = self.data or {}
-        print "core_properties", core_properties
         extended_properties = core_properties.pop('properties', {})
 
         return freddy.Facility(
