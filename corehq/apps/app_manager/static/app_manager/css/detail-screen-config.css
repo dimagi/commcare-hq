@@ -8,7 +8,6 @@
 .detail-screen-table select {
 }
 .detail-screen-table th, .detail-screen-table td {
-    padding: 5px;
     vertical-align: middle;
 }
 
@@ -31,10 +30,8 @@
     width: 160px;
 }
 .detail-screen-table .detail-screen-header {
-    width: 100px;
 }
 .detail-screen-table .detail-screen-format {
-    padding: 0 10px;
 }
 .detail-screen-table .detail-screen-extra {
 }

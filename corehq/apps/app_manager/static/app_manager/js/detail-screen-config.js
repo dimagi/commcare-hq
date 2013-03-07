@@ -243,7 +243,7 @@ var DetailScreenConfig = (function () {
     }());
     Screen = (function () {
         var sectionLabels = {
-            'case': "Case Details",
+            'case': "Case List and Detail Screen Configuration",
             referral: "Referral Details"
         };
         function Screen($home, spec, options) {
@@ -521,7 +521,7 @@ var DetailScreenConfig = (function () {
                     if (this.edit) {
                         $('<div class="clearfix">').append(this.saveButton.ui).appendTo($box);
                     }
-                    $table = $('<table class="table"/>'
+                    $table = $('<table class="table table-condensed"/>'
                         ).addClass('detail-screen-table'
                     ).appendTo($box);
                     $thead = $('<thead/>').appendTo($table);

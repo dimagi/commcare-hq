@@ -1,6 +1,6 @@
 {% load hq_shared_tags %}
 
-<ul class="nav nav-pills" id="release-manager-nav">
+<ul class="nav nav-pills pull-right">
     <li {% if not release_manager %}class="active"{% endif %}>
     <a href="{% url view_app domain app.id %}?edit={{ edit|BOOL }}">
         Structure and Configuration

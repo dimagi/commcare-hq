@@ -2,7 +2,13 @@
 {% load hq_shared_tags %}
 {% load i18n %}
 <div class="control-group">
-    <label class="control-label">{% trans LABEL %}</label>
+    <label class="control-label">
+        {% trans LABEL %}
+        <span class="hq-help-template"
+              data-title="{% trans LABEL %}"
+              data-content="{% trans DESC %}"
+        ></span>
+    </label>
     <div class="controls">
         {% if edit %}
             <select type="text" name="{{ SLUG }}-show" data-value="{% if case_list.show %}true{% else %}false{% endif %}">
@@ -28,9 +34,5 @@
                 Show with label: {{ case_list.label|trans:langs }}
             {% endif %}
         {% endif %}
-        <span class="hq-help-template"
-              data-title="{% trans LABEL %}"
-              data-content="{% trans DESC %}"
-        ></span>
     </div>
 </div>

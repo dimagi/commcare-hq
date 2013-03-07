@@ -26,7 +26,7 @@
 
 <script type="text/html" id="CommcareSettings.widgets.text">
     <span data-bind="visible: $root.edit">
-        <input type="text" class="input-xxlarge" data-bind="
+        <input type="text" class="span6" data-bind="
             value: visibleValue,
             valueUpdate: 'textchange',
             attr: {disabled: !enabled()}
@@ -114,17 +114,18 @@ todo fix
                     visible: visible,
                     css: {error: disabledButHasValue}
                 ">
-                    <label class="control-label" data-bind="text: name"></label>
-                    <div class="controls">
+                    <label class="control-label">
+                        <span data-bind="text: name"></span>
                         <span data-bind="makeHqHelp: {name: name, description: $data.description}, visible: $data.description"></span>
-                        <div class="offset1">
-                            <span data-bind="template: 'CommcareSettings.widgets.' + widget"></span>
-                            <span data-bind="visible: disabledMessage(), css: {'text-warning': !versionOK(), 'text-success': versionOK}">
-                                <i data-bind="css: {'icon-arrow-left': !versionOK(), 'icon-ok': versionOK}"></i>
-                                <span data-bind="text: disabledMessage()"></span>
-                            </span>
-                            <p class="help-block" data-bind="visible: disabledButHasValue">
-                                <span data-bind="text: $data.disabled_txt"></span>
+                    </label>
+                    <div class="controls">
+                        <span data-bind="template: 'CommcareSettings.widgets.' + widget"></span>
+                        <span data-bind="visible: disabledMessage(), css: {'text-warning': !versionOK(), 'text-success': versionOK}">
+                            <i data-bind="css: {'icon-arrow-left': !versionOK(), 'icon-ok': versionOK}"></i>
+                            <span data-bind="text: disabledMessage()"></span>
+                        </span>
+                        <p class="help-block" data-bind="visible: disabledButHasValue">
+                            <span data-bind="text: $data.disabled_txt"></span>
                             <span data-bind="visible: !$data.disabled_txt">
                             {% blocktrans %}
                                 Oops!
@@ -134,8 +135,7 @@ todo fix
                                 Sorry about that.
                             {% endblocktrans %}
                             </span>
-                            </p>
-                        </div>
+                        </p>
                     </div>
                 </div>
             <!--/ko-->
