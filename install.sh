@@ -5,14 +5,9 @@
 # - ensures all necessary processes will run on startup
 # - creates databases 
 #
-# Before running, you must download the following files to the script's
-# directory: 
-#  - the JDK 7 tar.gz from
-#    http://www.oracle.com/technetwork/java/javase/downloads/index.html and
-#    save it as jdk.tar.gz
-# 
-# When installing Jython, accept the default options and enter
-# /usr/local/lib/jython when prompted for the target directory.
+# Before running, you must download the JDK 7 tar.gz from
+# http://www.oracle.com/technetwork/java/javase/downloads/index.html and save
+# it as jdk.tar.gz in the same directory as this script.
 
 
 # Database settings; change these if desired
@@ -25,7 +20,7 @@ COUCHDB_DB="foodb"
 
 ## Misc settings
 
-ES_VERSION=0.19.12
+ES_VERSION=0.20.5
 
 if [ ! -f jdk.tar.gz ]; then
     echo "Please read the top of this file."
@@ -98,8 +93,12 @@ sudo npm install npm
 #sudo npm install less uglify-js -g
 
 sudo pip install --upgrade pip
-sudo pip install virtualenv virtualenvwrapper supervisor
+# 3.0b1 has a bug that affects our fabfile
+sudo pip install virtualenv virtualenvwrapper supervisor==3.0a10
 echo_supervisord_conf | sudo tee /etc/supervisord.conf
+
+curl -L https://gist.github.com/raw/1213031/929e578faae2ad3bcb29b03d116bcb09e1932221/supervisord.conf | sudo tee /etc/init/supervisord.conf && sudo start supervisord
+
 
 if [[ ! $(grep virtualenvwrapper ~/.bashrc) ]]; then
     echo "source /usr/local/bin/virtualenvwrapper.sh" >> ~/.bashrc
@@ -128,7 +127,7 @@ if [ ! -d /usr/local/lib/jython ]; then
     fi
 
     # Set /usr/local/lib/jython as the target directory
-    sudo java -jar jython_installer-2.5.2.jar
+    sudo java -jar jython_installer-2.5.2.jar --silent -d /usr/local/lib/jython
 
     sudo ln -s /usr/local/lib/jython/bin/jython /usr/local/bin/
 
@@ -142,12 +141,12 @@ fi
 ## Install couchdb ##
 # from http://onabai.wordpress.com/2012/05/10/installing-couchdb-1-2-in-ubuntu-12-04/
 if [ ! -f /etc/init.d/couchdb ]; then
-    if [ ! -f apache-couchdb-1.2.0.tar.gz ]; then
-        wget http://apache.mirrors.pair.com/couchdb/releases/1.2.0/apache-couchdb-1.2.0.tar.gz
+    if [ ! -f apache-couchdb-1.2.1.tar.gz ]; then
+        wget http://apache.mirrors.pair.com/couchdb/1.2.1/apache-couchdb-1.2.1.tar.gz
     fi
 
-    tar xzf apache-couchdb-1.2.0.tar.gz
-    cd apache-couchdb-1.2.0
+    tar xzf apache-couchdb-1.2.1.tar.gz
+    cd apache-couchdb-1.2.1
     if [ "$PM" = "apt-ubuntu" ]; then
         ./configure
     elif  [ "$PM" = "yum-rhel" ]; then
@@ -160,7 +159,7 @@ if [ ! -f /etc/init.d/couchdb ]; then
     fi
     make 
     sudo make install
-    cd .. && rm -r apache-couchdb-1.2.0
+    cd .. && rm -r apache-couchdb-1.2.1
 
     if [ "$PM" = "apt-ubuntu" ]; then
         sudo adduser --disabled-login --disabled-password --no-create-home couchdb
@@ -177,13 +176,12 @@ fi
 
 ## Install couchdb-lucene
 if [ ! -f /etc/init.d/couchdb-lucene ]; then
-    if [ ! -f couchdb-lucene-0.8.0-dist.zip ]; then
-        wget https://github.com/downloads/rnewson/couchdb-lucene/couchdb-lucene-0.8.0-dist.zip
+    if [ ! -f v0.8.0.zip ]; then
+        wget https://github.com/rnewson/couchdb-lucene/archive/v0.8.0.zip
     fi
 
-    unzip couchdb-lucene-0.8.0-dist.zip
-    sudo cp couchdb-lucene-0.8.0 /usr/local
-    rm -r couchdb-lucene-0.8.0
+    unzip v0.8.0.zip
+    sudo mv couchdb-lucene-0.8.0 /usr/local
     sudo cp /usr/local/couchdb-lucene-0.8.0/tools/etc/init.d/couchdb-lucene/couchdb-lucene /etc/init.d/
 fi
 
@@ -205,7 +203,7 @@ if [ ! -f /etc/init.d/elasticsearch ]; then
     if [ "$PM" = "apt-ubuntu" ]; then
         file=elasticsearch-$ES_VERSION.deb
         if [ ! -f $file ]; then
-            wget https://github.com/downloads/elasticsearch/elasticsearch/$file
+            wget https://download.elasticsearch.org/elasticsearch/elasticsearch/$file
         fi
         sudo gdebi --n $file
 
