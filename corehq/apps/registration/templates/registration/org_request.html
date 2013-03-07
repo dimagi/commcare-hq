@@ -1,7 +1,7 @@
 {% extends "registration/base.html" %}
 {% load i18n %}
 
-{% block title %}New Organization{% endblock title %}
+{% block title %}{% trans "New Organization" %}{% endblock title %}
 {% block js-inline  %}{{ block.super }}
 <script type="text/javascript">
     $(function() {
@@ -16,14 +16,14 @@
 {% endblock %}
 
 {% block step-title %}
-Create a New Organization
+{% trans "Create a New Organization" %}
 {% endblock %}
 
 {% block registration-content %}
     <div class="span8">
         <form class="form-horizontal" method="post" action="{{ request.get_full_path }}" enctype="multipart/form-data">
             <fieldset>
-                <legend>Create an Organization</legend>
+                <legend>{% trans "Create an Organization" %}</legend>
                 {% for global_error in form.non_field_errors %}
                 <div class="alert alert-error">
                     {{ global_error }}
@@ -61,13 +61,13 @@ Create a New Organization
 <div class="modal hide fade" id="termsOfServiceDomainModal">
     <div class="modal-header">
         <a class="close" data-dismiss="modal">&times;</a>
-        <h3>CommCare HQ Terms of Service</h3>
+        <h3>{% trans "CommCare HQ Terms of Service" %}</h3>
     </div>
     <div class="modal-body">
-        Loading Terms of Service...
+        {% trans "Loading Terms of Service" %}...
     </div>
     <div class="modal-footer">
-        <a href="#" data-dismiss="modal" class="btn">Close</a>
+        <a href="#" data-dismiss="modal" class="btn">{% trans "Close" %}</a>
     </div>
 </div>
 {% endblock %}
