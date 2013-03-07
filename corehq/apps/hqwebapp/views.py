@@ -2,6 +2,7 @@ from datetime import datetime
 from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
+from django.views.decorators.http import require_http_methods
 from django.contrib.auth.forms import AdminPasswordChangeForm
 from django.contrib.auth.models import User
 from django.contrib.auth.views import login as django_login, redirect_to_login
@@ -222,7 +223,8 @@ def debug_notify(request):
             "If you want to achieve a 500-style email-out but don't want the user to see a 500, use notify_exception(request[, message])")
     return HttpResponse("Email should have been sent")
 
-
+@login_required()
+@require_http_methods(["POST"])
 def bug_report(req):
     report = dict([(key, req.POST.get(key, '')) for key in (
         'subject',
