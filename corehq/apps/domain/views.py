@@ -298,6 +298,21 @@ def create_snapshot(request, domain):
     # todo: refactor function into smaller pieces
     domain = Domain.get_by_name(domain)
     can_publish_as_org = domain.get_organization() and request.couch_user.is_org_admin(domain.get_organization().name)
+
+    def render_with_ctxt(snapshot=None, error_msg=None):
+        ctxt = {'error_message': error_msg} if error_msg else {}
+        ctxt.update({'domain': domain.name,
+                     'form': form,
+                     'app_forms': app_forms,
+                     'can_publish_as_org': can_publish_as_org,
+                     'autocomplete_fields': ('project_type', 'phone_model', 'user_type', 'city', 'country', 'region')})
+        if snapshot:
+            ctxt.update({'published_as_org': snapshot.publisher == 'organization', 'author': snapshot.author})
+        else:
+            ctxt.update({'published_as_org': request.POST.get('publisher', '') == 'organization',
+                         'author': request.POST.get('author', '')})
+        return render(request, 'domain/create_snapshot.html', ctxt)
+
     if request.method == 'GET':
         form = SnapshotSettingsForm(initial={
                 'default_timezone': domain.default_timezone,
@@ -347,14 +362,7 @@ def create_snapshot(request, domain):
             else:
                 app_forms.append((app, SnapshotApplicationForm(initial={'publish': (published_snapshot is None or published_snapshot == domain)}, prefix=app.id)))
 
-        return render(request, 'domain/create_snapshot.html',
-            {'domain': domain.name,
-             'form': form,
-             'app_forms': app_forms,
-             'can_publish_as_org': can_publish_as_org,
-             'published_as_org': published_snapshot.publisher == 'organization',
-             'author': published_snapshot.author,
-             'autocomplete_fields': ('project_type', 'phone_model', 'user_type', 'city', 'country', 'region')})
+        return render_with_ctxt(snapshot=published_snapshot)
 
     elif request.method == 'POST':
         form = SnapshotSettingsForm(request.POST, request.FILES)
@@ -369,37 +377,16 @@ def create_snapshot(request, domain):
 
         if not publishing_apps:
             messages.error(request, "Cannot publish a project without applications to CommCare Exchange")
-            return render(request, 'domain/create_snapshot.html',
-                {'domain': domain.name,
-                 'form': form,
-                 'can_publish_as_org': can_publish_as_org,
-                 'published_as_org': request.POST.get('publisher', '') == 'organization',
-                 'author': request.POST.get('author', ''),
-                 'app_forms': app_forms,
-                 'autocomplete_fields': ('project_type', 'phone_model', 'user_type', 'city', 'country', 'region')})
+            return render_with_ctxt()
 
         current_user = request.couch_user
         if not current_user.is_eula_signed():
             messages.error(request, 'You must agree to our eula to publish a project to Exchange')
-            return render(request, 'domain/create_snapshot.html',
-                {'domain': domain.name,
-                 'form': form,
-                 'can_publish_as_org': can_publish_as_org,
-                 'published_as_org': request.POST.get('publisher', '') == 'organization',
-                 'author': request.POST.get('author', ''),
-                 'app_forms': app_forms,
-                 'autocomplete_fields': ('project_type', 'phone_model', 'user_type', 'city', 'country', 'region')})
+            return render_with_ctxt()
 
         if not form.is_valid():
             messages.error(request, _("There are some problems with your form. Please address these issues and try again."))
-            return render(request, 'domain/create_snapshot.html',
-                    {'domain': domain.name,
-                     'form': form,
-                     'can_publish_as_org': can_publish_as_org,
-                     'published_as_org': request.POST.get('publisher', '') == 'organization',
-                     'author': request.POST.get('author', ''),
-                     'app_forms': app_forms,
-                     'autocomplete_fields': ('project_type', 'phone_model', 'user_type', 'city', 'country', 'region')})
+            return render_with_ctxt()
 
         new_license = request.POST['license']
         if request.POST.get('share_multimedia', False):
@@ -478,14 +465,7 @@ def create_snapshot(request, domain):
                 application.delete()
 
         if new_domain is None:
-            return render(request, 'domain/snapshot_settings.html',
-                    {'domain': domain.name,
-                     'form': form,
-                     'can_publish_as_org': can_publish_as_org,
-                     'published_as_org': request.POST.get('publisher', '') == 'organization',
-                     'author': request.POST.get('author', ''),
-                     'app_forms': app_forms,
-                     'error_message': _('Version creation failed; please try again')})
+            return render_with_ctxt(error_message=_('Version creation failed; please try again'))
 
         if publish_on_submit:
             messages.success(request, _("Created a new version of your app. This version will be posted to CommCare Exchange pending approval by admins."))
