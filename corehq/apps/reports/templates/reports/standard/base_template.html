@@ -53,6 +53,13 @@
 {% endblock %}
 {% endblock %}
 
+{% block head %}
+    {{ block.super }}
+    {% block reports-css %}
+    <link rel="stylesheet" href="{% static 'hqwebapp/js/lib/jquery-ui-datepicker/datepicker-theme/jquery-ui-1.8.17.custom.css' %}" />
+    {% endblock %}
+{% endblock %}
+
 {% block title %} - Report: {{ report.title|default:"Project Reports"|safe }}{% endblock %}
 
 {% block page-title %}
