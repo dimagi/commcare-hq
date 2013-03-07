@@ -49,7 +49,7 @@
 
         $('.edit-project-btn').on('click', function() {
             $('#updating-project').val($(this).attr('data-project'));
-            $('#updating-project-slug').val($(this).attr('data-slug'));
+            $('#updating-project-hrname').val($(this).attr('data-hrname'));
             $('#edit-project-modal').modal({show: true});
             return false;
         });
@@ -65,6 +65,7 @@
 
         $('#prelim_add_project').change(function() {
             $("#add_project_modal").find('[name="domain_name"]').val($(this).val())
+            $("#add_project_modal").find('[name="domain_hrname"]').val($(this).val())
         });
     });
 </script>
@@ -101,7 +102,7 @@
                 </a>
                 {% if admin %}
                     <div class="btn-toolbar pull-right" style="margin: 0;">
-                        <a href="#" class="btn edit-project-btn" data-project="{{ domain.name }}" data-slug="{{ domain.slug|default:domain.name }}">
+                        <a href="#" class="btn edit-project-btn" data-project="{{ domain.name }}" data-hrname="{{ domain.hrname|default:domain.name }}">
                             <i class="icon icon-pencil"></i> {% trans "Edit Project Info" %}
                         </a>
                         <a href="#" class="btn btn-danger remove-project-btn" data-project="{{ domain.name }}" data-name="{{ domain.display_name }}">
@@ -223,9 +224,9 @@
                     <div class="modal-body">
                         <input id="updating-project" type="hidden" name="domain" value="" />
                         <div class="control-group">
-                            <label class="control-label" for="updating-project-slug">{% trans "New Display Name" %}</label>
+                            <label class="control-label" for="updating-project-hrname">{% trans "New Display Name" %}</label>
                             <div class="controls">
-                                <input type="text" id="updating-project-slug" name="slug" />
+                                <input type="text" id="updating-project-hrname" name="hr_name" />
                             </div>
                         </div>
                     </div>
