@@ -78,7 +78,7 @@ def post_data(data, url, curl_command="curl", use_curl=False,
     errors = None
 
     if path is not None:
-        with open(path) as f:
+        with open(path, 'rb') as f:
             data = f.read()
 
     try:
@@ -87,7 +87,6 @@ def post_data(data, url, curl_command="curl", use_curl=False,
                 tmp_file, path = tmpfile()
                 with tmp_file:
                     tmp_file.write(data)
-
             params = [curl_command, '--request', 'POST' ]
             params.append('--insecure')
             if is_odk == False:
@@ -115,7 +114,6 @@ def post_data(data, url, curl_command="curl", use_curl=False,
                     params.append('Content-length:%s' % len(data))
 
             params.append(url)
-            
             p = subprocess.Popen(params,
                                  stdout=PIPE,stderr=PIPE,shell=False)
             errors = p.stderr.read()
