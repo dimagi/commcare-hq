@@ -633,12 +633,21 @@ INDICATOR_CONFIG = {
     "mvp-potou": ['mvp_indicators'],
 }
 
-PILLOWTOPS = ['corehq.pillows.CasePillow',
-              'corehq.pillows.XFormPillow',
-              'corehq.pillows.ExchangePillow',
+PILLOWTOPS = [
+                'corehq.pillows.case.CasePillow',
+                'corehq.pillows.fullcase.FullCasePillow',
+
+                'corehq.pillows.xform.XFormPillow',
+                'corehq.pillows.fullxform.FullXFormPillow',
+
+                'corehq.pillows.exchange.ExchangePillow',
              ] + LOCAL_PILLOWTOPS
 
 #Custom workflow for indexing xform data beyond the standard properties
 XFORM_PILLOW_HANDLERS = ['pact.pillowhandler.PactHandler', ]
+
+#Custom fully indexed domains for FullCase index/pillowtop
+ES_CASE_FULL_INDEX_DOMAINS = ['pact']
+
 
 REMOTE_APP_NAMESPACE = "%(domain)s.commcarehq.org"
