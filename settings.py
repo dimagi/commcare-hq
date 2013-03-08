@@ -6,7 +6,9 @@ import os
 from django.contrib import messages
 
 # odd celery fix
-import djcelery; djcelery.setup_loader()
+import djcelery;
+
+djcelery.setup_loader()
 
 CACHE_BACKEND = 'memcached://127.0.0.1:11211/'
 
@@ -29,7 +31,7 @@ LANGUAGES = (
     ('en', 'English'),
     ('fr', 'French'),
     # ('hin', 'Hindi'),
-    )
+)
 
 SITE_ID = 1
 
@@ -55,11 +57,11 @@ STATIC_ROOT = os.path.join(FILEPATH, 'staticfiles')
 STATICFILES_FINDERS = (
     "django.contrib.staticfiles.finders.FileSystemFinder",
     "django.contrib.staticfiles.finders.AppDirectoriesFinder"
-    )
+)
 
 STATICFILES_DIRS = (
     ('formdesigner', os.path.join(FILEPATH, 'submodules', 'formdesigner')),
-    )
+)
 
 DJANGO_LOG_FILE = "%s/%s" % (FILEPATH, "commcarehq.django.log")
 
@@ -82,7 +84,6 @@ if not DEBUG:
     TEMPLATE_LOADERS = [
         ('django.template.loaders.cached.Loader', TEMPLATE_LOADERS),
     ]
-
 
 MIDDLEWARE_CLASSES = [
     'django.middleware.common.CommonMiddleware',
@@ -314,7 +315,7 @@ XFORMS_PLAYER_URL = "http://localhost:4444/"  # touchform's setting
 SUPPORT_EMAIL = "commcarehq-support@dimagi.com"
 COUCHLOG_BLUEPRINT_HOME = "%s%s" % (STATIC_URL, "hqwebapp/stylesheets/blueprint/")
 COUCHLOG_DATATABLES_LOC = "%s%s" % (
-STATIC_URL, "hqwebapp/js/lib/datatables-1.9/js/jquery.dataTables.min.js")
+    STATIC_URL, "hqwebapp/js/lib/datatables-1.9/js/jquery.dataTables.min.js")
 
 # These allow HQ to override what shows up in couchlog (add a domain column)
 COUCHLOG_TABLE_CONFIG = {"id_column": 0,
@@ -409,7 +410,7 @@ LOGGING = {
         'simple': {
             'format': '%(levelname)s %(message)s'
         },
-        },
+    },
     'handlers': {
         'console': {
             'level': 'INFO',
@@ -425,28 +426,28 @@ LOGGING = {
         'couchlog': {
             'level': 'WARNING',
             'class': 'couchlog.handlers.CouchHandler',
-            },
+        },
         'mail_admins': {
             'level': 'ERROR',
             'class': 'django.utils.log.AdminEmailHandler',
-            }
+        }
     },
     'loggers': {
         '': {
             'handlers': ['console', 'file', 'couchlog'],
             'propagate': True,
             'level': 'INFO',
-            },
+        },
         'django.request': {
             'handlers': ['mail_admins'],
             'level': 'ERROR',
             'propagate': True,
-            },
+        },
         'notify': {
             'handlers': ['mail_admins'],
             'level': 'ERROR',
             'propagate': True,
-            },
+        },
         'celery.task': {
             'handlers': ['console', 'file', 'couchlog'],
             'level': 'INFO',
@@ -633,9 +634,12 @@ INDICATOR_CONFIG = {
     "mvp-potou": ['mvp_indicators'],
 }
 
-PILLOWTOPS = ['corehq.pillows.CasePillow',
-              'corehq.pillows.XFormPillow',
-              'corehq.pillows.ExchangePillow',
+PILLOWTOPS = [
+                 'corehq.pillows.case.CasePillow',
+                 'corehq.pillows.fullcase.FullCasePillow',
+                 'corehq.pillows.xform.XFormPillow',
+                 'corehq.pillows.xform.FullXFormPillow',
+                 'corehq.pillows.ExchangePillow',
              ] + LOCAL_PILLOWTOPS
 
 #Custom workflow for indexing xform data beyond the standard properties
@@ -643,6 +647,5 @@ XFORM_PILLOW_HANDLERS = ['pact.pillowhandler.PactHandler', ]
 
 #Custom fully indexed domains for FullCase index/pillowtop
 ES_CASE_FULL_INDEX_DOMAINS = ['pact']
-
 
 REMOTE_APP_NAMESPACE = "%(domain)s.commcarehq.org"
