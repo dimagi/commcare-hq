@@ -53,97 +53,95 @@
     <div class="page-header">
         <h1 class="app-manager-title variable-module_name">{{ module.name|html_trans:langs|safe }}</h1>
     </div>
-    <h2>Module Settings</h2>
-
     <div id="module-settings">
         <form class="form-horizontal save-button-form" action="{% url corehq.apps.app_manager.views.edit_module_attr domain app.id module.id 'all' %}">
-            <div class="save-button-holder"></div>
-            <div class="control-group">
-                <label class="control-label">{% trans "Module Name" %}</label>
-                <div class="controls">
-                    {% if edit %}
-                        {{ module.name|input_trans:langs|safe }}
-                    {% else %}
-                        {{ module.name|html_trans:langs|safe }}
-                    {% endif %}
-                </div>
-            </div>
-            <div class="control-group">
-                <label class="control-label">
-                    {% trans "Menu Mode" %}
-                </label>
-                <div class="controls">
-                    {% if edit %}
-                        <select type="text" name="put_in_root" data-value="{% if module.put_in_root %}true{% else %}false{% endif %}">
-                            <option value="false">{% trans "Display module and then forms" %}</option>
-                            <option value="true">{% trans "Display only forms" %}</option>
-                        </select>
-                    {% else %}
-                        {% if not module.put_in_root %}
-                            {% trans "Display module and then forms" %}
+            <div class="save-button-holder clearfix"></div>
+            <fieldset>
+                <div class="control-group">
+                    <label class="control-label">{% trans "Module Name" %}</label>
+                    <div class="controls">
+                        {% if edit %}
+                            {{ module.name|input_trans:langs|safe }}
                         {% else %}
-                            {% trans "Display only forms" %}
+                            {{ module.name|html_trans:langs|safe }}
                         {% endif %}
-                    {% endif %}
+                    </div>
                 </div>
-            </div>
-
-            {% include "app_manager/partials/nav_menu_media.html" with item=module %}
-
-            <div class="control-group">
-                <label class="control-label">
-                    {% trans "Case Type" %}
-                </label>
-                <div class="controls">
-                    {% if edit %}
-                        <input class="code" type="text" name="case_type" value="{{ module.case_type }}"/>
-                    {% else %}
-                        <code>{{ module.case_type }}</code>
-                    {% endif %}
-
-                    <span class="hq-help-template"
-                          data-title="{% trans "Case Type" %}"
-                          data-content="{% trans "e.g. &quot;pregnant_mother&quot;. The value you set for Case Type will be the name for the type of case that this module uses. If you are creating an application for the first time, you can name the case type whatever you like. If you want to be able to interface with the cases of other modules, you will have to use the same name for the case type. When you view the case data online, it will be organized by case type. Perhaps you will have one case called &quot;pregnant_mother&quot;, and another called &quot;routine_patient&quot;, etc." %}"
-                    ></span>
+                <div class="control-group">
+                    <label class="control-label">
+                        {% trans "Menu Mode" %}
+                    </label>
+                    <div class="controls">
+                        {% if edit %}
+                            <select type="text" name="put_in_root" data-value="{% if module.put_in_root %}true{% else %}false{% endif %}">
+                                <option value="false">{% trans "Display module and then forms" %}</option>
+                                <option value="true">{% trans "Display only forms" %}</option>
+                            </select>
+                        {% else %}
+                            {% if not module.put_in_root %}
+                                {% trans "Display module and then forms" %}
+                            {% else %}
+                                {% trans "Display only forms" %}
+                            {% endif %}
+                        {% endif %}
+                    </div>
                 </div>
-            </div>
 
-            {% include 'app_manager/partials/case_list_setting.html' with LABEL="Case List" DESC="Whether to have an item in the module's menu that lets you browse the case list without moving on to fill out a form." SLUG="case_list" case_list=module.case_list %}
+                {% include "app_manager/partials/nav_menu_media.html" with item=module %}
 
-            <div class="control-group">
-                <label class="control-label">
-                    {% trans "Label for Cases" %}
-                </label>
-                <div class="controls">
-                    {% if edit %}
-                        <input type="text" name="case_label" value="{{ module.case_label|trans:langs }}" />
-                    {% else %}
-                        {{ module.case_label|trans:langs }}
-                    {% endif %}
-
-                    <span class="hq-help-template"
-                          data-title="{% trans "Label for Cases" %}"
-                          data-content="{% trans "This label will appear on J2ME and newer versions of CommCare ODK at the top of the case select screen." %}"
-                    ></span>
+                <div class="control-group">
+                    <label class="control-label">
+                        {% trans "Case Type" %}
+                        <span class="hq-help-template"
+                              data-title="{% trans "Case Type" %}"
+                              data-content="{% trans "e.g. &quot;pregnant_mother&quot;. The value you set for Case Type will be the name for the type of case that this module uses. If you are creating an application for the first time, you can name the case type whatever you like. If you want to be able to interface with the cases of other modules, you will have to use the same name for the case type. When you view the case data online, it will be organized by case type. Perhaps you will have one case called &quot;pregnant_mother&quot;, and another called &quot;routine_patient&quot;, etc." %}"
+                                ></span>
+                    </label>
+                    <div class="controls">
+                        {% if edit %}
+                            <input class="code" type="text" name="case_type" value="{{ module.case_type }}"/>
+                        {% else %}
+                            <code>{{ module.case_type }}</code>
+                        {% endif %}
+                    </div>
                 </div>
-            </div>
-            {% if app.application_version == '1.0' %}
-            <div class="control-group">
-                <label class="control-label">
-                    {% trans "Label for Referrals" %}
-                </label>
-                <div class="controls">
-                    {% if edit %}
-                        <input type="text" name="referral_label" value="{{ module.referral_label|trans:langs }}" />
-                    {% else %}
-                        {{ module.referral_label|trans:langs }}
-                    {% endif %}
+
+                {% include 'app_manager/partials/case_list_setting.html' with LABEL="Case List" DESC="Whether to have an item in the module's menu that lets you browse the case list without moving on to fill out a form." SLUG="case_list" case_list=module.case_list %}
+
+                <div class="control-group">
+                    <label class="control-label">
+                        {% trans "Label for Cases" %}
+                        <span class="hq-help-template"
+                              data-title="{% trans "Label for Cases" %}"
+                              data-content="{% trans "This label will appear on J2ME and newer versions of CommCare ODK at the top of the case select screen." %}"
+                        ></span>
+                    </label>
+                    <div class="controls">
+                        {% if edit %}
+                            <input type="text" name="case_label" value="{{ module.case_label|trans:langs }}" />
+                        {% else %}
+                            {{ module.case_label|trans:langs }}
+                        {% endif %}
+                    </div>
                 </div>
-            </div>
-            {% endif %}
-            {% if app.application_version != '1.0' and request.project.survey_management_enabled %}
-                {% include 'app_manager/partials/case_list_setting.html' with LABEL="Task List" DESC="Whether to have an item in the module's menu that lets you see all of your delegated tasks. Only makes sense if you're using a delegation workflow." SLUG="task_list" case_list=module.task_list %}
-            {% endif %}
+                {% if app.application_version == '1.0' %}
+                <div class="control-group">
+                    <label class="control-label">
+                        {% trans "Label for Referrals" %}
+                    </label>
+                    <div class="controls">
+                        {% if edit %}
+                            <input type="text" name="referral_label" value="{{ module.referral_label|trans:langs }}" />
+                        {% else %}
+                            {{ module.referral_label|trans:langs }}
+                        {% endif %}
+                    </div>
+                </div>
+                {% endif %}
+                {% if app.application_version != '1.0' and request.project.survey_management_enabled %}
+                    {% include 'app_manager/partials/case_list_setting.html' with LABEL="Task List" DESC="Whether to have an item in the module's menu that lets you see all of your delegated tasks. Only makes sense if you're using a delegation workflow." SLUG="task_list" case_list=module.task_list %}
+                {% endif %}
+            </fieldset>
         </form>
     </div>
 

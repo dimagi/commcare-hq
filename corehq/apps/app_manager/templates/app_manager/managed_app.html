@@ -47,25 +47,32 @@
     {% endif %}
 {% endblock %}
 {% block app-content %}
-    <div id="langs" style="border-bottom: 1px solid #eee;">
-        {% if not app.is_remote_app %}
-        Language:
-        <select class="code" name="lang">
-            {% for lang in app.langs %}
-                <option value="{% urlencode request.path request.GET with "lang" as lang %}"
-                    {% if lang == langs.0 %}selected=""{% endif %}>
-                    {{ lang }} {% if lang == app.langs.0 %}(default){% endif %}
-                </option>
-            {% endfor %}
-        </select>
-        {% else %}
-            <select style="visibility: hidden;"></select>
-        {% endif %}
-        {% include 'app_manager/partials/release-manager-nav.html' %}
+    <div class="row-fluid" style="border-bottom: 1px solid #eee;">
+        <div class="span12">
+            {% include 'app_manager/partials/release-manager-nav.html' %}
+        </div>
     </div>
     <div class="sidebar-wrapper row-fluid hq-double-col">
         <div id="modules" class="sidebar span2">
         <!--h2 id="modules-header">Modules</h2-->
+        <div id="langs">
+            <div>
+                {% if not app.is_remote_app %}
+                    Language:
+                    <select class="code" name="lang">
+                        {% for lang in app.langs %}
+                            <option value="{% urlencode request.path request.GET with "lang" as lang %}"
+                                    {% if lang == langs.0 %}selected=""{% endif %}>
+                                {% if lang == app.langs.0 %}*{% endif %}
+                                {{ lang }}
+                            </option>
+                        {% endfor %}
+                    </select>
+                {% else %}
+                    <select style="visibility: hidden;"></select>
+                {% endif %}
+            </div>
+        </div>
         <div {% if not module and not form and not release_manager %}class="app-name-div selected"{% endif %}>
             <a href="{% url view_app domain app.id %}?edit={{ edit|BOOL }}" class="variable-app_name">{{ app.name|html_name }}
             </a>

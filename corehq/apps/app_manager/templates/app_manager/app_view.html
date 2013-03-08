@@ -211,9 +211,9 @@
     </style>
 {% endblock %}
 {% block form-view %}
-    <div class="page-header">
-        <h1 class="app-manager-title variable-app_name">{{ app.name|html_name }}</h1>
-    </div>
+{#    <div class="page-header">#}
+{#        <h1 class="app-manager-title variable-app_name">{{ app.name|html_name }}</h1>#}
+{#    </div>#}
     <ul class="nav nav-tabs">
         <li class="active">
             <a href="#app-settings" data-toggle="tab">
@@ -230,17 +230,13 @@
         {% if app.get_doc_type == 'Application' %}
         <li><a href="#multimedia" data-toggle="tab">{% trans "Multimedia" %}</a></li>
         {% endif %}
+        {% if edit %}
+        <li><a href="#actions" data-toggle="tab">{% trans "Actions" %}</a></li>
+        {% endif %}
     </ul>
     <div class="tab-content">
         <div class="tab-pane active" id="app-settings">
             {% include "app_manager/partials/app-settings.html" %}
-            <div>
-                <form method="get" action='{% url import_app domain %}' style="font-size: .8em; text-align: right;">
-                    <input type="hidden" name="app" value="{{ app.id }}"/>
-                    Copy this app to project: <input type="text" name="domain" />
-                    <input type="submit" value="Copy" />
-                </form>
-            </div>
         </div>
         <div id="languages-and-translations" class="tab-pane">
             <div id="supported-languages">
@@ -282,5 +278,23 @@
             </div>
 
         {% endif %}
+        <div class="tab-pane" id="actions">
+            <h2>{% trans "Copy to another project" %}</h2>
+            <div>
+                <form method="get" action="{% url import_app domain %}">
+                    <input type="hidden" name="app" value="{{ app.id }}"/>
+                    Copy this app to project: <input type="text" name="domain" />
+                    <input type="submit" value="Copy" />
+                </form>
+            </div>
+            <h2>{% trans "Delete this application" %}</h2>
+            <form action="{% url corehq.apps.app_manager.views.delete_app domain app.id %}" method="POST">
+
+                <a href="#" class="btn btn-danger submit">
+                    <i class="icon-trash"></i>
+                    {% trans "Delete this application" %}
+                </a>
+            </form>
+        </div>
     </div>
 {% endblock %}
