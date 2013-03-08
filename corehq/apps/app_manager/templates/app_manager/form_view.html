@@ -327,18 +327,60 @@
     </div>
 
     {% if edit %}
-        <ul class="nav nav-pills">
+    <ul class="nav nav-pills">
+        <li>
+            <a href="./source/">
+                <i class="icon-pencil"></i>
+                {% if form.source %}
+                    {% trans "Edit" %}
+                {% else %}
+                    {% trans "Create" %}
+                {% endif %}
+            </a>
+        </li>
+        {% if app.application_version == '2.0' %}
             <li>
-                <a href="./source/"><i class="icon-pencil"></i> {% if form.source %}Edit{% else %}Create{% endif %}</a>
-            </li><li>
+                <a {% if not form.source or is_user_registration %}class="disabled"{% endif %}
+                   id="cloudcare-preview-url" href="#" target="_blank">
+                    <i class="icon-play"></i>
+                    {% trans "Try in CloudCare" %}
+                </a>
+            </li>
+        {% endif %}
+        <li>
+            <a class="dialog_opener" href="#">
+                <i class="icon-arrow-up"></i>
+                {% trans "Upload" %}
+            </a>
+            <div class="dialog" title="Upload XForm">
+                <form action="{% url corehq.apps.app_manager.views.edit_form_attr domain app.id form.get_unique_id 'xform' %}" method="POST" enctype="multipart/form-data">
+                    <input type="file" id="xform_file_input" name="xform" />
+                    <input type="hidden" name="ajax" value="false" />
+                    <input type="submit" id="xform_file_submit" value="Upload" />
+                </form>
+            </div>
+        </li>
+        <li>
+            <a {% if not form.source %}class="disabled"{% endif %}{% if is_user_registration %}
+                   href="{% url get_user_registration_source domain app.id %}?download=true"
+                {% else %}
+                   href="{% url get_xform_source domain app.id module.id form.id %}?download=true"
+                {% endif %}
+            >
+                <i class="icon-arrow-down"></i>
+                {% trans "Download" %}
+            </a>
+        </li>
+        <li>
             <a id="xform-source-opener" class="dialog_opener {% if not form.source %}disabled{% endif %}"
                     {% if is_user_registration %}
-               href="{% url get_user_registration_source domain app.id %}">
+               href="{% url get_user_registration_source domain app.id %}"
                     {% else %}
-                        href="{% url get_xform_source domain app.id module.id form.id %}">
+               href="{% url get_xform_source domain app.id module.id form.id %}"
                     {% endif %}
-            <i class="icon-search"></i>
-            View
+                    >
+                <i class="icon-search"></i>
+                {% trans "XForm (Advanced)" %}
             </a>
             <div class="xml-source dialog" title="XML Source">
                 <div id="source-readonly">
@@ -357,30 +399,9 @@
                     </form>
                 </div>
             </div>
-        </li><li>
-            <a class="dialog_opener" href="#"><i class="icon-arrow-up"></i> Upload</a>
-            <div class="dialog" title="Upload XForm">
-                <form action="{% url corehq.apps.app_manager.views.edit_form_attr domain app.id form.get_unique_id 'xform' %}" method="POST" enctype="multipart/form-data">
-                    <input type="file" id="xform_file_input" name="xform" />
-                    <input type="hidden" name="ajax" value="false" />
-                    <input type="submit" id="xform_file_submit" value="Upload" />
-                </form>
-            </div>
-        </li><li>
-            <a {% if not form.source %}class="disabled"{% endif %}{% if is_user_registration %}
-               href="{% url get_user_registration_source domain app.id %}?download=true"
-            {% else %}
-               href="{% url get_xform_source domain app.id module.id form.id %}?download=true"
-            {% endif %}><i class="icon-arrow-down"></i> Download</a>
         </li>
-            {% if app.application_version == '2.0' %}
-                <li><a {% if not form.source or is_user_registration %}class="disabled"{% endif %}
-                       id="cloudcare-preview-url" href="#"
-                        ><i class="icon-play"></i> Try in CloudCare</a>
-                </li>
-            {% endif %}
-        </ul>
-        <hr/>
+    </ul>
+    <hr/>
     {% endif %}
 
     {% if nav_form %}
@@ -430,7 +451,6 @@
     {% endif %}
 
 {#    {% if form.source %}#}
-{#        <h2>Child Cases</h2>#}
 {#        <div>#}
 {#            <p>This form contains the following languages:</p>#}
 {#            <div id="langcode_validator">#}

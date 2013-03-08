@@ -50,6 +50,7 @@
     <div class="row-fluid" style="border-bottom: 1px solid #eee;">
         <div class="span12">
             {% include 'app_manager/partials/release-manager-nav.html' %}
+            <h1 class="app-manager-title variable-app_name">{{ app.name|html_name }}</h1>
         </div>
     </div>
     <div class="sidebar-wrapper row-fluid hq-double-col">
@@ -57,7 +58,7 @@
         <!--h2 id="modules-header">Modules</h2-->
         <div id="langs">
             <div>
-                {% if not app.is_remote_app %}
+                {% if not app.is_remote_app and app.langs|length > 1%}
                     Language:
                     <select class="code" name="lang">
                         {% for lang in app.langs %}
@@ -68,8 +69,6 @@
                             </option>
                         {% endfor %}
                     </select>
-                {% else %}
-                    <select style="visibility: hidden;"></select>
                 {% endif %}
             </div>
         </div>

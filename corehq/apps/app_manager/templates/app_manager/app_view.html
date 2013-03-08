@@ -240,18 +240,17 @@
         </div>
         <div id="languages-and-translations" class="tab-pane">
             <div id="supported-languages">
-                <h2>Supported Languages</h2>
                 {% include "app_manager/partials/supported-languages.html" %}
             </div>
             {% if app.get_doc_type == "Application" %}
             <div id="translations_ui">
                 <h2>CommCare Translations</h2>
-                <p>
+                <p class="help-block">
                     For J2ME (Nokia) refer to
                     <a target="_blank" href="https://bitbucket.org/commcare/javarosa/src/default/j2me/shared-resources/resources/messages_default.txt">JavaRosa translations</a>
                     and <a target="_blank" href="https://bitbucket.org/commcare/commcare/src/default/application/resources/messages_cc_default.txt">CommCare translations</a>.
                 </p>
-                <p>
+                <p class="help-block">
                     For CommCareODK (Android) refer to
                     <a target="_blank" href="https://bitbucket.org/commcare/commcare-odk/src/default/app/assets/locales/messages_ccodk_default.txt">CommCareODK translations</a>
                     and <a target="_blank" href="https://confluence.dimagi.com/display/commcarepublic/CommCare+ODK+Form+Entry+Interface+Strings">ODK Collect translations</a>.
