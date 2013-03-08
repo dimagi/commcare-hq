@@ -609,8 +609,11 @@ class FormCompletionVsSubmissionTrendsReport(WorkerMonitoringReportTableBase, Mu
             if not status:
                 status.append("same")
             elif td.days < 0:
-                status = [_("submitted before completed [strange]")]
-                klass = "label-inverse"
+                if abs(td.total_seconds()) > 15*60:
+                    status = [_("submitted before completed [strange]")]
+                    klass = "label-inverse"
+                else:
+                    status = [_("same")]
 
         if use_label:
             return template % dict(status=", ".join(status), klass=klass)
