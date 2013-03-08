@@ -32,13 +32,6 @@ class PactCHWAdminReport(GenericTabularReport, CustomProjectReport):
         return headers
 
     def csv_data(self, username, user_context):
-
-        # return_context['date_arr'] = ret
-        # return_context['total_scheduled'] = total_scheduled
-        # return_context['total_visited'] = total_visited
-        # return_context['start_date'] = ret[0][0]
-        # return_context['end_date'] = ret[-1][0]
-
         rowdata = []
         # {% for visit_date, patient_visits in date_arr %}
         # {% if patient_visits %}
@@ -108,24 +101,3 @@ class PactCHWAdminReport(GenericTabularReport, CustomProjectReport):
             scheduled_context = chw_schedule.chw_calendar_submit_report(self.request, user_doc.raw_username)
             for row in self.csv_data(user_doc.raw_username, scheduled_context):
                 yield row
-
-    @property
-    def total_records(self):
-        """
-            Override for pagination.
-            Returns an integer.
-        """
-        return 1000
-
-
-    @property
-    def shared_pagination_GET_params(self):
-        """
-        Override the params and applies all the params of the originating view to the GET
-        so as to get sorting working correctly with the context of the GET params
-        """
-        ret = []
-        for k, v in self.request.GET.items():
-            ret.append(dict(name=k, value=v))
-        return ret
-
