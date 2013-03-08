@@ -19,6 +19,7 @@ from corehq.apps.domain.forms import DomainGlobalSettingsForm,\
 from corehq.apps.domain.models import Domain, LICENSES
 from corehq.apps.domain.utils import get_domained_url, normalize_domain_name
 from corehq.apps.orgs.models import Organization, OrgRequest, Team
+from corehq.apps.commtrack.util import all_sms_codes
 from dimagi.utils.django.email import send_HTML_email
 
 from dimagi.utils.web import get_ip, json_response
@@ -236,10 +237,13 @@ def org_settings(request, domain):
     for user in org_users:
         user.current_domain = domain.name
 
+    all_orgs = Organization.get_all()
+
     return render(request, 'domain/orgs_settings.html', {
         "project": domain, 'domain': domain.name,
         "organization": Organization.get_by_name(getattr(domain, "organization", None)),
-        "org_users": org_users
+        "org_users": org_users,
+        "all_orgs": all_orgs,
     })
 
 @login_and_domain_required
@@ -551,15 +555,80 @@ def manage_multimedia(request, domain):
             'type': m.doc_type
                    } for m in media],
         'licenses': LICENSES.items()
-                                                                           })
+    })
 
 @domain_admin_required
 def commtrack_settings(request, domain):
     domain = Domain.get_by_name(domain)
+    settings = domain.commtrack_settings
+
+    if request.POST:
+        from corehq.apps.commtrack.models import CommtrackActionConfig, LocationType
+
+        payload = json.loads(request.POST.get('json'))
+
+        settings.multiaction_keyword = payload['keyword']
+
+        def make_action_name(caption, actions):
+            existing = filter(None, [a.get('name') for a in actions])
+            name = ''.join(c.lower() if c.isalpha() else '_' for c in caption)
+            disambig = 1
+
+            def _name():
+                return name + ('_%s' % disambig if disambig > 1 else '')
+
+            while _name() in existing:
+                disambig += 1
+
+            return _name()
+
+        def mk_action(action):
+            action['action_type'] = action['type']
+            del action['type']
+
+            if not action.get('name'):
+                action['name'] = make_action_name(action['caption'], payload['actions'])
+
+            return CommtrackActionConfig(**action)
+
+        def mk_loctype(loctype):
+            loctype['allowed_parents'] = [p or '' for p in loctype['allowed_parents']]
+            return LocationType(**loctype)
+
+        #TODO add server-side input validation here (currently validated on client)
+
+        settings.actions = [mk_action(a) for a in payload['actions']]
+        settings.location_types = [mk_loctype(l) for l in payload['loc_types']]
+        settings.save()
+
+    def settings_to_json(config):
+        return {
+            'keyword': config.multiaction_keyword,
+            'actions': [action_to_json(a) for a in config.actions],
+            'loc_types': [loctype_to_json(l) for l in config.location_types],
+        }
+    def action_to_json(action):
+        return {
+            'type': action.action_type,
+            'keyword': action.keyword,
+            'name': action.action_name,
+            'caption': action.caption,
+        }
+    def loctype_to_json(loctype):
+        return {
+            'name': loctype.name,
+            'allowed_parents': [p or None for p in loctype.allowed_parents],
+        }
+
+    def other_sms_codes():
+        for k, v in all_sms_codes(domain.name).iteritems():
+            if v[0] == 'product':
+                yield (k, (v[0], v[1].name))
 
     return render(request, 'domain/admin/commtrack_settings.html', dict(
             domain=domain.name,
-            #form=form,
+            settings=settings_to_json(settings),
+            other_sms_codes=dict(other_sms_codes()),
         ))
 
 @require_POST

@@ -396,8 +396,7 @@ def custom_export(req, domain):
     if req.method == "POST":
         helper.update_custom_export()
         messages.success(req, "Custom export created! You can continue editing here.")
-        return HttpResponseRedirect("%s?type=%s" % (reverse("edit_custom_export",
-                                            args=[domain, helper.custom_export.get_id]), helper.export_type))
+        return _redirect_to_export_home(helper.export_type, domain)
 
     schema = build_latest_schema(export_tag)
 
@@ -433,7 +432,10 @@ def edit_custom_export(req, domain, export_id):
         raise Http404()
     if req.method == "POST":
         helper.update_custom_export()
-    return helper.get_response()
+        messages.success(req, "Custom export saved!")
+        return _redirect_to_export_home(helper.export_type, domain)
+    else:
+        return helper.get_response()
 
 @login_or_digest
 @require_form_export_permission
@@ -487,9 +489,11 @@ def delete_custom_export(req, domain, export_id):
         saved_export = SavedExportSchema.get(export_id)
     except ResourceNotFound:
         return HttpResponseRedirect(req.META['HTTP_REFERER'])
-    type = saved_export.type
     saved_export.delete()
     messages.success(req, "Custom export was deleted.")
+    return _redirect_to_export_home(saved_export.type, domain)
+
+def _redirect_to_export_home(type, domain):
     if type == "form":
         return HttpResponseRedirect(export.ExcelExportReport.get_url(domain=domain))
     else:

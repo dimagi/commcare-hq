@@ -3,8 +3,6 @@ import hashlib
 from django.core.management.base import NoArgsCommand
 import sys
 import os
-import simplejson
-from auditcare.utils import dict_diff
 from casexml.apps.case.models import CommCareCase
 from corehq.apps.hqcase.management.commands.ptop_generate_mapping import MappingOutputCommand
 from corehq.pillows import dynamic, CasePillow
@@ -30,7 +28,6 @@ class Command(MappingOutputCommand):
 
 #        current_index = '%s_%s' % (casepillow.es_index_prefix, casepillow.calc_meta())
         current_index = casepillow.es_index
-
 
         #regenerate the mapping dict
         m = DEFAULT_MAPPING_WRAPPER

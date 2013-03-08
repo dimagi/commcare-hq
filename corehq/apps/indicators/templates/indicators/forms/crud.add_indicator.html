@@ -1,0 +1,18 @@
+{% extends 'crud/forms/crud.add_item.html' %}
+{% block additional-form-content %}
+    <script type="text/javascript">
+        $(function () {
+            var $change_doc_type = $('#id_change_doc_type');
+
+            if ($change_doc_type) {
+                $('#id_doc_type_choices').parent().parent().hide();
+                $('#id_change_doc_type').removeAttr('checked');
+                $change_doc_type.change(function () {
+                    var $doc_type = $('#id_doc_type_choices').parent().parent();
+                    ($(this).attr('checked')) ? $doc_type.fadeIn() : $doc_type.fadeOut();
+                });
+            }
+
+        })
+    </script>
+{% endblock %}

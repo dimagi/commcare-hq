@@ -4,7 +4,10 @@
 {% load i18n %}
 
 {% block js %}{{ block.super }}
-<script type="text/javascript" src="{% static 'hqwebapp/js/lib/jquery-ui-datepicker/jquery-ui-1.8.17.custom.datepicker.min.js' %}"></script>
+<script src="{% static 'hqwebapp/js/lib/jquery-ui/jquery-ui-1.8.16.min.js' %}"></script>
+<script src="{% static 'hqwebapp/js/lib/jquery-ui-datepicker/jquery-ui-1.8.17.custom.datepicker.min.js' %}"></script>
+<script src="{% static 'hqwebapp/js/knockout-bindings.js' %}"></script>
+<script src="{% static 'commtrack/ko/settings.js' %}"></script>
 {% endblock %}
 
 {% block head %}
@@ -15,6 +18,8 @@
 {% block js-inline %} {{ block.super }}
 <script type="text/javascript">
 
+var settings = {{ settings|JSON }};
+var other_sms_codes = {{ other_sms_codes|JSON }};
 
 </script>
 {% endblock %}
@@ -27,5 +32,112 @@
 
 {% block user-view %}
 
+<style>
+
+.sortable-handle {
+  cursor: move;
+}
+
+</style>
+
+<form id="settings" class="form form-horizontal" method="post">
+
+<h3>SMS Keywords</h3>
+
+<fieldset>
+  <div class="control-group" data-bind="css: { 'error': keyword_error }">
+    <label class="control-label" for="keyword_stock_report">Stock Report</label>
+    <div class="controls">
+      <input id="keyword_stock_report" type="text" data-bind="value: keyword"/>
+      <div class="help-inline" data-bind="text: keyword_error"></div>
+    </div>
+  </div>
+</fieldset>
+
+<hr />
+
+<h3>Stock Actions</h3>
+
+<p class="help">For a given incoming stock report, stock actions will be applied in the order listed below.</p>
+
+<table class="table table-striped table-bordered">
+  <thead>
+    <tr>
+      <th></th>
+      <th>Name</th>
+      <th>SMS Keyword</th>
+      <th>Action Type</th>
+      <th></th>
+    </tr>
+  </thead>
+  <tbody data-bind="sortable: actions">
+    <tr>
+      <td>
+        <i class="icon-sort sortable-handle"></i>
+      </td>
+      <td class="control-group" data-bind="css: { 'error': caption_error }">
+        <input data-bind="value: caption" type="text" />
+        <div class="help-inline" data-bind="text: caption_error"></div>
+      </td>
+      <td class="control-group" data-bind="css: { 'error': keyword_error }">
+        <input data-bind="value: keyword" type="text" />
+        <div class="help-inline" data-bind="text: keyword_error"></div>
+      </td>
+      <td>
+        <select data-bind="value: type, options: $root.action_types, optionsText: 'label', optionsValue: 'value'"></select>
+      </td>
+      <td>
+        <button type="button" class="btn btn-danger" data-bind="click: $root.remove_action"><i class="icon-trash icon-white"></i> Remove</button>
+      </td>
+    </tr>
+  </tbody>
+</table>
+<button type="button" class="btn btn-primary" data-bind="click: new_action"><i class="icon-plus icon-white"></i> New Action</button>
+
+<hr />
+
+<h3>Location Hierarchy</h3>
+
+<div class="text-error" data-bind="text: loc_types_error"></div>
+<table class="table table-striped table-bordered">
+  <thead>
+    <tr>
+      <th>Location Type</th>
+      <th>Allowed Parent Types</th>
+      <th></th>
+    </tr>
+  </thead>
+  <tbody data-bind="foreach: loc_types">
+    <tr data-bind="bind_element: null">
+      <td class="control-group" data-bind="css: { 'error': name_error }">
+        <input class="loctype_name" data-bind="value: name" type="text" />
+        <div class="help-inline" data-bind="text: name_error"></div>
+      </td>
+      <td class="control-group" data-bind="css: { 'error': allowed_parents_error }">
+        <select multiple="true" data-bind="options: $root.loc_types, optionsText: 'name', optionsValue: 'name', selectedOptions: allowed_parents, optionsCaption: '\u2013top level\u2013'"></select>
+        <div class="help-inline" data-bind="text: allowed_parents_error"></div>
+      </td>
+      <td>
+        <button type="button" class="btn btn-danger" data-bind="click: $root.remove_loctype"><i class="icon-trash icon-white"></i> Remove</button>
+      </td>
+    </tr>
+  </tbody>
+</table>
+<button type="button" class="btn btn-primary" data-bind="click: new_loctype"><i class="icon-plus icon-white"></i> New Location Type</button>
+
+
+<!--
+
+<hr />
+
+<h3>Supply Point Types</h3>
+
+-->
+
+<div class="form-actions"><button type="submit" class="btn btn-primary">Save Settings</button></div>
+
+<input name="json" type="hidden" data-bind="value: json_payload" />
+</form>
 
 {% endblock %}
+

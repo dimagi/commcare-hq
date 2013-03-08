@@ -56,8 +56,8 @@ def orgs_landing(request, org, template="orgs/orgs_landing.html", form=None, add
     add_team_form = add_team_form or AddTeamForm(org)
 
     ctxt = base_context(request, organization, update_form=update_form)
-    potential_domains = []
-
+    user_domains = []
+    req_domains = []
     # display a notification for each org request that hasn't previously been seen
     if request.couch_user.is_org_admin(org):
         requests = OrgRequest.get_requests(org)
@@ -68,15 +68,21 @@ def orgs_landing(request, org, template="orgs/orgs_landing.html", form=None, add
                 {"requesting_user": WebUser.get(req.requested_by).username, "org_req": req, "org": organization}),
                 extra_tags="html")
 
+        def format_domains(dom_list, extra=None):
+            extra = extra or []
+            dom_list = list(set(filter(lambda d: d not in ctxt["domains"] + extra, dom_list)))
+            return [Domain.get_by_name(d) for d in dom_list]
+
         # get the existing domains that an org admin would add to the organization
-        potential_domains = request.couch_user.domains
-        potential_domains.extend([req.domain for req in requests])
-        potential_domains = list(set(filter(lambda d: d not in ctxt["domains"], potential_domains)))
+        user_domains = request.couch_user.domains or []
+        req_domains = [req.domain for req in requests]
+        user_domains = format_domains(user_domains)
+        req_domains = format_domains(req_domains, [d.name for d in user_domains if d])
 
     ctxt.update(dict(reg_form=reg_form, add_form=add_form, reg_form_empty=reg_form_empty, add_form_empty=add_form_empty,
                 invite_member_form=invite_member_form, invite_member_form_empty=invite_member_form_empty,
                 add_team_form=add_team_form, add_team_form_empty=add_team_form_empty, tab="projects",
-                potential_domains=potential_domains))
+                user_domains=user_domains, req_domains=req_domains))
     return render(request, template, ctxt)
 
 @org_member_required
@@ -296,8 +302,8 @@ def orgs_team_members(request, org, team_id, template="orgs/orgs_team_members.ht
     for name in domain_names:
         team_domains.append([Domain.get_by_name(name), team.role_label(domain=name), UserRole.by_domain(name)])
 
-    nonmembers = [m.username for m in filter(lambda m: m.username not in [tm.username for tm in team_members], ctxt["members"])]
-    nondomains = [d.name for d in filter(lambda d: d.name not in [td[0].name for td in team_domains], ctxt["domains"])]
+    nonmembers = filter(lambda m: m.username not in [tm.username for tm in team_members], ctxt["members"])
+    nondomains = filter(lambda d: d.name not in [td[0].name for td in team_domains], ctxt["domains"])
 
     ctxt.update(dict(team=team, team_members=team_members, nonmembers=nonmembers,
                      team_domains=team_domains, nondomains=nondomains))

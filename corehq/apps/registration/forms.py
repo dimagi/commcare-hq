@@ -19,6 +19,8 @@ class NewWebUserRegistrationForm(forms.Form):
                                     help_text='You will use this email to log in.')
     password  =  forms.CharField(label='Password', max_length=max_pwd, widget=forms.PasswordInput(render_value=False))
     eula_confirmed = forms.BooleanField(required=False, label="End User License Agreement") # Must be set to False to have the clean_*() routine called
+    domain_type = forms.CharField(
+        widget=forms.HiddenInput(), initial='commcare')
 
     def clean_full_name(self):
         data = self.cleaned_data['full_name'].split()
@@ -110,6 +112,8 @@ class DomainRegistrationForm(forms.Form):
     """
     org = forms.CharField(widget=forms.HiddenInput(), required=False)
     domain_name = forms.CharField(label='Project Name:', max_length=25)
+    domain_type = forms.CharField(
+        widget=forms.HiddenInput(), initial='commcare')
 
     def clean_domain_name(self):
         data = self.cleaned_data['domain_name'].strip().lower()
