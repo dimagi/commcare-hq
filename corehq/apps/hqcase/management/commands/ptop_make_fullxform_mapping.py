@@ -6,8 +6,8 @@ from django.conf import settings
 
 from casexml.apps.case.models import CommCareCase
 from corehq.apps.hqcase.management.commands.ptop_generate_mapping import MappingOutputCommand
+from corehq.pillows.fullxform import FullXFormPillow
 from corehq.pillows.mappings import xform_mapping
-from corehq.pillows.xform import XFormPillow
 
 
 class Command(MappingOutputCommand):
@@ -19,25 +19,24 @@ class Command(MappingOutputCommand):
 
 
     def finish_handle(self):
-        filepath = os.path.join(settings.FILEPATH, 'submodules','core-hq-src','corehq','pillows','mappings','xform_mapping.py')
-        xform_pillow = XFormPillow(create_index=False)
+        filepath = os.path.join(settings.FILEPATH, 'submodules','core-hq-src','corehq','pillows','mappings','fullxform_mapping.py')
+        full_xform_pillow = FullXFormPillow(create_index=False)
 
         #current index
         #check current index
-        aliased_indices = xform_pillow.check_alias()
+        aliased_indices = full_xform_pillow.check_alias()
 
 #        current_index = '%s_%s' % (xform_pillow.es_index_prefix, xform_pillow.calc_meta())
-        current_index = xform_pillow.es_index
+        current_index = full_xform_pillow.es_index
 
         sys.stderr.write("current index:\n")
         sys.stderr.write('XFORM_INDEX="%s"\n' % current_index)
 
         #regenerate the mapping dict
         mapping = xform_mapping.XFORM_MAPPING
-        xform_pillow.default_mapping = mapping
-        delattr(xform_pillow, '_calc_meta_cache')
-        #xform_pillow.calc_meta.reset_cache()
-        calc_index = "%s_%s" % (xform_pillow.es_index_prefix, xform_pillow.calc_meta())
+        full_xform_pillow.default_mapping = mapping
+        delattr(full_xform_pillow, '_calc_meta_cache')
+        calc_index = "%s_%s" % (full_xform_pillow.es_index_prefix, full_xform_pillow.calc_meta())
 
 
 
@@ -46,10 +45,10 @@ class Command(MappingOutputCommand):
             sys.stderr.write("\tCurrent live aliased index: %s\n\n"  % (','.join(aliased_indices)))
 
         if calc_index != current_index:
-            sys.stderr.write("XFORM_INDEX hash has changed, please update \n\t%s\n\tXFORM_INDEX property with the line below:\n" % filepath)
-            sys.stdout.write('XFORM_INDEX="%s"\n' % calc_index)
+            sys.stderr.write("FULL_XFORM_INDEX hash has changed, please update \n\t%s\n\tXFORM_INDEX property with the line below:\n" % filepath)
+            sys.stdout.write('FULL_XFORM_INDEX="%s"\n' % calc_index)
         else:
-            sys.stderr.write("XFORM_INDEX unchanged\n")
+            sys.stderr.write("FULL_XFORM_INDEX unchanged\n")
 
 
 

@@ -1,6 +1,6 @@
 from casexml.apps.case.models import CommCareCase
 from corehq.apps.hqcase.management.commands.ptop_fast_reindexer import PtopReindexer
-from corehq.pillows.case import CasePillow
+from corehq.pillows.fullcase import FullCasePillow
 
 CHUNK_SIZE = 500
 POOL_SIZE = 15
@@ -11,4 +11,4 @@ class Command(PtopReindexer):
 
     doc_class = CommCareCase
     view_name = 'case/by_owner'
-    pillow_class = CasePillow
+    pillow_class = FullCasePillow

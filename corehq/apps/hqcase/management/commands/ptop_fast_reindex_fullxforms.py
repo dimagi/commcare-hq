@@ -1,5 +1,5 @@
 from corehq.apps.hqcase.management.commands.ptop_fast_reindexer import PtopReindexer
-from corehq.pillows.xform import XFormPillow
+from corehq.pillows.fullxform import FullXFormPillow
 from couchforms.models import XFormInstance
 
 CHUNK_SIZE = 500
@@ -11,7 +11,7 @@ class Command(PtopReindexer):
 
     doc_class = XFormInstance
     view_name = 'couchforms/by_xmlns'
-    pillow_class = XFormPillow
+    pillow_class = FullXFormPillow
 
     def custom_filter(self, view_row):
         """

@@ -2,7 +2,9 @@ import rawes
 from casexml.apps.case.models import CommCareCase
 from corehq.apps.domain.models import Domain
 from corehq.elastic import get_es
-from corehq.pillows import ExchangePillow, CasePillow,XFormPillow
+from corehq.pillows.case import CasePillow
+from corehq.pillows.exchange import ExchangePillow
+from corehq.pillows.xform import XFormPillow
 from couchforms.models import XFormInstance
 from django.conf import settings
 

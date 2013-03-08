@@ -1,14 +1,14 @@
 from corehq.pillows.core import DATE_FORMATS_STRING, DATE_FORMATS_ARR
+#staging
+FULL_XFORM_INDEX = "full_xforms_8f890d8ac4bdd3d6918e53c61515c2a6"
 
-XFORM_INDEX = "xforms_a6c260a2d775551049beaef92d24a000"
-
-XFORM_MAPPING = {
+FULL_XFORM_MAPPING = {
     "date_detection": False,
     "date_formats": DATE_FORMATS_ARR, #for parsing the explicitly defined dates
     'ignore_malformed': True,
-    'dynamic': False,
+    'dynamic': False, # still set to false, as we want to leave it to the implementor's decision on how to map properties
     "_meta": {
-        "created": '2013-03-06', #record keeping on the index.
+        "created": '', #record keeping on the index.
     },
     "properties": {
         "domain": {

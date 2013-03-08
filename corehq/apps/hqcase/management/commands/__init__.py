@@ -1,11 +1,6 @@
-
-
 import logging
-from optparse import make_option
 from django.core.mail import send_mail
-from django.core.management.base import  BaseCommand, NoArgsCommand
-from casexml.apps.case.models import CommCareCase
-from corehq.pillows import CasePillow
+from django.core.management.base import  BaseCommand
 
 CHUNK_SIZE=500
 POOL_SIZE = 15
