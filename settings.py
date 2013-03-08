@@ -399,6 +399,62 @@ COUCH_HTTPS = False
 # this should be overridden in localsettings
 INTERNAL_DATA = defaultdict(list)
 
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': True,
+    'formatters': {
+        'verbose': {
+            'format': '%(levelname)s %(asctime)s %(module)s %(process)d %(thread)d %(message)s'
+        },
+        'simple': {
+            'format': '%(levelname)s %(message)s'
+        },
+        },
+    'handlers': {
+        'console': {
+            'level': 'INFO',
+            'class': 'logging.StreamHandler',
+            'formatter': 'simple'
+        },
+        'file': {
+            'level': 'INFO',
+            'class': 'logging.FileHandler',
+            'formatter': 'verbose',
+            'filename': DJANGO_LOG_FILE
+        },
+        'couchlog': {
+            'level': 'WARNING',
+            'class': 'couchlog.handlers.CouchHandler',
+            },
+        'mail_admins': {
+            'level': 'ERROR',
+            'class': 'django.utils.log.AdminEmailHandler',
+            }
+    },
+    'loggers': {
+        '': {
+            'handlers': ['console', 'file', 'couchlog'],
+            'propagate': True,
+            'level': 'INFO',
+            },
+        'django.request': {
+            'handlers': ['mail_admins'],
+            'level': 'ERROR',
+            'propagate': True,
+            },
+        'notify': {
+            'handlers': ['mail_admins'],
+            'level': 'ERROR',
+            'propagate': True,
+            },
+        'celery.task': {
+            'handlers': ['console', 'file', 'couchlog'],
+            'level': 'INFO',
+            'propagate': True
+        }
+    }
+}
+
 try:
     #try to see if there's an environmental variable set for local_settings
     if os.environ.get('CUSTOMSETTINGS', None) == "demo":
@@ -492,62 +548,6 @@ INSTALLED_APPS += LOCAL_APPS
 
 MIDDLEWARE_CLASSES += LOCAL_MIDDLEWARE_CLASSES
 
-LOGGING = {
-    'version': 1,
-    'disable_existing_loggers': True,
-    'formatters': {
-        'verbose': {
-            'format': '%(levelname)s %(asctime)s %(module)s %(process)d %(thread)d %(message)s'
-        },
-        'simple': {
-            'format': '%(levelname)s %(message)s'
-        },
-    },
-    'handlers': {
-        'console': {
-            'level': 'INFO',
-            'class': 'logging.StreamHandler',
-            'formatter': 'simple'
-        },
-        'file': {
-            'level': 'INFO',
-            'class': 'logging.FileHandler',
-            'formatter': 'verbose',
-            'filename': DJANGO_LOG_FILE
-        },
-        'couchlog': {
-            'level': 'WARNING',
-            'class': 'couchlog.handlers.CouchHandler',
-        },
-        'mail_admins': {
-            'level': 'ERROR',
-            'class': 'django.utils.log.AdminEmailHandler',
-        }
-    },
-    'loggers': {
-        '': {
-            'handlers': ['console', 'file', 'couchlog'],
-            'propagate': True,
-            'level': 'INFO',
-        },
-        'django.request': {
-            'handlers': ['mail_admins'],
-            'level': 'ERROR',
-            'propagate': True,
-        },
-        'notify': {
-            'handlers': ['mail_admins'],
-            'level': 'ERROR',
-            'propagate': True,
-        },
-        'celery.task': {
-            'handlers': ['console', 'file', 'couchlog'],
-            'level': 'INFO',
-            'propagate': True
-        }
-    }
-}
-
 # these are the official django settings
 # which really we should be using over the custom ones
 EMAIL_HOST = EMAIL_SMTP_HOST
@@ -574,7 +574,9 @@ DOMAIN_MODULE_MAP = {
     'eagles-fahu': 'dca',
     'mvp-potou': 'mvp',
     'mvp-sauri': 'mvp',
-    'psi-unicef': 'psi'
+    'mvp-bonsaaso': 'mvp',
+    'mvp-ruhiira': 'mvp',
+    'psi-unicef': 'psi',
 }
 
 MESSAGE_LOG_OPTIONS = {
@@ -643,5 +645,9 @@ PILLOWTOPS = [
 
 #Custom workflow for indexing xform data beyond the standard properties
 XFORM_PILLOW_HANDLERS = ['pact.pillowhandler.PactHandler', ]
+
+#Custom fully indexed domains for FullCase index/pillowtop
+ES_CASE_FULL_INDEX_DOMAINS = ['pact']
+
 
 REMOTE_APP_NAMESPACE = "%(domain)s.commcarehq.org"

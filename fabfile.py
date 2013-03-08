@@ -166,8 +166,9 @@ def production():
 
         'remote_es': ['hqdb.internal.commcarehq.org', 'hqdjango0.internal.commcarehq.org',
                       'hqdjango1.internal.commcarehq.org', 'hqdjango2.internal.commcarehq.org'],
-
-        'formsplayer': ['hqdjango0.internal.commcarehq.org'],
+        # for now, we'll have touchforms run on both hqdb and hqdjango0
+        # will remove hqdjango0 once we verify it works well on hqdb
+        'formsplayer': ['hqdb.internal.commcarehq.org', 'hqdjango0.internal.commcarehq.org'],
         'lb': [], #todo on apache level config
         'staticfiles': ['hqproxy0.internal.commcarehq.org'],
         'deploy': ['hqdb.internal.commcarehq.org'], #this is a stub becuaue we don't want to be prompted for a host or run deploy too many times
@@ -186,7 +187,7 @@ def production():
 @task
 def realstaging():
     """ use production environment on remote host"""
-    env.code_branch = 'pact-dev'
+    env.code_branch = 'master'
     env.sudo_user = 'cchq'
     env.environment = 'staging'
     env.django_port = '9010'
