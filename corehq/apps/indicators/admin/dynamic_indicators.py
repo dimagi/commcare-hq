@@ -15,7 +15,7 @@ class BaseDynamicIndicatorAdminInterface(BaseIndicatorAdminInterface):
 
 
 class CombinedIndicatorAdminInterface(BaseDynamicIndicatorAdminInterface):
-    name = "Combined Indicators (Ratio)"
+    name = CombinedCouchViewIndicatorDefinition.get_nice_name()
     description = "desc needed" #todo
     slug = "dynamic_combined"
     document_class = CombinedCouchViewIndicatorDefinition
