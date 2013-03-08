@@ -609,7 +609,7 @@ class FormCompletionVsSubmissionTrendsReport(WorkerMonitoringReportTableBase, Mu
             if not status:
                 status.append("same")
             elif td.days < 0:
-                if abs(td.total_seconds()) > 15*60:
+                if abs(td).seconds > 15*60:
                     status = [_("submitted before completed [strange]")]
                     klass = "label-inverse"
                 else:
