@@ -49,9 +49,7 @@ class PactDOTReport(GenericTabularReport, CustomProjectReport, ProjectReportPara
     name = "DOT Patient List"
     slug = "dots"
 
-    #description = "PACT DOT Report"
     report_template_path = "pact/dots/dots_report.html"
-    #hide_filters = True
     flush_layout = True
     fields = ['pact.reports.dot.PactDOTPatientField', 'corehq.apps.reports.fields.DatespanField']
 

@@ -98,16 +98,3 @@ class PactDOTAdminReport(GenericTabularReport, CustomProjectReport):
             dict_obj = obs.to_json()
             row = [dict_obj[x.prop_name].encode('utf-8') if isinstance(dict_obj[x.prop_name], unicode) else dict_obj[x.prop_name] for x in self.headers]
             yield row
-
-    #
-    # @property
-    # def shared_pagination_GET_params(self):
-    #     """
-    #     Override the params and applies all the params of the originating view to the GET
-    #     so as to get sorting working correctly with the context of the GET params
-    #     """
-    #     ret = []
-    #     for k, v in self.request.GET.items():
-    #         ret.append(dict(name=k, value=v))
-    #     return ret
-
