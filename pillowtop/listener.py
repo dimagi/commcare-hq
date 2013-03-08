@@ -1,7 +1,9 @@
 import logging
 from datetime import datetime
 import hashlib
+import os
 import traceback
+from requests import ConnectionError
 import simplejson
 from gevent import socket
 import rawes
@@ -23,6 +25,29 @@ else:
 
 CHECKPOINT_FREQUENCY = 100
 WAIT_HEARTBEAT = 10000
+RETRY_INTERVAL = 5
+MAX_RETRIES = 5
+
+INDEX_REINDEX_SETTINGS = {"index": {"refresh_interval": "900s",
+                                    "merge.policy.merge_factor": 20,
+                                    "store.throttle.max_bytes_per_sec": "1mb",
+                                    "store.throttle.type": "merge",
+                                    "number_of_replicas": "0"}
+}
+INDEX_STANDARD_SETTINGS = {"index": {"refresh_interval": "10s",
+                                     "merge.policy.merge_factor": 10,
+                                     "store.throttle.max_bytes_per_sec": "5mb",
+                                     "store.throttle.type": "node",
+                                     "number_of_replicas": "0"}
+}
+
+
+class PillowtopIndexingError(Exception):
+    pass
+
+
+class PillowtopNetworkError(Exception):
+    pass
 
 
 def ms_from_timedelta(td):
@@ -55,7 +80,7 @@ class BasicPillow(object):
                        heartbeat=WAIT_HEARTBEAT, feed='continuous', timeout=30000)
             except Exception, ex:
                 logging.exception("Exception in form listener: %s, sleeping and restarting" % ex)
-                gevent.sleep(5)
+                gevent.sleep(RETRY_INTERVAL)
 
     def new_changes(self):
         """
@@ -78,8 +103,10 @@ class BasicPillow(object):
         else:
             self.old_changes()
 
+    @memoized
     def get_name(self):
-        return "%s.%s" % (self.__module__, self.__class__.__name__)
+        return "%s.%s.%s" % (
+            self.__module__, self.__class__.__name__, os.uname()[1].replace('.', '_'))
 
     def get_checkpoint_doc_name(self):
         return "pillowtop_%s" % self.get_name()
@@ -90,10 +117,20 @@ class BasicPillow(object):
         if self.couch_db.doc_exist(doc_name):
             checkpoint_doc = self.couch_db.open_doc(doc_name)
         else:
+            #legacy check
+            #split doc and see if non_hostname setup exists.
+            legacy_name = '.'.join(doc_name.split('.')[0:-1])
+            starting_seq = "0"
+            if self.couch_db.doc_exist(legacy_name):
+                logging.info("hostname specific checkpoint not found, searching legacy")
+                legacy_checkpoint = self.couch_db.open_doc(legacy_name)
+                if not isinstance(legacy_checkpoint['seq'], int):
+                    logging.info("Legacy checkpoint set")
+                    starting_seq = legacy_checkpoint['seq']
+
             checkpoint_doc = {
                 "_id": doc_name,
-                "seq": "0"
-                #todo: bigcouch changes seq are [num, string] arrs, num is meaningless,string is meaningful
+                "seq": starting_seq
             }
             self.couch_db.save_doc(checkpoint_doc)
         return checkpoint_doc
@@ -103,7 +140,6 @@ class BasicPillow(object):
         checkpoint_doc['old_seq'] = checkpoint_doc['seq']
         checkpoint_doc['seq'] = "0"
         self.couch_db.save_doc(checkpoint_doc)
-
 
     @property
     def since(self):
@@ -166,7 +202,6 @@ class BasicPillow(object):
         """
         return doc_dict
 
-
     def change_transport(self, doc_dict):
         """
         Step three of the pillowtop processor:
@@ -196,24 +231,47 @@ class ElasticPillow(BasicPillow):
         """
         create_index if the index doesn't exist on the ES cluster
         """
-        if create_index:
-            if not self.index_exists():
-                self.create_index()
+        index_exists = self.index_exists()
+        if create_index and not index_exists:
+            self.create_index()
 
-    def index_exists(self):
+    def index_exists(self, connect_attempt=0):
         es = self.get_es()
-        return es.head(self.es_index)
+        while True:
+            try:
+                res = es.head(self.es_index)
+                return res
+            except ConnectionError, ex:
+                logging.error("[%s] Error connecting to ES %s:%s: %s" % (
+                    self.get_name(), es.host, es.port, ex))
+                logging.debug(
+                    "[%s] Retry attempt in %s seconds" % (self.get_name(), RETRY_INTERVAL))
+                gevent.sleep(RETRY_INTERVAL)
 
     def get_doc_path(self, doc_id):
         return "%s/%s/%s" % (self.es_index, self.es_type, doc_id)
+
+    def update_settings(self, settings_dict):
+        return self.put_robust("%s/_settings" % self.es_index, data=settings_dict)
+
+    def set_index_reindex_settings(self):
+        """
+        Set a more optimized setting setup for fast reindexing
+        """
+        return self.update_settings(INDEX_REINDEX_SETTINGS)
+
+    def set_index_normal_settings(self):
+        """
+        Normal indexing configuration
+        """
+        return self.update_settings(INDEX_STANDARD_SETTINGS)
 
     def get_index_mapping(self):
         es = self.get_es()
         return es.get('%s/_mapping' % self.es_index).get(self.es_index, {})
 
     def set_mapping(self, type_string, mapping):
-        es = self.get_es()
-        return es.put("%s/%s/_mapping" % (self.es_index, type_string), data=mapping)
+        return self.put_robust("%s/%s/_mapping" % (self.es_index, type_string), data=mapping)
 
     @memoized
     def get_es(self):
@@ -232,8 +290,7 @@ class ElasticPillow(BasicPillow):
         """
         Rebuild an index after a delete
         """
-        es = self.get_es()
-        es.put(self.es_index, data=self.es_meta)
+        self.put_robust(self.es_index, data=self.es_meta)
 
     def change_trigger(self, changes_dict):
         if changes_dict.get('deleted', False):
@@ -244,7 +301,6 @@ class ElasticPillow(BasicPillow):
                               (self.get_doc_path(changes_dict['id']), ex))
             return None
         return self.couch_db.open_doc(changes_dict['id'])
-
 
     def doc_exists(self, doc_id):
         """
@@ -258,6 +314,9 @@ class ElasticPillow(BasicPillow):
 
     def bulk_builder(self, changes):
         """
+        Generator function for bulk changes - note each individual change item goes through the pillowtop pathway individually
+        when loading the bulk item, and short of change_transport, it's identical. It would be slightly more efficient if the couch
+        load could be done in bulk for the actual documents, but it's not quite possible without gutting the existing pillowtop API
         http://www.elasticsearch.org/guide/reference/api/bulk.html
         bulk loader follows the following:
         { "index" : { "_index" : "test", "_type" : "type1", "_id" : "1" } }\n
@@ -272,7 +331,8 @@ class ElasticPillow(BasicPillow):
                         self.change_transport(tr)
 
                         yield {
-                        "index": {"_index": self.es_index, "_type": self.es_type, "_id": tr['_id']}}
+                            "index": {"_index": self.es_index, "_type": self.es_type,
+                                      "_id": tr['_id']}}
                         yield tr
             except Exception, ex:
                 logging.error("Error on change: %s, %s" % (change['id'], ex))
@@ -281,13 +341,18 @@ class ElasticPillow(BasicPillow):
         self.allow_updates = False
         self.bulk = True
         es = self.get_es()
+        bstart = datetime.utcnow()
         bulk_payload = '\n'.join(map(simplejson.dumps, self.bulk_builder(changes))) + "\n"
+        logging.info(
+            "prepare_bulk,%s" % str(ms_from_timedelta(datetime.utcnow() - bstart) / 1000.0))
+        send_start = datetime.utcnow()
         es.post('_bulk', data=bulk_payload)
-
+        logging.info(
+            "send_bulk,%s" % str(ms_from_timedelta(datetime.utcnow() - send_start) / 1000.0))
 
     def processor(self, change, do_set_checkpoint=True):
         """
-        Parent processsor for a pillow class - this should not be overridden.
+        Parent processor for a pillow class - this should not be overridden.
         This workflow is made for the situation where 1 change yields 1 transport/transaction
         """
         self.changes_seen += 1
@@ -305,11 +370,49 @@ class ElasticPillow(BasicPillow):
         except Exception, ex:
             logging.error("Error on change: %s, %s" % (change['id'], ex))
 
+    def put_robust(self, path, data={}, retries=MAX_RETRIES, except_on_failure=False):
+        """
+        More fault tolerant es.put method
+        """
+        current_tries = 0
+        while current_tries < retries:
+            try:
+                res = self.get_es().put(path, data=data)
+                break
+            except ConnectionError, ex:
+                current_tries += 1
+                logging.error("[%s] put_robust error %s attempt %d/%d" % (
+                    self.get_name(), ex, current_tries, retries))
+                gevent.sleep(RETRY_INTERVAL)
+
+                if current_tries == retries:
+                    message = "[%s] Max retry error on %s" % (self.get_name(), path)
+                    if except_on_failure:
+                        raise PillowtopIndexingError(message)
+                    else:
+                        logging.error(message)
+                    res = {}
+                    break
+
+        if res.get('status', 0) == 400:
+            error_message = "Pillowtop put_robust error [%s]:\n%s\n\tpath: %s\n\t%s" % (
+                self.get_name(),
+                res.get('error', "No error message"),
+                path,
+                data.keys())
+
+            if except_on_failure:
+                raise PillowtopIndexingError(error_message)
+            else:
+                logging.error(error_message)
+        return res
 
     def change_transport(self, doc_dict):
         """
         Default elastic pillow for a given doc to a type.
         """
+        if self.bulk:
+            return
         try:
             es = self.get_es()
             doc_path = self.get_doc_path(doc_dict['_id'])
@@ -319,15 +422,9 @@ class ElasticPillow(BasicPillow):
             else:
                 can_put = not self.doc_exists(doc_dict['_id'])
 
-            if can_put and not self.bulk:
-                res = es.put(doc_path, data=doc_dict)
-                if res.get('status', 0) == 400:
-                    logging.error(
-                        "Pillowtop Error [%s]:\n%s\n\tDoc id: %s\n\t%s" % (self.get_name(),
-                                                                           res.get('error',
-                                                                                   "No error message"),
-                                                                           doc_dict['_id'],
-                                                                           doc_dict.keys()))
+            if can_put:
+                res = self.put_robust(doc_path, data=doc_dict)
+                return res
         except Exception, ex:
             logging.error("PillowTop [%s]: transporting change data to elasticsearch error: %s",
                           (self.get_name(), ex))
@@ -336,15 +433,19 @@ class ElasticPillow(BasicPillow):
 
 class AliasedElasticPillow(ElasticPillow):
     """
-    This pillow class defines it as being alias-able. That is, when you query it, you use an Alias to access it.
+    This pillow class defines it as being alias-able. That is, when you query it, you use an
+    Alias to access it.
 
-    This could be for varying reasons -  to make an index by certain metadata into its own index for performance/separation reasons
+    This could be for varying reasons -  to make an index by certain metadata into its own index
+    for performance/separation reasons
 
-    Or, for our initial use case, needing to version/update the index mappings on the fly with minimal disruption.
+    Or, for our initial use case, needing to version/update the index mappings on the fly with
+    minimal disruption.
 
 
-    The workflow for altering an AliasedElasticPillow is that if you know you made a change, the pillow will create a new
-    Index witha new md5sum as its suffix. Once it's finished indexing, you will need to flip the alias over to it.
+    The workflow for altering an AliasedElasticPillow is that if you know you made a change, the
+    pillow will create a new Index with a new md5sum as its suffix. Once it's finished indexing,
+    you will need to flip the alias over to it.
     """
     es_alias = ''
     es_index_prefix = ''
@@ -354,15 +455,39 @@ class AliasedElasticPillow(ElasticPillow):
     def check_alias(self):
         """
         Naive means to verify the alias of the current pillow iteration is matched.
-        If we go fancier with routing and multi-index aliases due to index splitting, this will need to be revisited.
+        If we go fancier with routing and multi-index aliases due to index splitting, this
+        will need to be revisited.
         """
         es = self.get_es()
         aliased_indexes = es[self.es_alias].get('_aliases')
         return aliased_indexes.keys()
 
+    def assume_alias(self):
+        """
+        For this instance, have the index that represents this index receive the alias itself.
+        This presents a management issue later if we route out additional
+        indexes/aliases that we automate this carefully. But for now, 1 alias to 1 index.
+        Routing will need a refactor anyway
+        """
+
+        es = self.get_es()
+        if es.head(self.es_alias):
+            #remove all existing aliases - this is destructive and could be harmful, but for current
+            #uses, it is legal - in a more delicate routing arrangement, a configuration file of
+            # some sort should be in use.
+            alias_indices = es[self.es_alias].get('_status')['indices'].keys()
+
+            remove_actions = [{"remove": {"index": x, "alias": self.es_alias}} for x in
+                              alias_indices]
+            remove_data = {"actions": remove_actions}
+            es.post('_aliases', data=remove_data)
+            #now reapply HEAD/master index
+        es.post('_aliases', data={"actions": [{"add":
+                                                   {"index": self.es_index,
+                                                    "alias": self.es_alias}}]})
+
     def calc_mapping_hash(self, mapping):
         return hashlib.md5(simplejson.dumps(mapping, sort_keys=True)).hexdigest()
-
 
     def __init__(self, **kwargs):
         super(AliasedElasticPillow, self).__init__(**kwargs)
@@ -371,7 +496,6 @@ class AliasedElasticPillow(ElasticPillow):
 
     def calc_meta(self):
         raise NotImplementedError("Need to implement your own meta calculator")
-
 
     def bulk_builder(self, changes):
         """
@@ -394,11 +518,9 @@ class AliasedElasticPillow(ElasticPillow):
             except Exception, ex:
                 logging.error("Error on change: %s, %s" % (change['id'], ex))
 
-
     def type_exists(self, doc_dict, server=False):
         """
         Verify whether the server has indexed this type
-
         We can assume at startup that the mapping from the server is loaded,
         so in memory will be up to date.
 
@@ -408,23 +530,20 @@ class AliasedElasticPillow(ElasticPillow):
         es = self.get_es()
         type_string = self.get_type_string(doc_dict)
 
-        ##################
-        #ES 0.20 has the index HEAD API.  While we're on 0.19, we will need to poll the index
-        # metadata
         if server:
             type_path = "%(index)s/%(type_string)s" % (
-            {'index': self.es_index, 'type_string': type_string, })
+                {
+                    'index': self.es_index,
+                    'type_string': type_string
+                })
             head_result = es.head(type_path)
             self.seen_types[type_string] = head_result
             return head_result
-            ##################
-
-        #####
-        #0.19 method, get the mapping from the index
-        return self.seen_types.has_key(type_string)
+        else:
+            return type_string in self.seen_types
 
     def get_type_string(self, doc_dict):
-        raise NotImplementedError("Please implement acustom type string resolver")
+        raise NotImplementedError("Please implement a custom type string resolver")
 
     def get_doc_path_typed(self, doc_dict):
         return "%(index)s/%(type_string)s/%(id)s" % (
@@ -442,22 +561,15 @@ class AliasedElasticPillow(ElasticPillow):
         head_result = es.head(self.get_doc_path_typed(doc_dict))
         return head_result
 
-
-    def assume_alias(self):
-        """
-        todo: for this instance, have the index that represents this index
-        receive the alias itself as well.
-        This presents a management issue later if we route out additional
-        indexes/aliases that we automate this carefully.
-        """
-        pass
-
+    @memoized
     def get_name(self):
         """
         Gets the doc_name in which to set the checkpoint for itself, based upon
         class name and the hashed name representation.
         """
-        return "%s.%s.%s" % (self.__module__, self.__class__.__name__, self.calc_meta())
+        return "%s.%s.%s.%s" % (
+            self.__module__, self.__class__.__name__, self.calc_meta(),
+            os.uname()[1].replace('.', '_'))
 
     def get_mapping_from_type(self, doc_dict):
         raise NotImplementedError("This must be implemented in this subclass!")
@@ -467,9 +579,7 @@ class AliasedElasticPillow(ElasticPillow):
         Override the elastic transport to go to the index + the type being a string between the
         domain and case type
         """
-        #        start = datetime.utcnow()
         try:
-            es = self.get_es()
             if not self.type_exists(doc_dict):
                 #if type is never seen, apply mapping for said type
                 type_mapping = self.get_mapping_from_type(doc_dict)
@@ -483,30 +593,24 @@ class AliasedElasticPillow(ElasticPillow):
                         "Mapping set: [%s] %s" % (self.get_type_string(doc_dict), mapping_res))
                     #manually update in memory dict
                     self.seen_types[self.get_type_string(doc_dict)] = {}
+                    #got_type = datetime.utcnow()
 
-                #            got_type = datetime.utcnow()
-            doc_path = self.get_doc_path_typed(doc_dict)
+            if not self.bulk:
+                doc_path = self.get_doc_path_typed(doc_dict)
 
-            if self.allow_updates:
-                can_put = True
-            else:
-                can_put = not self.doc_exists(doc_dict)
+                if self.allow_updates:
+                    can_put = True
+                else:
+                    can_put = not self.doc_exists(doc_dict)
 
-            if can_put and not self.bulk:
-                res = es.put(doc_path, data=doc_dict)
-                #                did_put = datetime.utcnow()
-                if res.get('status', 0) == 400:
-                    logging.error(
-                        "Pillowtop Error [%(case_type)s]:\n%(es_message)s\n\tDoc id: %(doc_id)s\n\t%(doc_keys)s" % dict(
-                            case_type=self.get_name(),
-                            es_message=res.get('error', "No error message"),
-                            doc_id=doc_dict['_id'],
-                            doc_keys=doc_dict.keys()))
+                if can_put and not self.bulk:
+                    res = self.put_robust(doc_path, data=doc_dict)
+                    return res
         except Exception, ex:
             tb = traceback.format_exc()
             logging.error(
                 "PillowTop [%s]: transporting change data doc_id: %s to elasticsearch error: %s\ntraceback: %s\n" % (
-                self.get_name(), doc_dict['_id'], ex, tb))
+                    self.get_name(), doc_dict['_id'], ex, tb))
             return None
 
 
