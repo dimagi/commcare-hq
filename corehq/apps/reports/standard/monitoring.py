@@ -541,6 +541,8 @@ class FormCompletionVsSubmissionTrendsReport(WorkerMonitoringReportTableBase, Mu
         total_seconds = 0
         if self.all_relevant_forms:
             for user in self.users:
+                if not user.get('user_id'):
+                    continue
                 for form in self.all_relevant_forms.values():
                     data = self.get_form_data(user.get('user_id'), form['xmlns'], form['app_id'])
                     for item in data:

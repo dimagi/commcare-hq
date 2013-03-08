@@ -130,6 +130,8 @@ def get_all_users_by_domain(domain=None, group=None, individual=None,
                 temp_user = TempCommCareUser(domain, username, user_id)
                 if user_filter[temp_user.filter_flag].show:
                     users.append(temp_user)
+        if user_filter[HQUserType.UNKNOWN].show:
+            users.append(TempCommCareUser(domain, '', None))
 
         if user_filter[HQUserType.REGISTERED].show:
             # now add all the registered users who never submitted anything
