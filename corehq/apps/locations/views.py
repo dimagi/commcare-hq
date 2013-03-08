@@ -3,7 +3,7 @@ from corehq.apps.domain.decorators import require_superuser, domain_admin_requir
 from corehq.apps.domain.models import Domain
 from corehq.apps.locations.models import Location
 from corehq.apps.locations.forms import LocationForm
-from corehq.apps.locations.util import load_locs_json
+from corehq.apps.locations.util import load_locs_json, location_hierarchy_config
 from django.core.urlresolvers import reverse
 from django.shortcuts import render
 from dimagi.utils.web import get_url_base
@@ -20,6 +20,7 @@ def locations_list(request, domain):
         'domain': domain,
         'selected_id': selected_id,
         'locations': load_locs_json(domain, selected_id),
+        'hierarchy': location_hierarchy_config(domain),
         'api_root': reverse('api_dispatch_list', kwargs={'domain': domain,
                                                          'resource_name': 'location', 
                                                          'api_name': 'v0.3'})
@@ -56,6 +57,7 @@ def location_edit(request, domain, loc_id=None):
                                                          'resource_name': 'location', 
                                                          'api_name': 'v0.3'}),
         'location': location,
+        'hierarchy': location_hierarchy_config(domain),
         'form': form,
     }
     return render(request, 'locations/manage/location.html', context)
