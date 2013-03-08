@@ -9,6 +9,11 @@
     <script src="{% static 'hqwebapp/js/lib/jquery-ui/multiselect/ui.multiselect.js' %}"></script>
 {% endblock %}
 
+{% block head %}
+    <link rel="stylesheet" href="{% static 'hqwebapp/js/lib/jquery-ui-datepicker/datepicker-theme/jquery-ui-1.8.17.custom.css' %}" />g
+    <link rel="stylesheet" href="{% static 'hqwebapp/js/lib/jquery-ui/multiselect/ui.multiselect.css' %}" />
+{% endblock %}
+
 {% block title %}{% trans 'Bulk Copy Indicators' %}{% endblock title %}
 
 {% block js-inline %}
