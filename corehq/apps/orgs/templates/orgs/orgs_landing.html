@@ -3,6 +3,10 @@
 {% load hqstyle_tags %}
 {% load i18n %}
 
+{% block js %}{{ block.super }}
+    <link href="{% static 'hqwebapp/js/lib/select2/select2.css' %}" rel="stylesheet"/>
+    <script src="{% static 'hqwebapp/js/lib/select2/select2.js' %}"></script>
+{% endblock %}
 {% block js-inline %}{{ block.super }}
 <script>
     $(function () {
@@ -49,7 +53,10 @@
             return false;
         });
 
-        $('#prelim_add_project').typeahead({source: {{ potential_domains|JSON }}});
+        $('#prelim_add_project').select2({
+            placeholder: "Name of an Existing Project",
+            allowClear: true
+        });
 
         $('#prelim_add_project').change(function() {
             $("#add_project_modal").find('[name="domain_name"]').val($(this).val())
@@ -99,14 +106,28 @@
 
         {% if admin %}
             <div class="well well-small form-horizontal">
-                <div class="input-append">
-                    <input id="prelim_add_project" type="text" placeholder="Name of an existing project" />
-                    <a href="#add_project_modal" id="add_project_btn" class="btn btn-info" data-toggle="modal">
-                        <i class="icon-plus"></i> {% trans "Add Existing Project" %}
-                    </a>
-                </div>
+                <select id="prelim_add_project" class="input-xlarge">
+                    <option value=""></option>
+                    {% if req_domains %}
+                        <optgroup label="Requested Projects">
+                            {% for dom in req_domains %}
+                                <option value="{{ dom.name }}">{{ dom.display_name }}</option>
+                            {% endfor %}
+                        </optgroup>
+                    {% endif %}
+                    {% if user_domains %}
+                        <optgroup label="My Projects">
+                            {% for dom in user_domains %}
+                                <option value="{{ dom.name }}">{{ dom.display_name }}</option>
+                            {% endfor %}
+                        </optgroup>
+                    {% endif %}
+                </select>
+                <a href="#add_project_modal" id="add_project_btn" class="btn btn-info" data-toggle="modal">
+                    <i class="icon-plus"></i> {% trans "Add Existing Project" %}
+                </a>
                 <a href="#create_project_modal" id="create_project_btn" class="btn pull-right" data-toggle="modal">
-                    <i class="icon-pencil"></i> {% trans "Add New Project" %}
+                    <i class="icon-plus-sign"></i> {% trans "Add New Project" %}
                 </a>
             </div>
         {% endif %}
