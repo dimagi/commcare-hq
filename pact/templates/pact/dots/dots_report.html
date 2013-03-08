@@ -1,10 +1,5 @@
 {% extends "reports/async/default.html" %}
 {% load i18n %}
-{#{% block extrahead %}#}
-{#    {{ block.super }}#}
-{#    <link type="text/css" rel="stylesheet" href="{{ STATIC_URL }}pact/stylesheets/dots.css"/>#}
-{#{% endblock extrahead %}#}
-
 {% block reportcontent %}
     <h3>({{ patient_case.pactid }}) {{ patient_case.name }} DOT Report <small>{{ startdate }}-{{ enddate }} &nbsp; <a href="{{ patient_case.get_info_url }}" target="_blank">Profile</a></small></h3>
     <small>Observations spanning <strong>visits</strong> during this time</small>

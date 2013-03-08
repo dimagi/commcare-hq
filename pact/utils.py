@@ -1,4 +1,4 @@
-from corehq.apps.api.es import  CaseES
+from corehq.apps.api.es import  FullCaseES
 from pact.enums import PACT_DOTS_DATA_PROPERTY, PACT_DOMAIN
 from StringIO import StringIO
 from django.test.client import RequestFactory
@@ -99,7 +99,7 @@ def get_patient_display_cache(case_ids):
     """
     if len(case_ids) == 0:
         return {}
-    case_es = CaseES(PACT_DOMAIN)
+    case_es = FullCaseES(PACT_DOMAIN)
     query = {
         "fields": [
             "_id",

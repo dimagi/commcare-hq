@@ -1,0 +1,17 @@
+{% extends "reports/async/default.html" %}
+{% load i18n %}
+{#{% block extrahead %}#}
+{#    {{ block.super }}#}
+{#    <link type="text/css" rel="stylesheet" href="{{ STATIC_URL }}pact/stylesheets/dots.css"/>#}
+{#{% endblock extrahead %}#}
+
+{% block reportcontent %}
+    <h2>Pact Admin Report {{ foo }}</h2>
+    <ul>
+        <li>DOT Raw Data Download</li>
+        <li>Progress Note Data Download</li>
+        <li>DOT Report Data Download</li>
+        <li>Scheduled Visit Raw Data Dump</li>
+    </ul>
+
+{% endblock %}

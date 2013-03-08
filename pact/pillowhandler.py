@@ -1,5 +1,5 @@
 from corehq.pillows.core import DATE_FORMATS_STRING
-from corehq.pillows.xform import XFormPillowHandler
+from corehq.pillows.fullxform import XFormPillowHandler
 
 class PactHandler(XFormPillowHandler):
     domain = "pact"

@@ -1,30 +1,32 @@
 from datetime import datetime, time
 import logging
 import uuid
-import dateutil
-from django.core.urlresolvers import reverse
-from lxml import etree
 import tempfile
+
+import dateutil
+from lxml import etree
 from django.core.servers.basehttp import FileWrapper
 from django.utils.decorators import method_decorator
 from django_digest.decorators import httpdigest
 import simplejson
+from django.http import Http404, HttpResponse
+from django.core.cache import cache
+
 from corehq.apps.api.domainapi import DomainAPI
-from corehq.apps.api.es import XFormES, CaseES
+from corehq.apps.api.es import FullCaseES, FullXFormES
 from corehq.apps.app_manager.models import ApplicationBase
-from corehq.apps.domain.decorators import login_and_domain_required, login_or_digest
+from corehq.apps.domain.decorators import login_or_digest
 from corehq.apps.fixtures.models import FixtureDataType, FixtureDataItem
 from corehq.apps.groups.models import Group
 from corehq.apps.users.models import CouchUser
 from couchforms.models import XFormInstance
 import localsettings
 from pact.dot_data import get_dots_case_json
-from pact.enums import PACT_DOMAIN, XMLNS_PATIENT_UPDATE, PACT_PROVIDER_FIXTURE_TAG, PACT_HP_GROUPNAME, PACT_PROVIDERS_FIXTURE_CACHE_KEY, XMLNS_DOTS_FORM, XMLNS_PATIENT_UPDATE_DOT
-from django.http import Http404, HttpResponse
+from pact.enums import PACT_DOMAIN, XMLNS_PATIENT_UPDATE, PACT_PROVIDER_FIXTURE_TAG, PACT_HP_GROUPNAME, PACT_PROVIDERS_FIXTURE_CACHE_KEY, XMLNS_PATIENT_UPDATE_DOT
 from pact.forms.patient_form import PactPatientForm
 from pact.forms.weekly_schedule_form import ScheduleForm, DAYS_OF_WEEK
 from pact.utils import pact_script_fields, case_script_field, submit_xform, query_per_case_submissions_facet
-from django.core.cache import cache
+
 
 
 #address edit
@@ -87,8 +89,8 @@ def get_cloudcare_url(case_id, mode):
 
 
 class PactFormAPI(DomainAPI):
-    xform_es = XFormES(PACT_DOMAIN)
-    case_es = CaseES(PACT_DOMAIN)
+    xform_es = FullXFormES(PACT_DOMAIN)
+    case_es = FullCaseES(PACT_DOMAIN)
 
     @classmethod
     def allowed_domain(self, domain):
@@ -334,7 +336,8 @@ class PactAPI(DomainAPI):
     http_method_names = ['get', 'post', 'head', ]
 
     def get(self, *args, **kwargs):
-        from pact.models import PactPatientCase, CDotWeeklySchedule
+        from pact.models import PactPatientCase
+
         if self.request.GET.get('case_id', None) is None:
             raise Http404
 

@@ -1,15 +1,11 @@
-import pdb
-import dateutil
-from dateutil.parser import parser
 from django.core.urlresolvers import  NoReverseMatch
-import simplejson
-from corehq.apps.api.es import CaseES, XFormES
+from django.utils import html
+
+from corehq.apps.api.es import FullCaseES, FullXFormES
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
 from corehq.apps.reports.fields import  ReportSelectField
 from corehq.apps.reports.generic import GenericTabularReport
 from corehq.apps.reports.standard import CustomProjectReport
-from django.utils import html
-
 from corehq.apps.users.models import CommCareUser
 from dimagi.utils.decorators.memoized import memoized
 from pact.enums import PACT_DOMAIN, PACT_HP_CHOICES, PACT_DOT_CHOICES, PACT_CASE_TYPE
@@ -80,8 +76,8 @@ class PatientListDashboardReport(GenericTabularReport, ESSortableMixin, CustomPr
         'pact.reports.patient_list.HPStatusField',
         'pact.reports.patient_list.DOTStatus',
     ]
-    case_es = CaseES(PACT_DOMAIN)
-    xform_es = XFormES(PACT_DOMAIN)
+    case_es = FullCaseES(PACT_DOMAIN)
+    xform_es = FullXFormES(PACT_DOMAIN)
 
     def get_pact_cases(self):
         domain = PACT_DOMAIN

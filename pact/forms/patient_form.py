@@ -5,7 +5,7 @@ from django import forms
 from django.core.exceptions import ValidationError
 from django.forms import Form
 import simplejson
-from corehq.apps.api.es import CaseES
+from corehq.apps.api.es import FullCaseES
 from pact.enums import PACT_HP_CHOICES, PACT_DOT_CHOICES, PACT_REGIMEN_CHOICES, GENDER_CHOICES, PACT_RACE_CHOICES, PACT_HIV_CLINIC_CHOICES, PACT_LANGUAGE_CHOICES, CASE_NONART_REGIMEN_PROP, CASE_ART_REGIMEN_PROP, DOT_ART, DOT_NONART, PACT_DOMAIN
 from django.forms import widgets
 from pact.regimen import regimen_string_from_doc, regimen_dict_from_choice
@@ -48,7 +48,7 @@ class PactPatientForm(Form):
         super(PactPatientForm, self).__init__(*args, **kwargs)
         self.casedoc = casedoc
         self.fields['hp'].choices = get_hp_choices()
-        self.case_es = CaseES(request.domain)
+        self.case_es = FullCaseES(request.domain)
         for name, field in self.fields.items():
             if name == CASE_ART_REGIMEN_PROP:
                 #these really should be a widget of some type

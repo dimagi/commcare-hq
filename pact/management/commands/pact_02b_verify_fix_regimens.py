@@ -4,7 +4,7 @@ import sys
 from datetime import datetime, timedelta
 import simplejson
 from casexml.apps.case.models import CommCareCase
-from corehq.apps.api.es import CaseES
+from corehq.apps.api.es import FullCaseES
 from corehq.apps.users.models import CommCareUser
 from pact.api import submit_case_update_form
 from pact.dot_data import filter_obs_for_day

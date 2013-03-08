@@ -1,12 +1,11 @@
-from datetime import datetime, timedelta, timedelta
-import pdb
+from datetime import datetime, timedelta
 import time
 from dateutil.parser import parser
 from django.core.cache import cache
 from django.http import HttpResponse
 import simplejson
 from casexml.apps.case.models import CommCareCase
-from corehq.apps.api.es import XFormES
+from corehq.apps.api.es import FullXFormES
 from pact.enums import PACT_DOMAIN
 from pact.lib.quicksect import IntervalNode
 from pact.utils import get_patient_display_cache
@@ -90,35 +89,15 @@ class CHWPatientSchedule(object):
 
             daytree.insert(get_seconds(startdate), get_seconds(enddate), other=case_id)
             day_intervaltree[day_of_week] = daytree
-            #cached_schedules[chw_username] = CHWPatientSchedule(chw_username, day_intervaltree, chw_schedules)
         return cls(chw_username, day_intervaltree, cached_arr)
 
 
-def query_submissions(username):
-    xform_es = XFormES(PACT_DOMAIN)
-    fields = [
-        "form.#type",
-        "form.encounter_date",
-        "form.note.encounter_date",
-        "form.case.case_id",
-        "form.case.@case_id",
-        "form.pact_id",
-        "form.note.pact_id",
-        "received_on",
-        "form.meta.timeStart",
-        "form.meta.timeEnd"
-    ]
-    query = xform_es.base_query(terms={"form.meta.username": username}, fields=fields,
-                                start=0, size=25)
-    return xform_es.run_query(query)
-
-
-def dot_submits_by_username(username, case_id, query_date):
+def dots_submissions_by_case(case_id, query_date, username=None):
     """
     Actually run query for username submissions
     todo: do terms for the pact_ids instead of individual term?
     """
-    xform_es = XFormES(PACT_DOMAIN)
+    xform_es = FullXFormES(PACT_DOMAIN)
     script_fields = {
         "doc_id": {"script": "_source._id"},
         "pact_id": {"script": "_source.form.pact_id", },
@@ -136,8 +115,10 @@ def dot_submits_by_username(username, case_id, query_date):
         "scheduled": {"script": "_source.form.scheduled"}
     }
 
-    query = xform_es.by_case_id_query(PACT_DOMAIN, case_id, terms={'form.meta.username': username,
-                                                                   'form.#type': 'dots_form'},
+    term_block = {'form.#type': 'dots_form'}
+    if username is not None:
+        term_block['form.meta.username'] = username
+    query = xform_es.by_case_id_query(PACT_DOMAIN, case_id, terms=term_block,
                                       date_field='form.encounter_date', startdate=query_date,
                                       enddate=query_date)
     query['sort'] = {'received_on': 'asc'}
@@ -156,7 +137,7 @@ def get_schedule_tally(username, total_interval, override_date=None):
     schedul_tally_array = [visit_date, [(patient1, visit1), (patient2, visit2), (patient3, None), (patient4, visit4), ...]]
     where visit = XFormInstance
     """
-    if override_date == None:
+    if override_date is None:
         nowdate = datetime.now()
         chw_schedule = CHWPatientSchedule.get_schedule(username)
     else:
@@ -188,13 +169,8 @@ def get_schedule_tally(username, total_interval, override_date=None):
         dp = parser()
         for case_id in patient_case_ids:
             total_scheduled += 1
-            #            searchkey = [str(username), str(pact_id), visit_date.year, visit_date.month, visit_date.day]
-            search_results = dot_submits_by_username(username, case_id, visit_date)
+            search_results = dots_submissions_by_case(case_id, visit_date, username=username)
             submissions = search_results['hits']['hits']
-            #            print "\tquerying submissions: %s: %s" % (username, visit_date)
-            #            submissions = XFormInstance.view('dotsview/dots_submits_by_chw_per_patient_date', key=searchkey, include_docs=True).all()
-            #            submissions = []
-            #ES Query
             if len(submissions) > 0:
                 #print submissions[0]['fields']
                 #calculate if pillbox checked
@@ -213,9 +189,9 @@ def get_schedule_tally(username, total_interval, override_date=None):
                 visited.append(submissions[0]['fields'])
                 total_visited += 1
             else:
-            #ok, so no submission from this chw, let's see if there's ANY from anyone on this day.
-            #                other_submissions = XFormInstance.view('pactcarehq/all_submits_by_patient_date', key=[str(pact_id), visit_date.year, visit_date.month, visit_date.day, 'http://dev.commcarehq.org/pact/dots_form' ], include_docs=True).all()
-                other_submissions = []
+                #ok, so no submission from this chw, let's see if there's ANY from anyone on this day.
+                search_results = dots_submissions_by_case(case_id, visit_date)
+                other_submissions = search_results['hits']['hits']
                 if len(other_submissions) > 0:
                     visited.append(other_submissions[0])
                     total_visited += 1
@@ -228,18 +204,22 @@ def get_schedule_tally(username, total_interval, override_date=None):
 def chw_calendar_submit_report(request, username):
     """Calendar view of submissions by CHW, overlaid with their scheduled visits, and whether they made them or not."""
     return_context = {}
-    all_patients = request.GET.get("all_patients", False)
     return_context['username'] = username
-    user = request.user
     total_interval = 30
-    if request.GET.has_key('interval'):
+    if 'interval' in request.GET:
         try:
             total_interval = int(request.GET['interval'])
-        except:
+        except ValueError:
             pass
+    else:
+        start_date_str = request.GET.get('startdate', (datetime.utcnow() - timedelta(days=7)).strftime('%Y-%m-%d'))
+        end_date_str = request.GET.get('enddate', datetime.utcnow().strftime('%Y-%m-%d'))
 
-    ret, patients, total_scheduled, total_visited = get_schedule_tally(username, total_interval)
-    nowdate = datetime.now()
+        end_date = datetime.strptime(end_date_str, '%Y-%m-%d')
+        start_date = datetime.strptime(start_date_str, '%Y-%m-%d')
+        total_interval = (end_date - start_date).days
+
+    ret, patients, total_scheduled, total_visited = get_schedule_tally(username, total_interval, override_date=end_date)
 
     if len(ret) > 0:
         return_context['date_arr'] = ret
@@ -251,50 +231,4 @@ def chw_calendar_submit_report(request, username):
         return_context['total_scheduled'] = 0
         return_context['total_visited'] = 0
 
-
-    if request.GET.get('getcsv', None) != None:
-        csvdata = []
-        csvdata.append(','.join(
-            ['visit_date', 'assigned_chw', 'pact_id', 'is_scheduled', 'contact_type', 'visit_type',
-             'visit_kept', 'submitted_by', 'visit_id']))
-        for date, pt_visit in ret:
-            if len(pt_visit) > 0:
-                for cpt, v in pt_visit:
-                    rowdata = [date.strftime('%Y-%m-%d'), username, cpt['pactid']]
-                    if v != None:
-                        #is scheduled
-                        if v['scheduled'] == 'yes':
-                            rowdata.append('scheduled')
-                        else:
-                            rowdata.append('unscheduled')
-                            #contact_type
-                        rowdata.append(v['contact_type'])
-
-                        #visit type
-                        rowdata.append(v['visit_type'])
-
-                        #visit kept
-                        rowdata.append(v['visit_kept'])
-
-                        rowdata.append(v['username'])
-                        if v['username'] == username:
-                            rowdata.append('assigned')
-                        else:
-                            rowdata.append('covered')
-                        rowdata.append(v['doc_id'])
-
-                    else:
-                        rowdata.append('novisit')
-                    csvdata.append(','.join(rowdata))
-            else:
-                csvdata.append(','.join([date.strftime('%Y-%m-%d'), 'nopatients']))
-
-        resp = HttpResponse()
-
-        resp['Content-Disposition'] = 'attachment; filename=chw_schedule_%s-%s_to_%s.csv' % (
-            username, datetime.now().strftime("%Y-%m-%d"),
-            (nowdate - timedelta(days=total_interval)).strftime("%Y-%m-%d"))
-        resp.write('\n'.join(csvdata))
-        return resp
-    else:
-        return return_context
+    return return_context

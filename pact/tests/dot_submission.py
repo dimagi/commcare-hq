@@ -189,9 +189,6 @@ class dotsSubmissionTests(TestCase):
             #day_data = DOTDay.merge_from_observations(day_arr)
             #ret['days'].append(day_data.to_case_json(casedoc))
 
-
-
-
     def testDOTFormatConversion(self):
         """
         When a DOT submission comes in, it gets sliced into the CObservations

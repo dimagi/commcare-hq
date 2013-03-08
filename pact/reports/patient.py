@@ -2,16 +2,16 @@ from django.core.urlresolvers import reverse
 from django.http import Http404
 from django.template.context import RequestContext
 import simplejson
-from corehq.apps.api.es import XFormES
+from corehq.apps.api.es import FullXFormES
 from corehq.apps.reports.datatables import DataTablesColumn, DataTablesHeader
 from corehq.apps.reports.generic import GenericTabularReport
 from corehq.apps.reports.standard import CustomProjectReport
 from dimagi.utils import html
 from dimagi.utils.decorators.memoized import memoized
-from pact.enums import  PACT_DOMAIN
+from pact.enums import PACT_DOMAIN
 from pact.forms.patient_form import PactPatientForm
 from pact.forms.weekly_schedule_form import ScheduleForm
-from pact.models import  PactPatientCase
+from pact.models import PactPatientCase
 from pact.reports import PactDrilldownReportMixin, ESSortableMixin
 from pact.utils import pact_script_fields
 
@@ -24,14 +24,15 @@ from pact.utils import pact_script_fields
 #address: /a/pact/cloudcare/apps/view/0ff529f53c26f44e1fa020e79afe0b1b/0/4/case/%(case_id)s/enter/
 
 
-class PactPatientInfoReport(PactDrilldownReportMixin,ESSortableMixin, GenericTabularReport, CustomProjectReport):
+class PactPatientInfoReport(PactDrilldownReportMixin, ESSortableMixin, GenericTabularReport,
+                            CustomProjectReport):
     slug = "patient"
     description = "some patient"
 
     hide_filters = True
     filters = []
     ajax_pagination = True
-    xform_es = XFormES(PACT_DOMAIN)
+    xform_es = FullXFormES(PACT_DOMAIN)
 
     default_sort = {
         "received_on": "desc"
@@ -46,6 +47,7 @@ class PactPatientInfoReport(PactDrilldownReportMixin,ESSortableMixin, GenericTab
     @property
     def report_context(self):
         from pact import api
+
         patient_doc = self.get_case()
         view_mode = self.request.GET.get('view', 'info')
         # notabs = True if not self.request.GET.get('notabs', False) else False
@@ -60,7 +62,8 @@ class PactPatientInfoReport(PactDrilldownReportMixin,ESSortableMixin, GenericTab
 
         if view_mode == 'info':
             self.report_template_path = "pact/patient/pactpatient_info.html"
-            ret['cloudcare_addr_edit_url'] = api.get_cloudcare_url(patient_doc._id, api.FORM_ADDRESS)
+            ret['cloudcare_addr_edit_url'] = api.get_cloudcare_url(patient_doc._id,
+                                                                   api.FORM_ADDRESS)
             ret['cloudcare_pn_url'] = api.get_cloudcare_url(patient_doc._id, api.FORM_PROGRESS_NOTE)
             ret['cloudcare_dot_url'] = api.get_cloudcare_url(patient_doc._id, api.FORM_DOT)
             ret['cloudcare_bw_url'] = api.get_cloudcare_url(patient_doc._id, api.FORM_BLOODWORK)
@@ -70,7 +73,7 @@ class PactPatientInfoReport(PactDrilldownReportMixin,ESSortableMixin, GenericTab
             self.report_template_path = "pact/patient/pactpatient_submissions.html"
             return tabular_context
         elif view_mode == 'schedule':
-#            ret.update(patient_doc.schedules)
+        #            ret.update(patient_doc.schedules)
             the_form = ScheduleForm()
             ret['schedule_form'] = the_form
             ret['schedule_fields'] = simplejson.dumps(the_form.fields.keys())
@@ -116,7 +119,8 @@ class PactPatientInfoReport(PactDrilldownReportMixin,ESSortableMixin, GenericTab
                     },
                     "filter": {
                         "and": [
-                            { "term": { "domain.exact": self.request.domain } }
+                            {"term": {"domain.exact": self.request.domain}},
+                            {"term": {"doc_type": "xforminstance"}}
                         ]
                     }
                 }
@@ -133,11 +137,10 @@ class PactPatientInfoReport(PactDrilldownReportMixin,ESSortableMixin, GenericTab
             "size": self.pagination.count,
             "from": self.pagination.start
         }
+        print simplejson.dumps(full_query)
 
         full_query['script_fields'] = pact_script_fields()
         return self.xform_es.run_query(full_query)
-
-
 
 
     @property
@@ -147,13 +150,12 @@ class PactPatientInfoReport(PactDrilldownReportMixin,ESSortableMixin, GenericTab
             Returns 2D list of rows.
             [['row1'],[row2']]
         """
-
-
         if self.request.GET.has_key('patient_id'):
             rows = []
 
             def _format_row(row_field_dict):
-                yield html.mark_safe("<a class='ajax_dialog' href='%s'>View</a>" % ( reverse('render_form_data', args=[self.domain, row_field_dict['_id']])))
+                yield html.mark_safe("<a class='ajax_dialog' href='%s'>View</a>" % (
+                reverse('render_form_data', args=[self.domain, row_field_dict['_id']])))
                 yield self.format_date(row_field_dict["received_on"].replace('_', ' '))
                 yield self.format_date(row_field_dict.get("form.meta.timeStart", ""))
                 if row_field_dict["script_encounter_date"] != None:
@@ -162,8 +164,6 @@ class PactPatientInfoReport(PactDrilldownReportMixin,ESSortableMixin, GenericTab
                     yield "---"
                 yield row_field_dict["form.#type"].replace('_', ' ').title()
                 yield row_field_dict.get("form.meta.username", "")
-
-
 
 
             res = self.es_results

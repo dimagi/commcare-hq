@@ -1,52 +1,24 @@
 from django.core.urlresolvers import NoReverseMatch, reverse
 from django.http import Http404
-import simplejson
-from corehq.apps.api.es import XFormES, CaseES
+from corehq.apps.api.es import FullCaseES, FullXFormES
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
 from corehq.apps.reports.generic import GenericTabularReport
 from corehq.apps.reports.standard import CustomProjectReport
 from corehq.apps.users.models import CommCareUser
 from dimagi.utils import html
-from dimagi.utils.decorators import inline
 from dimagi.utils.decorators.memoized import memoized
 from pact.enums import PACT_CASE_TYPE, PACT_DOMAIN
 from . import chw_schedule
 from pact.reports import PactDrilldownReportMixin, ESSortableMixin
 from pact.utils import pact_script_fields, case_script_field
 
-
-class XFormDisplay(object):
-    def __init__(self, result_row):
-        self.result_row = result_row
-
-    @property
-    def pact_id(self):
-        pass
-
-    @property
-    def case_id(self):
-        pass
-
-    @property
-    def form_type(self):
-        pass
-
-    @property
-    def encounter_date(self):
-        pass
-
-    @property
-    def received_on(self):
-        pass
-
-
 class PactCHWProfileReport(PactDrilldownReportMixin, ESSortableMixin,GenericTabularReport, CustomProjectReport):
     slug = "chw_profile"
     description = "CHW Profile"
     view_mode = 'info'
     ajax_pagination = True
-    xform_es = XFormES(PACT_DOMAIN)
-    case_es = CaseES(PACT_DOMAIN)
+    xform_es = FullXFormES(PACT_DOMAIN)
+    case_es = FullCaseES(PACT_DOMAIN)
     default_sort = {"received_on": "desc"}
 
     name = "CHW Profile"
