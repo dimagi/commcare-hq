@@ -62,6 +62,8 @@ def post_xform_to_couch(instance, attachments={}):
                 for key, val in attachments.items():
                     res = xform.put_attachment(val, name=key, content_type=val.content_type, content_length=val.size)
 
+                # get the form again, after attachments have been added
+                xform = xform.get(doc_id)
                 # fire signals
                 # We don't trap any exceptions here. This is by design. 
                 # If something fails (e.g. case processing), we quarantine the
