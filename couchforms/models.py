@@ -17,6 +17,8 @@ from copy import copy
 from couchforms.signals import submission_error_received, xform_archived
 from dimagi.utils.mixins import UnicodeMixIn
 from couchforms.const import ATTACHMENT_NAME
+from couchdbkit.exceptions import PreconditionFailed
+import time
 
 def doc_types():
     """
@@ -125,6 +127,23 @@ class XFormInstance(Document, UnicodeMixIn, ComputedDocumentMixin):
 
     def __unicode__(self):
         return "%s (%s)" % (self.type, self.xmlns)
+
+    def save(self, *args, **kwargs):
+        # HACK: cloudant has a race condition when saving newly created forms
+        # which throws errors here. use a try/retry loop here to get around
+        # it until we find something more stable.
+        RETRIES = 10
+        SLEEP = 0.5 # seconds
+        tries = 0
+        while True:
+            try:
+                return super(XFormInstance, self).save(*args, **kwargs)
+            except PreconditionFailed:
+                if tries < RETRIES:
+                    tries += 1
+                    time.sleep(SLEEP)
+                else:
+                    raise
 
     def xpath(self, path):
         """
