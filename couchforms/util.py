@@ -65,7 +65,7 @@ def post_xform_to_couch(instance, attachments={}):
                     res = xform.put_attachment(val, name=key, content_type=val.content_type, content_length=val.size)
 
                 # get the form again, after attachments have been added
-                time.sleep(0.5)
+                time.sleep(1.0)
                 xform = XFormInstance.wrap(get_db().get(doc_id))
                 # fire signals
                 # We don't trap any exceptions here. This is by design. 
