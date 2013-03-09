@@ -1,6 +1,6 @@
 import os
 from django.test import TestCase
-from couchforms.util import post_xform_to_couch, SubmissionError
+from couchforms.util import post_xform_to_couch
 import uuid
 
 class CloudantTest(TestCase):
@@ -10,7 +10,7 @@ class CloudantTest(TestCase):
         with open(file_path) as f:
             xml_data = f.read()
 
-        count = 100
+        count = 1000
         for i in range(count):
             instance_id = uuid.uuid4().hex
             case_id = uuid.uuid4().hex
