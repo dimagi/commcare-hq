@@ -535,7 +535,10 @@ def system_ajax(request):
     db = XFormInstance.get_db()
     ret = {}
     if type == "_active_tasks":
-        tasks = filter(lambda x: x['type'] == "indexer", db.server.active_tasks())
+        tasks = []
+        #commenting out until we get this fixed on bigcouch
+        #tasks = filter(lambda x: x['type'] == "indexer", db.server.active_tasks())
+        #for reference structure is:
 #        tasks = [{'type': 'indexer', 'pid': 'foo', 'database': 'mock',
 #            'design_document': 'mockymock', 'progress': 0,
 #            'started_on': 1349906040.723517, 'updated_on': 1349905800.679458,
@@ -623,7 +626,9 @@ def system_info(request):
     else:
         couchlog_resource = Resource("http://%s:%s@%s/" % (settings.COUCH_USERNAME, settings.COUCH_PASSWORD, settings.COUCH_SERVER_ROOT))
     try:
-        context['couch_log'] = couchlog_resource.get('_log', params_dict={'bytes': 2000 }).body_string()
+        #todo, fix on bigcouch/cloudant
+        #context['couch_log'] = couchlog_resource.get('_log', params_dict={'bytes': 2000 }).body_string()
+        context['couch_log'] = "Will be back online shortly"
     except Exception, ex:
         context['couch_log'] = "unable to open couch log: %s" % ex
 
