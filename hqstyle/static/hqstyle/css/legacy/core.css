@@ -206,12 +206,6 @@
 .hq-oldstyle .code {
   font-family: monospace !important;
 }
-.hq-oldstyle #langs {
-  border-top: none;
-  border-left: none;
-  border-right: none;
-  padding: 1em;
-}
 .hq-oldstyle #version {
   height: 22px;
 }
