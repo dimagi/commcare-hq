@@ -153,7 +153,7 @@ class Command(LabelCommand):
             pool.join() # blocking
             print "\n"
 
-    def _throttle_updates(self, document_type, indicators, total_docs, domain, get_docs, limit=100):
+    def _throttle_updates(self, document_type, indicators, total_docs, domain, get_docs, limit=300):
 
         for skip in range(self.start_at_record, total_docs, limit):
             print "\n\nUpdating %s %d to %d of %d\n" % (document_type, skip, min(total_docs, skip+limit), total_docs)
