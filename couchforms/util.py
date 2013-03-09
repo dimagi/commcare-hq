@@ -1,10 +1,9 @@
-from datetime import datetime
 import time
 import hashlib
 from django.conf import settings
-import uuid
 from dimagi.utils.mixins import UnicodeMixIn
 from dimagi.utils.couch.database import get_db
+import urllib
 try:
     import simplejson
 except ImportError:
@@ -12,7 +11,6 @@ except ImportError:
 
 from couchforms.models import XFormInstance, XFormDuplicate, XFormError, XFormDeprecated,\
     SubmissionErrorLog
-from dimagi.utils.logging import log_exception
 import logging
 from couchdbkit.resource import RequestFailed
 from couchforms.exceptions import CouchFormException
@@ -37,8 +35,12 @@ class SubmissionError(Exception, UnicodeMixIn):
         return str(self.error_log)
         
 def post_from_settings(instance, extras={}):
+    if 'cloudant' in settings.COUCH_SERVER_ROOT:
+        # HACK: for cloudant force update all 3 nodes at once
+        # to prevent 412 race condition
+        extras['w'] = 3
     url = settings.XFORMS_POST_URL if not extras else "%s?%s" % \
-        (settings.XFORMS_POST_URL, "&".join(["%s=%s" % (k, v) for k, v in extras.items()]))
+        (settings.XFORMS_POST_URL, urllib.urlencode(extras))
     if settings.COUCH_USERNAME:
         return post_authenticated_data(instance, url, 
                                        settings.COUCH_USERNAME, 
@@ -64,9 +66,6 @@ def post_xform_to_couch(instance, attachments={}):
                 for key, val in attachments.items():
                     res = xform.put_attachment(val, name=key, content_type=val.content_type, content_length=val.size)
 
-                # get the form again, after attachments have been added
-                time.sleep(1.0)
-                xform = XFormInstance.wrap(get_db().get(doc_id))
                 # fire signals
                 # We don't trap any exceptions here. This is by design. 
                 # If something fails (e.g. case processing), we quarantine the
