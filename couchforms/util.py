@@ -2,7 +2,6 @@ import time
 import hashlib
 from django.conf import settings
 from dimagi.utils.mixins import UnicodeMixIn
-from dimagi.utils.couch.database import get_db
 import urllib
 try:
     import simplejson
@@ -70,6 +69,7 @@ def post_xform_to_couch(instance, attachments={}):
                 # We don't trap any exceptions here. This is by design. 
                 # If something fails (e.g. case processing), we quarantine the
                 # form into an error location.
+                time.sleep(1.0)
                 xform_saved.send(sender="couchforms", xform=xform)
                 return xform
             except Exception, e:
