@@ -18,17 +18,13 @@ POOL_SIZE = 10
 
 class Command(LabelCommand):
     help = "Update MVP indicators in existing cases and forms."
-    args = "<domain> <case or form> <case or form type> <start at record #>"
+    args = "<domain> <case or form> <case or form label> <start at record #>"
     label = ""
     start_at_record = 0
     domains = None
 
     def handle(self, *args, **options):
         self.domains = [args[0]] if len(args) > 0 and args[0] != "all" else MVP.DOMAINS
-        forms = {}
-        forms.update(MVP.CLOSE_FORMS)
-        forms.update(MVP.VISIT_FORMS)
-        forms.update(MVP.REGISTRATION_FORMS)
 
         cases = ['child', 'pregnancy', 'household']
 
@@ -46,46 +42,56 @@ class Command(LabelCommand):
             document_type = args[2]
             if process_cases:
                 cases = [document_type]
-            elif process_forms:
-                final_forms = forms.get(document_type, {})
-                forms.clear()
-                forms[document_type] = final_forms
+        else:
+            document_type = None
+
 
         if process_forms:
-            for form_type, xmlns in forms.items():
-                print "\n\nGetting Forms of Type %s and XMLNS %s" % (form_type, xmlns)
-                self.update_indicators_for_xmlns(xmlns)
+            for domain in self.domains:
+                self.update_indicators_for_xmlns(domain, form_label_filter=document_type)
 
         if process_cases:
-            for type in cases:
+            for case_type in cases:
                 for domain in self.domains:
-                    self.update_indicators_for_case_type(type, domain)
+                    self.update_indicators_for_case_type(case_type, domain)
 
-    def update_indicators_for_xmlns(self, xmlns):
-        relevant_forms = get_db().view("couchforms/by_xmlns",
-            reduce=True,
-            key=xmlns
-        ).first()
-        num_forms = relevant_forms['value'] if relevant_forms else 0
-
-        get_forms = lambda skip, limit: XFormInstance.view("couchforms/by_xmlns",
+    def update_indicators_for_xmlns(self, domain, form_label_filter=None):
+        key = [MVP.NAMESPACE, domain]
+        all_labels = get_db().view('indicators/form_labels',
             reduce=False,
-            include_docs=True,
-            key=xmlns,
-            skip=skip,
-            limit=limit
+            startkey=key,
+            endkey=key + [{}],
         ).all()
+        for label in all_labels:
+            label_name = label['value']
+            if form_label_filter is not None and form_label_filter != label_name:
+                continue
+            xmlns = label['key'][-2]
+            print "\n\nGetting Forms of Type %s and XMLNS %s for domain %s" % (label_name, xmlns, domain)
 
-        print "Found %d forms with matching XMLNS %s" % (num_forms, xmlns)
-        for domain in self.domains:
+            relevant_forms = get_db().view("couchforms/by_xmlns",
+                reduce=True,
+                key=xmlns
+            ).first()
+            num_forms = relevant_forms['value'] if relevant_forms else 0
+            get_forms = lambda skip, limit: XFormInstance.view("couchforms/by_xmlns",
+                reduce=False,
+                include_docs=True,
+                key=xmlns,
+                skip=skip,
+                limit=limit
+            ).all()
+
+            print "Found %d forms with matching XMLNS %s" % (num_forms, xmlns)
             relevant_indicators = FormIndicatorDefinition.get_all(
                 namespace=MVP.NAMESPACE,
                 domain=domain,
                 xmlns=xmlns
             )
             if relevant_indicators:
-                self._throttle_updates("Forms (XMLNS %s, DOMAIN: %s)" % (xmlns, domain),
-                    relevant_indicators, num_forms, domain, get_forms)
+                self._throttle_updates("Forms (TYPE: %s, XMLNS %s, DOMAIN: %s)" % (label_name, xmlns, domain),
+                                       relevant_indicators, num_forms, domain, get_forms)
+
 
     def update_indicators_for_case_type(self, case_type, domain):
         print "\n\n\nFetching %s cases in domain %s...." % (case_type, domain)
