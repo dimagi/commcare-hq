@@ -1,4 +1,3 @@
-import time
 import hashlib
 from django.conf import settings
 from dimagi.utils.mixins import UnicodeMixIn
@@ -9,7 +8,7 @@ except ImportError:
     from django.utils import simplejson
 
 from couchforms.models import XFormInstance, XFormDuplicate, XFormError, XFormDeprecated,\
-    SubmissionErrorLog
+    SubmissionErrorLog, is_cloudant
 import logging
 from couchdbkit.resource import RequestFailed
 from couchforms.exceptions import CouchFormException
@@ -33,11 +32,8 @@ class SubmissionError(Exception, UnicodeMixIn):
     def __str__(self):
         return str(self.error_log)
 
-def _is_cloudant():
-    return 'cloudant' in settings.COUCH_SERVER_ROOT
-
 def post_from_settings(instance, extras={}):
-    if _is_cloudant():
+    if is_cloudant():
         # HACK: for cloudant force update all 3 nodes at once
         # to prevent 412 race condition
         extras['w'] = 3
@@ -64,10 +60,7 @@ def post_xform_to_couch(instance, attachments={}):
         if not _has_errors(response, errors):
             doc_id = response
             try:
-                # on cloudant don't get the doc back until all nodes agree
-                # on the copy, to avoid race conditions
-                args = {'r': 3} if _is_cloudant() else {}
-                xform = XFormInstance.wrap(XFormInstance.get_db().get(doc_id, **args))
+                xform = XFormInstance.get(doc_id)
                 #put attachments onto the saved xform instance
                 for key, val in attachments.items():
                     res = xform.put_attachment(val, name=key, content_type=val.content_type, content_length=val.size)
