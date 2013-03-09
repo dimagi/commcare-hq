@@ -81,6 +81,12 @@ def bootstrap_default(domain):
                 name='stock_out',
             ),
         ],
+        location_types=[
+            LocationType(name='province', allowed_parents=['']),
+            LocationType(name='district', allowed_parents=['province']),
+            LocationType(name='village', allowed_parents=['district']),
+            LocationType(name='dispensary', allowed_parents=['village']),
+        ],
         supply_point_types=[],
     )
     c.save()

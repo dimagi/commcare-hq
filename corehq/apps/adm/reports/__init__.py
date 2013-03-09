@@ -149,6 +149,7 @@ class DefaultReportADMSectionView(GenericTabularReport, ADMSectionView, ProjectR
 
         if not subreports:
             subreport_context.append({
+                'url': '#', 
                 'warning_label': 'No ADM Reports Configured',
             })
             return subreport_context

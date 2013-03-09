@@ -1,5 +1,7 @@
 from corehq.apps.locations.models import Location, root_locations, CustomProperty
+from corehq.apps.domain.models import Domain
 from couchdbkit import ResourceNotFound
+from dimagi.utils.couch.loosechange import map_reduce
 
 def load_locs_json(domain, selected_loc_id=None):
     """initialize a json location tree for drill-down controls on
@@ -34,27 +36,18 @@ def load_locs_json(domain, selected_loc_id=None):
 
     return loc_json
 
+def location_hierarchy_config(domain):
+    return [(loc_type.name, [p or None for p in loc_type.allowed_parents]) for loc_type in Domain.get_by_name(domain).commtrack_settings.location_types]
+
 def defined_location_types(domain):
-    return [
-        'block',
-        'district',
-        'outlet',
-        'state',
-        'village',
-    ]
-  
-# hard-coded for now
+    return [k for k, v in location_hierarchy_config(domain)]
+
+def parent_child(domain):
+    return map_reduce(lambda (k, v): [(p, k) for p in v], data=dict(location_hierarchy_config(domain)).iteritems())
+
 def allowed_child_types(domain, parent):
     parent_type = parent.location_type if parent else None
-
-    return {
-        None: ['state'],
-        'state': ['district'],
-        'district': ['block'],
-        'block': ['village', 'outlet'],
-        'village': ['outlet'],
-        'outlet': [],
-     }[parent_type]
+    return parent_child(domain).get(parent_type, [])
 
 # hard-coded for now
 def location_custom_properties(domain, loc_type):

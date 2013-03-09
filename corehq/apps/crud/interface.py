@@ -33,6 +33,7 @@ class BaseCRUDAdminInterface(GenericTabularReport):
             crud_item = {
                 'type': self.crud_item_type,
                 'form': self.form_class.__name__,
+                'doc': self.document_class.__name__,
                 'url': self.crud_form_update_url,
             },
         )
