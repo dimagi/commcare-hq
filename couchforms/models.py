@@ -40,6 +40,10 @@ def get(doc_id):
         return doc_types()[doc['doc_type']].wrap(doc)
     raise ResourceNotFound(doc_id)
 
+def is_cloudant():
+    # this is a bit of a hack but we'll use it for now
+    return 'cloudant' in settings.COUCH_SERVER_ROOT
+
 class Metadata(DocumentSchema):
     """
     Metadata of an xform, from a meta block structured like:
@@ -78,6 +82,18 @@ class XFormInstance(Document, UnicodeMixIn, ComputedDocumentMixin):
         _form but wrapping that access gives future audit capabilities"""
         return self._form
     
+
+    @classmethod
+    def get(cls, docid, rev=None, db=None, dynamic_properties=True):
+        # copied and tweaked from the superclass's method
+        if not db:
+            db = cls.get_db()
+        cls._allow_dynamic_properties = dynamic_properties
+        # on cloudant don't get the doc back until all nodes agree
+        # on the copy, to avoid race conditions
+        extras = {'r': 3} if is_cloudant() else {}
+        return db.get(docid, rev=rev, wrapper=cls.wrap, **extras)
+
     @property
     def _form(self):
         return self[const.TAG_FORM]
@@ -139,6 +155,8 @@ class XFormInstance(Document, UnicodeMixIn, ComputedDocumentMixin):
             try:
                 return super(XFormInstance, self).save(*args, **kwargs)
             except PreconditionFailed:
+                if tries == 0:
+                    logging.error('doc %s got a precondition failed' % self._id)
                 if tries < RETRIES:
                     tries += 1
                     time.sleep(SLEEP)
