@@ -32,12 +32,16 @@ class SubmissionError(Exception, UnicodeMixIn):
     
     def __str__(self):
         return str(self.error_log)
-        
+
+def _is_cloudant():
+    return 'cloudant' in settings.COUCH_SERVER_ROOT
+
 def post_from_settings(instance, extras={}):
-    if 'cloudant' in settings.COUCH_SERVER_ROOT:
+    if _is_cloudant():
         # HACK: for cloudant force update all 3 nodes at once
         # to prevent 412 race condition
         extras['w'] = 3
+
     url = settings.XFORMS_POST_URL if not extras else "%s?%s" % \
         (settings.XFORMS_POST_URL, urllib.urlencode(extras))
     if settings.COUCH_USERNAME:
@@ -60,7 +64,10 @@ def post_xform_to_couch(instance, attachments={}):
         if not _has_errors(response, errors):
             doc_id = response
             try:
-                xform = XFormInstance.get(doc_id)
+                # on cloudant don't get the doc back until all nodes agree
+                # on the copy, to avoid race conditions
+                args = {'r': 3} if _is_cloudant() else {}
+                xform = XFormInstance.wrap(XFormInstance.get_db().get(doc_id, **args))
                 #put attachments onto the saved xform instance
                 for key, val in attachments.items():
                     res = xform.put_attachment(val, name=key, content_type=val.content_type, content_length=val.size)
