@@ -1,4 +1,7 @@
-from gevent import monkey; monkey.patch_all()
+from gevent import monkey;
+import time
+
+monkey.patch_all()
 import sys
 import gevent
 from restkit.session import set_session
@@ -123,7 +126,7 @@ class Command(LabelCommand):
                 limit=limit
             ).all()
             self._throttle_updates("Cases of type %s in %s" % (case_type, domain),
-                relevant_indicators, num_cases, domain, get_cases)
+                                   relevant_indicators, num_cases, domain, get_cases)
 
     def update_indicators(self, indicators, docs, domain):
 
@@ -150,15 +153,12 @@ class Command(LabelCommand):
             pool.join() # blocking
             print "\n"
 
-    def _throttle_updates(self, document_type, indicators, total_docs, domain, get_docs, limit=100):
+    def _throttle_updates(self, document_type, indicators, total_docs, domain, get_docs, limit=300):
 
         for skip in range(self.start_at_record, total_docs, limit):
             print "\n\nUpdating %s %d to %d of %d\n" % (document_type, skip, min(total_docs, skip+limit), total_docs)
             matching_docs = get_docs(skip, limit)
             self.update_indicators(indicators, matching_docs, domain)
-            print "Priming views."
-            prime_pool = Pool(POOL_SIZE)
-            prime_all = prime_views.Command()
-            prime_all.prime_everything(prime_pool, verbose=True)
-            prime_pool.join() # blocking
-            print "\nViews have been primed."
+            print "Pausing..."
+            time.sleep(3)
+            print "Going..."
