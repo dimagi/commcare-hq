@@ -84,7 +84,7 @@ class GroupMemoizer(object):
         self.add_group(group)
 
     def save_all(self):
-        Group.bulk_save(self.groups, all_or_nothing=True)
+        Group.bulk_save(self.groups)
 
 def _fmt_phone(phone_number):
     if phone_number and not isinstance(phone_number, basestring):
