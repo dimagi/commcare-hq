@@ -1,12 +1,12 @@
 from datetime import datetime, timedelta
 from optparse import make_option
-from django.core.management.base import BaseCommand, CommandError, LabelCommand
 import sys
-from casexml.apps.case.models import CommCareCase
-from corehq.apps.cleanup.xforms import reprocess_form_cases
+
+from django.core.management.base import BaseCommand, LabelCommand
+
 from corehq.apps.domain.models import Domain
 from corehq.elastic import get_es
-from couchforms.models import XFormError, XFormInstance
+from couchforms.models import XFormInstance
 
 
 class Command(BaseCommand):
@@ -33,12 +33,18 @@ class Command(BaseCommand):
                                   help="Date to begin query range from"),
                   )
 
+    def println(self, message):
+        self.stdout.write("%s\n" % message)
+
+    def printerr(self, message):
+        self.stderr.write("%s\n" % message)
+
     def get_all_domains(self):
         db = Domain.get_db()
         return [x['key'] for x in db.view('domain/domains', reduce=False).all()]
 
     def get_all_submissions(self, domain, from_date):
-        #/receiverwrapper/_view/all_submissions_by_domain?startkey=["tulasalud","by_date","2013-03-07"]&endkey=["tulasalud","by_date","2013-05-07"]&reduce=false
+        #/receiverwrapper/_view/all_submissions_by_domain?startkey=["domain","by_date","2013-03-07"]&endkey=["domain","by_date","2013-05-07"]&reduce=false
 
         db = XFormInstance.get_db()
 
@@ -62,7 +68,8 @@ class Command(BaseCommand):
         view_chunk = call_view(sk, ek, start, chunk)
         while len(view_chunk) > 0:
             for item in view_chunk:
-                yield item['doc']
+                if item['doc'] is not None:
+                    yield item['doc']
             start += chunk
             view_chunk = call_view(sk, ek, start, chunk)
 
@@ -75,27 +82,27 @@ class Command(BaseCommand):
                 case_id = submission['form']['case']['case_id']
 
             if case_id is not None:
-                #case_doc = CommCareCase.get(case_id)
                 query = {
                     "filter": {
                         "and": [
                             {"term": {"domain.exact": submission['domain']}},
-                            {"term": {"xform_id": submission['_id']}}
+                            {"term": {"xform_ids": submission['_id']}}
                         ]
                     },
                     "from": 0,
                     "size":1
                 }
                 es_results = self.es['hqcases'].post('_search', data=query)
-                for row in es_results['hits']['hits']:
-                    case_doc = row['_source']
-                    print case_doc['_id']
-                    return case_id, True
+                if es_results['hits']['hits']:
+                    for row in es_results['hits']['hits']:
+                        case_doc = row['_source']
+                        #print case_doc['_id']
+                        return case_id, True
                 return case_id, False
             else:
                 return None, None
-
-
+        else:
+            return None, None
 
     def handle(self, *args, **options):
         self.es = get_es()
@@ -103,7 +110,7 @@ class Command(BaseCommand):
         try:
             from_date = datetime.strptime(options['from_date'], "%Y-%m-%d")
         except Exception, ex:
-            print "need a valid date string --from_date YYYY-mm-dd: %s" % ex
+            self.printerr("need a valid date string --from_date YYYY-mm-dd: %s" % ex)
             sys.exit()
 
         if do_process:
@@ -113,28 +120,31 @@ Type 'yes' to continue, or 'no' to cancel: """)
             pass
 
             if confirm == "yes":
-                print "OK, proceeding, I hope you know what you're doing"
+                self.printerr("OK, proceeding, I hope you know what you're doing")
                 sys.exit()
             else:
-                print "You didn't say yes, so we're quitting, chicken."
+                self.printerr("You didn't say yes, so we're quitting, chicken.")
                 sys.exit()
-
 
         #time for analysis
         domains = self.get_all_domains()
         for domain in domains:
-            print "Starting domain query: %s" % domain
-            xform_submissions = self.get_all_submissions(domain, from_date)
-            for submit in xform_submissions:
-                outrow = [submit['received_on'], submit['doc_type'], submit['_id']]
-                case_id, updated = self.is_case_updated(submit)
+            self.printerr("Starting domain query: %s" % domain)
+            for submit in self.get_all_submissions(domain, from_date):
+                outrow = [domain, submit['received_on'], submit['doc_type'], submit['_id']]
+                if submit['doc_type'] == 'XFormDuplicate':
+                    #for dupes, actually check the "real" submit and see if that case has been updated
+                    orig_submit = XFormInstance.get_db().get(submit['form']['meta']['instanceID'])
+                    case_id, updated = self.is_case_updated(orig_submit)
+                else:
+                    case_id, updated = self.is_case_updated(submit)
                 if case_id:
                     outrow.append(case_id)
                     outrow.append(updated)
                 else:
                     outrow.append("")
                     outrow.append("")
-                print ",".join(outrow)
-
-
-
+                if submit['doc_type'] == 'XFormDuplicate':
+                    #append orig id this is a dupe of at the end
+                    outrow.append(orig_submit['_id'])
+                self.println(','.join(str(x) for x in outrow))
