@@ -1,12 +1,15 @@
+import simplejson
 from datetime import datetime, timedelta
+import pdb
 from optparse import make_option
+from django.core.management.base import BaseCommand, CommandError, LabelCommand
 import sys
-
-from django.core.management.base import BaseCommand, LabelCommand
-
+from casexml.apps.case.models import CommCareCase
+from corehq.apps.cleanup.xforms import reprocess_form_cases
 from corehq.apps.domain.models import Domain
 from corehq.elastic import get_es
-from couchforms.models import XFormInstance
+from couchforms.models import XFormError, XFormInstance
+
 
 
 class Command(BaseCommand):
@@ -44,7 +47,7 @@ class Command(BaseCommand):
         return [x['key'] for x in db.view('domain/domains', reduce=False).all()]
 
     def get_all_submissions(self, domain, from_date):
-        #/receiverwrapper/_view/all_submissions_by_domain?startkey=["domain","by_date","2013-03-07"]&endkey=["domain","by_date","2013-05-07"]&reduce=false
+        #/receiverwrapper/_view/all_submissions_by_domain?startkey=["tulasalud","by_date","2013-03-07"]&endkey=["tulasalud","by_date","2013-05-07"]&reduce=false
 
         db = XFormInstance.get_db()
 
@@ -73,7 +76,9 @@ class Command(BaseCommand):
             start += chunk
             view_chunk = call_view(sk, ek, start, chunk)
 
+
     def is_case_updated(self, submission):
+        method = "couch"
         case_id = None
         if 'case' in submission['form']:
             if '@case_id' in submission['form']['case']:
@@ -82,27 +87,43 @@ class Command(BaseCommand):
                 case_id = submission['form']['case']['case_id']
 
             if case_id is not None:
-                query = {
-                    "filter": {
-                        "and": [
-                            {"term": {"domain.exact": submission['domain']}},
-                            {"term": {"xform_ids": submission['_id']}}
-                        ]
-                    },
-                    "from": 0,
-                    "size":1
-                }
-                es_results = self.es['hqcases'].post('_search', data=query)
-                if es_results['hits']['hits']:
-                    for row in es_results['hits']['hits']:
-                        case_doc = row['_source']
-                        #print case_doc['_id']
-                        return case_id, True
-                return case_id, False
+                if method == "couch":
+                    #couch based
+                    case_view = CommCareCase.get_db().view('case/by_xform_id', key=submission['_id'], reduce=False).all()
+                    if len(case_view) > 0:
+                        if len(case_view) > 1:
+                            self.printerr("more than one case match: %s" % submission['_id'])
+                            self.printerr("case ids: %s" % ','.join([x['id'] for x in case_view]))
+                        for vr in case_view:
+                            if vr['id'] == case_id:
+                                return case_id, True
+                        return case_id, False
+                    else:
+                        return case_id, False
+                else:
+                    #es based
+                    query = {
+                        "filter": {
+                            "and": [
+                                {"term": {"xform_ids": submission['_id']}}
+                            ]
+                        },
+                        "from": 0,
+                        "size":1
+                    }
+                    es_results = self.es['hqcases'].post('_search', data=query)
+                    if es_results['hits']['hits']:
+                        for row in es_results['hits']['hits']:
+                            case_doc = row['_source']
+                            #print case_doc['_id']
+                            return case_id, True
+                    return case_id, False
             else:
                 return None, None
         else:
             return None, None
+
+
 
     def handle(self, *args, **options):
         self.es = get_es()
@@ -126,25 +147,48 @@ Type 'yes' to continue, or 'no' to cancel: """)
                 self.printerr("You didn't say yes, so we're quitting, chicken.")
                 sys.exit()
 
-        #time for analysis
+
+        self.println(','.join(['domain','received_on','doc_type','doc_id','case_id','xform in case history','orig doc_id if dupe','subcases']))
         domains = self.get_all_domains()
-        for domain in domains:
-            self.printerr("Starting domain query: %s" % domain)
+        for ix, domain in enumerate(domains):
+            self.printerr("Domain: %s (%d/%d)" % (domain, ix, len(domains)))
             for submit in self.get_all_submissions(domain, from_date):
                 outrow = [domain, submit['received_on'], submit['doc_type'], submit['_id']]
+
+                #basic case info
+                is_dupe=False
                 if submit['doc_type'] == 'XFormDuplicate':
-                    #for dupes, actually check the "real" submit and see if that case has been updated
+                    is_dupe=True
                     orig_submit = XFormInstance.get_db().get(submit['form']['meta']['instanceID'])
                     case_id, updated = self.is_case_updated(orig_submit)
                 else:
                     case_id, updated = self.is_case_updated(submit)
+
                 if case_id:
                     outrow.append(case_id)
                     outrow.append(updated)
                 else:
-                    outrow.append("")
-                    outrow.append("")
-                if submit['doc_type'] == 'XFormDuplicate':
-                    #append orig id this is a dupe of at the end
+                    outrow.append("nocase")
+                    outrow.append("no update")
+                if is_dupe:
                     outrow.append(orig_submit['_id'])
+                else:
+                    outrow.append("not dupe")
+
+                #check subcases being updated? not checked now todo if necessary
+                subcase_keys = filter(lambda x: x.startswith('subcase_'), submit['form'].keys())
+                try:
+                    #outrow += [submit['form'][k].get('case',{}).get('@case_id','nosubcaseid') for k in subcase_keys]
+                    for k in subcase_keys:
+                        subcase_data = submit['form'][k]
+                        if isinstance(subcase_data, dict):
+                            outrow.append(subcase_data.get('case',{}).get('@case_id','nosubcaseid'))
+                except Exception, ex:
+                    print "error, fix it %s" % ex
+                    print outrow
+                    print subcase_keys
+                    print simplejson.dumps(submit['form'], indent=4)
+                    sys.exit()
                 self.println(','.join(str(x) for x in outrow))
+
+
