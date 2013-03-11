@@ -14,18 +14,6 @@
   disabled: true
   disabled_txt: "We suggest moving to CommCare 2.0 and above, unless your project is using referrals"
 
-#- id: is_j2me
-#  name: "J2ME"
-#  description: ""
-#  widget: bool
-#  default: true
-#
-#- id: is_odk
-#  name: "Android"
-#  description: ""
-#  widget: bool
-#  default: true
-
 - id: build_spec
   name: "CommCare Version"
   widget: select
