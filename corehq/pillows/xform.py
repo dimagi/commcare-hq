@@ -1,3 +1,5 @@
+import copy
+from casexml.apps.case.xform import extract_case_blocks
 from corehq.pillows.case import UNKNOWN_DOMAIN, UNKNOWN_TYPE
 from corehq.pillows.core import DATE_FORMATS_ARR
 from corehq.pillows.mappings.xform_mapping import XFORM_MAPPING, XFORM_INDEX
@@ -72,15 +74,20 @@ class XFormPillow(AliasedElasticPillow):
             #going through with indexing this xform
             return None
         else:
-            doc_ret = dict.copy(doc_dict)
+            doc_ret = copy.deepcopy(doc_dict)
+
             if 'meta' in doc_ret['form']:
                 if doc_ret['form']['meta'].get('timeEnd', None) == "":
                     doc_ret['form']['meta']['timeEnd'] = None
                 if doc_ret['form']['meta'].get('timeStart', None) == "":
                     doc_ret['form']['meta']['timeStart'] = None
-            if 'case' in doc_ret['form']:
-                    if doc_ret['form']['case'].get('date_modified', None) == "":
-                        doc_ret['form']['case']['date_modified'] = None
+
+            #see:  extract_case_blocks(doc_dict)
+            case_blocks = extract_case_blocks(doc_ret)
+            for case_dict in case_blocks:
+                for date_modified_key in ['date_modified', '@date_modified']:
+                    if case_dict.get(date_modified_key, None) == "":
+                        case_dict[date_modified_key] = None
             return doc_ret
 
 
