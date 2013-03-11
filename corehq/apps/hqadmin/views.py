@@ -1,4 +1,6 @@
 from datetime import timedelta, datetime
+import dateutil
+import pytz
 import json
 from copy import deepcopy
 import logging
@@ -8,6 +10,7 @@ from django.shortcuts import render
 
 import rawes
 from casexml.apps.case.models import CommCareCase
+from corehq.apps.hqadmin.models import HqDeploy
 from corehq.apps.builds.models import CommCareBuildConfig, BuildSpec
 from corehq.apps.domain.models import Domain
 from corehq.apps.hqadmin.escheck import check_cluster_health, check_case_index, check_xform_index, check_exchange_index
@@ -612,7 +615,8 @@ def system_info(request):
     context['celery_update'] = request.GET.get('celery_update', 10000)
 
     context['hide_filters'] = True
-    context['current_system'] = os.uname()[1]
+    if hasattr(os, 'uname'):
+        context['current_system'] = os.uname()[1]
 
     #from dimagi.utils import gitinfo
     #context['current_ref'] = gitinfo.get_project_info()
@@ -689,6 +693,7 @@ def system_info(request):
     context['memcached_status'] = mc_status
     context['memcached_results'] = mc_results
 
+    context['last_deploy'] = _get_latest_deploy()
 
     #elasticsearch status
     #node status
@@ -698,6 +703,14 @@ def system_info(request):
     context.update(check_exchange_index())
 
     return render(request, "hqadmin/system_info.html", context)
+
+def _get_latest_deploy():
+    db = HqDeploy.get_db()
+    results = db.view('hqadmin/deploy_history', reduce=False, limit=1, descending=True)
+    if results.first() != None:
+        return {'date': dateutil.parser.parse(results.first().get('key'))}
+    else:
+        return None
 
 @require_superuser
 def noneulized_users(request, template="hqadmin/noneulized_users.html"):
