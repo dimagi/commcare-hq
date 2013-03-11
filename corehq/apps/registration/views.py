@@ -22,6 +22,9 @@ DOMAIN_TYPES = (
     'commtrack'
 )
 
+def registration_default(request):
+    return redirect(register_user)
+
 @transaction.commit_on_success
 def register_user(request, domain_type=None):
     domain_type = domain_type or 'commcare'
