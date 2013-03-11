@@ -6,7 +6,7 @@ import re
 from corehq.apps.domain.forms import clean_password, max_pwd
 from django.core.validators import validate_email
 from corehq.apps.domain.models import Domain
-from corehq.apps.domain.utils import new_domain_re, new_org_re, new_org_title_re, website_re
+from corehq.apps.domain.utils import new_domain_re, new_org_re, website_re
 from corehq.apps.orgs.models import Organization
 
 class NewWebUserRegistrationForm(forms.Form):
@@ -76,8 +76,6 @@ class OrganizationRegistrationForm(forms.Form):
 
     def clean_org_title(self):
         data = self.cleaned_data['org_title'].strip()
-        if not re.match("^%s$" % new_org_title_re, data) and not data == '':
-            raise forms.ValidationError('Only letters and numbers allowed. Single spaces may be used to separate words.')
         return data
 
     def clean_email(self):

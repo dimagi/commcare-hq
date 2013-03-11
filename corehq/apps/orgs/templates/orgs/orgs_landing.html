@@ -53,6 +53,7 @@
 
         $('.edit-project-btn').on('click', function() {
             $('#updating-project').val($(this).attr('data-project'));
+            $('#updating-project-name').attr('placeholder', $(this).attr('data-project'));
             $('#updating-project-hrname').val($(this).attr('data-hrname'));
             $('#edit-project-modal').modal({show: true});
             return false;
@@ -109,7 +110,7 @@
                 </a>
                 {% if admin %}
                     <div class="btn-toolbar pull-right" style="margin: 0;">
-                        <a href="#" class="btn edit-project-btn" data-project="{{ domain.name }}" data-hrname="{{ domain.hrname|default:domain.name }}">
+                        <a href="#" class="btn edit-project-btn" data-project="{{ domain.name }}" data-hrname="{{ domain.hr_name|default:domain.name }}">
                             <i class="icon icon-pencil"></i> {% trans "Edit Project Info" %}
                         </a>
                         <a href="#" class="btn btn-danger remove-project-btn" data-project="{{ domain.name }}" data-name="{{ domain.display_name }}">
@@ -143,7 +144,7 @@
                 <a href="#add_project_modal" id="add_project_btn" class="btn btn-info" data-toggle="modal">
                     <i class="icon-plus"></i> {% trans "Add Existing Project" %}
                 </a>
-                <a href="#create_project_modal" id="create_project_btn" class="btn pull-right" data-toggle="modal">
+                <a href="#create_project_modal" id="create_project_btn" class="btn btn-info pull-right" data-toggle="modal">
                     <i class="icon-plus-sign"></i> {% trans "Add New Project" %}
                 </a>
             </div>
@@ -245,7 +246,12 @@
                     <div class="modal-body">
                         <input id="updating-project" type="hidden" name="domain" value="" />
                         <div class="control-group">
-                            <label class="control-label" for="updating-project-hrname">{% trans "New Display Name" %}</label>
+                            <label class="control-label" for="updating-project-name">{% trans "Project Name" %}</label>
+                            <div class="controls">
+                                <input id="updating-project-name" disabled type="text" name="hr_name" />
+                            </div>
+                        </div><div class="control-group">
+                            <label class="control-label" for="updating-project-hrname">{% trans "Project Nickname" %}</label>
                             <div class="controls">
                                 <input type="text" id="updating-project-hrname" name="hr_name" />
                             </div>
