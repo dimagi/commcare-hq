@@ -113,8 +113,7 @@ class DomainRegistrationForm(forms.Form):
     """
     org = forms.CharField(widget=forms.HiddenInput(), required=False)
     domain_name = forms.CharField(label='Project Name:', max_length=25)
-    domain_type = forms.CharField(
-        widget=forms.HiddenInput(), initial='commcare')
+    domain_type = forms.CharField(widget=forms.HiddenInput(), required=False, initial='commcare')
 
     def clean_domain_name(self):
         data = self.cleaned_data['domain_name'].strip().lower()
@@ -125,6 +124,10 @@ class DomainRegistrationForm(forms.Form):
         if conflict:
             raise forms.ValidationError('Project name already taken---please try another')
         return data
+
+    def clean_domain_type(self):
+        data = self.cleaned_data.get('domain_type', '').strip().lower()
+        return data if data else 'commcare'
 
     def clean(self):
         for field in self.cleaned_data:
