@@ -211,13 +211,13 @@ def chw_calendar_submit_report(request, username):
             total_interval = int(request.GET['interval'])
         except ValueError:
             pass
-    else:
-        start_date_str = request.GET.get('startdate', (datetime.utcnow() - timedelta(days=7)).strftime('%Y-%m-%d'))
-        end_date_str = request.GET.get('enddate', datetime.utcnow().strftime('%Y-%m-%d'))
 
-        end_date = datetime.strptime(end_date_str, '%Y-%m-%d')
-        start_date = datetime.strptime(start_date_str, '%Y-%m-%d')
-        total_interval = (end_date - start_date).days
+    start_date_str = request.GET.get('startdate', (datetime.utcnow() - timedelta(days=7)).strftime('%Y-%m-%d'))
+    end_date_str = request.GET.get('enddate', datetime.utcnow().strftime('%Y-%m-%d'))
+
+    end_date = datetime.strptime(end_date_str, '%Y-%m-%d')
+    start_date = datetime.strptime(start_date_str, '%Y-%m-%d')
+    total_interval = (end_date - start_date).days
 
     ret, patients, total_scheduled, total_visited = get_schedule_tally(username, total_interval, override_date=end_date)
 
