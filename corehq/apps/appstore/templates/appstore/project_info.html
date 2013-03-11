@@ -99,7 +99,7 @@
     <dt>{% trans 'Description' %}</dt>
     <dd>
         {% if project.description %}
-            {{ project.description }}
+            {{ project.description|linebreaks }}
         {% else %}
             <h6>{% trans "None" %}</h6>
         {% endif %}
@@ -208,7 +208,7 @@
                     {% if app.description %}
                         <dt>{% trans 'Description' %}</dt>
                         <dd>
-                            {{ app.description }}
+                            {{ app.description|linebreaks }}
                         </dd>
                     {% endif %}
                     {% if app.attribution_notes %}
