@@ -126,7 +126,7 @@ class DomainRegistrationForm(forms.Form):
         return data
 
     def clean_domain_type(self):
-        data = self.cleaned_data.get('domain_name', '').strip().lower()
+        data = self.cleaned_data.get('domain_type', '').strip().lower()
         return data if data else 'commcare'
 
     def clean(self):
