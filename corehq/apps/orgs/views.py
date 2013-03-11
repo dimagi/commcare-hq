@@ -172,7 +172,7 @@ def orgs_update_team(request, org):
     else:
         messages.error(request, "Could not edit team information -- missing new team name")
 
-    return HttpResponseRedirect(reverse("orgs_teams", args=(org, )))
+    return HttpResponseRedirect(reverse('orgs_team_members', args=(org, team_id)))
 
 @org_admin_required
 @require_POST
@@ -196,6 +196,20 @@ def orgs_add_project(request, org):
         messages.error(request, "Unable to add project")
         return orgs_landing(request, org, add_form=form)
     return HttpResponseRedirect(reverse('orgs_landing', args=[org]))
+
+@org_admin_required
+@require_POST
+def orgs_remove_project(request, org):
+    domain = request.POST.get("project_name", None)
+    if not domain:
+        messages.error(request, "You must specify a project name")
+    else:
+        domain = Domain.get_by_name(domain)
+        domain.organization = None
+        domain.save()
+        messages.success(request, render_to_string('orgs/partials/undo_remove_project.html',
+                                                   {"org": org, "dom": domain}), extra_tags="html")
+    return HttpResponseRedirect(reverse(request.POST.get('redirect_url', 'orgs_landing'), args=(org,)))
 
 @org_admin_required
 @require_POST

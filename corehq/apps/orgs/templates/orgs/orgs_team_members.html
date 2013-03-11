@@ -5,11 +5,6 @@
 {% block js-inline %}{{ block.super }}
     <script type="text/javascript">
         $(function () {
-            $(".form-submit-link").on('click', function() {
-                $(this).closest('form').submit();
-                return false;
-            });
-
             $(document).on('click', ".role-change-btn", function() {
                 var post_url = "{% url set_team_permission_for_domain org.name team.get_id %}";
                 var domain = $(this).attr('data-domain');
@@ -42,6 +37,13 @@
 {% endblock %}
 
 {% block carded-content %}
+    <form class="form-horizontal" method="post" action="{% url orgs_update_team org.name %}">
+        <input id="updating-team-id" type="hidden" name="team_id" value="{{ team.get_id }}" />
+        <div class="input-append">
+            <input name="team_name" type="text" value="{{ team.name }}" />
+            <button class="btn" type="submit">Edit Team Name</button>
+        </div>
+    </form>
     <div class="row-fluid">
         <div class="span6" id="members">
             <h3>{% trans "Members" %}</h3>

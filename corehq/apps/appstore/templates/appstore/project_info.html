@@ -67,7 +67,7 @@
         {% if project.image_path %}
             <img class="app-pic" src="{% url appstore_project_image project.name %}" />
         {% else %}
-            <img class="app-pic opacity65" src="{% static 'hqstyle/img/no-image-available.png' %}" />
+            <img class="app-pic opacity65" src="{% static 'hqstyle/img/commcarehq-icon-large.png' %}" />
         {% endif %}
     </div>
     <div class="span7">
@@ -99,7 +99,7 @@
     <dt>{% trans 'Description' %}</dt>
     <dd>
         {% if project.description %}
-            {{ project.description }}
+            {{ project.description|linebreaks }}
         {% else %}
             <h6>{% trans "None" %}</h6>
         {% endif %}
@@ -208,7 +208,7 @@
                     {% if app.description %}
                         <dt>{% trans 'Description' %}</dt>
                         <dd>
-                            {{ app.description }}
+                            {{ app.description|linebreaks }}
                         </dd>
                     {% endif %}
                     {% if app.attribution_notes %}
