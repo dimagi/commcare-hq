@@ -299,8 +299,24 @@ def calculated_properties(request, domain):
 
 @domain_admin_required
 def create_snapshot(request, domain):
+    # todo: refactor function into smaller pieces
     domain = Domain.get_by_name(domain)
-    #latest_applications = [app.get_latest_saved() or app for app in domain.applications()]
+    can_publish_as_org = domain.get_organization() and request.couch_user.is_org_admin(domain.get_organization().name)
+
+    def render_with_ctxt(snapshot=None, error_msg=None):
+        ctxt = {'error_message': error_msg} if error_msg else {}
+        ctxt.update({'domain': domain.name,
+                     'form': form,
+                     'app_forms': app_forms,
+                     'can_publish_as_org': can_publish_as_org,
+                     'autocomplete_fields': ('project_type', 'phone_model', 'user_type', 'city', 'country', 'region')})
+        if snapshot:
+            ctxt.update({'published_as_org': snapshot.publisher == 'organization', 'author': snapshot.author})
+        else:
+            ctxt.update({'published_as_org': request.POST.get('publisher', '') == 'organization',
+                         'author': request.POST.get('author', '')})
+        return render(request, 'domain/create_snapshot.html', ctxt)
+
     if request.method == 'GET':
         form = SnapshotSettingsForm(initial={
                 'default_timezone': domain.default_timezone,
@@ -310,6 +326,7 @@ def create_snapshot(request, domain):
                 'license': domain.license,
                 'publish_on_submit': True,
             })
+
         snapshots = list(domain.snapshots())
         published_snapshot = snapshots[0] if snapshots else domain
         published_apps = {}
@@ -320,7 +337,6 @@ def create_snapshot(request, domain):
                 'project_type': published_snapshot.project_type,
                 'license': published_snapshot.license,
                 'title': published_snapshot.title,
-                'author': published_snapshot.author,
                 'share_multimedia': published_snapshot.multimedia_included,
                 'description': published_snapshot.description,
                 'short_description': published_snapshot.short_description,
@@ -331,6 +347,7 @@ def create_snapshot(request, domain):
                     published_apps[app._id] = app
                 else:
                     published_apps[app.copied_from._id] = app
+
         app_forms = []
         for app in domain.applications():
             app = app.get_latest_saved() or app
@@ -348,46 +365,32 @@ def create_snapshot(request, domain):
                 }, prefix=app.id)))
             else:
                 app_forms.append((app, SnapshotApplicationForm(initial={'publish': (published_snapshot is None or published_snapshot == domain)}, prefix=app.id)))
-        return render(request, 'domain/create_snapshot.html',
-            {'domain': domain.name,
-             'form': form,
-             #'latest_applications': latest_applications,
-             'app_forms': app_forms,
-             'autocomplete_fields': ('project_type', 'phone_model', 'user_type', 'city', 'country', 'region')})
+
+        return render_with_ctxt(snapshot=published_snapshot)
+
     elif request.method == 'POST':
         form = SnapshotSettingsForm(request.POST, request.FILES)
         form.dom = domain
+
         app_forms = []
         publishing_apps = False
         for app in domain.applications():
             app = app.get_latest_saved() or app
             app_forms.append((app, SnapshotApplicationForm(request.POST, prefix=app.id)))
             publishing_apps = publishing_apps or request.POST.get("%s-publish" % app.id, False)
+
         if not publishing_apps:
             messages.error(request, "Cannot publish a project without applications to CommCare Exchange")
-            return render(request, 'domain/create_snapshot.html',
-                {'domain': domain.name,
-                 'form': form,
-                 'app_forms': app_forms,
-                 'autocomplete_fields': ('project_type', 'phone_model', 'user_type', 'city', 'country', 'region')})
+            return render_with_ctxt()
 
         current_user = request.couch_user
         if not current_user.is_eula_signed():
             messages.error(request, 'You must agree to our eula to publish a project to Exchange')
-            return render(request, 'domain/create_snapshot.html',
-                {'domain': domain.name,
-                 'form': form,
-                 'app_forms': app_forms,
-                 'autocomplete_fields': ('project_type', 'phone_model', 'user_type', 'city', 'country', 'region')})
+            return render_with_ctxt()
 
         if not form.is_valid():
             messages.error(request, _("There are some problems with your form. Please address these issues and try again."))
-            return render(request, 'domain/create_snapshot.html',
-                    {'domain': domain.name,
-                     'form': form,
-                     #'latest_applications': latest_applications,
-                     'app_forms': app_forms,
-                     'autocomplete_fields': ('project_type', 'phone_model', 'user_type', 'city', 'country', 'region')})
+            return render_with_ctxt()
 
         new_license = request.POST['license']
         if request.POST.get('share_multimedia', False):
@@ -410,8 +413,10 @@ def create_snapshot(request, domain):
         new_domain.short_description = request.POST['short_description']
         new_domain.project_type = request.POST['project_type']
         new_domain.title = request.POST['title']
-        new_domain.author = request.POST['author']
         new_domain.multimedia_included = request.POST.get('share_multimedia', '') == 'on'
+        new_domain.publisher = request.POST['publisher']
+
+        new_domain.author = request.POST.get('author', None)
 
         new_domain.is_approved = False
         publish_on_submit = request.POST.get('publish_on_submit', "no") == "yes"
@@ -464,12 +469,7 @@ def create_snapshot(request, domain):
                 application.delete()
 
         if new_domain is None:
-            return render(request, 'domain/snapshot_settings.html',
-                    {'domain': domain.name,
-                     'form': form,
-                     #'latest_applications': latest_applications,
-                     'app_forms': app_forms,
-                     'error_message': _('Version creation failed; please try again')})
+            return render_with_ctxt(error_message=_('Version creation failed; please try again'))
 
         if publish_on_submit:
             messages.success(request, _("Created a new version of your app. This version will be posted to CommCare Exchange pending approval by admins."))

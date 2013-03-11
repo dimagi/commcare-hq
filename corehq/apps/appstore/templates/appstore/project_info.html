@@ -74,11 +74,13 @@
         <h1>
             {{ project.title }}
             <small>{% trans "by" %}
-                {% if project.organization %}
-                <a href="{% url orgs_landing project.organization %}">{{ project.get_organization.title }}</a>
+                {% ifequal project.publisher 'organization' %}
+{#                <a href="{% url orgs_public project.organization %}">#}
+                    {{ project.get_organization.title }}
+{#                </a>#}
                 {% else %}
-                    {{ project.author }}
-                {% endif %}
+                    {{ project.author|default:published_by.full_name }}
+                {% endifequal %}
             </small>
         </h1>
         <h4 style="color: #808080;">{{ project.short_description }}</h4>

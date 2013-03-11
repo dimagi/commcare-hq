@@ -9,6 +9,7 @@ from couchdbkit.ext.django.schema import Document, StringProperty,\
     BooleanProperty, DateTimeProperty, IntegerProperty, DocumentSchema, SchemaProperty, DictProperty, ListProperty, StringListProperty
 from django.utils.safestring import mark_safe
 from corehq.apps.appstore.models import Review, SnapshotMixin
+from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.html import format_html
 from dimagi.utils.logging import notify_exception
 from dimagi.utils.timezones import fields as tz_fields
@@ -204,6 +205,7 @@ class Domain(Document, HQBillingDomainMixin, SnapshotMixin):
     author = StringProperty()
     phone_model = StringProperty()
     attribution_notes = StringProperty()
+    publisher = StringProperty(choices=["organization", "user"], default="user")
 
     deployment = SchemaProperty(Deployment)
 
@@ -581,6 +583,7 @@ class Domain(Document, HQBillingDomainMixin, SnapshotMixin):
     def snapshots(self):
         return Domain.view('domain/snapshots', startkey=[self._id, {}], endkey=[self._id], include_docs=True, descending=True)
 
+    @memoized
     def published_snapshot(self):
         snapshots = self.snapshots().all()
         for snapshot in snapshots:
@@ -610,10 +613,12 @@ class Domain(Document, HQBillingDomainMixin, SnapshotMixin):
         results = get_db().search('domain/snapshot_search', q=json.dumps(query), limit=limit, skip=skip, stale='ok')
         return map(cls.get, [r['id'] for r in results]), results.total_rows
 
+    @memoized
     def get_organization(self):
         from corehq.apps.orgs.models import Organization
         return Organization.get_by_name(self.organization)
 
+    @memoized
     def organization_title(self):
         if self.organization:
             return self.get_organization().title
