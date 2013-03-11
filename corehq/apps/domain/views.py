@@ -642,6 +642,7 @@ def org_request(request, domain):
             org_request = OrgRequest(organization=org_name, domain=domain,
                 requested_by=request.couch_user.get_id, requested_on=datetime.datetime.utcnow())
             org_request.save()
+            _send_request_notification_email(request, org, domain)
             messages.success(request,
                 "Your request was submitted. The admin of organization %s can now choose to manage the project %s" %
                 (org_name, domain))
@@ -650,3 +651,16 @@ def org_request(request, domain):
     else:
         messages.error(request, "The organization '%s' does not exist" % org_name)
     return HttpResponseRedirect(reverse('domain_org_settings', args=[domain]))
+
+def _send_request_notification_email(request, org, dom):
+    url_base = Site.objects.get_current().domain
+    params = {"org": org, "dom": dom, "requestee": request.couch_user, "url_base": url_base}
+    text_content = render_to_string("domain/email/org_request_notification.txt", params)
+    html_content = render_to_string("domain/email/org_request_notification.html", params)
+    recipients = [member.email for member in org.get_members() if member.is_org_admin(org.name)]
+    subject = "New request to add a project to your organization! -- CommcareHQ"
+    try:
+        for recipient in recipients:
+            send_HTML_email(subject, recipient, html_content, text_content=text_content)
+    except Exception:
+        logging.warning("Can't send notification email, but the message was:\n%s" % text_content)
