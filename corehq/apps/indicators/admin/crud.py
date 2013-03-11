@@ -3,6 +3,7 @@ from django.conf import settings
 from django.template.loader import render_to_string
 from django.utils.safestring import mark_safe
 from corehq.apps.crud.models import BaseAdminHQTabularCRUDManager
+from corehq.apps.indicators.utils import get_namespace_name
 from dimagi.utils.data.crud import CRUDFormRequestManager
 
 
@@ -10,6 +11,7 @@ class IndicatorCRUDFormRequestManager(CRUDFormRequestManager):
     """
         Form request manager for Indicator CRUD forms.
     """
+
     def _get_form(self):
         if self.request.method == 'POST' and not self.success:
             return self.form_class(self.request.POST, doc_id=self.doc_id, domain=self.request.domain)
@@ -30,9 +32,7 @@ class IndicatorAdminCRUDManager(BaseAdminHQTabularCRUDManager):
         if isinstance(property, datetime.datetime):
             return property.strftime("%d %B %Y")
         if key == "namespace":
-            available_namespaces = dict(getattr(settings,
-                                                'INDICATOR_NAMESPACES', {}).get(self.document_instance.domain))
-            return available_namespaces.get(property)
+            return get_namespace_name(self.document_instance.domain, property)
         return super(IndicatorAdminCRUDManager, self).format_property(key, property)
 
     def create(self, **kwargs):

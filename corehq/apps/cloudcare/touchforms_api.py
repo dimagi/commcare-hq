@@ -5,6 +5,7 @@ import json
 from django.conf import settings
 from corehq.apps.cloudcare import CLOUDCARE_DEVICE_ID
 from django.core.urlresolvers import reverse
+from corehq.apps.users.models import CommCareUser
 
 DELEGATION_STUB_CASE_TYPE = "cc_delegation_stub"
 
@@ -40,13 +41,16 @@ class SessionDataHelper(object):
         """
         Get session data used by touchforms.
         """
-
+        # NOTE: Better to use isinstance(self.couch_user, CommCareUser) here rather than 
+        # self.couch_user.is_commcare_user() since this function is reused by smsforms where
+        # the recipient can be a case.
         session_data = {
             'device_id': device_id,
             'app_version': '2.0',
             'username': self.couch_user.raw_username,
             'user_id': self.couch_user.get_id,
-            "domain": self.domain,
+            'domain': self.domain,
+            'user_data': self.couch_user.user_data if isinstance(self.couch_user, CommCareUser) else {},
         }
         if self.case_id:
             if self.delegation:

@@ -310,3 +310,9 @@ def eula(request):
 def cda(request):
     return render_static(request, "cda.html")
 
+def apache_license(request):
+    return render_static(request, "apache_license.html")
+
+def bsd_license(request):
+    return render_static(request, "bsd_license.html")
+

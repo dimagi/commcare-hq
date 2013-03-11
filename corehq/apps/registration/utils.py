@@ -36,9 +36,11 @@ def activate_new_user(form, is_domain_admin=True, domain=None, ip=None):
 
     return new_user
 
-def request_new_domain(request, form, org, new_user=True, slug=''):
+def request_new_domain(request, form, org, domain_type=None, new_user=True):
     now = datetime.utcnow()
     current_user = CouchUser.from_django_user(request.user)
+
+    commtrack_enabled = domain_type == 'commtrack'
 
     dom_req = RegistrationRequest()
     if new_user:
@@ -49,12 +51,12 @@ def request_new_domain(request, form, org, new_user=True, slug=''):
     new_domain = Domain(name=form.cleaned_data['domain_name'],
         is_active=False,
         date_created=datetime.utcnow(),
+        commtrack_enabled=commtrack_enabled,
         creating_user=current_user.username)
 
     if org:
         new_domain.organization = org
-        if slug:
-            new_domain.slug = slug
+        new_domain.slug = new_domain.name
 
     if not new_user:
         new_domain.is_active = True

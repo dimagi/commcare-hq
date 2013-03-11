@@ -3,14 +3,28 @@
 {% load hq_shared_tags %}
 {% load hqstyle_tags %}
 
+{% block js-inline %}{{ block.super }}
+<script>
+    $(function () {
+        $('.remove-member-btn').on('click', function() {
+            $('#removing-member').text($(this).attr('data-member'));
+            $('#removing-member-id').val($(this).attr('data-member_id'));
+            $('#remove-member-modal').modal({show: true});
+            return false;
+        });
+    });
+</script>
+{% endblock %}
+
 {% block carded-content %}
 <table class="table table-striped" style="border-collapse:collapse">
     {% for member in members %}
         <tr><td style="border-top: none;">
             <strong>
-                {{ member.username }}
-                {% if member.first_name and member.last_name %}
-                    <small>({{ member.full_name }})</small>
+                {% if member.full_name %}
+                    {{ member.full_name }} <small>({{ member.username }})</small>
+                {% else %}
+                    {{ member.username }}
                 {% endif %}
                 {% if member.username in org_admins %} <span class="label">Admin</span>{% endif %}
             </strong>

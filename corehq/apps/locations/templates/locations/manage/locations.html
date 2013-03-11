@@ -17,6 +17,7 @@ var NEW_LOC_URL = '{% url create_location domain %}';
 
 var locs = {{ locations|JSON }};
 var selected_loc = {{ selected_id|JSON }};
+var hierarchy = {{ hierarchy|JSON }};
 
 function loc_edit_url(loc_id) {
     var template = '{% url edit_location domain "-locid-" %}';
@@ -25,7 +26,7 @@ function loc_edit_url(loc_id) {
 
 $(function() {
 
-  var model = new LocationTreeViewModel();
+  var model = new LocationTreeViewModel(hierarchy);
   ko.applyBindings(model, $('#location_tree')[0]);
   model.load(locs, selected_loc);
 

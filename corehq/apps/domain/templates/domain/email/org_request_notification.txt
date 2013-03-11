@@ -1,0 +1,11 @@
+Hi!
+
+You've received a request from {{ requestee.username }} to add the project {{ dom }} to the organization {{ org.title }}.
+
+To accept this request, visit the {{ org.title }} organization's landing page: http://{{ url_base }}{% url orgs_landing org.name %}
+
+If you think you have received this by mistake, you can go ahead and ignore this email. To find out more about CommCareHQ visit http://www.commcarehq.org/.
+
+Thanks for using our site!
+
+-The CommCareHQ team

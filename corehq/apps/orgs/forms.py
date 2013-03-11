@@ -2,32 +2,26 @@ from django import forms
 from django.core.validators import validate_email
 from corehq.apps.domain.models import Domain
 import re
-from corehq.apps.domain.utils import new_domain_re, website_re, new_org_title_re
+from corehq.apps.domain.utils import new_domain_re, website_re
 from corehq.apps.orgs.models import Organization, Team
 from corehq.apps.registration.forms import OrganizationRegistrationForm
 from corehq.apps.users.models import CouchUser
 
 class AddProjectForm(forms.Form):
-    domain_name = forms.CharField(label="Project name")
-    domain_slug = forms.CharField(label="Project alias", required=False, help_text="""
-This project will be given a new name within this organization. You may leave it the same or choose a new name.
-""")
-
+    domain_name = forms.CharField(label="Project name", help_text="e.g. - public")
+    domain_hrname = forms.CharField(label="Project display name", required=False, help_text="e.g. - Commcare HQ Demo Project")
     def __init__(self, org_name, *args, **kwargs):
         self.org_name = org_name
         super(AddProjectForm, self).__init__(*args, **kwargs)
 
-    def clean_domain_slug(self):
-        data = self.cleaned_data['domain_slug'].strip().lower()
+    def clean_domain_hrname(self):
+        data = self.cleaned_data['domain_hrname']
         if not data:
-            data = self.cleaned_data['domain_name'].strip().lower()
+            data = self.cleaned_data['domain_name']
 
-        if not re.match("^%s$" % new_domain_re, data):
-            raise forms.ValidationError('Only lowercase letters and numbers allowed. Single hyphens may be used to separate words.')
-
-        conflict = Domain.get_by_organization_and_slug(self.org_name, data) or Domain.get_by_organization_and_slug(self.org_name, data.replace('-', '.'))
+        conflict = Domain.get_by_organization_and_hrname(self.org_name, data) or Domain.get_by_organization_and_hrname(self.org_name, data.replace('-', '.'))
         if conflict:
-            raise forms.ValidationError('A project with that name already exists.')
+            raise forms.ValidationError('A project with that display name already exists.')
         return data
 
     def clean_domain_name(self):

@@ -142,7 +142,7 @@
                     {% trans "You can drag and drop fields to reorder them.  You can also rename fields, which will update the headers in the export file." %}
                 </label>
                 <div class="controls">
-                    <table class="column_list table table-striped table-bordered" id="field-select">
+                    <table class="column_list table table-striped table-bordered table-condensed" id="field-select">
                         <thead>
                         <tr class="nodrag nodrop">
                             <th>{% trans "Include this Field?" %}<br>
@@ -157,7 +157,7 @@
                             <tr id="{{ columndef.index }}">
                                 <td><input type="checkbox" class="field-include" name="{{ columndef.index }} val" {% if columndef.selected %}checked="yes"{% endif %}></input></td>
                                 <td>{{ columndef.index }}</td>
-                                <td><input name="{{ columndef.index }} display" type="text" value="{{ columndef.display }}" selected="selected" checked="true"></input></td>
+                                <td><input class="input-xlarge" name="{{ columndef.index }} display" type="text" value="{{ columndef.display }}" selected="selected" checked="true"></input></td>
                                 <td class="deid-column">
                                     {% if columndef.index != 'id' or columndef.transform %}
                                     <select name="{{ columndef.index }} transform" data-value="{{ columndef.transform|default:'' }}">

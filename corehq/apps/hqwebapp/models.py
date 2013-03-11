@@ -146,7 +146,7 @@ class ProjectReportsTab(UITab):
     @property
     def is_active(self):
         # HACK. We need a more overarching way to avoid doing things this way
-        if 'adm' in self._request.get_full_path():
+        if 'reports/adm' in self._request.get_full_path():
             return False
 
         return super(ProjectReportsTab, self).is_active

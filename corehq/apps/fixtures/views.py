@@ -240,13 +240,19 @@ class UploadItemLists(TemplateView):
 
         data_types = workbook.get_worksheet(title='types')
 
+        def _get_or_raise(container, attr, message):
+            try:
+                return container[attr]
+            except KeyError:
+                raise Exception(message.format(attr=attr))
         with CouchTransaction() as transaction:
             for dt in data_types:
+                err_msg = "Workbook 'types' has no column '{attr}'"
                 data_type = FixtureDataType(
                     domain=self.domain,
-                    name=dt['name'],
-                    tag=dt['tag'],
-                    fields=dt['field'],
+                    name=_get_or_raise(dt, 'name', err_msg),
+                    tag=_get_or_raise(dt, 'tag', err_msg),
+                    fields=_get_or_raise(dt, 'field', err_msg),
                 )
                 transaction.save(data_type)
                 data_items = workbook.get_worksheet(data_type.tag)
