@@ -6,7 +6,7 @@ function api_get_children(loc_uuid, callback) {
         });
 }
 
-function LocationTreeViewModel() {
+function LocationTreeViewModel(hierarchy) {
     var model = this;
     
     this.root = ko.observable();

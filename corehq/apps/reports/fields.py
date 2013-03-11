@@ -14,7 +14,7 @@ from dimagi.utils.couch.database import get_db
 from dimagi.utils.dates import DateSpan
 from dimagi.utils.decorators.datespan import datespan_in_request
 from corehq.apps.locations.models import location_tree, root_locations
-from corehq.apps.locations.util import load_locs_json
+from corehq.apps.locations.util import load_locs_json, location_hierarchy_config
 from django.conf import settings
 import json
 from django.utils.translation import ugettext_noop
@@ -414,34 +414,6 @@ class DatespanField(ReportField):
         self.context['timezone'] = self.timezone.zone
         self.context['datespan'] = self.datespan
 
-class LocationField(ReportField):
-    name = ugettext_noop("Location")
-    slug = "location"
-    template = "reports/fields/location.html"
-    is_cacheable = True
-
-    def update_context(self):
-        self.context.update(self._get_custom_context())
-
-    @request_cache('locationfieldcontext')
-    def _get_custom_context(self):
-        all_locs = location_tree(self.domain)
-        def loc_to_json(loc):
-            return {
-                'name': loc.name,
-                'type': loc.location_type,
-                'uuid': loc._id,
-                'children': [loc_to_json(child) for child in loc._children],
-            }
-        loc_json = [loc_to_json(root) for root in all_locs]
-
-        return {
-            'control_name': self.name,
-            'control_slug': self.slug,
-            'loc_id': self.request.GET.get('location_id'),
-            'locations': json.dumps(loc_json)
-        }
-
 class AsyncLocationField(ReportField):
     name = ugettext_noop("Location")
     slug = "location_async"
@@ -462,6 +434,7 @@ class AsyncLocationField(ReportField):
             'control_slug': self.slug,
             'loc_id': selected_loc_id,
             'locations': json.dumps(load_locs_json(self.domain, selected_loc_id)),
+            'hierarchy': location_hierarchy_config(self.domain),
         }
 
 class AsyncDrillableField(BaseReportFilter):
