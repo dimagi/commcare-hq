@@ -489,10 +489,14 @@ class AliasedElasticPillow(ElasticPillow):
     def calc_mapping_hash(self, mapping):
         return hashlib.md5(simplejson.dumps(mapping, sort_keys=True)).hexdigest()
 
-    def __init__(self, **kwargs):
+    def __init__(self, get_mapping=True, **kwargs):
         super(AliasedElasticPillow, self).__init__(**kwargs)
-        self.seen_types = self.get_index_mapping()
-        logging.info("Pillowtop [%s] Retrieved mapping from ES" % self.get_name())
+        if get_mapping:
+            self.seen_types = self.get_index_mapping()
+            logging.info("Pillowtop [%s] Retrieved mapping from ES" % self.get_name())
+        else:
+            logging.info("Pillowtop [%s] Started with no mapping from server" % self.get_name())
+            self.seen_types = {}
 
     def calc_meta(self):
         raise NotImplementedError("Need to implement your own meta calculator")
