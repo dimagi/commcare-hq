@@ -20,6 +20,11 @@ function(doc) {
 
         var indicator_entries = {};
 
+        if (isChildWelfareForm(doc) && indicators.vaccination_status && indicators.vaccination_status.value === 'yes') {
+            // special case for Bonsaaso
+            indicator_entries['child under1 immunized'] = case_id;
+        }
+
         if (isChildVisitForm(doc) && indicators.child_dob && indicators.child_dob.value) {
             // birthdate found, is child under 5?
             var age = get_age_from_dob(indicators.child_dob.value, visit_date);
