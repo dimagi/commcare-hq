@@ -6,7 +6,6 @@ from couchdbkit.ext.django.schema import *
 import couchforms.const as const
 from dimagi.utils.indicators import ComputedDocumentMixin
 from dimagi.utils.parsing import string_to_datetime
-from couchdbkit.schema.properties_proxy import SchemaListProperty
 from dimagi.utils.couch.safe_index import safe_index
 from xml.etree import ElementTree
 from django.utils.datastructures import SortedDict
@@ -14,7 +13,7 @@ from couchdbkit.resource import ResourceNotFound
 import logging
 import hashlib
 from copy import copy
-from couchforms.signals import submission_error_received, xform_archived
+from couchforms.signals import xform_archived
 from dimagi.utils.mixins import UnicodeMixIn
 from couchforms.const import ATTACHMENT_NAME
 from couchdbkit.exceptions import PreconditionFailed
@@ -31,9 +30,11 @@ def doc_types():
         'XFormDuplicate': XFormDuplicate,
     }
 
+
 def get(doc_id):
     # This logic is independent of couchforms; when it moves elsewhere, 
     # please use the most appropriate alternative to get a DB handle.
+    
     db = XFormInstance.get_db()
     doc = db.get(doc_id)
     if doc['doc_type'] in doc_types():
@@ -145,6 +146,12 @@ class XFormInstance(Document, UnicodeMixIn, ComputedDocumentMixin):
         return "%s (%s)" % (self.type, self.xmlns)
 
     def save(self, *args, **kwargs):
+        # these documents are particularly finicky and get save/resaved
+        # a lot in sucession during form submits, so for now always write
+        # to all nodes
+        if is_cloudant() and 'w' not in kwargs:
+            kwargs['w'] = 3
+
         # HACK: cloudant has a race condition when saving newly created forms
         # which throws errors here. use a try/retry loop here to get around
         # it until we find something more stable.
@@ -288,7 +295,7 @@ class SubmissionErrorLog(XFormError):
         self["doc_type"] = "SubmissionErrorLog" 
         # and we can't use super for the same reasons XFormError 
         XFormInstance.save(self, *args, **kwargs)
-        
+
     @classmethod
     def from_instance(cls, instance, message):
         """
