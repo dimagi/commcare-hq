@@ -273,13 +273,13 @@ class CustomExportHelper(object):
             HQGroupExportConfiguration.remove_custom_export(self.domain, self.custom_export.get_id)
 
     def get_response(self):
-        table_config = self.custom_export.table_configuration[0]
         slug = export.ExcelExportReport.slug if self.export_type == "form" else export.CaseExportReport.slug
         
         def show_deid_column():
-            for col in table_config['column_configuration']:
-                if col['transform']:
-                    return True
+            for table_config in self.custom_export.table_configuration:
+                for col in table_config['column_configuration']:
+                    if col['transform']:
+                        return True
             return False
 
         return render(self.request, "reports/reportdata/customize_export.html", {
@@ -287,7 +287,7 @@ class CustomExportHelper(object):
             "deid_options": CustomExportHelper.DEID.options,
             "presave": self.presave,
             "DeidExportReport_name": DeidExportReport.name,
-            "table_config": table_config,
+            "table_configuration": self.custom_export.table_configuration,
             "slug": slug,
             "domain": self.domain,
             "show_deid_column": show_deid_column()

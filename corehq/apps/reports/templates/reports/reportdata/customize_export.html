@@ -96,7 +96,7 @@
 {% block main_column %}
     <form class="form-horizontal" method="post" action="{{ request.get_full_path|safe }}">
         <input type="hidden" name="schema" value="{{ saved_export.schema_id }}" />
-        <input type="hidden" name="table" value="{{ table_config.index }}" />
+        <input type="hidden" name="table" value="{{ table_configuration.0.index }}" />
         <input type="hidden" name="order" id="order_input" value="" />
         {% if saved_export.type == 'form' and saved_export.app_id %}
             <input type="hidden" name="app_id" value="{{ saved_export.app_id|default:'' }}" />
@@ -153,7 +153,7 @@
                         </tr>
                         </thead>
                         <tbody>
-                        {% for columndef in table_config.column_configuration %}
+                        {% for columndef in table_configuration.0.column_configuration %}
                             <tr id="{{ columndef.index }}">
                                 <td><input type="checkbox" class="field-include" name="{{ columndef.index }} val" {% if columndef.selected %}checked="yes"{% endif %}></input></td>
                                 <td>{{ columndef.index }}</td>
