@@ -267,7 +267,7 @@ class DeviceLogDetailsReport(PhonelogReport):
         for item in data:
             entry = item['value']
             date = entry['@date']
-            date_fmt = tz_utils.string_to_prertty_time(date, self.timezone)
+            date_fmt = tz_utils.string_to_prertty_time(date, self.timezone, fmt="%b %d, %Y %H:%M:%S")
 
             username = entry.get('user','unknown')
             username_fmt = '<a href="%(url)s">%(username)s</a>' % {
