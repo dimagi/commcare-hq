@@ -51,83 +51,92 @@ def allowed_child_types(domain, parent):
 
 # hard-coded for now
 def location_custom_properties(domain, loc_type):
+    hardcoded = {
+        'outlet': [
+            CustomProperty(
+                name='outlet_type',
+                datatype='Choice',
+                label='Outlet Type',
+                required=True,
+                choices={'mode': 'static', 'args': [
+                        'CHC',
+                        'PHC',
+                        'SC',
+                        'MBBS',
+                        'Pediatrician',
+                        'AYUSH',
+                        'Medical Store / Chemist',
+                        'RMP',
+                        'Asha',
+                        'AWW',
+                        'NGO',
+                        'CBO',
+                        'SHG',
+                        'Pan Store',
+                        'General Store',
+                        'Other',
+                    ]},
+            ),
+            CustomProperty(
+                name='outlet_type_other',
+                label='Outlet Type (Other)',
+            ),
+            CustomProperty(
+                name='address',
+                label='Address',
+            ),
+            CustomProperty(
+                name='landmark',
+                label='Landmark',
+            ),
+            CustomProperty(
+                name='contact_name',
+                label='Contact Name',
+            ),
+            CustomProperty(
+                name='contact_phone',
+                label='Contact Phone',
+            ),
+        ],
+        'village': [
+            CustomProperty(
+                name='village_size',
+                datatype='Integer',
+                label='Village Size',
+            ),
+            CustomProperty(
+                name='village_class',
+                datatype='Choice',
+                label='Village Class',
+                choices={'mode': 'static', 'args': [
+                        'Town',
+                        'A',
+                        'B',
+                        'C',
+                        'D',
+                        'E',
+                    ]},
+            ),
+        ],
+    }
+    prop_site_code = CustomProperty(
+        name='site_code',
+        label='SMS Code',
+        required=True,
+        unique='global',
+    )
+
     try:
-        return {
-            'outlet': [
-                CustomProperty(
-                    name='site_code',
-                    label='SMS Code',
-                    required=True,
-                    unique='global',
-                ),
-                CustomProperty(
-                    name='outlet_type',
-                    datatype='Choice',
-                    label='Outlet Type',
-                    required=True,
-                    choices={'mode': 'static', 'args': [
-                            'CHC',
-                            'PHC',
-                            'SC',
-                            'MBBS',
-                            'Pediatrician',
-                            'AYUSH',
-                            'Medical Store / Chemist',
-                            'RMP',
-                            'Asha',
-                            'AWW',
-                            'NGO',
-                            'CBO',
-                            'SHG',
-                            'Pan Store',
-                            'General Store',
-                            'Other',
-                        ]},
-                ),
-                CustomProperty(
-                    name='outlet_type_other',
-                    label='Outlet Type (Other)',
-                ),
-                CustomProperty(
-                    name='address',
-                    label='Address',
-                ),
-                CustomProperty(
-                    name='landmark',
-                    label='Landmark',
-                ),
-                CustomProperty(
-                    name='contact_name',
-                    label='Contact Name',
-                ),
-                CustomProperty(
-                    name='contact_phone',
-                    label='Contact Phone',
-                ),
-            ],
-            'village': [
-                CustomProperty(
-                    name='village_size',
-                    datatype='Integer',
-                    label='Village Size',
-                ),
-                CustomProperty(
-                    name='village_class',
-                    datatype='Choice',
-                    label='Village Class',
-                    choices={'mode': 'static', 'args': [
-                            'Town',
-                            'A',
-                            'B',
-                            'C',
-                            'D',
-                            'E',
-                        ]},
-                ),
-            ],
-        }[loc_type]
+        properties = hardcoded[loc_type]
     except KeyError:
         return []
+
+    loc_config = dict((lt.name, lt) for lt in Domain.get_by_name(domain).commtrack_settings.location_types)
+    if not loc_config[loc_type].administrative:
+        properties.insert(0, prop_site_code)
+
+    return properties
+
 
 def lookup_by_property(domain, prop_name, val, scope, root=None):
     if root and not isinstance(root, basestring):

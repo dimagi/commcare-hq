@@ -618,6 +618,7 @@ def commtrack_settings(request, domain):
         return {
             'name': loctype.name,
             'allowed_parents': [p or None for p in loctype.allowed_parents],
+            'administrative': loctype.administrative,
         }
 
     def other_sms_codes():
