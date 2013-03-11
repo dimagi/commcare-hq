@@ -1,6 +1,4 @@
 from datetime import timedelta, datetime
-import dateutil
-import pytz
 import json
 from copy import deepcopy
 import logging
@@ -693,7 +691,7 @@ def system_info(request):
     context['memcached_status'] = mc_status
     context['memcached_results'] = mc_results
 
-    context['last_deploy'] = _get_latest_deploy()
+    context['last_deploy'] = HqDeploy.get_latest()
 
     #elasticsearch status
     #node status
@@ -703,14 +701,6 @@ def system_info(request):
     context.update(check_exchange_index())
 
     return render(request, "hqadmin/system_info.html", context)
-
-def _get_latest_deploy():
-    db = HqDeploy.get_db()
-    results = db.view('hqadmin/deploy_history', reduce=False, limit=1, descending=True)
-    if results.first() != None:
-        return {'date': dateutil.parser.parse(results.first().get('key'))}
-    else:
-        return None
 
 @require_superuser
 def noneulized_users(request, template="hqadmin/noneulized_users.html"):
