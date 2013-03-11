@@ -7,7 +7,7 @@ function hasIndicators(doc) {
 function hasFormLabel(doc, label_name) {
     return (hasIndicators(doc)
         && label_name in doc.computed_.mvp_indicators
-        && doc.computed_.mvp_indicators[form_label].type === "FormLabelIndicatorDefinition")
+        && doc.computed_.mvp_indicators[label_name].type === "FormLabelIndicatorDefinition")
 }
 
 function isChildRegistrationForm(doc) {
