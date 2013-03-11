@@ -1,0 +1,5 @@
+<form class="form-inline" action="{% url orgs_add_project org %}" method="POST">
+    <input type="hidden" name="domain_name" value="{{ dom.name }}" />
+    <input type="hidden" name="domain_hrname" value="{{ dom.hr_name }}" />
+    You have removed the project {{ dom.display_name }} from this organization. <a href="#" class="form-submit-link">Undo</a>
+</form>

@@ -10,6 +10,11 @@
 {% block js-inline %}{{ block.super }}
 <script>
     $(function () {
+        $(".form-submit-link").on('click', function() {
+            $(this).closest('form').submit();
+            return false;
+        });
+
         if (!{{ reg_form_empty|JSON }}) {
             $('#create_project_modal').modal({show: true});
         }
@@ -50,6 +55,13 @@
             $('#updating-project').val($(this).attr('data-project'));
             $('#updating-project-hrname').val($(this).attr('data-hrname'));
             $('#edit-project-modal').modal({show: true});
+            return false;
+        });
+
+        $('.remove-project-btn').on('click', function() {
+            $('#removing-project').val($(this).attr('data-project'));
+            $('#removing-project-name').text($(this).attr('data-name'));
+            $('#remove-project-modal').modal({show: true});
             return false;
         });
 
@@ -96,9 +108,14 @@
                     {% ifnotequal domain.name domain.display_name %}<small>({{ domain.name }})</small>{% endifnotequal %}
                 </a>
                 {% if admin %}
-                    <a href="#" class="btn edit-project-btn pull-right" data-project="{{ domain.name }}" data-hrname="{{ domain.hrname|default:domain.name }}">
-                        <i class="icon icon-pencil"></i> {% trans "Edit Project Info" %}
-                    </a>
+                    <div class="btn-toolbar pull-right" style="margin: 0;">
+                        <a href="#" class="btn edit-project-btn" data-project="{{ domain.name }}" data-hrname="{{ domain.hrname|default:domain.name }}">
+                            <i class="icon icon-pencil"></i> {% trans "Edit Project Info" %}
+                        </a>
+                        <a href="#" class="btn btn-danger remove-project-btn" data-project="{{ domain.name }}" data-name="{{ domain.display_name }}">
+                            <i class="icon icon-white icon-remove"></i> {% trans "Remove Project" %}
+                        </a>
+                    </div>
                 {% endif %}
             </td></tr>
         {% endfor %}
@@ -203,7 +220,7 @@
             <div id="add_project_modal" class="modal hide fade">
                 <div class="modal-header">
                     <a class="close" data-dismiss="modal">&times;</a>
-                    <h3>{% trans "Manage an existing project" %}</h3>
+                    <h3>{% trans "Add an existing project" %}</h3>
                 </div>
                 <form class="form-horizontal" method="post" action="{% url orgs_add_project org.name %}">
                     <div class="modal-body">
@@ -237,6 +254,20 @@
                     <div class="modal-footer">
                         <a href="#" data-dismiss="modal" class="btn">{% trans "Cancel" %}</a>
                         <button type="submit" class="btn btn-primary disable-on-submit">{% trans "Update Project Info" %}</button>
+                    </div>
+                </form>
+            </div>
+
+            <div id="remove-project-modal" class="modal hide fade">
+                <form class="form-inline" style="margin: 0;" action="{% url orgs_remove_project org.name %}" method="post">
+                    <div class="modal-body">
+                        <a class="close" data-dismiss="modal">&times;</a>
+                        <h3>Remove <em><span id="removing-project-name"></span></em> from {{ org.title }}?</h3>
+                        <input type="hidden" id="removing-project" name="project_name" value="" />
+                    </div>
+                    <div class="modal-footer">
+                        <a href="#" data-dismiss="modal" class="btn">{% trans "Cancel" %}</a>
+                        <button type="submit" class="btn btn-danger disable-on-submit">{% trans "Remove Project" %}</button>
                     </div>
                 </form>
             </div>

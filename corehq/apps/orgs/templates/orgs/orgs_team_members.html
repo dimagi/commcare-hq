@@ -5,11 +5,6 @@
 {% block js-inline %}{{ block.super }}
     <script type="text/javascript">
         $(function () {
-            $(".form-submit-link").on('click', function() {
-                $(this).closest('form').submit();
-                return false;
-            });
-
             $(document).on('click', ".role-change-btn", function() {
                 var post_url = "{% url set_team_permission_for_domain org.name team.get_id %}";
                 var domain = $(this).attr('data-domain');
