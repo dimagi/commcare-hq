@@ -5,6 +5,7 @@ from django.contrib.auth import authenticate, login
 from django.db import transaction
 from django.http import HttpResponseRedirect
 from django.shortcuts import redirect, render
+from django.template.loader import render_to_string
 from corehq.apps.domain.decorators import login_required_late_eval_of_LOGIN_URL
 from corehq.apps.domain.models import Domain
 from corehq.apps.orgs.views import orgs_landing
@@ -73,7 +74,7 @@ def register_org(request, template="registration/org_request.html"):
             # else:
             #     logo_filename = ''
 
-            org = Organization(name=name, title=title, location=location, email=email, url=url, logo_filename=logo_filename)
+            org = Organization(name=name, title=title, location=location, email=email, url=url)
             org.save()
 
             request.couch_user.add_org_membership(org.name, is_admin=True)
@@ -84,6 +85,8 @@ def register_org(request, template="registration/org_request.html"):
 
             if referer_url:
                 return redirect(referer_url)
+            messages.info(request, render_to_string('orgs/partials/welcome_notification.html',
+                                                       {"org": org, "user": request.couch_user}), extra_tags="html")
             return HttpResponseRedirect(reverse("orgs_landing", args=[name]))
     else:
         form = OrganizationRegistrationForm()
