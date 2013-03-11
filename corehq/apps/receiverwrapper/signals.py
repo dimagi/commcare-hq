@@ -1,5 +1,3 @@
-import traceback
-from casexml.apps import case
 from casexml.apps.case.signals import case_post_save
 from corehq.apps.domain.utils import normalize_domain_name
 from receiver.signals import form_received, successful_form_received
@@ -65,8 +63,8 @@ def _get_app_id(xform):
 
 def add_domain(sender, xform, **kwargs):
     domain = _get_domain(xform) or ""
-    to_update = domain != xform.get('domain', None)
-    xform['domain'] = domain
+    to_update = domain != xform._doc.get('domain', None)
+    xform.domain = domain
     return to_update
 
 def add_export_tag(sender, xform):
