@@ -45,6 +45,15 @@ def is_cloudant():
     # this is a bit of a hack but we'll use it for now
     return 'cloudant' in settings.COUCH_SERVER_ROOT
 
+def cloudant_quorum_count():
+    """
+    The number of nodes to force an update/read in cloudant to make sure
+    we have a quorum. Should typically be the number of copies of a doc
+    that end up in the cluster.
+    """
+    return 3 if not hasattr(settings, 'CLOUDANT_QUORUM_COUNT') \
+        else settings.CLOUDANT_QUORUM_COUNT
+
 class Metadata(DocumentSchema):
     """
     Metadata of an xform, from a meta block structured like:
@@ -92,7 +101,7 @@ class XFormInstance(Document, UnicodeMixIn, ComputedDocumentMixin):
         cls._allow_dynamic_properties = dynamic_properties
         # on cloudant don't get the doc back until all nodes agree
         # on the copy, to avoid race conditions
-        extras = {'r': 3} if is_cloudant() else {}
+        extras = {'r': cloudant_quorum_count()} if is_cloudant() else {}
         return db.get(docid, rev=rev, wrapper=cls.wrap, **extras)
 
     @property
@@ -150,7 +159,7 @@ class XFormInstance(Document, UnicodeMixIn, ComputedDocumentMixin):
         # a lot in sucession during form submits, so for now always write
         # to all nodes
         if is_cloudant() and 'w' not in kwargs:
-            kwargs['w'] = 3
+            kwargs['w'] = cloudant_quorum_count()
 
         # HACK: cloudant has a race condition when saving newly created forms
         # which throws errors here. use a try/retry loop here to get around

@@ -8,7 +8,7 @@ except ImportError:
     from django.utils import simplejson
 
 from couchforms.models import XFormInstance, XFormDuplicate, XFormError, XFormDeprecated,\
-    SubmissionErrorLog, is_cloudant
+    SubmissionErrorLog, is_cloudant, cloudant_quorum_count
 import logging
 from couchdbkit.resource import RequestFailed
 from couchforms.exceptions import CouchFormException
@@ -35,9 +35,9 @@ class SubmissionError(Exception, UnicodeMixIn):
 def post_from_settings(instance, extras=None):
     extras = extras or {}
     if is_cloudant():
-        # HACK: for cloudant force update all 3 nodes at once
+        # HACK: for cloudant force update all nodes at once
         # to prevent 412 race condition
-        extras['w'] = 3
+        extras['w'] = cloudant_quorum_count()
 
     url = settings.XFORMS_POST_URL if not extras else "%s?%s" % \
         (settings.XFORMS_POST_URL, urllib.urlencode(extras))
