@@ -1387,7 +1387,10 @@ def edit_app_attr(request, domain, app_id, attr):
     app = get_app(domain, app_id)
     lang = request.COOKIES.get('lang', (app.langs or ['en'])[0])
 
-    hq_settings = json.loads(request.raw_post_data)['hq']
+    try:
+        hq_settings = json.loads(request.raw_post_data)['hq']
+    except ValueError:
+        hq_settings = request.POST
 
     attributes = [
         'all',

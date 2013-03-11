@@ -14,21 +14,22 @@
 {% block js-inline %}
     {{ block.super }}
     <script>
-    COMMCAREHQ.appView = {
-        settings: {
-            sections: {{ settings_layout|JSON }},
-            values: {{ settings_values|JSON }},
-            urls: {
-                save: '{% url edit_commcare_settings domain app.id %}'
-            },
-            edit: {{ edit|BOOL }}
-        }
-    };
+        COMMCAREHQ.appView = {
+            settings: {
+                sections: {{ settings_layout|JSON }},
+                values: {{ settings_values|JSON }},
+                urls: {
+                    save: '{% url edit_commcare_settings domain app.id %}'
+                },
+                edit: {{ edit|BOOL }}
+            }
+        };
+        $(function () {
+            COMMCAREHQ.appView.settings = new CommcareSettings(COMMCAREHQ.appView.settings);
+            ko.applyBindings(COMMCAREHQ.appView.settings, $('#commcare-settings').get(0));
+            ko.applyBindings(COMMCAREHQ.appView.settings, $('#success-message').get(0));
+        });
 
-    $(function () {
-        var settings = new CommcareSettings(COMMCAREHQ.appView.settings);
-        ko.applyBindings(settings, $('#commcare-settings').get(0));
-    });
     </script>
     {% if app %}
     <script>
@@ -243,8 +244,8 @@
                 {% include "app_manager/partials/supported-languages.html" %}
             </div>
             {% if app.get_doc_type == "Application" %}
-            <div id="translations_ui">
-                <h2>CommCare Translations</h2>
+            <section id="translations_ui">
+                <h2>{% trans "CommCare Translations" %}</h2>
                 <p class="help-block">
                     For J2ME (Nokia) refer to
                     <a target="_blank" href="https://bitbucket.org/commcare/javarosa/src/default/j2me/shared-resources/resources/messages_default.txt">JavaRosa translations</a>
@@ -256,8 +257,35 @@
                     and <a target="_blank" href="https://confluence.dimagi.com/display/commcarepublic/CommCare+ODK+Form+Entry+Interface+Strings">ODK Collect translations</a>.
                 </p>
                 <br/>
-            </div>
+            </section>
             {% endif %}
+            <section id="success-message">
+                <h2>{% trans "Success Message" %}</h2>
+                <form class="save-button-form form-horizontal" method="post" action="{% url edit_app_attr domain app.id 'success_message' %}">
+                    <div class="save-button-holder clearfix"></div>
+                    <fieldset>
+                        <div class="control-group">
+                            <label class="control-label">
+                                {% trans "Success Message" %}
+                                <span class="hq-help-template"
+                                      data-title="{% trans "Success Message" %}"
+                                      data-content="{% trans "You can optionally specify a template for the message that your CHWs receive upon successful submission of a form. In the template, you have access to the following variables gathered real-time from the server: $first_name, $name, $week, $today. Example: Thanks $first_name! You have submitted $today forms today and $week forms since Monday." %}"
+                                ></span>
+                            </label>
+                            <div class="controls">
+                                {% if edit %}
+                                    <textarea class="span3" name="success_message" data-bind="attr: {disabled: COMMCAREHQ.appView.settings.settingsIndex.properties['cc-send-unsent'].value() !== 'cc-su-man'}">{{ app.success_message|trans:langs }}</textarea>
+                                {% else %}
+                                    <p>{{ app.success_message|trans:langs }}</p>
+                                {% endif %}
+                                <span data-bind="visible: COMMCAREHQ.appView.settings.settingsIndex.properties['cc-send-unsent'].value() !== 'cc-su-man'">
+                                    <i class="icon-ok"></i> Autoset by Auto-set by Sync Mode
+                                </span>
+                            </div>
+                        </div>
+                    </fieldset>
+                </form>
+            </section>
         </div>
 
         {% if app.get_doc_type == "Application" %}
