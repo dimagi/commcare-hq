@@ -205,7 +205,7 @@ def chw_calendar_submit_report(request, username):
     """Calendar view of submissions by CHW, overlaid with their scheduled visits, and whether they made them or not."""
     return_context = {}
     return_context['username'] = username
-    total_interval = 30
+    total_interval = 7
     if 'interval' in request.GET:
         try:
             total_interval = int(request.GET['interval'])
