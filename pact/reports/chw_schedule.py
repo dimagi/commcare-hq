@@ -205,21 +205,23 @@ def chw_calendar_submit_report(request, username):
     """Calendar view of submissions by CHW, overlaid with their scheduled visits, and whether they made them or not."""
     return_context = {}
     return_context['username'] = username
-    total_interval = 30
+    total_interval = 7
     if 'interval' in request.GET:
         try:
             total_interval = int(request.GET['interval'])
         except ValueError:
             pass
 
-    start_date_str = request.GET.get('startdate', (datetime.utcnow() - timedelta(days=7)).strftime('%Y-%m-%d'))
-    end_date_str = request.GET.get('enddate', datetime.utcnow().strftime('%Y-%m-%d'))
+    #secret date ranges
+    if 'enddate' in request.GET:
+        end_date_str = request.GET.get('enddate', datetime.utcnow().strftime('%Y-%m-%d'))
+        end_date = datetime.strptime(end_date_str, '%Y-%m-%d')
+    else:
+        end_date = datetime.utcnow()
 
-    end_date = datetime.strptime(end_date_str, '%Y-%m-%d')
-    start_date = datetime.strptime(start_date_str, '%Y-%m-%d')
-    total_interval = (end_date - start_date).days
-
-    ret, patients, total_scheduled, total_visited = get_schedule_tally(username, total_interval, override_date=end_date)
+    ret, patients, total_scheduled, total_visited = get_schedule_tally(username,
+                                                                       total_interval,
+                                                                       override_date=end_date)
 
     if len(ret) > 0:
         return_context['date_arr'] = ret
