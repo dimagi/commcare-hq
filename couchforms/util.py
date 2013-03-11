@@ -32,7 +32,8 @@ class SubmissionError(Exception, UnicodeMixIn):
     def __str__(self):
         return str(self.error_log)
 
-def post_from_settings(instance, extras={}):
+def post_from_settings(instance, extras=None):
+    extras = extras or {}
     if is_cloudant():
         # HACK: for cloudant force update all 3 nodes at once
         # to prevent 412 race condition
