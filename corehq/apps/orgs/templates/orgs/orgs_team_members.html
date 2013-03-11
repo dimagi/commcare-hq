@@ -42,6 +42,13 @@
 {% endblock %}
 
 {% block carded-content %}
+    <form class="form-horizontal" method="post" action="{% url orgs_update_team org.name %}">
+        <input id="updating-team-id" type="hidden" name="team_id" value="{{ team.get_id }}" />
+        <div class="input-append">
+            <input name="team_name" type="text" value="{{ team.name }}" />
+            <button class="btn" type="submit">Edit Team Name</button>
+        </div>
+    </form>
     <div class="row-fluid">
         <div class="span6" id="members">
             <h3>{% trans "Members" %}</h3>
