@@ -172,7 +172,7 @@ def orgs_update_team(request, org):
     else:
         messages.error(request, "Could not edit team information -- missing new team name")
 
-    return HttpResponseRedirect(reverse("orgs_teams", args=(org, )))
+    return HttpResponseRedirect(reverse('orgs_team_members', args=(org, team_id)))
 
 @org_admin_required
 @require_POST
