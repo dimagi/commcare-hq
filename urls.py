@@ -4,6 +4,8 @@ from corehq.apps.domain.utils import legacy_domain_re
 
 # Uncomment the next two lines to enable the admin:
 from django.contrib import admin
+from corehq.apps.orgs.urls import organizations_urls
+
 try:
     from localsettings import LOCAL_APP_URLS
 except ImportError:
@@ -57,8 +59,8 @@ urlpatterns = patterns('',
     (r'^register/', include('corehq.apps.registration.urls')),
     (r'^a/(?P<domain>%s)/' % legacy_domain_re, include(domain_specific)),
     (r'^o/', include('corehq.apps.orgs.urls')),
+    (r'^organizations/', include(organizations_urls)),
     (r'^account/', include('corehq.apps.settings.urls')),
-    url(r'^organizations/$', 'corehq.apps.orgs.views.orgs_base', name='orgs_base'),
     (r'^couch/', include('djangocouch.urls')),
     (r'^project_store(.*)$', 'corehq.apps.appstore.views.rewrite_url'),
     (r'^exchange/', include('corehq.apps.appstore.urls')),
