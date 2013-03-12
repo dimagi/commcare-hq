@@ -276,7 +276,7 @@ def internal_settings(request, domain, template='domain/internal_settings.html')
             "can_use_data": 'true' if domain.internal.can_use_data else 'false',
         })
 
-        return render(request, template, {"project": domain, "domain": domain.name, "form": internal_form, 'active': 'settings'})
+    return render(request, template, {"project": domain, "domain": domain.name, "form": internal_form, 'active': 'settings'})
 
 @login_and_domain_required
 @require_superuser
