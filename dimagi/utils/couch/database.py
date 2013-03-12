@@ -49,14 +49,15 @@ def iter_docs(database, ids, chunksize=100):
         for doc in database.all_docs(keys=doc_ids, include_docs=True):
             yield doc['doc']
 
-def is_cloudant():
+def is_bigcouch():
     # this is a bit of a hack but we'll use it for now
     return 'cloudant' in settings.COUCH_SERVER_ROOT
 
-def cloudant_quorum_count():
+def bigcouch_quorum_count():
     """
-    The number of nodes to force an update/read in cloudant to make sure
+    The number of nodes to force an update/read in bigcouch to make sure
     we have a quorum. Should typically be the number of copies of a doc
     that end up in the cluster.
     """
-    return getattr(settings, 'CLOUDANT_QUORUM_COUNT', 3)
+    return (3 if not hasattr(settings, 'BIGCOUCH_QUORUM_COUNT')
+            else settings.BIGCOUCH_QUORUM_COUNT)
