@@ -149,8 +149,8 @@ def query_observations(case_id, start_date, end_date):
     These are the actual observation day cells in which they filled in DOT data.
     args: start_date and end_date as datetime objects
     """
-    startkey = [case_id, 'observe_date', start_date.year, start_date.month, start_date.day]
-    endkey = [case_id, 'observe_date', end_date.year, end_date.month, end_date.day]
+    startkey = [case_id, 'anchor_date', start_date.year, start_date.month, start_date.day]
+    endkey = [case_id, 'anchor_date', end_date.year, end_date.month, end_date.day]
     observations = CObservation.view('pact/dots_observations', startkey=startkey, endkey=endkey).all()
     return observations
 

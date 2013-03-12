@@ -17,6 +17,9 @@ class DOTCalendarReporter(object):
     start_date=None
     end_date=None
 
+    observe_start_date = None
+    observe_end_date = None
+
     def unique_xforms(self):
         obs = self.dot_observation_range()
 #        ret = set([x[]])
@@ -34,8 +37,7 @@ class DOTCalendarReporter(object):
             observations = query_observations(case_id, self.start_date, self.end_date)
         else:
             observations = query_observations_singledoc(self.single_submit)
-
-        return observations
+        return sorted(observations, key=lambda x: x['observed_date'])
 
     def __init__(self, patient_casedoc, start_date=None, end_date=None, submit_id=None):
         """
@@ -64,25 +66,31 @@ class DOTCalendarReporter(object):
 
         Return iterator of calendars
         """
-        startmonth = self.start_date.month
-        startyear = self.start_date.year
-        endmonth = self.end_date.month
+        # startmonth = self.start_date.month
+        # startyear = self.start_date.year
+        # endmonth = self.end_date.month
+
+        observations = self.dot_observation_range()
+
+        startmonth = observations[0].observed_date.month
+        startyear = observations[0].observed_date.year
+
+        endmonth = observations[-1].observed_date.month
+        endyear = observations[0].observed_date.year
 
         currmonth = startmonth
         curryear = startyear
-        observations = self.dot_observation_range()
 
         def endcur_in_obs(currmonth, curryear, observations):
             month_days = monthrange(curryear, currmonth)[1]
             if len(observations) == 0:
                 return False
-            if (curryear, currmonth) <= (observations[-1].observed_date.year, observations[-1].observed_date.month):
+            if (curryear, currmonth) <= (endyear, endmonth):
                 return True
             else:
                 return False
 
         while endcur_in_obs(currmonth, curryear, observations):
-        #while currmonth % 13 + 1 <= endmonth:
             cal = DOTCalendar(self.patient_casedoc, observations)
             yield cal.formatmonth(curryear, currmonth)
             currmonth += 1
