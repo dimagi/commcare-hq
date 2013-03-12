@@ -61,7 +61,10 @@ def request_new_domain(request, form, org, domain_type=None, new_user=True):
     if not new_user:
         new_domain.is_active = True
 
-    new_domain.save()
+    # ensure no duplicate domain documents get created on cloudant
+    is_cloudant = 'cloudant' in settings.COUCH_SERVER_ROOT
+    new_domain.save(**{'w': 3} if is_cloudant else {})
+
     if not new_domain.name:
         new_domain.name = new_domain._id
         new_domain.save() # we need to get the name from the _id
