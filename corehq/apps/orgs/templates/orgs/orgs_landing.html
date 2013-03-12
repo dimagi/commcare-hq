@@ -194,15 +194,20 @@
                                 <label class="control-label" for="{{ field.id }}">{{ field.label }}</label>
                                 <div class="controls">
                                     {{ field }}
-                                    <span class="help-inline"></span>
                                     {% for error in field.errors %}
                                     <span class="help-inline">{{ error }}</span>
                                     {% endfor %}
                                     {% if field.help_text %}
-                                    <p class="help-block">
-                                        {{ field.help_text }}
-                                    </p>
-                                    {% endif %}
+                                        <p class="help-block">{{ field.help_text }}</p>
+                                    {% endif %}{% ifequal field.label "Project Name:" %}
+                                        <p class="help-block">e.g. - public</p>
+                                    {% endifequal %}
+                                </div>
+                            </div><div class="control-group">
+                                <label class="control-label" for="creating-project-hrname">{% trans "Project Nickname" %}</label>
+                                <div class="controls">
+                                    <input type="text" id="creating-project-hrname" name="domain_hrname" />
+                                    <p class="help-block">e.g. - Commcare HQ Demo Project</p>
                                 </div>
                             </div>
                             {% endfor %}
