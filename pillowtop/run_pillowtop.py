@@ -2,6 +2,9 @@ from gevent import monkey; monkey.patch_all()
 from gevent.pool import Pool
 from restkit.session import set_session; set_session("gevent")
 
+class PillowtopConfigurationException(Exception):
+    pass
+
 def import_pillows():
     try:
         from django.conf import settings
@@ -21,6 +24,8 @@ def import_pillows():
             if hasattr(mod, pillowtop_class_str):
                 pillowtop_class  = getattr(mod, pillowtop_class_str)
                 pillowtops.append(pillowtop_class())
+            else:
+                raise PillowtopConfigurationException("Error, the pillow class %s could not be imported" % full_str)
     return pillowtops
 
 
