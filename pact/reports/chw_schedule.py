@@ -219,6 +219,13 @@ def chw_calendar_submit_report(request, username):
     else:
         end_date = datetime.utcnow()
 
+    if 'startdate' in request.GET:
+        #if there's a startdate, trump interval
+        start_date_str = request.GET.get('startdate', datetime.utcnow().strftime('%Y-%m-%d'))
+        start_date = datetime.strptime(start_date_str, '%Y-%m-%d')
+        total_interval = (end_date - start_date).days
+
+
     ret, patients, total_scheduled, total_visited = get_schedule_tally(username,
                                                                        total_interval,
                                                                        override_date=end_date)

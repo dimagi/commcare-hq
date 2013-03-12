@@ -31,8 +31,15 @@ class PactCHWAdminReport(GenericTabularReport, CustomProjectReport):
         )
         return headers
 
-    def csv_data(self, username, user_context):
-        rowdata = []
+    def csv_data_block(self, username, user_context):
+        """
+        generator of rows of scheduled visits for a given chw
+        """
+        def finish_row_blanks(r):
+            if len(r) < 11:
+                for x in range(11 - len(r)):
+                    r.append('---')
+            return r
         # {% for visit_date, patient_visits in date_arr %}
         # {% if patient_visits %}
         # {% for cpatient, visit in patient_visits %}
@@ -40,6 +47,7 @@ class PactCHWAdminReport(GenericTabularReport, CustomProjectReport):
 
         #this is ugly, but we're repeating the work of the template for rendering the row data
         for visit_date, patient_visits in user_context['date_arr']:
+            rowdata = []
             if len(patient_visits) > 0:
                 for patient_case, visit in patient_visits:
                     rowdata = [visit_date.strftime('%Y-%m-%d')]
@@ -47,38 +55,37 @@ class PactCHWAdminReport(GenericTabularReport, CustomProjectReport):
                     rowdata.append(patient_case['pactid'])
                     if visit is not None:
                         ####is scheduled
-                        if visit['scheduled'] == 'yes':
+                        if visit.get('scheduled', '---') == 'yes':
                             rowdata.append('scheduled')
                         else:
                             rowdata.append('unscheduled')
 
                         ####visit kept
-                        if visit['visit_kept'] == 'notice':
+                        visit_kept = visit.get('visit_kept', '---')
+                        if visit_kept == 'notice':
                             rowdata.append("no - notice given")
-                        elif visit['visit_kept'] == 'yes':
+                        elif visit_kept == 'yes':
                             rowdata.append("yes")
                         else:
-                            rowdata.append(visit['visit_kept'])
+                            rowdata.append(visit_kept)
 
                         #visit type
-                        rowdata.append(visit['visit_type'])
+                        rowdata.append(visit.get('visit_type', '---'))
 
                         #contact type
-                        rowdata.append(visit['contact_type'])
+                        rowdata.append(visit.get('contact_type', '---'))
 
-                        rowdata.append(visit['username'])
-                        rowdata.append(visit['observed_art'])
-                        rowdata.append(visit['has_pillbox_check'])
-                        rowdata.append(visit['doc_id'])
+                        rowdata.append(visit.get('username', '---'))
+                        rowdata.append(visit.get('observed_art', '---'))
+                        rowdata.append(visit.get('has_pillbox_check', '---'))
+                        rowdata.append(visit.get('doc_id', '---'))
                     else:
                         rowdata.append('novisit')
-            else:
-            #     no patients
-                rowdata = [visit_date.strftime('%Y-%m-%d'), username, 'nopatient']
-            if len(rowdata) < 11:
-                for x in range(11 - len(rowdata)):
-                    rowdata.append('---')
-            yield rowdata
+                    yield finish_row_blanks(rowdata)
+            # else:
+            #     no patients scheduled, skipping day altogether - matches chw schedule view
+                # nopatient_row = [visit_date.strftime('%Y-%m-%d'), username, 'nopatient']
+                # yield finish_row_blanks(nopatient_row)
 
 
 
@@ -99,5 +106,5 @@ class PactCHWAdminReport(GenericTabularReport, CustomProjectReport):
 
         for user_doc in user_docs:
             scheduled_context = chw_schedule.chw_calendar_submit_report(self.request, user_doc.raw_username)
-            for row in self.csv_data(user_doc.raw_username, scheduled_context):
+            for row in self.csv_data_block(user_doc.raw_username, scheduled_context):
                 yield row
