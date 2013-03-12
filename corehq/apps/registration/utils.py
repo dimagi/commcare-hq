@@ -10,7 +10,7 @@ from django.core.urlresolvers import reverse
 from corehq.apps.domain.models import Domain
 from corehq.apps.users.models import WebUser, CouchUser
 from dimagi.utils.django.email import send_HTML_email
-from dimagi.utils.couch.database import is_cloudant
+from dimagi.utils.couch.database import is_bigcouch
 
 def activate_new_user(form, is_domain_admin=True, domain=None, ip=None):
     username = form.cleaned_data['email']
@@ -63,7 +63,7 @@ def request_new_domain(request, form, org, domain_type=None, new_user=True):
         new_domain.is_active = True
 
     # ensure no duplicate domain documents get created on cloudant
-    new_domain.save(**{'w': 3} if is_cloudant() else {})
+    new_domain.save(**{'w': 3} if is_bigcouch() else {})
 
     if not new_domain.name:
         new_domain.name = new_domain._id
