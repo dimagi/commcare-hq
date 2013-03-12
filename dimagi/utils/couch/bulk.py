@@ -92,7 +92,7 @@ def all_docs(cls, keys):
     try:
         rows = r.json()['rows']
     except KeyError:
-        logging.error('%r has no key %r' % (r.json(), 'rows'))
+        logging.exception('%r has no key %r' % (r.json(), 'rows'))
         raise
 
     for row in rows:
