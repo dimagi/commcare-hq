@@ -7,6 +7,7 @@ import couchforms.const as const
 from dimagi.utils.indicators import ComputedDocumentMixin
 from dimagi.utils.parsing import string_to_datetime
 from dimagi.utils.couch.safe_index import safe_index
+from dimagi.utils.couch.database import is_bigcouch, bigcouch_quorum_count
 from xml.etree import ElementTree
 from django.utils.datastructures import SortedDict
 from couchdbkit.resource import ResourceNotFound
@@ -41,18 +42,6 @@ def get(doc_id):
         return doc_types()[doc['doc_type']].wrap(doc)
     raise ResourceNotFound(doc_id)
 
-def is_cloudant():
-    # this is a bit of a hack but we'll use it for now
-    return 'cloudant' in settings.COUCH_SERVER_ROOT
-
-def cloudant_quorum_count():
-    """
-    The number of nodes to force an update/read in cloudant to make sure
-    we have a quorum. Should typically be the number of copies of a doc
-    that end up in the cluster.
-    """
-    return 3 if not hasattr(settings, 'CLOUDANT_QUORUM_COUNT') \
-        else settings.CLOUDANT_QUORUM_COUNT
 
 class Metadata(DocumentSchema):
     """
@@ -101,7 +90,7 @@ class XFormInstance(Document, UnicodeMixIn, ComputedDocumentMixin):
         cls._allow_dynamic_properties = dynamic_properties
         # on cloudant don't get the doc back until all nodes agree
         # on the copy, to avoid race conditions
-        extras = {'r': cloudant_quorum_count()} if is_cloudant() else {}
+        extras = {'r': bigcouch_quorum_count()} if is_bigcouch() else {}
         return db.get(docid, rev=rev, wrapper=cls.wrap, **extras)
 
     @property
@@ -158,8 +147,8 @@ class XFormInstance(Document, UnicodeMixIn, ComputedDocumentMixin):
         # these documents are particularly finicky and get save/resaved
         # a lot in sucession during form submits, so for now always write
         # to all nodes
-        if is_cloudant() and 'w' not in kwargs:
-            kwargs['w'] = cloudant_quorum_count()
+        if is_bigcouch() and 'w' not in kwargs:
+            kwargs['w'] = bigcouch_quorum_count()
 
         # HACK: cloudant has a race condition when saving newly created forms
         # which throws errors here. use a try/retry loop here to get around

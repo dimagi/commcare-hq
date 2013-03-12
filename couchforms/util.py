@@ -8,12 +8,13 @@ except ImportError:
     from django.utils import simplejson
 
 from couchforms.models import XFormInstance, XFormDuplicate, XFormError, XFormDeprecated,\
-    SubmissionErrorLog, is_cloudant, cloudant_quorum_count
+    SubmissionErrorLog
 import logging
 from couchdbkit.resource import RequestFailed
 from couchforms.exceptions import CouchFormException
 from couchforms.signals import xform_saved
 from dimagi.utils.couch import uid
+from dimagi.utils.couch.database import is_bigcouch, bigcouch_quorum_count
 import re
 from dimagi.utils.post import post_authenticated_data, post_unauthenticated_data
 from restkit.errors import ResourceNotFound
@@ -34,10 +35,10 @@ class SubmissionError(Exception, UnicodeMixIn):
 
 def post_from_settings(instance, extras=None):
     extras = extras or {}
-    if is_cloudant():
+    if is_bigcouch():
         # HACK: for cloudant force update all nodes at once
         # to prevent 412 race condition
-        extras['w'] = cloudant_quorum_count()
+        extras['w'] = bigcouch_quorum_count()
 
     url = settings.XFORMS_POST_URL if not extras else "%s?%s" % \
         (settings.XFORMS_POST_URL, urllib.urlencode(extras))
