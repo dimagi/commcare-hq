@@ -211,6 +211,7 @@ function LocationTypeModel(data, root) {
         allowed_parents = [last ? last.name() : undefined];
     }
     this.allowed_parents = ko.observableArray(allowed_parents);
+    this.administrative = ko.observable(data.administrative);
 
     this.name_error = ko.observable();
     this.allowed_parents_error = ko.observable();
@@ -236,7 +237,8 @@ function LocationTypeModel(data, root) {
     this.to_json = function() {
         return {
             name: this.name(),
-            allowed_parents: this.allowed_parents()
+            allowed_parents: this.allowed_parents(),
+            administrative: this.administrative()
         };
     }
 }
