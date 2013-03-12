@@ -8,12 +8,13 @@ except ImportError:
     from django.utils import simplejson
 
 from couchforms.models import XFormInstance, XFormDuplicate, XFormError, XFormDeprecated,\
-    SubmissionErrorLog, is_cloudant, cloudant_quorum_count
+    SubmissionErrorLog
 import logging
 from couchdbkit.resource import RequestFailed
 from couchforms.exceptions import CouchFormException
 from couchforms.signals import xform_saved
 from dimagi.utils.couch import uid
+from dimagi.utils.couch.database import is_cloudant, cloudant_quorum_count
 import re
 from dimagi.utils.post import post_authenticated_data, post_unauthenticated_data
 from restkit.errors import ResourceNotFound

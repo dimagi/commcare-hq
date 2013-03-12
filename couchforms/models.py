@@ -7,6 +7,7 @@ import couchforms.const as const
 from dimagi.utils.indicators import ComputedDocumentMixin
 from dimagi.utils.parsing import string_to_datetime
 from dimagi.utils.couch.safe_index import safe_index
+from dimagi.utils.couch.database import is_cloudant, cloudant_quorum_count
 from xml.etree import ElementTree
 from django.utils.datastructures import SortedDict
 from couchdbkit.resource import ResourceNotFound
@@ -41,18 +42,6 @@ def get(doc_id):
         return doc_types()[doc['doc_type']].wrap(doc)
     raise ResourceNotFound(doc_id)
 
-def is_cloudant():
-    # this is a bit of a hack but we'll use it for now
-    return 'cloudant' in settings.COUCH_SERVER_ROOT
-
-def cloudant_quorum_count():
-    """
-    The number of nodes to force an update/read in cloudant to make sure
-    we have a quorum. Should typically be the number of copies of a doc
-    that end up in the cluster.
-    """
-    return 3 if not hasattr(settings, 'CLOUDANT_QUORUM_COUNT') \
-        else settings.CLOUDANT_QUORUM_COUNT
 
 class Metadata(DocumentSchema):
     """
