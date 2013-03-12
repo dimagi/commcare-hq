@@ -31,7 +31,7 @@ Then skip to "Setting up a virtualenv".
 Otherwise, install the following software from your OS package manager or the
 individual project sites when necessary.
 
-+ Python 2.6 or 2.7
++ Python 2.6 or 2.7 (use 32 bit if you're on Windows see `Alternate steps for Windows` section below)
 + pip
 + CouchDB >= 1.0 (1.2 recommended) ([installation instructions][couchdb])
 + PostgreSQL >= 8.4 - (install from OS package manager or [here][postgres])
@@ -46,30 +46,6 @@ individual project sites when necessary.
  [elasticsearch]: http://www.elasticsearch.org/download/
  [jython]: http://jython.org/downloads.html
 
-
-#### Common issues
-
-+ A bug in psycopg 2.4.1 (a Python package we require) may break CommCare HQ
-  when using a virtualenv created with `--no-site-packages` or when the
-  `egenix-mx-base` Python package is not already installed. To fix this, install
-  `egenix-mx-base` (`sudo apt-get install python-egenix-mxdatetime` on Ubuntu)
-  and use `virtualenv --system-site-packages` instead.
-
-+ On Mac OS X, pip doesn't install the `libmagic` dependency for `python-magic`
-  properly. To fix this, run `brew install libmagic`.
-
-+ On Mac OS X, libevent may not be installed already, which the Python `gevent` library requires. The error message
-  will be a clang error that file `event.h` is not found. To fix this using Homebrew, run `brew install libevent`.
-
-+ To install PIL (Python Image Library) correctly on Ubuntu, you may need to
-  follow [these instructions](http://obroll.com/install-python-pil-python-image-library-on-ubuntu-11-10-oneiric/). 
-  (If you don't do this, the only thing that won't work is uploading of JPEGs to
-  the CommCare Exchange.)
-
-+ If you have an authentication error running `./manage.py syncdb` the first
-  time, open `pg_hba.conf` (`/etc/postgresql/9.1/main/pg_hba.conf` on Ubuntu)
-  and change the line "local all all peer" to "local all all md5".
-
 #### Configuration for Elasticsearch
 
 To run elasticsearch in an upstart configuration, see [this example](https://gist.github.com/3961323).
@@ -82,7 +58,8 @@ supervisor config demonstrates the tunnel creation using autossh.
 
 ### Setting up a virtualenv
 
-A virtualenv is not required, but it may make your life easier.
+A virtualenv is not required, but it may make your life easier. If you're on Windows see the section `Alternate steps
+for Windows` below.
 
     sudo pip install virtualenv
     mkdir ~/.virtualenvs/
@@ -106,6 +83,36 @@ functionality you want to use, such as SMS sending and Google Analytics.
 Ensure that the directories for `LOG_FILE` and `DJANGO_LOG_FILE` exist and are
 writeable.
 
+### Alternate steps for Windows
+On Windows it can be hard to compile some of the packages so we recommend installing those from their binary
+distributions. Because many of the binary packages are only available in 32bit format you should also make sure
+that you have a 32bit version of Python installed.
+
++ Install 32 bit Python
++ Install [MinGW][mingw] (used to compile some of the packages that don't have binary distributions).
++ Install the following packages from their binaries. If you are using Virtualenv you will need to copy the packages
+  files from $PYTHON_HOME/Lib/site-packages to $ENV_HOME/Lib/site-packages. Alternatively you could create your
+  Virtualenv with the `--system-site-packages` option.
+  + [gevent][gevent]
+  + [numpy][numpy]
+  + [egenix-mx-base][mxbase]
+  + [PIL][pil]
+  + [psycopg2][psycopg2]
+  + [greenlet][greenlet]
++ Install http-parser by adding MinGW/bin to the path and running `pip install http-parser`. You may also need to alter
+  $PYTHON_HOME/Lib/distutils/cygwincompiler.py to remove all instances of '-mno-cygwin' which is a depreciated compiler
+  option. The http-parser package is required by restkit.
++ Having installed those packages you can comment them out of the requirements/requirements.txt file.
++ Now run `pip install -r requirements/requirements.txt -r requirements/prod-requirements.txt` as described in the
+  section above.
+
+ [mingw]: http://www.mingw.org/wiki/Getting_Started
+ [gevent]: http://www.lfd.uci.edu/~gohlke/pythonlibs/#gevent
+ [numpy]: http://www.lfd.uci.edu/~gohlke/pythonlibs/#numpy
+ [mxbase]: http://www.lfd.uci.edu/~gohlke/pythonlibs/#mxbase
+ [pil]: http://www.lfd.uci.edu/~gohlke/pythonlibs/#pil
+ [psycopg2]: http://www.lfd.uci.edu/~gohlke/pythonlibs/#psycopg
+ [greenlet]: http://www.lfd.uci.edu/~gohlke/pythonlibs/#greenlet
 
 ### Set up your django environment
 
@@ -137,6 +144,40 @@ the following contents:
 
     URL_ROOT = 'http://localhost:8000/a/{{DOMAIN}}'
 
+#### Common issues
+
++ A bug in psycopg 2.4.1 (a Python package we require) may break CommCare HQ
+  when using a virtualenv created with `--no-site-packages` or when the
+  `egenix-mx-base` Python package is not already installed. To fix this, install
+  `egenix-mx-base` (`sudo apt-get install python-egenix-mxdatetime` on Ubuntu)
+  and use `virtualenv --system-site-packages` instead.
+
++ On Mac OS X, pip doesn't install the `libmagic` dependency for `python-magic`
+  properly. To fix this, run `brew install libmagic`.
+
++ On Mac OS X, libevent may not be installed already, which the Python `gevent` library requires. The error message
+  will be a clang error that file `event.h` is not found. To fix this using Homebrew, run `brew install libevent`.
+
++ To install PIL (Python Image Library) correctly on Ubuntu, you may need to
+  follow [these instructions](http://obroll.com/install-python-pil-python-image-library-on-ubuntu-11-10-oneiric/).
+  (If you don't do this, the only thing that won't work is uploading of JPEGs to
+  the CommCare Exchange.)
+
++ If you have an authentication error running `./manage.py syncdb` the first
+  time, open `pg_hba.conf` (`/etc/postgresql/9.1/main/pg_hba.conf` on Ubuntu)
+  and change the line "local all all peer" to "local all all md5".
+
++ On Windows, to get python-magic to work you will need to install the following dependencies.
+  Once they are installed make sure the install folder is on the path.
+  + [GNUWin32 regex][regex]
+  + [GNUWin32 zlib][zlib]
+  + [GNUWin32 file][file]
+
+ [regex]: http://sourceforge.net/projects/gnuwin32/files/regex/
+ [zlib]: http://sourceforge.net/projects/gnuwin32/files/zlib/
+ [file]: http://sourceforge.net/projects/gnuwin32/files/file/
+
++ On Windows, Touchforms may complain about not having permission to access `tmp`. To solve this make a `c:\tmp` folder.
 
 Running CommCare HQ
 -------------------
@@ -156,10 +197,22 @@ Then run the following separately:
     # Keeps elasticsearch index in sync
     ./manage.py run_ptop
 
-    # only necessary if you want to use CloudCare
+    # run the Django server
+    ./manage.py runserver
+
+    #
+    # if you want to use CloudCare you will also need to run the Touchforms server and be running a multi-threaded
+    # Django server as follows:
+    #
+
+    # run Touchforms server
     jython submodules/touchforms-src/touchforms/backend/xformserver.py
 
-    ./manage.py runserver --werkzeug
+    # On Mac / Linux use Gunicorn as the multi-threaded server
+    ./manage.py run_gunicorn
+
+    # on Windows use CherryPy
+    ./manage.py runcpserver port=8000
 
 Building CommCare Mobile Apps
 -----------------------------
