@@ -1,4 +1,8 @@
 from collections import defaultdict
+import json
+import urlparse
+import requests
+
 
 class CouchTransaction(object):
     """
@@ -71,3 +75,17 @@ class CouchTransaction(object):
         self.depth -= 1
         if self.depth == 0 and not exc_type:
             self.commit()
+
+
+def all_docs(cls, keys):
+    db = cls.get_db()
+    payload = json.dumps({'keys': keys})
+    url = db.uri + '/_all_docs?include_docs=true'
+    url_parts = urlparse.urlsplit(url)
+
+    r = requests.post(url, data=payload,
+                      headers={'content-type': 'application/json'},
+                      auth=(url_parts.username, url_parts.password))
+
+    for row in r.json()['rows']:
+        yield cls.wrap(row['doc'])
