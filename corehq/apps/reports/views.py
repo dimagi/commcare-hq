@@ -17,6 +17,7 @@ import couchexport
 from couchexport.export import UnsupportedExportFormat, export_raw
 from couchexport.util import SerializableFunction
 from couchforms.models import XFormInstance
+from dimagi.utils.couch.bulk import all_docs
 from dimagi.utils.couch.loosechange import parse_date
 from dimagi.utils.decorators import inline
 from dimagi.utils.export import WorkBook
@@ -776,9 +777,10 @@ def generate_case_export_payload(domain, include_closed, format, group, user_fil
         include_docs=False,
         wrapper=lambda r: r['id']
     )
+
     def stream_cases(all_case_ids):
         for case_ids in chunked(all_case_ids, 500):
-            for case in CommCareCase.view('_all_docs', keys=case_ids, include_docs=True):
+            for case in all_docs(CommCareCase, case_ids):
                 yield case
 
     # todo deal with cached user dict here

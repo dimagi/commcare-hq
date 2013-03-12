@@ -1,6 +1,8 @@
 from django.core.management.base import LabelCommand, CommandError
 from casexml.apps.case.models import CommCareCase
 from dimagi.utils.chunked import chunked
+from dimagi.utils.couch.bulk import all_docs
+
 
 class Command(LabelCommand):
     args = '<domain>'
@@ -23,8 +25,9 @@ class Command(LabelCommand):
 
         print 'loading %s cases in %s' % (len(case_ids), domain)
         def stream_cases(all_case_ids):
-            for case_ids in chunked(all_case_ids, 500):
-                for case in CommCareCase.view('_all_docs', keys=case_ids, include_docs=True):
+            for case_ids in chunked(all_case_ids, 1000):
+                for case in all_docs(CommCareCase, keys=case_ids):
+                # for case in CommCareCase.view('_all_docs', keys=case_ids, include_docs=True):
                     yield case
 
         count = 0
