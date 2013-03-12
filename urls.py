@@ -4,6 +4,8 @@ from corehq.apps.domain.utils import legacy_domain_re
 
 # Uncomment the next two lines to enable the admin:
 from django.contrib import admin
+from corehq.apps.orgs.urls import organizations_urls
+
 try:
     from localsettings import LOCAL_APP_URLS
 except ImportError:
@@ -57,8 +59,8 @@ urlpatterns = patterns('',
     (r'^register/', include('corehq.apps.registration.urls')),
     (r'^a/(?P<domain>%s)/' % legacy_domain_re, include(domain_specific)),
     (r'^o/', include('corehq.apps.orgs.urls')),
+    (r'^organizations/', include(organizations_urls)),
     (r'^account/', include('corehq.apps.settings.urls')),
-    url(r'^organizations/$', 'corehq.apps.orgs.views.orgs_base', name='orgs_base'),
     (r'^couch/', include('djangocouch.urls')),
     (r'^project_store(.*)$', 'corehq.apps.appstore.views.rewrite_url'),
     (r'^exchange/', include('corehq.apps.appstore.urls')),
@@ -87,6 +89,10 @@ urlpatterns = patterns('',
     (r'^404/$', 'django.views.generic.simple.direct_to_template', {'template': '404.html'}),
     url(r'^eula_basic/$', 'django.views.generic.simple.direct_to_template', {'template': 'eula.html'}, name='eula_basic'),
     url(r'^eula/$', 'corehq.apps.hqwebapp.views.eula', name='eula'),
+    url(r'^apache_license_basic/$', 'django.views.generic.simple.direct_to_template', {'template': 'apache_license.html'}, name='apache_license_basic'),
+    url(r'^apache_license/$', 'corehq.apps.hqwebapp.views.apache_license', name='apache_license'),
+    url(r'^bsd_license_basic/$', 'django.views.generic.simple.direct_to_template', {'template': 'bsd_license.html'}, name='bsd_license_basic'),
+    url(r'^bsd_license/$', 'corehq.apps.hqwebapp.views.bsd_license', name='bsd_license'),
     url(r'^exchange/cda_basic/$', 'django.views.generic.simple.direct_to_template', {'template': 'cda.html'}, name='cda_basic'),
     url(r'^exchange/cda/$', 'corehq.apps.hqwebapp.views.cda', name='cda'),
 ) + patterns('', *LOCAL_APP_URLS)
