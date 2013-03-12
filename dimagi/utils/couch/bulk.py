@@ -1,5 +1,6 @@
 from collections import defaultdict
 import json
+import logging
 import urlparse
 import requests
 
@@ -81,11 +82,18 @@ def all_docs(cls, keys):
     db = cls.get_db()
     payload = json.dumps({'keys': keys})
     url = db.uri + '/_all_docs?include_docs=true'
-    url_parts = urlparse.urlsplit(url)
+    u = urlparse.urlsplit(url)
+    auth = (u.username, u.password) if u.username else None
 
     r = requests.post(url, data=payload,
                       headers={'content-type': 'application/json'},
-                      auth=(url_parts.username, url_parts.password))
+                      auth=auth)
 
-    for row in r.json()['rows']:
+    try:
+        rows = r.json()['rows']
+    except KeyError:
+        logging.exception('%r has no key %r' % (r.json(), 'rows'))
+        raise
+
+    for row in rows:
         yield cls.wrap(row['doc'])
