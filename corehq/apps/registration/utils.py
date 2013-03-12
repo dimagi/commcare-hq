@@ -56,7 +56,7 @@ def request_new_domain(request, form, org, domain_type=None, new_user=True):
 
     if org:
         new_domain.organization = org
-        new_domain.slug = new_domain.name
+        new_domain.hr_name = request.POST.get('domain_hrname', None) or new_domain.name
 
     if not new_user:
         new_domain.is_active = True
