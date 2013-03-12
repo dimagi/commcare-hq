@@ -5,6 +5,7 @@ from django.contrib.auth import authenticate, login
 from django.db import transaction
 from django.http import HttpResponseRedirect
 from django.shortcuts import redirect, render
+from django.template.loader import render_to_string
 from corehq.apps.domain.decorators import login_required_late_eval_of_LOGIN_URL
 from corehq.apps.domain.models import Domain
 from corehq.apps.orgs.views import orgs_landing
@@ -16,8 +17,19 @@ from dimagi.utils.web import get_ip
 from corehq.apps.domain.decorators import require_superuser
 from corehq.apps.orgs.models import Organization
 
+DOMAIN_TYPES = (
+    'commcare',
+    'commtrack'
+)
+
+def registration_default(request):
+    return redirect(register_user)
+
 @transaction.commit_on_success
-def register_user(request):
+def register_user(request, domain_type=None):
+    domain_type = domain_type or 'commcare'
+    assert domain_type in DOMAIN_TYPES
+
     if request.user.is_authenticated():
         # Redirect to a page which lets user choose whether or not to create a new account
         vals = {}
@@ -27,20 +39,25 @@ def register_user(request):
         else:
             return redirect("domain_list")
     else:
-        if request.method == 'POST': # If the form has been submitted...
-            form = NewWebUserRegistrationForm(request.POST) # A form bound to the POST data
-            if form.is_valid(): # All validation rules pass
+        if request.method == 'POST':
+            form = NewWebUserRegistrationForm(request.POST)
+            if form.is_valid():
                 activate_new_user(form, ip=get_ip(request))
                 new_user = authenticate(username=form.cleaned_data['email'],
                                         password=form.cleaned_data['password'])
                 login(request, new_user)
 
-                return redirect('registration_domain')
+                return redirect(
+                    'registration_domain', domain_type=domain_type)
         else:
-            form = NewWebUserRegistrationForm() # An unbound form
+            form = NewWebUserRegistrationForm(
+                    initial={'domain_type': domain_type})
 
-        vals = dict(form = form)
-        return render(request, 'registration/create_new_user.html', vals)
+        return render(request, 'registration/create_new_user.html', {
+            'form': form,
+            'domain_type': domain_type
+        })
+
 
 @transaction.commit_on_success
 @login_required_late_eval_of_LOGIN_URL
@@ -60,7 +77,7 @@ def register_org(request, template="registration/org_request.html"):
             # else:
             #     logo_filename = ''
 
-            org = Organization(name=name, title=title, location=location, email=email, url=url, logo_filename=logo_filename)
+            org = Organization(name=name, title=title, location=location, email=email, url=url)
             org.save()
 
             request.couch_user.add_org_membership(org.name, is_admin=True)
@@ -71,18 +88,24 @@ def register_org(request, template="registration/org_request.html"):
 
             if referer_url:
                 return redirect(referer_url)
+            messages.info(request, render_to_string('orgs/partials/welcome_notification.html',
+                                                       {"org": org, "user": request.couch_user}), extra_tags="html")
             return HttpResponseRedirect(reverse("orgs_landing", args=[name]))
     else:
-        form = OrganizationRegistrationForm() # An unbound form
+        form = OrganizationRegistrationForm()
 
-    vals = dict(form=form)
-    return render(request, template, vals)
+    return render(request, template, {
+        'form': form,
+    })
 
 
 
 @transaction.commit_on_success
 @login_required_late_eval_of_LOGIN_URL
-def register_domain(request):
+def register_domain(request, domain_type=None):
+    domain_type = domain_type or 'commcare'
+    assert domain_type in DOMAIN_TYPES
+
     is_new = False
     referer_url = request.GET.get('referer', '')
 
@@ -94,11 +117,11 @@ def register_domain(request):
             vals = dict(requested_domain=domains_for_user[0])
             return render(request, 'registration/confirmation_waiting.html', vals)
 
-    if request.method == 'POST': # If the form has been submitted...
+    if request.method == 'POST':
         nextpage = request.POST.get('next')
         org = request.POST.get('org')
-        form = DomainRegistrationForm(request.POST) # A form bound to the POST data
-        if form.is_valid(): # All validation rules pass
+        form = DomainRegistrationForm(request.POST)
+        if form.is_valid():
             reqs_today = RegistrationRequest.get_requests_today()
             max_req = settings.DOMAIN_MAX_REGISTRATION_REQUESTS_PER_DAY
             if reqs_today >= max_req:
@@ -106,7 +129,9 @@ def register_domain(request):
                         'show_homepage_link': 1 }
                 return render(request, 'error.html', vals)
 
-            request_new_domain(request, form, org, is_new)
+            request_new_domain(
+                request, form, org, new_user=is_new, domain_type=domain_type)
+
             requested_domain = form.cleaned_data['domain_name']
             if is_new:
                 vals = dict(alert_message="An email has been sent to %s." % request.user.username, requested_domain=requested_domain)
@@ -127,21 +152,20 @@ def register_domain(request):
 #                messages.error(request, "The new project could not be created! Please make sure to fill out all fields of the form.")
                 return orgs_landing(request, org, form=form)
     else:
-        form = DomainRegistrationForm() # An unbound form
+        form = DomainRegistrationForm(initial={'domain_type': domain_type})
 
-    vals = dict(form=form, is_new=is_new)
-
-    return render(request, 'registration/domain_request.html', vals)
+    return render(request, 'registration/domain_request.html', {
+        'form': form,
+        'is_new': is_new,
+    })
 
 @transaction.commit_on_success
 @login_required_late_eval_of_LOGIN_URL
 def resend_confirmation(request):
-    dom_req = None
     try:
         dom_req = RegistrationRequest.get_request_for_username(request.user.username)
     except Exception:
-        pass
-
+        dom_req = None
 
     if not dom_req:
         inactive_domains_for_user = Domain.active_for_user(request.user, is_active=False)
@@ -151,7 +175,7 @@ def resend_confirmation(request):
                 domain.save()
         return redirect('domain_select')
 
-    if request.method == 'POST': # If the form has been submitted...
+    if request.method == 'POST':
         try:
             send_domain_registration_email(dom_req.new_user_username, dom_req.domain, dom_req.activation_guid)
         except Exception:
@@ -163,8 +187,9 @@ def resend_confirmation(request):
             vals = dict(alert_message="An email has been sent to %s." % dom_req.new_user_username, requested_domain=dom_req.domain)
             return render(request, 'registration/confirmation_sent.html', vals)
 
-    vals = dict(requested_domain=dom_req.domain)
-    return render(request, 'registration/confirmation_resend.html', vals)
+    return render(request, 'registration/confirmation_resend.html', {
+        'requested_domain': dom_req.domain
+    })
 
 @transaction.commit_on_success
 def confirm_domain(request, guid=None):

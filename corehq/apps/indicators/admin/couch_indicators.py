@@ -7,7 +7,7 @@ from corehq.apps.reports.datatables import DataTablesColumn
 
 
 class CouchIndicatorAdminInterface(BaseIndicatorAdminInterface):
-    name = "Simple Indicators"
+    name = CouchIndicatorDef.get_nice_name()
     description = "desc needed" #todo
     slug = "couch_simple"
     document_class = CouchIndicatorDef
@@ -25,7 +25,7 @@ class CouchIndicatorAdminInterface(BaseIndicatorAdminInterface):
 
 
 class CountUniqueCouchIndicatorAdminInterface(CouchIndicatorAdminInterface):
-    name = "Count Unique Emitted Values"
+    name = CountUniqueCouchIndicatorDef.get_nice_name()
     description = "" #todo
     slug = "couch_count_unique"
     document_class = CountUniqueCouchIndicatorDef
@@ -33,7 +33,7 @@ class CountUniqueCouchIndicatorAdminInterface(CouchIndicatorAdminInterface):
 
 
 class MedianCouchIndicatorAdminInterface(CouchIndicatorAdminInterface):
-    name = "Median of Emitted Values"
+    name = MedianCouchIndicatorDef.get_nice_name()
     description = "" #todo
     slug = "couch_median"
     document_class = MedianCouchIndicatorDef
@@ -41,7 +41,7 @@ class MedianCouchIndicatorAdminInterface(CouchIndicatorAdminInterface):
 
 
 class SumLastEmittedCouchIndicatorAdminInterface(CouchIndicatorAdminInterface):
-    name = "Sum Last Emitted Unique Values"
+    name = SumLastEmittedCouchIndicatorDef.get_nice_name()
     description = "" #todo
     slug = "couch_sum_last_unique"
     document_class = SumLastEmittedCouchIndicatorDef

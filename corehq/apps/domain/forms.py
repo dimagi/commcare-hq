@@ -52,7 +52,6 @@ class SnapshotApplicationForm(forms.Form):
 
 class SnapshotSettingsForm(SnapshotSettingsMixin):
     title = CharField(label=ugettext_noop("Title"), required=True)
-    author = CharField(label=ugettext_noop("Author name"), required=True)
     project_type = CharField(label=ugettext_noop("Project Category"), required=True,
         help_text=ugettext_noop("e.g. MCH, HIV, etc."))
     license = ChoiceField(label=ugettext_noop("License"), required=True, choices=LICENSES.items(),
@@ -75,7 +74,6 @@ class SnapshotSettingsForm(SnapshotSettingsMixin):
         super(SnapshotSettingsForm, self).__init__(*args, **kw)
         self.fields.keyOrder = [
             'title',
-            'author',
             'short_description',
             'description',
             'project_type',

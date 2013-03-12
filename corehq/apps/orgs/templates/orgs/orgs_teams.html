@@ -4,10 +4,10 @@
 {% block js-inline %}{{ block.super }}
 <script>
     $(function () {
-        $('.edit-team-btn').on('click', function() {
-            $('#updating-team-id').val($(this).attr('data-team_id'));
-            $('#updating-team-name').val($(this).attr('data-team'));
-            $('#edit-team-modal').modal({show: true});
+        $('.delete-team-btn').on('click', function() {
+            $('#deleting-team-id').val($(this).attr('data-team_id'));
+            $('#deleting-team-name').text($(this).attr('data-team'));
+            $('#delete-team-modal').modal({show: true});
             return false;
         });
     });
@@ -20,9 +20,14 @@
     <tr><td style="border-top: none;">
         <a href="{% url orgs_team_members org.name team.get_id %}"><strong>{{ team.name }}</strong></a>
         {% if admin %}
-            <a href="#" class="btn edit-team-btn pull-right" data-team="{{ team.name }}" data-team_id="{{ team.get_id }}">
-                <i class="icon icon-pencil"></i> {% trans "Edit Team" %}
-            </a>
+            <div class="btn-toolbar pull-right" style="margin: 0;">
+                <a href="{% url orgs_team_members org.name team.get_id %}" class="btn">
+                    <i class="icon icon-pencil"></i> {% trans "Edit Team" %}
+                </a>
+                <a href="#" class="btn btn-danger delete-team-btn" data-team="{{ team.name }}" data-team_id="{{ team.get_id }}">
+                    <i class="icon icon-white icon-remove"></i> {% trans "Delete Team" %}
+                </a>
+            </div>
         {% endif %}
     </td></tr>
 {% endfor %}
@@ -49,19 +54,17 @@
             <a class="close" data-dismiss="modal">&times;</a>
             <h3>{% trans "Change Team Name" %}</h3>
         </div>
-        <form class="form-horizontal" method="post" action="{% url orgs_update_team org.name %}">
+    </div>
+    <div id="delete-team-modal" class="modal hide fade">
+        <form class="form-inline" style="margin: 0;" action="{% url delete_team org.name %}" method="post">
             <div class="modal-body">
-                <input id="updating-team-id" type="hidden" name="team_id" value="" />
-                <div class="control-group">
-                    <label class="control-label" for="updating-team-name">{% trans "Team Name" %}</label>
-                    <div class="controls">
-                        <input type="text" id="updating-team-name" name="team_name" />
-                    </div>
-                </div>
+                <a class="close" data-dismiss="modal">&times;</a>
+                <h3>Delete team <em><span id="deleting-team-name"></span></em> from {{ org.title }}?</h3>
+                <input type="hidden" id="deleting-team-id" name="team_id" value="" />
             </div>
             <div class="modal-footer">
                 <a href="#" data-dismiss="modal" class="btn">{% trans "Cancel" %}</a>
-                <button type="submit" class="btn btn-primary disable-on-submit">{% trans "Update Team" %}</button>
+                <button type="submit" class="btn btn-danger disable-on-submit">{% trans "Delete Team" %}</button>
             </div>
         </form>
     </div>

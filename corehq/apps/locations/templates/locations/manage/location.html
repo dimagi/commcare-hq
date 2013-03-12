@@ -12,7 +12,6 @@
     <script type="text/javascript">
 
 var LOAD_LOCS_URL = '{{ api_root }}';
-var loc_id = {{ location.get_id|JSON }};
 
     </script>
 {% endblock %}
@@ -35,7 +34,8 @@ var loc_id = {{ location.get_id|JSON }};
 $(function() {
 
   var loc_id = {{ location.get_id|JSON }};
-  model = new LocationSelectViewModel('\u2026', false, function(loc) {
+  var hierarchy = {{ hierarchy|JSON }};
+  model = new LocationSelectViewModel(hierarchy, '\u2026', false, function(loc) {
       return loc.uuid() != loc_id && loc.can_have_children();
     });
 

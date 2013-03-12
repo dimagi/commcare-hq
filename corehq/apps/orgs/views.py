@@ -56,8 +56,8 @@ def orgs_landing(request, org, template="orgs/orgs_landing.html", form=None, add
     add_team_form = add_team_form or AddTeamForm(org)
 
     ctxt = base_context(request, organization, update_form=update_form)
-    potential_domains = []
-
+    user_domains = []
+    req_domains = []
     # display a notification for each org request that hasn't previously been seen
     if request.couch_user.is_org_admin(org):
         requests = OrgRequest.get_requests(org)
@@ -68,15 +68,21 @@ def orgs_landing(request, org, template="orgs/orgs_landing.html", form=None, add
                 {"requesting_user": WebUser.get(req.requested_by).username, "org_req": req, "org": organization}),
                 extra_tags="html")
 
+        def format_domains(dom_list, extra=None):
+            extra = extra or []
+            dom_list = list(set(filter(lambda d: d not in ctxt["domains"] + extra, dom_list)))
+            return [Domain.get_by_name(d) for d in dom_list]
+
         # get the existing domains that an org admin would add to the organization
-        potential_domains = request.couch_user.domains
-        potential_domains.extend([req.domain for req in requests])
-        potential_domains = list(set(filter(lambda d: d not in ctxt["domains"], potential_domains)))
+        user_domains = request.couch_user.domains or []
+        req_domains = [req.domain for req in requests]
+        user_domains = format_domains(user_domains)
+        req_domains = format_domains(req_domains, [d.name for d in user_domains if d])
 
     ctxt.update(dict(reg_form=reg_form, add_form=add_form, reg_form_empty=reg_form_empty, add_form_empty=add_form_empty,
                 invite_member_form=invite_member_form, invite_member_form_empty=invite_member_form_empty,
                 add_team_form=add_team_form, add_team_form_empty=add_team_form_empty, tab="projects",
-                potential_domains=potential_domains))
+                user_domains=user_domains, req_domains=req_domains))
     return render(request, template, ctxt)
 
 @org_member_required
@@ -138,15 +144,15 @@ def orgs_update_info(request, org):
 @require_POST
 def orgs_update_project(request, org):
     domain = Domain.get_by_name(request.POST.get('domain', ""))
-    new_slug = request.POST.get('slug', "")
-    if domain and new_slug:
+    new_hr_name = request.POST.get('hr_name', "")
+    if domain and new_hr_name:
         if domain.organization != org:
             messages.error(request, "The project %s isn't a part of this organization" % domain.name)
         else:
-            old_slug = domain.slug
-            domain.slug = new_slug
+            old_hr_name = domain.hr_name
+            domain.hr_name = new_hr_name
             domain.save()
-            messages.success(request, "The projects display name has been changed from %s to %s" % (old_slug, new_slug))
+            messages.success(request, "The projects display name has been changed from %s to %s" % (old_hr_name, new_hr_name))
     else:
         messages.error(request, "Could not edit project information -- missing new display name")
 
@@ -166,7 +172,7 @@ def orgs_update_team(request, org):
     else:
         messages.error(request, "Could not edit team information -- missing new team name")
 
-    return HttpResponseRedirect(reverse("orgs_teams", args=(org, )))
+    return HttpResponseRedirect(reverse('orgs_team_members', args=(org, team_id)))
 
 @org_admin_required
 @require_POST
@@ -183,13 +189,27 @@ def orgs_add_project(request, org):
 
         dom = Domain.get_by_name(domain_name)
         dom.organization = org
-        dom.slug = form.cleaned_data['domain_slug']
+        dom.hr_name = form.cleaned_data['domain_hrname']
         dom.save()
         messages.success(request, "Project Added!")
     else:
         messages.error(request, "Unable to add project")
         return orgs_landing(request, org, add_form=form)
     return HttpResponseRedirect(reverse('orgs_landing', args=[org]))
+
+@org_admin_required
+@require_POST
+def orgs_remove_project(request, org):
+    domain = request.POST.get("project_name", None)
+    if not domain:
+        messages.error(request, "You must specify a project name")
+    else:
+        domain = Domain.get_by_name(domain)
+        domain.organization = None
+        domain.save()
+        messages.success(request, render_to_string('orgs/partials/undo_remove_project.html',
+                                                   {"org": org, "dom": domain}), extra_tags="html")
+    return HttpResponseRedirect(reverse(request.POST.get('redirect_url', 'orgs_landing'), args=(org,)))
 
 @org_admin_required
 @require_POST
@@ -282,8 +302,8 @@ def orgs_team_members(request, org, team_id, template="orgs/orgs_team_members.ht
     for name in domain_names:
         team_domains.append([Domain.get_by_name(name), team.role_label(domain=name), UserRole.by_domain(name)])
 
-    nonmembers = [m.username for m in filter(lambda m: m.username not in [tm.username for tm in team_members], ctxt["members"])]
-    nondomains = [d.name for d in filter(lambda d: d.name not in [td[0].name for td in team_domains], ctxt["domains"])]
+    nonmembers = filter(lambda m: m.username not in [tm.username for tm in team_members], ctxt["members"])
+    nondomains = filter(lambda d: d.name not in [td[0].name for td in team_domains], ctxt["domains"])
 
     ctxt.update(dict(team=team, team_members=team_members, nonmembers=nonmembers,
                      team_domains=team_domains, nondomains=nondomains))
@@ -453,4 +473,13 @@ def verify_org(request, org):
         organization.verified = False
         organization.save()
     return HttpResponseRedirect(request.META.get('HTTP_REFERER') or reverse('orgs_base'))
+
+def public(request, org, template='orgs/public.html'):
+    organization = Organization.get_by_name(org, strict=True)
+    ctxt = base_context(request, organization)
+    ctxt["snapshots"] = []
+    for dom in ctxt["domains"]:
+        if dom.published_snapshot() and dom.published_snapshot().is_approved:
+            ctxt["snapshots"].append(dom.published_snapshot())
+    return render(request, template, ctxt)
 

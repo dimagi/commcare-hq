@@ -189,6 +189,10 @@ class IndicatorDefinition(Document, AdminCRUDDocumentMixin):
                         endkey=key+[{}]
         ).all()
 
+    @classmethod
+    def get_nice_name(cls):
+        return "Indicator Definition"
+
 
 class DynamicIndicatorDefinition(IndicatorDefinition):
     description = StringProperty()
@@ -437,6 +441,10 @@ class CouchIndicatorDef(DynamicIndicatorDefinition):
             ))
         return retrospective
 
+    @classmethod
+    def get_nice_name(cls):
+        return "Simple Indicators"
+
 
 class NoGroupCouchIndicatorDefBase(CouchIndicatorDef):
     """
@@ -464,6 +472,10 @@ class CountUniqueCouchIndicatorDef(NoGroupCouchIndicatorDefBase):
         all_emitted_values = set(all_emitted_values)
         return len(all_emitted_values)
 
+    @classmethod
+    def get_nice_name(cls):
+        return "Count Unique Emitted Values"
+
 
 class MedianCouchIndicatorDef(NoGroupCouchIndicatorDefBase):
     """
@@ -474,6 +486,10 @@ class MedianCouchIndicatorDef(NoGroupCouchIndicatorDefBase):
         results = self.get_raw_results(user_ids, datespan)
         values = [item.get('value', 0) for item in results if item.get('value')]
         return numpy.median(values) if values else None
+
+    @classmethod
+    def get_nice_name(cls):
+        return "Median of Emitted Values"
 
 
 class SumLastEmittedCouchIndicatorDef(NoGroupCouchIndicatorDefBase):
@@ -493,6 +509,10 @@ class SumLastEmittedCouchIndicatorDef(NoGroupCouchIndicatorDefBase):
             if item.get('value'):
                 unique_values[item['value']['_id']] = item['value']['value']
         return sum(unique_values.values())
+
+    @classmethod
+    def get_nice_name(cls):
+        return "Sum Last Emitted Unique Values"
 
 
 class CombinedCouchViewIndicatorDefinition(DynamicIndicatorDefinition):
@@ -540,6 +560,10 @@ class CombinedCouchViewIndicatorDefinition(DynamicIndicatorDefinition):
                 ratio=ratio
             ))
         return combined_retro
+
+    @classmethod
+    def get_nice_name(cls):
+        return "Combined Indicators (Ratio)"
 
 
 class BaseDocumentIndicatorDefinition(IndicatorDefinition):
@@ -650,6 +674,10 @@ class FormLabelIndicatorDefinition(FormIndicatorDefinition):
         ).one()
         return label['value'] if label else ""
 
+    @classmethod
+    def get_nice_name(cls):
+        return "Form Label Indicators"
+
 
 class FormDataAliasIndicatorDefinition(FormIndicatorDefinition):
     """
@@ -665,6 +693,10 @@ class FormDataAliasIndicatorDefinition(FormIndicatorDefinition):
     def get_value(self, doc):
         form_data = doc.get_form
         return self.get_from_form(form_data, self.question_id)
+
+    @classmethod
+    def get_nice_name(cls):
+        return "Form Alias Indicators"
 
 
 class CaseDataInFormIndicatorDefinition(FormIndicatorDefinition):
@@ -711,6 +743,10 @@ class CaseDataInFormIndicatorDefinition(FormIndicatorDefinition):
                 except ValueError:
                     pass
         return computed, is_update
+
+    @classmethod
+    def get_nice_name(cls):
+        return "Related Case Property Indicators"
 
 
 class CaseIndicatorDefinition(BaseDocumentIndicatorDefinition):
@@ -789,3 +825,7 @@ class FormDataInCaseIndicatorDefinition(CaseIndicatorDefinition, FormDataIndicat
                     logging.error("Error updating computed namespace for doc %s: %s" % (document._id, e))
 
         return computed, is_update
+
+    @classmethod
+    def get_nice_name(cls):
+        return "Related Form Question ID Indicators"

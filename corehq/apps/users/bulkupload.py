@@ -84,7 +84,7 @@ class GroupMemoizer(object):
         self.add_group(group)
 
     def save_all(self):
-        Group.bulk_save(self.groups, all_or_nothing=True)
+        Group.bulk_save(self.groups)
 
 def _fmt_phone(phone_number):
     if phone_number and not isinstance(phone_number, basestring):
@@ -147,9 +147,7 @@ def create_or_update_users_and_groups(domain, user_specs, group_specs):
             data, group_names, language, name, password, phone_number, user_id, username = (
                 row.get(k) for k in sorted(allowed_headers)
             )
-            if isinstance(password, float):
-                # almost certainly what was intended
-                password = unicode(int(password))
+            password = unicode(password)
             group_names = group_names or []
             try:
                 username = normalize_username(username, domain)
@@ -212,8 +210,6 @@ def create_or_update_users_and_groups(domain, user_specs, group_specs):
                         group_memoizer.by_name(group_name).add_user(user, save=False)
 
                 except Exception, e:
-#                    if settings.DEBUG:
-#                        raise
                     status_row['flag'] = 'error: %s' % e
                     
             ret["rows"].append(status_row)

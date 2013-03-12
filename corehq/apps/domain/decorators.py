@@ -28,7 +28,7 @@ def _redirect_for_login_or_domain(request, redirect_field_name, where):
 
 ########################################################################################################
 #
-# Decorator that checks to see if user is loggd in and a domain is set.
+# Decorator that checks to see if user is logged in and a domain is set.
 #
 # Unfortunately, there's no good way to combine this with the login_required decorator,
 # because what we want to do is to test for domains just after authentication, but
@@ -53,7 +53,7 @@ def _redirect_for_login_or_domain(request, redirect_field_name, where):
 # Can't put reverse() in any code that executes upon file import, which means it can't go
 # in default parms of functions that are called at import (such as the call to login_and_domain_required()
 # below. This is because the files are imported during initialization of the urlconfs, and
-# the call to reverse happens before intialization is finished, so it fails. Need to delay 
+# the call to reverse happens before initialization is finished, so it fails. Need to delay
 # the call to reverse until post-initialization, which means until during the first actual call
 # into _inner().
 

@@ -7,7 +7,7 @@ from corehq.apps.reports.datatables import DataTablesColumn
 
 
 class FormLabelIndicatorDefinitionAdminInterface(BaseIndicatorAdminInterface):
-    name = "Form Label Indicators"
+    name = FormLabelIndicatorDefinition.get_nice_name()
     description = "desc needed" #todo
     slug = "form_label"
     document_class = FormLabelIndicatorDefinition
@@ -21,7 +21,7 @@ class FormLabelIndicatorDefinitionAdminInterface(BaseIndicatorAdminInterface):
 
 
 class FormAliasIndicatorDefinitionAdminInterface(BaseIndicatorAdminInterface):
-    name = "Form Alias Indicators"
+    name = FormDataAliasIndicatorDefinition.get_nice_name()
     description = "desc needed" #todo
     slug = "form_alias"
     document_class = FormDataAliasIndicatorDefinition
@@ -36,7 +36,7 @@ class FormAliasIndicatorDefinitionAdminInterface(BaseIndicatorAdminInterface):
 
 
 class CaseDataInFormAdminInterface(BaseIndicatorAdminInterface):
-    name = "Related Case Property Indicators"
+    name = CaseDataInFormIndicatorDefinition.get_nice_name()
     description = "" #todo
     slug = "form_case_data"
     document_class = CaseDataInFormIndicatorDefinition
@@ -51,7 +51,7 @@ class CaseDataInFormAdminInterface(BaseIndicatorAdminInterface):
 
 
 class FormDataInCaseAdminInterface(BaseIndicatorAdminInterface):
-    name = "Related Form Question ID Indicators"
+    name = FormDataInCaseIndicatorDefinition.get_nice_name()
     description = "todo" #todo
     slug = "case_form_data"
     document_class = FormDataInCaseIndicatorDefinition
