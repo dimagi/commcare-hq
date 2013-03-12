@@ -103,10 +103,16 @@ class BasicPillow(object):
         else:
             self.old_changes()
 
+    def _get_os_name(self):
+        os_name = "unknown_os"
+        if hasattr(os, "uname"):
+            os_name = os.uname()[1].replace('.', '_')
+        return os_name
+
     @memoized
     def get_name(self):
         return "%s.%s.%s" % (
-            self.__module__, self.__class__.__name__, os.uname()[1].replace('.', '_'))
+            self.__module__, self.__class__.__name__, self._get_os_name())
 
     def get_checkpoint_doc_name(self):
         return "pillowtop_%s" % self.get_name()
@@ -572,8 +578,7 @@ class AliasedElasticPillow(ElasticPillow):
         class name and the hashed name representation.
         """
         return "%s.%s.%s.%s" % (
-            self.__module__, self.__class__.__name__, self.calc_meta(),
-            os.uname()[1].replace('.', '_'))
+            self.__module__, self.__class__.__name__, self.calc_meta(), self._get_os_name())
 
     def get_mapping_from_type(self, doc_dict):
         raise NotImplementedError("This must be implemented in this subclass!")
