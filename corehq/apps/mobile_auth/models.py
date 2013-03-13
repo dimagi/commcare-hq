@@ -37,6 +37,7 @@ class MobileAuthKeyRecord(Document):
         now_json = json_format_datetime(now)
         key_record = cls.view('mobile_auth/key_records',
             startkey=[domain, user_id, now_json],
+            endkey=[domain, user_id, ""],
             descending=True,
             limit=1,
             include_docs=True,
