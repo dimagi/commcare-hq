@@ -178,6 +178,9 @@ the following contents:
  [file]: http://sourceforge.net/projects/gnuwin32/files/file/
 
 + On Windows, Touchforms may complain about not having permission to access `tmp`. To solve this make a `c:\tmp` folder.
+ 
++ On Windows, if Celery gives this error on startup: `TypeError: 'LazySettings' object is not iterable` apply the 
+  changes decribed in this bug report comment: https://github.com/celery/django-celery/issues/228#issuecomment-13562642
 
 Running CommCare HQ
 -------------------
@@ -191,8 +194,10 @@ to automatically run on system startup, you need to run them manually:
 
 Then run the following separately:
 
-    # Asynchronous task scheduler
+    # MacOS Asynchronous task scheduler
     ./manage.py celeryd --verbosity=2 --beat --statedb=celery.db --events
+    # Windows
+    > manage.py celeryd --settings=settings
 
     # Keeps elasticsearch index in sync
     ./manage.py run_ptop
@@ -206,13 +211,13 @@ Then run the following separately:
     #
 
     # run Touchforms server
-    jython submodules/touchforms-src/touchforms/backend/xformserver.py
+    > jython submodules/touchforms-src/touchforms/backend/xformserver.py
 
     # On Mac / Linux use Gunicorn as the multi-threaded server
     ./manage.py run_gunicorn
 
     # on Windows use CherryPy
-    ./manage.py runcpserver port=8000
+    > manage.py runcpserver port=8000
 
 Building CommCare Mobile Apps
 -----------------------------
