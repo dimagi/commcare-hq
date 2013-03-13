@@ -1,6 +1,6 @@
 import urlparse
 from couchdbkit import CouchdbResource
-from restkit import Client, Response
+from restkit import Client
 import requests
 from simplejson import JSONDecodeError
 
