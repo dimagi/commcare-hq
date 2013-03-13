@@ -100,3 +100,6 @@
 [submodule "submodules/psi-reports"]
 	path = submodules/psi-reports
 	url = git://github.com/dimagi/psi-reports.git
+[submodule "submodules/freddy"]
+	path = submodules/freddy
+	url = git://github.com/dimagi/freddy.git
