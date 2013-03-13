@@ -4,7 +4,7 @@ function(doc) {
     if(isChildVisitForm(doc)) {
         var indicators = get_indicators(doc),
             meta = doc.form.meta;
-        var indicator_keys = new Array();
+        var indicator_keys = [];
         if (indicators.child_dob && indicators.child_dob.value) {
             // birthdate found, is child under 5?
             var age = get_age_from_dob(indicators.child_dob.value, meta.timeEnd);
@@ -28,29 +28,37 @@ function(doc) {
                     diarrhea_medication_received = (diarrhea_medication && diarrhea_medication.indexOf('ors') >= 0),
                     zinc_received = (diarrhea_medication && diarrhea_medication.indexOf('zinc') >= 0);
 
+                var danger_signs = [],
+                    emergency_signs = [];
+
                 try {
-                    var danger_signs = get_danger_signs(indicators.immediate_danger_sign.value),
-                        emergency_signs = get_danger_signs(indicators.emergency_danger_sign.value);
-                    if (danger_signs.indexOf('fever') >= 0) {
-                        if (danger_signs.length === 1) {
-                            uncomplicated_fever = true;
-                        } else {
-                            complicated_fever = true;
-                        }
-                    }
-                    if (danger_signs.indexOf('diarrhea') >= 0 && danger_signs.length === 1) {
-                        diarrhea_only = true;
-                    }
-                    if (danger_signs.length > 0 || emergency_signs.length > 0) {
-                        indicator_keys.push("under5_danger_signs");
-                    }
+                    danger_signs = get_danger_signs(indicators.immediate_danger_sign.value);
                 } catch (err) {
-                    log('did not process danger signs');
-                    log(err);
+                    // pass
+                }
+
+                try {
+                    emergency_signs = get_danger_signs(indicators.emergency_danger_sign.value);
+                } catch (err) {
+                    // pass
+                }
+
+                if (danger_signs.indexOf('fever') >= 0) {
+                    if (danger_signs.length === 1) {
+                        uncomplicated_fever = true;
+                    } else {
+                        complicated_fever = true;
+                    }
+                }
+                if (danger_signs.indexOf('diarrhea') >= 0 && danger_signs.length === 1) {
+                    diarrhea_only = true;
+                }
+                if (danger_signs.length > 0 || emergency_signs.length > 0) {
+                    indicator_keys.push("under5_danger_signs");
                 }
 
                 var category = "",
-                    category_keys = new Array();
+                    category_keys = [];
                 if (uncomplicated_fever && meta.timeEnd) {
                     category = "under5_fever ";
                     if (rdt_test_received)
