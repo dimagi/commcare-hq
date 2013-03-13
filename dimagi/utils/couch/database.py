@@ -1,6 +1,7 @@
 from couchdbkit.client import Database
 from django.conf import settings
 from dimagi.utils.chunked import chunked
+from dimagi.utils.couch.bulk import get_docs
 
 class DesignDoc(object):
     """Data structure representing a design doc"""
@@ -46,7 +47,7 @@ def get_view_names(database):
 
 def iter_docs(database, ids, chunksize=100):
     for doc_ids in chunked(ids, chunksize):
-        for doc in database.all_docs(keys=doc_ids, include_docs=True):
+        for doc in get_docs(database, keys=doc_ids):
             yield doc['doc']
 
 def is_bigcouch():
