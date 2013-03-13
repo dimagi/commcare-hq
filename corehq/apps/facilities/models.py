@@ -145,6 +145,27 @@ class FacilityRegistry(Document):
         return super(FacilityRegistry, self).delete(*args, **kwargs)
 
 
+#class FacilityIdentifier(DocumentSchema):
+    #"""A facility identifier as defined by the Facility Registry API spec"""
+
+    #agency = StringProperty(required=True)
+    #context = StringProperty(required=True)
+    #id = StringProperty(required=True)
+
+
+#class FacilityData(DocumentSchema):
+    #"""Facility properties as defined by the Facility Registry API spec"""
+
+    #name = StringProperty(required=True)
+    #url = StringProperty()
+    #identifiers = SchemaListProperty(FacilityIdentifier)
+    #coordinates = ListProperty()
+    #active = BooleanProperty()
+    #createdAt = DateTimeProperty()
+    #updatedAt = DateTimeProperty()
+    #properties = DictProperty()
+
+
 class Facility(Document):
     registry_id = StringProperty()
     data = DictProperty(
