@@ -2,7 +2,7 @@ from collections import defaultdict
 import json
 import logging
 import requests
-from dimagi.utils.couch.requestskit import get_auth
+from dimagi.utils.requestskit import get_auth
 
 
 class CouchTransaction(object):

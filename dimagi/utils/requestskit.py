@@ -1,6 +1,6 @@
 import urlparse
 from couchdbkit import CouchdbResource
-from restkit import Client
+from restkit import Client, Response
 import requests
 from simplejson import JSONDecodeError
 
@@ -45,10 +45,18 @@ class WrappedResponse(requests.Response):
     def final_url(self):
         return self.url
 
+    def __getitem__(self, key):
+        try:
+            return getattr(self, key)
+        except AttributeError:
+            pass
+        return self.headers.get(key)
+
 
 class RequestsClient(Client):
 
     def request(self, url, method='GET', body=None, headers=None):
+        print method, url
         auth = get_auth(url)
         resp = requests.request(method, url, data=body, headers=headers,
                                 auth=auth)

@@ -12,7 +12,7 @@ class LockableMixIn(DocumentSchema):
 
     def acquire_lock(self, now):
         """
-        Returns True if the lock was acquired by the calling thread, 
+        Returns True if the lock was acquired by the calling thread,
         False if another thread acquired it first
         """
         if (self.lock_date is None) or (now > (self.lock_date + LOCK_EXPIRATION)):
