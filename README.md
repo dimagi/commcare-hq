@@ -214,6 +214,10 @@ Then run the following separately:
     # on Windows use CherryPy
     ./manage.py runcpserver port=8000
 
+If you run a development server on a port other than 8000, you need to go into
+the Django Admin and change the Site object to reflect this, otherwise certain
+features like links in emails and CloudCare may behave incorrectly.
+
 Building CommCare Mobile Apps
 -----------------------------
 
