@@ -63,14 +63,6 @@ JAR_SIGN = dict(
     key_pass = "*******",
 )
 
-####### XEP stuff - TODO: remove this section when we retire XEP ########
-
-REFLEXIVE_URL_BASE = "http://localhost:8001"
-def get_url_base():
-    return REFLEXIVE_URL_BASE
-GET_URL_BASE  = 'settings.get_url_base'
-
-
 ####### SMS Config ########
 
 # Mach
