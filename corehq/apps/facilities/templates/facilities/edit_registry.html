@@ -2,6 +2,6 @@
 {% load crispy_forms_tags %}
 
 {% block main_column %}
-    <h2>{{ action }} Facility Registry</h2>
+    <h2>{% if new %}Create{% else %}Edit {% endif %} Facility Registry</h2>
     {% crispy form %}
 {% endblock %}
