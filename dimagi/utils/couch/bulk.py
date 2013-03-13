@@ -1,8 +1,8 @@
 from collections import defaultdict
 import json
 import logging
-import urlparse
 import requests
+from dimagi.utils.couch.requestskit import get_auth
 
 
 class CouchTransaction(object):
@@ -77,21 +77,21 @@ class CouchTransaction(object):
         if self.depth == 0 and not exc_type:
             self.commit()
 
+
 def get_docs(db, keys):
     payload = json.dumps({'keys': keys})
     url = db.uri + '/_all_docs?include_docs=true'
-    u = urlparse.urlsplit(url)
-    auth = (u.username, u.password) if u.username else None
 
     r = requests.post(url, data=payload,
                       headers={'content-type': 'application/json'},
-                      auth=auth)
+                      auth=get_auth(url))
 
     try:
         return r.json()['rows']
     except KeyError:
         logging.exception('%r has no key %r' % (r.json(), 'rows'))
         raise
+
 
 def wrapped_docs(cls, keys):
     rows = get_docs(cls.get_db(), keys)
