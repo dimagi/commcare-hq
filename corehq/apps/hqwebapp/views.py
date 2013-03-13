@@ -304,7 +304,7 @@ def dismiss_notification(request):
     note = Notification.get(note_id)
     if note:
         if note.user != request.couch_user.username:
-            return json_response({"failure": "Not the same user"})
+            return json_response({"status": "failure: Not the same user"})
 
         note.dismissed = True
         note.save()
