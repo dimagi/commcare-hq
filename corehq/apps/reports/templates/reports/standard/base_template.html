@@ -97,6 +97,12 @@
                         <i class="icon icon-share"></i> Export to Excel
                     </a>
                 {% endif %}
+
+                {% if report.is_emailable %}
+                    <a href="#" class="btn" id="email-report" data-bind="click: setConfigBeingEmailed">
+                        <i class="icon icon-envelope"></i> Email report
+                    </a>
+                {% endif %}
             </div>
             <div id="extra-filter-info" class="accordion-extra"></div>
         </div>

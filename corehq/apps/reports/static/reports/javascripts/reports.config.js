@@ -9,6 +9,7 @@ var HQReport = function (options) {
     self.filterSubmitButton = options.filterSubmitButton || $('#paramSelectorForm button[type="submit"]');
     self.toggleFiltersButton = options.toggleFiltersButton || "#toggle-report-filters";
     self.exportReportButton = options.exportReportButton || "#export-report-excel";
+    self.emailReportButton = options.emailReportButton || "#email-report";
     self.urlRoot = options.urlRoot;
     self.slug = options.slug;
     self.subReportSlug = options.subReportSlug;
@@ -35,6 +36,19 @@ var HQReport = function (options) {
                 }
                 window.location.href = window.location.pathname.replace(self.urlRoot,
                     self.urlRoot+'export/')+"?"+params;
+            });
+
+            $(self.emailReportButton).click(function (e) {
+                var params = window.location.search.substr(1);
+                e.preventDefault();
+                if (params.length <= 1) {
+                    if (self.loadDatespanFromCookie()) {
+                        params = "startdate="+self.datespan.startdate+
+                            "&enddate="+self.datespan.enddate;
+                    }
+                }
+                window.location.href = window.location.pathname.replace(self.urlRoot,
+                    self.urlRoot+'email_onceoff/')+"?"+params;
             });
 
             self.resetFilterState();
