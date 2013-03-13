@@ -2,30 +2,28 @@
 couch models go here
 """
 from __future__ import absolute_import
-
 from datetime import datetime
 import logging
-from couchdbkit import ResourceConflict, NoResultFound
 import re
+import json
+
+from couchdbkit import ResourceConflict, NoResultFound
 from django.utils import html, safestring
 from restkit.errors import NoMoreData
-from dimagi.utils.decorators.memoized import memoized
-from dimagi.utils.make_uuid import random_hex
-from dimagi.utils.modules import to_function
-
 from django.conf import settings
 from django.contrib.auth.models import User
 from django.contrib.sites.models import Site
 from django.core.urlresolvers import reverse
 from django.core.exceptions import ValidationError
 from django.template.loader import render_to_string
-
 from couchdbkit.ext.django.schema import *
 from couchdbkit.resource import ResourceNotFound
+
+from dimagi.utils.decorators.memoized import memoized
+from dimagi.utils.make_uuid import random_hex
+from dimagi.utils.modules import to_function
 from casexml.apps.case.models import CommCareCase
-
 from casexml.apps.phone.models import User as CaseXMLUser
-
 from corehq.apps.domain.shortcuts import create_user
 from corehq.apps.domain.utils import normalize_domain_name
 from corehq.apps.domain.models import LicenseAgreement
@@ -33,13 +31,11 @@ from corehq.apps.users.util import normalize_username, user_data_from_registrati
 from corehq.apps.users.xml import group_fixture
 from corehq.apps.sms.mixin import CommCareMobileContactMixin, VerifiedNumber, PhoneNumberInUseException, InvalidFormatException
 from couchforms.models import XFormInstance
-
 from dimagi.utils.couch.undo import DeleteRecord, DELETED_SUFFIX
 from dimagi.utils.django.email import send_HTML_email
 from dimagi.utils.mixins import UnicodeMixIn
 from dimagi.utils.dates import force_to_datetime
 from dimagi.utils.django.database import get_unique_value
-import json
 
 
 COUCH_USER_AUTOCREATED_STATUS = 'autocreated'
@@ -1524,7 +1520,6 @@ class WebUser(CouchUser, MultiMembershipMixin, OrgMembershipMixin):
     @memoized
     def has_permission(self, domain, permission, data=None):
         # is_admin is the same as having all the permissions set
-        from corehq.apps.orgs.models import Team
         if self.is_global_admin():
             return True
         elif self.is_domain_admin(domain):
@@ -1554,7 +1549,6 @@ class WebUser(CouchUser, MultiMembershipMixin, OrgMembershipMixin):
         Get the role object for this user
 
         """
-        from corehq.apps.orgs.models import Team
         if domain is None:
             # default to current_domain for django templates
             domain = self.current_domain
@@ -1708,61 +1702,6 @@ class OrgRemovalRecord(DeleteRecord):
         some_args = self.org_membership._doc
         user.add_org_membership(some_args["organization"], **some_args)
         user.save()
-
-class Notification(Document):
-    """
-    For handling persistent notifications that only disappear when the user explicitly dismisses them.
-
-    Example Usage:
-        class ExampleNotification(Notification):
-            doc_type = 'ExampleNotification'
-
-            def template(self):
-                return 'example_notification.html'
-
-        def example_page(request):
-            ExampleNotification.display_if_needed(messages, request)
-    """
-    dismissed = BooleanProperty(default=False)
-    user = StringProperty()
-    base_doc = 'Notification'
-    doc_type = 'Notification'
-
-    def template(self):
-        raise NotImplementedError
-
-    @classmethod
-    # @memoized todo: figure out how to reset cache of class methods
-    def get_notification(cls, username):
-        notification = cls.view("users/notifications",
-            reduce=False,
-            startkey=[cls._doc_type, username],
-            endkey=[cls._doc_type, username, {}],
-            include_docs=True,
-        ).one()
-
-        if not notification:
-            notification = cls(user=username)
-            notification.save()
-
-        return notification
-
-    @classmethod
-    def unseen_notification(cls, username):
-        notification = cls.get_notification(username)
-        return notification if not notification.dismissed else None
-
-    def render_notice(self, ctxt=None):
-        ctxt = ctxt or {}
-        ctxt.update({"note": self, "notification_template": self.template()})
-        return render_to_string('users/partial/notification_wrapper.html', ctxt)
-
-    @classmethod
-    def display_if_needed(cls, messages, request, ctxt=None):
-        note = cls.unseen_notification(request.couch_user.username)
-        if note:
-            ctxt = ctxt or {}
-            messages.info(request, note.render_notice(ctxt=ctxt), extra_tags="html")
 
 
 from .signals import *

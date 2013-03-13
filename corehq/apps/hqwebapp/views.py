@@ -11,6 +11,7 @@ from django.contrib.sites.models import Site
 from django.http import HttpResponseRedirect, HttpResponse, Http404,\
     HttpResponseServerError, HttpResponseNotFound
 from django.shortcuts import redirect, render
+from corehq.apps.announcements.models import Notification
 
 from corehq.apps.app_manager.models import BUG_REPORTS_DOMAIN
 from corehq.apps.app_manager.models import import_app
@@ -18,7 +19,7 @@ from corehq.apps.domain.decorators import require_superuser,\
     login_and_domain_required
 from corehq.apps.domain.utils import normalize_domain_name, get_domain_from_url
 from corehq.apps.hqwebapp.forms import EmailAuthenticationForm, CloudCareAuthenticationForm
-from corehq.apps.users.models import CouchUser, Notification
+from corehq.apps.users.models import CouchUser
 from corehq.apps.users.util import format_username
 from dimagi.utils.logging import notify_exception
 

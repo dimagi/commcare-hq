@@ -8,13 +8,14 @@ from django.template.loader import render_to_string
 from django.views.decorators.http import require_POST
 from django.shortcuts import render
 from django.contrib import messages
+from corehq.apps.announcements.models import Notification
 
 from corehq.apps.domain.decorators import require_superuser
 from corehq.apps.hqwebapp.utils import InvitationView
 from corehq.apps.orgs.decorators import org_admin_required, org_member_required
 from corehq.apps.registration.forms import DomainRegistrationForm
 from corehq.apps.orgs.forms import AddProjectForm, InviteMemberForm, AddTeamForm, UpdateOrgInfo
-from corehq.apps.users.models import WebUser, UserRole, OrgRemovalRecord, Notification
+from corehq.apps.users.models import WebUser, UserRole, OrgRemovalRecord
 from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.web import json_response
 from corehq.apps.orgs.models import Organization, Team, DeleteTeamRecord, \
