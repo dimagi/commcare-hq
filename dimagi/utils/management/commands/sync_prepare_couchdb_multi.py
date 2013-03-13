@@ -72,6 +72,14 @@ class Command(BaseCommand):
         else:
             sync_design_docs(get_db(), temp="tmp")
 
+        # same hack above for MVP
+        try:
+            from mvp_apps import sync_design_docs as mvp_sync
+        except ImportError:
+            pass
+        else:
+            mvp_sync(get_db(), temp="tmp")
+
         print "All apps loaded into jobs, waiting..."
         pool.join()
         print "All apps reported complete."
