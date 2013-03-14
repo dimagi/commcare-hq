@@ -455,6 +455,8 @@ LOGGING = {
     }
 }
 
+COUCH_STALE_QUERY='update_after'  # 'ok' for cloudant
+
 try:
     #try to see if there's an environmental variable set for local_settings
     if os.environ.get('CUSTOMSETTINGS', None) == "demo":
