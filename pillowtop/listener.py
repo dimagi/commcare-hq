@@ -4,6 +4,7 @@ import hashlib
 import os
 import traceback
 from requests import ConnectionError
+from restkit import RequestFailed
 import simplejson
 from gevent import socket
 import rawes
@@ -125,6 +126,7 @@ class BasicPillow(object):
                 logging.info("hostname specific checkpoint not found, searching legacy")
                 legacy_checkpoint = self.couch_db.open_doc(legacy_name)
                 if not isinstance(legacy_checkpoint['seq'], int):
+                    #if it's not an explicit integer, copy it over directly
                     logging.info("Legacy checkpoint set")
                     starting_seq = legacy_checkpoint['seq']
 
@@ -220,22 +222,28 @@ class ElasticPillow(BasicPillow):
     es_index = ""
     es_type = ""
     es_meta = {}
-    es_timeout = 30 # in seconds
+    es_timeout = 30  # in seconds
     bulk = False
+    online = True  # online=False is for in memory (no ES) connectivity for testing purposes
 
     # Note - we allow for for existence because we do not care - we want the ES
     # index to always have the latest version of the case based upon ALL changes done to it.
     allow_updates = True
 
-    def __init__(self, create_index=True):
+    def __init__(self, create_index=True, online=False):
         """
         create_index if the index doesn't exist on the ES cluster
         """
+        self.online = online
         index_exists = self.index_exists()
         if create_index and not index_exists:
             self.create_index()
 
     def index_exists(self, connect_attempt=0):
+        if not self.online:
+            #If offline, just say the index is there and proceed along
+            return True
+
         es = self.get_es()
         while True:
             try:
@@ -452,6 +460,16 @@ class AliasedElasticPillow(ElasticPillow):
     seen_types = {}
     es_index = ""
 
+    def __init__(self, **kwargs):
+        super(AliasedElasticPillow, self).__init__(**kwargs)
+        if self.online:
+            self.seen_types = self.get_index_mapping()
+            logging.info("Pillowtop [%s] Retrieved mapping from ES" % self.get_name())
+        else:
+            logging.info("Pillowtop [%s] Started with no mapping from server in memory testing mode" % self.get_name())
+            self.seen_types = {}
+
+
     def check_alias(self):
         """
         Naive means to verify the alias of the current pillow iteration is matched.
@@ -489,14 +507,6 @@ class AliasedElasticPillow(ElasticPillow):
     def calc_mapping_hash(self, mapping):
         return hashlib.md5(simplejson.dumps(mapping, sort_keys=True)).hexdigest()
 
-    def __init__(self, get_mapping=True, **kwargs):
-        super(AliasedElasticPillow, self).__init__(**kwargs)
-        if get_mapping:
-            self.seen_types = self.get_index_mapping()
-            logging.info("Pillowtop [%s] Retrieved mapping from ES" % self.get_name())
-        else:
-            logging.info("Pillowtop [%s] Started with no mapping from server" % self.get_name())
-            self.seen_types = {}
 
     def calc_meta(self):
         raise NotImplementedError("Need to implement your own meta calculator")
@@ -534,7 +544,7 @@ class AliasedElasticPillow(ElasticPillow):
         es = self.get_es()
         type_string = self.get_type_string(doc_dict)
 
-        if server:
+        if server and self.online:
             type_path = "%(index)s/%(type_string)s" % (
                 {
                     'index': self.es_index,
