@@ -64,15 +64,14 @@
                 {{ hidden }}
             {% endfor %}
         </fieldset>
-        {% if is_new %}<div class="alert alert-info"><strong>You will be emailed a request to confirm your email address.</strong> In order to open your project, you must first confirm your email.</div>{% endif %}
         <div class="form-actions"{% if not is_new %} style="margin-top:24px; padding-top:18px;"{% endif %}><button type="submit" class="btn btn-primary btn-large">{% if is_new %}Request{% else %}Create{% endif %} Project</button></div>
     </form>
 </div>
 <div class="span4">
     <aside class="well">
-        <h3>Explore an Example Project</h3>
+       <a href="{% url appstore %}"><h3>Explore Example Projects</h3></a>
         <p>In need of ideas or just want to explore?</p>
-        <p>Take a peek at our <strong><a href="/a/public/">Example CommCare HQ Project</a></strong>.</p>
+        <p>Check out <strong><a href="{% url appstore %}">CommCare Exchange</a></strong> for examples of apps being used today.</p>
     </aside>
     <aside class="well">
         For detailed documentation, please visit the <a href="http://wiki.commcarehq.org/display/commcarepublic/Home">CommCare Wiki</a>.
