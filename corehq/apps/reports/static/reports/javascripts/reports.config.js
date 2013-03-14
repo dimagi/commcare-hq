@@ -9,6 +9,7 @@ var HQReport = function (options) {
     self.filterSubmitButton = options.filterSubmitButton || $('#paramSelectorForm button[type="submit"]');
     self.toggleFiltersButton = options.toggleFiltersButton || "#toggle-report-filters";
     self.exportReportButton = options.exportReportButton || "#export-report-excel";
+    self.emailReportButton = options.emailReportButton || "#email-report";
     self.urlRoot = options.urlRoot;
     self.slug = options.slug;
     self.subReportSlug = options.subReportSlug;
@@ -23,23 +24,29 @@ var HQReport = function (options) {
         $(function () {
             checkFilterAccordionToggleState();
 
-            $(self.exportReportButton).click(function (e) {
-                var params = window.location.search.substr(1);
-                var exportURL;
-                e.preventDefault();
-                if (params.length <= 1) {
-                    if (self.loadDatespanFromCookie()) {
-                        params = "startdate="+self.datespan.startdate+
-                            "&enddate="+self.datespan.enddate;
-                    }
-                }
-                window.location.href = window.location.pathname.replace(self.urlRoot,
-                    self.urlRoot+'export/')+"?"+params;
-            });
+            $(self.exportReportButton).click(button_click_handler("export/"));
+
+            $(self.emailReportButton).click(button_click_handler("email_onceoff/"));
 
             self.resetFilterState();
             if (self.needsFilters) {
                 self.filterSubmitButton.button('reset').addClass('btn-primary');
+            }
+
+            function button_click_handler(path) {
+                return function (e) {
+                    var params = window.location.search.substr(1);
+                    var exportURL;
+                    e.preventDefault();
+                    if (params.length <= 1) {
+                        if (self.loadDatespanFromCookie()) {
+                            params = "startdate="+self.datespan.startdate+
+                                "&enddate="+self.datespan.enddate;
+                        }
+                    }
+                    window.location.href = window.location.pathname.replace(self.urlRoot,
+                        self.urlRoot+path)+"?"+params;
+                }
             }
         });
     };
