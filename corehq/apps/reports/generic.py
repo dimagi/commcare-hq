@@ -813,6 +813,8 @@ class GenericTabularReport(GenericReportView):
         pagination_spec = dict(is_on=self.ajax_pagination)
         if self.ajax_pagination:
             shared_params = list(self.shared_pagination_GET_params)
+            print "super shared_params"
+            print shared_params
             pagination_spec.update(
                 params=shared_params,
                 source=self.pagination_source,

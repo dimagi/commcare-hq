@@ -1,20 +1,23 @@
+import simplejson
+from corehq.apps.api.es import CaseES
 from corehq.elastic import get_es
 from dimagi.utils.logging import notify_exception
 
 
 class CasePaginator():
     def __init__(self, domain, params, case_type=None, owner_ids=None,
-                 user_ids=None, status=None, sort_key=None, sort_order=None,
-                 filter=None):
+                 user_ids=None, status=None, sort_block=None,
+                 filter=None, search_string=None):
         self.domain = domain
         self.params = params
         self.case_type = case_type
         self.owner_ids = owner_ids
         self.user_ids = user_ids
         self.status = status or None
-        self.sort_key = sort_key or 'modified_on'
-        self.sort_order = sort_order or 'desc'
+        self.sort_block = sort_block or {"modified_on": {"order": "desc"}}
         self.filter = filter
+        self.case_es = CaseES(self.domain)
+        self.search_string = search_string
 
         assert self.status in ('open', 'closed', None)
 
@@ -35,11 +38,14 @@ class CasePaginator():
             elif list and "demo_user" not in list:
                 yield {"not": {"term": {key: "demo_user"}}}
 
+        def _domain_term():
+            return {"term": {"domain.exact": self.domain}}
+
         if self.params.search:
             #these are not supported/implemented on the UI side, so ignoring (dmyung)
             pass
 
-        subterms = [self.filter] if self.filter else []
+        subterms = [_domain_term(), self.filter] if self.filter else [_domain_term()]
         if self.case_type:
             subterms.append({"term": {"type": self.case_type}})
 
@@ -51,24 +57,27 @@ class CasePaginator():
         if user_filters:
             subterms.append({'or': user_filters})
 
+        if self.search_string:
+            query_block = {"query_string": {"query": self.query_string}} #todo, make sure this doesn't suck
+        else:
+            query_block = {"match_all": {}}
+
         and_block = {'and': subterms} if subterms else {}
 
         es_query = {
             'query': {
                 'filtered': {
-                    'query': {
-                        'match': {'domain.exact': self.domain}
-                    },
+                    'query': query_block,
                     'filter': and_block
                 }
             },
-            'sort': {
-                self.sort_key: {'order': self.sort_order}
-            },
+            'sort': self.sort_block,
             'from': self.params.start,
             'size': self.params.count,
         }
-        es_results = get_es().get('hqcases/_search', data=es_query)
+
+        print simplejson.dumps(es_query, indent=4)
+        es_results = self.case_es.run_query(es_query)
         if es_results.has_key('error'):
             notify_exception(None, "Error in case list elasticsearch query: %s" % es_results['error'])
             return {
