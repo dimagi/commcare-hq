@@ -1,21 +1,23 @@
 import simplejson
 from datetime import datetime, timedelta
-import pdb
 from optparse import make_option
-from django.core.management.base import BaseCommand, CommandError, LabelCommand
+from django.core.management.base import BaseCommand, LabelCommand
 import sys
 from casexml.apps.case.models import CommCareCase
-from corehq.apps.cleanup.xforms import reprocess_form_cases
 from corehq.apps.domain.models import Domain
 from corehq.elastic import get_es
-from couchforms.models import XFormError, XFormInstance
-
+from couchforms.models import XFormInstance
+from dimagi.utils.django.management import are_you_sure
+from casexml.apps.case.xform import extract_case_blocks
+from casexml.apps.case.xml.parser import case_update_from_block
 
 
 class Command(BaseCommand):
     args = '<id>'
-    help = (
-        'Comprehensive reprocessing command for xforms that had post-submission signaling errors that may not have updated the requisite case they were attached to')
+    help = ('''
+        Comprehensive reprocessing command for xforms that had post-submission
+        signaling errors that may not have updated the requisite case they were
+        attached to''')
 
     option_list = LabelCommand.option_list + \
                   (
@@ -53,18 +55,17 @@ class Command(BaseCommand):
 
         chunk = 500
         start = 0
-        end = chunk
 
         sk = [domain, "by_date", from_date.strftime("%Y-%m-%d")]
         ek = [domain, "by_date", (datetime.utcnow() + timedelta(days=10)).strftime("%Y-%m%d")]
 
-        def call_view(sk, ek, s, l):
+        def call_view(sk, ek, skip, limit):
             return db.view('receiverwrapper/all_submissions_by_domain',
                            startkey=sk,
                            endkey=ek,
                            reduce=False,
-                           limit=l,
-                           skip=s,
+                           limit=limit,
+                           skip=skip,
                            include_docs=True
             )
 
@@ -77,53 +78,39 @@ class Command(BaseCommand):
             view_chunk = call_view(sk, ek, start, chunk)
 
 
-    def is_case_updated(self, submission):
-        method = "couch"
-        case_id = None
-        if 'case' in submission['form']:
-            if '@case_id' in submission['form']['case']:
-                case_id = submission['form']['case']['@case_id']
-            if 'case_id' in submission['form']['case']:
-                case_id = submission['form']['case']['case_id']
+    def is_case_updated(self, submission, method="couch"):
+        # use the same case processing utilities the case code does
+        def _case_ids_in_couch(submission):
+            case_view = CommCareCase.get_db().view('case/by_xform_id',
+                                                   key=submission['_id'],
+                                                   reduce=False).all()
+            return [row['id'] for row in case_view]
 
-            if case_id is not None:
-                if method == "couch":
-                    #couch based
-                    case_view = CommCareCase.get_db().view('case/by_xform_id', key=submission['_id'], reduce=False).all()
-                    if len(case_view) > 0:
-                        if len(case_view) > 1:
-                            self.printerr("more than one case match: %s" % submission['_id'])
-                            self.printerr("case ids: %s" % ','.join([x['id'] for x in case_view]))
-                        for vr in case_view:
-                            if vr['id'] == case_id:
-                                return case_id, True
-                        return case_id, False
-                    else:
-                        return case_id, False
-                else:
-                    #es based
-                    query = {
-                        "filter": {
-                            "and": [
-                                {"term": {"xform_ids": submission['_id']}}
-                            ]
-                        },
-                        "from": 0,
-                        "size":1
-                    }
-                    es_results = self.es['hqcases'].post('_search', data=query)
-                    if es_results['hits']['hits']:
-                        for row in es_results['hits']['hits']:
-                            case_doc = row['_source']
-                            #print case_doc['_id']
-                            return case_id, True
-                    return case_id, False
-            else:
-                return None, None
-        else:
-            return None, None
+        def _case_ids_in_es(submission):
+            query = {
+                "filter": {
+                    "and": [
+                        {"term": {"xform_ids": submission['_id']}}
+                    ]
+                },
+                "from": 0,
+                "size":1
+            }
+            es_results = self.es['hqcases'].post('_search', data=query)
+            return [row['_source']['_id'] for row in es_results['hits']['hits']] \
+                    if es_results['hits']['hits'] else []
 
+        case_blocks = extract_case_blocks(submission)
+        case_updates = [case_update_from_block(case_block) for case_block in case_blocks]
+        case_ids_in_form = set(cu.id for cu in case_updates)
 
+        case_ids_in_db = set({
+            "couch": _case_ids_in_couch,
+            "es": _case_ids_in_es,
+        }[method](submission))
+
+        missing = case_ids_in_form - case_ids_in_db
+        return list(case_ids_in_form), list(missing), bool(missing)
 
     def handle(self, *args, **options):
         self.es = get_es()
@@ -135,20 +122,29 @@ class Command(BaseCommand):
             sys.exit()
 
         if do_process:
-            confirm = raw_input("""
+            if not are_you_sure("""
 Are you sure you want to make written changes to the database?
-Type 'yes' to continue, or 'no' to cancel: """)
-            pass
-
-            if confirm == "yes":
-                self.printerr("OK, proceeding, I hope you know what you're doing")
-                sys.exit()
-            else:
+Type 'yes' to continue, or 'no' to cancel: """):
                 self.printerr("You didn't say yes, so we're quitting, chicken.")
                 sys.exit()
+            else:
+                self.printerr("OK, proceeding, I hope you know what you're doing")
+                self.printerr("Just kidding, this is still way to dangerous!")
+                # TODO: call the real cleanup command here
+                sys.exit()
 
-
-        self.println(','.join(['domain','received_on','doc_type','doc_id','case_id','xform in case history','orig doc_id if dupe','subcases']))
+        headers = [
+            'domain',
+            'received_on',
+            'doc_type',
+            'doc_id',
+            'case_ids',
+            'unmatched_case_ids',
+            'xform in case history?',
+            'orig doc_id if dupe',
+            'subcases'
+        ]
+        self.println(','.join(headers))
         domains = self.get_all_domains()
         for ix, domain in enumerate(domains):
             self.printerr("Domain: %s (%d/%d)" % (domain, ix, len(domains)))
@@ -160,15 +156,17 @@ Type 'yes' to continue, or 'no' to cancel: """)
                 if submit['doc_type'] == 'XFormDuplicate':
                     is_dupe=True
                     orig_submit = XFormInstance.get_db().get(submit['form']['meta']['instanceID'])
-                    case_id, updated = self.is_case_updated(orig_submit)
+                    case_ids, missing, updated = self.is_case_updated(orig_submit)
                 else:
-                    case_id, updated = self.is_case_updated(submit)
+                    case_ids, missing, updated = self.is_case_updated(submit)
 
-                if case_id:
-                    outrow.append(case_id)
+                if case_ids:
+                    outrow.append("|".join(case_ids))
+                    outrow.append("|".join(missing))
                     outrow.append(updated)
                 else:
                     outrow.append("nocase")
+                    outrow.append("|".join(missing)) # would be weird if something was here
                     outrow.append("no update")
                 if is_dupe:
                     outrow.append(orig_submit['_id'])
