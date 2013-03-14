@@ -2,6 +2,7 @@ from __future__ import absolute_import
 from couchdbkit.ext.django.schema import *
 from corehq.apps.users.models import CouchUser, CommCareUser
 from dimagi.utils.couch.undo import UndoableDocument, DeleteDocRecord
+from django.conf import settings
 
 
 class Group(UndoableDocument):
@@ -109,7 +110,7 @@ class Group(UndoableDocument):
         return cls.view('groups/by_domain',
             key=domain,
             include_docs=True,
-            stale='update_after',
+            stale=settings.COUCH_STALE_QUERY,
         ).all()
 
     @classmethod
@@ -117,7 +118,7 @@ class Group(UndoableDocument):
         result = cls.view('groups/by_name',
             key=[domain, name],
             include_docs=True,
-            stale='update_after',
+            stale=settings.COUCH_STALE_QUERY,
         )
         if one:
             return result.one()
@@ -153,7 +154,7 @@ class Group(UndoableDocument):
             startkey=key,
             endkey=key + [{}],
             include_docs=True,
-            stale='update_after',
+            stale=settings.COUCH_STALE_QUERY,
         ).all()
 
     def create_delete_record(self, *args, **kwargs):

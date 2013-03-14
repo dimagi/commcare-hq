@@ -2,11 +2,32 @@ from couchdbkit.ext.django.schema import *
 import freddy
 import datetime
 import pytz
-
-from corehq.apps.users.models import CouchUser
+import copy
 
 def utcnow():
     return datetime.datetime.utcnow().replace(tzinfo=pytz.utc)
+
+
+def clean_data(data):
+    """
+    Ensure tzinfo.utcoffset() == None (use UTC implicitly) so the
+    following doesn't happen:
+    
+    1. Save ISO8601 representation of a time with an offset (+HH:MM) as
+       a string value in a DictProperty.
+    2. That string matches couchdbkit's datetime regex, so it gets
+       wrapped as a DateTimeProperty.
+    3. couchdbkit appends 'Z' when the string representation is
+       requested, leading to an invalid +HH:MMZ format.
+    
+    """
+    for k, v in data.items():
+        if isinstance(v, datetime.datetime):
+            data[k] = (v - v.utcoffset()).replace(tzinfo=None)
+        if isinstance(v, dict):
+            data[k] = clean_data(v)
+
+    return data
 
 
 VERSION_CHOICES = (
@@ -60,6 +81,7 @@ class FacilityRegistry(Document):
         try:
             ours_existing = {}
             self.syncing = True
+            self.save()
 
             for our_f in Facility.by_registry(self._id).all():
                 if our_f.synced_at:
@@ -74,7 +96,7 @@ class FacilityRegistry(Document):
                 if remote_id in ours_existing:
                     if strategy == 'theirs':
                         ours = ours_existing[remote_id]
-                        ours.data = their_f.to_dict()
+                        ours.data = clean_data(their_f.to_dict())
                         ours.save(update_remote=False)
                     else:  # strategy == 'ours'
                         for f, v in ours.data.items():
@@ -83,9 +105,13 @@ class FacilityRegistry(Document):
                 else:
                     # new remote facility
                     now = utcnow()
+
+                    data = clean_data(their_f.to_dict())
+
                     our_new_f = Facility(registry_id=self._id,
-                        data=their_f.to_dict(), synced_at=now,
+                        data=data, synced_at=now,
                         sync_attempted_at=now)
+
                     our_new_f.save(update_remote=False)
 
             self.synced_at = utcnow()
@@ -148,12 +174,11 @@ class Facility(Document):
 
     @property
     def remote_facility(self):
-        core_properties = self.data or {}
-        print "core_properties", core_properties
+        core_properties = dict(copy.deepcopy(self.data)) if self.data else {}
         extended_properties = core_properties.pop('properties', {})
 
         return freddy.Facility(
-            is_new=not self.synced_at, registry=self.registry.remote_registry,
+            new=not self.synced_at, registry=self.registry.remote_registry,
             properties=extended_properties, **core_properties)
 
     def delete(self, delete_remote=False, *args, **kwargs):

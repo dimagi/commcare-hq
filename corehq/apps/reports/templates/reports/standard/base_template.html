@@ -82,25 +82,6 @@
 
 {% block main_column %}
     <div class="hq-accordion-control{% if report.is_async%} hide{% endif %}" id="reportFiltersAccordion">
-        <div class="accordion-heading">
-            <div class="accordion-actions">
-                {% if report.show_filters %}
-                    <a href="#reportFilters" class="btn" id="toggle-report-filters"
-                       data-toggle="collapse" data-open-text="Show Filter Options"
-                       data-close-text="Hide Filter Options">
-                        Filter Options
-                    </a>
-                {% endif %}
-
-                {% if report.is_exportable %}
-                    <a href="#" class="btn" id="export-report-excel">
-                        <i class="icon icon-share"></i> Export to Excel
-                    </a>
-                {% endif %}
-            </div>
-            <div id="extra-filter-info" class="accordion-extra"></div>
-        </div>
-
         {% if report.show_filters %}
             <div id="reportFilters" class="accordion-body collapse">
                 <div class="accordion-inner">
@@ -123,6 +104,30 @@
                 </div>
             </div>
         {% endif %}
+        <div class="accordion-heading">
+            <div class="accordion-actions">
+                {% if report.show_filters %}
+                    <a href="#reportFilters" class="btn" id="toggle-report-filters"
+                       data-toggle="collapse" data-open-text="Show Filter Options"
+                       data-close-text="Hide Filter Options">
+                        Filter Options
+                    </a>
+                {% endif %}
+
+                {% if report.is_exportable %}
+                    <a href="#" class="btn" id="export-report-excel">
+                        <i class="icon icon-share"></i> Export to Excel
+                    </a>
+                {% endif %}
+
+                {% if report.is_emailable %}
+                    <a href="#" class="btn" id="email-report" data-bind="click: setConfigBeingEmailed">
+                        <i class="icon icon-envelope"></i> Email report
+                    </a>
+                {% endif %}
+            </div>
+            <div id="extra-filter-info" class="accordion-extra"></div>
+        </div>
     </div>
     {% if report.special_notice %}
     <div class="alert alert-info" style="margin-bottom: 2px">

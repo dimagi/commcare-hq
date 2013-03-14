@@ -23,8 +23,8 @@
                 <th>{% trans 'Properties' %}</th>
                 <th>{% trans 'Active' %}</th>
 
-                <th>{% trans 'Remote updated at' %}</th>
                 <th>{% trans 'Remote created at' %}</th>
+                <th>{% trans 'Remote updated at' %}</th>
                 <th>{% trans 'Last local edit/sync' %}</th>
 
                 {% if not registry %}
@@ -55,8 +55,8 @@
             </td>
             <td>{{ f.properties }}</td>
             <td>{{ f.active }}</td>
-            <td>{{ f.updatedAt }}</td>
             <td>{{ f.createdAt }}</td>
+            <td>{{ f.updatedAt }}</td>
             {% endwith %}
 
             <td>
