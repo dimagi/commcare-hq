@@ -1,6 +1,7 @@
 from collections import defaultdict
 import json
 import logging
+from django.conf import settings
 from django.http import Http404
 from corehq.apps.reports.standard import ProjectReportParametersMixin, ProjectReport, DatespanMixin
 from corehq.apps.reports.models import FormExportSchema,\
@@ -250,7 +251,7 @@ class DeidExportReport(FormExportReportBase):
             startkey=startkey,
             limit=1,
             include_docs=False,
-            stale='update_after',
+            stale=settings.COUCH_STALE_QUERY,
         ).count() > 0
 
 

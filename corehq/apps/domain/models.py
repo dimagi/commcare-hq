@@ -280,7 +280,7 @@ class Domain(Document, HQBillingDomainMixin, SnapshotMixin):
                 keys=[[is_active, d] for d in domain_names],
                 reduce=False,
                 include_docs=True,
-                stale='update_after',
+                stale=settings.COUCH_STALE_QUERY,
             ).all()
         else:
             return []
@@ -426,7 +426,7 @@ class Domain(Document, HQBillingDomainMixin, SnapshotMixin):
                 else:
                     notify_exception(None, '%r is not a valid domain name' % name)
                     return None
-        extra_args = {'stale': 'update_after'} if not strict else {}
+        extra_args = {'stale': settings.COUCH_STALE_QUERY} if not strict else {}
         result = cls.view("domain/domains",
             key=name,
             reduce=False,

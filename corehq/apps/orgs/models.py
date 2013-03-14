@@ -1,4 +1,5 @@
 from couchdbkit.ext.django.schema import *
+from django.conf import settings
 from django.contrib.sites.models import Site
 from django.core.urlresolvers import reverse
 from django.template.loader import render_to_string
@@ -20,7 +21,7 @@ class Organization(Document):
 
     @classmethod
     def get_by_name(cls, name, strict=False):
-        extra_args = {'stale': 'update_after'} if not strict else {}
+        extra_args = {'stale': settings.COUCH_STALE_QUERY} if not strict else {}
         result = cls.view("orgs/by_name",
             key=name,
             reduce=False,
@@ -35,7 +36,7 @@ class Organization(Document):
         result = cls.view("orgs/by_name",
             reduce=False,
             include_docs=True,
-            stale='update_after',
+            stale=settings.COUCH_STALE_QUERY,
         ).all()
         return result
 

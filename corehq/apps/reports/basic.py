@@ -1,3 +1,4 @@
+from django.conf import settings
 from corehq.apps.reports.datatables import (DataTablesHeader, DataTablesColumn,
     DTSortType)
 from corehq.apps.reports.generic import GenericTabularReport
@@ -106,7 +107,7 @@ class BasicTabularReport(GenericTabularReport):
 
     @property
     def rows(self):
-        kwargs = {'stale': 'update_after'} if self.update_after else {}
+        kwargs = {'stale': settings.COUCH_STALE_QUERY} if self.update_after else {}
         startkey, endkey = self.start_and_end_keys
         kwargs.update({
             'db': get_db(),
