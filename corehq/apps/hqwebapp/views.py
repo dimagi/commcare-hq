@@ -11,6 +11,7 @@ from django.contrib.sites.models import Site
 from django.http import HttpResponseRedirect, HttpResponse, Http404,\
     HttpResponseServerError, HttpResponseNotFound
 from django.shortcuts import redirect, render
+from corehq.apps.announcements.models import Notification
 
 from corehq.apps.app_manager.models import BUG_REPORTS_DOMAIN
 from corehq.apps.app_manager.models import import_app
@@ -22,7 +23,7 @@ from corehq.apps.users.models import CouchUser
 from corehq.apps.users.util import format_username
 from dimagi.utils.logging import notify_exception
 
-from dimagi.utils.web import get_url_base
+from dimagi.utils.web import get_url_base, json_response
 from django.core.urlresolvers import reverse
 from corehq.apps.domain.models import Domain
 from django.core.mail.message import EmailMessage
@@ -295,6 +296,21 @@ def bug_report(req):
         return HttpResponseRedirect(reverse('homepage'))
 
     return HttpResponse()
+
+
+@login_required()
+@require_POST
+def dismiss_notification(request):
+    note_id = request.POST.get('note_id', None)
+    note = Notification.get(note_id)
+    if note:
+        if note.user != request.couch_user.username:
+            return json_response({"status": "failure: Not the same user"})
+
+        note.dismissed = True
+        note.save()
+        return json_response({"status": "success"})
+    return json_response({"status": "failure: No note by that name"})
 
 
 def render_static(request, template):

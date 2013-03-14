@@ -1,9 +1,7 @@
-from django.http import (HttpResponse, HttpResponseNotFound,
-    HttpResponseBadRequest, HttpResponseRedirect)
+from django.http import Http404, HttpResponseBadRequest, HttpResponseRedirect
 from django.core.urlresolvers import reverse
 from django.shortcuts import render
-from django.views.decorators.http import (require_GET, require_POST,
-    require_http_methods)
+from django.views.decorators.http import require_GET, require_http_methods
 from django.contrib import messages
 from couchdbkit.exceptions import ResourceNotFound
 
@@ -28,13 +26,11 @@ def add_view_or_update_registry(request, id=None):
     """Add, view, or update a facility registry"""
 
     if id:
-        action = "edit"
         try:
             registry = FacilityRegistry.get(id)
         except ResourceNotFound:
-            return HttpResponseNotFound()
+            raise Http404()
     else:
-        action = "create"
         registry = FacilityRegistry()
 
     if request.method == 'POST':
@@ -48,7 +44,8 @@ def add_view_or_update_registry(request, id=None):
                 messages.error(request, "Error saving registry, is it valid?")
             else:
                 messages.success(
-                    request, "Facility Registry successfully {0}d!".format(action))
+                    request, "Facility Registry successfully {0}!".format(
+                        "edited" if id else "created"))
 
                 return HttpResponseRedirect(reverse(list_registries))
     else:
@@ -56,7 +53,7 @@ def add_view_or_update_registry(request, id=None):
 
     return render(request, "facilities/edit_registry.html", {
         'form': form,
-        'action': action.capitalize()
+        'new': id
     })
 
 
@@ -66,7 +63,7 @@ def sync_registry(request, id, strategy='theirs'):
     try:
         registry = FacilityRegistry.get(id)
     except ResourceNotFound:
-        return HttpResponseNotFound()
+        raise Http404()
 
     registry.sync_with_remote(strategy=strategy)
     messages.success(request, "Facility Registry successfully synced!")
@@ -79,7 +76,7 @@ def delete_registry(request, id):
     try:
         registry = FacilityRegistry.get(id)
     except ResourceNotFound:
-        return HttpResponseNotFound()
+        raise Http404()
 
     try:
         registry.delete()
@@ -99,7 +96,7 @@ def list_facilities(request, registry_id=None):
         try:
             registry = FacilityRegistry.get(registry_id)
         except ResourceNotFound:
-            return HttpResponseNotFound()
+            raise Http404()
     else:
         registry = None
 
@@ -115,7 +112,7 @@ def view_or_update_facility(request, id):
     try:
         facility = Facility.get(id)
     except ResourceNotFound:
-        return HttpResponseNotFound()
+        raise Http404()
 
     if request.method == 'POST':
         form = FacilityForm(request.POST, initial={
@@ -128,7 +125,7 @@ def view_or_update_facility(request, id):
                     facility.data[k] = v
                 except Exception:
                     messages.warning(request,
-                        "Error using value {0} for the '{1}' field!".format(
+                        "Unable to use value {0} for the '{1}' field!".format(
                             v, k))
             try:
                 facility.save()

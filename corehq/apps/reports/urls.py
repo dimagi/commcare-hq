@@ -66,6 +66,9 @@ urlpatterns = patterns('corehq.apps.reports.views',
     ## saved
     url(r"^export/saved/download/(?P<export_id>[\w\-]+)/$", "hq_download_saved_export", name="hq_download_saved_export"),
 
+    # once off email
+    url(r"^email_onceoff/(?P<report_slug>[\w_]+)/$", 'email_report'),
+
     # Saved reports
     url(r"^configs$", 'add_config', name='add_report_config'),
     url(r"^configs/(?P<config_id>[\w-]+)$", 'delete_config',

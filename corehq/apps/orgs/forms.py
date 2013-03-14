@@ -8,8 +8,9 @@ from corehq.apps.registration.forms import OrganizationRegistrationForm
 from corehq.apps.users.models import CouchUser
 
 class AddProjectForm(forms.Form):
-    domain_name = forms.CharField(label="Project name", help_text="e.g. - public")
-    domain_hrname = forms.CharField(label="Project display name", required=False, help_text="e.g. - Commcare HQ Demo Project")
+    domain_name = forms.CharField(label="Project Name", help_text="e.g. - public")
+    domain_hrname = forms.CharField(label="Project Nickname", required=False, help_text="e.g. - Commcare HQ Demo Project")
+
     def __init__(self, org_name, *args, **kwargs):
         self.org_name = org_name
         super(AddProjectForm, self).__init__(*args, **kwargs)

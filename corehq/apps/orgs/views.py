@@ -8,6 +8,7 @@ from django.template.loader import render_to_string
 from django.views.decorators.http import require_POST
 from django.shortcuts import render
 from django.contrib import messages
+from corehq.apps.announcements.models import Notification
 
 from corehq.apps.domain.decorators import require_superuser
 from corehq.apps.hqwebapp.utils import InvitationView
@@ -40,10 +41,26 @@ def orgs_base(request, template="orgs/orgs_base.html"):
     vals = dict(orgs = organizations)
     return render(request, template, vals)
 
+class MainNotification(Notification):
+    doc_type = 'OrgMainNotification'
+
+    def template(self):
+        return 'orgs/partials/main_notification.html'
+
 @org_member_required
 def orgs_landing(request, org, template="orgs/orgs_landing.html", form=None, add_form=None, invite_member_form=None,
                  add_team_form=None, update_form=None, tab=None):
     organization = Organization.get_by_name(org, strict=True)
+
+
+    class LandingNotification(Notification):
+        doc_type = 'OrgLandingNotification'
+
+        def template(self):
+            return 'orgs/partials/landing_notification.html'
+
+    MainNotification.display_if_needed(messages, request, ctxt={"org": organization})
+    LandingNotification.display_if_needed(messages, request)
 
     reg_form_empty = not form
     add_form_empty = not add_form
@@ -88,16 +105,38 @@ def orgs_landing(request, org, template="orgs/orgs_landing.html", form=None, add
 @org_member_required
 def orgs_members(request, org, template="orgs/orgs_members.html"):
     organization = Organization.get_by_name(org, strict=True)
+
+    class MembersNotification(Notification):
+        doc_type = 'OrgMembersNotification'
+
+        def template(self):
+            return 'orgs/partials/members_notification.html'
+
+    MainNotification.display_if_needed(messages, request, ctxt={"org": organization})
+    MembersNotification.display_if_needed(messages, request)
+
     ctxt = base_context(request, organization)
     ctxt["org_admins"] = [member.username for member in ctxt["members"] if member.is_org_admin(org)]
     ctxt["tab"] = "members"
+
     return render(request, template, ctxt)
 
 @org_member_required
 def orgs_teams(request, org, template="orgs/orgs_teams.html"):
     organization = Organization.get_by_name(org, strict=True)
+
+    class TeamsNotification(Notification):
+        doc_type = 'OrgTeamsNotification'
+
+        def template(self):
+            return 'orgs/partials/teams_notification.html'
+
+    MainNotification.display_if_needed(messages, request, ctxt={"org": organization})
+    TeamsNotification.display_if_needed(messages, request)
+
     ctxt = base_context(request, organization)
     ctxt["tab"] = "teams"
+
     return render(request, template, ctxt)
 
 @require_superuser
@@ -284,6 +323,15 @@ def orgs_logo(request, org, template="orgs/orgs_logo.html"):
 @org_member_required
 def orgs_team_members(request, org, team_id, template="orgs/orgs_team_members.html"):
     organization = Organization.get_by_name(org)
+
+    class TeamMembersNotification(Notification):
+        doc_type = 'OrgTeamMembersNotification'
+
+        def template(self):
+            return 'orgs/partials/team_members_notification.html'
+
+    MainNotification.display_if_needed(messages, request, ctxt={"org": organization})
+    TeamMembersNotification.display_if_needed(messages, request)
 
     ctxt = base_context(request, organization)
     ctxt["tab"] = "teams"

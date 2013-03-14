@@ -88,7 +88,7 @@ def register_org(request, template="registration/org_request.html"):
 
             if referer_url:
                 return redirect(referer_url)
-            messages.info(request, render_to_string('orgs/partials/welcome_notification.html',
+            messages.info(request, render_to_string('orgs/partials/landing_notification.html',
                                                        {"org": org, "user": request.couch_user}), extra_tags="html")
             return HttpResponseRedirect(reverse("orgs_landing", args=[name]))
     else:

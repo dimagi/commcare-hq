@@ -1,9 +1,0 @@
-<h2>Welcome {{ user.full_name|default:user.username }}</h2>
-<p>Welcome to {{ org.title|capfirst }}’s organization page!  Use this page to coordinate your organization’s projects and members.</p>
-<p>You can add CommCare projects to your organization, and add organization members to certain projects.  Soon members will be able to view organization-wide reports and other advanced analytics.</p>
-<a href="{% url orgs_landing org.name %}"><h3>Projects Info</h3></a>
-<p>Add projects that are part of your organization.  You can add a project if you are an admin member of that project.  Project admins can also request to join your organization.</p>
-<a href="{% url orgs_teams org.name %}"><h3>Teams Info</h3></a>
-<p>Organize your members into different teams. You can grant each team different permissions for each project. In the future, this will control which project’s data team members see in global reports and advanced analytics.</p>
-<a href="{% url orgs_members org.name %}"><h3>Members Info</h3></a>
-<p>Add members to your organization.  In the future, members will be able to take advantage of organization-level features like global reports and advanced analytics.</p>
