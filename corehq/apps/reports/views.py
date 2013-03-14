@@ -553,6 +553,50 @@ def add_config(request, domain=None):
     return json_response(config)
 
 @login_and_domain_required
+@datespan_default
+def email_report(request, domain, report_slug):
+    from datetime import datetime
+    from dimagi.utils.django.email import send_HTML_email
+    from corehq.apps.reports.dispatcher import ProjectReportDispatcher
+    user_id = request.couch_user._id
+
+    config = ReportConfig()
+    object.__setattr__(config, '_id', 'dummy')
+    config.name = "Once off emailed report"
+    config.report_type = ProjectReportDispatcher.prefix
+    config.report_slug = report_slug
+    config.owner_id = user_id
+    config.domain = domain
+
+    config.date_range = 'range'
+    config.start_date = request.datespan.computed_startdate.date()
+    config.end_date = request.datespan.computed_enddate.date()
+
+    GET = dict(request.GET.iterlists())
+    exclude_filters = ['startdate', 'enddate']
+    for field in exclude_filters:
+        GET.pop(field, None)
+
+    filters = {}
+    for field in GET:
+        filters[field] = GET.get(field)
+
+    config.filters = filters
+
+    body = _render_report_configs(request, [config],
+                                  domain,
+                                  user_id,
+                                  request.couch_user,
+                                  True).content
+
+    title = "Scheduled report from CommCare HQ"
+
+    send_HTML_email(title, request.couch_user.get_email(), body)
+
+    messages.success(request, "Your report has been emailed.")
+    return HttpResponseRedirect(config.url)
+
+@login_and_domain_required
 @require_http_methods(['DELETE'])
 def delete_config(request, domain, config_id):
     try:
@@ -676,7 +720,6 @@ def send_test_scheduled_report(request, domain, scheduled_report_id):
 
 def get_scheduled_report_response(couch_user, domain, scheduled_report_id,
                                   email=True):
-    from dimagi.utils.web import get_url_base
     from django.http import HttpRequest
     
     request = HttpRequest()
@@ -687,18 +730,27 @@ def get_scheduled_report_response(couch_user, domain, scheduled_report_id,
 
     notification = ReportNotification.get(scheduled_report_id)
 
+    return _render_report_configs(request, notification.configs,
+                                  notification.domain,
+                                  notification.owner_id,
+                                  couch_user,
+                                  email)
+
+def _render_report_configs(request, configs, domain, owner_id, couch_user, email):
+    from dimagi.utils.web import get_url_base
+
     report_outputs = []
-    for config in notification.configs:
+    for config in configs:
         report_outputs.append({
             'title': config.full_name,
             'url': config.url,
             'content': config.get_report_content()
         })
-    
+
     return render(request, "reports/report_email.html", {
         "reports": report_outputs,
-        "domain": notification.domain,
-        "couch_user": notification.owner._id,
+        "domain": domain,
+        "couch_user": owner_id,
         "DNS_name": get_url_base(),
         "owner_name": couch_user.full_name or couch_user.get_email(),
         "email": email
