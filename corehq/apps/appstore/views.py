@@ -18,7 +18,6 @@ from corehq.apps.domain.models import Domain
 from django.contrib import messages
 from django.utils.translation import ugettext as _
 
-PER_PAGE = 9
 SNAPSHOT_FACETS = ['project_type', 'license', 'region', 'author']
 DEPLOYMENT_FACETS = ['deployment.region']
 SNAPSHOT_MAPPING = {'category':'project_type', 'license': 'license', 'region': 'region', 'author': 'author'}
