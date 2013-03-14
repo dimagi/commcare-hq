@@ -466,6 +466,10 @@ try:
 except ImportError:
     pass
 
+if DEBUG:
+    INSTALLED_APPS.append('luna')
+
+
 ####### South Settings #######
 #SKIP_SOUTH_TESTS=True
 #SOUTH_TESTS_MIGRATE=False
