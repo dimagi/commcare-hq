@@ -464,6 +464,10 @@ try:
 except ImportError:
     pass
 
+if DEBUG:
+    INSTALLED_APPS = INSTALLED_APPS + (
+        'luna',
+    )
 
 if not DEBUG:
     TEMPLATE_LOADERS = [
