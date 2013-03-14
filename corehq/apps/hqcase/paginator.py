@@ -8,7 +8,7 @@ class CasePaginator():
                  filter=None):
         self.domain = domain.lower()
         self.params = params
-        self.case_type = case_type
+        self.case_type = case_type.lower()
         self.owner_ids = owner_ids
         self.user_ids = user_ids
         self.status = status or None
@@ -41,7 +41,7 @@ class CasePaginator():
 
         subterms = [self.filter] if self.filter else []
         if self.case_type:
-            subterms.append({"term": {"type": self.case_type.lower()}})
+            subterms.append({"term": {"type": self.case_type}})
 
         if self.status:
             subterms.append({"term": {"closed": (self.status == 'closed')}})
