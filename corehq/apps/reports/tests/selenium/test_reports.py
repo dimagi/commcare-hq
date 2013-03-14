@@ -1,5 +1,5 @@
-from corehq.apps.selenium.testcases import WebUserTestCase
-from corehq.apps import selenium
+from corehq.apps.hqwebapp.testcases import WebUserTestCase
+from corehq.apps.hqwebapp import selenium
 from selenium.common.exceptions import NoSuchElementException
 import re
 
