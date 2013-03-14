@@ -465,7 +465,9 @@ except ImportError:
     pass
 
 if DEBUG:
-    INSTALLED_APPS.append('luna')
+    INSTALLED_APPS = INSTALLED_APPS + (
+        'luna',
+    )
 
 if not DEBUG:
     TEMPLATE_LOADERS = [
