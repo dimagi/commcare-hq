@@ -80,10 +80,6 @@ TEMPLATE_LOADERS = (
     'django.template.loaders.eggs.Loader',
     #     'django.template.loaders.eggs.load_template_source',
 )
-if not DEBUG:
-    TEMPLATE_LOADERS = [
-        ('django.template.loaders.cached.Loader', TEMPLATE_LOADERS),
-    ]
 
 MIDDLEWARE_CLASSES = [
     'django.middleware.common.CommonMiddleware',
@@ -467,6 +463,12 @@ try:
         from localsettings import *
 except ImportError:
     pass
+
+
+if not DEBUG:
+    TEMPLATE_LOADERS = [
+        ('django.template.loaders.cached.Loader', TEMPLATE_LOADERS),
+    ]
 
 ####### South Settings #######
 #SKIP_SOUTH_TESTS=True
