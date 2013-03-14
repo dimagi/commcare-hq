@@ -730,4 +730,4 @@ def noneulized_users(request, template="hqadmin/noneulized_users.html"):
     context["headers"] = headers
     context["aoColumns"] = headers.render_aoColumns
 
-    return render_to_response(request, template, context)
+    return render(request, template, context)
