@@ -175,7 +175,7 @@ class testPillowTopProcessing(TestCase):
         Verify that a simple case doc will yield the basic mapping
         """
 
-        pillow = XFormPillow(create_index=False, get_mapping=False)
+        pillow = XFormPillow(create_index=False, online=False)
         t1 = pillow.get_mapping_from_type(XFORM_SINGLE_CASE)
         t2 = pillow.get_mapping_from_type(XFORM_MULTI_CASES)
 
@@ -186,7 +186,7 @@ class testPillowTopProcessing(TestCase):
         Test that xform pillow can process and cleanup a single xform with a case submission
         """
         xform = XFORM_SINGLE_CASE
-        pillow = XFormPillow(create_index=False, get_mapping=False)
+        pillow = XFormPillow(create_index=False, online=False)
         changed = pillow.change_transform(xform)
 
         self.assertIsNone(changed['form']['case']['@date_modified'])
@@ -198,7 +198,7 @@ class testPillowTopProcessing(TestCase):
         Test that xform pillow can process and cleanup a single xform with a list of cases in it
         """
         xform = XFORM_MULTI_CASES
-        pillow = XFormPillow(create_index=False, get_mapping=False)
+        pillow = XFormPillow(create_index=False, online=False)
         changed = pillow.change_transform(xform)
 
 
