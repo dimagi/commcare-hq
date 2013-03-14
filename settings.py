@@ -80,10 +80,6 @@ TEMPLATE_LOADERS = (
     'django.template.loaders.eggs.Loader',
     #     'django.template.loaders.eggs.load_template_source',
 )
-if not DEBUG:
-    TEMPLATE_LOADERS = [
-        ('django.template.loaders.cached.Loader', TEMPLATE_LOADERS),
-    ]
 
 MIDDLEWARE_CLASSES = [
     'django.middleware.common.CommonMiddleware',
@@ -455,6 +451,8 @@ LOGGING = {
     }
 }
 
+COUCH_STALE_QUERY='update_after'  # 'ok' for cloudant
+
 try:
     #try to see if there's an environmental variable set for local_settings
     if os.environ.get('CUSTOMSETTINGS', None) == "demo":
@@ -469,6 +467,10 @@ except ImportError:
 if DEBUG:
     INSTALLED_APPS.append('luna')
 
+if not DEBUG:
+    TEMPLATE_LOADERS = [
+        ('django.template.loaders.cached.Loader', TEMPLATE_LOADERS),
+    ]
 
 ####### South Settings #######
 #SKIP_SOUTH_TESTS=True
