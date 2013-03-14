@@ -6,7 +6,7 @@ class CasePaginator():
     def __init__(self, domain, params, case_type=None, owner_ids=None,
                  user_ids=None, status=None, sort_key=None, sort_order=None,
                  filter=None):
-        self.domain = domain
+        self.domain = domain.lower()
         self.params = params
         self.case_type = case_type
         self.owner_ids = owner_ids
@@ -41,7 +41,7 @@ class CasePaginator():
 
         subterms = [self.filter] if self.filter else []
         if self.case_type:
-            subterms.append({"term": {"type": self.case_type}})
+            subterms.append({"term": {"type": self.case_type.lower()}})
 
         if self.status:
             subterms.append({"term": {"closed": (self.status == 'closed')}})
