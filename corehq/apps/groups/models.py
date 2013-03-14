@@ -2,6 +2,7 @@ from __future__ import absolute_import
 from couchdbkit.ext.django.schema import *
 from corehq.apps.users.models import CouchUser, CommCareUser
 from dimagi.utils.couch.undo import UndoableDocument, DeleteDocRecord
+from django.conf import settings
 
 
 class Group(UndoableDocument):

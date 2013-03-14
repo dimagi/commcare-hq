@@ -1,3 +1,4 @@
+from django.conf import settings
 from django.core.urlresolvers import reverse
 from corehq.apps.announcements.dispatcher import HQAnnouncementAdminInterfaceDispatcher
 from corehq.apps.announcements.forms import HQAnnouncementForm, ReportAnnouncementForm
