@@ -552,33 +552,35 @@ def add_config(request, domain=None):
     return json_response(config)
 
 @login_and_domain_required
-def email_report(request, domain=None, report_slug=None):
+@datespan_default
+def email_report(request, domain, report_slug):
     from datetime import datetime
     from dimagi.utils.django.email import send_HTML_email
     from corehq.apps.reports.dispatcher import ProjectReportDispatcher
     user_id = request.couch_user._id
 
-    GET = dict(request.GET.iteritems())
-
-    to_date = lambda s: datetime.strptime(s, '%Y-%m-%d').date() if s else s
-    try:
-        GET['start_date'] = to_date(GET['startdate'])
-        GET['end_date'] = to_date(GET['enddate'])
-    except ValueError:
-        # invalidly formatted date input
-        return HttpResponseBadRequest()
-
     config = ReportConfig()
-
+    object.__setattr__(config, '_id', 'dummy')
+    config.name = "Once off emailed report"
     config.report_type = ProjectReportDispatcher.prefix
     config.report_slug = report_slug
-    config.domain = domain
     config.owner_id = user_id
-    config.name = "Once off emailed report"
+    config.domain = domain
 
-    for field in config.properties().keys():
-        if field in GET:
-            setattr(config, field, GET[field])
+    config.date_range = 'range'
+    config.start_date = request.datespan.computed_startdate.date()
+    config.end_date = request.datespan.computed_enddate.date()
+
+    GET = dict(request.GET.iterlists())
+    exclude_filters = ['startdate', 'enddate']
+    for field in exclude_filters:
+        GET.pop(field, None)
+
+    filters = {}
+    for field in GET:
+        filters[field] = GET.get(field)
+
+    config.filters = filters
 
     body = _render_report_configs(request, [config],
                                   domain,
@@ -591,7 +593,7 @@ def email_report(request, domain=None, report_slug=None):
     send_HTML_email(title, request.couch_user.get_email(), body)
 
     messages.success(request, "Your report has been emailed.")
-    return HttpResponseRedirect(request.get_full_path().replace("email_onceoff/", ""))
+    return HttpResponseRedirect(config.url)
 
 @login_and_domain_required
 @require_http_methods(['DELETE'])
