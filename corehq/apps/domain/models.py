@@ -280,7 +280,7 @@ class Domain(Document, HQBillingDomainMixin, SnapshotMixin):
                 keys=[[is_active, d] for d in domain_names],
                 reduce=False,
                 include_docs=True,
-                stale=COUCH_STALE_QUERY,
+                stale=settings.COUCH_STALE_QUERY,
             ).all()
         else:
             return []
