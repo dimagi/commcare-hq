@@ -6,7 +6,7 @@
 {% block js-inline %} {{ block.super }}
     <script type="text/javascript">
         function format_date(datestring) {
-            //parse nad format the date timestamps - seconds since epoch into date object
+            //parse and format the date timestamps - seconds since epoch into date object
             var date = new Date(datestring * 1000);
             // hours part from the timestamp
             var hours = date.getHours();
@@ -116,6 +116,10 @@
 
 {% endblock js-inline %}
 {% block reportcontent %}
+    <div class="row-fluid">
+        <span class="label label-info pull-right">Last deployed on {{ last_deploy.date|date:"d M Y" }}
+         at {{ last_deploy.date|date:"H:i:s"}} UTC by {{ last_deploy.user }}</span>
+    </div>
     <div class="row-fluid">
         <table class="table table-striped">
 
