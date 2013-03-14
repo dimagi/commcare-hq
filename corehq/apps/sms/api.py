@@ -3,7 +3,7 @@ from django.conf import settings
 
 from dimagi.utils.modules import try_import, to_function
 from corehq.apps.sms.util import clean_phone_number, create_billable_for_sms, format_message_list
-from corehq.apps.sms.models import SMSLog, OUTGOING, INCOMING
+from corehq.apps.sms.models import SMSLog, OUTGOING, INCOMING, ForwardingRule, FORWARD_ALL, FORWARD_BY_KEYWORD
 from corehq.apps.sms.mixin import MobileBackend, VerifiedNumber
 from datetime import datetime
 
@@ -348,6 +348,22 @@ def form_session_handler(v, text):
     # should the error responses instead be handler by some generic error/fallback
     # handler
     return True
+
+def forwarding_handler(v, text):
+    rules = ForwardingRule.view("sms/forwarding_rule", key=v.domain, include_docs=True).all()
+    text_words = text.upper().split()
+    keyword_to_match = text_words[0] if len(text_words) > 0 else ""
+    for rule in rules:
+        matches_rule = False
+        if rule.forward_type == FORWARD_ALL:
+            matches_rule = True
+        elif rule.forward_type == FORWARD_BY_KEYWORD:
+            matches_rule = (keyword_to_match == rule.keyword.upper())
+        
+        if matches_rule:
+            send_sms_with_backend(v.domain, "+%s" % v.phone_number, text, rule.backend_id)
+            return True
+    return False
 
 def fallback_handler(v, text):
     send_sms_to_verified_number(v, 'could not understand your message. please check keyword.')
