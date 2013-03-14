@@ -409,7 +409,7 @@ def get_apps_base_context(request, domain, app):
     applications = ApplicationBase.view('app_manager/applications_brief',
         startkey=[domain],
         endkey=[domain, {}],
-        stale='update_after',
+        stale=settings.COUCH_STALE_QUERY,
     ).all()
 
     lang, langs = get_langs(request, app)
