@@ -6,13 +6,14 @@ from corehq.apps.api.es import FullXFormES
 from corehq.apps.reports.datatables import DataTablesColumn, DataTablesHeader
 from corehq.apps.reports.generic import GenericTabularReport
 from corehq.apps.reports.standard import CustomProjectReport
+from corehq.apps.reports.standard.inspect import ElasticTabularReport
 from dimagi.utils import html
 from dimagi.utils.decorators.memoized import memoized
 from pact.enums import PACT_DOMAIN
 from pact.forms.patient_form import PactPatientForm
 from pact.forms.weekly_schedule_form import ScheduleForm
 from pact.models import PactPatientCase
-from pact.reports import PactDrilldownReportMixin, ESSortableMixin
+from pact.reports import PactDrilldownReportMixin
 from pact.utils import pact_script_fields
 
 
@@ -24,7 +25,7 @@ from pact.utils import pact_script_fields
 #address: /a/pact/cloudcare/apps/view/0ff529f53c26f44e1fa020e79afe0b1b/0/4/case/%(case_id)s/enter/
 
 
-class PactPatientInfoReport(PactDrilldownReportMixin, ESSortableMixin, GenericTabularReport,
+class PactPatientInfoReport(PactDrilldownReportMixin, ElasticTabularReport, GenericTabularReport,
                             CustomProjectReport):
     slug = "patient"
     description = "some patient"
