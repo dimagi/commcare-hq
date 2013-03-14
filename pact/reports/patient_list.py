@@ -10,6 +10,7 @@ from corehq.apps.reports.standard.inspect import ElasticTabularReport
 from corehq.apps.users.models import CommCareUser
 from dimagi.utils.decorators.memoized import memoized
 from pact.enums import PACT_DOMAIN, PACT_HP_CHOICES, PACT_DOT_CHOICES, PACT_CASE_TYPE
+from pact.reports import PactElasticTabularReportMixin
 from pact.reports.dot import PactDOTReport
 from pact.reports.patient import PactPatientInfoReport
 from pact.utils import query_per_case_submissions_facet
@@ -62,7 +63,7 @@ class DOTStatus(ReportSelectField):
         self.options.insert(0, dict(val=self.ANY_DOT, text="Any DOT"))
 
 
-class PatientListDashboardReport(ElasticTabularReport, CustomProjectReport):
+class PatientListDashboardReport(PactElasticTabularReportMixin):
     name = "All Patients"
     slug = "patients"
     ajax_pagination = True

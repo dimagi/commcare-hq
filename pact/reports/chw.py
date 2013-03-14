@@ -10,12 +10,11 @@ from dimagi.utils import html
 from dimagi.utils.decorators.memoized import memoized
 from pact.enums import PACT_CASE_TYPE, PACT_DOMAIN
 from . import chw_schedule
-from pact.reports import PactDrilldownReportMixin
+from pact.reports import PactDrilldownReportMixin, PactElasticTabularReportMixin
 from pact.utils import pact_script_fields, case_script_field
 
 
-class PactCHWProfileReport(PactDrilldownReportMixin, ElasticTabularReport, GenericTabularReport,
-                           CustomProjectReport):
+class PactCHWProfileReport(PactDrilldownReportMixin, PactElasticTabularReportMixin):
     slug = "chw_profile"
     description = "CHW Profile"
     view_mode = 'info'

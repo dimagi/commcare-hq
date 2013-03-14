@@ -1,5 +1,7 @@
 import dateutil
 from corehq.apps.reports.dispatcher import CustomProjectReportDispatcher
+from corehq.apps.reports.standard import ProjectReportParametersMixin, CustomProjectReport
+from corehq.apps.reports.standard.inspect import ElasticTabularReport
 
 
 class PactPatientDispatcher(CustomProjectReportDispatcher):
@@ -15,6 +17,15 @@ class PactPatientDispatcher(CustomProjectReportDispatcher):
 
     def get_reports(self, domain):
         return self.report_map.get(domain, {})
+
+
+class PactElasticTabularReportMixin(CustomProjectReport, ElasticTabularReport, ProjectReportParametersMixin):
+    def format_date(self, date_string, format="%Y-%m-%d"):
+        try:
+            date_obj = dateutil.parser.parse(date_string)
+            return date_obj.strftime(format)
+        except:
+            return date_string
 
 
 class PactDrilldownReportMixin(object):

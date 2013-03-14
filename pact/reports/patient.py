@@ -13,7 +13,7 @@ from pact.enums import PACT_DOMAIN
 from pact.forms.patient_form import PactPatientForm
 from pact.forms.weekly_schedule_form import ScheduleForm
 from pact.models import PactPatientCase
-from pact.reports import PactDrilldownReportMixin
+from pact.reports import PactDrilldownReportMixin, PactElasticTabularReportMixin
 from pact.utils import pact_script_fields
 
 
@@ -25,8 +25,7 @@ from pact.utils import pact_script_fields
 #address: /a/pact/cloudcare/apps/view/0ff529f53c26f44e1fa020e79afe0b1b/0/4/case/%(case_id)s/enter/
 
 
-class PactPatientInfoReport(PactDrilldownReportMixin, ElasticTabularReport, GenericTabularReport,
-                            CustomProjectReport):
+class PactPatientInfoReport(PactDrilldownReportMixin,PactElasticTabularReportMixin):
     slug = "patient"
     description = "some patient"
 
