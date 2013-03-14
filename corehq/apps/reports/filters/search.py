@@ -9,7 +9,6 @@ class SearchFilter(BaseReportFilter):
 
     @property
     def filter_context(self):
-        print "in filter context"
         return {
             'search_query': self.request.GET.get('search_query', "")
         }
