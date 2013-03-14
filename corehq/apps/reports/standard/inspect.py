@@ -1,16 +1,19 @@
+import json
+
 from couchdbkit.exceptions import ResourceNotFound
 from couchdbkit.resource import RequestFailed
 import dateutil
 from django.core.urlresolvers import reverse, NoReverseMatch
 from django.template.defaultfilters import yesno
-import json
 from django.utils import html
 import pytz
 from django.conf import settings
 import simplejson
-from casexml.apps.case.models import CommCareCase, CommCareCaseAction
+from django.utils.translation import ugettext as _
+from django.utils.translation import ugettext_noop
+
+from casexml.apps.case.models import CommCareCaseAction
 from corehq.apps.api.es import CaseES
-from corehq.apps.hqcase.paginator import CasePaginator
 from corehq.apps.hqsofabed.models import HQFormData
 from corehq.apps.reports.filters.search import SearchFilter
 from corehq.apps.reports.standard import ProjectReport, ProjectReportParametersMixin
@@ -22,11 +25,8 @@ from corehq.apps.users.models import CommCareUser
 from dimagi.utils.couch.database import get_db
 from dimagi.utils.couch.pagination import CouchFilter
 from dimagi.utils.decorators.memoized import memoized
-from dimagi.utils.logging import notify_exception
 from dimagi.utils.timezones import utils as tz_utils
 from corehq.apps.groups.models import Group
-from django.utils.translation import ugettext as _
-from django.utils.translation import ugettext_noop
 
 
 class ProjectInspectionReportParamsMixin(object):
@@ -37,7 +37,6 @@ class ProjectInspectionReportParamsMixin(object):
         # complicated multiple-inheritance chain
         # todo: group this kind of stuff with the field object in a comprehensive field refactor
 
-        print "paramsmixin shared"
         return [dict(name='individual', value=self.individual),
                 dict(name='group', value=self.group_id),
                 dict(name='case_type', value=self.case_type),
@@ -198,7 +197,12 @@ class CaseDisplay(object):
 
     @property
     def modified_on(self):
-        return self.report.date_to_json(self.parse_date(self.case['modified_on']))
+        return self.report.date_to_json(self.modified_on_dt)
+
+    @property
+    def modified_on_dt(self):
+        return self.parse_date(self.case['modified_on'])
+
 
     @property
     def owner_id(self):
@@ -257,6 +261,12 @@ class CaseDisplay(object):
 
 
 class ElasticTabularReport(ProjectInspectionReportParamsMixin, GenericTabularReport):
+    """
+    Tabular report that provides framework for doing elasticsearch backed tabular reports.
+
+    Main thing of interest is that you need es_results to hit ES, and that your datatable headers
+    must use prop_name kwarg to enable column sorting.
+    """
     default_sort = None
 
     @property
@@ -291,7 +301,6 @@ class ElasticTabularReport(ProjectInspectionReportParamsMixin, GenericTabularRep
             Returns an integer.
         """
         res = self.es_results
-        print "elastic total_records"
         if res is not None:
             return res['hits'].get('total', 0)
         else:
@@ -303,10 +312,8 @@ class ElasticTabularReport(ProjectInspectionReportParamsMixin, GenericTabularRep
         Override the params and applies all the params of the originating view to the GET
         so as to get sorting working correctly with the context of the GET params
         """
-        print "elastic paginagion get params"
         ret = super(ElasticTabularReport, self).shared_pagination_GET_params
         for k, v in self.request.GET.items():
-            print "elastic pagination: %s: %s" % (k, v)
             ret.append(dict(name=k, value=v))
         return ret
 
@@ -373,14 +380,11 @@ class CaseListMixin(ElasticTabularReport, ProjectReportParametersMixin):
             'size': self.pagination.count,
             }
 
-        print simplejson.dumps(es_query)
         return es_query
 
     @property
     def es_results(self):
         case_es = CaseES(self.domain)
-        print "es_results"
-        print self.request.GET.keys()
         query = self.build_query(case_type=self.case_type, filter=self.case_filter,
                                  status=self.case_status, owner_ids=self.case_owners,
                                  search_string=SearchFilter.get_value(self.request, self.domain))
@@ -424,15 +428,11 @@ class CaseListMixin(ElasticTabularReport, ProjectReportParametersMixin):
 
     @property
     def shared_pagination_GET_params(self):
-        print "caselist shared pagination"
         shared_params = super(CaseListMixin, self).shared_pagination_GET_params
         shared_params.append(dict(
             name=SelectOpenCloseField.slug,
             value=self.request.GET.get(SelectOpenCloseField.slug, '')
         ))
-        print 'caselistmixin shared_pagination_gets:'
-        print self.request.GET.keys()
-        print shared_params
         return shared_params
 
 

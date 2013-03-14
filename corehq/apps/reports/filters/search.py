@@ -11,5 +11,5 @@ class SearchFilter(BaseReportFilter):
     def filter_context(self):
         print "in filter context"
         return {
-            'search_query': self.request.GET.get('search_query', None)
+            'search_query': self.request.GET.get('search_query', "")
         }

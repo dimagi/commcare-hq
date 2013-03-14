@@ -9,6 +9,7 @@ from corehq.apps.reports.models import HQUserType
 from corehq.apps.reports.standard.inspect import CaseListMixin, CaseDisplay
 from dimagi.utils.decorators.memoized import memoized
 from django.utils.translation import ugettext_noop
+from django.utils.translation import ugettext as _
 
 class DataInterface(GenericReportView):
     # overriding properties from GenericReportView
@@ -40,27 +41,25 @@ class CaseReassignmentInterface(CaseListMixin, DataInterface):
     def headers(self):
         headers = DataTablesHeader(
             DataTablesColumn(mark_safe('Select  <a href="#" class="select-all btn btn-mini btn-inverse">all</a> <a href="#" class="select-none btn btn-mini btn-warning">none</a>'), sortable=False, span=2),
-            DataTablesColumn("Case Name", span=3),
-            DataTablesColumn("Case Type", span=2),
-            DataTablesColumn("Owner", span=2),
-            DataTablesColumn("Last Modified", span=3, sort_type=DTSortType.NUMERIC)
+            DataTablesColumn(_("Case Name"), span=3, prop_name="name.exact"),
+            DataTablesColumn(_("Case Type"), span=2, prop_name="type"),
+            DataTablesColumn(_("Owner"), span=2, prop_name="owner_display", sortable=False),
+            DataTablesColumn(_("Last Modified"), span=3, prop_name="modified_on"),
         )
-#        headers.custom_sort = [[1, 'asc']]
-        headers.no_sort = True
         return headers
 
     @property
     def rows(self):
         checkbox = mark_safe('<input type="checkbox" class="selected-commcare-case" data-bind="event: {change: updateCaseSelection}" data-caseid="%(case_id)s" data-owner="%(owner)s" data-ownertype="%(owner_type)s" />')
-        for row in self.case_results['rows']:
+        for row in self.es_results['hits'].get('hits', []):
             case = self.get_case(row)
             display = CaseDisplay(self, case)
             yield [
-                checkbox % dict(case_id=case._id, owner=display.owner_id, owner_type=display.owner_type),
+                checkbox % dict(case_id=case['_id'], owner=display.owner_id, owner_type=display.owner_type),
                 display.case_link,
                 display.case_type,
                 display.owner_display,
-                util.format_relative_date(case.modified_on)['html'],
+                util.format_relative_date(display.modified_on_dt)['html'],
             ]
 
     @property
@@ -68,7 +67,7 @@ class CaseReassignmentInterface(CaseListMixin, DataInterface):
         context = super(CaseReassignmentInterface, self).report_context
         active_users = self.get_all_users_by_domain(user_filter=tuple(HQUserType.use_defaults()), simplified=True)
         context.update(
-            users=[dict(ownerid=user.get('user_id'), name=user.get('username_in_report'), type="user")
+           users=[dict(ownerid=user.get('user_id'), name=user.get('username_in_report'), type="user")
                    for user in active_users],
             groups=[dict(ownerid=group.get_id, name=group.name, type="group")
                     for group in self.all_case_sharing_groups],
