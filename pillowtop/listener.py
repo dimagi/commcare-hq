@@ -279,7 +279,10 @@ class ElasticPillow(BasicPillow):
         return es.get('%s/_mapping' % self.es_index).get(self.es_index, {})
 
     def set_mapping(self, type_string, mapping):
-        return self.put_robust("%s/%s/_mapping" % (self.es_index, type_string), data=mapping)
+        if self.online:
+            return self.put_robust("%s/%s/_mapping" % (self.es_index, type_string), data=mapping)
+        else:
+            return {"ok": True, "acknowledged": True}
 
     @memoized
     def get_es(self):
