@@ -21,7 +21,7 @@
     {% for member in members %}
         <tr><td style="border-top: none;">
             <strong>
-                {% if member.first_name and member.last_name %}
+                {% if member.full_name %}
                     {{ member.full_name }} <small>({{ member.username }})</small>
                 {% else %}
                     {{ member.username }}

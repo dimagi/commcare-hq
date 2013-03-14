@@ -346,7 +346,7 @@ def set_report_announcements_for_user(request, couch_user):
         reduce=False,
         startkey=key + [now.isoformat()],
         endkey=key + [{}],
-        stale='update_after',
+        stale=settings.COUCH_STALE_QUERY,
     ).all()
     announce_ids = [a['id'] for a in data if a['id'] not in couch_user.announcements_seen]
     for announcement_id in announce_ids:

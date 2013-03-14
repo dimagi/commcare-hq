@@ -8,6 +8,7 @@ from django.shortcuts import render
 
 import rawes
 from casexml.apps.case.models import CommCareCase
+from corehq.apps.hqadmin.models import HqDeploy
 from corehq.apps.builds.models import CommCareBuildConfig, BuildSpec
 from corehq.apps.domain.models import Domain
 from corehq.apps.hqadmin.escheck import check_cluster_health, check_case_index, check_xform_index, check_exchange_index
@@ -383,7 +384,7 @@ def submissions_errors(request, template="hqadmin/submissions_errors_report.html
             reduce=True,
             startkey=key+[datespan.startdate_param_utc],
             endkey=key+[datespan.enddate_param_utc],
-            stale='update_after',
+            stale=settings.COUCH_STALE_QUERY,
         ).first()
         num_errors = 0
         num_warnings = 0
@@ -535,7 +536,10 @@ def system_ajax(request):
     db = XFormInstance.get_db()
     ret = {}
     if type == "_active_tasks":
-        tasks = filter(lambda x: x['type'] == "indexer", db.server.active_tasks())
+        tasks = []
+        #commenting out until we get this fixed on bigcouch
+        #tasks = filter(lambda x: x['type'] == "indexer", db.server.active_tasks())
+        #for reference structure is:
 #        tasks = [{'type': 'indexer', 'pid': 'foo', 'database': 'mock',
 #            'design_document': 'mockymock', 'progress': 0,
 #            'started_on': 1349906040.723517, 'updated_on': 1349905800.679458,
@@ -612,7 +616,8 @@ def system_info(request):
     context['celery_update'] = request.GET.get('celery_update', 10000)
 
     context['hide_filters'] = True
-    context['current_system'] = os.uname()[1]
+    if hasattr(os, 'uname'):
+        context['current_system'] = os.uname()[1]
 
     #from dimagi.utils import gitinfo
     #context['current_ref'] = gitinfo.get_project_info()
@@ -623,7 +628,9 @@ def system_info(request):
     else:
         couchlog_resource = Resource("http://%s:%s@%s/" % (settings.COUCH_USERNAME, settings.COUCH_PASSWORD, settings.COUCH_SERVER_ROOT))
     try:
-        context['couch_log'] = couchlog_resource.get('_log', params_dict={'bytes': 2000 }).body_string()
+        #todo, fix on bigcouch/cloudant
+        #context['couch_log'] = couchlog_resource.get('_log', params_dict={'bytes': 2000 }).body_string()
+        context['couch_log'] = "Will be back online shortly"
     except Exception, ex:
         context['couch_log'] = "unable to open couch log: %s" % ex
 
@@ -689,6 +696,7 @@ def system_info(request):
     context['memcached_status'] = mc_status
     context['memcached_results'] = mc_results
 
+    context['last_deploy'] = HqDeploy.get_latest()
 
     #elasticsearch status
     #node status
@@ -725,4 +733,4 @@ def noneulized_users(request, template="hqadmin/noneulized_users.html"):
     context["headers"] = headers
     context["aoColumns"] = headers.render_aoColumns
 
-    return render_to_response(request, template, context)
+    return render(request, template, context)

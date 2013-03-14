@@ -2,30 +2,28 @@
 couch models go here
 """
 from __future__ import absolute_import
-
 from datetime import datetime
 import logging
-from couchdbkit import ResourceConflict, NoResultFound
 import re
+import json
+
+from couchdbkit import ResourceConflict, NoResultFound
 from django.utils import html, safestring
 from restkit.errors import NoMoreData
-from dimagi.utils.decorators.memoized import memoized
-from dimagi.utils.make_uuid import random_hex
-from dimagi.utils.modules import to_function
-
 from django.conf import settings
 from django.contrib.auth.models import User
 from django.contrib.sites.models import Site
 from django.core.urlresolvers import reverse
 from django.core.exceptions import ValidationError
 from django.template.loader import render_to_string
-
 from couchdbkit.ext.django.schema import *
 from couchdbkit.resource import ResourceNotFound
+
+from dimagi.utils.decorators.memoized import memoized
+from dimagi.utils.make_uuid import random_hex
+from dimagi.utils.modules import to_function
 from casexml.apps.case.models import CommCareCase
-
 from casexml.apps.phone.models import User as CaseXMLUser
-
 from corehq.apps.domain.shortcuts import create_user
 from corehq.apps.domain.utils import normalize_domain_name
 from corehq.apps.domain.models import LicenseAgreement
@@ -33,13 +31,11 @@ from corehq.apps.users.util import normalize_username, user_data_from_registrati
 from corehq.apps.users.xml import group_fixture
 from corehq.apps.sms.mixin import CommCareMobileContactMixin, VerifiedNumber, PhoneNumberInUseException, InvalidFormatException
 from couchforms.models import XFormInstance
-
 from dimagi.utils.couch.undo import DeleteRecord, DELETED_SUFFIX
 from dimagi.utils.django.email import send_HTML_email
 from dimagi.utils.mixins import UnicodeMixIn
 from dimagi.utils.dates import force_to_datetime
 from dimagi.utils.django.database import get_unique_value
-import json
 
 
 COUCH_USER_AUTOCREATED_STATUS = 'autocreated'
@@ -792,7 +788,7 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, UnicodeMixIn):
             reduce=reduce,
             startkey=key,
             endkey=key + [{}],
-            stale='update_after',
+            stale=settings.COUCH_STALE_QUERY,
             **extra_args
         ).all()
 
@@ -889,7 +885,7 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, UnicodeMixIn):
             )
             return result.one(except_all=raise_if_none)
         try:
-            result = get(stale='update_after', raise_if_none=True)
+            result = get(stale=settings.COUCH_STALE_QUERY, raise_if_none=True)
             if result['doc'] is None or result['doc']['username'] != username:
                 raise NoResultFound
         except NoMoreData:
@@ -1524,7 +1520,6 @@ class WebUser(CouchUser, MultiMembershipMixin, OrgMembershipMixin):
     @memoized
     def has_permission(self, domain, permission, data=None):
         # is_admin is the same as having all the permissions set
-        from corehq.apps.orgs.models import Team
         if self.is_global_admin():
             return True
         elif self.is_domain_admin(domain):
@@ -1554,7 +1549,6 @@ class WebUser(CouchUser, MultiMembershipMixin, OrgMembershipMixin):
         Get the role object for this user
 
         """
-        from corehq.apps.orgs.models import Team
         if domain is None:
             # default to current_domain for django templates
             domain = self.current_domain

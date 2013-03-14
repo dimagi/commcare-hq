@@ -82,6 +82,7 @@ class CommtrackActionConfig(DocumentSchema):
 class LocationType(DocumentSchema):
     name = StringProperty()
     allowed_parents = StringListProperty()
+    administrative = BooleanProperty()
 
 class CommtrackRequisitionConfig(DocumentSchema):
     # placeholder class for when this becomes fancier

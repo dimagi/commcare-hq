@@ -34,3 +34,59 @@ class ReportAnnouncement(HQAnnouncement):
         Global Announcements.
     """
     pass
+
+
+class Notification(Document):
+    """
+    For handling persistent notifications that only disappear when the user explicitly dismisses them.
+
+    Example Usage:
+        class ExampleNotification(Notification):
+            doc_type = 'ExampleNotification'
+
+            def template(self):
+                return 'example_notification.html'
+
+        def example_page(request):
+            ExampleNotification.display_if_needed(messages, request)
+    """
+    dismissed = BooleanProperty(default=False)
+    user = StringProperty()
+    base_doc = 'Notification'
+    doc_type = 'Notification'
+
+    def template(self):
+        raise NotImplementedError
+
+    @classmethod
+    # @memoized todo: figure out how to reset cache of class methods
+    def get_notification(cls, username):
+        notification = cls.view("announcements/notifications",
+            reduce=False,
+            startkey=[cls._doc_type, username],
+            endkey=[cls._doc_type, username, {}],
+            include_docs=True,
+        ).one()
+
+        if not notification:
+            notification = cls(user=username)
+            notification.save()
+
+        return notification
+
+    @classmethod
+    def unseen_notification(cls, username):
+        notification = cls.get_notification(username)
+        return notification if not notification.dismissed else None
+
+    def render_notice(self, ctxt=None):
+        ctxt = ctxt or {}
+        ctxt.update({"note": self, "notification_template": self.template()})
+        return render_to_string('announcements/partials/notification_wrapper.html', ctxt)
+
+    @classmethod
+    def display_if_needed(cls, messages, request, ctxt=None):
+        note = cls.unseen_notification(request.couch_user.username)
+        if note:
+            ctxt = ctxt or {}
+            messages.info(request, note.render_notice(ctxt=ctxt), extra_tags="html")

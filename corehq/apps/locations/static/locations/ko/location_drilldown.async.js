@@ -8,7 +8,7 @@ function api_get_children(loc_uuid, callback) {
     });
 }
 
-function LocationSelectViewModel(default_caption, auto_drill, loc_filter) {
+function LocationSelectViewModel(hierarchy, default_caption, auto_drill, loc_filter) {
   var model = this;
 
   this.default_caption = default_caption || 'All';

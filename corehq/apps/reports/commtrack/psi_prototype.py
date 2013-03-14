@@ -386,7 +386,8 @@ class SalesAndConsumptionReport(GenericTabularReport, CommtrackReportMixin, Date
                 tx_by_action = map_reduce(lambda tx: [(tx['action'], int(tx['value']))], data=tx_by_product.get(p['_id'], []))
 
                 product_states = product_state_buckets.get((site._id, p['_id']), [])
-                latest_state = product_states[-1] if product_states else None
+                stock_update_states = filter(lambda st: 'current_stock' in st['updated_unknown_properties'], product_states)
+                latest_state = stock_update_states[-1] if stock_update_states else None
                 if latest_state:
                     stock = latest_state['updated_unknown_properties']['current_stock']
                     as_of = dateparse.string_to_datetime(latest_state['server_date']).strftime('%Y-%m-%d')
@@ -394,7 +395,7 @@ class SalesAndConsumptionReport(GenericTabularReport, CommtrackReportMixin, Date
 
                 stockout_dates = set()
                 for state in product_states:
-                    stocked_out_since = state['updated_unknown_properties']['stocked_out_since']
+                    stocked_out_since = state['updated_unknown_properties'].get('stocked_out_since')
                     if stocked_out_since:
                         so_start = max(dateparse.string_to_datetime(stocked_out_since).date(), self.datespan.startdate.date())
                         so_end = dateparse.string_to_datetime(state['server_date']).date() # TODO deal with time zone issues
@@ -594,10 +595,18 @@ class StockOutReport(GenericTabularReport, CommtrackReportMixin, DatespanMixin):
                 startkey = [str(self.domain), site._id, p['_id']]
                 endkey = startkey + [{}]
 
-                latest_state = get_db().view('commtrack/stock_product_state', startkey=endkey, endkey=startkey, descending=True).first()
+                def product_states():
+                    for st in get_db().view('commtrack/stock_product_state', startkey=endkey, endkey=startkey, descending=True):
+                        doc = st['value']
+                        if 'stocked_out_since' in doc['updated_unknown_properties']:
+                            yield doc
+                try:
+                    latest_state = product_states().next()
+                except StopIteration:
+                    latest_state = None
+
                 if latest_state:
-                    doc = latest_state['value']
-                    so_date = doc['updated_unknown_properties']['stocked_out_since']
+                    so_date = latest_state['updated_unknown_properties']['stocked_out_since']
                     if so_date:
                         so_days = (date.today() - dateparse.string_to_datetime(so_date).date()).days + 1
                     else:

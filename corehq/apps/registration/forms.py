@@ -6,7 +6,7 @@ import re
 from corehq.apps.domain.forms import clean_password, max_pwd
 from django.core.validators import validate_email
 from corehq.apps.domain.models import Domain
-from corehq.apps.domain.utils import new_domain_re, new_org_re, new_org_title_re, website_re
+from corehq.apps.domain.utils import new_domain_re, new_org_re, website_re
 from corehq.apps.orgs.models import Organization
 
 class NewWebUserRegistrationForm(forms.Form):
@@ -19,8 +19,9 @@ class NewWebUserRegistrationForm(forms.Form):
                                     help_text='You will use this email to log in.')
     password  =  forms.CharField(label='Password', max_length=max_pwd, widget=forms.PasswordInput(render_value=False))
     eula_confirmed = forms.BooleanField(required=False, label="End User License Agreement") # Must be set to False to have the clean_*() routine called
+    # not required for when a user accepts an invitation
     domain_type = forms.CharField(
-        widget=forms.HiddenInput(), initial='commcare')
+        required=False, widget=forms.HiddenInput(), initial='commcare')
 
     def clean_full_name(self):
         data = self.cleaned_data['full_name'].split()
@@ -75,8 +76,6 @@ class OrganizationRegistrationForm(forms.Form):
 
     def clean_org_title(self):
         data = self.cleaned_data['org_title'].strip()
-        if not re.match("^%s$" % new_org_title_re, data) and not data == '':
-            raise forms.ValidationError('Only letters and numbers allowed. Single spaces may be used to separate words.')
         return data
 
     def clean_email(self):
@@ -112,8 +111,7 @@ class DomainRegistrationForm(forms.Form):
     """
     org = forms.CharField(widget=forms.HiddenInput(), required=False)
     domain_name = forms.CharField(label='Project Name:', max_length=25)
-    domain_type = forms.CharField(
-        widget=forms.HiddenInput(), initial='commcare')
+    domain_type = forms.CharField(widget=forms.HiddenInput(), required=False, initial='commcare')
 
     def clean_domain_name(self):
         data = self.cleaned_data['domain_name'].strip().lower()
@@ -124,6 +122,10 @@ class DomainRegistrationForm(forms.Form):
         if conflict:
             raise forms.ValidationError('Project name already taken---please try another')
         return data
+
+    def clean_domain_type(self):
+        data = self.cleaned_data.get('domain_type', '').strip().lower()
+        return data if data else 'commcare'
 
     def clean(self):
         for field in self.cleaned_data:

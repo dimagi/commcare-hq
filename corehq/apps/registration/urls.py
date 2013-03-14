@@ -1,6 +1,7 @@
 from django.conf.urls.defaults import *
 
 urlpatterns = patterns('corehq.apps.registration.views',
+    url(r'^$', 'registration_default', name='registration_default'),
     url(r'^user/(?P<domain_type>\w+)?$', 'register_user', name='register_user'),
     url(r'^domain/(?P<domain_type>\w+)?$', 'register_domain', name='registration_domain'),
     url(r'^organization/$', 'register_org', name='registration_org'),

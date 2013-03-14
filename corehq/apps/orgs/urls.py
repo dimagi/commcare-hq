@@ -7,6 +7,7 @@ urlpatterns = patterns('corehq.apps.orgs.views',
     url(r'^(?P<org>[\w\.-]+)/add_project/$', 'orgs_add_project', name='orgs_add_project'),
     url(r'^(?P<org>[\w\.-]+)/new_project/$', 'orgs_new_project', name='orgs_new_project'),
     url(r'^(?P<org>[\w\.-]+)/update_project_info/$', 'orgs_update_project', name='orgs_update_project'),
+    url(r'^(?P<org>[\w\.-]+)/remove_project/$', 'orgs_remove_project', name='orgs_remove_project'),
     url(r'^(?P<org>[\w\.-]+)/invite_member/$', 'invite_member', name='orgs_invite_member'),
     url(r'^(?P<org>[\w\.-]+)/remove_member/$', 'remove_member', name='orgs_remove_member'),
     url(r'^(?P<org>[\w\.-]+)/add_team/$', 'orgs_add_team', name='orgs_add_team'),
@@ -30,4 +31,9 @@ urlpatterns = patterns('corehq.apps.orgs.views',
     url(r'^(?P<org>[\w\.-]+)/join/(?P<invitation_id>[ \w-]+)/$', 'accept_invitation', name='orgs_accept_invitation'),
     url(r'^(?P<org>[\w\.-]+)/seen_request/$', 'seen_request', name='orgs_seen'),
     url(r'^(?P<org>[\w\.-]+)/verify_org/$', 'verify_org', name='verify_org'),
+)
+
+organizations_urls = patterns('corehq.apps.orgs.views',
+    url(r'^$', 'orgs_base', name='orgs_base'),
+    url(r'^(?P<org>[\w\.-]+)/$', 'public', name='orgs_public'),
 )
