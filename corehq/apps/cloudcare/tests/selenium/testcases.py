@@ -1,7 +1,7 @@
-from dimagi.utils.django.test import SeleniumWrapper
-from corehq.apps.selenium.testcases import MobileWorkerTestCase
+from corehq.apps.hqwebapp.testcases import MobileWorkerTestCase
 from selenium.common.exceptions import NoSuchElementException, StaleElementReferenceException
-from corehq.apps import selenium
+from corehq.apps.hqwebapp import selenium
+import luna
 
 DEFAULT_OPEN_FORM_WAIT_TIME = 10
 DEFAULT_SUBMIT_FORM_WAIT_TIME = 5
@@ -15,7 +15,7 @@ class CloudCareQuestion(object):
     def __init__(self, element):
         # element is a fully loaded question - we can assume any finds can
         # return immediately
-        self.element = SeleniumWrapper(element)
+        self.element = luna.SeleniumWrapper(element)
 
     def __getattr__(self, name):
         return getattr(self.element, name)

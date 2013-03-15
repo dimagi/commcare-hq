@@ -6,9 +6,9 @@ class CasePaginator():
     def __init__(self, domain, params, case_type=None, owner_ids=None,
                  user_ids=None, status=None, sort_key=None, sort_order=None,
                  filter=None):
-        self.domain = domain
+        self.domain = domain.lower()
         self.params = params
-        self.case_type = case_type
+        self.case_type = case_type.lower()
         self.owner_ids = owner_ids
         self.user_ids = user_ids
         self.status = status or None
