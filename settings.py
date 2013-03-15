@@ -576,6 +576,8 @@ DOMAIN_MODULE_MAP = {
     'mvp-sauri': 'mvp',
     'mvp-bonsaaso': 'mvp',
     'mvp-ruhiira': 'mvp',
+    'mvp-mwandama': 'mvp',
+    'mvp-sada': 'mvp',
     'psi-unicef': 'psi',
 }
 
