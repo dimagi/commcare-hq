@@ -18,7 +18,7 @@ from casexml.apps.case.sharedmodels import IndexHoldingMixIn, CommCareCaseIndex
 from copy import copy
 import itertools
 from dimagi.utils.couch.database import get_db
-from couchdbkit.exceptions import ResourceNotFound
+from couchdbkit.exceptions import ResourceNotFound, ResourceConflict
 from dimagi.utils.couch import LooselyEqualDocumentSchema
 
 """
@@ -575,6 +575,19 @@ class CommCareCase(CaseBase, IndexHoldingMixIn, ComputedDocumentMixin):
         self.server_modified_on = datetime.utcnow()
         super(CommCareCase, self).save(**params)
         case_post_save.send(CommCareCase, case=self)
+
+    def force_save(self, **params):
+        try:
+            self.save()
+        except ResourceConflict:
+            conflict = CommCareCase.get(self._id)
+            # if there's a conflict, make sure we know about every
+            # form in the conflicting doc
+            if set(conflict.xform_ids) - set(self.xform_ids):
+                raise
+            # couchdbkit doesn't like to let you set _rev very easily
+            self._doc["_rev"] = conflict._rev
+            self.save()
 
     def to_xml(self, version):
         from xml.etree import ElementTree
