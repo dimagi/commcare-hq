@@ -35,7 +35,7 @@ INDEX_REINDEX_SETTINGS = {"index": {"refresh_interval": "900s",
                                     "store.throttle.type": "merge",
                                     "number_of_replicas": "0"}
 }
-INDEX_STANDARD_SETTINGS = {"index": {"refresh_interval": "10s",
+INDEX_STANDARD_SETTINGS = {"index": {"refresh_interval": "5s",
                                      "merge.policy.merge_factor": 10,
                                      "store.throttle.max_bytes_per_sec": "5mb",
                                      "store.throttle.type": "node",
@@ -308,6 +308,7 @@ class ElasticPillow(BasicPillow):
         Rebuild an index after a delete
         """
         self.put_robust(self.es_index, data=self.es_meta)
+        self.set_index_normal_settings()
 
     def change_trigger(self, changes_dict):
         if changes_dict.get('deleted', False):
