@@ -161,7 +161,7 @@ class CaseDisplay(object):
     def _get_username(self, user_id):
         username = self.report.usernames.get(user_id)
         if not username:
-            user = CommCareUser.get_by_user_id(user_id)
+            user = CommCareUser.get_by_user_id(user_id) if user_id else None
             username = user.username if user else self.user_not_found_display(user_id)
         return username
 
