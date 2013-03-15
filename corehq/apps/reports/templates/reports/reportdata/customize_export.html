@@ -78,14 +78,12 @@
 {% block page-title %}
     <ul class="breadcrumb">
         <li>
-            <a href="{% url reports_home domain %}"><strong>{% trans "Reports" %}</strong></a> <span class="divider">&gt;</span>
+            <a href="{% url reports_home domain %}"><strong>{% trans "Project Reports" %}</strong></a>
+            <span class="divider">&gt;</span>
         </li>
         <li>
-            {% ifequal request.GET.type "case" %}
-                <a href="{% url project_report_dispatcher domain 'case_export' %}">{% trans "Export Cases, Referrals, and Users" %}</a> <span class="divider">&gt;</span>
-            {% else %}
-            <a href="{% url project_report_dispatcher domain 'excel_export_data' %}">{% trans "Export Submissions to Excel" %}</a> <span class="divider">&gt;</span>
-            {% endifequal %}
+            <a href="{{ back_url }}">{{ export_title }}</a>
+            <span class="divider">&gt;</span>
         </li>
         <li class="active">
             <a href="#">{% trans "Create Custom Export" %}</a>
@@ -194,7 +192,7 @@
         {% endif %}
         <div class="form-actions">
             <button type="submit" class="btn btn-large btn-primary">{% if saved_export.get_id %}Save{% else %}Create{% endif %}</button>
-            <a class="btn btn-large" href="{% ifequal request.GET.type "case" %}{% url project_report_dispatcher domain 'case_export' %}{% else %}{% url project_report_dispatcher domain 'excel_export_data' %}{% endifequal %}">Cancel</a>
+            <a class="btn btn-large" href="{{ back_url }}">Cancel</a>
             {% if saved_export.get_id %}
             <a class="btn btn-large btn-danger pull-right" data-toggle="modal" href="#delete-export-modal-{{ saved_export.get_id }}">
                 <i class="icon-remove icon-white"></i>

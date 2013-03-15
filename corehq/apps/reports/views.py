@@ -5,11 +5,13 @@ from django.core.cache import cache
 from django.core.servers.basehttp import FileWrapper
 import os
 from corehq.apps.reports import util
+from corehq.apps.reports.custom_export_helpers import CustomExportHelper
 from corehq.apps.reports.standard import inspect, export, ProjectReport
-from corehq.apps.reports.standard.export import DeidExportReport
-from corehq.apps.reports.export import ApplicationBulkExportHelper, CustomBulkExportHelper
-from corehq.apps.reports.models import (ReportConfig, ReportNotification,
-    FormExportSchema, HQGroupExportConfiguration)
+from corehq.apps.reports.export import (
+    ApplicationBulkExportHelper,
+    CustomBulkExportHelper
+)
+from corehq.apps.reports.models import ReportConfig, ReportNotification
 from corehq.apps.users.decorators import require_permission
 from corehq.apps.users.export import export_users
 from corehq.apps.users.models import Permissions
@@ -19,7 +21,6 @@ from couchexport.util import SerializableFunction
 from couchforms.models import XFormInstance
 from dimagi.utils.couch.bulk import wrapped_docs
 from dimagi.utils.couch.loosechange import parse_date
-from dimagi.utils.decorators import inline
 from dimagi.utils.export import WorkBook
 from dimagi.utils.web import json_request, json_response
 from django.http import HttpResponseRedirect, HttpResponse, HttpResponseBadRequest, Http404, HttpResponseForbidden
@@ -36,8 +37,7 @@ from corehq.apps.hqcase.export import export_cases_and_referrals
 from corehq.apps.users.models import CommCareUser
 from corehq.apps.reports.display import xmlns_to_name
 from couchexport.schema import build_latest_schema
-from couchexport.models import ExportSchema, ExportColumn, SavedExportSchema,\
-    ExportTable, Format, FakeSavedExportSchema, SavedBasicExport
+from couchexport.models import SavedExportSchema, Format, FakeSavedExportSchema, SavedBasicExport
 from couchexport import views as couchexport_views
 from couchexport.shortcuts import export_data_shared, export_raw_data,\
     export_response
@@ -182,117 +182,6 @@ def export_data_async(request, domain):
     return couchexport_views.export_data_async(request, filter=filter, type=export_type)
 
 
-class CustomExportHelper(object):
-
-    class DEID(object):
-        options = (
-            ('', ''),
-            ('Sensitive ID', 'couchexport.deid.deid_ID'),
-            ('Sensitive Date', 'couchexport.deid.deid_date'),
-        )
-
-    def __init__(self, request, domain, export_id=None):
-        self.request = request
-        self.domain = domain
-        self.export_type = request.GET.get('type', 'form')
-        self.presave = False
-
-        if self.export_type == 'form':
-            self.ExportSchemaClass = FormExportSchema
-        else:
-            self.ExportSchemaClass = SavedExportSchema
-
-        if export_id:
-            self.custom_export = self.ExportSchemaClass.get(export_id)
-            # also update the schema to include potential new stuff
-            self.custom_export.update_schema()
-
-            # enable configuring saved exports from this page
-            saved_group = HQGroupExportConfiguration.get_for_domain(self.domain)
-            self.presave = export_id in saved_group.custom_export_ids
-
-            assert(self.custom_export.doc_type == 'SavedExportSchema')
-            assert(self.custom_export.type == self.export_type)
-            assert(self.custom_export.index[0] == domain)
-        else:
-            self.custom_export = self.ExportSchemaClass(type=self.export_type)
-            if self.export_type == 'form':
-                self.custom_export.app_id = request.GET.get('app_id')
-        
-    def update_custom_export(self):
-        """
-        Updates custom_export object from the request
-        and saves to the db
-        """
-        schema = ExportSchema.get(self.request.POST["schema"])
-        self.custom_export.index = schema.index
-        self.custom_export.schema_id = self.request.POST["schema"]
-        self.custom_export.name = self.request.POST["name"]
-        self.custom_export.default_format = self.request.POST["format"] or Format.XLS_2007
-        self.custom_export.is_safe = bool(self.request.POST.get('is_safe'))
-
-        self.presave = bool(self.request.POST.get('presave'))
-
-        table = self.request.POST["table"]
-        cols = self.request.POST['order'].strip().split()
-
-        @list
-        @inline
-        def export_cols():
-            for col in cols:
-                transform = self.request.POST.get('%s transform' % col) or None
-                if transform:
-                    transform = SerializableFunction.loads(transform)
-                yield ExportColumn(
-                    index=col,
-                    display=self.request.POST["%s display" % col],
-                    transform=transform
-                )
-
-        export_table = ExportTable(index=table, display=self.request.POST["name"], columns=export_cols)
-        self.custom_export.tables = [export_table]
-        self.custom_export.order = cols
-
-        table_dict = dict([t.index, t] for t in self.custom_export.tables)
-        if table in table_dict:
-            table_dict[table].columns = export_cols
-        else:
-            self.custom_export.tables.append(ExportTable(index=table,
-                display=self.custom_export.name,
-                columns=export_cols))
-
-        if self.export_type == 'form':
-            self.custom_export.include_errors = bool(self.request.POST.get("include-errors"))
-            self.custom_export.app_id = self.request.POST.get('app_id')
-
-        self.custom_export.save()
-
-        if self.presave:
-            HQGroupExportConfiguration.add_custom_export(self.domain, self.custom_export.get_id)
-        else:
-            HQGroupExportConfiguration.remove_custom_export(self.domain, self.custom_export.get_id)
-
-    def get_response(self):
-        slug = export.ExcelExportReport.slug if self.export_type == "form" else export.CaseExportReport.slug
-        
-        def show_deid_column():
-            for table_config in self.custom_export.table_configuration:
-                for col in table_config['column_configuration']:
-                    if col['transform']:
-                        return True
-            return False
-
-        return render(self.request, "reports/reportdata/customize_export.html", {
-            "saved_export": self.custom_export,
-            "deid_options": CustomExportHelper.DEID.options,
-            "presave": self.presave,
-            "DeidExportReport_name": DeidExportReport.name,
-            "table_configuration": self.custom_export.table_configuration,
-            "slug": slug,
-            "domain": self.domain,
-            "show_deid_column": show_deid_column()
-        })
-
 @login_or_digest
 @datespan_default
 @require_GET
@@ -343,7 +232,7 @@ def _export_default_or_custom_data(request, domain, export_id=None, bulk_export=
     elif export_id:
         # this is a custom export
         try:
-            export_object = CustomExportHelper(request, domain, export_id).custom_export
+            export_object = CustomExportHelper.make(request, domain, export_id).custom_export
             if safe_only and not export_object.is_safe:
                 return HttpResponseForbidden()
         except ResourceNotFound:
@@ -392,7 +281,7 @@ def custom_export(req, domain):
     except ValueError:
         return HttpResponseBadRequest()
 
-    helper = CustomExportHelper(req, domain)
+    helper = CustomExportHelper.make(req, domain)
 
     if req.method == "POST":
         helper.update_custom_export()
@@ -428,7 +317,7 @@ def edit_custom_export(req, domain, export_id):
     Customize an export
     """
     try:
-        helper = CustomExportHelper(req, domain, export_id)
+        helper = CustomExportHelper.make(req, domain, export_id)
     except ResourceNotFound:
         raise Http404()
     if req.method == "POST":
@@ -494,11 +383,20 @@ def delete_custom_export(req, domain, export_id):
     messages.success(req, "Custom export was deleted.")
     return _redirect_to_export_home(saved_export.type, domain)
 
-def _redirect_to_export_home(type, domain):
-    if type == "form":
-        return HttpResponseRedirect(export.ExcelExportReport.get_url(domain=domain))
+
+def _export_home(type, domain):
+    if type == 'form':
+        return export.ExcelExportReport.get_url(domain=domain)
+    elif type == 'case':
+        return export.CaseExportReport.get_url(domain=domain)
     else:
-        return HttpResponseRedirect(export.CaseExportReport.get_url(domain=domain))
+        raise ValueError(
+            'Export is supposed to have type form or case, has %s' % type
+        )
+
+def _redirect_to_export_home(type, domain):
+    return HttpResponseRedirect(_export_home(type, domain))
+
 
 @login_and_domain_required
 @require_POST
