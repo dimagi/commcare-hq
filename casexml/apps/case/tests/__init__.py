@@ -3,6 +3,7 @@ try:
     from .test_attachments import *
     from .test_bugs import *
     from .test_exclusion import *
+    from .test_force_save import *
     from .test_from_xform import *
     from .test_indexes import *
     from .test_multi_case_submits import *

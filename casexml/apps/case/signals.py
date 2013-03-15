@@ -56,7 +56,7 @@ def process_cases(sender, xform, reconcile=False, **kwargs):
     # that they can re-pick up on
     xform.save(force_update=True)
     for case in cases:
-        case.save(force_update=True)
+        case.force_save()
 
 
 successful_form_received.connect(process_cases)
