@@ -3,7 +3,7 @@ from django.shortcuts import render
 from django.utils.decorators import method_decorator
 from django.views.generic import TemplateView
 from tastypie.http import HttpBadRequest
-from corehq.apps.crud.views import BaseAdminCRUDFormView
+from corehq.apps.crud.views import BaseAdminCRUDFormView, BaseCRUDFormView
 from corehq.apps.domain.decorators import login_and_domain_required
 from corehq.apps.indicators.admin.crud import IndicatorCRUDFormRequestManager
 from corehq.apps.indicators.admin.forms import BulkCopyIndicatorsForm
@@ -34,10 +34,14 @@ def default_admin(request, domain, template="reports/base_template.html", **kwar
     return render(request, template, context)
 
 
-class IndicatorAdminCRUDFormView(BaseAdminCRUDFormView):
+class IndicatorAdminCRUDFormView(BaseCRUDFormView):
     base_loc = "corehq.apps.indicators.admin.forms"
     template_name = "indicators/forms/crud.add_indicator.html"
     form_request_manager = IndicatorCRUDFormRequestManager
+
+    @method_decorator(require_edit_indicators)
+    def dispatch(self, request, *args, **kwargs):
+        return super(IndicatorAdminCRUDFormView, self).dispatch(request, *args, **kwargs)
 
 
 class BulkCopyIndicatorsView(TemplateView):
