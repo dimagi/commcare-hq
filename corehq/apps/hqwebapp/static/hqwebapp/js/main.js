@@ -41,7 +41,7 @@ var SaveButton = {
             $retry: $('<span/>').text(SaveButton.message.RETRY).click(function () {
                 button.fire('save');
             }).addClass('btn btn-success'),
-            $saving: $('<span/>').text(SaveButton.message.SAVING).addClass('btn disabled'),
+            $saving: $('<span/>').text(SaveButton.message.SAVING).prepend('<i class="icon-refresh icon-spin"></i> ').addClass('btn disabled'),
             $saved: $('<span/>').text(SaveButton.message.SAVED).addClass('btn disabled'),
             ui: $('<div/>').addClass('pull-right'),
             setStateWhenReady: function (state) {
@@ -146,7 +146,7 @@ var SaveButton = {
     },
     message: {
         SAVE: 'Save',
-        SAVING: 'Saving...',
+        SAVING: 'Saving',
         SAVED: 'Saved',
         RETRY: 'Try Again',
         ERROR_SAVING: 'There was an error saving'
@@ -180,7 +180,7 @@ var COMMCAREHQ = (function () {
         initBlock: function ($elem) {
             $('.submit_on_click', $elem).click(function (e) {
                 e.preventDefault();
-                $(this).closest('form').submit();
+                $(this).prev('form').submit();
             });
 
             $('.submit').click(function (e) {
@@ -393,10 +393,10 @@ $(function () {
         });
     }());
 
-    $(".sidebar h2").addClass('ui-corner-all');
-    $(".sidebar ul li").addClass('ui-corner-all');
-    $(".sidebar ul li div").addClass('ui-corner-top');
-    $(".sidebar ul").addClass('ui-corner-bottom');
+//    $(".sidebar h2").addClass('ui-corner-all');
+//    $(".sidebar ul li").addClass('ui-corner-all');
+//    $(".sidebar ul li div").addClass('ui-corner-top');
+//    $(".sidebar ul").addClass('ui-corner-bottom');
 
     COMMCAREHQ.initBlock($("body"));
     setUpIeWarning();

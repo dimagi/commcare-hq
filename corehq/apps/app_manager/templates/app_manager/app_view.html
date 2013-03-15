@@ -215,26 +215,26 @@
 {#    <div class="page-header">#}
 {#        <h1 class="app-manager-title variable-app_name">{{ app.name|html_name }}</h1>#}
 {#    </div>#}
-    <ul class="nav nav-tabs">
-        <li class="active">
-            <a href="#app-settings" data-toggle="tab">
-                {% if app.get_doc_type == "Application" %}
-                    {% trans "Application Settings" %}
-                {% else %}
-                    {% trans "Remote Setup" %}
-                {% endif %}
-            </a>
-        </li>
-
-        <li><a href="#languages-and-translations" data-toggle="tab">{% trans "Languages" %}</a></li>
-
-        {% if app.get_doc_type == 'Application' %}
-        <li><a href="#multimedia" data-toggle="tab">{% trans "Multimedia" %}</a></li>
-        {% endif %}
-        {% if edit %}
-        <li><a href="#actions" data-toggle="tab">{% trans "Actions" %}</a></li>
-        {% endif %}
-    </ul>
+{#    <ul class="nav nav-tabs">#}
+{#        <li class="active">#}
+{#            <a href="#app-settings" data-toggle="tab">#}
+{#                {% if app.get_doc_type == "Application" %}#}
+{#                    {% trans "Application Settings" %}#}
+{#                {% else %}#}
+{#                    {% trans "Remote Setup" %}#}
+{#                {% endif %}#}
+{#            </a>#}
+{#        </li>#}
+{##}
+{#        <li><a href="#languages-and-translations" data-toggle="tab">{% trans "Languages" %}</a></li>#}
+{##}
+{#        {% if app.get_doc_type == 'Application' %}#}
+{#        <li><a href="#multimedia" data-toggle="tab">{% trans "Multimedia" %}</a></li>#}
+{#        {% endif %}#}
+{#        {% if edit %}#}
+{#        <li><a href="#actions" data-toggle="tab">{% trans "Actions" %}</a></li>#}
+{#        {% endif %}#}
+{#    </ul>#}
     <div class="tab-content">
         <div class="tab-pane active" id="app-settings">
             {% include "app_manager/partials/app-settings.html" %}
@@ -243,6 +243,7 @@
             <div id="supported-languages">
                 {% include "app_manager/partials/supported-languages.html" %}
             </div>
+            <hr/>
             {% if app.get_doc_type == "Application" %}
             <section id="translations_ui">
                 <h2>{% trans "CommCare Translations" %}</h2>
@@ -259,6 +260,7 @@
                 <br/>
             </section>
             {% endif %}
+            <hr/>
             <section id="success-message">
                 <h2>{% trans "Success Message" %}</h2>
                 <form class="save-button-form form-horizontal" method="post" action="{% url edit_app_attr domain app.id 'success_message' %}">
@@ -279,7 +281,7 @@
                                     <p>{{ app.success_message|trans:langs }}</p>
                                 {% endif %}
                                 <span data-bind="visible: COMMCAREHQ.appView.settings.settingsIndex.properties['cc-send-unsent'].value() !== 'cc-su-man'">
-                                    <i class="icon-ok"></i> Autoset by Auto-set by Sync Mode
+                                    <i class="icon-ok"></i> Auto-set by Sync Mode
                                 </span>
                             </div>
                         </div>
@@ -316,6 +318,7 @@
                     <input type="submit" value="Copy..." />
                 </form>
             </div>
+            <hr/>
             <h2>{% trans "Delete this application" %}</h2>
             <form action="{% url corehq.apps.app_manager.views.delete_app domain app.id %}" method="POST">
 
