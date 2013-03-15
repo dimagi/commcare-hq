@@ -5,10 +5,12 @@ from couchdbkit.exceptions import ResourceConflict
 from django.conf import settings
 from django.contrib.auth.models import AnonymousUser
 from django.db import models
-from couchdbkit.ext.django.schema import Document, StringProperty,\
-    BooleanProperty, DateTimeProperty, IntegerProperty, DocumentSchema, SchemaProperty, DictProperty, ListProperty, StringListProperty
+from couchdbkit.ext.django.schema import (Document, StringProperty, BooleanProperty, DateTimeProperty, IntegerProperty,
+                                          DocumentSchema, SchemaProperty, DictProperty, ListProperty,
+                                          StringListProperty)
 from django.utils.safestring import mark_safe
 from corehq.apps.appstore.models import Review, SnapshotMixin
+from corehq.apps.domain.utils import get_domain_module_map
 from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.html import format_html
 from dimagi.utils.logging import notify_exception
@@ -747,8 +749,7 @@ class Domain(Document, HQBillingDomainMixin, SnapshotMixin):
         None if it doesn't exist.
         
         """
-        domain_module_map = getattr(settings, 'DOMAIN_MODULE_MAP', {})
-        module_name = domain_module_map.get(domain_name, domain_name)
+        module_name = get_domain_module_map().get(domain_name, domain_name)
 
         try:
             return __import__(module_name) if module_name else None
