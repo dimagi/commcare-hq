@@ -452,7 +452,7 @@ class CaseListReport(CaseListMixin, ProjectInspectionReport):
     @property
     def headers(self):
         headers = DataTablesHeader(
-            DataTablesColumn(_("Case Type"), prop_name="type"),
+            DataTablesColumn(_("Case Type"), prop_name="type.exact"),
             DataTablesColumn(_("Name"), prop_name="name.exact"),
             DataTablesColumn(_("Owner"), prop_name="owner_display", sortable=False),
             DataTablesColumn(_("Created Date"), prop_name="opened_on"),

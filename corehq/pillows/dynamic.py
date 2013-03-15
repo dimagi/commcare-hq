@@ -70,6 +70,7 @@ case_special_types = {
 
     "referrals": {"enabled": False, "type": "object"},
     "computed_": {"enabled": False, "type": "object"},
+    "type":type_exact_match_string("type", dual=True),
     #to extend, use this and add special date formats here...
 }
 
