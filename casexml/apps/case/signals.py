@@ -1,7 +1,10 @@
 from django.dispatch.dispatcher import Signal
 from receiver.signals import successful_form_received
 from casexml.apps.phone.models import SyncLog
+from dimagi.utils.decorators.log_exception import log_exception
+from couchforms.models import XFormInstance
 
+@log_exception()
 def process_cases(sender, xform, reconcile=False, **kwargs):
     """
     Creates or updates case objects which live outside of the form.
@@ -17,15 +20,15 @@ def process_cases(sender, xform, reconcile=False, **kwargs):
         for c in cases:
             c.reconcile_actions(rebuild=True)
 
-    # attach domain if it's there
+    # attach domain and export tag if domain is there
     if hasattr(xform, "domain"):
         domain = xform.domain
-        def attach_domain(case):
+        def attach_extras(case):
             case.domain = domain
             if domain and hasattr(case, 'type'):
                 case['#export_tag'] = ["domain", "type"]
             return case
-        cases = [attach_domain(case) for case in cases]
+        cases = [attach_extras(case) for case in cases]
 
     # HACK -- figure out how to do this more properly
     # todo: create a pillow for this
@@ -47,10 +50,13 @@ def process_cases(sender, xform, reconcile=False, **kwargs):
 
     # set flags for indicator pillows and save
     xform.initial_processing_complete = True
-    xform.save()
+
+    # if there are pillows or other _changes listeners competing to update
+    # this form, override them. this will create a new entry in the feed
+    # that they can re-pick up on
+    xform.save(force_update=True)
     for case in cases:
-        case.initial_processing_complete = True
-        case.save()
+        case.save(force_update=True)
 
 
 successful_form_received.connect(process_cases)
