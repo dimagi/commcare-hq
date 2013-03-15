@@ -409,6 +409,14 @@ def mail_admins(subject, message):
                  'message':message },
              user=env.sudo_user)
 
+@roles('pg', 'django_monolith')
+def record_successful_deploy():
+    with cd(env.code_root):
+        sudo('%(virtualenv_root)s/bin/python manage.py record_deploy_success --user "%(user)s"' % \
+             {'virtualenv_root': env.virtualenv_root,
+              'user': env.user },
+        user=env.sudo_user)
+
 @task
 def deploy():
     """ deploy code to remote host by checking out the latest via git """
@@ -432,6 +440,7 @@ def deploy():
         raise
     else:
         execute(mail_admins, "Deploy successful", "Cheers.")
+        execute(record_successful_deploy)
     finally:
         # hopefully bring the server back to life if anything goes wrong
         execute(services_restart)
