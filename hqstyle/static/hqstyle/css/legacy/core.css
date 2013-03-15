@@ -38,8 +38,6 @@
   margin-top: 5px;
 }
 .hq-oldstyle {
-  /* make join .sidebar and .sidebar + * horizontally */
-
   /*.dropdown {*/
 
   /*display: block;*/
@@ -117,52 +115,8 @@
 .hq-oldstyle #title-bar {
   padding: 1em;
 }
-.hq-oldstyle .sidebar {
-  padding: 1em;
-}
-.hq-oldstyle .sidebar a {
-  color: #222;
-}
-.hq-oldstyle .sidebar a:hover {
-  color: #0067B1;
-  text-decoration: underline;
-}
 .hq-oldstyle #modules-header {
   text-align: center;
-}
-.hq-oldstyle .sidebar .app-name-div {
-  padding: .25em;
-}
-.hq-oldstyle .sidebar ul li {
-  padding: .25em;
-  padding-left: 1.5em;
-  list-style: none;
-}
-.hq-oldstyle .sidebar > ul > li > div {
-  padding: .25em;
-}
-.hq-oldstyle .sidebar ul {
-  margin-bottom: 1em;
-  margin: 0;
-}
-.hq-oldstyle .sidebar .app-name-div.selected {
-  background-color: #ccc;
-  border: 1px solid #bbb;
-}
-.hq-oldstyle .sidebar div.selected {
-  background-color: #ccc;
-  border: 1px solid #bbb;
-}
-.hq-oldstyle .sidebar ul.selected {
-  background-color: #eee;
-}
-.hq-oldstyle .sidebar li.selected {
-  background-color: #ccc;
-  border: 1px solid #bbb;
-}
-.hq-oldstyle .sidebar + * {
-  border: none;
-  padding: 1em 2.7% 1em 0;
 }
 .hq-oldstyle form table td {
   padding: .25em;
