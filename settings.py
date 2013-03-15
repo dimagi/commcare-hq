@@ -80,10 +80,6 @@ TEMPLATE_LOADERS = (
     'django.template.loaders.eggs.Loader',
     #     'django.template.loaders.eggs.load_template_source',
 )
-if not DEBUG:
-    TEMPLATE_LOADERS = [
-        ('django.template.loaders.cached.Loader', TEMPLATE_LOADERS),
-    ]
 
 MIDDLEWARE_CLASSES = [
     'django.middleware.common.CommonMiddleware',
@@ -203,7 +199,6 @@ HQ_APPS = (
     'corehq.apps.api',
     'corehq.apps.indicators',
     'corehq.couchapps',
-    'corehq.apps.selenium',
     'sofabed.forms',
     'soil',
     'corehq.apps.hqsofabed',
@@ -455,6 +450,8 @@ LOGGING = {
     }
 }
 
+COUCH_STALE_QUERY='update_after'  # 'ok' for cloudant
+
 try:
     #try to see if there's an environmental variable set for local_settings
     if os.environ.get('CUSTOMSETTINGS', None) == "demo":
@@ -465,6 +462,22 @@ try:
         from localsettings import *
 except ImportError:
     pass
+
+if DEBUG:
+    try:
+        import luna
+        del luna
+    except ImportError:
+        pass
+    else:
+        INSTALLED_APPS = INSTALLED_APPS + (
+            'luna',
+        )
+
+if not DEBUG:
+    TEMPLATE_LOADERS = [
+        ('django.template.loaders.cached.Loader', TEMPLATE_LOADERS),
+    ]
 
 ####### South Settings #######
 #SKIP_SOUTH_TESTS=True

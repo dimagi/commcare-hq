@@ -147,9 +147,6 @@ LOCAL_PILLOWTOPS = []
 ####### Selenium tests config ########
 
 SELENIUM_SETUP = {
-    # apps (or app-qualified testcase classes or methods) to skip testing
-    'EXCLUDE_APPS': [],
-
     # Firefox, Chrome, Ie, or Remote
     'BROWSER': 'Chrome',
     
