@@ -6,7 +6,8 @@ from corehq.apps.domain.decorators import require_superuser
 from dimagi.utils.data.crud import CRUDFormRequestManager, CRUDActionError
 from dimagi.utils.modules import to_function
 
-class BaseAdminCRUDFormView(TemplateView):
+
+class BaseCRUDFormView(TemplateView):
     template_name = "crud/forms/crud.add_item.html"
     base_loc = None
     form_request_manager = CRUDFormRequestManager
@@ -14,7 +15,6 @@ class BaseAdminCRUDFormView(TemplateView):
     def is_form_class_valid(self, form_class):
         return True
 
-    @method_decorator(require_superuser)
     def dispatch(self, request, *args, **kwargs):
         self.request = request
         form_type = kwargs.get('form_type')
@@ -32,9 +32,16 @@ class BaseAdminCRUDFormView(TemplateView):
         if self.is_form_class_valid(form_class):
             try:
                 form_manager = self.form_request_manager(request, form_class, self.template_name,
-                    doc_id=item_id, delete=bool(action == 'delete'))
+                                                         doc_id=item_id, delete=bool(action == 'delete'))
                 return HttpResponse(form_manager.json_response)
             except CRUDActionError as e:
                 return HttpResponseBadRequest(e)
         else:
             return HttpResponseBadRequest("Not a valid form class.")
+
+
+class BaseAdminCRUDFormView(BaseCRUDFormView):
+
+    @method_decorator(require_superuser)
+    def dispatch(self, request, *args, **kwargs):
+        super(BaseAdminCRUDFormView, self).dispatch(request, *args, **kwargs)
