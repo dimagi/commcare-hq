@@ -1,11 +1,11 @@
 from django.shortcuts import render
+import json
 from corehq.apps.reports.standard import export
 from corehq.apps.reports.models import FormExportSchema, HQGroupExportConfiguration
 from corehq.apps.reports.standard.export import DeidExportReport
 from couchexport.models import SavedExportSchema, ExportColumn, ExportTable, ExportSchema, Format
 from django.utils.translation import ugettext as _
 from couchexport.util import SerializableFunction
-from dimagi.utils.decorators import inline
 
 
 class CustomExportHelper(object):
@@ -52,6 +52,32 @@ class CustomExportHelper(object):
         else:
             self.custom_export = self.ExportSchemaClass(type=self.export_type)
 
+    def parse_non_json_post(self):
+        table = self.request.POST["table"]
+        cols = self.request.POST['order'].strip().split()
+
+        def export_cols():
+            for col in cols:
+                transform = self.request.POST.get('%s transform' % col) or None
+                if transform:
+                    transform = SerializableFunction.loads(transform)
+                yield dict(
+                    index=col,
+                    display=self.request.POST["%s display" % col],
+                    transform=transform
+                )
+
+        export_cols = list(export_cols())
+
+        export_table = dict(
+            index=table,
+            display=self.custom_export.name,
+            columns=export_cols
+        )
+        return {
+            'tables': [export_table],
+        }
+
     def update_custom_export(self):
         """
         Updates custom_export object from the request
@@ -66,33 +92,28 @@ class CustomExportHelper(object):
 
         self.presave = bool(self.request.POST.get('presave'))
 
-        table = self.request.POST["table"]
-        cols = self.request.POST['order'].strip().split()
+        try:
+            post_data = json.loads(self.request.raw_post_data)
+        except ValueError:
+            post_data = self.parse_non_json_post()
 
-        @list
-        @inline
-        def export_cols():
-            for col in cols:
-                transform = self.request.POST.get('%s transform' % col) or None
-                if transform:
-                    transform = SerializableFunction.loads(transform)
-                yield ExportColumn(
-                    index=col,
-                    display=self.request.POST["%s display" % col],
-                    transform=transform
+        self.custom_export.tables = [
+            ExportTable.wrap(table)
+            for table in post_data['tables']
+        ]
+
+        table_dict = dict((t.index, t) for t in self.custom_export.tables)
+        for table in self.custom_export.tables:
+            if table.index in table_dict:
+                table_dict[table.index].columns = table.columns
+            else:
+                self.custom_export.tables.append(
+                    ExportTable(
+                        index=table.index,
+                        display=self.custom_export.name,
+                        columns=table.columns
+                    )
                 )
-
-        export_table = ExportTable(index=table, display=self.custom_export.name, columns=export_cols)
-        self.custom_export.tables = [export_table]
-        self.custom_export.order = cols
-
-        table_dict = dict([t.index, t] for t in self.custom_export.tables)
-        if table in table_dict:
-            table_dict[table].columns = export_cols
-        else:
-            self.custom_export.tables.append(ExportTable(index=table,
-                                                         display=self.custom_export.name,
-                                                         columns=export_cols))
 
         self.update_custom_params()
 
