@@ -7,6 +7,7 @@ from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn, D
 from corehq.apps.reports.generic import GenericTabularReport
 from corehq.apps.reports.standard import DatespanMixin
 from dimagi.utils.decorators.memoized import memoized
+from dimagi.utils.html import format_html
 from mvp.models import MVP
 from mvp.reports import MVPIndicatorReport
 
@@ -87,14 +88,13 @@ class CHWManagerReport(GenericTabularReport, MVPIndicatorReport, DatespanMixin):
     def rows(self):
         self.statistics_rows = [["Average"], ["Median"], ["Std. Dev."], ["Totals"]]
         if self.is_rendered_as_email:
-            print self.full_rows
             return self.full_rows
         return self.piecewise_rows
 
     @property
     def piecewise_rows(self):
         rows = []
-        d_text = lambda slug: mark_safe('<i class="icon icon-spinner status-%s"></i>' % slug)
+        d_text = lambda slug: mark_safe('<i class="icon icon-spinner status-%s"></i>' % format_html(slug))
 
         def _create_stat_cell(stat_type, slug):
             stat_cell = self.table_cell(None, d_text(slug))
@@ -134,8 +134,6 @@ class CHWManagerReport(GenericTabularReport, MVPIndicatorReport, DatespanMixin):
         user_data = {}
         for user in self.users:
             user_data[user.get('user_id')] = [user.get('username_in_report')]
-
-        print "USER DATA", user_data
 
         for section in self.indicators:
             for indicator in section:
