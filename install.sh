@@ -23,8 +23,7 @@ COUCHDB_DB="foodb"
 ES_VERSION=0.20.5
 
 if [ ! -f jdk.tar.gz ]; then
-    echo "Please read the top of this file."
-    exit 1
+    echo "WARNING: No JDK tarball found; some pieces of CommCareHQ (Cloudcare) may be nonfunctional"
 fi
 
 ## Install OS-level package dependencies
@@ -106,7 +105,7 @@ if [[ ! $(grep virtualenvwrapper ~/.bashrc) ]]; then
 fi
 
 ## Install Java ##
-if [ ! -d /usr/lib/jvm/jdk1.7.0 ]; then
+if [ -f jdk.tar.gz && ! -d /usr/lib/jvm/jdk1.7.0 ]; then
     tar -xzf jdk.tar.gz
     sudo mkdir /usr/lib/jvm
     sudo rm -r /usr/lib/jvm/jdk1.7.0/
@@ -121,7 +120,7 @@ if [ ! -d /usr/lib/jvm/jdk1.7.0 ]; then
 fi
 
 ## Install Jython ##
-if [ ! -d /usr/local/lib/jython ]; then
+if [ -f jdk.tar.gz && ! -d /usr/local/lib/jython ]; then
     if [ ! -f jython_installer-2.5.2.jar ]; then
         wget http://downloads.sourceforge.net/project/jython/jython/2.5.2/jython_installer-2.5.2.jar
     fi
