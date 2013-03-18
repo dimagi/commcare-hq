@@ -42,7 +42,7 @@ if [ $? -eq 0 ]; then
     sudo apt-get install -y git python-pip python-dev libevent-1.4-2 \
         libevent-dev python-setuptools  \
         postgresql memcached \
-        nodejs npm \
+        nodejs \
         gdebi-core \
         apache2
 
