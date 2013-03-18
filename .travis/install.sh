@@ -9,7 +9,7 @@ sudo pip install -r requirements/dev-requirements.txt
 # CouchDB
 
 # Postgres 
-sudo -u postgres psql --file="commcare-hq-test-setup.sql"
+sudo -u postgres psql --file="commcare-hq-test-setup.psql"
 
 # Set up the DBs via Django
 python manage.py syncdb --noinput
