@@ -116,11 +116,11 @@ class CouchIndicatorForm(BaseDynamicIndicatorForm):
         return subclasses.difference([self.doc_class])
 
     def clean_fixed_datespan_days(self):
-        if 'fixed_datespan_days' in self.cleaned_data:
+        if 'fixed_datespan_days' in self.cleaned_data and self.cleaned_data['fixed_datespan_days']:
             return abs(self.cleaned_data['fixed_datespan_days'])
 
     def clean_fixed_datespan_months(self):
-        if 'fixed_datespan_months' in self.cleaned_data:
+        if 'fixed_datespan_months' in self.cleaned_data and self.cleaned_data['fixed_datespan_months']:
             return abs(self.cleaned_data['fixed_datespan_months'])
 
     def clean_doc_type_choices(self):
