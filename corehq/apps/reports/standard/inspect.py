@@ -347,11 +347,11 @@ class CaseListMixin(ElasticTabularReport, ProjectReportParametersMixin):
                 yield {"not": {"term": {key: "demo_user"}}}
 
         def _domain_term():
-            return {"term": {"domain.exact": self.domain.lower()}}
+            return {"term": {"domain.exact": self.domain}}
 
         subterms = [_domain_term(), filter] if filter else [_domain_term()]
         if case_type:
-            subterms.append({"term": {"type.exact": case_type.lower()}})
+            subterms.append({"term": {"type.exact": case_type}})
 
         if status:
             subterms.append({"term": {"closed": (status == 'closed')}})
