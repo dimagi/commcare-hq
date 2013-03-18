@@ -5,14 +5,22 @@ from dimagi.utils.modules import try_import, to_function
 from corehq.apps.sms.util import clean_phone_number, create_billable_for_sms, format_message_list
 from corehq.apps.sms.models import SMSLog, OUTGOING, INCOMING, ForwardingRule, FORWARD_ALL, FORWARD_BY_KEYWORD
 from corehq.apps.sms.mixin import MobileBackend, VerifiedNumber
+from corehq.apps.domain.models import Domain
 from datetime import datetime
 
 from corehq.apps.smsforms.models import XFormsSession
 from corehq.apps.smsforms.app import _get_responses, start_session
 from corehq.apps.app_manager.models import get_app, Form
+from corehq.apps.sms.util import register_sms_contact, strip_plus
 from casexml.apps.case.models import CommCareCase
 from touchforms.formplayer.api import current_question
 from dateutil.parser import parse
+
+# A list of all keywords which allow registration via sms.
+# Meant to allow support for multiple languages.
+# Keywords should be in all caps.
+REGISTRATION_KEYWORDS = ["JOIN"]
+REGISTRATION_MOBILE_WORKER_KEYWORDS = ["WORKER"]
 
 def send_sms(domain, id, phone_number, text):
     """
@@ -127,6 +135,33 @@ def start_session_from_keyword(survey_keyword, verified_number):
         print e
         print "ERROR: Exception raised while starting survey for keyword " + survey_keyword.keyword + ", domain " + verified_number.domain
 
+# Returns True if a contact was registered, False if not
+def process_sms_registration(msg):
+    registration_processed = False
+    text_words = msg.text.upper().split()
+    keyword1 = text_words[0] if len(text_words) > 0 else ""
+    keyword2 = text_words[1].lower() if len(text_words) > 1 else ""
+    keyword3 = text_words[2] if len(text_words) > 2 else ""
+    if keyword1 in REGISTRATION_KEYWORDS and keyword2 != "":
+        domain = Domain.get_by_name(keyword2, strict=True)
+        if domain is not None:
+            if keyword3 in REGISTRATION_MOBILE_WORKER_KEYWORDS and domain.sms_mobile_worker_registration_enabled:
+                #TODO: Register a PendingMobileWorker object that must be approved by a domain admin
+                pass
+            elif domain.sms_case_registration_enabled:
+                register_sms_contact(
+                    domain=domain.name,
+                    case_type=domain.sms_case_registration_type,
+                    case_name="unknown",
+                    user_id=domain.sms_case_registration_user_id,
+                    contact_phone_number=strip_plus(msg.phone_number),
+                    contact_phone_number_is_verified="1",
+                    owner_id=domain.sms_case_registration_owner_id,
+                )
+                registration_processed = True
+    
+    return registration_processed
+
 def incoming(phone_number, text, backend_api, timestamp=None, domain_scope=None, delay=True):
     """
     entry point for incoming sms
@@ -179,8 +214,9 @@ def incoming(phone_number, text, backend_api, timestamp=None, domain_scope=None,
             if was_handled:
                 break
     else:
-        import verify
-        verify.process_verification(phone_number, text)
+        if not process_sms_registration(msg):
+            import verify
+            verify.process_verification(phone_number, text)
 
     return msg
 

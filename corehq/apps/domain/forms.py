@@ -170,6 +170,10 @@ class DomainMetadataForm(DomainGlobalSettingsForm, SnapshotSettingsMixin):
         choices=(('basic', 'Basic'), ('plus', 'Plus'), ('full', 'Full')))
     is_test = ChoiceField(label='Test Project', choices=tf_choices('Test', 'Real'))
     survey_management_enabled = BooleanField(label='Survey Management Enabled', required=False)
+    sms_case_registration_enabled = BooleanField(label='Enable Case Registration Via SMS', required=False)
+    sms_case_registration_type = CharField(label='SMS Case Registration Type', required=False)
+    sms_case_registration_owner_id = CharField(label='SMS Case Registration Owner', required=False)
+    sms_case_registration_user_id = CharField(label='SMS Case Registration Submitting User', required=False)
     commtrack_enabled = BooleanField(label='CommTrack Enabled', required=False, help_text='CommTrack is a CommCareHQ module for logistics, inventory tracking, and supply chain management. It is still under active development. Do not enable for your domain unless you\'re actively piloting it.')
 
     def __init__(self, *args, **kwargs):
@@ -178,7 +182,25 @@ class DomainMetadataForm(DomainGlobalSettingsForm, SnapshotSettingsMixin):
         if not (user and user.is_previewer):
             # commtrack is pre-release
             self.fields['commtrack_enabled'].widget = forms.HiddenInput()
-
+    
+    def _validate_sms_registration_field(self, field_name, error_msg):
+        value = self.cleaned_data.get(field_name)
+        if value is not None:
+            value = value.strip()
+        if self.cleaned_data.get("sms_case_registration_enabled", False):
+            if value is None or value == "":
+                raise forms.ValidationError(error_msg)
+        return value
+    
+    def clean_sms_case_registration_type(self):
+        return self._validate_sms_registration_field("sms_case_registration_type", _("Please enter a default case type for cases that register themselves via sms."))
+    
+    def clean_sms_case_registration_owner_id(self):
+        return self._validate_sms_registration_field("sms_case_registration_owner_id", _("Please enter a default owner for cases that register themselves via sms."))
+    
+    def clean_sms_case_registration_user_id(self):
+        return self._validate_sms_registration_field("sms_case_registration_user_id", _("Please enter a default submitting user for cases that register themselves via sms."))
+    
     def save(self, request, domain):
         res = DomainGlobalSettingsForm.save(self, request, domain)
         if not res:
@@ -188,6 +210,10 @@ class DomainMetadataForm(DomainGlobalSettingsForm, SnapshotSettingsMixin):
             domain.customer_type = self.cleaned_data['customer_type']
             domain.is_test = self.cleaned_data['is_test'] == 'true'
             domain.survey_management_enabled = self.cleaned_data.get('survey_management_enabled', False)
+            domain.sms_case_registration_enabled = self.cleaned_data.get('sms_case_registration_enabled', False)
+            domain.sms_case_registration_type = self.cleaned_data.get('sms_case_registration_type')
+            domain.sms_case_registration_owner_id = self.cleaned_data.get('sms_case_registration_owner_id')
+            domain.sms_case_registration_user_id = self.cleaned_data.get('sms_case_registration_user_id')
             domain.commtrack_enabled = self.cleaned_data.get('commtrack_enabled', False)
             if domain.commtrack_enabled and not domain.commtrack_settings:
                 commtrack_util.bootstrap_default(domain.name)
