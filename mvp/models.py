@@ -63,6 +63,10 @@ class MVPDaysSinceLastTransmission(DynamicIndicatorDefinition):
         if not days:
             return None
         return days
+
+    @classmethod
+    def get_nice_name(cls):
+        return "MVP Days Since Last Transmission"
     
 
 class MVPActiveCasesIndicatorDefinition(NoGroupCouchIndicatorDefBase):
@@ -118,6 +122,10 @@ class MVPActiveCasesIndicatorDefinition(NoGroupCouchIndicatorDefBase):
             datespan.startdate = None
         return datespan
 
+    @classmethod
+    def get_nice_name(cls):
+        return "MVP Active Cases"
+
 
 class MVPChildCasesByAgeIndicatorDefinition(MVPActiveCasesIndicatorDefinition):
     """
@@ -162,3 +170,7 @@ class MVPChildCasesByAgeIndicatorDefinition(MVPActiveCasesIndicatorDefinition):
             results = self.get_raw_results(user_ids, datespan)
             all_cases = self._filter_by_age(results, datespan)
         return len(all_cases)
+
+    @classmethod
+    def get_nice_name(cls):
+        return "MVP Child Cases"

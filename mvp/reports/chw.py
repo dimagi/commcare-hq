@@ -137,7 +137,7 @@ class CHWManagerReport(GenericTabularReport, MVPIndicatorReport, DatespanMixin):
             dict(
                 title="Under-5s",
                 indicators=[
-                    dict(slug="num_under5_visits", expected="--"),
+                    dict(slug="num_under5", expected="--"),
                     dict(slug="under5_danger_signs", expected="--"),
                     dict(slug="under5_fever", expected="--"),
                     dict(slug="under5_fever_rdt_proportion", expected="100%"),
