@@ -29,7 +29,8 @@ function(doc) {
                     zinc_received = (diarrhea_medication && diarrhea_medication.indexOf('zinc') >= 0);
 
                 var danger_signs = [],
-                    emergency_signs = [];
+                    emergency_signs = [],
+                    valid_referrals = ['emergency', 'basic', 'convenient'];
 
                 try {
                     danger_signs = get_danger_signs(indicators.immediate_danger_sign.value);
@@ -53,7 +54,9 @@ function(doc) {
                 if (danger_signs.indexOf('diarrhea') >= 0 && danger_signs.length === 1) {
                     diarrhea_only = true;
                 }
-                if (danger_signs.length > 0 || emergency_signs.length > 0) {
+
+                if ((referral_type && valid_referrals.indexOf(referral_type) >= 0) &&
+                    danger_signs.length > 0 || emergency_signs.length > 0) {
                     indicator_keys.push("under5_danger_signs");
                 }
 
@@ -77,8 +80,6 @@ function(doc) {
 
                 } else if (complicated_fever && meta.timeEnd) {
                     category = "under5_complicated_fever ";
-
-                    var valid_referrals = ['emergency', 'basic', 'convenient'];
 
                     if (doc.form.patient_available.referral_given === 'yes' ||
                         (referral_type && valid_referrals.indexOf(referral_type) >= 0)) {
