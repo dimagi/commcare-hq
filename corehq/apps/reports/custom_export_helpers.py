@@ -59,8 +59,6 @@ class CustomExportHelper(object):
         def export_cols():
             for col in cols:
                 transform = self.request.POST.get('%s transform' % col) or None
-                if transform:
-                    transform = SerializableFunction.loads(transform)
                 yield dict(
                     index=col,
                     display=self.request.POST["%s display" % col],
