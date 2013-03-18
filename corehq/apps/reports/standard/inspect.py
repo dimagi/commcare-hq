@@ -347,11 +347,11 @@ class CaseListMixin(ElasticTabularReport, ProjectReportParametersMixin):
                 yield {"not": {"term": {key: "demo_user"}}}
 
         def _domain_term():
-            return {"term": {"domain.exact": self.domain}}
+            return {"term": {"domain.exact": self.domain.lower()}}
 
         subterms = [_domain_term(), filter] if filter else [_domain_term()]
         if case_type:
-            subterms.append({"term": {"type": case_type}})
+            subterms.append({"term": {"type.exact": case_type.lower()}})
 
         if status:
             subterms.append({"term": {"closed": (status == 'closed')}})
@@ -362,7 +362,8 @@ class CaseListMixin(ElasticTabularReport, ProjectReportParametersMixin):
             subterms.append({'or': user_filters})
 
         if search_string:
-            query_block = {"query_string": {"query": search_string }} #todo, make sure this doesn't suck
+            query_block = {
+                "query_string": {"query": search_string}}  # todo, make sure this doesn't suck
         else:
             query_block = {"match_all": {}}
 
@@ -378,7 +379,7 @@ class CaseListMixin(ElasticTabularReport, ProjectReportParametersMixin):
             'sort': self.get_sorting_block(),
             'from': self.pagination.start,
             'size': self.pagination.count,
-            }
+        }
 
         return es_query
 
