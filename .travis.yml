@@ -1,0 +1,5 @@
+language: python
+python:
+ - "2.6"
+install: "sh -ex .travis/install.sh"
+script: python manage.py test --no-input
