@@ -174,7 +174,7 @@ if [ ! -f /etc/init.d/couchdb ]; then
 fi
 
 ## Install couchdb-lucene
-if [ ! -f /etc/init.d/couchdb-lucene ]; then
+if [ -f jdk.tar.gz && ! -f /etc/init.d/couchdb-lucene ]; then
     if [ ! -f v0.8.0.zip ]; then
         wget https://github.com/rnewson/couchdb-lucene/archive/v0.8.0.zip
     fi
@@ -198,7 +198,7 @@ _fti = {couch_httpd_external, handle_external_req, <<\"fti\">>}
 fi
 
 ## Install elastic-search ##
-if [ ! -f /etc/init.d/elasticsearch ]; then
+if [ -f jdk.tar.gz && ! -f /etc/init.d/elasticsearch ]; then
     if [ "$PM" = "apt-ubuntu" ]; then
         file=elasticsearch-$ES_VERSION.deb
         if [ ! -f $file ]; then
