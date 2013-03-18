@@ -1,3 +1,4 @@
+from datetime import datetime
 import json
 
 from couchdbkit.exceptions import ResourceNotFound
@@ -8,9 +9,10 @@ from django.template.defaultfilters import yesno
 from django.utils import html
 import pytz
 from django.conf import settings
-import simplejson
+from django.core import cache
 from django.utils.translation import ugettext as _
 from django.utils.translation import ugettext_noop
+import simplejson
 
 from casexml.apps.case.models import CommCareCaseAction
 from corehq.apps.api.es import CaseES
@@ -21,12 +23,14 @@ from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
 from corehq.apps.reports.display import xmlns_to_name
 from corehq.apps.reports.fields import SelectOpenCloseField, SelectMobileWorkerField
 from corehq.apps.reports.generic import GenericTabularReport
-from corehq.apps.users.models import CommCareUser
+from corehq.apps.users.models import CommCareUser, CouchUser
+from corehq.pillows.case import ES_CASE_CREATOR
 from dimagi.utils.couch.database import get_db
 from dimagi.utils.couch.pagination import CouchFilter
 from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.timezones import utils as tz_utils
 from corehq.apps.groups.models import Group
+from pillowtop.listener import ms_from_timedelta
 
 
 class ProjectInspectionReportParamsMixin(object):
@@ -161,8 +165,27 @@ class CaseDisplay(object):
     def _get_username(self, user_id):
         username = self.report.usernames.get(user_id)
         if not username:
-            user = CommCareUser.get_by_user_id(user_id) if user_id else None
-            username = user.username if user else self.user_not_found_display(user_id)
+            mc = cache.get_cache('default')
+            cache_key = "%s.%s" % (CouchUser.__class__.__name__, user_id)
+            try:
+                if mc.has_key(cache_key):
+                    user_dict = simplejson.loads(mc.get(cache_key))
+                else:
+                    user_obj = CouchUser.get_by_user_id(self.owner_id) if user_id else None
+                    if user_obj:
+                        user_dict = user_obj.to_json()
+                    else:
+                        user_dict = {}
+                    cache_payload = simplejson.dumps(user_dict)
+                    mc.set(cache_key, cache_payload)
+                    return user_obj
+                if user_dict == {}:
+                    return self.user_not_found_display(user_id)
+                else:
+                    user_obj = CouchUser.wrap(user_dict)
+                    username = user_obj.username
+            except Exception:
+                return None
         return username
 
     @property
@@ -239,8 +262,17 @@ class CaseDisplay(object):
 
     @property
     def owning_group(self):
+        mc = cache.get_cache('default')
+        cache_key = "%s.%s" % (Group.__class__.__name__, self.owner_id)
         try:
-            return Group.get(self.owner_id)
+            if mc.has_key(cache_key):
+                cached_obj = simplejson.loads(mc.get(cache_key))
+                wrapped = Group.wrap(cached_obj)
+                return wrapped
+            else:
+                group_obj = Group.get(self.owner_id)
+                mc.set(cache_key, simplejson.dumps(group_obj.to_json()))
+                return group_obj
         except Exception:
             return None
 
@@ -250,14 +282,18 @@ class CaseDisplay(object):
 
     @property
     def creating_user(self):
-        owner_id = ""
-        for action in self.case['actions']:
-            if action['action_type'] == 'create':
-                action_doc = CommCareCaseAction.wrap(action)
-                owner_id = action_doc.get_user_id()
-        if not owner_id:
-            return _("No data")
-        return self._get_username(owner_id)
+        creator_id = self.case.get(ES_CASE_CREATOR, None)
+        #creator_id = None
+
+        if creator_id is None:
+            for action in self.case['actions']:
+                if action['action_type'] == 'create':
+                    action_doc = CommCareCaseAction.wrap(action)
+                    creator_id = action_doc.get_user_id()
+                    break
+            if not creator_id:
+                return _("No data")
+        return self._get_username(creator_id)
 
 
 class ElasticTabularReport(ProjectInspectionReportParamsMixin, GenericTabularReport):
