@@ -11,3 +11,7 @@ sudo pip install -r requirements/dev-requirements.txt
 # Postgres 
 sudo -u postgres psql --file="commcare-hq-test-setup.sql"
 
+# Set up the DBs via Django
+python manage.py syncdb --noinput
+python manage.py migrate --noinput
+
