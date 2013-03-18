@@ -21,17 +21,19 @@ function(doc) {
                         } else {
                             emit_standard(doc, flagged_date, ["urgent_referral_followup_none"], [doc._id]);
                         }
-                        return;
-                    } else if (n == (self.normal.length - 1)) {
-                        emit_standard(doc, flagged_date, ["urgent_referral_followup_none"], [doc._id]);
+                        return true;
                     }
                 }
+                return false;
             }
 
             for (var f = 0; f < self.flagged.length; f++) {
                 var flagged_visit = self.flagged[f];
                 emit_standard(doc, flagged_visit, ["urgent_or_treatment"], [doc._id]);
-                _compareVisitAndFlagged(flagged_visit);
+                var followed_up = _compareVisitAndFlagged(flagged_visit);
+                if (!followed_up) {
+                    emit_standard(doc, flagged_visit, ["urgent_referral_followup_none"], [doc._id]);
+                }
             }
         };
 
