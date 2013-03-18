@@ -94,7 +94,7 @@ class CHWManagerReport(GenericTabularReport, MVPIndicatorReport, DatespanMixin):
     @property
     def piecewise_rows(self):
         rows = []
-        d_text = lambda slug: format_html('<i class="icon icon-spinner status-%s"></i>' % slug)
+        d_text = lambda slug: format_html('<i class="icon icon-spinner status-{0}"></i>', slug)
 
         def _create_stat_cell(stat_type, slug):
             stat_cell = self.table_cell(None, d_text(slug))
