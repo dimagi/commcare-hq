@@ -16,4 +16,5 @@ urlpatterns = patterns('corehq.apps.hqadmin.views',
     url(r'^domains/update/$', 'update_domains', name="domain_update"),
     url(r'^domains/download/$', 'domain_list_download', name="domain_list_download"),
     url(r'^noneulized_users/$', 'noneulized_users', name="noneulized_users"),
+    url(r'^stats/$', 'project_stats', name='project_stats'),
 )

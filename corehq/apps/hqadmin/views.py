@@ -1,4 +1,5 @@
 from datetime import timedelta, datetime
+import inspect
 import json
 from copy import deepcopy
 import logging
@@ -8,13 +9,15 @@ from django.shortcuts import render
 
 import rawes
 from casexml.apps.case.models import CommCareCase
+from corehq.apps.appstore.views import parse_args_for_es, es_query, generate_sortables_from_facets
 from corehq.apps.builds.models import CommCareBuildConfig, BuildSpec
-from corehq.apps.domain.models import Domain
+from corehq.apps.domain.models import Domain, InternalProperties
 from corehq.apps.hqadmin.escheck import check_cluster_health, check_case_index, check_xform_index, check_exchange_index
 from corehq.apps.reports.datatables import DataTablesColumn, DataTablesHeader, DTSortType
 from corehq.apps.reports.util import make_form_couch_key
 from corehq.apps.sms.models import SMSLog
 from corehq.apps.users.models import  CommCareUser, CouchUser, WebUser
+from corehq.pillows.mappings.domain_mapping import DOMAIN_INDEX
 from couchforms.models import XFormInstance
 from dimagi.utils.couch.database import get_db
 from collections import defaultdict
@@ -731,3 +734,49 @@ def noneulized_users(request, template="hqadmin/noneulized_users.html"):
     context["aoColumns"] = headers.render_aoColumns
 
     return render_to_response(request, template, context)
+
+@require_superuser
+def project_stats(request, template="hqadmin/stats_report.html"):
+    ctxt = {'hide_filters': True}
+
+    params, _ = parse_args_for_es(request)
+    page = params.pop('page', 1)
+    page = int(page[0] if isinstance(page, list) else page)
+    facets = ['internal.' + p for p in InternalProperties._properties.keys()]
+    results = es_domain_query(params, facets)
+    d_results = [Domain.wrap(res['_source']) for res in results.get('hits', {}).get('hits', [])]
+
+    facets_sortables = generate_sortables_from_facets(results, params)
+
+    ctxt = { 'domains': d_results,
+             'page': page,
+             'prev_page': page-1,
+             'next_page': (page+1),
+             'sortables': facets_sortables,
+             'query_str': request.META['QUERY_STRING'],
+             'search_url': reverse('project_stats'),
+             'search_query': params.get('search', [""])[0]}
+    return render(request, template, ctxt)
+
+def es_domain_query(params, facets=None, terms=None):
+    if terms is None:
+        terms = ['search']
+    if facets is None:
+        facets = []
+    q = {"query": {"match_all":{}}}
+
+    search_query = params.get('search', "")
+    if search_query:
+        q['query'] = {
+            "bool": {
+                "must": {
+                    "match" : {
+                        "_all" : {
+                            "query" : search_query,
+                            "operator" : "and"
+                        }
+                    }
+                }
+            }
+        }
+    return es_query(params, facets, terms, q, DOMAIN_INDEX + '/hqdomain/_search')

@@ -1,4 +1,4 @@
-from couchdbkit import StringProperty, BooleanProperty, IntegerProperty, FloatProperty, DecimalProperty, DictProperty, StringListProperty, SchemaListProperty, SchemaDictProperty, DateProperty, DateTimeProperty
+from couchdbkit import StringProperty, BooleanProperty, IntegerProperty, FloatProperty, DecimalProperty, DictProperty, StringListProperty, SchemaListProperty, SchemaDictProperty, DateProperty, DateTimeProperty, SchemaProperty
 from casexml.apps.case.models import CommCareCase
 from corehq.pillows.core import DATE_FORMATS_ARR, DATE_FORMATS_STRING
 
@@ -30,7 +30,8 @@ simple_type_mapper = {
 complex_type_mapper = {
     SchemaListProperty: prop_subtype,
     SchemaDictProperty: prop_subtype,
-    }
+    SchemaProperty: prop_subtype,
+}
 
 conservative_types = {
     DictProperty: {"type": "object", "dynamic": False}

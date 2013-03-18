@@ -203,7 +203,7 @@ def appstore_api(request):
     results = es_snapshot_query(params, facets)
     return HttpResponse(json.dumps(results), mimetype="application/json")
 
-def es_query(params, facets=None, terms=None, q=None):
+def es_query(params, facets=None, terms=None, q=None, es_url=None):
     if terms is None:
         terms = []
     if q is None:
@@ -231,9 +231,19 @@ def es_query(params, facets=None, terms=None, q=None):
     if not q['filter']['and']:
         del q["filter"]
 
-    es_url = "cc_exchange/domain/_search"
+    es_url = es_url or "cc_exchange/domain/_search"
+    # es_url = "cc_exchange/domain/_search"
+    print es_url
+    import pprint
+    pp = pprint.PrettyPrinter(indent=2)
+    pp.pprint(q)
+
     es = get_es()
     ret_data = es.get(es_url, data=q)
+
+    import pprint
+    pp = pprint.PrettyPrinter(indent=2)
+    pp.pprint(ret_data.get('facets', []))
     return ret_data
 
 def es_snapshot_query(params, facets=None, terms=None, sort_by="snapshot_time"):

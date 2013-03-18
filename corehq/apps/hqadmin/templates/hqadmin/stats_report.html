@@ -1,0 +1,278 @@
+{#{% extends "hqadmin/hqadmin_base_report.html" %}#}
+{#{% block report-title %}Stats{% endblock %}#}
+{#{% block reportcontent %}#}
+{##}
+{#{% endblock %}#}
+{#{% extends "hqwebapp/two_column.html" %}#}
+{#{% load hq_shared_tags %}#}
+{#{% load hqstyle_tags %}#}
+{#{% load i18n %}#}
+{#{% load url_extras %}#}
+{##}
+{#{% block head %}{{ block.super }}#}
+{#    <style type="text/css">#}
+{#        .scrollable {#}
+{#            overflow-x: scroll;#}
+{#            overflow-y:hidden;#}
+{#            white-space:nowrap;#}
+{#            /*max-height: 300px;*/#}
+{#        }#}
+{##}
+{#        .pager {#}
+{#            margin-top: 25px;#}
+{#        }#}
+{##}
+{#        .app-pic {#}
+{#            width: 12.5em;#}
+{#            height: 12.5em;#}
+{#            margin-right: .5em;#}
+{#        }#}
+{##}
+{#        .opacity65 {#}
+{#            filter:alpha(opacity=65);#}
+{#            -moz-opacity:0.65;#}
+{#            -khtml-opacity: 0.65;#}
+{#            opacity: 0.65;#}
+{#        }#}
+{##}
+{#        .pi-stars {#}
+{#            display: inline-block;#}
+{#            padding-right: 1.8em;#}
+{#            font-size: 70%;#}
+{#        }#}
+{##}
+{#        #results {#}
+{#            display: table;#}
+{#        }#}
+{##}
+{#        #results div.span3 {#}
+{#            display: "table-cell";#}
+{#        }#}
+{##}
+{#        .top-nav-search {#}
+{#            margin-top: 1.5em;#}
+{#        }#}
+{##}
+{#        #license-info-label {#}
+{#            display: inline;#}
+{#        }#}
+{##}
+{#        #license-info-label:hover {#}
+{#            background: inherit;#}
+{#        }#}
+{##}
+{#        .facet-checkbox {#}
+{#            float: right;#}
+{#        }#}
+{#    </style>#}
+{#{% endblock %}#}
+{##}
+{#{% block js-inline %}{{ block.super }}#}
+{#    <script type="text/javascript">#}
+{#        $(function () {#}
+{#            $(".more-sortable-button").click(function() {#}
+{#                var e = $(this);#}
+{#                var sortable = e.data('sortable');#}
+{#                $('.sortable-' + sortable).show();#}
+{#                e.hide();#}
+{#                return false;#}
+{#            });#}
+{#        });#}
+{#    </script>#}
+{##}
+{#    <script type="text/javascript">#}
+{#        $(function () {#}
+{#            $(".facet-checkbox").click(function() {#}
+{#                window.location = $(this).parent().attr('href');#}
+{#            });#}
+{#        });#}
+{#    </script>#}
+{##}
+{#    <script>#}
+{#        // This assures that all the result elements are the same height#}
+{#        $(function(){#}
+{#            $('.results').each(function(){#}
+{#                var heighest = 0;#}
+{#                var $this = $(this);#}
+{#                $this.find('.well').each(function(){#}
+{#                    heighest = ($(this).height() > heighest) ? $(this).height() : heighest;#}
+{#                });#}
+{#                $this.find('.well').css('height',heighest + 'px');#}
+{#            });#}
+{#        });#}
+{#    </script>#}
+{##}
+{#    <script>#}
+{#        function genScalePicFunc() {#}
+{#            var $app_pic = $('.app-pic');#}
+{#            return function() {#}
+{#                var pic_width = $app_pic.width();#}
+{#                $app_pic.css('height', pic_width+'px');#}
+{#            }#}
+{#        }#}
+{#        var scaleAppPic = genScalePicFunc();#}
+{##}
+{#        $(function(){#}
+{#            scaleAppPic();#}
+{#            $(window).resize(scaleAppPic);#}
+{#        });#}
+{#    </script>#}
+{#{% endblock %}#}
+{##}
+{#{% block sidebar %}#}
+{#    {% include 'appstore/partials/sidebar.html' with display_ua='true' %}#}
+{#{% endblock %}#}
+{##}
+{#{% block extra_tabs %}#}
+{#    {% block tabs %}#}
+{#        {% url appstore as search_url %}#}
+{#        <ul class="nav">#}
+{#            {% include 'appstore/partials/search_input.html' with search_name="search" search_for="apps..." %}#}
+{#        </ul>#}
+{#    {% endblock %}#}
+{#{% endblock %}#}
+{##}
+{#{% block page-title %}#}
+{#    <ul class="breadcrumb">#}
+{#        <li>#}
+{#            <strong><a href="{% url appstore %}">CommCare Exchange</a></strong>#}
+{#            {% if search_query or filter_by or domain or project or sort_by %}#}
+{#                <span class="divider">&gt;</span>#}
+{#            {% endif %}#}
+{#        </li>#}
+{#        {% block breadcrumb %}#}
+{#        {% endblock %}#}
+{#        {% if search_query %}#}
+{#            <li>#}
+{#                {% trans "Searching for" %} "{{ search_query }}"#}
+{#                <a href="{% urlencode request.path request.GET without "search" %}" style="font-size: 60%;">{% trans "(cancel)" %}</a>#}
+{#                {% if sort_by %}#}
+{#                    <span class="divider">&gt;</span>#}
+{#                {% endif %}#}
+{#            </li>#}
+{#        {% endif %}#}
+{#        {% if filter_by and filter %}#}
+{#            <li>#}
+{#                With {{ filter_by }} {{ filter }}#}
+{#                {% if sort_by %}#}
+{#                    <span class="divider">&gt;</span>#}
+{#                {% endif %}#}
+{#            </li>#}
+{#        {% endif %}#}
+{#    </ul>#}
+{#{% endblock %}#}
+{##}
+{#{% block main_column %}#}
+{##}
+{#    <!--{% if search_query or filter_by %}-->#}
+{#        <!--<h3>{{ apps|length }} result{{ apps|pluralize }}</h3>-->#}
+{#        <!--{% endif %}-->#}
+{##}
+{#    <h1>#}
+{#        {% block store-header %}#}
+{#        {% endblock %}#}
+{#    </h1>#}
+{##}
+{#    <div class="container-fluid">#}
+{#        <div class="row-fluid">#}
+{#            {% block view-tabs %}#}
+{#                <div class="tabbable" style="padding-top: 15px;">#}
+{#                    <ul class="nav nav-pills">#}
+{#                        <li{% if not sort_by %} class="active"{% endif %}><a href="{% urlencode request.path request.GET without "sort_by" %}">{% trans "Newest" %}</a></li>#}
+{#                    </ul>#}
+{#                </div>#}
+{#            {% endblock %}#}
+{#        </div>#}
+{#        <div class="row-fluid results">#}
+{#            {% block results-display %}#}
+{#                {% for app in apps %}#}
+{#                    {% if forloop.counter0|divisibleby:"2" and forloop.counter0 != 0 %}#}
+{#                        </div><div class="row-fluid results">#}
+{#                    {% endif %}#}
+{#                    <div class="span5">#}
+{#                        <div class="well">#}
+{#                            <div class="row-fluid">#}
+{#                                <div class="span5">#}
+{#                                    <a href="{% url project_info app.name %}">#}
+{#                                        {% if app.image_path %}#}
+{#                                            <div style="text-align: center;">#}
+{#                                                <img class="app-pic" src="{% url appstore_project_image app.name %}" />#}
+{#                                            </div>#}
+{#                                        {% else %}#}
+{#                                            <div style="text-align: center;">#}
+{#                                                <img class="app-pic opacity65" src="{% static 'hqstyle/img/commcarehq-icon-large.png' %}" />#}
+{#                                            </div>#}
+{#                                        {% endif %}#}
+{#                                    </a>#}
+{#                                </div>#}
+{#                                <div class="span7">#}
+{#                                    <h3>#}
+{#                                        <a href="{% url project_info app.name %}">#}
+{#                                            {{ app.title }}#}
+{#                                        </a>#}
+{#                                        <small style="display: block;">{% trans "By" %}#}
+{#                                            {% if app.organization %}#}
+{#                                                {{ app.get_organization.title }}#}
+{#                                            {% else %}#}
+{#                                                {{ app.author }}#}
+{#                                            {% endif %}#}
+{#                                        </small>#}
+{#                                    </h3>#}
+{#                                    {% if app.project_type %}#}
+{#                                        <h6>{{ app.project_type }}</h6>#}
+{#                                    {% endif %}#}
+{#                                </div>#}
+{#                            </div>#}
+{#                        </div>#}
+{#                    </div>#}
+{#                {% empty %}#}
+{#                    {% trans "No results were found for your query" %}.#}
+{#                {% endfor %}#}
+{#            {% endblock %}#}
+{#            </div>#}
+{##}
+{#        <div class="row-fluid">#}
+{#            <ul class="pager span10">#}
+{#                {% if page > 1 %}#}
+{#                    <li class="previous">#}
+{#                        <a href="{% urlencode request.path request.GET with "page" as prev_page %}">&larr; {% trans "Previous" %}</a>#}
+{#                    </li>#}
+{#                {% endif %}#}
+{#                {% if more_pages %}#}
+{#                    <li class="next">#}
+{#                        <a href="{% urlencode request.path request.GET with "page" as next_page %}">{% trans "Next" %} &rarr;</a>#}
+{#                    </li>#}
+{#                {% endif %}#}
+{#            </ul>#}
+{#        </div>#}
+{#    </div>#}
+{##}
+{#{% endblock %}#}
+{% extends "appstore/appstore_base.html" %}
+{% load hq_shared_tags %}
+{% load hqstyle_tags %}
+{% load i18n %}
+
+{% block tabs %}
+    {% url project_stats as search_url %}
+    <ul class="nav">
+        {% include 'appstore/partials/search_input.html' with search_name="search" search_for="projects..." %}
+    </ul>
+{% endblock %}
+
+{% block store-header %}
+    Stats
+{% endblock %}
+
+{% block view-tabs %}
+{% endblock %}
+
+{% block results-display %}
+    {% for dom in domains %}
+        <div class="well">
+            <h2>{{ dom.name }}</h2>
+        </div>
+    {% empty %}
+        No results were found for your query.
+    {% endfor %}
+{% endblock %}

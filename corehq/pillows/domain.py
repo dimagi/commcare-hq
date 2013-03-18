@@ -1,4 +1,4 @@
-from casexml.apps.case.models import CommCareCase
+from corehq.apps.domain.models import Domain
 from corehq.pillows.mappings.domain_mapping import DOMAIN_MAPPING, DOMAIN_INDEX
 from dimagi.utils.decorators.memoized import memoized
 from pillowtop.listener import AliasedElasticPillow
@@ -9,7 +9,8 @@ class DomainPillow(AliasedElasticPillow):
     """
     Simple/Common Case properties Indexer
     """
-    document_class = CommCareCase
+
+    document_class = Domain
     couch_filter = "domain/not_snapshots"
     es_host = settings.ELASTICSEARCH_HOST
     es_port = settings.ELASTICSEARCH_PORT
@@ -35,6 +36,8 @@ class DomainPillow(AliasedElasticPillow):
 
     @memoized
     def calc_meta(self):
+        #todo: actually do this correctly
+
         """
         override of the meta calculator since we're separating out all the types,
         so we just do a hash of the "prototype" instead to determined md5
