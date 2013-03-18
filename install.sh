@@ -21,9 +21,13 @@ COUCHDB_DB="foodb"
 ## Misc settings
 
 ES_VERSION=0.20.5
+MINIMAL_INSTALL=
+JDK=1
 
 if [ ! -f jdk.tar.gz ]; then
     echo "WARNING: No JDK tarball found; some pieces of CommCareHQ (Cloudcare) may be nonfunctional"
+    JDK=
+    MINIMAL_INSTALL=1
 fi
 
 ## Install OS-level package dependencies
@@ -105,7 +109,7 @@ if [[ ! $(grep virtualenvwrapper ~/.bashrc) ]]; then
 fi
 
 ## Install Java ##
-if [ -f jdk.tar.gz && ! -d /usr/lib/jvm/jdk1.7.0 ]; then
+if [ "$JDK" ] && [ ! -d /usr/lib/jvm/jdk1.7.0 ]; then
     tar -xzf jdk.tar.gz
     sudo mkdir /usr/lib/jvm
     sudo rm -r /usr/lib/jvm/jdk1.7.0/
@@ -120,7 +124,7 @@ if [ -f jdk.tar.gz && ! -d /usr/lib/jvm/jdk1.7.0 ]; then
 fi
 
 ## Install Jython ##
-if [ -f jdk.tar.gz && ! -d /usr/local/lib/jython ]; then
+if [ "$JDK" ] && [ ! -d /usr/local/lib/jython ]; then
     if [ ! -f jython_installer-2.5.2.jar ]; then
         wget http://downloads.sourceforge.net/project/jython/jython/2.5.2/jython_installer-2.5.2.jar
     fi
@@ -174,7 +178,7 @@ if [ ! -f /etc/init.d/couchdb ]; then
 fi
 
 ## Install couchdb-lucene
-if [ -f jdk.tar.gz && ! -f /etc/init.d/couchdb-lucene ]; then
+if [ ! "$MINIMAL_INSTALL" ] && ! -f /etc/init.d/couchdb-lucene ]; then
     if [ ! -f v0.8.0.zip ]; then
         wget https://github.com/rnewson/couchdb-lucene/archive/v0.8.0.zip
     fi
@@ -198,7 +202,7 @@ _fti = {couch_httpd_external, handle_external_req, <<\"fti\">>}
 fi
 
 ## Install elastic-search ##
-if [ -f jdk.tar.gz && ! -f /etc/init.d/elasticsearch ]; then
+if [ "$JDK" ] && [ ! -f /etc/init.d/elasticsearch ]; then
     if [ "$PM" = "apt-ubuntu" ]; then
         file=elasticsearch-$ES_VERSION.deb
         if [ ! -f $file ]; then
@@ -235,7 +239,7 @@ fi
 # installs a system java package and changes the configured java install path,
 # which we don't want
 
-if [ -f jdk.tar.gz ]; then
+if [ ! "$MINIMAL_INSTALL" ]; then
     sudo update-alternatives --install "/usr/bin/java" "java" "/usr/lib/jvm/jdk1.7.0/bin/java" 1
     sudo update-alternatives --install "/usr/bin/javac" "javac" "/usr/lib/jvm/jdk1.7.0/bin/javac" 1
     sudo update-alternatives --install "/usr/bin/javaws" "javaws" "/usr/lib/jvm/jdk1.7.0/bin/javaws" 1
@@ -244,33 +248,35 @@ fi
 sudo update-alternatives --config java
 
 ## Ensure services start on startup ##
-if [ "$PM" = "apt-ubuntu" ]; then
-    sudo update-rc.d couchdb defaults
-    sudo update-rc.d couchdb-lucene defaults
+if [ ! "$MINIMAL_INSTALL" ]; then
+    if [ "$PM" = "apt-ubuntu" ]; then
+        sudo update-rc.d couchdb defaults
+        sudo update-rc.d couchdb-lucene defaults
 
-    # these should already be on by default
-    sudo update-rc.d elasticsearch defaults
-    sudo update-rc.d memcached defaults
-    sudo update-rc.d postgresql defaults
-elif [ "$PM" = "yum-rhel" ]; then
-    sudo chkconfig --add couchdb
-    sudo chkconfig --add elasticsearch
-    sudo chkconfig --add memcached
-    sudo chkconfig --add postgresql
-    sudo chkconfig --add couchdb-lucene
+        # these should already be on by default
+        sudo update-rc.d elasticsearch defaults
+        sudo update-rc.d memcached defaults
+        sudo update-rc.d postgresql defaults
+    elif [ "$PM" = "yum-rhel" ]; then
+        sudo chkconfig --add couchdb
+        sudo chkconfig --add elasticsearch
+        sudo chkconfig --add memcached
+        sudo chkconfig --add postgresql
+        sudo chkconfig --add couchdb-lucene
+    
+        sudo chkconfig couchdb on
+        sudo chkconfig elasticsearch on
+        sudo chkconfig memcached on
+        sudo chkconfig postgresql on
+        sudo chkconfig couchdb-lucene on
+    fi
 
-    sudo chkconfig couchdb on
-    sudo chkconfig elasticsearch on
-    sudo chkconfig memcached on
-    sudo chkconfig postgresql on
-    sudo chkconfig couchdb-lucene on
+    ## Ensure services are running ##
+    sudo service couchdb start
+    sudo service elasticsearch start
+    sudo service memcached start
+    sudo service postgresql start
 fi
-
-## Ensure services are running ##
-sudo service couchdb start
-sudo service elasticsearch start
-sudo service memcached start
-sudo service postgresql start
 
 ## Configure databases ##
 DB=$POSTGRES_DB
