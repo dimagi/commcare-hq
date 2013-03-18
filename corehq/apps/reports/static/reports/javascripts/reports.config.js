@@ -10,6 +10,7 @@ var HQReport = function (options) {
     self.toggleFiltersButton = options.toggleFiltersButton || "#toggle-report-filters";
     self.exportReportButton = options.exportReportButton || "#export-report-excel";
     self.emailReportButton = options.emailReportButton || "#email-report";
+    self.emailReportModal = options.emailReportModal || "#email-report-modal";
     self.urlRoot = options.urlRoot;
     self.slug = options.slug;
     self.subReportSlug = options.subReportSlug;
@@ -20,34 +21,27 @@ var HQReport = function (options) {
 
     self.initialLoad = true;
 
+    self.emailReportViewModel = new EmailReportViewModel();
+
     self.init = function () {
         $(function () {
             checkFilterAccordionToggleState();
 
-            $(self.exportReportButton).click(button_click_handler("export/"));
+            $(self.exportReportButton).click(function (e) {
+                e.preventDefault();
+                window.location.href = get_report_render_url("export");
+            });
 
-            $(self.emailReportButton).click(button_click_handler("email_onceoff/"));
+            $(self.emailReportButton).click(function (e) {
+                self.emailReportViewModel.setConfigBeingEmailed();
+            });
 
             self.resetFilterState();
             if (self.needsFilters) {
                 self.filterSubmitButton.button('reset').addClass('btn-primary');
             }
 
-            function button_click_handler(path) {
-                return function (e) {
-                    var params = window.location.search.substr(1);
-                    var exportURL;
-                    e.preventDefault();
-                    if (params.length <= 1) {
-                        if (self.loadDatespanFromCookie()) {
-                            params = "startdate="+self.datespan.startdate+
-                                "&enddate="+self.datespan.enddate;
-                        }
-                    }
-                    window.location.href = window.location.pathname.replace(self.urlRoot,
-                        self.urlRoot+path)+"?"+params;
-                }
-            }
+            ko.applyBindings(self.emailReportViewModel, $(self.emailReportModal).get(0));
         });
     };
 
@@ -134,5 +128,58 @@ var HQReport = function (options) {
         $('#paramSelectorForm fieldset').change(function () {
             $('#paramSelectorForm button[type="submit"]').button('reset').addClass('btn-primary');
         });
+    };
+
+    function get_report_render_url(render_type, additionalParams) {
+        var params = window.location.search.substr(1);
+        if (params.length <= 1) {
+            if (self.loadDatespanFromCookie()) {
+                params = "startdate="+self.datespan.startdate+
+                    "&enddate="+self.datespan.enddate;
+            }
+        }
+        return window.location.pathname.replace(self.urlRoot,
+            self.urlRoot+render_type+"/")+"?"+params + (additionalParams == undefined ? "" : "&" + additionalParams);
+    };
+
+    function EmailReportViewModel() {
+        var self = this;
+
+        self.modalTitle = "Email report";
+        self.configBeingEmailed = ko.observable();
+
+        self.send_to_owner = ko.observable(true);
+        self.subject = ko.observable("Once of Report");
+        self.recipient_emails = ko.observable();
+        self.notes = ko.observable();
+
+        self.setConfigBeingEmailed = function () {
+            self.configBeingEmailed({});
+        }
+
+        self.unsetConfigBeingEmailed = function() {
+            self.configBeingEmailed(undefined);
+        }
+
+        self.unwrap = function () {
+            var data = ko.mapping.toJS(self, {
+                ignore: ['modalTitle', 'configBeingEmailed', 'setConfigBeingEmailed',
+                'unsetConfigBeingEmailed', 'sendEmail', 'unwrap']
+            });
+
+            for (var i in data) {
+                if (data[i] === null || data[i] === undefined) delete data[i];
+            }
+            return data;
+        }
+
+        self.sendEmail = function(data, event) {
+            $.get(get_report_render_url("email_onceoff", $.param(self.unwrap())))
+                .done(function() {
+                    alert("Report successfully emailed.");
+                    self.unsetConfigBeingEmailed();
+                })
+                .fail(function() { alert("An error occurred, please try again."); });
+        }
     };
 };

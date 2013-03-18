@@ -51,3 +51,20 @@ class ScheduledReportForm(forms.Form):
                     "valid recipient")
 
         return cleaned_data
+
+class EmailReportForm(forms.Form):
+    subject = forms.CharField(required=False)
+    send_to_owner = forms.BooleanField(required=False)
+    recipient_emails = MultiEmailField(required=False)
+    notes = forms.CharField(required=False)
+
+    def clean(self):
+        cleaned_data = super(EmailReportForm, self).clean()
+
+        if ('recipient_emails' in cleaned_data
+            and not (cleaned_data['recipient_emails'] or
+                        cleaned_data['send_to_owner'])):
+            raise forms.ValidationError("You must specify at least one "
+                    "valid recipient")
+
+        return cleaned_data
