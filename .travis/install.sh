@@ -1,5 +1,8 @@
 # Set up for running CommCareHQ test cases via Travis-CI
 
+dir=`dirname $0`
+echo "$0 Setting up test environment"
+
 # Prerequisite apt packages
 cat requirements/apt-packages.txt | xargs sudo apt-get install -qq
 
@@ -9,7 +12,7 @@ sudo pip install -r requirements/dev-requirements.txt
 # CouchDB
 
 # Postgres 
-sudo -u postgres psql --file="commcare-hq-test-setup.psql"
+sudo -u postgres psql --file="${dir}/commcare-hq-test-setup.psql"
 
 # Set up the DBs via Django
 python manage.py syncdb --noinput
