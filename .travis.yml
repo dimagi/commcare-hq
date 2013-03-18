@@ -3,6 +3,7 @@ python:
  - "2.6"
 install:
  - "sh -ex install.sh"
+ - "pip install -r requirements/requirements.txt"
  - "pip install -r requirements/dev-requirements.txt"
 script: python manage.py test --no-input
 services:
