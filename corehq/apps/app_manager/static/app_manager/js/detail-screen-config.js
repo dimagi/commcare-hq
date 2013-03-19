@@ -189,9 +189,9 @@ var DetailScreenConfig = (function () {
                     that.field.$edit_view.focus();
                 }
             }).css({cursor: 'pointer'}).attr('title', DetailScreenConfig.message.ADD_COLUMN);
-            this.$copy = $('<i></i>').addClass(COMMCAREHQ.icons.COPY).click(function () {
-                that.duplicate();
-            }).css({cursor: 'pointer'}).attr('title', DetailScreenConfig.message.COPY_COLUMN);
+//            this.$copy = $('<i></i>').addClass(COMMCAREHQ.icons.COPY).click(function () {
+//                that.duplicate();
+//            }).css({cursor: 'pointer'}).attr('title', DetailScreenConfig.message.COPY_COLUMN);
             this.$delete = $('<i></i>').addClass(COMMCAREHQ.icons.DELETE).click(function () {
                 $(this).remove();
                 that.screen.fire('delete-column', that);
@@ -243,7 +243,7 @@ var DetailScreenConfig = (function () {
     }());
     Screen = (function () {
         var sectionLabels = {
-            'case': "Case List and Detail Screen Configuration",
+            'case': "",
             referral: "Referral Details"
         };
         function Screen($home, spec, options) {
@@ -489,10 +489,10 @@ var DetailScreenConfig = (function () {
                 $('<td/>').addClass('detail-screen-extra').append(column.$extra).appendTo($tr);
                 if (this.edit) {
                     $('<td/>').addClass('detail-screen-icon').append(
-                        suggested ? "" : column.$delete
+                        suggested ? column.$add : column.$copy
                     ).appendTo($tr);
                     $('<td/>').addClass('detail-screen-icon').append(
-                        suggested ? column.$add : column.$copy
+                        suggested ? "" : column.$delete
                     ).appendTo($tr);
                 } else {
                     $('<td/>').addClass('detail-screen-icon').appendTo($tr);
@@ -503,7 +503,7 @@ var DetailScreenConfig = (function () {
             },
             render: function () {
                 var $table, $columns, $suggestedColumns, $thead, $tr, i, $box;
-                $('<h2/>').text(sectionLabels[this.model]).appendTo(this.$home);
+                $('<h4/>').text(sectionLabels[this.model]).appendTo(this.$home);
                 $box = $("<div/>").appendTo(this.$home);
 
                 // this is a not-so-elegant way to get the styling right
@@ -540,7 +540,7 @@ var DetailScreenConfig = (function () {
                     $('<th/>').addClass('detail-screen-format').text(DetailScreenConfig.message.FORMAT).appendTo($tr);
                     $('<th/>').addClass('detail-screen-extra').appendTo($tr);
 
-                    $('<th/>').addClass('detail-screen-icon').appendTo($tr);
+//                    $('<th/>').addClass('detail-screen-icon').appendTo($tr);
                     $('<th/>').addClass('detail-screen-icon').appendTo($tr);
 
                     $columns = $('<tbody/>').addClass('detail-screen-columns').appendTo($table);
@@ -646,7 +646,7 @@ var DetailScreenConfig = (function () {
 
         MODEL: 'Model',
         FIELD: 'Property',
-        HEADER: 'Label',
+        HEADER: 'Display Text',
         FORMAT: 'Format',
 
         PLAIN_FORMAT: 'Plain',

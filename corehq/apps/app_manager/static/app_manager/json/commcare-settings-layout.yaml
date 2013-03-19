@@ -1,4 +1,5 @@
 - title: 'Basic'
+  id: app-settings-basic
   settings:
     - hq.name  # Name
     - hq.application_version # App Version (disabled)
@@ -14,6 +15,7 @@
     - hq.manage_urls
 
 - title: General Settings
+  id: app-settings-general
   settings:
     - features.sense  # CommCare Sense
     - properties.cc-autoup-freq  # Auto Update Frequency
@@ -25,6 +27,7 @@
     - properties.password_format  # Password Format
 
 - title: 'J2ME UI Settings'
+  id: app-settings-j2me-ui
   settings:
     - properties.extra_key_action  # Extra Key Action
     - properties.cc-entry-mode  # Item Selection Mode
@@ -35,6 +38,7 @@
     - properties.cc-user-mode  # User Login Mode
 
 - title: 'J2ME CommCare Properties'
+  id: app-settings-j2me-properties
   settings:
     - hq.build_spec  # CommCare Version
     - hq.platform  # J2ME Platform
@@ -43,12 +47,14 @@
     - properties.cc-send-procedure  # Send Data
 
 - title: 'Advanced (Logging)'
+  id: app-settings-advanced
   settings:
     - properties.logenabled  # Logging Enabled
     - properties.log_prop_weekly  # Weekly Log Sending Frequency
     - properties.log_prop_daily  # Daily Log Sending Frequency
 
 - title: 'Disabled'
+  id: app-settings-disabled
   always_show: false
   settings:
     - properties.purge-freq  # Purge Frequency (disabled)

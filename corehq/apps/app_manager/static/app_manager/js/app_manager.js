@@ -67,7 +67,7 @@
                     var $form = $(this),
 	                    $buttonHolder = $form.find('.save-button-holder');
 	                COMMCAREHQ.SaveButton.initForm($form, {
-	                    unsavedMessage: "You have unchanged settings",
+	                    unsavedMessage: "You have unsaved changes",
 	                    success: function (data) {
 	                        var key;
 	                        COMMCAREHQ.app_manager.updateDOM(data.update);
@@ -98,7 +98,7 @@
                 var $sortable = $(this);
                 $('.drag_handle', this).each(function () {
                     if ($(this).closest('.sortable')[0] === $sortable[0]) {
-                        $(this).removeClass('drag_handle').css({cursor: "auto"}).css({color: "transparent"});
+                        $(this).removeClass('drag_handle').hide();
                     }
                 });
             }
@@ -137,7 +137,7 @@
                             $form.append('<input type="hidden" name="to"   value="' + to.toString()   + '" />');
 
                             // disable sortable
-                            $sortable.find('.drag_handle').hide('slow');
+                            $sortable.find('.drag_handle').css('color', 'transparent').removeClass('drag_handle');
                             $sortable.sortable('option', 'disabled', true);
                             if ($form.find('input[name="ajax"]').first().val() === "true") {
                                 resetIndexes($sortable);

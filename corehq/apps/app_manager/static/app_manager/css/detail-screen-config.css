@@ -48,17 +48,11 @@
 .detail-screen-table .detail-screen-suggestion:hover {
     color: inherit;
     background-color: #EEE;
-    border: 1px solid #CCC;
 }
 .detail-screen-table .detail-screen-suggestion:hover td {
-    border-top: 1px solid #CCC;
 }
 .detail-screen-table .detail-screen-columns tr {
     background-color: #EEE;
-    border-left: 1px solid #CCC;
-    border-right: 1px solid #CCC;
 }
 .detail-screen-table .detail-screen-columns td {
-    border-top: 1px solid #CCC;
-    border-bottom: 1px solid #CCC;
 }

@@ -870,7 +870,7 @@ def edit_module_attr(req, domain, app_id, module_id, attr):
         'media_image': None, 'media_audio': None,
         "case_list": ('case_list-show', 'case_list-label'),
         "task_list": ('task_list-show', 'task_list-label'),
-        }
+    }
 
     if attr not in attributes:
         return HttpResponseBadRequest()
@@ -897,7 +897,7 @@ def edit_module_attr(req, domain, app_id, module_id, attr):
             # todo: something better than nothing when invalid
             module["case_type"] = case_type
         else:
-            resp['update'].update({'#module-settings [name="case_type"]': module['case_type']})
+            resp['update'].update({'#case_type': module['case_type']})
     if should_edit("put_in_root"):
         module["put_in_root"] = json.loads(req.POST.get("put_in_root"))
     for attribute in ("name", "case_label", "referral_label"):

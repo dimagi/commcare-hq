@@ -47,8 +47,12 @@
     </script>
     {% endif %}
 {% endblock %}
+{% block page-title %}
+    <ul class="breadcrumb">
+        <li><span class="app-manager-title variable-app_name">{{ app.name|html_name }}</span></li>
+    </ul>
+{% endblock %}
 {% block app-content %}
-    <h1 class="app-manager-title variable-app_name">{{ app.name|html_name }}</h1>
     <div class="sidebar-wrapper row-fluid hq-double-col">
         <div id="modules" class="sidebar span2">
         <nav>
@@ -60,11 +64,11 @@
                         {% trans "Deploy" %}
                     </a>
                 </li>
-                <li class="nav-header">Application Settings</li>
+                <li class="nav-header">Application</li>
                 <li {% if not module and not form and not release_manager %}class="app-name-div active"{% endif %}>
                     <a href="{% url view_app domain app.id %}?edit={{ edit|BOOL }}">
                         <i class="icon-cog"></i>
-                        {% trans "Application Settings" %}
+                        {% trans "Settings" %}
                     </a>
                 </li>
                 <li>
@@ -78,14 +82,6 @@
                     <a href="#multimedia" data-toggle="tab">
                         <i class="icon-picture"></i>
                         {% trans "Multimedia" %}
-                    </a>
-                </li>
-                {% endif %}
-                {% if edit %}
-                <li>
-                    <a href="#actions" data-toggle="tab">
-                        <i class="icon-exchange"></i>
-                        {% trans "Copy/Delete" %}
                     </a>
                 </li>
                 {% endif %}
@@ -108,7 +104,7 @@
                     </div>
                 </li>
                 <li>
-                <ul class="nav nav-list {% if edit %}sortable {% endif %}">
+                <ul class="nav nav-list {% if edit %}sortable {% endif %}" style="padding-left: 0">
                     {% if edit %}
                         <li class="sort-action">
                             <form method="post"
@@ -196,19 +192,28 @@
                             <form action="{% url corehq.apps.app_manager.views.new_module domain app.id %}"
                                   method="post" style="display: none">
                             </form>
-                            <a href="#" class="muted submit_on_click" id="new_module">
+                            <a href="#" class="submit_on_click" id="new_module">
                                 <i class="icon-plus"></i>
-                                {% trans "Module" %}
+                                <span class="muted">{% trans "Module" %}</span>
                             </a>
                         </li>
                     {% endif %}
                 </ul>
                 </li>
             {% endif %}
+                {% if edit %}
+                    <li class="nav-header">Actions</li>
+                    <li>
+                        <a href="#actions" data-toggle="tab">
+                            <i class="icon-exchange"></i>
+                            {% trans "Copy/Delete" %}
+                        </a>
+                    </li>
+                {% endif %}
                 </ul>
             </nav>
         </div>
-        <div class="next-to-sidebar span10">
+        <div class="next-to-sidebar span8">
             {% block form-view %}
 
             {% endblock %}

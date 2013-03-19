@@ -108,8 +108,10 @@ todo fix
     <div class="clearfix" data-bind="saveButton2: state, saveOptions: saveOptions"></div>
     <form class="form-horizontal" data-bind="foreach: sections">
         <fieldset data-bind="visible: notEmpty">
-            <legend data-bind="text: title"></legend>
-            <!--ko foreach: settings-->
+            <legend>
+                <a data-toggle="collapse" data-bind="attr: {href: '#' + id}, text: title"></a>
+            </legend>
+            <div class="collapse in" data-bind="foreach: settings, attr: {id: id}">
                 <div class="control-group" data-bind="
                     visible: visible,
                     css: {error: disabledButHasValue}
@@ -138,7 +140,7 @@ todo fix
                         </p>
                     </div>
                 </div>
-            <!--/ko-->
+            <div>
         </fieldset>
     </form>
 </div>

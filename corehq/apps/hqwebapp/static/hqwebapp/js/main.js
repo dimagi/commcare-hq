@@ -141,7 +141,8 @@ var SaveButton = {
                 button.fire('change');
             };
         $form.find('*').change(fireChange);
-        $form.on('textchange', 'input, textarea', fireChange);
+//        $form.on('textchange', 'input, textarea', fireChange);
+        $form.find('input, textarea').bind('textchange', fireChange);
         return button;
     },
     message: {
