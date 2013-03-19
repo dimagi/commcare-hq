@@ -44,4 +44,4 @@ class BaseAdminCRUDFormView(BaseCRUDFormView):
 
     @method_decorator(require_superuser)
     def dispatch(self, request, *args, **kwargs):
-        super(BaseAdminCRUDFormView, self).dispatch(request, *args, **kwargs)
+        return super(BaseAdminCRUDFormView, self).dispatch(request, *args, **kwargs)
