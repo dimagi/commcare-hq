@@ -175,6 +175,7 @@ class DomainMetadataForm(DomainGlobalSettingsForm, SnapshotSettingsMixin):
     sms_case_registration_type = CharField(label='SMS Case Registration Type', required=False)
     sms_case_registration_owner_id = ChoiceField(label='SMS Case Registration Owner', required=False, choices=[])
     sms_case_registration_user_id = ChoiceField(label='SMS Case Registration Submitting User', required=False, choices=[])
+    default_sms_backend_id = CharField(label="Default SMS Backend", required=False, help_text="This SMS backend will be used if a contact has no backend specified.")
     commtrack_enabled = BooleanField(label='CommTrack Enabled', required=False, help_text='CommTrack is a CommCareHQ module for logistics, inventory tracking, and supply chain management. It is still under active development. Do not enable for your domain unless you\'re actively piloting it.')
 
     def __init__(self, *args, **kwargs):
@@ -227,6 +228,7 @@ class DomainMetadataForm(DomainGlobalSettingsForm, SnapshotSettingsMixin):
             domain.sms_case_registration_type = self.cleaned_data.get('sms_case_registration_type')
             domain.sms_case_registration_owner_id = self.cleaned_data.get('sms_case_registration_owner_id')
             domain.sms_case_registration_user_id = self.cleaned_data.get('sms_case_registration_user_id')
+            domain.default_sms_backend_id = self.cleaned_data.get('default_sms_backend_id')
             domain.commtrack_enabled = self.cleaned_data.get('commtrack_enabled', False)
             if domain.commtrack_enabled and not domain.commtrack_settings:
                 commtrack_util.bootstrap_default(domain.name)

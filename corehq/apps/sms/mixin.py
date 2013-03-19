@@ -2,6 +2,7 @@ import re
 from couchdbkit.ext.django.schema import *
 from django.conf import settings
 from dimagi.utils.modules import try_import
+from corehq.apps.domain.models import Domain
 
 phone_number_re = re.compile("^\d+$")
 
@@ -35,7 +36,10 @@ class VerifiedNumber(Document):
 
     @property
     def backend(self):
-        return MobileBackend.load(self.backend_id)
+        if self.backend_id is None or self.backend_id == "":
+            return MobileBackend.auto_load("+%s" % self.phone_number, self.domain)
+        else:
+            return MobileBackend.load(self.backend_id)
     
     @property
     def ivr_backend(self):
@@ -85,8 +89,13 @@ class MobileBackend(Document):
         """
         phone_number = add_plus(phone_number)
 
-        # TODO: support domain-specific settings
+        # Use the domain-wide default backend if possible
+        if domain is not None:
+            domain_obj = Domain.get_by_name(domain, strict=True)
+            if domain_obj.default_sms_backend_id is not None and domain_obj.default_sms_backend_id != "":
+                return cls.load(domain_obj.default_sms_backend_id)
         
+        # Use the appropriate system-wide default backend
         global_backends = getattr(settings, 'SMS_BACKENDS', {})
         backend_mapping = sorted(global_backends.iteritems(),
                                  key=lambda (prefix, backend): len(prefix),

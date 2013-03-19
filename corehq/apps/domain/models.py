@@ -197,6 +197,7 @@ class Domain(Document, HQBillingDomainMixin, SnapshotMixin):
     sms_case_registration_owner_id = StringProperty() # Owner to apply to cases registered via sms
     sms_case_registration_user_id = StringProperty() # Submitting user to apply to cases registered via sms
     sms_mobile_worker_registration_enabled = BooleanProperty(default=False) # Whether or not a mobile worker can register via sms
+    default_sms_backend_id = StringProperty()
 
     # exchange/domain copying stuff
     is_snapshot = BooleanProperty(default=False)
