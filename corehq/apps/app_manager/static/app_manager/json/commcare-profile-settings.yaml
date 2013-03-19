@@ -110,7 +110,7 @@
   description: "What user interface style should be used during form entry."
   id: "ViewStyle"
   values: ["v_chatterbox","v_singlequestionscreen"]
-  value_names: ["Chatterbox", "One Question per Screen"]
+  value_names: ["Multiple Questions per Screen", "One Question per Screen"]
   values_txt: "Chatterbox displays a running list of questions on the screen at the same time. One Question per Screen displays each question independently. Note: OQPS does not support some features"
   default: "v_chatterbox"
 
