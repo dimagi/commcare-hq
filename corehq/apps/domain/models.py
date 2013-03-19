@@ -192,7 +192,15 @@ class Domain(Document, HQBillingDomainMixin, SnapshotMixin):
     short_description = StringProperty()
     is_shared = BooleanProperty(default=False)
     commtrack_enabled = BooleanProperty(default=False)
+    
+    # CommConnect settings
     survey_management_enabled = BooleanProperty(default=False)
+    sms_case_registration_enabled = BooleanProperty(default=False) # Whether or not a case can register via sms
+    sms_case_registration_type = StringProperty() # Case type to apply to cases registered via sms
+    sms_case_registration_owner_id = StringProperty() # Owner to apply to cases registered via sms
+    sms_case_registration_user_id = StringProperty() # Submitting user to apply to cases registered via sms
+    sms_mobile_worker_registration_enabled = BooleanProperty(default=False) # Whether or not a mobile worker can register via sms
+    default_sms_backend_id = StringProperty()
 
     # exchange/domain copying stuff
     is_snapshot = BooleanProperty(default=False)

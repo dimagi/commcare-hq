@@ -2,7 +2,7 @@
     <create>
         <case_type>{{ case_type }}</case_type>
         <case_name>{{ case_name }}</case_name>
-        <owner_id>{{ user_id }}</owner_id>
+        <owner_id>{{ owner_id }}</owner_id>
     </create>
     <update>
         <contact_phone_number>{{ contact_phone_number }}</contact_phone_number>

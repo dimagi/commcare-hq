@@ -133,7 +133,7 @@ def project_settings(request, domain, template="domain/admin/project_settings.ht
        'deployment_info_form' not in request.POST:
         # deal with saving the settings data
         if user_sees_meta:
-            form = DomainMetadataForm(request.POST, user=request.couch_user)
+            form = DomainMetadataForm(request.POST, user=request.couch_user, domain=domain.name)
         else:
             form = DomainGlobalSettingsForm(request.POST)
         if form.is_valid():
@@ -143,13 +143,18 @@ def project_settings(request, domain, template="domain/admin/project_settings.ht
                 messages.error(request, "There seems to have been an error saving your settings. Please try again!")
     else:
         if user_sees_meta:
-            form = DomainMetadataForm(user=request.couch_user, initial={
+            form = DomainMetadataForm(user=request.couch_user, domain=domain.name, initial={
                 'default_timezone': domain.default_timezone,
                 'case_sharing': json.dumps(domain.case_sharing),
                 'project_type': domain.project_type,
                 'customer_type': domain.customer_type,
                 'is_test': json.dumps(domain.is_test),
                 'survey_management_enabled': domain.survey_management_enabled,
+                'sms_case_registration_enabled': domain.sms_case_registration_enabled,
+                'sms_case_registration_type': domain.sms_case_registration_type,
+                'sms_case_registration_owner_id': domain.sms_case_registration_owner_id,
+                'sms_case_registration_user_id': domain.sms_case_registration_user_id,
+                'default_sms_backend_id': domain.default_sms_backend_id,
                 'commtrack_enabled': domain.commtrack_enabled,
             })
         else:
