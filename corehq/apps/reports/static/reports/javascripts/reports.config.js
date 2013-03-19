@@ -11,6 +11,9 @@ var HQReport = function (options) {
     self.exportReportButton = options.exportReportButton || "#export-report-excel";
     self.emailReportButton = options.emailReportButton || "#email-report";
     self.emailReportModal = options.emailReportModal || "#email-report-modal";
+    self.emailDefaultSubject = options.emailDefaultSubject || "";
+    self.emailSuccessMessage = options.emailSuccessMessage;
+    self.emailErrorMessage = options.emailErrorMessage;
     self.urlRoot = options.urlRoot;
     self.slug = options.slug;
     self.subReportSlug = options.subReportSlug;
@@ -21,27 +24,27 @@ var HQReport = function (options) {
 
     self.initialLoad = true;
 
-    self.emailReportViewModel = new EmailReportViewModel();
-
     self.init = function () {
         $(function () {
             checkFilterAccordionToggleState();
 
-            $(self.exportReportButton).click(function (e) {
-                e.preventDefault();
-                window.location.href = get_report_render_url("export");
-            });
-
-            $(self.emailReportButton).click(function (e) {
-                self.emailReportViewModel.setConfigBeingEmailed();
-            });
-
             self.resetFilterState();
+
             if (self.needsFilters) {
                 self.filterSubmitButton.button('reset').addClass('btn-primary');
-            }
+            } else {
+                $(self.exportReportButton).click(function (e) {
+                    e.preventDefault();
+                    window.location.href = get_report_render_url("export");
+                });
 
-            ko.applyBindings(self.emailReportViewModel, $(self.emailReportModal).get(0));
+                self.emailReportViewModel = new EmailReportViewModel(self);
+                $(self.emailReportButton).click(function (e) {
+                    self.emailReportViewModel.openEmailModal();
+                });
+
+                ko.applyBindings(self.emailReportViewModel, $(self.emailReportModal).get(0));
+            }
         });
     };
 
@@ -142,29 +145,28 @@ var HQReport = function (options) {
             self.urlRoot+render_type+"/")+"?"+params + (additionalParams == undefined ? "" : "&" + additionalParams);
     };
 
-    function EmailReportViewModel() {
+    function EmailReportViewModel(hqReport) {
         var self = this;
 
-        self.modalTitle = "Email report";
-        self.configBeingEmailed = ko.observable();
+        self.modalDisplayState = ko.observable();
 
         self.send_to_owner = ko.observable(true);
-        self.subject = ko.observable("Once of Report");
+        self.subject = ko.observable(hqReport.emailDefaultSubject);
         self.recipient_emails = ko.observable();
         self.notes = ko.observable();
 
-        self.setConfigBeingEmailed = function () {
-            self.configBeingEmailed({});
+        self.openEmailModal = function () {
+            self.modalDisplayState({});
         }
 
-        self.unsetConfigBeingEmailed = function() {
-            self.configBeingEmailed(undefined);
+        self.closeEmailModal = function() {
+            self.modalDisplayState(undefined);
         }
 
         self.unwrap = function () {
             var data = ko.mapping.toJS(self, {
-                ignore: ['modalTitle', 'configBeingEmailed', 'setConfigBeingEmailed',
-                'unsetConfigBeingEmailed', 'sendEmail', 'unwrap']
+                ignore: ['modalTitle', 'modalDisplayState', 'openEmailModal',
+                'closeEmailModal', 'sendEmail', 'unwrap']
             });
 
             for (var i in data) {
@@ -176,11 +178,11 @@ var HQReport = function (options) {
         self.sendEmail = function(data, event) {
             $.get(get_report_render_url("email_onceoff", $.param(self.unwrap())))
                 .done(function() {
-                    $.showMessage("Report successfully emailed", "success");
-                    self.unsetConfigBeingEmailed();
+                    $.showMessage(hqReport.emailSuccessMessage, "success");
+                    self.closeEmailModal();
                 })
                 .fail(function() {
-                    $.showMessage("An error occurred emailing you report. Please try again.", "error");
+                    $.showMessage(hqReport.emailErrorMessage, "error");
                 });
         }
     };

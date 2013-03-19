@@ -568,7 +568,7 @@ def email_report(request, domain, report_slug):
     config = ReportConfig()
     # see ReportConfig.query_string()
     object.__setattr__(config, '_id', 'dummy')
-    config.name = "Once off emailed report"
+    config.name = _("Emailed report")
     config.report_type = ProjectReportDispatcher.prefix
     config.report_slug = report_slug
     config.owner_id = user_id
@@ -594,7 +594,7 @@ def email_report(request, domain, report_slug):
                                   True,
                                   notes=form.cleaned_data['notes']).content
 
-    subject = form.cleaned_data['subject'] or "Once off report from CommCare HQ"
+    subject = form.cleaned_data['subject'] or _("Email report from CommCare HQ")
 
     if form.cleaned_data['send_to_owner']:
         send_HTML_email(subject, request.couch_user.get_email(), body)

@@ -28,6 +28,9 @@
             type: {{ report.type|JSON }},
             filterSet: {{ report.filter_set|JSON }},
             needsFilters: {{ report.needs_filters|JSON }},
+            emailDefaultSubject: {{ report.title|JSON }},
+            emailSuccessMessage: '{% trans "Report successfully emailed" %}',
+            emailErrorMessage: '{% trans "An error occurred emailing you report. Please try again." %}',
 
             {% if request.datespan %}
                 datespan: {
@@ -133,11 +136,11 @@
     </div>
 
     {% if not report.needs_filters and report.is_emailable%}
-    <div id="email-report-modal" class="hide fade" data-bind="modal: configBeingEmailed">
+    <div id="email-report-modal" class="hide fade" data-bind="modal: modalDisplayState">
         <div>
             <div class="modal-header">
-                <a class="close" data-bind="click: unsetConfigBeingEmailed">×</a>
-                <h3 data-bind="text: modalTitle"></h3>
+                <a class="close" data-bind="click: closeEmailModal">×</a>
+                <h3>{% trans "Email report" %}</h3>
             </div>
             <form class="form-horizontal">
                 <div class="modal-body">
@@ -168,7 +171,7 @@
                 <div class="modal-footer">
                     <div class="btn-toolbar">
                         <div class="btn-group">
-                            <a href="#" class="btn" data-bind="click: unsetConfigBeingEmailed">Cancel</a>
+                            <a href="#" class="btn" data-bind="click: closeEmailModal">Cancel</a>
                         </div>
                         <div class="btn-group">
                             <a href="#" class="btn btn-success" data-bind="click: sendEmail">Send</a>
