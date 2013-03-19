@@ -135,8 +135,37 @@ def start_session_from_keyword(survey_keyword, verified_number):
         print e
         print "ERROR: Exception raised while starting survey for keyword " + survey_keyword.keyword + ", domain " + verified_number.domain
 
-# Returns True if a contact was registered, False if not
 def process_sms_registration(msg):
+    """
+    This method handles registration via sms.
+    Returns True if a contact was registered, False if not.
+    
+    To have a case register itself, do the following:
+
+        1) Select "Enable Case Registration Via SMS" in project settings, and fill in the
+        associated Case Registration settings.
+
+        2) Text in "join <domain>", where <domain> is the domain to join. If the sending
+        number does not exist in the system, a case will be registered tied to that number.
+        The "join" keyword can be any keyword in REGISTRATION_KEYWORDS. This is meant to
+        support multiple translations.
+    
+    To have a mobile worker register itself, do the following:
+
+        NOTE: This is not yet implemented and may change slightly.
+
+        1) Select "Enable Mobile Worker Registration via SMS" in project settings.
+
+        2) Text in "join <domain> worker", where <domain> is the domain to join. If the
+        sending number does not exist in the system, a PendingCommCareUser object will be
+        created, tied to that number.
+        The "join" and "worker" keywords can be any keyword in REGISTRATION_KEYWORDS and
+        REGISTRATION_MOBILE_WORKER_KEYWORDS, respectively. This is meant to support multiple 
+        translations.
+
+        3) A domain admin will have to approve the addition of the mobile worker before
+        a CommCareUser can actually be created.
+    """
     registration_processed = False
     text_words = msg.text.upper().split()
     keyword1 = text_words[0] if len(text_words) > 0 else ""
