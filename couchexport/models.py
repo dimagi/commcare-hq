@@ -169,10 +169,6 @@ class ExportSchema(Document, UnicodeMixIn):
     def table_dict(self):
         return dict(self.tables)
     
-    @property
-    def top_level_nodes(self):
-        return self.tables[0][1].get_data()
-    
     def get_columns(self, index):
         return self.table_dict[index].get_data()
 
@@ -256,8 +252,7 @@ class ExportTable(DocumentSchema):
     def displays_by_index(self):
         return dict((c.index, c.display + (" [sensitive]" if c.transform else '')) for c in self.columns)
     
-    def get_column_configuration(self, schema):
-        all_cols = schema.top_level_nodes
+    def get_column_configuration(self, all_cols):
         selected_cols = set()
         for c in self.columns:
             selected_cols.add(c.index)
@@ -472,7 +467,7 @@ class SavedExportSchema(BaseSavedExportSchema, UnicodeMixIn):
     def get_table_configuration(self, index):
         def column_configuration():
             if self.tables_by_index.has_key(index):
-                return list(self.tables_by_index[index].get_column_configuration(self.schema))
+                return list(self.tables_by_index[index].get_column_configuration(self.schema.get_columns(index)))
             else:
                 return [ExportColumn(index=c, display=c).to_config_format(selected=False) for c in self.schema.get_columns(index)]
 
