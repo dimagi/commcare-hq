@@ -158,6 +158,8 @@ def process_sms_registration(msg):
                     contact_phone_number_is_verified="1",
                     owner_id=domain.sms_case_registration_owner_id,
                 )
+                msg.domain = domain.name
+                msg.save()
                 registration_processed = True
     
     return registration_processed
@@ -386,7 +388,7 @@ def form_session_handler(v, text):
     return True
 
 def forwarding_handler(v, text):
-    rules = ForwardingRule.view("sms/forwarding_rule", key=v.domain, include_docs=True).all()
+    rules = ForwardingRule.view("sms/forwarding_rule", key=[v.domain], include_docs=True).all()
     text_words = text.upper().split()
     keyword_to_match = text_words[0] if len(text_words) > 0 else ""
     for rule in rules:
