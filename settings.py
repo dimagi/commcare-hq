@@ -612,6 +612,7 @@ WEB_USER_TERM = "Web User"
 DEFAULT_CURRENCY = "USD"
 
 SMS_HANDLERS = [
+    'corehq.apps.sms.api.forwarding_handler',
     'corehq.apps.commtrack.sms.handle',
     'corehq.apps.sms.api.form_session_handler',
     'corehq.apps.sms.api.fallback_handler',
