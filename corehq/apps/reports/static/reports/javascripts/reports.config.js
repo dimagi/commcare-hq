@@ -176,10 +176,12 @@ var HQReport = function (options) {
         self.sendEmail = function(data, event) {
             $.get(get_report_render_url("email_onceoff", $.param(self.unwrap())))
                 .done(function() {
-                    alert("Report successfully emailed.");
+                    $.showMessage("Report successfully emailed", "success");
                     self.unsetConfigBeingEmailed();
                 })
-                .fail(function() { alert("An error occurred, please try again."); });
+                .fail(function() {
+                    $.showMessage("An error occurred emailing you report. Please try again.", "error");
+                });
         }
     };
 };
