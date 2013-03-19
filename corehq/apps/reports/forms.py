@@ -5,6 +5,7 @@ from crispy_forms.helper import FormHelper
 from crispy_forms.layout import Submit
 from .models import ReportNotification
 
+
 class ScheduledReportForm(forms.Form):
     config_ids = forms.MultipleChoiceField(
         label="Saved report(s)",
@@ -43,14 +44,9 @@ class ScheduledReportForm(forms.Form):
 
     def clean(self):
         cleaned_data = super(ScheduledReportForm, self).clean()
-        
-        if ('recipient_emails' in cleaned_data
-            and not (cleaned_data['recipient_emails'] or
-                        cleaned_data['send_to_owner'])):
-            raise forms.ValidationError("You must specify at least one "
-                    "valid recipient")
-
+        _verify_email(cleaned_data)
         return cleaned_data
+
 
 class EmailReportForm(forms.Form):
     subject = forms.CharField(required=False)
@@ -60,11 +56,13 @@ class EmailReportForm(forms.Form):
 
     def clean(self):
         cleaned_data = super(EmailReportForm, self).clean()
-
-        if ('recipient_emails' in cleaned_data
-            and not (cleaned_data['recipient_emails'] or
-                        cleaned_data['send_to_owner'])):
-            raise forms.ValidationError("You must specify at least one "
-                    "valid recipient")
-
+        _verify_email(cleaned_data)
         return cleaned_data
+
+
+def _verify_email(cleaned_data):
+    if ('recipient_emails' in cleaned_data
+        and not (cleaned_data['recipient_emails'] or
+                     cleaned_data['send_to_owner'])):
+        raise forms.ValidationError("You must specify at least one "
+                                    "valid recipient")
