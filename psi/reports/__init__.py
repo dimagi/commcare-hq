@@ -1,6 +1,6 @@
 from corehq.apps.fixtures.models import FixtureDataItem, FixtureDataType
 from corehq.apps.reports.standard import CustomProjectReport, DatespanMixin
-from corehq.apps.reports.basic import BasicTabularReport, Column, FunctionView
+from corehq.apps.reports.basic import BasicTabularReport, Column, FunctionView, SummingTabularReport
 from corehq.apps.reports.fields import AsyncDrillableField, ReportSelectField
 from util import get_unique_combinations
 from couchdbkit_aggregate.fn import mean
@@ -83,7 +83,7 @@ def get_village_name(key, req):
 def get_village_class(key, req):
     return get_village(req, key[4]).fields.get("village_class", "No data")
 
-class PSIReport(BasicTabularReport, CustomProjectReport, DatespanMixin):
+class PSIReport(SummingTabularReport, CustomProjectReport, DatespanMixin):
     update_after = True
     fields = ['corehq.apps.reports.fields.DatespanField','psi.reports.AsyncPlaceField',]
 
