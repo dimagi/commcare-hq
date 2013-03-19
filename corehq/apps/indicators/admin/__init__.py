@@ -13,17 +13,10 @@ class BaseIndicatorAdminInterface(BaseCRUDAdminInterface):
     dispatcher = IndicatorAdminInterfaceDispatcher
 
     crud_item_type = "Indicator Definition"
-    crud_form_update_url = "/indicators/form/"
 
     @property
     def crud_item_type(self):
         return self.document_class.get_nice_name()
-
-    def validate_document_class(self):
-        from corehq.apps.indicators.models import IndicatorDefinition
-        if self.document_class is None or not issubclass(self.document_class, IndicatorDefinition):
-            raise NotImplementedError("document_class must be an IndicatorDefinition and must not be None.")
-
 
     @property
     def headers(self):
@@ -34,6 +27,18 @@ class BaseIndicatorAdminInterface(BaseCRUDAdminInterface):
             DataTablesColumn("Last Modified"),
             DataTablesColumn("Edit"),
         )
+
+    @property
+    def report_context(self):
+        context = super(BaseIndicatorAdminInterface, self).report_context
+        context.update({
+            "bulk_add_url": self.bulk_add_url,
+        })
+        return context
+
+    @property
+    def bulk_add_url(self):
+        return reverse("indicator_bulk_copy", args=[self.domain, self.document_class.__name__])
 
     @property
     def rows(self):
@@ -62,3 +67,8 @@ class BaseIndicatorAdminInterface(BaseCRUDAdminInterface):
     @property
     def default_report_url(self):
         return reverse("default_indicator_admin", args=[self.domain])
+
+    def validate_document_class(self):
+        from corehq.apps.indicators.models import IndicatorDefinition
+        if self.document_class is None or not issubclass(self.document_class, IndicatorDefinition):
+            raise NotImplementedError("document_class must be an IndicatorDefinition and must not be None.")
