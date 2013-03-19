@@ -639,6 +639,7 @@ PILLOWTOPS = [
                  'corehq.pillows.xform.XFormPillow',
                  'corehq.pillows.fullxform.FullXFormPillow',
                  'corehq.pillows.exchange.ExchangePillow',
+                 'corehq.pillows.domain.DomainPillow'
              ] + LOCAL_PILLOWTOPS
 
 #Custom workflow for indexing xform data beyond the standard properties
