@@ -9,13 +9,6 @@ from django.conf import settings
 UNKNOWN_DOMAIN = "__nodomain__"
 UNKNOWN_TYPE = "__notype__"
 
-
-#special elasticsearch case data for the creator user_id
-ES_CASE_CREATOR = 'es_case_creator_id'
-
-#special elasticsearch case data for the modifier user_id
-ES_CASE_MODIFIER = 'es_case_modifier_id'
-
 class CasePillow(AliasedElasticPillow):
     """
     Simple/Common Case properties Indexer
@@ -73,28 +66,3 @@ class CasePillow(AliasedElasticPillow):
 
     def get_type_string(self, doc_dict):
         return self.es_type
-
-
-    def change_transform(self, doc_dict):
-        """
-        Subtle transformation for case dict for easing of rapid queries to the db.
-        Cache the user_id of the creator and the user_id of the last_modified
-        """
-
-        doc_ret = copy.deepcopy(doc_dict)
-        owner_id = ""
-
-        def do_get_action_user(action):
-            action_doc = CommCareCaseAction.wrap(action)
-            owner_id = action_doc.get_user_id()
-            return owner_id
-
-        for action in doc_ret.get('actions', []):
-            if action['action_type'] == 'create':
-                doc_ret[ES_CASE_CREATOR] = do_get_action_user(action)
-
-        last_action = doc_ret['actions'][-1]
-        if last_action:
-            doc_ret[ES_CASE_MODIFIER] = do_get_action_user(last_action)
-
-        return doc_ret

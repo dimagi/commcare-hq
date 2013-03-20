@@ -24,7 +24,6 @@ from corehq.apps.reports.display import xmlns_to_name
 from corehq.apps.reports.fields import SelectOpenCloseField, SelectMobileWorkerField
 from corehq.apps.reports.generic import GenericTabularReport
 from corehq.apps.users.models import CommCareUser, CouchUser
-from corehq.pillows.case import ES_CASE_CREATOR
 from dimagi.utils.couch.database import get_db
 from dimagi.utils.couch.pagination import CouchFilter
 from dimagi.utils.decorators.memoized import memoized
@@ -225,7 +224,6 @@ class CaseDisplay(object):
     def modified_on_dt(self):
         return self.parse_date(self.case['modified_on'])
 
-
     @property
     def owner_id(self):
         return self.case['owner_id'] if self.case['owner_id'] else self.case['user_id']
@@ -281,17 +279,13 @@ class CaseDisplay(object):
 
     @property
     def creating_user(self):
-        creator_id = self.case.get(ES_CASE_CREATOR, None)
-        #creator_id = None
-
-        if creator_id is None:
-            for action in self.case['actions']:
-                if action['action_type'] == 'create':
-                    action_doc = CommCareCaseAction.wrap(action)
-                    creator_id = action_doc.get_user_id()
-                    break
-            if not creator_id:
-                return _("No data")
+        for action in self.case['actions']:
+            if action['action_type'] == 'create':
+                action_doc = CommCareCaseAction.wrap(action)
+                creator_id = action_doc.get_user_id()
+                break
+        if not creator_id:
+            return _("No data")
         return self._get_username(creator_id)
 
 
