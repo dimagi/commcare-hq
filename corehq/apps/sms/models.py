@@ -233,6 +233,20 @@ CALLBACK_MISSED = "MISSED"
 class ExpectedCallbackEventLog(EventLog):
     status = StringProperty(choices=[CALLBACK_PENDING,CALLBACK_RECEIVED,CALLBACK_MISSED])
 
+FORWARD_ALL = "ALL"
+FORWARD_BY_KEYWORD = "KEYWORD"
+FORWARDING_CHOICES = [FORWARD_ALL, FORWARD_BY_KEYWORD]
+
+class ForwardingRule(Document):
+    domain = StringProperty()
+    forward_type = StringProperty(choices=FORWARDING_CHOICES)
+    keyword = StringProperty()
+    backend_id = StringProperty() # id of MobileBackend which will be used to do the forwarding
+    
+    def retire(self):
+        self.doc_type += "-Deleted"
+        self.save()
+
 class MessageLogOld(models.Model):
     couch_recipient    = models.TextField()
     phone_number       = models.TextField()

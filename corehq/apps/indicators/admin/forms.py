@@ -6,7 +6,7 @@ from django.forms import MultipleChoiceField
 from django.forms.util import ErrorList
 from corehq.apps.crud.models import BaseAdminCRUDForm
 from corehq.apps.indicators.models import FormDataAliasIndicatorDefinition, FormLabelIndicatorDefinition, CaseDataInFormIndicatorDefinition, FormDataInCaseIndicatorDefinition, CouchIndicatorDef, CountUniqueCouchIndicatorDef, MedianCouchIndicatorDef, CombinedCouchViewIndicatorDefinition, SumLastEmittedCouchIndicatorDef, DynamicIndicatorDefinition, NoGroupCouchIndicatorDefBase
-from corehq.apps.indicators.utils import get_namespaces, get_namespace_name
+from corehq.apps.indicators.utils import get_namespaces, get_namespace_name, get_indicator_domains
 from corehq.apps.users.models import Permissions
 from dimagi.utils.decorators.memoized import memoized
 
@@ -116,11 +116,11 @@ class CouchIndicatorForm(BaseDynamicIndicatorForm):
         return subclasses.difference([self.doc_class])
 
     def clean_fixed_datespan_days(self):
-        if 'fixed_datespan_days' in self.cleaned_data:
+        if 'fixed_datespan_days' in self.cleaned_data and self.cleaned_data['fixed_datespan_days']:
             return abs(self.cleaned_data['fixed_datespan_days'])
 
     def clean_fixed_datespan_months(self):
-        if 'fixed_datespan_months' in self.cleaned_data:
+        if 'fixed_datespan_months' in self.cleaned_data and self.cleaned_data['fixed_datespan_months']:
             return abs(self.cleaned_data['fixed_datespan_months'])
 
     def clean_doc_type_choices(self):
@@ -204,7 +204,7 @@ class BulkCopyIndicatorsForm(forms.Form):
     def available_domains(self):
         if not self.couch_user:
             return []
-        indicator_domains = set(getattr(settings, 'INDICATOR_ENABLED_PROJECTS'))
+        indicator_domains = set(get_indicator_domains())
         indicator_domains = indicator_domains.difference([self.domain])
         return [d for d in indicator_domains if self.couch_user.has_permission(d, Permissions.edit_data)]
 
