@@ -30,7 +30,6 @@ from dimagi.utils.couch.pagination import CouchFilter
 from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.timezones import utils as tz_utils
 from corehq.apps.groups.models import Group
-from pillowtop.listener import ms_from_timedelta
 
 
 class ProjectInspectionReportParamsMixin(object):
