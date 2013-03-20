@@ -1,5 +1,12 @@
 {% extends 'reports/filters/base.html' %}
+{% load hq_shared_tags %}
 {% load i18n %}
 {% block filter_content %}
+<script src="{% static 'hqwebapp/js/main.js' %}"></script>
 <input id="{{ css_id }}" name="{{ slug }}" type="text" class="span6" value="{{ search_query }}">
+
+<span class="hq-help-template"
+    data-title="{% trans search_help_title %}"
+    data-content="{% trans search_help_content %}"
+</span>
 {% endblock %}
