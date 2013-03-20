@@ -353,13 +353,31 @@ class ElasticTabularReport(ProjectInspectionReportParamsMixin, GenericTabularRep
         return ret
 
 
+class CaseSearchFilter(SearchFilter):
+    search_help_title = "Case Search"
+    search_help_content = """<p>You can now enter general queries for case search</p>
+    <p>Example searches include:</p>
+    String fields enabled are: <pre>name</pre> and <pre>type</pre>
+    Can be searched full text using any string, or you choose the direct field
+    like <pre>name:parker</pre> or <pre>type:some_case_type</pre>
+    Date Fields enabled are: <pre>opened_on</pre> and <pre>modified_date</pre>
+    Date based search: <pre>opened_on:[2011-01-01 TO 2012-01-01]</pre> or <pre>opened_on:[2013-01-01 TO *]</pre>
+
+    Boolean fields enabled is just <pre>closed</pre>
+    To query a closed case, enter a <pre>closed:TRUE</pre>
+
+    Searches can be chained like <pre>type:some_type AND name:parker AND opened_on[2012-01-01 to *] AND closed:TRUE</pre>
+    """
+
+
+
 class CaseListMixin(ElasticTabularReport, ProjectReportParametersMixin):
     fields = [
         'corehq.apps.reports.fields.FilterUsersField',
         'corehq.apps.reports.fields.SelectCaseOwnerField',
         'corehq.apps.reports.fields.CaseTypeField',
         'corehq.apps.reports.fields.SelectOpenCloseField',
-        'corehq.apps.reports.filters.search.SearchFilter',
+        'corehq.apps.reports.standard.inspect.CaseSearchFilter',
     ]
 
     case_filter = {}
