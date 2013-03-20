@@ -420,6 +420,7 @@ class CaseListMixin(ElasticTabularReport, ProjectReportParametersMixin):
         return es_query
 
     @property
+    @memoized
     def es_results(self):
         case_es = CaseES(self.domain)
         query = self.build_query(case_type=self.case_type, filter=self.case_filter,
