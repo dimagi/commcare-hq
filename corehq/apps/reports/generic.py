@@ -523,7 +523,7 @@ class GenericReportView(CacheableRequestMixIn):
             Intention: Not to be overridden in general.
             Renders the asynchronous view of the report template, returned as json.
         """
-        return HttpResponse(json.dumps(self._async_context()))
+        return HttpResponse(json.dumps(self._async_context()), content_type='application/json')
     
     def _async_context(self):
         self.update_template_context()
