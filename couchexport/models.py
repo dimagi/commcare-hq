@@ -170,7 +170,7 @@ class ExportSchema(Document, UnicodeMixIn):
         return dict(self.tables)
     
     def get_columns(self, index):
-        return self.table_dict[index].get_data()
+        return ['id'] + self.table_dict[index].data
 
     def get_all_ids(self, database=None):
         database = database or self.get_db()
@@ -266,7 +266,20 @@ class ExportTable(DocumentSchema):
 
     def get_headers_row(self):
         from couchexport.export import FormattedRow
-        return FormattedRow([self.displays_by_index[col.index] for col in self.columns])
+        headers = []
+        for col in self.columns:
+            display = self.displays_by_index[col.index]
+            if col.index == 'id':
+                id_len = len(
+                    filter(lambda part: part == '#', self.index.split('.'))
+                )
+                headers.append(display)
+                if id_len > 1:
+                    for i in range(id_len):
+                        headers.append('{id}__{i}'.format(id=display, i=i))
+            else:
+                headers.append(display)
+        return FormattedRow(headers)
 
     @property
     @memoized
@@ -466,10 +479,11 @@ class SavedExportSchema(BaseSavedExportSchema, UnicodeMixIn):
 
     def get_table_configuration(self, index):
         def column_configuration():
+            columns = self.schema.get_columns(index)
             if self.tables_by_index.has_key(index):
-                return list(self.tables_by_index[index].get_column_configuration(self.schema.get_columns(index)))
+                return list(self.tables_by_index[index].get_column_configuration(columns))
             else:
-                return [ExportColumn(index=c, display=c).to_config_format(selected=False) for c in self.schema.get_columns(index)]
+                return [ExportColumn(index=c, display=c).to_config_format(selected=False) for c in columns]
 
         def display():
             if self.tables_by_index.has_key(index):
