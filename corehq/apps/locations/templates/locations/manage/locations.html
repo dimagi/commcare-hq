@@ -70,7 +70,7 @@ $(function() {
       <div class="loc_header" data-bind="if: name() != '_root', bind_element: null">
         <a class="loc_edit btn btn-primary" data-bind="attr: { href: loc_edit_url(uuid()) }">Edit</a>
         <span data-bind="click: toggle, style: { cursor: (can_have_children() ? 'pointer' : 'default') }"> <!-- want to make entire row clickable, but overrides click on 'edit' button -->
-          <span data-bind="if: can_have_children"><a class="label" data-bind="css: { 'icon-plus': !expanded(), 'icon-minus': expanded() }"></a></span>
+          <span data-bind="if: can_have_children"><a class="label"><i data-bind="css: { 'icon-plus': !expanded(), 'icon-minus': expanded() }"></i></a></span>
           <span class="loc_name" data-bind="text: name"></span> <span class="loc_type">(<span data-bind="text: type"></span>)</span>
         </span>
         <div style="clear: both;"></div>
