@@ -50,8 +50,10 @@ class CommCareCaseAction(LooselyEqualDocumentSchema):
     date = DateTimeProperty()
     server_date = DateTimeProperty()
     xform_id = StringProperty()
+    xform_xmlns = StringProperty()
+    xform_name = StringProperty()
     sync_log_id = StringProperty()
-    
+
     updated_known_properties = DictProperty()
     updated_unknown_properties = DictProperty()
     indices = SchemaListProperty(CommCareCaseIndex)
@@ -61,13 +63,15 @@ class CommCareCaseAction(LooselyEqualDocumentSchema):
         if not action_type in const.CASE_ACTIONS:
             raise ValueError("%s not a valid case action!")
         
-        ret = CommCareCaseAction(action_type=action_type, date=date,
-                                 xform_id=xformdoc.get_id) 
+        ret = CommCareCaseAction(action_type=action_type, date=date)
         
         def _couchify(d):
             return dict((k, couchable_property(v)) for k, v in d.items())
 
         ret.server_date = xformdoc.received_on
+        ret.xform_id = xformdoc.get_id
+        ret.xform_xmlns = xformdoc.xmlns
+        ret.xform_name = xformdoc.name
         ret.updated_known_properties = _couchify(action.get_known_properties())
         ret.updated_unknown_properties = _couchify(action.dynamic_properties)
         ret.indices = [CommCareCaseIndex.from_case_index_update(i) for i in action.indices]

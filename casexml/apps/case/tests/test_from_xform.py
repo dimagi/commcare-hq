@@ -16,7 +16,8 @@ class CaseFromXFormTest(TestCase):
         self.assertEqual(1, len(case.actions))
         create_action = case.actions[0]
         self.assertEqual(const.CASE_ACTION_CREATE, create_action.action_type)
-        
+        self.assertEqual("http://openrosa.org/case/test/create", create_action.xform_xmlns)
+        self.assertEqual("test create", create_action.xform_name)
         self.assertEqual(0, len(case.referrals))
     
     def testCreateThenUpdateInSeparateForms(self):
@@ -34,7 +35,9 @@ class CaseFromXFormTest(TestCase):
         self.assertEqual(3, len(case.actions))
         new_update_action = case.actions[2]
         self.assertEqual(const.CASE_ACTION_UPDATE, new_update_action.action_type)
-        
+        self.assertEqual("http://openrosa.org/case/test/update", new_update_action.xform_xmlns)
+        self.assertEqual("", new_update_action.xform_name)
+
         # some properties didn't change
         self.assertEqual("123", str(case["someotherprop"]))
         
@@ -72,7 +75,9 @@ class CaseFromXFormTest(TestCase):
         close_action = case.actions[2]
         self.assertEqual(const.CASE_ACTION_UPDATE, update_action.action_type)
         self.assertEqual(const.CASE_ACTION_CLOSE, close_action.action_type)
-        
+        self.assertEqual("http://openrosa.org/case/test/close", close_action.xform_xmlns)
+        self.assertEqual("", close_action.xform_name)
+
         self.assertEqual("abcde", case["someprop"])
         self.assertEqual("abcde", update_action.updated_unknown_properties["someprop"])
         self.assertEqual("case closed", case["someclosedprop"])

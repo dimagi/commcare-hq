@@ -1,5 +1,5 @@
 <?xml version='1.0' ?>
-<registration version="1" uiVersion="1" xmlns:jrm="http://openrosa.org/jr/xforms" xmlns="http://openrosa.org/case/test/create">
+<registration version="1" uiVersion="1" xmlns:jrm="http://openrosa.org/jr/xforms" xmlns="http://openrosa.org/case/test/update">
 <meta>
     <DeviceID>Chalimbana</DeviceID>
     <TimeStart>2010-06-29T13:42:50.137</TimeStart>

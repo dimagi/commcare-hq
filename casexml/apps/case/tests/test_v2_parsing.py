@@ -35,6 +35,9 @@ class Version2CaseParsingTest(TestCase):
         self.assertEqual("v2_case_type", case.type)
         self.assertEqual("test case name", case.name)
         self.assertEqual(1, len(case.actions))
+        [action] = case.actions
+        self.assertEqual("http://openrosa.org/case/test/create", action.xform_xmlns)
+        self.assertEqual("v2 create", action.xform_name)
     
     def testParseUpdate(self):
         self.testParseCreate()
