@@ -6,11 +6,12 @@ from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
 from corehq.apps.reports.fields import  ReportSelectField
 from corehq.apps.reports.generic import GenericTabularReport
 from corehq.apps.reports.standard import CustomProjectReport
+from corehq.apps.reports.standard.inspect import ElasticTabularReport
 from corehq.apps.users.models import CommCareUser
 from dimagi.utils.decorators.memoized import memoized
 from pact.enums import PACT_DOMAIN, PACT_HP_CHOICES, PACT_DOT_CHOICES, PACT_CASE_TYPE
+from pact.reports import PactElasticTabularReportMixin
 from pact.reports.dot import PactDOTReport
-from pact.reports import ESSortableMixin
 from pact.reports.patient import PactPatientInfoReport
 from pact.utils import query_per_case_submissions_facet
 
@@ -62,7 +63,7 @@ class DOTStatus(ReportSelectField):
         self.options.insert(0, dict(val=self.ANY_DOT, text="Any DOT"))
 
 
-class PatientListDashboardReport(GenericTabularReport, ESSortableMixin, CustomProjectReport):
+class PatientListDashboardReport(PactElasticTabularReportMixin):
     name = "All Patients"
     slug = "patients"
     ajax_pagination = True
@@ -233,27 +234,3 @@ class PatientListDashboardReport(GenericTabularReport, ESSortableMixin, CustomPr
                 ))
         except NoReverseMatch:
             return "%s (bad ID format)" % status
-
-
-
-    @property
-    def shared_pagination_GET_params(self):
-        """
-        Override the params and applies all the params of the originating view to the GET
-        so as to get sorting working correctly with the context of the GET params
-        """
-        ret = []
-        for k,v in self.request.GET.items():
-            ret.append(dict(name=k, value=v))
-        return ret
-    @property
-    def total_records(self):
-        """
-            Override for pagination.
-            Returns an integer.
-        """
-        res = self.es_results
-        if res is not None:
-            return res['hits'].get('total', 0)
-        else:
-            return 0

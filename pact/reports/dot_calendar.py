@@ -71,12 +71,15 @@ class DOTCalendarReporter(object):
         # endmonth = self.end_date.month
 
         observations = self.dot_observation_range()
+        if len(observations) > 0:
+            startmonth = observations[0].observed_date.month
+            startyear = observations[0].observed_date.year
 
-        startmonth = observations[0].observed_date.month
-        startyear = observations[0].observed_date.year
-
-        endmonth = observations[-1].observed_date.month
-        endyear = observations[0].observed_date.year
+            endmonth = observations[-1].observed_date.month
+            endyear = observations[0].observed_date.year
+        else:
+            startmonth = datetime.now().month
+            startyear = datetime.now().year
 
         currmonth = startmonth
         curryear = startyear

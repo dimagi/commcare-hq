@@ -4,15 +4,17 @@ from corehq.apps.api.es import FullCaseES, FullXFormES
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
 from corehq.apps.reports.generic import GenericTabularReport
 from corehq.apps.reports.standard import CustomProjectReport
+from corehq.apps.reports.standard.inspect import ElasticTabularReport
 from corehq.apps.users.models import CommCareUser
 from dimagi.utils import html
 from dimagi.utils.decorators.memoized import memoized
 from pact.enums import PACT_CASE_TYPE, PACT_DOMAIN
 from . import chw_schedule
-from pact.reports import PactDrilldownReportMixin, ESSortableMixin
+from pact.reports import PactDrilldownReportMixin, PactElasticTabularReportMixin
 from pact.utils import pact_script_fields, case_script_field
 
-class PactCHWProfileReport(PactDrilldownReportMixin, ESSortableMixin,GenericTabularReport, CustomProjectReport):
+
+class PactCHWProfileReport(PactDrilldownReportMixin, PactElasticTabularReportMixin):
     slug = "chw_profile"
     description = "CHW Profile"
     view_mode = 'info'
@@ -32,6 +34,7 @@ class PactCHWProfileReport(PactDrilldownReportMixin, ESSortableMixin,GenericTabu
     def pact_case_link(self, case_id):
         #stop the madness
         from pact.reports.patient import PactPatientInfoReport
+
         try:
             return PactPatientInfoReport.get_url(*[self.domain]) + "?patient_id=%s" % case_id
         except NoReverseMatch:
@@ -39,6 +42,7 @@ class PactCHWProfileReport(PactDrilldownReportMixin, ESSortableMixin,GenericTabu
 
     def pact_dot_link(self, case_id ):
         from pact.reports.dot import PactDOTReport
+
         try:
             return PactDOTReport.get_url(*[self.domain]) + "?dot_patient=%s" % case_id
         except NoReverseMatch:
@@ -47,8 +51,10 @@ class PactCHWProfileReport(PactDrilldownReportMixin, ESSortableMixin,GenericTabu
 
     def get_assigned_patients(self):
         """get list of patients and their submissions on who this chw is assigned as primary hp"""
-        fields = [ "_id", "name", "pactid", "hp_status", "dot_status" ]
-        case_query = self.case_es.base_query(terms={'type': PACT_CASE_TYPE, 'hp': self.get_user().raw_username}, fields=fields, size=100)
+        fields = ["_id", "name", "pactid", "hp_status", "dot_status"]
+        case_query = self.case_es.base_query(
+            terms={'type': PACT_CASE_TYPE, 'hp': self.get_user().raw_username}, fields=fields,
+            size=100)
 
         case_query['filter']['and'].append({'not': {'term': {'hp_status': 'discharged'}}})
         chw_patients_res = self.case_es.run_query(case_query)
@@ -99,7 +105,8 @@ class PactCHWProfileReport(PactDrilldownReportMixin, ESSortableMixin,GenericTabu
             self.report_template_path = "pact/chw/pact_chw_profile_submissions.html"
             return tabular_context
         elif self.view_mode == 'schedule':
-            scheduled_context = chw_schedule.chw_calendar_submit_report(self.request, user_doc.raw_username)
+            scheduled_context = chw_schedule.chw_calendar_submit_report(self.request,
+                                                                        user_doc.raw_username)
             ret.update(scheduled_context)
             self.report_template_path = "pact/chw/pact_chw_profile_schedule.html"
         else:
@@ -111,11 +118,11 @@ class PactCHWProfileReport(PactDrilldownReportMixin, ESSortableMixin,GenericTabu
     @property
     def headers(self):
         return DataTablesHeader(
-                    DataTablesColumn("Show Form", sortable=False, span=1),
-                    DataTablesColumn("Pact ID", sortable=False, span=1),
-                    DataTablesColumn("Received", prop_name="received_on", sortable=True, span=1),
-                    DataTablesColumn("Encounter Date", sortable=False, span=1),
-                    DataTablesColumn("Form", prop_name="form.#type", sortable=True, span=1),
+            DataTablesColumn("Show Form", sortable=False, span=1),
+            DataTablesColumn("Pact ID", sortable=False, span=1),
+            DataTablesColumn("Received", prop_name="received_on", sortable=True, span=1),
+            DataTablesColumn("Encounter Date", sortable=False, span=1),
+            DataTablesColumn("Form", prop_name="form.#type", sortable=True, span=1),
         )
 
     @property
@@ -128,7 +135,9 @@ class PactCHWProfileReport(PactDrilldownReportMixin, ESSortableMixin,GenericTabu
             "form.meta.timeStart",
             "form.meta.timeEnd"
         ]
-        query = self.xform_es.base_query(terms={'form.meta.username': user.raw_username }, fields=fields, start=self.pagination.start, size=self.pagination.count)
+        query = self.xform_es.base_query(terms={'form.meta.username': user.raw_username},
+                                         fields=fields, start=self.pagination.start,
+                                         size=self.pagination.count)
         query['script_fields'] = {}
         query['script_fields'].update(pact_script_fields())
         query['script_fields'].update(case_script_field())
@@ -144,11 +153,13 @@ class PactCHWProfileReport(PactDrilldownReportMixin, ESSortableMixin,GenericTabu
         """
         if self.get_user() is not None:
             def _format_row(row_field_dict):
-                yield html.mark_safe("<a class='ajax_dialog' href='%s'>View</a>" % ( reverse('render_form_data', args=[self.domain, row_field_dict['_id']])))
+                yield html.mark_safe("<a class='ajax_dialog' href='%s'>View</a>" % (
+                reverse('render_form_data', args=[self.domain, row_field_dict['_id']])))
                 yield row_field_dict['script_pact_id']
                 yield self.format_date(row_field_dict["received_on"].replace('_', ' ').title())
                 yield self.format_date(row_field_dict['script_encounter_date'])
                 yield row_field_dict["form.#type"].replace('_', ' ').title().strip()
+
             res = self.es_results
             if res.has_key('error'):
                 pass
