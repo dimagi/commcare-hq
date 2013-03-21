@@ -172,13 +172,13 @@
             <div class="control-group">
                 <label for="export-name" class="control-label">{% trans "Export Name" %}: </label>
                 <div class="controls">
-                    <input type="text" id="export-name" name="name" data-bind="value: custom_export.name" />
+                    <input type="text" id="export-name" data-bind="value: custom_export.name" />
                 </div>
             </div>
             <div class="control-group">
                 <label for="format-select" class="control-label">{% trans "Default file type" %}: </label>
                 <div class="controls">
-                    <select name="format" id="format-select" data-bind="value: custom_export.default_format">
+                    <select id="format-select" data-bind="value: custom_export.default_format">
                         <option value="xlsx">Excel 2007</option>
                         <option value="xls">Excel (older versions)</option>
                         <option value="csv">CSV (Zip file)</option>
@@ -189,12 +189,12 @@
                 <div class="controls">
             {% if custom_export.type == 'form' %}
                     <label class="checkbox">
-                        <input type="checkbox" name="include-errors" id="include-errors-checkbox" data-bind="checked: custom_export.include_errors" />
+                        <input type="checkbox" id="include-errors-checkbox" data-bind="checked: custom_export.include_errors" />
                         {% trans "Include duplicates and other unprocessed forms" %}
                     </label>
             {% endif %}
                     <label class="checkbox">
-                        <input type="checkbox" name="presave" id="presave-checkbox" data-bind="checked: presave" />
+                        <input type="checkbox" id="presave-checkbox" data-bind="checked: presave" />
                         {% trans "Save this report daily?" %}
                     </label>
                 </div>
@@ -271,7 +271,7 @@
                 <label for="is_safe" class="control-label"></label>
                 <div class="controls deid-column" data-bind="visible: $root.showDeidColumn()">
                     <label class="checkbox">
-                        <input type="checkbox" name="is_safe" id="is_safe" data-bind="checked: custom_export.is_safe" />
+                        <input type="checkbox" id="is_safe" data-bind="checked: custom_export.is_safe" />
                         Publish in {{ DeidExportReport_name }}
                     </label>
                     <span class="help-inline">{% trans "Check only if this export has been fully and safely de-identified." %}</span>
