@@ -348,9 +348,8 @@ class ElasticTabularReport(ProjectInspectionReportParamsMixin, GenericTabularRep
 
 
 class CaseSearchFilter(SearchFilter):
-    search_help_inline = """Search any text, or use a targeted query
-    <br>For more info see the
-    <a href='https://wiki.commcarehq.org/display/commcarepublic/Advanced+Case+Search'>Case Search</a> help page"""
+    search_help_inline = """Search any text, or use a targeted query. For more info see the
+    <a href='https://wiki.commcarehq.org/display/commcarepublic/Advanced+Case+Search' target='_blank'>Case Search</a> help page"""
 
 class CaseListMixin(ElasticTabularReport, ProjectReportParametersMixin):
     fields = [
