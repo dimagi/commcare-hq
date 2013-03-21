@@ -16,7 +16,6 @@ class MVPChildCasesByAgeCRUDManager(MVPActiveCasesCRUDManager):
     @property
     def properties_in_row(self):
         original_props = super(MVPChildCasesByAgeCRUDManager, self).properties_in_row
-        print original_props[:7]
         return original_props[:7] + ["is_dob_in_datespan", "show_active_only"] + original_props[-3:]
 
     def format_property(self, key, property):
