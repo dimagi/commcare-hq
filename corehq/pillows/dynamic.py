@@ -74,6 +74,15 @@ case_special_types = {
     #to extend, use this and add special date formats here...
 }
 
+domain_special_types = {
+    "name": type_exact_match_string("name", dual=True),
+    "author": {"type": "string", "index": "not_analyzed"},
+    "title": {"type": "string", "index": "not_analyzed"},
+    "deployment.description": {"type": "string", "index": "not_analyzed"},
+    "short_description": {"type": "string", "index": "not_analyzed"},
+    "internal.area": {"type": "string", "index": "not_analyzed"},
+}
+
 def set_properties(schema_class, custom_types=default_special_types):
     """
     Helper function to walk a schema_class's properties recursively and create a typed out mapping
