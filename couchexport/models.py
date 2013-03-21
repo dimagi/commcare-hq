@@ -475,7 +475,7 @@ class SavedExportSchema(BaseSavedExportSchema, UnicodeMixIn):
             if self.tables_by_index.has_key(index):
                 return self.tables_by_index[index].display
             else:
-                return index
+                return ""
 
         return {
             "index": index,
@@ -484,8 +484,8 @@ class SavedExportSchema(BaseSavedExportSchema, UnicodeMixIn):
             "selected": index in self.tables_by_index
         }
     
-    def get_table_headers(self, override_name=False):
-        return ((self.table_name if override_name and i==0 else t.index, [t.get_headers_row()]) for i, t in enumerate(self.tables))
+    def get_table_headers(self):
+        return ((t.index, [t.get_headers_row()]) for t in self.tables)
         
     @property
     def table_configuration(self):
@@ -543,7 +543,15 @@ class SavedExportSchema(BaseSavedExportSchema, UnicodeMixIn):
         # open the doc and the headers
         formatted_headers = list(self.get_table_headers())
         tmp = StringIO()
-        writer.open(formatted_headers, tmp, max_column_size=max_column_size)
+        writer.open(
+            formatted_headers,
+            tmp,
+            max_column_size=max_column_size,
+            table_titles=dict([
+                (table.index, table.display)
+                for table in self.tables if table.display
+            ])
+        )
 
         total_docs = len(config.potentially_relevant_ids)
         if process:

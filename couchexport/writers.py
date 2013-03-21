@@ -39,24 +39,34 @@ class UniqueHeaderGenerator(object):
 class ExportWriter(object):
     max_table_name_size = 500
     
-    def open(self, header_table, file, max_column_size=2000):
+    def open(self, header_table, file, max_column_size=2000, table_titles=None):
         """
         Create any initial files, headings, etc necessary.
         """
+        table_titles = table_titles or {}
+
         self._isopen = True
         self.max_column_size = max_column_size
         self._current_primary_id = 0
         self.file = file
 
         self._init()
-        self.table_name_generator = UniqueHeaderGenerator(self.max_table_name_size)
-        for table_name, table in header_table:
-            self.add_table(table_name, table[0])
+        self.table_name_generator = UniqueHeaderGenerator(
+            self.max_table_name_size
+        )
+        for table_index, table in header_table:
+            self.add_table(
+                table_index,
+                table[0],
+                table_title=table_titles.get(table_index)
+            )
 
-    def add_table(self, table_name, headers):
+    def add_table(self, table_index, headers, table_title=None):
         def _clean_name(name):
             return re.sub(r"[[\\?*/:\]]", "-", name)
-        table_name_truncated = _clean_name(self.table_name_generator.next_unique(table_name))
+        table_title_truncated = _clean_name(
+            self.table_name_generator.next_unique(table_title or table_index)
+        )
 
         # make sure we trim the headers
         with UniqueHeaderGenerator(self.max_column_size) as g:
@@ -64,8 +74,9 @@ class ExportWriter(object):
                 headers.data = [g.next_unique(header) for header in headers.data]
             except AttributeError:
                 headers = [g.next_unique(header) for header in headers]
-        self._init_table(table_name, table_name_truncated)
-        self.write_row(table_name, headers)
+
+        self._init_table(table_index, table_title_truncated)
+        self.write_row(table_index, headers)
 
     def write(self, document_table, skip_first=False):
         """
@@ -73,7 +84,7 @@ class ExportWriter(object):
         rows, write those rows to the resulting files.
         """
         assert self._isopen
-        for table_name, table in document_table:
+        for table_index, table in document_table:
             for i, row in enumerate(table):
                 if skip_first and i is 0:
                     continue
@@ -86,17 +97,17 @@ class ExportWriter(object):
                 if row_has_id:
                     row.id = (self._current_primary_id,) + tuple(row.id[1:])
 
-                self.write_row(table_name, row)
+                self.write_row(table_index, row)
         
         self._current_primary_id += 1
 
-    def write_row(self, table_name, headers):
+    def write_row(self, table_index, headers):
         """
         Currently just calls the subclass's implementation
         but if we were to add a universal validation step,
         such a thing would happen here.
         """
-        return self._write_row(table_name, headers)
+        return self._write_row(table_index, headers)
 
     def close(self):
         """
@@ -109,7 +120,7 @@ class ExportWriter(object):
     def _init(self):
         raise NotImplementedError
 
-    def _init_table(self, table_name, table_name_truncated):
+    def _init_table(self, table_index, table_title):
         raise NotImplementedError
 
     def _write_row(self, sheet_index, row):
@@ -138,12 +149,12 @@ class CsvExportWriter(ExportWriter):
         self.table_files = {}
         
         
-    def _init_table(self, table_name, table_name_truncated):
+    def _init_table(self, table_index, table_title):
         table_file = StringIO()
         writer = csv.writer(table_file, dialect=csv.excel)
-        self.tables[table_name] = writer
-        self.table_files[table_name] = table_file
-        self.table_names[table_name] = table_name_truncated            
+        self.tables[table_index] = writer
+        self.table_files[table_index] = table_file
+        self.table_names[table_index] = table_title
         
     def _write_row(self, sheet_index, row):
         def _encode_if_needed(val):
@@ -179,11 +190,11 @@ class Excel2007ExportWriter(ExportWriter):
         self.table_indices = {}
         
         
-    def _init_table(self, table_name, table_name_truncated):
+    def _init_table(self, table_index, table_title):
         sheet = self.book.create_sheet()
-        sheet.title = table_name_truncated
-        self.tables[table_name] = sheet
-        self.table_indices[table_name] = 0
+        sheet.title = table_title
+        self.tables[table_index] = sheet
+        self.table_indices[table_index] = 0
 
     
     def _write_row(self, sheet_index, row):
@@ -214,10 +225,10 @@ class Excel2003ExportWriter(ExportWriter):
         self.tables = {}
         self.table_indices = {}
         
-    def _init_table(self, table_name, table_name_truncated):
-        sheet = self.book.add_sheet(table_name_truncated)
-        self.tables[table_name] = sheet
-        self.table_indices[table_name] = 0
+    def _init_table(self, table_index, table_title):
+        sheet = self.book.add_sheet(table_title)
+        self.tables[table_index] = sheet
+        self.table_indices[table_index] = 0
 
     def _write_row(self, sheet_index, row):
         row_index = self.table_indices[sheet_index]
@@ -239,9 +250,9 @@ class InMemoryExportWriter(ExportWriter):
         self.tables = {}
         self.table_names = {}
     
-    def _init_table(self, table_name, table_name_truncated):
-        self.table_names[table_name] = table_name_truncated
-        self.tables[table_name] = []
+    def _init_table(self, table_index, table_title):
+        self.table_names[table_index] = table_title
+        self.tables[table_index] = []
         
     def _write_row(self, sheet_index, row):
         table = self.tables[sheet_index]
