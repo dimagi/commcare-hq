@@ -28,6 +28,8 @@
             type: {{ report.type|JSON }},
             filterSet: {{ report.filter_set|JSON }},
             needsFilters: {{ report.needs_filters|JSON }},
+            isExportable: {{ report.is_exportable|JSON }},
+            isEmailable: {{ report.is_emailable|JSON }},
             emailDefaultSubject: {{ report.title|JSON }},
             emailSuccessMessage: '{% trans "Report successfully emailed" %}',
             emailErrorMessage: '{% trans "An error occurred emailing you report. Please try again." %}',
