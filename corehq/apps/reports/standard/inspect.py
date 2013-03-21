@@ -416,7 +416,7 @@ class CaseListReport(CaseListMixin, ProjectInspectionReport):
 
     @property
     @memoized
-    def rendered_report_title2(self):
+    def rendered_report_title(self):
         if not self.individual:
             self.name = _("%(report_name)s for %(worker_type)s") % {
                 "report_name": _(self.name),
