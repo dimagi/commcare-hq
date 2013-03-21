@@ -876,3 +876,74 @@ class SummaryTablularReport(GenericTabularReport):
         headers = list(self.headers)
         assert (len(self.data) == len(headers))
         return zip(headers, self.data)
+
+class ProjectInspectionReportParamsMixin(object):
+    @property
+    def shared_pagination_GET_params(self):
+        # This was moved from ProjectInspectionReport so that it could be included in CaseReassignmentInterface too
+        # I tried a number of other inheritance schemes, but none of them worked because of the already
+        # complicated multiple-inheritance chain
+        # todo: group this kind of stuff with the field object in a comprehensive field refactor
+
+        return [dict(name='individual', value=self.individual),
+                dict(name='group', value=self.group_id),
+                dict(name='case_type', value=self.case_type),
+                dict(name='ufilter', value=[f.type for f in self.user_filter if f.show])]
+
+
+class ElasticTabularReport(ProjectInspectionReportParamsMixin, GenericTabularReport):
+    """
+    Tabular report that provides framework for doing elasticsearch backed tabular reports.
+
+    Main thing of interest is that you need es_results to hit ES, and that your datatable headers
+    must use prop_name kwarg to enable column sorting.
+    """
+    default_sort = None
+
+    @property
+    def es_results(self):
+        """
+        Main meat - run your ES query and return the raw results here.
+        """
+        raise NotImplementedError("ES Query not implemented")
+
+    def get_sorting_block(self):
+        res = []
+        #the NUMBER of cols sorting
+        sort_cols = int(self.request.GET['iSortingCols'])
+        if sort_cols > 0:
+            for x in range(sort_cols):
+                col_key = 'iSortCol_%d' % x
+                sort_dir = self.request.GET['sSortDir_%d' % x]
+                col_id = int(self.request.GET[col_key])
+                col = self.headers.header[col_id]
+                if col.prop_name is not None:
+                    sort_dict = {col.prop_name: sort_dir}
+                    res.append(sort_dict)
+        if len(res) == 0 and self.default_sort is not None:
+            res.append(self.default_sort)
+        return res
+
+
+    @property
+    def total_records(self):
+        """
+            Override for pagination slice from ES
+            Returns an integer.
+        """
+        res = self.es_results
+        if res is not None:
+            return res['hits'].get('total', 0)
+        else:
+            return 0
+
+    @property
+    def shared_pagination_GET_params(self):
+        """
+        Override the params and applies all the params of the originating view to the GET
+        so as to get sorting working correctly with the context of the GET params
+        """
+        ret = super(ElasticTabularReport, self).shared_pagination_GET_params
+        for k, v in self.request.GET.items():
+            ret.append(dict(name=k, value=v))
+        return ret

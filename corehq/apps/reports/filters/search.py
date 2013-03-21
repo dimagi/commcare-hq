@@ -1,16 +1,17 @@
+from django.utils.translation import ugettext_noop
 from corehq.apps.reports.filters.base import BaseReportFilter
 
 
 class SearchFilter(BaseReportFilter):
     slug = "search_query"
     template = "reports/filters/search.html"
-    label = "Search"
+    label = ugettext_noop("Search")
 
-    #bubble help
+    #bubble help, should be noop'ed
     search_help_title = None
     search_help_content = None
 
-    #inline help text
+    #inline help text, should be noop'ed
     search_help_inline = None
 
 

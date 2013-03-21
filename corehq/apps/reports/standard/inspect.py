@@ -1,4 +1,3 @@
-from datetime import datetime
 import json
 
 from couchdbkit.exceptions import ResourceNotFound
@@ -7,6 +6,7 @@ import dateutil
 from django.core.urlresolvers import reverse, NoReverseMatch
 from django.template.defaultfilters import yesno
 from django.utils import html
+from django.utils.safestring import mark_safe
 import pytz
 from django.conf import settings
 from django.core import cache
@@ -22,7 +22,7 @@ from corehq.apps.reports.standard import ProjectReport, ProjectReportParametersM
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
 from corehq.apps.reports.display import xmlns_to_name
 from corehq.apps.reports.fields import SelectOpenCloseField, SelectMobileWorkerField
-from corehq.apps.reports.generic import GenericTabularReport
+from corehq.apps.reports.generic import GenericTabularReport, ProjectInspectionReportParamsMixin, ElasticTabularReport
 from corehq.apps.users.models import CommCareUser, CouchUser
 from dimagi.utils.couch.database import get_db
 from dimagi.utils.couch.pagination import CouchFilter
@@ -31,18 +31,6 @@ from dimagi.utils.timezones import utils as tz_utils
 from corehq.apps.groups.models import Group
 
 
-class ProjectInspectionReportParamsMixin(object):
-    @property
-    def shared_pagination_GET_params(self):
-        # This was moved from ProjectInspectionReport so that it could be included in CaseReassignmentInterface too
-        # I tried a number of other inheritance schemes, but none of them worked because of the already
-        # complicated multiple-inheritance chain
-        # todo: group this kind of stuff with the field object in a comprehensive field refactor
-
-        return [dict(name='individual', value=self.individual),
-                dict(name='group', value=self.group_id),
-                dict(name='case_type', value=self.case_type),
-                dict(name='ufilter', value=[f.type for f in self.user_filter if f.show])]
 
 class ProjectInspectionReport(ProjectInspectionReportParamsMixin, GenericTabularReport, ProjectReport, ProjectReportParametersMixin):
     """
@@ -289,67 +277,9 @@ class CaseDisplay(object):
         return self._get_username(creator_id)
 
 
-class ElasticTabularReport(ProjectInspectionReportParamsMixin, GenericTabularReport):
-    """
-    Tabular report that provides framework for doing elasticsearch backed tabular reports.
-
-    Main thing of interest is that you need es_results to hit ES, and that your datatable headers
-    must use prop_name kwarg to enable column sorting.
-    """
-    default_sort = None
-
-    @property
-    def es_results(self):
-        """
-        Main meat - run your ES query and return the raw results here.
-        """
-        raise NotImplementedError("ES Query not implemented")
-
-    def get_sorting_block(self):
-        res = []
-        #the NUMBER of cols sorting
-        sort_cols = int(self.request.GET['iSortingCols'])
-        if sort_cols > 0:
-            for x in range(sort_cols):
-                col_key = 'iSortCol_%d' % x
-                sort_dir = self.request.GET['sSortDir_%d' % x]
-                col_id = int(self.request.GET[col_key])
-                col = self.headers.header[col_id]
-                if col.prop_name is not None:
-                    sort_dict = {col.prop_name: sort_dir}
-                    res.append(sort_dict)
-        if len(res) == 0 and self.default_sort is not None:
-            res.append(self.default_sort)
-        return res
-
-
-    @property
-    def total_records(self):
-        """
-            Override for pagination slice from ES
-            Returns an integer.
-        """
-        res = self.es_results
-        if res is not None:
-            return res['hits'].get('total', 0)
-        else:
-            return 0
-
-    @property
-    def shared_pagination_GET_params(self):
-        """
-        Override the params and applies all the params of the originating view to the GET
-        so as to get sorting working correctly with the context of the GET params
-        """
-        ret = super(ElasticTabularReport, self).shared_pagination_GET_params
-        for k, v in self.request.GET.items():
-            ret.append(dict(name=k, value=v))
-        return ret
-
-
 class CaseSearchFilter(SearchFilter):
-    search_help_inline = """Search any text, or use a targeted query. For more info see the
-    <a href='https://wiki.commcarehq.org/display/commcarepublic/Advanced+Case+Search' target='_blank'>Case Search</a> help page"""
+    search_help_inline = mark_safe(ugettext_noop("""Search any text, or use a targeted query. For more info see the <a href='https://wiki.commcarehq.org/display/commcarepublic/Advanced+Case+Search' target='_blank'>Case Search</a> help page"""))
+
 
 class CaseListMixin(ElasticTabularReport, ProjectReportParametersMixin):
     fields = [
@@ -485,6 +415,16 @@ class CaseListReport(CaseListMixin, ProjectInspectionReport):
         return rep_context
 
     @property
+    @memoized
+    def rendered_report_title2(self):
+        if not self.individual:
+            self.name = _("%(report_name)s for %(worker_type)s") % {
+                "report_name": _(self.name),
+                "worker_type": _(SelectMobileWorkerField.get_default_text(self.user_filter))
+            }
+        return self.name
+
+    @property
     def headers(self):
         headers = DataTablesHeader(
             DataTablesColumn(_("Case Type"), prop_name="type.exact"),
@@ -495,12 +435,6 @@ class CaseListReport(CaseListMixin, ProjectInspectionReport):
             DataTablesColumn(_("Modified Date"), prop_name="modified_on"),
             DataTablesColumn(_("Status"), prop_name="get_status_display", sortable=False)
         )
-        if not self.individual:
-            self.name = _("%(report_name)s for %(worker_type)s") % {
-                "report_name": _(self.name),
-                "worker_type": _(SelectMobileWorkerField.get_default_text(self.user_filter))
-            }
-
         return headers
 
     @property
@@ -520,10 +454,7 @@ class CaseListReport(CaseListMixin, ProjectInspectionReport):
             ]
 
         try:
-            for item in self.es_results['hits'].get('hits', []):
-                row = _format_row(item)
-                if row is not None:
-                    yield row
+            return [_format_row(item) for item in self.es_results['hits'].get('hits', [])]
         except RequestFailed:
             pass
 
