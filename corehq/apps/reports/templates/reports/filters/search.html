@@ -2,11 +2,30 @@
 {% load hq_shared_tags %}
 {% load i18n %}
 {% block filter_content %}
-<script src="{% static 'hqwebapp/js/main.js' %}"></script>
 <input id="{{ css_id }}" name="{{ slug }}" type="text" class="span6" value="{{ search_query }}">
-
-<span class="hq-help-template"
-    data-title="{% trans search_help_title %}"
-    data-content="{% trans search_help_content %}"
-</span>
+    {% if search_help_inline %}
+    <span class="helptext help-inline">
+    {%  trans search_help_inline|safe %}
+    </span>
+    {% endif %}
+    {% if search_help_title and search_help_content %}
+    <a href="#" class="hq-help no-click">
+        <i class="icon-question-sign"
+           data-title="{% trans search_help_title %}"
+           data-content="{% trans search_help_content %}"
+           data-trigger="click"
+           data-html="true"></i>
+    </a>
+    {% endif %}
 {% endblock %}
+
+{% if search_help_title and search_help_content %}
+{% block filter_js %} {{ block.super }}
+{#<script type="text/javascript" src="{% static 'reports/ko/report_filter.unknown_forms_extension.js' %}"></script>#}
+<script type="text/javascript">
+    $(function () {
+        $('.hq-help').hqHelp();
+    });
+</script>
+{% endblock filter_js %}
+{% endif %}
