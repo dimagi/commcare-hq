@@ -102,6 +102,10 @@ class XFormInstance(Document, UnicodeMixIn, ComputedDocumentMixin):
         return self._form.get(const.TAG_TYPE, "")
         
     @property
+    def name(self):
+        return self._form.get(const.TAG_NAME, "")
+
+    @property
     def version(self):
         return self._form.get(const.TAG_VERSION, "")
         
