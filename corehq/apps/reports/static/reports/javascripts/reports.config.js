@@ -11,6 +11,7 @@ var HQReport = function (options) {
     self.exportReportButton = options.exportReportButton || "#export-report-excel";
     self.emailReportButton = options.emailReportButton || "#email-report";
     self.emailReportModal = options.emailReportModal || "#email-report-modal";
+    self.isExportable = options.isExportable || false;
     self.isEmailable = options.isEmailable || false;
     self.emailDefaultSubject = options.emailDefaultSubject || "";
     self.emailSuccessMessage = options.emailSuccessMessage;
@@ -33,18 +34,22 @@ var HQReport = function (options) {
 
             if (self.needsFilters) {
                 self.filterSubmitButton.button('reset').addClass('btn-primary');
-            } else if (self.isEmailable && self.slug) {
-                $(self.exportReportButton).click(function (e) {
-                    e.preventDefault();
-                    window.location.href = get_report_render_url("export");
-                });
+            } else if (self.slug) {
+                if (self.isExportable) {
+                    $(self.exportReportButton).click(function (e) {
+                        e.preventDefault();
+                        window.location.href = get_report_render_url("export");
+                    });
+                }
 
-                self.emailReportViewModel = new EmailReportViewModel(self);
-                $(self.emailReportButton).click(function (e) {
-                    self.emailReportViewModel.openEmailModal();
-                });
+                if (self.isEmailable) {
+                    self.emailReportViewModel = new EmailReportViewModel(self);
+                    $(self.emailReportButton).click(function (e) {
+                        self.emailReportViewModel.openEmailModal();
+                    });
 
-                ko.applyBindings(self.emailReportViewModel, $(self.emailReportModal).get(0));
+                    ko.applyBindings(self.emailReportViewModel, $(self.emailReportModal).get(0));
+                }
             }
         });
     };
