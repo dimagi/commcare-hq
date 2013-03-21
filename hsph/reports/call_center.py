@@ -333,7 +333,7 @@ class CaseReport(CaseListReport, CustomProjectReport, HSPHSiteDataMixin,
     @property
     def rows(self):
         case_displays = (HSPHCaseDisplay(self, self.get_case(case))
-                         for case in self.case_results['rows'])
+                         for case in self.es_results['hits'].get('hits', []))
 
         for disp in case_displays:
             yield [
