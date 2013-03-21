@@ -117,7 +117,10 @@ class DownloadBase(object):
             else:
                 current = info.get('current')
                 total = info.get('total')
-                percent = current * 100./ total if total and current is not None else 0
+                percent = int(
+                    current * 100. / total if total and current is not None
+                    else 0
+                )
         return {
             'current': current,
             'total': total,
