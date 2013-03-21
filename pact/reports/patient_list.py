@@ -4,9 +4,6 @@ from django.utils import html
 from corehq.apps.api.es import FullCaseES, FullXFormES
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
 from corehq.apps.reports.fields import  ReportSelectField
-from corehq.apps.reports.generic import GenericTabularReport
-from corehq.apps.reports.standard import CustomProjectReport
-from corehq.apps.reports.standard.inspect import ElasticTabularReport
 from corehq.apps.users.models import CommCareUser
 from dimagi.utils.decorators.memoized import memoized
 from pact.enums import PACT_DOMAIN, PACT_HP_CHOICES, PACT_DOT_CHOICES, PACT_CASE_TYPE
