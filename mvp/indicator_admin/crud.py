@@ -31,6 +31,6 @@ class MVPChildCasesByAgeCRUDManager(MVPActiveCasesCRUDManager):
                 "property": property
             }))
         if key == "case_type":
-            return property or mark_safe('<span class="label">unspecified</span>')
+            return property or mark_safe('<span class="label">default: child</span>')
         return super(MVPChildCasesByAgeCRUDManager, self).format_property(key, property)
 

@@ -28,3 +28,4 @@ class MVPChildCasesByAgeForm(MVPActiveCasesForm):
     def __init__(self, *args, **kwargs):
         super(MVPChildCasesByAgeForm, self).__init__(*args, **kwargs)
         self.fields['case_type'].required = False
+        self.fields['case_type'].help_text = "defaults to child if left blank"
