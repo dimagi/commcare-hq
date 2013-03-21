@@ -176,7 +176,6 @@ class CaseDisplay(object):
                         user_dict = {}
                     cache_payload = simplejson.dumps(user_dict)
                     mc.set(cache_key, cache_payload)
-                    return user_obj
                 if user_dict == {}:
                     return self.user_not_found_display(user_id)
                 else:
@@ -279,6 +278,7 @@ class CaseDisplay(object):
 
     @property
     def creating_user(self):
+        creator_id = None
         for action in self.case['actions']:
             if action['action_type'] == 'create':
                 action_doc = CommCareCaseAction.wrap(action)
