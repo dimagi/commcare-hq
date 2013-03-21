@@ -32,7 +32,7 @@ var HQReport = function (options) {
 
             if (self.needsFilters) {
                 self.filterSubmitButton.button('reset').addClass('btn-primary');
-            } else {
+            } else if (self.slug) {
                 $(self.exportReportButton).click(function (e) {
                     e.preventDefault();
                     window.location.href = get_report_render_url("export");
