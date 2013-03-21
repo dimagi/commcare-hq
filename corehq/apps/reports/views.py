@@ -286,7 +286,7 @@ def custom_export(req, domain):
     if req.method == "POST":
         helper.update_custom_export()
         messages.success(req, "Custom export created! You can continue editing here.")
-        return _redirect_to_export_home(helper.export_type, domain)
+        return _redirect_to_export_home(helper.export_type, domain, ajax=True)
 
     schema = build_latest_schema(export_tag)
 
@@ -323,7 +323,7 @@ def edit_custom_export(req, domain, export_id):
     if req.method == "POST":
         helper.update_custom_export()
         messages.success(req, "Custom export saved!")
-        return _redirect_to_export_home(helper.export_type, domain)
+        return _redirect_to_export_home(helper.export_type, domain, ajax=True)
     else:
         return helper.get_response()
 
@@ -394,8 +394,12 @@ def _export_home(type, domain):
             'Export is supposed to have type form or case, has %s' % type
         )
 
-def _redirect_to_export_home(type, domain):
-    return HttpResponseRedirect(_export_home(type, domain))
+def _redirect_to_export_home(type, domain, ajax=False):
+    url = _export_home(type, domain)
+    if not ajax:
+        return HttpResponseRedirect(url)
+    else:
+        return json_response({'redirect': url})
 
 
 @login_and_domain_required
