@@ -214,7 +214,7 @@ class PtopReindexer(NoArgsCommand):
             while retries < MAX_TRIES:
                 try:
                     if not self.custom_filter(item):
-                        continue
+                        break
                     print "\tProcessing item %s (%d/%d)" % (item['id'], ix, total_length)
                     self.pillow.processor(item, do_set_checkpoint=False)
                     break
