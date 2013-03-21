@@ -460,11 +460,17 @@ def email_report(request, domain, report_slug):
     from datetime import datetime
     from dimagi.utils.django.email import send_HTML_email
     from corehq.apps.reports.dispatcher import ProjectReportDispatcher
+    from forms import EmailReportForm
     user_id = request.couch_user._id
 
+    form = EmailReportForm(request.GET)
+    if not form.is_valid():
+        return HttpResponseBadRequest()
+
     config = ReportConfig()
+    # see ReportConfig.query_string()
     object.__setattr__(config, '_id', 'dummy')
-    config.name = "Once off emailed report"
+    config.name = _("Emailed report")
     config.report_type = ProjectReportDispatcher.prefix
     config.report_slug = report_slug
     config.owner_id = user_id
@@ -475,13 +481,11 @@ def email_report(request, domain, report_slug):
     config.end_date = request.datespan.computed_enddate.date()
 
     GET = dict(request.GET.iterlists())
-    exclude_filters = ['startdate', 'enddate']
-    for field in exclude_filters:
-        GET.pop(field, None)
-
+    exclude = ['startdate', 'enddate', 'subject', 'send_to_owner', 'notes', 'recipient_emails']
     filters = {}
     for field in GET:
-        filters[field] = GET.get(field)
+        if not field in exclude:
+            filters[field] = GET.get(field)
 
     config.filters = filters
 
@@ -489,14 +493,19 @@ def email_report(request, domain, report_slug):
                                   domain,
                                   user_id,
                                   request.couch_user,
-                                  True).content
+                                  True,
+                                  notes=form.cleaned_data['notes']).content
 
-    title = "Scheduled report from CommCare HQ"
+    subject = form.cleaned_data['subject'] or _("Email report from CommCare HQ")
 
-    send_HTML_email(title, request.couch_user.get_email(), body)
+    if form.cleaned_data['send_to_owner']:
+        send_HTML_email(subject, request.couch_user.get_email(), body)
 
-    messages.success(request, "Your report has been emailed.")
-    return HttpResponseRedirect(config.url)
+    if form.cleaned_data['recipient_emails']:
+        for recipient in form.cleaned_data['recipient_emails']:
+            send_HTML_email(subject, recipient, body)
+
+    return HttpResponse()
 
 @login_and_domain_required
 @require_http_methods(['DELETE'])
@@ -638,7 +647,7 @@ def get_scheduled_report_response(couch_user, domain, scheduled_report_id,
                                   couch_user,
                                   email)
 
-def _render_report_configs(request, configs, domain, owner_id, couch_user, email):
+def _render_report_configs(request, configs, domain, owner_id, couch_user, email, notes=None):
     from dimagi.utils.web import get_url_base
 
     report_outputs = []
@@ -655,7 +664,8 @@ def _render_report_configs(request, configs, domain, owner_id, couch_user, email
         "couch_user": owner_id,
         "DNS_name": get_url_base(),
         "owner_name": couch_user.full_name or couch_user.get_email(),
-        "email": email
+        "email": email,
+        "notes": notes
     })
 
 @login_and_domain_required
