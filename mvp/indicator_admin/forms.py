@@ -24,3 +24,7 @@ class MVPChildCasesByAgeForm(MVPActiveCasesForm):
     is_dob_in_datespan = forms.BooleanField(label="DoB falls inside Datespan", required=False)
 
     doc_class = MVPChildCasesByAgeIndicatorDefinition
+
+    def __init__(self, *args, **kwargs):
+        super(MVPChildCasesByAgeForm, self).__init__(*args, **kwargs)
+        self.fields['case_type'].required = False
