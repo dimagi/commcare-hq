@@ -150,7 +150,7 @@ def generate_sortables_from_facets(results, params=None, mapping={}):
         return {'url': generate_query_string(f_name, ft["term"]),
                 'name': ft["term"] if not license else ccs.get(ft["term"]),
                 'count': ft["count"],
-                'active': ft["term"] in params.get(f_name, "")}
+                'active': str(ft["term"]) in params.get(f_name, "")}
 
     sortable = []
     for facet in results.get("facets", []):
@@ -212,9 +212,18 @@ def es_query(params, facets=None, terms=None, q=None, es_url=None):
     q["size"] = 9999
     q["filter"] = q.get("filter", {})
     q["filter"]["and"] = q["filter"].get("and", [])
+
+    def convert(param):
+        #todo: find a better way to handle bools, something that won't break fields that may be 'T' or 'F' but not bool
+        if param == 'T':
+            return 1
+        elif param == 'F':
+            return 0
+        return param.lower()
+
     for attr in params:
         if attr not in terms:
-            attr_val = [params[attr].lower()] if isinstance(params[attr], basestring) else [p.lower() for p in params[attr]]
+            attr_val = [convert(params[attr])] if isinstance(params[attr], basestring) else [convert(p) for p in params[attr]]
             q["filter"]["and"].append({"terms": {attr: attr_val}})
 
     def facet_filter(facet):

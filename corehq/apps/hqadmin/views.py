@@ -11,7 +11,7 @@ import rawes
 from casexml.apps.case.models import CommCareCase
 from corehq.apps.appstore.views import parse_args_for_es, es_query, generate_sortables_from_facets
 from corehq.apps.builds.models import CommCareBuildConfig, BuildSpec
-from corehq.apps.domain.models import Domain, InternalProperties
+from corehq.apps.domain.models import Domain, InternalProperties, LicenseAgreement, Deployment
 from corehq.apps.hqadmin.escheck import check_cluster_health, check_case_index, check_xform_index, check_exchange_index
 from corehq.apps.reports.datatables import DataTablesColumn, DataTablesHeader, DTSortType
 from corehq.apps.reports.util import make_form_couch_key
@@ -88,10 +88,7 @@ def _all_domain_stats():
             "forms": form_counts,
             "cases": case_counts}
 
-@require_superuser
-def domain_list(request):
-    # one wonders if this will eventually have to paginate
-    domains = Domain.get_all()
+def ammend_domains(domains):
     all_stats = _all_domain_stats()
     for dom in domains:
         dom.web_users = int(all_stats["web_users"][dom.name])
@@ -99,6 +96,14 @@ def domain_list(request):
         dom.cases = int(all_stats["cases"][dom.name])
         dom.forms = int(all_stats["forms"][dom.name])
         dom.admins = [row["doc"]["email"] for row in get_db().view("users/admins_by_domain", key=dom.name, reduce=False, include_docs=True).all()]
+
+    return domains
+
+@require_superuser
+def domain_list(request):
+    # one wonders if this will eventually have to paginate
+    domains = Domain.get_all()
+    domains = ammend_domains(domains)
 
     context = get_hqadmin_base_context(request)
     context.update({"domains": domains})
@@ -742,20 +747,66 @@ def project_stats(request, template="hqadmin/stats_report.html"):
     params, _ = parse_args_for_es(request)
     page = params.pop('page', 1)
     page = int(page[0] if isinstance(page, list) else page)
-    facets = ['internal.' + p for p in InternalProperties._properties.keys()]
+
+    # import pprint
+    # pp = pprint.PrettyPrinter(indent=2)
+    # pp.pprint(dict(Domain.__dict__))
+
+    facets = Domain.properties().keys()
+    facets += ['internal.' + p for p in InternalProperties.properties().keys()]
+    facets += ['deployment.' + p for p in Deployment.properties().keys()]
+    facets += ['cda.' + p for p in LicenseAgreement.properties().keys()]
+    for p in ['internal', 'deployment', 'cda', 'migrations', 'eula']:
+        facets.remove(p)
+
     results = es_domain_query(params, facets)
     d_results = [Domain.wrap(res['_source']) for res in results.get('hits', {}).get('hits', [])]
 
+    # def get_cases(domain):
+    #     row = get_db().view("hqcase/types_by_domain", startkey=[domain], endkey=[domain, {}]).one()
+    #     return row["value"] if row else 0
+    #
+    # def get_mob_users(domain):
+    #     row = get_db().view('users/by_domain', startkey=[domain], endkey=[domain, {}]).one()
+    #     return row["value"] if row else 0
+    #
+    # def get_web_users(domain):
+    #     key = ["active", domain, 'WebUser']
+    #     row = get_db().view('users/by_domain', startkey=key, endkey=key+[{}]).one()
+    #     return row["value"] if row else 0
+
+    domains = ammend_domains(d_results)
+    num_cases = reduce(lambda total, dom: total + dom.cases, domains, 0)
+    num_forms = reduce(lambda total, dom: total + dom.forms, domains, 0)
+    num_mob_users = reduce(lambda total, dom: total + dom.commcare_users, domains, 0)
+    num_web_users = reduce(lambda total, dom: total + dom.web_users, domains, 0)
+
     facets_sortables = generate_sortables_from_facets(results, params)
 
-    ctxt = { 'domains': d_results,
-             'page': page,
-             'prev_page': page-1,
-             'next_page': (page+1),
-             'sortables': facets_sortables,
-             'query_str': request.META['QUERY_STRING'],
-             'search_url': reverse('project_stats'),
-             'search_query': params.get('search', [""])[0]}
+    headers = DataTablesHeader(
+        DataTablesColumn("Domain"),
+        DataTablesColumn("# Web Users", sort_type=DTSortType.NUMERIC),
+        DataTablesColumn("# Mobile Workers", sort_type=DTSortType.NUMERIC),
+        DataTablesColumn("# Cases", sort_type=DTSortType.NUMERIC),
+        DataTablesColumn("# Submitted Forms", sort_type=DTSortType.NUMERIC),
+        DataTablesColumn("Domain Admins")
+    )
+
+    ctxt = {
+        'layout_flush_content': True,
+        'headers': headers,
+        "aoColumns": headers.render_aoColumns,
+        'domains': domains,
+        'sortables': sorted(facets_sortables),
+        'query_str': request.META['QUERY_STRING'],
+        'search_url': reverse('project_stats'),
+        'search_query': params.get('search', [""])[0],
+        'num_mob_users': num_mob_users,
+        'num_web_users': num_web_users,
+        'num_cases': num_cases,
+        'num_forms': num_forms,
+        # 'num_projects': len(d_results),
+    }
     return render(request, template, ctxt)
 
 def es_domain_query(params, facets=None, terms=None):
@@ -773,10 +824,5 @@ def es_domain_query(params, facets=None, terms=None):
                     "match" : {
                         "_all" : {
                             "query" : search_query,
-                            "operator" : "and"
-                        }
-                    }
-                }
-            }
-        }
+                            "operator" : "and" }}}}}
     return es_query(params, facets, terms, q, DOMAIN_INDEX + '/hqdomain/_search')
