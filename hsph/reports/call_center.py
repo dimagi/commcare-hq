@@ -1,4 +1,6 @@
 import datetime
+from casexml.apps.case.models import CommCareCaseAction
+from corehq.apps.api.es import FullCaseES
 from corehq.apps.groups.models import Group
 from corehq.apps.reports.generic import GenericTabularReport
 from corehq.apps.reports.basic import BasicTabularReport, Column
@@ -103,7 +105,7 @@ class HSPHCaseDisplay(CaseDisplay):
     @property
     def region(self):
         try:
-            return self.report.get_region_name(self.case.region_id)
+            return self.report.get_region_name(self.case['region_id'])
         except AttributeError:
             return ""
 
@@ -111,7 +113,7 @@ class HSPHCaseDisplay(CaseDisplay):
     def district(self):
         try:
             return self.report.get_district_name(
-                self.case.region_id, self.case.district_id)
+                self.case['region_id'], self.case['district_id'])
         except AttributeError:
             return ""
 
@@ -119,8 +121,8 @@ class HSPHCaseDisplay(CaseDisplay):
     def site(self):
         try:
             return self.report.get_site_name(
-                self.case.region_id, self.case.district_id,
-                self.case.site_number)
+                self.case['region_id'], self.case['district_id'],
+                self.case['site_number'])
         except AttributeError:
             return ""
 
@@ -133,25 +135,25 @@ class HSPHCaseDisplay(CaseDisplay):
 
     @property
     def status(self):
-        return "Closed" if self.case.closed else "Open"
+        return "Closed" if self.case['closed'] else "Open"
 
     @property
     def mother_name(self):
-        return getattr(self.case, 'name_mother', '')
+        return self.case.get('name_mother', '')
 
     @property
     def filter_date(self):
-        return str(getattr(self.case, 'filter_date', ''))
+        return self.case.get('filter_date', '')
 
     @property
     def address(self):
-        return getattr(self.case, 'house_address', '')
+        return self.case.get('house_address', '')
 
     @property
     @memoized
     def allocated_to(self):
         if self.status == "Closed":
-            close_action = [a for a in self.case.actions if a.action_type ==
+            close_action = [CommCareCaseAction.wrap(a) for a in self.case['actions'] if a['action_type'] ==
                 const.CASE_ACTION_CLOSE][0]
 
             CATI_FOLLOW_UP_FORMS = (
@@ -163,11 +165,11 @@ class HSPHCaseDisplay(CaseDisplay):
                 return 'Field'
 
         else:
-            follow_up_type = getattr(self.case, 'follow_up_type', '')
-            house_number = getattr(self.case, 'phone_house_number', '')
-            husband_number = getattr(self.case, 'phone_husband_number', '')
-            mother_number = getattr(self.case, 'phone_mother_number', '')
-            asha_number = getattr(self.case, 'phone_asha_number', '')
+            follow_up_type = self.case.get('follow_up_type', '')
+            house_number = self.case.get('phone_house_number', '')
+            husband_number = self.case.get('phone_husband_number', '')
+            mother_number = self.case.get('phone_mother_number', '')
+            asha_number = self.case.get('phone_asha_number', '')
 
             if follow_up_type != 'field_follow_up' and (house_number or
                    husband_number or mother_number or asha_number):
@@ -179,7 +181,7 @@ class HSPHCaseDisplay(CaseDisplay):
     def allocated_start(self):
         try:
             delta = datetime.timedelta(days=8 if self.allocated_to == 'CATI' else 13)
-            return short_date_format(self.case.filter_date + delta)
+            return short_date_format(self.parse_date(self.case['filter_date']) + delta)
         except AttributeError:
             return ""
 
@@ -187,22 +189,22 @@ class HSPHCaseDisplay(CaseDisplay):
     def allocated_end(self):
         try:
             delta = datetime.timedelta(days=13 if self.allocated_to == 'CATI' else 23)
-            return short_date_format(self.case.filter_date + delta)
+            return short_date_format(self.parse_date(self.case['filter_date']) + delta)
         except AttributeError:
             return ""
 
     @property
     def outside_allocated_period(self):
-        if not (hasattr(self.case, 'filter_date') and
-                isinstance(self.case.filter_date, datetime.date)):
+        if not ('filter_date' in self.case and
+                isinstance(self.parse_date(self.case['filter_date']), datetime.datetime)):
             return ""
 
-        if self.case.closed_on:
-            compare_date = self.case.closed_on.date()
+        if self.case['closed_on']:
+            compare_date = self.parse_date(self.case['closed_on']).date()
         else:
             compare_date = datetime.date.today()
 
-        return 'Yes' if (compare_date - self.case.filter_date).days > 23 else 'No'
+        return 'Yes' if (compare_date - self.parse_date(self.case['filter_date']).date()).days > 23 else 'No'
 
 
 class CaseReport(CaseListReport, CustomProjectReport, HSPHSiteDataMixin,
@@ -220,6 +222,12 @@ class CaseReport(CaseListReport, CustomProjectReport, HSPHSiteDataMixin,
     )
 
     default_case_type = 'birth'
+
+
+    @property
+    @memoized
+    def case_es(self):
+        return FullCaseES(self.domain)
 
     @property
     def headers(self):
@@ -333,7 +341,7 @@ class CaseReport(CaseListReport, CustomProjectReport, HSPHSiteDataMixin,
     @property
     def rows(self):
         case_displays = (HSPHCaseDisplay(self, self.get_case(case))
-                         for case in self.case_results['rows'])
+                         for case in self.es_results['hits'].get('hits', []))
 
         for disp in case_displays:
             yield [
