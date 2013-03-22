@@ -48,6 +48,7 @@ class FacilityRegistry(Document):
     name = StringProperty(
         verbose_name="Name/description of the facility registry")
 
+    domain = StringProperty()
     created_at = DateTimeProperty()
     synced_at = DateTimeProperty(
         verbose_name="Time of last full sync of facilities for this registry")
@@ -55,9 +56,16 @@ class FacilityRegistry(Document):
     last_sync_failed = BooleanProperty(default=True)
 
     @classmethod
-    def all(cls):
-        return cls.view('facilities/all_registries', reduce=False,
-            include_docs=True).all()
+    def get(cls, id, domain=None, *args, **kwargs):
+        registry = super(FacilityRegistry, cls).get(id, *args, **kwargs)
+        if domain is not None:
+            assert registry.domain == domain
+        return registry
+
+    @classmethod
+    def by_domain(cls, domain):
+        return cls.view('facilities/registries_by_domain', reduce=False,
+            key=domain, include_docs=True).all()
 
     @property
     def remote_registry(self):
@@ -76,7 +84,7 @@ class FacilityRegistry(Document):
 
         """
         if strategy not in ('ours', 'theirs'):
-            raise ValueError()
+            raise ValueError("Invalid facility sync strategy.")
 
         try:
             ours_existing = {}
@@ -108,7 +116,7 @@ class FacilityRegistry(Document):
                     # new remote facility
                     now = utcnow()
                     our_new_f = Facility(registry_id=self._id,
-                        data=data, synced_at=now,
+                        domain=self.domain, data=data, synced_at=now,
                         sync_attempted_at=now)
 
                     our_new_f.save(update_remote=False)
@@ -127,7 +135,7 @@ class FacilityRegistry(Document):
             self.save()
 
     def save(self, *args, **kwargs):
-        # todo: test validitiy
+        # todo: test validity
         self.remote_registry
 
         if self._id is None:
@@ -146,6 +154,8 @@ class FacilityRegistry(Document):
 
 class Facility(Document):
     registry_id = StringProperty()
+    # denormalized for purpose of permissions checking
+    domain = StringProperty()
     data = DictProperty(
         verbose_name="Raw properties from the facility registry")
     synced_at = DateTimeProperty(
@@ -153,6 +163,13 @@ class Facility(Document):
                      "with the facility registry")
     sync_attempted_at = DateTimeProperty(
         verbose_name="Time of last attempted sync with the facility registry")
+
+    @classmethod
+    def get(cls, id, domain=None, *args, **kwargs):
+        facility = super(Facility, cls).get(id, *args, **kwargs)
+        if domain is not None:
+            assert facility.domain == domain
+        return facility
 
     @classmethod
     def by_registry(cls, registry_id=None):

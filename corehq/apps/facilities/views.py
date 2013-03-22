@@ -7,31 +7,36 @@ from couchdbkit.exceptions import ResourceNotFound
 
 from dimagi.utils.logging import notify_exception
 
-from corehq.apps.domain.decorators import require_superuser
+from corehq.apps.domain.decorators import domain_admin_required
 from .models import FacilityRegistry, Facility
 from .forms import FacilityRegistryForm, FacilityForm
 
 
+def default(request, domain):
+    return HttpResponseRedirect(reverse(list_registries, args=[domain]))
+
+
 @require_GET
-@require_superuser
-def list_registries(request):
+@domain_admin_required
+def list_registries(request, domain):
     return render(request, "facilities/list_registries.html", {
-        'registries': FacilityRegistry.all()
+        'domain': domain,
+        'registries': FacilityRegistry.by_domain(domain)
     })
 
 
 @require_http_methods(['GET', 'POST'])
-@require_superuser
-def add_view_or_update_registry(request, id=None):
+@domain_admin_required
+def add_view_or_update_registry(request, domain, id=None):
     """Add, view, or update a facility registry"""
 
     if id:
         try:
-            registry = FacilityRegistry.get(id)
+            registry = FacilityRegistry.get(id, domain=domain)
         except ResourceNotFound:
             raise Http404()
     else:
-        registry = FacilityRegistry()
+        registry = FacilityRegistry(domain=domain)
 
     if request.method == 'POST':
         form = FacilityRegistryForm(request.POST, initial=registry.to_json())
@@ -47,7 +52,8 @@ def add_view_or_update_registry(request, id=None):
                     request, "Facility Registry successfully {0}!".format(
                         "edited" if id else "created"))
 
-                return HttpResponseRedirect(reverse(list_registries))
+                return HttpResponseRedirect(reverse(
+                        list_registries, args=[domain]))
     else:
         form = FacilityRegistryForm(initial=registry.to_json())
 
@@ -58,23 +64,23 @@ def add_view_or_update_registry(request, id=None):
 
 
 @require_GET
-@require_superuser
-def sync_registry(request, id, strategy='theirs'):
+@domain_admin_required
+def sync_registry(request, domain, id, strategy='theirs'):
     try:
-        registry = FacilityRegistry.get(id)
+        registry = FacilityRegistry.get(id, domain=domain)
     except ResourceNotFound:
         raise Http404()
 
     registry.sync_with_remote(strategy=strategy)
     messages.success(request, "Facility Registry successfully synced!")
-    return HttpResponseRedirect(reverse(list_registries))
+    return HttpResponseRedirect(reverse(list_registries, args=[domain]))
 
 
 @require_GET
-@require_superuser
-def delete_registry(request, id):
+@domain_admin_required
+def delete_registry(request, domain, id):
     try:
-        registry = FacilityRegistry.get(id)
+        registry = FacilityRegistry.get(id, domain=domain)
     except ResourceNotFound:
         raise Http404()
 
@@ -86,31 +92,32 @@ def delete_registry(request, id):
     else:
         messages.success(request, "Facility Registry successfully deleted!")
 
-    return HttpResponseRedirect(reverse(list_registries))
+    return HttpResponseRedirect(reverse(list_registries, args=[domain]))
 
 
 @require_GET
-@require_superuser
-def list_facilities(request, registry_id=None):
+@domain_admin_required
+def list_facilities(request, domain, registry_id=None):
     if registry_id:
         try:
-            registry = FacilityRegistry.get(registry_id)
+            registry = FacilityRegistry.get(registry_id, domain=domain)
         except ResourceNotFound:
             raise Http404()
     else:
         registry = None
 
     return render(request, "facilities/list_facilities.html", {
+        'domain': domain,
         'registry': registry,
         'facilities': Facility.by_registry(registry_id).all()
     })
 
 
 @require_http_methods(['GET', 'POST'])
-@require_superuser
-def view_or_update_facility(request, id):
+@domain_admin_required
+def view_or_update_facility(request, domain, id):
     try:
-        facility = Facility.get(id)
+        facility = Facility.get(id, domain=domain)
     except ResourceNotFound:
         raise Http404()
 
@@ -137,7 +144,7 @@ def view_or_update_facility(request, id):
                 messages.success(request, "Facility successfully updated "
                                           "and synced with remote server!")
                 return HttpResponseRedirect(reverse(view_or_update_facility,
-                                                    args=(facility._id,)))
+                                                    args=[domain, facility._id]))
     else:
         form = FacilityForm(initial=facility.data)
 
@@ -147,10 +154,10 @@ def view_or_update_facility(request, id):
 
 
 @require_GET
-@require_superuser
-def delete_facility(request, id):
+@domain_admin_required
+def delete_facility(request, domain, id):
     try:
-        facility = Facility.get(id)
+        facility = Facility.get(id, domain=domain)
     except ResourceNotFound:
         raise HttpResponseBadRequest()
 
@@ -162,4 +169,5 @@ def delete_facility(request, id):
         messages.error(request, "Error deleting facility!")
         notify_exception(request, "Error deleting facility {0}".format(id))
 
-    return HttpResponseRedirect(reverse(list_facilities, args=(registry_id,)))
+    return HttpResponseRedirect(reverse( 
+        list_facilities, args=[registry_id, domain]))
