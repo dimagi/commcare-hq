@@ -149,7 +149,8 @@ class FormCustomExportHelper(CustomExportHelper):
 
     def __init__(self, request, domain, export_id=None):
         super(FormCustomExportHelper, self).__init__(request, domain, export_id)
-        self.custom_export.app_id = request.GET.get('app_id')
+        if not self.custom_export.app_id:
+            self.custom_export.app_id = request.GET.get('app_id')
 
     def update_custom_params(self):
         p = self.post_data['custom_export']
