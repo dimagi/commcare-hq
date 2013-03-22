@@ -539,7 +539,8 @@ def stats(request, org, template='orgs/stats.html'):
     ctxt = base_context(request, organization)
 
     params, _ = parse_args_for_es(request)
-    facets = project_stats_facets()
+    # facets = project_stats_facets()
+    facets = ['is_active', 'project_type']
     for f in sorted(facets):
         print f
 

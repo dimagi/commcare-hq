@@ -32,12 +32,6 @@
         {% block append-to-title %}{% endblock %}
     </h2>
     {% include "orgs/partials/top_nav.html" %}
-
-    <h4> # project spaces: {{ domains_for_report|length }}</h4>
-    <h4> # cases: {{ num_cases }}</h4>
-    <h4> # forms: {{ num_forms }}</h4>
-    <h4> # web users: {{ num_web_users }}</h4>
-    <h4> # mobile users: {{ num_mob_users }}</h4>
     {% include "reports/partials/generic_filters.html" %}
     <div id="report-content">
         {% include "domain/partials/report_list.html" with domains=domains_for_report %}

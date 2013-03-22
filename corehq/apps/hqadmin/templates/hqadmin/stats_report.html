@@ -26,13 +26,6 @@
 {#{% block results-display %}#}
 {#{% extends "hqadmin/hqadmin_base_report.html" %}#}
 {% block report-title %}Statistics{% endblock %}
-{% block precontent %}
-    <h4> # project spaces: {{ domains|length }}</h4>
-    <h4> # cases: {{ num_cases }}</h4>
-    <h4> # forms: {{ num_forms }}</h4>
-    <h4> # web users: {{ num_web_users }}</h4>
-    <h4> # mobile users: {{ num_mob_users }}</h4>
-{% endblock %}
 {% block reportcontent %}
     {% include "domain/partials/report_list.html" %}
 {% endblock %}
