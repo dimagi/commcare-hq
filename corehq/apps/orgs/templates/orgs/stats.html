@@ -1,0 +1,49 @@
+{% extends "hqwebapp/two_column.html" %}
+{% load hq_shared_tags %}
+{% load hqstyle_tags %}
+{% load i18n %}
+
+{% block js %}{{ block.super }}
+    {% include "imports/datatables.html" %}
+    <script type="text/javascript" src="{% static 'reports/javascripts/config.dataTables.bootstrap.js' %}"></script>
+    <script type="text/javascript" src="{% static 'hqwebapp/js/lib/jquery-ui-datepicker/jquery-ui-1.8.17.custom.datepicker.min.js' %}"></script>
+    <script type="text/javascript" src="{% static 'reports/javascripts/datepicker.js' %}"></script>
+{% endblock %}
+
+{% block js-inline %} {{ block.super }}
+    <script type="text/javascript">
+        $(function() {
+            var reportTables = new HQReportDataTables({
+                {% if aoColumns %}aoColumns: {{ aoColumns|JSON }}{% endif %}
+            });
+            reportTables.render();
+        });
+    </script>
+{% endblock %}
+
+{% block sidebar %}
+    {% include 'appstore/partials/sidebar.html' %}
+{% endblock %}
+
+{% block main_column %}
+{#    <div class="span10">#}
+    <h2>
+        {{ org.title }} <small>({{ org.name }})</small>
+        {% block append-to-title %}{% endblock %}
+    </h2>
+    {% include "orgs/partials/top_nav.html" %}
+
+    <h4> # project spaces: {{ domains_for_report|length }}</h4>
+    <h4> # cases: {{ num_cases }}</h4>
+    <h4> # forms: {{ num_forms }}</h4>
+    <h4> # web users: {{ num_web_users }}</h4>
+    <h4> # mobile users: {{ num_mob_users }}</h4>
+    {% include "reports/partials/generic_filters.html" %}
+    <div id="report-content">
+        {% include "domain/partials/report_list.html" with domains=domains_for_report %}
+    </div>
+{#    </div>#}
+{% endblock %}
+
+{% block page-title %}Title
+{% endblock %}

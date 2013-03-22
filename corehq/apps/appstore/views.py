@@ -250,9 +250,6 @@ def es_query(params, facets=None, terms=None, q=None, es_url=None):
     es = get_es()
     ret_data = es.get(es_url, data=q)
 
-    import pprint
-    pp = pprint.PrettyPrinter(indent=2)
-    pp.pprint(ret_data.get('facets', []))
     return ret_data
 
 def es_snapshot_query(params, facets=None, terms=None, sort_by="snapshot_time"):

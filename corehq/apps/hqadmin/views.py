@@ -740,24 +740,35 @@ def noneulized_users(request, template="hqadmin/noneulized_users.html"):
 
     return render_to_response(request, template, context)
 
-@require_superuser
-def project_stats(request, template="hqadmin/stats_report.html"):
-    ctxt = {'hide_filters': True}
-
-    params, _ = parse_args_for_es(request)
-    page = params.pop('page', 1)
-    page = int(page[0] if isinstance(page, list) else page)
-
-    # import pprint
-    # pp = pprint.PrettyPrinter(indent=2)
-    # pp.pprint(dict(Domain.__dict__))
-
+def project_stats_facets():
     facets = Domain.properties().keys()
     facets += ['internal.' + p for p in InternalProperties.properties().keys()]
     facets += ['deployment.' + p for p in Deployment.properties().keys()]
     facets += ['cda.' + p for p in LicenseAgreement.properties().keys()]
     for p in ['internal', 'deployment', 'cda', 'migrations', 'eula']:
         facets.remove(p)
+    return facets
+
+DOMAIN_LIST_HEADERS = DataTablesHeader(
+    DataTablesColumn("Domain"),
+    DataTablesColumn("# Web Users", sort_type=DTSortType.NUMERIC),
+    DataTablesColumn("# Mobile Workers", sort_type=DTSortType.NUMERIC),
+    DataTablesColumn("# Cases", sort_type=DTSortType.NUMERIC),
+    DataTablesColumn("# Submitted Forms", sort_type=DTSortType.NUMERIC),
+    DataTablesColumn("Domain Admins")
+)
+
+@require_superuser
+def project_stats(request, template="hqadmin/stats_report.html"):
+    ctxt = {'hide_filters': True}
+
+    params, _ = parse_args_for_es(request)
+
+    # import pprint
+    # pp = pprint.PrettyPrinter(indent=2)
+    # pp.pprint(dict(Domain.__dict__))
+
+    facets = project_stats_facets()
 
     results = es_domain_query(params, facets)
     d_results = [Domain.wrap(res['_source']) for res in results.get('hits', {}).get('hits', [])]
@@ -783,19 +794,10 @@ def project_stats(request, template="hqadmin/stats_report.html"):
 
     facets_sortables = generate_sortables_from_facets(results, params)
 
-    headers = DataTablesHeader(
-        DataTablesColumn("Domain"),
-        DataTablesColumn("# Web Users", sort_type=DTSortType.NUMERIC),
-        DataTablesColumn("# Mobile Workers", sort_type=DTSortType.NUMERIC),
-        DataTablesColumn("# Cases", sort_type=DTSortType.NUMERIC),
-        DataTablesColumn("# Submitted Forms", sort_type=DTSortType.NUMERIC),
-        DataTablesColumn("Domain Admins")
-    )
-
     ctxt = {
         'layout_flush_content': True,
-        'headers': headers,
-        "aoColumns": headers.render_aoColumns,
+        'headers': DOMAIN_LIST_HEADERS,
+        "aoColumns": DOMAIN_LIST_HEADERS.render_aoColumns,
         'domains': domains,
         'sortables': sorted(facets_sortables),
         'query_str': request.META['QUERY_STRING'],
@@ -805,16 +807,22 @@ def project_stats(request, template="hqadmin/stats_report.html"):
         'num_web_users': num_web_users,
         'num_cases': num_cases,
         'num_forms': num_forms,
-        # 'num_projects': len(d_results),
     }
     return render(request, template, ctxt)
 
-def es_domain_query(params, facets=None, terms=None):
+def es_domain_query(params, facets=None, terms=None, domains=None):
     if terms is None:
         terms = ['search']
     if facets is None:
         facets = []
     q = {"query": {"match_all":{}}}
+
+    if domains is not None:
+        q["query"] = {
+            "in" : {
+                "name" : domains,
+            }
+        }
 
     search_query = params.get('search', "")
     if search_query:

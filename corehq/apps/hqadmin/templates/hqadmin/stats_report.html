@@ -34,28 +34,5 @@
     <h4> # mobile users: {{ num_mob_users }}</h4>
 {% endblock %}
 {% block reportcontent %}
-    <table class="datatable table table-striped">
-        <thead>
-        {{ headers.render_html|safe }}
-        </thead>
-        <tbody>
-        {% for domain in domains %}
-            <tr>
-                <td><a href="{% url reports_home domain.name %}">{{ domain.display_name }}</a></td>
-                <td>{{ domain.web_users }}
-                    <span title="{{ domain.web_users }}"></span>
-                </td>
-                <td>{{ domain.commcare_users }}
-                    <span title="{{ domain.commcare_users }}"></span></td>
-                <td>{{ domain.cases }}
-                    <span title="{{ domain.cases }}"></span></td>
-                <td>{{ domain.forms }}
-                    <span title="{{ domain.forms }}"></span></td>
-                <td>{{ domain.admins|join:", " }}</td>
-            </tr>
-        {% empty %}
-            No results were found for your query.
-        {% endfor %}
-        </tbody>
-    </table>
+    {% include "domain/partials/report_list.html" %}
 {% endblock %}

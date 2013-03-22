@@ -1,5 +1,6 @@
 from datetime import datetime
 from couchdbkit import ResourceNotFound
+from django.core.cache import params
 from django.core.urlresolvers import reverse
 from django.db import transaction
 from django.http import HttpResponse, HttpResponseRedirect, Http404, \
@@ -9,8 +10,10 @@ from django.views.decorators.http import require_POST
 from django.shortcuts import render
 from django.contrib import messages
 from corehq.apps.announcements.models import Notification
+from corehq.apps.appstore.views import generate_sortables_from_facets, parse_args_for_es
 
 from corehq.apps.domain.decorators import require_superuser
+from corehq.apps.hqadmin.views import project_stats_facets, ammend_domains, es_domain_query, DOMAIN_LIST_HEADERS
 from corehq.apps.hqwebapp.utils import InvitationView
 from corehq.apps.orgs.decorators import org_admin_required, org_member_required
 from corehq.apps.registration.forms import DomainRegistrationForm
@@ -530,4 +533,34 @@ def public(request, org, template='orgs/public.html'):
         if dom.published_snapshot() and dom.published_snapshot().is_approved:
             ctxt["snapshots"].append(dom.published_snapshot())
     return render(request, template, ctxt)
+
+def stats(request, org, template='orgs/stats.html'):
+    organization = Organization.get_by_name(org, strict=True)
+    ctxt = base_context(request, organization)
+
+    params, _ = parse_args_for_es(request)
+    facets = project_stats_facets()
+    for f in sorted(facets):
+        print f
+
+    results = es_domain_query(params, facets, domains=[d.name for d in ctxt['domains']])
+    d_results = [Domain.wrap(res['_source']) for res in results.get('hits', {}).get('hits', [])]
+
+    ctxt['domains_for_report'] = ammend_domains(d_results)
+    ctxt['num_cases'] = reduce(lambda total, dom: total + dom.cases, ctxt['domains_for_report'], 0)
+    ctxt['num_forms'] = reduce(lambda total, dom: total + dom.forms, ctxt['domains_for_report'], 0)
+    ctxt['num_mob_users'] = reduce(lambda total, dom: total + dom.commcare_users, ctxt['domains_for_report'], 0)
+    ctxt['num_web_users'] = reduce(lambda total, dom: total + dom.web_users, ctxt['domains_for_report'], 0)
+    ctxt["tab"] = "stats"
+
+    facets_sortables = generate_sortables_from_facets(results, params)
+    ctxt.update({
+        # 'layout_flush_content': True,
+        'headers': DOMAIN_LIST_HEADERS,
+        "aoColumns": DOMAIN_LIST_HEADERS.render_aoColumns,
+        'sortables': sorted(facets_sortables),
+        'no_header': True,
+    })
+    return render(request, template, ctxt)
+
 

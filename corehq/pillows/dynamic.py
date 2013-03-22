@@ -81,6 +81,7 @@ domain_special_types = {
     "deployment.description": {"type": "string", "index": "not_analyzed"},
     "short_description": {"type": "string", "index": "not_analyzed"},
     "internal.area": {"type": "string", "index": "not_analyzed"},
+    "cda.type": {"type": "string", "index": "not_analyzed"},
 }
 
 def set_properties(schema_class, custom_types=default_special_types):
