@@ -7,7 +7,6 @@ from casexml.apps.case.models import CommCareCase
 from corehq.apps.domain.models import Domain
 from corehq.elastic import get_es
 from couchforms.models import XFormInstance
-from dimagi.utils.django.management import are_you_sure
 from casexml.apps.case.xform import extract_case_blocks
 from casexml.apps.case.xml.parser import case_update_from_block
 
@@ -21,8 +20,6 @@ HEADERS = [
     'case_ids',
     'unmatched_case_ids',
     'xform not in case history?',
-    'orig doc_id if dupe',
-    'subcases'
 ]
 
 class Command(BaseCommand):
@@ -152,25 +149,14 @@ class Command(BaseCommand):
                     outrow.append("nocase")
                     outrow.append("|".join(missing)) # would be weird if something was here
                     outrow.append("no update")
-                if is_dupe:
-                    outrow.append(orig_submit['_id'])
-                else:
-                    outrow.append("not dupe")
 
-                #check subcases being updated? not checked now todo if necessary
-                subcase_keys = filter(lambda x: x.startswith('subcase_'), submit['form'].keys())
-                try:
-                    #outrow += [submit['form'][k].get('case',{}).get('@case_id','nosubcaseid') for k in subcase_keys]
-                    for k in subcase_keys:
-                        subcase_data = submit['form'][k]
-                        if isinstance(subcase_data, dict):
-                            outrow.append(subcase_data.get('case',{}).get('@case_id','nosubcaseid'))
-                except Exception, ex:
-                    print "error, fix it %s" % ex
-                    print outrow
-                    print subcase_keys
-                    print simplejson.dumps(submit['form'], indent=4)
-                    sys.exit()
-                self.println(','.join(str(x) for x in outrow))
+                def _should_write():
+                    # if we want to make this more configurable can adjust
+                    # for now only output if there's a missing case and if
+                    # it's not a dupe/deprecated
+                    return missing and submit['doc_type'] not in ['XFormDeprecated', 'XFormDuplicate']
+
+                if _should_write():
+                    self.println(','.join(str(x) for x in outrow))
 
 
