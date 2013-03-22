@@ -387,8 +387,6 @@ class HQMediaMixin(Document):
     @property
     @memoized
     def all_media_paths(self):
-        for m in self.all_media:
-            print m
         return set([m.path for m in self.all_media])
 
     def remove_unused_mappings(self):

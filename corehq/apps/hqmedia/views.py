@@ -228,12 +228,10 @@ class DownloadMultimediaZip(View, ApplicationViewMixin):
         self.app.remove_unused_mappings()
         if not self.app.multimedia_map:
             return HttpResponse("You have no multimedia to download.")
-        print self.app.multimedia_map
         for path, media in self.app.get_media_objects():
             try:
                 data, content_type = media.get_display_file()
                 folder = path.replace(utils.MULTIMEDIA_PREFIX, "")
-                print "FOLDER", folder
                 if not isinstance(data, unicode):
                     media_zip.writestr(os.path.join(folder), data)
             except NameError as e:
