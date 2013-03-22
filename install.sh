@@ -46,6 +46,7 @@ if [ $? -eq 0 ]; then
         libevent-dev python-setuptools  \
         postgresql memcached \
         nodejs \
+        npm \
         gdebi-core \
         apache2
 
