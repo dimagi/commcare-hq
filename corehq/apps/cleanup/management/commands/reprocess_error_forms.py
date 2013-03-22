@@ -1,6 +1,5 @@
 from django.core.management.base import BaseCommand, CommandError, LabelCommand
 from corehq.apps.cleanup.xforms import iter_problem_forms, reprocess_form_cases
-from couchforms.models import XFormError
 from optparse import make_option
 from dimagi.utils.parsing import string_to_datetime
 
