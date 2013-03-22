@@ -5,7 +5,7 @@ git:
   submodules: false
 install:
  - "sh -ex .travis/get-submodules.sh"
- - "sh -ex install.sh"
+ - "sh -ex .travis/quietly-run-install.sh"
  - "sh -ex .travis/quietly-install-requirements.sh"
 script: python manage.py test --no-input
 services:
