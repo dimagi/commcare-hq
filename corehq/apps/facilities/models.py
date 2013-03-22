@@ -55,6 +55,9 @@ class FacilityRegistry(Document):
     syncing = BooleanProperty()
     last_sync_failed = BooleanProperty(default=True)
 
+    def get_facilities(self):
+        return Facility.by_registry(self._id)
+
     @classmethod
     def get(cls, id, domain=None, *args, **kwargs):
         registry = super(FacilityRegistry, cls).get(id, *args, **kwargs)
