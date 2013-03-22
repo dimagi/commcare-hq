@@ -11,6 +11,19 @@ from dimagi.utils.django.management import are_you_sure
 from casexml.apps.case.xform import extract_case_blocks
 from casexml.apps.case.xml.parser import case_update_from_block
 
+# NOTE: these are referenced by other management commands so don't change
+# the names without fixing the references
+HEADERS = [
+    'domain',
+    'received_on',
+    'doc_type',
+    'doc_id',
+    'case_ids',
+    'unmatched_case_ids',
+    'xform not in case history?',
+    'orig doc_id if dupe',
+    'subcases'
+]
 
 class Command(BaseCommand):
     args = '<id>'
@@ -26,11 +39,6 @@ class Command(BaseCommand):
                                   dest='do_report',
                                   default=False,
                                   help="Analyze and print a report of the data"),
-                      make_option('--do_processing',
-                                  action='store_true',
-                                  dest='do_process',
-                                  default=False,
-                                  help="Actually do the processing"),
                       make_option('--from_date',
                                   action='store',
                                   dest='from_date',
@@ -114,44 +122,20 @@ class Command(BaseCommand):
 
     def handle(self, *args, **options):
         self.es = get_es()
-        do_process = options['do_process']
         try:
             from_date = datetime.strptime(options['from_date'], "%Y-%m-%d")
         except Exception, ex:
             self.printerr("need a valid date string --from_date YYYY-mm-dd: %s" % ex)
             sys.exit()
 
-        if do_process:
-            if not are_you_sure("""
-Are you sure you want to make written changes to the database?
-Type 'yes' to continue, or 'no' to cancel: """):
-                self.printerr("You didn't say yes, so we're quitting, chicken.")
-                sys.exit()
-            else:
-                self.printerr("OK, proceeding, I hope you know what you're doing")
-                self.printerr("Just kidding, this is still way to dangerous!")
-                # TODO: call the real cleanup command here
-                sys.exit()
-
-        headers = [
-            'domain',
-            'received_on',
-            'doc_type',
-            'doc_id',
-            'case_ids',
-            'unmatched_case_ids',
-            'xform in case history?',
-            'orig doc_id if dupe',
-            'subcases'
-        ]
-        self.println(','.join(headers))
+        self.println(','.join(HEADERS))
         domains = self.get_all_domains()
         for ix, domain in enumerate(domains):
             self.printerr("Domain: %s (%d/%d)" % (domain, ix, len(domains)))
             for submit in self.get_all_submissions(domain, from_date):
                 outrow = [domain, submit['received_on'], submit['doc_type'], submit['_id']]
 
-                #basic case info
+                # basic case info
                 is_dupe=False
                 if submit['doc_type'] == 'XFormDuplicate':
                     is_dupe=True
