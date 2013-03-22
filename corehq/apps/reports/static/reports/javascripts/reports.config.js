@@ -11,6 +11,7 @@ var HQReport = function (options) {
     self.exportReportButton = options.exportReportButton || "#export-report-excel";
     self.emailReportButton = options.emailReportButton || "#email-report";
     self.emailReportModal = options.emailReportModal || "#email-report-modal";
+    self.isEmailable = options.isEmailable || false;
     self.emailDefaultSubject = options.emailDefaultSubject || "";
     self.emailSuccessMessage = options.emailSuccessMessage;
     self.emailErrorMessage = options.emailErrorMessage;
@@ -32,7 +33,7 @@ var HQReport = function (options) {
 
             if (self.needsFilters) {
                 self.filterSubmitButton.button('reset').addClass('btn-primary');
-            } else if (self.slug) {
+            } else if (self.isEmailable && self.slug) {
                 $(self.exportReportButton).click(function (e) {
                     e.preventDefault();
                     window.location.href = get_report_render_url("export");
