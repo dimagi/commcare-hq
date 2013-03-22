@@ -301,6 +301,8 @@ def internal_settings(request, domain, template='domain/internal_settings.html')
             "using_call_center": 'true' if domain.internal.using_call_center else 'false',
             "custom_eula": 'true' if domain.internal.custom_eula else 'false',
             "can_use_data": 'true' if domain.internal.can_use_data else 'false',
+            "organization_name": domain.internal.organization_name,
+            "notes": domain.internal.notes,
         })
 
     return render(request, template, {"project": domain, "domain": domain.name, "form": internal_form, 'active': 'settings'})

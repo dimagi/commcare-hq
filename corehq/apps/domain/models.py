@@ -165,6 +165,8 @@ class InternalProperties(DocumentSchema, UpdatableSchema):
     using_call_center = BooleanProperty()
     custom_eula = BooleanProperty()
     can_use_data = BooleanProperty()
+    notes = StringProperty()
+    organization_name = StringProperty()
 
 
 class Domain(Document, HQBillingDomainMixin, SnapshotMixin):

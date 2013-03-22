@@ -12,7 +12,7 @@ function HQReportDataTables(options) {
     self.customSort = options.customSort;
     self.ajaxParams = options.ajaxParams || new Object();
     self.ajaxSource = options.ajaxSource;
-    self.loadingText = options.loadingText || "Loading...";
+    self.loadingText = options.loadingText || "Loading <img src='/static/hqwebapp/img/ajax-loader.gif' alt='loading indicator' />";
     self.emptyText = options.emptyText || "No data available to display. Please try changing your filters.";
     self.fixColumns = !!(options.fixColumns);
     self.fixColsNumLeft = options.fixColsNumLeft || 1;

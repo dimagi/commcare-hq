@@ -294,6 +294,12 @@ class CaseListMixin(ElasticTabularReport, ProjectReportParametersMixin):
     ajax_pagination = True
     asynchronous = True
 
+    @property
+    @memoized
+    def case_es(self):
+        return CaseES(self.domain)
+
+
     def build_query(self, case_type=None, filter=None, status=None, owner_ids=[], search_string=None):
         # there's no point doing filters that are like owner_id:(x1 OR x2 OR ... OR x612)
         # so past a certain number just exclude
@@ -349,7 +355,7 @@ class CaseListMixin(ElasticTabularReport, ProjectReportParametersMixin):
     @property
     @memoized
     def es_results(self):
-        case_es = CaseES(self.domain)
+        case_es = self.case_es
         query = self.build_query(case_type=self.case_type, filter=self.case_filter,
                                  status=self.case_status, owner_ids=self.case_owners,
                                  search_string=SearchFilter.get_value(self.request, self.domain))
