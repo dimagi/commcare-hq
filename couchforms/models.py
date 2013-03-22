@@ -29,6 +29,7 @@ def doc_types():
         'XFormArchived': XFormArchived,
         'XFormDeprecated': XFormDeprecated,
         'XFormDuplicate': XFormDuplicate,
+        'XFormError': XFormError,
     }
 
 
