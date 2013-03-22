@@ -281,6 +281,8 @@ class DomainInternalForm(forms.Form, SubAreaMixin):
     using_call_center = ChoiceField(label=ugettext_noop("Using Call Center?"), choices=tf_choices('Yes', 'No'), required=False)
     custom_eula = ChoiceField(label=ugettext_noop("Custom Eula?"), choices=tf_choices('Yes', 'No'), required=False)
     can_use_data = ChoiceField(label=ugettext_noop("Data Usage?"), choices=tf_choices('Yes', 'No'), required=False)
+    organization_name = CharField(label=ugettext_noop("Organization Name"), required=False)
+    notes = CharField(label=ugettext_noop("Notes"), required=False, widget=forms.Textarea)
 
     def save(self, domain):
         domain.update_internal(sf_contract_id=self.cleaned_data['sf_contract_id'],
@@ -297,6 +299,8 @@ class DomainInternalForm(forms.Form, SubAreaMixin):
             using_call_center=self.cleaned_data['using_call_center'] == 'true',
             custom_eula=self.cleaned_data['custom_eula'] == 'true',
             can_use_data=self.cleaned_data['can_use_data'] == 'true',
+            organization_name=self.cleaned_data['organization_name'],
+            notes=self.cleaned_data['notes'],
         )
 
 
