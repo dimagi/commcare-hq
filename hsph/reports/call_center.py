@@ -153,7 +153,7 @@ class HSPHCaseDisplay(CaseDisplay):
     @memoized
     def allocated_to(self):
         if self.status == "Closed":
-            close_action = [CommCareCaseAction.wrap(a) for a in self.case.actions if a['action_type'] ==
+            close_action = [CommCareCaseAction.wrap(a) for a in self.case['actions'] if a['action_type'] ==
                 const.CASE_ACTION_CLOSE][0]
 
             CATI_FOLLOW_UP_FORMS = (
