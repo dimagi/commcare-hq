@@ -1,6 +1,9 @@
 from corehq.pillows.core import DATE_FORMATS_STRING, DATE_FORMATS_ARR
-#staging
-FULL_XFORM_INDEX = "full_xforms_8f890d8ac4bdd3d6918e53c61515c2a6"
+
+FULL_XFORM_INDEX="full_xforms_1595b2ca525ba48c3e8bcb8cd2a426f4"
+
+
+
 
 FULL_XFORM_MAPPING = {
     "date_detection": False,
@@ -11,6 +14,7 @@ FULL_XFORM_MAPPING = {
         "created": '', #record keeping on the index.
     },
     "properties": {
+        'doc_type': {'type': 'string'},
         "domain": {
             "type": "multi_field",
             "fields": {
@@ -36,6 +40,13 @@ FULL_XFORM_MAPPING = {
         "received_on": {
             "type": "date",
             "format": DATE_FORMATS_STRING
+        },
+        'initial_processing_complete': {"type": "boolean"},
+        'partial_submission': {"type": "boolean"},
+        "#export_tag": {"type": "string", "index": "not_analyzed"},
+        '_attachments': {
+            'dynamic': True,
+            'type': 'object'
         },
         'form': {
             'dynamic': False,
