@@ -37,7 +37,7 @@ from PIL import Image
 from django.utils.translation import ugettext as _
 
 
-class DomainViewMixin():
+class DomainViewMixin(object):
     """
         Paving the way for a world of entirely class-based views.
         Let's do this, guys. :-)

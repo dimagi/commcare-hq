@@ -92,6 +92,7 @@ class ApplicationViewMixin(DomainViewMixin):
             return get_app(self.domain, self.app_id)
         except Exception:
             pass
+        return None
 
 
 @login_and_domain_required
