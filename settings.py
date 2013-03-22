@@ -661,6 +661,6 @@ PILLOWTOPS = [
 XFORM_PILLOW_HANDLERS = ['pact.pillowhandler.PactHandler', ]
 
 #Custom fully indexed domains for FullCase index/pillowtop
-ES_CASE_FULL_INDEX_DOMAINS = ['pact']
+ES_CASE_FULL_INDEX_DOMAINS = ['pact', 'hsph']
 
 REMOTE_APP_NAMESPACE = "%(domain)s.commcarehq.org"
