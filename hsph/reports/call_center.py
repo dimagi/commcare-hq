@@ -1,4 +1,6 @@
 import datetime
+from casexml.apps.case.models import CommCareCaseAction
+from corehq.apps.api.es import FullCaseES
 from corehq.apps.groups.models import Group
 from corehq.apps.reports.generic import GenericTabularReport
 from corehq.apps.reports.basic import BasicTabularReport, Column
@@ -151,7 +153,7 @@ class HSPHCaseDisplay(CaseDisplay):
     @memoized
     def allocated_to(self):
         if self.status == "Closed":
-            close_action = [a for a in self.case.actions if a.action_type ==
+            close_action = [CommCareCaseAction.wrap(a) for a in self.case.actions if a['action_type'] ==
                 const.CASE_ACTION_CLOSE][0]
 
             CATI_FOLLOW_UP_FORMS = (
@@ -194,7 +196,7 @@ class HSPHCaseDisplay(CaseDisplay):
     @property
     def outside_allocated_period(self):
         if not ('filter_date' in self.case and
-                isinstance(self.parse_date(self.case['filter_date']), datetime)):
+                isinstance(self.parse_date(self.case['filter_date']), datetime.datetime)):
             return ""
 
         if self.case['closed_on']:
@@ -202,7 +204,7 @@ class HSPHCaseDisplay(CaseDisplay):
         else:
             compare_date = datetime.date.today()
 
-        return 'Yes' if (compare_date - self.case.filter_date).days > 23 else 'No'
+        return 'Yes' if (compare_date - self.parse_date(self.case['filter_date']).date()).days > 23 else 'No'
 
 
 class CaseReport(CaseListReport, CustomProjectReport, HSPHSiteDataMixin,
@@ -220,6 +222,12 @@ class CaseReport(CaseListReport, CustomProjectReport, HSPHSiteDataMixin,
     )
 
     default_case_type = 'birth'
+
+
+    @property
+    @memoized
+    def case_es(self):
+        return FullCaseES(self.domain)
 
     @property
     def headers(self):
