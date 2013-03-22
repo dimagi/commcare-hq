@@ -1,5 +1,6 @@
 import datetime
 import logging
+from couchdbkit import ResourceNotFound
 import dateutil
 from django.conf import settings
 from django.contrib.sites.models import Site
@@ -20,6 +21,7 @@ from corehq.apps.domain.models import Domain, LICENSES
 from corehq.apps.domain.utils import get_domained_url, normalize_domain_name
 from corehq.apps.orgs.models import Organization, OrgRequest, Team
 from corehq.apps.commtrack.util import all_sms_codes
+from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.django.email import send_HTML_email
 
 from dimagi.utils.web import get_ip, json_response
@@ -33,6 +35,26 @@ from dimagi.utils.post import simple_post
 import cStringIO
 from PIL import Image
 from django.utils.translation import ugettext as _
+
+
+class DomainViewMixin(object):
+    """
+        Paving the way for a world of entirely class-based views.
+        Let's do this, guys. :-)
+    """
+
+    @property
+    @memoized
+    def domain(self):
+        return self.args[0] if len(self.args) > 0 else ""
+
+    @property
+    @memoized
+    def domain_object(self):
+        try:
+            return Domain.get_by_name(self.domain)
+        except ResourceNotFound:
+            raise Http404
 
 
 # Domain not required here - we could be selecting it for the first time. See notes domain.decorators

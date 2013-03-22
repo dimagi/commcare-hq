@@ -1,13 +1,13 @@
 from StringIO import StringIO
 import functools
 import logging
-import zipfile
 from diff_match_patch import diff_match_patch
 from django.template.loader import render_to_string
 import hashlib
 from corehq.apps.app_manager.const import APP_V1
 from corehq.apps.app_manager.success_message import SuccessMessage
 from corehq.apps.domain.models import Domain
+from corehq.apps.domain.views import DomainViewMixin
 from couchexport.export import FormattedRow
 from couchexport.models import Format
 from couchexport.writers import Excel2007ExportWriter
@@ -72,6 +72,29 @@ def set_file_download(response, filename):
 
 def _encode_if_unicode(s):
     return s.encode('utf-8') if isinstance(s, unicode) else s
+
+
+class ApplicationViewMixin(DomainViewMixin):
+    """
+        Paving the way for class-based views in app manager. Yo yo yo.
+    """
+
+    @property
+    @memoized
+    def app_id(self):
+        return self.args[1] if len(self.args) > 1 else None
+
+    @property
+    @memoized
+    def app(self):
+        try:
+            # if get_app is mainly used for views, maybe it should be a classmethod of this mixin? todo
+            return get_app(self.domain, self.app_id)
+        except Exception:
+            pass
+        return None
+
+
 @login_and_domain_required
 def back_to_main(req, domain, app_id=None, module_id=None, form_id=None, unique_form_id=None, edit=True, error='', page=None, **kwargs):
     """
@@ -1663,34 +1686,6 @@ def download_user_registration(req, domain, app_id):
     return HttpResponse(
         req.app.get_user_registration().render_xform()
     )
-
-@safe_download
-def download_multimedia_zip(req, domain, app_id):
-    app = get_app(domain, app_id)
-    temp = StringIO()
-    hqZip = zipfile.ZipFile(temp, "a")
-    errors = []
-    for form_path, media_item in app.multimedia_map.items():
-        try:
-            media_cls = CommCareMultimedia.get_doc_class(media_item.media_type)
-            media = media_cls.get(media_item.multimedia_id)
-            data, content_type = media.get_display_file()
-            path = form_path.replace(utils.MULTIMEDIA_PREFIX, "")
-            if not isinstance(data, unicode):
-                hqZip.writestr(os.path.join(path), data)
-        except (NameError, ResourceNotFound) as e:
-            errors.append("[%s] ERROR: %s" % (form_path, e))
-            logging.warning("%s on %s %s" % (e, form_path, media_item))
-    hqZip.close()
-
-    if errors:
-        return HttpResponseServerError("Errors were encountered while retrieving media for this application.<br /> %s" % "<br />".join(errors))
-
-    response = HttpResponse(mimetype="application/zip")
-    set_file_download(response, 'commcare.zip')
-    temp.seek(0)
-    response.write(temp.read())
-    return response
 
 
 @safe_download

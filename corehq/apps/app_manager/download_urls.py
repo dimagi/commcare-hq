@@ -1,4 +1,5 @@
-from django.conf.urls.defaults import patterns, url
+from django.conf.urls.defaults import patterns, url, include
+from corehq.apps.hqmedia.urls import download_urls as media_download_urls
 
 urlpatterns = patterns('corehq.apps.app_manager.views',
     url(r'^$', 'download_index', {}, 'download_index'),
@@ -8,7 +9,7 @@ urlpatterns = patterns('corehq.apps.app_manager.views',
     url(r'^(?P<lang>[\w-]+)/app_strings.txt$', 'download_app_strings', {}, 'download_app_strings'),
 
     url(r'^user_registration.xml$', 'download_user_registration', {}, 'download_user_registration'),
-    url(r'^multimedia/commcare.zip$', 'download_multimedia_zip', {}, 'download_multimedia_zip'),
+    url(r'^multimedia/', include(media_download_urls)),
     url(r'^modules-(?P<module_id>\d+)/forms-(?P<form_id>\d+).xml$', 'download_xform', {}, 'download_xform'),
     url(r'^CommCare.jad$', 'download_jad', {}, 'download_jad'),
     url(r'^CommCare_raw.jar$', 'download_raw_jar', {}, 'download_raw_jar'),
