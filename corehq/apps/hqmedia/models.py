@@ -4,9 +4,13 @@ from datetime import datetime
 import hashlib
 from couchdbkit.exceptions import ResourceConflict, ResourceNotFound
 from couchdbkit.ext.django.schema import *
+from couchdbkit.schema import LazyDict
 from django.contrib import messages
 from django.core.urlresolvers import reverse
 import magic
+from corehq.apps.app_manager.xform import XFormValidationError
+from couchforms.models import XFormError
+from dimagi.utils.decorators.memoized import memoized
 from hutch.models import AuxMedia, AttachmentImage, MediaAttachmentManager
 from corehq.apps.domain.models import LICENSES
 from dimagi.utils.couch.database import get_db
@@ -134,7 +138,7 @@ class CommCareMultimedia(Document):
             first_id = all_ids[0]
             data = self.fetch_attachment(first_id, True).read()
             if return_type:
-                content_type =  self._attachments[first_id]['content_type']
+                content_type = self._attachments[first_id]['content_type']
                 return data, content_type
             else:
                 return data
@@ -218,6 +222,7 @@ class CommCareMultimedia(Document):
             'CommCareAudio': CommCareAudio
         }[doc_type]
 
+
 class CommCareImage(CommCareMultimedia):
 
     class Config(object):
@@ -247,7 +252,8 @@ class CommCareAudio(CommCareMultimedia):
 
     @classmethod
     def validate_content_type(cls, content_type):
-        return content_type in ['audio/mpeg', 'audio/mp3']
+        #todo check audio/vnd.wave for wav files
+        return content_type in ['audio/mpeg', 'audio/mp3', 'audio/vnd.wave']
 
 
 
@@ -267,12 +273,141 @@ class HQMediaMapItem(DocumentSchema):
             "upload_path": upload_path
         }
 
+
+class ApplicationMediaReference(object):
+    """
+        Generated when all_media is queried and stored in memory.
+
+        Contains all the information needed to know where / how this the media PATH is stored in the application.
+        Provides no link to a multimedia object---link comes from the application's multimedia map.
+        Useful info for user-facing things.
+    """
+
+    def __init__(self, path,
+                 module_id=None, module_name=None,
+                 form_id=None, form_name=None,
+                 media_type=None, is_menu_media=False):
+
+        if not isinstance(path, basestring):
+            raise ValueError("path should be a string")
+        self.path = path.strip()
+
+        if not issubclass(media_type, CommCareMultimedia):
+            raise ValueError("media_type should be a type of CommCareMultimedia")
+
+        self.module_id = module_id
+        self.module_name = module_name
+        self.form_id = form_id
+        self.form_name = form_name
+
+        self.media_type = media_type
+        self.is_menu_media = is_menu_media
+
+    def __str__(self):
+        detailed_location = ""
+        if self.module_name:
+            detailed_location = " | %s" % self.get_module_name()
+        if self.form_name:
+            detailed_location = "%s > %s" % (detailed_location, self.get_form_name())
+        return "%(media_type)s at %(path)s%(detailed_location)s" % {
+            'media_type': self.media_type.__name__,
+            'path': self.path,
+            'detailed_location': detailed_location,
+        }
+
+    def _get_name(self, raw_name, lang=None):
+        if not isinstance(raw_name, dict) or not isinstance(raw_name, LazyDict):
+            return raw_name
+        if lang is None:
+            lang = 'en'
+        return raw_name.get(lang)
+
+    def get_module_name(self, lang=None):
+        return self._get_name(self.module_name, lang=lang)
+
+    def get_form_name(self, lang=None):
+        return self._get_name(self.form_name, lang=lang)
+
+
 class HQMediaMixin(Document):
+    """
+        Mix this guy in with Application to support multimedia.
+        Anything multimedia related happens here.
+    """
 
     # keys are the paths to each file in the final application media zip
     multimedia_map = SchemaDictProperty(HQMediaMapItem)
 
+    @property
+    @memoized
+    def all_media(self):
+        """
+            Get all the paths of multimedia IMAGES and AUDIO referenced in this application.
+            (Video and anything else is currently not supported...)
+        """
+        media = []
+        self.media_form_errors = False
+
+        def _add_menu_media(item, **kwargs):
+            if item.media_image:
+                media.append(ApplicationMediaReference(item.media_image,
+                                                       media_type=CommCareImage,
+                                                       is_menu_media=True, **kwargs))
+            if item.media_audio:
+                media.append(ApplicationMediaReference(item.media_audio,
+                                                       media_type=CommCareAudio,
+                                                       is_menu_media=True, **kwargs))
+
+        for m, module in enumerate(self.get_modules()):
+            media_kwargs = {
+                'module_name': module.name,
+                'module_id': m,
+            }
+            _add_menu_media(module, **media_kwargs)
+            for f in module.get_forms():
+                media_kwargs['form_name'] = f.name
+                media_kwargs['form_id'] = f.unique_id
+                _add_menu_media(f, **media_kwargs)
+                try:
+                    parsed = f.wrapped_xform()
+                    if not parsed.exists():
+                        continue
+                    f.validate_form()
+                    for image in parsed.image_references:
+                        if image:
+                            media.append(ApplicationMediaReference(image, media_type=CommCareImage, **media_kwargs))
+                    for audio in parsed.audio_references:
+                        if audio:
+                            media.append(ApplicationMediaReference(audio, media_type=CommCareAudio, **media_kwargs))
+                except (XFormValidationError, XFormError):
+                    self.media_form_errors = True
+
+        return media
+
+    @property
+    @memoized
+    def all_media_paths(self):
+        for m in self.all_media:
+            print m
+        return set([m.path for m in self.all_media])
+
+    def remove_unused_mappings(self):
+        """
+            This checks to see if the paths specified in the multimedia map still exist in the Application.
+            If not, then that item is removed from the multimedia map.
+        """
+        map_changed = False
+        for path in self.multimedia_map.keys():
+            if path not in self.all_media_paths:
+                map_changed = True
+                del self.multimedia_map[path]
+        if map_changed:
+            self.save()
+
     def create_mapping(self, multimedia, form_path):
+        """
+            This creates the mapping of a path to the multimedia in an application to the media object stored in couch.
+        """
         form_path = form_path.strip()
         map_item = HQMediaMapItem()
         map_item.multimedia_id = multimedia._id
@@ -286,19 +421,26 @@ class HQMediaMixin(Document):
             updated_doc = self.get(self._id)
             updated_doc.create_mapping(multimedia, form_path)
 
-    def get_media_documents(self):
-        for form_path, map_item in self.multimedia_map.items():
+    def get_media_objects(self):
+        """
+            Gets all the media objects stored in the multimedia map.
+        """
+        for path, map_item in self.multimedia_map.items():
             media = CommCareMultimedia.get_doc_class(map_item.media_type)
             try:
                 media = media.get(map_item.multimedia_id)
+                yield path, media
             except ResourceNotFound:
-                media = None
-            yield form_path, media
+                # delete media reference from multimedia map so this doesn't pop up again!
+                del self.multimedia_map[path]
+                self.save()
 
     def get_media_references(self, request=None):
         """
             Use this to check all Application media against the stored multimedia_map.
         """
+        #todo this should get updated to use self.all_media
+        #todo multimedia map VIEW should show nice output of Module > Name for each path /// clean this view up!
         from corehq.apps.app_manager.models import Application
         if not isinstance(self, Application):
             raise NotImplementedError("Sorry, this method is only supported for CommCare HQ Applications.")
@@ -356,7 +498,11 @@ class HQMediaMixin(Document):
             "missing_refs": missing_refs,
         }
 
-    def clean_mapping(self, user=None):
-        for path, media in self.get_media_documents():
+    def prepare_multimedia_for_exchange(self):
+        """
+            Prepares the multimedia in the application for exchanging across domains.
+        """
+        self.remove_unused_mappings()
+        for path, media in self.get_media_objects():
             if not media or (not media.is_shared and self.domain not in media.owners):
                 del self.multimedia_map[path]
