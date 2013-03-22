@@ -39,11 +39,6 @@ class Command(BaseCommand):
                                   dest='do_report',
                                   default=False,
                                   help="Analyze and print a report of the data"),
-                      make_option('--do_processing',
-                                  action='store_true',
-                                  dest='do_process',
-                                  default=False,
-                                  help="Actually do the processing"),
                       make_option('--from_date',
                                   action='store',
                                   dest='from_date',
@@ -127,21 +122,11 @@ class Command(BaseCommand):
 
     def handle(self, *args, **options):
         self.es = get_es()
-        do_process = options['do_process']
         try:
             from_date = datetime.strptime(options['from_date'], "%Y-%m-%d")
         except Exception, ex:
             self.printerr("need a valid date string --from_date YYYY-mm-dd: %s" % ex)
             sys.exit()
-
-        if do_process:
-            if not are_you_sure("""
-Are you sure you want to make written changes to the database?
-Type 'yes' to continue, or 'no' to cancel: """):
-                self.printerr("You didn't say yes, so we're quitting, chicken.")
-                sys.exit()
-            else:
-                self.printerr("OK, proceeding, I hope you know what you're doing")
 
         self.println(','.join(HEADERS))
         domains = self.get_all_domains()
