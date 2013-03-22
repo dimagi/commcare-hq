@@ -214,7 +214,8 @@ class BulkCopyIndicatorsForm(forms.Form):
         indicators = []
         for namespace in get_namespaces(self.domain):
             indicators.extend(self.indicator_class.get_all_of_type(namespace, self.domain))
-        return [(i._id, "%s | v. %d | n: %s" % (i.slug, i.version, get_namespace_name(i.domain, i.namespace))) for i in indicators]
+        return [(i._id, "%s | v. %d | n: %s" % (i.slug, i.version if i.version else 0,
+                                                get_namespace_name(i.domain, i.namespace))) for i in indicators]
 
     def clean_destination_domain(self):
         if 'destination_domain' in self.cleaned_data:
@@ -246,6 +247,9 @@ class BulkCopyIndicatorsForm(forms.Form):
                 copied_indicator = self.indicator_class.update_or_create_unique(indicator.namespace, destination_domain,
                                                                                 save_on_update=override,
                                                                                 **copied_properties)
+                if copied_indicator and not copied_indicator.version:
+                    copied_indicator.version = 1
+                    copied_indicator.save()
                 if copied_indicator:
                     success.append(copied_indicator.slug)
             except Exception as e:
