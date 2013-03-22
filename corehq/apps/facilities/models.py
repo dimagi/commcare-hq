@@ -85,18 +85,20 @@ class FacilityRegistry(Document):
 
             for our_f in Facility.by_registry(self._id).all():
                 if our_f.synced_at:
-                    local_id = unicode(our_f.data['id'])
+                    local_id = unicode(our_f.data['uuid'])
                     ours_existing[local_id] = our_f
                 else:
                     # new local facility
                     f.save(update_remote=True)
 
             for their_f in self.remote_registry.facilities.all():
-                remote_id = unicode(their_f['id'])
+                remote_id = unicode(their_f['uuid'])
+                data = clean_data(their_f.to_dict())
+
                 if remote_id in ours_existing:
                     if strategy == 'theirs':
                         ours = ours_existing[remote_id]
-                        ours.data = clean_data(their_f.to_dict())
+                        ours.data = data
                         ours.save(update_remote=False)
                     else:  # strategy == 'ours'
                         for f, v in ours.data.items():
@@ -105,9 +107,6 @@ class FacilityRegistry(Document):
                 else:
                     # new remote facility
                     now = utcnow()
-
-                    data = clean_data(their_f.to_dict())
-
                     our_new_f = Facility(registry_id=self._id,
                         data=data, synced_at=now,
                         sync_attempted_at=now)
