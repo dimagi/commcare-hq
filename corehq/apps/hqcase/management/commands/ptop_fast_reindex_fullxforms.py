@@ -16,11 +16,9 @@ class Command(PtopReindexer):
     doc_class = XFormInstance
     view_name = 'hqadmin/domains_over_time'
     pillow_class = FullXFormPillow
+    file_prefix = "ptop_fast_reindex_Full"
 
 
-    def get_dump_filename(self):
-        view_dump_filename = "ptop_fast_reindex_Full%s_%s_data.json" % (self.doc_class.__name__,  self.get_seq_prefix())
-        return view_dump_filename
 
     def load_from_view(self):
         """

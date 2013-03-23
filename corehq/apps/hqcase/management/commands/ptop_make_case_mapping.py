@@ -1,5 +1,6 @@
 from datetime import datetime
 import hashlib
+import pprint
 from django.core.management.base import NoArgsCommand
 import sys
 import os
@@ -39,7 +40,7 @@ class Command(MappingOutputCommand):
         delattr(casepillow, '_calc_meta_cache')
         output = []
         output.append('CASE_INDEX="%s_%s"' % (casepillow.es_index_prefix, casepillow.calc_meta()))
-        output.append('CASE_MAPPING=%s' % m)
+        output.append('CASE_MAPPING=%s' % pprint.pformat(m))
         newcalc_index = "%s_%s" % (casepillow.es_index_prefix, casepillow.calc_meta())
         print "Writing new case_index and mapping: %s" % output[0]
         with open(filepath, 'w') as outfile:
