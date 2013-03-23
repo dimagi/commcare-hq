@@ -1,34 +1,9 @@
 from datetime import datetime, timedelta
 from django.template.loader import render_to_string
 from corehq.apps.domain.models import Domain
+from corehq.apps.reminders.models import CaseReminderHandler
 from corehq.apps.reports.util import make_form_couch_key
 from dimagi.utils.couch.database import get_db
-
-CALC_ORDER = [
-    'num_web_users', 'num_mobile_users', 'forms', 'cases', 'mobile_users--active', 'mobile_users--inactive', 'active_cases', 'cases_in_last--30',
-    'cases_in_last--60', 'cases_in_last--90', 'cases_in_last--120', 'active', 'first_form_submission',
-    'last_form_submission', 'has_app', 'web_users', 'active_apps'
-]
-
-CALCS = {
-    'num_web_users': "# web users",
-    'num_mobile_users': "# mobile users",
-    'forms': "# forms",
-    'cases': "# cases",
-    'mobile_users--active': "# active mobile users",
-    'mobile_users--inactive': "# inactive mobile users",
-    'active_cases': "# active cases",
-    'cases_in_last--30': "# cases seen last 30 days",
-    'cases_in_last--60': "# cases seen last 60 days",
-    'cases_in_last--90': "# cases seen last 90 days",
-    'cases_in_last--120': "# cases seen last 120 days",
-    'active': "Active",
-    'first_form_submission': "Date of first form submission",
-    'last_form_submission': "Date of last form submission",
-    'has_app': "Has App",
-    'web_users': "list of web users",
-    'active_apps': "list of active apps",
-}
 
 def num_web_users(domain, *args):
     key = ["active", domain, 'WebUser']
@@ -69,7 +44,7 @@ def active(domain, *args):
     now = now.strftime(DATE_FORMAT)
 
     key = ['submission', domain]
-    row = get_db().view("hqcase/all_cases", startkey=key+[then], endkey=key+[now]).all()
+    row = get_db().view("reports_forms/all_forms", startkey=key+[then], endkey=key+[now]).all()
     return {"value": 'yes' if row else 'no'}
 
 def first_form_submission(domain, *args):
@@ -92,8 +67,39 @@ def app_list(domain, *args):
     apps = domain.applications()
     return {"value": render_to_string("domain/partials/app_list.html", {"apps": apps, "domain": domain.name})}
 
+def uses_reminders(domain, *args):
+    handlers = CaseReminderHandler.get_handlers(domain=domain).all()
+    return {"value": 'yes' if len(handlers) > 0 else 'no'}
+
 def not_implemented(domain, *args):
     return {"value": '<p class="text-error">not implemented</p>'}
+
+CALC_ORDER = [
+    'num_web_users', 'num_mobile_users', 'forms', 'cases', 'mobile_users--active', 'mobile_users--inactive', 'active_cases', 'cases_in_last--30',
+    'cases_in_last--60', 'cases_in_last--90', 'cases_in_last--120', 'active', 'first_form_submission',
+    'last_form_submission', 'has_app', 'web_users', 'active_apps', 'uses_reminders'
+]
+
+CALCS = {
+    'num_web_users': "# web users",
+    'num_mobile_users': "# mobile users",
+    'forms': "# forms",
+    'cases': "# cases",
+    'mobile_users--active': "# active mobile users",
+    'mobile_users--inactive': "# inactive mobile users",
+    'active_cases': "# active cases",
+    'cases_in_last--30': "# cases seen last 30 days",
+    'cases_in_last--60': "# cases seen last 60 days",
+    'cases_in_last--90': "# cases seen last 90 days",
+    'cases_in_last--120': "# cases seen last 120 days",
+    'active': "Active",
+    'first_form_submission': "Date of first form submission",
+    'last_form_submission': "Date of last form submission",
+    'has_app': "Has App",
+    'web_users': "list of web users",
+    'active_apps': "list of active apps",
+    'uses_reminders': "uses reminders",
+}
 
 CALC_FNS = {
     'num_web_users': num_web_users,
@@ -109,4 +115,5 @@ CALC_FNS = {
     "has_app": has_app,
     "web_users": not_implemented,
     "active_apps": app_list,
+    'uses_reminders': uses_reminders,
 }

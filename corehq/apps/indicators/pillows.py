@@ -42,10 +42,17 @@ class IndicatorPillowBase(BasicPillow):
 
         computed_dict = doc_dict.get('computed_')
         domain = doc_dict.get('domain')
+
+        def _processing_check(doc_dict):
+            # forms are the only doc types that use this pattern.
+            if doc_dict.get('doc_type') == 'XFormInstance':
+                return doc_dict.get('initial_processing_complete')
+            return True
+
         if (computed_dict is not None
             and domain in self.indicator_domains
             and doc_dict.get('doc_type') == self.indicator_document_type.__name__
-            and doc_dict.get('initial_processing_complete')):
+            and _processing_check(doc_dict)):
             namespaces = INDICATOR_CONFIG[domain]
             for namespace in namespaces:
                 if not self.only_use_fresh_docs:

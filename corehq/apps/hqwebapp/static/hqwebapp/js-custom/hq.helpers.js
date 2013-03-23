@@ -50,3 +50,13 @@ $.fn.hqHelp = function () {
         })
     });
 };
+
+$.showMessage = function (message, level) {
+    $notice = $('<div />').addClass("alert fade in alert-block alert-full page-level-alert")
+        .addClass("alert-" + level);
+    var $closeIcon = $('<a />').addClass("close").attr("data-dismiss", "alert");
+    $closeIcon.attr("href", "#").html("&times;");
+    $notice.append($closeIcon);
+    $notice.append(message);
+    $(".hq-page-header-container").prepend($notice);
+}

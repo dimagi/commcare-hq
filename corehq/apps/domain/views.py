@@ -1,5 +1,6 @@
 import datetime
 import logging
+from couchdbkit import ResourceNotFound
 import dateutil
 from django.conf import settings
 from django.contrib.sites.models import Site
@@ -20,6 +21,7 @@ from corehq.apps.domain.models import Domain, LICENSES
 from corehq.apps.domain.utils import get_domained_url, normalize_domain_name
 from corehq.apps.orgs.models import Organization, OrgRequest, Team
 from corehq.apps.commtrack.util import all_sms_codes
+from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.django.email import send_HTML_email
 
 from dimagi.utils.web import get_ip, json_response
@@ -33,6 +35,26 @@ from dimagi.utils.post import simple_post
 import cStringIO
 from PIL import Image
 from django.utils.translation import ugettext as _
+
+
+class DomainViewMixin(object):
+    """
+        Paving the way for a world of entirely class-based views.
+        Let's do this, guys. :-)
+    """
+
+    @property
+    @memoized
+    def domain(self):
+        return self.args[0] if len(self.args) > 0 else ""
+
+    @property
+    @memoized
+    def domain_object(self):
+        try:
+            return Domain.get_by_name(self.domain)
+        except ResourceNotFound:
+            raise Http404
 
 
 # Domain not required here - we could be selecting it for the first time. See notes domain.decorators
@@ -133,7 +155,7 @@ def project_settings(request, domain, template="domain/admin/project_settings.ht
        'deployment_info_form' not in request.POST:
         # deal with saving the settings data
         if user_sees_meta:
-            form = DomainMetadataForm(request.POST, user=request.couch_user)
+            form = DomainMetadataForm(request.POST, user=request.couch_user, domain=domain.name)
         else:
             form = DomainGlobalSettingsForm(request.POST)
         if form.is_valid():
@@ -143,13 +165,18 @@ def project_settings(request, domain, template="domain/admin/project_settings.ht
                 messages.error(request, "There seems to have been an error saving your settings. Please try again!")
     else:
         if user_sees_meta:
-            form = DomainMetadataForm(user=request.couch_user, initial={
+            form = DomainMetadataForm(user=request.couch_user, domain=domain.name, initial={
                 'default_timezone': domain.default_timezone,
                 'case_sharing': json.dumps(domain.case_sharing),
                 'project_type': domain.project_type,
                 'customer_type': domain.customer_type,
                 'is_test': json.dumps(domain.is_test),
                 'survey_management_enabled': domain.survey_management_enabled,
+                'sms_case_registration_enabled': domain.sms_case_registration_enabled,
+                'sms_case_registration_type': domain.sms_case_registration_type,
+                'sms_case_registration_owner_id': domain.sms_case_registration_owner_id,
+                'sms_case_registration_user_id': domain.sms_case_registration_user_id,
+                'default_sms_backend_id': domain.default_sms_backend_id,
                 'commtrack_enabled': domain.commtrack_enabled,
             })
         else:
@@ -274,6 +301,8 @@ def internal_settings(request, domain, template='domain/internal_settings.html')
             "using_call_center": 'true' if domain.internal.using_call_center else 'false',
             "custom_eula": 'true' if domain.internal.custom_eula else 'false',
             "can_use_data": 'true' if domain.internal.can_use_data else 'false',
+            "organization_name": domain.internal.organization_name,
+            "notes": domain.internal.notes,
         })
 
     return render(request, template, {"project": domain, "domain": domain.name, "form": internal_form, 'active': 'settings'})
