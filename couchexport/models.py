@@ -261,7 +261,7 @@ class ExportTable(DocumentSchema):
         for c in all_cols:
             if c not in selected_cols:
                 column = ExportColumn(index=c)
-                column.display = self.displays_by_index[c] if self.displays_by_index.has_key(c) else c
+                column.display = self.displays_by_index[c] if self.displays_by_index.has_key(c) else ''
                 yield column.to_config_format(selected=False)
 
     def get_headers_row(self):
@@ -483,13 +483,19 @@ class SavedExportSchema(BaseSavedExportSchema, UnicodeMixIn):
             if self.tables_by_index.has_key(index):
                 return list(self.tables_by_index[index].get_column_configuration(columns))
             else:
-                return [ExportColumn(index=c, display=c).to_config_format(selected=False) for c in columns]
+                return [
+                    ExportColumn(
+                        index=c,
+                        display=''
+                    ).to_config_format(selected=False)
+                    for c in columns
+                ]
 
         def display():
             if self.tables_by_index.has_key(index):
                 return self.tables_by_index[index].display
             else:
-                return ""
+                return ''
 
         return {
             "index": index,
