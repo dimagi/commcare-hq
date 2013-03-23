@@ -15,10 +15,7 @@ class Command(PtopReindexer):
     doc_class = CommCareCase
     view_name = 'hqcase/types_by_domain'
     pillow_class = FullCasePillow
-
-    def get_dump_filename(self):
-        view_dump_filename = "ptop_fast_reindex_Full%s_%s_data.json" % (self.doc_class.__name__,  self.get_seq_prefix())
-        return view_dump_filename
+    file_prefix = "ptop_fast_reindex_Full"
 
     def load_from_view(self):
         """
