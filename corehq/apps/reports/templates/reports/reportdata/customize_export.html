@@ -53,9 +53,9 @@
                 };
 
                 self.showDeidColumn = ko.observable(function () {
-                    return _(self.table_configuration()).some(function (table_c) {
-                        return table_c.selected() && _(table_c.column_configuration()).some(function (column_c) {
-                            return column_c.selected() && column_c.transform();
+                    return _(self.table_configuration()).some(function (table) {
+                        return table.selected() && _(table.column_configuration()).some(function (column) {
+                            return column.selected() && column.transform();
                         });
                     });
                 }());
@@ -83,19 +83,19 @@
 
                 self.make_tables = function () {
                     return ko.mapping.toJS(
-                        _(self.table_configuration()).filter(function (table_c) {
-                            return table_c.selected();
-                        }).map(function (table_c) {
+                        _(self.table_configuration()).filter(function (table) {
+                            return table.selected();
+                        }).map(function (table) {
                             return {
-                                display: table_c.display,
-                                index: table_c.index,
-                                columns: _(table_c.column_configuration()).filter(function (column_c) {
-                                        return column_c.selected();
-                                    }).map(function (column_c) {
+                                display: table.display,
+                                index: table.index,
+                                columns: _(table.column_configuration()).filter(function (column) {
+                                        return column.selected();
+                                    }).map(function (column) {
                                         return {
-                                            index: column_c.index,
-                                            display: column_c.display,
-                                            transform: column_c.transform() || null // it doesn't save '' well
+                                            index: column.index,
+                                            display: column.display,
+                                            transform: column.transform() || null // it doesn't save '' well
                                         };
                                     })
                             }
@@ -122,6 +122,21 @@
                     });
                 };
                 self.save.state = ko.observable('save');
+
+                setTimeout(function () {
+                    _(self.table_configuration()).each(function (table) {
+                        _(table.column_configuration()).each(function (column) {
+                            if (!column.display()) {
+                                var parsed = self.utils.parseField(column.index(), table.index());
+                                var display = parsed.field;
+                                if (parsed.tag) {
+                                    display = parsed.tag + '.' + parsed.field;
+                                }
+                                column.display(display);
+                            }
+                        });
+                    });
+                }, 0);
 
                 return self;
             },
@@ -170,13 +185,13 @@
         <fieldset>
             <legend>{% trans "Export Settings" %}</legend>
             <div class="control-group">
-                <label for="export-name" class="control-label">{% trans "Export Name" %}: </label>
+                <label for="export-name" class="control-label">{% trans "Export Name" %}</label>
                 <div class="controls">
                     <input type="text" id="export-name" data-bind="value: custom_export.name" />
                 </div>
             </div>
             <div class="control-group">
-                <label for="format-select" class="control-label">{% trans "Default file type" %}: </label>
+                <label for="format-select" class="control-label">{% trans "Default file type" %}</label>
                 <div class="controls">
                     <select id="format-select" data-bind="value: custom_export.default_format">
                         <option value="xlsx">Excel 2007</option>

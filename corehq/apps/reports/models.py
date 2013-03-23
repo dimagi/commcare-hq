@@ -1,8 +1,11 @@
 from datetime import datetime, timedelta
+import logging
+from django.http import Http404
 from django.utils import html
 from django.utils.safestring import mark_safe
 import pytz
 from corehq.apps import reports
+from corehq.apps.app_manager.models import get_app
 from corehq.apps.reports.display import xmlns_to_name
 from couchdbkit.ext.django.schema import *
 from corehq.apps.users.models import WebUser, CommCareUser, CouchUser
@@ -492,10 +495,31 @@ class ReportNotification(Document):
         for email in self.all_recipient_emails:
             send_HTML_email(title, email, body)
 
+
+class AppNotFound(Exception):
+    pass
+
+
 class FormExportSchema(SavedExportSchema):
     doc_type = 'SavedExportSchema'
     app_id = StringProperty()
     include_errors = BooleanProperty(default=True)
+
+    @property
+    @memoized
+    def app(self):
+        if self.app_id:
+            try:
+                return get_app(self.domain, self.app_id)
+            except Http404:
+                logging.error('App %s in domain %s not found for export %s' % (
+                    self.app_id,
+                    self.domain,
+                    self.get_id
+                ))
+                raise AppNotFound()
+        else:
+            return None
 
     @classmethod
     def wrap(cls, data):
@@ -527,6 +551,65 @@ class FormExportSchema(SavedExportSchema):
     @property
     def formname(self):
         return xmlns_to_name(self.domain, self.xmlns, app_id=self.app_id)
+
+    @property
+    def table_configuration(self):
+        table_configuration = super(FormExportSchema, self).table_configuration
+
+        order = self.get_app_order()
+
+        ORDER_DICT = dict([(index, (i,)) for i, index in enumerate(order)])
+        MAX_I = len(ORDER_DICT)
+
+        def sort_key(column):
+            index = column['index']
+            if index in ORDER_DICT:
+                return ORDER_DICT[index]
+            else:
+                # put indexes not in the app at the end, in alphabetical order
+                return MAX_I, index
+
+        column_configuration = []
+        unselected = []
+        for column in table_configuration[0]['column_configuration']:
+            if column['index'] == 'id':
+                column_configuration.insert(0, column)
+            elif column['selected']:
+                column_configuration.append(column)
+            else:
+                unselected.append(column)
+        unselected.sort(key=sort_key)
+        column_configuration.extend(unselected)
+        table_configuration[0]['column_configuration'] = column_configuration
+
+        return table_configuration
+
+    def get_app_order(self):
+        if not self.app:
+            return []
+        else:
+            forms = self.app.get_xmlns_map()[self.xmlns]
+            if len(forms) != 1:
+                logging.error('App %s in domain %s has %s forms with xmlns %s' % (
+                    self.app_id,
+                    self.domain,
+                    len(forms),
+                    self.xmlns,
+                ))
+                return []
+            else:
+                form, = forms
+
+        questions = form.get_questions(self.app.langs)
+
+        order = []
+        for question in questions:
+            index_parts = question['value'].split('/')
+            assert index_parts[0] == ''
+            index_parts[1] = 'form'
+            index = '.'.join(index_parts[1:])
+            order.append(index)
+        return order
 
 class FormDeidExportSchema(FormExportSchema):
 
