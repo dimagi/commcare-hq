@@ -107,11 +107,11 @@ def sync_facilities(request, domain):
             facility_loc._seen = True
 
         for id, f in facility_locs.iteritems():
-            if not f._seen:
+            if not hasattr(f, '_seen'):
                 f.delete()
 
     for id, r in registry_locs.iteritems():
-        if not r._seen:
+        if not hasattr(r, '_seen'):
             r.delete()
 
     return HttpResponse('OK')
