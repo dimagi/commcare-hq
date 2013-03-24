@@ -18,7 +18,13 @@
     }
 </style>
 {% endblock %}
-{% block js-inline %}{{ block.super }}
+{% block js %}
+    {{ block.super }}
+    <script src="//cdnjs.cloudflare.com/ajax/libs/history.js/1.7.1/native.history.js"></script>
+    <script src="{% static 'app_manager/js/bootstrap-tab-history.js' %}"></script>
+{% endblock %}
+{% block js-inline %}
+    {{ block.super }}
     {% if app.get_doc_type == "Application" %}
     <script>
         $(function () {
@@ -66,20 +72,20 @@
                 </li>
                 <li class="nav-header">Application</li>
                 <li {% if not module and not form and not release_manager %}class="app-name-div active"{% endif %}>
-                    <a href="{% url view_app domain app.id %}?edit={{ edit|BOOL }}">
+                    <a href="{% url view_app domain app.id %}?edit={{ edit|BOOL }}#app-settings" data-toggle="tab">
                         <i class="icon-cog"></i>
                         {% trans "Settings" %}
                     </a>
                 </li>
                 <li>
-                    <a href="#languages-and-translations" data-toggle="tab">
+                    <a href="{% url view_app domain app.id %}languages/?edit={{ edit|BOOL }}#languages-and-translations" data-toggle="tab">
                         <i class="icon-globe"></i>
                         {% trans "Languages" %}
                     </a>
                 </li>
                 {% if app.get_doc_type == 'Application' %}
                 <li>
-                    <a href="#multimedia" data-toggle="tab">
+                    <a href="{% url view_app domain app.id %}multimedia/?edit={{ edit|BOOL }}#multimedia" data-toggle="tab">
                         <i class="icon-picture"></i>
                         {% trans "Multimedia" %}
                     </a>
@@ -93,7 +99,7 @@
                             <span class="muted">Language:</span>
                             <select class="code" name="lang">
                                 {% for lang in app.langs %}
-                                    <option value="{% urlencode request.path request.GET with "lang" as lang %}"
+                                    <option value="{{ lang }}"
                                             {% if lang == langs.0 %}selected=""{% endif %}>
                                         {% if lang == app.langs.0 %}*{% endif %}
                                         {{ lang }}
@@ -204,7 +210,7 @@
                 {% if edit %}
                     <li class="nav-header">Actions</li>
                     <li>
-                        <a href="#actions" data-toggle="tab">
+                        <a href="{% url view_app domain app.id %}actions/?edit={{ edit|BOOL }}#actions" data-toggle="tab">
                             <i class="icon-exchange"></i>
                             {% trans "Copy/Delete" %}
                         </a>

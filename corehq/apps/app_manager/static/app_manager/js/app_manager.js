@@ -162,8 +162,8 @@
             $(document).attr('location', url);
         });
         $('#langs select').change(function () {
-            var url = $(this).find('option:selected').attr('value');
-            $(document).attr('location', url);
+            var lang = $(this).find('option:selected').attr('value');
+            $(document).attr('location', window.location.href + (window.location.search ? '&' : '?') + 'lang=' + lang);
         });
 
         $("#ic_file").button();

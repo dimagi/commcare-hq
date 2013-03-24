@@ -28,9 +28,10 @@
                         <br/>
                     </section>
                 {% endif %}
-                <hr/>
                 <section id="success-message">
-                    <form class="save-button-form form-horizontal" method="post" action="{% url edit_app_attr domain app.id 'success_message' %}">
+                    <form class="save-button-form form-horizontal" method="post" action="{% url edit_app_attr domain app.id 'success_message' %}"
+                            data-bind="visible: COMMCAREHQ.appView.settings.enableSuccessMessage()">
+                        <hr/>
                         <div class="save-button-holder clearfix"></div>
                         <fieldset>
                             <div class="control-group">
@@ -43,13 +44,10 @@
                                 </label>
                                 <div class="controls">
                                     {% if edit %}
-                                        <textarea class="span3" name="success_message" data-bind="attr: {disabled: COMMCAREHQ.appView.settings.settingsIndex.properties['cc-send-unsent'].value() !== 'cc-su-man'}">{{ app.success_message|trans:langs }}</textarea>
+                                        <textarea class="span3" name="success_message">{{ app.success_message|trans:langs }}</textarea>
                                     {% else %}
                                         <p>{{ app.success_message|trans:langs }}</p>
                                     {% endif %}
-                                    <span data-bind="visible: COMMCAREHQ.appView.settings.settingsIndex.properties['cc-send-unsent'].value() !== 'cc-su-man'">
-                                            <i class="icon-ok"></i> Auto-set by Sync Mode
-                                    </span>
                                 </div>
                             </div>
                         </fieldset>

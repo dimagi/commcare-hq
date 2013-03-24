@@ -2,6 +2,9 @@ from django.conf.urls.defaults import patterns, url, include
 from corehq.apps.hqmedia.urls import application_urls as hqmedia_urls
 
 app_urls = patterns('corehq.apps.app_manager.views',
+    url(r'^languages/$', 'view_app', name='view_app'),
+    url(r'^multimedia/$', 'view_app', name='view_app'),
+    url(r'^actions/$', 'view_app', name='view_app'),
     url(r'^$', 'view_app', name='view_app'),
     url(r'^releases/$', 'release_manager', name='release_manager'),
     url(r'^releases/json/$', 'paginate_releases', name='paginate_releases'),
