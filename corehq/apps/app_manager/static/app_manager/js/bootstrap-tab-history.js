@@ -55,7 +55,7 @@ $(function () {
         var tab = event.target.href.split("#")[1];
 
         var State = History.getState();
-        console.log(url);
+
         if (url === window.location.href) {
             // for tabs that we don't want to change the url on
             return;
