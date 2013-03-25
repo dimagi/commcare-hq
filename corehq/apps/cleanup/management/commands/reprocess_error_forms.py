@@ -23,11 +23,24 @@ class Command(BaseCommand):
         else:
             raise CommandError('Usage: %s\n%s' % (self.args, self.help))
 
+        succeeded = []
+        failed = []
+        error_messages = set()
         for form in iter_problem_forms(domain, since):
             print "%s\t%s\t%s\t%s\t%s" % (form._id, form.received_on,
                               form.xmlns,
                               form.xpath('form/meta/username'),
                               form.problem.strip())
             if not options["dryrun"]:
-                reprocess_form_cases(form)
+                try:
+                    reprocess_form_cases(form)
+                except Exception, e:
+                    failed.append(form._id)
+                    error_messages.add(str(e))
+                else:
+                    succeeded.append(form._id)
 
+        print "%s / %s forms successfully processed, %s failures" % \
+              (len(succeeded), len(succeeded) + len(failed), len(failed))
+        if error_messages:
+            print r"The following errors were seen: \n%s" % (r"\n".join(error_messages))
