@@ -152,7 +152,8 @@ class ReportDispatcher(View):
                 class_name = report.__module__ + '.' + report.__name__
                 if not dispatcher.permissions_check(class_name, request, domain=domain):
                     continue
-                if report.show_in_navigation(request, domain=domain):
+                if report.show_in_navigation(
+                        domain=domain, project=project, user=couch_user):
                     if hasattr(report, 'override_navigation_list'):
                         report_contexts.extend(report.override_navigation_list(context))
                     else:
