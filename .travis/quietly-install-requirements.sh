@@ -1,3 +1,10 @@
 LOG=pip.log
-pip install --quiet --log="$LOG" --use-mirrors -r requirements/requirements.txt || cat $LOG
-pip install --quiet --log="$LOG" --use-mirrors -r requirements/dev-requirements.txt || cat $LOG
+
+# --quiet is a bit too quiet because everything times out on travis
+
+cat requirements/requirements.txt requirements/dev-requirements.txt | \
+while read line; do 
+    if [ ! -z "$line" ]; then
+        pip install --quiet --log="$LOG" --use-mirrors --quiet "$line" || cat $LOG
+    fi
+done
