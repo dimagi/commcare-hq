@@ -6,7 +6,7 @@ git:
 install:
  - "bash -ex .travis/get-submodules.sh"
  - "bash -e .travis/quietly-run-install.sh"
- - "bash -ex .travis/quietly-install-requirements.sh"
+ - "bash -e .travis/quietly-install-requirements.sh"
 script: python manage.py test --no-input
 services:
  - postgresql

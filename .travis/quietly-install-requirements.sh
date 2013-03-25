@@ -5,6 +5,7 @@ LOG=pip.log
 cat requirements/requirements.txt requirements/dev-requirements.txt | \
 while read line; do 
     if [ ! -z "$line" ]; then
-        pip install --quiet --log="$LOG" --use-mirrors --quiet "$line" || cat $LOG
+        echo pip install --use-mirrors "$line" 
+        pip install --use-mirrors "$line" > "$LOG" 2>&1 || cat "$LOG"
     fi
 done
