@@ -561,7 +561,8 @@ class CommCareCase(CaseBase, IndexHoldingMixIn, ComputedDocumentMixin):
         """
         Rebuilds the case state from its actions
         """
-        assert self.actions[0].action_type == const.CASE_ACTION_CREATE
+        assert self.actions[0].action_type == const.CASE_ACTION_CREATE, (
+            'first case action should be a create but was %s' % self.actions[0].action_type)
         for i in range(1, len(self.actions)):
             self._apply_action(self.actions[i])
         self.xform_ids = list(set([a.xform_id for a in self.actions]))
