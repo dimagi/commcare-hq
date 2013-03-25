@@ -1,4 +1,5 @@
 import datetime
+from couchdbkit import ResourceNotFound
 from django.utils.safestring import mark_safe
 import logging
 import numpy
@@ -40,8 +41,9 @@ class HealthCoordinatorReport(MVPIndicatorReport):
             category_indicators = []
             total_rowspan = 0
             for slug in category_group['indicator_slugs']:
-                indicator = DynamicIndicatorDefinition.get_current(MVP.NAMESPACE, self.domain, slug, wrap_correctly=True)
-                if indicator:
+                try:
+                    indicator = DynamicIndicatorDefinition.get_current(MVP.NAMESPACE, self.domain, slug,
+                                                                       wrap_correctly=True)
                     if self.is_rendered_as_email:
                         retrospective = indicator.get_monthly_retrospective(user_ids=self.user_ids)
                     else:
@@ -63,7 +65,7 @@ class HealthCoordinatorReport(MVPIndicatorReport):
                         load_url="%s?indicator=%s" % (self.get_url(self.domain, render_as='partial'), indicator.slug),
                         rowspan=indicator_rowspan
                     ))
-                else:
+                except (AttributeError, ResourceNotFound):
                     logging.info("Could not grab indicator %s in domain %s" % (slug, self.domain))
             report_matrix.append(dict(
                 category_title=category_group['category_title'],
@@ -236,7 +238,7 @@ class HealthCoordinatorReport(MVPIndicatorReport):
         )
 
     def get_response_for_indicator(self, indicator):
-        if indicator:
+        try:
             retrospective = indicator.get_monthly_retrospective(user_ids=self.user_ids)
             if isinstance(indicator, CombinedCouchViewIndicatorDefinition):
                 table = self.get_indicator_table(retrospective)
@@ -245,6 +247,8 @@ class HealthCoordinatorReport(MVPIndicatorReport):
             return {
                 'table': table,
             }
+        except AttributeError:
+            pass
         return None
 
 
