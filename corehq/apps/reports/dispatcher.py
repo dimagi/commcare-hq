@@ -137,7 +137,9 @@ class ReportDispatcher(View):
     def navigation_sections(cls, context):
         request = context.get('request')
         domain = context.get('domain') or getattr(request, 'domain', None)
-
+        project = getattr(request, 'project', None)
+        couch_user = getattr(request, 'couch_user', None)
+        
         nav_context = []
 
         dispatcher = cls()  # uhoh
@@ -162,6 +164,9 @@ class ReportDispatcher(View):
                             'title': report.name,
                         })
             if report_contexts:
+                if hasattr(section_name, '__call__'):
+                    section_name = section_name(
+                        domain=domain, project=project, user=couch_user)
                 nav_context.append((section_name, report_contexts))
         return nav_context
 
