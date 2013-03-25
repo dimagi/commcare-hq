@@ -82,7 +82,7 @@ class RequisitionState(object):
 
 def create_requisition(product_stock_case, transaction):
     req = RequisitionState.from_transactions(product_stock_case, [transaction])
-    submit_case_blocks(req.to_xml(create=True), req.domain, req.username,
+    submit_case_blocks(req.to_xml(), req.domain, req.username,
                        req.user_id)
     case = CommCareCase.get(req.id)
     # NOTE: should these have locations?

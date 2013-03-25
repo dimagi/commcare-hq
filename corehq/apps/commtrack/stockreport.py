@@ -56,11 +56,12 @@ def process(domain, instance):
             root.append(recon)
         root.append(case_block)
 
-        # do the same for the requisitions
-        req_txs = requisition_transactions_by_product.get(product_id, [])
-        req = RequisitionState.from_transactions(product_case, req_txs)
-        case_block = etree.fromstring(req.to_xml())
-        root.append(case_block)
+        if config.requisitions_enabled:
+            # do the same for the requisitions
+            req_txs = requisition_transactions_by_product.get(product_id, [])
+            req = RequisitionState.from_transactions(product_case, req_txs)
+            case_block = etree.fromstring(req.to_xml())
+            root.append(case_block)
 
     submission = etree.tostring(root)
     logger.debug('submitting: %s' % submission)
