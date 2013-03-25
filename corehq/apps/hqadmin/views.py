@@ -441,7 +441,7 @@ def update_domains(request):
                         messages.warning(request, "No domain with name %s found" % name)
                         fail_count += 1
                 except Exception, e:
-                    messages.warning("Update for %s failed: %s" % e)
+                    messages.warning(request, "Update for %s failed: %s" % (row.get("name", '<No Name>'), e))
                     fail_count += 1
             if success_count:
                 messages.success(request, "%s domains successfully updated" % success_count)

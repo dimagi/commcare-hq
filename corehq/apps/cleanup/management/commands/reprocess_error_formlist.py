@@ -2,7 +2,7 @@ from django.core.management.base import BaseCommand, CommandError
 from corehq.apps.cleanup.xforms import reprocess_form_cases
 from couchforms.models import get
 import csv
-from corehq.apps.cleanup.management.commands.repair_unprocessed_forms import HEADERS
+from corehq.apps.cleanup.management.commands.generate_form_case_consistency_list import HEADERS
 
 class Command(BaseCommand):
     args = '<file>'

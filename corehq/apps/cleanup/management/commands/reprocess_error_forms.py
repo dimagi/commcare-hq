@@ -1,3 +1,4 @@
+from collections import defaultdict
 from django.core.management.base import BaseCommand, CommandError, LabelCommand
 from corehq.apps.cleanup.xforms import iter_problem_forms, reprocess_form_cases
 from optparse import make_option
@@ -23,11 +24,25 @@ class Command(BaseCommand):
         else:
             raise CommandError('Usage: %s\n%s' % (self.args, self.help))
 
+        succeeded = []
+        failed = []
+        error_messages = defaultdict(lambda: 0)
         for form in iter_problem_forms(domain, since):
             print "%s\t%s\t%s\t%s\t%s" % (form._id, form.received_on,
                               form.xmlns,
                               form.xpath('form/meta/username'),
                               form.problem.strip())
             if not options["dryrun"]:
-                reprocess_form_cases(form)
+                try:
+                    reprocess_form_cases(form)
+                except Exception, e:
+                    failed.append(form._id)
+                    error_messages[str(e)] += 1
+                else:
+                    succeeded.append(form._id)
 
+        print "%s / %s forms successfully processed, %s failures" % \
+              (len(succeeded), len(succeeded) + len(failed), len(failed))
+        if error_messages:
+            print "The following errors were seen: \n%s" % \
+                  ("\n".join("%s: %s" % (v, k) for k, v in error_messages.items()))

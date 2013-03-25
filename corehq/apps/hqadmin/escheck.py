@@ -33,19 +33,38 @@ def check_exchange_index():
 
 def check_xform_index():
     latest_xforms = _get_latest_xforms()
+    found_xform = False
+    start_skip = 0
+    limit = 100
 
-    for xform in latest_xforms:
-        doc_id = xform['id']
-        xform_doc = XFormInstance.get_db().get(doc_id)
-        couch_rev = xform_doc['_rev']
-        return _check_es_rev(XFormPillow.es_alias, doc_id, couch_rev)
+    while found_xform is False:
+        for xform in latest_xforms:
+            doc_id = xform['id']
+            xform_doc = xform['doc']
+            couch_rev = xform_doc['_rev']
+            return _check_es_rev(XFormPillow.es_alias, doc_id, couch_rev)
     return {"%s_status" % XFormPillow.es_alias: False, "%s_message" % XFormPillow.es_alias: "XForms stale" }
 
 
-
-def _get_latest_xforms(limit=100):
+def _get_latest_xforms(skip=0, limit=100):
     db = XFormInstance.get_db()
-    recent_xforms = db.view('hqadmin/forms_over_time', reduce=False, limit=100, descending=True)
+
+    def _do_get_raw_xforms(skip, limit):
+        return db.view('hqadmin/forms_over_time', reduce=False, limit=limit, skip=skip, include_docs=True, descending=True)
+    raw_xforms = _do_get_raw_xforms(skip, limit)
+    recent_xforms = []
+
+    while True:
+        recent_xforms = filter(lambda x: x['doc']['xmlns'] != 'http://code.javarosa.org/devicereport', raw_xforms)
+        if len(recent_xforms) > 0:
+            break
+        #all the recent submissions are device logs, keep digging
+        skip += limit
+        raw_xforms = _do_get_raw_xforms(skip, limit)
+        if skip == 5000:
+            #sanity check if we get a deluge of devicereports
+            return recent_xforms
+
     return recent_xforms
 
 def _check_es_rev(index, doc_id, couch_rev):

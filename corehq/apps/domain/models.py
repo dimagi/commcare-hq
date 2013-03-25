@@ -165,6 +165,8 @@ class InternalProperties(DocumentSchema, UpdatableSchema):
     using_call_center = BooleanProperty()
     custom_eula = BooleanProperty()
     can_use_data = BooleanProperty()
+    notes = StringProperty()
+    organization_name = StringProperty()
 
 
 class Domain(Document, HQBillingDomainMixin, SnapshotMixin):
@@ -568,7 +570,7 @@ class Domain(Document, HQBillingDomainMixin, SnapshotMixin):
             new_doc.domain = new_domain_name
 
         if self.is_snapshot and doc_type == 'Application':
-            new_doc.clean_mapping()
+            new_doc.prepare_multimedia_for_exchange()
 
         new_doc.save()
         return new_doc
@@ -702,7 +704,7 @@ class Domain(Document, HQBillingDomainMixin, SnapshotMixin):
             media_ids = set()
             apps = [app for app in dom_with_media.full_applications() if app.get_id in from_apps]
             for app in apps:
-                for _, m in app.get_media_documents():
+                for _, m in app.get_media_objects():
                     if m.get_id not in media_ids:
                         media.append(m)
                         media_ids.add(m.get_id)
