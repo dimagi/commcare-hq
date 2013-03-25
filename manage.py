@@ -5,9 +5,15 @@ from django.core.management import execute_manager
 import sys, os
 
 filedir = os.path.dirname(__file__)
-sys.path.append(os.path.join(filedir))
-#sys.path.append(os.path.join(filedir,'apps'))
 
+# remove pyc files
+for root, dirs, files in os.walk(filedir):
+    for file in files:
+        if any(file.endswith(e) for e in ['pyc', 'pyo', 'py.class']):
+            os.remove(os.path.join(root, file))
+
+
+sys.path.append(os.path.join(filedir))
 sys.path.append(os.path.join(filedir,'submodules'))
 submodules_list = os.listdir(os.path.join(filedir, 'submodules'))
 for d in submodules_list:
