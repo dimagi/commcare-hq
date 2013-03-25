@@ -1,3 +1,4 @@
+from django.conf import settings
 from corehq.apps.reports.datatables import (DataTablesHeader, DataTablesColumn,
     DTSortType)
 from corehq.apps.reports.generic import GenericTabularReport
@@ -106,7 +107,7 @@ class BasicTabularReport(GenericTabularReport):
 
     @property
     def rows(self):
-        kwargs = {'stale': 'update_after'} if self.update_after else {}
+        kwargs = {'stale': settings.COUCH_STALE_QUERY} if self.update_after else {}
         startkey, endkey = self.start_and_end_keys
         kwargs.update({
             'db': get_db(),
@@ -121,3 +122,15 @@ class BasicTabularReport(GenericTabularReport):
             yield [row[c] if c in self.View.key_views
                           else self.function_views[c].view(key, self)
                    for c in self.default_column_order]
+
+class SummingTabularReport(BasicTabularReport):
+    @property
+    def rows(self):
+        ret = list(super(SummingTabularReport, self).rows)
+        num_cols = len(ret[0])
+        total_row = []
+        for i in range(num_cols):
+            total_row.append(reduce(lambda x, y: x+ y, [r[i] for r in ret if isinstance(r[i], (int, long))], 0))
+
+        self.total_row = total_row
+        return ret

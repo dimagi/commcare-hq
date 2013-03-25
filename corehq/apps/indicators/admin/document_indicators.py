@@ -7,8 +7,8 @@ from corehq.apps.reports.datatables import DataTablesColumn
 
 
 class FormLabelIndicatorDefinitionAdminInterface(BaseIndicatorAdminInterface):
-    name = "Form Label Indicators"
-    description = "desc needed" #todo
+    name = FormLabelIndicatorDefinition.get_nice_name()
+    description = "Maps a form_label to an XMLNS for that form."
     slug = "form_label"
     document_class = FormLabelIndicatorDefinition
     form_class = FormLabelIndicatorDefinitionForm
@@ -21,8 +21,9 @@ class FormLabelIndicatorDefinitionAdminInterface(BaseIndicatorAdminInterface):
 
 
 class FormAliasIndicatorDefinitionAdminInterface(BaseIndicatorAdminInterface):
-    name = "Form Alias Indicators"
-    description = "desc needed" #todo
+    name = FormDataAliasIndicatorDefinition.get_nice_name()
+    description = ("Maps a question id from that form to an indicator slug that can be referenced across all projects "
+                   "in the indicator couch views.")
     slug = "form_alias"
     document_class = FormDataAliasIndicatorDefinition
     form_class = FormDataAliasIndicatorDefinitionForm
@@ -36,8 +37,9 @@ class FormAliasIndicatorDefinitionAdminInterface(BaseIndicatorAdminInterface):
 
 
 class CaseDataInFormAdminInterface(BaseIndicatorAdminInterface):
-    name = "Related Case Property Indicators"
-    description = "" #todo
+    name = CaseDataInFormIndicatorDefinition.get_nice_name()
+    description = ("Grabs the specified case property value of the form's related case and inserts it into the form's "
+                   "indicators.")
     slug = "form_case_data"
     document_class = CaseDataInFormIndicatorDefinition
     form_class = CaseDataInFormIndicatorDefinitionForm
@@ -51,8 +53,9 @@ class CaseDataInFormAdminInterface(BaseIndicatorAdminInterface):
 
 
 class FormDataInCaseAdminInterface(BaseIndicatorAdminInterface):
-    name = "Related Form Question ID Indicators"
-    description = "todo" #todo
+    name = FormDataInCaseIndicatorDefinition.get_nice_name()
+    description = ("Takes the value from the question_id / data_node path specified from that case's related form(s)"
+                   "---matched by XMLNS---and inserts it into that case's indicators.")
     slug = "case_form_data"
     document_class = FormDataInCaseIndicatorDefinition
     form_class = FormDataInCaseForm

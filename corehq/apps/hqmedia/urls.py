@@ -1,4 +1,5 @@
 from django.conf.urls.defaults import *
+from corehq.apps.hqmedia.views import DownloadMultimediaZip
 
 urlpatterns = patterns('corehq.apps.hqmedia.views',
     url(r'^file/(?P<media_type>[\w\-]+)/(?P<doc_id>[\w\-]+)/(foo.mp3)?(foo.wav)?$', "download_media", name="hqmedia_download"),
@@ -14,3 +15,7 @@ application_urls = patterns('corehq.apps.hqmedia.views',
     url(r'^preview/$', 'media_map', name='emulator_root_url'), # hack so that we can reverse() and get back the root preview url for use in the emulator
     url(r'^preview/(?P<file_path>.+)', 'media_from_path', name='media_from_path'),
 )
+
+download_urls = patterns('corehq.apps.hqmedia.views',
+                         url(r'^commcare.zip$', DownloadMultimediaZip.as_view(), name=DownloadMultimediaZip.name),
+                         )

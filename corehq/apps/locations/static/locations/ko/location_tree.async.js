@@ -6,19 +6,15 @@ function api_get_children(loc_uuid, callback) {
         });
 }
 
-function LocationTreeViewModel() {
+function LocationTreeViewModel(hierarchy) {
     var model = this;
     
     this.root = ko.observable();
     
     // TODO this should reference location type settings for domain
-    this.location_types = [
-        {type: 'state', allowed_parents: [null]},
-        {type: 'district', allowed_parents: ['state']},
-        {type: 'block', allowed_parents: ['district']},
-        {type: 'village', allowed_parents: ['block']},
-        {type: 'outlet', allowed_parents: ['village', 'block']},
-    ];
+    this.location_types = $.map(hierarchy, function(e) {
+            return {type: e[0], allowed_parents: e[1]};
+        });
 
     // search for a location within the tree by uuid; return path to location if found
     this.find_loc = function(uuid, loc) {

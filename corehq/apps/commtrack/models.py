@@ -109,6 +109,11 @@ class CommtrackActionConfig(DocumentSchema):
     def is_requisition(self):
         return self.action_type in REQUISITION_ACTION_TYPES
 
+class LocationType(DocumentSchema):
+    name = StringProperty()
+    allowed_parents = StringListProperty()
+    administrative = BooleanProperty()
+
 class CommtrackRequisitionConfig(DocumentSchema):
     # placeholder class for when this becomes fancier
 
@@ -135,6 +140,7 @@ class CommtrackConfig(Document):
     multiaction_keyword = StringProperty() # if None, will attempt to parse
     # all messages as multi-action
 
+    location_types = SchemaListProperty(LocationType)
     supply_point_types = SchemaListProperty(SupplyPointType)
 
     requisition_config = SchemaProperty(CommtrackRequisitionConfig)

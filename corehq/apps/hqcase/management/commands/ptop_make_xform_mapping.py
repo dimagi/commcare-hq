@@ -1,13 +1,14 @@
-from datetime import datetime
-from django.core.management.base import NoArgsCommand
 import sys
 import os
+
+from django.core.management.base import NoArgsCommand
+from django.conf import settings
+
 from casexml.apps.case.models import CommCareCase
 from corehq.apps.hqcase.management.commands.ptop_generate_mapping import MappingOutputCommand
-from corehq.pillows import dynamic, CasePillow, XFormPillow
-from corehq.pillows.dynamic import DEFAULT_MAPPING_WRAPPER, case_special_types
-from django.conf import settings
 from corehq.pillows.mappings import xform_mapping
+from corehq.pillows.xform import XFormPillow
+
 
 class Command(MappingOutputCommand):
     help="Generate mapping JSON of our ES indexed types. For casexml"
@@ -34,7 +35,8 @@ class Command(MappingOutputCommand):
         #regenerate the mapping dict
         mapping = xform_mapping.XFORM_MAPPING
         xform_pillow.default_mapping = mapping
-        delattr(xform_pillow, '_calc_meta')
+        delattr(xform_pillow, '_calc_meta_cache')
+        #xform_pillow.calc_meta.reset_cache()
         calc_index = "%s_%s" % (xform_pillow.es_index_prefix, xform_pillow.calc_meta())
 
 

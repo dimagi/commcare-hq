@@ -17,6 +17,7 @@ import couchexport
 from couchexport.export import UnsupportedExportFormat, export_raw
 from couchexport.util import SerializableFunction
 from couchforms.models import XFormInstance
+from dimagi.utils.couch.bulk import wrapped_docs
 from dimagi.utils.couch.loosechange import parse_date
 from dimagi.utils.decorators import inline
 from dimagi.utils.export import WorkBook
@@ -396,8 +397,7 @@ def custom_export(req, domain):
     if req.method == "POST":
         helper.update_custom_export()
         messages.success(req, "Custom export created! You can continue editing here.")
-        return HttpResponseRedirect("%s?type=%s" % (reverse("edit_custom_export",
-                                            args=[domain, helper.custom_export.get_id]), helper.export_type))
+        return _redirect_to_export_home(helper.export_type, domain)
 
     schema = build_latest_schema(export_tag)
 
@@ -433,7 +433,10 @@ def edit_custom_export(req, domain, export_id):
         raise Http404()
     if req.method == "POST":
         helper.update_custom_export()
-    return helper.get_response()
+        messages.success(req, "Custom export saved!")
+        return _redirect_to_export_home(helper.export_type, domain)
+    else:
+        return helper.get_response()
 
 @login_or_digest
 @require_form_export_permission
@@ -487,9 +490,11 @@ def delete_custom_export(req, domain, export_id):
         saved_export = SavedExportSchema.get(export_id)
     except ResourceNotFound:
         return HttpResponseRedirect(req.META['HTTP_REFERER'])
-    type = saved_export.type
     saved_export.delete()
     messages.success(req, "Custom export was deleted.")
+    return _redirect_to_export_home(saved_export.type, domain)
+
+def _redirect_to_export_home(type, domain):
     if type == "form":
         return HttpResponseRedirect(export.ExcelExportReport.get_url(domain=domain))
     else:
@@ -546,6 +551,59 @@ def add_config(request, domain=None):
     config.save()
 
     return json_response(config)
+
+@login_and_domain_required
+@datespan_default
+def email_report(request, domain, report_slug):
+    from datetime import datetime
+    from dimagi.utils.django.email import send_HTML_email
+    from corehq.apps.reports.dispatcher import ProjectReportDispatcher
+    from forms import EmailReportForm
+    user_id = request.couch_user._id
+
+    form = EmailReportForm(request.GET)
+    if not form.is_valid():
+        return HttpResponseBadRequest()
+
+    config = ReportConfig()
+    # see ReportConfig.query_string()
+    object.__setattr__(config, '_id', 'dummy')
+    config.name = _("Emailed report")
+    config.report_type = ProjectReportDispatcher.prefix
+    config.report_slug = report_slug
+    config.owner_id = user_id
+    config.domain = domain
+
+    config.date_range = 'range'
+    config.start_date = request.datespan.computed_startdate.date()
+    config.end_date = request.datespan.computed_enddate.date()
+
+    GET = dict(request.GET.iterlists())
+    exclude = ['startdate', 'enddate', 'subject', 'send_to_owner', 'notes', 'recipient_emails']
+    filters = {}
+    for field in GET:
+        if not field in exclude:
+            filters[field] = GET.get(field)
+
+    config.filters = filters
+
+    body = _render_report_configs(request, [config],
+                                  domain,
+                                  user_id,
+                                  request.couch_user,
+                                  True,
+                                  notes=form.cleaned_data['notes']).content
+
+    subject = form.cleaned_data['subject'] or _("Email report from CommCare HQ")
+
+    if form.cleaned_data['send_to_owner']:
+        send_HTML_email(subject, request.couch_user.get_email(), body)
+
+    if form.cleaned_data['recipient_emails']:
+        for recipient in form.cleaned_data['recipient_emails']:
+            send_HTML_email(subject, recipient, body)
+
+    return HttpResponse()
 
 @login_and_domain_required
 @require_http_methods(['DELETE'])
@@ -671,7 +729,6 @@ def send_test_scheduled_report(request, domain, scheduled_report_id):
 
 def get_scheduled_report_response(couch_user, domain, scheduled_report_id,
                                   email=True):
-    from dimagi.utils.web import get_url_base
     from django.http import HttpRequest
     
     request = HttpRequest()
@@ -682,21 +739,31 @@ def get_scheduled_report_response(couch_user, domain, scheduled_report_id,
 
     notification = ReportNotification.get(scheduled_report_id)
 
+    return _render_report_configs(request, notification.configs,
+                                  notification.domain,
+                                  notification.owner_id,
+                                  couch_user,
+                                  email)
+
+def _render_report_configs(request, configs, domain, owner_id, couch_user, email, notes=None):
+    from dimagi.utils.web import get_url_base
+
     report_outputs = []
-    for config in notification.configs:
+    for config in configs:
         report_outputs.append({
             'title': config.full_name,
             'url': config.url,
             'content': config.get_report_content()
         })
-    
+
     return render(request, "reports/report_email.html", {
         "reports": report_outputs,
-        "domain": notification.domain,
-        "couch_user": notification.owner._id,
+        "domain": domain,
+        "couch_user": owner_id,
         "DNS_name": get_url_base(),
         "owner_name": couch_user.full_name or couch_user.get_email(),
-        "email": email
+        "email": email,
+        "notes": notes
     })
 
 @login_and_domain_required
@@ -772,9 +839,10 @@ def generate_case_export_payload(domain, include_closed, format, group, user_fil
         include_docs=False,
         wrapper=lambda r: r['id']
     )
+
     def stream_cases(all_case_ids):
         for case_ids in chunked(all_case_ids, 500):
-            for case in CommCareCase.view('_all_docs', keys=case_ids, include_docs=True):
+            for case in wrapped_docs(CommCareCase, case_ids):
                 yield case
 
     # todo deal with cached user dict here

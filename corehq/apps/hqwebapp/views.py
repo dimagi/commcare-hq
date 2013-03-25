@@ -2,6 +2,7 @@ from datetime import datetime
 from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
+from django.views.decorators.http import require_POST
 from django.contrib.auth.forms import AdminPasswordChangeForm
 from django.contrib.auth.models import User
 from django.contrib.auth.views import login as django_login, redirect_to_login
@@ -10,6 +11,7 @@ from django.contrib.sites.models import Site
 from django.http import HttpResponseRedirect, HttpResponse, Http404,\
     HttpResponseServerError, HttpResponseNotFound
 from django.shortcuts import redirect, render
+from corehq.apps.announcements.models import Notification
 
 from corehq.apps.app_manager.models import BUG_REPORTS_DOMAIN
 from corehq.apps.app_manager.models import import_app
@@ -21,7 +23,7 @@ from corehq.apps.users.models import CouchUser
 from corehq.apps.users.util import format_username
 from dimagi.utils.logging import notify_exception
 
-from dimagi.utils.web import get_url_base
+from dimagi.utils.web import get_url_base, json_response
 from django.core.urlresolvers import reverse
 from corehq.apps.domain.models import Domain
 from django.core.mail.message import EmailMessage
@@ -222,7 +224,8 @@ def debug_notify(request):
             "If you want to achieve a 500-style email-out but don't want the user to see a 500, use notify_exception(request[, message])")
     return HttpResponse("Email should have been sent")
 
-
+@login_required()
+@require_POST
 def bug_report(req):
     report = dict([(key, req.POST.get(key, '')) for key in (
         'subject',
@@ -295,6 +298,21 @@ def bug_report(req):
     return HttpResponse()
 
 
+@login_required()
+@require_POST
+def dismiss_notification(request):
+    note_id = request.POST.get('note_id', None)
+    note = Notification.get(note_id)
+    if note:
+        if note.user != request.couch_user.username:
+            return json_response({"status": "failure: Not the same user"})
+
+        note.dismissed = True
+        note.save()
+        return json_response({"status": "success"})
+    return json_response({"status": "failure: No note by that name"})
+
+
 def render_static(request, template):
     """
     Takes an html file and renders it Commcare HQ's styling
@@ -307,4 +325,10 @@ def eula(request):
 
 def cda(request):
     return render_static(request, "cda.html")
+
+def apache_license(request):
+    return render_static(request, "apache_license.html")
+
+def bsd_license(request):
+    return render_static(request, "bsd_license.html")
 

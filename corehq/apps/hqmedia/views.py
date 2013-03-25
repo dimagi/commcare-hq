@@ -1,26 +1,36 @@
+import zipfile
 import logging
-from corehq.apps.app_manager.views import require_can_edit_apps
+import os
+from django.utils.decorators import method_decorator
+from django.views.generic import View
 import magic
-from django.conf import settings
+from StringIO import StringIO
+
 from couchdbkit.exceptions import ResourceNotFound
+
 from django.contrib.sites.models import Site
-from django.http import HttpResponse, Http404, HttpResponseRedirect
+from django.http import HttpResponse, Http404, HttpResponseRedirect, HttpResponseServerError
 from django.utils import simplejson
 from django.views.decorators.http import require_POST
 from django.shortcuts import render
+from django.conf import settings
 
-import zipfile
-from corehq.apps.hqmedia import utils
+from corehq.apps.app_manager.decorators import safe_download
+from corehq.apps.app_manager.views import require_can_edit_apps, set_file_download, ApplicationViewMixin
 from corehq.apps.app_manager.models import get_app
-from corehq.apps.hqmedia.models import CommCareImage, CommCareAudio
+from corehq.apps.domain.views import DomainViewMixin
+from corehq.apps.hqmedia import utils
+from corehq.apps.hqmedia.models import CommCareImage, CommCareAudio, CommCareMultimedia
 
 X_PROGRESS_ERROR = 'Server Error: You must provide X-Progress-ID header or query param.'
+
 
 def get_media_type(media_type):
     return {
         'CommCareImage': CommCareImage,
         'CommCareAudio': CommCareAudio,
     }[media_type]
+
 
 def download_media(request, media_type, doc_id):
     try:
@@ -40,7 +50,6 @@ def download_media(request, media_type, doc_id):
         raise Http404("unknown media type %s" % media_type)
 
 
-
 @require_can_edit_apps
 def search_for_media(request, domain, app_id):
     media_type = request.GET['t']
@@ -55,6 +64,7 @@ def search_for_media(request, domain, app_id):
          'licenses': [license.display_name for license in i.licenses],
          'tags': [tag for tags in i.tags.values() for tag in tags],
          'm_id': i._id} for i in files]))
+
 
 @require_can_edit_apps
 def choose_media(request, domain, app_id):
@@ -157,8 +167,8 @@ def uploaded(request, domain, app_id):
         uploaded_file.file.seek(0)
         matcher = utils.HQMediaMatcher(app, domain, request.user.username, specific_params)
 
-        license=request.POST.get('license', "")
-        author=request.POST.get('author', "")
+        license = request.POST.get('license', "")
+        author = request.POST.get('author', "")
         att_notes = request.POST.get('attribution-notes', "")
 
         if content_type in utils.ZIP_MIMETYPES:
@@ -199,4 +209,47 @@ def uploaded(request, domain, app_id):
     response['errors'] = errors
     return HttpResponse(simplejson.dumps(response))
 
+
+class DownloadMultimediaZip(View, ApplicationViewMixin):
+    """
+        This is where the Multimedia for an application gets generated.
+        Expects domain and app_id to be in its args, otherwise it's generally unhappy.
+    """
+    name = "download_multimedia_zip"
+
+    @method_decorator(safe_download)
+    def dispatch(self, request, *args, **kwargs):
+        return super(DownloadMultimediaZip, self).dispatch(request, *args, **kwargs)
+
+    def get(self, request, *args, **kwargs):
+        errors = []
+        temp = StringIO()
+        media_zip = zipfile.ZipFile(temp, "a")
+        self.app.remove_unused_mappings()
+        if not self.app.multimedia_map:
+            return HttpResponse("You have no multimedia to download.")
+        for path, media in self.app.get_media_objects():
+            try:
+                data, content_type = media.get_display_file()
+                folder = path.replace(utils.MULTIMEDIA_PREFIX, "")
+                if not isinstance(data, unicode):
+                    media_zip.writestr(os.path.join(folder), data)
+            except NameError as e:
+                errors.append("%(path)s produced an ERROR: %(error)s" % {
+                    'path': path,
+                    'error': e,
+                })
+        media_zip.close()
+
+        if errors:
+            logging.error("Error downloading multimedia ZIP for domain %s and application %s." %
+                          (self.domain, self.app_id))
+            return HttpResponseServerError("Errors were encountered while "
+                                           "retrieving media for this application.<br /> %s" % "<br />".join(errors))
+
+        response = HttpResponse(mimetype="application/zip")
+        set_file_download(response, 'commcare.zip')
+        temp.seek(0)
+        response.write(temp.read())
+        return response
 

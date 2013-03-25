@@ -1,4 +1,5 @@
 from couchdbkit import ResourceConflict
+from django.views.decorators.cache import cache_page
 from casexml.apps.case.models import CommCareCase
 from corehq.apps.app_manager.suite_xml import SuiteGenerator
 from corehq.apps.cloudcare.models import CaseSpec, ApplicationAccess
@@ -245,6 +246,7 @@ def get_app_api(request, domain, app_id):
     return json_response(get_app(domain, app_id))
 
 @cloudcare_api
+@cache_page(60 * 30)
 def get_fixtures(request, domain, user_id, fixture_id=None):
     try:
         user = CommCareUser.get_by_user_id(user_id)

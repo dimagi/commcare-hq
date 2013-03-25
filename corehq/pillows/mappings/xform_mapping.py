@@ -1,7 +1,8 @@
 from corehq.pillows.core import DATE_FORMATS_STRING, DATE_FORMATS_ARR
-#staging
-#XFORM_INDEX = "xforms_4ef015a1d89a20b5a850f4f95b0412a8"
-XFORM_INDEX="xforms_8f890d8ac4bdd3d6918e53c61515c2a6"
+
+XFORM_INDEX="xforms_1595b2ca525ba48c3e8bcb8cd2a426f4"
+
+
 
 
 XFORM_MAPPING = {
@@ -10,9 +11,10 @@ XFORM_MAPPING = {
     'ignore_malformed': True,
     'dynamic': False,
     "_meta": {
-        "created": '', #record keeping on the index.
+        "created": '2013-03-06', #record keeping on the index.
     },
     "properties": {
+        'doc_type': {'type': 'string'},
         "domain": {
             "type": "multi_field",
             "fields": {
@@ -39,6 +41,13 @@ XFORM_MAPPING = {
             "type": "date",
             "format": DATE_FORMATS_STRING
         },
+        'initial_processing_complete': {"type": "boolean"},
+        'partial_submission': {"type": "boolean"},
+        "#export_tag": {"type": "string", "index": "not_analyzed"},
+        '_attachments': {
+            'dynamic': True,
+            'type': 'object'
+        },
         'form': {
             'dynamic': False,
             'properties': {
@@ -63,7 +72,7 @@ XFORM_MAPPING = {
                         "case_id": {"type": "string", "index": "not_analyzed"},
                         "user_id": {"type": "string", "index": "not_analyzed"},
                         "xmlns": {"type": "string", "index": "not_analyzed"},
-                        }
+                    }
                 },
                 'meta': {
                     'dynamic': False,
@@ -82,7 +91,7 @@ XFORM_MAPPING = {
                         "username": {"type": "string", "index": "not_analyzed"}
                     }
                 },
-                },
             },
-        }
+        },
+    }
 }

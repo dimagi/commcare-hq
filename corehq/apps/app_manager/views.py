@@ -1,13 +1,13 @@
 from StringIO import StringIO
 import functools
 import logging
-import zipfile
 from diff_match_patch import diff_match_patch
 from django.template.loader import render_to_string
 import hashlib
 from corehq.apps.app_manager.const import APP_V1
 from corehq.apps.app_manager.success_message import SuccessMessage
 from corehq.apps.domain.models import Domain
+from corehq.apps.domain.views import DomainViewMixin
 from couchexport.export import FormattedRow
 from couchexport.models import Format
 from couchexport.writers import Excel2007ExportWriter
@@ -72,6 +72,29 @@ def set_file_download(response, filename):
 
 def _encode_if_unicode(s):
     return s.encode('utf-8') if isinstance(s, unicode) else s
+
+
+class ApplicationViewMixin(DomainViewMixin):
+    """
+        Paving the way for class-based views in app manager. Yo yo yo.
+    """
+
+    @property
+    @memoized
+    def app_id(self):
+        return self.args[1] if len(self.args) > 1 else None
+
+    @property
+    @memoized
+    def app(self):
+        try:
+            # if get_app is mainly used for views, maybe it should be a classmethod of this mixin? todo
+            return get_app(self.domain, self.app_id)
+        except Exception:
+            pass
+        return None
+
+
 @login_and_domain_required
 def back_to_main(req, domain, app_id=None, module_id=None, form_id=None, unique_form_id=None, edit=True, error='', page=None, **kwargs):
     """
@@ -160,8 +183,12 @@ def get_user_registration_source(req, domain, app_id):
     return _get_xform_source(req, app, form, filename="User Registration.xml")
 
 def xform_display(req, domain, form_unique_id):
-    form, app = Form.get_form(form_unique_id, and_app=True)
-    if domain != app.domain: raise Http404
+    try:
+        form, app = Form.get_form(form_unique_id, and_app=True)
+    except ResourceNotFound:
+        raise Http404()
+    if domain != app.domain:
+        raise Http404()
     langs = [req.GET.get('lang')] + app.langs
 
     questions = form.get_questions(langs)
@@ -170,8 +197,12 @@ def xform_display(req, domain, form_unique_id):
 
 @login_and_domain_required
 def form_casexml(req, domain, form_unique_id):
-    form, app = Form.get_form(form_unique_id, and_app=True)
-    if domain != app.domain: raise Http404
+    try:
+        form, app = Form.get_form(form_unique_id, and_app=True)
+    except ResourceNotFound:
+        raise Http404()
+    if domain != app.domain:
+        raise Http404()
     return HttpResponse(form.create_casexml())
 
 @login_or_digest
@@ -298,11 +329,15 @@ def get_form_view_context(request, form, langs, is_user_registration, messages=m
         except AppError as e:
             messages.error(request, "Error in application: %s" % e)
         except XFormValidationError as e:
+
             # Don't display the first two lines which say "Parsing form..." and 'Title: "{form_name}"'
+            #
             # ... and if possible split the third line that looks like e.g. "org.javarosa.xform.parse.XFormParseException: Select question has no choices"
             # and just return the undecorated string
+            #
+            # ... unless the first line says
             message_lines = unicode(e).split('\n')[2:]
-            if len(message_lines) > 0 and ':' in message_lines[0]:
+            if len(message_lines) > 0 and ':' in message_lines[0] and 'XPath Dependency Cycle' not in unicode(e):
                 message = ' '.join(message_lines[0].split(':')[1:])
             else:
                 message = '\n'.join(message_lines)
@@ -397,7 +432,7 @@ def get_apps_base_context(request, domain, app):
     applications = ApplicationBase.view('app_manager/applications_brief',
         startkey=[domain],
         endkey=[domain, {}],
-        stale='update_after',
+        stale=settings.COUCH_STALE_QUERY,
     ).all()
 
     lang, langs = get_langs(request, app)
@@ -1128,9 +1163,12 @@ def edit_form_attr(req, domain, app_id, unique_form_id, attr):
 def rename_language(req, domain, form_unique_id):
     old_code = req.POST.get('oldCode')
     new_code = req.POST.get('newCode')
-    form, app = Form.get_form(form_unique_id, and_app=True)
+    try:
+        form, app = Form.get_form(form_unique_id, and_app=True)
+    except ResourceConflict:
+        raise Http404()
     if app.domain != domain:
-        raise Http404
+        raise Http404()
     try:
         form.rename_xform_language(old_code, new_code)
         app.save()
@@ -1648,34 +1686,6 @@ def download_user_registration(req, domain, app_id):
     return HttpResponse(
         req.app.get_user_registration().render_xform()
     )
-
-@safe_download
-def download_multimedia_zip(req, domain, app_id):
-    app = get_app(domain, app_id)
-    temp = StringIO()
-    hqZip = zipfile.ZipFile(temp, "a")
-    errors = []
-    for form_path, media_item in app.multimedia_map.items():
-        try:
-            media_cls = CommCareMultimedia.get_doc_class(media_item.media_type)
-            media = media_cls.get(media_item.multimedia_id)
-            data, content_type = media.get_display_file()
-            path = form_path.replace(utils.MULTIMEDIA_PREFIX, "")
-            if not isinstance(data, unicode):
-                hqZip.writestr(os.path.join(path), data)
-        except (NameError, ResourceNotFound) as e:
-            errors.append("[%s] ERROR: %s" % (form_path, e))
-            logging.warning("%s on %s %s" % (e, form_path, media_item))
-    hqZip.close()
-
-    if errors:
-        return HttpResponseServerError("Errors were encountered while retrieving media for this application.<br /> %s" % "<br />".join(errors))
-
-    response = HttpResponse(mimetype="application/zip")
-    set_file_download(response, 'commcare.zip')
-    temp.seek(0)
-    response.write(temp.read())
-    return response
 
 
 @safe_download

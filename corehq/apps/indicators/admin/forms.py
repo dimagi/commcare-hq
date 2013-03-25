@@ -1,9 +1,13 @@
 from django import forms
 from django.conf import settings
 from django.core.exceptions import ValidationError
+from django.core.validators import MinLengthValidator
+from django.forms import MultipleChoiceField
 from django.forms.util import ErrorList
 from corehq.apps.crud.models import BaseAdminCRUDForm
-from corehq.apps.indicators.models import FormDataAliasIndicatorDefinition, FormLabelIndicatorDefinition, CaseDataInFormIndicatorDefinition, FormDataInCaseIndicatorDefinition, CouchIndicatorDef, CountUniqueCouchIndicatorDef, MedianCouchIndicatorDef, CombinedCouchViewIndicatorDefinition, SumLastEmittedCouchIndicatorDef, DynamicIndicatorDefinition
+from corehq.apps.indicators.models import FormDataAliasIndicatorDefinition, FormLabelIndicatorDefinition, CaseDataInFormIndicatorDefinition, FormDataInCaseIndicatorDefinition, CouchIndicatorDef, CountUniqueCouchIndicatorDef, MedianCouchIndicatorDef, CombinedCouchViewIndicatorDefinition, SumLastEmittedCouchIndicatorDef, DynamicIndicatorDefinition, NoGroupCouchIndicatorDefBase
+from corehq.apps.indicators.utils import get_namespaces, get_namespace_name, get_indicator_domains
+from corehq.apps.users.models import Permissions
 from dimagi.utils.decorators.memoized import memoized
 
 
@@ -12,16 +16,13 @@ class BaseIndicatorDefinitionForm(BaseAdminCRUDForm):
     namespace = forms.CharField(label="Namespace", widget=forms.Select(choices=[]))
     version = forms.IntegerField(label="Version No.")
 
-    namespace_map = "INDICATOR_NAMESPACES"
-
     def __init__(self, data=None, files=None, auto_id='id_%s', prefix=None,
                  initial=None, error_class=ErrorList, label_suffix=':',
                  empty_permitted=False, doc_id=None, domain=None):
         super(BaseIndicatorDefinitionForm, self).__init__(data, files, auto_id, prefix, initial, error_class,
                                                           label_suffix, empty_permitted, doc_id)
         self.domain = domain
-        available_namespaces = getattr(settings, self.namespace_map, {})
-        self.fields['namespace'].widget = forms.Select(choices=available_namespaces.get(self.domain, ()))
+        self.fields['namespace'].widget = forms.Select(choices=get_namespaces(self.domain, as_choices=True))
 
     @property
     @memoized
@@ -94,15 +95,44 @@ class CouchIndicatorForm(BaseDynamicIndicatorForm):
     fixed_datespan_days = forms.IntegerField(label="Fix Datespan by Days", required=False)
     fixed_datespan_months = forms.IntegerField(label="Fix Datespan by Months", required=False)
 
+    change_doc_type = forms.BooleanField(label="Change Indicator Type?", required=False, initial=False)
+    doc_type_choices = forms.CharField(label="Choose Indicator Type", required=False, widget=forms.Select(choices=[]))
+
     doc_class = CouchIndicatorDef
 
+    def __init__(self, *args, **kwargs):
+        super(CouchIndicatorForm, self).__init__(*args, **kwargs)
+        if self.existing_object:
+            self.fields['doc_type_choices'].widget.choices = [(d.__name__, d.get_nice_name())
+                                                              for d in self.available_doc_types]
+        else:
+            del self.fields['change_doc_type']
+            del self.fields['doc_type_choices']
+
+    @property
+    def available_doc_types(self):
+        subclasses = set([CouchIndicatorDef, CountUniqueCouchIndicatorDef,
+                      MedianCouchIndicatorDef, SumLastEmittedCouchIndicatorDef])
+        return subclasses.difference([self.doc_class])
+
     def clean_fixed_datespan_days(self):
-        if 'fixed_datespan_days' in self.cleaned_data:
+        if 'fixed_datespan_days' in self.cleaned_data and self.cleaned_data['fixed_datespan_days']:
             return abs(self.cleaned_data['fixed_datespan_days'])
 
     def clean_fixed_datespan_months(self):
-        if 'fixed_datespan_months' in self.cleaned_data:
+        if 'fixed_datespan_months' in self.cleaned_data and self.cleaned_data['fixed_datespan_months']:
             return abs(self.cleaned_data['fixed_datespan_months'])
+
+    def clean_doc_type_choices(self):
+        if ('doc_type_choices' in self.cleaned_data
+            and 'change_doc_type' in self.cleaned_data
+            and self.cleaned_data['change_doc_type']):
+            subclass_to_class = dict([(d.__name__, d) for d in self.available_doc_types])
+            if self.existing_object:
+                self.existing_object.doc_type = self.cleaned_data['doc_type_choices']
+                self.existing_object.save()
+            return self.cleaned_data['doc_type_choices']
+
 
 
 class CountUniqueCouchIndicatorForm(CouchIndicatorForm):
@@ -149,5 +179,83 @@ class CombinedIndicatorForm(BaseDynamicIndicatorForm):
             return self._check_if_slug_exists(self.cleaned_data['denominator_slug'])
 
 
+class BulkCopyIndicatorsForm(forms.Form):
+    destination_domain = forms.CharField(label="Destination Project Space")
+    indicator_ids = MultipleChoiceField(
+        label="Indicator(s)",
+        validators=[MinLengthValidator(1)])
+    override_existing = forms.BooleanField(label="Override Existing",
+                                           help_text="Override properties of existing indicators with the same"
+                                                     "namespace and slug in destination project space.",
+                                           required=False,
+                                           initial=False)
 
+    def __init__(self, domain=None, couch_user=None, indicator_class=None, *args, **kwargs):
+        super(BulkCopyIndicatorsForm, self).__init__(*args, **kwargs)
+        self.domain = domain
+        self.couch_user = couch_user
+        self.indicator_class = indicator_class
 
+        self.fields['destination_domain'].widget = forms.Select(choices=[(d, d) for d in self.available_domains])
+        self.fields['indicator_ids'].choices = self.available_indicators
+
+    @property
+    @memoized
+    def available_domains(self):
+        if not self.couch_user:
+            return []
+        indicator_domains = set(get_indicator_domains())
+        indicator_domains = indicator_domains.difference([self.domain])
+        return [d for d in indicator_domains if self.couch_user.has_permission(d, Permissions.edit_data)]
+
+    @property
+    @memoized
+    def available_indicators(self):
+        indicators = []
+        for namespace in get_namespaces(self.domain):
+            indicators.extend(self.indicator_class.get_all_of_type(namespace, self.domain))
+        return [(i._id, "%s | v. %d | n: %s" % (i.slug, i.version if i.version else 0,
+                                                get_namespace_name(i.domain, i.namespace))) for i in indicators]
+
+    def clean_destination_domain(self):
+        if 'destination_domain' in self.cleaned_data:
+            destination = self.cleaned_data['destination_domain']
+            if not self.couch_user or not self.couch_user.has_permission(destination, Permissions.edit_data):
+                raise ValidationError("You do not have permission to copy indicators to this project space.")
+            if destination not in self.available_domains:
+                raise ValidationError("You submitted an invalid destination project space")
+            return destination
+
+    def copy_indicators(self):
+        failed = []
+        success = []
+        destination_domain = self.cleaned_data['destination_domain']
+        override = self.cleaned_data['override_existing']
+        available_namespaces = get_namespaces(destination_domain)
+        indicator_ids = self.cleaned_data['indicator_ids']
+        for indicator_id in indicator_ids:
+            try:
+                indicator = self.indicator_class.get(indicator_id)
+                excluded_properties = ['last_modified', 'base_doc', 'namespace', 'domain', 'class_path']
+                if indicator.namespace not in available_namespaces:
+                    failed.append(dict(indicator=indicator.slug,
+                                       reason='Indicator namespace not available for destination project.'))
+                    continue
+                properties = set(indicator.properties().keys())
+                copied_properties = properties.difference(excluded_properties)
+                copied_properties = dict([(p, getattr(indicator, p)) for p in copied_properties])
+                copied_indicator = self.indicator_class.update_or_create_unique(indicator.namespace, destination_domain,
+                                                                                save_on_update=override,
+                                                                                **copied_properties)
+                if copied_indicator and not copied_indicator.version:
+                    copied_indicator.version = 1
+                    copied_indicator.save()
+                if copied_indicator:
+                    success.append(copied_indicator.slug)
+            except Exception as e:
+                failed.append(dict(indicator=indicator_id,
+                                   reason='Could not retrieve indicator %s due to error %s:' % (indicator_id, e)))
+        return {
+            'success': success,
+            'failure': failed,
+        }

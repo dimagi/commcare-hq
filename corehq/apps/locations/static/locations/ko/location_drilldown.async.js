@@ -8,7 +8,7 @@ function api_get_children(loc_uuid, callback) {
     });
 }
 
-function LocationSelectViewModel(default_caption, auto_drill, loc_filter) {
+function LocationSelectViewModel(hierarchy, default_caption, auto_drill, loc_filter) {
   var model = this;
 
   this.default_caption = default_caption || 'All';
@@ -18,14 +18,9 @@ function LocationSelectViewModel(default_caption, auto_drill, loc_filter) {
   this.root = ko.observable();
   this.selected_path = ko.observableArray();
 
-  // TODO this should reference location type settings for domain
-  this.location_types = [
-    {type: 'state', allowed_parents: [null]},
-    {type: 'district', allowed_parents: ['state']},
-    {type: 'block', allowed_parents: ['district']},
-    {type: 'village', allowed_parents: ['block']},
-    {type: 'outlet', allowed_parents: ['village', 'block']},
-  ];
+  this.location_types = $.map(hierarchy, function(e) {
+          return {type: e[0], allowed_parents: e[1]};
+      });
 
   // currently selected location in the tree (or null)
   this.selected_location = ko.computed(function() {
