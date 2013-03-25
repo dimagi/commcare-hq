@@ -61,6 +61,9 @@ def _get_latest_xforms(skip=0, limit=100):
         #all the recent submissions are device logs, keep digging
         skip += limit
         raw_xforms = _do_get_raw_xforms(skip, limit)
+        if skip == 5000:
+            #sanity check if we get a deluge of devicereports
+            return recent_xforms
 
     return recent_xforms
 
