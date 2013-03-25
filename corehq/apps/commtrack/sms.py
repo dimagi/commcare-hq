@@ -26,6 +26,7 @@ def handle(verified_contact, text):
         if not data:
             return False
     except Exception, e:
+        raise
         send_sms_to_verified_number(verified_contact, 'problem with stock report: %s' % str(e))
         return True
 
@@ -95,7 +96,7 @@ class StockReportHelper(object):
 
     def single_action_transactions(self, action, args):
         # special case to handle immediate stock-out reports
-        if action.type == 'stockout':
+        if action.action_type == 'stockout':
             if all(looks_like_prod_code(arg) for arg in args):
                 for prod_code in args:
                     yield mk_tx(self.product_from_code(prod_code), action.name, 0)
@@ -103,7 +104,7 @@ class StockReportHelper(object):
             else:
                 raise RuntimeError("can't include a quantity for stock-out action")
 
-        grouping_allowed = (action.type == 'stockedoutfor')
+        grouping_allowed = (action.action_type == 'stockedoutfor')
 
         products = []
         for arg in args:
