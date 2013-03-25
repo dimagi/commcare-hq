@@ -441,7 +441,7 @@ def get_app_view_context(request, app):
         "app_version" : app.application_version,  # todo: remove
     })
 
-    if app and app.get_doc_type() == 'Application':
+    if app.get_doc_type() == 'Application':
         try:
             multimedia = app.get_media_references()
         except ProcessTimedOut as e:
@@ -475,6 +475,13 @@ def get_langs(request, app):
             lang = (app.langs or ['en'])[0]
         langs = [lang] + app.langs
     return lang, langs
+
+
+def _clear_app_cache(domain):
+    ApplicationBase.get_db().view('app_manager/applications_brief',
+        startkey=[domain],
+        limit=1,
+    ).all()
 
 
 def get_apps_base_context(request, domain, app):
@@ -678,7 +685,8 @@ def view_generic(req, domain, app_id=None, module_id=None, form_id=None, is_user
         template = "app_manager/module_view.html"
     else:
         template = "app_manager/app_view.html"
-        context.update(get_app_view_context(req, app))
+        if app:
+            context.update(get_app_view_context(req, app))
 
     error = req.GET.get('error', '')
 
@@ -772,6 +780,7 @@ def new_app(req, domain):
     else:
         app = cls.new_app(domain, "Untitled Application", lang=lang)
     app.save()
+    _clear_app_cache(domain)
     app_id = app.id
 
     return back_to_main(**locals())
@@ -817,6 +826,7 @@ def delete_app(req, domain, app_id):
         extra_tags='html'
     )
     app.save()
+    _clear_app_cache(domain)
     del app_id
     return back_to_main(**locals())
 
