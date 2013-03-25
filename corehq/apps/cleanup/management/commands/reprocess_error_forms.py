@@ -43,4 +43,4 @@ class Command(BaseCommand):
         print "%s / %s forms successfully processed, %s failures" % \
               (len(succeeded), len(succeeded) + len(failed), len(failed))
         if error_messages:
-            print r"The following errors were seen: \n%s" % (r"\n".join(error_messages))
+            print "The following errors were seen: \n%s" % ("\n".join(error_messages))
