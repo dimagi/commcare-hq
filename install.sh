@@ -188,7 +188,7 @@ if [ ! "$MINIMAL_INSTALL" ] && ! -f /etc/init.d/couchdb-lucene ]; then
     sudo cp /usr/local/couchdb-lucene-0.8.0/tools/etc/init.d/couchdb-lucene/couchdb-lucene /etc/init.d/
 fi
 
-if [[ ! $(grep _fti /usr/local/etc/couchdb/local.ini) ]]; then
+if [ -e /usr/local/etc/couchdb/local.ini ] && [[ ! $(grep _fti /usr/local/etc/couchdb/local.ini) ]]; then
     config=/usr/local/etc/couchdb/local.ini
     sudo sed -i '/\[couchdb\]/ a\os_process_timeout=60000' $config
 
