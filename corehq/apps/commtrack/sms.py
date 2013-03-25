@@ -57,7 +57,7 @@ class StockReportHelper(object):
             # single action sms
             # TODO: support single-action by product, as well as by action?
             action_name = self.C.all_keywords()[args[0]]
-            action = self.C.actions_by_name[action_name]
+            action = self.C.all_actions_by_name[action_name]
             args = args[1:]
 
             if not location:
