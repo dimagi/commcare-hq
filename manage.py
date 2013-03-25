@@ -7,14 +7,12 @@ import sys, os
 filedir = os.path.dirname(__file__)
 
 submodules_list = os.listdir(os.path.join(filedir, 'submodules'))
-submodule_paths = []
 for d in submodules_list:
     if d == "__init__.py" or d == '.' or d == '..':
         continue
-    submodule_paths.append(os.path.join(filedir,'submodules',d))
+    sys.path.insert(1, os.path.join(filedir, 'submodules', d))
 
 sys.path.append(os.path.join(filedir,'submodules'))
-sys.path = [filedir] + submodule_paths + sys.path
 
 try:
     import settings # Assumed to be in the same directory.
