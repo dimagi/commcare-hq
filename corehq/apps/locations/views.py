@@ -1,4 +1,6 @@
 from django.http import HttpResponse, HttpResponseRedirect, Http404
+from django.views.decorators.http import require_POST
+
 from corehq.apps.domain.decorators import domain_admin_required
 from corehq.apps.locations.models import Location
 from corehq.apps.locations.forms import LocationForm
@@ -62,6 +64,7 @@ def location_edit(request, domain, loc_id=None):
     return render(request, 'locations/manage/location.html', context)
 
 @domain_admin_required
+@require_POST
 def sync_facilities(request, domain):
     commtrack_settings = request.project.commtrack_settings
 

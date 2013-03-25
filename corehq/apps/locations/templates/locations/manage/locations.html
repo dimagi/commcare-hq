@@ -28,16 +28,18 @@ function loc_edit_url(loc_id) {
 
 $(function() {
     $("#sync_facilities").click(function() {
-        $(this).addClass("disabled").html("Syncing...");
+        $(this).addClass("disabled").html('{% trans "Syncing..." %}');
 
         $.ajax({
+            type: 'POST',
             url: SYNC_FACILITIES_URL,
             success: function() {
-                $("#sync_facilities").html("Synced");
+                $("#sync_facilities").html('{% trans "Synced" %}');
                 window.location.reload()
             },
             error: function() {
-                $("#sync_facilities").html("Error!").addClass("btn-danger");
+                $("#sync_facilities").html('{% trans "Error!" %}').addClass("btn-danger");
+
             }
         });
     });
@@ -53,7 +55,7 @@ $(function() {
 
 {% block subsection-title %}
     <li class="active">
-        <a href="#">Locations</a>
+        <a href="#">{% trans "Locations" %}</a>
     </li>
 {% endblock %}
 
@@ -61,7 +63,7 @@ $(function() {
 <header>
     <div class="row-fluid">
         <div class="span8">
-            <h2>Manage Locations</h2>
+            <h2>{% trans "Manage Locations" %}</h2>
         </div>
     </div>
 </header>
@@ -70,7 +72,9 @@ $(function() {
     <div class="row-fluid">
         <div class="span12">
             <div class="btn-toolbar">
-                <a class="btn" id="sync_facilities">Sync with Facility Registries</a>
+                <a class="btn" id="sync_facilities">
+                    {% trans "Sync with Facility Registries" %}
+                </a>
               <!-- not supported yet!
                 <a class="btn" href="#">Bulk Import</a>
                 <a class="btn" href="#">Bulk Export</a>
