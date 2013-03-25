@@ -13,6 +13,7 @@
 {% endblock %}
 {% block js-inline %}
     {{ block.super }}
+    {% if app %}
     <script>
         COMMCAREHQ.appView = {
             settings: {
@@ -40,7 +41,6 @@
         });
 
     </script>
-    {% if app %}
     <script>
         $(function () {
             var langs = {{ app.langs|JSON }};
@@ -267,7 +267,7 @@
             </div>
 
         {% endif %}
-        <div class="tab-pane" id="actions">
+        <div class="tab-pane" id="copy">
             <h3>{% trans "Copy" %}</h3>
             <div>
                 <form method="get" action="{% url import_app domain %}">
@@ -276,7 +276,8 @@
                     <input type="submit" value="Copy..." />
                 </form>
             </div>
-            <hr/>
+        </div>
+        <div class="tab-pane" id="delete">
             <h3>{% trans "Delete" %}</h3>
             <form action="{% url corehq.apps.app_manager.views.delete_app domain app.id %}" method="POST">
 

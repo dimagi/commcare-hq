@@ -54,9 +54,11 @@
     {% endif %}
 {% endblock %}
 {% block page-title %}
+    {% if app %}
     <ul class="breadcrumb">
         <li><span class="app-manager-title variable-app_name">{{ app.name|html_name }}</span></li>
     </ul>
+    {% endif %}
 {% endblock %}
 {% block app-content %}
     <div class="sidebar-wrapper row-fluid hq-double-col">
@@ -210,9 +212,15 @@
                 {% if edit %}
                     <li class="nav-header">Actions</li>
                     <li>
-                        <a href="{% url view_app domain app.id %}actions/?edit={{ edit|BOOL }}#actions" data-toggle="tab">
-                            <i class="icon-exchange"></i>
-                            {% trans "Copy/Delete" %}
+                        <a href="{% url view_app domain app.id %}copy/?edit={{ edit|BOOL }}#copy" data-toggle="tab">
+                            <i class="icon-copy"></i>
+                            {% trans "Copy" %}
+                        </a>
+                    </li>
+                    <li>
+                        <a href="{% url view_app domain app.id %}delete/?edit={{ edit|BOOL }}#delete" data-toggle="tab">
+                            <i class="icon-trash"></i>
+                            {% trans "Delete" %}
                         </a>
                     </li>
                 {% endif %}
