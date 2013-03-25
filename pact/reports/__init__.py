@@ -47,7 +47,7 @@ class PactDrilldownReportMixin(object):
         return None if self.rendered_as == "async" else self.rendered_as
 
     @classmethod
-    def show_in_navigation(cls, request, *args, **kwargs):
+    def show_in_navigation(cls, *args, **kwargs):
         return False
         #
 #    @property
