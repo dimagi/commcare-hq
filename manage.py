@@ -13,13 +13,15 @@ for root, dirs, files in os.walk(filedir):
             os.remove(os.path.join(root, file))
 
 
-sys.path.append(os.path.join(filedir))
-sys.path.append(os.path.join(filedir,'submodules'))
 submodules_list = os.listdir(os.path.join(filedir, 'submodules'))
+submodule_paths = []
 for d in submodules_list:
     if d == "__init__.py" or d == '.' or d == '..':
         continue
-    sys.path.append(os.path.join(filedir,'submodules',d))
+    submodule_paths.append(os.path.join(filedir,'submodules',d))
+
+sys.path.append(os.path.join(filedir,'submodules'))
+sys.path = [filedir] + submodule_paths + sys.path
 
 try:
     import settings # Assumed to be in the same directory.
