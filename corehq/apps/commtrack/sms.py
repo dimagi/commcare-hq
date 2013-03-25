@@ -1,3 +1,4 @@
+from corehq.apps.commtrack.const import RequisitionActions
 from corehq.apps.domain.models import Domain
 from casexml.apps.case.models import CommCareCase
 from corehq.apps.locations.models import Location
@@ -55,7 +56,8 @@ class StockReportHelper(object):
         if args[0] in self.C.all_keywords():
             # single action sms
             # TODO: support single-action by product, as well as by action?
-            action = self.C.all_keywords()[args[0]]
+            action_name = self.C.all_keywords()[args[0]]
+            action = self.C.actions_by_name[action_name]
             args = args[1:]
 
             if not location:
@@ -81,7 +83,7 @@ class StockReportHelper(object):
 
         tx = list(_tx)
         if not tx:
-            raise RuntimeError('stock report doesn\'t have any transactions')
+            raise RuntimeError("stock report doesn't have any transactions")
 
         return {
             'timestamp': datetime.utcnow(),
@@ -93,15 +95,15 @@ class StockReportHelper(object):
 
     def single_action_transactions(self, action, args):
         # special case to handle immediate stock-out reports
-        if action == 'stockout':
+        if action.type == 'stockout':
             if all(looks_like_prod_code(arg) for arg in args):
                 for prod_code in args:
-                    yield mk_tx(self.product_from_code(prod_code), action, 0)
+                    yield mk_tx(self.product_from_code(prod_code), action.name, 0)
                 return
             else:
-                raise RuntimeError('can\'t include a quantity for stock-out action')
-            
-        grouping_allowed = (action == 'stockedoutfor')
+                raise RuntimeError("can't include a quantity for stock-out action")
+
+        grouping_allowed = (action.type == 'stockedoutfor')
 
         products = []
         for arg in args:
@@ -119,7 +121,7 @@ class StockReportHelper(object):
                     raise RuntimeError('could not understand product quantity "%s"' % arg)
 
                 for p in products:
-                    yield mk_tx(p, action, value)
+                    yield mk_tx(p, action.name, value)
                 products = []
         if products:
             raise RuntimeError('missing quantity for product "%s"' % products[-1].code)
