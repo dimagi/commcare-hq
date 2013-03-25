@@ -16,6 +16,7 @@
 
 - title: General Settings
   id: app-settings-general
+  collapse: true
   settings:
     - features.sense  # CommCare Sense
     - properties.cc-autoup-freq  # Auto Update Frequency
@@ -28,6 +29,7 @@
 
 - title: 'J2ME UI Settings'
   id: app-settings-j2me-ui
+  collapse: true
   settings:
     - properties.extra_key_action  # Extra Key Action
     - properties.cc-entry-mode  # Item Selection Mode
@@ -39,6 +41,7 @@
 
 - title: 'J2ME CommCare Properties'
   id: app-settings-j2me-properties
+  collapse: true
   settings:
     - hq.build_spec  # CommCare Version
     - hq.platform  # J2ME Platform
@@ -48,6 +51,7 @@
 
 - title: 'Advanced (Logging)'
   id: app-settings-advanced
+  collapse: true
   settings:
     - properties.logenabled  # Logging Enabled
     - properties.log_prop_weekly  # Weekly Log Sending Frequency
@@ -55,6 +59,7 @@
 
 - title: 'Disabled'
   id: app-settings-disabled
+  collapse: true
   always_show: false
   settings:
     - properties.purge-freq  # Purge Frequency (disabled)

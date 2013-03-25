@@ -109,9 +109,12 @@ todo fix
     <form class="form-horizontal" data-bind="foreach: sections">
         <fieldset data-bind="visible: notEmpty">
             <legend>
-                <a data-toggle="collapse" data-bind="attr: {href: '#' + id}, text: title"></a>
+                <a data-toggle="collapse" data-bind="attr: {href: '#' + id}">
+                    <i class="icon icon-double-angle-right"></i>
+                    <span data-bind="text: title"></span>
+                </a>
             </legend>
-            <div class="collapse in" data-bind="foreach: settings, attr: {id: id}">
+            <div class="collapse" data-bind="foreach: settings, attr: {id: id}, css: {'in': !$data.collapse}">
                 <div class="control-group" data-bind="
                     visible: visible,
                     css: {error: disabledButHasValue}
