@@ -25,6 +25,7 @@ from django.utils.translation import ugettext as _
 from django.utils.translation import ugettext_noop
 from dimagi.utils.logging import notify_exception
 
+
 class HQUserType(object):
     REGISTERED = 0
     DEMO_USER = 1
@@ -47,6 +48,7 @@ class HQUserType(object):
     def use_filter(cls, ufilter):
         return [HQUserToggle(i, unicode(i) in ufilter) for i in range(len(cls.human_readable))]
 
+
 class HQToggle(object):
     type = None
     show = False
@@ -64,6 +66,7 @@ class HQToggle(object):
             name=self.name,
             show=self.show
         )
+
 
 class HQUserToggle(HQToggle):
     
@@ -119,8 +122,8 @@ class TempCommCareUser(CommCareUser):
         app_label = 'reports'
 
 
-
 DATE_RANGE_CHOICES = ['last7', 'last30', 'lastn', 'since', 'range']
+
 
 class ReportConfig(Document):
     _extra_json_properties = ['url', 'report_name', 'date_description']
@@ -554,41 +557,50 @@ class FormExportSchema(SavedExportSchema):
 
     @property
     def table_configuration(self):
-        table_configuration = super(FormExportSchema, self).table_configuration
+        try:
+            table_configuration = super(FormExportSchema, self).table_configuration
 
-        order = self.get_app_order()
+            order = self.get_app_order()
 
-        ORDER_DICT = dict([(index, (i,)) for i, index in enumerate(order)])
-        MAX_I = len(ORDER_DICT)
+            ORDER_DICT = dict([(index, (i,)) for i, index in enumerate(order)])
+            MAX_I = len(ORDER_DICT)
 
-        def sort_key(column):
-            index = column['index']
-            if index in ORDER_DICT:
-                return ORDER_DICT[index]
-            else:
-                # put indexes not in the app at the end, in alphabetical order
-                return MAX_I, index
+            def sort_key(column):
+                index = column['index']
+                if index in ORDER_DICT:
+                    return ORDER_DICT[index]
+                else:
+                    # put indexes not in the app at the end,
+                    # in alphabetical order
+                    return MAX_I, index
 
-        column_configuration = []
-        unselected = []
-        for column in table_configuration[0]['column_configuration']:
-            if column['index'] == 'id' and not column['selected']:
-                column_configuration.insert(0, column)
-            elif column['selected']:
-                column_configuration.append(column)
-            else:
-                unselected.append(column)
-        unselected.sort(key=sort_key)
-        column_configuration.extend(unselected)
-        table_configuration[0]['column_configuration'] = column_configuration
+            column_configuration = []
+            unselected = []
+            for column in table_configuration[0]['column_configuration']:
+                if column['index'] == 'id' and not column['selected']:
+                    column_configuration.insert(0, column)
+                elif column['selected']:
+                    column_configuration.append(column)
+                else:
+                    unselected.append(column)
+            unselected.sort(key=sort_key)
+            column_configuration.extend(unselected)
+            table_configuration[0]['column_configuration'] = column_configuration
 
-        return table_configuration
+            return table_configuration
+        except AttributeError as e:
+            # couchdbkit just loves swallowing these
+            logging.exception(e)
+            raise
 
     def get_app_order(self):
         if not self.app:
             return []
         else:
-            forms = self.app.get_xmlns_map()[self.xmlns]
+            try:
+                forms = self.app.get_xmlns_map()[self.xmlns]
+            except AttributeError:
+                return []
             if len(forms) != 1:
                 logging.error('App %s in domain %s has %s forms with xmlns %s' % (
                     self.app_id,
@@ -611,6 +623,7 @@ class FormExportSchema(SavedExportSchema):
             order.append(index)
         return order
 
+
 class FormDeidExportSchema(FormExportSchema):
 
     @property
@@ -620,7 +633,8 @@ class FormDeidExportSchema(FormExportSchema):
     @classmethod
     def get_case(cls, doc, case_id):
         pass
-    
+
+
 class HQGroupExportConfiguration(GroupExportConfiguration):
     """
     HQ's version of a group export, tagged with a domain
@@ -663,6 +677,7 @@ class HQGroupExportConfiguration(GroupExportConfiguration):
         if updated:
             group.save()
         return group
+
 
 class CaseActivityReportCache(Document):
     domain = StringProperty()
