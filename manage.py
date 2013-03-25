@@ -6,13 +6,6 @@ import sys, os
 
 filedir = os.path.dirname(__file__)
 
-# remove pyc files
-for root, dirs, files in os.walk(filedir):
-    for file in files:
-        if any(file.endswith(e) for e in ['pyc', 'pyo', 'py.class']):
-            os.remove(os.path.join(root, file))
-
-
 submodules_list = os.listdir(os.path.join(filedir, 'submodules'))
 submodule_paths = []
 for d in submodules_list:
