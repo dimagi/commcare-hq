@@ -1,4 +1,5 @@
-{% extends "hqwebapp/two_column.html" %}
+{% extends "orgs/orgs_landing.html" %}
+{#{% extends "hqwebapp/two_column.html" %}#}
 {% load hq_shared_tags %}
 {% load hqstyle_tags %}
 {% load i18n %}
@@ -21,23 +22,43 @@
     </script>
 {% endblock %}
 
-{% block sidebar %}
-    {% include 'appstore/partials/sidebar.html' %}
-{% endblock %}
+{#{% block sidebar %}#}
+{#    {% include 'appstore/partials/sidebar.html' %}#}
+{#{% endblock %}#}
 
-{% block main_column %}
+{#{% block main_column %}#}
+{% block carded-content %}
 {#    <div class="span10">#}
-    <h2>
-        {{ org.title }} <small>({{ org.name }})</small>
-        {% block append-to-title %}{% endblock %}
-    </h2>
-    {% include "orgs/partials/top_nav.html" %}
+{#    <h2>#}
+{#        {{ org.title }} <small>({{ org.name }})</small>#}
+{#        {% block append-to-title %}{% endblock %}#}
+{#    </h2>#}
+{#    {% include "orgs/partials/top_nav.html" %}#}
     {% include "reports/partials/generic_filters.html" %}
     <div id="report-content">
         {% include "domain/partials/report_list.html" with domains=domains_for_report %}
     </div>
+    <hr />
+    <form action="{% url orgs_stats org.name %}" method="get">
+        <h3>{% trans "Filter Project Spaces" %}
+        <button type="submit" class="btn btn-primary pull-right">{% trans "Filter" %}</button></h3>
+        <div class="well" id="domain-filter">
+            <div class="row-fluid">
+                {% for dom in domains %}
+                    {% if forloop.counter0|divisibleby:"4" and forloop.counter0 != 0 %}
+                        </div><div class="row-fluid">
+                    {% endif %}
+                    <div class="span3">
+                        <label class="checkbox">
+                            <input type="checkbox" name="name" value="{{ dom.name }}" {% if dom.active_in_filter %}checked{% endif %}> <strong>{{ dom.display_name }}</strong>
+                        </label>
+                    </div>
+                {% endfor %}
+            </div>
+        </div>
+    </form>
 {#    </div>#}
 {% endblock %}
 
-{% block page-title %}Title
+{% block org-modals %}
 {% endblock %}

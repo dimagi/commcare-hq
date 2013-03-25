@@ -30,7 +30,7 @@ def base_context(request, organization, update_form=None):
     return {
         "org": organization,
         "teams": Team.get_by_org(organization.name),
-        "domains": Domain.get_by_organization(organization.name).all(),
+        "domains": sorted(Domain.get_by_organization(organization.name).all(), cmp=lambda x,y: cmp(x.name, y.name)),
         "members": organization.get_members(),
         "admin": request.couch_user.is_org_admin(organization.name) or request.couch_user.is_superuser,
         "update_form_empty": not update_form,
@@ -540,9 +540,7 @@ def stats(request, org, template='orgs/stats.html'):
 
     params, _ = parse_args_for_es(request)
     # facets = project_stats_facets()
-    facets = ['is_active', 'project_type']
-    for f in sorted(facets):
-        print f
+    facets = ['name', 'is_active', 'project_type']
 
     results = es_domain_query(params, facets, domains=[d.name for d in ctxt['domains']])
     d_results = [Domain.wrap(res['_source']) for res in results.get('hits', {}).get('hits', [])]
@@ -555,11 +553,21 @@ def stats(request, org, template='orgs/stats.html'):
     ctxt["tab"] = "stats"
 
     facets_sortables = generate_sortables_from_facets(results, params)
+    domain_facets = [fs[1] for fs in facets_sortables if fs[0] == 'name'][0]
+    domain_facets = dict([(df['name'], df) for df in domain_facets])
+    for dom in ctxt["domains"]:
+        dom.active_in_filter = domain_facets[dom.name]["active"]
+    # set all domains to active if there are no active domain facets
+    if not filter(lambda d: d.active_in_filter, ctxt["domains"]):
+        for dom in ctxt["domains"]:
+            dom.active_in_filter = True
+
     ctxt.update({
         # 'layout_flush_content': True,
         'headers': DOMAIN_LIST_HEADERS,
         "aoColumns": DOMAIN_LIST_HEADERS.render_aoColumns,
-        'sortables': sorted(facets_sortables),
+        # 'sortables': sorted(facets_sortables),
+        'domain_facets': sorted(domain_facets),
         'no_header': True,
     })
     return render(request, template, ctxt)
