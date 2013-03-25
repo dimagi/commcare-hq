@@ -572,7 +572,7 @@ class FormExportSchema(SavedExportSchema):
         column_configuration = []
         unselected = []
         for column in table_configuration[0]['column_configuration']:
-            if column['index'] == 'id':
+            if column['index'] == 'id' and not column['selected']:
                 column_configuration.insert(0, column)
             elif column['selected']:
                 column_configuration.append(column)
