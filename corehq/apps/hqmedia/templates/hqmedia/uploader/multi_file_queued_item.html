@@ -1,0 +1,30 @@
+{% load i18n %}
+<tr id="<%= unique_id %>">
+    <td><%= file_name %></td>
+    <td><%= file_size %> MB</td>
+    <td class="hqm-progress">
+        <div class="progress progress-striped active" style="margin-bottom: 5px;">
+            <div class="bar" style="width: 0%;"></div>
+        </div>
+        <p class="text-success hqm-begin">
+            {% blocktrans %}Added to queue. Click <strong>Begin Upload</strong> above to start.{% endblocktrans %}
+        </p>
+        <p class="text-info hqm-processing hide">
+            {% trans 'Processing, please wait.' %}
+        </p>
+        <p class="text-success hqm-upload-completed hide">
+            {% trans 'Upload complete' %}
+        </p>
+        <p class="text-error hqm-error hide">
+            {% trans 'Error uploading file.' %}
+        </p>
+        <a href="#" class="btn btn-inverse btn-mini pull-right hqm-remove">
+            <i class="icon-remove"></i> {% trans 'Remove from queue' %}
+        </a>
+        <a href="#" class="btn btn-danger btn-mini pull-right hqm-cancel hide">
+            <i class="icon-remove"></i> {% trans 'Cancel Upload' %}
+        </a>
+    </td>
+    <td class="hqm-status"></td>
+    <td class="hqm-details"></td>
+</tr>

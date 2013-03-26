@@ -1,0 +1,51 @@
+{% load i18n %}
+<% if (!_.isEmpty(images)) { %>
+    <div class="well well-small">
+        <h4>{% trans 'Matched Images' %} <span class="badge badge-success"><%= images.length %></span></h4>
+        <ul>
+            <% for (var i=0; i < images.length; i++) {
+                var image = images[i]; %>
+                <li>
+                    <p>
+                        <img src="<%= image.url %>" style="height: 50px;" alt="<%= image.path %>" />
+                        <a href="<%= image.url %>"
+                           target="_blank"
+                           class="btn btn-primary match-info"
+                           data-content="<img src='<%= image.url %>' width='220' alt='<%= image.path %>' />">
+                            <i class="icon-eye-open"></i> View Full Image</a>
+                    </p>
+                    <p><code><% if (image.path.length > 50) { %>(...)<% } %><%= image.path.substring(image.path.length-50) %></code></p>
+                </li>
+            <% } %>
+        </ul>
+    </div>
+<% } %>
+<% if (!_.isEmpty(audio)) { %>
+<div class="well well-small">
+    <h4>{% trans 'Matched Audio' %} <span class="badge badge-success"><%= audio.length %></span></h4>
+    <ul>
+        <% for (var a=0; a < audio.length; a++) {
+        var sound = audio[a]; %>
+        <li>
+            <p><a href="<%= sound.url %>"
+                      target="_blank"
+                      class="btn btn-primary match-info"
+                      data-content="Playing audio directly on this page is currently not supported.">
+                    <i class="icon-volume-up"></i> Hear Audio</a></p>
+            <p><code><%= sound.path %></code></p>
+        </li>
+        <% } %>
+    </ul>
+</div>
+<% } %>
+<% if (!_.isEmpty(unknowns)) { %>
+<div class="well well-small">
+    <h4>{% trans 'No Matches' %} <span class="badge badge-important"><%= unknowns.length %></span></h4>
+    <ul>
+        <% for (var u=0; u < unknowns.length; u++) {
+        var unknown = unknowns[u]; %>
+        <li><code><%= unknown %></code></li>
+        <% } %>
+    </ul>
+</div>
+<% } %>
