@@ -1,8 +1,10 @@
 import zipfile
 import logging
 import os
+from django.core.urlresolvers import reverse
+from django.template.loader import render_to_string
 from django.utils.decorators import method_decorator
-from django.views.generic import View
+from django.views.generic import View, TemplateView
 import magic
 from StringIO import StringIO
 
@@ -30,6 +32,31 @@ def get_media_type(media_type):
         'CommCareImage': CommCareImage,
         'CommCareAudio': CommCareAudio,
     }[media_type]
+
+
+class BaseMultimediaTemplateView(ApplicationViewMixin, TemplateView):
+    """
+        The base view for all the multimedia templates.
+    """
+
+    @property
+    def page_context(self):
+        return {}
+
+    def get_context_data(self, **kwargs):
+        context = {
+            "domain": self.domain,
+            "app": self.app,
+        }
+        context.update(self.page_context)
+        return context
+
+    @method_decorator(require_can_edit_apps)
+    def dispatch(self, request, *args, **kwargs):
+        return super(BaseMultimediaTemplateView, self).dispatch(request, *args, **kwargs)
+
+    def render_to_response(self, context, **response_kwargs):
+        return render(self.request, self.template_name, context)
 
 
 def download_media(request, media_type, doc_id):
@@ -138,6 +165,67 @@ def media_from_path(request, domain, app_id, file_path):
                     return HttpResponseRedirect(media_map['url'])
 
     raise Http404('No Media Found')
+
+
+class BaseUploaderMultimediaView(BaseMultimediaTemplateView):
+    upload_multiple_files = True
+    queue_template_name = None
+    no_match_found_template_name = None
+    match_found_template_name = None
+    details_template_name = None
+
+    @property
+    def page_context(self):
+        return {
+            'uploader': {
+                'file_filters': self.supported_files,
+                'destination': self.upload_url,
+                'multi_file': self.upload_multiple_files,
+                'queue_template': render_to_string(self.queue_template_name, {}),
+                'no_match_found_template': render_to_string(self.no_match_found_template_name, {}),
+                'matches_found_template': render_to_string(self.match_found_template_name, {}),
+                'details_template': render_to_string(self.details_template_name, {}),
+                'form_params': self.upload_form_params,
+                'upload_params': self.upload_params,
+            },
+        }
+
+    @property
+    def supported_files(self):
+        """
+            A list of dicts of accepted file extensions by the YUI Uploader widget.
+        """
+        return [
+            {
+                'description': 'Zip',
+                'extensions': '*.zip',
+                },
+            ]
+
+    @property
+    def upload_form_params(self):
+        return ['shared', 'license', 'author', 'attribution-notes']
+
+    @property
+    def upload_params(self):
+        return {
+            'replace_existing': False,
+        }
+
+    @property
+    def upload_url(self):
+        return reverse("hqmedia_handle_uploaded", args=[self.domain, self.app_id])
+
+
+class BulkUploadMultimediaView(BaseUploaderMultimediaView):
+    name = "hqmedia_bulk_upload"
+    template_name = "hqmedia/bulk_upload.html"
+    queue_template_name = "hqmedia/uploader/multi_file_queued_item.html"
+    no_match_found_template_name = "hqmedia/uploader/no_match_found_multi.html"
+    match_found_template_name = "hqmedia/uploader/matches_found_multi.html"
+    details_template_name = "hqmedia/uploader/details_multi.html"
+
+
 
 @require_can_edit_apps
 def upload(request, domain, app_id):
