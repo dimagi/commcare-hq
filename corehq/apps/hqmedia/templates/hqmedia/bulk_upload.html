@@ -81,14 +81,19 @@
                     <th class="span5">{% trans 'Details' %}</th>
                 </tr>
             </thead>
+            <thead class="table-condensed">
+            <tr>
+                <th class="muted" colspan="5" style="text-align: center;">{% trans 'Queued Files' %}</th>
+            </tr>
+            </thead>
             <tbody class="hqm-queue">
                 <tr class="hqm-empty">
                     <td colspan="5">{% blocktrans %}Select files above to add to the queue.{% endblocktrans %}</td>
                 </tr>
             </tbody>
-            <thead>
+            <thead class="table-condensed">
                 <tr class="hqm-uploaded-notice hide">
-                    <th colspan="5">{% trans 'Uploaded Files' %}</th>
+                    <th class="muted" colspan="5" style="text-align: center;">{% trans 'Uploaded Files' %}</th>
                 </tr>
             </thead>
             <tbody class="hqm-uploaded-files">

@@ -205,14 +205,16 @@ function HQMediaUploadController(options) {
                 if (!self.isMultiFileUpload) {
                     $(self.queueSelector).empty();
                 }
-                $(self.queueSelector).append(self.processQueueTemplate(currentFile));
-                self.selectedFiles.push(file_id);
-                self.toggleEmptyNotice();
-                var activeSelector = self.getActiveUploadSelectors(file_id);
-                $(activeSelector.cancel).click(self.cancelFileUploadFn(currentFile));
-                if (activeSelector.remove) {
-                    $(activeSelector.remove).click(self.cancelFileUploadFn(currentFile));
+                if (self.selectedFiles.indexOf(file_id) < 0) {
+                    $(self.queueSelector).append(self.processQueueTemplate(currentFile));
+                    self.selectedFiles.push(file_id);
+                    var activeSelector = self.getActiveUploadSelectors(file_id);
+                    $(activeSelector.cancel).click(self.cancelFileUploadFn(currentFile));
+                    if (activeSelector.remove) {
+                        $(activeSelector.remove).click(self.cancelFileUploadFn(currentFile));
+                    }
                 }
+                self.toggleEmptyNotice();
             }
         }
         self.toggleUploadButton();
