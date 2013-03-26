@@ -1,26 +1,47 @@
 {% load i18n %}
-<div class="control-group">
-    <div class="control-label">{% trans "License" %}</div>
-    <div class="controls">
-        <select name="license">
-            <option value="cc-nc">Creative Commons Attribution, Non-Commercial</option>
-            <option value="cc-nd">Creative Commons Attribution, No Derivatives</option>
-            <option value="cc" selected="selected">Creative Commons Attribution</option>
-            <option value="cc-nc-sa">Creative Commons Attribution, Non-Commercial, and Share Alike</option>
-            <option value="cc-nc-nd">Creative Commons Attribution, Non-Commercial, and No Derivatives</option>
-            <option value="cc-sa">Creative Commons Attribution, Share Alike</option>
-        </select>
+<fieldset>
+    <legend>Upload Options</legend>
+    <div class="control-group">
+        <label class="control-label">{% trans 'Override Existing' %}</label>
+        <div class="controls">
+            <label class="checkbox">
+                <input name="replace_existing" type="checkbox" />
+                {% trans 'Yes, replace any existing multimedia with media from this upload.' %}
+            </label>
+        </div>
     </div>
-</div>
-<div class="control-group">
-    <div class="control-label">{% trans "Author" %}</div>
-    <div class="controls">
-        <input type="text" name="author" placeholder="{% trans "Enter the name of the author" %}" />
+    <div class="control-group">
+        <label class="control-label">{% trans 'Share Multimedia' %}</label>
+        <div class="controls">
+            <label class="checkbox"><input class="hqm-share-media" name="shared" value="t" type="checkbox" /> {% trans 'Yes, share my multimedia.' %}</label>
+        </div>
     </div>
-</div>
-<div class="control-group">
-    <div class="control-label">{% trans "Attribution Notes" %}</div>
-    <div class="controls">
-        <textarea name="attribution-notes" rows="2"></textarea>
+</fieldset>
+<fieldset class="hqm-sharing hide">
+    <legend>Multimedia Sharing Options</legend>
+    <div class="control-group">
+        <div class="control-label">{% trans "License" %}</div>
+        <div class="controls">
+            <select name="license">
+                <option value="cc-nc">Creative Commons Attribution, Non-Commercial</option>
+                <option value="cc-nd">Creative Commons Attribution, No Derivatives</option>
+                <option value="cc" selected="selected">Creative Commons Attribution</option>
+                <option value="cc-nc-sa">Creative Commons Attribution, Non-Commercial, and Share Alike</option>
+                <option value="cc-nc-nd">Creative Commons Attribution, Non-Commercial, and No Derivatives</option>
+                <option value="cc-sa">Creative Commons Attribution, Share Alike</option>
+            </select>
+        </div>
     </div>
-</div>
+    <div class="control-group">
+        <div class="control-label">{% trans "Author" %}</div>
+        <div class="controls">
+            <input type="text" name="author" placeholder="{% trans "Enter the name of the author" %}" />
+        </div>
+    </div>
+    <div class="control-group">
+        <div class="control-label">{% trans "Attribution Notes" %}</div>
+        <div class="controls">
+            <textarea name="attribution-notes" rows="2"></textarea>
+        </div>
+    </div>
+</fieldset>
