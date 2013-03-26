@@ -1,5 +1,4 @@
 {% extends "orgs/orgs_landing.html" %}
-{#{% extends "hqwebapp/two_column.html" %}#}
 {% load hq_shared_tags %}
 {% load hqstyle_tags %}
 {% load i18n %}
@@ -26,7 +25,15 @@
             });
             reportTables.render();
 
-            // for charts
+            $project_filter_checkboxes = $('#filter-projects-form').find(':checkbox');
+            $(document).on('click', '#select-btn', function() {
+                $project_filter_checkboxes.attr('checked', true);
+            });
+            $(document).on('click', '#deselect-btn', function() {
+                $project_filter_checkboxes.attr('checked', false);
+            });
+
+            // Charts ==================================================================================================
             var forms_data = {{ forms_data|JSON }};
             var cases_data = {{ cases_data|JSON }};
 
@@ -34,29 +41,13 @@
             var starting_time = new Date({{ startdate.0 }}, {{ startdate.1 }}, {{ startdate.2 }}).getTime();
             var ending_time = new Date({{ enddate.0 }}, {{ enddate.1 }}, {{ enddate.2 }}).getTime();
 
-{#            var starting_time = 0;#}
-{#            var MAX_INT = 9007199254740992;#}
-{#            var ending_time = MAX_INT;#}
-
             addHistogram('form-submissions-chart', '# of form submissions', forms_data, starting_time, ending_time);
             addHistogram('cases-chart', '# of case modifications', cases_data, starting_time, ending_time);
         });
     </script>
 {% endblock %}
 
-{#{% block sidebar %}#}
-{#    {% include 'appstore/partials/sidebar.html' %}#}
-{#{% endblock %}#}
-
-{#{% block main_column %}#}
 {% block carded-content %}
-{#    <div class="span10">#}
-{#    <h2>#}
-{#        {{ org.title }} <small>({{ org.name }})</small>#}
-{#        {% block append-to-title %}{% endblock %}#}
-{#    </h2>#}
-{#    {% include "orgs/partials/top_nav.html" %}#}
-
     <div class="accordion" id="charts-accordion">
         <div class="accordion-group">
             <div class="accordion-heading">
@@ -94,9 +85,16 @@
         {% include "domain/partials/report_list.html" with domains=domains_for_report %}
     </div>
     <hr />
-    <form action="{% url orgs_stats org.name %}" method="get">
+    <form id="filter-projects-form" action="{% url orgs_stats org.name %}" method="get">
         <h3>{% trans "Filter Project Spaces" %}
-        <button type="submit" class="btn btn-primary pull-right">{% trans "Filter" %}</button></h3>
+            <div class="btn-toolbar pull-right">
+                <button type="submit" class="btn btn-primary"><strong>{% trans "Filter" %}</strong></button>
+                <div class="btn-group">
+                    <button type="button" id="select-btn" href="#" class="btn">{% trans "Select All" %}</button>
+                    <button type="button" id="deselect-btn" href="#" class="btn">{% trans "Deselect All" %}</button>
+                </div>
+            </div>
+        </h3>
         <div class="well" id="domain-filter">
             <div class="row-fluid">
                 {% for dom in domains %}
@@ -112,7 +110,6 @@
             </div>
         </div>
     </form>
-{#    </div>#}
 {% endblock %}
 
 {% block org-modals %}

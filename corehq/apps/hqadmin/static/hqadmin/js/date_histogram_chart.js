@@ -40,7 +40,6 @@ function format_data(data, starting_time, ending_time) {
         return ret
     }
 
-
     //convert data into proper format
     var formatted_data = [];
     for (var key in data) {
