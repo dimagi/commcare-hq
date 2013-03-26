@@ -9,6 +9,13 @@ var HQReport = function (options) {
     self.filterSubmitButton = options.filterSubmitButton || $('#paramSelectorForm button[type="submit"]');
     self.toggleFiltersButton = options.toggleFiltersButton || "#toggle-report-filters";
     self.exportReportButton = options.exportReportButton || "#export-report-excel";
+    self.emailReportButton = options.emailReportButton || "#email-report";
+    self.emailReportModal = options.emailReportModal || "#email-report-modal";
+    self.isExportable = options.isExportable || false;
+    self.isEmailable = options.isEmailable || false;
+    self.emailDefaultSubject = options.emailDefaultSubject || "";
+    self.emailSuccessMessage = options.emailSuccessMessage;
+    self.emailErrorMessage = options.emailErrorMessage;
     self.urlRoot = options.urlRoot;
     self.slug = options.slug;
     self.subReportSlug = options.subReportSlug;
@@ -23,23 +30,26 @@ var HQReport = function (options) {
         $(function () {
             checkFilterAccordionToggleState();
 
-            $(self.exportReportButton).click(function (e) {
-                var params = window.location.search.substr(1);
-                var exportURL;
-                e.preventDefault();
-                if (params.length <= 1) {
-                    if (self.loadDatespanFromCookie()) {
-                        params = "startdate="+self.datespan.startdate+
-                            "&enddate="+self.datespan.enddate;
-                    }
-                }
-                window.location.href = window.location.pathname.replace(self.urlRoot,
-                    self.urlRoot+'export/')+"?"+params;
-            });
-
             self.resetFilterState();
+
             if (self.needsFilters) {
                 self.filterSubmitButton.button('reset').addClass('btn-primary');
+            } else if (self.slug) {
+                if (self.isExportable) {
+                    $(self.exportReportButton).click(function (e) {
+                        e.preventDefault();
+                        window.location.href = get_report_render_url("export");
+                    });
+                }
+
+                if (self.isEmailable) {
+                    self.emailReportViewModel = new EmailReportViewModel(self);
+                    $(self.emailReportButton).click(function (e) {
+                        self.emailReportViewModel.openEmailModal();
+                    });
+
+                    ko.applyBindings(self.emailReportViewModel, $(self.emailReportModal).get(0));
+                }
             }
         });
     };
@@ -127,5 +137,59 @@ var HQReport = function (options) {
         $('#paramSelectorForm fieldset').change(function () {
             $('#paramSelectorForm button[type="submit"]').button('reset').addClass('btn-primary');
         });
+    };
+
+    function get_report_render_url(render_type, additionalParams) {
+        var params = window.location.search.substr(1);
+        if (params.length <= 1) {
+            if (self.loadDatespanFromCookie()) {
+                params = "startdate="+self.datespan.startdate+
+                    "&enddate="+self.datespan.enddate;
+            }
+        }
+        return window.location.pathname.replace(self.urlRoot,
+            self.urlRoot+render_type+"/")+"?"+params + (additionalParams == undefined ? "" : "&" + additionalParams);
+    };
+
+    function EmailReportViewModel(hqReport) {
+        var self = this;
+
+        self.modalDisplayState = ko.observable();
+
+        self.send_to_owner = ko.observable(true);
+        self.subject = ko.observable(hqReport.emailDefaultSubject);
+        self.recipient_emails = ko.observable();
+        self.notes = ko.observable();
+
+        self.openEmailModal = function () {
+            self.modalDisplayState({});
+        }
+
+        self.closeEmailModal = function() {
+            self.modalDisplayState(undefined);
+        }
+
+        self.unwrap = function () {
+            var data = ko.mapping.toJS(self, {
+                ignore: ['modalTitle', 'modalDisplayState', 'openEmailModal',
+                'closeEmailModal', 'sendEmail', 'unwrap']
+            });
+
+            for (var i in data) {
+                if (data[i] === null || data[i] === undefined) delete data[i];
+            }
+            return data;
+        }
+
+        self.sendEmail = function(data, event) {
+            $.get(get_report_render_url("email_onceoff", $.param(self.unwrap())))
+                .done(function() {
+                    $.showMessage(hqReport.emailSuccessMessage, "success");
+                    self.closeEmailModal();
+                })
+                .fail(function() {
+                    $.showMessage(hqReport.emailErrorMessage, "error");
+                });
+        }
     };
 };

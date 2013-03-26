@@ -1,7 +1,7 @@
 from django.conf.urls.defaults import patterns, url
-from django.shortcuts import redirect
 
-urlpatterns = patterns('corehq.apps.facilities.views',
+settings_urls = patterns('corehq.apps.facilities.views',
+    url(r'^$', 'default'),
     url(r'^registries/$', 'list_registries'),
     url(r'^registries/new/$', 'add_view_or_update_registry',
         name='add_registry'),
@@ -16,8 +16,6 @@ urlpatterns = patterns('corehq.apps.facilities.views',
     url(r'^facility/(?P<id>[\w-]+)$', 'view_or_update_facility',
         name="view_or_update_facility"),
     url(r'^facility/(?P<id>[\w-]+)/delete/$', 'delete_facility'),
-    
-    #url(r'^$', redirect('list_registries')),
 
     # todo: create facility?
 )

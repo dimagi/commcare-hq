@@ -51,7 +51,7 @@
     </div>
     {% for calc_tag in order %}
         <div class="row-fluid calc-group">
-            <div class="span2"><p style="text-align: right">{{ calcs|dict_lookup:calc_tag }}{{ name }}</p></div>
+            <div class="span2"><p style="text-align: right">{{ calcs|dict_lookup:calc_tag }}</p></div>
             <div id="calc-{{ calc_tag }}" class="well well-small span4 calc-display"></div>
             <div class="span6">
                 <button class="btn btn-info load-calc-btn" data-calc-tag="{{ calc_tag }}">Load Property</button>

@@ -166,7 +166,7 @@ class ReportConfig(Document):
             include_docs=include_docs,
             startkey=key,
             endkey=key + [{}],
-            stale='update_after',
+            stale=settings.COUCH_STALE_QUERY,
         )
    
     @classmethod
@@ -395,7 +395,7 @@ class ReportNotification(Document):
             startkey=key,
             endkey=key + [{}],
             include_docs=True,
-            stale='update_after',
+            stale=settings.COUCH_STALE_QUERY,
         )
 
     @property

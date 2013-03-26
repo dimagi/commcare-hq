@@ -3,5 +3,5 @@ function (doc) {
         return;
     }
 
-    emit(doc._id, null);
+    emit(doc.domain, null);
 }

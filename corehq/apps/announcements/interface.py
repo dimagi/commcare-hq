@@ -1,3 +1,4 @@
+from django.conf import settings
 from django.core.urlresolvers import reverse
 from corehq.apps.announcements.dispatcher import HQAnnouncementAdminInterfaceDispatcher
 from corehq.apps.announcements.forms import HQAnnouncementForm, ReportAnnouncementForm
@@ -46,7 +47,7 @@ class BaseHQAnnouncementsAdminInterface(BaseCRUDAdminInterface):
             include_docs=True,
             startkey=key,
             endkey=key + [{}],
-            stale='update_after',
+            stale=settings.COUCH_STALE_QUERY,
         ).all()
         return data
 

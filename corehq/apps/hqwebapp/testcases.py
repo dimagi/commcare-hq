@@ -1,13 +1,13 @@
-from dimagi.utils.django.test import SeleniumTestCase
 from django.conf import settings
-from corehq.apps import selenium
+from corehq.apps.hqwebapp import selenium
+import luna
 import random
 import string
 
 DEFAULT_BROWSER = 'Chrome'
 
 
-class HQSeleniumTestCase(SeleniumTestCase):
+class HQSeleniumTestCase(luna.SeleniumTestCase):
     """
     Base test case for testing things that require logging in to the HQ web
     interface.

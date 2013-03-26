@@ -5,11 +5,6 @@
 {% block js-inline %}{{ block.super }}
     <script type="text/javascript">
         $(function () {
-            $(".form-submit-link").on('click', function() {
-                $(this).closest('form').submit();
-                return false;
-            });
-
             $(document).on('click', ".role-change-btn", function() {
                 var post_url = "{% url set_team_permission_for_domain org.name team.get_id %}";
                 var domain = $(this).attr('data-domain');
@@ -42,6 +37,14 @@
 {% endblock %}
 
 {% block carded-content %}
+{#    <form class="form-horizontal" method="post" action="{% url orgs_update_team org.name %}">#}
+{#        <input id="updating-team-id" type="hidden" name="team_id" value="{{ team.get_id }}" />#}
+{#        <div class="input-append">#}
+{#            <input name="team_name" type="text" value="{{ team.name }}" />#}
+{#            <button class="btn" type="submit">Edit Team Name</button>#}
+{#        </div>#}
+{#    </form>#}
+
     <div class="row-fluid">
         <div class="span6" id="members">
             <h3>{% trans "Members" %}</h3>
@@ -133,6 +136,9 @@
     {% if admin and members|length %}
     <div class="form-actions">
         <form name="delete_group" style="margin: 0;" action="{% url delete_team org.name %}" method="post">
+            <a href="#" data-toggle="modal" data-target="#edit-team-modal" class="btn btn-primary edit-team-btn">
+                <i class="icon icon-pencil"></i> {% trans "Change Team Name" %}
+            </a>
             <input type="hidden" name="team_id" value={{ team.get_id }} />
             <button class="btn btn-danger disable-on-submit" type="submit"><i class="icon icon-white icon-remove"></i> {% trans "Delete Team" %} "{{ team.name }}"</button>
         </form>
@@ -141,4 +147,25 @@
 {% endblock %}
 
 {% block org-modals %}
+    <div id="edit-team-modal" class="modal hide fade">
+        <div class="modal-header">
+            <a class="close" data-dismiss="modal">&times;</a>
+            <h3>{% trans "Change Team Name" %}</h3>
+        </div>
+        <form class="form-horizontal" method="post" action="{% url orgs_update_team org.name %}">
+            <div class="modal-body">
+                <input id="updating-team-id" type="hidden" name="team_id" value="{{ team.get_id }}" />
+                <div class="control-group">
+                    <label class="control-label" for="updating-team-name">{% trans "Team Name" %}</label>
+                    <div class="controls">
+                        <input type="text" id="updating-team-name" name="team_name" value="{{ team.name }}"/>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <a href="#" data-dismiss="modal" class="btn">{% trans "Cancel" %}</a>
+                <button type="submit" class="btn btn-primary disable-on-submit">{% trans "Update Team" %}</button>
+            </div>
+        </form>
+    </div>
 {% endblock %}

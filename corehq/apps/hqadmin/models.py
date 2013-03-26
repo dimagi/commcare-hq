@@ -1,6 +1,10 @@
-# This file is only here so that django will recognize that 
-# this is a valid app and run the associated unit tests.
+from couchdbkit.ext.django.schema import *
 
-from couchdbkit.ext.django.schema import Document
 
-class _(Document): pass
+class HqDeploy(Document):
+    date = DateTimeProperty()
+    user = StringProperty()
+
+    @classmethod
+    def get_latest(cls):
+        return HqDeploy.view('hqadmin/deploy_history', reduce=False, limit=1, descending=True).one()

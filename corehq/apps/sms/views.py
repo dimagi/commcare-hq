@@ -7,15 +7,16 @@ from datetime import datetime
 import re
 from django.contrib.auth import authenticate
 from django.core.urlresolvers import reverse
-from django.http import HttpResponse, HttpResponseRedirect, HttpResponseBadRequest
+from django.http import HttpResponse, HttpResponseRedirect, HttpResponseBadRequest, Http404
 from django.shortcuts import render
 
 from corehq.apps.sms.api import send_sms, incoming, send_sms_with_backend
 from corehq.apps.users.models import CouchUser
 from corehq.apps.users import models as user_models
-from corehq.apps.sms.models import SMSLog, INCOMING
+from corehq.apps.sms.models import SMSLog, INCOMING, ForwardingRule
+from corehq.apps.sms.forms import ForwardingRuleForm
 from corehq.apps.groups.models import Group
-from corehq.apps.domain.decorators import login_and_domain_required, login_or_digest, domain_admin_required
+from corehq.apps.domain.decorators import login_and_domain_required, login_or_digest, domain_admin_required, require_superuser
 from dimagi.utils.couch.database import get_db
 from django.contrib import messages
 from corehq.apps.reports import util as report_utils
@@ -224,6 +225,57 @@ def api_send_sms(request, domain):
     else:
         return HttpResponseBadRequest("POST Expected.")
 
+@login_and_domain_required
+@require_superuser
+def list_forwarding_rules(request, domain):
+    forwarding_rules = ForwardingRule.view("sms/forwarding_rule", key=[domain], include_docs=True).all()
+    
+    context = {
+        "domain" : domain,
+        "forwarding_rules" : forwarding_rules,
+    }
+    return render(request, "sms/list_forwarding_rules.html", context)
 
+@login_and_domain_required
+@require_superuser
+def add_forwarding_rule(request, domain, forwarding_rule_id=None):
+    forwarding_rule = None
+    if forwarding_rule_id is not None:
+        forwarding_rule = ForwardingRule.get(forwarding_rule_id)
+        if forwarding_rule.domain != domain:
+            raise Http404
+    
+    if request.method == "POST":
+        form = ForwardingRuleForm(request.POST)
+        if form.is_valid():
+            if forwarding_rule is None:
+                forwarding_rule = ForwardingRule(domain=domain)
+            forwarding_rule.forward_type = form.cleaned_data.get("forward_type")
+            forwarding_rule.keyword = form.cleaned_data.get("keyword")
+            forwarding_rule.backend_id = form.cleaned_data.get("backend_id")
+            forwarding_rule.save()
+            return HttpResponseRedirect(reverse('list_forwarding_rules', args=[domain]))
+    else:
+        initial = {}
+        if forwarding_rule is not None:
+            initial["forward_type"] = forwarding_rule.forward_type
+            initial["keyword"] = forwarding_rule.keyword
+            initial["backend_id"] = forwarding_rule.backend_id
+        form = ForwardingRuleForm(initial=initial)
+    
+    context = {
+        "domain" : domain,
+        "form" : form,
+        "forwarding_rule_id" : forwarding_rule_id,
+    }
+    return render(request, "sms/add_forwarding_rule.html", context)
 
+@login_and_domain_required
+@require_superuser
+def delete_forwarding_rule(request, domain, forwarding_rule_id):
+    forwarding_rule = ForwardingRule.get(forwarding_rule_id)
+    if forwarding_rule.domain != domain:
+        raise Http404
+    forwarding_rule.retire()
+    return HttpResponseRedirect(reverse("list_forwarding_rules", args=[domain]))
 

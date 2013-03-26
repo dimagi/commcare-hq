@@ -1,11 +1,12 @@
 import re
 import logging
+from couchdbkit import ResourceNotFound
 from django.conf import settings
 from django.core.mail import send_mail
+from dimagi.utils.couch.database import get_db
 from dimagi.utils.web import get_url_base
 
 new_domain_re = r"(?:[a-z0-9]+\-)*[a-z0-9]+" # lowercase letters, numbers, and '-' (at most one between "words")
-new_org_title_re = r"(?:[a-zA-Z0-9]+\s)*[a-zA-Z0-9]+" # lowercase letters, numbers, and ' ' (at most one between "words")
 new_org_re = r"(?:[a-z0-9]+\-)*[a-zA-Z0-9]+" # lowercase and uppercase letters, numbers, and '-' (at most one between "words")
 grandfathered_domain_re = r"[a-z0-9\-\.:]+"
 legacy_domain_re = r"[\w\.:-]+"
@@ -27,3 +28,11 @@ def get_domain_from_url(path):
     except Exception:
         domain = None
     return domain
+
+
+def get_domain_module_map():
+    try:
+        return get_db().get('DOMAIN_MODULE_CONFIG').get('module_map', {})
+    except ResourceNotFound:
+        pass
+    return {}

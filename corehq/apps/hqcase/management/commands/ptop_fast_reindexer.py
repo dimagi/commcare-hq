@@ -54,6 +54,7 @@ class PtopReindexer(NoArgsCommand):
     doc_class = None
     view_name = None
     pillow_class = None
+    file_prefix = "ptop_fast_reindex_"
 
 
 
@@ -78,11 +79,11 @@ class PtopReindexer(NoArgsCommand):
 
     def get_seq_filename(self):
         #print "Run file prefix: ptop_fast_reindex_%s_%s" % (self.doc_class.__name__, datestring)
-        seq_filename = "ptop_fast_reindex_%s_%s_seq.txt" % (self.doc_class.__name__, self.get_seq_prefix())
+        seq_filename = "%s%s_%s_seq.txt" % (self.file_prefix, self.doc_class.__name__, self.get_seq_prefix())
         return seq_filename
 
     def get_dump_filename(self):
-        view_dump_filename = "ptop_fast_reindex_%s_%s_data.json" % (self.doc_class.__name__,  self.get_seq_prefix())
+        view_dump_filename = "%s%s_%s_data.json" % (self.file_prefix, self.doc_class.__name__,  self.get_seq_prefix())
         return view_dump_filename
 
     def load_from_view(self):
@@ -214,7 +215,7 @@ class PtopReindexer(NoArgsCommand):
             while retries < MAX_TRIES:
                 try:
                     if not self.custom_filter(item):
-                        continue
+                        break
                     print "\tProcessing item %s (%d/%d)" % (item['id'], ix, total_length)
                     self.pillow.processor(item, do_set_checkpoint=False)
                     break

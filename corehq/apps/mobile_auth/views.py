@@ -6,6 +6,7 @@ from corehq.apps.mobile_auth.utils import new_key_record, get_mobile_auth_payloa
 from corehq.apps.mobile_auth.models import MobileAuthKeyRecord
 from dimagi.utils.parsing import string_to_datetime
 
+
 class FetchKeyRecords(object):
     def __init__(self, domain, user_id, last_issued):
         self.domain = domain
@@ -37,13 +38,13 @@ class FetchKeyRecords(object):
             current_key = None
         return filter(None, [old_key, current_key])
 
-
     def get_payload(self):
         return get_mobile_auth_payload(
             key_records=self.get_key_records(),
             domain=self.domain,
             now=self.now,
         )
+
 
 @login_or_digest_ex(allow_cc_users=True)
 @require_GET
