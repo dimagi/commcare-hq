@@ -50,7 +50,7 @@ def make_product(domain, name, code):
     p.save()
     return p
 
-def bootstrap_default(domain):
+def bootstrap_default(domain, requisitions_enabled=False):
     c = CommtrackConfig(
         domain=domain,
         multiaction_enabled=True,
@@ -89,6 +89,30 @@ def bootstrap_default(domain):
         ],
         supply_point_types=[],
     )
+    if requisitions_enabled:
+        c.requisition_config = CommtrackRequisitionConfig(
+            enabled=True,
+            actions=[
+                CommtrackActionConfig(
+                    action_type=RequisitionActions.REQUEST,
+                    keyword='req',
+                    caption='Request',
+                    name='request',
+                ),
+                CommtrackActionConfig(
+                    action_type=RequisitionActions.FILL,
+                    keyword='fill',
+                    caption='Filled',
+                    name='filled',
+                ),
+                CommtrackActionConfig(
+                    action_type=RequisitionActions.RECEIPTS,
+                    keyword='rec',
+                    caption='Stock on hand',
+                    name='stock_on_hand',
+                ),
+            ],
+        )
     c.save()
 
     make_product(domain, 'Sample Product 1', 'pp')
