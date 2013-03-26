@@ -552,7 +552,7 @@ def add_config(request, domain=None):
 
     # hit the view so stale=update_after doesn't cause the user to not see it
     # the next time they go to the reports homepage
-    ReportConfig.by_domain_and_owner(domain, user_id).all()
+    ReportConfig.by_domain_and_owner(domain, user_id, limit=1).all()
 
     return json_response(config)
 
@@ -683,7 +683,7 @@ def edit_scheduled_report(request, domain, scheduled_report_id=None,
 
         # hit the view so stale=update_after doesn't cause the user to not see
         # this report when they next load the report list
-        ReportNotification.by_domain_and_owner(domain, user_id).all()
+        ReportNotification.by_domain_and_owner(domain, user_id, limit=1).all()
 
         return HttpResponseRedirect(reverse('reports_home', args=(domain,)))
 
