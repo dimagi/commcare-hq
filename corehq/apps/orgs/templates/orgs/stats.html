@@ -9,15 +9,37 @@
     <script type="text/javascript" src="{% static 'reports/javascripts/config.dataTables.bootstrap.js' %}"></script>
     <script type="text/javascript" src="{% static 'hqwebapp/js/lib/jquery-ui-datepicker/jquery-ui-1.8.17.custom.datepicker.min.js' %}"></script>
     <script type="text/javascript" src="{% static 'reports/javascripts/datepicker.js' %}"></script>
+
+    <link href="{% static 'hqwebapp/js/lib/nvd3/src/nv.d3.css' %}" rel="stylesheet">
+    <script src="{% static 'hqwebapp/js/lib/nvd3/lib/d3.v2.js' %}"></script>
+    <script src="{% static 'hqwebapp/js/lib/nvd3/lib/fisheye.js' %}"></script>
+    <script src="{% static 'hqwebapp/js/lib/nvd3/nv.d3.js' %}"></script>
 {% endblock %}
 
 {% block js-inline %} {{ block.super }}
+    <script src='{% static 'hqadmin/js/date_histogram_chart.js' %}' type='text/javascript'></script>
     <script type="text/javascript">
+        var domain_data;
         $(function() {
             var reportTables = new HQReportDataTables({
                 {% if aoColumns %}aoColumns: {{ aoColumns|JSON }}{% endif %}
             });
             reportTables.render();
+
+            // for charts
+            var forms_data = {{ forms_data|JSON }};
+            var cases_data = {{ cases_data|JSON }};
+
+            //set starting and ending times
+            var starting_time = new Date({{ startdate.0 }}, {{ startdate.1 }}, {{ startdate.2 }}).getTime();
+            var ending_time = new Date({{ enddate.0 }}, {{ enddate.1 }}, {{ enddate.2 }}).getTime();
+
+{#            var starting_time = 0;#}
+{#            var MAX_INT = 9007199254740992;#}
+{#            var ending_time = MAX_INT;#}
+
+            addHistogram('form-submissions-chart', '# of form submissions', forms_data, starting_time, ending_time);
+            addHistogram('cases-chart', '# of case modifications', cases_data, starting_time, ending_time);
         });
     </script>
 {% endblock %}
@@ -34,6 +56,39 @@
 {#        {% block append-to-title %}{% endblock %}#}
 {#    </h2>#}
 {#    {% include "orgs/partials/top_nav.html" %}#}
+
+    <div class="accordion" id="charts-accordion">
+        <div class="accordion-group">
+            <div class="accordion-heading">
+                <a class="accordion-toggle" data-toggle="collapse" data-parent="#charts-accordion" href="#form-graph">
+                    {% trans "Form Submissions" %}
+                </a>
+            </div>
+            <div id="form-graph" class="accordion-body collapse in">
+                <div class="accordion-inner">
+                    <div id='form-submissions-chart'>
+                        <svg style='height:320px'> </svg>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="accordion-group">
+            <div class="accordion-heading">
+                <a class="accordion-toggle" data-toggle="collapse" data-parent="#charts-accordion" href="#case-graph">
+                    {% trans "Case Modifications" %}
+                </a>
+            </div>
+            <div id="case-graph" class="accordion-body collapse">
+                <div class="accordion-inner">
+                    <div id='cases-chart'>
+                        <svg style='height:320px'> </svg>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <hr />
     {% include "reports/partials/generic_filters.html" %}
     <div id="report-content">
         {% include "domain/partials/report_list.html" with domains=domains_for_report %}

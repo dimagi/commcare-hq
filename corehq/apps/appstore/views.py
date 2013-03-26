@@ -241,11 +241,6 @@ def es_query(params, facets=None, terms=None, q=None, es_url=None):
         del q["filter"]
 
     es_url = es_url or "cc_exchange/domain/_search"
-    # es_url = "cc_exchange/domain/_search"
-    print es_url
-    import pprint
-    pp = pprint.PrettyPrinter(indent=2)
-    pp.pprint(q)
 
     es = get_es()
     ret_data = es.get(es_url, data=q)

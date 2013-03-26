@@ -810,7 +810,7 @@ def project_stats(request, template="hqadmin/stats_report.html"):
     }
     return render(request, template, ctxt)
 
-def es_domain_query(params, facets=None, terms=None, domains=None):
+def es_domain_query(params, facets=None, terms=None, domains=None, return_q_dict=False):
     if terms is None:
         terms = ['search']
     if facets is None:
@@ -833,4 +833,5 @@ def es_domain_query(params, facets=None, terms=None, domains=None):
                         "_all" : {
                             "query" : search_query,
                             "operator" : "and" }}}}}
-    return es_query(params, facets, terms, q, DOMAIN_INDEX + '/hqdomain/_search')
+
+    return q if return_q_dict else es_query(params, facets, terms, q, DOMAIN_INDEX + '/hqdomain/_search')

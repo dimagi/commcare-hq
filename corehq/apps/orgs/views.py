@@ -1,4 +1,5 @@
-from datetime import datetime
+from datetime import datetime, timedelta, date
+import json
 from couchdbkit import ResourceNotFound
 from django.core.cache import params
 from django.core.urlresolvers import reverse
@@ -19,6 +20,9 @@ from corehq.apps.orgs.decorators import org_admin_required, org_member_required
 from corehq.apps.registration.forms import DomainRegistrationForm
 from corehq.apps.orgs.forms import AddProjectForm, InviteMemberForm, AddTeamForm, UpdateOrgInfo
 from corehq.apps.users.models import WebUser, UserRole, OrgRemovalRecord
+from corehq.elastic import get_es
+from corehq.pillows.mappings.case_mapping import CASE_INDEX
+from corehq.pillows.mappings.xform_mapping import XFORM_INDEX
 from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.web import json_response
 from corehq.apps.orgs.models import Organization, Team, DeleteTeamRecord, \
@@ -562,6 +566,24 @@ def stats(request, org, template='orgs/stats.html'):
         for dom in ctxt["domains"]:
             dom.active_in_filter = True
 
+    range = request.POST.get("daterange", 'year')
+    today = date.today()
+    startdate = (today - timedelta(days={
+        'month': 30,
+        'week': 7,
+        'quarter': 120,
+        'year': 365,
+    }[range]))
+
+    forms_data = dict([(d.name, es_histogram('forms', [d.name],
+                                             startdate.strftime('%Y-%m-%d'),
+                                             today.strftime('%Y-%m-%d'))["facets"]["histo"]["entries"])
+                   for d in ctxt["domains_for_report"]])
+    cases_data = dict([(d.name, es_histogram('cases', [d.name],
+                                             startdate.strftime('%Y-%m-%d'),
+                                             today.strftime('%Y-%m-%d'))["facets"]["histo"]["entries"])
+                       for d in ctxt["domains_for_report"]])
+
     ctxt.update({
         # 'layout_flush_content': True,
         'headers': DOMAIN_LIST_HEADERS,
@@ -569,7 +591,46 @@ def stats(request, org, template='orgs/stats.html'):
         # 'sortables': sorted(facets_sortables),
         'domain_facets': sorted(domain_facets),
         'no_header': True,
+        'forms_data': forms_data,
+        'cases_data': cases_data,
+        'range': range,
+        'startdate': [startdate.year, startdate.month, startdate.day],
+        'enddate': [today.year, today.month, today.day],
     })
     return render(request, template, ctxt)
+
+def es_histogram(type, domains=None, startdate=None, enddate=None):
+    date_field = {  "forms": "received_on",
+                    "cases": "modified_on"  }[type]
+    es_url = {  "forms": XFORM_INDEX + '/xform/_search',
+                "cases": CASE_INDEX + '/case/_search' }[type]
+
+    q = {"query": {"match_all":{}}}
+
+    if domains is not None:
+        q["query"] = {"in" : {"domain.exact": domains}}
+
+    q.update({
+        "facets": {
+            "histo": {
+                "date_histogram": {
+                    "field": date_field,
+                    "interval": "day"
+                },
+                "facet_filter": {
+                    "and": [{
+                        "range": {
+                            date_field: {
+                                "from": startdate,
+                                "to": enddate
+                            }}}]}}},
+        "size": 0
+    })
+
+    # es_url = XFORM_INDEX + '/xform/_search'
+    es = get_es()
+    ret_data = es.get(es_url, data=q)
+    return ret_data
+
 
 
