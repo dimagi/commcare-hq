@@ -443,7 +443,7 @@ def create_snapshot(request, domain):
         new_domain.project_type = request.POST['project_type']
         new_domain.title = request.POST['title']
         new_domain.multimedia_included = request.POST.get('share_multimedia', '') == 'on'
-        new_domain.publisher = request.POST['publisher']
+        new_domain.publisher = request.POST.get('publisher', None) or 'user'
 
         new_domain.author = request.POST.get('author', None)
 
