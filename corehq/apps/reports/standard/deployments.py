@@ -13,7 +13,10 @@ class DeploymentsReport(GenericTabularReport, ProjectReport, ProjectReportParame
     """
         Base class for all deployments reports
     """
-    pass
+   
+    @classmethod
+    def show_in_navigation(cls, domain=None, project=None, user=None):
+        return not project.commtrack_enabled
 
 class ApplicationStatusReport(DeploymentsReport):
     name = ugettext_noop("Application Status")
