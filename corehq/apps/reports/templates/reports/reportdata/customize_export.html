@@ -114,7 +114,13 @@
                         return {tag: '', field: field};
                     },
                     showTable: function (table) {
-                        return !(table.index() in CustomExportView.excludedTables) || table.selected();
+                        var index = table.index();
+                        var excluded = index in CustomExportView.excludedTables;
+                        if (!excluded && table.column_configuration().length === 2) {
+                            // just id field and an '' field — no info
+                            excluded = true;
+                        }
+                        return !excluded || table.selected();
                     },
                     actuallyShowTable: function (table) {
                         if (self.repeatsEnabled()) {
