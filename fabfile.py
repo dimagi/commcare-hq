@@ -393,6 +393,7 @@ def update_code(preindex=False):
         root_to_use = env.code_root
 
     with cd(root_to_use):
+        sudo('git fetch', user=env.sudo_user)
         sudo('git checkout %(code_branch)s' % env, user=env.sudo_user)
         sudo('git pull', user=env.sudo_user)
         sudo('git submodule sync', user=env.sudo_user)
