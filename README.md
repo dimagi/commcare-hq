@@ -127,14 +127,24 @@ that you have a 32bit version of Python installed.
     # To set up elasticsearch indexes, first run (and then kill once you see the
     "Starting pillow" lines):
     ./manage.py run_ptop
+    # This will do an initial run of the elasticsearch indexing process, but this will run as a
+    # service later. This run at least creates the indices for the first time.
     
     # then run
     curl -GET 'http://localhost:9200/_status?pretty=true'
 
     # Note the hqcases_<long_string> part near the top of the output of the
-    # above command, and run:
-    curl -XPOST 'http://localhost:9200/_aliases' -d \
-        '{ "actions": [ {"add": {"index": "hqcases_<long_string>", "alias": "hqcases"}}]}'
+    # above command.
+
+    # Next, set the aliases of the elastic indices. These can be set by a management command
+    # that sets the stored index names to the aliases.
+
+    python manage.py ptop_es_manage --flip_alias --pillow CasePillow
+    python manage.py ptop_es_manage --flip_alias --pillow FullCasePillow
+    python manage.py ptop_es_manage --flip_alias --pillow XFormPillow
+    python manage.py ptop_es_manage --flip_alias --pillow FullXFormPillow
+
+
 
 To enable CloudCare, ensure that `TOUCHFORMS_API_USER` and
 `TOUCHFORMS_API_PASSWORD` in `localsettings.py` are the credentials of the
