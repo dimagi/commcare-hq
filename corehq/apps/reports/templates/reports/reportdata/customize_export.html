@@ -33,12 +33,16 @@
                         index = ko.utils.unwrapObservable(index);
                         var stripped = self.utils.stripIndex(index);
                         if (self.custom_export.type() === 'form') {
+                            if (index === '#') {
+                                return "{% trans "Forms" %}";
+                            }
                             return "{% trans 'Repeat: ' %}" + stripped;
                         } else {
                             return {
-                                'actions': 'Case History',
-                                'actions > indices': 'Case History > Parent Cases',
-                                'indices': 'Parent Cases'
+                                '#': "{% trans 'Cases' %}",
+                                'actions': "{% trans 'Case History' %}",
+                                'actions > indices': "{% trans 'Case History > Parent Cases' %}",
+                                'indices': "{% trans 'Parent Cases' %}"
                             }[stripped] || stripped;
                         }
                     },
@@ -379,10 +383,7 @@
                 <span data-bind="visible: $root.repeatsEnabled()">
                     <input type="checkbox" data-bind="checked: selected" />
                 </span>
-                <span data-bind="visible: index() === '#'">
-                    {% trans "Export Fields" %}
-                </span>
-                <span data-bind="visible: index() !== '#'">
+                <span>
                     <span data-bind="text: $root.utils.tableHeader(index())">
                 </span>
             </legend>
