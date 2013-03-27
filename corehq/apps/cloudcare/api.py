@@ -194,11 +194,12 @@ def es_filter_cases(domain, filters=None):
         # To be replaced by CaseES framework.
         RESERVED_KEYS = ('date_modified_start', 'date_modified_end', 
                          'server_date_modified_start', 'server_date_modified_end', 
-                         'limit')
+                         'limit', 'offset')
     
         def __init__(self, domain, filters):
             self.domain = domain
             self.filters = filters
+            self.offset = int(filters.get('offset', 0))
             self.limit = int(filters.get('limit', 50))
             self._date_modified_start = filters.get("date_modified_start", None)
             self._date_modified_end = filters.get("date_modified_end", None)
@@ -277,7 +278,7 @@ def es_filter_cases(domain, filters=None):
                 'sort': {
                     'modified_on': {'order': 'asc'}
                 },
-                'from': 0,
+                'from': self.offset,
                 'size': self.limit,
             }
     
