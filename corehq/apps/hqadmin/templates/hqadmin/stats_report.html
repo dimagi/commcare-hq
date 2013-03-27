@@ -1,31 +1,19 @@
-{#{% extends "hqwebapp/two_column.html" %}#}
-{#{% extends "appstore/appstore_base.html" %}#}
 {% extends "hqadmin/hqadmin_base_report.html" %}
 {% load hq_shared_tags %}
 {% load hqstyle_tags %}
 {% load i18n %}
 
-{#{% block tabs %}#}
-{#    {% url project_stats as search_url %}#}
-{#    <ul class="nav">#}
-{#        {% include 'appstore/partials/search_input.html' with search_name="search" search_for="projects..." %}#}
-{#    </ul>#}
-{#{% endblock %}#}
-
-{% block store-header %}
-    Stats
-{% endblock %}
-
 {% block view-tabs %}
 {% endblock %}
 
 {% block sidebar %}
+    {{ block.super }}
+    <hr />
+    <h4 style="margin-left: 1em">Project Facets</h4>
     {% include 'appstore/partials/sidebar.html' %}
 {% endblock %}
 
-{#{% block results-display %}#}
-{#{% extends "hqadmin/hqadmin_base_report.html" %}#}
-{% block report-title %}Statistics{% endblock %}
+{% block report-title %}Domain List{% endblock %}
 {% block reportcontent %}
     {% include "domain/partials/report_list.html" %}
 {% endblock %}

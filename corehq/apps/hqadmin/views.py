@@ -121,27 +121,77 @@ def get_domain_totals(domains):
         'num_web_users': reduce(lambda total, dom: total + dom.web_users, domains, 0),
     }
 
+DOMAIN_LIST_HEADERS = DataTablesHeader(
+    DataTablesColumn("Project"),
+    # DataTablesColumn("# Web Users", sort_type=DTSortType.NUMERIC),
+    DataTablesColumn("# Active Mobile Workers", sort_type=DTSortType.NUMERIC),
+    DataTablesColumn("# Active Cases", sort_type=DTSortType.NUMERIC),
+    DataTablesColumn("# Mobile Workers", sort_type=DTSortType.NUMERIC),
+    DataTablesColumn("# Cases", sort_type=DTSortType.NUMERIC),
+    DataTablesColumn("# Form Submissions", sort_type=DTSortType.NUMERIC),
+    DataTablesColumn("First Form Submission"),
+    DataTablesColumn("Last Form Submission"),
+    DataTablesColumn("Admins")
+)
+
+def project_stats_facets():
+    facets = Domain.properties().keys()
+    facets += ['internal.' + p for p in InternalProperties.properties().keys()]
+    facets += ['deployment.' + p for p in Deployment.properties().keys()]
+    facets += ['cda.' + p for p in LicenseAgreement.properties().keys()]
+    for p in ['internal', 'deployment', 'cda', 'migrations', 'eula']:
+        facets.remove(p)
+    return facets
+
+def es_domain_query(params, facets=None, terms=None, domains=None, return_q_dict=False):
+    if terms is None:
+        terms = ['search']
+    if facets is None:
+        facets = []
+    q = {"query": {"match_all":{}}}
+
+    if domains is not None:
+        q["query"] = {
+            "in" : {
+                "name" : domains,
+                }
+        }
+
+    search_query = params.get('search', "")
+    if search_query:
+        q['query'] = {
+            "bool": {
+                "must": {
+                    "match" : {
+                        "_all" : {
+                            "query" : search_query,
+                            "operator" : "and" }}}}}
+
+    return q if return_q_dict else es_query(params, facets, terms, q, DOMAIN_INDEX + '/hqdomain/_search')
+
 @require_superuser
-def domain_list(request):
-    # one wonders if this will eventually have to paginate
-    domains = Domain.get_all()
-    domains = ammend_domains(domains)
+def domain_list(request, template="hqadmin/stats_report.html"):
+    params, _ = parse_args_for_es(request)
+    facets = project_stats_facets()
+    results = es_domain_query(params, facets)
+    d_results = [Domain.wrap(res['_source']) for res in results.get('hits', {}).get('hits', [])]
 
-    context = get_hqadmin_base_context(request)
-    context.update({"domains": domains})
-    context['layout_flush_content'] = True
+    domains = ammend_domains(d_results)
+    ctxt = get_domain_totals(domains)
 
-    headers = DataTablesHeader(
-        DataTablesColumn("Domain"),
-        DataTablesColumn("# Web Users", sort_type=DTSortType.NUMERIC),
-        DataTablesColumn("# Mobile Workers", sort_type=DTSortType.NUMERIC),
-        DataTablesColumn("# Cases", sort_type=DTSortType.NUMERIC),
-        DataTablesColumn("# Submitted Forms", sort_type=DTSortType.NUMERIC),
-        DataTablesColumn("Domain Admins")
-    )
-    context["headers"] = headers
-    context["aoColumns"] = headers.render_aoColumns
-    return render(request, "hqadmin/domain_list.html", context)
+    facets_sortables = generate_sortables_from_facets(results, params)
+
+    ctxt.update({
+        'layout_flush_content': True,
+        'headers': DOMAIN_LIST_HEADERS,
+        "aoColumns": DOMAIN_LIST_HEADERS.render_aoColumns,
+        'domains': domains,
+        'sortables': sorted(facets_sortables),
+        'query_str': request.META['QUERY_STRING'],
+        'search_url': reverse('domain_list'),
+        'search_query': params.get('search', [""])[0],
+        })
+    return render(request, template, ctxt)
 
 @require_superuser
 def active_users(request):
@@ -763,75 +813,3 @@ def noneulized_users(request, template="hqadmin/noneulized_users.html"):
     context["aoColumns"] = headers.render_aoColumns
 
     return render(request, template, context)
-
-def project_stats_facets():
-    facets = Domain.properties().keys()
-    facets += ['internal.' + p for p in InternalProperties.properties().keys()]
-    facets += ['deployment.' + p for p in Deployment.properties().keys()]
-    facets += ['cda.' + p for p in LicenseAgreement.properties().keys()]
-    for p in ['internal', 'deployment', 'cda', 'migrations', 'eula']:
-        facets.remove(p)
-    return facets
-
-DOMAIN_LIST_HEADERS = DataTablesHeader(
-    DataTablesColumn("Project"),
-    # DataTablesColumn("# Web Users", sort_type=DTSortType.NUMERIC),
-    DataTablesColumn("# Active Mobile Workers", sort_type=DTSortType.NUMERIC),
-    DataTablesColumn("# Active Cases", sort_type=DTSortType.NUMERIC),
-    DataTablesColumn("# Mobile Workers", sort_type=DTSortType.NUMERIC),
-    DataTablesColumn("# Cases", sort_type=DTSortType.NUMERIC),
-    DataTablesColumn("# Form Submissions", sort_type=DTSortType.NUMERIC),
-    DataTablesColumn("First Form Submission", sort_type=DTSortType.NUMERIC),
-    DataTablesColumn("Last Form Submission", sort_type=DTSortType.NUMERIC),
-    DataTablesColumn("Admins")
-)
-
-@require_superuser
-def project_stats(request, template="hqadmin/stats_report.html"):
-    params, _ = parse_args_for_es(request)
-    facets = project_stats_facets()
-    results = es_domain_query(params, facets)
-    d_results = [Domain.wrap(res['_source']) for res in results.get('hits', {}).get('hits', [])]
-
-    domains = ammend_domains(d_results)
-    ctxt = get_domain_totals(domains)
-
-    facets_sortables = generate_sortables_from_facets(results, params)
-
-    ctxt.update({
-        'layout_flush_content': True,
-        'headers': DOMAIN_LIST_HEADERS,
-        "aoColumns": DOMAIN_LIST_HEADERS.render_aoColumns,
-        'domains': domains,
-        'sortables': sorted(facets_sortables),
-        'query_str': request.META['QUERY_STRING'],
-        'search_url': reverse('project_stats'),
-        'search_query': params.get('search', [""])[0],
-    })
-    return render(request, template, ctxt)
-
-def es_domain_query(params, facets=None, terms=None, domains=None, return_q_dict=False):
-    if terms is None:
-        terms = ['search']
-    if facets is None:
-        facets = []
-    q = {"query": {"match_all":{}}}
-
-    if domains is not None:
-        q["query"] = {
-            "in" : {
-                "name" : domains,
-            }
-        }
-
-    search_query = params.get('search', "")
-    if search_query:
-        q['query'] = {
-            "bool": {
-                "must": {
-                    "match" : {
-                        "_all" : {
-                            "query" : search_query,
-                            "operator" : "and" }}}}}
-
-    return q if return_q_dict else es_query(params, facets, terms, q, DOMAIN_INDEX + '/hqdomain/_search')
