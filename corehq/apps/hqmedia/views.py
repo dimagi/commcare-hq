@@ -226,7 +226,6 @@ class BulkUploadMultimediaView(BaseUploaderMultimediaView):
     details_template_name = "hqmedia/uploader/details_multi.html"
 
 
-
 @require_can_edit_apps
 def upload(request, domain, app_id):
     app = get_app(domain, app_id)
