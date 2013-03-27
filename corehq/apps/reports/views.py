@@ -1,4 +1,4 @@
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, date
 import json
 import tempfile
 from django.core.cache import cache
@@ -251,6 +251,10 @@ def _export_default_or_custom_data(request, domain, export_id=None, bulk_export=
             return HttpResponseBadRequest()
         assert(export_tag[0] == domain)
         export_object = FakeSavedExportSchema(index=export_tag)
+
+    if not filename:
+        filename = export_object.name
+    filename += ' ' + date.today().isoformat()
 
     if async:
         return export_object.export_data_async(
