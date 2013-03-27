@@ -7,6 +7,7 @@ from casexml.apps.case.models import CommCareCase
 from copy import copy
 from django.dispatch import receiver
 from corehq.apps.locations.signals import location_created
+from corehq.apps.commtrack.const import RequisitionActions
 
 # these are the allowable stock transaction types, listed in the
 # default ordering in which they are processed. processing order
@@ -28,6 +29,23 @@ ACTION_TYPES = [
 
     # immediately indicates that product is stocked out right now
     'stockout',
+]
+
+REQUISITION_ACTION_TYPES = [
+    # request a product
+    RequisitionActions.REQUEST,
+
+    # approve a requisition (it is allowed to be filled)
+    # using this is configurable and optional
+    RequisitionActions.APPROVAL,
+
+    # fill a requisition (the order is ready)
+    RequisitionActions.FILL,
+
+    # receive the sock (closes the requisition)
+    # NOTE: it's not totally clear if this is necessary or
+    # should be built into the regular receipt workflow.
+    RequisitionActions.RECEIPTS,
 ]
 
 class Product(Document):
@@ -68,6 +86,9 @@ class CommtrackActionConfig(DocumentSchema):
     name = StringProperty() # defaults to action_type
     caption = StringProperty()
 
+    def __repr__(self):
+        return '{action_type}: {caption} ({keyword})'.format(**self._doc)
+
     def _keyword(self, multi):
         if multi:
             k = self.multiaction_keyword or self.keyword
@@ -79,6 +100,15 @@ class CommtrackActionConfig(DocumentSchema):
     def action_name(self):
         return self.name or self.action_type
 
+    @property
+    def is_stock(self):
+        # NOTE: assumes ACTION_TYPES and REQUISITION_ACTION_TYPES don't overlap
+        return self.action_type in ACTION_TYPES
+
+    @property
+    def is_requisition(self):
+        return self.action_type in REQUISITION_ACTION_TYPES
+
 class LocationType(DocumentSchema):
     name = StringProperty()
     allowed_parents = StringListProperty()
@@ -88,6 +118,11 @@ class CommtrackRequisitionConfig(DocumentSchema):
     # placeholder class for when this becomes fancier
 
     enabled = BooleanProperty(default=False)
+
+    # requisitions have their own sets of actions
+    actions = SchemaListProperty(CommtrackActionConfig)
+    
+
 
 class SupplyPointType(DocumentSchema):
     name = StringProperty()
@@ -117,12 +152,38 @@ class CommtrackConfig(Document):
                           include_docs=True).one()
         return result
 
+    def all_actions(self):
+        if self.requisitions_enabled:
+            return self.actions + self.requisition_config.actions
+        return self.actions
+
+    def _keywords(self, action_list, multi):
+        return dict((action_config._keyword(multi), action_config.action_name) \
+                    for action_config in action_list)
+
     def keywords(self, multi=False):
-        return dict((action_config._keyword(multi), action_config.action_name) for action_config in self.actions)
+        return self._keywords(self.actions, multi)
+
+    def all_keywords(self, multi=False):
+        return self._keywords(self.all_actions(), multi)
+
+    def _by_name(self, action_list):
+        return dict((action_config.action_name, action_config) for action_config in action_list)
 
     @property
     def actions_by_name(self):
-        return dict((action_config.action_name, action_config) for action_config in self.actions)
+        return self._by_name(self.actions)
+
+    @property
+    def all_actions_by_name(self):
+        return self._by_name(self.all_actions())
+
+    @property
+    def all_actions_by_type(self):
+        return dict((action_config.action_type, action_config) for action_config in self.all_actions())
+
+    def get_action_by_type(self, action_type):
+        return self.all_actions_by_type[action_type]
 
     @property
     def known_supply_point_types(self):

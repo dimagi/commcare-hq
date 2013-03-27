@@ -161,19 +161,15 @@ class ReportConfig(Document):
         return super(ReportConfig, self).delete(*args, **kwargs)
 
     @classmethod
-    def by_domain_and_owner(cls, domain, owner_id, report_slug=None, include_docs=True):
+    def by_domain_and_owner(cls, domain, owner_id, report_slug=None, **kwargs):
         if report_slug is not None:
             key = ["name slug", domain, owner_id, report_slug]
         else:
             key = ["name", domain, owner_id]
 
         return cls.view('reportconfig/configs_by_domain',
-            reduce=False,
-            include_docs=include_docs,
-            startkey=key,
-            endkey=key + [{}],
-            stale=settings.COUCH_STALE_QUERY,
-        )
+            reduce=False, include_docs=True, startkey=key, endkey=key + [{}],
+            stale=settings.COUCH_STALE_QUERY, **kwargs)
    
     @classmethod
     def default(self):
@@ -393,16 +389,12 @@ class ReportNotification(Document):
             return True
         
     @classmethod
-    def by_domain_and_owner(cls, domain, owner_id):
+    def by_domain_and_owner(cls, domain, owner_id, **kwargs):
         key = [domain, owner_id]
 
         return cls.view("reportconfig/user_notifications",
-            reduce=False,
-            startkey=key,
-            endkey=key + [{}],
-            include_docs=True,
-            stale=settings.COUCH_STALE_QUERY,
-        )
+            reduce=False, include_docs=True, startkey=key, endkey=key + [{}],
+            stale=settings.COUCH_STALE_QUERY, **kwargs)
 
     @property
     def all_recipient_emails(self):

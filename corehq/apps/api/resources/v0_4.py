@@ -13,6 +13,12 @@ class XFormInstanceResource(v0_3.XFormInstanceResource):
     uiversion = fields.CharField(attribute='uiversion', blank=True, null=True)
     metadata = fields.DictField(attribute='metadata', blank=True, null=True)
 
+    # Prevent hitting Couch to md5 the attachment. However, there is no way to
+    # eliminate a tastypie field defined in a parent class.
+    md5 = fields.CharField(attribute='uiversion', blank=True, null=True)
+    def dehydrate_md5(self, bundle):
+        return 'OBSOLETED'
+
     def get_list(self, request, **kwargs):
         """
         Exactly copied from https://github.com/toastdriven/django-tastypie/blob/v0.9.11/tastypie/resources.py#L1018
