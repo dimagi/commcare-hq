@@ -409,6 +409,14 @@ def mail_admins(subject, message):
                  'message':message },
              user=env.sudo_user)
 
+@roles('pg', 'django_monolith')
+def record_successful_deploy():
+    with cd(env.code_root):
+        sudo('%(virtualenv_root)s/bin/python manage.py record_deploy_success --user "%(user)s"' % \
+             {'virtualenv_root': env.virtualenv_root,
+              'user': env.user },
+        user=env.sudo_user)
+
 @task
 def deploy():
     """ deploy code to remote host by checking out the latest via git """
@@ -427,11 +435,13 @@ def deploy():
         execute(migrate)
         execute(_do_collectstatic)
         execute(version_static)
+        execute(flip_es_aliases)
     except Exception:
         execute(mail_admins, "Deploy failed", "You had better check the logs.")
         raise
     else:
         execute(mail_admins, "Deploy successful", "Cheers.")
+        execute(record_successful_deploy)
     finally:
         # hopefully bring the server back to life if anything goes wrong
         execute(services_restart)
@@ -558,6 +568,16 @@ def migrate():
         sudo('%(virtualenv_root)s/bin/python manage.py syncdb --noinput' % env, user=env.sudo_user)
         sudo('%(virtualenv_root)s/bin/python manage.py migrate --noinput' % env, user=env.sudo_user)
 
+
+@roles('django_celery','django_monolith')
+def flip_es_aliases():
+    """Flip elasticsearch aliases to the lastest version """
+    require('code_root', provided_by=('production', 'demo', 'staging', "india"))
+    with cd(env.code_root):
+        sudo('%(virtualenv_root)s/bin/python manage.py ptop_es_manage --flip_alias --pillow CasePillow' % env, user=env.sudo_user)
+        sudo('%(virtualenv_root)s/bin/python manage.py ptop_es_manage --flip_alias --pillow FullCasePillow' % env, user=env.sudo_user)
+        sudo('%(virtualenv_root)s/bin/python manage.py ptop_es_manage --flip_alias --pillow XFormPillow' % env, user=env.sudo_user)
+        sudo('%(virtualenv_root)s/bin/python manage.py ptop_es_manage --flip_alias --pillow FullXFormPillow' % env, user=env.sudo_user)
 
 @roles('staticfiles', 'django_monolith')
 def _do_collectstatic():

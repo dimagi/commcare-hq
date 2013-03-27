@@ -5,15 +5,14 @@ from django.core.management import execute_manager
 import sys, os
 
 filedir = os.path.dirname(__file__)
-sys.path.append(os.path.join(filedir))
-#sys.path.append(os.path.join(filedir,'apps'))
 
-sys.path.append(os.path.join(filedir,'submodules'))
 submodules_list = os.listdir(os.path.join(filedir, 'submodules'))
 for d in submodules_list:
     if d == "__init__.py" or d == '.' or d == '..':
         continue
-    sys.path.append(os.path.join(filedir,'submodules',d))
+    sys.path.insert(1, os.path.join(filedir, 'submodules', d))
+
+sys.path.append(os.path.join(filedir,'submodules'))
 
 try:
     import settings # Assumed to be in the same directory.
