@@ -4,9 +4,7 @@
     <div class="tabbable">
         <ul class="nav nav-tabs">
             <li class="active"><a href="#supported-languages" data-toggle="tab">{% trans "Language List" %}</a></li>
-            {% if app.get_doc_type == "Application" %}
             <li><a href="#translations-tab" data-toggle="tab">{% trans "CommCare Translations" %}</a></li>
-            {% endif %}
         </ul>
         <div class="tab-content">
             <div id="supported-languages" class="tab-pane active">
@@ -31,7 +29,9 @@
                 <section id="success-message">
                     <form class="save-button-form form-horizontal" method="post" action="{% url edit_app_attr domain app.id 'success_message' %}"
                             data-bind="visible: COMMCAREHQ.appView.settings.enableSuccessMessage()">
+                        {% if app.get_doc_type == 'Application'%}
                         <hr/>
+                        {% endif %}
                         <div class="save-button-holder clearfix"></div>
                         <fieldset>
                             <div class="control-group">
