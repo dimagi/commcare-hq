@@ -16,10 +16,6 @@ from corehq.apps.domain.models import LICENSES
 from dimagi.utils.couch.database import get_db
 from django.utils.translation import ugettext as _
 
-class HQMediaType(object):
-    IMAGE = 0
-    AUDIO = 1
-    names = ["image", "audio"]
 
 class HQMediaLicense(DocumentSchema):
     domain = StringProperty()
@@ -37,6 +33,7 @@ class HQMediaLicense(DocumentSchema):
     @property
     def display_name(self):
         return LICENSES.get(self.type, "Improper License")
+
 
 class CommCareMultimedia(Document):
     file_hash = StringProperty()
@@ -254,7 +251,6 @@ class CommCareAudio(CommCareMultimedia):
     def validate_content_type(cls, content_type):
         #todo check audio/vnd.wave for wav files
         return content_type in ['audio/mpeg', 'audio/mp3', 'audio/vnd.wave']
-
 
 
 class HQMediaMapItem(DocumentSchema):
