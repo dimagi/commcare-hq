@@ -52,7 +52,7 @@ class ESView(View):
         raise NotImplementedError("Not implemented")
 
     @method_decorator(login_and_domain_required)
-    @method_decorator(csrf_protect)
+    #@method_decorator(csrf_protect)
     def dispatch(self, *args, **kwargs):
         req = args[0]
         self.pretty = req.GET.get('pretty', False)
@@ -110,6 +110,7 @@ class ESView(View):
                 res_domain = res['fields'].get('domain', None)
                 #check fields
             assert res_domain == self.domain, "Security check failed, search result domain did not match requester domain: %s != %s" % (res_domain, self.domain)
+        # print simplejson.dumps(es_results.get('facets', {}))
         return es_results
 
     def base_query(self, terms={}, fields=[], start=0, size=DEFAULT_SIZE):
@@ -154,7 +155,9 @@ class ESView(View):
         """
         try:
             raw_post = self.request.raw_post_data
+            # print raw_post
             raw_query = simplejson.loads(raw_post)
+            # print raw_query
         except Exception, ex:
             content_response = dict(message="Error parsing query request", exception=ex.message)
             response = HttpResponse(status=406, content=simplejson.dumps(content_response))

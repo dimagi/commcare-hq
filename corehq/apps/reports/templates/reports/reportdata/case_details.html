@@ -74,6 +74,7 @@
 
 {% block main_column %}
 <div class="hq-generic-report">
-    {% render_case case_id timezone %}
+{#    {% render_case case_id timezone %}#}
+    {% include "case/partials/single_case.html" %}
 </div>
 {% endblock %}

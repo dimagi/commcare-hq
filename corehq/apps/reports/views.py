@@ -788,13 +788,8 @@ def case_details(request, domain, case_id):
         return HttpResponseRedirect(inspect.CaseListReport.get_url(domain=domain))
 
     report_name = 'Details for Case "%s"' % case.name
-    form_lookups = dict((form.get_id,
-                         "%s: %s" % (form.received_on.date(), 
-                                     xmlns_to_name(domain, form.xmlns, get_app_id(form)))) \
-                        for form in case.get_forms())
+    # form_lookups = dict((form.get_id, "%s: %s" % (form.received_on.date(),  xmlns_to_name(domain, form.xmlns, get_app_id(form)))) for form in case.get_forms())
 
-
-                        
     try:
         owner_name = CommCareUser.get_by_user_id(case.owner_id, domain).raw_username
     except Exception:
@@ -812,10 +807,11 @@ def case_details(request, domain, case_id):
     return render(request, "reports/reportdata/case_details.html", {
         "domain": domain,
         "case_id": case_id,
+        "case": case,
         "username": username, 
         "owner_name": owner_name,
-        "form_lookups": form_lookups,
-        "slug":inspect.CaseListReport.slug,
+        # "form_lookups": form_lookups,
+        "slug": inspect.CaseListReport.slug,
         "report": dict(
             name=report_name,
             slug=inspect.CaseListReport.slug,
