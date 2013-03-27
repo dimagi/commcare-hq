@@ -51,6 +51,3 @@ class Command(MappingOutputCommand):
             sys.stderr.write("\tCurrent live aliased index: %s\n\n"  % (','.join(aliased_indices)))
 
         sys.stderr.write("File written to %s\n" % filepath)
-
-
-

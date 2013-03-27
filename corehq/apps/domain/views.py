@@ -318,14 +318,12 @@ def internal_calculations(request, domain, template="domain/internal_calculation
 def calculated_properties(request, domain):
     calc_tag = request.GET.get("calc_tag", '').split('--')
     extra_arg = calc_tag[1] if len(calc_tag) > 1 else ''
-    print extra_arg
     calc_tag = calc_tag[0]
 
     if not calc_tag or calc_tag not in CALC_FNS.keys():
         data = {"error": 'This tag does not exist'}
     else:
         data = {"value": CALC_FNS[calc_tag](domain, extra_arg)}
-        print CALC_FNS[calc_tag]
     return json_response(data)
 
 @domain_admin_required
