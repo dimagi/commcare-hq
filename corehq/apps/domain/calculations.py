@@ -33,20 +33,20 @@ CALCS = {
 def num_web_users(domain, *args):
     key = ["active", domain, 'WebUser']
     row = get_db().view('users/by_domain', startkey=key, endkey=key+[{}]).one()
-    return {"value": row["value"] if row else 0}
+    return row["value"] if row else 0
 
 def num_mobile_users(domain, *args):
     row = get_db().view('users/by_domain', startkey=[domain], endkey=[domain, {}]).one()
-    return {"value": row["value"] if row else 0}
+    return row["value"] if row else 0
 
 def mobile_users(domain, active):
     key = ["active" if active == "active" else "inactive", domain, 'CommCareUser']
     row = get_db().view('users/by_domain', startkey=key, endkey=key+[{}]).one()
-    return {"value": row["value"] if row else 0}
+    return row["value"] if row else 0
 
 def cases(domain, *args):
     row = get_db().view("hqcase/types_by_domain", startkey=[domain], endkey=[domain, {}]).one()
-    return {"value": row["value"] if row else 0}
+    return row["value"] if row else 0
 
 DATE_FORMAT = '%Y-%m-%dT%H:%M:%SZ'
 
@@ -56,12 +56,12 @@ def cases_in_last(domain, days):
     now = now.strftime(DATE_FORMAT)
 
     row = get_db().view("hqcase/all_cases", startkey=[domain, {}, {}, then], endkey=[domain, {}, {}, now]).one()
-    return {"value": row["value"] if row else 0}
+    return row["value"] if row else 0
 
 def forms(domain, *args):
     key = make_form_couch_key(domain)
     row = get_db().view("reports_forms/all_forms", startkey=key, endkey=key+[{}]).one()
-    return {"value": row["value"] if row else 0}
+    return row["value"] if row else 0
 
 def active(domain, *args):
     now = datetime.now()
@@ -70,30 +70,30 @@ def active(domain, *args):
 
     key = ['submission', domain]
     row = get_db().view("hqcase/all_cases", startkey=key+[then], endkey=key+[now]).all()
-    return {"value": 'yes' if row else 'no'}
+    return 'yes' if row else 'no'
 
 def first_form_submission(domain, *args):
     key = make_form_couch_key(domain)
     row = get_db().view("reports_forms/all_forms", reduce=False, startkey=key, endkey=key+[{}]).first()
-    return {"value": row["value"]["submission_time"] if row else "No submissions"}
+    return row["value"]["submission_time"] if row else "No forms"
 
 def last_form_submission(domain, *args):
     key = make_form_couch_key(domain)
-    row = get_db().view("reports_forms/all_forms", reduce=False, startkey=key, endkey=key+[{}]).all()[-1]
-    return {"value": row["value"]["submission_time"] if row else "No submissions"}
+    row = get_db().view("reports_forms/all_forms", reduce=False, startkey=key, endkey=key+[{}]).all()
+    return row[-1]["value"]["submission_time"] if row else "No forms"
 
 def has_app(domain, *args):
     domain = Domain.get_by_name(domain)
     apps = domain.applications()
-    return {"value": 'yes' if len(apps) > 0 else 'no'}
+    return 'yes' if len(apps) > 0 else 'no'
 
 def app_list(domain, *args):
     domain = Domain.get_by_name(domain)
     apps = domain.applications()
-    return {"value": render_to_string("domain/partials/app_list.html", {"apps": apps, "domain": domain.name})}
+    return render_to_string("domain/partials/app_list.html", {"apps": apps, "domain": domain.name})
 
 def not_implemented(domain, *args):
-    return {"value": '<p class="text-error">not implemented</p>'}
+    return '<p class="text-error">not implemented</p>'
 
 CALC_FNS = {
     'num_web_users': num_web_users,

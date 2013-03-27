@@ -14,7 +14,7 @@ from corehq.apps.announcements.models import Notification
 from corehq.apps.appstore.views import generate_sortables_from_facets, parse_args_for_es
 
 from corehq.apps.domain.decorators import require_superuser
-from corehq.apps.hqadmin.views import project_stats_facets, ammend_domains, es_domain_query, DOMAIN_LIST_HEADERS
+from corehq.apps.hqadmin.views import project_stats_facets, ammend_domains, es_domain_query, DOMAIN_LIST_HEADERS, get_domain_totals
 from corehq.apps.hqwebapp.utils import InvitationView
 from corehq.apps.orgs.decorators import org_admin_required, org_member_required
 from corehq.apps.registration.forms import DomainRegistrationForm
@@ -550,10 +550,7 @@ def stats(request, org, template='orgs/stats.html'):
     d_results = [Domain.wrap(res['_source']) for res in results.get('hits', {}).get('hits', [])]
 
     ctxt['domains_for_report'] = ammend_domains(d_results)
-    ctxt['num_cases'] = reduce(lambda total, dom: total + dom.cases, ctxt['domains_for_report'], 0)
-    ctxt['num_forms'] = reduce(lambda total, dom: total + dom.forms, ctxt['domains_for_report'], 0)
-    ctxt['num_mob_users'] = reduce(lambda total, dom: total + dom.commcare_users, ctxt['domains_for_report'], 0)
-    ctxt['num_web_users'] = reduce(lambda total, dom: total + dom.web_users, ctxt['domains_for_report'], 0)
+    ctxt.update(get_domain_totals(ctxt['domains_for_report']))
     ctxt["tab"] = "stats"
 
     facets_sortables = generate_sortables_from_facets(results, params)
@@ -566,44 +563,44 @@ def stats(request, org, template='orgs/stats.html'):
         for dom in ctxt["domains"]:
             dom.active_in_filter = True
 
-    range = request.POST.get("daterange", 'year')
+    ctxt.update({
+        'headers': DOMAIN_LIST_HEADERS,
+        "aoColumns": DOMAIN_LIST_HEADERS.render_aoColumns,
+        # 'sortables': sorted(facets_sortables),
+        'domain_facets': sorted(domain_facets),
+        'no_header': True,
+    })
+    return render(request, template, ctxt)
+
+def stats_data(request, org):
+    params, _ = parse_args_for_es(request)
+    domains = params.get('name') or [d.name for d in Domain.get_by_organization(org).all()]
+    histo_type = request.GET.get('histogram_type')
+    period = request.GET.get("daterange", 'month')
+
     today = date.today()
     startdate = (today - timedelta(days={
         'month': 30,
         'week': 7,
         'quarter': 120,
         'year': 365,
-    }[range]))
+    }[period]))
 
-    forms_data = dict([(d.name, es_histogram('forms', [d.name],
-                                             startdate.strftime('%Y-%m-%d'),
-                                             today.strftime('%Y-%m-%d'))["facets"]["histo"]["entries"])
-                   for d in ctxt["domains_for_report"]])
-    cases_data = dict([(d.name, es_histogram('cases', [d.name],
-                                             startdate.strftime('%Y-%m-%d'),
-                                             today.strftime('%Y-%m-%d'))["facets"]["histo"]["entries"])
-                       for d in ctxt["domains_for_report"]])
+    histo_data = dict([(d, es_histogram(histo_type, [d], startdate.strftime('%Y-%m-%d'), today.strftime('%Y-%m-%d')))
+                       for d in domains])
 
-    ctxt.update({
-        # 'layout_flush_content': True,
-        'headers': DOMAIN_LIST_HEADERS,
-        "aoColumns": DOMAIN_LIST_HEADERS.render_aoColumns,
-        # 'sortables': sorted(facets_sortables),
-        'domain_facets': sorted(domain_facets),
-        'no_header': True,
-        'forms_data': forms_data,
-        'cases_data': cases_data,
-        'range': range,
+    return json_response({
+        'histo_data': histo_data,
+        'range': period,
         'startdate': [startdate.year, startdate.month, startdate.day],
         'enddate': [today.year, today.month, today.day],
     })
-    return render(request, template, ctxt)
 
-def es_histogram(type, domains=None, startdate=None, enddate=None):
+def es_histogram(histo_type, domains=None, startdate=None, enddate=None):
     date_field = {  "forms": "received_on",
-                    "cases": "modified_on"  }[type]
+                    "cases": "modified_on"  }[histo_type]
     es_url = {  "forms": XFORM_INDEX + '/xform/_search',
-                "cases": CASE_INDEX + '/case/_search' }[type]
+                "cases": CASE_INDEX + '/case/_search' }[histo_type]
 
     q = {"query": {"match_all":{}}}
 
@@ -630,7 +627,7 @@ def es_histogram(type, domains=None, startdate=None, enddate=None):
     # es_url = XFORM_INDEX + '/xform/_search'
     es = get_es()
     ret_data = es.get(es_url, data=q)
-    return ret_data
+    return ret_data["facets"]["histo"]["entries"]
 
 
 

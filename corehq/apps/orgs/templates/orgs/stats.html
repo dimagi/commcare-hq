@@ -18,7 +18,41 @@
 {% block js-inline %} {{ block.super }}
     <script src='{% static 'hqadmin/js/date_histogram_chart.js' %}' type='text/javascript'></script>
     <script type="text/javascript">
-        var domain_data;
+        function setActiveRange(chart_id, range) {
+            var $chart = $('#' + chart_id);
+            var $accordion = $chart.parents('.accordion-group');
+            var $labels = $accordion.find('.label');
+            $labels.removeClass('label-success');
+            $accordion.find('.' + range + '-label').addClass('label-success');
+        }
+
+        function loadChartData(chart_id, daterange) {
+            var xname = {
+                'forms-chart': '# of form submissions',
+                'cases-chart': '# of case modifications'
+            }[chart_id];
+            var histo_type = {
+                'forms-chart': 'forms',
+                'cases-chart': 'cases'
+            }[chart_id];
+            var $chart = $('#' + chart_id);
+            $chart.parent().children('.loading').show();
+{#            $chart.find("svg").append('<text class="nvd3 nv-noData" dy="-.7em" style="text-anchor: middle;" x="484" y="150">Loading...</text>');#}
+            $chart.hide();
+
+            $.getJSON('{% url orgs_stats_data org.name %}', {daterange: daterange, histogram_type: histo_type},
+                    function(d) {
+                        var starting_time = new Date(d.startdate[0], d.startdate[1], d.startdate[2]).getTime();
+                        var ending_time = new Date(d.enddate[0], d.enddate[1], d.enddate[2]).getTime();
+                        addHistogram(chart_id, xname, d.histo_data, starting_time, ending_time);
+                        $chart.parent().children('.loading').hide();
+                        $chart.html('').append('<svg style="height:320px"> </svg>');
+                        $chart.show();
+                        setActiveRange(chart_id, d.range);
+                    }
+            )
+        }
+
         $(function() {
             var reportTables = new HQReportDataTables({
                 {% if aoColumns %}aoColumns: {{ aoColumns|JSON }}{% endif %}
@@ -33,16 +67,36 @@
                 $project_filter_checkboxes.attr('checked', false);
             });
 
-            // Charts ==================================================================================================
-            var forms_data = {{ forms_data|JSON }};
-            var cases_data = {{ cases_data|JSON }};
+            $('#charts-accordion.collapse').on('show', function(){
+                $('#charts-accordion.collapse.in').collapse('hide');
+            });
 
-            //set starting and ending times
-            var starting_time = new Date({{ startdate.0 }}, {{ startdate.1 }}, {{ startdate.2 }}).getTime();
-            var ending_time = new Date({{ enddate.0 }}, {{ enddate.1 }}, {{ enddate.2 }}).getTime();
+            $('#charts-accordion').on('click', '.accordion-toggle', function(){
+                var $chart = ($($(this).attr('href')).find('.nvd3-chart'));
+                $c = $chart;
+                if ($chart.length > 0 && !$chart.is(':visible')) {
+                    console.log('loading for the first time');
+                    loadChartData($chart.attr('id'), 'year');
+                }
+            });
 
-            addHistogram('form-submissions-chart', '# of form submissions', forms_data, starting_time, ending_time);
-            addHistogram('cases-chart', '# of case modifications', cases_data, starting_time, ending_time);
+            $('.daterange-btn').hover(function() { // Mouse in
+               $(this).children(":first").addClass('label-info');
+            }, function() { // Mouse out
+                $(this).children(":first").removeClass('label-info');
+            });
+
+            $(document).on('click', '.daterange-btn', function() {
+                var $this = $(this);
+                var $chart_container = $this.parents('.accordion-heading').siblings('.accordion-body');
+                loadChartData($this.attr('data-chart'), $this.attr('data-range'));
+                if (!$chart_container.is(':visible')) {
+                    $chart_container.collapse('show');
+                }
+                return false;
+            });
+
+            loadChartData('forms-chart', 'year');
         });
     </script>
 {% endblock %}
@@ -51,13 +105,21 @@
     <div class="accordion" id="charts-accordion">
         <div class="accordion-group">
             <div class="accordion-heading">
-                <a class="accordion-toggle" data-toggle="collapse" data-parent="#charts-accordion" href="#form-graph">
-                    {% trans "Form Submissions" %}
-                </a>
+                <span class="pull-right" style="margin: 8px">
+                    <a data-chart="forms-chart" data-range="year" class="daterange-btn" href="#">
+                        <span class="label year-label">Year</span></a>
+                    <a data-chart="forms-chart" data-range="month" class="daterange-btn" href="#">
+                        <span class="label month-label">Month</span></a>
+                    <a data-chart="forms-chart" data-range="week" class="daterange-btn" href="#">
+                        <span class="label week-label">Week</span></a>
+                </span>
+                <a class="accordion-toggle" data-toggle="collapse" data-parent="#charts-accordion" href="#forms-graph">
+                    {% trans "Form Submissions" %}</a>
             </div>
-            <div id="form-graph" class="accordion-body collapse in">
+            <div id="forms-graph" class="accordion-body collapse in">
                 <div class="accordion-inner">
-                    <div id='form-submissions-chart'>
+                    <div style="height: 320px; min-height: 320px;" class="loading">Loading...</div>
+                    <div id='forms-chart' class='nvd3-chart hide'>
                         <svg style='height:320px'> </svg>
                     </div>
                 </div>
@@ -65,13 +127,22 @@
         </div>
         <div class="accordion-group">
             <div class="accordion-heading">
-                <a class="accordion-toggle" data-toggle="collapse" data-parent="#charts-accordion" href="#case-graph">
+                <span class="pull-right" style="margin: 8px">
+                    <a data-chart="cases-chart" data-range="year" class="daterange-btn" href="#">
+                        <span class="label year-label">Year</span></a>
+                    <a data-chart="cases-chart" data-range="month" class="daterange-btn" href="#">
+                        <span class="label month-label">Month</span></a>
+                    <a data-chart="cases-chart" data-range="week" class="daterange-btn" href="#">
+                        <span class="label week-label">Week</span></a>
+                </span>
+                <a class="accordion-toggle" data-toggle="collapse" data-parent="#charts-accordion" href="#cases-graph">
                     {% trans "Case Modifications" %}
                 </a>
             </div>
-            <div id="case-graph" class="accordion-body collapse">
+            <div id="cases-graph" class=" accordion-body collapse">
                 <div class="accordion-inner">
-                    <div id='cases-chart'>
+                    <div style="height: 320px; min-height: 320px;" class="loading">Loading...</div>
+                    <div id='cases-chart' class='nvd3-chart hide'>
                         <svg style='height:320px'> </svg>
                     </div>
                 </div>
@@ -87,12 +158,10 @@
     <hr />
     <form id="filter-projects-form" action="{% url orgs_stats org.name %}" method="get">
         <h3>{% trans "Filter Project Spaces" %}
-            <div class="btn-toolbar pull-right">
-                <button type="submit" class="btn btn-primary"><strong>{% trans "Filter" %}</strong></button>
-                <div class="btn-group">
-                    <button type="button" id="select-btn" href="#" class="btn">{% trans "Select All" %}</button>
-                    <button type="button" id="deselect-btn" href="#" class="btn">{% trans "Deselect All" %}</button>
-                </div>
+            <button type="submit" class="btn btn-primary"><strong>{% trans "Filter" %}</strong></button>
+            <div class="btn-group pull-right">
+                <button type="button" id="select-btn" href="#" class="btn">{% trans "Select All" %}</button>
+                <button type="button" id="deselect-btn" href="#" class="btn">{% trans "Deselect All" %}</button>
             </div>
         </h3>
         <div class="well" id="domain-filter">
