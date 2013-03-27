@@ -166,8 +166,7 @@ class ReportDispatcher(View):
                         })
             if report_contexts:
                 if hasattr(section_name, '__call__'):
-                    section_name = section_name(
-                        domain=domain, project=project, user=couch_user)
+                    section_name = section_name(project, couch_user)
                 nav_context.append((section_name, report_contexts))
         return nav_context
 
