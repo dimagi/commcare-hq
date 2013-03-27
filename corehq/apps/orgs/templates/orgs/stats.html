@@ -26,6 +26,8 @@
             $accordion.find('.' + range + '-label').addClass('label-success');
         }
 
+        // given the chart_id of a chart element in the dom, the function fetches the data associated with that chart
+        // and renders the chart in the specified element
         function loadChartData(chart_id, daterange) {
             var xname = {
                 'forms-chart': '# of form submissions',
@@ -37,7 +39,6 @@
             }[chart_id];
             var $chart = $('#' + chart_id);
             $chart.parent().children('.loading').show();
-{#            $chart.find("svg").append('<text class="nvd3 nv-noData" dy="-.7em" style="text-anchor: middle;" x="484" y="150">Loading...</text>');#}
             $chart.hide();
 
             $.getJSON('{% url orgs_stats_data org.name %}', {daterange: daterange, histogram_type: histo_type},
@@ -54,11 +55,13 @@
         }
 
         $(function() {
+            // renders the domain list
             var reportTables = new HQReportDataTables({
                 {% if aoColumns %}aoColumns: {{ aoColumns|JSON }}{% endif %}
             });
             reportTables.render();
 
+            // 'Select All' and 'Deselect All' buttons in filter domains
             $project_filter_checkboxes = $('#filter-projects-form').find(':checkbox');
             $(document).on('click', '#select-btn', function() {
                 $project_filter_checkboxes.attr('checked', true);
@@ -67,10 +70,12 @@
                 $project_filter_checkboxes.attr('checked', false);
             });
 
-            $('#charts-accordion.collapse').on('show', function(){
-                $('#charts-accordion.collapse.in').collapse('hide');
+            // collapse other collapseable divs in the charts accordion when
+            $('#charts-accordion .collapse').on('show', function(){
+                $('#charts-accordion .collapse.in').collapse('hide');
             });
 
+            // load chart if not already visible on the screen
             $('#charts-accordion').on('click', '.accordion-toggle', function(){
                 var $chart = ($($(this).attr('href')).find('.nvd3-chart'));
                 $c = $chart;
@@ -80,17 +85,19 @@
                 }
             });
 
+            // hover effects of the daterange button
             $('.daterange-btn').hover(function() { // Mouse in
                $(this).children(":first").addClass('label-info');
             }, function() { // Mouse out
                 $(this).children(":first").removeClass('label-info');
             });
 
+            // load new chart when daterange is clicked
             $(document).on('click', '.daterange-btn', function() {
                 var $this = $(this);
                 var $chart_container = $this.parents('.accordion-heading').siblings('.accordion-body');
                 loadChartData($this.attr('data-chart'), $this.attr('data-range'));
-                if (!$chart_container.is(':visible')) {
+                if (!$chart_container.hasClass('in')) { // check to see
                     $chart_container.collapse('show');
                 }
                 return false;

@@ -543,7 +543,6 @@ def stats(request, org, template='orgs/stats.html'):
     ctxt = base_context(request, organization)
 
     params, _ = parse_args_for_es(request)
-    # facets = project_stats_facets()
     facets = ['name', 'is_active', 'project_type']
 
     results = es_domain_query(params, facets, domains=[d.name for d in ctxt['domains']])
@@ -566,7 +565,6 @@ def stats(request, org, template='orgs/stats.html'):
     ctxt.update({
         'headers': DOMAIN_LIST_HEADERS,
         "aoColumns": DOMAIN_LIST_HEADERS.render_aoColumns,
-        # 'sortables': sorted(facets_sortables),
         'domain_facets': sorted(domain_facets),
         'no_header': True,
     })
@@ -624,7 +622,6 @@ def es_histogram(histo_type, domains=None, startdate=None, enddate=None):
         "size": 0
     })
 
-    # es_url = XFORM_INDEX + '/xform/_search'
     es = get_es()
     ret_data = es.get(es_url, data=q)
     return ret_data["facets"]["histo"]["entries"]

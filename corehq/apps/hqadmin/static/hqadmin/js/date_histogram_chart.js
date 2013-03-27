@@ -1,3 +1,5 @@
+// Contains helper functions for rendering nvd3 multibar charts with data pulled from an elastic search histogram filter
+
 var DAY_VALUE = 86400000;
 function isInt(n) {
     return typeof n === 'number' && parseFloat(n) == parseInt(n, 10) && !isNaN(n);
@@ -14,7 +16,7 @@ function format_data(data, starting_time, ending_time) {
 
     function format_data_entry(name, entry) {
         /*
-         * Takes in the entries dictionary returned in a es histogram facet nd converts that data for use in nvd3
+         * Takes in the entries dictionary returned in a es date histogram facet and converts that data for use in nvd3
          */
         entry.sort(function(x, y) {return x.time > y.time});
 
