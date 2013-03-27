@@ -15,22 +15,27 @@ $(function () {
     var statechange = function () {
         var State = History.getState();
         var hash  = History.getHash();
+
         // Our default tab.
         if (!State.data || !State.data.tab) {
             if (hash) {
                 State.data.tab = hash;
                 window.location.hash = '';
             } else {
-                State.data.tab = 'DEFAULT ACTIVE TAB';
+                State.data.tab = '';
             }
         }
-        var link = $('a[data-toggle="tab"][href$="#' + State.data.tab + '"]');
-        if (link.length === 0) {
+
+        var link;
+        if (State.data.tab) {
+            link = $('a[data-toggle="tab"][href$="#' + State.data.tab + '"]');
+        } else {
             // if you can't find it by hash, try matching the url
             // this is for first loading a page,
             // where State.data.tab won't be available
             link = $('a[data-toggle="tab"][href^="' + window.location.pathname + '"]');
             if (link.length !== 0) {
+                link = link.first();
                 History.replaceState({
                     tab: link.attr('href').split('#')[1]
                 }, null, State.url);
