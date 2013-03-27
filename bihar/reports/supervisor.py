@@ -54,7 +54,7 @@ class ConvenientBaseMixIn(object):
         return None if self.rendered_as == "async" else self.rendered_as
        
     @classmethod
-    def show_in_navigation(cls, request, domain=None):
+    def show_in_navigation(cls, *args, **kwargs):
         return False
 
 def list_prompt(index, value):
@@ -223,7 +223,7 @@ class MainNavReport(BiharSummaryReport, IndicatorConfigMixIn):
         return [WorkerRankSelectionReport, ToolsNavReport]
     
     @classmethod
-    def show_in_navigation(cls, request, domain=None):
+    def show_in_navigation(cls, *args, **kwargs):
         return True
 
     @property
