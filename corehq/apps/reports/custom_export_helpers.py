@@ -14,9 +14,13 @@ class CustomExportHelper(object):
     ExportReport = NotImplemented
     export_title = NotImplemented
     allow_deid = False
+    allow_repeats = True
 
     subclasses_map = NotImplemented  # implemented below
 
+    @property
+    def default_order(self):
+        return {}
 
     @classmethod
     def make(cls, request, *args, **kwargs):
@@ -113,26 +117,20 @@ class CustomExportHelper(object):
     def get_response(self):
         table_configuration = self.custom_export.table_configuration
 
-        def show_deid_column():
-            for table_config in table_configuration:
-                for col in table_config['column_configuration']:
-                    if col['transform']:
-                        return True
-            return False
-
-        return render(self.request, "reports/reportdata/customize_export.html", {
-            "custom_export": self.custom_export,
-            "deid_options": self.DEID.json_options,
-            "presave": self.presave,
-            "DeidExportReport_name": DeidExportReport.name,
-            "table_configuration": table_configuration,
-            "domain": self.domain,
-            "show_deid_column": show_deid_column(),
+        return render(self.request, 'reports/reportdata/customize_export.html', {
+            'custom_export': self.custom_export,
+            'default_order': self.default_order,
+            'deid_options': self.DEID.json_options,
+            'presave': self.presave,
+            'DeidExportReport_name': DeidExportReport.name,
+            'table_configuration': table_configuration,
+            'domain': self.domain,
             'helper': {
                 'back_url': self.ExportReport.get_url(domain=self.domain),
                 'export_title': self.export_title,
                 'slug': self.ExportReport.slug,
-                'allow_deid': self.allow_deid
+                'allow_deid': self.allow_deid,
+                'allow_repeats': self.allow_repeats
             }
         })
 
@@ -143,6 +141,7 @@ class FormCustomExportHelper(CustomExportHelper):
     ExportReport = export.ExcelExportReport
 
     allow_deid = True
+    allow_repeats = True
 
     @property
     def export_title(self):
@@ -158,6 +157,11 @@ class FormCustomExportHelper(CustomExportHelper):
         e = self.custom_export
         e.include_errors = p['include_errors']
         e.app_id = p['app_id']
+
+    @property
+    @memoized
+    def default_order(self):
+        return self.custom_export.get_default_order()
 
 
 class CaseCustomExportHelper(CustomExportHelper):

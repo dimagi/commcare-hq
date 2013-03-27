@@ -555,45 +555,8 @@ class FormExportSchema(SavedExportSchema):
     def formname(self):
         return xmlns_to_name(self.domain, self.xmlns, app_id=self.app_id)
 
-    @property
-    def table_configuration(self):
-        try:
-            table_configuration = super(FormExportSchema, self).table_configuration
+    def get_default_order(self):
 
-            order = self.get_app_order()
-
-            ORDER_DICT = dict([(index, (i,)) for i, index in enumerate(order)])
-            MAX_I = len(ORDER_DICT)
-
-            def sort_key(column):
-                index = column['index']
-                if index in ORDER_DICT:
-                    return ORDER_DICT[index]
-                else:
-                    # put indexes not in the app at the end,
-                    # in alphabetical order
-                    return MAX_I, index
-
-            column_configuration = []
-            unselected = []
-            for column in table_configuration[0]['column_configuration']:
-                if column['index'] == 'id' and not column['selected']:
-                    column_configuration.insert(0, column)
-                elif column['selected']:
-                    column_configuration.append(column)
-                else:
-                    unselected.append(column)
-            unselected.sort(key=sort_key)
-            column_configuration.extend(unselected)
-            table_configuration[0]['column_configuration'] = column_configuration
-
-            return table_configuration
-        except AttributeError as e:
-            # couchdbkit just loves swallowing these
-            logging.exception(e)
-            raise
-
-    def get_app_order(self):
         if not self.app:
             return []
         else:
@@ -621,7 +584,8 @@ class FormExportSchema(SavedExportSchema):
             index_parts[1] = 'form'
             index = '.'.join(index_parts[1:])
             order.append(index)
-        return order
+
+        return {'#': order}
 
 
 class FormDeidExportSchema(FormExportSchema):
