@@ -101,5 +101,5 @@ class CommCareCaseResource(v0_3.CommCareCaseResource):
     def obj_get_list(self, request, domain, **kwargs):
         filters = v0_3.CaseListFilters(request.GET).filters
         return ESQuerySet(payload = ElasticCaseQuery(domain, filters).get_query(),
-                          model = CommCareCase,
+                          model = lambda jvalue: dict_object(CommCareCase.wrap(jvalue).get_json()),
                           es_client = CaseES(domain)) # Not that XFormES is used only as an ES client, for `run_query` against the proper index
