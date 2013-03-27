@@ -9,6 +9,8 @@ class Location(Document):
     name = StringProperty()
     location_type = StringProperty()
     site_code = StringProperty() # should be unique, not yet enforced
+    # unique id from some external data source
+    external_id = StringProperty()
 
     # a list of doc ids, referring to the parent location, then the
     # grand-parent, and so on up to the root location in the hierarchy

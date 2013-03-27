@@ -1,3 +1,4 @@
+from corehq.apps.commtrack.const import RequisitionActions
 from corehq.apps.domain.models import Domain
 from casexml.apps.case.models import CommCareCase
 from corehq.apps.locations.models import Location
@@ -21,10 +22,11 @@ def handle(verified_contact, text):
         return False
 
     try:
-        data = StockReport(domain, verified_contact).parse(text.lower())
+        data = StockReportHelper(domain, verified_contact).parse(text.lower())
         if not data:
             return False
     except Exception, e:
+        raise
         send_sms_to_verified_number(verified_contact, 'problem with stock report: %s' % str(e))
         return True
 
@@ -39,7 +41,7 @@ def process(domain, data):
     
     stockreport.process(domain, inst_xml)
 
-class StockReport(object):
+class StockReportHelper(object):
     """a helper object for parsing raw stock report texts"""
 
     def __init__(self, domain, v):
@@ -52,10 +54,11 @@ class StockReport(object):
         """take in a text and return the parsed stock transactions"""
         args = text.split()
 
-        if args[0] in self.C.keywords():
+        if args[0] in self.C.all_keywords():
             # single action sms
             # TODO: support single-action by product, as well as by action?
-            action = self.C.keywords()[args[0]]
+            action_name = self.C.all_keywords()[args[0]]
+            action = self.C.all_actions_by_name[action_name]
             args = args[1:]
 
             if not location:
@@ -81,7 +84,7 @@ class StockReport(object):
 
         tx = list(_tx)
         if not tx:
-            raise RuntimeError('stock report doesn\'t have any transactions')
+            raise RuntimeError("stock report doesn't have any transactions")
 
         return {
             'timestamp': datetime.utcnow(),
@@ -93,15 +96,15 @@ class StockReport(object):
 
     def single_action_transactions(self, action, args):
         # special case to handle immediate stock-out reports
-        if action == 'stockout':
+        if action.action_type == 'stockout':
             if all(looks_like_prod_code(arg) for arg in args):
                 for prod_code in args:
-                    yield mk_tx(self.product_from_code(prod_code), action, 0)
+                    yield mk_tx(self.product_from_code(prod_code), action.name, 0)
                 return
             else:
-                raise RuntimeError('can\'t include a quantity for stock-out action')
-            
-        grouping_allowed = (action == 'stockedoutfor')
+                raise RuntimeError("can't include a quantity for stock-out action")
+
+        grouping_allowed = (action.action_type == 'stockedoutfor')
 
         products = []
         for arg in args:
@@ -119,7 +122,7 @@ class StockReport(object):
                     raise RuntimeError('could not understand product quantity "%s"' % arg)
 
                 for p in products:
-                    yield mk_tx(p, action, value)
+                    yield mk_tx(p, action.name, value)
                 products = []
         if products:
             raise RuntimeError('missing quantity for product "%s"' % products[-1].code)
@@ -272,7 +275,7 @@ def send_confirmation(v, data):
     static_loc = Location.get(data['location'].location_[-1])
     location_name = static_loc.name
 
-    action_to_code = dict((v, k) for k, v in C.keywords().iteritems())
+    action_to_code = dict((v, k) for k, v in C.all_keywords().iteritems())
     tx_by_action = map_reduce(lambda tx: [(tx['action'],)], data=data['transactions'], include_docs=True)
     def summarize_action(action, txs):
         def fragment(tx):
