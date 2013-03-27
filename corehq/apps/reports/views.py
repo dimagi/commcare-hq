@@ -550,7 +550,64 @@ def add_config(request, domain=None):
     
     config.save()
 
+    # hit the view so stale=update_after doesn't cause the user to not see it
+    # the next time they go to the reports homepage
+    ReportConfig.by_domain_and_owner(domain, user_id, limit=1).all()
+
     return json_response(config)
+
+@login_and_domain_required
+@datespan_default
+def email_report(request, domain, report_slug):
+    from datetime import datetime
+    from dimagi.utils.django.email import send_HTML_email
+    from corehq.apps.reports.dispatcher import ProjectReportDispatcher
+    from forms import EmailReportForm
+    user_id = request.couch_user._id
+
+    form = EmailReportForm(request.GET)
+    if not form.is_valid():
+        return HttpResponseBadRequest()
+
+    config = ReportConfig()
+    # see ReportConfig.query_string()
+    object.__setattr__(config, '_id', 'dummy')
+    config.name = _("Emailed report")
+    config.report_type = ProjectReportDispatcher.prefix
+    config.report_slug = report_slug
+    config.owner_id = user_id
+    config.domain = domain
+
+    config.date_range = 'range'
+    config.start_date = request.datespan.computed_startdate.date()
+    config.end_date = request.datespan.computed_enddate.date()
+
+    GET = dict(request.GET.iterlists())
+    exclude = ['startdate', 'enddate', 'subject', 'send_to_owner', 'notes', 'recipient_emails']
+    filters = {}
+    for field in GET:
+        if not field in exclude:
+            filters[field] = GET.get(field)
+
+    config.filters = filters
+
+    body = _render_report_configs(request, [config],
+                                  domain,
+                                  user_id,
+                                  request.couch_user,
+                                  True,
+                                  notes=form.cleaned_data['notes']).content
+
+    subject = form.cleaned_data['subject'] or _("Email report from CommCare HQ")
+
+    if form.cleaned_data['send_to_owner']:
+        send_HTML_email(subject, request.couch_user.get_email(), body)
+
+    if form.cleaned_data['recipient_emails']:
+        for recipient in form.cleaned_data['recipient_emails']:
+            send_HTML_email(subject, recipient, body)
+
+    return HttpResponse()
 
 @login_and_domain_required
 @require_http_methods(['DELETE'])
@@ -624,6 +681,10 @@ def edit_scheduled_report(request, domain, scheduled_report_id=None,
         else:
             messages.success(request, "Scheduled report updated!")
 
+        # hit the view so stale=update_after doesn't cause the user to not see
+        # this report when they next load the report list
+        ReportNotification.by_domain_and_owner(domain, user_id, limit=1).all()
+
         return HttpResponseRedirect(reverse('reports_home', args=(domain,)))
 
     context['form'] = form
@@ -676,7 +737,6 @@ def send_test_scheduled_report(request, domain, scheduled_report_id):
 
 def get_scheduled_report_response(couch_user, domain, scheduled_report_id,
                                   email=True):
-    from dimagi.utils.web import get_url_base
     from django.http import HttpRequest
     
     request = HttpRequest()
@@ -687,21 +747,31 @@ def get_scheduled_report_response(couch_user, domain, scheduled_report_id,
 
     notification = ReportNotification.get(scheduled_report_id)
 
+    return _render_report_configs(request, notification.configs,
+                                  notification.domain,
+                                  notification.owner_id,
+                                  couch_user,
+                                  email)
+
+def _render_report_configs(request, configs, domain, owner_id, couch_user, email, notes=None):
+    from dimagi.utils.web import get_url_base
+
     report_outputs = []
-    for config in notification.configs:
+    for config in configs:
         report_outputs.append({
             'title': config.full_name,
             'url': config.url,
             'content': config.get_report_content()
         })
-    
+
     return render(request, "reports/report_email.html", {
         "reports": report_outputs,
-        "domain": notification.domain,
-        "couch_user": notification.owner._id,
+        "domain": domain,
+        "couch_user": owner_id,
         "DNS_name": get_url_base(),
         "owner_name": couch_user.full_name or couch_user.get_email(),
-        "email": email
+        "email": email,
+        "notes": notes
     })
 
 @login_and_domain_required

@@ -1,41 +1,36 @@
+import json
+
 from couchdbkit.exceptions import ResourceNotFound
 from couchdbkit.resource import RequestFailed
+import dateutil
 from django.core.urlresolvers import reverse, NoReverseMatch
 from django.template.defaultfilters import yesno
-import json
 from django.utils import html
+from django.utils.safestring import mark_safe
 import pytz
 from django.conf import settings
-from casexml.apps.case.models import CommCareCase
-from corehq.apps.hqcase.paginator import CasePaginator
+from django.core import cache
+from django.utils.translation import ugettext as _
+from django.utils.translation import ugettext_noop
+import simplejson
+
+from casexml.apps.case.models import CommCareCaseAction
+from corehq.apps.api.es import CaseES
 from corehq.apps.hqsofabed.models import HQFormData
+from corehq.apps.reports.filters.search import SearchFilter
 from corehq.apps.reports.standard import ProjectReport, ProjectReportParametersMixin
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
 from corehq.apps.reports.display import xmlns_to_name
 from corehq.apps.reports.fields import SelectOpenCloseField, SelectMobileWorkerField
-from corehq.apps.reports.generic import GenericTabularReport
-from corehq.apps.users.models import CommCareUser
+from corehq.apps.reports.generic import GenericTabularReport, ProjectInspectionReportParamsMixin, ElasticTabularReport
+from corehq.apps.users.models import CommCareUser, CouchUser
 from dimagi.utils.couch.database import get_db
 from dimagi.utils.couch.pagination import CouchFilter
 from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.timezones import utils as tz_utils
 from corehq.apps.groups.models import Group
-from django.utils.translation import ugettext as _
-from django.utils.translation import ugettext_noop
 
 
-class ProjectInspectionReportParamsMixin(object):
-    @property
-    def shared_pagination_GET_params(self):
-        # This was moved from ProjectInspectionReport so that it could be included in CaseReassignmentInterface too
-        # I tried a number of other inheritance schemes, but none of them worked because of the already
-        # complicated multiple-inheritance chain
-        # todo: group this kind of stuff with the field object in a comprehensive field refactor
-
-        return [dict(name='individual', value=self.individual),
-                dict(name='group', value=self.group_id),
-                dict(name='case_type', value=self.case_type),
-                dict(name='ufilter', value=[f.type for f in self.user_filter if f.show])]
 
 class ProjectInspectionReport(ProjectInspectionReportParamsMixin, GenericTabularReport, ProjectReport, ProjectReportParametersMixin):
     """
@@ -136,8 +131,18 @@ class CaseListFilter(CouchFilter):
 
 class CaseDisplay(object):
     def __init__(self, report, case):
+        """
+        case is a dict object of the case doc
+        """
         self.case = case
         self.report = report
+
+    def parse_date(self, date_string):
+        try:
+            date_obj = dateutil.parser.parse(date_string)
+            return date_obj
+        except:
+            return date_string
 
     def user_not_found_display(self, user_id):
         return _("Unknown [%s]") % user_id
@@ -146,8 +151,26 @@ class CaseDisplay(object):
     def _get_username(self, user_id):
         username = self.report.usernames.get(user_id)
         if not username:
-            user = CommCareUser.get_by_user_id(user_id)
-            username = user.username if user else self.user_not_found_display(user_id)
+            mc = cache.get_cache('default')
+            cache_key = "%s.%s" % (CouchUser.__class__.__name__, user_id)
+            try:
+                if mc.has_key(cache_key):
+                    user_dict = simplejson.loads(mc.get(cache_key))
+                else:
+                    user_obj = CouchUser.get_by_user_id(self.owner_id) if user_id else None
+                    if user_obj:
+                        user_dict = user_obj.to_json()
+                    else:
+                        user_dict = {}
+                    cache_payload = simplejson.dumps(user_dict)
+                    mc.set(cache_key, cache_payload)
+                if user_dict == {}:
+                    return self.user_not_found_display(user_id)
+                else:
+                    user_obj = CouchUser.wrap(user_dict)
+                    username = user_obj.username
+            except Exception:
+                return None
         return username
 
     @property
@@ -159,11 +182,11 @@ class CaseDisplay(object):
 
     @property
     def closed_display(self):
-        return yesno(self.case.closed, "closed,open")
+        return yesno(self.case['closed'], "closed,open")
 
     @property
     def case_link(self):
-        case_id, case_name = self.case.case_id, self.case.name
+        case_id, case_name = self.case['_id'], self.case['name']
         try:
             return html.mark_safe("<a class='ajax_dialog' href='%s'>%s</a>" % (
                 html.escape(reverse('case_details', args=[self.report.domain, case_id])),
@@ -174,19 +197,23 @@ class CaseDisplay(object):
 
     @property
     def case_type(self):
-        return self.case.type
+        return self.case['type']
 
     @property
     def opened_on(self):
-        return self.report.date_to_json(self.case.opened_on)
+        return self.report.date_to_json(self.parse_date(self.case['opened_on']))
 
     @property
     def modified_on(self):
-        return self.report.date_to_json(self.case.modified_on)
+        return self.report.date_to_json(self.modified_on_dt)
+
+    @property
+    def modified_on_dt(self):
+        return self.parse_date(self.case['modified_on'])
 
     @property
     def owner_id(self):
-        return self.case.owner_id if self.case.owner_id else self.case.user_id
+        return self.case['owner_id'] if self.case['owner_id'] else self.case['user_id']
 
     @property
     @memoized
@@ -219,8 +246,17 @@ class CaseDisplay(object):
 
     @property
     def owning_group(self):
+        mc = cache.get_cache('default')
+        cache_key = "%s.%s" % (Group.__class__.__name__, self.owner_id)
         try:
-            return Group.get(self.owner_id)
+            if mc.has_key(cache_key):
+                cached_obj = simplejson.loads(mc.get(cache_key))
+                wrapped = Group.wrap(cached_obj)
+                return wrapped
+            else:
+                group_obj = Group.get(self.owner_id)
+                mc.set(cache_key, simplejson.dumps(group_obj.to_json()))
+                return group_obj
         except Exception:
             return None
 
@@ -230,41 +266,100 @@ class CaseDisplay(object):
 
     @property
     def creating_user(self):
-        owner_id = ""
-        for action in self.case.actions:
+        creator_id = None
+        for action in self.case['actions']:
             if action['action_type'] == 'create':
-                owner_id = action.get_user_id()
-        if not owner_id:
+                action_doc = CommCareCaseAction.wrap(action)
+                creator_id = action_doc.get_user_id()
+                break
+        if not creator_id:
             return _("No data")
-        return self._get_username(owner_id)
+        return self._get_username(creator_id)
 
-class CaseListMixin(ProjectInspectionReportParamsMixin, GenericTabularReport, ProjectReportParametersMixin):
 
+class CaseSearchFilter(SearchFilter):
+    search_help_inline = mark_safe(ugettext_noop("""Search any text, or use a targeted query. For more info see the <a href='https://wiki.commcarehq.org/display/commcarepublic/Advanced+Case+Search' target='_blank'>Case Search</a> help page"""))
+
+
+class CaseListMixin(ElasticTabularReport, ProjectReportParametersMixin):
     fields = [
         'corehq.apps.reports.fields.FilterUsersField',
         'corehq.apps.reports.fields.SelectCaseOwnerField',
         'corehq.apps.reports.fields.CaseTypeField',
         'corehq.apps.reports.fields.SelectOpenCloseField',
+        'corehq.apps.reports.standard.inspect.CaseSearchFilter',
     ]
 
     case_filter = {}
+    ajax_pagination = True
+    asynchronous = True
 
     @property
     @memoized
-    def case_results(self):
-        return CasePaginator(
-            domain=self.domain,
-            params=self.pagination,
-            case_type=self.case_type,
-            owner_ids=self.case_owners,
-            user_ids=self.user_ids,
-            status=self.case_status,
-            filter=self.case_filter
-        ).results()
+    def case_es(self):
+        return CaseES(self.domain)
+
+
+    def build_query(self, case_type=None, filter=None, status=None, owner_ids=[], search_string=None):
+        # there's no point doing filters that are like owner_id:(x1 OR x2 OR ... OR x612)
+        # so past a certain number just exclude
+        MAX_IDS = 50
+
+        def _filter_gen(key, flist):
+            if flist and len(flist) < MAX_IDS:
+                yield {"terms": {
+                    key: [item.lower() if item else "" for item in flist]
+                }}
+
+            # demo user hack
+            elif flist and "demo_user" not in flist:
+                yield {"not": {"term": {key: "demo_user"}}}
+
+        def _domain_term():
+            return {"term": {"domain.exact": self.domain}}
+
+        subterms = [_domain_term(), filter] if filter else [_domain_term()]
+        if case_type:
+            subterms.append({"term": {"type.exact": case_type}})
+
+        if status:
+            subterms.append({"term": {"closed": (status == 'closed')}})
+
+        user_filters = list(_filter_gen('owner_id', owner_ids)) + \
+                       list(_filter_gen('user_id', owner_ids))
+        if user_filters:
+            subterms.append({'or': user_filters})
+
+        if search_string:
+            query_block = {
+                "query_string": {"query": search_string}}  # todo, make sure this doesn't suck
+        else:
+            query_block = {"match_all": {}}
+
+        and_block = {'and': subterms} if subterms else {}
+
+        es_query = {
+            'query': {
+                'filtered': {
+                    'query': query_block,
+                    'filter': and_block
+                }
+            },
+            'sort': self.get_sorting_block(),
+            'from': self.pagination.start,
+            'size': self.pagination.count,
+        }
+
+        return es_query
 
     @property
-    def total_records(self):
-        return self.case_results['total_rows']
+    @memoized
+    def es_results(self):
+        case_es = self.case_es
+        query = self.build_query(case_type=self.case_type, filter=self.case_filter,
+                                 status=self.case_status, owner_ids=self.case_owners,
+                                 search_string=SearchFilter.get_value(self.request, self.domain))
+        return case_es.run_query(query)
 
     @property
     @memoized
@@ -292,18 +387,15 @@ class CaseListMixin(ProjectInspectionReportParamsMixin, GenericTabularReport, Pr
                 return []
 
     def get_case(self, row):
-        if "doc" in row:
-            case = CommCareCase.wrap(row["doc"])
-        elif "id" in row:
-            case = CommCareCase.get(row["id"])
+        if '_source' in row:
+            case_dict = row['_source']
         else:
-            raise ValueError("Can't construct case object from row result %s" % row)
+            raise ValueError("Case object is not in search result %s" % row)
 
-        if case.domain != self.domain:
-            raise Exception("case.domain != self.domain; %r and %r, respectively" % (case.domain, self.domain))
+        if case_dict['domain'] != self.domain:
+            raise Exception("case.domain != self.domain; %r and %r, respectively" % (case_dict['domain'], self.domain))
 
-        return case
-
+        return case_dict
 
     @property
     def shared_pagination_GET_params(self):
@@ -326,34 +418,33 @@ class CaseListReport(CaseListMixin, ProjectInspectionReport):
     @property
     def report_context(self):
         rep_context = super(CaseListReport, self).report_context
-        rep_context.update(
-            filter=settings.LUCENE_ENABLED
-        )
         return rep_context
+
+    @property
+    @memoized
+    def rendered_report_title(self):
+        if not self.individual:
+            self.name = _("%(report_name)s for %(worker_type)s") % {
+                "report_name": _(self.name),
+                "worker_type": _(SelectMobileWorkerField.get_default_text(self.user_filter))
+            }
+        return self.name
 
     @property
     def headers(self):
         headers = DataTablesHeader(
-            DataTablesColumn(_("Case Type")),
-            DataTablesColumn(_("Name")),
-            DataTablesColumn(_("Owner")),
-            DataTablesColumn(_("Created Date")),
-            DataTablesColumn(_("Created By")),
-            DataTablesColumn(_("Modified Date")),
-            DataTablesColumn(_("Status"))
+            DataTablesColumn(_("Case Type"), prop_name="type.exact"),
+            DataTablesColumn(_("Name"), prop_name="name.exact"),
+            DataTablesColumn(_("Owner"), prop_name="owner_display", sortable=False),
+            DataTablesColumn(_("Created Date"), prop_name="opened_on"),
+            DataTablesColumn(_("Created By"), prop_name="opened_by_display", sortable=False),
+            DataTablesColumn(_("Modified Date"), prop_name="modified_on"),
+            DataTablesColumn(_("Status"), prop_name="get_status_display", sortable=False)
         )
-        headers.no_sort = True
-        if not self.individual:
-            self.name = _("%(report_name)s for %(worker_type)s") % {
-                "report_name": _(self.name), 
-                "worker_type": _(SelectMobileWorkerField.get_default_text(self.user_filter))
-            }
-
         return headers
 
     @property
     def rows(self):
-        rows = []
         def _format_row(row):
             case = self.get_case(row)
             display = CaseDisplay(self, case)
@@ -369,14 +460,9 @@ class CaseListReport(CaseListMixin, ProjectInspectionReport):
             ]
 
         try:
-            for item in self.case_results['rows']:
-                row = _format_row(item)
-                if row is not None:
-                    rows.append(row)
+            return [_format_row(item) for item in self.es_results['hits'].get('hits', [])]
         except RequestFailed:
             pass
-
-        return rows
 
     def date_to_json(self, date):
         return tz_utils.adjust_datetime_to_timezone\
@@ -468,8 +554,5 @@ create a couch doc as such:
         )
 
     @classmethod
-    def show_in_navigation(cls, request, domain=None):
-        if cls.get_config(domain):
-            return True
-        else:
-            return False
+    def show_in_navigation(cls, domain=None, project=None, user=None):
+        return cls.get_config(domain)

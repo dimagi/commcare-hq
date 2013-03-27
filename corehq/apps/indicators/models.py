@@ -627,8 +627,8 @@ class FormDataIndicatorDefinitionMixin(DocumentSchema):
             question_id = question_id.split('.')
         if len(question_id) > 0 and form_data:
             return self.get_from_form(form_data.get(question_id[0]), question_id[1:])
-        if (isinstance(form_data, dict) or isinstance(form_data, LazyDict)) and form_data.get('#text'):
-            return form_data.get('#text')
+        if (isinstance(form_data, dict) or isinstance(form_data, LazyDict)) and '#text' in form_data:
+            return form_data['#text']
         return form_data
 
 

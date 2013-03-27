@@ -10,6 +10,7 @@ from django.shortcuts import render
 import rawes
 from casexml.apps.case.models import CommCareCase
 from corehq.apps.appstore.views import parse_args_for_es, es_query, generate_sortables_from_facets
+from corehq.apps.hqadmin.models import HqDeploy
 from corehq.apps.builds.models import CommCareBuildConfig, BuildSpec
 from corehq.apps.domain.calculations import CALC_FNS
 from corehq.apps.domain.models import Domain, InternalProperties, LicenseAgreement, Deployment
@@ -412,7 +413,7 @@ def submissions_errors(request, template="hqadmin/submissions_errors_report.html
             reduce=True,
             startkey=key+[datespan.startdate_param_utc],
             endkey=key+[datespan.enddate_param_utc],
-            stale='update_after',
+            stale=settings.COUCH_STALE_QUERY,
         ).first()
         num_errors = 0
         num_warnings = 0
@@ -469,7 +470,7 @@ def update_domains(request):
                         messages.warning(request, "No domain with name %s found" % name)
                         fail_count += 1
                 except Exception, e:
-                    messages.warning("Update for %s failed: %s" % e)
+                    messages.warning(request, "Update for %s failed: %s" % (row.get("name", '<No Name>'), e))
                     fail_count += 1
             if success_count:
                 messages.success(request, "%s domains successfully updated" % success_count)
@@ -644,7 +645,8 @@ def system_info(request):
     context['celery_update'] = request.GET.get('celery_update', 10000)
 
     context['hide_filters'] = True
-    context['current_system'] = os.uname()[1]
+    if hasattr(os, 'uname'):
+        context['current_system'] = os.uname()[1]
 
     #from dimagi.utils import gitinfo
     #context['current_ref'] = gitinfo.get_project_info()
@@ -723,6 +725,7 @@ def system_info(request):
     context['memcached_status'] = mc_status
     context['memcached_results'] = mc_results
 
+    context['last_deploy'] = HqDeploy.get_latest()
 
     #elasticsearch status
     #node status
@@ -759,7 +762,7 @@ def noneulized_users(request, template="hqadmin/noneulized_users.html"):
     context["headers"] = headers
     context["aoColumns"] = headers.render_aoColumns
 
-    return render_to_response(request, template, context)
+    return render(request, template, context)
 
 def project_stats_facets():
     facets = Domain.properties().keys()

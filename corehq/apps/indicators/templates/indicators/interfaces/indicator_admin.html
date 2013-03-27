@@ -3,7 +3,7 @@
 {% block js-inline %} {{ block.super }}
     <script type="text/javascript">
         $(function () {
-            var bulk_add = '  <a href="{% url indicator_bulk_copy domain crud_item.doc %}" class="btn btn-primary"><i class="icon-copy"></i> Copy Indicators to another Project</a>';
+            var bulk_add = '  <a href="{{ bulk_add_url }}" class="btn btn-primary"><i class="icon-copy"></i> Copy Indicators to another Project</a>';
             $('#reportFiltersAccordion .accordion-actions').append(bulk_add);
         });
     </script>

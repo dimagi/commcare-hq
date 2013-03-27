@@ -1,4 +1,5 @@
-from casexml.apps.case.models import CommCareCase
+import copy
+from casexml.apps.case.models import CommCareCase, CommCareCaseAction
 from corehq.pillows.mappings.case_mapping import CASE_MAPPING, CASE_INDEX
 from dimagi.utils.decorators.memoized import memoized
 from pillowtop.listener import AliasedElasticPillow

@@ -1,7 +1,5 @@
-from django.conf import settings
 from corehq.apps.reports.standard import ProjectReport, ProjectReportParametersMixin, DatespanMixin
 from corehq.apps.reports.generic import GenericTabularReport
-from corehq.apps.domain.models import Domain
 from corehq.apps.users.models import CommCareUser
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
 from corehq.apps.locations.models import Location, all_locations
@@ -12,7 +10,6 @@ import itertools
 from datetime import date, timedelta
 from corehq.apps.commtrack.models import CommtrackConfig, Product, StockReport
 from dimagi.utils.decorators.memoized import memoized
-import urllib
 from casexml.apps.case.models import CommCareCase
 from corehq.apps.commtrack import const
 from corehq.apps.commtrack.util import supply_point_type_categories
@@ -20,15 +17,8 @@ from corehq.apps.commtrack.util import supply_point_type_categories
 class CommtrackReportMixin(ProjectReport, ProjectReportParametersMixin):
 
     @classmethod
-    def show_in_navigation(cls, request, domain=None):
-        try:
-            return request.project.commtrack_enabled
-        except Exception:
-            if settings.DEBUG:
-                raise
-            else:
-                domain = Domain.get_by_name(domain)
-                return domain.commtrack_enabled
+    def show_in_navigation(cls, domain=None, project=None, user=None):
+        return project.commtrack_enabled
 
     @property
     def config(self):

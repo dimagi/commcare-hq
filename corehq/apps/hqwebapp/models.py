@@ -5,6 +5,7 @@ from django.core.urlresolvers import reverse
 from django.utils.translation import ugettext as _
 from django.utils.translation import ugettext_noop
 from corehq.apps.indicators.dispatcher import IndicatorAdminInterfaceDispatcher
+from corehq.apps.indicators.utils import get_indicator_domains
 
 from dimagi.utils.couch.database import get_db
 from dimagi.utils.decorators.memoized import memoized
@@ -205,7 +206,7 @@ class IndicatorAdminTab(UITab):
 
     @property
     def is_viewable(self):
-        indicator_enabled_projects = getattr(settings, 'INDICATOR_ENABLED_PROJECTS', [])
+        indicator_enabled_projects = get_indicator_domains()
         return self.couch_user.can_edit_data and self.domain in indicator_enabled_projects
 
 
@@ -249,7 +250,7 @@ class ApplicationsTab(UITab):
             reduce=False,
             startkey=key,
             endkey=key+[{}],
-            stale='update_after',
+            stale=settings.COUCH_STALE_QUERY,
         ).all()
         submenu_context = []
         if not apps:

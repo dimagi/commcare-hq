@@ -5,10 +5,12 @@ from couchdbkit.exceptions import ResourceConflict
 from django.conf import settings
 from django.contrib.auth.models import AnonymousUser
 from django.db import models
-from couchdbkit.ext.django.schema import Document, StringProperty,\
-    BooleanProperty, DateTimeProperty, IntegerProperty, DocumentSchema, SchemaProperty, DictProperty, ListProperty, StringListProperty
+from couchdbkit.ext.django.schema import (Document, StringProperty, BooleanProperty, DateTimeProperty, IntegerProperty,
+                                          DocumentSchema, SchemaProperty, DictProperty, ListProperty,
+                                          StringListProperty)
 from django.utils.safestring import mark_safe
 from corehq.apps.appstore.models import Review, SnapshotMixin
+from corehq.apps.domain.utils import get_domain_module_map
 from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.html import format_html
 from dimagi.utils.logging import notify_exception
@@ -163,6 +165,8 @@ class InternalProperties(DocumentSchema, UpdatableSchema):
     using_call_center = BooleanProperty()
     custom_eula = BooleanProperty()
     can_use_data = BooleanProperty()
+    notes = StringProperty()
+    organization_name = StringProperty()
 
 
 class Domain(Document, HQBillingDomainMixin, SnapshotMixin):
@@ -190,7 +194,15 @@ class Domain(Document, HQBillingDomainMixin, SnapshotMixin):
     short_description = StringProperty()
     is_shared = BooleanProperty(default=False)
     commtrack_enabled = BooleanProperty(default=False)
+    
+    # CommConnect settings
     survey_management_enabled = BooleanProperty(default=False)
+    sms_case_registration_enabled = BooleanProperty(default=False) # Whether or not a case can register via sms
+    sms_case_registration_type = StringProperty() # Case type to apply to cases registered via sms
+    sms_case_registration_owner_id = StringProperty() # Owner to apply to cases registered via sms
+    sms_case_registration_user_id = StringProperty() # Submitting user to apply to cases registered via sms
+    sms_mobile_worker_registration_enabled = BooleanProperty(default=False) # Whether or not a mobile worker can register via sms
+    default_sms_backend_id = StringProperty()
 
     # exchange/domain copying stuff
     is_snapshot = BooleanProperty(default=False)
@@ -280,7 +292,7 @@ class Domain(Document, HQBillingDomainMixin, SnapshotMixin):
                 keys=[[is_active, d] for d in domain_names],
                 reduce=False,
                 include_docs=True,
-                stale='update_after',
+                stale=settings.COUCH_STALE_QUERY,
             ).all()
         else:
             return []
@@ -426,7 +438,7 @@ class Domain(Document, HQBillingDomainMixin, SnapshotMixin):
                 else:
                     notify_exception(None, '%r is not a valid domain name' % name)
                     return None
-        extra_args = {'stale': 'update_after'} if not strict else {}
+        extra_args = {'stale': settings.COUCH_STALE_QUERY} if not strict else {}
         result = cls.view("domain/domains",
             key=name,
             reduce=False,
@@ -558,7 +570,7 @@ class Domain(Document, HQBillingDomainMixin, SnapshotMixin):
             new_doc.domain = new_domain_name
 
         if self.is_snapshot and doc_type == 'Application':
-            new_doc.clean_mapping()
+            new_doc.prepare_multimedia_for_exchange()
 
         new_doc.save()
         return new_doc
@@ -692,7 +704,7 @@ class Domain(Document, HQBillingDomainMixin, SnapshotMixin):
             media_ids = set()
             apps = [app for app in dom_with_media.full_applications() if app.get_id in from_apps]
             for app in apps:
-                for _, m in app.get_media_documents():
+                for _, m in app.get_media_objects():
                     if m.get_id not in media_ids:
                         media.append(m)
                         media_ids.add(m.get_id)
@@ -747,8 +759,7 @@ class Domain(Document, HQBillingDomainMixin, SnapshotMixin):
         None if it doesn't exist.
         
         """
-        domain_module_map = getattr(settings, 'DOMAIN_MODULE_MAP', {})
-        module_name = domain_module_map.get(domain_name, domain_name)
+        module_name = get_domain_module_map().get(domain_name, domain_name)
 
         try:
             return __import__(module_name) if module_name else None

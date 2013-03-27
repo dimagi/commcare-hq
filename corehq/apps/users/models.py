@@ -788,7 +788,7 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, UnicodeMixIn):
             reduce=reduce,
             startkey=key,
             endkey=key + [{}],
-            stale='update_after',
+            stale=settings.COUCH_STALE_QUERY,
             **extra_args
         ).all()
 
@@ -885,7 +885,7 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, UnicodeMixIn):
             )
             return result.one(except_all=raise_if_none)
         try:
-            result = get(stale='update_after', raise_if_none=True)
+            result = get(stale=settings.COUCH_STALE_QUERY, raise_if_none=True)
             if result['doc'] is None or result['doc']['username'] != username:
                 raise NoResultFound
         except NoMoreData:

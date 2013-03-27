@@ -41,7 +41,6 @@ class MobileAuthKeyRecord(Document):
             descending=True,
             limit=1,
             include_docs=True,
-            stale='update_after',
         ).first()
         if key_record and now < key_record.expires:
             return key_record
