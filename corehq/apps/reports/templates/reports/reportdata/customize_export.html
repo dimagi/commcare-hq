@@ -357,9 +357,9 @@
                 <label for="format-select" class="control-label">{% trans "Default file type" %}</label>
                 <div class="controls">
                     <select id="format-select" data-bind="value: custom_export.default_format">
-                        <option value="xlsx">Excel 2007</option>
-                        <option value="xls">Excel (older versions)</option>
-                        <option value="csv">CSV (Zip file)</option>
+                        <option value="xlsx">{% trans "Excel 2007" %}</option>
+                        <option value="xls">{% trans "Excel (older versions)" %}</option>
+                        <option value="csv">{% trans "CSV (Zip file)" %}</option>
                     </select>
                 </div>
             </div>
@@ -442,13 +442,13 @@
         </fieldset>
         {% if helper.allow_deid %}
         <fieldset>
-            <legend>Privacy Settings</legend>
+            <legend>{% trans "Privacy Settings" %}</legend>
             <div class="control-group">
                 <label for="is_safe" class="control-label"></label>
                 <div class="controls deid-column" data-bind="visible: $root.showDeidColumn()">
                     <label class="checkbox">
                         <input type="checkbox" id="is_safe" data-bind="checked: custom_export.is_safe" />
-                        Publish in {{ DeidExportReport_name }}
+                        {% trans "Publish in" %} {{ DeidExportReport_name }}
                     </label>
                     <span class="help-inline">{% trans "Check only if this export has been fully and safely de-identified." %}</span>
                 </div>
@@ -478,7 +478,7 @@
                 </span>
 
             </button>
-            <a class="btn btn-large" href="{{ helper.back_url }}">Cancel</a>
+            <a class="btn btn-large" href="{{ helper.back_url }}">{% trans "Cancel" %}</a>
             {% if custom_export.get_id %}
             <a class="btn btn-large btn-danger pull-right" data-toggle="modal" href="#delete-export-modal-{{ custom_export.get_id }}">
                 <i class="icon-remove icon-white"></i>
