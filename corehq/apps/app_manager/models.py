@@ -309,15 +309,17 @@ class FormBase(DocumentSchema):
 
     """
 
-    name        = DictProperty()
-    unique_id   = StringProperty()
-    requires    = StringProperty(choices=["case", "referral", "none"], default="none")
-    actions     = SchemaProperty(FormActions)
-    show_count  = BooleanProperty(default=False)
-    xmlns       = StringProperty()
-    version     = IntegerProperty()
-    source      = FormSource()
-    validation_cache = CouchCachedStringProperty(lambda self: "cache-%s-validation" % self.unique_id)
+    name = DictProperty()
+    unique_id = StringProperty()
+    requires = StringProperty(choices=["case", "referral", "none"], default="none")
+    actions = SchemaProperty(FormActions)
+    show_count = BooleanProperty(default=False)
+    xmlns = StringProperty()
+    version = IntegerProperty()
+    source = FormSource()
+    validation_cache = CouchCachedStringProperty(
+        lambda self: "cache-%s-validation" % self.unique_id
+    )
 
     @classmethod
     def wrap(cls, data):
@@ -1775,10 +1777,10 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
         return len(self.multimedia_map) > 0
 
     def get_xmlns_map(self):
-        map = defaultdict(list)
+        xmlns_map = defaultdict(list)
         for form in self.get_forms():
-            map[form.xmlns].append(form)
-        return map
+            xmlns_map[form.xmlns].append(form)
+        return xmlns_map
 
     def validate_app(self):
         xmlns_count = defaultdict(int)

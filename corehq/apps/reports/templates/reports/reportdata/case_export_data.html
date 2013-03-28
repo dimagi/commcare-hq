@@ -62,7 +62,10 @@
             <tbody>
                 {% for export in saved_exports %}
                 <tr class="{% cycle "odd" "even" %}">
-                    <td>{{ export.name|default:"[blank]" }}</td>
+                    <td>
+                        <div>{{ export.name|default:"[blank]" }}</div>
+                        <p class="help-inline">{{ export.index.1 }}</p>
+                    </td>
                     <td class="cell-vertical-centered">
                         <a class="btn" href='{% url export_custom_data domain export.get_id %}?type=case&format=html&{{ get_filter_params.urlencode|safe }}'>
                             {% trans "HTML Preview" %}
