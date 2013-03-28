@@ -7,7 +7,7 @@ install:
  - "bash -ex .travis/get-submodules.sh"
  - "bash -e .travis/quietly-run-install.sh"
  - "bash -e .travis/quietly-install-requirements.sh"
-script: python manage.py test --no-input
+script: python manage.py test --noinput
 services:
  - postgresql
  - couchdb
