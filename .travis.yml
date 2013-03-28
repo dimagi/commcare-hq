@@ -13,3 +13,4 @@ services:
  - couchdb
  - rabbitmq
  - elasticsearch
+ - memcache
