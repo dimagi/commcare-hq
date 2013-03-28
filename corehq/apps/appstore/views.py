@@ -89,7 +89,7 @@ def project_info(request, domain, template="appstore/project_info.html"):
     facets_sortables = generate_sortables_from_facets(results, {}, inverse_dict(SNAPSHOT_MAPPING))
 
     pb_id = dom.cda.user_id
-    published_by = CouchUser.get_by_user_id(pb_id) if pb_id else None
+    published_by = CouchUser.get_by_user_id(pb_id) if pb_id else {"full_name": "*Publisher's name*"}
 
     return render(request, template, {
         "project": dom,
