@@ -12,6 +12,7 @@ from datetime import datetime
 from helpers import make_supply_point_product
 from corehq.apps.commtrack.util import get_supply_point
 from corehq.apps.commtrack.models import Product, CommtrackConfig
+import settings
 
 logger = logging.getLogger('commtrack.sms')
 
@@ -26,7 +27,8 @@ def handle(verified_contact, text):
         if not data:
             return False
     except Exception, e:
-        raise
+        if settings.UNIT_TESTING:
+            raise
         send_sms_to_verified_number(verified_contact, 'problem with stock report: %s' % str(e))
         return True
 
