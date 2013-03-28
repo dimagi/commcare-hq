@@ -8,15 +8,21 @@ from django.utils.translation import ugettext as _
 from dimagi.utils.decorators.memoized import memoized
 
 
+class AbstractProperty(object):
+    def __get__(self, instance, owner):
+        raise NotImplementedError()
+
+
 class CustomExportHelper(object):
 
-    ExportSchemaClass = NotImplemented
-    ExportReport = NotImplemented
-    export_title = NotImplemented
+    ExportSchemaClass = AbstractProperty()
+    ExportReport = AbstractProperty()
+    export_title = AbstractProperty()
+
     allow_deid = False
     allow_repeats = True
 
-    subclasses_map = NotImplemented  # implemented below
+    subclasses_map = {}  # filled in below
 
     @property
     def default_order(self):
@@ -174,7 +180,7 @@ class CaseCustomExportHelper(CustomExportHelper):
         return _('Export Cases, Referrals, and Users')
 
 
-CustomExportHelper.subclasses_map = {
+CustomExportHelper.subclasses_map.update({
     'form': FormCustomExportHelper,
     'case': CaseCustomExportHelper,
-}
+})
