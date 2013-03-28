@@ -2,7 +2,7 @@
 # vim: ai ts=4 sts=4 et sw=4 encoding=utf-8
 from collections import defaultdict
 
-import os
+import sys, os
 from django.contrib import messages
 
 # odd celery fix
@@ -14,6 +14,11 @@ CACHE_BACKEND = 'memcached://127.0.0.1:11211/'
 
 DEBUG = True
 TEMPLATE_DEBUG = DEBUG
+
+try:
+    UNIT_TESTING = 'test' == sys.argv[1]
+except IndexError:
+    UNIT_TESTING = False
 
 ADMINS = ()
 MANAGERS = ADMINS
