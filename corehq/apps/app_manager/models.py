@@ -1377,6 +1377,7 @@ class SavedAppBuild(ApplicationBase):
 
         return data
 
+
 class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
     """
     A Managed Application that can be created entirely through the online interface, except for writing the
@@ -1460,12 +1461,7 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
     @property
     def suite_loc(self):
         return "suite.xml"
-#    @property
-#    def jar_url(self):
-#        return "%s%s" % (
-#            get_url_base(),
-#            reverse('corehq.apps.app_manager.views.download_zipped_jar', args=[self.domain, self._id]),
-#        )
+
     def fetch_xform(self, module_id=None, form_id=None, form=None):
         if not form:
             form = self.get_module(module_id).get_form(form_id)
@@ -1814,8 +1810,7 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
         r = get_db().view('exports_forms/by_xmlns', key=[domain, {}, xmlns], group=True).one()
         return cls.get(r['value']['app']['id']) if r and 'app' in r['value'] else None
 
-class NotImplementedYet(Exception):
-    pass
+
 class RemoteApp(ApplicationBase):
     """
     A wrapper for a url pointing to a suite or profile file. This allows you to
@@ -1827,13 +1822,6 @@ class RemoteApp(ApplicationBase):
     name = StringProperty()
     manage_urls = BooleanProperty(default=False)
 
-    # @property
-    #     def suite_loc(self):
-    #         if self.suite_url:
-    #             return self.suite_url.split('/')[-1]
-    #         else:
-    #             raise NotImplementedYet()
-
     def is_remote_app(self):
         return True
 
@@ -1842,8 +1830,6 @@ class RemoteApp(ApplicationBase):
         app = cls(domain=domain, name=name, langs=[lang])
         return app
 
-    # def fetch_suite(self):
-    #     return urlopen(self.suite_url).read()
     def create_profile(self, is_odk=False):
         # we don't do odk for now anyway
         try:
@@ -1914,6 +1900,7 @@ class RemoteApp(ApplicationBase):
             'profile.xml': self.create_profile(),
         }
         tree = _parse_xml(files['profile.xml'])
+
         def add_file_from_path(path):
             try:
                 loc = tree.find(path).text
@@ -1947,8 +1934,10 @@ class RemoteApp(ApplicationBase):
                 data = xform.render()
             files.update({location: data})
         return files
+
     def scrub_source(self, source):
         pass
+
 
 class DomainError(Exception):
     pass
