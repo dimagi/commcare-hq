@@ -169,12 +169,8 @@ class ExportSchema(Document, UnicodeMixIn):
     def table_dict(self):
         return dict(self.tables)
     
-    @property
-    def top_level_nodes(self):
-        return self.tables[0][1].get_data()
-    
     def get_columns(self, index):
-        return self.table_dict[index].get_data()
+        return ['id'] + self.table_dict[index].data
 
     def get_all_ids(self, database=None):
         database = database or self.get_db()
@@ -256,8 +252,7 @@ class ExportTable(DocumentSchema):
     def displays_by_index(self):
         return dict((c.index, c.display + (" [sensitive]" if c.transform else '')) for c in self.columns)
     
-    def get_column_configuration(self, schema):
-        all_cols = schema.top_level_nodes
+    def get_column_configuration(self, all_cols):
         selected_cols = set()
         for c in self.columns:
             selected_cols.add(c.index)
@@ -266,12 +261,25 @@ class ExportTable(DocumentSchema):
         for c in all_cols:
             if c not in selected_cols:
                 column = ExportColumn(index=c)
-                column.display = self.displays_by_index[c] if self.displays_by_index.has_key(c) else c
+                column.display = self.displays_by_index[c] if self.displays_by_index.has_key(c) else ''
                 yield column.to_config_format(selected=False)
 
     def get_headers_row(self):
         from couchexport.export import FormattedRow
-        return FormattedRow([self.displays_by_index[col.index] for col in self.columns])
+        headers = []
+        for col in self.columns:
+            display = self.displays_by_index[col.index]
+            if col.index == 'id':
+                id_len = len(
+                    filter(lambda part: part == '#', self.index.split('.'))
+                )
+                headers.append(display)
+                if id_len > 1:
+                    for i in range(id_len):
+                        headers.append('{id}__{i}'.format(id=display, i=i))
+            else:
+                headers.append(display)
+        return FormattedRow(headers)
 
     @property
     @memoized
@@ -471,16 +479,23 @@ class SavedExportSchema(BaseSavedExportSchema, UnicodeMixIn):
 
     def get_table_configuration(self, index):
         def column_configuration():
+            columns = self.schema.get_columns(index)
             if self.tables_by_index.has_key(index):
-                return list(self.tables_by_index[index].get_column_configuration(self.schema))
+                return list(self.tables_by_index[index].get_column_configuration(columns))
             else:
-                return [ExportColumn(index=c, display=c).to_config_format(selected=False) for c in self.schema.get_columns(index)]
+                return [
+                    ExportColumn(
+                        index=c,
+                        display=''
+                    ).to_config_format(selected=False)
+                    for c in columns
+                ]
 
         def display():
             if self.tables_by_index.has_key(index):
                 return self.tables_by_index[index].display
             else:
-                return index
+                return ''
 
         return {
             "index": index,
@@ -489,8 +504,8 @@ class SavedExportSchema(BaseSavedExportSchema, UnicodeMixIn):
             "selected": index in self.tables_by_index
         }
     
-    def get_table_headers(self, override_name=False):
-        return ((self.table_name if override_name and i==0 else t.index, [t.get_headers_row()]) for i, t in enumerate(self.tables))
+    def get_table_headers(self):
+        return ((t.index, [t.get_headers_row()]) for t in self.tables)
         
     @property
     def table_configuration(self):
@@ -548,7 +563,15 @@ class SavedExportSchema(BaseSavedExportSchema, UnicodeMixIn):
         # open the doc and the headers
         formatted_headers = list(self.get_table_headers())
         tmp = StringIO()
-        writer.open(formatted_headers, tmp, max_column_size=max_column_size)
+        writer.open(
+            formatted_headers,
+            tmp,
+            max_column_size=max_column_size,
+            table_titles=dict([
+                (table.index, table.display)
+                for table in self.tables if table.display
+            ])
+        )
 
         total_docs = len(config.potentially_relevant_ids)
         if process:
