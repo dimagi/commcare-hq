@@ -13,7 +13,7 @@ billiard==2.7.3.21
 diff-match-patch==20120106
 django-kombu==0.9.1
 django-digest==1.13
-django-rosetta==0.6.8
+django-rosetta==0.7.1
 django-tastypie==0.9.14
 djtables==0.1.1
 egenix-mx-base==3.2.6
