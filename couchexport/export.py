@@ -295,7 +295,7 @@ def get_headers(schema, separator="|"):
         separator=separator,
     )
 
-def create_intermediate_tables(docs, schema, integer='#'):
+def create_intermediate_tables(docs, schema):
     """
     return {
         table_name: {
@@ -309,10 +309,14 @@ def create_intermediate_tables(docs, schema, integer='#'):
     }
 
     """
+
+    INT = '#'
+
     def lookup(doc, keys):
         for key in keys:
             doc = doc[key]
         return doc
+
     def split_path(path):
         table = []
         column = []
@@ -322,10 +326,11 @@ def create_intermediate_tables(docs, schema, integer='#'):
                 column.append(k)
             else:
                 table.extend(column)
-                table.append(integer)
+                table.append(INT)
                 column = []
                 id.append(k)
         return (tuple(table), tuple(column), tuple(id))
+
     schema = [schema]
     docs = fit_to_schema(docs, schema)
     # first, flatten documents
