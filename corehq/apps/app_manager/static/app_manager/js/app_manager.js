@@ -78,9 +78,7 @@
 	                            }
 	                        }
                             if (data.hasOwnProperty('case_list-show')){
-                                var $case_details_screen = $('#detail-screen-config');
-                                if (data['case_list-show']) $case_details_screen.show(500);
-                                else $case_details_screen.hide(500);
+                                COMMCAREHQ.app_manager.module_view.requires_case_details(data['case_list-show'])
                             }
 	                    }
 	                }).ui.appendTo($buttonHolder);

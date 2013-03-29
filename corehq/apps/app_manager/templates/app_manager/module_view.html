@@ -43,7 +43,13 @@
                 if (value !== valueNoSpaces) {
                     $(this).val(valueNoSpaces);
                 }
-            })
+            });
+        });
+        $(function () {
+            COMMCAREHQ.app_manager.module_view = {
+                requires_case_details: ko.observable({{ module.requires_case_details|BOOL }})
+            };
+            ko.applyBindings(COMMCAREHQ.app_manager.module_view, $('#module-view-tabs').get(0));
         });
     </script>
 {% endblock %}
@@ -63,10 +69,17 @@
     <h3 class="app-manager-title variable-module_name">{{ module.name|html_trans:langs|safe }}</h3>
 
 <div class="tabbable">
-<ul class="nav nav-tabs">
+<ul class="nav nav-tabs" id="module-view-tabs">
     <li class="active"><a href="#module-settings" data-toggle="tab">{% trans "Settings" %}</a></li>
     <li><a href="#case-settings" data-toggle="tab">{% trans "Case Management" %}</a></li>
-    <li {% if not module.requires_case_details %}class="disabled"{% endif %}><a {% if module.requires_case_details %}href="#detail-screen-config" data-toggle="tab"{% endif %}>{% trans "Case List" %}</a></li>
+    <li data-bind="css: {disabled: !requires_case_details()}">
+        <a href="#detail-screen-config" data-toggle="tab" data-bind="visible: requires_case_details">
+            {% trans "Case List" %}
+        </a>
+        <a data-bind="visible: !requires_case_details()">
+            {% trans "Case List" %}
+        </a>
+    </li>
 </ul>
 <div class="tab-content">
     <div class="tab-pane active" id="module-settings">
