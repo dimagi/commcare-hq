@@ -1,2 +1,1 @@
-git submodule foreach --recursive 'git checkout master; git pull &'
-until [ -z "$(ps aux | grep '[g]it pull')" ]; do sleep 1; done
+git submodule | cut -c '2-' | cut -d ' ' -f 2 | parallel --ungroup git submodule update --recursive

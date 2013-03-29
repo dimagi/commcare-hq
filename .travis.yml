@@ -4,6 +4,7 @@ python:
 git:
   submodules: false
 install:
+ - "sudo apt-get install parallel"
  - "bash -ex .travis/get-submodules.sh"
  - "bash -e .travis/quietly-run-install.sh"
  - "bash -e .travis/quietly-install-requirements.sh"
