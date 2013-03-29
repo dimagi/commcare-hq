@@ -8,6 +8,8 @@ install:
  - "bash -e .travis/quietly-run-install.sh"
  - "bash -e .travis/quietly-install-requirements.sh"
  - "cp .travis/localsettings.py localsettings.py"
+ - "keytool -genkey -keyalg RSA -keysize 2048 -validity 10000 -alias javarosakey -keypass onetwothreefourfive -keystore InsecureTestingKeyStore -storepass onetwothreefourfive\
+ -dname 'CN=Foo, OU=Bar, O=Bizzle, L=Bazzle, ST=Bingle, C=US'"
 script: python manage.py test --noinput
 services:
  - postgresql
