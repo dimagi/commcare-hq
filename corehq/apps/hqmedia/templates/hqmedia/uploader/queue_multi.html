@@ -9,14 +9,21 @@
         <p class="text-success hqm-begin">
             {% blocktrans %}Added to queue. Click <strong>Begin Upload</strong> above to start.{% endblocktrans %}
         </p>
+        <p class="text-info hqm-processing-queued hide">
+            {% trans 'Queued for processing. Please wait.' %}
+        </p>
         <p class="text-info hqm-processing hide">
-            {% trans 'Processing, please wait.' %}
+            <span class="label label-info hide">
+                <span class="numerator">0</span>/<span class="denominator">0</span>
+                {% trans 'Files' %}
+            </span>
+            {% trans 'Processing upload, please wait.' %}
         </p>
         <p class="text-success hqm-upload-completed hide">
-            {% trans 'Upload complete' %}
+            {% trans 'Upload complete.' %}
         </p>
         <p class="text-error hqm-error hide">
-            {% trans 'Error uploading file.' %}
+            {% trans 'Errors encountered.' %}
         </p>
         <a href="#" class="btn btn-inverse btn-mini pull-right hqm-remove">
             <i class="icon-remove"></i> {% trans 'Remove from queue' %}
