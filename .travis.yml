@@ -4,6 +4,7 @@ python:
 git:
   submodules: false
 install:
+ - "sudo add-apt-repository -y ppa:ieltonf/ppa"
  - "sudo apt-get install parallel"
  - "bash -ex .travis/get-submodules.sh"
  - "bash -e .travis/quietly-run-install.sh"
