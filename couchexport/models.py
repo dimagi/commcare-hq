@@ -503,10 +503,10 @@ class SavedExportSchema(BaseSavedExportSchema, UnicodeMixIn):
             "column_configuration": column_configuration(),
             "selected": index in self.tables_by_index
         }
-    
-    def get_table_headers(self):
-        return ((t.index, [t.get_headers_row()]) for t in self.tables)
-        
+
+    def get_table_headers(self, override_name=False):
+        return ((self.table_name if override_name and i == 0 else t.index, [t.get_headers_row()]) for i, t in enumerate(self.tables))
+
     @property
     def table_configuration(self):
         return [self.get_table_configuration(index) for index, cols in self.schema.tables]
