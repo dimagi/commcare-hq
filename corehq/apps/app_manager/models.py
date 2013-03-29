@@ -1377,6 +1377,7 @@ class SavedAppBuild(ApplicationBase):
 
         return data
 
+
 class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
     """
     A Managed Application that can be created entirely through the online interface, except for writing the
@@ -1460,12 +1461,7 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
     @property
     def suite_loc(self):
         return "suite.xml"
-#    @property
-#    def jar_url(self):
-#        return "%s%s" % (
-#            get_url_base(),
-#            reverse('corehq.apps.app_manager.views.download_zipped_jar', args=[self.domain, self._id]),
-#        )
+
     def fetch_xform(self, module_id=None, form_id=None, form=None):
         if not form:
             form = self.get_module(module_id).get_form(form_id)
@@ -1776,11 +1772,29 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
     def has_media(self):
         return len(self.multimedia_map) > 0
 
+    @memoized
     def get_xmlns_map(self):
         xmlns_map = defaultdict(list)
         for form in self.get_forms():
             xmlns_map[form.xmlns].append(form)
         return xmlns_map
+
+    def get_questions(self, xmlns):
+        try:
+            forms = self.app.get_xmlns_map()[xmlns]
+        except AttributeError:
+            return []
+        if len(forms) != 1:
+            logging.error('App %s in domain %s has %s forms with xmlns %s' % (
+                self.get_id,
+                self.domain,
+                len(forms),
+                xmlns,
+            ))
+            return []
+        else:
+            form, = forms
+        return form.get_questions(self.app.langs)
 
     def validate_app(self):
         xmlns_count = defaultdict(int)
@@ -1814,8 +1828,7 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
         r = get_db().view('exports_forms/by_xmlns', key=[domain, {}, xmlns], group=True).one()
         return cls.get(r['value']['app']['id']) if r and 'app' in r['value'] else None
 
-class NotImplementedYet(Exception):
-    pass
+
 class RemoteApp(ApplicationBase):
     """
     A wrapper for a url pointing to a suite or profile file. This allows you to
@@ -1827,12 +1840,7 @@ class RemoteApp(ApplicationBase):
     name = StringProperty()
     manage_urls = BooleanProperty(default=False)
 
-    # @property
-    #     def suite_loc(self):
-    #         if self.suite_url:
-    #             return self.suite_url.split('/')[-1]
-    #         else:
-    #             raise NotImplementedYet()
+    questions_map = DictProperty(required=False)
 
     def is_remote_app(self):
         return True
@@ -1842,8 +1850,6 @@ class RemoteApp(ApplicationBase):
         app = cls(domain=domain, name=name, langs=[lang])
         return app
 
-    # def fetch_suite(self):
-    #     return urlopen(self.suite_url).read()
     def create_profile(self, is_odk=False):
         # we don't do odk for now anyway
         try:
@@ -1909,11 +1915,25 @@ class RemoteApp(ApplicationBase):
 
         return location, content
 
+    @classmethod
+    def get_locations(cls, suite):
+        for resource in suite.findall('*/resource'):
+            try:
+                loc = resource.findtext('location[@authority="local"]')
+            except Exception:
+                loc = resource.findtext('location[@authority="remote"]')
+            yield resource.getparent().tag, loc
+
+    @property
+    def SUITE_XPATH(self):
+        return 'suite/resource/location[@authority="local"]'
+
     def create_all_files(self):
         files = {
             'profile.xml': self.create_profile(),
         }
         tree = _parse_xml(files['profile.xml'])
+
         def add_file_from_path(path):
             try:
                 loc = tree.find(path).text
@@ -1924,19 +1944,11 @@ class RemoteApp(ApplicationBase):
             return loc, file
 
         add_file_from_path('features/users/logo')
-        _, suite = add_file_from_path('suite/resource/location[@authority="local"]')
+        _, suite = add_file_from_path(self.SUITE_XPATH)
 
         suite_xml = _parse_xml(suite)
 
-        locations = []
-        for resource in suite_xml.findall('*/resource'):
-            try:
-                loc = resource.findtext('location[@authority="local"]')
-            except Exception:
-                loc = resource.findtext('location[@authority="remote"]')
-            locations.append((resource.getparent().tag, loc))
-
-        for tag, location in locations:
+        for tag, location in self.get_locations(suite_xml):
             location, data = self.fetch_file(location)
             if tag == 'xform' and self.build_langs:
                 try:
@@ -1947,8 +1959,40 @@ class RemoteApp(ApplicationBase):
                 data = xform.render()
             files.update({location: data})
         return files
+
     def scrub_source(self, source):
         pass
+
+    def make_questions_map(self):
+        if self.copy_of:
+            xmlns_map = {}
+
+            def fetch(location):
+                filepath = self.strip_location(location)
+                return self.fetch_attachment('files/%s' % filepath)
+
+            profile_xml = _parse_xml(fetch('profile.xml'))
+            suite_location = profile_xml.find(self.SUITE_XPATH).text
+            suite_xml = _parse_xml(fetch(suite_location))
+
+            for tag, location in self.get_locations(suite_xml):
+                if tag == 'xform':
+                    xform = XForm(fetch(location))
+                    xmlns = xform.data_node.tag_xmlns
+                    questions = xform.get_questions(self.build_langs)
+                    xmlns_map[xmlns] = questions
+            return xmlns_map
+        else:
+            return None
+
+    def get_questions(self, xmlns):
+        if not self.questions_map:
+            self.questions_map = self.make_questions_map()
+            self.save()
+        questions = self.questions_map.get(xmlns, [])
+        return questions
+
+
 
 class DomainError(Exception):
     pass

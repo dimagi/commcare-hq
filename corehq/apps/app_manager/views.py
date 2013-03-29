@@ -1837,10 +1837,10 @@ def _questions_for_form(request, form, langs):
         def add_message(self, type, message):
             self.messages[type].append(message)
 
-        def error(self, request, message):
+        def error(self, request, message, *args, **kwargs):
             self.add_message('error', message)
 
-        def warning(self, request, message):
+        def warning(self, request, message, *args, **kwargs):
             self.add_message('warning', message)
 
     m = FakeMessages()

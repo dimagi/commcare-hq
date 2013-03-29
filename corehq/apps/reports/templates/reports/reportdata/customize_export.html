@@ -134,10 +134,14 @@
                         }
                     },
                     putInDefaultOrder: function (index, columns) {
+                        // http://stackoverflow.com/questions/2998784/how-to-output-integers-with-leading-zeros-in-javascript
+                        // [11] < [2], so have to pad numbers
+                        function pad10(a){return(1e15+a+"").slice(-10)}
+
                         var order = ko.utils.unwrapObservable(self.default_order[index]);
                         var order_index = {};
                         _(order).each(function (index, i) {
-                            order_index[index] = i;
+                            order_index[index] = pad10(i);
                         });
                         var tag_order = {
                             '': 0,
@@ -146,7 +150,7 @@
                             'update': 2.5, // for case history only
                             'server': 3,
                             'tag': 4,
-                            'row': self.repeatsEnabled() ? -1 : 5
+                            'row': 5
                         };
                         return _(columns).sortBy(function (column) {
                             var key;
