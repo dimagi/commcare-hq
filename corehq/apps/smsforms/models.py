@@ -1,6 +1,7 @@
 from datetime import datetime
 from couchdbkit.ext.django.schema import StringProperty, Document,\
     DateTimeProperty, BooleanProperty, IntegerProperty
+from dimagi.utils.couch.database import is_bigcouch, bigcouch_quorum_count
 
 XFORMS_SESSION_SMS = "SMS"
 XFORMS_SESSION_IVR = "IVR"
@@ -26,6 +27,12 @@ class XFormsSession(Document):
     submission_id = StringProperty()
     survey_incentive = StringProperty()
     session_type = StringProperty(choices=XFORMS_SESSION_TYPES, default=XFORMS_SESSION_SMS)
+    
+    def save(self, *args, **kwargs):
+        if is_bigcouch() and "w" not in kwargs:
+            # Force a write to all nodes before returning
+            kwargs["w"] = bigcouch_quorum_count()
+        return super(XFormsSession, self).save(*args, **kwargs)
     
     def __unicode__(self):
         return 'Form %(form)s in domain %(domain)s. Last modified: %(mod)s' % \
