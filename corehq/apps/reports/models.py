@@ -505,7 +505,7 @@ class FormExportSchema(SavedExportSchema):
     def app(self):
         if self.app_id:
             try:
-                return get_app(self.domain, self.app_id)
+                return get_app(self.domain, self.app_id, latest=True)
             except Http404:
                 logging.error('App %s in domain %s not found for export %s' % (
                     self.app_id,
@@ -548,26 +548,10 @@ class FormExportSchema(SavedExportSchema):
         return xmlns_to_name(self.domain, self.xmlns, app_id=self.app_id)
 
     def get_default_order(self):
-
         if not self.app:
             return []
         else:
-            try:
-                forms = self.app.get_xmlns_map()[self.xmlns]
-            except AttributeError:
-                return []
-            if len(forms) != 1:
-                logging.error('App %s in domain %s has %s forms with xmlns %s' % (
-                    self.app_id,
-                    self.domain,
-                    len(forms),
-                    self.xmlns,
-                ))
-                return []
-            else:
-                form, = forms
-
-        questions = form.get_questions(self.app.langs)
+            questions = self.app.get_questions(self.xmlns)
 
         order = []
         for question in questions:
