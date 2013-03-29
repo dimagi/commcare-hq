@@ -222,7 +222,7 @@ class CommCareMobileContactMixin(object):
         if v is not None and (v.owner_doc_type != self.doc_type or v.owner_id != self._id):
             raise PhoneNumberInUseException("Phone number is already in use.")
     
-    def save_verified_number(self, domain, phone_number, verified, backend_id, ivr_backend_id=None):
+    def save_verified_number(self, domain, phone_number, verified, backend_id, ivr_backend_id=None, only_one_number_allowed=False):
         """
         Saves the given phone number as this contact's verified phone number.
         
@@ -232,7 +232,10 @@ class CommCareMobileContactMixin(object):
         """
         phone_number = strip_plus(phone_number)
         self.verify_unique_number(phone_number)
-        v = self.get_verified_number(phone_number)
+        if only_one_number_allowed:
+            v = self.get_verified_number()
+        else:
+            v = self.get_verified_number(phone_number)
         if v is None:
             v = VerifiedNumber(
                 owner_doc_type = self.doc_type,

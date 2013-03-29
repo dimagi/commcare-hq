@@ -239,6 +239,7 @@ class CaseExportReport(ExportReport):
         )
         return context
 
+
 class DeidExportReport(FormExportReportBase):
     slug = 'deid_export'
     name = "De-Identified Export"
