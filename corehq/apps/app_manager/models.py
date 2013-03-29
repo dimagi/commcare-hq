@@ -1392,7 +1392,7 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
     
     @classmethod
     def wrap(cls, data):
-        for module in data['modules']:
+        for module in data.get('modules', []):
             for attr in ('case_label', 'referral_label'):
                 if not module.has_key(attr):
                     module[attr] = {}
