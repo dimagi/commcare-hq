@@ -191,6 +191,7 @@ def realstaging():
     env.sudo_user = 'cchq'
     env.environment = 'staging'
     env.django_port = '9010'
+    env.user = prompt("Username: ", default=env.user)
 
     #env.hosts = None
     env.roledefs = {
