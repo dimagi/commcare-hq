@@ -1,11 +1,8 @@
 from datetime import datetime, timedelta, date
-import json
 from couchdbkit import ResourceNotFound
-from django.core.cache import params
 from django.core.urlresolvers import reverse
 from django.db import transaction
-from django.http import HttpResponse, HttpResponseRedirect, Http404, \
-    HttpResponseForbidden
+from django.http import HttpResponse, HttpResponseRedirect, Http404
 from django.template.loader import render_to_string
 from django.views.decorators.http import require_POST
 from django.shortcuts import render
@@ -14,7 +11,7 @@ from corehq.apps.announcements.models import Notification
 from corehq.apps.appstore.views import generate_sortables_from_facets, parse_args_for_es
 
 from corehq.apps.domain.decorators import require_superuser
-from corehq.apps.hqadmin.views import project_stats_facets, ammend_domains, es_domain_query, DOMAIN_LIST_HEADERS, get_domain_totals
+from corehq.apps.hqadmin.views import ammend_domains, es_domain_query, DOMAIN_LIST_HEADERS, get_domain_totals
 from corehq.apps.hqwebapp.utils import InvitationView
 from corehq.apps.orgs.decorators import org_admin_required, org_member_required
 from corehq.apps.registration.forms import DomainRegistrationForm
