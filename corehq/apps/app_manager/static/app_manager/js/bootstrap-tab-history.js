@@ -72,17 +72,16 @@ $(function () {
 
         // Don't set the state if we haven't changed tabs.
         if (State.data.tab != tab) {
-            History.pushState({'tab': tab}, null, url);
+            var message = COMMCAREHQ.beforeUnloadCallback();
+            var ask = message !== undefined && message !== undefined;
+            if (!ask) {
+                History.pushState({'tab': tab}, null, url);
+            } else {
+                // instead of using tabs, reload page
+                // so as to trigger warning
+                event.preventDefault();
+                loadPage(url);
+            }
         }
-    });
-    $(window).on('beforeunload', function () {
-        $('.next-to-sidebar').html('');
-        setTimeout(function () {
-            $('<i class="icon-spinner icon-spin icon-4x"></i>').css({
-                position: 'fixed',
-                top: $(window).height()/2,
-                left: $(window).width()/2
-            }).appendTo('body');
-        }, 0);
     });
 });

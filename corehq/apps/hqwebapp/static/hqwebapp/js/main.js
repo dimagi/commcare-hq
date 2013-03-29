@@ -115,12 +115,14 @@ var SaveButton = {
                 ;
             })
         }
-        $(window).bind('beforeunload', function () {
+
+        var beforeunload = function () {
             var stillAttached = button.ui.parents()[button.ui.parents().length - 1].tagName.toLowerCase() == 'html';
             if (button.state !== 'saved' && stillAttached) {
                 return options.unsavedMessage || "";
             }
-        });
+        };
+        COMMCAREHQ.bindBeforeUnload(beforeunload);
         return button;
     },
     initForm: function ($form, options) {
@@ -280,7 +282,19 @@ var COMMCAREHQ = (function () {
                 }]
             });
         },
-        SaveButton: SaveButton
+        SaveButton: SaveButton,
+        beforeUnload: [],
+        bindBeforeUnload: function (callback) {
+            COMMCAREHQ.beforeUnload.push(callback);
+        },
+        beforeUnloadCallback: function () {
+            for (var i = 0; i < COMMCAREHQ.beforeUnload.length; i++) {
+                var message = COMMCAREHQ.beforeUnload[i]();
+                if (message !== null && message !== undefined) {
+                    return message;
+                }
+            }
+        }
     };
 }());
 
@@ -401,6 +415,9 @@ $(function () {
 
     COMMCAREHQ.initBlock($("body"));
     setUpIeWarning();
+
+    $(window).bind('beforeunload', COMMCAREHQ.beforeUnloadCallback);
+
 });
 
 // thanks to http://stackoverflow.com/questions/1149454/non-ajax-get-post-using-jquery-plugin
