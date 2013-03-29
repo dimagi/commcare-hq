@@ -5,39 +5,32 @@ function isInt(n) {
     return typeof n === 'number' && parseFloat(n) == parseInt(n, 10) && !isNaN(n);
 }
 
-function prependToArray(value, oldArray) {
-    var i, len = oldArray.length + 1,
-        newArray = new Array(len);
-    newArray[0] = value;
-    return newArray.concat(oldArray);
-}
-
 function format_data(data, starting_time, ending_time) {
-
     function format_data_entry(name, entry) {
         /*
          * Takes in the entries dictionary returned in a es date histogram facet and converts that data for use in nvd3
          */
         entry.sort(function(x, y) {return x.time > y.time});
 
-        var values = [];
+        var vals = new Array();
         for (var day = starting_time, index = 0; day <= ending_time; day += DAY_VALUE) {
             if (entry.length > 0 && index < entry.length && entry[index].time < day) {
-                values.push({x: day, y: entry[index].count});
+                vals.push({x: day, y: entry[index].count});
                 index++;
             } else {
-//            values.push({x: day, y: 0});
-                if (index > 0 && index < entry.length) values.push({x: day, y: 0});
+                if (index > 0 && index < entry.length) {
+                    vals.push({x: day, y: 0});
+                }
             }
         }
 
         var ret = {
             key: name,
-            values: values
+            values: vals.slice(0)
         };
-        if (values.length > 0) {
-            ret.firsttime = values[0].x;
-            ret.lasttime = values[values.length-1].x;
+        if (vals.length > 0) {
+            ret.firsttime = vals[0].x;
+            ret.lasttime = vals[vals.length-1].x;
         }
         return ret
     }
@@ -52,25 +45,27 @@ function format_data(data, starting_time, ending_time) {
     }
 
     // fill in each entry with empty data beginning from the startdate to the enddate
-    var first = Math.max.apply(null, _.filter(_.map(formatted_data, function(fd) { return fd.firsttime; }), isInt));
+    var first = Math.min.apply(null, _.filter(_.map(formatted_data, function(fd) { return fd.firsttime; }), isInt));
     var last = Math.max.apply(null, _.filter(_.map(formatted_data, function(fd) { return fd.lasttime; }), isInt));
     if (first !== -Infinity && last !== -Infinity) {
-        _.each(formatted_data, function(entry) {
-            if (entry.values.length <= 0) {
-                for (var day = first; day <= last; day += DAY_VALUE) {
+        _.each(formatted_data, function(entry, ind, l) {
+            var vals = entry.values.slice(0) || [];
+            if (vals.length <= 0) {
+                for (var day = first; day < last; day += DAY_VALUE) {
                     entry.values.push({x: day, y: 0});
                 }
+                return;
             }
 
-            for (var day = first; day < entry.values[0]; day += DAY_VALUE) {
-                prependToArray({x: day, y: 0}, entry.values);
+            for (var day = first, i = 0; day <= vals[0].x; day += DAY_VALUE, i++) {
+                entry.values.splice(i, 0, {x: day, y: 0});
             }
-            for (var day = entry.values[entry.values.length-1]; day <= last; day += DAY_VALUE) {
+
+            for (var day = vals[vals.length-1].x; day < last; day += DAY_VALUE) {
                 entry.values.push({x: day, y: 0});
             }
         });
     }
-
     return formatted_data;
 }
 
@@ -95,7 +90,7 @@ function addHistogram(element_id, xname, data, starting_time, ending_time) {
 
         chart.xAxis
             .axisLabel('Date')
-            .tickFormat(function(d){return d3.time.format('%d-%b')(new Date(d));});
+            .tickFormat(function(d){return d3.time.format('%d-%b-%Y')(new Date(d));});
 
         chart.yAxis
             .tickFormat(d3.format(',.1f'))
