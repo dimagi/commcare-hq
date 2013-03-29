@@ -15,9 +15,8 @@
 </script>
 
 <script type="text/html" id="CommcareSettings.widgets.bool">
-{#    <span data-bind="template: 'CommcareSettings.widgets.select'"></span>#}
-    <span data-bind="visible: $root.edit">
-        <input class="span3" type="checkbox" data-bind="checked: boolValue, attr: {disabled: !enabled()}"/>
+    <span class="span3" data-bind="visible: $root.edit">
+        <input type="checkbox" data-bind="checked: boolValue, attr: {disabled: !enabled()}"/>
     </span>
     <span class="span3" data-bind="visible: !$root.edit()">
         <i data-bind="css: {'icon-ok': boolValue, 'icon-remove': !boolValue()}"></i>
