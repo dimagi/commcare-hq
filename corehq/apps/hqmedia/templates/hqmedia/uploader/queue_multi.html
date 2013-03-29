@@ -20,10 +20,10 @@
             {% trans 'Processing upload, please wait.' %}
         </p>
         <p class="text-success hqm-upload-completed hide">
-            {% trans 'Upload complete.' %}
+            <span class="label label-success">{% trans 'Upload Finished' %}</span>
         </p>
         <p class="text-error hqm-error hide">
-            {% trans 'Errors encountered.' %}
+            <span class="label label-important">{% trans 'There were errors' %}</span>
         </p>
         <a href="#" class="btn btn-inverse btn-mini pull-right hqm-remove">
             <i class="icon-remove"></i> {% trans 'Remove from queue' %}

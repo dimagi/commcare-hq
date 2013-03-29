@@ -15,14 +15,15 @@
         var hqm_controller = new HQMediaUploadController({
             fileFilters: {{ uploader.file_filters|JSON }},
             uploadURL: '{{ uploader.destination }}',
+            processingURL: '{{ uploader.processing_url }}',
             swfURL: '{% static 'hqmedia/yui/uploader/uploader.swf' %}',
             isMultiFileUpload: {{ uploader.multi_file|yesno:"true,false" }},
             queueTemplate: {{ uploader.queue_template|JSON }},
-            noMatchFoundTemplate: {{ uploader.no_match_found_template|JSON }},
-            matchesFoundTemplate: {{ uploader.matches_found_template|JSON }},
+            statusTemplate: {{ uploader.status_template|JSON }},
             detailsTemplate: {{ uploader.details_template|JSON }},
+            errorsTemplate: {{ uploader.errors_template|JSON }},
             uploadParams: {{ uploader.upload_params|JSON }},
-            uploadFormParams: {{ uploader.form_params|JSON }}
+            licensingParams: {{ uploader.licensing_params|JSON }}
         });
         hqm_controller.init();
     </script>
@@ -81,9 +82,9 @@
                     <th class="span5">{% trans 'Details' %}</th>
                 </tr>
             </thead>
-            <thead class="table-condensed">
+            <thead>
             <tr>
-                <th class="muted" colspan="5" style="text-align: center;">{% trans 'Queued Files' %}</th>
+                <th class="muted" colspan="5"  style="text-align: center;">{% trans 'Queued Files' %}</th>
             </tr>
             </thead>
             <tbody class="hqm-queue">
@@ -91,12 +92,15 @@
                     <td colspan="5">{% blocktrans %}Select files above to add to the queue.{% endblocktrans %}</td>
                 </tr>
             </tbody>
-            <thead class="table-condensed">
-                <tr class="hqm-uploaded-notice hide">
-                    <th class="muted" colspan="5" style="text-align: center;">{% trans 'Uploaded Files' %}</th>
+            <tbody class="hqm-upload-processing">
+                <tr class="hqm-list-notice">
+                    <th colspan="5">{% trans 'Processing Upload' %}</th>
                 </tr>
-            </thead>
+            </tbody>
             <tbody class="hqm-uploaded-files">
+                <tr class="hqm-list-notice">
+                    <th colspan="5">{% trans 'Uploaded Files' %}</th>
+                </tr>
             </tbody>
         </table>
     </div>

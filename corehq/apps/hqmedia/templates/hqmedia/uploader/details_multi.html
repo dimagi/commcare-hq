@@ -1,5 +1,5 @@
 {% load i18n %}
-<% if (!_.isEmpty(images)) { %>
+<% if (images.length > 0) { %>
     <div class="well well-small">
         <h4>{% trans 'Matched Images' %} <span class="badge badge-success"><%= images.length %></span></h4>
         <ul>
@@ -13,14 +13,17 @@
                            class="btn btn-primary match-info"
                            data-content="<img src='<%= image.url %>' width='220' alt='<%= image.path %>' />">
                             <i class="icon-eye-open"></i> View Full Image</a>
+                        <% if (image.updated) { %>
+                        <span class="label label-info">Updated</span>
+                        <% } %>
                     </p>
-                    <p><code><% if (image.path.length > 50) { %>(...)<% } %><%= image.path.substring(image.path.length-50) %></code></p>
+                    <p><code class="hqm-path"><%= image.path %></code></p>
                 </li>
             <% } %>
         </ul>
     </div>
 <% } %>
-<% if (!_.isEmpty(audio)) { %>
+<% if (audio.length > 0) { %>
 <div class="well well-small">
     <h4>{% trans 'Matched Audio' %} <span class="badge badge-success"><%= audio.length %></span></h4>
     <ul>
@@ -32,19 +35,22 @@
                       class="btn btn-primary match-info"
                       data-content="Playing audio directly on this page is currently not supported.">
                     <i class="icon-volume-up"></i> Hear Audio</a></p>
-            <p><code><%= sound.path %></code></p>
+            <p><code class="hqm-path"><%= sound.path %></code></p>
         </li>
         <% } %>
     </ul>
 </div>
 <% } %>
-<% if (!_.isEmpty(unknowns)) { %>
+<% if (unknowns.length > 0) { %>
 <div class="well well-small">
     <h4>{% trans 'No Matches' %} <span class="badge badge-important"><%= unknowns.length %></span></h4>
     <ul>
         <% for (var u=0; u < unknowns.length; u++) {
         var unknown = unknowns[u]; %>
-        <li><code><%= unknown %></code></li>
+        <li><p>
+            <%= unknown.reason %>
+            <code class="hqm-path"><span><%= unknown.path %></span></code>
+        </p></li>
         <% } %>
     </ul>
 </div>

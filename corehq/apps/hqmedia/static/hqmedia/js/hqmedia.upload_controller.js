@@ -18,25 +18,28 @@ function HQMediaUploadController(options) {
     self.beginUploadButtonSelector = options.beginUploadButtonSelector || (self.container + " .hqm-upload-begin");
     self.confirmUploadButtonSelector = options.confirmUploadButtonSelector || (self.container + " .hqm-upload-confirm");
     self.confirmUploadModalSelector = options.confirmUploadModalSelector || "#hqm-upload-modal";
-    self.emptyNoticeSelector = options.emptyNoticeSelector || (self.container + " .hqm-empty");
-    self.uploadedNoticeSelector = options.uploadedNoticeSelector || (self.container + " .hqm-uploaded-notice");
+    self.processingFilesListSelector = options.processingFilesListSelector || (self.container + " .hqm-upload-processing");
     self.uploadedFilesListSelector = options.uploadedFilesListSelector || (self.container + " .hqm-uploaded-files");
     self.queueSelector = options.queueSelector || (self.container + " .hqm-queue");
     self.uploadFormSelector = options.uploadFormSelector || (self.container + " .hqm-upload-form");
 
     // Text and templates
     self.queueTemplate = options.queueTemplate;
-    self.noMatchFoundTemplate = options.noMatchFoundTemplate;
     self.detailsTemplate = options.detailsTemplate;
-    self.matchesFoundTemplate = options.matchesFoundTemplate;
+    self.statusTemplate = options.statusTemplate;
+    self.errorsTemplate = options.errorsTemplate;
 
     // Stuff for processing the upload
     self.uploadParams = options.uploadParams || {};
-    self.uploadFormParams = options.uploadFormParams || [];
+    self.licensingParams = options.licensingParams || [];
     self.uploadURL = options.uploadURL;
+    self.processingURL = options.processingURL;
 
     // Other
+    self.processingFiles = [];
     self.uploadedFiles = [];
+    self.processingIdToFile = {};
+    self.pollInterval = 1000;
 
     self.processQueueTemplate = function (upload_info) {
         /*
@@ -49,18 +52,28 @@ function HQMediaUploadController(options) {
         });
     };
 
-    self.processDetailsTemplate = function (response) {
+    self.processDetailsTemplate = function (images, audio, unknowns) {
+        console.log("DETAILS");
+        console.log(images);
+        console.log(audio);
+        console.log(unknowns);
         return _.template(self.detailsTemplate, {
-            images: response.images,
-            audio: response.audio,
-            unknowns: response.unknown
+            images: images,
+            audio: audio,
+            unknowns: unknowns
         });
     };
 
-    self.processMatchesTemplate = function (response) {
-        var numMatches = _.keys(response.images).length + _.keys(response.audio).length;
-        return _.template(self.matchesFoundTemplate, {
+    self.processStatusTemplate = function (images, audio) {
+        var numMatches = images.length + audio.length;
+        return _.template(self.statusTemplate, {
             num: numMatches
+        });
+    };
+
+    self.processErrorsTemplate = function (errors) {
+        return _.template(self.errorsTemplate, {
+            errors: errors
         });
     };
 
@@ -85,18 +98,6 @@ function HQMediaUploadController(options) {
         }
     };
 
-    self.handleErrors = function (file_id, errors) {
-        var selector = self.getActiveUploadSelectors(file_id);
-        $(selector.progressBarContainer).removeClass('progress-success').addClass('progress-danger');
-        $(selector.completeNotice).addClass('hide');
-        $(selector.errorNotice).removeClass('hide');
-        for (var e = 0; e < errors.length; e++) {
-            var error = errors[e];
-            var $errorMsg = $('<p class="label label-important" style="margin-top: 5px;" />').text('ERROR: ' + error);
-            $(selector.status).append($errorMsg);
-        }
-    };
-
     self.getActiveUploadSelectors = function (upload_id) {
         /*
             All the different active parts of the queued item template that the upload controller cares about.
@@ -109,6 +110,7 @@ function HQMediaUploadController(options) {
             cancel: selector + ' .hqm-cancel',
             remove: selector + ' .hqm-remove',
             beginNotice: selector + ' .hqm-begin',
+            processingQueuedNotice: selector + ' .hqm-processing-queued',
             processingNotice: selector + ' .hqm-processing',
             completeNotice: selector + ' .hqm-upload-completed',
             errorNotice: selector + ' .hqm-error',
@@ -160,6 +162,7 @@ function HQMediaUploadController(options) {
             Start over.
          */
         self.selectedFiles = [];
+        self.processingFiles = [];
         self.uploadedFiles = [];
         self.toggleUploadButton();
         self.resetUploadForm();
@@ -174,12 +177,12 @@ function HQMediaUploadController(options) {
         $uploadForm.find('[name="attribution-notes"]').val('');
     };
 
-    self.getPramsFromForm = function () {
+    self.getLicensingParams = function () {
         var $form = $(self.uploadFormSelector),
             params = {};
-        for (var i = 0; i < self.uploadFormParams.length; i++) {
-            var param_name = self.uploadFormParams[i];
-            var param_val = $form.find('[name=' + param_name + ']').val();
+        for (var i = 0; i < self.licensingParams.length; i++) {
+            var param_name = self.licensingParams[i];
+            var param_val = $form.find('[name="' + param_name + '"]').val();
             if (param_val.length > 0) params[param_name] = param_val;
         }
         return params;
@@ -214,7 +217,6 @@ function HQMediaUploadController(options) {
                         $(activeSelector.remove).click(self.cancelFileUpload(currentFile));
                     }
                 }
-                self.toggleEmptyNotice();
             }
         }
         self.toggleUploadButton();
@@ -225,7 +227,7 @@ function HQMediaUploadController(options) {
         $(self.confirmUploadModalSelector).modal('hide');
         var currentParams = _.clone(self.uploadParams);
         if ($(self.uploadFormSelector).find('[name="shared"]').prop('checked')) {
-            $.extend(currentParams, self.getPramsFromForm());
+            $.extend(currentParams, self.getLicensingParams());
         }
         for (var key in self.uploadParams) {
             if (self.uploadParams.hasOwnProperty(key)
@@ -241,60 +243,33 @@ function HQMediaUploadController(options) {
     self.uploadProgress = function (event) {
         var currentProgress = Math.round(100 * event.bytesLoaded / event.bytesTotal),
             curUpload = self.getActiveUploadSelectors(event.id);
-        $(curUpload.progressBar).attr('style', 'width: ' + currentProgress + '%;');
-        if (currentProgress >= 100) {
-            $(curUpload.cancel).addClass('hide');
-            // todo, get updates from memcached as to how the processing is going server-side
-            $(curUpload.processingNotice).removeClass('hide');
-            $(curUpload.progressBarContainer).addClass('progress-warning');
-        }
+        $(curUpload.progressBar).attr('style', 'width: ' + Math.min(currentProgress, 100) + '%;');
     };
 
     self.uploadComplete = function (event) {
         var curUpload = self.getActiveUploadSelectors(event.id);
-        $(curUpload.progressBar).attr('style', 'width: 100%;'); // Double check that progress bar is at 100%
-        $(curUpload.progressBarContainer).removeClass('active progress-warning').addClass('progress-success');
+        $(curUpload.progressBarContainer).removeClass('active');
         $(curUpload.cancel).addClass('hide');
-        $(curUpload.processingNotice).addClass('hide');
-        $(curUpload.completeNotice).removeClass('hide');
-
         self.removeFileFromUploader(event.id);
-        self.uploadedFiles.push(event.id);
-        self.toggleUploadedFilesNotice();
+
+        self.processingFiles.push(event.id);
 
         if (self.isMultiFileUpload) {
             var $queuedItem = $(curUpload.selector);
             $queuedItem.remove();
-            $(self.uploadedFilesListSelector).prepend($queuedItem);
+            $queuedItem.insertAfter($(self.processingFilesListSelector).find('.hqm-list-notice'));
         }
     };
 
     self.uploadCompleteData = function (event) {
         var response = $.parseJSON(event.data);
-        self.processMatchList(event, response);
-        if (!_.isEmpty(response.errors)) {
-            self.handleErrors(event.id, response.errors);
-        }
+        self.beginProcessing(event, response);
     };
 
     self.toggleUploadButton = function () {
         var $uploadButton = $(self.uploadButtonSelector);
         if (self.isMultiFileUpload) {
             (self.selectedFiles.length > 0) ? $uploadButton.addClass('btn-success').removeClass('disabled') : $uploadButton.addClass('disabled').removeClass('btn-success');
-        }
-    };
-
-    self.toggleEmptyNotice = function () {
-        var $emptyNotice = $(self.emptyNoticeSelector);
-        if ($emptyNotice) {
-            (self.selectedFiles.length < 1) ? $emptyNotice.removeClass('hide') : $emptyNotice.addClass('hide');
-        }
-    };
-
-    self.toggleUploadedFilesNotice = function () {
-        var $uploadedNotice = $(self.uploadedNoticeSelector);
-        if ($uploadedNotice) {
-            (self.uploadedFiles.length > 0) ? $uploadedNotice.removeClass('hide') : $uploadedNotice.addClass('hide');
         }
     };
 
@@ -311,26 +286,108 @@ function HQMediaUploadController(options) {
     self.removeFileFromUploader = function (file_id) {
         self.uploader.removeFile(file_id);
         self.selectedFiles = _.without(self.selectedFiles, file_id);
-        self.toggleEmptyNotice();
         self.toggleUploadButton();
     };
 
-    self.processMatchList = function (event, response) {
+    self.beginProcessing = function(event, response) {
+        console.log("starting to process data");
+        console.log(response);
+        var processing_id = response.processing_id;
+        console.log(processing_id);
+        self.processingIdToFile[response.processing_id] = event.id;
         var curUpload = self.getActiveUploadSelectors(event.id);
-        if (response.zip) {
-            if (_.isEmpty(response.images) && _.isEmpty(response.audio)) {
-                $(curUpload.status).html(self.noMatchFoundTemplate);
-            } else {
-                $(curUpload.status).html(self.processMatchesTemplate(response));
+        $(curUpload.progressBar).addClass('hide').attr('style', 'width: 0%;'); // reset progress bar for processing
+        $(curUpload.progressBarContainer).addClass('progress-warning active');
+        $(curUpload.processingQueuedNotice).removeClass('hide');
+        self.pollProcessingQueue(processing_id)();
+    };
+
+    self.pollProcessingQueue = function (processing_id) {
+        return function _poll () {
+            setTimeout(function () {
+                if (processing_id in self.processingIdToFile) {
+                    $.ajax({
+                        url: self.processingURL,
+                        dataType: 'json',
+                        data: {
+                            processing_id: processing_id
+                        },
+                        type: 'POST',
+                        success: self.handleProcessingQueue,
+                        error: self.handleProcessingQueueError,
+                        complete: _poll,
+                        timeout: self.pollInterval
+                    });
+                }
+            }, self.pollInterval);
+        }
+    };
+
+    self.handleProcessingQueue = function (data) {
+        var file_id = self.processingIdToFile[data.processing_id];
+        var curUpload = self.getActiveUploadSelectors(file_id);
+        if (data.in_celery) {
+            $(curUpload.processingQueuedNotice).addClass('hide');
+            $(curUpload.processingNotice).removeClass('hide');
+            $(curUpload.progressBar).removeClass('hide').attr('style', 'width: ' + data.progress + '%;');
+            if (data.total_files) {
+                var $file_status = $(curUpload.processingNotice).find('.label');
+                $file_status.find('.denominator').text(data.total_files);
+                $file_status.find('.numerator').text(data.processed_files || 0);
+                $file_status.removeClass('hide');
             }
-            $(curUpload.details).html(self.processDetailsTemplate(response));
+        }
+        if (data.complete) {
+            self.handleProcessingQueueComplete(data);
+        }
+    };
+
+    self.handleProcessingQueueComplete = function (data) {
+        var file_id = self.processingIdToFile[data.processing_id];
+        delete self.processingIdToFile[data.processing_id];
+        var curUpload = self.getActiveUploadSelectors(file_id);
+        if (self.isMultiFileUpload) {
+            var $processingItem = $(curUpload.selector);
+            $processingItem.remove();
+            $processingItem.insertAfter($(self.uploadedFilesListSelector).find('.hqm-list-notice'));
+        }
+
+        $(curUpload.processingNotice).addClass('hide');
+        $(curUpload.completeNotice).removeClass('hide');
+        $(curUpload.progressBar).attr('style', 'width: 100%;');
+        $(curUpload.progressBarContainer).removeClass('active progress-warning').addClass('progress-success');
+
+        self.showMatches(file_id, data);
+        self.handleErrors(file_id, data.errors);
+    };
+
+    self.handleProcessingQueueError = function (data) {
+        console.log("handle error");
+        console.log(data);
+    };
+
+    self.showMatches = function (file_id, data) {
+        var curUpload = self.getActiveUploadSelectors(file_id);
+        if (data.type === 'zip' && data.matched_files) {
+            var images = data.matched_files.CommCareImage,
+                audio = data.matched_files.CommCareAudio,
+                unknowns = data.unmatched_files;
+            $(curUpload.status).append(self.processStatusTemplate(images, audio));
+
+            $(curUpload.details).html(self.processDetailsTemplate(images, audio, unknowns));
             $(curUpload.details).find('.match-info').popover({
                 html: true,
                 title: 'Click to open in new tab.',
                 trigger: 'hover',
                 placement: 'bottom'
-            })
+            });
         }
+    };
+
+    self.handleErrors = function (file_id, errors) {
+        var selector = self.getActiveUploadSelectors(file_id);
+        (errors.length > 0) ? $(selector.errorNotice).removeClass('hide') : $(selector.errorNotice).addClass('hide');
+        $(selector.status).append(self.processErrorsTemplate(errors));
     };
 
 }
