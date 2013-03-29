@@ -75,26 +75,7 @@ class ExportTest(TestCase):
         prev_token = resp["X-CommCareHQ-Export-Token"]
         prev_checkpoint = ExportSchema.get(prev_token)
         assert prev_checkpoint.timestamp
-        prev_checkpoint.timestamp = None
-        prev_checkpoint.save()
-        prev_checkpoint = ExportSchema.get(prev_token)
-        assert not prev_checkpoint.timestamp 
 
-        # data but no new data = redirect
-        resp = get_export_response(c, prev_token)
-        self.assertEqual(302, resp.status_code)
-
-        submit_form()
-        time.sleep(1)
-        resp = get_export_response(c, prev_token)
-        self.assertEqual(200, resp.status_code)
-        self.assertTrue(resp.content is not None)
-        self.assertTrue("X-CommCareHQ-Export-Token" in resp)
-        prev_token = resp["X-CommCareHQ-Export-Token"]
-
-        full_data = get_export_response(c).content
-        partial_data = get_export_response(c, prev_token).content
-        self.assertTrue(len(full_data) > len(partial_data))
 
     def testExportTokens(self):
         c = Client()
