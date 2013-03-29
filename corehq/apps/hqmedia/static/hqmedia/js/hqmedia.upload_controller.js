@@ -36,7 +36,6 @@ function HQMediaUploadController(options) {
     self.processingURL = options.processingURL;
 
     // Other
-    self.processingFiles = [];
     self.uploadedFiles = [];
     self.processingIdToFile = {};
     self.pollInterval = 1000;
@@ -53,10 +52,6 @@ function HQMediaUploadController(options) {
     };
 
     self.processDetailsTemplate = function (images, audio, unknowns) {
-        console.log("DETAILS");
-        console.log(images);
-        console.log(audio);
-        console.log(unknowns);
         return _.template(self.detailsTemplate, {
             images: images,
             audio: audio,
@@ -162,7 +157,6 @@ function HQMediaUploadController(options) {
             Start over.
          */
         self.selectedFiles = [];
-        self.processingFiles = [];
         self.uploadedFiles = [];
         self.toggleUploadButton();
         self.resetUploadForm();
@@ -252,8 +246,6 @@ function HQMediaUploadController(options) {
         $(curUpload.cancel).addClass('hide');
         self.removeFileFromUploader(event.id);
 
-        self.processingFiles.push(event.id);
-
         if (self.isMultiFileUpload) {
             var $queuedItem = $(curUpload.selector);
             $queuedItem.remove();
@@ -290,10 +282,7 @@ function HQMediaUploadController(options) {
     };
 
     self.beginProcessing = function(event, response) {
-        console.log("starting to process data");
-        console.log(response);
         var processing_id = response.processing_id;
-        console.log(processing_id);
         self.processingIdToFile[response.processing_id] = event.id;
         var curUpload = self.getActiveUploadSelectors(event.id);
         $(curUpload.progressBar).addClass('hide').attr('style', 'width: 0%;'); // reset progress bar for processing
@@ -314,7 +303,7 @@ function HQMediaUploadController(options) {
                         },
                         type: 'POST',
                         success: self.handleProcessingQueue,
-                        error: self.handleProcessingQueueError,
+                        error: self.handleProcessingQueueError(processing_id),
                         complete: _poll,
                         timeout: self.pollInterval
                     });
@@ -346,6 +335,15 @@ function HQMediaUploadController(options) {
         var file_id = self.processingIdToFile[data.processing_id];
         delete self.processingIdToFile[data.processing_id];
         var curUpload = self.getActiveUploadSelectors(file_id);
+        self.stopProcessingFile(file_id);
+        $(curUpload.progressBarContainer).addClass('progress-success');
+
+        self.showMatches(file_id, data);
+        self.handleErrors(file_id, data.errors);
+    };
+
+    self.stopProcessingFile = function (file_id) {
+        var curUpload = self.getActiveUploadSelectors(file_id);
         if (self.isMultiFileUpload) {
             var $processingItem = $(curUpload.selector);
             $processingItem.remove();
@@ -355,15 +353,18 @@ function HQMediaUploadController(options) {
         $(curUpload.processingNotice).addClass('hide');
         $(curUpload.completeNotice).removeClass('hide');
         $(curUpload.progressBar).attr('style', 'width: 100%;');
-        $(curUpload.progressBarContainer).removeClass('active progress-warning').addClass('progress-success');
-
-        self.showMatches(file_id, data);
-        self.handleErrors(file_id, data.errors);
+        $(curUpload.progressBarContainer).removeClass('active progress-warning');
     };
 
-    self.handleProcessingQueueError = function (data) {
-        console.log("handle error");
-        console.log(data);
+    self.handleProcessingQueueError = function (processing_id) {
+        return function (data) {
+            var file_id = self.processingIdToFile[processing_id];
+            delete self.processingIdToFile[processing_id];
+            var curUpload = self.getActiveUploadSelectors(file_id);
+            self.stopProcessingFile(file_id);
+            $(curUpload.progressBarContainer).addClass('progress-danger');
+            self.handleErrors(file_id, ['There was an issue communicating with the server. The upload failed.']);
+        }
     };
 
     self.showMatches = function (file_id, data) {

@@ -7,6 +7,7 @@ from couchdbkit.ext.django.schema import *
 from couchdbkit.schema import LazyDict
 from django.contrib import messages
 from django.core.urlresolvers import reverse
+import logging
 import magic
 from corehq.apps.app_manager.xform import XFormValidationError
 from couchforms.models import XFormError
@@ -154,7 +155,7 @@ class CommCareMultimedia(Document):
             "path": path,
             "uid": self.file_hash,
             "m_id": self._id,
-            "url": "%s?hieght=50" % reverse("hqmedia_download", args=[self.__class__.__name__, self._id]),
+            "url": reverse("hqmedia_download", args=[self.__class__.__name__, self._id]),
             "updated": is_updated,
             "original_path": original_path
         }
@@ -273,14 +274,15 @@ class CommCareImage(CommCareMultimedia):
     def get_image_object(self, data):
         return Image.open(StringIO(data))
 
-    def get_thumbnail_data(self, data, size=(50,50)):
+    def get_thumbnail_data(self, data, size):
         try:
             image = self.get_image_object(data)
             o = StringIO()
+            image.thumbnail(size, Image.ANTIALIAS)
             image.save(o, format="JPEG")
-            # return o.getvalue()
+            return o.getvalue()
         except ImportError:
-            pass
+            logging.error("Could not correctly process thumbnail for media %s" % self._id)
         return data
 
     def attach_data(self, data, original_filename=None, username=None, attachment_id=None, media_meta=None,

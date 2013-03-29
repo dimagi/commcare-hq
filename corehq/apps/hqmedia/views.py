@@ -380,11 +380,10 @@ class CheckOnProcessingFile(BaseMultimediaView):
 
 @require_POST
 def uploaded(request, domain, app_id):
+    # todo move this over to something similar to what bulk upload does
     app = get_app(domain, app_id)
     response = {}
     errors = []
-    print "uploading"
-    print request.POST
 
     if request.POST.get('media_type', ''):
         specific_params = dict(request.POST)
@@ -541,5 +540,5 @@ class ViewMultimediaFile(View):
 
     def resize_image(self, data):
         if self.thumb:
-            return self.multimedia.get_thumbnail_data(data)
+            return self.multimedia.get_thumbnail_data(data, self.thumb)
         return data
