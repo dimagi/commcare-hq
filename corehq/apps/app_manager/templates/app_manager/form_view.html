@@ -350,6 +350,7 @@
             <li class="active">
                 <a href="#form-settings" data-toggle="tab">{% trans "Settings" %}</a>
             </li>
+            {% if form.source %}
             <li>
                 <a href="#case-configuration" data-toggle="tab">{% trans "Case Management" %}
                 <span class="hq-help-template"
@@ -358,6 +359,7 @@
                 ></span>
                 </a>
             </li>
+            {% endif %}
             <li>
                 <a href="#advanced" data-toggle="tab">{% trans "Advanced" %}</a>
             </li>
@@ -419,8 +421,9 @@
 {#            </div>#}
 {#        </div>#}
 {#    {% endif %}#}
-        <div class="tab-pane" id="case-configuration">
     {% if form.source %}
+        <div class="tab-pane" id="case-configuration">
+
         {% if is_user_registration %}
             <h4>User Registration Properties</h4>
             <div id="user_reg_home" class="config"></div>
@@ -556,8 +559,8 @@
                 </div>
             {% endif %}
         {% endif %}
-    {% endif %}
         </div>
+    {% endif %}
         <div class="tab-pane" id="advanced">
             <h4>XForm</h4>
             <ul class="nav nav-pills">
