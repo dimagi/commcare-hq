@@ -317,11 +317,14 @@
         </div>
     {% endif %}
 
+    <h3>
+        <i class="icon icon-file-alt"></i>
     {% if is_user_registration %}
-        <h3 class="app-manager-title">User Registration</h3>
+        <span class="app-manager-title">{% trans "User Registration" %}</span>
     {% else %}
-        <h3 class="app-manager-title variable-form_name">{{ form.name|html_trans:langs|safe }}</h3>
+        <span class="app-manager-title variable-form_name">{{ form.name|html_trans:langs|safe }}</span>
     {% endif %}
+    </h3>
 
     {% if edit %}
     <div class="btn-group">
