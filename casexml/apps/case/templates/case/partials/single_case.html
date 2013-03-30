@@ -242,11 +242,7 @@
     </div>
     <div class="span6">
         <h2>Xform goes here</h2>
-        <div data-bind="visible: $root.xform_view, template: { name: 'xform-template', foreach: $root.selected_xforms }">
-{#            #<div data-bind="template: { name: 'person-template', foreach: people }"></div>#}
-
-
-        </div>
+        <div data-bind="visible: $root.xform_view, template: { name: 'xform-template', foreach: $root.selected_xforms }"></div>
     </div>
     <script type="text/html" id="xform-template">
         <h2>Hello XForm</h2>
@@ -261,7 +257,7 @@
         <span data-bind="text: 'timeend:' + timeEnd()"></span><br>
         <span data-bind="text: 'case_id:' + case_id()"></span><br>
         <span data-bind="text: 'device_id:' + deviceID()"></span><br>
-        <div class="form-data-block" data-bind="html: 'form_data:' + get_form_data()"></div>
+        <div class="form-data-block" data-bind="html:get_form_data()"></div>
     </script>
 
 
@@ -303,17 +299,16 @@
             return username.split('@')[0];
         }
     }
-    function recursiveRender(obj) {
-        var ret = "";
+    function recursiveRender(obj, depth) {
+        var ret = '';
         for (var k in obj) {
             if (typeof obj[k] == "object") {
-                ret = ret + "<dl class='dl-horizontal'>" + recursiveRender(obj[k]) + "</dl>";
+                ret = ret + "<dl class='dl-horizontal'>" + "<h3 class='push" + depth + "'>" + k + "</h3>" + recursiveRender(obj[k], depth + 1) + "</dl>";
             }
             else {
-                ret = ret + "<dt>" + k.toString() + "</dt><dd>" + obj[k].toString() + "</dd>";
+                ret = ret + "<dt>" + k + "</dt><dd>" + obj[k] + "</dd>";
             }
         }
-        ret = ret + "</dl>";
         return ret;
     }
 
@@ -338,10 +333,12 @@
             self.get_form_data = function() {
                 return "<dl class='dl-horizontal'>" + JSON.stringify(self.form_data(), function(key,value) {
                     console.log(typeof(value));
+                    console.log("##" + key + "##");
+                    console.log("$$" + value + "$$");
                     if (typeof(value) == "object") {
-                        return "<dt>" + key.toString() + "</dt><dd>" + recursiveRender(value) + "</dd>";
+                        return "<dt><h3>" + key + "</h3></dt><dd>" + recursiveRender(value, 0) + "</dd>";
                     } else {
-                        return "<dt>" + key.toString() + "</dt><dd>" + value.toString() + "</dd>";
+                        return "<dt>" + key + "</dt><dd>" + value + "</dd>";
                     }
                 }) + "</dl>";
             };
