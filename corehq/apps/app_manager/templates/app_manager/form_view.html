@@ -360,11 +360,8 @@
             </li>
             {% if form.source %}
             <li>
-                <a href="#case-configuration" data-toggle="tab">{% trans "Case Management" %}
-                <span class="hq-help-template"
-                      data-title="{% trans "Case Configuration" %}"
-                      data-content="{% trans "Cases give you a way to track patients, farms, etc. over time.  You can choose to save data from a form to the case, which will store the data locally on the phone to use later." %}"
-                ></span>
+                <a href="#case-configuration" data-toggle="tab">
+                    {% trans "Case Management" %}
                 </a>
             </li>
             {% endif %}
@@ -442,6 +439,10 @@
                 <div class="casexml" id="casexml_home">
                 </div>
             {% else %}
+                <h4>
+                    {% trans "Case Management" %}
+                    <small>{% trans "Cases give you a way to track patients, farms, etc. over time.  You can choose to save data from a form to the case, which will store the data locally on the phone to use later." %}</small>
+                </h4>
                 <div class="casexml" id="casexml_home">
                     <script type="text/html" id="remove-subcase-modal-template">
                         <div class="modal-header">
@@ -457,13 +458,12 @@
                         </div>
                     </script>
                     <div id="case-config-ko">
-                        <header class="clearfix">
-                            <h5 class="pull-left">Child Cases</h5>
-                            <span class="hq-help-template"
-                                  data-title="{% trans "Child Cases" %}"
-                                  data-content="{% trans "Child Cases let you open other types of cases for use in other modules. When possible, they'll be linked to the current case so you'll always know where they came from. A great use of Child Cases is for tracking a newborn separately from its mother." %}"
-                            ></span>
-                        </header>
+                        <h5>
+                            {% trans "Child Cases" %}
+                            <small>
+                                {% trans "Child Cases let you open other types of cases for use in other modules. When possible, they'll be linked to the current case so you'll always know where they came from. A great use of Child Cases is for tracking a newborn separately from its mother." %}
+                            </small>
+                        </h5>
 
                         <div data-bind="foreach: subcases" class="indent form">
                             <div>
