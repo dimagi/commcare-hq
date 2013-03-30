@@ -161,10 +161,10 @@ var COMMCAREHQ = (function () {
     'use strict';
     return {
         icons: {
-            GRIP:   'icon-resize-vertical',
-            ADD:    'icon-plus',
-            COPY:   'icon-copy',
-            DELETE: 'icon-remove'
+            GRIP:   'icon-resize-vertical icon-blue',
+            ADD:    'icon-plus icon-blue',
+            COPY:   'icon-copy icon-blue',
+            DELETE: 'icon-remove icon-blue'
         },
         makeHqHelp: function (opts, wrap) {
             wrap = wrap === undefined ? true : wrap;
