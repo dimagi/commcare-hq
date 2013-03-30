@@ -1,6 +1,49 @@
+{% load i18n %}
 {% load xform_tags %}
 {% load i18n %}
 {% load timezone_tags %}
+<style type="text/css">
+    .hq-generic-report {
+        padding: 10px;
+    
+    }
+
+    .well {
+        position: relative;
+    }
+
+    .well:after {
+        content: attr(data-title);
+        position: absolute;
+        top: -1px;
+        left: -1px;
+        padding: 3px 7px;
+        font-size: 12px;
+        font-weight: bold;
+        background-color: #f5f5f5;
+        border: 1px solid #ddd;
+        -webkit-border-radius: 4px 0 4px 0;
+        border-radius: 4px 0 4px 0;
+    
+    }
+
+    dl {
+        margin-bottom: 0px;
+        display: inline-block;
+    }
+
+    dl:not(:last-child) {
+        margin-right: 38px;
+    }
+
+    dd {
+        padding-bottom: 10px;
+    
+    }
+</style>
+
+<h2>{% trans "Case Details" %}</h2>
+
 <div id="report-content">
 <div id="tabbed-content-container" class="row-fluid">
     <ul class="nav nav-tabs">
@@ -12,6 +55,23 @@
 
     <div class="tab-content">
         <div class="tab-pane active" id="case-details">
+            <div class="row-fluid">
+                {% for section_name, span, columns in layout %}
+                <div class="well span{{ span }}" data-title="{{ section_name }}">
+                    <div class="row-fluid">
+                        {% for column in columns %}
+                        <dl>    
+                            {% for attr, name, value in column %}
+                            <dt title="{{ attr }}">{{ name }}</dt>
+                            <dd>{{ value }}</dd>
+                            {% endfor %}
+                        </dl>
+                        {% endfor %}
+                    </div>
+                </div>
+
+                {% endfor %}
+            </div>
             <table class="table table-striped case_details table-hover">
                 <thead>
                 <tr>
@@ -20,50 +80,6 @@
                 </tr>
                 </thead>
                 <tbody>
-                <tr>
-                    <td>name</td>
-                    <td>{{ case.name }}</td>
-                </tr>
-                <tr>
-                    <td>case_id</td>
-                    <td>{{ case.case_id }}</td>
-                </tr>
-                <tr>
-                    <td>opened_on</td>
-                    <td>{% utc_to_timezone case.opened_on timezone %}</td>
-                </tr>
-                <tr>
-                    <td>modified_on</td>
-                    <td>{% utc_to_timezone case.modified_on timezone %}</td>
-                </tr>
-                <tr>
-                    <td>type</td>
-                    <td><code>{{ case.type }}</code></td>
-                </tr>
-                <tr>
-                    <td>closed?</td>
-                    <td>{{ case.closed|yesno }}</td>
-                </tr>
-                <tr>
-                    <td>closed_on</td>
-                    <td>{% utc_to_timezone case.closed_on timezone %}</td>
-                </tr>
-                <tr>
-                    <td>domain</td>
-                    <td>{{ case.domain }}</td>
-                </tr>
-                <tr>
-                    <td>external_id</td>
-                    <td>{{ case.external_id }}</td>
-                </tr>
-                <tr>
-                    <td>user_id</td>
-                    <td><span data-field="user_id">{{ case.user_id }}</span></td>
-                </tr>
-                <tr>
-                    <td>owner_id</td>
-                    <td><span data-field="owner_id">{{ case.owner_id }}</span></td>
-                </tr>
                 <tr>
                     <td>forms</td>
                     <td>
@@ -519,4 +535,3 @@
     </script>
 
 </div>
-
