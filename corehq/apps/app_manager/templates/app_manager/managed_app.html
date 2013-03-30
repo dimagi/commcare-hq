@@ -20,7 +20,7 @@
 {% endblock %}
 {% block js %}
     {{ block.super }}
-    <script src="//cdnjs.cloudflare.com/ajax/libs/history.js/1.7.1/native.history.js"></script>
+    <script src="{% static 'hqwebapp/js/lib/history-1.7.1.js' %}"></script>
     <script src="{% static 'app_manager/js/bootstrap-tab-history.js' %}"></script>
 {% endblock %}
 {% block js-inline %}
