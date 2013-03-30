@@ -207,7 +207,7 @@ class IndicatorAdminTab(UITab):
     @property
     def is_viewable(self):
         indicator_enabled_projects = get_indicator_domains()
-        return self.couch_user.can_edit_data and self.domain in indicator_enabled_projects
+        return self.couch_user.can_edit_data(self.domain) and self.domain in indicator_enabled_projects
 
 
 class ReportsTab(UITab):
