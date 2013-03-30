@@ -48,16 +48,27 @@ class FacilityRegistry(Document):
     name = StringProperty(
         verbose_name="Name/description of the facility registry")
 
+    domain = StringProperty()
     created_at = DateTimeProperty()
     synced_at = DateTimeProperty(
         verbose_name="Time of last full sync of facilities for this registry")
     syncing = BooleanProperty()
     last_sync_failed = BooleanProperty(default=True)
 
+    def get_facilities(self):
+        return Facility.by_registry(self._id)
+
     @classmethod
-    def all(cls):
-        return cls.view('facilities/all_registries', reduce=False,
-            include_docs=True).all()
+    def get(cls, id, domain=None, *args, **kwargs):
+        registry = super(FacilityRegistry, cls).get(id, *args, **kwargs)
+        if domain is not None:
+            assert registry.domain == domain
+        return registry
+
+    @classmethod
+    def by_domain(cls, domain):
+        return cls.view('facilities/registries_by_domain', reduce=False,
+            key=domain, include_docs=True).all()
 
     @property
     def remote_registry(self):
@@ -76,7 +87,7 @@ class FacilityRegistry(Document):
 
         """
         if strategy not in ('ours', 'theirs'):
-            raise ValueError()
+            raise ValueError("Invalid facility sync strategy.")
 
         try:
             ours_existing = {}
@@ -85,18 +96,20 @@ class FacilityRegistry(Document):
 
             for our_f in Facility.by_registry(self._id).all():
                 if our_f.synced_at:
-                    local_id = unicode(our_f.data['id'])
+                    local_id = unicode(our_f.data['uuid'])
                     ours_existing[local_id] = our_f
                 else:
                     # new local facility
                     f.save(update_remote=True)
 
             for their_f in self.remote_registry.facilities.all():
-                remote_id = unicode(their_f['id'])
+                remote_id = unicode(their_f['uuid'])
+                data = clean_data(their_f.to_dict())
+
                 if remote_id in ours_existing:
                     if strategy == 'theirs':
                         ours = ours_existing[remote_id]
-                        ours.data = clean_data(their_f.to_dict())
+                        ours.data = data
                         ours.save(update_remote=False)
                     else:  # strategy == 'ours'
                         for f, v in ours.data.items():
@@ -105,11 +118,8 @@ class FacilityRegistry(Document):
                 else:
                     # new remote facility
                     now = utcnow()
-
-                    data = clean_data(their_f.to_dict())
-
                     our_new_f = Facility(registry_id=self._id,
-                        data=data, synced_at=now,
+                        domain=self.domain, data=data, synced_at=now,
                         sync_attempted_at=now)
 
                     our_new_f.save(update_remote=False)
@@ -128,7 +138,7 @@ class FacilityRegistry(Document):
             self.save()
 
     def save(self, *args, **kwargs):
-        # todo: test validitiy
+        # todo: test validity
         self.remote_registry
 
         if self._id is None:
@@ -147,6 +157,8 @@ class FacilityRegistry(Document):
 
 class Facility(Document):
     registry_id = StringProperty()
+    # denormalized for purpose of permissions checking
+    domain = StringProperty()
     data = DictProperty(
         verbose_name="Raw properties from the facility registry")
     synced_at = DateTimeProperty(
@@ -154,6 +166,13 @@ class Facility(Document):
                      "with the facility registry")
     sync_attempted_at = DateTimeProperty(
         verbose_name="Time of last attempted sync with the facility registry")
+
+    @classmethod
+    def get(cls, id, domain=None, *args, **kwargs):
+        facility = super(Facility, cls).get(id, *args, **kwargs)
+        if domain is not None:
+            assert facility.domain == domain
+        return facility
 
     @classmethod
     def by_registry(cls, registry_id=None):

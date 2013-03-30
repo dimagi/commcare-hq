@@ -520,6 +520,7 @@ class Domain(Document, HQBillingDomainMixin, SnapshotMixin):
         new_domain.is_snapshot = False
         new_domain.snapshot_time = None
         new_domain.organization = None # TODO: use current user's organization (?)
+        del new_domain['cda'] # don't copy the cda
 
         for field in self._dirty_fields:
             if hasattr(new_domain, field):

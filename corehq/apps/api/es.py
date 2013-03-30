@@ -317,8 +317,11 @@ class ESQuerySet(object):
     def __iter__(self):
         for jvalue in self.results['hits']['hits']:
             if self.model:
-                # HACK: ideally would not assume that the model class has a `wrap` method, but just call constructor
-                yield self.model.wrap(jvalue['_source']) 
+                # HACK: Sometimes the model is a class w/ a wrap method, sometimes just a function
+                if hasattr(self.model, 'wrap'):
+                    yield self.model.wrap(jvalue['_source']) 
+                else:
+                    yield self.model(jvalue['_source'])
             else:
                 yield jvalue['_source']
 
