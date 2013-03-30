@@ -345,6 +345,11 @@
     <hr/>
     {% endif %}
 
+    {% if is_user_registration %}
+    <h4>User Registration Properties</h4>
+    <div id="user_reg_home" class="config"></div>
+    {% else %}
+
     <div class="tabbable">
         <ul class="nav nav-tabs">
             <li class="active">
@@ -423,11 +428,6 @@
 {#    {% endif %}#}
     {% if form.source %}
         <div class="tab-pane" id="case-configuration">
-
-        {% if is_user_registration %}
-            <h4>User Registration Properties</h4>
-            <div id="user_reg_home" class="config"></div>
-        {% else %}
             {% if app.application_version == '1.0' %}
                 <header class="clearfix">
                     <h4 class="pull-left">{% trans "Cases and Referrals" %}</h4>
@@ -558,7 +558,6 @@
                     </div>
                 </div>
             {% endif %}
-        {% endif %}
         </div>
     {% endif %}
         <div class="tab-pane" id="advanced">
@@ -621,5 +620,6 @@
         </div>
         </div>
     </div>
+    {% endif %}
     <div id="questions"></div>
 {% endblock %}
