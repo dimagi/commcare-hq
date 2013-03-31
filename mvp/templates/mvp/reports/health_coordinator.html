@@ -30,7 +30,7 @@
             });
 
             $('#mvp_mvis_indicators').asyncIndicators({
-                categories: {{ report|JSON }},
+                categories: {{ report|JSON }}
             });
 
             var recalc_thead_width = function () {
@@ -42,11 +42,14 @@
                 $('.mvp-table thead th.indicator-def, .mvp-table tbody th.indicator-def').width(indicator_width);
             };
             recalc_thead_width();
+
+            var getTopOffset = function () {
+                return $('#toggle-report-filters').offset().top + (($('.hq-subsection-navbar')) ? 36 : 10);
+            };
+
             var findOffset = function () {
                 var self = this;
-                self.top = function () {
-                    return $('#reportFilters').hasClass('in') ? 450 : 197;
-                };
+                self.top = getTopOffset;
                 self.bottom = function () {
                     return null;
                 };
@@ -57,7 +60,7 @@
             });
 
             $(window).on('scroll.affix.data-api', function () {
-                $('.mvp-table thead.affix').css('margin-top', $('#reportFilters').hasClass('in') ? '-450px' : '-197px');
+                $('.mvp-table thead.affix').css('margin-top', "-" + getTopOffset() + "px");
             });
 
             $(window).resize(function () {
