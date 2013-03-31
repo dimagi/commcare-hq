@@ -110,7 +110,7 @@ var HQReport = function (options) {
 
         $(self.filterAccordion).on('hidden', function (data) {
             if (!(data.target && $(data.target).hasClass('modal'))) {
-                _setShowFilterCookie(true);
+                _setShowFilterCookie(false);
                 $(self.toggleFiltersButton).button('open');
             }
         });
@@ -149,7 +149,7 @@ var HQReport = function (options) {
         }
         return window.location.pathname.replace(self.urlRoot,
             self.urlRoot+render_type+"/")+"?"+params + (additionalParams == undefined ? "" : "&" + additionalParams);
-    };
+    }
 
     function EmailReportViewModel(hqReport) {
         var self = this;
