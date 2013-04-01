@@ -92,7 +92,7 @@ def render_case(case, timezone=pytz.utc, display=None):
                 if attr in meta:
                     attr_meta = meta[attr]
                 elif isinstance(val, datetime.datetime):
-                    attr_meta = meta['_date']
+                    attr_meta = meta.get('_date', {})
                 else:
                     attr_meta = {}
 
@@ -102,14 +102,22 @@ def render_case(case, timezone=pytz.utc, display=None):
 
                 if 'format' in attr_meta:
                     val = mark_safe(attr_meta['format'].format(val))
-                
-                processed_row.append((attr, _(name), val))
+               
+                # raw property name, property name, property value, colspan
+                processed_row.append([attr, _(name), val, None])
 
             processed_rows.append(processed_row)
+        
+        max_row_length = max(len(row) for row in processed_rows) 
+        table_span = max_row_length * 2
 
-        columns = list(itertools.izip_longest(*processed_rows))
-        span = len(columns) * 2
-        processed_layout.append((_(section_name), span, columns))
+        # set colspan for last element in row if necessary
+        for row in processed_rows:
+            if len(row) < max_row_length:
+                row[-1][3] = (max_row_length - len(row) + 1) * 2
+
+        processed_layout.append((
+            _(section_name) if section_name else "", table_span, processed_rows))
     
     return render_to_string("case/partials/single_case.html", {
         "layout": processed_layout,

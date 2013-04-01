@@ -8,38 +8,33 @@
     
     }
 
-    .well {
+    .case-properties-table {
         position: relative;
+        width: auto;
+        float: left;
+        margin-right: 18px;
+        margin-top: 25px;
     }
 
-    .well:after {
+    .case-properties-table th:not(:first-child), .case-properties-table td {
+        border-left: 0;
+    }
+
+    /* partially lifted from bootstrap docs */
+    .case-properties-table:after {
         content: attr(data-title);
         position: absolute;
-        top: -1px;
-        left: -1px;
+        top: -26px;
+        left: 0px;
         padding: 3px 7px;
         font-size: 12px;
         font-weight: bold;
         background-color: #f5f5f5;
         border: 1px solid #ddd;
-        -webkit-border-radius: 4px 0 4px 0;
-        border-radius: 4px 0 4px 0;
-    
+        border-radius: 4px 4px 0 0;
     }
 
-    dl {
-        margin-bottom: 0px;
-        display: inline-block;
-    }
 
-    dl:not(:last-child) {
-        margin-right: 38px;
-    }
-
-    dd {
-        padding-bottom: 10px;
-    
-    }
 </style>
 
 <h2>{% trans "Case Details" %}</h2>
@@ -56,22 +51,28 @@
     <div class="tab-content">
         <div class="tab-pane active" id="case-details">
             <div class="row-fluid">
-                {% for section_name, span, columns in layout %}
-                <div class="well span{{ span }}" data-title="{{ section_name }}">
-                    <div class="row-fluid">
-                        {% for column in columns %}
-                        <dl>    
-                            {% for attr, name, value in column %}
-                            <dt title="{{ attr }}">{{ name }}</dt>
-                            <dd>{{ value }}</dd>
+                {% for section_name, span, rows in layout %}
+                <table class="table table-bordered case-properties-table" 
+                    data-title="{{ section_name }}">
+                    <tbody>
+                        {% for row in rows %}
+                        <tr>
+                            {% for attr, name, value, colspan in row %}
+                            <th title="{{ attr }}">
+                                {{ name }}
+                            </th>
+                            <td {% if colspan %}colspan="{{ colspan }}"{% endif %}>
+                                {{ value }}
+                            </td>
                             {% endfor %}
-                        </dl>
+                        </tr>
                         {% endfor %}
-                    </div>
-                </div>
+                    </tbody>
+                </table>
 
                 {% endfor %}
             </div>
+            
             <table class="table table-striped case_details table-hover">
                 <thead>
                 <tr>
