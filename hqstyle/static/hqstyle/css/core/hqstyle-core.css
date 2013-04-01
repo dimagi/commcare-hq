@@ -6784,6 +6784,9 @@ a.badge:hover {
   transition: background-color 0.2s ease-in-out;
   background-color: #eff4fa;
 }
+#reportFilters.in {
+  overflow: visible;
+}
 .carousel {
   position: relative;
   margin-bottom: 18px;
