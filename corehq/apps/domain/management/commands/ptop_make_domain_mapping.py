@@ -1,5 +1,4 @@
 from datetime import datetime
-import hashlib
 from django.core.management.base import NoArgsCommand
 import sys
 import os
@@ -14,7 +13,7 @@ class Command(MappingOutputCommand):
     help="Generate mapping JSON of our ES indexed types. For domains"
     option_list = NoArgsCommand.option_list + (
     )
-    doc_class_str = "casexml.apps.domain.models.Domain"
+    doc_class_str = "corehq.apps.domain.models.Domain"
     doc_class = Domain
 
 
