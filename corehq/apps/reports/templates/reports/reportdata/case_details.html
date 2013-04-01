@@ -3,6 +3,11 @@
 {% load hq_shared_tags %}
 
 {% block js-inline %}{{ block.super }}
+
+    <script src="{% static 'hqwebapp/js/lib/nvd3/lib/d3.v2.min.js' %}"></script>
+    <script src="{% static 'hqwebapp/js/lib/nvd3/nv.d3.js' %}"></script>
+    <script src="{% static 'hqwebapp/js/lib/nvd3/nv.d3.css' %}"></script>
+
     <script>
     $(document).ready(function() {
         // this adds clickable links to our form and case elements
