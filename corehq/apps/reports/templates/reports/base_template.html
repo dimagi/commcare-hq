@@ -21,10 +21,6 @@
                 saveUrl: '{% url add_report_config domain %}',
             });
 
-            if ($("#reportFilters").hasClass('in')) {
-                $("#reportFilters").css('overflow', 'visible');
-            }
-
             /* Toggle #reportFilters overflow visibility depending on whether
               it's collapsed or not.  Storing the modal ID is a hack to get
               around unwanted interaction between bootstrap and knockout. */
