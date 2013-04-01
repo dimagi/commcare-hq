@@ -1,4 +1,4 @@
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, time
 from django.template.loader import render_to_string
 from corehq.apps.domain.models import Domain
 from corehq.apps.reminders.models import CaseReminderHandler
@@ -24,6 +24,7 @@ def cases(domain, *args):
     return row["value"] if row else 0
 
 DATE_FORMAT = '%Y-%m-%dT%H:%M:%SZ'
+DISPLAY_DATE_FORMAT = '%Y/%m/%d %H:%M:%S'
 
 def cases_in_last(domain, days):
     now = datetime.now()
@@ -50,12 +51,12 @@ def active(domain, *args):
 def first_form_submission(domain, *args):
     key = make_form_couch_key(domain)
     row = get_db().view("reports_forms/all_forms", reduce=False, startkey=key, endkey=key+[{}]).first()
-    return row["value"]["submission_time"] if row else "No forms"
+    return datetime.strptime((row["value"]["submission_time"]), DATE_FORMAT).strftime(DISPLAY_DATE_FORMAT) if row else "No forms"
 
 def last_form_submission(domain, *args):
     key = make_form_couch_key(domain)
     row = get_db().view("reports_forms/all_forms", reduce=False, startkey=key, endkey=key+[{}]).all()
-    return row[-1]["value"]["submission_time"] if row else "No forms"
+    return datetime.strptime((row[-1]["value"]["submission_time"]), DATE_FORMAT).strftime(DISPLAY_DATE_FORMAT) if row else "No forms"
 
 def has_app(domain, *args):
     domain = Domain.get_by_name(domain)

@@ -93,7 +93,7 @@ function addHistogram(element_id, xname, data, starting_time, ending_time) {
             .tickFormat(function(d){return d3.time.format('%d-%b-%Y')(new Date(d));});
 
         chart.yAxis
-            .tickFormat(d3.format(',.1f'))
+            .tickFormat(d3.format(',.1d'))
             .axisLabel(xname);
 
         chart.margin({top: 30, right: 20, bottom: 50, left: 80});

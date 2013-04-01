@@ -536,33 +536,36 @@ def public(request, org, template='orgs/public.html'):
     return render(request, template, ctxt)
 
 def stats(request, org, template='orgs/stats.html'):
+    """
+        Commented out sections were for supporting filtering domains. This feature is currently being put on hold.
+    """
     organization = Organization.get_by_name(org, strict=True)
     ctxt = base_context(request, organization)
 
-    params, _ = parse_args_for_es(request)
-    facets = ['name', 'is_active', 'project_type']
+    # params, _ = parse_args_for_es(request)
+    # facets = ['name', 'is_active', 'project_type']
 
-    results = es_domain_query(params, facets, domains=[d.name for d in ctxt['domains']])
-    d_results = [Domain.wrap(res['_source']) for res in results.get('hits', {}).get('hits', [])]
+    # results = es_domain_query(params, facets, domains=[d.name for d in ctxt['domains']])
+    # d_results = [Domain.wrap(res['_source']) for res in results.get('hits', {}).get('hits', [])]
 
-    ctxt['domains_for_report'] = ammend_domains(d_results)
+    ctxt['domains_for_report'] = ammend_domains(ctxt['domains'])
     ctxt.update(get_domain_totals(ctxt['domains_for_report']))
     ctxt["tab"] = "stats"
 
-    facets_sortables = generate_sortables_from_facets(results, params)
-    domain_facets = [fs[1] for fs in facets_sortables if fs[0] == 'name'][0]
-    domain_facets = dict([(df['name'], df) for df in domain_facets])
-    for dom in ctxt["domains"]:
-        dom.active_in_filter = domain_facets[dom.name]["active"]
-    # set all domains to active if there are no active domain facets
-    if not filter(lambda d: d.active_in_filter, ctxt["domains"]):
-        for dom in ctxt["domains"]:
-            dom.active_in_filter = True
+    # facets_sortables = generate_sortables_from_facets(results, params)
+    # domain_facets = [fs[1] for fs in facets_sortables if fs[0] == 'name'][0]
+    # domain_facets = dict([(df['name'], df) for df in domain_facets])
+    # for dom in ctxt["domains"]:
+    #     dom.active_in_filter = domain_facets[dom.name]["active"]
+    # # set all domains to active if there are no active domain facets
+    # if not filter(lambda d: d.active_in_filter, ctxt["domains"]):
+    #     for dom in ctxt["domains"]:
+    #         dom.active_in_filter = True
 
     ctxt.update({
         'headers': DOMAIN_LIST_HEADERS,
         "aoColumns": DOMAIN_LIST_HEADERS.render_aoColumns,
-        'domain_facets': sorted(domain_facets),
+        # 'domain_facets': sorted(domain_facets),
         'no_header': True,
     })
     return render(request, template, ctxt)
