@@ -2,6 +2,7 @@ import csv
 from StringIO import StringIO
 from datetime import datetime
 from corehq.apps.commtrack.models import *
+from corehq.apps.commtrack.sms import ProductTransaction
 from corehq.apps.sms.mixin import VerifiedNumber, strip_plus
 from corehq.apps.users.models import CouchUser
 from dimagi.utils.couch.database import get_db
@@ -203,7 +204,7 @@ def import_row(row, data_cols, domain):
         for header, meta in data_cols.iteritems():
             val = row[header]
             if val is not None and val != '':
-                yield {'action': meta['action'], 'product': meta['product'], 'value': int(val)}
+                yield ProductTransaction(meta['action'], meta['product'], int(val))
 
     report = {
         'location': row['loc'],
