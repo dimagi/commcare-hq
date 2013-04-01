@@ -12,6 +12,7 @@ from django.utils.translation import ugettext as _
 from django.utils.translation import ugettext_noop
 
 REMOTE_APP_WILDCARD = "http://(.+).commcarehq.org"
+MISSING_APP_ID = "_MISSING_APP_ID"
 
 class FormsByApplicationFilter(BaseDrilldownOptionFilter):
     """
@@ -632,7 +633,7 @@ class FormsByApplicationFilter(BaseDrilldownOptionFilter):
             Uniquely identify a form with an xmlns+app_id pairing so that we can split fuzzy-matched data from
             non-fuzzy data.
         """
-        if isinstance(app_id, dict) or isinstance(app_id, LazyDict):
+        if app_id == MISSING_APP_ID:
             return xmlns
         return "%s %s" % (xmlns, app_id)
 
@@ -647,7 +648,7 @@ class FormsByApplicationFilter(BaseDrilldownOptionFilter):
         xmlns = identify[0]
         if only_xmlns:
             return xmlns
-        app_id = identify[1] if len(identify) > 1 else {}
+        app_id = identify[1] if len(identify) > 1 else MISSING_APP_ID
         return xmlns, app_id
 
     @classmethod
