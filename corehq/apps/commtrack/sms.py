@@ -176,7 +176,7 @@ class StockReportParser(object):
             if product:
                 if not action:
                     raise RuntimeError('need to specify an action before product')
-                elif action == 'stockout': # FIXME i think this suffers the same bug of comparing user action ('action') with base action ('stockout')
+                elif action == 'stockout': # FIXME this suffers the same bug of comparing action name against an action type
                     value = 0
                 else:
                     try:

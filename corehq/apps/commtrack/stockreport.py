@@ -28,41 +28,40 @@ def process(domain, instance):
     """process an incoming commtrack stock report instance"""
     config = CommtrackConfig.for_domain(domain)
     root = etree.fromstring(instance)
-    transactions = unpack_transactions(root, config)
+    user_id, transactions = unpack_transactions(root, config)
 
     case_ids = [tx.case_id for tx in transactions]
     cases = dict((c._id, c) for c in CommCareCase.view('_all_docs', keys=case_ids, include_docs=True))
 
-    # ensure transaction types are processed in the correct order
-    transactions.sort(key=lambda t: t.order)
-    stock_transactions = [t for t in transactions if t.is_stock]
-    requisition_transactions = [t for t in transactions if t.is_requisition]
+    def get_transactions(all_tx, type_filter):
+        return map_reduce(lambda tx: [(tx.case_id,)],
+                          lambda v: sorted(v, key=lambda tx: tx.priority_order), # important!
+                          data=filter(type_filter, all_tx),
+                          include_docs=True)
+
+    # split transactions by type and product
+    stock_transactions = get_transactions(transactions, lambda tx: tx.is_stock)
+    requisition_transactions = get_transactions(transactions, lambda tx: tx.is_requisition)
 
     # TODO: code to auto generate / update requisitions from transactions if
     # project is configured for that.
 
-    # first apply all transactions to each product case in bulk
-    stock_transactions_by_product = map_reduce(lambda tx: [(tx.case_id,)],
-                                               data=stock_transactions,
-                                               include_docs=True)
-    requisition_transactions_by_product = map_reduce(lambda tx: [(tx.case_id,)],
-                                                     data=requisition_transactions,
-                                                     include_docs=True)
-
+    post_processed_transactions = list(transactions)
     for product_id, product_case in cases.iteritems():
-        stock_txs = stock_transactions_by_product.get(product_id, [])
-        case_block, reconciliations = process_product_transactions(product_case, stock_txs)
-        for recon in reconciliations:
-            root.append(recon)
+        stock_txs = stock_transactions.get(product_id, [])
+
+        case_block, reconciliations = process_product_transactions(user_id, product_case, stock_txs)
         root.append(case_block)
+        post_processed_transactions.extend(reconciliations)
 
         if config.requisitions_enabled:
             # do the same for the requisitions
-            req_txs = requisition_transactions_by_product.get(product_id, [])
+            req_txs = requisition_transactions.get(product_id, [])
             if req_txs:
                 req = RequisitionState.from_transactions(product_case, req_txs)
                 case_block = etree.fromstring(req.to_xml())
                 root.append(case_block)
+    replace_transactions(root, post_processed_transactions)
 
     submission = etree.tostring(root)
     logger.debug('submitting: %s' % submission)
@@ -80,13 +79,30 @@ class StockTransaction(object):
         self.value = kwargs['value']
         self.case_id = kwargs.get('case_id') or kwargs.get('get_caseid', lambda p: None)(self.product)
         self.inferred = kwargs.get('inferred', False)
+        self.processing_order = kwargs.get('order')
+
+        self.config = kwargs.get('config')
+        if self.config:
+            self.action_config = self.config.all_actions_by_name[self.action_name]
+            self.priority_order = [action.action_name for action in self.config.all_actions()].index(self.action_name)
 
         assert self.product_id
         assert self.case_id
 
+    @property
+    def base_action(self):
+        return self.action_config.action_type
+
     @classmethod
-    def from_xml(cls):
-        pass
+    def from_xml(cls, tx, config=None):
+        data = {
+            'product_id': tx.find(_('product')).text,
+            'case_id': tx.find(_('product_entry')).text,
+            'value': int(tx.find(_('value')).text),
+            'inferred': tx.attrib.get('inferred') == 'true',
+            'action': tx.find(_('action')).text,
+        }
+        return StockTransaction(config=config, **data)
 
     def to_xml(self, E=None, **kwargs):
         if not E:
@@ -95,6 +111,8 @@ class StockTransaction(object):
         attr = {}
         if self.inferred:
             attr['inferred'] = 'true'
+        if self.processing_order is not None:
+            attr['order'] = str(self.processing_order + 1)
 
         return E.transaction(
             E.product(self.product_id),
@@ -104,20 +122,13 @@ class StockTransaction(object):
             **attr
         )
 
-class StockTransaction(object):
-    def __init__(self, config, user_id, product_id, case_id, action_name, value, inferred):
-        self.config = config
-        self.user_id = user_id
-        self.product_id = product_id   #
-        self.case_id = case_id         #
-        self.action_name = action_name #
-        self.value = value             #
-        self.inferred = inferred       #
-        self.processing_order = None
-        self.action_config = self.config.all_actions_by_name[self.action_name]
-
-        # used for sorting - the order this appears in the config
-        self.order = [action.action_name for action in self.config.all_actions()].index(self.action_name)
+    # figure this out later
+    @property
+    def is_stock(self):
+        return True #self.action_config.is_stock
+    @property
+    def is_requisition(self):
+        return False #self.action_config.is_requisition
 
     def __repr__(self):
         return '{action}: {value} (case: {case}, product: {product})'.format(
@@ -125,48 +136,17 @@ class StockTransaction(object):
             product=self.product_id
         )
 
-    @property
-    def is_stock(self):
-        return self.action_config.is_stock
-
-    @property
-    def is_requisition(self):
-        return self.action_config.is_requisition
-
-    @classmethod
-    def from_xml(cls, tx, user_id, config):
-        data = {
-            'product_id': tx.find(_('product')).text,
-            'case_id': tx.find(_('product_entry')).text,
-            'value': int(tx.find(_('value')).text),
-            'inferred': tx.attrib.get('inferred') == 'true',
-            'action_name': tx.find(_('action')).text,
-        }
-        return StockTransaction(config=config, user_id= user_id, **data)
-
-# TODO: tag all transactions with 'order in which processed' info -- especially
-# needed for the reconciliation transactions
-
-def tx_to_xml(tx, E=None):
-    if not E:
-        E = XML()
-        
-    attr = {}
-    if tx.get('inferred'):
-        attr['inferred'] = 'true'
-    return E.transaction(
-        E.product(tx['product_id']),
-        E.product_entry(tx['case_id']),
-        E.action(tx['action']),
-        E.value(str(tx['value'])),
-        **attr
-    )
-
 def unpack_transactions(root, config):
     user_id = root.find('.//%s' % _('userID', META_XMLNS)).text
-    return [StockTransaction.from_xml(tx, user_id, config) for tx in root.findall(_('transaction'))]
+    return user_id, [StockTransaction.from_xml(tx, config) for tx in root.findall(_('transaction'))]
 
-def process_product_transactions(case, txs):
+def replace_transactions(root, new_tx):
+    for tx in root.findall(_('transaction')):
+        tx.getparent().remove(tx)
+    for tx in new_tx:
+        root.append(tx.to_xml())
+
+def process_product_transactions(user_id, case, txs):
     """process all the transactions from a stock report for an individual
     product. we have to apply them in bulk because each one may update
     the case state that the next one works off of. therefore we have to
@@ -174,16 +154,11 @@ def process_product_transactions(case, txs):
     """
     current_state = StockState(case)
     reconciliations = []
-    user_id = None
-    for order, tx in enumerate(txs):
-        if user_id is None:
-            user_id = tx.user_id
-        else:
-            assert user_id == tx.user_id # these should all be the same user
-
-        recon = current_state.update(tx.action_config.action_type, tx.value)
+    for i, tx in enumerate(txs):
+        tx.processing_order = i
+        recon = current_state.update(i, tx.base_action, tx.value)
         if recon:
-            reconciliations.append(tx_to_xml(recon))
+            reconciliations.append(recon)
     return current_state.to_case_block(user_id=user_id), reconciliations
 
 class StockState(object):
@@ -193,7 +168,7 @@ class StockState(object):
         self.current_stock = int(props.get('current_stock', 0)) # int
         self.stocked_out_since = props.get('stocked_out_since') # date
 
-    def update(self, action_type, value):
+    def update(self, i, action_type, value):
         """given the current stock state for a product at a location, update
         with the incoming datapoint
         
@@ -201,21 +176,25 @@ class StockState(object):
         """
         reconciliation_transaction = None
         def mk_reconciliation(diff):
-            return {
-                'product_id': self.case.product,
-                'case_id': self.case._id,
-                'action': 'receipts' if diff > 0 else 'consumption',
-                'value': abs(diff),
-                'inferred': True,
-            }
+            return StockTransaction(
+                product_id=self.case.product,
+                case_id=self.case._id,
+                action='receipts' if diff > 0 else 'consumption', # argh, these are base actions, not config actions
+                value=abs(diff),
+                inferred=True,
+                order=i,
+            )
 
         if action_type == 'stockout' or (action_type == 'stockedoutfor' and value > 0):
+            if self.current_stock > 0:
+                reconciliation_transaction = mk_reconciliation(-self.current_stock)
+
             self.current_stock = 0
             days_stocked_out = (value - 1) if action_type == 'stockedoutfor' else 0
             self.stocked_out_since = date.today() - timedelta(days=days_stocked_out)
-        else:
 
-            if action_type in ('stockonhand', 'prevstockonhand'):
+        else:
+            if action_type == 'stockonhand':
                 if self.current_stock != value:
                     reconciliation_transaction = mk_reconciliation(value - self.current_stock)
                 self.current_stock = value
