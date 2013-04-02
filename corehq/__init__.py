@@ -42,6 +42,7 @@ REPORTS = (
         sms.MessagesReport,
         sms.MessageLogReport,
         ivr.CallLogReport,
+        ivr.ExpectedCallbackReport,
     )),
 )
 
