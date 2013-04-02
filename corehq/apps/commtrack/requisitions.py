@@ -76,8 +76,8 @@ class RequisitionState(object):
             **kwargs
         )
 
-def create_requisition(product_stock_case, transaction):
-    req = RequisitionState.from_transactions(product_stock_case, [transaction])
+def create_requisition(user_id, product_stock_case, transaction):
+    req = RequisitionState.from_transactions(user_id, product_stock_case, [transaction])
     submit_case_blocks(req.to_xml(), req.domain, req.username,
                        req.user_id)
     case = CommCareCase.get(req.id)
