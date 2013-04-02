@@ -154,11 +154,18 @@ def process_product_transactions(user_id, case, txs):
     """
     current_state = StockState(case)
     reconciliations = []
-    for i, tx in enumerate(txs):
-        tx.processing_order = i
-        recon = current_state.update(i, tx.base_action, tx.value)
+
+    i = [0] # annoying python 2.x scope issue
+    def set_order(tx):
+        tx.processing_order = i[0]
+        i[0] += 1
+
+    for tx in txs:
+        recon = current_state.update(tx.base_action, tx.value)
         if recon:
+            set_order(recon)
             reconciliations.append(recon)
+        set_order(tx)
     return current_state.to_case_block(user_id=user_id), reconciliations
 
 class StockState(object):
@@ -168,7 +175,7 @@ class StockState(object):
         self.current_stock = int(props.get('current_stock', 0)) # int
         self.stocked_out_since = props.get('stocked_out_since') # date
 
-    def update(self, i, action_type, value):
+    def update(self, action_type, value):
         """given the current stock state for a product at a location, update
         with the incoming datapoint
         
@@ -182,7 +189,6 @@ class StockState(object):
                 action='receipts' if diff > 0 else 'consumption', # argh, these are base actions, not config actions
                 value=abs(diff),
                 inferred=True,
-                order=i,
             )
 
         if action_type == 'stockout' or (action_type == 'stockedoutfor' and value > 0):
