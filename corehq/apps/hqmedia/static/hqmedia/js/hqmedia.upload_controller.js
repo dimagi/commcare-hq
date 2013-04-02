@@ -38,7 +38,9 @@ function HQMediaUploadController(options) {
     // Other
     self.uploadedFiles = [];
     self.processingIdToFile = {};
-    self.pollInterval = 1000;
+    self.pollInterval = 5000;
+    self.currentPollAttempts = 0;
+    self.maxPollAttempts = 10;
 
     self.processQueueTemplate = function (upload_info) {
         /*
@@ -139,6 +141,7 @@ function HQMediaUploadController(options) {
                 self.uploader.on("uploadprogress", self.uploadProgress);
                 self.uploader.on("uploadcomplete", self.uploadComplete);
                 self.uploader.on("uploadcompletedata", self.uploadCompleteData);
+                self.uploader.on("uploaderror", self.uploadError);
             });
         });
 
@@ -258,6 +261,13 @@ function HQMediaUploadController(options) {
         self.beginProcessing(event, response);
     };
 
+    self.uploadError = function (event) {
+        var file_id = event.id;
+        var curUpload = self.getActiveUploadSelectors(file_id);
+        $(curUpload.progressBarContainer).addClass('progress-danger');
+        self.handleErrors(file_id, ['There is an issue communicating with the server at this time. The upload failed.']);
+    };
+
     self.toggleUploadButton = function () {
         var $uploadButton = $(self.uploadButtonSelector);
         if (self.isMultiFileUpload) {
@@ -313,6 +323,7 @@ function HQMediaUploadController(options) {
     };
 
     self.handleProcessingQueue = function (data) {
+        self.currentPollAttempts = 0;
         var file_id = self.processingIdToFile[data.processing_id];
         var curUpload = self.getActiveUploadSelectors(file_id);
         if (data.in_celery) {
@@ -357,13 +368,17 @@ function HQMediaUploadController(options) {
     };
 
     self.handleProcessingQueueError = function (processing_id) {
-        return function (data) {
-            var file_id = self.processingIdToFile[processing_id];
-            delete self.processingIdToFile[processing_id];
-            var curUpload = self.getActiveUploadSelectors(file_id);
-            self.stopProcessingFile(file_id);
-            $(curUpload.progressBarContainer).addClass('progress-danger');
-            self.handleErrors(file_id, ['There was an issue communicating with the server. The upload failed.']);
+        return function (data, status) {
+            self.currentPollAttempts += 1;
+            if (self.currentPollAttempts > self.maxPollAttempts) {
+                var file_id = self.processingIdToFile[processing_id];
+                delete self.processingIdToFile[processing_id];
+                var curUpload = self.getActiveUploadSelectors(file_id);
+                self.stopProcessingFile(file_id);
+                $(curUpload.progressBarContainer).addClass('progress-danger');
+                self.handleErrors(file_id, ['There was an issue communicating with the server at this time. ' +
+                    'The upload has failed.']);
+            }
         }
     };
 
