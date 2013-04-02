@@ -2,6 +2,8 @@
 {% load xform_tags %}
 {% load i18n %}
 {% load timezone_tags %}
+{% load case_tags %}
+
 <style type="text/css">
     .hq-generic-report {
         padding: 10px;
@@ -11,21 +13,42 @@
     .case-properties-table {
         position: relative;
         width: auto;
-        float: left;
-        margin-right: 18px;
-        margin-top: 25px;
+        margin: 0;
+        table-layout: fixed;
+    }
+
+    .case-properties-table th, td {
+        word-wrap: break-word;
+        word-break: break-all;
     }
 
     .case-properties-table th:not(:first-child), .case-properties-table td {
         border-left: 0;
     }
 
+    .case-properties-table th:nth-child(odd) {
+        text-align: right;
+        width: 80px;
+    }
+
+    .case-properties-table td:nth-child(even) {
+        width: 160px;
+    
+    }
+
+    .table-container {
+        float: left;
+        margin-bottom: 18px;
+        margin-right: 18px;
+    
+    }
+
     /* partially lifted from bootstrap docs */
-    .case-properties-table:after {
-        content: attr(data-title);
-        position: absolute;
+    .table-tab {
         top: -26px;
         left: 0px;
+        display: inline-block;
+        width: auto;
         padding: 3px 7px;
         font-size: 12px;
         font-weight: bold;
@@ -51,26 +74,11 @@
     <div class="tab-content">
         <div class="tab-pane active" id="case-details">
             <div class="row-fluid">
-                {% for section_name, span, rows in layout %}
-                <table class="table table-bordered case-properties-table" 
-                    data-title="{{ section_name }}">
-                    <tbody>
-                        {% for row in rows %}
-                        <tr>
-                            {% for attr, name, value, colspan in row %}
-                            <th title="{{ attr }}">
-                                {{ name }}
-                            </th>
-                            <td {% if colspan %}colspan="{{ colspan }}"{% endif %}>
-                                {{ value }}
-                            </td>
-                            {% endfor %}
-                        </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
-
+                {% for section_name, rows in default_properties %}
+                {% render_table section_name rows %}
                 {% endfor %}
+                <div class="clearfix"></div>
+                {% render_table "Other Properties" dynamic_properties %}
             </div>
             
             <table class="table table-striped case_details table-hover">
@@ -105,43 +113,8 @@
 
                 </tbody>
             </table>
-            <h2>Dynamic Properties <button id="case-dynamic-props-tgl" type="button" class="btn btn-primary" data-toggle="button">Show</button></h2>
-
-        <div id="tbl-dynamic-props">
-            <table class="table table-striped case_properties ">
-                <thead>
-                <tr>
-                    <th>Property</th>
-                    <th>Value</th>
-                </tr>
-                </thead>
-                <tbody>
-                {% for prop, val in case.dynamic_case_properties %}
-                    <tr>
-                        <td>{{ prop }}</td>
-                        <td>{{ val }}</td>
-                    </tr>
-                {% empty %}
-                    <tr>
-                        <td colspan="2" class="no_data">No data</td>
-                    </tr>
-                {% endfor %}
-                </tbody>
-            </table>
         </div>
-                <script type="text/javascript">
-                $('#case-dynamic-props-tgl').click( function() {
-                    if( ! $(this).hasClass('active') ) {
-                        $("#tbl-dynamic-props").collapse('toggle');
-                    } else {
-                        $("#tbl-dynamic-props").collapse('toggle');
-                    }
-                });
-            </script>
 
-
-
-        </div>
         <div class="tab-pane" id="case-referrals">
 
             <h2>Referrals</h2>
@@ -170,9 +143,8 @@
 
                 </tbody>
             </table>
-
-
         </div>
+
         <div class="tab-pane" id="case-related">
 
             <h2>Related Cases</h2>

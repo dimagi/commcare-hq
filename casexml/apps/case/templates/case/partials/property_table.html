@@ -1,0 +1,39 @@
+{% load i18n %}
+
+<div class="table-container">
+    <div class="table-tab" data-toggle="collapse" 
+        data-target="#case_properties_{{ name|slugify }}">
+        {{ name }}
+    </div>
+    <div class="collapse in" id="case_properties_{{ name|slugify }}">
+        <table class="table table-bordered case-properties-table">
+            <tbody>
+                {% for row in rows %}
+                <tr>
+                    {% for attr, name, value, colspan in row %}
+                    {# attr=None, name=colspan for last cell in a short row #}
+                    {% if not attr %}
+                    <th colspan="{{ name }}"></th>
+                    {% else %}
+                    <th title="{{ attr }}">
+                        {{ name }}:
+                    </th>
+                    <td>
+                        {{ value }}
+                    </td>
+                    {% endif %}
+                    {% endfor %}
+                </tr>
+                {% empty %}
+                <tr>
+                    <th style="width:auto" colspan="2" class="no-data">
+                        <span class="muted">
+                            {% trans "No properties found." %}
+                        </span>
+                    </th>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
