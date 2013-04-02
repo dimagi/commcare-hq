@@ -11,6 +11,7 @@ from dimagi.utils.couch.loosechange import map_reduce
 import logging
 from corehq.apps.commtrack.models import CommtrackConfig
 from corehq.apps.commtrack.requisitions import RequisitionState
+from corehq.apps.commtrack import const
 
 logger = logging.getLogger('commtrack.incoming')
 
@@ -156,7 +157,32 @@ class Requisition(StockTransaction):
         )
 
 class RequisitionResponse(object):
-    pass
+    def __init__(self, action):
+        self.action = action
+
+    @property
+    def category(self):
+        return 'requisition'
+
+    @property
+    def product_id(self):
+        return const.ALL_PRODUCTS_TRANSACTION_TAG
+
+    @classmethod
+    def from_xml(cls, tx, config=None):
+        data = {
+            'action': tx.find(_('status')).text,
+        }
+        return cls(**data)
+
+    def to_xml(self, E=None, **kwargs):
+        if not E:
+            E = XML()
+
+        return E.response(
+            E.status(self.action),
+            E.product(self.product_id),
+        )
 
 def unpack_transactions(root, config):
     user_id = root.find('.//%s' % _('userID', META_XMLNS)).text
@@ -164,6 +190,7 @@ def unpack_transactions(root, config):
         types = {
             'transaction': StockTransaction,
             'request': Requisition,
+            'response': RequisitionResponse,
         }
         for tag, factory in types.iteritems():
             for tx in root.findall(_(tag)):
@@ -172,7 +199,7 @@ def unpack_transactions(root, config):
     return user_id, list(transactions())
 
 def replace_transactions(root, new_tx):
-    for tag in ('transaction', 'request'):
+    for tag in ('transaction', 'request', 'response'):
         for tx in root.findall(_(tag)):
             tx.getparent().remove(tx)
     for tx in new_tx:

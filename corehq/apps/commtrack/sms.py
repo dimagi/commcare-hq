@@ -207,8 +207,8 @@ class StockReportParser(object):
         if args:
             raise RuntimeError('extra arguments at end')
 
-        return something
-            
+        yield stockreport.RequisitionResponse(action.action_type)
+
     def location_from_code(self, loc_code):
         """return the supply point case referenced by loc_code"""
         result = get_supply_point(self.domain.name, loc_code)['case']
@@ -224,29 +224,6 @@ class StockReportParser(object):
             raise RuntimeError('invalid product code "%s"' % prod_code)
         return p
 
-
-
-"""
-class BulkTransaction(SmsTransaction):
-    ""
-    An SMS transaction helper class that represents a product and a value
-    ""
-    def __init__(self, action):
-        super(SmsTransaction, self).__init__(action, None, False)
-
-    @property
-    def product_id(self):
-        return const.ALL_PRODUCTS_TRANSACTION_TAG
-
-    def to_xml(self, E=None):
-        if not E:
-            E = stockreport.XML()
-
-        return E.transaction(
-            E.product(self.product_id),
-            E.action(self.action),
-        )
-"""
 
 def looks_like_prod_code(code):
     try:
