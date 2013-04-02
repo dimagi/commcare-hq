@@ -6,7 +6,7 @@ from corehq.apps.reports.standard import DatespanMixin, ProjectReport,\
 from corehq.apps.reports.generic import GenericTabularReport
 from corehq.apps.reports.datatables import DataTablesColumn, DataTablesHeader
 from dimagi.utils.parsing import json_format_datetime
-from corehq.apps.sms.models import INCOMING, OUTGOING, CallLog
+from corehq.apps.sms.models import INCOMING, OUTGOING, CallLog, ExpectedCallbackEventLog, CALLBACK_PENDING, CALLBACK_RECEIVED, CALLBACK_MISSED
 from corehq.apps.smsforms.models import XFormsSession
 from corehq.apps.reports.util import format_datatables_data
 from corehq.apps.users.models import CouchUser
@@ -16,10 +16,10 @@ from dimagi.utils.timezones import utils as tz_utils
 from corehq.apps.reminders.util import get_form_name
 import pytz
 
-"""
-Displays all calls for the given domain and date range.
-"""
 class CallLogReport(ProjectReport, ProjectReportParametersMixin, GenericTabularReport, DatespanMixin):
+    """
+    Displays all calls for the given domain and date range.
+    """
     name = ugettext_noop('Call Log')
     slug = 'call_log'
     fields = ['corehq.apps.reports.fields.DatespanField']
@@ -147,4 +147,80 @@ class CallLogReport(ProjectReport, ProjectReportParametersMixin, GenericTabularR
         display_text = _("View Submission")
         return self.table_cell(display_text, '<a href="%s">%s</a>' % (url, display_text))
 
+class ExpectedCallbackReport(ProjectReport, ProjectReportParametersMixin, GenericTabularReport, DatespanMixin):
+    """
+    Displays all expected callbacks for the given time period.
+    """
+    name = ugettext_noop('Expected Callbacks')
+    slug = 'expected_callbacks'
+    fields = ['corehq.apps.reports.fields.DatespanField']
+    exportable = True
+    
+    @property
+    def headers(self):
+        header_list = [
+            DataTablesColumn(_("Timestamp")),
+            DataTablesColumn(_("Recipient Name")),
+            DataTablesColumn(_("Status")),
+        ]
+        
+        return DataTablesHeader(*header_list)
+    
+    @property
+    def rows(self):
+        startdate = json_format_datetime(self.datespan.startdate_utc)
+        enddate = json_format_datetime(self.datespan.enddate_utc)
+        data = ExpectedCallbackEventLog.by_domain(self.domain, startdate, enddate)
+        result = []
+        
+        status_descriptions = {
+            CALLBACK_PENDING : _("Pending"),
+            CALLBACK_RECEIVED : _("Received"),
+            CALLBACK_MISSED : _("Missed"),
+        }
+        
+        # Store the results of lookups for faster loading
+        username_map = {} 
+        
+        for event in data:
+            recipient_id = event.couch_recipient
+            if recipient_id in [None, ""]:
+                username = "-"
+            elif recipient_id in username_map:
+                username = username_map.get(recipient_id)
+            else:
+                username = "-"
+                try:
+                    if event.couch_recipient_doc_type == "CommCareCase":
+                        username = CommCareCase.get(recipient_id).name
+                    else:
+                        username = CouchUser.get_by_user_id(recipient_id).username
+                except Exception:
+                    pass
+               
+                username_map[recipient_id] = username
+            
+            timestamp = tz_utils.adjust_datetime_to_timezone(event.date, pytz.utc.zone, self.timezone.zone)
+            
+            row = [
+                self._fmt_timestamp(timestamp),
+                self._fmt(username),
+                self._fmt(status_descriptions.get(event.status, "-")),
+            ]
+            
+            result.append(row)
+        
+        return result
+    
+    def _fmt(self, val):
+        if val is None:
+            return format_datatables_data("-", "-")
+        else:
+            return format_datatables_data(val, val)
+    
+    def _fmt_timestamp(self, timestamp):
+        return self.table_cell(
+            timestamp,
+            timestamp.strftime("%Y-%m-%d %H:%M:%S"),
+        )
 
