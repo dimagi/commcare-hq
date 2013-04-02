@@ -70,15 +70,50 @@ def process(domain, instance):
     submit_time = root.find('.//%s' % _('timeStart', META_XMLNS)).text
     spoof_submission(get_submit_url(domain), submission, headers={'HTTP_X_SUBMIT_TIME': submit_time})
 
+
+
+class StockTransaction(object):
+    def __init__(self, **kwargs):
+        self.product = kwargs.get('product')
+        self.product_id = kwargs.get('product_id') or self.product._id
+        self.action_name = kwargs['action']
+        self.value = kwargs['value']
+        self.case_id = kwargs.get('case_id') or kwargs.get('get_caseid', lambda p: None)(self.product)
+        self.inferred = kwargs.get('inferred', False)
+
+        assert self.product_id
+        assert self.case_id
+
+    @classmethod
+    def from_xml(cls):
+        pass
+
+    def to_xml(self, E=None, **kwargs):
+        if not E:
+            E = XML()
+
+        attr = {}
+        if self.inferred:
+            attr['inferred'] = 'true'
+
+        return E.transaction(
+            E.product(self.product_id),
+            E.product_entry(self.case_id),
+            E.action(self.action_name),
+            E.value(str(self.value)),
+            **attr
+        )
+
 class StockTransaction(object):
     def __init__(self, config, user_id, product_id, case_id, action_name, value, inferred):
         self.config = config
         self.user_id = user_id
-        self.product_id = product_id
-        self.case_id = case_id
-        self.action_name = action_name
-        self.value = value
-        self.inferred = inferred
+        self.product_id = product_id   #
+        self.case_id = case_id         #
+        self.action_name = action_name #
+        self.value = value             #
+        self.inferred = inferred       #
+        self.processing_order = None
         self.action_config = self.config.all_actions_by_name[self.action_name]
 
         # used for sorting - the order this appears in the config
@@ -140,7 +175,7 @@ def process_product_transactions(case, txs):
     current_state = StockState(case)
     reconciliations = []
     user_id = None
-    for tx in txs:
+    for order, tx in enumerate(txs):
         if user_id is None:
             user_id = tx.user_id
         else:
@@ -157,7 +192,6 @@ class StockState(object):
         props = case.dynamic_properties()
         self.current_stock = int(props.get('current_stock', 0)) # int
         self.stocked_out_since = props.get('stocked_out_since') # date
-        # worry about consumption rates later
 
     def update(self, action_type, value):
         """given the current stock state for a product at a location, update

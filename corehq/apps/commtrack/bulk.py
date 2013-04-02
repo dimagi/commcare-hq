@@ -171,6 +171,7 @@ def process_loc(domain, loc, rows, data_cols):
     endkey = list(startkey)
     endkey.append({})
 
+    # TODO potential source of slowness
     most_recent_entry = get_db().view('commtrack/stock_reports', startkey=endkey, endkey=startkey, descending=True).first()
     if most_recent_entry:
         most_recent_timestamp = most_recent_entry['key'][-1]
