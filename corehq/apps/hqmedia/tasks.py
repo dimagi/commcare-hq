@@ -98,8 +98,7 @@ def process_bulk_upload_zip(processing_id, domain, app_id, username=None, share_
 
             media_class = CommCareMultimedia.get_class_by_data(data)
             if not media_class:
-                _add_unmatched(path, "Did not process as a valid media file. Type: %s" %
-                                     CommCareMultimedia.get_mime_type(data))
+                # skip these...
                 continue
 
             app_paths = app.get_all_paths_of_type(media_class.__name__)
