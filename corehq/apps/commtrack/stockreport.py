@@ -56,7 +56,7 @@ def process(domain, instance):
 
         req_txs = requisition_transactions.get(product_id, [])
         if req_txs and config.requisitions_enabled:
-            req = RequisitionState.from_transactions(product_case, req_txs)
+            req = RequisitionState.from_transactions(user_id, product_case, req_txs)
             case_block = etree.fromstring(req.to_xml())
             root.append(case_block)
     replace_transactions(root, post_processed_transactions)
@@ -100,7 +100,7 @@ class StockTransaction(object):
             'inferred': tx.attrib.get('inferred') == 'true',
             'action': tx.find(_('action')).text,
         }
-        return StockTransaction(config=config, **data)
+        return cls(config=config, **data)
 
     def to_xml(self, E=None, **kwargs):
         if not E:
@@ -143,7 +143,7 @@ class Requisition(StockTransaction):
             'value': int(tx.find(_('value')).text),
             'action': 'request',
         }
-        return StockTransaction(config=config, **data)
+        return cls(config=config, **data)
 
     def to_xml(self, E=None, **kwargs):
         if not E:

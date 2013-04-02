@@ -46,7 +46,7 @@ class RequisitionState(object):
         return ElementTree.tostring(caseblock.as_xml())
 
     @classmethod
-    def from_transactions(cls, product_stock_case, transactions):
+    def from_transactions(cls, user_id, product_stock_case, transactions):
         assert transactions, "can't make a requisition state from an empty transaciton list"
 
         def _to_fields(transaction):
@@ -59,21 +59,15 @@ class RequisitionState(object):
             else:
                 raise ValueError('only requests are currently supported')
 
-        user_id = None
         kwargs = {}
         for tx in transactions:
-            if user_id is None:
-                user_id = tx.user_id
-            else:
-                assert user_id == tx.user_id, 'all transaction user ids should match'
-
             fields = _to_fields(tx)
             for field in fields:
                 assert field not in kwargs, 'transaction updates should be disjoint but found %s twice' % field
             kwargs.update(fields)
 
         username = CouchUser.get(user_id).username
-        return RequisitionState(
+        return cls(
             domain=product_stock_case.domain,
             id=uuid.uuid4().hex, # TODO: support non-create case
             user_id=user_id,
