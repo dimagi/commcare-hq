@@ -40,8 +40,8 @@ def process(domain, instance):
                           include_docs=True)
 
     # split transactions by type and product
-    stock_transactions = get_transactions(transactions, lambda tx: tx.is_stock)
-    requisition_transactions = get_transactions(transactions, lambda tx: tx.is_requisition)
+    stock_transactions = get_transactions(transactions, lambda tx: tx.category == 'stock')
+    requisition_transactions = get_transactions(transactions, lambda tx: tx.category == 'requisition')
 
     # TODO: code to auto generate / update requisitions from transactions if
     # project is configured for that.
@@ -49,18 +49,16 @@ def process(domain, instance):
     post_processed_transactions = list(transactions)
     for product_id, product_case in cases.iteritems():
         stock_txs = stock_transactions.get(product_id, [])
+        if stock_txs:
+            case_block, reconciliations = process_product_transactions(user_id, product_case, stock_txs)
+            root.append(case_block)
+            post_processed_transactions.extend(reconciliations)
 
-        case_block, reconciliations = process_product_transactions(user_id, product_case, stock_txs)
-        root.append(case_block)
-        post_processed_transactions.extend(reconciliations)
-
-        if config.requisitions_enabled:
-            # do the same for the requisitions
-            req_txs = requisition_transactions.get(product_id, [])
-            if req_txs:
-                req = RequisitionState.from_transactions(product_case, req_txs)
-                case_block = etree.fromstring(req.to_xml())
-                root.append(case_block)
+        req_txs = requisition_transactions.get(product_id, [])
+        if req_txs and config.requisitions_enabled:
+            req = RequisitionState.from_transactions(product_case, req_txs)
+            case_block = etree.fromstring(req.to_xml())
+            root.append(case_block)
     replace_transactions(root, post_processed_transactions)
 
     submission = etree.tostring(root)
@@ -122,13 +120,9 @@ class StockTransaction(object):
             **attr
         )
 
-    # figure this out later
     @property
-    def is_stock(self):
-        return True #self.action_config.is_stock
-    @property
-    def is_requisition(self):
-        return False #self.action_config.is_requisition
+    def category(self):
+        return 'stock'
 
     def __repr__(self):
         return '{action}: {value} (case: {case}, product: {product})'.format(
@@ -136,13 +130,51 @@ class StockTransaction(object):
             product=self.product_id
         )
 
+class Requisition(StockTransaction):
+    @property
+    def category(self):
+        return 'requisition'
+
+    @classmethod
+    def from_xml(cls, tx, config=None):
+        data = {
+            'product_id': tx.find(_('product')).text,
+            'case_id': tx.find(_('product_entry')).text,
+            'value': int(tx.find(_('value')).text),
+            'action': 'request',
+        }
+        return StockTransaction(config=config, **data)
+
+    def to_xml(self, E=None, **kwargs):
+        if not E:
+            E = XML()
+
+        return E.request(
+            E.product(self.product_id),
+            E.product_entry(self.case_id),
+            E.value(str(self.value)),
+        )
+
+class RequisitionResponse(object):
+    pass
+
 def unpack_transactions(root, config):
     user_id = root.find('.//%s' % _('userID', META_XMLNS)).text
-    return user_id, [StockTransaction.from_xml(tx, config) for tx in root.findall(_('transaction'))]
+    def transactions():
+        types = {
+            'transaction': StockTransaction,
+            'request': Requisition,
+        }
+        for tag, factory in types.iteritems():
+            for tx in root.findall(_(tag)):
+                yield factory.from_xml(tx, config)
+
+    return user_id, list(transactions())
 
 def replace_transactions(root, new_tx):
-    for tx in root.findall(_('transaction')):
-        tx.getparent().remove(tx)
+    for tag in ('transaction', 'request'):
+        for tx in root.findall(_(tag)):
+            tx.getparent().remove(tx)
     for tx in new_tx:
         root.append(tx.to_xml())
 

@@ -168,6 +168,12 @@ class CommtrackConfig(Document):
     def keywords(self, multi=False):
         return self._keywords(self.actions, multi)
 
+    # TODO clean all this up
+    def stock_keywords(self):
+        return self.keywords()
+    def requisition_keywords(self):
+        return self._keywords(self.requisition_config.actions if self.requisitions_enabled else [], False)
+
     def all_keywords(self, multi=False):
         return self._keywords(self.all_actions(), multi)
 

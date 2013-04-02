@@ -57,13 +57,13 @@ class StockReportParser(object):
         """take in a text and return the parsed stock transactions"""
         args = text.split()
 
-        def tx_factory(location):
+        def tx_factory(location, baseclass):
             product_subcase_mapping = product_subcases(location)
             product_caseid = lambda p: product_subcase_mapping[p._id]
-            return lambda **kwargs: stockreport.StockTransaction(get_caseid=product_caseid, **kwargs)
+            return lambda **kwargs: baseclass(get_caseid=product_caseid, **kwargs)
 
-        if args[0] in self.C.all_keywords():
-            # single action sms
+        # single action stock report
+        if args[0] in self.C.stock_keywords():
             # TODO: support single-action by product, as well as by action?
             action_name = self.C.all_keywords()[args[0]]
             action = self.C.all_actions_by_name[action_name]
@@ -73,10 +73,27 @@ class StockReportParser(object):
                 location = self.location_from_code(args[0])
                 args = args[1:]
         
-            _tx = self.single_action_transactions(action, args, tx_factory(location))
+            _tx = self.single_action_transactions(action, args, tx_factory(location, stockreport.StockTransaction))
 
+        # requisition
+        elif args[0] in self.C.requisition_keywords():
+            action_name = self.C.all_keywords()[args[0]]
+            action = self.C.all_actions_by_name[action_name]
+            args = args[1:]
+
+            # TODO in future when location can be linked to sending phone #, FILL and APPROVE will still require location code
+            # (since they refer to locations different from the sender's loc)
+            if not location:
+                location = self.location_from_code(args[0])
+                args = args[1:]
+
+            if action.action_type in [RequisitionActions.APPROVAL, RequisitionActions.FILL]:
+                _tx = self.requisition_bulk_action(action, args)
+            else:
+                _tx = self.single_action_transactions(action, args, tx_factory(location, stockreport.Requisition))
+
+        # multiple action stock report
         elif self.C.multiaction_enabled and (self.C.multiaction_keyword is None or args[0] == self.C.multiaction_keyword.lower()):
-            # multiple action sms
             if self.C.multiaction_keyword:
                 args = args[1:]
 
@@ -84,7 +101,7 @@ class StockReportParser(object):
                 location = self.location_from_code(args[0])
                 args = args[1:]
 
-            _tx = self.multiple_action_transactions(args, tx_factory(location))
+            _tx = self.multiple_action_transactions(args, tx_factory(location, stockreport.StockTransaction))
 
         else:
             # initial keyword not recognized; delegate to another handler
@@ -111,11 +128,6 @@ class StockReportParser(object):
                 return
             else:
                 raise RuntimeError("can't include a quantity for stock-out action")
-
-        #FIXME requisition
-        if action.action_type in [RequisitionActions.APPROVAL, RequisitionActions.FILL] and not args:
-            # these two actions can be submitted generically without specifying products or amounts
-            yield BulkTransaction(action.name)
 
         grouping_allowed = (action.action_type == 'stockedoutfor')
 
@@ -144,6 +156,8 @@ class StockReportParser(object):
         action = None
         action_code = None
         product = None
+
+        # TODO: catch that we don't mix in requisiton and stock report keywords in the same multi-action message?
 
         _args = iter(args)
         def next():
@@ -189,6 +203,11 @@ class StockReportParser(object):
 
             raise RuntimeError('do not recognize keyword "%s"' % keyword)
 
+    def requisition_bulk_action(self, action, args):
+        if args:
+            raise RuntimeError('extra arguments at end')
+
+        return something
             
     def location_from_code(self, loc_code):
         """return the supply point case referenced by loc_code"""
@@ -277,7 +296,14 @@ def to_instance(data):
         deviceID = 'sms:%s' % data['phone']
     timestamp = json_format_datetime(data['timestamp'])
 
-    root = E.stock_report(
+    transactions = data['transactions']
+    category = set(tx.category for tx in transactions).pop()
+    factory = {
+        'stock': E.stock_report,
+        'requisition': E.requisition,
+    }[category]
+
+    root = factory(
         M.meta(
             M.userID(data['user']._id),
             M.deviceID(deviceID),
@@ -285,7 +311,7 @@ def to_instance(data):
             M.timeEnd(timestamp)
         ),
         E.location(data['location']._id),
-        *[tx.to_xml() for tx in data['transactions']]
+        *[tx.to_xml() for tx in transactions]
     )
 
     return etree.tostring(root, encoding='utf-8', pretty_print=True)
