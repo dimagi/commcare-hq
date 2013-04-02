@@ -28,8 +28,7 @@ from corehq.apps.hqmedia.tasks import process_bulk_upload_zip
 
 from dimagi.utils import make_uuid
 from dimagi.utils.decorators.memoized import memoized
-
-DEFAULT_EXPIRY = 60 * 60  # one hour
+from soil.util import expose_download
 
 
 class BaseMultimediaView(ApplicationViewMixin, View):
@@ -230,6 +229,7 @@ class BadMediaFileException(Exception):
 
 
 class BaseProcessUploadedView(BaseMultimediaView):
+    cache_expiry = 60 * 60  # one hour
 
     @property
     @memoized
@@ -319,16 +319,11 @@ class ProcessBulkUploadView(BaseProcessUploadedView):
             raise BadMediaFileException("The ZIP file provided was bad.")
 
     def process_upload(self):
-        processing_id = make_uuid()
+        # save the file w/ soil
         self.uploaded_file.file.seek(0)
-        # borrowed from a number of places. ex: http://code.activestate.com/recipes/273844-minimal-http-upload-cgi/
-        saved_file = file(self.get_save_path(processing_id), 'wb')
-        while 1:
-            chunk = self.uploaded_file.file.read(100000)
-            if not chunk:
-                break
-            saved_file.write(chunk)
-        saved_file.close()
+        saved_file = expose_download(self.uploaded_file.file.read(), expiry=self.cache_expiry)
+        processing_id = saved_file.download_id
+
         status = {
             'in_celery': False,
             'complete': False,
@@ -337,7 +332,7 @@ class ProcessBulkUploadView(BaseProcessUploadedView):
             'type': 'zip',
             'processing_id': processing_id,
         }
-        cache.set(self.get_cache_key(processing_id), status)
+        cache.set(self.get_cache_key(processing_id), status, self.cache_expiry)
         process_bulk_upload_zip.delay(processing_id, self.domain, self.app_id,
                                       username=self.request.couch_user.username if self.request.couch_user else None,
                                       share_media=self.share_media,
@@ -353,18 +348,6 @@ class ProcessBulkUploadView(BaseProcessUploadedView):
             'application/octet-stream',
             'application/x-zip-compressed',
         ]
-
-    @classmethod
-    def get_bulk_upload_location(cls):
-        try:
-            return settings.MULTIMEDIA_BULK_UPLOAD_LOCATION
-        except AttributeError:
-            raise NotImplementedError("You need to specify a bulk upload location (MULTIMEDIA_BULK_UPLOAD_LOCATION) "
-                                      "in your localsettings to use this feature")
-
-    @classmethod
-    def get_save_path(cls, processing_id):
-        return os.path.join(cls.get_bulk_upload_location(), "%s.zip" % processing_id)
 
     @classmethod
     def get_cache_key(cls, processing_id):

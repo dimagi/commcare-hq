@@ -1,3 +1,4 @@
+import StringIO
 import os
 from celery.task import task
 from celery.utils.log import get_task_logger
@@ -5,6 +6,7 @@ from django.core.cache import cache
 import zipfile
 from corehq.apps.app_manager.models import get_app
 from corehq.apps.hqmedia.models import CommCareImage, CommCareAudio, CommCareMultimedia
+from soil import DownloadBase
 
 logging = get_task_logger(__name__)
 
@@ -34,12 +36,16 @@ def process_bulk_upload_zip(processing_id, domain, app_id, username=None, share_
         cache.set(cache_key, upload_status_cache)
 
     try:
-        saved_file = file(ProcessBulkUploadView.get_save_path(processing_id), 'r')
+        saved_file = StringIO.StringIO()
+        saved_ref = DownloadBase.get(processing_id)
+        data = saved_ref.get_content()
+        saved_file.write(data)
     except Exception as e:
-        _mark_upload_with_error("Error opening file: %s" % e)
+        _mark_upload_with_error("Could not fetch cached bulk upload file. Error: %s." % e)
         return
 
     try:
+        saved_file.seek(0)
         uploaded_zip = zipfile.ZipFile(saved_file)
     except Exception as e:
         _mark_upload_with_error("Error opening file as zip file: %s" % e)
