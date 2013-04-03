@@ -69,7 +69,6 @@
         <div id="modules" class="sidebar span2">
         <nav>
             <ul class="nav nav-list">
-                <li class="nav-header">Deploy</li>
                 <li {% if release_manager %}class="active"{% endif %}>
                     <a href="{% url release_manager domain app.id %}?edit={{ edit|BOOL }}">
                         <i class="icon-download-alt"></i>
