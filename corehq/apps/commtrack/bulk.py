@@ -205,7 +205,7 @@ def import_row(row, data_cols, domain):
         for header, meta in data_cols.iteritems():
             val = row[header]
             if val is not None and val != '':
-                yield StockTransaction(action=meta['action'], product=meta['product'], value=int(val))
+                yield StockTransaction(action_name=meta['action'], product=meta['product'], value=int(val))
 
     report = {
         'location': row['loc'],

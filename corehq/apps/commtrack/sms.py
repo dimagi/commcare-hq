@@ -60,7 +60,7 @@ class StockReportParser(object):
         def tx_factory(location, baseclass):
             """build the product->subcase mapping once and return a closure"""
             product_subcase_mapping = product_subcases(location)
-            product_caseid = lambda p: product_subcase_mapping[p._id]
+            product_caseid = lambda product_id: product_subcase_mapping[product_id]
             return lambda **kwargs: baseclass(get_caseid=product_caseid, **kwargs)
 
         # single action stock report
@@ -125,7 +125,7 @@ class StockReportParser(object):
         if action.action_type == 'stockout':
             if all(looks_like_prod_code(arg) for arg in args):
                 for prod_code in args:
-                    yield make_tx(product=self.product_from_code(prod_code), action=action.name, value=0)
+                    yield make_tx(product=self.product_from_code(prod_code), action_name=action.name, value=0)
                 return
             else:
                 raise RuntimeError("can't include a quantity for stock-out action")
@@ -148,7 +148,7 @@ class StockReportParser(object):
                     raise RuntimeError('could not understand product quantity "%s"' % arg)
 
                 for p in products:
-                    yield make_tx(product=p, action=action.name, value=value)
+                    yield make_tx(product=p, action_name=action.name, value=value)
                 products = []
         if products:
             raise RuntimeError('missing quantity for product "%s"' % products[-1].code)
@@ -203,7 +203,7 @@ class StockReportParser(object):
                     except (ValueError, StopIteration):
                         raise RuntimeError('quantity expected for product "%s"' % product.code)
 
-                yield make_tx(product=product, action=action_name, value=value)
+                yield make_tx(product=product, action_name=action_name, value=value)
                 continue
 
             raise RuntimeError('do not recognize keyword "%s"' % keyword)

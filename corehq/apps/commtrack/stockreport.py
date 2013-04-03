@@ -35,6 +35,10 @@ def process(domain, instance):
     cases = dict((c._id, c) for c in CommCareCase.view('_all_docs', keys=case_ids, include_docs=True))
 
     def get_transactions(all_tx, type_filter):
+        """get all the transactions of the relevant type (filtered by type_filter),
+        grouped by product (returns a dict of 'product subcase id' => list of transactions),
+        with each set of transactions sorted in the correct order for processing
+        """
         return map_reduce(lambda tx: [(tx.case_id,)],
                           lambda v: sorted(v, key=lambda tx: tx.priority_order), # important!
                           data=filter(type_filter, all_tx),
@@ -66,7 +70,7 @@ def process(domain, instance):
     logger.debug('submitting: %s' % submission)
 
     submit_time = root.find('.//%s' % _('timeStart', META_XMLNS)).text
-    spoof_submission(get_submit_url(domain), submission, headers={'HTTP_X_SUBMIT_TIME': submit_time})
+    spoof_submission(get_submit_url(domain), submission, headers={'HTTP_X_SUBMIT_TIME': submit_time}, hqsubmission=False)
 
 
 
@@ -74,9 +78,9 @@ class StockTransaction(object):
     def __init__(self, **kwargs):
         self.product = kwargs.get('product')
         self.product_id = kwargs.get('product_id') or self.product._id
-        self.action_name = kwargs['action']
+        self.action_name = kwargs['action_name']
         self.value = kwargs['value']
-        self.case_id = kwargs.get('case_id') or kwargs.get('get_caseid', lambda p: None)(self.product)
+        self.case_id = kwargs.get('case_id') or kwargs.get('get_caseid', lambda p: None)(self.product_id)
         self.inferred = kwargs.get('inferred', False)
         self.processing_order = kwargs.get('order')
 
@@ -89,7 +93,7 @@ class StockTransaction(object):
         assert self.case_id
 
     @property
-    def base_action(self):
+    def base_action_type(self):
         return self.action_config.action_type
 
     @classmethod
@@ -99,7 +103,7 @@ class StockTransaction(object):
             'case_id': tx.find(_('product_entry')).text,
             'value': int(tx.find(_('value')).text),
             'inferred': tx.attrib.get('inferred') == 'true',
-            'action': tx.find(_('action')).text,
+            'action_name': tx.find(_('action')).text,
         }
         return cls(config=config, **data)
 
@@ -157,8 +161,8 @@ class Requisition(StockTransaction):
         )
 
 class RequisitionResponse(object):
-    def __init__(self, action):
-        self.action = action
+    def __init__(self, action_name):
+        self.action_name = action_name
 
     @property
     def category(self):
@@ -171,7 +175,7 @@ class RequisitionResponse(object):
     @classmethod
     def from_xml(cls, tx, config=None):
         data = {
-            'action': tx.find(_('status')).text,
+            'action_name': tx.find(_('status')).text,
         }
         return cls(**data)
 
@@ -180,7 +184,7 @@ class RequisitionResponse(object):
             E = XML()
 
         return E.response(
-            E.status(self.action),
+            E.status(self.action_name),
             E.product(self.product_id),
         )
 
@@ -220,7 +224,7 @@ def process_product_transactions(user_id, case, txs):
         i[0] += 1
 
     for tx in txs:
-        recon = current_state.update(tx.base_action, tx.value)
+        recon = current_state.update(tx.base_action_type, tx.value)
         if recon:
             set_order(recon)
             reconciliations.append(recon)
@@ -245,7 +249,7 @@ class StockState(object):
             return StockTransaction(
                 product_id=self.case.product,
                 case_id=self.case._id,
-                action='receipts' if diff > 0 else 'consumption', # argh, these are base actions, not config actions
+                action_name='receipts' if diff > 0 else 'consumption', # TODO argh, these are base actions, not config actions
                 value=abs(diff),
                 inferred=True,
             )

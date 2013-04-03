@@ -18,7 +18,7 @@ class RequisitionTest(CommTrackTest):
                 config=config,
                 product_id=spp.product,
                 case_id=spp._id,
-                action=config.get_action_by_type(RequisitionActions.REQUEST).action_name,
+                action_name=config.get_action_by_type(RequisitionActions.REQUEST).action_name,
                 value=20,
             )
             req = create_requisition(self.user._id, spp, transaction)
