@@ -146,7 +146,7 @@ class Requisition(StockTransaction):
             'product_id': tx.find(_('product')).text,
             'case_id': tx.find(_('product_entry')).text,
             'value': int(tx.find(_('value')).text),
-            'action': 'request',
+            'action_name': 'request',
         }
         return cls(config=config, **data)
 
