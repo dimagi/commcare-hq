@@ -2,7 +2,7 @@ from django.conf import settings
 from corehq.apps.reports.datatables import (DataTablesHeader, DataTablesColumn,
     DTSortType)
 from corehq.apps.reports.generic import GenericTabularReport
-from couchdbkit_aggregate import KeyView, AggregateView
+from couchdbkit_aggregate import KeyView, AggregateView, IndicatorView
 from dimagi.utils.couch.database import get_db
 
 __all__ = ['Column', 'BasicTabularReport']
@@ -19,7 +19,7 @@ class Column(object):
 
         couch_args = (
             # args specific to KeyView constructor
-            'key', 'couch_view', 'startkey_fn', 'endkey_fn', 'reduce_fn',
+            'key', 'couch_view', 'startkey_fn', 'endkey_fn', 'reduce_fn', 'denominator',
 
             # pass-through db.view() args
         )
@@ -37,7 +37,16 @@ class Column(object):
                 kwargs['sortable'] = True
 
             key = couch_kwargs.pop('key')
-            self.view = KeyView(key, **couch_kwargs)
+
+            denominator=None
+            if 'denominator' in couch_kwargs:
+                denominator = couch_kwargs.pop('denominator')
+
+            numerator = KeyView(key, **couch_kwargs)
+            if denominator:
+                self.view = IndicatorView(numerator, denominator)
+            else:
+                self.view = numerator
         elif calculate_fn:
             kwargs['sortable'] = False
             self.view = FunctionView(calculate_fn)
@@ -79,7 +88,7 @@ class ColumnCollector(type):
         # class declaratively
         function_views = {}
         for slug, column in columns.items():
-            if hasattr(column, 'view') and isinstance(column.view, KeyView):
+            if hasattr(column, 'view') and (isinstance(column.view, KeyView) or isinstance(column.view, IndicatorView)):
                 MyAggregateView.key_views[slug] = column.view
             else:
                 function_views[slug] = column.view
