@@ -39,7 +39,7 @@
     - properties.ViewStyle  # Form Entry Style
     - properties.cc-user-mode  # User Login Mode
 
-- title: 'Java Phone CommCare Properties'
+- title: 'Java Phone General Settings'
   id: app-settings-j2me-properties
   collapse: true
   settings:
