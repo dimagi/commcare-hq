@@ -34,13 +34,12 @@ def export_for_group(export_id, output_dir):
                                           reduce=False).one()
             if not saved: 
                 saved = SavedBasicExport(configuration=config)
-                saved.save()
-            saved.put_attachment(payload, config.filename)
+            else:
+                saved.configuration = config
             saved.last_updated = datetime.utcnow()
-            # force update the config in case it changed.
-            # redundant in the create case
-            saved.configuration = config
             saved.save()
+            saved.set_payload(payload)
+
         else:
             with open(os.path.join(output_dir, config.filename), "wb") as f:
                 f.write(payload)
