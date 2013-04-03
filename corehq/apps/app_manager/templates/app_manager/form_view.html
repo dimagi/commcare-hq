@@ -309,9 +309,9 @@
     {% if edit and not is_user_registration %}
         <div class="delete-me">
             <form action="{% url delete_form domain app.id module.id form.id %}" method="post">
-                <a class="submit" href="#">
+                <a class="submit btn btn-danger" href="#">
                     <i class="icon-trash"></i>
-                    {% trans "Delete this form" %}
+                    {% trans "Delete Form" %}
                 </a>
             </form>
         </div>
