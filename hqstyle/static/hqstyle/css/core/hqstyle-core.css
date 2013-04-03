@@ -7329,6 +7329,32 @@ a.badge:hover {
   opacity: 0.8;
   filter: alpha(opacity=80);
 }
+.hqm-empty {
+  display: none;
+}
+.hqm-empty:only-child {
+  display: table-row;
+}
+.hqm-uploaded-files:empty {
+  display: none;
+}
+.hqm-list-notice > th {
+  background-color: #ffffff !important;
+  color: #999999;
+  text-align: center;
+}
+.hqm-list-notice:only-child {
+  display: none;
+}
+.hqm-path {
+  width: 340px;
+  display: block;
+  overflow-x: hidden;
+  clear: right;
+}
+.hqm-path span {
+  float: right;
+}
 /**
 * From github.com/danielfarrell/bootstrap-combobox
 *
