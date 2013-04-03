@@ -3,11 +3,6 @@
 {% load hq_shared_tags %}
 
 {% block js-inline %}{{ block.super }}
-
-    <script src="{% static 'hqwebapp/js/lib/nvd3/lib/d3.v2.min.js' %}"></script>
-    <script src="{% static 'hqwebapp/js/lib/nvd3/nv.d3.js' %}"></script>
-    <script src="{% static 'hqwebapp/js/lib/nvd3/nv.d3.css' %}"></script>
-
     <script>
     $(document).ready(function() {
         // this adds clickable links to our form and case elements
@@ -79,7 +74,7 @@
 
 {% block main_column %}
 <div class="hq-generic-report">
-{#    {% render_case case_id timezone %}#}
-    {% include "case/partials/single_case.html" %}
+    {% render_case case timezone %}
+{#    {% include "case/partials/single_case.html" %}#}
 </div>
 {% endblock %}

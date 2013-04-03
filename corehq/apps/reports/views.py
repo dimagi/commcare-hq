@@ -841,6 +841,47 @@ def form_data(request, domain, instance_id):
 @require_form_view_permission
 @login_and_domain_required
 @require_GET
+def case_form_data(request, domain, case_id, xform_id):
+    """
+    specific rendering for a case's xform - render to html via templatetag
+    """
+    timezone = util.get_timezone(request.couch_user.user_id, domain)
+    try:
+        instance = XFormInstance.get(xform_id)
+    except Exception:
+        raise Http404()
+    try:
+        assert(domain == instance.domain)
+    except AssertionError:
+        raise Http404()
+
+
+    #todo: additional formatting options
+    #todo: sanity check that xform_id has case_block
+
+    try:
+        form_name = instance.get_form["@name"]
+    except KeyError:
+        form_name = "Untitled Form"
+
+    is_archived = instance.doc_type == "XFormArchived"
+    if is_archived:
+        messages.info(request, _(
+            "This form is archived. To restore it, click 'Restore this form' at the bottom of the page."))
+    return render(request, "reports/reportdata/form_data.html",
+                  dict(domain=domain,
+                       instance=instance,
+                       cases=[],
+                       timezone=timezone,
+                       slug=inspect.SubmitHistory.slug,
+                       is_archived=is_archived,
+                       form_data=dict(name=form_name,
+                                      modified=instance.received_on)))
+
+
+@require_form_view_permission
+@login_and_domain_required
+@require_GET
 def download_form(request, domain, instance_id):
     instance = XFormInstance.get(instance_id)
     assert(domain == instance.domain)
