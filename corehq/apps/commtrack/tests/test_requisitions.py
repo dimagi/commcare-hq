@@ -4,7 +4,7 @@ from corehq.apps.commtrack import const
 from corehq.apps.commtrack.tests.util import make_loc, TEST_DOMAIN,\
     CommTrackTest
 from datetime import datetime
-from corehq.apps.commtrack.stockreport import StockTransaction
+from corehq.apps.commtrack.stockreport import Requisition, RequisitionResponse
 from corehq.apps.commtrack.const import RequisitionActions
 from corehq.apps.commtrack.requisitions import create_requisition
 
@@ -14,15 +14,14 @@ class RequisitionTest(CommTrackTest):
     def testMakeRequisition(self):
         config = self.domain.commtrack_settings
         for spp in self.spps.values():
-            transaction = StockTransaction(
+            transaction = Requisition(
                 config=config,
-                user_id=self.user._id,
                 product_id=spp.product,
                 case_id=spp._id,
                 action_name=config.get_action_by_type(RequisitionActions.REQUEST).action_name,
                 value=20,
-                inferred=False)
-            req = create_requisition(spp, transaction)
+            )
+            req = create_requisition(self.user._id, spp, transaction)
             self.assertEqual("CommCareCase", req.doc_type)
             self.assertEqual(self.domain.name, req.domain)
             self.assertEqual(const.REQUISITION_CASE_TYPE, req.type)
