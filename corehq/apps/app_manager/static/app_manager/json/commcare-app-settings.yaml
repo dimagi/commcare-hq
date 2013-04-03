@@ -21,7 +21,7 @@
   # values, value_names, and default are magically set elsewhere
 
 - id: platform
-  name: "J2ME Platform"
+  name: "Java Phone Platform"
   values: ['nokia/s40', 'nokia/s60', 'winmo', 'generic']
   value_names: ['Nokia S40 (default)', 'Nokia S60', 'WinMo', 'Generic']
   default: 'nokia/s40'
