@@ -38,9 +38,9 @@ function HQMediaUploadController(options) {
     // Other
     self.uploadedFiles = [];
     self.processingIdToFile = {};
-    self.pollInterval = 5000;
+    self.pollInterval = 1000;
     self.currentPollAttempts = 0;
-    self.maxPollAttempts = 10;
+    self.maxPollAttempts = 30;
 
     self.processQueueTemplate = function (upload_info) {
         /*
