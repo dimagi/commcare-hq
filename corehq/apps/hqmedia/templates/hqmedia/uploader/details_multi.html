@@ -1,4 +1,18 @@
 {% load i18n %}
+<% if (unknowns.length > 0) { %>
+<div class="well well-small">
+    <h4>{% trans 'No Matches' %} <span class="badge badge-important"><%= unknowns.length %></span></h4>
+    <ul>
+        <% for (var u=0; u < unknowns.length; u++) {
+        var unknown = unknowns[u]; %>
+        <li><p>
+            <%= unknown.reason %>
+            <code class="hqm-path"><span><%= unknown.path %></span></code>
+        </p></li>
+        <% } %>
+    </ul>
+</div>
+<% } %>
 <% if (images.length > 0) { %>
     <div class="well well-small">
         <h4>{% trans 'Matched Images' %} <span class="badge badge-success"><%= images.length %></span></h4>
@@ -37,20 +51,6 @@
                     <i class="icon-volume-up"></i> Hear Audio</a></p>
             <p><code class="hqm-path"><span><%= sound.path %></span></code></p>
         </li>
-        <% } %>
-    </ul>
-</div>
-<% } %>
-<% if (unknowns.length > 0) { %>
-<div class="well well-small">
-    <h4>{% trans 'No Matches' %} <span class="badge badge-important"><%= unknowns.length %></span></h4>
-    <ul>
-        <% for (var u=0; u < unknowns.length; u++) {
-        var unknown = unknowns[u]; %>
-        <li><p>
-            <%= unknown.reason %>
-            <code class="hqm-path"><span><%= unknown.path %></span></code>
-        </p></li>
         <% } %>
     </ul>
 </div>
