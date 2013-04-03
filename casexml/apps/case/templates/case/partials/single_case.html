@@ -48,8 +48,13 @@
 <div id="tabbed-content-container" class="row-fluid">
     <ul class="nav nav-tabs">
         <li class="active"><a href="#case-details" data-toggle="tab">{% trans "Case Details" %}</a></li>
+        <li><a href="#case-history-tab" data-toggle="tab">{% trans "Case History" %}</a></li>
+        {% if case.referrals %}
         <li><a href="#case-referrals" data-toggle="tab">{% trans "Referrals" %}</a></li>
+        {% endif %}
+        {% if case.all_indices %}
         <li><a href="#case-related" data-toggle="tab">{% trans "Related Cases" %}</a></li>
+        {% endif %}
         <li><a href="#case-attachments" data-toggle="tab">{% trans "Attachments" %}</a></li>
     </ul>
 
@@ -141,6 +146,7 @@
 
 
         </div>
+    {% if case.referalls %}
         <div class="tab-pane" id="case-referrals">
 
             <h2>Referrals</h2>
@@ -169,9 +175,9 @@
 
                 </tbody>
             </table>
-
-
         </div>
+    {% endif %}
+    {% if case.all_indices %}
         <div class="tab-pane" id="case-related">
 
             <h2>Related Cases</h2>
@@ -205,21 +211,14 @@
 
                 </tbody>
             </table>
-
-
         </div>
+    {% endif %}
         <div class="tab-pane" id="case-attachments">
             <h2>todo</h2>
         </div>
     </div>
-</div> {# end tabbed-content-container div #}
-<div id="xform-list-block" class="row-fluid">
-<h2>Sexy histogram of all xform submits over time</h2>
-<hr>
-<h2>Sexy dot chart of all case updates over time</h2>
-<hr>
+<div class="tab-pane" id="xform-history-tab">
     <div class="span4">
-    <h2>Interaction History</h2>
         <ul data-bind="foreach: $root.form_type_facets">
             <li>
                 <strong><span data-bind="text: form_name"></span></strong>:
@@ -273,7 +272,7 @@
         <span data-bind="text: 'timeend:' + timeEnd()"></span><br>
         <span data-bind="text: 'case_id:' + case_id()"></span><br>
         <span data-bind="text: 'device_id:' + deviceID()"></span><br>
-        <div class="form-data-block" data-bind="html:get_form_data()"></div>
+        <div class="form-data-block" data-bind="html: get_form_data()"></div>
     </script>
 
 
@@ -348,6 +347,7 @@
 
             self.get_form_data = function() {
                 return "<dl class='dl-horizontal'>" + JSON.stringify(self.form_data(), function(key,value) {
+                    console.log(self.form_data());
                     console.log(typeof(value));
                     console.log("##" + key + "##");
                     console.log("$$" + value + "$$");
@@ -465,15 +465,81 @@
             };
 
             self.stats_data_cb = function(data) {
-                //eww, doing this on every pagination, make this separate operations
                 var term_facets_mapped = $.map(data['facets']['form_type_facets']['terms'], function (item) {
                     return new FormTypeFacetModel(item);
                 });
                 self.form_type_facets(term_facets_mapped);
-                var recv_facets_mapped = $.map(data['facets']['received_facets']['terms'], function (item) {
+                var recv_facets_mapped = $.map(data['facets']['received_facets']['entries'], function (item) {
                     return new FormDateHistogram(item);
                 });
                 self.form_recv_facets(recv_facets_mapped);
+
+                nv.addGraph(function () {
+                    var chart = nv.models.multiBarChart();
+
+                    chart.xAxis
+                            .tickFormat(function (d) {
+                                return d3.time.format('%x')(new Date(d))
+                            });
+
+
+                    chart.yAxis.tickFormat(d3.format('.1f'));
+
+                    console.log("add graph d3 select");
+                    console.log(self.form_recv_facets());
+                    var chart_data = function() {
+                        var start_date = new Date(self.form_recv_facets()[0].es_time());
+                        var end_date = new Date(self.form_recv_facets()[self.form_recv_facets().length - 1].es_time());
+                        var ms_delta = end_date - start_date;
+                        console.log(ms_delta);
+                        console.log(start_date);
+                        console.log(end_date);
+                        console.log(ms_delta/86400000);
+                        var retdata = [];
+
+                        for (var i = 0; i < self.form_recv_facets().length; i++) {
+                            var item = self.form_recv_facets()[i];
+                            if (retdata.length == 0) {
+                                retdata.push({ x:item.es_time(), y:item.form_count()});
+                                //retdata.push({x:item.es_time(), y: item.form_count(), size: item.form_count(), shape: 'circle'});
+                            }
+                            else {
+                                var last_time = retdata[retdata.length - 1].x;
+                                var last_time_dt = new Date(last_time);
+                                var curr_time = new Date(item.es_time());
+                                var d = (curr_time - last_time) / 86400000;
+                                console.log("delta! "  + d);
+                                if (d > 1) {
+                                    for (var j = 1; j <= d; j++) {
+                                       //fill in blank dates
+                                       console.log(j);
+                                       retdata.push({x:last_time+(j*86400000), y: 0});
+                                       //retdata.push({x:last_time+(j*86400000), y: item.form_count(), size: 0, shape: 'square'});
+                                    }
+                                }
+                                retdata.push({x:item.es_time(), y:item.form_count()});
+                                //retdata.push({x:item.es_time(), y: item.form_count(), size: item.form_count(), shape: 'circle'});
+                            }
+                        }
+
+                        return {
+                        key: "submissions",
+                        //values: $.map(self.form_recv_facets(), function (item) {
+                            ////console.log(new Date(item.es_time()));
+                            //return { x:item.es_time(), y:item.form_count()}
+                        //})
+                        values: retdata
+                    }};
+                    console.log([chart_data()]);
+                    d3.select('#submit_chart svg')
+                            .datum([chart_data()]).transition().duration(500).call(chart);
+
+                    nv.utils.windowResize(chart.update);
+
+                    return chart;
+                });
+
+
             };
 
 
@@ -533,5 +599,5 @@
 
         ko.applyBindings(new XFormListViewModel(), $("#xform-list-block")[0]);
     </script>
-
+</div> {# end tabbed-content-container div #}
 </div>
