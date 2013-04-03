@@ -24,7 +24,7 @@ def handle(verified_contact, text):
         return False
 
     try:
-        data = StockReportHelper(domain, verified_contact).parse(text.lower())
+        data = StockReportParser(domain, verified_contact).parse(text.lower())
         if not data:
             return False
     except Exception, e:
@@ -44,7 +44,7 @@ def process(domain, data):
     
     stockreport.process(domain, inst_xml)
 
-class StockReportHelper(object):
+class StockReportParser(object):
     """a helper object for parsing raw stock report texts"""
 
     def __init__(self, domain, v):
@@ -57,8 +57,14 @@ class StockReportHelper(object):
         """take in a text and return the parsed stock transactions"""
         args = text.split()
 
-        if args[0] in self.C.all_keywords():
-            # single action sms
+        def tx_factory(location, baseclass):
+            """build the product->subcase mapping once and return a closure"""
+            product_subcase_mapping = product_subcases(location)
+            product_caseid = lambda product_id: product_subcase_mapping[product_id]
+            return lambda **kwargs: baseclass(get_caseid=product_caseid, **kwargs)
+
+        # single action stock report
+        if args[0] in self.C.stock_keywords():
             # TODO: support single-action by product, as well as by action?
             action_name = self.C.all_keywords()[args[0]]
             action = self.C.all_actions_by_name[action_name]
@@ -68,10 +74,27 @@ class StockReportHelper(object):
                 location = self.location_from_code(args[0])
                 args = args[1:]
         
-            _tx = self.single_action_transactions(action, args)
+            _tx = self.single_action_transactions(action, args, tx_factory(location, stockreport.StockTransaction))
 
+        # requisition
+        elif args[0] in self.C.requisition_keywords():
+            action_name = self.C.all_keywords()[args[0]]
+            action = self.C.all_actions_by_name[action_name]
+            args = args[1:]
+
+            # TODO in future when location can be linked to sending phone #, FILL and APPROVE will still require location code
+            # (since they refer to locations different from the sender's loc)
+            if not location:
+                location = self.location_from_code(args[0])
+                args = args[1:]
+
+            if action.action_type in [RequisitionActions.APPROVAL, RequisitionActions.FILL]:
+                _tx = self.requisition_bulk_action(action, args)
+            else:
+                _tx = self.single_action_transactions(action, args, tx_factory(location, stockreport.Requisition))
+
+        # multiple action stock report
         elif self.C.multiaction_enabled and (self.C.multiaction_keyword is None or args[0] == self.C.multiaction_keyword.lower()):
-            # multiple action sms
             if self.C.multiaction_keyword:
                 args = args[1:]
 
@@ -79,7 +102,7 @@ class StockReportHelper(object):
                 location = self.location_from_code(args[0])
                 args = args[1:]
 
-            _tx = self.multiple_action_transactions(args)
+            _tx = self.multiple_action_transactions(args, tx_factory(location, stockreport.StockTransaction))
 
         else:
             # initial keyword not recognized; delegate to another handler
@@ -97,19 +120,15 @@ class StockReportHelper(object):
             'transactions': tx,
         }
 
-    def single_action_transactions(self, action, args):
+    def single_action_transactions(self, action, args, make_tx):
         # special case to handle immediate stock-out reports
         if action.action_type == 'stockout':
             if all(looks_like_prod_code(arg) for arg in args):
                 for prod_code in args:
-                    yield ProductTransaction(self.product_from_code(prod_code), action.name, 0)
+                    yield make_tx(product=self.product_from_code(prod_code), action_name=action.name, value=0)
                 return
             else:
                 raise RuntimeError("can't include a quantity for stock-out action")
-
-        if action.action_type in [RequisitionActions.APPROVAL, RequisitionActions.FILL] and not args:
-            # these two actions can be submitted generically without specifying products or amounts
-            yield BulkTransaction(action.name)
 
         grouping_allowed = (action.action_type == 'stockedoutfor')
 
@@ -129,15 +148,19 @@ class StockReportHelper(object):
                     raise RuntimeError('could not understand product quantity "%s"' % arg)
 
                 for p in products:
-                    yield ProductTransaction(p, action.name, value)
+                    yield make_tx(product=p, action_name=action.name, value=value)
                 products = []
         if products:
             raise RuntimeError('missing quantity for product "%s"' % products[-1].code)
 
-    def multiple_action_transactions(self, args):
-        action = None
+    def multiple_action_transactions(self, args, make_tx):
+        action_name = None
         action_code = None
         product = None
+
+        action_defs = self.C.all_actions_by_name
+
+        # TODO: catch that we don't mix in requisiton and stock report keywords in the same multi-action message?
 
         _args = iter(args)
         def next():
@@ -154,7 +177,9 @@ class StockReportHelper(object):
 
             try:
                 old_action_code = action_code
-                action, action_code = self.C.keywords(multi=True)[keyword], keyword
+                action_name, action_code = self.C.keywords(multi=True)[keyword], keyword
+                action = action_defs.get(action_name)
+
                 if not found_product_for_action:
                     raise RuntimeError('product expected for action "%s"' % old_action_code)
                 found_product_for_action = False
@@ -170,7 +195,7 @@ class StockReportHelper(object):
             if product:
                 if not action:
                     raise RuntimeError('need to specify an action before product')
-                elif action == 'stockout':
+                elif action.action_type == 'stockout':
                     value = 0
                 else:
                     try:
@@ -178,12 +203,17 @@ class StockReportHelper(object):
                     except (ValueError, StopIteration):
                         raise RuntimeError('quantity expected for product "%s"' % product.code)
 
-                yield ProductTransaction(product, action, value)
+                yield make_tx(product=product, action_name=action_name, value=value)
                 continue
 
             raise RuntimeError('do not recognize keyword "%s"' % keyword)
 
-            
+    def requisition_bulk_action(self, action, args):
+        if args:
+            raise RuntimeError('extra arguments at end')
+
+        yield stockreport.RequisitionResponse(action.action_type)
+
     def location_from_code(self, loc_code):
         """return the supply point case referenced by loc_code"""
         result = get_supply_point(self.domain.name, loc_code)['case']
@@ -198,69 +228,6 @@ class StockReportHelper(object):
         if p is None:
             raise RuntimeError('invalid product code "%s"' % prod_code)
         return p
-
-class SmsTransaction(object):
-
-    def __init__(self, action, value, inferred=False):
-        self.action = action
-        self.value = value
-        self.inferred = inferred
-
-    @property
-    def product_id(self):
-        raise NotImplemented()
-
-    def to_xml(self, E=None, **kwargs):
-        raise NotImplemented()
-
-class ProductTransaction(SmsTransaction):
-    """
-    An SMS transaction helper class that represents a product and a value
-    """
-    def __init__(self, product, action, value, inferred=False):
-        super(ProductTransaction, self).__init__(action, value, inferred)
-        self.product = product
-
-    @property
-    def product_id(self):
-        return self.product._id
-
-    def to_xml(self, E=None, case_id=None):
-        if not E:
-            E = stockreport.XML()
-
-        assert case_id is not None
-        attr = {}
-        if self.inferred:
-            attr['inferred'] = 'true'
-
-        return E.transaction(
-            E.product(self.product_id),
-            E.product_entry(case_id),
-            E.action(self.action),
-            E.value(str(self.value)),
-            **attr
-        )
-
-class BulkTransaction(SmsTransaction):
-    """
-    An SMS transaction helper class that represents a product and a value
-    """
-    def __init__(self, action):
-        super(SmsTransaction, self).__init__(action, None, False)
-
-    @property
-    def product_id(self):
-        return const.ALL_PRODUCTS_TRANSACTION_TAG
-
-    def to_xml(self, E=None):
-        if not E:
-            E = stockreport.XML()
-
-        return E.transaction(
-            E.product(self.product_id),
-            E.action(self.action),
-        )
 
 
 def looks_like_prod_code(code):
@@ -306,31 +273,19 @@ def to_instance(data):
     E = stockreport.XML()
     M = stockreport.XML(stockreport.META_XMLNS, 'jrm')
 
-    product_subcase_mapping = product_subcases(data['location'])
-
-    def mk_xml_tx(tx):
-        # this is ugly but if we want to take advantage of the product_subcase_mapping
-        # it's necessary unless we want to make the api even uglier
-        def _kwargs(tx):
-            def product_kwargs():
-                return {
-                    'case_id': product_subcase_mapping.get(tx.product_id, None)
-                }
-
-            bulk_kwargs = lambda: {}
-
-            return {
-                ProductTransaction: product_kwargs,
-                BulkTransaction: bulk_kwargs,
-            }[tx.__class__]()
-        return tx.to_xml(E, **_kwargs(tx))
-
     deviceID = ''
     if data.get('phone'):
         deviceID = 'sms:%s' % data['phone']
     timestamp = json_format_datetime(data['timestamp'])
 
-    root = E.stock_report(
+    transactions = data['transactions']
+    category = set(tx.category for tx in transactions).pop()
+    factory = {
+        'stock': E.stock_report,
+        'requisition': E.requisition,
+    }[category]
+
+    root = factory(
         M.meta(
             M.userID(data['user']._id),
             M.deviceID(deviceID),
@@ -338,7 +293,7 @@ def to_instance(data):
             M.timeEnd(timestamp)
         ),
         E.location(data['location']._id),
-        *[mk_xml_tx(tx) for tx in data['transactions']]
+        *[tx.to_xml() for tx in transactions]
     )
 
     return etree.tostring(root, encoding='utf-8', pretty_print=True)
@@ -356,7 +311,7 @@ def send_confirmation(v, data):
     location_name = static_loc.name
 
     action_to_code = dict((v, k) for k, v in C.all_keywords().iteritems())
-    tx_by_action = map_reduce(lambda tx: [(tx.action,)], data=data['transactions'], include_docs=True)
+    tx_by_action = map_reduce(lambda tx: [(tx.action_name,)], data=data['transactions'], include_docs=True)
     def summarize_action(action, txs):
         def fragment(tx):
             quantity = tx.value if tx.value is not None else ''
