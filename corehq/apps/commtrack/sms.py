@@ -58,6 +58,7 @@ class StockReportParser(object):
         args = text.split()
 
         def tx_factory(location, baseclass):
+            """build the product->subcase mapping once and return a closure"""
             product_subcase_mapping = product_subcases(location)
             product_caseid = lambda p: product_subcase_mapping[p._id]
             return lambda **kwargs: baseclass(get_caseid=product_caseid, **kwargs)
@@ -119,12 +120,12 @@ class StockReportParser(object):
             'transactions': tx,
         }
 
-    def single_action_transactions(self, action, args, tx_factory):
+    def single_action_transactions(self, action, args, make_tx):
         # special case to handle immediate stock-out reports
         if action.action_type == 'stockout':
             if all(looks_like_prod_code(arg) for arg in args):
                 for prod_code in args:
-                    yield tx_factory(product=self.product_from_code(prod_code), action=action.name, value=0)
+                    yield make_tx(product=self.product_from_code(prod_code), action=action.name, value=0)
                 return
             else:
                 raise RuntimeError("can't include a quantity for stock-out action")
@@ -147,15 +148,17 @@ class StockReportParser(object):
                     raise RuntimeError('could not understand product quantity "%s"' % arg)
 
                 for p in products:
-                    yield tx_factory(product=p, action=action.name, value=value)
+                    yield make_tx(product=p, action=action.name, value=value)
                 products = []
         if products:
             raise RuntimeError('missing quantity for product "%s"' % products[-1].code)
 
-    def multiple_action_transactions(self, args, tx_factory):
-        action = None
+    def multiple_action_transactions(self, args, make_tx):
+        action_name = None
         action_code = None
         product = None
+
+        action_defs = self.C.all_actions_by_name
 
         # TODO: catch that we don't mix in requisiton and stock report keywords in the same multi-action message?
 
@@ -174,7 +177,9 @@ class StockReportParser(object):
 
             try:
                 old_action_code = action_code
-                action, action_code = self.C.keywords(multi=True)[keyword], keyword
+                action_name, action_code = self.C.keywords(multi=True)[keyword], keyword
+                action = action_defs.get(action_name)
+
                 if not found_product_for_action:
                     raise RuntimeError('product expected for action "%s"' % old_action_code)
                 found_product_for_action = False
@@ -190,7 +195,7 @@ class StockReportParser(object):
             if product:
                 if not action:
                     raise RuntimeError('need to specify an action before product')
-                elif action == 'stockout': # FIXME this suffers the same bug of comparing action name against an action type
+                elif action.action_type == 'stockout':
                     value = 0
                 else:
                     try:
@@ -198,7 +203,7 @@ class StockReportParser(object):
                     except (ValueError, StopIteration):
                         raise RuntimeError('quantity expected for product "%s"' % product.code)
 
-                yield tx_factory(product=product, action=action, value=value)
+                yield make_tx(product=product, action=action_name, value=value)
                 continue
 
             raise RuntimeError('do not recognize keyword "%s"' % keyword)
