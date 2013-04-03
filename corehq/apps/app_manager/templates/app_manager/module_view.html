@@ -49,7 +49,7 @@
             COMMCAREHQ.app_manager.module_view = {
                 requires_case_details: ko.observable({{ module.requires_case_details|BOOL }})
             };
-            ko.applyBindings(COMMCAREHQ.app_manager.module_view, $('#module-view-tabs').get(0));
+            ko.applyBindings(COMMCAREHQ.app_manager.module_view, $('#detail-screen-config-warning').get(0));
         });
     </script>
 {% endblock %}
@@ -75,11 +75,8 @@
 <ul class="nav nav-tabs" id="module-view-tabs">
     <li class="active"><a href="#module-settings" data-toggle="tab">{% trans "Settings" %}</a></li>
     <li><a href="#case-settings" data-toggle="tab">{% trans "Case Management" %}</a></li>
-    <li data-bind="css: {disabled: !requires_case_details()}">
-        <a href="#detail-screen-config" data-toggle="tab" data-bind="visible: requires_case_details">
-            {% trans "Case List" %}
-        </a>
-        <a data-bind="visible: !requires_case_details()">
+    <li>
+        <a href="#detail-screen-config-tab" data-toggle="tab">
             {% trans "Case List" %}
         </a>
     </li>
@@ -192,7 +189,20 @@
     </div>
     {% endcomment %}
 
-    <div class="tab-pane" id="detail-screen-config"></div>
+    <div class="tab-pane" id="detail-screen-config-tab">
+        <div class="alert alert-warning" id="detail-screen-config-warning"
+             data-bind="visible: !requires_case_details()">
+            {% blocktrans %}
+                This module doesn't currently use a case list.
+                Changes made here will have no effect until you use:
+                <ol>
+                    <li>forms that require a case or</li>
+                    <li>select the <strong>Case List Menu Item</strong> setting.</li>
+                </ol>
+            {% endblocktrans %}
+        </div>
+        <div id="detail-screen-config"></div>
+    </div>
 </div>
 </div>
 {% endblock %}
