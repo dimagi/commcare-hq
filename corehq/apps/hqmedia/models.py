@@ -277,6 +277,8 @@ class CommCareImage(CommCareMultimedia):
     def get_thumbnail_data(self, data, size):
         try:
             image = self.get_image_object(data)
+            if image.mode != "RGB":
+                image = image.convert("RGB")
             o = StringIO()
             image.thumbnail(size, Image.ANTIALIAS)
             image.save(o, format="JPEG")
