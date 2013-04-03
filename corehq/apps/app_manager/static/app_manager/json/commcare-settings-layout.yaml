@@ -27,7 +27,7 @@
     - properties.cc-content-valid  # Multimedia Validation
     - properties.password_format  # Password Format
 
-- title: 'J2ME UI Settings'
+- title: 'Java Phone User Interface Settings'
   id: app-settings-j2me-ui
   collapse: true
   settings:
@@ -39,7 +39,7 @@
     - properties.ViewStyle  # Form Entry Style
     - properties.cc-user-mode  # User Login Mode
 
-- title: 'J2ME CommCare Properties'
+- title: 'Java Phone CommCare Properties'
   id: app-settings-j2me-properties
   collapse: true
   settings:
