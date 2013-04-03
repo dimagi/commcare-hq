@@ -35,4 +35,4 @@ def get_domain_module_map():
         return get_db().get('DOMAIN_MODULE_CONFIG').get('module_map', {})
     except ResourceNotFound:
         pass
-    return {}
+    return getattr(settings, 'DOMAIN_MODULE_MAP', {})
