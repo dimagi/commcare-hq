@@ -27,6 +27,7 @@
     
     }
 
+
     dl {
         margin-bottom: 0px;
         display: inline-block;
@@ -40,33 +41,8 @@
         padding-bottom: 10px;
     
     }
-    .case-properties-table {
-        position: relative;
-        width: auto;
-        margin: 0;
-        table-layout: fixed;
-    }
-
-    .case-properties-table th, td {
-        word-wrap: break-word;
-        word-break: break-all;
-    }
-
-    .case-properties-table th:not(:first-child), .case-properties-table td {
-        border-left: 0;
-    }
-
-    .case-properties-table th:nth-child(odd) {
-        text-align: right;
-        width: 80px;
-    }
-
-    .case-properties-table td:nth-child(even) {
-        width: 160px;
-    
-    }
-
-    .table-container {
+yeah 
+    .property-table-container {
         float: left;
         margin-bottom: 18px;
         margin-right: 18px;
@@ -87,11 +63,34 @@
         border-radius: 4px 4px 0 0;
     }
 
+    .case-properties-table > dl, .case-properties-table > dd {
+        word-wrap: break-word;
+        word-break: break-all;
+    }
 
+
+    .case-properties-table > dl {
+        float: left;
+        width: 210px;
+        margin-bottom: 0;
+        margin-top: 0;
+    
+    }
+
+    .case-properties-table > dl:not(:last-child) {
+        margin-right: 20px;
+    }
+
+    .case-properties-table > dd:not(:last-child) {
+        margin-bottom: 10px;
+    }
 </style>
-<h2>{% trans "Case Details" %}</h2>
+
 <div id="report-content">
 <div id="tabbed-content-container" class="row-fluid">
+    <div class="row-fluid">
+        {% render_tables default_properties %}
+    </div>
     <ul class="nav nav-tabs">
         <li class="active"><a href="#case-details" data-toggle="tab">{% trans "Case Details" %}</a></li>
         <li><a href="#case-history-tab" data-toggle="tab">{% trans "History" %}</a></li>
@@ -107,11 +106,7 @@
     <div class="tab-content">
         <div class="tab-pane active" id="case-details">
             <div class="row-fluid">
-                {% for section_name, rows in default_properties %}
-                {% render_table section_name rows %}
-                {% endfor %}
-                <div class="clearfix"></div>
-                {% render_table "Other Properties" dynamic_properties %}
+                {% render_tables dynamic_properties %}
             </div>
         </div><!-- end case-details tab -->
     {% if case.referalls %}
@@ -597,5 +592,7 @@
             ko.applyBindings(new XFormListViewModel(), $("#xform-list-block")[0]);
         </script>
     </div> <!-- end case-history tab -->
+    </div>
 </div> {# end tabbed-content-container div #}
 </div> {# end report-container #}
+
