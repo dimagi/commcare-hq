@@ -83,6 +83,28 @@ def render_tables(tables, collapsible=False):
         "tables": tables
     })
 
+@register.simple_tag
+def render_form(form):
+    data = form.to_json()
+
+    definition = {
+        'layout': [
+            (None, chunks(
+                [(prop, prop) for prop in data.keys()],
+                DYNAMIC_PROPERTIES_COLUMNS)
+            )
+        ],
+        'meta': {
+            '_date': {
+                'process': 'utc_to_timezone'
+            }
+        }
+    }
+
+    tables = build_tables(data, definition=definition)
+
+    return render_tables(tables)
+
 
 @register.simple_tag
 def render_case(case, timezone=pytz.utc, display=None):
@@ -143,8 +165,7 @@ def render_case(case, timezone=pytz.utc, display=None):
         }
     }
     
-
-    data = dict((k, getattr(case, k)) for k in case.all_properties())
+    data = case.to_json()
     default_properties = build_tables(
             data, definition=display, timezone=timezone)
     
