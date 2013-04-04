@@ -725,7 +725,10 @@ class SavedBasicExport(Document):
     
     @property
     def size(self):
-        return self._attachments[self.get_attachment_name()]["length"]
+        try:
+            return self._attachments[self.get_attachment_name()]["length"]
+        except KeyError:
+            return 0
 
     def get_attachment_name(self):
         # obfuscate this because couch doesn't like attachments that start with underscores
