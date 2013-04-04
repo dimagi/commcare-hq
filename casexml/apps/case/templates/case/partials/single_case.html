@@ -7,13 +7,21 @@
 <style type="text/css">
     .hq-generic-report {
         padding: 10px;
+    
     }
 
-    .case-properties-table {
-        position: relative;
-        width: auto;
-        margin: 0;
-        table-layout: fixed;
+    dl {
+        margin-bottom: 0px;
+        display: inline-block;
+    }
+
+    dl:not(:last-child) {
+        margin-right: 38px;
+    }
+
+    dd {
+        padding-bottom: 10px;
+    
     }
 
     .property-table-container {
@@ -57,8 +65,6 @@
     .case-properties-table > dd:not(:last-child) {
         margin-bottom: 10px;
     }
-
-
 </style>
 
 <div id="report-content">
@@ -68,8 +74,13 @@
     </div>
     <ul class="nav nav-tabs">
         <li class="active"><a href="#case-details" data-toggle="tab">{% trans "Case Details" %}</a></li>
+        <li><a href="#case-history-tab" data-toggle="tab">{% trans "History" %}</a></li>
+        {% if case.referrals %}
         <li><a href="#case-referrals" data-toggle="tab">{% trans "Referrals" %}</a></li>
+        {% endif %}
+        {% if case.all_indices %}
         <li><a href="#case-related" data-toggle="tab">{% trans "Related Cases" %}</a></li>
+        {% endif %}
         <li><a href="#case-attachments" data-toggle="tab">{% trans "Attachments" %}</a></li>
     </ul>
 
@@ -78,43 +89,10 @@
             <div class="row-fluid">
                 {% render_tables dynamic_properties %}
             </div>
-            
-            <table class="table table-striped case_details table-hover">
-                <thead>
-                <tr>
-                    <th>Property</th>
-                    <th>Value</th>
-                </tr>
-                </thead>
-                <tbody>
-                <tr>
-                    <td>forms</td>
-                    <td>
-                        {#    {% for form_id in case.xform_ids %}#}
-                        {#        <p class="xform_ref" data-formid="{{ form_id }}">{% form_inline_display form_id %}</p>#}
-                        {#        {% if not forloop.first %}<br>{% endif %}#}
-                        {#    {% endfor %}#}
-                    </td>
-
-                </tr>
-                <tr>
-                    <td>Attachments</td>
-                    <td>
-                        {% for form_id, filename in case.attachments %}
-                            {% if not forloop.first %}<br>{% endif %}
-                            <a href="{% url xform_attachment form_id filename %}">{{ filename }}</a>
-                        {% empty %}
-                            <h6>No Attachments</h6>
-                        {% endfor %}
-                    </td>
-                </tr>
-
-                </tbody>
-            </table>
         </div>
 
+    {% if case.referrals %}
         <div class="tab-pane" id="case-referrals">
-
             <h2>Referrals</h2>
             <table class="table table-striped case_history">
                 <thead>
@@ -141,11 +119,10 @@
 
                 </tbody>
             </table>
-        </div>
-
+        </div> <!-- end case-referrals tab -->
+    {% endif %}
+    {% if case.all_indices %}
         <div class="tab-pane" id="case-related">
-
-            <h2>Related Cases</h2>
             <table class="table table-striped case_history">
                 <thead>
                 <tr>
@@ -176,21 +153,22 @@
 
                 </tbody>
             </table>
-
-
-        </div>
+        </div> <!-- end case-related tab -->
+    {% endif %}
         <div class="tab-pane" id="case-attachments">
-            <h2>todo</h2>
-        </div>
-    </div>
-</div> {# end tabbed-content-container div #}
-<div id="xform-list-block" class="row-fluid">
-<h2>Sexy histogram of all xform submits over time</h2>
-<hr>
-<h2>Sexy dot chart of all case updates over time</h2>
-<hr>
-    <div class="span4">
-    <h2>Interaction History</h2>
+            <ul>
+            {% for form_id, filename in case.attachments %}
+                {% if not forloop.first %}<br>{% endif %}
+                <li>
+                <a href="{% url xform_attachment form_id filename %}">{{ filename }}</a>
+                </li>
+            {% empty %}
+                <li>No Attachments</li>
+            {% endfor %}
+            </ul>
+        </div> <!-- end case-attachments tab -->
+    <div class="tab-pane" id="case-history-tab">
+        <div class="span4">
         <ul data-bind="foreach: $root.form_type_facets">
             <li>
                 <strong><span data-bind="text: form_name"></span></strong>:
@@ -224,288 +202,376 @@
                 </tr>
             </tbody>
         </table>
-
-
-    </div>
-    <div class="span6">
-        <h2>Xform goes here</h2>
-        <div data-bind="visible: $root.xform_view, template: { name: 'xform-template', foreach: $root.selected_xforms }">
-{#            #<div data-bind="template: { name: 'person-template', foreach: people }"></div>#}
-
-
         </div>
-    </div>
-    <script type="text/html" id="xform-template">
-        <h2>Hello XForm</h2>
-        <h3 data-bind="text: name"></h3>
-        <span data-bind="text: 'XForm ID:' + id()"></span><br>
-        <span data-bind="text: 'User:' + username()"></span><br>
-        <span data-bind="text: 'user_id:' + userID()"></span><br>
-        <span data-bind="text: 'form type:' + form_type()"></span><br>
-        <span data-bind="text: 'xmlns:' + xmlns()"></span><br>
-        <span data-bind="text: 'received_on:' + received_on()"></span><br>
-        <span data-bind="text: 'timestart:' + timeStart()"></span><br>
-        <span data-bind="text: 'timeend:' + timeEnd()"></span><br>
-        <span data-bind="text: 'case_id:' + case_id()"></span><br>
-        <span data-bind="text: 'device_id:' + deviceID()"></span><br>
-        <div class="form-data-block" data-bind="html: 'form_data:' + get_form_data()"></div>
-    </script>
+        <div class="span6">
+            <div id="xform_data_panel"></div>
+            </div>
+{#        <h2>Xform goes here</h2>#}
+{#        <div data-bind="visible: $root.xform_view, template: { name: 'xform-template', foreach: $root.selected_xforms }"></div>#}
+{#        </div>#}
+{#        <script type="text/html" id="xform-template">#}
+{#        <h2>Hello XForm</h2>#}
+{#        <h3 data-bind="text: name"></h3>#}
+{#        <span data-bind="text: 'XForm ID:' + id()"></span><br>#}
+{#        <span data-bind="text: 'User:' + username()"></span><br>#}
+{#        <span data-bind="text: 'user_id:' + userID()"></span><br>#}
+{#        <span data-bind="text: 'form type:' + form_type()"></span><br>#}
+{#        <span data-bind="text: 'xmlns:' + xmlns()"></span><br>#}
+{#        <span data-bind="text: 'received_on:' + received_on()"></span><br>#}
+{#        <span data-bind="text: 'timestart:' + timeStart()"></span><br>#}
+{#        <span data-bind="text: 'timeend:' + timeEnd()"></span><br>#}
+{#        <span data-bind="text: 'case_id:' + case_id()"></span><br>#}
+{#        <span data-bind="text: 'device_id:' + deviceID()"></span><br>#}
+{#        <div class="form-data-block" data-bind="html: get_form_data()"></div>#}
+{#        </script>#}
 
+        <script type="text/javascript">
 
-    <script type="text/javascript">
+        function format_date(isodatestring) {
+            if (isodatestring == "" || isodatestring == null) {
+                return 'present';
+            }
+            //parse nad format the date timestamps - seconds since epoch into date object
+            var date = new Date(isodatestring.split('+')[0]);
+            // hours part from the timestamp
+            var hours = date.getHours();
+            // minutes part from the timestamp
+            var minutes = date.getMinutes();
+            // seconds part from the timestamp
+            var seconds = date.getSeconds();
+            if (seconds < 10) {
+                var second_str = "0" + seconds;
+            } else {
+                var second_str = seconds;
+            }
 
-    function format_date(isodatestring) {
-        if (isodatestring == "" || isodatestring == null) {
-            return 'present';
+            var year = date.getFullYear();
+            var month = date.getMonth() + 1;
+            var day = date.getDate();
+
+            //return  year + '/' + month + '/' + day + ' ' + hours + ':' + minutes + ':' + second_str;
+            //return  year + '/' + month + '/' + day;
+            return  year + '-' + month + '-' + day + ' ' + hours + ":" + minutes;
+
         }
-        //parse nad format the date timestamps - seconds since epoch into date object
-        var date = new Date(isodatestring.split('+')[0]);
-        // hours part from the timestamp
-        var hours = date.getHours();
-        // minutes part from the timestamp
-        var minutes = date.getMinutes();
-        // seconds part from the timestamp
-        var seconds = date.getSeconds();
-        if (seconds < 10) {
-            var second_str = "0" + seconds;
-        } else {
-            var second_str = seconds;
-        }
 
-        var year = date.getFullYear();
-        var month = date.getMonth() + 1;
-        var day = date.getDate();
-
-        //return  year + '/' + month + '/' + day + ' ' + hours + ':' + minutes + ':' + second_str;
-        //return  year + '/' + month + '/' + day;
-        return  year + '-' + month + '-' + day + ' ' + hours + ":" + minutes;
-
-    }
-
-    function format_user(username) {
-        if (username === undefined || username == null) {
-            return "---"
-        }
-        else {
-            return username.split('@')[0];
-        }
-    }
-    function recursiveRender(obj) {
-        var ret = "";
-        for (var k in obj) {
-            if (typeof obj[k] == "object") {
-                ret = ret + "<dl class='dl-horizontal'>" + recursiveRender(obj[k]) + "</dl>";
+        function format_user(username) {
+            if (username === undefined || username == null) {
+                return "---"
             }
             else {
-                ret = ret + "<dt>" + k.toString() + "</dt><dd>" + obj[k].toString() + "</dd>";
+                return username.split('@')[0];
             }
         }
-        ret = ret + "</dl>";
-        return ret;
-    }
+        function recursiveRender(obj, depth) {
+            var ret = '';
+            for (var k in obj) {
+                if (typeof obj[k] == "object") {
+                    ret = ret + "<dl class='dl-horizontal'>" + "<h3 class='push" + depth + "'>" + k + "</h3>" + recursiveRender(obj[k], depth + 1) + "</dl>";
+                }
+                else {
+                    ret = ret + "<dt>" + k + "</dt><dd>" + obj[k] + "</dd>";
+                }
+            }
+            return ret;
+        }
 
 
-    function XFormDataModel(data) {
-            var self = this;
-            self.id = ko.observable(data['_id']);
-            self.case_id = ko.observable(data.case_id); //helper populated
-            self.xmlns = ko.observable(data.xmlns);
-            self.domain = ko.observable(data.domain);
-            self.app_id = ko.observable(data.app_id);
-            self.received_on = ko.observable(format_date(data.received_on));
+        function XFormDataModel(data) {
+                var self = this;
+                self.id = ko.observable(data['_id']);
+                self.case_id = ko.observable(data.case_id); //helper populated
+                self.xmlns = ko.observable(data.xmlns);
+                self.domain = ko.observable(data.domain);
+                self.app_id = ko.observable(data.app_id);
+                self.received_on = ko.observable(format_date(data.received_on));
 
-            self.timeStart = ko.observable(format_date(data.form.meta.timeStart));
-            self.timeEnd = ko.observable(format_date(data.form.meta.timeEnd));
-            self.userID = ko.observable(data.form.meta.userID);
-            self.username = ko.observable(format_user(data.form.meta.username));
-            self.deviceID = ko.observable(data.form.meta.deviceID);
-            self.form_type = ko.observable(data.form['#type']);
-            self.form_data = ko.observable(data.form);
+                self.timeStart = ko.observable(format_date(data.form.meta.timeStart));
+                self.timeEnd = ko.observable(format_date(data.form.meta.timeEnd));
+                self.userID = ko.observable(data.form.meta.userID);
+                self.username = ko.observable(format_user(data.form.meta.username));
+                self.deviceID = ko.observable(data.form.meta.deviceID);
+                self.form_type = ko.observable(data.form['#type']);
+                self.form_data = ko.observable(data.form);
 
-            self.get_form_data = function() {
-                return "<dl class='dl-horizontal'>" + JSON.stringify(self.form_data(), function(key,value) {
-                    console.log(typeof(value));
-                    if (typeof(value) == "object") {
-                        return "<dt>" + key.toString() + "</dt><dd>" + recursiveRender(value) + "</dd>";
-                    } else {
-                        return "<dt>" + key.toString() + "</dt><dd>" + value.toString() + "</dd>";
-                    }
-                }) + "</dl>";
+                self.get_form_data = function() {
+                    return "<dl class='dl-horizontal'>" + JSON.stringify(self.form_data(), function(key,value) {
+                        console.log(self.form_data());
+                        console.log(typeof(value));
+                        console.log("##" + key + "##");
+                        console.log("$$" + value + "$$");
+                        if (typeof(value) == "object") {
+                            return "<dt><h3>" + key + "</h3></dt><dd>" + recursiveRender(value, 0) + "</dd>";
+                        } else {
+                            return "<dt>" + key + "</dt><dd>" + value + "</dd>";
+                        }
+                    }) + "</dl>";
+                };
+        };
+
+            function FormTypeFacetModel(data) {
+                var self = this;
+                //{"form_type_facets": {"_type": "terms", "total": 854, "terms": [{"count": 605, "term": "dots_form"}, {"count": 168, "term": "data"}, {"count": 75, "term": "progress_note"}, {"count": 6, "term": "bloodwork"}], "other": 0, "missing": 0},
+                self.form_name = ko.observable(data.term);
+                self.form_count = ko.observable(data.count);
             };
-    };
 
-        function FormTypeFacetModel(data) {
-            var self = this;
-            //{"form_type_facets": {"_type": "terms", "total": 854, "terms": [{"count": 605, "term": "dots_form"}, {"count": 168, "term": "data"}, {"count": 75, "term": "progress_note"}, {"count": 6, "term": "bloodwork"}], "other": 0, "missing": 0},
-            self.form_name = ko.observable(data.term);
-            self.form_count = ko.observable(data.count);
-        };
+            function FormDateHistogram(data) {
+                var self = this;
+                self.es_time = ko.observable(data.time);
+                self.form_count = ko.observable(data.count);
+            };
 
-        function FormDateHistogram(data) {
-            var self = this;
-            self.es_time = ko.observable(data.time);
-            self.form_count = ko.observable(data.count);
-        };
+            function XFormListViewModel() {
+                var self = this;
+                self.xforms = ko.observableArray([]);
+                self.page_size = ko.observable(25);
+                self.page_index = ko.observable(0);
+                self.total_rows = ko.observable(0);
+                self.page_count = ko.observable(0);
+                self.selected_xform_idx = ko.observable(-1);
+                self.selected_xform_doc_id = ko.observable("");
+                self.selected_xforms = ko.observableArray([]);
 
-        function XFormListViewModel() {
-            var self = this;
-            self.xforms = ko.observableArray([]);
-            self.page_size = ko.observable(25);
-            self.page_index = ko.observable(0);
-            self.total_rows = ko.observable(0);
-            self.page_count = ko.observable(0);
-            self.selected_xform_idx = ko.observable(-1);
-            self.selected_xform_doc_id = ko.observable("");
-            self.selected_xforms = ko.observableArray([]);
+                self.form_type_facets = ko.observableArray([]);
+                self.form_recv_facets = ko.observableArray([]);
 
-            self.form_type_facets = ko.observableArray([]);
-            self.form_recv_facets = ko.observableArray([]);
+                var api_url = "/a/{{ case.domain }}/api/v0.1/xform_es/";
 
-            var api_url = "/a/pact/api/v0.1/xform_es/";
+                //based upon criteria, get totals + facets?
+                //then populate observableArray and set pagination limits
 
-            //based upon criteria, get totals + facets?
-            //then populate observableArray and set pagination limits
-
-            self.xform_query = function () {
-                return {
-                    "query": {
-                        "filtered": {
-                            "filter": {
-                                "and": [
-                                    {"term": {"domain.exact": "{{ domain }}"}},
-                                    {"term": {"doc_type": "xforminstance"}},
-                                ]
-                            },
-                            "query": {
-                                "query_string": {
-                                    "query": "(form.case.case_id:{{ case.get_id }} OR form.case.@case_id:{{ case.get_id }})"
+                self.xform_query = function () {
+                    return {
+                        "query": {
+                            "filtered": {
+                                "filter": {
+                                    "and": [
+                                        {"term": {"domain.exact": "{{ case.domain }}"}},
+{#                                        {"term": {"doc_type": "xforminstance"}},#}
+                                    ]
+                                },
+                                "query": {
+                                    "query_string": {
+                                        "query": "(form.case.case_id:{{ case.get_id }} OR form.case.@case_id:{{ case.get_id }})"
+                                    }
                                 }
                             }
+                        },
+                        "size": self.page_size(),
+                        "from": self.page_index() * self.page_size()
+                    };
+                };
+
+                self.stats_query = function () {
+                    var q = self.xform_query();
+                    q["facets"] = {
+                        "received_facets": {
+                            "date_histogram": {
+                                "field": "received_on",
+                                "interval": "day"
+                            }
+                        }, "form_type_facets": {
+                            "terms": {
+                                "field": "form.#type"
+                            }
                         }
-                    },
-                    "size": self.page_size(),
-                    "from": self.page_index() * self.page_size()
+                    }
+                    q['size'] = 0;
+                    q['from'] = 0;
+                    return q;
+                };
+
+
+                self.get_xform_data = function(xform_id) {
+                    console.log("querying xform: " + xform_id);
+
+                    $.ajax({
+                        "type": "GET",
+                        "url": "/a/{{ case.domain }}/reports/case_data/{{ case.get_id }}/" + xform_id + "/",
+                        "success": function(data) {
+                            console.log("got data");
+                            console.log(data);
+                            $("#xform_data_panel").html(data);
+                        },
+                        "error": function(data) {
+                            console.log("Get xform error");
+                            console.log(data);
+                        },
+                        "complete": function(data) {
+
+                        }
+                    })
+                }
+
+                self.get_data = function(query, success_cb) {
+                    console.log(query);
+                    $.ajax({
+                        "type": "POST",
+                        "url":  api_url,
+                        "data": ko.toJSON(query),
+                        "success": function(data) {
+                            success_cb(data);
+                        }, //end success
+                        "error": function(data) {
+                            console.log("Error:");
+                            console.log(data);
+                        },
+                        "complete": function(data){
+                            {#                        self.is_loading(false);#}
+                        }
+                    });
+                };
+
+
+                self.xform_data_cb = function(data) {
+                    self.total_rows(data['hits']['total']);
+                    self.page_count(Math.floor(data['hits']['total']/self.page_size()));
+                    var mapped_xforms = $.map(data['hits']['hits'], function (item) {
+                        return new XFormDataModel(item['_source']);
+                    });
+                    self.xforms(mapped_xforms);
+                    self.selected_xform_idx(-1);
+                };
+
+                self.stats_data_cb = function(data) {
+                    var term_facets_mapped = $.map(data['facets']['form_type_facets']['terms'], function (item) {
+                        return new FormTypeFacetModel(item);
+                    });
+                    self.form_type_facets(term_facets_mapped);
+                    var recv_facets_mapped = $.map(data['facets']['received_facets']['entries'], function (item) {
+                        return new FormDateHistogram(item);
+                    });
+                    self.form_recv_facets(recv_facets_mapped);
+
+                    nv.addGraph(function () {
+                        var chart = nv.models.multiBarChart();
+
+                        chart.xAxis
+                                .tickFormat(function (d) {
+                                    return d3.time.format('%x')(new Date(d))
+                                });
+
+
+                        chart.yAxis.tickFormat(d3.format('.1f'));
+
+                        console.log("add graph d3 select");
+                        console.log(self.form_recv_facets());
+                        var chart_data = function() {
+                            var start_date = new Date(self.form_recv_facets()[0].es_time());
+                            var end_date = new Date(self.form_recv_facets()[self.form_recv_facets().length - 1].es_time());
+                            var ms_delta = end_date - start_date;
+                            console.log(ms_delta);
+                            console.log(start_date);
+                            console.log(end_date);
+                            console.log(ms_delta/86400000);
+                            var retdata = [];
+
+                            for (var i = 0; i < self.form_recv_facets().length; i++) {
+                                var item = self.form_recv_facets()[i];
+                                if (retdata.length == 0) {
+                                    retdata.push({ x:item.es_time(), y:item.form_count()});
+                                    //retdata.push({x:item.es_time(), y: item.form_count(), size: item.form_count(), shape: 'circle'});
+                                }
+                                else {
+                                    var last_time = retdata[retdata.length - 1].x;
+                                    var last_time_dt = new Date(last_time);
+                                    var curr_time = new Date(item.es_time());
+                                    var d = (curr_time - last_time) / 86400000;
+                                    console.log("delta! "  + d);
+                                    if (d > 1) {
+                                        for (var j = 1; j <= d; j++) {
+                                           //fill in blank dates
+                                           console.log(j);
+                                           retdata.push({x:last_time+(j*86400000), y: 0});
+                                           //retdata.push({x:last_time+(j*86400000), y: item.form_count(), size: 0, shape: 'square'});
+                                        }
+                                    }
+                                    retdata.push({x:item.es_time(), y:item.form_count()});
+                                    //retdata.push({x:item.es_time(), y: item.form_count(), size: item.form_count(), shape: 'circle'});
+                                }
+                            }
+
+                            return {
+                            key: "submissions",
+                            //values: $.map(self.form_recv_facets(), function (item) {
+                                ////console.log(new Date(item.es_time()));
+                                //return { x:item.es_time(), y:item.form_count()}
+                            //})
+                            values: retdata
+                        }};
+                        console.log([chart_data()]);
+                        d3.select('#submit_chart svg')
+                                .datum([chart_data()]).transition().duration(500).call(chart);
+
+                        nv.utils.windowResize(chart.update);
+
+                        return chart;
+                    });
+
+
+                };
+
+
+                //self.get_data(self.stats_query(), self.stats_data_cb);
+                self.get_data(self.xform_query(), self.xform_data_cb);
+
+                self.nextPage = function() {
+                    self.page_index(self.page_index() + 1);
+                    self.get_data(self.xform_query(), self.xform_data_cb);
+                };
+
+                self.prevPage = function() {
+                    self.page_index(self.page_index() - 1);
+                    self.get_data(self.xform_query(), self.xform_data_cb);
+                };
+
+                self.clickRow = function(item) {
+                    var idx = self.xforms().indexOf(item);
+                    console.log("clickrow");
+                    console.log(idx);
+                    console.log(self.xforms()[idx].id());
+                    self.get_xform_data(self.xforms()[idx].id());
+                    self.selected_xform_idx(idx);
+                    self.selected_xform_doc_id(self.xforms()[idx].id());
+                    if (idx > -1) {
+                        self.selected_xforms([]);
+                        self.selected_xforms.push(self.xforms()[self.selected_xform_idx()]);
+                    }
+                };
+
+                self.xform_view = ko.computed(function () {
+                    return self.selected_xform_doc_id() !== undefined;
+                });
+
+                self.row_highlight = ko.computed(function() {
+                    //hitting next page will not disappear the xform display just remove the highlight
+                    if (self.selected_xform_idx() == -1) {
+                        console.log("row_highlight false");
+                        return false;
+                    } else  {
+                        if (self.selected_xforms[0] !== undefined) {
+                            console.log("row_highlight something");
+                            console.log(self.selected_xform_doc_id() === self.selected_xforms()[0].id());
+                            return self.selected_xform_doc_id() === self.selected_xforms()[0].id();
+                        } else {
+                            console.log("row_highlight true");
+                            return false;
+                        }
+                    }
+                });
+
+</div>
+                self.sortByName = function() {
+                    self.xforms.sort(function(a, b) {
+                        return a.name < b.name ? -1 : 1;
+                    });
                 };
             };
 
-            self.stats_query = function () {
-                var q = self.xform_query();
-                q["facets"] = {
-                    "received_facets": {
-                        "date_histogram": {
-                            "field": "received_on",
-                            "interval": "day"
-                        }
-                    }, "form_type_facets": {
-                        "terms": {
-                            "field": "form.#type"
-                        }
-                    }
-                }
-                q['size'] = 0;
-                q['from'] = 0;
-                return q;
-            };
-
-
-            self.get_data = function(query, success_cb) {
-                console.log(query);
-                $.ajax({
-                    "type": "POST",
-                    "url":  api_url,
-                    "data": ko.toJSON(query),
-                    "success": function(data) {
-                        success_cb(data);
-                    }, //end success
-                    "error": function(data) {
-                        console.log("Error:");
-                        console.log(data);
-                    },
-                    "complete": function(data){
-                        {#                        self.is_loading(false);#}
-                    }
-                });
-            };
-
-
-            self.xform_data_cb = function(data) {
-                self.total_rows(data['hits']['total']);
-                self.page_count(Math.floor(data['hits']['total']/self.page_size()));
-                var mapped_xforms = $.map(data['hits']['hits'], function (item) {
-                    return new XFormDataModel(item['_source']);
-                });
-                self.xforms(mapped_xforms);
-                self.selected_xform_idx(-1);
-            };
-
-            self.stats_data_cb = function(data) {
-                //eww, doing this on every pagination, make this separate operations
-                var term_facets_mapped = $.map(data['facets']['form_type_facets']['terms'], function (item) {
-                    return new FormTypeFacetModel(item);
-                });
-                self.form_type_facets(term_facets_mapped);
-                var recv_facets_mapped = $.map(data['facets']['received_facets']['terms'], function (item) {
-                    return new FormDateHistogram(item);
-                });
-                self.form_recv_facets(recv_facets_mapped);
-            };
-
-
-            self.get_data(self.stats_query(), self.stats_data_cb);
-            self.get_data(self.xform_query(), self.xform_data_cb);
-
-            self.nextPage = function() {
-                self.page_index(self.page_index() + 1);
-                self.get_data(self.xform_query(), self.xform_data_cb);
-            };
-
-            self.prevPage = function() {
-                self.page_index(self.page_index() - 1);
-                self.get_data(self.xform_query(), self.xform_data_cb);
-            };
-
-            self.clickRow = function(item) {
-                var idx = self.xforms().indexOf(item);
-                console.log("clickrow");
-                console.log(idx);
-                console.log(self.xforms()[idx].id());
-                self.selected_xform_idx(idx);
-                self.selected_xform_doc_id(self.xforms()[idx].id());
-                if (idx > -1) {
-                    self.selected_xforms([]);
-                    self.selected_xforms.push(self.xforms()[self.selected_xform_idx()]);
-                }
-            };
-
-            self.xform_view = ko.computed(function () {
-                return self.selected_xform_doc_id() !== undefined;
-            });
-
-            self.row_highlight = ko.computed(function() {
-                //hitting next page will not disappear the xform display just remove the highlight
-                if (self.selected_xform_idx() == -1) {
-                    console.log("row_highlight false");
-                    return false;
-                } else  {
-                    if (self.selected_xforms[0] !== undefined) {
-                        console.log("row_highlight something");
-                        console.log(self.selected_xform_doc_id() === self.selected_xforms()[0].id());
-                        return self.selected_xform_doc_id() === self.selected_xforms()[0].id();
-                    } else {
-                        console.log("row_highlight true");
-                        return false;
-                    }
-                }
-            });
-
-            self.sortByName = function() {
-                self.xforms.sort(function(a, b) {
-                    return a.name < b.name ? -1 : 1;
-                });
-            };
-        };
-
-        ko.applyBindings(new XFormListViewModel(), $("#xform-list-block")[0]);
-    </script>
-
-</div>
+            ko.applyBindings(new XFormListViewModel(), $("#xform-list-block")[0]);
+        </script>
+    </div> <!-- end case-history tab -->
+    </div>
+</div> {# end tabbed-content-container div #}
+</div> {# end report-container #}
