@@ -203,7 +203,7 @@
         <span data-bind="text: '<<', click: $root.prevPage, visible: $root.page_index() > 0"></span>
         <span data-bind="text: 'Page ' + ($root.page_index() + 1) + ' of ' + $root.page_count()"></span>
         <span data-bind="text: '>>', click: $root.nextPage, visible: $root.page_index() < $root.page_count()"></span>
-        <table class="table table-bordered table-striped">
+        <table class="table table-bordered table-striped table-hover">
             <thead>
             <tr>
                 <th class="span1">Date</th>
@@ -414,8 +414,9 @@
                         "url": "/a/{{ case.domain }}/reports/case_data/{{ case.get_id }}/" + xform_id + "/",
                         "success": function(data) {
                             console.log("got data");
-                            console.log(data);
-                            $("#xform_data_panel").html(data);
+{#                            console.log(data);#}
+                            //$("#xform_data_panel").html(data);
+                            $("#xform_data_panel").html('<h2>selected ' + xform_id + "</h2>");
                         },
                         "error": function(data) {
                             console.log("Get xform error");
@@ -550,7 +551,9 @@
                 };
 
                 self.clickRow = function(item) {
+                    $("#xform_data_panel").html("<img src='/static/hqwebapp/img/ajax-loader.gif' alt='loading indicator' />");
                     var idx = self.xforms().indexOf(item);
+
                     console.log("clickrow");
                     console.log(idx);
                     console.log(self.xforms()[idx].id());
