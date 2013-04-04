@@ -10,6 +10,8 @@ from django.template.loader import render_to_string
 from corehq.apps.reports.templatetags.timezone_tags import utc_to_timezone
 from django.template.defaultfilters import yesno
 
+import itertools
+
 def chunks(l, n):
     """Yield successive n-sized chunks from l."""
     for i in xrange(0, len(l), n):
@@ -19,13 +21,13 @@ register = template.Library()
 
 DYNAMIC_PROPERTIES_COLUMNS = 4
 
+
 @register.simple_tag
-def render_table(name, rows, collapsible=False):
+def render_tables(tables, collapsible=False):
     return render_to_string("case/partials/property_table.html", {
-        "name": name,
-        "rows": rows,
-        "num_columns": max(map(len, rows)) if rows else None
+        "tables": tables
     })
+
 
 @register.simple_tag
 def render_case(case, timezone=pytz.utc, display=None):
@@ -55,12 +57,12 @@ def render_case(case, timezone=pytz.utc, display=None):
             # second box
             ("Submission Info", [
                 [
+                    ("Opened On", "opened_on"),
                     ("User ID", "user_id"),
-                    ("Owner ID", "owner_id")
                 ],
                 [
-                    ("Opened On", "opened_on"),
                     ("Modified On", "modified_on"),
+                    ("Owner ID", "owner_id")
                 ],
                 [
                     ("Closed On", "closed_on"),
@@ -115,17 +117,17 @@ def render_case(case, timezone=pytz.utc, display=None):
         return val
 
 
-    def set_colspan(rows):
-        if not rows:
-            return
+    #def set_colspan(rows):
+        #if not rows:
+            #return
 
-        max_row_length = max(map(len, rows))
+        #max_row_length = max(map(len, rows))
 
-        # set colspan for last element in row if necessary
-        for row in rows:
-            if len(row) < max_row_length:
-                colspan = (max_row_length - len(row)) * 2 + 1
-                row.append([None, colspan, None])
+        ## set colspan for last element in row if necessary
+        #for row in rows:
+            #if len(row) < max_row_length:
+                #colspan = (max_row_length - len(row)) * 2 + 1
+                #row.append([None, colspan, None])
    
     seen_properties = []
     default_properties = []
@@ -144,10 +146,11 @@ def render_case(case, timezone=pytz.utc, display=None):
 
             processed_rows.append(processed_row)
 
-        set_colspan(processed_rows)
+        #set_colspan(processed_rows)
+        columns = list(itertools.izip_longest(*processed_rows))
 
         default_properties.append((
-            _(section_name) if section_name else "", processed_rows))
+            _(section_name) if section_name else "", columns))
 
     unseen_dynamic_properties = [k for (k, v) 
             in case.dynamic_case_properties() 
@@ -162,11 +165,12 @@ def render_case(case, timezone=pytz.utc, display=None):
 
         dynamic_properties_rows.append(row)
 
-    set_colspan(dynamic_properties_rows)
+    dynamic_properties_columns = list(itertools.izip_longest(*dynamic_properties_rows))
+    #set_colspan(dynamic_properties_rows)
     
     return render_to_string("case/partials/single_case.html", {
         "default_properties": default_properties,
-        "dynamic_properties": dynamic_properties_rows,
+        "dynamic_properties": [("", dynamic_properties_columns)],
         "case": case, 
         "timezone": timezone
     })

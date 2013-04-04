@@ -1,39 +1,72 @@
 {% load i18n %}
 
-<div class="table-container">
-    <div class="table-tab" data-toggle="collapse" 
-        data-target="#case_properties_{{ name|slugify }}">
-        {{ name }}
-    </div>
-    <div class="collapse in" id="case_properties_{{ name|slugify }}">
-        <table class="table table-bordered case-properties-table">
-            <tbody>
-                {% for row in rows %}
-                <tr>
-                    {% for attr, name, value, colspan in row %}
-                    {# attr=None, name=colspan for last cell in a short row #}
-                    {% if not attr %}
-                    <th colspan="{{ name }}"></th>
-                    {% else %}
-                    <th title="{{ attr }}">
-                        {{ name }}:
-                    </th>
-                    <td>
-                        {{ value }}
-                    </td>
-                    {% endif %}
-                    {% endfor %}
-                </tr>
-                {% empty %}
-                <tr>
-                    <th style="width:auto" colspan="2" class="no-data">
-                        <span class="muted">
-                            {% trans "No properties found." %}
-                        </span>
-                    </th>
-                </tr>
+<script>
+    $(function () {
+        $(".property-table-row").each(function () {
+            var $container = $(this),
+                maxHeights = [];
+
+            // get max height of each row
+            $container.find("dl").each(function () {
+                $(this).children().each(function (i, el) {
+                    maxHeights[i] = Math.max(maxHeights[i] || 0, $(this).outerHeight());
+                });
+            });
+
+            // set height on all cells in each row
+            _.map(maxHeights, function (val, i) {
+                var n = i + 1, 
+                    selector = "dd:nth-child(" + n + "), dt:nth-child(" + n + ")";
+                $container.find("dl > " + selector).css({
+                    height: val + "px"
+                });
+            });
+        });
+    });
+</script>
+
+<div class="property-table-row">
+    {% for name, columns in tables %}
+    <div class="property-table-container">
+        {% if name %}
+        <div class="table-tab"
+            data-target="#case_properties_{{ name|slugify }}">
+            {{ name }}
+        </div>
+        {% endif %}
+
+        <div class="case-properties-table well collapse in" 
+            id="case_properties_{{ name|slugify }}">
+            {# todo: make work with either tables or dls, specify which with kwarg #}
+            {# (requires transforming dl columns to table rows and handling colspan)} #}
+            {# <table class="table table-bordered case-properties-table"> #}
+            {% for column in columns %}
+            <dl>
+                {% for attr, name, value, colspan in column %}
+                {# attr=None, name=colspan for last cell in a short row #}
+                {% if not attr %}
+                <th colspan="{{ name }}"></th>
+                {% else %}
+                <dt title="{{ attr }}">
+                    {{ name }}
+                </dt>
+                <dd>
+                    {{ value }}
+                </dd>
+                {% endif %}
                 {% endfor %}
-            </tbody>
-        </table>
+            </dl>
+            {% empty %}
+            <dt>
+                {% trans "No data" %}
+            </dt>
+            <dd>
+                <span class="muted">
+                    {% trans "No properties found for this block." %}
+                </span>
+            </dd>
+            {% endfor %}
+        </div>
     </div>
+{% endfor %}
 </div>
