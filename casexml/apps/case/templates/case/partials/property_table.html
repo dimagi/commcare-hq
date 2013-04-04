@@ -3,13 +3,13 @@
 <script>
     $(function () {
         $(".property-table-row").each(function () {
-            var $container = $(this),
+            var $rowContainer = $(this),
                 maxHeights = [];
 
             // get max height of each row
-            $container.find("dl").each(function () {
+            $rowContainer.find("dl").each(function () {
                 $(this).children().each(function (i, el) {
-                    maxHeights[i] = Math.max(maxHeights[i] || 0, $(this).outerHeight());
+                    maxHeights[i] = Math.max(maxHeights[i] || 0, $(el).height());
                 });
             });
 
@@ -17,7 +17,7 @@
             _.map(maxHeights, function (val, i) {
                 var n = i + 1, 
                     selector = "dd:nth-child(" + n + "), dt:nth-child(" + n + ")";
-                $container.find("dl > " + selector).css({
+                $rowContainer.find("dl > " + selector).css({
                     height: val + "px"
                 });
             });
