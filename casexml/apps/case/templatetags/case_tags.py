@@ -83,11 +83,6 @@ def render_tables(tables, collapsible=False):
         "tables": tables
     })
 
-@register.simple_tag
-def render_form_data(form, display=None):
-    pass
-    #display = 
-
 
 @register.simple_tag
 def render_case(case, timezone=pytz.utc, display=None):
