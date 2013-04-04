@@ -56,9 +56,9 @@ def view_export_group(request, group_id):
                            
 def download_saved_export(request, export_id):
     export = SavedBasicExport.get(export_id)
-    attach = export._attachments[export.configuration.filename]
+    attach = export._attachments[export.get_attachment_name()]
     response = HttpResponse(mimetype=attach["content_type"])
-    response.write(export.fetch_attachment(export.configuration.filename))
+    response.write(export.get_payload())
     # ht: http://stackoverflow.com/questions/1207457/convert-unicode-to-string-in-python-containing-extra-symbols
     normalized_filename = unicodedata.normalize('NFKD', export.configuration.filename).encode('ascii','ignore')
     response['Content-Disposition'] = 'attachment; filename=%s' % normalized_filename

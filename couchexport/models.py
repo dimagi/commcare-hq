@@ -1,3 +1,4 @@
+import hashlib
 from itertools import islice
 from couchdbkit.ext.django.schema import Document, IntegerProperty, DictProperty,\
     DocumentSchema, StringProperty, SchemaListProperty, ListProperty,\
@@ -724,4 +725,17 @@ class SavedBasicExport(Document):
     
     @property
     def size(self):
-        return self._attachments[self.configuration.filename]["length"]
+        try:
+            return self._attachments[self.get_attachment_name()]["length"]
+        except KeyError:
+            return 0
+
+    def get_attachment_name(self):
+        # obfuscate this because couch doesn't like attachments that start with underscores
+        return hashlib.md5(self.configuration.filename).hexdigest()
+
+    def set_payload(self, payload):
+        self.put_attachment(payload, self.get_attachment_name())
+
+    def get_payload(self):
+        return self.fetch_attachment(self.get_attachment_name())
