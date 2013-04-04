@@ -52,9 +52,9 @@ def compute_consumption(product_case, window_end, get_base_action):
     transactions = list(StockTransaction.by_product(product_case, to_ts(overshoot_start), to_ts(window_end)))
     transactions.sort(key=lambda tx: (tx.received_on, tx.processing_order))
 
-    return _compute_consumption(transactions, window_start, get_base_action)
+    return _compute_consumption(transactions, window_start, get_base_action, {'min_periods': MIN_PERIODS, 'min_window': MIN_WINDOW})
 
-def _compute_consumption(transactions, window_start, get_base_action):
+def _compute_consumption(transactions, window_start, get_base_action, params={}):
     class ConsumptionPeriod(object):
         def __init__(self, tx):
             self.start = from_ts(tx.received_on)
@@ -112,7 +112,7 @@ def _compute_consumption(transactions, window_start, get_base_action):
     total_length = sum(period.normalized_length for period in periods)
 
     # check minimum statistical significance thresholds
-    if len(periods) < MIN_PERIODS or total_length < MIN_WINDOW:
+    if len(periods) < params.get('min_periods', 0) or total_length < params.get('min_window', 0):
         return None
 
     return total_consumption / float(total_length)
