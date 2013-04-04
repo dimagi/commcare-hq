@@ -4,6 +4,8 @@ from corehq.apps.commtrack.models import StockTransaction
 import collections
 from dimagi.utils import parsing as dateparse
 from datetime import datetime, timedelta
+from corehq.apps.domain.models import Domain
+from casexml.apps.case.models import CommCareCase
 
 from_ts = lambda dt: dateparse.string_to_datetime(dt).replace(tzinfo=None)
 to_ts = dateparse.json_format_datetime
@@ -18,8 +20,20 @@ class ConsumptionRatePillow(BasicPillow):
             txs = [txs]
         touched_products = set(tx['product_entry'] for tx in txs)
 
+        action_defs = Domain.get_by_name(doc_dict['domain']).commtrack_settings.all_actions_by_name
+
         for case_id in touched_products:
-            print compute_consumption(case_id, from_ts(doc_dict['received_on']))
+            rate = compute_consumption(case_id, from_ts(doc_dict['received_on']), lambda action: action_defs[action])
+
+            case = CommCareCase.get(case_id)
+            set_computed(case, 'consumption_rate', rate)
+            case.save()
+
+def set_computed(case, key, val):
+    NAMESPACE = 'commtrack'
+    if not NAMESPACE in case.computed_:
+        case.computed_[NAMESPACE] = {}
+    case.computed_[NAMESPACE][key] = val
 
 CONSUMPTION_WINDOW = 60 # days
 WINDOW_OVERSHOOT = 15 # days
@@ -31,13 +45,16 @@ def span_days(start, end):
     span = end - start
     return span.days + span.seconds / 86400.
 
-def compute_consumption(product_case, window_end):
+def compute_consumption(product_case, window_end, get_base_action):
     window_start = window_end - timedelta(days=CONSUMPTION_WINDOW)
     overshoot_start = window_start - timedelta(days=WINDOW_OVERSHOOT)
 
     transactions = list(StockTransaction.by_product(product_case, to_ts(overshoot_start), to_ts(window_end)))
     transactions.sort(key=lambda tx: (tx.received_on, tx.processing_order))
 
+    return _compute_consumption(transactions, window_start, get_base_action)
+
+def _compute_consumption(transactions, window_start, get_base_action):
     class ConsumptionPeriod(object):
         def __init__(self, tx):
             self.start = from_ts(tx.received_on)
@@ -65,7 +82,7 @@ def compute_consumption(product_case, window_end):
     def split_periods(transactions):
         period = None
         for tx in transactions:
-            base_action_type = tx.action #FIXME
+            base_action_type = get_base_action(tx.action)
             is_stockout = (
                 base_action_type == 'stockout' or
                 (base_action_type == 'stockonhand' and tx.value == 0) or
@@ -83,6 +100,8 @@ def compute_consumption(product_case, window_end):
                     # throw out current period
                     period = None
             elif base_action_type == 'consumption':
+                # TODO in the future it's possible we'll want to break this out by action_type, in order to track
+                # different kinds of consumption: normal vs losses, etc.
                 if period:
                     period.add(tx)
     periods = list(split_periods(transactions))
@@ -93,7 +112,7 @@ def compute_consumption(product_case, window_end):
     total_length = sum(period.normalized_length for period in periods)
 
     # check minimum statistical significance thresholds
-    if len(periods) < MIN_PERIODS or total_length < MIN_DAYS:
+    if len(periods) < MIN_PERIODS or total_length < MIN_WINDOW:
         return None
 
     return total_consumption / float(total_length)
