@@ -1,4 +1,4 @@
-from dimagi.utils.couch.database import get_db
+from dimagi.utils.couch.database import get_db, is_bigcouch
 from django.http import HttpResponse
 import json
 from restkit.errors import RequestFailed
@@ -205,6 +205,25 @@ class LucenePaginator(object):
         self._generator_func = generator_func
         self.database = database or get_db()
         
+    def get_search_params(self):
+        # the difference is:
+        # on couch lucene: /[db]/_fti/_design/[ddoc]/[search view]
+        # on cloudant: /[db]/_design/[ddoc]/_search/[search view]
+        # this magic combination of args makes it work for each one in couchdbkit
+        if is_bigcouch():
+            # todo
+            ddoc, view = self._search_view.split("/")
+            return {
+                'view_name': '%s/_search/%s' % (ddoc, view),
+                'handler': "_design",
+            }
+        else:
+            return {
+                'view_name': self._search_view,
+                'handler': "_fti/_design",
+            }
+
+
     def get_ajax_response(self, request, search_query, extras={}):
         """
         From a datatables generated ajax request, return the appropriate
@@ -215,10 +234,12 @@ class LucenePaginator(object):
         """
         query = request.POST if request.method == "POST" else request.GET
         params = DatatablesParams.from_request_dict(query)
-        
-        results = self.database.search(self._search_view, q=search_query,
-                                       handler="_fti/_design", 
-                                       limit=params.count, skip=params.start)
+
+
+
+        results = self.database.search(q=search_query, limit=params.count, skip=params.start,
+                                       **self.get_search_params())
+
         all_json = []
         try:
             for row in results:
