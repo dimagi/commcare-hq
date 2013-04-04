@@ -25,6 +25,11 @@ class Command(BaseCommand):
                     dest='list_types',
                     default=False,
                     help='Don\'t copy anything, just list all the available document types.'),
+        make_option('--simulate',
+                    action='store_true',
+                    dest='simulate',
+                    default=False,
+                    help='Don\'t copy anything, print what would be copied.'),
     )
 
     def handle(self, *args, **options):
@@ -34,8 +39,9 @@ class Command(BaseCommand):
 
         sourcedb = Database(args[0])
         domain = args[1].strip()
+        simulate = options['simulate']
 
-        since = datetime.strptime(options['since'], '%y-%m-%d') if options['since'] else None
+        since = datetime.strptime(options['since'], '%Y-%m-%d').isoformat() if options['since'] else None
 
         if options['list_types']:
             self.list_types(sourcedb, domain)
@@ -44,11 +50,11 @@ class Command(BaseCommand):
             doc_types = options['doc_types'].split(',')
             for type in doc_types:
                 docs = self.get_docs_by_type(sourcedb, domain, type=type, since=since)
-                self.copy_docs(sourcedb, domain, docs, type=type, since=since)
+                self.copy_docs(sourcedb, domain, docs, simulate, type=type, since=since)
         else:
             all_docs = sourcedb.view("domain/docs", startkey=[domain],
                                  endkey=[domain, {}], reduce=False)
-            self.copy_docs(sourcedb, domain, all_docs)
+            self.copy_docs(sourcedb, domain, all_docs, simulate)
 
     def list_types(self, sourcedb, domain):
         doc_types = sourcedb.view("domain/docs", startkey=[domain],
@@ -64,7 +70,7 @@ class Command(BaseCommand):
                              endkey=endkey, reduce=False)
         return docs
 
-    def copy_docs(self, sourcedb, domain, docs, type=None, since=None):
+    def copy_docs(self, sourcedb, domain, docs, simulate, type=None, since=None):
         total = len(docs)
         count = 0
         targetdb = get_db()
@@ -75,8 +81,9 @@ class Command(BaseCommand):
         for row in docs:
             try:
                 count += 1
-                dt = DocumentTransform(sourcedb.get(row["id"]), sourcedb)
-                save(dt, targetdb)
+                if not simulate:
+                    dt = DocumentTransform(sourcedb.get(row["id"]), sourcedb)
+                    save(dt, targetdb)
                 print "     Synced %s/%s docs (%s: %s)" % (count, total, row["key"][1], row["id"])
             except Exception, e:
                 print "     Document %s failed! Error is: %s" % (row["id"], e)
