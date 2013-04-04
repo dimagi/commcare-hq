@@ -730,6 +730,9 @@ class SavedBasicExport(Document):
         except KeyError:
             return 0
 
+    def has_file(self):
+        return self.get_attachment_name() in self._attachments
+
     def get_attachment_name(self):
         # obfuscate this because couch doesn't like attachments that start with underscores
         return hashlib.md5(self.configuration.filename).hexdigest()
