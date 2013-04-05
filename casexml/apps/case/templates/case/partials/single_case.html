@@ -207,14 +207,14 @@
 
                     <div class="pagination pagination-right">
                         <ul>
-                            <li data-bind="enable: $root.page_index() > 0, click: $root.prevPage">
-                                <<
+                            <li>
+                                <button class="btn btn-small" type="button" data-bind="enable: $root.page_index() > 0, click: $root.prevPage">«</button>
                             </li>
                             <li class="active">
                                 <select size="1" class="input-mini" data-bind="options: all_pages(), value: $root.disp_page_index"></select>
                             </li>
-                            <li data-bind="enable: $root.disp_page_index() < $root.page_count() - 1, click: $root.nextPage">
-                                >>
+                            <li>
+                                <button class="btn btn-small" type="button" data-bind="enable: $root.disp_page_index() < $root.page_count() - 1, click: $root.nextPage">»</button>
                             </li>
                         </ul>
                     </div>
@@ -399,7 +399,7 @@
                                 "filter": {
                                     "and": [
                                         {"term": {"domain.exact": "{{ case.domain }}"}},
-{#                                        {"term": {"doc_type": "xforminstance"}},#}
+                                        {"term": {"doc_type": "xforminstance"}},
                                     ]
                                 },
                                 "query": {
@@ -479,6 +479,8 @@
 
 
                 self.xform_data_cb = function(data) {
+                    console.log("xform_data_cb");
+                    console.log(data);
                     self.total_rows(data['hits']['total']);
                     self.page_count(Math.floor(data['hits']['total']/self.page_size()));
                     var mapped_xforms = $.map(data['hits']['hits'], function (item) {
