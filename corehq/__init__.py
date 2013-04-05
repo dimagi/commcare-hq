@@ -120,11 +120,17 @@ APPSTORE_INTERFACES = (
     )),
 )
 
-from corehq.apps.reports.standard.domains import DomainStatsReport
+from corehq.apps.reports.standard.domains import OrgDomainStatsReport, AdminDomainStatsReport
 
 BASIC_REPORTS = (
+    (_('Project Stats'), (
+        OrgDomainStatsReport,
+    )),
+)
+
+ADMIN_REPORTS = (
     (_('Domain Stats'), (
-        DomainStatsReport,
+        AdminDomainStatsReport,
     )),
 )
 

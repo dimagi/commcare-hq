@@ -206,3 +206,7 @@ class CustomProjectReportDispatcher(ProjectReportDispatcher):
 class BasicReportDispatcher(ReportDispatcher):
     prefix = 'basic_report'
     map_name = 'BASIC_REPORTS'
+
+class AdminReportDispatcher(ReportDispatcher):
+    prefix = 'admin_report'
+    map_name = 'ADMIN_REPORTS'

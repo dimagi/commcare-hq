@@ -81,7 +81,7 @@ var HQAsyncReport = function (o) {
         process_filters = process_filters + "&filterSet=" + self.standardReport.filterSet;
         self.reportRequest = $.ajax({
             url: (self.customAsyncUrl || window.location.pathname.replace(self.standardReport.urlRoot,
-                self.standardReport.urlRoot+'async/'))+"?"+process_filters+"&"+params+self.additionalParams,
+                self.standardReport.urlRoot+'async/'))+"?"+process_filters+"&"+params+"&"+self.additionalParams,
             dataType: 'json',
             success: function(data) {
                 self.reportRequest = null;

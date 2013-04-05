@@ -16,7 +16,7 @@ from corehq.apps.hqwebapp.utils import InvitationView
 from corehq.apps.orgs.decorators import org_admin_required, org_member_required
 from corehq.apps.registration.forms import DomainRegistrationForm
 from corehq.apps.orgs.forms import AddProjectForm, InviteMemberForm, AddTeamForm, UpdateOrgInfo
-from corehq.apps.reports.standard.domains import DomainStatsReport
+from corehq.apps.reports.standard.domains import DomainStatsReport, OrgDomainStatsReport
 from corehq.apps.users.models import WebUser, UserRole, OrgRemovalRecord
 from corehq.elastic import get_es
 from corehq.pillows.mappings.case_mapping import CASE_INDEX
@@ -540,12 +540,14 @@ def stats(request, org, template='orgs/stats.html'):
     organization = Organization.get_by_name(org, strict=True)
     ctxt = base_context(request, organization)
 
-    stats_report = DomainStatsReport(request)
+    stats_report = OrgDomainStatsReport(request)
     ctxt.update(stats_report.context)
 
     ctxt.update({
         'tab': 'stats',
         'no_header': True,
+        'custom_async_url': reverse('basic_report_dispatcher', args=('async/dom_stats',))
+        # '{% url basic_report_dispatcher 'async/dom_stats'
     })
     return render(request, template, ctxt)
 

@@ -40,6 +40,7 @@ from django.conf import settings
 from restkit import Resource
 import os
 from django.core import cache
+from urllib import urlencode
 
 @require_superuser
 def default(request):
@@ -170,28 +171,29 @@ def es_domain_query(params, facets=None, terms=None, domains=None, return_q_dict
     return q if return_q_dict else es_query(params, facets, terms, q, DOMAIN_INDEX + '/hqdomain/_search')
 
 @require_superuser
-def domain_list(request, template="hqadmin/stats_report.html"):
+def domain_list(request):
+    from corehq.apps.reports.standard.domains import DomainStatsReport
+
     params, _ = parse_args_for_es(request)
     facets = project_stats_facets()
     results = es_domain_query(params, facets)
     d_results = [Domain.wrap(res['_source']) for res in results.get('hits', {}).get('hits', [])]
 
-    domains = ammend_domains(d_results)
-    ctxt = get_domain_totals(domains)
-
     facets_sortables = generate_sortables_from_facets(results, params)
+
+    stats_report = DomainStatsReport(request)
+    ctxt = (stats_report.context)
 
     ctxt.update({
         'layout_flush_content': True,
-        'headers': DOMAIN_LIST_HEADERS,
-        "aoColumns": DOMAIN_LIST_HEADERS.render_aoColumns,
-        'domains': domains,
+        'custom_async_url': reverse('admin_report_dispatcher', args=('async/dom_stats',)),
+        'domains': '|'.join([d.name for d in d_results]),
         'sortables': sorted(facets_sortables),
         'query_str': request.META['QUERY_STRING'],
         'search_url': reverse('domain_list'),
         'search_query': params.get('search', [""])[0],
-        })
-    return render(request, template, ctxt)
+    })
+    return render(request, "hqadmin/stats_report.html", ctxt)
 
 @require_superuser
 def active_users(request):

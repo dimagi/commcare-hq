@@ -18,45 +18,7 @@
 {% endblock %}
 
 {% block js-inline %} {{ block.super }}
-    <script type="text/javascript">
-        var standardHQReport = new HQReport({
-            domain: '{{ domain }}',
-            urlRoot: '{{ report.url_root }}',
-            slug: {{ report.slug|JSON }},
-            subReportSlug: {{ report.sub_slug|JSON }},
-            type: {{ report.type|JSON }},
-            filterSet: {{ report.filter_set|JSON }},
-            needsFilters: {{ report.needs_filters|JSON }},
-            isExportable: {{ report.is_exportable|JSON }},
-            isEmailable: {{ report.is_emailable|JSON }},
-            emailDefaultSubject: {{ report.title|JSON }},
-            emailSuccessMessage: '{% trans "Report successfully emailed" %}',
-            emailErrorMessage: '{% trans "An error occurred emailing you report. Please try again." %}',
-
-            {% if request.datespan %}
-                datespan: {
-                    startdate: '{{ datespan.startdate|date:"Y-m-d" }}',
-                    enddate: '{{ datespan.enddate|date:"Y-m-d" }}'
-                },
-            {% endif %}
-        });
-        standardHQReport.init();
-
-        {% if report.slug and report.is_async %}
-            var asyncHQReport = new HQAsyncReport({
-                standardReport: standardHQReport,
-                customAsyncUrl: '{% url basic_report_dispatcher 'async/dom_stats' %}',
-                additionalParams: 'user_context=org&org={{ org.name }}'
-            });
-            asyncHQReport.init();
-        {% endif %}
-
-        $('.report-description-popover').popover({
-            placement: 'right',
-            trigger: 'hover',
-        });
-    </script>
-
+    {% include "reports/standard/partials/report_loader.html" with additional_params='org='|add:org.name %}
 
     <script src='{% static 'hqadmin/js/date_histogram_chart.js' %}' type='text/javascript'></script>
     <script type="text/javascript">
@@ -195,6 +157,7 @@
 
     <hr />
     <div id="report-content">
+{#        {% include "reports/async/default.html" %}#}
         {% if not report.is_async and report.slug %}
             {% block reportcontent %}
             {% endblock %}
