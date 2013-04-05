@@ -1,3 +1,5 @@
+import copy
+import pdb
 from django import template
 from django.utils.translation import ugettext as _
 from django.utils.safestring import mark_safe
@@ -164,11 +166,11 @@ def render_case(case, timezone=pytz.utc, display=None):
             }
         }
     }
-    
-    data = case.to_json()
+
+    data = copy.deepcopy(case.to_json())
     default_properties = build_tables(
             data, definition=display, timezone=timezone)
-    
+
     dynamic_data = dict((k, v) for (k, v) in case.dynamic_case_properties()
                         if k in data)
     definition = {
@@ -187,7 +189,6 @@ def render_case(case, timezone=pytz.utc, display=None):
 
     dynamic_properties = build_tables(
             dynamic_data, definition=definition, timezone=timezone)
-    
     return render_to_string("case/partials/single_case.html", {
         "default_properties": default_properties,
         "dynamic_properties": dynamic_properties,

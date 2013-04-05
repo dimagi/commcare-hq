@@ -8,26 +8,6 @@
         padding: 10px;
     
     }
-    .well {
-        position: relative;
-    }
-
-    .well:after {
-        content: attr(data-title);
-        position: absolute;
-        top: -1px;
-        left: -1px;
-        padding: 3px 7px;
-        font-size: 12px;
-        font-weight: bold;
-        background-color: #f5f5f5;
-        border: 1px solid #ddd;
-        -webkit-border-radius: 4px 0 4px 0;
-        border-radius: 4px 0 4px 0;
-    
-    }
-
-
     dl {
         margin-bottom: 0px;
         display: inline-block;
@@ -41,7 +21,6 @@
         padding-bottom: 10px;
     
     }
-yeah 
     .property-table-container {
         float: left;
         margin-bottom: 18px;
@@ -194,10 +173,8 @@ yeah
             </li>
         </ul>
 
-        <span data-bind="text: 'Total records: ' + $root.total_rows()"></span>
-        <span data-bind="text: '<<', click: $root.prevPage, visible: $root.page_index() > 0"></span>
-        <span data-bind="text: 'Page ' + ($root.page_index() + 1) + ' of ' + $root.page_count()"></span>
-        <span data-bind="text: '>>', click: $root.nextPage, visible: $root.page_index() < $root.page_count()"></span>
+
+        <div class="hq-loading" data-bind="visible: $root.data_loading">Loading <img src="/static/hqwebapp/img/ajax-loader.gif" alt="loading indicator"></div>
         <table class="table table-bordered table-striped table-hover">
             <thead>
             <tr>
@@ -207,7 +184,7 @@ yeah
             </tr>
             </thead>
             <tbody data-bind="foreach: xforms">
-                <tr data-bind='click: $root.clickRow, css: { info: $root.row_highlight }'>
+                <tr data-bind='click: $root.clickRow, css: { info: $data.id() == $root.selected_xform_doc_id() }'>
                     <td>
                         <span data-bind="text: received_on"></span>
                     <td>
@@ -220,6 +197,28 @@ yeah
                 </tr>
             </tbody>
         </table>
+            <div class="row-fluid dataTables_control">
+                    <div class="dataTables_info">
+                        <span data-bind="text: $root.page_start_num() + '-' + $root.page_end_num() + ' of ' + $root.total_rows()"></span>
+                    </div>
+                    <div class="dataTables_length">
+                        <select id="page_size_select" size="1" class="input-mini" data-bind="options: pagination_options, value: $root.page_size"></select> <span>per page</span>
+                    </div>
+
+                    <div class="pagination pagination-right">
+                        <ul>
+                            <li data-bind="enable: $root.page_index() > 0, click: $root.prevPage">
+                                <<
+                            </li>
+                            <li class="active">
+                                <select size="1" class="input-mini" data-bind="options: all_pages(), value: $root.disp_page_index"></select>
+                            </li>
+                            <li data-bind="enable: $root.disp_page_index() < $root.page_count() - 1, click: $root.nextPage">
+                                >>
+                            </li>
+                        </ul>
+                    </div>
+            </div>
         </div>
         <div class="span6">
             <div id="xform_data_panel"></div>
@@ -325,7 +324,7 @@ yeah
                         }
                     }) + "</dl>";
                 };
-        };
+            };
 
             function FormTypeFacetModel(data) {
                 var self = this;
@@ -342,9 +341,13 @@ yeah
 
             function XFormListViewModel() {
                 var self = this;
+
+                self.pagination_options = [10,25,50,100];
+
                 self.xforms = ko.observableArray([]);
-                self.page_size = ko.observable(25);
+                self.page_size = ko.observable(10);
                 self.page_index = ko.observable(0);
+                self.disp_page_index = ko.observable(1);
                 self.total_rows = ko.observable(0);
                 self.page_count = ko.observable(0);
                 self.selected_xform_idx = ko.observable(-1);
@@ -354,7 +357,37 @@ yeah
                 self.form_type_facets = ko.observableArray([]);
                 self.form_recv_facets = ko.observableArray([]);
 
+                self.data_loading = ko.observable(false);
+
                 var api_url = "/a/{{ case.domain }}/api/v0.1/xform_es/";
+                console.log(api_url);
+
+                self.page_start_num = ko.computed(function() {
+                    return (self.page_index() * self.page_size()) + 1;
+                });
+
+                self.page_end_num = ko.computed(function() {
+                    return (self.page_index() * self.page_size()) + 1 + self.page_size();
+                });
+
+
+                self.page_size_changed = self.page_size.subscribe(function () {
+                    console.log("page size change");
+                    self.get_data(self.xform_query(), self.xform_data_cb);
+                });
+
+                self.disp_page_index_changed = self.disp_page_index.subscribe(function () {
+                    console.log("disp page index change");
+                    self.page_index(self.disp_page_index() - 1);
+                    self.get_data(self.xform_query(), self.xform_data_cb);
+                });
+
+
+                self.all_pages = function() {
+                    return _.range(1, self.page_count()+1);
+                };
+
+
 
                 //based upon criteria, get totals + facets?
                 //then populate observableArray and set pagination limits
@@ -380,6 +413,7 @@ yeah
                         "from": self.page_index() * self.page_size()
                     };
                 };
+
 
                 self.stats_query = function () {
                     var q = self.xform_query();
@@ -410,21 +444,21 @@ yeah
                         "success": function(data) {
                             console.log("got data");
 {#                            console.log(data);#}
-                            //$("#xform_data_panel").html(data);
-                            $("#xform_data_panel").html('<h2>selected ' + xform_id + "</h2>");
+                            $("#xform_data_panel").html(data);
+                            //$("#xform_data_panel").html('<h2>selected ' + xform_id + "</h2>");
                         },
                         "error": function(data) {
                             console.log("Get xform error");
                             console.log(data);
                         },
                         "complete": function(data) {
-
                         }
                     })
-                }
+                };
 
                 self.get_data = function(query, success_cb) {
                     console.log(query);
+                    self.data_loading(true);
                     $.ajax({
                         "type": "POST",
                         "url":  api_url,
@@ -438,6 +472,7 @@ yeah
                         },
                         "complete": function(data){
                             {#                        self.is_loading(false);#}
+                            self.data_loading(false);
                         }
                     });
                 };
@@ -532,16 +567,17 @@ yeah
                 };
 
 
+                //main function data collection - entry point if you will
                 //self.get_data(self.stats_query(), self.stats_data_cb);
                 self.get_data(self.xform_query(), self.xform_data_cb);
 
                 self.nextPage = function() {
-                    self.page_index(self.page_index() + 1);
+                    self.disp_page_index(self.disp_page_index() + 1);
                     self.get_data(self.xform_query(), self.xform_data_cb);
                 };
 
                 self.prevPage = function() {
-                    self.page_index(self.page_index() - 1);
+                    self.disp_page_index(self.disp_page_index() - 1);
                     self.get_data(self.xform_query(), self.xform_data_cb);
                 };
 
@@ -577,7 +613,7 @@ yeah
                             return self.selected_xform_doc_id() === self.selected_xforms()[0].id();
                         } else {
                             console.log("row_highlight true");
-                            return false;
+                            return true;
                         }
                     }
                 });
