@@ -174,6 +174,11 @@ class CommCareMultimedia(Document):
         return mime.from_buffer(data)
 
     @classmethod
+    def get_base_mime_type(cls, data):
+        mime_type = cls.get_mime_type(data)
+        return mime_type.split('/')[0] if mime_type else None
+
+    @classmethod
     def is_data_valid(cls, data):
         mime_type = cls.get_mime_type(data)
         return mime_type in cls.get_valid_mime_types()
@@ -217,11 +222,10 @@ class CommCareMultimedia(Document):
 
     @classmethod
     def get_class_by_data(cls, data):
-        if CommCareImage.is_data_valid(data):
-            return CommCareImage
-        if CommCareAudio.is_data_valid(data):
-            return CommCareAudio
-        return None
+        return {
+            'image': CommCareImage,
+            'audio': CommCareAudio,
+        }.get(cls.get_base_mime_type(data))
 
     @classmethod
     def get_form_path(cls, path):
