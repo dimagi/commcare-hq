@@ -1,15 +1,9 @@
 from django.utils.translation import ugettext_noop
-import time
 from corehq.apps.domain.calculations import CALC_FNS
-from corehq.apps.domain.models import Domain
-from corehq.apps.hqadmin.views import _all_domain_stats, domain_list
-from corehq.apps.orgs.models import Organization
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn, DTSortType
 from corehq.apps.reports.dispatcher import BasicReportDispatcher, AdminReportDispatcher
 from corehq.apps.reports.generic import GenericTabularReport
 from django.utils.translation import ugettext as _
-import json
-from dimagi.utils.couch.database import get_db
 
 
 class DomainStatsReport(GenericTabularReport):
@@ -47,6 +41,7 @@ class DomainStatsReport(GenericTabularReport):
 
     @property
     def rows(self):
+        from corehq.apps.hqadmin.views import _all_domain_stats
         rows = []
         all_stats = _all_domain_stats()
         for dom in self.get_domains():
@@ -77,6 +72,8 @@ class OrgDomainStatsReport(DomainStatsReport):
     custom_params = ['org']
 
     def get_domains(self):
+        from corehq.apps.orgs.models import Organization
+        from corehq.apps.domain.models import Domain
         org = self.request.GET.get('org', None)
         organization = Organization.get_by_name(org, strict=True)
         if organization and \
@@ -89,6 +86,7 @@ class AdminDomainStatsReport(DomainStatsReport):
     custom_params = ['domains']
 
     def get_domains(self):
+        from corehq.apps.domain.models import Domain
         domains = self.request.GET.get("domains", "").split('|')
         if not domains:
             domains = [d.name for d in Domain.get_all()]
