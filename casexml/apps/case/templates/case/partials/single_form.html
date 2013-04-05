@@ -1,0 +1,32 @@
+{% load i18n %}
+{% load case_tags %}
+
+<ul class="nav nav-tabs">
+    <li class="active">
+        <a href="#form-data" data-toggle="tab">
+            {% trans "Form Data" %}
+        </a>
+    </li>
+    <li>
+        <a href="#form-case-data" data-toggle="tab">
+            {% trans "Case" %}
+        </a>
+    </li>
+    <li>
+        <a href="#form-meta-data" data-toggle="tab">
+            {% trans "Meta" %}
+        </a>
+    </li>
+</ul>
+
+<div class="tab-content">
+    <div class="tab-pane active" id="form-data">
+        {% render_tables form_data %}
+    </div>
+    <div class="tab-pane" id="form-case-data">
+        {% render_tables form_case_data %}
+    </div>
+    <div class="tab-pane" id="form-meta-data">
+        {% render_tables form_meta_data %}
+    </div>
+</div>
