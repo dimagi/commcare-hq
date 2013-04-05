@@ -6,8 +6,14 @@ from dimagi.utils import parsing as dateparse
 from datetime import datetime, timedelta
 from corehq.apps.domain.models import Domain
 from casexml.apps.case.models import CommCareCase
+from corehq.apps.commtrack.models import ACTION_TYPES
 
-from_ts = lambda dt: dateparse.string_to_datetime(dt).replace(tzinfo=None)
+def from_ts(dt): #damn this is ugly
+    if isinstance(dt, datetime):
+        return dt
+    if len(dt) > 20 and dt.endswith('Z'): # deal with invalid timestamps (where are these coming from?)
+        dt = dt[:-1]
+    return dateparse.string_to_datetime(dt).replace(tzinfo=None)
 to_ts = dateparse.json_format_datetime
 
 class ConsumptionRatePillow(BasicPillow):
@@ -21,14 +27,25 @@ class ConsumptionRatePillow(BasicPillow):
         touched_products = set(tx['product_entry'] for tx in txs)
 
         action_defs = Domain.get_by_name(doc_dict['domain']).commtrack_settings.all_actions_by_name
+        def get_base_action(action):
+            try:
+                return action_defs[action].action_type
+            except KeyError:
+                # this arises because inferred transactions might not map cleanly to user-defined action types
+                # need to find a more understandable solution
+                if action in ACTION_TYPES:
+                    return action
+                else:
+                    raise
 
         for case_id in touched_products:
-            rate = compute_consumption(case_id, from_ts(doc_dict['received_on']), lambda action: action_defs[action])
+            rate = compute_consumption(case_id, from_ts(doc_dict['received_on']), get_base_action)
 
             case = CommCareCase.get(case_id)
             set_computed(case, 'consumption_rate', rate)
             case.save()
 
+# TODO: biyeun might have better framework code for doing this
 def set_computed(case, key, val):
     NAMESPACE = 'commtrack'
     if not NAMESPACE in case.computed_:
@@ -115,5 +132,5 @@ def _compute_consumption(transactions, window_start, get_base_action, params={})
     if len(periods) < params.get('min_periods', 0) or total_length < params.get('min_window', 0):
         return None
 
-    return total_consumption / float(total_length)
+    return total_consumption / float(total_length) if total_length else None
 
