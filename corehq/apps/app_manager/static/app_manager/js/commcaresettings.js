@@ -3,7 +3,6 @@
  * User: droberts
  * Date: 3/4/13
  * Time: 10:17 PM
- * To change this template use File | Settings | File Templates.
  */
 
 function CommcareSettings(options) {
@@ -88,6 +87,7 @@ function CommcareSettings(options) {
         setting.since = setting.since || '1.1';
 
         setting.value = ko.observable(value);
+        setting.inputId = setting.id + '-input';
 
 
         setting.parsedCondition = ko.computed(function () {

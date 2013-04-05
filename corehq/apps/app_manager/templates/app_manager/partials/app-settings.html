@@ -16,7 +16,7 @@
 
 <script type="text/html" id="CommcareSettings.widgets.bool">
     <span class="span3" data-bind="visible: $root.edit">
-        <input type="checkbox" data-bind="checked: boolValue, attr: {disabled: !enabled()}"/>
+        <input type="checkbox" data-bind="checked: boolValue, attr: {disabled: !enabled(), id: inputId}"/>
     </span>
     <span class="span3" data-bind="visible: !$root.edit()">
         <i data-bind="css: {'icon-ok': boolValue, 'icon-remove': !boolValue()}"></i>
@@ -28,7 +28,7 @@
         <input type="text" class="span6" data-bind="
             value: visibleValue,
             valueUpdate: 'textchange',
-            attr: {disabled: !enabled()}
+            attr: {disabled: !enabled(), id: inputId}
         " />
     </span>
     <span class="span3" data-bind="visible: !$root.edit(), text: visibleValue"></span>
@@ -118,7 +118,7 @@ todo fix
                     visible: visible,
                     css: {error: disabledButHasValue}
                 ">
-                    <label class="control-label">
+                    <label class="control-label" data-bind="attr: {for: inputId}">
                         <span data-bind="text: name"></span>
                         <span data-bind="makeHqHelp: {name: name, description: $data.description}, visible: $data.description"></span>
                     </label>
