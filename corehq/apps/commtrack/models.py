@@ -145,6 +145,10 @@ class CommtrackConfig(Document):
 
     requisition_config = SchemaProperty(CommtrackRequisitionConfig)
 
+    consumption_rate_window = IntegerProperty() # days
+    consumption_rate_min_timespan = IntegerProperty() # days
+    consumption_rate_min_datapoints = IntegerProperty()
+
     @classmethod
     def for_domain(cls, domain):
         result = cls.view("commtrack/domain_config",
@@ -163,6 +167,12 @@ class CommtrackConfig(Document):
 
     def keywords(self, multi=False):
         return self._keywords(self.actions, multi)
+
+    # TODO clean all this up
+    def stock_keywords(self):
+        return self.keywords()
+    def requisition_keywords(self):
+        return self._keywords(self.requisition_config.actions if self.requisitions_enabled else [], False)
 
     def all_keywords(self, multi=False):
         return self._keywords(self.all_actions(), multi)
@@ -336,10 +346,12 @@ def post_loc_created(sender, loc=None, **kwargs):
     from corehq.apps.commtrack.helpers import make_supply_point
     from corehq.apps.domain.models import Domain
 
-    if not Domain.get_by_name(loc.domain).commtrack_enabled:
+    domain = Domain.get_by_name(loc.domain)
+    if not domain.commtrack_enabled:
         return
+    config = domain.commtrack_settings
 
-    # exclude non-leaf locs
-    if loc.location_type == 'outlet': # TODO 'outlet' is PSI-specific
+    # exclude administrative-only locs
+    if loc.location_type in [loc_type.name for loc_type in config.location_types if not loc_type.administrative]:
         make_supply_point(loc.domain, loc)
 

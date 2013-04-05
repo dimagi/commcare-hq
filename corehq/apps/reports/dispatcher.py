@@ -140,7 +140,6 @@ class ReportDispatcher(View):
         project = getattr(request, 'project', None)
         couch_user = getattr(request, 'couch_user', None)
         
-
         nav_context = []
 
         dispatcher = cls()  # uhoh
@@ -166,6 +165,8 @@ class ReportDispatcher(View):
                             'title': report.name,
                         })
             if report_contexts:
+                if hasattr(section_name, '__call__'):
+                    section_name = section_name(project, couch_user)
                 nav_context.append((section_name, report_contexts))
         return nav_context
 

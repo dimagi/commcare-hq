@@ -2,6 +2,7 @@ import csv
 from StringIO import StringIO
 from datetime import datetime
 from corehq.apps.commtrack.models import *
+from corehq.apps.commtrack.stockreport import StockTransaction
 from corehq.apps.sms.mixin import VerifiedNumber, strip_plus
 from corehq.apps.users.models import CouchUser
 from dimagi.utils.couch.database import get_db
@@ -170,6 +171,7 @@ def process_loc(domain, loc, rows, data_cols):
     endkey = list(startkey)
     endkey.append({})
 
+    # TODO potential source of slowness
     most_recent_entry = get_db().view('commtrack/stock_reports', startkey=endkey, endkey=startkey, descending=True).first()
     if most_recent_entry:
         most_recent_timestamp = most_recent_entry['key'][-1]
@@ -203,7 +205,7 @@ def import_row(row, data_cols, domain):
         for header, meta in data_cols.iteritems():
             val = row[header]
             if val is not None and val != '':
-                yield {'action': meta['action'], 'product': meta['product'], 'value': int(val)}
+                yield StockTransaction(action_name=meta['action'], product=meta['product'], value=int(val))
 
     report = {
         'location': row['loc'],
