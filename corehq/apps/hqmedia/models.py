@@ -12,7 +12,7 @@ import magic
 from corehq.apps.app_manager.xform import XFormValidationError
 from couchforms.models import XFormError
 from dimagi.utils.decorators.memoized import memoized
-from hutch.models import AuxMedia, AttachmentImage, MediaAttachmentManager
+from hutch.models import AuxMedia
 from corehq.apps.domain.models import LICENSES
 from dimagi.utils.couch.database import get_db
 from django.utils.translation import ugettext as _
@@ -266,7 +266,7 @@ class CommCareMultimedia(Document):
 
     @classmethod
     def get_nice_name(cls):
-        return "Generic Multimedia"
+        return _("Generic Multimedia")
 
 
 class CommCareImage(CommCareMultimedia):
@@ -312,7 +312,7 @@ class CommCareImage(CommCareMultimedia):
 
     @classmethod
     def get_nice_name(cls):
-        return "Image"
+        return _("Image")
 
         
 class CommCareAudio(CommCareMultimedia):
@@ -326,7 +326,7 @@ class CommCareAudio(CommCareMultimedia):
 
     @classmethod
     def get_nice_name(cls):
-        return "Audio"
+        return _("Audio")
 
 
 class HQMediaMapItem(DocumentSchema):

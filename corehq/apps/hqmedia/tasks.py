@@ -7,6 +7,7 @@ import zipfile
 from corehq.apps.app_manager.models import get_app
 from corehq.apps.hqmedia.models import CommCareImage, CommCareAudio, CommCareMultimedia
 from soil import DownloadBase
+from django.utils.translation import ugettext as _
 
 logging = get_task_logger(__name__)
 
@@ -41,18 +42,18 @@ def process_bulk_upload_zip(processing_id, domain, app_id, username=None, share_
         data = saved_ref.get_content()
         saved_file.write(data)
     except Exception as e:
-        _mark_upload_with_error("Could not fetch cached bulk upload file. Error: %s." % e)
+        _mark_upload_with_error(_("Could not fetch cached bulk upload file. Error: %s." % e))
         return
 
     try:
         saved_file.seek(0)
         uploaded_zip = zipfile.ZipFile(saved_file)
     except Exception as e:
-        _mark_upload_with_error("Error opening file as zip file: %s" % e)
+        _mark_upload_with_error(_("Error opening file as zip file: %s" % e))
         return
 
     if uploaded_zip.testzip():
-        _mark_upload_with_error("Error encountered processing Zip File. File doesn't look valid.")
+        _mark_upload_with_error(_("Error encountered processing Zip File. File doesn't look valid."))
         return
 
     unmatched_files = []
@@ -105,18 +106,18 @@ def process_bulk_upload_zip(processing_id, domain, app_id, username=None, share_
             form_path = media_class.get_form_path(path)
 
             if not form_path in app_paths:
-                _add_unmatched(path, "Did not match any %s paths in application." % media_class.get_nice_name())
+                _add_unmatched(path, _("Did not match any %s paths in application." % media_class.get_nice_name()))
                 continue
 
             multimedia = media_class.get_by_data(data)
             if not multimedia:
-                _add_unmatched(path, "Matching path found, but could not save the data to couch.")
+                _add_unmatched(path, _("Matching path found, but could not save the data to couch."))
                 continue
 
             is_updated = multimedia.attach_data(data, original_filename=file_name, username=username,
                                                 replace_attachment=replace_existing)
             if not is_updated and not getattr(multimedia, '_id'):
-                _add_unmatched(form_path, "Matching path found, but didn't save new multimedia correctly.")
+                _add_unmatched(form_path, _("Matching path found, but didn't save new multimedia correctly."))
                 continue
 
             if is_updated:
@@ -136,6 +137,6 @@ def process_bulk_upload_zip(processing_id, domain, app_id, username=None, share_
         upload_status_cache["unmatched_files"] = unmatched_files
         cache.set(cache_key, upload_status_cache)
     except Exception as e:
-        _mark_upload_with_error("Error while processing zip: %s" % e)
+        _mark_upload_with_error(_("Error while processing zip: %s" % e))
     uploaded_zip.close()
 
