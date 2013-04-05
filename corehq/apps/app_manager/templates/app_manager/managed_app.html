@@ -75,17 +75,10 @@
                         {% trans "Deploy" %}
                     </a>
                 </li>
-                <li class="nav-header">Application</li>
                 <li {% if not module and not form and not release_manager %}class="app-name-div active"{% endif %}>
                     <a href="{% url view_app domain app.id %}?edit={{ edit|BOOL }}#app-settings" data-toggle="tab">
                         <i class="icon-cog"></i>
                         {% trans "Settings" %}
-                    </a>
-                </li>
-                <li>
-                    <a href="{% url view_app domain app.id %}languages/?edit={{ edit|BOOL }}#languages-and-translations" data-toggle="tab">
-                        <i class="icon-globe"></i>
-                        {% trans "Languages" %}
                     </a>
                 </li>
                 {% if app.get_doc_type == 'Application' %}
@@ -96,24 +89,30 @@
                     </a>
                 </li>
                 {% endif %}
-                <li class="nav-header">{% trans "Modules & Forms" %}</li>
-            {% if app.get_doc_type == "Application" %}
-                <li id="langs">
-                    <div>
-                        {% if not app.is_remote_app and app.langs|length > 1%}
-                            <span class="muted">Language:</span>
-                            <select class="code" name="lang">
-                                {% for lang in app.langs %}
-                                    <option value="{{ lang }}"
-                                            {% if lang == langs.0 %}selected=""{% endif %}>
-                                        {% if lang == app.langs.0 %}*{% endif %}
-                                        {{ lang }}
-                                    </option>
-                                {% endfor %}
-                            </select>
+                <li>
+                    <a href="{% url view_app domain app.id %}languages/?edit={{ edit|BOOL }}#languages-and-translations" data-toggle="tab"
+                       style="vertical-align: middle;">
+                        <i class="icon-globe"></i>
+                        {% trans "Languages" %}
+                        {% if app.get_doc_type == 'Application' %}
+                            <span id="langs">
+                            {% if not app.is_remote_app and app.langs|length > 1%}
+                                <select name="lang" class="input-mini" style="height: auto; margin-bottom: 0;">
+                                    {% for lang in app.langs %}
+                                        <option value="{{ lang }}"
+                                                {% if lang == langs.0 %}selected=""{% endif %}>
+                                            {% if lang == app.langs.0 %}*{% endif %}
+                                            {{ lang }}
+                                        </option>
+                                    {% endfor %}
+                                </select>
+                            {% endif %}
+                        </span>
                         {% endif %}
-                    </div>
+                    </a>
                 </li>
+                <li class="divider"></li>
+            {% if app.get_doc_type == "Application" %}
                 <li>
                 <ul class="nav nav-list {% if edit %}sortable {% endif %}" style="padding-left: 0">
                     {% if edit %}
@@ -124,7 +123,10 @@
                         </li>
                     {% endif %}
                         <li class="sort-disabled edit-form-li {% if is_user_registration %} active{% endif %}" id="user-registration-nav-link">
-                            <a href="{% url view_user_registration domain app.id %}?edit={{ edit|BOOL }}">User Registration</a>
+                            <a href="{% url view_user_registration domain app.id %}?edit={{ edit|BOOL }}">
+                                <i class="icon-file-alt"></i>
+                                {% trans "User Registration" %}
+                            </a>
                             <div class="edit-form-pencil">
                                 <a href="{% url user_registration_source domain app.id %}">
                                     <span class="icon icon-pencil"></span>
@@ -142,6 +144,7 @@
                                     {% if edit %}
                                         <i class="drag_handle"></i>
                                     {% endif %}
+                                    <i class="icon-folder-open"></i>
                                     <span {% if module.id == selected_module.id %}class="variable-module_name"{% endif %}>
                                         {{ module.name|html_trans:langs }}
                                     </span>
@@ -166,6 +169,7 @@
                                                     {% if edit %}
                                                         <i class="drag_handle"></i>
                                                     {% endif %}
+                                                    <i class="icon-file-alt"></i>
                                                     <span {% if form == selected_form %}class="variable-form_name"{% endif %}>
                                                     {{ form.name|html_trans:langs }}
                                                     </span>
