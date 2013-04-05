@@ -1832,10 +1832,7 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
         return xmlns_map
 
     def get_questions(self, xmlns):
-        try:
-            forms = self.app.get_xmlns_map()[xmlns]
-        except AttributeError:
-            return []
+        forms = self.get_xmlns_map()[xmlns]
         if len(forms) != 1:
             logging.error('App %s in domain %s has %s forms with xmlns %s' % (
                 self.get_id,
@@ -1846,7 +1843,7 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
             return []
         else:
             form, = forms
-        return form.get_questions(self.app.langs)
+        return form.get_questions(self.langs)
 
     def validate_app(self):
         xmlns_count = defaultdict(int)

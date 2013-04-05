@@ -82,7 +82,7 @@ class ApplicationViewMixin(DomainViewMixin):
     @property
     @memoized
     def app_id(self):
-        return self.args[1] if len(self.args) > 1 else None
+        return self.args[1] if len(self.args) > 1 else self.kwargs.get('app_id')
 
     @property
     @memoized
@@ -1591,7 +1591,11 @@ def save_copy(req, domain, app_id):
 
 def validate_form_for_build(request, domain, app_id, unique_form_id):
     app = get_app(domain, app_id)
-    form = app.get_form(unique_form_id)
+    try:
+        form = app.get_form(unique_form_id)
+    except KeyError:
+        # this can happen if you delete the form from another page
+        raise Http404()
     errors = form.validate_for_build()
     lang, langs = get_langs(request, app)
     return json_response({

@@ -5,6 +5,8 @@ SUPPLY_POINT_CASE_TYPE = 'supply-point'
 SUPPLY_POINT_PRODUCT_CASE_TYPE = 'supply-point-product'
 REQUISITION_CASE_TYPE = 'requisition'
 
+ALL_PRODUCTS_TRANSACTION_TAG = '_all_products'
+
 # supply point products --> supply points and sp product --> requisitions
 PARENT_CASE_REF = 'parent'
 
