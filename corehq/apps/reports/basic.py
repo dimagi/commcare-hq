@@ -82,8 +82,7 @@ class ColumnCollector(type):
         # class declaratively
         function_views = {}
         for slug, column in columns.items():
-            if (hasattr(column, 'view') and 
-                isinstance(column.view, (KeyView, AggregateKeyView)):
+            if hasattr(column, 'view') and isinstance(column.view, (KeyView, AggregateKeyView)):
                 MyAggregateView.key_views[slug] = column.view
             else:
                 function_views[slug] = column.view
