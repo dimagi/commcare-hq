@@ -17,7 +17,7 @@ from corehq.apps.reports.util import make_form_couch_key
 from corehq.apps.sms.models import SMSLog
 from corehq.apps.users.models import  CommCareUser, CouchUser, WebUser
 from couchforms.models import XFormInstance
-from dimagi.utils.couch.database import get_db
+from dimagi.utils.couch.database import get_db, is_bigcouch
 from collections import defaultdict
 from corehq.apps.domain.decorators import  require_superuser
 from dimagi.utils.decorators.datespan import datespan_in_request
@@ -536,18 +536,16 @@ def system_ajax(request):
     db = XFormInstance.get_db()
     ret = {}
     if type == "_active_tasks":
-        tasks = []
-        #commenting out until we get this fixed on bigcouch
-        #tasks = filter(lambda x: x['type'] == "indexer", db.server.active_tasks())
+        tasks = [] if is_bigcouch() else filter(lambda x: x['type'] == "indexer", db.server.active_tasks())
         #for reference structure is:
-#        tasks = [{'type': 'indexer', 'pid': 'foo', 'database': 'mock',
-#            'design_document': 'mockymock', 'progress': 0,
-#            'started_on': 1349906040.723517, 'updated_on': 1349905800.679458,
-#            'total_changes': 1023},
-#            {'type': 'indexer', 'pid': 'foo', 'database': 'mock',
-#            'design_document': 'mockymock', 'progress': 70,
-#            'started_on': 1349906040.723517, 'updated_on': 1349905800.679458,
-#            'total_changes': 1023}]
+        #        tasks = [{'type': 'indexer', 'pid': 'foo', 'database': 'mock',
+        #            'design_document': 'mockymock', 'progress': 0,
+        #            'started_on': 1349906040.723517, 'updated_on': 1349905800.679458,
+        #            'total_changes': 1023},
+        #            {'type': 'indexer', 'pid': 'foo', 'database': 'mock',
+        #            'design_document': 'mockymock', 'progress': 70,
+        #            'started_on': 1349906040.723517, 'updated_on': 1349905800.679458,
+        #            'total_changes': 1023}]
         return HttpResponse(json.dumps(tasks), mimetype='application/json')
     elif type == "_stats":
         return HttpResponse(json.dumps({}), mimetype = 'application/json')
@@ -629,8 +627,8 @@ def system_info(request):
         couchlog_resource = Resource("http://%s:%s@%s/" % (settings.COUCH_USERNAME, settings.COUCH_PASSWORD, settings.COUCH_SERVER_ROOT))
     try:
         #todo, fix on bigcouch/cloudant
-        #context['couch_log'] = couchlog_resource.get('_log', params_dict={'bytes': 2000 }).body_string()
-        context['couch_log'] = "Will be back online shortly"
+        context['couch_log'] = "Will be back online shortly" if is_bigcouch() \
+            else couchlog_resource.get('_log', params_dict={'bytes': 2000 }).body_string()
     except Exception, ex:
         context['couch_log'] = "unable to open couch log: %s" % ex
 
