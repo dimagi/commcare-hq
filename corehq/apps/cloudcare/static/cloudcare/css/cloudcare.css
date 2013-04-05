@@ -1,0 +1,4 @@
+
+.sidebar .nav-list > li > a, .sidebar .nav-list > li > a:hover {
+    cursor: pointer;
+}
