@@ -12,6 +12,8 @@ from corehq.apps.reports.templatetags.timezone_tags import utc_to_timezone
 from django.template.defaultfilters import yesno
 
 import itertools
+import types
+import collections
 
 def chunks(l, n):
     """Yield successive n-sized chunks from l."""
@@ -22,6 +24,28 @@ register = template.Library()
 
 DYNAMIC_CASE_PROPERTIES_COLUMNS = 4
 FORM_PROPERTIES_COLUMNS = 2
+
+
+def get_display(val):
+    if isinstance(val, types.DictionaryType):
+        ret = "".join(
+            ["<dl>"] + 
+            ["<dt>{0}</dt><dd>{1}</dd>".format(k, get_display(v))
+             for k, v in val.items()] +
+            ["</dl>"])
+
+    elif (isinstance(val, collections.Iterable) and 
+          not isinstance(val, basestring)):
+        ret = "".join(
+            ["<ul>"] +
+            ["<li>{0}</li>".format(get_display(v)) for v in val] +
+            ["</ul>"])
+
+    else:
+        ret = escape(val)
+
+    return mark_safe(ret)
+
 
 def build_tables(data, definition, processors=None, timezone=pytz.utc):
     processors = processors or {
@@ -46,9 +70,10 @@ def build_tables(data, definition, processors=None, timezone=pytz.utc):
             process = 'utc_to_timezone'
 
         if process:
-            val = processors[process](val)
+            val = escape(processors[process](val))
+        else:
+            val = mark_safe(get_display(val))
 
-        val = escape(val)
 
         if format:
             val = mark_safe(format.format(val))
@@ -65,6 +90,7 @@ def build_tables(data, definition, processors=None, timezone=pytz.utc):
         sections.append((_(section_name) if section_name else "", columns))
 
     return sections
+
 
 @register.simple_tag
 def render_tables(tables, collapsible=False):
