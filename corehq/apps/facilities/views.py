@@ -8,8 +8,10 @@ from couchdbkit.exceptions import ResourceNotFound
 from dimagi.utils.logging import notify_exception
 
 from corehq.apps.domain.decorators import domain_admin_required
+
 from .models import FacilityRegistry, Facility
 from .forms import FacilityRegistryForm, FacilityForm
+import freddy
 
 
 def default(request, domain):
@@ -71,8 +73,17 @@ def sync_registry(request, domain, id, strategy='theirs'):
     except ResourceNotFound:
         raise Http404()
 
-    registry.sync_with_remote(strategy=strategy)
-    messages.success(request, "Facility Registry successfully synced!")
+    try:
+        registry.sync_with_remote(strategy=strategy)
+    except freddy.FredAuthenticationError as e:
+        messages.error(
+            request, "Authentication error, check your credentials!")
+    except freddy.FredHttpError as e:
+        messages.error(
+            request, "An unknown error occured while trying to sync.")
+    else:
+        messages.success(request, "Facility Registry successfully synced!")
+
     return HttpResponseRedirect(reverse(list_registries, args=[domain]))
 
 
@@ -87,8 +98,8 @@ def delete_registry(request, domain, id):
     try:
         registry.delete()
     except Exception:
-        messages.error(request, "Error deleting facility!")
-        notify_exception(request, "Error deleting facility {0}".format(id))
+        messages.error(request, "Error deleting registry!")
+        notify_exception(request, "Error deleting registry {0}".format(id))
     else:
         messages.success(request, "Facility Registry successfully deleted!")
 

@@ -38,10 +38,12 @@ REPORTS = (
         phonelog.FormErrorReport,
         phonelog.DeviceLogDetailsReport
     )),
-    (_("CommConnect"), (
+    (lambda project, user: (
+        _("Logs") if project.commtrack_enabled else _("CommConnect")), (
         sms.MessagesReport,
         sms.MessageLogReport,
         ivr.CallLogReport,
+        ivr.ExpectedCallbackReport,
     )),
 )
 
