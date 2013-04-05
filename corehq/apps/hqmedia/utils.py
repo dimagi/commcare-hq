@@ -161,66 +161,6 @@ class HQMediaMatcher():
         else:
             return CouchUser.get_by_username(self.username)
 
-    def match_zipped(self, zip, replace_existing_media=True, **kwargs):
-        unknown_files = []
-        matched_audio = []
-        matched_images = []
-        errors = []
-        try:
-            for index, path in enumerate(zip.namelist()):
-                path = path.strip()
-                filename = path.lower()
-                basename = os.path.basename(path.lower())
-                is_image = False
-
-                if not basename:
-                    continue
-
-                if self.match_filename:
-                    filename = basename
-
-                media = None
-                form_path = None
-                data = None
-
-                if filename in self.images:
-                    form_path = self.image_paths[self.images.index(filename)]
-                    data = zip.read(path)
-                    media = CommCareImage.get_by_data(data)
-                    is_image = True
-                elif filename in self.audio:
-                    form_path = self.audio_paths[self.audio.index(filename)]
-                    data = zip.read(path)
-                    media = CommCareAudio.get_by_data(data)
-                else:
-                    unknown_files.append(path)
-
-                if media:
-                    try:
-                        media.attach_data(data,
-                            upload_path=path,
-                            username=self.username,
-                            replace_attachment=replace_existing_media)
-                        media.add_domain(self.domain, owner=True)
-                        media.update_or_add_license(self.domain,
-                                                    type=kwargs.get('license', ''),
-                                                    author=kwargs.get('author', ''),
-                                                    attribution_notes=kwargs.get('attribution_notes', ''))
-                        self.app.create_mapping(media, form_path)
-                        match_map = HQMediaMapItem.format_match_map(form_path, media.doc_type, media._id, path)
-                        if is_image:
-                            matched_images.append(match_map)
-                        else:
-                            matched_audio.append(match_map)
-                    except Exception as e:
-                        errors.append("%s (%s)" % (e, filename))
-            zip.close()
-        except Exception as e:
-            logging.error(e)
-            errors.append(e.message)
-
-        return matched_images, matched_audio, unknown_files, errors
-
     def match_file(self, uploaded_file, replace_existing_media=True, **kwargs):
         errors = []
         try:
@@ -248,7 +188,7 @@ class HQMediaMatcher():
                     return False, {}, errors
             if media:
                 media.attach_data(data,
-                    upload_path=filename,
+                    original_filename=filename,
                     username=self.username,
                     replace_attachment=replace_existing_media)
                 media.add_domain(self.domain, owner=True, **kwargs)
