@@ -1,5 +1,4 @@
 import copy
-import pdb
 from django import template
 from django.utils.translation import ugettext as _
 from django.utils.safestring import mark_safe
@@ -13,6 +12,8 @@ from corehq.apps.reports.templatetags.timezone_tags import utc_to_timezone
 from django.template.defaultfilters import yesno
 
 import itertools
+import types
+import collections
 
 def chunks(l, n):
     """Yield successive n-sized chunks from l."""
@@ -21,7 +22,30 @@ def chunks(l, n):
 
 register = template.Library()
 
-DYNAMIC_PROPERTIES_COLUMNS = 4
+DYNAMIC_CASE_PROPERTIES_COLUMNS = 4
+FORM_PROPERTIES_COLUMNS = 2
+
+
+def get_display(val):
+    if isinstance(val, types.DictionaryType):
+        ret = "".join(
+            ["<dl>"] + 
+            ["<dt>{0}</dt><dd>{1}</dd>".format(k, get_display(v))
+             for k, v in val.items()] +
+            ["</dl>"])
+
+    elif (isinstance(val, collections.Iterable) and 
+          not isinstance(val, basestring)):
+        ret = "".join(
+            ["<ul>"] +
+            ["<li>{0}</li>".format(get_display(v)) for v in val] +
+            ["</ul>"])
+
+    else:
+        ret = escape(val)
+
+    return mark_safe(ret)
+
 
 def build_tables(data, definition, processors=None, timezone=pytz.utc):
     processors = processors or {
@@ -29,55 +53,44 @@ def build_tables(data, definition, processors=None, timezone=pytz.utc):
         'yesno': yesno
     }
 
-    
-    layout = definition['layout']
-    meta = definition['meta']
+    def get_value(data, expr):
+        # todo: nested attributes, support for both getitem and getattr
 
-    def display_value(prop):
-        val = data.pop(prop, None)
+        return data.get(expr, None)
 
-        if prop in meta:
-            prop_meta = meta[prop]
-        elif isinstance(val, datetime.datetime):
-            prop_meta = meta.get('_date', {})
+    def get_display_tuple(prop):
+        expr = prop['expr']
+        name = prop.get('name', expr)
+        format = prop.get('format')
+        process = prop.get('process')
+
+        val = get_value(data, expr)
+
+        if not process and isinstance(val, datetime.datetime):
+            process = 'utc_to_timezone'
+
+        if process:
+            val = escape(processors[process](val))
         else:
-            prop_meta = {}
-
-        if 'process' in prop_meta:
-            val = processors[prop_meta['process']](val)
-
-        val = escape(val)
-
-        if 'format' in prop_meta:
-            val = mark_safe(prop_meta['format'].format(val))
-
-        return val
+            val = mark_safe(get_display(val))
 
 
-    #def set_colspan(rows):
-        #if not rows:
-            #return
+        if format:
+            val = mark_safe(format.format(val))
 
-        #max_row_length = max(map(len, rows))
+        return (expr, name, val)
 
-        ## set colspan for last element in row if necessary
-        #for row in rows:
-            #if len(row) < max_row_length:
-                #colspan = (max_row_length - len(row)) * 2 + 1
-                #row.append([None, colspan, None])
-   
     sections = []
 
-    for section_name, rows in layout:
-        processed_rows = [[[prop, _(name), display_value(prop)] 
-                           for name, prop in row]
+    for section_name, rows in definition:
+        processed_rows = [[get_display_tuple(prop) for prop in row]
                           for row in rows]
 
-        #set_colspan(processed_rows)
         columns = list(itertools.izip_longest(*processed_rows))
         sections.append((_(section_name) if section_name else "", columns))
 
     return sections
+
 
 @register.simple_tag
 def render_tables(tables, collapsible=False):
@@ -87,25 +100,43 @@ def render_tables(tables, collapsible=False):
 
 @register.simple_tag
 def render_form(form):
-    data = form.to_json()
 
-    definition = {
-        'layout': [
-            (None, chunks(
-                [(prop, prop) for prop in data.keys()],
-                DYNAMIC_PROPERTIES_COLUMNS)
-            )
-        ],
-        'meta': {
-            '_date': {
-                'process': 'utc_to_timezone'
-            }
-        }
-    }
+    form = dict(copy.deepcopy(form.form))
+    case = form.pop('case')
+    meta = form.pop('meta')
 
-    tables = build_tables(data, definition=definition)
+    definition = [
+        (None, chunks(
+            [{"expr": prop} for prop in form],
+            FORM_PROPERTIES_COLUMNS)
+        )
+    ]
 
-    return render_tables(tables)
+    form_data = build_tables(form, definition=definition)
+    
+    definition = [
+        (None, chunks(
+            [{"expr": prop} for prop in case],
+            FORM_PROPERTIES_COLUMNS)
+        )
+    ]
+
+    form_case_data = build_tables(case, definition=definition)
+    
+    definition = [
+        (None, chunks(
+            [{"expr": prop} for prop in meta],
+            FORM_PROPERTIES_COLUMNS)
+        )
+    ]
+
+    form_meta_data = build_tables(meta, definition=definition)
+
+    return render_to_string("case/partials/single_form.html", {
+        "form_data": form_data,
+        "form_meta_data": form_meta_data,
+        "form_case_data": form_case_data,
+    })
 
 
 @register.simple_tag
@@ -114,58 +145,72 @@ def render_case(case, timezone=pytz.utc, display=None):
         # we were given an ID, fetch the case
         case = CommCareCase.get(case)
 
-    display = display or {
-        'layout': [
-            # first box
-            ("Basic Data", [
-                # first row
-                [
-                    ("Name", "name"),
-                    ("Closed?", "closed"),
-                ],
-                # second row
-                [
-                    ("Type", "type"),
-                    ("External ID", "external_id"),
-                ],
-                [
-                    ("Case ID", "case_id"),
-                    ("Domain", "domain"),
-                ],
-            ]),
-            # second box
-            ("Submission Info", [
-                [
-                    ("Opened On", "opened_on"),
-                    ("User ID", "user_id"),
-                ],
-                [
-                    ("Modified On", "modified_on"),
-                    ("Owner ID", "owner_id")
-                ],
-                [
-                    ("Closed On", "closed_on"),
-                ],
-            ])
-        ],
-        'meta': {
-            '_date': {
-                'process': 'utc_to_timezone'
-            },
-            'closed': {
-                'process': 'yesno'
-            },
-            'type': {
-                'format': '<code>{0}</code>'
-            },
-            'user_id': {
-                'format': '<span data-field="user_id">{0}</span>'
-            },
-            'owner_id': {
-                'format': '<span data-field="owner_id">{0}</span>'
-            }
-        }
-    }
+    display = display or [
+        (_("Basic Data"), [
+            [
+                {
+                    "expr": "name",
+                    "name": _("Name"),
+                },
+                {
+                    "expr": "closed",
+                    "name": _("Closed?"),
+                    "process": "yesno",
+                },
+            ],
+            [
+                {
+                    "expr": "type",
+                    "name": _("Type"),
+                    "format": '<code>{0}</code>',
+                },
+                {
+                    "expr": "external_id",
+                    "name": _("External ID"),
+                },
+            ],
+            [
+                {
+                    "expr": "case_id",
+                    "name": _("Case ID"),
+                },
+                {
+                    "expr": "domain",
+                    "name": _("Domain"),
+                },
+            ],
+        ]),
+        (_("Submission Info"), [
+            [
+                {
+                    "expr": "opened_on",
+                    "name": _("Opened On"),
+                },
+                {
+                    "expr": "user_id",
+                    "name": _("User ID"),
+                    "format": '<span data-field="user_id">{0}</span>',
+                },
+            ],
+            [
+                {
+                    "expr": "modified_on",
+                    "name": _("Modified On"),
+                },
+                {
+                    "expr": "owner_id",
+                    "name": _("Owner ID"),
+                    "format": '<span data-field="owner_id">{0}</span>',
+                },
+            ],
+            [
+                {
+                    "expr": "closed_on",
+                    "name": _("Closed On"),
+                },
+            ],
+        ])
+    ]
 
     data = copy.deepcopy(case.to_json())
     default_properties = build_tables(
@@ -173,22 +218,16 @@ def render_case(case, timezone=pytz.utc, display=None):
 
     dynamic_data = dict((k, v) for (k, v) in case.dynamic_case_properties()
                         if k in data)
-    definition = {
-        'layout': [
-            (None, chunks(
-                [(prop, prop) for prop in dynamic_data.keys()],
-                DYNAMIC_PROPERTIES_COLUMNS)
-            )
-        ],
-        'meta': {
-            '_date': {
-                'process': 'utc_to_timezone'
-            }
-        }
-    }
+    definition = [
+        (None, chunks(
+            [{"expr": prop} for prop in dynamic_data.keys()],
+            DYNAMIC_CASE_PROPERTIES_COLUMNS)
+        )
+    ]
 
     dynamic_properties = build_tables(
             dynamic_data, definition=definition, timezone=timezone)
+
     return render_to_string("case/partials/single_case.html", {
         "default_properties": default_properties,
         "dynamic_properties": dynamic_properties,

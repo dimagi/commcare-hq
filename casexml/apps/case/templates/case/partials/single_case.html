@@ -3,6 +3,7 @@
 {% load i18n %}
 {% load timezone_tags %}
 {% load case_tags %}
+<script src="https://raw.github.com/morr/jquery.appear/master/jquery.appear.js"></script>
 <style type="text/css">
     .hq-generic-report {
         padding: 10px;
@@ -41,19 +42,22 @@
         border: 1px solid #ddd;
         border-radius: 4px 4px 0 0;
     }
+    
+    .case-properties-table dl {
+        font-size: 90%;
+    }
 
-    .case-properties-table > dl, .case-properties-table > dd {
+    .case-properties-table > dl {
         word-wrap: break-word;
         word-break: break-all;
     }
-
 
     .case-properties-table > dl {
         float: left;
         width: 210px;
         margin-bottom: 0;
         margin-top: 0;
-    
+        font-size: 100%;
     }
 
     .case-properties-table > dl:not(:last-child) {
@@ -63,6 +67,7 @@
     .case-properties-table > dd:not(:last-child) {
         margin-bottom: 10px;
     }
+
 </style>
 
 <div id="report-content">
@@ -88,7 +93,7 @@
                 {% render_tables dynamic_properties %}
             </div>
         </div><!-- end case-details tab -->
-    {% if case.referalls %}
+    {% if case.referrals %}
         <div class="tab-pane" id="case-referrals">
             <h2>Referrals</h2>
             <table class="table table-striped case_history">

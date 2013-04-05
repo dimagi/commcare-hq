@@ -2,7 +2,7 @@
 
 <script>
     $(function () {
-        $(".property-table-row").each(function () {
+        $(".property-table-row").on('appear', function () {
             var $rowContainer = $(this),
                 maxHeights = [];
 
@@ -42,18 +42,13 @@
             {# <table class="table table-bordered case-properties-table"> #}
             {% for column in columns %}
             <dl>
-                {% for attr, name, value, colspan in column %}
-                {# attr=None, name=colspan for last cell in a short row #}
-                {% if not attr %}
-                <th colspan="{{ name }}"></th>
-                {% else %}
-                <dt title="{{ attr }}">
+                {% for expr, name, value in column %}
+                <dt title="{{ expr }}">
                     {{ name }}
                 </dt>
                 <dd>
                     {{ value }}
                 </dd>
-                {% endif %}
                 {% endfor %}
             </dl>
             {% empty %}
