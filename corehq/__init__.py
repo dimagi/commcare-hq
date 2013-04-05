@@ -118,6 +118,14 @@ APPSTORE_INTERFACES = (
     )),
 )
 
+from corehq.apps.reports.standard.domains import DomainStatsReport
+
+BASIC_REPORTS = (
+    (_('Domain Stats'), (
+        DomainStatsReport,
+    )),
+)
+
 from corehq.apps.hqwebapp.models import *
 
 TABS = (

@@ -9,6 +9,8 @@ var HQAsyncReport = function (o) {
     self.standardReport = o.standardReport;
     self.filterRequest = null;
     self.reportRequest = null;
+    self.customAsyncUrl = o.customAsyncUrl || null;
+    self.additionalParams = o.additionalParams || '';
 
     self.humanReadableErrors = {
         400: "Please check your Internet connection!",
@@ -40,7 +42,7 @@ var HQAsyncReport = function (o) {
 
     self.init = function () {
         self.reportContent.attr('style', 'position: relative;');
-        
+
         self.updateReport(true, window.location.search.substr(1));
         
         // only update the report if there are actually filters set
@@ -78,8 +80,8 @@ var HQAsyncReport = function (o) {
         }
         process_filters = process_filters + "&filterSet=" + self.standardReport.filterSet;
         self.reportRequest = $.ajax({
-            url: window.location.pathname.replace(self.standardReport.urlRoot,
-                self.standardReport.urlRoot+'async/')+"?"+process_filters+"&"+params,
+            url: (self.customAsyncUrl || window.location.pathname.replace(self.standardReport.urlRoot,
+                self.standardReport.urlRoot+'async/'))+"?"+process_filters+"&"+params+self.additionalParams,
             dataType: 'json',
             success: function(data) {
                 self.reportRequest = null;

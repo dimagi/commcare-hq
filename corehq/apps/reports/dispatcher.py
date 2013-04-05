@@ -67,7 +67,7 @@ class ReportDispatcher(View):
                getattr(Domain.get_module_by_name(domain), attr_name, ())
 
     def get_reports_dict(self, domain=None):
-        return dict((report.slug, report) 
+        return dict((report.slug, report)
                     for name, group in self.get_reports(domain)
                     for report in group)
 
@@ -201,3 +201,7 @@ class ProjectReportDispatcher(ReportDispatcher):
 class CustomProjectReportDispatcher(ProjectReportDispatcher):
     prefix = 'custom_project_report'
     map_name = 'CUSTOM_REPORTS'
+
+class BasicReportDispatcher(ReportDispatcher):
+    prefix = 'basic_report'
+    map_name = 'BASIC_REPORTS'
