@@ -1,11 +1,13 @@
 {% extends "registration/base.html" %}
+{% load i18n %}
+
 {% block title %}New Project Space{% endblock title %}
 
 {% block step-title %}
     {% if is_new %}
-        Welcome to CommCare HQ! <small>It's time to create your first project.</small>
+        {% blocktrans %}Welcome to CommCare HQ! <small>It's time to create your first project.</small>{% endblocktrans %}
     {% else %}
-        Create a New Project Space
+        {% blocktrans %}Create a New Project Space{% endblocktrans %}
     {% endif %}
 {% endblock %}
 
@@ -13,15 +15,15 @@
     {% if is_new %}
         <ul class="breadcrumb breadcrumb-steps">
             <li class="past">
-                Account Created for <strong>{{ request.user.first_name }}</strong>
+                {% blocktrans %}Account Created for <strong>{{ request.user.first_name }}</strong>{% endblocktrans %}
                 <span class="divider">></span>
             </li>
             <li class="active">
-                Request a Project Space
+                {% blocktrans %}Request a Project Space{% endblocktrans %}
                 <span class="divider">></span>
             </li>
             <li>
-                Confirm Account
+                {% blocktrans %}Confirm Account{% endblocktrans %}
             </li>
         </ul>
     {% endif %}
@@ -69,12 +71,12 @@
 </div>
 <div class="span4">
     <aside class="well">
-       <a href="{% url appstore %}"><h3>Explore Example Projects</h3></a>
-        <p>In need of ideas or just want to explore?</p>
-        <p>Check out <strong><a href="{% url appstore %}">CommCare Exchange</a></strong> for examples of apps being used today.</p>
+        <h3><a href="{% url appstore %}">{% trans 'Explore Example Projects' %}</a></h3>
+        <p>{% blocktrans %}In need of ideas or just want to explore?{% endblocktrans %}</p>
+        <p>{% blocktrans %}Check out <strong><a href="{% url appstore %}">CommCare Exchange</a></strong> for examples of apps being used today.{% endblocktrans %}</p>
     </aside>
     <aside class="well">
-        For detailed documentation, please visit the <a href="http://wiki.commcarehq.org/display/commcarepublic/Home">CommCare Wiki</a>.
+        {% blocktrans %}For detailed documentation, please visit the <a href="http://wiki.commcarehq.org/display/commcarepublic/Home">CommCare Help Site</a>.{% endblocktrans %}
     </aside>
 </div>
 {% endblock %}
