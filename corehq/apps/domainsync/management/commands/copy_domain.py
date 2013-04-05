@@ -45,6 +45,10 @@ class Command(BaseCommand):
 
         if options['list_types']:
             self.list_types(sourcedb, domain)
+            sys.exit(0)
+
+        if simulate:
+            print "\nSimulated run, no data will be copied.\n"
 
         if options['doc_types']:
             doc_types = options['doc_types'].split(',')
@@ -61,7 +65,6 @@ class Command(BaseCommand):
                                   endkey=[domain, {}], reduce=True, group=True, group_level=2)
         for row in doc_types:
             print "{:<30}- {}".format(row['key'][1], row['value'])
-        sys.exit(0)
 
     def get_docs_by_type(self, sourcedb, domain, type=None, since=None):
         startkey = [x for x in [domain, type, since] if x is not None]
