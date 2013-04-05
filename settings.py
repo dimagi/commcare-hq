@@ -455,7 +455,7 @@ LOGGING = {
     }
 }
 
-COUCH_STALE_QUERY='update_after'  # 'ok' for cloudant
+COUCH_STALE_QUERY='ok'  # 'ok' for cloudant
 
 try:
     #try to see if there's an environmental variable set for local_settings
