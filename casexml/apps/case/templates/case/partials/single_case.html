@@ -3,6 +3,7 @@
 {% load i18n %}
 {% load timezone_tags %}
 {% load case_tags %}
+<script src="https://raw.github.com/morr/jquery.appear/master/jquery.appear.js"></script>
 <style type="text/css">
     .hq-generic-report {
         padding: 10px;
@@ -88,7 +89,7 @@
                 {% render_tables dynamic_properties %}
             </div>
         </div><!-- end case-details tab -->
-    {% if case.referalls %}
+    {% if case.referrals %}
         <div class="tab-pane" id="case-referrals">
             <h2>Referrals</h2>
             <table class="table table-striped case_history">

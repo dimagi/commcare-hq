@@ -2,7 +2,7 @@
 
 <script>
     $(function () {
-        $(".property-table-row").each(function () {
+        $(".property-table-row").on('appear', function () {
             var $rowContainer = $(this),
                 maxHeights = [];
 

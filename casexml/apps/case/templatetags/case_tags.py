@@ -20,7 +20,8 @@ def chunks(l, n):
 
 register = template.Library()
 
-DYNAMIC_PROPERTIES_COLUMNS = 4
+DYNAMIC_CASE_PROPERTIES_COLUMNS = 4
+FORM_PROPERTIES_COLUMNS = 2
 
 def build_tables(data, definition, processors=None, timezone=pytz.utc):
     processors = processors or {
@@ -73,18 +74,43 @@ def render_tables(tables, collapsible=False):
 
 @register.simple_tag
 def render_form(form):
-    data = form.to_json()
+
+    form = dict(copy.deepcopy(form.form))
+    case = form.pop('case')
+    meta = form.pop('meta')
 
     definition = [
         (None, chunks(
-            [{"expr": prop} for prop in data.keys()],
-            DYNAMIC_PROPERTIES_COLUMNS)
+            [{"expr": prop} for prop in form],
+            FORM_PROPERTIES_COLUMNS)
         )
     ]
 
-    tables = build_tables(data, definition=definition)
+    form_data = build_tables(form, definition=definition)
+    
+    definition = [
+        (None, chunks(
+            [{"expr": prop} for prop in case],
+            FORM_PROPERTIES_COLUMNS)
+        )
+    ]
 
-    return render_tables(tables)
+    form_case_data = build_tables(case, definition=definition)
+    
+    definition = [
+        (None, chunks(
+            [{"expr": prop} for prop in meta],
+            FORM_PROPERTIES_COLUMNS)
+        )
+    ]
+
+    form_meta_data = build_tables(meta, definition=definition)
+
+    return render_to_string("case/partials/single_form.html", {
+        "form_data": form_data,
+        "form_meta_data": form_meta_data,
+        "form_case_data": form_case_data,
+    })
 
 
 @register.simple_tag
@@ -169,7 +195,7 @@ def render_case(case, timezone=pytz.utc, display=None):
     definition = [
         (None, chunks(
             [{"expr": prop} for prop in dynamic_data.keys()],
-            DYNAMIC_PROPERTIES_COLUMNS)
+            DYNAMIC_CASE_PROPERTIES_COLUMNS)
         )
     ]
 
