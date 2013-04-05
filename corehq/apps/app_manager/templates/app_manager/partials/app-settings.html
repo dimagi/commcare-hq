@@ -3,15 +3,30 @@
 {% load xforms_extras %}
 
 <script type="text/html" id="CommcareSettings.widgets.select">
-    <span data-bind="visible: $root.edit">
-        <select class="span3" data-bind="
-            options: options,
-            value: selectedOption,
-            optionsText: 'label',
-            attr: {disabled: !enabled()}
-        "></select>
+    <span>
+        <span data-bind="if: $root.edit">
+            <span data-bind="if: valueIsLegal()">
+                <select class="span3" data-bind="
+                    options: options,
+                    value: selectedOption,
+                    optionsText: 'label',
+                    attr: {disabled: !enabled(), id: inputId}
+                "></select>
+            </span>
+            <span data-bind="if: !valueIsLegal()" >
+                <select class="span3 error" data-bind="
+                    options: options,
+                    value: writeSelectedOption,
+                    optionsText: 'label',
+                    attr: {disabled: !enabled(), id: inputId},
+                    optionsCaption: value()
+                "></select>
+            </span>
+        </span>
+        <span data-bind="if: !$root.edit()">
+            <span data-bind="text: selectedOption().label"></span>
+        </span>
     </span>
-    <span class="span3" data-bind="visible: !$root.edit(), text: selectedOption().label"></span>
 </script>
 
 <script type="text/html" id="CommcareSettings.widgets.bool">
@@ -36,17 +51,9 @@
 
 <script type="text/html" id="CommcareSettings.widgets.textarea">
     <span data-bind="visible: $root.edit">
-        <textarea type="text" data-bind="value: value" />
+        <textarea type="text" data-bind="value: value, attr: {id: inputId}" />
     </span>
     <span class="span3" data-bind="visible: !$root.edit(), text: value"></span>
-</script>
-<script type="text/html" id="CommcareSettings.widgets.build_spec">
-    {% if edit %}
-        <select name="build_spec" class="span3" data-value="{{ app.build_spec.to_string }}" id="commcare_version">
-        </select>
-    {% else %}
-        {{ app.get_build_label }}
-    {% endif %}
 </script>
 
 <script type="text/html" id="CommcareSettings.widgets.password">
@@ -113,10 +120,10 @@ todo fix
                     <span data-bind="text: title"></span>
                 </a>
             </legend>
-            <div class="collapse" data-bind="foreach: settings, attr: {id: id}, css: {'in': !$data.collapse}">
+            <div class="collapse" data-bind="foreach: settings, attr: {id: id}, css: {'in': !$data.collapse || _(settings).some(function (s) {return s.hasError();})}">
                 <div class="control-group" data-bind="
                     visible: visible,
-                    css: {error: disabledButHasValue}
+                    css: {error: hasError()}
                 ">
                     <label class="control-label" data-bind="attr: {for: inputId}">
                         <span data-bind="text: name"></span>
@@ -140,7 +147,11 @@ todo fix
                             {% endblocktrans %}
                             </span>
                         </p>
-                    </div>
+                        <p class="help-block" data-bind="visible: !$data.valueIsLegal()">
+                            {% blocktrans %}
+                                This is not an allowed value for this field
+                            {% endblocktrans %}
+                        </p>
                 </div>
             <div>
         </fieldset>

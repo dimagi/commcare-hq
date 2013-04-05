@@ -87,6 +87,11 @@ function CommcareSettings(options) {
         setting.since = setting.since || '1.1';
 
         setting.value = ko.observable(value);
+        setting.valueIsLegal = function () {
+            // to be overridden
+            return true;
+        };
+        
         setting.inputId = setting.id + '-input';
 
 
@@ -151,6 +156,7 @@ function CommcareSettings(options) {
         setting.disabledButHasValue = ko.computed(function () {
             return setting.disabled && setting.visibleValue() !== setting['default'];
         });
+
         // valueToSave is only ever used during serialization/save;
         // different from visibleValue
         // in that you want to save null and not the shown value
@@ -168,6 +174,9 @@ function CommcareSettings(options) {
         if (wrap) {
             wrap(setting);
         }
+        setting.hasError = ko.computed(function () {
+            return setting.disabledButHasValue() || !setting.valueIsLegal();
+        });
     });
 
     _(self.sections).each(function (section) {
@@ -232,6 +241,11 @@ CommcareSettings.widgets.select = function (self) {
         }
         return options;
     });
+    self.selectOption = function (selectedOption) {
+        if (selectedOption) {
+            self.visibleValue(selectedOption.value);
+        }
+    };
     self.selectedOption = ko.computed({
         read: function () {
             var visibleValue = self.visibleValue(),
@@ -246,15 +260,22 @@ CommcareSettings.widgets.select = function (self) {
                     return retu;
                 }
             }
-            var message = 'Not a valid value for ' + self.type + '.' + self.id + ': ' + self.value() +
-                '. Options: ' + JSON.stringify(self.options());
-            console.error(message);
-            throw {};
+//            var message = 'Not a valid value for ' + self.type + '.' + self.id + ': ' + self.value() +
+//                '. Options: ' + JSON.stringify(self.options());
+            return null;
         },
-        write: function (selectedOption) {
-            self.visibleValue(selectedOption.value);
-        }
+        write: self.selectOption
     });
+    self.writeSelectedOption = ko.computed({
+        read: function () { return null; },
+        write: self.selectOption
+    });
+    self.valueIsLegal = function () {
+        var value = self.value();
+        return !value || _(self.options()).some(function (option) {
+            return option.value === value;
+        });
+    };
 };
 
 CommcareSettings.widgets.bool = function (self) {
