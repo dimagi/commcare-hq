@@ -6,22 +6,22 @@ function HQMediaUploadController(options) {
     self.marker = options.marker || 'media_';
 
     ///// YUI Uploader Specific Params
-    self.boundingBox = options.boundingBox || (self.container + " .hqm-bounding-box");  // The element that's responsible for housing the swf that controls the upload process. This is the most important, functional part of this uploader.
-    self.buttonSkin = options.buttonSkin;
+    self.boundingBox = options.boundingBox || (self.container + " .hqm-bounding-box"); // todo is this now used?
+    self.confirmUploadModalSelector = options.confirmUploadModalSelector || "#hqm-upload-modal";
     self.swfURL = options.swfURL;
     self.fileFilters = options.fileFilters;
     self.isMultiFileUpload = options.isMultiFileUpload;
 
-    // Custom Selectors
-    self.selectFilesSelector = options.selectFilesSelector || (self.container + " .hqm-select");
-    self.uploadButtonSelector = options.uploadButtonSelector || (self.container + " .hqm-upload");
-    self.beginUploadButtonSelector = options.beginUploadButtonSelector || (self.container + " .hqm-upload-begin");
-    self.confirmUploadButtonSelector = options.confirmUploadButtonSelector || (self.container + " .hqm-upload-confirm");
-    self.confirmUploadModalSelector = options.confirmUploadModalSelector || "#hqm-upload-modal";
-    self.processingFilesListSelector = options.processingFilesListSelector || (self.container + " .hqm-upload-processing");
-    self.uploadedFilesListSelector = options.uploadedFilesListSelector || (self.container + " .hqm-uploaded-files");
-    self.queueSelector = options.queueSelector || (self.container + " .hqm-queue");
-    self.uploadFormSelector = options.uploadFormSelector || (self.container + " .hqm-upload-form");
+    // Essential Selectors
+    self.selectFilesButton = self.container + " .hqm-select";
+
+    self.uploadButtonSelector = self.container + " .hqm-upload";
+    self.confirmUploadSelector = self.container + " .hqm-upload-confirm";
+
+    self.processingFilesListSelector = self.container + " .hqm-upload-processing";
+    self.uploadedFilesListSelector = self.container + " .hqm-uploaded-files";
+    self.queueSelector = self.container + " .hqm-queue";
+    self.uploadFormSelector = self.container + " .hqm-upload-form";
 
     // Text and templates
     self.queueTemplate = options.queueTemplate;
@@ -81,7 +81,7 @@ function HQMediaUploadController(options) {
         var file_id = upload_info.id;
         if (self.isMultiFileUpload) {
             return function (event) {
-                self.uploader.cancel(file_id);
+                self.uploader.queue.cancel(file_id);
                 self.removeFileFromUploader(file_id);
                 var activeSelector = self.getActiveUploadSelectors(file_id);
                 $(activeSelector.selector).remove();
@@ -126,28 +126,42 @@ function HQMediaUploadController(options) {
         YUI({
             combine: false,
             base: '/static/hqmedia/yui/'
-        }).use("uploader", function (Y) {
-            Y.on("domready", function () {
-                $(self.boundingBox).width($(self.selectFilesSelector).outerWidth()).height($(self.selectFilesSelector).outerHeight());
+        }).use('uploader','uploader-flash', function (Y) {
 
-                self.uploader = new Y.Uploader({
-                    buttonSkin: self.buttonSkin,
-                    boundingBox: self.boundingBox,
-                    swfURL: self.swfURL
-                });
+                if (Y.Uploader.TYPE != "none") {
+                    self.uploader = new Y.Uploader({
+                        selectFilesButton: self.selectFilesButton,
+//                    boundingBox: self.boundingBox,
+//                    swfURL: self.swfURL
+                    });
 
-                self.uploader.on("uploaderReady", self.uploaderReady);
-                self.uploader.on("fileselect", self.fileSelect);
-                self.uploader.on("uploadprogress", self.uploadProgress);
-                self.uploader.on("uploadcomplete", self.uploadComplete);
-                self.uploader.on("uploadcompletedata", self.uploadCompleteData);
-                self.uploader.on("uploaderror", self.uploadError);
-            });
+                    if (Y.Uploader.TYPE == "html5") {
+                        console.log("using HTML5 Uploader");
+//                    uploader.set("dragAndDropArea", "#divContainer");
+                    }
+                    else if (Y.Uploader.TYPE == "flash") {
+                        console.log("using Flash Uploader");
+                        self.uploader.set("fileFilters", self.fileFilters);
+                    }
+
+                    self.uploader.set("multipleFiles", self.isMultiFileUpload);
+                    self.uploader.set("simLimit", 2);
+                    self.uploader.render(self.boundingBox);
+
+                    self.uploader.on("fileselect", self.fileSelect);
+                    self.uploader.on("uploadprogress", self.uploadProgress);
+                    self.uploader.on("uploadcomplete", self.uploadComplete);
+                    self.uploader.on("uploadcompletedata", self.uploadCompleteData);
+                    self.uploader.on("uploaderror", self.uploadError);
+                }
+
+
+
         });
 
         $(function () {
             self.resetUploader();
-            $(self.confirmUploadButtonSelector).click(self.startUpload);
+            $(self.confirmUploadSelector).click(self.startUpload);
             $(self.uploadFormSelector).find('.hqm-share-media').change(function () {
                 var $sharingOptions = $(self.uploadFormSelector).find('.hqm-sharing');
                 ($(this).prop('checked')) ? $sharingOptions.removeClass('hide') : $sharingOptions.addClass('hide');
@@ -185,39 +199,30 @@ function HQMediaUploadController(options) {
         return params;
     };
 
-    self.uploaderReady = function (event) {
-        /*
-            When the uploader is ready, set these things.
-         */
-        self.uploader.set("multiFiles", self.isMultiFileUpload);
-        self.uploader.set("simLimit", 3);
-        self.uploader.set("log", true);
-        self.uploader.set("fileFilters", self.fileFilters);
-    };
-
     self.fileSelect = function (event) {
         /*
             After files have been selected by the select files function, do this.
          */
-        for (var file_id in event.fileList) {
-            if (event.fileList.hasOwnProperty(file_id) && !(file_id in self.selectedFiles)) {
-                var currentFile = event.fileList[file_id];
-                if (!self.isMultiFileUpload) {
-                    $(self.queueSelector).empty();
-                }
-                if (self.selectedFiles.indexOf(file_id) < 0) {
-                    $(self.queueSelector).append(self.processQueueTemplate(currentFile));
-                    self.selectedFiles.push(file_id);
-                    var activeSelector = self.getActiveUploadSelectors(file_id);
-                    $(activeSelector.cancel).click(self.cancelFileUpload(currentFile));
-                    if (activeSelector.remove) {
-                        $(activeSelector.remove).click(self.cancelFileUpload(currentFile));
-                    }
-                }
-            }
-        }
-        self.toggleUploadButton();
-        self.resetUploadForm();
+        console.log(event.fileList);
+//        for (var file_id in event.fileList) {
+//            if (event.fileList.hasOwnProperty(file_id) && !(file_id in self.selectedFiles)) {
+//                var currentFile = event.fileList[file_id];
+//                if (!self.isMultiFileUpload) {
+//                    $(self.queueSelector).empty();
+//                }
+//                if (self.selectedFiles.indexOf(file_id) < 0) {
+//                    $(self.queueSelector).append(self.processQueueTemplate(currentFile));
+//                    self.selectedFiles.push(file_id);
+//                    var activeSelector = self.getActiveUploadSelectors(file_id);
+//                    $(activeSelector.cancel).click(self.cancelFileUpload(currentFile));
+//                    if (activeSelector.remove) {
+//                        $(activeSelector.remove).click(self.cancelFileUpload(currentFile));
+//                    }
+//                }
+//            }
+//        }
+//        self.toggleUploadButton();
+//        self.resetUploadForm();
     };
 
     self.startUpload = function (event) {

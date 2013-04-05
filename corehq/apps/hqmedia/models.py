@@ -19,6 +19,7 @@ from django.utils.translation import ugettext as _
 
 MULTIMEDIA_PREFIX = "jr://file/"
 
+
 class HQMediaLicense(DocumentSchema):
     domain = StringProperty()
     author = StringProperty()
