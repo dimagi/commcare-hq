@@ -5,6 +5,7 @@ from celery.utils.log import get_task_logger
 from django.core.cache import cache
 import zipfile
 from corehq.apps.app_manager.models import get_app
+from corehq.apps.hqmedia.cache import BulkMultimediaStatusCache
 from corehq.apps.hqmedia.models import CommCareImage, CommCareAudio, CommCareMultimedia
 from soil import DownloadBase
 from django.utils.translation import ugettext as _
@@ -17,24 +18,16 @@ def process_bulk_upload_zip(processing_id, domain, app_id, username=None, share_
     """
         Responsible for processing the uploaded zip from Bulk Upload.
     """
+    status = BulkMultimediaStatusCache.get(processing_id)
 
-    from corehq.apps.hqmedia.views import ProcessBulkUploadView
-    cache_key = ProcessBulkUploadView.get_cache_key(processing_id)
-    upload_status_cache = cache.get(cache_key)
-
-    if not upload_status_cache:
+    if not status:
         # no download data available, abort
         return
 
     app = get_app(domain, app_id)
 
-    upload_status_cache['in_celery'] = True
-    cache.set(cache_key, upload_status_cache)
-
-    def _mark_upload_with_error(error):
-        upload_status_cache['complete'] = True
-        upload_status_cache['errors'].append(error)
-        cache.set(cache_key, upload_status_cache)
+    status.in_celery = True
+    status.save()
 
     try:
         saved_file = StringIO.StringIO()
@@ -42,59 +35,32 @@ def process_bulk_upload_zip(processing_id, domain, app_id, username=None, share_
         data = saved_ref.get_content()
         saved_file.write(data)
     except Exception as e:
-        _mark_upload_with_error(_("Could not fetch cached bulk upload file. Error: %s." % e))
+        status.mark_with_error(_("Could not fetch cached bulk upload file. Error: %s." % e))
         return
 
     try:
         saved_file.seek(0)
         uploaded_zip = zipfile.ZipFile(saved_file)
     except Exception as e:
-        _mark_upload_with_error(_("Error opening file as zip file: %s" % e))
+        status.mark_with_error(_("Error opening file as zip file: %s" % e))
         return
 
     if uploaded_zip.testzip():
-        _mark_upload_with_error(_("Error encountered processing Zip File. File doesn't look valid."))
+        status.mark_with_error(_("Error encountered processing Zip File. File doesn't look valid."))
         return
 
-    unmatched_files = []
-    matched_files = {
-        CommCareImage.__name__: [],
-        CommCareAudio.__name__: [],
-    }
-
     zipped_files = uploaded_zip.namelist()
-    total_files = len(zipped_files)
+    status.total_files = len(zipped_files)
     checked_paths = []
-
-    upload_status_cache['total_files'] = total_files
-    upload_status_cache['processed_files'] = 0
-
-    def _add_unmatched(path, reason):
-        unmatched_files.append({
-            'path': path,
-            'reason': reason,
-        })
-        checked_paths.append(path)
-
-    def _update_progress():
-        processed_files = len(checked_paths)
-        upload_status_cache['processed_files'] = processed_files
-        progress = int(100 * (float(processed_files) / float(total_files)))
-        if progress > 100:
-            logging.error("The progress of bulk upload exceeded 100 percent (%d). You "
-                          "might want to check on this one, B." % progress)
-        progress = min(progress, 100)  # always cap at 100
-        upload_status_cache['progress'] = progress
-        cache.set(cache_key, upload_status_cache)
 
     try:
         for index, path in enumerate(zipped_files):
-            _update_progress()
+            status.update_progress(len(checked_paths))
             file_name = os.path.basename(path)
             try:
                 data = uploaded_zip.read(path)
             except Exception as e:
-                _add_unmatched(path, "Error reading file: %s" % e)
+                status.add_unmatched_path(path, _("Error reading file: %s" % e))
                 continue
 
             media_class = CommCareMultimedia.get_class_by_data(data)
@@ -106,18 +72,21 @@ def process_bulk_upload_zip(processing_id, domain, app_id, username=None, share_
             form_path = media_class.get_form_path(path)
 
             if not form_path in app_paths:
-                _add_unmatched(path, _("Did not match any %s paths in application." % media_class.get_nice_name()))
+                status.add_unmatched_path(path,
+                                          _("Did not match any %s paths in application." % media_class.get_nice_name()))
                 continue
 
             multimedia = media_class.get_by_data(data)
             if not multimedia:
-                _add_unmatched(path, _("Matching path found, but could not save the data to couch."))
+                status.add_unmatched_path(path,
+                                          _("Matching path found, but could not save the data to couch."))
                 continue
 
             is_updated = multimedia.attach_data(data, original_filename=file_name, username=username,
                                                 replace_attachment=replace_existing)
             if not is_updated and not getattr(multimedia, '_id'):
-                _add_unmatched(form_path, _("Matching path found, but didn't save new multimedia correctly."))
+                status.add_unmatched_path(form_path,
+                                          _("Matching path found, but didn't save new multimedia correctly."))
                 continue
 
             if is_updated:
@@ -128,15 +97,11 @@ def process_bulk_upload_zip(processing_id, domain, app_id, username=None, share_
                 app.create_mapping(multimedia, form_path)
 
             media_info = multimedia.get_media_info(form_path, is_updated=is_updated, original_path=path)
-            matched_files[media_class.__name__].append(media_info)
+            status.add_matched_path(media_class, media_info)
             checked_paths.append(path)
 
-        _update_progress()
-        upload_status_cache["complete"] = True
-        upload_status_cache["matched_files"] = matched_files
-        upload_status_cache["unmatched_files"] = unmatched_files
-        cache.set(cache_key, upload_status_cache)
+        status.update_progress(len(checked_paths))
     except Exception as e:
-        _mark_upload_with_error(_("Error while processing zip: %s" % e))
+        status.mark_with_error(_("Error while processing zip: %s" % e))
     uploaded_zip.close()
 

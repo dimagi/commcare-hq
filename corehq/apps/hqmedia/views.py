@@ -17,16 +17,14 @@ from django.http import HttpResponse, Http404, HttpResponseRedirect, HttpRespons
 
 from django.views.decorators.http import require_POST
 from django.shortcuts import render
-from django.conf import settings
 
 from corehq.apps.app_manager.decorators import safe_download
 from corehq.apps.app_manager.views import require_can_edit_apps, set_file_download, ApplicationViewMixin
 from corehq.apps.app_manager.models import get_app
 from corehq.apps.hqmedia import utils
+from corehq.apps.hqmedia.cache import BulkMultimediaStatusCache
 from corehq.apps.hqmedia.models import CommCareImage, CommCareAudio, CommCareMultimedia, MULTIMEDIA_PREFIX
 from corehq.apps.hqmedia.tasks import process_bulk_upload_zip
-
-from dimagi.utils import make_uuid
 from dimagi.utils.decorators.memoized import memoized
 from soil.util import expose_download
 
@@ -229,30 +227,24 @@ class BadMediaFileException(Exception):
 
 
 class BaseProcessUploadedView(BaseMultimediaView):
-    cache_expiry = 60 * 60  # one hour
 
     @property
-    @memoized
     def replace_existing(self):
         return self.request.POST.get('replace_existing') == 'true'
 
     @property
-    @memoized
     def share_media(self):
         return self.request.POST.get('shared') == 't'
 
     @property
-    @memoized
     def license_used(self):
         return self.request.POST.get('license', '')
 
     @property
-    @memoized
     def author(self):
         return self.request.POST.get('author', '')
 
     @property
-    @memoized
     def attribution_notes(self):
         return self.request.POST.get('attribution-notes', '')
 
@@ -321,24 +313,18 @@ class ProcessBulkUploadView(BaseProcessUploadedView):
     def process_upload(self):
         # save the file w/ soil
         self.uploaded_file.file.seek(0)
-        saved_file = expose_download(self.uploaded_file.file.read(), expiry=self.cache_expiry)
+        saved_file = expose_download(self.uploaded_file.file.read(), expiry=BulkMultimediaStatusCache.cache_expiry)
         processing_id = saved_file.download_id
 
-        status = {
-            'in_celery': False,
-            'complete': False,
-            'progress': 0,
-            'errors': [],
-            'type': 'zip',
-            'processing_id': processing_id,
-        }
-        cache.set(self.get_cache_key(processing_id), status, self.cache_expiry)
+        status = BulkMultimediaStatusCache(processing_id)
+        status.save()
+
         process_bulk_upload_zip.delay(processing_id, self.domain, self.app_id,
                                       username=self.request.couch_user.username if self.request.couch_user else None,
                                       share_media=self.share_media,
                                       license_name=self.license_used, author=self.author,
                                       attribution_notes=self.attribution_notes, replace_existing=self.replace_existing)
-        return status
+        return status.get_response()
 
     @classmethod
     def valid_mime_types(cls):
@@ -348,10 +334,6 @@ class ProcessBulkUploadView(BaseProcessUploadedView):
             'application/octet-stream',
             'application/x-zip-compressed',
         ]
-
-    @classmethod
-    def get_cache_key(cls, processing_id):
-        return "MMBULK_%s" % processing_id
 
 
 class CheckOnProcessingFile(BaseMultimediaView):
@@ -474,9 +456,8 @@ class MultimediaUploadStatus(View):
     def post(self, request, *args, **kwargs):
         if not self.processing_id:
             return HttpResponseBadRequest("A processing_id is required.")
-        cache_key = ProcessBulkUploadView.get_cache_key(self.processing_id)
-        progress_info = cache.get(cache_key)
-        return HttpResponse(json.dumps(progress_info))
+        status = BulkMultimediaStatusCache.get(self.processing_id)
+        return HttpResponse(json.dumps(status.get_response()))
 
 
 class ViewMultimediaFile(View):
