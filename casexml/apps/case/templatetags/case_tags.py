@@ -54,25 +54,12 @@ def build_tables(data, definition, processors=None, timezone=pytz.utc):
 
         return (expr, name, val)
 
-    #def set_colspan(rows):
-        #if not rows:
-            #return
-
-        #max_row_length = max(map(len, rows))
-
-        ## set colspan for last element in row if necessary
-        #for row in rows:
-            #if len(row) < max_row_length:
-                #colspan = (max_row_length - len(row)) * 2 + 1
-                #row.append([None, colspan, None])
-   
     sections = []
 
     for section_name, rows in definition:
         processed_rows = [[get_display_tuple(prop) for prop in row]
                           for row in rows]
 
-        #set_colspan(processed_rows)
         columns = list(itertools.izip_longest(*processed_rows))
         sections.append((_(section_name) if section_name else "", columns))
 
