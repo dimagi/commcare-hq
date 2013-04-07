@@ -844,7 +844,9 @@ def form_data(request, domain, instance_id):
 def case_form_data(request, domain, case_id, xform_id):
     """
     specific rendering for a case's xform - render to html via templatetag
+
     """
+    timezone = util.get_timezone(request.couch_user.user_id, domain)
 
     try:
         instance = XFormInstance.get(xform_id)
@@ -860,9 +862,8 @@ def case_form_data(request, domain, case_id, xform_id):
 
     #todo: additional formatting options
     #todo: sanity check that xform_id has case_block
-    #todo: more stringent permissions checks here (same thing?)
 
-    return HttpResponse(render_form(instance))
+    return HttpResponse(render_form(instance, timezone=timezone))
 
 
 @require_form_view_permission
