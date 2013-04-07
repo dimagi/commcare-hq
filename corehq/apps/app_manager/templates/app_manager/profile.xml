@@ -40,4 +40,12 @@
         {% endif %}
         <location authority="remote">{{ suite_url }}</location>
     </resource></suite>
+    {% if app.include_media_resources %}
+    <suite><resource id="suite" version="{{ app.version }}">
+        {% if not is_odk %}
+            <location authority="local">jr://resource/{{ app.media_suite_loc }}</location>
+        {% endif %}
+        <location authority="remote">{{ app.media_suite_url }}</location>
+    </resource></suite>
+    {% endif %}
 </profile>

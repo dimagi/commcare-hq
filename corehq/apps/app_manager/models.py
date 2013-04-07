@@ -1380,8 +1380,7 @@ class SavedAppBuild(ApplicationBase):
 
 class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
     """
-    A Managed Application that can be created entirely through the online interface, except for writing the
-    forms themselves.
+    An Application that can be created entirely through the online interface
 
     """
     user_registration = SchemaProperty(UserRegistrationForm)
@@ -1392,6 +1391,7 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
     use_custom_suite = BooleanProperty(default=False)
     force_http = BooleanProperty(default=False)
     cloudcare_enabled = BooleanProperty(default=False)
+    include_media_resources = BooleanProperty(default=False)
     
     @classmethod
     def wrap(cls, data):
@@ -1461,6 +1461,14 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
     @property
     def suite_loc(self):
         return "suite.xml"
+
+    @absolute_url_property
+    def media_suite_url(self):
+        return reverse('download_media_suite', args=[self.domain, self.get_id])
+
+    @property
+    def media_suite_loc(self):
+        return "media_suite.xml"
 
     def fetch_xform(self, module_id=None, form_id=None, form=None):
         if not form:
@@ -1596,13 +1604,20 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
                 'langs': ["default"] + self.build_langs
             })
         else:
-            return suite_xml.generate_suite(self)
+            return suite_xml.SuiteGenerator(self).generate_suite()
+
+    def create_media_suite(self):
+        return suite_xml.SuiteGenerator(self).generate_suite(
+            sections=['media_resources']
+        )
 
     def create_all_files(self):
         files = {
             "profile.xml": self.create_profile(),
             "suite.xml": self.create_suite(),
         }
+        if self.include_media_resources:
+            files['media_suite.xml'] = self.create_media_suite()
 
         if self.show_user_registration:
             files["user_registration.xml"] = self.fetch_xform(form=self.get_user_registration())

@@ -69,6 +69,10 @@ class LocaleResource(AbstractResource):
     language = StringField('@language')
 
 
+class MediaResource(AbstractResource):
+    ROOT_NAME = 'media'
+
+
 class Display(XmlObject):
     ROOT_NAME = 'display'
     text = NodeField('text', Text)
@@ -215,6 +219,7 @@ class Suite(XmlObject):
 
     xform_resources = NodeListField('xform', XFormResource)
     locale_resources = NodeListField('locale', LocaleResource)
+    media_resources = NodeListField('locale', MediaResource)
 
     details = NodeListField('detail', Detail)
     entries = NodeListField('entry', Entry)
@@ -236,6 +241,9 @@ class IdStrings(object):
 
     def locale_resource(self, lang):
         return u'app_{lang}_strings'.format(lang=lang)
+
+    def media_resource(self, path):
+        return u'media-{path}'.format(path=path)
 
     def detail(self, module, detail):
         return u"m{module.id}_{detail.type}".format(module=module, detail=detail)
@@ -329,6 +337,18 @@ class SuiteGenerator(object):
             )
 
     @property
+    def media_resources(self):
+        paths = self.app.all_media_paths
+        version = self.app.version
+        for path in paths:
+            yield MediaResource(
+                id=self.id_strings.media_resource(path),
+                version=version,
+                local=path,
+                remote=path
+            )
+
+    @property
     @memoized
     def details(self):
         r = []
@@ -378,11 +398,13 @@ class SuiteGenerator(object):
                 yield Instance(id='casedb', src='jr://instance/casedb')
                 if any([form.form_filter for form in module.get_forms()]) and \
                         module.all_forms_require_a_case():
-                    yield Instance(id='commcaresession', src='jr://instance/session')
+                    yield Instance(id='commcaresession',
+                                   src='jr://instance/session')
             e.instances.extend(get_instances())
 
 
-            # I'm setting things individually instead of in the constructor so they appear in the correct order
+            # I'm setting things individually instead of in the constructor
+            # so that they appear in the correct order
             e.datum = SessionDatum()
             e.datum.id='case_id'
             e.datum.nodeset="instance('casedb')/casedb/case[@case_type='{module.case_type}'][@status='open']{filter_xpath}".format(
@@ -468,22 +490,21 @@ class SuiteGenerator(object):
             f.set_content(groups)
             yield f
 
-    def __call__(self, *args, **kwargs):
-        suite = Suite()
-        suite.version = self.app.version
-        def add_to_suite(attr):
-            getattr(suite, attr).extend(getattr(self, attr))
-        map(add_to_suite, [
+    def generate_suite(self, sections=None):
+        sections = sections or (
             'xform_resources',
             'locale_resources',
             'details',
             'entries',
             'menus',
-            'fixtures'
-        ])
+            'fixtures',
+        )
+        suite = Suite()
+        suite.version = self.app.version
+
+        def add_to_suite(attr):
+            getattr(suite, attr).extend(getattr(self, attr))
+
+        map(add_to_suite, sections)
         return suite.serializeDocument(pretty=True)
 
-
-def generate_suite(app):
-    g = SuiteGenerator(app)
-    return g()
