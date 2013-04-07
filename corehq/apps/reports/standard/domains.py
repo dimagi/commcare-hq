@@ -27,7 +27,7 @@ class DomainStatsReport(GenericTabularReport):
         headers = DataTablesHeader(
             DataTablesColumn("Project"),
             DataTablesColumn("# Web Users", sort_type=DTSortType.NUMERIC),
-            # DataTablesColumn(_("# Active Mobile Workers"), sort_type=DTSortType.NUMERIC),
+            DataTablesColumn(_("# Active Mobile Workers"), sort_type=DTSortType.NUMERIC),
             DataTablesColumn(_("# Mobile Workers"), sort_type=DTSortType.NUMERIC),
             DataTablesColumn(_("# Active Cases"), sort_type=DTSortType.NUMERIC),
             DataTablesColumn(_("# Cases"), sort_type=DTSortType.NUMERIC),
@@ -48,7 +48,7 @@ class DomainStatsReport(GenericTabularReport):
             rows.append([
                 dom,
                 int(all_stats["web_users"][dom]),
-                # CALC_FNS["mobile_users"](dom, 'active'),
+                CALC_FNS["mobile_users"](dom),
                 int(all_stats["commcare_users"][dom]),
                 CALC_FNS["cases_in_last"](dom, 30),
                 int(all_stats["cases"][dom]),
