@@ -3,8 +3,10 @@ from eulxml.xmlmap import StringField, XmlObject, IntegerField, NodeListField, N
 from corehq.apps.app_manager.xform import SESSION_CASE_ID
 from dimagi.utils.decorators.memoized import memoized
 
+
 class IdNode(XmlObject):
     id = StringField('@id')
+
 
 class XpathVariable(XmlObject):
     ROOT_NAME = 'variable'
@@ -12,10 +14,12 @@ class XpathVariable(XmlObject):
 
     locale_id = StringField('locale/@id')
 
+
 class Xpath(XmlObject):
     ROOT_NAME = 'xpath'
     function = StringField('@function')
     variables = NodeListField('variable', XpathVariable)
+
 
 class Text(XmlObject):
     """
@@ -37,6 +41,7 @@ class Text(XmlObject):
 
     locale_id = StringField('locale/@id')
 
+
 class AbstractResource(XmlObject):
 
     LOCATION_TEMPLATE = 'resource/location[@authority="%s"]'
@@ -54,12 +59,15 @@ class AbstractResource(XmlObject):
         self.local = local
         self.remote = remote
 
+
 class XFormResource(AbstractResource):
     ROOT_NAME = 'xform'
+
 
 class LocaleResource(AbstractResource):
     ROOT_NAME = 'locale'
     language = StringField('@language')
+
 
 class Display(XmlObject):
     ROOT_NAME = 'display'
@@ -71,6 +79,7 @@ class Display(XmlObject):
         super(Display, self).__init__(text=text, **kwargs)
         self.media_image = media_image
         self.media_audio = media_audio
+
 
 class DisplayNode(XmlObject):
     """Any node that has the awkward text-or-display subnode, like Command or Menu"""
@@ -89,9 +98,11 @@ class DisplayNode(XmlObject):
         else:
             self.text = text
 
+
 class Command(DisplayNode, IdNode):
     ROOT_NAME = 'command'
     relevant = StringField('@relevant')
+
 
 class Instance(IdNode):
     ROOT_NAME = 'instance'
@@ -102,6 +113,7 @@ class Instance(IdNode):
         super(Instance, self).__init__(id=id, **kwargs)
         self.src = src
 
+
 class SessionDatum(IdNode):
     ROOT_NAME = 'datum'
 
@@ -109,6 +121,7 @@ class SessionDatum(IdNode):
     value = StringField('@value')
     detail_select = StringField('@detail-select')
     detail_confirm = StringField('@detail-confirm')
+
 
 class Entry(XmlObject):
     ROOT_NAME = 'entry'
@@ -121,21 +134,26 @@ class Entry(XmlObject):
     datums = NodeListField('session/datum', SessionDatum)
     datum = NodeField('session/datum', SessionDatum)
 
+
 class Menu(DisplayNode, IdNode):
     ROOT_NAME = 'menu'
 
     commands = NodeListField('command', Command)
+
 
 class AbstractTemplate(XmlObject):
     form = StringField('@form', choices=['image', 'phone', 'address'])
     width = IntegerField('@width')
     text = NodeField('text', Text)
 
+
 class Template(AbstractTemplate):
     ROOT_NAME = 'template'
 
+
 class Header(AbstractTemplate):
     ROOT_NAME = 'header'
+
 
 class Field(XmlObject):
     ROOT_NAME = 'field'
@@ -143,6 +161,7 @@ class Field(XmlObject):
     sort = StringField('@sort')
     header = NodeField('header', Header)
     template = NodeField('template', Template)
+
 
 class DetailVariable(XmlObject):
     ROOT_NAME = '_'
@@ -155,6 +174,7 @@ class DetailVariable(XmlObject):
         self.node.tag = value
 
     name = property(get_name, set_name)
+
 
 class Detail(IdNode):
     """
@@ -187,6 +207,7 @@ class Fixture(IdNode):
             self.node.remove(child)
         self.node.append(xml)
 
+
 class Suite(XmlObject):
     ROOT_NAME = 'suite'
 
@@ -200,6 +221,7 @@ class Suite(XmlObject):
     menus = NodeListField('menu', Menu)
 
     fixtures = NodeListField('fixture', Fixture)
+
 
 class IdStrings(object):
 
@@ -263,6 +285,7 @@ class IdStrings(object):
     def referral_list_locale(self, module):
         """1.0 holdover"""
         return module.get_referral_list_locale_id()
+
 
 class SuiteGenerator(object):
     def __init__(self, app):
@@ -459,6 +482,7 @@ class SuiteGenerator(object):
             'fixtures'
         ])
         return suite.serializeDocument(pretty=True)
+
 
 def generate_suite(app):
     g = SuiteGenerator(app)
