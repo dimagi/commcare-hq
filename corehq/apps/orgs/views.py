@@ -536,7 +536,7 @@ def public(request, org, template='orgs/public.html'):
             ctxt["snapshots"].append(dom.published_snapshot())
     return render(request, template, ctxt)
 
-def stats(request, org, template='orgs/stats.html'):
+def base_report(request, org, template='orgs/report_base.html'):
     organization = Organization.get_by_name(org, strict=True)
     ctxt = base_context(request, organization)
 
@@ -544,11 +544,17 @@ def stats(request, org, template='orgs/stats.html'):
     ctxt.update(stats_report.context)
 
     ctxt.update({
-        'tab': 'stats',
+        'tab': 'reports',
         'no_header': True,
         'custom_async_url': reverse('basic_report_dispatcher', args=('async/dom_stats',))
         # '{% url basic_report_dispatcher 'async/dom_stats'
     })
+    return render(request, template, ctxt)
+
+def stats(request, org, template='orgs/stats.html'):
+    organization = Organization.get_by_name(org, strict=True)
+    ctxt = base_context(request, organization)
+    ctxt['tab'] = 'reports'
     return render(request, template, ctxt)
 
 def stats_data(request, org):

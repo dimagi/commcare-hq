@@ -1,4 +1,5 @@
-{% extends "orgs/orgs_landing.html" %}
+{#{% extends "orgs/orgs_landing.html" %}#}
+{% extends "orgs/report_base.html" %}
 {% load hq_shared_tags %}
 {% load hqstyle_tags %}
 {% load i18n %}
@@ -18,7 +19,7 @@
 {% endblock %}
 
 {% block js-inline %} {{ block.super }}
-    {% include "reports/standard/partials/report_loader.html" with additional_params='org='|add:org.name %}
+{#    {% include "reports/standard/partials/report_loader.html" with additional_params='org='|add:org.name %}#}
 
     <script src='{% static 'hqadmin/js/date_histogram_chart.js' %}' type='text/javascript'></script>
     <script type="text/javascript">
@@ -106,7 +107,7 @@
     </script>
 {% endblock %}
 
-{% block carded-content %}
+{% block report %}
     <div class="accordion" id="charts-accordion">
         <div class="accordion-group">
             <div class="accordion-heading">
@@ -155,16 +156,17 @@
         </div>
     </div>
 
-    <hr />
-    <div id="report-content">
+{#    <hr />#}
+{#    <div id="report-content">#}
 {#        {% include "reports/async/default.html" %}#}
-        {% if not report.is_async and report.slug %}
-            {% block reportcontent %}
-            {% endblock %}
-        {% else %}
-            {% include "reports/async/default.html" %}
-        {% endif %}
-    </div>
+{#        {% if not report.is_async and report.slug %}#}
+{#            {% block reportcontent %}#}
+{#            {% endblock %}#}
+{#        {% else %}#}
+{#            {% include "reports/async/default.html" %}#}
+{#        {% endif %}#}
+{#    </div>#}
+
 {#    <hr />#}
 {#    <form id="filter-projects-form" action="{% url orgs_stats org.name %}" method="get">#}
 {#        <h3>{% trans "Filter Project Spaces" %}#}

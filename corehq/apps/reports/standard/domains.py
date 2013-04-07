@@ -50,7 +50,7 @@ class DomainStatsReport(GenericTabularReport):
                 int(all_stats["web_users"][dom]),
                 CALC_FNS["mobile_users"](dom),
                 int(all_stats["commcare_users"][dom]),
-                CALC_FNS["cases_in_last"](dom, 30),
+                CALC_FNS["cases_in_last"](dom, 120),
                 int(all_stats["cases"][dom]),
                 int(all_stats["forms"][dom]),
                 CALC_FNS["first_form_submission"](dom),

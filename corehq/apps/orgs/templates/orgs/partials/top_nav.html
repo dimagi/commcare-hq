@@ -11,8 +11,8 @@
     <li{% ifequal tab "members" %} class="active"{% endifequal %}>
         <a href="{% url orgs_members org.name %}">{% trans "Members" %} ({{ members|length }})</a>
     </li>
-    <li{% ifequal tab "stats" %} class="active"{% endifequal %}>
-        <a href="{% url orgs_stats org.name %}">{% trans "Statistics" %}</a>
+    <li{% ifequal tab "reports" %} class="active"{% endifequal %}>
+        <a href="{% url orgs_report org.name %}">{% trans "Reports" %}</a>
     </li>
     <span class="pull-right">
         {% if admin %}

@@ -2,8 +2,6 @@ from django.conf.urls.defaults import *
 
 urlpatterns = patterns('corehq.apps.orgs.views',
     url(r'^(?P<org>[\w\.-]+)/$', 'orgs_landing', name='orgs_landing'),
-    url(r'^(?P<org>[\w\.-]+)/stats/$', 'stats', name='orgs_stats'),
-    url(r'^(?P<org>[\w\.-]+)/stats_data/$', 'stats_data', name='orgs_stats_data'),
     url(r'^(?P<org>[\w\.-]+)/update_info/$', 'orgs_update_info', name='orgs_update_info'),
     url(r'^(?P<org>[\w\.-]+)/get_data/$', 'get_data', name='get_data'),
     url(r'^(?P<org>[\w\.-]+)/add_project/$', 'orgs_add_project', name='orgs_add_project'),
@@ -29,6 +27,11 @@ urlpatterns = patterns('corehq.apps.orgs.views',
     url(r'^(?P<org>[\w\.-]+)/teams/(?P<record_id>[ \w-]+)/undo_remove_member', 'undo_remove_member', name='undo_remove_member'),
     url(r'^(?P<org>[\w\.-]+)/teams/(?P<team_id>[ \w-]+)/join_team$', 'join_team', name='join_team'),
     url(r'^(?P<org>[\w\.-]+)/teams/(?P<team_id>[ \w-]+)/leave_team$', 'leave_team', name='leave_team'),
+
+    url(r'^(?P<org>[\w\.-]+)/reports/$', 'base_report', name='orgs_report'),
+    url(r'^(?P<org>[\w\.-]+)/reports/stats/$', 'stats', name='orgs_stats'),
+    # url(r'^(?P<org>[\w\.-]+)/stats/$', 'stats', name='orgs_stats'),
+    url(r'^(?P<org>[\w\.-]+)/reports/stats_data/$', 'stats_data', name='orgs_stats_data'),
 
     url(r'^(?P<org>[\w\.-]+)/join/(?P<invitation_id>[ \w-]+)/$', 'accept_invitation', name='orgs_accept_invitation'),
     url(r'^(?P<org>[\w\.-]+)/seen_request/$', 'seen_request', name='orgs_seen'),
