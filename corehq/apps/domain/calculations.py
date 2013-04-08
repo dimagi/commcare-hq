@@ -14,17 +14,21 @@ def num_mobile_users(domain, *args):
     row = get_db().view('users/by_domain', startkey=[domain], endkey=[domain, {}]).one()
     return row["value"] if row else 0
 
-def mobile_users(domain, active):
-    key = ["active" if active == "active" else "inactive", domain, 'CommCareUser']
-    row = get_db().view('users/by_domain', startkey=key, endkey=key+[{}]).one()
-    return row["value"] if row else 0
+DATE_FORMAT = '%Y-%m-%dT%H:%M:%SZ'
+DISPLAY_DATE_FORMAT = '%Y/%m/%d %H:%M:%S'
+
+def active_mobile_users(domain):
+    now = datetime.now()
+    then = (now - timedelta(days=30)).strftime(DATE_FORMAT)
+    now = now.strftime(DATE_FORMAT)
+
+    key = ['submission', domain]
+    rows = get_db().view("reports_forms/all_forms", startkey=key+[then], endkey=key+[now], reduce=False, include_docs=True).all()
+    return len(set([r["value"].get('user_id') for r in rows if r["value"].get('user_id')])) if rows else 0
 
 def cases(domain, *args):
     row = get_db().view("hqcase/types_by_domain", startkey=[domain], endkey=[domain, {}]).one()
     return row["value"] if row else 0
-
-DATE_FORMAT = '%Y-%m-%dT%H:%M:%SZ'
-DISPLAY_DATE_FORMAT = '%Y/%m/%d %H:%M:%S'
 
 def cases_in_last(domain, days):
     now = datetime.now()
@@ -107,7 +111,7 @@ CALC_FNS = {
     "num_mobile_users": num_mobile_users,
     "forms": forms,
     "cases": cases,
-    "mobile_users": mobile_users,
+    "mobile_users": active_mobile_users,
     "active_cases": not_implemented,
     "cases_in_last": cases_in_last,
     "active": active,

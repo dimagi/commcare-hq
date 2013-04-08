@@ -145,6 +145,8 @@ TABS = (
     MessagesTab,
     RemindersTab,
     ProjectSettingsTab,
+    OrgReportTab,
+    OrgSettingsTab,
     AdminTab,
     ExchangeTab,
     ManageSurveysTab,
