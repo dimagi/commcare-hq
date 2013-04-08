@@ -36,7 +36,7 @@ class LocationCache(object):
             if key in self._existing_by_type:
                 self._existing_by_type[key][location.name] = location
 
-def import_locations(domain, f):
+def import_locations(domain, f, update_existing=False):
     r = csv.DictReader(f)
     data = list(r)
 
@@ -56,10 +56,10 @@ def import_locations(domain, f):
 
     loc_cache = LocationCache(domain)
     for loc in data:
-        for m in import_location(domain, loc, hierarchy_fields, property_fields, loc_cache):
+        for m in import_location(domain, loc, hierarchy_fields, property_fields, update_existing, loc_cache):
             yield m
 
-def import_location(domain, loc_row, hierarchy_fields, property_fields, loc_cache=None):
+def import_location(domain, loc_row, hierarchy_fields, property_fields, update, loc_cache=None):
     if loc_cache is None:
         loc_cache = LocationCache(domain)
 
@@ -89,14 +89,9 @@ def import_location(domain, loc_row, hierarchy_fields, property_fields, loc_cach
                 yield 'warning: %s properties specified on row that won\'t create a %s! (%s)' % (terminal_type, terminal_type, row_name)
             continue
 
-        child = loc_cache.get_by_name(loc_name, loc_type, parent)
-        if child:
-            if is_terminal:
-                yield '%s %s exists; skipping...' % (loc_type, loc_name)
-        else:
-            if loc_type not in allowed_child_types(domain, parent):
-                yield 'error: %s %s cannot be child of %s' % (loc_type, loc_name, row_name)
-                return
+        def save(existing=None):
+            messages = []
+            error = False
 
             data = {
                 'name': loc_name,
@@ -106,27 +101,57 @@ def import_location(domain, loc_row, hierarchy_fields, property_fields, loc_cach
             if is_terminal:
                 data.update(((terminal_type, k), v) for k, v in properties.iteritems())
 
-            form = make_form(domain, parent, data)
+            form = make_form(domain, parent, data, existing)
             form.strict = False # optimization hack to turn off strict validation
             if form.is_valid():
                 child = form.save()
-                loc_cache.add(child)
-                yield 'created %s %s' % (loc_type, loc_name)
+                if existing:
+                    messages.append('updated %s %s' % (loc_type, loc_name))
+                else:
+                    loc_cache.add(child)
+                    messages.append('created %s %s' % (loc_type, loc_name))
             else:
                 # TODO move this to LocationForm somehow
+                error = True
                 forms = filter(None, [form, form.sub_forms.get(loc_type)])
                 for k, v in itertools.chain(*(f.errors.iteritems() for f in forms)):
                     if k != '__all__':
-                        yield 'error in %s %s; %s: %s' % (loc_type, loc_name, k, v)
+                        messages.append('error in %s %s; %s: %s' % (loc_type, loc_name, k, v))
+
+            return child, messages, error
+
+        child = loc_cache.get_by_name(loc_name, loc_type, parent)
+        if child:
+            if is_terminal:
+                if update:
+                    properties_changed = any(v != getattr(child, k) for k, v in properties)
+                    if properties_changed:
+                        _, messages, _ = save(child)
+                        for m in messages:
+                            yield m
+
+                    else:
+                        yield '%s %s unchanged; skipping...' % (loc_type, loc_name)
+                else:
+                    yield '%s %s exists; skipping...' % (loc_type, loc_name)
+        else:
+            if loc_type not in allowed_child_types(domain, parent):
+                yield 'error: %s %s cannot be child of %s' % (loc_type, loc_name, row_name)
+                return
+
+            child, messages, error = save()
+            for m in messages:
+                yield m
+            if error:
                 return
 
         parent = child
 
 
 # TODO i think the parent param will not be necessary once the TODO in LocationForm.__init__ is done
-def make_form(domain, parent, data):
+def make_form(domain, parent, data, existing=None):
     """simulate a POST payload from the location create/edit page"""
-    location = Location(domain=domain, parent=parent)
+    location = existing or Location(domain=domain, parent=parent)
     def make_payload(k, v):
         if hasattr(k, '__iter__'):
             prefix, propname = k
