@@ -457,6 +457,14 @@ LOGGING = {
 
 COUCH_STALE_QUERY='update_after'  # 'ok' for cloudant
 
+
+MESSAGE_LOG_OPTIONS = {
+    "abbreviated_phone_number_domains": ["mustmgh", "mgh-cgh-uganda"],
+}
+
+IVR_OUTBOUND_RETRIES = 3
+IVR_OUTBOUND_RETRY_INTERVAL = 10
+
 try:
     #try to see if there's an environmental variable set for local_settings
     if os.environ.get('CUSTOMSETTINGS', None) == "demo":
@@ -599,10 +607,6 @@ DOMAIN_MODULE_MAP = {
     'psi-unicef': 'psi',
 }
 
-MESSAGE_LOG_OPTIONS = {
-    "abbreviated_phone_number_domains": ["mustmgh", "mgh-cgh-uganda"],
-}
-
 MESSAGE_TAGS = {
     messages.INFO: 'alert-info',
     messages.DEBUG: '',
@@ -627,14 +631,13 @@ SMS_HANDLERS = [
 # outbound sms backend to use for that set of numbers. the backend can be:
 # * the ID of a MobileBackend couch doc ("new-style" backends), or
 # * the python path of a backend module ("old-style" backends)
-SMS_BACKENDS = {
-    '': 'MOBILE_BACKEND_MACH', # default backend
-    '91': 'MOBILE_BACKEND_UNICEL', # india
-    '999': 'MOBILE_BACKEND_TEST', # +999 is an unused country code
-}
+# NOTE: Going forward, do not add backends here, add them in localsettings
+if "SMS_BACKENDS" not in globals():
+    SMS_BACKENDS = {}
 
-IVR_OUTBOUND_RETRIES = 3
-IVR_OUTBOUND_RETRY_INTERVAL = 10
+SMS_BACKENDS[''] = 'MOBILE_BACKEND_MACH' # default backend
+SMS_BACKENDS['91'] = 'MOBILE_BACKEND_UNICEL' # india
+SMS_BACKENDS['999'] = 'MOBILE_BACKEND_TEST' # +999 is an unused country code
 
 SELENIUM_APP_SETTING_DEFAULTS = {
     'cloudcare': {
