@@ -9,7 +9,6 @@ from django.utils.translation import ugettext as _
 class DomainStatsReport(GenericTabularReport):
     dispatcher = BasicReportDispatcher
     asynchronous = True
-    ajax_pagination = True
     section_name = 'DOMSTATS'
     base_template = "reports/async/default.html"
     custom_params = []
@@ -82,6 +81,7 @@ class OrgDomainStatsReport(DomainStatsReport):
         return []
 
 class AdminDomainStatsReport(DomainStatsReport):
+    ajax_pagination = True
     dispatcher = AdminReportDispatcher
     custom_params = ['domains']
 

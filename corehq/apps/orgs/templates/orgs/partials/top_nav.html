@@ -11,9 +11,9 @@
     <li{% ifequal tab "members" %} class="active"{% endifequal %}>
         <a href="{% url orgs_members org.name %}">{% trans "Members" %} ({{ members|length }})</a>
     </li>
-    <li{% ifequal tab "reports" %} class="active"{% endifequal %}>
-        <a href="{% url orgs_report org.name %}">{% trans "Reports" %}</a>
-    </li>
+{#    <li{% ifequal tab "reports" %} class="active"{% endifequal %}>#}
+{#        <a href="{% url orgs_report org.name %}">{% trans "Reports" %}</a>#}
+{#    </li>#}
     <span class="pull-right">
         {% if admin %}
             <a href="#update_info_modal" class="btn btn-primary" data-toggle="modal"><i class="icon-edit"></i> Update {{ org.name|capfirst }}'s Info</a>

@@ -545,6 +545,7 @@ def base_report(request, org, template='orgs/report_base.html'):
 
     ctxt.update({
         'tab': 'reports',
+        'report_type': 'base',
         'no_header': True,
         'custom_async_url': reverse('basic_report_dispatcher', args=('async/dom_stats',))
         # '{% url basic_report_dispatcher 'async/dom_stats'
@@ -554,7 +555,11 @@ def base_report(request, org, template='orgs/report_base.html'):
 def stats(request, org, template='orgs/stats.html'):
     organization = Organization.get_by_name(org, strict=True)
     ctxt = base_context(request, organization)
-    ctxt['tab'] = 'reports'
+    ctxt.update({
+        'tab': 'reports',
+        'report_type': 'stats',
+        'no_header': True,
+    })
     return render(request, template, ctxt)
 
 def stats_data(request, org):

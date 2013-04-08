@@ -19,8 +19,6 @@
 {% endblock %}
 
 {% block js-inline %} {{ block.super }}
-{#    {% include "reports/standard/partials/report_loader.html" with additional_params='org='|add:org.name %}#}
-
     <script src='{% static 'hqadmin/js/date_histogram_chart.js' %}' type='text/javascript'></script>
     <script type="text/javascript">
         function setActiveRange(chart_id, range) {
