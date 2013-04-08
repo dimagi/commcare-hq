@@ -161,10 +161,6 @@ def render_form(form, timezone=pytz.utc, display=None):
 
 @register.simple_tag
 def render_case(case, timezone=pytz.utc, display=None):
-    if isinstance(case, basestring):
-        # we were given an ID, fetch the case
-        case = CommCareCase.get(case)
-
     display = display or [
         (_("Basic Data"), [
             [
