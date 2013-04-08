@@ -12,8 +12,6 @@ class DomainStatsReport(GenericTabularReport):
     section_name = 'DOMSTATS'
     base_template = "reports/async/default.html"
     custom_params = []
-    # fields = ['corehq.apps.reports.fields.FilterUsersField',
-    #           'corehq.apps.reports.fields.SelectMobileWorkerField']
 
     name = ugettext_noop('Domain Statistics')
     slug = 'dom_stats'
@@ -25,17 +23,17 @@ class DomainStatsReport(GenericTabularReport):
     def headers(self):
         headers = DataTablesHeader(
             DataTablesColumn("Project"),
-            DataTablesColumn(_("# Web Users")),
-            DataTablesColumn(_("# Active Mobile Workers")),
-            DataTablesColumn(_("# Mobile Workers")),
-            DataTablesColumn(_("# Active Cases")),
-            DataTablesColumn(_("# Cases")),
-            DataTablesColumn(_("# Form Submissions")),
+            DataTablesColumn(_("# Web Users"), sort_type=DTSortType.NUMERIC),
+            DataTablesColumn(_("# Active Mobile Workers"), sort_type=DTSortType.NUMERIC),
+            DataTablesColumn(_("# Mobile Workers"), sort_type=DTSortType.NUMERIC),
+            DataTablesColumn(_("# Active Cases"), sort_type=DTSortType.NUMERIC),
+            DataTablesColumn(_("# Cases"), sort_type=DTSortType.NUMERIC),
+            DataTablesColumn(_("# Form Submissions"), sort_type=DTSortType.NUMERIC),
             DataTablesColumn(_("First Form Submission")),
             DataTablesColumn(_("Last Form Submission")),
             # DataTablesColumn(_("Admins"))
         )
-        # headers.no_sort = True
+        headers.no_sort = True
         return headers
 
     @property
@@ -47,9 +45,9 @@ class DomainStatsReport(GenericTabularReport):
             rows.append([
                 dom,
                 int(all_stats["web_users"][dom]),
-                CALC_FNS["mobile_users"](dom),
+                int(CALC_FNS["mobile_users"](dom)),
                 int(all_stats["commcare_users"][dom]),
-                CALC_FNS["cases_in_last"](dom, 120),
+                int(CALC_FNS["cases_in_last"](dom, 120)),
                 int(all_stats["cases"][dom]),
                 int(all_stats["forms"][dom]),
                 CALC_FNS["first_form_submission"](dom),
