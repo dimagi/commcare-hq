@@ -730,7 +730,7 @@ def case_details(request, domain, case_id):
         ),
         "layout_flush_content": True,
         "timezone": timezone,
-        "case_details": request.project.case_display.case_details,
+        "case_details": request.project.get_case_display(case)
     })
 
 def generate_case_export_payload(domain, include_closed, format, group, user_filter):
@@ -857,11 +857,13 @@ def case_form_data(request, domain, case_id, xform_id):
 
     from casexml.apps.case.templatetags.case_tags import render_form
 
-
     #todo: additional formatting options
     #todo: sanity check that xform_id has case_block
 
-    return HttpResponse(render_form(instance, timezone=timezone))
+    display = request.project.get_form_display(instance)
+
+    return HttpResponse(render_form(
+            instance, timezone=timezone, display=display))
 
 
 @require_form_view_permission

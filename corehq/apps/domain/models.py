@@ -170,10 +170,12 @@ class InternalProperties(DocumentSchema, UpdatableSchema):
 
 
 class CaseDisplaySettings(DocumentSchema):
-    case_details = ListProperty(
-        verbose_name="Properties to display above the fold on case details")
-    form_details = ListProperty(
-        verbose_name="Properties to display for individual forms")
+    case_details = DictProperty(
+        verbose_name="Mapping of case type to definitions of properties "
+                     "to display above the fold on case details")
+    form_details = DictProperty(
+        verbose_name="Mapping of form xmlns to definitions of properties "
+                     "to display for individual forms")
 
     # todo: case list
 
@@ -789,6 +791,14 @@ class Domain(Document, HQBillingDomainMixin, SnapshotMixin):
             return CommtrackConfig.for_domain(self.name)
         else:
             return None
+
+    def get_case_display(self, case):
+        """Get the properties display definition for a given case"""
+        return self.case_display.case_details.get(case.type)
+
+    def get_form_display(self, form):
+        """Get the properties display definition for a given XFormInstance"""
+        return self.case_display.form_details.get(form.xmlns)
 
 ##############################################################################################################
 #
