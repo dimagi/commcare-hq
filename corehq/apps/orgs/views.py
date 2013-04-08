@@ -26,6 +26,8 @@ from dimagi.utils.web import json_response
 from corehq.apps.orgs.models import Organization, Team, DeleteTeamRecord, \
     OrgInvitation, OrgRequest
 from corehq.apps.domain.models import Domain
+from django.utils.translation import ugettext as _
+
 
 @memoized
 def base_context(request, organization, update_form=None):
@@ -540,15 +542,17 @@ def base_report(request, org, template='orgs/report_base.html'):
     organization = Organization.get_by_name(org, strict=True)
     ctxt = base_context(request, organization)
 
+    if not ctxt['domains']:
+        messages.warning(request, _("This organization has no projects. This report will show no data until a project has been added to the organization."))
+
     stats_report = OrgDomainStatsReport(request)
     ctxt.update(stats_report.context)
 
     ctxt.update({
         'tab': 'reports',
         'report_type': 'base',
-        'no_header': True,
+        'no_header': True if ctxt['domains'] else False,
         'custom_async_url': reverse('basic_report_dispatcher', args=('async/dom_stats',))
-        # '{% url basic_report_dispatcher 'async/dom_stats'
     })
     return render(request, template, ctxt)
 

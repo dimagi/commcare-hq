@@ -24,16 +24,18 @@ class DomainStatsReport(GenericTabularReport):
         headers = DataTablesHeader(
             DataTablesColumn("Project"),
             DataTablesColumn(_("# Web Users"), sort_type=DTSortType.NUMERIC),
-            DataTablesColumn(_("# Active Mobile Workers"), sort_type=DTSortType.NUMERIC),
+            DataTablesColumn(_("# Active Mobile Workers"), sort_type=DTSortType.NUMERIC,
+                help_text=_("The number of mobile workers who have submitted a form in the last 30 days")),
             DataTablesColumn(_("# Mobile Workers"), sort_type=DTSortType.NUMERIC),
-            DataTablesColumn(_("# Active Cases"), sort_type=DTSortType.NUMERIC),
+            DataTablesColumn(_("# Active Cases"), sort_type=DTSortType.NUMERIC,
+                help_text=_("The number of cases modified in the last 120 days")),
             DataTablesColumn(_("# Cases"), sort_type=DTSortType.NUMERIC),
             DataTablesColumn(_("# Form Submissions"), sort_type=DTSortType.NUMERIC),
             DataTablesColumn(_("First Form Submission")),
             DataTablesColumn(_("Last Form Submission")),
             # DataTablesColumn(_("Admins"))
         )
-        headers.no_sort = True
+        # headers.no_sort = True
         return headers
 
     @property
@@ -79,7 +81,6 @@ class OrgDomainStatsReport(DomainStatsReport):
         return []
 
 class AdminDomainStatsReport(DomainStatsReport):
-    ajax_pagination = True
     dispatcher = AdminReportDispatcher
     custom_params = ['domains']
 
