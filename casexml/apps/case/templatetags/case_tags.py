@@ -117,20 +117,20 @@ def render_tables(tables, collapsible=False):
     })
 
 @register.simple_tag
-def render_form(form, timezone=pytz.utc):
+def render_form(form, timezone=pytz.utc, display=None):
 
     form = dict(copy.deepcopy(form.form))
     case = form.pop('case')
     meta = form.pop('meta')
 
-    definition = [
+    display = display or [
         (None, chunks(
             [{"expr": prop} for prop in form],
             FORM_PROPERTIES_COLUMNS)
         )
     ]
 
-    form_data = build_tables(form, definition=definition, timezone=timezone)
+    form_data = build_tables(form, definition=display, timezone=timezone)
     
     definition = [
         (None, chunks(
