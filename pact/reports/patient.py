@@ -40,20 +40,38 @@ class PactPatientInfoReport(PactDrilldownReportMixin,PactElasticTabularReportMix
 
     name = "Patient Info"
 
-    @memoized
     def get_case(self):
+        if self.request.GET.get('patient_id', None) is None:
+            return None
         return PactPatientCase.get(self.request.GET['patient_id'])
 
     @property
     def report_context(self):
         from pact import api
+        ret = {}
 
-        patient_doc = self.get_case()
+        try:
+            patient_doc = self.get_case()
+            has_error = False
+        except Exception, ex:
+            #eww, but we don't want to make a habit of returning exceptions as return values
+            print ex
+            has_error = True
+            patient_doc = None
+
+        if patient_doc is None:
+            self.report_template_path = "pact/patient/nopatient.html"
+            if has_error:
+                ret['error_message'] = "Patient not found"
+            else:
+                ret['error_message'] = "No patient selected"
+            return ret
+
+
         view_mode = self.request.GET.get('view', 'info')
         # notabs = True if not self.request.GET.get('notabs', False) else False
 
-        ret = RequestContext(self.request)
-        ret = {'patient_doc': patient_doc}
+        ret['patient_doc'] = patient_doc
         #        ret.update(csrf(self.request))
         ret['pt_root_url'] = patient_doc.get_info_url()
         # if notabs:
