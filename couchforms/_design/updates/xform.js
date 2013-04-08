@@ -2,14 +2,15 @@ function(doc, req) {
     var e4xmlJsonClass = require("util/jsone4xml").e4xmlJsonClass;
     var base64Class = require("util/base64").Base64;
     var dateFormat = require("util/dateFormat").dateFormat;
-    
+
     if (doc) {
         log("doc wasn't null!  this is unexpected! you will LOSE your information in favor of the xml");
     }
-    
     // Workaround: Mozilla Bug 336551
-    // see https://developer.mozilla.org/en/E4X
-    var content = req.body.replace(/^<\?xml\s+version\s*=\s*(["'])[^\1]+\1[^?]*\?>/, "");
+    // see https://developer.mozilla.org/en-US/docs/E4X
+    // NOTE: the regex on that page is no longer valid so replaced with the one from the following:
+    // https://bugzilla.mozilla.org/show_bug.cgi?id=336551#c24
+    var content = req.body.replace(/<\?xml[^>]*\?>/, "");
     var xml_content = new XML(content);
     doc = {};
     doc['form'] = e4xmlJsonClass.xml2obj(xml_content);
