@@ -2,12 +2,12 @@
 
 <script>
     $(function () {
-        $(".property-table-row").on('appear', function () {
+        $(".property-table-row").one('inview', function () {
             var $rowContainer = $(this),
                 maxHeights = [];
 
             // get max height of each row
-            $rowContainer.find("dl").each(function () {
+            $rowContainer.children().children().children("dl").each(function () {
                 $(this).children().each(function (i, el) {
                     maxHeights[i] = Math.max(maxHeights[i] || 0, $(el).height());
                 });
@@ -15,9 +15,8 @@
 
             // set height on all cells in each row
             _.map(maxHeights, function (val, i) {
-                var n = i + 1, 
-                    selector = "dd:nth-child(" + n + "), dt:nth-child(" + n + ")";
-                $rowContainer.find("dl > " + selector).css({
+                $rowContainer.find(".case-properties-table > dl > " + 
+                                   ":nth-child(" + (i+1) + ")").css({
                     height: val + "px"
                 });
             });
@@ -35,8 +34,7 @@
         </div>
         {% endif %}
 
-        <div class="case-properties-table well collapse in" 
-            id="case_properties_{{ name|slugify }}">
+        <div class="case-properties-table well collapse in">
             {# todo: make work with either tables or dls, specify which with kwarg #}
             {# (requires transforming dl columns to table rows and handling colspan)} #}
             {# <table class="table table-bordered case-properties-table"> #}
