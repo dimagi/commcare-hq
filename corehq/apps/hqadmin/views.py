@@ -172,7 +172,7 @@ def es_domain_query(params, facets=None, terms=None, domains=None, return_q_dict
 
 @require_superuser
 def domain_list(request):
-    from corehq.apps.reports.standard.domains import DomainStatsReport
+    from corehq.apps.reports.standard.domains import AdminDomainStatsReport
 
     params, _ = parse_args_for_es(request)
     facets = project_stats_facets()
@@ -181,8 +181,8 @@ def domain_list(request):
 
     facets_sortables = generate_sortables_from_facets(results, params)
 
-    stats_report = DomainStatsReport(request)
-    ctxt = (stats_report.context)
+    stats_report = AdminDomainStatsReport(request)
+    ctxt = stats_report.context
 
     ctxt.update({
         'layout_flush_content': True,

@@ -78,7 +78,7 @@
                 $c = $chart;
                 if ($chart.length > 0 && !$chart.is(':visible')) {
                     console.log('loading for the first time');
-                    loadChartData($chart.attr('id'), 'year');
+                    loadChartData($chart.attr('id'), 'month');
                 }
             });
 
@@ -100,7 +100,7 @@
                 return false;
             });
 
-            loadChartData('forms-chart', 'year');
+            loadChartData('forms-chart', 'month');
         });
     </script>
 {% endblock %}

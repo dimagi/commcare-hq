@@ -13,7 +13,6 @@
 {% endblock %}
 
 {% block js-inline %}{{ block.super }}
-{#    {% include "reports/standard/partials/report_loader.html" %}#}
     {% include "reports/standard/partials/report_loader.html" with additional_params='domains='|add:domains %}
 {% endblock %}
 

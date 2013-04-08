@@ -34,15 +34,12 @@
             {{ org.title }} <small>({{ org.name }})</small>
             {% block append-to-title %}{% endblock %}
         </h2>
-{#        {% include "orgs/partials/top_nav.html" %}#}
         {% block report %}
+        {% if not hide_filters %}
+            {% include "reports/partials/generic_filters.html" %}
+        {% endif %}
         <div id="report-content">
-            {% if not report.is_async and report.slug %}
-                {% block reportcontent %}
-                {% endblock %}
-            {% else %}
-                {% include "reports/async/default.html" %}
-            {% endif %}
+            {% include "reports/async/default.html" %}
         </div>
         {% endblock %}
     </div>

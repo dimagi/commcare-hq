@@ -30,7 +30,6 @@
             standardReport: standardHQReport
         {% if custom_async_url %},customAsyncUrl: '{{ custom_async_url }}'{% endif %}
         {% if additional_params %},additionalParams: '{{ additional_params }}'{% endif %}
-{#            additionalParams: 'user_context=org&org={{ org.name }}'#}
         });
         asyncHQReport.init();
     {% endif %}
