@@ -138,6 +138,9 @@ def generate_sortables_from_facets(results, params=None, mapping={}):
         return "?%s" % urlencode(updated_params, True)
 
     def generate_facet_dict(f_name, ft):
+        if isinstance(ft['term'], unicode): #hack to get around unicode encoding issues. However it breaks this specific facet
+            ft['term'] = ft['term'].encode('ascii','replace')
+
         ccs = {
             'cc': 'CC BY',
             'cc-sa': 'CC BY-SA',
