@@ -6,9 +6,10 @@ from django.utils.html import escape
 
 import datetime
 import pytz
+import dateutil
 from casexml.apps.case.models import CommCareCase
 from django.template.loader import render_to_string
-from corehq.apps.reports.templatetags.timezone_tags import utc_to_timezone
+from dimagi.utils.timezones.utils import adjust_datetime_to_timezone
 from django.template.defaultfilters import yesno
 
 import itertools
@@ -26,11 +27,14 @@ DYNAMIC_CASE_PROPERTIES_COLUMNS = 4
 FORM_PROPERTIES_COLUMNS = 2
 
 
-def get_display(val):
+def get_display(val, dt_format="%b %d, %Y %H:%M %Z", timezone=pytz.utc,
+                parse_dates=True):
+    recurse = lambda v: get_display(v, dt_format=dt_format, timezone=timezone)
+
     if isinstance(val, types.DictionaryType):
         ret = "".join(
             ["<dl>"] + 
-            ["<dt>{0}</dt><dd>{1}</dd>".format(k, get_display(v))
+            ["<dt>{0}</dt><dd>{1}</dd>".format(k, recurse(v))
              for k, v in val.items()] +
             ["</dl>"])
 
@@ -38,20 +42,24 @@ def get_display(val):
           not isinstance(val, basestring)):
         ret = "".join(
             ["<ul>"] +
-            ["<li>{0}</li>".format(get_display(v)) for v in val] +
+            ["<li>{0}</li>".format(recurse(v)) for v in val] +
             ["</ul>"])
 
     else:
+        if isinstance(val, datetime.datetime):
+            val = val.strftime(dt_format)
+
         ret = escape(val)
 
     return mark_safe(ret)
 
 
 def build_tables(data, definition, processors=None, timezone=pytz.utc):
-    processors = processors or {
-        'utc_to_timezone': lambda d: utc_to_timezone(d, timezone=timezone),
+    default_processors = {
         'yesno': yesno
     }
+    processors = processors or {}
+    processors.update(default_processors)
 
     def get_value(data, expr):
         # todo: nested attributes, support for both getitem and getattr
@@ -63,17 +71,27 @@ def build_tables(data, definition, processors=None, timezone=pytz.utc):
         name = prop.get('name', expr)
         format = prop.get('format')
         process = prop.get('process')
+        parse_date = prop.get('parse_date')
 
         val = get_value(data, expr)
 
-        if not process and isinstance(val, datetime.datetime):
-            process = 'utc_to_timezone'
+        if parse_date and not isinstance(val, datetime.datetime):
+            try:
+                val = dateutil.parser.parse(val)
+            except:
+                pass  # val = val
+
+        if isinstance(val, datetime.datetime):
+            if val.tzinfo is None:
+                val = val.replace(tzinfo=pytz.utc)
+
+            val = adjust_datetime_to_timezone(val, val.tzinfo, timezone.zone)
+
 
         if process:
             val = escape(processors[process](val))
         else:
-            val = mark_safe(get_display(val))
-
+            val = mark_safe(get_display(val, timezone=timezone))
 
         if format:
             val = mark_safe(format.format(val))
@@ -99,20 +117,20 @@ def render_tables(tables, collapsible=False):
     })
 
 @register.simple_tag
-def render_form(form):
+def render_form(form, timezone=pytz.utc, display=None):
 
     form = dict(copy.deepcopy(form.form))
     case = form.pop('case')
     meta = form.pop('meta')
 
-    definition = [
+    display = display or [
         (None, chunks(
             [{"expr": prop} for prop in form],
             FORM_PROPERTIES_COLUMNS)
         )
     ]
 
-    form_data = build_tables(form, definition=definition)
+    form_data = build_tables(form, definition=display, timezone=timezone)
     
     definition = [
         (None, chunks(
@@ -121,7 +139,8 @@ def render_form(form):
         )
     ]
 
-    form_case_data = build_tables(case, definition=definition)
+    form_case_data = build_tables(
+            case, definition=definition, timezone=timezone)
     
     definition = [
         (None, chunks(
@@ -130,7 +149,8 @@ def render_form(form):
         )
     ]
 
-    form_meta_data = build_tables(meta, definition=definition)
+    form_meta_data = build_tables(meta, definition=definition,
+            timezone=timezone)
 
     return render_to_string("case/partials/single_form.html", {
         "form_data": form_data,
@@ -141,10 +161,6 @@ def render_form(form):
 
 @register.simple_tag
 def render_case(case, timezone=pytz.utc, display=None):
-    if isinstance(case, basestring):
-        # we were given an ID, fetch the case
-        case = CommCareCase.get(case)
-
     display = display or [
         (_("Basic Data"), [
             [
@@ -185,6 +201,7 @@ def render_case(case, timezone=pytz.utc, display=None):
                 {
                     "expr": "opened_on",
                     "name": _("Opened On"),
+                    "parse_date": True,
                 },
                 {
                     "expr": "user_id",
@@ -196,6 +213,7 @@ def render_case(case, timezone=pytz.utc, display=None):
                 {
                     "expr": "modified_on",
                     "name": _("Modified On"),
+                    "parse_date": True,
                 },
                 {
                     "expr": "owner_id",
@@ -207,6 +225,7 @@ def render_case(case, timezone=pytz.utc, display=None):
                 {
                     "expr": "closed_on",
                     "name": _("Closed On"),
+                    "parse_date": True,
                 },
             ],
         ])

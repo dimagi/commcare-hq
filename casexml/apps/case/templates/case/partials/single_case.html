@@ -3,7 +3,9 @@
 {% load i18n %}
 {% load timezone_tags %}
 {% load case_tags %}
-<script src="https://raw.github.com/morr/jquery.appear/master/jquery.appear.js"></script>
+{% load hq_shared_tags %}
+<script src="{% static "case/js/lib/jquery.inview.js" %}"></script>
+
 <style type="text/css">
     .hq-generic-report {
         padding: 10px;
