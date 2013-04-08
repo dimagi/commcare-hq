@@ -25,12 +25,12 @@ class DomainStatsReport(GenericTabularReport):
     def headers(self):
         headers = DataTablesHeader(
             DataTablesColumn("Project"),
-            DataTablesColumn("# Web Users", sort_type=DTSortType.NUMERIC),
-            DataTablesColumn(_("# Active Mobile Workers"), sort_type=DTSortType.NUMERIC),
-            DataTablesColumn(_("# Mobile Workers"), sort_type=DTSortType.NUMERIC),
-            DataTablesColumn(_("# Active Cases"), sort_type=DTSortType.NUMERIC),
-            DataTablesColumn(_("# Cases"), sort_type=DTSortType.NUMERIC),
-            DataTablesColumn(_("# Form Submissions"), sort_type=DTSortType.NUMERIC),
+            DataTablesColumn(_("# Web Users")),
+            DataTablesColumn(_("# Active Mobile Workers")),
+            DataTablesColumn(_("# Mobile Workers")),
+            DataTablesColumn(_("# Active Cases")),
+            DataTablesColumn(_("# Cases")),
+            DataTablesColumn(_("# Form Submissions")),
             DataTablesColumn(_("First Form Submission")),
             DataTablesColumn(_("Last Form Submission")),
             # DataTablesColumn(_("Admins"))

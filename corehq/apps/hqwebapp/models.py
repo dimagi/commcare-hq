@@ -614,7 +614,7 @@ class ExchangeTab(UITab):
 class OrgTab(UITab):
     @property
     def is_viewable(self):
-        return self.org and self.couch_user and self.couch_user.is_member_of_org(self.org)
+        return self.org and self.couch_user and (self.couch_user.is_member_of_org(self.org) or self.couch_user.is_superuser)
 
 
 class OrgReportTab(OrgTab):
