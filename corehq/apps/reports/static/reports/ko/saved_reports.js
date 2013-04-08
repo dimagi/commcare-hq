@@ -110,12 +110,7 @@ var ReportConfigsViewModel = function (options) {
             type: "DELETE",
             url: options.saveUrl + '/' + config._id(),
             success: function (data) {
-                for (var i = 0; i < self.reportConfigs().length; i++) {
-                    if (ko.utils.unwrapObservable(self.reportConfigs()[i]._id) === config._id()) {
-                        self.reportConfigs.splice(i, 1);
-                        return;
-                    }
-                }
+                window.location.reload();
             }
         });
     };
