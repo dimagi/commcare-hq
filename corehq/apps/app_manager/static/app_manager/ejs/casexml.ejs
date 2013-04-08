@@ -1,5 +1,5 @@
 [% if(questions.length) { %]
-    <ul>
+    <ul class="unstyled">
         <li>
                 Requires
                 [%= renderOptions([
@@ -8,8 +8,6 @@
                     {value: "referral", label: "a case and a referral"}
                 ], requires, 'requires', false) %]
         </li>
-    </ul>
-    <ul>
         [% if(requires == "none") { %]
             [%= renderAction("open_case", "Opens a case") %]
         [% } %]

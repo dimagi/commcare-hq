@@ -1,0 +1,159 @@
+{% load i18n %}
+{% load hq_shared_tags %}
+{% load xforms_extras %}
+
+<script type="text/html" id="CommcareSettings.widgets.select">
+    <span>
+        <span data-bind="if: $root.edit">
+            <span data-bind="if: valueIsLegal()">
+                <select class="span3" data-bind="
+                    options: options,
+                    value: selectedOption,
+                    optionsText: 'label',
+                    attr: {disabled: !enabled(), id: inputId}
+                "></select>
+            </span>
+            <span data-bind="if: !valueIsLegal()" >
+                <select class="span3 error" data-bind="
+                    options: options,
+                    value: writeSelectedOption,
+                    optionsText: 'label',
+                    attr: {disabled: !enabled(), id: inputId},
+                    optionsCaption: value()
+                "></select>
+            </span>
+        </span>
+        <span data-bind="if: !$root.edit()">
+            <span data-bind="text: selectedOption().label"></span>
+        </span>
+    </span>
+</script>
+
+<script type="text/html" id="CommcareSettings.widgets.bool">
+    <span class="span3" data-bind="visible: $root.edit">
+        <input type="checkbox" data-bind="checked: boolValue, attr: {disabled: !enabled(), id: inputId}"/>
+    </span>
+    <span class="span3" data-bind="visible: !$root.edit()">
+        <i data-bind="css: {'icon-ok': boolValue, 'icon-remove': !boolValue()}"></i>
+    </span>
+</script>
+
+<script type="text/html" id="CommcareSettings.widgets.text">
+    <span data-bind="visible: $root.edit">
+        <input type="text" class="span6" data-bind="
+            value: visibleValue,
+            valueUpdate: 'textchange',
+            attr: {disabled: !enabled(), id: inputId}
+        " />
+    </span>
+    <span class="span3" data-bind="visible: !$root.edit(), text: visibleValue"></span>
+</script>
+
+<script type="text/html" id="CommcareSettings.widgets.textarea">
+    <span data-bind="visible: $root.edit">
+        <textarea type="text" data-bind="value: value, attr: {id: inputId}" />
+    </span>
+    <span class="span3" data-bind="visible: !$root.edit(), text: value"></span>
+</script>
+
+<script type="text/html" id="CommcareSettings.widgets.password">
+    <span data-bind="visible: $root.edit">
+        <input type="password" data-bind="passwordSetter: visibleValue"/>
+    </span>
+    <span data-bind="visible: !$root.edit()">
+        ********
+    </span>
+</script>
+
+<script>
+    $(function () {
+        CommcareSettings.widgets.text_input = CommcareSettings.widgets.select;
+    });
+</script>
+
+<script type="text/html" id="CommcareSettings.widgets.text_input">
+    <span data-bind="template: 'CommcareSettings.widgets.select'"></span>
+    <aside id="custom-keys-help" data-bind="visible: visibleValue() === 'custom-keys'">
+        <i class="icon-arrow-right"></i>
+        <span>Customize through
+            <a href="#" data-bind="click: function () {$('#custom-keys-example').slideToggle()}">{% trans "User Interface Translations" %}</a>.
+        </span>
+        <div id="custom-keys-example" style="display: none;">
+            <h6>Example:</h6>
+            <ul class="unstyled">
+                <li><span>polish.TextField.charactersKey1</span><span>.,</span><li>
+                <li><span>polish.TextField.charactersKey2</span><span>abc2</span><li>
+                <li><span>polish.TextField.charactersKey3</span><span>def3</span><li>
+                <li><span>polish.TextField.charactersKey4</span><span>ghi4</span><li>
+                <li><span>polish.TextField.charactersKey5</span><span>jkl5</span><li>
+                <li><span>polish.TextField.charactersKey6</span><span>mno6</span><li>
+                <li><span>polish.TextField.charactersKey7</span><span>pqrs7</span><li>
+                <li><span>polish.TextField.charactersKey8</span><span>tuv8</span><li>
+                <li><span>polish.TextField.charactersKey9</span><span>wxyz9</span><li>
+                <li><span>polish.TextField.charactersKey0</span><span> 0</span><li>
+            </ul>
+        </div>
+    </aside>
+</script>
+{% comment %}
+todo fix
+<script>
+    $(function () {
+        $('#show-user-registration-select').change(function () {
+            if (JSON.parse($(this).val())) {
+                $('#user-registration-nav-link').slideDown();
+            } else {
+                $('#user-registration-nav-link').slideUp();
+            }
+        });
+    });
+</script>
+{% endcomment %}
+
+<div class="tab-pane" id="commcare-settings">
+    <div class="clearfix" data-bind="saveButton2: state, saveOptions: saveOptions"></div>
+    <form class="form-horizontal" data-bind="foreach: sections">
+        <fieldset data-bind="visible: notEmpty">
+            <legend>
+                <a data-toggle="collapse" data-bind="attr: {href: '#' + id}">
+                    <i class="icon icon-double-angle-right"></i>
+                    <span data-bind="text: title"></span>
+                </a>
+            </legend>
+            <div class="collapse" data-bind="foreach: settings, attr: {id: id}, css: {'in': !$data.collapse || _(settings).some(function (s) {return s.hasError();})}">
+                <div class="control-group" data-bind="
+                    visible: visible,
+                    css: {error: hasError()}
+                ">
+                    <label class="control-label" data-bind="attr: {for: inputId}">
+                        <span data-bind="text: name"></span>
+                        <span data-bind="makeHqHelp: {name: name, description: $data.description}, visible: $data.description"></span>
+                    </label>
+                    <div class="controls">
+                        <span data-bind="template: 'CommcareSettings.widgets.' + widget"></span>
+                        <span data-bind="visible: disabledMessage(), css: {'text-warning': !versionOK(), 'text-success': versionOK}">
+                            <i data-bind="css: {'icon-arrow-left': !versionOK(), 'icon-ok': versionOK}"></i>
+                            <span data-bind="text: disabledMessage()"></span>
+                        </span>
+                        <p class="help-block" data-bind="visible: disabledButHasValue">
+                            <span data-bind="text: $data.disabled_txt"></span>
+                            <span data-bind="visible: !$data.disabled_txt">
+                            {% blocktrans %}
+                                Oops!
+                                This setting shouldn't be here.
+                                Could you change it to the default
+                                to make it go away?
+                                Sorry about that.
+                            {% endblocktrans %}
+                            </span>
+                        </p>
+                        <p class="help-block" data-bind="visible: !$data.valueIsLegal()">
+                            {% blocktrans %}
+                                This is not an allowed value for this field
+                            {% endblocktrans %}
+                        </p>
+                </div>
+            <div>
+        </fieldset>
+    </form>
+</div>
