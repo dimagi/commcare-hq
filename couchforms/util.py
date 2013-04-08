@@ -14,7 +14,7 @@ from couchdbkit.resource import RequestFailed
 from couchforms.exceptions import CouchFormException
 from couchforms.signals import xform_saved
 from dimagi.utils.couch import uid
-from dimagi.utils.couch.database import is_bigcouch, bigcouch_quorum_count
+from dimagi.utils.couch.database import is_bigcouch, bigcouch_quorum_count, get_safe_write_kwargs
 import re
 from dimagi.utils.post import post_authenticated_data, post_unauthenticated_data
 from restkit.errors import ResourceNotFound
@@ -35,10 +35,9 @@ class SubmissionError(Exception, UnicodeMixIn):
 
 def post_from_settings(instance, extras=None):
     extras = extras or {}
-    if is_bigcouch():
-        # HACK: for cloudant force update all nodes at once
-        # to prevent 412 race condition
-        extras['w'] = bigcouch_quorum_count()
+    # HACK: for cloudant force update all nodes at once
+    # to prevent 412 race condition
+    extras.update(get_safe_write_kwargs())
 
     url = settings.XFORMS_POST_URL if not extras else "%s?%s" % \
         (settings.XFORMS_POST_URL, urllib.urlencode(extras))
