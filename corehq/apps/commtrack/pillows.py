@@ -52,9 +52,9 @@ def set_computed(case, key, val):
         case.computed_[NAMESPACE] = {}
     case.computed_[NAMESPACE][key] = val
 
+# TODO make into domain settings
 CONSUMPTION_WINDOW = 60 # days
 WINDOW_OVERSHOOT = 15 # days
-
 MIN_WINDOW = 10 # days
 MIN_PERIODS = 2 # is this a good filter? differs a bit from malawi
 
