@@ -1,13 +1,12 @@
 from __future__ import absolute_import
 
 import datetime
-from django.conf import settings
 from couchdbkit.ext.django.schema import *
 import couchforms.const as const
 from dimagi.utils.indicators import ComputedDocumentMixin
 from dimagi.utils.parsing import string_to_datetime
 from dimagi.utils.couch.safe_index import safe_index
-from dimagi.utils.couch.database import is_bigcouch, bigcouch_quorum_count
+from dimagi.utils.couch.database import is_bigcouch, bigcouch_quorum_count, get_safe_read_kwargs
 from xml.etree import ElementTree
 from django.utils.datastructures import SortedDict
 from couchdbkit.resource import ResourceNotFound
@@ -91,7 +90,7 @@ class XFormInstance(Document, UnicodeMixIn, ComputedDocumentMixin):
         cls._allow_dynamic_properties = dynamic_properties
         # on cloudant don't get the doc back until all nodes agree
         # on the copy, to avoid race conditions
-        extras = {'r': bigcouch_quorum_count()} if is_bigcouch() else {}
+        extras = get_safe_read_kwargs()
         return db.get(docid, rev=rev, wrapper=cls.wrap, **extras)
 
     @property
