@@ -2,7 +2,7 @@ from django.test import TestCase
 from couchexport.models import ExportSchema
 from datetime import datetime, timedelta
 import time
-from dimagi.utils.couch.database import bigcouch_quorum_count, is_bigcouch
+from dimagi.utils.couch.database import get_safe_write_kwargs
 
 
 class ExportSchemaTest(TestCase):
@@ -23,7 +23,7 @@ class ExportSchemaTest(TestCase):
 
     def testGetLast(self):
         indices = ["a string", ["a", "list"]]
-        save_args = {'w': bigcouch_quorum_count()} if is_bigcouch() else {}
+        save_args = get_safe_write_kwargs()
 
         for index in indices:
             self.assertEqual(None, ExportSchema.last(index))
