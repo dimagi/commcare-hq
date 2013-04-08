@@ -1,6 +1,6 @@
 import sys
 from django.core.management.base import BaseCommand, CommandError
-from dimagi.utils.couch.database import get_db
+from dimagi.utils.couch.database import get_db, iter_docs
 from corehq.apps.domainsync.config import DocumentTransform, save
 from couchdbkit.client import Database
 from optparse import make_option
@@ -53,12 +53,13 @@ class Command(BaseCommand):
         if options['doc_types']:
             doc_types = options['doc_types'].split(',')
             for type in doc_types:
-                docs = self.get_docs_by_type(sourcedb, domain, type=type, since=since)
-                self.copy_docs(sourcedb, domain, docs, simulate, type=type, since=since)
+                startkey = [x for x in [domain, type, since] if x is not None]
+                endkey = [x for x in [domain, type, {}] if x is not None]
+                self.copy_docs(sourcedb, domain, startkey, endkey, simulate, type=type, since=since)
         else:
-            all_docs = sourcedb.view("domain/docs", startkey=[domain],
-                                 endkey=[domain, {}], reduce=False)
-            self.copy_docs(sourcedb, domain, all_docs, simulate)
+            startkey = [domain]
+            endkey = [domain, {}]
+            self.copy_docs(sourcedb, domain, startkey, endkey, simulate)
 
     def list_types(self, sourcedb, domain):
         doc_types = sourcedb.view("domain/docs", startkey=[domain],
@@ -66,27 +67,23 @@ class Command(BaseCommand):
         for row in doc_types:
             print "{:<30}- {}".format(row['key'][1], row['value'])
 
-    def get_docs_by_type(self, sourcedb, domain, type=None, since=None):
-        startkey = [x for x in [domain, type, since] if x is not None]
-        endkey = [x for x in [domain, type, {}] if x is not None]
-        docs = sourcedb.view("domain/docs", startkey=startkey,
-                             endkey=endkey, reduce=False)
-        return docs
+    def copy_docs(self, sourcedb, domain, startkey, endkey, simulate, type=None, since=None):
+        doc_ids = [result["id"] for result in sourcedb.view("domain/docs", startkey=startkey,
+                             endkey=endkey, reduce=False)]
 
-    def copy_docs(self, sourcedb, domain, docs, simulate, type=None, since=None):
-        total = len(docs)
+        total = len(doc_ids)
         count = 0
         targetdb = get_db()
         msg = "Found %s matching documents in domain: %s" % (total, domain)
         msg += " of type: %s" % (type) if type else ""
         msg += " since: %s" % (since) if since else ""
         print msg
-        for row in docs:
+        for doc in iter_docs(sourcedb, doc_ids):
             try:
                 count += 1
                 if not simulate:
-                    dt = DocumentTransform(sourcedb.get(row["id"]), sourcedb)
+                    dt = DocumentTransform(doc, sourcedb)
                     save(dt, targetdb)
-                print "     Synced %s/%s docs (%s: %s)" % (count, total, row["key"][1], row["id"])
+                print "     Synced %s/%s docs (%s: %s)" % (count, total, doc["doc_type"], doc["_id"])
             except Exception, e:
-                print "     Document %s failed! Error is: %s" % (row["id"], e)
+                print "     Document %s failed! Error is: %s" % (doc["_id"], e)

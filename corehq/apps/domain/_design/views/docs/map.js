@@ -35,7 +35,10 @@ function (doc) {
             case "EventLog":
                 return doc.date;
             case "Application":
-                return doc.built_on;
+            case "Application-Deleted":
+            case "RemoteApp":
+            case "RemoteApp-Deleted":
+                return doc.copy_of ? doc.built_on : null;
             default:
                 return null;
         }
