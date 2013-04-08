@@ -1,7 +1,9 @@
+from django.core.urlresolvers import reverse
 from lxml import etree
-from eulxml.xmlmap import StringField, XmlObject, IntegerField, NodeListField, NodeField, StringListField
+from eulxml.xmlmap import StringField, XmlObject, IntegerField, NodeListField, NodeField
 from corehq.apps.app_manager.xform import SESSION_CASE_ID
 from dimagi.utils.decorators.memoized import memoized
+from dimagi.utils.web import get_url_base
 
 
 class IdNode(XmlObject):
@@ -71,6 +73,7 @@ class LocaleResource(AbstractResource):
 
 class MediaResource(AbstractResource):
     ROOT_NAME = 'media'
+    path = StringField('@path')
 
 
 class Display(XmlObject):
@@ -242,8 +245,8 @@ class IdStrings(object):
     def locale_resource(self, lang):
         return u'app_{lang}_strings'.format(lang=lang)
 
-    def media_resource(self, path):
-        return u'media-{path}'.format(path=path)
+    def media_resource(self, multimedia_id, name):
+        return u'media-{id}-{name}'.format(id=multimedia_id, name=name)
 
     def detail(self, module, detail):
         return u"m{module.id}_{detail.type}".format(module=module, detail=detail)
@@ -295,6 +298,10 @@ class IdStrings(object):
         return module.get_referral_list_locale_id()
 
 
+class MediaResourceError(Exception):
+    pass
+
+
 class SuiteGenerator(object):
     def __init__(self, app):
         self.app = app
@@ -338,14 +345,29 @@ class SuiteGenerator(object):
 
     @property
     def media_resources(self):
-        paths = self.app.all_media_paths
-        version = self.app.version
-        for path in paths:
+        PREFIX = 'jr://file/commcare/'
+        for path, m in self.app.multimedia_map.items():
+            if path.startswith(PREFIX):
+                path = path[len(PREFIX):]
+            else:
+                raise MediaResourceError('%s does not start with jr://file/commcare/' % path)
+            split_path = path.split('/')
+            name = split_path.pop(-1)
+            # CommCare assumes jr://media/,
+            # which is an alias to jr://file/commcare/media/
+            # so we need to replace 'jr://file/commcare/' with '../'
+            # (this is a hack)
+            path = '../' + '/'.join(split_path)
+            multimedia_id = m.multimedia_id
             yield MediaResource(
-                id=self.id_strings.media_resource(path),
-                version=version,
-                local=path,
-                remote=path
+                id=self.id_strings.media_resource(multimedia_id, name),
+                path=path,
+                version=1,
+                local=None,
+                remote=get_url_base() + reverse(
+                    'hqmedia_download',
+                    args=[m.media_type, multimedia_id]
+                ) + name
             )
 
     @property

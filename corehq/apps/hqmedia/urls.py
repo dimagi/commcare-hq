@@ -3,7 +3,7 @@ from corehq.apps.hqmedia.views import (DownloadMultimediaZip, BulkUploadMultimed
                                        MultimediaUploadStatus, ViewMultimediaFile)
 
 urlpatterns = patterns('corehq.apps.hqmedia.views',
-    url(r'^file/(?P<media_type>[\w\-]+)/(?P<doc_id>[\w\-]+)/(foo.mp3)?(foo.wav)?$',
+    url(r'^file/(?P<media_type>[\w\-]+)/(?P<doc_id>[\w\-]+)/(.+)?$',
         ViewMultimediaFile.as_view(), name=ViewMultimediaFile.name),
     url(r'^upload_status/$', MultimediaUploadStatus.as_view(), name=MultimediaUploadStatus.name)
 )
