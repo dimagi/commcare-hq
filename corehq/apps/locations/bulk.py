@@ -113,6 +113,7 @@ def import_location(domain, loc_row, hierarchy_fields, property_fields, update, 
             else:
                 # TODO move this to LocationForm somehow
                 error = True
+                child = None
                 forms = filter(None, [form, form.sub_forms.get(loc_type)])
                 for k, v in itertools.chain(*(f.errors.iteritems() for f in forms)):
                     if k != '__all__':
@@ -124,7 +125,7 @@ def import_location(domain, loc_row, hierarchy_fields, property_fields, update, 
         if child:
             if is_terminal:
                 if update:
-                    properties_changed = any(v != getattr(child, k) for k, v in properties)
+                    properties_changed = any((v or None) != (getattr(child, k) or None) for k, v in properties.iteritems())
                     if properties_changed:
                         _, messages, _ = save(child)
                         for m in messages:
