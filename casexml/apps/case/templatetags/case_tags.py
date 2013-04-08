@@ -7,7 +7,6 @@ from django.utils.html import escape
 import datetime
 import pytz
 import dateutil
-from casexml.apps.case.models import CommCareCase
 from django.template.loader import render_to_string
 from dimagi.utils.timezones.utils import adjust_datetime_to_timezone
 from django.template.defaultfilters import yesno
@@ -118,37 +117,44 @@ def render_tables(tables, collapsible=False):
 
 @register.simple_tag
 def render_form(form, timezone=pytz.utc, display=None):
+    def key_filter(key):
+        if key in ("drugs_prescribed", "case", "meta", "clinic_ids",
+                   "drug_drill_down", "tmp", "info_hack_done"):
+            return False
 
-    form = dict(copy.deepcopy(form.form))
-    case = form.pop('case')
-    meta = form.pop('meta')
+        if any(key.startswith(p) for p in ['#', '@', '_']):
+            return False
 
+        return True
+
+    form = form.top_level_tags()
+
+    form_keys = [k for k in form.keys() if key_filter(k)]
     display = display or [
         (None, chunks(
-            [{"expr": prop} for prop in form],
+            [{"expr": prop} for prop in sorted(form_keys)],
             FORM_PROPERTIES_COLUMNS)
         )
     ]
-
     form_data = build_tables(form, definition=display, timezone=timezone)
     
+    case = form.pop('case')
     definition = [
         (None, chunks(
-            [{"expr": prop} for prop in case],
+            [{"expr": prop} for prop in sorted(case.keys())],
             FORM_PROPERTIES_COLUMNS)
         )
     ]
-
     form_case_data = build_tables(
             case, definition=definition, timezone=timezone)
-    
+   
+    meta = form.pop('meta')
     definition = [
         (None, chunks(
-            [{"expr": prop} for prop in meta],
+            [{"expr": prop} for prop in sorted(meta.keys())],
             FORM_PROPERTIES_COLUMNS)
         )
     ]
-
     form_meta_data = build_tables(meta, definition=definition,
             timezone=timezone)
 

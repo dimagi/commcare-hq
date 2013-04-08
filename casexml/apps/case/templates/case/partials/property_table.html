@@ -41,12 +41,16 @@
             {% for column in columns %}
             <dl>
                 {% for expr, name, value in column %}
+                {% if expr and name and value %}
                 <dt title="{{ expr }}">
                     {{ name }}
                 </dt>
                 <dd>
                     {{ value }}
                 </dd>
+                {% else %} {# empty row #}
+                <dt></dt><dd></dd>
+                {% endif %}
                 {% endfor %}
             </dl>
             {% empty %}
