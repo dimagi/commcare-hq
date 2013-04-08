@@ -237,9 +237,10 @@ def render_case(case, timezone=pytz.utc, display=None):
 
     dynamic_data = dict((k, v) for (k, v) in case.dynamic_case_properties()
                         if k in data)
+    dynamic_keys = sorted(dynamic_data.keys())
     definition = [
         (None, chunks(
-            [{"expr": prop} for prop in dynamic_data.keys()],
+            [{"expr": prop} for prop in dynamic_keys],
             DYNAMIC_CASE_PROPERTIES_COLUMNS)
         )
     ]
