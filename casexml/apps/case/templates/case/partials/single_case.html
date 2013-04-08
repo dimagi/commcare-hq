@@ -210,16 +210,16 @@
                         <select id="page_size_select" size="1" class="input-mini" data-bind="options: pagination_options, value: $root.page_size"></select> <span>per page</span>
                     </div>
 
-                    <div class="pagination pagination-right">
+                    <div class="pagination pagination-right" data-bind="visible: $root.page_count() > 1">
                         <ul>
                             <li>
-                                <button class="btn btn-small" type="button" data-bind="enable: $root.page_index() > 0, click: $root.prevPage">«</button>
+                                <button class="btn btn-small" type="button" data-bind="enable: $root.disp_page_index() > 1, click: $root.prevPage">«</button>
                             </li>
                             <li class="active">
                                 <select size="1" class="input-mini" data-bind="options: all_pages(), value: $root.disp_page_index"></select>
                             </li>
                             <li>
-                                <button class="btn btn-small" type="button" data-bind="enable: $root.disp_page_index() < $root.page_count() - 1, click: $root.nextPage">»</button>
+                                <button class="btn btn-small" type="button" data-bind="enable: $root.disp_page_index() < $root.page_count(), click: $root.nextPage">»</button>
                             </li>
                         </ul>
                     </div>
@@ -351,7 +351,6 @@
 
                 self.xforms = ko.observableArray([]);
                 self.page_size = ko.observable(10);
-                self.page_index = ko.observable(0);
                 self.disp_page_index = ko.observable(1);
                 self.total_rows = ko.observable(0);
                 self.page_count = ko.observable(0);
@@ -366,32 +365,6 @@
 
                 var api_url = "/a/{{ case.domain }}/api/v0.1/xform_es/";
                 console.log(api_url);
-
-                self.page_start_num = ko.computed(function() {
-                    return (self.page_index() * self.page_size()) + 1;
-                });
-
-                self.page_end_num = ko.computed(function() {
-                    return (self.page_index() * self.page_size()) + 1 + self.page_size();
-                });
-
-
-                self.page_size_changed = self.page_size.subscribe(function () {
-                    console.log("page size change");
-                    self.get_data(self.xform_query(), self.xform_data_cb);
-                });
-
-                self.disp_page_index_changed = self.disp_page_index.subscribe(function () {
-                    console.log("disp page index change");
-                    self.page_index(self.disp_page_index() - 1);
-                    self.get_data(self.xform_query(), self.xform_data_cb);
-                });
-
-
-                self.all_pages = function() {
-                    return _.range(1, self.page_count()+1);
-                };
-
 
 
                 //based upon criteria, get totals + facets?
@@ -415,7 +388,7 @@
                             }
                         },
                         "size": self.page_size(),
-                        "from": self.page_index() * self.page_size()
+                        "from": (self.disp_page_index() || 1 - 1) * self.page_size()
                     };
                 };
 
@@ -441,6 +414,7 @@
 
 
                 self.get_xform_data = function(xform_id) {
+                    //method for getting individual xform via GET
                     console.log("querying xform: " + xform_id);
 
                     $.ajax({
@@ -461,7 +435,9 @@
                     })
                 };
 
-                self.get_data = function(query, success_cb) {
+                self.run_es_query = function(query, success_cb) {
+                    //generic caller for ES query
+                    console.log("running query");
                     console.log(query);
                     self.data_loading(true);
                     $.ajax({
@@ -483,8 +459,9 @@
                 };
 
 
-                self.xform_data_cb = function(data) {
-                    console.log("xform_data_cb");
+                self.xform_history_cb = function(data) {
+                    //callback for rendering the xforms list
+                    console.log("xform_history_cb");
                     console.log(data);
                     self.total_rows(data['hits']['total']);
                     self.page_count(Math.floor(data['hits']['total']/self.page_size()));
@@ -575,17 +552,22 @@
 
 
                 //main function data collection - entry point if you will
-                //self.get_data(self.stats_query(), self.stats_data_cb);
-                self.get_data(self.xform_query(), self.xform_data_cb);
+                //self.run_es_query(self.stats_query(), self.stats_data_cb);
+                console.log("Running query for the first time");
+                self.run_es_query(self.xform_query(), self.xform_history_cb);
 
                 self.nextPage = function() {
+                    console.log("nextPage");
+                    console.log(self.disp_page_index());
                     self.disp_page_index(self.disp_page_index() + 1);
-                    self.get_data(self.xform_query(), self.xform_data_cb);
+                    self.run_es_query(self.xform_query(), self.xform_history_cb);
                 };
 
                 self.prevPage = function() {
+                    console.log("prevPage");
+                    console.log(self.disp_page_index());
                     self.disp_page_index(self.disp_page_index() - 1);
-                    self.get_data(self.xform_query(), self.xform_data_cb);
+                    self.run_es_query(self.xform_query(), self.xform_history_cb);
                 };
 
                 self.clickRow = function(item) {
@@ -602,6 +584,40 @@
                         self.selected_xforms([]);
                         self.selected_xforms.push(self.xforms()[self.selected_xform_idx()]);
                     }
+                };
+
+                self.page_start_num = ko.computed(function() {
+                    console.log("page start num");
+                    console.log(self.page_size());
+                    console.log(self.disp_page_index() || 1);
+                    return ((self.disp_page_index() || 1 - 1) * self.page_size()) + 1;
+                });
+
+                self.page_end_num = ko.computed(function() {
+                    var end_page_num = ((self.disp_page_index() || 1 - 1) * self.page_size()) + 1 + self.page_size();
+                    if (end_page_num > self.total_rows()) {
+                        return self.total_rows();
+                    }
+                    else {
+                        return end_page_num;
+                    }
+                });
+
+
+                self.page_size_changed = self.page_size.subscribe(function () {
+                    console.log("page size change");
+                    self.run_es_query(self.xform_query(), self.xform_history_cb);
+                });
+
+                self.disp_page_index_changed = self.disp_page_index.subscribe(function () {
+                    console.log("disp page index change");
+                    self.run_es_query(self.xform_query(), self.xform_history_cb);
+                });
+
+
+                self.all_pages = function() {
+                    console.log("all pages");
+                    return _.range(1, self.page_count()+1);
                 };
 
                 self.xform_view = ko.computed(function () {
@@ -624,12 +640,6 @@
                         }
                     }
                 });
-
-                self.sortByName = function() {
-                    self.xforms.sort(function(a, b) {
-                        return a.name < b.name ? -1 : 1;
-                    });
-                };
             };
 
             ko.applyBindings(new XFormListViewModel(), $("#xform-list-block")[0]);
