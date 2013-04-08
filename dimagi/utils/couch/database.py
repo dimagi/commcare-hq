@@ -62,3 +62,9 @@ def bigcouch_quorum_count():
     """
     return (3 if not hasattr(settings, 'BIGCOUCH_QUORUM_COUNT')
             else settings.BIGCOUCH_QUORUM_COUNT)
+
+def get_safe_write_kwargs():
+    return {'w': bigcouch_quorum_count()} if is_bigcouch() else {}
+
+def get_safe_read_kwargs():
+    return {'r': bigcouch_quorum_count()} if is_bigcouch() else {}
