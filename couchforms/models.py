@@ -6,7 +6,7 @@ import couchforms.const as const
 from dimagi.utils.indicators import ComputedDocumentMixin
 from dimagi.utils.parsing import string_to_datetime
 from dimagi.utils.couch.safe_index import safe_index
-from dimagi.utils.couch.database import is_bigcouch, bigcouch_quorum_count, get_safe_read_kwargs
+from dimagi.utils.couch.database import get_safe_read_kwargs, SafeSaveDocument
 from xml.etree import ElementTree
 from django.utils.datastructures import SortedDict
 from couchdbkit.resource import ResourceNotFound
@@ -69,7 +69,7 @@ class Metadata(DocumentSchema):
     deprecatedID = StringProperty()
     username = StringProperty()
 
-class XFormInstance(Document, UnicodeMixIn, ComputedDocumentMixin):
+class XFormInstance(SafeSaveDocument, UnicodeMixIn, ComputedDocumentMixin):
     """An XForms instance."""
     xmlns = StringProperty()
     received_on = DateTimeProperty()
@@ -147,13 +147,7 @@ class XFormInstance(Document, UnicodeMixIn, ComputedDocumentMixin):
     def __unicode__(self):
         return "%s (%s)" % (self.type, self.xmlns)
 
-    def save(self, *args, **kwargs):
-        # these documents are particularly finicky and get save/resaved
-        # a lot in sucession during form submits, so for now always write
-        # to all nodes
-        if is_bigcouch() and 'w' not in kwargs:
-            kwargs['w'] = bigcouch_quorum_count()
-
+    def save(self, **kwargs):
         # HACK: cloudant has a race condition when saving newly created forms
         # which throws errors here. use a try/retry loop here to get around
         # it until we find something more stable.
@@ -162,7 +156,7 @@ class XFormInstance(Document, UnicodeMixIn, ComputedDocumentMixin):
         tries = 0
         while True:
             try:
-                return super(XFormInstance, self).save(*args, **kwargs)
+                return super(XFormInstance, self).save(**kwargs)
             except PreconditionFailed:
                 if tries == 0:
                     logging.error('doc %s got a precondition failed' % self._id)
