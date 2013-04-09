@@ -1,4 +1,5 @@
 from couchdbkit.client import Database
+from couchdbkit.ext.django.schema import Document
 from django.conf import settings
 from dimagi.utils.chunked import chunked
 from dimagi.utils.couch.bulk import get_docs
@@ -68,3 +69,14 @@ def get_safe_write_kwargs():
 
 def get_safe_read_kwargs():
     return {'r': bigcouch_quorum_count()} if is_bigcouch() else {}
+
+
+class SafeSaveDocument(Document):
+    """
+    A document class that overrides save such that any time it's called in bigcouch
+    mode it saves with the maximum quorum count (unless explicitly overridden).
+    """
+    def save(self, **params):
+        if is_bigcouch() and 'w' not in params:
+            params['w'] = bigcouch_quorum_count()
+        return super(SafeSaveDocument, self).save(**params)
