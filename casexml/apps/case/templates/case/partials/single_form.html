@@ -24,8 +24,26 @@
         {% render_tables form_data %}
     </div>
     <div class="tab-pane" id="form-case-data">
-        {% render_tables form_case_data %}
+        {% if this_case_data and other_cases_data %}
+        <h3>{% trans "This Case" %}</h3>
+        {% endif %}
+
+        {% if this_case_data %}
+        {% render_tables this_case_data %}
+        {% endif %}
+
+        <div class="clearfix"></div>
+        {% if this_case_data and other_cases_data %}
+        <h3>{% trans "Other Cases" %}</h3>
+        {% endif %}
+
+        {% if other_cases_data %}
+        {% for data in other_cases_data %}
+        {% render_tables data %}
+        {% endfor %}
+        {% endif %}
     </div>
+    
     <div class="tab-pane" id="form-meta-data">
         {% render_tables form_meta_data %}
     </div>
