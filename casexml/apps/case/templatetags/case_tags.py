@@ -15,6 +15,9 @@ import itertools
 import types
 import collections
 
+from casexml.apps.case.xform import extract_case_blocks
+from casexml.apps.case import const
+
 def chunks(l, n):
     """Yield successive n-sized chunks from l."""
     for i in xrange(0, len(l), n):
@@ -115,8 +118,16 @@ def render_tables(tables, collapsible=False):
         "tables": tables
     })
 
+
+def get_definition(keys, num_columns=FORM_PROPERTIES_COLUMNS):
+    return [
+        (None, 
+         chunks([{"expr": prop} for prop in sorted(keys)], num_columns))
+    ]
+
+
 @register.simple_tag
-def render_form(form, timezone=pytz.utc, display=None):
+def render_form(form, timezone=pytz.utc, display=None, case_id=None):
     def key_filter(key):
         if key in ("drugs_prescribed", "case", "meta", "clinic_ids",
                    "drug_drill_down", "tmp", "info_hack_done"):
@@ -127,41 +138,47 @@ def render_form(form, timezone=pytz.utc, display=None):
 
         return True
 
-    form = form.top_level_tags()
+    # Form Data tab
+    form_dict = form.top_level_tags()
+    form_keys = [k for k in copy.deepcopy(form_dict).keys() if key_filter(k)]
+    form_data = build_tables(form_dict, definition=get_definition(form_keys),
+            timezone=timezone)
 
-    form_keys = [k for k in form.keys() if key_filter(k)]
-    display = display or [
-        (None, chunks(
-            [{"expr": prop} for prop in sorted(form_keys)],
-            FORM_PROPERTIES_COLUMNS)
-        )
-    ]
-    form_data = build_tables(form, definition=display, timezone=timezone)
-    
-    case = form.pop('case')
-    definition = [
-        (None, chunks(
-            [{"expr": prop} for prop in sorted(case.keys())],
-            FORM_PROPERTIES_COLUMNS)
-        )
-    ]
-    form_case_data = build_tables(
-            case, definition=definition, timezone=timezone)
+    # Case tab
+    this_case_block = None
+    other_cases_blocks = []
+
+    for block in extract_case_blocks(form):
+        if block.get("@%s" % const.CASE_TAG_ID) == case_id:
+            this_case_block = block
+        else:
+            other_cases_blocks.append(block)
    
-    meta = form.pop('meta')
-    definition = [
-        (None, chunks(
-            [{"expr": prop} for prop in sorted(meta.keys())],
-            FORM_PROPERTIES_COLUMNS)
-        )
-    ]
-    form_meta_data = build_tables(meta, definition=definition,
+    if this_case_block:
+        this_case_data = build_tables( 
+                this_case_block,
+                definition=get_definition(this_case_block.keys()),
+                timezone=timezone)
+    else:
+        this_case_data = None
+
+    if other_cases_blocks:
+        other_cases_data = [build_tables(
+                b, definition=get_definition(b.keys()), timezone=timezone)
+                for b in other_cases_blocks]
+    else:
+        other_cases_data = None
+  
+    # Meta tab
+    meta = form_dict.pop('meta')
+    form_meta_data = build_tables(meta, definition=get_definition(meta.keys()),
             timezone=timezone)
 
     return render_to_string("case/partials/single_form.html", {
         "form_data": form_data,
         "form_meta_data": form_meta_data,
-        "form_case_data": form_case_data,
+        "this_case_data": this_case_data,
+        "other_cases_data": other_cases_data,
     })
 
 
