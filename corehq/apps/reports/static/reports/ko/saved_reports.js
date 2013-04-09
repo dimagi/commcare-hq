@@ -68,6 +68,7 @@ var ReportConfig = function (data) {
 
 var ReportConfigsViewModel = function (options) {
     var self = this;
+    self.defaultItem = options.defaultItem;
     self.filterForm = options.filterForm;
 
     self.initialLoad = true;
@@ -172,7 +173,7 @@ var ReportConfigsViewModel = function (options) {
         });
 
         self.configBeingViewed().filters = filters;
-        self.configBeingEdited(self.configBeingViewed());
+        self.configBeingEdited(new ReportConfig(self.defaultItem));
         self.modalSaveButton.state('save');
 
         /*$("#modal-body").find('date-picker').datepicker({

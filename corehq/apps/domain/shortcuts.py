@@ -18,10 +18,5 @@ def create_user(username, password, is_staff=False, is_superuser=False, is_activ
     user.save()
     return user
 
-def add_user_to_domain(user, domain):
-    couch_user = user.get_profile().get_couch_user()
-    couch_user.add_domain_membership(domain.name)
-    couch_user.save()
-
 from corehq.apps.domain.models import Domain
 from django.contrib.auth.models import User
