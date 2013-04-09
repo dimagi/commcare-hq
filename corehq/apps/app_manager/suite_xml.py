@@ -1,10 +1,14 @@
+from django.core.urlresolvers import reverse
 from lxml import etree
-from eulxml.xmlmap import StringField, XmlObject, IntegerField, NodeListField, NodeField, StringListField
+from eulxml.xmlmap import StringField, XmlObject, IntegerField, NodeListField, NodeField
 from corehq.apps.app_manager.xform import SESSION_CASE_ID
 from dimagi.utils.decorators.memoized import memoized
+from dimagi.utils.web import get_url_base
+
 
 class IdNode(XmlObject):
     id = StringField('@id')
+
 
 class XpathVariable(XmlObject):
     ROOT_NAME = 'variable'
@@ -12,10 +16,12 @@ class XpathVariable(XmlObject):
 
     locale_id = StringField('locale/@id')
 
+
 class Xpath(XmlObject):
     ROOT_NAME = 'xpath'
     function = StringField('@function')
     variables = NodeListField('variable', XpathVariable)
+
 
 class Text(XmlObject):
     """
@@ -37,6 +43,7 @@ class Text(XmlObject):
 
     locale_id = StringField('locale/@id')
 
+
 class AbstractResource(XmlObject):
 
     LOCATION_TEMPLATE = 'resource/location[@authority="%s"]'
@@ -54,12 +61,20 @@ class AbstractResource(XmlObject):
         self.local = local
         self.remote = remote
 
+
 class XFormResource(AbstractResource):
     ROOT_NAME = 'xform'
+
 
 class LocaleResource(AbstractResource):
     ROOT_NAME = 'locale'
     language = StringField('@language')
+
+
+class MediaResource(AbstractResource):
+    ROOT_NAME = 'media'
+    path = StringField('@path')
+
 
 class Display(XmlObject):
     ROOT_NAME = 'display'
@@ -71,6 +86,7 @@ class Display(XmlObject):
         super(Display, self).__init__(text=text, **kwargs)
         self.media_image = media_image
         self.media_audio = media_audio
+
 
 class DisplayNode(XmlObject):
     """Any node that has the awkward text-or-display subnode, like Command or Menu"""
@@ -89,9 +105,11 @@ class DisplayNode(XmlObject):
         else:
             self.text = text
 
+
 class Command(DisplayNode, IdNode):
     ROOT_NAME = 'command'
     relevant = StringField('@relevant')
+
 
 class Instance(IdNode):
     ROOT_NAME = 'instance'
@@ -102,6 +120,7 @@ class Instance(IdNode):
         super(Instance, self).__init__(id=id, **kwargs)
         self.src = src
 
+
 class SessionDatum(IdNode):
     ROOT_NAME = 'datum'
 
@@ -109,6 +128,7 @@ class SessionDatum(IdNode):
     value = StringField('@value')
     detail_select = StringField('@detail-select')
     detail_confirm = StringField('@detail-confirm')
+
 
 class Entry(XmlObject):
     ROOT_NAME = 'entry'
@@ -121,21 +141,26 @@ class Entry(XmlObject):
     datums = NodeListField('session/datum', SessionDatum)
     datum = NodeField('session/datum', SessionDatum)
 
+
 class Menu(DisplayNode, IdNode):
     ROOT_NAME = 'menu'
 
     commands = NodeListField('command', Command)
+
 
 class AbstractTemplate(XmlObject):
     form = StringField('@form', choices=['image', 'phone', 'address'])
     width = IntegerField('@width')
     text = NodeField('text', Text)
 
+
 class Template(AbstractTemplate):
     ROOT_NAME = 'template'
 
+
 class Header(AbstractTemplate):
     ROOT_NAME = 'header'
+
 
 class Field(XmlObject):
     ROOT_NAME = 'field'
@@ -143,6 +168,7 @@ class Field(XmlObject):
     sort = StringField('@sort')
     header = NodeField('header', Header)
     template = NodeField('template', Template)
+
 
 class DetailVariable(XmlObject):
     ROOT_NAME = '_'
@@ -155,6 +181,7 @@ class DetailVariable(XmlObject):
         self.node.tag = value
 
     name = property(get_name, set_name)
+
 
 class Detail(IdNode):
     """
@@ -187,6 +214,7 @@ class Fixture(IdNode):
             self.node.remove(child)
         self.node.append(xml)
 
+
 class Suite(XmlObject):
     ROOT_NAME = 'suite'
 
@@ -194,12 +222,14 @@ class Suite(XmlObject):
 
     xform_resources = NodeListField('xform', XFormResource)
     locale_resources = NodeListField('locale', LocaleResource)
+    media_resources = NodeListField('locale', MediaResource)
 
     details = NodeListField('detail', Detail)
     entries = NodeListField('entry', Entry)
     menus = NodeListField('menu', Menu)
 
     fixtures = NodeListField('fixture', Fixture)
+
 
 class IdStrings(object):
 
@@ -214,6 +244,9 @@ class IdStrings(object):
 
     def locale_resource(self, lang):
         return u'app_{lang}_strings'.format(lang=lang)
+
+    def media_resource(self, multimedia_id, name):
+        return u'media-{id}-{name}'.format(id=multimedia_id, name=name)
 
     def detail(self, module, detail):
         return u"m{module.id}_{detail.type}".format(module=module, detail=detail)
@@ -264,6 +297,11 @@ class IdStrings(object):
         """1.0 holdover"""
         return module.get_referral_list_locale_id()
 
+
+class MediaResourceError(Exception):
+    pass
+
+
 class SuiteGenerator(object):
     def __init__(self, app):
         self.app = app
@@ -303,6 +341,33 @@ class SuiteGenerator(object):
                 version=self.app.version,
                 local=path,
                 remote=path,
+            )
+
+    @property
+    def media_resources(self):
+        PREFIX = 'jr://file/commcare/'
+        for path, m in self.app.multimedia_map.items():
+            if path.startswith(PREFIX):
+                path = path[len(PREFIX):]
+            else:
+                raise MediaResourceError('%s does not start with jr://file/commcare/' % path)
+            split_path = path.split('/')
+            name = split_path.pop(-1)
+            # CommCare assumes jr://media/,
+            # which is an alias to jr://file/commcare/media/
+            # so we need to replace 'jr://file/commcare/' with '../'
+            # (this is a hack)
+            path = '../' + '/'.join(split_path)
+            multimedia_id = m.multimedia_id
+            yield MediaResource(
+                id=self.id_strings.media_resource(multimedia_id, name),
+                path=path,
+                version=1,
+                local=None,
+                remote=get_url_base() + reverse(
+                    'hqmedia_download',
+                    args=[m.media_type, multimedia_id]
+                ) + name
             )
 
     @property
@@ -355,11 +420,13 @@ class SuiteGenerator(object):
                 yield Instance(id='casedb', src='jr://instance/casedb')
                 if any([form.form_filter for form in module.get_forms()]) and \
                         module.all_forms_require_a_case():
-                    yield Instance(id='commcaresession', src='jr://instance/session')
+                    yield Instance(id='commcaresession',
+                                   src='jr://instance/session')
             e.instances.extend(get_instances())
 
 
-            # I'm setting things individually instead of in the constructor so they appear in the correct order
+            # I'm setting things individually instead of in the constructor
+            # so that they appear in the correct order
             e.datum = SessionDatum()
             e.datum.id='case_id'
             e.datum.nodeset="instance('casedb')/casedb/case[@case_type='{module.case_type}'][@status='open']{filter_xpath}".format(
@@ -445,21 +512,21 @@ class SuiteGenerator(object):
             f.set_content(groups)
             yield f
 
-    def __call__(self, *args, **kwargs):
-        suite = Suite()
-        suite.version = self.app.version
-        def add_to_suite(attr):
-            getattr(suite, attr).extend(getattr(self, attr))
-        map(add_to_suite, [
+    def generate_suite(self, sections=None):
+        sections = sections or (
             'xform_resources',
             'locale_resources',
             'details',
             'entries',
             'menus',
-            'fixtures'
-        ])
+            'fixtures',
+        )
+        suite = Suite()
+        suite.version = self.app.version
+
+        def add_to_suite(attr):
+            getattr(suite, attr).extend(getattr(self, attr))
+
+        map(add_to_suite, sections)
         return suite.serializeDocument(pretty=True)
 
-def generate_suite(app):
-    g = SuiteGenerator(app)
-    return g()

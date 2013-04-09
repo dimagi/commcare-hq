@@ -10,7 +10,8 @@ from django.core.urlresolvers import reverse
 from corehq.apps.domain.models import Domain
 from corehq.apps.users.models import WebUser, CouchUser
 from dimagi.utils.django.email import send_HTML_email
-from dimagi.utils.couch.database import is_bigcouch, bigcouch_quorum_count
+from dimagi.utils.couch.database import get_safe_write_kwargs
+
 
 def activate_new_user(form, is_domain_admin=True, domain=None, ip=None):
     username = form.cleaned_data['email']
@@ -63,7 +64,7 @@ def request_new_domain(request, form, org, domain_type=None, new_user=True):
         new_domain.is_active = True
 
     # ensure no duplicate domain documents get created on cloudant
-    new_domain.save(**{'w': bigcouch_quorum_count()} if is_bigcouch() else {})
+    new_domain.save(**get_safe_write_kwargs())
 
     if not new_domain.name:
         new_domain.name = new_domain._id
@@ -179,7 +180,7 @@ The CommCareHQ Team
 <p>Hello {name},</p>
 <p>You may now  <a href="{domain_link}">visit your newly created project</a> with the CommCare HQ User <strong>{username}</strong>.</p>
 
-<p>Please remember, if you need help you can visit the <a href="{wiki_link}">CommCare Wiki</a>, the home of all CommCare documentation.</p>
+<p>Please remember, if you need help you can visit the <a href="{wiki_link}">CommCare Help Site</a>, the home of all CommCare documentation.</p>
 <p>We also encourage you to join the <a href="{users_link}">commcare-users google group</a>, where CommCare users from all over the world ask each other questions and share information over the commcare-users mailing list.</p>
 <p>If you encounter any technical problems while using CommCareHQ, look for a "Report an Issue" link at the bottom of every page.  Our developers will look into the problem and communicate with you about a solution.</p>
 <p style="margin-top:1em">Thank you,</p>
