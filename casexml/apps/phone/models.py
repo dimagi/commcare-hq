@@ -1,4 +1,5 @@
 from couchdbkit.ext.django.schema import *
+from dimagi.utils.couch.database import SafeSaveDocument
 from dimagi.utils.mixins import UnicodeMixIn
 from dimagi.utils.couch import LooselyEqualDocumentSchema
 from casexml.apps.case import const
@@ -74,7 +75,7 @@ class ConfigurableAssertionMixin(object):
             logging.warn("assertion failed: %s" % msg)
             self.has_assert_errors = True
 
-class SyncLog(Document, UnicodeMixIn, ConfigurableAssertionMixin):
+class SyncLog(SafeSaveDocument, UnicodeMixIn, ConfigurableAssertionMixin):
     """
     A log of a single sync operation.
     """
