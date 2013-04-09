@@ -17,7 +17,7 @@ from couchforms.models import XFormInstance
 from casexml.apps.case.sharedmodels import IndexHoldingMixIn, CommCareCaseIndex
 from copy import copy
 import itertools
-from dimagi.utils.couch.database import get_db
+from dimagi.utils.couch.database import get_db, SafeSaveDocument
 from couchdbkit.exceptions import ResourceNotFound, ResourceConflict
 from dimagi.utils.couch import LooselyEqualDocumentSchema
 
@@ -28,7 +28,7 @@ For details on casexml check out:
 http://bitbucket.org/javarosa/javarosa/wiki/casexml
 """
 
-class CaseBase(Document):
+class CaseBase(SafeSaveDocument):
     """
     Base class for cases and referrals.
     """
@@ -40,6 +40,7 @@ class CaseBase(Document):
     
     class Meta:
         app_label = 'case'
+
 
 class CommCareCaseAction(LooselyEqualDocumentSchema):
     """
