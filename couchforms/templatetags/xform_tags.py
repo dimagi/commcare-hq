@@ -8,6 +8,11 @@ from couchforms.models import XFormInstance
 from dimagi.utils.timezones import utils as tz_utils
 from couchdbkit.exceptions import ResourceNotFound
 
+SYSTEM_FIELD_NAMES = (
+    "drugs_prescribed", "case", "meta", "clinic_ids", "drug_drill_down", "tmp",
+    "info_hack_done"
+)
+
 register = template.Library()
 
 @register.simple_tag
@@ -23,7 +28,6 @@ def render_form_data(form):
             # hackity hack this static list of things we don't actually
             # want to display
             if show_hidden: return False
-            SYSTEM_FIELD_NAMES = ("drugs_prescribed", "case", "meta", "clinic_ids", "drug_drill_down", "tmp", "info_hack_done")
             return field_key.startswith("#") or field_key.startswith("@") or field_key.startswith("_")\
             or field_key.lower() in SYSTEM_FIELD_NAMES
 
