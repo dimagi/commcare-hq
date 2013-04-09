@@ -15,7 +15,7 @@ from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.html import format_html
 from dimagi.utils.logging import notify_exception
 from dimagi.utils.timezones import fields as tz_fields
-from dimagi.utils.couch.database import get_db
+from dimagi.utils.couch.database import get_db, get_safe_write_kwargs
 from itertools import chain
 from langcodes import langs as all_langs
 from collections import defaultdict
@@ -481,7 +481,7 @@ class Domain(Document, HQBillingDomainMixin, SnapshotMixin):
             new_domain = Domain(name=name,
                             is_active=is_active,
                             date_created=datetime.utcnow())
-            new_domain.save()
+            new_domain.save(**get_safe_write_kwargs())
             return new_domain
 
     def password_format(self):
