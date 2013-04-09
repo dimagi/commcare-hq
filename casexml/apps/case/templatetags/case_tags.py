@@ -15,6 +15,7 @@ import itertools
 import types
 import collections
 
+from couchforms.templatetags.xform_tags import SYSTEM_FIELD_NAMES
 from casexml.apps.case.xform import extract_case_blocks
 from casexml.apps.case import const
 
@@ -81,7 +82,8 @@ def build_tables(data, definition, processors=None, timezone=pytz.utc):
             try:
                 val = dateutil.parser.parse(val)
             except:
-                pass  # val = val
+                if not val:
+                    val = '---'
 
         if isinstance(val, datetime.datetime):
             if val.tzinfo is None:
@@ -129,8 +131,7 @@ def get_definition(keys, num_columns=FORM_PROPERTIES_COLUMNS):
 @register.simple_tag
 def render_form(form, timezone=pytz.utc, display=None, case_id=None):
     def key_filter(key):
-        if key in ("drugs_prescribed", "case", "meta", "clinic_ids",
-                   "drug_drill_down", "tmp", "info_hack_done"):
+        if key in SYSTEM_FIELD_NAMES:
             return False
 
         if any(key.startswith(p) for p in ['#', '@', '_']):
@@ -139,8 +140,8 @@ def render_form(form, timezone=pytz.utc, display=None, case_id=None):
         return True
 
     # Form Data tab
-    form_dict = form.top_level_tags()
-    form_keys = [k for k in copy.deepcopy(form_dict).keys() if key_filter(k)]
+    form_dict = copy.deepcopy(form.top_level_tags())
+    form_keys = [k for k in form_dict.keys() if key_filter(k)]
     form_data = build_tables(form_dict, definition=get_definition(form_keys),
             timezone=timezone)
 
