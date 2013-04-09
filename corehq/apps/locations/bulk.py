@@ -125,7 +125,8 @@ def import_location(domain, loc_row, hierarchy_fields, property_fields, update, 
         if child:
             if is_terminal:
                 if update:
-                    properties_changed = any((v or None) != (getattr(child, k) or None) for k, v in properties.iteritems())
+                    # (x or None) is to not distinguish between '' and None
+                    properties_changed = any((v or None) != (getattr(child, k, None) or None) for k, v in properties.iteritems())
                     if properties_changed:
                         _, messages, _ = save(child)
                         for m in messages:
