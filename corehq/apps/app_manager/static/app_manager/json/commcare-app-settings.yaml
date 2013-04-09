@@ -1,6 +1,6 @@
 - id: name
   name: Name
-  description: "Application Name"
+  description: ""
   default: ""
   type: hq
   widget: text
@@ -51,7 +51,7 @@
 # Application only
 - id: case_sharing
   name: "Case Sharing"
-  description: ""
+  description: "Allow mobile workers in the same case sharing group to share case lists.  Read more on the <a href='https://confluence.dimagi.com/display/commcarepublic/Case+Sharing'/>Help Site</a>"
   widget: bool
   default: false
   requires: "{$parent.doc_type}='Application'"
@@ -60,6 +60,7 @@
 
 - id: cloudcare_enabled
   name: "CloudCare"
+  description: "Allow mobile workers to access the web-based version of your application. Read more on the <a href='https://confluence.dimagi.com/display/commcarepublic/Using+CloudCare'/>Help Site</a>"
   widget: bool
   default: false
   requires: "{$parent.doc_type}='Application'"
