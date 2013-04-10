@@ -221,7 +221,7 @@
                                 <select size="1" class="input-mini" data-bind="options: all_pages(), value: $root.disp_page_index"></select>
                             </li>
                             <li>
-                                <button class="btn btn-small" type="button" data-bind="enable: $root.disp_page_index() < $root.page_count(), click: $root.nextPage">»</button>
+                                <button class="btn btn-small" type="button" data-bind="enable: $root.page_end_num() < $root.total_rows(), click: $root.nextPage">»</button>
                             </li>
                         </ul>
                     </div>
@@ -373,6 +373,7 @@
                 //then populate observableArray and set pagination limits
 
                 self.xform_query = function () {
+                    var start_num = self.disp_page_index() || 1;
                     return {
                         "query": {
                             "filtered": {
@@ -390,7 +391,7 @@
                             }
                         },
                         "size": self.page_size(),
-                        "from": (self.disp_page_index() || 1 - 1) * self.page_size()
+                        "from": (start_num - 1) * self.page_size()
                     };
                 };
 
@@ -464,9 +465,9 @@
                 self.xform_history_cb = function(data) {
                     //callback for rendering the xforms list
                     console.log("xform_history_cb");
-                    console.log(data);
                     self.total_rows(data['hits']['total']);
-                    self.page_count(Math.floor(data['hits']['total']/self.page_size()));
+                    console.log(data['hits']['total']);
+                    self.page_count(Math.ceil(data['hits']['total']/self.page_size()));
                     var mapped_xforms = $.map(data['hits']['hits'], function (item) {
                         return new XFormDataModel(item['_source']);
                     });
@@ -592,11 +593,13 @@
                     console.log("page start num");
                     console.log(self.page_size());
                     console.log(self.disp_page_index() || 1);
-                    return ((self.disp_page_index() || 1 - 1) * self.page_size()) + 1;
+                    var start_num = self.disp_page_index() || 1;
+                    return ((start_num - 1) * self.page_size()) + 1;
                 });
 
                 self.page_end_num = ko.computed(function() {
-                    var end_page_num = ((self.disp_page_index() || 1 - 1) * self.page_size()) + 1 + self.page_size();
+                    var start_num = self.disp_page_index() || 1;
+                    var end_page_num = ((start_num - 1) * self.page_size()) + self.page_size();
                     if (end_page_num > self.total_rows()) {
                         return self.total_rows();
                     }
