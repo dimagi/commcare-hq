@@ -23,7 +23,10 @@ def prepare_download(download_id, payload_func, content_disposition, mimetype, e
     payload_func should be an instance of SerializableFunction, and can return
     either a string or a FileWrapper object
     """
-    payload = payload_func()
+    try:
+        payload = payload_func(process=prepare_download)
+    except TypeError:
+        payload = payload_func()
     expose_download(payload, expiry, mimetype=mimetype,
                     content_disposition=content_disposition,
                     download_id=download_id)
