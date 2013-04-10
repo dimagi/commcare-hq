@@ -98,6 +98,8 @@ class CommCareMultimedia(Document):
             is_update = True
 
         if not attachment_id in self.current_attachments:
+            if not getattr(self, '_id'):
+                self.save()  # let's just make sure an id has been assigned to this guy before we try to put_attachment
             self.put_attachment(data, attachment_id, content_type=self.get_mime_type(data))
             new_media = AuxMedia()
             new_media.uploaded_date = datetime.utcnow()
