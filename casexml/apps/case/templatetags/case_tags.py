@@ -8,6 +8,7 @@ import datetime
 import pytz
 import dateutil
 from django.template.loader import render_to_string
+import simplejson
 from dimagi.utils.timezones.utils import adjust_datetime_to_timezone
 from django.template.defaultfilters import yesno
 
@@ -272,10 +273,14 @@ def render_case(case, timezone=pytz.utc, display=None):
     dynamic_properties = build_tables(
             dynamic_data, definition=definition, timezone=timezone)
 
+    actions = case.to_json()['actions']
+    actions.reverse()
+
     return render_to_string("case/partials/single_case.html", {
         "default_properties": default_properties,
         "dynamic_properties": dynamic_properties,
-        "case": case, 
+        "case": case,
+        "case_actions": mark_safe(simplejson.dumps(actions)),
         "timezone": timezone
     })
     

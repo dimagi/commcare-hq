@@ -4,7 +4,7 @@
 {% load timezone_tags %}
 {% load case_tags %}
 {% load hq_shared_tags %}
-<script src="{% static "case/js/lib/jquery.inview.js" %}"></script>
+{#<script src="{% static "case/js/lib/jquery.inview.js" %}"></script>#}
 
 <style type="text/css">
     .hq-generic-report {
@@ -185,9 +185,9 @@
         <table class="table table-bordered table-striped table-hover">
             <thead>
             <tr>
-                <th class="span1">Date</th>
-                <th class="span1">Form</th>
-                <th class="span1">Username</th>
+                <th class="span1">{% trans "Received" %}</th>
+                <th class="span1">{% trans "Form" %}</th>
+                <th class="span1">{% trans "User" %}</th>
             </tr>
             </thead>
             <tbody data-bind="foreach: xforms">
@@ -320,10 +320,6 @@
 
                 self.get_form_data = function() {
                     return "<dl class='dl-horizontal'>" + JSON.stringify(self.form_data(), function(key,value) {
-                        console.log(self.form_data());
-                        console.log(typeof(value));
-                        console.log("##" + key + "##");
-                        console.log("$$" + value + "$$");
                         if (typeof(value) == "object") {
                             return "<dt><h3>" + key + "</h3></dt><dd>" + recursiveRender(value, 0) + "</dd>";
                         } else {
@@ -366,32 +362,57 @@
                 self.data_loading = ko.observable(false);
 
                 var api_url = "/a/{{ case.domain }}/api/v0.1/xform_es/";
-                console.log(api_url);
 
 
                 //based upon criteria, get totals + facets?
                 //then populate observableArray and set pagination limits
 
                 self.xform_query = function () {
+                    //elastic query based upon case id
+                    var id_query = self.xform_id_query();
+                    return id_query;
+                    //todo once the xform index is updated with embedded case properties
+                    //var start_num = self.disp_page_index() || 1;
+                    //return {
+                        //"query": {
+                            //"filtered": {
+                                //"filter": {
+                                    //"and": [
+                                        //{"term": {"domain.exact": "{{ case.domain }}"}},
+                                        //{"term": {"doc_type": "xforminstance"}},
+                                    //]
+                                //},
+                                //"query": {
+                                    //"query_string": {
+                                        //"query": "(form.case.case_id:{{ case.get_id }} OR form.case.@case_id:{{ case.get_id }})"
+                                    //}
+                                //}
+                            //}
+                        //},
+                        //"size": self.page_size(),
+                        //"from": (start_num - 1) * self.page_size(),
+                        //"sort": [{"received_on": "desc"}]
+                    //};
+                };
+
+                self.xform_id_query = function () {
+                    //hacky query based upon xform_ids due to nested case properties not being indexed in pillowtop at the moment
+
                     var start_num = self.disp_page_index() || 1;
+                    var start_range = (start_num - 1) * self.page_size();
+                    var actions = {{ case_actions }};
+                    var end_range = start_range + self.page_size();
+                    if (end_range > {{ case.xform_ids|length }}) {
+                        end_range = {{ case.xform_ids|length }};
+                    }
                     return {
-                        "query": {
-                            "filtered": {
-                                "filter": {
-                                    "and": [
-                                        {"term": {"domain.exact": "{{ case.domain }}"}},
-                                        {"term": {"doc_type": "xforminstance"}},
-                                    ]
-                                },
-                                "query": {
-                                    "query_string": {
-                                        "query": "(form.case.case_id:{{ case.get_id }} OR form.case.@case_id:{{ case.get_id }})"
-                                    }
-                                }
+                        "filter": {
+                            "ids": {
+                                "values": _.map(_.range(start_range, end_range),
+                                                    function(idx) { return actions[idx].xform_id})
                             }
                         },
-                        "size": self.page_size(),
-                        "from": (start_num - 1) * self.page_size()
+                        "from": 0
                     };
                 };
 
@@ -418,19 +439,15 @@
 
                 self.get_xform_data = function(xform_id) {
                     //method for getting individual xform via GET
-                    console.log("querying xform: " + xform_id);
-
                     $.ajax({
                         "type": "GET",
                         "url": "/a/{{ case.domain }}/reports/case_data/{{ case.get_id }}/" + xform_id + "/",
                         "success": function(data) {
-                            console.log("got data");
-{#                            console.log(data);#}
                             $("#xform_data_panel").html(data);
                             //$("#xform_data_panel").html('<h2>selected ' + xform_id + "</h2>");
                         },
                         "error": function(data) {
-                            console.log("Get xform error");
+                            console.log("get xform error");
                             console.log(data);
                         },
                         "complete": function(data) {
@@ -440,8 +457,6 @@
 
                 self.run_es_query = function(query, success_cb) {
                     //generic caller for ES query
-                    console.log("running query");
-                    console.log(query);
                     self.data_loading(true);
                     $.ajax({
                         "type": "POST",
@@ -451,7 +466,7 @@
                             success_cb(data);
                         }, //end success
                         "error": function(data) {
-                            console.log("Error:");
+                            console.log("Error");
                             console.log(data);
                         },
                         "complete": function(data){
@@ -464,10 +479,10 @@
 
                 self.xform_history_cb = function(data) {
                     //callback for rendering the xforms list
-                    console.log("xform_history_cb");
-                    self.total_rows(data['hits']['total']);
-                    console.log(data['hits']['total']);
-                    self.page_count(Math.ceil(data['hits']['total']/self.page_size()));
+                    //todo until indexing is fixed for nested case blocks
+                    //self.total_rows(data['hits']['total']);
+                    self.total_rows({{ case.xform_ids|length }});
+                    self.page_count(Math.ceil(self.total_rows()/self.page_size()));
                     var mapped_xforms = $.map(data['hits']['hits'], function (item) {
                         return new XFormDataModel(item['_source']);
                     });
@@ -496,16 +511,10 @@
 
                         chart.yAxis.tickFormat(d3.format('.1f'));
 
-                        console.log("add graph d3 select");
-                        console.log(self.form_recv_facets());
                         var chart_data = function() {
                             var start_date = new Date(self.form_recv_facets()[0].es_time());
                             var end_date = new Date(self.form_recv_facets()[self.form_recv_facets().length - 1].es_time());
                             var ms_delta = end_date - start_date;
-                            console.log(ms_delta);
-                            console.log(start_date);
-                            console.log(end_date);
-                            console.log(ms_delta/86400000);
                             var retdata = [];
 
                             for (var i = 0; i < self.form_recv_facets().length; i++) {
@@ -519,11 +528,9 @@
                                     var last_time_dt = new Date(last_time);
                                     var curr_time = new Date(item.es_time());
                                     var d = (curr_time - last_time) / 86400000;
-                                    console.log("delta! "  + d);
                                     if (d > 1) {
                                         for (var j = 1; j <= d; j++) {
                                            //fill in blank dates
-                                           console.log(j);
                                            retdata.push({x:last_time+(j*86400000), y: 0});
                                            //retdata.push({x:last_time+(j*86400000), y: item.form_count(), size: 0, shape: 'square'});
                                         }
@@ -535,13 +542,8 @@
 
                             return {
                             key: "submissions",
-                            //values: $.map(self.form_recv_facets(), function (item) {
-                                ////console.log(new Date(item.es_time()));
-                                //return { x:item.es_time(), y:item.form_count()}
-                            //})
                             values: retdata
                         }};
-                        console.log([chart_data()]);
                         d3.select('#submit_chart svg')
                                 .datum([chart_data()]).transition().duration(500).call(chart);
 
@@ -556,19 +558,14 @@
 
                 //main function data collection - entry point if you will
                 //self.run_es_query(self.stats_query(), self.stats_data_cb);
-                console.log("Running query for the first time");
                 self.run_es_query(self.xform_query(), self.xform_history_cb);
 
                 self.nextPage = function() {
-                    console.log("nextPage");
-                    console.log(self.disp_page_index());
                     self.disp_page_index(self.disp_page_index() + 1);
                     self.run_es_query(self.xform_query(), self.xform_history_cb);
                 };
 
                 self.prevPage = function() {
-                    console.log("prevPage");
-                    console.log(self.disp_page_index());
                     self.disp_page_index(self.disp_page_index() - 1);
                     self.run_es_query(self.xform_query(), self.xform_history_cb);
                 };
@@ -577,9 +574,6 @@
                     $("#xform_data_panel").html("<img src='/static/hqwebapp/img/ajax-loader.gif' alt='loading indicator' />");
                     var idx = self.xforms().indexOf(item);
 
-                    console.log("clickrow");
-                    console.log(idx);
-                    console.log(self.xforms()[idx].id());
                     self.get_xform_data(self.xforms()[idx].id());
                     self.selected_xform_idx(idx);
                     self.selected_xform_doc_id(self.xforms()[idx].id());
@@ -590,9 +584,6 @@
                 };
 
                 self.page_start_num = ko.computed(function() {
-                    console.log("page start num");
-                    console.log(self.page_size());
-                    console.log(self.disp_page_index() || 1);
                     var start_num = self.disp_page_index() || 1;
                     return ((start_num - 1) * self.page_size()) + 1;
                 });
@@ -610,18 +601,15 @@
 
 
                 self.page_size_changed = self.page_size.subscribe(function () {
-                    console.log("page size change");
                     self.run_es_query(self.xform_query(), self.xform_history_cb);
                 });
 
                 self.disp_page_index_changed = self.disp_page_index.subscribe(function () {
-                    console.log("disp page index change");
                     self.run_es_query(self.xform_query(), self.xform_history_cb);
                 });
 
 
                 self.all_pages = function() {
-                    console.log("all pages");
                     return _.range(1, self.page_count()+1);
                 };
 
@@ -632,15 +620,11 @@
                 self.row_highlight = ko.computed(function() {
                     //hitting next page will not disappear the xform display just remove the highlight
                     if (self.selected_xform_idx() == -1) {
-                        console.log("row_highlight false");
                         return false;
                     } else  {
                         if (self.selected_xforms[0] !== undefined) {
-                            console.log("row_highlight something");
-                            console.log(self.selected_xform_doc_id() === self.selected_xforms()[0].id());
                             return self.selected_xform_doc_id() === self.selected_xforms()[0].id();
                         } else {
-                            console.log("row_highlight true");
                             return true;
                         }
                     }
