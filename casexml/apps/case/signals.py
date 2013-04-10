@@ -3,8 +3,21 @@ from receiver.signals import successful_form_received
 from casexml.apps.phone.models import SyncLog
 from dimagi.utils.decorators.log_exception import log_exception
 
+class CaseProcessingConfig(object):
+    def __init__(self, reconcile=False, strict_asserts=True, failing_case_ids=None):
+        self.reconcile = reconcile
+        self.strict_asserts = strict_asserts
+        self.failing_case_ids = failing_case_ids or []
+
+    def __repr__(self):
+        return 'reconcile: {reconcile}, strict: {strict}, ids: {ids}'.format(
+            reconcile=self.reconcile,
+            strict=self.strict_asserts,
+            ids=", ".join(self.failing_case_ids)
+        )
+
 @log_exception()
-def process_cases(sender, xform, reconcile=False, strict_asserts=True, **kwargs):
+def process_cases(sender, xform, config=None, **kwargs):
     """
     Creates or updates case objects which live outside of the form.
 
@@ -12,10 +25,11 @@ def process_cases(sender, xform, reconcile=False, strict_asserts=True, **kwargs)
     reconciling the case update history after the case is processed.
     """
     # recursive import fail
+    config = config or CaseProcessingConfig()
     from casexml.apps.case.xform import get_or_update_cases
     cases = get_or_update_cases(xform).values()
 
-    if reconcile:
+    if config.reconcile:
         for c in cases:
             c.reconcile_actions(rebuild=True)
 
@@ -41,11 +55,12 @@ def process_cases(sender, xform, reconcile=False, strict_asserts=True, **kwargs)
     if hasattr(xform, "last_sync_token") and xform.last_sync_token:
         relevant_log = SyncLog.get(xform.last_sync_token)
         # in reconciliation mode, things can be unexpected
-        relevant_log.strict = strict_asserts
+        relevant_log.strict = config.strict_asserts
         from casexml.apps.case.util import update_sync_log_with_checks
-        update_sync_log_with_checks(relevant_log, xform, cases)
+        update_sync_log_with_checks(relevant_log, xform, cases,
+                                    failing_case_ids=config.failing_case_ids)
 
-        if reconcile:
+        if config.reconcile:
             relevant_log.reconcile_cases()
             relevant_log.save()
 

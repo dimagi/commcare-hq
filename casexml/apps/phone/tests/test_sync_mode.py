@@ -896,3 +896,50 @@ class SyncTokenReprocessingTest(SyncBaseTest):
         self._postFakeWithSyncToken(update, self.sync_log.get_id)
         sync_log = SyncLog.get(self.sync_log._id)
         self.assertFalse(getattr(sync_log, 'has_assert_errors', False))
+
+    def testCodependencies(self):
+
+        case_id1 = 'bad1'
+        case_id2 = 'bad2'
+        initial_caseblocks = [CaseBlock(
+            create=True,
+            case_id=case_id,
+            user_id='not_me',
+            owner_id='not_me',
+            case_type=PARENT_TYPE,
+            version=V2
+        ).as_xml() for case_id in [case_id1, case_id2]]
+
+        post_case_blocks(
+            initial_caseblocks,
+        )
+
+        def _get_bad_caseblocks(ids):
+            return [CaseBlock(
+                create=False,
+                case_id=id,
+                user_id=USER_ID,
+                owner_id=USER_ID,
+                case_type=PARENT_TYPE,
+                version=V2
+            ).as_xml() for id in ids]
+
+        try:
+            post_case_blocks(
+                _get_bad_caseblocks([case_id1, case_id2]),
+                form_extras={ "last_sync_token": self.sync_log._id }
+            )
+            self.fail('posting an update to non-existant cases should fail')
+        except AssertionError:
+            # this should fail because it's a true error
+            pass
+
+        try:
+            post_case_blocks(
+                _get_bad_caseblocks([case_id2, case_id1]),
+                form_extras={ "last_sync_token": self.sync_log._id }
+            )
+            self.fail('posting an update to non-existant cases should fail')
+        except AssertionError:
+            # this should fail because it's a true error
+            pass
