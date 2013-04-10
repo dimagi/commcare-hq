@@ -659,6 +659,7 @@ PILLOWTOPS = [
                  'corehq.pillows.fullcase.FullCasePillow',
                  'corehq.pillows.xform.XFormPillow',
                  'corehq.pillows.fullxform.FullXFormPillow',
+                 'corehq.pillows.domain.DomainPillow',
                  'corehq.pillows.exchange.ExchangePillow',
              ] + LOCAL_PILLOWTOPS
 
