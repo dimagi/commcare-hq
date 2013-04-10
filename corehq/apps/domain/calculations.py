@@ -1,4 +1,4 @@
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, time
 from django.template.loader import render_to_string
 from corehq.apps.domain.models import Domain
 from corehq.apps.reminders.models import CaseReminderHandler
@@ -8,22 +8,27 @@ from dimagi.utils.couch.database import get_db
 def num_web_users(domain, *args):
     key = ["active", domain, 'WebUser']
     row = get_db().view('users/by_domain', startkey=key, endkey=key+[{}]).one()
-    return {"value": row["value"] if row else 0}
+    return row["value"] if row else 0
 
 def num_mobile_users(domain, *args):
     row = get_db().view('users/by_domain', startkey=[domain], endkey=[domain, {}]).one()
-    return {"value": row["value"] if row else 0}
+    return row["value"] if row else 0
 
-def mobile_users(domain, active):
-    key = ["active" if active == "active" else "inactive", domain, 'CommCareUser']
-    row = get_db().view('users/by_domain', startkey=key, endkey=key+[{}]).one()
-    return {"value": row["value"] if row else 0}
+DATE_FORMAT = '%Y-%m-%dT%H:%M:%SZ'
+DISPLAY_DATE_FORMAT = '%Y/%m/%d %H:%M:%S'
+
+def active_mobile_users(domain):
+    now = datetime.now()
+    then = (now - timedelta(days=30)).strftime(DATE_FORMAT)
+    now = now.strftime(DATE_FORMAT)
+
+    key = ['submission', domain]
+    rows = get_db().view("reports_forms/all_forms", startkey=key+[then], endkey=key+[now], reduce=False, include_docs=True).all()
+    return len(set([r["value"].get('user_id') for r in rows if r["value"].get('user_id')])) if rows else 0
 
 def cases(domain, *args):
     row = get_db().view("hqcase/types_by_domain", startkey=[domain], endkey=[domain, {}]).one()
-    return {"value": row["value"] if row else 0}
-
-DATE_FORMAT = '%Y-%m-%dT%H:%M:%SZ'
+    return row["value"] if row else 0
 
 def cases_in_last(domain, days):
     now = datetime.now()
@@ -31,12 +36,12 @@ def cases_in_last(domain, days):
     now = now.strftime(DATE_FORMAT)
 
     row = get_db().view("hqcase/all_cases", startkey=[domain, {}, {}, then], endkey=[domain, {}, {}, now]).one()
-    return {"value": row["value"] if row else 0}
+    return row["value"] if row else 0
 
 def forms(domain, *args):
     key = make_form_couch_key(domain)
     row = get_db().view("reports_forms/all_forms", startkey=key, endkey=key+[{}]).one()
-    return {"value": row["value"] if row else 0}
+    return row["value"] if row else 0
 
 def active(domain, *args):
     now = datetime.now()
@@ -45,34 +50,34 @@ def active(domain, *args):
 
     key = ['submission', domain]
     row = get_db().view("reports_forms/all_forms", startkey=key+[then], endkey=key+[now]).all()
-    return {"value": 'yes' if row else 'no'}
+    return 'yes' if row else 'no'
 
 def first_form_submission(domain, *args):
     key = make_form_couch_key(domain)
     row = get_db().view("reports_forms/all_forms", reduce=False, startkey=key, endkey=key+[{}]).first()
-    return {"value": row["value"]["submission_time"] if row else "No submissions"}
+    return datetime.strptime((row["value"]["submission_time"]), DATE_FORMAT).strftime(DISPLAY_DATE_FORMAT) if row else "No forms"
 
 def last_form_submission(domain, *args):
     key = make_form_couch_key(domain)
-    row = get_db().view("reports_forms/all_forms", reduce=False, startkey=key, endkey=key+[{}]).all()[-1]
-    return {"value": row["value"]["submission_time"] if row else "No submissions"}
+    row = get_db().view("reports_forms/all_forms", reduce=False, startkey=key, endkey=key+[{}]).all()
+    return datetime.strptime((row[-1]["value"]["submission_time"]), DATE_FORMAT).strftime(DISPLAY_DATE_FORMAT) if row else "No forms"
 
 def has_app(domain, *args):
     domain = Domain.get_by_name(domain)
     apps = domain.applications()
-    return {"value": 'yes' if len(apps) > 0 else 'no'}
+    return 'yes' if len(apps) > 0 else 'no'
 
 def app_list(domain, *args):
     domain = Domain.get_by_name(domain)
     apps = domain.applications()
-    return {"value": render_to_string("domain/partials/app_list.html", {"apps": apps, "domain": domain.name})}
+    return render_to_string("domain/partials/app_list.html", {"apps": apps, "domain": domain.name})
 
 def uses_reminders(domain, *args):
     handlers = CaseReminderHandler.get_handlers(domain=domain).all()
     return {"value": 'yes' if len(handlers) > 0 else 'no'}
 
 def not_implemented(domain, *args):
-    return {"value": '<p class="text-error">not implemented</p>'}
+    return '<p class="text-error">not implemented</p>'
 
 CALC_ORDER = [
     'num_web_users', 'num_mobile_users', 'forms', 'cases', 'mobile_users--active', 'mobile_users--inactive', 'active_cases', 'cases_in_last--30',
@@ -106,7 +111,7 @@ CALC_FNS = {
     "num_mobile_users": num_mobile_users,
     "forms": forms,
     "cases": cases,
-    "mobile_users": mobile_users,
+    "mobile_users": active_mobile_users,
     "active_cases": not_implemented,
     "cases_in_last": cases_in_last,
     "active": active,

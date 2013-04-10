@@ -1,4 +1,5 @@
 from django.conf.urls.defaults import *
+from corehq.apps.reports.dispatcher import AdminReportDispatcher
 
 urlpatterns = patterns('corehq.apps.hqadmin.views',
     url(r'^$', 'default', name="default_admin_report"),
@@ -16,4 +17,6 @@ urlpatterns = patterns('corehq.apps.hqadmin.views',
     url(r'^domains/update/$', 'update_domains', name="domain_update"),
     url(r'^domains/download/$', 'domain_list_download', name="domain_list_download"),
     url(r'^noneulized_users/$', 'noneulized_users', name="noneulized_users"),
+    AdminReportDispatcher.url_pattern(),
 )
+

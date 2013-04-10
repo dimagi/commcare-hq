@@ -111,15 +111,15 @@
             click: makeNewBuild,
             attr: {disabled: !makeNewBuildEnabled() ? 'disabled' : undefined},
             css: {disabled: !makeNewBuildEnabled()}
-        ">{% trans 'Make New Build' %}</button>
+        ">{% trans 'Make New Version' %}</button>
 
         <div id="build-errors-wrapper"></div>
 
         <table class="table">
             <tr>
                 <th colspan="2">Version</th>
-                <th colspan="2">Build Date &amp; Time</th>
-                <th>CommCare Binary</th>
+                <th colspan="2">Date &amp; Time</th>
+                <th>CommCare Version</th>
                 <th></th>
                 {% if edit %}
                 <th></th>

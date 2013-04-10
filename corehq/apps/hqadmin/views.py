@@ -1,4 +1,5 @@
 from datetime import timedelta, datetime
+import inspect
 import json
 from copy import deepcopy
 import logging
@@ -8,14 +9,17 @@ from django.shortcuts import render
 
 import rawes
 from casexml.apps.case.models import CommCareCase
+from corehq.apps.appstore.views import parse_args_for_es, es_query, generate_sortables_from_facets
 from corehq.apps.hqadmin.models import HqDeploy
 from corehq.apps.builds.models import CommCareBuildConfig, BuildSpec
-from corehq.apps.domain.models import Domain
+from corehq.apps.domain.calculations import CALC_FNS
+from corehq.apps.domain.models import Domain, InternalProperties, LicenseAgreement, Deployment
 from corehq.apps.hqadmin.escheck import check_cluster_health, check_case_index, check_xform_index, check_exchange_index
 from corehq.apps.reports.datatables import DataTablesColumn, DataTablesHeader, DTSortType
 from corehq.apps.reports.util import make_form_couch_key
 from corehq.apps.sms.models import SMSLog
 from corehq.apps.users.models import  CommCareUser, CouchUser, WebUser
+from corehq.pillows.mappings.domain_mapping import DOMAIN_INDEX
 from couchforms.models import XFormInstance
 from dimagi.utils.couch.database import get_db, is_bigcouch
 from collections import defaultdict
@@ -36,6 +40,7 @@ from django.conf import settings
 from restkit import Resource
 import os
 from django.core import cache
+from urllib import urlencode
 
 @require_superuser
 def default(request):
@@ -86,33 +91,109 @@ def _all_domain_stats():
             "forms": form_counts,
             "cases": case_counts}
 
-@require_superuser
-def domain_list(request):
-    # one wonders if this will eventually have to paginate
-    domains = Domain.get_all()
+def ammend_domains(domains):
+    """
+        Alters a list of domain objects so that each domain contains certain calculated properties used in the domain list
+    """
     all_stats = _all_domain_stats()
     for dom in domains:
         dom.web_users = int(all_stats["web_users"][dom.name])
         dom.commcare_users = int(all_stats["commcare_users"][dom.name])
         dom.cases = int(all_stats["cases"][dom.name])
         dom.forms = int(all_stats["forms"][dom.name])
+        dom.active_cases = CALC_FNS["cases_in_last"](dom.name, 30)
+        dom.active_users = CALC_FNS["mobile_users"](dom.name, 'active')
+        dom.first_form = CALC_FNS["first_form_submission"](dom.name)
+        dom.last_form = CALC_FNS["last_form_submission"](dom.name)
         dom.admins = [row["doc"]["email"] for row in get_db().view("users/admins_by_domain", key=dom.name, reduce=False, include_docs=True).all()]
+    return domains
 
-    context = get_hqadmin_base_context(request)
-    context.update({"domains": domains})
-    context['layout_flush_content'] = True
+def get_domain_totals(domains):
+    """
+        Returns a dict containing the sum of various calculated properties on a domain. These are the context variables
+        used by the domain list's total row. To be used on a list of domains after ammend_domains was called
+    """
+    return {
+        'num_cases': reduce(lambda total, dom: total + dom.cases, domains, 0),
+        'num_forms': reduce(lambda total, dom: total + dom.forms, domains, 0),
+        'num_active_cases': reduce(lambda total, dom: total + dom.active_cases, domains, 0),
+        'num_active_users': reduce(lambda total, dom: total + dom.active_users, domains, 0),
+        'num_mob_users': reduce(lambda total, dom: total + dom.commcare_users, domains, 0),
+        'num_web_users': reduce(lambda total, dom: total + dom.web_users, domains, 0),
+    }
 
-    headers = DataTablesHeader(
-        DataTablesColumn("Domain"),
-        DataTablesColumn("# Web Users", sort_type=DTSortType.NUMERIC),
-        DataTablesColumn("# Mobile Workers", sort_type=DTSortType.NUMERIC),
-        DataTablesColumn("# Cases", sort_type=DTSortType.NUMERIC),
-        DataTablesColumn("# Submitted Forms", sort_type=DTSortType.NUMERIC),
-        DataTablesColumn("Domain Admins")
-    )
-    context["headers"] = headers
-    context["aoColumns"] = headers.render_aoColumns
-    return render(request, "hqadmin/domain_list.html", context)
+DOMAIN_LIST_HEADERS = DataTablesHeader(
+    DataTablesColumn("Project"),
+    # DataTablesColumn("# Web Users", sort_type=DTSortType.NUMERIC),
+    DataTablesColumn("# Active Mobile Workers", sort_type=DTSortType.NUMERIC),
+    DataTablesColumn("# Active Cases", sort_type=DTSortType.NUMERIC),
+    DataTablesColumn("# Mobile Workers", sort_type=DTSortType.NUMERIC),
+    DataTablesColumn("# Cases", sort_type=DTSortType.NUMERIC),
+    DataTablesColumn("# Form Submissions", sort_type=DTSortType.NUMERIC),
+    DataTablesColumn("First Form Submission"),
+    DataTablesColumn("Last Form Submission"),
+    DataTablesColumn("Admins")
+)
+
+def project_stats_facets():
+    facets = Domain.properties().keys()
+    facets += ['internal.' + p for p in InternalProperties.properties().keys()]
+    facets += ['deployment.' + p for p in Deployment.properties().keys()]
+    facets += ['cda.' + p for p in LicenseAgreement.properties().keys()]
+    for p in ['internal', 'deployment', 'cda', 'migrations', 'eula']:
+        facets.remove(p)
+    return facets
+
+def es_domain_query(params, facets=None, terms=None, domains=None, return_q_dict=False):
+    if terms is None:
+        terms = ['search']
+    if facets is None:
+        facets = []
+    q = {"query": {"match_all":{}}}
+
+    if domains is not None:
+        q["query"] = {
+            "in" : {
+                "name" : domains,
+                }
+        }
+
+    search_query = params.get('search', "")
+    if search_query:
+        q['query'] = {
+            "bool": {
+                "must": {
+                    "match" : {
+                        "_all" : {
+                            "query" : search_query,
+                            "operator" : "and" }}}}}
+
+    return q if return_q_dict else es_query(params, facets, terms, q, DOMAIN_INDEX + '/hqdomain/_search')
+
+@require_superuser
+def domain_list(request):
+    from corehq.apps.reports.standard.domains import AdminDomainStatsReport
+
+    params, _ = parse_args_for_es(request)
+    facets = project_stats_facets()
+    results = es_domain_query(params, facets)
+    d_results = [Domain.wrap(res['_source']) for res in results.get('hits', {}).get('hits', [])]
+
+    facets_sortables = generate_sortables_from_facets(results, params)
+
+    stats_report = AdminDomainStatsReport(request)
+    ctxt = stats_report.context
+
+    ctxt.update({
+        'layout_flush_content': True,
+        'custom_async_url': reverse('admin_report_dispatcher', args=('async/dom_stats',)),
+        'domains': '|'.join([d.name for d in d_results]),
+        'sortables': sorted(facets_sortables),
+        'query_str': request.META['QUERY_STRING'],
+        'search_url': reverse('domain_list'),
+        'search_query': params.get('search', [""])[0],
+    })
+    return render(request, "hqadmin/stats_report.html", ctxt)
 
 @require_superuser
 def active_users(request):

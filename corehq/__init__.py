@@ -120,6 +120,20 @@ APPSTORE_INTERFACES = (
     )),
 )
 
+from corehq.apps.reports.standard.domains import OrgDomainStatsReport, AdminDomainStatsReport
+
+BASIC_REPORTS = (
+    (_('Project Stats'), (
+        OrgDomainStatsReport,
+    )),
+)
+
+ADMIN_REPORTS = (
+    (_('Domain Stats'), (
+        AdminDomainStatsReport,
+    )),
+)
+
 from corehq.apps.hqwebapp.models import *
 
 TABS = (
@@ -131,6 +145,8 @@ TABS = (
     MessagesTab,
     RemindersTab,
     ProjectSettingsTab,
+    OrgReportTab,
+    OrgSettingsTab,
     AdminTab,
     ExchangeTab,
     ManageSurveysTab,

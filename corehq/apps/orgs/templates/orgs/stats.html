@@ -1,0 +1,195 @@
+{#{% extends "orgs/orgs_landing.html" %}#}
+{% extends "orgs/report_base.html" %}
+{% load hq_shared_tags %}
+{% load hqstyle_tags %}
+{% load i18n %}
+
+{% block js %}{{ block.super }}
+    {% include "imports/datatables.html" %}
+    <script type="text/javascript" src="{% static 'reports/javascripts/config.dataTables.bootstrap.js' %}"></script>
+    <script type="text/javascript" src="{% static 'hqwebapp/js/lib/jquery-ui-datepicker/jquery-ui-1.8.17.custom.datepicker.min.js' %}"></script>
+    <script type="text/javascript" src="{% static 'reports/javascripts/datepicker.js' %}"></script>
+
+    <link href="{% static 'hqwebapp/js/lib/nvd3/nv.d3.css' %}" rel="stylesheet">
+    <script src="{% static 'hqwebapp/js/lib/nvd3/lib/d3.v2.js' %}"></script>
+    <script src="{% static 'hqwebapp/js/lib/nvd3/lib/fisheye.js' %}"></script>
+    <script src="{% static 'hqwebapp/js/lib/nvd3/nv.d3.js' %}"></script>
+    <script src="{% static 'reports/javascripts/reports.config.js' %}"></script>
+    <script src="{% static 'reports/javascripts/reports.async.js' %}"></script>
+{% endblock %}
+
+{% block js-inline %} {{ block.super }}
+    <script src='{% static 'hqadmin/js/date_histogram_chart.js' %}' type='text/javascript'></script>
+    <script type="text/javascript">
+        function setActiveRange(chart_id, range) {
+            var $chart = $('#' + chart_id);
+            var $accordion = $chart.parents('.accordion-group');
+            var $labels = $accordion.find('.label');
+            $labels.removeClass('label-success');
+            $accordion.find('.' + range + '-label').addClass('label-success');
+        }
+
+        // given the chart_id of a chart element in the dom, the function fetches the data associated with that chart
+        // and renders the chart in the specified element
+        function loadChartData(chart_id, daterange) {
+            var xname = {
+                'forms-chart': '# of form submissions',
+                'cases-chart': '# of case modifications'
+            }[chart_id];
+            var histo_type = {
+                'forms-chart': 'forms',
+                'cases-chart': 'cases'
+            }[chart_id];
+            var $chart = $('#' + chart_id);
+            $chart.parent().children('.loading').show();
+            $chart.hide();
+
+            $.getJSON('{% url orgs_stats_data org.name %}', {daterange: daterange, histogram_type: histo_type},
+                    function(d) {
+                        var starting_time = new Date(d.startdate[0], d.startdate[1], d.startdate[2]).getTime();
+                        var ending_time = new Date(d.enddate[0], d.enddate[1], d.enddate[2]).getTime();
+                        addHistogram(chart_id, xname, d.histo_data, starting_time, ending_time);
+                        $chart.parent().children('.loading').hide();
+                        $chart.html('').append('<svg style="height:320px"> </svg>');
+                        $chart.show();
+                        setActiveRange(chart_id, d.range);
+                    }
+            )
+        }
+
+        $(function() {
+{#            // 'Select All' and 'Deselect All' buttons in filter domains#}
+{#            $project_filter_checkboxes = $('#filter-projects-form').find(':checkbox');#}
+{#            $(document).on('click', '#select-btn', function() {#}
+{#                $project_filter_checkboxes.attr('checked', true);#}
+{#            });#}
+{#            $(document).on('click', '#deselect-btn', function() {#}
+{#                $project_filter_checkboxes.attr('checked', false);#}
+{#            });#}
+
+            // collapse other collapseable divs in the charts accordion when
+            $('#charts-accordion .collapse').on('show', function(){
+                $('#charts-accordion .collapse.in').collapse('hide');
+            });
+
+            // load chart if not already visible on the screen
+            $('#charts-accordion').on('click', '.accordion-toggle', function(){
+                var $chart = ($($(this).attr('href')).find('.nvd3-chart'));
+                $c = $chart;
+                if ($chart.length > 0 && !$chart.is(':visible')) {
+                    console.log('loading for the first time');
+                    loadChartData($chart.attr('id'), 'month');
+                }
+            });
+
+            // hover effects of the daterange button
+            $('.daterange-btn').hover(function() { // Mouse in
+               $(this).children(":first").addClass('label-info');
+            }, function() { // Mouse out
+                $(this).children(":first").removeClass('label-info');
+            });
+
+            // load new chart when daterange is clicked
+            $(document).on('click', '.daterange-btn', function() {
+                var $this = $(this);
+                var $chart_container = $this.parents('.accordion-heading').siblings('.accordion-body');
+                loadChartData($this.attr('data-chart'), $this.attr('data-range'));
+                if (!$chart_container.hasClass('in')) { // check to see
+                    $chart_container.collapse('show');
+                }
+                return false;
+            });
+
+            loadChartData('forms-chart', 'month');
+        });
+    </script>
+{% endblock %}
+
+{% block report %}
+    <div class="accordion" id="charts-accordion">
+        <div class="accordion-group">
+            <div class="accordion-heading">
+                <span class="pull-right" style="margin: 8px">
+                    <a data-chart="forms-chart" data-range="year" class="daterange-btn" href="#">
+                        <span class="label year-label">Year</span></a>
+                    <a data-chart="forms-chart" data-range="month" class="daterange-btn" href="#">
+                        <span class="label month-label">Month</span></a>
+                    <a data-chart="forms-chart" data-range="week" class="daterange-btn" href="#">
+                        <span class="label week-label">Week</span></a>
+                </span>
+                <a class="accordion-toggle" data-toggle="collapse" data-parent="#charts-accordion" href="#forms-graph">
+                    {% trans "Forms" %}</a>
+            </div>
+            <div id="forms-graph" class="accordion-body collapse in">
+                <div class="accordion-inner">
+                    <div style="height: 320px; min-height: 320px;" class="loading">Loading...</div>
+                    <div id='forms-chart' class='nvd3-chart hide'>
+                        <svg style='height:320px'> </svg>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="accordion-group">
+            <div class="accordion-heading">
+                <span class="pull-right" style="margin: 8px">
+                    <a data-chart="cases-chart" data-range="year" class="daterange-btn" href="#">
+                        <span class="label year-label">Year</span></a>
+                    <a data-chart="cases-chart" data-range="month" class="daterange-btn" href="#">
+                        <span class="label month-label">Month</span></a>
+                    <a data-chart="cases-chart" data-range="week" class="daterange-btn" href="#">
+                        <span class="label week-label">Week</span></a>
+                </span>
+                <a class="accordion-toggle" data-toggle="collapse" data-parent="#charts-accordion" href="#cases-graph">
+                    {% trans "Cases" %}
+                </a>
+            </div>
+            <div id="cases-graph" class=" accordion-body collapse">
+                <div class="accordion-inner">
+                    <div style="height: 320px; min-height: 320px;" class="loading">Loading...</div>
+                    <div id='cases-chart' class='nvd3-chart hide'>
+                        <svg style='height:320px'> </svg>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+{#    <hr />#}
+{#    <div id="report-content">#}
+{#        {% include "reports/async/default.html" %}#}
+{#        {% if not report.is_async and report.slug %}#}
+{#            {% block reportcontent %}#}
+{#            {% endblock %}#}
+{#        {% else %}#}
+{#            {% include "reports/async/default.html" %}#}
+{#        {% endif %}#}
+{#    </div>#}
+
+{#    <hr />#}
+{#    <form id="filter-projects-form" action="{% url orgs_stats org.name %}" method="get">#}
+{#        <h3>{% trans "Filter Project Spaces" %}#}
+{#            <button type="submit" class="btn btn-primary"><strong>{% trans "Filter" %}</strong></button>#}
+{#            <div class="btn-group pull-right">#}
+{#                <button type="button" id="select-btn" href="#" class="btn">{% trans "Select All" %}</button>#}
+{#                <button type="button" id="deselect-btn" href="#" class="btn">{% trans "Deselect All" %}</button>#}
+{#            </div>#}
+{#        </h3>#}
+{#        <div class="well" id="domain-filter">#}
+{#            <div class="row-fluid">#}
+{#                {% for dom in domains %}#}
+{#                    {% if forloop.counter0|divisibleby:"4" and forloop.counter0 != 0 %}#}
+{#                        </div><div class="row-fluid">#}
+{#                    {% endif %}#}
+{#                    <div class="span3">#}
+{#                        <label class="checkbox">#}
+{#                            <input type="checkbox" name="name" value="{{ dom.name }}" {% if dom.active_in_filter %}checked{% endif %}> <strong>{{ dom.display_name }}</strong>#}
+{#                        </label>#}
+{#                    </div>#}
+{#                {% endfor %}#}
+{#            </div>#}
+{#        </div>#}
+{#    </form>#}
+{% endblock %}
+
+{% block org-modals %}
+{% endblock %}

@@ -323,7 +323,7 @@ def calculated_properties(request, domain):
     if not calc_tag or calc_tag not in CALC_FNS.keys():
         data = {"error": 'This tag does not exist'}
     else:
-        data = CALC_FNS[calc_tag](domain, extra_arg)
+        data = {"value": CALC_FNS[calc_tag](domain, extra_arg)}
     return json_response(data)
 
 @domain_admin_required

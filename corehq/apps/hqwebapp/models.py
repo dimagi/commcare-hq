@@ -47,10 +47,10 @@ class UITab(object):
 
     dispatcher = None
 
-    def __init__(self, request, domain=None, couch_user=None, project=None):
+    def __init__(self, request, domain=None, couch_user=None, project=None, org=None):
         if self.subtab_classes:
             self.subtabs = [cls(request, domain=domain, couch_user=couch_user,
-                                project=project)
+                                project=project, org=org)
                             for cls in self.subtab_classes]
         else:
             self.subtabs = None
@@ -58,6 +58,7 @@ class UITab(object):
         self.domain = domain
         self.couch_user = couch_user
         self.project = project
+        self.org = org
        
         # This should not be considered as part of the subclass API unless it
         # is necessary. Try to add new explicit parameters instead.
@@ -107,12 +108,14 @@ class UITab(object):
     @property
     @memoized
     def url(self):
-        if self.domain:
-            try:
+        try:
+            if self.domain:
                 return reverse(self.view, args=[self.domain])
-            except Exception:
-                pass
-        
+            if self.org:
+                return reverse(self.view, args=[self.org.name])
+        except Exception:
+            pass
+
         try:
             return reverse(self.view)
         except Exception:
@@ -268,7 +271,11 @@ class ApplicationsTab(UITab):
             app_info = app['value']
             if app_info:
                 url = reverse('view_app', args=[self.domain, app_info['_id']])
-                app_name = mark_safe("%s" % mark_for_escaping(app_info['name'] or '(Untitled)'))
+                app_name = mark_safe("%s%s" % (
+                    mark_for_escaping(app_info['name'] or '(Untitled)'),
+                    mark_for_escaping(' (Remote)' if app_info['doc_type'] == 'RemoteApp' else ''),
+                ))
+
                 submenu_context.append(format_submenu_context(app_name, url=url))
 
         if self.couch_user.can_edit_apps():
@@ -500,8 +507,8 @@ class AdminReportsTab(UITab):
         # todo: convert these to dispatcher-style like other reports
         return [
             (_('Administrative Reports'), [
-                {'title': _('Domain List'),
-                 'url': reverse('domain_list')},
+                # {'title': _('Domain List'),
+                #  'url': reverse('domain_list')},
                 {'title': _('Domain Activity Report'),
                  'url': reverse('domain_activity_report')},
                 {'title': _('Message Logs Across All Domains'),
@@ -613,6 +620,44 @@ class ExchangeTab(UITab):
     @property
     def is_viewable(self):
         return not self.couch_user.is_commcare_user()
+
+
+class OrgTab(UITab):
+    @property
+    def is_viewable(self):
+        return self.org and self.couch_user and (self.couch_user.is_member_of_org(self.org) or self.couch_user.is_superuser)
+
+
+class OrgReportTab(OrgTab):
+    title = ugettext_noop("Reports")
+    view = "corehq.apps.orgs.views.base_report"
+
+    @property
+    def dropdown_items(self):
+        return [
+            format_submenu_context(_("All Projects"), url=reverse("orgs_report", args=(self.org.name,))),
+            format_submenu_context(_("Visualize Data"), url=reverse("orgs_stats", args=(self.org.name,))),
+        ]
+
+class OrgSettingsTab(OrgTab):
+    title = ugettext_noop("Settings")
+    view = "corehq.apps.orgs.views.orgs_landing"
+
+    @property
+    def is_active(self):
+        # HACK. We need a more overarching way to avoid doing things this way -- copied this strat from above usage...
+        if self.org and 'o/%s/reports' % self.org.name in self._request.get_full_path():
+            return False
+
+        return super(OrgSettingsTab, self).is_active
+
+    @property
+    def dropdown_items(self):
+        return [
+            format_submenu_context(_("Projects"), url=reverse("orgs_landing", args=(self.org.name,))),
+            format_submenu_context(_("Teams"), url=reverse("orgs_teams", args=(self.org.name,))),
+            format_submenu_context(_("Members"), url=reverse("orgs_stats", args=(self.org.name,))),
+        ]
 
 
 class ManageSurveysTab(UITab):

@@ -18,7 +18,6 @@ from corehq.apps.domain.models import Domain
 from django.contrib import messages
 from django.utils.translation import ugettext as _
 
-PER_PAGE = 9
 SNAPSHOT_FACETS = ['project_type', 'license', 'region', 'author']
 DEPLOYMENT_FACETS = ['deployment.region']
 SNAPSHOT_MAPPING = {'category':'project_type', 'license': 'license', 'region': 'region', 'author': 'author'}
@@ -139,6 +138,9 @@ def generate_sortables_from_facets(results, params=None, mapping={}):
         return "?%s" % urlencode(updated_params, True)
 
     def generate_facet_dict(f_name, ft):
+        if isinstance(ft['term'], unicode): #hack to get around unicode encoding issues. However it breaks this specific facet
+            ft['term'] = ft['term'].encode('ascii','replace')
+
         ccs = {
             'cc': 'CC BY',
             'cc-sa': 'CC BY-SA',
@@ -151,7 +153,7 @@ def generate_sortables_from_facets(results, params=None, mapping={}):
         return {'url': generate_query_string(f_name, ft["term"]),
                 'name': ft["term"] if not license else ccs.get(ft["term"]),
                 'count': ft["count"],
-                'active': ft["term"] in params.get(f_name, "")}
+                'active': str(ft["term"]) in params.get(f_name, "")}
 
     sortable = []
     for facet in results.get("facets", []):
@@ -204,7 +206,7 @@ def appstore_api(request):
     results = es_snapshot_query(params, facets)
     return HttpResponse(json.dumps(results), mimetype="application/json")
 
-def es_query(params, facets=None, terms=None, q=None):
+def es_query(params, facets=None, terms=None, q=None, es_url=None):
     if terms is None:
         terms = []
     if q is None:
@@ -213,9 +215,18 @@ def es_query(params, facets=None, terms=None, q=None):
     q["size"] = 9999
     q["filter"] = q.get("filter", {})
     q["filter"]["and"] = q["filter"].get("and", [])
+
+    def convert(param):
+        #todo: find a better way to handle bools, something that won't break fields that may be 'T' or 'F' but not bool
+        if param == 'T':
+            return 1
+        elif param == 'F':
+            return 0
+        return param.lower()
+
     for attr in params:
         if attr not in terms:
-            attr_val = [params[attr].lower()] if isinstance(params[attr], basestring) else [p.lower() for p in params[attr]]
+            attr_val = [convert(params[attr])] if isinstance(params[attr], basestring) else [convert(p) for p in params[attr]]
             q["filter"]["and"].append({"terms": {attr: attr_val}})
 
     def facet_filter(facet):
@@ -232,9 +243,11 @@ def es_query(params, facets=None, terms=None, q=None):
     if not q['filter']['and']:
         del q["filter"]
 
-    es_url = "cc_exchange/domain/_search"
+    es_url = es_url or "cc_exchange/domain/_search"
+
     es = get_es()
     ret_data = es.get(es_url, data=q)
+
     return ret_data
 
 def es_snapshot_query(params, facets=None, terms=None, sort_by="snapshot_time"):

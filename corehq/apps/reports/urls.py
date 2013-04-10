@@ -1,6 +1,6 @@
 from django.conf.urls.defaults import *
 from corehq.apps.domain.decorators import login_and_domain_required as protect
-from corehq.apps.reports.dispatcher import ReportDispatcher, ProjectReportDispatcher, CustomProjectReportDispatcher
+from corehq.apps.reports.dispatcher import ReportDispatcher, ProjectReportDispatcher, CustomProjectReportDispatcher, BasicReportDispatcher, AdminReportDispatcher
 
 dodoma_reports = patterns('corehq.apps.reports.dodoma',
     url('^household_verification_json$', 'household_verification_json'),
@@ -94,4 +94,8 @@ urlpatterns = patterns('corehq.apps.reports.views',
 
     url(r'^custom/', include(custom_report_urls)),
     ProjectReportDispatcher.url_pattern(),
+)
+
+report_urls = patterns('',
+    BasicReportDispatcher.url_pattern(),
 )
