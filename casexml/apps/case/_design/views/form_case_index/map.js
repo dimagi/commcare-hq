@@ -78,7 +78,6 @@ function (doc) {
         }
     };
     if (shouldLook(doc)) {
-        log('looking in ' + doc._id);
         emitCaseBlocksIn(doc);
     }
 }
