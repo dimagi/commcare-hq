@@ -1,8 +1,5 @@
-import hashlib
 from django.utils.translation import ugettext_noop
-from corehq.apps.appstore.views import parse_args_for_es, generate_sortables_from_facets, es_query
 from corehq.apps.domain.calculations import CALC_FNS
-from corehq.apps.domain.models import Domain, InternalProperties, Deployment, LicenseAgreement
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn, DTSortType
 from corehq.apps.reports.dispatcher import BasicReportDispatcher, AdminReportDispatcher
 from corehq.apps.reports.generic import GenericTabularReport
@@ -93,6 +90,7 @@ class OrgDomainStatsReport(DomainStatsReport):
 
 
 def project_stats_facets():
+    from corehq.apps.domain.models import Domain, InternalProperties, Deployment, LicenseAgreement
     facets = Domain.properties().keys()
     facets += ['internal.' + p for p in InternalProperties.properties().keys()]
     facets += ['deployment.' + p for p in Deployment.properties().keys()]
@@ -102,6 +100,7 @@ def project_stats_facets():
     return facets
 
 def es_domain_query(params, facets=None, terms=None, domains=None, return_q_dict=False, start_at=None, size=None):
+    from corehq.apps.appstore.views import es_query
     if terms is None:
         terms = ['search']
     if facets is None:
@@ -161,6 +160,7 @@ class AdminDomainStatsReport(DomainStatsReport):
         return int(self.es_results['hits']['total'])
 
     def es_query(self):
+        from corehq.apps.appstore.views import parse_args_for_es, generate_sortables_from_facets
         if not self.es_queried:
             self.es_params, _ = parse_args_for_es(self.request, prefix=ES_PREFIX)
             self.es_facets = project_stats_facets()
