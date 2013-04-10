@@ -1,12 +1,13 @@
 import csv
 
-# a *DictReader responsds to __init__(self, file), __iter__, and fieldnames
-import os
 from tempfile import NamedTemporaryFile
 import openpyxl
 
+
+# a *DictReader responsds to __init__(self, file), __iter__, and fieldnames
 def CsvDictReader(file):
     return csv.DictReader(file)
+
 
 class Excel2007DictReader(object):
     def __init__(self, f):
@@ -35,6 +36,11 @@ class Excel2007DictReader(object):
             return thing
         for row in rows:
             yield dict(zip(self.fieldnames, [to_string(cell.internal_value) for cell in row]))
+
+
+class JSONReaderError(Exception):
+    pass
+
 
 class IteratorJSONReader(object):
     """
@@ -133,19 +139,25 @@ class IteratorJSONReader(object):
                     None: False,
                 }[value]
             except AttributeError:
-                raise Exception('Values for %s must be: "yes" or "no" (or empty = "no")')
+                raise JSONReaderError(
+                    'Values for %s must be: "yes" or "no" (or empty = "no")'
+                )
 
         # set for any flat type
         field = field.strip()
         if obj.has_key(field):
-            raise Exception('You have a repeat field: %s' % field)
+            raise JSONReaderError(
+                'You have a repeat field: %s' % field
+            )
 
         obj[field] = value
+
 
 class WorksheetNotFound(Exception):
     def __init__(self, title):
         self.title = title
         super(WorksheetNotFound, self).__init__()
+
 
 class WorksheetJSONReader(IteratorJSONReader):
     def __init__(self, worksheet):
@@ -179,6 +191,7 @@ class WorksheetJSONReader(IteratorJSONReader):
                     break
                 yield cell_values
         super(WorksheetJSONReader, self).__init__(iterator())
+
 
 class WorkbookJSONReader(object):
     def __init__(self, f):
