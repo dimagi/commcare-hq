@@ -23,10 +23,10 @@ def get_schema_index_view_keys(export_tag):
 def intersect_functions(*functions):
     functions = [fn for fn in functions if fn]
     if functions:
-        def function(*args):
+        def function(*args, **kwargs):
             val = True
             for fn in functions:
-                val = fn(*args)
+                val = fn(*args, **kwargs)
                 if not val:
                     return val
             return val
@@ -61,9 +61,12 @@ class SerializableFunction(object):
         f &= other
         return f
 
-    def __call__(self, *args):
+    def __call__(self, *args, **kwargs):
         if self.functions:
-            return intersect_functions(*[functools.partial(f, **kwargs) for (f, kwargs) in self.functions])(*args)
+            return intersect_functions(*[
+                functools.partial(f, **f_kwargs)
+                for (f, f_kwargs) in self.functions
+            ])(*args, **kwargs)
         else:
             return True
 
