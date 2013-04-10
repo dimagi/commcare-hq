@@ -2,10 +2,9 @@ from django.dispatch.dispatcher import Signal
 from receiver.signals import successful_form_received
 from casexml.apps.phone.models import SyncLog
 from dimagi.utils.decorators.log_exception import log_exception
-from couchforms.models import XFormInstance
 
 @log_exception()
-def process_cases(sender, xform, reconcile=False, **kwargs):
+def process_cases(sender, xform, reconcile=False, strict_asserts=True, **kwargs):
     """
     Creates or updates case objects which live outside of the form.
 
@@ -42,8 +41,10 @@ def process_cases(sender, xform, reconcile=False, **kwargs):
     if hasattr(xform, "last_sync_token") and xform.last_sync_token:
         relevant_log = SyncLog.get(xform.last_sync_token)
         # in reconciliation mode, things can be unexpected
-        relevant_log.strict = not reconcile
-        relevant_log.update_phone_lists(xform, cases)
+        relevant_log.strict = strict_asserts
+        from casexml.apps.case.util import update_sync_log_with_checks
+        update_sync_log_with_checks(relevant_log, xform, cases)
+
         if reconcile:
             relevant_log.reconcile_cases()
             relevant_log.save()
