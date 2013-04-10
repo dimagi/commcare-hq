@@ -72,7 +72,6 @@ def get_case_xform_ids(case_id):
     return list(set([row['key'][1] for row in results]))
 
 def update_sync_log_with_checks(sync_log, xform, cases, failing_case_id=None):
-
     try:
         sync_log.update_phone_lists(xform, cases)
     except SyncLogAssertionError, e:
@@ -80,6 +79,8 @@ def update_sync_log_with_checks(sync_log, xform, cases, failing_case_id=None):
             form_ids = get_case_xform_ids(e.case_id)
             for form_id in form_ids:
                 if form_id != xform._id:
-                    reprocess_form_cases(XFormInstance.get(form_id), strict_asserts=True)
+                    form = XFormInstance.get(form_id)
+                    if form.doc_type in ['XFormInstance', 'XFormError']:
+                        reprocess_form_cases(form, strict_asserts=True)
             updated_log = SyncLog.get(sync_log._id)
             update_sync_log_with_checks(updated_log, xform, cases, failing_case_id=e.case_id)
