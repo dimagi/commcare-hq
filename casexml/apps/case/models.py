@@ -609,6 +609,11 @@ class CommCareCase(CaseBase, IndexHoldingMixIn, ComputedDocumentMixin):
                         key=xform_id)
 
     def get_xform_ids_from_couch(self):
+        """
+        Like xform_ids, but will grab the raw output from couch (including
+        potential duplicates or other forms, so that they can be reprocessed
+        if desired).
+        """
         return get_case_xform_ids(self._id)
 
 import casexml.apps.case.signals
