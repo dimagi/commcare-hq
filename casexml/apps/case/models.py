@@ -4,7 +4,7 @@ from django.core.cache import cache
 from casexml.apps.phone.xml import get_case_element
 from casexml.apps.case.signals import case_post_save
 from casexml.apps.case.util import get_close_case_xml, get_close_referral_xml,\
-    couchable_property
+    couchable_property, get_case_xform_ids
 from datetime import datetime
 from couchdbkit.ext.django.schema import *
 from casexml.apps.case import const
@@ -609,10 +609,6 @@ class CommCareCase(CaseBase, IndexHoldingMixIn, ComputedDocumentMixin):
                         key=xform_id)
 
     def get_xform_ids_from_couch(self):
-        results = XFormInstance.get_db().view('case/form_case_index',
-                                              reduce=False,
-                                              startkey=[self._id],
-                                              endkey=[self._id, {}])
-        return list(set([row['key'][1] for row in results]))
+        return get_case_xform_ids(self._id)
 
 import casexml.apps.case.signals

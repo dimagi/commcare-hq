@@ -12,6 +12,7 @@ from couchdbkit.schema.properties import LazyDict
 #    _close_referral_template = f.read()
 from django.template.loader import render_to_string
 from casexml.apps.case.signals import process_cases
+from couchforms.models import XFormInstance
 from couchforms.util import post_xform_to_couch
 from dimagi.utils.parsing import json_format_datetime
 
@@ -54,3 +55,10 @@ def post_case_blocks(case_blocks, form_extras={}):
         setattr(xform, k, v)
     process_cases(sender="testharness", xform=xform)
     return xform
+
+def get_case_xform_ids(case_id):
+    results = XFormInstance.get_db().view('case/form_case_index',
+                                          reduce=False,
+                                          startkey=[case_id],
+                                          endkey=[case_id, {}])
+    return list(set([row['key'][1] for row in results]))
