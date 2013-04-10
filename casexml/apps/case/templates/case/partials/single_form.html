@@ -24,7 +24,10 @@
         {% render_tables form_data %}
     </div>
     <div class="tab-pane" id="form-case-data">
+        {% if this_case_data and other_cases_data %}
         <h3>{% trans "This Case" %}</h3>
+        {% endif %}
+
         {% if this_case_data %}
         {% render_tables this_case_data %}
         {% endif %}
