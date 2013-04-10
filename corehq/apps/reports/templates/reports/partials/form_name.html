@@ -1,3 +1,21 @@
 {% load xforms_extras %}
 {% load i18n %}
-{% if form.is_user_registration %}{% trans "User Registration" %}{% else %}{% if form.has_app and form.form %}{{ form.form.name|trans:form.app.langs }}{% else %}{{ form.xmlns }}{% endif %}{% endif %}
+{% spaceless %}
+{% if form.is_user_registration %}
+    {% trans "User Registration" %}
+{% else %}
+    {% if form.has_app and form.form %}
+        {{ form.form.name|trans:form.app.langs }}
+    {% else %}
+        {% if form.xmlns == 'http://code.javarosa.org/devicereport' %}
+            {% trans "Mobile Device Report" %}
+        {% else %}
+            {% if html %}
+                <code>{{ form.xmlns }}</code>
+            {% else %}
+                {{ form.xmlns }}
+            {% endif %}
+        {% endif %}
+    {% endif %}
+{% endif %}
+{% endspaceless %}
