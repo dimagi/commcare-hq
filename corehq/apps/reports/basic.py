@@ -1,6 +1,6 @@
 from django.conf import settings
 from corehq.apps.reports.datatables import (DataTablesHeader, DataTablesColumn,
-    DTSortType, DataTablesColumnGroup)
+    DTSortType)
 from corehq.apps.reports.generic import GenericTabularReport
 from couchdbkit_aggregate import AggregateView, KeyView, AggregateKeyView
 from dimagi.utils.couch.database import get_db
