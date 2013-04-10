@@ -465,7 +465,6 @@ def add_config(request, domain=None):
 @login_and_domain_required
 @datespan_default
 def email_report(request, domain, report_slug):
-    from datetime import datetime
     from dimagi.utils.django.email import send_HTML_email
     from corehq.apps.reports.dispatcher import ProjectReportDispatcher
     from forms import EmailReportForm
@@ -702,7 +701,6 @@ def case_details(request, domain, case_id):
         return HttpResponseRedirect(inspect.CaseListReport.get_url(domain=domain))
 
     report_name = 'Details for Case "%s"' % case.name
-    # form_lookups = dict((form.get_id, "%s: %s" % (form.received_on.date(),  xmlns_to_name(domain, form.xmlns, get_app_id(form)))) for form in case.get_forms())
 
     try:
         owner_name = CommCareUser.get_by_user_id(case.owner_id, domain).raw_username
@@ -724,7 +722,6 @@ def case_details(request, domain, case_id):
         "case": case,
         "username": username, 
         "owner_name": owner_name,
-        # "form_lookups": form_lookups,
         "slug": inspect.CaseListReport.slug,
         "report": dict(
             name=report_name,
@@ -732,7 +729,8 @@ def case_details(request, domain, case_id):
             is_async=False,
         ),
         "layout_flush_content": True,
-        "timezone": timezone
+        "timezone": timezone,
+        "case_details": request.project.get_case_display(case)
     })
 
 def generate_case_export_payload(domain, include_closed, format, group, user_filter):
@@ -837,6 +835,36 @@ def form_data(request, domain, instance_id):
                                    is_archived=is_archived,
                                    form_data=dict(name=form_name,
                                                   modified=instance.received_on)))
+
+@require_form_view_permission
+@login_and_domain_required
+@require_GET
+def case_form_data(request, domain, case_id, xform_id):
+    """
+    specific rendering for a case's xform - render to html via templatetag
+
+    """
+    timezone = util.get_timezone(request.couch_user.user_id, domain)
+
+    try:
+        instance = XFormInstance.get(xform_id)
+    except Exception:
+        raise Http404()
+    try:
+        assert(domain == instance.domain)
+    except AssertionError:
+        raise Http404()
+
+    from casexml.apps.case.templatetags.case_tags import render_form
+
+    #todo: additional formatting options
+    #todo: sanity check that xform_id has case_block
+
+    display = request.project.get_form_display(instance)
+
+    return HttpResponse(render_form(
+            instance, timezone=timezone, display=display))
+
 
 @require_form_view_permission
 @login_and_domain_required
