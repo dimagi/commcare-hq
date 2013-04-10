@@ -5,6 +5,7 @@ from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
 from casexml.apps.case.models import CommCareCase
 from corehq.apps.commtrack.models import Product
 from dimagi.utils.couch.loosechange import map_reduce
+from corehq.apps.commtrack.util import num_periods_late
 
 UNDERSTOCK_THRESHOLD = 0.5 # months
 OVERSTOCK_THRESHOLD = 2. # months
@@ -25,6 +26,7 @@ class CurrentStockStatusReport(GenericTabularReport, CommtrackReportMixin):
                     'Adequate Stock',
                     'Overstocked',
                     'Non-reporting',
+                    'Insufficient Data',
                 ]))
 
     @property
@@ -76,12 +78,12 @@ class CurrentStockStatusReport(GenericTabularReport, CommtrackReportMixin):
                 return 'overstock'
             else:
                 return 'adequate'
-
-        # TODO handle non-reporting
+        def status(case):
+            return stock_category(case) if num_periods_late(case) == 0 else 'nonreporting'
 
         status_by_product = dict((p, map_reduce(lambda c: [(stock_category(c),)], len, data=cases)) for p, cases in cases_by_product.iteritems())
 
-        cols = ['stockout', 'understock', 'adequate', 'overstock', 'nodata']
+        cols = ['stockout', 'understock', 'adequate', 'overstock', 'nonreporting', 'nodata']
         for p in sorted(products, key=lambda p: p.name):
             cases = cases_by_product.get(p._id, [])
             results = status_by_product.get(p._id, {})

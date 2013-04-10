@@ -120,3 +120,6 @@ def bootstrap_default(domain, requisitions_enabled=False):
     make_product(domain, 'Sample Product 3', 'pr')
 
     return c
+
+def num_periods_late(product_case):
+    return 0
