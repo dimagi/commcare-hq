@@ -56,6 +56,7 @@ def process_bulk_upload_zip(processing_id, domain, app_id, username=None, share_
     try:
         for index, path in enumerate(zipped_files):
             status.update_progress(len(checked_paths))
+            checked_paths.append(path)
             file_name = os.path.basename(path)
             try:
                 data = uploaded_zip.read(path)
@@ -98,10 +99,12 @@ def process_bulk_upload_zip(processing_id, domain, app_id, username=None, share_
 
             media_info = multimedia.get_media_info(form_path, is_updated=is_updated, original_path=path)
             status.add_matched_path(media_class, media_info)
-            checked_paths.append(path)
 
         status.update_progress(len(checked_paths))
     except Exception as e:
         status.mark_with_error(_("Error while processing zip: %s" % e))
     uploaded_zip.close()
+
+    status.complete = True
+    status.save()
 
