@@ -1,6 +1,6 @@
 from django.conf import settings
 from corehq.apps.reports.datatables import (DataTablesHeader, DataTablesColumn,
-    DTSortType)
+    DTSortType, DataTablesColumnGroup)
 from corehq.apps.reports.generic import GenericTabularReport
 from couchdbkit_aggregate import AggregateView, KeyView, AggregateKeyView
 from dimagi.utils.couch.database import get_db
@@ -31,6 +31,10 @@ class Column(object):
             except KeyError:
                 pass
 
+        self.group = None
+        if 'group' in kwargs:
+            self.group = kwargs.pop('group')
+
         if 'key' in couch_kwargs:
             if 'sort_type' not in kwargs:
                 kwargs['sort_type'] = DTSortType.NUMERIC
@@ -48,6 +52,8 @@ class Column(object):
             raise Exception("Must specify either key or calculate_fn.")
 
         self.data_tables_column = DataTablesColumn(name, *args, **kwargs)
+        if self.group:
+            self.group.add_column(self.data_tables_column)
 
 
 class FunctionView(object):
@@ -117,8 +123,17 @@ class BasicTabularReport(GenericTabularReport):
 
     @property
     def headers(self):
-        return DataTablesHeader(*[self.columns[c].data_tables_column
-                                  for c in self.default_column_order])
+        columns = []
+        groups = []
+        for c in self.default_column_order:
+            column = self.columns[c]
+            if column.group and column.group not in groups:
+                columns.append(column.group)
+                groups.append(column.group)
+            elif not column.group:
+                columns.append(column.data_tables_column)
+
+        return DataTablesHeader(*columns)
 
     @property
     def rows(self):
