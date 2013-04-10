@@ -115,7 +115,12 @@ class CaseBugTest(TestCase):
         self.assertEqual('1630005', case.community_code)
         self.assertEqual('SantaMariaCahabon', case.district_name)
         self.assertEqual('TAMERLO', case.community_name)
-    
+
+        ids = case.get_xform_ids_from_couch()
+        self.assertEqual(1, len(ids))
+        self.assertEqual(form._id, ids[0])
+
+
     def testLotsOfSubcases(self):
         """
         How do we do when submitting a form with multiple blocks for the same case?

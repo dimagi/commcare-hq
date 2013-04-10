@@ -608,4 +608,11 @@ class CommCareCase(CaseBase, IndexHoldingMixIn, ComputedDocumentMixin):
         return cls.view("case/by_xform_id", reduce=False, include_docs=True, 
                         key=xform_id)
 
+    def get_xform_ids_from_couch(self):
+        results = XFormInstance.get_db().view('case/form_case_index',
+                                              reduce=False,
+                                              startkey=[self._id],
+                                              endkey=[self._id, {}])
+        return list(set([row['key'][1] for row in results]))
+
 import casexml.apps.case.signals
