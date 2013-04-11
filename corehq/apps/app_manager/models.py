@@ -319,7 +319,7 @@ class FormBase(DocumentSchema):
     version = IntegerProperty()
     source = FormSource()
     validation_cache = CouchCachedStringProperty(
-        lambda self: "cache-%s-validation" % self.unique_id
+        lambda self: "cache-%s-%s-validation" % (self.get_app().get_id, self.unique_id)
     )
 
     @classmethod
