@@ -187,7 +187,7 @@ def production():
 @task
 def realstaging():
     """ use production environment on remote host"""
-    env.code_branch = 'stats-n'
+    env.code_branch = 'master'
     env.sudo_user = 'cchq'
     env.environment = 'staging'
     env.django_port = '9010'
@@ -395,7 +395,7 @@ def update_code(preindex=False):
     with cd(root_to_use):
         sudo('git fetch', user=env.sudo_user)
         sudo('git checkout %(code_branch)s' % env, user=env.sudo_user)
-        sudo('git reset --hard origin/%(code_branch)s' % env, user=env.sudo_user)
+        sudo('git pull', user=env.sudo_user)
         sudo('git submodule sync', user=env.sudo_user)
         sudo('git submodule update --init --recursive', user=env.sudo_user)
         # remove all .pyc files in the project
@@ -579,7 +579,6 @@ def flip_es_aliases():
         sudo('%(virtualenv_root)s/bin/python manage.py ptop_es_manage --flip_alias --pillow FullCasePillow' % env, user=env.sudo_user)
         sudo('%(virtualenv_root)s/bin/python manage.py ptop_es_manage --flip_alias --pillow XFormPillow' % env, user=env.sudo_user)
         sudo('%(virtualenv_root)s/bin/python manage.py ptop_es_manage --flip_alias --pillow FullXFormPillow' % env, user=env.sudo_user)
-        sudo('%(virtualenv_root)s/bin/python manage.py ptop_es_manage --flip_alias --pillow DomainPillow' % env, user=env.sudo_user)
 
 @roles('staticfiles', 'django_monolith')
 def _do_collectstatic():
