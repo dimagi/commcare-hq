@@ -1,6 +1,9 @@
 from django.test import TestCase
 import os
 from casexml.apps.case.models import CommCareCase
+from casexml.apps.case.tests.util import CaseBlock
+from casexml.apps.case.util import post_case_blocks
+from casexml.apps.case.xml import V2
 from couchforms.util import post_xform_to_couch
 from casexml.apps.case.signals import process_cases
 
@@ -133,4 +136,25 @@ class CaseBugTest(TestCase):
         # before the bug was fixed this call failed
         process_cases(sender="testharness", xform=form)
         self.assertEqual(11, len(CommCareCase.view("case/by_user", reduce=False).all()))
-        
+
+    def testSubmitToDeletedCase(self):
+        # submitting to a deleted case should update the case but keep it as deleted
+        case_id = 'immagetdeleted'
+        deleted_doc_type = 'CommCareCase-Deleted'
+        post_case_blocks([
+            CaseBlock(create=True, case_id=case_id, user_id='whatever',
+                      version=V2, update={'foo': 'bar'}).as_xml()
+        ])
+        case = CommCareCase.get(case_id)
+        self.assertEqual('bar', case.foo)
+        # hack copy how we delete things
+        case.doc_type = deleted_doc_type
+        case.save()
+        self.assertEqual(deleted_doc_type, case.doc_type)
+        post_case_blocks([
+            CaseBlock(create=False, case_id=case_id, user_id='whatever',
+                      version=V2, update={'foo': 'not_bar'}).as_xml()
+        ])
+        case = CommCareCase.get(case_id)
+        self.assertEqual('not_bar', case.foo)
+        self.assertEqual(deleted_doc_type, case.doc_type)
