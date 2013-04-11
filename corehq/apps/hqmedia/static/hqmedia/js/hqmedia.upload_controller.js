@@ -6,13 +6,13 @@ function HQMediaUploadController(options) {
     self.marker = options.marker || 'media_';
 
     ///// YUI Uploader Specific Params
-    self.boundingBox = options.boundingBox || (self.container + " .hqm-bounding-box"); // todo is this now used?
     self.confirmUploadModalSelector = options.confirmUploadModalSelector || "#hqm-upload-modal";
     self.swfURL = options.swfURL;
     self.fileFilters = options.fileFilters;
     self.isMultiFileUpload = options.isMultiFileUpload;
 
     // Essential Selectors
+    self.selectFilesButtonContainer = self.container + " .hqm-select-files-container";
     self.selectFilesButton = self.container + " .hqm-select";
 
     self.uploadButtonSelector = self.container + " .hqm-upload";
@@ -36,20 +36,18 @@ function HQMediaUploadController(options) {
     self.processingURL = options.processingURL;
 
     // Other
-    self.uploadedFiles = [];
-    self.processingIdToFile = {};
     self.pollInterval = 1000;
     self.currentPollAttempts = 0;
     self.maxPollAttempts = 30;
 
-    self.processQueueTemplate = function (upload_info) {
+    self.processQueueTemplate = function (file) {
         /*
             This renders the template for the queued item display.
          */
         return _.template(self.queueTemplate, {
-            unique_id: self.marker + upload_info.id,
-            file_size: (upload_info.size/1048576).toFixed(3),
-            file_name: upload_info.name
+            unique_id: self.marker + file.get('id'),
+            file_size: (file.get('size')/1048576).toFixed(3),
+            file_name: file.get('name')
         });
     };
 
@@ -74,17 +72,15 @@ function HQMediaUploadController(options) {
         });
     };
 
-    self.cancelFileUpload = function (upload_info) {
+    self.cancelFileUpload = function (file) {
         /*
             What happens when you cancel or remove the file from queue.
          */
-        var file_id = upload_info.id;
         if (self.isMultiFileUpload) {
             return function (event) {
-                self.uploader.queue.cancel(file_id);
-                self.removeFileFromUploader(file_id);
-                var activeSelector = self.getActiveUploadSelectors(file_id);
-                $(activeSelector.selector).remove();
+                file.cancelUpload();
+                var activeSelector = self.getActiveUploadSelectors(file.get('id'));
+                self.removeFileFromUploaderUI(file);
                 event.preventDefault();
             }
         } else {
@@ -93,6 +89,13 @@ function HQMediaUploadController(options) {
                 // todo implement this
             }
         }
+    };
+
+    self.removeFileFromUI = function (file) {
+        console.log("remove file from uploader ui");
+        console.log(self.uploader.get('fileList'));
+        var activeSelector = self.getActiveUploadSelectors(file.get('id'));
+        $(activeSelector.selector).remove();
     };
 
     self.getActiveUploadSelectors = function (upload_id) {
@@ -125,39 +128,65 @@ function HQMediaUploadController(options) {
          */
         YUI({
             combine: false,
-            base: '/static/hqmedia/yui/'
-        }).use('uploader','uploader-flash', function (Y) {
+            base: '/static/hqmedia/yui/3.9.1/build/'
+        }).use('uploader', function (Y) {
+                Y.Uploader = Y.UploaderFlash;
+                var buttonRegion = Y.one(self.selectFilesButton).get('region');
+                console.log(Y.Uploader.TYPE);
 
-                if (Y.Uploader.TYPE != "none") {
-                    self.uploader = new Y.Uploader({
-                        selectFilesButton: self.selectFilesButton,
-//                    boundingBox: self.boundingBox,
-//                    swfURL: self.swfURL
-                    });
+                self.uploader = new Y.Uploader({
+                    width: buttonRegion.width,
+                    height: buttonRegion.height,
+                    selectFilesButton: Y.one(self.selectFilesButton),
+                    multipleFiles: self.isMultiFileUpload
+                });
 
-                    if (Y.Uploader.TYPE == "html5") {
-                        console.log("using HTML5 Uploader");
-//                    uploader.set("dragAndDropArea", "#divContainer");
-                    }
-                    else if (Y.Uploader.TYPE == "flash") {
-                        console.log("using Flash Uploader");
-                        self.uploader.set("fileFilters", self.fileFilters);
-                    }
-
-                    self.uploader.set("multipleFiles", self.isMultiFileUpload);
-                    self.uploader.set("simLimit", 2);
-                    self.uploader.render(self.boundingBox);
-
-                    self.uploader.on("fileselect", self.fileSelect);
-                    self.uploader.on("uploadprogress", self.uploadProgress);
-                    self.uploader.on("uploadcomplete", self.uploadComplete);
-                    self.uploader.on("uploadcompletedata", self.uploadCompleteData);
-                    self.uploader.on("uploaderror", self.uploadError);
+                if (Y.Uploader.TYPE == "html5") {
+                    console.log("using HTML5 Uploader");
+                }
+                else if (Y.Uploader.TYPE == "flash") {
+                    self.uploader.set("fileFilters", self.fileFilters);
+                    self.uploader.set("swfURL", self.swfURL);
                 }
 
-
-
+                self.uploader.on("fileselect", self.fileSelect);
+                self.uploader.render(self.selectFilesButtonContainer);
         });
+//        YUI({
+//            combine: false,
+//            base: '/static/hqmedia/yui/'
+//        }).use('uploader','uploader-flash', function (Y) {
+//
+//                if (Y.Uploader.TYPE != "none") {
+//                    self.uploader = new Y.Uploader({
+//                        selectFilesButton: self.selectFilesButton,
+////                    boundingBox: self.boundingBox,
+////                    swfURL: self.swfURL
+//                    });
+//
+//                    if (Y.Uploader.TYPE == "html5") {
+//                        console.log("using HTML5 Uploader");
+////                    uploader.set("dragAndDropArea", "#divContainer");
+//                    }
+//                    else if (Y.Uploader.TYPE == "flash") {
+//                        console.log("using Flash Uploader");
+//                        self.uploader.set("fileFilters", self.fileFilters);
+//                    }
+//
+//                    self.uploader.set("multipleFiles", self.isMultiFileUpload);
+//                    self.uploader.set("simLimit", 2);
+//                    self.uploader.render(self.boundingBox);
+//
+//                    self.uploader.on("fileselect", self.fileSelect);
+//                    self.uploader.on("uploadprogress", self.uploadProgress);
+//                    self.uploader.on("uploadcomplete", self.uploadComplete);
+//                    self.uploader.on("uploadcompletedata", self.uploadCompleteData);
+//                    self.uploader.on("uploaderror", self.uploadError);
+//                }
+//
+//
+//
+//        });
 
         $(function () {
             self.resetUploader();
@@ -175,6 +204,7 @@ function HQMediaUploadController(options) {
          */
         self.selectedFiles = [];
         self.uploadedFiles = [];
+        self.processingIdToFile = {};
         self.toggleUploadButton();
         self.resetUploadForm();
     };
@@ -203,8 +233,23 @@ function HQMediaUploadController(options) {
         /*
             After files have been selected by the select files function, do this.
          */
-        console.log(event.fileList);
-//        for (var file_id in event.fileList) {
+        console.log(event);
+        console.log(self.uploader.get('fileList'));
+        for (var f = 0; f < event.fileList.length; f++) {
+            var queuedFile = event.fileList[f];
+            var fileId = queuedFile.get('id');
+            if (self.selectedFiles.indexOf(fileId) < 0) {
+                self.selectedFiles.push(fileId);
+                $(self.queueSelector).append(self.processQueueTemplate(queuedFile));
+                var activeSelector = self.getActiveUploadSelectors(fileId);
+                $(activeSelector.cancel).click(self.cancelFileUpload(queuedFile));
+                if ($(activeSelector.remove)) {
+                    $(activeSelector.remove).click(self.removeFileFromUploader(queuedFile));
+                }
+            }
+
+
+
 //            if (event.fileList.hasOwnProperty(file_id) && !(file_id in self.selectedFiles)) {
 //                var currentFile = event.fileList[file_id];
 //                if (!self.isMultiFileUpload) {
@@ -214,13 +259,10 @@ function HQMediaUploadController(options) {
 //                    $(self.queueSelector).append(self.processQueueTemplate(currentFile));
 //                    self.selectedFiles.push(file_id);
 //                    var activeSelector = self.getActiveUploadSelectors(file_id);
-//                    $(activeSelector.cancel).click(self.cancelFileUpload(currentFile));
-//                    if (activeSelector.remove) {
-//                        $(activeSelector.remove).click(self.cancelFileUpload(currentFile));
-//                    }
+//
 //                }
 //            }
-//        }
+        }
 //        self.toggleUploadButton();
 //        self.resetUploadForm();
     };
@@ -252,7 +294,7 @@ function HQMediaUploadController(options) {
         var curUpload = self.getActiveUploadSelectors(event.id);
         $(curUpload.progressBarContainer).removeClass('active');
         $(curUpload.cancel).addClass('hide');
-        self.removeFileFromUploader(event.id);
+        self.removeFileFromUploaderUI(event.id);
 
         if (self.isMultiFileUpload) {
             var $queuedItem = $(curUpload.selector);
@@ -288,12 +330,6 @@ function HQMediaUploadController(options) {
             $(currentSelector.remove).addClass('hide');
             $(currentSelector.cancel).removeClass('hide');
         }
-    };
-
-    self.removeFileFromUploader = function (file_id) {
-        self.uploader.removeFile(file_id);
-        self.selectedFiles = _.without(self.selectedFiles, file_id);
-        self.toggleUploadButton();
     };
 
     self.beginProcessing = function(event, response) {
