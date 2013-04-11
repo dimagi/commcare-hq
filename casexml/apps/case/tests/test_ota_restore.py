@@ -4,7 +4,7 @@ from casexml.apps.case.models import CommCareCase
 from casexml.apps.case.signals import process_cases
 from couchforms.util import post_xform_to_couch
 
-class MultiCaseTest(TestCase):
+class TestOTARestore(TestCase):
     
     def setUp(self):
         for item in CommCareCase.view("case/by_user", reduce=False, include_docs=True).all():

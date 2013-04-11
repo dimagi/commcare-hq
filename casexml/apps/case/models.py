@@ -4,7 +4,7 @@ from django.core.cache import cache
 from casexml.apps.phone.xml import get_case_element
 from casexml.apps.case.signals import case_post_save
 from casexml.apps.case.util import get_close_case_xml, get_close_referral_xml,\
-    couchable_property
+    couchable_property, get_case_xform_ids
 from datetime import datetime
 from couchdbkit.ext.django.schema import *
 from casexml.apps.case import const
@@ -607,5 +607,13 @@ class CommCareCase(CaseBase, IndexHoldingMixIn, ComputedDocumentMixin):
     def get_by_xform_id(cls, xform_id):
         return cls.view("case/by_xform_id", reduce=False, include_docs=True, 
                         key=xform_id)
+
+    def get_xform_ids_from_couch(self):
+        """
+        Like xform_ids, but will grab the raw output from couch (including
+        potential duplicates or other forms, so that they can be reprocessed
+        if desired).
+        """
+        return get_case_xform_ids(self._id)
 
 import casexml.apps.case.signals

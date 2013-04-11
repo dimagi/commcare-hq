@@ -2,10 +2,22 @@ from django.dispatch.dispatcher import Signal
 from receiver.signals import successful_form_received
 from casexml.apps.phone.models import SyncLog
 from dimagi.utils.decorators.log_exception import log_exception
-from couchforms.models import XFormInstance
+
+class CaseProcessingConfig(object):
+    def __init__(self, reconcile=False, strict_asserts=True, case_id_blacklist=None):
+        self.reconcile = reconcile
+        self.strict_asserts = strict_asserts
+        self.case_id_blacklist = case_id_blacklist or []
+
+    def __repr__(self):
+        return 'reconcile: {reconcile}, strict: {strict}, ids: {ids}'.format(
+            reconcile=self.reconcile,
+            strict=self.strict_asserts,
+            ids=", ".join(self.case_id_blacklist)
+        )
 
 @log_exception()
-def process_cases(sender, xform, reconcile=False, **kwargs):
+def process_cases(sender, xform, config=None, **kwargs):
     """
     Creates or updates case objects which live outside of the form.
 
@@ -13,10 +25,11 @@ def process_cases(sender, xform, reconcile=False, **kwargs):
     reconciling the case update history after the case is processed.
     """
     # recursive import fail
+    config = config or CaseProcessingConfig()
     from casexml.apps.case.xform import get_or_update_cases
     cases = get_or_update_cases(xform).values()
 
-    if reconcile:
+    if config.reconcile:
         for c in cases:
             c.reconcile_actions(rebuild=True)
 
@@ -42,9 +55,12 @@ def process_cases(sender, xform, reconcile=False, **kwargs):
     if hasattr(xform, "last_sync_token") and xform.last_sync_token:
         relevant_log = SyncLog.get(xform.last_sync_token)
         # in reconciliation mode, things can be unexpected
-        relevant_log.strict = not reconcile
-        relevant_log.update_phone_lists(xform, cases)
-        if reconcile:
+        relevant_log.strict = config.strict_asserts
+        from casexml.apps.case.util import update_sync_log_with_checks
+        update_sync_log_with_checks(relevant_log, xform, cases,
+                                    case_id_blacklist=config.case_id_blacklist)
+
+        if config.reconcile:
             relevant_log.reconcile_cases()
             relevant_log.save()
 
