@@ -26,9 +26,9 @@
                            target="_blank"
                            class="btn btn-primary match-info"
                            data-content="<img src='<%= image.url %>?thumb=220' width='220' alt='<%= image.path %>' />">
-                            <i class="icon-eye-open"></i> View Full Image</a>
+                            <i class="icon-eye-open"></i> {% trans 'View Full Image' %}</a>
                         <% if (image.updated) { %>
-                        <span class="label label-info">Updated</span>
+                        <span class="label label-info">{% trans 'Updated' %}</span>
                         <% } %>
                     </p>
                     <p><code class="hqm-path"><span><%= image.path %></span></code></p>
@@ -47,10 +47,10 @@
             <p><a href="<%= sound.url %>"
                       target="_blank"
                       class="btn btn-primary match-info"
-                      data-content="Playing audio directly on this page is currently not supported.">
-                    <i class="icon-volume-up"></i> Hear Audio</a>
+                      data-content="{% trans 'Playing audio directly on this page is currently not supported.' %}">
+                    <i class="icon-volume-up"></i> {% trans 'Hear Audio' %}</a>
                 <% if (sound.updated) { %>
-                <span class="label label-info">Updated</span>
+                <span class="label label-info">{% trans 'Updated' %}</span>
                 <% } %>
             </p>
             <p>
