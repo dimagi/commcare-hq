@@ -86,7 +86,9 @@
         {% if case.all_indices %}
         <li><a href="#case-related" data-toggle="tab">{% trans "Related Cases" %}</a></li>
         {% endif %}
+    {% if case.attachments %}
         <li><a href="#case-attachments" data-toggle="tab">{% trans "Attachments" %}</a></li>
+    {% endif %}
     </ul>
 
     <div class="tab-content">
@@ -159,6 +161,7 @@
             </table>
         </div> <!-- end case-related tab -->
     {% endif %}
+    {% if case.attachments %}
         <div class="tab-pane" id="case-attachments">
             <ul>
             {% for form_id, filename in case.attachments %}
@@ -171,6 +174,7 @@
             {% endfor %}
             </ul>
         </div> <!-- end case-attachments tab -->
+    {% endif %}
     <div class="tab-pane" id="case-history-tab">
         <div class="span4">
         <ul data-bind="foreach: $root.form_type_facets">
