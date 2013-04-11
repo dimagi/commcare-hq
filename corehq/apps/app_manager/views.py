@@ -82,7 +82,7 @@ class ApplicationViewMixin(DomainViewMixin):
     @property
     @memoized
     def app_id(self):
-        return self.args[1] if len(self.args) > 1 else None
+        return self.args[1] if len(self.args) > 1 else self.kwargs.get('app_id')
 
     @property
     @memoized
