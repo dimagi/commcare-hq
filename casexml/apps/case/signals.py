@@ -4,16 +4,16 @@ from casexml.apps.phone.models import SyncLog
 from dimagi.utils.decorators.log_exception import log_exception
 
 class CaseProcessingConfig(object):
-    def __init__(self, reconcile=False, strict_asserts=True, failing_case_ids=None):
+    def __init__(self, reconcile=False, strict_asserts=True, case_id_blacklist=None):
         self.reconcile = reconcile
         self.strict_asserts = strict_asserts
-        self.failing_case_ids = failing_case_ids or []
+        self.case_id_blacklist = case_id_blacklist or []
 
     def __repr__(self):
         return 'reconcile: {reconcile}, strict: {strict}, ids: {ids}'.format(
             reconcile=self.reconcile,
             strict=self.strict_asserts,
-            ids=", ".join(self.failing_case_ids)
+            ids=", ".join(self.case_id_blacklist)
         )
 
 @log_exception()
@@ -58,7 +58,7 @@ def process_cases(sender, xform, config=None, **kwargs):
         relevant_log.strict = config.strict_asserts
         from casexml.apps.case.util import update_sync_log_with_checks
         update_sync_log_with_checks(relevant_log, xform, cases,
-                                    failing_case_ids=config.failing_case_ids)
+                                    case_id_blacklist=config.case_id_blacklist)
 
         if config.reconcile:
             relevant_log.reconcile_cases()
