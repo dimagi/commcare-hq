@@ -1637,6 +1637,7 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
                 get_url_base(),
                 reverse('view_user_registration', args=[self.domain, self.id])
             ))
+            self.save()
         return form
 
     def get_forms(self, bare=True):
