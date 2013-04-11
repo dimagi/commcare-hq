@@ -2,7 +2,7 @@ from django.conf import settings
 from corehq.apps.reports.datatables import (DataTablesHeader, DataTablesColumn,
     DTSortType)
 from corehq.apps.reports.generic import GenericTabularReport
-from couchdbkit_aggregate import KeyView, AggregateView
+from couchdbkit_aggregate import AggregateView, KeyView, AggregateKeyView
 from dimagi.utils.couch.database import get_db
 
 __all__ = ['Column', 'BasicTabularReport']
@@ -19,7 +19,7 @@ class Column(object):
 
         couch_args = (
             # args specific to KeyView constructor
-            'key', 'couch_view', 'startkey_fn', 'endkey_fn', 'reduce_fn',
+            'key', 'couch_view', 'startkey_fn', 'endkey_fn', 'reduce_fn'
 
             # pass-through db.view() args
         )
@@ -37,7 +37,10 @@ class Column(object):
                 kwargs['sortable'] = True
 
             key = couch_kwargs.pop('key')
-            self.view = KeyView(key, **couch_kwargs)
+            if isinstance(key, AggregateKeyView):
+                self.view = key
+            else:
+                self.view = KeyView(key, **couch_kwargs)
         elif calculate_fn:
             kwargs['sortable'] = False
             self.view = FunctionView(calculate_fn)
@@ -79,7 +82,7 @@ class ColumnCollector(type):
         # class declaratively
         function_views = {}
         for slug, column in columns.items():
-            if hasattr(column, 'view') and isinstance(column.view, KeyView):
+            if hasattr(column, 'view') and isinstance(column.view, (KeyView, AggregateKeyView)):
                 MyAggregateView.key_views[slug] = column.view
             else:
                 function_views[slug] = column.view
@@ -94,6 +97,18 @@ class ColumnCollector(type):
 class BasicTabularReport(GenericTabularReport):
     __metaclass__ = ColumnCollector
     update_after = False
+
+    @property
+    def default_column_order(self):
+        raise NotImplementedError()
+
+    @property
+    def keys(self):
+        raise NotImplementedError()
+
+    @property
+    def start_and_end_keys(self):
+        raise NotImplementedError()
 
     @property
     def fields(self):
@@ -117,11 +132,12 @@ class BasicTabularReport(GenericTabularReport):
         })
 
         for key in self.keys:
-            row = self.View.view(key, **kwargs)
+            row = self.View.get_result(key, **kwargs)
 
             yield [row[c] if c in self.View.key_views
                           else self.function_views[c].view(key, self)
                    for c in self.default_column_order]
+
 
 class SummingTabularReport(BasicTabularReport):
     @property

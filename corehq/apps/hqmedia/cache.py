@@ -3,6 +3,7 @@ from django.core.cache import cache
 from corehq.apps.hqmedia.models import CommCareImage, CommCareAudio
 from django.utils.translation import ugettext as _
 
+
 class BaseMultimediaStatusCache(object):
     upload_type = None
     cache_expiry = 60 * 60 # defaults to one hour
@@ -32,13 +33,16 @@ class BaseMultimediaStatusCache(object):
 
     def get_response(self):
         """
-            Modify the response you want to send back to the uploader as you want.
+            Response that gets sent back to the upload controller.
         """
-        response = self.__dict__
-        response.update({
+        return {
             'type': self.upload_type,
-        })
-        return response
+            'in_celery': self.in_celery,
+            'complete': self.complete,
+            'progress': self.progress,
+            'errors': self.errors,
+            'processing_id': self.processing_id,
+        }
 
     @classmethod
     def get_cache_key(cls, processing_id):
@@ -62,6 +66,16 @@ class BulkMultimediaStatusCache(BaseMultimediaStatusCache):
     @property
     def allowed_media(self):
         return [CommCareAudio, CommCareImage]
+
+    def get_response(self):
+        response = super(BulkMultimediaStatusCache, self).get_response()
+        response.update({
+            'unmatched_files': self.unmatched_files,
+            'matched_files': self.matched_files,
+            'total_files': self.total_files,
+            'processed_files': self.processed_files,
+        })
+        return response
 
     def update_progress(self, num_files_processed):
         if self.total_files is None:
