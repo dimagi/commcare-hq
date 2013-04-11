@@ -416,7 +416,9 @@
                                                     function(idx) { return actions[idx].xform_id})
                             }
                         },
-                        "from": 0
+                        "from": 0,
+                        "size": self.page_size(),
+                        "sort": [{"received_on": "desc"}]
                     };
                 };
 
