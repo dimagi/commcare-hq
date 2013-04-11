@@ -370,6 +370,7 @@ AUDIT_VIEWS = [
 
 # Don't use google analytics unless overridden in localsettings
 GOOGLE_ANALYTICS_ID = ''
+PINGDOM_ID = ''
 
 # for touchforms maps
 GMAPS_API_KEY = "changeme"
