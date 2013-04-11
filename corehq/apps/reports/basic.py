@@ -31,9 +31,7 @@ class Column(object):
             except KeyError:
                 pass
 
-        self.group = None
-        if 'group' in kwargs:
-            self.group = kwargs.pop('group')
+        self.group = kwargs.pop('group', None)
 
         if 'key' in couch_kwargs:
             if 'sort_type' not in kwargs:
