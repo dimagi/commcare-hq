@@ -38,14 +38,14 @@ def get_display(val, dt_format="%b %d, %Y %H:%M %Z", timezone=pytz.utc,
     if isinstance(val, types.DictionaryType):
         ret = "".join(
             ["<dl>"] + 
-            ["<dt>%s</dt><dd>%s</dd>" % (k, unicode(recurse(v))) for k, v in val.items()] +
+            ["<dt>%s</dt><dd>%s</dd>" % (k, recurse(v)) for k, v in val.items()] +
             ["</dl>"])
 
     elif (isinstance(val, collections.Iterable) and 
           not isinstance(val, basestring)):
         ret = "".join(
             ["<ul>"] +
-            ["<li>{0}</li>".format(recurse(v)) for v in val] +
+            ["<li>%s</li>" % (recurse(v)) for v in val] +
             ["</ul>"])
 
     else:
