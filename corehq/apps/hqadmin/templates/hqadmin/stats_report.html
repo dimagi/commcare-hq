@@ -12,6 +12,7 @@
 {% endblock %}
 
 {% block js-inline %}{{ block.super }}
+    <script src="{% static 'appstore/js/facet_sidebar.js' %}"></script>
     {% include "reports/standard/partials/report_loader.html" %}
 {% endblock %}
 
