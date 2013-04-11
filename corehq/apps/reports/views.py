@@ -863,7 +863,7 @@ def case_form_data(request, domain, case_id, xform_id):
     display = request.project.get_form_display(instance)
 
     return HttpResponse(render_form(
-            instance, timezone=timezone, display=display))
+            instance, timezone=timezone, display=display, case_id=case_id))
 
 
 @require_form_view_permission
