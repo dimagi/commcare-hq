@@ -230,6 +230,22 @@ class CommCareMultimedia(Document):
         }.get(cls.get_base_mime_type(data))
 
     @classmethod
+    def get_class_by_filename(cls, filename):
+        """
+            NOTE: This is a last resort an not a great way to verify a file's type.
+
+            Unfortunately some forms of media files, when created under certain conditions, are not readily identifiable
+            without further prodding. You should only add extensions here when you've verified that get_class_by_data
+            fails and those files are indeed valid.
+
+            Valid is defined as: playable or viewable and consumable by CommCare
+        """
+        extension = filename[filename.rfind('.') + 1:]
+        return {
+            'mp3': CommCareAudio,
+        }.get(extension)
+
+    @classmethod
     def get_form_path(cls, path):
         path = path.strip().lower()
         if path.startswith(MULTIMEDIA_PREFIX):
