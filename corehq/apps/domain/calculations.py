@@ -1,8 +1,10 @@
 from datetime import datetime, timedelta, time
 from django.template.loader import render_to_string
+from corehq.apps.appstore.views import es_query
 from corehq.apps.domain.models import Domain
 from corehq.apps.reminders.models import CaseReminderHandler
 from corehq.apps.reports.util import make_form_couch_key
+from corehq.pillows.mappings.xform_mapping import XFORM_INDEX
 from dimagi.utils.couch.database import get_db
 
 def num_web_users(domain, *args):
@@ -18,13 +20,24 @@ DATE_FORMAT = '%Y-%m-%dT%H:%M:%SZ'
 DISPLAY_DATE_FORMAT = '%Y/%m/%d %H:%M:%S'
 
 def active_mobile_users(domain):
+    """
+    Returns the number of mobile users who have submitted a form in the last 30 days
+    """
     now = datetime.now()
     then = (now - timedelta(days=30)).strftime(DATE_FORMAT)
     now = now.strftime(DATE_FORMAT)
 
-    key = ['submission', domain]
-    rows = get_db().view("reports_forms/all_forms", startkey=key+[then], endkey=key+[now], reduce=False, include_docs=True).all()
-    return len(set([r["value"].get('user_id') for r in rows if r["value"].get('user_id')])) if rows else 0
+    q = {"query": {
+            "range": {
+                "form.meta.timeEnd": {
+                    "from": then,
+                    "to": now}}}}
+    facets = ['userID']
+    data = es_query(params={"domain.exact": domain}, q=q, facets=facets, es_url=XFORM_INDEX + '/xform/_search')
+    excluded_ids = ['commtrack-system']
+    terms = [t.get('term') for t in data["facets"]["userID"]["terms"]]
+    terms = filter(lambda t: t and t not in excluded_ids, terms)
+    return len(terms)
 
 def cases(domain, *args):
     row = get_db().view("hqcase/types_by_domain", startkey=[domain], endkey=[domain, {}]).one()
