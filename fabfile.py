@@ -187,7 +187,7 @@ def production():
 @task
 def realstaging():
     """ use production environment on remote host"""
-    env.code_branch = 'realeststaging'
+    env.code_branch = 'staging2'
     env.sudo_user = 'cchq'
     env.environment = 'staging'
     env.django_port = '9010'
