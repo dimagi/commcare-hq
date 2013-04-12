@@ -401,10 +401,12 @@ ko.bindingHandlers.makeHqHelp = {
     init: function (element, valueAccessor) {
         var opts = valueAccessor(),
             name = ko.utils.unwrapObservable(opts.name),
-            description = ko.utils.unwrapObservable(opts.description);
+            description = ko.utils.unwrapObservable(opts.description),
+            format = ko.utils.unwrapObservable(opts.format);
         COMMCAREHQ.makeHqHelp({
             title: name,
-            content: description
+            content: description,
+            html: format === 'html'
         }).appendTo(element);
     }
 };
