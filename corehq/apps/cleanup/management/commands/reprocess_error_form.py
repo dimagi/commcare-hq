@@ -1,5 +1,5 @@
 from django.core.management.base import BaseCommand, CommandError
-from corehq.apps.cleanup.xforms import reprocess_form_cases
+from casexml.apps.case.util import reprocess_form_cases
 from couchforms.models import XFormError
 
 class Command(BaseCommand):
