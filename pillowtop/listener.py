@@ -266,7 +266,7 @@ class ElasticPillow(BasicPillow):
         return "%s/%s/%s" % (self.es_index, self.es_type, doc_id)
 
     def update_settings(self, settings_dict):
-        return self.put_robust("%s/_settings" % self.es_index, data=settings_dict)
+        return self.send_robust("%s/_settings" % self.es_index, data=settings_dict)
 
     def set_index_reindex_settings(self):
         """
@@ -286,7 +286,7 @@ class ElasticPillow(BasicPillow):
 
     def set_mapping(self, type_string, mapping):
         if self.online:
-            return self.put_robust("%s/%s/_mapping" % (self.es_index, type_string), data=mapping)
+            return self.send_robust("%s/%s/_mapping" % (self.es_index, type_string), data=mapping)
         else:
             return {"ok": True, "acknowledged": True}
 
@@ -307,7 +307,7 @@ class ElasticPillow(BasicPillow):
         """
         Rebuild an index after a delete
         """
-        self.put_robust(self.es_index, data=self.es_meta)
+        self.send_robust(self.es_index, data=self.es_meta)
         self.set_index_normal_settings()
 
     def change_trigger(self, changes_dict):
@@ -388,14 +388,17 @@ class ElasticPillow(BasicPillow):
         except Exception, ex:
             logging.error("Error on change: %s, %s" % (change['id'], ex))
 
-    def put_robust(self, path, data={}, retries=MAX_RETRIES, except_on_failure=False):
+    def send_robust(self, path, data={}, retries=MAX_RETRIES, except_on_failure=False, update=False):
         """
         More fault tolerant es.put method
         """
         current_tries = 0
         while current_tries < retries:
             try:
-                res = self.get_es().put(path, data=data)
+                if update:
+                    res = self.get_es().post("%s/_update" % path, data={"doc": data})
+                else:
+                    res = self.get_es().put(path, data=data)
                 break
             except ConnectionError, ex:
                 current_tries += 1
@@ -435,13 +438,15 @@ class ElasticPillow(BasicPillow):
             es = self.get_es()
             doc_path = self.get_doc_path(doc_dict['_id'])
 
+            doc_exists = self.doc_exists(doc_dict['_id'])
+
             if self.allow_updates:
                 can_put = True
             else:
-                can_put = not self.doc_exists(doc_dict['_id'])
+                can_put = not doc_exists
 
             if can_put:
-                res = self.put_robust(doc_path, data=doc_dict)
+                res = self.send_robust(doc_path, data=doc_dict, update=doc_exists)
                 return res
         except Exception, ex:
             logging.error("PillowTop [%s]: transporting change data to elasticsearch error: %s",
@@ -621,13 +626,15 @@ class AliasedElasticPillow(ElasticPillow):
             if not self.bulk:
                 doc_path = self.get_doc_path_typed(doc_dict)
 
+                doc_exists = self.doc_exists(doc_dict)
+
                 if self.allow_updates:
                     can_put = True
                 else:
-                    can_put = not self.doc_exists(doc_dict)
+                    can_put = not doc_exists
 
                 if can_put and not self.bulk:
-                    res = self.put_robust(doc_path, data=doc_dict)
+                    res = self.send_robust(doc_path, data=doc_dict, update=doc_exists)
                     return res
         except Exception, ex:
             tb = traceback.format_exc()
