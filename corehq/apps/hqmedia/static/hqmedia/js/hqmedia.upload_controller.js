@@ -36,7 +36,7 @@ function HQMediaUploadController(options) {
     self.processingURL = options.processingURL;
 
     // Other
-    self.pollInterval = 1000;
+    self.pollInterval = 2000;
     self.currentPollAttempts = 0;
     self.maxPollAttempts = 30;
 
@@ -214,6 +214,7 @@ function HQMediaUploadController(options) {
                 self.uploader.on("fileselect", self.fileSelect);
                 self.uploader.on("uploadprogress", self.uploadProgress);
                 self.uploader.on("uploadcomplete", self.uploadComplete);
+                self.uploader.on("uploaderror", self.uploadError);
 
                 self.uploader.render(self.selectFilesButtonContainer);
         });
@@ -233,7 +234,6 @@ function HQMediaUploadController(options) {
             Start over.
          */
         self.filesInQueueUI = [];
-        self.uploadedFiles = [];
         self.processingIdToFile = {};
         self.toggleUploadButton();
         self.resetUploadForm();
@@ -282,45 +282,44 @@ function HQMediaUploadController(options) {
     };
 
     self.uploadProgress = function (event) {
-        var curUpload = self.getActiveUploadSelectors(event.file.get('id'));
+        var curUpload = self.getActiveUploadSelectors(event.file);
         $(curUpload.progressBar).attr('style', 'width: ' + event.percentLoaded + '%;');
     };
 
     self.uploadComplete = function (event) {
-        var curUpload = self.getActiveUploadSelectors(event.file.get('id'));
+        var curUpload = self.getActiveUploadSelectors(event.file);
         $(curUpload.progressBarContainer).removeClass('active');
         $(curUpload.cancel).addClass('hide');
-        self.removeFileFromUI(event.file);
+        var $queuedItem = $(curUpload.selector);
+        $queuedItem.remove();
 
         if (self.isMultiFileUpload) {
-            var $queuedItem = $(curUpload.selector);
-            $queuedItem.remove();
             $queuedItem.insertAfter($(self.processingFilesListSelector).find('.hqm-list-notice'));
         }
 
-        var response = $.parseJSON(event.data);
-        self.beginProcessing(event, response);
+        self.beginProcessing(event);
     };
 
     self.uploadError = function (event) {
         /*
             An error occurred while uploading the file.
          */
-        var file_id = event.id;
-        var curUpload = self.getActiveUploadSelectors(file_id);
+        var curUpload = self.getActiveUploadSelectors(event.file);
         $(curUpload.progressBarContainer).addClass('progress-danger');
-        self.showErrors(file_id, ['There is an issue communicating with the server at this time. The upload failed.']);
+        self.showErrors(event.file, ['There is an issue communicating with the server at this time. The upload failed.']);
     };
 
 
     // processing flow
-    self.beginProcessing = function(event, response) {
+    self.beginProcessing = function(event) {
         /*
             The upload completed. Do this...
          */
+        var response = $.parseJSON(event.data);
+
         var processing_id = response.processing_id;
         self.processingIdToFile[response.processing_id] = event.file;
-        var curUpload = self.getActiveUploadSelectors(event.file.get('id'));
+        var curUpload = self.getActiveUploadSelectors(event.file);
         $(curUpload.progressBar).addClass('hide').attr('style', 'width: 0%;'); // reset progress bar for processing
         $(curUpload.progressBarContainer).addClass('progress-warning active');
         $(curUpload.processingQueuedNotice).removeClass('hide');
@@ -350,8 +349,7 @@ function HQMediaUploadController(options) {
 
     self.processingProgress = function (data) {
         self.currentPollAttempts = 0;
-        var file_id = self.processingIdToFile[data.processing_id];
-        var curUpload = self.getActiveUploadSelectors(file_id);
+        var curUpload = self.getActiveUploadSelectors(self.processingIdToFile[data.processing_id]);
         if (data.in_celery) {
             $(curUpload.processingQueuedNotice).addClass('hide');
             $(curUpload.processingNotice).removeClass('hide');
@@ -369,34 +367,34 @@ function HQMediaUploadController(options) {
     };
 
     self.processingComplete = function (data) {
-        var file_id = self.processingIdToFile[data.processing_id];
+        var processingFile = self.processingIdToFile[data.processing_id];
         delete self.processingIdToFile[data.processing_id];
-        var curUpload = self.getActiveUploadSelectors(file_id);
-        self.stopProcessingFile(file_id);
+        var curUpload = self.getActiveUploadSelectors(processingFile);
+        self.stopProcessingFile(processingFile);
         $(curUpload.progressBarContainer).addClass('progress-success');
 
-        self.showMatches(file_id, data);
-        self.showErrors(file_id, data.errors);
+        self.showMatches(processingFile, data);
+        self.showErrors(processingFile, data.errors);
     };
 
     self.processingError = function (processing_id) {
         return function (data, status) {
             self.currentPollAttempts += 1;
             if (self.currentPollAttempts > self.maxPollAttempts) {
-                var file_id = self.processingIdToFile[processing_id];
+                var processingFile = self.processingIdToFile[processing_id];
                 delete self.processingIdToFile[processing_id];
-                var curUpload = self.getActiveUploadSelectors(file_id);
-                self.stopProcessingFile(file_id);
+                var curUpload = self.getActiveUploadSelectors(processingFile);
+                self.stopProcessingFile(processingFile);
                 $(curUpload.progressBarContainer).addClass('progress-danger');
-                self.showErrors(file_id, ['There was an issue communicating with the server at this time. ' +
+                self.showErrors(processingFile, ['There was an issue communicating with the server at this time. ' +
                     'The upload has failed.']);
             }
         }
     };
 
 
-    self.stopProcessingFile = function (file_id) {
-        var curUpload = self.getActiveUploadSelectors(file_id);
+    self.stopProcessingFile = function (file) {
+        var curUpload = self.getActiveUploadSelectors(file);
         if (self.isMultiFileUpload) {
             var $processingItem = $(curUpload.selector);
             $processingItem.remove();
@@ -409,8 +407,8 @@ function HQMediaUploadController(options) {
         $(curUpload.progressBarContainer).removeClass('active progress-warning');
     };
 
-    self.showMatches = function (file_id, data) {
-        var curUpload = self.getActiveUploadSelectors(file_id);
+    self.showMatches = function (file, data) {
+        var curUpload = self.getActiveUploadSelectors(file);
         if (data.type === 'zip' && data.matched_files) {
             var images = data.matched_files.CommCareImage,
                 audio = data.matched_files.CommCareAudio,
@@ -427,10 +425,10 @@ function HQMediaUploadController(options) {
         }
     };
 
-    self.showErrors = function (file_id, errors) {
-        var selector = self.getActiveUploadSelectors(file_id);
-        (errors.length > 0) ? $(selector.errorNotice).removeClass('hide') : $(selector.errorNotice).addClass('hide');
-        $(selector.status).append(self.processErrorsTemplate(errors));
+    self.showErrors = function (file, errors) {
+        var curUpload = self.getActiveUploadSelectors(file);
+        (errors.length > 0) ? $(curUpload.errorNotice).removeClass('hide') : $(curUpload.errorNotice).addClass('hide');
+        $(curUpload.status).append(self.processErrorsTemplate(errors));
     };
 
 }
