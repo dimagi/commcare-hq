@@ -212,9 +212,7 @@
                     {% endifchanged %}
                 </td>
                 <td>
-                {% if form.show_xmlns %}<code>{% endif %}
-                {% include "reports/partials/form_name.html" %}
-                {% if form.show_xmlns %}</code>{% endif %}
+                {% include "reports/partials/form_name.html" with html='yes' %}
                 {% if form.app_copy %}
                     <span class="label label-info">{% trans "Mislabeled" %}</span>
                     {% if request.couch_user.can_edit_data %}
