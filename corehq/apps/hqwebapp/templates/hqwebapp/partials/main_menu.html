@@ -1,7 +1,8 @@
 {% load i18n %}
-
+{% load cache %}
 <ul class="nav" role="menu">
     {% for tab in tabs %}
+    {% cache 500 header_tab tab.domain tab.title tab.is_active tab.couch_user.get_id %}
     {% with tab.dropdown_items as items %}
         <li id="mainmenu-{{ tab.css_id }}"
             class="{% if items %}dropdown{% endif %}{% if tab.is_active %} active{% endif %}">
@@ -33,5 +34,6 @@
             {% endif %}
         </li>
     {% endwith %}
+    {% endcache %}
     {% endfor %}
 </ul>
