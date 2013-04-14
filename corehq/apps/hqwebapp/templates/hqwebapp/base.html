@@ -1,4 +1,4 @@
-{% load menu_tags %}{% load i18n %}{% load hq_shared_tags %}{% load raven %}<!DOCTYPE html>
+{% load menu_tags %}{% load i18n %}{% load hq_shared_tags %}{% load raven %}{% load cache %}<!DOCTYPE html>
 <html lang="en">
     <head>
         <meta charset="utf-8"/>
@@ -30,6 +30,7 @@
     </head>
     <body>
         <div class="hq-container-fluid {% block layout_style %}{% endblock %}{% block oldstyle_tag %} old-style{% endblock %}">
+            {% with c_username=user.username c_org=request.project.organization c_domain=domain %}
             <header>
                 {% block header-section %}
                 <div class="navbar">
@@ -42,7 +43,7 @@
                             {% block tabs %}
                                 {% format_main_menu %}
                             {% endblock %}
-
+                            {% cache 500 header_user_buttons c_username c_domain c_org %}
                             <div class="btn-toolbar pull-right">
                                 <div class="btn-group">
                                 {% if request.project.organization and request.couch_user.is_web_user %}
@@ -101,6 +102,7 @@
                                     </ul>
                                 </div>
                             </div>
+                            {% endcache %}
                         </nav>
                     {% else %}
                         {% block extra_tabs %}
@@ -116,6 +118,7 @@
                 {% format_subtab_menu %}
                 {% endblock header-section %}
             </header>
+            {% endwith %}
 
             {% if request.project.is_snapshot %}
                 <div class="alert alert-info snapshot-alert">
