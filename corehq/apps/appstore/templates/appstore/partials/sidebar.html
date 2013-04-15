@@ -22,7 +22,7 @@
             {% for choice in choices %}
                 <li class="sortable-{{ sortable }}{% if forloop.counter > 5 and choices|length > 6 %} hide{% endif %}">
                     <a href="{% if url_base %}{{ url_base }}{% else %}{{ request.path }}{% endif %}{{ choice.url }}">
-                        <input class="facet-checkbox" type="checkbox" {% if choice.active %}checked=checked{% endif %}/>
+                        <input style="float: right;" class="facet-checkbox" type="checkbox" {% if choice.active %}checked=checked{% endif %}/>
                         <span>{{ choice.name }} ({{ choice.count }})</span>
                     </a>
                 </li>

@@ -236,6 +236,7 @@ class FormAction(DocumentSchema):
 
     """
     condition   = SchemaProperty(FormActionCondition)
+
     def is_active(self):
         return self.condition.type in ('if', 'always')
 
@@ -577,10 +578,19 @@ class FormBase(DocumentSchema):
             if not re.match(r'^[a-zA-Z][\w_-]*$', key):
                 errors.append({'type': 'update_case word illegal', 'word': key})
 
-
         for subcase_action in self.actions.subcases:
             if not subcase_action.case_type:
                 errors.append({'type': 'subcase has no case type'})
+
+        if self.actions.open_case.is_active() \
+                and not self.actions.open_case.name_path:
+            errors.append({
+                'type': 'case_name required',
+                'message': 'You are creating a case '
+                           'but have not given the case a name. '
+                           'The "Name according to question" field is required'
+            })
+
         try:
             valid_paths = set([question['value'] for question in self.get_questions(langs=[])])
         except XFormError as e:
@@ -596,7 +606,7 @@ class FormBase(DocumentSchema):
                     for action in actions:
                         if action.condition.type == 'if':
                             yield action.condition.question
-                        if hasattr(action, 'name_path'):
+                        if hasattr(action, 'name_path') and action.name_path:
                             yield action.name_path
                         if hasattr(action, 'case_name'):
                             yield action.case_name
@@ -1692,7 +1702,7 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
         if not form.source:
             form.source = load_default_user_registration().format(user_registration_xmlns="%s%s" % (
                 get_url_base(),
-                reverse('view_user_registration', args=[self.domain, self.id])
+                reverse('view_user_registration', args=[self.domain, self.id]),
             ))
         return form
 

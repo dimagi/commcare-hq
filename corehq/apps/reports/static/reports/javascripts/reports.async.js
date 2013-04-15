@@ -62,7 +62,7 @@ var HQAsyncReport = function (o) {
         self.standardReport.saveDatespanToCookie();
         self.filterRequest = $.ajax({
             url: window.location.pathname.replace(self.standardReport.urlRoot,
-                self.standardReport.urlRoot+'filters/')+"?"+form_params,
+                self.standardReport.urlRoot+'filters/')+"?"+form_params+"&"+self.additionalParams,
             dataType: 'json',
             success: loadFilters
         });

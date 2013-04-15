@@ -4,6 +4,7 @@ from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn, D
 from corehq.apps.reports.dispatcher import BasicReportDispatcher, AdminReportDispatcher
 from corehq.apps.reports.generic import GenericTabularReport
 from django.utils.translation import ugettext as _
+from corehq.pillows.mappings.domain_mapping import DOMAIN_INDEX
 
 
 class DomainStatsReport(GenericTabularReport):
@@ -18,6 +19,9 @@ class DomainStatsReport(GenericTabularReport):
 
     def get_domains(self):
         return getattr(self, 'domains', [])
+
+    def is_custom_param(self, param):
+        raise NotImplementedError
 
     @property
     def headers(self):
@@ -40,11 +44,14 @@ class DomainStatsReport(GenericTabularReport):
 
     @property
     def rows(self):
+        import time
+        time.sleep(1)
         from corehq.apps.hqadmin.views import _all_domain_stats
-        rows = []
         all_stats = _all_domain_stats()
-        for dom in self.get_domains():
-            rows.append([
+        # domains = sorted(self.get_domains())
+        domains = self.get_domains()
+        for dom in domains:
+            yield [
                 dom,
                 int(all_stats["web_users"][dom]),
                 int(CALC_FNS["mobile_users"](dom)),
@@ -56,20 +63,18 @@ class DomainStatsReport(GenericTabularReport):
                 CALC_FNS["last_form_submission"](dom),
                 # [row["doc"]["email"] for row in get_db().view("users/admins_by_domain",
                 #                                               key=dom, reduce=False, include_docs=True).all()],
-            ])
-        return rows
+            ]
 
     @property
     def shared_pagination_GET_params(self):
         ret = super(DomainStatsReport, self).shared_pagination_GET_params
-        for k, v in self.request.GET.items():
-            if k in self.custom_params:
-                ret.append(dict(name=k, value=v))
+        for param in self.request.GET.iterlists():
+            if self.is_custom_param(param[0]):
+                for val in param[1]:
+                    ret.append(dict(name=param[0], value=val))
         return ret
 
 class OrgDomainStatsReport(DomainStatsReport):
-    custom_params = ['org']
-
     def get_domains(self):
         from corehq.apps.orgs.models import Organization
         from corehq.apps.domain.models import Domain
@@ -80,13 +85,90 @@ class OrgDomainStatsReport(DomainStatsReport):
             return [d.name for d in Domain.get_by_organization(organization.name).all()]
         return []
 
+    def is_custom_param(self, param):
+        return param in ['org']
+
+
+def project_stats_facets():
+    from corehq.apps.domain.models import Domain, InternalProperties, Deployment, LicenseAgreement
+    facets = Domain.properties().keys()
+    facets += ['internal.' + p for p in InternalProperties.properties().keys()]
+    facets += ['deployment.' + p for p in Deployment.properties().keys()]
+    facets += ['cda.' + p for p in LicenseAgreement.properties().keys()]
+    for p in ['internal', 'deployment', 'cda', 'migrations', 'eula']:
+        facets.remove(p)
+    return facets
+
+def es_domain_query(params, facets=None, terms=None, domains=None, return_q_dict=False, start_at=None, size=None):
+    from corehq.apps.appstore.views import es_query
+    if terms is None:
+        terms = ['search']
+    if facets is None:
+        facets = []
+    q = {"query": {"match_all":{}}}
+
+    if domains is not None:
+        q["query"] = {
+            "in" : {
+                "name" : domains,
+            }
+        }
+
+    search_query = params.get('search', "")
+    if search_query:
+        q['query'] = {
+            "bool": {
+                "must": {
+                    "match" : {
+                        "_all" : {
+                            "query" : search_query,
+                            "operator" : "and" }}}}}
+
+    q["sort"] = [{"name" : {"order": "asc"}},]
+
+    return q if return_q_dict else es_query(params, facets, terms, q, DOMAIN_INDEX + '/hqdomain/_search', start_at, size)
+
+ES_PREFIX = "es_"
 class AdminDomainStatsReport(DomainStatsReport):
+    slug = "domains"
     dispatcher = AdminReportDispatcher
-    custom_params = ['domains']
+    base_template = "hqadmin/stats_report.html"
+    asynchronous = False
+    ajax_pagination = True
+    es_queried = False
+
+    @property
+    def template_context(self):
+        ctxt = super(AdminDomainStatsReport, self).template_context
+
+        self.es_query()
+
+        ctxt.update({
+            'layout_flush_content': True,
+            'sortables': sorted(self.es_sortables),
+            'query_str': self.request.META['QUERY_STRING'],
+        })
+        return ctxt
 
     def get_domains(self):
-        from corehq.apps.domain.models import Domain
-        domains = self.request.GET.get("domains", "").split('|')
-        if not domains:
-            domains = [d.name for d in Domain.get_all()]
+        self.es_query()
+        domains = self.es_domains
         return domains
+
+    @property
+    def total_records(self):
+        return int(self.es_results['hits']['total'])
+
+    def es_query(self):
+        from corehq.apps.appstore.views import parse_args_for_es, generate_sortables_from_facets
+        if not self.es_queried:
+            self.es_params, _ = parse_args_for_es(self.request, prefix=ES_PREFIX)
+            self.es_facets = project_stats_facets()
+            self.es_results = es_domain_query(self.es_params, self.es_facets,
+                                              start_at=self.pagination.start, size=self.pagination.count)
+            self.es_domains = [res['_source']['name'] for res in self.es_results.get('hits', {}).get('hits', [])]
+            self.es_sortables = generate_sortables_from_facets(self.es_results, self.es_params, prefix=ES_PREFIX)
+            self.es_queried = True
+
+    def is_custom_param(self, param):
+        return param.startswith(ES_PREFIX)

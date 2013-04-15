@@ -507,8 +507,8 @@ class AdminReportsTab(UITab):
         # todo: convert these to dispatcher-style like other reports
         return [
             (_('Administrative Reports'), [
-                # {'title': _('Domain List'),
-                #  'url': reverse('domain_list')},
+                {'title': _('Domain List'),
+                'url': reverse('admin_report_dispatcher', args=('domains',))},
                 {'title': _('Domain Activity Report'),
                  'url': reverse('domain_activity_report')},
                 {'title': _('Message Logs Across All Domains'),

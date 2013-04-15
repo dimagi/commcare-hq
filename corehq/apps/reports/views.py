@@ -739,7 +739,7 @@ def case_details(request, domain, case_id):
         "case_details": request.project.get_case_display(case)
     })
 
-def generate_case_export_payload(domain, include_closed, format, group, user_filter):
+def generate_case_export_payload(domain, include_closed, format, group, user_filter, process=None):
     """
     Returns a FileWrapper object, which only the file backend in django-soil supports
 
@@ -754,10 +754,17 @@ def generate_case_export_payload(domain, include_closed, format, group, user_fil
         wrapper=lambda r: r['id']
     )
 
-    def stream_cases(all_case_ids):
-        for case_ids in chunked(all_case_ids, 500):
-            for case in wrapped_docs(CommCareCase, case_ids):
-                yield case
+    class stream_cases(object):
+        def __init__(self, all_case_ids):
+            self.all_case_ids = all_case_ids
+
+        def __iter__(self):
+            for case_ids in chunked(self.all_case_ids, 500):
+                for case in wrapped_docs(CommCareCase, case_ids):
+                    yield case
+
+        def __len__(self):
+            return len(self.all_case_ids)
 
     # todo deal with cached user dict here
     users = get_all_users_by_domain(domain, group=group, user_filter=user_filter)
@@ -766,7 +773,14 @@ def generate_case_export_payload(domain, include_closed, format, group, user_fil
     fd, path = tempfile.mkstemp()
     with os.fdopen(fd, 'wb') as file:
         workbook = WorkBook(file, format)
-        export_cases_and_referrals(domain, stream_cases(case_ids), workbook, users=users, groups=groups)
+        export_cases_and_referrals(
+            domain,
+            stream_cases(case_ids),
+            workbook,
+            users=users,
+            groups=groups,
+            process=process
+        )
         export_users(users, workbook)
         workbook.close()
     return FileWrapper(open(path))
