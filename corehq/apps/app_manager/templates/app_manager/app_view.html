@@ -278,7 +278,7 @@
 
         {% endif %}
         <div class="tab-pane" id="copy">
-            <h3>{% trans "Copy" %}</h3>
+            <h3>{% trans "Copy Application" %}</h3>
             <div>
                 <form method="get" action="{% url import_app domain %}">
                     <input type="hidden" name="app" value="{{ app.id }}"/>
@@ -288,7 +288,7 @@
             </div>
         </div>
         <div class="tab-pane" id="delete">
-            <h3>{% trans "Delete" %}</h3>
+            <h3>{% trans "Delete Application" %}</h3>
             <form action="{% url corehq.apps.app_manager.views.delete_app domain app.id %}" method="POST">
 
                 <a href="#" class="btn btn-danger submit">
