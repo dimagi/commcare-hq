@@ -1669,6 +1669,17 @@ def download_suite(req, domain, app_id):
     )
 
 @safe_download
+def download_media_suite(req, domain, app_id):
+    """
+    See Application.create_media_suite
+
+    """
+    return HttpResponse(
+        req.app.create_media_suite()
+    )
+
+
+@safe_download
 def download_app_strings(req, domain, app_id, lang):
     """
     See Application.create_app_strings
