@@ -567,7 +567,7 @@ def stats(request, org, template='orgs/stats.html'):
 
 def stats_data(request, org):
     params, _ = parse_args_for_es(request)
-    domains = params.get('name') or [d.name for d in Domain.get_by_organization(org).all()]
+    domains = [{"name": d.name, "hr_name": d.hr_name} for d in Domain.get_by_organization(org).all()]
     histo_type = request.GET.get('histogram_type')
     period = request.GET.get("daterange", 'month')
 
@@ -579,7 +579,7 @@ def stats_data(request, org):
         'year': 365,
     }[period]))
 
-    histo_data = dict([(d, es_histogram(histo_type, [d], startdate.strftime('%Y-%m-%d'), today.strftime('%Y-%m-%d')))
+    histo_data = dict([(d['hr_name'], es_histogram(histo_type, [d["name"]], startdate.strftime('%Y-%m-%d'), today.strftime('%Y-%m-%d')))
                        for d in domains])
 
     return json_response({
