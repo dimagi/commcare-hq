@@ -575,7 +575,7 @@ def stats_data(request, org):
     startdate = (today - timedelta(days={
         'month': 30,
         'week': 7,
-        'quarter': 120,
+        'quarter': 90,
         'year': 365,
     }[period]))
 
@@ -589,7 +589,7 @@ def stats_data(request, org):
         'enddate': [today.year, today.month, today.day],
     })
 
-def es_histogram(histo_type, domains=None, startdate=None, enddate=None):
+def es_histogram(histo_type, domains=None, startdate=None, enddate=None, tz_diff=None):
     date_field = {  "forms": "received_on",
                     "cases": "modified_on"  }[histo_type]
     es_url = {  "forms": XFORM_INDEX + '/xform/_search',
@@ -616,6 +616,9 @@ def es_histogram(histo_type, domains=None, startdate=None, enddate=None):
                             }}}]}}},
         "size": 0
     })
+
+    if tz_diff:
+        q["facets"]["histo"]["date_histogram"]["time_zone"] = tz_diff
 
     es = get_es()
     ret_data = es.get(es_url, data=q)

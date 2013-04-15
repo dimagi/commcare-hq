@@ -46,8 +46,8 @@
 
             $.getJSON('{% url orgs_stats_data org.name %}', {daterange: daterange, histogram_type: histo_type},
                     function(d) {
-                        var starting_time = new Date(d.startdate[0], d.startdate[1], d.startdate[2]).getTime();
-                        var ending_time = new Date(d.enddate[0], d.enddate[1], d.enddate[2]).getTime();
+                        var starting_time = new Date(Date.UTC(d.startdate[0], d.startdate[1]-1, d.startdate[2])).getTime();
+                        var ending_time = new Date(Date.UTC(d.enddate[0], d.enddate[1]-1, d.enddate[2])).getTime();
                         addHistogram(chart_id, xname, d.histo_data, starting_time, ending_time);
                         $chart.parent().children('.loading').hide();
                         $chart.html('').append('<svg style="height:320px"> </svg>');
