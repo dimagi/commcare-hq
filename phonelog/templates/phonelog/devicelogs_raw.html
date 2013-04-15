@@ -6,7 +6,7 @@
 <tbody>
     {% for log in logs %}
     <tr>
-        <td><a href="{% url render_form_data domain log.id %}">
+        <td><a href="{% url 'render_form_data' domain log.id %}">
         <b>{{ log.received_on|date:"M d"}}</b>, <span style="font-size: 80%">{{ log.received_on|date:"Y" }} <span style="color: #888;">{{ log.received_on|date:"H:i" }} UTC</span></span>
         </a></td>
     </tr>
