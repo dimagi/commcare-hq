@@ -11,7 +11,7 @@
 {% for config, saved in group.saved_exports %}
     <tr>
     {% if saved %}
-        <td><a href="{% url couchexport_download_saved_export saved.get_id %}">{{ config.name }}</a></td>
+        <td><a href="{% url 'couchexport_download_saved_export' saved.get_id %}">{{ config.name }}</a></td>
         <td>{{ saved.last_updated|date:"d M Y H:i" }}</td>
         <td>{{ saved.size|filesizeformat }}</td>
     {% else %}
