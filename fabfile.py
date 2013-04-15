@@ -394,6 +394,7 @@ def update_code(preindex=False):
 
     with cd(root_to_use):
         sudo('git fetch', user=env.sudo_user)
+        sudo("git submodule foreach 'git fetch'", user=env.sudo_user)
         sudo('git checkout %(code_branch)s' % env, user=env.sudo_user)
         sudo('git pull', user=env.sudo_user)
         sudo('git submodule sync', user=env.sudo_user)
