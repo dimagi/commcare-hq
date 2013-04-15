@@ -598,6 +598,7 @@ def es_histogram(histo_type, domains=None, startdate=None, enddate=None, tz_diff
     q = {"query": {"match_all":{}}}
 
     if domains is not None:
+        print domains
         q["query"] = {"in" : {"domain.exact": domains}}
 
     q.update({
@@ -619,6 +620,9 @@ def es_histogram(histo_type, domains=None, startdate=None, enddate=None, tz_diff
 
     if tz_diff:
         q["facets"]["histo"]["date_histogram"]["time_zone"] = tz_diff
+
+    if histo_type == "forms":
+        q["facets"]["histo"]["facet_filter"]["and"].append({"not": {"in": {"doc_type": ["xformduplicate", "xformdeleted"]}}})
 
     es = get_es()
     ret_data = es.get(es_url, data=q)
