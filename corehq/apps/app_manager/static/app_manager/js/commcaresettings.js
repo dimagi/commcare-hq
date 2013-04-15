@@ -296,6 +296,15 @@ CommcareSettings.widgets.bool = function (self) {
     });
 };
 
+CommcareSettings.widgets.build_spec = function (self) {
+    CommcareSettings.widgets.select(self);
+    self.widget_template = 'CommcareSettings.widgets.select';
+    self.visibleValue.subscribe(function () {
+        var majorVersion = self.visibleValue().split('/')[0].split('.').slice(0,2).join('.');
+        COMMCAREHQ.app_manager.setCommcareVersion(majorVersion);
+    });
+};
+
 $(function () {
     ko.bindingHandlers.passwordSetter = {
         init: function (element, valueAccessor) {
