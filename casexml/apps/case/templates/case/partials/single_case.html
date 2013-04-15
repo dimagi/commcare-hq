@@ -406,7 +406,7 @@
                     var start_range = (start_num - 1) * self.page_size();
                     var actions = {{ case_actions }};
                     var end_range = start_range + self.page_size();
-                    if (end_range > {{ case.xform_ids|length }}) {
+                    if (end_range >= {{ case.xform_ids|length }}) {
                         end_range = {{ case.xform_ids|length }} - 1;
                     }
 
