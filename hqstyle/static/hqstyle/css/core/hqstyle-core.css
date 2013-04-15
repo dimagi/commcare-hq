@@ -3381,22 +3381,22 @@ th.header > div {
 .hq-help {
   position: relative;
   overflow: visible;
-  padding-right: 25px;
+  width: 0px;
+  line-height: 25px;
+  margin: 0 3px;
 }
 .hq-help i {
   font-size: 20px;
-  line-height: 25px;
-  width: 25px;
   text-decoration: none;
   position: absolute;
-  top: -30%;
-  left: 6.666666666666667px;
+  bottom: -3px;
 }
 .hq-help:hover i,
 .hq-help.on i {
   font-size: 30px;
   text-decoration: none;
-  left: 4.666666666666667px;
+  bottom: -8px;
+  left: -5px;
   color: #46a546;
 }
 .hq-help .popover {
