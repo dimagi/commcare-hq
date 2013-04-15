@@ -1,4 +1,5 @@
 from StringIO import StringIO
+import mimetypes
 from PIL import Image
 from datetime import datetime
 import hashlib
@@ -100,7 +101,7 @@ class CommCareMultimedia(Document):
         if not attachment_id in self.current_attachments:
             if not getattr(self, '_id'):
                 self.save()  # let's just make sure an id has been assigned to this guy before we try to put_attachment
-            self.put_attachment(data, attachment_id, content_type=self.get_mime_type(data))
+            self.put_attachment(data, attachment_id, content_type=self.get_mime_type(data, filename=original_filename))
             new_media = AuxMedia()
             new_media.uploaded_date = datetime.utcnow()
             new_media.attachment_id = attachment_id
@@ -167,23 +168,18 @@ class CommCareMultimedia(Document):
         return [aux.attachment_id for aux in self.aux_media]
 
     @classmethod
-    def get_valid_mime_types(cls):
-        return []
-
-    @classmethod
-    def get_mime_type(cls, data):
+    def get_mime_type(cls, data, filename=None):
         mime = magic.Magic(mime=True)
-        return mime.from_buffer(data)
+        mime_type = mime.from_buffer(data)
+        if mime_type.startswith('application') and filename is not None:
+            guessed_type = mimetypes.guess_type(filename)
+            mime_type = guessed_type[0] if guessed_type[0] else mime_type
+        return mime_type
 
     @classmethod
-    def get_base_mime_type(cls, data):
-        mime_type = cls.get_mime_type(data)
+    def get_base_mime_type(cls, data, filename=None):
+        mime_type = cls.get_mime_type(data, filename=filename)
         return mime_type.split('/')[0] if mime_type else None
-
-    @classmethod
-    def is_data_valid(cls, data):
-        mime_type = cls.get_mime_type(data)
-        return mime_type in cls.get_valid_mime_types()
         
     @classmethod
     def generate_hash(cls, data):
@@ -223,11 +219,11 @@ class CommCareMultimedia(Document):
         }[doc_type]
 
     @classmethod
-    def get_class_by_data(cls, data):
+    def get_class_by_data(cls, data, filename=None):
         return {
             'image': CommCareImage,
             'audio': CommCareAudio,
-        }.get(cls.get_base_mime_type(data))
+        }.get(cls.get_base_mime_type(data, filename=filename))
 
     @classmethod
     def get_form_path(cls, path):
@@ -309,10 +305,6 @@ class CommCareImage(CommCareMultimedia):
                                                       replace_attachment=replace_attachment)
 
     @classmethod
-    def get_valid_mime_types(cls):
-        return ['image/jpeg', 'image/png', 'image/gif', 'image/bmp']
-
-    @classmethod
     def get_nice_name(cls):
         return _("Image")
 
@@ -321,10 +313,6 @@ class CommCareAudio(CommCareMultimedia):
 
     class Config(object):
         search_view = 'hqmedia/audio_search'
-
-    @classmethod
-    def get_valid_mime_types(cls):
-        return ['audio/mpeg', 'audio/mp3', 'audio/vnd.wave', 'audio/wav', 'audio/x-wav']
 
     @classmethod
     def get_nice_name(cls):

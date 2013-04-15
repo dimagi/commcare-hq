@@ -1537,14 +1537,17 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
                 yield id_strings.form_locale(form), trans(form.name) + ('${0}' if form.show_count else '')
 
 
-    def create_app_strings(self, lang):
+    def create_app_strings(self, lang, include_blank_custom=False):
         def non_empty_only(dct):
             return dict([(key, value) for key, value in dct.items() if value])
         if lang != "default":
             messages = {"cchq.case": "Case", "cchq.referral": "Referral"}
 
             custom = dict(self._create_custom_app_strings(lang))
-            messages.update(non_empty_only(custom))
+            if include_blank_custom:
+                messages.update(custom)
+            else:
+                messages.update(non_empty_only(custom))
 
             # include language code names
             for lc in self.langs:
@@ -1561,7 +1564,9 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
             for lc in reversed(self.langs):
                 if lc == "default": continue
                 messages.update(
-                    commcare_translations.loads(self.create_app_strings(lc))
+                    commcare_translations.loads(
+                        self.create_app_strings(lc, include_blank_custom=True)
+                    )
                 )
         return commcare_translations.dumps(messages).encode('utf-8')
 
@@ -1650,9 +1655,8 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
         if not form.source:
             form.source = load_default_user_registration().format(user_registration_xmlns="%s%s" % (
                 get_url_base(),
-                reverse('view_user_registration', args=[self.domain, self.id])
+                reverse('view_user_registration', args=[self.domain, self.id]),
             ))
-            self.save()
         return form
 
     def get_forms(self, bare=True):
