@@ -111,7 +111,7 @@
                         </div>
                     {% endfor %}
                     <div style="float:right;">
-{#                        <a class="btn" href="javascript:ajax_get_form('{% url ajax_patient_form_get %}', '{{ patient_doc.get_id }}','address', 'addressform');"> <i class="icon-plus"></i> Add Address</a>#}
+{#                        <a class="btn" href="javascript:ajax_get_form('{% url 'ajax_patient_form_get' %}', '{{ patient_doc.get_id }}','address', 'addressform');"> <i class="icon-plus"></i> Add Address</a>#}
                     </div>
                 </td>
             </tr>
@@ -128,7 +128,7 @@
                                 <strong>{{ phone.type|title }}</strong> &nbsp;<br>
                             {% endif %}
                             {{ phone.number }}<br>
-{#                            <a href="javascript:ajax_get_form('{% url ajax_patient_form_get %}', '{{ patient_doc.get_id }}', 'phone', 'phoneform', {{ forloop.counter0 }})">Change</a>#}
+{#                            <a href="javascript:ajax_get_form('{% url 'ajax_patient_form_get' %}', '{{ patient_doc.get_id }}', 'phone', 'phoneform', {{ forloop.counter0 }})">Change</a>#}
                             &nbsp;
 {#                            <a href="javascript:rm_phone_addr('{{ patient_doc.get_id }}', 'phone', {{ forloop.counter0 }})">Remove</a>#}
                         </div>

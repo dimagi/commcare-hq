@@ -25,7 +25,7 @@
             $("#submit_button").click(function() {
                 // validate and process form here
                 var form_data = $("#pt_edit_form").serialize();
-                var api_url = "{% url pactdata_1 domain=domain %}?case_id={{ patient_doc.get_id }}&method=patient_edit";
+                var api_url = "{% url 'pactdata_1' domain=domain %}?case_id={{ patient_doc.get_id }}&method=patient_edit";
                 console.log(form_data);
                 var send_xhr = $.ajax({
                     "type": "POST",

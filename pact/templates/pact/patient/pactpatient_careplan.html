@@ -9,7 +9,7 @@
                         <li {% if selected_plan.get_id == plan.get_id %}class="active"{% endif %}><a href="{{ request.path }}?plan={{ plan.get_id }}" >{{ plan.title }}</a></li>
                     {% endfor %}
                 </ul>
-                <a href="{% url manage_patient_careplan patient_doc.get_id %}" class="btn"><i class="icon-edit"></i> Manage Care Plan</a>
+                <a href="{% url 'manage_patient_careplan' patient_doc.get_id %}" class="btn"><i class="icon-edit"></i> Manage Care Plan</a>
             </div>
         </div>
         <div class="span9">

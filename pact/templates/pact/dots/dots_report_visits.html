@@ -22,8 +22,8 @@
                 <td>
                     <a href="{{ vdoc.drilldown_url }}&startdate={{ vdoc.form.encounter_date|date:"Y-m-d" }}&enddate={{ vdoc.form.encounter_date|date:"Y-m-d" }}">
                         {{ vdoc.form.encounter_date|date:"m/d/Y" }}</a>
-                    <small>[<a href="{% url render_form_data domain vdoc.get_id %}">Raw</a>]</small>
-{#                    <small>[<a href="{% url show_submission vdoc.get_id %}">Raw</a>]</small>#}
+                    <small>[<a href="{% url 'render_form_data' domain vdoc.get_id %}">Raw</a>]</small>
+{#                    <small>[<a href="{% url 'show_submission' vdoc.get_id %}">Raw</a>]</small>#}
                     {#                            {{ vdoc.form.case.update.dots.anchor }} commenting out to use this vs encounter date?#}
                 </td>
                 <td>{{ vdoc.form.meta.username }}</td>
