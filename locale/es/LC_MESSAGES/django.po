@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2013-02-14 17:22-0500\n"
+"POT-Creation-Date: 2013-04-15 09:40-0400\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -17,6 +17,47 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1)\n"
+
+#: submodules/a5288-reports/a5288/reports.py:16
+msgid "Missed Callbacks"
+msgstr ""
+
+#: submodules/a5288-reports/a5288/reports.py:18
+msgid ""
+"Summarizes two weeks of SMS / Callback interactions for all participants."
+msgstr ""
+
+#: submodules/a5288-reports/a5288/reports.py:29
+msgid "Participant ID"
+msgstr ""
+
+#: submodules/a5288-reports/a5288/reports.py:30
+msgid "Total No Response"
+msgstr ""
+
+#: submodules/a5288-reports/a5288/reports.py:31
+msgid "Total Indicated"
+msgstr ""
+
+#: submodules/a5288-reports/a5288/reports.py:32
+msgid "Total Pending"
+msgstr ""
+
+#: submodules/a5288-reports/a5288/reports.py:99
+msgid "pending"
+msgstr ""
+
+#: submodules/a5288-reports/a5288/reports.py:102
+msgid "OK"
+msgstr ""
+
+#: submodules/a5288-reports/a5288/reports.py:106
+msgid "No Response"
+msgstr ""
+
+#: submodules/a5288-reports/a5288/reports.py:108
+msgid "not indicated"
+msgstr ""
 
 #: submodules/auditcare-src/auditcare/forms.py:14
 msgid ""
@@ -81,7 +122,8 @@ msgid "Subcenter selection report"
 msgstr ""
 
 #: submodules/bihar-reports/bihar/reports/supervisor.py:182
-#: submodules/bihar-reports/bihar/reports/indicators/reports.py:50
+#: submodules/bihar-reports/bihar/reports/indicators/reports.py:52
+#: submodules/core-hq-src/corehq/apps/orgs/templates/orgs/orgs_team_members.html:159
 msgid "Team Name"
 msgstr ""
 
@@ -177,7 +219,7 @@ msgid "You are underweight"
 msgstr ""
 
 #: submodules/bihar-reports/bihar/reports/supervisor.py:436
-msgid "no awc code found"
+msgid "no awcc"
 msgstr ""
 
 #: submodules/bihar-reports/bihar/reports/indicators/__init__.py:19
@@ -406,11 +448,11 @@ msgstr ""
 
 #: submodules/bihar-reports/bihar/reports/indicators/calculations.py:129
 #: submodules/bihar-reports/bihar/reports/indicators/calculations.py:153
-#: submodules/core-hq-src/corehq/apps/domain/forms.py:27
+#: submodules/core-hq-src/corehq/apps/domain/forms.py:32
 #: submodules/core-hq-src/corehq/apps/domain/templates/domain/partials/user_list.html:9
 #: submodules/core-hq-src/corehq/apps/facilities/templates/facilities/list_facilities.html:20
-#: submodules/core-hq-src/corehq/apps/reports/standard/inspect.py:338
-#: submodules/core-hq-src/corehq/apps/reports/templates/reports/base_template.html:111
+#: submodules/core-hq-src/corehq/apps/reports/standard/inspect.py:437
+#: submodules/core-hq-src/corehq/apps/reports/templates/reports/base_template.html:97
 #: submodules/core-hq-src/corehq/apps/reports/templates/reports/partials/saved_custom_exports.html:5
 #: submodules/core-hq-src/corehq/apps/reports/templates/reports/reportdata/case_export_data.html:55
 msgid "Name"
@@ -439,94 +481,118 @@ msgstr ""
 msgid "Identified in %s hours"
 msgstr ""
 
-#: submodules/bihar-reports/bihar/reports/indicators/reports.py:16
+#: submodules/bihar-reports/bihar/reports/indicators/reports.py:17
 msgid "Indicator Options"
 msgstr ""
 
-#: submodules/bihar-reports/bihar/reports/indicators/reports.py:18
+#: submodules/bihar-reports/bihar/reports/indicators/reports.py:19
 msgid "Indicator navigation"
 msgstr ""
 
-#: submodules/bihar-reports/bihar/reports/indicators/reports.py:34
+#: submodules/bihar-reports/bihar/reports/indicators/reports.py:36
 msgid "Indicators"
 msgstr ""
 
-#: submodules/bihar-reports/bihar/reports/indicators/reports.py:87
+#: submodules/bihar-reports/bihar/reports/indicators/reports.py:92
 msgid "Charts"
 msgstr ""
 
-#: submodules/bihar-reports/bihar/reports/indicators/reports.py:93
+#: submodules/bihar-reports/bihar/reports/indicators/reports.py:98
 msgid "Select Client List"
 msgstr ""
 
-#: submodules/bihar-reports/bihar/reports/indicators/reports.py:137
+#: submodules/bihar-reports/bihar/reports/indicators/reports.py:144
 msgid "Client List"
 msgstr ""
 
+#: submodules/bihar-reports/bihar/templates/bihar/client_listing.html:11
+msgid "Sorry, there are no clients matching this report"
+msgstr ""
+
 #: submodules/core-hq-src/corehq/__init__.py:10
-#: submodules/core-hq-src/corehq/apps/reports/__init__.py:8
-msgid "Monitor Workers"
-msgstr ""
-
-#: submodules/core-hq-src/corehq/__init__.py:18
-#: submodules/core-hq-src/corehq/apps/reports/__init__.py:9
-msgid "Inspect Data"
-msgstr ""
-
-#: submodules/core-hq-src/corehq/__init__.py:23
-#: submodules/core-hq-src/corehq/apps/reports/__init__.py:10
-msgid "Raw Data"
-msgstr ""
-
-#: submodules/core-hq-src/corehq/__init__.py:28
-#: submodules/core-hq-src/corehq/apps/reports/__init__.py:11
-msgid "Manage Deployments"
-msgstr ""
-
-#: submodules/core-hq-src/corehq/__init__.py:34
-msgid "CommConnect"
-msgstr ""
-
-#: submodules/core-hq-src/corehq/__init__.py:39
 #: submodules/core-hq-src/corehq/apps/reports/__init__.py:12
 msgid "Commtrack"
 msgstr ""
 
-#: submodules/core-hq-src/corehq/__init__.py:52
+#: submodules/core-hq-src/corehq/__init__.py:17
+#: submodules/core-hq-src/corehq/apps/reports/__init__.py:8
+msgid "Monitor Workers"
+msgstr ""
+
+#: submodules/core-hq-src/corehq/__init__.py:25
+#: submodules/core-hq-src/corehq/apps/reports/__init__.py:9
+msgid "Inspect Data"
+msgstr ""
+
+#: submodules/core-hq-src/corehq/__init__.py:30
+#: submodules/core-hq-src/corehq/apps/reports/__init__.py:10
+msgid "Raw Data"
+msgstr ""
+
+#: submodules/core-hq-src/corehq/__init__.py:35
+#: submodules/core-hq-src/corehq/apps/reports/__init__.py:11
+msgid "Manage Deployments"
+msgstr ""
+
+#: submodules/core-hq-src/corehq/__init__.py:42
+msgid "Logs"
+msgstr ""
+
+#: submodules/core-hq-src/corehq/__init__.py:42
+msgid "CommConnect"
+msgstr ""
+
+#: submodules/core-hq-src/corehq/__init__.py:54
 msgid "Case Management"
 msgstr ""
 
-#: submodules/core-hq-src/corehq/__init__.py:62
+#: submodules/core-hq-src/corehq/__init__.py:64
 msgid "Supervisor Report"
 msgstr ""
 
-#: submodules/core-hq-src/corehq/__init__.py:70
+#: submodules/core-hq-src/corehq/__init__.py:72
 msgid "ADM Default Columns"
 msgstr ""
 
-#: submodules/core-hq-src/corehq/__init__.py:75
+#: submodules/core-hq-src/corehq/__init__.py:77
 msgid "ADM Default Reports"
 msgstr ""
 
 #: submodules/core-hq-src/corehq/__init__.py:85
+msgid "Form Based Indicators"
+msgstr ""
+
+#: submodules/core-hq-src/corehq/__init__.py:90
+msgid "Case Based Indicators"
+msgstr ""
+
+#: submodules/core-hq-src/corehq/__init__.py:93
+msgid "Dynamic Indicators"
+msgstr ""
+
+#: submodules/core-hq-src/corehq/__init__.py:96
+msgid "Couch Based Indicators"
+msgstr ""
+
+#: submodules/core-hq-src/corehq/__init__.py:109
 msgid "Manage Announcements"
 msgstr ""
 
-#: submodules/core-hq-src/corehq/__init__.py:94
+#: submodules/core-hq-src/corehq/__init__.py:118
 msgid "App Store"
 msgstr ""
 
-#: submodules/core-hq-src/corehq/apps/adm/reports/__init__.py:15
-#: submodules/core-hq-src/corehq/apps/adm/reports/__init__.py:61
-#: submodules/core-hq-src/corehq/apps/reports/templates/reports/base_template.html:57
+#: submodules/core-hq-src/corehq/apps/adm/reports/__init__.py:13
+#: submodules/core-hq-src/corehq/apps/adm/reports/__init__.py:55
+#: submodules/core-hq-src/corehq/apps/hqwebapp/models.py:177
 msgid "Active Data Management"
 msgstr ""
 
-#: submodules/core-hq-src/corehq/apps/adm/reports/__init__.py:38
+#: submodules/core-hq-src/corehq/apps/adm/reports/__init__.py:36
 msgid "ADM Report"
 msgstr ""
 
-#: submodules/core-hq-src/corehq/apps/adm/reports/__init__.py:112
+#: submodules/core-hq-src/corehq/apps/adm/reports/__init__.py:106
 msgid "FLW Name"
 msgstr ""
 
@@ -553,7 +619,7 @@ msgid ""
 "forms today and $week forms since Monday."
 msgstr ""
 
-#: submodules/core-hq-src/corehq/apps/app_manager/templates/app_manager/app_view.html:610
+#: submodules/core-hq-src/corehq/apps/app_manager/templates/app_manager/app_view.html:611
 msgid "Application Multimedia"
 msgstr ""
 
@@ -573,21 +639,21 @@ msgstr ""
 msgid "Download Multimedia Zip"
 msgstr ""
 
-#: submodules/core-hq-src/corehq/apps/app_manager/templates/app_manager/apps_base.html:175
-#: submodules/core-hq-src/corehq/apps/hqwebapp/models.py:155
+#: submodules/core-hq-src/corehq/apps/app_manager/templates/app_manager/apps_base.html:167
+#: submodules/core-hq-src/corehq/apps/hqwebapp/models.py:277
 msgid "Blank Application"
 msgstr ""
 
-#: submodules/core-hq-src/corehq/apps/app_manager/templates/app_manager/apps_base.html:179
+#: submodules/core-hq-src/corehq/apps/app_manager/templates/app_manager/apps_base.html:171
 msgid "Remote App (Advanced Users Only)"
 msgstr ""
 
-#: submodules/core-hq-src/corehq/apps/app_manager/templates/app_manager/apps_base.html:182
-#: submodules/core-hq-src/corehq/apps/hqwebapp/models.py:159
+#: submodules/core-hq-src/corehq/apps/app_manager/templates/app_manager/apps_base.html:174
+#: submodules/core-hq-src/corehq/apps/hqwebapp/models.py:281
 msgid "Visit CommCare Exchange to copy existing app..."
 msgstr ""
 
-#: submodules/core-hq-src/corehq/apps/app_manager/templates/app_manager/apps_base.html:191
+#: submodules/core-hq-src/corehq/apps/app_manager/templates/app_manager/apps_base.html:183
 msgid "Go to: "
 msgstr ""
 
@@ -623,35 +689,35 @@ msgstr ""
 msgid "Behavior may differ from phone."
 msgstr ""
 
-#: submodules/core-hq-src/corehq/apps/app_manager/templates/app_manager/form_view.html:328
+#: submodules/core-hq-src/corehq/apps/app_manager/templates/app_manager/form_view.html:332
 #: submodules/core-hq-src/corehq/apps/reports/standard/monitoring.py:532
 msgid "Form Name"
 msgstr ""
 
-#: submodules/core-hq-src/corehq/apps/app_manager/templates/app_manager/form_view.html:344
-#: submodules/core-hq-src/corehq/apps/app_manager/templates/app_manager/form_view.html:346
+#: submodules/core-hq-src/corehq/apps/app_manager/templates/app_manager/form_view.html:348
+#: submodules/core-hq-src/corehq/apps/app_manager/templates/app_manager/form_view.html:350
 msgid "Display Condition"
 msgstr ""
 
-#: submodules/core-hq-src/corehq/apps/app_manager/templates/app_manager/form_view.html:347
+#: submodules/core-hq-src/corehq/apps/app_manager/templates/app_manager/form_view.html:351
 msgid ""
 "The form will not appear in this module’s form menu unless this condition is "
 "met."
 msgstr ""
 
-#: submodules/core-hq-src/corehq/apps/app_manager/templates/app_manager/form_view.html:358
+#: submodules/core-hq-src/corehq/apps/app_manager/templates/app_manager/form_view.html:362
 msgid "Add Display Condition"
 msgstr ""
 
-#: submodules/core-hq-src/corehq/apps/app_manager/templates/app_manager/form_view.html:359
+#: submodules/core-hq-src/corehq/apps/app_manager/templates/app_manager/form_view.html:363
 msgid "Why can't I add a display condition?"
 msgstr ""
 
-#: submodules/core-hq-src/corehq/apps/app_manager/templates/app_manager/form_view.html:360
+#: submodules/core-hq-src/corehq/apps/app_manager/templates/app_manager/form_view.html:364
 msgid "Error! Display condition will be ignored."
 msgstr ""
 
-#: submodules/core-hq-src/corehq/apps/app_manager/templates/app_manager/form_view.html:361
+#: submodules/core-hq-src/corehq/apps/app_manager/templates/app_manager/form_view.html:365
 msgid ""
 "To use display conditions in a module, (1) the module <strong>Menu</strong> "
 "setting must be set to <em>Put forms in a separate menu</em> and (2) all the "
@@ -659,7 +725,7 @@ msgid ""
 "go in a seperate module."
 msgstr ""
 
-#: submodules/core-hq-src/corehq/apps/app_manager/templates/app_manager/form_view.html:362
+#: submodules/core-hq-src/corehq/apps/app_manager/templates/app_manager/form_view.html:366
 msgid ""
 "Similar to how you write display logic inside the form designer, except that "
 "you must enter <code>./</code> before a case property. <strong>For example</"
@@ -670,33 +736,33 @@ msgid ""
 "for more help</a>"
 msgstr ""
 
-#: submodules/core-hq-src/corehq/apps/app_manager/templates/app_manager/form_view.html:448
-#: submodules/core-hq-src/corehq/apps/app_manager/templates/app_manager/form_view.html:450
+#: submodules/core-hq-src/corehq/apps/app_manager/templates/app_manager/form_view.html:452
+#: submodules/core-hq-src/corehq/apps/app_manager/templates/app_manager/form_view.html:454
 msgid "Cases and Referrals"
 msgstr ""
 
-#: submodules/core-hq-src/corehq/apps/app_manager/templates/app_manager/form_view.html:451
+#: submodules/core-hq-src/corehq/apps/app_manager/templates/app_manager/form_view.html:455
 msgid ""
 "Cases and referrals are a way of preserving information across multiple "
 "interactions with CommCare on the mobile phone."
 msgstr ""
 
-#: submodules/core-hq-src/corehq/apps/app_manager/templates/app_manager/form_view.html:457
-#: submodules/core-hq-src/corehq/apps/app_manager/templates/app_manager/form_view.html:459
+#: submodules/core-hq-src/corehq/apps/app_manager/templates/app_manager/form_view.html:461
+#: submodules/core-hq-src/corehq/apps/app_manager/templates/app_manager/form_view.html:463
 msgid "Case Configuration"
 msgstr ""
 
-#: submodules/core-hq-src/corehq/apps/app_manager/templates/app_manager/form_view.html:460
+#: submodules/core-hq-src/corehq/apps/app_manager/templates/app_manager/form_view.html:464
 msgid ""
 "Cases are a way of preserving information across multiple interactions with "
 "CommCare on the mobile phone."
 msgstr ""
 
-#: submodules/core-hq-src/corehq/apps/app_manager/templates/app_manager/form_view.html:482
+#: submodules/core-hq-src/corehq/apps/app_manager/templates/app_manager/form_view.html:486
 msgid "Child Cases"
 msgstr ""
 
-#: submodules/core-hq-src/corehq/apps/app_manager/templates/app_manager/form_view.html:483
+#: submodules/core-hq-src/corehq/apps/app_manager/templates/app_manager/form_view.html:487
 msgid ""
 "Child Cases let you open other types of cases for use in other modules. When "
 "possible, they'll be linked to the current case so you'll always know where "
@@ -704,15 +770,16 @@ msgid ""
 "separately from its mother."
 msgstr ""
 
-#: submodules/core-hq-src/corehq/apps/app_manager/templates/app_manager/managed_app.html:30
+#: submodules/core-hq-src/corehq/apps/app_manager/templates/app_manager/managed_app.html:31
 msgid "Edit in form designer"
 msgstr ""
 
 #: submodules/core-hq-src/corehq/apps/app_manager/templates/app_manager/module_view.html:72
 #: submodules/core-hq-src/corehq/apps/app_manager/templates/app_manager/module_view.html:75
+#: submodules/core-hq-src/corehq/apps/data_interfaces/interfaces.py:45
 #: submodules/core-hq-src/corehq/apps/reports/fields.py:179
-#: submodules/core-hq-src/corehq/apps/reports/standard/inspect.py:337
-#: submodules/core-hq-src/corehq/apps/reports/templates/reports/reportdata/case_export_data.html:99
+#: submodules/core-hq-src/corehq/apps/reports/standard/inspect.py:436
+#: submodules/core-hq-src/corehq/apps/reports/templates/reports/reportdata/case_export_data.html:102
 msgid "Case Type"
 msgstr ""
 
@@ -780,31 +847,53 @@ msgstr ""
 msgid "Troubleshooting Phone Problems"
 msgstr ""
 
-#: submodules/core-hq-src/corehq/apps/app_manager/templates/app_manager/releases.html:316
+#: submodules/core-hq-src/corehq/apps/app_manager/templates/app_manager/releases.html:315
 msgid "Download to CommCare ODK (Android)"
 msgstr ""
 
-#: submodules/core-hq-src/corehq/apps/app_manager/templates/app_manager/releases.html:324
+#: submodules/core-hq-src/corehq/apps/app_manager/templates/app_manager/releases.html:322
+msgid ""
+"\n"
+"                                            Install by typing the following "
+"URL\n"
+"                                            into the application install "
+"screen:\n"
+"                                        "
+msgstr ""
+
+#: submodules/core-hq-src/corehq/apps/app_manager/templates/app_manager/releases.html:332
+msgid "No short code available; try making another build."
+msgstr ""
+
+#: submodules/core-hq-src/corehq/apps/app_manager/templates/app_manager/releases.html:336
+msgid "Or"
+msgstr ""
+
+#: submodules/core-hq-src/corehq/apps/app_manager/templates/app_manager/releases.html:338
+msgid "scan the bar code"
+msgstr ""
+
+#: submodules/core-hq-src/corehq/apps/app_manager/templates/app_manager/releases.html:348
 msgid "Send to phone via SMS"
 msgstr ""
 
-#: submodules/core-hq-src/corehq/apps/app_manager/templates/app_manager/releases.html:334
+#: submodules/core-hq-src/corehq/apps/app_manager/templates/app_manager/releases.html:358
 msgid "Send J2ME app"
 msgstr ""
 
-#: submodules/core-hq-src/corehq/apps/app_manager/templates/app_manager/releases.html:337
+#: submodules/core-hq-src/corehq/apps/app_manager/templates/app_manager/releases.html:361
 msgid "Send CommCare ODK app (Android)"
 msgstr ""
 
-#: submodules/core-hq-src/corehq/apps/app_manager/templates/app_manager/releases.html:344
+#: submodules/core-hq-src/corehq/apps/app_manager/templates/app_manager/releases.html:368
 msgid "Send to:"
 msgstr ""
 
-#: submodules/core-hq-src/corehq/apps/app_manager/templates/app_manager/releases.html:355
+#: submodules/core-hq-src/corehq/apps/app_manager/templates/app_manager/releases.html:379
 msgid "No URL was found for this app, try rebuilding."
 msgstr ""
 
-#: submodules/core-hq-src/corehq/apps/app_manager/templates/app_manager/releases.html:368
+#: submodules/core-hq-src/corehq/apps/app_manager/templates/app_manager/releases.html:392
 msgid "Download Multimedia"
 msgstr ""
 
@@ -834,119 +923,120 @@ msgstr ""
 msgid "Image Icon"
 msgstr ""
 
-#: submodules/core-hq-src/corehq/apps/app_manager/templates/app_manager/partials/nav_menu_media.html:14
+#: submodules/core-hq-src/corehq/apps/app_manager/templates/app_manager/partials/nav_menu_media.html:15
 msgid "Add Image"
 msgstr ""
 
-#: submodules/core-hq-src/corehq/apps/app_manager/templates/app_manager/partials/nav_menu_media.html:22
+#: submodules/core-hq-src/corehq/apps/app_manager/templates/app_manager/partials/nav_menu_media.html:23
+#: submodules/core-hq-src/corehq/apps/hqmedia/models.py:319
 msgid "Audio"
 msgstr ""
 
-#: submodules/core-hq-src/corehq/apps/app_manager/templates/app_manager/partials/nav_menu_media.html:32
+#: submodules/core-hq-src/corehq/apps/app_manager/templates/app_manager/partials/nav_menu_media.html:34
 msgid "Add Audio"
 msgstr ""
 
-#: submodules/core-hq-src/corehq/apps/app_manager/templates/app_manager/partials/nav_menu_media.html:33
+#: submodules/core-hq-src/corehq/apps/app_manager/templates/app_manager/partials/nav_menu_media.html:35
 msgid "Why can't I add audio?"
 msgstr ""
 
-#: submodules/core-hq-src/corehq/apps/app_manager/templates/app_manager/partials/nav_menu_media.html:34
+#: submodules/core-hq-src/corehq/apps/app_manager/templates/app_manager/partials/nav_menu_media.html:36
 msgid ""
 "To hear audio on J2ME, you must be in CommCare Sense mode or Numeric "
 "Selection mode. (In ODK it will always work.)"
 msgstr ""
 
-#: submodules/core-hq-src/corehq/apps/appstore/views.py:293
+#: submodules/core-hq-src/corehq/apps/appstore/views.py:296
 msgid "You don't belong to that project"
 msgstr ""
 
-#: submodules/core-hq-src/corehq/apps/appstore/views.py:301
+#: submodules/core-hq-src/corehq/apps/appstore/views.py:304
 msgid "Application successfully imported!"
 msgstr ""
 
-#: submodules/core-hq-src/corehq/apps/appstore/views.py:330
+#: submodules/core-hq-src/corehq/apps/appstore/views.py:333
 msgid "A project by that name already exists"
 msgstr ""
 
-#: submodules/core-hq-src/corehq/apps/appstore/views.py:334
+#: submodules/core-hq-src/corehq/apps/appstore/views.py:337
 msgid "Project copied successfully!"
 msgstr ""
 
-#: submodules/core-hq-src/corehq/apps/appstore/views.py:338
+#: submodules/core-hq-src/corehq/apps/appstore/views.py:341
 msgid "You must specify a name for the new project"
 msgstr ""
 
-#: submodules/core-hq-src/corehq/apps/appstore/templates/appstore/appstore_base.html:252
+#: submodules/core-hq-src/corehq/apps/appstore/templates/appstore/appstore_base.html:236
 msgid "Searching for"
 msgstr ""
 
-#: submodules/core-hq-src/corehq/apps/appstore/templates/appstore/appstore_base.html:253
+#: submodules/core-hq-src/corehq/apps/appstore/templates/appstore/appstore_base.html:237
 msgid "(cancel)"
 msgstr ""
 
-#: submodules/core-hq-src/corehq/apps/appstore/templates/appstore/appstore_base.html:268
-#: submodules/core-hq-src/corehq/apps/appstore/templates/appstore/appstore_base.html:294
+#: submodules/core-hq-src/corehq/apps/appstore/templates/appstore/appstore_base.html:252
+#: submodules/core-hq-src/corehq/apps/appstore/templates/appstore/appstore_base.html:278
 msgid "Highest Rated"
 msgstr ""
 
-#: submodules/core-hq-src/corehq/apps/appstore/templates/appstore/appstore_base.html:271
-#: submodules/core-hq-src/corehq/apps/appstore/templates/appstore/appstore_base.html:295
+#: submodules/core-hq-src/corehq/apps/appstore/templates/appstore/appstore_base.html:255
+#: submodules/core-hq-src/corehq/apps/appstore/templates/appstore/appstore_base.html:279
 msgid "Most Downloaded"
 msgstr ""
 
-#: submodules/core-hq-src/corehq/apps/appstore/templates/appstore/appstore_base.html:293
+#: submodules/core-hq-src/corehq/apps/appstore/templates/appstore/appstore_base.html:277
 msgid "Newest"
 msgstr ""
 
-#: submodules/core-hq-src/corehq/apps/appstore/templates/appstore/appstore_base.html:321
+#: submodules/core-hq-src/corehq/apps/appstore/templates/appstore/appstore_base.html:305
 msgid "Last updated"
 msgstr ""
 
-#: submodules/core-hq-src/corehq/apps/appstore/templates/appstore/appstore_base.html:322
+#: submodules/core-hq-src/corehq/apps/appstore/templates/appstore/appstore_base.html:306
 #: submodules/core-hq-src/corehq/apps/reports/standard/monitoring.py:533
 #: submodules/core-hq-src/corehq/apps/reports/templates/reports/reports_home.html:118
 msgid "View"
 msgstr ""
 
-#: submodules/core-hq-src/corehq/apps/appstore/templates/appstore/appstore_base.html:325
+#: submodules/core-hq-src/corehq/apps/appstore/templates/appstore/appstore_base.html:309
 msgid "Unapprove"
 msgstr ""
 
-#: submodules/core-hq-src/corehq/apps/appstore/templates/appstore/appstore_base.html:327
+#: submodules/core-hq-src/corehq/apps/appstore/templates/appstore/appstore_base.html:311
 msgid "Approve"
 msgstr ""
 
-#: submodules/core-hq-src/corehq/apps/appstore/templates/appstore/appstore_base.html:336
+#: submodules/core-hq-src/corehq/apps/appstore/templates/appstore/appstore_base.html:320
 msgid "By"
 msgstr ""
 
-#: submodules/core-hq-src/corehq/apps/appstore/templates/appstore/appstore_base.html:365
+#: submodules/core-hq-src/corehq/apps/appstore/templates/appstore/appstore_base.html:349
 msgid "No results were found for your query"
 msgstr ""
 
-#: submodules/core-hq-src/corehq/apps/appstore/templates/appstore/appstore_base.html:374
+#: submodules/core-hq-src/corehq/apps/appstore/templates/appstore/appstore_base.html:358
 msgid "Previous"
 msgstr ""
 
-#: submodules/core-hq-src/corehq/apps/appstore/templates/appstore/appstore_base.html:379
+#: submodules/core-hq-src/corehq/apps/appstore/templates/appstore/appstore_base.html:363
 #: submodules/core-hq-src/corehq/apps/reports/templates/reports/filters/drilldown_options.html:24
 msgid "Next"
 msgstr ""
 
 #: submodules/core-hq-src/corehq/apps/appstore/templates/appstore/deployment_info.html:31
-#: submodules/core-hq-src/corehq/apps/appstore/templates/appstore/project_info.html:84
-#: submodules/core-hq-src/corehq/apps/appstore/templates/appstore/project_info.html:163
+#: submodules/core-hq-src/corehq/apps/appstore/templates/appstore/project_info.html:101
+#: submodules/core-hq-src/corehq/apps/appstore/templates/appstore/project_info.html:211
 #: submodules/core-hq-src/corehq/apps/commtrack/templates/commtrack/manage/products.html:124
-#: submodules/core-hq-src/corehq/apps/domain/forms.py:28
-#: submodules/core-hq-src/corehq/apps/domain/forms.py:181
-#: submodules/core-hq-src/corehq/apps/reports/templates/reports/base_template.html:120
+#: submodules/core-hq-src/corehq/apps/domain/forms.py:33
+#: submodules/core-hq-src/corehq/apps/domain/forms.py:242
+#: submodules/core-hq-src/corehq/apps/reports/templates/reports/base_template.html:106
 #: submodules/core-hq-src/corehq/apps/reports/templates/reports/reports_home.html:36
 msgid "Description"
 msgstr ""
 
 #: submodules/core-hq-src/corehq/apps/appstore/templates/appstore/deployment_info.html:53
-#: submodules/core-hq-src/corehq/apps/appstore/templates/appstore/project_info.html:114
-#: submodules/core-hq-src/corehq/apps/domain/templates/domain/admin/project_settings.html:74
+#: submodules/core-hq-src/corehq/apps/appstore/templates/appstore/project_info.html:131
+#: submodules/core-hq-src/corehq/apps/domain/templates/domain/admin/project_settings.html:97
 msgid "Languages"
 msgstr ""
 
@@ -962,16 +1052,18 @@ msgid "Preview"
 msgstr ""
 
 #: submodules/core-hq-src/corehq/apps/appstore/templates/appstore/media_files.html:34
-#: submodules/core-hq-src/corehq/apps/appstore/templates/appstore/project_info.html:122
-#: submodules/core-hq-src/corehq/apps/domain/forms.py:54
+#: submodules/core-hq-src/corehq/apps/appstore/templates/appstore/project_info.html:139
+#: submodules/core-hq-src/corehq/apps/domain/forms.py:58
 #: submodules/core-hq-src/corehq/apps/domain/templates/domain/partials/project_version_display.html:26
 #: submodules/core-hq-src/corehq/apps/hqmedia/templates/hqmedia/partials/hqm_upload_form.html:3
+#: submodules/core-hq-src/corehq/apps/hqmedia/templates/hqmedia/partials/hqm_upload_form_multi.html:23
 #: submodules/core-hq-src/corehq/apps/reports/fields.py:294
 msgid "License"
 msgstr ""
 
 #: submodules/core-hq-src/corehq/apps/appstore/templates/appstore/media_files.html:38
 #: submodules/core-hq-src/corehq/apps/hqmedia/templates/hqmedia/partials/hqm_upload_form.html:16
+#: submodules/core-hq-src/corehq/apps/hqmedia/templates/hqmedia/partials/hqm_upload_form_multi.html:36
 msgid "Author"
 msgstr ""
 
@@ -982,6 +1074,7 @@ msgstr ""
 
 #: submodules/core-hq-src/corehq/apps/appstore/templates/appstore/media_files.html:46
 #: submodules/core-hq-src/corehq/apps/hqmedia/templates/hqmedia/partials/hqm_upload_form.html:22
+#: submodules/core-hq-src/corehq/apps/hqmedia/templates/hqmedia/partials/hqm_upload_form_multi.html:42
 msgid "Attribution Notes"
 msgstr ""
 
@@ -993,198 +1086,222 @@ msgstr ""
 msgid "This app doesn't share it's multimedia files"
 msgstr ""
 
-#: submodules/core-hq-src/corehq/apps/appstore/templates/appstore/project_info.html:61
+#: submodules/core-hq-src/corehq/apps/appstore/templates/appstore/project_info.html:76
 msgid "by"
 msgstr ""
 
-#: submodules/core-hq-src/corehq/apps/appstore/templates/appstore/project_info.html:71
+#: submodules/core-hq-src/corehq/apps/appstore/templates/appstore/project_info.html:88
 msgid "Ratings"
 msgstr ""
 
-#: submodules/core-hq-src/corehq/apps/appstore/templates/appstore/project_info.html:89
-#: submodules/core-hq-src/corehq/apps/appstore/templates/appstore/project_info.html:97
-#: submodules/core-hq-src/corehq/apps/appstore/templates/appstore/project_info.html:119
+#: submodules/core-hq-src/corehq/apps/appstore/templates/appstore/project_info.html:106
+#: submodules/core-hq-src/corehq/apps/appstore/templates/appstore/project_info.html:114
+#: submodules/core-hq-src/corehq/apps/appstore/templates/appstore/project_info.html:136
 msgid "None"
 msgstr ""
 
-#: submodules/core-hq-src/corehq/apps/appstore/templates/appstore/project_info.html:92
+#: submodules/core-hq-src/corehq/apps/appstore/templates/appstore/project_info.html:109
 #: submodules/core-hq-src/corehq/apps/commtrack/templates/commtrack/manage/products.html:123
 #: submodules/core-hq-src/corehq/apps/reports/fields.py:279
 msgid "Category"
 msgstr ""
 
-#: submodules/core-hq-src/corehq/apps/appstore/templates/appstore/project_info.html:101
+#: submodules/core-hq-src/corehq/apps/appstore/templates/appstore/project_info.html:118
 msgid "Published by"
 msgstr ""
 
-#: submodules/core-hq-src/corehq/apps/appstore/templates/appstore/project_info.html:110
+#: submodules/core-hq-src/corehq/apps/appstore/templates/appstore/project_info.html:127
 #: submodules/core-hq-src/corehq/apps/domain/templates/domain/partials/project_version_display.html:24
 msgid "Published on"
 msgstr ""
 
-#: submodules/core-hq-src/corehq/apps/appstore/templates/appstore/project_info.html:124
+#: submodules/core-hq-src/corehq/apps/appstore/templates/appstore/project_info.html:141
+#: submodules/core-hq-src/corehq/apps/appstore/templates/appstore/project_info.html:146
 msgid "Downloads"
 msgstr ""
 
-#: submodules/core-hq-src/corehq/apps/appstore/templates/appstore/project_info.html:131
+#: submodules/core-hq-src/corehq/apps/appstore/templates/appstore/project_info.html:159
+msgid "Project"
+msgstr ""
+
+#: submodules/core-hq-src/corehq/apps/appstore/templates/appstore/project_info.html:160
+msgid "Downloaded by"
+msgstr ""
+
+#: submodules/core-hq-src/corehq/apps/appstore/templates/appstore/project_info.html:169
+msgid "No Downloads Information"
+msgstr ""
+
+#: submodules/core-hq-src/corehq/apps/appstore/templates/appstore/project_info.html:179
 msgid "Browse Multimedia"
 msgstr ""
 
-#: submodules/core-hq-src/corehq/apps/appstore/templates/appstore/project_info.html:143
+#: submodules/core-hq-src/corehq/apps/appstore/templates/appstore/project_info.html:191
 msgid "Preview this app"
 msgstr ""
 
-#: submodules/core-hq-src/corehq/apps/appstore/templates/appstore/project_info.html:146
+#: submodules/core-hq-src/corehq/apps/appstore/templates/appstore/project_info.html:194
 msgid "Media"
 msgstr ""
 
-#: submodules/core-hq-src/corehq/apps/appstore/templates/appstore/project_info.html:152
+#: submodules/core-hq-src/corehq/apps/appstore/templates/appstore/project_info.html:200
 #: submodules/core-hq-src/corehq/apps/builds/templates/builds/all.html:8
 msgid "Version"
 msgstr ""
 
-#: submodules/core-hq-src/corehq/apps/appstore/templates/appstore/project_info.html:155
-#: submodules/core-hq-src/corehq/apps/domain/forms.py:32
+#: submodules/core-hq-src/corehq/apps/appstore/templates/appstore/project_info.html:203
+#: submodules/core-hq-src/corehq/apps/domain/forms.py:37
 msgid "User type"
 msgstr ""
 
-#: submodules/core-hq-src/corehq/apps/appstore/templates/appstore/project_info.html:159
-#: submodules/core-hq-src/corehq/apps/domain/forms.py:31
+#: submodules/core-hq-src/corehq/apps/appstore/templates/appstore/project_info.html:207
+#: submodules/core-hq-src/corehq/apps/domain/forms.py:36
 msgid "Phone model"
 msgstr ""
 
-#: submodules/core-hq-src/corehq/apps/appstore/templates/appstore/project_info.html:169
-#: submodules/core-hq-src/corehq/apps/domain/forms.py:34
+#: submodules/core-hq-src/corehq/apps/appstore/templates/appstore/project_info.html:217
+#: submodules/core-hq-src/corehq/apps/domain/forms.py:39
 msgid "Attribution notes"
 msgstr ""
 
-#: submodules/core-hq-src/corehq/apps/appstore/templates/appstore/project_info.html:172
+#: submodules/core-hq-src/corehq/apps/appstore/templates/appstore/project_info.html:220
 msgid "Application Summary"
 msgstr ""
 
-#: submodules/core-hq-src/corehq/apps/appstore/templates/appstore/project_info.html:180
+#: submodules/core-hq-src/corehq/apps/appstore/templates/appstore/project_info.html:228
 #: submodules/core-hq-src/corehq/apps/reports/templates/reports/partials/bulk_export_notice.html:4
 #: submodules/core-hq-src/corehq/apps/reports/templates/reports/partials/saved_custom_exports.html:10
 #: submodules/core-hq-src/corehq/apps/reports/templates/reports/partials/saved_custom_exports.html:61
 #: submodules/core-hq-src/corehq/apps/reports/templates/reports/reportdata/case_export_data.html:32
 #: submodules/core-hq-src/corehq/apps/reports/templates/reports/reportdata/case_export_data.html:44
 #: submodules/core-hq-src/corehq/apps/reports/templates/reports/reportdata/case_export_data.html:58
-#: submodules/core-hq-src/corehq/apps/reports/templates/reports/reportdata/case_export_data.html:78
+#: submodules/core-hq-src/corehq/apps/reports/templates/reports/reportdata/case_export_data.html:81
 #: submodules/core-hq-src/corehq/apps/reports/templates/reports/reportdata/excel_export_data.html:169
-#: submodules/core-hq-src/corehq/apps/reports/templates/reports/reportdata/excel_export_data.html:282
+#: submodules/core-hq-src/corehq/apps/reports/templates/reports/reportdata/excel_export_data.html:280
 msgid "Download"
 msgstr ""
 
-#: submodules/core-hq-src/corehq/apps/appstore/templates/appstore/project_info.html:183
+#: submodules/core-hq-src/corehq/apps/appstore/templates/appstore/project_info.html:231
 msgid ""
 "You are currently logged in as a CloudCare user. Please sign out and login "
 "as a normal user to download apps"
 msgstr ""
 
-#: submodules/core-hq-src/corehq/apps/appstore/templates/appstore/project_info.html:187
+#: submodules/core-hq-src/corehq/apps/appstore/templates/appstore/project_info.html:235
 #: submodules/core-hq-src/corehq/apps/domain/templates/domain/copy_snapshot.html:16
 msgid "New project name"
 msgstr ""
 
-#: submodules/core-hq-src/corehq/apps/appstore/templates/appstore/project_info.html:191
+#: submodules/core-hq-src/corehq/apps/appstore/templates/appstore/project_info.html:239
 msgid "Download As New Project"
 msgstr ""
 
-#: submodules/core-hq-src/corehq/apps/appstore/templates/appstore/project_info.html:193
-#: submodules/core-hq-src/corehq/apps/appstore/templates/appstore/project_info.html:199
+#: submodules/core-hq-src/corehq/apps/appstore/templates/appstore/project_info.html:241
+#: submodules/core-hq-src/corehq/apps/appstore/templates/appstore/project_info.html:247
 #: submodules/core-hq-src/corehq/apps/users/templates/users/accept_invite_base.html:27
 msgid "or"
 msgstr ""
 
-#: submodules/core-hq-src/corehq/apps/appstore/templates/appstore/project_info.html:194
+#: submodules/core-hq-src/corehq/apps/appstore/templates/appstore/project_info.html:242
 msgid "Download to Existing Project"
 msgstr ""
 
-#: submodules/core-hq-src/corehq/apps/appstore/templates/appstore/project_info.html:199
+#: submodules/core-hq-src/corehq/apps/appstore/templates/appstore/project_info.html:247
 #: submodules/core-hq-src/corehq/apps/users/templates/users/accept_invite_base.html:27
 msgid "Please"
 msgstr ""
 
-#: submodules/core-hq-src/corehq/apps/appstore/templates/appstore/project_info.html:199
+#: submodules/core-hq-src/corehq/apps/appstore/templates/appstore/project_info.html:247
 msgid "sign in"
 msgstr ""
 
-#: submodules/core-hq-src/corehq/apps/appstore/templates/appstore/project_info.html:199
+#: submodules/core-hq-src/corehq/apps/appstore/templates/appstore/project_info.html:247
 msgid "register"
 msgstr ""
 
-#: submodules/core-hq-src/corehq/apps/appstore/templates/appstore/project_info.html:199
+#: submodules/core-hq-src/corehq/apps/appstore/templates/appstore/project_info.html:247
 msgid "to download an app from Exchange"
 msgstr ""
 
-#: submodules/core-hq-src/corehq/apps/appstore/templates/appstore/project_info.html:218
+#: submodules/core-hq-src/corehq/apps/appstore/templates/appstore/project_info.html:266
 msgid "Reviews of"
 msgstr ""
 
-#: submodules/core-hq-src/corehq/apps/appstore/templates/appstore/project_info.html:221
+#: submodules/core-hq-src/corehq/apps/appstore/templates/appstore/project_info.html:269
 msgid "Write a Review"
 msgstr ""
 
-#: submodules/core-hq-src/corehq/apps/appstore/templates/appstore/project_info.html:237
+#: submodules/core-hq-src/corehq/apps/appstore/templates/appstore/project_info.html:285
 msgid "on"
 msgstr ""
 
-#: submodules/core-hq-src/corehq/apps/appstore/templates/appstore/project_info.html:251
+#: submodules/core-hq-src/corehq/apps/appstore/templates/appstore/project_info.html:299
 msgid "Write a review for "
 msgstr ""
 
-#: submodules/core-hq-src/corehq/apps/appstore/templates/appstore/project_info.html:256
+#: submodules/core-hq-src/corehq/apps/appstore/templates/appstore/project_info.html:304
 msgid "Review This App"
 msgstr ""
 
-#: submodules/core-hq-src/corehq/apps/appstore/templates/appstore/project_info.html:263
+#: submodules/core-hq-src/corehq/apps/appstore/templates/appstore/project_info.html:311
 msgid "Rating"
 msgstr ""
 
-#: submodules/core-hq-src/corehq/apps/appstore/templates/appstore/project_info.html:295
-#: submodules/core-hq-src/corehq/apps/hqmedia/templates/hqmedia/bulk_upload.html:151
-#: submodules/core-hq-src/corehq/apps/orgs/templates/orgs/orgs_landing.html:302
+#: submodules/core-hq-src/corehq/apps/appstore/templates/appstore/project_info.html:343
+#: submodules/core-hq-src/corehq/apps/domain/templates/domain/orgs_settings.html:75
+#: submodules/core-hq-src/corehq/apps/hqmedia/templates/hqmedia/bulk_upload.html:70
+#: submodules/core-hq-src/corehq/apps/indicators/templates/indicators/forms/copy_to_domain.html:66
+#: submodules/core-hq-src/corehq/apps/orgs/templates/orgs/orgs_landing.html:170
+#: submodules/core-hq-src/corehq/apps/orgs/templates/orgs/orgs_landing.html:220
+#: submodules/core-hq-src/corehq/apps/orgs/templates/orgs/orgs_landing.html:239
+#: submodules/core-hq-src/corehq/apps/orgs/templates/orgs/orgs_landing.html:266
+#: submodules/core-hq-src/corehq/apps/orgs/templates/orgs/orgs_landing.html:280
+#: submodules/core-hq-src/corehq/apps/orgs/templates/orgs/orgs_members.html:65
+#: submodules/core-hq-src/corehq/apps/orgs/templates/orgs/orgs_team_members.html:166
+#: submodules/core-hq-src/corehq/apps/orgs/templates/orgs/orgs_teams.html:66
+#: submodules/core-hq-src/corehq/apps/reports/templates/reports/reportdata/customize_export.html:490
 msgid "Cancel"
 msgstr ""
 
-#: submodules/core-hq-src/corehq/apps/appstore/templates/appstore/project_info.html:296
+#: submodules/core-hq-src/corehq/apps/appstore/templates/appstore/project_info.html:344
 msgid "Post"
 msgstr ""
 
-#: submodules/core-hq-src/corehq/apps/appstore/templates/appstore/project_info.html:305
+#: submodules/core-hq-src/corehq/apps/appstore/templates/appstore/project_info.html:353
 msgid "You're about to download "
 msgstr ""
 
-#: submodules/core-hq-src/corehq/apps/appstore/templates/appstore/project_info.html:308
+#: submodules/core-hq-src/corehq/apps/appstore/templates/appstore/project_info.html:356
 msgid "is licensed under "
 msgstr ""
 
-#: submodules/core-hq-src/corehq/apps/appstore/templates/appstore/project_info.html:311
+#: submodules/core-hq-src/corehq/apps/appstore/templates/appstore/project_info.html:359
 msgid "Please view the"
 msgstr ""
 
-#: submodules/core-hq-src/corehq/apps/appstore/templates/appstore/project_info.html:311
+#: submodules/core-hq-src/corehq/apps/appstore/templates/appstore/project_info.html:359
 msgid "licenses for this app's media files"
 msgstr ""
 
-#: submodules/core-hq-src/corehq/apps/appstore/templates/appstore/project_info.html:316
+#: submodules/core-hq-src/corehq/apps/appstore/templates/appstore/project_info.html:364
 msgid "I have read and agree to the terms of this license."
 msgstr ""
 
-#: submodules/core-hq-src/corehq/apps/appstore/templates/appstore/project_info.html:318
+#: submodules/core-hq-src/corehq/apps/appstore/templates/appstore/project_info.html:366
 msgid "Agree"
 msgstr ""
 
-#: submodules/core-hq-src/corehq/apps/appstore/templates/appstore/project_info.html:319
+#: submodules/core-hq-src/corehq/apps/appstore/templates/appstore/project_info.html:367
 msgid "Disagree"
 msgstr ""
 
 #: submodules/core-hq-src/corehq/apps/appstore/templates/appstore/partials/view_wiki.html:6
-msgid "Check out the "
-msgstr ""
-
-#: submodules/core-hq-src/corehq/apps/appstore/templates/appstore/partials/view_wiki.html:8
-msgid " to get more information on how to get started with CommCare."
+msgid ""
+"\n"
+"    Check out the\n"
+"    <a href=\"https://wiki.commcarehq.org/display/commcarepublic/Getting"
+"+Started+with+CommCare\">CommCare Help Site</a>\n"
+"    to get more information on how to get started with CommCare.\n"
 msgstr ""
 
 #: submodules/core-hq-src/corehq/apps/builds/templates/builds/all.html:7
@@ -1195,41 +1312,48 @@ msgstr ""
 msgid "Time"
 msgstr ""
 
-#: submodules/core-hq-src/corehq/apps/cloudcare/views.py:96
+#: submodules/core-hq-src/corehq/apps/cloudcare/views.py:97
 msgid ""
 "That app is no longer valid. Try using the navigation links to select an app."
 msgstr ""
 
-#: submodules/core-hq-src/corehq/apps/cloudcare/views.py:222
+#: submodules/core-hq-src/corehq/apps/cloudcare/views.py:223
 msgid "Something went wrong filtering your cases."
 msgstr ""
 
-#: submodules/core-hq-src/corehq/apps/cloudcare/templates/cloudcare/cloudcare_home.html:103
+#: submodules/core-hq-src/corehq/apps/cloudcare/templates/cloudcare/cloudcare_home.html:104
 msgid "Loading"
 msgstr ""
 
-#: submodules/core-hq-src/corehq/apps/commtrack/stockreport.py:51
+#: submodules/core-hq-src/corehq/apps/commtrack/stockreport.py:72
 msgid "timeStart"
 msgstr ""
 
-#: submodules/core-hq-src/corehq/apps/commtrack/stockreport.py:61
+#: submodules/core-hq-src/corehq/apps/commtrack/stockreport.py:102
+#: submodules/core-hq-src/corehq/apps/commtrack/stockreport.py:146
 msgid "product"
 msgstr ""
 
-#: submodules/core-hq-src/corehq/apps/commtrack/stockreport.py:62
+#: submodules/core-hq-src/corehq/apps/commtrack/stockreport.py:103
+#: submodules/core-hq-src/corehq/apps/commtrack/stockreport.py:147
 msgid "product_entry"
 msgstr ""
 
-#: submodules/core-hq-src/corehq/apps/commtrack/stockreport.py:63
-msgid "action"
-msgstr ""
-
-#: submodules/core-hq-src/corehq/apps/commtrack/stockreport.py:64
+#: submodules/core-hq-src/corehq/apps/commtrack/stockreport.py:104
+#: submodules/core-hq-src/corehq/apps/commtrack/stockreport.py:148
 msgid "value"
 msgstr ""
 
-#: submodules/core-hq-src/corehq/apps/commtrack/stockreport.py:86
-msgid "transaction"
+#: submodules/core-hq-src/corehq/apps/commtrack/stockreport.py:106
+msgid "action"
+msgstr ""
+
+#: submodules/core-hq-src/corehq/apps/commtrack/stockreport.py:178
+msgid "status"
+msgstr ""
+
+#: submodules/core-hq-src/corehq/apps/commtrack/stockreport.py:192
+msgid "userID"
 msgstr ""
 
 #: submodules/core-hq-src/corehq/apps/commtrack/templates/commtrack/manage/products.html:121
@@ -1249,158 +1373,329 @@ msgstr ""
 msgid "Archive"
 msgstr ""
 
-#: submodules/core-hq-src/corehq/apps/data_interfaces/interfaces.py:15
-#: submodules/core-hq-src/corehq/apps/hqwebapp/models.py:114
+#: submodules/core-hq-src/corehq/apps/data_interfaces/interfaces.py:16
+#: submodules/core-hq-src/corehq/apps/hqwebapp/models.py:229
 msgid "Manage Data"
 msgstr ""
 
-#: submodules/core-hq-src/corehq/apps/data_interfaces/interfaces.py:26
+#: submodules/core-hq-src/corehq/apps/data_interfaces/interfaces.py:27
 msgid "Reassign Cases"
 msgstr ""
 
-#: submodules/core-hq-src/corehq/apps/domain/forms.py:22
-#: submodules/core-hq-src/corehq/apps/domain/forms.py:52
+#: submodules/core-hq-src/corehq/apps/data_interfaces/interfaces.py:44
+msgid "Case Name"
+msgstr ""
+
+#: submodules/core-hq-src/corehq/apps/data_interfaces/interfaces.py:46
+#: submodules/core-hq-src/corehq/apps/reports/standard/inspect.py:438
+msgid "Owner"
+msgstr ""
+
+#: submodules/core-hq-src/corehq/apps/data_interfaces/interfaces.py:47
+msgid "Last Modified"
+msgstr ""
+
+#: submodules/core-hq-src/corehq/apps/domain/forms.py:27
+#: submodules/core-hq-src/corehq/apps/domain/forms.py:56
 msgid "Project Category"
 msgstr ""
 
-#: submodules/core-hq-src/corehq/apps/domain/forms.py:23
-#: submodules/core-hq-src/corehq/apps/domain/forms.py:53
+#: submodules/core-hq-src/corehq/apps/domain/forms.py:28
+#: submodules/core-hq-src/corehq/apps/domain/forms.py:57
 msgid "e.g. MCH, HIV, etc."
 msgstr ""
 
-#: submodules/core-hq-src/corehq/apps/domain/forms.py:26
+#: submodules/core-hq-src/corehq/apps/domain/forms.py:31
 msgid "Publish?"
 msgstr ""
 
-#: submodules/core-hq-src/corehq/apps/domain/forms.py:29
+#: submodules/core-hq-src/corehq/apps/domain/forms.py:34
 msgid "A detailed technical description of the application"
 msgstr ""
 
-#: submodules/core-hq-src/corehq/apps/domain/forms.py:30
-#: submodules/core-hq-src/corehq/apps/domain/forms.py:180
+#: submodules/core-hq-src/corehq/apps/domain/forms.py:35
+#: submodules/core-hq-src/corehq/apps/domain/forms.py:241
 msgid "Deployment date"
 msgstr ""
 
-#: submodules/core-hq-src/corehq/apps/domain/forms.py:33
+#: submodules/core-hq-src/corehq/apps/domain/forms.py:38
 msgid "e.g. CHW, ASHA, RA, etc"
 msgstr ""
 
-#: submodules/core-hq-src/corehq/apps/domain/forms.py:35
+#: submodules/core-hq-src/corehq/apps/domain/forms.py:40
 msgid ""
 "Enter any special instructions to users here. This will be shown just before "
 "users copy your project."
 msgstr ""
 
-#: submodules/core-hq-src/corehq/apps/domain/forms.py:50
+#: submodules/core-hq-src/corehq/apps/domain/forms.py:55
 msgid "Title"
 msgstr ""
 
-#: submodules/core-hq-src/corehq/apps/domain/forms.py:51
-msgid "Author name"
-msgstr ""
-
-#: submodules/core-hq-src/corehq/apps/domain/forms.py:57
+#: submodules/core-hq-src/corehq/apps/domain/forms.py:61
 msgid ""
 "All un-licensed multimedia files in your project will be given this license"
 msgstr ""
 
-#: submodules/core-hq-src/corehq/apps/domain/forms.py:58
+#: submodules/core-hq-src/corehq/apps/domain/forms.py:62
 msgid "Long Description"
 msgstr ""
 
-#: submodules/core-hq-src/corehq/apps/domain/forms.py:59
+#: submodules/core-hq-src/corehq/apps/domain/forms.py:63
 msgid "A high-level overview of your project as a whole"
 msgstr ""
 
-#: submodules/core-hq-src/corehq/apps/domain/forms.py:60
+#: submodules/core-hq-src/corehq/apps/domain/forms.py:64
 msgid "Short Description"
 msgstr ""
 
-#: submodules/core-hq-src/corehq/apps/domain/forms.py:62
+#: submodules/core-hq-src/corehq/apps/domain/forms.py:66
 msgid "A brief description of your project (max. 200 characters)"
 msgstr ""
 
-#: submodules/core-hq-src/corehq/apps/domain/forms.py:63
+#: submodules/core-hq-src/corehq/apps/domain/forms.py:67
 msgid "Share all multimedia?"
 msgstr ""
 
-#: submodules/core-hq-src/corehq/apps/domain/forms.py:64
+#: submodules/core-hq-src/corehq/apps/domain/forms.py:68
 msgid "This will allow any user to see and use all multimedia in this project"
 msgstr ""
 
-#: submodules/core-hq-src/corehq/apps/domain/forms.py:65
+#: submodules/core-hq-src/corehq/apps/domain/forms.py:69
 msgid "Exchange image"
 msgstr ""
 
-#: submodules/core-hq-src/corehq/apps/domain/forms.py:66
+#: submodules/core-hq-src/corehq/apps/domain/forms.py:70
 msgid ""
 "An optional image to show other users your logo or what your app looks like"
 msgstr ""
 
-#: submodules/core-hq-src/corehq/apps/domain/forms.py:67
+#: submodules/core-hq-src/corehq/apps/domain/forms.py:71
 msgid "Content Distribution Agreement"
 msgstr ""
 
-#: submodules/core-hq-src/corehq/apps/domain/forms.py:119
+#: submodules/core-hq-src/corehq/apps/domain/forms.py:128
+msgid "You may not specify a sub area when the project has no specified area"
+msgstr ""
+
+#: submodules/core-hq-src/corehq/apps/domain/forms.py:138
+#, python-format
+msgid "This is not a valid sub-area for the area %s"
+msgstr ""
+
+#: submodules/core-hq-src/corehq/apps/domain/forms.py:142
 msgid "Default Timezone"
 msgstr ""
 
-#: submodules/core-hq-src/corehq/apps/domain/forms.py:120
-#: submodules/core-hq-src/corehq/apps/users/templates/users/mobile/users_list.html:147
-msgid "Case Sharing"
+#: submodules/core-hq-src/corehq/apps/domain/forms.py:206
+msgid ""
+"Please enter a default case type for cases that register themselves via sms."
 msgstr ""
 
-#: submodules/core-hq-src/corehq/apps/domain/forms.py:176
+#: submodules/core-hq-src/corehq/apps/domain/forms.py:209
+msgid ""
+"Please enter a default owner for cases that register themselves via sms."
+msgstr ""
+
+#: submodules/core-hq-src/corehq/apps/domain/forms.py:212
+msgid ""
+"Please enter a default submitting user for cases that register themselves "
+"via sms."
+msgstr ""
+
+#: submodules/core-hq-src/corehq/apps/domain/forms.py:237
 msgid "City"
 msgstr ""
 
-#: submodules/core-hq-src/corehq/apps/domain/forms.py:177
+#: submodules/core-hq-src/corehq/apps/domain/forms.py:238
 msgid "Country"
 msgstr ""
 
-#: submodules/core-hq-src/corehq/apps/domain/forms.py:178
+#: submodules/core-hq-src/corehq/apps/domain/forms.py:239
 #: submodules/core-hq-src/corehq/apps/reports/fields.py:306
 msgid "Region"
 msgstr ""
 
-#: submodules/core-hq-src/corehq/apps/domain/forms.py:179
+#: submodules/core-hq-src/corehq/apps/domain/forms.py:240
 msgid "e.g. US, LAC, SA, Sub-Saharan Africa, Southeast Asia, etc."
 msgstr ""
 
-#: submodules/core-hq-src/corehq/apps/domain/forms.py:182
+#: submodules/core-hq-src/corehq/apps/domain/forms.py:243
 msgid "Make Public?"
 msgstr ""
 
-#: submodules/core-hq-src/corehq/apps/domain/views.py:327
+#: submodules/core-hq-src/corehq/apps/domain/forms.py:264
+msgid "Salesforce Contract ID"
+msgstr ""
+
+#: submodules/core-hq-src/corehq/apps/domain/forms.py:265
+msgid "Salesforce Account ID"
+msgstr ""
+
+#: submodules/core-hq-src/corehq/apps/domain/forms.py:266
+msgid "Commcare Edition"
+msgstr ""
+
+#: submodules/core-hq-src/corehq/apps/domain/forms.py:268
+msgid "Services"
+msgstr ""
+
+#: submodules/core-hq-src/corehq/apps/domain/forms.py:270
+msgid "Real Space?"
+msgstr ""
+
+#: submodules/core-hq-src/corehq/apps/domain/forms.py:271
+msgid "Initiative"
+msgstr ""
+
+#: submodules/core-hq-src/corehq/apps/domain/forms.py:273
+msgid "Project State"
+msgstr ""
+
+#: submodules/core-hq-src/corehq/apps/domain/forms.py:275
+msgid "Self Started?"
+msgstr ""
+
+#: submodules/core-hq-src/corehq/apps/domain/forms.py:276
+msgid "Area"
+msgstr ""
+
+#: submodules/core-hq-src/corehq/apps/domain/forms.py:277
+msgid "Sub-Area"
+msgstr ""
+
+#: submodules/core-hq-src/corehq/apps/domain/forms.py:278
+msgid "Using ADM?"
+msgstr ""
+
+#: submodules/core-hq-src/corehq/apps/domain/forms.py:279
+msgid "Using Call Center?"
+msgstr ""
+
+#: submodules/core-hq-src/corehq/apps/domain/forms.py:280
+msgid "Custom Eula?"
+msgstr ""
+
+#: submodules/core-hq-src/corehq/apps/domain/forms.py:281
+msgid "Data Usage?"
+msgstr ""
+
+#: submodules/core-hq-src/corehq/apps/domain/forms.py:282
+msgid "Organization Name"
+msgstr ""
+
+#: submodules/core-hq-src/corehq/apps/domain/forms.py:283
+msgid "Notes"
+msgstr ""
+
+#: submodules/core-hq-src/corehq/apps/domain/views.py:421
 msgid ""
 "There are some problems with your form. Please address these issues and try "
 "again."
 msgstr ""
 
-#: submodules/core-hq-src/corehq/apps/domain/views.py:415
+#: submodules/core-hq-src/corehq/apps/domain/views.py:501
 msgid "Version creation failed; please try again"
 msgstr ""
 
-#: submodules/core-hq-src/corehq/apps/domain/views.py:418
+#: submodules/core-hq-src/corehq/apps/domain/views.py:504
 msgid ""
 "Created a new version of your app. This version will be posted to CommCare "
 "Exchange pending approval by admins."
 msgstr ""
 
-#: submodules/core-hq-src/corehq/apps/domain/views.py:420
+#: submodules/core-hq-src/corehq/apps/domain/views.py:506
 msgid "Created a new version of your app."
 msgstr ""
 
-#: submodules/core-hq-src/corehq/apps/domain/templates/domain/create_snapshot.html:94
+#: submodules/core-hq-src/corehq/apps/domain/templates/domain/create_snapshot.html:96
+msgid "Publishing as"
+msgstr ""
+
+#: submodules/core-hq-src/corehq/apps/domain/templates/domain/create_snapshot.html:100
+msgid "A user"
+msgstr ""
+
+#: submodules/core-hq-src/corehq/apps/domain/templates/domain/create_snapshot.html:104
+msgid "An organization"
+msgstr ""
+
+#: submodules/core-hq-src/corehq/apps/domain/templates/domain/create_snapshot.html:110
+msgid "Publishing on behalf of"
+msgstr ""
+
+#: submodules/core-hq-src/corehq/apps/domain/templates/domain/create_snapshot.html:112
+msgid "Name to display as the author"
+msgstr ""
+
+#: submodules/core-hq-src/corehq/apps/domain/templates/domain/create_snapshot.html:123
 msgid "Save and Publish Later"
 msgstr ""
 
-#: submodules/core-hq-src/corehq/apps/domain/templates/domain/create_snapshot.html:95
+#: submodules/core-hq-src/corehq/apps/domain/templates/domain/create_snapshot.html:124
 msgid "Publish Now"
 msgstr ""
 
+#: submodules/core-hq-src/corehq/apps/domain/templates/domain/internal_settings.html:30
+msgid "Update Project Information"
+msgstr ""
+
+#: submodules/core-hq-src/corehq/apps/domain/templates/domain/orgs_settings.html:38
+msgid "This project is not a part of any organization"
+msgstr ""
+
+#: submodules/core-hq-src/corehq/apps/domain/templates/domain/orgs_settings.html:40
+msgid "Request to add this project to an organization"
+msgstr ""
+
 #: submodules/core-hq-src/corehq/apps/domain/templates/domain/orgs_settings.html:49
-msgid "This project is not managed by an organization"
+msgid "Send request to an organization to add this project"
+msgstr ""
+
+#: submodules/core-hq-src/corehq/apps/domain/templates/domain/orgs_settings.html:55
+msgid "Choose an organization"
+msgstr ""
+
+#: submodules/core-hq-src/corehq/apps/domain/templates/domain/orgs_settings.html:66
+#: submodules/pact-src/pact/templates/pact/chw/pact_chw_profile_base.html:9
+#: submodules/pact-src/pact/templates/pact/chw/pact_chw_profile_submissions.html:9
+#: submodules/pact-src/pact/templates/pact/patient/pactpatient_base.html:24
+#: submodules/pact-src/pact/templates/pact/patient/pactpatient_submissions.html:17
+msgid "Info"
+msgstr ""
+
+#: submodules/core-hq-src/corehq/apps/domain/templates/domain/orgs_settings.html:68
+msgid ""
+"The admins of this organization will be notified about your request. They "
+"will then have the opportunity to add your project to the organization"
+msgstr ""
+
+#: submodules/core-hq-src/corehq/apps/domain/templates/domain/orgs_settings.html:74
+msgid "Submit Request"
+msgstr ""
+
+#: submodules/core-hq-src/corehq/apps/domain/templates/domain/select.html:5
+msgid "Project Selection"
+msgstr ""
+
+#: submodules/core-hq-src/corehq/apps/domain/templates/domain/select.html:10
+msgid "Dashboard"
+msgstr ""
+
+#: submodules/core-hq-src/corehq/apps/domain/templates/domain/select.html:13
+msgid "My Projects"
+msgstr ""
+
+#: submodules/core-hq-src/corehq/apps/domain/templates/domain/select.html:18
+msgid "My Organizations"
+msgstr ""
+
+#: submodules/core-hq-src/corehq/apps/domain/templates/domain/select.html:24
+msgid "Have a new idea?"
+msgstr ""
+
+#: submodules/core-hq-src/corehq/apps/domain/templates/domain/select.html:30
+msgid "Need ideas?"
 msgstr ""
 
 #: submodules/core-hq-src/corehq/apps/domain/templates/domain/snapshot_settings.html:102
@@ -1421,8 +1716,8 @@ msgstr ""
 msgid "This project was originally copied from "
 msgstr ""
 
-#: submodules/core-hq-src/corehq/apps/domain/templates/domain/admin/project_settings.html:82
-#: submodules/core-hq-src/corehq/apps/hqwebapp/models.py:125
+#: submodules/core-hq-src/corehq/apps/domain/templates/domain/admin/project_settings.html:105
+#: submodules/core-hq-src/corehq/apps/hqwebapp/models.py:249
 msgid "Applications"
 msgstr ""
 
@@ -1440,7 +1735,8 @@ msgstr ""
 
 #: submodules/core-hq-src/corehq/apps/domain/templates/domain/partials/project_version_display.html:28
 #: submodules/core-hq-src/corehq/apps/hqmedia/templates/hqmedia/partials/media_list.html:18
-#: submodules/core-hq-src/corehq/apps/reports/standard/inspect.py:343
+#: submodules/core-hq-src/corehq/apps/reports/standard/inspect.py:442
+#: submodules/core-hq-src/corehq/apps/reports/standard/ivr.py:164
 msgid "Status"
 msgstr ""
 
@@ -1461,6 +1757,8 @@ msgid "Phone Numbers"
 msgstr ""
 
 #: submodules/core-hq-src/corehq/apps/domain/templates/domain/partials/user_list.html:11
+#: submodules/core-hq-src/corehq/apps/orgs/templates/orgs/orgs_team_members.html:58
+#: submodules/core-hq-src/corehq/apps/orgs/templates/orgs/orgs_team_members.html:108
 msgid "Remove"
 msgstr ""
 
@@ -1542,11 +1840,11 @@ msgid "Active"
 msgstr ""
 
 #: submodules/core-hq-src/corehq/apps/facilities/templates/facilities/list_facilities.html:26
-msgid "Remote updated at"
+msgid "Remote created at"
 msgstr ""
 
 #: submodules/core-hq-src/corehq/apps/facilities/templates/facilities/list_facilities.html:27
-msgid "Remote created at"
+msgid "Remote updated at"
 msgstr ""
 
 #: submodules/core-hq-src/corehq/apps/facilities/templates/facilities/list_facilities.html:28
@@ -1599,13 +1897,13 @@ msgstr ""
 
 #: submodules/core-hq-src/corehq/apps/facilities/templates/facilities/list_registries.html:49
 #: submodules/core-hq-src/corehq/apps/hqwebapp/templates/hqwebapp/ko/value-or-none-ui.html:32
-#: submodules/core-hq-src/corehq/apps/hqwebapp/templates/hqwebapp/ko/value-or-none-ui.html:52
+#: submodules/core-hq-src/corehq/apps/hqwebapp/templates/hqwebapp/ko/value-or-none-ui.html:53
 #: submodules/core-hq-src/corehq/apps/prescriptions/templates/prescriptions/all.html:9
 #: submodules/core-hq-src/corehq/apps/reports/templates/reports/reports_home.html:128
 #: submodules/core-hq-src/corehq/apps/reports/templates/reports/dialogs/delete_custom_export_dialog.html:12
 #: submodules/core-hq-src/corehq/apps/reports/templates/reports/partials/saved_custom_exports.html:20
 #: submodules/core-hq-src/corehq/apps/reports/templates/reports/reportdata/case_export_data.html:59
-#: submodules/core-hq-src/corehq/apps/reports/templates/reports/reportdata/case_export_data.html:81
+#: submodules/core-hq-src/corehq/apps/reports/templates/reports/reportdata/case_export_data.html:84
 msgid "Delete"
 msgstr ""
 
@@ -1647,27 +1945,27 @@ msgstr ""
 msgid "Group Information"
 msgstr ""
 
-#: submodules/core-hq-src/corehq/apps/groups/templates/groups/group_members.html:139
+#: submodules/core-hq-src/corehq/apps/groups/templates/groups/group_members.html:133
 msgid "Group Data"
 msgstr ""
 
-#: submodules/core-hq-src/corehq/apps/groups/templates/groups/group_members.html:142
+#: submodules/core-hq-src/corehq/apps/groups/templates/groups/group_members.html:136
 msgid "Update Information"
 msgstr ""
 
-#: submodules/core-hq-src/corehq/apps/groups/templates/groups/groups.html:24
-#: submodules/core-hq-src/corehq/apps/groups/templates/groups/groups.html:59
+#: submodules/core-hq-src/corehq/apps/groups/templates/groups/groups.html:18
+#: submodules/core-hq-src/corehq/apps/groups/templates/groups/groups.html:53
 msgid "Group Name"
 msgstr ""
 
-#: submodules/core-hq-src/corehq/apps/groups/templates/groups/groups.html:25
-#: submodules/core-hq-src/corehq/apps/groups/templates/groups/groups.html:60
+#: submodules/core-hq-src/corehq/apps/groups/templates/groups/groups.html:19
+#: submodules/core-hq-src/corehq/apps/groups/templates/groups/groups.html:54
 #: submodules/core-hq-src/corehq/apps/hqmedia/templates/hqmedia/partials/media_list.html:19
 #: submodules/core-hq-src/corehq/apps/users/templates/users/partial/domain_accounts.html:7
 msgid "Action"
 msgstr ""
 
-#: submodules/core-hq-src/corehq/apps/groups/templates/groups/groups.html:33
+#: submodules/core-hq-src/corehq/apps/groups/templates/groups/groups.html:27
 msgid "Leave Group"
 msgstr ""
 
@@ -1677,59 +1975,110 @@ msgid "Domain"
 msgstr ""
 
 #: submodules/core-hq-src/corehq/apps/hqadmin/templates/hqadmin/commcare_version.html:24
-#: submodules/core-hq-src/corehq/apps/hqmedia/templates/hqmedia/bulk_upload.html:119
+#: submodules/core-hq-src/corehq/apps/hqmedia/templates/hqmedia/bulk_upload.html:34
 #: submodules/core-hq-src/corehq/apps/hqmedia/templates/hqmedia/map.html:68
 #: submodules/core-hq-src/corehq/apps/reports/fields.py:247
-#: submodules/core-hq-src/corehq/apps/reports/filters/forms.py:94
-#: submodules/core-hq-src/corehq/apps/reports/filters/forms.py:656
+#: submodules/core-hq-src/corehq/apps/reports/filters/forms.py:95
+#: submodules/core-hq-src/corehq/apps/reports/filters/forms.py:657
 #: submodules/core-hq-src/corehq/apps/reports/templates/reports/reportdata/excel_export_data.html:165
 msgid "Application"
 msgstr ""
 
-#: submodules/core-hq-src/corehq/apps/hqmedia/models.py:335
+#: submodules/core-hq-src/corehq/apps/hqmedia/cache.py:108
+#, python-format
+msgid "Not a bulk-upload supported CommCareMedia type: %s"
+msgstr ""
+
+#: submodules/core-hq-src/corehq/apps/hqmedia/models.py:267
+msgid "Generic Multimedia"
+msgstr ""
+
+#: submodules/core-hq-src/corehq/apps/hqmedia/models.py:309
+msgid "Image"
+msgstr ""
+
+#: submodules/core-hq-src/corehq/apps/hqmedia/models.py:541
 #, python-format
 msgid "Encountered an AttributeError for media: %s"
 msgstr ""
 
-#: submodules/core-hq-src/corehq/apps/hqmedia/models.py:339
+#: submodules/core-hq-src/corehq/apps/hqmedia/models.py:545
 #, python-format
 msgid ""
 "This application has unsupported text in one of it's media file label "
 "fields: %s"
 msgstr ""
 
+#: submodules/core-hq-src/corehq/apps/hqmedia/tasks.py:38
+#, python-format
+msgid "Could not fetch cached bulk upload file. Error: %s."
+msgstr ""
+
+#: submodules/core-hq-src/corehq/apps/hqmedia/tasks.py:45
+#, python-format
+msgid "Error opening file as zip file: %s"
+msgstr ""
+
+#: submodules/core-hq-src/corehq/apps/hqmedia/tasks.py:49
+msgid "Error encountered processing Zip File. File doesn't look valid."
+msgstr ""
+
+#: submodules/core-hq-src/corehq/apps/hqmedia/tasks.py:64
+#, python-format
+msgid "Error reading file: %s"
+msgstr ""
+
+#: submodules/core-hq-src/corehq/apps/hqmedia/tasks.py:77
+#, python-format
+msgid "Did not match any %s paths in application."
+msgstr ""
+
+#: submodules/core-hq-src/corehq/apps/hqmedia/tasks.py:83
+msgid "Matching path found, but could not save the data to couch."
+msgstr ""
+
+#: submodules/core-hq-src/corehq/apps/hqmedia/tasks.py:90
+msgid "Matching path found, but didn't save new multimedia correctly."
+msgstr ""
+
+#: submodules/core-hq-src/corehq/apps/hqmedia/tasks.py:105
+#, python-format
+msgid "Error while processing zip: %s"
+msgstr ""
+
 #: submodules/core-hq-src/corehq/apps/hqmedia/templates/hqmedia/bulk_upload.html:5
 msgid "Bulk Upload of Multimedia"
 msgstr ""
 
-#: submodules/core-hq-src/corehq/apps/hqmedia/templates/hqmedia/bulk_upload.html:120
+#: submodules/core-hq-src/corehq/apps/hqmedia/templates/hqmedia/bulk_upload.html:35
 #: submodules/core-hq-src/corehq/apps/hqmedia/templates/hqmedia/map.html:69
 #: submodules/core-hq-src/corehq/apps/hqmedia/templates/hqmedia/map.html:72
 msgid "Multimedia Reference Checker"
 msgstr ""
 
-#: submodules/core-hq-src/corehq/apps/hqmedia/templates/hqmedia/bulk_upload.html:121
+#: submodules/core-hq-src/corehq/apps/hqmedia/templates/hqmedia/bulk_upload.html:36
+#: submodules/core-hq-src/corehq/apps/hqwebapp/models.py:388
 msgid "Bulk Upload"
 msgstr ""
 
-#: submodules/core-hq-src/corehq/apps/hqmedia/templates/hqmedia/bulk_upload.html:124
+#: submodules/core-hq-src/corehq/apps/hqmedia/templates/hqmedia/bulk_upload.html:39
 msgid "Multimedia Bulk Upload"
 msgstr ""
 
-#: submodules/core-hq-src/corehq/apps/hqmedia/templates/hqmedia/bulk_upload.html:126
+#: submodules/core-hq-src/corehq/apps/hqmedia/templates/hqmedia/bulk_upload.html:41
 msgid ""
 "Use this tool to upload ZIP files of your multimedia, so you don't have to\n"
 "        upload each file one-by-one."
 msgstr ""
 
-#: submodules/core-hq-src/corehq/apps/hqmedia/templates/hqmedia/bulk_upload.html:128
+#: submodules/core-hq-src/corehq/apps/hqmedia/templates/hqmedia/bulk_upload.html:43
 msgid ""
 "The bulk uploader will compare the file paths in your form with the file "
 "paths\n"
 "        in your zip to find a matching file."
 msgstr ""
 
-#: submodules/core-hq-src/corehq/apps/hqmedia/templates/hqmedia/bulk_upload.html:130
+#: submodules/core-hq-src/corehq/apps/hqmedia/templates/hqmedia/bulk_upload.html:45
 msgid ""
 "For example, <code>jr://file/commcare/images/hin/image.jpg</code> and your "
 "zip's\n"
@@ -1738,52 +2087,60 @@ msgid ""
 "        <code>commcare/images/image.jpg</code>."
 msgstr ""
 
-#: submodules/core-hq-src/corehq/apps/hqmedia/templates/hqmedia/bulk_upload.html:137
+#: submodules/core-hq-src/corehq/apps/hqmedia/templates/hqmedia/bulk_upload.html:52
 msgid "Select Files"
 msgstr ""
 
-#: submodules/core-hq-src/corehq/apps/hqmedia/templates/hqmedia/bulk_upload.html:138
-msgid "Upload Files"
+#: submodules/core-hq-src/corehq/apps/hqmedia/templates/hqmedia/bulk_upload.html:54
+msgid "Begin Upload"
 msgstr ""
 
-#: submodules/core-hq-src/corehq/apps/hqmedia/templates/hqmedia/bulk_upload.html:143
-msgid "Please select the license you wish to upload these files under"
+#: submodules/core-hq-src/corehq/apps/hqmedia/templates/hqmedia/bulk_upload.html:60
+msgid "Configure this Upload"
 msgstr ""
 
-#: submodules/core-hq-src/corehq/apps/hqmedia/templates/hqmedia/bulk_upload.html:151
+#: submodules/core-hq-src/corehq/apps/hqmedia/templates/hqmedia/bulk_upload.html:68
 msgid "Continue with Upload"
 msgstr ""
 
-#: submodules/core-hq-src/corehq/apps/hqmedia/templates/hqmedia/bulk_upload.html:155
+#: submodules/core-hq-src/corehq/apps/hqmedia/templates/hqmedia/bulk_upload.html:74
 msgid "Bulk Upload File Queue"
 msgstr ""
 
-#: submodules/core-hq-src/corehq/apps/hqmedia/templates/hqmedia/bulk_upload.html:159
+#: submodules/core-hq-src/corehq/apps/hqmedia/templates/hqmedia/bulk_upload.html:78
 msgid "Filename"
 msgstr ""
 
-#: submodules/core-hq-src/corehq/apps/hqmedia/templates/hqmedia/bulk_upload.html:160
+#: submodules/core-hq-src/corehq/apps/hqmedia/templates/hqmedia/bulk_upload.html:79
 #: submodules/core-hq-src/corehq/apps/reports/templates/reports/partials/hqexport_group_table.html:8
 msgid "Size"
 msgstr ""
 
-#: submodules/core-hq-src/corehq/apps/hqmedia/templates/hqmedia/bulk_upload.html:161
+#: submodules/core-hq-src/corehq/apps/hqmedia/templates/hqmedia/bulk_upload.html:80
 msgid "Upload Progress"
 msgstr ""
 
-#: submodules/core-hq-src/corehq/apps/hqmedia/templates/hqmedia/bulk_upload.html:162
+#: submodules/core-hq-src/corehq/apps/hqmedia/templates/hqmedia/bulk_upload.html:81
 msgid "Match Status"
 msgstr ""
 
-#: submodules/core-hq-src/corehq/apps/hqmedia/templates/hqmedia/bulk_upload.html:163
+#: submodules/core-hq-src/corehq/apps/hqmedia/templates/hqmedia/bulk_upload.html:82
 msgid "Details"
 msgstr ""
 
-#: submodules/core-hq-src/corehq/apps/hqmedia/templates/hqmedia/bulk_upload.html:168
+#: submodules/core-hq-src/corehq/apps/hqmedia/templates/hqmedia/bulk_upload.html:87
+msgid "Queued Files"
+msgstr ""
+
+#: submodules/core-hq-src/corehq/apps/hqmedia/templates/hqmedia/bulk_upload.html:92
 msgid "Select files above to add to the queue."
 msgstr ""
 
-#: submodules/core-hq-src/corehq/apps/hqmedia/templates/hqmedia/bulk_upload.html:173
+#: submodules/core-hq-src/corehq/apps/hqmedia/templates/hqmedia/bulk_upload.html:97
+msgid "Processing Upload"
+msgstr ""
+
+#: submodules/core-hq-src/corehq/apps/hqmedia/templates/hqmedia/bulk_upload.html:102
 msgid "Uploaded Files"
 msgstr ""
 
@@ -1819,6 +2176,7 @@ msgstr ""
 
 #: submodules/core-hq-src/corehq/apps/hqmedia/templates/hqmedia/partials/audio_list.html:4
 #: submodules/core-hq-src/corehq/apps/hqmedia/templates/hqmedia/partials/image_list.html:6
+#: submodules/core-hq-src/corehq/apps/orgs/templates/orgs/orgs_landing.html:171
 msgid "Update"
 msgstr ""
 
@@ -1845,6 +2203,7 @@ msgstr ""
 
 #: submodules/core-hq-src/corehq/apps/hqmedia/templates/hqmedia/partials/audio_list.html:48
 #: submodules/core-hq-src/corehq/apps/hqmedia/templates/hqmedia/partials/image_list.html:56
+#: submodules/core-hq-src/corehq/apps/registration/templates/registration/org_request.html:70
 #: submodules/core-hq-src/corehq/apps/registration/templates/registration/partials/eula_modal.html:11
 #: submodules/core-hq-src/corehq/apps/reports/templates/reports/dialogs/delete_custom_export_dialog.html:13
 #: submodules/core-hq-src/corehq/apps/reports/templates/reports/partials/export_download_modal.html:15
@@ -1852,7 +2211,24 @@ msgid "Close"
 msgstr ""
 
 #: submodules/core-hq-src/corehq/apps/hqmedia/templates/hqmedia/partials/hqm_upload_form.html:18
+#: submodules/core-hq-src/corehq/apps/hqmedia/templates/hqmedia/partials/hqm_upload_form_multi.html:38
 msgid "Enter the name of the author"
+msgstr ""
+
+#: submodules/core-hq-src/corehq/apps/hqmedia/templates/hqmedia/partials/hqm_upload_form_multi.html:5
+msgid "Override Existing"
+msgstr ""
+
+#: submodules/core-hq-src/corehq/apps/hqmedia/templates/hqmedia/partials/hqm_upload_form_multi.html:9
+msgid "Yes, replace any existing multimedia with media from this upload."
+msgstr ""
+
+#: submodules/core-hq-src/corehq/apps/hqmedia/templates/hqmedia/partials/hqm_upload_form_multi.html:14
+msgid "Share Multimedia"
+msgstr ""
+
+#: submodules/core-hq-src/corehq/apps/hqmedia/templates/hqmedia/partials/hqm_upload_form_multi.html:16
+msgid "Yes, share my multimedia."
 msgstr ""
 
 #: submodules/core-hq-src/corehq/apps/hqmedia/templates/hqmedia/partials/image_list.html:12
@@ -1927,6 +2303,7 @@ msgid "Upload %(media_type)s"
 msgstr ""
 
 #: submodules/core-hq-src/corehq/apps/hqmedia/templates/hqmedia/partials/media_upload.html:30
+#: submodules/core-hq-src/corehq/apps/hqmedia/templates/hqmedia/uploader/queue_multi.html:32
 msgid "Cancel Upload"
 msgstr ""
 
@@ -1969,10 +2346,87 @@ msgid ""
 "    "
 msgstr ""
 
+#: submodules/core-hq-src/corehq/apps/hqmedia/templates/hqmedia/uploader/details_multi.html:4
+msgid "No Matches"
+msgstr ""
+
+#: submodules/core-hq-src/corehq/apps/hqmedia/templates/hqmedia/uploader/details_multi.html:18
+msgid "Matched Images"
+msgstr ""
+
+#: submodules/core-hq-src/corehq/apps/hqmedia/templates/hqmedia/uploader/details_multi.html:29
+msgid "View Full Image"
+msgstr ""
+
+#: submodules/core-hq-src/corehq/apps/hqmedia/templates/hqmedia/uploader/details_multi.html:31
+#: submodules/core-hq-src/corehq/apps/hqmedia/templates/hqmedia/uploader/details_multi.html:53
+msgid "Updated"
+msgstr ""
+
+#: submodules/core-hq-src/corehq/apps/hqmedia/templates/hqmedia/uploader/details_multi.html:42
+msgid "Matched Audio"
+msgstr ""
+
+#: submodules/core-hq-src/corehq/apps/hqmedia/templates/hqmedia/uploader/details_multi.html:50
+msgid "Playing audio directly on this page is currently not supported."
+msgstr ""
+
+#: submodules/core-hq-src/corehq/apps/hqmedia/templates/hqmedia/uploader/details_multi.html:51
+msgid "Hear Audio"
+msgstr ""
+
+#: submodules/core-hq-src/corehq/apps/hqmedia/templates/hqmedia/uploader/errors_multi.html:4
+msgid "Errors found"
+msgstr ""
+
+#: submodules/core-hq-src/corehq/apps/hqmedia/templates/hqmedia/uploader/queue_multi.html:10
+msgid "Added to queue. Click <strong>Begin Upload</strong> above to start."
+msgstr ""
+
+#: submodules/core-hq-src/corehq/apps/hqmedia/templates/hqmedia/uploader/queue_multi.html:13
+msgid "Queued for processing. Please wait."
+msgstr ""
+
+#: submodules/core-hq-src/corehq/apps/hqmedia/templates/hqmedia/uploader/queue_multi.html:18
+msgid "Files"
+msgstr ""
+
+#: submodules/core-hq-src/corehq/apps/hqmedia/templates/hqmedia/uploader/queue_multi.html:20
+msgid "Processing upload, please wait."
+msgstr ""
+
+#: submodules/core-hq-src/corehq/apps/hqmedia/templates/hqmedia/uploader/queue_multi.html:23
+msgid "Upload Finished"
+msgstr ""
+
+#: submodules/core-hq-src/corehq/apps/hqmedia/templates/hqmedia/uploader/queue_multi.html:26
+msgid "There were errors"
+msgstr ""
+
+#: submodules/core-hq-src/corehq/apps/hqmedia/templates/hqmedia/uploader/queue_multi.html:29
+msgid "Remove from queue"
+msgstr ""
+
+#: submodules/core-hq-src/corehq/apps/hqmedia/templates/hqmedia/uploader/single_file_queued_item.html:7
+msgid "Change File"
+msgstr ""
+
+#: submodules/core-hq-src/corehq/apps/hqmedia/templates/hqmedia/uploader/status_multi.html:7
+msgid "1 Match Found"
+msgstr ""
+
+#: submodules/core-hq-src/corehq/apps/hqmedia/templates/hqmedia/uploader/status_multi.html:9
+msgid "<%= num %> Matches Found"
+msgstr ""
+
+#: submodules/core-hq-src/corehq/apps/hqmedia/templates/hqmedia/uploader/status_multi.html:13
+msgid "No Matches Found"
+msgstr ""
+
 #: submodules/core-hq-src/corehq/apps/hqwebapp/forms.py:16
 #: submodules/core-hq-src/corehq/apps/receiverwrapper/reports.py:58
-#: submodules/core-hq-src/corehq/apps/reports/standard/deployments.py:27
-#: submodules/core-hq-src/corehq/apps/reports/standard/inspect.py:58
+#: submodules/core-hq-src/corehq/apps/reports/standard/deployments.py:30
+#: submodules/core-hq-src/corehq/apps/reports/standard/inspect.py:53
 #: submodules/core-hq-src/corehq/apps/reports/standard/monitoring.py:374
 #: submodules/core-hq-src/corehq/apps/userhack/admin.py:14
 #: submodules/core-hq-src/corehq/apps/users/templates/users/mobile/users_list.html:139
@@ -1980,97 +2434,298 @@ msgstr ""
 msgid "Username"
 msgstr ""
 
-#: submodules/core-hq-src/corehq/apps/hqwebapp/models.py:88
-#: submodules/core-hq-src/corehq/apps/hqwebapp/models.py:245
-#: submodules/core-hq-src/corehq/apps/reports/templates/reports/reportdata/customize_export.html:84
-msgid "Reports"
-msgstr ""
-
-#: submodules/core-hq-src/corehq/apps/hqwebapp/models.py:101
-msgid "Project Info"
-msgstr ""
-
-#: submodules/core-hq-src/corehq/apps/hqwebapp/models.py:144
-msgid "My Applications"
-msgstr ""
-
-#: submodules/core-hq-src/corehq/apps/hqwebapp/models.py:156
-msgid "RemoteApp (Advanced Users Only)"
+#: submodules/core-hq-src/corehq/apps/hqwebapp/models.py:138
+#: submodules/core-hq-src/corehq/apps/reports/standard/__init__.py:17
+#: submodules/core-hq-src/corehq/apps/reports/templates/reports/reportdata/customize_export.html:341
+msgid "Project Reports"
 msgstr ""
 
 #: submodules/core-hq-src/corehq/apps/hqwebapp/models.py:162
+msgid "Tools"
+msgstr ""
+
+#: submodules/core-hq-src/corehq/apps/hqwebapp/models.py:203
+#: submodules/core-hq-src/corehq/apps/indicators/templates/indicators/forms/copy_to_domain.html:29
+msgid "Administer Indicators"
+msgstr ""
+
+#: submodules/core-hq-src/corehq/apps/hqwebapp/models.py:214
+#: submodules/core-hq-src/corehq/apps/hqwebapp/models.py:572
+msgid "Reports"
+msgstr ""
+
+#: submodules/core-hq-src/corehq/apps/hqwebapp/models.py:220
+msgid "Project Info"
+msgstr ""
+
+#: submodules/core-hq-src/corehq/apps/hqwebapp/models.py:266
+msgid "My Applications"
+msgstr ""
+
+#: submodules/core-hq-src/corehq/apps/hqwebapp/models.py:278
+msgid "RemoteApp (Advanced Users Only)"
+msgstr ""
+
+#: submodules/core-hq-src/corehq/apps/hqwebapp/models.py:284
 msgid "New Application..."
 msgstr ""
 
-#: submodules/core-hq-src/corehq/apps/hqwebapp/models.py:185
+#: submodules/core-hq-src/corehq/apps/hqwebapp/models.py:307
 msgid "CloudCare"
 msgstr ""
 
-#: submodules/core-hq-src/corehq/apps/hqwebapp/models.py:196
+#: submodules/core-hq-src/corehq/apps/hqwebapp/models.py:316
 msgid "Messages"
 msgstr ""
 
-#: submodules/core-hq-src/corehq/apps/hqwebapp/models.py:226
+#: submodules/core-hq-src/corehq/apps/hqwebapp/models.py:326
+msgid "Messaging"
+msgstr ""
+
+#: submodules/core-hq-src/corehq/apps/hqwebapp/models.py:327
+msgid "Message History"
+msgstr ""
+
+#: submodules/core-hq-src/corehq/apps/hqwebapp/models.py:329
+msgid "Compose SMS Message"
+msgstr ""
+
+#: submodules/core-hq-src/corehq/apps/hqwebapp/models.py:335
+#: submodules/core-hq-src/corehq/apps/reminders/templates/reminders/reminders_base.html:96
+msgid "Reminders"
+msgstr ""
+
+#: submodules/core-hq-src/corehq/apps/hqwebapp/models.py:358
 msgid "Settings"
 msgstr ""
 
-#: submodules/core-hq-src/corehq/apps/hqwebapp/models.py:227
+#: submodules/core-hq-src/corehq/apps/hqwebapp/models.py:359
 msgid "Settings & Users"
 msgstr ""
 
-#: submodules/core-hq-src/corehq/apps/hqwebapp/models.py:237
-msgid "Admin"
+#: submodules/core-hq-src/corehq/apps/hqwebapp/models.py:375
+#: submodules/core-hq-src/corehq/apps/hqwebapp/models.py:411
+msgid "Deleted"
 msgstr ""
 
-#: submodules/core-hq-src/corehq/apps/hqwebapp/models.py:246
-msgid "Admin Reports"
+#: submodules/core-hq-src/corehq/apps/hqwebapp/models.py:380
+msgid "Mobile Users"
 msgstr ""
 
-#: submodules/core-hq-src/corehq/apps/hqwebapp/models.py:247
-msgid "System Info"
+#: submodules/core-hq-src/corehq/apps/hqwebapp/models.py:381
+msgid "Mobile Workers"
 msgstr ""
 
-#: submodules/core-hq-src/corehq/apps/hqwebapp/models.py:248
-msgid "Management"
+#: submodules/core-hq-src/corehq/apps/hqwebapp/models.py:386
+msgid "New Mobile Worker"
 msgstr ""
 
-#: submodules/core-hq-src/corehq/apps/hqwebapp/models.py:249
-msgid "ADM Reports & Columns"
+#: submodules/core-hq-src/corehq/apps/hqwebapp/models.py:390
+msgid "Transfer Mobile Workers"
 msgstr ""
 
-#: submodules/core-hq-src/corehq/apps/hqwebapp/models.py:255
-msgid "Billing"
+#: submodules/core-hq-src/corehq/apps/hqwebapp/models.py:394
+msgid "Groups"
 msgstr ""
 
-#: submodules/core-hq-src/corehq/apps/hqwebapp/models.py:261
-msgid "Django Admin"
+#: submodules/core-hq-src/corehq/apps/hqwebapp/models.py:398
+msgid "Editing"
 msgstr ""
 
-#: submodules/core-hq-src/corehq/apps/hqwebapp/models.py:272
-msgid "Exchange"
+#: submodules/core-hq-src/corehq/apps/hqwebapp/models.py:400
+msgid "Membership Info"
 msgstr ""
 
-#: submodules/core-hq-src/corehq/apps/hqwebapp/models.py:282
+#: submodules/core-hq-src/corehq/apps/hqwebapp/models.py:416
+msgid "CommCare HQ Users"
+msgstr ""
+
+#: submodules/core-hq-src/corehq/apps/hqwebapp/models.py:417
+msgid "Web Users"
+msgstr ""
+
+#: submodules/core-hq-src/corehq/apps/hqwebapp/models.py:420
+msgid "Invite Web User"
+msgstr ""
+
+#: submodules/core-hq-src/corehq/apps/hqwebapp/models.py:427
+msgid "My Account"
+msgstr ""
+
+#: submodules/core-hq-src/corehq/apps/hqwebapp/models.py:428
+msgid "My Account Settings"
+msgstr ""
+
+#: submodules/core-hq-src/corehq/apps/hqwebapp/models.py:430
+msgid "Change My Password"
+msgstr ""
+
+#: submodules/core-hq-src/corehq/apps/hqwebapp/models.py:435
+msgid "CloudCare Settings"
+msgstr ""
+
+#: submodules/core-hq-src/corehq/apps/hqwebapp/models.py:436
+msgid "App Access"
+msgstr ""
+
+#: submodules/core-hq-src/corehq/apps/hqwebapp/models.py:444
+msgid "Forward Forms"
+msgstr ""
+
+#: submodules/core-hq-src/corehq/apps/hqwebapp/models.py:446
+msgid "Forward Form Stubs"
+msgstr ""
+
+#: submodules/core-hq-src/corehq/apps/hqwebapp/models.py:448
+msgid "Forward Cases"
+msgstr ""
+
+#: submodules/core-hq-src/corehq/apps/hqwebapp/models.py:451
+#: submodules/core-hq-src/corehq/apps/hqwebapp/models.py:481
+msgid "Project Settings"
+msgstr ""
+
+#: submodules/core-hq-src/corehq/apps/hqwebapp/models.py:454
+#: submodules/core-hq-src/corehq/apps/hqwebapp/models.py:606
+#: submodules/core-hq-src/corehq/apps/registration/templates/registration/domain_request.html:76
 msgid "CommCare Exchange"
 msgstr ""
 
-#: submodules/core-hq-src/corehq/apps/hqwebapp/models.py:283
+#: submodules/core-hq-src/corehq/apps/hqwebapp/models.py:457
+msgid "Multimedia Sharing"
+msgstr ""
+
+#: submodules/core-hq-src/corehq/apps/hqwebapp/models.py:464
+msgid "Internal Settings"
+msgstr ""
+
+#: submodules/core-hq-src/corehq/apps/hqwebapp/models.py:470
+msgid "Data Forwarding"
+msgstr ""
+
+#: submodules/core-hq-src/corehq/apps/hqwebapp/models.py:477
+msgid "Project Administration"
+msgstr ""
+
+#: submodules/core-hq-src/corehq/apps/hqwebapp/models.py:480
+msgid "CommTrack"
+msgstr ""
+
+#: submodules/core-hq-src/corehq/apps/hqwebapp/models.py:484
+msgid "Manage Products"
+msgstr ""
+
+#: submodules/core-hq-src/corehq/apps/hqwebapp/models.py:487
+#: submodules/core-hq-src/corehq/apps/locations/templates/locations/manage/locations.html:66
+msgid "Manage Locations"
+msgstr ""
+
+#: submodules/core-hq-src/corehq/apps/hqwebapp/models.py:495
+#: submodules/core-hq-src/corehq/apps/hqwebapp/models.py:573
+msgid "Admin Reports"
+msgstr ""
+
+#: submodules/core-hq-src/corehq/apps/hqwebapp/models.py:502
+msgid "Administrative Reports"
+msgstr ""
+
+#: submodules/core-hq-src/corehq/apps/hqwebapp/models.py:503
+msgid "Domain List"
+msgstr ""
+
+#: submodules/core-hq-src/corehq/apps/hqwebapp/models.py:505
+msgid "Domain Activity Report"
+msgstr ""
+
+#: submodules/core-hq-src/corehq/apps/hqwebapp/models.py:507
+msgid "Message Logs Across All Domains"
+msgstr ""
+
+#: submodules/core-hq-src/corehq/apps/hqwebapp/models.py:509
+msgid "Global Statistics"
+msgstr ""
+
+#: submodules/core-hq-src/corehq/apps/hqwebapp/models.py:511
+msgid "CommCare Versions"
+msgstr ""
+
+#: submodules/core-hq-src/corehq/apps/hqwebapp/models.py:513
+msgid "Submissions & Error Statistics per Domain"
+msgstr ""
+
+#: submodules/core-hq-src/corehq/apps/hqwebapp/models.py:515
+#: submodules/core-hq-src/corehq/apps/hqwebapp/models.py:574
+msgid "System Info"
+msgstr ""
+
+#: submodules/core-hq-src/corehq/apps/hqwebapp/models.py:518
+msgid "Administrative Operations"
+msgstr ""
+
+#: submodules/core-hq-src/corehq/apps/hqwebapp/models.py:519
+msgid "View/Update Domain Information"
+msgstr ""
+
+#: submodules/core-hq-src/corehq/apps/hqwebapp/models.py:530
+msgid "Global ADM Report Configuration"
+msgstr ""
+
+#: submodules/core-hq-src/corehq/apps/hqwebapp/models.py:540
+#: submodules/core-hq-src/corehq/apps/hqwebapp/models.py:582
+msgid "Billing"
+msgstr ""
+
+#: submodules/core-hq-src/corehq/apps/hqwebapp/models.py:550
+msgid "Announcements"
+msgstr ""
+
+#: submodules/core-hq-src/corehq/apps/hqwebapp/models.py:560
+msgid "Admin"
+msgstr ""
+
+#: submodules/core-hq-src/corehq/apps/hqwebapp/models.py:575
+msgid "Management"
+msgstr ""
+
+#: submodules/core-hq-src/corehq/apps/hqwebapp/models.py:576
+msgid "ADM Reports & Columns"
+msgstr ""
+
+#: submodules/core-hq-src/corehq/apps/hqwebapp/models.py:588
+msgid "Django Admin"
+msgstr ""
+
+#: submodules/core-hq-src/corehq/apps/hqwebapp/models.py:598
+msgid "Exchange"
+msgstr ""
+
+#: submodules/core-hq-src/corehq/apps/hqwebapp/models.py:607
 msgid "Publish this project"
 msgstr ""
 
-#: submodules/core-hq-src/corehq/apps/hqwebapp/models.py:293
+#: submodules/core-hq-src/corehq/apps/hqwebapp/models.py:619
 msgid "Manage Surveys"
 msgstr ""
 
-#: submodules/core-hq-src/corehq/apps/hqwebapp/templates/hqwebapp/base.html:122
+#: submodules/core-hq-src/corehq/apps/hqwebapp/templates/hqwebapp/base.html:123
 msgid "This is a snapshot of "
 msgstr ""
 
-#: submodules/core-hq-src/corehq/apps/hqwebapp/templates/hqwebapp/base_mobile.html:15
+#: submodules/core-hq-src/corehq/apps/hqwebapp/templates/hqwebapp/base.html:180
+msgid ""
+"Need help? Try the <a href=\"https://wiki.commcarehq.org/display/"
+"commcarepublic/Home\" target=\"_blank\" class=\"btn btn-footer\"><i class="
+"\"icon-info-sign icon-white\"></i> CommCare Help Site</a> and join the <a "
+"href=\"http://groups.google.com/group/commcare-users/subscribe\" target="
+"\"_blank\" class=\"btn btn-footer\"><i class=\"icon-envelope icon-white\"></"
+"i> commcare-users</a> mailing list."
+msgstr ""
+
+#: submodules/core-hq-src/corehq/apps/hqwebapp/templates/hqwebapp/base_mobile.html:16
 msgid "CommCare HQ Mobile is Copyright"
 msgstr ""
 
-#: submodules/core-hq-src/corehq/apps/hqwebapp/templates/hqwebapp/base_mobile.html:17
+#: submodules/core-hq-src/corehq/apps/hqwebapp/templates/hqwebapp/base_mobile.html:18
 msgid "Logout"
 msgstr ""
 
@@ -2095,49 +2750,200 @@ msgstr ""
 msgid "OK, close this"
 msgstr ""
 
-#: submodules/core-hq-src/corehq/apps/importer/views.py:55
+#: submodules/core-hq-src/corehq/apps/importer/views.py:54
 #, python-format
 msgid ""
 "Sorry, your spreadsheet is too big. Please reduce the number of rows to less "
 "than %s and try again"
 msgstr ""
 
-#: submodules/core-hq-src/corehq/apps/importer/views.py:76
+#: submodules/core-hq-src/corehq/apps/importer/views.py:77
 msgid ""
 "No cases have been submitted to this domain. You cannot update case details "
 "from an Excel file until you have existing cases."
 msgstr ""
 
-#: submodules/core-hq-src/corehq/apps/importer/views.py:80
+#: submodules/core-hq-src/corehq/apps/importer/views.py:81
 msgid ""
 "The Excel file you chose could not be processed. Please check that it is "
 "saved as a Microsoft Excel 97/2000 .xls file."
 msgstr ""
 
-#: submodules/core-hq-src/corehq/apps/importer/views.py:84
+#: submodules/core-hq-src/corehq/apps/importer/views.py:85
 msgid "Please choose an Excel file to import."
 msgstr ""
 
-#: submodules/core-hq-src/corehq/apps/importer/views.py:188
+#: submodules/core-hq-src/corehq/apps/importer/views.py:189
 msgid ""
 "The session containing the file you uploaded has expired - please upload a "
 "new one."
 msgstr ""
 
-#: submodules/core-hq-src/corehq/apps/importer/views.py:326
+#: submodules/core-hq-src/corehq/apps/importer/views.py:327
 msgid "Sorry, your session has expired. Please start over and try again."
+msgstr ""
+
+#: submodules/core-hq-src/corehq/apps/indicators/templates/indicators/forms/copy_to_domain.html:17
+#: submodules/core-hq-src/corehq/apps/indicators/templates/indicators/forms/copy_to_domain.html:33
+msgid "Bulk Copy Indicators"
+msgstr ""
+
+#: submodules/core-hq-src/corehq/apps/indicators/templates/indicators/forms/copy_to_domain.html:30
+msgid "Bulk Copy Indicators:"
+msgstr ""
+
+#: submodules/core-hq-src/corehq/apps/indicators/templates/indicators/forms/copy_to_domain.html:39
+msgid "Successfully copied the following indicators"
+msgstr ""
+
+#: submodules/core-hq-src/corehq/apps/indicators/templates/indicators/forms/copy_to_domain.html:47
+msgid "The following indicators were not successfully copied."
+msgstr ""
+
+#: submodules/core-hq-src/corehq/apps/indicators/templates/indicators/forms/copy_to_domain.html:60
+msgid "Choose Destination &amp; Indicators"
+msgstr ""
+
+#: submodules/core-hq-src/corehq/apps/indicators/templates/indicators/forms/copy_to_domain.html:65
+msgid "Copy"
+msgstr ""
+
+#: submodules/core-hq-src/corehq/apps/locations/templates/locations/manage/locations.html:31
+msgid "Syncing..."
+msgstr ""
+
+#: submodules/core-hq-src/corehq/apps/locations/templates/locations/manage/locations.html:37
+msgid "Synced"
+msgstr ""
+
+#: submodules/core-hq-src/corehq/apps/locations/templates/locations/manage/locations.html:41
+msgid "Error!"
+msgstr ""
+
+#: submodules/core-hq-src/corehq/apps/locations/templates/locations/manage/locations.html:58
+msgid "Locations"
+msgstr ""
+
+#: submodules/core-hq-src/corehq/apps/locations/templates/locations/manage/locations.html:76
+msgid "Sync with Facility Registries"
 msgstr ""
 
 #: submodules/core-hq-src/corehq/apps/mobile_auth/utils.py:57
 msgid "Here are your keys!"
 msgstr ""
 
-#: submodules/core-hq-src/corehq/apps/orgs/templates/orgs/orgs_landing.html:292
-msgid "Invite a user to "
+#: submodules/core-hq-src/corehq/apps/orgs/templates/orgs/orgs_landing.html:89
+#: submodules/core-hq-src/corehq/apps/orgs/templates/orgs/orgs_team_members.html:84
+#: submodules/core-hq-src/corehq/apps/orgs/templates/orgs/public.html:28
+msgid "Projects"
 msgstr ""
 
-#: submodules/core-hq-src/corehq/apps/orgs/templates/orgs/orgs_landing.html:303
+#: submodules/core-hq-src/corehq/apps/orgs/templates/orgs/orgs_landing.html:92
+#: submodules/core-hq-src/corehq/apps/orgs/templates/orgs/public.html:31
+msgid "Teams"
+msgstr ""
+
+#: submodules/core-hq-src/corehq/apps/orgs/templates/orgs/orgs_landing.html:95
+#: submodules/core-hq-src/corehq/apps/orgs/templates/orgs/orgs_team_members.html:50
+#: submodules/core-hq-src/corehq/apps/orgs/templates/orgs/public.html:34
+msgid "Members"
+msgstr ""
+
+#: submodules/core-hq-src/corehq/apps/orgs/templates/orgs/orgs_landing.html:114
+msgid "Edit Project Info"
+msgstr ""
+
+#: submodules/core-hq-src/corehq/apps/orgs/templates/orgs/orgs_landing.html:117
+#: submodules/core-hq-src/corehq/apps/orgs/templates/orgs/orgs_landing.html:281
+msgid "Remove Project"
+msgstr ""
+
+#: submodules/core-hq-src/corehq/apps/orgs/templates/orgs/orgs_landing.html:145
+msgid "Add Existing Project"
+msgstr ""
+
+#: submodules/core-hq-src/corehq/apps/orgs/templates/orgs/orgs_landing.html:148
+msgid "Add New Project"
+msgstr ""
+
+#: submodules/core-hq-src/corehq/apps/orgs/templates/orgs/orgs_landing.html:186
+msgid "Create a new project within this organization"
+msgstr ""
+
+#: submodules/core-hq-src/corehq/apps/orgs/templates/orgs/orgs_landing.html:207
+#: submodules/core-hq-src/corehq/apps/orgs/templates/orgs/orgs_landing.html:259
+msgid "Project Nickname"
+msgstr ""
+
+#: submodules/core-hq-src/corehq/apps/orgs/templates/orgs/orgs_landing.html:221
+msgid "Create New Project"
+msgstr ""
+
+#: submodules/core-hq-src/corehq/apps/orgs/templates/orgs/orgs_landing.html:229
+msgid "Add an existing project"
+msgstr ""
+
+#: submodules/core-hq-src/corehq/apps/orgs/templates/orgs/orgs_landing.html:240
+msgid "Add Project"
+msgstr ""
+
+#: submodules/core-hq-src/corehq/apps/orgs/templates/orgs/orgs_landing.html:248
+msgid "Change Project Display Name"
+msgstr ""
+
+#: submodules/core-hq-src/corehq/apps/orgs/templates/orgs/orgs_landing.html:254
+#: submodules/core-hq-src/corehq/apps/users/templates/users/partial/domain_accounts.html:6
+msgid "Project Name"
+msgstr ""
+
+#: submodules/core-hq-src/corehq/apps/orgs/templates/orgs/orgs_landing.html:267
+msgid "Update Project Info"
+msgstr ""
+
+#: submodules/core-hq-src/corehq/apps/orgs/templates/orgs/orgs_members.html:34
+#: submodules/core-hq-src/corehq/apps/orgs/templates/orgs/orgs_members.html:66
+msgid "Remove Member"
+msgstr ""
+
+#: submodules/core-hq-src/corehq/apps/orgs/templates/orgs/orgs_members.html:48
 msgid "Invite Member"
+msgstr ""
+
+#: submodules/core-hq-src/corehq/apps/orgs/templates/orgs/orgs_team_members.html:63
+msgid "No members have been added to this team"
+msgstr ""
+
+#: submodules/core-hq-src/corehq/apps/orgs/templates/orgs/orgs_team_members.html:77
+#: submodules/core-hq-src/corehq/apps/orgs/templates/orgs/orgs_team_members.html:128
+msgid "Add"
+msgstr ""
+
+#: submodules/core-hq-src/corehq/apps/orgs/templates/orgs/orgs_team_members.html:115
+msgid "No projects have been added to this team"
+msgstr ""
+
+#: submodules/core-hq-src/corehq/apps/orgs/templates/orgs/orgs_team_members.html:140
+#: submodules/core-hq-src/corehq/apps/orgs/templates/orgs/orgs_team_members.html:153
+#: submodules/core-hq-src/corehq/apps/orgs/templates/orgs/orgs_teams.html:55
+msgid "Change Team Name"
+msgstr ""
+
+#: submodules/core-hq-src/corehq/apps/orgs/templates/orgs/orgs_team_members.html:143
+#: submodules/core-hq-src/corehq/apps/orgs/templates/orgs/orgs_teams.html:28
+#: submodules/core-hq-src/corehq/apps/orgs/templates/orgs/orgs_teams.html:67
+msgid "Delete Team"
+msgstr ""
+
+#: submodules/core-hq-src/corehq/apps/orgs/templates/orgs/orgs_team_members.html:167
+msgid "Update Team"
+msgstr ""
+
+#: submodules/core-hq-src/corehq/apps/orgs/templates/orgs/orgs_teams.html:25
+msgid "Edit Team"
+msgstr ""
+
+#: submodules/core-hq-src/corehq/apps/orgs/templates/orgs/orgs_teams.html:42
+msgid "Add Team"
 msgstr ""
 
 #: submodules/core-hq-src/corehq/apps/prescriptions/templates/prescriptions/all.html:4
@@ -2145,7 +2951,7 @@ msgstr ""
 #: submodules/core-hq-src/corehq/apps/reports/templates/reports/partials/saved_custom_exports.html:8
 #: submodules/core-hq-src/corehq/apps/reports/templates/reports/partials/saved_custom_exports.html:49
 #: submodules/core-hq-src/corehq/apps/reports/templates/reports/reportdata/case_export_data.html:57
-#: submodules/core-hq-src/corehq/apps/reports/templates/reports/reportdata/case_export_data.html:73
+#: submodules/core-hq-src/corehq/apps/reports/templates/reports/reportdata/case_export_data.html:76
 msgid "Edit"
 msgstr ""
 
@@ -2191,13 +2997,13 @@ msgstr ""
 
 #: submodules/core-hq-src/corehq/apps/receiverwrapper/reports.py:57
 #: submodules/core-hq-src/corehq/apps/receiverwrapper/reports.py:116
-#: submodules/core-hq-src/corehq/apps/reports/standard/inspect.py:57
-#: submodules/core-hq-src/corehq/apps/reports/standard/inspect.py:93
+#: submodules/core-hq-src/corehq/apps/reports/standard/inspect.py:52
+#: submodules/core-hq-src/corehq/apps/reports/standard/inspect.py:88
 msgid "View Form"
 msgstr ""
 
 #: submodules/core-hq-src/corehq/apps/receiverwrapper/reports.py:59
-#: submodules/core-hq-src/corehq/apps/reports/standard/inspect.py:59
+#: submodules/core-hq-src/corehq/apps/reports/standard/inspect.py:54
 msgid "Submit Time"
 msgstr ""
 
@@ -2227,6 +3033,71 @@ msgstr ""
 msgid "Unknown Form"
 msgstr ""
 
+#: submodules/core-hq-src/corehq/apps/registration/templates/registration/domain_request.html:8
+msgid ""
+"Welcome to CommCare HQ! <small>It's time to create your first project.</"
+"small>"
+msgstr ""
+
+#: submodules/core-hq-src/corehq/apps/registration/templates/registration/domain_request.html:10
+msgid "Create a New Project Space"
+msgstr ""
+
+#: submodules/core-hq-src/corehq/apps/registration/templates/registration/domain_request.html:18
+#, python-format
+msgid "Account Created for <strong>%(request.user.first_name)s</strong>"
+msgstr ""
+
+#: submodules/core-hq-src/corehq/apps/registration/templates/registration/domain_request.html:22
+msgid "Request a Project Space"
+msgstr ""
+
+#: submodules/core-hq-src/corehq/apps/registration/templates/registration/domain_request.html:26
+msgid "Confirm Account"
+msgstr ""
+
+#: submodules/core-hq-src/corehq/apps/registration/templates/registration/domain_request.html:74
+msgid "Explore Example Projects"
+msgstr ""
+
+#: submodules/core-hq-src/corehq/apps/registration/templates/registration/domain_request.html:75
+msgid "In need of ideas or just want to explore?"
+msgstr ""
+
+#: submodules/core-hq-src/corehq/apps/registration/templates/registration/domain_request.html:76
+msgid "Check out"
+msgstr ""
+
+#: submodules/core-hq-src/corehq/apps/registration/templates/registration/domain_request.html:76
+msgid "for examples of apps being used today."
+msgstr ""
+
+#: submodules/core-hq-src/corehq/apps/registration/templates/registration/domain_request.html:79
+msgid ""
+"For detailed documentation, please visit the <a href=\"http://wiki."
+"commcarehq.org/display/commcarepublic/Home\">CommCare Help Site</a>."
+msgstr ""
+
+#: submodules/core-hq-src/corehq/apps/registration/templates/registration/org_request.html:4
+msgid "New Organization"
+msgstr ""
+
+#: submodules/core-hq-src/corehq/apps/registration/templates/registration/org_request.html:19
+msgid "Create a New Organization"
+msgstr ""
+
+#: submodules/core-hq-src/corehq/apps/registration/templates/registration/org_request.html:26
+msgid "Create an Organization"
+msgstr ""
+
+#: submodules/core-hq-src/corehq/apps/registration/templates/registration/org_request.html:64
+msgid "CommCare HQ Terms of Service"
+msgstr ""
+
+#: submodules/core-hq-src/corehq/apps/registration/templates/registration/org_request.html:67
+msgid "Loading Terms of Service"
+msgstr ""
+
 #: submodules/core-hq-src/corehq/apps/registration/templates/registration/partials/eula_modal.html:5
 msgid "CommCare HQ End User License Agreement"
 msgstr ""
@@ -2243,6 +3114,22 @@ msgstr ""
 
 #: submodules/core-hq-src/corehq/apps/reminders/forms.py:677
 msgid "Please add at least one contact."
+msgstr ""
+
+#: submodules/core-hq-src/corehq/apps/reports/custom_export_helpers.py:42
+msgid "Sensitive ID"
+msgstr ""
+
+#: submodules/core-hq-src/corehq/apps/reports/custom_export_helpers.py:43
+msgid "Sensitive Date"
+msgstr ""
+
+#: submodules/core-hq-src/corehq/apps/reports/custom_export_helpers.py:154
+msgid "Export Submissions to Excel"
+msgstr ""
+
+#: submodules/core-hq-src/corehq/apps/reports/custom_export_helpers.py:180
+msgid "Export Cases, Referrals, and Users"
 msgstr ""
 
 #: submodules/core-hq-src/corehq/apps/reports/fields.py:63
@@ -2275,7 +3162,7 @@ msgid "All Case Types"
 msgstr ""
 
 #: submodules/core-hq-src/corehq/apps/reports/fields.py:227
-#: submodules/core-hq-src/corehq/apps/reports/filters/forms.py:660
+#: submodules/core-hq-src/corehq/apps/reports/filters/forms.py:661
 msgid "Select a Form"
 msgstr ""
 
@@ -2358,72 +3245,79 @@ msgid "Date Range"
 msgstr ""
 
 #: submodules/core-hq-src/corehq/apps/reports/fields.py:418
-#: submodules/core-hq-src/corehq/apps/reports/fields.py:446
 msgid "Location"
 msgstr ""
 
-#: submodules/core-hq-src/corehq/apps/reports/fields.py:600
+#: submodules/core-hq-src/corehq/apps/reports/fields.py:573
 msgid "Filter Logs by Username"
 msgstr ""
 
-#: submodules/core-hq-src/corehq/apps/reports/fields.py:605
+#: submodules/core-hq-src/corehq/apps/reports/fields.py:578
 msgid "Filter Logs by Device"
 msgstr ""
 
-#: submodules/core-hq-src/corehq/apps/reports/models.py:30
+#: submodules/core-hq-src/corehq/apps/reports/models.py:35
 msgid "demo_user"
 msgstr ""
 
-#: submodules/core-hq-src/corehq/apps/reports/models.py:31
+#: submodules/core-hq-src/corehq/apps/reports/models.py:36
 msgid "admin"
 msgstr ""
 
-#: submodules/core-hq-src/corehq/apps/reports/models.py:32
+#: submodules/core-hq-src/corehq/apps/reports/models.py:37
 msgid "Unknown Users"
 msgstr ""
 
-#: submodules/core-hq-src/corehq/apps/reports/models.py:291
+#: submodules/core-hq-src/corehq/apps/reports/models.py:294
 msgid "Deleted Report"
 msgstr ""
 
-#: submodules/core-hq-src/corehq/apps/reports/models.py:295
+#: submodules/core-hq-src/corehq/apps/reports/models.py:298
 msgid "Unsupported Report"
 msgstr ""
 
-#: submodules/core-hq-src/corehq/apps/reports/models.py:328
+#: submodules/core-hq-src/corehq/apps/reports/models.py:334
 msgid ""
 "The report used to create this scheduled report is no longer available on "
 "CommCare HQ.  Please delete this scheduled report and create a new one using "
 "an available report."
 msgstr ""
 
-#: submodules/core-hq-src/corehq/apps/reports/models.py:349
+#: submodules/core-hq-src/corehq/apps/reports/models.py:356
 msgid "An error occurred while generating this report."
 msgstr ""
 
-#: submodules/core-hq-src/corehq/apps/reports/views.py:852
+#: submodules/core-hq-src/corehq/apps/reports/views.py:488
+msgid "Emailed report"
+msgstr ""
+
+#: submodules/core-hq-src/corehq/apps/reports/views.py:513
+msgid "Email report from CommCare HQ"
+msgstr ""
+
+#: submodules/core-hq-src/corehq/apps/reports/views.py:853
 msgid ""
 "This form is archived. To restore it, click 'Restore this form' at the "
 "bottom of the page."
 msgstr ""
 
-#: submodules/core-hq-src/corehq/apps/reports/views.py:887
+#: submodules/core-hq-src/corehq/apps/reports/views.py:888
 msgid "Form was successfully archived."
 msgstr ""
 
-#: submodules/core-hq-src/corehq/apps/reports/views.py:889
+#: submodules/core-hq-src/corehq/apps/reports/views.py:890
 msgid "Form was already archived."
 msgstr ""
 
-#: submodules/core-hq-src/corehq/apps/reports/views.py:891
+#: submodules/core-hq-src/corehq/apps/reports/views.py:892
 msgid "Can't archive documents of type %(s). How did you get here??"
 msgstr ""
 
-#: submodules/core-hq-src/corehq/apps/reports/views.py:895
+#: submodules/core-hq-src/corehq/apps/reports/views.py:896
 msgid "Undo"
 msgstr ""
 
-#: submodules/core-hq-src/corehq/apps/reports/views.py:913
+#: submodules/core-hq-src/corehq/apps/reports/views.py:914
 msgid "Form was successfully restored."
 msgstr ""
 
@@ -2435,183 +3329,177 @@ msgstr ""
 msgid "No Data Available"
 msgstr ""
 
-#: submodules/core-hq-src/corehq/apps/reports/filters/forms.py:28
+#: submodules/core-hq-src/corehq/apps/reports/filters/forms.py:29
 msgid "Filter Forms"
 msgstr ""
 
-#: submodules/core-hq-src/corehq/apps/reports/filters/forms.py:30
+#: submodules/core-hq-src/corehq/apps/reports/filters/forms.py:31
 msgid ""
 "You don't have any applications set up, so there are no forms to choose "
 "from. Please create an application!"
 msgstr ""
 
-#: submodules/core-hq-src/corehq/apps/reports/filters/forms.py:91
+#: submodules/core-hq-src/corehq/apps/reports/filters/forms.py:92
 msgid "Application Type"
 msgstr ""
 
-#: submodules/core-hq-src/corehq/apps/reports/filters/forms.py:92
+#: submodules/core-hq-src/corehq/apps/reports/filters/forms.py:93
 msgid "Select an Application Type"
 msgstr ""
 
-#: submodules/core-hq-src/corehq/apps/reports/filters/forms.py:92
+#: submodules/core-hq-src/corehq/apps/reports/filters/forms.py:93
 msgid "Show all Application Types"
 msgstr ""
 
-#: submodules/core-hq-src/corehq/apps/reports/filters/forms.py:95
+#: submodules/core-hq-src/corehq/apps/reports/filters/forms.py:96
 msgid "Select Application..."
 msgstr ""
 
-#: submodules/core-hq-src/corehq/apps/reports/filters/forms.py:95
+#: submodules/core-hq-src/corehq/apps/reports/filters/forms.py:96
 msgid "Show all Forms of this Application Type..."
 msgstr ""
 
-#: submodules/core-hq-src/corehq/apps/reports/filters/forms.py:158
+#: submodules/core-hq-src/corehq/apps/reports/filters/forms.py:159
 msgid "Active CommCare Applications"
 msgstr ""
 
-#: submodules/core-hq-src/corehq/apps/reports/filters/forms.py:160
+#: submodules/core-hq-src/corehq/apps/reports/filters/forms.py:161
 msgid "Remote CommCare Applications"
 msgstr ""
 
-#: submodules/core-hq-src/corehq/apps/reports/filters/forms.py:162
+#: submodules/core-hq-src/corehq/apps/reports/filters/forms.py:163
 msgid "Deleted CommCare Applications"
 msgstr ""
 
-#: submodules/core-hq-src/corehq/apps/reports/filters/forms.py:495
+#: submodules/core-hq-src/corehq/apps/reports/filters/forms.py:496
 msgid "Untitled"
 msgstr ""
 
-#: submodules/core-hq-src/corehq/apps/reports/filters/forms.py:656
+#: submodules/core-hq-src/corehq/apps/reports/filters/forms.py:657
 msgid "Select an Application"
 msgstr ""
 
-#: submodules/core-hq-src/corehq/apps/reports/filters/forms.py:657
+#: submodules/core-hq-src/corehq/apps/reports/filters/forms.py:658
 msgid "Show Forms in all Applications"
 msgstr ""
 
-#: submodules/core-hq-src/corehq/apps/reports/filters/forms.py:658
+#: submodules/core-hq-src/corehq/apps/reports/filters/forms.py:659
 #: submodules/core-hq-src/corehq/apps/reports/templates/reports/reportdata/excel_export_data.html:166
 msgid "Module"
 msgstr ""
 
-#: submodules/core-hq-src/corehq/apps/reports/filters/forms.py:658
+#: submodules/core-hq-src/corehq/apps/reports/filters/forms.py:659
 msgid "Select a Module"
 msgstr ""
 
-#: submodules/core-hq-src/corehq/apps/reports/filters/forms.py:659
+#: submodules/core-hq-src/corehq/apps/reports/filters/forms.py:660
 msgid "Show Forms from all Modules in selected Application"
 msgstr ""
 
-#: submodules/core-hq-src/corehq/apps/reports/filters/forms.py:660
-#: submodules/core-hq-src/corehq/apps/reports/standard/inspect.py:60
+#: submodules/core-hq-src/corehq/apps/reports/filters/forms.py:661
+#: submodules/core-hq-src/corehq/apps/reports/standard/inspect.py:55
 #: submodules/core-hq-src/corehq/apps/reports/standard/ivr.py:35
 #: submodules/core-hq-src/corehq/apps/reports/templates/reports/reportdata/excel_export_data.html:167
 msgid "Form"
 msgstr ""
 
-#: submodules/core-hq-src/corehq/apps/reports/filters/forms.py:661
+#: submodules/core-hq-src/corehq/apps/reports/filters/forms.py:662
 msgid "Show all Forms in selected Module"
 msgstr ""
 
-#: submodules/core-hq-src/corehq/apps/reports/filters/forms.py:677
+#: submodules/core-hq-src/corehq/apps/reports/filters/forms.py:678
 msgid "Choose a Form"
 msgstr ""
 
-#: submodules/core-hq-src/corehq/apps/reports/filters/forms.py:699
+#: submodules/core-hq-src/corehq/apps/reports/filters/forms.py:700
 msgid "Filter Dates By"
 msgstr ""
 
-#: submodules/core-hq-src/corehq/apps/reports/filters/forms.py:701
+#: submodules/core-hq-src/corehq/apps/reports/filters/forms.py:702
 msgid ""
 "<strong>Completion</strong> time is when the form is completed on the phone."
 msgstr ""
 
-#: submodules/core-hq-src/corehq/apps/reports/filters/forms.py:702
+#: submodules/core-hq-src/corehq/apps/reports/filters/forms.py:703
 msgid "<strong>Submission</strong> time is when CommCare HQ receives the form."
 msgstr ""
 
-#: submodules/core-hq-src/corehq/apps/reports/filters/forms.py:703
+#: submodules/core-hq-src/corehq/apps/reports/filters/forms.py:704
 #: submodules/core-hq-src/corehq/apps/reports/standard/monitoring.py:530
 msgid "Completion Time"
 msgstr ""
 
-#: submodules/core-hq-src/corehq/apps/reports/filters/forms.py:708
+#: submodules/core-hq-src/corehq/apps/reports/filters/forms.py:709
 #: submodules/core-hq-src/corehq/apps/reports/standard/monitoring.py:531
 msgid "Submission Time"
 msgstr ""
 
-#: submodules/core-hq-src/corehq/apps/reports/standard/__init__.py:18
-#: submodules/core-hq-src/corehq/apps/reports/templates/reports/base_template.html:56
-msgid "Project Reports"
+#: submodules/core-hq-src/corehq/apps/reports/filters/search.py:8
+msgid "Search"
 msgstr ""
 
-#: submodules/core-hq-src/corehq/apps/reports/standard/deployments.py:19
+#: submodules/core-hq-src/corehq/apps/reports/standard/deployments.py:22
 msgid "Application Status"
 msgstr ""
 
-#: submodules/core-hq-src/corehq/apps/reports/standard/deployments.py:28
+#: submodules/core-hq-src/corehq/apps/reports/standard/deployments.py:31
 msgid "Last Seen"
 msgstr ""
 
-#: submodules/core-hq-src/corehq/apps/reports/standard/deployments.py:29
-msgid "CommCare Version"
-msgstr ""
-
-#: submodules/core-hq-src/corehq/apps/reports/standard/deployments.py:30
+#: submodules/core-hq-src/corehq/apps/reports/standard/deployments.py:32
 msgid "Application [Deployed Build]"
 msgstr ""
 
-#: submodules/core-hq-src/corehq/apps/reports/standard/deployments.py:36
+#: submodules/core-hq-src/corehq/apps/reports/standard/deployments.py:38
 msgid "unknown"
 msgstr ""
 
-#: submodules/core-hq-src/corehq/apps/reports/standard/deployments.py:38
+#: submodules/core-hq-src/corehq/apps/reports/standard/deployments.py:40
 msgid "Never"
 msgstr ""
 
-#: submodules/core-hq-src/corehq/apps/reports/standard/deployments.py:63
-msgid "2.0 Remote"
-msgstr ""
-
-#: submodules/core-hq-src/corehq/apps/reports/standard/inspect.py:52
+#: submodules/core-hq-src/corehq/apps/reports/standard/inspect.py:47
 msgid "Submit History"
 msgstr ""
 
-#: submodules/core-hq-src/corehq/apps/reports/standard/inspect.py:143
+#: submodules/core-hq-src/corehq/apps/reports/standard/inspect.py:148
 #, python-format
 msgid "Unknown [%s]"
 msgstr ""
 
-#: submodules/core-hq-src/corehq/apps/reports/standard/inspect.py:238
+#: submodules/core-hq-src/corehq/apps/reports/standard/inspect.py:276
 msgid "No data"
 msgstr ""
 
-#: submodules/core-hq-src/corehq/apps/reports/standard/inspect.py:319
+#: submodules/core-hq-src/corehq/apps/reports/standard/inspect.py:281
+msgid ""
+"Search any text, or use a targeted query. For more info see the <a "
+"href='https://wiki.commcarehq.org/display/commcarepublic/Advanced+Case"
+"+Search' target='_blank'>Case Search</a> help page"
+msgstr ""
+
+#: submodules/core-hq-src/corehq/apps/reports/standard/inspect.py:411
 msgid "Case List"
 msgstr ""
 
-#: submodules/core-hq-src/corehq/apps/reports/standard/inspect.py:339
-msgid "Owner"
-msgstr ""
-
-#: submodules/core-hq-src/corehq/apps/reports/standard/inspect.py:340
-msgid "Created Date"
-msgstr ""
-
-#: submodules/core-hq-src/corehq/apps/reports/standard/inspect.py:341
-msgid "Created By"
-msgstr ""
-
-#: submodules/core-hq-src/corehq/apps/reports/standard/inspect.py:342
-msgid "Modified Date"
-msgstr ""
-
-#: submodules/core-hq-src/corehq/apps/reports/standard/inspect.py:347
+#: submodules/core-hq-src/corehq/apps/reports/standard/inspect.py:427
 #, python-format
 msgid "%(report_name)s for %(worker_type)s"
 msgstr ""
 
-#: submodules/core-hq-src/corehq/apps/reports/standard/inspect.py:457
+#: submodules/core-hq-src/corehq/apps/reports/standard/inspect.py:439
+msgid "Created Date"
+msgstr ""
+
+#: submodules/core-hq-src/corehq/apps/reports/standard/inspect.py:440
+msgid "Created By"
+msgstr ""
+
+#: submodules/core-hq-src/corehq/apps/reports/standard/inspect.py:441
+msgid "Modified Date"
+msgstr ""
+
+#: submodules/core-hq-src/corehq/apps/reports/standard/inspect.py:523
 msgid "Maps"
 msgstr ""
 
@@ -2620,6 +3508,7 @@ msgid "Call Log"
 msgstr ""
 
 #: submodules/core-hq-src/corehq/apps/reports/standard/ivr.py:31
+#: submodules/core-hq-src/corehq/apps/reports/standard/ivr.py:162
 #: submodules/core-hq-src/corehq/apps/reports/standard/sms.py:113
 msgid "Timestamp"
 msgstr ""
@@ -2669,6 +3558,26 @@ msgstr ""
 #: submodules/core-hq-src/corehq/apps/reports/standard/ivr.py:61
 #: submodules/core-hq-src/corehq/apps/reports/standard/sms.py:131
 msgid "Outgoing"
+msgstr ""
+
+#: submodules/core-hq-src/corehq/apps/reports/standard/ivr.py:154
+msgid "Expected Callbacks"
+msgstr ""
+
+#: submodules/core-hq-src/corehq/apps/reports/standard/ivr.py:163
+msgid "Recipient Name"
+msgstr ""
+
+#: submodules/core-hq-src/corehq/apps/reports/standard/ivr.py:177
+msgid "Pending"
+msgstr ""
+
+#: submodules/core-hq-src/corehq/apps/reports/standard/ivr.py:178
+msgid "Received"
+msgstr ""
+
+#: submodules/core-hq-src/corehq/apps/reports/standard/ivr.py:179
+msgid "Missed"
 msgstr ""
 
 #: submodules/core-hq-src/corehq/apps/reports/standard/monitoring.py:104
@@ -2791,7 +3700,7 @@ msgid "No Form Selected"
 msgstr ""
 
 #: submodules/core-hq-src/corehq/apps/reports/standard/monitoring.py:442
-#: submodules/core-hq-src/corehq/apps/reports/standard/monitoring.py:573
+#: submodules/core-hq-src/corehq/apps/reports/standard/monitoring.py:576
 msgid "Average"
 msgstr ""
 
@@ -2837,31 +3746,35 @@ msgstr ""
 msgid "Difference"
 msgstr ""
 
-#: submodules/core-hq-src/corehq/apps/reports/standard/monitoring.py:600
+#: submodules/core-hq-src/corehq/apps/reports/standard/monitoring.py:603
 msgid "day"
 msgstr ""
 
-#: submodules/core-hq-src/corehq/apps/reports/standard/monitoring.py:600
+#: submodules/core-hq-src/corehq/apps/reports/standard/monitoring.py:603
 msgid "hour"
 msgstr ""
 
-#: submodules/core-hq-src/corehq/apps/reports/standard/monitoring.py:600
+#: submodules/core-hq-src/corehq/apps/reports/standard/monitoring.py:603
 msgid "minute"
 msgstr ""
 
-#: submodules/core-hq-src/corehq/apps/reports/standard/monitoring.py:600
+#: submodules/core-hq-src/corehq/apps/reports/standard/monitoring.py:603
 msgid "second"
 msgstr ""
 
-#: submodules/core-hq-src/corehq/apps/reports/standard/monitoring.py:612
+#: submodules/core-hq-src/corehq/apps/reports/standard/monitoring.py:616
 msgid "submitted before completed [strange]"
 msgstr ""
 
-#: submodules/core-hq-src/corehq/apps/reports/standard/monitoring.py:633
+#: submodules/core-hq-src/corehq/apps/reports/standard/monitoring.py:619
+msgid "same"
+msgstr ""
+
+#: submodules/core-hq-src/corehq/apps/reports/standard/monitoring.py:639
 msgid "Worker Activity Times"
 msgstr ""
 
-#: submodules/core-hq-src/corehq/apps/reports/standard/monitoring.py:636
+#: submodules/core-hq-src/corehq/apps/reports/standard/monitoring.py:642
 msgid "Graphical representation of when forms are submitted."
 msgstr ""
 
@@ -2895,69 +3808,70 @@ msgstr ""
 msgid "Message"
 msgstr ""
 
-#: submodules/core-hq-src/corehq/apps/reports/templates/reports/base_template.html:68
+#: submodules/core-hq-src/corehq/apps/reports/templates/reports/base_template.html:54
 msgid "Generating Report..."
 msgstr ""
 
-#: submodules/core-hq-src/corehq/apps/reports/templates/reports/base_template.html:69
-#: submodules/core-hq-src/corehq/apps/reports/templates/reports/base_template.html:70
+#: submodules/core-hq-src/corehq/apps/reports/templates/reports/base_template.html:55
+#: submodules/core-hq-src/corehq/apps/reports/templates/reports/base_template.html:56
 msgid "Apply"
 msgstr ""
 
-#: submodules/core-hq-src/corehq/apps/reports/templates/reports/base_template.html:75
+#: submodules/core-hq-src/corehq/apps/reports/templates/reports/base_template.html:61
 msgid "Favorites"
 msgstr ""
 
-#: submodules/core-hq-src/corehq/apps/reports/templates/reports/base_template.html:80
+#: submodules/core-hq-src/corehq/apps/reports/templates/reports/base_template.html:66
 msgid "You don't have any favorites"
 msgstr ""
 
-#: submodules/core-hq-src/corehq/apps/reports/templates/reports/base_template.html:93
+#: submodules/core-hq-src/corehq/apps/reports/templates/reports/base_template.html:79
+#: submodules/core-hq-src/corehq/apps/reports/templates/reports/reportdata/customize_export.html:478
 msgid "Save"
 msgstr ""
 
-#: submodules/core-hq-src/corehq/apps/reports/templates/reports/base_template.html:98
+#: submodules/core-hq-src/corehq/apps/reports/templates/reports/base_template.html:84
 msgid "Email Supported"
 msgstr ""
 
-#: submodules/core-hq-src/corehq/apps/reports/templates/reports/base_template.html:128
+#: submodules/core-hq-src/corehq/apps/reports/templates/reports/base_template.html:114
 msgid "Default Date Range"
 msgstr ""
 
-#: submodules/core-hq-src/corehq/apps/reports/templates/reports/base_template.html:131
+#: submodules/core-hq-src/corehq/apps/reports/templates/reports/base_template.html:117
 msgid "Last 7 days"
 msgstr ""
 
-#: submodules/core-hq-src/corehq/apps/reports/templates/reports/base_template.html:132
+#: submodules/core-hq-src/corehq/apps/reports/templates/reports/base_template.html:118
 msgid "Last 30 days"
 msgstr ""
 
-#: submodules/core-hq-src/corehq/apps/reports/templates/reports/base_template.html:133
+#: submodules/core-hq-src/corehq/apps/reports/templates/reports/base_template.html:119
 msgid "Days ago"
 msgstr ""
 
-#: submodules/core-hq-src/corehq/apps/reports/templates/reports/base_template.html:134
+#: submodules/core-hq-src/corehq/apps/reports/templates/reports/base_template.html:120
 msgid "Since a date"
 msgstr ""
 
-#: submodules/core-hq-src/corehq/apps/reports/templates/reports/base_template.html:135
+#: submodules/core-hq-src/corehq/apps/reports/templates/reports/base_template.html:121
 msgid "From a date to a date"
 msgstr ""
 
-#: submodules/core-hq-src/corehq/apps/reports/templates/reports/base_template.html:140
+#: submodules/core-hq-src/corehq/apps/reports/templates/reports/base_template.html:126
 msgid "Number of Days"
 msgstr ""
 
-#: submodules/core-hq-src/corehq/apps/reports/templates/reports/base_template.html:146
+#: submodules/core-hq-src/corehq/apps/reports/templates/reports/base_template.html:132
 msgid "Begin Date"
 msgstr ""
 
-#: submodules/core-hq-src/corehq/apps/reports/templates/reports/base_template.html:150
-#: submodules/core-hq-src/corehq/apps/reports/templates/reports/base_template.html:159
+#: submodules/core-hq-src/corehq/apps/reports/templates/reports/base_template.html:136
+#: submodules/core-hq-src/corehq/apps/reports/templates/reports/base_template.html:145
 msgid "YYYY-MM-DD"
 msgstr ""
 
-#: submodules/core-hq-src/corehq/apps/reports/templates/reports/base_template.html:155
+#: submodules/core-hq-src/corehq/apps/reports/templates/reports/base_template.html:141
 msgid "End Date"
 msgstr ""
 
@@ -3184,8 +4098,12 @@ msgstr ""
 msgid "Processing data, please wait"
 msgstr ""
 
-#: submodules/core-hq-src/corehq/apps/reports/templates/reports/partials/form_name.html:3
+#: submodules/core-hq-src/corehq/apps/reports/templates/reports/partials/form_name.html:5
 msgid "User Registration"
+msgstr ""
+
+#: submodules/core-hq-src/corehq/apps/reports/templates/reports/partials/form_name.html:11
+msgid "Mobile Device Report"
 msgstr ""
 
 #: submodules/core-hq-src/corehq/apps/reports/templates/reports/partials/generic_piechart.html:62
@@ -3237,6 +4155,7 @@ msgid "de-identified"
 msgstr ""
 
 #: submodules/core-hq-src/corehq/apps/reports/templates/reports/partials/saved_custom_exports.html:31
+#: submodules/core-hq-src/corehq/apps/reports/templates/reports/reportdata/customize_export.html:401
 msgid "Sheet Name"
 msgstr ""
 
@@ -3245,17 +4164,17 @@ msgid "duplicate"
 msgstr ""
 
 #: submodules/core-hq-src/corehq/apps/reports/templates/reports/partials/saved_custom_exports.html:43
-#: submodules/core-hq-src/corehq/apps/reports/templates/reports/reportdata/case_export_data.html:68
+#: submodules/core-hq-src/corehq/apps/reports/templates/reports/reportdata/case_export_data.html:71
 msgid "HTML Preview"
 msgstr ""
 
 #: submodules/core-hq-src/corehq/apps/reports/templates/reports/partials/saved_custom_exports.html:67
-#: submodules/core-hq-src/corehq/apps/reports/templates/reports/reportdata/excel_export_data.html:296
+#: submodules/core-hq-src/corehq/apps/reports/templates/reports/reportdata/excel_export_data.html:294
 msgid "Bulk Export"
 msgstr ""
 
 #: submodules/core-hq-src/corehq/apps/reports/templates/reports/partials/saved_custom_exports.html:70
-#: submodules/core-hq-src/corehq/apps/reports/templates/reports/reportdata/excel_export_data.html:299
+#: submodules/core-hq-src/corehq/apps/reports/templates/reports/reportdata/excel_export_data.html:297
 msgid "Not Available"
 msgstr ""
 
@@ -3272,107 +4191,157 @@ msgstr ""
 msgid "Saved Custom Exports"
 msgstr ""
 
-#: submodules/core-hq-src/corehq/apps/reports/templates/reports/reportdata/case_export_data.html:90
+#: submodules/core-hq-src/corehq/apps/reports/templates/reports/reportdata/case_export_data.html:93
 #: submodules/core-hq-src/corehq/apps/reports/templates/reports/reportdata/excel_export_data.html:152
 msgid "No Custom Exports yet!"
 msgstr ""
 
-#: submodules/core-hq-src/corehq/apps/reports/templates/reports/reportdata/case_export_data.html:90
+#: submodules/core-hq-src/corehq/apps/reports/templates/reports/reportdata/case_export_data.html:93
 #: submodules/core-hq-src/corehq/apps/reports/templates/reports/reportdata/excel_export_data.html:152
 msgid "Click \"Create Custom Export\" on a form below to make one."
 msgstr ""
 
-#: submodules/core-hq-src/corehq/apps/reports/templates/reports/reportdata/case_export_data.html:95
+#: submodules/core-hq-src/corehq/apps/reports/templates/reports/reportdata/case_export_data.html:98
 msgid "Export cases"
 msgstr ""
 
-#: submodules/core-hq-src/corehq/apps/reports/templates/reports/reportdata/case_export_data.html:100
+#: submodules/core-hq-src/corehq/apps/reports/templates/reports/reportdata/case_export_data.html:103
 #: submodules/core-hq-src/corehq/apps/reports/templates/reports/reportdata/excel_export_data.html:168
 msgid "Custom Export"
 msgstr ""
 
-#: submodules/core-hq-src/corehq/apps/reports/templates/reports/reportdata/case_export_data.html:111
+#: submodules/core-hq-src/corehq/apps/reports/templates/reports/reportdata/case_export_data.html:114
 msgid "Unknown Case"
 msgstr ""
 
-#: submodules/core-hq-src/corehq/apps/reports/templates/reports/reportdata/case_export_data.html:117
-#: submodules/core-hq-src/corehq/apps/reports/templates/reports/reportdata/customize_export.html:94
-#: submodules/core-hq-src/corehq/apps/reports/templates/reports/reportdata/excel_export_data.html:271
+#: submodules/core-hq-src/corehq/apps/reports/templates/reports/reportdata/case_export_data.html:120
+#: submodules/core-hq-src/corehq/apps/reports/templates/reports/reportdata/customize_export.html:349
+#: submodules/core-hq-src/corehq/apps/reports/templates/reports/reportdata/excel_export_data.html:269
 msgid "Create Custom Export"
 msgstr ""
 
-#: submodules/core-hq-src/corehq/apps/reports/templates/reports/reportdata/customize_export.html:88
-msgid "Export Cases, Referrals, and Users"
+#: submodules/core-hq-src/corehq/apps/reports/templates/reports/reportdata/customize_export.html:37
+#: submodules/core-hq-src/corehq/apps/users/templates/users/mobile/users_list.html:143
+msgid "Forms"
 msgstr ""
 
-#: submodules/core-hq-src/corehq/apps/reports/templates/reports/reportdata/customize_export.html:90
-msgid "Export Submissions to Excel"
+#: submodules/core-hq-src/corehq/apps/reports/templates/reports/reportdata/customize_export.html:39
+msgid "Repeat: "
 msgstr ""
 
-#: submodules/core-hq-src/corehq/apps/reports/templates/reports/reportdata/customize_export.html:108
+#: submodules/core-hq-src/corehq/apps/reports/templates/reports/reportdata/customize_export.html:42
+#: submodules/core-hq-src/corehq/apps/users/templates/users/mobile/users_list.html:144
+msgid "Cases"
+msgstr ""
+
+#: submodules/core-hq-src/corehq/apps/reports/templates/reports/reportdata/customize_export.html:43
+msgid "Case History"
+msgstr ""
+
+#: submodules/core-hq-src/corehq/apps/reports/templates/reports/reportdata/customize_export.html:44
+msgid "Case History > Parent Cases"
+msgstr ""
+
+#: submodules/core-hq-src/corehq/apps/reports/templates/reports/reportdata/customize_export.html:45
+msgid "Parent Cases"
+msgstr ""
+
+#: submodules/core-hq-src/corehq/apps/reports/templates/reports/reportdata/customize_export.html:358
 msgid "Export Settings"
 msgstr ""
 
-#: submodules/core-hq-src/corehq/apps/reports/templates/reports/reportdata/customize_export.html:110
+#: submodules/core-hq-src/corehq/apps/reports/templates/reports/reportdata/customize_export.html:360
 msgid "Export Name"
 msgstr ""
 
-#: submodules/core-hq-src/corehq/apps/reports/templates/reports/reportdata/customize_export.html:116
+#: submodules/core-hq-src/corehq/apps/reports/templates/reports/reportdata/customize_export.html:366
 msgid "Default file type"
 msgstr ""
 
-#: submodules/core-hq-src/corehq/apps/reports/templates/reports/reportdata/customize_export.html:131
+#: submodules/core-hq-src/corehq/apps/reports/templates/reports/reportdata/customize_export.html:369
+msgid "Excel 2007"
+msgstr ""
+
+#: submodules/core-hq-src/corehq/apps/reports/templates/reports/reportdata/customize_export.html:370
+msgid "Excel (older versions)"
+msgstr ""
+
+#: submodules/core-hq-src/corehq/apps/reports/templates/reports/reportdata/customize_export.html:371
+msgid "CSV (Zip file)"
+msgstr ""
+
+#: submodules/core-hq-src/corehq/apps/reports/templates/reports/reportdata/customize_export.html:380
 msgid "Include duplicates and other unprocessed forms"
 msgstr ""
 
-#: submodules/core-hq-src/corehq/apps/reports/templates/reports/reportdata/customize_export.html:135
+#: submodules/core-hq-src/corehq/apps/reports/templates/reports/reportdata/customize_export.html:385
 msgid "Save this report daily?"
 msgstr ""
 
-#: submodules/core-hq-src/corehq/apps/reports/templates/reports/reportdata/customize_export.html:142
-msgid "Export Fields"
-msgstr ""
-
-#: submodules/core-hq-src/corehq/apps/reports/templates/reports/reportdata/customize_export.html:145
+#: submodules/core-hq-src/corehq/apps/reports/templates/reports/reportdata/customize_export.html:408
 msgid "Choose the fields you want to export."
 msgstr ""
 
-#: submodules/core-hq-src/corehq/apps/reports/templates/reports/reportdata/customize_export.html:146
+#: submodules/core-hq-src/corehq/apps/reports/templates/reports/reportdata/customize_export.html:409
 msgid ""
 "You can drag and drop fields to reorder them.  You can also rename fields, "
 "which will update the headers in the export file."
 msgstr ""
 
-#: submodules/core-hq-src/corehq/apps/reports/templates/reports/reportdata/customize_export.html:152
+#: submodules/core-hq-src/corehq/apps/reports/templates/reports/reportdata/customize_export.html:416
 msgid "Include this Field?"
 msgstr ""
 
-#: submodules/core-hq-src/corehq/apps/reports/templates/reports/reportdata/customize_export.html:153
+#: submodules/core-hq-src/corehq/apps/reports/templates/reports/reportdata/customize_export.html:417
 msgid "Select All"
 msgstr ""
 
-#: submodules/core-hq-src/corehq/apps/reports/templates/reports/reportdata/customize_export.html:153
+#: submodules/core-hq-src/corehq/apps/reports/templates/reports/reportdata/customize_export.html:418
 msgid "Select None"
 msgstr ""
 
-#: submodules/core-hq-src/corehq/apps/reports/templates/reports/reportdata/customize_export.html:154
+#: submodules/core-hq-src/corehq/apps/reports/templates/reports/reportdata/customize_export.html:419
 msgid "Field"
 msgstr ""
 
-#: submodules/core-hq-src/corehq/apps/reports/templates/reports/reportdata/customize_export.html:155
+#: submodules/core-hq-src/corehq/apps/reports/templates/reports/reportdata/customize_export.html:420
 msgid "Display"
 msgstr ""
 
-#: submodules/core-hq-src/corehq/apps/reports/templates/reports/reportdata/customize_export.html:156
+#: submodules/core-hq-src/corehq/apps/reports/templates/reports/reportdata/customize_export.html:421
 msgid "Sensitivity"
 msgstr ""
 
-#: submodules/core-hq-src/corehq/apps/reports/templates/reports/reportdata/customize_export.html:191
+#: submodules/core-hq-src/corehq/apps/reports/templates/reports/reportdata/customize_export.html:454
+msgid "Privacy Settings"
+msgstr ""
+
+#: submodules/core-hq-src/corehq/apps/reports/templates/reports/reportdata/customize_export.html:460
+msgid "Publish in"
+msgstr ""
+
+#: submodules/core-hq-src/corehq/apps/reports/templates/reports/reportdata/customize_export.html:462
 msgid "Check only if this export has been fully and safely de-identified."
 msgstr ""
 
-#: submodules/core-hq-src/corehq/apps/reports/templates/reports/reportdata/customize_export.html:193
+#: submodules/core-hq-src/corehq/apps/reports/templates/reports/reportdata/customize_export.html:468
 msgid "Allow me to mark sensitive data"
+msgstr ""
+
+#: submodules/core-hq-src/corehq/apps/reports/templates/reports/reportdata/customize_export.html:479
+msgid "Create"
+msgstr ""
+
+#: submodules/core-hq-src/corehq/apps/reports/templates/reports/reportdata/customize_export.html:483
+msgid "Saving"
+msgstr ""
+
+#: submodules/core-hq-src/corehq/apps/reports/templates/reports/reportdata/customize_export.html:486
+msgid "Try Again"
+msgstr ""
+
+#: submodules/core-hq-src/corehq/apps/reports/templates/reports/reportdata/customize_export.html:494
+msgid "Delete this Export"
 msgstr ""
 
 #: submodules/core-hq-src/corehq/apps/reports/templates/reports/reportdata/excel_export_data.html:91
@@ -3446,7 +4415,7 @@ msgid "Add to Bulk Export"
 msgstr ""
 
 #: submodules/core-hq-src/corehq/apps/reports/templates/reports/reportdata/excel_export_data.html:189
-#: submodules/core-hq-src/corehq/apps/reports/templates/reports/reportdata/excel_export_data.html:248
+#: submodules/core-hq-src/corehq/apps/reports/templates/reports/reportdata/excel_export_data.html:246
 msgid "deleted"
 msgstr ""
 
@@ -3458,46 +4427,46 @@ msgstr ""
 msgid "No Application"
 msgstr ""
 
-#: submodules/core-hq-src/corehq/apps/reports/templates/reports/reportdata/excel_export_data.html:219
+#: submodules/core-hq-src/corehq/apps/reports/templates/reports/reportdata/excel_export_data.html:217
 msgid "Mislabeled"
 msgstr ""
 
-#: submodules/core-hq-src/corehq/apps/reports/templates/reports/reportdata/excel_export_data.html:225
-#: submodules/core-hq-src/corehq/apps/reports/templates/reports/reportdata/excel_export_data.html:256
+#: submodules/core-hq-src/corehq/apps/reports/templates/reports/reportdata/excel_export_data.html:223
+#: submodules/core-hq-src/corehq/apps/reports/templates/reports/reportdata/excel_export_data.html:254
 msgid "Fix"
 msgstr ""
 
-#: submodules/core-hq-src/corehq/apps/reports/templates/reports/reportdata/excel_export_data.html:232
+#: submodules/core-hq-src/corehq/apps/reports/templates/reports/reportdata/excel_export_data.html:230
 msgid ""
 "These submissions are tagged as if they belong to an application that "
 "doesn't exist."
 msgstr ""
 
-#: submodules/core-hq-src/corehq/apps/reports/templates/reports/reportdata/excel_export_data.html:236
+#: submodules/core-hq-src/corehq/apps/reports/templates/reports/reportdata/excel_export_data.html:234
 msgid "These submissions could belong to one of the following forms:"
 msgstr ""
 
-#: submodules/core-hq-src/corehq/apps/reports/templates/reports/reportdata/excel_export_data.html:256
+#: submodules/core-hq-src/corehq/apps/reports/templates/reports/reportdata/excel_export_data.html:254
 msgid "Select this option"
 msgstr ""
 
-#: submodules/core-hq-src/corehq/apps/reports/templates/reports/reportdata/excel_export_data.html:265
+#: submodules/core-hq-src/corehq/apps/reports/templates/reports/reportdata/excel_export_data.html:263
 msgid "No suggestions"
 msgstr ""
 
-#: submodules/core-hq-src/corehq/apps/reports/templates/reports/reportdata/excel_export_data.html:284
+#: submodules/core-hq-src/corehq/apps/reports/templates/reports/reportdata/excel_export_data.html:282
 msgid "No Forms"
 msgstr ""
 
-#: submodules/core-hq-src/corehq/apps/reports/templates/reports/reportdata/excel_export_data.html:309
+#: submodules/core-hq-src/corehq/apps/reports/templates/reports/reportdata/excel_export_data.html:307
 msgid "Saved Export Files"
 msgstr ""
 
-#: submodules/core-hq-src/corehq/apps/reports/templates/reports/reportdata/excel_export_data.html:317
+#: submodules/core-hq-src/corehq/apps/reports/templates/reports/reportdata/excel_export_data.html:315
 msgid "Export all Forms' Metadata"
 msgstr ""
 
-#: submodules/core-hq-src/corehq/apps/reports/templates/reports/reportdata/excel_export_data.html:320
+#: submodules/core-hq-src/corehq/apps/reports/templates/reports/reportdata/excel_export_data.html:318
 msgid ""
 "Export basic data for all forms in this domain. Note that this export does "
 "not support the filters above."
@@ -3529,7 +4498,35 @@ msgstr ""
 msgid "Restore this form"
 msgstr ""
 
-#: submodules/core-hq-src/corehq/apps/reports/templates/reports/standard/base_template.html:137
+#: submodules/core-hq-src/corehq/apps/reports/templates/reports/standard/base_template.html:33
+msgid "Report successfully emailed"
+msgstr ""
+
+#: submodules/core-hq-src/corehq/apps/reports/templates/reports/standard/base_template.html:34
+msgid "An error occurred emailing you report. Please try again."
+msgstr ""
+
+#: submodules/core-hq-src/corehq/apps/reports/templates/reports/standard/base_template.html:144
+msgid "Email report"
+msgstr ""
+
+#: submodules/core-hq-src/corehq/apps/reports/templates/reports/standard/base_template.html:149
+msgid "Subject"
+msgstr ""
+
+#: submodules/core-hq-src/corehq/apps/reports/templates/reports/standard/base_template.html:156
+msgid "Send to me"
+msgstr ""
+
+#: submodules/core-hq-src/corehq/apps/reports/templates/reports/standard/base_template.html:160
+msgid "Additional Recipients"
+msgstr ""
+
+#: submodules/core-hq-src/corehq/apps/reports/templates/reports/standard/base_template.html:166
+msgid "Report notes"
+msgstr ""
+
+#: submodules/core-hq-src/corehq/apps/reports/templates/reports/standard/base_template.html:189
 msgid "Notice"
 msgstr ""
 
@@ -3559,14 +4556,14 @@ msgstr ""
 msgid "Please enter a valid two or three digit language code."
 msgstr ""
 
-#: submodules/core-hq-src/corehq/apps/users/forms.py:92
+#: submodules/core-hq-src/corehq/apps/users/forms.py:93
 msgid ""
-"CloudCare only: write in the language code to set the language this user "
-"sees in CloudCare applications. This does not affect the default language of "
-"mobile applications."
+"Write in the language code to set the default language this user sees in "
+"CloudCare applications and in reports (if applicable). Current supported "
+"languages for reports are en, fr (partial), and hin (partial)."
 msgstr ""
 
-#: submodules/core-hq-src/corehq/apps/users/forms.py:146
+#: submodules/core-hq-src/corehq/apps/users/forms.py:149
 msgid "Username contains invalid characters."
 msgstr ""
 
@@ -3592,19 +4589,19 @@ msgstr ""
 msgid "create a web account"
 msgstr ""
 
-#: submodules/core-hq-src/corehq/apps/users/templates/users/upload_commcare_users.html:33
+#: submodules/core-hq-src/corehq/apps/users/templates/users/upload_commcare_users.html:27
 msgid "Download your current user data: "
 msgstr ""
 
-#: submodules/core-hq-src/corehq/apps/users/templates/users/upload_commcare_users.html:33
+#: submodules/core-hq-src/corehq/apps/users/templates/users/upload_commcare_users.html:27
 msgid "users.xlsx"
 msgstr ""
 
-#: submodules/core-hq-src/corehq/apps/users/templates/users/upload_commcare_users.html:36
+#: submodules/core-hq-src/corehq/apps/users/templates/users/upload_commcare_users.html:30
 msgid "Updated it with the changes you want to make"
 msgstr ""
 
-#: submodules/core-hq-src/corehq/apps/users/templates/users/upload_commcare_users.html:39
+#: submodules/core-hq-src/corehq/apps/users/templates/users/upload_commcare_users.html:33
 msgid "Use the form below to upload your completed file"
 msgstr ""
 
@@ -3649,20 +4646,12 @@ msgstr ""
 msgid "Phone"
 msgstr ""
 
-#: submodules/core-hq-src/corehq/apps/users/templates/users/mobile/users_list.html:143
-msgid "Forms"
-msgstr ""
-
-#: submodules/core-hq-src/corehq/apps/users/templates/users/mobile/users_list.html:144
-msgid "Cases"
+#: submodules/core-hq-src/corehq/apps/users/templates/users/mobile/users_list.html:147
+msgid "Case Sharing"
 msgstr ""
 
 #: submodules/core-hq-src/corehq/apps/users/templates/users/mobile/users_list.html:151
 msgid "More..."
-msgstr ""
-
-#: submodules/core-hq-src/corehq/apps/users/templates/users/partial/domain_accounts.html:6
-msgid "Project Name"
 msgstr ""
 
 #: submodules/core-hq-src/corehq/apps/users/views/__init__.py:391
@@ -3689,14 +4678,36 @@ msgstr ""
 msgid "%(user)s is no longer a part of the %(domain)s project space"
 msgstr ""
 
-#: submodules/core-hq-src/corehq/apps/users/views/mobile/users.py:310
+#: submodules/core-hq-src/corehq/apps/users/views/mobile/users.py:319
 #, python-format
 msgid "Blank Group %s"
 msgstr ""
 
-#: submodules/core-hq-src/corehq/apps/users/views/mobile/users.py:319
+#: submodules/core-hq-src/corehq/apps/users/views/mobile/users.py:328
 msgid ""
 "The following groups have no name. Please name them before continuing: {}"
+msgstr ""
+
+#: submodules/django-soil-src/soil/templates/soil/partials/dl_status.html:4
+msgid "Your export is ready."
+msgstr ""
+
+#: submodules/django-soil-src/soil/templates/soil/partials/dl_status.html:7
+msgid "Download File Now"
+msgstr ""
+
+#: submodules/django-soil-src/soil/templates/soil/partials/dl_status.html:16
+msgid ""
+"\n"
+"                Task processor not detected.\n"
+"                There may be something wrong with your system.\n"
+"                If the download takes longer than normal to complete\n"
+"                please contact support for help.\n"
+"            "
+msgstr ""
+
+#: submodules/django-soil-src/soil/templates/soil/partials/dl_status.html:31
+msgid "Processed"
 msgstr ""
 
 #: submodules/hsph-reports/hsph/fields.py:106
@@ -3713,13 +4724,6 @@ msgstr ""
 
 #: submodules/hsph-reports/hsph/fields.py:107
 msgid "Select a FIDA"
-msgstr ""
-
-#: submodules/pact-src/pact/templates/pact/chw/pact_chw_profile_base.html:9
-#: submodules/pact-src/pact/templates/pact/chw/pact_chw_profile_submissions.html:9
-#: submodules/pact-src/pact/templates/pact/patient/pactpatient_base.html:24
-#: submodules/pact-src/pact/templates/pact/patient/pactpatient_submissions.html:17
-msgid "Info"
 msgstr ""
 
 #: submodules/pact-src/pact/templates/pact/chw/pact_chw_profile_base.html:10
@@ -3763,8 +4767,12 @@ msgstr ""
 msgid "Billing Tools"
 msgstr ""
 
-#: submodules/payments/hqbilling/filters.py:10
-msgid "Select Project..."
+#: submodules/payments/hqbilling/filters.py:12
+msgid "Select Domain..."
+msgstr ""
+
+#: submodules/payments/hqbilling/filters.py:58
+msgid "Any Direction"
 msgstr ""
 
 #: submodules/phonelog/phonelog/reports.py:17
