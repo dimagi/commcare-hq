@@ -11,7 +11,6 @@ from django.shortcuts import render
 from corehq.apps.appstore.forms import AddReviewForm
 from corehq.apps.appstore.models import Review
 from corehq.apps.domain.decorators import require_superuser
-from corehq.apps.registration.forms import DomainRegistrationForm
 from corehq.apps.users.models import CouchUser
 from corehq.elastic import get_es
 from corehq.apps.domain.models import Domain
@@ -348,6 +347,7 @@ def copy_snapshot(request, domain):
 
     dom = Domain.get_by_name(domain)
     if request.method == "POST" and dom.is_snapshot:
+        from corehq.apps.registration.forms import DomainRegistrationForm
         args = {'domain_name': request.POST['new_project_name'], 'eula_confirmed': True}
         form = DomainRegistrationForm(args)
 
