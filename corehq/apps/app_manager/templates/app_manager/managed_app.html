@@ -75,6 +75,7 @@
                         {% trans "Deploy" %}
                     </a>
                 </li>
+                <li class="divider"></li>
                 <li {% if not module and not form and not release_manager %}class="app-name-div active"{% endif %}>
                     <a href="{% url view_app domain app.id %}?edit={{ edit|BOOL }}#app-settings" data-toggle="tab">
                         <i class="icon-cog"></i>
