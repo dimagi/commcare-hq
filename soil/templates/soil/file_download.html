@@ -9,7 +9,7 @@
         var pollDownloader = function () {
             if ($('#ready_{{ download_id }}').length == 0)
 	        {
-	            $.get("{% url ajax_job_poll download_id %}", function(data) {
+	            $.get("{% url 'ajax_job_poll' download_id %}", function(data) {
 	                $("#display_{{ download_id }}").html(data);
 	            });
 	        } else {

@@ -2,7 +2,7 @@
     {% if is_ready %}
         <div id="ready_{{ download_id }}">
         <p class="alert alert-success">{% trans "Your export is ready." %}</p>
-        <a class="btn btn-primary" href="{% url retrieve_download download_id %}?get_file">
+        <a class="btn btn-primary" href="{% url 'retrieve_download' download_id %}?get_file">
             <i class="icon icon-white icon-download-alt"></i>
             {% trans "Download File Now" %}
         </a>
