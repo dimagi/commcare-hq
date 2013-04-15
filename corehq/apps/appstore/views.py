@@ -220,11 +220,13 @@ def appstore_api(request):
     results = es_snapshot_query(params, facets)
     return HttpResponse(json.dumps(results), mimetype="application/json")
 
-def es_query(params, facets=None, terms=None, q=None, es_url=None, start_at=None, size=None):
+def es_query(params=None, facets=None, terms=None, q=None, es_url=None, start_at=None, size=None, dict_only=False):
     if terms is None:
         terms = []
     if q is None:
         q = {}
+    if params is None:
+        params = {}
 
     q["size"] = size or 9999
     q["from"] = start_at or 0
@@ -233,15 +235,15 @@ def es_query(params, facets=None, terms=None, q=None, es_url=None, start_at=None
 
     def convert(param):
         #todo: find a better way to handle bools, something that won't break fields that may be 'T' or 'F' but not bool
-        if param == 'T':
+        if param == 'T' or param is True:
             return 1
-        elif param == 'F':
+        elif param == 'F' or param is False:
             return 0
         return param.lower()
 
     for attr in params:
         if attr not in terms:
-            attr_val = [convert(params[attr])] if isinstance(params[attr], basestring) else [convert(p) for p in params[attr]]
+            attr_val = [convert(params[attr])] if not isinstance(params[attr], list) else [convert(p) for p in params[attr]]
             q["filter"]["and"].append({"terms": {attr: attr_val}})
 
     def facet_filter(facet):
@@ -257,6 +259,9 @@ def es_query(params, facets=None, terms=None, q=None, es_url=None, start_at=None
 
     if not q['filter']['and']:
         del q["filter"]
+
+    if dict_only:
+        return q
 
     es_url = es_url or "cc_exchange/domain/_search"
 
