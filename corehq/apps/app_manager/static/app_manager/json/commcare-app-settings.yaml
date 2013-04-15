@@ -16,7 +16,7 @@
 
 - id: build_spec
   name: "CommCare Version"
-  widget: select
+  widget: build_spec
   # this depends on builds are available, and on application_version
   # values, value_names, and default are magically set elsewhere
 

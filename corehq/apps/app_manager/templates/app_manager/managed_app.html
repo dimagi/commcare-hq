@@ -75,6 +75,7 @@
                         {% trans "Deploy" %}
                     </a>
                 </li>
+                <li class="divider"></li>
                 <li {% if not module and not form and not release_manager %}class="app-name-div active"{% endif %}>
                     <a href="{% url view_app domain app.id %}?edit={{ edit|BOOL }}#app-settings" data-toggle="tab">
                         <i class="icon-cog"></i>
@@ -220,13 +221,13 @@
                     <li>
                         <a href="{% url view_app domain app.id %}copy/?edit={{ edit|BOOL }}#copy" data-toggle="tab">
                             <i class="icon-copy"></i>
-                            {% trans "Copy" %}
+                            {% trans "Copy Application" %}
                         </a>
                     </li>
                     <li>
                         <a href="{% url view_app domain app.id %}delete/?edit={{ edit|BOOL }}#delete" data-toggle="tab">
                             <i class="icon-trash"></i>
-                            {% trans "Delete" %}
+                            {% trans "Delete Application" %}
                         </a>
                     </li>
                 {% endif %}

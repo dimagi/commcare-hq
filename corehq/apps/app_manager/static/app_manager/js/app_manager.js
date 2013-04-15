@@ -4,8 +4,7 @@
     COMMCAREHQ.app_manager = eventize({});
 
     COMMCAREHQ.app_manager.setCommcareVersion = function (version) {
-        COMMCAREHQ.app_manager.commcareVersion = version;
-        COMMCAREHQ.app_manager.fire('change:commcareVersion', {commcareVersion: version});
+        COMMCAREHQ.app_manager.commcareVersion(version);
     };
     COMMCAREHQ.app_manager.checkCommcareVersion = function (version) {
         function versionGE(commcareVersion1, commcareVersion2) {
@@ -25,11 +24,12 @@
                 return false;
             }
         }
-        return versionGE(COMMCAREHQ.app_manager.commcareVersion, version);
+        return versionGE(COMMCAREHQ.app_manager.commcareVersion(), version);
     };
     COMMCAREHQ.app_manager.init = function (args) {
         var appVersion = args.appVersion,
             edit = args.edit;
+        COMMCAREHQ.app_manager.commcareVersion = ko.observable();
 
         function updateDOM(update) {
             if (update.hasOwnProperty('app-version')) {
@@ -206,7 +206,7 @@
             $(this).closest('tr').find('[name="index"]').val($(this).text());
         }).trigger('change');
 
-        COMMCAREHQ.app_manager.on('change:commcareVersion', function () {
+        COMMCAREHQ.app_manager.commcareVersion.subscribe(function () {
             $('.commcare-feature').each(function () {
                 var version = '' + $(this).data('since-version') || '1.1',
                     upgradeMessage = $('<span class="upgrade-message"/>'),

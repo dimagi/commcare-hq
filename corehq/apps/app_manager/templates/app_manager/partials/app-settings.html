@@ -130,7 +130,7 @@ todo fix
                         <span data-bind="makeHqHelp: {name: name, description: $data.description, format: $data.description_format}, visible: $data.description"></span>
                     </label>
                     <div class="controls">
-                        <span data-bind="template: 'CommcareSettings.widgets.' + widget"></span>
+                        <span data-bind="template: $data.widget_template || 'CommcareSettings.widgets.' + widget"></span>
                         <span data-bind="visible: disabledMessage(), css: {'text-warning': !versionOK(), 'text-success': versionOK}">
                             <i data-bind="css: {'icon-arrow-left': !versionOK(), 'icon-ok': versionOK}"></i>
                             <span data-bind="text: disabledMessage()"></span>
