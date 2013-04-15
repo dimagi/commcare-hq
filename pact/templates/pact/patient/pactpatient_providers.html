@@ -103,7 +103,7 @@
             this.facility_name = ko.observable(data.facility_name);
             this.facility_address = ko.observable(data.facility_address);
         }
-        var api_url = "{% url pactdata_1 domain=domain %}?case_id={{ patient_doc.get_id }}";
+        var api_url = "{% url 'pactdata_1' domain=domain %}?case_id={{ patient_doc.get_id }}";
         function ProviderListViewModel() {
             // Data
             var self = this;
