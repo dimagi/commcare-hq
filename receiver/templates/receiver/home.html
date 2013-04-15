@@ -8,7 +8,7 @@
 <body>
 <div class="container">
     <h1>Receiver Home</h1>
-    <p>Your application is working. <strong>Post your xforms to http://[server root]{% url receiver_post %}</strong></p>
+    <p>Your application is working. <strong>Post your xforms to http://[server root]{% url 'receiver_post' %}</strong></p>
     <p>After submitting you should be able to see and download data below</p>
 {% if forms %}    
     <table>
@@ -24,7 +24,7 @@
             <tr>
                 <td>{{ xmlns }}</td>
                 <td>{{ count }}</td>
-                <td><a href="{% url model_download_excel %}?export_tag={{xmlns}}">download</a></td>
+                <td><a href="{% url 'model_download_excel' %}?export_tag={{xmlns}}">download</a></td>
             </tr>
 {% endfor %}        
         </tbody>
