@@ -598,7 +598,6 @@ def es_histogram(histo_type, domains=None, startdate=None, enddate=None, tz_diff
     q = {"query": {"match_all":{}}}
 
     if domains is not None:
-        print domains
         q["query"] = {"in" : {"domain.exact": domains}}
 
     q.update({
