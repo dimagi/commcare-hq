@@ -1,9 +1,5 @@
-from collections import defaultdict
-import functools
-from django.conf import settings
 from dimagi.utils.modules import to_function
 from django.utils.translation import ugettext_noop as _
-from dimagi.utils.parsing import string_to_datetime
 from django.utils.datastructures import SortedDict
 
 # change here to debug as if today were some day in the past
