@@ -1285,22 +1285,29 @@ class ApplicationBase(VersionedDoc, SnapshotMixin):
     def get_jadjar(self):
         return self.get_build().get_jadjar(self.get_jar_path())
 
+    @property
+    def jad_settings(self):
+        return {
+            'JavaRosa-Admin-Password': self.admin_password,
+            'Profile': self.profile_loc,
+            'MIDlet-Jar-URL': self.jar_url,
+            #'MIDlet-Name': self.name,
+            # e.g. 2011-Apr-11 20:45
+            'CommCare-Release': "true",
+            'Build-Number': self.version,
+        }
+
     def create_jadjar(self, save=False):
         try:
             return self.fetch_attachment('CommCare.jad'), self.fetch_attachment('CommCare.jar')
         except ResourceError:
             built_on = datetime.utcnow()
             all_files = self.create_all_files()
-            jadjar = self.get_jadjar().pack(all_files, {
-                'JavaRosa-Admin-Password': self.admin_password,
-                'Profile': self.profile_loc,
-                'MIDlet-Jar-URL': self.jar_url,
-                #'MIDlet-Name': self.name,
-                # e.g. 2011-Apr-11 20:45
+            jad_settings = {
                 'Released-on': built_on.strftime("%Y-%b-%d %H:%M"),
-                'CommCare-Release': "true",
-                'Build-Number': self.version,
-            })
+            }
+            jad_settings.update(self.jad_settings)
+            jadjar = self.get_jadjar().pack(all_files, jad_settings)
             if save:
                 self.built_on = built_on
                 self.built_with = BuildRecord(
@@ -1609,6 +1616,18 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
                 )
         return commcare_translations.dumps(messages).encode('utf-8')
 
+    @property
+    def skip_validation(self):
+        properties = (self.profile or {}).get('properties', {})
+        return properties.get('cc-content-valid', 'yes')
+
+    @property
+    def jad_settings(self):
+        s = super(Application, self).jad_settings
+        s.update({
+            'Skip-Validation': self.skip_validation,
+        })
+        return s
 
     def create_profile(self, is_odk=False, template='app_manager/profile.xml'):
         app_profile = defaultdict(dict)
