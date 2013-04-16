@@ -342,7 +342,7 @@ var CaseXML = (function () {
         this.template.update(this.subhome.get(0), this);
         COMMCAREHQ.initBlock(this.subhome);
         $('.action-checkbox').each(function () {
-            var container = $(this).next().next('.well');
+            var container = $(this).parent().next('.well');
             if (!$(this).is(':checked')) {
                 container.hide();
             }
@@ -364,7 +364,7 @@ var CaseXML = (function () {
                 casexml.render();
                 casexml.change();
             }).delegate('input.action-checkbox', 'change', function () {
-                var container = $(this).next().next('.well');
+                var container = $(this).parent().next('.well');
                 if ($(this).is(':checked')) {
                     container.slideDown();
                 } else {

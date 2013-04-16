@@ -670,7 +670,7 @@ var DetailScreenConfig = (function () {
         FILTER_XPATH_FORMAT: 'Filter (Advanced)',
         FILTER_XPATH_EXTRA_LABEL: 'Filter XPath',
         INVISIBLE_FORMAT: 'Search Only',
-        ADDRESS_FORMAT: 'Address (ODK/CloudCare)',
+        ADDRESS_FORMAT: 'Address (Android/CloudCare)',
 
         ADD_COLUMN: 'Add to list',
         COPY_COLUMN: 'Duplicate',
