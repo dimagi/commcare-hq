@@ -4,6 +4,7 @@ from corehq.apps.hqmedia.urls import download_urls as media_download_urls
 urlpatterns = patterns('corehq.apps.app_manager.views',
     url(r'^$', 'download_index', {}, 'download_index'),
     url(r'^suite.xml$', 'download_suite', {}, 'download_suite'),
+    url(r'^media_suite.xml$', 'download_media_suite', {}, 'download_media_suite'),
     url(r'^profile.xml$', 'download_profile', {}, 'download_profile'),
     url(r'^profile.ccpr$', 'download_odk_profile', {}, 'download_odk_profile'),
     url(r'^(?P<lang>[\w-]+)/app_strings.txt$', 'download_app_strings', {}, 'download_app_strings'),
