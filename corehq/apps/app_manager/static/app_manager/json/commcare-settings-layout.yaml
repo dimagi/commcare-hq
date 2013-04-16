@@ -25,7 +25,6 @@
     - properties.cc-autosync-freq  # Auto-Sync Frequency
     - properties.unsent-time-limit  # Unsynced Time Limit
     - properties.cc-content-valid  # Multimedia Validation
-    - properties.password_format  # Password Format
 
 - title: 'Java Phone General Settings'
   id: app-settings-j2me-properties
@@ -36,6 +35,7 @@
     - hq.admin_password  # Admin Password
     - hq.show_user_registration  # Allow User Registration from Phone
     - properties.cc-send-procedure  # Send Data
+    - properties.password_format  # Password Format
 
 - title: 'Java Phone User Interface Settings'
   id: app-settings-j2me-ui
