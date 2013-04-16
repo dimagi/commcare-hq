@@ -30,7 +30,11 @@
         [% } %]
     [% } %]
         [% if(value && !something_is_selected) { %]
-            <span class="help-link" data-help-key="app_manager/unidentified_question"></span>
+            <div class="alert alert-danger">
+                We cannot find this question in the form.
+                It is likely that you deleted or renamed the question.
+                Please choose a valid question from the dropdown.
+            </div>
         [% } %]
 [% } else { %]
     [% options.forEach(function(o){ %]
