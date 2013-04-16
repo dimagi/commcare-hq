@@ -797,8 +797,8 @@ ol.inline {
   margin-left: 0;
   list-style: none;
 }
-ul.inline  > li,
-ol.inline  > li {
+ul.inline > li,
+ol.inline > li {
   display: inline-block;
   padding-left: 5px;
   padding-right: 5px;
@@ -3380,27 +3380,30 @@ th.header > div {
 }
 .hq-help {
   position: relative;
-  width: 40px;
   overflow: visible;
+  width: 0px;
+  line-height: 25px;
+  margin: 0 3px;
 }
 .hq-help i {
   font-size: 20px;
-  line-height: 25px;
-  width: 25px;
   text-decoration: none;
   position: absolute;
-  top: -30%;
-  left: 6.666666666666667px;
+  bottom: -3px;
 }
 .hq-help:hover i,
 .hq-help.on i {
   font-size: 30px;
   text-decoration: none;
-  left: 4.666666666666667px;
+  bottom: -8px;
+  left: -5px;
   color: #46a546;
 }
 .hq-help .popover {
   color: #333333;
+}
+.icon-blue {
+  color: #449ADC;
 }
 .dropup,
 .dropdown {
@@ -3517,7 +3520,7 @@ th.header > div {
 .open {
   *z-index: 1000;
 }
-.open  > .dropdown-menu {
+.open > .dropdown-menu {
   display: block;
 }
 .pull-right > .dropdown-menu {
