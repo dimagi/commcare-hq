@@ -380,7 +380,7 @@ class FormBase(DocumentSchema):
     version = IntegerProperty()
     source = FormSource()
     validation_cache = CouchCachedStringProperty(
-        lambda self: "cache-%s-validation" % self.unique_id
+        lambda self: "cache-%s-%s-validation" % (self.get_app().get_id, self.unique_id)
     )
 
     @classmethod
@@ -1285,22 +1285,29 @@ class ApplicationBase(VersionedDoc, SnapshotMixin):
     def get_jadjar(self):
         return self.get_build().get_jadjar(self.get_jar_path())
 
+    @property
+    def jad_settings(self):
+        return {
+            'JavaRosa-Admin-Password': self.admin_password,
+            'Profile': self.profile_loc,
+            'MIDlet-Jar-URL': self.jar_url,
+            #'MIDlet-Name': self.name,
+            # e.g. 2011-Apr-11 20:45
+            'CommCare-Release': "true",
+            'Build-Number': self.version,
+        }
+
     def create_jadjar(self, save=False):
         try:
             return self.fetch_attachment('CommCare.jad'), self.fetch_attachment('CommCare.jar')
         except ResourceError:
             built_on = datetime.utcnow()
             all_files = self.create_all_files()
-            jadjar = self.get_jadjar().pack(all_files, {
-                'JavaRosa-Admin-Password': self.admin_password,
-                'Profile': self.profile_loc,
-                'MIDlet-Jar-URL': self.jar_url,
-                #'MIDlet-Name': self.name,
-                # e.g. 2011-Apr-11 20:45
+            jad_settings = {
                 'Released-on': built_on.strftime("%Y-%b-%d %H:%M"),
-                'CommCare-Release': "true",
-                'Build-Number': self.version,
-            })
+            }
+            jad_settings.update(self.jad_settings)
+            jadjar = self.get_jadjar().pack(all_files, jad_settings)
             if save:
                 self.built_on = built_on
                 self.built_with = BuildRecord(
@@ -1442,8 +1449,7 @@ class SavedAppBuild(ApplicationBase):
 
 class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
     """
-    A Managed Application that can be created entirely through the online interface, except for writing the
-    forms themselves.
+    An Application that can be created entirely through the online interface
 
     """
     user_registration = SchemaProperty(UserRegistrationForm)
@@ -1454,6 +1460,7 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
     use_custom_suite = BooleanProperty(default=False)
     force_http = BooleanProperty(default=False)
     cloudcare_enabled = BooleanProperty(default=False)
+    include_media_resources = BooleanProperty(default=False)
     
     @classmethod
     def wrap(cls, data):
@@ -1524,6 +1531,14 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
     def suite_loc(self):
         return "suite.xml"
 
+    @absolute_url_property
+    def media_suite_url(self):
+        return reverse('download_media_suite', args=[self.domain, self.get_id])
+
+    @property
+    def media_suite_loc(self):
+        return "media_suite.xml"
+
     def fetch_xform(self, module_id=None, form_id=None, form=None):
         if not form:
             form = self.get_module(module_id).get_form(form_id)
@@ -1581,14 +1596,17 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
                 yield id_strings.form_locale(form), trans(form.name) + ('${0}' if form.show_count else '')
 
 
-    def create_app_strings(self, lang):
+    def create_app_strings(self, lang, include_blank_custom=False):
         def non_empty_only(dct):
             return dict([(key, value) for key, value in dct.items() if value])
         if lang != "default":
             messages = {"cchq.case": "Case", "cchq.referral": "Referral"}
 
             custom = dict(self._create_custom_app_strings(lang))
-            messages.update(non_empty_only(custom))
+            if include_blank_custom:
+                messages.update(custom)
+            else:
+                messages.update(non_empty_only(custom))
 
             # include language code names
             for lc in self.langs:
@@ -1605,10 +1623,24 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
             for lc in reversed(self.langs):
                 if lc == "default": continue
                 messages.update(
-                    commcare_translations.loads(self.create_app_strings(lc))
+                    commcare_translations.loads(
+                        self.create_app_strings(lc, include_blank_custom=True)
+                    )
                 )
         return commcare_translations.dumps(messages).encode('utf-8')
 
+    @property
+    def skip_validation(self):
+        properties = (self.profile or {}).get('properties', {})
+        return properties.get('cc-content-valid', 'yes')
+
+    @property
+    def jad_settings(self):
+        s = super(Application, self).jad_settings
+        s.update({
+            'Skip-Validation': self.skip_validation,
+        })
+        return s
 
     def create_profile(self, is_odk=False, template='app_manager/profile.xml'):
         app_profile = defaultdict(dict)
@@ -1658,13 +1690,20 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
                 'langs': ["default"] + self.build_langs
             })
         else:
-            return suite_xml.generate_suite(self)
+            return suite_xml.SuiteGenerator(self).generate_suite()
+
+    def create_media_suite(self):
+        return suite_xml.SuiteGenerator(self).generate_suite(
+            sections=['media_resources']
+        )
 
     def create_all_files(self):
         files = {
             "profile.xml": self.create_profile(),
             "suite.xml": self.create_suite(),
         }
+        if self.include_media_resources:
+            files['media_suite.xml'] = self.create_media_suite()
 
         if self.show_user_registration:
             files["user_registration.xml"] = self.fetch_xform(form=self.get_user_registration())

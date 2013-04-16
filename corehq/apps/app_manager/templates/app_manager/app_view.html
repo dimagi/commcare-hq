@@ -38,16 +38,6 @@
             };
             ko.applyBindings(COMMCAREHQ.appView.settings, $('#commcare-settings').get(0));
             ko.applyBindings(COMMCAREHQ.appView.settings, $('#success-message').get(0));
-
-            // https://github.com/twitter/bootstrap/issues/6122
-            $('.collapse').hover(
-                function () {
-                    $(this).css('overflow','visible');
-                },
-                function () {
-                    $(this).css('overflow','hidden');
-                }
-            );
         });
 
     </script>
