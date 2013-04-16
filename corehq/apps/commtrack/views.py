@@ -1,7 +1,8 @@
+from collections import defaultdict
 from django.http import HttpResponse, HttpResponseRedirect, Http404
 from django.shortcuts import render
 
-from corehq.apps.domain.decorators import require_superuser, domain_admin_required
+from corehq.apps.domain.decorators import require_superuser, domain_admin_required, require_previewer
 from corehq.apps.domain.models import Domain
 from corehq.apps.commtrack.management.commands import bootstrap_psi
 from corehq.apps.commtrack.models import Product
@@ -148,3 +149,47 @@ def _async_in_progress(request, domain, download_id):
         (reverse('hq_soil_download', kwargs={'domain': domain, 'download_id': download_id})),
         extra_tags="html")
     return HttpResponseRedirect(reverse('domain_homepage', args=[domain]))
+
+
+@require_previewer
+def charts(request, domain, template="commtrack/charts.html"):
+    products = Product.by_domain(domain)
+    prod_codes = [p.code for p in products]
+    prod_codes.extend(range(20))
+
+    from random import randint
+    num_facilities = randint(44, 444)
+
+
+    ### gen fake data
+    def vals():
+        tot = 0
+        l = []
+        for i in range(4):
+            v = randint(0, num_facilities - tot)
+            l.append(v)
+            tot += v
+        l.append(num_facilities - tot)
+        return l
+
+    statuses = [
+        {"key": "stocked out", "color": "#e00707"},
+        {"key": "under stock", "color": "#ffb100"},
+        {"key": "adequate stock", "color": "#4ac925"},
+        {"key": "overstocked", "color": "#b536da"},
+        {"key": "no data", "color": "#ABABAB"}
+    ]
+
+    for s in statuses:
+        s["values"] = []
+
+    for i, p in enumerate(prod_codes):
+        vs = vals()
+        for j in range(5):
+            statuses[j]["values"].append({"x": p, "y": vs[j]})
+
+    ctxt = {
+        "domain": domain,
+        "data": statuses
+    }
+    return render(request, template, ctxt)

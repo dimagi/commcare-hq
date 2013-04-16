@@ -5,6 +5,7 @@ urlpatterns = patterns('corehq.apps.commtrack.views',
     url(r'^debug/bootstrap/$', 'bootstrap'),
     url(r'^debug/import_locations/$', 'location_import'),
     url(r'^debug/import_history/$', 'historical_import'),
+    url(r'^debug/charts/$', 'charts'),
 )
 
 # used in settings urls
