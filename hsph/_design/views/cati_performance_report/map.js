@@ -79,7 +79,7 @@ function(doc) {
     for (var i in doc.actions) {
         var days = daysSinceEpoch(new Date(doc.actions[i].date));
         if (data.workingDays.indexOf(days) === -1) {
-            data.workingDays.push();
+            data.workingDays.push(days);
         }
     }
 

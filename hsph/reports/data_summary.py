@@ -4,6 +4,7 @@ from corehq.apps.reports.generic import GenericTabularReport
 from dimagi.utils.couch.database import get_db
 from hsph.fields import IHForCHFField, SelectReferredInStatusField
 from hsph.reports import HSPHSiteDataMixin
+import itertools
 
 class DataSummaryReport(CustomProjectReport, ProjectReportParametersMixin, DatespanMixin):
     """
@@ -189,3 +190,83 @@ class SecondaryOutcomeReport(DataSummaryReport, HSPHSiteDataMixin):
                                         data['positiveOutcomeEvents'] - \
                                         data['lostToFollowUp']
         return data
+
+
+class FADAObservationsReport(DataSummaryReport, HSPHSiteDataMixin):
+    name = "FADA Observations"
+    slug = "fada_observations"
+
+    fields = ['corehq.apps.reports.fields.DatespanField',
+              'corehq.apps.reports.fields.SelectMobileWorkerField']
+
+    report_template_path = 'hsph/reports/fada_observations.html'
+    flush_layout = True
+
+    @property
+    def report_context(self):
+        keys = [
+            "total_forms",
+            "pp1_observed",
+            "pp1_maternal_temp",
+            "pp1_maternal_bp",
+            "pp1_partograph",
+            "pp1_scc_used_pp1",
+            "pp1_pp_1_birth_companion_present",
+            "pp2_observed",
+            "pp2_oxycotin_started",
+            "pp2_soap",
+            "pp2_water",
+            "pp2_gloves_used",
+            "pp2_scc_used_pp2",
+            "pp2_pp3_birth_companion_present",
+            "pp3_observed",
+            "pp3_oxycotin",
+            "pp3_baby_apneic",
+            "pp3_baby_intervention",
+            "pp3_pp_3_birth_companion_present",
+            "pp4_observed",
+            "pp4_baby_wt",
+            "pp4_baby_temp",
+            "pp4_breastfeeding",
+            "pp4_scc_used_pp4",
+            "pp4_pp_4_birth_companion_present",
+            "medication_observed",
+            "med_oxycotin_admin",
+            "med_ab_mother",
+            "med_mgsulp",
+            "med_ab_baby",
+            "med_art_mother",
+            "med_art_baby",
+            "med_antiobiotics_baby"
+        ]
+
+        values = dict((k, 0) for k in keys)
+
+        db = get_db()
+
+        print self.user_ids
+
+        for key in itertools.product(keys, self.user_ids):
+            key = list(key)
+
+            results = db.view("hsph/fada_observations",
+                reduce=True,
+                group_level=4,
+                startkey=key + [self.datespan.startdate_param_utc],
+                endkey=key + [self.datespan.enddate_param_utc],
+                wrapper=lambda r: r['value']
+            )
+
+            for result in results:
+                values[key[0]] += result
+
+        unique_sbrs = values['unique_sbrs'] = values['total_forms']
+        for k, v in values.items():
+            if unique_sbrs:
+                values[k + '_pct'] = round(float(v) * 100 / unique_sbrs, 1)
+            else:
+                values[k + '_pct'] = '---'
+
+        return values
+
+
