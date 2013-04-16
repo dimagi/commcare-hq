@@ -394,15 +394,18 @@ def get_app_view_context(request, app):
         profile = app.profile
     except AttributeError:
         profile = {}
+    hq_settings = dict([
+        (attr, app[attr])
+        for attr in app.properties() if not hasattr(app[attr], 'pop')
+    ])
+    if hasattr(app, 'custom_suite'):
+        hq_settings.update({'custom_suite': app.custom_suite})
     context = {
         'settings_layout': load_commcare_settings_layout(app.get_doc_type()),
         'settings_values': {
             'properties': profile.get('properties', {}),
             'features': profile.get('features', {}),
-            'hq': dict([
-                (attr, app[attr])
-                for attr in app.properties() if not hasattr(app[attr], 'pop')
-            ]),
+            'hq': hq_settings,
             '$parent': {
                 'doc_type': app.get_doc_type()
             }
