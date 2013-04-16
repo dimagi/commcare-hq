@@ -9,7 +9,6 @@ from corehq.apps.commtrack.forms import ProductForm
 from soil.util import expose_download
 import uuid
 from django.core.urlresolvers import reverse
-from dimagi.utils.web import get_url_base
 from django.contrib import messages
 from corehq.apps.commtrack.tasks import import_locations_async,\
     import_stock_reports_async
@@ -95,13 +94,17 @@ def product_edit(request, domain, prod_id=None):
 def bootstrap(request, domain):
     if request.method == "POST":
         D = Domain.get_by_name(domain)
+
         if D.commtrack_enabled:
             return HttpResponse('already configured', 'text/plain')
         else:
             bootstrap_psi.one_time_setup(D)
             return HttpResponse('set up successfully', 'text/plain')
 
-    return HttpResponse('<form method="post" action=""><button type="submit">Bootstrap Commtrack domain</button></form>')
+    return render(request, 'commtrack/debug/bootstrap.html', {
+        'domain': domain,
+        }
+    )
 
 @require_superuser
 def location_import(request, domain):
