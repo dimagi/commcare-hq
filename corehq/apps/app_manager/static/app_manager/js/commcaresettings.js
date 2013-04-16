@@ -1,10 +1,3 @@
-/**
- * Created with PyCharm.
- * User: droberts
- * Date: 3/4/13
- * Time: 10:17 PM
- */
-
 function CommcareSettings(options) {
     var self = this;
     var initialValues = options.values;
@@ -207,7 +200,6 @@ function CommcareSettings(options) {
         });
     }, 0);
     self.saveOptions = ko.computed(function () {
-//        console.log(JSON.stringify(self.serialize()));
         return {
             url: options.urls.save,
             data: JSON.stringify(self.serialize()),
@@ -260,8 +252,6 @@ CommcareSettings.widgets.select = function (self) {
                     return retu;
                 }
             }
-//            var message = 'Not a valid value for ' + self.type + '.' + self.id + ': ' + self.value() +
-//                '. Options: ' + JSON.stringify(self.options());
             return null;
         },
         write: self.selectOption
@@ -282,8 +272,6 @@ CommcareSettings.widgets.bool = function (self) {
     if (!self.values) {
         self.values = [true, false];
     }
-//    self.value_names = ['Yes', 'No'];
-//    CommcareSettings.widgets.select(self);
     self.boolValue = ko.computed({
         read: function () {
             return !!(self.visibleValue() === self.values[0]);
