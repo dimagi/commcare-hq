@@ -17,33 +17,36 @@
     </thead>
     <tbody data-bind="sortable: languages">
         <tr class="row control-group" data-bind="css: {error: show_error, light: !deploy()}">
-            <td class="span1" data-bind="css: {'sortable-handle': $root.editing}">
-                <i class="icon-move" data-bind="visible: $root.editing"></i>
+            <td data-bind="css: {'sortable-handle': $root.editing && $root.languages().length > 1}">
+                <i class="icon-resize-vertical" data-bind="visible: $root.editing && $root.languages().length > 1"></i>
             </td>
-            <td class="span1">
+            <td>
                 <span data-bind="text: $root.languages.indexOf($data) + 1 + '.', visible: $root.languages()[0] !== $data"></span>
                 <span class="label label-info" data-bind="visible: $root.languages()[0] === $data">1. default</span>
             </td>
-            <td class="span1">
+            <td>
                 <span data-bind="editableBool: deploy, editing: $root.editing"></span>
             </td>
-            <td class="span2">
+            <td>
                 <span data-bind="langcode: langcode, valueUpdate: 'textchange', editing: $root.editing, inputHandlers: {hasfocus: $root.seen}"></span>
             </td>
-            <td class="span1">
+            <td>
                 <span data-bind="visible: originalLangcode() && originalLangcode() !== langcode()"><i class="icon-arrow-left"></i></span>
             </td>
-            <td class="span1">
+            <td>
                 <span class="code" data-bind="text: originalLangcode, visible: originalLangcode() !== langcode()"></span>
             </td>
-            <td class="span4"><p class="help-inline" data-bind="text: message"></p></td>
-            <td class="span1">
+            <td><p class="help-inline" data-bind="text: message"></p></td>
+            <td>
                 <a href="#" data-bind="click: $root.removeLanguage, visible: $root.editing">Delete</a>
             </td>
         </tr>
     </tbody>
 </table>
-<button class="btn" data-bind="click: addLanguage, visible: editing">Add Language</button>
+<button class="btn" data-bind="click: addLanguage, visible: editing">
+    <i class="icon-plus"></i>
+    Add Language
+</button>
 <div data-bind="if: removedLanguages().length">
     <h6>Deleting Languages:</h6>
     <table class="table">

@@ -414,7 +414,7 @@ var uiElement;
                 this.val(this.value);
                 this.setEdit(this.edit);
             };
-            Checkbox.CHECKED = "ui-icon ui-icon-check";
+            Checkbox.CHECKED = "icon-ok";
             Checkbox.UNCHECKED = "";
             Checkbox.prototype = {
                 val: function (value) {

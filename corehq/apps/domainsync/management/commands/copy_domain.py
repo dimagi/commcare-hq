@@ -6,6 +6,14 @@ from couchdbkit.client import Database
 from optparse import make_option
 from datetime import datetime
 
+# doctypes we want to be careful not to copy, which must be explicitly
+# specified with --include
+DEFAULT_EXCLUDE_TYPES = [
+    'ReportNotification',
+    'WeeklyNotification',
+    'DailyNotification'
+]
+
 class Command(BaseCommand):
     help = "Copies the contents of a domain to another database."
     args = '<sourcedb> <domain>'
@@ -15,11 +23,16 @@ class Command(BaseCommand):
                     dest='doc_types',
                     default='',
                     help='Comma-separated list of Document Types to copy'),
+        make_option('--exclude',
+                    action='store',
+                    dest='doc_types_exclude',
+                    default='',
+                    help='Comma-separated list of Document Types to NOT copy.'),
         make_option('--since',
                     action='store',
                     dest='since',
                     default='',
-                    help='Only copy documents newer thank this date. Format: yyyy-MM-dd. Only '),
+                    help='Only copy documents newer than this date. Format: yyyy-MM-dd. Only '),
         make_option('--list-types',
                     action='store_true',
                     dest='list_types',
@@ -59,7 +72,8 @@ class Command(BaseCommand):
         else:
             startkey = [domain]
             endkey = [domain, {}]
-            self.copy_docs(sourcedb, domain, startkey, endkey, simulate)
+            exclude_types = DEFAULT_EXCLUDE_TYPES + options['doc_types_exclude'].split(',')
+            self.copy_docs(sourcedb, domain, startkey, endkey, simulate, exclude_types=exclude_types)
 
     def list_types(self, sourcedb, domain):
         doc_types = sourcedb.view("domain/docs", startkey=[domain],
@@ -67,7 +81,7 @@ class Command(BaseCommand):
         for row in doc_types:
             print "{:<30}- {}".format(row['key'][1], row['value'])
 
-    def copy_docs(self, sourcedb, domain, startkey, endkey, simulate, type=None, since=None):
+    def copy_docs(self, sourcedb, domain, startkey, endkey, simulate, type=None, since=None, exclude_types=None):
         doc_ids = [result["id"] for result in sourcedb.view("domain/docs", startkey=startkey,
                              endkey=endkey, reduce=False)]
 
@@ -81,9 +95,13 @@ class Command(BaseCommand):
         for doc in iter_docs(sourcedb, doc_ids):
             try:
                 count += 1
-                if not simulate:
-                    dt = DocumentTransform(doc, sourcedb)
-                    save(dt, targetdb)
-                print "     Synced %s/%s docs (%s: %s)" % (count, total, doc["doc_type"], doc["_id"])
+                if exclude_types and doc["doc_type"] in exclude_types:
+                    print "     SKIPPED (excluded type: %s). Synced %s/%s docs (%s: %s)" % \
+                          (doc["doc_type"], count, total, doc["doc_type"], doc["_id"])
+                else:
+                    if not simulate:
+                        dt = DocumentTransform(doc, sourcedb)
+                        save(dt, targetdb)
+                    print "     Synced %s/%s docs (%s: %s)" % (count, total, doc["doc_type"], doc["_id"])
             except Exception, e:
                 print "     Document %s failed! Error is: %s" % (doc["_id"], e)
