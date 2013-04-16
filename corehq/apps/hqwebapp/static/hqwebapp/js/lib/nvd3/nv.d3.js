@@ -432,11 +432,11 @@ nv.models.axis = function() {
       axisLabel.exit().remove();
       switch (axis.orient()) {
         case 'top':
-          axisLabel.enter().append('text').attr('class', 'nv-axislabel')
-              .attr('text-anchor', 'middle')
-              .attr('y', 0);
+          axisLabel.enter().append('text').attr('class', 'nv-axislabel');
           var w = (scale.range().length==2) ? scale.range()[1] : (scale.range()[scale.range().length-1]+(scale.range()[1]-scale.range()[0]));
           axisLabel
+              .attr('text-anchor', 'middle')
+              .attr('y', 0)
               .attr('x', w/2);
           if (showMaxMin) {
             var axisMaxMin = wrap.selectAll('g.nv-axisMaxMin')
@@ -479,11 +479,11 @@ nv.models.axis = function() {
               .attr('transform', function(d,i,j) { return 'rotate(' + rotateLabels + ' 0,0)' })
               .attr('text-anchor', rotateLabels%360 > 0 ? 'start' : 'end');
           }
-          axisLabel.enter().append('text').attr('class', 'nv-axislabel')
-            .attr('text-anchor', 'middle')
-            .attr('y', xLabelMargin);
+          axisLabel.enter().append('text').attr('class', 'nv-axislabel');
           var w = (scale.range().length==2) ? scale.range()[1] : (scale.range()[scale.range().length-1]+(scale.range()[1]-scale.range()[0]));
           axisLabel
+              .attr('text-anchor', 'middle')
+              .attr('y', xLabelMargin)
               .attr('x', w/2);
           if (showMaxMin) {
           //if (showMaxMin && !isOrdinal) {
@@ -518,11 +518,11 @@ nv.models.axis = function() {
 
           break;
         case 'right':
-          axisLabel.enter().append('text').attr('class', 'nv-axislabel')
+          axisLabel.enter().append('text').attr('class', 'nv-axislabel');
+          axisLabel
               .attr('text-anchor', rotateYLabel ? 'middle' : 'begin')
               .attr('transform', rotateYLabel ? 'rotate(90)' : '')
-              .attr('y', rotateYLabel ? (-Math.max(margin.right,width) + 12) : -10); //TODO: consider calculating this based on largest tick width... OR at least expose this on chart
-          axisLabel
+              .attr('y', rotateYLabel ? (-Math.max(margin.right,width) + 12) : -10) //TODO: consider calculating this based on largest tick width... OR at least expose this on chart
               .attr('x', rotateYLabel ? (scale.range()[0] / 2) : axis.tickPadding());
           if (showMaxMin) {
             var axisMaxMin = wrap.selectAll('g.nv-axisMaxMin')
@@ -560,11 +560,11 @@ nv.models.axis = function() {
             if(labelPadding > width) width = labelPadding;
           });
           */
-          axisLabel.enter().append('text').attr('class', 'nv-axislabel')
+          axisLabel.enter().append('text').attr('class', 'nv-axislabel');
+          axisLabel
               .attr('text-anchor', rotateYLabel ? 'middle' : 'end')
               .attr('transform', rotateYLabel ? 'rotate(-90)' : '')
-              .attr('y', rotateYLabel ? (-Math.max(margin.left,width) + 12) : -10); //TODO: consider calculating this based on largest tick width... OR at least expose this on chart
-          axisLabel
+              .attr('y', rotateYLabel ? (-Math.max(margin.left,width) + 12) : -10) //TODO: consider calculating this based on largest tick width... OR at least expose this on chart
               .attr('x', rotateYLabel ? (-scale.range()[0] / 2) : -axis.tickPadding());
           if (showMaxMin) {
             var axisMaxMin = wrap.selectAll('g.nv-axisMaxMin')
@@ -3129,7 +3129,6 @@ nv.models.distribution = function() {
 
   return chart;
 }
-
 nv.models.indentedTree = function() {
 
   //============================================================
@@ -3142,6 +3141,7 @@ nv.models.indentedTree = function() {
     , color = nv.utils.defaultColor()
     , id = Math.floor(Math.random() * 10000)
     , header = true
+    , filterZero = false
     , noData = "No Data Available."
     , childIndent = 20
     , columns = [{key:'key', label: 'Name', type:'text'}] //TODO: consider functions like chart.addColumn, chart.removeColumn, instead of a block like this
@@ -3176,7 +3176,6 @@ nv.models.indentedTree = function() {
 
       var nodes = tree.nodes(data[0]);
 
-
       //------------------------------------------------------------
       // Setup containers and skeleton of chart
 
@@ -3205,7 +3204,7 @@ nv.models.indentedTree = function() {
 
 
       var tbody = table.selectAll('tbody')
-                    .data(function(d) {return d });
+                    .data(function(d) { return d });
       tbody.enter().append('tbody');
 
 
@@ -3217,7 +3216,7 @@ nv.models.indentedTree = function() {
 
       // Update the nodes…
       var node = tbody.selectAll('tr')
-          .data(function(d) { return d }, function(d) { return d.id || (d.id == ++i)});
+          .data(function(d) { return d.filter(function(d) { return (filterZero && !d.children) ? filterZero(d) :  true; }) }, function(d) { return d.id || (d.id == ++i)});
           //.style('display', 'table-row'); //TODO: see if this does anything
 
       node.exit().remove();
@@ -3255,15 +3254,18 @@ nv.models.indentedTree = function() {
             .text(function(d) { return column.format ? column.format(d) :
                                         (d[column.key] || '-') });
 
-        if  (column.showCount)
+        if  (column.showCount) {
           nodeName.append('span')
-              .attr('class', 'nv-childrenCount')
-              .text(function(d) {
-                return ((d.values && d.values.length) || (d._values && d._values.length)) ?
-                    '(' + ((d.values && d.values.length) || (d._values && d._values.length)) + ')'
-                  : ''
-              });
+              .attr('class', 'nv-childrenCount');
 
+          node.selectAll('span.nv-childrenCount').text(function(d) {
+                return ((d.values && d.values.length) || (d._values && d._values.length)) ?                                   //If this is a parent
+                    '(' + ((d.values && (d.values.filter(function(d) { return filterZero ? filterZero(d) :  true; }).length)) //If children are in values check its children and filter
+                    || (d._values && d._values.filter(function(d) { return filterZero ? filterZero(d) :  true; }).length)     //Otherwise, do the same, but with the other name, _values...
+                    || 0) + ')'                                                                                               //This is the catch-all in case there are no children after a filter
+                    : ''                                                                                                     //If this is not a parent, just give an empty string
+            });
+        }
 
         if (column.click)
           nodeName.select('span').on('click', column.click);
@@ -3406,6 +3408,12 @@ nv.models.indentedTree = function() {
     return chart;
   };
 
+  chart.filterZero = function(_) {
+    if (!arguments.length) return filterZero;
+    filterZero = _;
+    return chart;
+  };
+
   chart.columns = function(_) {
     if (!arguments.length) return columns;
     columns = _;
@@ -3434,8 +3442,7 @@ nv.models.indentedTree = function() {
 
 
   return chart;
-}
-nv.models.legend = function() {
+};nv.models.legend = function() {
 
   //============================================================
   // Public Variables with Default Settings
@@ -5551,10 +5558,10 @@ nv.models.multiBar = function() {
                           y(0) :
                           y(0) - y(getY(d,i)) < 1 ?
                             y(0) - 1 :
-                            y(getY(d,i))
-                })
-                .attr('height', function(d,i) {
-                  return Math.max(Math.abs(y(getY(d,i)) - y(0)),1);
+                          y(getY(d,i)) || 0;
+              })
+              .attr('height', function(d,i) {
+                  return Math.max(Math.abs(y(getY(d,i)) - y(0)),1) || 0;
                 });
             })
 
@@ -5717,6 +5724,7 @@ nv.models.multiBarChart = function() {
     , state = { stacked: false }
     , noData = "No Data Available."
     , dispatch = d3.dispatch('tooltipShow', 'tooltipHide', 'stateChange', 'changeState')
+    , controlWidth = function() { return showControls ? 180 : 0 }
     ;
 
   multibar
@@ -5824,7 +5832,7 @@ nv.models.multiBarChart = function() {
       // Legend
 
       if (showLegend) {
-        legend.width(availableWidth / 2);
+        legend.width(availableWidth - controlWidth());
 
         if (multibar.barColor())
           data.forEach(function(series,i) {
@@ -5842,7 +5850,7 @@ nv.models.multiBarChart = function() {
         }
 
         g.select('.nv-legendWrap')
-            .attr('transform', 'translate(' + (availableWidth / 2) + ',' + (-margin.top) +')');
+            .attr('transform', 'translate(' + controlWidth() + ',' + (-margin.top) +')');
       }
 
       //------------------------------------------------------------
@@ -5857,7 +5865,7 @@ nv.models.multiBarChart = function() {
           { key: 'Stacked', disabled: !multibar.stacked() }
         ];
 
-        controls.width(180).color(['#444', '#444', '#444']);
+        controls.width(controlWidth()).color(['#444', '#444', '#444']);
         g.select('.nv-controlsWrap')
             .datum(controlsData)
             .attr('transform', 'translate(0,' + (-margin.top) +')')
@@ -5919,10 +5927,10 @@ nv.models.multiBarChart = function() {
 
       if(rotateLabels)
         xTicks
-            .selectAll('text')
-            .attr('transform', function(d,i,j) { return 'rotate('+rotateLabels+' 0,0)' })
-            .attr('text-transform', rotateLabels > 0 ? 'start' : 'end');
-
+          .selectAll('text')
+          .attr('transform', 'rotate(' + rotateLabels + ' 0,0)')
+          .attr('text-anchor', rotateLabels > 0 ? 'start' : 'end');
+      
       g.select('.nv-x.nv-axis').selectAll('g.nv-axisMaxMin text')
           .style('opacity', 1);
 
@@ -6584,6 +6592,7 @@ nv.models.multiBarHorizontalChart = function() {
     , state = { stacked: stacked }
     , noData = 'No Data Available.'
     , dispatch = d3.dispatch('tooltipShow', 'tooltipHide', 'stateChange', 'changeState')
+    , controlWidth = function() { return showControls ? 180 : 0 }
     ;
 
   multibar
@@ -6691,7 +6700,7 @@ nv.models.multiBarHorizontalChart = function() {
       // Legend
 
       if (showLegend) {
-        legend.width(availableWidth / 2);
+        legend.width(availableWidth - controlWidth());
 
         if (multibar.barColor())
           data.forEach(function(series,i) {
@@ -6709,7 +6718,7 @@ nv.models.multiBarHorizontalChart = function() {
         }
 
         g.select('.nv-legendWrap')
-            .attr('transform', 'translate(' + (availableWidth / 2) + ',' + (-margin.top) +')');
+            .attr('transform', 'translate(' + controlWidth() + ',' + (-margin.top) +')');
       }
 
       //------------------------------------------------------------
@@ -6724,7 +6733,7 @@ nv.models.multiBarHorizontalChart = function() {
           { key: 'Stacked', disabled: !multibar.stacked() }
         ];
 
-        controls.width(180).color(['#444', '#444', '#444']);
+        controls.width(controlWidth()).color(['#444', '#444', '#444']);
         g.select('.nv-controlsWrap')
             .datum(controlsData)
             .attr('transform', 'translate(0,' + (-margin.top) +')')
@@ -7017,7 +7026,7 @@ nv.models.multiChart = function() {
     var left = e.pos[0] + ( offsetElement.offsetLeft || 0 ),
         top = e.pos[1] + ( offsetElement.offsetTop || 0),
         x = xAxis.tickFormat()(lines1.x()(e.point, e.pointIndex)),
-        y = (e.series.bar ? yAxis1 : yAxis2).tickFormat()(lines1.y()(e.point, e.pointIndex)),
+        y = ((e.series.yAxis == 2) ? yAxis2 : yAxis1).tickFormat()(lines1.y()(e.point, e.pointIndex)),
         content = tooltip(e.series.key, x, y, e, chart);
 
     nv.tooltip.show([left, top], content, undefined, undefined, offsetElement.offsetParent);
@@ -7780,7 +7789,6 @@ nv.models.ohlcBar = function() {
 
   return chart;
 }
-
 nv.models.pie = function() {
 
   //============================================================
@@ -7793,14 +7801,19 @@ nv.models.pie = function() {
     , getValues = function(d) { return d.values }
     , getX = function(d) { return d.x }
     , getY = function(d) { return d.y }
+    , getDescription = function(d) { return d.description }
     , id = Math.floor(Math.random() * 10000) //Create semi-unique ID in case user doesn't select one
     , color = nv.utils.defaultColor()
     , valueFormat = d3.format(',.2f')
     , showLabels = true
+    , pieLabelsOutside = true
     , donutLabelsOutside = false
     , labelThreshold = .02 //if slice percentage is under this, don't show label
     , donut = false
     , labelSunbeamLayout = false
+    , startAngle = false
+    , endAngle = false
+    , donutRatio = 0.5
     , dispatch = d3.dispatch('chartClick', 'elementClick', 'elementDblClick', 'elementMouseover', 'elementMouseout')
     ;
 
@@ -7847,8 +7860,9 @@ nv.models.pie = function() {
       var arc = d3.svg.arc()
                   .outerRadius(arcRadius);
 
-      if (donut) arc.innerRadius(radius / 2);
-
+      if (startAngle) arc.startAngle(startAngle)
+      if (endAngle) arc.endAngle(endAngle);
+      if (donut) arc.innerRadius(radius * donutRatio);
 
       // Setup the Pie chart and choose the data element
       var pie = d3.layout.pie()
@@ -7920,10 +7934,11 @@ nv.models.pie = function() {
 
         if (showLabels) {
           // This does the normal label
-          var labelsArc = arc;
-          if (donutLabelsOutside) {
-            labelsArc = d3.svg.arc().outerRadius(arc.outerRadius())
-          }
+          var labelsArc = d3.svg.arc().innerRadius(0);
+          
+          if (pieLabelsOutside){ labelsArc = arc; }
+
+          if (donutLabelsOutside) { labelsArc = d3.svg.arc().outerRadius(arc.outerRadius()); }
 
           ae.append("g").classed("nv-label", true)
             .each(function(d, i) {
@@ -8075,6 +8090,12 @@ nv.models.pie = function() {
     getY = d3.functor(_);
     return chart;
   };
+  
+  chart.description = function(_) {
+    if (!arguments.length) return getDescription;
+    getDescription = _;
+    return chart;
+  };
 
   chart.showLabels = function(_) {
     if (!arguments.length) return showLabels;
@@ -8093,10 +8114,34 @@ nv.models.pie = function() {
     donutLabelsOutside = _;
     return chart;
   };
+  
+  chart.pieLabelsOutside = function(_) {
+    if (!arguments.length) return pieLabelsOutside;
+    pieLabelsOutside = _;
+    return chart;
+  };
 
   chart.donut = function(_) {
     if (!arguments.length) return donut;
     donut = _;
+    return chart;
+  };
+  
+  chart.donutRatio = function(_) {
+    if (!arguments.length) return donutRatio;
+    donutRatio = _;
+    return chart;
+  };
+
+  chart.startAngle = function(_) {
+    if (!arguments.length) return startAngle;
+    startAngle = _;
+    return chart;
+  };
+
+  chart.endAngle = function(_) {
+    if (!arguments.length) return endAngle;
+    endAngle = _;
     return chart;
   };
 
@@ -8123,13 +8168,11 @@ nv.models.pie = function() {
     labelThreshold = _;
     return chart;
   };
-
   //============================================================
 
 
   return chart;
 }
-
 nv.models.pieChart = function() {
 
   //============================================================
@@ -8163,10 +8206,11 @@ nv.models.pieChart = function() {
   //------------------------------------------------------------
 
   var showTooltip = function(e, offsetElement) {
+    var tooltipLabel = pie.description()(e.point) || pie.x()(e.point)
     var left = e.pos[0] + ( (offsetElement && offsetElement.offsetLeft) || 0 ),
         top = e.pos[1] + ( (offsetElement && offsetElement.offsetTop) || 0),
         y = pie.valueFormat()(pie.y()(e.point)),
-        content = tooltip(pie.x()(e.point), y, e, chart);
+        content = tooltip(tooltipLabel, y, e, chart);
 
     nv.tooltip.show([left, top], content, e.value < 0 ? 'n' : 's', null, offsetElement);
   };
@@ -8179,7 +8223,7 @@ nv.models.pieChart = function() {
       var container = d3.select(this),
           that = this;
 
-      var availableWidth = (width  || parseInt(container.style('width')) || 960)
+      var availableWidth = (width || parseInt(container.style('width')) || 960)
                              - margin.left - margin.right,
           availableHeight = (height || parseInt(container.style('height')) || 400)
                              - margin.top - margin.bottom;
@@ -8193,7 +8237,7 @@ nv.models.pieChart = function() {
       //------------------------------------------------------------
       // Display No Data message if there's nothing to show.
 
-      if (!data || !data.length) {
+      if (!data[0] || !data[0].length) {
         var noDataText = container.selectAll('.nv-noData').data([noData]);
 
         noDataText.enter().append('text')
@@ -8347,7 +8391,7 @@ nv.models.pieChart = function() {
   chart.dispatch = dispatch;
   chart.pie = pie;
 
-  d3.rebind(chart, pie, 'valueFormat', 'values', 'x', 'y', 'id', 'showLabels', 'donutLabelsOutside', 'donut', 'labelThreshold');
+  d3.rebind(chart, pie, 'valueFormat', 'values', 'x', 'y', 'description', 'id', 'showLabels', 'donutLabelsOutside', 'pieLabelsOutside', 'donut', 'donutRatio', 'labelThreshold');
 
   chart.margin = function(_) {
     if (!arguments.length) return margin;
@@ -11255,6 +11299,9 @@ nv.models.stackedAreaChart = function() {
             d.disabled = (i != e.seriesIndex);
             return d
           });
+
+        state.disabled = data.map(function(d) { return !!d.disabled });
+        dispatch.stateChange(state);
 
         //selection.transition().call(chart);
         chart(selection);
