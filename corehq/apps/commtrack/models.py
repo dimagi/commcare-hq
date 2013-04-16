@@ -1,4 +1,5 @@
 from couchdbkit.ext.django.schema import *
+from corehq.apps.commtrack import const
 from dimagi.utils.couch.loosechange import map_reduce
 from couchforms.models import XFormInstance
 from dimagi.utils import parsing as dateparse
@@ -12,6 +13,8 @@ from corehq.apps.commtrack.const import RequisitionActions
 # these are the allowable stock transaction types, listed in the
 # default ordering in which they are processed. processing order
 # may be customized per domain
+from dimagi.utils.decorators.memoized import memoized
+
 ACTION_TYPES = [
     # indicates the product has been stocked out for N days
     # prior to the reporting date, including today ('0' does
@@ -286,6 +289,27 @@ class StockTransaction(DocumentSchema):
                                        endkey=[product_case, end_date, {}])
         return [StockTransaction.wrap(row['value']) for row in q]
 
+
+class RequisitionCase(CommCareCase):
+    """
+    A wrapper around CommCareCases to get more built in functionality
+    """
+
+    @memoized
+    def get_product_case(self):
+        matching = filter(lambda i: i.identifier == const.PARENT_CASE_REF, self.indices)
+        if matching:
+            assert len(matching) == 1, 'should only be one parent index'
+            assert matching[0].referenced_type == const.SUPPLY_POINT_PRODUCT_CASE_TYPE, \
+                'req parent had bad case type %s' % matching[0].referenced_type
+            return CommCareCase.get(matching[0].referenced_id)
+
+        return None
+
+    class Meta:
+        app_label = "commtrack" # This is necessary otherwise syncdb will confuse this app with casexml
+
+
 class StockReport(object):
     """
     This is a wrapper around the couch xform doc that gets associated with
@@ -363,3 +387,5 @@ def post_loc_created(sender, loc=None, **kwargs):
     if loc.location_type in [loc_type.name for loc_type in config.location_types if not loc_type.administrative]:
         make_supply_point(loc.domain, loc)
 
+# import signals
+from . import signals
