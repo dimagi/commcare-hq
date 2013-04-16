@@ -176,6 +176,7 @@ def render_form(form, timezone=pytz.utc, display=None, case_id=None):
             timezone=timezone)
 
     return render_to_string("case/partials/single_form.html", {
+        "form_obj": form,
         "form_data": form_data,
         "form_meta_data": form_meta_data,
         "this_case_data": this_case_data,

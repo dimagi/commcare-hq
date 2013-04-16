@@ -406,16 +406,18 @@
                     var start_range = (start_num - 1) * self.page_size();
                     var actions = {{ case_actions }};
                     var end_range = start_range + self.page_size();
-                    if (end_range >= {{ case.xform_ids|length }}) {
-                        end_range = {{ case.xform_ids|length }} - 1;
+                    if (end_range > {{ case.xform_ids|length }}) {
+                        end_range = {{ case.xform_ids|length }};
                     }
+                    var xform_ids = {{ case.xform_ids|safe }};
 
                     return {
                         "filter": {
                             "ids": {
                                 "values": _.map(_.range(start_range, end_range),
                                                     function(idx) {
-                                                        return actions[idx].xform_id})
+                                                        return xform_ids[idx];
+                                                    })
                             }
                         },
                         "from": 0,

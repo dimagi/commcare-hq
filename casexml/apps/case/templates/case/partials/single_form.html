@@ -4,7 +4,7 @@
 <ul class="nav nav-tabs">
     <li class="active">
         <a href="#form-data" data-toggle="tab">
-            {% trans "Form Data" %}
+            {% trans "Form" %}
         </a>
     </li>
     <li>
@@ -22,6 +22,7 @@
 <div class="tab-content">
     <div class="tab-pane active" id="form-data">
         {% render_tables form_data %}
+        <a href="{% url render_form_data form_obj.domain form_obj.get_id %}">View Submission</a>
     </div>
     <div class="tab-pane" id="form-case-data">
         {% if this_case_data and other_cases_data %}
