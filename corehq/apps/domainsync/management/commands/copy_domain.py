@@ -6,6 +6,14 @@ from couchdbkit.client import Database
 from optparse import make_option
 from datetime import datetime
 
+# doctypes we want to be careful not to copy, which must be explicitly
+# specified with --include
+DEFAULT_EXCLUDE_TYPES = [
+    'ReportNotification',
+    'WeeklyNotification',
+    'DailyNotification'
+]
+
 class Command(BaseCommand):
     help = "Copies the contents of a domain to another database."
     args = '<sourcedb> <domain>'
@@ -18,13 +26,13 @@ class Command(BaseCommand):
         make_option('--exclude',
                     action='store',
                     dest='doc_types_exclude',
-                    default='ReportNotification',
+                    default='',
                     help='Comma-separated list of Document Types to NOT copy.'),
         make_option('--since',
                     action='store',
                     dest='since',
                     default='',
-                    help='Only copy documents newer thank this date. Format: yyyy-MM-dd. Only '),
+                    help='Only copy documents newer than this date. Format: yyyy-MM-dd. Only '),
         make_option('--list-types',
                     action='store_true',
                     dest='list_types',
@@ -64,7 +72,7 @@ class Command(BaseCommand):
         else:
             startkey = [domain]
             endkey = [domain, {}]
-            exclude_types = options['doc_types_exclude'].split(',')
+            exclude_types = DEFAULT_EXCLUDE_TYPES + options['doc_types_exclude'].split(',')
             self.copy_docs(sourcedb, domain, startkey, endkey, simulate, exclude_types=exclude_types)
 
     def list_types(self, sourcedb, domain):
