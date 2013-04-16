@@ -266,6 +266,7 @@ class StockTransaction(DocumentSchema):
     product_entry = StringProperty()
     received_on = DateTimeProperty()
     inferred = BooleanProperty(name='@inferred', default=False)
+    processing_order = IntegerProperty(name='@order')
 
     @classmethod
     def by_domain(cls, domain, skip=0, limit=100):
@@ -277,6 +278,13 @@ class StockTransaction(DocumentSchema):
         return [StockTransaction.wrap(row["value"]) for row in _view_shared(
             'commtrack/stock_transactions', domain, location_id,
             skip=skip, limit=limit)]
+
+    @classmethod
+    def by_product(cls, product_case, start_date, end_date):
+        q = CommCareCase.get_db().view('commtrack/stock_transactions_by_product',
+                                       startkey=[product_case, start_date],
+                                       endkey=[product_case, end_date, {}])
+        return [StockTransaction.wrap(row['value']) for row in q]
 
 class StockReport(object):
     """

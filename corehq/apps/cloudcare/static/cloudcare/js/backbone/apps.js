@@ -32,7 +32,7 @@ cloudCare.AppSummary = Backbone.Model.extend({
 cloudCare.AppSummaryView = Selectable.extend({
     tagName: 'li',
     initialize: function() {
-        _.bindAll(this, 'render', 'toggle', 'select', 'deselect');
+        _.bindAll(this, 'render', 'toggle', 'select', 'deselect', 'enable', 'disable');
     },
     render: function() {
         $("<a />").text(this.model.get("name")).appendTo($(this.el));
@@ -144,7 +144,14 @@ cloudCare.Form = LocalizableModel.extend({
 cloudCare.FormView = Selectable.extend({
     tagName: 'li',
     initialize: function() {
-        _.bindAll(this, 'render', 'toggle', 'select', 'deselect');
+        var self = this;
+        _.bindAll(self, 'render', 'toggle', 'select', 'deselect', 'enable', 'disable');
+        cloudCare.dispatch.on("form:enter", function (form, caseModel) {
+            self.disable();
+        });
+        cloudCare.dispatch.on("form:ready form:error", function (form, caseModel) {
+            self.enable();
+        });
     },
     render: function () {
         $("<a />").text(this.model.getLocalized("name", this.options.language)).appendTo($(this.el));
@@ -217,7 +224,7 @@ cloudCare.Module = LocalizableModel.extend({
 cloudCare.ModuleView = Selectable.extend({
     tagName: 'li',
     initialize: function() {
-        _.bindAll(this, 'render', 'toggle', 'select', 'deselect');
+        _.bindAll(this, 'render', 'toggle', 'select', 'deselect', 'enable', 'disable');
     },
     render: function() {
         $("<a />").text(this.model.getLocalized("name", this.options.language)).appendTo($(this.el));
@@ -472,7 +479,11 @@ cloudCare.AppView = Backbone.View.extend({
             };
             data["onerror"] = function (resp) {
                 showError(resp.message, $("#cloudcare-notifications"));
+                cloudCare.dispatch.trigger("form:error", form, caseModel);
             };
+            data["onload"] = function (adapter, resp) {
+                cloudCare.dispatch.trigger("form:ready", form, caseModel);
+            }
             var sess = new WebFormSession(data);
             // TODO: probably shouldn't hard code these divs
             sess.load($('#webforms'), $('#loading'), self.options.language);

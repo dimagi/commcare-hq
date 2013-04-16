@@ -240,6 +240,13 @@ class ManageDataTab(UITab):
 
         return self.domain and self.couch_user.can_edit_data()
 
+    @property
+    @memoized
+    def is_active(self):
+        # hack because subpages of excel importer don't follow the url <->
+        # navigation isomorphism
+        return ('importer/excel' in self._request.get_full_path() or
+                super(ManageDataTab, self).is_active)
         
 class ApplicationsTab(UITab):
     title = ugettext_noop("Applications")

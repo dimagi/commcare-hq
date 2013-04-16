@@ -73,7 +73,7 @@
     <aside class="well">
         <h3><a href="{% url appstore %}">{% trans 'Explore Example Projects' %}</a></h3>
         <p>{% blocktrans %}In need of ideas or just want to explore?{% endblocktrans %}</p>
-        <p>{% blocktrans %}Check out <strong><a href="{% url appstore %}">CommCare Exchange</a></strong> for examples of apps being used today.{% endblocktrans %}</p>
+        <p>{% trans "Check out" %} <strong><a href="{% url appstore %}">{% trans "CommCare Exchange" %}</a></strong> {% trans "for examples of apps being used today." %}</p>
     </aside>
     <aside class="well">
         {% blocktrans %}For detailed documentation, please visit the <a href="http://wiki.commcarehq.org/display/commcarepublic/Home">CommCare Help Site</a>.{% endblocktrans %}
