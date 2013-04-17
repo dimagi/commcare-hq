@@ -44,8 +44,6 @@ class DomainStatsReport(GenericTabularReport):
 
     @property
     def rows(self):
-        import time
-        time.sleep(1)
         from corehq.apps.hqadmin.views import _all_domain_stats
         all_stats = _all_domain_stats()
         # domains = sorted(self.get_domains())
