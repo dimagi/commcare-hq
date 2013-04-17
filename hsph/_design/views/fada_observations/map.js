@@ -81,8 +81,6 @@ function (doc) {
     }
 
     var key = [form.meta.userID, form.meta.timeEnd, form.process_sbr_no];
-    for (var k in data) {
-        emit([k].concat(key), data[k]);
-    }
+    emit(key, data);
 
 }

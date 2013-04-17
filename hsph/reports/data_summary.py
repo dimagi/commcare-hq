@@ -244,21 +244,18 @@ class FADAObservationsReport(DataSummaryReport, HSPHSiteDataMixin):
 
         db = get_db()
 
-        print self.user_ids
-
-        for key in itertools.product(keys, self.user_ids):
-            key = list(key)
-
+        for user_id in self.user_ids:
             results = db.view("hsph/fada_observations",
                 reduce=True,
-                group_level=4,
-                startkey=key + [self.datespan.startdate_param_utc],
-                endkey=key + [self.datespan.enddate_param_utc],
+                group_level=3,
+                startkey=[user_id, self.datespan.startdate_param_utc],
+                endkey=[user_id, self.datespan.enddate_param_utc],
                 wrapper=lambda r: r['value']
             )
 
             for result in results:
-                values[key[0]] += result
+                for k, v in result.items():
+                    values[k] += v
 
         unique_sbrs = values['unique_sbrs'] = values['total_forms']
         for k, v in values.items():
