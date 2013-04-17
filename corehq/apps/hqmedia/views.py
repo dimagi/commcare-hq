@@ -5,7 +5,6 @@ from django.contrib.auth.decorators import login_required
 import magic
 import json
 from django.core.urlresolvers import reverse
-from django.core.cache import cache
 from django.template.loader import render_to_string
 from django.utils.decorators import method_decorator
 from django.views.generic import View, TemplateView
@@ -27,6 +26,7 @@ from corehq.apps.hqmedia.models import CommCareImage, CommCareAudio, CommCareMul
 from corehq.apps.hqmedia.tasks import process_bulk_upload_zip
 from dimagi.utils.decorators.memoized import memoized
 from soil.util import expose_download
+from django.utils.translation import ugettext as _
 
 
 class BaseMultimediaView(ApplicationViewMixin, View):
@@ -457,7 +457,18 @@ class MultimediaUploadStatus(View):
         if not self.processing_id:
             return HttpResponseBadRequest("A processing_id is required.")
         status = BulkMultimediaStatusCache.get(self.processing_id)
-        return HttpResponse(json.dumps(status.get_response()))
+        if status is None:
+            # No status could be retrieved from the cache
+            fake_status = BulkMultimediaStatusCache(self.processing_id)
+            fake_status.complete = True
+            fake_status.errors.append(_('There was an issue retrieving the status from the cache. '
+                                      'We are looking into it. Please try uploading again.'))
+            logging.error("[Multimedia Bulk Upload] Process ID #%s encountered an issue while retrieving "
+                          "a status from the cache." % self.processing_id)
+            response = fake_status.get_response()
+        else:
+            response = status.get_response()
+        return HttpResponse(json.dumps(response))
 
 
 class ViewMultimediaFile(View):

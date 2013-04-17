@@ -7,6 +7,7 @@ from django.core.cache import cache
 from django.utils.encoding import force_unicode
 from django.utils.safestring import mark_safe
 import re
+from django.utils.translation import ugettext_noop
 from corehq.apps.app_manager.const import APP_V1, APP_V2
 from couchdbkit.exceptions import BadValueError
 from couchdbkit.ext.django.schema import *
@@ -16,12 +17,12 @@ from django.core.urlresolvers import reverse
 from django.http import Http404
 from restkit.errors import ResourceError
 import commcare_translations
-from corehq.apps.app_manager import fixtures, xform, suite_xml
+from corehq.apps.app_manager import fixtures, suite_xml
 from corehq.apps.app_manager.suite_xml import IdStrings
 from corehq.apps.app_manager.templatetags.xforms_extras import clean_trans
-from corehq.apps.app_manager.xform import XForm, parse_xml as _parse_xml, namespaces as NS, XFormError, XFormValidationError, WrappedNode, CaseXPath
+from corehq.apps.app_manager.xform import XForm, parse_xml as _parse_xml, XFormError, XFormValidationError, WrappedNode, CaseXPath
 from corehq.apps.appstore.models import SnapshotMixin
-from corehq.apps.builds.models import CommCareBuild, BuildSpec, CommCareBuildConfig, BuildRecord
+from corehq.apps.builds.models import BuildSpec, CommCareBuildConfig, BuildRecord
 from corehq.apps.hqmedia.models import HQMediaMixin
 from corehq.apps.reports.templatetags.timezone_tags import utc_to_timezone
 from corehq.apps.translations.models import TranslationMixin
@@ -33,7 +34,7 @@ from dimagi.utils.couch.undo import DeleteRecord, DELETED_SUFFIX
 from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.web import get_url_base, parse_int
 from copy import deepcopy
-from corehq.apps.domain.models import Domain, cached_property
+from corehq.apps.domain.models import cached_property
 from django.template.loader import render_to_string
 from urllib2 import urlopen
 from urlparse import urljoin
@@ -47,7 +48,7 @@ import json
 from couchdbkit.resource import ResourceNotFound
 import tempfile
 import os
-from utilities.profile import profile as profile_decorator, profile
+
 import logging
 import hashlib
 
@@ -81,17 +82,77 @@ def _rename_key(dct, old, new):
         dct[new] = dct[old]
         del dct[old]
 
+@memoized
 def load_case_reserved_words():
     with open(os.path.join(os.path.dirname(__file__), 'static', 'app_manager', 'json', 'case-reserved-words.json')) as f:
         return json.load(f)
 
+@memoized
 def load_default_user_registration():
     with open(os.path.join(os.path.dirname(__file__), 'data', 'register_user.xhtml')) as f:
         return f.read()
 
-def load_custom_commcare_properties():
-    with open(os.path.join(os.path.dirname(__file__), 'static', 'app_manager', 'json', 'custom-commcare-properties.json')) as f:
-        return json.load(f)
+
+def load_custom_commcare_settings():
+    import yaml
+    path = os.path.join(os.path.dirname(__file__), 'static', 'app_manager', 'json')
+    settings = []
+    with open(os.path.join(path,
+                           'commcare-profile-settings.yaml')) as f:
+        for setting in yaml.load(f):
+            if not setting.get('type'):
+                setting['type'] = 'properties'
+            settings.append(setting)
+
+    with open(os.path.join(path, 'commcare-app-settings.yaml')) as f:
+        for setting in yaml.load(f):
+            if not setting.get('type'):
+                setting['type'] = 'hq'
+            settings.append(setting)
+    for setting in settings:
+        if not setting.get('widget'):
+            setting['widget'] = 'select'
+        # i18n; not statically analyzable
+        setting['name'] = ugettext_noop(setting['name'])
+    return settings
+
+
+def load_commcare_settings_layout(doc_type):
+    import yaml
+    settings = dict([
+        ('{0}.{1}'.format(setting.get('type'), setting.get('id')), setting)
+        for setting in load_custom_commcare_settings()
+    ])
+    path = os.path.join(os.path.dirname(__file__), 'static', 'app_manager', 'json')
+    with open(os.path.join(path, 'commcare-settings-layout.yaml')) as f:
+        layout = yaml.load(f)
+
+    for section in layout:
+        # i18n; not statically analyzable
+        section['title'] = ugettext_noop(section['title'])
+        for i, key in enumerate(section['settings']):
+            setting = settings.pop(key)
+            if doc_type == 'Application' or setting['type'] == 'hq':
+                section['settings'][i] = setting
+            else:
+                section['settings'][i] = None
+        section['settings'] = filter(None, section['settings'])
+        for setting in section['settings']:
+            setting['value'] = None
+
+    if settings:
+        raise Exception(
+            "CommCare settings layout should mention "
+            "all the available settings. "
+            "The following settings went unmentioned: %s" % (
+                ', '.join(settings.keys())
+            )
+        )
+    return layout
+
+if not settings.DEBUG:
+    load_custom_commcare_settings = memoized(load_custom_commcare_settings)
+    load_commcare_settings_layout = memoized(load_commcare_settings_layout)
 
 def authorize_xform_edit(view):
     def authorized_view(request, xform_id):
@@ -319,7 +380,7 @@ class FormBase(DocumentSchema):
     version = IntegerProperty()
     source = FormSource()
     validation_cache = CouchCachedStringProperty(
-        lambda self: "cache-%s-validation" % self.unique_id
+        lambda self: "cache-%s-%s-validation" % (self.get_app().get_id, self.unique_id)
     )
 
     @classmethod
@@ -1200,15 +1261,6 @@ class ApplicationBase(VersionedDoc, SnapshotMixin):
     def jar_url(self):
         return reverse('corehq.apps.app_manager.views.download_jar', args=[self.domain, self._id])
 
-    @classmethod
-    def platform_options(cls):
-        return [
-            {'label': 'Nokia S40 (default)', 'value': 'nokia/s40'},
-            {'label': 'Nokia S60', 'value': 'nokia/s60'},
-            {'label': 'WinMo', 'value': 'winmo'},
-            {'label': 'Generic', 'value': 'generic'},
-        ]
-
     def get_jar_path(self):
         build = self.get_build()
         if self.text_input == 'custom-keys' and build.minor_release() < (1,3):
@@ -1233,22 +1285,29 @@ class ApplicationBase(VersionedDoc, SnapshotMixin):
     def get_jadjar(self):
         return self.get_build().get_jadjar(self.get_jar_path())
 
+    @property
+    def jad_settings(self):
+        return {
+            'JavaRosa-Admin-Password': self.admin_password,
+            'Profile': self.profile_loc,
+            'MIDlet-Jar-URL': self.jar_url,
+            #'MIDlet-Name': self.name,
+            # e.g. 2011-Apr-11 20:45
+            'CommCare-Release': "true",
+            'Build-Number': self.version,
+        }
+
     def create_jadjar(self, save=False):
         try:
             return self.fetch_attachment('CommCare.jad'), self.fetch_attachment('CommCare.jar')
         except ResourceError:
             built_on = datetime.utcnow()
             all_files = self.create_all_files()
-            jadjar = self.get_jadjar().pack(all_files, {
-                'JavaRosa-Admin-Password': self.admin_password,
-                'Profile': self.profile_loc,
-                'MIDlet-Jar-URL': self.jar_url,
-                #'MIDlet-Name': self.name,
-                # e.g. 2011-Apr-11 20:45
+            jad_settings = {
                 'Released-on': built_on.strftime("%Y-%b-%d %H:%M"),
-                'CommCare-Release': "true",
-                'Build-Number': self.version,
-            })
+            }
+            jad_settings.update(self.jad_settings)
+            jadjar = self.get_jadjar().pack(all_files, jad_settings)
             if save:
                 self.built_on = built_on
                 self.built_with = BuildRecord(
@@ -1390,8 +1449,7 @@ class SavedAppBuild(ApplicationBase):
 
 class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
     """
-    A Managed Application that can be created entirely through the online interface, except for writing the
-    forms themselves.
+    An Application that can be created entirely through the online interface
 
     """
     user_registration = SchemaProperty(UserRegistrationForm)
@@ -1402,6 +1460,7 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
     use_custom_suite = BooleanProperty(default=False)
     force_http = BooleanProperty(default=False)
     cloudcare_enabled = BooleanProperty(default=False)
+    include_media_resources = BooleanProperty(default=False)
     
     @classmethod
     def wrap(cls, data):
@@ -1472,6 +1531,14 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
     def suite_loc(self):
         return "suite.xml"
 
+    @absolute_url_property
+    def media_suite_url(self):
+        return reverse('download_media_suite', args=[self.domain, self.get_id])
+
+    @property
+    def media_suite_loc(self):
+        return "media_suite.xml"
+
     def fetch_xform(self, module_id=None, form_id=None, form=None):
         if not form:
             form = self.get_module(module_id).get_form(form_id)
@@ -1529,14 +1596,17 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
                 yield id_strings.form_locale(form), trans(form.name) + ('${0}' if form.show_count else '')
 
 
-    def create_app_strings(self, lang):
+    def create_app_strings(self, lang, include_blank_custom=False):
         def non_empty_only(dct):
             return dict([(key, value) for key, value in dct.items() if value])
         if lang != "default":
             messages = {"cchq.case": "Case", "cchq.referral": "Referral"}
 
             custom = dict(self._create_custom_app_strings(lang))
-            messages.update(non_empty_only(custom))
+            if include_blank_custom:
+                messages.update(custom)
+            else:
+                messages.update(non_empty_only(custom))
 
             # include language code names
             for lc in self.langs:
@@ -1553,23 +1623,37 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
             for lc in reversed(self.langs):
                 if lc == "default": continue
                 messages.update(
-                    commcare_translations.loads(self.create_app_strings(lc))
+                    commcare_translations.loads(
+                        self.create_app_strings(lc, include_blank_custom=True)
+                    )
                 )
         return commcare_translations.dumps(messages).encode('utf-8')
 
+    @property
+    def skip_validation(self):
+        properties = (self.profile or {}).get('properties', {})
+        return properties.get('cc-content-valid', 'yes')
+
+    @property
+    def jad_settings(self):
+        s = super(Application, self).jad_settings
+        s.update({
+            'Skip-Validation': self.skip_validation,
+        })
+        return s
 
     def create_profile(self, is_odk=False, template='app_manager/profile.xml'):
         app_profile = defaultdict(dict)
         app_profile.update(self.profile)
         # the following code is to let HQ override CommCare defaults
         # impetus: Weekly Logging should be Short (HQ override) instead of Never (CommCare default)
-        # property.default is assumed to also be the CommCare default unless there's a property.commcare_default
-        all_properties = load_custom_commcare_properties()
-        for property in all_properties:
-            type = property.get('type', 'properties')
-            if property['id'] not in app_profile[type]:
-                if property.has_key('commcare_default') and property['commcare_default'] != property['default']:
-                    app_profile[type][property['id']] = property['default']
+        # setting.default is assumed to also be the CommCare default unless there's a setting.commcare_default
+        all_settings = load_custom_commcare_settings()
+        for setting in all_settings:
+            type = setting['type']
+            if type in ('properties', 'features') and setting['id'] not in app_profile[type]:
+                if 'commcare_default' in setting and setting['commcare_default'] != setting['default']:
+                    app_profile[type][setting['id']] = setting['default']
 
         if self.case_sharing:
             app_profile['properties']['server-tether'] = 'sync'
@@ -1606,13 +1690,20 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
                 'langs': ["default"] + self.build_langs
             })
         else:
-            return suite_xml.generate_suite(self)
+            return suite_xml.SuiteGenerator(self).generate_suite()
+
+    def create_media_suite(self):
+        return suite_xml.SuiteGenerator(self).generate_suite(
+            sections=['media_resources']
+        )
 
     def create_all_files(self):
         files = {
             "profile.xml": self.create_profile(),
             "suite.xml": self.create_suite(),
         }
+        if self.include_media_resources:
+            files['media_suite.xml'] = self.create_media_suite()
 
         if self.show_user_registration:
             files["user_registration.xml"] = self.fetch_xform(form=self.get_user_registration())

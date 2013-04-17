@@ -58,6 +58,7 @@ class BulkMultimediaStatusCache(BaseMultimediaStatusCache):
 
     def __init__(self, processing_id):
         super(BulkMultimediaStatusCache, self).__init__(processing_id)
+        self.skipped_files = []
         self.unmatched_files = []
         self.matched_files = dict((m.__name__, []) for m in self.allowed_media)
         self.total_files = None
@@ -74,6 +75,7 @@ class BulkMultimediaStatusCache(BaseMultimediaStatusCache):
             'matched_files': self.matched_files,
             'total_files': self.total_files,
             'processed_files': self.processed_files,
+            'skipped_files': self.skipped_files,
         })
         return response
 
@@ -85,6 +87,12 @@ class BulkMultimediaStatusCache(BaseMultimediaStatusCache):
         if self.progress >= 100:
             self.complete = True
         self.save()
+
+    def add_skipped_path(self, path, mimetype):
+        self.skipped_files.append({
+            'path': path,
+            'mimetype': mimetype,
+        })
 
     def add_unmatched_path(self, path, reason):
         self.unmatched_files.append({

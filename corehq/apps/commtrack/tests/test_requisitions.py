@@ -29,6 +29,8 @@ class RequisitionTest(CommTrackTest):
             self.assertEqual(None, req.owner_id)
             self.assertFalse(req.closed)
             self.assertTrue(len(req.actions) > 0)
+            self.assertEqual(req.location_, spp.location_)
+
             [parent_ref] = req.indices
             self.assertEqual(const.PARENT_CASE_REF, parent_ref.identifier)
             self.assertEqual(const.SUPPLY_POINT_PRODUCT_CASE_TYPE, parent_ref.referenced_type)

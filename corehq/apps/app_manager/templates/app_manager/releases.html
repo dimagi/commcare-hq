@@ -111,15 +111,15 @@
             click: makeNewBuild,
             attr: {disabled: !makeNewBuildEnabled() ? 'disabled' : undefined},
             css: {disabled: !makeNewBuildEnabled()}
-        ">{% trans 'Make New Build' %}</button>
+        ">{% trans 'Make New Version' %}</button>
 
         <div id="build-errors-wrapper"></div>
 
         <table class="table">
             <tr>
                 <th colspan="2">Version</th>
-                <th colspan="2">Build Date &amp; Time</th>
-                <th>CommCare Binary</th>
+                <th colspan="2">Date &amp; Time</th>
+                <th>CommCare Version</th>
                 <th></th>
                 {% if edit %}
                 <th></th>
@@ -217,7 +217,7 @@
                         </div>
                         <div data-bind="visible: doneFetching() && !savedApps().length, css: {hidden: false}" class="hidden">
                             <div class="alert alert-info">
-                                {% trans "This application currently has no builds" %}
+                                {% trans 'Use the <strong>Make New Version</strong> button to create and deploy the latest version of your application' %}
                             </div>
                         </div>
                     </td>
@@ -285,7 +285,7 @@
                     <div class="accordion-group">
                         <div class="accordion-heading">
                             <a class="accordion-toggle">
-                                {% trans "Download to J2ME" %}
+                                {% trans "Download to Java Phone" %}
                             </a>
                         </div>
                         <div class="accordion-body collapse">
@@ -311,7 +311,7 @@
                     <div class="accordion-group">
                         <div class="accordion-heading">
                             <a class="accordion-toggle">
-                                {% trans "Download to CommCare ODK (Android)" %}
+                                {% trans "Download to Android" %}
                             </a>
                         </div>
                         <div class="accordion-body collapse">
@@ -354,10 +354,10 @@
                                     <div class="tabbable">
                                         <ul class="nav nav-pills">
                                             <li class="active">
-                                                <a>{% trans "Send J2ME app" %}</a>
+                                                <a>{% trans "Send Java Phone app" %}</a>
                                             </li>
                                             <li>
-                                                <a>{% trans "Send CommCare ODK app (Android)" %}</a>
+                                                <a>{% trans "Send Android app" %}</a>
                                             </li>
                                         </ul>
                                         <div class="tab-content" data-bind="foreach: [short_url(), short_odk_url()]">

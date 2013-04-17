@@ -4,7 +4,7 @@ from django.utils.safestring import mark_safe
 
 register = template.Library()
 
-LANG_BUTTON = ' <a href="#" style="color: #FFFFFF; text-decoration:none;" class="btn btn-mini btn-inverse btn-langcode-preprocessed%(extra_class)s">%(lang)s</a>'
+LANG_BUTTON = ' <span style="color: #FFFFFF; text-decoration:none;" class="btn btn-mini btn-inverse btn-langcode-preprocessed%(extra_class)s">%(lang)s</span>'
 EMPTY_LABEL = '<span class="label label-info">Empty</span>'
 
 @register.simple_tag
@@ -40,7 +40,7 @@ def html_name(name):
 
 @register.filter
 def input_trans(name, langs=["default"]):
-    template='<input class="wide" type="text" name="name" value="%(value)s" placeholder="%(placeholder)s" />'
+    template='<input type="text" name="name" value="%(value)s" placeholder="%(placeholder)s" />'
     for lang in langs:
         if lang in name:
             if langs and lang == langs[0]:
