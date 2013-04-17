@@ -89,7 +89,7 @@ class StockReportParser(object):
                 args = args[1:]
 
             if action.action_type in [RequisitionActions.APPROVAL, RequisitionActions.FILL]:
-                _tx = self.requisition_bulk_action(action, args)
+                _tx = self.requisition_bulk_action(action, location, args)
             else:
                 _tx = self.single_action_transactions(action, args, tx_factory(location, stockreport.Requisition))
 
@@ -208,11 +208,16 @@ class StockReportParser(object):
 
             raise RuntimeError('do not recognize keyword "%s"' % keyword)
 
-    def requisition_bulk_action(self, action, args):
+    def requisition_bulk_action(self, action, location, args):
         if args:
             raise RuntimeError('extra arguments at end')
 
-        yield stockreport.RequisitionResponse(action.action_type)
+        yield stockreport.RequisitionResponse(
+            domain=location.domain,
+            action_type=action.action_type,
+            action_name=action.action_name,
+            location_id=location.location_[-1]
+        )
 
     def location_from_code(self, loc_code):
         """return the supply point case referenced by loc_code"""
@@ -313,10 +318,7 @@ def send_confirmation(v, data):
     action_to_code = dict((v, k) for k, v in C.all_keywords().iteritems())
     tx_by_action = map_reduce(lambda tx: [(tx.action_name,)], data=data['transactions'], include_docs=True)
     def summarize_action(action, txs):
-        def fragment(tx):
-            quantity = tx.value if tx.value is not None else ''
-            return '%s%s' % (tx.product.code.lower(), quantity)
-        return '%s %s' % (action_to_code[action].upper(), ' '.join(sorted(fragment(tx) for tx in txs)))
+        return '%s %s' % (action_to_code[action].upper(), ' '.join(sorted(tx.fragment() for tx in txs)))
 
     msg = 'received stock report for %s(%s) %s' % (
         static_loc.site_code,

@@ -1,3 +1,4 @@
+import itertools
 from casexml.apps.case.models import CommCareCase
 from casexml.apps.case.tests.util import CaseBlock
 from casexml.apps.case.xml import V2
@@ -9,7 +10,7 @@ from receiver.util import spoof_submission
 from corehq.apps.receiverwrapper.util import get_submit_url
 from dimagi.utils.couch.loosechange import map_reduce
 import logging
-from corehq.apps.commtrack.models import CommtrackConfig
+from corehq.apps.commtrack.models import CommtrackConfig, RequisitionCase
 from corehq.apps.commtrack.requisitions import RequisitionState
 from corehq.apps.commtrack import const
 
@@ -31,9 +32,6 @@ def process(domain, instance):
     root = etree.fromstring(instance)
     user_id, transactions = unpack_transactions(root, config)
 
-    case_ids = [tx.case_id for tx in transactions]
-    cases = dict((c._id, c) for c in CommCareCase.view('_all_docs', keys=case_ids, include_docs=True))
-
     def get_transactions(all_tx, type_filter):
         """get all the transactions of the relevant type (filtered by type_filter),
         grouped by product (returns a dict of 'product subcase id' => list of transactions),
@@ -46,7 +44,17 @@ def process(domain, instance):
 
     # split transactions by type and product
     stock_transactions = get_transactions(transactions, lambda tx: tx.category == 'stock')
-    requisition_transactions = get_transactions(transactions, lambda tx: tx.category == 'requisition')
+    requisition_transactions = get_transactions(
+        transactions,
+        lambda tx: tx.category == 'requisition' and tx.product_id != const.ALL_PRODUCTS_TRANSACTION_TAG
+    )
+    bulk_transactions = filter(
+        lambda tx: tx.category == 'requisition' and tx.product_id == const.ALL_PRODUCTS_TRANSACTION_TAG,
+        transactions,
+    )
+
+    case_ids = list(set(itertools.chain(*[tx.get_case_ids() for tx in transactions])))
+    cases = dict((c._id, c) for c in CommCareCase.view('_all_docs', keys=case_ids, include_docs=True))
 
     # TODO: code to auto generate / update requisitions from transactions if
     # project is configured for that.
@@ -92,12 +100,16 @@ class StockTransaction(object):
         assert self.product_id
         assert self.case_id
 
+    def get_case_ids(self):
+        # to standardize an API that could have one or more cases
+        yield self.case_id
+
     @property
     def base_action_type(self):
         return self.action_config.action_type
 
     @classmethod
-    def from_xml(cls, tx, config=None):
+    def from_xml(cls, tx, config):
         data = {
             'product_id': tx.find(_('product')).text,
             'case_id': tx.find(_('product_entry')).text,
@@ -129,6 +141,13 @@ class StockTransaction(object):
     def category(self):
         return 'stock'
 
+    def fragment(self):
+        """
+        A short string representation of this to be used in sms correspondence
+        """
+        quantity = self.value if self.value is not None else ''
+        return '%s%s' % (self.product.code.lower(), quantity)
+
     def __repr__(self):
         return '{action}: {value} (case: {case}, product: {product})'.format(
             action=self.action_name, value=self.value, case=self.case_id,
@@ -141,7 +160,7 @@ class Requisition(StockTransaction):
         return 'requisition'
 
     @classmethod
-    def from_xml(cls, tx, config=None):
+    def from_xml(cls, tx, config):
         data = {
             'product_id': tx.find(_('product')).text,
             'case_id': tx.find(_('product_entry')).text,
@@ -161,8 +180,23 @@ class Requisition(StockTransaction):
         )
 
 class RequisitionResponse(object):
-    def __init__(self, action_name):
+    """
+    A bulk response to a set of requisitions, for example "approve" or "fill".
+    """
+    # todo: it's possible this class should support explicit transactions/amounts
+    # on a per-product basis, but won't until someone demands it
+
+    def __init__(self, domain, action_type, action_name, location_id):
+        self.domain = domain
         self.action_name = action_name
+        self.action_type = action_type
+        self.location_id = location_id
+        self.case_id = None
+
+    def get_case_ids(self):
+        # todo: domain?
+        for c in RequisitionCase.open_for_location(self.domain, self.location_id):
+            yield c
 
     @property
     def category(self):
@@ -173,9 +207,12 @@ class RequisitionResponse(object):
         return const.ALL_PRODUCTS_TRANSACTION_TAG
 
     @classmethod
-    def from_xml(cls, tx, config=None):
+    def from_xml(cls, tx, config):
         data = {
+            'domain': config.domain, # implicit assert that this isn't empty
             'action_name': tx.find(_('status')).text,
+            'action_type': tx.find(_('status_type')).text,
+            'location_id': tx.find(_('location')).text,
         }
         return cls(**data)
 
@@ -185,8 +222,17 @@ class RequisitionResponse(object):
 
         return E.response(
             E.status(self.action_name),
+            E.status_type(self.action_type),
+            E.location(self.location_id),
             E.product(self.product_id),
         )
+
+    def fragment(self):
+        # for a bulk operation just indicate we touched everything
+        return 'all'
+
+    def __repr__(self):
+        return 'bulk requisition response: %s' % self.action_name
 
 def unpack_transactions(root, config):
     user_id = root.find('.//%s' % _('userID', META_XMLNS)).text
