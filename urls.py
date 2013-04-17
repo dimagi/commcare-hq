@@ -5,7 +5,6 @@ from corehq.apps.domain.utils import legacy_domain_re
 # Uncomment the next two lines to enable the admin:
 from django.contrib import admin
 from corehq.apps.orgs.urls import organizations_urls
-from corehq.apps.reports.urls import report_urls
 
 try:
     from localsettings import LOCAL_APP_URLS
@@ -74,7 +73,6 @@ urlpatterns = patterns('',
     (r'^hq/multimedia/', include('corehq.apps.hqmedia.urls')),
     (r'^hq/admin/', include('corehq.apps.hqadmin.urls')),
     (r'^hq/prescriptions/', include('corehq.apps.prescriptions.urls')),
-    (r'^hq/reports/', include(report_urls)),
     (r'^couchlog/', include('couchlog.urls')),
     (r'^formtranslate/', include('formtranslate.urls')),
     (r'^unicel/', include('corehq.apps.unicel.urls')),

@@ -37,7 +37,7 @@ RSYNC_EXCLUDE = (
     )
 env.project = 'commcare-hq'
 env.code_repo = 'git://github.com/dimagi/commcare-hq.git'
-env.code_branch = 'master'
+#env.code_branch = None
 env.home = "/home/cchq"
 env.selenium_url = 'http://jenkins.dimagi.com/job/commcare-hq-post-deploy/buildWithParameters?token=%(token)s&TARGET=%(environment)s'
 
@@ -152,6 +152,7 @@ def production():
     env.sudo_user = 'cchq'
     env.environment = 'production'
     env.django_port = '9010'
+    env.code_branch = 'master'
 
     #env.hosts = None
     env.roledefs = {
@@ -186,11 +187,15 @@ def production():
 
 @task
 def realstaging():
-    """ use production environment on remote host"""
-    env.code_branch = 'staging2'
+    """ Use production data in a safe staging environment on remote host"""
+    if not hasattr(env, 'code_branch'):
+        print "You must specify a code branch with --set code_branch=<branch>"
+        sys.exit()
+
     env.sudo_user = 'cchq'
     env.environment = 'staging'
     env.django_port = '9010'
+
 
     #env.hosts = None
     env.roledefs = {
