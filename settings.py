@@ -110,7 +110,7 @@ TEMPLATE_CONTEXT_PROCESSORS = [
     'django.core.context_processors.static',
     "corehq.util.context_processors.current_url_name",
     "corehq.util.context_processors.base_template", # sticks the base template inside all responses
-    "corehq.util.context_processors.google_analytics",
+    "corehq.util.context_processors.analytics_js",
     "corehq.util.context_processors.raven",
 ]
 
@@ -369,6 +369,11 @@ AUDIT_VIEWS = [
 ]
 
 # Don't use google analytics unless overridden in localsettings
+ANALYTICS_IDS = {
+    'GOOGLE_ANALYTICS_ID': '',
+    'PINGDOM_ID': ''
+}
+
 GOOGLE_ANALYTICS_ID = ''
 PINGDOM_ID = ''
 
