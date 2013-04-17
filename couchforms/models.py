@@ -198,7 +198,7 @@ class XFormInstance(SafeSaveDocument, UnicodeMixIn, ComputedDocumentMixin):
         return dict((item, val) for item, val in self._attachments.items() if item != ATTACHMENT_NAME)
     
     def xml_md5(self):
-        return hashlib.md5(self.get_xml()).hexdigest()
+        return hashlib.md5(self.get_xml().encode('utf-8')).hexdigest()
     
     def top_level_tags(self):
         """
