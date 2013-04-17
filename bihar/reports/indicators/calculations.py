@@ -172,19 +172,6 @@ def _in_timeframe(date, days):
     today = dt.datetime.today().date()
     return today - dt.timedelta(days=days) < date < today
 
-def _num_denom_count(cases, num_func, denom_func):
-    num = denom = 0
-    for case in cases:
-        denom_diff = denom_func(case)
-        if denom_diff:
-            denom += denom_diff
-            num_diff = num_func(case)
-            assert num_diff <= denom_diff
-            # this is to prevent the numerator from ever passing the denominator
-            # though is probably not totally accurate
-            num += num_diff
-    return _num_denom(num, denom)
-
 def delivered_in_timeframe(case, days):
     return is_pregnant_mother(case) and get_add(case) and _in_timeframe(case.add, days)
 
