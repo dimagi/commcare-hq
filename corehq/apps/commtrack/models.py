@@ -306,6 +306,19 @@ class RequisitionCase(CommCareCase):
 
         return None
 
+    @classmethod
+    def open_for_location(cls, domain, location_id):
+        """
+        For a given location, return the IDs of all open requisitions at that location.
+        """
+        results = cls.get_db().view('commtrack/requisitions',
+            startkey=[domain, location_id, 'open'],
+            endkey=[domain, location_id, 'open', {}],
+            reduce=False,
+        )
+        return [r['id'] for r in results]
+
+
     class Meta:
         app_label = "commtrack" # This is necessary otherwise syncdb will confuse this app with casexml
 
