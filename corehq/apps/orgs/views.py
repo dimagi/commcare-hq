@@ -591,7 +591,7 @@ def stats_data(request, org):
 
 def es_histogram(histo_type, domains=None, startdate=None, enddate=None, tz_diff=None):
     date_field = {  "forms": "received_on",
-                    "cases": "modified_on"  }[histo_type]
+                    "cases": "opened_on"  }[histo_type]
     es_url = {  "forms": XFORM_INDEX + '/xform/_search',
                 "cases": CASE_INDEX + '/case/_search' }[histo_type]
 
