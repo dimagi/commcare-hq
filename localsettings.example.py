@@ -100,8 +100,11 @@ TOUCHFORMS_API_PASSWORD = 'password'
 DEFAULT_PROTOCOL = "https" # or http
 OVERRIDE_LOCATION="https://www.commcarehq.org"
 
-
-GOOGLE_ANALYTICS_ID = '*******'
+#Set your analytics IDs here for GA and pingdom RUM
+ANALYTICS_IDS = {
+    'GOOGLE_ANALYTICS_ID': '*******',
+    'PINGDOM_ID': '*****'
+}
 
 AXES_LOCK_OUT_AT_FAILURE = False
 LUCENE_ENABLED = True
