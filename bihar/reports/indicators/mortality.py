@@ -1,6 +1,6 @@
 from bihar.reports.indicators.calculations import MemoizingCalculatorMixIn,\
     MotherPostDeliverySummaryMixIn, IndicatorCalculator,\
-    delivered_in_timeframe_with_status, delivered_in_timeframe, get_forms,\
+    delivered_in_timeframe, get_forms,\
     SummaryValueMixIn
 from datetime import datetime, timedelta
 from bihar.reports.indicators.visits import visit_is

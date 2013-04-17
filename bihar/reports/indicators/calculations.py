@@ -1,14 +1,12 @@
 from couchdbkit import ResourceNotFound
 from bihar.reports.indicators.filters import is_pregnant_mother, is_newborn_child, get_add, get_edd,\
     mother_pre_delivery_columns, mother_post_delivery_columns
-from dimagi.utils.couch.safe_index import safe_index
 from dimagi.utils.parsing import string_to_datetime
 import datetime as dt
 from bihar.reports.indicators.visits import get_related_prop
 from dimagi.utils.decorators.memoized import memoized
 from django.utils.translation import ugettext_noop
 from django.utils.translation import ugettext as _
-from dimagi.utils.logging import notify_exception
 
 EMPTY = (0,0)
 

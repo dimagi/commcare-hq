@@ -1,6 +1,5 @@
 from datetime import datetime, timedelta, date
 from bihar.reports.indicators.reports import DEFAULT_EMPTY
-from bihar.reports.indicators.visits import has_visit
 
 # for now we do in-memory filtering, but should consider the implications
 # before diving too far down that road.
