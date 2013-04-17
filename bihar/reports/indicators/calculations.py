@@ -165,9 +165,6 @@ class MotherPostDeliverySummaryMixIn(MotherPostDeliveryMixIn):
     def as_row(self, case):
         return super(MotherPostDeliverySummaryMixIn, self).as_row(case) + (self.summary_value(case),)
 
-def _num_denom(num, denom):
-    return "%s/%s" % (num, denom)
-
 def _in_timeframe(date, days):
     today = dt.datetime.today().date()
     return today - dt.timedelta(days=days) < date < today
