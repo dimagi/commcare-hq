@@ -5,14 +5,8 @@
 {% block title %}{% trans 'Bulk Upload of Multimedia' %}{% endblock title %}
 
 {% block js %} {{ block.super }}
-    <!-- YUI Minimum requirements for uploader, uploader-flash, uploader-html5, and uploader-queue -->
-{#    <script type="text/javascript" src="http://yui.yahooapis.com/combo?3.9.1/build/yui-base/yui-base-min.js&3.9.1/build/oop/oop-min.js&3.9.1/build/attribute-core/attribute-core-min.js&3.9.1/build/event-custom-base/event-custom-base-min.js&3.9.1/build/event-custom-complex/event-custom-complex-min.js&3.9.1/build/attribute-observable/attribute-observable-min.js&3.9.1/build/attribute-extras/attribute-extras-min.js&3.9.1/build/attribute-base/attribute-base-min.js&3.9.1/build/base-core/base-core-min.js&3.9.1/build/base-observable/base-observable-min.js&3.9.1/build/base-base/base-base-min.js&3.9.1/build/pluginhost-base/pluginhost-base-min.js&3.9.1/build/pluginhost-config/pluginhost-config-min.js&3.9.1/build/base-pluginhost/base-pluginhost-min.js&3.9.1/build/base-build/base-build-min.js&3.9.1/build/uploader-queue/uploader-queue-min.js&3.9.1/build/file-flash/file-flash-min.js&3.9.1/build/attribute-complex/attribute-complex-min.js&3.9.1/build/classnamemanager/classnamemanager-min.js&3.9.1/build/features/features-min.js&3.9.1/build/dom-core/dom-core-min.js"></script>#}
-{#    <script type="text/javascript" src="http://yui.yahooapis.com/combo?3.9.1/build/dom-base/dom-base-min.js&3.9.1/build/selector-native/selector-native-min.js&3.9.1/build/selector/selector-min.js&3.9.1/build/node-core/node-core-min.js&3.9.1/build/node-base/node-base-min.js&3.9.1/build/event-base/event-base-min.js&3.9.1/build/event-synthetic/event-synthetic-min.js&3.9.1/build/event-focus/event-focus-min.js&3.9.1/build/dom-style/dom-style-min.js&3.9.1/build/node-style/node-style-min.js&3.9.1/build/widget-base/widget-base-min.js&3.9.1/build/widget-htmlparser/widget-htmlparser-min.js&3.9.1/build/widget-skin/widget-skin-min.js&3.9.1/build/event-delegate/event-delegate-min.js&3.9.1/build/node-event-delegate/node-event-delegate-min.js&3.9.1/build/widget-uievents/widget-uievents-min.js&3.9.1/build/dom-screen/dom-screen-min.js&3.9.1/build/node-screen/node-screen-min.js&3.9.1/build/node-pluginhost/node-pluginhost-min.js&3.9.1/build/swfdetect/swfdetect-min.js&3.9.1/build/escape/escape-min.js&3.9.1/build/swf/swf-min.js"></script>#}
-{#    <script type="text/javascript" src="http://yui.yahooapis.com/combo?3.9.1/build/uploader-flash/uploader-flash-min.js&3.9.1/build/file-html5/file-html5-min.js&3.9.1/build/event-simulate/event-simulate-min.js&3.9.1/build/async-queue/async-queue-min.js&3.9.1/build/gesture-simulate/gesture-simulate-min.js&3.9.1/build/node-event-simulate/node-event-simulate-min.js&3.9.1/build/uploader-html5/uploader-html5-min.js&3.9.1/build/uploader/uploader-min.js&3.9.1/build/get/get-min.js&3.9.1/build/loader-base/loader-base-min.js&3.9.1/build/loader-rollup/loader-rollup-min.js&3.9.1/build/loader-yui3/loader-yui3-min.js&3.9.1/build/json-parse/json-parse-min.js&3.9.1/build/json-stringify/json-stringify-min.js&3.9.1/build/file/file-min.js"></script>#}
     <script type="text/javascript" src="{% static 'hqmedia/yui/3.9.1/build/yui/yui-min.js' %}"></script>
-{#    <script type="text/javascript" src="{% static 'hqmedia/yui/yui-flash_uploader-3.9.1.min.js' %}"></script>#}
-{#    <script type="text/javascript" src="{% static 'hqmedia/yui/yui-html5_uploader-3.9.1.min.js' %}"></script>#}
-
+    <script type="text/javascript" src="{% static 'hqmedia/js/swfobject.js' %}"></script>
     <script type="text/javascript" src="{% static 'hqmedia/js/hqmedia.upload_controller.js' %}"></script>
 {% endblock %}
 
@@ -53,6 +47,10 @@
         <code>commcare/images/image.jpg</code>.{% endblocktrans %}</p>
     
     <div id="hqmedia_uploader">
+        <div class="alert alert-info hqm-not-supported hide">
+            <i class="icon-warning-sign"></i> Your browser does not support this uploader.
+            We recommend <a href="https://www.google.com/intl/en/chrome/browser/">Google Chrome</a>.
+        </div>
         <div class="btn-toolbar">
             <div class="hqm-select-files-container">
                 <button class="hqm-select btn btn-primary" role="button">{% trans 'Select Files' %}</button>

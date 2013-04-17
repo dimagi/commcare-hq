@@ -23,6 +23,8 @@ function HQMediaUploadController(options) {
     self.queueSelector = self.container + " .hqm-queue";
     self.uploadFormSelector = self.container + " .hqm-upload-form";
 
+    self.notSupportedNotice = self.container + " .hqm-not-supported";
+
     // Text and templates
     self.queueTemplate = options.queueTemplate;
     self.detailsTemplate = options.detailsTemplate;
@@ -192,9 +194,20 @@ function HQMediaUploadController(options) {
             combine: false,
             base: '/static/hqmedia/yui/3.9.1/build/'
         }).use('uploader', function (Y) {
-                Y.Uploader = Y.UploaderFlash;
                 var buttonRegion = Y.one(self.selectFilesButton).get('region');
-                console.log(Y.Uploader.TYPE);
+                var version_info = swfobject.getFlashPlayerVersion();
+                
+                if (version_info && version_info.major > 5) {
+                    Y.Uploader = Y.UploaderFlash;
+                }
+
+                if (Y.Uploader.TYPE == "none") {
+                    $(self.notSupportedNotice).removeClass('hide');
+                    $(self.selectFilesButtonContainer).parent().addClass('hide');
+                    return;
+                } else {
+                    $(self.notSupportedNotice).remove();
+                }
 
                 self.uploader = new Y.Uploader({
                     width: buttonRegion.width,
@@ -203,10 +216,7 @@ function HQMediaUploadController(options) {
                     multipleFiles: self.isMultiFileUpload
                 });
 
-                if (Y.Uploader.TYPE == "html5") {
-                    console.log("using HTML5 Uploader");
-                }
-                else if (Y.Uploader.TYPE == "flash") {
+                if (Y.Uploader.TYPE == "flash") {
                     self.uploader.set("fileFilters", self.fileFilters);
                     self.uploader.set("swfURL", self.swfURL);
                 }
