@@ -2,6 +2,7 @@ from StringIO import StringIO
 import functools
 import logging
 from diff_match_patch import diff_match_patch
+from django.core.cache import cache
 from django.template.loader import render_to_string
 import hashlib
 from corehq.apps.app_manager.const import APP_V1
@@ -19,15 +20,15 @@ import os
 import re
 
 from couchdbkit.exceptions import ResourceConflict
-from django.http import HttpResponse, Http404, HttpResponseBadRequest, HttpResponseForbidden, HttpResponseServerError
+from django.http import HttpResponse, Http404, HttpResponseBadRequest, HttpResponseForbidden
 from unidecode import unidecode
-from corehq.apps.hqmedia import utils
 from corehq.apps.app_manager.xform import XFormError, XFormValidationError, CaseError,\
     XForm, parse_xml
 from corehq.apps.builds.models import CommCareBuildConfig, BuildSpec
 from corehq.apps.users.decorators import require_permission
 from corehq.apps.users.models import Permissions, CommCareUser
 from dimagi.utils.decorators.memoized import memoized
+from dimagi.utils.django.cache import make_template_fragment_key
 from dimagi.utils.logging import notify_exception
 from dimagi.utils.subprocess_timeout import ProcessTimedOut
 
@@ -57,7 +58,6 @@ from collections import defaultdict
 from couchdbkit.resource import ResourceNotFound
 from corehq.apps.app_manager.decorators import safe_download
 from xml.dom.minidom import parseString
-from corehq.apps.hqmedia.models import CommCareMultimedia
 
 try:
     from lxml.etree import XMLSyntaxError
@@ -480,11 +480,20 @@ def get_langs(request, app):
     return lang, langs
 
 
-def _clear_app_cache(domain):
+def _clear_app_cache(request, domain):
+    from corehq import ApplicationsTab
     ApplicationBase.get_db().view('app_manager/applications_brief',
         startkey=[domain],
         limit=1,
     ).all()
+    for is_active in True, False:
+        key = make_template_fragment_key('header_tab', [
+            domain,
+            ApplicationsTab.view,
+            is_active,
+            request.couch_user.get_id
+        ])
+        cache.delete(key)
 
 
 def get_apps_base_context(request, domain, app):
@@ -790,7 +799,7 @@ def new_app(req, domain):
     else:
         app = cls.new_app(domain, "Untitled Application", lang=lang)
     app.save()
-    _clear_app_cache(domain)
+    _clear_app_cache(req, domain)
     app_id = app.id
 
     return back_to_main(**locals())
@@ -836,7 +845,7 @@ def delete_app(req, domain, app_id):
         extra_tags='html'
     )
     app.save()
-    _clear_app_cache(domain)
+    _clear_app_cache(req, domain)
     del app_id
     return back_to_main(**locals())
 
@@ -851,6 +860,7 @@ def undo_delete_app(request, domain, record_id):
         record = DeleteApplicationRecord.get(record_id)
         record.undo()
         app_id = record.app_id
+    _clear_app_cache(request, domain)
     messages.success(request, 'Application successfully restored.')
     return back_to_main(request, domain, app_id=app_id)
 
