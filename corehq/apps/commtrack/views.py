@@ -188,8 +188,20 @@ def charts(request, domain, template="commtrack/charts.html"):
         for j in range(5):
             statuses[j]["values"].append({"x": p, "y": vs[j]})
 
+    # colors don't actually work correctly for pie charts
+    resp_values = [
+        {"label": "Submitted on Time", "color": "#4ac925", "value": randint(0, 40)},
+        {"label": "Didn't respond", "color": "#ABABAB", "value": randint(0, 20)},
+        {"label": "Submitted Late", "color": "#e00707", "value": randint(0, 8)},
+    ]
+    response_data = [{
+        "key": "Current Late Report",
+        "values": resp_values
+    }]
+
     ctxt = {
         "domain": domain,
-        "data": statuses
+        "stock_data": statuses,
+        "response_data": response_data,
     }
     return render(request, template, ctxt)
