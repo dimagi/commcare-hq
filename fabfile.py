@@ -660,7 +660,8 @@ def _upload_supervisor_conf_file(filename):
     upload_dict["destination"] = '/tmp/%s.blah' % filename
     upload_dict["enabled"] =  posixpath.join(env.services, u'supervisor/%s' % filename)
 
-    files.upload_template(upload_dict["template"], upload_dict["destination"], context=env, use_sudo=False)
+    sudo ('rm -f /tmp/%s' % filename, shell=False)
+    files.upload_template(upload_dict["template"], upload_dict["destination"], context=env, use_sudo=False, backup=False)
     sudo('chown -R %s %s' % (env.sudo_user, upload_dict["destination"]), shell=False)
     #sudo('chgrp -R %s %s' % (env.apache_user, upload_dict["destination"]))
     sudo('chmod -R g+w %(destination)s' % upload_dict, shell=False)
