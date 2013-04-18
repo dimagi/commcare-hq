@@ -202,7 +202,9 @@ class XFormInstance(SafeSaveDocument, UnicodeMixIn, ComputedDocumentMixin):
     
     def top_level_tags(self):
         """
-        Get the top level tags found in the xml, in the order they are found.
+        Returns a SortedDict of the top level tags found in the xml, in the
+        order they are found.
+        
         """
         xml_payload = self.get_xml()
         element = ElementTree.XML(xml_payload)

@@ -92,7 +92,7 @@ def render_form_data(form):
 
 @register.simple_tag
 def render_form_xml(form):
-    return '<pre id="formatted-form-xml" class="prettyprint linenums"><code class="language-xml">%s</code></pre>' % escape(form.get_xml().replace("><", ">\n<"))
+    return '<pre class="fancy-code prettyprint linenums"><code class="language-xml">%s</code></pre>' % escape(form.get_xml().replace("><", ">\n<"))
 
 @register.simple_tag
 def form_inline_display(form_id, timezone=pytz.utc):
