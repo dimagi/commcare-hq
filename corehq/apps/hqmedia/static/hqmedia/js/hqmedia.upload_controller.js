@@ -1,12 +1,13 @@
 function HQMediaUploadController(options) {
+    'use strict';
     var self = this;
 
     // These are necessary for having multiple upload controllers on the same page.
     self.container = options.container || '#hqmedia_uploader';
     self.marker = options.marker || 'media_';
+    self.confirmUploadModalSelector = options.confirmUploadModalSelector || "#hqm-upload-modal";
 
     ///// YUI Uploader Specific Params
-    self.confirmUploadModalSelector = options.confirmUploadModalSelector || "#hqm-upload-modal";
     self.swfURL = options.swfURL;
     self.fileFilters = options.fileFilters;
     self.isMultiFileUpload = options.isMultiFileUpload;
@@ -273,7 +274,9 @@ function HQMediaUploadController(options) {
         /*
             Begin Upload was clicked.
          */
-        $(self.confirmUploadModalSelector).modal('hide');
+        if ($(self.confirmUploadModalSelector)) {
+            $(self.confirmUploadModalSelector).modal('hide');
+        }
         var postParams = _.clone(self.uploadParams);
         if ($(self.uploadFormSelector).find('[name="shared"]').prop('checked')) {
             $.extend(postParams, self.getLicensingParams());

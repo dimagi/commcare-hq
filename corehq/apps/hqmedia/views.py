@@ -205,7 +205,11 @@ class BaseUploaderMultimediaView(BaseMultimediaTemplateView):
 
     @property
     def processing_url(self):
-        return reverse(MultimediaUploadStatus.name)
+        return reverse(MultimediaUploadStatusView.name)
+
+
+class MultimediaReferencesView(BaseUploaderMultimediaView):
+    name = "hqmedia_references"
 
 
 class BulkUploadMultimediaView(BaseUploaderMultimediaView):
@@ -438,7 +442,7 @@ class DownloadMultimediaZip(View, ApplicationViewMixin):
         return response
 
 
-class MultimediaUploadStatus(View):
+class MultimediaUploadStatusView(View):
     name = "hqmedia_upload_status"
 
     @property
@@ -448,7 +452,7 @@ class MultimediaUploadStatus(View):
 
     @method_decorator(login_required)
     def dispatch(self, request, *args, **kwargs):
-        return super(MultimediaUploadStatus, self).dispatch(request, *args, **kwargs)
+        return super(MultimediaUploadStatusView, self).dispatch(request, *args, **kwargs)
 
     def get(self, request, *args, **kwargs):
         return HttpResponseBadRequest("Please post to this.")

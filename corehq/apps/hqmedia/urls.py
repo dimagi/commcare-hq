@@ -1,11 +1,11 @@
 from django.conf.urls.defaults import *
 from corehq.apps.hqmedia.views import (DownloadMultimediaZip, BulkUploadMultimediaView, ProcessBulkUploadView,
-                                       MultimediaUploadStatus, ViewMultimediaFile)
+                                       MultimediaUploadStatusView, ViewMultimediaFile)
 
 urlpatterns = patterns('corehq.apps.hqmedia.views',
     url(r'^file/(?P<media_type>[\w\-]+)/(?P<doc_id>[\w\-]+)/(.+)?$',
         ViewMultimediaFile.as_view(), name=ViewMultimediaFile.name),
-    url(r'^upload_status/$', MultimediaUploadStatus.as_view(), name=MultimediaUploadStatus.name)
+    url(r'^upload_status/$', MultimediaUploadStatusView.as_view(), name=MultimediaUploadStatusView.name)
 )
 
 application_urls = patterns('corehq.apps.hqmedia.views',
