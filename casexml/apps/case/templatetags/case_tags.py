@@ -32,13 +32,16 @@ FORM_PROPERTIES_COLUMNS = 2
 
 
 def get_display(val, dt_format="%b %d, %Y %H:%M %Z", timezone=pytz.utc,
-                parse_dates=True):
-    recurse = lambda v: get_display(v, dt_format=dt_format, timezone=timezone)
+                parse_dates=True, key_format=None):
+    recurse = lambda v: get_display(
+            v, dt_format=dt_format, timezone=timezone, key_format=key_format)
 
     if isinstance(val, types.DictionaryType):
         ret = "".join(
             ["<dl>"] + 
-            ["<dt>%s</dt><dd>%s</dd>" % (k, recurse(v)) for k, v in val.items()] +
+            ["<dt>%s</dt><dd>%s</dd>" % (
+                (key_format(k) if key_format else k), recurse(v)
+             ) for k, v in val.items()] +
             ["</dl>"])
 
     elif (isinstance(val, collections.Iterable) and 
@@ -70,8 +73,9 @@ def build_tables(data, definition, processors=None, timezone=pytz.utc):
         return data.get(expr, None)
 
     def get_display_tuple(prop):
+        replace_underscores = lambda v: v.replace('_', ' ')
         expr = prop['expr']
-        name = prop.get('name', expr)
+        name = prop.get('name', replace_underscores(expr))
         format = prop.get('format')
         process = prop.get('process')
         parse_date = prop.get('parse_date')
@@ -95,7 +99,9 @@ def build_tables(data, definition, processors=None, timezone=pytz.utc):
         if process:
             val = escape(processors[process](val))
         else:
-            val = mark_safe(get_display(val, timezone=timezone))
+            val = mark_safe(get_display(
+                val, timezone=timezone, 
+                key_format=replace_underscores))
 
         if format:
             val = mark_safe(format.format(val))
