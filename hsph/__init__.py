@@ -20,6 +20,7 @@ CUSTOM_REPORTS = (
     )),
     ('Data Summary Reports', (
         data_summary.PrimaryOutcomeReport,
-        data_summary.SecondaryOutcomeReport
+        data_summary.SecondaryOutcomeReport,
+        data_summary.FADAObservationsReport
     ))
 )
