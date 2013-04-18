@@ -218,6 +218,7 @@ class Domain(Document, HQBillingDomainMixin, SnapshotMixin):
     phone_model = StringProperty()
     attribution_notes = StringProperty()
     publisher = StringProperty(choices=["organization", "user"], default="user")
+    yt_id = StringProperty()
 
     deployment = SchemaProperty(Deployment)
 
