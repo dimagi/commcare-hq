@@ -248,7 +248,7 @@ class Domain(Document, HQBillingDomainMixin, SnapshotMixin):
             del data['original_doc']
             should_save = True
             if original_doc:
-                original_doc = Domain.get_by_name(data['original_doc'])
+                original_doc = Domain.get_by_name(original_doc)
                 data['copy_history'] = [original_doc._id]
 
         # for domains that have a public domain license
