@@ -6,28 +6,9 @@
 {% load i18n %}
 
 {% block head %}{{ block.super }}
-    {% include "imports/bootstrap.google-prettify.html" %}
-    <script type="text/javascript" src="{% static 'hqstyle/js/jquery/plugins/jquery.selectText.js' %}"></script>
-    <script type="text/javascript">
-        $(function() {
-            var $codeBlock = $("#formatted-form-xml"),
-                original_xml = $codeBlock.find("code").text(),
-                code_selected = false;
-            prettyPrint();
-            var formatted_block = $codeBlock.html();
-            $codeBlock.dblclick(function() {
-               if(!code_selected) {
-                   $(this).text(original_xml);
-                   $(this).selText();
-                   code_selected = true;
-               }
-            });
-            $(document).click(function() {
-                if(code_selected) {
-                    code_selected = false;
-                    $codeBlock.html(formatted_block);
-                }
-            });
+    {% include "imports/fancy-code.html" %}
+    <script>
+        $(function () {
             var help_text = {
                 "{% trans "Archiving Forms" %}": "{% trans "Archived forms will no longer show up in reports. However, case data submitted from archived forms is still maintained." %}",
                 "{% trans "Restoring Forms" %}": "{% trans "Restoring this form will cause it to show up in reports again." %}",
