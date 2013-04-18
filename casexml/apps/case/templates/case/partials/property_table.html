@@ -2,7 +2,11 @@
 
 <script>
     $(function () {
-        $(".property-table-row").one('inview', function () {
+        var id = "{{ id }}";
+
+        // make horizontally adjacent dls look aligned like a table
+        $("#" + id).one('inview', function () {
+            
             var $rowContainer = $(this),
                 maxHeights = [];
 
@@ -20,28 +24,41 @@
                     height: val + "px"
                 });
             });
+
+            // make sure tables with fewer rows than the tallest table are the
+            // same height as it
+            var maxHeight = 0;
+            $rowContainer.find(".case-properties-table").each(function () {
+            console.log("foo", $(this), $(this).height());
+                maxHeight = Math.max(maxHeight, $(this).height());
+                
+            });
+            console.log(id, "maxHeight", maxHeight);
+                $rowContainer.find(".case-properties-table").css({
+                height: maxHeight + "px"
+            });
+
         });
     });
 </script>
 
-<div class="property-table-row">
+<div class="property-table-row" id="{{ id }}">
     {% for name, columns in tables %}
     <div class="property-table-container">
         {% if name %}
-        <div class="table-tab"
-            data-target="#case_properties_{{ name|slugify }}">
+        <div class="table-tab">
             {{ name }}
         </div>
         {% endif %}
 
-        <div class="case-properties-table well collapse in">
+        <div class="case-properties-table well">
             {# todo: make work with either tables or dls, specify which with kwarg #}
             {# (requires transforming dl columns to table rows and handling colspan)} #}
             {# <table class="table table-bordered case-properties-table"> #}
             {% for column in columns %}
             <dl>
                 {% for expr, name, value in column %}
-                {% if expr and name and value %}
+                {% if name %}
                 <dt title="{{ expr }}">
                     {{ name }}
                 </dt>
@@ -54,15 +71,18 @@
                 {% endfor %}
             </dl>
             {% empty %}
-            <dt>
-                {% trans "No data" %}
-            </dt>
-            <dd>
-                <span class="muted">
-                    {% trans "No properties found for this block." %}
-                </span>
-            </dd>
+            <dl>
+                <dt>
+                    {% trans "No data" %}
+                </dt>
+                <dd>
+                    <span class="muted">
+                        {% trans "No properties found." %}
+                    </span>
+                </dd>
+            </dl>
             {% endfor %}
+            <div class="clearfix"></div>
         </div>
     </div>
     {% endfor %}

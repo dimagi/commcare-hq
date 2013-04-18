@@ -30,25 +30,35 @@
 <div class="tab-content">
     <div class="tab-pane active" id="form-data">
         {% render_tables form_data %}
-        <a href="{% url render_form_data form_obj.domain form_obj.get_id %}">View Submission</a>
+        <a href="{% url render_form_data instance.domain instance.get_id %}">
+            View Submission
+        </a>
     </div>
+
     <div class="tab-pane" id="form-case-data">
         {% if this_case_data and other_cases_data %}
-        <h3>{% trans "This Case" %}</h3>
+        <div style="float: left">
+        <h4>{% trans "This Case" %}</h4>
         {% endif %}
 
         {% if this_case_data %}
         {% render_tables this_case_data %}
         {% endif %}
+        </div>
 
-        <div class="clearfix"></div>
+        <div style="float: left">
         {% if this_case_data and other_cases_data %}
-        <h3>{% trans "Other Cases" %}</h3>
+        <h4>{% trans "Other Cases" %}</h4>
         {% endif %}
 
         {% if other_cases_data %}
         {% for data in other_cases_data %}
         {% render_tables data %}
+        </div>
+
+        <div class="clearfix"></div>
+
+
         {% endfor %}
         {% endif %}
     </div>
@@ -58,6 +68,12 @@
     </div>
 
     <div class="tab-pane" id="form-xml">
+        <p>
+            <a class="btn" href="{% url download_form domain instance.get_id %}" target="_blank">
+                {% trans "Open XML in New Window" %}
+            </a>
+        </p>
+        <p>Double-click code below to select all:</p>
         {% render_form_xml instance %}
     </div>
 </div>

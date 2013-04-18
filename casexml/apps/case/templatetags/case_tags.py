@@ -28,17 +28,18 @@ def chunks(l, n):
 register = template.Library()
 
 DYNAMIC_CASE_PROPERTIES_COLUMNS = 4
-FORM_PROPERTIES_COLUMNS = 2
+FORM_PROPERTIES_COLUMNS = 1
 
 
 def get_display(val, dt_format="%b %d, %Y %H:%M %Z", timezone=pytz.utc,
-                parse_dates=True, key_format=None):
+                parse_dates=True, key_format=None, level=0):
     recurse = lambda v: get_display(
-            v, dt_format=dt_format, timezone=timezone, key_format=key_format)
+            v, dt_format=dt_format, timezone=timezone, key_format=key_format,
+            level=level + 1)
 
     if isinstance(val, types.DictionaryType):
         ret = "".join(
-            ["<dl>"] + 
+            ["<dl %s>" % "class='well'" if level == 0 else ''] + 
             ["<dt>%s</dt><dd>%s</dd>" % (
                 (key_format(k) if key_format else k), recurse(v)
              ) for k, v in val.items()] +
@@ -121,21 +122,26 @@ def build_tables(data, definition, processors=None, timezone=pytz.utc):
 
 
 @register.simple_tag
-def render_tables(tables, collapsible=False):
+def render_tables(tables, id=None):
+    if id is None:
+        import uuid
+        id = "a" + str(uuid.uuid4())
+
     return render_to_string("case/partials/property_table.html", {
-        "tables": tables
+        "tables": tables,
+        "id": id,
     })
 
 
 def get_definition(keys, num_columns=FORM_PROPERTIES_COLUMNS):
     return [
         (None, 
-         chunks([{"expr": prop} for prop in sorted(keys)], num_columns))
+         chunks([{"expr": prop} for prop in keys], num_columns))
     ]
 
 
 @register.simple_tag
-def render_form(form, timezone=pytz.utc, display=None, case_id=None):
+def render_form(form, domain, timezone=pytz.utc, display=None, case_id=None):
     def key_filter(key):
         if key in SYSTEM_FIELD_NAMES:
             return False
@@ -145,7 +151,8 @@ def render_form(form, timezone=pytz.utc, display=None, case_id=None):
 
         return True
 
-    # Form Data tab
+    # Form Data tab. Ensure that if top_level_tags() returns live references we
+    # don't change any data
     form_dict = copy.deepcopy(form.top_level_tags())
     form_keys = [k for k in form_dict.keys() if key_filter(k)]
     form_data = build_tables(form_dict, definition=get_definition(form_keys),
@@ -164,7 +171,7 @@ def render_form(form, timezone=pytz.utc, display=None, case_id=None):
     if this_case_block:
         this_case_data = build_tables( 
                 this_case_block,
-                definition=get_definition(this_case_block.keys()),
+                definition=get_definition(sorted(this_case_block.keys())),
                 timezone=timezone)
     else:
         this_case_data = None
@@ -182,7 +189,8 @@ def render_form(form, timezone=pytz.utc, display=None, case_id=None):
             timezone=timezone)
 
     return render_to_string("case/partials/single_form.html", {
-        "form_obj": form,
+        "instance": form,
+        "domain": domain,
         "form_data": form_data,
         "form_meta_data": form_meta_data,
         "this_case_data": this_case_data,
@@ -208,15 +216,9 @@ def render_case(case, timezone=pytz.utc, display=None):
             [
                 {
                     "expr": "type",
-                    "name": _("Type"),
+                    "name": _("Case Type"),
                     "format": '<code>{0}</code>',
                 },
-                {
-                    "expr": "external_id",
-                    "name": _("External ID"),
-                },
-            ],
-            [
                 {
                     "expr": "case_id",
                     "name": _("Case ID"),

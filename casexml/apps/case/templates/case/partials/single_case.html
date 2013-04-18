@@ -4,7 +4,7 @@
 {% load timezone_tags %}
 {% load case_tags %}
 {% load hq_shared_tags %}
-{#<script src="{% static "case/js/lib/jquery.inview.js" %}"></script>#}
+<script src="{% static "case/js/lib/jquery.inview.js" %}"></script>
 
 <style type="text/css">
     .hq-generic-report {
@@ -20,10 +20,6 @@
         margin-right: 38px;
     }
 
-    dd {
-        padding-bottom: 10px;
-    
-    }
     .property-table-container {
         float: left;
         margin-bottom: 18px;
@@ -45,10 +41,6 @@
         border-radius: 4px 4px 0 0;
     }
     
-    .case-properties-table dl {
-        font-size: 90%;
-    }
-
     .case-properties-table > dl {
         word-wrap: break-word;
         word-break: break-all;
@@ -66,8 +58,12 @@
         margin-right: 20px;
     }
 
-    .case-properties-table > dd:not(:last-child) {
-        margin-bottom: 10px;
+    .case-properties-table > dl dt {
+        margin-bottom: 5px;
+    }
+
+    .case-properties-table > dl dd:not(:last-child) {
+        margin-bottom: 20px;
     }
 
 </style>
@@ -78,8 +74,8 @@
         {% render_tables default_properties %}
     </div>
     <ul class="nav nav-tabs">
-        <li class="active"><a href="#case-details" data-toggle="tab">{% trans "Case Details" %}</a></li>
-        <li><a href="#case-history-tab" data-toggle="tab">{% trans "History" %}</a></li>
+        <li class="active"><a href="#case-details" data-toggle="tab">{% trans "Case Properties" %}</a></li>
+        <li><a href="#case-history-tab" data-toggle="tab">{% trans "Case History" %}</a></li>
         {% if case.referrals %}
         <li><a href="#case-referrals" data-toggle="tab">{% trans "Referrals" %}</a></li>
         {% endif %}
