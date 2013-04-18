@@ -27,7 +27,6 @@ class DomainStatsReport(GenericTabularReport):
     def headers(self):
         headers = DataTablesHeader(
             DataTablesColumn("Project"),
-            DataTablesColumn(_("# Web Users"), sort_type=DTSortType.NUMERIC),
             DataTablesColumn(_("# Active Mobile Workers"), sort_type=DTSortType.NUMERIC,
                 help_text=_("The number of mobile workers who have submitted a form in the last 30 days")),
             DataTablesColumn(_("# Mobile Workers"), sort_type=DTSortType.NUMERIC),
@@ -37,6 +36,7 @@ class DomainStatsReport(GenericTabularReport):
             DataTablesColumn(_("# Form Submissions"), sort_type=DTSortType.NUMERIC),
             DataTablesColumn(_("First Form Submission")),
             DataTablesColumn(_("Last Form Submission")),
+            DataTablesColumn(_("# Web Users"), sort_type=DTSortType.NUMERIC),
             # DataTablesColumn(_("Admins"))
         )
         # headers.no_sort = True
@@ -48,10 +48,10 @@ class DomainStatsReport(GenericTabularReport):
         all_stats = _all_domain_stats()
         # domains = sorted(self.get_domains())
         domains = self.get_domains()
-        for dom in domains:
+        for domain in domains:
+            dom = getattr(domain, 'name', domain) # get the domain name if domains is a list of domain objects
             yield [
-                dom,
-                int(all_stats["web_users"][dom]),
+                getattr(domain, 'hr_name', dom), # get the hr_name if domain is a domain object
                 int(CALC_FNS["mobile_users"](dom)),
                 int(all_stats["commcare_users"][dom]),
                 int(CALC_FNS["cases_in_last"](dom, 120)),
@@ -59,6 +59,7 @@ class DomainStatsReport(GenericTabularReport):
                 int(all_stats["forms"][dom]),
                 CALC_FNS["first_form_submission"](dom),
                 CALC_FNS["last_form_submission"](dom),
+                int(all_stats["web_users"][dom]),
                 # [row["doc"]["email"] for row in get_db().view("users/admins_by_domain",
                 #                                               key=dom, reduce=False, include_docs=True).all()],
             ]
@@ -80,7 +81,7 @@ class OrgDomainStatsReport(DomainStatsReport):
         organization = Organization.get_by_name(org, strict=True)
         if organization and \
                 (self.request.couch_user.is_superuser or self.request.couch_user.is_member_of_org(org)):
-            return [d.name for d in Domain.get_by_organization(organization.name).all()]
+            return [d for d in Domain.get_by_organization(organization.name).all()]
         return []
 
     def is_custom_param(self, param):
