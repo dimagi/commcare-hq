@@ -173,7 +173,12 @@ def _log_hard_failure(instance, attachments, error):
     Currently, it will save the raw payload to couch in a hard-failure doc
     and return that doc.
     """
-    return SubmissionErrorLog.from_instance(instance, str(error))
+    try:
+        message = unicode(error)
+    except UnicodeDecodeError:
+        message = unicode(str(error), encoding='utf-8')
+
+    return SubmissionErrorLog.from_instance(instance, message)
     
     
 def value_for_display(value, replacement_chars="_-"):
