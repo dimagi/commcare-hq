@@ -1,20 +1,28 @@
 {% load i18n %}
 {% load case_tags %}
+{% load xform_tags %}
+
+{% include "imports/fancy-code.html" %}
 
 <ul class="nav nav-tabs">
     <li class="active">
         <a href="#form-data" data-toggle="tab">
-            {% trans "Form" %}
+            {% trans "Form Data" %}
         </a>
     </li>
     <li>
         <a href="#form-case-data" data-toggle="tab">
-            {% trans "Case" %}
+            {% trans "Case Changes" %}
         </a>
     </li>
     <li>
         <a href="#form-meta-data" data-toggle="tab">
-            {% trans "Meta" %}
+            {% trans "Form Metadata" %}
+        </a>
+    </li>
+    <li>
+        <a href="#form-xml" data-toggle="tab">
+            {% trans "Raw XML" %}
         </a>
     </li>
 </ul>
@@ -47,5 +55,9 @@
     
     <div class="tab-pane" id="form-meta-data">
         {% render_tables form_meta_data %}
+    </div>
+
+    <div class="tab-pane" id="form-xml">
+        {% render_form_xml instance %}
     </div>
 </div>
