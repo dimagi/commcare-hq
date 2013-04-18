@@ -197,7 +197,7 @@ class FADAObservationsReport(DataSummaryReport, HSPHSiteDataMixin):
     slug = "fada_observations"
 
     fields = ['corehq.apps.reports.fields.DatespanField',
-              'corehq.apps.reports.fields.SelectMobileWorkerField']
+              'hsph.fields.NameOfFADAField']
 
     report_template_path = 'hsph/reports/fada_observations.html'
     flush_layout = True

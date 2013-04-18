@@ -36,10 +36,20 @@ class SiteField(ReportField):
                 facs[region]["districts"][district]["sites"][site] = dict(name=fix.fields.get("site_name"))
         return facs
 
+
+class NameOfFADAField(SelectFilteredMobileWorkerField):
+    slug = "fada_name"
+    name = "Name of FADA"
+    group_names = ["Role - FADA"]
+    cssId = "fada_name"
+    show_only_group_option = False
+    default_option = "All FADAs"
+
+
 class NameOfFIDAField(SelectFilteredMobileWorkerField):
     slug = "fida_name"
     name = "Name of FIDA"
-    group_names = ["FIDA"]
+    group_names = ["Role - FIDA"]
     cssId = "fida_name"
 
 class NameOfCATIField(SelectFilteredMobileWorkerField):
