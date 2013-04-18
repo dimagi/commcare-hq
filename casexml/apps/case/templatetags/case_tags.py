@@ -221,10 +221,6 @@ def render_case(case, timezone=pytz.utc, display=None):
                     "expr": "case_id",
                     "name": _("Case ID"),
                 },
-                {
-                    "expr": "domain",
-                    "name": _("Domain"),
-                },
             ],
         ]),
         (_("Submission Info"), [
