@@ -193,7 +193,7 @@ function HQMediaUploadController(options) {
          */
         YUI({
             combine: false,
-            base: '/static/hqmedia/yui/3.9.1/build/'
+            base: '/static/hqmedia/yui/3.9.1/'
         }).use('uploader', function (Y) {
                 var buttonRegion = Y.one(self.selectFilesButton).get('region');
                 var version_info = swfobject.getFlashPlayerVersion();
