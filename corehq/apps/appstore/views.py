@@ -175,7 +175,9 @@ def appstore(request, template="appstore/appstore_base.html"):
     sort_by = request.GET.get('sort_by', None)
     if sort_by == 'best':
         d_results = Domain.popular_sort(d_results)
-    elif sort_by == 'hits':
+    elif sort_by == 'newest':
+        pass
+    else:
         d_results = Domain.hit_sort(d_results)
 
     average_ratings = list()

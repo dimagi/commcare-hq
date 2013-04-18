@@ -248,11 +248,11 @@
             {% endif %}
         </li>
     {% endif %}
+    {% if sort_by == 'newest' %}
+        <li>{% trans "Newest" %}</li>
+    {% endif %}
     {% if sort_by  == 'best' %}
     <li>{% trans "Highest Rated" %}</li>
-    {% endif %}
-    {% if sort_by == 'hits' %}
-    <li>{% trans "Most Downloaded" %}</li>
     {% endif %}
 
 </ul>
@@ -274,9 +274,9 @@
     {% block view-tabs %}
     <div class="tabbable" style="padding-top: 15px;">
         <ul class="nav nav-pills">
-            <li{% if not sort_by %} class="active"{% endif %}><a href="{% urlencode request.path request.GET without "sort_by" %}">{% trans "Newest" %}</a></li>
+            <li{% if not sort_by %} class="active"{% endif %}><a href="{% urlencode request.path request.GET without "sort_by" %}">{% trans "Most Downloaded" %}</a></li>
+            <li{% if sort_by == 'newest' %} class="active"{% endif %}><a href="{% urlencode request.path request.GET with "sort_by" as "newest" %}">{% trans "Newest" %}</a></li>
             <li{% if sort_by == 'best' %} class="active"{% endif %}><a href="{% urlencode request.path request.GET with "sort_by" as "best" %}">{% trans "Highest Rated" %}</a></li>
-            <li{% if sort_by == 'hits' %} class="active"{% endif %}><a href="{% urlencode request.path request.GET with "sort_by" as "hits" %}">{% trans "Most Downloaded" %}</a></li>
         </ul>
     </div>
     {% endblock %}
