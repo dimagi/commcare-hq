@@ -18,6 +18,7 @@ from django.core.exceptions import ValidationError
 from django.template.loader import render_to_string
 from couchdbkit.ext.django.schema import *
 from couchdbkit.resource import ResourceNotFound
+from dimagi.utils.couch.database import get_safe_write_kwargs
 
 from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.make_uuid import random_hex
@@ -983,7 +984,7 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, UnicodeMixIn):
                 couch_user.sync_from_django_user(django_user)
                 try:
                     # avoid triggering cyclical sync
-                    super(CouchUser, couch_user).save()
+                    super(CouchUser, couch_user).save(**get_safe_write_kwargs())
                 except ResourceConflict:
                     cls.django_user_post_save_signal(sender, django_user, created, max_tries - 1)
 
@@ -1085,7 +1086,7 @@ class CommCareUser(CouchUser, CommCareMobileContactMixin, SingleMembershipMixin)
 
         commcare_user.domain_membership = DomainMembership(domain=domain, **kwargs)
 
-        commcare_user.save()
+        commcare_user.save(**get_safe_write_kwargs())
 
         return commcare_user
 

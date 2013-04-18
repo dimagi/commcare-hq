@@ -240,6 +240,13 @@ class ManageDataTab(UITab):
 
         return self.domain and self.couch_user.can_edit_data()
 
+    @property
+    @memoized
+    def is_active(self):
+        # hack because subpages of excel importer don't follow the url <->
+        # navigation isomorphism
+        return ('importer/excel' in self._request.get_full_path() or
+                super(ManageDataTab, self).is_active)
         
 class ApplicationsTab(UITab):
     title = ugettext_noop("Applications")
@@ -264,7 +271,11 @@ class ApplicationsTab(UITab):
             app_info = app['value']
             if app_info:
                 url = reverse('view_app', args=[self.domain, app_info['_id']])
-                app_name = mark_safe("%s" % mark_for_escaping(app_info['name'] or '(Untitled)'))
+                app_name = mark_safe("%s%s" % (
+                    mark_for_escaping(app_info['name'] or '(Untitled)'),
+                    mark_for_escaping(' (Remote)' if app_info['doc_type'] == 'RemoteApp' else ''),
+                ))
+
                 submenu_context.append(format_submenu_context(app_name, url=url))
 
         if self.couch_user.can_edit_apps():

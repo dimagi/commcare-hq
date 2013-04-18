@@ -1,4 +1,6 @@
 from corehq.apps.sms.mixin import MobileBackend
+from dimagi.utils.couch.database import get_safe_write_kwargs
+
 
 def bootstrap(id=None, to_console=''):
     """
@@ -12,7 +14,7 @@ def bootstrap(id=None, to_console=''):
     )
     if id:
         backend._id = id
-    backend.save()
+    backend.save(**get_safe_write_kwargs())
     return backend
 
 def send(msg, *args, **kwargs):

@@ -134,7 +134,6 @@ var CaseManagement = function (o) {
 
         }
     };
-
 };
 
 ko.bindingHandlers.caseReassignmentForm = {
@@ -186,7 +185,7 @@ ko.bindingHandlers.comboboxOptions = {
     update: function (element, valueAccessor, allBindingsAccessor) {
         ko.bindingHandlers.options.update(element, valueAccessor, allBindingsAccessor);
         var value = ko.utils.unwrapObservable(valueAccessor());
-        if (!$(element).find([value=""]).size()) {
+        if (!$(element).find('[value=""]').size()) {
             $(element).append('<option value=""></option>');
         }
         $(element).data('combobox').refresh();

@@ -18,12 +18,12 @@ var mk_translation_ui = function (spec) {
                 this.value = uiElement.input().val(value).setEdit(translation_ui.edit);
                 this.solid = true;
 
-                this.$delete = $('<div class="ui-icon"/>').addClass(COMMCAREHQ.icons.DELETE).click(function () {
+                this.$delete = $('<i></i>').addClass(COMMCAREHQ.icons.DELETE).click(function () {
                     $(this).remove();
                     translation_ui.deleteTranslation(that.key.val());
                 }).css({cursor: 'pointer'}).attr('title', "Delete Translation");
                 
-                this.$add = $('<div class="ui-icon"/>').addClass(COMMCAREHQ.icons.ADD).click(function () {
+                this.$add = $('<i></i>').addClass(COMMCAREHQ.icons.ADD).click(function () {
                     // remove any trailing whitespace from the input box
                     that.key.val($.trim(that.key.val()));
                     if (that.key.val() && !translation_ui.translations[that.key.val()]) {

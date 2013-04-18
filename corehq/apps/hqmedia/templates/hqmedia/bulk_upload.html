@@ -6,111 +6,26 @@
 
 {% block js %} {{ block.super }}
     {% include 'hqmedia/includes/yui_upload.html' %}
-    <script type="text/javascript" src="{% static 'hqmedia/js/hqmedia.uploader.js' %}"></script>
+    <script type="text/javascript" src="{% static 'hqmedia/js/hqmedia.upload_controller.js' %}"></script>
     <script type="text/javascript" src="{% static 'hqwebapp/js/lib/underscore-1.3.1.js' %}"></script>
 {% endblock %}
 
 {% block js-inline %} {{ block.super }}
     <script type="text/javascript">
-        $(function() {
-            // use these filters when we figure out what to do with duplicate filenames in different folders
-//            new Array({description:"Zip", extensions:"*.zip"},
-//                    {description:"Images", extensions:"*.jpg;*.png;*.gif"},
-//                    {description:"Audio", extensions:"*.mp3"}),
-            var uploader = new HQMediaUploader({
-                uploadElem: '#hqmedia-upload',
-                fileFilters: new Array({description:"Zip", extensions:"*.zip"}),
-                uploadURL: '{% url hqmedia_handle_uploaded domain app.get_id %}',
-                onSuccess: showUploadStats,
-                swfLocation: '{% static 'hqmedia/yui/uploader/uploader.swf' %}',
-                uploadParams: {replace_existing: false},
-                uploadFormParams: ['license', 'author', 'attribution-notes']
-            });
-            uploader.render();
-
-            function showUploadStats (event, resp) {
-                var $currentMedia = $('#hqmedia_'+event.id);
-                if (resp.zip) {
-                    // Handle Zip File Response
-                    if ($.isEmptyObject(resp.images) && $.isEmptyObject(resp.audio)) {
-                        $currentMedia.find('.match_status').html($('<span class="label label-important" />').text("No Matches Found"));
-                    } else {
-                        $currentMedia.find('.match_status').html($('<span class="label label-success" />').text("Matches Found"));
-                        var $imageList = createMatchList(resp.images),
-                            $audioList = createMatchList(resp.audio, true),
-                            $detailList = $currentMedia.find('.details');
-                        var accordion_id;
-                        if (!_.isEmpty(resp.images))
-                            $detailList.append(createAccordionItem('imageRef_',
-                                                                    "Matched Images ("+resp.images.length+")",
-                                                                    $imageList));
-
-                        if (!_.isEmpty(resp.audio))
-                            $detailList.append(createAccordionItem('audioRef_',
-                                    "Matched Audio ("+resp.audio.length+")",
-                                    $audioList));
-                    }
-                } else if (resp.file) {
-                    if (!_.isEmpty(resp.image)) {
-                        $currentMedia.find('.match_status').html($('<div class="label label-success" />').text("Image Match Found"));
-                        $currentMedia.find('.details').append(createMatchList(new Array(resp.image)));
-                    } else if (!$.isEmptyObject(resp.audio)) {
-                        $currentMedia.find('.match_status').html($('<div class="label label-success" />').text("Audio Match Found"));
-                        $currentMedia.find('.details').append(createMatchList(new Array(resp.audio), true));
-                    } else {
-                        $currentMedia.find('.match_status').html($('<div class="label label-inverse" />').text("No Match Found"));
-                    }
-                }
-            }
-
-            function createAccordionItem(id_prefix, header_text, content) {
-                var accordion_id = _.uniqueId(id_prefix),
-                    $accordionToggle = $('<a class="accordion-toggle" data-toggle="collapse" />'),
-                    $accordionBody = $('<div class="accordion-body collapse" />');
-                $accordionToggle.text(header_text);
-                $accordionToggle.attr('href', '#'+accordion_id);
-                $accordionBody.attr('id',accordion_id);
-                $accordionBody.append($('<div class="accordion-inner" />').append(content));
-//                $accordionBody.collapse();
-                return $('<div class="accordion-group" />').append($('<div class="accordion-heading" />').html($accordionToggle),
-                                                                   $accordionBody);
-            }
-
-            function createMatchList (matches, is_audio) {
-                var $list = $('<dl style="margin: 5px 0 0;" />');
-                for (var i in matches) {
-                    var $name = $('<dt />'),
-                         $val = $('<dd />'),
-                        $view = $('<a style="margin-bottom:6px;" target="_blank" class="btn btn-info btn-mini" />');
-                    $view.text('Preview');
-                    if (is_audio) {
-                        $view.popout({
-                            title: 'Click to open in new tab',
-                            content: 'Audio not currently available for on-the-fly preview.',
-                            placement: 'bottom',
-                            trigger: 'hover'
-                        });
-                    } else {
-                        $view.popout({
-                            title: 'Click to open in new tab',
-                            html: true,
-                            content: '<img src="'+matches[i].url+'" height="195" alt="'+matches[i].path+'" />',
-                            placement: 'bottom',
-                            trigger: 'hover'
-                        });
-                    }
-                    $view.attr('href', matches[i].url);
-                    $name.text(matches[i].upload_path);
-                    $val.text(matches[i].path);
-                    $val.append($('<br />'));
-                    $val.append($view);
-                    $list.append($name);
-                    $list.append($val);
-                }
-                return $list;
-            }
-
+        var hqm_controller = new HQMediaUploadController({
+            fileFilters: {{ uploader.file_filters|JSON }},
+            uploadURL: '{{ uploader.destination }}',
+            processingURL: '{{ uploader.processing_url }}',
+            swfURL: '{% static 'hqmedia/yui/uploader/uploader.swf' %}',
+            isMultiFileUpload: {{ uploader.multi_file|yesno:"true,false" }},
+            queueTemplate: {{ uploader.queue_template|JSON }},
+            statusTemplate: {{ uploader.status_template|JSON }},
+            detailsTemplate: {{ uploader.details_template|JSON }},
+            errorsTemplate: {{ uploader.errors_template|JSON }},
+            uploadParams: {{ uploader.upload_params|JSON }},
+            licensingParams: {{ uploader.licensing_params|JSON }}
         });
+        hqm_controller.init();
     </script>
 {% endblock %}
 
@@ -131,24 +46,28 @@
         <code>commcare/images/hin/image.jpg</code> file would match, but it would <strong>not</strong> match
         <code>commcare/images/image.jpg</code>.{% endblocktrans %}</p>
     
-    <div id="hqmedia-upload">
+    <div id="hqmedia_uploader">
         <div class="btn-toolbar">
-            <div class="hqm-overlay" style="position:absolute; z-index:2"></div>
+            <div class="hqm-bounding-box" style="position:absolute; z-index:2;"></div>
             <a class="hqm-select btn btn-primary" href="#" style="z-index:1;">{% trans 'Select Files' %}</a>
-            <a class="hqm-upload-button-helper btn disabled" href="#hqm-upload-modal" onclick="return false;" data-toggle="modal"><i class="icon icon-cloud-upload"></i> {% trans 'Upload Files' %}</a>
+            <a class="hqm-upload btn disabled hqm-upload-begin" href="#hqm-upload-modal" data-toggle="modal">
+                <i class="icon icon-cloud-upload"></i> {% trans 'Begin Upload' %}
+            </a>
         </div>
-        <div id="hqm-upload-modal" class="hide modal fade">
+        <div id="hqm-upload-modal" class="modal hide fade">
             <div class="modal-header">
                 <a class="close" href="#" data-dismiss="modal">&times;</a>
-                <h3>{% trans 'Please select the license you wish to upload these files under' %}</h3>
+                <h3>{% trans 'Configure this Upload' %}</h3>
             </div>
             <div class="form-horizontal hqm-upload-form">
                 <div class="modal-body">
-                    {% include 'hqmedia/partials/hqm_upload_form.html' %}
+                    {% include 'hqmedia/partials/hqm_upload_form_multi.html' %}
                 </div>
                 <div class="modal-footer">
-                    <a class="hqm-upload-button btn disabled" data-dismiss="modal" onclick="return false;"><i class="icon icon-cloud-upload"></i>
-                        {% trans 'Continue with Upload' %}</a> <a href="#" data-dismiss="modal" class="btn">{% trans 'Cancel' %}</a>
+                    <a class="hqm-upload hqm-upload-confirm btn disabled">
+                        <i class="icon-cloud-upload"></i> {% trans 'Continue with Upload' %}
+                    </a>
+                    <a href="#" data-dismiss="modal" class="btn">{% trans 'Cancel' %}</a>
                 </div>
             </div>
         </div>
@@ -163,17 +82,25 @@
                     <th class="span5">{% trans 'Details' %}</th>
                 </tr>
             </thead>
-            <tbody class="queue">
-                <tr class="hqm-empty_queue-notice">
+            <thead>
+            <tr>
+                <th class="muted" colspan="5"  style="text-align: center;">{% trans 'Queued Files' %}</th>
+            </tr>
+            </thead>
+            <tbody class="hqm-queue">
+                <tr class="hqm-empty">
                     <td colspan="5">{% blocktrans %}Select files above to add to the queue.{% endblocktrans %}</td>
                 </tr>
             </tbody>
-            <thead>
-                <tr class="hqm-uploaded-notice hide">
+            <tbody class="hqm-upload-processing">
+                <tr class="hqm-list-notice">
+                    <th colspan="5">{% trans 'Processing Upload' %}</th>
+                </tr>
+            </tbody>
+            <tbody class="hqm-uploaded-files">
+                <tr class="hqm-list-notice">
                     <th colspan="5">{% trans 'Uploaded Files' %}</th>
                 </tr>
-            </thead>
-            <tbody class="done">
             </tbody>
         </table>
     </div>
