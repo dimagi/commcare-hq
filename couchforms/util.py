@@ -14,7 +14,7 @@ from couchdbkit.resource import RequestFailed
 from couchforms.exceptions import CouchFormException
 from couchforms.signals import xform_saved
 from dimagi.utils.couch import uid
-from dimagi.utils.couch.database import is_bigcouch, bigcouch_quorum_count, get_safe_write_kwargs
+from dimagi.utils.couch.database import get_safe_write_kwargs
 import re
 from dimagi.utils.post import post_authenticated_data, post_unauthenticated_data
 from restkit.errors import ResourceNotFound
@@ -140,6 +140,8 @@ def _handle_id_conflict(instance, attachments):
     # to deprecate, copy new instance into a XFormDeprecated
     if existing_md5 != new_md5:
         doc_copy = XFormInstance.get_db().copy_doc(conflict_id)
+        # get the doc back to avoid any potential bigcouch race conditions.
+        # r=3 implied by class
         xfd = XFormDeprecated.get(doc_copy['id'])
         xfd.orig_id = conflict_id
         xfd.doc_type=XFormDeprecated.__name__
@@ -171,7 +173,12 @@ def _log_hard_failure(instance, attachments, error):
     Currently, it will save the raw payload to couch in a hard-failure doc
     and return that doc.
     """
-    return SubmissionErrorLog.from_instance(instance, str(error))
+    try:
+        message = unicode(error)
+    except UnicodeDecodeError:
+        message = unicode(str(error), encoding='utf-8')
+
+    return SubmissionErrorLog.from_instance(instance, message)
     
     
 def value_for_display(value, replacement_chars="_-"):
