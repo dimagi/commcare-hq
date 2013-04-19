@@ -262,7 +262,15 @@ def render_form(form, domain, options):
 
 
 @register.simple_tag
-def render_case(case, timezone=pytz.utc, display=None):
+def render_case(case, options):
+    """
+    Uses options since Django 1.3 doesn't seem to support templatetag kwargs.
+    Change to kwargs when we're on a version of Django that does.
+    
+    """
+    timezone = options.get('timezone', pytz.utc)
+    display = options.get('display', None)
+
     display = display or [
         (None, [
             [
