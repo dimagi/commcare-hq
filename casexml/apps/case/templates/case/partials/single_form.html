@@ -36,8 +36,8 @@
         {% render_tables form_data form_table_options %}
     </div>
 
+    {% if cases %}
     <div class="tab-pane" id="form-case-data">
-        {% if cases %}
         <div class="accordion">
             {% for case_data in cases %}
             <div class="accordion-group">
@@ -68,10 +68,8 @@
             </div>
             {% endfor %}
         </div>
-        {% else %}
-        <p class="muted">This form didn't change any cases.</p>
-        {% endif %}
     </div>
+    {% endif %}
     
     <div class="tab-pane" id="form-meta-data">
         {% render_tables form_meta_data form_table_options %}
