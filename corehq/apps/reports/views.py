@@ -48,13 +48,16 @@ from couchdbkit.exceptions import ResourceNotFound
 from fields import FilterUsersField
 from util import get_all_users_by_domain, stream_qs
 from corehq.apps.hqsofabed.models import HQFormData
-from corehq.apps.app_manager.util import get_app_id
 from corehq.apps.groups.models import Group
 from soil import DownloadBase
 from soil.tasks import prepare_download
 from django.utils.translation import ugettext as _
 from django.utils.safestring import mark_safe
 from dimagi.utils.chunked import chunked
+
+from casexml.apps.case.templatetags.case_tags import (render_form,
+    case_inline_display)
+
 
 DATE_FORMAT = "%Y-%m-%d"
 
@@ -706,8 +709,6 @@ def case_details(request, domain, case_id):
         messages.info(request, "Sorry, we couldn't find that case. If you think this is a mistake plase report an issue.")
         return HttpResponseRedirect(inspect.CaseListReport.get_url(domain=domain))
 
-    report_name = 'Details for Case "%s"' % case.name
-
     try:
         owner_name = CommCareUser.get_by_user_id(case.owner_id, domain).raw_username
     except Exception:
@@ -730,7 +731,7 @@ def case_details(request, domain, case_id):
         "owner_name": owner_name,
         "slug": inspect.CaseListReport.slug,
         "report": dict(
-            name=report_name,
+            name=case_inline_display(case),
             slug=inspect.CaseListReport.slug,
             is_async=False,
         ),
@@ -875,7 +876,6 @@ def case_form_data(request, domain, case_id, xform_id):
     except AssertionError:
         raise Http404()
 
-    from casexml.apps.case.templatetags.case_tags import render_form
 
     #todo: additional formatting options
     #todo: sanity check that xform_id has case_block
