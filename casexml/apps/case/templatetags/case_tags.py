@@ -32,27 +32,43 @@ register = template.Library()
 DYNAMIC_CASE_PROPERTIES_COLUMNS = 4
 FORM_PROPERTIES_COLUMNS = 1
 
+def is_list(val):
+    return (isinstance(val, collections.Iterable) and 
+            not isinstance(val, basestring))
 
-def get_display(val, dt_format="%b %d, %Y %H:%M %Z", timezone=pytz.utc,
-                parse_dates=True, key_format=None, level=0):
-    recurse = lambda v: get_display(
-            v, dt_format=dt_format, timezone=timezone, key_format=key_format,
-            level=level + 1)
+def get_display(key, val, dt_format="%b %d, %Y %H:%M %Z", timezone=pytz.utc,
+                parse_dates=True, key_format=None, level=0,
+                collapse_lists=False):
+
+    recurse = lambda k, v: get_display(k, v,
+            dt_format=dt_format, timezone=timezone, key_format=key_format,
+            level=level + 1, collapse_lists=collapse_lists)
+    
+    def _key_format(k, v):
+        if not is_list(v):
+            return key_format(k) if key_format else k
+        else:
+            return ""
 
     if isinstance(val, types.DictionaryType):
         ret = "".join(
             ["<dl %s>" % ("class='well'" if level == 0 else '')] + 
             ["<dt>%s</dt><dd>%s</dd>" % (
-                (key_format(k) if key_format else k), recurse(v)
+                _key_format(k, v), recurse(k, v)
              ) for k, v in val.items()] +
             ["</dl>"])
 
-    elif (isinstance(val, collections.Iterable) and 
-          not isinstance(val, basestring)):
-        ret = "".join(
-            ["<ul>"] +
-            ["<li>%s</li>" % (recurse(v)) for v in val] +
-            ["</ul>"])
+    elif is_list(val):
+        if collapse_lists:
+            ret = "".join(
+                ["<dl>"] +
+                ["<dt>%s</dt><dd>%s</dd>" % (key, recurse(None, v)) for v in val] +
+                ["</dl>"])
+        else:
+            ret = "".join(
+                ["<ul>"] +
+                ["<li>%s</li>" % recurse(None, v) for v in val] +
+                ["</ul>"])
 
     else:
         if isinstance(val, datetime.datetime):
@@ -105,8 +121,9 @@ def build_tables(data, definition, processors=None, timezone=pytz.utc):
         if process:
             val = escape(processors[process](val))
         else:
-            val = mark_safe(get_display(
-                val, timezone=timezone, key_format=format_key))
+            val = mark_safe(get_display(None,
+                val, timezone=timezone, key_format=format_key,
+                collapse_lists=True))
 
         if format:
             val = mark_safe(format.format(val))

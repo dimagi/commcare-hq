@@ -4,13 +4,6 @@
 
 {% include "imports/fancy-code.html" %}
 
-{# not ideal to have this here #}
-<style type="text/css">
-    .form-details .case-properties-table {
-        padding-top: 0;
-    }
-</style>
-
 <script>
     $(function () {
         var help_text = {
@@ -63,9 +56,9 @@
     </li>
 </ul>
 
-<div class="tab-content form-details">
-    <div class="tab-pane active" id="form-data">
-        <div class="pull-right">
+<div class="tab-content form-details" style="overflow:visible">
+    <div class="tab-pane active" id="form-data" style="position:relative">
+        <div style="position: absolute; right: 0; top: 0">
             {% if context_case_id %}
             <p>
                 <a class="btn"

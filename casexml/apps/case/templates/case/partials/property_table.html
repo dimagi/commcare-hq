@@ -3,11 +3,6 @@
 
 <!-- having styles in a partial is not ideal, will hopefully refactor soon -->
 <style type="text/css">
-    .well-loner {
-        background-color: inherit;
-        border: inherit;
-        box-shadow: inherit;
-    }
 
     .property-table-container {
         float: left;
@@ -26,6 +21,14 @@
         background-color: #f5f5f5;
         border: 1px solid #ddd;
         border-radius: 4px 4px 0 0;
+    }
+
+    .case-properties-table ul {
+        list-style-type: none;
+    }
+
+    .case-properties-table ul li {
+        margin: 0;
     }
     
     .case-properties-table > dl {
@@ -48,6 +51,17 @@
 
     .case-properties-table > dl dd {
         margin-bottom: 20px;
+    }
+    
+    .well-loner {
+        background-color: inherit;
+        border: inherit;
+        box-shadow: inherit;
+        padding-top: 0;
+    }
+
+    .well-loner dl {
+        width: auto;
     }
 </style>
 
