@@ -3,6 +3,14 @@
 {% load xform_tags %}
 
 {% include "imports/fancy-code.html" %}
+
+{# not ideal to have this here #}
+<style type="text/css">
+    .form-details .case-properties-table {
+        padding-top: 0;
+    }
+</style>
+
 <script>
     $(function () {
         var help_text = {
@@ -10,7 +18,7 @@
             "{% trans "Restoring Forms" %}": "{% trans "Restoring this form will cause it to show up in reports again." %}",
         };
         $('.help_popover').popover({
-            placement: 'top',
+            placement: 'left',
             trigger: 'hover',
             title: function () {
                 return $(this).attr('data-help-key');
@@ -55,7 +63,7 @@
     </li>
 </ul>
 
-<div class="tab-content">
+<div class="tab-content form-details">
     <div class="tab-pane active" id="form-data">
         <div class="pull-right">
             {% if context_case_id %}
@@ -70,22 +78,21 @@
             <p>
                 {% if not is_archived %}
                 <form action="{% url archive_form domain instance.get_id %}" method="POST">
-                    <input type="submit" class="btn btn-danger" value="{% trans "Archive this form" %}">
                     <span class="help_popover" data-help-key="{% trans "Archiving Forms" %}">
                         <i class="icon icon-question-sign"></i>
                     </span>
+                    <input type="submit" class="btn btn-danger" value="{% trans "Archive this form" %}">
                 </form>
                 {% else %}
                 <form action="{% url unarchive_form domain instance.get_id %}" method="POST">
-                    <input type="submit" class="btn btn-primary" value="{% trans "Restore this form" %}">
                     <span class="help_popover" data-help-key="{% trans "Restoring Forms" %}">
                         <i class="icon icon-question-sign"></i>
                     </span>
+                    <input type="submit" class="btn btn-primary" value="{% trans "Restore this form" %}">
                 </form>
                 {% endif %}
             </p>
         </div>
-
 
         {% render_tables form_data form_table_options %}
     </div>

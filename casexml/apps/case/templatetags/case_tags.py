@@ -76,9 +76,12 @@ def build_tables(data, definition, processors=None, timezone=pytz.utc):
         return data.get(expr, None)
 
     def get_display_tuple(prop):
-        replace_underscores = lambda v: v.replace('_', ' ')
+        def format_key(key):
+            key = key.replace('_', ' ')
+            return key.replace('-', ' ')
+
         expr = prop['expr']
-        name = prop.get('name', replace_underscores(expr))
+        name = prop.get('name', format_key(expr))
         format = prop.get('format')
         process = prop.get('process')
         parse_date = prop.get('parse_date')
@@ -103,8 +106,7 @@ def build_tables(data, definition, processors=None, timezone=pytz.utc):
             val = escape(processors[process](val))
         else:
             val = mark_safe(get_display(
-                val, timezone=timezone, 
-                key_format=replace_underscores))
+                val, timezone=timezone, key_format=format_key))
 
         if format:
             val = mark_safe(format.format(val))
@@ -190,8 +192,18 @@ def form_key_filter(key):
 
 
 @register.simple_tag
-def render_form(form, domain, timezone=pytz.utc, display=None, case_id=None):
+def render_form(form, domain, options):
+    """
+    Uses options since Django 1.3 doesn't seem to support templatetag kwargs.
+    Change to kwargs when we're on a version of Django that does.
+    
+    """
+    timezone = options.get('timezone', pytz.utc)
+    #display = options.get('display')
+    case_id = options.get('case_id')
+
     case_id_attr = "@%s" % const.CASE_TAG_ID
+
     # Form Data tab. deepcopy to ensure that if top_level_tags() returns live
     # references we don't change any data.
     form_dict = copy.deepcopy(form.top_level_tags())
@@ -243,7 +255,7 @@ def render_form(form, domain, timezone=pytz.utc, display=None, case_id=None):
         "cases": cases,
         "form_table_options": {
             # todo: wells if display config has more than one column
-            "put_loners_in_wells": display
+            "put_loners_in_wells": False
         },
         "form_meta_data": form_meta_data,
     })
