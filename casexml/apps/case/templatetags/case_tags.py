@@ -191,8 +191,9 @@ def form_key_filter(key):
 
 @register.simple_tag
 def render_form(form, domain, timezone=pytz.utc, display=None, case_id=None):
+    case_id_attr = "@%s" % const.CASE_TAG_ID
     # Form Data tab. deepcopy to ensure that if top_level_tags() returns live
-    # references we don't change any data
+    # references we don't change any data.
     form_dict = copy.deepcopy(form.top_level_tags())
     form_dict.pop('change', None)  # this data already in Case Changes tab
     form_keys = [k for k in form_dict.keys() if form_key_filter(k)]
@@ -202,13 +203,13 @@ def render_form(form, domain, timezone=pytz.utc, display=None, case_id=None):
     # Case Changes tab
     case_blocks = extract_case_blocks(form)
     for i, block in enumerate(list(case_blocks)):
-        if case_id and block.get("@%s" % const.CASE_TAG_ID) == case_id:
+        if case_id and block.get(case_id_attr) == case_id:
             case_blocks.pop(i)
             case_blocks.insert(0, block)
 
     cases = []
     for b in case_blocks:
-        this_case_id = b.get("@%s" % const.CASE_TAG_ID)
+        this_case_id = b.get(case_id_attr)
         this_case = CommCareCase.get(this_case_id) if this_case_id else None
 
         cases.append({
@@ -291,7 +292,7 @@ def render_case(case, timezone=pytz.utc, display=None):
     ]
 
     data = copy.deepcopy(case.to_json())
-    print data
+    
     default_properties = build_tables(
             data, definition=display, timezone=timezone)
 
