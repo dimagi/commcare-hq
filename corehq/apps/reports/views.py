@@ -876,7 +876,6 @@ def case_form_data(request, domain, case_id, xform_id):
     except AssertionError:
         raise Http404()
 
-
     #todo: additional formatting options
     #todo: sanity check that xform_id has case_block
 
@@ -925,7 +924,11 @@ def archive_form(request, domain, instance_id):
     msg_template = '%(notif)s <a href="%(url)s">%(undo)s</a>' if instance.doc_type == "XFormArchived" else '%(notif)s'
     msg = msg_template % params
     messages.success(request, mark_safe(msg), extra_tags='html')
-    return HttpResponseRedirect(inspect.SubmitHistory.get_url(domain))
+    
+    redirect = request.META.get('HTTP_REFERER')
+    if not redirect:
+        redirect = inspect.SubmitHistory.get_url(domain)
+    return HttpResponseRedirect(redirect)
 
 @require_form_view_permission
 @require_permission(Permissions.edit_data)
@@ -938,7 +941,11 @@ def unarchive_form(request, domain, instance_id):
     else:
         assert instance.doc_type == "XFormInstance"
     messages.success(request, _("Form was successfully restored."))
-    return HttpResponseRedirect(reverse('render_form_data', args=[domain, instance_id]))
+
+    redirect = request.META.get('HTTP_REFERER')
+    if not redirect:
+        redirect = reverse('render_form_data', args=[domain, instance_id])
+    return HttpResponseRedirect(redirect)
     
 # Weekly submissions by xmlns
 def mk_date_range(start=None, end=None, ago=timedelta(days=7), iso=False):
