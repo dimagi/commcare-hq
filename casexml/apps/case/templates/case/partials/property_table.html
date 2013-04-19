@@ -35,11 +35,9 @@
             // same height as it
             var maxHeight = 0;
             $rowContainer.find(".case-properties-table").each(function () {
-            console.log("foo", $(this), $(this).height());
                 maxHeight = Math.max(maxHeight, $(this).height());
                 
             });
-            console.log(id, "maxHeight", maxHeight);
                 $rowContainer.find(".case-properties-table").css({
                 height: maxHeight + "px"
             });
