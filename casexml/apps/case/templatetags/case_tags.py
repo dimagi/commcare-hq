@@ -212,6 +212,11 @@ def render_form(form, domain, timezone=pytz.utc, display=None, case_id=None):
         this_case_id = b.get(case_id_attr)
         this_case = CommCareCase.get(this_case_id) if this_case_id else None
 
+        if this_case and this_case._id:
+            url = reverse('case_details', args=[domain, this_case._id])
+        else:
+            url = "#"
+
         cases.append({
             "is_current_case": case_id and this_case_id == case_id,
             "name": case_inline_display(this_case),
@@ -219,7 +224,7 @@ def render_form(form, domain, timezone=pytz.utc, display=None, case_id=None):
                 b, definition=get_definition(
                     sorted_case_update_keys(b.keys())),
                 timezone=timezone),
-            "url": reverse('case_details', args=[domain, this_case._id])
+            "url": url
         })
 
     # Form Metadata tab
@@ -230,7 +235,9 @@ def render_form(form, domain, timezone=pytz.utc, display=None, case_id=None):
             timezone=timezone)
 
     return render_to_string("case/partials/single_form.html", {
+        "context_case_id": case_id,
         "instance": form,
+        "is_archived": form.doc_type == "XFormArchived",
         "domain": domain,
         "form_data": form_data,
         "cases": cases,

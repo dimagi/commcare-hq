@@ -3,6 +3,34 @@
 {% load xform_tags %}
 
 {% include "imports/fancy-code.html" %}
+<script>
+    $(function () {
+        var help_text = {
+            "{% trans "Archiving Forms" %}": "{% trans "Archived forms will no longer show up in reports. However, case data submitted from archived forms is still maintained." %}",
+            "{% trans "Restoring Forms" %}": "{% trans "Restoring this form will cause it to show up in reports again." %}",
+        };
+        $('.help_popover').popover({
+            placement: 'top',
+            trigger: 'hover',
+            title: function () {
+                return $(this).attr('data-help-key');
+            },
+            content: function () {
+                return help_text[$(this).attr('data-help-key')];
+            }
+        });
+    });
+</script>
+
+{% if is_archived %}
+<div class="alert alert-full alert-block">
+    {% blocktrans %}
+    This form is archived and will not be included in reports. 
+    However, case data submitted from archived forms is retained.
+    To unarchive this form, click the "Restore" button.
+    {% endblocktrans %}
+</div>
+{% endif %}
 
 <ul class="nav nav-tabs">
     <li class="active">
@@ -29,10 +57,36 @@
 
 <div class="tab-content">
     <div class="tab-pane active" id="form-data">
-        <a class="btn pull-right"
-            href="{% url render_form_data instance.domain instance.get_id %}">
-            {% trans "View Individual Form" %}
-        </a>
+        <div class="pull-right">
+            {% if context_case_id %}
+            <p>
+                <a class="btn"
+                    href="{% url render_form_data instance.domain instance.get_id %}">
+                    {% trans "View standalone form" %}
+                </a>
+            </p>
+            {% endif %}
+
+            <p>
+                {% if not is_archived %}
+                <form action="{% url archive_form domain instance.get_id %}" method="POST">
+                    <input type="submit" class="btn btn-danger" value="{% trans "Archive this form" %}">
+                    <span class="help_popover" data-help-key="{% trans "Archiving Forms" %}">
+                        <i class="icon icon-question-sign"></i>
+                    </span>
+                </form>
+                {% else %}
+                <form action="{% url unarchive_form domain instance.get_id %}" method="POST">
+                    <input type="submit" class="btn btn-primary" value="{% trans "Restore this form" %}">
+                    <span class="help_popover" data-help-key="{% trans "Restoring Forms" %}">
+                        <i class="icon icon-question-sign"></i>
+                    </span>
+                </form>
+                {% endif %}
+            </p>
+        </div>
+
+
         {% render_tables form_data form_table_options %}
     </div>
 
