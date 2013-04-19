@@ -244,16 +244,26 @@ def render_form(form, domain, timezone=pytz.utc, display=None, case_id=None):
 @register.simple_tag
 def render_case(case, timezone=pytz.utc, display=None):
     display = display or [
-        (_("Basic Data"), [
+        (None, [
             [
                 {
                     "expr": "name",
                     "name": _("Name"),
                 },
                 {
-                    "expr": "closed",
-                    "name": _("Closed?"),
-                    "process": "yesno",
+                    "expr": "opened_on",
+                    "name": _("Opened On"),
+                    "parse_date": True,
+                },
+                {
+                    "expr": "modified_on",
+                    "name": _("Modified On"),
+                    "parse_date": True,
+                },
+                {
+                    "expr": "closed_on",
+                    "name": _("Closed On"),
+                    "parse_date": True,
                 },
             ],
             [
@@ -263,47 +273,25 @@ def render_case(case, timezone=pytz.utc, display=None):
                     "format": '<code>{0}</code>',
                 },
                 {
-                    "expr": "case_id",
-                    "name": _("Case ID"),
-                },
-            ],
-        ]),
-        (_("Submission Info"), [
-            [
-                {
-                    "expr": "opened_on",
-                    "name": _("Opened On"),
-                    "parse_date": True,
-                },
-                {
                     "expr": "user_id",
                     "name": _("User ID"),
                     "format": '<span data-field="user_id">{0}</span>',
-                },
-            ],
-            [
-                {
-                    "expr": "modified_on",
-                    "name": _("Modified On"),
-                    "parse_date": True,
                 },
                 {
                     "expr": "owner_id",
                     "name": _("Owner ID"),
                     "format": '<span data-field="owner_id">{0}</span>',
                 },
-            ],
-            [
                 {
-                    "expr": "closed_on",
-                    "name": _("Closed On"),
-                    "parse_date": True,
+                    "expr": "_id",
+                    "name": _("Case ID"),
                 },
             ],
-        ])
+        ]),
     ]
 
     data = copy.deepcopy(case.to_json())
+    print data
     default_properties = build_tables(
             data, definition=display, timezone=timezone)
 
