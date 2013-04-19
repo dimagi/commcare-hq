@@ -5,6 +5,8 @@
 {% load case_tags %}
 {% load hq_shared_tags %}
 
+<script src="{% static "hqwebapp/js/lib/jquery.cachedAjax.js" %}"></script>
+
 <style type="text/css">
     .hq-generic-report {
         padding: 10px;
@@ -388,7 +390,7 @@
 
                 self.get_xform_data = function(xform_id) {
                     //method for getting individual xform via GET
-                    $.ajax({
+                    $.cachedAjax({
                         "type": "GET",
                         "url": "/a/{{ case.domain }}/reports/case_data/{{ case.get_id }}/" + xform_id + "/",
                         "success": function(data) {
