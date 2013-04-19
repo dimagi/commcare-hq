@@ -1,8 +1,14 @@
 {% load i18n %}
+{% load hq_shared_tags %}
 
 <script>
     $(function () {
-        var id = "{{ id }}";
+        var id = {{ id|JSON }},
+            adjustHeights = {{ adjust_heights|JSON }};
+
+        if (!adjustHeights) {
+            return;
+        }
 
         // make horizontally adjacent dls look aligned like a table
         $("#" + id).one('inview', function () {
@@ -43,18 +49,25 @@
 </script>
 
 <div class="property-table-row" id="{{ id }}">
-    {% for name, columns in tables %}
+    {% for table_name, columns in tables %}
     <div class="property-table-container">
-        {% if name %}
+
+        {% if table_name %}
         <div class="table-tab">
-            {{ name }}
+            {{ table_name }}
         </div>
         {% endif %}
 
-        <div class="case-properties-table well">
+        <div class="case-properties-table well
+            {% with table_count=tables|length column_count=columns|length %}
+            {% if not put_loners_in_wells and not table_name and table_count == 1 and column_count == 1 %} 
+                well-standalone
+            {% endif %}
+            {% endwith %}">
             {# todo: make work with either tables or dls, specify which with kwarg #}
             {# (requires transforming dl columns to table rows and handling colspan)} #}
             {# <table class="table table-bordered case-properties-table"> #}
+
             {% for column in columns %}
             <dl>
                 {% for expr, name, value in column %}

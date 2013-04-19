@@ -7,17 +7,17 @@
 <ul class="nav nav-tabs">
     <li class="active">
         <a href="#form-data" data-toggle="tab">
-            {% trans "Form Data" %}
+            {% trans "Form Properties" %}
         </a>
     </li>
     <li>
         <a href="#form-case-data" data-toggle="tab">
-            {% trans "Case Changes" %}
+            {% trans "Cases" %}
         </a>
     </li>
     <li>
         <a href="#form-meta-data" data-toggle="tab">
-            {% trans "Form Metadata" %}
+            {% trans "Metadata" %}
         </a>
     </li>
     <li>
@@ -29,37 +29,17 @@
 
 <div class="tab-content">
     <div class="tab-pane active" id="form-data">
-        {% render_tables form_data %}
         <a href="{% url render_form_data instance.domain instance.get_id %}">
             View Submission
         </a>
+        {% render_tables form_data %}
     </div>
 
     <div class="tab-pane" id="form-case-data">
-        {% if this_case_data and other_cases_data %}
-        <div style="float: left">
-        <h4>{% trans "This Case" %}</h4>
-        {% endif %}
-
-        {% if this_case_data %}
-        {% render_tables this_case_data %}
-        {% endif %}
-        </div>
-
-        <div style="float: left">
-        {% if this_case_data and other_cases_data %}
-        <h4>{% trans "Other Cases" %}</h4>
-        {% endif %}
-
-        {% if other_cases_data %}
-        {% for data in other_cases_data %}
-        {% render_tables data %}
-        </div>
-
-        <div class="clearfix"></div>
-
-
-        {% endfor %}
+        {% if case_data %}
+        {% render_tables case_data case_data_options %}
+        {% else %}
+        <p class="muted">This form didn't change any cases.</p>
         {% endif %}
     </div>
     

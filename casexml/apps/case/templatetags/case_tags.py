@@ -3,6 +3,7 @@ from django import template
 from django.utils.translation import ugettext as _
 from django.utils.safestring import mark_safe
 from django.utils.html import escape
+from django.core.urlresolvers import reverse
 
 import datetime
 import pytz
@@ -19,6 +20,7 @@ import collections
 from couchforms.templatetags.xform_tags import SYSTEM_FIELD_NAMES
 from casexml.apps.case.xform import extract_case_blocks
 from casexml.apps.case import const
+from casexml.apps.case.models import CommCareCase
 
 def chunks(l, n):
     """Yield successive n-sized chunks from l."""
@@ -39,7 +41,7 @@ def get_display(val, dt_format="%b %d, %Y %H:%M %Z", timezone=pytz.utc,
 
     if isinstance(val, types.DictionaryType):
         ret = "".join(
-            ["<dl %s>" % "class='well'" if level == 0 else ''] + 
+            ["<dl %s>" % ("class='well'" if level == 0 else '')] + 
             ["<dt>%s</dt><dd>%s</dd>" % (
                 (key_format(k) if key_format else k), recurse(v)
              ) for k, v in val.items()] +
@@ -122,7 +124,12 @@ def build_tables(data, definition, processors=None, timezone=pytz.utc):
 
 
 @register.simple_tag
-def render_tables(tables, id=None):
+def render_tables(tables, options=None):
+    options = options or {}
+    id = options.get('id')
+    adjust_heights = options.get('adjust_heights', True)
+    put_loners_in_wells = options.get('put_loners_in_wells', True)
+
     if id is None:
         import uuid
         id = "a" + str(uuid.uuid4())
@@ -130,71 +137,108 @@ def render_tables(tables, id=None):
     return render_to_string("case/partials/property_table.html", {
         "tables": tables,
         "id": id,
+        "adjust_heights": adjust_heights,
+        "put_loners_in_wells": put_loners_in_wells
     })
 
 
-def get_definition(keys, num_columns=FORM_PROPERTIES_COLUMNS):
+def get_definition(keys, num_columns=FORM_PROPERTIES_COLUMNS, name=None):
     return [
-        (None, 
+        (name, 
          chunks([{"expr": prop} for prop in keys], num_columns))
     ]
 
 
+def sorted_case_update_keys(keys):
+    def mycmp(x, y):
+        if x[0] == '@' and y[0] == '@':
+            return cmp(x, y)
+        if x[0] == '@':
+            return 1
+        if y[0] == '@':
+            return -1
+        return cmp(x, y)
+    return sorted(keys, cmp=mycmp)
+
+
+def sorted_form_metadata_keys(keys):
+    def mycmp(x, y):
+        foo = ('timeStart', 'timeEnd')
+        bar = ('username', 'userID')
+        if x in foo and y in foo:
+            return -1 if foo.index(x) == 0 else 1
+        elif x in foo or y in foo:
+            return 0
+
+        if x in bar and y in bar:
+            return -1 if bar.index(x) == 0 else 1
+        elif x in bar and y in bar:
+            return 0
+
+        return cmp(x, y)
+    return sorted(keys, cmp=mycmp)
+
+
+def form_key_filter(key):
+    if key in SYSTEM_FIELD_NAMES:
+        return False
+
+    if any(key.startswith(p) for p in ['#', '@', '_']):
+        return False
+
+    return True
+
+
 @register.simple_tag
 def render_form(form, domain, timezone=pytz.utc, display=None, case_id=None):
-    def key_filter(key):
-        if key in SYSTEM_FIELD_NAMES:
-            return False
-
-        if any(key.startswith(p) for p in ['#', '@', '_']):
-            return False
-
-        return True
-
-    # Form Data tab. Ensure that if top_level_tags() returns live references we
-    # don't change any data
+    # Form Data tab. deepcopy to ensure that if top_level_tags() returns live
+    # references we don't change any data
     form_dict = copy.deepcopy(form.top_level_tags())
-    form_keys = [k for k in form_dict.keys() if key_filter(k)]
-    form_data = build_tables(form_dict, definition=get_definition(form_keys),
+    form_dict.pop('change', None)  # this data already in Case Changes tab
+    form_keys = [k for k in form_dict.keys() if form_key_filter(k)]
+    form_data = build_tables(
+            form_dict, definition=get_definition(form_keys), timezone=timezone)
+
+    def case_link(case):
+        if case_id and case._id == case_id:
+            return _("This Case")
+
+        return mark_safe("<a href='%s'>%s</a>" % (
+            reverse('case_details', args=[domain, case._id]),
+            case_inline_display(case)))
+
+    # Case Changes tab
+    case_blocks = extract_case_blocks(form)
+    for i, block in enumerate(list(case_blocks)):
+        if case_id and block.get("@%s" % const.CASE_TAG_ID) == case_id:
+            case_blocks.pop(i)
+            case_blocks.insert(0, block)
+
+    case_data = []
+    for b in case_blocks:
+        this_case_id = b.get("@%s" % const.CASE_TAG_ID)
+        this_case = CommCareCase.get(this_case_id) if this_case_id else None
+
+        case_data += build_tables(
+            b, definition=get_definition(
+                sorted_case_update_keys(b.keys()), 
+                name=case_link(this_case)),
             timezone=timezone)
 
-    # Case tab
-    this_case_block = None
-    other_cases_blocks = []
-
-    for block in extract_case_blocks(form):
-        if block.get("@%s" % const.CASE_TAG_ID) == case_id:
-            this_case_block = block
-        else:
-            other_cases_blocks.append(block)
-   
-    if this_case_block:
-        this_case_data = build_tables( 
-                this_case_block,
-                definition=get_definition(sorted(this_case_block.keys())),
-                timezone=timezone)
-    else:
-        this_case_data = None
-
-    if other_cases_blocks:
-        other_cases_data = [build_tables(
-                b, definition=get_definition(b.keys()), timezone=timezone)
-                for b in other_cases_blocks]
-    else:
-        other_cases_data = None
-  
-    # Meta tab
+    # Form Metadata tab
     meta = form_dict.pop('meta')
-    form_meta_data = build_tables(meta, definition=get_definition(meta.keys()),
+    form_meta_data = build_tables(
+            meta, definition=get_definition(
+                sorted_form_metadata_keys(meta.keys())),
             timezone=timezone)
 
     return render_to_string("case/partials/single_form.html", {
         "instance": form,
         "domain": domain,
         "form_data": form_data,
+        "case_data": case_data,
+        "case_data_options": {"adjust_heights": False},
         "form_meta_data": form_meta_data,
-        "this_case_data": this_case_data,
-        "other_cases_data": other_cases_data,
     })
 
 
@@ -296,8 +340,11 @@ def case_inline_display(case):
     """
     if case:
         if case.opened_on:
-            return "%s (opened: %s)" % (case.name, case.opened_on.date())
+            ret = "%s (%s: %s)" % (case.name, _("Opened"), case.opened_on.date())
         else:
-            return case.name
-    return "empty case" 
+            ret =  case.name
+    else:
+        ret = _("Empty Case")
+
+    return escape(ret)
     
