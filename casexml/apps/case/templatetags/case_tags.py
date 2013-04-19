@@ -323,8 +323,14 @@ def render_case(case, options):
     default_properties = build_tables(
             data, definition=display, timezone=timezone)
 
-    dynamic_data = dict((k, v) for (k, v) in case.dynamic_case_properties()
-                        if k in data)
+    # pop seen properties off of remaining case properties
+    dynamic_data = dict(case.dynamic_case_properties())
+    for section_name, definition in display:
+        for row in definition:
+            for item in row:
+                dynamic_data.pop(item.get("expr"), None)
+
+
     dynamic_keys = sorted(dynamic_data.keys())
     definition = [
         (None, chunks(
