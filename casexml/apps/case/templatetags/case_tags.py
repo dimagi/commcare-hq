@@ -199,14 +199,6 @@ def render_form(form, domain, timezone=pytz.utc, display=None, case_id=None):
     form_data = build_tables(
             form_dict, definition=get_definition(form_keys), timezone=timezone)
 
-    def case_link(case):
-        if case_id and case._id == case_id:
-            return _("This Case")
-
-        return mark_safe("<a href='%s'>%s</a>" % (
-            reverse('case_details', args=[domain, case._id]),
-            case_inline_display(case)))
-
     # Case Changes tab
     case_blocks = extract_case_blocks(form)
     for i, block in enumerate(list(case_blocks)):
@@ -214,16 +206,20 @@ def render_form(form, domain, timezone=pytz.utc, display=None, case_id=None):
             case_blocks.pop(i)
             case_blocks.insert(0, block)
 
-    case_data = []
+    cases = []
     for b in case_blocks:
         this_case_id = b.get("@%s" % const.CASE_TAG_ID)
         this_case = CommCareCase.get(this_case_id) if this_case_id else None
 
-        case_data += build_tables(
-            b, definition=get_definition(
-                sorted_case_update_keys(b.keys()), 
-                name=case_link(this_case)),
-            timezone=timezone)
+        cases.append({
+            "is_current_case": case_id and this_case_id == case_id,
+            "name": case_inline_display(this_case),
+            "table": build_tables(
+                b, definition=get_definition(
+                    sorted_case_update_keys(b.keys())),
+                timezone=timezone),
+            "url": reverse('case_details', args=[domain, this_case._id])
+        })
 
     # Form Metadata tab
     meta = form_dict.pop('meta')
@@ -236,8 +232,11 @@ def render_form(form, domain, timezone=pytz.utc, display=None, case_id=None):
         "instance": form,
         "domain": domain,
         "form_data": form_data,
-        "case_data": case_data,
-        "case_data_options": {"adjust_heights": False},
+        "cases": cases,
+        "form_table_options": {
+            # todo: wells if display config has more than one column
+            "put_loners_in_wells": display
+        },
         "form_meta_data": form_meta_data,
     })
 

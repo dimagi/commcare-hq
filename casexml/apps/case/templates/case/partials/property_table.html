@@ -61,7 +61,7 @@
         <div class="case-properties-table well
             {% with table_count=tables|length column_count=columns|length %}
             {% if not put_loners_in_wells and not table_name and table_count == 1 and column_count == 1 %} 
-                well-standalone
+                well-loner
             {% endif %}
             {% endwith %}">
             {# todo: make work with either tables or dls, specify which with kwarg #}
