@@ -825,65 +825,60 @@ def download_cases(request, domain):
 
     return generate_payload(payload_func)
 
-
-@require_form_view_permission
-@login_and_domain_required
-@require_GET
-def form_data(request, domain, instance_id):
+def _get_form_context(request, domain, instance_id):
     timezone = util.get_timezone(request.couch_user.user_id, domain)
+
     try:
         instance = XFormInstance.get(instance_id)
     except Exception:
         raise Http404()
     try:
-        assert(domain == instance.domain)
+        assert domain == instance.domain
     except AssertionError:
         raise Http404()
-    cases = CommCareCase.view("case/by_xform_id", key=instance_id, reduce=False, include_docs=True).all()
+
+    display = request.project.get_form_display(instance)
+    context = {
+        "domain": domain,
+        "display": display,
+        "timezone": timezone,
+        "instance": instance
+    }
+    context['form_render_options'] = context
+    return context
+
+
+@require_form_view_permission
+@login_and_domain_required
+@require_GET
+def form_data(request, domain, instance_id):
+    context = _get_form_context(request, domain, instance_id)
+
     try:
-        form_name = instance.get_form["@name"]
+        form_name = context['instance'].get_form["@name"]
     except KeyError:
         form_name = "Untitled Form"
-    is_archived = instance.doc_type == "XFormArchived"
-    if is_archived:
-        messages.info(request, _("This form is archived. To restore it, click 'Restore this form' at the bottom of the page."))
-    return render(request, "reports/reportdata/form_data.html",
-                              dict(domain=domain,
-                                   instance=instance,
-                                   cases=cases,
-                                   timezone=timezone,
-                                   slug=inspect.SubmitHistory.slug,
-                                   is_archived=is_archived,
-                                   form_data=dict(name=form_name,
-                                                  modified=instance.received_on)))
+   
+    context.update({
+        "slug": inspect.SubmitHistory.slug,
+        "form_name": form_name,
+        "form_received_on": context['instance'].received_on
+    })
+
+    return render(request, "reports/reportdata/form_data.html", context)
 
 @require_form_view_permission
 @login_and_domain_required
 @require_GET
 def case_form_data(request, domain, case_id, xform_id):
-    """
-    specific rendering for a case's xform - render to html via templatetag
-
-    """
-    timezone = util.get_timezone(request.couch_user.user_id, domain)
-
-    try:
-        instance = XFormInstance.get(xform_id)
-    except Exception:
-        raise Http404()
-    try:
-        assert(domain == instance.domain)
-    except AssertionError:
-        raise Http404()
+    context = _get_form_context(request, domain, xform_id)
+    context['case_id'] = case_id
 
     #todo: additional formatting options
     #todo: sanity check that xform_id has case_block
 
-    display = request.project.get_form_display(instance)
-
     return HttpResponse(render_form(
-            instance, domain, timezone=timezone, display=display,
-            case_id=case_id))
+            context['instance'], domain, options=context))
 
 
 @require_form_view_permission
