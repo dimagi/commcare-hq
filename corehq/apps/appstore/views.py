@@ -335,7 +335,7 @@ def copy_snapshot(request, domain):
                 messages.error(request, _("A project by that name already exists"))
                 return project_info(request, domain)
             dom.downloads += 1
-            dom.save()
+            dom.save(force_update=True)
             messages.success(request, render_to_string("appstore/partials/view_wiki.html", {"pre": _("Project copied successfully!")}), extra_tags="html")
             return HttpResponseRedirect(reverse('view_app',
                 args=[new_domain.name, new_domain.full_applications()[0].get_id]))
