@@ -276,12 +276,15 @@ def render_case(case, timezone=pytz.utc, display=None):
     actions = case.to_json()['actions']
     actions.reverse()
 
+    tz_abbrev = timezone.localize(datetime.datetime.now()).tzname()
+
     return render_to_string("case/partials/single_case.html", {
         "default_properties": default_properties,
         "dynamic_properties": dynamic_properties,
         "case": case,
         "case_actions": mark_safe(simplejson.dumps(actions)),
-        "timezone": timezone
+        "timezone": timezone,
+        "tz_abbrev": tz_abbrev
     })
     
     

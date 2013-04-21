@@ -145,7 +145,7 @@
                     <tr>
                         <td class="case_ref"
                             data-caseid="{{ case_index.referenced_id }}">{{ case_index.referenced_case.name }}</td>
-                        <td>{{ case.name }}'s {{ case_index.is_reverse|yesno:"Child, Parent" }}</td>
+                        <td>{{ case_index.is_reverse|yesno:"Child, Parent" }}</td>
                         <td><code>{{ case_index.referenced_case.type }}</code></td>
                         <td>{{ case_index.referenced_case.opened_on }}</td>
                         <td>{{ case_index.referenced_case.modified_on }}</td>
@@ -186,12 +186,12 @@
 
 
         <div class="hq-loading" data-bind="visible: $root.data_loading">Loading <img src="/static/hqwebapp/img/ajax-loader.gif" alt="loading indicator"></div>
-        <table class="table table-bordered table-striped table-hover">
+        <table class="table table-bordered table-striped table-hover datatable dataTable">
             <thead>
             <tr>
-                <th class="span1">{% trans "Received" %}</th>
-                <th class="span1">{% trans "Form" %}</th>
-                <th class="span1">{% trans "User" %}</th>
+                <th class="span2">{% trans "Received" %} ({{ tz_abbrev }})</th>
+                <th class="span2">{% trans "Form" %}</th>
+                <th class="span2">{% trans "User" %}</th>
             </tr>
             </thead>
             <tbody data-bind="foreach: xforms">
@@ -199,21 +199,21 @@
                     <td>
                         <span data-bind="text: received_on"></span>
                     <td>
-                        <span data-bind="text: form_type"></span><br>
+                        <span data-bind="text: readable_name"></span>
                     </td>
-
                     <td>
-                        <span data-bind="text: username"></span><br>
+                        <span data-bind="text: username"></span>
+                        <div class="pull-right"><i class="icon-chevron-right"></i></div>
                     </td>
                 </tr>
             </tbody>
         </table>
-            <div class="row-fluid dataTables_control">
+            <div class="dataTables_control">
                     <div class="dataTables_info">
-                        <span data-bind="text: $root.page_start_num() + '-' + $root.page_end_num() + ' of ' + $root.total_rows()"></span>
+                        <span data-bind="text: $root.page_start_num() + '-' + $root.page_end_num() + ' / ' + $root.total_rows()"></span>
                     </div>
                     <div class="dataTables_length">
-                        <select id="page_size_select" size="1" class="input-mini" data-bind="options: pagination_options, value: $root.page_size"></select> <span>per page</span>
+                        <select id="page_size_select" size="1" class="input-mini" data-bind="options: pagination_options, value: $root.page_size"></select> <span>/ {% trans "page" %}</span>
                     </div>
 
                     <div class="pagination pagination-right" data-bind="visible: $root.page_count() > 1">
@@ -234,27 +234,15 @@
         <div class="span6">
             <div id="xform_data_panel"></div>
             </div>
-{#        <h2>Xform goes here</h2>#}
-{#        <div data-bind="visible: $root.xform_view, template: { name: 'xform-template', foreach: $root.selected_xforms }"></div>#}
-{#        </div>#}
-{#        <script type="text/html" id="xform-template">#}
-{#        <h2>Hello XForm</h2>#}
-{#        <h3 data-bind="text: name"></h3>#}
-{#        <span data-bind="text: 'XForm ID:' + id()"></span><br>#}
-{#        <span data-bind="text: 'User:' + username()"></span><br>#}
-{#        <span data-bind="text: 'user_id:' + userID()"></span><br>#}
-{#        <span data-bind="text: 'form type:' + form_type()"></span><br>#}
-{#        <span data-bind="text: 'xmlns:' + xmlns()"></span><br>#}
-{#        <span data-bind="text: 'received_on:' + received_on()"></span><br>#}
-{#        <span data-bind="text: 'timestart:' + timeStart()"></span><br>#}
-{#        <span data-bind="text: 'timeend:' + timeEnd()"></span><br>#}
-{#        <span data-bind="text: 'case_id:' + case_id()"></span><br>#}
-{#        <span data-bind="text: 'device_id:' + deviceID()"></span><br>#}
-{#        <div class="form-data-block" data-bind="html: get_form_data()"></div>#}
-{#        </script>#}
-
         <script type="text/javascript">
 
+        function pad_zero(val) {
+            if (val < 10) {
+                return "0" + val;
+            } else {
+               return val;
+            }
+        }
         function format_date(isodatestring) {
             if (isodatestring == "" || isodatestring == null) {
                 return 'present';
@@ -262,16 +250,12 @@
             //parse nad format the date timestamps - seconds since epoch into date object
             var date = new Date(isodatestring.split('+')[0]);
             // hours part from the timestamp
-            var hours = date.getHours();
+            var hours = pad_zero(date.getHours());
             // minutes part from the timestamp
-            var minutes = date.getMinutes();
+            var minutes = pad_zero(date.getMinutes());
+
             // seconds part from the timestamp
-            var seconds = date.getSeconds();
-            if (seconds < 10) {
-                var second_str = "0" + seconds;
-            } else {
-                var second_str = seconds;
-            }
+            var seconds = pad_zero(date.getSeconds());
 
             var year = date.getFullYear();
             var month = date.getMonth() + 1;
@@ -321,6 +305,7 @@
                 self.deviceID = ko.observable(data.form.meta.deviceID);
                 self.form_type = ko.observable(data.form['#type']);
                 self.form_data = ko.observable(data.form);
+                self.readable_name = ko.observable(data.es_readable_name);
 
                 self.get_form_data = function() {
                     return "<dl class='dl-horizontal'>" + JSON.stringify(self.form_data(), function(key,value) {
