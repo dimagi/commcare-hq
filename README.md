@@ -241,3 +241,20 @@ CommCare HQ, you need to follow our [instructions][builds] for how to download
 and load CommCare binaries from the Dimagi build server.
 
  [builds]: https://github.com/dimagi/core-hq/blob/master/corehq/apps/builds/README.md
+
+Running Tests
+=============
+
+To run the standard tests for CommCare HQ, simply run
+
+    ./manage.py test
+
+To run the selenium tests, you first need to install the
+[ChromeDriver](https://code.google.com/p/selenium/wiki/ChromeDriver).
+
+The tests for CloudCare currently expect the "Basic Tests" app from the
+`corpora` domain on CommCareHQ.org to be installed in the same domain locally.
+
+Make sure to edit the selenium user credentials in `localsettings.py`.  Then run
+
+    ./manage.py seltest
