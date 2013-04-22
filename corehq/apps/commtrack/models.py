@@ -8,7 +8,7 @@ from casexml.apps.case.models import CommCareCase
 from copy import copy
 from django.dispatch import receiver
 from corehq.apps.locations.signals import location_created
-from corehq.apps.commtrack.const import RequisitionActions
+from corehq.apps.commtrack.const import RequisitionActions, RequisitionStatus
 
 # these are the allowable stock transaction types, listed in the
 # default ordering in which they are processed. processing order
@@ -290,10 +290,37 @@ class StockTransaction(DocumentSchema):
         return [StockTransaction.wrap(row['value']) for row in q]
 
 
+
 class RequisitionCase(CommCareCase):
     """
     A wrapper around CommCareCases to get more built in functionality
     """
+    # supply_point = StringProperty() # todo, if desired
+    requisition_status = StringProperty()
+
+    # NOTE: this is redundant with the supply point product case and is an optimization
+    product_id = StringProperty()
+
+    # this second field is added for auditing purposes
+    # the status can change, but once set - this one will not
+    requested_on = DateTimeProperty()
+    approved_on = DateTimeProperty()
+    filled_on = DateTimeProperty()
+    received_on = DateTimeProperty()
+
+    requested_by = StringProperty()
+    approved_by = StringProperty()
+    filled_by = StringProperty()
+    received_by = StringProperty()
+
+    # NOTE: should these be strings or ints or decimals?
+    amount_requested = StringProperty()
+    # these two fields are unnecessary with no ability to
+    # approve partial resupplies in the current system, but is
+    # left in the models for possible use down the road
+    amount_approved = StringProperty()
+    amount_filled = StringProperty()
+    amount_received = StringProperty()
 
     @memoized
     def get_product_case(self):
@@ -305,6 +332,16 @@ class RequisitionCase(CommCareCase):
             return CommCareCase.get(matching[0].referenced_id)
 
         return None
+
+    def get_default_value(self):
+        """get how much the default is. this is dependent on state."""
+        property_map = {
+            RequisitionStatus.REQUESTED: 'amount_requested',
+            RequisitionStatus.APPROVED: 'amount_approved',
+            RequisitionStatus.FILLED: 'amount_filled',
+
+        }
+        return getattr(self, property_map.get(self.requisition_status, 'amount_requested'))
 
     @classmethod
     def open_for_location(cls, domain, location_id):

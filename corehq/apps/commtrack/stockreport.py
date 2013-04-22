@@ -6,6 +6,7 @@ from lxml import etree
 from lxml.builder import ElementMaker
 from xml import etree as legacy_etree
 from datetime import date, timedelta
+from dimagi.utils.decorators.memoized import memoized
 from receiver.util import spoof_submission
 from corehq.apps.receiverwrapper.util import get_submit_url
 from dimagi.utils.couch.loosechange import map_reduce
@@ -31,6 +32,7 @@ def process(domain, instance):
     config = CommtrackConfig.for_domain(domain)
     root = etree.fromstring(instance)
     user_id, transactions = unpack_transactions(root, config)
+    transactions = list(denormalize_transactions(transactions))
 
     def get_transactions(all_tx, type_filter):
         """get all the transactions of the relevant type (filtered by type_filter),
@@ -44,14 +46,7 @@ def process(domain, instance):
 
     # split transactions by type and product
     stock_transactions = get_transactions(transactions, lambda tx: tx.category == 'stock')
-    requisition_transactions = get_transactions(
-        transactions,
-        lambda tx: tx.category == 'requisition' and tx.product_id != const.ALL_PRODUCTS_TRANSACTION_TAG
-    )
-    bulk_transactions = filter(
-        lambda tx: tx.category == 'requisition' and tx.product_id == const.ALL_PRODUCTS_TRANSACTION_TAG,
-        transactions,
-    )
+    requisition_transactions = get_transactions(transactions, lambda tx: tx.category == 'requisition')
 
     case_ids = list(set(itertools.chain(*[tx.get_case_ids() for tx in transactions])))
     cases = dict((c._id, c) for c in CommCareCase.view('_all_docs', keys=case_ids, include_docs=True))
@@ -159,6 +154,13 @@ class Requisition(StockTransaction):
     def category(self):
         return 'requisition'
 
+    @property
+    def requisition_case_id(self):
+        # for somewhat obscure reasons, the case_id is the id of the
+        # supply_point_product case, so we add a new field for this.
+        # though for newly created requisitions it's just empty
+        return None
+
     @classmethod
     def from_xml(cls, tx, config):
         data = {
@@ -179,24 +181,46 @@ class Requisition(StockTransaction):
             E.value(str(self.value)),
         )
 
-class RequisitionResponse(object):
+class RequisitionResponse(Requisition):
+
+    @property
+    def requisition_case_id(self):
+        return self.case_id
+
+class BulkRequisitionResponse(object):
     """
     A bulk response to a set of requisitions, for example "approve" or "fill".
     """
     # todo: it's possible this class should support explicit transactions/amounts
     # on a per-product basis, but won't until someone demands it
 
-    def __init__(self, domain, action_type, action_name, location_id):
+    def __init__(self, domain, action_type, action_name, location_id, config=None):
         self.domain = domain
         self.action_name = action_name
         self.action_type = action_type
         self.location_id = location_id
         self.case_id = None
+        self.config = config
 
+
+    @memoized
     def get_case_ids(self):
-        # todo: domain?
         for c in RequisitionCase.open_for_location(self.domain, self.location_id):
             yield c
+
+    def get_transactions(self):
+        for case_id in self.get_case_ids():
+            # this is going to hit the db a lot
+            c = RequisitionCase.get(case_id)
+            yield(RequisitionResponse(
+                product_id = c.product_id,
+                case_id=c._id,
+                action_name=self.action_name,
+                value=c.get_default_value(),
+                inferred=True,
+                config=self.config,
+            ))
+
 
     @property
     def category(self):
@@ -213,6 +237,7 @@ class RequisitionResponse(object):
             'action_name': tx.find(_('status')).text,
             'action_type': tx.find(_('status_type')).text,
             'location_id': tx.find(_('location')).text,
+            'config': config,
         }
         return cls(**data)
 
@@ -240,13 +265,24 @@ def unpack_transactions(root, config):
         types = {
             'transaction': StockTransaction,
             'request': Requisition,
-            'response': RequisitionResponse,
+            'response': BulkRequisitionResponse,
         }
         for tag, factory in types.iteritems():
             for tx in root.findall(_(tag)):
                 yield factory.from_xml(tx, config)
 
-    return user_id, list(transactions())
+    return user_id, transactions()
+
+def denormalize_transactions(transactions):
+    for t in transactions:
+        if isinstance(t, BulkRequisitionResponse):
+            # deal with the bulkness by creating individual transactions
+            # for each relevant product
+            for sub_t in t.get_transactions():
+                yield sub_t
+        else:
+            yield t
+
 
 def replace_transactions(root, new_tx):
     for tag in ('transaction', 'request', 'response'):

@@ -1,3 +1,5 @@
+from datetime import datetime
+from corehq.apps.commtrack.const import RequisitionStatus
 from corehq.apps.commtrack.models import RequisitionCase
 from corehq.apps.commtrack.tests.util import CommTrackTest
 from corehq.apps.commtrack.sms import handle
@@ -52,3 +54,22 @@ class StockRequisitionTest(CommTrackTest):
             self.assertEqual(str(amt), req_case.amount_requested)
             self.assertEqual(req_case.location_, self.sp.location_)
             self.assertTrue(req_case._id in reqs)
+
+    def testSimpleFill(self):
+        self.testRequisition()
+
+        # req loc1 pp 10 pq 20...
+        handled = handle(self.verified_number, 'fill {loc}'.format(
+            loc='loc1',
+        ))
+        self.assertTrue(handled)
+        reqs = RequisitionCase.open_for_location(self.domain.name, self.loc._id)
+        self.assertEqual(3, len(reqs))
+
+        for req_id in reqs:
+            req_case = RequisitionCase.get(req_id)
+            self.assertEqual(RequisitionStatus.FILLED, req_case.requisition_status)
+            self.assertEqual(req_case.amount_requested, req_case.amount_filled)
+            self.assertEqual(self.user._id, req_case.filled_by)
+            self.assertIsNotNone(req_case.filled_on)
+            self.assertTrue(isinstance(req_case.filled_on, datetime))

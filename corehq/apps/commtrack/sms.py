@@ -212,7 +212,7 @@ class StockReportParser(object):
         if args:
             raise RuntimeError('extra arguments at end')
 
-        yield stockreport.RequisitionResponse(
+        yield stockreport.BulkRequisitionResponse(
             domain=location.domain,
             action_type=action.action_type,
             action_name=action.action_name,
