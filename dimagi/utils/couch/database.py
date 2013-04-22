@@ -87,19 +87,18 @@ def safe_delete(db, doc_or_id):
         doc_or_id = doc_or_id._id
     db.delete_doc(doc_or_id, **get_safe_write_kwargs())
 
-MAX_TRIES = 5
-def apply_update(doc, update_fn):
+def apply_update(doc, update_fn, max_tries=5):
     """
     A function for safely applying a change to a couch doc. For getting around ResourceConflict
     errors that stem from the distributed cloudant nodes
     """
     tries = 0
-    while tries < MAX_TRIES:
+    while tries < max_tries:
         try:
             update_fn(doc)
             doc.save()
             return doc
         except ResourceConflict:
-            doc = doc.__class__.get(doc.get_id)
+            doc = doc.__class__.get(doc._id)
         tries+=1
     raise ResourceConflict("Document update conflict. -- Max Retries Reached")
