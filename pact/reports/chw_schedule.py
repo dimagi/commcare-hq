@@ -193,7 +193,7 @@ def get_schedule_tally(username, total_interval, override_date=None):
                 search_results = dots_submissions_by_case(case_id, visit_date)
                 other_submissions = search_results['hits']['hits']
                 if len(other_submissions) > 0:
-                    visited.append(other_submissions[0])
+                    visited.append(other_submissions[0]['fields'])
                     total_visited += 1
                 else:
                     visited.append(None)
