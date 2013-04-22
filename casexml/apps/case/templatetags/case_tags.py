@@ -79,7 +79,7 @@ def get_display(key, val, dt_format="%b %d, %Y %H:%M %Z", timezone=pytz.utc,
     return mark_safe(ret)
 
 
-def build_tables(data, definition, processors=None, timezone=pytz.utc):
+def build_table_rows(data, definition, processors=None, timezone=pytz.utc):
     default_processors = {
         'yesno': yesno
     }
@@ -136,11 +136,18 @@ def build_tables(data, definition, processors=None, timezone=pytz.utc):
         processed_rows = [[get_display_tuple(prop) for prop in row]
                           for row in rows]
 
-        columns = list(itertools.izip_longest(*processed_rows))
-        sections.append((_(section_name) if section_name else "", columns))
+        sections.append((_(section_name) if section_name else "",
+            processed_rows))
 
     return sections
 
+def build_table_columns(*args, **kwargs):
+    sections = build_table_rows(*args, **kwargs)
+    sections = [(name, list(itertools.izip_longest(*rows))) 
+                for name, rows in sections]
+
+    return sections
+    
 
 @register.simple_tag
 def render_tables(tables, options=None):
@@ -153,7 +160,7 @@ def render_tables(tables, options=None):
         import uuid
         id = "a" + str(uuid.uuid4())
 
-    return render_to_string("case/partials/property_table.html", {
+    return render_to_string("case/partials/dl_property_table.html", {
         "tables": tables,
         "id": id,
         "adjust_heights": adjust_heights,
@@ -226,7 +233,7 @@ def render_form(form, domain, options):
     form_dict = copy.deepcopy(form.top_level_tags())
     form_dict.pop('change', None)  # this data already in Case Changes tab
     form_keys = [k for k in form_dict.keys() if form_key_filter(k)]
-    form_data = build_tables(
+    form_data = build_table_columns(
             form_dict, definition=get_definition(form_keys), timezone=timezone)
 
     # Case Changes tab
@@ -249,7 +256,7 @@ def render_form(form, domain, options):
         cases.append({
             "is_current_case": case_id and this_case_id == case_id,
             "name": case_inline_display(this_case),
-            "table": build_tables(
+            "table": build_table_columns(
                 b, definition=get_definition(
                     sorted_case_update_keys(b.keys())),
                 timezone=timezone),
@@ -258,7 +265,7 @@ def render_form(form, domain, options):
 
     # Form Metadata tab
     meta = form_dict.pop('meta')
-    form_meta_data = build_tables(
+    form_meta_data = build_table_columns(
             meta, definition=get_definition(
                 sorted_form_metadata_keys(meta.keys())),
             timezone=timezone)
@@ -337,7 +344,7 @@ def render_case(case, options):
 
     data = copy.deepcopy(case.to_json())
     
-    default_properties = build_tables(
+    default_properties = build_table_columns(
             data, definition=display, timezone=timezone)
 
     # pop seen properties off of remaining case properties
@@ -356,7 +363,7 @@ def render_case(case, options):
         )
     ]
 
-    dynamic_properties = build_tables(
+    dynamic_properties = build_table_columns(
             dynamic_data, definition=definition, timezone=timezone)
 
     actions = case.to_json()['actions']
