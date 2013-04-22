@@ -17,6 +17,7 @@ from corehq.elastic import get_es
 from corehq.apps.domain.models import Domain
 from django.contrib import messages
 from django.utils.translation import ugettext as _
+from dimagi.utils.couch.database import apply_update
 
 PER_PAGE = 9
 SNAPSHOT_FACETS = ['project_type', 'license', 'region', 'author']
@@ -334,8 +335,11 @@ def copy_snapshot(request, domain):
             if new_domain is None:
                 messages.error(request, _("A project by that name already exists"))
                 return project_info(request, domain)
-            dom.downloads += 1
-            dom.save()
+
+            def inc_downloads(d):
+                d.downloads += 1
+
+            apply_update(dom, inc_downloads)
             messages.success(request, render_to_string("appstore/partials/view_wiki.html", {"pre": _("Project copied successfully!")}), extra_tags="html")
             return HttpResponseRedirect(reverse('view_app',
                 args=[new_domain.name, new_domain.full_applications()[0].get_id]))
