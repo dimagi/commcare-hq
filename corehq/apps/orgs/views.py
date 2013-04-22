@@ -33,7 +33,7 @@ def base_context(request, organization, update_form=None):
     return {
         "org": organization,
         "teams": Team.get_by_org(organization.name),
-        "domains": sorted(Domain.get_by_organization(organization.name).all(), cmp=lambda x,y: cmp(x.name, y.name)),
+        "domains": sorted(Domain.get_by_organization(organization.name).all(), key=lambda x: x.name),
         "members": organization.get_members(),
         "admin": request.couch_user.is_org_admin(organization.name) or request.couch_user.is_superuser,
         "update_form_empty": not update_form,
@@ -591,7 +591,7 @@ def stats_data(request, org):
 
 def es_histogram(histo_type, domains=None, startdate=None, enddate=None, tz_diff=None):
     date_field = {  "forms": "received_on",
-                    "cases": "modified_on"  }[histo_type]
+                    "cases": "opened_on"  }[histo_type]
     es_url = {  "forms": XFORM_INDEX + '/xform/_search',
                 "cases": CASE_INDEX + '/case/_search' }[histo_type]
 

@@ -29,7 +29,7 @@ class StockRequisitionTest(CommTrackTest):
             'pq': 20,
             'pr': 30,
         }
-        # soh loc1 pp 10 pq 20...
+        # req loc1 pp 10 pq 20...
         handled = handle(self.verified_number, 'req {loc} {report}'.format(
             loc='loc1',
             report=' '.join('%s %s' % (k, v) for k, v in amounts.items())
@@ -41,3 +41,4 @@ class StockRequisitionTest(CommTrackTest):
             [req_ref] = spp.reverse_indices
             req_case = CommCareCase.get(req_ref.referenced_id)
             self.assertEqual(str(amt), req_case.amount_requested)
+            self.assertEqual(req_case.location_, self.sp.location_)

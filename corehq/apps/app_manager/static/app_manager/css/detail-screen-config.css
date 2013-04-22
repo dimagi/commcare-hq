@@ -1,11 +1,5 @@
-.detail-screen-table {
-}
-.detail-screen-table tr {
-}
 .detail-screen-table td {
     word-wrap: break-word;
-}
-.detail-screen-table select {
 }
 .detail-screen-table th, .detail-screen-table td {
     vertical-align: middle;
@@ -29,17 +23,6 @@
 .detail-screen-table .detail-screen-field {
     width: 160px;
 }
-.detail-screen-table .detail-screen-header {
-}
-.detail-screen-table .detail-screen-format {
-}
-.detail-screen-table .detail-screen-extra {
-}
-.detail-screen-table .detail-screen-extra textarea,
-.detail-screen-table .detail-screen-extra input {
-}
-.detail-screen-table .detail-screen-late-flag {
-}
 .detail-screen-table .detail-screen-suggestion {
     color: #888;
     cursor: pointer;
@@ -49,10 +32,6 @@
     color: inherit;
     background-color: #EEE;
 }
-.detail-screen-table .detail-screen-suggestion:hover td {
-}
 .detail-screen-table .detail-screen-columns tr {
     background-color: #EEE;
-}
-.detail-screen-table .detail-screen-columns td {
 }

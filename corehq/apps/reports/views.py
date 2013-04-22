@@ -737,7 +737,10 @@ def case_details(request, domain, case_id):
         ),
         "layout_flush_content": True,
         "timezone": timezone,
-        "case_details": request.project.get_case_display(case)
+        "case_display_options": {
+            "display": request.project.get_case_display(case),
+            "timezone": timezone
+        }
     })
 
 def generate_case_export_payload(domain, include_closed, format, group, user_filter, process=None):

@@ -28,8 +28,8 @@
 - name: "Logging Enabled"
   description: "Whether logging of incidents should be activated on the client."
   id: "logenabled"
-  values: ["Enabled", disabled]
-  value_names: ["Enabled", disabled]
+  values: ["Enabled", "Disabled"]
+  value_names: ["Enabled", "Disabled"]
   default: "Enabled"
   group: "log"
 
