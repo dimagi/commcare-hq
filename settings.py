@@ -594,21 +594,6 @@ in HTML or read this email in a client that supports HTML email.
 Thanks,
 The CommCare HQ Team"""
 
-# mapping of domains to modules for those that aren't identical
-DOMAIN_MODULE_MAP = {
-    'a5288-test': 'a5288',
-    'a5288-study': 'a5288',
-    'care-bihar': 'bihar',
-    'dca-malawi': 'dca',
-    'eagles-fahu': 'dca',
-    'mvp-potou': 'mvp',
-    'mvp-sauri': 'mvp',
-    'mvp-bonsaaso': 'mvp',
-    'mvp-ruhiira': 'mvp',
-    'mvp-mwandama': 'mvp',
-    'mvp-sada': 'mvp',
-    'psi-unicef': 'psi',
-}
 
 MESSAGE_TAGS = {
     messages.INFO: 'alert-info',
@@ -677,18 +662,22 @@ ES_CASE_FULL_INDEX_DOMAINS = ['pact', 'hsph']
 
 REMOTE_APP_NAMESPACE = "%(domain)s.commcarehq.org"
 
-
 # mapping of domains to modules for those that aren't identical
-# a DOMAIN_MODULE_CONFIG doc present in your couchdb will override this.
+# a DOMAIN_MODULE_CONFIG doc present in your couchdb can override individual
+# items.
 DOMAIN_MODULE_MAP = {
     'a5288-test': 'a5288',
     'a5288-study': 'a5288',
     'care-bihar': 'bihar',
     'dca-malawi': 'dca',
     'eagles-fahu': 'dca',
+    'hsph-dev': 'hsph',
+    'hsph-betterbirth-pilot-2': 'hsph',
     'mvp-potou': 'mvp',
     'mvp-sauri': 'mvp',
     'mvp-bonsaaso': 'mvp',
     'mvp-ruhiira': 'mvp',
+    'mvp-mwandama': 'mvp',
+    'mvp-sada': 'mvp',
     'psi-unicef': 'psi',
 }
