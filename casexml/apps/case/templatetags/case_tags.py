@@ -3,6 +3,7 @@ from django import template
 from django.utils.translation import ugettext as _
 from django.utils.safestring import mark_safe
 from django.utils.html import escape
+from django.core.urlresolvers import reverse
 
 import datetime
 import pytz
@@ -19,6 +20,7 @@ import collections
 from couchforms.templatetags.xform_tags import SYSTEM_FIELD_NAMES
 from casexml.apps.case.xform import extract_case_blocks
 from casexml.apps.case import const
+from casexml.apps.case.models import CommCareCase
 
 def chunks(l, n):
     """Yield successive n-sized chunks from l."""
@@ -28,25 +30,45 @@ def chunks(l, n):
 register = template.Library()
 
 DYNAMIC_CASE_PROPERTIES_COLUMNS = 4
-FORM_PROPERTIES_COLUMNS = 2
+FORM_PROPERTIES_COLUMNS = 1
 
+def is_list(val):
+    return (isinstance(val, collections.Iterable) and 
+            not isinstance(val, basestring))
 
-def get_display(val, dt_format="%b %d, %Y %H:%M %Z", timezone=pytz.utc,
-                parse_dates=True):
-    recurse = lambda v: get_display(v, dt_format=dt_format, timezone=timezone)
+def get_display(key, val, dt_format="%b %d, %Y %H:%M %Z", timezone=pytz.utc,
+                parse_dates=True, key_format=None, level=0,
+                collapse_lists=False):
+
+    recurse = lambda k, v: get_display(k, v,
+            dt_format=dt_format, timezone=timezone, key_format=key_format,
+            level=level + 1, collapse_lists=collapse_lists)
+    
+    def _key_format(k, v):
+        if not is_list(v):
+            return key_format(k) if key_format else k
+        else:
+            return ""
 
     if isinstance(val, types.DictionaryType):
         ret = "".join(
-            ["<dl>"] + 
-            ["<dt>%s</dt><dd>%s</dd>" % (k, recurse(v)) for k, v in val.items()] +
+            ["<dl %s>" % ("class='well'" if level == 0 else '')] + 
+            ["<dt>%s</dt><dd>%s</dd>" % (
+                _key_format(k, v), recurse(k, v)
+             ) for k, v in val.items()] +
             ["</dl>"])
 
-    elif (isinstance(val, collections.Iterable) and 
-          not isinstance(val, basestring)):
-        ret = "".join(
-            ["<ul>"] +
-            ["<li>%s</li>" % (recurse(v)) for v in val] +
-            ["</ul>"])
+    elif is_list(val):
+        if collapse_lists:
+            ret = "".join(
+                ["<dl>"] +
+                ["<dt>%s</dt><dd>%s</dd>" % (key, recurse(None, v)) for v in val] +
+                ["</dl>"])
+        else:
+            ret = "".join(
+                ["<ul>"] +
+                ["<li>%s</li>" % recurse(None, v) for v in val] +
+                ["</ul>"])
 
     else:
         if isinstance(val, datetime.datetime):
@@ -70,8 +92,12 @@ def build_tables(data, definition, processors=None, timezone=pytz.utc):
         return data.get(expr, None)
 
     def get_display_tuple(prop):
+        def format_key(key):
+            key = key.replace('_', ' ')
+            return key.replace('-', ' ')
+
         expr = prop['expr']
-        name = prop.get('name', expr)
+        name = prop.get('name', format_key(expr))
         format = prop.get('format')
         process = prop.get('process')
         parse_date = prop.get('parse_date')
@@ -95,7 +121,9 @@ def build_tables(data, definition, processors=None, timezone=pytz.utc):
         if process:
             val = escape(processors[process](val))
         else:
-            val = mark_safe(get_display(val, timezone=timezone))
+            val = mark_safe(get_display(None,
+                val, timezone=timezone, key_format=format_key,
+                collapse_lists=True))
 
         if format:
             val = mark_safe(format.format(val))
@@ -115,153 +143,211 @@ def build_tables(data, definition, processors=None, timezone=pytz.utc):
 
 
 @register.simple_tag
-def render_tables(tables, collapsible=False):
+def render_tables(tables, options=None):
+    options = options or {}
+    id = options.get('id')
+    adjust_heights = options.get('adjust_heights', True)
+    put_loners_in_wells = options.get('put_loners_in_wells', True)
+
+    if id is None:
+        import uuid
+        id = "a" + str(uuid.uuid4())
+
     return render_to_string("case/partials/property_table.html", {
-        "tables": tables
+        "tables": tables,
+        "id": id,
+        "adjust_heights": adjust_heights,
+        "put_loners_in_wells": put_loners_in_wells
     })
 
 
-def get_definition(keys, num_columns=FORM_PROPERTIES_COLUMNS):
+def get_definition(keys, num_columns=FORM_PROPERTIES_COLUMNS, name=None):
     return [
-        (None, 
-         chunks([{"expr": prop} for prop in sorted(keys)], num_columns))
+        (name, 
+         chunks([{"expr": prop} for prop in keys], num_columns))
     ]
 
 
+def sorted_case_update_keys(keys):
+    def mycmp(x, y):
+        if x[0] == '@' and y[0] == '@':
+            return cmp(x, y)
+        if x[0] == '@':
+            return 1
+        if y[0] == '@':
+            return -1
+        return cmp(x, y)
+    return sorted(keys, cmp=mycmp)
+
+
+def sorted_form_metadata_keys(keys):
+    def mycmp(x, y):
+        foo = ('timeStart', 'timeEnd')
+        bar = ('username', 'userID')
+        if x in foo and y in foo:
+            return -1 if foo.index(x) == 0 else 1
+        elif x in foo or y in foo:
+            return 0
+
+        if x in bar and y in bar:
+            return -1 if bar.index(x) == 0 else 1
+        elif x in bar and y in bar:
+            return 0
+
+        return cmp(x, y)
+    return sorted(keys, cmp=mycmp)
+
+
+def form_key_filter(key):
+    if key in SYSTEM_FIELD_NAMES:
+        return False
+
+    if any(key.startswith(p) for p in ['#', '@', '_']):
+        return False
+
+    return True
+
+
 @register.simple_tag
-def render_form(form, timezone=pytz.utc, display=None, case_id=None):
-    def key_filter(key):
-        if key in SYSTEM_FIELD_NAMES:
-            return False
+def render_form(form, domain, options):
+    """
+    Uses options since Django 1.3 doesn't seem to support templatetag kwargs.
+    Change to kwargs when we're on a version of Django that does.
+    
+    """
+    timezone = options.get('timezone', pytz.utc)
+    #display = options.get('display')
+    case_id = options.get('case_id')
 
-        if any(key.startswith(p) for p in ['#', '@', '_']):
-            return False
+    case_id_attr = "@%s" % const.CASE_TAG_ID
 
-        return True
-
-    # Form Data tab
+    # Form Data tab. deepcopy to ensure that if top_level_tags() returns live
+    # references we don't change any data.
     form_dict = copy.deepcopy(form.top_level_tags())
-    form_keys = [k for k in form_dict.keys() if key_filter(k)]
-    form_data = build_tables(form_dict, definition=get_definition(form_keys),
-            timezone=timezone)
+    form_dict.pop('change', None)  # this data already in Case Changes tab
+    form_keys = [k for k in form_dict.keys() if form_key_filter(k)]
+    form_data = build_tables(
+            form_dict, definition=get_definition(form_keys), timezone=timezone)
 
-    # Case tab
-    this_case_block = None
-    other_cases_blocks = []
+    # Case Changes tab
+    case_blocks = extract_case_blocks(form)
+    for i, block in enumerate(list(case_blocks)):
+        if case_id and block.get(case_id_attr) == case_id:
+            case_blocks.pop(i)
+            case_blocks.insert(0, block)
 
-    for block in extract_case_blocks(form):
-        if block.get("@%s" % const.CASE_TAG_ID) == case_id:
-            this_case_block = block
+    cases = []
+    for b in case_blocks:
+        this_case_id = b.get(case_id_attr)
+        this_case = CommCareCase.get(this_case_id) if this_case_id else None
+
+        if this_case and this_case._id:
+            url = reverse('case_details', args=[domain, this_case._id])
         else:
-            other_cases_blocks.append(block)
-   
-    if this_case_block:
-        this_case_data = build_tables( 
-                this_case_block,
-                definition=get_definition(this_case_block.keys()),
-                timezone=timezone)
-    else:
-        this_case_data = None
+            url = "#"
 
-    if other_cases_blocks:
-        other_cases_data = [build_tables(
-                b, definition=get_definition(b.keys()), timezone=timezone)
-                for b in other_cases_blocks]
-    else:
-        other_cases_data = None
-  
-    # Meta tab
+        cases.append({
+            "is_current_case": case_id and this_case_id == case_id,
+            "name": case_inline_display(this_case),
+            "table": build_tables(
+                b, definition=get_definition(
+                    sorted_case_update_keys(b.keys())),
+                timezone=timezone),
+            "url": url
+        })
+
+    # Form Metadata tab
     meta = form_dict.pop('meta')
-    form_meta_data = build_tables(meta, definition=get_definition(meta.keys()),
+    form_meta_data = build_tables(
+            meta, definition=get_definition(
+                sorted_form_metadata_keys(meta.keys())),
             timezone=timezone)
 
     return render_to_string("case/partials/single_form.html", {
-        "form_obj": form,
+        "context_case_id": case_id,
+        "instance": form,
+        "is_archived": form.doc_type == "XFormArchived",
+        "domain": domain,
         "form_data": form_data,
+        "cases": cases,
+        "form_table_options": {
+            # todo: wells if display config has more than one column
+            "put_loners_in_wells": False
+        },
         "form_meta_data": form_meta_data,
-        "this_case_data": this_case_data,
-        "other_cases_data": other_cases_data,
     })
 
 
 @register.simple_tag
-def render_case(case, timezone=pytz.utc, display=None):
+def render_case(case, options):
+    """
+    Uses options since Django 1.3 doesn't seem to support templatetag kwargs.
+    Change to kwargs when we're on a version of Django that does.
+    
+    """
+    timezone = options.get('timezone', pytz.utc)
+    display = options.get('display', None)
+
     display = display or [
-        (_("Basic Data"), [
+        (None, [
             [
                 {
                     "expr": "name",
                     "name": _("Name"),
                 },
                 {
-                    "expr": "closed",
-                    "name": _("Closed?"),
-                    "process": "yesno",
-                },
-            ],
-            [
-                {
-                    "expr": "type",
-                    "name": _("Type"),
-                    "format": '<code>{0}</code>',
-                },
-                {
-                    "expr": "external_id",
-                    "name": _("External ID"),
-                },
-            ],
-            [
-                {
-                    "expr": "case_id",
-                    "name": _("Case ID"),
-                },
-                {
-                    "expr": "domain",
-                    "name": _("Domain"),
-                },
-            ],
-        ]),
-        (_("Submission Info"), [
-            [
-                {
                     "expr": "opened_on",
                     "name": _("Opened On"),
                     "parse_date": True,
                 },
-                {
-                    "expr": "user_id",
-                    "name": _("User ID"),
-                    "format": '<span data-field="user_id">{0}</span>',
-                },
-            ],
-            [
                 {
                     "expr": "modified_on",
                     "name": _("Modified On"),
                     "parse_date": True,
                 },
                 {
-                    "expr": "owner_id",
-                    "name": _("Owner ID"),
-                    "format": '<span data-field="owner_id">{0}</span>',
-                },
-            ],
-            [
-                {
                     "expr": "closed_on",
                     "name": _("Closed On"),
                     "parse_date": True,
                 },
             ],
-        ])
+            [
+                {
+                    "expr": "type",
+                    "name": _("Case Type"),
+                    "format": '<code>{0}</code>',
+                },
+                {
+                    "expr": "user_id",
+                    "name": _("User ID"),
+                    "format": '<span data-field="user_id">{0}</span>',
+                },
+                {
+                    "expr": "owner_id",
+                    "name": _("Owner ID"),
+                    "format": '<span data-field="owner_id">{0}</span>',
+                },
+                {
+                    "expr": "_id",
+                    "name": _("Case ID"),
+                },
+            ],
+        ]),
     ]
 
     data = copy.deepcopy(case.to_json())
+    
     default_properties = build_tables(
             data, definition=display, timezone=timezone)
 
-    dynamic_data = dict((k, v) for (k, v) in case.dynamic_case_properties()
-                        if k in data)
+    # pop seen properties off of remaining case properties
+    dynamic_data = dict(case.dynamic_case_properties())
+    for section_name, definition in display:
+        for row in definition:
+            for item in row:
+                dynamic_data.pop(item.get("expr"), None)
+
+
     dynamic_keys = sorted(dynamic_data.keys())
     definition = [
         (None, chunks(
@@ -295,8 +381,11 @@ def case_inline_display(case):
     """
     if case:
         if case.opened_on:
-            return "%s (opened: %s)" % (case.name, case.opened_on.date())
+            ret = "%s (%s: %s)" % (case.name, _("Opened"), case.opened_on.date())
         else:
-            return case.name
-    return "empty case" 
+            ret =  case.name
+    else:
+        ret = _("Empty Case")
+
+    return escape(ret)
     

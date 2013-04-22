@@ -4,72 +4,13 @@
 {% load timezone_tags %}
 {% load case_tags %}
 {% load hq_shared_tags %}
-{#<script src="{% static "case/js/lib/jquery.inview.js" %}"></script>#}
+
+<script src="{% static "hqwebapp/js/lib/jquery.cachedAjax.js" %}"></script>
 
 <style type="text/css">
     .hq-generic-report {
         padding: 10px;
-    
     }
-    dl {
-        margin-bottom: 0px;
-        display: inline-block;
-    }
-
-    dl:not(:last-child) {
-        margin-right: 38px;
-    }
-
-    dd {
-        padding-bottom: 10px;
-    
-    }
-    .property-table-container {
-        float: left;
-        margin-bottom: 18px;
-        margin-right: 18px;
-    
-    }
-
-    /* partially lifted from bootstrap docs */
-    .table-tab {
-        top: -26px;
-        left: 0px;
-        display: inline-block;
-        width: auto;
-        padding: 3px 7px;
-        font-size: 12px;
-        font-weight: bold;
-        background-color: #f5f5f5;
-        border: 1px solid #ddd;
-        border-radius: 4px 4px 0 0;
-    }
-    
-    .case-properties-table dl {
-        font-size: 90%;
-    }
-
-    .case-properties-table > dl {
-        word-wrap: break-word;
-        word-break: break-all;
-    }
-
-    .case-properties-table > dl {
-        float: left;
-        width: 210px;
-        margin-bottom: 0;
-        margin-top: 0;
-        font-size: 100%;
-    }
-
-    .case-properties-table > dl:not(:last-child) {
-        margin-right: 20px;
-    }
-
-    .case-properties-table > dd:not(:last-child) {
-        margin-bottom: 10px;
-    }
-
 </style>
 
 <div id="report-content">
@@ -78,8 +19,8 @@
         {% render_tables default_properties %}
     </div>
     <ul class="nav nav-tabs">
-        <li class="active"><a href="#case-details" data-toggle="tab">{% trans "Case Details" %}</a></li>
-        <li><a href="#case-history-tab" data-toggle="tab">{% trans "History" %}</a></li>
+        <li class="active"><a href="#case-details" data-toggle="tab">{% trans "Case Properties" %}</a></li>
+        <li><a href="#case-history-tab" data-toggle="tab">{% trans "Case History" %}</a></li>
         {% if case.referrals %}
         <li><a href="#case-referrals" data-toggle="tab">{% trans "Referrals" %}</a></li>
         {% endif %}
@@ -434,7 +375,7 @@
 
                 self.get_xform_data = function(xform_id) {
                     //method for getting individual xform via GET
-                    $.ajax({
+                    $.cachedAjax({
                         "type": "GET",
                         "url": "/a/{{ case.domain }}/reports/case_data/{{ case.get_id }}/" + xform_id + "/",
                         "success": function(data) {
