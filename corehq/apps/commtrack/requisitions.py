@@ -81,7 +81,6 @@ def create_requisition(user_id, product_stock_case, transaction):
     submit_case_blocks(req.to_xml(), req.domain, req.username,
                        req.user_id)
     case = CommCareCase.get(req.id)
-    # NOTE: should these have locations?
-    # case.location_ = supply_point_case.location_
+    case.location_ = product_stock_case.location_
     return case
 

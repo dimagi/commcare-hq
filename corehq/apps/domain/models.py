@@ -15,7 +15,7 @@ from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.html import format_html
 from dimagi.utils.logging import notify_exception
 from dimagi.utils.timezones import fields as tz_fields
-from dimagi.utils.couch.database import get_db, get_safe_write_kwargs
+from dimagi.utils.couch.database import get_db, get_safe_write_kwargs, apply_update
 from itertools import chain
 from langcodes import langs as all_langs
 from collections import defaultdict
@@ -260,7 +260,7 @@ class Domain(Document, HQBillingDomainMixin, SnapshotMixin):
             del data['original_doc']
             should_save = True
             if original_doc:
-                original_doc = Domain.get_by_name(data['original_doc'])
+                original_doc = Domain.get_by_name(original_doc)
                 data['copy_history'] = [original_doc._id]
 
         # for domains that have a public domain license
@@ -557,8 +557,9 @@ class Domain(Document, HQBillingDomainMixin, SnapshotMixin):
         new_domain.save()
 
         if user:
-            user.add_domain_membership(new_domain_name, is_admin=True)
-            user.save()
+            def add_dom_to_user(user):
+                user.add_domain_membership(new_domain_name, is_admin=True)
+            apply_update(user, add_dom_to_user)
 
         return new_domain
 

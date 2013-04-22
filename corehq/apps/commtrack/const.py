@@ -3,7 +3,7 @@ COMMTRACK_USERNAME = 'commtrack-system'
 
 SUPPLY_POINT_CASE_TYPE = 'supply-point'
 SUPPLY_POINT_PRODUCT_CASE_TYPE = 'supply-point-product'
-REQUISITION_CASE_TYPE = 'requisition'
+REQUISITION_CASE_TYPE = 'commtrack-requisition'
 
 ALL_PRODUCTS_TRANSACTION_TAG = '_all_products'
 

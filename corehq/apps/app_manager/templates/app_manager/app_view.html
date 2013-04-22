@@ -221,29 +221,6 @@
     </style>
 {% endblock %}
 {% block form-view %}
-{#    <div class="page-header">#}
-{#        <h1 class="app-manager-title variable-app_name">{{ app.name|html_name }}</h1>#}
-{#    </div>#}
-{#    <ul class="nav nav-tabs">#}
-{#        <li class="active">#}
-{#            <a href="#app-settings" data-toggle="tab">#}
-{#                {% if app.get_doc_type == "Application" %}#}
-{#                    {% trans "Application Settings" %}#}
-{#                {% else %}#}
-{#                    {% trans "Remote Setup" %}#}
-{#                {% endif %}#}
-{#            </a>#}
-{#        </li>#}
-{##}
-{#        <li><a href="#languages-and-translations" data-toggle="tab">{% trans "Languages" %}</a></li>#}
-{##}
-{#        {% if app.get_doc_type == 'Application' %}#}
-{#        <li><a href="#multimedia" data-toggle="tab">{% trans "Multimedia" %}</a></li>#}
-{#        {% endif %}#}
-{#        {% if edit %}#}
-{#        <li><a href="#actions" data-toggle="tab">{% trans "Actions" %}</a></li>#}
-{#        {% endif %}#}
-{#    </ul>#}
     <div class="tab-content">
         <div class="tab-pane active" id="app-settings">
             {% include "app_manager/partials/app-settings.html" %}

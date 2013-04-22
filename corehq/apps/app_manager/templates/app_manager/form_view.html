@@ -14,7 +14,6 @@
     {% else %}
         <script src="{% static 'app_manager/js/case-config-ui-1.js' %}"></script>
     {% endif %}
-    <script src="{% static 'app_manager/js/langcodeValidator.js' %}"></script>
     <script src="{% static 'cloudcare/js/util.js' %}"></script>
 {% endblock %}
 
@@ -70,13 +69,6 @@
                 });
             }());
             var edit = {% if edit %}true{% else %}false{% endif %};
-            var langcodeValidator = new LangcodeValidator({
-                home: 'langcode_validator',
-                langcodes: {{ xform_languages|JSON }},
-                edit: edit,
-                renameURL: "{% url corehq.apps.app_manager.views.rename_language app.domain form.get_unique_id %}",
-                validateURL: "{% url corehq.apps.app_manager.views.validate_language app.domain app.id %}"
-            });
             var form_empty = {% if form.source and xform_questions %}false{% else %}true{% endif %};
         {% if is_user_registration %}
             if (!form_empty) {
@@ -415,15 +407,6 @@
             </form>
         </div>
     {% endif %}
-
-{#    {% if form.source %}#}
-{#        <div>#}
-{#            <p>This form contains the following languages:</p>#}
-{#            <div id="langcode_validator">#}
-{#                <p>This form does not use internationalized text.</p>#}
-{#            </div>#}
-{#        </div>#}
-{#    {% endif %}#}
         <div class="tab-pane" id="case-configuration">
         {% if form.source and xform_questions %}
             {% if app.application_version == '1.0' %}
