@@ -7,6 +7,8 @@ from corehq.apps.reports.util import make_form_couch_key
 from corehq.pillows.mappings.case_mapping import CASE_INDEX
 from corehq.pillows.mappings.xform_mapping import XFORM_INDEX
 from dimagi.utils.couch.database import get_db
+from django.utils.translation import ugettext as _
+
 
 def num_web_users(domain, *args):
     key = ["active", domain, 'WebUser']
@@ -148,7 +150,7 @@ CALC_FNS = {
 def dom_calc(calc_tag, dom, extra_arg=''):
     ans = CALC_FNS[calc_tag](dom, extra_arg)
     if ans is True:
-        return 'yes'
+        return _('yes')
     elif ans is False:
-        return 'no'
+        return _('no')
     return ans
