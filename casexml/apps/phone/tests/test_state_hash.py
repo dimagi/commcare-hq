@@ -8,20 +8,17 @@ from casexml.apps.phone.restore import generate_restore_payload,\
 from casexml.apps.phone.checksum import EMPTY_HASH, CaseStateHash
 from casexml.apps.case.xml import V2
 from casexml.apps.case.util import post_case_blocks
-from casexml.apps.case.tests.util import CaseBlock
+from casexml.apps.case.tests.util import CaseBlock, delete_all_sync_logs, delete_all_xforms, delete_all_cases
+
 
 class StateHashTest(TestCase):
     
     def setUp(self):
-        # clear cases, forms, logs
-        for item in XFormInstance.view("couchforms/by_xmlns", include_docs=True, reduce=False).all():
-            item.delete()
-        for case in CommCareCase.view("case/by_user", reduce=False, include_docs=True).all():
-            case.delete()
-        for log in SyncLog.view("phone/sync_logs_by_user", include_docs=True, reduce=False).all():
-            log.delete()
-        
-        self.user = User(user_id="state_hash", username="state_hash", 
+        delete_all_cases()
+        delete_all_xforms()
+        delete_all_sync_logs()
+
+        self.user = User(user_id="state_hash", username="state_hash",
                          password="changeme", date_joined=datetime(2011, 6, 9)) 
         
         # this creates the initial blank sync token in the database

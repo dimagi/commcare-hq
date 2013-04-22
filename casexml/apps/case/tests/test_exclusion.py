@@ -1,6 +1,7 @@
 from django.test import TestCase
 import os
 from casexml.apps.case.models import CommCareCase
+from casexml.apps.case.tests.util import delete_all_cases
 from couchforms.util import post_xform_to_couch
 from casexml.apps.case.signals import process_cases
 
@@ -10,9 +11,8 @@ class CaseExclusionTest(TestCase):
     """
     
     def setUp(self):
-        for item in CommCareCase.view("case/by_user", include_docs=True, reduce=False).all():
-            item.delete()
-        
+        delete_all_cases()
+
     def testTopLevelExclusion(self):
         """
         Entire forms tagged as device logs should be excluded

@@ -3,7 +3,7 @@ import os
 import time
 from couchforms.util import post_xform_to_couch
 from casexml.apps.case.models import CommCareCase
-from casexml.apps.case.tests.util import check_xml_line_by_line
+from casexml.apps.case.tests.util import check_xml_line_by_line, delete_all_cases, delete_all_sync_logs
 from casexml.apps.case.signals import process_cases
 from datetime import datetime, date
 from casexml.apps.phone.models import User, SyncLog
@@ -20,12 +20,9 @@ class OtaRestoreTest(TestCase):
     """Tests OTA Restore"""
     
     def setUp(self):
-        # clear cases
-        for case in CommCareCase.view("case/by_user", reduce=False, include_docs=True).all():
-            case.delete()
-        for log in SyncLog.view("phone/sync_logs_by_user", include_docs=True, reduce=False).all():
-            log.delete()
-        
+        delete_all_cases()
+        delete_all_sync_logs()
+
     def testFromDjangoUser(self):
         django_user = DjangoUser(username="foo", password="secret", date_joined=datetime(2011, 6, 9))
         django_user.save()

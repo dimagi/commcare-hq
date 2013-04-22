@@ -1,7 +1,7 @@
 from django.test import TestCase
 import os
 from casexml.apps.case.models import CommCareCase
-from casexml.apps.case.tests.util import CaseBlock
+from casexml.apps.case.tests.util import CaseBlock, delete_all_cases
 from casexml.apps.case.util import post_case_blocks
 from casexml.apps.case.xml import V2
 from couchforms.util import post_xform_to_couch
@@ -13,9 +13,8 @@ class CaseBugTest(TestCase):
     """
     
     def setUp(self):
-        for item in CommCareCase.view("case/by_user", include_docs=True, reduce=False).all():
-            item.delete()
-        
+        delete_all_cases()
+
     def testConflictingIds(self):
         """
         If two forms share an ID it's a conflict
