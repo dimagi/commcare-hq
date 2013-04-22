@@ -2,7 +2,7 @@ from django.test import TestCase
 import os
 from couchforms.util import post_xform_to_couch
 from casexml.apps.case.models import CommCareCase
-from casexml.apps.case.tests.util import CaseBlock, check_user_has_case
+from casexml.apps.case.tests.util import CaseBlock, check_user_has_case, delete_all_sync_logs, delete_all_xforms, delete_all_cases
 from casexml.apps.case.signals import process_cases
 from casexml.apps.phone.models import SyncLog, User
 from casexml.apps.phone.restore import generate_restore_payload
@@ -25,14 +25,10 @@ class SyncBaseTest(TestCase):
     """
     
     def setUp(self):
-        # clear cases, forms, logs
-        for item in XFormInstance.view("couchforms/by_xmlns", include_docs=True, reduce=False).all():
-            item.delete()
-        for case in CommCareCase.view("case/by_user", reduce=False, include_docs=True).all():
-            case.delete()
-        for log in SyncLog.view("phone/sync_logs_by_user", include_docs=True, reduce=False).all():
-            log.delete()
-        
+        delete_all_cases()
+        delete_all_xforms()
+        delete_all_sync_logs()
+
         self.user = User(user_id=USER_ID, username="syncguy", 
                          password="changeme", date_joined=datetime(2011, 6, 9)) 
         # this creates the initial blank sync token in the database

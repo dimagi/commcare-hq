@@ -2,7 +2,7 @@ from django.test import TestCase
 import os
 from casexml.apps.case.models import CommCareCase
 from couchforms.util import post_xform_to_couch
-from casexml.apps.case.tests.util import check_xml_line_by_line, CaseBlock
+from casexml.apps.case.tests.util import check_xml_line_by_line, CaseBlock, delete_all_cases
 from casexml.apps.case.signals import process_cases
 from datetime import datetime
 from casexml.apps.phone import views as phone_views
@@ -17,10 +17,8 @@ class Version2CaseParsingTest(TestCase):
     """
     
     def setUp(self):
-        for item in CommCareCase.view("case/by_user", include_docs=True, reduce=False).all():
-            item.delete()
-        
-    
+        delete_all_cases()
+
     def testParseCreate(self):
         file_path = os.path.join(os.path.dirname(__file__), "data", "v2", "basic_create.xml")
         with open(file_path, "rb") as f:

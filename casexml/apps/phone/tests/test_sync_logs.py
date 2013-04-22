@@ -1,15 +1,13 @@
 from django.test import TestCase
+from casexml.apps.case.tests.util import delete_all_sync_logs
 from casexml.apps.phone.models import SyncLog, CaseState
 from casexml.apps.case.sharedmodels import CommCareCaseIndex
 
 class PhoneFootprintTest(TestCase):
     
     def setUp(self):
-        # clear sync logs
-        for log in SyncLog.view("phone/sync_logs_by_user", include_docs=True, reduce=False).all():
-            log.delete()
-        
-    
+        delete_all_sync_logs()
+
     def test_empty(self):
         log = SyncLog()
         self.assertEqual(0, len(log.get_footprint_of_cases_on_phone()))

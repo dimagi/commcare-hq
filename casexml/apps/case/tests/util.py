@@ -4,12 +4,14 @@ import uuid
 from datetime import datetime
 from xml.etree import ElementTree
 from casexml.apps.case.xml import V1, V2, NS_VERSION_MAP
+from casexml.apps.phone.models import SyncLog
 
 from couchforms.util import post_xform_to_couch
 from couchforms.models import XFormInstance
 
 from casexml.apps.case.models import CommCareCase
 from casexml.apps.case.signals import process_cases
+from dimagi.utils.couch.database import safe_delete
 from dimagi.utils.dates import utcnow_sans_milliseconds
 from lxml import etree
 from dimagi.utils.parsing import json_format_datetime
@@ -380,3 +382,20 @@ def post_util(create=False, case_id=None, user_id=None, owner_id=None,
                       update=kwargs).as_xml()
     post_case_blocks([block])
     return case_id
+
+
+def _delete_all(db, viewname):
+    for row in db.view(viewname, reduce=False):
+        safe_delete(db, row['id'])
+
+def delete_all_cases():
+    # handle with care
+    _delete_all(CommCareCase.get_db(), 'case/by_user')
+
+def delete_all_xforms():
+    # handle with care
+    _delete_all(XFormInstance.get_db(), 'couchforms/by_xmlns')
+
+def delete_all_sync_logs():
+    # handle with care
+    _delete_all(SyncLog.get_db(), 'phone/sync_logs_by_user')
