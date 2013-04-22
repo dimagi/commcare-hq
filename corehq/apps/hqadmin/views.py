@@ -1,4 +1,5 @@
 from datetime import timedelta, datetime
+import inspect
 import json
 from copy import deepcopy
 import logging
@@ -6,11 +7,9 @@ from django.http import HttpResponseRedirect, HttpResponse
 from django.core.urlresolvers import reverse
 from django.shortcuts import render
 
-import rawes
-from casexml.apps.case.models import CommCareCase
 from corehq.apps.hqadmin.models import HqDeploy
 from corehq.apps.builds.models import CommCareBuildConfig, BuildSpec
-from corehq.apps.domain.models import Domain
+from corehq.apps.domain.models import Domain, InternalProperties, LicenseAgreement, Deployment
 from corehq.apps.hqadmin.escheck import check_cluster_health, check_case_index, check_xform_index, check_exchange_index
 from corehq.apps.reports.datatables import DataTablesColumn, DataTablesHeader, DTSortType
 from corehq.apps.reports.util import make_form_couch_key
@@ -39,7 +38,7 @@ from django.core import cache
 
 @require_superuser
 def default(request):
-    return HttpResponseRedirect(reverse("domain_list"))
+    return HttpResponseRedirect(reverse('admin_report_dispatcher', args=('domains',)))
 
 datespan_default = datespan_in_request(
     from_param="startdate",
@@ -85,34 +84,6 @@ def _all_domain_stats():
             "commcare_users": commcare_counts,
             "forms": form_counts,
             "cases": case_counts}
-
-@require_superuser
-def domain_list(request):
-    # one wonders if this will eventually have to paginate
-    domains = Domain.get_all()
-    all_stats = _all_domain_stats()
-    for dom in domains:
-        dom.web_users = int(all_stats["web_users"][dom.name])
-        dom.commcare_users = int(all_stats["commcare_users"][dom.name])
-        dom.cases = int(all_stats["cases"][dom.name])
-        dom.forms = int(all_stats["forms"][dom.name])
-        dom.admins = [row["doc"]["email"] for row in get_db().view("users/admins_by_domain", key=dom.name, reduce=False, include_docs=True).all()]
-
-    context = get_hqadmin_base_context(request)
-    context.update({"domains": domains})
-    context['layout_flush_content'] = True
-
-    headers = DataTablesHeader(
-        DataTablesColumn("Domain"),
-        DataTablesColumn("# Web Users", sort_type=DTSortType.NUMERIC),
-        DataTablesColumn("# Mobile Workers", sort_type=DTSortType.NUMERIC),
-        DataTablesColumn("# Cases", sort_type=DTSortType.NUMERIC),
-        DataTablesColumn("# Submitted Forms", sort_type=DTSortType.NUMERIC),
-        DataTablesColumn("Domain Admins")
-    )
-    context["headers"] = headers
-    context["aoColumns"] = headers.render_aoColumns
-    return render(request, "hqadmin/domain_list.html", context)
 
 @require_superuser
 def active_users(request):

@@ -165,34 +165,11 @@
         #license-info-label:hover {
             background: inherit;
         }
-
-        .facet-checkbox {
-            float: right;
-        }
     </style>
 {% endblock %}
 
 {% block js-inline %}{{ block.super }}
-    <script type="text/javascript">
-        $(function () {
-            $(".more-sortable-button").click(function() {
-                var e = $(this);
-                var sortable = e.data('sortable');
-                $('.sortable-' + sortable).show();
-                e.hide();
-                return false;
-            });
-        });
-    </script>
-
-    <script type="text/javascript">
-        $(function () {
-            $(".facet-checkbox").click(function() {
-                window.location = $(this).parent().attr('href');
-            });
-        });
-    </script>
-
+    <script src="{% static 'appstore/js/facet_sidebar.js' %}"></script>
     <script>
         // This assures that all the result elements are the same height
         $(window).load(function() {

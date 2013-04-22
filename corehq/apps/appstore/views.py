@@ -11,7 +11,6 @@ from django.shortcuts import render
 from corehq.apps.appstore.forms import AddReviewForm
 from corehq.apps.appstore.models import Review
 from corehq.apps.domain.decorators import require_superuser
-from corehq.apps.registration.forms import DomainRegistrationForm
 from corehq.apps.users.models import CouchUser
 from corehq.elastic import get_es
 from corehq.apps.domain.models import Domain
@@ -19,7 +18,6 @@ from django.contrib import messages
 from django.utils.translation import ugettext as _
 from dimagi.utils.couch.database import apply_update
 
-PER_PAGE = 9
 SNAPSHOT_FACETS = ['project_type', 'license', 'region', 'author']
 DEPLOYMENT_FACETS = ['deployment.region']
 SNAPSHOT_MAPPING = {'category':'project_type', 'license': 'license', 'region': 'region', 'author': 'author'}
@@ -108,7 +106,7 @@ def project_info(request, domain, template="appstore/project_info.html"):
         'display_import': True if getattr(request, "couch_user", "") and request.couch_user.get_domains() else False
     })
 
-def parse_args_for_es(request):
+def parse_args_for_es(request, prefix=None):
     """
     Parses a request's query string for url parameters. It specifically parses the facet url parameter so that each term
     is counted as a separate facet. e.g. 'facets=region author category' -> facets = ['region', 'author', 'category']
@@ -119,27 +117,44 @@ def parse_args_for_es(request):
         if attr[0] == 'facets':
             facets = attr[1][0].split()
             continue
-#        params[attr[0]] = attr[1][0] if len(attr[1]) < 2 else attr[1]
-        params[attr[0]] = attr[1]
+
+        if prefix:
+            if attr[0].startswith(prefix):
+                params[attr[0][len(prefix):]] = attr[1]
+        else:
+            params[attr[0]] = attr[1]
+
     return params, facets
 
-def generate_sortables_from_facets(results, params=None, mapping={}):
+def generate_sortables_from_facets(results, params=None, mapping=None, prefix=''):
     """
     Sortable is a list of tuples containing the field name (e.g. Category) and a list of dictionaries for each facet
     under that field (e.g. HIV and MCH are under Category). Each facet's dict contains the query string, display name,
     count and active-status for each facet.
     """
+    mapping = mapping or {}
     params = dict([(mapping.get(p, p), params[p]) for p in params])
     def generate_query_string(attr, val):
-        updated_params = copy.deepcopy(params)
+        if prefix:
+            attr = prefix + attr
+            updated_params = {}
+            for k, v in params.iteritems():
+                updated_params[prefix + k] = v[:] if isinstance(v, list) else v
+        else:
+            updated_params = copy.deepcopy(params)
+
         updated_params[attr] = updated_params.get(attr, [])
-        if val in params.get(attr, []):
+        if val in updated_params.get(attr, []):
             updated_params[attr].remove(val)
         else:
             updated_params[attr].append(val)
+
         return "?%s" % urlencode(updated_params, True)
 
     def generate_facet_dict(f_name, ft):
+        if isinstance(ft['term'], unicode): #hack to get around unicode encoding issues. However it breaks this specific facet
+            ft['term'] = ft['term'].encode('ascii','replace')
+
         ccs = {
             'cc': 'CC BY',
             'cc-sa': 'CC BY-SA',
@@ -152,7 +167,7 @@ def generate_sortables_from_facets(results, params=None, mapping={}):
         return {'url': generate_query_string(f_name, ft["term"]),
                 'name': ft["term"] if not license else ccs.get(ft["term"]),
                 'count': ft["count"],
-                'active': ft["term"] in params.get(f_name, "")}
+                'active': str(ft["term"]) in params.get(f_name, "")}
 
     sortable = []
     for facet in results.get("facets", []):
@@ -207,18 +222,30 @@ def appstore_api(request):
     results = es_snapshot_query(params, facets)
     return HttpResponse(json.dumps(results), mimetype="application/json")
 
-def es_query(params, facets=None, terms=None, q=None):
+def es_query(params=None, facets=None, terms=None, q=None, es_url=None, start_at=None, size=None, dict_only=False):
     if terms is None:
         terms = []
     if q is None:
         q = {}
+    if params is None:
+        params = {}
 
-    q["size"] = 9999
+    q["size"] = size or 9999
+    q["from"] = start_at or 0
     q["filter"] = q.get("filter", {})
     q["filter"]["and"] = q["filter"].get("and", [])
+
+    def convert(param):
+        #todo: find a better way to handle bools, something that won't break fields that may be 'T' or 'F' but not bool
+        if param == 'T' or param is True:
+            return 1
+        elif param == 'F' or param is False:
+            return 0
+        return param.lower()
+
     for attr in params:
         if attr not in terms:
-            attr_val = [params[attr].lower()] if isinstance(params[attr], basestring) else [p.lower() for p in params[attr]]
+            attr_val = [convert(params[attr])] if not isinstance(params[attr], list) else [convert(p) for p in params[attr]]
             q["filter"]["and"].append({"terms": {attr: attr_val}})
 
     def facet_filter(facet):
@@ -235,9 +262,14 @@ def es_query(params, facets=None, terms=None, q=None):
     if not q['filter']['and']:
         del q["filter"]
 
-    es_url = "cc_exchange/domain/_search"
+    if dict_only:
+        return q
+
+    es_url = es_url or "cc_exchange/domain/_search"
+
     es = get_es()
     ret_data = es.get(es_url, data=q)
+
     return ret_data
 
 def es_snapshot_query(params, facets=None, terms=None, sort_by="snapshot_time"):
@@ -318,6 +350,7 @@ def copy_snapshot(request, domain):
 
     dom = Domain.get_by_name(domain)
     if request.method == "POST" and dom.is_snapshot:
+        from corehq.apps.registration.forms import DomainRegistrationForm
         args = {'domain_name': request.POST['new_project_name'], 'eula_confirmed': True}
         form = DomainRegistrationForm(args)
 
