@@ -1,4 +1,5 @@
 import hashlib
+from couchdbkit import ResourceNotFound
 from django.core.cache import cache
 from django.http import HttpResponse
 import json
@@ -35,9 +36,9 @@ class MVPIndicatorReport(CustomProjectReport, ProjectReportParametersMixin):
         if cached_data and self.cache_indicators:
             response = cached_data
         elif indicator_slug:
-            indicator = DynamicIndicatorDefinition.get_current(MVP.NAMESPACE, self.domain, indicator_slug,
-                wrap_correctly=True)
-            if indicator:
+            try:
+                indicator = DynamicIndicatorDefinition.get_current(MVP.NAMESPACE, self.domain, indicator_slug,
+                    wrap_correctly=True)
                 response = self.get_response_for_indicator(indicator)
                 if response is not None:
                     cache.set(cache_key, response, 3600)
@@ -46,4 +47,6 @@ class MVPIndicatorReport(CustomProjectReport, ProjectReportParametersMixin):
                         'error': True,
                         'message': 'This Indicator is currently undergoing updates. Please check back shortly.'
                     }
+            except (ResourceNotFound, AttributeError):
+                response['message'] = "Indicator '%s' could not be found." % indicator_slug
         return HttpResponse(json.dumps(response))

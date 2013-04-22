@@ -7,6 +7,7 @@ from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn, D
 from corehq.apps.reports.generic import GenericTabularReport
 from corehq.apps.reports.standard import DatespanMixin
 from dimagi.utils.decorators.memoized import memoized
+from dimagi.utils.html import format_html
 from mvp.models import MVP
 from mvp.reports import MVPIndicatorReport
 
@@ -15,10 +16,17 @@ class CHWManagerReport(GenericTabularReport, MVPIndicatorReport, DatespanMixin):
     name = "CHW Manager Report"
     report_template_path = "mvp/reports/chw_report.html"
     fix_left_col = True
-    emailable = False
+    emailable = True
     fields = ['corehq.apps.reports.fields.FilterUsersField',
               'corehq.apps.reports.fields.GroupField',
               'corehq.apps.reports.fields.DatespanField']
+
+    @property
+    @memoized
+    def template_report(self):
+        if self.is_rendered_as_email:
+            self.report_template_path ="reports/async/tabular.html"
+        return super(CHWManagerReport, self).template_report
 
     @property
     @memoized
@@ -78,9 +86,15 @@ class CHWManagerReport(GenericTabularReport, MVPIndicatorReport, DatespanMixin):
 
     @property
     def rows(self):
-        rows = list()
-        d_text = lambda slug: mark_safe('<i class="icon icon-spinner status-%s"></i>' % slug)
         self.statistics_rows = [["Average"], ["Median"], ["Std. Dev."], ["Totals"]]
+        if self.is_rendered_as_email:
+            return self.full_rows
+        return self.piecewise_rows
+
+    @property
+    def piecewise_rows(self):
+        rows = []
+        d_text = lambda slug: format_html('<i class="icon icon-spinner status-{0}"></i>', slug)
 
         def _create_stat_cell(stat_type, slug):
             stat_cell = self.table_cell(None, d_text(slug))
@@ -113,6 +127,28 @@ class CHWManagerReport(GenericTabularReport, MVPIndicatorReport, DatespanMixin):
 
         return rows
 
+
+    @property
+    @memoized
+    def full_rows(self):
+        user_data = {}
+        for user in self.users:
+            user_data[user.get('user_id')] = [user.get('username_in_report')]
+
+        for section in self.indicators:
+            for indicator in section:
+                indicator_stats = self.get_response_for_indicator(indicator)
+                for user_id in self.user_ids:
+                    user_data[user_id].append(indicator_stats['data'][user_id])
+
+                self.statistics_rows[0].append(indicator_stats['average'])
+                self.statistics_rows[1].append(indicator_stats['median'])
+                self.statistics_rows[2].append(indicator_stats['std'])
+                self.statistics_rows[3].append(indicator_stats['total'])
+
+        return user_data.values()
+
+
     @property
     def indicator_slugs(self):
         return [
@@ -137,7 +173,7 @@ class CHWManagerReport(GenericTabularReport, MVPIndicatorReport, DatespanMixin):
             dict(
                 title="Under-5s",
                 indicators=[
-                    dict(slug="num_under5_visits", expected="--"),
+                    dict(slug="num_under5", expected="--"),
                     dict(slug="under5_danger_signs", expected="--"),
                     dict(slug="under5_fever", expected="--"),
                     dict(slug="under5_fever_rdt_proportion", expected="100%"),

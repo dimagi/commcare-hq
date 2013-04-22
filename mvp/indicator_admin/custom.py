@@ -1,3 +1,4 @@
+from django.core.urlresolvers import reverse
 from corehq.apps.indicators.admin.couch_indicators import CouchIndicatorAdminInterface
 from corehq.apps.indicators.admin.dynamic_indicators import BaseDynamicIndicatorAdminInterface
 from corehq.apps.reports.datatables import DataTablesColumn
@@ -6,24 +7,29 @@ from mvp.models import (MVPDaysSinceLastTransmission, MVPActiveCasesIndicatorDef
 from mvp.indicator_admin.forms import MVPDaysSinceLastTransmissionForm, MVPActiveCasesForm, MVPChildCasesByAgeForm
 
 
-class MVPDaysSinceLastTransmissionAdminInterface(BaseDynamicIndicatorAdminInterface):
+class MVPIndicatorAdminMixin(object):
+
+    @property
+    def crud_form_update_url(self):
+        return "/a/%s/indicators/mvp/form/" % self.domain
+
+    @property
+    def bulk_add_url(self):
+        return reverse("mvp_indicator_bulk_copy", args=[self.domain, self.document_class.__name__])
+
+
+class MVPDaysSinceLastTransmissionAdminInterface(MVPIndicatorAdminMixin, BaseDynamicIndicatorAdminInterface):
     name = "Days Since Last Transmission"
-    description = "desc needed" #todo
     slug = "mvp_days_since"
     document_class = MVPDaysSinceLastTransmission
     form_class = MVPDaysSinceLastTransmissionForm
 
-    crud_form_update_url = "/indicators/mvp/form/"
 
-
-class MVPActiveCasesAdminInterface(CouchIndicatorAdminInterface):
+class MVPActiveCasesAdminInterface(MVPIndicatorAdminMixin, CouchIndicatorAdminInterface):
     name = "Active Cases"
-    description = "desc needed" #todo
     slug = "mvp_active_cases"
     document_class = MVPActiveCasesIndicatorDefinition
     form_class = MVPActiveCasesForm
-
-    crud_form_update_url = "/indicators/mvp/form/"
 
     @property
     def headers(self):
