@@ -546,7 +546,7 @@ class Domain(Document, HQBillingDomainMixin, SnapshotMixin):
 
         if user:
             user.add_domain_membership(new_domain_name, is_admin=True)
-            user.save()
+            user.save(force_update=True)
 
         return new_domain
 
