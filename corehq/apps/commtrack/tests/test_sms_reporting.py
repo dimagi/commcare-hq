@@ -55,6 +55,25 @@ class StockRequisitionTest(CommTrackTest):
             self.assertEqual(req_case.location_, self.sp.location_)
             self.assertTrue(req_case._id in reqs)
 
+    def testSimpleApproval(self):
+        self.testRequisition()
+
+        # req loc1 pp 10 pq 20...
+        handled = handle(self.verified_number, 'approve {loc}'.format(
+            loc='loc1',
+            ))
+        self.assertTrue(handled)
+        reqs = RequisitionCase.open_for_location(self.domain.name, self.loc._id)
+        self.assertEqual(3, len(reqs))
+
+        for req_id in reqs:
+            req_case = RequisitionCase.get(req_id)
+            self.assertEqual(RequisitionStatus.APPROVED, req_case.requisition_status)
+            self.assertEqual(req_case.amount_requested, req_case.amount_approved)
+            self.assertEqual(self.user._id, req_case.approved_by)
+            self.assertIsNotNone(req_case.approved_on)
+            self.assertTrue(isinstance(req_case.approved_on, datetime))
+
     def testSimpleFill(self):
         self.testRequisition()
 
