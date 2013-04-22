@@ -1,5 +1,5 @@
 from django.utils.translation import ugettext_noop
-from corehq.apps.domain.calculations import CALC_FNS
+from corehq.apps.domain.calculations import dom_calc
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn, DTSortType
 from corehq.apps.reports.dispatcher import BasicReportDispatcher, AdminReportDispatcher
 from corehq.apps.reports.generic import GenericTabularReport
@@ -52,13 +52,13 @@ class DomainStatsReport(GenericTabularReport):
             dom = getattr(domain, 'name', domain) # get the domain name if domains is a list of domain objects
             yield [
                 getattr(domain, 'hr_name', dom), # get the hr_name if domain is a domain object
-                int(CALC_FNS["mobile_users"](dom)),
+                int(dom_calc("mobile_users", dom)),
                 int(all_stats["commcare_users"][dom]),
-                int(CALC_FNS["cases_in_last"](dom, 120)),
+                int(dom_calc("cases_in_last", dom, 120)),
                 int(all_stats["cases"][dom]),
                 int(all_stats["forms"][dom]),
-                CALC_FNS["first_form_submission"](dom),
-                CALC_FNS["last_form_submission"](dom),
+                dom_calc("first_form_submission", dom),
+                dom_calc("last_form_submission", dom),
                 int(all_stats["web_users"][dom]),
                 # [row["doc"]["email"] for row in get_db().view("users/admins_by_domain",
                 #                                               key=dom, reduce=False, include_docs=True).all()],

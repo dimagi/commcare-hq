@@ -20,7 +20,7 @@ def num_mobile_users(domain, *args):
 DATE_FORMAT = '%Y-%m-%dT%H:%M:%SZ'
 DISPLAY_DATE_FORMAT = '%Y/%m/%d %H:%M:%S'
 
-def active_mobile_users(domain):
+def active_mobile_users(domain, *args):
     """
     Returns the number of mobile users who have submitted a form in the last 30 days
     """
@@ -72,7 +72,7 @@ def active(domain, *args):
 
     key = ['submission', domain]
     row = get_db().view("reports_forms/all_forms", startkey=key+[then], endkey=key+[now]).all()
-    return 'yes' if row else 'no'
+    return True if row else False
 
 def first_form_submission(domain, *args):
     key = make_form_couch_key(domain)
@@ -87,7 +87,7 @@ def last_form_submission(domain, *args):
 def has_app(domain, *args):
     domain = Domain.get_by_name(domain)
     apps = domain.applications()
-    return 'yes' if len(apps) > 0 else 'no'
+    return len(apps) > 0
 
 def app_list(domain, *args):
     domain = Domain.get_by_name(domain)
@@ -96,7 +96,7 @@ def app_list(domain, *args):
 
 def uses_reminders(domain, *args):
     handlers = CaseReminderHandler.get_handlers(domain=domain).all()
-    return {"value": 'yes' if len(handlers) > 0 else 'no'}
+    return len(handlers) > 0
 
 def not_implemented(domain, *args):
     return '<p class="text-error">not implemented</p>'
@@ -144,3 +144,11 @@ CALC_FNS = {
     "active_apps": app_list,
     'uses_reminders': uses_reminders,
 }
+
+def dom_calc(calc_tag, dom, extra_arg=''):
+    ans = CALC_FNS[calc_tag](dom, extra_arg)
+    if ans is True:
+        return 'yes'
+    elif ans is False:
+        return 'no'
+    return ans

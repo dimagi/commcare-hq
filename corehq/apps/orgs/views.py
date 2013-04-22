@@ -33,7 +33,7 @@ def base_context(request, organization, update_form=None):
     return {
         "org": organization,
         "teams": Team.get_by_org(organization.name),
-        "domains": sorted(Domain.get_by_organization(organization.name).all(), cmp=lambda x,y: cmp(x.name, y.name)),
+        "domains": sorted(Domain.get_by_organization(organization.name).all(), key=lambda x: x.name),
         "members": organization.get_members(),
         "admin": request.couch_user.is_org_admin(organization.name) or request.couch_user.is_superuser,
         "update_form_empty": not update_form,
