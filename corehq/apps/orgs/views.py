@@ -33,7 +33,7 @@ def base_context(request, organization, update_form=None):
     return {
         "org": organization,
         "teams": Team.get_by_org(organization.name),
-        "domains": sorted(Domain.get_by_organization(organization.name).all(), cmp=lambda x,y: cmp(x.name, y.name)),
+        "domains": sorted(Domain.get_by_organization(organization.name).all(), key=lambda x: x.name),
         "members": organization.get_members(),
         "admin": request.couch_user.is_org_admin(organization.name) or request.couch_user.is_superuser,
         "update_form_empty": not update_form,
@@ -567,7 +567,7 @@ def stats(request, org, template='orgs/stats.html'):
 
 def stats_data(request, org):
     params, _ = parse_args_for_es(request)
-    domains = params.get('name') or [d.name for d in Domain.get_by_organization(org).all()]
+    domains = [{"name": d.name, "hr_name": d.hr_name} for d in Domain.get_by_organization(org).all()]
     histo_type = request.GET.get('histogram_type')
     period = request.GET.get("daterange", 'month')
 
@@ -575,11 +575,11 @@ def stats_data(request, org):
     startdate = (today - timedelta(days={
         'month': 30,
         'week': 7,
-        'quarter': 120,
+        'quarter': 90,
         'year': 365,
     }[period]))
 
-    histo_data = dict([(d, es_histogram(histo_type, [d], startdate.strftime('%Y-%m-%d'), today.strftime('%Y-%m-%d')))
+    histo_data = dict([(d['hr_name'], es_histogram(histo_type, [d["name"]], startdate.strftime('%Y-%m-%d'), today.strftime('%Y-%m-%d')))
                        for d in domains])
 
     return json_response({
@@ -589,9 +589,9 @@ def stats_data(request, org):
         'enddate': [today.year, today.month, today.day],
     })
 
-def es_histogram(histo_type, domains=None, startdate=None, enddate=None):
+def es_histogram(histo_type, domains=None, startdate=None, enddate=None, tz_diff=None):
     date_field = {  "forms": "received_on",
-                    "cases": "modified_on"  }[histo_type]
+                    "cases": "opened_on"  }[histo_type]
     es_url = {  "forms": XFORM_INDEX + '/xform/_search',
                 "cases": CASE_INDEX + '/case/_search' }[histo_type]
 
@@ -616,6 +616,12 @@ def es_histogram(histo_type, domains=None, startdate=None, enddate=None):
                             }}}]}}},
         "size": 0
     })
+
+    if tz_diff:
+        q["facets"]["histo"]["date_histogram"]["time_zone"] = tz_diff
+
+    if histo_type == "forms":
+        q["facets"]["histo"]["facet_filter"]["and"].append({"not": {"in": {"doc_type": ["xformduplicate", "xformdeleted"]}}})
 
     es = get_es()
     ret_data = es.get(es_url, data=q)

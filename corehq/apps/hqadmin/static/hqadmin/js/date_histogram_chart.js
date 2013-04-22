@@ -10,20 +10,10 @@ function format_data(data, starting_time, ending_time) {
         /*
          * Takes in the entries dictionary returned in a es date histogram facet and converts that data for use in nvd3
          */
-        entry.sort(function(x, y) {return x.time > y.time});
-
-        var vals = new Array();
-        for (var day = starting_time, index = 0; day <= ending_time; day += DAY_VALUE) {
-            if (entry.length > 0 && index < entry.length && entry[index].time < day) {
-                vals.push({x: day, y: entry[index].count});
-                index++;
-            } else {
-                if (index > 0 && index < entry.length) {
-                    vals.push({x: day, y: 0});
-                }
-            }
+        var vals = [];
+        for (var i = 0; i < entry.length; i++) {
+            vals.push({x: entry[i].time, y: entry[i].count})
         }
-
         var ret = {
             key: name,
             values: vals.slice(0)
@@ -90,7 +80,7 @@ function addHistogram(element_id, xname, data, starting_time, ending_time) {
 
         chart.xAxis
             .axisLabel('Date')
-            .tickFormat(function(d){return d3.time.format('%d-%b-%Y')(new Date(d));});
+            .tickFormat(function(d){return d3.time.format.utc('%d-%b-%Y')(new Date(d));});
 
         chart.yAxis
             .tickFormat(d3.format(',.1d'))

@@ -1,8 +1,11 @@
 from datetime import datetime, timedelta, time
 from django.template.loader import render_to_string
+from corehq.apps.appstore.views import es_query
 from corehq.apps.domain.models import Domain
 from corehq.apps.reminders.models import CaseReminderHandler
 from corehq.apps.reports.util import make_form_couch_key
+from corehq.pillows.mappings.case_mapping import CASE_INDEX
+from corehq.pillows.mappings.xform_mapping import XFORM_INDEX
 from dimagi.utils.couch.database import get_db
 
 def num_web_users(domain, *args):
@@ -17,26 +20,45 @@ def num_mobile_users(domain, *args):
 DATE_FORMAT = '%Y-%m-%dT%H:%M:%SZ'
 DISPLAY_DATE_FORMAT = '%Y/%m/%d %H:%M:%S'
 
-def active_mobile_users(domain):
+def active_mobile_users(domain, *args):
+    """
+    Returns the number of mobile users who have submitted a form in the last 30 days
+    """
     now = datetime.now()
     then = (now - timedelta(days=30)).strftime(DATE_FORMAT)
     now = now.strftime(DATE_FORMAT)
 
-    key = ['submission', domain]
-    rows = get_db().view("reports_forms/all_forms", startkey=key+[then], endkey=key+[now], reduce=False, include_docs=True).all()
-    return len(set([r["value"].get('user_id') for r in rows if r["value"].get('user_id')])) if rows else 0
+    q = {"query": {
+            "range": {
+                "form.meta.timeEnd": {
+                    "from": then,
+                    "to": now}}}}
+    facets = ['userID']
+    data = es_query(params={"domain.exact": domain}, q=q, facets=facets, es_url=XFORM_INDEX + '/xform/_search', size=1)
+    excluded_ids = ['commtrack-system']
+    terms = [t.get('term') for t in data["facets"]["userID"]["terms"]]
+    terms = filter(lambda t: t and t not in excluded_ids, terms)
+    return len(terms)
 
 def cases(domain, *args):
     row = get_db().view("hqcase/types_by_domain", startkey=[domain], endkey=[domain, {}]).one()
     return row["value"] if row else 0
 
 def cases_in_last(domain, days):
+    """
+    Returns the number of open cases that have been modified in the last <days> days
+    """
     now = datetime.now()
     then = (now - timedelta(days=int(days))).strftime(DATE_FORMAT)
     now = now.strftime(DATE_FORMAT)
 
-    row = get_db().view("hqcase/all_cases", startkey=[domain, {}, {}, then], endkey=[domain, {}, {}, now]).one()
-    return row["value"] if row else 0
+    q = {"query": {
+        "range": {
+            "modified_on": {
+                "from": then,
+                "to": now}}}}
+    data = es_query(params={"domain.exact": domain, 'closed': False}, q=q, es_url=CASE_INDEX + '/case/_search', size=1)
+    return data['hits']['total'] if data.get('hits') else 0
 
 def forms(domain, *args):
     key = make_form_couch_key(domain)
@@ -50,7 +72,7 @@ def active(domain, *args):
 
     key = ['submission', domain]
     row = get_db().view("reports_forms/all_forms", startkey=key+[then], endkey=key+[now]).all()
-    return 'yes' if row else 'no'
+    return True if row else False
 
 def first_form_submission(domain, *args):
     key = make_form_couch_key(domain)
@@ -65,7 +87,7 @@ def last_form_submission(domain, *args):
 def has_app(domain, *args):
     domain = Domain.get_by_name(domain)
     apps = domain.applications()
-    return 'yes' if len(apps) > 0 else 'no'
+    return len(apps) > 0
 
 def app_list(domain, *args):
     domain = Domain.get_by_name(domain)
@@ -74,7 +96,7 @@ def app_list(domain, *args):
 
 def uses_reminders(domain, *args):
     handlers = CaseReminderHandler.get_handlers(domain=domain).all()
-    return {"value": 'yes' if len(handlers) > 0 else 'no'}
+    return len(handlers) > 0
 
 def not_implemented(domain, *args):
     return '<p class="text-error">not implemented</p>'
@@ -122,3 +144,11 @@ CALC_FNS = {
     "active_apps": app_list,
     'uses_reminders': uses_reminders,
 }
+
+def dom_calc(calc_tag, dom, extra_arg=''):
+    ans = CALC_FNS[calc_tag](dom, extra_arg)
+    if ans is True:
+        return 'yes'
+    elif ans is False:
+        return 'no'
+    return ans

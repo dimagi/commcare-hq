@@ -1,6 +1,7 @@
 import re
 from couchdbkit.ext.django.schema import *
 from django.conf import settings
+from dimagi.utils.couch.database import get_safe_write_kwargs
 from dimagi.utils.modules import try_import
 from corehq.apps.domain.models import Domain
 
@@ -246,7 +247,7 @@ class CommCareMobileContactMixin(object):
         v.verified = verified
         v.backend_id = backend_id
         v.ivr_backend_id = ivr_backend_id
-        v.save()
+        v.save(**get_safe_write_kwargs())
 
     def delete_verified_number(self, phone_number=None):
         """

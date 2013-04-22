@@ -34,7 +34,7 @@
         function loadChartData(chart_id, daterange) {
             var xname = {
                 'forms-chart': '# of form submissions',
-                'cases-chart': '# of case modifications'
+                'cases-chart': '# of cases created'
             }[chart_id];
             var histo_type = {
                 'forms-chart': 'forms',
@@ -46,10 +46,11 @@
 
             $.getJSON('{% url orgs_stats_data org.name %}', {daterange: daterange, histogram_type: histo_type},
                     function(d) {
-                        var starting_time = new Date(d.startdate[0], d.startdate[1], d.startdate[2]).getTime();
-                        var ending_time = new Date(d.enddate[0], d.enddate[1], d.enddate[2]).getTime();
+                        var starting_time = new Date(Date.UTC(d.startdate[0], d.startdate[1]-1, d.startdate[2])).getTime();
+                        var ending_time = new Date(Date.UTC(d.enddate[0], d.enddate[1]-1, d.enddate[2])).getTime();
                         addHistogram(chart_id, xname, d.histo_data, starting_time, ending_time);
                         $chart.parent().children('.loading').hide();
+                        $chart.parent().css('padding-top', 48);
                         $chart.html('').append('<svg style="height:320px"> </svg>');
                         $chart.show();
                         setActiveRange(chart_id, d.range);
@@ -106,6 +107,7 @@
 {% endblock %}
 
 {% block report %}
+    <span style="margin-bottom: 1em" class="label label-info">{% trans "All dates are in UTC" %}</span>
     <div class="accordion" id="charts-accordion">
         <div class="accordion-group">
             <div class="accordion-heading">

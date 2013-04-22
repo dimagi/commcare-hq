@@ -405,6 +405,16 @@ def _redirect_to_export_home(type, domain, ajax=False):
     else:
         return json_response({'redirect': url})
 
+def touch_saved_reports_views(user, domain):
+    """
+    Hit the saved reports views so stale=update_after doesn't cause the user to
+    see old or deleted data after a change when they next load the reports
+    homepage.
+
+    """
+    ReportConfig.by_domain_and_owner(domain, user._id, limit=1).all()
+    ReportNotification.by_domain_and_owner(domain, user._id, limit=1).all()
+
 
 @login_and_domain_required
 @require_POST
@@ -456,16 +466,13 @@ def add_config(request, domain=None):
     
     config.save()
 
-    # hit the view so stale=update_after doesn't cause the user to not see it
-    # the next time they go to the reports homepage
-    ReportConfig.by_domain_and_owner(domain, user_id, limit=1).all()
+    touch_saved_reports_views(request.couch_user, domain)
 
     return json_response(config)
 
 @login_and_domain_required
 @datespan_default
 def email_report(request, domain, report_slug):
-    from datetime import datetime
     from dimagi.utils.django.email import send_HTML_email
     from corehq.apps.reports.dispatcher import ProjectReportDispatcher
     from forms import EmailReportForm
@@ -499,8 +506,7 @@ def email_report(request, domain, report_slug):
 
     body = _render_report_configs(request, [config],
                                   domain,
-                                  user_id,
-                                  request.couch_user,
+                                  user_id, request.couch_user,
                                   True,
                                   notes=form.cleaned_data['notes']).content
 
@@ -524,6 +530,8 @@ def delete_config(request, domain, config_id):
         raise Http404()
 
     config.delete()
+    
+    touch_saved_reports_views(request.couch_user, domain)
     return HttpResponse()
 
 
@@ -587,10 +595,7 @@ def edit_scheduled_report(request, domain, scheduled_report_id=None,
         else:
             messages.success(request, "Scheduled report updated!")
 
-        # hit the view so stale=update_after doesn't cause the user to not see
-        # this report when they next load the report list
-        ReportNotification.by_domain_and_owner(domain, user_id, limit=1).all()
-
+        touch_saved_reports_views(request.couch_user, domain)
         return HttpResponseRedirect(reverse('reports_home', args=(domain,)))
 
     context['form'] = form
@@ -739,7 +744,7 @@ def case_details(request, domain, case_id):
         "timezone": timezone
     })
 
-def generate_case_export_payload(domain, include_closed, format, group, user_filter):
+def generate_case_export_payload(domain, include_closed, format, group, user_filter, process=None):
     """
     Returns a FileWrapper object, which only the file backend in django-soil supports
 
@@ -754,10 +759,17 @@ def generate_case_export_payload(domain, include_closed, format, group, user_fil
         wrapper=lambda r: r['id']
     )
 
-    def stream_cases(all_case_ids):
-        for case_ids in chunked(all_case_ids, 500):
-            for case in wrapped_docs(CommCareCase, case_ids):
-                yield case
+    class stream_cases(object):
+        def __init__(self, all_case_ids):
+            self.all_case_ids = all_case_ids
+
+        def __iter__(self):
+            for case_ids in chunked(self.all_case_ids, 500):
+                for case in wrapped_docs(CommCareCase, case_ids):
+                    yield case
+
+        def __len__(self):
+            return len(self.all_case_ids)
 
     # todo deal with cached user dict here
     users = get_all_users_by_domain(domain, group=group, user_filter=user_filter)
@@ -766,7 +778,14 @@ def generate_case_export_payload(domain, include_closed, format, group, user_fil
     fd, path = tempfile.mkstemp()
     with os.fdopen(fd, 'wb') as file:
         workbook = WorkBook(file, format)
-        export_cases_and_referrals(domain, stream_cases(case_ids), workbook, users=users, groups=groups)
+        export_cases_and_referrals(
+            domain,
+            stream_cases(case_ids),
+            workbook,
+            users=users,
+            groups=groups,
+            process=process
+        )
         export_users(users, workbook)
         workbook.close()
     return FileWrapper(open(path))

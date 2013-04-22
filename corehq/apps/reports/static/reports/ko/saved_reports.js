@@ -68,6 +68,7 @@ var ReportConfig = function (data) {
 
 var ReportConfigsViewModel = function (options) {
     var self = this;
+    self.defaultItem = options.defaultItem;
     self.filterForm = options.filterForm;
 
     self.initialLoad = true;
@@ -110,12 +111,7 @@ var ReportConfigsViewModel = function (options) {
             type: "DELETE",
             url: options.saveUrl + '/' + config._id(),
             success: function (data) {
-                for (var i = 0; i < self.reportConfigs().length; i++) {
-                    if (ko.utils.unwrapObservable(self.reportConfigs()[i]._id) === config._id()) {
-                        self.reportConfigs.splice(i, 1);
-                        return;
-                    }
-                }
+                window.location.reload();
             }
         });
     };
@@ -177,7 +173,7 @@ var ReportConfigsViewModel = function (options) {
         });
 
         self.configBeingViewed().filters = filters;
-        self.configBeingEdited(self.configBeingViewed());
+        self.configBeingEdited(new ReportConfig(self.defaultItem));
         self.modalSaveButton.state('save');
 
         /*$("#modal-body").find('date-picker').datepicker({

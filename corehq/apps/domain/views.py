@@ -10,7 +10,7 @@ from django.core.urlresolvers import reverse
 from django.http import HttpResponseRedirect, HttpResponse, Http404
 
 from django.shortcuts import redirect, render
-from corehq.apps.domain.calculations import CALCS, CALC_FNS, CALC_ORDER
+from corehq.apps.domain.calculations import CALCS, CALC_FNS, CALC_ORDER, dom_calc
 
 from corehq.apps.domain.decorators import (domain_admin_required,
     login_required_late_eval_of_LOGIN_URL, require_superuser,
@@ -323,7 +323,7 @@ def calculated_properties(request, domain):
     if not calc_tag or calc_tag not in CALC_FNS.keys():
         data = {"error": 'This tag does not exist'}
     else:
-        data = {"value": CALC_FNS[calc_tag](domain, extra_arg)}
+        data = {"value": dom_calc(calc_tag, domain, extra_arg)}
     return json_response(data)
 
 @domain_admin_required

@@ -26,7 +26,7 @@ from corehq.apps.users.views import (_users_context, require_can_edit_web_users,
     require_can_edit_commcare_users, account as users_account)
 from dimagi.utils.html import format_html
 from dimagi.utils.decorators.view import get_file
-from dimagi.utils.excel import WorkbookJSONReader, WorksheetNotFound
+from dimagi.utils.excel import WorkbookJSONReader, WorksheetNotFound, JSONReaderError
 
 
 DEFAULT_USER_LIST_LIMIT = 10
@@ -217,18 +217,25 @@ class UploadCommCareUsers(TemplateView):
     @method_decorator(get_file)
     def post(self, request):
         """View's dispatch method automatically calls this"""
+        redirect = request.POST.get('redirect')
 
         try:
             self.workbook = WorkbookJSONReader(request.file)
         except InvalidFileException:
             try:
-                csv.DictReader(io.StringIO(request.file.read().decode('ascii'), newline=None))
+                csv.DictReader(io.StringIO(request.file.read().decode('ascii'),
+                                           newline=None))
                 return HttpResponseBadRequest(
                     "CommCare HQ no longer supports CSV upload. "
-                    "Please convert to Excel 2007 or higher (.xlsx) and try again."
+                    "Please convert to Excel 2007 or higher (.xlsx) "
+                    "and try again."
                 )
             except UnicodeDecodeError:
                 return HttpResponseBadRequest("Unrecognized format")
+        except JSONReaderError as e:
+            messages.error(request,
+                           'Your upload was unsuccessful. %s' % e.message)
+            return HttpResponseRedirect(redirect)
 
         try:
             self.user_specs = self.workbook.get_worksheet(title='users')
@@ -268,7 +275,6 @@ class UploadCommCareUsers(TemplateView):
             for row in ret["rows"]:
                 response_rows.append(row)
 
-        redirect = request.POST.get('redirect')
         if redirect:
             if not async:
                 messages.success(request, 'Your bulk user upload is complete!')

@@ -1,6 +1,6 @@
 $.prototype.iconify = function (icon) {
     'use strict';
-    var $icon = $("<div/>").addClass('ui-icon ' + icon).css('float', 'left');
+    var $icon = $("<i/>").addClass(icon).css('float', 'left');
     $(this).css('width', "16px").prepend($icon);
 };
 
@@ -41,9 +41,9 @@ var SaveButton = {
             $retry: $('<span/>').text(SaveButton.message.RETRY).click(function () {
                 button.fire('save');
             }).addClass('btn btn-success'),
-            $saving: $('<span/>').text(SaveButton.message.SAVING).addClass('btn disabled'),
+            $saving: $('<span/>').text(SaveButton.message.SAVING).prepend('<i class="icon-refresh icon-spin"></i> ').addClass('btn disabled'),
             $saved: $('<span/>').text(SaveButton.message.SAVED).addClass('btn disabled'),
-            ui: $('<div/>').css({float: 'right'}),
+            ui: $('<div/>').addClass('pull-right'),
             setStateWhenReady: function (state) {
                 if (this.state === 'saving') {
                     this.nextState = state;
@@ -69,6 +69,7 @@ var SaveButton = {
                 } else if (state === 'retry') {
                     this.ui.append(this.$retry);
                 }
+                this.fire('state:change');
             },
             ajaxOptions: function (options) {
                 var options = options || {},
@@ -114,12 +115,14 @@ var SaveButton = {
                 ;
             })
         }
-        $(window).bind('beforeunload', function () {
+
+        var beforeunload = function () {
             var stillAttached = button.ui.parents()[button.ui.parents().length - 1].tagName.toLowerCase() == 'html';
             if (button.state !== 'saved' && stillAttached) {
                 return options.unsavedMessage || "";
             }
-        });
+        };
+        COMMCAREHQ.bindBeforeUnload(beforeunload);
         return button;
     },
     initForm: function ($form, options) {
@@ -140,12 +143,13 @@ var SaveButton = {
                 button.fire('change');
             };
         $form.find('*').change(fireChange);
-        $form.on('textchange', 'input, textarea', fireChange);
+//        $form.on('textchange', 'input, textarea', fireChange);
+        $form.find('input, textarea').bind('textchange', fireChange);
         return button;
     },
     message: {
         SAVE: 'Save',
-        SAVING: 'Saving...',
+        SAVING: 'Saving',
         SAVED: 'Saved',
         RETRY: 'Try Again',
         ERROR_SAVING: 'There was an error saving'
@@ -157,10 +161,10 @@ var COMMCAREHQ = (function () {
     'use strict';
     return {
         icons: {
-            GRIP:   'ui-icon ui-icon-arrowthick-2-n-s',
-            ADD:    'ui-icon ui-icon-plusthick',
-            COPY:   'ui-icon ui-icon-copy',
-            DELETE: 'ui-icon ui-icon-closethick'
+            GRIP:   'icon-resize-vertical icon-blue',
+            ADD:    'icon-plus icon-blue',
+            COPY:   'icon-copy icon-blue',
+            DELETE: 'icon-remove icon-blue'
         },
         makeHqHelp: function (opts, wrap) {
             wrap = wrap === undefined ? true : wrap;
@@ -168,7 +172,7 @@ var COMMCAREHQ = (function () {
                 '<a href="#" class="hq-help no-click">' +
                     '<i class="icon-question-sign" data-trigger="hover"></i></a>'
             );
-            for (var attr in {'content': 0, 'title': 0}) {
+            for (var attr in {content: 0, title: 0, html: 0}) {
                 $('i', el).data(attr, opts[attr]);
             }
             if (wrap) {
@@ -179,7 +183,7 @@ var COMMCAREHQ = (function () {
         initBlock: function ($elem) {
             $('.submit_on_click', $elem).click(function (e) {
                 e.preventDefault();
-                $(this).closest('form').submit();
+                $(this).prev('form').submit();
             });
 
             $('.submit').click(function (e) {
@@ -278,7 +282,19 @@ var COMMCAREHQ = (function () {
                 }]
             });
         },
-        SaveButton: SaveButton
+        SaveButton: SaveButton,
+        beforeUnload: [],
+        bindBeforeUnload: function (callback) {
+            COMMCAREHQ.beforeUnload.push(callback);
+        },
+        beforeUnloadCallback: function () {
+            for (var i = 0; i < COMMCAREHQ.beforeUnload.length; i++) {
+                var message = COMMCAREHQ.beforeUnload[i]();
+                if (message !== null && message !== undefined) {
+                    return message;
+                }
+            }
+        }
     };
 }());
 
@@ -295,16 +311,14 @@ function setUpIeWarning() {
 
 $(function () {
     'use strict';
-    $('.delete_link').iconify('ui-icon-closethick');
+    $('.delete_link').iconify('icon-remove');
     $(".delete_link").addClass("dialog_opener");
     $(".delete_dialog").addClass("dialog");
-    $('.new_link').iconify('ui-icon-plusthick');
-    $('.edit_link').iconify('ui-icon-pencil');
-    $('.drag_handle').iconify(COMMCAREHQ.icons.GRIP);
+    $('.new_link').iconify('icon-plus');
+    $('.edit_link').iconify('icon-pencil');
 
     $(".message").addClass('ui-state-highlight ui-corner-all').addClass("shadow");
 
-    $('#main_container').addClass('container shadow');
     (function () {
         var formIsOpen = false,
             footer = $('footer'),
@@ -394,13 +408,16 @@ $(function () {
         });
     }());
 
-    $(".sidebar h2").addClass('ui-corner-all');
-    $(".sidebar ul li").addClass('ui-corner-all');
-    $(".sidebar ul li div").addClass('ui-corner-top');
-    $(".sidebar ul").addClass('ui-corner-bottom');
+//    $(".sidebar h2").addClass('ui-corner-all');
+//    $(".sidebar ul li").addClass('ui-corner-all');
+//    $(".sidebar ul li div").addClass('ui-corner-top');
+//    $(".sidebar ul").addClass('ui-corner-bottom');
 
     COMMCAREHQ.initBlock($("body"));
     setUpIeWarning();
+
+    $(window).bind('beforeunload', COMMCAREHQ.beforeUnloadCallback);
+
 });
 
 // thanks to http://stackoverflow.com/questions/1149454/non-ajax-get-post-using-jquery-plugin
