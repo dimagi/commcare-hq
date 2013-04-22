@@ -10,8 +10,8 @@ import hashlib
 class CaseMultimediaTest(TestCase):
     """
     Tests new attachments for cases and case properties
+    Spec: https://bitbucket.org/commcare/commcare/wiki/CaseAttachmentAPI
     """
-
 
     def setUp(self):
         for item in CommCareCase.view("case/by_user", include_docs=True, reduce=False).all():
@@ -22,12 +22,12 @@ class CaseMultimediaTest(TestCase):
     def testAttachInCreate(self):
         self.assertEqual(0, len(CommCareCase.view("case/by_user", reduce=False).all()))
 
-        file_path = os.path.join(os.path.dirname(__file__), "data", "attachments", "create_with_attach.xml")
+        file_path = os.path.join(os.path.dirname(__file__), "data", "multimedia", "multimedia_create.xml")
         with open(file_path, "rb") as f:
             xml_data = f.read()
 
         attach_name = "fruity.jpg"
-        attachment_path = os.path.join(os.path.dirname(__file__), "data", "attachments", attach_name)
+        attachment_path = os.path.join(os.path.dirname(__file__), "data", "multimedia", attach_name)
         with open(attachment_path, "rb") as attachment:
             uf = UploadedFile(attachment, attach_name)
             form = post_xform_to_couch(xml_data, {attach_name: uf})
@@ -49,12 +49,12 @@ class CaseMultimediaTest(TestCase):
     def testAttachInUpdate(self):
         self.testAttachInCreate()
 
-        file_path = os.path.join(os.path.dirname(__file__), "data", "attachments", "update_with_attach.xml")
+        file_path = os.path.join(os.path.dirname(__file__), "data", "multimedia", "multimedia_update.xml")
         with open(file_path, "rb") as f:
             xml_data = f.read()
 
         attach_name = "house.jpg"
-        attachment_path = os.path.join(os.path.dirname(__file__), "data", "attachments", attach_name)
+        attachment_path = os.path.join(os.path.dirname(__file__), "data", "multimedia", attach_name)
         with open(attachment_path, "rb") as attachment:
             uf = UploadedFile(attachment, attach_name)
             form = post_xform_to_couch(xml_data, {attach_name: uf})
