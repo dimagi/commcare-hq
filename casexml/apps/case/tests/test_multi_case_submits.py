@@ -45,8 +45,6 @@ class MultiCaseTest(TestCase):
         form = post_xform_to_couch(xml_data)
         process_cases(sender="testharness", xform=form)
         cases = self._get_cases()
-        for case in cases:
-            print case._id
         self.assertEqual(3, len(cases))
         self._check_ids(form, cases)
 
