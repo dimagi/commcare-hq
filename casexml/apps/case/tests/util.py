@@ -390,7 +390,7 @@ def _delete_all(db, viewname):
 
 def delete_all_cases():
     # handle with care
-    _delete_all(CommCareCase.get_db(), 'case/by_user')
+    _delete_all(CommCareCase.get_db(), 'case/get_lite')
 
 def delete_all_xforms():
     # handle with care
