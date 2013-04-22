@@ -80,3 +80,9 @@ class SafeSaveDocument(Document):
         if is_bigcouch() and 'w' not in params:
             params['w'] = bigcouch_quorum_count()
         return super(SafeSaveDocument, self).save(**params)
+
+
+def safe_delete(db, doc_or_id):
+    if not isinstance(doc_or_id, basestring):
+        doc_or_id = doc_or_id._id
+    db.delete_doc(doc_or_id, **get_safe_write_kwargs())
