@@ -113,18 +113,18 @@
 </script>
 
 <div class="property-table-row" id="{{ id }}">
-    {% for table_name, columns in tables %}
+    {% for table in tables %}
     <div class="property-table-container">
 
-        {% if table_name %}
+        {% if table.name %}
         <div class="table-tab">
-            {{ table_name }}
+            {{ table.name }}
         </div>
         {% endif %}
 
         <div class="case-properties-table well
-            {% with table_count=tables|length column_count=columns|length %}
-            {% if not put_loners_in_wells and not table_name and table_count == 1 and column_count == 1 %} 
+            {% with table_count=tables|length column_count=table.columns|length %}
+            {% if not put_loners_in_wells and not table.name and table_count == 1 and column_count == 1 %} 
                 well-loner
             {% endif %}
             {% endwith %}">
@@ -132,15 +132,15 @@
             {# (requires transforming dl columns to table rows and handling colspan)} #}
             {# <table class="table table-bordered case-properties-table"> #}
 
-            {% for column in columns %}
+            {% for column in table.columns %}
             <dl>
-                {% for expr, name, value in column %}
-                {% if name %}
-                <dt title="{{ expr }}">
-                    {{ name }}
+                {% for cell in column %}
+                {% if cell.name %}
+                <dt title="{{ cell.expr }}">
+                    {{ cell.name }}
                 </dt>
                 <dd>
-                    {{ value }}
+                    {{ cell.value }}
                 </dd>
                 {% else %} {# empty row #}
                 <dt></dt><dd></dd>

@@ -91,10 +91,11 @@ def build_table_rows(data, definition, processors=None, timezone=pytz.utc):
 
         return data.get(expr, None)
 
-    def get_display_tuple(prop):
-        def format_key(key):
-            key = key.replace('_', ' ')
-            return key.replace('-', ' ')
+    def format_key(key):
+        key = key.replace('_', ' ')
+        return key.replace('-', ' ')
+
+    def get_display_data(prop):
 
         expr = prop['expr']
         name = prop.get('name', format_key(expr))
@@ -128,23 +129,29 @@ def build_table_rows(data, definition, processors=None, timezone=pytz.utc):
         if format:
             val = mark_safe(format.format(val))
 
-        return (expr, name, val)
+        return {
+            "expr": expr,
+            "name": name,
+            "value": val
+        }
 
     sections = []
 
-    for section_name, rows in definition:
-        processed_rows = [[get_display_tuple(prop) for prop in row]
-                          for row in rows]
+    for section in definition:
+        rows = [[get_display_data(prop) for prop in row] 
+                for row in section['layout']]
 
-        sections.append((_(section_name) if section_name else "",
-            processed_rows))
+        sections.append({
+            "name": section.get('name') or '',
+            "rows": rows
+        })
 
     return sections
 
 def build_table_columns(*args, **kwargs):
     sections = build_table_rows(*args, **kwargs)
-    sections = [(name, list(itertools.izip_longest(*rows))) 
-                for name, rows in sections]
+    for section in sections:
+        section['columns'] = list(itertools.izip_longest(*section['rows']))
 
     return sections
     
@@ -169,9 +176,13 @@ def render_tables(tables, options=None):
 
 
 def get_definition(keys, num_columns=FORM_PROPERTIES_COLUMNS, name=None):
+    layout = chunks([{"expr": prop} for prop in keys], num_columns)
+
     return [
-        (name, 
-         chunks([{"expr": prop} for prop in keys], num_columns))
+        {
+            "name": name,
+            "layout": layout
+        }
     ]
 
 
@@ -296,50 +307,52 @@ def render_case(case, options):
     display = options.get('display', None)
 
     display = display or [
-        (None, [
-            [
-                {
-                    "expr": "name",
-                    "name": _("Name"),
-                },
-                {
-                    "expr": "opened_on",
-                    "name": _("Opened On"),
-                    "parse_date": True,
-                },
-                {
-                    "expr": "modified_on",
-                    "name": _("Modified On"),
-                    "parse_date": True,
-                },
-                {
-                    "expr": "closed_on",
-                    "name": _("Closed On"),
-                    "parse_date": True,
-                },
+        {
+            "layout": [
+                [
+                    {
+                        "expr": "name",
+                        "name": _("Name"),
+                    },
+                    {
+                        "expr": "opened_on",
+                        "name": _("Opened On"),
+                        "parse_date": True,
+                    },
+                    {
+                        "expr": "modified_on",
+                        "name": _("Modified On"),
+                        "parse_date": True,
+                    },
+                    {
+                        "expr": "closed_on",
+                        "name": _("Closed On"),
+                        "parse_date": True,
+                    },
+                ],
+                [
+                    {
+                        "expr": "type",
+                        "name": _("Case Type"),
+                        "format": '<code>{0}</code>',
+                    },
+                    {
+                        "expr": "user_id",
+                        "name": _("User ID"),
+                        "format": '<span data-field="user_id">{0}</span>',
+                    },
+                    {
+                        "expr": "owner_id",
+                        "name": _("Owner ID"),
+                        "format": '<span data-field="owner_id">{0}</span>',
+                    },
+                    {
+                        "expr": "_id",
+                        "name": _("Case ID"),
+                    },
+                ],
             ],
-            [
-                {
-                    "expr": "type",
-                    "name": _("Case Type"),
-                    "format": '<code>{0}</code>',
-                },
-                {
-                    "expr": "user_id",
-                    "name": _("User ID"),
-                    "format": '<span data-field="user_id">{0}</span>',
-                },
-                {
-                    "expr": "owner_id",
-                    "name": _("Owner ID"),
-                    "format": '<span data-field="owner_id">{0}</span>',
-                },
-                {
-                    "expr": "_id",
-                    "name": _("Case ID"),
-                },
-            ],
-        ]),
+        }
     ]
 
     data = copy.deepcopy(case.to_json())
@@ -349,18 +362,19 @@ def render_case(case, options):
 
     # pop seen properties off of remaining case properties
     dynamic_data = dict(case.dynamic_case_properties())
-    for section_name, definition in display:
-        for row in definition:
+    for section in display:
+        for row in section['layout']:
             for item in row:
                 dynamic_data.pop(item.get("expr"), None)
 
 
     dynamic_keys = sorted(dynamic_data.keys())
     definition = [
-        (None, chunks(
-            [{"expr": prop} for prop in dynamic_keys],
-            DYNAMIC_CASE_PROPERTIES_COLUMNS)
-        )
+        {
+            "layout": chunks(
+                [{"expr": prop} for prop in dynamic_keys],
+                DYNAMIC_CASE_PROPERTIES_COLUMNS)
+        }
     ]
 
     dynamic_properties = build_table_columns(
