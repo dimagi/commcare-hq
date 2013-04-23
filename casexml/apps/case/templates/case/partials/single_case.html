@@ -114,8 +114,8 @@
             </ul>
         </div> <!-- end case-attachments tab -->
     {% endif %}
-    <div class="tab-pane" id="case-history-tab">
-        <div class="span4">
+    <div class="tab-pane" id="case-history-tab" class="row-fluid">
+        <div class="span5">
         <ul data-bind="foreach: $root.form_type_facets">
             <li>
                 <strong><span data-bind="text: form_name"></span></strong>:
@@ -170,9 +170,9 @@
                     </div>
             </div>
         </div>
-        <div class="span6">
+        <div class="span5">
             <div id="xform_data_panel"></div>
-            </div>
+        </div>
         <script type="text/javascript">
 
         function pad_zero(val) {
