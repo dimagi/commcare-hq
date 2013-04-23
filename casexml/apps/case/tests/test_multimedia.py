@@ -27,7 +27,7 @@ class CaseMultimediaTest(TestCase):
             xml_data = f.read()
 
         attach_name = "fruity.jpg"
-        attachment_path = os.path.join(os.path.dirname(__file__), "data", "multimedia", attach_name)
+        attachment_path = os.path.join(os.path.dirname(__file__), "data", "attachments", attach_name)
         with open(attachment_path, "rb") as attachment:
             uf = UploadedFile(attachment, attach_name)
             form = post_xform_to_couch(xml_data, {attach_name: uf})
@@ -54,7 +54,7 @@ class CaseMultimediaTest(TestCase):
             xml_data = f.read()
 
         attach_name = "house.jpg"
-        attachment_path = os.path.join(os.path.dirname(__file__), "data", "multimedia", attach_name)
+        attachment_path = os.path.join(os.path.dirname(__file__), "data", "attachments", attach_name)
         with open(attachment_path, "rb") as attachment:
             uf = UploadedFile(attachment, attach_name)
             form = post_xform_to_couch(xml_data, {attach_name: uf})
