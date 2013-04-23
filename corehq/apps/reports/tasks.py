@@ -83,7 +83,6 @@ def update_calculated_properties():
     all_stats = _all_domain_stats()
     for r in results:
         dom = r["_source"]["name"]
-        # print dom
         calced_props = {
             "cp_n_web_users": int(all_stats["web_users"][dom]),
             "cp_n_active_cc_users": int(CALC_FNS["mobile_users"](dom)),
@@ -97,5 +96,4 @@ def update_calculated_properties():
         if calced_props['cp_first_form'] == 'No forms':
             del calced_props['cp_first_form']
             del calced_props['cp_last_form']
-        print "%s/hqdomain/%s/_update" % (DOMAIN_INDEX, r["_id"])
-        print es.post("%s/hqdomain/%s/_update" % (DOMAIN_INDEX, r["_id"]) , data= {"doc": calced_props})
+        es.post("%s/hqdomain/%s/_update" % (DOMAIN_INDEX, r["_id"]) , data= {"doc": calced_props})
