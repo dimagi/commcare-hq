@@ -1,3 +1,4 @@
+from urlparse import urlparse
 from datetime import datetime
 from django.conf import settings
 from django.contrib import messages
@@ -33,6 +34,8 @@ from couchforms.models import XFormInstance
 from soil import heartbeat
 from soil import views as soil_views
 import os
+
+from django.utils.http import urlencode
 
 def server_error(request, template_name='500.html'):
     """
@@ -206,10 +209,21 @@ def login(req, template_name="login_and_password/login.html"):
 def domain_login(req, domain, template_name="login_and_password/login.html"):
     return _login(req, domain, template_name)
 
+def is_mobile_url(url):
+    # Minor hack
+    return ('reports/custom/mobile' in url)
+
 def logout(req, template_name="hqwebapp/loggedout.html"):
+    referer = req.META.get('HTTP_REFERER')
+    domain = get_domain_from_url(urlparse(referer).path)
+
     req.base_template = settings.BASE_TEMPLATE
     response = django_logout(req, **{"template_name": template_name})
-    return HttpResponseRedirect(reverse('login'))
+    
+    if referer and domain and is_mobile_url(referer):
+        return HttpResponseRedirect(reverse('domain_mobile_login', kwargs={'domain': domain}) + '?' + urlencode({'next': reverse('custom_project_report_dispatcher', args=[domain, 'mobile/mainnav'])}))
+    else:
+        return HttpResponseRedirect(reverse('login'))
 
 @login_and_domain_required
 def retrieve_download(req, domain, download_id, template="hqwebapp/file_download.html"):
