@@ -24,7 +24,7 @@
         {% if case.referrals %}
         <li><a href="#case-referrals" data-toggle="tab">{% trans "Referrals" %}</a></li>
         {% endif %}
-        {% if case.all_indices %}
+        {% if case.all_indices|length %}
         <li><a href="#case-related" data-toggle="tab">{% trans "Related Cases" %}</a></li>
         {% endif %}
     {% if case.attachments %}
