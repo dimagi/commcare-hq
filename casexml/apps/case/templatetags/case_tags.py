@@ -96,7 +96,6 @@ def build_table_rows(data, definition, processors=None, timezone=pytz.utc):
         return key.replace('-', ' ')
 
     def get_display_data(prop):
-
         expr = prop['expr']
         name = prop.get('name', format_key(expr))
         format = prop.get('format')
@@ -141,6 +140,13 @@ def build_table_rows(data, definition, processors=None, timezone=pytz.utc):
         rows = [[get_display_data(prop) for prop in row] 
                 for row in section['layout']]
 
+        max_row_len = max(map(len, rows))
+        for row in rows:
+            if len(row) < max_row_len:
+                row.append({
+                    "colspan": 2 * (max_row_len - len(row))
+                })
+
         sections.append({
             "name": section.get('name') or '',
             "rows": rows
@@ -160,19 +166,29 @@ def build_table_columns(*args, **kwargs):
 def render_tables(tables, options=None):
     options = options or {}
     id = options.get('id')
-    adjust_heights = options.get('adjust_heights', True)
-    put_loners_in_wells = options.get('put_loners_in_wells', True)
+    style = options.get('style', 'dl')
+    assert style in ('table', 'dl')
 
     if id is None:
         import uuid
         id = "a" + str(uuid.uuid4())
+   
+    if style == 'table':
+        return render_to_string("case/partials/property_table.html", {
+            "tables": tables,
+            "id": id
+        })
 
-    return render_to_string("case/partials/dl_property_table.html", {
-        "tables": tables,
-        "id": id,
-        "adjust_heights": adjust_heights,
-        "put_loners_in_wells": put_loners_in_wells
-    })
+    else:
+        adjust_heights = options.get('adjust_heights', True)
+        put_loners_in_wells = options.get('put_loners_in_wells', True)
+
+        return render_to_string("case/partials/dl_property_table.html", {
+            "tables": tables,
+            "id": id,
+            "adjust_heights": adjust_heights,
+            "put_loners_in_wells": put_loners_in_wells
+        })
 
 
 def get_definition(keys, num_columns=FORM_PROPERTIES_COLUMNS, name=None):
@@ -367,7 +383,6 @@ def render_case(case, options):
             for item in row:
                 dynamic_data.pop(item.get("expr"), None)
 
-
     dynamic_keys = sorted(dynamic_data.keys())
     definition = [
         {
@@ -385,7 +400,13 @@ def render_case(case, options):
 
     return render_to_string("case/partials/single_case.html", {
         "default_properties": default_properties,
+        "default_properties_options": {
+            "style": "table"
+        },
         "dynamic_properties": dynamic_properties,
+        "dynamic_properties_options": {
+            "style": "table"
+        },
         "case": case,
         "case_actions": mark_safe(simplejson.dumps(actions)),
         "timezone": timezone

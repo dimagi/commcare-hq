@@ -135,7 +135,7 @@
             {% for column in table.columns %}
             <dl>
                 {% for cell in column %}
-                {% if cell.name %}
+                {% if cell.name or cell.value %}
                 <dt title="{{ cell.expr }}">
                     {{ cell.name }}
                 </dt>

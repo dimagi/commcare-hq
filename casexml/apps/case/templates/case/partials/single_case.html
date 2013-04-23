@@ -16,7 +16,7 @@
 <div id="report-content">
 <div id="tabbed-content-container" class="row-fluid">
     <div class="row-fluid">
-        {% render_tables default_properties %}
+        {% render_tables default_properties default_properties_options %}
     </div>
     <ul class="nav nav-tabs">
         <li class="active"><a href="#case-details" data-toggle="tab">{% trans "Case Properties" %}</a></li>
@@ -35,7 +35,7 @@
     <div class="tab-content">
         <div class="tab-pane active" id="case-details">
             <div class="row-fluid">
-                {% render_tables dynamic_properties %}
+                {% render_tables dynamic_properties dynamic_properties_options %}
             </div>
         </div><!-- end case-details tab -->
     {% if case.referrals %}
