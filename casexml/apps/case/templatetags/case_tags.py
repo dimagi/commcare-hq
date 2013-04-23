@@ -36,11 +36,27 @@ def is_list(val):
     return (isinstance(val, collections.Iterable) and 
             not isinstance(val, basestring))
 
-def get_display(key, val, dt_format="%b %d, %Y %H:%M %Z", timezone=pytz.utc,
-                parse_dates=True, key_format=None, level=0,
-                collapse_lists=False):
+def to_html(key, val, dt_format="%b %d, %Y %H:%M %Z", timezone=pytz.utc,
+                key_format=None, level=0, collapse_lists=False):
+    """
+    Recursively convert an object to its HTML representation using <dl>s for
+    dictionaries and <ul>s for lists.
 
-    recurse = lambda k, v: get_display(k, v,
+    key -- optional key for the object, which determines some formatting
+            choices. used when calling recursively.
+    val -- the object
+    dt_format -- strftime format for datetimes
+    key_format -- formatting function to apply to keys
+    collapse_lists -- whether to turn "key": [1, 2] into
+
+            <dt>key</dt><dd>1</dd><dt>key</dt><dd>2</dd>
+
+        instead of
+    
+            <dt>key</dt><dd><ul><li>1</li><li>2</li></ul></dd>
+    """
+
+    recurse = lambda k, v: to_html(k, v,
             dt_format=dt_format, timezone=timezone, key_format=key_format,
             level=level + 1, collapse_lists=collapse_lists)
     
@@ -79,7 +95,13 @@ def get_display(key, val, dt_format="%b %d, %Y %H:%M %Z", timezone=pytz.utc,
     return mark_safe(ret)
 
 
-def build_table_rows(data, definition, processors=None, timezone=pytz.utc):
+def get_tables_as_rows(data, definition, processors=None, timezone=pytz.utc):
+    """
+    Return a low-level definition of a group of tables, given a data object and
+    a high-level declarative definition of the table rows and value
+    calculations.
+
+    """
     default_processors = {
         'yesno': yesno
     }
@@ -87,7 +109,8 @@ def build_table_rows(data, definition, processors=None, timezone=pytz.utc):
     processors.update(default_processors)
 
     def get_value(data, expr):
-        # todo: nested attributes, support for both getitem and getattr
+        # todo: nested attributes, jsonpath, indexing into related documents,
+        # support for both getitem and getattr
 
         return data.get(expr, None)
 
@@ -108,8 +131,7 @@ def build_table_rows(data, definition, processors=None, timezone=pytz.utc):
             try:
                 val = dateutil.parser.parse(val)
             except:
-                if not val:
-                    val = '---'
+                val = val if val else '---'
 
         if isinstance(val, datetime.datetime):
             if val.tzinfo is None:
@@ -117,11 +139,10 @@ def build_table_rows(data, definition, processors=None, timezone=pytz.utc):
 
             val = adjust_datetime_to_timezone(val, val.tzinfo, timezone.zone)
 
-
         if process:
             val = escape(processors[process](val))
         else:
-            val = mark_safe(get_display(None,
+            val = mark_safe(to_html(None,
                 val, timezone=timezone, key_format=format_key,
                 collapse_lists=True))
 
@@ -154,8 +175,9 @@ def build_table_rows(data, definition, processors=None, timezone=pytz.utc):
 
     return sections
 
-def build_table_columns(*args, **kwargs):
-    sections = build_table_rows(*args, **kwargs)
+
+def get_tables_as_columns(*args, **kwargs):
+    sections = get_tables_as_rows(*args, **kwargs)
     for section in sections:
         section['columns'] = list(itertools.izip_longest(*section['rows']))
 
@@ -192,6 +214,11 @@ def render_tables(tables, options=None):
 
 
 def get_definition(keys, num_columns=FORM_PROPERTIES_COLUMNS, name=None):
+    """
+    Get a default single table layout definition for `keys` split across
+    `num_columns` columns.
+    
+    """
     layout = chunks([{"expr": prop} for prop in keys], num_columns)
 
     return [
@@ -260,8 +287,8 @@ def render_form(form, domain, options):
     form_dict = copy.deepcopy(form.top_level_tags())
     form_dict.pop('change', None)  # this data already in Case Changes tab
     form_keys = [k for k in form_dict.keys() if form_key_filter(k)]
-    form_data = build_table_columns(
-            form_dict, definition=get_definition(form_keys), timezone=timezone)
+    definition = get_definition(form_keys)
+    form_data = get_tables_as_columns(form_dict, definition, timezone=timezone)
 
     # Case Changes tab
     case_blocks = extract_case_blocks(form)
@@ -280,22 +307,18 @@ def render_form(form, domain, options):
         else:
             url = "#"
 
+        definition = get_definition(sorted_case_update_keys(b.keys()))
         cases.append({
             "is_current_case": case_id and this_case_id == case_id,
             "name": case_inline_display(this_case),
-            "table": build_table_columns(
-                b, definition=get_definition(
-                    sorted_case_update_keys(b.keys())),
-                timezone=timezone),
+            "table": get_tables_as_columns(b, definition, timezone=timezone),
             "url": url
         })
 
     # Form Metadata tab
     meta = form_dict.pop('meta')
-    form_meta_data = build_table_columns(
-            meta, definition=get_definition(
-                sorted_form_metadata_keys(meta.keys())),
-            timezone=timezone)
+    definition = get_definition(sorted_form_metadata_keys(meta.keys()))
+    form_meta_data = get_tables_as_columns(meta, definition, timezone=timezone)
 
     return render_to_string("case/partials/single_form.html", {
         "context_case_id": case_id,
@@ -373,8 +396,7 @@ def render_case(case, options):
 
     data = copy.deepcopy(case.to_json())
     
-    default_properties = build_table_columns(
-            data, definition=display, timezone=timezone)
+    default_properties = get_tables_as_columns(data, display, timezone=timezone)
 
     # pop seen properties off of remaining case properties
     dynamic_data = dict(case.dynamic_case_properties())
@@ -384,16 +406,11 @@ def render_case(case, options):
                 dynamic_data.pop(item.get("expr"), None)
 
     dynamic_keys = sorted(dynamic_data.keys())
-    definition = [
-        {
-            "layout": chunks(
-                [{"expr": prop} for prop in dynamic_keys],
-                DYNAMIC_CASE_PROPERTIES_COLUMNS)
-        }
-    ]
+    definition = get_definition(
+            dynamic_keys, num_columns=DYNAMIC_CASE_PROPERTIES_COLUMNS)
 
-    dynamic_properties = build_table_columns(
-            dynamic_data, definition=definition, timezone=timezone)
+    dynamic_properties = get_tables_as_columns(
+            dynamic_data, definition, timezone=timezone)
 
     actions = case.to_json()['actions']
     actions.reverse()
