@@ -55,8 +55,8 @@ from django.utils.translation import ugettext as _
 from django.utils.safestring import mark_safe
 from dimagi.utils.chunked import chunked
 
-from casexml.apps.case.templatetags.case_tags import (render_form,
-    case_inline_display)
+from casexml.apps.case.templatetags.case_tags import case_inline_display
+from couchforms.templatetags.xform_tags import render_form
 
 
 DATE_FORMAT = "%Y-%m-%d"

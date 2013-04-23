@@ -2,6 +2,13 @@
 {% load case_tags %}
 {% load hq_shared_tags %}
 
+{% block title %} - Case: {{ report.name }}{% endblock %}
+
+{% block head %} {{ block.super }}
+    {% include "imports/proptable.html" %}
+    {% include "imports/fancy-code.html" %}
+{% endblock %}
+
 {% block js-inline %}{{ block.super }}
     <script>
     $(document).ready(function() {
@@ -75,6 +82,5 @@
 {% block main_column %}
 <div class="hq-generic-report">
     {% render_case case case_display_options %}
-{#    {% include "case/partials/single_case.html" %}#}
 </div>
 {% endblock %}
