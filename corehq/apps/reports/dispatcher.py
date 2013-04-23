@@ -67,7 +67,7 @@ class ReportDispatcher(View):
                getattr(Domain.get_module_by_name(domain), attr_name, ())
 
     def get_reports_dict(self, domain=None):
-        return dict((report.slug, report) 
+        return dict((report.slug, report)
                     for name, group in self.get_reports(domain)
                     for report in group)
 
@@ -140,7 +140,6 @@ class ReportDispatcher(View):
         project = getattr(request, 'project', None)
         couch_user = getattr(request, 'couch_user', None)
         
-
         nav_context = []
 
         dispatcher = cls()  # uhoh
@@ -166,6 +165,8 @@ class ReportDispatcher(View):
                             'title': report.name,
                         })
             if report_contexts:
+                if hasattr(section_name, '__call__'):
+                    section_name = section_name(project, couch_user)
                 nav_context.append((section_name, report_contexts))
         return nav_context
 
@@ -201,3 +202,11 @@ class ProjectReportDispatcher(ReportDispatcher):
 class CustomProjectReportDispatcher(ProjectReportDispatcher):
     prefix = 'custom_project_report'
     map_name = 'CUSTOM_REPORTS'
+
+class BasicReportDispatcher(ReportDispatcher):
+    prefix = 'basic_report'
+    map_name = 'BASIC_REPORTS'
+
+class AdminReportDispatcher(ReportDispatcher):
+    prefix = 'admin_report'
+    map_name = 'ADMIN_REPORTS'

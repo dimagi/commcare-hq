@@ -140,7 +140,6 @@ class SubAreaMixin():
 
 class DomainGlobalSettingsForm(forms.Form):
     default_timezone = TimeZoneChoiceField(label=ugettext_noop("Default Timezone"), initial="UTC")
-    case_sharing = ChoiceField(label=ugettext_noop("Case Sharing"), choices=tf_choices('On', 'Off'))
 
     def clean_default_timezone(self):
         data = self.cleaned_data['default_timezone']
@@ -158,7 +157,6 @@ class DomainGlobalSettingsForm(forms.Form):
                 if not dm.override_global_tz:
                     dm.timezone = global_tz
                     user.save()
-            domain.case_sharing = self.cleaned_data['case_sharing'] == 'true'
             domain.save()
             return True
         except Exception:

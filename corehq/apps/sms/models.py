@@ -233,6 +233,16 @@ CALLBACK_MISSED = "MISSED"
 
 class ExpectedCallbackEventLog(EventLog):
     status = StringProperty(choices=[CALLBACK_PENDING,CALLBACK_RECEIVED,CALLBACK_MISSED])
+    
+    @classmethod
+    def by_domain(cls, domain, start_date=None, end_date={}):
+        """
+        Note that start_date and end_date are expected in JSON format.
+        """
+        return cls.view("sms/expected_callback_event",
+                        startkey=[domain, start_date],
+                        endkey=[domain, end_date],
+                        include_docs=True).all()
 
 FORWARD_ALL = "ALL"
 FORWARD_BY_KEYWORD = "KEYWORD"

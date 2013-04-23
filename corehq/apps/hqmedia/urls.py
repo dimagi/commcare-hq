@@ -1,12 +1,16 @@
 from django.conf.urls.defaults import *
-from corehq.apps.hqmedia.views import DownloadMultimediaZip
+from corehq.apps.hqmedia.views import (DownloadMultimediaZip, BulkUploadMultimediaView, ProcessBulkUploadView,
+                                       MultimediaUploadStatus, ViewMultimediaFile)
 
 urlpatterns = patterns('corehq.apps.hqmedia.views',
-    url(r'^file/(?P<media_type>[\w\-]+)/(?P<doc_id>[\w\-]+)/(foo.mp3)?(foo.wav)?$', "download_media", name="hqmedia_download"),
+    url(r'^file/(?P<media_type>[\w\-]+)/(?P<doc_id>[\w\-]+)/(.+)?$',
+        ViewMultimediaFile.as_view(), name=ViewMultimediaFile.name),
+    url(r'^upload_status/$', MultimediaUploadStatus.as_view(), name=MultimediaUploadStatus.name)
 )
 
 application_urls = patterns('corehq.apps.hqmedia.views',
-    url(r'^upload/$', "upload", name="hqmedia_bulk_upload"),
+    url(r'^upload/$', BulkUploadMultimediaView.as_view(), name=BulkUploadMultimediaView.name),
+    url(r'^uploaded/bulk/$', ProcessBulkUploadView.as_view(), name=ProcessBulkUploadView.name),
     url(r'^uploaded/$', "uploaded", name="hqmedia_handle_uploaded"),
     url(r'^map/$', "media_map", name="hqmedia_references"),
     url(r'^search/$', 'search_for_media', name='hqmedia_search'),

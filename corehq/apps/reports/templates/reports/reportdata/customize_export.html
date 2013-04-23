@@ -120,9 +120,14 @@
                     showTable: function (table) {
                         var index = table.index();
                         var excluded = index in CustomExportView.excludedTables;
-                        if (!excluded && table.column_configuration().length === 2) {
-                            // just id field and an '' field — no info
-                            excluded = true;
+                        var columns = table.column_configuration();
+                        if (!excluded && columns.length === 2) {
+                            // just an '' field and an 'id' field field, no info
+                            var blank_field = columns[0],
+                                id_field = columns[1];
+                            if (id_field.index() === 'id' && blank_field.index() === '') {
+                                excluded = true;
+                            }
                         }
                         return !excluded || table.selected();
                     },

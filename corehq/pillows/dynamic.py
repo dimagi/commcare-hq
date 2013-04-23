@@ -1,4 +1,4 @@
-from couchdbkit import StringProperty, BooleanProperty, IntegerProperty, FloatProperty, DecimalProperty, DictProperty, StringListProperty, SchemaListProperty, SchemaDictProperty, DateProperty, DateTimeProperty
+from couchdbkit import StringProperty, BooleanProperty, IntegerProperty, FloatProperty, DecimalProperty, DictProperty, StringListProperty, SchemaListProperty, SchemaDictProperty, DateProperty, DateTimeProperty, SchemaProperty
 from casexml.apps.case.models import CommCareCase
 from corehq.pillows.core import DATE_FORMATS_ARR, DATE_FORMATS_STRING
 
@@ -30,7 +30,8 @@ simple_type_mapper = {
 complex_type_mapper = {
     SchemaListProperty: prop_subtype,
     SchemaDictProperty: prop_subtype,
-    }
+    SchemaProperty: prop_subtype,
+}
 
 conservative_types = {
     DictProperty: {"type": "object", "dynamic": False}
@@ -73,6 +74,16 @@ case_special_types = {
     "computed_": {"enabled": False, "type": "object"},
     "type":type_exact_match_string("type", dual=True),
     #to extend, use this and add special date formats here...
+}
+
+domain_special_types = {
+    "name": type_exact_match_string("name", dual=True),
+    "author": {"type": "string", "index": "not_analyzed"},
+    "title": {"type": "string", "index": "not_analyzed"},
+    "deployment.description": {"type": "string", "index": "not_analyzed"},
+    "short_description": {"type": "string", "index": "not_analyzed"},
+    "internal.area": {"type": "string", "index": "not_analyzed"},
+    "cda.type": {"type": "string", "index": "not_analyzed"},
 }
 
 def set_properties(schema_class, custom_types=default_special_types):

@@ -19,6 +19,9 @@ var Selectable = Backbone.View.extend({
         "click": "toggle"
     },
     toggle: function () {
+        if (this.disabled) {
+            return;
+        }
         if (this.selected) {
             this.deselect();
             this.trigger("deselected");
@@ -39,5 +42,15 @@ var Selectable = Backbone.View.extend({
     deselect: function () {
         this.selected = false;
         this.$el.removeClass("active");
-    }, 
+    },
+
+    disable: function () {
+        this.disabled = true;
+        this.$el.addClass("disabled");
+    },
+
+    enable: function () {
+        this.disabled = false;
+        this.$el.removeClass("disabled");
+    }
 });

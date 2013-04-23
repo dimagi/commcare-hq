@@ -7,6 +7,7 @@ from django.utils.unittest.case import TestCase
 from corehq.apps.commtrack.helpers import make_supply_point,\
     make_supply_point_product
 from corehq.apps.commtrack.models import Product
+from dimagi.utils.couch.database import get_safe_write_kwargs
 
 TEST_DOMAIN = 'commtrack-test'
 TEST_LOCATION_TYPE = 'location'
@@ -20,7 +21,7 @@ def bootstrap_domain(domain_name=TEST_DOMAIN, requisitions_enabled=False):
     # a default config and a location
     domain_obj = create_domain(domain_name)
     domain_obj.commtrack_enabled = True
-    domain_obj.save()
+    domain_obj.save(**get_safe_write_kwargs())
     bootstrap_default(domain_name, requisitions_enabled)
     return domain_obj
 
