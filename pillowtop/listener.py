@@ -60,6 +60,7 @@ def ms_from_timedelta(td):
 
 class BasicPillow(object):
     couch_filter = None  # string for filter if needed
+    extra_args = {} # filter args if needed
     document_class = None  # couchdbkit Document class
     changes_seen = 0
 
@@ -78,7 +79,7 @@ class BasicPillow(object):
         while True:
             try:
                 c.wait(self.parsing_processor, since=self.since, filter=self.couch_filter,
-                       heartbeat=WAIT_HEARTBEAT, feed='continuous', timeout=30000)
+                       heartbeat=WAIT_HEARTBEAT, feed='continuous', timeout=30000, **self.extra_args)
             except Exception, ex:
                 logging.exception("Exception in form listener: %s, sleeping and restarting" % ex)
                 gevent.sleep(RETRY_INTERVAL)
@@ -89,7 +90,7 @@ class BasicPillow(object):
         http://couchdbkit.org/docs/changes.html
         """
         with ChangesStream(self.couch_db, feed='continuous', heartbeat=True, since=self.since,
-                           filter=self.couch_filter) as st:
+                           filter=self.couch_filter, **self.extra_args) as st:
             for c in st:
                 self.processor(c)
 
