@@ -2,7 +2,7 @@ from django.utils.translation import ugettext_noop
 from corehq.apps.domain.calculations import dom_calc
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn, DTSortType
 from corehq.apps.reports.dispatcher import BasicReportDispatcher, AdminReportDispatcher
-from corehq.apps.reports.generic import GenericTabularReport
+from corehq.apps.reports.generic import GenericTabularReport, ElasticTabularReport
 from django.utils.translation import ugettext as _
 from corehq.pillows.mappings.domain_mapping import DOMAIN_INDEX
 
@@ -28,15 +28,16 @@ class DomainStatsReport(GenericTabularReport):
         headers = DataTablesHeader(
             DataTablesColumn("Project"),
             DataTablesColumn(_("# Active Mobile Workers"), sort_type=DTSortType.NUMERIC,
+                prop_name="cp_n_active_cc_users",
                 help_text=_("The number of mobile workers who have submitted a form in the last 30 days")),
-            DataTablesColumn(_("# Mobile Workers"), sort_type=DTSortType.NUMERIC),
-            DataTablesColumn(_("# Active Cases"), sort_type=DTSortType.NUMERIC,
+            DataTablesColumn(_("# Mobile Workers"), sort_type=DTSortType.NUMERIC, prop_name="cp_n_cc_users"),
+            DataTablesColumn(_("# Active Cases"), sort_type=DTSortType.NUMERIC, prop_name="cp_n_active_cases",
                 help_text=_("The number of cases modified in the last 120 days")),
-            DataTablesColumn(_("# Cases"), sort_type=DTSortType.NUMERIC),
-            DataTablesColumn(_("# Form Submissions"), sort_type=DTSortType.NUMERIC),
-            DataTablesColumn(_("First Form Submission")),
-            DataTablesColumn(_("Last Form Submission")),
-            DataTablesColumn(_("# Web Users"), sort_type=DTSortType.NUMERIC),
+            DataTablesColumn(_("# Cases"), sort_type=DTSortType.NUMERIC, prop_name="cp_n_cases"),
+            DataTablesColumn(_("# Form Submissions"), sort_type=DTSortType.NUMERIC, prop_name="cp_n_forms"),
+            DataTablesColumn(_("First Form Submission"), prop_name="cp_first_form"),
+            DataTablesColumn(_("Last Form Submission"), prop_name="cp_last_form"),
+            DataTablesColumn(_("# Web Users"), sort_type=DTSortType.NUMERIC, prop_name="cp_n_web_users"),
             # DataTablesColumn(_("Admins"))
         )
         # headers.no_sort = True
@@ -98,7 +99,7 @@ def project_stats_facets():
         facets.remove(p)
     return facets
 
-def es_domain_query(params, facets=None, terms=None, domains=None, return_q_dict=False, start_at=None, size=None):
+def es_domain_query(params, facets=None, terms=None, domains=None, return_q_dict=False, start_at=None, size=None, sort=None):
     from corehq.apps.appstore.views import es_query
     if terms is None:
         terms = ['search']
@@ -123,12 +124,13 @@ def es_domain_query(params, facets=None, terms=None, domains=None, return_q_dict
                             "query" : search_query,
                             "operator" : "and" }}}}}
 
-    q["sort"] = [{"name" : {"order": "asc"}},]
+    q["sort"] = sort if sort else [{"name" : {"order": "asc"}},]
 
-    return q if return_q_dict else es_query(params, facets, terms, q, DOMAIN_INDEX + '/hqdomain/_search', start_at, size)
+    return es_query(params, facets, terms, q, DOMAIN_INDEX + '/hqdomain/_search', start_at, size, dict_only=return_q_dict)
 
 ES_PREFIX = "es_"
-class AdminDomainStatsReport(DomainStatsReport):
+class AdminDomainStatsReport(DomainStatsReport, ElasticTabularReport):
+    default_sort = None
     slug = "domains"
     dispatcher = AdminReportDispatcher
     base_template = "hqadmin/stats_report.html"
@@ -149,25 +151,43 @@ class AdminDomainStatsReport(DomainStatsReport):
         })
         return ctxt
 
-    def get_domains(self):
-        self.es_query()
-        domains = self.es_domains
-        return domains
-
     @property
     def total_records(self):
         return int(self.es_results['hits']['total'])
+
+    @property
+    def es_results(self):
+        if not getattr(self, 'es_response', None):
+            self.es_query()
+        return self.es_response
 
     def es_query(self):
         from corehq.apps.appstore.views import parse_args_for_es, generate_sortables_from_facets
         if not self.es_queried:
             self.es_params, _ = parse_args_for_es(self.request, prefix=ES_PREFIX)
             self.es_facets = project_stats_facets()
-            self.es_results = es_domain_query(self.es_params, self.es_facets,
-                                              start_at=self.pagination.start, size=self.pagination.count)
-            self.es_domains = [res['_source']['name'] for res in self.es_results.get('hits', {}).get('hits', [])]
-            self.es_sortables = generate_sortables_from_facets(self.es_results, self.es_params, prefix=ES_PREFIX)
+            results = es_domain_query(self.es_params, self.es_facets, sort=self.get_sorting_block(),
+                start_at=self.pagination.start, size=self.pagination.count)
+            self.es_sortables = generate_sortables_from_facets(results, self.es_params, prefix=ES_PREFIX)
             self.es_queried = True
+            self.es_response = results
+        return self.es_response
 
     def is_custom_param(self, param):
         return param.startswith(ES_PREFIX)
+
+    @property
+    def rows(self):
+        domains = [res['_source'] for res in self.es_results.get('hits', {}).get('hits', [])]
+        for dom in domains:
+            yield [
+                dom.get('hr_name') or dom['name'],
+                dom["cp_n_active_cc_users"],
+                dom["cp_n_cc_users"],
+                dom["cp_n_active_cases"],
+                dom["cp_n_cases"],
+                dom["cp_n_forms"],
+                dom.get("cp_first_form", "No Forms"),
+                dom.get("cp_last_form", "No Forms"),
+                dom["cp_n_web_users"],
+            ]

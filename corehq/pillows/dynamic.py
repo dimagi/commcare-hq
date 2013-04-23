@@ -86,12 +86,12 @@ domain_special_types = {
     "cda.type": {"type": "string", "index": "not_analyzed"},
 }
 
-def set_properties(schema_class, custom_types=default_special_types):
+def set_properties(schema_class, custom_types=default_special_types, init_dict=None):
     """
     Helper function to walk a schema_class's properties recursively and create a typed out mapping
     that can index well (specifically dict types and date time properties)
     """
-    props_dict = {}
+    props_dict = init_dict or {}
     for prop_name, prop_type in schema_class.properties().items():
         if custom_types.has_key(prop_name):
             props_dict[prop_name] = custom_types[prop_name]

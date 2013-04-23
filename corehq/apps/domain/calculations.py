@@ -76,15 +76,21 @@ def active(domain, *args):
     row = get_db().view("reports_forms/all_forms", startkey=key+[then], endkey=key+[now]).all()
     return True if row else False
 
-def first_form_submission(domain, *args):
+def display_time(row, display=True):
+    if display:
+        return datetime.strptime((row["value"]["submission_time"]), DATE_FORMAT).strftime(DISPLAY_DATE_FORMAT)
+    else:
+        return row["value"]["submission_time"]
+
+def first_form_submission(domain, display=True):
     key = make_form_couch_key(domain)
     row = get_db().view("reports_forms/all_forms", reduce=False, startkey=key, endkey=key+[{}]).first()
-    return datetime.strptime((row["value"]["submission_time"]), DATE_FORMAT).strftime(DISPLAY_DATE_FORMAT) if row else "No forms"
+    return display_time(row, display) if row else "No forms"
 
-def last_form_submission(domain, *args):
+def last_form_submission(domain, display=True):
     key = make_form_couch_key(domain)
     row = get_db().view("reports_forms/all_forms", reduce=False, startkey=key, endkey=key+[{}]).all()
-    return datetime.strptime((row[-1]["value"]["submission_time"]), DATE_FORMAT).strftime(DISPLAY_DATE_FORMAT) if row else "No forms"
+    return display_time(row[-1], display) if row else "No forms"
 
 def has_app(domain, *args):
     domain = Domain.get_by_name(domain)
@@ -148,7 +154,7 @@ CALC_FNS = {
 }
 
 def dom_calc(calc_tag, dom, extra_arg=''):
-    ans = CALC_FNS[calc_tag](dom, extra_arg)
+    ans = CALC_FNS[calc_tag](dom, extra_arg) if extra_arg else CALC_FNS[calc_tag](dom)
     if ans is True:
         return _('yes')
     elif ans is False:
