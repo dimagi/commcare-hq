@@ -83,14 +83,19 @@ def update_calculated_properties():
     all_stats = _all_domain_stats()
     for r in results:
         dom = r["_source"]["name"]
+        # print dom
         calced_props = {
-            "n_web_users": int(all_stats["web_users"][dom]),
-            "n_active_cc_users": int(CALC_FNS["mobile_users"](dom)),
-            "n_cc_users": int(all_stats["commcare_users"][dom]),
-            "n_active_cases": int(CALC_FNS["cases_in_last"](dom, 120)),
-            "n_cases": int(all_stats["cases"][dom]),
-            "n_forms": int(all_stats["forms"][dom]),
-            "first_form": CALC_FNS["first_form_submission"](dom),
-            "last_form": CALC_FNS["last_form_submission"](dom),
+            "cp_n_web_users": int(all_stats["web_users"][dom]),
+            "cp_n_active_cc_users": int(CALC_FNS["mobile_users"](dom)),
+            "cp_n_cc_users": int(all_stats["commcare_users"][dom]),
+            "cp_n_active_cases": int(CALC_FNS["cases_in_last"](dom, 120)),
+            "cp_n_cases": int(all_stats["cases"][dom]),
+            "cp_n_forms": int(all_stats["forms"][dom]),
+            "cp_first_form": CALC_FNS["first_form_submission"](dom),
+            "cp_last_form": CALC_FNS["last_form_submission"](dom),
         }
-        es.post("%s/hqdomain/%s/_update" % (DOMAIN_INDEX, r["_id"]) , data= {"doc": {'calced_props': calced_props}})
+        if calced_props['cp_first_form'] == 'No forms':
+            del calced_props['cp_first_form']
+            del calced_props['cp_last_form']
+        print "%s/hqdomain/%s/_update" % (DOMAIN_INDEX, r["_id"])
+        print es.post("%s/hqdomain/%s/_update" % (DOMAIN_INDEX, r["_id"]) , data= {"doc": calced_props})
