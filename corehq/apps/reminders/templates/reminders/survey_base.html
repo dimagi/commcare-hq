@@ -1,6 +1,9 @@
 {% extends 'hqwebapp/two_column.html' %}
 
 {% load hq_shared_tags %}
+{% load i18n %}
+
+{% block title %}{% trans "Surveys" %}{% endblock %}
 
 {% block head %}
     {{ block.super }}
