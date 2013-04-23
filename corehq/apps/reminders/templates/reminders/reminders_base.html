@@ -80,6 +80,7 @@
     {% url list_reminders domain as default_url %}
     {% url scheduled_reminders domain as scheduled_reminders_url %}
     {% url manage_keywords domain as keywords_url %}
+    {% url reminders_in_error domain as reminders_in_error_url %}
     <nav>
         <ul class="nav nav-list">
             <li class="nav-header">Reminders</li>
@@ -87,6 +88,7 @@
             {% block reminder_definition_nav %}{% endblock %}
             <li{% is_url_active request scheduled_reminders_url %}><a href="{{ scheduled_reminders_url }}">Reminder Calendar</a></li>
             <li{% is_url_active request keywords_url %}><a href="{{ keywords_url }}">Keywords</a></li>
+            <li{% is_url_active request reminders_in_error_url %}><a href="{{ reminders_in_error_url }}">Reminders in Error</a></li>
             {% block keyword_nav %}{% endblock %}
         </ul>
     </nav>

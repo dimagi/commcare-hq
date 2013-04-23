@@ -4,6 +4,7 @@ from datetime import timedelta, datetime
 from django.core.exceptions import ValidationError
 from django.forms.fields import *
 from django.forms.forms import Form
+from django.forms.widgets import CheckboxSelectMultiple
 from django.forms import Field, Widget, Select, TextInput
 from django.utils.datastructures import DotExpandedDict
 from .models import REPEAT_SCHEDULE_INDEFINITELY, CaseReminderEvent,\
@@ -686,4 +687,17 @@ class EditContactForm(Form):
     def clean_phone_number(self):
         value = self.cleaned_data.get("phone_number")
         return validate_phone_number(value)
+
+class ListField(Field):
+    
+    def __init__(self, *args, **kwargs):
+        kwargs["widget"] = CheckboxSelectMultiple
+        super(ListField, self).__init__(*args, **kwargs)
+    
+    def clean(self, value):
+        return value
+
+class RemindersInErrorForm(Form):
+    selected_reminders = ListField(required=False)
+
 
