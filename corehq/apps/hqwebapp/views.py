@@ -213,10 +213,6 @@ def is_mobile_url(url):
     # Minor hack
     return ('reports/custom/mobile' in url)
 
-def is_cloudcare_url(url):
-    # Minor hack
-    return ('cloudcare/apps' in url)
-
 def logout(req, template_name="hqwebapp/loggedout.html"):
     referer = req.META.get('HTTP_REFERER')
     domain = get_domain_from_url(urlparse(referer).path) if referer else None
