@@ -91,8 +91,8 @@ def update_calculated_properties():
             "cp_n_active_cases": int(CALC_FNS["cases_in_last"](dom, 120)),
             "cp_n_cases": int(all_stats["cases"][dom]),
             "cp_n_forms": int(all_stats["forms"][dom]),
-            "cp_first_form": CALC_FNS["first_form_submission"](dom),
-            "cp_last_form": CALC_FNS["last_form_submission"](dom),
+            "cp_first_form": CALC_FNS["first_form_submission"](dom, False),
+            "cp_last_form": CALC_FNS["last_form_submission"](dom, False),
         }
         if calced_props['cp_first_form'] == 'No forms':
             del calced_props['cp_first_form']
