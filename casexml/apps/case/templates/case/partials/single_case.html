@@ -1,8 +1,6 @@
 {% load i18n %}
-{% load xform_tags %}
-{% load i18n %}
+{% load proptable_tags %}
 {% load timezone_tags %}
-{% load case_tags %}
 {% load hq_shared_tags %}
 
 <script src="{% static "hqwebapp/js/lib/jquery.cachedAjax.js" %}"></script>
@@ -16,7 +14,7 @@
 <div id="report-content">
 <div id="tabbed-content-container" class="row-fluid">
     <div class="row-fluid">
-        {% render_tables default_properties %}
+        {% render_tables default_properties default_properties_options %}
     </div>
     <ul class="nav nav-tabs">
         <li class="active"><a href="#case-details" data-toggle="tab">{% trans "Case Properties" %}</a></li>
@@ -24,7 +22,7 @@
         {% if case.referrals %}
         <li><a href="#case-referrals" data-toggle="tab">{% trans "Referrals" %}</a></li>
         {% endif %}
-        {% if case.all_indices %}
+        {% if case.all_indices|length %}
         <li><a href="#case-related" data-toggle="tab">{% trans "Related Cases" %}</a></li>
         {% endif %}
     {% if case.attachments %}
@@ -35,7 +33,7 @@
     <div class="tab-content">
         <div class="tab-pane active" id="case-details">
             <div class="row-fluid">
-                {% render_tables dynamic_properties %}
+                {% render_tables dynamic_properties dynamic_properties_options %}
             </div>
         </div><!-- end case-details tab -->
     {% if case.referrals %}
