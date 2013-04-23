@@ -9,6 +9,8 @@
     {% include "imports/fancy-code.html" %}
 {% endblock %}
 
+{% block title %} - Form: {{ form_name }}{% if form_received_on %} ({% utc_to_timezone form_received_on timezone %}){% endif %}{% endblock %}
+
 {% block page-title %}
     <ul class="breadcrumb">
         <li>

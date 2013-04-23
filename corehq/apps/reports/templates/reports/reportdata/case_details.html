@@ -2,6 +2,8 @@
 {% load case_tags %}
 {% load hq_shared_tags %}
 
+{% block title %} - Case: {{ report.name }}{% endblock %}
+
 {% block js-inline %}{{ block.super }}
     <script>
     $(document).ready(function() {
