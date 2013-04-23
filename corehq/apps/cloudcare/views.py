@@ -14,7 +14,7 @@ from django.shortcuts import render
 from corehq.apps.app_manager.models import Application, ApplicationBase
 import json
 from corehq.apps.cloudcare.api import get_app, get_cloudcare_apps, get_filtered_cases, get_filters_from_request,\
-    api_closed_to_status, CaseAPIResult
+    api_closed_to_status, CaseAPIResult, CASE_STATUS_OPEN
 from dimagi.utils.parsing import string_to_boolean
 from django.conf import settings
 from corehq.apps.cloudcare import touchforms_api 
@@ -210,19 +210,29 @@ def filter_cases(request, domain, app_id, module_id):
         case_type = DELEGATION_STUB_CASE_TYPE
     else:
         case_type = module.case_type
-    additional_filters = {
-        "properties/case_type": case_type,
-        "footprint": True
-    }
 
-    result = touchforms_api.filter_cases(domain, request.couch_user,
-                                         xpath, additional_filters,
-                                         auth=DjangoAuth(auth_cookie))
-    if result.get('status', None) == 'error':
-        return HttpResponseServerError(
-            result.get("message", _("Something went wrong filtering your cases.")))
+    if xpath:
+        # if we need to do a custom filter, send it to touchforms for processing
+        additional_filters = {
+            "properties/case_type": case_type,
+            "footprint": True
+        }
 
-    case_ids = result.get("cases", [])
+        result = touchforms_api.filter_cases(domain, request.couch_user,
+                                             xpath, additional_filters,
+                                             auth=DjangoAuth(auth_cookie))
+        if result.get('status', None) == 'error':
+            return HttpResponseServerError(
+                result.get("message", _("Something went wrong filtering your cases.")))
+
+        case_ids = result.get("cases", [])
+    else:
+        # otherwise just use our built in api with the defaults
+        case_ids = [res.id for res in get_filtered_cases(
+            domain, status=CASE_STATUS_OPEN, case_type=case_type,
+            user_id=request.couch_user._id, footprint=True, ids_only=True
+        )]
+
     cases = [CommCareCase.get(id) for id in case_ids]
     # refilter these because we might have accidentally included footprint cases
     # in the results from touchforms. this is a little hacky but the easiest
