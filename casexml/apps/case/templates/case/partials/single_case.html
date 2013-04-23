@@ -170,7 +170,7 @@
                     </div>
             </div>
         </div>
-        <div class="span5">
+        <div class="span7">
             <div id="xform_data_panel"></div>
         </div>
         <script type="text/javascript">
@@ -328,12 +328,12 @@
 
                     var start_num = self.disp_page_index() || 1;
                     var start_range = (start_num - 1) * self.page_size();
-                    var actions = {{ case_actions }};
                     var end_range = start_range + self.page_size();
                     if (end_range > {{ case.xform_ids|length }}) {
                         end_range = {{ case.xform_ids|length }};
                     }
                     var xform_ids = {{ case.xform_ids|safe }};
+                    xform_ids.reverse();
 
                     return {
                         "filter": {
@@ -416,12 +416,17 @@
                     //todo until indexing is fixed for nested case blocks
                     //self.total_rows(data['hits']['total']);
                     self.total_rows({{ case.xform_ids|length }});
-                    self.page_count(Math.ceil(self.total_rows()/self.page_size()));
+                    self.calc_page_count();
                     var mapped_xforms = $.map(data['hits']['hits'], function (item) {
                         return new XFormDataModel(item['_source']);
                     });
                     self.xforms(mapped_xforms);
                     self.selected_xform_idx(-1);
+                };
+
+
+                self.calc_page_count = function() {
+                    self.page_count(Math.ceil(self.total_rows()/self.page_size()));
                 };
 
                 self.stats_data_cb = function(data) {
@@ -519,7 +524,8 @@
 
                 self.page_start_num = ko.computed(function() {
                     var start_num = self.disp_page_index() || 1;
-                    return ((start_num - 1) * self.page_size()) + 1;
+                    var calc_start_num = ((start_num - 1) * self.page_size()) + 1;
+                    return calc_start_num;
                 });
 
                 self.page_end_num = ko.computed(function() {
@@ -535,7 +541,13 @@
 
 
                 self.page_size_changed = self.page_size.subscribe(function () {
-                    self.run_es_query(self.xform_query(), self.xform_history_cb);
+                    var disp_index = self.disp_page_index();
+                    self.calc_page_count();
+                    if (disp_index > self.page_count()) {
+                        self.disp_page_index(self.page_count());
+                    } else {
+                        self.run_es_query(self.xform_query(), self.xform_history_cb);
+                    }
                 });
 
                 self.disp_page_index_changed = self.disp_page_index.subscribe(function () {
