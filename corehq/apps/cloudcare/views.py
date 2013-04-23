@@ -215,8 +215,8 @@ def filter_cases(request, domain, app_id, module_id):
         "footprint": True
     }
 
-    result = touchforms_api.filter_cases(domain, request.couch_user, 
-                                         xpath, additional_filters, 
+    result = touchforms_api.filter_cases(domain, request.couch_user,
+                                         xpath, additional_filters,
                                          auth=DjangoAuth(auth_cookie))
     if result.get('status', None) == 'error':
         return HttpResponseServerError(
@@ -224,6 +224,10 @@ def filter_cases(request, domain, app_id, module_id):
 
     case_ids = result.get("cases", [])
     cases = [CommCareCase.get(id) for id in case_ids]
+    # refilter these because we might have accidentally included footprint cases
+    # in the results from touchforms. this is a little hacky but the easiest
+    # (quick) workaround. should be revisted when we optimize the case list.
+    cases = filter(lambda c: c.type == case_type, cases)
     cases = [c.get_json() for c in cases if c]
     parents = []
     if delegation:
