@@ -1,3 +1,16 @@
+"""
+A collection of templatetags and helper functions for declaratively defining a
+property table layout with multiple (optionally named) tables of some number of
+rows of possibly differing length, where each row consists of a number of names
+and values which are calculated based on an expression and a data source.
+
+Supports psuedo-tables using dls (heights are adjusted using JavaScript) and
+real tables.
+
+See render_case() in casexml for an example of the display definition format.
+
+"""
+
 import collections
 import datetime
 import itertools
