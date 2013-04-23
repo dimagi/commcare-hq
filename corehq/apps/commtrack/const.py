@@ -20,3 +20,23 @@ RequisitionActions = enum(
     FILL='fill',
     RECEIPTS='requisition-receipts',
 )
+
+class RequisitionStatus(object):
+    """a const for our requisition status choices"""
+    REQUESTED = "requested"
+    APPROVED = "approved"
+    FILLED = "filled"
+    RECEIVED = "received"
+    CANCELED = "canceled"
+    CHOICES = [REQUESTED, APPROVED, FILLED, RECEIVED, CANCELED]
+    CHOICES_PENDING = [REQUESTED, APPROVED, FILLED]
+    CHOICES_CLOSED = [RECEIVED, CANCELED]
+
+    @classmethod
+    def by_action_type(cls, type):
+        return {
+            RequisitionActions.REQUEST: cls.REQUESTED,
+            RequisitionActions.APPROVAL: cls.APPROVED,
+            RequisitionActions.FILL: cls.FILLED,
+            RequisitionActions.RECEIPTS: cls.RECEIVED,
+        }[type]
