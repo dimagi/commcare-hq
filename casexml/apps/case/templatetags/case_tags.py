@@ -398,6 +398,8 @@ def render_case(case, options):
     actions = case.to_json()['actions']
     actions.reverse()
 
+    tz_abbrev = timezone.localize(datetime.datetime.now()).tzname()
+
     return render_to_string("case/partials/single_case.html", {
         "default_properties": default_properties,
         "default_properties_options": {
@@ -409,7 +411,8 @@ def render_case(case, options):
         },
         "case": case,
         "case_actions": mark_safe(simplejson.dumps(actions)),
-        "timezone": timezone
+        "timezone": timezone,
+        "tz_abbrev": tz_abbrev
     })
     
     
