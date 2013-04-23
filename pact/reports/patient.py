@@ -1,14 +1,9 @@
 from django.core.urlresolvers import reverse
 from django.http import Http404
-from django.template.context import RequestContext
 import simplejson
 from corehq.apps.api.es import FullXFormES
 from corehq.apps.reports.datatables import DataTablesColumn, DataTablesHeader
-from corehq.apps.reports.generic import GenericTabularReport
-from corehq.apps.reports.standard import CustomProjectReport
-from corehq.apps.reports.standard.inspect import ElasticTabularReport
 from dimagi.utils import html
-from dimagi.utils.decorators.memoized import memoized
 from pact.enums import PACT_DOMAIN
 from pact.forms.patient_form import PactPatientForm
 from pact.forms.weekly_schedule_form import ScheduleForm
