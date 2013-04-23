@@ -213,15 +213,24 @@ def is_mobile_url(url):
     # Minor hack
     return ('reports/custom/mobile' in url)
 
+def is_cloudcare_url(url):
+    # Minor hack
+    return ('cloudcare/apps' in url)
+
 def logout(req, template_name="hqwebapp/loggedout.html"):
     referer = req.META.get('HTTP_REFERER')
-    domain = get_domain_from_url(urlparse(referer).path)
+    domain = get_domain_from_url(urlparse(referer).path) if referer else None
 
     req.base_template = settings.BASE_TEMPLATE
     response = django_logout(req, **{"template_name": template_name})
     
     if referer and domain and is_mobile_url(referer):
-        return HttpResponseRedirect(reverse('domain_mobile_login', kwargs={'domain': domain}) + '?' + urlencode({'next': reverse('custom_project_report_dispatcher', args=[domain, 'mobile/mainnav'])}))
+        mobile_mainnav_url = reverse('custom_project_report_dispatcher', args=[domain, 'mobile/mainnav'])
+        mobile_login_url = reverse('domain_mobile_login', kwargs={'domain': domain})
+        return HttpResponseRedirect('%s?%s' % (mobile_login_url, urlencode({'next': mobile_mainnav_url})))
+    elif referer and domain and is_cloudcare_url(referer):
+        domain_login_url = reverse('domain_login', kwargs={'domain': domain})
+        return HttpResponseRedirect('%s' % domain_login_url)
     else:
         return HttpResponseRedirect(reverse('login'))
 
