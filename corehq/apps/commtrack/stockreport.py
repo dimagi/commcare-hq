@@ -32,7 +32,7 @@ def process(domain, instance):
     config = CommtrackConfig.for_domain(domain)
     root = etree.fromstring(instance)
     user_id, transactions = unpack_transactions(root, config)
-    transactions = list(denormalize_transactions(transactions))
+    transactions = list(normalize_transactions(transactions))
 
     def get_transactions(all_tx, type_filter):
         """get all the transactions of the relevant type (filtered by type_filter),
@@ -273,7 +273,7 @@ def unpack_transactions(root, config):
 
     return user_id, transactions()
 
-def denormalize_transactions(transactions):
+def normalize_transactions(transactions):
     for t in transactions:
         if isinstance(t, BulkRequisitionResponse):
             # deal with the bulkness by creating individual transactions
