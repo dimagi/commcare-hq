@@ -167,7 +167,7 @@ def get_tables_as_rows(data, definition, processors=None, timezone=pytz.utc):
         rows = [[get_display_data(prop) for prop in row] 
                 for row in section['layout']]
 
-        max_row_len = max(map(len, rows))
+        max_row_len = max(map(len, rows)) if rows else 0
         for row in rows:
             if len(row) < max_row_len:
                 row.append({
