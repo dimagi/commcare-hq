@@ -251,7 +251,11 @@ def import_app(req, domain, template="app_manager/import_app.html"):
         else:
             app = None
 
-        return render(req, template, {'domain': domain, 'app': app})
+        return render(req, template, {
+            'domain': domain, 
+            'app': app,
+            'is_superuser': req.couch_user.is_superuser
+        })
 
 @require_can_edit_apps
 @require_POST

@@ -2,7 +2,7 @@
 <html lang="en">
     <head>
         <meta charset="utf-8"/>
-        <title>CommCare HQ{% block title %}{% endblock %}</title>
+        <title>{% block title %}{% endblock %} - CommCare HQ</title>
         <meta name="application-name" content="CommCare HQ">
         <meta http-equiv="content-language" content="en">
 
@@ -129,6 +129,7 @@
                 </div>
             {% endif %}
 
+            {% if not no_header %}
             <div class="hq-page-header-container">
                 <div id="unsupported-browser" class="alert alert-error alert-block alert-full" style="display: none">
                     <p><i class="icon icon-warning-sign"></i><strong>CommCare HQ does not work well with Internet Explorer.</strong></p>
@@ -152,6 +153,7 @@
                     {% endblock %}
                 </h1>
             </div>
+            {% endif %}
             {% block oldstyle_hack_start %}<div class="hq-oldstyle">{% endblock %}
             {% block content %}
             {% endblock %}

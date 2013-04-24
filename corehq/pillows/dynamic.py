@@ -1,4 +1,4 @@
-from couchdbkit import StringProperty, BooleanProperty, IntegerProperty, FloatProperty, DecimalProperty, DictProperty, StringListProperty, SchemaListProperty, SchemaDictProperty, DateProperty, DateTimeProperty
+from couchdbkit import StringProperty, BooleanProperty, IntegerProperty, FloatProperty, DecimalProperty, DictProperty, StringListProperty, SchemaListProperty, SchemaDictProperty, DateProperty, DateTimeProperty, SchemaProperty
 from casexml.apps.case.models import CommCareCase
 from corehq.pillows.core import DATE_FORMATS_ARR, DATE_FORMATS_STRING
 
@@ -30,7 +30,8 @@ simple_type_mapper = {
 complex_type_mapper = {
     SchemaListProperty: prop_subtype,
     SchemaDictProperty: prop_subtype,
-    }
+    SchemaProperty: prop_subtype,
+}
 
 conservative_types = {
     DictProperty: {"type": "object", "dynamic": False}
@@ -75,12 +76,22 @@ case_special_types = {
     #to extend, use this and add special date formats here...
 }
 
-def set_properties(schema_class, custom_types=default_special_types):
+domain_special_types = {
+    "name": type_exact_match_string("name", dual=True),
+    "author": {"type": "string", "index": "not_analyzed"},
+    "title": {"type": "string", "index": "not_analyzed"},
+    "deployment.description": {"type": "string", "index": "not_analyzed"},
+    "short_description": {"type": "string", "index": "not_analyzed"},
+    "internal.area": {"type": "string", "index": "not_analyzed"},
+    "cda.type": {"type": "string", "index": "not_analyzed"},
+}
+
+def set_properties(schema_class, custom_types=default_special_types, init_dict=None):
     """
     Helper function to walk a schema_class's properties recursively and create a typed out mapping
     that can index well (specifically dict types and date time properties)
     """
-    props_dict = {}
+    props_dict = init_dict or {}
     for prop_name, prop_type in schema_class.properties().items():
         if custom_types.has_key(prop_name):
             props_dict[prop_name] = custom_types[prop_name]
