@@ -4,10 +4,14 @@ from corehq.apps.commtrack.models import RequisitionCase
 from corehq.apps.commtrack.tests.util import CommTrackTest
 from corehq.apps.commtrack.sms import handle
 from casexml.apps.case.models import CommCareCase
+from couchforms.models import XFormInstance
+
 
 class StockReportTest(CommTrackTest):
 
     def testStockReport(self):
+        self.assertEqual(0, len(self.get_commtrack_forms()))
+
         amounts = {
             'pp': 10,
             'pq': 20,
@@ -19,8 +23,13 @@ class StockReportTest(CommTrackTest):
             report=' '.join('%s %s' % (k, v) for k, v in amounts.items())
         ))
         self.assertTrue(handled)
+        forms = list(self.get_commtrack_forms())
+        self.assertEqual(1, len(forms))
+        self.assertEqual(self.sp.location_, forms[0].location_)
+
         for code, amt in amounts.items():
             spp = CommCareCase.get(self.spps[code]._id)
+            self.assertEqual(self.sp.location_, spp.location_)
             self.assertEqual(str(amt), spp.current_stock)
 
 class StockRequisitionTest(CommTrackTest):
@@ -28,6 +37,7 @@ class StockRequisitionTest(CommTrackTest):
 
     def testRequisition(self):
         self.assertEqual(0, len(RequisitionCase.open_for_location(self.domain.name, self.loc._id)))
+        self.assertEqual(0, len(self.get_commtrack_forms()))
 
         amounts = {
             'pp': 10,
@@ -45,6 +55,11 @@ class StockRequisitionTest(CommTrackTest):
         reqs = RequisitionCase.open_for_location(self.domain.name, self.loc._id)
         self.assertEqual(3, len(reqs))
 
+        forms = list(self.get_commtrack_forms())
+        self.assertEqual(1, len(forms))
+
+        # todo: should this be the case? need to investigate further
+        # self.assertEqual(self.sp.location_, forms[0].location_)
         # check updated status
         for code, amt in amounts.items():
             spp = CommCareCase.get(self.spps[code]._id)

@@ -17,7 +17,7 @@ from corehq.apps.commtrack import const
 
 logger = logging.getLogger('commtrack.incoming')
 
-XMLNS = 'http://openrosa.org/commtrack/stock_report'
+XMLNS = const.COMMTRACK_REPORT_XMLNS
 META_XMLNS = 'http://openrosa.org/jr/xforms'
 def _(tag, ns=XMLNS):
     return '{%s}%s' % (ns, tag)
@@ -73,7 +73,9 @@ def process(domain, instance):
     logger.debug('submitting: %s' % submission)
 
     submit_time = root.find('.//%s' % _('timeStart', META_XMLNS)).text
-    spoof_submission(get_submit_url(domain), submission, headers={'HTTP_X_SUBMIT_TIME': submit_time}, hqsubmission=False)
+    spoof_submission(get_submit_url(domain), submission,
+                     headers={'HTTP_X_SUBMIT_TIME': submit_time},
+                     hqsubmission=False)
 
 
 
@@ -380,5 +382,3 @@ class StockState(object):
         case_update = etree.fromstring(legacy_etree.ElementTree.tostring(case_update))
 
         return case_update
-
-
