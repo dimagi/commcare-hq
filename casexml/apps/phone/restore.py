@@ -1,6 +1,6 @@
 from casexml.apps.phone.models import SyncLog, CaseState
 import logging
-from dimagi.utils.couch.database import get_db
+from dimagi.utils.couch.database import get_db, get_safe_write_kwargs
 from casexml.apps.phone import xml
 from datetime import datetime
 from receiver.xml import get_response_element, get_simple_response_xml,\
@@ -70,7 +70,7 @@ def generate_restore_payload(user, restore_id="", version="1.0", state_hash=""):
                                       sync_operation.actual_owned_cases],
                       dependent_cases_on_phone=[CaseState.from_case(c) for c in \
                                                 sync_operation.actual_extended_cases])
-    synclog.save()
+    synclog.save(**get_safe_write_kwargs())
     
     # start with standard response
     response = get_response_element(

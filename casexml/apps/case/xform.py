@@ -25,7 +25,7 @@ class CaseDbCache(object):
             case_doc = CommCareCase.get(case_id)
             # some forms recycle case ids as other ids (like xform ids)
             # disallow that hard.
-            if case_doc.doc_type != "CommCareCase":
+            if case_doc.doc_type not in ["CommCareCase", "CommCareCase-Deleted"]:
                 raise Exception("Bad case doc type! This usually means you are using a bad value for case_id.")
             return case_doc
         except ResourceNotFound:

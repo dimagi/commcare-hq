@@ -1,15 +1,18 @@
 from django.test import TestCase
 import os
 from casexml.apps.case.models import CommCareCase
+from casexml.apps.case.tests import delete_all_xforms, delete_all_cases
+from couchforms.models import XFormInstance
 from couchforms.util import post_xform_to_couch
 from casexml.apps.case.signals import process_cases
+
 
 class MultiCaseTest(TestCase):
     
     def setUp(self):
-        for item in CommCareCase.view("case/by_user", reduce=False, include_docs=True).all():
-            item.delete()
-        
+        delete_all_cases()
+        delete_all_xforms()
+
     def testParallel(self):
         self.assertEqual(0, len(CommCareCase.view("case/by_user", reduce=False).all()))
         file_path = os.path.join(os.path.dirname(__file__), "data", "multicase", "parallel_cases.xml")
@@ -17,8 +20,10 @@ class MultiCaseTest(TestCase):
             xml_data = f.read()
         form = post_xform_to_couch(xml_data)
         process_cases(sender="testharness", xform=form)
-        self.assertEqual(4, len(CommCareCase.view("case/by_user", reduce=False).all()))
-        
+        cases = self._get_cases()
+        self.assertEqual(4, len(cases))
+        self._check_ids(form, cases)
+
     def testMixed(self):
         self.assertEqual(0, len(CommCareCase.view("case/by_user", reduce=False).all()))
         file_path = os.path.join(os.path.dirname(__file__), "data", "multicase", "mixed_cases.xml")
@@ -26,9 +31,12 @@ class MultiCaseTest(TestCase):
             xml_data = f.read()
         form = post_xform_to_couch(xml_data)
         process_cases(sender="testharness", xform=form)
-        self.assertEqual(4, len(CommCareCase.view("case/by_user", reduce=False).all()))
-        
-        
+        cases = self._get_cases()
+        self.assertEqual(4, len(cases))
+        self._check_ids(form, cases)
+
+
+
     def testCasesInRepeats(self):
         self.assertEqual(0, len(CommCareCase.view("case/by_user", reduce=False).all()))
         file_path = os.path.join(os.path.dirname(__file__), "data", "multicase", "case_in_repeats.xml")
@@ -36,7 +44,18 @@ class MultiCaseTest(TestCase):
             xml_data = f.read()
         form = post_xform_to_couch(xml_data)
         process_cases(sender="testharness", xform=form)
-        self.assertEqual(3, len(CommCareCase.view("case/by_user", reduce=False).all()))
-        
-        
-        
+        cases = self._get_cases()
+        self.assertEqual(3, len(cases))
+        self._check_ids(form, cases)
+
+    def _get_cases(self):
+        return CommCareCase.view("case/get_lite", reduce=False, include_docs=True).all()
+
+    def _get_forms(self):
+        return XFormInstance.view("couchforms/by_xmlns", reduce=False, include_docs=True).all()
+
+    def _check_ids(self, form, cases):
+        for case in cases:
+            ids = case.get_xform_ids_from_couch()
+            self.assertEqual(1, len(ids))
+            self.assertEqual(form._id, ids[0])
