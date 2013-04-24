@@ -94,3 +94,18 @@ class MultimediaAudioUploadController(BaseMultimediaFileUploadController):
                 'extensions': '*.mp3;*.wav',
             },
         ]
+
+
+class MultimediaVideoUploadController(BaseMultimediaFileUploadController):
+    media_type = ugettext_noop("video")
+
+    existing_file_template = "hqmedia/uploader/preview_audio_single.html"
+
+    @property
+    def supported_files(self):
+        return [
+            {
+                'description': 'Audio',
+                'extensions': '*.mp3;*.wav',
+            },
+        ]

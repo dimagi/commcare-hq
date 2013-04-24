@@ -354,6 +354,10 @@ class HQMediaMapItem(DocumentSchema):
 
     @staticmethod
     def format_match_map(path, media_type=None, media_id=None, upload_path=""):
+        """
+            This method is deprecated. Use CommCareMultimedia.get_media_info instead.
+        """
+        # todo cleanup references to this method
         return {
             "path": path,
             "uid": path.replace('jr://','').replace('/', '_').replace('.', '_'),
@@ -490,6 +494,9 @@ class HQMediaMixin(Document):
                     for audio in parsed.audio_references:
                         if audio:
                             media.append(ApplicationMediaReference(audio, media_type=CommCareAudio, **media_kwargs))
+                    for video in parsed.video_references:
+                        if video:
+                            media.append(ApplicationMediaReference(video, media_type=CommCareVideo, **media_kwargs))
                 except (XFormValidationError, XFormError):
                     self.media_form_errors = True
         return media
