@@ -22,6 +22,8 @@ class CurrentStockStatusReport(GenericTabularReport, CommtrackReportMixin):
     exportable = True
     emailable = True
 
+    report_template_path = "reports/async/tabular_graph.html"
+
     @property
     def headers(self):
         return DataTablesHeader(*(DataTablesColumn(text) for text in [
@@ -35,7 +37,13 @@ class CurrentStockStatusReport(GenericTabularReport, CommtrackReportMixin):
                 ]))
 
     @property
-    def rows(self):
+    def product_data(self):
+        if getattr(self, 'prod_data', None) is None:
+            self.prod_data = list(self.get_prod_data())
+        return self.prod_data
+
+
+    def get_prod_data(self):
         startkey = [self.domain, self.active_location._id if self.active_location else None]
         product_cases = CommCareCase.view('commtrack/product_cases', startkey=startkey, endkey=startkey + [{}], include_docs=True)
 
@@ -94,5 +102,37 @@ class CurrentStockStatusReport(GenericTabularReport, CommtrackReportMixin):
             results = status_by_product.get(p._id, {})
             def val(key):
                 return results.get(key, 0) / float(len(cases))
-            yield [p.name] + ['%.1f%%' % (100. * val(key)) for key in cols]
+            yield [p.name] + [100. * val(key) for key in cols]
+
+    @property
+    def rows(self):
+        return [[pd[0]] + ['%.1f%%' %d for d in pd[1:]] for pd in self.product_data]
+
+
+    def get_data_for_graph(self):
+        ret = [
+            {"key": "stocked out", "color": "#e00707"},
+            {"key": "under stock", "color": "#ffb100"},
+            {"key": "adequate stock", "color": "#4ac925"},
+            {"key": "overstocked", "color": "#b536da"},
+            {"key": "nonreporting", "color": "#363636"},
+            {"key": "no data", "color": "#ABABAB"}
+        ]
+        statuses = ['stocked out', 'under stock', 'adequate stock', 'overstocked', 'nonreporting', 'no data']
+
+        for r in ret:
+            r["values"] = []
+
+        for pd in self.product_data:
+            for i, status in enumerate(statuses):
+                ret[i]['values'].append({"x": pd[0], "y": pd[i+1]})
+
+        return ret
+
+    @property
+    def report_context(self):
+        ctxt = super(CurrentStockStatusReport, self).report_context
+        if self.active_location: # only get data if we're loading an actual report
+            ctxt['stock_data'] = self.get_data_for_graph()
+        return ctxt
 
