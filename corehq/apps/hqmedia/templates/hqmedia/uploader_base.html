@@ -1,0 +1,34 @@
+{% extends "hqwebapp/centered.html" %}
+{% load hq_shared_tags %}
+{% load i18n %}
+
+{% block js %} {{ block.super }}
+    <script type="text/javascript" src="{% static 'hqmedia/js/swfobject.js' %}"></script>
+    <script type="text/javascript" src="{% static 'hqmedia/yui/3.9.1/yui/yui-min.js' %}"></script>
+    <script type="text/javascript" src="{% static 'hqmedia/js/hqmedia.upload_controller.js' %}"></script>
+{% endblock %}
+
+{% block js-inline %} {{ block.super }}
+    <script type="text/javascript">
+        {% for uploader in uploaders  %}
+            var {{ uploader.name }}_controller = new {{ uploader.uploader_class }} (
+                '{{ uploader.name }}',
+                '{{ uploader.media_type }}',
+                {
+                    fileFilters: {{ uploader.supported_files|JSON }},
+                    uploadURL: '{{ uploader.destination }}',
+                    processingURL: '{{ uploader.processing_url }}',
+                    swfURL: '{% static 'hqmedia/yui/assets/flashuploader.swf' %}',
+                    isMultiFileUpload: {{ uploader.is_multi_file|yesno:"true,false" }},
+                    {% if uploader.queue_template %}queueTemplate: {{ uploader.queue_template|JSON }},{% endif %}
+                    {% if uploader.status_template %}statusTemplate: {{ uploader.status_template|JSON }},{% endif %}
+                    {% if uploader.details_template %}detailsTemplate: {{ uploader.details_template|JSON }},{% endif %}
+                    {% if uploader.errors_template %}errorsTemplate: {{ uploader.errors_template|JSON }},{% endif %}
+                    {% if uploader.existing_file_template %}existingFileTemplate: {{ uploader.existing_file_template|JSON }},{% endif %}
+                    uploadParams: {{ uploader.upload_params|JSON }},
+                    licensingParams: {{ uploader.licensing_params|JSON }}
+                });
+            {{ uploader.name }}_controller.init();
+        {% endfor %}
+    </script>
+{% endblock %}

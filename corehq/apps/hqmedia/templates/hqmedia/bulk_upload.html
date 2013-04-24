@@ -1,33 +1,8 @@
-{% extends "hqwebapp/centered.html" %}
+{% extends "hqmedia/uploader_base.html" %}
 {% load hq_shared_tags %}
 {% load i18n %}
 
 {% block title %}{% trans 'Bulk Upload of Multimedia' %}{% endblock title %}
-
-{% block js %} {{ block.super }}
-    <script type="text/javascript" src="{% static 'hqmedia/yui/3.9.1/yui/yui-min.js' %}"></script>
-    <script type="text/javascript" src="{% static 'hqmedia/js/swfobject.js' %}"></script>
-    <script type="text/javascript" src="{% static 'hqmedia/js/hqmedia.upload_controller.js' %}"></script>
-{% endblock %}
-
-{% block js-inline %} {{ block.super }}
-    <script type="text/javascript">
-        var hqm_controller = new HQMediaUploadController({
-            fileFilters: {{ uploader.file_filters|JSON }},
-            uploadURL: '{{ uploader.destination }}',
-            processingURL: '{{ uploader.processing_url }}',
-            swfURL: '{% static 'hqmedia/yui/assets/flashuploader.swf' %}',
-            isMultiFileUpload: {{ uploader.multi_file|yesno:"true,false" }},
-            queueTemplate: {{ uploader.queue_template|JSON }},
-            statusTemplate: {{ uploader.status_template|JSON }},
-            detailsTemplate: {{ uploader.details_template|JSON }},
-            errorsTemplate: {{ uploader.errors_template|JSON }},
-            uploadParams: {{ uploader.upload_params|JSON }},
-            licensingParams: {{ uploader.licensing_params|JSON }}
-        });
-        hqm_controller.init();
-    </script>
-{% endblock %}
 
 {% block centered-content %}
     <ul class="breadcrumb">
@@ -45,12 +20,16 @@
     <p>{% blocktrans %}For example, <code>jr://file/commcare/images/hin/image.jpg</code> and your zip's
         <code>commcare/images/hin/image.jpg</code> file would match, but it would <strong>not</strong> match
         <code>commcare/images/image.jpg</code>.{% endblocktrans %}</p>
-    
-    <div id="hqmedia_uploader">
+
+    {% for uploader in uploaders %}
+    <div id="{{ uploader.name }}">
         <div class="alert alert-info hqm-not-supported hide">
+            {% blocktrans %}
             <i class="icon-warning-sign"></i> Your browser does not support this uploader.
             We recommend <a href="https://www.google.com/intl/en/chrome/browser/">Google Chrome</a>.
+            {% endblocktrans %}
         </div>
+        <a href="{% url hqmedia_references domain app.get_id %}" class="btn btn-inverse pull-right"><i class="icon-arrow-left"></i> {% trans 'Back to Reference Checker' %}</a>
         <div class="btn-toolbar">
             <div class="hqm-select-files-container">
                 <button class="hqm-select btn btn-primary" role="button">{% trans 'Select Files' %}</button>
@@ -109,4 +88,5 @@
             </tbody>
         </table>
     </div>
+    {% endfor %}
 {% endblock centered-content %}

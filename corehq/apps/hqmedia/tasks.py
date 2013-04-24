@@ -83,14 +83,17 @@ def process_bulk_upload_zip(processing_id, domain, app_id, username=None, share_
                                           _("Matching path found, but could not save the data to couch."))
                 continue
 
-            is_updated = multimedia.attach_data(data, original_filename=file_name, username=username,
+            is_new = not form_path in app.multimedia_map.keys()
+            is_updated = multimedia.attach_data(data,
+                                                original_filename=file_name,
+                                                username=username,
                                                 replace_attachment=replace_existing)
             if not is_updated and not getattr(multimedia, '_id'):
                 status.add_unmatched_path(form_path,
                                           _("Matching path found, but didn't save new multimedia correctly."))
                 continue
 
-            if is_updated:
+            if is_updated or is_new:
                 multimedia.add_domain(domain, owner=True)
                 if share_media:
                     multimedia.update_or_add_license(domain, type=license_name, author=author,

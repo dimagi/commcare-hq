@@ -22,6 +22,7 @@ from corehq.apps.app_manager.views import require_can_edit_apps, set_file_downlo
 from corehq.apps.app_manager.models import get_app
 from corehq.apps.hqmedia import utils
 from corehq.apps.hqmedia.cache import BulkMultimediaStatusCache
+from corehq.apps.hqmedia.controller import MultimediaBulkUploadController, MultimediaImageUploadController, MultimediaAudioUploadController
 from corehq.apps.hqmedia.models import CommCareImage, CommCareAudio, CommCareMultimedia, MULTIMEDIA_PREFIX
 from corehq.apps.hqmedia.tasks import process_bulk_upload_zip
 from dimagi.utils.decorators.memoized import memoized
@@ -110,6 +111,7 @@ def media_urls(request, domain, app_id):
     # IS THIS USED?????
     # I rewrote it so it actually produces _something_, but is it useful???
     app = get_app(domain, app_id)
+    # todo remove get_media_references
     multimedia = app.get_media_references()
     pathUrls = {}
     for section, types in multimedia['references'].items():
@@ -121,23 +123,12 @@ def media_urls(request, domain, app_id):
     return HttpResponse(json.dumps(pathUrls))
 
 
-@require_can_edit_apps
-def media_map(request, domain, app_id):
-    app = get_app(domain, app_id)
-    multimedia = app.get_media_references()
-
-    return render(request, "hqmedia/map.html", {
-        "domain": domain,
-        "app": app,
-        "multimedia": multimedia,
-    })
-
-
 def media_from_path(request, domain, app_id, file_path):
     # Not sure what the intentions were for this. I didn't see it getting used anywhere.
     # Rewrote it to use new media refs.
     # Yedi, care to comment?
     app = get_app(domain, app_id)
+    # todo remove get_media_references
     multimedia = app.get_media_references()
 
     for section, types in multimedia['references'].items():
@@ -150,80 +141,54 @@ def media_from_path(request, domain, app_id, file_path):
     raise Http404('No Media Found')
 
 
-class BaseUploaderMultimediaView(BaseMultimediaTemplateView):
-    upload_multiple_files = True
-    queue_template_name = None
-    status_template_name = None
-    details_template_name = None
-    errors_template_name = None
+class BaseMultimediaUploaderView(BaseMultimediaTemplateView):
 
     @property
     def page_context(self):
         return {
-            'uploader': {
-                'file_filters': self.supported_files,
-                'destination': self.upload_url,
-                'processing_url': self.processing_url,
-                'multi_file': self.upload_multiple_files,
-                'queue_template': render_to_string(self.queue_template_name, {}),
-                'status_template': render_to_string(self.status_template_name, {}),
-                'details_template': render_to_string(self.details_template_name, {}),
-                'errors_template': render_to_string(self.errors_template_name, {}),
-                'licensing_params': self.licensing_params,
-                'upload_params': self.upload_params,
-            },
+            'uploaders': self.upload_controllers,
         }
 
     @property
-    def supported_files(self):
+    def upload_controllers(self):
         """
-            A list of dicts of accepted file extensions by the YUI Uploader widget.
+            Return a list of Upload Controllers
         """
-        return [
-            {
-                'description': 'Zip',
-                'extensions': '*.zip',
-                },
-            ]
-
-    @property
-    def licensing_params(self):
-        return ['shared', 'license', 'author', 'attribution-notes']
-
-    @property
-    def upload_params(self):
-        return {
-            'replace_existing': False,
-        }
-
-    @property
-    def upload_url(self):
-        """
-            The URL to post the file upload data to.
-        """
-        raise NotImplementedError("You must specify an upload url.")
-
-    @property
-    def processing_url(self):
-        return reverse(MultimediaUploadStatusView.name)
+        raise NotImplementedError("You must specify a list of upload controllers")
 
 
-class MultimediaReferencesView(BaseUploaderMultimediaView):
+class MultimediaReferencesView(BaseMultimediaUploaderView):
     name = "hqmedia_references"
+    template_name = "hqmedia/references.html"
+
+    @property
+    def page_context(self):
+        context = super(MultimediaReferencesView, self).page_context
+        context.update({
+            "references": self.app.get_references(),
+            "object_map": self.app.get_object_map(),
+            "totals": self.app.get_reference_totals(),
+        })
+        return context
+
+    @property
+    def upload_controllers(self):
+        return [
+            MultimediaImageUploadController("hqimage", reverse(ProcessImageFileUploadView.name,
+                                                               args=[self.domain, self.app_id])),
+            MultimediaAudioUploadController("hqaudio", reverse(ProcessAudioFileUploadView.name,
+                                                               args=[self.domain, self.app_id])),
+        ]
 
 
-class BulkUploadMultimediaView(BaseUploaderMultimediaView):
+class BulkUploadMultimediaView(BaseMultimediaUploaderView):
     name = "hqmedia_bulk_upload"
     template_name = "hqmedia/bulk_upload.html"
 
-    queue_template_name = "hqmedia/uploader/queue_multi.html"
-    status_template_name = "hqmedia/uploader/status_multi.html"
-    details_template_name = "hqmedia/uploader/details_multi.html"
-    errors_template_name = "hqmedia/uploader/errors_multi.html"
-
     @property
-    def upload_url(self):
-        return reverse(ProcessBulkUploadView.name, args=[self.domain, self.app_id])
+    def upload_controllers(self):
+        return [MultimediaBulkUploadController("hqmedia_bulk", reverse(ProcessBulkUploadView.name,
+                                                                       args=[self.domain, self.app_id]))]
 
 
 class BadMediaFileException(Exception):
@@ -233,8 +198,8 @@ class BadMediaFileException(Exception):
 class BaseProcessUploadedView(BaseMultimediaView):
 
     @property
-    def replace_existing(self):
-        return self.request.POST.get('replace_existing') == 'true'
+    def username(self):
+        return self.request.couch_user.username if self.request.couch_user else None
 
     @property
     def share_media(self):
@@ -262,8 +227,7 @@ class BaseProcessUploadedView(BaseMultimediaView):
     def mime_type(self):
         try:
             data = self.uploaded_file.file.read()
-            mime = magic.Magic(mime=True)
-            return mime.from_buffer(data)
+            return CommCareMultimedia.get_mime_type(data, filename=self.uploaded_file.name)
         except Exception as e:
             return BadMediaFileException("There was an error fetching the MIME type of your file. Error: %s" % e)
 
@@ -284,19 +248,18 @@ class BaseProcessUploadedView(BaseMultimediaView):
         return HttpResponse(json.dumps(response))
 
     def validate_file(self):
-        if not self.mime_type in self.valid_mime_types():
-            raise BadMediaFileException("You uploaded a file with an invalid MIME type.")
+        raise NotImplementedError("You must validate your uploaded file!")
 
     def process_upload(self):
         raise NotImplementedError("You definitely need to implement this guy.")
 
-    @classmethod
-    def valid_mime_types(cls):
-        raise NotImplementedError("You must provide valid MIME Types so the validator can function")
-
 
 class ProcessBulkUploadView(BaseProcessUploadedView):
     name = "hqmedia_uploader_bulk"
+
+    @property
+    def replace_existing(self):
+        return self.request.POST.get('replace_existing') == 'true'
 
     @property
     @memoized
@@ -308,7 +271,8 @@ class ProcessBulkUploadView(BaseProcessUploadedView):
             raise BadMediaFileException("There was an issue processing the zip file you provided. Error: %s" % e)
 
     def validate_file(self):
-        super(ProcessBulkUploadView, self).validate_file()
+        if not self.mime_type in self.valid_mime_types():
+            raise BadMediaFileException("Your zip file doesn't have a valid mimetype.")
         if not self.uploaded_zip:
             raise BadMediaFileException("There is no ZIP file.")
         if self.uploaded_zip.testzip():
@@ -324,10 +288,12 @@ class ProcessBulkUploadView(BaseProcessUploadedView):
         status.save()
 
         process_bulk_upload_zip.delay(processing_id, self.domain, self.app_id,
-                                      username=self.request.couch_user.username if self.request.couch_user else None,
+                                      username=self.username,
                                       share_media=self.share_media,
-                                      license_name=self.license_used, author=self.author,
-                                      attribution_notes=self.attribution_notes, replace_existing=self.replace_existing)
+                                      license_name=self.license_used,
+                                      author=self.author,
+                                      attribution_notes=self.attribution_notes,
+                                      replace_existing=self.replace_existing)
         return status.get_response()
 
     @classmethod
@@ -340,62 +306,67 @@ class ProcessBulkUploadView(BaseProcessUploadedView):
         ]
 
 
+class BaseProcessFileUploadView(BaseProcessUploadedView):
+    media_class = None
+
+    @property
+    def form_path(self):
+        return self.request.POST.get('path', '')
+
+    def validate_file(self):
+        if not self.mime_type:
+            raise BadMediaFileException("Did not process a mime type!")
+        base_type = self.mime_type.split('/')[0]
+        if base_type not in self.valid_base_types():
+            raise BadMediaFileException("Not a valid file.")
+
+    def process_upload(self):
+        self.uploaded_file.file.seek(0)
+        data = self.uploaded_file.file.read()
+        multimedia = self.media_class.get_by_data(data)
+        multimedia.attach_data(data,
+                               original_filename=self.uploaded_file.name,
+                               username=self.username,
+                               replace_attachment=True)
+        multimedia.add_domain(self.domain, owner=True)
+        if self.share_media:
+            multimedia.update_or_add_license(self.domain,
+                                             type=self.license_used,
+                                             author=self.author,
+                                             attribution_notes=self.attribution_notes)
+        self.app.create_mapping(multimedia, self.form_path)
+        return {
+            'ref': multimedia.get_media_info(self.form_path),
+        }
+
+    @classmethod
+    def valid_base_types(cls):
+        raise NotImplementedError("You need to specify a list of valid base mime types!")
+
+
+class ProcessImageFileUploadView(BaseProcessFileUploadView):
+    media_class = CommCareImage
+    name = "hqmedia_uploader_image"
+
+    @classmethod
+    def valid_base_types(cls):
+        return ['image']
+
+
+class ProcessAudioFileUploadView(BaseProcessFileUploadView):
+    media_class = CommCareAudio
+    name = "hqmedia_uploader_audio"
+
+    @classmethod
+    def valid_base_types(cls):
+        return ['audio']
+
+
 class CheckOnProcessingFile(BaseMultimediaView):
     name = "hqmedia_check_processing"
 
     def get(self, request, *args, **kwargs):
         return HttpResponse("workin on it")
-
-
-@require_POST
-def uploaded(request, domain, app_id):
-    # todo move this over to something similar to what bulk upload does
-    app = get_app(domain, app_id)
-    response = {}
-    errors = []
-
-    if request.POST.get('media_type', ''):
-        specific_params = dict(request.POST)
-    else:
-        specific_params = {}
-
-    replace_existing = request.POST.get('replace_existing', True)
-    try:
-        uploaded_file = request.FILES.get('Filedata')
-        data = uploaded_file.file.read()
-        mime = magic.Magic(mime=True)
-        content_type = mime.from_buffer(data)
-        uploaded_file.file.seek(0)
-        matcher = utils.HQMediaMatcher(app, domain, request.user.username, specific_params)
-
-        license = request.POST.get('license', "")
-        author = request.POST.get('author', "")
-        att_notes = request.POST.get('attribution-notes', "")
-
-        if not content_type in utils.ZIP_MIMETYPES:
-            # zip files are no longer handled here todo clean this up too
-            if content_type in utils.IMAGE_MIMETYPES:
-                file_type = "image"
-            elif content_type in utils.AUDIO_MIMETYPES:
-                file_type = "audio"
-            else:
-                raise Exception("Unsupported content type.")
-            tags = [t.strip() for t in request.POST.get('tags', '').split(' ')]
-            match_found, match_map, errors = matcher.match_file(uploaded_file,
-                                                                replace_existing_media=replace_existing,
-                                                                shared=request.POST.get('shared', False),
-                                                                tags=tags,
-                                                                license=license,
-                                                                author=author,
-                                                                attribution_notes=att_notes)
-            response = {"match_found": match_found,
-                        file_type: match_map,
-                        "file": True}
-    except Exception as e:
-        errors.append(e.message)
-
-    response['errors'] = errors
-    return HttpResponse(json.dumps(response))
 
 
 class DownloadMultimediaZip(View, ApplicationViewMixin):
