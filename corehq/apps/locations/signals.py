@@ -13,7 +13,7 @@ def attach_location_to_xform(sender, xform, cases, **kwargs):
     if cases:
         # NOTE: this only checks the first case by design, though we may want to switch
         # it to check all cases. not sure what the behavior should be if there were
-        # cases with conflicting locations inside the form
+        # cases with conflicting locations inside the form. fail hard?
         case = cases[0]
         if case.location_ is not None:
             # should probably store this in computed_
