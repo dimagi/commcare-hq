@@ -362,14 +362,14 @@ class ApplicationMediaReference(object):
     def __init__(self, path,
                  module_id=None, module_name=None,
                  form_id=None, form_name=None, form_order=None,
-                 media_type=None, is_menu_media=False):
+                 media_class=None, is_menu_media=False):
 
         if not isinstance(path, basestring):
             raise ValueError("path should be a string")
         self.path = path.strip()
 
-        if not issubclass(media_type, CommCareMultimedia):
-            raise ValueError("media_type should be a type of CommCareMultimedia")
+        if not issubclass(media_class, CommCareMultimedia):
+            raise ValueError("media_class should be a type of CommCareMultimedia")
 
         self.module_id = module_id
         self.module_name = module_name
@@ -378,7 +378,7 @@ class ApplicationMediaReference(object):
         self.form_name = form_name
         self.form_order = form_order
 
-        self.media_type = media_type
+        self.media_class = media_class
         self.is_menu_media = is_menu_media
 
     def __str__(self):
@@ -387,8 +387,8 @@ class ApplicationMediaReference(object):
             detailed_location = " | %s" % self.get_module_name()
         if self.form_name:
             detailed_location = "%s > %s" % (detailed_location, self.get_form_name())
-        return "%(media_type)s at %(path)s%(detailed_location)s" % {
-            'media_type': self.media_type.__name__,
+        return "%(media_class)s at %(path)s%(detailed_location)s" % {
+            'media_class': self.media_class.__name__,
             'path': self.path,
             'detailed_location': detailed_location,
         }
@@ -405,9 +405,10 @@ class ApplicationMediaReference(object):
                 'order': self.form_order,
             },
             'is_menu_media': self.is_menu_media,
-            'media_class': self.media_type.__name__,
+            'media_class': self.media_class.__name__,
             'path': self.path,
-            "icon_class": self.media_type.get_icon_class(),
+            "icon_class": self.media_class.get_icon_class(),
+            "media_type": self.media_class.get_nice_name(),
         }
 
     def _get_name(self, raw_name, lang=None):
@@ -448,11 +449,11 @@ class HQMediaMixin(Document):
         def _add_menu_media(item, **kwargs):
             if item.media_image:
                 media.append(ApplicationMediaReference(item.media_image,
-                                                       media_type=CommCareImage,
+                                                       media_class=CommCareImage,
                                                        is_menu_media=True, **kwargs))
             if item.media_audio:
                 media.append(ApplicationMediaReference(item.media_audio,
-                                                       media_type=CommCareAudio,
+                                                       media_class=CommCareAudio,
                                                        is_menu_media=True, **kwargs))
 
         for m, module in enumerate(self.get_modules()):
@@ -473,10 +474,10 @@ class HQMediaMixin(Document):
                     f.validate_form()
                     for image in parsed.image_references:
                         if image:
-                            media.append(ApplicationMediaReference(image, media_type=CommCareImage, **media_kwargs))
+                            media.append(ApplicationMediaReference(image, media_class=CommCareImage, **media_kwargs))
                     for audio in parsed.audio_references:
                         if audio:
-                            media.append(ApplicationMediaReference(audio, media_type=CommCareAudio, **media_kwargs))
+                            media.append(ApplicationMediaReference(audio, media_class=CommCareAudio, **media_kwargs))
                 except (XFormValidationError, XFormError):
                     self.media_form_errors = True
         return media
@@ -487,8 +488,8 @@ class HQMediaMixin(Document):
         return set([m.path for m in self.all_media])
 
     @memoized
-    def get_all_paths_of_type(self, media_type_name):
-        return set([m.path for m in self.all_media if m.media_type.__name__ == media_type_name])
+    def get_all_paths_of_type(self, media_class_name):
+        return set([m.path for m in self.all_media if m.media_class.__name__ == media_class_name])
 
     def remove_unused_mappings(self):
         """

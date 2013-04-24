@@ -154,7 +154,7 @@ function BaseMediaReference (ref) {
     var self = this;
 
     self.media_class = ref.media_class;
-    self.media_type = ref.media_class.replace("CommCare", "");
+    self.media_type = ref.media_type;
     self.module = ref.module;
     self.form = ref.form;
     self.is_menu_media = ref.is_menu_media;
