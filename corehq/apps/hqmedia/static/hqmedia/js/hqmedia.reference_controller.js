@@ -199,17 +199,19 @@ function BaseMediaReference (ref) {
     };
 
     self.search = function () {
-        if (self.query()) {
-            self.searched(true);
-            self.searching(self.searching() + 1);
-            $.getJSON(searchUrl, {q: self.query(), t: self.type()}, function (res) {
-                self.searching(self.searching() - 1);
-                self.searchOptions([]);
-                for (var i = 0; i < res.length; i++) {
-                    self.searchOptions.push(new MediaOption(self, res[i]))
-                }
-            });
-        }
+        throw new Error("This functionality is currently broken");
+        // leftovers from Tim. todo: fix
+//        if (self.query()) {
+//            self.searched(true);
+//            self.searching(self.searching() + 1);
+//            $.getJSON(searchUrl, {q: self.query(), t: self.type()}, function (res) {
+//                self.searching(self.searching() - 1);
+//                self.searchOptions([]);
+//                for (var i = 0; i < res.length; i++) {
+//                    self.searchOptions.push(new MediaOption(self, res[i]))
+//                }
+//            });
+//        }
     };
 
     self.triggerUpload = function () {
