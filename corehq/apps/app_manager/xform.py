@@ -648,10 +648,10 @@ class XForm(WrappedNode):
             if extra_updates:
                 update_mapping.update(extra_updates)
 
-            for key in update_mapping.keys():
+            for key in sorted(update_mapping.keys()):
                 update_block.append(make_case_elem(key))
 
-            for key, q_path in update_mapping.items():
+            for key, q_path in sorted(update_mapping.items()):
                 self.add_bind(
                     nodeset="%scase/update/%s" % (path, key),
                     calculate=self.resolve_path(q_path),
