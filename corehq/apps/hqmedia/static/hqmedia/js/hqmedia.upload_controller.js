@@ -72,9 +72,10 @@ function BaseHQMediaUploadController (uploader_name, marker, options) {
         /*
             This renders the template for the queued item display.
          */
+        var MEGABYTE = 1048576;
         return _.template(self.queueTemplate, {
             unique_id: self.marker + file.get('id'),
-            file_size: (file.get('size')/1048576).toFixed(3),
+            file_size: (file.get('size')/MEGABYTE).toFixed(3),
             file_name: file.get('name')
         });
     };
@@ -237,7 +238,9 @@ function BaseHQMediaUploadController (uploader_name, marker, options) {
         self.processingIdToFile = {};
         self.toggleUploadButton();
         self.resetUploadForm();
-        $(self.queueSelector).empty();
+        if (!self.isMultiFileUpload) {
+            $(self.queueSelector).empty();
+        }
     };
 
     self.clearUploaderData = function () {
@@ -253,7 +256,10 @@ function BaseHQMediaUploadController (uploader_name, marker, options) {
         /*
             After files have been selected by the select files function, do this.
          */
-
+        if (!self.isMultiFileUpload) {
+            self.resetUploader();
+            self.uploader.set('fileList', event.fileList);
+        }
         for (var f = 0; f < event.fileList.length; f++) {
             var queuedFile = event.fileList[f];
             if (self.filesInQueueUI.indexOf(queuedFile) < 0) {
