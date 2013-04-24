@@ -13,6 +13,7 @@ function(doc, req)
         case "XFormArchived":
         case "XFormDeprecated":
         case "XFormDuplicate":
+        case "XFormInstance-Deleted":
         case "HQSubmission":
             return true;
         default:
