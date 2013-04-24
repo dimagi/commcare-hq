@@ -1,6 +1,8 @@
+from collections import defaultdict
 from casexml.apps.case.xml import V2_NAMESPACE
 from corehq.apps.app_manager.const import APP_V1
 from lxml import etree as ET
+from corehq.apps.app_manager.util import split_path
 import formtranslate.api
 
 
@@ -634,7 +636,8 @@ class XForm(WrappedNode):
                 nodeset=case_name,
                 required="true()",
             )
-        def add_update_block(case_block, updates, path='', extra_updates=None):
+
+        def add_update_block(case_block, updates, path=''):
             update_block = make_case_elem('update')
             case_block.append(update_block)
             update_mapping = {}
@@ -644,9 +647,6 @@ class XForm(WrappedNode):
                     if key == 'name':
                         key = 'case_name'
                     update_mapping[key] = value
-
-            if extra_updates:
-                update_mapping.update(extra_updates)
 
             for key in sorted(update_mapping.keys()):
                 update_block.append(make_case_elem(key))
@@ -711,7 +711,27 @@ class XForm(WrappedNode):
                 )
 
             if 'update_case' in actions or extra_updates:
-                add_update_block(case_block, getattr(actions.get('update_case'), 'update', {}), extra_updates=extra_updates)
+                def group_updates_by_case(input):
+                    """
+                    updates grouped by case. Example:
+                    input: {'name': ..., 'parent/name'}
+                    output: {'': {'name': ...}, 'parent': {'name': ...}}
+                    """
+                    updates = defaultdict(dict)
+                    for key, value in input.items():
+                        path, name = split_path(key)
+                        updates[path][name] = value
+                    return updates
+                updates = group_updates_by_case(
+                    getattr(actions.get('update_case'), 'update', {})
+                )
+                if '' in updates:
+                    # 90% use-case
+                    basic_updates = updates.pop('')
+                    basic_updates.update(extra_updates)
+                    add_update_block(case_block, basic_updates)
+                if updates:
+                    pass
 
             if 'close_case' in actions:
                 add_close_block(case_block, actions['close_case'])
