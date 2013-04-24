@@ -250,6 +250,7 @@ function BaseHQMediaUploadController (uploader_name, marker, options) {
     self.removeFileFromUploader = function (file) {
         var fileList = self.uploader.get('fileList');
         self.uploader.set('fileList', _.without(fileList, file));
+        self.filesInQueueUI = _.without(self.filesInQueueUI, file);
     };
 
     self.fileSelect = function (event) {
@@ -346,6 +347,7 @@ function HQMediaBulkUploadController (uploader_name, marker, options) {
         $queuedItem.remove();
         $queuedItem.insertAfter($(self.processingFilesListSelector).find('.hqm-list-notice'));
         self.beginProcessing(event);
+        self.toggleUploadButton();
     };
 
     // processing flow

@@ -228,8 +228,10 @@ class CommCareMultimedia(Document):
         }.get(cls.get_base_mime_type(data, filename=filename))
 
     @classmethod
-    def get_form_path(cls, path):
-        path = path.strip().lower()
+    def get_form_path(cls, path, lowercase=False):
+        path = path.strip()
+        if lowercase:
+            path = path.lower()
         if path.startswith(MULTIMEDIA_PREFIX):
             return path
         if path.startswith('/'):

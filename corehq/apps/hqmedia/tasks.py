@@ -69,13 +69,17 @@ def process_bulk_upload_zip(processing_id, domain, app_id, username=None, share_
                 status.add_skipped_path(path, CommCareMultimedia.get_mime_type(data))
                 continue
 
-            app_paths = app.get_all_paths_of_type(media_class.__name__)
-            form_path = media_class.get_form_path(path)
+            app_paths = list(app.get_all_paths_of_type(media_class.__name__))
+            app_paths_lower = [p.lower() for p in app_paths]
+            form_path = media_class.get_form_path(path, lowercase=True)
 
-            if not form_path in app_paths:
+            if not form_path in app_paths_lower:
                 status.add_unmatched_path(path,
                                           _("Did not match any %s paths in application." % media_class.get_nice_name()))
                 continue
+
+            index_of_path = app_paths_lower.index(form_path)
+            form_path = app_paths[index_of_path]  # this is the correct capitalization as specified in the form
 
             multimedia = media_class.get_by_data(data)
             if not multimedia:
@@ -88,6 +92,7 @@ def process_bulk_upload_zip(processing_id, domain, app_id, username=None, share_
                                                 original_filename=file_name,
                                                 username=username,
                                                 replace_attachment=replace_existing)
+
             if not is_updated and not getattr(multimedia, '_id'):
                 status.add_unmatched_path(form_path,
                                           _("Matching path found, but didn't save new multimedia correctly."))
