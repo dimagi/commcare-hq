@@ -23,7 +23,7 @@ from corehq.apps.app_manager.models import get_app
 from corehq.apps.hqmedia import utils
 from corehq.apps.hqmedia.cache import BulkMultimediaStatusCache
 from corehq.apps.hqmedia.controller import MultimediaBulkUploadController, MultimediaImageUploadController, MultimediaAudioUploadController
-from corehq.apps.hqmedia.models import CommCareImage, CommCareAudio, CommCareMultimedia, MULTIMEDIA_PREFIX
+from corehq.apps.hqmedia.models import CommCareImage, CommCareAudio, CommCareMultimedia, MULTIMEDIA_PREFIX, CommCareVideo
 from corehq.apps.hqmedia.tasks import process_bulk_upload_zip
 from dimagi.utils.decorators.memoized import memoized
 from soil.util import expose_download
@@ -360,6 +360,15 @@ class ProcessAudioFileUploadView(BaseProcessFileUploadView):
     @classmethod
     def valid_base_types(cls):
         return ['audio']
+
+
+class ProcessVideoFileUploadView(BaseProcessFileUploadView):
+    media_class = CommCareVideo
+    name = "hqmedia_uploader_video"
+
+    @classmethod
+    def valid_base_types(cls):
+        return ['video']
 
 
 class CheckOnProcessingFile(BaseMultimediaView):

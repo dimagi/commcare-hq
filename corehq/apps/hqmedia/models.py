@@ -217,7 +217,8 @@ class CommCareMultimedia(Document):
     def get_doc_class(cls, doc_type):
         return {
             'CommCareImage': CommCareImage,
-            'CommCareAudio': CommCareAudio
+            'CommCareAudio': CommCareAudio,
+            'CommCareVideo': CommCareVideo,
         }[doc_type]
 
     @classmethod
@@ -225,6 +226,7 @@ class CommCareMultimedia(Document):
         return {
             'image': CommCareImage,
             'audio': CommCareAudio,
+            'video': CommCareVideo,
         }.get(cls.get_base_mime_type(data, filename=filename))
 
     @classmethod
@@ -331,6 +333,17 @@ class CommCareAudio(CommCareMultimedia):
     @classmethod
     def get_icon_class(cls):
         return "icon-volume-up"
+
+
+class CommCareVideo(CommCareMultimedia):
+
+    @classmethod
+    def get_nice_name(cls):
+        return _("Video")
+
+    @classmethod
+    def get_icon_class(cls):
+        return "icon-facetime-video"
 
 
 class HQMediaMapItem(DocumentSchema):
