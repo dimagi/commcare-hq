@@ -1,4 +1,6 @@
+import logging
 from django.dispatch.dispatcher import Signal
+from dimagi.utils.logging import notify_exception
 from receiver.signals import successful_form_received
 from casexml.apps.phone.models import SyncLog
 from dimagi.utils.decorators.log_exception import log_exception
@@ -43,14 +45,6 @@ def process_cases(sender, xform, config=None, **kwargs):
             return case
         cases = [attach_extras(case) for case in cases]
 
-    # HACK -- figure out how to do this more properly
-    # todo: create a pillow for this
-    if cases:
-        case = cases[0]
-        if case.location_ is not None:
-            # should probably store this in computed_
-            xform.location_ = list(case.location_)
-
     # handle updating the sync records for apps that use sync mode
     if hasattr(xform, "last_sync_token") and xform.last_sync_token:
         relevant_log = SyncLog.get(xform.last_sync_token)
@@ -63,6 +57,13 @@ def process_cases(sender, xform, config=None, **kwargs):
         if config.reconcile:
             relevant_log.reconcile_cases()
             relevant_log.save()
+
+    try:
+        cases_received.send(sender=None, xform=xform, cases=cases)
+    except Exception, e:
+        # don't let the exceptions in signals prevent standard case processing
+        notify_exception(None,
+                         'something went wrong sending the cases_received signal for form %s: %s' % (xform._id, e))
 
     # set flags for indicator pillows and save
     xform.initial_processing_complete = True
@@ -77,4 +78,11 @@ def process_cases(sender, xform, config=None, **kwargs):
 
 successful_form_received.connect(process_cases)
 
+# any time a case is saved
 case_post_save = Signal(providing_args=["case"])
+
+# only when one or more cases are updated as the result of an xform submission
+# the contract of this signal is that you should modify the form and cases in
+# place but NOT save them. this is so that we can avoid multiple redundant writes
+# to the database in a row. we may want to revisit this if it creates problems.
+cases_received = Signal(providing_args=["xform", "cases"])
