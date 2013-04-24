@@ -5,6 +5,7 @@ from couchforms.util import post_xform_to_couch
 from casexml.apps.case.signals import process_cases
 from django.core.files.uploadedfile import UploadedFile
 from couchforms.models import XFormInstance
+from casexml.apps.case.tests.util import delete_all_cases, delete_all_xforms
 import hashlib
 
 class CaseAttachmentTest(TestCase):
@@ -14,11 +15,10 @@ class CaseAttachmentTest(TestCase):
     
     
     def setUp(self):
-        for item in CommCareCase.view("case/by_user", include_docs=True, reduce=False).all():
-            item.delete()
-        for item in XFormInstance.view("couchforms/by_xmlns", include_docs=True, reduce=False).all():
-            item.delete()
-    
+        delete_all_cases()
+        delete_all_xforms()
+
+
     def testAttachInCreate(self):
         self.assertEqual(0, len(CommCareCase.view("case/by_user", reduce=False).all()))
         
