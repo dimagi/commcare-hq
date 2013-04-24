@@ -10,6 +10,7 @@ from django.utils.translation import ugettext_noop as _
 REPORTS = (
     (_("Commtrack"), (
         commtrack_reports.CurrentStockStatusReport,
+        commtrack_reports.AggregateStockStatusReport,
         psi_prototype.VisitReport,
         psi_prototype.SalesAndConsumptionReport,
         psi_prototype.CumulativeSalesAndConsumptionReport,
