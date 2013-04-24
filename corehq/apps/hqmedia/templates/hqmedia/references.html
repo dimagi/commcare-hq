@@ -57,6 +57,7 @@
         {% endif %}
     </div>
 </div>
+    {% if totals|length %}
     <p style="text-align: center;"><a href="#" data-bind="click: toggleMissingRefs, text: toggleRefsText, attr: { class: toggleRefsClass }"></a></p>
 
     <article class="accordion accordion-multimedia" id="mm-reference-list">
@@ -149,4 +150,5 @@
     {% endfor %}
 
     <div id="jquery_jplayer"></div>
+    {% endif %}
 {% endblock centered-content %}
