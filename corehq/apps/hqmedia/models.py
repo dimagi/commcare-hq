@@ -270,7 +270,7 @@ class CommCareMultimedia(Document):
 
     @classmethod
     def get_icon_class(cls):
-        raise NotImplementedError("Please specify an icon class.")
+        return "icon-desktop"
 
 
 class CommCareImage(CommCareMultimedia):
