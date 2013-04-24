@@ -102,6 +102,12 @@ def bootstrap_default(domain, requisitions_enabled=False):
                     name='request',
                 ),
                 CommtrackActionConfig(
+                    action_type=RequisitionActions.APPROVAL,
+                    keyword='approve',
+                    caption='Approved',
+                    name='approved',
+                ),
+                CommtrackActionConfig(
                     action_type=RequisitionActions.FILL,
                     keyword='fill',
                     caption='Filled',

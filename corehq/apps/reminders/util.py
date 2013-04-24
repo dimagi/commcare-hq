@@ -43,4 +43,32 @@ def get_form_name(form_unique_id):
         form_name = form.name.items()[0][1]
     return app.name + "/" + module_name + "/" + form_name
 
+def get_recipient_name(recipient, include_desc=True):
+    # Circular imports
+    from corehq.apps.users.models import CouchUser
+    from corehq.apps.groups.models import Group
+    from casexml.apps.case.models import CommCareCase
+    from .models import SurveySample
+    
+    if isinstance(recipient, CouchUser):
+        name = recipient.raw_username
+        desc = "User"
+    elif isinstance(recipient, CommCareCase):
+        name = recipient.name
+        desc = "Case"
+    elif isinstance(recipient, Group):
+        name = recipient.name
+        desc = "Group"
+    elif isinstance(recipient, SurveySample):
+        name = recipient.name
+        desc = "Survey Sample"
+    else:
+        name = "(unknown)"
+        desc = ""
+    
+    if include_desc:
+        return "%s '%s'" % (desc, name)
+    else:
+        return name
+
 

@@ -40,10 +40,12 @@ REPORTS = (
         phonelog.FormErrorReport,
         phonelog.DeviceLogDetailsReport
     )),
-    (_("CommConnect"), (
+    (lambda project, user: (
+        _("Logs") if project.commtrack_enabled else _("CommConnect")), (
         sms.MessagesReport,
         sms.MessageLogReport,
         ivr.CallLogReport,
+        ivr.ExpectedCallbackReport,
     )),
 )
 
@@ -120,6 +122,20 @@ APPSTORE_INTERFACES = (
     )),
 )
 
+from corehq.apps.reports.standard.domains import OrgDomainStatsReport, AdminDomainStatsReport
+
+BASIC_REPORTS = (
+    (_('Project Stats'), (
+        OrgDomainStatsReport,
+    )),
+)
+
+ADMIN_REPORTS = (
+    (_('Domain Stats'), (
+        AdminDomainStatsReport,
+    )),
+)
+
 from corehq.apps.hqwebapp.models import *
 
 TABS = (
@@ -131,6 +147,8 @@ TABS = (
     MessagesTab,
     RemindersTab,
     ProjectSettingsTab,
+    OrgReportTab,
+    OrgSettingsTab,
     AdminTab,
     ExchangeTab,
     ManageSurveysTab,

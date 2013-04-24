@@ -1,33 +1,39 @@
-from datetime import datetime
+from datetime import datetime, timedelta, date
 from couchdbkit import ResourceNotFound
 from django.core.urlresolvers import reverse
 from django.db import transaction
-from django.http import HttpResponse, HttpResponseRedirect, Http404, \
-    HttpResponseForbidden
+from django.http import HttpResponse, HttpResponseRedirect, Http404
 from django.template.loader import render_to_string
 from django.views.decorators.http import require_POST
 from django.shortcuts import render
 from django.contrib import messages
 from corehq.apps.announcements.models import Notification
+from corehq.apps.appstore.views import generate_sortables_from_facets, parse_args_for_es
 
 from corehq.apps.domain.decorators import require_superuser
 from corehq.apps.hqwebapp.utils import InvitationView
 from corehq.apps.orgs.decorators import org_admin_required, org_member_required
 from corehq.apps.registration.forms import DomainRegistrationForm
 from corehq.apps.orgs.forms import AddProjectForm, InviteMemberForm, AddTeamForm, UpdateOrgInfo
+from corehq.apps.reports.standard.domains import DomainStatsReport, OrgDomainStatsReport
 from corehq.apps.users.models import WebUser, UserRole, OrgRemovalRecord
+from corehq.elastic import get_es
+from corehq.pillows.mappings.case_mapping import CASE_INDEX
+from corehq.pillows.mappings.xform_mapping import XFORM_INDEX
 from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.web import json_response
 from corehq.apps.orgs.models import Organization, Team, DeleteTeamRecord, \
     OrgInvitation, OrgRequest
 from corehq.apps.domain.models import Domain
+from django.utils.translation import ugettext as _
+
 
 @memoized
 def base_context(request, organization, update_form=None):
     return {
         "org": organization,
         "teams": Team.get_by_org(organization.name),
-        "domains": Domain.get_by_organization(organization.name).all(),
+        "domains": sorted(Domain.get_by_organization(organization.name).all(), key=lambda x: x.name),
         "members": organization.get_members(),
         "admin": request.couch_user.is_org_admin(organization.name) or request.couch_user.is_superuser,
         "update_form_empty": not update_form,
@@ -50,8 +56,7 @@ class MainNotification(Notification):
 @org_member_required
 def orgs_landing(request, org, template="orgs/orgs_landing.html", form=None, add_form=None, invite_member_form=None,
                  add_team_form=None, update_form=None, tab=None):
-    organization = Organization.get_by_name(org, strict=True)
-
+    organization = request.organization
 
     class LandingNotification(Notification):
         doc_type = 'OrgLandingNotification'
@@ -104,18 +109,16 @@ def orgs_landing(request, org, template="orgs/orgs_landing.html", form=None, add
 
 @org_member_required
 def orgs_members(request, org, template="orgs/orgs_members.html"):
-    organization = Organization.get_by_name(org, strict=True)
-
     class MembersNotification(Notification):
         doc_type = 'OrgMembersNotification'
 
         def template(self):
             return 'orgs/partials/members_notification.html'
 
-    MainNotification.display_if_needed(messages, request, ctxt={"org": organization})
+    MainNotification.display_if_needed(messages, request, ctxt={"org": request.organization})
     MembersNotification.display_if_needed(messages, request)
 
-    ctxt = base_context(request, organization)
+    ctxt = base_context(request, request.organization)
     ctxt["org_admins"] = [member.username for member in ctxt["members"] if member.is_org_admin(org)]
     ctxt["tab"] = "members"
 
@@ -123,18 +126,16 @@ def orgs_members(request, org, template="orgs/orgs_members.html"):
 
 @org_member_required
 def orgs_teams(request, org, template="orgs/orgs_teams.html"):
-    organization = Organization.get_by_name(org, strict=True)
-
     class TeamsNotification(Notification):
         doc_type = 'OrgTeamsNotification'
 
         def template(self):
             return 'orgs/partials/teams_notification.html'
 
-    MainNotification.display_if_needed(messages, request, ctxt={"org": organization})
+    MainNotification.display_if_needed(messages, request, ctxt={"org": request.organization})
     TeamsNotification.display_if_needed(messages, request)
 
-    ctxt = base_context(request, organization)
+    ctxt = base_context(request, request.organization)
     ctxt["tab"] = "teams"
 
     return render(request, template, ctxt)
@@ -153,7 +154,7 @@ def orgs_new_project(request, org):
 @org_admin_required
 @require_POST
 def orgs_update_info(request, org):
-    organization = Organization.get_by_name(org)
+    organization = request.organization
     form = UpdateOrgInfo(request.POST, request.FILES)
     if form.is_valid():
         # logo = None
@@ -316,24 +317,21 @@ def orgs_add_team(request, org):
 
 @org_member_required
 def orgs_logo(request, org, template="orgs/orgs_logo.html"):
-    organization = Organization.get_by_name(org)
-    image, type = organization.get_logo()
+    image, type = request.organization.get_logo()
     return HttpResponse(image, content_type=type if image else 'image/gif')
 
 @org_member_required
 def orgs_team_members(request, org, team_id, template="orgs/orgs_team_members.html"):
-    organization = Organization.get_by_name(org)
-
     class TeamMembersNotification(Notification):
         doc_type = 'OrgTeamMembersNotification'
 
         def template(self):
             return 'orgs/partials/team_members_notification.html'
 
-    MainNotification.display_if_needed(messages, request, ctxt={"org": organization})
+    MainNotification.display_if_needed(messages, request, ctxt={"org": request.organization})
     TeamMembersNotification.display_if_needed(messages, request)
 
-    ctxt = base_context(request, organization)
+    ctxt = base_context(request, request.organization)
     ctxt["tab"] = "teams"
 
     try:
@@ -458,8 +456,7 @@ def set_team_permission_for_domain(request, org, team_id):
 @org_admin_required
 @require_POST
 def add_all_to_team(request, org, team_id):
-    organization = Organization.get_by_name(org)
-    members = organization.get_members()
+    members = request.organization.get_members()
     for member in members:
         member.add_to_team(org, team_id)
         member.save()
@@ -530,4 +527,96 @@ def public(request, org, template='orgs/public.html'):
         if dom.published_snapshot() and dom.published_snapshot().is_approved:
             ctxt["snapshots"].append(dom.published_snapshot())
     return render(request, template, ctxt)
+
+@org_member_required
+def base_report(request, org, template='orgs/report_base.html'):
+    ctxt = base_context(request, request.organization)
+
+    if not ctxt['domains']:
+        messages.warning(request, _("This organization has no projects. This report will show no data until a project has been added to the organization."))
+
+    stats_report = OrgDomainStatsReport(request)
+    ctxt.update(stats_report.context)
+
+    ctxt.update({
+        'tab': 'reports',
+        'report_type': 'base',
+        'no_header': True if ctxt['domains'] else False,
+        'custom_async_url': reverse('basic_report_dispatcher', args=('async/dom_stats',))
+    })
+    return render(request, template, ctxt)
+
+@org_member_required
+def stats(request, org, template='orgs/stats.html'):
+    ctxt = base_context(request, request.organization)
+    ctxt.update({
+        'tab': 'reports',
+        'report_type': 'stats',
+        'no_header': True,
+    })
+    return render(request, template, ctxt)
+
+def stats_data(request, org):
+    params, _ = parse_args_for_es(request)
+    domains = [{"name": d.name, "hr_name": d.hr_name} for d in Domain.get_by_organization(org).all()]
+    histo_type = request.GET.get('histogram_type')
+    period = request.GET.get("daterange", 'month')
+
+    today = date.today()
+    startdate = (today - timedelta(days={
+        'month': 30,
+        'week': 7,
+        'quarter': 90,
+        'year': 365,
+    }[period]))
+
+    histo_data = dict([(d['hr_name'], es_histogram(histo_type, [d["name"]], startdate.strftime('%Y-%m-%d'), today.strftime('%Y-%m-%d')))
+                       for d in domains])
+
+    return json_response({
+        'histo_data': histo_data,
+        'range': period,
+        'startdate': [startdate.year, startdate.month, startdate.day],
+        'enddate': [today.year, today.month, today.day],
+    })
+
+def es_histogram(histo_type, domains=None, startdate=None, enddate=None, tz_diff=None):
+    date_field = {  "forms": "received_on",
+                    "cases": "opened_on"  }[histo_type]
+    es_url = {  "forms": XFORM_INDEX + '/xform/_search',
+                "cases": CASE_INDEX + '/case/_search' }[histo_type]
+
+    q = {"query": {"match_all":{}}}
+
+    if domains is not None:
+        q["query"] = {"in" : {"domain.exact": domains}}
+
+    q.update({
+        "facets": {
+            "histo": {
+                "date_histogram": {
+                    "field": date_field,
+                    "interval": "day"
+                },
+                "facet_filter": {
+                    "and": [{
+                        "range": {
+                            date_field: {
+                                "from": startdate,
+                                "to": enddate
+                            }}}]}}},
+        "size": 0
+    })
+
+    if tz_diff:
+        q["facets"]["histo"]["date_histogram"]["time_zone"] = tz_diff
+
+    if histo_type == "forms":
+        q["facets"]["histo"]["facet_filter"]["and"].append({"not": {"in": {"doc_type": ["xformduplicate", "xformdeleted"]}}})
+
+    es = get_es()
+    ret_data = es.get(es_url, data=q)
+    return ret_data["facets"]["histo"]["entries"]
+
+
 

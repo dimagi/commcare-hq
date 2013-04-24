@@ -1,10 +1,7 @@
 import re
-import logging
 from couchdbkit import ResourceNotFound
 from django.conf import settings
-from django.core.mail import send_mail
 from dimagi.utils.couch.database import get_db
-from dimagi.utils.web import get_url_base
 
 new_domain_re = r"(?:[a-z0-9]+\-)*[a-z0-9]+" # lowercase letters, numbers, and '-' (at most one between "words")
 new_org_re = r"(?:[a-z0-9]+\-)*[a-zA-Z0-9]+" # lowercase and uppercase letters, numbers, and '-' (at most one between "words")
@@ -31,8 +28,11 @@ def get_domain_from_url(path):
 
 
 def get_domain_module_map():
+    hardcoded = getattr(settings, 'DOMAIN_MODULE_MAP', {})
     try:
-        return get_db().get('DOMAIN_MODULE_CONFIG').get('module_map', {})
+        dynamic = get_db().get('DOMAIN_MODULE_CONFIG').get('module_map', {})
     except ResourceNotFound:
-        pass
-    return {}
+        dynamic = {}
+
+    hardcoded.update(dynamic)
+    return hardcoded

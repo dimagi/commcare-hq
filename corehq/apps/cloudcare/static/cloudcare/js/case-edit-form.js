@@ -36,7 +36,7 @@ var CaseEditForm = (function () {
                         element.ui.css({
                             position: 'relative'
                         }).append(
-                            $('<div/>').addClass('ui-icon ui-icon-calendar').css({
+                            $('<i/>').addClass('icon-calendar').css({
                                 position: 'absolute',
                                 right: 3,
                                 top: 2

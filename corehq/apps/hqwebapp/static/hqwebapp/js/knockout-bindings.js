@@ -167,6 +167,7 @@ ko.bindingHandlers.saveButton = {
 ko.bindingHandlers.saveButton2 = {
     init: function (element, valueAccessor, allBindingsAccessor) {
         var saveOptions = allBindingsAccessor().saveOptions,
+            state = valueAccessor(),
             saveButton = SaveButton.init({
                 save: function () {
                     saveButton.ajax(saveOptions());
@@ -174,6 +175,9 @@ ko.bindingHandlers.saveButton2 = {
             });
         saveButton.ui.appendTo(element);
         element.saveButton = saveButton;
+        saveButton.on('state:change', function () {
+            state(saveButton.state);
+        });
     },
     update: function (element, valueAccessor) {
         var state = ko.utils.unwrapObservable(valueAccessor());
@@ -390,5 +394,19 @@ ko.bindingHandlers.valueOrNoneUI = {
         ).appendTo(element);
         ko.applyBindings(helper, subElement.get(0));
         return {controlsDescendantBindings: true};
+    }
+};
+
+ko.bindingHandlers.makeHqHelp = {
+    init: function (element, valueAccessor) {
+        var opts = valueAccessor(),
+            name = ko.utils.unwrapObservable(opts.name),
+            description = ko.utils.unwrapObservable(opts.description),
+            format = ko.utils.unwrapObservable(opts.format);
+        COMMCAREHQ.makeHqHelp({
+            title: name,
+            content: description,
+            html: format === 'html'
+        }).appendTo(element);
     }
 };

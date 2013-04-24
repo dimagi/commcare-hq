@@ -29,8 +29,9 @@ def current_url_name(request):
         'current_url_name': url_name
     }
 
-def google_analytics(request):
-    return {"GOOGLE_ANALYTICS_ID": settings.GOOGLE_ANALYTICS_ID}
+
+def analytics_js(request):
+    return settings.ANALYTICS_IDS
 
 def raven(request):
     """lets you know whether raven is being used"""

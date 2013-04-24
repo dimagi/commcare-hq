@@ -3,7 +3,7 @@ COMMTRACK_USERNAME = 'commtrack-system'
 
 SUPPLY_POINT_CASE_TYPE = 'supply-point'
 SUPPLY_POINT_PRODUCT_CASE_TYPE = 'supply-point-product'
-REQUISITION_CASE_TYPE = 'requisition'
+REQUISITION_CASE_TYPE = 'commtrack-requisition'
 
 ALL_PRODUCTS_TRANSACTION_TAG = '_all_products'
 
@@ -20,3 +20,23 @@ RequisitionActions = enum(
     FILL='fill',
     RECEIPTS='requisition-receipts',
 )
+
+class RequisitionStatus(object):
+    """a const for our requisition status choices"""
+    REQUESTED = "requested"
+    APPROVED = "approved"
+    FILLED = "filled"
+    RECEIVED = "received"
+    CANCELED = "canceled"
+    CHOICES = [REQUESTED, APPROVED, FILLED, RECEIVED, CANCELED]
+    CHOICES_PENDING = [REQUESTED, APPROVED, FILLED]
+    CHOICES_CLOSED = [RECEIVED, CANCELED]
+
+    @classmethod
+    def by_action_type(cls, type):
+        return {
+            RequisitionActions.REQUEST: cls.REQUESTED,
+            RequisitionActions.APPROVAL: cls.APPROVED,
+            RequisitionActions.FILL: cls.FILLED,
+            RequisitionActions.RECEIPTS: cls.RECEIVED,
+        }[type]

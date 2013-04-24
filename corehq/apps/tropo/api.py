@@ -13,11 +13,15 @@ def send(msg, delay=True, *args, **kwargs):
     phone_number = msg.phone_number
     if phone_number[0] != "+":
         phone_number = "+" + phone_number
+    try:
+        text = str(msg.text)
+    except UnicodeEncodeError:
+        text = msg.text.encode("utf-8")
     params = urlencode({
         "action" : "create"
        ,"token" : kwargs["messaging_token"]
        ,"numberToDial" : phone_number
-       ,"msg" : msg.text
+       ,"msg" : text
        ,"_send_sms" : "true"
     })
     url = "https://api.tropo.com/1.0/sessions?%s" % params

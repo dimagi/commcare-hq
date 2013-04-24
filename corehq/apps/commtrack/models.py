@@ -1,4 +1,5 @@
 from couchdbkit.ext.django.schema import *
+from corehq.apps.commtrack import const
 from dimagi.utils.couch.loosechange import map_reduce
 from couchforms.models import XFormInstance
 from dimagi.utils import parsing as dateparse
@@ -7,11 +8,13 @@ from casexml.apps.case.models import CommCareCase
 from copy import copy
 from django.dispatch import receiver
 from corehq.apps.locations.signals import location_created
-from corehq.apps.commtrack.const import RequisitionActions
+from corehq.apps.commtrack.const import RequisitionActions, RequisitionStatus
 
 # these are the allowable stock transaction types, listed in the
 # default ordering in which they are processed. processing order
 # may be customized per domain
+from dimagi.utils.decorators.memoized import memoized
+
 ACTION_TYPES = [
     # indicates the product has been stocked out for N days
     # prior to the reporting date, including today ('0' does
@@ -286,6 +289,77 @@ class StockTransaction(DocumentSchema):
                                        endkey=[product_case, end_date, {}])
         return [StockTransaction.wrap(row['value']) for row in q]
 
+
+
+class RequisitionCase(CommCareCase):
+    """
+    A wrapper around CommCareCases to get more built in functionality
+    """
+    # supply_point = StringProperty() # todo, if desired
+    requisition_status = StringProperty()
+
+    # NOTE: this is redundant with the supply point product case and is an optimization
+    product_id = StringProperty()
+
+    # this second field is added for auditing purposes
+    # the status can change, but once set - this one will not
+    requested_on = DateTimeProperty()
+    approved_on = DateTimeProperty()
+    filled_on = DateTimeProperty()
+    received_on = DateTimeProperty()
+
+    requested_by = StringProperty()
+    approved_by = StringProperty()
+    filled_by = StringProperty()
+    received_by = StringProperty()
+
+    # NOTE: should these be strings or ints or decimals?
+    amount_requested = StringProperty()
+    # these two fields are unnecessary with no ability to
+    # approve partial resupplies in the current system, but is
+    # left in the models for possible use down the road
+    amount_approved = StringProperty()
+    amount_filled = StringProperty()
+    amount_received = StringProperty()
+
+    @memoized
+    def get_product_case(self):
+        matching = filter(lambda i: i.identifier == const.PARENT_CASE_REF, self.indices)
+        if matching:
+            assert len(matching) == 1, 'should only be one parent index'
+            assert matching[0].referenced_type == const.SUPPLY_POINT_PRODUCT_CASE_TYPE, \
+                'req parent had bad case type %s' % matching[0].referenced_type
+            return CommCareCase.get(matching[0].referenced_id)
+
+        return None
+
+    def get_default_value(self):
+        """get how much the default is. this is dependent on state."""
+        property_map = {
+            RequisitionStatus.REQUESTED: 'amount_requested',
+            RequisitionStatus.APPROVED: 'amount_approved',
+            RequisitionStatus.FILLED: 'amount_filled',
+
+        }
+        return getattr(self, property_map.get(self.requisition_status, 'amount_requested'))
+
+    @classmethod
+    def open_for_location(cls, domain, location_id):
+        """
+        For a given location, return the IDs of all open requisitions at that location.
+        """
+        results = cls.get_db().view('commtrack/requisitions',
+            startkey=[domain, location_id, 'open'],
+            endkey=[domain, location_id, 'open', {}],
+            reduce=False,
+        )
+        return [r['id'] for r in results]
+
+
+    class Meta:
+        app_label = "commtrack" # This is necessary otherwise syncdb will confuse this app with casexml
+
+
 class StockReport(object):
     """
     This is a wrapper around the couch xform doc that gets associated with
@@ -363,3 +437,5 @@ def post_loc_created(sender, loc=None, **kwargs):
     if loc.location_type in [loc_type.name for loc_type in config.location_types if not loc_type.administrative]:
         make_supply_point(loc.domain, loc)
 
+# import signals
+from . import signals

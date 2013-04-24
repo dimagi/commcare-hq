@@ -5,7 +5,7 @@
 {% load timezone_tags %}
 {% load i18n %}
 
-
+{% block title %}{% trans "Applications" %}{% endblock %}
 
 {% block head %}{{ block.super }}
     <link rel="stylesheet" href="{% static 'hqstyle/css/legacy/app_manager.css' %}"/>
@@ -76,10 +76,10 @@
             $appsMenu = $("#apps-menu"),
             $appsMenuBorder = $("#apps-menu-border"),
             $toggleDiv = $("#apps-menu-toggle"),
-            $toggleIcon = $("#apps-menu-toggle div.ui-icon"),
+            $toggleIcon = $("#apps-menu-toggle i"),
             $toggleLink = $("#apps-menu-toggle a"),
-            down = 'ui-icon-carat-1-s',
-            up = 'ui-icon-carat-1-n';
+            down = 'icon-chevron-down',
+            up = 'icon-chevron-up';
 
         function setHidden(val) {
             hidden = val;
@@ -149,93 +149,6 @@
             {% endifequal %}
         </div>
         {% endif %}
-        <div id="apps-menu">
-            <ul>
-                {% if request.couch_user.can_edit_apps %}
-                <li>
-                    <div>
-                        <div class="btn-group">
-                            <span class="btn btn-primary dropdown-toggle" data-toggle="dropdown" href="#">
-                                <i class="icon-plus"></i>
-                                New Application
-                                <span class="caret"></span>
-                            </span>
-                            <ul class="dropdown-menu">
-                                <li class="form" data-action="{% url corehq.apps.app_manager.views.new_app domain %}" data-method="post">
-                                    <input type="hidden" name="type" value="Application" />
-                                    <input type="hidden" name="application_version" value="2.0" />
-                                    <a href="#" class="submit">{% trans 'Blank Application' %}</a>
-                                </li>
-                                <li class="form" data-action="{% url corehq.apps.app_manager.views.new_app domain %}" data-method="post">
-                                    <input type="hidden" name="type" value="RemoteApp" />
-                                    <a href="#" class="submit">{% trans 'Remote App (Advanced Users Only)' %}</a>
-                                </li>
-                                <li>
-                                    <a href="{% url appstore %}">{% trans 'Visit CommCare Exchange to copy existing app...' %}</a>
-                                </li>
-                            </ul>
-                        </div>
-                    </div>
-                </li>
-                {% endif %}
-                {% if applications|length > 1 %}
-                <li>
-                    {% trans "Go to: " %}
-                    <select class="applications">
-                    {% if not app %}
-                        <option value="#" disabled="" selected="">No Application Selected</option>
-                    {% endif %}
-                    {% for a in applications %}
-                    <option value="{% url corehq.apps.app_manager.views.view_app domain a.id %}"
-                            {% ifequal a.id app.id %}selected="" class="variable-app_name" {% endifequal %}>
-                        {{ a.name }}
-                        {% if a.get_doc_type == "RemoteApp" %}(remote){% endif %}
-                        {% if a.application_version == '2.0' %}(2.x){% endif %}
-                    </option>
-                    {% endfor %}
-                </select>
-                </li>
-                {% endif %}
-                {% if edit and app %}
-                <li>
-                    <form action="{% url corehq.apps.app_manager.views.delete_app domain app.id %}" method="POST">
-                        <span class="ui-icon ui-icon-trash"></span>
-                        <a href="#" class="submit">Delete this application</a>
-                    </form>
-                </li>
-                {% endif %}
-            </ul>
-        </div>
-        <div id="apps-menu-border"></div>
-        <div id="title-bar">
-            <div id="apps-menu-toggle"><div class="ui-icon"></div><a href="#"></a></div>
-            <div id="app-info">
-                {% if app %}
-                    <ul>
-                        <li>
-                            <strong id="app_name" class="variable-app_name">{{ app.name }}</strong>
-                            {% if app.get_doc_type == "RemoteApp" %}<strong>(remote)</strong>{% endif %}
-                            {% if app.application_version == "2.0" %}<strong>(2.x)</strong>{% endif %}
-                            version <span id="version" class="variable-version">{{ app.version }}</span>
-                        </li>
-                    </ul>
-                {% endif %}
-            </div>
-            {% if applications and request.couch_user.can_edit_apps %}
-                <div id="edit">
-                    Switch to:
-                    {% if edit %}
-                        <a href="{% urlencode request.path request.GET with "edit" as "false" %}">
-                            Read Only
-                        </a>
-                    {% else %}
-                        <a href="{% urlencode request.path request.GET with "edit" as "true" %}">
-                            Edit
-                        </a>
-                    {% endif %}
-                </div>
-            {% endif %}
-        </div>
         <div id="app-content">
             {% block app-content %}
             {% endblock %}
