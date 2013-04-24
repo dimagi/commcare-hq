@@ -4,6 +4,8 @@
 {% load i18n %}
 {% load url_extras %}
 
+{% block title %}{% trans "CommCare Exchange" %}{% endblock %}
+
 {% block head %}{{ block.super }}
     <style type="text/css">
         .rating_static > span {
@@ -236,10 +238,6 @@
 {% endblock %}
 
 {% block main_column %}
-
-<!--{% if search_query or filter_by %}-->
-    <!--<h3>{{ apps|length }} result{{ apps|pluralize }}</h3>-->
-<!--{% endif %}-->
 
 <h1>
     {% block store-header %}
