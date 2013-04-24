@@ -393,7 +393,7 @@ class ApplicationMediaReference(object):
             'detailed_location': detailed_location,
         }
 
-    def as_json(self, lang=None):
+    def as_dict(self, lang=None):
         return {
             'module': {
                 'name': self.get_module_name(lang),
@@ -538,7 +538,7 @@ class HQMediaMixin(Document):
         """
             Used for the multimedia controller.
         """
-        return [m.as_json(lang) for m in self.all_media]
+        return [m.as_dict(lang) for m in self.all_media]
 
     def get_object_map(self):
         object_map = {}
