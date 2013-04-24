@@ -7,8 +7,13 @@ from corehq.apps.commtrack.models import Product
 from dimagi.utils.couch.loosechange import map_reduce
 from corehq.apps.commtrack.util import num_periods_late
 
+# TODO make settings
+
 UNDERSTOCK_THRESHOLD = 0.5 # months
 OVERSTOCK_THRESHOLD = 2. # months
+
+REPORTING_PERIOD = 'weekly'
+REPORTING_PERIOD_ARGS = (1,)
 
 class CurrentStockStatusReport(GenericTabularReport, CommtrackReportMixin):
     name = 'Current Stock Status by Product'
@@ -79,7 +84,7 @@ class CurrentStockStatusReport(GenericTabularReport, CommtrackReportMixin):
             else:
                 return 'adequate'
         def status(case):
-            return stock_category(case) if num_periods_late(case) == 0 else 'nonreporting'
+            return stock_category(case) if num_periods_late(case, REPORTING_PERIOD, *REPORTING_PERIOD_ARGS) == 0 else 'nonreporting'
 
         status_by_product = dict((p, map_reduce(lambda c: [(status(c),)], len, data=cases)) for p, cases in cases_by_product.iteritems())
 

@@ -3,6 +3,8 @@ from corehq.apps.commtrack.models import *
 from corehq.apps.locations.models import Location
 from casexml.apps.case.models import CommCareCase
 import itertools
+from datetime import datetime, date, timedelta
+from calendar import monthrange
 
 def all_supply_point_types(domain):
     return [e['key'][1] for e in get_db().view('commtrack/supply_point_types', startkey=[domain], endkey=[domain, {}], group_level=2)]
@@ -121,5 +123,49 @@ def bootstrap_default(domain, requisitions_enabled=False):
 
     return c
 
-def num_periods_late(product_case):
-    return 0
+
+def due_date_weekly(dow, past_period=0): # 0 == sunday
+    """compute the next due date on a weekly schedule, where reports are
+    due on 'dow' day of the week (0:sunday, 6:saturday). 'next' due date
+    is the first due date that occurs today or in the future. if past_period
+    is non-zero, return the due date that occured N before the next due date
+    """
+    cur_weekday = date.today().isoweekday()
+    days_till_due = (dow - cur_weekday) % 7
+    return date.today() + timedelta(days=days_till_due - 7 * past_period)
+
+def due_date_monthly(day, from_end=False, past_period=0):
+    """compute the next due date on a monthly schedule, where reports are
+    due on 'day' day of the month. (if from_false is true, due date is 'day' days
+    before the end of the month, where 0 is the last day of the month). 'next' due date
+    is the first due date that occurs today or in the future. if past_period
+    is non-zero, return the due date that occured N before the next due date
+    """
+    if from_end:
+        assert False, 'not supported yet'
+
+    month_diff = -past_period
+    if date.today().day > day:
+        month_diff += 1
+    month_seq = date.today().year * 12 + (date.today().month - 1)
+    month_seq += month_diff
+
+    y = month_seq // 12
+    m = month_seq % 12 + 1
+    return date(y, m, min(day, monthrange(y, m)[1]))
+
+def num_periods_late(product_case, schedule, *schedule_args):
+    def due_date(n):
+        return {
+            'weekly': due_date_weekly,
+            'monthly': due_date_monthly,
+        }[schedule](*schedule_args, past_period=n)
+
+    last_reported = getattr(product_case, 'last_reported', datetime(2000, 1, 1)).date()
+
+    n = 0
+    # FIXME this will be very inefficient for sites that have not reported in
+    # a long time; could be changed to a o(log n) algorithm w/o too much trouble
+    while last_reported <= due_date(n + 1):
+        n += 1
+    return n
