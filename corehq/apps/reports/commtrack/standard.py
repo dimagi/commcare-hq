@@ -127,7 +127,7 @@ class CurrentStockStatusReport(GenericTabularReport, CommtrackReportMixin):
     @property
     def report_context(self):
         ctxt = super(CurrentStockStatusReport, self).report_context
-        if self.active_location: # only get data if we're loading an actual report
+        if 'location_id' in self.request.GET: # hack: only get data if we're loading an actual report
             ctxt['stock_data'] = self.get_data_for_graph()
         return ctxt
 
