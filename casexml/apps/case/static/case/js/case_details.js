@@ -1,3 +1,7 @@
+$(function () {
+    ko.applyBindings(new XFormListViewModel(), $("#xform-list-block")[0]);
+});
+
 function pad_zero(val) {
     if (val < 10) {
         return "0" + val;
@@ -402,4 +406,3 @@ function XFormListViewModel() {
     });
 };
 
-ko.applyBindings(new XFormListViewModel(), $("#xform-list-block")[0]);
