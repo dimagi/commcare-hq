@@ -114,7 +114,14 @@ INSECURE_URL_BASE = "http://submit.commcarehq.org"
 PREVIEWER_RE = r'^.*@dimagi\.com$'
 GMAPS_API_KEY = '******'
 FORMTRANSLATE_TIMEOUT = 5
-#LOCAL_APPS = ('django_cpserver','dimagi.utils')
+LOCAL_APPS = (
+#    'django_coverage', # Adds `python manage.py test_coverage` (settings below)
+#    'debug_toolbar',   # Adds a retractable panel to every page giving profiling & debugging info
+#    'couchdebugpanel', # Adds couch info to said toolbar
+#    'devserver',       # Adds improved dev server that also prints SQL on the console (for AJAX, etc, when you cannot use debug_toolbar)
+#    'django_cpserver', # Another choice for a replacement server
+#    'dimagi.utils'     
+)
 
 # list of domains to enable ADM reporting on
 ADM_ENABLED_PROJECTS = []
@@ -146,6 +153,13 @@ LOGSTASH_AUDITCARE_PORT = 10999
 LOGSTASH_HOST = 'localhost'
 
 LOCAL_PILLOWTOPS = []
+
+####### django-coverage config ########
+
+COVERAGE_REPORT_HTML_OUTPUT_DIR='coverage-html'
+COVERAGE_MODULE_EXCLUDES= ['tests$', 'settings$', 'urls$', 'locale$',
+                           'common.views.test', '^django', 'management', 'migrations',
+                           '^south', '^djcelery', '^debug_toolbar', '^rosetta']
 
 ####### Selenium tests config ########
 
