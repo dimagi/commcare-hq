@@ -5,40 +5,6 @@
 .hq-oldstyle #main_container {
   padding: 0;
 }
-.hq-oldstyle #apps-menu {
-  padding: 1em 1em .5em 1em;
-  background-color: #EEE;
-  display: none;
-}
-.hq-oldstyle #apps-menu > ul,
-.hq-oldstyle #app-info > ul {
-  display: table-row;
-}
-.hq-oldstyle #apps-menu > ul > li,
-.hq-oldstyle #app-info > ul > li {
-  border-right: 1px solid #CCC;
-  padding: 0 .5em;
-  display: table-cell;
-}
-.hq-oldstyle #apps-menu > ul > li:last-child,
-.hq-oldstyle #app-info > ul > li:last-child {
-  border-right: none;
-}
-.hq-oldstyle #apps-menu-toggle {
-  background-color: #EEE;
-  border: 1px solid #CCC;
-  border-top: none;
-  padding: .5em;
-  position: absolute;
-  right: 300px;
-  top: -1px;
-  width: 8em;
-}
-.hq-oldstyle #apps-menu-border {
-  background-color: #EEE;
-  border-bottom: 1px solid #CCC;
-  height: .5em;
-}
 .hq-oldstyle #title-bar {
   position: relative;
 }
