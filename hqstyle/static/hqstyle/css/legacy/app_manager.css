@@ -5,12 +5,6 @@
 .hq-oldstyle #main_container {
   padding: 0;
 }
-.hq-oldstyle #title-bar {
-  position: relative;
-}
-.hq-oldstyle input.sms-autocomplete {
-  width: 90%;
-}
 .hq-oldstyle .dialog textarea {
   width: 90%;
   height: 100px;
@@ -21,15 +15,6 @@
 }
 .hq-oldstyle #app-info {
   float: left;
-}
-.hq-oldstyle .jar_download_dialog p {
-  padding-top: .5em;
-  margin-left: 1em;
-}
-.hq-oldstyle .jar_download_dialog ol li {
-  list-style: decimal outside;
-  margin-left: 2em;
-  padding-bottom: 1em;
 }
 .hq-oldstyle .delete-me {
   float: right;
