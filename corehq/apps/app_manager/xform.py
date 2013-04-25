@@ -566,6 +566,7 @@ class XForm(WrappedNode):
 
         def make_case_elem(tag, attr=None):
             return _make_elem('{cx2}%s' % tag, attr)
+
         def make_case_block(path=''):
             case_block = ET.Element('{cx2}case'.format(**namespaces), {
                 'case_id': '',
@@ -739,25 +740,37 @@ class XForm(WrappedNode):
                     basic_updates.update(extra_updates)
                     add_update_block(case_block, basic_updates)
                 if updates_by_case:
-                    parents_node = _make_elem('{x}parents')
-                    self.data_node.append(parents_node)
-                    for parent_path, updates in sorted(updates_by_case.items()):
-                        prev_node = parents_node
-                        tail, head = split_path(parent_path)
+                    def make_nested_subnode(base_node, path):
+                        """
+                        path='x/y/z' will append <x><y><z/></y></x> to base_node
+                        """
+                        prev_node = base_node
+                        tail, head = split_path(path)
                         if tail:
                             for node_name in tail.split('/'):
                                 prev_node = prev_node.find('{x}%s' % node_name)
                         node = _make_elem('{x}%s' % head)
                         prev_node.append(node)
-                        path = 'parents/%s/' % parent_path
-                        parent_case_block = make_case_block(path)
-                        node.append(parent_case_block)
-                        add_update_block(parent_case_block, updates, path)
+                        return node
+
+                    def make_parent_case_block(node_path, parent_path):
+                        case_block = make_case_block(node_path)
                         xpath = get_case_parent_xpath(parent_path)
                         self.add_bind(
-                            nodeset='%scase/@case_id' % path,
-                            calculate=xpath.property('@case_id')
+                            nodeset='%scase/@case_id' % node_path,
+                            calculate=xpath.property('@case_id'),
                         )
+                        return case_block
+
+                    base_node = _make_elem('{x}parents')
+                    self.data_node.append(base_node)
+                    for parent_path, updates in sorted(updates_by_case.items()):
+                        node = make_nested_subnode(base_node, parent_path)
+                        node_path = 'parents/%s/' % parent_path
+                        parent_case_block = make_parent_case_block(node_path,
+                                                                   parent_path)
+                        add_update_block(parent_case_block, updates, node_path)
+                        node.append(parent_case_block)
 
             if 'close_case' in actions:
                 add_close_block(case_block, actions['close_case'])
