@@ -56,6 +56,7 @@
 
 .well-loner dl {
     width: auto;
+    max-width: 300px;
 }
 
 .foo-table {
