@@ -213,6 +213,7 @@ def app_source(req, domain, app_id):
 @login_and_domain_required
 def import_app(req, domain, template="app_manager/import_app.html"):
     if req.method == "POST":
+        _clear_app_cache(req, domain)
         name = req.POST.get('name')
         try:
             source = req.POST.get('source')
