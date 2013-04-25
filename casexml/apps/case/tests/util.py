@@ -306,7 +306,7 @@ class CaseBlock(dict):
         def fmt(value):
             if isinstance(value, datetime):
                 return unicode(format_datetime(value))
-            elif isinstance(value, basestring):
+            elif isinstance(value, (basestring, int)):
                 return unicode(value)
             else:
                 raise CaseBlockError("Can't transform to XML: %s; unexpected type." % value)
