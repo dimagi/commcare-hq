@@ -69,6 +69,10 @@ function BaseReferenceGroup (name, obj_map, group_id) {
             var audioRef = new AudioReference(ref);
             audioRef.setObjReference(obj_ref);
             return audioRef;
+        } else if (ref.media_class == "CommCareVideo" ) {
+            var videoRef = new VideoReference(ref);
+            videoRef.setObjReference(obj_ref);
+            return videoRef;
         }
         return null;
     };
@@ -114,12 +118,16 @@ function FormReferences (name, obj_map, group_id) {
     var self = this;
     self.images = ko.observableArray();
     self.audio = ko.observableArray();
+    self.video = ko.observableArray();
 
     self.active_images = ko.computed(function () {
         return (self.showOnlyMissing()) ? self.getMissingRefs(self.images()) : self.images();
     }, self);
     self.active_audio = ko.computed(function () {
         return (self.showOnlyMissing()) ? self.getMissingRefs(self.audio()) : self.audio();
+    }, self);
+    self.active_video = ko.computed(function () {
+        return (self.showOnlyMissing()) ? self.getMissingRefs(self.video()) : self.video();
     }, self);
 
     self.showImageRefs = ko.computed(function () {
@@ -128,9 +136,12 @@ function FormReferences (name, obj_map, group_id) {
     self.showAudioRefs = ko.computed(function () {
         return self.active_audio().length > 0;
     }, self);
+    self.showVideoRefs = ko.computed(function () {
+        return self.active_video().length > 0;
+    }, self);
 
     self.showForm = ko.computed(function () {
-        return self.showImageRefs() || self.showAudioRefs() || self.showMenuRefs();
+        return self.showImageRefs() || self.showAudioRefs() || self.showVideoRefs() || self.showMenuRefs();
     });
 
     self.processReference = function (ref) {
@@ -141,6 +152,8 @@ function FormReferences (name, obj_map, group_id) {
             self.images.push(ref_obj);
         } else if (ref.media_class == "CommCareAudio") {
             self.audio.push(ref_obj);
+        } else if (ref.media_class == "CommCareVideo") {
+            self.video.push(ref_obj);
         }
     }
 }
@@ -260,6 +273,18 @@ function AudioReference (ref) {
 
 AudioReference.prototype = Object.create( BaseMediaReference.prototype );
 AudioReference.prototype.constructor = AudioReference;
+
+
+function VideoReference (ref) {
+    'use strict';
+    BaseMediaReference.call(this, ref);
+    var self = this;
+    self.upload_controller = hqvideo_controller;
+    self.preview_template = "video-preview-template";
+}
+
+VideoReference.prototype = Object.create( BaseMediaReference.prototype );
+VideoReference.prototype.constructor = VideoReference;
 
 
 // Kept from Tim, you might want to fix it up a bit

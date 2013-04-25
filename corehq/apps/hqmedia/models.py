@@ -163,6 +163,7 @@ class CommCareMultimedia(Document):
             "updated": is_updated,
             "original_path": original_path,
             "icon_class": self.get_icon_class(),
+            "media_type": self.get_nice_name(),
         }
 
     @property
@@ -574,14 +575,14 @@ class HQMediaMixin(Document):
             Returns a list of totals of each type of media in the application and total matches.
         """
         totals = []
-        for mm in [CommCareImage, CommCareAudio]:
+        for mm in [CommCareImage, CommCareAudio, CommCareVideo]:
             paths = self.get_all_paths_of_type(mm.__name__)
             if len(paths) > 0:
                 totals.append({
-                        'media_type': mm.get_nice_name(),
-                        'totals': len(paths),
-                        'matched': len([p for p in self.multimedia_map.keys() if p in paths]),
-                        'icon_class': mm.get_icon_class(),
+                    'media_type': mm.get_nice_name(),
+                    'totals': len(paths),
+                    'matched': len([p for p in self.multimedia_map.keys() if p in paths]),
+                    'icon_class': mm.get_icon_class(),
                 })
         return totals
 

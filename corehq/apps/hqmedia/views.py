@@ -22,7 +22,7 @@ from corehq.apps.app_manager.views import require_can_edit_apps, set_file_downlo
 from corehq.apps.app_manager.models import get_app
 from corehq.apps.hqmedia import utils
 from corehq.apps.hqmedia.cache import BulkMultimediaStatusCache
-from corehq.apps.hqmedia.controller import MultimediaBulkUploadController, MultimediaImageUploadController, MultimediaAudioUploadController
+from corehq.apps.hqmedia.controller import MultimediaBulkUploadController, MultimediaImageUploadController, MultimediaAudioUploadController, MultimediaVideoUploadController
 from corehq.apps.hqmedia.models import CommCareImage, CommCareAudio, CommCareMultimedia, MULTIMEDIA_PREFIX, CommCareVideo
 from corehq.apps.hqmedia.tasks import process_bulk_upload_zip
 from dimagi.utils.decorators.memoized import memoized
@@ -177,6 +177,8 @@ class MultimediaReferencesView(BaseMultimediaUploaderView):
             MultimediaImageUploadController("hqimage", reverse(ProcessImageFileUploadView.name,
                                                                args=[self.domain, self.app_id])),
             MultimediaAudioUploadController("hqaudio", reverse(ProcessAudioFileUploadView.name,
+                                                               args=[self.domain, self.app_id])),
+            MultimediaVideoUploadController("hqvideo", reverse(ProcessVideoFileUploadView.name,
                                                                args=[self.domain, self.app_id])),
         ]
 
