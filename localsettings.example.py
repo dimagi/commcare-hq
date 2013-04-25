@@ -158,7 +158,8 @@ LOCAL_PILLOWTOPS = []
 
 COVERAGE_REPORT_HTML_OUTPUT_DIR='coverage-html'
 COVERAGE_MODULE_EXCLUDES= ['tests$', 'settings$', 'urls$', 'locale$',
-                           'common.views.test', '^django', 'management', 'migrations']
+                           'common.views.test', '^django', 'management', 'migrations',
+                           '^south', '^djcelery', '^debug_toolbar', '^rosetta']
 
 ####### Selenium tests config ########
 
