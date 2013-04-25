@@ -657,12 +657,20 @@ class XForm(WrappedNode):
                     calculate=self.resolve_path(q_path),
                     relevant=("count(%s) > 0" % self.resolve_path(q_path))
                 )
+
         def add_close_block(case_block, action=None, path=''):
             case_block.append(make_case_elem('close'))
             self.add_bind(
                 nodeset="%scase/close" % path,
                 relevant=relevance(action) if action else 'true()',
             )
+
+        def get_case_parent_xpath(parent_path):
+            xpath = SESSION_CASE_ID.case()
+            for parent_name in parent_path.split('/'):
+                xpath = xpath.index_id(parent_name).case()
+            return xpath
+
         delegation_case_block = None
         if not actions or (form.requires == 'none' and 'open_case' not in actions):
             case_block = None
@@ -711,27 +719,45 @@ class XForm(WrappedNode):
                 )
 
             if 'update_case' in actions or extra_updates:
-                def group_updates_by_case(input):
+                def group_updates_by_case(updates):
                     """
                     updates grouped by case. Example:
                     input: {'name': ..., 'parent/name'}
                     output: {'': {'name': ...}, 'parent': {'name': ...}}
                     """
-                    updates = defaultdict(dict)
-                    for key, value in input.items():
+                    updates_by_case = defaultdict(dict)
+                    for key, value in updates.items():
                         path, name = split_path(key)
-                        updates[path][name] = value
-                    return updates
-                updates = group_updates_by_case(
+                        updates_by_case[path][name] = value
+                    return updates_by_case
+                updates_by_case = group_updates_by_case(
                     getattr(actions.get('update_case'), 'update', {})
                 )
-                if '' in updates:
+                if '' in updates_by_case:
                     # 90% use-case
-                    basic_updates = updates.pop('')
+                    basic_updates = updates_by_case.pop('')
                     basic_updates.update(extra_updates)
                     add_update_block(case_block, basic_updates)
-                if updates:
-                    pass
+                if updates_by_case:
+                    parents_node = _make_elem('{x}parents')
+                    self.data_node.append(parents_node)
+                    for parent_path, updates in sorted(updates_by_case.items()):
+                        prev_node = parents_node
+                        tail, head = split_path(parent_path)
+                        if tail:
+                            for node_name in tail.split('/'):
+                                prev_node = prev_node.find('{x}%s' % node_name)
+                        node = _make_elem('{x}%s' % head)
+                        prev_node.append(node)
+                        path = 'parents/%s/' % parent_path
+                        parent_case_block = make_case_block(path)
+                        node.append(parent_case_block)
+                        add_update_block(parent_case_block, updates, path)
+                        xpath = get_case_parent_xpath(parent_path)
+                        self.add_bind(
+                            nodeset='%scase/@case_id' % path,
+                            calculate=xpath.property('@case_id')
+                        )
 
             if 'close_case' in actions:
                 add_close_block(case_block, actions['close_case'])
@@ -744,9 +770,8 @@ class XForm(WrappedNode):
                         'name': 'case_name',
                         'owner_id': '@owner_id'
                     }.get(property, property)
-                    xpath = SESSION_CASE_ID.case()
-                    for parent_name in parent_path.split('/'):
-                        xpath = xpath.index_id(parent_name).case()
+
+                    xpath = get_case_parent_xpath(parent_path)
                     self.add_setvalue(
                         ref=nodeset,
                         value=xpath.property(property_xpath),
