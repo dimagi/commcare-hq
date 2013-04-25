@@ -24,8 +24,9 @@
     {% for uploader in uploaders %}
     <div id="{{ uploader.name }}">
         <div class="alert alert-info hqm-not-supported hide">
+            <i class="icon-warning-sign"></i>
             {% blocktrans %}
-            <i class="icon-warning-sign"></i> Your browser does not support this uploader.
+            Your browser does not support this uploader.
             We recommend <a href="https://www.google.com/intl/en/chrome/browser/">Google Chrome</a>.
             {% endblocktrans %}
         </div>
