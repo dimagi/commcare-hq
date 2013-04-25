@@ -1,4 +1,5 @@
 
+COMMTRACK_REPORT_XMLNS = 'http://openrosa.org/commtrack/stock_report'
 COMMTRACK_USERNAME = 'commtrack-system'
 
 SUPPLY_POINT_CASE_TYPE = 'supply-point'
