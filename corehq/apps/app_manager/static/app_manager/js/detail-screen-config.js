@@ -67,8 +67,8 @@ var DetailScreenConfig = (function () {
     }
 
     var field_val_re = /^[a-zA-Z][\w_-]*(\/[a-zA-Z][\w_-]*)*$/;
-    var field_format_warning = $('<span/>').addClass('label label-warning').html("Invalid Property Name:" +
-        "<br /> Must begin with a letter and contain only letters, numbers, '-', and '_'");
+    var field_format_warning = $('<span/>').addClass('help-inline')
+        .text("Must begin with a letter and contain only letters, numbers, '-', and '_'");
 
     Column = (function () {
         function Column(col, screen) {
@@ -189,7 +189,7 @@ var DetailScreenConfig = (function () {
             }).fire('change');
 
             this.$add = $('<i></i>').addClass(COMMCAREHQ.icons.ADD).click(function () {
-                if (that.field.val()) {
+                if (that.field.val() && field_val_re.test(that.field.val())) {
                     that.duplicate();
                 } else {
                     that.field.$edit_view.focus();
@@ -327,9 +327,9 @@ var DetailScreenConfig = (function () {
             this.customColumn.field.on('change', function () {
                 that.customColumn.header.val(toTitleCase(this.val()));
                 if (this.val() && !field_val_re.test(this.val())) {
-                    that.customColumn.format_warning.show();
+                    that.customColumn.format_warning.show().parent().addClass('error');
                 } else {
-                    that.customColumn.format_warning.hide();
+                    that.customColumn.format_warning.hide().parent().removeClass('error');
                 }
             }).$edit_view.autocomplete({
                 source: function (request, response) {
@@ -494,10 +494,10 @@ var DetailScreenConfig = (function () {
                     parts[j] = '<code style="display: inline-block;">' + parts[j] + '</code>'
                     column.field.ui.html(parts.join('<span style="color: #DDD;">/</span>'));
                 }
-                var dsf = $('<td/>').addClass('detail-screen-field').append(column.field.ui)
+                var dsf = $('<td/>').addClass('detail-screen-field control-group').append(column.field.ui)
                 dsf.append(column.format_warning);
                 if (column.field.value && !field_val_re.test(column.field.value)) {
-                    column.format_warning.show();
+                    column.format_warning.show().parent().addClass('error');
                 }
                 dsf.appendTo($tr);
 
