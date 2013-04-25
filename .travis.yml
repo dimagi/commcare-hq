@@ -4,6 +4,7 @@ python:
 install:
  - "bash -e .travis/quietly-run-install.sh"
  - "bash -e .travis/quietly-install-requirements.sh"
+ - "bash -e .travis/misc-setup.sh"
  - "cp .travis/localsettings.py localsettings.py"
 script: python manage.py test --noinput
 services:
