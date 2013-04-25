@@ -36,6 +36,9 @@ def default_consumption(case):
     # if setting is monthly rate, must normalize to daily
     return None
 
+def is_timely(case, limit=0):
+    return num_periods_late(case, REPORTING_PERIOD, *REPORTING_PERIOD_ARGS) <= limit
+
 def get_threshold(type):
     # TODO vary by supply point type?
     return {
@@ -103,7 +106,7 @@ class CurrentStockStatusReport(GenericTabularReport, CommtrackReportMixin):
         def case_stock_category(case):
             return stock_category(current_stock(case), monthly_consumption(case))
         def status(case):
-            return case_stock_category(case) if num_periods_late(case, REPORTING_PERIOD, *REPORTING_PERIOD_ARGS) == 0 else 'nonreporting'
+            return case_stock_category(case) if is_timely(case) else 'nonreporting'
 
         status_by_product = dict((p, map_reduce(lambda c: [(status(c),)], len, data=cases)) for p, cases in cases_by_product.iteritems())
 
@@ -183,7 +186,7 @@ class AggregateStockStatusReport(GenericTabularReport, CommtrackReportMixin):
             return sum(vals) if vals else None
 
         def aggregate_product(cases):
-            data = [(current_stock(c), monthly_consumption(c)) for c in cases]
+            data = [(current_stock(c), monthly_consumption(c)) for c in cases if is_timely(c)]
             total_stock = _sum([d[0] for d in data if d[0] is not None])
             total_consumption = _sum([d[1] for d in data if d[1] is not None])
             # exclude stock values w/o corresponding consumption figure from total months left calculation
@@ -215,11 +218,19 @@ class AggregateStockStatusReport(GenericTabularReport, CommtrackReportMixin):
             def fmt(val, formatter=lambda k: k, default=u'\u2014'):
                 return formatter(val) if val is not None else default
 
+            statuses = {
+                'nodata': 'no data',
+                'stockout': 'stock-out',
+                'understock': 'under-stock',
+                'adequate': 'adequate',
+                'overstock': 'over-stock',
+            }
+
             for row in self.product_data:
                 row[1] = fmt(row[1])
                 row[2] = fmt(row[2], int)
                 row[3] = fmt(row[3], lambda k: '%.1f' % k)
-                row[4] = fmt(row[4])
+                row[4] = fmt(row[4], lambda k: statuses.get(k, k))
                 yield row
 
     """
