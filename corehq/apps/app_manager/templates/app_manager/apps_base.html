@@ -70,44 +70,6 @@
         });
         $('.hq-help').hqHelp();
     });
-    $(function() {
-        var hidden,
-            bootstrap = {% if applications %}false{% else %}true{% endif %},
-            $appsMenu = $("#apps-menu"),
-            $appsMenuBorder = $("#apps-menu-border"),
-            $toggleDiv = $("#apps-menu-toggle"),
-            $toggleIcon = $("#apps-menu-toggle i"),
-            $toggleLink = $("#apps-menu-toggle a"),
-            down = 'icon-chevron-down',
-            up = 'icon-chevron-up';
-
-        function setHidden(val) {
-            hidden = val;
-            $.cookie('appsMenuHidden', JSON.stringify(hidden), {path: '/'});
-            $toggleIcon.addClass(hidden ? down : up)
-                    .removeClass(hidden ? up : down);
-            $toggleLink.text(hidden ? "Change Apps" : "Hide");
-
-        }
-        setHidden(JSON.parse($.cookie('appsMenuHidden') || "true"));
-        $toggleDiv.addClass('ui-corner-bottom');
-        $toggleLink.click(function(){
-            $("#apps-menu").slideToggle();
-            setHidden(!hidden);
-            return false;
-        });
-        if(hidden) {
-            $appsMenu.hide();
-        } else if (bootstrap) {
-            $appsMenu.show();
-            $toggleDiv.hide();
-        } else {
-            $appsMenu.show();
-            window.setTimeout(function(){
-                $toggleLink.trigger('click');
-            }, 400);
-        }
-    });
     $(function () {
         COMMCAREHQ.app_manager.init({
             appVersion: {% if app.version %}{{ app.version }}{% else %}-1{% endif %},
@@ -132,8 +94,6 @@
             }
         });
     });
-
-
     </script>
 {% endblock %}
 
