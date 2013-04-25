@@ -142,7 +142,7 @@ def render_form(form, domain, options):
     definition = get_definition(sorted_form_metadata_keys(meta.keys()))
     form_meta_data = _get_tables_as_columns(meta, definition)
 
-    return render_to_string("case/partials/single_form.html", {
+    return render_to_string("form/partials/single_form.html", {
         "context_case_id": case_id,
         "instance": form,
         "is_archived": form.doc_type == "XFormArchived",
