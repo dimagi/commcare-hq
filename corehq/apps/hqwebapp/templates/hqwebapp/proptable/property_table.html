@@ -1,27 +1,35 @@
 <div class="property-table-row" id="{{ id }}">
     {% for table in tables %}
+    <div class="property-table-container">
+    
+        {% if table.name %}
+        <div class="table-tab">
+            {{ table.name }}
+        </div>
+        {% endif %}
 
-    <table class="table table-bordered foo-table">
-        <tbody>
-            {% for row in table.rows %}
-            <tr>
-                {% for cell in row %}
-                {% if not cell.colspan %}
-                <th title="{{ cell.expr }}">
-                    {{ cell.name }}
-                </th>
-                <td>
-                    {{ cell.value }}
-                </td>
-                {% else %}
-                <th colspan="{{ cell.colspan }}">
-                </th>
-                {% endif %}
+        <table class="table table-bordered foo-table">
+            <tbody>
+                {% for row in table.rows %}
+                <tr>
+                    {% for cell in row %}
+                    {% if not cell.colspan %}
+                    <th title="{{ cell.expr }}">
+                        {{ cell.name }}
+                    </th>
+                    <td>
+                        {{ cell.value }}
+                    </td>
+                    {% else %}
+                    <th colspan="{{ cell.colspan }}">
+                    </th>
+                    {% endif %}
+                    {% endfor %}
+                </tr>
                 {% endfor %}
-            </tr>
-            {% endfor %}
-        </tbody>
-    </table>
+            </tbody>
+        </table>
 
+    </div>
     {% endfor %}
 </div>
