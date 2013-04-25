@@ -505,6 +505,7 @@ function HQMediaFileUploadController (uploader_name, marker, options) {
 
     self.uploadComplete = function (event) {
         var curUpload = self.getActiveUploadSelectors(event.file);
+        $(curUpload.cancel).addClass('hide');
         $(curUpload.progressBarContainer).removeClass('active').addClass('progress-success');
 
         var response = $.parseJSON(event.data);

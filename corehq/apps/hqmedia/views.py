@@ -236,15 +236,15 @@ class BaseProcessUploadedView(BaseMultimediaView):
 
     def post(self, request, *args, **kwargs):
         self.errors = []
+        response = {}
         try:
             self.validate_file()
+            response.update(self.process_upload())
         except BadMediaFileException as e:
             self.errors.append(e.message)
-        upload_response = self.process_upload()
-        response = {
+        response.update({
             'errors': self.errors,
-        }
-        response.update(upload_response)
+        })
         return HttpResponse(json.dumps(response))
 
     def validate_file(self):
@@ -318,7 +318,7 @@ class BaseProcessFileUploadView(BaseProcessUploadedView):
             raise BadMediaFileException("Did not process a mime type!")
         base_type = self.mime_type.split('/')[0]
         if base_type not in self.valid_base_types():
-            raise BadMediaFileException("Not a valid file.")
+            raise BadMediaFileException("Not a valid %s file." % self.media_class.get_nice_name().lower())
 
     def process_upload(self):
         self.uploaded_file.file.seek(0)
