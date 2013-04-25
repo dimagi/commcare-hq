@@ -21,7 +21,7 @@ from dimagi.utils.web import json_request
 from django.conf import settings
 
 def make_form_couch_key(domain, by_submission_time=True,
-                   xmlns=None, user_id=None, app_id=None):
+                   xmlns=None, user_id=Ellipsis, app_id=None):
     prefix = ["submission"] if by_submission_time else ["completion"]
     key = [domain] if domain is not None else []
     if xmlns == "":
@@ -37,7 +37,7 @@ def make_form_couch_key(domain, by_submission_time=True,
         if app_id:
             prefix.append('app')
             key.append(app_id)
-        if user_id:
+        if user_id is not Ellipsis:
             prefix.append('user')
             key.append(user_id)
     return [" ".join(prefix)] + key
@@ -104,7 +104,7 @@ def get_all_users_by_domain(domain=None, group=None, individual=None,
         # get all the users only in this group and don't bother filtering.
         if not isinstance(group, Group):
             group = Group.get(group)
-        users =  group.get_users(only_commcare=True)
+        users = group.get_users(only_commcare=True)
     elif individual:
         try:
             users = [CommCareUser.get_by_user_id(individual)]
@@ -131,7 +131,7 @@ def get_all_users_by_domain(domain=None, group=None, individual=None,
                 if user_filter[temp_user.filter_flag].show:
                     users.append(temp_user)
         if user_filter[HQUserType.UNKNOWN].show:
-            users.append(TempCommCareUser(domain, '', None))
+            users.append(TempCommCareUser(domain, '*', None))
 
         if user_filter[HQUserType.REGISTERED].show:
             # now add all the registered users who never submitted anything
