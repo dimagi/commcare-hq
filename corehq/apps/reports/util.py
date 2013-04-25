@@ -20,8 +20,15 @@ from dimagi.utils.timezones import utils as tz_utils
 from dimagi.utils.web import json_request
 from django.conf import settings
 
+
 def make_form_couch_key(domain, by_submission_time=True,
                    xmlns=None, user_id=Ellipsis, app_id=None):
+    """
+        This sets up the appropriate query for couch based on common report parameters.
+
+        Note: Ellipsis is used as the default for user_id because
+        None is actually emitted as a user_id on occasion in couch
+    """
     prefix = ["submission"] if by_submission_time else ["completion"]
     key = [domain] if domain is not None else []
     if xmlns == "":
@@ -41,6 +48,7 @@ def make_form_couch_key(domain, by_submission_time=True,
             prefix.append('user')
             key.append(user_id)
     return [" ".join(prefix)] + key
+
 
 def all_xmlns_in_domain(domain):
     # todo replace form_list with this
