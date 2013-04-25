@@ -231,7 +231,7 @@ def import_app(req, domain, template="app_manager/import_app.html"):
         return back_to_main(**locals())
     else:
         app_id = req.GET.get('app')
-        redirect_domain = req.GET.get('domain')
+        redirect_domain = req.GET.get('domain') or None
         if redirect_domain is not None:
             if Domain.get_by_name(redirect_domain):
                 return HttpResponseRedirect(
