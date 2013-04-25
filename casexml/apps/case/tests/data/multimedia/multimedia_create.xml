@@ -1,24 +1,25 @@
 <?xml version='1.0' ?>
 <data uiVersion="1" version="1" name="Barcode Demo Item Registration"
     xmlns:jrm="http://dev.commcarehq.org/jr/xforms"
+    xmlns:cc="http://commcarehq.org/xforms"
     xmlns="http://openrosa.org/formdesigner/B095F533-6226-40EE-9045-38EA21D214DB">
     <name>fgg</name>
     <date>2011-06-07</date>
-    <case case_id="EOL9FIAKIQWOFXFOH0QAMWU64" user_id="6dac4940-913e-11e0-9d4b-005056aa7fb5" date_modified="2013-04-07T15:00:37.026-05" xmlns:n0="http://commcarehq.org/case/transaction/v2">
-        <create>
-            <case_type_id>cc_bc_demo</case_type_id>
-            <case_name>fgg</case_name>
-            <attachment>
-                <photo src="fruity.jpg" from="local"/>
-            </attachment>
-        </create>
-    </case>
-    <meta>
-        <deviceID>354957031935664</deviceID>
-        <timeStart>2013-04-07T17:06:02.156</timeStart>
-        <timeEnd>2013-04-07T16:07:01.907</timeEnd>
-        <username>bcdemo</username>
-        <userID>6dac4940-913e-11e0-9d4b-005056aa7fb5</userID>
-        <uid>6RGAZTETE3Z2QC0PE2DKM88MO</uid>
-    </meta>
+    <n0:case case_id="EOL9FIAKIQWOFXFOH0QAMWU64" user_id="6dac4940-913e-11e0-9d4b-005056aa7fb5" date_modified="2013-04-07T15:00:37.026-05" xmlns:n0="http://commcarehq.org/case/transaction/v2">
+        <n0:create>
+            <n0:case_type_id>cc_bc_demo</n0:case_type_id>
+            <n0:case_name>fgg</n0:case_name>
+            <n0:attachment>
+                <n0:photo src="fruity.jpg" from="local"/>
+            </n0:attachment>
+        </n0:create>
+    </n0:case>
+    <n1:meta xmlns:n1="http://openrosa.org/jr/xforms">
+        <n1:deviceID>354957031935664</n1:deviceID>
+        <n1:timeStart>2013-04-07T17:06:02.156</n1:timeStart>
+        <n1:timeEnd>2013-04-07T16:07:01.907</n1:timeEnd>
+        <n1:username>bcdemo</n1:username>
+        <n1:userID>6dac4940-913e-11e0-9d4b-005056aa7fb5</n1:userID>
+        <n1:instanceID>6RGAZTETE3Z2QC0PE2DKM88MO</n1:instanceID>
+    </n1:meta>
 </data>
