@@ -2,11 +2,17 @@
 {% load case_tags %}
 {% load hq_shared_tags %}
 
-{% block title %} - Case: {{ report.name }}{% endblock %}
+{% block title %}Case: {{ report.name }}{% endblock %}
 
 {% block head %} {{ block.super }}
     {% include "imports/proptable.html" %}
     {% include "imports/fancy-code.html" %}
+    
+    <style type="text/css">
+        .hq-generic-report {
+            padding: 10px;
+        }
+    </style>
 {% endblock %}
 
 {% block js-inline %}{{ block.super }}
