@@ -56,8 +56,7 @@ class MainNotification(Notification):
 @org_member_required
 def orgs_landing(request, org, template="orgs/orgs_landing.html", form=None, add_form=None, invite_member_form=None,
                  add_team_form=None, update_form=None, tab=None):
-    organization = Organization.get_by_name(org, strict=True)
-
+    organization = request.organization
 
     class LandingNotification(Notification):
         doc_type = 'OrgLandingNotification'
@@ -110,18 +109,16 @@ def orgs_landing(request, org, template="orgs/orgs_landing.html", form=None, add
 
 @org_member_required
 def orgs_members(request, org, template="orgs/orgs_members.html"):
-    organization = Organization.get_by_name(org, strict=True)
-
     class MembersNotification(Notification):
         doc_type = 'OrgMembersNotification'
 
         def template(self):
             return 'orgs/partials/members_notification.html'
 
-    MainNotification.display_if_needed(messages, request, ctxt={"org": organization})
+    MainNotification.display_if_needed(messages, request, ctxt={"org": request.organization})
     MembersNotification.display_if_needed(messages, request)
 
-    ctxt = base_context(request, organization)
+    ctxt = base_context(request, request.organization)
     ctxt["org_admins"] = [member.username for member in ctxt["members"] if member.is_org_admin(org)]
     ctxt["tab"] = "members"
 
@@ -129,18 +126,16 @@ def orgs_members(request, org, template="orgs/orgs_members.html"):
 
 @org_member_required
 def orgs_teams(request, org, template="orgs/orgs_teams.html"):
-    organization = Organization.get_by_name(org, strict=True)
-
     class TeamsNotification(Notification):
         doc_type = 'OrgTeamsNotification'
 
         def template(self):
             return 'orgs/partials/teams_notification.html'
 
-    MainNotification.display_if_needed(messages, request, ctxt={"org": organization})
+    MainNotification.display_if_needed(messages, request, ctxt={"org": request.organization})
     TeamsNotification.display_if_needed(messages, request)
 
-    ctxt = base_context(request, organization)
+    ctxt = base_context(request, request.organization)
     ctxt["tab"] = "teams"
 
     return render(request, template, ctxt)
@@ -159,7 +154,7 @@ def orgs_new_project(request, org):
 @org_admin_required
 @require_POST
 def orgs_update_info(request, org):
-    organization = Organization.get_by_name(org)
+    organization = request.organization
     form = UpdateOrgInfo(request.POST, request.FILES)
     if form.is_valid():
         # logo = None
@@ -322,24 +317,21 @@ def orgs_add_team(request, org):
 
 @org_member_required
 def orgs_logo(request, org, template="orgs/orgs_logo.html"):
-    organization = Organization.get_by_name(org)
-    image, type = organization.get_logo()
+    image, type = request.organization.get_logo()
     return HttpResponse(image, content_type=type if image else 'image/gif')
 
 @org_member_required
 def orgs_team_members(request, org, team_id, template="orgs/orgs_team_members.html"):
-    organization = Organization.get_by_name(org)
-
     class TeamMembersNotification(Notification):
         doc_type = 'OrgTeamMembersNotification'
 
         def template(self):
             return 'orgs/partials/team_members_notification.html'
 
-    MainNotification.display_if_needed(messages, request, ctxt={"org": organization})
+    MainNotification.display_if_needed(messages, request, ctxt={"org": request.organization})
     TeamMembersNotification.display_if_needed(messages, request)
 
-    ctxt = base_context(request, organization)
+    ctxt = base_context(request, request.organization)
     ctxt["tab"] = "teams"
 
     try:
@@ -464,8 +456,7 @@ def set_team_permission_for_domain(request, org, team_id):
 @org_admin_required
 @require_POST
 def add_all_to_team(request, org, team_id):
-    organization = Organization.get_by_name(org)
-    members = organization.get_members()
+    members = request.organization.get_members()
     for member in members:
         member.add_to_team(org, team_id)
         member.save()
@@ -537,9 +528,9 @@ def public(request, org, template='orgs/public.html'):
             ctxt["snapshots"].append(dom.published_snapshot())
     return render(request, template, ctxt)
 
+@org_member_required
 def base_report(request, org, template='orgs/report_base.html'):
-    organization = Organization.get_by_name(org, strict=True)
-    ctxt = base_context(request, organization)
+    ctxt = base_context(request, request.organization)
 
     if not ctxt['domains']:
         messages.warning(request, _("This organization has no projects. This report will show no data until a project has been added to the organization."))
@@ -555,9 +546,9 @@ def base_report(request, org, template='orgs/report_base.html'):
     })
     return render(request, template, ctxt)
 
+@org_member_required
 def stats(request, org, template='orgs/stats.html'):
-    organization = Organization.get_by_name(org, strict=True)
-    ctxt = base_context(request, organization)
+    ctxt = base_context(request, request.organization)
     ctxt.update({
         'tab': 'reports',
         'report_type': 'stats',

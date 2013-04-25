@@ -79,6 +79,8 @@ def saved_exports():
 @periodic_task(run_every=crontab(hour="0", minute="0", day_of_week="*"))
 def update_calculated_properties():
     es = get_es()
+
+    #todo: use some sort of ES scrolling/paginating
     results = es.get(DOMAIN_INDEX + "/hqdomain/_search", data={"size": 99999})['hits']['hits']
     all_stats = _all_domain_stats()
     for r in results:

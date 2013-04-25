@@ -5,6 +5,8 @@
 {% load timezone_tags %}
 {% load i18n %}
 
+{% block title %}{% trans "Applications" %}{% endblock %}
+
 {% block head %}{{ block.super }}
     <link rel="stylesheet" href="{% static 'hqstyle/css/legacy/app_manager.css' %}"/>
     {% include "imports/jqmodal.html" %}

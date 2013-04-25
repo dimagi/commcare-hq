@@ -1,15 +1,16 @@
 from datetime import timedelta, datetime, time
 import json
+import pytz
 from django.core.urlresolvers import reverse
 from django.http import HttpResponseRedirect, Http404, HttpResponse, HttpResponseBadRequest
 from django.shortcuts import render
 
-from corehq.apps.reminders.forms import CaseReminderForm, ComplexCaseReminderForm, SurveyForm, SurveySampleForm, EditContactForm
-from corehq.apps.reminders.models import CaseReminderHandler, CaseReminderEvent, REPEAT_SCHEDULE_INDEFINITELY, EVENT_AS_OFFSET, EVENT_AS_SCHEDULE, SurveyKeyword, Survey, SurveySample, SURVEY_METHOD_LIST, SurveyWave, ON_DATETIME, RECIPIENT_SURVEY_SAMPLE, QUESTION_RETRY_CHOICES
+from corehq.apps.reminders.forms import CaseReminderForm, ComplexCaseReminderForm, SurveyForm, SurveySampleForm, EditContactForm, RemindersInErrorForm
+from corehq.apps.reminders.models import CaseReminderHandler, CaseReminderEvent, CaseReminder, REPEAT_SCHEDULE_INDEFINITELY, EVENT_AS_OFFSET, EVENT_AS_SCHEDULE, SurveyKeyword, Survey, SurveySample, SURVEY_METHOD_LIST, SurveyWave, ON_DATETIME, RECIPIENT_SURVEY_SAMPLE, QUESTION_RETRY_CHOICES
 from corehq.apps.users.decorators import require_permission
 from corehq.apps.users.models import CouchUser, CommCareUser, Permissions
 from .models import UI_SIMPLE_FIXED, UI_COMPLEX
-from .util import get_form_list, get_sample_list
+from .util import get_form_list, get_sample_list, get_recipient_name
 from corehq.apps.sms.mixin import VerifiedNumber
 from corehq.apps.sms.util import register_sms_contact, update_contact
 from corehq.apps.domain.models import DomainCounter
@@ -17,6 +18,9 @@ from casexml.apps.case.models import CommCareCase
 from dateutil.parser import parse
 from corehq.apps.sms.util import close_task
 from corehq.apps.groups.models import Group
+from dimagi.utils.timezones import utils as tz_utils
+from corehq.apps.reports import util as report_utils
+from dimagi.utils.couch.database import is_bigcouch, bigcouch_quorum_count
 
 reminders_permission = require_permission(Permissions.edit_data)
 
@@ -112,18 +116,7 @@ def scheduled_reminders(request, domain, template="reminders/partial/scheduled_r
     for reminder in reminders:
         handler = reminder.handler
         recipient = reminder.recipient
-        
-        if isinstance(recipient, CouchUser):
-            recipient_desc = "User '" + recipient.raw_username + "'"
-        elif isinstance(recipient, CommCareCase):
-            recipient_desc = "Case '" + recipient.name + "'"
-        elif isinstance(recipient, Group):
-            recipient_desc = "Group '" + recipient.name + "'"
-        elif isinstance(recipient, SurveySample):
-            recipient_desc = "Survey Sample '" + recipient.name + "'"
-        else:
-            recipient_desc = ""
-        
+        recipient_desc = get_recipient_name(recipient)
         case = reminder.case
         
         reminder_data.append({
@@ -669,4 +662,56 @@ def edit_contact(request, domain, sample_id, case_id):
     }
     return render(request, "reminders/partial/edit_contact.html", context)
 
+@reminders_permission
+def reminders_in_error(request, domain):
+    handler_map = {}
+    if request.method == "POST":
+        form = RemindersInErrorForm(request.POST)
+        if form.is_valid():
+            kwargs = {}
+            if is_bigcouch():
+                # Force a write to all nodes before returning
+                kwargs["w"] = bigcouch_quorum_count()
+            current_timestamp = datetime.utcnow()
+            for reminder_id in form.cleaned_data.get("selected_reminders"):
+                reminder = CaseReminder.get(reminder_id)
+                if reminder.domain != domain:
+                    continue
+                if reminder.handler_id in handler_map:
+                    handler = handler_map[reminder.handler_id]
+                else:
+                    handler = reminder.handler
+                    handler_map[reminder.handler_id] = handler
+                reminder.error = False
+                reminder.error_msg = None
+                handler.set_next_fire(reminder, current_timestamp)
+                reminder.save(**kwargs)
+    
+    timezone = report_utils.get_timezone(request.couch_user.user_id, domain)
+    reminders = []
+    for reminder in CaseReminder.view("reminders/reminders_in_error", startkey=[domain], endkey=[domain, {}], include_docs=True).all():
+        if reminder.handler_id in handler_map:
+            handler = handler_map[reminder.handler_id]
+        else:
+            handler = reminder.handler
+            handler_map[reminder.handler_id] = handler
+        recipient = reminder.recipient
+        case = reminder.case
+        reminders.append({
+            "reminder_id" : reminder._id,
+            "handler_id" : reminder.handler_id,
+            "handler_name" : handler.nickname,
+            "case_id" : case.get_id if case is not None else None,
+            "case_name" : case.name if case is not None else None,
+            "next_fire" : tz_utils.adjust_datetime_to_timezone(reminder.next_fire, pytz.utc.zone, timezone.zone).strftime("%Y-%m-%d %H:%M:%S"),
+            "error_msg" : reminder.error_msg,
+            "recipient_name" : get_recipient_name(recipient),
+        })
+    context = {
+        "domain" : domain,
+        "reminders" : reminders,
+        "timezone" : timezone,
+        "timezone_now" : datetime.now(tz=timezone),
+    }
+    return render(request, "reminders/partial/reminders_in_error.html", context)
 

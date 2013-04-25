@@ -1,3 +1,4 @@
+import itertools
 from casexml.apps.case.models import CommCareCase
 from casexml.apps.case.tests.util import CaseBlock
 from casexml.apps.case.xml import V2
@@ -5,17 +6,18 @@ from lxml import etree
 from lxml.builder import ElementMaker
 from xml import etree as legacy_etree
 from datetime import date, timedelta
+from dimagi.utils.decorators.memoized import memoized
 from receiver.util import spoof_submission
 from corehq.apps.receiverwrapper.util import get_submit_url
 from dimagi.utils.couch.loosechange import map_reduce
 import logging
-from corehq.apps.commtrack.models import CommtrackConfig
+from corehq.apps.commtrack.models import CommtrackConfig, RequisitionCase
 from corehq.apps.commtrack.requisitions import RequisitionState
 from corehq.apps.commtrack import const
 
 logger = logging.getLogger('commtrack.incoming')
 
-XMLNS = 'http://openrosa.org/commtrack/stock_report'
+XMLNS = const.COMMTRACK_REPORT_XMLNS
 META_XMLNS = 'http://openrosa.org/jr/xforms'
 def _(tag, ns=XMLNS):
     return '{%s}%s' % (ns, tag)
@@ -30,9 +32,7 @@ def process(domain, instance):
     config = CommtrackConfig.for_domain(domain)
     root = etree.fromstring(instance)
     user_id, transactions = unpack_transactions(root, config)
-
-    case_ids = [tx.case_id for tx in transactions]
-    cases = dict((c._id, c) for c in CommCareCase.view('_all_docs', keys=case_ids, include_docs=True))
+    transactions = list(normalize_transactions(transactions))
 
     def get_transactions(all_tx, type_filter):
         """get all the transactions of the relevant type (filtered by type_filter),
@@ -47,6 +47,9 @@ def process(domain, instance):
     # split transactions by type and product
     stock_transactions = get_transactions(transactions, lambda tx: tx.category == 'stock')
     requisition_transactions = get_transactions(transactions, lambda tx: tx.category == 'requisition')
+
+    case_ids = list(set(itertools.chain(*[tx.get_case_ids() for tx in transactions])))
+    cases = dict((c._id, c) for c in CommCareCase.view('_all_docs', keys=case_ids, include_docs=True))
 
     # TODO: code to auto generate / update requisitions from transactions if
     # project is configured for that.
@@ -70,7 +73,9 @@ def process(domain, instance):
     logger.debug('submitting: %s' % submission)
 
     submit_time = root.find('.//%s' % _('timeStart', META_XMLNS)).text
-    spoof_submission(get_submit_url(domain), submission, headers={'HTTP_X_SUBMIT_TIME': submit_time}, hqsubmission=False)
+    spoof_submission(get_submit_url(domain), submission,
+                     headers={'HTTP_X_SUBMIT_TIME': submit_time},
+                     hqsubmission=False)
 
 
 
@@ -92,12 +97,16 @@ class StockTransaction(object):
         assert self.product_id
         assert self.case_id
 
+    def get_case_ids(self):
+        # to standardize an API that could have one or more cases
+        yield self.case_id
+
     @property
     def base_action_type(self):
         return self.action_config.action_type
 
     @classmethod
-    def from_xml(cls, tx, config=None):
+    def from_xml(cls, tx, config):
         data = {
             'product_id': tx.find(_('product')).text,
             'case_id': tx.find(_('product_entry')).text,
@@ -129,6 +138,13 @@ class StockTransaction(object):
     def category(self):
         return 'stock'
 
+    def fragment(self):
+        """
+        A short string representation of this to be used in sms correspondence
+        """
+        quantity = self.value if self.value is not None else ''
+        return '%s%s' % (self.product.code.lower(), quantity)
+
     def __repr__(self):
         return '{action}: {value} (case: {case}, product: {product})'.format(
             action=self.action_name, value=self.value, case=self.case_id,
@@ -140,8 +156,15 @@ class Requisition(StockTransaction):
     def category(self):
         return 'requisition'
 
+    @property
+    def requisition_case_id(self):
+        # for somewhat obscure reasons, the case_id is the id of the
+        # supply_point_product case, so we add a new field for this.
+        # though for newly created requisitions it's just empty
+        return None
+
     @classmethod
-    def from_xml(cls, tx, config=None):
+    def from_xml(cls, tx, config):
         data = {
             'product_id': tx.find(_('product')).text,
             'case_id': tx.find(_('product_entry')).text,
@@ -160,9 +183,46 @@ class Requisition(StockTransaction):
             E.value(str(self.value)),
         )
 
-class RequisitionResponse(object):
-    def __init__(self, action_name):
+class RequisitionResponse(Requisition):
+
+    @property
+    def requisition_case_id(self):
+        return self.case_id
+
+class BulkRequisitionResponse(object):
+    """
+    A bulk response to a set of requisitions, for example "approve" or "fill".
+    """
+    # todo: it's possible this class should support explicit transactions/amounts
+    # on a per-product basis, but won't until someone demands it
+
+    def __init__(self, domain, action_type, action_name, location_id, config=None):
+        self.domain = domain
         self.action_name = action_name
+        self.action_type = action_type
+        self.location_id = location_id
+        self.case_id = None
+        self.config = config
+
+
+    @memoized
+    def get_case_ids(self):
+        for c in RequisitionCase.open_for_location(self.domain, self.location_id):
+            yield c
+
+    def get_transactions(self):
+        for case_id in self.get_case_ids():
+            # this is going to hit the db a lot
+            c = RequisitionCase.get(case_id)
+            yield(RequisitionResponse(
+                product_id = c.product_id,
+                case_id=c._id,
+                action_name=self.action_name,
+                value=c.get_default_value(),
+                inferred=True,
+                config=self.config,
+            ))
+
 
     @property
     def category(self):
@@ -173,9 +233,13 @@ class RequisitionResponse(object):
         return const.ALL_PRODUCTS_TRANSACTION_TAG
 
     @classmethod
-    def from_xml(cls, tx, config=None):
+    def from_xml(cls, tx, config):
         data = {
+            'domain': config.domain, # implicit assert that this isn't empty
             'action_name': tx.find(_('status')).text,
+            'action_type': tx.find(_('status_type')).text,
+            'location_id': tx.find(_('location')).text,
+            'config': config,
         }
         return cls(**data)
 
@@ -185,8 +249,17 @@ class RequisitionResponse(object):
 
         return E.response(
             E.status(self.action_name),
+            E.status_type(self.action_type),
+            E.location(self.location_id),
             E.product(self.product_id),
         )
+
+    def fragment(self):
+        # for a bulk operation just indicate we touched everything
+        return 'all'
+
+    def __repr__(self):
+        return 'bulk requisition response: %s' % self.action_name
 
 def unpack_transactions(root, config):
     user_id = root.find('.//%s' % _('userID', META_XMLNS)).text
@@ -194,13 +267,24 @@ def unpack_transactions(root, config):
         types = {
             'transaction': StockTransaction,
             'request': Requisition,
-            'response': RequisitionResponse,
+            'response': BulkRequisitionResponse,
         }
         for tag, factory in types.iteritems():
             for tx in root.findall(_(tag)):
                 yield factory.from_xml(tx, config)
 
-    return user_id, list(transactions())
+    return user_id, transactions()
+
+def normalize_transactions(transactions):
+    for t in transactions:
+        if isinstance(t, BulkRequisitionResponse):
+            # deal with the bulkness by creating individual transactions
+            # for each relevant product
+            for sub_t in t.get_transactions():
+                yield sub_t
+        else:
+            yield t
+
 
 def replace_transactions(root, new_tx):
     for tag in ('transaction', 'request', 'response'):
@@ -298,5 +382,3 @@ class StockState(object):
         case_update = etree.fromstring(legacy_etree.ElementTree.tostring(case_update))
 
         return case_update
-
-
