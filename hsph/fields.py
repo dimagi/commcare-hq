@@ -1,6 +1,11 @@
 from corehq.apps.reports.fields import ReportField, ReportSelectField
 from corehq.apps.reports.fields import SelectFilteredMobileWorkerField
 from corehq.apps.fixtures.models import FixtureDataType, FixtureDataItem
+from corehq.apps.reports.filters.base import (BaseSingleOptionFilter,
+    BaseDrilldownOptionFilter)
+from corehq.apps.reports.filters.users import LinkedUserFilter
+from corehq.apps.groups.models import Group
+from django.utils.translation import ugettext as _
 
 
 class SiteField(ReportField):
@@ -94,12 +99,12 @@ class NameOfDCTLField(ReportSelectField):
             dctls[item.fields.get("id")] = item.get_users(wrap=False)
         return dctls
 
-from corehq.apps.reports.filters.base import (BaseSingleOptionFilter,
-    BaseDrilldownOptionFilter)
-from corehq.apps.groups.models import Group
-from django.utils.translation import ugettext as _
 
+class DCTLToFIDAFilter(LinkedUserFilter):
+    domain = 'hsph'
+    user_types = ["DCTL", "FIDA"]
 
+# todo: remove
 class DCTLAndFIDAFilter(BaseDrilldownOptionFilter):
 
     slug = 'dctl_fida'
