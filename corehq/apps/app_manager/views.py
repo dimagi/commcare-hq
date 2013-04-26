@@ -312,13 +312,15 @@ def default(req, domain):
 def get_form_view_context(request, form, langs, is_user_registration, messages=messages):
     xform_questions = []
     xform = None
+    form_errors = []
+
     try:
         xform = form.wrapped_xform()
     except XFormError as e:
-        messages.error(request, "Error in form: %s" % e)
+        form_errors.append("Error in form: %s" % e)
     except Exception as e:
         logging.exception(e)
-        messages.error(request, "Unexpected error in form: %s" % e)
+        form_errors.append("Unexpected error in form: %s" % e)
 
     if xform and xform.exists():
         if xform.already_has_meta():
@@ -326,13 +328,14 @@ def get_form_view_context(request, form, langs, is_user_registration, messages=m
                 "This form has a meta block already! "
                 "It may be replaced by CommCare HQ's standard meta block."
             )
+
         try:
             form.validate_form()
             xform_questions = xform.get_questions(langs)
         except XMLSyntaxError as e:
-            messages.error(request, "Syntax Error: %s" % e)
+            form_errors.append("Syntax Error: %s" % e)
         except AppError as e:
-            messages.error(request, "Error in application: %s" % e)
+            form_errors.append("Error in application: %s" % e)
         except XFormValidationError as e:
 
             # Don't display the first two lines which say "Parsing form..." and 'Title: "{form_name}"'
@@ -348,19 +351,16 @@ def get_form_view_context(request, form, langs, is_user_registration, messages=m
                 message = '\n'.join(message_lines)
                 
             message = "Validation Error: " + message
+            form_errors.append((html.escape(message).replace('\n', '<br/>'), {'extra_tags': 'html'}))
 
-            messages.error(request,
-                html.escape(message).replace('\n', '<br/>'),
-                extra_tags='html',
-            )
         except XFormError as e:
-            messages.error(request, "Error in form: %s" % e)
+            form_errors.append("Error in form: %s" % e)
         # any other kind of error should fail hard, but for now there are too many for that to be practical
         except Exception as e:
             if settings.DEBUG:
                 raise
             logging.exception(e)
-            messages.error(request, "Unexpected System Error: %s" % e)
+            form_errors.append("Unexpected System Error: %s" % e)
 
         try:
             form_action_errors = form.validate_for_build()
@@ -383,6 +383,13 @@ def get_form_view_context(request, form, langs, is_user_registration, messages=m
     except Exception:
         languages = []
 
+    for i, err in enumerate(form_errors):
+        if not isinstance(err, basestring):
+            messages.error(request, err[0], **err[1])
+            form_errors[i] = err[0]
+        else:
+            messages.error(request, err)
+
     return {
         'nav_form': form if not is_user_registration else '',
         'xform_languages': languages,
@@ -391,6 +398,7 @@ def get_form_view_context(request, form, langs, is_user_registration, messages=m
         'case_reserved_words_json': load_case_reserved_words(),
         'is_user_registration': is_user_registration,
         'module_case_types': [{'module_name': module.name.get('en'), 'case_type': module.case_type} for module in form.get_app().modules if module.case_type] if not is_user_registration else None,
+        'form_errors': form_errors,
     }
 
 
