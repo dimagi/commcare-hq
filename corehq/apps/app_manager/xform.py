@@ -668,8 +668,9 @@ class XForm(WrappedNode):
 
         def get_case_parent_xpath(parent_path):
             xpath = SESSION_CASE_ID.case()
-            for parent_name in parent_path.split('/'):
-                xpath = xpath.index_id(parent_name).case()
+            if parent_path:
+                for parent_name in parent_path.split('/'):
+                    xpath = xpath.index_id(parent_name).case()
             return xpath
 
         delegation_case_block = None
