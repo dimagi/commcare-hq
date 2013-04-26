@@ -51,21 +51,14 @@ def form_inline_display(form_id, timezone=pytz.utc):
 
 def sorted_case_update_keys(keys):
     """Put common @ attributes at the bottom"""
-    def mycmp(x, y):
-        if x[0] == '@' and y[0] == '@':
-            return cmp(x, y)
-        if x[0] == '@':
-            return 1
-        if y[0] == '@':
-            return -1
-        return cmp(x, y)
-    return sorted(keys, cmp=mycmp)
+    return sorted(keys, key=lambda k: (k[0] == '@', k))
 
 
 def sorted_form_metadata_keys(keys):
     def mycmp(x, y):
         foo = ('timeStart', 'timeEnd')
         bar = ('username', 'userID')
+
         if x in foo and y in foo:
             return -1 if foo.index(x) == 0 else 1
         elif x in foo or y in foo:
@@ -84,7 +77,7 @@ def form_key_filter(key):
     if key in SYSTEM_FIELD_NAMES:
         return False
 
-    if any(key.startswith(p) for p in ['#', '@', '_']):
+    if key.startswith(('#', '@', '_')):
         return False
 
     return True
