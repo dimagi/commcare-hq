@@ -1,132 +1,183 @@
-{% load xform_tags %}
+{% load i18n %}
+{% load proptable_tags %}
 {% load timezone_tags %}
-<h2>Case Details</h2>
-<table class="table table-striped case_details">
-<thead>
-    <tr>
-        <th>Property</th>
-        <th>Value</th>
-    </tr>
-</thead>
-<tbody>
-    <tr><td>name</td><td>{{ case.name }}</td></tr>
-    <tr><td>case_id</td><td>{{ case.case_id }}</td></tr>
-    <tr><td>opened_on</td><td>{%  utc_to_timezone case.opened_on timezone %}</td></tr>
-    <tr><td>modified_on</td><td>{% utc_to_timezone case.modified_on timezone %}</td></tr>
-    <tr><td>type</td><td><code>{{ case.type }}</code></td></tr>
-    <tr><td>closed?</td><td>{{ case.closed|yesno }}</td></tr>
-    <tr><td>closed_on</td><td>{% utc_to_timezone case.closed_on timezone %}</td></tr>
-    <tr><td>domain</td><td>{{ case.domain }}</td></tr>
-    <tr><td>external_id</td><td>{{ case.external_id }}</td></tr>
-    <tr><td>user_id</td><td><span data-field="user_id">{{ case.user_id }}</span></td></tr>
-    <tr><td>owner_id</td><td><span data-field="owner_id">{{ case.owner_id }}</span></td></tr>
-    <tr><td>forms</td><td>{% for form_id in case.xform_ids %}
-    <p class="xform_ref" data-formid="{{ form_id }}">{% form_inline_display form_id %}</p>
-    {% if not forloop.first %}<br>{% endif %}
-    {% endfor %}</td></tr>
-    <tr>
-        <td>Attachments</td><td>
+{% load hq_shared_tags %}
+
+{# standalone template, js files included at bottom #}
+<script type="text/javascript">
+    var CASE_DETAILS = {};
+
+    CASE_DETAILS.xform_api_url = "/a/{{ case.domain }}/api/v0.1/xform_es/";
+    CASE_DETAILS.xform_ids = {{ case.xform_ids|safe }};
+    CASE_DETAILS.xform_ajax_url = "/a/{{ case.domain }}/reports/case_data/{{ case.get_id }}/";
+</script>
+
+<div id="report-content">
+<div id="tabbed-content-container" class="row-fluid">
+    <div class="row-fluid">
+        {% render_tables default_properties default_properties_options %}
+    </div>
+    <ul class="nav nav-tabs">
+        <li class="active"><a href="#case-details" data-toggle="tab">{% trans "Case Properties" %}</a></li>
+        <li><a href="#case-history-tab" data-toggle="tab">{% trans "Case History" %}</a></li>
+        {% if case.referrals %}
+        <li><a href="#case-referrals" data-toggle="tab">{% trans "Referrals" %}</a></li>
+        {% endif %}
+        {% if case.all_indices|length %}
+        <li><a href="#case-related" data-toggle="tab">{% trans "Related Cases" %}</a></li>
+        {% endif %}
+    {% if case.attachments %}
+        <li><a href="#case-attachments" data-toggle="tab">{% trans "Attachments" %}</a></li>
+    {% endif %}
+    </ul>
+
+    <div class="tab-content">
+        <div class="tab-pane active" id="case-details">
+            <div class="row-fluid">
+                {% render_tables dynamic_properties dynamic_properties_options %}
+            </div>
+        </div><!-- end case-details tab -->
+    {% if case.referrals %}
+        <div class="tab-pane" id="case-referrals">
+            <h2>{% trans "Referrals" %}</h2>
+            <table class="table table-striped case_history">
+                <thead>
+                <tr>
+                    <th>{% trans "Date Opened" %}</th>
+                    <th>{% trans "Type" %}</th>
+                    <th>{% trans "Date Modified" %}</th>
+                    <th>{% trans "Status" %}</th>
+                </tr>
+                </thead>
+                <tbody>
+                {% for referral in case.referrals %}
+                    <tr>
+                        <td>{% utc_to_timezone referral.opened_on timezone %}</td>
+                        <td>{{ referral.type }}</td>
+                        <td>{% utc_to_timezone referral.modified_on timezone %}</td>
+                        <td>{{ referral.closed|yesno:"closed,open" }}</td>
+                    </tr>
+                {% empty %}
+                    <tr>
+                        <td colspan="4" class="no_data">{% trans "No referrals" %}</td>
+                    </tr>
+                {% endfor %}
+
+                </tbody>
+            </table>
+        </div> <!-- end case-referrals tab -->
+    {% endif %}
+    {% if case.all_indices %}
+        <div class="tab-pane" id="case-related">
+            <table class="table table-striped case_history">
+                <thead>
+                <tr>
+                    <th>{% trans "Name" %}</th>
+                    <th>{%  trans "Relation" %} </th>
+                    <th>{%  trans "Type" %}</th>
+                    <th>{%  trans "Date Opened" %}</th>
+                    <th>{%  trans "Date Modified" %}</th>
+                    <th>{%  trans "Status" %}</th>
+                </tr>
+                </thead>
+                <tbody>
+                {% for case_index in case.all_indices %}
+                    <tr>
+                        <td class="case_ref"
+                            data-caseid="{{ case_index.referenced_id }}">{{ case_index.referenced_case.name }}</td>
+                        <td>{{ case_index.is_reverse|yesno:"Child, Parent" }}</td>
+                        <td><code>{{ case_index.referenced_case.type }}</code></td>
+                        <td>{{ case_index.referenced_case.opened_on }}</td>
+                        <td>{{ case_index.referenced_case.modified_on }}</td>
+                        <td>{{ case_index.referenced_case.closed|yesno:"closed,open" }}</td>
+                    </tr>
+                {% empty %}
+                    <tr>
+                        <td colspan="4" class="no_data">{%  trans "No related cases" %}</td>
+                    </tr>
+                {% endfor %}
+
+                </tbody>
+            </table>
+        </div> <!-- end case-related tab -->
+    {% endif %}
+    {% if case.attachments %}
+        <div class="tab-pane" id="case-attachments">
+            <ul>
             {% for form_id, filename in case.attachments %}
-            {% if not forloop.first %}<br>{% endif %}
-            <a href="{% url xform_attachment form_id filename %}">{{ filename }}</a>
+                {% if not forloop.first %}<br>{% endif %}
+                <li>
+                <a href="{% url xform_attachment form_id filename %}">{{ filename }}</a>
+                </li>
             {% empty %}
-                <h6>No Attachments</h6>
+                <li>{% trans "No Attachments" %}</li>
             {% endfor %}
-        </td>
-    </tr>
+            </ul>
+        </div> <!-- end case-attachments tab -->
+    {% endif %}
+    <div class="tab-pane" id="case-history-tab" class="row-fluid">
+        <div class="span5">
+        <ul data-bind="foreach: $root.form_type_facets">
+            <li>
+                <strong><span data-bind="text: form_name"></span></strong>:
+                <span data-bind="text: form_count"></span>
+            </li>
+        </ul>
 
-</tbody>
-</table>
-<h2>Dynamic Properties</h2>
-<table class="table table-striped case_properties">
-<thead>
-    <tr>
-        <th>Property</th>
-        <th>Value</th>
-    </tr>
-</thead>
-<tbody>
-    {% for prop, val in case.dynamic_case_properties %}
-    <tr><td>{{ prop }}</td><td>{{ val }}</td></tr>
-    {% empty %}
-    <tr><td colspan="2" class="no_data">No data</td></tr>
-    {% endfor %}
-</tbody>
-</table>
 
-<h2>Referrals</h2>
-<table class="table table-striped case_history">
-<thead>
-    <tr>
-        <th>Date Opened</th>
-        <th>Type</th>
-        <th>Date Modified</th>
-        <th>Status</th>
-    </tr>
-</thead>
-<tbody>
-{% for referral in case.referrals %}
-    <tr>
-        <td>{% utc_to_timezone referral.opened_on timezone %}</td>
-        <td>{{ referral.type }}</td>
-        <td>{% utc_to_timezone referral.modified_on timezone %}</td>
-        <td>{{ referral.closed|yesno:"closed,open" }}</td>
-    </tr>
-{% empty %}
-    <tr><td colspan="4" class="no_data">No referrals</td></tr>
-{% endfor %}
+        <div class="hq-loading" data-bind="visible: $root.data_loading">Loading <img src="/static/hqwebapp/img/ajax-loader.gif" alt="loading indicator"></div>
+        <table class="table table-bordered table-striped table-hover datatable dataTable">
+            <thead>
+            <tr>
+                <th class="span2">{% trans "Received" %} ({{ tz_abbrev }})</th>
+                <th class="span2">{% trans "Form" %}</th>
+                <th class="span2">{% trans "User" %}</th>
+            </tr>
+            </thead>
+            <tbody data-bind="foreach: xforms">
+                <tr data-bind='click: $root.clickRow, css: { info: $data.id() == $root.selected_xform_doc_id() }'>
+                    <td>
+                        <span data-bind="text: received_on"></span>
+                    <td>
+                        <span data-bind="text: readable_name"></span>
+                    </td>
+                    <td>
+                        <span data-bind="text: username"></span>
+                        <div class="pull-right"><i class="icon-chevron-right"></i></div>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+            <div class="dataTables_control">
+                    <div class="dataTables_info">
+                        <span data-bind="text: $root.page_start_num() + '-' + $root.page_end_num() + ' / ' + $root.total_rows()"></span>
+                    </div>
+                    <div class="dataTables_length">
+                        <select id="page_size_select" size="1" class="input-mini" data-bind="options: pagination_options, value: $root.page_size"></select> <span>/ {% trans "page" %}</span>
+                    </div>
 
-</tbody>
-</table>
+                    <div class="pagination pagination-right" data-bind="visible: $root.page_count() > 1">
+                        <ul>
+                            <li>
+                                <button class="btn btn-small" type="button" data-bind="enable: $root.disp_page_index() > 1, click: $root.prevPage">«</button>
+                            </li>
+                            <li class="active">
+                                <select size="1" class="input-mini" data-bind="options: all_pages(), value: $root.disp_page_index"></select>
+                            </li>
+                            <li>
+                                <button class="btn btn-small" type="button" data-bind="enable: $root.page_end_num() < $root.total_rows(), click: $root.nextPage">»</button>
+                            </li>
+                        </ul>
+                    </div>
+            </div>
+        </div>
+        <div class="span7">
+            <div id="xform_data_panel"></div>
+        </div>
+    </div> <!-- end case-history tab -->
+    </div>
+</div> {# end tabbed-content-container div #}
+</div> {# end report-container #}
 
-<h2>Related Cases</h2>
-<table class="table table-striped case_history">
-<thead>
-    <tr>
-        <th>Name</th>
-        <th>Relation</th>
-        <th>Type</th>
-        <th>Date Opened</th>
-        <th>Date Modified</th>
-        <th>Status</th>
-    </tr>
-</thead>
-<tbody>
-{% for case_index in case.all_indices %}
-    <tr>
-        <td class="case_ref" data-caseid="{{ case_index.referenced_id }}">{{ case_index.referenced_case.name }}</td>
-        <td>{{ case.name }}'s {{ case_index.is_reverse|yesno:"Child, Parent" }}</td>
-        <td><code>{{ case_index.referenced_case.type }}</code></td>
-        <td>{{ case_index.referenced_case.opened_on}}</td>
-        <td>{{ case_index.referenced_case.modified_on}}</td>
-        <td>{{ case_index.referenced_case.closed|yesno:"closed,open" }}</td>
-    </tr>
-{% empty %}
-    <tr><td colspan="4" class="no_data">No related cases</td></tr>
-{% endfor %}
-
-</tbody>
-</table>
-
-<h2>Case History</h2>
-<table class="table table-striped case_history">
-<thead>
-    <tr>
-        <th>Date</th>
-        <th>Action</th>
-        <th>Form</th>
-    </tr>
-</thead>
-<tbody>
-{% for action in case.actions %}
-    <tr>
-        <td>{% utc_to_timezone action.date timezone %}</td>
-        <td>{{ action.action_type }}</td>
-        <td>
-            {# this makes one call to couch per action, which could be optimized but shouldn't be a big deal since it's small amounts of data #}
-            <p class="xform_ref" {% if action.xform_id %}data-formid="{{ action.xform_id }}"{% endif %}>{% form_inline_display action.xform_id timezone %}</p>
-        </td>
-    </tr>
-{% endfor %}
-</tbody>
-</table>
+<script src="{% static "hqwebapp/js/lib/jquery.cachedAjax.js" %}"></script>
+<script src="{% static "case/js/case_details.js" %}"></script>
