@@ -1,5 +1,5 @@
 from django.utils.translation import ugettext_noop
-from corehq.apps.domain.calculations import dom_calc
+from corehq.apps.domain.calculations import dom_calc, _all_domain_stats, ES_CALCED_PROPS
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn, DTSortType
 from corehq.apps.reports.dispatcher import BasicReportDispatcher, AdminReportDispatcher
 from corehq.apps.reports.generic import GenericTabularReport, ElasticTabularReport
@@ -38,14 +38,11 @@ class DomainStatsReport(GenericTabularReport):
             DataTablesColumn(_("First Form Submission"), prop_name="cp_first_form"),
             DataTablesColumn(_("Last Form Submission"), prop_name="cp_last_form"),
             DataTablesColumn(_("# Web Users"), sort_type=DTSortType.NUMERIC, prop_name="cp_n_web_users"),
-            # DataTablesColumn(_("Admins"))
         )
-        # headers.no_sort = True
         return headers
 
     @property
     def rows(self):
-        from corehq.apps.hqadmin.views import _all_domain_stats
         all_stats = _all_domain_stats()
         domains = self.get_domains()
         for domain in domains:
@@ -60,8 +57,6 @@ class DomainStatsReport(GenericTabularReport):
                 dom_calc("first_form_submission", dom),
                 dom_calc("last_form_submission", dom),
                 int(all_stats["web_users"][dom]),
-                # [row["doc"]["email"] for row in get_db().view("users/admins_by_domain",
-                #                                               key=dom, reduce=False, include_docs=True).all()],
             ]
 
     @property
@@ -96,9 +91,13 @@ def project_stats_facets():
     facets += ['cda.' + p for p in LicenseAgreement.properties().keys()]
     for p in ['internal', 'deployment', 'cda', 'migrations', 'eula']:
         facets.remove(p)
+    facets += ES_CALCED_PROPS
     return facets
 
 def es_domain_query(params, facets=None, terms=None, domains=None, return_q_dict=False, start_at=None, size=None, sort=None):
+    # from corehq.pillows.domain import DomainPillow
+    # d = DomainPillow()
+    # d.reset_checkpoint()
     from corehq.apps.appstore.views import es_query
     if terms is None:
         terms = ['search']
@@ -176,11 +175,34 @@ class AdminDomainStatsReport(DomainStatsReport, ElasticTabularReport):
         return param.startswith(ES_PREFIX)
 
     @property
+    def headers(self):
+        headers = DataTablesHeader(
+            DataTablesColumn("Project"),
+            DataTablesColumn(_("Organization"), prop_name="organization"),
+            DataTablesColumn(_("Deployment Date"), prop_name="deployment.date"),
+            DataTablesColumn(_("# Active Mobile Workers"), sort_type=DTSortType.NUMERIC,
+                prop_name="cp_n_active_cc_users",
+                help_text=_("The number of mobile workers who have submitted a form in the last 30 days")),
+            DataTablesColumn(_("# Mobile Workers"), sort_type=DTSortType.NUMERIC, prop_name="cp_n_cc_users"),
+            DataTablesColumn(_("# Active Cases"), sort_type=DTSortType.NUMERIC, prop_name="cp_n_active_cases",
+                help_text=_("The number of cases modified in the last 120 days")),
+            DataTablesColumn(_("# Cases"), sort_type=DTSortType.NUMERIC, prop_name="cp_n_cases"),
+            DataTablesColumn(_("# Form Submissions"), sort_type=DTSortType.NUMERIC, prop_name="cp_n_forms"),
+            DataTablesColumn(_("First Form Submission"), prop_name="cp_first_form"),
+            DataTablesColumn(_("Last Form Submission"), prop_name="cp_last_form"),
+            DataTablesColumn(_("# Web Users"), sort_type=DTSortType.NUMERIC, prop_name="cp_n_web_users"),
+            DataTablesColumn(_("Notes"), prop_name="internal.notes"),
+        )
+        return headers
+
+    @property
     def rows(self):
         domains = [res['_source'] for res in self.es_results.get('hits', {}).get('hits', [])]
         for dom in domains:
             yield [
                 dom.get('hr_name') or dom['name'],
+                dom.get("organization") or 'No org',
+                dom['deployment'].get('date') or 'No date',
                 dom.get("cp_n_active_cc_users", "Not Yet Calculated"),
                 dom.get("cp_n_cc_users", "Not Yet Calculated"),
                 dom.get("cp_n_active_cases", "Not Yet Calculated"),
@@ -189,4 +211,5 @@ class AdminDomainStatsReport(DomainStatsReport, ElasticTabularReport):
                 dom.get("cp_first_form", "No Forms"),
                 dom.get("cp_last_form", "No Forms"),
                 dom.get("cp_n_web_users", "Not Yet Calculated"),
+                dom['internal'].get('notes') or 'No notes',
             ]

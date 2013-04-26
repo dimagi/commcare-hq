@@ -1,40 +1,40 @@
 from datetime import timedelta, datetime
-import inspect
 import json
 from copy import deepcopy
 import logging
+from collections import defaultdict
+from StringIO import StringIO
+import os
+
 from django.http import HttpResponseRedirect, HttpResponse
 from django.core.urlresolvers import reverse
 from django.shortcuts import render
-
+from django.views.decorators.cache import cache_page
+from django.template.defaultfilters import yesno
+from django.contrib import messages
+from django.conf import settings
+from restkit import Resource
+from django.core import cache
 from corehq.apps.hqadmin.models import HqDeploy
 from corehq.apps.builds.models import CommCareBuildConfig, BuildSpec
-from corehq.apps.domain.models import Domain, InternalProperties, LicenseAgreement, Deployment
+from corehq.apps.domain.models import Domain
 from corehq.apps.hqadmin.escheck import check_cluster_health, check_case_index, check_xform_index, check_exchange_index
 from corehq.apps.reports.datatables import DataTablesColumn, DataTablesHeader, DTSortType
 from corehq.apps.reports.util import make_form_couch_key
 from corehq.apps.sms.models import SMSLog
-from corehq.apps.users.models import  CommCareUser, CouchUser, WebUser
+from corehq.apps.users.models import  CommCareUser, WebUser
 from couchforms.models import XFormInstance
 from dimagi.utils.couch.database import get_db, is_bigcouch
-from collections import defaultdict
 from corehq.apps.domain.decorators import  require_superuser
 from dimagi.utils.decorators.datespan import datespan_in_request
 from dimagi.utils.parsing import json_format_datetime, string_to_datetime
 from dimagi.utils.web import json_response
-from django.views.decorators.cache import cache_page
 from couchexport.export import export_raw, export_from_tables
 from couchexport.shortcuts import export_response
 from couchexport.models import Format
-from StringIO import StringIO
-from django.template.defaultfilters import yesno
 from dimagi.utils.excel import WorkbookJSONReader
 from dimagi.utils.decorators.view import get_file
-from django.contrib import messages
-from django.conf import settings
-from restkit import Resource
-import os
-from django.core import cache
+
 
 @require_superuser
 def default(request):
@@ -52,38 +52,7 @@ def get_hqadmin_base_context(request):
         "domain": None,
     }
 
-def _all_domain_stats():
-    webuser_counts = defaultdict(lambda: 0)
-    commcare_counts = defaultdict(lambda: 0)
-    form_counts = defaultdict(lambda: 0)
-    case_counts = defaultdict(lambda: 0)
-    
-    for row in get_db().view('users/by_domain', startkey=["active"], 
-                             endkey=["active", {}], group_level=3).all():
-        _, domain, doc_type = row['key']
-        value = row['value']
-        {
-            'WebUser': webuser_counts,
-            'CommCareUser': commcare_counts
-        }[doc_type][domain] = value
 
-    key = make_form_couch_key(None)
-    form_counts.update(dict([(row["key"][1], row["value"]) for row in \
-                                get_db().view("reports_forms/all_forms",
-                                    group=True,
-                                    group_level=2,
-                                    startkey=key,
-                                    endkey=key+[{}]
-                             ).all()]))
-    
-    case_counts.update(dict([(row["key"][0], row["value"]) for row in \
-                             get_db().view("hqcase/types_by_domain", 
-                                           group=True,group_level=1).all()]))
-    
-    return {"web_users": webuser_counts, 
-            "commcare_users": commcare_counts,
-            "forms": form_counts,
-            "cases": case_counts}
 
 @require_superuser
 def active_users(request):
@@ -424,6 +393,7 @@ def update_domains(request):
             
     # one wonders if this will eventually have to paginate
     domains = Domain.get_all()
+    from corehq.apps.domain.calculations import _all_domain_stats
     all_stats = _all_domain_stats()
     for dom in domains:
         dom.web_users = int(all_stats["web_users"][dom.name])
