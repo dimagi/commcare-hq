@@ -182,12 +182,12 @@ class AdminDomainStatsReport(DomainStatsReport, ElasticTabularReport):
         for dom in domains:
             yield [
                 dom.get('hr_name') or dom['name'],
-                dom["cp_n_active_cc_users"],
-                dom["cp_n_cc_users"],
-                dom["cp_n_active_cases"],
-                dom["cp_n_cases"],
-                dom["cp_n_forms"],
+                dom.get("cp_n_active_cc_users", "Not Yet Calculated"),
+                dom.get("cp_n_cc_users", "Not Yet Calculated"),
+                dom.get("cp_n_active_cases", "Not Yet Calculated"),
+                dom.get("cp_n_cases", "Not Yet Calculated"),
+                dom.get("cp_n_forms", "Not Yet Calculated"),
                 dom.get("cp_first_form", "No Forms"),
                 dom.get("cp_last_form", "No Forms"),
-                dom["cp_n_web_users"],
+                dom.get("cp_n_web_users", "Not Yet Calculated"),
             ]
