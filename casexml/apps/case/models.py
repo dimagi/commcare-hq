@@ -1,6 +1,7 @@
 from __future__ import absolute_import
 import re
 from django.core.cache import cache
+import simplejson
 from casexml.apps.phone.xml import get_case_element
 from casexml.apps.case.signals import case_post_save
 from casexml.apps.case.util import get_close_case_xml, get_close_referral_xml,\
@@ -14,12 +15,13 @@ from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.indicators import ComputedDocumentMixin
 from receiver.util import spoof_submission
 from couchforms.models import XFormInstance
-from casexml.apps.case.sharedmodels import IndexHoldingMixIn, CommCareCaseIndex
+from casexml.apps.case.sharedmodels import IndexHoldingMixIn, CommCareCaseIndex, CommCareCaseAttachment
 from copy import copy
 import itertools
 from dimagi.utils.couch.database import get_db, SafeSaveDocument
 from couchdbkit.exceptions import ResourceNotFound, ResourceConflict
 from dimagi.utils.couch import LooselyEqualDocumentSchema
+import ipdb
 
 """
 Couch models for commcare cases.  
@@ -58,6 +60,7 @@ class CommCareCaseAction(LooselyEqualDocumentSchema):
     updated_known_properties = DictProperty()
     updated_unknown_properties = DictProperty()
     indices = SchemaListProperty(CommCareCaseIndex)
+    attachments = SchemaDictProperty(CommCareCaseAttachment)
 
     @classmethod
     def from_parsed_action(cls, action_type, date, xformdoc, action):
@@ -76,6 +79,8 @@ class CommCareCaseAction(LooselyEqualDocumentSchema):
         ret.updated_known_properties = _couchify(action.get_known_properties())
         ret.updated_unknown_properties = _couchify(action.dynamic_properties)
         ret.indices = [CommCareCaseIndex.from_case_index_update(i) for i in action.indices]
+        ret.attachments = dict((attach_id, CommCareCaseAttachment.from_case_index_update(attach))
+                               for attach_id, attach in action.attachments.items())
         if hasattr(xformdoc, "last_sync_token"):
             ret.sync_log_id = xformdoc.last_sync_token
         return ret
@@ -195,6 +200,7 @@ class CommCareCase(CaseBase, IndexHoldingMixIn, ComputedDocumentMixin):
     name = StringProperty()
     version = StringProperty()
     indices = SchemaListProperty(CommCareCaseIndex)
+    attachments = SchemaDictProperty(CommCareCaseAttachment)
     location_ = StringListProperty()
 
     server_modified_on = DateTimeProperty()
@@ -344,22 +350,22 @@ class CommCareCase(CaseBase, IndexHoldingMixIn, ComputedDocumentMixin):
         
         forms = [_get(id) for id in self.xform_ids]
         return [form for form in forms if form] 
-    
-    @property
-    def attachments(self):
-        """
-        Get any attachments associated with this.
-        
-        returns (creating_form_id, attachment_name) tuples 
-        """
-        attachments = []
-        for action in self.actions:
-            for prop, val in action.updated_unknown_properties.items():
-                # welcome to hard code city!
-                if isinstance(val, dict) and "@tag" in val and val["@tag"] == "attachment":
-                    attachments.append((action.xform_id, val["#text"]))
-        return attachments
-    
+
+    # @property
+    # def attachments(self):
+    #     """
+    #     Get any attachments associated with this.
+    #
+    #     returns (creating_form_id, attachment_name) tuples
+    #     """
+    #     attachments = []
+    #     for action in self.actions:
+    #         for prop, val in action.updated_unknown_properties.items():
+    #             # welcome to hard code city!
+    #             if isinstance(val, dict) and "@tag" in val and val["@tag"] == "attachment":
+    #                 attachments.append((action.xform_id, val["#text"]))
+    #     return attachments
+
     def get_attachment(self, attachment_tuple):
         return XFormInstance.get_db().fetch_attachment(attachment_tuple[0], attachment_tuple[1])
         
@@ -415,7 +421,6 @@ class CommCareCase(CaseBase, IndexHoldingMixIn, ComputedDocumentMixin):
             if not self.opened_on:
                 self.opened_on = mod_date
         
-        
         if case_update.updates_case():
             update_action = CommCareCaseAction.from_parsed_action(const.CASE_ACTION_UPDATE, 
                                                                   mod_date,
@@ -461,6 +466,15 @@ class CommCareCase(CaseBase, IndexHoldingMixIn, ComputedDocumentMixin):
             self.actions.append(index_action)
             self._apply_action(index_action)
 
+
+        if case_update.has_attachments():
+            attachment_action = CommCareCaseAction.from_parsed_action(const.CASE_ACTION_ATTACHMENT,
+                                                                      mod_date,
+                                                                      xformdoc,
+                                                                      case_update.get_attachment_action())
+            self.attachments.update(attachment_action)
+            self._apply_action(attachment_action)
+
         # finally override any explicit properties from the update
         if case_update.user_id:     self.user_id = case_update.user_id
         if case_update.version:     self.version = case_update.version
@@ -472,6 +486,8 @@ class CommCareCase(CaseBase, IndexHoldingMixIn, ComputedDocumentMixin):
             self.update_indices(action.indices)
         elif action.action_type == const.CASE_ACTION_CLOSE:
             self.apply_close(action)
+        elif action.action_type == const.CASE_ACTION_ATTACHMENT:
+            self.apply_attachments(action)
         else:
             raise ValueError("Can't apply action of type %s" % action.action_type)
 
@@ -487,7 +503,13 @@ class CommCareCase(CaseBase, IndexHoldingMixIn, ComputedDocumentMixin):
             if item not in const.CASE_TAGS:
                 self[item] = couchable_property(update_action.updated_unknown_properties[item])
             
-        
+    def apply_attachments(self, attachment_action):
+        # ipdb.set_trace()
+        print "in apply attachments!"
+        print simplejson.dumps(attachment_action.to_json(), indent=4)
+        for k, v in attachment_action.attachments.items():
+            self.attachments[k] = attachment_action.attachments[k]
+
     def apply_close(self, close_action):
         self.closed = True
         self.closed_on = close_action.date

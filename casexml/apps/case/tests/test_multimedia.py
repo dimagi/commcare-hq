@@ -1,11 +1,14 @@
 from django.test import TestCase
 import os
+import simplejson
 from casexml.apps.case.models import CommCareCase
 from couchforms.util import post_xform_to_couch
 from casexml.apps.case.signals import process_cases
 from django.core.files.uploadedfile import UploadedFile
 from couchforms.models import XFormInstance
 import hashlib
+
+TEST_CASE_ID = "EOL9FIAKIQWOFXFOH0QAMWU64"
 
 class CaseMultimediaTest(TestCase):
     """
@@ -20,6 +23,12 @@ class CaseMultimediaTest(TestCase):
             item.delete()
 
     def testAttachInCreate(self):
+        # <n0:photo1 src="fruity.jpg" from="local"/>
+        # <n0:photo2 src="house.jpg" from="local"/>
+        #http://www.dimagi.com/wp-content/uploads/2010/07/TheVolcano3.mp4
+        #http://www.dimagi.com/wp-content/uploads/2012/10/commcare-div2-pressrelease.png
+        #http://www.dimagi.com/wp-content/uploads/2012/10/dimagi-div2-pressrelease.png
+
         self.assertEqual(0, len(CommCareCase.view("case/by_user", reduce=False).all()))
 
         file_path = os.path.join(os.path.dirname(__file__), "data", "multimedia", "multimedia_create.xml")
@@ -40,7 +49,8 @@ class CaseMultimediaTest(TestCase):
 
 
         process_cases(sender="testharness", xform=form)
-        case = CommCareCase.get(form.xpath("form/case/case_id"))
+        case = CommCareCase.get(TEST_CASE_ID)
+        print simplejson.dumps(case.to_json(), indent=4)
         self.assertEqual(1, len(case.attachments))
         self.assertEqual(form.get_id, case.attachments[0][0])
         self.assertEqual(attach_name, case.attachments[0][1])
@@ -67,7 +77,8 @@ class CaseMultimediaTest(TestCase):
 
 
         process_cases(sender="testharness", xform=form)
-        case = CommCareCase.get(form.xpath("form/case/case_id"))
+        case = CommCareCase.get(TEST_CASE_ID)
+        print simplejson.dumps(case.to_json(), indent=4)
         self.assertEqual(2, len(case.attachments))
         self.assertEqual(form.get_id, case.attachments[1][0])
         self.assertEqual(attach_name, case.attachments[1][1])

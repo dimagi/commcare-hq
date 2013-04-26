@@ -9,10 +9,9 @@
         <n0:create>
             <n0:case_type_id>cc_bc_demo</n0:case_type_id>
             <n0:case_name>fgg</n0:case_name>
-            <n0:attachment>
-                <n0:photo src="fruity.jpg" from="local"/>
-            </n0:attachment>
         </n0:create>
+        <n0:attachment>
+        </n0:attachment>
     </n0:case>
     <n1:meta xmlns:n1="http://openrosa.org/jr/xforms">
         <n1:deviceID>354957031935664</n1:deviceID>

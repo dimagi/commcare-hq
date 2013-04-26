@@ -6,6 +6,7 @@ from dimagi.utils.couch import LooselyEqualDocumentSchema
 Shared models live here to avoid cyclical import issues
 """
 
+
 class CommCareCaseIndex(LooselyEqualDocumentSchema, UnicodeMixIn):
     """
     In CaseXML v2 we support indices, which link a case to other cases.
@@ -38,6 +39,21 @@ class CommCareCaseIndex(LooselyEqualDocumentSchema, UnicodeMixIn):
 
     def __repr__(self):
         return str(self)
+
+
+class CommCareCaseAttachment(LooselyEqualDocumentSchema, UnicodeMixIn):
+    identifier = StringProperty()
+    attachment_src = StringProperty()
+    attachment_from = StringProperty()
+    attachment_name = StringProperty()
+
+    @classmethod
+    def from_case_index_update(cls, attachment):
+        return cls(identifier=attachment.identifier,
+                   attachment_src=attachment.attachment_src,
+                   attachment_from=attachment.attachment_from,
+                   attachment_name=attachment.attachment_name)
+
 
 class IndexHoldingMixIn(object):
     """
