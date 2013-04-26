@@ -205,7 +205,9 @@ class XFormES(ESView):
     def run_query(self, es_query):
         es_results = super(XFormES, self).run_query(es_query)
         #hack, walk the results again, and if we have xmlns, populate human readable names
-        form_filter = FormsByApplicationFilter(self.request, domain=self.request.domain)
+        # Note that `get_unknown_form_name` does not require the request, which is also
+        # not necessarily available here. So `None` is passed here.
+        form_filter = FormsByApplicationFilter(None, domain=self.domain)
 
         for res in es_results['hits']['hits']:
             if '_source' in res:
