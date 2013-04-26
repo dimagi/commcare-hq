@@ -18,6 +18,11 @@
   display: none;
 }
 
+.hqm-select-files-container {
+  display: inline-block;
+  margin-right: @gridGutterWidth/2;
+}
+
 .hqm-path {
   width: 340px;
   display: block;
@@ -28,3 +33,76 @@
     float: right;
   }
 }
+
+.accordion-multimedia .accordion-group {
+    margin-bottom: 1em;
+}
+
+.accordion-multimedia .accordion-heading {
+  a:hover {
+      text-decoration: none;
+  }
+
+  h1, h2, h3 {
+    margin: 0;
+  }
+
+  .accordion-toggle {
+    .animation-fade(background-color, .2s);
+    background-color: desaturate(lighten(@blue, 60), 50);
+    &.collapsed {
+        background-color: transparent;
+    }
+  }
+  &:hover {
+    .animation-fade(background-color, .2s);
+    background-color: desaturate(lighten(@blue, 60), 20);
+  }
+}
+
+.accordion-multimedia {
+  h1 {
+    font-size: @baseFontSize*1.75;
+  }
+
+  h2 {
+    font-size: @baseFontSize*1.5;
+  }
+
+  h3 {
+    font-size: @baseFontSize*1.25;
+  }
+}
+
+.table-multimedia {
+  margin-bottom: 0;
+
+  thead th,
+  tbody td{
+    text-align: center;
+    &:last-child {
+      text-align: left;
+    }
+  }
+
+  .media-type-icon,
+  .media-status-icon {
+    font-size: 2em;
+  }
+  .media-type-icon {
+    color: @blue;
+  }
+  .media-status-icon {
+    .icon-ok {
+      color: @green;
+    }
+    .icon-warning-sign {
+      color: @orange;
+    }
+  }
+}
+
+.table-multimedia td {
+  vertical-align: middle;
+}
+
