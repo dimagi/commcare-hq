@@ -1,6 +1,7 @@
 import simplejson
 from datetime import datetime
 
+from django.utils.http import urlencode
 from django.test import TestCase
 from django.core.urlresolvers import reverse
 
@@ -42,6 +43,8 @@ class TestXFormInstanceResource(TestCase):
     """
     
     def setUp(self):
+        self.maxDiff = None
+        
         self.domain = Domain.get_or_create_with_name('qwerty', is_active=True)
 
         self.list_endpoint = reverse('api_dispatch_list', kwargs=dict(domain=self.domain.name, 
@@ -100,3 +103,65 @@ class TestXFormInstanceResource(TestCase):
         self.assertEqual(api_form['received_on'], backend_form.received_on.isoformat())
 
         backend_form.delete()
+
+    def test_get_list_xmlns(self):
+        """
+        Forms can be filtered by passing ?xmlns=<xmlns>
+
+        Since we not testing ElasticSearch, we only test that the proper query is generated.
+        """
+
+        fake_xform_es = FakeXFormES()
+
+        # A bit of a hack since none of Python's mocking libraries seem to do basic spies easily...
+        prior_run_query = fake_xform_es.run_query
+        def mock_run_query(es_query):
+            self.assertEqual(es_query['filter'], {
+                'and': [{'term': {'domain.exact': 'qwerty'}},
+                        {'term': {'xmlns.exact': 'foo'}}]
+            })
+
+            return prior_run_query(es_query)
+            
+        fake_xform_es.run_query = mock_run_query
+        v0_4.MOCK_XFORM_ES = fake_xform_es
+
+        self.client.login(username=self.username, password=self.password)
+
+        response = self.client.get('%s?%s' % (self.list_endpoint, urlencode({'xmlns': 'foo'})))
+        self.assertEqual(response.status_code, 200)
+
+    def test_get_list_received_on(self):
+        """
+        Forms can be filtered by passing ?recieved_on_start=<date>&received_on_end=<date>
+
+        Since we not testing ElasticSearch, we only test that the proper query is generated.
+        """
+
+        fake_xform_es = FakeXFormES()
+        start_date = datetime(1969, 6, 14)
+        end_date = datetime(2011, 1, 2)
+
+        # A bit of a hack since none of Python's mocking libraries seem to do basic spies easily...
+        prior_run_query = fake_xform_es.run_query
+        def mock_run_query(es_query):
+            
+            self.assertEqual(sorted(es_query['filter']['and']), [
+                {'range': {'received_on': {'from': start_date.isoformat()}}},
+                {'range': {'received_on': {'to': end_date.isoformat()}}},
+                {'term': {'domain.exact': 'qwerty'}},
+            ])
+
+            return prior_run_query(es_query)
+            
+        fake_xform_es.run_query = mock_run_query
+        v0_4.MOCK_XFORM_ES = fake_xform_es
+
+        self.client.login(username=self.username, password=self.password)
+
+        response = self.client.get('%s?%s' % (self.list_endpoint, urlencode({
+            'received_on_end': end_date.isoformat(),
+            'received_on_start': start_date.isoformat(),
+        })))
+
+        self.assertEqual(response.status_code, 200)
