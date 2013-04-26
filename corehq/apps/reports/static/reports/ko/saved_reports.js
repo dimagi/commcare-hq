@@ -68,7 +68,6 @@ var ReportConfig = function (data) {
 
 var ReportConfigsViewModel = function (options) {
     var self = this;
-    self.defaultItem = options.defaultItem;
     self.filterForm = options.filterForm;
 
     self.initialLoad = true;
@@ -173,17 +172,8 @@ var ReportConfigsViewModel = function (options) {
         });
 
         self.configBeingViewed().filters = filters;
-        self.configBeingEdited(new ReportConfig(self.defaultItem));
+        self.configBeingEdited(self.configBeingViewed());
         self.modalSaveButton.state('save');
-
-        /*$("#modal-body").find('date-picker').datepicker({
-         changeMonth: true,
-         changeYear: true,
-         showButtonPanel: true,
-         dateFormat: 'yy-mm-dd',
-         maxDate: '0',
-         numberOfMonths: 2
-         });*/
     };
 
     self.unsetConfigBeingEdited = function () {
@@ -213,16 +203,8 @@ $.fn.reportConfigEditor = function (options) {
         var viewModel = new ReportConfigsViewModel(options);
 
         ko.applyBindings(viewModel, $(this).get(i));
-
-        var data;
-        if (options.initialItemID) {
-            config = ko.utils.arrayFirst(viewModel.reportConfigs(), function(item) {
-                return item._id() === options.initialItemID;
-            });
-            viewModel.setConfigBeingViewed(config);
-        } else {
-            viewModel.setConfigBeingViewed(new ReportConfig(options.defaultItem));
-        }
+        
+        viewModel.setConfigBeingViewed(new ReportConfig(options.defaultItem));
     });
 };
 
