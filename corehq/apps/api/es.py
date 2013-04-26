@@ -54,6 +54,8 @@ class ESView(View):
 
     @method_decorator(login_and_domain_required)
     #@method_decorator(csrf_protect)
+    # todo: csrf_protect temporarily removed and left to implementor's prerogative
+    # getting ajax'ed csrf token method needs revisit.
     def dispatch(self, *args, **kwargs):
         req = args[0]
         self.pretty = req.GET.get('pretty', False)
@@ -111,7 +113,6 @@ class ESView(View):
                 res_domain = res['fields'].get('domain', None)
                 #check fields
             assert res_domain == self.domain, "Security check failed, search result domain did not match requester domain: %s != %s" % (res_domain, self.domain)
-        # print simplejson.dumps(es_results.get('facets', {}))
         return es_results
 
     def base_query(self, terms={}, fields=[], start=0, size=DEFAULT_SIZE):
@@ -156,9 +157,7 @@ class ESView(View):
         """
         try:
             raw_post = self.request.raw_post_data
-            # print raw_post
             raw_query = simplejson.loads(raw_post)
-            # print raw_query
         except Exception, ex:
             content_response = dict(message="Error parsing query request", exception=ex.message)
             response = HttpResponse(status=406, content=simplejson.dumps(content_response))
@@ -206,7 +205,6 @@ class XFormES(ESView):
         es_results = super(XFormES, self).run_query(es_query)
         #hack, walk the results again, and if we have xmlns, populate human readable names
         form_filter = FormsByApplicationFilter(self.request, domain=self.request.domain)
-        #get_unknown_form_name(self, xmlns, app_id=None, none_if_not_found=False):
 
         for res in es_results['hits']['hits']:
             if '_source' in res:
@@ -220,9 +218,9 @@ class XFormES(ESView):
                     else:
                         backup = res['_source']['form'].get('#type', 'data')
                         if backup != 'data':
-                            name=backup
+                            name = backup
                         else:
-                            name="unknown"
+                            name = "unknown"
 
                 res['_source']['es_readable_name'] = name
         return es_results
