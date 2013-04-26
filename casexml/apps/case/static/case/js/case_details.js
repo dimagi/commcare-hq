@@ -35,26 +35,13 @@ function format_date(isodatestring) {
 }
 
 function format_user(username) {
-    if (username === undefined || username == null) {
+    if (username === undefined || username === null) {
         return "---"
     }
     else {
         return username.split('@')[0];
     }
 }
-function recursiveRender(obj, depth) {
-    var ret = '';
-    for (var k in obj) {
-        if (typeof obj[k] == "object") {
-            ret = ret + "<dl class='dl-horizontal'>" + "<h3 class='push" + depth + "'>" + k + "</h3>" + recursiveRender(obj[k], depth + 1) + "</dl>";
-        }
-        else {
-            ret = ret + "<dt>" + k + "</dt><dd>" + obj[k] + "</dd>";
-        }
-    }
-    return ret;
-}
-
 
 function XFormDataModel(data) {
     var self = this;
@@ -73,16 +60,6 @@ function XFormDataModel(data) {
     self.form_type = ko.observable(data.form['#type']);
     self.form_data = ko.observable(data.form);
     self.readable_name = ko.observable(data.es_readable_name);
-
-    self.get_form_data = function() {
-        return "<dl class='dl-horizontal'>" + JSON.stringify(self.form_data(), function(key,value) {
-            if (typeof(value) == "object") {
-                return "<dt><h3>" + key + "</h3></dt><dd>" + recursiveRender(value, 0) + "</dd>";
-            } else {
-                return "<dt>" + key + "</dt><dd>" + value + "</dd>";
-            }
-        }) + "</dl>";
-    };
 };
 
 function FormTypeFacetModel(data) {
@@ -119,36 +96,13 @@ function XFormListViewModel() {
 
     var api_url = CASE_DETAILS.xform_api_url;
 
-
-    //based upon criteria, get totals + facets?
-    //then populate observableArray and set pagination limits
-
     self.xform_query = function () {
         //elastic query based upon case id
         var id_query = self.xform_id_query();
         return id_query;
         //todo once the xform index is updated with embedded case properties
-        //var start_num = self.disp_page_index() || 1;
-        //return {
-        //"query": {
-        //"filtered": {
-        //"filter": {
-        //"and": [
-        //{"term": {"domain.exact": "{{ case.domain }}"}},
-        //{"term": {"doc_type": "xforminstance"}},
-        //]
-        //},
-        //"query": {
-        //"query_string": {
-        //"query": "(form.case.case_id:{{ case.get_id }} OR form.case.@case_id:{{ case.get_id }})"
-        //}
-        //}
-        //}
-        //},
-        //"size": self.page_size(),
-        //"from": (start_num - 1) * self.page_size(),
-        //"sort": [{"received_on": "desc"}]
-        //};
+        //real query to be filled out here below once index is modified
+
     };
 
     self.xform_id_query = function () {
@@ -289,7 +243,6 @@ function XFormListViewModel() {
                     var item = self.form_recv_facets()[i];
                     if (retdata.length == 0) {
                         retdata.push({ x:item.es_time(), y:item.form_count()});
-                        //retdata.push({x:item.es_time(), y: item.form_count(), size: item.form_count(), shape: 'circle'});
                     }
                     else {
                         var last_time = retdata[retdata.length - 1].x;
@@ -300,11 +253,9 @@ function XFormListViewModel() {
                             for (var j = 1; j <= d; j++) {
                                 //fill in blank dates
                                 retdata.push({x:last_time+(j*86400000), y: 0});
-                                //retdata.push({x:last_time+(j*86400000), y: item.form_count(), size: 0, shape: 'square'});
                             }
                         }
                         retdata.push({x:item.es_time(), y:item.form_count()});
-                        //retdata.push({x:item.es_time(), y: item.form_count(), size: item.form_count(), shape: 'circle'});
                     }
                 }
 
@@ -394,7 +345,7 @@ function XFormListViewModel() {
 
     self.row_highlight = ko.computed(function() {
         //hitting next page will not disappear the xform display just remove the highlight
-        if (self.selected_xform_idx() == -1) {
+        if (self.selected_xform_idx() === -1) {
             return false;
         } else  {
             if (self.selected_xforms[0] !== undefined) {
