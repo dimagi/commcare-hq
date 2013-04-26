@@ -90,6 +90,7 @@ class ESView(View):
 
         Returns the raw query json back, or None if there's an error
         """
+        
         #todo: backend audit logging of all these types of queries
         if 'fields' in es_query or 'script_fields' in es_query:
             #nasty hack to add domain field to query that does specific fields.
@@ -378,6 +379,13 @@ class ESQuerySet(object):
 
 RESERVED_QUERY_PARAMS=set(['limit', 'offset', 'q', '_search'])
 
+# Note that dates are already in a string format when they arrive as query params
+query_param_transforms = {
+    'xmlns': lambda v: {'term':{'xmlns.exact':v}},
+    'received_on_start': lambda v: {'range':{'received_on': {'from': v}}},
+    'received_on_end': lambda v: {'range':{'received_on': {'to': v}}},
+}
+
 def es_search(request, domain):
     payload = {
         "filter": {
@@ -406,6 +414,12 @@ def es_search(request, domain):
 
     # filters are actually going to be a more common case
     for key in set(request.GET.keys()) - RESERVED_QUERY_PARAMS:
-        payload["filter"]["and"].append({"term": {key: request.GET[key]}})
+        value = request.GET[key]
+
+        if key in query_param_transforms:
+            payload["filter"]["and"].append(query_param_transforms[key](value))
+        else:
+            payload["filter"]["and"].append({"term": {key: value}})
+
 
     return payload
