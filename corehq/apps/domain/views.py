@@ -372,16 +372,14 @@ def create_snapshot(request, domain):
                 'publish_on_submit': True,
             })
             for app in published_snapshot.full_applications():
-                if domain == published_snapshot:
-                    published_apps[app._id] = app
-                else:
-                    published_apps[app.copied_from._id] = app
+                base_app_id = app.copy_of if domain == published_snapshot else app.copied_from.copy_of
+                published_apps[base_app_id] = app
 
         app_forms = []
         for app in domain.applications():
             app = app.get_latest_saved() or app
-            if published_snapshot and app._id in published_apps:
-                original = published_apps[app._id]
+            if published_snapshot and app.copy_of in published_apps:
+                original = published_apps[app.copy_of]
                 app_forms.append((app, SnapshotApplicationForm(initial={
                     'publish': True,
                     'name': original.name,

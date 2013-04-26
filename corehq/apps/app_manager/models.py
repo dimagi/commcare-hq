@@ -70,6 +70,9 @@ CASE_PROPERTY_MAP = {
     'name': 'case_name',
 }
 
+ATTACHMENT_REGEX = r'[^/]*\.xml'
+
+
 def _dsstr(self):
     return ", ".join(json.dumps(self.to_json()), self.schema)
 #DocumentSchema.__repr__ = _dsstr
@@ -949,10 +952,10 @@ class VersionedDoc(Document):
             copy = cls.wrap(copy)
             copy['copy_of'] = self._id
             copy.save(increment_version=False)
-            copy.copy_attachments(self, r'[^/]*\.xml')
+            copy.copy_attachments(self)
         return copy
 
-    def copy_attachments(self, other, regexp=None):
+    def copy_attachments(self, other, regexp=ATTACHMENT_REGEX):
         for name in other._attachments or {}:
             if regexp is None or re.match(regexp, name):
                 self.put_attachment(other.fetch_attachment(name), name)
@@ -977,7 +980,7 @@ class VersionedDoc(Document):
         cls = self.__class__
         app = cls.wrap(app)
         app.save()
-        app.copy_attachments(copy, r'[^/]*\.xml')
+        app.copy_attachments(copy)
         return app
 
     def delete_copy(self, copy):
@@ -1004,7 +1007,7 @@ class VersionedDoc(Document):
                 del source[field]
         _attachments = {}
         for name in source.get('_attachments', {}):
-            if name.endswith('.xml', 1):
+            if re.match(ATTACHMENT_REGEX, name):
                 _attachments[name] = self.fetch_attachment(name)
         source['_attachments'] = _attachments
         self.scrub_source(source)
@@ -2194,7 +2197,8 @@ def import_app(app_id_or_source, domain, name=None, validate_source_domain=None)
     app = cls.from_source(source, domain)
     app.save()
     for name, attachment in attachments.items():
-        app.put_attachment(attachment, name)
+        if re.match(ATTACHMENT_REGEX, name):
+            app.put_attachment(attachment, name)
     return app
 
 class DeleteApplicationRecord(DeleteRecord):
