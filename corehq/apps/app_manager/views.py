@@ -451,6 +451,7 @@ def get_app_view_context(request, app):
 
     if app.get_doc_type() == 'Application':
         try:
+            # todo remove get_media_references
             multimedia = app.get_media_references()
         except ProcessTimedOut as e:
             notify_exception(request)
@@ -572,6 +573,7 @@ def release_manager(request, domain, app_id, template='app_manager/releases.html
     })
     if not app.is_remote_app():
         # Multimedia is not supported for remote applications at this time.
+        # todo remove get_media_references
         multimedia = app.get_media_references()
         context.update({
             'multimedia': multimedia,
