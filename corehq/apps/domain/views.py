@@ -360,7 +360,7 @@ def create_snapshot(request, domain):
         published_snapshot = snapshots[0] if snapshots else domain
         published_apps = {}
         if published_snapshot is not None:
-            form = SnapshotSettingsForm(initial={
+            initial={
                 'default_timezone': published_snapshot.default_timezone,
                 'case_sharing': json.dumps(published_snapshot.case_sharing),
                 'project_type': published_snapshot.project_type,
@@ -370,7 +370,11 @@ def create_snapshot(request, domain):
                 'description': published_snapshot.description,
                 'short_description': published_snapshot.short_description,
                 'publish_on_submit': True,
-            })
+            }
+            if published_snapshot.yt_id:
+                initial['video'] = 'http://www.youtube.com/watch?v=%s' % published_snapshot.yt_id
+            form = SnapshotSettingsForm(initial=initial)
+
             for app in published_snapshot.full_applications():
                 base_app_id = app.copy_of if domain == published_snapshot else app.copied_from.copy_of
                 published_apps[base_app_id] = app
@@ -442,6 +446,8 @@ def create_snapshot(request, domain):
         new_domain.title = request.POST['title']
         new_domain.multimedia_included = request.POST.get('share_multimedia', '') == 'on'
         new_domain.publisher = request.POST.get('publisher', None) or 'user'
+        if request.POST.get('video'):
+            new_domain.yt_id = form.cleaned_data['video']
 
         new_domain.author = request.POST.get('author', None)
 

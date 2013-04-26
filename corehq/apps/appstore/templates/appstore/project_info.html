@@ -98,6 +98,12 @@
 <div class="row">
 <div class="span10">
 <dl class="dl-horizontal">
+    {% if project.yt_id %}
+        <dt>{% trans 'Video' %}</dt>
+        <dd>
+            <iframe width="420" height="315" src="http://www.youtube.com/embed/{{ project.yt_id }}" frameborder="0" allowfullscreen></iframe>
+        </dd>
+    {% endif %}
     <dt>{% trans 'Description' %}</dt>
     <dd>
         {% if project.description %}
