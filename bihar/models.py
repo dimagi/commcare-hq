@@ -2,6 +2,7 @@ import datetime
 from bihar.reports.indicators.filters import is_pregnant_mother, get_add, get_edd, A_MONTH
 from bihar.reports.indicators.home_visit import GRACE_PERIOD
 from bihar.reports.indicators.visits import visit_is
+from casexml.apps.case.models import CommCareCase
 import fluff
 
 
@@ -51,6 +52,7 @@ class VisitCalculator(fluff.Calculator):
 
 
 class CareBiharIndicators(fluff.IndicatorDocument):
+    document_class = CommCareCase
 
     bp2 = BPCalculator(days=75, n_visits=2)
     bp3 = BPCalculator(days=45, n_visits=3)
