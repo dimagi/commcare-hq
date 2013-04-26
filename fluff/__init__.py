@@ -64,10 +64,14 @@ class IndicatorDocument(schema.Document):
 
     @classmethod
     def pillow(cls):
-        return BasicPillow.__metaclass__(cls.__name__ + 'Pillow', [BasicPillow], {
+        return type(BasicPillow)(cls.__name__ + 'Pillow', (BasicPillow,), {
             'filter': 'fluff/global',
             'extra_args': {
                 'domain': cls.domain,
-                'doc_type': cls.document_class.doc_type
+                'doc_type': getattr(cls.document_class, 'doc_type',
+                                    cls.document_class.__name__),
             },
         })
+
+    class Meta:
+        app_label = ''
