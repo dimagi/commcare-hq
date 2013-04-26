@@ -39,14 +39,14 @@
         </div><!-- end case-details tab -->
     {% if case.referrals %}
         <div class="tab-pane" id="case-referrals">
-            <h2>Referrals</h2>
+            <h2>{% trans "Referrals" %}</h2>
             <table class="table table-striped case_history">
                 <thead>
                 <tr>
-                    <th>Date Opened</th>
-                    <th>Type</th>
-                    <th>Date Modified</th>
-                    <th>Status</th>
+                    <th>{% trans "Date Opened" %}</th>
+                    <th>{% trans "Type" %}</th>
+                    <th>{% trans "Date Modified" %}</th>
+                    <th>{% trans "Status" %}</th>
                 </tr>
                 </thead>
                 <tbody>
@@ -59,7 +59,7 @@
                     </tr>
                 {% empty %}
                     <tr>
-                        <td colspan="4" class="no_data">No referrals</td>
+                        <td colspan="4" class="no_data">{% trans "No referrals" %}</td>
                     </tr>
                 {% endfor %}
 
@@ -72,12 +72,12 @@
             <table class="table table-striped case_history">
                 <thead>
                 <tr>
-                    <th>Name</th>
-                    <th>Relation</th>
-                    <th>Type</th>
-                    <th>Date Opened</th>
-                    <th>Date Modified</th>
-                    <th>Status</th>
+                    <th>{% trans "Name" %}</th>
+                    <th>{%  trans "Relation" %} </th>
+                    <th>{%  trans "Type" %}</th>
+                    <th>{%  trans "Date Opened" %}</th>
+                    <th>{%  trans "Date Modified" %}</th>
+                    <th>{%  trans "Status" %}</th>
                 </tr>
                 </thead>
                 <tbody>
@@ -93,7 +93,7 @@
                     </tr>
                 {% empty %}
                     <tr>
-                        <td colspan="4" class="no_data">No related cases</td>
+                        <td colspan="4" class="no_data">{%  trans "No related cases" %}</td>
                     </tr>
                 {% endfor %}
 
@@ -110,7 +110,7 @@
                 <a href="{% url xform_attachment form_id filename %}">{{ filename }}</a>
                 </li>
             {% empty %}
-                <li>No Attachments</li>
+                <li>{% trans "No Attachments" %}</li>
             {% endfor %}
             </ul>
         </div> <!-- end case-attachments tab -->
