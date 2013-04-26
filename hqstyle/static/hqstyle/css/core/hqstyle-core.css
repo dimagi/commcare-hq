@@ -797,8 +797,8 @@ ol.inline {
   margin-left: 0;
   list-style: none;
 }
-ul.inline > li,
-ol.inline > li {
+ul.inline  > li,
+ol.inline  > li {
   display: inline-block;
   padding-left: 5px;
   padding-right: 5px;
@@ -3520,7 +3520,7 @@ th.header > div {
 .open {
   *z-index: 1000;
 }
-.open > .dropdown-menu {
+.open  > .dropdown-menu {
   display: block;
 }
 .pull-right > .dropdown-menu {
@@ -6761,34 +6761,11 @@ a.badge:hover {
 .hq-accordion-control .accordion-body.in .accordion-inner {
   display: block;
 }
-.multimedia-map .accordion-group {
-  margin-bottom: 1em;
-}
-.multimedia-map .accordion-heading a:hover {
-  text-decoration: none;
-}
-.multimedia-map .accordion-heading h3 {
-  margin: 0;
-}
-.multimedia-map .accordion-heading .accordion-toggle {
-  -webkit-transition: background-color 0.2s ease-in-out;
-  -moz-transition: background-color 0.2s ease-in-out;
-  -o-transition: background-color 0.2s ease-in-out;
-  transition: background-color 0.2s ease-in-out;
-  background-color: #f2f4f7;
-}
-.multimedia-map .accordion-heading .accordion-toggle.collapsed {
-  background-color: transparent;
-}
-.multimedia-map .accordion-heading:hover {
-  -webkit-transition: background-color 0.2s ease-in-out;
-  -moz-transition: background-color 0.2s ease-in-out;
-  -o-transition: background-color 0.2s ease-in-out;
-  transition: background-color 0.2s ease-in-out;
-  background-color: #eff4fa;
-}
 #reportFilters.in {
   overflow: visible;
+}
+.accordion-toggle.collapsed .icon-double-angle-down:before {
+  content: "\f101" !important;
 }
 .carousel {
   position: relative;
@@ -7349,6 +7326,10 @@ a.badge:hover {
 .hqm-list-notice:only-child {
   display: none;
 }
+.hqm-select-files-container {
+  display: inline-block;
+  margin-right: 10px;
+}
 .hqm-path {
   width: 340px;
   display: block;
@@ -7357,6 +7338,70 @@ a.badge:hover {
 }
 .hqm-path span {
   float: right;
+}
+.accordion-multimedia .accordion-group {
+  margin-bottom: 1em;
+}
+.accordion-multimedia .accordion-heading a:hover {
+  text-decoration: none;
+}
+.accordion-multimedia .accordion-heading h1,
+.accordion-multimedia .accordion-heading h2,
+.accordion-multimedia .accordion-heading h3 {
+  margin: 0;
+}
+.accordion-multimedia .accordion-heading .accordion-toggle {
+  -webkit-transition: background-color 0.2s ease-in-out;
+  -moz-transition: background-color 0.2s ease-in-out;
+  -o-transition: background-color 0.2s ease-in-out;
+  transition: background-color 0.2s ease-in-out;
+  background-color: #f2f4f7;
+}
+.accordion-multimedia .accordion-heading .accordion-toggle.collapsed {
+  background-color: transparent;
+}
+.accordion-multimedia .accordion-heading:hover {
+  -webkit-transition: background-color 0.2s ease-in-out;
+  -moz-transition: background-color 0.2s ease-in-out;
+  -o-transition: background-color 0.2s ease-in-out;
+  transition: background-color 0.2s ease-in-out;
+  background-color: #eff4fa;
+}
+.accordion-multimedia h1 {
+  font-size: 22.75px;
+}
+.accordion-multimedia h2 {
+  font-size: 19.5px;
+}
+.accordion-multimedia h3 {
+  font-size: 16.25px;
+}
+.table-multimedia {
+  margin-bottom: 0;
+}
+.table-multimedia thead th,
+.table-multimedia tbody td {
+  text-align: center;
+}
+.table-multimedia thead th:last-child,
+.table-multimedia tbody td:last-child {
+  text-align: left;
+}
+.table-multimedia .media-type-icon,
+.table-multimedia .media-status-icon {
+  font-size: 2em;
+}
+.table-multimedia .media-type-icon {
+  color: #1557a2;
+}
+.table-multimedia .media-status-icon .icon-ok {
+  color: #46a546;
+}
+.table-multimedia .media-status-icon .icon-warning-sign {
+  color: #ff8b03;
+}
+.table-multimedia td {
+  vertical-align: middle;
 }
 /**
 * From github.com/danielfarrell/bootstrap-combobox
