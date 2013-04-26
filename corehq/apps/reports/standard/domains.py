@@ -47,7 +47,6 @@ class DomainStatsReport(GenericTabularReport):
     def rows(self):
         from corehq.apps.hqadmin.views import _all_domain_stats
         all_stats = _all_domain_stats()
-        # domains = sorted(self.get_domains())
         domains = self.get_domains()
         for domain in domains:
             dom = getattr(domain, 'name', domain) # get the domain name if domains is a list of domain objects
