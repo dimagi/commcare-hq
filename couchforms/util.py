@@ -179,13 +179,3 @@ def _log_hard_failure(instance, attachments, error):
         message = unicode(str(error), encoding='utf-8')
 
     return SubmissionErrorLog.from_instance(instance, message)
-    
-    
-def value_for_display(value, replacement_chars="_-"):
-    """
-    Formats an xform value for display, replacing the contents of the 
-    system characters with spaces
-    """
-    for char in replacement_chars:
-        value = str(value).replace(char, " ")
-    return value
