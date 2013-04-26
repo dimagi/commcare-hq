@@ -213,6 +213,7 @@ def app_source(req, domain, app_id):
 @login_and_domain_required
 def import_app(req, domain, template="app_manager/import_app.html"):
     if req.method == "POST":
+        _clear_app_cache(req, domain)
         name = req.POST.get('name')
         try:
             source = req.POST.get('source')
@@ -230,7 +231,7 @@ def import_app(req, domain, template="app_manager/import_app.html"):
         return back_to_main(**locals())
     else:
         app_id = req.GET.get('app')
-        redirect_domain = req.GET.get('domain')
+        redirect_domain = req.GET.get('domain') or None
         if redirect_domain is not None:
             if Domain.get_by_name(redirect_domain):
                 return HttpResponseRedirect(
@@ -450,6 +451,7 @@ def get_app_view_context(request, app):
 
     if app.get_doc_type() == 'Application':
         try:
+            # todo remove get_media_references
             multimedia = app.get_media_references()
         except ProcessTimedOut as e:
             notify_exception(request)
@@ -571,6 +573,7 @@ def release_manager(request, domain, app_id, template='app_manager/releases.html
     })
     if not app.is_remote_app():
         # Multimedia is not supported for remote applications at this time.
+        # todo remove get_media_references
         multimedia = app.get_media_references()
         context.update({
             'multimedia': multimedia,
@@ -1697,8 +1700,9 @@ def download_file(req, domain, app_id, path):
         response = HttpResponse()
     try:
         response.write(req.app.fetch_attachment('files/%s' % path))
+        assert req.app.copy_of
         return response
-    except ResourceNotFound:
+    except (ResourceNotFound, AssertionError):
         callback, callback_args, callback_kwargs = RegexURLResolver(r'^', 'corehq.apps.app_manager.download_urls').resolve(path)
         return callback(req, domain, app_id, *callback_args, **callback_kwargs)
 
