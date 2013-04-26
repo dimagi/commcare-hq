@@ -95,9 +95,6 @@ def project_stats_facets():
     return facets
 
 def es_domain_query(params, facets=None, terms=None, domains=None, return_q_dict=False, start_at=None, size=None, sort=None):
-    # from corehq.pillows.domain import DomainPillow
-    # d = DomainPillow()
-    # d.reset_checkpoint()
     from corehq.apps.appstore.views import es_query
     if terms is None:
         terms = ['search']
@@ -201,15 +198,15 @@ class AdminDomainStatsReport(DomainStatsReport, ElasticTabularReport):
         for dom in domains:
             yield [
                 dom.get('hr_name') or dom['name'],
-                dom.get("organization") or 'No org',
-                dom['deployment'].get('date') or 'No date',
-                dom.get("cp_n_active_cc_users", "Not Yet Calculated"),
-                dom.get("cp_n_cc_users", "Not Yet Calculated"),
-                dom.get("cp_n_active_cases", "Not Yet Calculated"),
-                dom.get("cp_n_cases", "Not Yet Calculated"),
-                dom.get("cp_n_forms", "Not Yet Calculated"),
-                dom.get("cp_first_form", "No Forms"),
-                dom.get("cp_last_form", "No Forms"),
-                dom.get("cp_n_web_users", "Not Yet Calculated"),
-                dom['internal'].get('notes') or 'No notes',
+                dom.get("organization") or _('No org'),
+                dom['deployment'].get('date') or _('No date'),
+                dom.get("cp_n_active_cc_users", _("Not Yet Calculated")),
+                dom.get("cp_n_cc_users", _("Not Yet Calculated")),
+                dom.get("cp_n_active_cases", _("Not Yet Calculated")),
+                dom.get("cp_n_cases", _("Not Yet Calculated")),
+                dom.get("cp_n_forms", _("Not Yet Calculated")),
+                dom.get("cp_first_form", _("No Forms")),
+                dom.get("cp_last_form", _("No Forms")),
+                dom.get("cp_n_web_users", _("Not Yet Calculated")),
+                dom['internal'].get('notes') or _('No notes'),
             ]
