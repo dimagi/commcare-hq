@@ -35,6 +35,7 @@ phonelog_reports = patterns('',
 urlpatterns = patterns('corehq.apps.reports.views',
     url(r'^$', "default", name="reports_home"),
     url(r'^saved/', "saved_reports", name="saved_reports"),
+    url(r'^saved_reports', 'old_saved_reports'),
 
     url(r'^case_data/(?P<case_id>[\w\-]+)/(?P<xform_id>[\w\-:]+)/$', 'case_form_data', name="case_form_data"),
     url(r'^case_data/(?P<case_id>[\w\-]+)/$', 'case_details', name="case_details"),
