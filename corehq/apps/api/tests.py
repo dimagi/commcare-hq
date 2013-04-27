@@ -75,7 +75,7 @@ class TestXFormInstanceResource(TestCase):
         # and write the translated form directly; we are not trying to test
         # the ptop infrastructure.
 
-        pillow = XFormPillow()
+        pillow = XFormPillow(online=False)
         fake_xform_es = FakeXFormES()
         v0_4.MOCK_XFORM_ES = fake_xform_es
 
