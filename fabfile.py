@@ -37,7 +37,7 @@ RSYNC_EXCLUDE = (
     )
 env.project = 'commcare-hq'
 env.code_repo = 'git://github.com/dimagi/commcare-hq.git'
-#env.code_branch = None
+env.code_branch = 'master'
 env.home = "/home/cchq"
 env.selenium_url = 'http://jenkins.dimagi.com/job/commcare-hq-post-deploy/buildWithParameters?token=%(token)s&TARGET=%(environment)s'
 
