@@ -79,6 +79,10 @@ UI_FREQUENCY_CHOICES = [UI_FREQUENCY_ADVANCED]
 
 QUESTION_RETRY_CHOICES = [1, 2, 3, 4, 5]
 
+FORM_TYPE_ONE_BY_ONE = "ONE_BY_ONE" # Answer each question one at a time
+FORM_TYPE_ALL_AT_ONCE = "ALL_AT_ONCE" # Complete the entire form with just one sms using the delimiter to separate answers
+FORM_TYPE_CHOICES = [FORM_TYPE_ONE_BY_ONE, FORM_TYPE_ALL_AT_ONCE]
+
 # This time is used when the case property used to specify the reminder time isn't a valid time
 # TODO: Decide whether to keep this or retire the reminder
 DEFAULT_REMINDER_TIME = time(12, 0)
@@ -914,7 +918,12 @@ class CaseReminder(Document, LockableMixIn):
 class SurveyKeyword(Document):
     domain = StringProperty()
     keyword = StringProperty()
+    form_type = StringProperty(choices=FORM_TYPE_CHOICES, default=FORM_TYPE_ONE_BY_ONE)
     form_unique_id = StringProperty()
+    delimiter = StringProperty() # Default is None, in which case the delimiter is any consecutive white space
+    use_named_args = BooleanProperty()
+    named_args = DictProperty() # Dictionary of {argument name in the sms (caps) : form question xpath}
+    named_args_separator = StringProperty()
     
     def retire(self):
         self.doc_type += "-Deleted"
