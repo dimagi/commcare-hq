@@ -36,7 +36,7 @@ EXCHANGE_NOTIFICATION_RECIPIENTS = ['commcarehq-dev+exchange@dimagi.com']
 
 ####### Log/debug setup ########
 
-DEBUG = False
+DEBUG = True
 TEMPLATE_DEBUG = DEBUG
 
 # log directories must exist and be writeable!
