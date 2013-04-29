@@ -1,5 +1,3 @@
-var HQMediaUploaders = {};  // This will be referenced by the media references
-
 var HQMediaUploaderTypes = {
     'bulk': HQMediaBulkUploadController,
     'file': HQMediaFileUploadController

@@ -10,6 +10,7 @@
 
 {% block js-inline %} {{ block.super }}
     <script type="text/javascript">
+        var HQMediaUploaders = {};  // This will be referenced by the media references
         {% for uploader in uploaders  %}
             HQMediaUploaders['{{ uploader.slug }}'] = new HQMediaUploaderTypes['{{ uploader.uploader_type }}'] (
                 '{{ uploader.slug }}',
