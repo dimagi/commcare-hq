@@ -352,8 +352,16 @@ class RequisitionCase(CommCareCase):
     amount_received = StringProperty()
 
     @memoized
+    def get_supply_point_case(self):
+        product_case = self.get_product_case()
+        if product_case:
+            return product_case.get_supply_point_case()
+        return None
+
+    @memoized
     def get_product_case(self):
-        return _get_single_index(self, const.PARENT_CASE_REF, const.SUPPLY_POINT_PRODUCT_CASE_TYPE)
+        uncasted = _get_single_index(self, const.PARENT_CASE_REF, const.SUPPLY_POINT_PRODUCT_CASE_TYPE)
+        return SupplyPointProductCase.wrap(uncasted._doc) if uncasted else None
 
     def get_default_value(self):
         """get how much the default is. this is dependent on state."""
