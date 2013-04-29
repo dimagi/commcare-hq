@@ -10,8 +10,12 @@
 
 {% block js-inline %} {{ block.super }}
     <script type="text/javascript">
+        var uploaders_available = {
+            'bulk': HQMediaBulkUploadController,
+            'file': HQMediaFileUploadController
+        };
         {% for uploader in uploaders  %}
-            var {{ uploader.name }}_controller = new {{ uploader.uploader_class }} (
+            var {{ uploader.name }}_controller = new uploaders_available['{{ uploader.uploader_type }}'] (
                 '{{ uploader.name }}',
                 '{{ uploader.media_type }}',
                 {

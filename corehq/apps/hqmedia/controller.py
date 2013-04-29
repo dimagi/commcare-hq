@@ -4,8 +4,8 @@ from django.utils.translation import ugettext_noop
 
 class BaseMultimediaUploadController(object):
     is_multi_file = False
-    uploader_class = None
     media_type = None
+    uploader_type = None
 
     errors_template = "hqmedia/uploader/errors.html"
 
@@ -39,8 +39,8 @@ class BaseMultimediaUploadController(object):
 
 class MultimediaBulkUploadController(BaseMultimediaUploadController):
     is_multi_file = True
-    uploader_class = "HQMediaBulkUploadController"
     media_type = "bulk"
+    uploader_type = "bulk"
 
     queue_template = "hqmedia/uploader/queue_multi.html"
     status_template = "hqmedia/uploader/status_multi.html"
@@ -63,7 +63,7 @@ class MultimediaBulkUploadController(BaseMultimediaUploadController):
 
 
 class BaseMultimediaFileUploadController(BaseMultimediaUploadController):
-    uploader_class = "HQMediaFileUploadController"
+    uploader_type = "file"
     queue_template = "hqmedia/uploader/queue_single.html"
 
 
