@@ -3,3 +3,4 @@ psql -c 'create database commcarehq' -U postgres
 
 # The XFORMS_POST_URL is under suspicion of still pointing at the wrong DB; trying this
 curl -X PUT localhost:5984/commcarehq
+

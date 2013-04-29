@@ -5,7 +5,9 @@ LOG=pip.log
 cat requirements/requirements.txt requirements/dev-requirements.txt | cut -d '#' -f 1 | egrep -v '^$' | \
 while read line; do 
     if [ ! -z "$line" ]; then
+        date
         echo pip install --use-mirrors "$line" 
         pip install --use-mirrors "$line" > "$LOG" 2>&1 || cat "$LOG"
     fi
 done
+date
