@@ -291,9 +291,38 @@ class StockTransaction(DocumentSchema):
 
 
 
+def _get_single_index(case, identifier, type):
+    matching = filter(lambda i: i.identifier == identifier, case.indices)
+    if matching:
+        assert len(matching) == 1, 'should only be one parent index'
+        assert matching[0].referenced_type == type, \
+             ' parent had bad case type %s' % matching[0].referenced_type
+        return CommCareCase.get(matching[0].referenced_id)
+    return None
+
+class SupplyPointProductCase(CommCareCase):
+    """
+    A wrapper around CommCareCases to get more built in functionality
+    specific to supply point products.
+    """
+    # can flesh this out more as needed
+    product = StringProperty() # would be nice if this was product_id but is grandfathered in
+
+    @memoized
+    def get_product(self):
+        return Product.get(self.product)
+
+    @memoized
+    def get_supply_point_case(self):
+        return _get_single_index(self, const.PARENT_CASE_REF, const.SUPPLY_POINT_CASE_TYPE)
+
+    class Meta:
+        app_label = "commtrack" # This is necessary otherwise syncdb will confuse this app with casexml
+
 class RequisitionCase(CommCareCase):
     """
     A wrapper around CommCareCases to get more built in functionality
+    specific to requisitions.
     """
     # supply_point = StringProperty() # todo, if desired
     requisition_status = StringProperty()
@@ -324,14 +353,7 @@ class RequisitionCase(CommCareCase):
 
     @memoized
     def get_product_case(self):
-        matching = filter(lambda i: i.identifier == const.PARENT_CASE_REF, self.indices)
-        if matching:
-            assert len(matching) == 1, 'should only be one parent index'
-            assert matching[0].referenced_type == const.SUPPLY_POINT_PRODUCT_CASE_TYPE, \
-                'req parent had bad case type %s' % matching[0].referenced_type
-            return CommCareCase.get(matching[0].referenced_id)
-
-        return None
+        return _get_single_index(self, const.PARENT_CASE_REF, const.SUPPLY_POINT_PRODUCT_CASE_TYPE)
 
     def get_default_value(self):
         """get how much the default is. this is dependent on state."""
