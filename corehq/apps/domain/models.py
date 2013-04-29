@@ -169,6 +169,17 @@ class InternalProperties(DocumentSchema, UpdatableSchema):
     organization_name = StringProperty()
 
 
+class CaseDisplaySettings(DocumentSchema):
+    case_details = DictProperty(
+        verbose_name="Mapping of case type to definitions of properties "
+                     "to display above the fold on case details")
+    form_details = DictProperty(
+        verbose_name="Mapping of form xmlns to definitions of properties "
+                     "to display for individual forms")
+
+    # todo: case list
+
+
 class Domain(Document, HQBillingDomainMixin, SnapshotMixin):
     """Domain is the highest level collection of people/stuff
        in the system.  Pretty much everything happens at the
@@ -194,6 +205,7 @@ class Domain(Document, HQBillingDomainMixin, SnapshotMixin):
     short_description = StringProperty()
     is_shared = BooleanProperty(default=False)
     commtrack_enabled = BooleanProperty(default=False)
+    case_display = SchemaProperty(CaseDisplaySettings) 
     
     # CommConnect settings
     survey_management_enabled = BooleanProperty(default=False)
@@ -218,6 +230,7 @@ class Domain(Document, HQBillingDomainMixin, SnapshotMixin):
     phone_model = StringProperty()
     attribution_notes = StringProperty()
     publisher = StringProperty(choices=["organization", "user"], default="user")
+    yt_id = StringProperty()
 
     deployment = SchemaProperty(Deployment)
 
@@ -780,6 +793,14 @@ class Domain(Document, HQBillingDomainMixin, SnapshotMixin):
             return CommtrackConfig.for_domain(self.name)
         else:
             return None
+
+    def get_case_display(self, case):
+        """Get the properties display definition for a given case"""
+        return self.case_display.case_details.get(case.type)
+
+    def get_form_display(self, form):
+        """Get the properties display definition for a given XFormInstance"""
+        return self.case_display.form_details.get(form.xmlns)
 
 ##############################################################################################################
 #

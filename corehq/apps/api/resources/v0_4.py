@@ -9,6 +9,12 @@ from corehq.apps.api.resources.v0_2 import dict_object
 from corehq.apps.api.resources import v0_3, JsonResource
 from corehq.apps.api.es import XFormES, CaseES, ESQuerySet, es_search
 
+# By the time a test case is running, the resource is already instantiated,
+# so as a hack until this can be remedied, there is a global that
+# can be set to provide a mock.
+
+MOCK_XFORM_ES = None
+
 class XFormInstanceResource(v0_3.XFormInstanceResource):
 
     # Some fields that were present when just fetching individual docs are
@@ -21,6 +27,9 @@ class XFormInstanceResource(v0_3.XFormInstanceResource):
     md5 = fields.CharField(attribute='uiversion', blank=True, null=True)
     def dehydrate_md5(self, bundle):
         return 'OBSOLETED'
+
+    def xform_es(self, domain):
+        return MOCK_XFORM_ES or XFormES(domain)
 
     def get_list(self, request, **kwargs):
         """
@@ -43,7 +52,7 @@ class XFormInstanceResource(v0_3.XFormInstanceResource):
     def obj_get_list(self, request, domain, **kwargs):
         return ESQuerySet(payload = es_search(request, domain),
                           model = XFormInstance, 
-                          es_client=XFormES(domain)) # Not that XFormES is used only as an ES client, for `run_query` against the proper index
+                          es_client=self.xform_es(domain)) # Not that XFormES is used only as an ES client, for `run_query` against the proper index
 
     def get_resource_list_uri(self, request=None, **kwargs):
         """
