@@ -18,7 +18,7 @@ def send(msg, delay=True, *args, **kwargs):
     }
     encoding_param = ""
     try:
-        text = str(msg.text)
+        text = msg.text.encode("iso-8859-1")
         context["message"] = clean_outgoing_sms_text(text)
     except UnicodeEncodeError:
         context["message"] = msg.text.encode("utf-16-be").encode("hex")
