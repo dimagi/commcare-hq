@@ -12,13 +12,18 @@ def send(msg, delay=True, *args, **kwargs):
     """
     Sends a message via mach's API
     """
-    outgoing_sms_text = clean_outgoing_sms_text(msg.text)
     context = {
-        'message': outgoing_sms_text,
         'phone_number': urllib.quote(msg.phone_number),
         'sender_id': urllib.quote(kwargs.get("sender_id", DEFAULT_SENDER_ID)),
     }
-    url = "%s?%s" % (settings.SMS_GATEWAY_URL, settings.SMS_GATEWAY_PARAMS % context)
+    encoding_param = ""
+    try:
+        text = str(msg.text)
+        context["message"] = clean_outgoing_sms_text(text)
+    except UnicodeEncodeError:
+        context["message"] = msg.text.encode("utf-16-be").encode("hex")
+        encoding_param = "&encoding=ucs"
+    url = "%s?%s%s" % (settings.SMS_GATEWAY_URL, settings.SMS_GATEWAY_PARAMS % context, encoding_param)
     # just opening the url is enough to send the message
     # TODO, check response
     resp = urllib2.urlopen(url).read()
