@@ -155,7 +155,6 @@ class InternalProperties(DocumentSchema, UpdatableSchema):
     sf_account_id = StringProperty()
     commcare_edition = StringProperty(choices=["", "standard", "plus", "advanced"], default="")
     services = StringProperty(choices=["", "basic", "plus", "full", "custom"], default="")
-    real_space = BooleanProperty()
     initiative = StringListProperty()
     project_state = StringProperty(choices=["", "POC", "transition", "at-scale"], default="")
     self_started = BooleanProperty()
@@ -200,7 +199,7 @@ class Domain(Document, HQBillingDomainMixin, SnapshotMixin):
     # domain metadata
     project_type = StringProperty() # e.g. MCH, HIV
     customer_type = StringProperty() # plus, full, etc.
-    is_test = BooleanProperty(default=False)
+    is_test = BooleanProperty(default=True)
     description = StringProperty()
     short_description = StringProperty()
     is_shared = BooleanProperty(default=False)

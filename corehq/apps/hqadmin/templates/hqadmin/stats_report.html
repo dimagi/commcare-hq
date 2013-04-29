@@ -19,13 +19,12 @@
 {% block sidebar %}
     {{ block.super }}
     <hr />
+    {% url admin_report_dispatcher 'domains' as search_url %}
+    <ul class="nav">
+        {% include 'appstore/partials/search_input.html' with search_name="es_search" search_for="domains..." %}
+    </ul>
     <h4 style="margin-left: 1em">Project Facets</h4>
     {% include 'appstore/partials/sidebar.html' %}
 {% endblock %}
 
 {% block report-title %}Domain List{% endblock %}
-{#{% block reportcontent %}#}
-{#    <div id="report-content">#}
-{#        {% include "reports/async/default.html" %}#}
-{#    </div>#}
-{#{% endblock %}#}

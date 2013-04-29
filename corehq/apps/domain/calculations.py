@@ -1,3 +1,4 @@
+from collections import defaultdict
 from datetime import datetime, timedelta, time
 from django.template.loader import render_to_string
 from corehq.apps.appstore.views import es_query
@@ -160,3 +161,39 @@ def dom_calc(calc_tag, dom, extra_arg=''):
     elif ans is False:
         return _('no')
     return ans
+
+def _all_domain_stats():
+    webuser_counts = defaultdict(lambda: 0)
+    commcare_counts = defaultdict(lambda: 0)
+    form_counts = defaultdict(lambda: 0)
+    case_counts = defaultdict(lambda: 0)
+
+    for row in get_db().view('users/by_domain', startkey=["active"],
+                             endkey=["active", {}], group_level=3).all():
+        _, domain, doc_type = row['key']
+        value = row['value']
+        {
+            'WebUser': webuser_counts,
+            'CommCareUser': commcare_counts
+        }[doc_type][domain] = value
+
+    key = make_form_couch_key(None)
+    form_counts.update(dict([(row["key"][1], row["value"]) for row in \
+                                get_db().view("reports_forms/all_forms",
+                                    group=True,
+                                    group_level=2,
+                                    startkey=key,
+                                    endkey=key+[{}]
+                             ).all()]))
+
+    case_counts.update(dict([(row["key"][0], row["value"]) for row in \
+                             get_db().view("hqcase/types_by_domain",
+                                           group=True,group_level=1).all()]))
+
+    return {"web_users": webuser_counts,
+            "commcare_users": commcare_counts,
+            "forms": form_counts,
+            "cases": case_counts}
+
+ES_CALCED_PROPS = ["cp_n_web_users", "cp_n_active_cc_users", "cp_n_cc_users", "cp_n_active_cases" , "cp_n_cases",
+                   "cp_n_forms", "cp_first_form", "cp_last_form", "cp_is_active", 'cp_has_app']

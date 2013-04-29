@@ -291,7 +291,6 @@ def internal_settings(request, domain, template='domain/internal_settings.html')
             "sf_account_id": domain.internal.sf_account_id,
             "commcare_edition": domain.internal.commcare_edition,
             "services": domain.internal.services,
-            "real_space": 'true' if domain.internal.real_space else 'false',
             "initiative": domain.internal.initiative,
             "project_state": domain.internal.project_state,
             "self_started": 'true' if domain.internal.self_started else 'false',

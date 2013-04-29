@@ -304,7 +304,6 @@ class DomainInternalForm(forms.Form, SubAreaMixin):
                                    choices=tuple_of_copies(["standard", "plus", "advanced"]))
     services = ChoiceField(label=ugettext_noop("Services"), required=False,
                            choices=tuple_of_copies(["basic", "plus", "full", "custom"]))
-    real_space = ChoiceField(label=ugettext_noop("Real Space?"), choices=tf_choices('Yes', 'No'), required=False)
     initiative = forms.MultipleChoiceField(label=ugettext_noop("Initiative"), widget=forms.CheckboxSelectMultiple(),
                                            choices=tuple_of_copies(DATA_DICT["initiatives"], blank=False), required=False)
     project_state = ChoiceField(label=ugettext_noop("Project State"), required=False,
@@ -324,7 +323,6 @@ class DomainInternalForm(forms.Form, SubAreaMixin):
             sf_account_id=self.cleaned_data['sf_account_id'],
             commcare_edition=self.cleaned_data['commcare_edition'],
             services=self.cleaned_data['services'],
-            real_space=self.cleaned_data['real_space'] == 'true',
             initiative=self.cleaned_data['initiative'],
             project_state=self.cleaned_data['project_state'],
             self_started=self.cleaned_data['self_started'] == 'true',
