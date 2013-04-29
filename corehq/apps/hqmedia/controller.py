@@ -3,14 +3,17 @@ from django.utils.translation import ugettext_noop
 
 
 class BaseMultimediaUploadController(object):
-    is_multi_file = False
+    """
+        Media type is the user-facing term for the type of media that the uploader is uploading
+    """
     media_type = None
     uploader_type = None
+    is_multi_file = False
 
     errors_template = "hqmedia/uploader/errors.html"
 
-    def __init__(self, name, destination):
-        self.name = name
+    def __init__(self, slug, destination):
+        self.slug = slug
         self.destination = destination
 
     @property
@@ -39,8 +42,8 @@ class BaseMultimediaUploadController(object):
 
 class MultimediaBulkUploadController(BaseMultimediaUploadController):
     is_multi_file = True
-    media_type = "bulk"
     uploader_type = "bulk"
+    media_type = ugettext_noop("zip")
 
     queue_template = "hqmedia/uploader/queue_multi.html"
     status_template = "hqmedia/uploader/status_multi.html"

@@ -1,3 +1,10 @@
+var HQMediaUploaders = {};  // This will be referenced by the media references
+
+var HQMediaUploaderTypes = {
+    'bulk': HQMediaBulkUploadController,
+    'file': HQMediaFileUploadController
+};
+
 function BaseHQMediaUploadController (uploader_name, marker, options) {
     'use strict';
     var self = this;

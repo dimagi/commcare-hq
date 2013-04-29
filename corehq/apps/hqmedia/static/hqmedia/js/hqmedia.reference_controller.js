@@ -252,7 +252,7 @@ function ImageReference (ref) {
     'use strict';
     BaseMediaReference.call(this, ref);
     var self = this;
-    self.upload_controller = hqimage_controller;
+    self.upload_controller = HQMediaUploaders['hqimage'];
     self.preview_template = "image-preview-template";
     self.thumb_url = ko.computed(function () {
         return (self.url()) ? self.url() + "?thumb=50" : "";
@@ -267,7 +267,7 @@ function AudioReference (ref) {
     'use strict';
     BaseMediaReference.call(this, ref);
     var self = this;
-    self.upload_controller = hqaudio_controller;
+    self.upload_controller = HQMediaUploaders['hqaudio'];
     self.preview_template = "audio-preview-template";
 }
 
@@ -279,7 +279,7 @@ function VideoReference (ref) {
     'use strict';
     BaseMediaReference.call(this, ref);
     var self = this;
-    self.upload_controller = hqvideo_controller;
+    self.upload_controller = HQMediaUploaders['hqvideo'];
     self.preview_template = "video-preview-template";
 }
 
