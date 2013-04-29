@@ -817,7 +817,6 @@ class CaseReminderHandler(Document):
         reminders = self.get_reminders()
         self.doc_type += "-Deleted"
         for reminder in reminders:
-            print "Retiring %s" % reminder._id
             reminder.retire()
         self.save()
 

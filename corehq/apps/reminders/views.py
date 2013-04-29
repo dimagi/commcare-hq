@@ -5,7 +5,7 @@ from django.core.urlresolvers import reverse
 from django.http import HttpResponseRedirect, Http404, HttpResponse, HttpResponseBadRequest
 from django.shortcuts import render
 
-from corehq.apps.reminders.forms import CaseReminderForm, ComplexCaseReminderForm, SurveyForm, SurveySampleForm, EditContactForm, RemindersInErrorForm
+from corehq.apps.reminders.forms import CaseReminderForm, ComplexCaseReminderForm, SurveyForm, SurveySampleForm, EditContactForm, RemindersInErrorForm, KeywordForm
 from corehq.apps.reminders.models import CaseReminderHandler, CaseReminderEvent, CaseReminder, REPEAT_SCHEDULE_INDEFINITELY, EVENT_AS_OFFSET, EVENT_AS_SCHEDULE, SurveyKeyword, Survey, SurveySample, SURVEY_METHOD_LIST, SurveyWave, ON_DATETIME, RECIPIENT_SURVEY_SAMPLE, QUESTION_RETRY_CHOICES
 from corehq.apps.users.decorators import require_permission
 from corehq.apps.users.models import CouchUser, CommCareUser, Permissions
@@ -246,45 +246,52 @@ def manage_keywords(request, domain):
 
 @reminders_permission
 def add_keyword(request, domain, keyword_id=None):
-    if keyword_id is None:
-        s = SurveyKeyword(domain = domain)
+    sk = None
+    if keyword_id is not None:
+        sk = SurveyKeyword.get(keyword_id)
+        if sk.domain != domain:
+            raise Http404
+    
+    if request.method == "POST":
+        form = KeywordForm(request.POST)
+        form._cchq_domain = domain
+        form._sk_id = sk._id if sk is not None else None
+        if form.is_valid():
+            if sk is None:
+                sk = SurveyKeyword(domain=domain)
+            sk.keyword = form.cleaned_data.get("keyword")
+            sk.form_type = form.cleaned_data.get("form_type")
+            sk.form_unique_id = form.cleaned_data.get("form_unique_id")
+            sk.delimiter = form.cleaned_data.get("delimiter")
+            sk.use_named_args = form.cleaned_data.get("use_named_args", False)
+            sk.named_args = form.cleaned_data.get("named_args")
+            sk.named_args_separator = form.cleaned_data.get("named_args_separator")
+            sk.save()
+            return HttpResponseRedirect(reverse("manage_keywords", args=[domain]))
     else:
-        s = SurveyKeyword.get(keyword_id)
+        initial = {}
+        if sk is not None:
+            initial = {
+                "keyword" : sk.keyword,
+                "form_unique_id" : sk.form_unique_id,
+                "form_type" : sk.form_type,
+                "use_custom_delimiter" : sk.delimiter is not None,
+                "delimiter" : sk.delimiter,
+                "use_named_args" : sk.use_named_args,
+                "use_named_args_separator" : sk.named_args_separator is not None,
+                "named_args" : [{"name" : k, "xpath" : v} for k, v in sk.named_args.items()],
+                "named_args_separator" : sk.named_args_separator,
+            }
+        form = KeywordForm(initial=initial)
     
     context = {
         "domain" : domain,
         "form_list" : get_form_list(domain),
-        "errors" : [],
-        "keyword" : s
+        "form" : form,
+        "keyword" : sk,
     }
     
-    if request.method == "GET":
-        return render(request, "reminders/partial/add_keyword.html", context)
-    else:
-        keyword = request.POST.get("keyword", None)
-        form_unique_id = request.POST.get("survey", None)
-        
-        if keyword is not None:
-            keyword = keyword.strip()
-        
-        s.keyword = keyword
-        s.form_unique_id = form_unique_id
-        
-        errors = []
-        if keyword is None or keyword == "":
-            errors.append("Please enter a keyword.")
-        if form_unique_id is None:
-            errors.append("Please create a form first, and then add a keyword for it.")
-        duplicate_entry = SurveyKeyword.get_keyword(domain, keyword)
-        if duplicate_entry is not None and keyword_id != duplicate_entry._id:
-            errors.append("Keyword already exists.")
-        
-        if len(errors) > 0:
-            context["errors"] = errors
-            return render(request, "reminders/partial/add_keyword.html", context)
-        else:
-            s.save()
-            return HttpResponseRedirect(reverse("manage_keywords", args=[domain]))
+    return render(request, "reminders/partial/add_keyword.html", context)
 
 @reminders_permission
 def delete_keyword(request, domain, keyword_id):
