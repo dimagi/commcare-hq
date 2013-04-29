@@ -14,7 +14,7 @@ diff-match-patch==20120106
 django-kombu==0.9.1
 django-digest==1.13
 django-rosetta==0.6.8
-django-tastypie==0.9.11
+django-tastypie==0.9.14
 djtables==0.1.1
 egenix-mx-base==3.2.6
 eulxml==0.18.0
