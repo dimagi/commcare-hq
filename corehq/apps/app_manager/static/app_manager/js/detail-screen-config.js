@@ -65,6 +65,11 @@ var DetailScreenConfig = (function () {
         }
         return orig;
     }
+
+    var field_val_re = /^[a-zA-Z][\w_-]*(\/[a-zA-Z][\w_-]*)*$/;
+    var field_format_warning = $('<span/>').addClass('help-inline')
+        .text("Must begin with a letter and contain only letters, numbers, '-', and '_'");
+
     Column = (function () {
         function Column(col, screen) {
             /*
@@ -102,6 +107,7 @@ var DetailScreenConfig = (function () {
                 {label: "Referral", value: "referral"}
             ]).val(this.original.model);
             this.field = uiElement.input().val(this.original.field);
+            this.format_warning = field_format_warning.clone().hide();
 
             (function () {
                 var i, lang, visibleVal = "", invisibleVal = "";
@@ -117,6 +123,7 @@ var DetailScreenConfig = (function () {
                     }
                 }
                 that.header = uiElement.input().val(invisibleVal);
+                that.header.ui.find('input').addClass('input-small');
                 that.header.setVisibleValue(visibleVal);
             }());
             this.format = uiElement.select(DetailScreenConfig.MENU_OPTIONS).val(this.original.format || null);
@@ -181,17 +188,17 @@ var DetailScreenConfig = (function () {
                 }
             }).fire('change');
 
-            this.$add = $('<div class="ui-icon"/>').addClass(COMMCAREHQ.icons.ADD).click(function () {
-                if (that.field.val()) {
+            this.$add = $('<i></i>').addClass(COMMCAREHQ.icons.ADD).click(function () {
+                if (that.field.val() && field_val_re.test(that.field.val())) {
                     that.duplicate();
                 } else {
                     that.field.$edit_view.focus();
                 }
             }).css({cursor: 'pointer'}).attr('title', DetailScreenConfig.message.ADD_COLUMN);
-            this.$copy = $('<div class="ui-icon"/>').addClass(COMMCAREHQ.icons.COPY).click(function () {
-                that.duplicate();
-            }).css({cursor: 'pointer'}).attr('title', DetailScreenConfig.message.COPY_COLUMN);
-            this.$delete = $('<div class="ui-icon"/>').addClass(COMMCAREHQ.icons.DELETE).click(function () {
+//            this.$copy = $('<i></i>').addClass(COMMCAREHQ.icons.COPY).click(function () {
+//                that.duplicate();
+//            }).css({cursor: 'pointer'}).attr('title', DetailScreenConfig.message.COPY_COLUMN);
+            this.$delete = $('<i></i>').addClass(COMMCAREHQ.icons.DELETE).click(function () {
                 $(this).remove();
                 that.screen.fire('delete-column', that);
             }).css({cursor: 'pointer'}).attr('title', DetailScreenConfig.message.DELETE_COLUMN);
@@ -227,7 +234,7 @@ var DetailScreenConfig = (function () {
                 if (this.grip !== grip) {
                     this.grip = grip;
                     if (grip) {
-                        this.$grip = $('<div class="grip ui-icon"/>').addClass(COMMCAREHQ.icons.GRIP).css({
+                        this.$grip = $('<i class="grip"></i>').addClass(COMMCAREHQ.icons.GRIP).css({
                             cursor: 'move'
                         }).mousedown(function () {
                             $(':focus').blur();
@@ -242,7 +249,7 @@ var DetailScreenConfig = (function () {
     }());
     Screen = (function () {
         var sectionLabels = {
-            'case': "Case Details",
+            'case': "",
             referral: "Referral Details"
         };
         function Screen($home, spec, options) {
@@ -319,6 +326,11 @@ var DetailScreenConfig = (function () {
             this.customColumn = Column.init({model: "case", format: "plain"}, this);
             this.customColumn.field.on('change', function () {
                 that.customColumn.header.val(toTitleCase(this.val()));
+                if (this.val() && !field_val_re.test(this.val())) {
+                    that.customColumn.format_warning.show().parent().addClass('error');
+                } else {
+                    that.customColumn.format_warning.hide().parent().removeClass('error');
+                }
             }).$edit_view.autocomplete({
                 source: function (request, response) {
                     var availableTags = that.properties[that.customColumn.model.val()];
@@ -482,16 +494,22 @@ var DetailScreenConfig = (function () {
                     parts[j] = '<code style="display: inline-block;">' + parts[j] + '</code>'
                     column.field.ui.html(parts.join('<span style="color: #DDD;">/</span>'));
                 }
-                $('<td/>').addClass('detail-screen-field').append(column.field.ui).appendTo($tr);
+                var dsf = $('<td/>').addClass('detail-screen-field control-group').append(column.field.ui)
+                dsf.append(column.format_warning);
+                if (column.field.value && !field_val_re.test(column.field.value)) {
+                    column.format_warning.show().parent().addClass('error');
+                }
+                dsf.appendTo($tr);
+
                 $('<td/>').addClass('detail-screen-header').append(column.header.ui).appendTo($tr);
                 $('<td/>').addClass('detail-screen-format').append(column.format.ui).appendTo($tr);
                 $('<td/>').addClass('detail-screen-extra').append(column.$extra).appendTo($tr);
                 if (this.edit) {
                     $('<td/>').addClass('detail-screen-icon').append(
-                        suggested ? "" : column.$delete
+                        suggested ? column.$add : column.$copy
                     ).appendTo($tr);
                     $('<td/>').addClass('detail-screen-icon').append(
-                        suggested ? column.$add : column.$copy
+                        suggested ? "" : column.$delete
                     ).appendTo($tr);
                 } else {
                     $('<td/>').addClass('detail-screen-icon').appendTo($tr);
@@ -501,9 +519,9 @@ var DetailScreenConfig = (function () {
                 return $tr;
             },
             render: function () {
-                var $table, $columns, $suggestedColumns, $tr, i, $box;
-                $('<h1/>').text(sectionLabels[this.model]).appendTo(this.$home);
-                $box = $("<div/>").addClass('config').appendTo(this.$home);
+                var $table, $columns, $suggestedColumns, $thead, $tr, i, $box;
+                $('<h4/>').text(sectionLabels[this.model]).appendTo(this.$home);
+                $box = $("<div/>").appendTo(this.$home);
 
                 // this is a not-so-elegant way to get the styling right
                 COMMCAREHQ.initBlock(this.$home);
@@ -518,14 +536,13 @@ var DetailScreenConfig = (function () {
                     $('<p/>').text(DetailScreenConfig.message.EMPTY_SCREEN).appendTo($box);
                 } else {
                     if (this.edit) {
-                        $('<div/>').append(this.saveButton.ui).appendTo($box);
+                        $('<div class="clearfix">').append(this.saveButton.ui).appendTo($box);
                     }
-                    $table = $('<table/>'
+                    $table = $('<table class="table table-condensed"/>'
                         ).addClass('detail-screen-table'
-                        ).css('clear', 'both'
-                        ).appendTo($box);
-
-                    $tr = $('<tr/>').appendTo($table);
+                    ).appendTo($box);
+                    $thead = $('<thead/>').appendTo($table);
+                    $tr = $('<tr/>').appendTo($thead);
 
                     // grip
                     $('<th/>').addClass('detail-screen-icon').appendTo($tr);
@@ -540,7 +557,7 @@ var DetailScreenConfig = (function () {
                     $('<th/>').addClass('detail-screen-format').text(DetailScreenConfig.message.FORMAT).appendTo($tr);
                     $('<th/>').addClass('detail-screen-extra').appendTo($tr);
 
-                    $('<th/>').addClass('detail-screen-icon').appendTo($tr);
+//                    $('<th/>').addClass('detail-screen-icon').appendTo($tr);
                     $('<th/>').addClass('detail-screen-icon').appendTo($tr);
 
                     $columns = $('<tbody/>').addClass('detail-screen-columns').appendTo($table);
@@ -646,7 +663,7 @@ var DetailScreenConfig = (function () {
 
         MODEL: 'Model',
         FIELD: 'Property',
-        HEADER: 'Label',
+        HEADER: 'Display Text',
         FORMAT: 'Format',
 
         PLAIN_FORMAT: 'Plain',
@@ -670,7 +687,7 @@ var DetailScreenConfig = (function () {
         FILTER_XPATH_FORMAT: 'Filter (Advanced)',
         FILTER_XPATH_EXTRA_LABEL: 'Filter XPath',
         INVISIBLE_FORMAT: 'Search Only',
-        ADDRESS_FORMAT: 'Address (ODK/CloudCare)',
+        ADDRESS_FORMAT: 'Address (Android/CloudCare)',
 
         ADD_COLUMN: 'Add to list',
         COPY_COLUMN: 'Duplicate',

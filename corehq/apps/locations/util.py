@@ -129,7 +129,7 @@ def location_custom_properties(domain, loc_type):
     try:
         properties = hardcoded[loc_type]
     except KeyError:
-        return []
+        properties = []
 
     loc_config = dict((lt.name, lt) for lt in Domain.get_by_name(domain).commtrack_settings.location_types)
     if not loc_config[loc_type].administrative:

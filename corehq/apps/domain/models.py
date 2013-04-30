@@ -15,7 +15,7 @@ from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.html import format_html
 from dimagi.utils.logging import notify_exception
 from dimagi.utils.timezones import fields as tz_fields
-from dimagi.utils.couch.database import get_db
+from dimagi.utils.couch.database import get_db, get_safe_write_kwargs, apply_update
 from itertools import chain
 from langcodes import langs as all_langs
 from collections import defaultdict
@@ -155,7 +155,6 @@ class InternalProperties(DocumentSchema, UpdatableSchema):
     sf_account_id = StringProperty()
     commcare_edition = StringProperty(choices=["", "standard", "plus", "advanced"], default="")
     services = StringProperty(choices=["", "basic", "plus", "full", "custom"], default="")
-    real_space = BooleanProperty()
     initiative = StringListProperty()
     project_state = StringProperty(choices=["", "POC", "transition", "at-scale"], default="")
     self_started = BooleanProperty()
@@ -167,6 +166,17 @@ class InternalProperties(DocumentSchema, UpdatableSchema):
     can_use_data = BooleanProperty()
     notes = StringProperty()
     organization_name = StringProperty()
+
+
+class CaseDisplaySettings(DocumentSchema):
+    case_details = DictProperty(
+        verbose_name="Mapping of case type to definitions of properties "
+                     "to display above the fold on case details")
+    form_details = DictProperty(
+        verbose_name="Mapping of form xmlns to definitions of properties "
+                     "to display for individual forms")
+
+    # todo: case list
 
 
 class Domain(Document, HQBillingDomainMixin, SnapshotMixin):
@@ -189,11 +199,12 @@ class Domain(Document, HQBillingDomainMixin, SnapshotMixin):
     # domain metadata
     project_type = StringProperty() # e.g. MCH, HIV
     customer_type = StringProperty() # plus, full, etc.
-    is_test = BooleanProperty(default=False)
+    is_test = BooleanProperty(default=True)
     description = StringProperty()
     short_description = StringProperty()
     is_shared = BooleanProperty(default=False)
     commtrack_enabled = BooleanProperty(default=False)
+    case_display = SchemaProperty(CaseDisplaySettings) 
     
     # CommConnect settings
     survey_management_enabled = BooleanProperty(default=False)
@@ -218,6 +229,7 @@ class Domain(Document, HQBillingDomainMixin, SnapshotMixin):
     phone_model = StringProperty()
     attribution_notes = StringProperty()
     publisher = StringProperty(choices=["organization", "user"], default="user")
+    yt_id = StringProperty()
 
     deployment = SchemaProperty(Deployment)
 
@@ -248,7 +260,7 @@ class Domain(Document, HQBillingDomainMixin, SnapshotMixin):
             del data['original_doc']
             should_save = True
             if original_doc:
-                original_doc = Domain.get_by_name(data['original_doc'])
+                original_doc = Domain.get_by_name(original_doc)
                 data['copy_history'] = [original_doc._id]
 
         # for domains that have a public domain license
@@ -481,7 +493,7 @@ class Domain(Document, HQBillingDomainMixin, SnapshotMixin):
             new_domain = Domain(name=name,
                             is_active=is_active,
                             date_created=datetime.utcnow())
-            new_domain.save()
+            new_domain.save(**get_safe_write_kwargs())
             return new_domain
 
     def password_format(self):
@@ -521,6 +533,13 @@ class Domain(Document, HQBillingDomainMixin, SnapshotMixin):
         new_domain.snapshot_time = None
         new_domain.organization = None # TODO: use current user's organization (?)
 
+        # reset the cda
+        new_domain.cda.signed = False
+        new_domain.cda.date = None
+        new_domain.cda.type = None
+        new_domain.cda.user_id = None
+        new_domain.cda.user_ip = None
+
         for field in self._dirty_fields:
             if hasattr(new_domain, field):
                 delattr(new_domain, field)
@@ -538,8 +557,9 @@ class Domain(Document, HQBillingDomainMixin, SnapshotMixin):
         new_domain.save()
 
         if user:
-            user.add_domain_membership(new_domain_name, is_admin=True)
-            user.save()
+            def add_dom_to_user(user):
+                user.add_domain_membership(new_domain_name, is_admin=True)
+            apply_update(user, add_dom_to_user)
 
         return new_domain
 
@@ -772,6 +792,14 @@ class Domain(Document, HQBillingDomainMixin, SnapshotMixin):
             return CommtrackConfig.for_domain(self.name)
         else:
             return None
+
+    def get_case_display(self, case):
+        """Get the properties display definition for a given case"""
+        return self.case_display.case_details.get(case.type)
+
+    def get_form_display(self, form):
+        """Get the properties display definition for a given XFormInstance"""
+        return self.case_display.form_details.get(form.xmlns)
 
 ##############################################################################################################
 #

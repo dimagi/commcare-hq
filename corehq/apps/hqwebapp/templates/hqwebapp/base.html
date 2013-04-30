@@ -1,8 +1,8 @@
-{% load menu_tags %}{% load i18n %}{% load hq_shared_tags %}{% load raven %}<!DOCTYPE html>
+{% load menu_tags %}{% load i18n %}{% load hq_shared_tags %}{% load raven %}{% load cache %}<!DOCTYPE html>
 <html lang="en">
     <head>
         <meta charset="utf-8"/>
-        <title>CommCare HQ{% block title %}{% endblock %}</title>
+        <title>{% block title %}{% endblock %} - CommCare HQ</title>
         <meta name="application-name" content="CommCare HQ">
         <meta http-equiv="content-language" content="en">
 
@@ -30,6 +30,7 @@
     </head>
     <body>
         <div class="hq-container-fluid {% block layout_style %}{% endblock %}{% block oldstyle_tag %} old-style{% endblock %}">
+            {% with c_username=user.username c_org=request.project.organization c_domain=domain %}
             <header>
                 {% block header-section %}
                 <div class="navbar">
@@ -42,7 +43,7 @@
                             {% block tabs %}
                                 {% format_main_menu %}
                             {% endblock %}
-
+                            {% cache 500 header_user_buttons c_username c_domain c_org %}
                             <div class="btn-toolbar pull-right">
                                 <div class="btn-group">
                                 {% if request.project.organization and request.couch_user.is_web_user %}
@@ -101,6 +102,7 @@
                                     </ul>
                                 </div>
                             </div>
+                            {% endcache %}
                         </nav>
                     {% else %}
                         {% block extra_tabs %}
@@ -116,6 +118,7 @@
                 {% format_subtab_menu %}
                 {% endblock header-section %}
             </header>
+            {% endwith %}
 
             {% if request.project.is_snapshot %}
                 <div class="alert alert-info snapshot-alert">
@@ -126,6 +129,7 @@
                 </div>
             {% endif %}
 
+            {% if not no_header %}
             <div class="hq-page-header-container">
                 <div id="unsupported-browser" class="alert alert-error alert-block alert-full" style="display: none">
                     <p><i class="icon icon-warning-sign"></i><strong>CommCare HQ does not work well with Internet Explorer.</strong></p>
@@ -149,6 +153,7 @@
                     {% endblock %}
                 </h1>
             </div>
+            {% endif %}
             {% block oldstyle_hack_start %}<div class="hq-oldstyle">{% endblock %}
             {% block content %}
             {% endblock %}
@@ -176,7 +181,7 @@
 
             {% if user.is_authenticated %}
             <div class="footer-right">
-                Need help? Try the <a href="https://wiki.commcarehq.org/display/commcarepublic/Home" target="_blank" class="btn btn-footer"><i class="icon-info-sign icon-white"></i> CommCare Wiki</a> and join the <a href="http://groups.google.com/group/commcare-users/subscribe" target="_blank" class="btn btn-footer"><i class="icon-envelope icon-white"></i> commcare-users</a> mailing list.
+                {% blocktrans %}Need help? Try the <a href="https://wiki.commcarehq.org/display/commcarepublic/Home" target="_blank" class="btn btn-footer"><i class="icon-info-sign icon-white"></i> CommCare Help Site</a> and join the <a href="http://groups.google.com/group/commcare-users/subscribe" target="_blank" class="btn btn-footer"><i class="icon-envelope icon-white"></i> commcare-users</a> mailing list.{% endblocktrans %}
             </div>
             {% endif %}
         </footer>
@@ -307,7 +312,19 @@
                     ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
                     var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
                 })();
-
+            </script>
+        {% endif %}
+        {% if PINGDOM_ID %}
+            <script>
+                var _prum = [['id', '{{ PINGDOM_ID }}'],
+                    ['mark', 'firstbyte', (new Date()).getTime()]];
+                (function() {
+                    var s = document.getElementsByTagName('script')[0]
+                            , p = document.createElement('script');
+                    p.async = 'async';
+                    p.src = '//rum-static.pingdom.net/prum.min.js';
+                    s.parentNode.insertBefore(p, s);
+                })();
             </script>
         {% endif %}
     </body>

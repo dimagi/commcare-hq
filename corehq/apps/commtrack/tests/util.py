@@ -1,3 +1,5 @@
+from casexml.apps.case.tests import delete_all_cases, delete_all_xforms
+from corehq.apps.commtrack import const
 from corehq.apps.locations.models import Location
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.commtrack.util import bootstrap_default
@@ -7,6 +9,8 @@ from django.utils.unittest.case import TestCase
 from corehq.apps.commtrack.helpers import make_supply_point,\
     make_supply_point_product
 from corehq.apps.commtrack.models import Product
+from couchforms.models import XFormInstance
+from dimagi.utils.couch.database import get_safe_write_kwargs
 
 TEST_DOMAIN = 'commtrack-test'
 TEST_LOCATION_TYPE = 'location'
@@ -20,7 +24,7 @@ def bootstrap_domain(domain_name=TEST_DOMAIN, requisitions_enabled=False):
     # a default config and a location
     domain_obj = create_domain(domain_name)
     domain_obj.commtrack_enabled = True
-    domain_obj.save()
+    domain_obj.save(**get_safe_write_kwargs())
     bootstrap_default(domain_name, requisitions_enabled)
     return domain_obj
 
@@ -42,6 +46,10 @@ class CommTrackTest(TestCase):
     requisitions_enabled = False # can be overridden
 
     def setUp(self):
+        # might as well clean house before doing anything
+        delete_all_xforms()
+        delete_all_cases()
+
         self.backend = test.bootstrap(TEST_BACKEND, to_console=True)
         self.domain = bootstrap_domain(requisitions_enabled=self.requisitions_enabled)
         self.user = bootstrap_user()
@@ -59,3 +67,9 @@ class CommTrackTest(TestCase):
         self.user.delete()
         self.domain.delete() # domain delete cascades to everything else
 
+    def get_commtrack_forms(self):
+        return XFormInstance.view('couchforms/by_xmlns',
+            key=const.COMMTRACK_REPORT_XMLNS,
+            reduce=False,
+            include_docs=True
+        )

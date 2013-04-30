@@ -1,15 +1,17 @@
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, date
 import json
 import tempfile
 from django.core.cache import cache
 from django.core.servers.basehttp import FileWrapper
 import os
 from corehq.apps.reports import util
+from corehq.apps.reports.custom_export_helpers import CustomExportHelper
 from corehq.apps.reports.standard import inspect, export, ProjectReport
-from corehq.apps.reports.standard.export import DeidExportReport
-from corehq.apps.reports.export import ApplicationBulkExportHelper, CustomBulkExportHelper
-from corehq.apps.reports.models import (ReportConfig, ReportNotification,
-    FormExportSchema, HQGroupExportConfiguration)
+from corehq.apps.reports.export import (
+    ApplicationBulkExportHelper,
+    CustomBulkExportHelper
+)
+from corehq.apps.reports.models import ReportConfig, ReportNotification
 from corehq.apps.users.decorators import require_permission
 from corehq.apps.users.export import export_users
 from corehq.apps.users.models import Permissions
@@ -19,7 +21,6 @@ from couchexport.util import SerializableFunction
 from couchforms.models import XFormInstance
 from dimagi.utils.couch.bulk import wrapped_docs
 from dimagi.utils.couch.loosechange import parse_date
-from dimagi.utils.decorators import inline
 from dimagi.utils.export import WorkBook
 from dimagi.utils.web import json_request, json_response
 from django.http import HttpResponseRedirect, HttpResponse, HttpResponseBadRequest, Http404, HttpResponseForbidden
@@ -36,8 +37,7 @@ from corehq.apps.hqcase.export import export_cases_and_referrals
 from corehq.apps.users.models import CommCareUser
 from corehq.apps.reports.display import xmlns_to_name
 from couchexport.schema import build_latest_schema
-from couchexport.models import ExportSchema, ExportColumn, SavedExportSchema,\
-    ExportTable, Format, FakeSavedExportSchema, SavedBasicExport
+from couchexport.models import SavedExportSchema, Format, FakeSavedExportSchema, SavedBasicExport
 from couchexport import views as couchexport_views
 from couchexport.shortcuts import export_data_shared, export_raw_data,\
     export_response
@@ -48,13 +48,16 @@ from couchdbkit.exceptions import ResourceNotFound
 from fields import FilterUsersField
 from util import get_all_users_by_domain, stream_qs
 from corehq.apps.hqsofabed.models import HQFormData
-from corehq.apps.app_manager.util import get_app_id
 from corehq.apps.groups.models import Group
 from soil import DownloadBase
 from soil.tasks import prepare_download
 from django.utils.translation import ugettext as _
 from django.utils.safestring import mark_safe
 from dimagi.utils.chunked import chunked
+
+from casexml.apps.case.templatetags.case_tags import case_inline_display
+from couchforms.templatetags.xform_tags import render_form
+
 
 DATE_FORMAT = "%Y-%m-%d"
 
@@ -92,7 +95,7 @@ def saved_reports(request, domain, template="reports/reports_home.html"):
         configs=configs,
         scheduled_reports=scheduled_reports,
         report=dict(
-            title="Select a Report to View",
+            title=_("My Saved Reports"),
             show=user.can_view_reports() or user.get_viewable_reports(),
             slug=None,
             is_async=True,
@@ -182,117 +185,6 @@ def export_data_async(request, domain):
     return couchexport_views.export_data_async(request, filter=filter, type=export_type)
 
 
-class CustomExportHelper(object):
-
-    class DEID(object):
-        options = (
-            ('', ''),
-            ('Sensitive ID', 'couchexport.deid.deid_ID'),
-            ('Sensitive Date', 'couchexport.deid.deid_date'),
-        )
-
-    def __init__(self, request, domain, export_id=None):
-        self.request = request
-        self.domain = domain
-        self.export_type = request.GET.get('type', 'form')
-        self.presave = False
-
-        if self.export_type == 'form':
-            self.ExportSchemaClass = FormExportSchema
-        else:
-            self.ExportSchemaClass = SavedExportSchema
-
-        if export_id:
-            self.custom_export = self.ExportSchemaClass.get(export_id)
-            # also update the schema to include potential new stuff
-            self.custom_export.update_schema()
-
-            # enable configuring saved exports from this page
-            saved_group = HQGroupExportConfiguration.get_for_domain(self.domain)
-            self.presave = export_id in saved_group.custom_export_ids
-
-            assert(self.custom_export.doc_type == 'SavedExportSchema')
-            assert(self.custom_export.type == self.export_type)
-            assert(self.custom_export.index[0] == domain)
-        else:
-            self.custom_export = self.ExportSchemaClass(type=self.export_type)
-            if self.export_type == 'form':
-                self.custom_export.app_id = request.GET.get('app_id')
-        
-    def update_custom_export(self):
-        """
-        Updates custom_export object from the request
-        and saves to the db
-        """
-        schema = ExportSchema.get(self.request.POST["schema"])
-        self.custom_export.index = schema.index
-        self.custom_export.schema_id = self.request.POST["schema"]
-        self.custom_export.name = self.request.POST["name"]
-        self.custom_export.default_format = self.request.POST["format"] or Format.XLS_2007
-        self.custom_export.is_safe = bool(self.request.POST.get('is_safe'))
-
-        self.presave = bool(self.request.POST.get('presave'))
-
-        table = self.request.POST["table"]
-        cols = self.request.POST['order'].strip().split()
-
-        @list
-        @inline
-        def export_cols():
-            for col in cols:
-                transform = self.request.POST.get('%s transform' % col) or None
-                if transform:
-                    transform = SerializableFunction.loads(transform)
-                yield ExportColumn(
-                    index=col,
-                    display=self.request.POST["%s display" % col],
-                    transform=transform
-                )
-
-        export_table = ExportTable(index=table, display=self.request.POST["name"], columns=export_cols)
-        self.custom_export.tables = [export_table]
-        self.custom_export.order = cols
-
-        table_dict = dict([t.index, t] for t in self.custom_export.tables)
-        if table in table_dict:
-            table_dict[table].columns = export_cols
-        else:
-            self.custom_export.tables.append(ExportTable(index=table,
-                display=self.custom_export.name,
-                columns=export_cols))
-
-        if self.export_type == 'form':
-            self.custom_export.include_errors = bool(self.request.POST.get("include-errors"))
-            self.custom_export.app_id = self.request.POST.get('app_id')
-
-        self.custom_export.save()
-
-        if self.presave:
-            HQGroupExportConfiguration.add_custom_export(self.domain, self.custom_export.get_id)
-        else:
-            HQGroupExportConfiguration.remove_custom_export(self.domain, self.custom_export.get_id)
-
-    def get_response(self):
-        table_config = self.custom_export.table_configuration[0]
-        slug = export.ExcelExportReport.slug if self.export_type == "form" else export.CaseExportReport.slug
-        
-        def show_deid_column():
-            for col in table_config['column_configuration']:
-                if col['transform']:
-                    return True
-            return False
-
-        return render(self.request, "reports/reportdata/customize_export.html", {
-            "saved_export": self.custom_export,
-            "deid_options": CustomExportHelper.DEID.options,
-            "presave": self.presave,
-            "DeidExportReport_name": DeidExportReport.name,
-            "table_config": table_config,
-            "slug": slug,
-            "domain": self.domain,
-            "show_deid_column": show_deid_column()
-        })
-
 @login_or_digest
 @datespan_default
 @require_GET
@@ -343,7 +235,7 @@ def _export_default_or_custom_data(request, domain, export_id=None, bulk_export=
     elif export_id:
         # this is a custom export
         try:
-            export_object = CustomExportHelper(request, domain, export_id).custom_export
+            export_object = CustomExportHelper.make(request, domain, export_id).custom_export
             if safe_only and not export_object.is_safe:
                 return HttpResponseForbidden()
         except ResourceNotFound:
@@ -362,6 +254,10 @@ def _export_default_or_custom_data(request, domain, export_id=None, bulk_export=
             return HttpResponseBadRequest()
         assert(export_tag[0] == domain)
         export_object = FakeSavedExportSchema(index=export_tag)
+
+    if not filename:
+        filename = export_object.name
+    filename += ' ' + date.today().isoformat()
 
     if async:
         return export_object.export_data_async(
@@ -392,12 +288,12 @@ def custom_export(req, domain):
     except ValueError:
         return HttpResponseBadRequest()
 
-    helper = CustomExportHelper(req, domain)
+    helper = CustomExportHelper.make(req, domain)
 
     if req.method == "POST":
         helper.update_custom_export()
         messages.success(req, "Custom export created! You can continue editing here.")
-        return _redirect_to_export_home(helper.export_type, domain)
+        return _redirect_to_export_home(helper.export_type, domain, ajax=True)
 
     schema = build_latest_schema(export_tag)
 
@@ -428,13 +324,13 @@ def edit_custom_export(req, domain, export_id):
     Customize an export
     """
     try:
-        helper = CustomExportHelper(req, domain, export_id)
+        helper = CustomExportHelper.make(req, domain, export_id)
     except ResourceNotFound:
         raise Http404()
     if req.method == "POST":
         helper.update_custom_export()
         messages.success(req, "Custom export saved!")
-        return _redirect_to_export_home(helper.export_type, domain)
+        return _redirect_to_export_home(helper.export_type, domain, ajax=True)
     else:
         return helper.get_response()
 
@@ -494,11 +390,34 @@ def delete_custom_export(req, domain, export_id):
     messages.success(req, "Custom export was deleted.")
     return _redirect_to_export_home(saved_export.type, domain)
 
-def _redirect_to_export_home(type, domain):
-    if type == "form":
-        return HttpResponseRedirect(export.ExcelExportReport.get_url(domain=domain))
+
+def _export_home(type, domain):
+    if type == 'form':
+        return export.ExcelExportReport.get_url(domain=domain)
+    elif type == 'case':
+        return export.CaseExportReport.get_url(domain=domain)
     else:
-        return HttpResponseRedirect(export.CaseExportReport.get_url(domain=domain))
+        raise ValueError(
+            'Export is supposed to have type form or case, has %s' % type
+        )
+
+def _redirect_to_export_home(type, domain, ajax=False):
+    url = _export_home(type, domain)
+    if not ajax:
+        return HttpResponseRedirect(url)
+    else:
+        return json_response({'redirect': url})
+
+def touch_saved_reports_views(user, domain):
+    """
+    Hit the saved reports views so stale=update_after doesn't cause the user to
+    see old or deleted data after a change when they next load the reports
+    homepage.
+
+    """
+    ReportConfig.by_domain_and_owner(domain, user._id, limit=1).all()
+    ReportNotification.by_domain_and_owner(domain, user._id, limit=1).all()
+
 
 @login_and_domain_required
 @require_POST
@@ -550,12 +469,13 @@ def add_config(request, domain=None):
     
     config.save()
 
+    touch_saved_reports_views(request.couch_user, domain)
+
     return json_response(config)
 
 @login_and_domain_required
 @datespan_default
 def email_report(request, domain, report_slug):
-    from datetime import datetime
     from dimagi.utils.django.email import send_HTML_email
     from corehq.apps.reports.dispatcher import ProjectReportDispatcher
     from forms import EmailReportForm
@@ -589,8 +509,7 @@ def email_report(request, domain, report_slug):
 
     body = _render_report_configs(request, [config],
                                   domain,
-                                  user_id,
-                                  request.couch_user,
+                                  user_id, request.couch_user,
                                   True,
                                   notes=form.cleaned_data['notes']).content
 
@@ -614,6 +533,8 @@ def delete_config(request, domain, config_id):
         raise Http404()
 
     config.delete()
+    
+    touch_saved_reports_views(request.couch_user, domain)
     return HttpResponse()
 
 
@@ -677,6 +598,7 @@ def edit_scheduled_report(request, domain, scheduled_report_id=None,
         else:
             messages.success(request, "Scheduled report updated!")
 
+        touch_saved_reports_views(request.couch_user, domain)
         return HttpResponseRedirect(reverse('reports_home', args=(domain,)))
 
     context['form'] = form
@@ -787,14 +709,6 @@ def case_details(request, domain, case_id):
         messages.info(request, "Sorry, we couldn't find that case. If you think this is a mistake plase report an issue.")
         return HttpResponseRedirect(inspect.CaseListReport.get_url(domain=domain))
 
-    report_name = 'Details for Case "%s"' % case.name
-    form_lookups = dict((form.get_id,
-                         "%s: %s" % (form.received_on.date(), 
-                                     xmlns_to_name(domain, form.xmlns, get_app_id(form)))) \
-                        for form in case.get_forms())
-
-
-                        
     try:
         owner_name = CommCareUser.get_by_user_id(case.owner_id, domain).raw_username
     except Exception:
@@ -812,20 +726,24 @@ def case_details(request, domain, case_id):
     return render(request, "reports/reportdata/case_details.html", {
         "domain": domain,
         "case_id": case_id,
+        "case": case,
         "username": username, 
         "owner_name": owner_name,
-        "form_lookups": form_lookups,
-        "slug":inspect.CaseListReport.slug,
+        "slug": inspect.CaseListReport.slug,
         "report": dict(
-            name=report_name,
+            name=case_inline_display(case),
             slug=inspect.CaseListReport.slug,
             is_async=False,
         ),
         "layout_flush_content": True,
-        "timezone": timezone
+        "timezone": timezone,
+        "case_display_options": {
+            "display": request.project.get_case_display(case),
+            "timezone": timezone
+        }
     })
 
-def generate_case_export_payload(domain, include_closed, format, group, user_filter):
+def generate_case_export_payload(domain, include_closed, format, group, user_filter, process=None):
     """
     Returns a FileWrapper object, which only the file backend in django-soil supports
 
@@ -840,10 +758,17 @@ def generate_case_export_payload(domain, include_closed, format, group, user_fil
         wrapper=lambda r: r['id']
     )
 
-    def stream_cases(all_case_ids):
-        for case_ids in chunked(all_case_ids, 500):
-            for case in wrapped_docs(CommCareCase, case_ids):
-                yield case
+    class stream_cases(object):
+        def __init__(self, all_case_ids):
+            self.all_case_ids = all_case_ids
+
+        def __iter__(self):
+            for case_ids in chunked(self.all_case_ids, 500):
+                for case in wrapped_docs(CommCareCase, case_ids):
+                    yield case
+
+        def __len__(self):
+            return len(self.all_case_ids)
 
     # todo deal with cached user dict here
     users = get_all_users_by_domain(domain, group=group, user_filter=user_filter)
@@ -852,7 +777,14 @@ def generate_case_export_payload(domain, include_closed, format, group, user_fil
     fd, path = tempfile.mkstemp()
     with os.fdopen(fd, 'wb') as file:
         workbook = WorkBook(file, format)
-        export_cases_and_referrals(domain, stream_cases(case_ids), workbook, users=users, groups=groups)
+        export_cases_and_referrals(
+            domain,
+            stream_cases(case_ids),
+            workbook,
+            users=users,
+            groups=groups,
+            process=process
+        )
         export_users(users, workbook)
         workbook.close()
     return FileWrapper(open(path))
@@ -896,37 +828,61 @@ def download_cases(request, domain):
 
     return generate_payload(payload_func)
 
-
-@require_form_view_permission
-@login_and_domain_required
-@require_GET
-def form_data(request, domain, instance_id):
+def _get_form_context(request, domain, instance_id):
     timezone = util.get_timezone(request.couch_user.user_id, domain)
+
     try:
         instance = XFormInstance.get(instance_id)
     except Exception:
         raise Http404()
     try:
-        assert(domain == instance.domain)
+        assert domain == instance.domain
     except AssertionError:
         raise Http404()
-    cases = CommCareCase.view("case/by_xform_id", key=instance_id, reduce=False, include_docs=True).all()
+
+    display = request.project.get_form_display(instance)
+    context = {
+        "domain": domain,
+        "display": display,
+        "timezone": timezone,
+        "instance": instance
+    }
+    context['form_render_options'] = context
+    return context
+
+
+@require_form_view_permission
+@login_and_domain_required
+@require_GET
+def form_data(request, domain, instance_id):
+    context = _get_form_context(request, domain, instance_id)
+
     try:
-        form_name = instance.get_form["@name"]
+        form_name = context['instance'].get_form["@name"]
     except KeyError:
         form_name = "Untitled Form"
-    is_archived = instance.doc_type == "XFormArchived"
-    if is_archived:
-        messages.info(request, _("This form is archived. To restore it, click 'Restore this form' at the bottom of the page."))
-    return render(request, "reports/reportdata/form_data.html",
-                              dict(domain=domain,
-                                   instance=instance,
-                                   cases=cases,
-                                   timezone=timezone,
-                                   slug=inspect.SubmitHistory.slug,
-                                   is_archived=is_archived,
-                                   form_data=dict(name=form_name,
-                                                  modified=instance.received_on)))
+   
+    context.update({
+        "slug": inspect.SubmitHistory.slug,
+        "form_name": form_name,
+        "form_received_on": context['instance'].received_on
+    })
+
+    return render(request, "reports/reportdata/form_data.html", context)
+
+@require_form_view_permission
+@login_and_domain_required
+@require_GET
+def case_form_data(request, domain, case_id, xform_id):
+    context = _get_form_context(request, domain, xform_id)
+    context['case_id'] = case_id
+
+    #todo: additional formatting options
+    #todo: sanity check that xform_id has case_block
+
+    return HttpResponse(render_form(
+            context['instance'], domain, options=context))
+
 
 @require_form_view_permission
 @login_and_domain_required
@@ -966,7 +922,11 @@ def archive_form(request, domain, instance_id):
     msg_template = '%(notif)s <a href="%(url)s">%(undo)s</a>' if instance.doc_type == "XFormArchived" else '%(notif)s'
     msg = msg_template % params
     messages.success(request, mark_safe(msg), extra_tags='html')
-    return HttpResponseRedirect(inspect.SubmitHistory.get_url(domain))
+    
+    redirect = request.META.get('HTTP_REFERER')
+    if not redirect:
+        redirect = inspect.SubmitHistory.get_url(domain)
+    return HttpResponseRedirect(redirect)
 
 @require_form_view_permission
 @require_permission(Permissions.edit_data)
@@ -979,7 +939,11 @@ def unarchive_form(request, domain, instance_id):
     else:
         assert instance.doc_type == "XFormInstance"
     messages.success(request, _("Form was successfully restored."))
-    return HttpResponseRedirect(reverse('render_form_data', args=[domain, instance_id]))
+
+    redirect = request.META.get('HTTP_REFERER')
+    if not redirect:
+        redirect = reverse('render_form_data', args=[domain, instance_id])
+    return HttpResponseRedirect(redirect)
     
 # Weekly submissions by xmlns
 def mk_date_range(start=None, end=None, ago=timedelta(days=7), iso=False):

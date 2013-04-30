@@ -2,9 +2,12 @@ from datetime import datetime
 from celery.schedules import crontab
 from celery.task import periodic_task, task
 from celery.utils.log import get_task_logger
+from corehq.apps.domain.calculations import CALC_FNS, _all_domain_stats
 from corehq.apps.hqadmin.escheck import check_cluster_health, check_case_index, CLUSTER_HEALTH, check_xform_index, check_exchange_index
 from corehq.apps.reports.models import (ReportNotification,
     UnsupportedScheduledReportError, HQGroupExportConfiguration )
+from corehq.elastic import get_es
+from corehq.pillows.mappings.domain_mapping import DOMAIN_INDEX
 from couchexport.groupexports import export_for_group
 from dimagi.utils.logging import notify_exception
 
@@ -71,3 +74,28 @@ def saved_exports():
     for row in HQGroupExportConfiguration.view("groupexport/by_domain", reduce=False).all():
         export_for_group(row["id"], "couch")
 
+@periodic_task(run_every=crontab(hour="12, 22", minute="0", day_of_week="*"))
+def update_calculated_properties():
+    es = get_es()
+
+    #todo: use some sort of ES scrolling/paginating
+    results = es.get(DOMAIN_INDEX + "/hqdomain/_search", data={"size": 99999})['hits']['hits']
+    all_stats = _all_domain_stats()
+    for r in results:
+        dom = r["_source"]["name"]
+        calced_props = {
+            "cp_n_web_users": int(all_stats["web_users"][dom]),
+            "cp_n_active_cc_users": int(CALC_FNS["mobile_users"](dom)),
+            "cp_n_cc_users": int(all_stats["commcare_users"][dom]),
+            "cp_n_active_cases": int(CALC_FNS["cases_in_last"](dom, 120)),
+            "cp_n_cases": int(all_stats["cases"][dom]),
+            "cp_n_forms": int(all_stats["forms"][dom]),
+            "cp_first_form": CALC_FNS["first_form_submission"](dom, False),
+            "cp_last_form": CALC_FNS["last_form_submission"](dom, False),
+            "cp_is_active": CALC_FNS["active"](dom),
+            "cp_has_app": CALC_FNS["has_app"](dom),
+        }
+        if calced_props['cp_first_form'] == 'No forms':
+            del calced_props['cp_first_form']
+            del calced_props['cp_last_form']
+        es.post("%s/hqdomain/%s/_update" % (DOMAIN_INDEX, r["_id"]), data={"doc": calced_props})

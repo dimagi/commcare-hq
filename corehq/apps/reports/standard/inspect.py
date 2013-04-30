@@ -22,7 +22,7 @@ from corehq.apps.reports.standard import ProjectReport, ProjectReportParametersM
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
 from corehq.apps.reports.display import xmlns_to_name
 from corehq.apps.reports.fields import SelectOpenCloseField, SelectMobileWorkerField
-from corehq.apps.reports.generic import GenericTabularReport, ProjectInspectionReportParamsMixin, ElasticTabularReport
+from corehq.apps.reports.generic import GenericTabularReport, ProjectInspectionReportParamsMixin, ElasticProjectInspectionReport
 from corehq.apps.users.models import CommCareUser, CouchUser
 from dimagi.utils.couch.database import get_db
 from dimagi.utils.couch.pagination import CouchFilter
@@ -281,7 +281,7 @@ class CaseSearchFilter(SearchFilter):
     search_help_inline = mark_safe(ugettext_noop("""Search any text, or use a targeted query. For more info see the <a href='https://wiki.commcarehq.org/display/commcarepublic/Advanced+Case+Search' target='_blank'>Case Search</a> help page"""))
 
 
-class CaseListMixin(ElasticTabularReport, ProjectReportParametersMixin):
+class CaseListMixin(ElasticProjectInspectionReport, ProjectReportParametersMixin):
     fields = [
         'corehq.apps.reports.fields.FilterUsersField',
         'corehq.apps.reports.fields.SelectCaseOwnerField',
@@ -554,8 +554,5 @@ create a couch doc as such:
         )
 
     @classmethod
-    def show_in_navigation(cls, request, domain=None):
-        if cls.get_config(domain):
-            return True
-        else:
-            return False
+    def show_in_navigation(cls, domain=None, project=None, user=None):
+        return cls.get_config(domain)

@@ -4,6 +4,8 @@
 {% load i18n %}
 {% load url_extras %}
 
+{% block title %}{% trans "CommCare Exchange" %}{% endblock %}
+
 {% block head %}{{ block.super }}
     <style type="text/css">
         .rating_static > span {
@@ -129,7 +131,7 @@
 
         .app-pic {
             width: 12.5em;
-            height: 12.5em;
+{#            height: 12.5em;#}
             margin-right: .5em;
         }
 
@@ -165,61 +167,22 @@
         #license-info-label:hover {
             background: inherit;
         }
-
-        .facet-checkbox {
-            float: right;
-        }
     </style>
 {% endblock %}
 
 {% block js-inline %}{{ block.super }}
-    <script type="text/javascript">
-        $(function () {
-            $(".more-sortable-button").click(function() {
-                var e = $(this);
-                var sortable = e.data('sortable');
-                $('.sortable-' + sortable).show();
-                e.hide();
-                return false;
-            });
-        });
-    </script>
-
-    <script type="text/javascript">
-        $(function () {
-            $(".facet-checkbox").click(function() {
-                window.location = $(this).parent().attr('href');
-            });
-        });
-    </script>
-
+    <script src="{% static 'appstore/js/facet_sidebar.js' %}"></script>
     <script>
         // This assures that all the result elements are the same height
-        $(function(){
+        $(window).load(function() {
             $('.results').each(function(){
-                var heighest = 0;
-                var $this = $(this);
-                $this.find('.well').each(function(){
-                    heighest = ($(this).height() > heighest) ? $(this).height() : heighest;
+                var highest = 0;
+                var $wells = $(this).find('.well');
+                $wells.each(function(){
+                    highest = ($(this).height() > highest) ? $(this).height() : highest;
                 });
-                $this.find('.well').css('height',heighest + 'px');
+                $wells.css('height', highest + 'px');
             });
-        });
-    </script>
-
-    <script>
-        function genScalePicFunc() {
-            var $app_pic = $('.app-pic');
-            return function() {
-                var pic_width = $app_pic.width();
-                $app_pic.css('height', pic_width+'px');
-            }
-        }
-        var scaleAppPic = genScalePicFunc();
-
-        $(function(){
-            scaleAppPic();
-            $(window).resize(scaleAppPic);
         });
     </script>
 {% endblock %}
@@ -264,21 +227,17 @@
             {% endif %}
         </li>
     {% endif %}
+    {% if sort_by == 'newest' %}
+        <li>{% trans "Newest" %}</li>
+    {% endif %}
     {% if sort_by  == 'best' %}
     <li>{% trans "Highest Rated" %}</li>
-    {% endif %}
-    {% if sort_by == 'hits' %}
-    <li>{% trans "Most Downloaded" %}</li>
     {% endif %}
 
 </ul>
 {% endblock %}
 
 {% block main_column %}
-
-<!--{% if search_query or filter_by %}-->
-    <!--<h3>{{ apps|length }} result{{ apps|pluralize }}</h3>-->
-<!--{% endif %}-->
 
 <h1>
     {% block store-header %}
@@ -290,9 +249,9 @@
     {% block view-tabs %}
     <div class="tabbable" style="padding-top: 15px;">
         <ul class="nav nav-pills">
-            <li{% if not sort_by %} class="active"{% endif %}><a href="{% urlencode request.path request.GET without "sort_by" %}">{% trans "Newest" %}</a></li>
+            <li{% if not sort_by %} class="active"{% endif %}><a href="{% urlencode request.path request.GET without "sort_by" %}">{% trans "Most Downloaded" %}</a></li>
+            <li{% if sort_by == 'newest' %} class="active"{% endif %}><a href="{% urlencode request.path request.GET with "sort_by" as "newest" %}">{% trans "Newest" %}</a></li>
             <li{% if sort_by == 'best' %} class="active"{% endif %}><a href="{% urlencode request.path request.GET with "sort_by" as "best" %}">{% trans "Highest Rated" %}</a></li>
-            <li{% if sort_by == 'hits' %} class="active"{% endif %}><a href="{% urlencode request.path request.GET with "sort_by" as "hits" %}">{% trans "Most Downloaded" %}</a></li>
         </ul>
     </div>
     {% endblock %}

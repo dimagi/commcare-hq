@@ -5,6 +5,7 @@ from django.http import HttpResponse
 from django.utils.decorators import method_decorator, classonlymethod
 from django.views.decorators.csrf import csrf_protect
 from corehq.apps.domain.decorators import login_and_domain_required
+from corehq.apps.reports.filters.forms import FormsByApplicationFilter
 from dimagi.utils.decorators import inline
 from corehq.elastic import get_es
 from django.views.generic import View
@@ -52,7 +53,9 @@ class ESView(View):
         raise NotImplementedError("Not implemented")
 
     @method_decorator(login_and_domain_required)
-    @method_decorator(csrf_protect)
+    #@method_decorator(csrf_protect)
+    # todo: csrf_protect temporarily removed and left to implementor's prerogative
+    # getting ajax'ed csrf token method needs revisit.
     def dispatch(self, *args, **kwargs):
         req = args[0]
         self.pretty = req.GET.get('pretty', False)
@@ -87,8 +90,9 @@ class ESView(View):
 
         Returns the raw query json back, or None if there's an error
         """
+        
         #todo: backend audit logging of all these types of queries
-        if es_query.has_key('fields') or es_query.has_key('script_fields'):
+        if 'fields' in es_query or 'script_fields' in es_query:
             #nasty hack to add domain field to query that does specific fields.
             #do nothing if there's no field query because we get everything
             fields = es_query.get('fields', [])
@@ -103,10 +107,10 @@ class ESView(View):
 
         for res in es_results['hits']['hits']:
             res_domain = None
-            if res.has_key('_source'):
+            if '_source' in res:
                 #check source
                 res_domain = res['_source'].get('domain', None)
-            elif res.has_key('fields'):
+            elif 'fields' in res:
                 res_domain = res['fields'].get('domain', None)
                 #check fields
             assert res_domain == self.domain, "Security check failed, search result domain did not match requester domain: %s != %s" % (res_domain, self.domain)
@@ -196,6 +200,35 @@ class XFormES(ESView):
             #let the terms override the kwarg - the query terms trump the magic
             new_terms['doc_type'] = doc_type
         return super(XFormES, self).base_query(terms=new_terms, fields=fields, start=start, size=size)
+
+
+    def run_query(self, es_query):
+        es_results = super(XFormES, self).run_query(es_query)
+        #hack, walk the results again, and if we have xmlns, populate human readable names
+        # Note that `get_unknown_form_name` does not require the request, which is also
+        # not necessarily available here. So `None` is passed here.
+        form_filter = FormsByApplicationFilter(None, domain=self.domain)
+
+        for res in es_results['hits']['hits']:
+            if '_source' in res:
+                xmlns = res['_source'].get('xmlns', None)
+                if xmlns:
+                    name = form_filter.get_unknown_form_name(xmlns, none_if_not_found=True)
+                if not name:
+                    #fall back
+                    if res['_source']['form'].get('@name', None):
+                        return res['_source']['form'].get['@name']
+                    else:
+                        backup = res['_source']['form'].get('#type', 'data')
+                        if backup != 'data':
+                            name = backup
+                        else:
+                            name = "unknown"
+
+                res['_source']['es_readable_name'] = name
+        return es_results
+
+
 
 
 
@@ -314,8 +347,11 @@ class ESQuerySet(object):
     def __iter__(self):
         for jvalue in self.results['hits']['hits']:
             if self.model:
-                # HACK: ideally would not assume that the model class has a `wrap` method, but just call constructor
-                yield self.model.wrap(jvalue['_source']) 
+                # HACK: Sometimes the model is a class w/ a wrap method, sometimes just a function
+                if hasattr(self.model, 'wrap'):
+                    yield self.model.wrap(jvalue['_source']) 
+                else:
+                    yield self.model(jvalue['_source'])
             else:
                 yield jvalue['_source']
 
@@ -345,6 +381,13 @@ class ESQuerySet(object):
 
 RESERVED_QUERY_PARAMS=set(['limit', 'offset', 'q', '_search'])
 
+# Note that dates are already in a string format when they arrive as query params
+query_param_transforms = {
+    'xmlns': lambda v: {'term':{'xmlns.exact':v}},
+    'received_on_start': lambda v: {'range':{'received_on': {'from': v}}},
+    'received_on_end': lambda v: {'range':{'received_on': {'to': v}}},
+}
+
 def es_search(request, domain):
     payload = {
         "filter": {
@@ -373,6 +416,12 @@ def es_search(request, domain):
 
     # filters are actually going to be a more common case
     for key in set(request.GET.keys()) - RESERVED_QUERY_PARAMS:
-        payload["filter"]["and"].append({"term": {key: request.GET[key]}})
+        value = request.GET[key]
+
+        if key in query_param_transforms:
+            payload["filter"]["and"].append(query_param_transforms[key](value))
+        else:
+            payload["filter"]["and"].append({"term": {key: value}})
+
 
     return payload

@@ -110,12 +110,7 @@ var ReportConfigsViewModel = function (options) {
             type: "DELETE",
             url: options.saveUrl + '/' + config._id(),
             success: function (data) {
-                for (var i = 0; i < self.reportConfigs().length; i++) {
-                    if (ko.utils.unwrapObservable(self.reportConfigs()[i]._id) === config._id()) {
-                        self.reportConfigs.splice(i, 1);
-                        return;
-                    }
-                }
+                window.location.reload();
             }
         });
     };
@@ -179,15 +174,6 @@ var ReportConfigsViewModel = function (options) {
         self.configBeingViewed().filters = filters;
         self.configBeingEdited(self.configBeingViewed());
         self.modalSaveButton.state('save');
-
-        /*$("#modal-body").find('date-picker').datepicker({
-         changeMonth: true,
-         changeYear: true,
-         showButtonPanel: true,
-         dateFormat: 'yy-mm-dd',
-         maxDate: '0',
-         numberOfMonths: 2
-         });*/
     };
 
     self.unsetConfigBeingEdited = function () {
@@ -217,16 +203,8 @@ $.fn.reportConfigEditor = function (options) {
         var viewModel = new ReportConfigsViewModel(options);
 
         ko.applyBindings(viewModel, $(this).get(i));
-
-        var data;
-        if (options.initialItemID) {
-            config = ko.utils.arrayFirst(viewModel.reportConfigs(), function(item) {
-                return item._id() === options.initialItemID;
-            });
-            viewModel.setConfigBeingViewed(config);
-        } else {
-            viewModel.setConfigBeingViewed(new ReportConfig(options.defaultItem));
-        }
+        
+        viewModel.setConfigBeingViewed(new ReportConfig(options.defaultItem));
     });
 };
 

@@ -1,15 +1,17 @@
-from casexml.apps.case.models import CommCareCase
-from corehq.apps.domain.decorators import login_or_digest
-from corehq.apps.groups.models import Group
-from corehq.apps.users.models import CommCareUser
-from couchforms.models import XFormInstance
 from tastypie import fields
 from tastypie.authentication import Authentication
 from tastypie.authorization import ReadOnlyAuthorization
 from tastypie.exceptions import BadRequest
 from tastypie.serializers import Serializer
+
+from casexml.apps.case.models import CommCareCase
+from couchforms.models import XFormInstance
+from corehq.apps.domain.decorators import login_or_digest
+from corehq.apps.groups.models import Group
+from corehq.apps.users.models import CommCareUser
+
 from corehq.apps.api.util import get_object_or_not_exist
-from corehq.apps.api.resources import JsonResource
+from corehq.apps.api.resources import JsonResource, DomainSpecificResourceMixin
 
 
 class CustomXMLSerializer(Serializer):
@@ -49,7 +51,7 @@ class CustomResourceMeta(object):
     authentication = LoginAndDomainAuthentication()
     serializer = CustomXMLSerializer()
 
-class CommCareUserResource(JsonResource):
+class CommCareUserResource(JsonResource, DomainSpecificResourceMixin):
     type = "user"
     id = fields.CharField(attribute='get_id', readonly=True, unique=True)
     username = fields.CharField(attribute='username', unique=True)
@@ -61,7 +63,7 @@ class CommCareUserResource(JsonResource):
     groups = fields.ListField(attribute='get_group_ids')
     user_data = fields.DictField(attribute='user_data')
 
-    def obj_get(self, request, **kwargs):
+    def obj_get(self, bundle, **kwargs):
         domain = kwargs['domain']
         pk = kwargs['pk']
         try:
@@ -70,9 +72,9 @@ class CommCareUserResource(JsonResource):
             user = None
         return user
 
-    def obj_get_list(self, request, **kwargs):
+    def obj_get_list(self, bundle, **kwargs):
         domain = kwargs['domain']
-        group_id = request.GET.get('group')
+        group_id = bundle.request.GET.get('group')
         if group_id:
             group = Group.get(group_id)
             if not group or group.domain != domain:
@@ -86,11 +88,11 @@ class CommCareUserResource(JsonResource):
         detail_allowed_methods = ['get']
         resource_name = 'user'
 
-class CommCareCaseResource(JsonResource):
+class CommCareCaseResource(JsonResource, DomainSpecificResourceMixin):
     type = "case"
     id = fields.CharField(attribute='get_id', readonly=True, unique=True)
     user_id = fields.CharField(attribute='user_id')
-    date_modified = fields.CharField(attribute='modified_on')
+    date_modified = fields.CharField(attribute='modified_on', null=True)
     closed = fields.BooleanField(attribute='closed')
     date_closed = fields.CharField(attribute='closed_on', null=True)
 
@@ -106,18 +108,18 @@ class CommCareCaseResource(JsonResource):
     def dehydrate_indices(self, bundle):
         return bundle.obj.get_json()['indices']
 
-    def obj_get(self, request, **kwargs):
+    def obj_get(self, bundle, **kwargs):
         return get_object_or_not_exist(CommCareCase, kwargs['pk'],
                                        kwargs['domain'])
 
-    def obj_get_list(self, request, **kwargs):
+    def obj_get_list(self, bundle, **kwargs):
         domain = kwargs['domain']
         closed_only = {
                           'true': True,
                           'false': False,
                           'any': True
-                      }[request.GET.get('closed', 'false')]
-        case_type = request.GET.get('case_type')
+                      }[bundle.request.GET.get('closed', 'false')]
+        case_type = bundle.request.GET.get('case_type')
 
         key = [domain]
         if case_type:
@@ -133,11 +135,12 @@ class CommCareCaseResource(JsonResource):
 
 
     class Meta(CustomResourceMeta):
+        object_class = CommCareCase    
         list_allowed_methods = ['get']
         detail_allowed_methods = ['get']
         resource_name = 'case'
 
-class XFormInstanceResource(JsonResource):
+class XFormInstanceResource(JsonResource, DomainSpecificResourceMixin):
     type = "form"
     id = fields.CharField(attribute='get_id', readonly=True, unique=True)
 
@@ -145,14 +148,15 @@ class XFormInstanceResource(JsonResource):
     type = fields.CharField(attribute='type')
     version = fields.CharField(attribute='version')
     uiversion = fields.CharField(attribute='uiversion')
-    metadata = fields.DictField(attribute='metadata')
+    metadata = fields.DictField(attribute='metadata', null=True)
     received_on = fields.DateTimeField(attribute="received_on")
     md5 = fields.CharField(attribute='xml_md5')
 
-    def obj_get(self, request, **kwargs):
+    def obj_get(self, bundle, **kwargs):
         return get_object_or_not_exist(XFormInstance, kwargs['pk'], kwargs['domain'])
 
     class Meta(CustomResourceMeta):
+        object_class = XFormInstance        
         list_allowed_methods = []
         detail_allowed_methods = ['get']
         resource_name = 'form'

@@ -33,7 +33,8 @@ API_LIST = (
     )),
     ((0, 4), (
         v0_1.CommCareUserResource,
-        v0_3.CommCareCaseResource,
+        v0_4.CommCareCaseResource,
+        v0_4.GroupResource,
         v0_4.XFormInstanceResource,
         FixtureResource
     ))

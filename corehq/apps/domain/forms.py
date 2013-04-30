@@ -1,3 +1,4 @@
+from urlparse import urlparse, parse_qs
 import dateutil
 import re
 from django import forms
@@ -68,6 +69,8 @@ class SnapshotSettingsForm(SnapshotSettingsMixin):
         help_text=ugettext_noop("This will allow any user to see and use all multimedia in this project"))
     image = forms.ImageField(label=ugettext_noop("Exchange image"), required=False,
         help_text=ugettext_noop("An optional image to show other users your logo or what your app looks like"))
+    video = CharField(label=ugettext_noop("Youtube Video"), required=False,
+        help_text=ugettext_noop("An optional youtube clip to tell users about your app. Please copy and paste a URL to a youtube video"))
     cda_confirmed = BooleanField(required=False, label=ugettext_noop("Content Distribution Agreement"),
         help_text=render_to_string('domain/partials/cda_modal.html'))
 
@@ -79,6 +82,7 @@ class SnapshotSettingsForm(SnapshotSettingsMixin):
             'description',
             'project_type',
             'image',
+            'video',
             'share_multimedia',
             'license',
             'cda_confirmed',]
@@ -89,6 +93,39 @@ class SnapshotSettingsForm(SnapshotSettingsMixin):
         if data_publish and data_cda is False:
             raise forms.ValidationError('You must agree to our Content Distribution Agreement to publish your project.')
         return data_cda
+
+    def clean_video(self):
+        video = self.cleaned_data['video']
+        if not video:
+            return video
+
+        def video_id(value):
+            # http://stackoverflow.com/questions/4356538/how-can-i-extract-video-id-from-youtubes-link-in-python#answer-7936523
+            """
+            Examples:
+            - http://youtu.be/SA2iWivDJiE
+            - http://www.youtube.com/watch?v=_oPAwA_Udwc&feature=feedu
+            - http://www.youtube.com/embed/SA2iWivDJiE
+            - http://www.youtube.com/v/SA2iWivDJiE?version=3&amp;hl=en_US
+            """
+            query = urlparse(value)
+            if query.hostname == 'youtu.be':
+                return query.path[1:]
+            if query.hostname in ('www.youtube.com', 'youtube.com'):
+                if query.path == '/watch':
+                    p = parse_qs(query.query)
+                    return p['v'][0]
+                if query.path[:7] == '/embed/':
+                    return query.path.split('/')[2]
+                if query.path[:3] == '/v/':
+                    return query.path.split('/')[2]
+                    # fail?
+            return None
+
+        v_id = video_id(video)
+        if not v_id:
+            raise forms.ValidationError('This is not a correctly formatted youtube URL. Please use a different URL.')
+        return v_id
 
     def clean(self):
         cleaned_data = self.cleaned_data
@@ -140,7 +177,6 @@ class SubAreaMixin():
 
 class DomainGlobalSettingsForm(forms.Form):
     default_timezone = TimeZoneChoiceField(label=ugettext_noop("Default Timezone"), initial="UTC")
-    case_sharing = ChoiceField(label=ugettext_noop("Case Sharing"), choices=tf_choices('On', 'Off'))
 
     def clean_default_timezone(self):
         data = self.cleaned_data['default_timezone']
@@ -158,7 +194,6 @@ class DomainGlobalSettingsForm(forms.Form):
                 if not dm.override_global_tz:
                     dm.timezone = global_tz
                     user.save()
-            domain.case_sharing = self.cleaned_data['case_sharing'] == 'true'
             domain.save()
             return True
         except Exception:
@@ -269,7 +304,6 @@ class DomainInternalForm(forms.Form, SubAreaMixin):
                                    choices=tuple_of_copies(["standard", "plus", "advanced"]))
     services = ChoiceField(label=ugettext_noop("Services"), required=False,
                            choices=tuple_of_copies(["basic", "plus", "full", "custom"]))
-    real_space = ChoiceField(label=ugettext_noop("Real Space?"), choices=tf_choices('Yes', 'No'), required=False)
     initiative = forms.MultipleChoiceField(label=ugettext_noop("Initiative"), widget=forms.CheckboxSelectMultiple(),
                                            choices=tuple_of_copies(DATA_DICT["initiatives"], blank=False), required=False)
     project_state = ChoiceField(label=ugettext_noop("Project State"), required=False,
@@ -289,7 +323,6 @@ class DomainInternalForm(forms.Form, SubAreaMixin):
             sf_account_id=self.cleaned_data['sf_account_id'],
             commcare_edition=self.cleaned_data['commcare_edition'],
             services=self.cleaned_data['services'],
-            real_space=self.cleaned_data['real_space'] == 'true',
             initiative=self.cleaned_data['initiative'],
             project_state=self.cleaned_data['project_state'],
             self_started=self.cleaned_data['self_started'] == 'true',

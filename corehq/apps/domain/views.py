@@ -10,7 +10,7 @@ from django.core.urlresolvers import reverse
 from django.http import HttpResponseRedirect, HttpResponse, Http404
 
 from django.shortcuts import redirect, render
-from corehq.apps.domain.calculations import CALCS, CALC_FNS, CALC_ORDER
+from corehq.apps.domain.calculations import CALCS, CALC_FNS, CALC_ORDER, dom_calc
 
 from corehq.apps.domain.decorators import (domain_admin_required,
     login_required_late_eval_of_LOGIN_URL, require_superuser,
@@ -291,7 +291,6 @@ def internal_settings(request, domain, template='domain/internal_settings.html')
             "sf_account_id": domain.internal.sf_account_id,
             "commcare_edition": domain.internal.commcare_edition,
             "services": domain.internal.services,
-            "real_space": 'true' if domain.internal.real_space else 'false',
             "initiative": domain.internal.initiative,
             "project_state": domain.internal.project_state,
             "self_started": 'true' if domain.internal.self_started else 'false',
@@ -323,7 +322,7 @@ def calculated_properties(request, domain):
     if not calc_tag or calc_tag not in CALC_FNS.keys():
         data = {"error": 'This tag does not exist'}
     else:
-        data = CALC_FNS[calc_tag](domain, extra_arg)
+        data = {"value": dom_calc(calc_tag, domain, extra_arg)}
     return json_response(data)
 
 @domain_admin_required
@@ -360,7 +359,7 @@ def create_snapshot(request, domain):
         published_snapshot = snapshots[0] if snapshots else domain
         published_apps = {}
         if published_snapshot is not None:
-            form = SnapshotSettingsForm(initial={
+            initial={
                 'default_timezone': published_snapshot.default_timezone,
                 'case_sharing': json.dumps(published_snapshot.case_sharing),
                 'project_type': published_snapshot.project_type,
@@ -370,18 +369,20 @@ def create_snapshot(request, domain):
                 'description': published_snapshot.description,
                 'short_description': published_snapshot.short_description,
                 'publish_on_submit': True,
-            })
+            }
+            if published_snapshot.yt_id:
+                initial['video'] = 'http://www.youtube.com/watch?v=%s' % published_snapshot.yt_id
+            form = SnapshotSettingsForm(initial=initial)
+
             for app in published_snapshot.full_applications():
-                if domain == published_snapshot:
-                    published_apps[app._id] = app
-                else:
-                    published_apps[app.copied_from._id] = app
+                base_app_id = app.copy_of if domain == published_snapshot else app.copied_from.copy_of
+                published_apps[base_app_id] = app
 
         app_forms = []
         for app in domain.applications():
             app = app.get_latest_saved() or app
-            if published_snapshot and app._id in published_apps:
-                original = published_apps[app._id]
+            if published_snapshot and app.copy_of in published_apps:
+                original = published_apps[app.copy_of]
                 app_forms.append((app, SnapshotApplicationForm(initial={
                     'publish': True,
                     'name': original.name,
@@ -444,6 +445,8 @@ def create_snapshot(request, domain):
         new_domain.title = request.POST['title']
         new_domain.multimedia_included = request.POST.get('share_multimedia', '') == 'on'
         new_domain.publisher = request.POST.get('publisher', None) or 'user'
+        if request.POST.get('video'):
+            new_domain.yt_id = form.cleaned_data['video']
 
         new_domain.author = request.POST.get('author', None)
 

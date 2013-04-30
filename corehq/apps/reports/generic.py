@@ -610,7 +610,7 @@ class GenericReportView(CacheableRequestMixIn):
         return reverse(cls.dispatcher.name(), args=url_args+[cls.slug])
 
     @classmethod
-    def show_in_navigation(cls, request, domain=None):
+    def show_in_navigation(cls, domain=None, project=None, user=None):
         return True
 
 class GenericTabularReport(GenericReportView):
@@ -891,7 +891,7 @@ class ProjectInspectionReportParamsMixin(object):
                 dict(name='ufilter', value=[f.type for f in self.user_filter if f.show])]
 
 
-class ElasticTabularReport(ProjectInspectionReportParamsMixin, GenericTabularReport):
+class ElasticTabularReport(GenericTabularReport):
     """
     Tabular report that provides framework for doing elasticsearch backed tabular reports.
 
@@ -910,7 +910,7 @@ class ElasticTabularReport(ProjectInspectionReportParamsMixin, GenericTabularRep
     def get_sorting_block(self):
         res = []
         #the NUMBER of cols sorting
-        sort_cols = int(self.request.GET['iSortingCols'])
+        sort_cols = int(self.request.GET.get('iSortingCols', 0))
         if sort_cols > 0:
             for x in range(sort_cols):
                 col_key = 'iSortCol_%d' % x
@@ -924,7 +924,6 @@ class ElasticTabularReport(ProjectInspectionReportParamsMixin, GenericTabularRep
             res.append(self.default_sort)
         return res
 
-
     @property
     def total_records(self):
         """
@@ -937,6 +936,8 @@ class ElasticTabularReport(ProjectInspectionReportParamsMixin, GenericTabularRep
         else:
             return 0
 
+
+class ElasticProjectInspectionReport(ProjectInspectionReportParamsMixin, ElasticTabularReport):
     @property
     def shared_pagination_GET_params(self):
         """
