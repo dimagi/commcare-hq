@@ -11,8 +11,6 @@ def create_unique_filter(fn):
     [{'id': 'a'}, {'id': 'b'}, {'id': 'a'}, {'id': 'c'}, {'id': 'b'}]
     """
 
-    # no idea where this should live, but currently I only use it in commtrack
-    # code so it's here.
     unique = []
     def filter(x):
         res = fn(x)
