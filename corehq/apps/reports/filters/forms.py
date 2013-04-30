@@ -1,5 +1,4 @@
 import copy
-from couchdbkit.schema.properties import LazyDict
 from django.template.loader import render_to_string
 from django.utils.safestring import mark_safe
 import re
