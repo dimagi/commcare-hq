@@ -6,6 +6,7 @@ install:
  - "time python .travis/download-requirements-in-parallel.py requirements/requirements.txt requirements/dev-requirements.txt"
  - "time pip install Cython"
  - "time pip install -r requirements/requirements.txt -r requirements/dev-requirements.txt"
+ - "bash -e .travis/misc-setup.sh"
  - "cp .travis/localsettings.py localsettings.py"
 script: python manage.py test --noinput
 services:
