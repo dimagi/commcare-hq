@@ -6,6 +6,8 @@ from casexml.apps.case.models import CommCareCase
 from corehq.apps.commtrack.models import Product
 from dimagi.utils.couch.loosechange import map_reduce
 from corehq.apps.commtrack.util import num_periods_late
+from datetime import date, datetime
+from corehq.apps.locations.models import Location
 
 # TODO make settings
 
@@ -38,6 +40,14 @@ def default_consumption(case):
 
 def is_timely(case, limit=0):
     return num_periods_late(case, REPORTING_PERIOD, *REPORTING_PERIOD_ARGS) <= limit
+
+def reporting_status(case):
+    if is_timely(case):
+        return 'ontime'
+    elif is_timely(case, 1):
+        return 'late'
+    else:
+        return 'nonreporting'
 
 def get_threshold(type):
     # TODO vary by supply point type?
@@ -232,6 +242,122 @@ class AggregateStockStatusReport(GenericTabularReport, CommtrackReportMixin):
                 row[3] = fmt(row[3], lambda k: '%.1f' % k)
                 row[4] = fmt(row[4], lambda k: statuses.get(k, k))
                 yield row
+
+    """
+    def get_data_for_graph(self):
+        ret = [
+            {"key": "stocked out", "color": "#e00707"},
+            {"key": "under stock", "color": "#ffb100"},
+            {"key": "adequate stock", "color": "#4ac925"},
+            {"key": "overstocked", "color": "#b536da"},
+            {"key": "nonreporting", "color": "#363636"},
+            {"key": "no data", "color": "#ABABAB"}
+        ]
+        statuses = ['stocked out', 'under stock', 'adequate stock', 'overstocked', 'nonreporting', 'no data']
+
+        for r in ret:
+            r["values"] = []
+
+        for pd in self.product_data:
+            for i, status in enumerate(statuses):
+                ret[i]['values'].append({"x": pd[0], "y": pd[i+1]})
+
+        return ret
+
+    @property
+    def report_context(self):
+        ctxt = super(CurrentStockStatusReport, self).report_context
+        if 'location_id' in self.request.GET: # hack: only get data if we're loading an actual report
+            ctxt['stock_data'] = self.get_data_for_graph()
+        return ctxt
+    """
+
+class ReportingRatesReport(GenericTabularReport, CommtrackReportMixin):
+    name = 'Reporting Rate'
+    slug = 'reporting_rate'
+    fields = ['corehq.apps.reports.fields.AsyncLocationField']
+    exportable = True
+    emailable = True
+
+#    report_template_path = "reports/async/tabular_graph.html"
+
+    @property
+    def headers(self):
+        return DataTablesHeader(*(DataTablesColumn(text) for text in [
+                    'Location',
+                    '# Sites',
+                    'On-time',
+                    'Late',
+                    'Non-reporting',
+                ]))
+
+    @property
+    def rows(self):
+        startkey = [self.domain, self.active_location._id if self.active_location else None]
+        product_cases = CommCareCase.view('commtrack/product_cases', startkey=startkey, endkey=startkey + [{}], include_docs=True)
+
+        def latest_case(cases):
+            # getting last report date should probably be moved to a util function in a case wrapper class
+            return max(cases, key=lambda c: getattr(c, 'last_reported', datetime(2000, 1, 1)).date())
+        cases_by_site = map_reduce(lambda c: [(tuple(c.location_),)],
+                                   lambda v: reporting_status(latest_case(v)),
+                                   data=product_cases, include_docs=True)
+
+        def child_loc(path):
+            root = self.active_location
+            ix = path.index(root._id) if root else -1
+            return path[ix + 1]
+        status_by_agg_site = map_reduce(lambda (path, status): [(child_loc(path), status)],
+                                        data=cases_by_site.iteritems())
+        sites_by_agg_site = map_reduce(lambda (path, status): [(child_loc(path), path[-1])],
+                                       data=cases_by_site.iteritems())
+
+        def status_tally(statuses):
+            total = len(statuses)
+            return map_reduce(lambda s: [(s,)], lambda v: {'count': len(v), 'pct': len(v) / float(total)}, data=statuses)
+        status_counts = dict((loc_id, status_tally(statuses)) for loc_id, statuses in status_by_agg_site.iteritems())
+
+        locs = sorted(Location.view('_all_docs', keys=status_counts.keys(), include_docs=True), key=lambda loc: loc.name)
+        def fmt(pct):
+            return '%.1f%%' % (100. * pct)
+        def fmt_col(loc, col_type):
+            return fmt(status_counts[loc._id].get(col_type, {'pct': 0.})['pct'])
+        for loc in locs:
+            num_sites = len(sites_by_agg_site[loc._id])
+            yield [loc.name, len(sites_by_agg_site[loc._id])] + [fmt_col(loc, k) for k in ('ontime', 'late', 'nonreporting')]
+
+
+
+    """
+    @property
+    def product_data(self):
+        if getattr(self, 'prod_data', None) is None:
+            self.prod_data = list(self.get_prod_data())
+        return self.prod_data
+
+    def get_prod_data(self):
+        startkey = [self.domain, self.active_location._id if self.active_location else None]
+        product_cases = CommCareCase.view('commtrack/product_cases', startkey=startkey, endkey=startkey + [{}], include_docs=True)
+
+        cases_by_product = map_reduce(lambda c: [(c.product,)], data=product_cases, include_docs=True)
+        products = Product.view('_all_docs', keys=cases_by_product.keys(), include_docs=True)
+
+        def case_stock_category(case):
+            return stock_category(current_stock(case), monthly_consumption(case))
+        def status(case):
+            return case_stock_category(case) if is_timely(case) else 'nonreporting'
+
+        status_by_product = dict((p, map_reduce(lambda c: [(status(c),)], len, data=cases)) for p, cases in cases_by_product.iteritems())
+
+        cols = ['stockout', 'understock', 'adequate', 'overstock', 'nonreporting', 'nodata']
+        for p in sorted(products, key=lambda p: p.name):
+            cases = cases_by_product.get(p._id, [])
+            results = status_by_product.get(p._id, {})
+            def val(key):
+                return results.get(key, 0) / float(len(cases))
+            yield [p.name] + [100. * val(key) for key in cols]
+    """
+
 
     """
     def get_data_for_graph(self):
