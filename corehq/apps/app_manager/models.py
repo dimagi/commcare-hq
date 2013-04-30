@@ -1598,7 +1598,6 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
             for form in module.get_forms():
                 yield id_strings.form_locale(form), trans(form.name) + ('${0}' if form.show_count else '')
 
-
     def create_app_strings(self, lang, include_blank_custom=False):
         def non_empty_only(dct):
             return dict([(key, value) for key, value in dct.items() if value])
@@ -1624,12 +1623,16 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
         else:
             messages = {}
             for lc in reversed(self.langs):
-                if lc == "default": continue
-                messages.update(
-                    commcare_translations.loads(
-                        self.create_app_strings(lc, include_blank_custom=True)
-                    )
+                if lc == "default":
+                    continue
+                new_messages = commcare_translations.loads(
+                    self.create_app_strings(lc, include_blank_custom=True)
                 )
+
+                for key, val in new_messages.items():
+                    # do not overwrite a real trans with a blank trans
+                    if not (val == '' and key in messages):
+                        messages[key] = val
         return commcare_translations.dumps(messages).encode('utf-8')
 
     @property
