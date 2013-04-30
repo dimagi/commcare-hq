@@ -51,9 +51,9 @@ By creating a simple setup of this sort, you'll get a bunch of stuff for free:
 for the current date/time with no real-time computation, and will return the
 data in the following format:
 
-```json
-{
-    "all_visits": 26,
-    "bp_visits": 15
-}
-```
+    ```json
+    {
+        "all_visits": 26,
+        "bp_visits": 15
+    }
+    ```
