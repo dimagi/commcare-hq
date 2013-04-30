@@ -21,6 +21,7 @@ REPORTS = (
         monitoring.CaseActivityReport,
         monitoring.FormCompletionVsSubmissionTrendsReport,
         monitoring.WorkerActivityTimes,
+        monitoring.UserStatusReport,
     )),
     (_("Inspect Data"), (
         inspect.SubmitHistory,

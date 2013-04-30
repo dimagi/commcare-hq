@@ -11,6 +11,8 @@ from corehq.apps.reports.filters.forms import CompletionOrSubmissionTimeFilter, 
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn, DTSortType, DataTablesColumnGroup
 from corehq.apps.reports.generic import GenericTabularReport
 from corehq.apps.reports.util import make_form_couch_key, friendly_timedelta, format_datatables_data
+from corehq.pillows.mappings.case_mapping import CASE_INDEX
+from corehq.pillows.mappings.xform_mapping import XFORM_INDEX
 from dimagi.utils.couch.database import get_db
 from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.parsing import json_format_datetime
@@ -18,6 +20,8 @@ from dimagi.utils.timezones import utils as tz_utils
 from dimagi.utils.web import get_url_base
 from django.utils.translation import ugettext as _
 from django.utils.translation import ugettext_noop
+from corehq.apps.appstore.views import es_query
+
 
 def cache_report():
     """do nothing until the real cache_report is fixed"""
@@ -722,3 +726,184 @@ class WorkerActivityTimes(WorkerMonitoringChartBase,
 
         chart.add_marker(1, 1.0, 'o', '333333', 25)
         return chart.get_url() + '&chds=-1,24,-1,7,0,20'
+
+
+
+
+class UserStatusReport(WorkerMonitoringReportTableBase, DatespanMixin):
+    slug = 'user_status'
+    name = ugettext_noop("User Status")
+    description = ugettext_noop("Usage information for groups and users")
+    section_name = ugettext_noop("Project Reports")
+
+    fields = [
+        'corehq.apps.reports.fields.MultiSelectGroupField',
+        'corehq.apps.reports.fields.UserOrGroupField',
+        'corehq.apps.reports.fields.DatespanField',
+    ]
+    fix_left_col = True
+    emailable = True
+
+    @property
+    def aggregate_by(self):
+        return self.request.GET.get('aggregate_by', None)
+
+    @property
+    def group_ids(self):
+        return self.request.GET.getlist('group')
+
+    @property
+    @memoized
+    def groups(self):
+        from corehq.apps.groups.models import Group
+        return [Group.get(g) for g in self.group_ids if g != "_all"]
+
+    @property
+    @memoized
+    def users_by_group(self):
+        user_dict = {}
+        if '_all' in self.group_ids:
+            user_dict['_all'] = self.get_all_users_by_domain(
+                group=None,
+                individual=self.individual,
+                user_filter=tuple(self.user_filter),
+                simplified=True
+            )
+        for group in self.groups:
+            user_dict[group.name] = self.get_all_users_by_domain(
+                group=group,
+                individual=self.individual,
+                user_filter=tuple(self.user_filter),
+                simplified=True
+            )
+        return user_dict
+
+    @property
+    @memoized
+    def combined_users(self):
+        all_users = [user for sublist in self.users_by_group.values() for user in sublist]
+        return dict([(user['user_id'], user) for user in all_users]).values()
+
+    @property
+    def headers(self):
+        header_array = [
+            DataTablesColumn(_("User")),
+            DataTablesColumn(_("Group")),
+            DataTablesColumn(_("# Forms Submitted"), sort_type=DTSortType.NUMERIC),
+            DataTablesColumn(_("# Days Since Last Form Submission")),
+            DataTablesColumn(_("# Cases Created")),
+            DataTablesColumn(_("# Cases Modified")),
+            DataTablesColumn(_("# Cases Closed")),
+            DataTablesColumn(_("# Inactive Cases")),
+        ]
+        if self.aggregate_by == 'groups':
+            del header_array[0]
+        return DataTablesHeader(*header_array)
+
+    def es_form_submissions(self, dict_only=False):
+        q = {"query": {
+                "bool": {
+                    "must": [
+                        {"match": {"domain.exact": self.domain}},
+                        {"range": {
+                            "form.meta.timeEnd": {
+                                "from": self.datespan.startdate_param_utc,
+                                "to": self.datespan.enddate_param_utc}}}]}}}
+        facets = ['form.meta.userID']
+        return es_query(q=q, facets=facets, es_url=XFORM_INDEX + '/xform/_search', size=1, dict_only=dict_only)
+
+    def es_last_submissions(self, dict_only=False):
+        """
+            Creates a dict of userid => days since last submission
+        """
+        def es_q(user_id):
+            q = {"query": {
+                    "bool": {
+                        "must": [
+                            {"match": {"domain.exact": self.domain}},
+                            {"match": {"form.meta.userID": user_id}}
+                        ]}},
+                "sort": {"form.meta.timeEnd" : {"order": "desc"}}}
+            results = es_query(q=q, es_url=XFORM_INDEX + '/xform/_search', size=1, dict_only=dict_only)['hits']['hits']
+            return results[0]['_source']['form']['meta']['timeEnd'] if results else None
+
+        DATE_FORMAT = '%Y-%m-%dT%H:%M:%SZ'
+        def days_since(date):
+            if not date:
+                return '-1'
+            time_diff = datetime.datetime.now() - datetime.datetime.strptime(date, DATE_FORMAT)
+            return time_diff.days
+
+        return dict([(u["user_id"], days_since(es_q(u["user_id"]))) for u in self.combined_users])
+
+    def es_case_queries(self, date_field, dict_only=False):
+        q = {"query": {
+                "bool": {
+                    "must": [
+                        {"match": {"domain.exact": self.domain}},
+                        {"range": {
+                            date_field: {
+                                "from": self.datespan.startdate_param_utc,
+                                "to": self.datespan.enddate_param_utc}}}]}}}
+        facets = ['user_id']
+        return es_query(q=q, facets=facets, es_url=CASE_INDEX + '/case/_search', size=1, dict_only=dict_only)
+
+    def es_inactive_cases(self, dict_only=False):
+        """
+            Open cases that haven't been modified within time range
+        """
+        q = {"query": {
+                "bool": {
+                    "must": [
+                        {"match": {"domain.exact": self.domain}},
+                        {"match": {"closed": False}},
+                        {"range": {"opened_on": {"lt": self.datespan.startdate_param_utc}}}],
+                    "must_not": {"range": {
+                        "modified_on": {
+                            "from": self.datespan.startdate_param_utc,
+                            "to": self.datespan.enddate_param_utc}}}}}}
+        facets = ['owner_id']
+        return es_query(q=q, facets=facets, es_url=CASE_INDEX + '/case/_search', size=1, dict_only=dict_only)
+
+
+    @property
+    def rows(self):
+        form_data = self.es_form_submissions()
+        submissions_by_user = dict([(t["term"], t["count"]) for t in form_data["facets"]["form.meta.userID"]["terms"]])
+
+        last_form_by_user = self.es_last_submissions()
+
+        case_creation_data = self.es_case_queries('opened_on')
+        creations_by_user = dict([(t["term"], t["count"]) for t in case_creation_data["facets"]["user_id"]["terms"]])
+
+        case_modification_data = self.es_case_queries('modified_on')
+        modifications_by_user = dict([(t["term"], t["count"]) for t in case_modification_data["facets"]["user_id"]["terms"]])
+
+        case_closure_data = self.es_case_queries('closed_on')
+        closures_by_user = dict([(t["term"], t["count"]) for t in case_closure_data["facets"]["user_id"]["terms"]])
+
+        inactive_case_data = self.es_inactive_cases()
+        inactives_by_user = dict([(t["term"], t["count"]) for t in inactive_case_data["facets"]["owner_id"]["terms"]])
+
+        if self.aggregate_by == 'groups':
+            for group, users in self.users_by_group.iteritems():
+                yield [ group,
+                    sum([int(submissions_by_user.get(user["user_id"], 0)) for user in users]),
+                    # int(last_form_by_user.get(user["user_id"], 'No Data')),
+                    'broken cuz lazy',
+                    sum([int(creations_by_user.get(user["user_id"], 0)) for user in users]),
+                    sum([int(modifications_by_user.get(user["user_id"], 0)) for user in users]),
+                    sum([int(closures_by_user.get(user["user_id"], 0)) for user in users]),
+                    sum([int(inactives_by_user.get(user["user_id"], 0)) for user in users]),
+                ]
+        else:
+            for group, users in self.users_by_group.iteritems():
+                for user in users:
+                    yield [ user["username_in_report"],
+                            group,
+                            int(submissions_by_user.get(user["user_id"], 0)),
+                            int(last_form_by_user.get(user["user_id"], 'No Data')),
+                            int(creations_by_user.get(user["user_id"], 0)),
+                            int(modifications_by_user.get(user["user_id"], 0)),
+                            int(closures_by_user.get(user["user_id"], 0)),
+                            int(inactives_by_user.get(user["user_id"], 0))]
