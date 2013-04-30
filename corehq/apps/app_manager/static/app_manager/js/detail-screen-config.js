@@ -520,7 +520,9 @@ var DetailScreenConfig = (function () {
             },
             render: function () {
                 var $table, $columns, $suggestedColumns, $thead, $tr, i, $box;
-                $('<h4/>').text(sectionLabels[this.model]).appendTo(this.$home);
+                if (sectionLabels[this.model]) {
+                    $('<h4/>').text(sectionLabels[this.model]).appendTo(this.$home);
+                }
                 $box = $("<div/>").appendTo(this.$home);
 
                 // this is a not-so-elegant way to get the styling right
