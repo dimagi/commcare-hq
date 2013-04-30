@@ -1,6 +1,7 @@
 django-debug-toolbar
 django-devserver
 django-coverage
+django-redis
 guppy
 werkzeug
 line_profiler
