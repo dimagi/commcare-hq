@@ -1,4 +1,5 @@
 {% extends "registration/base.html" %}
+{% load i18n %}
 {% block title %}Confirmation Email Sent{% endblock title %}
 
 {% block step-title %}
@@ -8,7 +9,9 @@
 {% block breadcrumbs %}
     <ul class="breadcrumb breadcrumb-steps">
         <li class="past">
-            Account Created for <strong>{{ request.couch_user.first_name }}</strong>
+            {% blocktrans with request.couch_user.first_name as first_name %}
+                Account Created for <strong>{{ first_name }}</strong>
+            {% endblocktrans %}
             <span class="divider">></span>
         </li>
         <li class="past">
@@ -23,8 +26,13 @@
 
 {% block registration-content %}
     <div class="alert alert-info">
-        <strong>An email was just sent to {{ request.user.username }}.</strong>
-        Please visit the link provided in the email to activate your account, so you can start using your new CommCare HQ project!
+        <strong>{% blocktrans with request.user.username as username %}
+            An email was just sent to {{ username }}.
+        {% endblocktrans %}</strong>
+        {% blocktrans %}
+            Please visit the link provided in the email to activate your account,
+            so you can start using your new CommCare HQ project!
+        {% endblocktrans %}
     </div>
     {% include "registration/partials/confirmation_waiting_actions.html" %}
 {% endblock %}

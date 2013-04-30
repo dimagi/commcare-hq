@@ -1,4 +1,5 @@
 {% extends "registration/base.html" %}
+{% load i18n %}
 
 {% block title %}Waiting for Email Confirmation{% endblock title %}
 
@@ -9,7 +10,9 @@
 {% block breadcrumbs %}
     <ul class="breadcrumb breadcrumb-steps">
         <li class="past">
-            Account Created for <strong>{{ request.couch_user.first_name }}</strong>
+            {% blocktrans with request.couch_user.first_name as first_name %}
+                Account Created for <strong>{{ first_name }}</strong>
+            {% endblocktrans %}
             <span class="divider">></span>
         </li>
         <li class="past">
