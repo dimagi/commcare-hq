@@ -82,8 +82,8 @@
                                 <div class="btn-group">
                                     <a class="btn btn-primary dropdown-toggle" data-toggle="dropdown" href="#">
                                         <i class="icon-user"></i>
-                                        {% if request.couch_user.first_name %}
-                                            {{ request.couch_user.first_name }} {{ request.couch_user.last_name }}
+                                        {% if request.couch_user.full_name %}
+                                            {{ request.couch_user.full_name }}
                                         {% else %}
                                             {{ user.username }}
                                         {% endif %}
