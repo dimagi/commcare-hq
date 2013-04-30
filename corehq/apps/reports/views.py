@@ -475,7 +475,7 @@ def add_config(request, domain=None):
 
 @login_and_domain_required
 @datespan_default
-def email_report(request, domain, report_slug):
+def email_report(request, domain, report_slug, **kwargs):
     from dimagi.utils.django.email import send_HTML_email
     from corehq.apps.reports.dispatcher import ProjectReportDispatcher
     from forms import EmailReportForm
@@ -489,7 +489,12 @@ def email_report(request, domain, report_slug):
     # see ReportConfig.query_string()
     object.__setattr__(config, '_id', 'dummy')
     config.name = _("Emailed report")
-    config.report_type = ProjectReportDispatcher.prefix
+    report_type = kwargs.get("report_type", None)
+    if report_type:
+        config.report_type = report_type
+    else:
+        config.report_type = ProjectReportDispatcher.prefix
+
     config.report_slug = report_slug
     config.owner_id = user_id
     config.domain = domain
