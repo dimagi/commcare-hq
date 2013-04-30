@@ -6,7 +6,7 @@
 	<incident>gjh</incident>
 	<lost>no</lost>
 	<image>house.jpg</image>
-    <n0:case case_id="EOL9FIAKIQWOFXFOH0QAMWU64" user_id="6dac4940-913e-11e0-9d4b-005056aa7fb5" date_modified="2013-04-22T15:00:37.026-05" xmlns:n0="http://commcarehq.org/case/transaction/v2">
+    <n0:case case_id="EOL9FIAKIQWOFXFOH0QAMWU64" user_id="6dac4940-913e-11e0-9d4b-005056aa7fb5" date_modified="%(date_modified)s" xmlns:n0="http://commcarehq.org/case/transaction/v2">
 		<n0:update>
             <n0:foo>bar</n0:foo>
 		</n0:update>
@@ -16,10 +16,10 @@
 	</n0:case>
 	<n1:meta xmlns:n1="http://openrosa.org/jr/xforms">
 		<n1:deviceID>354957031935664</n1:deviceID>
-		<n1:timeStart>2013-04-22T13:25:19.427</n1:timeStart>
-		<n1:timeEnd>2013-04-22T17:25:54.422</n1:timeEnd>
+		<n1:timeStart>%(time_start)s</n1:timeStart>
+		<n1:timeEnd>%(time_end)s</n1:timeEnd>
 		<n1:username>bcdemo</n1:username>
 		<n1:userID>6dac4940-913e-11e0-9d4b-005056aa7fb5</n1:userID>
-		<n1:instanceID>FOOBARUIDBUTNOTREALLY</n1:instanceID>
+		<n1:instanceID>%(doc_id)s</n1:instanceID>
 	</n1:meta>
 </data>

@@ -11,6 +11,7 @@
             <n0:case_name>fgg</n0:case_name>
         </n0:create>
         <n0:attachment>
+            %(attachments)s
         </n0:attachment>
     </n0:case>
     <n1:meta xmlns:n1="http://openrosa.org/jr/xforms">

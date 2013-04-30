@@ -1,6 +1,8 @@
+import os
 from couchdbkit.ext.django.schema import *
 from dimagi.utils.mixins import UnicodeMixIn
 from dimagi.utils.couch import LooselyEqualDocumentSchema
+import mimetypes
 
 """
 Shared models live here to avoid cyclical import issues
@@ -46,13 +48,43 @@ class CommCareCaseAttachment(LooselyEqualDocumentSchema, UnicodeMixIn):
     attachment_src = StringProperty()
     attachment_from = StringProperty()
     attachment_name = StringProperty()
+    server_mime = StringProperty() #Server detected MIME
+    server_md5 = StringProperty() #Couch detected hash
+
+    @property
+    def is_present(self):
+        """
+        Helper method to see if this is a delete vs. update
+        """
+        if self.identifier and (self.attachment_src and self.attachment_from):
+            #todo:make it suck less
+            return True
+        else:
+            return False
+
+    @property
+    def attachment_key(self):
+        return self.identifier
+        # if self.attachment_name is not None:
+        #     return self.attachment_name
+        # else:
+        #     p, f = os.path.split(self.attachment_from)
+        #     return f
 
     @classmethod
     def from_case_index_update(cls, attachment):
+        print "guess type: %s" % str(mimetypes.guess_type(attachment.attachment_src))
+        guessed = mimetypes.guess_type(attachment.attachment_src)
+        if len(guessed) > 0 and guessed[0] is not None:
+            mime_type = guessed[0]
+        else:
+            mime_type = None
+
         return cls(identifier=attachment.identifier,
                    attachment_src=attachment.attachment_src,
                    attachment_from=attachment.attachment_from,
-                   attachment_name=attachment.attachment_name)
+                   attachment_name=attachment.attachment_name,
+                   server_mime=mime_type)
 
 
 class IndexHoldingMixIn(object):

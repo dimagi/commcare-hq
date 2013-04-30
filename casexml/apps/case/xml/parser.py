@@ -117,6 +117,12 @@ class CaseAttachment(object):
     A class that wraps an attachment to a case
     """
     def __init__(self, identifier, attachment_src, attachment_from, attachment_name):
+        """
+        identifier: the tag name
+        attachment_src: URL of attachment
+        attachment_from: source [local, remote, inline]
+        attachment_name: required if inline for inline blob of attachment - likely identical to identifier
+        """
         self.identifier = identifier
         self.attachment_src = attachment_src
         self.attachment_from = attachment_from
@@ -141,6 +147,7 @@ class CaseAttachmentAction(CaseActionBase):
     @classmethod
     def from_v2(cls, block):
         attachments = {}
+        print "#%s#" % block
         for id, data in block.items():
             attachment_from = data.get('@from', None)
             attachment_src = data.get('@src', None)

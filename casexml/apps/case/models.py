@@ -351,24 +351,11 @@ class CommCareCase(CaseBase, IndexHoldingMixIn, ComputedDocumentMixin):
         forms = [_get(id) for id in self.xform_ids]
         return [form for form in forms if form] 
 
-    # @property
-    # def attachments(self):
-    #     """
-    #     Get any attachments associated with this.
-    #
-    #     returns (creating_form_id, attachment_name) tuples
-    #     """
-    #     attachments = []
-    #     for action in self.actions:
-    #         for prop, val in action.updated_unknown_properties.items():
-    #             # welcome to hard code city!
-    #             if isinstance(val, dict) and "@tag" in val and val["@tag"] == "attachment":
-    #                 attachments.append((action.xform_id, val["#text"]))
-    #     return attachments
+    def get_attachment(self, attachment_key):
+        return self.fetch_attachment(attachment_key)
 
-    def get_attachment(self, attachment_tuple):
-        return XFormInstance.get_db().fetch_attachment(attachment_tuple[0], attachment_tuple[1])
-        
+
+
     def bind_to_location(self, loc):
         self.location_ = loc.path
 
@@ -473,6 +460,7 @@ class CommCareCase(CaseBase, IndexHoldingMixIn, ComputedDocumentMixin):
                                                                       xformdoc,
                                                                       case_update.get_attachment_action())
             self.attachments.update(attachment_action)
+            self.actions.append(attachment_action)
             self._apply_action(attachment_action)
 
         # finally override any explicit properties from the update
@@ -509,6 +497,46 @@ class CommCareCase(CaseBase, IndexHoldingMixIn, ComputedDocumentMixin):
         print simplejson.dumps(attachment_action.to_json(), indent=4)
         for k, v in attachment_action.attachments.items():
             self.attachments[k] = attachment_action.attachments[k]
+            #grab xform_attachment
+            foo = {
+                "doc_type": "CommCareCaseAction",
+                "xform_id": "6RGAZTETE3Z2QC0PE2DKM88MO",
+                "updated_unknown_properties": {},
+                "attachments": {
+                    "fruity": {
+                        "attachment_name": None,
+                        "doc_type": "CommCareCaseAttachment",
+                        "attachment_src": "submodules/casexml-src/casexml/apps/case/tests/data/attachments/fruity.jpg",
+                        "identifier": "fruity",
+                        "attachment_from": "local"
+                    }
+                },
+                "xform_name": "Barcode Demo Item Registration",
+                "sync_log_id": None,
+                "server_date": "2013-04-30T19:45:16Z",
+                "action_type": "attachment",
+                "updated_known_properties": {},
+                "date": "2013-04-07T15:00:37Z",
+                "indices": [],
+                "xform_xmlns": "http://openrosa.org/formdesigner/B095F533-6226-40EE-9045-38EA21D214DB"
+            }
+
+            #todo
+            #copy over attachments from form onto case
+            if v.is_present:
+                print "\tIs present!"
+                #fetch attachment from xform
+                attachment_key = v.attachment_key
+                #raw_doc = XFormInstance.get_db().get(attachment_action.xform_id)
+                #print raw_doc['_attachments']
+                if '_rev' not in self.to_json():
+                    #never saved on create?!
+                    self.save()
+                attach = XFormInstance.get_db().fetch_attachment(attachment_action.xform_id, attachment_key)
+                self.put_attachment(attach, name=attachment_key, content_type=v.server_mime)
+            else:
+                print "not present!"
+
 
     def apply_close(self, close_action):
         self.closed = True
