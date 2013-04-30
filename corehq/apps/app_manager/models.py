@@ -1633,11 +1633,6 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
                     # do not overwrite a real trans with a blank trans
                     if not (val == '' and key in messages):
                         messages[key] = val
-
-                # replace all blanks with non-breaking spaces
-                for key, val in messages.items():
-                    if not val:
-                        messages[key] = u'\u00A0'
         return commcare_translations.dumps(messages).encode('utf-8')
 
     @property
