@@ -1,4 +1,7 @@
+from couchdbkit import ResourceNotFound, StringProperty
 from couchdbkit.ext.django import schema
+import datetime
+from dimagi.utils.parsing import json_format_datetime
 from pillowtop.listener import BasicPillow
 
 
@@ -54,24 +57,65 @@ class IndicatorDocumentMeta(schema.DocumentMeta):
 
 class IndicatorDocument(schema.Document):
     __metaclass__ = IndicatorDocumentMeta
+    base_doc = 'IndicatorDocument'
 
-    domain = schema.StringProperty()
     document_class = None
+    group_by = ()
 
     def calculate(self, item):
         for attr, calculator in self._calculators.items():
             self[attr] = calculator.calculate(item)
+        self.id = item.get_id
+        for attr in self.group_by:
+            self[attr] = item[attr]
+        # overwrite whatever's in group_by with the default
+        self['group_by'] = type(self)().group_by
 
     @classmethod
     def pillow(cls):
-        return type(BasicPillow)(cls.__name__ + 'Pillow', (BasicPillow,), {
-            'filter': 'fluff/global',
+        doc_type = cls.document_class._doc_type
+        domains = ' '.join(cls.domains)
+        return type(FluffPillow)(cls.__name__ + 'Pillow', (FluffPillow,), {
+            'couch_filter': 'fluff/domain_type',
             'extra_args': {
-                'domain': cls.domain,
-                'doc_type': getattr(cls.document_class, 'doc_type',
-                                    cls.document_class.__name__),
+                'domains': domains,
+                'doc_type': doc_type
             },
+            'document_class': cls.document_class,
+            'indicator_class': cls,
         })
+
+    @classmethod
+    def get_result(cls, calc_name, key):
+        calculator = cls._calculators[calc_name]
+        result = {}
+        for emitter_name in calculator._emitters:
+            shared_key = key + [calc_name, emitter_name]
+            now = datetime.datetime.utcnow()
+            result[emitter_name] = cls.get_db().view(
+                'fluff/generic',
+                startkey=shared_key + [json_format_datetime(now - calculator.window)],
+                endkey=shared_key + [json_format_datetime(now)],
+            ).all()[0]['value']
+        return result
 
     class Meta:
         app_label = ''
+
+
+class FluffPillow(BasicPillow):
+    indicator_class = IndicatorDocument
+
+    def change_transform(self, doc_dict):
+        doc = self.document_class.wrap(doc_dict)
+        indicator_id = '%s-%s' % (self.indicator_class.__name__, doc.get_id)
+
+        try:
+            indicator = self.indicator_class.get(indicator_id)
+        except ResourceNotFound:
+            indicator = self.indicator_class(_id=indicator_id)
+        indicator.calculate(doc)
+        return indicator
+
+    def change_transport(self, indicator):
+        indicator.save()
