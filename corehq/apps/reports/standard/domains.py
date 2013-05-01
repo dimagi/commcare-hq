@@ -199,7 +199,7 @@ class AdminDomainStatsReport(DomainStatsReport, ElasticTabularReport):
             yield [
                 dom.get('hr_name') or dom['name'],
                 dom.get("organization") or _('No org'),
-                dom['deployment'].get('date') or _('No date'),
+                dom.get('deployment', {}).get('date') or _('No date'),
                 dom.get("cp_n_active_cc_users", _("Not Yet Calculated")),
                 dom.get("cp_n_cc_users", _("Not Yet Calculated")),
                 dom.get("cp_n_active_cases", _("Not Yet Calculated")),
@@ -208,5 +208,5 @@ class AdminDomainStatsReport(DomainStatsReport, ElasticTabularReport):
                 dom.get("cp_first_form", _("No Forms")),
                 dom.get("cp_last_form", _("No Forms")),
                 dom.get("cp_n_web_users", _("Not Yet Calculated")),
-                dom['internal'].get('notes') or _('No notes'),
+                dom.get('internal', {}).get('notes') or _('No notes'),
             ]
