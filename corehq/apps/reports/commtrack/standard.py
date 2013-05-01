@@ -322,7 +322,7 @@ class ReportingRatesReport(GenericTabularReport, CommtrackReportMixin):
         }
         return [{
                 'key': 'Current Reporting',
-                'values': [{'label': labels[k], 'value': 100. * tally.get(k, {'pct': 0.})['pct']} for k in ('ontime', 'late', 'nonreporting')],
+                'values': [{'label': labels[k], 'value': tally.get(k, {'count': 0.})['count']} for k in ('ontime', 'late', 'nonreporting')],
         }]
 
     @property
