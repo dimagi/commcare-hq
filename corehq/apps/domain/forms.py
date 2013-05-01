@@ -160,11 +160,9 @@ class SubAreaMixin():
         area = self.cleaned_data['area']
         sub_area = self.cleaned_data['sub_area']
 
-        if area:
+        if not area:
             if sub_area:
                 raise forms.ValidationError(_('You may not specify a sub area when the project has no specified area'))
-        else:
-            return None
 
         sub_areas = []
         for a in DATA_DICT["area"]:
