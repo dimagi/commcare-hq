@@ -823,8 +823,8 @@ class GenericTabularReport(GenericReportView):
             report_table=dict(
                 headers=headers,
                 rows=rows,
-                total_row=list(self.total_row) if self.total_row else None,
-                statistics_rows=list(self.statistics_rows) if self.statistics_rows else None,
+                total_row=list(self.total_row) if rows and self.total_row else None,
+                statistics_rows=list(self.statistics_rows) if rows and self.statistics_rows else None,
                 default_rows=self.default_rows,
                 start_at_row=self.start_at_row,
                 show_all_rows=self.show_all_rows,

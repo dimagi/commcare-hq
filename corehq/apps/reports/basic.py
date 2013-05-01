@@ -152,14 +152,13 @@ class BasicTabularReport(GenericTabularReport):
                    for c in self.default_column_order]
 
 
-class SummingTabularReport(BasicTabularReport):
+class SummingTabularMixin(BasicTabularReport):
     @property
-    def rows(self):
-        ret = list(super(SummingTabularReport, self).rows)
-        num_cols = len(ret[0])
+    def total_row(self):
+        rows = list(self.rows)
+        num_cols = len(rows[0])
         total_row = []
         for i in range(num_cols):
-            total_row.append(reduce(lambda x, y: x+ y, [r[i] for r in ret if isinstance(r[i], (int, long))], 0))
+            total_row.append(reduce(lambda x, y: x+ y, [r[i] for r in rows if isinstance(r[i], (int, long))], 0))
 
-        self.total_row = total_row
-        return ret
+        return total_row
