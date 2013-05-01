@@ -5,6 +5,8 @@ from casexml.apps.case.models import CommCareCase
 import itertools
 from datetime import datetime, date, timedelta
 from calendar import monthrange
+import math
+import bisect
 
 def all_supply_point_types(domain):
     return [e['key'][1] for e in get_db().view('commtrack/supply_point_types', startkey=[domain], endkey=[domain, {}], group_level=2)]
@@ -161,17 +163,34 @@ def due_date_monthly(day, from_end=False, past_period=0):
     return date(y, m, min(day, monthrange(y, m)[1]))
 
 def num_periods_late(product_case, schedule, *schedule_args):
-    def due_date(n):
-        return {
-            'weekly': due_date_weekly,
-            'monthly': due_date_monthly,
-        }[schedule](*schedule_args, past_period=n)
-
     last_reported = getattr(product_case, 'last_reported', datetime(2000, 1, 1)).date()
 
-    n = 0
-    # FIXME this will be very inefficient for sites that have not reported in
-    # a long time; could be changed to a o(log n) algorithm w/o too much trouble
-    while last_reported <= due_date(n + 1):
-        n += 1
-    return n
+    class DueDateStream(object):
+        """mimic an array of due dates to perform a binary search"""
+
+        def __getitem__(self, i):
+            return self.normalize(self.due_date(i + 1))
+
+        def __len__(self):
+            """highest number of periods late before we stop caring"""
+            max_horizon = 30. * 365.2425 / self.period_length() # arbitrary upper limit -- 30 years
+            return math.ceil(max_horizon)
+
+        def due_date(self, n):
+            return {
+                'weekly': due_date_weekly,
+                'monthly': due_date_monthly,
+            }[schedule](*schedule_args, past_period=n)
+
+        def period_length(self, n=100):
+            """get average length of reporting period"""
+            return (self.due_date(0) - self.due_date(n)).days / float(n)
+
+        def normalize(self, dt):
+            """convert dates into a numerical scale (where greater == more in the past)"""
+            return -(dt - date(2000, 1, 1)).days
+
+    stream = DueDateStream()
+    # find the earliest due date that is on or after the most-recent report date,
+    # and return how many reporting periods back it occurs
+    return bisect.bisect_right(stream, stream.normalize(last_reported))
