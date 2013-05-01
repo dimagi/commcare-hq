@@ -98,9 +98,8 @@ def render_form(form, domain, options):
 
     _get_tables_as_columns = partial(get_tables_as_columns, timezone=timezone)
 
-    # Form Data tab. deepcopy to ensure that if top_level_tags() returns live
-    # references we don't change any data.
-    form_dict = copy.deepcopy(form.top_level_tags())
+    # Form Data tab
+    form_dict = form.top_level_tags()
     form_dict.pop('change', None)  # this data already in Case Changes tab
     form_keys = [k for k in form_dict.keys() if form_key_filter(k)]
     form_data = _get_tables_as_columns(form_dict, get_definition(form_keys))
