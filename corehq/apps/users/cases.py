@@ -1,6 +1,5 @@
 from corehq.apps.groups.models import Group
 from corehq.apps.users.models import CouchUser, CommCareUser, WebUser
-from dimagi.utils.couch.database import iter_docs
 
 
 def user_db():
