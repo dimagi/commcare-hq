@@ -179,6 +179,9 @@ def add_complex_reminder_schedule(request, domain, handler_id=None):
             h.ui_frequency = form.cleaned_data["frequency"]
             h.start_condition_type = form.cleaned_data["start_condition_type"]
             h.max_question_retries = form.cleaned_data["max_question_retries"]
+            h.recipient_case_match_property = form.cleaned_data["recipient_case_match_property"]
+            h.recipient_case_match_type = form.cleaned_data["recipient_case_match_type"]
+            h.recipient_case_match_value = form.cleaned_data["recipient_case_match_value"]
             if form.cleaned_data["start_condition_type"] == "ON_DATETIME":
                 dt = parse(form.cleaned_data["start_datetime_date"]).date()
                 tm = parse(form.cleaned_data["start_datetime_time"]).time()
@@ -216,6 +219,9 @@ def add_complex_reminder_schedule(request, domain, handler_id=None):
                 "sample_id"             : h.sample_id,
                 "use_until"             : "Y" if h.until is not None else "N",
                 "max_question_retries"  : h.max_question_retries,
+                "recipient_case_match_property" : h.recipient_case_match_property,
+                "recipient_case_match_type" : h.recipient_case_match_type,
+                "recipient_case_match_value" : h.recipient_case_match_value,
             }
         else:
             initial = {

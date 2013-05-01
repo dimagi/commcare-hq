@@ -13,7 +13,7 @@ MATCH_EXACT, MATCH_REGEX, MATCH_ANY_VALUE, EVENT_AS_SCHEDULE, EVENT_AS_OFFSET,\
 SurveySample, CaseReminderHandler, FIRE_TIME_DEFAULT, FIRE_TIME_CASE_PROPERTY,\
 METHOD_SMS, METHOD_SMS_CALLBACK, METHOD_SMS_SURVEY, METHOD_IVR_SURVEY,\
 CASE_CRITERIA, QUESTION_RETRY_CHOICES, FORM_TYPE_ONE_BY_ONE,\
-FORM_TYPE_ALL_AT_ONCE, SurveyKeyword
+FORM_TYPE_ALL_AT_ONCE, SurveyKeyword, RECIPIENT_PARENT_CASE, RECIPIENT_SUBCASE
 from dimagi.utils.parsing import string_to_datetime
 from dimagi.utils.timezones.forms import TimeZoneChoiceField
 from dateutil.parser import parse
@@ -40,6 +40,8 @@ RECIPIENT_CHOICES = (
     (RECIPIENT_OWNER, "The case's owner(s)"),
     (RECIPIENT_USER, "The case's last submitting user"),
     (RECIPIENT_CASE, "The case"),
+    (RECIPIENT_PARENT_CASE, "The case's parent case"),
+    (RECIPIENT_SUBCASE, "The case's child case(s)"),
     (RECIPIENT_SURVEY_SAMPLE, "Survey Sample"),
 )
 
@@ -195,6 +197,9 @@ class ComplexCaseReminderForm(Form):
     sample_id = CharField(required=False)
     enable_advanced_time_choices = BooleanField(required=False)
     max_question_retries = ChoiceField(choices=((n,n) for n in QUESTION_RETRY_CHOICES))
+    recipient_case_match_property = CharField(required=False)
+    recipient_case_match_type = ChoiceField(choices=MATCH_TYPE_DISPLAY_CHOICES,required=False)
+    recipient_case_match_value = CharField(required=False)
     
     def __init__(self, *args, **kwargs):
         super(ComplexCaseReminderForm, self).__init__(*args, **kwargs)
@@ -459,6 +464,34 @@ class ComplexCaseReminderForm(Form):
             raise ValidationError("You must have at least one reminder event.")
         
         return events
+    
+    def clean_recipient_case_match_property(self):
+        if self.cleaned_data.get("recipient") == RECIPIENT_SUBCASE:
+            value = self.cleaned_data.get("recipient_case_match_property")
+            if value is not None:
+                value = value.strip()
+            if value is None or value == "":
+                raise ValidationError(_("Please enter a case property name."))
+            return value
+        else:
+            return None
+    
+    def clean_recipient_case_match_type(self):
+        if self.cleaned_data.get("recipient") == RECIPIENT_SUBCASE:
+            return self.cleaned_data.get("recipient_case_match_type")
+        else:
+            return None
+    
+    def clean_recipient_case_match_value(self):
+        if self.cleaned_data.get("recipient") == RECIPIENT_SUBCASE and self.cleaned_data.get("recipient_case_match_type") in [MATCH_EXACT, MATCH_REGEX]:
+            value = self.cleaned_data.get("recipient_case_match_value")
+            if value is not None:
+                value = value.strip()
+            if value is None or value == "":
+                raise ValidationError(_("Please enter a value to match."))
+            return value
+        else:
+            return None
     
     def clean(self):
         cleaned_data = super(ComplexCaseReminderForm, self).clean()

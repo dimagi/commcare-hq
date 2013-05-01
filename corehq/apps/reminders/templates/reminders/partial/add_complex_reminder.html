@@ -169,10 +169,16 @@
     }
     
     function recipient_changed() {
-        if($("#id_recipient").val() == "SURVEY_SAMPLE") {
+        value = $("#id_recipient").val()
+        if(value == "SURVEY_SAMPLE") {
             $("#id_sample_id").show();
         } else {
             $("#id_sample_id").hide();
+        }
+        if(value == "SUBCASE") {
+            $(".for_recipient_subcase").show();
+        } else {
+            $(".for_recipient_subcase").hide();
         }
     }
     
@@ -189,6 +195,14 @@
             $(".for_advanced_times").show();
         } else {
             $(".for_advanced_times").hide();
+        }
+    }
+    
+    function recipient_case_match_type_changed() {
+        if ($("#id_recipient_case_match_type").val() == "ANY_VALUE") {
+            $("#id_recipient_case_match_value").hide();
+        } else {
+            $("#id_recipient_case_match_value").show();
         }
     }
     
@@ -222,7 +236,8 @@
             "Advanced Reminder Time Choices": "Enable this option to specify reminder times in advanced ways, such as specifying the time to send in a case property. This applies only to " +
                                               "schedule-based (not offset-based) schedules.",
             "Time Type": "Use 'Default' to specify the time of day to send (hh:mm). Use 'Case Property' to specify the case property that contains the time of day to send.",
-            "Question Retries": "An IVR Survey will only allow this many invalid responses to a question before disconnecting the call."
+            "Question Retries": "An IVR Survey will only allow this many invalid responses to a question before disconnecting the call.",
+            "Child Case Property": "Enter a case property along with the criteria for matching it. Only the child cases whose given case property matches the given criteria will be recipients."
         };
 
         $('.help_popover').popover({
@@ -310,6 +325,10 @@
             enable_advanced_time_changed();
         });
         
+        $("#id_recipient_case_match_type").change(function() {
+            recipient_case_match_type_changed();
+        });
+        
         // Run on change methods
         
         method_changed();
@@ -320,6 +339,7 @@
         recipient_changed();
         use_until_changed();
         enable_advanced_time_changed();
+        recipient_case_match_type_changed();
     });
 </script>
 {% endblock %}
@@ -454,6 +474,8 @@
                             <option value="OWNER" class="for_sms for_case_criteria" {% if form.recipient.value == "OWNER" %}selected="selected"{% endif %}>The case's owner(s)</option>
                             <option value="USER" class="for_sms for_case_criteria" {% if form.recipient.value == "USER" %}selected="selected"{% endif %}>The case's last submitting user</option>
                             <option value="CASE" class="for_case_criteria" {% if form.recipient.value == "CASE" %}selected="selected"{% endif %}>The case</option>
+                            <option value="PARENT_CASE" class="for_case_criteria" {% if form.recipient.value == "PARENT_CASE" %}selected="selected"{% endif %}>The case's parent case</option>
+                            <option value="SUBCASE" class="for_case_criteria" {% if form.recipient.value == "SUBCASE" %}selected="selected"{% endif %}>The case's child case(s)</option>
                             <option value="SURVEY_SAMPLE" class="for_on_datetime" {% if form.recipient.value == "SURVEY_SAMPLE" %}selected="selected"{% endif %}>Survey Sample</option>
                         </select>
                         <select name="sample_id" id="id_sample_id">
@@ -463,6 +485,19 @@
                         </select>
                     </td>
                     <td>{{ form.sample_id.errors }}</td>
+                </tr>
+                <tr class="for_recipient_subcase">
+                    <td><div class="help_popover" data-help-key="Child Case Property">Child Case Property <i class="icon icon-question-sign"></i></div></td>
+                    <td>
+                        {{ form.recipient_case_match_property }}
+                        {{ form.recipient_case_match_type }}
+                        {{ form.recipient_case_match_value }}
+                    </td>
+                    <td>
+                        {{ form.recipient_case_match_property.errors }}
+                        {{ form.recipient_case_match_type.errors }}
+                        {{ form.recipient_case_match_value.errors }}
+                    </td>
                 </tr>
                 <tr>
                     <td>Frequency</td>
