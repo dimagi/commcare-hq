@@ -810,12 +810,13 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, UnicodeMixIn):
         else:
             return self.is_superuser or re.compile(PREVIEWER_RE).match(self.username)
 
-    # for synching
     def sync_from_django_user(self, django_user):
         if not django_user:
             django_user = self.get_django_user()
         for attr in DjangoUserMixin.ATTRS:
-            setattr(self, attr, getattr(django_user, attr))
+            # name might be truncated so don't backwards sync
+            if attr != 'first_name' and attr != 'last_name':
+                setattr(self, attr, getattr(django_user, attr))
 
     def sync_to_django_user(self):
         try:
@@ -823,7 +824,11 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, UnicodeMixIn):
         except User.DoesNotExist:
             django_user = User(username=self.username)
         for attr in DjangoUserMixin.ATTRS:
-            setattr(django_user, attr, getattr(self, attr))
+            attr_val = getattr(self, attr) or ''
+            # truncate names when saving to django
+            if attr == 'first_name' or attr == 'last_name':
+                attr_val = attr_val[:30]
+            setattr(django_user, attr, attr_val)
         django_user.DO_NOT_SAVE_COUCH_USER= True
         return django_user
 
