@@ -4,6 +4,7 @@ from corehq.apps.reports.datatables import (DataTablesHeader, DataTablesColumn,
 from corehq.apps.reports.generic import GenericTabularReport
 from couchdbkit_aggregate import AggregateView, KeyView, AggregateKeyView
 from dimagi.utils.couch.database import get_db
+from dimagi.utils.decorators.memoized import memoized
 
 __all__ = ['Column', 'BasicTabularReport']
 
@@ -152,8 +153,9 @@ class BasicTabularReport(GenericTabularReport):
                    for c in self.default_column_order]
 
 
-class SummingTabularMixin(BasicTabularReport):
+class SummingReportMixin():
     @property
+    @memoized
     def total_row(self):
         rows = list(self.rows)
         num_cols = len(rows[0])
