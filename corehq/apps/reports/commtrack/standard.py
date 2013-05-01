@@ -8,6 +8,7 @@ from dimagi.utils.couch.loosechange import map_reduce
 from corehq.apps.commtrack.util import num_periods_late
 from datetime import date, datetime
 from corehq.apps.locations.models import Location
+from dimagi.utils.decorators.memoized import memoized
 
 # TODO make settings
 
@@ -248,7 +249,7 @@ class ReportingRatesReport(GenericTabularReport, CommtrackReportMixin):
     exportable = True
     emailable = True
 
-#    report_template_path = "reports/async/tabular_graph.html"
+    report_template_path = "reports/async/tabular_pie.html"
 
     @property
     def headers(self):
@@ -261,7 +262,8 @@ class ReportingRatesReport(GenericTabularReport, CommtrackReportMixin):
                 ]))
 
     @property
-    def rows(self):
+    @memoized
+    def _data(self):
         startkey = [self.domain, self.active_location._id if self.active_location else None]
         product_cases = CommCareCase.view('commtrack/product_cases', startkey=startkey, endkey=startkey + [{}], include_docs=True)
 
@@ -293,73 +295,39 @@ class ReportingRatesReport(GenericTabularReport, CommtrackReportMixin):
             return map_reduce(lambda s: [(s,)], lambda v: {'count': len(v), 'pct': len(v) / float(total)}, data=statuses)
         status_counts = dict((loc_id, status_tally(statuses)) for loc_id, statuses in status_by_agg_site.iteritems())
 
+        master_tally = status_tally(cases_by_site.values())
+
         locs = sorted(Location.view('_all_docs', keys=status_counts.keys(), include_docs=True), key=lambda loc: loc.name)
         def fmt(pct):
             return '%.1f%%' % (100. * pct)
         def fmt_col(loc, col_type):
             return fmt(status_counts[loc._id].get(col_type, {'pct': 0.})['pct'])
-        for loc in locs:
-            num_sites = len(sites_by_agg_site[loc._id])
-            yield [loc.name, len(sites_by_agg_site[loc._id])] + [fmt_col(loc, k) for k in ('ontime', 'late', 'nonreporting')]
+        def _rows():
+            for loc in locs:
+                num_sites = len(sites_by_agg_site[loc._id])
+                yield [loc.name, len(sites_by_agg_site[loc._id])] + [fmt_col(loc, k) for k in ('ontime', 'late', 'nonreporting')]
 
+        return master_tally, _rows()
 
-
-    """
     @property
-    def product_data(self):
-        if getattr(self, 'prod_data', None) is None:
-            self.prod_data = list(self.get_prod_data())
-        return self.prod_data
+    def rows(self):
+        return self._data[1]
 
-    def get_prod_data(self):
-        startkey = [self.domain, self.active_location._id if self.active_location else None]
-        product_cases = CommCareCase.view('commtrack/product_cases', startkey=startkey, endkey=startkey + [{}], include_docs=True)
-
-        cases_by_product = map_reduce(lambda c: [(c.product,)], data=product_cases, include_docs=True)
-        products = Product.view('_all_docs', keys=cases_by_product.keys(), include_docs=True)
-
-        def case_stock_category(case):
-            return stock_category(current_stock(case), monthly_consumption(case))
-        def status(case):
-            return case_stock_category(case) if is_timely(case) else 'nonreporting'
-
-        status_by_product = dict((p, map_reduce(lambda c: [(status(c),)], len, data=cases)) for p, cases in cases_by_product.iteritems())
-
-        cols = ['stockout', 'understock', 'adequate', 'overstock', 'nonreporting', 'nodata']
-        for p in sorted(products, key=lambda p: p.name):
-            cases = cases_by_product.get(p._id, [])
-            results = status_by_product.get(p._id, {})
-            def val(key):
-                return results.get(key, 0) / float(len(cases))
-            yield [p.name] + [100. * val(key) for key in cols]
-    """
-
-
-    """
-    def get_data_for_graph(self):
-        ret = [
-            {"key": "stocked out", "color": "#e00707"},
-            {"key": "under stock", "color": "#ffb100"},
-            {"key": "adequate stock", "color": "#4ac925"},
-            {"key": "overstocked", "color": "#b536da"},
-            {"key": "nonreporting", "color": "#363636"},
-            {"key": "no data", "color": "#ABABAB"}
-        ]
-        statuses = ['stocked out', 'under stock', 'adequate stock', 'overstocked', 'nonreporting', 'no data']
-
-        for r in ret:
-            r["values"] = []
-
-        for pd in self.product_data:
-            for i, status in enumerate(statuses):
-                ret[i]['values'].append({"x": pd[0], "y": pd[i+1]})
-
-        return ret
+    def master_pie_chart_data(self):
+        tally = self._data[0]
+        labels = {
+            'ontime': 'On-time',
+            'late': 'Late',
+            'nonreporting': 'Non-reporting',
+        }
+        return [{
+                'key': 'Current Reporting',
+                'values': [{'label': labels[k], 'value': 100. * tally.get(k, {'pct': 0.})['pct']} for k in ('ontime', 'late', 'nonreporting')],
+        }]
 
     @property
     def report_context(self):
-        ctxt = super(CurrentStockStatusReport, self).report_context
+        ctxt = super(ReportingRatesReport, self).report_context
         if 'location_id' in self.request.GET: # hack: only get data if we're loading an actual report
-            ctxt['stock_data'] = self.get_data_for_graph()
+            ctxt['reporting_data'] = self.master_pie_chart_data()
         return ctxt
-    """
