@@ -90,13 +90,17 @@ class IndicatorDocument(schema.Document):
         calculator = cls._calculators[calc_name]
         result = {}
         for emitter_name in calculator._emitters:
-            shared_key = key + [calc_name, emitter_name]
+            shared_key = [cls._doc_type] + key + [calc_name, emitter_name]
             now = datetime.datetime.utcnow()
-            result[emitter_name] = cls.get_db().view(
+            q = cls.get_db().view(
                 'fluff/generic',
                 startkey=shared_key + [json_format_datetime(now - calculator.window)],
                 endkey=shared_key + [json_format_datetime(now)],
-            ).all()[0]['value']
+            ).all()
+            try:
+                result[emitter_name] = q[0]['value']
+            except IndexError:
+                result[emitter_name] = None
         return result
 
     class Meta:

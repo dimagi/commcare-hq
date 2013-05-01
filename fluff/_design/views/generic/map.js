@@ -1,6 +1,6 @@
 function (doc) {
     if (doc.base_doc === 'IndicatorDocument') {
-        var key = [], i;
+        var key = [doc.doc_type], i;
         for (i = 0; i < doc.group_by.length; i++) {
             key.push(doc[doc.group_by[i]]);
         }
