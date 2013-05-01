@@ -51,8 +51,10 @@ class VisitCalculator(fluff.Calculator):
             yield case.add + datetime.timedelta(days=days) + GRACE_PERIOD
 
 
-class CareBiharIndicators(fluff.IndicatorDocument):
+class CareBiharFluff(fluff.IndicatorDocument):
     document_class = CommCareCase
+    domains = ('care-bihar',)
+    group_by = ('domain', 'owner_id')
 
     bp2 = BPCalculator(days=75, n_visits=2)
     bp3 = BPCalculator(days=45, n_visits=3)
