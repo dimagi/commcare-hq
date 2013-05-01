@@ -1,0 +1,54 @@
+@toolbarBlue: desaturate(@blue, 50);
+
+#formdesigner .fd-nav {
+  margin-bottom: 0;
+}
+#formdesigner .fd-toolbar {
+  #gradient > .vertical(@white, lighten(@toolbarBlue, 60));
+  border-left: 1px solid #ddd;
+  border-right: 1px solid #ddd;
+
+  > h2, div {
+    display: inline-block;
+    vertical-align: middle;
+  }
+
+  h2 {
+    font-size: 1.25em;
+    color: @toolbarBlue;
+    margin: 0 1em;
+    text-shadow: 1px 1px @white;
+  }
+
+  .fd-question-type-group {
+    .btn{
+      padding: 8px 15px;
+    }
+    .btn:first-child > span {
+      display: block;
+      width: 55px;
+      text-align: center;
+      padding: 8px 0;
+    }
+    .btn:last-of-type {
+      padding-left: 1px;
+      padding-right: 6px;
+    }
+    .btn:first-child {
+      padding: 0;
+    }
+  }
+}
+
+#formdesigner .fd-tree,
+#formdesigner .fd-question-properties {
+    margin-top: 0 !important; // HACK HACK HACK, this needs to get cleaned up
+}
+
+#formdesigner .fd-question-type .tooltip {
+  display: absolute !important;
+}
+
+#formdesigner .fd-qtype-label {
+  
+}
