@@ -109,6 +109,7 @@ TEMPLATE_CONTEXT_PROCESSORS = [
     "django.contrib.messages.context_processors.messages",
     'django.core.context_processors.static',
     "corehq.util.context_processors.current_url_name",
+    'corehq.util.context_processors.domain',
     "corehq.util.context_processors.base_template", # sticks the base template inside all responses
     "corehq.util.context_processors.analytics_js",
     "corehq.util.context_processors.raven",
