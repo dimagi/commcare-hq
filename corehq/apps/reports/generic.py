@@ -805,11 +805,6 @@ class GenericTabularReport(GenericReportView):
         else:
             rows = list(self.rows)
 
-        if self.total_row is not None:
-            self.total_row = list(self.total_row)
-        if self.statistics_rows is not None:
-            self.statistics_rows = list(self.statistics_rows)
-
         pagination_spec = dict(is_on=self.ajax_pagination)
         if self.ajax_pagination:
             shared_params = list(self.shared_pagination_GET_params)
@@ -828,8 +823,8 @@ class GenericTabularReport(GenericReportView):
             report_table=dict(
                 headers=headers,
                 rows=rows,
-                total_row=self.total_row,
-                statistics_rows=self.statistics_rows,
+                total_row=list(self.total_row) if self.total_row else None,
+                statistics_rows=list(self.statistics_rows) if self.statistics_rows else None,
                 default_rows=self.default_rows,
                 start_at_row=self.start_at_row,
                 show_all_rows=self.show_all_rows,
