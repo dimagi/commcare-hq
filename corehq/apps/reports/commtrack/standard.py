@@ -167,8 +167,6 @@ class AggregateStockStatusReport(GenericTabularReport, CommtrackReportMixin):
     exportable = True
     emailable = True
 
-    #report_template_path = "reports/async/tabular_graph.html"
-
     @property
     def headers(self):
         return DataTablesHeader(*(DataTablesColumn(text) for text in [
@@ -243,35 +241,6 @@ class AggregateStockStatusReport(GenericTabularReport, CommtrackReportMixin):
                 row[4] = fmt(row[4], lambda k: statuses.get(k, k))
                 yield row
 
-    """
-    def get_data_for_graph(self):
-        ret = [
-            {"key": "stocked out", "color": "#e00707"},
-            {"key": "under stock", "color": "#ffb100"},
-            {"key": "adequate stock", "color": "#4ac925"},
-            {"key": "overstocked", "color": "#b536da"},
-            {"key": "nonreporting", "color": "#363636"},
-            {"key": "no data", "color": "#ABABAB"}
-        ]
-        statuses = ['stocked out', 'under stock', 'adequate stock', 'overstocked', 'nonreporting', 'no data']
-
-        for r in ret:
-            r["values"] = []
-
-        for pd in self.product_data:
-            for i, status in enumerate(statuses):
-                ret[i]['values'].append({"x": pd[0], "y": pd[i+1]})
-
-        return ret
-
-    @property
-    def report_context(self):
-        ctxt = super(CurrentStockStatusReport, self).report_context
-        if 'location_id' in self.request.GET: # hack: only get data if we're loading an actual report
-            ctxt['stock_data'] = self.get_data_for_graph()
-        return ctxt
-    """
-
 class ReportingRatesReport(GenericTabularReport, CommtrackReportMixin):
     name = 'Reporting Rate'
     slug = 'reporting_rate'
@@ -306,11 +275,18 @@ class ReportingRatesReport(GenericTabularReport, CommtrackReportMixin):
         def child_loc(path):
             root = self.active_location
             ix = path.index(root._id) if root else -1
-            return path[ix + 1]
+            try:
+                return path[ix + 1]
+            except IndexError:
+                return None
+        def case_iter():
+            for k, v in cases_by_site.iteritems():
+                if child_loc(k) is not None:
+                    yield (k, v)
         status_by_agg_site = map_reduce(lambda (path, status): [(child_loc(path), status)],
-                                        data=cases_by_site.iteritems())
+                                        data=case_iter())
         sites_by_agg_site = map_reduce(lambda (path, status): [(child_loc(path), path[-1])],
-                                       data=cases_by_site.iteritems())
+                                       data=case_iter())
 
         def status_tally(statuses):
             total = len(statuses)
