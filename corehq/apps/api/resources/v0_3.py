@@ -1,10 +1,11 @@
 from corehq.apps.cloudcare.api import es_filter_cases
-from . import v0_2, v0_1
-from corehq.apps.api.resources.v0_2 import dict_object
-from corehq.apps.api.util import object_does_not_exist
 from couchforms import models as couchforms_models
 from couchdbkit.exceptions import ResourceNotFound
 from tastypie import fields
+
+from corehq.apps.api.resources import v0_2, v0_1
+from corehq.apps.api.resources import DomainSpecificResourceMixin, dict_object
+from corehq.apps.api.util import object_does_not_exist
 
 class CaseListFilters(object):
     format = 'json'
@@ -28,23 +29,23 @@ class CaseListFilters(object):
             self.format = self.filters['format']
             del self.filters['format']
 
-class CommCareCaseResource(v0_2.CommCareCaseResource):
+class CommCareCaseResource(v0_2.CommCareCaseResource, DomainSpecificResourceMixin):
     
     # in v2 this can't be null, but in v3 it can
     user_id = fields.CharField(attribute='user_id', null=True)
     
-    def obj_get_list(self, request, domain, **kwargs):
-        filters = CaseListFilters(request.GET)
+    def obj_get_list(self, bundle, domain, **kwargs):
+        filters = CaseListFilters(bundle.request.GET)
         return map(dict_object, es_filter_cases(domain, filters=filters.filters))
 
     
-class XFormInstanceResource(v0_1.XFormInstanceResource):
+class XFormInstanceResource(v0_1.XFormInstanceResource, DomainSpecificResourceMixin):
     archived = fields.CharField(readonly=True)
 
     def dehydrate_archived(self, bundle):
         return isinstance(bundle.obj, couchforms_models.XFormArchived)
     
-    def obj_get(self, request, **kwargs):
+    def obj_get(self, bundle, **kwargs):
         domain = kwargs['domain']
         doc_id = kwargs['pk']
         doc_type = 'XFormInstance'

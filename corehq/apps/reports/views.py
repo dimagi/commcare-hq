@@ -48,13 +48,16 @@ from couchdbkit.exceptions import ResourceNotFound
 from fields import FilterUsersField
 from util import get_all_users_by_domain, stream_qs
 from corehq.apps.hqsofabed.models import HQFormData
-from corehq.apps.app_manager.util import get_app_id
 from corehq.apps.groups.models import Group
 from soil import DownloadBase
 from soil.tasks import prepare_download
 from django.utils.translation import ugettext as _
 from django.utils.safestring import mark_safe
 from dimagi.utils.chunked import chunked
+
+from casexml.apps.case.templatetags.case_tags import case_inline_display
+from couchforms.templatetags.xform_tags import render_form
+
 
 DATE_FORMAT = "%Y-%m-%d"
 
@@ -706,14 +709,6 @@ def case_details(request, domain, case_id):
         messages.info(request, "Sorry, we couldn't find that case. If you think this is a mistake plase report an issue.")
         return HttpResponseRedirect(inspect.CaseListReport.get_url(domain=domain))
 
-    report_name = 'Details for Case "%s"' % case.name
-    form_lookups = dict((form.get_id,
-                         "%s: %s" % (form.received_on.date(), 
-                                     xmlns_to_name(domain, form.xmlns, get_app_id(form)))) \
-                        for form in case.get_forms())
-
-
-                        
     try:
         owner_name = CommCareUser.get_by_user_id(case.owner_id, domain).raw_username
     except Exception:
@@ -731,17 +726,21 @@ def case_details(request, domain, case_id):
     return render(request, "reports/reportdata/case_details.html", {
         "domain": domain,
         "case_id": case_id,
+        "case": case,
         "username": username, 
         "owner_name": owner_name,
-        "form_lookups": form_lookups,
-        "slug":inspect.CaseListReport.slug,
+        "slug": inspect.CaseListReport.slug,
         "report": dict(
-            name=report_name,
+            name=case_inline_display(case),
             slug=inspect.CaseListReport.slug,
             is_async=False,
         ),
         "layout_flush_content": True,
-        "timezone": timezone
+        "timezone": timezone,
+        "case_display_options": {
+            "display": request.project.get_case_display(case),
+            "timezone": timezone
+        }
     })
 
 def generate_case_export_payload(domain, include_closed, format, group, user_filter, process=None):
@@ -829,37 +828,61 @@ def download_cases(request, domain):
 
     return generate_payload(payload_func)
 
-
-@require_form_view_permission
-@login_and_domain_required
-@require_GET
-def form_data(request, domain, instance_id):
+def _get_form_context(request, domain, instance_id):
     timezone = util.get_timezone(request.couch_user.user_id, domain)
+
     try:
         instance = XFormInstance.get(instance_id)
     except Exception:
         raise Http404()
     try:
-        assert(domain == instance.domain)
+        assert domain == instance.domain
     except AssertionError:
         raise Http404()
-    cases = CommCareCase.view("case/by_xform_id", key=instance_id, reduce=False, include_docs=True).all()
+
+    display = request.project.get_form_display(instance)
+    context = {
+        "domain": domain,
+        "display": display,
+        "timezone": timezone,
+        "instance": instance
+    }
+    context['form_render_options'] = context
+    return context
+
+
+@require_form_view_permission
+@login_and_domain_required
+@require_GET
+def form_data(request, domain, instance_id):
+    context = _get_form_context(request, domain, instance_id)
+
     try:
-        form_name = instance.get_form["@name"]
+        form_name = context['instance'].get_form["@name"]
     except KeyError:
         form_name = "Untitled Form"
-    is_archived = instance.doc_type == "XFormArchived"
-    if is_archived:
-        messages.info(request, _("This form is archived. To restore it, click 'Restore this form' at the bottom of the page."))
-    return render(request, "reports/reportdata/form_data.html",
-                              dict(domain=domain,
-                                   instance=instance,
-                                   cases=cases,
-                                   timezone=timezone,
-                                   slug=inspect.SubmitHistory.slug,
-                                   is_archived=is_archived,
-                                   form_data=dict(name=form_name,
-                                                  modified=instance.received_on)))
+   
+    context.update({
+        "slug": inspect.SubmitHistory.slug,
+        "form_name": form_name,
+        "form_received_on": context['instance'].received_on
+    })
+
+    return render(request, "reports/reportdata/form_data.html", context)
+
+@require_form_view_permission
+@login_and_domain_required
+@require_GET
+def case_form_data(request, domain, case_id, xform_id):
+    context = _get_form_context(request, domain, xform_id)
+    context['case_id'] = case_id
+
+    #todo: additional formatting options
+    #todo: sanity check that xform_id has case_block
+
+    return HttpResponse(render_form(
+            context['instance'], domain, options=context))
+
 
 @require_form_view_permission
 @login_and_domain_required
@@ -899,7 +922,11 @@ def archive_form(request, domain, instance_id):
     msg_template = '%(notif)s <a href="%(url)s">%(undo)s</a>' if instance.doc_type == "XFormArchived" else '%(notif)s'
     msg = msg_template % params
     messages.success(request, mark_safe(msg), extra_tags='html')
-    return HttpResponseRedirect(inspect.SubmitHistory.get_url(domain))
+    
+    redirect = request.META.get('HTTP_REFERER')
+    if not redirect:
+        redirect = inspect.SubmitHistory.get_url(domain)
+    return HttpResponseRedirect(redirect)
 
 @require_form_view_permission
 @require_permission(Permissions.edit_data)
@@ -912,7 +939,11 @@ def unarchive_form(request, domain, instance_id):
     else:
         assert instance.doc_type == "XFormInstance"
     messages.success(request, _("Form was successfully restored."))
-    return HttpResponseRedirect(reverse('render_form_data', args=[domain, instance_id]))
+
+    redirect = request.META.get('HTTP_REFERER')
+    if not redirect:
+        redirect = reverse('render_form_data', args=[domain, instance_id])
+    return HttpResponseRedirect(redirect)
     
 # Weekly submissions by xmlns
 def mk_date_range(start=None, end=None, ago=timedelta(days=7), iso=False):

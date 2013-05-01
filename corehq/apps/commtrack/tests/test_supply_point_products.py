@@ -24,6 +24,7 @@ class SupplyPointProductTest(TestCase):
         self.assertEqual(TEST_DOMAIN, spp.domain)
         self.assertEqual(const.SUPPLY_POINT_PRODUCT_CASE_TYPE, spp.type)
         self.assertEqual(self.product._id, spp.product)
+        self.assertEqual(self.product._id, spp.get_product()._id)
         self.assertEqual(self.sp.location_, spp.location_)
         self.assertEqual(get_commtrack_user_id(TEST_DOMAIN), spp.user_id)
         self.assertEqual(None, spp.owner_id)
@@ -33,6 +34,7 @@ class SupplyPointProductTest(TestCase):
         self.assertEqual(const.PARENT_CASE_REF, parent_ref.identifier)
         self.assertEqual(const.SUPPLY_POINT_CASE_TYPE, parent_ref.referenced_type)
         self.assertEqual(self.sp._id, parent_ref.referenced_id)
+        self.assertEqual(self.sp._id, spp.get_supply_point_case()._id)
         for dateprop in ('opened_on', 'modified_on', 'server_modified_on'):
             self.assertTrue(getattr(spp, dateprop) is not None)
             self.assertTrue(isinstance(getattr(spp, dateprop), datetime))

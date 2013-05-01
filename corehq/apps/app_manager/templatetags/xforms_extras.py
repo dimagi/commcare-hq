@@ -23,7 +23,7 @@ def trans(name, langs=["default"], include_lang=True, use_delim=True):
     else:
         suffix = lambda lang: ""
     for lang in langs:
-        if lang in name:
+        if lang in name and name[lang]:
             return name[lang] + ("" if langs and lang == langs[0] else suffix(lang))
         # ok, nothing yet... just return anything in name
     for lang, n in sorted(name.items()):
