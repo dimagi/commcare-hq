@@ -135,18 +135,10 @@ class CommtrackRequisitionConfig(DocumentSchema):
         return sorted(self.actions, key=_action_key)
 
     def get_next_action(self, previous_action_type):
-        return_next = False
-        for a in self.get_sorted_actions():
-            if return_next:
-                return a
-            if a.action_type == previous_action_type:
-                return_next = True
-        # if we got to the end, we must have been the last state, or something
-        # has gone wrong.
-        assert return_next, 'looked up a misconfigured requisition action: %s' % previous_action_type
-        return None
-
-
+        sorted_actions = self.get_sorted_actions()
+        sorted_types = [a.action_type for a in sorted_actions]
+        next_index = sorted_types.index(previous_action_type) + 1
+        return sorted_actions[next_index] if next_index < len(sorted_actions) else None
 
 
 class SupplyPointType(DocumentSchema):
