@@ -24,6 +24,7 @@ class NewWebUserRegistrationForm(forms.Form):
                                max_length=max_pwd,
                                widget=forms.PasswordInput(render_value=False))
     email_opt_in = forms.BooleanField(required=False,
+                                      initial=True,
                                       label="",
                                       help_text=
                                           """Join the mailing list to
