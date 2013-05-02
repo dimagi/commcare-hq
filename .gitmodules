@@ -100,3 +100,6 @@
 [submodule "submodules/freddy"]
 	path = submodules/freddy
 	url = git://github.com/dimagi/freddy.git
+[submodule "fluff-src"]
+	path = fluff-src
+	url = ./submodules/fluff-src/
