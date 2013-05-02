@@ -69,7 +69,7 @@ def send_notifications(xform, cases):
     requisitions = [RequisitionCase.wrap(case._doc) for case in cases if case.type == const.REQUISITION_CASE_TYPE]
 
     if requisitions:
-        by_status = defaultdict(lambda: [])
+        by_status = defaultdict(list)
         for r in requisitions:
             by_status[r.requisition_status].append(r)
 
@@ -85,7 +85,7 @@ def send_notifications(xform, cases):
                 # it to everyone who should be notified.
                 to_notify = filter(
                     create_unique_filter(lambda u: u._id),
-                    itertools.chain(*[get_notification_recipients(next_action, r) for r in reqs])
+                    itertools.chain(*(get_notification_recipients(next_action, r) for r in reqs))
                 )
 
                 msg = get_notification_message(next_action, reqs)
