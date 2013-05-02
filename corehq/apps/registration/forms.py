@@ -9,6 +9,7 @@ from corehq.apps.domain.models import Domain
 from corehq.apps.domain.utils import new_domain_re, new_org_re, website_re
 from corehq.apps.orgs.models import Organization
 from django.utils.safestring import mark_safe
+from django.utils.translation import ugettext_lazy as _
 
 class NewWebUserRegistrationForm(forms.Form):
     """
@@ -26,7 +27,7 @@ class NewWebUserRegistrationForm(forms.Form):
     email_opt_in = forms.BooleanField(required=False,
                                       initial=True,
                                       label="",
-                                      help_text= "Join the mailing list to receive important announcements.")
+                                      help_text=_("Join the mailing list to receive important announcements."))
     # Must be set to False to have the clean_*() routine called
     eula_confirmed = forms.BooleanField(required=False,
                                         label="",
@@ -64,10 +65,6 @@ class NewWebUserRegistrationForm(forms.Form):
             if isinstance(self.cleaned_data[field], basestring):
                 self.cleaned_data[field] = self.cleaned_data[field].strip()
         return self.cleaned_data
-
-    def clean_email_opt_in_confirmed(self):
-        data = self.cleaned_data['email_opt_in']
-        return data
 
     def clean_eula_confirmed(self):
         data = self.cleaned_data['eula_confirmed']

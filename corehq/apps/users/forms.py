@@ -91,7 +91,7 @@ class UserForm(RoleForm):
     email = forms.EmailField(label=_("E-mail"), max_length=75, required=False)
     email_opt_in = forms.BooleanField(required=False,
                                       label="",
-                                      help_text="Join the mailing list to receive important announcements.")
+                                      help_text=_("Join the mailing list to receive important announcements."))
     language = LanguageField(required=False, help_text=_(
         "Write in the language code to set the default language this user "
         "sees in CloudCare applications and in reports (if applicable). "
