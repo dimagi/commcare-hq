@@ -20,7 +20,7 @@ def _mother_delivered_in_window(case, days):
 
 def _in_last_month(date):
     today = dt.datetime.today().date()
-    return today - A_MONTH < date < today
+    return today - A_MONTH <= date <= today
 
 def _visits_due(case, schedule):
     return [i + 1 for i, days in enumerate(schedule) \
@@ -65,7 +65,7 @@ class EBCalculator(VisitCalculator):
 
 class CFCalculator(VisitCalculator):    
     schedule_in_months = (6, 7, 8, 9, 12, 15, 18)
-    schedule = (m * 30 for m in schedule_in_months)
+    schedule = [m * 30 for m in schedule_in_months]
     visit_type = "cf"
 
 # client list filters
