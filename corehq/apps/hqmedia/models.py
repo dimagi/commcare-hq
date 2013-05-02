@@ -382,7 +382,7 @@ class ApplicationMediaReference(object):
     def __init__(self, path,
                  module_id=None, module_name=None,
                  form_id=None, form_name=None, form_order=None,
-                 media_class=None, is_menu_media=False):
+                 media_class=None, is_menu_media=False, app_lang=None):
 
         if not isinstance(path, basestring):
             raise ValueError("path should be a string")
@@ -400,6 +400,8 @@ class ApplicationMediaReference(object):
 
         self.media_class = media_class
         self.is_menu_media = is_menu_media
+
+        self.app_lang = app_lang or "en"
 
     def __str__(self):
         detailed_location = ""
@@ -432,13 +434,13 @@ class ApplicationMediaReference(object):
         }
 
     def _get_name(self, raw_name, lang=None):
-        if raw_name is None:
+        if not raw_name:
             return ""
         if not isinstance(raw_name, dict) or not isinstance(raw_name, LazyDict):
             return raw_name
         if lang is None:
-            lang = 'en'
-        return raw_name.get(lang)
+            lang = self.app_lang
+        return raw_name.get(lang, raw_name.values()[0])
 
     def get_module_name(self, lang=None):
         return self._get_name(self.module_name, lang=lang)
@@ -476,10 +478,12 @@ class HQMediaMixin(Document):
                                                        media_class=CommCareAudio,
                                                        is_menu_media=True, **kwargs))
 
+
         for m, module in enumerate(self.get_modules()):
             media_kwargs = {
                 'module_name': module.name,
                 'module_id': m,
+                'app_lang': self.default_language,
             }
             _add_menu_media(module, **media_kwargs)
             for f_order, f in enumerate(module.get_forms()):
