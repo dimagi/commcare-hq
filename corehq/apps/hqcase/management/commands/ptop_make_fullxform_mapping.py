@@ -19,7 +19,7 @@ class Command(MappingOutputCommand):
 
 
     def finish_handle(self):
-        filepath = os.path.join(settings.FILEPATH, 'submodules','core-hq-src','corehq','pillows','mappings','fullxform_mapping.py')
+        filepath = os.path.join(settings.FILEPATH,'corehq','pillows','mappings','fullxform_mapping.py')
         full_xform_pillow = FullXFormPillow(create_index=False)
 
         #current index

@@ -1,12 +1,12 @@
 import pytz
 from django.template.loader import render_to_string
-from corehq.apps.reports.cache import CacheableRequestMixIn, request_cache
+#from corehq.apps.reports.cache import CacheableRequestMixIn, request_cache
 from dimagi.utils.decorators.memoized import memoized
 # For translations
 from django.utils.translation import ugettext as _
 from django.utils.translation import ugettext_noop
 
-class BaseReportFilter(CacheableRequestMixIn):
+class BaseReportFilter(object):   # (CacheableRequestMixIn):
     """
         For filtering the results of CommCare HQ Reports.
 
@@ -141,6 +141,39 @@ class BaseDrilldownOptionFilter(BaseReportFilter):
     is_cacheable = True
 
     @property
+    def drilldown_map(self):
+        """
+            Should return a structure like:
+            [{
+                'val': <value>,
+                'text': <text>,
+                'next': [
+                        {
+                            'val': <value>,
+                            'text' <text>,
+                            'next': [...]
+                        },
+                        {...}
+                    ]
+            },
+            {...}
+            ]
+        """
+        raise NotImplementedError("drilldown_map must be implemented")
+    
+    @classmethod
+    def get_labels(cls):
+        """
+            Returns a list of ('label', default text/caption', 'slug') tuples.
+            ex: [
+                ('Application', 'Select Application...', 'app'),
+                ('Module', 'Select Module...', 'module'),
+                ('Form', 'Select Form...', 'form')
+            ]
+        """
+        raise NotImplementedError("get_labels must be implemented")
+
+    @property
     def selected(self):
         selected = []
         for label in self.rendered_labels:
@@ -189,26 +222,6 @@ class BaseDrilldownOptionFilter(BaseReportFilter):
         """
         return {}
 
-    @property
-    def drilldown_map(self):
-        """
-            Should return a structure like:
-            [{
-                'val': <value>,
-                'text': <text>,
-                'next': [
-                        {
-                            'val': <value>,
-                            'text' <text>,
-                            'next': [...]
-                        },
-                        {...}
-                    ]
-            },
-            {...}
-            ]
-        """
-        raise NotImplementedError("drilldown_map must be implemented")
 
     @property
     @memoized
@@ -230,17 +243,6 @@ class BaseDrilldownOptionFilter(BaseReportFilter):
             'next': next,
             }
 
-    @classmethod
-    def get_labels(cls):
-        """
-            Returns a list of ('label', default text/caption', 'slug') tuples.
-            ex: [
-                ('Application', 'Select Application...', 'app'),
-                ('Module', 'Select Module...', 'module'),
-                ('Form', 'Select Form...', 'form')
-            ]
-        """
-        raise NotImplementedError("get_labels must be implemented")
 
     @classmethod
     def _get_label_value(cls, request, label):

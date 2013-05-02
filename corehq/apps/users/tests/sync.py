@@ -21,6 +21,20 @@ class SyncWebUserTestCase(TestCase):
         django_user.save()
         self.assertEqual(django_user.email, WebUser.from_django_user(django_user).email)
 
+    def test_truncates_long_names_from_couch_to_django(self):
+        # Should truncate name in Django but not in couch
+        self.web_user.first_name = 'b'*50
+        self.web_user.email = "droberts@dimagi.com"
+        self.web_user.save()
+        django_user = self.web_user.get_django_user()
+
+        self.assertEqual(len(django_user.first_name), 30)
+
+        # name in django shouldn't sync
+        django_user.first_name = "danny"
+        django_user.save()
+        self.assertEqual(len(self.web_user.first_name), 50)
+
     def tearDown(self):
         WebUser.get_by_user_id(self.web_user.user_id).delete()
 
@@ -43,13 +57,27 @@ class SyncCommCareUserTestCase(TestCase):
         django_user.save()
         self.assertEqual(django_user.email, CommCareUser.from_django_user(django_user).email)
 
+    def test_truncates_long_names_from_couch_to_django(self):
+        # Should truncate name in Django but not in couch
+        self.commcare_user.first_name = 'b'*50
+        self.commcare_user.email = "droberts@dimagi.com"
+        self.commcare_user.save()
+        django_user = self.commcare_user.get_django_user()
+
+        self.assertEqual(len(django_user.first_name), 30)
+
+        # name in django shouldn't sync
+        django_user.first_name = "danny"
+        django_user.save()
+        self.assertEqual(len(self.commcare_user.first_name), 50)
+
     def test_retire(self):
         self.commcare_user.retire()
         self.assertEqual(User.objects.filter(username=self.commcare_user.username).count(), 0)
-        
+
         self.commcare_user = CommCareUser.create(self.domain, self.username, self.password)
         self.commcare_user.save()
-        
+
     def tearDown(self):
         CommCareUser.get_by_user_id(self.commcare_user.user_id).delete()
 

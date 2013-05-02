@@ -7,6 +7,7 @@ from django.conf import settings
 from casexml.apps.case.models import CommCareCase
 from corehq.apps.sms.api import send_sms, send_sms_to_verified_number
 from corehq.apps.sms.models import CallLog, CommConnectCase
+from corehq.apps.users.cases import get_owner_id, get_wrapped_owner
 from corehq.apps.users.models import CommCareUser, CouchUser
 from corehq.apps.groups.models import Group
 import logging
@@ -902,19 +903,7 @@ class CaseReminder(Document, LockableMixIn):
         elif handler.recipient == RECIPIENT_SURVEY_SAMPLE:
             return SurveySample.get(self.sample_id)
         elif handler.recipient == RECIPIENT_OWNER:
-            case = self.case
-            
-            owner_id = case.owner_id
-            if owner_id is None:
-                owner_id = case.user_id
-            owner_doc = get_db().get(owner_id)
-            
-            if owner_doc["doc_type"] == "CommCareUser":
-                return CommCareUser.get_by_user_id(owner_id)
-            elif owner_doc["doc_type"] == "Group":
-                return Group.get(owner_id)
-            else:
-                return None
+            return get_wrapped_owner(get_owner_id(self.case))
         elif handler.recipient == RECIPIENT_PARENT_CASE:
             indices = self.case.indices
             for index in indices:
