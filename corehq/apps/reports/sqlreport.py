@@ -11,6 +11,18 @@ from django.conf import settings
 
 
 class Column(object):
+    """
+    Base object for Column classes.
+    """
+    def get_value(self, row):
+        """
+        Given a row of report data represented as a dict this method should return the value to be displayed
+        for this column or None.
+        """
+        raise NotImplementedError()
+
+
+class DatabaseColumn(Column):
     def __init__(self, header, name, column_type=None, calculate_fn=None, *args, **kwargs):
         """
         Args:
@@ -70,15 +82,15 @@ class Column(object):
         if self.header_group:
             self.header_group.add_column(self.data_tables_column)
 
-    def get_value(self, report, row):
+    def get_value(self, row):
         value = self.view.get_value(row) if row else None
         if self.calculate_fn and value:
-            return self.calculate_fn(report, value)
+            return self.calculate_fn(value)
         else:
             return value
 
 
-class AggregateColumn(object):
+class AggregateColumn(Column):
     """
     Allows combining the values from multiple columns into a single value.
     """
@@ -101,7 +113,7 @@ class AggregateColumn(object):
 
         self.view = sqlagg.AggregateColumn(aggregate_fn, *columns)
 
-    def get_value(self, report, row):
+    def get_value(self, row):
         return self.view.get_value(row) if row else None
 
 
@@ -181,13 +193,13 @@ class SqlTabularReport(GenericTabularReport, CustomProjectReport, ProjectReportP
                 row = data.get(row_key, None) if row_key else data
                 if not row:
                     row = dict(zip(self.group_by, key_group))
-                yield [self._or_no_value(c.get_value(self, row)) for c in self.columns]
+                yield [self._or_no_value(c.get_value(row)) for c in self.columns]
         else:
             if self.group_by:
                 for k, v in data.items():
-                    yield [self._or_no_value(c.get_value(self, data.get(k))) for c in self.columns]
+                    yield [self._or_no_value(c.get_value(data.get(k))) for c in self.columns]
             else:
-                yield [self._or_no_value(c.get_value(self, data)) for c in self.columns]
+                yield [self._or_no_value(c.get_value(data)) for c in self.columns]
 
     def _row_key(self, key_group):
         if len(self.group_by) == 1:

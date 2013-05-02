@@ -7,11 +7,7 @@ from dimagi.utils.decorators.memoized import memoized
 from sqlagg import *
 from sqlagg.columns import *
 
-from ..sqlreport import SqlTabularReport, Column, AggregateColumn
-
-
-def username(report, key):
-    return report.usernames_demo[key]
+from ..sqlreport import SqlTabularReport, DatabaseColumn, AggregateColumn
 
 
 def combine_indicator(num, denom):
@@ -59,11 +55,14 @@ class UserTestReport(SqlTabularReport, DatespanMixin):
             "enddate": self.datespan.enddate_param_utc
         }
 
+    def username(self, key):
+        return self.usernames_demo[key]
+
     @property
     def columns(self):
-        user = Column("Username", "user", column_type=SimpleColumn, calculate_fn=username)
-        i_a = Column("Indicator A", "indicator_a")
-        i_b = Column("Indicator B", "indicator_b")
+        user = DatabaseColumn("Username", "user", column_type=SimpleColumn, calculate_fn=self.username)
+        i_a = DatabaseColumn("Indicator A", "indicator_a")
+        i_b = DatabaseColumn("Indicator B", "indicator_b")
 
         agg_c_d = AggregateColumn("C/D", combine_indicator,
                                   SumColumn("indicator_c"),
@@ -79,14 +78,6 @@ class UserTestReport(SqlTabularReport, DatespanMixin):
             return [user] + aggregate_cols
         else:
             return aggregate_cols
-
-
-def region_name(report, key):
-    return report.regions[key]
-
-
-def sub_region_name(report, key):
-    return report.sub_regions[key]
 
 
 class RegionTestReport(SqlTabularReport, DatespanMixin):
@@ -115,12 +106,18 @@ class RegionTestReport(SqlTabularReport, DatespanMixin):
             "enddate": self.datespan.enddate_param_utc
         }
 
+    def region_name(self, key):
+        return self.regions[key]
+
+    def sub_region_name(self, key):
+        return self.sub_regions[key]
+
     @property
     def columns(self):
-        region = Column("Region", "region", column_type=SimpleColumn, calculate_fn=region_name)
-        sub_region = Column("Sub Region", "sub_region", column_type=SimpleColumn, calculate_fn=sub_region_name)
-        i_a = Column("Indicator A", "indicator_a")
-        i_b = Column("Indicator B", "indicator_b")
+        region = DatabaseColumn("Region", "region", column_type=SimpleColumn, calculate_fn=self.region_name)
+        sub_region = DatabaseColumn("Sub Region", "sub_region", column_type=SimpleColumn, calculate_fn=self.sub_region_name)
+        i_a = DatabaseColumn("Indicator A", "indicator_a")
+        i_b = DatabaseColumn("Indicator B", "indicator_b")
 
         aggregate_cols = [
             i_a,
