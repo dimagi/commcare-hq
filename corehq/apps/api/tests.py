@@ -75,7 +75,8 @@ class TestXFormInstanceResource(TestCase):
         # and write the translated form directly; we are not trying to test
         # the ptop infrastructure.
 
-        pillow = XFormPillow()
+        #the pillow is set to offline mode - elasticsearch not needed to validate
+        pillow = XFormPillow(online=False)
         fake_xform_es = FakeXFormES()
         v0_4.MOCK_XFORM_ES = fake_xform_es
 
@@ -116,10 +117,12 @@ class TestXFormInstanceResource(TestCase):
         # A bit of a hack since none of Python's mocking libraries seem to do basic spies easily...
         prior_run_query = fake_xform_es.run_query
         def mock_run_query(es_query):
-            self.assertEqual(es_query['filter'], {
-                'and': [{'term': {'domain.exact': 'qwerty'}},
-                        {'term': {'xmlns.exact': 'foo'}}]
-            })
+            self.assertEqual(
+                sorted(es_query['filter']['and']), 
+                [{'term': {'doc_type': 'xforminstance'}},
+                 {'term': {'domain.exact': 'qwerty'}},
+                 {'term': {'xmlns.exact': 'foo'}}])
+            
 
             return prior_run_query(es_query)
             
@@ -149,6 +152,7 @@ class TestXFormInstanceResource(TestCase):
             self.assertEqual(sorted(es_query['filter']['and']), [
                 {'range': {'received_on': {'from': start_date.isoformat()}}},
                 {'range': {'received_on': {'to': end_date.isoformat()}}},
+                {'term': {'doc_type': 'xforminstance'}},
                 {'term': {'domain.exact': 'qwerty'}},
             ])
 

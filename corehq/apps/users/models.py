@@ -668,11 +668,6 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, UnicodeMixIn):
     def __unicode__(self):
         return "<%s '%s'>" % (self.__class__.__name__, self.get_id)
 
-    def __getattr__(self, item):
-        if item == 'current_domain':
-            return None
-        super(CouchUser, self).__getattr__(item)
-
     def get_email(self):
         return self.email
 
@@ -806,6 +801,7 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, UnicodeMixIn):
             include_docs=True,
         )
 
+
     def is_previewer(self):
         try:
             from django.conf.settings import PREVIEWER_RE
@@ -814,12 +810,13 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, UnicodeMixIn):
         else:
             return self.is_superuser or re.compile(PREVIEWER_RE).match(self.username)
 
-    # for synching
     def sync_from_django_user(self, django_user):
         if not django_user:
             django_user = self.get_django_user()
         for attr in DjangoUserMixin.ATTRS:
-            setattr(self, attr, getattr(django_user, attr))
+            # name might be truncated so don't backwards sync
+            if attr != 'first_name' and attr != 'last_name':
+                setattr(self, attr, getattr(django_user, attr))
 
     def sync_to_django_user(self):
         try:
@@ -827,7 +824,11 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, UnicodeMixIn):
         except User.DoesNotExist:
             django_user = User(username=self.username)
         for attr in DjangoUserMixin.ATTRS:
-            setattr(django_user, attr, getattr(self, attr))
+            attr_val = getattr(self, attr) or ''
+            # truncate names when saving to django
+            if attr == 'first_name' or attr == 'last_name':
+                attr_val = attr_val[:30]
+            setattr(django_user, attr, attr_val)
         django_user.DO_NOT_SAVE_COUCH_USER= True
         return django_user
 
@@ -1257,8 +1258,7 @@ class CommCareUser(CouchUser, CommCareMobileContactMixin, SingleMembershipMixin)
     def case_count(self):
         result = CommCareCase.view('case/by_user',
             startkey=[self.user_id],
-            endkey=[self.user_id, {}],
-            group_level=0
+            endkey=[self.user_id, {}], group_level=0
         ).one()
         if result:
             return result['value']
@@ -1332,6 +1332,7 @@ class CommCareUser(CouchUser, CommCareMobileContactMixin, SingleMembershipMixin)
     @memoized
     def get_case_sharing_groups(self):
         from corehq.apps.groups.models import Group
+
         return [group for group in Group.by_user(self) if group.case_sharing]
 
     @classmethod
@@ -1353,6 +1354,7 @@ class CommCareUser(CouchUser, CommCareMobileContactMixin, SingleMembershipMixin)
 
     def get_group_ids(self):
         from corehq.apps.groups.models import Group
+
         return Group.by_user(self, wrap=False)
 
     @property
@@ -1374,6 +1376,9 @@ class CommCareUser(CouchUser, CommCareMobileContactMixin, SingleMembershipMixin)
             # Gracefully handle when user_data is None, or does not have a "language_code" entry
             lang = None
         return lang
+
+    def __repr__(self):
+        return ("CommCareUser(username={self.username!r})".format(self=self))
 
 
 class OrgMembershipMixin(DocumentSchema):
@@ -1581,7 +1586,6 @@ class WebUser(CouchUser, MultiMembershipMixin, OrgMembershipMixin):
     def total_domain_membership(self, domain_memberships, domain):
         #sort out the permissions
         total_permission = Permissions()
-        total_reports_list = list()
         if domain_memberships:
             for domain_membership, membership_source in domain_memberships:
                 permission = domain_membership.permissions

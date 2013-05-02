@@ -1,5 +1,4 @@
 from datetime import datetime
-import hashlib
 import pprint
 from django.core.management.base import NoArgsCommand
 import sys
@@ -28,7 +27,7 @@ class Command(MappingOutputCommand):
         a concept dictionary setup, so a little ugliness in execution will get things done for now
         """
 
-        filepath = os.path.join(settings.FILEPATH, 'submodules','core-hq-src','corehq','pillows','mappings','fullcase_mapping.py')
+        filepath = os.path.join(settings.FILEPATH, 'corehq','pillows','mappings','fullcase_mapping.py')
         casepillow = FullCasePillow(create_index=False)
 
         #current index
