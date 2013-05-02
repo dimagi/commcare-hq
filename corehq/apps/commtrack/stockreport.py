@@ -169,7 +169,7 @@ class Requisition(StockTransaction):
             'product_id': tx.find(_('product')).text,
             'case_id': tx.find(_('product_entry')).text,
             'value': int(tx.find(_('value')).text),
-            'action_name': 'request',
+            'action_name': tx.find(_('action')).text,
         }
         return cls(config=config, **data)
 
@@ -177,10 +177,11 @@ class Requisition(StockTransaction):
         if not E:
             E = XML()
 
-        return E.request(
+        return E.requisition(
             E.product(self.product_id),
             E.product_entry(self.case_id),
             E.value(str(self.value)),
+            E.action(self.action_name)
         )
 
 class RequisitionResponse(Requisition):
@@ -266,7 +267,7 @@ def unpack_transactions(root, config):
     def transactions():
         types = {
             'transaction': StockTransaction,
-            'request': Requisition,
+            'requisition': Requisition,
             'response': BulkRequisitionResponse,
         }
         for tag, factory in types.iteritems():
@@ -287,7 +288,7 @@ def normalize_transactions(transactions):
 
 
 def replace_transactions(root, new_tx):
-    for tag in ('transaction', 'request', 'response'):
+    for tag in ('transaction', 'requisition', 'response'):
         for tx in root.findall(_(tag)):
             tx.getparent().remove(tx)
     for tx in new_tx:
