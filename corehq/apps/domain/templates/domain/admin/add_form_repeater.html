@@ -1,0 +1,56 @@
+{% extends "users/users_base.html" %}
+{% load hqstyle_tags %}
+{% block js-inline %} {{ block.super }}
+    <script type="text/javascript">
+        $(function() {
+            var $testLinkButton = $('<a style="margin-left: 5px;" class="btn btn-info hide" href="#" />'),
+                     $testLabel = $('<span style="margin-left: 5px;" class="label" />');
+            $testLinkButton.text("Test Link");
+            $testLinkButton.click(function () {
+                var url = $("#id_url").val();
+                jQuery.post("{% url test_repeater domain %}", {url: url}, function(data){
+                    json_res = JSON.parse(data);
+                    $testLabel.removeClass("hide label-important label-success");
+                    if (json_res.status) {
+                        msg = json_res.status + ": " + json_res.response;
+                    } else {
+                        msg = json_res.response;
+                    }
+                    if (json_res.success) {
+                        $testLabel.addClass("label-success");
+                        $testLabel.text("Success! Response is: " + msg);
+                    } else {
+                        $testLabel.addClass("label-important");
+                        $testLabel.text("Failed! Response is: " + msg);
+                    }
+                });
+            });
+            $('#id_url').after($testLinkButton);
+            $testLinkButton.after($testLabel.addClass('hide'));
+            $('#id_url').change(function () {
+                if ($(this).val()) {
+                    $testLinkButton.removeClass('hide');
+                } else {
+                    $testLinkButton.addClass('hide');
+                }
+            });
+        });
+    </script>
+{% endblock %}
+
+{% block subsection-title %}
+    <li>
+        <a href="{% url domain_forwarding domain %}">Data Forwarding</a> <span class="divider">&gt;</span>
+    </li>
+    <li class="active">
+        <a href="#">Forward {% if repeater_type == "FormRepeater" %}Forms{% else %}Cases{% endif %}</a>
+    </li>
+{% endblock %}
+
+{% block user-view %}
+<form class="form form-horizontal" method="post" action="">
+    {% bootstrap_form_errors form %}
+    {% bootstrap_fieldset form "Forwarding Settings" %}
+    <div class="form-actions"><button type="submit" class="btn btn-primary">Start Forwarding</button></div>
+</form>
+{% endblock %}

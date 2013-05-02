@@ -1,0 +1,13 @@
+{% load hq_shared_tags %}
+{% load i18n %}
+<fieldset>
+    <legend><span data-bind="text: filterHeadingName">{% trans "Report Filters" %}</span></legend>
+    {% for field in report_filters %}
+        <fieldset id="fieldset_{{ field.slug }}">
+            <div id="group_{{ field.slug }}" class="control-group">
+                {{ field.field|safe }}
+            </div>
+        </fieldset>
+    {% endfor %}
+</fieldset>
+<script type="text/javascript" src="{% static 'reports/javascripts/datepicker.js' %}"></script>
