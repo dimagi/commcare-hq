@@ -489,15 +489,17 @@ class ComplicationsCalculator(SummaryValueMixIn, MotherPostDeliverySummaryMixIn,
 
     @memoized
     def get_forms(self, case, days=30):
+        result = []
         xform_ids = set()
         for action in case.actions:
             if action.xform_id not in xform_ids:
                 xform_ids.add(action.xform_id)
                 if self.now - dt.timedelta(days=days) <= action.date <= self.now:
                     try:
-                        yield action.xform
+                        result.append(action.xform)
                     except ResourceNotFound:
                         pass
+        return result
 
     def get_forms_with_complications(self, case):
         for form in self.get_forms(case):
