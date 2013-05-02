@@ -1,0 +1,21 @@
+{% extends 'sms/default.html' %}
+
+{% block main_column %}
+    <form class="form form-horizontal" action="{% url corehq.apps.sms.views.message_test domain phone_number %}" method="post">
+        <fieldset>
+            <legend>Simulate Inbound Message from +{{ phone_number }}</legend>
+            <div class="control-group">
+                <label class="control-label" for="sms-message">Message:</label>
+                <div class="controls">
+                    <div>
+                        <textarea id="sms-message" name="message" class="span12"></textarea>
+                    </div>
+                </div>
+            </div>
+        </fieldset>
+        <div class="form-actions">
+            <button type="submit" name="send_sms_button" class="btn btn-primary">Send Message</button>
+        </div>
+    </form>
+{{ block.super }}
+{% endblock %}

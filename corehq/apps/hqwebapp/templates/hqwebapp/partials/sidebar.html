@@ -1,0 +1,32 @@
+<nav>
+    <ul class="nav nav-list">
+        {% for section_title, navs in sections %}
+            <li class="nav-header">{{ section_title }}</li>
+            {% for nav in navs %}
+
+                <li {% if nav.is_active and not nav.child %}class="active"{% endif %}>
+                    <a href="{{ nav.url }}" {% if nav.description %}class="report-description-popover" data-title="{{ nav.title }}" data-content="{{ nav.description }}"{% endif %}>
+                        {% if nav.icon %}
+                        <i class="icon{% if nav.is_active %}-white{% endif %} {{ nav.icon }}"></i>
+                        {% endif %}
+                        {{ nav.title }}
+                    </a>
+
+                    {% if nav.child and nav.child.title %}
+                    <ul class="nav nav-list">
+                        <li class="active"><a href="#">{{ nav.child.title }}</a></li>
+                    </ul>
+                    {% endif %}
+                </li>
+
+                {% if nav.warning %}
+                <li>
+                    <span class="label">
+                        <i class="icon-white icon-info-sign"></i> {{ nav.warning }}
+                    </span>
+                </li>
+                {% endif %}
+            {% endfor %}
+        {% endfor %}
+    </ul>
+</nav>

@@ -1,0 +1,50 @@
+{% extends "registration/base.html" %}
+
+{% block title %}Create an Account{% endblock title %}
+{% block step-title %}Create an Account{% endblock %}
+{% block js-inline  %}{{ block.super }}
+    {% url eula_basic as eula_url %}
+    {% include 'hqstyle/partials/load_into_modal.html' with modal_id="eulaModal" load_from=eula_url %}
+{% endblock %}
+
+{% block registration-content %}
+    <form name="form" class="form-horizontal" method="post" action="{% url register_user domain_type=domain_type %}?">
+        {% csrf_token %}
+        {% for global_error in form.non_field_errors %}
+            <div class="alert alert-error">
+                {{ global_error }}
+            </div>
+        {% endfor %}
+        <fieldset>
+            {% for field in form.visible_fields %}
+                <div class="control-group{% if field.errors %} error{% endif %}">
+                    <label class="control-label" for="{{ field.id }}">{{ field.label }}</label>
+                    <div class="controls">
+                        {% ifnotequal field.name 'eula_confirmed' %}
+                            {{ field }}
+                        {% else %}
+                            <label class="checkbox">{{ field }} I have read and agree to the <a data-toggle="modal" data-target="#eulaModal" href="#eulaModal">CommCare HQ End User License Agreement</a>.</label>
+                        {% endifnotequal %}
+                        {% for error in field.errors %}
+                            <span class="help-inline">{{ error }}</span>
+                        {% endfor %}
+                        {% if field.help_text %}
+                            <p class="help-block">
+                                {{ field.help_text }}
+                            </p>
+                        {% endif %}
+                    </div>
+                </div>
+            {% endfor %}
+            {% for hidden in form.hidden_fields %}
+                {{ hidden }}
+            {% endfor %}
+            
+        </fieldset>
+        <div class="form-actions"><button type="submit" class="btn btn-primary btn-large disable-on-submit">Sign Up</button></div>
+    </form>
+{% endblock %}
+{% block modals %}{{ block.super }}
+    {% include 'registration/partials/eula_modal.html' %}
+{% endblock %}
+     

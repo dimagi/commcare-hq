@@ -1,0 +1,10 @@
+{% if label %}
+    <span class="label label-inverse form-label-{{ label }}" data-title="{{ xmlns }}" data-placement="right">{{ label }}</span>
+    <script type="text/javascript">
+        $(function () {
+            $(".form-label-{{ label }}").tooltip();
+        });
+    </script>
+{% else %}
+    <code>{{ xmlns }}</code>
+{% endif %}
