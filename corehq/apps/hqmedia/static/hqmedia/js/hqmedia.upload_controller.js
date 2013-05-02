@@ -1,3 +1,8 @@
+var HQMediaUploaderTypes = {
+    'bulk': HQMediaBulkUploadController,
+    'file': HQMediaFileUploadController
+};
+
 function BaseHQMediaUploadController (uploader_name, marker, options) {
     'use strict';
     var self = this;
@@ -27,10 +32,8 @@ function BaseHQMediaUploadController (uploader_name, marker, options) {
 
     self.notSupportedNotice = self.container + " .hqm-not-supported";
 
-    // Text and templates
+    // Templates
     self.queueTemplate = options.queueTemplate;
-    self.detailsTemplate = options.detailsTemplate;
-    self.statusTemplate = options.statusTemplate;
     self.errorsTemplate = options.errorsTemplate;
 
     // Stuff for processing the upload
@@ -80,20 +83,7 @@ function BaseHQMediaUploadController (uploader_name, marker, options) {
         });
     };
 
-    self.processDetailsTemplate = function (images, audio, unknowns) {
-        return _.template(self.detailsTemplate, {
-            images: images,
-            audio: audio,
-            unknowns: unknowns
-        });
-    };
 
-    self.processStatusTemplate = function (images, audio) {
-        var numMatches = images.length + audio.length;
-        return _.template(self.statusTemplate, {
-            num: numMatches
-        });
-    };
 
     self.processErrorsTemplate = function (errors) {
         return _.template(self.errorsTemplate, {
@@ -330,6 +320,27 @@ function HQMediaBulkUploadController (uploader_name, marker, options) {
     var self = this;
     self.confirmUploadModalSelector = "#hqm-upload-modal";
 
+    // Templates
+    self.detailsTemplate = options.detailsTemplate;
+    self.statusTemplate = options.statusTemplate;
+
+    self.processDetailsTemplate = function (images, audio, video, unknowns) {
+        return _.template(self.detailsTemplate, {
+            images: images,
+            audio: audio,
+            video: video,
+            unknowns: unknowns
+        });
+    };
+
+    self.processStatusTemplate = function (images, audio, video) {
+        var numMatches = images.length + audio.length + video.length;
+        return _.template(self.statusTemplate, {
+            num: numMatches
+        });
+    };
+
+
     self.startUploadUI = function () {
         // set the state of the uploader UI here when the upload starts
         if ($(self.confirmUploadModalSelector)) {
@@ -451,10 +462,11 @@ function HQMediaBulkUploadController (uploader_name, marker, options) {
         if (data.type === 'zip' && data.matched_files) {
             var images = data.matched_files.CommCareImage,
                 audio = data.matched_files.CommCareAudio,
+                video = data.matched_files.CommCareVideo,
                 unknowns = data.unmatched_files;
-            $(curUpload.status).append(self.processStatusTemplate(images, audio));
+            $(curUpload.status).append(self.processStatusTemplate(images, audio, video));
 
-            $(curUpload.details).html(self.processDetailsTemplate(images, audio, unknowns));
+            $(curUpload.details).html(self.processDetailsTemplate(images, audio, video, unknowns));
             $(curUpload.details).find('.match-info').popover({
                 html: true,
                 title: 'Click to open in new tab.',

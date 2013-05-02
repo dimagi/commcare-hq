@@ -87,6 +87,7 @@
                                 {% include "hqmedia/partials/reference_table.html" with ref_type="active_menu_references" show_refs="showMenuRefs" parent_accordion="FormRefs" this_accordion="FormMenuRefs" title="Menu References" %}
                                 {% include "hqmedia/partials/reference_table.html" with ref_type="active_images" show_refs="showImageRefs" parent_accordion="FormRefs" this_accordion="FormImageRefs" title="Image References" %}
                                 {% include "hqmedia/partials/reference_table.html" with ref_type="active_audio" show_refs="showAudioRefs" parent_accordion="FormRefs" this_accordion="FormAudioRefs" title="Audio References" %}
+                                {% include "hqmedia/partials/reference_table.html" with ref_type="active_video" show_refs="showVideoRefs" parent_accordion="FormRefs" this_accordion="FormVideoRefs" title="Video References" %}
                             </div>
                         </div>
                     <!-- /ko -->
@@ -101,18 +102,25 @@
         <a target="_blank"
            class="btn btn-small preview-media"
            data-bind="attr: { href: url }"
-           data-toggle="tooltip" data-title="Opens image in new tab.">View Larger</a>
+           data-toggle="tooltip" data-title="Opens image in new tab.">{% trans 'View Larger' %}</a>
     </script>
 
     <script type="text/html" id="audio-preview-template">
         <a target="_blank"
            class="btn preview-media"
            data-bind="attr: { href: url }"
-           data-toggle="tooltip" data-title="Opens file in new tab.">Hear Audio</a>
+           data-toggle="tooltip" data-title="Opens file in new tab.">{% trans 'Hear Audio' %}</a>
+    </script>
+
+    <script type="text/html" id="video-preview-template">
+        <a target="_blank"
+           class="btn preview-media"
+           data-bind="attr: { href: url }"
+           data-toggle="tooltip" data-title="Opens file in new tab.">{% trans 'View Video' %}</a>
     </script>
 
     {% for uploader in uploaders %}
-        <div class="modal hide fade" id="{{ uploader.name }}">
+        <div class="modal hide fade" id="{{ uploader.slug }}">
             <div class="modal-header">
                 <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
                 <h3>Upload {{ uploader.media_type|capfirst }}</h3>
