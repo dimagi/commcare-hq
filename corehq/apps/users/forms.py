@@ -90,8 +90,8 @@ class UserForm(RoleForm):
     last_name = forms.CharField(max_length=50, required=False)
     email = forms.EmailField(label=_("E-mail"), max_length=75, required=False)
     email_opt_in = forms.BooleanField(required=False,
-                                      label="Email opt-in",
-                                      help_text="I would like to receive notifications.")
+                                      label="",
+                                      help_text="Join the mailing list to receive important announcements and discuss issues with other CommCare users worldwide.")
     language = LanguageField(required=False, help_text=_(
         "Write in the language code to set the default language this user "
         "sees in CloudCare applications and in reports (if applicable). "

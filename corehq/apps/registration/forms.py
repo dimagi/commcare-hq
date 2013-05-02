@@ -24,8 +24,11 @@ class NewWebUserRegistrationForm(forms.Form):
                                max_length=max_pwd,
                                widget=forms.PasswordInput(render_value=False))
     email_opt_in = forms.BooleanField(required=False,
-                                      label="Email opt-in",
-                                      help_text="I would like to receive notifications")
+                                      label="",
+                                      help_text=
+                                          """Join the mailing list to
+                                             receive important announcements and discuss
+                                             issues with other CommCare users worldwide.""")
     # Must be set to False to have the clean_*() routine called
     eula_confirmed = forms.BooleanField(required=False,
                                         label="End User License Agreement",
