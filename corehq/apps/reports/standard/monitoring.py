@@ -6,7 +6,6 @@ from django.core.urlresolvers import reverse
 import numpy
 import pytz
 from corehq.apps.reports import util
-from corehq.apps.reports.basic import SummingTabularReport
 from corehq.apps.reports.standard import ProjectReportParametersMixin, \
     DatespanMixin, ProjectReport, DATE_FORMAT
 from corehq.apps.reports.filters.forms import CompletionOrSubmissionTimeFilter, FormsByApplicationFilter, SingleFormByApplicationFilter
