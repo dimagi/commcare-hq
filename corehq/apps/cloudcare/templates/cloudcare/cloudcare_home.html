@@ -1,0 +1,110 @@
+{% extends "cloudcare/base.html" %}
+{% load i18n %}
+{% load hq_shared_tags %}
+
+{% block head %} {{ block.super }}
+{% endblock %}
+
+{% block js %} {{ block.super }}
+    <script src="{% static 'hqwebapp/js/lib/jquery.textchange.min.js' %}"></script>
+    <script src="{% static 'hqwebapp/js/lib/underscore-1.3.1.js' %}"></script>
+<script type="text/javascript" src="{% static 'hqwebapp/js/lib/datatables-1.9/js/jquery.dataTables.min.js' %}"></script>
+
+<script src="{% static 'hqwebapp/js/ui-element.js' %}"></script>
+    <script src="{% static 'case/js/cheapxml.js' %}"></script>
+    <script src="{% static 'case/js/casexml.js' %}"></script>
+    <script src="{% static 'cloudcare/js/case-edit-form.js' %}"></script>
+    <script src="{% static 'hqwebapp/js/lib/backbone.js' %}"></script>
+    <script src="{% static 'cloudcare/js/util.js' %}"></script>
+    <script src="{% static 'cloudcare/js/backbone/shared.js' %}"></script>
+    <script src="{% static 'cloudcare/js/backbone/apps.js' %}"></script>
+    <script src="{% static 'cloudcare/js/backbone/cases.js' %}"></script>
+    <script src="{% static 'cloudcare/js/post.js' %}"></script>
+    
+    {# touchforms includes #}
+    <script language="javascript" type="text/javascript" src="{% static 'hqwebapp/js/lib/jquery-ui/jquery-ui-1.8.16.min.js' %}"></script>
+    <link rel="stylesheet" href="{% static 'hqwebapp/js/lib/jquery-ui/jquery-ui-redmond-1.8.16.css' %}">
+    
+    <script language="javascript" type="text/javascript" src="{% static 'formplayer/script/shortcut.js' %}"></script>
+    <script language="javascript" type="text/javascript" src="{% static 'formplayer/script/xforgasm.js' %}?version={{app_version}}"></script>
+    <script language="javascript" type="text/javascript" src="{% static 'formplayer/script/formnav-all.js' %}?version={{app_version}}"></script>
+    <script language="javascript" type="text/javascript" src="{% static 'formplayer/script/entrycontrols_full.js' %}?version={{app_version}}"></script>
+    <script language="javascript" type="text/javascript" src="{% static 'formplayer/script/fullform-ui.js' %}?version={{app_version}}"></script>
+
+    <link rel="stylesheet" href="{% static 'formplayer/style/webforms.css' %}">
+    <link rel="stylesheet" href="{% static 'cloudcare/css/cloudcare.css' %}">
+
+{% endblock %}
+
+{% block js-inline %} {{ block.super }}
+<script>
+
+    GMAPS_API_KEY = '{{ maps_api_key|safe }}'; // maps api is loaded on-demand
+
+    $(function () {
+        var urlRoot = "{% url cloudcare_main domain '' %}";
+        var appUrlRoot = "{% url cloudcare_get_apps domain %}";
+        var caseUrlRoot = "{% url cloudcare_get_cases domain %}";
+        var submitUrlRoot = "{% url receiver_post domain %}";
+        var language = "{{ language }}";
+        var apps = {{ apps|safe }};
+        var initialApp = {{ app|JSON }};
+        var initialCase = {{ case|JSON }};
+        window.mainView = new cloudCare.AppMainView({
+			apps: apps,
+			language: language,
+			urlRoot: urlRoot,
+			appUrlRoot: appUrlRoot,
+			caseUrlRoot: caseUrlRoot,
+			submitUrlRoot: submitUrlRoot,
+			initialApp: initialApp,
+			initialCase: initialCase
+        });
+        // TODO: when we figure out what to do about get params, use this
+        Backbone.history.start({pushState: true, root: urlRoot});
+
+        set_pin(30, $('#cloudcare-main'), $('#loading'));
+    }());
+
+</script>
+{% endblock %}
+
+{% block sidebar %}
+    <section id="app-main" >
+        <nav id="app-list" ></nav>
+        <nav id="module-list" ></nav>
+        <nav id="form-list" ></nav>
+    </section>
+{% endblock %}
+
+{% block main_column %}
+	{% if preview %}
+        <div class="alert fade in alert-block alert-full alert-info">
+            <a class="close" data-dismiss="alert" href="#">&times;</a>
+            CloudCare submits REAL DATA that will create cases and show up in reports!
+        </div>
+    {% endif %}
+    {% if request.couch_user.is_web_user %}
+	    <div class="alert fade in alert-block alert-full alert-info">
+	        <a class="close" data-dismiss="alert" href="#">&times;</a>
+	        You are using CloudCare as a {% hq_web_user %}! Any data you submit might confuse your reports, and not everything
+	        may work properly. For the best experience please logout and login as a {% commcare_user %}.
+	    </div>
+	{% endif %}
+	<div id="cloudcare-main" style="position:relative;">
+	    {% if not apps_raw %}
+	    <h3>No Apps found</h3>
+	    <p>Sorry, it doesn't look like you have any CloudCare apps available. To learn more about how to
+	    enable and use CloudCare, please check out our <a href="https://confluence.dimagi.com/pages/viewpage.action?pageId=10224014" target="_blank">wiki documentation</a>.
+	    </p>
+	    {% endif %}
+	    <section id="cloudcare-notifications"></section>
+        <div id="loading" class="well" style="display: none; position: fixed; right: 0; margin-right: 40px; top: 40px;">
+            <img width="32" height="32" alt="Loading" src="{% static 'formplayer/img/loading_transparent.gif' %}" />
+            {% trans "Loading" %}...
+        </div>
+        <section id="cases">
+        </section>
+        <section id="webforms" style="min-width: 800px;"></section>
+    </div>
+{% endblock %}

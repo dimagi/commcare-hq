@@ -1,0 +1,102 @@
+from collections import defaultdict
+import itertools
+from casexml.apps.case.signals import cases_received
+from corehq.apps.commtrack import const
+from corehq.apps.commtrack.const import is_commtrack_form, RequisitionStatus
+from corehq.apps.commtrack.models import RequisitionCase, SupplyPointProductCase, CommtrackConfig
+from corehq.apps.locations.models import Location
+from corehq.apps.sms.api import send_sms_to_verified_number
+from dimagi.utils import create_unique_filter
+
+
+def attach_locations(xform, cases):
+    """
+    Given a received form and cases, update the location of that form to the location
+    of its cases (if they have one).
+    """
+
+    # todo: this won't change locations if you are trying to do that via XML.
+    # this is mainly just a performance thing so you don't have to do extra lookups
+    # every time you touch a case
+
+    if cases:
+        found_loc = None
+        for case in cases:
+            loc = None
+            if not case.location_:
+                if case.type == const.SUPPLY_POINT_CASE_TYPE:
+                    loc_id = getattr(case, 'location_id', None)
+                    if loc_id:
+                        loc = Location.get(loc_id)
+                        case.bind_to_location(loc)
+
+                elif case.type == const.SUPPLY_POINT_PRODUCT_CASE_TYPE:
+                    wrapped_case = SupplyPointProductCase.wrap(case._doc)
+                    sp = wrapped_case.get_supply_point_case()
+                    if sp and sp.location_:
+                        loc = sp.location_
+                        case.location_ = loc
+
+                elif case.type == const.REQUISITION_CASE_TYPE:
+                    req = RequisitionCase.wrap(case._doc)
+                    prod = req.get_product_case()
+                    if prod and prod.location_ and prod.location_ != case.location_:
+                        case.location_ = prod.location_
+                        case.save()
+
+            if loc and found_loc and loc != found_loc:
+                raise Exception(
+                    'Submitted a commtrack case with multiple locations in a single form. '
+                    'This is currently not allowed.'
+                )
+            found_loc = loc
+
+        case = cases[0]
+        if case.location_ is not None:
+            # should probably store this in computed_
+            xform.location_ = list(case.location_)
+
+
+def send_notifications(xform, cases):
+    # TODO: fix circular imports
+    from corehq.apps.commtrack.requisitions import get_notification_recipients
+    from corehq.apps.commtrack.requisitions import get_notification_message
+
+    # for now the only notifications are for requisitions that were touched.
+    # todo: if we wanted to include previously requested items we could do so
+    # by either polling for other open requisitions here, or by ensuring that
+    # they get touched by the commtrack case processing.
+    requisitions = [RequisitionCase.wrap(case._doc) for case in cases if case.type == const.REQUISITION_CASE_TYPE]
+
+    if requisitions:
+        by_status = defaultdict(lambda: [])
+        for r in requisitions:
+            by_status[r.requisition_status].append(r)
+
+        # since each state transition might trigger a different person to be notified
+        req_config = CommtrackConfig.for_domain(requisitions[0].domain).requisition_config
+        for s, reqs in by_status.items():
+            next_action = req_config.get_next_action(RequisitionStatus.to_action_type(s))
+
+            if next_action:
+                # we could make this even more customizable by specifying it per requisition
+                # but that would get even messier in terms of constructing the messages
+                # so we'll just compose one message per status type now, and then send
+                # it to everyone who should be notified.
+                to_notify = filter(
+                    create_unique_filter(lambda u: u._id),
+                    itertools.chain(*[get_notification_recipients(next_action, r) for r in reqs])
+                )
+
+                msg = get_notification_message(next_action, reqs)
+                for u in to_notify:
+                    phone = u.get_verified_number()
+                    if phone:
+                        send_sms_to_verified_number(phone, msg)
+
+def commtrack_processing(sender, xform, cases, **kwargs):
+    if is_commtrack_form(xform):
+        attach_locations(xform, cases)
+        send_notifications(xform, cases)
+
+cases_received.connect(commtrack_processing)

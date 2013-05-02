@@ -1,0 +1,92 @@
+{% extends "reminders/reminders_base.html" %}
+{% load i18n %}
+{% load hq_shared_tags %}
+
+{% block head %}{{ block.super }}
+    {% include "imports/datatables.html" %}
+    <script type="text/javascript" src="{% static 'reports/javascripts/config.dataTables.bootstrap.js' %}"></script>
+{% endblock %}
+
+{% block js-inline %}{{ block.super }}
+    <script type="text/javascript">
+        $(function(){
+            options = {
+                "aoColumns" : [
+                    {"bSortable" : false},null,null,null,null,null
+                ]
+            };
+            var table = new HQReportDataTables(options);
+            table.render();
+            
+            $("#id_select_all").click(function(){
+                $(".selected_reminders").prop("checked", true);
+            });
+            
+            $("#id_select_none").click(function(){
+                $(".selected_reminders").prop("checked", false);
+            });
+            
+            var help_text = {
+                "{% trans 'Reinstate Selected Reminders' %}": 
+                "{% trans 'Only reminders selected on the current page will be processed. When a reminder is reinstated, the system will fast-forward it to its next scheduled time, without sending any of the missed reminders.' %}"
+            };
+            
+            $('.help_popover').popover({
+                placement: 'top',
+                trigger: 'hover',
+                title: function () {
+                    return $(this).attr('data-help-key');
+                },
+                content: function () {
+                    return help_text[$(this).attr('data-help-key')];
+                }
+            });
+        });
+    </script>
+{% endblock %}
+
+{% block subsection-title %}
+<li class="active">
+    <a href="#">{% trans 'Reminders in Error' %}</a>
+</li>
+{% endblock %}
+
+{% block main_column %}
+    {% include "hqwebapp/partials/time-notice.html" %}
+    <form action="" method="post">
+        <table id="reminder_error_table" class="table table-striped datatable">
+            <thead>
+                <tr>
+                    <th>{% trans 'Select' %}: <span style="cursor: pointer;" id="id_select_all">{% trans 'All' %}</span> | <span style="cursor: pointer;" id="id_select_none">{% trans 'None' %}</span></th>
+                    <th>{% trans 'Reminder Timestamp' %}</th>
+                    <th>{% trans 'Reminder Definition' %}</th>
+                    <th>{% trans 'Recipient' %}</th>
+                    <th>{% trans 'Case' %}</th>
+                    <th>{% trans 'Error' %}</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for info in reminders %}
+                    <tr>
+                        <td style="text-align: center;"><input class="selected_reminders" type="checkbox" name="selected_reminders" value="{{ info.reminder_id }}" /></td>
+                        <td>{{ info.next_fire }}</td>
+                        <td><a href="{% url edit_complex domain info.handler_id %}">{{ info.handler_name }}</a></td>
+                        <td>{{ info.recipient_name }}</td>
+                        <td>
+                            {% if info.case_id %}
+                            <a href="{% url case_details domain info.case_id %}">{{ info.case_name }}</a>
+                            {% else %}
+                            -
+                            {% endif %}
+                        </td>
+                        <td>{% trans info.error_msg %}</td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        <div style="padding-top:25px;">
+            <input type="submit" class="btn btn-primary" value="{% trans 'Reinstate Selected Reminders' %}" />
+            <span class="help_popover" data-help-key="{% trans 'Reinstate Selected Reminders' %}"><i class="icon icon-question-sign"></i></span>
+        </div>
+    </form>
+{% endblock %}
