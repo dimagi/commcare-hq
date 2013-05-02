@@ -1,0 +1,12 @@
+{% extends "hqwebapp/two_column.html" %}
+{% load i18n %}
+
+{% block title %}{% trans "CloudCare" %}{% endblock %}
+
+{% block page-title %}
+    <ul class="breadcrumb">
+        <li>
+            <a href="{% url cloudcare_default domain %}"><strong>CloudCare</strong></a><sup>beta</sup>
+        </li>
+    </ul>
+{% endblock %}

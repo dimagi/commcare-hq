@@ -1,0 +1,96 @@
+- id: name
+  name: Name
+  description: ""
+  default: ""
+  type: hq
+  widget: text
+
+- id: application_version
+  name: "App Version"
+  description: ""
+  values: ["1.0", "2.0"]
+  value_names: ["1.x", "2.x"]
+  default: "2.0"
+  disabled: true
+  disabled_txt: "We suggest moving to CommCare 2.0 and above, unless your project is using referrals"
+
+- id: build_spec
+  name: "CommCare Version"
+  widget: build_spec
+  # this depends on builds are available, and on application_version
+  # values, value_names, and default are magically set elsewhere
+
+- id: platform
+  name: "Java Phone Platform"
+  values: ['nokia/s40', 'nokia/s60', 'winmo', 'generic']
+  value_names: ['Nokia S40 (default)', 'Nokia S60', 'WinMo', 'Generic']
+  default: 'nokia/s40'
+
+- id: text_input
+  name: "Text Input"
+  widget: text_input
+  values: ['roman', 'native', 'custom-keys']
+  value_names: [Roman, Native (International), Custom Keys]
+  default: roman
+
+# RemoteApp Only
+- id: profile_url
+  name: "Profile URL"
+  requires: "{$parent.doc_type}='RemoteApp'"
+  hide_if_not_enabled: true
+  widget: text
+
+- id: manage_urls
+  name: "Auto-manage URLs"
+  requires: "{$parent.doc_type}='RemoteApp'"
+  hide_if_not_enabled: true
+  widget: bool
+  default: false
+
+
+# Application only
+- id: case_sharing
+  name: "Case Sharing"
+  description: 'Allow mobile workers in the same case sharing group to share case lists.  Read more on the <a href="https://confluence.dimagi.com/display/commcarepublic/Case+Sharing"/>Help Site</a>'
+  description_format: html
+  widget: bool
+  default: false
+  requires: "{$parent.doc_type}='Application'"
+  hide_if_not_enabled: true
+  since: "2.0"
+
+- id: cloudcare_enabled
+  name: "CloudCare"
+  description: 'Allow mobile workers to access the web-based version of your application. Read more on the <a href="https://confluence.dimagi.com/display/commcarepublic/Using+CloudCare"/>Help Site</a>'
+  description_format: html
+  widget: bool
+  default: false
+  requires: "{$parent.doc_type}='Application'"
+  hide_if_not_enabled: true
+  since: "2.0"
+
+- id: use_custom_suite
+  name: "Custom Suite File"
+  widget: bool
+  default: false
+  requires: "{$parent.doc_type}='Application'"
+  disabled: true
+
+- id: custom_suite
+  name: "Custom Suite"
+  widget: textarea
+  requires: "{$parent.doc_type}='Application'"
+  disabled: true
+
+- id: admin_password
+  name: "Admin Password"
+  widget: password
+  requires: "{$parent.doc_type}='Application'"
+  hide_if_not_enabled: true
+
+- id: show_user_registration
+  name: "Allow User Registration from Phone"
+  widget: bool
+  default: false
+  requires: "{$parent.doc_type}='Application'"
+  hide_if_not_enabled: true

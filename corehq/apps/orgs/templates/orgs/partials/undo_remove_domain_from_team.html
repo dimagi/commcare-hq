@@ -1,0 +1,4 @@
+<form class="form-inline" action="{% url add_domain_to_team org team_id %}" method="POST">
+    <input type="hidden" name="project_name" value="{{ dom }}" />
+    You have removed the project {{ dom }} from this team. <a href="#" class="form-submit-link">Undo</a>
+</form>

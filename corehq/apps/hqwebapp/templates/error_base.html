@@ -1,0 +1,12 @@
+{% extends "hqwebapp/centered.html" %}
+{% block title %}Error {% endblock %}
+{% block centered-content %}
+<div id="bigfail"><p>:(</p></div>
+<p class="error">
+{% if error_message %}
+    {{ error_message|safe }}
+{% else %} 
+    500! Sorry, something went wrong, and we're very sorry about it. This problem has been logged and we're already hard at work figuring out the issue! 
+{% endif %}
+</p>
+{% endblock %}
