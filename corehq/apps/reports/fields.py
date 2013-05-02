@@ -9,11 +9,9 @@ from corehq.apps.reports import util
 from corehq.apps.groups.models import Group
 from corehq.apps.reports.filters.base import BaseReportFilter
 from corehq.apps.reports.models import HQUserType
-from corehq.apps.locations.models import Location
 from dimagi.utils.couch.database import get_db
 from dimagi.utils.dates import DateSpan
 from dimagi.utils.decorators.datespan import datespan_in_request
-from corehq.apps.locations.models import location_tree, root_locations
 from corehq.apps.locations.util import load_locs_json, location_hierarchy_config
 from django.conf import settings
 import json

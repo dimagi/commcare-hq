@@ -136,8 +136,8 @@
     {% if admin and members|length %}
     <div class="form-actions">
         <form name="delete_group" style="margin: 0;" action="{% url delete_team org.name %}" method="post">
-            <a href="#" data-toggle="modal" data-target="#edit-team-modal" class="btn btn-primary edit-team-btn">
-                <i class="icon icon-pencil"></i> {% trans "Change Team Name" %}
+            <a href="#" data-toggle="modal" data-target="#edit-team-modal" class="btn edit-team-btn">
+                <i class="icon icon-pencil"></i> {% trans "Edit Team Name" %}
             </a>
             <input type="hidden" name="team_id" value={{ team.get_id }} />
             <button class="btn btn-danger disable-on-submit" type="submit"><i class="icon icon-white icon-remove"></i> {% trans "Delete Team" %} "{{ team.name }}"</button>

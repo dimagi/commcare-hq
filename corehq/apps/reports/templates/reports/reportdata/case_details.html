@@ -2,6 +2,19 @@
 {% load case_tags %}
 {% load hq_shared_tags %}
 
+{% block title %}Case: {{ report.name }}{% endblock %}
+
+{% block head %} {{ block.super }}
+    {% include "imports/proptable.html" %}
+    {% include "imports/fancy-code.html" %}
+    
+    <style type="text/css">
+        .hq-generic-report {
+            padding: 10px;
+        }
+    </style>
+{% endblock %}
+
 {% block js-inline %}{{ block.super }}
     <script>
     $(document).ready(function() {
@@ -74,6 +87,6 @@
 
 {% block main_column %}
 <div class="hq-generic-report">
-    {% render_case case_id timezone %}
+    {% render_case case case_display_options %}
 </div>
 {% endblock %}

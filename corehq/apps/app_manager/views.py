@@ -5,6 +5,7 @@ from diff_match_patch import diff_match_patch
 from django.core.cache import cache
 from django.template.loader import render_to_string
 import hashlib
+from django.utils.translation import ugettext as _
 from corehq.apps.app_manager.const import APP_V1
 from corehq.apps.app_manager.success_message import SuccessMessage
 from corehq.apps.domain.models import Domain
@@ -1598,11 +1599,6 @@ def save_copy(req, domain, app_id):
         try:
             copy = app.save_copy(comment=comment, user_id=req.couch_user.get_id,
                                  previous_version=app.get_latest_saved())
-        except Exception as e:
-            copy = None
-            if settings.DEBUG:
-                raise
-            messages.error(req, "Unexpected error saving build:\n%s" % e)
         finally:
             # To make a RemoteApp always available for building
             if app.is_remote_app():
@@ -1689,7 +1685,16 @@ def download_index(req, domain, app_id, template="app_manager/download_index.htm
     if req.app.copy_of:
         files = [(path[len('files/'):], req.app.fetch_attachment(path)) for path in req.app._attachments if path.startswith('files/')]
     else:
-        files = sorted(req.app.create_all_files().items())
+        try:
+            files = sorted(req.app.create_all_files().items())
+        except Exception:
+            messages.error(req, _(
+                "We were unable to get your files "
+                "because your Application has errors. "
+                "Please click <strong>Make New Version</strong> "
+                "under <strong>Deploy</strong> "
+                "for feedback on how to fix these errors."
+            ), extra_tags='html')
     return render(req, template, {
         'app': req.app,
         'files': files,

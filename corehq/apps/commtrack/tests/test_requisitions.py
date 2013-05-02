@@ -1,4 +1,5 @@
 from corehq.apps.commtrack import const
+from corehq.apps.commtrack.models import SupplyPointProductCase
 from corehq.apps.commtrack.tests.util import CommTrackTest
 from datetime import datetime
 from corehq.apps.commtrack.stockreport import Requisition
@@ -33,7 +34,9 @@ class RequisitionTest(CommTrackTest):
             self.assertEqual(const.PARENT_CASE_REF, parent_ref.identifier)
             self.assertEqual(const.SUPPLY_POINT_PRODUCT_CASE_TYPE, parent_ref.referenced_type)
             self.assertEqual(spp._id, parent_ref.referenced_id)
-            self.assertEqual(req.get_product_case()._id, spp._id)
+            self.assertEqual(spp._id, req.get_product_case()._id)
+            self.assertTrue(isinstance(req.get_product_case(), SupplyPointProductCase))
+            self.assertEqual(self.sp._id, req.get_supply_point_case()._id)
             self.assertEqual(RequisitionStatus.REQUESTED, req.requisition_status)
             self.assertEqual('20', req.amount_requested)
             self.assertEqual(self.user._id, req.requested_by)
