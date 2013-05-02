@@ -1,0 +1,85 @@
+.property-table-container {
+    float: left;
+    margin-right: 18px;
+}
+
+/* partially lifted from bootstrap docs */
+.table-tab {
+    top: -26px;
+    left: 0px;
+    display: inline-block;
+    width: auto;
+    padding: 3px 7px;
+    font-size: 12px;
+    font-weight: bold;
+    background-color: #f5f5f5;
+    border: 1px solid #ddd;
+    border-radius: 4px 4px 0 0;
+}
+
+.case-properties-table ul {
+    list-style-type: none;
+}
+
+.case-properties-table ul li {
+    margin: 0;
+}
+
+.case-properties-table > dl {
+    word-wrap: break-word;
+    word-break: break-all;
+    float: left;
+    width: 210px;
+    margin-bottom: 0;
+    margin-top: 0;
+    font-size: 100%;
+}
+
+.case-properties-table > dl:not(:last-child) {
+    margin-right: 20px;
+}
+
+.case-properties-table > dl dt {
+    margin-bottom: 5px;
+}
+
+.case-properties-table > dl dd {
+    margin-bottom: 20px;
+}
+
+.well-loner {
+    background-color: inherit;
+    border: inherit;
+    box-shadow: inherit;
+    padding-top: 0;
+}
+
+.well-loner dl {
+    width: auto;
+    max-width: 300px;
+}
+
+.foo-table {
+    table-layout: fixed;
+    width: auto;
+    background-color: #f5f5f5;
+    border-radius: 4px;
+}
+
+.foo-table th, .foo-table td {
+/*    word-wrap: break-word;*/
+ /*   word-break: break-all;*/
+}
+
+.foo-table td {
+    border-left: 0;
+}
+
+.foo-table th:nth-child(odd) {
+    text-align: right;
+    width: 80px;
+}
+
+.foo-table td:nth-child(even) {
+    width: 160px;
+}

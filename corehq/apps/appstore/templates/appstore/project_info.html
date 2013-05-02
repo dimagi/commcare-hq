@@ -1,0 +1,371 @@
+{% extends "appstore/appstore_base.html" %}
+{% load hq_shared_tags %}
+{% load hqstyle_tags %}
+{% load i18n %}
+
+{% block js-inline %}{{ block.super }}
+    <script>
+        function update_import_into_button() {
+            var project = $('#project_select option:selected').text();
+            $("#import-into-button").text("Import into " + project);
+        }
+        $(function () {
+            update_import_into_button();
+
+            $("#import-app-button").click(function() {
+                $('#import-app').show(500);
+            });
+
+            $('#project_select').change(update_import_into_button);
+        });
+
+        // remove gray sidebar
+        $(function () {
+            $('.hq-double-col').removeClass('hq-double-col');
+        });
+
+        $(function() {
+            $('[data-target="#licenseAgreement"]').click(function() {
+                var new_form = $(this).attr('data-form');
+                $('#agree-button').attr('data-form', new_form);
+            });
+            $('#agree-button').click(function() {
+                var form = $("#" + $(this).attr('data-form'));
+                form.submit();
+                $(this).prop('disabled', true).addClass('disabled')
+            });
+
+            // show downloads info div
+            $('#downloads-btn').click(function() {
+                var open =  $(this).attr('data-open') == 'true';
+                if (open) {
+                    $('#downloads-info').hide(500);
+                    $(this).attr('data-open', 'false');
+                    $("#downloads-btn-append").text('>>');
+                } else {
+                    $('#downloads-info').show(500);
+                    $(this).attr('data-open', 'true');
+                    $("#downloads-btn-append").text('<<');
+                }
+            });
+        });
+    </script>
+{% endblock %}
+
+{% block sidebar %}
+{% endblock %}
+
+{% block breadcrumb %}
+<li>{{ project.title }}</li>
+{% endblock %}
+
+{% block main_column %}
+
+<div class="container-fluid">
+<div class="page-header row-fluid" style="border-bottom: 0; margin-bottom: 0;">
+    <div class="span2" style="text-align: center;">
+        {% if project.image_path %}
+            <img class="app-pic" src="{% url appstore_project_image project.name %}" />
+        {% else %}
+            <img class="app-pic opacity65" src="{% static 'hqstyle/img/commcarehq-icon-large.png' %}" />
+        {% endif %}
+    </div>
+    <div class="span7">
+        <h1>
+            {{ project.title }}
+            <small>{% trans "by" %}
+                {% ifequal project.publisher 'organization' %}
+{#                <a href="{% url orgs_public project.organization %}">#}
+                    {{ project.get_organization.title }}
+{#                </a>#}
+                {% else %}
+                    {{ project.author|default:published_by.full_name }}
+                {% endifequal %}
+            </small>
+        </h1>
+        <h4 style="color: #808080;">{{ project.short_description }}</h4>
+        <h3>
+            {% trans "Ratings" %}: <span class="badge badge-info">{{ num_ratings }}</span>
+        </h3>
+            {% if average_rating %}
+                {% include "appstore/partials/five_stars.html" with rating_name=average_rating rating=average_rating %}
+            {% endif %}
+    <br/>
+    </div>
+</div>
+</div>
+
+<div class="row">
+<div class="span10">
+<dl class="dl-horizontal">
+    <dt>{% trans 'Description' %}</dt>
+    <dd>
+        {% if project.description %}
+            {{ project.description|linebreaks }}
+        {% else %}
+            <h6>{% trans "None" %}</h6>
+        {% endif %}
+    </dd>
+    <dt>{% trans 'Category' %}</dt>
+    <dd>
+        {% if project.project_type %}
+            {{ project.project_type }}
+        {% else %}
+            <h6>{% trans "None" %}</h6>
+        {% endif %}
+    </dd>
+    {% if request.couch_user.is_superuser %}
+        <dt> {% trans 'Published by' %}</dt>
+        <dd>
+            {% if published_by %}
+                {{ published_by.username }}
+            {% else %}
+                No Data
+            {% endif %}
+        </dd>
+    {% endif %}
+    <dt> {% trans 'Published on' %}</dt>
+    <dd>
+        {{ project.snapshot_time|date:"N j, Y" }}
+    </dd>
+    <dt>{% trans 'Languages' %}</dt>
+    <dd>
+        {% if project.languages %}
+            {{ project.readable_languages }}
+        {% else %}
+            {% trans "None" %}
+        {% endif %}
+    </dd>
+    <dt>{% trans 'License' %}</dt>
+    <dd>{{ project.get_license_display }}</dd>
+    <dt>{% trans 'Downloads' %}</dt>
+    <dd>
+        <!-- This version: -->
+        {% if project.copies and request.couch_user.is_superuser %}
+            <button class="btn btn-mini btn-info" data-open='false' id="downloads-btn">
+                {{ project.downloads }} {% trans "Downloads" %} <span id="downloads-btn-append">>></span>
+            </button>
+            <div style="margin-top: 1em;" class="well well-small hide" id="downloads-info">
+                <div class="alert">
+                    <button type="button" class="close" data-dismiss="alert">&times;</button>
+                    <strong>Note:</strong> <p>This a beta feature displayed to super users only</p>
+                    <p>Currently this list only shows new projects that were copied directly from this publication.
+                    It does not yet show projects who downloaded apps from this publication.</p>
+                    <p>We also don't have 'Downloaded By' data for many existing domains.</p>
+                </div>
+
+                {% if copies %}
+                <table class="table">
+                    <tr><th style="border-top: 0;">{% trans "Project" %}</th>
+                        <th style="border-top: 0;">{% trans "Downloaded by" %}</th></tr>
+                    {% for copy in copies %}
+                        <tr>
+                            <td>{{ copy.display_name }}</td>
+                            <td>{{ copy.creating_user|default:"No data" }}</td>
+                        </tr>
+                    {% endfor %}
+                </table>
+                {% else %}
+                    {% trans "No Downloads Information" %}
+                {% endif %}
+            </div>
+        {% else %}
+            {{ project.downloads }}
+        {% endif %}
+{#        <!-- All versions: -->{{ project.downloads }}#}
+    </dd>
+    {% if project.multimedia_included and project.has_media %}
+        <dd>
+            <a class="btn" style="margin-top: .4em" href="{% url media_files project %}">{% trans "Browse Multimedia" %}</a>
+        </dd>
+    {% endif %}
+</dl>
+<hr />
+    <div id="application-accordion">
+        {% for app in applications %}
+            <div id="application-{{ app.id }}">
+                <dl class="dl-horizontal">
+                    <dd>
+                        <h4 style="display: inline-block;">{{ app.name }}</h4>
+                        <a href="{% url emulator project app.id %}?exchange=true" style="margin-left: 1.2em" target="_blank" class="btn btn-primary">
+                            {% trans "Preview this app" %}
+                        </a>
+                   </dd>
+                    <dt>{% trans 'Media' %}</dt>
+                    <dd>
+                        {{ app.has_media|yesno:"Yes,No" }}
+                    </dd>
+                    <dt>CommCare</dt>
+                    <dd>
+                        {% trans "Version" %} {{ app.application_version }}
+                    </dd>
+                    {% if app.user_type %}
+                        <dt>{% trans 'User type' %}</dt>
+                        <dd>{{ app.user_type }}</dd>
+                    {% endif %}
+                    {% if app.phone_model %}
+                        <dt>{% trans 'Phone model' %}</dt>
+                        <dd>{{ app.phone_model }}</dd>
+                    {% endif %}
+                    {% if app.description %}
+                        <dt>{% trans 'Description' %}</dt>
+                        <dd>
+                            {{ app.description|linebreaks }}
+                        </dd>
+                    {% endif %}
+                    {% if app.attribution_notes %}
+                        <dt>{% trans 'Attribution notes' %}</dt>
+                        <dd>{{ app.attribution_notes }}</dd>
+                    {% endif %}
+                    <dd><a class="btn" style="margin: .4em 0" href="{% url exchange_app_summary project app.id %}">{% trans "Application Summary" %}</a></dd>
+                </dl>
+            </div>
+        {% endfor %}
+    </div>
+    <div>
+        <form id="new-project-form" method="post" class="form-inline" action="{% url domain_copy_snapshot project %}">
+            <fieldset>
+                <legend>{% trans "Download" %}</legend>
+                {% if request.couch_user %}
+                    {% if request.couch_user.is_commcare_user %}
+                        {% trans "You are currently logged in as a CloudCare user. Please sign out and login as a normal user to download apps" %}
+                    {% else %}
+                    <div{% if error_message %} class="error"{% endif %}>
+                        <input type="text" class="span3" id="new_project_name"
+                               name="new_project_name" value="{{ new_project_name }}" placeholder="{% trans 'New project name' %}">
+                        {% if error_message %}
+                            <span class="help-inline">{{ error_message }}</span>
+                        {% endif %}
+                        <a class="btn btn-primary" data-form="new-project-form" data-toggle="modal" data-target="#licenseAgreement" href="#licenseAgreement">{% trans "Download As New Project" %}</a>
+                        {% if display_import %}
+                            {% trans "or" %}
+                            <a class="btn" id="import-app-button">{% trans "Download to Existing Project" %}</a>
+                        {% endif %}
+                    </div>
+                    {% endif %}
+                {% else %}
+                    {% trans "Please" %} <a href="{% url login %}">{% trans "sign in" %}</a> {% trans "or" %} <a href="{% url register_user %}">{% trans "register" %}</a> {% trans "to download an app from Exchange" %}
+                {% endif %}
+            </fieldset>
+        </form>
+        <form id="import-form" method="post" class="form-inline" action="{% url import_app_from_snapshot project %}">
+            <div class="hide" id="import-app">
+                <select name="project" id="project_select">
+                    {% for p in request.couch_user.projects %}
+                        <option value="{{ p.name }}">{{ p.display_name }}</option>
+                    {% endfor %}
+                </select>
+                <a class="btn btn-primary" id="import-into-button" data-form="import-form" data-toggle="modal" data-target="#licenseAgreement" href="#licenseAgreement">Import into</a>
+            </div>
+        </form>
+
+    </div>
+
+    <hr/>
+    <div>
+        <h3>{% trans "Reviews of" %} {{ project.title }}</h3>
+        {% if project.copied_from.name not in request.couch_user.get_domains and project.published %}
+            <div>
+                <a href="#add_review_modal" data-toggle="modal" class="btn btn-inverse">{% trans "Write a Review" %}</a>
+            </div>
+        {% endif %}
+    </div>
+    {% for review in reviews %}
+        <hr/>
+        <div class="row">
+            <div class="span1">
+                <h4 style="padding-left:25px">{{ forloop.counter }})</h4>
+            </div>
+            <div class="span6">
+                <div>
+                    {% include "appstore/partials/five_stars.html" with rating_name=review.get_id rating=review.rating class="pi-stars" %}
+                    <h4 style="display: inline-block; vertical-align: bottom;">{{ review.title }}</h4>
+                </div>
+                <div>{{ review.info }}</div>
+                <p><small>{{ review.user }} {% trans "on" %} {{ review.date_published }}</small></p>
+            </div>
+        </div>
+    {% endfor %}
+</div>
+</div>
+{% endblock %}
+
+
+{% block modals %}{{ block.super }}
+{% if project.copied_from.name not in request.couch_user.get_domains %}
+<div id="add_review_modal" class="modal hide fade">
+    <div class="modal-header">
+        <a class="close" data-dismiss="modal">&times;</a>
+        <h3>{% trans 'Write a review for ' %}{{ project.title }}</h3>
+    </div>
+    <form class="form-horizontal" method="post" action="{% url project_info project %}">
+        <div class="modal-body">
+            <fieldset>
+                <legend>{% trans 'Review This App' %}</legend>
+                {% for global_error in form.non_field_errors %}
+                <div class="alert alert-error">
+                    {{ global_error }}
+                </div>
+                {% endfor %}
+                <div class="control-group">
+                    <label class="control-label">{% trans 'Rating' %}</label>
+                    <div class="controls">
+                        <fieldset class="rating" title="Rating">
+                            <input type="radio" id="star5" name="rating" value="5" /><label for="star5">5 stars</label>
+                            <input type="radio" id="star4" name="rating" value="4" /><label for="star4">4 stars</label>
+                            <input type="radio" id="star3" name="rating" value="3" /><label for="star3">3 stars</label>
+                            <input type="radio" id="star2" name="rating" value="2" /><label for="star2">2 stars</label>
+                            <input type="radio" id="star1" name="rating" value="1" checked=True /><label for="star1">1 star</label>
+                        </fieldset>
+                    </div>
+                </div>
+                {% for field in form.visible_fields %}
+                <div class="control-group{% if field.errors %} error{% endif %}">
+                    <label class="control-label" for="{{ field.id }}">{{ field.label }}</label>
+                    <div class="controls">
+                        {{ field }}
+                        <span class="help-inline"></span>
+                        {% for error in field.errors %}
+                        <span class="help-inline">{{ error }}</span>
+                        {% endfor %}
+                        {% if field.help_text %}
+                        <p class="help-block">
+                            {{ field.help_text }}
+                        </p>
+                        {% endif %}
+                    </div>
+                </div>
+                {% endfor %}
+            </fieldset>
+            <input type="hidden" name="versioned" value="{{ versioned }}">
+        </div>
+        <div class="modal-footer">
+            <a href="#" data-dismiss="modal" class="btn">{% trans "Cancel" %}</a>
+            <button type="submit" class="btn btn-primary disable-on-submit">{% trans "Post" %}</button>
+        </div>
+    </form>
+</div>
+{% endif %}
+
+<div class="modal hide fade" id="licenseAgreement">
+    <div class="modal-header">
+        <a class="close" data-dismiss="modal">&times;</a>
+        <h4>{% trans "You're about to download " %}{{ project.title }}</h4>
+    </div>
+    <div class="modal-body">
+        {{ project.title }} {% trans 'is licensed under ' %}<a target="_blank" href="http://creativecommons.org/licenses/#licenses">{{ project.get_license_display }}</a>
+        {% if project.multimedia_included and project.has_media %}
+            <br /><br />
+            {% trans "Please view the" %} <a target="_blank" href="{% url media_files project %}">{% trans "licenses for this app's media files" %}</a>
+        {% endif %}
+    </div>
+    <div class="modal-footer">
+        <div style="text-align: left; line-height: 2em;">
+            {% trans "I have read and agree to the terms of this license." %}
+        </div>
+        <a id="agree-button" data-dismiss="modal" data-form="" href="#" class="btn btn-primary">{% trans "Agree" %}</a>
+        <a href="#" data-dismiss="modal" class="btn">{% trans "Disagree" %}</a>
+    </div>
+</div>
+{% endblock %}
+
