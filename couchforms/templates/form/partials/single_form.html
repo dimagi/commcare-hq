@@ -48,10 +48,19 @@ requires imports/proptable.html to be included in the main template
         </a>
     </li>
     <li>
-        <a href="#form-meta-data" data-toggle="tab">
+        <a href="#form-metadata" data-toggle="tab">
             {% trans "Form Metadata" %}
         </a>
     </li>
+
+    {% if instance.attachments %}
+    <li>
+        <a href="#form-attachments" data-toggle="tab">
+            {% trans "Attachments" %}
+        </a>
+    </li>
+    {% endif %}
+    
     <li>
         <a href="#form-xml" data-toggle="tab">
             {% trans "Raw XML" %}
@@ -128,9 +137,21 @@ requires imports/proptable.html to be included in the main template
     </div>
     {% endif %}
     
-    <div class="tab-pane" id="form-meta-data">
+    <div class="tab-pane" id="form-metadata">
         {% render_tables form_meta_data form_table_options %}
     </div>
+
+    {% if instance.attachments %}
+    <div class="tab-pane" id="form-attachments">
+        <ul>
+            {% for key, val in instance.attachments.items %}
+            <li>
+                <a href="{% url download_attachment domain instance.get_id key %}">{{ key }}</a>
+            </li>
+            {% endfor %}
+        </ul>
+    </div>
+    {% endif %}
 
     <div class="tab-pane" id="form-xml">
         <p>
