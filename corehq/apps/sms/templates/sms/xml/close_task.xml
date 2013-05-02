@@ -1,0 +1,3 @@
+<case xmlns="http://commcarehq.org/case/transaction/v2" case_id="{{ subcase_guid }}" user_id="{{ user_id }}" date_modified="{{ date_modified }}">
+    <close />
+</case>

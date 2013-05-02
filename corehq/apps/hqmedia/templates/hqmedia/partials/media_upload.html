@@ -1,0 +1,33 @@
+{% load i18n %}
+<div id="hqmedia-upload-{{ media_type }}" class="hide">
+    <div class="control-group" style="margin-bottom: 0;">
+        <label class="hqm-no_file_selected control-label">
+            {% blocktrans %}Select {{ media_type }}{% endblocktrans %}
+        </label>
+        <div class="hqm-select-container controls clearfix">
+            <div class="hqm-overlay" style="width: 103px; height: 35px;"></div>
+        </div>
+        <div class="control-label hqm-file_selected_only hide" style="margin-bottom: 1em;">{% blocktrans %}Selected {{ media_type }}{% endblocktrans %}</div>
+        <div class="controls hqm-upload-list"></div>
+    </div>
+    <div class="hide control-group hqm-file_selected_only hqm-upload-form" style="margin-bottom: 0;">
+        {% include 'hqmedia/partials/hqm_upload_form.html' %}
+        <div class="controls hqm-status"></div>
+    </div>
+    <div class="control-group">
+        <div class="controls">
+            <div class="hide hqm-upload-hidden">
+                <label for="share{{ media_type }}"><input id="share{{ media_type }}" class="hqm-share-media" type="checkbox" checked="checked" />
+                    {% trans 'Share this media with other CommCareHQ users' %}</label>
+                <input id="{{ media_type|lower }}Tags" class="hqm-media-tags" type="text"
+                       placeholder="{% blocktrans with media_type|lower as mt %}Enter space-separated tags for the {{ mt }}.{% endblocktrans %}" />
+            {% blocktrans with media_type|lower as mt %}
+                By clicking "Upload" you are confirming that you have a right to use this {{ mt }},
+                and if you chose to share the {{ mt }}, you have the right to share it.
+            {% endblocktrans %}
+            </div>
+            <a class="hqm-upload-button hqm-upload-hidden btn btn-primary hide" onclick="return false;">{% blocktrans %}Upload {{ media_type }}{% endblocktrans %}</a>
+            <a class="hqm-cancel btn btn-warning hide" href="#"><i class="icon icon-white icon-remove"></i> {% trans 'Cancel Upload' %}</a>
+        </div>
+    </div>
+</div>

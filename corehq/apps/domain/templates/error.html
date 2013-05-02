@@ -1,0 +1,31 @@
+{% extends login_template %}
+
+{#################################################################################################################}
+
+{% block title %}
+error{% endblock title %}
+
+{#################################################################################################################}
+
+{% block login-content %}
+
+<h1>Oops!</h1>
+<p>{{error_msg}}</p>
+
+{% if error_details %}
+<h3>Error details:</h3>
+{% for err in error_details %}
+<p>{{err}}</p>
+{% endfor%}
+{% endif %}
+
+{% if back %}
+<a href="{{back}}">Back</a>
+{% endif %}
+
+{% if show_homepage_link %}
+<a href="{% url login %}">Login</a>
+{% endif %}
+{% endblock %}
+
+{#################################################################################################################}    

@@ -1,0 +1,82 @@
+{% extends "registration/base.html" %}
+{% load i18n %}
+
+{% block title %}New Project Space{% endblock title %}
+
+{% block step-title %}
+    {% if is_new %}
+        {% blocktrans %}Welcome to CommCare HQ! <small>It's time to create your first project.</small>{% endblocktrans %}
+    {% else %}
+        {% blocktrans %}Create a New Project Space{% endblocktrans %}
+    {% endif %}
+{% endblock %}
+
+{% block breadcrumbs %}
+    {% if is_new %}
+        <ul class="breadcrumb breadcrumb-steps">
+            <li class="past">
+                {% blocktrans %}Account Created for <strong>{{ request.user.first_name }}</strong>{% endblocktrans %}
+                <span class="divider">></span>
+            </li>
+            <li class="active">
+                {% blocktrans %}Request a Project Space{% endblocktrans %}
+                <span class="divider">></span>
+            </li>
+            <li>
+                {% blocktrans %}Confirm Account{% endblocktrans %}
+            </li>
+        </ul>
+    {% endif %}
+{% endblock %}
+
+{% block registration-content %}
+<div class="span8">
+    {% if is_new %}
+    <p>Congratulations, {{ request.user.first_name }}&mdash;you've successfully joined CommCare HQ.</p>
+    <p>Your CommCare HQ Project will contain all form submissions from your CommCare mobile applications, as well as tools that help you easily create, deploy, and monitor your applications and workers.</p>
+    <p>Before you can view any of your own data from CommCare, you will need to request a project space.</p>
+    {% endif %}
+    <form class="form-horizontal" method="post" action="{{ request.get_full_path }}">
+        <fieldset>
+            <legend>{% if is_new %}Request{% else %}Create{% endif %} a Project Space</legend>
+            {% for global_error in form.non_field_errors %}
+                <div class="alert alert-error">
+                    {{ global_error }}
+                </div>
+            {% endfor %}
+            {% for field in form.visible_fields %}
+                <div class="control-group{% if field.errors %} error{% endif %}">
+                    <label class="control-label" for="{{ field.id }}">{{ field.label }}</label>
+                    <div class="controls">
+                    {{ field }}
+                        <span class="help-inline"></span>
+                        {% for error in field.errors %}
+                            <span class="help-inline">{{ error }}</span>
+                        {% endfor %}
+                        {% if field.help_text %}
+                            <p class="help-block">
+                                {{ field.help_text }}
+                            </p>
+                        {% endif %}
+                    </div>
+                </div>
+            {% endfor %}
+
+            {% for hidden in form.hidden_fields %}
+                {{ hidden }}
+            {% endfor %}
+        </fieldset>
+        <div class="form-actions"{% if not is_new %} style="margin-top:24px; padding-top:18px;"{% endif %}><button type="submit" class="btn btn-primary btn-large disable-on-submit">{% if is_new %}Request{% else %}Create{% endif %} Project</button></div>
+    </form>
+</div>
+<div class="span4">
+    <aside class="well">
+        <h3><a href="{% url appstore %}">{% trans 'Explore Example Projects' %}</a></h3>
+        <p>{% blocktrans %}In need of ideas or just want to explore?{% endblocktrans %}</p>
+        <p>{% trans "Check out" %} <strong><a href="{% url appstore %}">{% trans "CommCare Exchange" %}</a></strong> {% trans "for examples of apps being used today." %}</p>
+    </aside>
+    <aside class="well">
+        {% blocktrans %}For detailed documentation, please visit the <a href="http://wiki.commcarehq.org/display/commcarepublic/Home">CommCare Help Site</a>.{% endblocktrans %}
+    </aside>
+</div>
+{% endblock %}

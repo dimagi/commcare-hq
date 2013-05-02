@@ -1,0 +1,64 @@
+{% extends "reminders/reminders_base.html" %}
+{% load hq_shared_tags %}
+
+{% block head %}{{ block.super }}
+
+<style type="text/css">
+    #reminder_list_table {
+        width: auto;
+        margin-left: 0px;
+        min-width: 50%;
+    }
+</style>
+
+{% endblock %}
+
+{% block subsection-title %}
+<li class="active">
+    <a href="#">Reminder Definitions</a>
+</li>
+{% endblock %}
+
+{% block main_column %}
+    <table id="reminder_list_table" class="table table-striped datatable table-bordered">
+        <thead>
+            <tr>
+                <th>Name</th>
+                <th>Trigger Type</th>
+                <th>Case Type</th>
+                <th></th>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for handler in reminder_handlers %}
+                <tr>
+                    <td>{{ handler.nickname }}</td>
+                    <td>{% if handler.start_condition_type == "CASE_CRITERIA" %}Case Criteria{% else %}{% if handler.start_condition_type == "ON_DATETIME" %}Specific Date/Time{% else %}{{ handler.start_condition_type }}{% endif %}{% endif %}</td>
+                    <td>{{ handler.case_type|default:"n/a" }}</td>
+                    <td><a href="{% url edit_complex domain handler.get_id %}"><span class="btn btn-primary">Edit</span></a></td>
+                    <td>
+                        <a class="btn btn-danger" data-toggle="modal" href="#delete_{{ handler.get_id }}"><i class="icon icon-white icon-remove"></i> Delete</a>
+                        <div id="delete_{{ handler.get_id }}" class="modal hide fade">
+                            <div class="modal-header">
+                                <a class="close" data-dismiss="modal">&times;</a>
+                                <h3>Delete Reminder Definition?</h3>
+                            </div>
+                            <form class="form form-horizontal" name="delete_handler" action="{% url delete_reminder domain handler.get_id %}" method="post">
+                                <div class="modal-body">
+                                    <p>Are you sure you want to delete reminder definition "{{ handler.nickname }}"?</p>
+                                </div>
+                                <div class="modal-footer">
+                                    <a href="#" data-dismiss="modal" class="btn">Cancel</a>
+                                    <button type="submit" class="btn btn-danger"><i class="icon icon-white icon-remove"></i> Delete</button>
+                                </div>
+                            </form>
+                        </div>
+                    </td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    <br />
+    <a href="{% url add_complex_reminder_schedule domain %}"><span class="btn btn-success"><i class="icon icon-white icon-plus"></i> New Reminder Definition</span></a>
+{% endblock %}

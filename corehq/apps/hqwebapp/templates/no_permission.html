@@ -1,0 +1,10 @@
+{% extends "error_base.html" %}
+{% block title %}Don't have permission{% endblock %}
+{% block centered-content %}
+    <div class="page-header">
+        <h1>You don't have the permission to access this page
+        </h1>
+    </div>
+    <p>If you believe this is an error, please
+        <a href="{% url no_permissions %}?switch=true{% if next %}&next={{ next }}{% endif %}">relogin and try again.</a></p>
+{% endblock %}

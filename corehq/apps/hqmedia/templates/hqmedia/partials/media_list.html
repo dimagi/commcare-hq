@@ -1,0 +1,45 @@
+{% load i18n %}
+<div class="accordion-group">
+    <div class="accordion-heading">
+        <h3><a class="accordion-toggle collapsed" data-toggle="collapse" href="#{{ css_id }}"><i class="icon icon-double-angle-right"></i>
+            {{ media_title }}
+            <span style="display: block">
+            {% if item_info.matched > 0 %}<span class="label label-success">{{ item_info.matched }} {% trans 'matched' %}</span>{% endif %}
+            {% if item_info.missing > 0 %}<span class="label label-warning">{{ item_info.missing }} {% trans 'missing' %}</span>{% endif %}
+            {% if item_info.errors > 0 %}<span class="label label-important">{{ item_info.errors }} {% trans 'with errors' %}</span>{% endif %}
+            </span>
+        </a></h3>
+    </div>
+    <div id="{{ css_id }}" class="accordion-body collapse">
+        <div class="accordion-inner">
+            <table class="table table-striped table-bordered table-condensed hqtable-vcentered">
+                <thead>
+                <tr>
+                    <th class="span1">{% trans 'Status' %}</th>
+                    <th class="span2">{% trans 'Action' %}</th>
+                    <th class="span2">{% trans 'Preview' %}</th>
+                    <th class="span7">{% trans 'Path in Application'  %}</th>
+                </tr>
+                </thead>
+                <tbody data-bind="visible: !{{ ko_item }}().length">
+                <tr>
+                    <td colspan="4">
+                        No media found in application of this category.
+                    </td>
+                </tr>
+                </tbody>
+                <tbody data-bind="foreach: {{ ko_item }}">
+                <tr>
+                    <td><span data-bind="mediaStatus: has_ref"></span></td>
+                    <td>
+                        {% block manage_item %}
+                        {% endblock %}
+                    </td>
+                    <td>{% block preview_button %}{% endblock %}</td>
+                    <td data-bind="text: path"></td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>

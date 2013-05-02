@@ -1,0 +1,10 @@
+{% load i18n %}
+<label class="checkbox">
+    <input type="checkbox" name="{{ hide_fuzzy.slug }}" value="yes" {% if hide_fuzzy.checked %}checked{% endif %} /> {% trans 'Hide Fuzzy Submissions' %}
+    <a href="#" id="hide-fuzzy-submissions" class="hq-help no-click">
+        <i class="icon-question-sign"
+           data-title="{% trans "Hide Fuzzy Submissions?" %}"
+           data-content="{% trans "Some of the submissions included in the report results could not be matched with precision to your selected applications. This hides those submissions so that only the most accurate submissions remain." %}"
+           data-trigger="hover"></i>
+    </a>
+</label>
