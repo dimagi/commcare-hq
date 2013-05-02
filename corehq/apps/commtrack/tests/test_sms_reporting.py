@@ -63,15 +63,16 @@ class StockRequisitionTest(CommTrackTest):
             spp = CommCareCase.get(self.spps[code]._id)
             # make sure the index was created
             [req_ref] = spp.reverse_indices
-            req_case = CommCareCase.get(req_ref.referenced_id)
+            req_case = RequisitionCase.get(req_ref.referenced_id)
             self.assertEqual(str(amt), req_case.amount_requested)
+            self.assertEqual(self.user._id, req_case.requested_by)
             self.assertEqual(req_case.location_, self.sp.location_)
             self.assertTrue(req_case._id in reqs)
 
     def testSimpleApproval(self):
         self.testRequisition()
 
-        # req loc1 pp 10 pq 20...
+        # approve loc1
         handled = handle(self.verified_number, 'approve {loc}'.format(
             loc='loc1',
             ))
@@ -90,7 +91,7 @@ class StockRequisitionTest(CommTrackTest):
     def testSimpleFill(self):
         self.testRequisition()
 
-        # req loc1 pp 10 pq 20...
+        # fill loc1
         handled = handle(self.verified_number, 'fill {loc}'.format(
             loc='loc1',
         ))
