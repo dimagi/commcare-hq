@@ -1,4 +1,5 @@
 {% extends "registration/base.html" %}
+{% load field_tags %}
 
 {% block title %}Create an Account{% endblock title %}
 {% block step-title %}Create an Account{% endblock %}
@@ -20,18 +21,23 @@
                 <div class="control-group{% if field.errors %} error{% endif %}">
                     <label class="control-label" for="{{ field.id }}">{{ field.label }}</label>
                     <div class="controls">
-                        {% ifnotequal field.name 'eula_confirmed' %}
-                            {{ field }}
+                        {% if field|is_checkbox %}
+                            <label class="checkbox">
+                                {{ field }} {{ field.help_text }}
+                            </label>
+                            {% for error in field.errors %}
+                                <span class="help-inline">{{ error }}</span>
+                            {% endfor %}
                         {% else %}
-                            <label class="checkbox">{{ field }} I have read and agree to the <a data-toggle="modal" data-target="#eulaModal" href="#eulaModal">CommCare HQ End User License Agreement</a>.</label>
-                        {% endifnotequal %}
-                        {% for error in field.errors %}
-                            <span class="help-inline">{{ error }}</span>
-                        {% endfor %}
-                        {% if field.help_text %}
-                            <p class="help-block">
-                                {{ field.help_text }}
-                            </p>
+                            {{ field }}
+                            {% for error in field.errors %}
+                                <span class="help-inline">{{ error }}</span>
+                            {% endfor %}
+                            {% if field.help_text %}
+                                <p class="help-block">
+                                    {{ field.help_text }}
+                                </p>
+                            {% endif %}
                         {% endif %}
                     </div>
                 </div>
@@ -39,7 +45,6 @@
             {% for hidden in form.hidden_fields %}
                 {{ hidden }}
             {% endfor %}
-            
         </fieldset>
         <div class="form-actions"><button type="submit" class="btn btn-primary btn-large disable-on-submit">Sign Up</button></div>
     </form>
@@ -47,4 +52,3 @@
 {% block modals %}{{ block.super }}
     {% include 'registration/partials/eula_modal.html' %}
 {% endblock %}
-     

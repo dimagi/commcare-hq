@@ -1,6 +1,7 @@
 {% extends "users/users_base.html" %}
 {% load hq_shared_tags %}
 {% load hqstyle_tags %}
+{% load field_tags %}
 {% block js %}{{ block.super }}
     <script src="{% static 'hqwebapp/js/lib/jquery.textchange.min.js' %}"></script>
     <script src="{% static 'users/js/key_filters.js' %}"></script>
@@ -118,15 +119,22 @@
                         <div class="control-group{% if field.errors %} error{% endif %}">
                             <label class="control-label" for="{{ field.id }}">{{ field.label }}</label>
                             <div class="controls">
-                                {{ field }}
+                                {% if field|is_checkbox %}
+                                    <label class="checkbox">
+                                        {{ field }}
+                                        {{ field.help_text }}
+                                    </label>
+                                {% else %}
+                                    {{ field }}
+                                    {% if field.help_text %}
+                                        <p class="help-block">
+                                            <i class="icon icon-info-sign"></i> {{ field.help_text }}
+                                        </p>
+                                    {% endif %}
+                                {% endif %}
                                 {% for error in field.errors %}
                                     <span class="help-inline">{{ error }}</span>
                                 {% endfor %}
-                                {% if field.help_text %}
-                                    <p class="help-block">
-                                        <i class="icon icon-info-sign"></i> {{ field.help_text }}
-                                    </p>
-                                {% endif %}
                             </div>
                         </div>
                     {% endfor %}
