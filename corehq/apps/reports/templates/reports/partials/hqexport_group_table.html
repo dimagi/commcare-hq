@@ -1,0 +1,27 @@
+{% load i18n %}
+{% if group.saved_exports %}
+<table class="couchexport-group-download table table-condensed">
+    <thead>
+        <tr>
+            <th>{% trans "File" %}</th>
+            <th>{% trans "Last Updated" %}</th>
+            <th>{% trans "Size" %}</th>
+        </tr>
+    </thead>
+    <tbody>
+{% for config, saved in group.saved_exports %}
+    <tr>
+    {% if saved and saved.has_file %}
+        <td><a href="{% url hq_download_saved_export domain saved.get_id %}">{{ config.name }}</a></td>
+        <td>{{ saved.last_updated|date:"d M Y H:i" }}</td>
+        <td>{{ saved.size|filesizeformat }}</td>
+    {% else %}
+        <td>{{ config.name }}</td>
+        <td>{% trans "N/A" %}</td>
+        <td>{% trans "N/A" %}</td>
+    {% endif %}
+    </tr>
+{% endfor %}    
+    </tbody>
+</table>
+{% endif %}

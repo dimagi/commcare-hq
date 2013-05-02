@@ -1,0 +1,60 @@
+<div data-bind="saveButton: saveButton, visible: editing"></div>
+<table class="table">
+    <thead>
+        <tr class="row control-group" data-bind="css: {error: validateGeneral()}">
+            <th></th>
+            <th></th>
+            <th>Deploy</th>
+            <th></th>
+            <th></th>
+            <th></th>
+            <td>
+                <p class="help-inline" data-bind="text: validateGeneral()"></p>
+                <p class="help-inline" style="visibility: hidden; float:right;">.</p>
+            </td>
+            <th></th>
+        </tr>
+    </thead>
+    <tbody data-bind="sortable: languages">
+        <tr class="row control-group" data-bind="css: {error: show_error, light: !deploy()}">
+            <td data-bind="css: {'sortable-handle': $root.editing && $root.languages().length > 1}">
+                <i class="icon-resize-vertical" data-bind="visible: $root.editing && $root.languages().length > 1"></i>
+            </td>
+            <td>
+                <span data-bind="text: $root.languages.indexOf($data) + 1 + '.', visible: $root.languages()[0] !== $data"></span>
+                <span class="label label-info" data-bind="visible: $root.languages()[0] === $data">1. default</span>
+            </td>
+            <td>
+                <span data-bind="editableBool: deploy, editing: $root.editing"></span>
+            </td>
+            <td>
+                <span data-bind="langcode: langcode, valueUpdate: 'textchange', editing: $root.editing, inputHandlers: {hasfocus: $root.seen}"></span>
+            </td>
+            <td>
+                <span data-bind="visible: originalLangcode() && originalLangcode() !== langcode()"><i class="icon-arrow-left"></i></span>
+            </td>
+            <td>
+                <span class="code" data-bind="text: originalLangcode, visible: originalLangcode() !== langcode()"></span>
+            </td>
+            <td><p class="help-inline" data-bind="text: message"></p></td>
+            <td>
+                <a href="#" data-bind="click: $root.removeLanguage, visible: $root.editing">Delete</a>
+            </td>
+        </tr>
+    </tbody>
+</table>
+<button class="btn" data-bind="click: addLanguage, visible: editing">
+    <i class="icon-plus"></i>
+    Add Language
+</button>
+<div data-bind="if: removedLanguages().length">
+    <h6>Deleting Languages:</h6>
+    <table class="table">
+        <tbody data-bind="foreach: removedLanguages">
+            <tr>
+                <td data-bind="text: langcode"></td>
+                <td><a href="#" data-bind="click: $root.unremoveLanguage">Don't Delete</a></td>
+            </tr>
+        </tbody>
+    </table>
+</div>

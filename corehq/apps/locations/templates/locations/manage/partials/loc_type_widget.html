@@ -1,0 +1,14 @@
+
+<select name="_loc_type" data-bind="options: allowed_child_types, value: loc_type"></select>
+<input name="{{ name }}" type="hidden" data-bind="value: loc_type" />
+
+<script type="text/javascript">
+
+$(function() {
+
+  model.loc_type('{{ value }}');
+
+});
+
+</script>
+

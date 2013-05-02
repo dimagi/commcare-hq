@@ -1,0 +1,18 @@
+{% extends "app_manager/summary.html" %}
+{% load xforms_extras %}
+{% load url_extras %}
+{% load hq_shared_tags %}
+{% load i18n %}
+{% block js-inline %}
+    <script>
+        $(function() {
+            $('#apps-menu-toggle').hide();
+            $('#edit').hide();
+        });
+    </script>
+{% endblock %}
+{% block tabs %}
+{% endblock %}
+{% block app-content %}
+    {% include 'app_manager/partials/app_summary.html' %}
+{% endblock %}

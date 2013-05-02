@@ -1,0 +1,18 @@
+{% extends "hqadmin/hqadmin_base_report.html" %}
+{% block report-title %}List of users who haven't agreed to the eula and has visited HQ in the last {{ days }} days{% endblock %}
+{% block reportcontent %}
+    <table class="datatable table table-striped">
+        <thead>
+        {{ headers.render_html|safe }}
+        </thead>
+        <tbody>
+        {% for user in users %}
+            <tr>
+                <td>{{ user.username }}</td>
+                <td>{{ user.last_login }}</td>
+                <td>{{ user.get_id }}</td>
+            </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+{% endblock %}

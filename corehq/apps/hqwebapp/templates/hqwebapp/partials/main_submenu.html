@@ -1,0 +1,14 @@
+{% load i18n %}
+{% if submenu.html %}
+    <li>{{ submenu.html }}</li>
+{% else %}
+    {% if submenu.is_divider %}
+        <li class="divider"></li>
+    {% else %}
+        <li {% if submenu.is_header %}class="nav-header"{% endif %}>
+            {% if submenu.url %}<a href="{{ submenu.url }}">{% endif %}
+            {% trans submenu.title %}
+            {% if submenu.url %}</a>{% endif %}
+        </li>
+    {% endif %}
+{% endif %}

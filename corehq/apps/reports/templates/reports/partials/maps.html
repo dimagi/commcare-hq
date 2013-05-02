@@ -1,0 +1,99 @@
+<div class="hq-graphic-report">
+
+<script type="text/javascript" src="http://maps.googleapis.com/maps/api/js?key={{ maps_api_key }}&sensor=false"></script>
+<script type="text/javascript" src="{{STATIC_URL}}reports/javascripts/maps.js"></script>
+<script type="text/javascript">
+
+CASE_API_URL = '{{ case_api_url }}';
+CONFIG = {{ config|safe }};
+
+function setMapHeight() {
+    $('#map').height($(window).height() - 200);
+}
+
+$(document).ready(function() { 
+    setMapHeight();
+    $(window).resize(setMapHeight);
+
+    maps_init(CONFIG, CASE_API_URL);
+});
+
+</script>
+
+<style>
+
+#sidebar {
+  position: absolute;
+  bottom: 30px;
+  right: 12px;
+  padding: 10px;
+  max-width: 12em;
+  background: rgba(255, 255, 255, .7);
+  border: 5px #aaa solid;
+  border-radius: 20px;
+  -moz-border-radius: 20px;
+  -webkit-border-radius: 20px;
+}
+
+.choice {
+  color: black;
+  font-weight: normal;
+  cursor: pointer;
+}
+
+.selected {
+  color: #a00;
+  font-weight: bold;
+  cursor: pointer;
+}
+
+.disabled {
+  color: #888;
+}
+
+.enumlegendcolor {
+  width: 1.4em;
+}
+
+.enumlegendlabel {
+  padding-left: 0.5em;
+}
+
+</style>
+
+<div style="position: relative;">
+  <div id="map" style="width: 100%;"></div>
+  
+  <div id="sidebar" style="display: none;">
+    <div id="legend" style="display: none; margin-bottom: 30px;">
+      <h3>Legend</h3>
+      <div id="legend-inner"></div>
+    </div>
+
+    <div id="style" style="display: none; margin-bottom: 30px;">
+      <h3>Style</h3>
+	<span type="intens">intensity</span> &middot;
+	<span type="blob">size</span> &middot;
+        <span type="gauge">gauge</span> &middot;
+	<span type="dot">dot</span> &middot;
+	<span type="pie">pie<sub>A</sub></span> &middot;
+	<span type="varpie">pie<sub>B</sub></span> &middot;
+	<span type="explodepie">pie<sub>C</sub></span>
+    </div>
+
+    <div id="agg" style="display: none; margin-bottom: 30px;">
+      <h3>Metric</h3>
+      <span type="count">count</span> &middot;
+      <span type="val">value</span> &middot;
+      <span type="sum">sum</span> &middot;
+      <span type="min">min</span> &middot;
+      <span type="max">max</span> &middot;
+      <span type="avg">average</span> &middot;
+      <span type="tally">tally</span>
+    </div>
+
+    <div id="panel"></div>
+  </div>
+  
+</div>
+</div>

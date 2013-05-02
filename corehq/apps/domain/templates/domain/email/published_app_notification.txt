@@ -1,0 +1,9 @@
+A new app has been published to Exchange!
+
+Check out {{ snapshot.title }} here: http://{{ url_base }}{% url project_info snapshot.name %}
+
+Author: {{ snapshot.author }}
+
+Published (and cda signed) by: {{ published_by.username }}
+
+Published from: {{ domain.name }}

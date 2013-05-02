@@ -1,0 +1,47 @@
+{% load i18n %}
+<h4>{% trans "Just a moment! It looks like there are 'Fuzzy Submissions' for this form." %}</h4>
+<p>
+    {% trans "What does this mean? We have form submissions that contain Form IDs matching this selected form, but we can't accurately relate them to this application." %}
+    {% if good_news %}
+        <br />
+        <strong>{% trans "But don't worry!" %}</strong>
+        {% trans "You only have one active application with this issue, so it's very likely that your submissions belong to:" %}
+        <strong>{{ active|first }}</strong>
+    {% endif %}
+</p>
+<p>
+{% if hide_fuzzy.show %}
+    {% include 'reports/filters/partials/fuzzy_checkbox.html' %}
+{% endif %}
+</p>
+
+<div class="accordion">
+    <div class="accordion-heading">
+        <a class="accordion-toggle" data-toggle="collapse" href="#showDupeApps">
+            {% trans 'Show all Applications that contain Forms with this ID' %}
+        </a>
+    </div>
+    <div id="showDupeApps" class="accordion-body collapse">
+        <div class="accordion-inner">
+            {% if active %}
+            <h5>{% trans 'Active Applications' %}</h5>
+            <ul>
+                {% for app in active %}
+                <li>{{ app }}</li>
+                {% endfor %}
+            </ul>
+            {% endif %}
+            {% if deleted %}
+                <h5>{% trans 'Deleted Applications' %}</h5>
+                <ul>
+                    {% for app in deleted %}
+                        <li>{{ app }}</li>
+                    {% endfor %}
+                </ul>
+            {% endif %}
+        </div>
+    </div>
+</div>
+<p>
+    {% trans 'Tired of seeing this message? We can help you out' %}: <a href="mailto:commcarehq-support@dimagi.com">commcarehq-support@dimagi.com</a>.
+</p>
