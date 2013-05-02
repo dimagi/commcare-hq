@@ -1,0 +1,123 @@
+{% extends "reminders/reminders_base.html" %}
+{% load hq_shared_tags %}
+
+{% block js-inline %}{{ block.super }}
+    <script>
+        $(function () {
+            var reminders = [
+                {% for data in reminder_data %}
+                    {
+                        nickname: "{{ data.handler_name }}",
+                        date: "{{ data.next_fire.date }}",
+                        time: "{{ data.next_fire.time }}",
+                        case_name: "{{ data.case_name }}",
+                        case_url: "{% if data.case_id %}{% url case_details domain data.case_id %}{% endif %}",
+                        recipient_desc: "{{ data.recipient_desc }}",
+                        recipient_type: "{{ data.recipient_type }}",
+                    },
+                {% endfor %}
+                    null
+                ],
+                i,
+                reminder;
+            for (i = 0; i < reminders.length; i += 1) {
+                reminder = reminders[i];
+                if (reminder) {
+                    var recipient_text;
+                    if (reminder.recipient_type == "USER" || reminder.recipient_type == "OWNER" || reminder.recipient_type == "CASE" || reminder.recipient_type == "PARENT_CASE" || reminder.recipient_type == "SUBCASE") {
+                        var case_url = '<a href="' + reminder.case_url + '">' + reminder.case_name + '</a>';
+                        if (reminder.recipient_type == "CASE") {
+                            recipient_text = case_url;
+                        } else {
+                            recipient_text = reminder.recipient_desc + " for " + case_url;
+                        }
+                    } else {
+                        recipient_text = reminder.recipient_desc;
+                    }
+                    $('.calendar [data-date="' + reminder.date + '"]').append(
+                        $('<li/>').append(
+                            $('<span/>').text(reminder.time).addClass('time-header')
+                        ).append(
+                            $('<span/>').html(
+                                " <b>" + reminder.nickname + "</b> to " + recipient_text
+                            )
+                        )
+                    );
+                }
+            }
+            $('.calendar-first').each(function () {
+                var i = 0, className = 'calendar-first-week', day = $(this);
+                for (i = 0; i < 7; i += 1) {
+                    day.addClass(className);
+                    if (day.next().length) {
+                        day = day.next();
+                    } else if (day.parent().next().find('> td')) {
+                        day = day.parent().next().find('> td').first();
+                    }
+                }
+            });
+        });
+    </script>
+{% endblock %}
+{% block head %}{{ block.super }}
+    <style>
+        .calendar-first:not(:first-child) {
+            border-left-width: 3px;
+        }
+        .calendar td.calendar-first-week{
+            border-top-width: 3px;
+        }
+        .calendar td {
+            vertical-align: top;
+            padding: 10px 10px 10px 10px;
+        }
+        .calendar {
+            margin-left: 0px;
+        }
+        li {
+            list-style-type: none;
+        }
+        ol {
+            margin: 0px 0px 0px 0px;
+        }
+    </style>
+{% endblock %}
+
+{% block subsection-title %}
+<li class="active">
+    <a href="#">Reminder Calendar</a>
+</li>
+{% endblock %}
+
+{% block main_column %}
+    {% include "hqwebapp/partials/time-notice.html" %}
+    <div id='scheduled-reminders-container'>
+        <table class="calendar">
+            <tr>
+                <th>Monday</th>
+                <th>Tuesday</th>
+                <th>Wednesday</th>
+                <th>Thursday</th>
+                <th>Friday</th>
+                <th>Saturday</th>
+                <th>Sunday</th>
+            </tr>
+        {% for date in dates %}
+            {% if date.weekday == 0 %}
+            <tr>
+            {% endif %}
+                <td {% if date == today %}class="calendar-today"{% endif %}
+                    {% if date < today %}class="calendar-past"{% endif %}
+                    {% if date.day == 1 %}class="calendar-first"{% endif %}>
+                    <div class="calendar-cell">
+                        <p class="date-header">{{ date }}</p>
+                        <ol data-date="{{ date }}" class="scheduled-reminders"></ol>
+                    </div>
+                </td>
+            {% if date.weekday == 6 %}
+            </tr>
+            {% endif %}
+        {% endfor %}
+        </table>
+    </div>
+{% endblock %}

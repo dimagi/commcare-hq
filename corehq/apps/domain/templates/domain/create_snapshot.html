@@ -1,0 +1,127 @@
+{% extends "users/users_base.html" %}
+{% load hqstyle_tags %}
+{% load hq_shared_tags %}
+{% load i18n %}
+
+{% block subsection-title %}
+<li class="active">
+    <a href="#">CommCare Exchange</a>
+</li>
+{% endblock %}
+
+{% block js %}{{ block.super }}
+<script type="text/javascript" src="{% static 'hqwebapp/js/lib/jquery-ui-datepicker/jquery-ui-1.8.17.custom.datepicker.min.js' %}"/>
+{% endblock %}
+
+{% block head %}
+{{ block.super }}
+<link rel="stylesheet" href="{% static 'hqwebapp/js/lib/jquery-ui-datepicker/datepicker-theme/jquery-ui-1.8.17.custom.css' %}" />
+{% endblock %}
+
+{% block js-inline %}
+{{ block.super }}
+{% url cda_basic as cda_url %}
+{% include 'hqstyle/partials/load_into_modal.html' with modal_id="cda-modal" load_from=cda_url %}
+{# unfortunately copied from project settings #}
+<script type="text/javascript">
+    $(function(){
+        {% for field in autocomplete_fields %}
+            $("#id_{{ field }}").focus(function() {
+                $.getJSON('{% url domain_autocomplete_fields field %}', function(results) {
+                    $("#id_{{ field }}").typeahead({ source: results,
+                        items: 8
+                    }).
+                            attr("autocomplete", "off");
+                });
+            });
+        {% endfor %}
+
+        var ids = [];
+        {% for app, app_form in app_forms %}
+        ids.push({{app.id|JSON}});
+        {% endfor %}
+
+        _.each(ids, function (id) {
+            var publish = $('#id_' + id + '-publish');
+            publish.change(function () {
+                $(this).parent().parent().siblings().slideToggle();
+            });
+            publish.parent().parent().siblings().toggle(publish.is(':checked'))
+            $('#id_' + id + '-deployment_date').datepicker({
+                changeMonth: true,
+                changeYear: true,
+                showButtonPanel: true,
+                dateFormat: 'yy-mm-dd',
+                maxDate: '0',
+                numberOfMonths: 2
+            });
+        });
+
+        $('#save-button').on('click', function () {
+            $('#id_publish_on_submit').val('no');
+            $('#snapshot-form').submit();
+        });
+
+        $('input:radio[name="publisher"]').change(function() {
+            if ($(this).val() == 'user') {
+                $('#author-input').show(250);
+            } else {
+                $('#author-input').hide(250);
+            }
+        });
+    });
+</script>
+{% endblock %}
+
+{% block user-view %}
+<form id="snapshot-form" class="form-horizontal" enctype="multipart/form-data" method="post" action="{% url domain_create_snapshot domain %}" id="snapshot_form">
+    <fieldset>
+        {% bootstrap_form_errors form %}
+        {% bootstrap_fieldset form "Publishing new version of your project to Commcare Exchange" %}
+        {% if request.project.published_snapshot.image_path %}
+            <div class="control-group">
+                <div class="control-label"><label for="id_old_image">Use current image</label></div>
+                <div class="controls">
+                    <input type="checkbox" checked="checked" id="id_old_image" name="old_image" value="true" />
+                    <br />
+                    <img src="{% url appstore_project_image request.project.published_snapshot.name %}" style="max-width: 400px; max-height:500px;" />
+                    <p class="help-block">
+                        If you upload an image, it will automatically erase the current image and use that instead.
+                    </p>
+                </div>
+            </div>
+        {% endif %}
+        {% if can_publish_as_org %}
+            <div class="control-group">
+                <div class="control-label"><label>{% trans "Publishing as" %}</label></div>
+                <div class="controls">
+                    <label class="radio">
+                        <input type="radio" name="publisher" id="as_user" value="user" {% if not published_as_org %}checked{% endif %}>
+                        {% trans "A user" %}: <strong>{{ request.couch_user.username }}</strong>
+                    </label>
+                    <label class="radio">
+                        <input type="radio" name="publisher" id="as_org" value="organization" {% if published_as_org %}checked{% endif %}>
+                        {% trans "An organization" %}: <strong>{{ request.project.get_organization.title }}</strong>
+                    </label>
+                </div>
+            </div>
+        {% endif %}
+        <div class="control-group{% if published_as_org %} hide{% endif %}" id="author-input">
+            <div class="control-label"><label>{% trans "Publishing on behalf of" %}</label></div>
+            <div class="controls">
+                <input type="text" name="author" value="{{ author|default:"" }}" placeholder="{% trans "Name to display as the author" %}" />
+            </div>
+        </div>
+        {% for app, app_form in app_forms %}
+            <h3>Application: {{ app.name }}</h3>
+            {% bootstrap_fieldset app_form %}
+        {% endfor %}
+        <input type="hidden" name="publish_on_submit" value="yes" id="id_publish_on_submit">
+    </fieldset>
+
+    <div class="form-actions">
+        <a id="save-button" class="btn disable-on-submit">{% trans "Save and Publish Later" %}</a>
+        <button type="submit" class="btn btn-primary disable-on-submit">{% trans "Publish Now" %}</button>
+    </div>
+</form>
+{% endblock %}>
