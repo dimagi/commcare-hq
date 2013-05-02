@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<h:html xmlns:h="http://www.w3.org/1999/xhtml" xmlns:orx="http://openrosa.org/jr/xforms" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:jr="http://openrosa.org/javarosa" xmlns="http://www.w3.org/2002/xforms">
+  <h:head>
+    <h:title ref="jr:itext('data')">New Form1</h:title>
+    <model>
+      <instance>
+        <data xmlns="http://openrosa.org/formdesigner/CC63DEB0-118F-4D07-9F72-491E6061C84F" xmlns:jrm="http://dev.commcarehq.org/jr/xforms" uiVersion="1" version="1">
+          <what_is_your_favorite_color/>
+        </data>
+      </instance>
+      <bind id="what_is_your_favorite_color" nodeset="/data/what_is_your_favorite_color" type="xsd:string"/>
+      <itext>
+        <translation  lang="en">
+          <text id="data">
+            <value>My First Form</value>
+          </text>
+          <text id="what_is_your_favorite_color">
+            <value>What is your favorite color?</value>
+          </text>
+        </translation>
+      </itext>
+    </model>
+  </h:head>
+  <h:body>
+    <input bind="what_is_your_favorite_color">
+      <label ref="jr:itext('what_is_your_favorite_color')"/>
+    </input>
+  </h:body>
+</h:html>

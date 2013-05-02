@@ -1,0 +1,6 @@
+{% extends "soil/file_download.html" %}
+{% load hq_shared_tags %}
+{% block extrahead %}
+    <script src="{% static 'hqstyle/js/jquery/jquery-1.7.1.min.js' %}"></script>
+    {{ block.super }}
+{% endblock %}

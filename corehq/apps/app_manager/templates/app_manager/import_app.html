@@ -1,0 +1,47 @@
+{% extends "app_manager/apps_base.html" %}
+{% block js-inline %}{{ block.super }}
+    <script>
+        $(function () {
+            $(".historyBack").click(function () {
+                history.back();
+                return false;
+            });
+        });
+    </script>
+{% endblock %}
+{% block head %}
+    {{ block.super }}
+    <style>
+        #main_container {
+            padding: 20px;
+            text-align: center;
+        }
+        #main_container p {
+            margin-bottom: 10px;
+        }
+    </style>
+{% endblock %}
+{% block content %}
+    <div id="main_container">
+        <form action="{% url corehq.apps.app_manager.views.import_app domain %}" method="post">
+{% if app %}
+            <p>Import application <strong>{{ app.name }}</strong> from domain <strong>{{ app.domain }}</strong>?</p>
+            <table {% if not is_superuser %}class="hidden"{% endif %}>
+{% else %}
+            <p>Paste your application definition into the box below.</p>
+            <table>
+{% endif %}
+                <tr>
+                    <th>Name:</th>
+                    <td><input type="text" name="name"/></td>
+                </tr>
+                <tr>
+                    <th>Source:</th>
+                    <td><textarea name="source">{{ app.export_json }}</textarea></td>
+                </tr>
+            </table>
+            <a href="#" class="historyBack">No, take me back.</a>
+            <input type="submit" value="Yes, import application">
+        </form>
+    </div>
+{% endblock %}

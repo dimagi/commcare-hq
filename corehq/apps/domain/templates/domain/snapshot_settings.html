@@ -1,0 +1,187 @@
+{% extends "users/users_base.html" %}
+{% load hqstyle_tags %}
+{% load i18n %}
+
+{% block js-inline  %}{{ block.super }}
+    {% url cda_basic as cda_url %}
+    {% include 'hqstyle/partials/load_into_modal.html' with modal_id="contentDistributionAgreement" load_from=cda_url %}
+
+    <script type="text/javascript">
+        $(function() {
+            $('[data-target="#contentDistributionAgreement"]').click(function() {
+                var new_action = $(this).attr('data-action');
+                $('#cda-agree').attr('action', new_action);
+            });
+        });
+    </script>
+    <script type="text/javascript">
+        $(function() {
+            $('#toggle-snapshots').click(function() {
+                if ($(this).text() === 'Show previous versions') {
+                    $('#snapshots').show(500);
+                    $(this).text('Hide previous versions');
+                }
+                else {
+                    $('#snapshots').hide(500);
+                    $(this).text('Show previous versions');
+                }
+            });
+        });
+    </script>
+{% endblock %}
+
+{% block subsection-title %}
+<li class="active">
+    <a href="#">CommCare Exchange</a>
+</li>
+{% endblock %}
+
+{% block user-view %}
+<div>
+    {% if published_snapshot %}
+        {% include 'domain/partials/project_version_display.html' with version=published_snapshot published=1 %}
+    {% else %}
+    <h3>This project has not been published</h3>
+        {% if snapshots %}
+            {% include 'domain/partials/project_version_display.html' with version=snapshots.0 published=0 %}
+        {% endif %}
+    {% endif %}
+</div>
+<button id="toggle-snapshots" class="btn">Show previous versions</button>
+<div id="snapshots" class="hide">
+    <h3>This project has {{ snapshots|length }} unpublished versions</h3>
+    <table class="table table-striped" id="snapshot-list">
+        <thead>
+        <tr>
+            <th></th>
+            <th>Date</th>
+            <th>License</th>
+            <th>In Exchange?</th>
+            <th></th>
+        </tr>
+        </thead>
+        <tbody>
+        {% for snapshot in snapshots %}
+        <tr>
+            <td><a class="btn btn-primary" href="{% url project_info snapshot.name %}">View</a></td>
+            <td>{{ snapshot.snapshot_time }}</td>
+            <td>{{ snapshot.get_license_display }}</td>
+            {% if snapshot.published %}
+            <td>
+                {% if snapshot.is_approved %}
+                    <span class="label label-success">Published & approved</span>
+                {% else %}
+                    <span class="label label-warning">Not yet approved</span>
+                {% endif %}
+            </td>
+            <td>
+                <form action="{% url domain_clear_published domain %}" method="POST">
+                    <button class="btn btn-danger" type="submit">Unpublish</button>
+                </form>
+            </td>
+            {% else %}
+            <td></td>
+            <td>
+                <a class="btn btn-primary" data-action="{% url domain_set_published domain snapshot.name %}" data-toggle="modal" data-target="#contentDistributionAgreement" href="#contentDistributionAgreement">Publish</a> (only one snapshot can be published at a time)
+            </td>
+            {% endif %}
+        </tr>
+        {% endfor %}
+    </table>
+</div>
+{% if error_message %}
+<div class="alert alert-error">{{ error_message }}</div>
+{% endif %}
+<form class="form-horizontal" method="get" action="{% url domain_create_snapshot domain %}">
+    <fieldset style="margin-top: 1em">
+        <legend>
+            Publish a new version
+        </legend>
+        <div class="alert alert-info">
+            <a href="#" class="close" data-dismiss="alert">×</a>
+            <h3>{% trans "You can publish your project using any of the following builds:" %}</h3>
+            <p>{% trans "Your project can be published using the latest starred builds, or, if no builds are starred, from the latest build overall." %}</p>
+        </div>
+        <div>
+            <table class="table table-striped">
+                <thead>
+                <tr>
+                    <th>
+                        Name
+                    </th>
+                    <th>
+                        Build source
+                    </th>
+                    <th>
+                        Version
+                    </th>
+                    <th>
+                        Build comment
+                    </th>
+                </tr>
+                </thead>
+                <tbody>
+                {% for app in request.project.applications %}
+                <tr>
+
+                    {% if app.get_latest_saved %}
+                    <td><a href="{% url app_summary domain app.id %}">{{ app.get_latest_saved.name }}</a></td>
+                    <td>
+                        {% if app.get_latest_saved.is_released %}
+                        Latest starred build
+                        {% else %}
+                        No starred builds - From latest build
+                        {% endif %}
+                    </td>
+                    <td>{{ app.get_latest_saved.version }}</td>
+                    <td>
+                        {{ app.get_latest_saved.build_comment }}
+                    </td>
+                    {% else %}
+                    <td><a href="{% url app_summary domain app.id %}">{{ app.name }}</a></td>
+                    <td>
+                        No builds - from current copy
+                    </td>
+                    <td>
+                        {{ app.version }}
+                    </td>
+                    <td></td>
+                    {% endif %}
+                </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </fieldset>
+
+    <div class="form-actions"><button type="submit" class="btn btn-primary">{% trans "Create a new version of your project to publish" %}</button></div>
+
+    {% if project.is_copy %}
+        <div class="alert alert-info">
+            <a href="#" class="close" data-dismiss="alert">×</a>
+            <h4>{% trans "This project was originally copied from " %}<a href="{% url project_info project.copied_from.name %}">{{ project.copied_from.title }}</a></h4>
+        </div>
+    {% endif %}
+</form>
+{% endblock %}>
+
+{% block modals %}{{ block.super }}
+    <div class="modal hide fade" id="contentDistributionAgreement">
+        <div class="modal-header">
+            <a class="close" data-dismiss="modal">&times;</a>
+            <h4>CommCare HQ Content Distribution Agreement</h4>
+        </div>
+        <div class="modal-body">
+            Loading Terms of Service...
+        </div>
+        <div class="modal-footer">
+            <div style="text-align: left; line-height: 2em;">
+                To publish this project, you must agree to our Content Distribution Agreement
+            </div>
+            <form id="cda-agree" action="" method="POST">
+                <button type="submit" href="#" class="btn btn-primary disable-on-submit">Agree</button>
+                <a href="#" data-dismiss="modal" class="btn">Disagree</a>
+            </form>
+        </div>
+    </div>
+{% endblock %}

@@ -1,0 +1,35 @@
+{% extends "reminders/survey_base.html" %}
+
+{% block head %}{{ block.super }}
+
+<style type="text/css">
+    #contact_info {
+        width: auto;
+        margin-left: 0px;
+    }
+    .table tbody td {
+        padding: 2px;
+    }
+</style>
+
+{% endblock %}
+
+{% block survey_content %}
+
+<h4>Edit Contact '{{ case.name }}'</h4>
+<br />
+<form method="post">
+    <table id="contact_info">
+        <tbody>
+            <tr>
+                <th>Phone Number</th>
+                <td><input type="text" name="phone_number" value="{{ form.phone_number.value }}" /></td>
+                <td>{{ form.phone_number.errors }}</td>
+            </tr>
+        </tbody>
+    </table>
+    <br />
+    <input type="submit" class="btn btn-primary" value="Submit" />
+</form>
+
+{% endblock %}
