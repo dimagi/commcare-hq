@@ -42,16 +42,21 @@ requires imports/proptable.html to be included in the main template
             {% trans "Form Properties" %}
         </a>
     </li>
+    {% if cases %}
     <li>
         <a href="#form-case-data" data-toggle="tab">
             {% trans "Case Changes" %}
         </a>
     </li>
+    {% endif %}
+
+    {% if form_meta_data %}
     <li>
         <a href="#form-metadata" data-toggle="tab">
             {% trans "Form Metadata" %}
         </a>
     </li>
+    {% endif %}
 
     {% if instance.attachments %}
     <li>
@@ -136,10 +141,12 @@ requires imports/proptable.html to be included in the main template
         </div>
     </div>
     {% endif %}
-    
+
+    {% if form_meta_data %}
     <div class="tab-pane" id="form-metadata">
         {% render_tables form_meta_data form_table_options %}
     </div>
+    {% endif %}
 
     {% if instance.attachments %}
     <div class="tab-pane" id="form-attachments">
