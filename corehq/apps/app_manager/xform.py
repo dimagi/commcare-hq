@@ -180,6 +180,7 @@ class XForm(WrappedNode):
             return [n.text for n in nodes]
         except XFormError:
             return []
+
     @property
     def image_references(self):
         return self.media_references(form="image")
@@ -187,6 +188,10 @@ class XForm(WrappedNode):
     @property
     def audio_references(self):
         return self.media_references(form="audio")
+
+    @property
+    def video_references(self):
+        return self.media_references(form="video")
 
     def rename_language(self, old_code, new_code):
         trans_node = self.itext_node.find('{f}translation[@lang="%s"]' % old_code)
