@@ -1599,11 +1599,6 @@ def save_copy(req, domain, app_id):
         try:
             copy = app.save_copy(comment=comment, user_id=req.couch_user.get_id,
                                  previous_version=app.get_latest_saved())
-        except Exception as e:
-            copy = None
-            if settings.DEBUG:
-                raise
-            messages.error(req, "Unexpected error saving build:\n%s" % e)
         finally:
             # To make a RemoteApp always available for building
             if app.is_remote_app():
