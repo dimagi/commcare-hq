@@ -37,7 +37,7 @@ def register_user(request, domain_type=None):
         if len(domains_for_user) == 0:
             return redirect("registration_domain")
         else:
-            return redirect("domain_list")
+            return redirect("homepage")
     else:
         if request.method == 'POST':
             form = NewWebUserRegistrationForm(request.POST)

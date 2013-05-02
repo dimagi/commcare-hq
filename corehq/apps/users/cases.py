@@ -1,3 +1,4 @@
+from couchdbkit import ResourceNotFound
 from corehq.apps.groups.models import Group
 from corehq.apps.users.models import CouchUser, CommCareUser, WebUser
 
@@ -20,7 +21,10 @@ def get_wrapped_owner(owner_id):
             'Group': Group,
         }.get(doc_type)
 
-    owner_doc = user_db().get(owner_id)
+    try:
+        owner_doc = user_db().get(owner_id)
+    except ResourceNotFound:
+        return None
     cls = _get_class(owner_doc['doc_type'])
     return cls.wrap(owner_doc) if cls else None
 
