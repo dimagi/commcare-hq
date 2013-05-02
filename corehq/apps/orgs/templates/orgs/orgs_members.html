@@ -1,0 +1,70 @@
+{% extends "orgs/orgs_landing.html" %}
+{% load i18n %}
+{% load hq_shared_tags %}
+{% load hqstyle_tags %}
+
+{% block js-inline %}{{ block.super }}
+<script>
+    $(function () {
+        $('.remove-member-btn').on('click', function() {
+            $('#removing-member').text($(this).attr('data-member'));
+            $('#removing-member-id').val($(this).attr('data-member_id'));
+            $('#remove-member-modal').modal({show: true});
+            return false;
+        });
+    });
+</script>
+{% endblock %}
+
+{% block carded-content %}
+<table class="table table-striped" style="border-collapse:collapse">
+    {% for member in members %}
+        <tr><td style="border-top: none;">
+            <strong>
+                {% if member.full_name %}
+                    {{ member.full_name }} <small>({{ member.username }})</small>
+                {% else %}
+                    {{ member.username }}
+                {% endif %}
+                {% if member.username in org_admins %} <span class="label">Admin</span>{% endif %}
+            </strong>
+            {% if admin %}
+                {% ifnotequal member.username request.couch_user.username %}
+                <a href="#" class="btn btn-danger remove-member-btn pull-right" data-member="{{ member.username }}" data-member_id="{{ member.get_id }}">
+                    <i class="icon-remove"></i> {% trans "Remove Member" %}
+                </a>
+                {% endifnotequal %}
+            {% endif %}
+        </td></tr>
+    {% endfor %}
+</table>
+
+{% if admin %}
+    <div class="well well-small">
+        <form class="form-inline" style="margin: 0;" method="post" action="{% url orgs_invite_member org.name %}">
+            <div class="input-append">
+                <input id="id_email" name="email" type="text" placeholder="Member's email address" />
+                <button type="submit" id="invite_member_btn" class="btn btn-info disable-on-submit">
+                    <i class="icon-plus"></i> {% trans "Invite Member" %}
+                </button>
+            </div>
+        </form>
+    </div>
+{% endif %}
+{% endblock %}
+
+{% block org-modals %}
+<div id="remove-member-modal" class="modal hide fade">
+    <form class="form-horizontal" method="post" action="{% url orgs_remove_member org.name %}">
+        <div class="modal-body">
+            <a class="close" data-dismiss="modal">&times;</a>
+            <h3>Remove <span id="removing-member"></span> from {{ org.title }}?</h3>
+            <input id="removing-member-id" type="hidden" name="member_id" value="" />
+        </div>
+        <div class="modal-footer">
+            <a href="#" data-dismiss="modal" class="btn">{% trans "Cancel" %}</a>
+            <button type="submit" class="btn btn-primary disable-on-submit">{% trans "Remove Member" %}</button>
+        </div>
+    </form>
+</div>
+{% endblock %}

@@ -1,0 +1,34 @@
+{% extends "users/users_base.html" %}
+{% load hqstyle_tags %}
+{% load hq_shared_tags %}
+{% load i18n %}
+
+{% block subsection-title %}
+    <li class="active">
+        <a href="#">Internal Project Information</a>
+    </li>
+{% endblock %}
+
+{% block user-view %}
+    <ul class="nav nav-tabs" id="internal-settings-tabs">
+        <li{% ifequal active "settings" %} class="active"{% endifequal %}>
+            <a href="{% url domain_internal_settings domain %}">
+                Settings
+            </a>
+        </li>
+        <li{% ifequal active "calcs" %} class="active"{% endifequal %}>
+            <a href="{% url domain_internal_calculations domain %}">
+                Calculated Properties
+            </a>
+        </li>
+    </ul>
+    {% block section-view %}
+        <form class="form-horizontal" method="post">
+            {% bootstrap_form_errors form %}
+            {% bootstrap_fieldset form "Internal Settings" %}
+            <div class="form-actions">
+                <button type="submit" class="btn btn-primary">{% trans "Update Project Information" %}</button>
+            </div>
+        </form>
+    {% endblock %}
+{% endblock %}

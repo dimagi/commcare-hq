@@ -1,0 +1,76 @@
+{% extends "reminders/reminders_base.html" %}
+
+{% block head %}{{ block.super }}
+<style type="text/css">
+    .errorlist ul {
+        margin: 0;
+        padding: 0;
+    }
+    .errorlist li {
+        background-color: #F88;
+        border: 1px solid #A44;
+        padding: 2px;
+    }
+    #new_keyword_table {
+        width: auto;
+        margin-left: 0px;
+        min-width: 50%;
+    }
+</style>
+{% endblock %}
+
+{% block subsection-title %}
+    <li>
+        <a href="#">Keywords</a> <span class="divider">&gt;</span>
+    </li>
+    {% if keyword.get_id %}
+    <li class="active">
+        <a href="{% url edit_keyword domain keyword.get_id %}">{{ keyword.keyword }}</a>
+    </li>
+    {% else %}
+    <li class="active">
+        <a href="{% url add_keyword domain %}">New Keyword</a>
+    </li>
+    {% endif %}
+{% endblock %}
+
+{% block keyword_nav %}
+<ul class="nav nav-list">
+    {% if keyword.get_id %}
+    <li class="active"><a href="{% url edit_keyword domain keyword.get_id %}">{{ keyword.keyword }}</a></li>
+    {% else %}
+    <li class="active"><a href="{% url add_keyword domain %}">New Keyword</a></li>
+    {% endif %}
+</ul>
+{% endblock %}
+
+{% block main_column %}
+<ul class="errorlist">
+    {% for e in errors %}
+    <li>{{ e }}</li>
+    {% endfor %}
+</ul>
+
+<form action="" method="post">
+    <table id="new_keyword_table" class="table table-bordered">
+        <tbody>
+            <tr>
+                <th>Keyword:</th>
+                <td><input type="text" name="keyword" value="{{ keyword.keyword|default:'' }}"/></td>
+            </tr>
+            <tr>
+                <th>Survey:</th>
+                <td>
+                    <select name="survey">
+                    {% for f in form_list %}
+                        <option value="{{ f.code }}" {% if f.code == keyword.form_unique_id %}selected="selected"{% endif %}>{{ f.name }}</option>
+                    {% endfor %}
+                    </select>
+                </td>
+            </tr>
+        </tbody>
+    </table>
+    <input type="submit" class="btn btn-primary" value="Submit" />
+</form>
+
+{% endblock %}

@@ -1,0 +1,48 @@
+{% extends base_template %}
+{% block head %}{{ block.super }}
+    {% include "imports/bootstrap.google-prettify.html" %}
+{% endblock %}
+{% block content %}
+    <table>
+        <tr>
+            <td>CommCare.jad</td>
+            <td>{% url download_jad app.domain app.id as url %}<a href="{{ url }}">{{ url }}</a></td>
+        </tr>
+        <tr>
+            <td>CommCare.jar</td>
+            <td>{% url download_jar app.domain app.id as url %}<a href="{{ url }}">{{ url }}</a></td>
+        </tr>
+        <tr>
+            <td>profile.xml</td>
+            <td>{% url download_profile app.domain app.id as url %}<a href="{{ url }}">{{ url }}</a></td>
+        </tr>
+    </table>
+    <p>Resource Files:</p>
+    <ul>
+        {% for path,source in files %}
+            <li>
+                (<a href="{{ path }}">link</a>) <a class="toggle-next" href="{{ path }}">{{ path }}</a>
+                <pre class="prettyprint linenums">{{ source|force_escape }}</pre>
+            </li>
+        {% empty %}
+            <li><h6>No Files</h6></li>
+        {% endfor %}
+        {% if app.copy_of and not files %}
+
+            <div class="alert alert-info">
+                This build was made before I knew how to save the files for a specific build.
+                To see this view for the current not-yet-built version of this app,
+                <a href="{% url download_index app.domain app.copy_of%}">click here</a>.
+            </div>
+        {% endif %}
+    </ul>
+    <script>
+        $(function(){
+            $('.toggle-next').click(function(e){
+                e.preventDefault();
+                $(this).next().slideToggle();
+            }).trigger('click');
+            prettyPrint();
+        });
+    </script>
+{% endblock %}

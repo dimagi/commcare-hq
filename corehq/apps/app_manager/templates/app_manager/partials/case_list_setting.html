@@ -1,0 +1,38 @@
+{% load xforms_extras %}
+{% load hq_shared_tags %}
+{% load i18n %}
+<div class="control-group">
+    <label class="control-label">
+        {% trans LABEL %}
+        <span class="hq-help-template"
+              data-title="{% trans LABEL %}"
+              data-content="{% trans DESC %}"
+        ></span>
+    </label>
+    <div class="controls">
+        {% if edit %}
+            <select type="text" name="{{ SLUG }}-show" data-value="{% if case_list.show %}true{% else %}false{% endif %}">
+                <option value="false">Don't Show</option>
+                <option value="true">Show</option>
+            </select>
+            <span id="{{ SLUG }}-label">
+                with label: {{ case_list.label|input_trans:langs|safe }}
+            </span>
+            <script>
+                $(function () {
+                    function updateCaseListLabel() {
+                        $(this).next()[$(this).val() === 'true' ? 'show' : 'hide']();
+                    }
+                    $('#{{ SLUG }}-label input').attr('name', '{{ SLUG }}-label').removeClass('wide');
+                    $('[name="{{ SLUG }}-show"]').change(updateCaseListLabel).each(updateCaseListLabel);
+                });
+            </script>
+        {% else %}
+            {% if not case_list.show %}
+                Don't Show
+            {% else %}
+                Show with label: {{ case_list.label|trans:langs }}
+            {% endif %}
+        {% endif %}
+    </div>
+</div>

@@ -1,0 +1,14 @@
+from corehq.apps.domain.models import Domain
+from corehq.apps.hqcase.management.commands.ptop_fast_reindexer import PtopReindexer
+from corehq.pillows.domain import DomainPillow
+
+CHUNK_SIZE = 500
+POOL_SIZE = 15
+
+
+class Command(PtopReindexer):
+    help = "Fast reindex of domain elastic index by using the domain view and reindexing domains"
+
+    doc_class = Domain
+    view_name = 'domain/not_snapshots'
+    pillow_class = DomainPillow

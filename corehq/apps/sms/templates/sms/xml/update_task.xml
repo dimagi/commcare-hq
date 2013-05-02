@@ -1,0 +1,9 @@
+<case xmlns="http://commcarehq.org/case/transaction/v2" case_id="{{ subcase_guid }}" user_id="{{ user_id }}" date_modified="{{ date_modified }}">
+    <update>
+        <owner_id>{{ task_owner_id }}</owner_id>
+        <form_id>{{ form_unique_id }}</form_id>
+        <start_date>{{ task_activation_date }}</start_date>
+        <end_date>{{ task_deactivation_date }}</end_date>
+        <incentive>{{ incentive }}</incentive>
+    </update>
+</case>

@@ -1,0 +1,10 @@
+{% load i18n %}
+<form class="form" action="{% url new_app domain %}" method="post">
+    {% if is_remote %}
+        <input type="hidden" name="type" value="RemoteApp" />
+    {% else %}
+        <input type="hidden" name="type" value="Application" />
+        <input type="hidden" name="application_version" value="2.0" />
+    {% endif %}
+    <button href="#" type="submit">{% trans action_text %}</button>
+</form>
