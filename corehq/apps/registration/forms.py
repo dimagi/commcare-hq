@@ -31,7 +31,7 @@ class NewWebUserRegistrationForm(forms.Form):
                                              issues with other CommCare users worldwide.""")
     # Must be set to False to have the clean_*() routine called
     eula_confirmed = forms.BooleanField(required=False,
-                                        label="End User License Agreement",
+                                        label="",
                                         help_text=mark_safe(
                                             """I have read and agree to the
                                                <a data-toggle='modal'
