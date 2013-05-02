@@ -972,7 +972,7 @@ class UserStatusReport(WorkerMonitoringReportTableBase, DatespanMixin):
                     group_name if group_name != '_all' else _("All Groups"),
                     sum([int(submissions_by_user.get(user["user_id"], 0)) for user in users]),
                     sum([int(avg_submissions_by_user.get(user["user_id"], 0)) for user in users]) / self.num_avg_intervals,
-                    reduce(latest_date, [last_form_by_user.get(user["user_id"]) for user in users]) or _('No forms submitted in time period'),
+                    reduce(latest_date, [last_form_by_user.get(user["user_id"]) for user in users], None) or _('No forms submitted in time period'),
                     sum([int(creations_by_user.get(user["user_id"], 0)) for user in users]),
                     sum([int(avg_creations_by_user.get(user["user_id"], 0)) for user in users]) / self.num_avg_intervals,
                     sum([int(modifications_by_user.get(user["user_id"], 0)) for user in users]),
