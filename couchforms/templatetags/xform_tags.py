@@ -1,5 +1,4 @@
 from functools import partial
-import copy
 
 from django.template.loader import render_to_string
 from django.core.urlresolvers import reverse
@@ -114,7 +113,12 @@ def render_form(form, domain, options):
     cases = []
     for b in case_blocks:
         this_case_id = b.get(case_id_attr)
-        this_case = CommCareCase.get(this_case_id) if this_case_id else None
+        try:
+            this_case = CommCareCase.get(this_case_id) if this_case_id else None
+            valid_case = True
+        except ResourceNotFound:
+            this_case = None
+            valid_case = False
 
         if this_case and this_case._id:
             url = reverse('case_details', args=[domain, this_case._id])
@@ -126,7 +130,8 @@ def render_form(form, domain, options):
             "is_current_case": case_id and this_case_id == case_id,
             "name": case_inline_display(this_case),
             "table": _get_tables_as_columns(b, definition),
-            "url": url
+            "url": url,
+            "valid_case": valid_case
         })
 
     # Form Metadata tab
