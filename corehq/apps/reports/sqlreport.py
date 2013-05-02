@@ -168,7 +168,7 @@ class SqlTabularReport(GenericTabularReport, CustomProjectReport, ProjectReportP
         qc = self.query_context
         for c in self.columns:
             qc.append_column(c.view)
-        engine = sqlalchemy.create_engine(settings.SQL_REPORTING_DATABASE)
+        engine = sqlalchemy.create_engine(settings.SQL_REPORTING_DATABASE_URL)
         conn = engine.connect()
         try:
             data = qc.resolve(conn, self.filter_values)
