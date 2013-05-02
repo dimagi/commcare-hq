@@ -1,0 +1,36 @@
+{% extends "reports/base_template.html" %}
+{% load xform_tags %}
+{% load case_tags %}
+{% load timezone_tags %}
+{% load hq_shared_tags %}
+{% load i18n %}
+
+{% block head %}{{ block.super }}
+    {% include "imports/proptable.html" %}
+    {% include "imports/fancy-code.html" %}
+{% endblock %}
+
+{% block title %}Form: {{ form_name }}{% if form_received_on %} ({% utc_to_timezone form_received_on timezone %}){% endif %}{% endblock %}
+
+{% block page-title %}
+    <ul class="breadcrumb">
+        <li>
+            <a href="{% url reports_home domain %}"><strong>Reports</strong></a> <span class="divider">&gt;</span>
+        </li>
+        <li>
+            <a href="{% url project_report_dispatcher domain 'submit_history' %}">Submit History</a> <span class="divider">&gt;</span>
+        </li>
+        <li class="active">
+            <a href="#">
+                {{ form_name }}
+                {% if form_received_on %}
+                ({% utc_to_timezone form_received_on timezone %})
+                {% endif %}
+            </a>
+        </li>
+    </ul>
+{% endblock %}
+
+{% block main_column %}
+    {% render_form instance domain form_render_options %}
+{% endblock %}

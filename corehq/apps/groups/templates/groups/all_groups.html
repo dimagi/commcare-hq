@@ -1,0 +1,68 @@
+{% extends "users/users_base.html" %}
+{% load i18n %}
+
+{% block head %}{{ block.super }}
+
+{% endblock %}
+
+{% block subsection-title %}
+    <li class="active">
+        <a href="#">Groups</a>
+    </li>
+{% endblock %}
+
+{% block user-view %}
+    {% block group-info %}
+        {% if all_groups %}
+            <h2>Select a group:</h2>
+        {% else %}
+            <h2>Create your first group:</h2>
+        {% endif %}
+    {% endblock %}
+
+    <div class="tabbable tabs-left row-fluid">
+        <ul class="nav nav-tabs span2">
+            {% with group as this_group %}
+                {% for group in all_groups %}
+                    <li {% if this_group.get_id == group.get_id %}class="active"{% endif %}>
+                        <a href="{% url group_members domain group.get_id %}">{{ group.display_name }}
+                            {% if group.reporting %}
+                                <i class="icon-list-alt reporting-group-icon"></i>
+                            {% else %}
+                               <i class="icon-white"></i>
+                            {% endif %}
+                            {% if group.case_sharing %}<i class="icon-star case-sharing-group-icon"></i>{% endif %}
+                        </a>
+                    </li>
+                {% endfor %}
+            {% endwith %}
+        </ul>
+        <div class="tab-content span9">
+            {% block group-view %}
+            {% endblock %}
+        </div>
+    </div>
+    <form class="well form-inline" method="post" action="{% url add_group domain %}">
+        <input type="text" placeholder="Group Name" id="id_group_name" name="group_name" />
+        <button class="btn btn-success" type="submit">Create Group</button>
+    </form>
+{% endblock %}
+{% block js-inline %}{{ block.super }}
+<script>
+    $(function () {
+        $('.reporting-group-icon').popover({
+            placement: 'right',
+            title: 'This is a Reporting Group',
+            content: "Reporting groups are used in reports to filter and view data. You can remove this group from " +
+                    "reports by editing this group's settings."
+        });
+        $('.case-sharing-group-icon').popover({
+            placement: 'right',
+            title: 'This is a Case Sharing Group',
+            content: "Case sharing groups allow their members to share a case list in a case-sharing app. You can change this " +
+                    "by editing this group's settings."
+        });
+    })
+</script>
+{% endblock %}
+

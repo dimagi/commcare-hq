@@ -1,0 +1,14 @@
+MIDlet-Name: CommCare
+MIDlet-Version: 1.0.1
+MIDlet-Vendor: Dimagi,Inc
+MIDlet-Jar-URL: {{ jar_url }}
+MIDlet-Jar-Size: {{ jar_size }}
+MIDlet-Info-URL: http://www.dimagi.com
+MIDlet-1: CommCare,,org.commcare.midlet.CommCareMidlet
+App-Version: 1.0.1
+Built-on: 2010-Sep-29 20:41
+CC-Build-Version: 1449877a6b8f
+CommCare-Version: v1.0.1
+JR-Build-Version: 38cf6e675568
+Polish-Device: Generic/AnyPhone
+Profile: {{ profile_url }}
