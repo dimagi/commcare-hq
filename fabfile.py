@@ -409,7 +409,7 @@ def update_code(preindex=False):
         sudo('git fetch', user=env.sudo_user)
         sudo("git submodule foreach 'git fetch'", user=env.sudo_user)
         sudo('git checkout %(code_branch)s' % env, user=env.sudo_user)
-        sudo('git pull', user=env.sudo_user)
+        sudo('git pull origin %(code_branch)s' % env, user=env.sudo_user)
         sudo('git submodule sync', user=env.sudo_user)
         sudo('git submodule update --init --recursive', user=env.sudo_user)
         # remove all .pyc files in the project
