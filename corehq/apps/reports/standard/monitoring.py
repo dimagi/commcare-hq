@@ -1,10 +1,12 @@
 from _collections import defaultdict
 import datetime
+from urllib import urlencode
 import dateutil
 from django.core.urlresolvers import reverse
 import numpy
 import pytz
 from corehq.apps.reports import util
+from corehq.apps.reports.basic import SummingTabularReport
 from corehq.apps.reports.standard import ProjectReportParametersMixin, \
     DatespanMixin, ProjectReport, DATE_FORMAT
 from corehq.apps.reports.filters.forms import CompletionOrSubmissionTimeFilter, FormsByApplicationFilter, SingleFormByApplicationFilter
@@ -14,6 +16,7 @@ from corehq.apps.reports.util import make_form_couch_key, friendly_timedelta, fo
 from corehq.pillows.mappings.case_mapping import CASE_INDEX
 from corehq.pillows.mappings.xform_mapping import XFORM_INDEX
 from dimagi.utils.couch.database import get_db
+from dimagi.utils.dates import DateSpan
 from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.parsing import json_format_datetime
 from dimagi.utils.timezones import utils as tz_utils
@@ -728,13 +731,12 @@ class WorkerActivityTimes(WorkerMonitoringChartBase,
         return chart.get_url() + '&chds=-1,24,-1,7,0,20'
 
 
-
-
 class UserStatusReport(WorkerMonitoringReportTableBase, DatespanMixin):
     slug = 'user_status'
     name = ugettext_noop("User Status")
     description = ugettext_noop("Usage information for groups and users")
     section_name = ugettext_noop("Project Reports")
+    num_avg_intervals = 3 # how many duration intervals we go back to calculate averages
 
     fields = [
         'corehq.apps.reports.fields.MultiSelectGroupField',
@@ -763,14 +765,14 @@ class UserStatusReport(WorkerMonitoringReportTableBase, DatespanMixin):
     def users_by_group(self):
         user_dict = {}
         if '_all' in self.group_ids:
-            user_dict['_all'] = self.get_all_users_by_domain(
+            user_dict['_all|_all'] = self.get_all_users_by_domain(
                 group=None,
                 individual=self.individual,
                 user_filter=tuple(self.user_filter),
                 simplified=True
             )
         for group in self.groups:
-            user_dict[group.name] = self.get_all_users_by_domain(
+            user_dict["%s|%s" % (group.name, group._id)] = self.get_all_users_by_domain(
                 group=group,
                 individual=self.individual,
                 user_filter=tuple(self.user_filter),
@@ -788,122 +790,213 @@ class UserStatusReport(WorkerMonitoringReportTableBase, DatespanMixin):
     def headers(self):
         header_array = [
             DataTablesColumn(_("User")),
-            DataTablesColumn(_("Group")),
             DataTablesColumn(_("# Forms Submitted"), sort_type=DTSortType.NUMERIC),
-            DataTablesColumn(_("# Days Since Last Form Submission")),
-            DataTablesColumn(_("# Cases Created")),
-            DataTablesColumn(_("# Cases Modified")),
+            DataTablesColumn(_("Avg # Forms Submitted"), sort_type=DTSortType.NUMERIC),
+            DataTablesColumn(_("Last Form Submission")),
+            DataTablesColumn(_("# Cases Created"), sort_type=DTSortType.NUMERIC),
+            DataTablesColumn(_("Avg # Cases Created"), sort_type=DTSortType.NUMERIC),
+            DataTablesColumn(_("# Cases Modified"), sort_type=DTSortType.NUMERIC),
+            DataTablesColumn(_("Avg # Cases Modified"), sort_type=DTSortType.NUMERIC),
             DataTablesColumn(_("# Cases Closed")),
+            DataTablesColumn(_("Avg # Cases Closed")),
             DataTablesColumn(_("# Inactive Cases")),
+            DataTablesColumn(_("Avg # Inactive Cases")),
         ]
         if self.aggregate_by == 'groups':
-            del header_array[0]
+            header_array[0] = DataTablesColumn(_("Group"))
         return DataTablesHeader(*header_array)
 
-    def es_form_submissions(self, dict_only=False):
+    def es_form_submissions(self, datespan=None, dict_only=False):
+        datespan = datespan or self.datespan
         q = {"query": {
                 "bool": {
                     "must": [
                         {"match": {"domain.exact": self.domain}},
                         {"range": {
                             "form.meta.timeEnd": {
-                                "from": self.datespan.startdate_param_utc,
-                                "to": self.datespan.enddate_param_utc}}}]}}}
+                                "from": datespan.startdate_param_utc,
+                                "to": datespan.enddate_param_utc}}}]}}}
         facets = ['form.meta.userID']
         return es_query(q=q, facets=facets, es_url=XFORM_INDEX + '/xform/_search', size=1, dict_only=dict_only)
 
-    def es_last_submissions(self, dict_only=False):
+    def es_last_submissions(self, datespan=None, dict_only=False):
         """
-            Creates a dict of userid => days since last submission
+            Creates a dict of userid => date of last submission
         """
+        datespan = datespan or self.datespan
         def es_q(user_id):
             q = {"query": {
                     "bool": {
                         "must": [
                             {"match": {"domain.exact": self.domain}},
-                            {"match": {"form.meta.userID": user_id}}
+                            {"match": {"form.meta.userID": user_id}},
+                            {"range": {
+                                "form.meta.timeEnd": {
+                                    "from": datespan.startdate_param_utc,
+                                    "to": datespan.enddate_param_utc}}}
                         ]}},
                 "sort": {"form.meta.timeEnd" : {"order": "desc"}}}
             results = es_query(q=q, es_url=XFORM_INDEX + '/xform/_search', size=1, dict_only=dict_only)['hits']['hits']
             return results[0]['_source']['form']['meta']['timeEnd'] if results else None
 
         DATE_FORMAT = '%Y-%m-%dT%H:%M:%SZ'
-        def days_since(date):
-            if not date:
-                return '-1'
-            time_diff = datetime.datetime.now() - datetime.datetime.strptime(date, DATE_FORMAT)
-            return time_diff.days
+        def convert_date(date):
+            return datetime.datetime.strptime(date, DATE_FORMAT) if date else None
 
-        return dict([(u["user_id"], days_since(es_q(u["user_id"]))) for u in self.combined_users])
+        return dict([(u["user_id"], convert_date(es_q(u["user_id"]))) for u in self.combined_users])
 
-    def es_case_queries(self, date_field, dict_only=False):
+    def es_case_queries(self, date_field, datespan=None, dict_only=False):
+        datespan = datespan or self.datespan
         q = {"query": {
                 "bool": {
                     "must": [
                         {"match": {"domain.exact": self.domain}},
                         {"range": {
                             date_field: {
-                                "from": self.datespan.startdate_param_utc,
-                                "to": self.datespan.enddate_param_utc}}}]}}}
+                                "from": datespan.startdate_param_utc,
+                                "to": datespan.enddate_param_utc}}}]}}}
         facets = ['user_id']
         return es_query(q=q, facets=facets, es_url=CASE_INDEX + '/case/_search', size=1, dict_only=dict_only)
 
-    def es_inactive_cases(self, dict_only=False):
+    def es_inactive_cases(self, datespan=None, dict_only=False):
         """
             Open cases that haven't been modified within time range
         """
+        datespan = datespan or self.datespan
         q = {"query": {
                 "bool": {
                     "must": [
                         {"match": {"domain.exact": self.domain}},
                         {"match": {"closed": False}},
-                        {"range": {"opened_on": {"lt": self.datespan.startdate_param_utc}}}],
+                        {"range": {"opened_on": {"lt": datespan.startdate_param_utc}}}],
                     "must_not": {"range": {
                         "modified_on": {
-                            "from": self.datespan.startdate_param_utc,
-                            "to": self.datespan.enddate_param_utc}}}}}}
+                            "from": datespan.startdate_param_utc,
+                            "to": datespan.enddate_param_utc}}}}}}
         facets = ['owner_id']
         return es_query(q=q, facets=facets, es_url=CASE_INDEX + '/case/_search', size=1, dict_only=dict_only)
 
 
     @property
     def rows(self):
+        duration = self.datespan.enddate - self.datespan.startdate
+        avg_datespan = DateSpan(self.datespan.startdate - (duration * self.num_avg_intervals), self.datespan.startdate)
+
         form_data = self.es_form_submissions()
         submissions_by_user = dict([(t["term"], t["count"]) for t in form_data["facets"]["form.meta.userID"]["terms"]])
+        avg_form_data = self.es_form_submissions(datespan=avg_datespan)
+        avg_submissions_by_user = dict([(t["term"], t["count"]) for t in avg_form_data["facets"]["form.meta.userID"]["terms"]])
 
         last_form_by_user = self.es_last_submissions()
 
         case_creation_data = self.es_case_queries('opened_on')
         creations_by_user = dict([(t["term"], t["count"]) for t in case_creation_data["facets"]["user_id"]["terms"]])
+        avg_case_creation_data = self.es_case_queries('opened_on', datespan=avg_datespan)
+        avg_creations_by_user = dict([(t["term"], t["count"]) for t in avg_case_creation_data["facets"]["user_id"]["terms"]])
 
         case_modification_data = self.es_case_queries('modified_on')
         modifications_by_user = dict([(t["term"], t["count"]) for t in case_modification_data["facets"]["user_id"]["terms"]])
+        avg_case_modification_data = self.es_case_queries('modified_on', datespan=avg_datespan)
+        avg_modifications_by_user = dict([(t["term"], t["count"]) for t in avg_case_modification_data["facets"]["user_id"]["terms"]])
 
         case_closure_data = self.es_case_queries('closed_on')
         closures_by_user = dict([(t["term"], t["count"]) for t in case_closure_data["facets"]["user_id"]["terms"]])
+        avg_case_closure_data = self.es_case_queries('closed_on', datespan=avg_datespan)
+        avg_closures_by_user = dict([(t["term"], t["count"]) for t in avg_case_closure_data["facets"]["user_id"]["terms"]])
 
         inactive_case_data = self.es_inactive_cases()
         inactives_by_user = dict([(t["term"], t["count"]) for t in inactive_case_data["facets"]["owner_id"]["terms"]])
+        avg_inactive_case_data = self.es_inactive_cases(datespan=avg_datespan)
+        avg_inactives_by_user = dict([(t["term"], t["count"]) for t in avg_inactive_case_data["facets"]["owner_id"]["terms"]])
+
+        def add_percentages(row, cells_to_add=None, cells_to_modify=None):
+            """
+                takes a row and certain numeric cells and returns the values within those cells represented as a
+                fraction and percentage of that value over the sum of all the values
+            """
+            cells_to_add = cells_to_add or [4, 6, 8, 10]
+            cells_to_modify = cells_to_modify or [10]
+
+            total = sum([row[i] for i in cells_to_add])
+            if total == 0:
+                return row
+
+            for i in cells_to_modify:
+                row[i] = "%d/%d (%d%%)" % (row[i], total, row[i]*100/total)
+
+            return row
+
+        def add_case_list_links(owner_id, row):
+            """
+                takes a row, and converts certain cells in the row to links that link to the case list page
+            """
+            cl_url = reverse('project_report_dispatcher', args=(self.domain, 'case_list'))
+            url_args = {
+                "ufilter": range(4), # include all types of users in case list report
+                "individual": owner_id,
+            }
+
+            start_date, end_date = self.datespan.startdate_param, self.datespan.enddate_param
+            search_strings = {
+                4: "opened_on: [%s TO %s]" % (start_date, end_date), # cases created
+                6: "modified_on: [%s TO %s]" % (start_date, end_date), # cases modified
+                8: "closed_on: [%s TO %s]" % (start_date, end_date), # cases closed
+                10: "closed:false AND opened_on: [* TO %s] AND NOT modified_on: [%s TO %s]" %
+                   (start_date, start_date, end_date), # inactive cases
+            }
+
+            def create_case_url(index):
+                """
+                    Given an index for a cell in a the row, creates the link to the case list page for that cell
+                """
+                url_params = url_args
+                url_params.update({"search_query": search_strings[index]})
+                return '<a href="%s?%s">%s</a>' %  (cl_url, urlencode(url_params, True), row[i])
+
+            for i in search_strings:
+                row[i] = create_case_url(i)
+            return row
 
         if self.aggregate_by == 'groups':
+            def latest_date(d1, d2):
+                if not d1:
+                    return d2
+                elif not d2:
+                    return d1
+                else:
+                    return d1 if d1 > d2 else d2
+
             for group, users in self.users_by_group.iteritems():
-                yield [ group,
+                group_name, group_id = tuple(group.split('|'))
+                yield add_case_list_links(group_id, add_percentages([
+                    group_name if group_name != '_all' else _("All Groups"),
                     sum([int(submissions_by_user.get(user["user_id"], 0)) for user in users]),
-                    # int(last_form_by_user.get(user["user_id"], 'No Data')),
-                    'broken cuz lazy',
+                    sum([int(avg_submissions_by_user.get(user["user_id"], 0)) for user in users]) / self.num_avg_intervals,
+                    reduce(latest_date, [last_form_by_user.get(user["user_id"]) for user in users]) or _('No forms submitted in time period'),
                     sum([int(creations_by_user.get(user["user_id"], 0)) for user in users]),
+                    sum([int(avg_creations_by_user.get(user["user_id"], 0)) for user in users]) / self.num_avg_intervals,
                     sum([int(modifications_by_user.get(user["user_id"], 0)) for user in users]),
+                    sum([int(avg_modifications_by_user.get(user["user_id"], 0)) for user in users]) / self.num_avg_intervals,
                     sum([int(closures_by_user.get(user["user_id"], 0)) for user in users]),
+                    sum([int(avg_closures_by_user.get(user["user_id"], 0)) for user in users]) / self.num_avg_intervals,
                     sum([int(inactives_by_user.get(user["user_id"], 0)) for user in users]),
-                ]
-        else:
+                    sum([int(avg_inactives_by_user.get(user["user_id"], 0)) for user in users]) / self.num_avg_intervals,
+                ]))
+
+        else: # if self.aggregate_by == 'groups'
             for group, users in self.users_by_group.iteritems():
                 for user in users:
-                    yield [ user["username_in_report"],
-                            group,
-                            int(submissions_by_user.get(user["user_id"], 0)),
-                            int(last_form_by_user.get(user["user_id"], 'No Data')),
-                            int(creations_by_user.get(user["user_id"], 0)),
-                            int(modifications_by_user.get(user["user_id"], 0)),
-                            int(closures_by_user.get(user["user_id"], 0)),
-                            int(inactives_by_user.get(user["user_id"], 0))]
+                    yield add_case_list_links(user['user_id'], add_percentages([
+                        user["username_in_report"],
+                        int(submissions_by_user.get(user["user_id"], 0)),
+                        int(avg_submissions_by_user.get(user["user_id"], 0)) / self.num_avg_intervals,
+                        last_form_by_user.get(user["user_id"]) or _('No forms submitted in time period'),
+                        int(creations_by_user.get(user["user_id"],0)),
+                        int(avg_creations_by_user.get(user["user_id"],0)) / self.num_avg_intervals,
+                        int(modifications_by_user.get(user["user_id"], 0)),
+                        int(avg_modifications_by_user.get(user["user_id"], 0)) / self.num_avg_intervals,
+                        int(closures_by_user.get(user["user_id"], 0)),
+                        int(avg_closures_by_user.get(user["user_id"], 0)) / self.num_avg_intervals,
+                        int(inactives_by_user.get(user["user_id"], 0)),
+                        int(avg_inactives_by_user.get(user["user_id"], 0)) / self.num_avg_intervals,
+                    ]))
