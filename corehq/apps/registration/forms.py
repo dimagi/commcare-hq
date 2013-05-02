@@ -26,10 +26,7 @@ class NewWebUserRegistrationForm(forms.Form):
     email_opt_in = forms.BooleanField(required=False,
                                       initial=True,
                                       label="",
-                                      help_text=
-                                          """Join the mailing list to
-                                             receive important announcements and discuss
-                                             issues with other CommCare users worldwide.""")
+                                      help_text= "Join the mailing list to receive important announcements.")
     # Must be set to False to have the clean_*() routine called
     eula_confirmed = forms.BooleanField(required=False,
                                         label="",
