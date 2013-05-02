@@ -41,6 +41,8 @@ class Command(MappingOutputCommand):
             "cp_n_forms": {"type": "long"},
             "cp_first_form": type_full_date(),
             "cp_last_form": type_full_date(),
+            "cp_is_active": {"type": "boolean"},
+            "cp_has_app": {"type": "boolean"},
         }
 
         m['properties'] = dynamic.set_properties(self.doc_class, custom_types=domain_special_types, init_dict=init_dict)

@@ -20,6 +20,7 @@ from django.utils.translation import ugettext as _
 
 MULTIMEDIA_PREFIX = "jr://file/"
 
+
 class HQMediaLicense(DocumentSchema):
     domain = StringProperty()
     author = StringProperty()
@@ -96,7 +97,6 @@ class CommCareMultimedia(Document):
             for aux in self.aux_media:
                 if aux.attachment_id == attachment_id:
                     self.aux_media.remove(aux)
-            is_update = True
 
         if not attachment_id in self.current_attachments:
             if not getattr(self, '_id'):
@@ -112,6 +112,7 @@ class CommCareMultimedia(Document):
                 new_media.media_meta = media_meta
             self.aux_media.append(new_media)
             self.save()
+            is_update = True
 
         return is_update
 
@@ -160,7 +161,8 @@ class CommCareMultimedia(Document):
             "m_id": self._id,
             "url": reverse("hqmedia_download", args=[self.__class__.__name__, self._id]),
             "updated": is_updated,
-            "original_path": original_path
+            "original_path": original_path,
+            "icon_class": self.get_icon_class(),
         }
 
     @property
@@ -226,8 +228,10 @@ class CommCareMultimedia(Document):
         }.get(cls.get_base_mime_type(data, filename=filename))
 
     @classmethod
-    def get_form_path(cls, path):
-        path = path.strip().lower()
+    def get_form_path(cls, path, lowercase=False):
+        path = path.strip()
+        if lowercase:
+            path = path.lower()
         if path.startswith(MULTIMEDIA_PREFIX):
             return path
         if path.startswith('/'):
@@ -265,6 +269,10 @@ class CommCareMultimedia(Document):
     @classmethod
     def get_nice_name(cls):
         return _("Generic Multimedia")
+
+    @classmethod
+    def get_icon_class(cls):
+        return "icon-desktop"
 
 
 class CommCareImage(CommCareMultimedia):
@@ -308,6 +316,10 @@ class CommCareImage(CommCareMultimedia):
     def get_nice_name(cls):
         return _("Image")
 
+    @classmethod
+    def get_icon_class(cls):
+        return "icon-picture"
+
         
 class CommCareAudio(CommCareMultimedia):
 
@@ -317,6 +329,10 @@ class CommCareAudio(CommCareMultimedia):
     @classmethod
     def get_nice_name(cls):
         return _("Audio")
+
+    @classmethod
+    def get_icon_class(cls):
+        return "icon-volume-up"
 
 
 class HQMediaMapItem(DocumentSchema):
@@ -347,22 +363,24 @@ class ApplicationMediaReference(object):
 
     def __init__(self, path,
                  module_id=None, module_name=None,
-                 form_id=None, form_name=None,
-                 media_type=None, is_menu_media=False):
+                 form_id=None, form_name=None, form_order=None,
+                 media_class=None, is_menu_media=False):
 
         if not isinstance(path, basestring):
             raise ValueError("path should be a string")
         self.path = path.strip()
 
-        if not issubclass(media_type, CommCareMultimedia):
-            raise ValueError("media_type should be a type of CommCareMultimedia")
+        if not issubclass(media_class, CommCareMultimedia):
+            raise ValueError("media_class should be a type of CommCareMultimedia")
 
         self.module_id = module_id
         self.module_name = module_name
+
         self.form_id = form_id
         self.form_name = form_name
+        self.form_order = form_order
 
-        self.media_type = media_type
+        self.media_class = media_class
         self.is_menu_media = is_menu_media
 
     def __str__(self):
@@ -371,13 +389,33 @@ class ApplicationMediaReference(object):
             detailed_location = " | %s" % self.get_module_name()
         if self.form_name:
             detailed_location = "%s > %s" % (detailed_location, self.get_form_name())
-        return "%(media_type)s at %(path)s%(detailed_location)s" % {
-            'media_type': self.media_type.__name__,
+        return "%(media_class)s at %(path)s%(detailed_location)s" % {
+            'media_class': self.media_class.__name__,
             'path': self.path,
             'detailed_location': detailed_location,
         }
 
+    def as_dict(self, lang=None):
+        return {
+            'module': {
+                'name': self.get_module_name(lang),
+                'id': self.module_id,
+            },
+            'form': {
+                'name': self.get_form_name(lang),
+                'id': self.form_id,
+                'order': self.form_order,
+            },
+            'is_menu_media': self.is_menu_media,
+            'media_class': self.media_class.__name__,
+            'path': self.path,
+            "icon_class": self.media_class.get_icon_class(),
+            "media_type": self.media_class.get_nice_name(),
+        }
+
     def _get_name(self, raw_name, lang=None):
+        if raw_name is None:
+            return ""
         if not isinstance(raw_name, dict) or not isinstance(raw_name, LazyDict):
             return raw_name
         if lang is None:
@@ -413,11 +451,11 @@ class HQMediaMixin(Document):
         def _add_menu_media(item, **kwargs):
             if item.media_image:
                 media.append(ApplicationMediaReference(item.media_image,
-                                                       media_type=CommCareImage,
+                                                       media_class=CommCareImage,
                                                        is_menu_media=True, **kwargs))
             if item.media_audio:
                 media.append(ApplicationMediaReference(item.media_audio,
-                                                       media_type=CommCareAudio,
+                                                       media_class=CommCareAudio,
                                                        is_menu_media=True, **kwargs))
 
         for m, module in enumerate(self.get_modules()):
@@ -426,9 +464,10 @@ class HQMediaMixin(Document):
                 'module_id': m,
             }
             _add_menu_media(module, **media_kwargs)
-            for f in module.get_forms():
+            for f_order, f in enumerate(module.get_forms()):
                 media_kwargs['form_name'] = f.name
                 media_kwargs['form_id'] = f.unique_id
+                media_kwargs['form_order'] = f_order
                 _add_menu_media(f, **media_kwargs)
                 try:
                     parsed = f.wrapped_xform()
@@ -437,13 +476,12 @@ class HQMediaMixin(Document):
                     f.validate_form()
                     for image in parsed.image_references:
                         if image:
-                            media.append(ApplicationMediaReference(image, media_type=CommCareImage, **media_kwargs))
+                            media.append(ApplicationMediaReference(image, media_class=CommCareImage, **media_kwargs))
                     for audio in parsed.audio_references:
                         if audio:
-                            media.append(ApplicationMediaReference(audio, media_type=CommCareAudio, **media_kwargs))
+                            media.append(ApplicationMediaReference(audio, media_class=CommCareAudio, **media_kwargs))
                 except (XFormValidationError, XFormError):
                     self.media_form_errors = True
-
         return media
 
     @property
@@ -452,8 +490,8 @@ class HQMediaMixin(Document):
         return set([m.path for m in self.all_media])
 
     @memoized
-    def get_all_paths_of_type(self, media_type_name):
-        return set([m.path for m in self.all_media if m.media_type.__name__ == media_type_name])
+    def get_all_paths_of_type(self, media_class_name):
+        return set([m.path for m in self.all_media if m.media_class.__name__ == media_class_name])
 
     def remove_unused_mappings(self):
         """
@@ -499,12 +537,49 @@ class HQMediaMixin(Document):
                 del self.multimedia_map[path]
                 self.save()
 
+    def get_references(self, lang=None):
+        """
+            Used for the multimedia controller.
+        """
+        return [m.as_dict(lang) for m in self.all_media]
+
+    def get_object_map(self):
+        object_map = {}
+        for path, media_obj in self.get_media_objects():
+            object_map[path] = media_obj.get_media_info(path)
+        return object_map
+
+    def get_reference_totals(self):
+        """
+            Returns a list of totals of each type of media in the application and total matches.
+        """
+        totals = []
+        for mm in [CommCareImage, CommCareAudio]:
+            paths = self.get_all_paths_of_type(mm.__name__)
+            if len(paths) > 0:
+                totals.append({
+                        'media_type': mm.get_nice_name(),
+                        'totals': len(paths),
+                        'matched': len([p for p in self.multimedia_map.keys() if p in paths]),
+                        'icon_class': mm.get_icon_class(),
+                })
+        return totals
+
+    def prepare_multimedia_for_exchange(self):
+        """
+            Prepares the multimedia in the application for exchanging across domains.
+        """
+        self.remove_unused_mappings()
+        for path, media in self.get_media_objects():
+            if not media or (not media.is_shared and self.domain not in media.owners):
+                del self.multimedia_map[path]
+
     def get_media_references(self, request=None):
         """
+            DEPRECATED METHOD: Use self.all_media instead.
             Use this to check all Application media against the stored multimedia_map.
         """
         #todo this should get updated to use self.all_media
-        #todo multimedia map VIEW should show nice output of Module > Name for each path /// clean this view up!
         from corehq.apps.app_manager.models import Application
         if not isinstance(self, Application):
             raise NotImplementedError("Sorry, this method is only supported for CommCare HQ Applications.")
@@ -561,12 +636,3 @@ class HQMediaMixin(Document):
             "form_errors": form_errors,
             "missing_refs": missing_refs,
         }
-
-    def prepare_multimedia_for_exchange(self):
-        """
-            Prepares the multimedia in the application for exchanging across domains.
-        """
-        self.remove_unused_mappings()
-        for path, media in self.get_media_objects():
-            if not media or (not media.is_shared and self.domain not in media.owners):
-                del self.multimedia_map[path]

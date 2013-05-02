@@ -2,10 +2,8 @@ from datetime import datetime
 from celery.schedules import crontab
 from celery.task import periodic_task, task
 from celery.utils.log import get_task_logger
-from corehq.apps.domain.calculations import CALC_FNS
-from corehq.apps.domain.models import Domain
+from corehq.apps.domain.calculations import CALC_FNS, _all_domain_stats
 from corehq.apps.hqadmin.escheck import check_cluster_health, check_case_index, CLUSTER_HEALTH, check_xform_index, check_exchange_index
-from corehq.apps.hqadmin.views import _all_domain_stats
 from corehq.apps.reports.models import (ReportNotification,
     UnsupportedScheduledReportError, HQGroupExportConfiguration )
 from corehq.elastic import get_es
@@ -76,7 +74,7 @@ def saved_exports():
     for row in HQGroupExportConfiguration.view("groupexport/by_domain", reduce=False).all():
         export_for_group(row["id"], "couch")
 
-@periodic_task(run_every=crontab(hour="0", minute="0", day_of_week="*"))
+@periodic_task(run_every=crontab(hour="12, 22", minute="0", day_of_week="*"))
 def update_calculated_properties():
     es = get_es()
 
@@ -94,8 +92,10 @@ def update_calculated_properties():
             "cp_n_forms": int(all_stats["forms"][dom]),
             "cp_first_form": CALC_FNS["first_form_submission"](dom, False),
             "cp_last_form": CALC_FNS["last_form_submission"](dom, False),
+            "cp_is_active": CALC_FNS["active"](dom),
+            "cp_has_app": CALC_FNS["has_app"](dom),
         }
         if calced_props['cp_first_form'] == 'No forms':
             del calced_props['cp_first_form']
             del calced_props['cp_last_form']
-        es.post("%s/hqdomain/%s/_update" % (DOMAIN_INDEX, r["_id"]) , data= {"doc": calced_props})
+        es.post("%s/hqdomain/%s/_update" % (DOMAIN_INDEX, r["_id"]), data={"doc": calced_props})

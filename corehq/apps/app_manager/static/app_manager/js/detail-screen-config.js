@@ -65,6 +65,11 @@ var DetailScreenConfig = (function () {
         }
         return orig;
     }
+
+    var field_val_re = /^[a-zA-Z][\w_-]*(\/[a-zA-Z][\w_-]*)*$/;
+    var field_format_warning = $('<span/>').addClass('help-inline')
+        .text("Must begin with a letter and contain only letters, numbers, '-', and '_'");
+
     Column = (function () {
         function Column(col, screen) {
             /*
@@ -102,6 +107,7 @@ var DetailScreenConfig = (function () {
                 {label: "Referral", value: "referral"}
             ]).val(this.original.model);
             this.field = uiElement.input().val(this.original.field);
+            this.format_warning = field_format_warning.clone().hide();
 
             (function () {
                 var i, lang, visibleVal = "", invisibleVal = "";
@@ -183,7 +189,7 @@ var DetailScreenConfig = (function () {
             }).fire('change');
 
             this.$add = $('<i></i>').addClass(COMMCAREHQ.icons.ADD).click(function () {
-                if (that.field.val()) {
+                if (that.field.val() && field_val_re.test(that.field.val())) {
                     that.duplicate();
                 } else {
                     that.field.$edit_view.focus();
@@ -320,6 +326,11 @@ var DetailScreenConfig = (function () {
             this.customColumn = Column.init({model: "case", format: "plain"}, this);
             this.customColumn.field.on('change', function () {
                 that.customColumn.header.val(toTitleCase(this.val()));
+                if (this.val() && !field_val_re.test(this.val())) {
+                    that.customColumn.format_warning.show().parent().addClass('error');
+                } else {
+                    that.customColumn.format_warning.hide().parent().removeClass('error');
+                }
             }).$edit_view.autocomplete({
                 source: function (request, response) {
                     var availableTags = that.properties[that.customColumn.model.val()];
@@ -483,7 +494,13 @@ var DetailScreenConfig = (function () {
                     parts[j] = '<code style="display: inline-block;">' + parts[j] + '</code>'
                     column.field.ui.html(parts.join('<span style="color: #DDD;">/</span>'));
                 }
-                $('<td/>').addClass('detail-screen-field').append(column.field.ui).appendTo($tr);
+                var dsf = $('<td/>').addClass('detail-screen-field control-group').append(column.field.ui)
+                dsf.append(column.format_warning);
+                if (column.field.value && !field_val_re.test(column.field.value)) {
+                    column.format_warning.show().parent().addClass('error');
+                }
+                dsf.appendTo($tr);
+
                 $('<td/>').addClass('detail-screen-header').append(column.header.ui).appendTo($tr);
                 $('<td/>').addClass('detail-screen-format').append(column.format.ui).appendTo($tr);
                 $('<td/>').addClass('detail-screen-extra').append(column.$extra).appendTo($tr);
@@ -503,7 +520,9 @@ var DetailScreenConfig = (function () {
             },
             render: function () {
                 var $table, $columns, $suggestedColumns, $thead, $tr, i, $box;
-                $('<h4/>').text(sectionLabels[this.model]).appendTo(this.$home);
+                if (sectionLabels[this.model]) {
+                    $('<h4/>').text(sectionLabels[this.model]).appendTo(this.$home);
+                }
                 $box = $("<div/>").appendTo(this.$home);
 
                 // this is a not-so-elegant way to get the styling right

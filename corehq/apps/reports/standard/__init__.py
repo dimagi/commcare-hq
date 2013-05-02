@@ -63,7 +63,6 @@ class ProjectReportParametersMixin(object):
 
     @memoized
     def get_all_users_by_domain(self, group=None, individual=None, user_filter=None, simplified=False):
-
         return list(util.get_all_users_by_domain(
             domain=self.domain,
             group=group,

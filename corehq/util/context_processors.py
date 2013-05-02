@@ -13,6 +13,23 @@ def base_template(request):
         'login_template': settings.LOGIN_TEMPLATE,
     }
 
+def domain(request):
+    """Global per-domain context variables"""
+
+    project = getattr(request, 'project', None)
+    if project and project.commtrack_enabled:
+        logo = 'hqstyle/img/commtrack-logo.png'
+        site_name = "CommTrack"
+    else:
+        logo = 'hqstyle/img/commcare-logo.png'
+        site_name = "CommCare HQ"
+
+    return {
+        'LOGO': logo,
+        'SITE_NAME': site_name
+    }
+
+
 def current_url_name(request):
     """
     Adds the name for the matched url pattern for the current request to the

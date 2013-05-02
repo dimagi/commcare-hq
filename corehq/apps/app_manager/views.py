@@ -5,6 +5,7 @@ from diff_match_patch import diff_match_patch
 from django.core.cache import cache
 from django.template.loader import render_to_string
 import hashlib
+from django.utils.translation import ugettext as _
 from corehq.apps.app_manager.const import APP_V1
 from corehq.apps.app_manager.success_message import SuccessMessage
 from corehq.apps.domain.models import Domain
@@ -213,6 +214,7 @@ def app_source(req, domain, app_id):
 @login_and_domain_required
 def import_app(req, domain, template="app_manager/import_app.html"):
     if req.method == "POST":
+        _clear_app_cache(req, domain)
         name = req.POST.get('name')
         try:
             source = req.POST.get('source')
@@ -230,7 +232,7 @@ def import_app(req, domain, template="app_manager/import_app.html"):
         return back_to_main(**locals())
     else:
         app_id = req.GET.get('app')
-        redirect_domain = req.GET.get('domain')
+        redirect_domain = req.GET.get('domain') or None
         if redirect_domain is not None:
             if Domain.get_by_name(redirect_domain):
                 return HttpResponseRedirect(
@@ -311,13 +313,15 @@ def default(req, domain):
 def get_form_view_context(request, form, langs, is_user_registration, messages=messages):
     xform_questions = []
     xform = None
+    form_errors = []
+
     try:
         xform = form.wrapped_xform()
     except XFormError as e:
-        messages.error(request, "Error in form: %s" % e)
+        form_errors.append("Error in form: %s" % e)
     except Exception as e:
         logging.exception(e)
-        messages.error(request, "Unexpected error in form: %s" % e)
+        form_errors.append("Unexpected error in form: %s" % e)
 
     if xform and xform.exists():
         if xform.already_has_meta():
@@ -325,13 +329,14 @@ def get_form_view_context(request, form, langs, is_user_registration, messages=m
                 "This form has a meta block already! "
                 "It may be replaced by CommCare HQ's standard meta block."
             )
+
         try:
             form.validate_form()
             xform_questions = xform.get_questions(langs)
         except XMLSyntaxError as e:
-            messages.error(request, "Syntax Error: %s" % e)
+            form_errors.append("Syntax Error: %s" % e)
         except AppError as e:
-            messages.error(request, "Error in application: %s" % e)
+            form_errors.append("Error in application: %s" % e)
         except XFormValidationError as e:
 
             # Don't display the first two lines which say "Parsing form..." and 'Title: "{form_name}"'
@@ -347,19 +352,16 @@ def get_form_view_context(request, form, langs, is_user_registration, messages=m
                 message = '\n'.join(message_lines)
                 
             message = "Validation Error: " + message
+            form_errors.append((html.escape(message).replace('\n', '<br/>'), {'extra_tags': 'html'}))
 
-            messages.error(request,
-                html.escape(message).replace('\n', '<br/>'),
-                extra_tags='html',
-            )
         except XFormError as e:
-            messages.error(request, "Error in form: %s" % e)
+            form_errors.append("Error in form: %s" % e)
         # any other kind of error should fail hard, but for now there are too many for that to be practical
         except Exception as e:
             if settings.DEBUG:
                 raise
             logging.exception(e)
-            messages.error(request, "Unexpected System Error: %s" % e)
+            form_errors.append("Unexpected System Error: %s" % e)
 
         try:
             form_action_errors = form.validate_for_build()
@@ -382,6 +384,13 @@ def get_form_view_context(request, form, langs, is_user_registration, messages=m
     except Exception:
         languages = []
 
+    for i, err in enumerate(form_errors):
+        if not isinstance(err, basestring):
+            messages.error(request, err[0], **err[1])
+            form_errors[i] = err[0]
+        else:
+            messages.error(request, err)
+
     return {
         'nav_form': form if not is_user_registration else '',
         'xform_languages': languages,
@@ -390,6 +399,7 @@ def get_form_view_context(request, form, langs, is_user_registration, messages=m
         'case_reserved_words_json': load_case_reserved_words(),
         'is_user_registration': is_user_registration,
         'module_case_types': [{'module_name': module.name.get('en'), 'case_type': module.case_type} for module in form.get_app().modules if module.case_type] if not is_user_registration else None,
+        'form_errors': form_errors,
     }
 
 
@@ -450,6 +460,7 @@ def get_app_view_context(request, app):
 
     if app.get_doc_type() == 'Application':
         try:
+            # todo remove get_media_references
             multimedia = app.get_media_references()
         except ProcessTimedOut as e:
             notify_exception(request)
@@ -571,6 +582,7 @@ def release_manager(request, domain, app_id, template='app_manager/releases.html
     })
     if not app.is_remote_app():
         # Multimedia is not supported for remote applications at this time.
+        # todo remove get_media_references
         multimedia = app.get_media_references()
         context.update({
             'multimedia': multimedia,
@@ -1587,11 +1599,6 @@ def save_copy(req, domain, app_id):
         try:
             copy = app.save_copy(comment=comment, user_id=req.couch_user.get_id,
                                  previous_version=app.get_latest_saved())
-        except Exception as e:
-            copy = None
-            if settings.DEBUG:
-                raise
-            messages.error(req, "Unexpected error saving build:\n%s" % e)
         finally:
             # To make a RemoteApp always available for building
             if app.is_remote_app():
@@ -1678,7 +1685,16 @@ def download_index(req, domain, app_id, template="app_manager/download_index.htm
     if req.app.copy_of:
         files = [(path[len('files/'):], req.app.fetch_attachment(path)) for path in req.app._attachments if path.startswith('files/')]
     else:
-        files = sorted(req.app.create_all_files().items())
+        try:
+            files = sorted(req.app.create_all_files().items())
+        except Exception:
+            messages.error(req, _(
+                "We were unable to get your files "
+                "because your Application has errors. "
+                "Please click <strong>Make New Version</strong> "
+                "under <strong>Deploy</strong> "
+                "for feedback on how to fix these errors."
+            ), extra_tags='html')
     return render(req, template, {
         'app': req.app,
         'files': files,
@@ -1697,8 +1713,9 @@ def download_file(req, domain, app_id, path):
         response = HttpResponse()
     try:
         response.write(req.app.fetch_attachment('files/%s' % path))
+        assert req.app.copy_of
         return response
-    except ResourceNotFound:
+    except (ResourceNotFound, AssertionError):
         callback, callback_args, callback_kwargs = RegexURLResolver(r'^', 'corehq.apps.app_manager.download_urls').resolve(path)
         return callback(req, domain, app_id, *callback_args, **callback_kwargs)
 

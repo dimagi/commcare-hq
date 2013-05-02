@@ -15,7 +15,7 @@
     {% if is_new %}
         <ul class="breadcrumb breadcrumb-steps">
             <li class="past">
-                {% blocktrans %}Account Created for <strong>{{ request.user.first_name }}</strong>{% endblocktrans %}
+                {% blocktrans %}Account Created for <strong>{{ request.couch_user.first_name }}</strong>{% endblocktrans %}
                 <span class="divider">></span>
             </li>
             <li class="active">
@@ -32,7 +32,9 @@
 {% block registration-content %}
 <div class="span8">
     {% if is_new %}
-    <p>Congratulations, {{ request.user.first_name }}&mdash;you've successfully joined CommCare HQ.</p>
+    <p>{% blocktrans with request.couch_user.first_name as first_name %}
+      Congratulations, {{ first_name }}&mdash;you've successfully joined CommCare HQ.
+    {% endblocktrans %}</p>
     <p>Your CommCare HQ Project will contain all form submissions from your CommCare mobile applications, as well as tools that help you easily create, deploy, and monitor your applications and workers.</p>
     <p>Before you can view any of your own data from CommCare, you will need to request a project space.</p>
     {% endif %}

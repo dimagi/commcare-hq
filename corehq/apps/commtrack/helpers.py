@@ -1,6 +1,6 @@
 from casexml.apps.case.models import CommCareCase
 from corehq.apps.commtrack.models import Product, CommtrackConfig,\
-    CommtrackActionConfig, SupplyPointType
+    CommtrackActionConfig, SupplyPointType, SupplyPointProductCase
 from corehq.apps.commtrack import const
 from casexml.apps.case.tests.util import CaseBlock
 from casexml.apps.case.xml import V2
@@ -37,13 +37,14 @@ def make_supply_point(domain, location):
         version=V2,
         user_id=user_id,
         case_type=const.SUPPLY_POINT_CASE_TYPE,
+        update={
+            'location_id': location._id,
+        }
     )
     casexml = ElementTree.tostring(caseblock.as_xml())
-    submit_case_blocks(casexml, domain, username, user_id)
-    c = CommCareCase.get(id)
-    c.bind_to_location(location)
-    c.save()
-    return c
+    submit_case_blocks(casexml, domain, username, user_id,
+                       xmlns=const.COMMTRACK_SUPPLY_POINT_XMLNS)
+    return CommCareCase.get(id)
 
 def make_supply_point_product(supply_point_case, product_uuid):
     domain = supply_point_case.domain
@@ -65,11 +66,9 @@ def make_supply_point_product(supply_point_case, product_uuid):
         }
     )
     casexml = ElementTree.tostring(caseblock.as_xml())
-    submit_case_blocks(casexml, domain, username, user_id)
-    pc = CommCareCase.get(id)
-    pc.location_ = supply_point_case.location_
-    pc.save()
-    return pc
+    submit_case_blocks(casexml, domain, username, user_id,
+                       xmlns=const.COMMTRACK_SUPPLY_POINT_PRODUCT_XMLNS)
+    return SupplyPointProductCase.get(id)
 
 def make_psi_config(domain):
     c = CommtrackConfig(

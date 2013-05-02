@@ -50,7 +50,6 @@ class Organization(Document):
         return self.title
 
     def get_members(self):
-        from corehq.apps.users.models import WebUser
         return WebUser.by_organization(self.name)
 
 
