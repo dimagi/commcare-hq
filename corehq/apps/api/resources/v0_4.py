@@ -32,7 +32,10 @@ class XFormInstanceResource(v0_3.XFormInstanceResource, DomainSpecificResourceMi
         return MOCK_XFORM_ES or XFormES(domain)
 
     def obj_get_list(self, bundle, domain, **kwargs):
-        return ESQuerySet(payload = es_search(bundle.request, domain),
+        es_query = es_search(bundle.request, domain)    
+        es_query['filter']['and'].append({'term': {'doc_type': 'xforminstance'}})
+
+        return ESQuerySet(payload = es_query,
                           model = XFormInstance, 
                           es_client=self.xform_es(domain)) # Not that XFormES is used only as an ES client, for `run_query` against the proper index
 
