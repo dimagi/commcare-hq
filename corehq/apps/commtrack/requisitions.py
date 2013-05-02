@@ -55,7 +55,7 @@ class RequisitionState(object):
 
     @classmethod
     def from_transactions(cls, user_id, product_stock_case, transactions):
-        assert transactions, "can't make a requisition state from an empty transaciton list"
+        assert transactions, "can't make a requisition state from an empty transaction list"
 
         def _to_fields(transaction):
             ret = {'requisition_status': RequisitionStatus.by_action_type(transaction.action_config.action_type)}
