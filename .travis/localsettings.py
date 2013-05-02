@@ -14,6 +14,8 @@ DATABASES = {
     }
 }
 
+SQL_REPORTING_DATABASE_URL = "sqlite:////tmp/commcare_reporting_test.db"
+
 ####### Couch Config ######
 COUCH_HTTPS = False 
 COUCH_SERVER_ROOT = '127.0.0.1:5984' 
