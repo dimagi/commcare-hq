@@ -36,6 +36,11 @@ ISO_FORMAT = '%Y-%m-%dT%H:%M:%SZ'
 def json_format_datetime(time):
     return time.strftime(ISO_FORMAT)
 
+ISO_DATE_FORMAT = '%Y-%m-%d'
+def json_format_date(time):
+    return time.strftime(ISO_DATE_FORMAT)
+
+
 ISO_MIN = datetime(1900, 1, 1)
 
 # use: json.dumps(datetime.datetime.now(), default=json_dt_handler)
