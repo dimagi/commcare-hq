@@ -1,3 +1,5 @@
+{% load hqstyle_tags %}
+{% load hq_shared_tags %}
 <div class="form form-horizontal">
     <fieldset>
         {% for phone in phone_numbers_extended %}
@@ -45,22 +47,24 @@
         {% endfor %}
     </fieldset>
 </div>
-<form class="form form-horizontal" name="add_phone_number" method="post">
-    <input type="hidden" name="form_type" value="phone-numbers" />
-    <fieldset>
-        <legend>Add a New Number</legend>
-        <div class="control-group">
-            <label class="control-label" for="id_add_phone_number">Phone Number:</label>
-            <div class="controls">
-                <div class="input-prepend">
-                    <span class="add-on">+</span>
-                    <input id="id_add_phone_number" type="text" name="phone_number" value="" maxlength="50" />
+{% if current_users_page %}
+    <form class="form form-horizontal" name="add_phone_number" method="post">
+        <input type="hidden" name="form_type" value="phone-numbers" />
+        <fieldset>
+            <legend>Add a New Number</legend>
+            <div class="control-group">
+                <label class="control-label" for="id_add_phone_number">Phone Number:</label>
+                <div class="controls">
+                    <div class="input-prepend">
+                        <span class="add-on">+</span>
+                        <input id="id_add_phone_number" type="text" name="phone_number" value="" maxlength="50" />
+                    </div>
+                    <p class="help-block">
+                        Please enter number, including international code, in digits only.
+                    </p>
                 </div>
-                <p class="help-block">
-                    Please enter number, including international code, in digits only.
-                </p>
             </div>
-        </div>
-    </fieldset>
-    <div class="form-actions"><button type="submit" class="btn btn-primary">Add Number</button></div>
-</form>
+        </fieldset>
+        <div class="form-actions"><button type="submit" class="btn btn-primary">Add Number</button></div>
+    </form>
+{% endif %}

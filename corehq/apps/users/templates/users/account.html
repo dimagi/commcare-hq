@@ -108,6 +108,7 @@
             {% else %}
                 {% include "users/partial/edit_other_user.html" %}
             {% endif %}
+            {% include "users/partial/edit_phone_numbers.html" %}
         </div>
         {% if editing_commcare_user %}
         <div class="tab-pane" id="user-data">
@@ -222,4 +223,3 @@
     </div>
     {% endif %}
 {% endblock %}
-
