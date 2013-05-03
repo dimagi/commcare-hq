@@ -253,7 +253,7 @@ class CommCareMobileContactMixin(object):
         """
         Deletes this contact's phone number from the verified phone number list, freeing it up
         for use by other contacts.
-        
+
         return  void
         """
         v = self.get_verified_number(phone_number)

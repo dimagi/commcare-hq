@@ -596,7 +596,7 @@ class DjangoUserMixin(DocumentSchema):
         return dummy.check_password(password)
 
 
-class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, UnicodeMixIn):
+class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, UnicodeMixIn, CommCareMobileContactMixin):
     """
     A user (for web and commcare)
     """
@@ -1032,7 +1032,7 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, UnicodeMixIn):
         return super(CouchUser, self).__getattr__(item)
 
 
-class CommCareUser(CouchUser, CommCareMobileContactMixin, SingleMembershipMixin):
+class CommCareUser(CouchUser, SingleMembershipMixin):
 
     domain = StringProperty()
     registering_device_id = StringProperty()
