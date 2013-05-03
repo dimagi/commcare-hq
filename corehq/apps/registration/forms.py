@@ -8,17 +8,36 @@ from django.core.validators import validate_email
 from corehq.apps.domain.models import Domain
 from corehq.apps.domain.utils import new_domain_re, new_org_re, website_re
 from corehq.apps.orgs.models import Organization
+from django.utils.safestring import mark_safe
+from django.utils.translation import ugettext_lazy as _
 
 class NewWebUserRegistrationForm(forms.Form):
     """
     Form for a brand new user, before they've created a domain or done anything on CommCare HQ.
     """
-    full_name = forms.CharField(label='Full Name', max_length=User._meta.get_field('first_name').max_length+User._meta.get_field('last_name').max_length+1)
+    full_name = forms.CharField(label='Full Name',
+                                max_length=User._meta.get_field('first_name').max_length +
+                                           User._meta.get_field('last_name').max_length + 1)
     email = forms.EmailField(label='Email Address',
                                     max_length=User._meta.get_field('email').max_length,
                                     help_text='You will use this email to log in.')
-    password  =  forms.CharField(label='Password', max_length=max_pwd, widget=forms.PasswordInput(render_value=False))
-    eula_confirmed = forms.BooleanField(required=False, label="End User License Agreement") # Must be set to False to have the clean_*() routine called
+    password = forms.CharField(label='Password',
+                               max_length=max_pwd,
+                               widget=forms.PasswordInput(render_value=False))
+    email_opt_in = forms.BooleanField(required=False,
+                                      initial=True,
+                                      label="",
+                                      help_text=_("Join the mailing list to receive important announcements."))
+    # Must be set to False to have the clean_*() routine called
+    eula_confirmed = forms.BooleanField(required=False,
+                                        label="",
+                                        help_text=mark_safe(
+                                            """I have read and agree to the
+                                               <a data-toggle='modal'
+                                                  data-target='#eulaModal'
+                                                  href='#eulaModal'>
+                                                  CommCare HQ End User License Agreement
+                                               </a>."""))
     # not required for when a user accepts an invitation
     domain_type = forms.CharField(
         required=False, widget=forms.HiddenInput(), initial='commcare')

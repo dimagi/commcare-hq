@@ -2,12 +2,14 @@
 from numbers import Number
 from corehq.apps.reports.fields import DatespanField
 from corehq.apps.reports.standard import DatespanMixin
+from corehq.apps.reports.util import format_datatables_data
 from dimagi.utils.decorators.memoized import memoized
 
 from sqlagg import *
 from sqlagg.columns import *
 
 from ..sqlreport import SqlTabularReport, DatabaseColumn, AggregateColumn
+
 
 
 def combine_indicator(num, denom):
@@ -58,15 +60,19 @@ class UserTestReport(SqlTabularReport, DatespanMixin):
     def username(self, key):
         return self.usernames_demo[key]
 
+    def format_percent(self, value):
+        return format_datatables_data("%d%%"%value, value)
+
     @property
     def columns(self):
-        user = DatabaseColumn("Username", "user", column_type=SimpleColumn, calculate_fn=self.username)
+        user = DatabaseColumn("Username", "user", column_type=SimpleColumn, format_fn=self.username)
         i_a = DatabaseColumn("Indicator A", "indicator_a")
         i_b = DatabaseColumn("Indicator B", "indicator_b")
 
         agg_c_d = AggregateColumn("C/D", combine_indicator,
                                   SumColumn("indicator_c"),
-                                  SumColumn("indicator_d"))
+                                  SumColumn("indicator_d"),
+                                  format_fn=self.format_percent)
 
         aggregate_cols = [
             i_a,
@@ -114,8 +120,8 @@ class RegionTestReport(SqlTabularReport, DatespanMixin):
 
     @property
     def columns(self):
-        region = DatabaseColumn("Region", "region", column_type=SimpleColumn, calculate_fn=self.region_name)
-        sub_region = DatabaseColumn("Sub Region", "sub_region", column_type=SimpleColumn, calculate_fn=self.sub_region_name)
+        region = DatabaseColumn("Region", "region", column_type=SimpleColumn, format_fn=self.region_name)
+        sub_region = DatabaseColumn("Sub Region", "sub_region", column_type=SimpleColumn, format_fn=self.sub_region_name)
         i_a = DatabaseColumn("Indicator A", "indicator_a")
         i_b = DatabaseColumn("Indicator B", "indicator_b")
 

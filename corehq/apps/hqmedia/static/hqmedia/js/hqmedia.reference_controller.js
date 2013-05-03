@@ -20,6 +20,10 @@ function MultimediaReferenceController (references, obj_map) {
             }
             self.modules[ref.module.id].processReference(ref);
         });
+        self.modules = _.compact(self.modules);
+        _.each(self.modules, function (mod) {
+            mod.forms = _.compact(mod.forms);
+        });
     };
 
     self.toggleMissingRefs = function (sender, event) {

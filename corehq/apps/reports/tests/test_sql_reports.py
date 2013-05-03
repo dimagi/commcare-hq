@@ -27,7 +27,20 @@ class BaseReportTest(unittest.TestCase):
     def _get_report_data(self, report, startdate, enddate):
         req = self._get_request(startdate, enddate)
         rep = report(req, in_testing=True)
-        return rep.json_dict['aaData']
+        json = rep.json_dict['aaData']
+        html_data, sort_data = [], []
+        for row in json:
+            html_row, sort_row = [], []
+            for val in row:
+                if isinstance(val, dict):
+                    html_row.append(val["html"])
+                    sort_row.append(val["sort_key"])
+                else:
+                    html_row.append(val)
+                    sort_row.append(val)
+            html_data.append(html_row)
+            sort_data.append(sort_row)
+        return html_data, sort_data
 
     def _get_request(self, startdate, enddate):
         request = self.factory.get('/')
@@ -41,42 +54,53 @@ class BaseReportTest(unittest.TestCase):
 
 class SimpleReportTest(BaseReportTest):
     def test_no_group_no_filter(self):
-        data = self._get_report_data(test_report(UserTestReport), "2013-01-01", "2013-02-01")
-        self.assertEqual(len(data), 1)
-        self.assertEqual(data[0], [2, 2, 66])
+        html_data, sort_data = self._get_report_data(test_report(UserTestReport), "2013-01-01", "2013-02-01")
+        self.assertEqual(len(sort_data), 1)
+        self.assertEqual(sort_data[0], [2, 2, 66])
 
     def test_no_group_with_filter(self):
         filters = ["date > :startdate"]
         report = test_report(UserTestReport, filters=filters)
-        data = self._get_report_data(report, "2013-01-01", "2013-02-01")
-        self.assertEqual(len(data), 1)
-        self.assertEqual(data[0], [1, 1, 66])
+        html_data, sort_data = self._get_report_data(report, "2013-01-01", "2013-02-01")
+        self.assertEqual(len(sort_data), 1)
+        self.assertEqual(sort_data[0], [1, 1, 66])
 
     def test_with_group_no_filter(self):
         keys = [["user1"], ["user2"]]  # specify keys to guarantee ordering
         report = test_report(UserTestReport, keys=keys, group_by=['user'])
-        data = self._get_report_data(report, "2013-01-01", "2013-02-01")
-        self.assertEqual(len(data), 2)
-        self.assertEqual(data[0], ['Joe', 1, 1, 100])
-        self.assertEqual(data[1], ['Bob', 1, 1, 50])
+        html_data, sort_data = self._get_report_data(report, "2013-01-01", "2013-02-01")
+        self.assertEqual(len(sort_data), 2)
+        self.assertEqual(sort_data[0], ['Joe', 1, 1, 100])
+        self.assertEqual(sort_data[1], ['Bob', 1, 1, 50])
 
     def test_with_group_with_filter(self):
         keys = [["user1"], ["user2"]]  # specify keys to guarantee ordering
         filters = ["date > :startdate"]
         report = test_report(UserTestReport, keys=keys, filters=filters, group_by=['user'])
-        data = self._get_report_data(report, "2013-01-01", "2013-02-01")
-        self.assertEqual(len(data), 2)
-        self.assertEqual(data[0], ['Joe', 0, 1, 100])
-        self.assertEqual(data[1], ['Bob', 1, 0, 50])
+        html_data, sort_data = self._get_report_data(report, "2013-01-01", "2013-02-01")
+        self.assertEqual(len(sort_data), 2)
+        self.assertEqual(sort_data[0], ['Joe', 0, 1, 100])
+        self.assertEqual(sort_data[1], ['Bob', 1, 0, 50])
 
     def test_extra_keys(self):
         keys = [["user1"], ["user2"], ["user3"]]
         report = test_report(UserTestReport, keys=keys, group_by=['user'])
-        data = self._get_report_data(report, "2013-01-01", "2013-02-01")
-        self.assertEqual(len(data), 3)
-        self.assertEqual(data[0], ['Joe', 1, 1, 100])
-        self.assertEqual(data[1], ['Bob', 1, 1, 50])
-        self.assertEqual(data[2], ['Gill', '--', '--', '--'])
+        html_data, sort_data = self._get_report_data(report, "2013-01-01", "2013-02-01")
+        self.assertEqual(len(sort_data), 3)
+        self.assertEqual(sort_data[0], ['Joe', 1, 1, 100])
+        self.assertEqual(sort_data[1], ['Bob', 1, 1, 50])
+        self.assertEqual(sort_data[2], ['Gill', '--', '--', '--'])
+
+    def test_formatting(self):
+        keys = [["user1"], ["user2"]]
+        report = test_report(UserTestReport, keys=keys, group_by=['user'])
+        html_data, sort_data = self._get_report_data(report, "2013-01-01", "2013-02-01")
+        self.assertEqual(len(sort_data), 2)
+        self.assertEqual(html_data[0], ['Joe', 1, 1, "100%"])
+        self.assertEqual(html_data[1], ['Bob', 1, 1, "50%"])
+
+        self.assertEqual(sort_data[0], ['Joe', 1, 1, 100])
+        self.assertEqual(sort_data[1], ['Bob', 1, 1, 50])
 
     def test_multi_level_grouping(self):
         keys = [
@@ -84,9 +108,9 @@ class SimpleReportTest(BaseReportTest):
             ["region2", "region2_a"], ["region2", "region2_b"]
         ]
         report = test_report(RegionTestReport, keys=keys, group_by=["region", "sub_region"])
-        data = self._get_report_data(report, "2013-01-01", "2013-02-01")
-        self.assertEqual(len(data), 4)
-        self.assertEqual(data[0], ['Cape Town', 'Ronderbosch', 2, 1])
-        self.assertEqual(data[1], ['Cape Town', 'Newlands', 0, 1])
-        self.assertEqual(data[2], ['Durban', 'Glenwood', 1, 2])
-        self.assertEqual(data[3], ['Durban', 'Morningside', 1, 0])
+        html_data, sort_data = self._get_report_data(report, "2013-01-01", "2013-02-01")
+        self.assertEqual(len(sort_data), 4)
+        self.assertEqual(sort_data[0], ['Cape Town', 'Ronderbosch', 2, 1])
+        self.assertEqual(sort_data[1], ['Cape Town', 'Newlands', 0, 1])
+        self.assertEqual(sort_data[2], ['Durban', 'Glenwood', 1, 2])
+        self.assertEqual(sort_data[3], ['Durban', 'Morningside', 1, 0])
