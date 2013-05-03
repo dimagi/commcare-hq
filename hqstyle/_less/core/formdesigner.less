@@ -2,9 +2,12 @@
 
 #formdesigner .fd-nav {
   margin-bottom: 0;
+  &.nav-tabs > li {
+    margin-bottom: 0;
+  }
 }
 #formdesigner .fd-toolbar {
-  #gradient > .vertical(@white, lighten(@toolbarBlue, 60));
+  #gradient > .vertical(lighten(@toolbarBlue, 50), lighten(@toolbarBlue, 30));
   border-left: 1px solid #ddd;
   border-right: 1px solid #ddd;
 
@@ -13,7 +16,6 @@
     display: inline-block;
     vertical-align: middle;
   }
-
   h2 {
     font-size: 1.8em;
     color: @toolbarBlue;
@@ -23,18 +25,18 @@
   }
 
   .btn{
-    padding: 8px 15px;
+    padding: 6px 10px;
   }
 
   .fd-question-type-group {
     .btn.fd-question-type > span {
       display: block;
-      width: 55px;
+      width: 40px;
       text-align: center;
-      padding: 8px 0;
+      padding: 6px 0;
     }
-    .btn:last-of-type {
-      padding: 8px 6px 8px 1px;
+    .btn:nth-of-type(2) {
+      padding: 6px 6px 6px 1px;
       .btn > span {
         width:auto;
       }
@@ -57,3 +59,11 @@
 #formdesigner .fd-question-type .tooltip {
   display: absolute !important;
 }
+
+#formdesigner .fd-head {
+  background: lighten(@toolbarBlue, 10);
+  font-weight: normal !important;
+  padding: 2px 0 !important;
+}
+
+
