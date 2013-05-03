@@ -117,6 +117,8 @@ var CaseXML = (function () {
                         if (property.path() || property.keyVal()) {
                             if (subcase.propertyCounts()[property.keyVal()] > 1) {
                                 return "Repeat property";
+                            } else if (root.utils.reserved_words.indexOf(property.keyVal()) !== -1) {
+                                return '<strong>' + property.keyVal() + '</strong> is a reserved word';
                             }
                         }
                     });

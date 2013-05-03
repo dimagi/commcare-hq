@@ -1,7 +1,8 @@
 <table>
     <tr>
-        <th class="span6">Question</th>
-        <th class="span6">Case Property</th>
+        <th class="span4">Question</th>
+        <th class="span4">Case Property</th>
+        <th></th>
     </tr>
 
     [% for(var key in map) { %]
@@ -30,7 +31,7 @@
                 [% } else if (!/^[a-zA-Z][\w_-]*$/.test(propertyName)) { %]
                     <span class="invalid">Must start with letter and contain only letters, numbers, '-', and '_': "[%= propertyName %]"</span>
                 [% } else if (reservedWords.indexOf(propertyName) !== -1) { %]
-                    <span class="invalid">Can't name a case property "[%= propertyName %]"</span>
+                    <span class="text-error"><strong>[%= propertyName %]</strong> is a reserved word</span>
                 [% } else if (propertyName === 'name') { %]
                     <span class="label">The Case's Name</span>
                 [% } else if (propertyName !== value && showSuggestion) { %]
