@@ -1,12 +1,17 @@
-from couchdbkit import ResourceNotFound, StringProperty
+from couchdbkit import ResourceNotFound
 from couchdbkit.ext.django import schema
 import datetime
-from dimagi.utils.parsing import json_format_datetime
+from dimagi.utils.parsing import json_format_date
 from pillowtop.listener import BasicPillow
 
 
-def emitter(fn):
-    fn._emitter = True
+def date_emitter(fn):
+    fn._emitter = 'date'
+    return fn
+
+
+def null_emitter(fn):
+    fn._emitter = 'null'
     return fn
 
 
@@ -37,8 +42,10 @@ class Calculator(object):
         passes_filter = self.filter(item)
         values = {}
         for slug in self._emitters:
-            values[slug] = (list(getattr(self, slug)(item))
-                if passes_filter else [])
+            values[slug] = (
+                list(getattr(self, slug)(item))
+                if passes_filter else []
+            )
         return values
 
 
@@ -86,21 +93,39 @@ class IndicatorDocument(schema.Document):
         })
 
     @classmethod
-    def get_result(cls, calc_name, key):
+    def get_result(cls, calc_name, key, reduce=True):
         calculator = cls._calculators[calc_name]
         result = {}
         for emitter_name in calculator._emitters:
             shared_key = [cls._doc_type] + key + [calc_name, emitter_name]
-            now = datetime.datetime.utcnow()
-            q = cls.get_db().view(
-                'fluff/generic',
-                startkey=shared_key + [json_format_datetime(now - calculator.window)],
-                endkey=shared_key + [json_format_datetime(now)],
-            ).all()
-            try:
-                result[emitter_name] = q[0]['value']
-            except IndexError:
-                result[emitter_name] = None
+            emitter_type = getattr(calculator, emitter_name)._emitter
+            q_args = {
+                'reduce': reduce,
+                'include_docs': not reduce,
+            }
+            if emitter_type == 'date':
+                now = datetime.datetime.utcnow().date()
+                start = now - calculator.window
+                end = now
+                q = cls.view(
+                    'fluff/generic',
+                    startkey=shared_key + [json_format_date(start)],
+                    endkey=shared_key + [json_format_date(end)],
+                    **q_args
+                ).all()
+            elif emitter_type == 'null':
+                q = cls.view(
+                    'fluff/generic',
+                    key=shared_key + [None],
+                    **q_args
+                ).all()
+            if reduce:
+                try:
+                    result[emitter_name] = q[0]['value']
+                except IndexError:
+                    result[emitter_name] = 0
+            else:
+                result[emitter_name] = q
         return result
 
     class Meta:

@@ -19,11 +19,13 @@ Example:
 import fluff
 
 class VisitCalculator(fluff.Calculator):
-    @fluff.emitter
+
+    @fluff.date_emitter
     def all_visits(self, case):
         for action in case.actions:
             yield action.date
 
+    @fluff.date_emitter
     def bp_visits(self, case):
         for action in case.actions:
             if is_bp(case):
@@ -34,6 +36,7 @@ class MyIndicators(fluff.IndicatorDocument):
     document_class = CommCareCase
     group_by = ('domain', 'owner_id')
     domains = ('droberts', 'test', 'corpora')
+
     visits_week = VisitCalculator(window=timedelta(days=7))
     visits_month = VisitCalculator(window=timedelta(days=30))
 
@@ -47,7 +50,7 @@ By creating a simple setup of this sort, you'll get a bunch of stuff for free:
 
 * Whenever a doc changes, the corresponding indicator document will be updated
 * You can get aggregated results back straight from couch with a simple
-`MyIndicators.get_result('visits_week', key=[owner_id])`, which will be correct
+`MyIndicators.get_result('visits_week', key=[domain, owner_id])`, which will be correct
 for the current date/time with no real-time computation, and will return the
 data in the following format:
 
