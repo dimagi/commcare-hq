@@ -245,7 +245,9 @@ def account(request, domain, couch_user_id, template="users/account.html"):
             raise Http404
 
     # phone-numbers tab
-    if request.method == "POST" and request.POST['form_type'] == "phone-numbers":
+    if request.method == "POST" and \
+       request.POST['form_type'] == "phone-numbers" and \
+       couch_user.is_current_web_user(request):
         phone_number = request.POST['phone_number']
         phone_number = re.sub('\s', '', phone_number)
         if re.match(r'\d+$', phone_number):
@@ -295,18 +297,18 @@ def account(request, domain, couch_user_id, template="users/account.html"):
     context.update(_handle_user_form(request, domain, couch_user))
     return render(request, template, context)
 
-
-
 @require_permission_to_edit_user
 def delete_phone_number(request, domain, couch_user_id):
     """
     phone_number cannot be passed in the url due to special characters
     but it can be passed as %-encoded GET parameters
     """
+    user = CouchUser.get_by_user_id(couch_user_id, domain)
+    if not user.is_current_web_user(request):
+        raise Http404
     if 'phone_number' not in request.GET:
         return Http404('Must include phone number in request.')
     phone_number = urllib.unquote(request.GET['phone_number'])
-    user = CouchUser.get_by_user_id(couch_user_id, domain)
     for i in range(0,len(user.phone_numbers)):
         if user.phone_numbers[i] == phone_number:
             del user.phone_numbers[i]
@@ -484,7 +486,7 @@ def _handle_user_form(request, domain, couch_user=None):
                 django_user.username = form.cleaned_data['email']
                 django_user.save()
                 couch_user = CouchUser.from_django_user(django_user)
-            if request.couch_user.user_id == couch_user.user_id:
+            if couch_user.is_current_web_user(request):
                 couch_user.first_name = form.cleaned_data['first_name']
                 couch_user.last_name = form.cleaned_data['last_name']
                 couch_user.email = form.cleaned_data['email']
