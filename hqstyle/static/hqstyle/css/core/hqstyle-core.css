@@ -7713,15 +7713,18 @@ a.badge:hover {
 #formdesigner .fd-nav {
   margin-bottom: 0;
 }
+#formdesigner .fd-nav.nav-tabs > li {
+  margin-bottom: 0;
+}
 #formdesigner .fd-toolbar {
-  background-color: #fafbfc;
-  background-image: -moz-linear-gradient(top, #ffffff, #f2f4f7);
-  background-image: -webkit-gradient(linear, 0 0, 0 100%, from(#ffffff), to(#f2f4f7));
-  background-image: -webkit-linear-gradient(top, #ffffff, #f2f4f7);
-  background-image: -o-linear-gradient(top, #ffffff, #f2f4f7);
-  background-image: linear-gradient(to bottom, #ffffff, #f2f4f7);
+  background-color: #b7c6d6;
+  background-image: -moz-linear-gradient(top, #d1dae5, #90a6c0);
+  background-image: -webkit-gradient(linear, 0 0, 0 100%, from(#d1dae5), to(#90a6c0));
+  background-image: -webkit-linear-gradient(top, #d1dae5, #90a6c0);
+  background-image: -o-linear-gradient(top, #d1dae5, #90a6c0);
+  background-image: linear-gradient(to bottom, #d1dae5, #90a6c0);
   background-repeat: repeat-x;
-  filter: progid:DXImageTransform.Microsoft.gradient(startColorstr='#ffffffff', endColorstr='#fff2f4f7', GradientType=0);
+  filter: progid:DXImageTransform.Microsoft.gradient(startColorstr='#ffd1dae5', endColorstr='#ff90a6c0', GradientType=0);
   border-left: 1px solid #ddd;
   border-right: 1px solid #ddd;
 }
@@ -7738,18 +7741,18 @@ a.badge:hover {
   padding-top: 4px;
 }
 #formdesigner .fd-toolbar .btn {
-  padding: 8px 15px;
+  padding: 6px 10px;
 }
 #formdesigner .fd-toolbar .fd-question-type-group .btn.fd-question-type > span {
   display: block;
-  width: 55px;
+  width: 40px;
   text-align: center;
-  padding: 8px 0;
+  padding: 6px 0;
 }
-#formdesigner .fd-toolbar .fd-question-type-group .btn:last-of-type {
-  padding: 8px 6px 8px 1px;
+#formdesigner .fd-toolbar .fd-question-type-group .btn:nth-of-type(2) {
+  padding: 6px 6px 6px 1px;
 }
-#formdesigner .fd-toolbar .fd-question-type-group .btn:last-of-type .btn > span {
+#formdesigner .fd-toolbar .fd-question-type-group .btn:nth-of-type(2) .btn > span {
   width: auto;
 }
 #formdesigner .fd-toolbar .fd-question-type-group .btn,
@@ -7765,6 +7768,11 @@ a.badge:hover {
 }
 #formdesigner .fd-question-type .tooltip {
   display: absolute !important;
+}
+#formdesigner .fd-head {
+  background: #557395;
+  font-weight: normal !important;
+  padding: 2px 0 !important;
 }
 /**
 * From github.com/danielfarrell/bootstrap-combobox
