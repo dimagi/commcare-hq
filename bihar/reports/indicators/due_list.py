@@ -1,7 +1,7 @@
 
 from corehq.apps.api.es import FullCaseES
 
-def due_list_by_task_name(target_date, case_es=None):
+def due_list_by_task_name(target_date, owner_id=None, case_es=None, size=0, case_type='task'):
     """
     Returns the due list in a dictionary of the form {type: count}
     """
@@ -14,19 +14,17 @@ def due_list_by_task_name(target_date, case_es=None):
     # so we can get the sums directly as facets on `name.exact` where the `.exact`
     # is to avoid tokenization so that "OPV 1" does not create two facets.
 
-    base_query = case_es.base_query(start=0, size=0)
-    
-    date_filter = {
-        "range": {
-            "date_eligible": {"to": target_date.isoformat()},
-            "date_expires": {"from": target_date.isoformat()},
-        }
-    }
+    base_query = case_es.base_query(start=0, size=size)
+
+    owner_filter = {"match_all":{}} if owner_id is None else {"term": {"owner_id": owner_id}}
 
     filter = {
         "and": [
-            {"term": { "closed": False, "type": "task" }},
-            date_filter
+            owner_filter,
+            {"term": {"closed": False}},
+            {"term": {"type": case_type}},
+            {"range": {"date_eligible": {"to": target_date.isoformat() }}},
+            {"range": {"date_expires": {"from": target_date.isoformat()}}},
         ]
     }
 
