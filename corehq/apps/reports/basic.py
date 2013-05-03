@@ -4,6 +4,7 @@ from corehq.apps.reports.datatables import (DataTablesHeader, DataTablesColumn,
 from corehq.apps.reports.generic import GenericTabularReport
 from couchdbkit_aggregate import AggregateView, KeyView, AggregateKeyView
 from dimagi.utils.couch.database import get_db
+from corehq.apps.reports.util import format_datatables_data
 
 __all__ = ['Column', 'BasicTabularReport']
 
@@ -44,7 +45,8 @@ class Column(object):
             else:
                 self.view = KeyView(key, **couch_kwargs)
         elif calculate_fn:
-            kwargs['sortable'] = False
+            if 'sortable' not in kwargs:
+                kwargs['sortable'] = True
             self.view = FunctionView(calculate_fn)
         else:
             raise Exception("Must specify either key or calculate_fn.")
@@ -147,7 +149,7 @@ class BasicTabularReport(GenericTabularReport):
         for key in self.keys:
             row = self.View.get_result(key, **kwargs)
 
-            yield [row[c] if c in self.View.key_views
+            yield [format_datatables_data(row[c], row[c]) if c in self.View.key_views
                           else self.function_views[c].view(key, self)
                    for c in self.default_column_order]
 
