@@ -11,11 +11,11 @@ def create_unique_filter(fn):
     [{'id': 'a'}, {'id': 'b'}, {'id': 'a'}, {'id': 'c'}, {'id': 'b'}]
     """
 
-    unique = []
+    unique = set()
     def filter(x):
         res = fn(x)
         if res in unique:
             return False
-        unique.append(res)
+        unique.add(res)
         return True
     return filter
