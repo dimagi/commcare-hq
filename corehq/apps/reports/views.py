@@ -57,6 +57,7 @@ from dimagi.utils.chunked import chunked
 
 from casexml.apps.case.templatetags.case_tags import case_inline_display
 from couchforms.templatetags.xform_tags import render_form
+from corehq.apps.reports.dispatcher import ProjectReportDispatcher
 
 
 DATE_FORMAT = "%Y-%m-%d"
@@ -475,9 +476,8 @@ def add_config(request, domain=None):
 
 @login_and_domain_required
 @datespan_default
-def email_report(request, domain, report_slug, **kwargs):
+def email_report(request, domain, report_slug, report_type=ProjectReportDispatcher.prefix):
     from dimagi.utils.django.email import send_HTML_email
-    from corehq.apps.reports.dispatcher import ProjectReportDispatcher
     from forms import EmailReportForm
     user_id = request.couch_user._id
 
@@ -489,11 +489,7 @@ def email_report(request, domain, report_slug, **kwargs):
     # see ReportConfig.query_string()
     object.__setattr__(config, '_id', 'dummy')
     config.name = _("Emailed report")
-    report_type = kwargs.get("report_type", None)
-    if report_type:
-        config.report_type = report_type
-    else:
-        config.report_type = ProjectReportDispatcher.prefix
+    config.report_type = report_type
 
     config.report_slug = report_slug
     config.owner_id = user_id
