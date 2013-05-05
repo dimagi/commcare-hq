@@ -762,6 +762,7 @@ class UserStatusReport(WorkerMonitoringReportTableBase, DatespanMixin):
     @property
     @memoized
     def users_by_group(self):
+        from corehq.apps.groups.models import Group
         user_dict = {}
         if '_all' in self.group_ids:
             user_dict['_all|_all'] = self.get_all_users_by_domain(
@@ -777,6 +778,11 @@ class UserStatusReport(WorkerMonitoringReportTableBase, DatespanMixin):
                 user_filter=tuple(self.user_filter),
                 simplified=True
             )
+
+        for users in user_dict.values():
+            for u in users:
+                u["group_ids"] = Group.by_user(u, False)
+
         return user_dict
 
     @property
@@ -787,23 +793,25 @@ class UserStatusReport(WorkerMonitoringReportTableBase, DatespanMixin):
 
     @property
     def headers(self):
-        header_array = [
-            DataTablesColumn(_("User")),
+        by_group = self.aggregate_by == 'groups'
+        columns = [DataTablesColumn(_("Group"))] if by_group else [DataTablesColumn(_("User"))]
+        columns.append(DataTablesColumnGroup(_("Form Data"),
             DataTablesColumn(_("# Forms Submitted"), sort_type=DTSortType.NUMERIC),
             DataTablesColumn(_("Avg # Forms Submitted"), sort_type=DTSortType.NUMERIC),
-            DataTablesColumn(_("Last Form Submission")),
+            DataTablesColumn(_("Last Form Submission")) if not by_group else DataTablesColumn(_("# Active Users"), sort_type=DTSortType.NUMERIC)
+        ))
+        columns.append(DataTablesColumnGroup(_("Case Data"),
             DataTablesColumn(_("# Cases Created"), sort_type=DTSortType.NUMERIC),
-            DataTablesColumn(_("Avg # Cases Created"), sort_type=DTSortType.NUMERIC),
+            DataTablesColumn(_("# Cases Closed"), sort_type=DTSortType.NUMERIC),
             DataTablesColumn(_("# Cases Modified"), sort_type=DTSortType.NUMERIC),
             DataTablesColumn(_("Avg # Cases Modified"), sort_type=DTSortType.NUMERIC),
-            DataTablesColumn(_("# Cases Closed")),
-            DataTablesColumn(_("Avg # Cases Closed")),
-            DataTablesColumn(_("# Inactive Cases")),
-            DataTablesColumn(_("Avg # Inactive Cases")),
-        ]
-        if self.aggregate_by == 'groups':
-            header_array[0] = DataTablesColumn(_("Group"))
-        return DataTablesHeader(*header_array)
+        ))
+        columns.append(DataTablesColumnGroup(_("Case Activity"),
+            DataTablesColumn(_("# Inactive Cases"), sort_type=DTSortType.NUMERIC),
+            DataTablesColumn(_("# Total Cases"), sort_type=DTSortType.NUMERIC),
+            DataTablesColumn(_("% Inactive Cases"), sort_type=DTSortType.NUMERIC),
+        ))
+        return DataTablesHeader(*columns)
 
     def es_form_submissions(self, datespan=None, dict_only=False):
         datespan = datespan or self.datespan
@@ -866,12 +874,25 @@ class UserStatusReport(WorkerMonitoringReportTableBase, DatespanMixin):
                 "bool": {
                     "must": [
                         {"match": {"domain.exact": self.domain}},
-                        {"match": {"closed": False}},
                         {"range": {"opened_on": {"lt": datespan.startdate_param_utc}}}],
-                    "must_not": {"range": {
-                        "modified_on": {
-                            "from": datespan.startdate_param_utc,
-                            "to": datespan.enddate_param_utc}}}}}}
+                    "must_not": [
+                        {"range": {"closed_on": {"lt": datespan.startdate_param_utc}}},
+                        {"range": {
+                            "modified_on": {
+                                "from": datespan.startdate_param_utc,
+                                "to": datespan.enddate_param_utc}}},
+                    ]}}}
+        facets = ['owner_id']
+        return es_query(q=q, facets=facets, es_url=CASE_INDEX + '/case/_search', size=1, dict_only=dict_only)
+
+    def es_total_cases(self, datespan=None, dict_only=False):
+        datespan = datespan or self.datespan
+        q = {"query": {
+                "bool": {
+                    "must": [
+                        {"match": {"domain.exact": self.domain}},
+                        {"range": {"opened_on": {"lt": datespan.startdate_param_utc}}}],
+                    "must_not": {"range": {"closed_on": {"lt": datespan.startdate_param_utc}}}}}}
         facets = ['owner_id']
         return es_query(q=q, facets=facets, es_url=CASE_INDEX + '/case/_search', size=1, dict_only=dict_only)
 
@@ -886,12 +907,14 @@ class UserStatusReport(WorkerMonitoringReportTableBase, DatespanMixin):
         avg_form_data = self.es_form_submissions(datespan=avg_datespan)
         avg_submissions_by_user = dict([(t["term"], t["count"]) for t in avg_form_data["facets"]["form.meta.userID"]["terms"]])
 
-        last_form_by_user = self.es_last_submissions()
+        if self.aggregate_by == 'groups':
+            active_users_by_group = dict([(g, len(filter(lambda u: submissions_by_user.get(u['user_id']), users)))
+                                          for g, users in self.users_by_group.iteritems()])
+        else:
+            last_form_by_user = self.es_last_submissions()
 
         case_creation_data = self.es_case_queries('opened_on')
         creations_by_user = dict([(t["term"], t["count"]) for t in case_creation_data["facets"]["user_id"]["terms"]])
-        avg_case_creation_data = self.es_case_queries('opened_on', datespan=avg_datespan)
-        avg_creations_by_user = dict([(t["term"], t["count"]) for t in avg_case_creation_data["facets"]["user_id"]["terms"]])
 
         case_modification_data = self.es_case_queries('modified_on')
         modifications_by_user = dict([(t["term"], t["count"]) for t in case_modification_data["facets"]["user_id"]["terms"]])
@@ -900,30 +923,22 @@ class UserStatusReport(WorkerMonitoringReportTableBase, DatespanMixin):
 
         case_closure_data = self.es_case_queries('closed_on')
         closures_by_user = dict([(t["term"], t["count"]) for t in case_closure_data["facets"]["user_id"]["terms"]])
-        avg_case_closure_data = self.es_case_queries('closed_on', datespan=avg_datespan)
-        avg_closures_by_user = dict([(t["term"], t["count"]) for t in avg_case_closure_data["facets"]["user_id"]["terms"]])
 
         inactive_case_data = self.es_inactive_cases()
-        inactives_by_user = dict([(t["term"], t["count"]) for t in inactive_case_data["facets"]["owner_id"]["terms"]])
-        avg_inactive_case_data = self.es_inactive_cases(datespan=avg_datespan)
-        avg_inactives_by_user = dict([(t["term"], t["count"]) for t in avg_inactive_case_data["facets"]["owner_id"]["terms"]])
+        inactives_by_owner = dict([(t["term"], t["count"]) for t in inactive_case_data["facets"]["owner_id"]["terms"]])
 
-        def add_percentages(row, cells_to_add=None, cells_to_modify=None):
-            """
-                takes a row and certain numeric cells and returns the values within those cells represented as a
-                fraction and percentage of that value over the sum of all the values
-            """
-            cells_to_add = cells_to_add or [4, 6, 8, 10]
-            cells_to_modify = cells_to_modify or [10]
+        total_case_data = self.es_total_cases()
+        totals_by_owner = dict([(t["term"], t["count"]) for t in total_case_data["facets"]["owner_id"]["terms"]])
 
-            total = sum([row[i] for i in cells_to_add])
-            if total == 0:
-                return row
+        fdd = util.format_datatables_data
 
-            for i in cells_to_modify:
-                row[i] = "%d/%d (%d%%)" % (row[i], total, row[i]*100/total)
-
-            return row
+        def numcell(text, value=None):
+            if value is None:
+                try:
+                    value = int(text)
+                except ValueError:
+                    value = text
+            return util.format_datatables_data(text=text, sort_key=value)
 
         def add_case_list_links(owner_id, row):
             """
@@ -938,10 +953,11 @@ class UserStatusReport(WorkerMonitoringReportTableBase, DatespanMixin):
             start_date, end_date = self.datespan.startdate_param, self.datespan.enddate_param
             search_strings = {
                 4: "opened_on: [%s TO %s]" % (start_date, end_date), # cases created
+                5: "closed_on: [%s TO %s]" % (start_date, end_date), # cases closed
                 6: "modified_on: [%s TO %s]" % (start_date, end_date), # cases modified
-                8: "closed_on: [%s TO %s]" % (start_date, end_date), # cases closed
-                10: "closed:false AND opened_on: [* TO %s] AND NOT modified_on: [%s TO %s]" %
-                   (start_date, start_date, end_date), # inactive cases
+                8: "opened_on: [* TO %s] AND NOT closed_on [* TO %s] AND NOT modified_on: [%s TO %s]" %
+                   (start_date, start_date, start_date, end_date), # inactive cases
+                9: "opened_on: [* TO %s] AND NOT closed_on [* TO %s]" % (start_date, start_date), # total cases
             }
 
             def create_case_url(index):
@@ -950,52 +966,48 @@ class UserStatusReport(WorkerMonitoringReportTableBase, DatespanMixin):
                 """
                 url_params = url_args
                 url_params.update({"search_query": search_strings[index]})
-                return '<a href="%s?%s">%s</a>' %  (cl_url, urlencode(url_params, True), row[i])
+                return numcell('<a href="%s?%s">%s</a>' % (cl_url, urlencode(url_params, True), row[index]), row[index])
 
             for i in search_strings:
                 row[i] = create_case_url(i)
             return row
 
         if self.aggregate_by == 'groups':
-            def latest_date(d1, d2):
-                if not d1:
-                    return d2
-                elif not d2:
-                    return d1
-                else:
-                    return d1 if d1 > d2 else d2
-
             for group, users in self.users_by_group.iteritems():
                 group_name, group_id = tuple(group.split('|'))
-                yield add_case_list_links(group_id, add_percentages([
+                inactive_cases = int(inactives_by_owner.get(group_id, 0))
+                total_cases = int(totals_by_owner.get(group_id, 0))
+                yield add_case_list_links(group_id, [
                     group_name if group_name != '_all' else _("All Groups"),
-                    sum([int(submissions_by_user.get(user["user_id"], 0)) for user in users]),
-                    sum([int(avg_submissions_by_user.get(user["user_id"], 0)) for user in users]) / self.num_avg_intervals,
-                    reduce(latest_date, [last_form_by_user.get(user["user_id"]) for user in users], None) or _('No forms submitted in time period'),
+                    numcell(sum([int(submissions_by_user.get(user["user_id"], 0)) for user in users])),
+                    numcell(sum([int(avg_submissions_by_user.get(user["user_id"], 0)) for user in users]) / self.num_avg_intervals),
+                    "%s / %s" % (int(active_users_by_group.get(group, 0)), len(self.users_by_group.get(group, []))),
                     sum([int(creations_by_user.get(user["user_id"], 0)) for user in users]),
-                    sum([int(avg_creations_by_user.get(user["user_id"], 0)) for user in users]) / self.num_avg_intervals,
-                    sum([int(modifications_by_user.get(user["user_id"], 0)) for user in users]),
-                    sum([int(avg_modifications_by_user.get(user["user_id"], 0)) for user in users]) / self.num_avg_intervals,
                     sum([int(closures_by_user.get(user["user_id"], 0)) for user in users]),
-                    sum([int(avg_closures_by_user.get(user["user_id"], 0)) for user in users]) / self.num_avg_intervals,
-                    sum([int(inactives_by_user.get(user["user_id"], 0)) for user in users]),
-                    sum([int(avg_inactives_by_user.get(user["user_id"], 0)) for user in users]) / self.num_avg_intervals,
-                ]))
+                    sum([int(modifications_by_user.get(user["user_id"], 0)) for user in users]),
+                    numcell(sum([int(avg_modifications_by_user.get(user["user_id"], 0)) for user in users]) / self.num_avg_intervals),
+                    inactive_cases,
+                    total_cases,
+                    (inactive_cases/total_cases) * 100 if inactive_cases else '---',
+                ])
 
-        else: # if self.aggregate_by == 'groups'
+        else: # ^ if self.aggregate_by == 'groups'
             for group, users in self.users_by_group.iteritems():
                 for user in users:
-                    yield add_case_list_links(user['user_id'], add_percentages([
+                    inactive_cases = int(inactives_by_owner.get(user["user_id"], 0)) + \
+                        sum([int(inactives_by_owner.get(group_id, 0)) for group_id in user["group_ids"]])
+                    total_cases = int(inactives_by_owner.get(user["user_id"], 0)) + \
+                        sum([int(totals_by_owner.get(group_id, 0)) for group_id in user["group_ids"]])
+                    yield add_case_list_links(user['user_id'], [
                         user["username_in_report"],
-                        int(submissions_by_user.get(user["user_id"], 0)),
-                        int(avg_submissions_by_user.get(user["user_id"], 0)) / self.num_avg_intervals,
+                        numcell(submissions_by_user.get(user["user_id"], 0)),
+                        numcell(int(avg_submissions_by_user.get(user["user_id"], 0)) / self.num_avg_intervals),
                         last_form_by_user.get(user["user_id"]) or _('No forms submitted in time period'),
                         int(creations_by_user.get(user["user_id"],0)),
-                        int(avg_creations_by_user.get(user["user_id"],0)) / self.num_avg_intervals,
-                        int(modifications_by_user.get(user["user_id"], 0)),
-                        int(avg_modifications_by_user.get(user["user_id"], 0)) / self.num_avg_intervals,
                         int(closures_by_user.get(user["user_id"], 0)),
-                        int(avg_closures_by_user.get(user["user_id"], 0)) / self.num_avg_intervals,
-                        int(inactives_by_user.get(user["user_id"], 0)),
-                        int(avg_inactives_by_user.get(user["user_id"], 0)) / self.num_avg_intervals,
-                    ]))
+                        int(modifications_by_user.get(user["user_id"], 0)),
+                        numcell(int(avg_modifications_by_user.get(user["user_id"], 0)) / self.num_avg_intervals),
+                        inactive_cases,
+                        total_cases,
+                        (inactive_cases/total_cases) * 100 if inactive_cases else '---',
+                    ])
