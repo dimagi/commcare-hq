@@ -4,6 +4,7 @@ from urllib import urlencode
 import dateutil
 from django.core.urlresolvers import reverse
 import numpy
+import operator
 import pytz
 from corehq.apps.reports import util
 from corehq.apps.reports.standard import ProjectReportParametersMixin, \
@@ -792,6 +793,11 @@ class UserStatusReport(WorkerMonitoringReportTableBase, DatespanMixin):
         return dict([(user['user_id'], user) for user in all_users]).values()
 
     @property
+    @memoized
+    def case_sharing_groups(self):
+        return set(reduce(operator.add, [[u['group_ids'] for u in self.combined_users]]))
+
+    @property
     def headers(self):
         by_group = self.aggregate_by == 'groups'
         columns = [DataTablesColumn(_("Group"))] if by_group else [DataTablesColumn(_("User"))]
@@ -930,8 +936,6 @@ class UserStatusReport(WorkerMonitoringReportTableBase, DatespanMixin):
         total_case_data = self.es_total_cases()
         totals_by_owner = dict([(t["term"], t["count"]) for t in total_case_data["facets"]["owner_id"]["terms"]])
 
-        fdd = util.format_datatables_data
-
         def numcell(text, value=None):
             if value is None:
                 try:
@@ -972,12 +976,18 @@ class UserStatusReport(WorkerMonitoringReportTableBase, DatespanMixin):
                 row[i] = create_case_url(i)
             return row
 
+        rows = []
         if self.aggregate_by == 'groups':
             for group, users in self.users_by_group.iteritems():
                 group_name, group_id = tuple(group.split('|'))
-                inactive_cases = int(inactives_by_owner.get(group_id, 0))
-                total_cases = int(totals_by_owner.get(group_id, 0))
-                yield add_case_list_links(group_id, [
+
+                case_sharing_groups = set(reduce(operator.add, [u['group_ids'] for u in users]))
+                inactive_cases = sum([int(inactives_by_owner.get(u["user_id"], 0)) for u in users]) + \
+                    sum([int(inactives_by_owner.get(group_id, 0)) for group_id in case_sharing_groups])
+                total_cases = sum([int(totals_by_owner.get(u["user_id"], 0)) for u in users]) + \
+                    sum([int(totals_by_owner.get(group_id, 0)) for group_id in case_sharing_groups])
+
+                rows.append(add_case_list_links(group_id, [
                     group_name if group_name != '_all' else _("All Groups"),
                     numcell(sum([int(submissions_by_user.get(user["user_id"], 0)) for user in users])),
                     numcell(sum([int(avg_submissions_by_user.get(user["user_id"], 0)) for user in users]) / self.num_avg_intervals),
@@ -989,16 +999,17 @@ class UserStatusReport(WorkerMonitoringReportTableBase, DatespanMixin):
                     inactive_cases,
                     total_cases,
                     (inactive_cases/total_cases) * 100 if inactive_cases else '---',
-                ])
+                ]))
 
         else: # ^ if self.aggregate_by == 'groups'
             for group, users in self.users_by_group.iteritems():
                 for user in users:
                     inactive_cases = int(inactives_by_owner.get(user["user_id"], 0)) + \
                         sum([int(inactives_by_owner.get(group_id, 0)) for group_id in user["group_ids"]])
-                    total_cases = int(inactives_by_owner.get(user["user_id"], 0)) + \
+                    total_cases = int(totals_by_owner.get(user["user_id"], 0)) + \
                         sum([int(totals_by_owner.get(group_id, 0)) for group_id in user["group_ids"]])
-                    yield add_case_list_links(user['user_id'], [
+
+                    rows.append(add_case_list_links(user['user_id'], [
                         user["username_in_report"],
                         numcell(submissions_by_user.get(user["user_id"], 0)),
                         numcell(int(avg_submissions_by_user.get(user["user_id"], 0)) / self.num_avg_intervals),
@@ -1010,4 +1021,11 @@ class UserStatusReport(WorkerMonitoringReportTableBase, DatespanMixin):
                         inactive_cases,
                         total_cases,
                         (inactive_cases/total_cases) * 100 if inactive_cases else '---',
-                    ])
+                    ]))
+
+        self.total_row = []
+        summing_cols = [1, 2, 4, 5, 6, 7, 8, 9]
+        for col in range(len(self.headers)):
+            self.total_row.append(sum([row[col].get('sort_key', 0) for row in rows]) if col in summing_cols else '---')
+
+        return rows
