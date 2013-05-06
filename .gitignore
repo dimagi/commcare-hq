@@ -3,3 +3,5 @@
 build/*
 dist/*
 dimagi_utils.egg-info*
+
+/*.egg
