@@ -10,8 +10,8 @@ function get_form_filled_duration(xform_doc) {
 /* HSPH related */
 
 function isHSPHForm(doc) {
-    return (doc.doc_type === 'XFormInstance'
-            && doc.domain === 'hsph');
+    return (doc.doc_type === 'XFormInstance' && 
+            doc.domain === 'hsph');
 }
 
 function isHSPHBirthCase(doc) {
@@ -19,32 +19,45 @@ function isHSPHBirthCase(doc) {
             doc.type === "birth");
 }
 
+// new apps
+function isHSPHBirthRegForm(doc) {
+    return (isHSPHForm(doc) &&
+           doc.xmlns === "http://openrosa.org/formdesigner/FE77C4BD-38EE-499B-AC5E-D7279C83BDB5");
+}
+
+function isFADAProcessDataForm(doc) {
+    return (isHSPHForm(doc) &&  
+            doc.xmlns === "http://openrosa.org/formdesigner/CAE82D95-8F39-45AF-9A22-0E5D15EF148B");
+}
+
+// old apps
 function isDCOFollowUpReport(doc) {
-    return (doc.xmlns === "http://openrosa.org/formdesigner/E5E03D8D-937D-46C6-AF8F-C1FD176E2E1B");
+    return (isHSPHForm(doc) &&
+            doc.xmlns === "http://openrosa.org/formdesigner/E5E03D8D-937D-46C6-AF8F-C1FD176E2E1B");
 }
 
 function isCITLReport(doc) {
-    return (doc.xmlns === "http://openrosa.org/formdesigner/0D9CB681-2C07-46AB-8720-66E4FBD94211");
+    return (isHSPHForm(doc) &&
+            doc.xmlns === "http://openrosa.org/formdesigner/0D9CB681-2C07-46AB-8720-66E4FBD94211");
 }
 
 function isDCOBirthRegReport(doc) {
-    return (doc.xmlns === "http://openrosa.org/formdesigner/FE77C4BD-38EE-499B-AC5E-D7279C83BDB5");
+    return (isHSPHForm(doc) &&
+            doc.xmlns === "http://openrosa.org/formdesigner/FE77C4BD-38EE-499B-AC5E-D7279C83BDB5");
 }
 
 function isDCOSiteLogReport(doc) {
-    return (doc.xmlns === "http://openrosa.org/formdesigner/8412C3D0-F06C-49BF-9067-ED62E991F315");
+    return (isHSPHForm(doc) &&
+            doc.xmlns === "http://openrosa.org/formdesigner/8412C3D0-F06C-49BF-9067-ED62E991F315");
 }
 
 function isDCCFollowUpReport(doc) {
-    return (doc.xmlns === "http://openrosa.org/formdesigner/A5B08D8F-139D-46C6-9FDF-B1AD176EAE1F");
+    return (isHSPHForm(doc) &&
+            doc.xmlns === "http://openrosa.org/formdesigner/A5B08D8F-139D-46C6-9FDF-B1AD176EAE1F");
 }
 
 function getDCO(doc) {
     return doc.form.meta.userID;
-}
-
-function isIHForCHF(doc) {
-    return "IHF";
 }
 
 function calcHSPHBirthDatespan(doc) {
@@ -155,7 +168,6 @@ function HSPHEntry(doc) {
 
     self.getCITLInfo = function () {
         self.data.facilityStatus = (isDCOSiteLogReport(self.doc)) ? -1 : parseInt(self.form.current_implementation_stage);
-        self.data.IHFCHF = isIHForCHF(self.doc);
 
         if (isCITLReport(self.doc)) {
             self.data.isCITLData = true;
@@ -163,33 +175,4 @@ function HSPHEntry(doc) {
         }
     };
 
-    self.getOutcomeStats = function () {
-        var follow_up = (self.form.follow_up) ? self.form.follow_up : self.form;
-
-        self.data.maternalDeath = follow_up.maternal_death === 'dead';
-        if (! self.data.maternalDeath) {
-            self.data.maternalNearMiss = (follow_up.maternal_near_miss === 'yes' ||
-                                          // old:
-                                            follow_up.icu === 'yes' ||
-                                            follow_up.cpr === 'yes' ||
-                                            follow_up.fever === 'yes' ||
-                                            follow_up.hysterectomy === 'yes' ||
-                                            follow_up.transfusion === 'yes' ||
-                                            follow_up.fits === 'yes' ||
-                                            follow_up.loss_consciousness === 'yes');
-        }
-
-        self.data.numStillBirths = 0;
-        for (var s=1; s<= 5; s++) {
-            var val = follow_up['baby_'+s+'_birth_or_stillbirth'];
-            self.data.numStillBirths += (val === 'fresh_stillbirth' || val === 'macerated_stillbirth') ? 1 : 0;
-        }
-
-        self.data.numNeonatalMortality = 0;
-        for (var b=1; b <= 5; b++) {
-            var val = follow_up['baby_'+b+'_death'];
-            self.data.numNeonatalMortality += (val === 'dead') ? 1 : 0;
-        }
-
-    }
 }

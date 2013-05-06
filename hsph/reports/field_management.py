@@ -7,8 +7,7 @@ from corehq.apps.reports.datatables import DataTablesColumn, DataTablesHeader
 from corehq.apps.reports.generic import GenericTabularReport
 from couchforms.models import XFormInstance
 from dimagi.utils.couch.database import get_db
-from corehq.apps.reports import util
-from hsph.fields import FacilityField, NameOfDCTLField, SiteField, SelectCaseStatusField
+from hsph.fields import FacilityField, NameOfDCTLField, SelectCaseStatusField
 from hsph.reports import HSPHSiteDataMixin
 
 class HSPHFieldManagementReport(GenericTabularReport, CustomProjectReport, ProjectReportParametersMixin, DatespanMixin):

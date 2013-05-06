@@ -1,8 +1,7 @@
 function (doc) {
-    if (!(doc.doc_type === "XFormInstance" &&
-          doc.domain === "hsph" &&
-          doc.xmlns === "http://openrosa.org/formdesigner/CAE82D95-8F39-45AF-9A22-0E5D15EF148B")) 
-    {
+    // !code util/hsph.js
+    
+    if (!isFADAProcessDataForm(doc)) {
         return;
     }
 
@@ -80,7 +79,10 @@ function (doc) {
         }
     }
 
-    var key = [form.meta.userID, form.meta.timeEnd, form.process_sbr_no];
-    emit(key, data);
+    emit(["user", form.meta.userID, form.process_date_admission, form.process_sbr_no], data);
+
+    // used by secondary outcome report
+    data.pp2_soap_and_water = (data.pp2_soap === 'yes' && data.pp2_water === 'yes');
+    emit(["site", form.site_id, form.process_date_admission, form.process_sbr_no], data);
 
 }
