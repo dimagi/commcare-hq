@@ -10,7 +10,16 @@ setup(
     author_email='information@dimagi.com',
     url='http://www.dimagi.com/',
     install_requires = [
-        "couchexport"
+        "couchdbkit",
+        "couchexport",
+        "dimagi-utils",
+        "django",
+        "lxml",
+        "restkit",
+    ],
+    tests_require = [
+        'coverage',
+        'django-coverage',    
     ],
     packages = find_packages(exclude=['*.pyc']),
     include_package_data=True
