@@ -1,4 +1,5 @@
 {% load hqstyle_tags %}
+{% load field_tags %}
 <form class="form form-horizontal" name="user_details" method="post">
     <input type="hidden" name="form_type" value="basic-info" />
     {% bootstrap_form_errors form %}
@@ -14,15 +15,22 @@
             <div class="control-group{% if field.errors %} error{% endif %}">
                 <label class="control-label" for="{{ field.id }}">{{ field.label }}</label>
                 <div class="controls">
-                    {{ field }}
+                    {% if field|is_checkbox %}
+                        <label class="checkbox">
+                            {{ field }}
+                            {{ field.help_text }}
+                        </label>
+                    {% else %}
+                        {{ field }}
+                        {% if field.help_text %}
+                            <p class="help-block">
+                                <i class="icon icon-info-sign"></i> {{ field.help_text }}
+                            </p>
+                        {% endif %}
+                    {% endif %}
                     {% for error in field.errors %}
                         <span class="help-inline">{{ error }}</span>
                     {% endfor %}
-                    {% if field.help_text %}
-                        <p class="help-block">
-                            <i class="icon icon-info-sign"></i> {{ field.help_text }}
-                        </p>
-                    {% endif %}
                 </div>
             </div>
         {% endfor %}

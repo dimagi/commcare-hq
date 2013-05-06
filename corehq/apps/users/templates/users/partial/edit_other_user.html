@@ -29,12 +29,14 @@
                     </div>
                 </div>
             {% else %}
-                <div class="control-group">
-                    <label class="control-label">{{ field.label }}</label>
-                    <div class="controls">
-                        <span class="input-xlarge uneditable-input">{{ couch_user|getattr:field.name }}</span>
+                {% ifnotequal field.name 'email_opt_in' %}
+                    <div class="control-group">
+                        <label class="control-label">{{ field.label }}</label>
+                        <div class="controls">
+                            <span class="input-xlarge uneditable-input">{{ couch_user|getattr:field.name }}</span>
+                        </div>
                     </div>
-                </div>
+                {% endifnotequal %}
             {% endifequal %}
         {% endfor %}
     </fieldset>

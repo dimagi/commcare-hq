@@ -4,6 +4,7 @@ from django.utils.safestring import mark_safe, mark_for_escaping
 from django.core.urlresolvers import reverse
 from django.utils.translation import ugettext as _
 from django.utils.translation import ugettext_noop
+from corehq.apps.domain.utils import get_adm_enabled_domains
 from corehq.apps.indicators.dispatcher import IndicatorAdminInterfaceDispatcher
 from corehq.apps.indicators.utils import get_indicator_domains
 
@@ -186,7 +187,7 @@ class ADMReportsTab(UITab):
         if not self.project or self.project.commtrack_enabled:
             return False
 
-        adm_enabled_projects = getattr(settings, 'ADM_ENABLED_PROJECTS', [])
+        adm_enabled_projects = get_adm_enabled_domains()
 
         return (not self.project.is_snapshot and
                 self.domain in adm_enabled_projects and
