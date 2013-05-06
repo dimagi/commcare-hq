@@ -69,7 +69,7 @@
 {% endblock %}
 
 {% block subsection-title %}
-    {% if current_users_page %}
+    {% if not current_users_page %}
         <li>
             {% if not couch_user.is_commcare_user %}
                 <a href="{% url web_users domain %}">{% hq_web_user %}s</a>
@@ -103,7 +103,7 @@
     </ul>
     <div class="tab-content" id="settings">
         <div class="tab-pane" id="basic-info">
-            {% if current_users_page and not couch_user.is_commcare_user %}
+            {% if current_users_page or couch_user.is_commcare_user %}
                 {% include "users/partial/edit_current_user.html" %}
             {% else %}
                 {% include "users/partial/edit_other_user.html" %}
@@ -121,9 +121,9 @@
             </div>
         {% endif %}
         {% if current_users_page and not couch_user.is_commcare_user %}
-        <div class="tab-pane" id="domains">
-            {% include "users/partial/domain_accounts.html" %}
-        </div>
+            <div class="tab-pane" id="domains">
+                {% include "users/partial/domain_accounts.html" %}
+            </div>
         {% endif %}
     </div>
     {% if editing_commcare_user %}
@@ -149,7 +149,7 @@
         </fieldset>
         <div class="form-actions"></div>
     {% endif %}
-    {% if couch_user.is_commcare_user and current_users_page %}
+    {% if couch_user.is_commcare_user and not current_users_page %}
         <p><a class="btn btn-danger" href="#delete_user_{{ couch_user.user_id }}" data-toggle="modal"><i class="icon-white icon-trash"></i> Delete {% commcare_user %}</a></p>
     {% endif %}
 {% endblock %}
@@ -189,7 +189,7 @@
             </form>
         </div>
     {% endifequal %}{% endfor %}
-    {% if couch_user.is_commcare_user and current_users_page %}
+    {% if couch_user.is_commcare_user and not current_users_page %}
     <div id="delete_user_{{ couch_user.user_id }}" class="modal hide fade">
         <div class="modal-header">
             <a class="close" data-dismiss="modal">&times;</a>

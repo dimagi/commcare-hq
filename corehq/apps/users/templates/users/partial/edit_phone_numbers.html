@@ -39,7 +39,7 @@
 
                     {% endifnotequal %}
 
-                    {% if current_users_page %}
+                    {% if current_users_page or couch_user.is_commcare_user %}
                         <a class="btn btn-danger" data-toggle="modal" href="#delete_phonenumber_{{ forloop.counter }}"><i class="icon icon-remove icon-white"></i> Delete</a>
                     {% endif %}
                 </div>
@@ -47,7 +47,7 @@
         {% endfor %}
     </fieldset>
 </div>
-{% if current_users_page %}
+{% if current_users_page or couch_user.is_commcare_user %}
     <form class="form form-horizontal" name="add_phone_number" method="post">
         <input type="hidden" name="form_type" value="phone-numbers" />
         <fieldset>

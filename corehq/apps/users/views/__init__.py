@@ -486,7 +486,7 @@ def _handle_user_form(request, domain, couch_user=None):
                 django_user.username = form.cleaned_data['email']
                 django_user.save()
                 couch_user = CouchUser.from_django_user(django_user)
-            if couch_user.is_current_web_user(request):
+            if couch_user.is_current_web_user(request) or couch_user.is_commcare_user():
                 couch_user.first_name = form.cleaned_data['first_name']
                 couch_user.last_name = form.cleaned_data['last_name']
                 couch_user.email = form.cleaned_data['email']
