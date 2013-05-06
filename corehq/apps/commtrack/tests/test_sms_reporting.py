@@ -4,7 +4,6 @@ from corehq.apps.commtrack.models import RequisitionCase
 from corehq.apps.commtrack.tests.util import CommTrackTest
 from corehq.apps.commtrack.sms import handle
 from casexml.apps.case.models import CommCareCase
-from couchforms.models import XFormInstance
 
 
 class StockReportTest(CommTrackTest):

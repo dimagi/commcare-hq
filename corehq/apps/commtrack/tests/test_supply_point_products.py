@@ -27,7 +27,7 @@ class SupplyPointProductTest(TestCase):
         self.assertEqual(self.product._id, spp.get_product()._id)
         self.assertEqual(self.sp.location_, spp.location_)
         self.assertEqual(get_commtrack_user_id(TEST_DOMAIN), spp.user_id)
-        self.assertEqual(None, spp.owner_id)
+        self.assertEqual(self.sp.owner_id, spp.owner_id)
         self.assertFalse(spp.closed)
         self.assertTrue(len(spp.actions) > 0)
         [parent_ref] = spp.indices
