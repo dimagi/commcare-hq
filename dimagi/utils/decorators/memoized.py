@@ -104,7 +104,7 @@ class Memoized(object):
             cache_attr = '_%s_cache' % self.func.__name__
             try:
                 cache = getattr(obj, cache_attr)
-            except AttributeError:
+            except (KeyError, AttributeError):
                 cache = {}
                 setattr(obj, cache_attr, cache)
             return cache
