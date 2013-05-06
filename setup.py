@@ -10,6 +10,7 @@ setup(
     author_email='information@dimagi.com',
     url='http://www.dimagi.com/',
     packages = find_packages(exclude=['*.pyc']),
+    test_suite = 'dimagi.test_utils',
     install_requires = [
         "python-dateutil"
     ],
