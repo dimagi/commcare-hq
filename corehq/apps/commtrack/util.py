@@ -144,7 +144,7 @@ def due_date_weekly(dow, past_period=0): # 0 == sunday
 
 def due_date_monthly(day, from_end=False, past_period=0):
     """compute the next due date on a monthly schedule, where reports are
-    due on 'day' day of the month. (if from_false is true, due date is 'day' days
+    due on 'day' day of the month. (if from_end is true, due date is 'day' days
     before the end of the month, where 0 is the last day of the month). 'next' due date
     is the first due date that occurs today or in the future. if past_period
     is non-zero, return the due date that occured N before the next due date
