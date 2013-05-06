@@ -147,7 +147,7 @@ class CaseAttachmentAction(CaseActionBase):
     @classmethod
     def from_v2(cls, block):
         attachments = {}
-        print "#%s#" % block
+        print "#### Case AttachmentAction: #%s#" % block
         for id, data in block.items():
             attachment_from = data.get('@from', None)
             attachment_src = data.get('@src', None)

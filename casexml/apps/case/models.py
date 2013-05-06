@@ -21,7 +21,6 @@ import itertools
 from dimagi.utils.couch.database import get_db, SafeSaveDocument
 from couchdbkit.exceptions import ResourceNotFound, ResourceConflict
 from dimagi.utils.couch import LooselyEqualDocumentSchema
-import ipdb
 
 """
 Couch models for commcare cases.  
@@ -64,6 +63,7 @@ class CommCareCaseAction(LooselyEqualDocumentSchema):
 
     @classmethod
     def from_parsed_action(cls, action_type, date, xformdoc, action):
+        print "#### from_parsed_action"
         if not action_type in const.CASE_ACTIONS:
             raise ValueError("%s not a valid case action!")
         
@@ -200,7 +200,7 @@ class CommCareCase(CaseBase, IndexHoldingMixIn, ComputedDocumentMixin):
     name = StringProperty()
     version = StringProperty()
     indices = SchemaListProperty(CommCareCaseIndex)
-    attachments = SchemaDictProperty(CommCareCaseAttachment)
+    case_attachments = SchemaDictProperty(CommCareCaseAttachment)
     location_ = StringListProperty()
 
     server_modified_on = DateTimeProperty()
@@ -370,7 +370,9 @@ class CommCareCase(CaseBase, IndexHoldingMixIn, ComputedDocumentMixin):
                             if case_update.modified_on_str else datetime.utcnow()
         
         # apply initial updates, referrals and such, if present
+        print "start from_case_update"
         case.update_from_case_update(case_update, xformdoc)
+        print "finish from_case_update"
         return case
     
     def apply_create_block(self, create_action, xformdoc, modified_on):
@@ -396,7 +398,8 @@ class CommCareCase(CaseBase, IndexHoldingMixIn, ComputedDocumentMixin):
         self.actions.append(create_action)
     
     def update_from_case_update(self, case_update, xformdoc):
-        
+
+        print "######### update_from_case_update"
         mod_date = parsing.string_to_datetime(case_update.modified_on_str) \
                     if   case_update.modified_on_str else datetime.utcnow()
         
@@ -453,14 +456,16 @@ class CommCareCase(CaseBase, IndexHoldingMixIn, ComputedDocumentMixin):
             self.actions.append(index_action)
             self._apply_action(index_action)
 
-
         if case_update.has_attachments():
             attachment_action = CommCareCaseAction.from_parsed_action(const.CASE_ACTION_ATTACHMENT,
                                                                       mod_date,
                                                                       xformdoc,
                                                                       case_update.get_attachment_action())
-            self.attachments.update(attachment_action)
+            print "#### Update has attachments ####"
+            print "\tattachment action to append: %s" % len(self.actions)
             self.actions.append(attachment_action)
+            print "\tattachment action appended: %s" % len(self.actions)
+            print simplejson.dumps(self.to_json(), indent=4)
             self._apply_action(attachment_action)
 
         # finally override any explicit properties from the update
@@ -492,50 +497,29 @@ class CommCareCase(CaseBase, IndexHoldingMixIn, ComputedDocumentMixin):
                 self[item] = couchable_property(update_action.updated_unknown_properties[item])
             
     def apply_attachments(self, attachment_action):
-        # ipdb.set_trace()
-        print "in apply attachments!"
-        print simplejson.dumps(attachment_action.to_json(), indent=4)
-        for k, v in attachment_action.attachments.items():
-            self.attachments[k] = attachment_action.attachments[k]
-            #grab xform_attachment
-            foo = {
-                "doc_type": "CommCareCaseAction",
-                "xform_id": "6RGAZTETE3Z2QC0PE2DKM88MO",
-                "updated_unknown_properties": {},
-                "attachments": {
-                    "fruity": {
-                        "attachment_name": None,
-                        "doc_type": "CommCareCaseAttachment",
-                        "attachment_src": "submodules/casexml-src/casexml/apps/case/tests/data/attachments/fruity.jpg",
-                        "identifier": "fruity",
-                        "attachment_from": "local"
-                    }
-                },
-                "xform_name": "Barcode Demo Item Registration",
-                "sync_log_id": None,
-                "server_date": "2013-04-30T19:45:16Z",
-                "action_type": "attachment",
-                "updated_known_properties": {},
-                "date": "2013-04-07T15:00:37Z",
-                "indices": [],
-                "xform_xmlns": "http://openrosa.org/formdesigner/B095F533-6226-40EE-9045-38EA21D214DB"
-            }
+        #the actions and _attachment must be added before the first saves canhappen
+        self.force_save()
+        print "start apply_attachments"
+        print simplejson.dumps(self.to_json(), indent=4)
+        update_attachments = {}
+        for k, v in self.case_attachments.items():
+            update_attachments[k] = v
 
-            #todo
+        for k, v in attachment_action.attachments.items():
+            #grab xform_attachments
             #copy over attachments from form onto case
+            update_attachments[k] = v
             if v.is_present:
-                print "\tIs present!"
+                print "\tAttachment %s present!" % k
                 #fetch attachment from xform
                 attachment_key = v.attachment_key
-                #raw_doc = XFormInstance.get_db().get(attachment_action.xform_id)
-                #print raw_doc['_attachments']
-                if '_rev' not in self.to_json():
-                    #never saved on create?!
-                    self.save()
                 attach = XFormInstance.get_db().fetch_attachment(attachment_action.xform_id, attachment_key)
                 self.put_attachment(attach, name=attachment_key, content_type=v.server_mime)
+                print simplejson.dumps(self.to_json(), indent=4)
             else:
                 print "not present!"
+        self.case_attachments = update_attachments
+
 
 
     def apply_close(self, close_action):

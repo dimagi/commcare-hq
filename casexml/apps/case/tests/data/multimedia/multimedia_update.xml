@@ -5,7 +5,6 @@
 	xmlns="http://openrosa.org/formdesigner/78A1B843-E564-4AD0-8FFD-BD5DC2F943C9">
 	<incident>gjh</incident>
 	<lost>no</lost>
-	<image>house.jpg</image>
     <n0:case case_id="EOL9FIAKIQWOFXFOH0QAMWU64" user_id="6dac4940-913e-11e0-9d4b-005056aa7fb5" date_modified="%(date_modified)s" xmlns:n0="http://commcarehq.org/case/transaction/v2">
 		<n0:update>
             <n0:foo>bar</n0:foo>

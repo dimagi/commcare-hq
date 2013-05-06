@@ -1,5 +1,6 @@
 import logging
 from django.dispatch.dispatcher import Signal
+import simplejson
 from dimagi.utils.logging import notify_exception
 from receiver.signals import successful_form_received
 from casexml.apps.phone.models import SyncLog
@@ -73,6 +74,8 @@ def process_cases(sender, xform, config=None, **kwargs):
     # that they can re-pick up on
     xform.save(force_update=True)
     for case in cases:
+        print "doing save"
+        print simplejson.dumps(case.to_json(), indent=4)
         case.force_save()
 
 
