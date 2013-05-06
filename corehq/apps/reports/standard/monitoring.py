@@ -902,7 +902,7 @@ class UserStatusReport(WorkerMonitoringReportTableBase, DatespanMixin):
                 "bool": {
                     "must": [
                         {"match": {"domain.exact": self.domain}},
-                        {"range": {"opened_on": {"lt": datespan.startdate_param_utc}}}],
+                        {"range": {"opened_on": {"lt": datespan.enddate_param_utc}}}],
                     "must_not": {"range": {"closed_on": {"lt": datespan.startdate_param_utc}}}}}}
         facets = ['owner_id']
         return es_query(q=q, facets=facets, es_url=CASE_INDEX + '/case/_search', size=1, dict_only=dict_only)
@@ -947,6 +947,8 @@ class UserStatusReport(WorkerMonitoringReportTableBase, DatespanMixin):
                     value = int(text) if convert == 'int' else float(text)
                     if math.isnan(value):
                         text = '---'
+                    elif not convert == 'int': # assume this is a percentage column
+                        text = '%.f%%' % value
                 except ValueError:
                     value = text
             return util.format_datatables_data(text=text, sort_key=value)
@@ -995,19 +997,19 @@ class UserStatusReport(WorkerMonitoringReportTableBase, DatespanMixin):
                 total_cases = sum([int(totals_by_owner.get(u["user_id"], 0)) for u in users]) + \
                     sum([int(totals_by_owner.get(group_id, 0)) for group_id in case_sharing_groups])
 
-                rows.append(add_case_list_links(group_id, [
+                rows.append([
                     group_name if group_name != '_all' else _("All Groups"),
                     numcell(sum([int(submissions_by_user.get(user["user_id"], 0)) for user in users])),
                     numcell(sum([int(avg_submissions_by_user.get(user["user_id"], 0)) for user in users]) / self.num_avg_intervals),
                     "%s / %s" % (int(active_users_by_group.get(group, 0)), len(self.users_by_group.get(group, []))),
-                    sum([int(creations_by_user.get(user["user_id"], 0)) for user in users]),
-                    sum([int(closures_by_user.get(user["user_id"], 0)) for user in users]),
-                    sum([int(modifications_by_user.get(user["user_id"], 0)) for user in users]),
+                    numcell(sum([int(creations_by_user.get(user["user_id"], 0)) for user in users])),
+                    numcell(sum([int(closures_by_user.get(user["user_id"], 0)) for user in users])),
+                    numcell(sum([int(modifications_by_user.get(user["user_id"], 0)) for user in users])),
                     numcell(sum([int(avg_modifications_by_user.get(user["user_id"], 0)) for user in users]) / self.num_avg_intervals),
-                    inactive_cases,
-                    total_cases,
+                    numcell(inactive_cases),
+                    numcell(total_cases),
                     numcell((float(inactive_cases)/total_cases) * 100 if inactive_cases else 'nan', convert='float'),
-                ]))
+                ])
 
         else: # ^ if self.aggregate_by == 'groups'
             for group, users in self.users_by_group.iteritems():
@@ -1048,7 +1050,7 @@ class UserStatusReport(WorkerMonitoringReportTableBase, DatespanMixin):
 
             def add(result_tuple, str):
                 num, denom = parse(str)
-                return (num + result_tuple[0], denom + result_tuple[1])
+                return num + result_tuple[0], denom + result_tuple[1]
 
             self.total_row[3] = '%s / %s' % reduce(add, [row[3] for row in rows], (0, 0))
         else:
