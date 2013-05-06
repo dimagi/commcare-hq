@@ -6,12 +6,13 @@ from lxml import etree
 from lxml.builder import ElementMaker
 from xml import etree as legacy_etree
 from datetime import date, timedelta
+from corehq.apps.commtrack.const import RequisitionActions
 from dimagi.utils.decorators.memoized import memoized
 from receiver.util import spoof_submission
 from corehq.apps.receiverwrapper.util import get_submit_url
 from dimagi.utils.couch.loosechange import map_reduce
 import logging
-from corehq.apps.commtrack.models import CommtrackConfig, RequisitionCase
+from corehq.apps.commtrack.models import CommtrackConfig, RequisitionCase, SupplyPointProductCase
 from corehq.apps.commtrack.requisitions import RequisitionState
 from corehq.apps.commtrack import const
 
@@ -81,6 +82,9 @@ def process(domain, instance):
 
 class StockTransaction(object):
     def __init__(self, **kwargs):
+        self.domain = kwargs.get('domain')
+        self.location = kwargs.get('location')
+        self.location_id = self.location.location_[-1] if self.location else None
         self.product = kwargs.get('product')
         self.product_id = kwargs.get('product_id') or self.product._id
         self.action_name = kwargs['action_name']
@@ -89,8 +93,11 @@ class StockTransaction(object):
         self.inferred = kwargs.get('inferred', False)
         self.processing_order = kwargs.get('order')
 
+
         self.config = kwargs.get('config')
         if self.config:
+            if not self.domain:
+                self.domain = self.config.domain
             self.action_config = self.config.all_actions_by_name[self.action_name]
             self.priority_order = [action.action_name for action in self.config.all_actions()].index(self.action_name)
 
@@ -157,11 +164,28 @@ class Requisition(StockTransaction):
         return 'requisition'
 
     @property
+    @memoized
     def requisition_case_id(self):
         # for somewhat obscure reasons, the case_id is the id of the
         # supply_point_product case, so we add a new field for this.
         # though for newly created requisitions it's just empty
-        return None
+        if self.base_action_type == RequisitionActions.REQUEST:
+            return None
+        if self.base_action_type == RequisitionActions.RECEIPTS:
+            # for receipts the id should point to the most recent open requisition
+            # (or none)
+            try:
+                product_stock_case = SupplyPointProductCase.get(self.case_id)
+                return RequisitionCase.open_for_product_case(
+                    self.domain,
+                    product_stock_case.location_[-1],
+                    self.case_id
+                )[0]
+            except IndexError:
+                # there was no open requisition. this is ok
+                return None
+
+        assert False, "%s is an unexpected action type!" % self.base_action_type
 
     @classmethod
     def from_xml(cls, tx, config):
@@ -169,7 +193,7 @@ class Requisition(StockTransaction):
             'product_id': tx.find(_('product')).text,
             'case_id': tx.find(_('product_entry')).text,
             'value': int(tx.find(_('value')).text),
-            'action_name': 'request',
+            'action_name': tx.find(_('action')).text,
         }
         return cls(config=config, **data)
 
@@ -177,10 +201,11 @@ class Requisition(StockTransaction):
         if not E:
             E = XML()
 
-        return E.request(
+        return E.requisition(
             E.product(self.product_id),
             E.product_entry(self.case_id),
             E.value(str(self.value)),
+            E.action(self.action_name)
         )
 
 class RequisitionResponse(Requisition):
@@ -266,7 +291,7 @@ def unpack_transactions(root, config):
     def transactions():
         types = {
             'transaction': StockTransaction,
-            'request': Requisition,
+            'requisition': Requisition,
             'response': BulkRequisitionResponse,
         }
         for tag, factory in types.iteritems():
@@ -287,7 +312,7 @@ def normalize_transactions(transactions):
 
 
 def replace_transactions(root, new_tx):
-    for tag in ('transaction', 'request', 'response'):
+    for tag in ('transaction', 'requisition', 'response'):
         for tx in root.findall(_(tag)):
             tx.getparent().remove(tx)
     for tx in new_tx:

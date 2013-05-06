@@ -24,7 +24,7 @@ class RequisitionState(object):
     """
 
     def __init__(self, domain, id, user_id, username, product_stock_case_id,
-                 create=False, owner_id=None, **custom_fields):
+                 create=False, owner_id=None, close=False, **custom_fields):
         self.domain = domain
         self.id = id
         self.user_id = user_id
@@ -32,6 +32,7 @@ class RequisitionState(object):
         self.username = username
         self.product_stock_case_id = product_stock_case_id
         self.create = create
+        self.close = close
         self.custom_fields = custom_fields or {}
 
     def to_xml(self):
@@ -49,13 +50,14 @@ class RequisitionState(object):
                 const.PARENT_CASE_REF: (const.SUPPLY_POINT_PRODUCT_CASE_TYPE,
                                         self.product_stock_case_id),
             },
+            close=self.close,
             **extras
         )
         return ElementTree.tostring(caseblock.as_xml(format_datetime=json_format_datetime))
 
     @classmethod
     def from_transactions(cls, user_id, product_stock_case, transactions):
-        assert transactions, "can't make a requisition state from an empty transaciton list"
+        assert transactions, "can't make a requisition state from an empty transaction list"
 
         def _to_fields(transaction):
             ret = {'requisition_status': RequisitionStatus.by_action_type(transaction.action_config.action_type)}
@@ -79,6 +81,13 @@ class RequisitionState(object):
                     'amount_filled': transaction.value,
                     'filled_by': user_id,
                     'filled_on': datetime.utcnow(),
+                })
+            elif transaction.action_config.action_type == RequisitionActions.RECEIPTS:
+                ret.update({
+                    'amount_received': transaction.value,
+                    'received_by': user_id,
+                    'received_on': datetime.utcnow(),
+                    'close': True,
                 })
             else:
                 raise ValueError("the type %s isn't yet supported." % transaction.action_config.action_type)
