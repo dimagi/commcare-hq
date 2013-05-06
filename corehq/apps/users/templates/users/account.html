@@ -105,9 +105,9 @@
     <div class="tab-content" id="settings">
         <div class="tab-pane" id="basic-info">
             {% if current_users_page or couch_user.is_commcare_user %}
-                {% include "users/partial/edit_current_user.html" %}
+                {% include "users/partial/edit_user.html" %}
             {% else %}
-                {% include "users/partial/edit_other_user.html" %}
+                {% include "users/partial/edit_user_role.html" %}
             {% endif %}
             {% include "users/partial/edit_phone_numbers.html" %}
         </div>
