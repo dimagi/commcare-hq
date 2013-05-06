@@ -1,6 +1,7 @@
 from django.core.urlresolvers import reverse
 from lxml import etree
 from eulxml.xmlmap import StringField, XmlObject, IntegerField, NodeListField, NodeField
+from corehq.apps.app_manager.util import split_path
 from corehq.apps.app_manager.xform import SESSION_CASE_ID
 from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.web import get_url_base
@@ -351,13 +352,12 @@ class SuiteGenerator(object):
                 path = path[len(PREFIX):]
             else:
                 raise MediaResourceError('%s does not start with jr://file/commcare/' % path)
-            split_path = path.split('/')
-            name = split_path.pop(-1)
+            path, name = split_path(path)
             # CommCare assumes jr://media/,
             # which is an alias to jr://file/commcare/media/
             # so we need to replace 'jr://file/commcare/' with '../'
             # (this is a hack)
-            path = '../' + '/'.join(split_path)
+            path = '../' + path
             multimedia_id = m.multimedia_id
             yield MediaResource(
                 id=self.id_strings.media_resource(multimedia_id, name),
