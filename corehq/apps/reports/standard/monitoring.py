@@ -3,6 +3,7 @@ import datetime
 from urllib import urlencode
 import dateutil
 from django.core.urlresolvers import reverse
+import math
 import numpy
 import operator
 import pytz
@@ -940,10 +941,12 @@ class UserStatusReport(WorkerMonitoringReportTableBase, DatespanMixin):
         total_case_data = self.es_total_cases()
         totals_by_owner = dict([(t["term"], t["count"]) for t in total_case_data["facets"]["owner_id"]["terms"]])
 
-        def numcell(text, value=None):
+        def numcell(text, value=None, convert='int'):
             if value is None:
                 try:
-                    value = int(text)
+                    value = int(text) if convert == 'int' else float(text)
+                    if math.isnan(value):
+                        text = '---'
                 except ValueError:
                     value = text
             return util.format_datatables_data(text=text, sort_key=value)
@@ -1002,7 +1005,7 @@ class UserStatusReport(WorkerMonitoringReportTableBase, DatespanMixin):
                     numcell(sum([int(avg_modifications_by_user.get(user["user_id"], 0)) for user in users]) / self.num_avg_intervals),
                     inactive_cases,
                     total_cases,
-                    (inactive_cases/total_cases) * 100 if inactive_cases else '---',
+                    numcell((float(inactive_cases)/total_cases) * 100 if inactive_cases else 'nan', convert='float'),
                 ]))
 
         else: # ^ if self.aggregate_by == 'groups'
@@ -1024,12 +1027,16 @@ class UserStatusReport(WorkerMonitoringReportTableBase, DatespanMixin):
                         numcell(int(avg_modifications_by_user.get(user["user_id"], 0)) / self.num_avg_intervals),
                         inactive_cases,
                         total_cases,
-                        (inactive_cases/total_cases) * 100 if inactive_cases else '---',
+                        numcell((float(inactive_cases)/total_cases) * 100 if inactive_cases else 'nan', convert='float'),
                     ]))
 
         self.total_row = [_("Total")]
-        summing_cols = [1, 2, 4, 5, 6, 7, 8, 9]
+        summing_cols = [1, 2, 4, 5, 6, 7, 8, 9, 10]
         for col in range(len(self.headers) - 1):
-            self.total_row.append(sum([row[col].get('sort_key', 0) for row in rows]) if col in summing_cols else '---')
+
+            if col in summing_cols:
+                self.total_row.append(sum(filter(lambda x: not math.isnan(x), [row[col].get('sort_key', 0) for row in rows])))
+            else:
+                self.total_row.append('---')
 
         return rows
