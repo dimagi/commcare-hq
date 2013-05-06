@@ -922,9 +922,9 @@ class UserStatusReport(WorkerMonitoringReportTableBase, DatespanMixin):
         case_creation_data = self.es_case_queries('opened_on')
         creations_by_user = dict([(t["term"], t["count"]) for t in case_creation_data["facets"]["user_id"]["terms"]])
 
-        case_modification_data = self.es_case_queries(['modified_on', 'created_on'])
+        case_modification_data = self.es_case_queries(['modified_on', 'opened_on'])
         modifications_by_user = dict([(t["term"], t["count"]) for t in case_modification_data["facets"]["user_id"]["terms"]])
-        avg_case_modification_data = self.es_case_queries(['modified_on', 'created_on'], datespan=avg_datespan)
+        avg_case_modification_data = self.es_case_queries(['modified_on', 'opened_on'], datespan=avg_datespan)
         avg_modifications_by_user = dict([(t["term"], t["count"]) for t in avg_case_modification_data["facets"]["user_id"]["terms"]])
 
         case_closure_data = self.es_case_queries('closed_on')
@@ -974,11 +974,26 @@ class UserStatusReport(WorkerMonitoringReportTableBase, DatespanMixin):
                 """
                 url_params = url_args
                 url_params.update({"search_query": search_strings[index]})
-                return numcell('<a href="%s?%s">%s</a>' % (cl_url, urlencode(url_params, True), row[index]), row[index])
+                return numcell('<a href="%s?%s" target="_blank">%s</a>' % (cl_url, urlencode(url_params, True), row[index]), row[index])
 
             for i in search_strings:
                 row[i] = create_case_url(i)
             return row
+
+        def group_cell(group_id, group_name):
+            """
+                takes group info, and creates a cell that links to the user status report focused on the group
+            """
+            us_url = reverse('project_report_dispatcher', args=(self.domain, 'user_status'))
+            url_args = {
+                "group": group_id,
+                "startdate": self.datespan.startdate_param,
+                "enddate": self.datespan.enddate_param,
+            }
+            return util.format_datatables_data(
+                '<a href="%s?%s" target="_blank">%s</a>' % (us_url, urlencode(url_args, True), group_name),
+                group_name
+            )
 
         rows = []
         NO_FORMS_TEXT = _('No forms submitted in time period')
@@ -993,7 +1008,7 @@ class UserStatusReport(WorkerMonitoringReportTableBase, DatespanMixin):
                     sum([int(totals_by_owner.get(group_id, 0)) for group_id in case_sharing_groups])
 
                 rows.append([
-                    group_name if group_name != '_all' else _("All Groups"),
+                    group_cell(group_id, group_name),
                     numcell(sum([int(submissions_by_user.get(user["user_id"], 0)) for user in users])),
                     numcell(sum([int(avg_submissions_by_user.get(user["user_id"], 0)) for user in users]) / self.num_avg_intervals),
                     "%s / %s" % (int(active_users_by_group.get(group, 0)), len(self.users_by_group.get(group, []))),
