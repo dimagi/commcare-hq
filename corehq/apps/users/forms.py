@@ -85,6 +85,15 @@ class UserForm(RoleForm):
     Form for Users
     """
 
+    def __init__(self, *args, **kwargs):
+        if kwargs.has_key('is_commcare_user'):
+            is_commcare_user = kwargs.pop('is_commcare_user')
+        else:
+            is_commcare_user = False
+        super(UserForm, self).__init__(*args, **kwargs)
+        if is_commcare_user:
+            del self.fields['email_opt_in']
+
     #username = forms.CharField(max_length=15)
     first_name = forms.CharField(max_length=50, required=False)
     last_name = forms.CharField(max_length=50, required=False)
