@@ -740,7 +740,7 @@ class UserStatusReport(WorkerMonitoringReportTableBase, DatespanMixin):
     num_avg_intervals = 3 # how many duration intervals we go back to calculate averages
 
     fields = [
-        'corehq.apps.reports.fields.MultiSelectGroupField',
+        'corehq.apps.reports.fields.MultiSelectGroupField2',
         'corehq.apps.reports.fields.UserOrGroupField',
         'corehq.apps.reports.fields.DatespanField',
     ]
@@ -759,20 +759,15 @@ class UserStatusReport(WorkerMonitoringReportTableBase, DatespanMixin):
     @memoized
     def groups(self):
         from corehq.apps.groups.models import Group
-        return [Group.get(g) for g in self.group_ids if g != "_all"]
+        if '_all' in self.group_ids:
+            return Group.get_reporting_groups(self.domain)
+        return [Group.get(g) for g in self.group_ids]
 
     @property
     @memoized
     def users_by_group(self):
         from corehq.apps.groups.models import Group
         user_dict = {}
-        if '_all' in self.group_ids:
-            user_dict['_all|_all'] = self.get_all_users_by_domain(
-                group=None,
-                individual=self.individual,
-                user_filter=tuple(self.user_filter),
-                simplified=True
-            )
         for group in self.groups:
             user_dict["%s|%s" % (group.name, group._id)] = self.get_all_users_by_domain(
                 group=group,
@@ -902,7 +897,7 @@ class UserStatusReport(WorkerMonitoringReportTableBase, DatespanMixin):
                 "bool": {
                     "must": [
                         {"match": {"domain.exact": self.domain}},
-                        {"range": {"opened_on": {"lt": datespan.startdate_param_utc}}}],
+                        {"range": {"opened_on": {"lt": datespan.enddate_param_utc}}}],
                     "must_not": {"range": {"closed_on": {"lt": datespan.startdate_param_utc}}}}}}
         facets = ['owner_id']
         return es_query(q=q, facets=facets, es_url=CASE_INDEX + '/case/_search', size=1, dict_only=dict_only)
@@ -947,6 +942,8 @@ class UserStatusReport(WorkerMonitoringReportTableBase, DatespanMixin):
                     value = int(text) if convert == 'int' else float(text)
                     if math.isnan(value):
                         text = '---'
+                    elif not convert == 'int': # assume this is a percentage column
+                        text = '%.f%%' % value
                 except ValueError:
                     value = text
             return util.format_datatables_data(text=text, sort_key=value)
@@ -984,6 +981,7 @@ class UserStatusReport(WorkerMonitoringReportTableBase, DatespanMixin):
             return row
 
         rows = []
+        NO_FORMS_TEXT = _('No forms submitted in time period')
         if self.aggregate_by == 'groups':
             for group, users in self.users_by_group.iteritems():
                 group_name, group_id = tuple(group.split('|'))
@@ -994,48 +992,63 @@ class UserStatusReport(WorkerMonitoringReportTableBase, DatespanMixin):
                 total_cases = sum([int(totals_by_owner.get(u["user_id"], 0)) for u in users]) + \
                     sum([int(totals_by_owner.get(group_id, 0)) for group_id in case_sharing_groups])
 
-                rows.append(add_case_list_links(group_id, [
+                rows.append([
                     group_name if group_name != '_all' else _("All Groups"),
                     numcell(sum([int(submissions_by_user.get(user["user_id"], 0)) for user in users])),
                     numcell(sum([int(avg_submissions_by_user.get(user["user_id"], 0)) for user in users]) / self.num_avg_intervals),
                     "%s / %s" % (int(active_users_by_group.get(group, 0)), len(self.users_by_group.get(group, []))),
-                    sum([int(creations_by_user.get(user["user_id"], 0)) for user in users]),
-                    sum([int(closures_by_user.get(user["user_id"], 0)) for user in users]),
-                    sum([int(modifications_by_user.get(user["user_id"], 0)) for user in users]),
+                    numcell(sum([int(creations_by_user.get(user["user_id"], 0)) for user in users])),
+                    numcell(sum([int(closures_by_user.get(user["user_id"], 0)) for user in users])),
+                    numcell(sum([int(modifications_by_user.get(user["user_id"], 0)) for user in users])),
                     numcell(sum([int(avg_modifications_by_user.get(user["user_id"], 0)) for user in users]) / self.num_avg_intervals),
+                    numcell(inactive_cases),
+                    numcell(total_cases),
+                    numcell((float(inactive_cases)/total_cases) * 100 if inactive_cases else 'nan', convert='float'),
+                ])
+
+        else: # ^ if self.aggregate_by == 'groups'
+            for user in self.combined_users:
+                inactive_cases = int(inactives_by_owner.get(user["user_id"], 0)) + \
+                    sum([int(inactives_by_owner.get(group_id, 0)) for group_id in user["group_ids"]])
+                total_cases = int(totals_by_owner.get(user["user_id"], 0)) + \
+                    sum([int(totals_by_owner.get(group_id, 0)) for group_id in user["group_ids"]])
+
+                rows.append(add_case_list_links(user['user_id'], [
+                    user["username_in_report"],
+                    numcell(submissions_by_user.get(user["user_id"], 0)),
+                    numcell(int(avg_submissions_by_user.get(user["user_id"], 0)) / self.num_avg_intervals),
+                    last_form_by_user.get(user["user_id"]) or NO_FORMS_TEXT,
+                    int(creations_by_user.get(user["user_id"],0)),
+                    int(closures_by_user.get(user["user_id"], 0)),
+                    int(modifications_by_user.get(user["user_id"], 0)),
+                    numcell(int(avg_modifications_by_user.get(user["user_id"], 0)) / self.num_avg_intervals),
                     inactive_cases,
                     total_cases,
                     numcell((float(inactive_cases)/total_cases) * 100 if inactive_cases else 'nan', convert='float'),
                 ]))
 
-        else: # ^ if self.aggregate_by == 'groups'
-            for group, users in self.users_by_group.iteritems():
-                for user in users:
-                    inactive_cases = int(inactives_by_owner.get(user["user_id"], 0)) + \
-                        sum([int(inactives_by_owner.get(group_id, 0)) for group_id in user["group_ids"]])
-                    total_cases = int(totals_by_owner.get(user["user_id"], 0)) + \
-                        sum([int(totals_by_owner.get(group_id, 0)) for group_id in user["group_ids"]])
-
-                    rows.append(add_case_list_links(user['user_id'], [
-                        user["username_in_report"],
-                        numcell(submissions_by_user.get(user["user_id"], 0)),
-                        numcell(int(avg_submissions_by_user.get(user["user_id"], 0)) / self.num_avg_intervals),
-                        last_form_by_user.get(user["user_id"]) or _('No forms submitted in time period'),
-                        int(creations_by_user.get(user["user_id"],0)),
-                        int(closures_by_user.get(user["user_id"], 0)),
-                        int(modifications_by_user.get(user["user_id"], 0)),
-                        numcell(int(avg_modifications_by_user.get(user["user_id"], 0)) / self.num_avg_intervals),
-                        inactive_cases,
-                        total_cases,
-                        numcell((float(inactive_cases)/total_cases) * 100 if inactive_cases else 'nan', convert='float'),
-                    ]))
-
         self.total_row = [_("Total")]
-        summing_cols = [1, 2, 4, 5, 6, 7, 8, 9, 10]
+        summing_cols = [1, 2, 4, 5, 6, 7, 8, 9]
         for col in range(1, len(self.headers)):
             if col in summing_cols:
                 self.total_row.append(sum(filter(lambda x: not math.isnan(x), [row[col].get('sort_key', 0) for row in rows])))
             else:
                 self.total_row.append('---')
+
+        if self.aggregate_by == 'groups':
+            def parse(str):
+                num, denom = tuple(str.split('/'))
+                num = int(num.strip())
+                denom = int(denom.strip())
+                return num, denom
+
+            def add(result_tuple, str):
+                num, denom = parse(str)
+                return num + result_tuple[0], denom + result_tuple[1]
+
+            self.total_row[3] = '%s / %s' % reduce(add, [row[3] for row in rows], (0, 0))
+        else:
+            num = len(filter(lambda row: row[3] != NO_FORMS_TEXT, rows))
+            self.total_row[3] = '%s / %s' % (num, len(rows))
 
         return rows

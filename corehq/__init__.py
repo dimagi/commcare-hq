@@ -15,13 +15,13 @@ REPORTS = (
         psi_prototype.StockReportExport,
     )),
     (_("Monitor Workers"), (
+        monitoring.UserStatusReport,
         monitoring.DailyFormStatsReport,
         monitoring.SubmissionsByFormReport,
         monitoring.FormCompletionTimeReport,
         monitoring.CaseActivityReport,
         monitoring.FormCompletionVsSubmissionTrendsReport,
         monitoring.WorkerActivityTimes,
-        monitoring.UserStatusReport,
     )),
     (_("Inspect Data"), (
         inspect.SubmitHistory,

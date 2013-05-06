@@ -101,6 +101,9 @@ class ReportMultiSelectField(ReportSelectField):
     def update_params(self):
         self.selected = self.request.GET.getlist(self.slug) or self.default_option
 
+class ReportMultiSelectField2(ReportMultiSelectField):
+    template = "reports/fields/multiselect_select2.html"
+
 class MonthField(ReportField):
     slug = "month"
     template = "reports/partials/month-select.html"
@@ -131,6 +134,16 @@ class GroupField(GroupFieldMixin, ReportSelectField):
         self.options = [dict(val=group.get_id, text=group.name) for group in self.groups]
 
 class MultiSelectGroupField(GroupFieldMixin, ReportMultiSelectField):
+    default_option = ['_all']
+
+    @property
+    def options(self):
+        self.groups = Group.get_reporting_groups(self.domain)
+        opts = [dict(val=group.get_id, text=group.name) for group in self.groups]
+        opts.insert(0, {'text': 'All Groups', 'val': '_all'})
+        return opts
+
+class MultiSelectGroupField2(GroupFieldMixin, ReportMultiSelectField2):
     default_option = ['_all']
 
     @property
