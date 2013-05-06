@@ -759,20 +759,15 @@ class UserStatusReport(WorkerMonitoringReportTableBase, DatespanMixin):
     @memoized
     def groups(self):
         from corehq.apps.groups.models import Group
-        return [Group.get(g) for g in self.group_ids if g != "_all"]
+        if '_all' in self.group_ids:
+            return Group.get_reporting_groups(self.domain)
+        return [Group.get(g) for g in self.group_ids]
 
     @property
     @memoized
     def users_by_group(self):
         from corehq.apps.groups.models import Group
         user_dict = {}
-        if '_all' in self.group_ids:
-            user_dict['_all|_all'] = self.get_all_users_by_domain(
-                group=None,
-                individual=self.individual,
-                user_filter=tuple(self.user_filter),
-                simplified=True
-            )
         for group in self.groups:
             user_dict["%s|%s" % (group.name, group._id)] = self.get_all_users_by_domain(
                 group=group,
@@ -1012,26 +1007,25 @@ class UserStatusReport(WorkerMonitoringReportTableBase, DatespanMixin):
                 ])
 
         else: # ^ if self.aggregate_by == 'groups'
-            for group, users in self.users_by_group.iteritems():
-                for user in users:
-                    inactive_cases = int(inactives_by_owner.get(user["user_id"], 0)) + \
-                        sum([int(inactives_by_owner.get(group_id, 0)) for group_id in user["group_ids"]])
-                    total_cases = int(totals_by_owner.get(user["user_id"], 0)) + \
-                        sum([int(totals_by_owner.get(group_id, 0)) for group_id in user["group_ids"]])
+            for user in self.combined_users:
+                inactive_cases = int(inactives_by_owner.get(user["user_id"], 0)) + \
+                    sum([int(inactives_by_owner.get(group_id, 0)) for group_id in user["group_ids"]])
+                total_cases = int(totals_by_owner.get(user["user_id"], 0)) + \
+                    sum([int(totals_by_owner.get(group_id, 0)) for group_id in user["group_ids"]])
 
-                    rows.append(add_case_list_links(user['user_id'], [
-                        user["username_in_report"],
-                        numcell(submissions_by_user.get(user["user_id"], 0)),
-                        numcell(int(avg_submissions_by_user.get(user["user_id"], 0)) / self.num_avg_intervals),
-                        last_form_by_user.get(user["user_id"]) or NO_FORMS_TEXT,
-                        int(creations_by_user.get(user["user_id"],0)),
-                        int(closures_by_user.get(user["user_id"], 0)),
-                        int(modifications_by_user.get(user["user_id"], 0)),
-                        numcell(int(avg_modifications_by_user.get(user["user_id"], 0)) / self.num_avg_intervals),
-                        inactive_cases,
-                        total_cases,
-                        numcell((float(inactive_cases)/total_cases) * 100 if inactive_cases else 'nan', convert='float'),
-                    ]))
+                rows.append(add_case_list_links(user['user_id'], [
+                    user["username_in_report"],
+                    numcell(submissions_by_user.get(user["user_id"], 0)),
+                    numcell(int(avg_submissions_by_user.get(user["user_id"], 0)) / self.num_avg_intervals),
+                    last_form_by_user.get(user["user_id"]) or NO_FORMS_TEXT,
+                    int(creations_by_user.get(user["user_id"],0)),
+                    int(closures_by_user.get(user["user_id"], 0)),
+                    int(modifications_by_user.get(user["user_id"], 0)),
+                    numcell(int(avg_modifications_by_user.get(user["user_id"], 0)) / self.num_avg_intervals),
+                    inactive_cases,
+                    total_cases,
+                    numcell((float(inactive_cases)/total_cases) * 100 if inactive_cases else 'nan', convert='float'),
+                ]))
 
         self.total_row = [_("Total")]
         summing_cols = [1, 2, 4, 5, 6, 7, 8, 9]
