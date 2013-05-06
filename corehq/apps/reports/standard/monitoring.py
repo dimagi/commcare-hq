@@ -858,17 +858,21 @@ class UserStatusReport(WorkerMonitoringReportTableBase, DatespanMixin):
 
         return dict([(u["user_id"], convert_date(es_q(u["user_id"]))) for u in self.combined_users])
 
-    def es_case_queries(self, date_field, datespan=None, dict_only=False):
+    def es_case_queries(self, date_fields, datespan=None, dict_only=False):
+        date_fields = date_fields if not isinstance(date_fields, basestring) else [date_fields]
         datespan = datespan or self.datespan
         q = {"query": {
                 "bool": {
-                    "must": [
-                        {"match": {"domain.exact": self.domain}},
-                        {"range": {
-                            date_field: {
-                                "from": datespan.startdate_param_utc,
-                                "to": datespan.enddate_param_utc}}}]}}}
+                    "should": [{"match": {"domain.exact": self.domain}}],
+                    "minimum_number_should_match" : 2}}}
         facets = ['user_id']
+
+        for date_field in date_fields:
+            q["query"]["bool"]["should"].append({"range": {
+                                                    date_field: {
+                                                        "from": datespan.startdate_param_utc,
+                                                        "to": datespan.enddate_param_utc}}})
+
         return es_query(q=q, facets=facets, es_url=CASE_INDEX + '/case/_search', size=1, dict_only=dict_only)
 
     def es_inactive_cases(self, datespan=None, dict_only=False):
@@ -922,9 +926,9 @@ class UserStatusReport(WorkerMonitoringReportTableBase, DatespanMixin):
         case_creation_data = self.es_case_queries('opened_on')
         creations_by_user = dict([(t["term"], t["count"]) for t in case_creation_data["facets"]["user_id"]["terms"]])
 
-        case_modification_data = self.es_case_queries('modified_on')
+        case_modification_data = self.es_case_queries(['modified_on', 'created_on'])
         modifications_by_user = dict([(t["term"], t["count"]) for t in case_modification_data["facets"]["user_id"]["terms"]])
-        avg_case_modification_data = self.es_case_queries('modified_on', datespan=avg_datespan)
+        avg_case_modification_data = self.es_case_queries(['modified_on', 'created_on'], datespan=avg_datespan)
         avg_modifications_by_user = dict([(t["term"], t["count"]) for t in avg_case_modification_data["facets"]["user_id"]["terms"]])
 
         case_closure_data = self.es_case_queries('closed_on')
@@ -1023,9 +1027,9 @@ class UserStatusReport(WorkerMonitoringReportTableBase, DatespanMixin):
                         (inactive_cases/total_cases) * 100 if inactive_cases else '---',
                     ]))
 
-        self.total_row = []
+        self.total_row = [_("Total")]
         summing_cols = [1, 2, 4, 5, 6, 7, 8, 9]
-        for col in range(len(self.headers)):
+        for col in range(len(self.headers) - 1):
             self.total_row.append(sum([row[col].get('sort_key', 0) for row in rows]) if col in summing_cols else '---')
 
         return rows
