@@ -735,10 +735,10 @@ class XForm(WrappedNode):
                 updates_by_case = group_updates_by_case(
                     getattr(actions.get('update_case'), 'update', {})
                 )
+                updates_by_case[''].update(extra_updates)
                 if '' in updates_by_case:
                     # 90% use-case
                     basic_updates = updates_by_case.pop('')
-                    basic_updates.update(extra_updates)
                     add_update_block(case_block, basic_updates)
                 if updates_by_case:
                     def make_nested_subnode(base_node, path):
