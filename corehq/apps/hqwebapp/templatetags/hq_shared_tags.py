@@ -185,7 +185,4 @@ def get_attribute(obj, arg):
 
     Usage: {{ couch_user|getattr:"full_name" }}
     """
-    try:
-        return getattr(obj, arg)
-    except:
-        return None
+    return getattr(obj, arg, None)
