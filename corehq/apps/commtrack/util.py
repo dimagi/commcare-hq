@@ -114,8 +114,8 @@ def bootstrap_default(domain, requisitions_enabled=False):
                 CommtrackActionConfig(
                     action_type=RequisitionActions.RECEIPTS,
                     keyword='rec',
-                    caption='Stock on hand',
-                    name='stock_on_hand',
+                    caption='Requisition Receipts',
+                    name='req_received',
                 ),
             ],
         )

@@ -13,7 +13,6 @@ from datetime import datetime
 from helpers import make_supply_point_product
 from corehq.apps.commtrack.util import get_supply_point
 from corehq.apps.commtrack.models import Product, CommtrackConfig
-import settings
 
 logger = logging.getLogger('commtrack.sms')
 
@@ -61,7 +60,9 @@ class StockReportParser(object):
             """build the product->subcase mapping once and return a closure"""
             product_subcase_mapping = product_subcases(location)
             product_caseid = lambda product_id: product_subcase_mapping[product_id]
-            return lambda **kwargs: baseclass(get_caseid=product_caseid, **kwargs)
+            return lambda **kwargs: baseclass(get_caseid=product_caseid,
+                                              location=location,
+                                              **kwargs)
 
         # single action stock report
         if args[0] in self.C.stock_keywords():
@@ -125,7 +126,13 @@ class StockReportParser(object):
         if action.action_type == 'stockout':
             if all(looks_like_prod_code(arg) for arg in args):
                 for prod_code in args:
-                    yield make_tx(product=self.product_from_code(prod_code), action_name=action.name, value=0)
+                    yield make_tx(
+                        domain=self.domain,
+                        product=self.product_from_code(prod_code),
+                        action_name=action.name,
+                        value=0,
+                    )
+
                 return
             else:
                 raise RuntimeError("can't include a quantity for stock-out action")
@@ -148,7 +155,7 @@ class StockReportParser(object):
                     raise RuntimeError('could not understand product quantity "%s"' % arg)
 
                 for p in products:
-                    yield make_tx(product=p, action_name=action.name, value=value)
+                    yield make_tx(domain=self.domain, product=p, action_name=action.name, value=value)
                 products = []
         if products:
             raise RuntimeError('missing quantity for product "%s"' % products[-1].code)
@@ -213,10 +220,10 @@ class StockReportParser(object):
             raise RuntimeError('extra arguments at end')
 
         yield stockreport.BulkRequisitionResponse(
-            domain=location.domain,
+            domain=self.domain,
             action_type=action.action_type,
             action_name=action.action_name,
-            location_id=location.location_[-1]
+            location_id=location.location_[-1],
         )
 
     def location_from_code(self, loc_code):
