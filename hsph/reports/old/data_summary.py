@@ -4,7 +4,6 @@ from corehq.apps.reports.generic import GenericTabularReport
 from dimagi.utils.couch.database import get_db
 from hsph.fields import IHForCHFField, SelectReferredInStatusField
 from hsph.reports import HSPHSiteDataMixin
-import itertools
 
 class DataSummaryReport(CustomProjectReport, ProjectReportParametersMixin, DatespanMixin):
     """
@@ -237,7 +236,6 @@ class FADAObservationsReport(DataSummaryReport, HSPHSiteDataMixin):
             "med_ab_baby",
             "med_art_mother",
             "med_art_baby",
-            "med_antiobiotics_baby"
         ]
 
         values = dict((k, 0) for k in keys)

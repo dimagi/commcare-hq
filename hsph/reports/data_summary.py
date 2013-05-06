@@ -232,7 +232,6 @@ class FADAObservationsReport(DataSummaryReport, HSPHSiteDataMixin):
             "med_ab_baby",
             "med_art_mother",
             "med_art_baby",
-            "med_antiobiotics_baby",
 
             "pp2_soap_and_water"
         ]
