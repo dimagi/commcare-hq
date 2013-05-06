@@ -1,10 +1,7 @@
 from __future__ import absolute_import
 
 import sys
-if sys.version_info < (2, 7):
-    from unittest2 import TestCase
-else:
-    from unittest import TestCase
+from unittest2 import TestCase
 
 from dimagi.utils.create_unique_filter import create_unique_filter
 from dimagi.utils.excel import IteratorJSONReader
