@@ -1032,8 +1032,7 @@ class UserStatusReport(WorkerMonitoringReportTableBase, DatespanMixin):
 
         self.total_row = [_("Total")]
         summing_cols = [1, 2, 4, 5, 6, 7, 8, 9, 10]
-        for col in range(len(self.headers) - 1):
-
+        for col in range(1, len(self.headers)):
             if col in summing_cols:
                 self.total_row.append(sum(filter(lambda x: not math.isnan(x), [row[col].get('sort_key', 0) for row in rows])))
             else:
