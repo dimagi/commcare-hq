@@ -247,7 +247,7 @@ def account(request, domain, couch_user_id, template="users/account.html"):
     # phone-numbers tab
     if request.method == "POST" and \
        request.POST['form_type'] == "phone-numbers" and \
-       couch_user.is_current_web_user(request):
+       (couch_user.is_current_web_user(request) or couch_user.is_commcare_user()):
         phone_number = request.POST['phone_number']
         phone_number = re.sub('\s', '', phone_number)
         if re.match(r'\d+$', phone_number):
@@ -304,7 +304,7 @@ def delete_phone_number(request, domain, couch_user_id):
     but it can be passed as %-encoded GET parameters
     """
     user = CouchUser.get_by_user_id(couch_user_id, domain)
-    if not user.is_current_web_user(request):
+    if not user.is_current_web_user(request) and not user.is_commcare_user():
         raise Http404
     if 'phone_number' not in request.GET:
         return Http404('Must include phone number in request.')
