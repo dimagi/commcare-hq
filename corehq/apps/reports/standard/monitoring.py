@@ -740,7 +740,7 @@ class UserStatusReport(WorkerMonitoringReportTableBase, DatespanMixin):
     num_avg_intervals = 3 # how many duration intervals we go back to calculate averages
 
     fields = [
-        'corehq.apps.reports.fields.MultiSelectGroupField',
+        'corehq.apps.reports.fields.MultiSelectGroupField2',
         'corehq.apps.reports.fields.UserOrGroupField',
         'corehq.apps.reports.fields.DatespanField',
     ]
