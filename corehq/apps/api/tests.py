@@ -10,7 +10,7 @@ from couchforms.models import XFormInstance
 from corehq.pillows.xform import XFormPillow
 from corehq.apps.users.models import CommCareUser, WebUser
 from corehq.apps.domain.models import Domain
-from corehq.apps.api.resources import v0_4
+from corehq.apps.api.resources import v0_1, v0_4
 
 class FakeXFormES(object):
     """
@@ -169,3 +169,43 @@ class TestXFormInstanceResource(TestCase):
         })))
 
         self.assertEqual(response.status_code, 200)
+
+class TestUserResource(TestCase):
+    """
+    Basic sanity checking of v0_1.CommCareUserResource
+    """
+        
+    def setUp(self):
+        self.maxDiff = None
+        
+        self.domain = Domain.get_or_create_with_name('qwerty', is_active=True)
+
+        self.list_endpoint = reverse('api_dispatch_list', kwargs=dict(domain=self.domain.name, 
+                                                                      api_name='v0.4', 
+                                                                      resource_name=v0_1.CommCareUserResource.Meta.resource_name))
+        
+
+        self.username = 'rudolph'
+        self.password = '***'
+        self.user = WebUser.create(self.domain.name, self.username, self.password)
+        self.user.set_role(self.domain.name, 'admin')
+        self.user.save()
+
+    def tearDown(self):
+        self.user.delete()
+        self.domain.delete()
+
+    def test_get_list(self):
+        self.client.login(username=self.username, password=self.password)
+
+        commcare_user = CommCareUser.create(domain=self.domain.name, username='fake_user', password='*****')
+        backend_id = commcare_user.get_id
+
+        response = self.client.get(self.list_endpoint)
+        self.assertEqual(response.status_code, 200)
+
+        api_users = simplejson.loads(response.content)['objects']
+        self.assertEqual(len(api_users), 1)
+        self.assertEqual(api_users[0]['id'], backend_id)    
+
+        commcare_user.delete()

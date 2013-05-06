@@ -23,6 +23,8 @@ except IndexError:
 ADMINS = ()
 MANAGERS = ADMINS
 
+# Default reporting database should be overridden in localsettings.
+SQL_REPORTING_DATABASE_URL = "sqlite:////tmp/commcare_reporting_test.db"
 
 # default to the system's timezone settings
 TIME_ZONE = "UTC"

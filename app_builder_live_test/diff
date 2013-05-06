@@ -17,9 +17,7 @@ echo "Preparing apps with branches $branch0 and $branch1"
 
 function build_apps {
     branch=$1
-    cd submodules/core-hq-src/
     git checkout $branch
-    cd ../..
     echo "./manage.py build_apps app_builder_live_test/ $branch"
     ./manage.py build_apps app_builder_live_test/ $branch
 }
