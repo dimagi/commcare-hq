@@ -54,6 +54,8 @@ def process(domain, instance):
     # TODO: code to auto generate / update requisitions from transactions if
     # project is configured for that.
 
+    # TODO: when we start receiving commcare-submitted reports, we should be using a server time rather
+    # than relying on timeStart (however timeStart is set to server time for reports received via sms)
     submit_time = root.find('.//%s' % _('timeStart', META_XMLNS)).text
     post_processed_transactions = list(transactions)
     for product_id, product_case in cases.iteritems():

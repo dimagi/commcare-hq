@@ -9,6 +9,8 @@ from corehq.apps.commtrack.util import num_periods_late
 from datetime import date, datetime
 from corehq.apps.locations.models import Location
 from dimagi.utils.decorators.memoized import memoized
+from django.utils.translation import ugettext as _, ugettext_noop
+
 
 # TODO make settings
 
@@ -81,7 +83,7 @@ def stock_category(stock, consumption, months_left=None):
 
 
 class CurrentStockStatusReport(GenericTabularReport, CommtrackReportMixin):
-    name = 'Current Stock Status by Product'
+    name = ugettext_noop('Current Stock Status by Product')
     slug = 'current_stock_status'
     fields = ['corehq.apps.reports.fields.AsyncLocationField']
     exportable = True
@@ -92,13 +94,13 @@ class CurrentStockStatusReport(GenericTabularReport, CommtrackReportMixin):
     @property
     def headers(self):
         return DataTablesHeader(*(DataTablesColumn(text) for text in [
-                    'Product',
-                    'Stocked Out',
-                    'Understocked',
-                    'Adequate Stock',
-                    'Overstocked',
-                    'Non-reporting',
-                    'Insufficient Data',
+                    _('Product'),
+                    _('Stocked Out'),
+                    _('Understocked'),
+                    _('Adequate Stock'),
+                    _('Overstocked'),
+                    _('Non-reporting'),
+                    _('Insufficient Data'),
                 ]))
 
     @property
@@ -162,7 +164,7 @@ class CurrentStockStatusReport(GenericTabularReport, CommtrackReportMixin):
         return ctxt
 
 class AggregateStockStatusReport(GenericTabularReport, CommtrackReportMixin):
-    name = 'Aggregate Stock Status by Product'
+    name = ugettext_noop('Aggregate Stock Status by Product')
     slug = 'agg_stock_status'
     fields = ['corehq.apps.reports.fields.AsyncLocationField']
     exportable = True
@@ -171,11 +173,11 @@ class AggregateStockStatusReport(GenericTabularReport, CommtrackReportMixin):
     @property
     def headers(self):
         return DataTablesHeader(*(DataTablesColumn(text) for text in [
-                    'Product',
-                    'Total SOH',
-                    'Total AMC',
-                    'Remaining MOS',
-                    'Stock Status',
+                    _('Product'),
+                    _('Total SOH'),
+                    _('Total AMC'),
+                    _('Remaining MOS'),
+                    _('Stock Status'),
                 ]))
 
     @property
@@ -228,11 +230,11 @@ class AggregateStockStatusReport(GenericTabularReport, CommtrackReportMixin):
                 return formatter(val) if val is not None else default
 
             statuses = {
-                'nodata': 'no data',
-                'stockout': 'stock-out',
-                'understock': 'under-stock',
-                'adequate': 'adequate',
-                'overstock': 'over-stock',
+                'nodata': _('no data'),
+                'stockout': _('stock-out'),
+                'understock': _('under-stock'),
+                'adequate': _('adequate'),
+                'overstock': _('over-stock'),
             }
 
             for row in self.product_data:
@@ -243,7 +245,7 @@ class AggregateStockStatusReport(GenericTabularReport, CommtrackReportMixin):
                 yield row
 
 class ReportingRatesReport(GenericTabularReport, CommtrackReportMixin):
-    name = 'Reporting Rate'
+    name = ugettext_noop('Reporting Rate')
     slug = 'reporting_rate'
     fields = ['corehq.apps.reports.fields.AsyncLocationField']
     exportable = True
@@ -254,11 +256,11 @@ class ReportingRatesReport(GenericTabularReport, CommtrackReportMixin):
     @property
     def headers(self):
         return DataTablesHeader(*(DataTablesColumn(text) for text in [
-                    'Location',
-                    '# Sites',
-                    'On-time',
-                    'Late',
-                    'Non-reporting',
+                    _('Location'),
+                    _('# Sites'),
+                    _('On-time'),
+                    _('Late'),
+                    _('Non-reporting'),
                 ]))
 
     @property
@@ -316,12 +318,12 @@ class ReportingRatesReport(GenericTabularReport, CommtrackReportMixin):
     def master_pie_chart_data(self):
         tally = self._data[0]
         labels = {
-            'ontime': 'On-time',
-            'late': 'Late',
-            'nonreporting': 'Non-reporting',
+            'ontime': _('On-time'),
+            'late': _('Late'),
+            'nonreporting': _('Non-reporting'),
         }
         return [{
-                'key': 'Current Reporting',
+                'key': _('Current Reporting'),
                 'values': [{'label': labels[k], 'value': tally.get(k, {'count': 0.})['count']} for k in ('ontime', 'late', 'nonreporting')],
         }]
 

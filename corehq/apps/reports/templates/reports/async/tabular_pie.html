@@ -18,7 +18,7 @@
 {% block js-inline %}{{ block.super }}
     <script type="text/javascript">
     var reporting_data = {{ reporting_data|JSON }};
-    if (reporting_data) { console.log(reporting_data);
+    if (reporting_data) {
         $('#chart1').show();
         nv.addGraph(function() {
             var chart = nv.models.pieChart()
