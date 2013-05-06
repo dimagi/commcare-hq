@@ -39,7 +39,7 @@ BITLY_APIKEY = '*******'
 
 _ROOT_DIR  = os.path.dirname(os.path.abspath(__file__))
 JAR_SIGN = dict(
-    jad_tool = os.path.join(_ROOT_DIR, "submodules", "core-hq-src", "corehq", "apps", "app_manager", "JadTool.jar"),
+    jad_tool = os.path.join(_ROOT_DIR, "corehq", "apps", "app_manager", "JadTool.jar"),
     key_store = os.path.join(_ROOT_DIR, "InsecureTestingKeyStore"),
     key_alias = "javarosakey",
     store_pass = "onetwothreefourfive",
