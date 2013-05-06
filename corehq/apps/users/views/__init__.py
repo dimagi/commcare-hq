@@ -25,7 +25,7 @@ from corehq.apps.prescriptions.models import Prescription
 from corehq.apps.domain.models import Domain
 from corehq.apps.hqwebapp.utils import InvitationView
 from corehq.apps.users.decorators import require_permission
-from corehq.apps.users.forms import UserForm, ProjectSettingsForm
+from corehq.apps.users.forms import WebUserForm, UserForm, ProjectSettingsForm
 from corehq.apps.users.models import CouchUser, CommCareUser, WebUser, \
     DomainRemovalRecord, UserRole, AdminUserRole, DomainInvitation, PublicUser
 from corehq.apps.domain.decorators import login_and_domain_required, require_superuser, domain_admin_required
@@ -479,7 +479,10 @@ def _handle_user_form(request, domain, couch_user=None):
         role_choices = UserRole.role_choices(domain)
 
     if request.method == "POST" and request.POST['form_type'] == "basic-info":
-        form = UserForm(request.POST, role_choices=role_choices)
+        if couch_user.is_commcare_user():
+            form = UserForm(request.POST, role_choices=role_choices)
+        else:
+            form = WebUserForm(request.POST, role_choices=role_choices)
         if form.is_valid():
             if create_user:
                 django_user = User()
@@ -504,7 +507,10 @@ def _handle_user_form(request, domain, couch_user=None):
 
             messages.success(request, 'Changes saved for user "%s"' % couch_user.username)
     else:
-        form = UserForm(role_choices=role_choices, is_commcare_user=couch_user.is_commcare_user())
+        if couch_user.is_commcare_user():
+            form = UserForm(role_choices=role_choices)
+        else:
+            form = WebUserForm(role_choices=role_choices)
         if not create_user:
             form.initial['first_name'] = couch_user.first_name
             form.initial['last_name'] = couch_user.last_name
