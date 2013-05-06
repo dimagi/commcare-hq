@@ -433,6 +433,20 @@ class RequisitionCase(CommCareCase):
         return [r['id'] for r in results]
 
 
+    @classmethod
+    def open_for_product_case(cls, domain, location, product_case_id):
+        """
+        For a given product case, return the IDs of all open requisitions at that location.
+        """
+        startkey = [domain, location, 'open', product_case_id]
+        results = cls.get_db().view('commtrack/requisitions',
+            endkey=startkey, # yes this is confusing, but i blame couch's descending=true rules
+            startkey=startkey + [{}],
+            descending=True,
+            reduce=False,
+        )
+        return [r['id'] for r in results]
+
     class Meta:
         app_label = "commtrack" # This is necessary otherwise syncdb will confuse this app with casexml
 

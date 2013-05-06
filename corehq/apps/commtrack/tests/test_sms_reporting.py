@@ -106,3 +106,57 @@ class StockRequisitionTest(CommTrackTest):
             self.assertEqual(self.user._id, req_case.filled_by)
             self.assertIsNotNone(req_case.filled_on)
             self.assertTrue(isinstance(req_case.filled_on, datetime))
+
+    def testReceipts(self):
+        # this tests the requisition specific receipt keyword. not to be confused
+        # with the standard stock receipt keyword
+        self.testRequisition()
+
+        reqs = RequisitionCase.open_for_location(self.domain.name, self.loc._id)
+        self.assertEqual(3, len(reqs))
+        req_ids_by_product_code = dict(((RequisitionCase.get(id).get_product().code, id) for id in reqs))
+
+        rec_amounts = {
+            'pp': 30,
+            'pq': 20,
+            'pr': 10,
+        }
+        # rec loc1 pp 10 pq 20...
+        handled = handle(self.verified_number, 'rec {loc} {report}'.format(
+            loc='loc1',
+            report=' '.join('%s %s' % (k, v) for k, v in rec_amounts.items())
+        ))
+        self.assertTrue(handled)
+
+        # we should have closed the requisitions
+        self.assertEqual(0, len(RequisitionCase.open_for_location(self.domain.name, self.loc._id)))
+
+        forms = list(self.get_commtrack_forms())
+        self.assertEqual(2, len(forms))
+
+        self.assertEqual(self.sp.location_, forms[1].location_)
+        # check updated status
+        for code, amt in rec_amounts.items():
+            req_case = RequisitionCase.get(req_ids_by_product_code[code])
+            self.assertTrue(req_case.closed)
+            self.assertEqual(str(amt), req_case.amount_received)
+            self.assertTrue(req_case._id in reqs, 'requisition %s should be in %s' % (req_case._id, reqs))
+
+    def testReceiptsWithNoOpenRequisition(self):
+        # make sure we don't have any open requisitions
+        self.assertEqual(0, len(RequisitionCase.open_for_location(self.domain.name, self.loc._id)))
+
+        rec_amounts = {
+            'pp': 30,
+            'pq': 20,
+            'pr': 10,
+        }
+        # rec loc1 pp 10 pq 20...
+        handled = handle(self.verified_number, 'rec {loc} {report}'.format(
+            loc='loc1',
+            report=' '.join('%s %s' % (k, v) for k, v in rec_amounts.items())
+        ))
+        self.assertTrue(handled)
+
+        # should still be no open requisitions
+        self.assertEqual(0, len(RequisitionCase.open_for_location(self.domain.name, self.loc._id)))
