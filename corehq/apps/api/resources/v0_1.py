@@ -55,8 +55,8 @@ class CommCareUserResource(JsonResource, DomainSpecificResourceMixin):
     type = "user"
     id = fields.CharField(attribute='get_id', readonly=True, unique=True)
     username = fields.CharField(attribute='username', unique=True)
-    first_name = fields.CharField(attribute='first_name')
-    last_name = fields.CharField(attribute='last_name')
+    first_name = fields.CharField(attribute='first_name', null=True)
+    last_name = fields.CharField(attribute='last_name', null=True)
     default_phone_number = fields.CharField(attribute='default_phone_number', null=True)
     email = fields.CharField(attribute='email')
     phone_numbers = fields.ListField(attribute='phone_numbers')
@@ -84,6 +84,7 @@ class CommCareUserResource(JsonResource, DomainSpecificResourceMixin):
             return list(CommCareUser.by_domain(domain))
 
     class Meta(CustomResourceMeta):
+        object_class = CommCareUser    
         list_allowed_methods = ['get']
         detail_allowed_methods = ['get']
         resource_name = 'user'

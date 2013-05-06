@@ -36,3 +36,11 @@ def get_domain_module_map():
 
     hardcoded.update(dynamic)
     return hardcoded
+
+
+def get_adm_enabled_domains():
+    try:
+        domains = get_db().get('ADM_ENABLED_DOMAINS').get('domains', [])
+    except ResourceNotFound:
+        domains = []
+    return domains

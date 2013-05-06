@@ -69,6 +69,8 @@ urlpatterns = patterns('corehq.apps.reports.views',
 
     # once off email
     url(r"^email_onceoff/(?P<report_slug>[\w_]+)/$", 'email_report'),
+    url(r"^custom/email_onceoff/(?P<report_slug>[\w_]+)/$", 'email_report',
+        kwargs=dict(report_type=CustomProjectReportDispatcher.prefix)),
 
     # Saved reports
     url(r"^configs$", 'add_config', name='add_report_config'),
