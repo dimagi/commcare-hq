@@ -139,12 +139,17 @@ class FormsByApplicationFilter(BaseDrilldownOptionFilter):
             app = self._map_structure(app_map['app']['id'], app_name)
 
             for module_map in app_map['modules']:
-                module_name = self.get_translated_value(app_langs, module_map['module']['names'])
-                module = self._map_structure(module_map['module']['id'], module_name)
-                for form_map in module_map['forms']:
-                    form_name = self.get_translated_value(app_langs, form_map['form']['names'])
-                    module['next'].append(self._map_structure(form_map['xmlns'], form_name))
-                app['next'].append(module)
+                try:
+                    module_name = self.get_translated_value(app_langs, module_map['module']['names'])
+                    module = self._map_structure(module_map['module']['id'], module_name)
+                    for form_map in module_map['forms']:
+                        form_name = self.get_translated_value(app_langs, form_map['form']['names'])
+                        module['next'].append(self._map_structure(form_map['xmlns'], form_name))
+                    app['next'].append(module)
+                except TypeError:
+                    # ignoring filler modules (modules in the app with no form submissions)
+                    pass
+
 
             if is_remote:
                 map_remote.append(app)
@@ -229,6 +234,7 @@ class FormsByApplicationFilter(BaseDrilldownOptionFilter):
             }
         """
         data = self._raw_data(["app module form", self.domain])
+        default_module = lambda num: {'module': None, 'forms': []}
         app_forms = {}
         for line in data:
             app_info = line.get('value')
@@ -248,11 +254,14 @@ class FormsByApplicationFilter(BaseDrilldownOptionFilter):
                 }
 
             module_id = app_info['module']['id'] + index_offset
-            if module_id+1 > len(app_forms[app_id]['modules']):
-                app_forms[app_id]['modules'].append({
-                    'module': app_info['module'],
-                    'forms': [],
-                })
+
+            new_modules = module_id - len(app_forms[app_id]['modules']) + 1
+            if new_modules > 0:
+                # takes care of filler modules (modules in the app with no form submissions.
+                # these 'filler modules' are eventually ignored when rendering the drilldown map.
+                app_forms[app_id]['modules'].extend([default_module(module_id - m) for m in range(0, new_modules)])
+
+            app_forms[app_id]['modules'][module_id]['module'] = app_info['module']
 
             app_forms[app_id]['modules'][module_id]['forms'].append({
                 'form': app_info['form'],
