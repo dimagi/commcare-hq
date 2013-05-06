@@ -314,6 +314,7 @@ XFORMS_PLAYER_URL = "http://localhost:4444/"  # touchform's setting
 
 ####### Couchlog config ######
 
+HQ_NOTIFICATIONS_EMAIL = 'commcarehq-noreply@dimagi.com'
 SUPPORT_EMAIL = "commcarehq-support@dimagi.com"
 COUCHLOG_BLUEPRINT_HOME = "%s%s" % (STATIC_URL, "hqwebapp/stylesheets/blueprint/")
 COUCHLOG_DATATABLES_LOC = "%s%s" % (
