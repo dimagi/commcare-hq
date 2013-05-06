@@ -179,9 +179,9 @@ class IHForCHFField(ReportSelectField):
     domain = 'hsph'
     cssId = "hsph_ihf_or_chf"
     cssClasses = "span2"
-    options = [dict(val="IHF", text="IHF"),
-               dict(val="CHF", text="CHF")]
-    default_option = "Select IHF/CHF..."
+    options = [dict(val="IHF", text="IHF only"),
+               dict(val="CHF", text="CHF only")]
+    default_option = "IHF and CHF"
 
     @classmethod
     def _get_facilities(cls):

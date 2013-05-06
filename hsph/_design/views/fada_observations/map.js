@@ -43,7 +43,6 @@ function (doc) {
             "ab_baby",
             "art_mother",
             "art_baby",
-            "antiobiotics_baby"
         ];
 
     var data = {
@@ -78,11 +77,14 @@ function (doc) {
             data["med_" + field] = 0;
         }
     }
-
-    emit(["user", form.meta.userID, form.process_date_admission, form.process_sbr_no], data);
-
+    
     // used by secondary outcome report
     data.pp2_soap_and_water = (data.pp2_soap === 'yes' && data.pp2_water === 'yes');
+
+    data.site_id = form.site_id;
+    data.user_id = form.meta.userID;
+
+    emit(["user", form.meta.userID, form.process_date_admission, form.process_sbr_no], data);
     emit(["site", form.site_id, form.process_date_admission, form.process_sbr_no], data);
 
 }

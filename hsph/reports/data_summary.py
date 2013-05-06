@@ -73,10 +73,10 @@ class PrimaryOutcomeReport(GenericTabularReport, DataSummaryReport, HSPHSiteData
         site_keys = self.generate_keys()
 
         referred = self.request_params.get(SelectReferredInStatusField.slug)
-        startkey = [self.datespan.startdate_param_utc, 
-                    1 if referred == 'referred' else 0]
-        endkey = [self.datespan.enddate_param_utc, 1]
-        
+        prefix = ['referred_in'] if referred else []
+        startdate = self.datespan.startdate_param_utc[:10]
+        enddate = self.datespan.enddate_param_utc[:10]
+
         fields = [
             'birthEvents',
             'referredInBirths',
@@ -98,11 +98,11 @@ class PrimaryOutcomeReport(GenericTabularReport, DataSummaryReport, HSPHSiteData
 
         for key in site_keys:
             data = get_db().view('hsph/data_summary', 
-                startkey=['region'] + startkey + key, 
-                endkey=['region'] + endkey + key,
+                startkey=prefix + ['region'] + key + [startdate], 
+                endkey=prefix + ['region'] + key + [enddate],
                 reduce=True,
                 wrapper=lambda r: r['value'])
-                
+
             for item in data:
                 row = list(self.get_site_table_values(key))
                 row.extend(item.get(f, 0) for f in fields)
@@ -130,6 +130,7 @@ class SecondaryOutcomeReport(DataSummaryReport, HSPHSiteDataMixin):
         )
 
     def _get_data(self, site_ids):
+        site_ids = list(site_ids)
         startdate = self.datespan.startdate_param_utc[:10]
         enddate = self.datespan.enddate_param_utc[:10]
 
@@ -158,8 +159,8 @@ class SecondaryOutcomeReport(DataSummaryReport, HSPHSiteDataMixin):
         for site_id in site_ids:
             result = db.view('hsph/data_summary',
                 reduce=True,
-                startkey=["site", startdate, 0, site_id],
-                endkey=["site", enddate, 1, site_id, {}],
+                startkey=["site", site_id, startdate],
+                endkey=["site", site_id, enddate],
                 wrapper=lambda r: r['value']
             ).first()
 
@@ -167,13 +168,11 @@ class SecondaryOutcomeReport(DataSummaryReport, HSPHSiteDataMixin):
                 for field, value in result.items():
                     data[field] += value
 
-        data.update(FADAObservationsReport.get_values([
-            (["site", site_id, startdate], ["site", site_id, enddate]) 
-            for site_id in site_ids]))
+        data.update(FADAObservationsReport.get_values(
+                    (startdate, enddate), site_ids=site_ids))
 
         for k, calc in extra_fields.items():
             data[k] = calc(data)
-
 
         return data
 
@@ -183,21 +182,33 @@ class FADAObservationsReport(DataSummaryReport, HSPHSiteDataMixin):
     slug = "fada_observations"
 
     fields = ['corehq.apps.reports.fields.DatespanField',
-              'hsph.fields.NameOfFADAField']
+              'hsph.fields.NameOfFADAField',
+              'hsph.fields.SiteField']
 
     report_template_path = 'hsph/reports/fada_observations.html'
     flush_layout = True
 
     @classmethod
-    def get_values(cls, keys):
+    def get_values(cls, daterange, site_ids=None, user_ids=None):
         """
         Gets reduced results per unique process_sbr_no for each key and sums
         them together, adding percentage occurences out of total_forms for all
         indicators.
 
-        keys -- iterable of (startkey, endkey) pairs
-        
         """
+
+        startdate, enddate = daterange
+        assert site_ids is not None or user_ids is not None
+        keys = []
+        if site_ids is not None:
+            keys.extend([(["site", site_id, startdate],
+                          ["site", site_id, enddate])
+                         for site_id in site_ids])
+        if user_ids is not None:
+            keys.extend([(["user", user_id, startdate],
+                          ["user", user_id, enddate])
+                         for user_id in user_ids])
+        print "keys", keys
 
         data_keys = [
             "total_forms",
@@ -237,10 +248,12 @@ class FADAObservationsReport(DataSummaryReport, HSPHSiteDataMixin):
         ]
 
         values = dict((k, 0) for k in data_keys)
-
         db = get_db()
 
+        all_results = []
+
         for startkey, endkey in keys:
+            print startkey, endkey
             results = db.view("hsph/fada_observations",
                 reduce=True,
                 group_level=4,
@@ -248,9 +261,14 @@ class FADAObservationsReport(DataSummaryReport, HSPHSiteDataMixin):
                 endkey=endkey,
                 wrapper=lambda r: r['value'])
 
-            for result in results:
+            all_results.extend(results)
+
+        for result in all_results:
+            if (site_ids is None or result['site_id'] in site_ids and
+                user_ids is None or result['user_id'] in user_ids):
                 for k, v in result.items():
-                    values[k] += v
+                    if k not in ('site_id', 'user_id'):
+                        values[k] += v
 
         unique_sbrs = values['unique_sbrs'] = values['total_forms']
         for k, v in values.items():
@@ -270,10 +288,19 @@ class FADAObservationsReport(DataSummaryReport, HSPHSiteDataMixin):
 
     @property
     def report_context(self):
-        keys = [(["user", user_id, self.datespan.startdate_param_utc[:10]],
-                 ["user", user_id, self.datespan.enddate_param_utc[:10]])
-                for user_id in self.user_ids]
-        return self.get_values(keys)
+        site_map = self.selected_site_map or self.site_map
+        facilities = IHForCHFField.get_selected_facilities(site_map)
 
+        startdate = self.datespan.startdate_param_utc[:10]
+        enddate = self.datespan.enddate_param_utc[:10]
 
-
+        user_ids = self.user_ids or None
+        
+        return {
+            'ihf': self.get_values(
+                    (startdate, enddate), site_ids=facilities['ihf'],
+                    user_ids=user_ids),
+            'chf': self.get_values(
+                    (startdate, enddate), site_ids=facilities['chf'],
+                    user_ids=user_ids)
+        }

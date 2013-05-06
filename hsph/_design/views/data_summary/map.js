@@ -61,13 +61,14 @@ function(doc) {
 
     data.followedUp = !data.lostToFollowUp;
 
-    emit(
-        ["region", doc.date_admission, data.referredInBirths, 
-         doc.region_id, doc.district_id, doc.site_id],
-        data
-    );
+    var key1 = ["region", doc.region_id, doc.district_id, doc.site_number, doc.date_admission];
+    var key2 = ["site", doc.site_id, doc.date_admission];
 
-    emit(["site", doc.date_admission, data.referredInBirths, doc.site_id],
-         data);
+    emit(key1, data);
+    emit(key2, data);
 
+    if (data.referredInBirths) {
+        emit(["referred_in"].concat(key1), data);
+        emit(["referred_in"].concat(key2), data);
+    }
 }
