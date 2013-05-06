@@ -139,16 +139,13 @@ class FormsByApplicationFilter(BaseDrilldownOptionFilter):
             app = self._map_structure(app_map['app']['id'], app_name)
 
             for module_map in app_map['modules']:
-                try:
+                if module_map['module'] is not None:
                     module_name = self.get_translated_value(app_langs, module_map['module']['names'])
                     module = self._map_structure(module_map['module']['id'], module_name)
                     for form_map in module_map['forms']:
                         form_name = self.get_translated_value(app_langs, form_map['form']['names'])
                         module['next'].append(self._map_structure(form_map['xmlns'], form_name))
                     app['next'].append(module)
-                except TypeError:
-                    # ignoring filler modules (modules in the app with no form submissions)
-                    pass
 
 
             if is_remote:
