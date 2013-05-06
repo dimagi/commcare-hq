@@ -984,6 +984,7 @@ class UserStatusReport(WorkerMonitoringReportTableBase, DatespanMixin):
             return row
 
         rows = []
+        NO_FORMS_TEXT = _('No forms submitted in time period')
         if self.aggregate_by == 'groups':
             for group, users in self.users_by_group.iteritems():
                 group_name, group_id = tuple(group.split('|'))
@@ -1020,7 +1021,7 @@ class UserStatusReport(WorkerMonitoringReportTableBase, DatespanMixin):
                         user["username_in_report"],
                         numcell(submissions_by_user.get(user["user_id"], 0)),
                         numcell(int(avg_submissions_by_user.get(user["user_id"], 0)) / self.num_avg_intervals),
-                        last_form_by_user.get(user["user_id"]) or _('No forms submitted in time period'),
+                        last_form_by_user.get(user["user_id"]) or NO_FORMS_TEXT,
                         int(creations_by_user.get(user["user_id"],0)),
                         int(closures_by_user.get(user["user_id"], 0)),
                         int(modifications_by_user.get(user["user_id"], 0)),
@@ -1031,11 +1032,27 @@ class UserStatusReport(WorkerMonitoringReportTableBase, DatespanMixin):
                     ]))
 
         self.total_row = [_("Total")]
-        summing_cols = [1, 2, 4, 5, 6, 7, 8, 9, 10]
+        summing_cols = [1, 2, 4, 5, 6, 7, 8, 9]
         for col in range(1, len(self.headers)):
             if col in summing_cols:
                 self.total_row.append(sum(filter(lambda x: not math.isnan(x), [row[col].get('sort_key', 0) for row in rows])))
             else:
                 self.total_row.append('---')
+
+        if self.aggregate_by == 'groups':
+            def parse(str):
+                num, denom = tuple(str.split('/'))
+                num = int(num.strip())
+                denom = int(denom.strip())
+                return num, denom
+
+            def add(result_tuple, str):
+                num, denom = parse(str)
+                return (num + result_tuple[0], denom + result_tuple[1])
+
+            self.total_row[3] = '%s / %s' % reduce(add, [row[3] for row in rows], (0, 0))
+        else:
+            num = len(filter(lambda row: row[3] != NO_FORMS_TEXT, rows))
+            self.total_row[3] = '%s / %s' % (num, len(rows))
 
         return rows
