@@ -12,6 +12,11 @@ setup(
     packages = find_packages(exclude=['*.pyc']),
     test_suite = 'dimagi.test_utils',
     install_requires = [
-        "python-dateutil"
+        'python-dateutil',
+    ],
+    tests_require = [
+        'django',
+        'openpyxl',
+        'pytz',
     ],
 )
