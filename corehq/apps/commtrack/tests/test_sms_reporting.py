@@ -140,6 +140,7 @@ class StockRequisitionTest(CommTrackTest):
             req_case = RequisitionCase.get(req_ids_by_product_code[code])
             self.assertTrue(req_case.closed)
             self.assertEqual(str(amt), req_case.amount_received)
+            self.assertEqual(self.user._id, req_case.received_by)
             self.assertTrue(req_case._id in reqs, 'requisition %s should be in %s' % (req_case._id, reqs))
 
     def testReceiptsWithNoOpenRequisition(self):
