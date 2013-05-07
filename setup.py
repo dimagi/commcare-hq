@@ -12,7 +12,13 @@ setup(
     packages = find_packages(exclude=['*.pyc']),
     include_package_data = True,
     install_requires = [
-        "restkit", "couchdbkit",
+        "restkit", 
+        "couchdbkit",
+        "simplejson",
+        "request",
+        "gevent",
+        "greenlet",
+        "rawes"
     ],
 )
 
