@@ -106,7 +106,7 @@ def make_psi_config(domain):
             SupplyPointType(name='Pediatrician', categories=['Private']),
             SupplyPointType(name='AYUSH', categories=['Private']),
             SupplyPointType(name='Medical Store / Chemist', categories=['Traditional']),
-            SupplyPointType(name='RMP', categories=['Traditional']),
+            SupplyPointType(name='RP', categories=['Traditional']),
             SupplyPointType(name='Asha', categories=['Frontline Workers']),
             SupplyPointType(name='AWW', categories=['Public', 'Frontline Workers']),
             SupplyPointType(name='NGO', categories=['Non-traditional']),
