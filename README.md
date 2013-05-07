@@ -1,8 +1,13 @@
+Couchforms ![[Build Status](https://travis-ci.org/dimagi/couchforms)](https://travis-ci.org/dimagi/couchforms.png)
+==========
+
 Put XForms in couchdb!
+
+To run the tests, `pip install -e . && django-admin.py test --settings settings`
 
 To include this in a django project you need the following settings defined in your settings.py
 
-
+```python
 ####### Couch Forms & Couch DB Kit Settings #######
 
 COUCH_SERVER_ROOT = 'localhost:5984'
@@ -29,17 +34,18 @@ COUCHDB_DATABASES = [(app_label, COUCH_DATABASE) for app_label in [
         'couchforms',
     ]
 ]
-
-
-### end settings.py ###
+```
 
 In order to put up a couchforms url that can receive POSTs, add the following line to urls.py:
 
+```python
 #   ...
     (r'desired/url/$',  'couchforms.views.post'),
 #   ...
+```
 
 In order to test whether this is working, you can send a filled out xform submission (saved at ./sub.xml) for the command line with curl as follows:
 
+```
 $ curl -X POST http://localhost:8000/desired/url/ -d @sub.xml
-
+```
