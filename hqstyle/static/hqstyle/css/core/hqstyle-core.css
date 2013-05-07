@@ -3462,8 +3462,23 @@ ul.icons li [class*=" icon-"] {
 .icon-vellum-variable:before {
   content: "\F005";
 }
-.icon-vellum-multi-choice:before {
+.icon-vellum-single-select:before {
   content: "\F006";
+}
+.icon-vellum-multi-select:before {
+  content: "\F007";
+}
+.icon-vellum-decimal:before {
+  content: "\F008";
+}
+.icon-vellum-long:before {
+  content: "\F009";
+}
+.icon-vellum-datetime:before {
+  content: "\F00A";
+}
+.icon-vellum-audio-capture:before {
+  content: "\F00B";
 }
 .header .icon-white:before {
   content: "\f1000";
@@ -3505,7 +3520,7 @@ th.header > div {
   color: #333333;
 }
 .icon-blue {
-  color: #449ADC;
+  color: #2787d0;
 }
 .dropup,
 .dropdown {
@@ -7777,6 +7792,31 @@ a.badge:hover {
 }
 #formdesigner .jstree a > ins.jstree-icon {
   display: none;
+}
+#formdesigner .jstree a > i {
+  color: #2787d0;
+}
+#formdesigner .jstree a {
+  color: #37475d;
+  line-height: 18px;
+  padding: 4px 0;
+  -webkit-border-radius: 5px;
+  -moz-border-radius: 5px;
+  border-radius: 5px;
+  -webkit-border-radius: 5px;
+  -moz-border-radius: 5px;
+  border-radius: 5px;
+}
+#formdesigner .jstree a.jstree-hovered,
+#formdesigner .jstree a.jstree-clicked {
+  border: none;
+  padding: 4px 6px;
+  background: #e3effb;
+}
+#formdesigner .jstree a.jstree-clicked {
+  -webkit-box-shadow: 0px 0px 4px rgba(21, 87, 162, 0.6);
+  -moz-box-shadow: 0px 0px 4px rgba(21, 87, 162, 0.6);
+  box-shadow: 0px 0px 4px rgba(21, 87, 162, 0.6);
 }
 /**
 * From github.com/danielfarrell/bootstrap-combobox
