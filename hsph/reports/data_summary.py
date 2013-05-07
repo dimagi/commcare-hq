@@ -253,7 +253,6 @@ class FADAObservationsReport(DataSummaryReport, HSPHSiteDataMixin):
         all_results = []
 
         for startkey, endkey in keys:
-            print startkey, endkey
             results = db.view("hsph/fada_observations",
                 reduce=True,
                 group_level=4,

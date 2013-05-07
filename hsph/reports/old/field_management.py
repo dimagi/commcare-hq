@@ -78,7 +78,7 @@ class DCOActivityReport(HSPHFieldManagementReport):
             num_home_completed = 0
             num_home_21days = 0
 
-            data = get_db().view('hsph/field_dco_activity',
+            data = get_db().view('hsph/field_dco_activity_old',
                 startkey = key + [self.datespan.startdate_param_utc],
                 endkey = key + [self.datespan.enddate_param_utc],
                 reduce = True
@@ -170,7 +170,7 @@ class FieldDataCollectionActivityReport(HSPHFieldManagementReport):
                     continue
 
                 key = [facility, user.get('user_id')]
-                data = get_db().view('hsph/field_data_collection_activity',
+                data = get_db().view('hsph/field_data_collection_activity_old',
                         startkey = key + [self.datespan.startdate_param_utc],
                         endkey = key + [self.datespan.enddate_param_utc],
                         reduce = True
@@ -202,7 +202,7 @@ class HVFollowUpStatusReport(HSPHFieldManagementReport, HSPHSiteDataMixin):
               'hsph.fields.SiteField']
 
     def get_data(self, key, reduce=True):
-        return get_db().view("hsph/field_follow_up_status",
+        return get_db().view("hsph/field_follow_up_status_old",
             reduce=reduce,
             startkey=key+[self.datespan.startdate_param_utc],
             endkey=key+[self.datespan.enddate_param_utc]
@@ -221,7 +221,7 @@ class HVFollowUpStatusReport(HSPHFieldManagementReport, HSPHSiteDataMixin):
         else:
             start = now-datetime.timedelta(days=dates[1])
             start = start.strftime("%Y-%m-%d")
-        data = get_db().view("hsph/cases_by_birth_date",
+        data = get_db().view("hsph/cases_by_birth_date_old",
                                 reduce=True,
                                 startkey=key+[start],
                                 endkey=key+[stop]
@@ -417,7 +417,7 @@ class DCOProcessDataReport(HSPHFieldManagementReport, HSPHSiteDataMixin):
         keys = self.generate_keys()
 
         for key in keys:
-            data = get_db().view("hsph/field_process_data",
+            data = get_db().view("hsph/field_process_data_old",
                     reduce=True,
                     startkey=key+[self.datespan.startdate_param_utc],
                     endkey=key+[self.datespan.enddate_param_utc]

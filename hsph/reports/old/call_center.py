@@ -45,7 +45,7 @@ class CATIPerformanceReport(CustomProjectReport, ProjectReportParametersMixin,
             
     filter_group_name = "CATI"
     
-    couch_view = "hsph/cati_performance_report"
+    couch_view = "hsph/cati_performance_report_old"
     
     default_column_order = (
         'catiName',
@@ -390,7 +390,7 @@ class CallCenterFollowUpSummaryReport(GenericTabularReport,
             self._selected_site_map = self.site_map
         keys = self.generate_keys()
         for key in keys:
-            data = db.view("hsph/dcc_followup_summary",
+            data = db.view("hsph/dcc_followup_summary_old",
                 reduce=True,
                 startkey=key+[self.datespan.startdate_param_utc],
                 endkey=key+[self.datespan.enddate_param_utc]
@@ -403,7 +403,7 @@ class CallCenterFollowUpSummaryReport(GenericTabularReport,
                     now = self.datespan.enddate
                     day14 = now-datetime.timedelta(days=14)
                     day14 = day14.strftime("%Y-%m-%d")
-                    day14_data = db.view("hsph/cases_by_birth_date",
+                    day14_data = db.view("hsph/cases_by_birth_date_old",
                                 reduce=True,
                                 startkey=key,
                                 endkey=key+[day14]

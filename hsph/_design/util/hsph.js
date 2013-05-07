@@ -7,6 +7,14 @@ function get_form_filled_duration(xform_doc) {
     return null;
 }
 
+function get_submission_day(xform_doc) {
+    var meta = xform_doc.form.meta;
+    if (meta && meta.timeEnd) {
+        return Math.round((new Date(meta.timeEnd)).getTime() / 1000 * 3600 * 24);
+    }
+    return null;
+}
+
 /* HSPH related */
 
 function isHSPHForm(doc) {
@@ -28,6 +36,12 @@ function isHSPHBirthRegForm(doc) {
 function isFADAProcessDataForm(doc) {
     return (isHSPHForm(doc) &&  
             doc.xmlns === "http://openrosa.org/formdesigner/CAE82D95-8F39-45AF-9A22-0E5D15EF148B");
+}
+
+function isCATIFollowUpForm(doc) {
+    // same as old "DCCFollowUpReport"
+    return (isHSPHForm(doc) &&
+            doc.xmlns === "http://openrosa.org/formdesigner/A5B08D8F-139D-46C6-9FDF-B1AD176EAE1F");
 }
 
 // old apps

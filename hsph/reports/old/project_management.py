@@ -109,7 +109,7 @@ class ProjectStatusDashboardReport(ProjectManagementReport):
         active_collectors = []
         for facility in facilities:
             key = key_prefix+[facility]+key_suffix
-            data = get_db().view("hsph/pm_project_status",
+            data = get_db().view("hsph/pm_project_status_old",
                     startkey=key+[self.datespan.startdate_param_utc],
                     endkey=key+[self.datespan.enddate_param_utc],
                     reduce=True
@@ -180,7 +180,7 @@ class ImplementationStatusDashboardReport(GenericTabularReport, ProjectManagemen
                     continue
 
                 key = key_prefix + site + [user.get('user_id')] + key_suffix
-                data = get_db().view('hsph/pm_implementation_status',
+                data = get_db().view('hsph/pm_implementation_status_old',
                         reduce=True,
                         startkey=key+[self.datespan.startdate_param_utc],
                         endkey=key+[self.datespan.enddate_param_utc]
