@@ -113,10 +113,17 @@ var CaseXML = (function () {
                     property.keyVal = ko.computed(function () {
                         return property.key() || property.defaultKey();
                     });
+                    property.repeat_context = function () {
+                        return self.utils.get_repeat_context(property.path());
+                    };
                     property.validate = ko.computed(function () {
                         if (property.path() || property.keyVal()) {
                             if (subcase.propertyCounts()[property.keyVal()] > 1) {
-                                return "Repeat property";
+                                return "Duplicate property";
+                            } else if (root.utils.reserved_words.indexOf(property.keyVal()) !== -1) {
+                                return '<strong>' + property.keyVal() + '</strong> is a reserved word';
+                            } else if (property.repeat_context() && property.repeat_context() !== subcase.repeat_context()) {
+                                return 'Inside the wrong repeat!'
                             }
                         }
                     });
@@ -155,6 +162,11 @@ var CaseXML = (function () {
                         question: null,
                         answer: null
                     };
+                },
+                {
+                    write: function (o, self) {
+                        o.repeat_context = self.repeat_context();
+                    }
                 }
             ],
             wrap: function (o) {
@@ -164,7 +176,9 @@ var CaseXML = (function () {
                     if (transform.hasOwnProperty('read')) {
                         transform.read(o);
                     } else {
-                        transform(o);
+                        if (typeof transform === 'function') {
+                            transform(o);
+                        }
                     }
                 });
                 case_properties = o.case_properties;
@@ -191,6 +205,9 @@ var CaseXML = (function () {
                     });
                     return count;
                 });
+                self.repeat_context = function () {
+                    return root.utils.get_repeat_context(self.case_name());
+                };
                 self.case_properties(ko.utils.arrayMap(case_properties, function (property) {
                     return SubCase.CaseProperty.wrap(property, self);
                 }));
@@ -252,7 +269,7 @@ var CaseXML = (function () {
         self.utils.actions.subcases = self.toJS();
     }
     SubCasesViewModel.prototype.getLabel = function (question) {
-        return CaseXML.prototype.truncateLabel(question.label, question.tag == 'hidden' ? ' (Hidden)' : '');
+        return CaseXML.prototype.truncateLabel((question.repeat ? '- ' : '') + question.label, question.tag == 'hidden' ? ' (Hidden)' : '');
     };
     var action_names = ["open_case", "update_case", "close_case", "case_preload"],
         CaseXML = function (params) {
@@ -310,6 +327,17 @@ var CaseXML = (function () {
             if (this.edit) {
                 this.saveButton.ui.prependTo(this.home);
             }
+            var questionMap = {};
+            _(this.questions).each(function (question) {
+                questionMap[question.value] = question;
+            });
+            this.get_repeat_context = function(path) {
+                if (path) {
+                    return questionMap[path].repeat;
+                } else {
+                    return undefined;
+                }
+            };
 
             ko.applyBindings(new SubCasesViewModel(params, this), $('#case-config-ko').get(0));
         };
@@ -383,11 +411,12 @@ var CaseXML = (function () {
             condition: condition
         });
     };
-    CaseXML.prototype.getQuestions = function (filter, excludeHidden) {
+    CaseXML.prototype.getQuestions = function (filter, excludeHidden, includeRepeat) {
         // filter can be "all", or any of "select1", "select", or "input" separated by spaces
         var i, options = [],
             q;
         excludeHidden = excludeHidden || false;
+        includeRepeat = includeRepeat || false;
         filter = filter.split(" ");
         if (!excludeHidden) {
             filter.push('hidden');
@@ -395,7 +424,9 @@ var CaseXML = (function () {
         for (i = 0; i < this.questions.length; i += 1) {
             q = this.questions[i];
             if (filter[0] === "all" || filter.indexOf(q.tag) !== -1) {
-                options.push(q);
+                if (includeRepeat || !q.repeat) {
+                    options.push(q);
+                }
             }
         }
         return options;

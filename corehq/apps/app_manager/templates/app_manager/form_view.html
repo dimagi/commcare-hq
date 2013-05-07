@@ -472,7 +472,7 @@
                                 <a href="#" data-bind="click: function () {condition.type('always')}, visible: $root.edit"><i class="icon-remove"></i></a>
                                 {% trans "If the answer to" %}
                                 <select data-bind="
-                                    optstr: $root.utils.getQuestions('select1'),
+                                    optstr: $root.utils.getQuestions('select1', false, true),
                                     value: condition.question,
                                     optionsCaption: ' ',
                                     edit: $root.edit"></select>
@@ -501,7 +501,7 @@
                                             <td></td>
                                             <td>
                                                 <div><select data-bind="
-                                                    optstr: $root.utils.getQuestions('all'),
+                                                    optstr: $root.utils.getQuestions('all', false, true),
                                                     optstrText: function (question) { return $root.getLabel(question)},
                                                     value: case_name,
                                                     optionsCaption: ' ',
@@ -521,7 +521,7 @@
                                         </td>
                                         <td>
                                             <select data-bind="
-                                                optstr: $root.utils.getQuestions('all'),
+                                                optstr: $root.utils.getQuestions('all', false, true),
                                                 optstrText: function (question) { return $root.getLabel(question)},
                                                 value: path,
                                                 optionsCaption: ' ',
@@ -529,7 +529,7 @@
                                         </td>
                                         <td>
                                             <input type="text" class="code" data-bind="value: key, attr: {placeholder: defaultKey}, edit: $root.edit"/>
-                                            <p class="help-inline" data-bind="text: validate"></p>
+                                            <p class="help-inline" data-bind="html: validate"></p>
                                         </td>
                                     </tr>
                                     </tbody>

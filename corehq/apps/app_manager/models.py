@@ -20,6 +20,7 @@ import commcare_translations
 from corehq.apps.app_manager import fixtures, suite_xml
 from corehq.apps.app_manager.suite_xml import IdStrings
 from corehq.apps.app_manager.templatetags.xforms_extras import clean_trans
+from corehq.apps.app_manager.util import split_path
 from corehq.apps.app_manager.xform import XForm, parse_xml as _parse_xml, XFormError, XFormValidationError, WrappedNode, CaseXPath
 from corehq.apps.appstore.models import SnapshotMixin
 from corehq.apps.builds.models import BuildSpec, CommCareBuildConfig, BuildRecord
@@ -260,30 +261,35 @@ class UpdateReferralAction(FormAction):
             )
         return self.followup_date or "date(today() + 2)"
 
+
 class OpenReferralAction(UpdateReferralAction):
-    name_path       = StringProperty()
+    name_path = StringProperty()
+
 
 class OpenCaseAction(FormAction):
-    name_path   = StringProperty()
+    name_path = StringProperty()
     external_id = StringProperty()
+
 
 class OpenSubCaseAction(FormAction):
     case_type = StringProperty()
     case_name = StringProperty()
     case_properties = DictProperty()
+    repeat_context = StringProperty()
+
 
 class FormActions(DocumentSchema):
-    open_case       = SchemaProperty(OpenCaseAction)
-    update_case     = SchemaProperty(UpdateCaseAction)
-    close_case      = SchemaProperty(FormAction)
-    open_referral   = SchemaProperty(OpenReferralAction)
+    open_case = SchemaProperty(OpenCaseAction)
+    update_case = SchemaProperty(UpdateCaseAction)
+    close_case = SchemaProperty(FormAction)
+    open_referral = SchemaProperty(OpenReferralAction)
     update_referral = SchemaProperty(UpdateReferralAction)
-    close_referral  = SchemaProperty(FormAction)
+    close_referral = SchemaProperty(FormAction)
 
-    case_preload    = SchemaProperty(PreloadAction)
-    referral_preload= SchemaProperty(PreloadAction)
+    case_preload = SchemaProperty(PreloadAction)
+    referral_preload = SchemaProperty(PreloadAction)
 
-    subcases        = SchemaListProperty(OpenSubCaseAction)
+    subcases = SchemaListProperty(OpenSubCaseAction)
 
     def all_property_names(self):
         names = set()
@@ -576,9 +582,11 @@ class FormBase(DocumentSchema):
         # Here, case-config-ui-*.js, and module_view.html
         reserved_words = load_case_reserved_words()
         for key in self.actions.all_property_names():
+            _, key = split_path(key)
             if key in reserved_words:
                 errors.append({'type': 'update_case uses reserved word', 'word': key})
-            if not re.match(r'^[a-zA-Z][\w_-]*$', key):
+            # this regex is also copied in propertyList.ejs
+            if not re.match(r'^[a-zA-Z][\w_-]*(/[a-zA-Z][\w_-]*)*$', key):
                 errors.append({'type': 'update_case word illegal', 'word': key})
 
         for subcase_action in self.actions.subcases:
