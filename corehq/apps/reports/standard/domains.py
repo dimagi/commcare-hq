@@ -220,7 +220,12 @@ class AdminDomainStatsReport(DomainStatsReport, ElasticTabularReport):
         def get_from_stat_facets(prop, what_to_get):
             return self.es_results.get('facets', {}).get('%s-STATS' % prop, {}).get(what_to_get)
 
-        total_row = ['total', None, None, ]
+        self.total_row = ['total', 10, 20, 30, 40, 50, 60, 70, 80, 90, 100, 110]
+        self.statistics_rows = [
+            ['stat I', 10, 20, 30, 40, 50, 60, 70, 80, 90, 100, 110],
+            ['stat II', 10, 20, 30, 40, 50, 60, 70, 80, 90, 100, 110],
+            ['stat III', 10, 20, 30, 40, 50, 60, 70, 80, 90, 100, 110]
+        ]
         for dom in domains:
             if dom.has_key('name'): # for some reason when using the statistical facet, ES adds an empty dict to hits
                 yield [

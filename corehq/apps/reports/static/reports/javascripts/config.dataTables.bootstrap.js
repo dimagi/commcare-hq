@@ -20,6 +20,39 @@ function HQReportDataTables(options) {
     self.fixColsWidth = options.fixColsWidth || 100;
     self.datatable = null;
 
+    this.render_footer_row = (function() {
+        var $dataTableElem = $(self.dataTableElem);
+        return function(id, row) {
+            var $row = $dataTableElem.find('#' + id);
+            if ($row.length == 0) {
+                $row = $('<tfoot />');
+                $dataTableElem.append($row);
+            }
+            $row.html('');
+            for (var i = 0; i < row.length; i++) {
+                $row.append('<td>' + row[i] + '</td>');
+            }
+        }
+    })();
+
+//    this.render_footer_row = function(row) {
+//        $footer_row = $('<tfoot />');
+//        for (var i = 0; i < row.length; i++) {
+//            $footer_row.append('<td>' + row[i] + '</td>');
+//        }
+//        $(this.dataTableElem).append($footer_row);
+//    };
+
+//    this.render_statistics_row = function(rows) {
+//        var $dataTableElem = $(this.dataTableElem);
+//        var render_stat_row = function(index) {
+//            var $row = $dataTableElem.find('ajax_stat_row' + index);
+//            if ($row.length == 0) {
+//                $row = $('<tfoot />');
+//                $dataTableElem.append($row);
+//            }
+//        }
+//    }
 
     this.render = function () {
 
@@ -64,10 +97,24 @@ function HQReportDataTables(options) {
                     }
                 };
                 params.fnServerData = function ( sSource, aoData, fnCallback, oSettings ) {
+                    var custom_callback = function(data) {
+                        console.log(data);
+                        var result = fnCallback(data); // this must be called first because datatables clears the tfoot of the table
+                        if ('total_row' in data) {
+                            self.render_footer_row('ajax_total_row', data['total_row']);
+                        }
+                        if ('statistics_rows' in data) {
+                            for (var i = 0; i < data['statistics_rows'].length; i++){
+                               self.render_footer_row('ajax_stat_row-' + i, data['statistics_rows'][i]);
+                            }
+                        }
+                        return result
+                    };
+
                     oSettings.jqXHR = $.ajax( {
                         "url": sSource,
                         "data": aoData,
-                        "success": fnCallback,
+                        "success": custom_callback,
                         "error": function(data) {
                             $(".dataTables_processing").hide();
                             $(".dataTables_empty").html(self.errorText);
