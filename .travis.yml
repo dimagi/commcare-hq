@@ -5,4 +5,4 @@ python:
 install:
  - "pip install -e ."
  - "pip install pytz requests simplejson coverage django-coverage"
-script: django-admin.py test --settings settings
+script: django-admin.py test --settings settings --traceback
