@@ -50,11 +50,11 @@
             return JSON.parse(r);
         }
         function resetIndexes($sortable) {
-            var indexes = $sortable.find('> * > .index').get(),
+            var $sortables = $sortable.children.get(),
                 i;
-            for (i in indexes) {
-                if (indexes.hasOwnProperty(i)) {
-                    $(indexes[i]).text(i).trigger('change');
+            for (i in $sortables) {
+                if ($sortables.hasOwnProperty(i)) {
+                    $($sortables[i]).data('index', i);
                 }
             }
         }
@@ -111,19 +111,20 @@
                         var to = -1,
                             from = -1,
                             $form;
-                        $(this).find('> * > .index').each(function (i) {
+                        $(this).children().not('.sort-disabled').each(function (i) {
+                            var index = parseInt($(this).data('index'), 10);
                             if (from !== -1) {
-                                if (from === parseInt($(this).text(), 10)) {
+                                if (from === index) {
                                     to = i;
                                     return false;
                                 }
                             }
-                            if (i !== parseInt($(this).text(), 10)) {
-                                if (i + 1 === parseInt($(this).text(), 10)) {
+                            if (i !== index) {
+                                if (i + 1 === index) {
                                     from = i;
                                 } else {
                                     to = i;
-                                    from = parseInt($(this).text(), 10);
+                                    from = index;
                                     return false;
                                 }
                             }
@@ -153,7 +154,7 @@
                 });
             }
         });
-        $('.index, .sort-action').hide();
+        $('.sort-action').hide();
 
         $('select.applications').change(function () {
             var url = $(this).find('option:selected').attr('value');
@@ -200,11 +201,6 @@
                 $(this).attr('value', val);
             }
         });
-
-        $('.index').change(function () {
-            // make sure that column_id changes when index changes (after drag-drop)
-            $(this).closest('tr').find('[name="index"]').val($(this).text());
-        }).trigger('change');
 
         COMMCAREHQ.app_manager.commcareVersion.subscribe(function () {
             $('.commcare-feature').each(function () {

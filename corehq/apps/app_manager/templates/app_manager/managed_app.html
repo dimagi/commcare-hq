@@ -149,10 +149,8 @@
                     {% with module as selected_module %}
                         {% for module in app.get_modules %}
                             <li {% ifequal module.id selected_module.id %}{% if not form %}
-                                class="active"{% endif %}{% endifequal %}>
-                                {% if edit %}
-                                    <div class="index">{{ module.id }}</div>
-                                {% endif %}
+                                class="active"{% endif %}{% endifequal %}
+                                data-index={{ module.id }}>
                                 <a href="{% url view_module domain app.id module.id %}?edit={{ edit|BOOL }}">
                                     {% if edit %}
                                         <i class="drag_handle"></i>
@@ -173,11 +171,8 @@
                                     {% endif %}
                                     {% with nav_form as selected_form %}
                                         {% for form in module.get_forms %}
-                                            <li class="edit-form-li{% ifequal form selected_form %} active{% endifequal %}">
+                                            <li class="edit-form-li{% ifequal form selected_form %} active{% endifequal %}" data-index={{ form.id }}>
                                                 <!--[F]-->
-                                                {% if edit %}
-                                                    <div class="index">{{ form.id }}</div>
-                                                {% endif %}
                                                 <a href="{% url view_form domain app.id module.id form.id %}?edit={{ edit|BOOL }}">
                                                     {% if edit %}
                                                         <i class="drag_handle"></i>
