@@ -1,6 +1,8 @@
+from collections import defaultdict
 from casexml.apps.case.xml import V2_NAMESPACE
 from corehq.apps.app_manager.const import APP_V1
 from lxml import etree as ET
+from corehq.apps.app_manager.util import split_path
 import formtranslate.api
 
 
@@ -569,6 +571,7 @@ class XForm(WrappedNode):
 
         def make_case_elem(tag, attr=None):
             return _make_elem('{cx2}%s' % tag, attr)
+
         def make_case_block(path=''):
             case_block = ET.Element('{cx2}case'.format(**namespaces), {
                 'case_id': '',
@@ -639,7 +642,8 @@ class XForm(WrappedNode):
                 nodeset=case_name,
                 required="true()",
             )
-        def add_update_block(case_block, updates, path='', extra_updates=None):
+
+        def add_update_block(case_block, updates, path=''):
             update_block = make_case_elem('update')
             case_block.append(update_block)
             update_mapping = {}
@@ -650,24 +654,30 @@ class XForm(WrappedNode):
                         key = 'case_name'
                     update_mapping[key] = value
 
-            if extra_updates:
-                update_mapping.update(extra_updates)
-
-            for key in update_mapping.keys():
+            for key in sorted(update_mapping.keys()):
                 update_block.append(make_case_elem(key))
 
-            for key, q_path in update_mapping.items():
+            for key, q_path in sorted(update_mapping.items()):
                 self.add_bind(
                     nodeset="%scase/update/%s" % (path, key),
                     calculate=self.resolve_path(q_path),
                     relevant=("count(%s) > 0" % self.resolve_path(q_path))
                 )
+
         def add_close_block(case_block, action=None, path=''):
             case_block.append(make_case_elem('close'))
             self.add_bind(
                 nodeset="%scase/close" % path,
                 relevant=relevance(action) if action else 'true()',
             )
+
+        def get_case_parent_xpath(parent_path):
+            xpath = SESSION_CASE_ID.case()
+            if parent_path:
+                for parent_name in parent_path.split('/'):
+                    xpath = xpath.index_id(parent_name).case()
+            return xpath
+
         delegation_case_block = None
         if not actions or (form.requires == 'none' and 'open_case' not in actions):
             case_block = None
@@ -716,7 +726,57 @@ class XForm(WrappedNode):
                 )
 
             if 'update_case' in actions or extra_updates:
-                add_update_block(case_block, getattr(actions.get('update_case'), 'update', {}), extra_updates=extra_updates)
+                def group_updates_by_case(updates):
+                    """
+                    updates grouped by case. Example:
+                    input: {'name': ..., 'parent/name'}
+                    output: {'': {'name': ...}, 'parent': {'name': ...}}
+                    """
+                    updates_by_case = defaultdict(dict)
+                    for key, value in updates.items():
+                        path, name = split_path(key)
+                        updates_by_case[path][name] = value
+                    return updates_by_case
+                updates_by_case = group_updates_by_case(
+                    getattr(actions.get('update_case'), 'update', {})
+                )
+                updates_by_case[''].update(extra_updates)
+                if '' in updates_by_case:
+                    # 90% use-case
+                    basic_updates = updates_by_case.pop('')
+                    add_update_block(case_block, basic_updates)
+                if updates_by_case:
+                    def make_nested_subnode(base_node, path):
+                        """
+                        path='x/y/z' will append <x><y><z/></y></x> to base_node
+                        """
+                        prev_node = base_node
+                        tail, head = split_path(path)
+                        if tail:
+                            for node_name in tail.split('/'):
+                                prev_node = prev_node.find('{x}%s' % node_name)
+                        node = _make_elem('{x}%s' % head)
+                        prev_node.append(node)
+                        return node
+
+                    def make_parent_case_block(node_path, parent_path):
+                        case_block = make_case_block(node_path)
+                        xpath = get_case_parent_xpath(parent_path)
+                        self.add_bind(
+                            nodeset='%scase/@case_id' % node_path,
+                            calculate=xpath.property('@case_id'),
+                        )
+                        return case_block
+
+                    base_node = _make_elem('{x}parents')
+                    self.data_node.append(base_node)
+                    for parent_path, updates in sorted(updates_by_case.items()):
+                        node = make_nested_subnode(base_node, parent_path)
+                        node_path = 'parents/%s/' % parent_path
+                        parent_case_block = make_parent_case_block(node_path,
+                                                                   parent_path)
+                        add_update_block(parent_case_block, updates, node_path)
+                        node.append(parent_case_block)
 
             if 'close_case' in actions:
                 add_close_block(case_block, actions['close_case'])
@@ -724,13 +784,16 @@ class XForm(WrappedNode):
             if 'case_preload' in actions:
                 needs_casedb_instance = True
                 for nodeset, property in actions['case_preload'].preload.items():
+                    parent_path, property = split_path(property)
                     property_xpath = {
                         'name': 'case_name',
                         'owner_id': '@owner_id'
                     }.get(property, property)
+
+                    xpath = get_case_parent_xpath(parent_path)
                     self.add_setvalue(
                         ref=nodeset,
-                        value=SESSION_CASE_ID.case().property(property_xpath),
+                        value=xpath.property(property_xpath),
                     )
             if needs_casedb_instance:
                 self.add_instance('casedb', src='jr://instance/casedb')

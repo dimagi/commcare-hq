@@ -1018,6 +1018,9 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, UnicodeMixIn):
         except AttributeError:
             return []
 
+    def is_current_web_user(self, request):
+        return self.user_id == request.couch_user.user_id
+
     def __getattr__(self, item):
         if item.startswith('can_'):
             perm = item[len('can_'):]

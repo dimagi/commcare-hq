@@ -24,7 +24,7 @@ class RequisitionTest(CommTrackTest):
             self.assertEqual(self.domain.name, req.domain)
             self.assertEqual(const.REQUISITION_CASE_TYPE, req.type)
             self.assertEqual(self.user._id, req.user_id)
-            self.assertEqual(None, req.owner_id)
+            self.assertEqual(spp.owner_id, req.owner_id)
             self.assertFalse(req.closed)
             self.assertTrue(len(req.actions) > 0)
             self.assertEqual(req.location_, spp.location_)
