@@ -11,6 +11,7 @@ script: coverage run setup.py test
 after_script:
  - "coverage html"
  - "travis-artifacts upload --path coverage-report --target-path artifacts/$TRAVIS_BUILD_ID/$TRAVIS_JOB_ID"
+ - "echo See full coverage report at http://travis-artifacts.dimagi.com.s3-website-us-east-1.amazonaws.com/artifacts/$TRAVIS_BUILD_ID/$TRAVIS_JOB_ID/index.html"
  - "coverage report"
 env:
  global:
