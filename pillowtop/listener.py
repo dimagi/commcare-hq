@@ -185,7 +185,7 @@ class BasicPillow(object):
                 if tr is not None:
                     self.change_transport(tr)
         except Exception, ex:
-            logging.error("Error on change: %s, %s" % (change['id'], ex))
+            logging.exception("Error on change: %s, %s" % (change['id'], ex))
 
 
     def change_trigger(self, changes_dict):
