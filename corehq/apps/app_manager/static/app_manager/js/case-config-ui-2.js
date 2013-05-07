@@ -162,6 +162,11 @@ var CaseXML = (function () {
                         question: null,
                         answer: null
                     };
+                },
+                {
+                    write: function (o, self) {
+                        o.repeat_context = self.repeat_context();
+                    }
                 }
             ],
             wrap: function (o) {
@@ -171,7 +176,9 @@ var CaseXML = (function () {
                     if (transform.hasOwnProperty('read')) {
                         transform.read(o);
                     } else {
-                        transform(o);
+                        if (typeof transform === 'function') {
+                            transform(o);
+                        }
                     }
                 });
                 case_properties = o.case_properties;
