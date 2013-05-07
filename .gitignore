@@ -4,3 +4,6 @@
 *localsettings.py
 *~
 *.db
+
+/*.egg
+/*.egg-info
