@@ -189,4 +189,34 @@ function HSPHEntry(doc) {
         }
     };
 
+    self.getOutcomeStats = function () {
+        var follow_up = (self.form.follow_up) ? self.form.follow_up : self.form;
+
+        self.data.maternalDeath = follow_up.maternal_death === 'dead';
+        if (! self.data.maternalDeath) {
+            self.data.maternalNearMiss = (follow_up.maternal_near_miss === 'yes' ||
+                                          // old:
+                                            follow_up.icu === 'yes' ||
+                                            follow_up.cpr === 'yes' ||
+                                            follow_up.fever === 'yes' ||
+                                            follow_up.hysterectomy === 'yes' ||
+                                            follow_up.transfusion === 'yes' ||
+                                            follow_up.fits === 'yes' ||
+                                            follow_up.loss_consciousness === 'yes');
+        }
+
+        self.data.numStillBirths = 0;
+        for (var s=1; s<= 5; s++) {
+            var val = follow_up['baby_'+s+'_birth_or_stillbirth'];
+            self.data.numStillBirths += (val === 'fresh_stillbirth' || val === 'macerated_stillbirth') ? 1 : 0;
+        }
+
+        self.data.numNeonatalMortality = 0;
+        for (var b=1; b <= 5; b++) {
+            var val = follow_up['baby_'+b+'_death'];
+            self.data.numNeonatalMortality += (val === 'dead') ? 1 : 0;
+        }
+
+    }
+
 }
