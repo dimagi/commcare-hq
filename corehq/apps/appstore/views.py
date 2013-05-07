@@ -259,6 +259,9 @@ def es_query(params=None, facets=None, terms=None, q=None, es_url=None, start_at
         q["facets"] = q.get("facets", {})
         for facet in facets:
             q["facets"][facet] = {"terms": {"field": facet, "size": 9999}}
+
+    if q.get('facets'):
+        for facet in q["facets"]:
             q["facets"][facet].update(facet_filter(facet))
 
     if not q['filter']['and']:

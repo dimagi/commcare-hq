@@ -213,20 +213,22 @@ class AdminDomainStatsReport(DomainStatsReport, ElasticTabularReport):
             10: "cp_n_web_users",
         }
         NUM_ROWS = 12
-        def stat_row(name, what_to_get):
+        def stat_row(name, what_to_get, type='float'):
             row = [name]
             for index in range(1, NUM_ROWS): #todo: switch to len(self.headers) when that userstatus report PR is merged
                 if index in CALCS_ROW_INDEX:
-                    row.append('%.2f' % float(get_from_stat_facets(CALCS_ROW_INDEX[index], what_to_get)))
+                    val = get_from_stat_facets(CALCS_ROW_INDEX[index], what_to_get)
+                    row.append('%.2f' % float(val) if type=='float' else val)
                 else:
                     row.append('---')
             return row
 
-        self.total_row = stat_row(_('Total'), 'total')
+        self.total_row = stat_row(_('Total'), 'total', type='int')
         self.statistics_rows = [
             stat_row(_('Mean'), 'mean'),
             stat_row(_('STD'), 'std_deviation'),
         ]
+
         for dom in domains:
             if dom.has_key('name'): # for some reason when using the statistical facet, ES adds an empty dict to hits
                 yield [
