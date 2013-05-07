@@ -1,10 +1,11 @@
-function MultimediaReferenceController (references, obj_map) {
+function MultimediaReferenceController (references, obj_map, totals) {
     'use strict';
     var self = this;
     self.obj_map = obj_map;
     self.modules = [];
     self.showMissingReferences = ko.observable(false);
-
+    self.totals = ko.observable(totals);
+    
     self.toggleRefsText = ko.computed(function () {
         return (self.showMissingReferences()) ? "Show All References" : "Show Only Missing References";
     }, self);
@@ -42,6 +43,18 @@ function MultimediaReferenceController (references, obj_map) {
             }
         }
         event.preventDefault();
+    };
+
+    self.incrementTotals = function (trigger, event, data) {
+        var newTotals = _.map(self.totals(), function (media) {
+            if (media.media_type == data.media_type && media.paths.indexOf(data.path) < 0) {
+                media = _.clone(media);
+                media.paths.push(data.path);
+                media.matched = media.paths.length;
+            }
+            return media;
+        });
+        self.totals(newTotals);
     };
 
 }
@@ -211,6 +224,7 @@ function BaseMediaReference (ref) {
             self.m_id(obj_ref.m_id);
             self.uid(obj_ref.uid);
             self.url(obj_ref.url);
+            $('.media-totals').trigger('refMediaAdded', self);
             self.is_matched(true);
         }
     };

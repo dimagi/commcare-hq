@@ -581,12 +581,14 @@ class HQMediaMixin(Document):
         totals = []
         for mm in [CommCareImage, CommCareAudio, CommCareVideo]:
             paths = self.get_all_paths_of_type(mm.__name__)
+            matched_paths = [p for p in self.multimedia_map.keys() if p in paths]
             if len(paths) > 0:
                 totals.append({
                     'media_type': mm.get_nice_name(),
                     'totals': len(paths),
-                    'matched': len([p for p in self.multimedia_map.keys() if p in paths]),
+                    'matched': len(matched_paths),
                     'icon_class': mm.get_icon_class(),
+                    'paths': matched_paths,
                 })
         return totals
 
