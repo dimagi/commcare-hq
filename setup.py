@@ -12,7 +12,7 @@ setup(
     install_requires = [
         "couchdbkit",
         "couchexport",
-        "dimagi-utils",
+        "dimagi-utils>=1.0.0",
         "django",
         "lxml",
         "restkit",
