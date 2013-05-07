@@ -7,4 +7,4 @@ install:
  - "pip install pytz"
  - "pip install requests"
  - "pip install simplejson"
-script: django-admin.py test
+script: django-admin.py test --settings settings
