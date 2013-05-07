@@ -6,31 +6,59 @@ from pillowtop.listener import BasicPillow
 
 
 def date_emitter(fn):
-    fn._emitter = 'date'
+    fn._fluff_emitter = 'date'
     return fn
 
 
 def null_emitter(fn):
-    fn._emitter = 'null'
+    fn._fluff_emitter = 'null'
+    return fn
+
+
+def filter_by(fn):
+    fn._fluff_filter = True
     return fn
 
 
 class CalculatorMeta(type):
+    _counter = 0
+
     def __new__(mcs, name, bases, attrs):
-        emitters = []
+        emitters = set()
+        filters = set()
+        parents = [p for p in bases if isinstance(p, CalculatorMeta)]
         for attr in attrs:
-            if getattr(attrs[attr], '_emitter', None):
-                emitters.append(attr)
+            if getattr(attrs[attr], '_fluff_emitter', None):
+                emitters.add(attr)
+            if getattr(attrs[attr], '_fluff_filter', False):
+                filters.add(attr)
+
+        # needs to inherit emitters and filters from all parents
+        for parent in parents:
+            emitters.update(parent._fluff_emitters)
+            filters.update(parent._fluff_filters)
+
         cls = super(CalculatorMeta, mcs).__new__(mcs, name, bases, attrs)
-        cls._emitters = emitters
+        cls._fluff_emitters = emitters
+        cls._fluff_filters = filters
+        cls._counter = mcs._counter
+        mcs._counter += 1
         return cls
 
 
 class Calculator(object):
     __metaclass__ = CalculatorMeta
 
-    def __init__(self, window):
-        self.window = window
+    window = None
+
+    def __init__(self, window=None):
+        if window is not None:
+            self.window = window
+        if not isinstance(self.window, datetime.timedelta):
+            # if window is set to None, for instance
+            # fail here and not whenever that's run into below
+            raise NotImplementedError(
+                'window must be timedelta, not %s' % type(self.window))
 
     def filter(self, item):
         return True
@@ -39,14 +67,17 @@ class Calculator(object):
         return value
 
     def calculate(self, item):
-        passes_filter = self.filter(item)
+        passes_filter = self.filter(item) and all(
+            (getattr(self, slug)(item) for slug in self._fluff_filters)
+        )
         values = {}
-        for slug in self._emitters:
+        for slug in self._fluff_emitters:
             values[slug] = (
                 list(getattr(self, slug)(item))
                 if passes_filter else []
             )
         return values
+
 
 
 class IndicatorDocumentMeta(schema.DocumentMeta):
@@ -58,11 +89,14 @@ class IndicatorDocumentMeta(schema.DocumentMeta):
                 calculators[attr_name] = attr_value
                 attrs[attr_name] = schema.DictProperty()
         cls = super(IndicatorDocumentMeta, mcs).__new__(mcs, name, bases, attrs)
-        cls._calculators = calculators
+        if not hasattr(cls, '_calculators'):
+            cls._calculators = {}
+        cls._calculators.update(calculators)
         return cls
 
 
 class IndicatorDocument(schema.Document):
+
     __metaclass__ = IndicatorDocumentMeta
     base_doc = 'IndicatorDocument'
 
@@ -96,9 +130,9 @@ class IndicatorDocument(schema.Document):
     def get_result(cls, calc_name, key, reduce=True):
         calculator = cls._calculators[calc_name]
         result = {}
-        for emitter_name in calculator._emitters:
+        for emitter_name in calculator._fluff_emitters:
             shared_key = [cls._doc_type] + key + [calc_name, emitter_name]
-            emitter_type = getattr(calculator, emitter_name)._emitter
+            emitter_type = getattr(calculator, emitter_name)._fluff_emitter
             q_args = {
                 'reduce': reduce,
                 'include_docs': not reduce,
@@ -129,7 +163,7 @@ class IndicatorDocument(schema.Document):
         return result
 
     class Meta:
-        app_label = ''
+        app_label = 'fluff'
 
 
 class FluffPillow(BasicPillow):
