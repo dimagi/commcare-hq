@@ -126,11 +126,6 @@ def es_domain_query(params, facets=None, terms=None, domains=None, return_q_dict
 
     q["sort"] = sort if sort else [{"name" : {"order": "asc"}},]
 
-    # la = es_query(params, facets, terms, q, DOMAIN_INDEX + '/hqdomain/_search', start_at, size, dict_only=True)
-    # import json
-    # print json.dumps(la)
-    # print DOMAIN_INDEX + '/hqdomain/_search'
-
     return es_query(params, facets, terms, q, DOMAIN_INDEX + '/hqdomain/_search', start_at, size, dict_only=return_q_dict)
 
 ES_PREFIX = "es_"
@@ -205,26 +200,32 @@ class AdminDomainStatsReport(DomainStatsReport, ElasticTabularReport):
     @property
     def rows(self):
         domains = [res['_source'] for res in self.es_results.get('hits', {}).get('hits', [])]
-        import pprint
-        pp = pprint.PrettyPrinter(indent=2)
-        pp.pprint(self.es_results.get('facets'))
 
-        calcs_row_index = {
-            "cp_n_active_cc_users": 3,
-            "cp_n_cc_users": 4,
-            "cp_n_active_cases": 5,
-            "cp_n_cases": 6,
-            "cp_n_forms": 7,
-            "cp_n_web_users": 10,
-        }
         def get_from_stat_facets(prop, what_to_get):
             return self.es_results.get('facets', {}).get('%s-STATS' % prop, {}).get(what_to_get)
 
-        self.total_row = ['total', 10, 20, 30, 40, 50, 60, 70, 80, 90, 100, 110]
+        CALCS_ROW_INDEX = {
+            3: "cp_n_active_cc_users",
+            4: "cp_n_cc_users",
+            5: "cp_n_active_cases",
+            6: "cp_n_cases",
+            7: "cp_n_forms",
+            10: "cp_n_web_users",
+        }
+        NUM_ROWS = 12
+        def stat_row(name, what_to_get):
+            row = [name]
+            for index in range(1, NUM_ROWS): #todo: switch to len(self.headers) when that userstatus report PR is merged
+                if index in CALCS_ROW_INDEX:
+                    row.append('%.2f' % float(get_from_stat_facets(CALCS_ROW_INDEX[index], what_to_get)))
+                else:
+                    row.append('---')
+            return row
+
+        self.total_row = stat_row(_('Total'), 'total')
         self.statistics_rows = [
-            ['stat I', 10, 20, 30, 40, 50, 60, 70, 80, 90, 100, 110],
-            ['stat II', 10, 20, 30, 40, 50, 60, 70, 80, 90, 100, 110],
-            ['stat III', 10, 20, 30, 40, 50, 60, 70, 80, 90, 100, 110]
+            stat_row(_('Mean'), 'mean'),
+            stat_row(_('STD'), 'std_deviation'),
         ]
         for dom in domains:
             if dom.has_key('name'): # for some reason when using the statistical facet, ES adds an empty dict to hits

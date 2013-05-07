@@ -98,7 +98,6 @@ function HQReportDataTables(options) {
                 };
                 params.fnServerData = function ( sSource, aoData, fnCallback, oSettings ) {
                     var custom_callback = function(data) {
-                        console.log(data);
                         var result = fnCallback(data); // this must be called first because datatables clears the tfoot of the table
                         if ('total_row' in data) {
                             self.render_footer_row('ajax_total_row', data['total_row']);
