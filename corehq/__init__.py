@@ -3,11 +3,15 @@ from corehq.apps.reports.standard import (monitoring, inspect, export,
 import corehq.apps.receiverwrapper.reports as receiverwrapper
 import phonelog.reports as phonelog
 from corehq.apps.reports.commtrack import psi_prototype
+from corehq.apps.reports.commtrack import standard as commtrack_reports
 
 from django.utils.translation import ugettext_noop as _
 
 REPORTS = (
     (_("Commtrack"), (
+        commtrack_reports.ReportingRatesReport,
+        commtrack_reports.CurrentStockStatusReport,
+        commtrack_reports.AggregateStockStatusReport,
         psi_prototype.VisitReport,
         psi_prototype.SalesAndConsumptionReport,
         psi_prototype.CumulativeSalesAndConsumptionReport,
