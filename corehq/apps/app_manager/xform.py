@@ -318,7 +318,7 @@ class XForm(WrappedNode):
         questions = []
         excluded_paths = set()
 
-        def build_questions(group, path_context="", exclude=False):
+        def build_questions(group, path_context="", repeat_context="", exclude=False):
             for prompt in group.findall('*'):
                 if prompt.tag_xmlns == namespaces['f'][1:-1] and prompt.tag_name != "label":
                     path = self.resolve_path(get_path(prompt), path_context)
@@ -326,13 +326,14 @@ class XForm(WrappedNode):
                     if prompt.tag_name == "group":
                         build_questions(prompt, path_context=path)
                     elif prompt.tag_name == "repeat":
-                        build_questions(prompt, path_context=path, exclude=True)
+                        build_questions(prompt, path_context=path, repeat_context=path)
                     elif prompt.tag_name not in ("trigger", "label"):
                         if not exclude:
                             question = {
                                 "label": self.get_label_text(prompt, langs),
                                 "tag": prompt.tag_name,
-                                "value": path
+                                "value": path,
+                                "repeat": repeat_context,
                             }
 
                             if question['tag'] == "select1":
