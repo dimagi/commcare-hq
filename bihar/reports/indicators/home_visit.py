@@ -134,7 +134,7 @@ class NoPostpartumCounseling(MotherPostDeliveryMixIn, MemoizingFilterCalculator,
                       IndicatorCalculator):
     def _filter(self, case):
         # filter by BP forms for cases with
-        # /data/family_planning_group/counsel_accessible = 'no'
+        # /data/bp2/counsel_accessible = 'no'
         def _no_counseling(case):
             for form in get_forms(case, action_filter=lambda a: visit_is(a, 'bp')):
                 if form.xpath('form/bp2/counsel_accessible') == 'no':
