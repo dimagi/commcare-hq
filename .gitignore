@@ -7,3 +7,4 @@
 build/*
 couchlog.egg-info/*
 dist/*
+*.egg-info

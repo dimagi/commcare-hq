@@ -3,10 +3,13 @@
 SECRET_KEY = 'this is not a secret key'
 
 INSTALLED_APPS = (
-    'casexml',
+    'casexml.apps.case',
+    'casexml.apps.phone',
     'couchdbkit.ext.django',
     'couchforms',
     'coverage',
+    'django.contrib.contenttypes',
+    'django.contrib.auth',
 )
 
 DATABASES = {
@@ -25,10 +28,9 @@ COUCH_USERNAME = ''
 COUCH_PASSWORD = ''
 COUCH_DATABASE_NAME = 'casexml'
 
-COUCHDB_DATABASES = [
-    ('couchforms', 'http://127.0.0.1:5984/casexml'),
-    ('couch', 'http://127.0.0.1:5984/casexml'), # Why?
-]
+COUCH_DATABASE = 'http://127.0.0.1:5984/casexml_test'
+
+COUCHDB_DATABASES = [ (app, 'http://127.0.0.1:5984/casexml') for app in ['case', 'couch', 'couchforms', 'phone'] ]
 
 
 # Hardcode the test database?
