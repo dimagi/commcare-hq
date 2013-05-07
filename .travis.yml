@@ -18,3 +18,4 @@ env:
   - "ARTIFACTS_S3_BUCKET=travis-artifacts.dimagi.com"
   - secure: "JbCPNtDj7nSbmNaF7vZ8e2JX9nxvVgUYB74MCuGsSRV3ckN9WtXL81bWhoFm\nFPE/ClVKfY0gqAtahOrzixBUuEeh4Kz2OVAsHeo6ldfAZOauEqGgkSlC+8yE\nnMFlEnd/yjIvl59ElSJxRVou2KAfZgWK1MaFSHzDkCMfcfhm6Do="
   - secure: "AjK6O+gAiCczZjbhJQ3AcRkC77YCpc8ZAntENulM+Tzjsq+rtyJGFO0i2JzI\n9qmJFrKIMxqZHHJIfW6EqfJcnA9yncsa1GMsmGnYCyS6GGU0ASDVWKUKVScy\nPP9xtGtcZj5rzgaGx2x7qEnHNxEZekG0WcbnKLMhciwwLm1RtX0="
+
