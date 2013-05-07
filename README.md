@@ -130,12 +130,6 @@ that you have a 32bit version of Python installed.
     # This will do an initial run of the elasticsearch indexing process, but this will run as a
     # service later. This run at least creates the indices for the first time.
     
-    # then run
-    curl -GET 'http://localhost:9200/_status?pretty=true'
-
-    # Note the hqcases_<long_string> part near the top of the output of the
-    # above command.
-
     # Next, set the aliases of the elastic indices. These can be set by a management command
     # that sets the stored index names to the aliases.
 
