@@ -35,25 +35,6 @@ function HQReportDataTables(options) {
         }
     })();
 
-//    this.render_footer_row = function(row) {
-//        $footer_row = $('<tfoot />');
-//        for (var i = 0; i < row.length; i++) {
-//            $footer_row.append('<td>' + row[i] + '</td>');
-//        }
-//        $(this.dataTableElem).append($footer_row);
-//    };
-
-//    this.render_statistics_row = function(rows) {
-//        var $dataTableElem = $(this.dataTableElem);
-//        var render_stat_row = function(index) {
-//            var $row = $dataTableElem.find('ajax_stat_row' + index);
-//            if ($row.length == 0) {
-//                $row = $('<tfoot />');
-//                $dataTableElem.append($row);
-//            }
-//        }
-//    }
-
     this.render = function () {
 
         $('[data-datatable-highlight-closest]').each(function () {
