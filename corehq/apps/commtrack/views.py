@@ -7,6 +7,7 @@ from corehq.apps.domain.models import Domain
 from corehq.apps.commtrack.management.commands import bootstrap_psi
 from corehq.apps.commtrack.models import Product
 from corehq.apps.commtrack.forms import ProductForm
+from corehq.apps.locations.models import Location
 from soil.util import expose_download
 import uuid
 from django.core.urlresolvers import reverse
@@ -15,6 +16,7 @@ from corehq.apps.commtrack.tasks import import_locations_async,\
     import_stock_reports_async
 import json
 from couchdbkit import ResourceNotFound
+import csv
 
 DEFAULT_PRODUCT_LIST_LIMIT = 10
 
@@ -208,3 +210,17 @@ def charts(request, domain, template="commtrack/charts.html"):
         "response_data": response_data,
     }
     return render(request, template, ctxt)
+
+@require_superuser
+def location_dump(self, domain):
+    locs = Location.view('commtrack/locations_by_code', startkey=[domain], endkey=[domain, {}], include_docs=True)
+    
+    resp = HttpResponse(content_type='text/csv')
+    resp['Content-Disposition'] = 'attachment; filename="locations_%s.csv"' % domain
+
+    w = csv.writer(resp)
+    w.writerow(['UUID', 'Location Type', 'SMS Code'])
+    for loc in locs:
+        w.writerow([loc._id, loc.location_type, loc.site_code])
+    return resp
+
