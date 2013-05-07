@@ -71,4 +71,23 @@
   display: none;
 }
 
+#formdesigner .jstree a > i {
+  color: @blueLight;
+}
+
+#formdesigner .jstree a {
+  color: darken(@blueDark, 10);
+  line-height: 18px;
+  padding: 4px 0;
+  .border-radius(5px);
+  &.jstree-hovered,
+  &.jstree-clicked {
+    border: none;
+    padding: 4px 6px;
+    background: lighten(@blue, 58);
+  }
+  &.jstree-clicked {
+    .box-shadow(0px 0px 4px fade(@blue, 60%));
+  }
+}
 
