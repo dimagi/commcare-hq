@@ -5,6 +5,6 @@ python:
 install:
  - "pip install -e ."
  - "pip install coverage django-coverage"
-script: django-admin.py test --settings settings --traceback
+script: django-admin.py test --settings settings --traceback case phone
 services:
  - couchdb
