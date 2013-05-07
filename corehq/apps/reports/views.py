@@ -1,6 +1,7 @@
 from datetime import datetime, timedelta, date
 import json
 import tempfile
+from django.conf import settings
 from django.core.cache import cache
 from django.core.servers.basehttp import FileWrapper
 import os
@@ -517,11 +518,12 @@ def email_report(request, domain, report_slug, report_type=ProjectReportDispatch
     subject = form.cleaned_data['subject'] or _("Email report from CommCare HQ")
 
     if form.cleaned_data['send_to_owner']:
-        send_HTML_email(subject, request.couch_user.get_email(), body)
+        send_HTML_email(subject, request.couch_user.get_email(), body,
+                        email_from=settings.HQ_NOTIFICATIONS_EMAIL)
 
     if form.cleaned_data['recipient_emails']:
         for recipient in form.cleaned_data['recipient_emails']:
-            send_HTML_email(subject, recipient, body)
+            send_HTML_email(subject, recipient, body, email_from=settings.HQ_NOTIFICATIONS_EMAIL)
 
     return HttpResponse()
 

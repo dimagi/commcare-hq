@@ -108,7 +108,7 @@ class OrgInvitation(Invitation):
         text_content = render_to_string("orgs/email/org_invite.txt", params)
         html_content = render_to_string("orgs/email/org_invite.html", params)
         subject = 'Invitation from %s to join CommCareHQ' % self.get_inviter().formatted_name
-        send_HTML_email(subject, self.email, html_content, text_content=text_content)
+        send_HTML_email(subject, self.email, html_content, text_content=text_content, settings.HQ_NOTIFICATIONS_EMAIL)
 
 class OrgRequest(Document):
     doc_type = "OrgRequest"
