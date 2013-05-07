@@ -1,14 +1,12 @@
 #!/usr/bin/env python
 from setuptools import setup, find_packages
 
-import sys
-
 setup(
     name='dimagi-utils',
-    version='0.0.2',
+    version='1.0.0',
     description='Dimagi Shared Utilities',
     author='Dimagi',
-    author_email='information@dimagi.com',
+    author_email='dev@dimagi.com',
     url='http://www.dimagi.com/',
     packages = find_packages(exclude=['*.pyc']),
     test_suite = 'dimagi.test_utils',
