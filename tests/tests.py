@@ -122,26 +122,26 @@ class Test(TestCase):
         diff = new.diff(current)
         self.assertIsNotNone(diff)
         self.maxDiff = None
-        expected = {'doc_type': 'MockIndicators',
-                    'group_values': ['mock', '123'],
-                    'group_names': ['domain', 'owner_id'],
-                    'indicator_changes': [{'calculator': 'visits_week',
-                                           'emitter': 'null_emitter',
-                                           'emitter_type': 'null',
-                                           'values': [None]},
-                                          {'calculator': 'visits_week',
-                                           'emitter': 'all_visits',
-                                           'emitter_type': 'date',
-                                           'values': [date(2012, 2, 24)],
-                                          }]}
+        expected = dict(doc_type='MockIndicators',
+                        group_values=['mock', '123'],
+                        group_names=['domain', 'owner_id'],
+                        indicator_changes=[
+                            dict(calculator='visits_week',
+                                 emitter='null_emitter',
+                                 emitter_type='null',
+                                 values=[None]),
+                            dict(calculator='visits_week',
+                                 emitter='all_visits',
+                                 emitter_type='date',
+                                 values=[date(2012, 2, 24)])
+                        ])
         self.assertEqual(expected, diff)
 
 
-mock_couch = MockCouchDb({'docs': {"123": dict(actions=[dict(date="2012-09-23"), dict(date="2012-09-24")],
-                                               get_id="123",
-                                               domain="mock",
-                                               owner_id="test_owner",
-                                               emit_null=True)}})
+mock_couch = MockCouchDb(docs={"123": dict(actions=[dict(date="2012-09-23"), dict(date="2012-09-24")],
+                                           get_id="123",
+                                           domain="mock",
+                                           owner_id="test_owner")})
 
 
 class MockDoc(Document):
@@ -157,8 +157,7 @@ class VisitCalculator(fluff.Calculator):
 
     @fluff.null_emitter
     def null_emitter(self, case):
-        if case.emit_null:
-            yield None
+        yield None
 
 
 class MockIndicators(fluff.IndicatorDocument):
