@@ -2,7 +2,7 @@ import fluff
 from couchdbkit import Document
 from unittest2 import TestCase
 from datetime import date
-from .mock_couch import MockCouch
+from dimagitest import MockCouchDb
 
 
 class Base0(fluff.Calculator):
@@ -92,13 +92,22 @@ class Test(TestCase):
     def test_indicator_calculation(self):
         pillow = MockIndicators.pillow()()
         pillow.processor({'changes': [], 'id': '123', 'seq': 1})
-        indicator = mock_couch.mock_data.get("MockIndicators-123", None)
-        print indicator
+        indicator = mock_couch.mock_docs.get("MockIndicators-123", None)
         self.assertIsNotNone(indicator)
         self.assertIn("visits_week", indicator)
         self.assertIn("all_visits", indicator["visits_week"])
         self.assertEqual("2012-09-23", indicator["visits_week"]["all_visits"][0])
         self.assertEqual("2012-09-24", indicator["visits_week"]["all_visits"][1])
+        self.assertIsNone(indicator["visits_week"]["null_emitter"][0])
+
+    def test_indicator_diff_same(self):
+        doc = MockIndicators(domain="mock",
+                             owner_id="123",
+                             visits_week=dict(all_visits=[date(2012, 02, 23)],
+                                              null_emitter=[]))
+        another = doc.clone()
+        diff = doc.diff(another)
+        self.assertIsNone(diff)
 
     def test_indicator_diff(self):
         current = MockIndicators(domain="mock",
@@ -110,14 +119,29 @@ class Test(TestCase):
                              visits_week=dict(all_visits=[date(2012, 02, 24)],
                                               null_emitter=[None]))
 
-        print new.diff(current)
+        diff = new.diff(current)
+        self.assertIsNotNone(diff)
+        self.maxDiff = None
+        expected = {'doc_type': 'MockIndicators',
+                    'group_values': ['mock', '123'],
+                    'group_names': ['domain', 'owner_id'],
+                    'indicator_changes': [{'calculator': 'visits_week',
+                                           'emitter': 'null_emitter',
+                                           'emitter_type': 'null',
+                                           'values': [None]},
+                                          {'calculator': 'visits_week',
+                                           'emitter': 'all_visits',
+                                           'emitter_type': 'date',
+                                           'values': [date(2012, 2, 24)],
+                                          }]}
+        self.assertEqual(expected, diff)
 
 
-mock_couch = MockCouch({"123": dict(actions=[dict(date="2012-09-23"), dict(date="2012-09-24")],
-                                    get_id="123",
-                                    domain="mock",
-                                    owner_id="test_owner",
-                                    emit_null=True)})
+mock_couch = MockCouchDb({'docs': {"123": dict(actions=[dict(date="2012-09-23"), dict(date="2012-09-24")],
+                                               get_id="123",
+                                               domain="mock",
+                                               owner_id="test_owner",
+                                               emit_null=True)}})
 
 
 class MockDoc(Document):
@@ -146,5 +170,3 @@ class MockIndicators(fluff.IndicatorDocument):
     domains = ('test',)
 
     visits_week = VisitCalculator(window=timedelta(days=7))
-
-

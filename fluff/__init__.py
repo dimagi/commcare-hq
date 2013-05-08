@@ -118,7 +118,7 @@ class IndicatorDocument(schema.Document):
     def diff(self, other_doc):
         """
         Get the diff between two IndicatorDocuments. Assumes that the documents are of the same type and that
-        both have the same set of calculators and emitters.
+        both have the same set of calculators and emitters. Doesn't support changes to group_by values.
 
         Return value is None for no diff or a dict with all indicator values
         that are different (added / removed / changed):
