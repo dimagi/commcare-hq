@@ -103,5 +103,5 @@
 
 {% block breadcrumbs %}
     {{ block.super }}
-    <li><span class="divider">&gt;</span> {% trans 'Form Editor' %}</li>
+    <li><span class="divider">&gt;</span> <i class="icon-file-alt"></i> {{ form.name|trans:app.langs }}</li>
 {% endblock %}
