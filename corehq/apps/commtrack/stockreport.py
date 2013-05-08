@@ -93,7 +93,6 @@ class StockTransaction(object):
         self.inferred = kwargs.get('inferred', False)
         self.processing_order = kwargs.get('order')
 
-
         self.config = kwargs.get('config')
         if self.config:
             if not self.domain:
