@@ -1,8 +1,9 @@
 from django.test import TestCase
 from corehq.apps.users.models import CouchUser, WebUser
+import pytz
 
 class PhoneUsersTestCase(TestCase):
-    
+
     def setUp(self):
         all_users = CouchUser.all()
         for user in all_users:
@@ -11,6 +12,7 @@ class PhoneUsersTestCase(TestCase):
         self.password = 'password'
         self.domain = 'mockdomain'
         self.couch_user = WebUser.create(self.domain, self.username, self.password)
+        self.couch_user.language = 'en'
         self.couch_user.save()
 
     def testPhoneUsersViewNoNumberSet(self):
@@ -53,3 +55,17 @@ class PhoneUsersTestCase(TestCase):
         self.assertEquals(phone_user_count, 1)
         phone_user = CouchUser.phone_users_by_domain(self.domain).one()
         self.assertEquals(phone_user.username, 'commcare_username_2')
+
+    def testWebUserImplementsMobileMixIn(self):
+        time_zone = self.couch_user.get_time_zone()
+        self.assertEquals(time_zone, pytz.utc)
+
+        lang_code = self.couch_user.get_language_code()
+        self.assertEquals(lang_code, 'en')
+
+    def testDeletePhoneNumber(self):
+        self.couch_user.add_phone_number('+11231231234')
+        self.couch_user.save()
+        self.assertEquals(len(self.couch_user.phone_numbers), 1)
+        self.couch_user.delete_phone_number('+11231231234')
+        self.assertEquals(len(self.couch_user.phone_numbers), 0)
