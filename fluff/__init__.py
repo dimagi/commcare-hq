@@ -83,7 +83,6 @@ class Calculator(object):
         return values
 
 
-
 class IndicatorDocumentMeta(schema.DocumentMeta):
 
     def __new__(mcs, name, bases, attrs):
@@ -116,10 +115,10 @@ class IndicatorDocument(schema.Document):
         # overwrite whatever's in group_by with the default
         self['group_by'] = type(self)().group_by
 
-    def diff(self, other):
+    def diff(self, other_doc):
         """
         Get the diff between two IndicatorDocuments. Assumes that the documents are of the same type and that
-        the calculators and emitters are unchanged.
+        both have the same set of calculators and emitters.
 
         Return value is None for no diff or a dict with all indicator values
         that are different (added / removed / changed):
@@ -138,41 +137,56 @@ class IndicatorDocument(schema.Document):
             }
         """
         diff_keys = {}
-        for attr in self._calculators.keys():
-            if other:
-                calc_diff = self._doc_diff(self[attr], other[attr])
+        for calc_name in self._calculators.keys():
+            if other_doc:
+                calc_diff = self._shallow_dict_diff(self[calc_name], other_doc[calc_name])
                 if calc_diff:
-                    diff_keys[attr] = calc_diff
+                    diff_keys[calc_name] = calc_diff
             else:
-                diff_keys[attr] = self[attr].keys()
+                diff_keys[calc_name] = self[calc_name].keys()
 
         if not diff_keys:
             return None
 
         diff = dict(doc_type=self._doc_type,
                     group_names=list(self.group_by),
-                    group_values=[self[attr] for attr in self.group_by],
+                    group_values=[self[calc_name] for calc_name in self.group_by],
                     indicator_changes=[])
         indicators = diff["indicator_changes"]
 
         for calc_name, emitter_names in diff_keys.items():
-            indicators.extend(self._indicator_diff(calc_name, emitter_names, other))
+            indicators.extend(self._indicator_diff(calc_name, emitter_names, other_doc))
 
         return diff
 
     def _indicator_diff(self, calc_name, emitter_names, other_doc):
         indicators = []
         for emitter_name in emitter_names:
-                emitter_type = getattr(self._calculators[calc_name], emitter_name)._fluff_emitter
                 if other_doc:
-                    value_diff = list(set(self[calc_name][emitter_name]) - set(other_doc[calc_name][emitter_name]))
+                    values_diff = list(set(self[calc_name][emitter_name]) - set(other_doc[calc_name][emitter_name]))
                 else:
-                    value_diff = self[calc_name][emitter_name]
+                    values_diff = self[calc_name][emitter_name]
+
+                emitter_type = getattr(self._calculators[calc_name], emitter_name)._fluff_emitter
                 indicators.append(dict(calculator=calc_name,
                                        emitter=emitter_name,
                                        emitter_type=emitter_type,
-                                       values=value_diff))
+                                       values=values_diff))
         return indicators
+
+    def _shallow_dict_diff(self, left, right):
+        if not left and not right:
+            return None
+        elif not left or not right:
+            return left.keys() if left else right.keys()
+
+        left_set, right_set = set(left.keys()), set(right.keys())
+        intersect = right_set.intersection(left_set)
+
+        added = right_set - intersect
+        removed = left_set - intersect
+        changed = set(o for o in intersect if left[o] != right[o])
+        return added | removed | changed
 
     @classmethod
     def pillow(cls):
@@ -223,19 +237,6 @@ class IndicatorDocument(schema.Document):
             else:
                 result[emitter_name] = q
         return result
-
-    def _doc_diff(self, old, new):
-        if not old:
-            return new.keys()
-
-        old_set, new_set = set(old.keys()), set(new.keys())
-        intersect = new_set.intersection(old_set)
-
-        added = new_set - intersect
-        removed = old_set - intersect
-        changed = set(o for o in intersect if old[o] != new[o])
-        return added | removed | changed
-
 
     class Meta:
         app_label = 'fluff'
