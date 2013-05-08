@@ -1,13 +1,14 @@
-@toolbarBlue: desaturate(@blue, 50);
+@toolbarBlue: desaturate(@blue, 65);
+@toolbarColor: lighten(@sideNavigationBackground, 3);
 
 #formdesigner .fd-nav {
   margin-bottom: 0;
-  &.nav-tabs > li {
-    margin-bottom: 0;
+  &.nav-tabs > .active > a {
+    background: @toolbarColor;
   }
 }
 #formdesigner .fd-toolbar {
-  #gradient > .vertical(lighten(@toolbarBlue, 50), lighten(@toolbarBlue, 30));
+  background: @toolbarColor;
   border-left: 1px solid #ddd;
   border-right: 1px solid #ddd;
 
@@ -61,7 +62,7 @@
 }
 
 #formdesigner .fd-head {
-  background: lighten(@toolbarBlue, 10);
+  background: @blue;
   font-weight: normal !important;
   padding: 2px 0 !important;
   font-size: @baseFontSize*1.1 !important;
@@ -78,12 +79,11 @@
 #formdesigner .jstree a {
   color: darken(@blueDark, 10);
   line-height: 18px;
-  padding: 4px 0;
+  padding: 4px 6px;
   .border-radius(5px);
   &.jstree-hovered,
   &.jstree-clicked {
     border: none;
-    padding: 4px 6px;
     background: lighten(@blue, 58);
   }
   &.jstree-clicked {
