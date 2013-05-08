@@ -7,3 +7,10 @@ def get_app_id(form):
     might not always be set.
     """
     return getattr(form, "app_id", None)
+
+
+def split_path(path):
+    path_parts = path.split('/')
+    name = path_parts.pop(-1)
+    path = '/'.join(path_parts)
+    return path, name
