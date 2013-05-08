@@ -3,11 +3,13 @@ python:
  - "2.6"
  - "2.7"
 install:
- - "pip install -e ."
- - "pip install coverage"
+ - "pip install -e . --use-mirrors"
+ - "pip install coverage coveralls --use-mirrors"
 before_script:
  - "gem install travis-artifacts"
 script: coverage run setup.py test
+after_success:
+ - coveralls
 after_script:
  - "coverage html"
  - "travis-artifacts upload --path coverage-report --target-path artifacts/$TRAVIS_BUILD_ID/$TRAVIS_JOB_ID"
