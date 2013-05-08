@@ -17,6 +17,7 @@ from corehq.apps.commtrack.tasks import import_locations_async,\
 import json
 from couchdbkit import ResourceNotFound
 import csv
+from dimagi.utils.couch.database import iter_docs
 
 DEFAULT_PRODUCT_LIST_LIMIT = 10
 
@@ -213,14 +214,15 @@ def charts(request, domain, template="commtrack/charts.html"):
 
 @require_superuser
 def location_dump(self, domain):
-    locs = Location.view('commtrack/locations_by_code', startkey=[domain], endkey=[domain, {}], include_docs=True)
+    loc_ids = [row['id'] for row in Location.view('commtrack/locations_by_code', startkey=[domain], endkey=[domain, {}])]
     
     resp = HttpResponse(content_type='text/csv')
     resp['Content-Disposition'] = 'attachment; filename="locations_%s.csv"' % domain
 
     w = csv.writer(resp)
     w.writerow(['UUID', 'Location Type', 'SMS Code'])
-    for loc in locs:
+    for raw in iter_docs(Location.get_db(), loc_ids):
+        loc = Location.wrap(raw)
         w.writerow([loc._id, loc.location_type, loc.site_code])
     return resp
 
