@@ -5,7 +5,7 @@ from unittest2 import TestCase
 import fluff
 from couchdbkit import Document
 from datetime import date
-from dimagitest import MockCouchDb
+from fakeco import MockCouchDb
 
 
 class Base0(fluff.Calculator):
