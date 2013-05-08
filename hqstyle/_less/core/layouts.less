@@ -26,11 +26,6 @@
 .hq-double-col {
     #gradient > .horizontal-two-column-color(@sideNavigationBackground, @white, (@fluidGridColumnWidth*2+@fluidGridGutterWidth));
 }
-.row-fluid .hq-flush-content {
-    @leftMargin: .15%;
-    margin-left: @leftMargin;
-    width: @fluidGridColumnWidth*10 + @fluidGridGutterWidth*10 - @leftMargin;
-}
 
 .old-style {
     #gradient > .vertical(#ffffff, #ffffff);
@@ -50,37 +45,43 @@
     padding-top: @gridGutterWidth;
 }
 
-.hq-content > form,
-.hq-content > div,
-.hq-content > p,
-.hq-content > h2,
-.hq-content > .row-fluid > form,
-.hq-content > .row-fluid > div,
-.hq-content > .row-fluid > p,
-.hq-content > .row-fluid > h2 {
+.hq-content:not(.hq-flush-content) > form,
+.hq-content:not(.hq-flush-content) > div,
+.hq-content:not(.hq-flush-content) > p,
+.hq-content:not(.hq-flush-content) > h2,
+.hq-content:not(.hq-flush-content) > .row-fluid > form,
+.hq-content:not(.hq-flush-content) > .row-fluid > div,
+.hq-content:not(.hq-flush-content) > .row-fluid > p,
+.hq-content:not(.hq-flush-content) > .row-fluid > h2,
+.hq-content:not(.hq-flush-content) > hr {
+    margin-right: @gridGutterWidth*2;
+}
+
+.hq-content:not(.hq-flush-content) > section {
     padding-right: @gridGutterWidth*2;
 }
 
-.hq-content > section {
-    padding-right: @gridGutterWidth*2;
-}
-
-.hq-content > .well {
+.hq-content:not(.hq-flush-content) > .well {
     padding-right: @gridGutterWidth;
     margin-right: @gridGutterWidth*2;
 }
 
-
-.hq-flush-content section > .well {
-    margin: 0 @gridGutterWidth @gridGutterWidth @gridGutterWidth;
-}
-
-.hq-content .nav-tabs:first-child {
+.hq-content:not(.hq-flush-content) .nav-tabs:first-child {
     margin-top: 0;
 }
 
 .hq-flush-content {
     padding-top: 0;
+}
+
+.row-fluid .hq-flush-content {
+    @leftMargin: .15%;
+    margin-left: @leftMargin;
+    width: @fluidGridColumnWidth*10 + @fluidGridGutterWidth*10 - @leftMargin;
+}
+
+.hq-flush-content section > .well {
+    margin: 0 @gridGutterWidth @gridGutterWidth @gridGutterWidth;
 }
 
 #report-content {
