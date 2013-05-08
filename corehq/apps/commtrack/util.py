@@ -54,7 +54,7 @@ def make_product(domain, name, code):
     p.save()
     return p
 
-def bootstrap_default(domain, requisitions_enabled=False):
+def bootstrap_default(domain, requisitions_enabled=True):
     c = CommtrackConfig(
         domain=domain,
         multiaction_enabled=True,
