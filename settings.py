@@ -415,10 +415,19 @@ LOGGING = {
             'format': '%(levelname)s %(asctime)s %(module)s %(process)d %(thread)d %(message)s'
         },
         'simple': {
-            'format': '%(levelname)s %(message)s'
+            'format': '%(asctime)s %(levelname)s %(message)s'
+        },
+
+        'pillowtop': {
+            'format': '%(asctime)s %(levelname)s %(module)s %(message)s'
         },
     },
     'handlers': {
+        'pillowtop': {
+            'level': 'INFO',
+            'class': 'logging.StreamHandler',
+            'formatter': 'pillowtop'
+        },
         'console': {
             'level': 'INFO',
             'class': 'logging.StreamHandler',
@@ -459,6 +468,11 @@ LOGGING = {
             'handlers': ['console', 'file', 'couchlog'],
             'level': 'INFO',
             'propagate': True
+        },
+        'pillowtop': {
+            'handlers': ['pillowtop'],
+            'level': 'ERROR',
+            'propagate': False,
         }
     }
 }
