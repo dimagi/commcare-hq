@@ -1871,6 +1871,19 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
             for f,form in enumerate(module['forms']):
                 change_unique_id(source['modules'][m]['forms'][f])
 
+    def copy_form(self, module_id, form_id, to_module_id):
+        form = self.modules[module_id]['forms'][form_id]
+        copy_source = deepcopy(form.to_json())
+        if copy_source.has_key('unique_id'):
+            del copy_source['unique_id']
+
+        copy_form = self.new_form_from_source(to_module_id, copy_source)
+
+        def xmlname(aform):
+            return "%s.xml" % aform.get_unique_id()
+        self.put_attachment(self.fetch_attachment(xmlname(form)), xmlname(copy_form))
+        self.modules[to_module_id]['forms'].append(copy_form)
+
     @cached_property
     def has_case_management(self):
         for module in self.get_modules():

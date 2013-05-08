@@ -920,6 +920,15 @@ def delete_form(req, domain, app_id, module_id, form_id):
 
 @require_POST
 @require_can_edit_apps
+def copy_form(req, domain, app_id, module_id, form_id):
+    app = get_app(domain, app_id)
+    to_module_id = int(req.POST['to_module_id'])
+    app.copy_form(int(module_id), int(form_id), to_module_id)
+    app.save()
+    return back_to_main(**locals())
+
+@require_POST
+@require_can_edit_apps
 def undo_delete_form(request, domain, record_id):
     record = DeleteFormRecord.get(record_id)
     record.undo()
@@ -1577,7 +1586,6 @@ def rearrange(req, domain, app_id, key):
         return HttpResponse(json.dumps(resp))
     else:
         return back_to_main(**locals())
-
 
 # The following three functions deal with
 # Saving multiple versions of the same app
