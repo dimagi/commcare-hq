@@ -6,9 +6,10 @@
     display: inline-block;
     vertical-align: middle;
   }
-
+  @toolbarVerticalPadding: 6px;
+  @toolbarButtonPadding: @toolbarVerticalPadding 10px;
   .btn{
-    padding: 6px 10px;
+    padding: @toolbarButtonPadding;
   }
 
   .fd-question-type-group {
@@ -16,10 +17,10 @@
       display: block;
       width: 40px;
       text-align: center;
-      padding: 6px 0;
+      padding: @toolbarVerticalPadding 0;
     }
     .btn:nth-of-type(2) {
-      padding: 6px 6px 6px 1px;
+      padding: @toolbarVerticalPadding @toolbarVerticalPadding @toolbarVerticalPadding 1px;
       .btn > span {
         width:auto;
       }
@@ -30,6 +31,12 @@
     }
     .btn.disabled i {
       color: @gray;
+    }
+    &.fd-question-type-group-advanced {
+      .btn {
+        padding: @toolbarButtonPadding;
+        font-size: @baseFontSize;
+      }
     }
   }
 }
