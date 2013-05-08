@@ -27,7 +27,7 @@ class LanguageField(forms.CharField):
         super(LanguageField, self).__init__(*args, **kwargs)
         self.min_length = 2
         self.max_length = 3
-    
+
     default_error_messages = {
         'invalid': _(u'Please enter a valid two or three digit language code.'),
     }
@@ -92,12 +92,22 @@ class UserForm(RoleForm):
     email_opt_in = forms.BooleanField(required=False,
                                       label="",
                                       help_text=_("Join the mailing list to receive important announcements."))
-    language = LanguageField(required=False, help_text=_(
-        "Write in the language code to set the default language this user "
-        "sees in CloudCare applications and in reports (if applicable). "
-        "Current supported languages for reports are en, fr (partial), "
-        "and hin (partial)."))
+    language = forms.ChoiceField(choices=(), required=False)
+    #language = LanguageField(required=False, help_text=_(
+        #"Write in the language code to set the default language this user "
+        #"sees in CloudCare applications and in reports (if applicable). "
+        #"Current supported languages for reports are en, fr (partial), "
+        #"and hin (partial)."))
     role = forms.ChoiceField(choices=(), required=False)
+
+    def __init__(self, *args, **kwargs):
+        if kwargs.has_key('language_choices'):
+            language_choices = kwargs.pop('language_choices')
+        else:
+            language_choices = ()
+        super(UserForm, self).__init__(*args, **kwargs)
+        self.fields['language'].choices = language_choices
+
 
 class Meta:
         app_label = 'users'

@@ -476,8 +476,11 @@ def _handle_user_form(request, domain, couch_user=None):
     else:
         role_choices = UserRole.role_choices(domain)
 
+    results = get_db().view('languages/list', startkey=[domain], endkey=[domain, {}], group='true').all()
+    language_choices = [(result['key'][1], result['key'][1]) for result in results]
+
     if request.method == "POST" and request.POST['form_type'] == "basic-info":
-        form = UserForm(request.POST, role_choices=role_choices)
+        form = UserForm(request.POST, role_choices=role_choices, language_choices=language_choices)
         if form.is_valid():
             if create_user:
                 django_user = User()
@@ -500,7 +503,7 @@ def _handle_user_form(request, domain, couch_user=None):
 
             messages.success(request, 'Changes saved for user "%s"' % couch_user.username)
     else:
-        form = UserForm(role_choices=role_choices)
+        form = UserForm(role_choices=role_choices, language_choices=language_choices)
         if not create_user:
             form.initial['first_name'] = couch_user.first_name
             form.initial['last_name'] = couch_user.last_name
