@@ -11,6 +11,13 @@
                 <span class="input-xlarge uneditable-input">{{ couch_user.html_username|safe }}</span>
             </div>
         </div>
+        <script type="text/javascript">
+            $(function() {
+                $('#id_language').combobox({
+                    placeholder: 'Select a language...'
+                });
+            });
+        </script>
         {% for field in form.visible_fields %}
             <div class="control-group{% if field.errors %} error{% endif %}">
                 <label class="control-label" for="{{ field.id }}">{{ field.label }}</label>
