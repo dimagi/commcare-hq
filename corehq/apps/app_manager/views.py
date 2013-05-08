@@ -922,6 +922,15 @@ def delete_form(req, domain, app_id, module_id, form_id):
 
 @require_POST
 @require_can_edit_apps
+def copy_form(req, domain, app_id, module_id, form_id):
+    app = get_app(domain, app_id)
+    to_module_id = int(req.POST['to_module_id'])
+    app.copy_form(int(module_id), int(form_id), to_module_id)
+    app.save()
+    return back_to_main(**locals())
+
+@require_POST
+@require_can_edit_apps
 def undo_delete_form(request, domain, record_id):
     record = DeleteFormRecord.get(record_id)
     record.undo()
@@ -1565,8 +1574,10 @@ def rearrange(req, domain, app_id, key):
 
 
     if   "forms" == key:
-        module_id = int(req.POST['module_id'])
-        app.rearrange_forms(module_id, i, j)
+        to_module_id = int(req.POST['to_module_id'])
+        from_module_id = int(req.POST['from_module_id'])
+        if app.rearrange_forms(to_module_id, from_module_id, i, j) == 'case type conflict':
+            messages.warning(req, "The module you moved this form to does not share the same case type as it's old module")
     elif "modules" == key:
         app.rearrange_modules(i, j)
     elif "detail" == key:
@@ -1579,7 +1590,6 @@ def rearrange(req, domain, app_id, key):
         return HttpResponse(json.dumps(resp))
     else:
         return back_to_main(**locals())
-
 
 # The following three functions deal with
 # Saving multiple versions of the same app

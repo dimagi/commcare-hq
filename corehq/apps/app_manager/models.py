@@ -1863,10 +1863,12 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
         columns = detail['columns']
         columns.insert(i, columns.pop(j))
         detail['columns'] = columns
-    def rearrange_forms(self, module_id, i, j):
-        forms = self.modules[module_id]['forms']
-        forms.insert(i, forms.pop(j))
-        self.modules[module_id]['forms'] = forms
+    def rearrange_forms(self, to_module_id, from_module_id, i, j):
+        forms = self.modules[to_module_id]['forms']
+        forms.insert(i, forms.pop(j) if to_module_id == from_module_id else self.modules[from_module_id]['forms'].pop(j))
+        self.modules[to_module_id]['forms'] = forms
+        if self.modules[to_module_id]['case_type'] != self.modules[from_module_id]['case_type']:
+            return 'case type conflict'
     def scrub_source(self, source):
         def change_unique_id(form):
             unique_id = form['unique_id']
@@ -1879,6 +1881,19 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
         for m,module in enumerate(source['modules']):
             for f,form in enumerate(module['forms']):
                 change_unique_id(source['modules'][m]['forms'][f])
+
+    def copy_form(self, module_id, form_id, to_module_id):
+        form = self.modules[module_id]['forms'][form_id]
+        copy_source = deepcopy(form.to_json())
+        if copy_source.has_key('unique_id'):
+            del copy_source['unique_id']
+
+        copy_form = self.new_form_from_source(to_module_id, copy_source)
+
+        def xmlname(aform):
+            return "%s.xml" % aform.get_unique_id()
+        self.put_attachment(self.fetch_attachment(xmlname(form)), xmlname(copy_form))
+        self.modules[to_module_id]['forms'].append(copy_form)
 
     @cached_property
     def has_case_management(self):
