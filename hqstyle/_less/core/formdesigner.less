@@ -1,28 +1,10 @@
-@toolbarBlue: desaturate(@blue, 65);
-@toolbarColor: lighten(@sideNavigationBackground, 3);
-
-#formdesigner .fd-nav {
-  margin-bottom: 0;
-  &.nav-tabs > .active > a {
-    background: @toolbarColor;
-  }
-}
 #formdesigner .fd-toolbar {
-  background: @toolbarColor;
   border-left: 1px solid #ddd;
   border-right: 1px solid #ddd;
 
-  > h2,
   #fd-container-question-type-group {
     display: inline-block;
     vertical-align: middle;
-  }
-  h2 {
-    font-size: 1.8em;
-    color: @toolbarBlue;
-    margin: 0 .8em;
-    text-shadow: 1px 1px @white;
-    padding-top: 4px;
   }
 
   .btn{
@@ -91,3 +73,19 @@
   }
 }
 
+#formdesigner #fd-form-actions {
+  padding-right: @gridGutterWidth;
+  > div {
+    display: inline-block;
+  }
+}
+
+#formdesigner #fd-save-button {
+  > .pull-right {
+    float: none; // HACK HACK HACK The javascript from main.js is causing issues.
+  }
+}
+
+#fd-props-content {
+  margin: 0 @gridGutterWidth;
+}
