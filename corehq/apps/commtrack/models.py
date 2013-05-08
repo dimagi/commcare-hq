@@ -305,13 +305,14 @@ class StockTransaction(DocumentSchema):
 
 
 
-def _get_single_index(case, identifier, type, wrapper=CommCareCase):
+def _get_single_index(case, identifier, type, wrapper=None):
     matching = filter(lambda i: i.identifier == identifier, case.indices)
     if matching:
         assert len(matching) == 1, 'should only be one parent index'
         assert matching[0].referenced_type == type, \
              ' parent had bad case type %s' % matching[0].referenced_type
-        return wrapper.get(matching[0].referenced_id)
+        ref_id = matching[0].referenced_id
+        return wrapper.get(ref_id) if wrapper else ref_id
     return None
 
 
@@ -344,6 +345,10 @@ class SupplyPointProductCase(CommCareCase):
     def get_supply_point_case(self):
         return _get_single_index(self, const.PARENT_CASE_REF, const.SUPPLY_POINT_CASE_TYPE,
                                  wrapper=SupplyPointCase)
+
+    @memoized
+    def get_supply_point_case_id(self):
+        return _get_single_index(self, const.PARENT_CASE_REF, const.SUPPLY_POINT_CASE_TYPE)
 
     class Meta:
         app_label = "commtrack" # This is necessary otherwise syncdb will confuse this app with casexml
@@ -394,8 +399,13 @@ class RequisitionCase(CommCareCase):
     @memoized
     def get_product_case(self):
         return _get_single_index(self, const.PARENT_CASE_REF,
-                                     const.SUPPLY_POINT_PRODUCT_CASE_TYPE,
-                                     wrapper=SupplyPointProductCase)
+                                 const.SUPPLY_POINT_PRODUCT_CASE_TYPE,
+                                 wrapper=SupplyPointProductCase)
+
+    @memoized
+    def get_product_case_id(self):
+        return _get_single_index(self, const.PARENT_CASE_REF,
+                                 const.SUPPLY_POINT_PRODUCT_CASE_TYPE)
 
     @memoized
     def get_requester(self):
@@ -426,9 +436,10 @@ class RequisitionCase(CommCareCase):
         For a given location, return the IDs of all open requisitions at that location.
         """
         results = cls.get_db().view('commtrack/requisitions',
-            startkey=[domain, location_id, 'open'],
-            endkey=[domain, location_id, 'open', {}],
+            endkey=[domain, location_id, 'open'],
+            startkey=[domain, location_id, 'open', {}],
             reduce=False,
+            descending=True,
         )
         return [r['id'] for r in results]
 
