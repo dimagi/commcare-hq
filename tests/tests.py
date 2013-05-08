@@ -1,4 +1,7 @@
-from django.test import TestCase
+from django.conf import settings
+settings.configure(DEBUG=True)
+
+from unittest2 import TestCase
 import fluff
 
 
