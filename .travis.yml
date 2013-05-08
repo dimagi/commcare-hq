@@ -12,6 +12,7 @@ after_script:
  - "coverage html"
  - "travis-artifacts upload --path coverage-report --target-path artifacts/$TRAVIS_BUILD_ID/$TRAVIS_JOB_ID"
  - "echo See full coverage report at http://travis-artifacts.dimagi.com.s3-website-us-east-1.amazonaws.com/artifacts/$TRAVIS_BUILD_ID/$TRAVIS_JOB_ID/index.html"
+ - "python .travis/link_to_coverage_report http://travis-artifacts.dimagi.com.s3-website-us-east-1.amazonaws.com/artifacts/$TRAVIS_BUILD_ID/$TRAVIS_JOB_ID/index.html"
  - "coverage report"
 env:
  global:
@@ -19,4 +20,5 @@ env:
   - "ARTIFACTS_S3_BUCKET=travis-artifacts.dimagi.com"
   - secure: "JbCPNtDj7nSbmNaF7vZ8e2JX9nxvVgUYB74MCuGsSRV3ckN9WtXL81bWhoFm\nFPE/ClVKfY0gqAtahOrzixBUuEeh4Kz2OVAsHeo6ldfAZOauEqGgkSlC+8yE\nnMFlEnd/yjIvl59ElSJxRVou2KAfZgWK1MaFSHzDkCMfcfhm6Do="
   - secure: "AjK6O+gAiCczZjbhJQ3AcRkC77YCpc8ZAntENulM+Tzjsq+rtyJGFO0i2JzI\n9qmJFrKIMxqZHHJIfW6EqfJcnA9yncsa1GMsmGnYCyS6GGU0ASDVWKUKVScy\nPP9xtGtcZj5rzgaGx2x7qEnHNxEZekG0WcbnKLMhciwwLm1RtX0="
+  - secure: "RiDT/doXAiBbGNeJpkhW7mPpgWG226s/N0r5+Iq82yY0eg/V8kQdznSAAVHX\nJskugJ/BLtQeyj74OyknTLqk2uGRMGw66HQ92Wp5eDx44beroP27LplOi0Wy\nHNe0ypBd0PvxGE7VjtKiX2HdTL2shTDt76EKuDs0GkYVCwTHPNU="
 
