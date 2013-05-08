@@ -543,7 +543,8 @@ def _notification_email_on_publish(domain, snapshot, published_by):
     subject = "New App on Exchange: %s" % snapshot.title
     try:
         for recipient in recipients:
-            send_HTML_email(subject, recipient, html_content, text_content=text_content, email_from=settings.HQ_NOTIFICATIONS_EMAIL)
+            send_HTML_email(subject, recipient, html_content, text_content=text_content,
+                            email_from=settings.HQ_NOTIFICATIONS_EMAIL)
     except Exception:
         logging.warning("Can't send notification email, but the message was:\n%s" % text_content)
 
@@ -694,6 +695,7 @@ def _send_request_notification_email(request, org, dom):
     subject = "New request to add a project to your organization! -- CommcareHQ"
     try:
         for recipient in recipients:
-            send_HTML_email(subject, recipient, html_content, text_content=text_content, email_from=settings.HQ_NOTIFICATIONS_EMAIL)
+            send_HTML_email(subject, recipient, html_content, text_content=text_content,
+                            email_from=settings.HQ_NOTIFICATIONS_EMAIL)
     except Exception:
         logging.warning("Can't send notification email, but the message was:\n%s" % text_content)
