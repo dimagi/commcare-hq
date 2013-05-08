@@ -119,6 +119,11 @@ def es_domain_query(params, facets=None, terms=None, domains=None, return_q_dict
                             "query" : search_query,
                             "operator" : "and" }}}}}
 
+    q["facets"] = {}
+    stats = ['cp_n_active_cases', 'cp_n_active_cc_users', 'cp_n_cc_users', 'cp_n_web_users', 'cp_n_forms', 'cp_n_cases']
+    for prop in stats:
+        q["facets"].update({"%s-STATS" % prop: {"statistical": {"field": prop}}})
+
     q["sort"] = sort if sort else [{"name" : {"order": "asc"}},]
 
     return es_query(params, facets, terms, q, DOMAIN_INDEX + '/hqdomain/_search', start_at, size, dict_only=return_q_dict)
@@ -195,18 +200,48 @@ class AdminDomainStatsReport(DomainStatsReport, ElasticTabularReport):
     @property
     def rows(self):
         domains = [res['_source'] for res in self.es_results.get('hits', {}).get('hits', [])]
+
+        def get_from_stat_facets(prop, what_to_get):
+            return self.es_results.get('facets', {}).get('%s-STATS' % prop, {}).get(what_to_get)
+
+        CALCS_ROW_INDEX = {
+            3: "cp_n_active_cc_users",
+            4: "cp_n_cc_users",
+            5: "cp_n_active_cases",
+            6: "cp_n_cases",
+            7: "cp_n_forms",
+            10: "cp_n_web_users",
+        }
+        NUM_ROWS = 12
+        def stat_row(name, what_to_get, type='float'):
+            row = [name]
+            for index in range(1, NUM_ROWS): #todo: switch to len(self.headers) when that userstatus report PR is merged
+                if index in CALCS_ROW_INDEX:
+                    val = get_from_stat_facets(CALCS_ROW_INDEX[index], what_to_get)
+                    row.append('%.2f' % float(val) if type=='float' else val)
+                else:
+                    row.append('---')
+            return row
+
+        self.total_row = stat_row(_('Total'), 'total', type='int')
+        self.statistics_rows = [
+            stat_row(_('Mean'), 'mean'),
+            stat_row(_('STD'), 'std_deviation'),
+        ]
+
         for dom in domains:
-            yield [
-                dom.get('hr_name') or dom['name'],
-                dom.get("organization") or _('No org'),
-                dom.get('deployment', {}).get('date') or _('No date'),
-                dom.get("cp_n_active_cc_users", _("Not Yet Calculated")),
-                dom.get("cp_n_cc_users", _("Not Yet Calculated")),
-                dom.get("cp_n_active_cases", _("Not Yet Calculated")),
-                dom.get("cp_n_cases", _("Not Yet Calculated")),
-                dom.get("cp_n_forms", _("Not Yet Calculated")),
-                dom.get("cp_first_form", _("No Forms")),
-                dom.get("cp_last_form", _("No Forms")),
-                dom.get("cp_n_web_users", _("Not Yet Calculated")),
-                dom.get('internal', {}).get('notes') or _('No notes'),
-            ]
+            if dom.has_key('name'): # for some reason when using the statistical facet, ES adds an empty dict to hits
+                yield [
+                    dom.get('hr_name') or dom['name'],
+                    dom.get("organization") or _('No org'),
+                    dom.get('deployment', {}).get('date') or _('No date'),
+                    dom.get("cp_n_active_cc_users", _("Not Yet Calculated")),
+                    dom.get("cp_n_cc_users", _("Not Yet Calculated")),
+                    dom.get("cp_n_active_cases", _("Not Yet Calculated")),
+                    dom.get("cp_n_cases", _("Not Yet Calculated")),
+                    dom.get("cp_n_forms", _("Not Yet Calculated")),
+                    dom.get("cp_first_form", _("No Forms")),
+                    dom.get("cp_last_form", _("No Forms")),
+                    dom.get("cp_n_web_users", _("Not Yet Calculated")),
+                    dom.get('internal', {}).get('notes') or _('No notes'),
+                ]

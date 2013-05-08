@@ -21,7 +21,7 @@ def new_key_record(domain, user_id, now=None):
         user_id=user_id,
         valid=now,
     )
-    bump_expiry(record)
+    bump_expiry(record, now=now)
 
     return record
 

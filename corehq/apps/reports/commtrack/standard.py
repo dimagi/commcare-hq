@@ -91,6 +91,11 @@ class CurrentStockStatusReport(GenericTabularReport, CommtrackReportMixin):
 
     report_template_path = "reports/async/tabular_graph.html"
 
+    # temporary
+    @classmethod
+    def show_in_navigation(cls, domain=None, project=None, user=None):
+        return 'psi' not in (domain or '')
+
     @property
     def headers(self):
         return DataTablesHeader(*(DataTablesColumn(text) for text in [
@@ -169,6 +174,11 @@ class AggregateStockStatusReport(GenericTabularReport, CommtrackReportMixin):
     fields = ['corehq.apps.reports.fields.AsyncLocationField']
     exportable = True
     emailable = True
+
+    # temporary
+    @classmethod
+    def show_in_navigation(cls, domain=None, project=None, user=None):
+        return 'psi' not in (domain or '')
 
     @property
     def headers(self):
@@ -252,6 +262,11 @@ class ReportingRatesReport(GenericTabularReport, CommtrackReportMixin):
     emailable = True
 
     report_template_path = "reports/async/tabular_pie.html"
+
+    # temporary
+    @classmethod
+    def show_in_navigation(cls, domain=None, project=None, user=None):
+        return 'psi' not in (domain or '')
 
     @property
     def headers(self):
