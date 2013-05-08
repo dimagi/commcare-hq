@@ -9,5 +9,6 @@ install:
 script:
  - "coverage run setup.py test"
 after_success:
+ - coverage report
  - coveralls
 

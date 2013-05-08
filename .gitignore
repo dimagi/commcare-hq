@@ -3,3 +3,4 @@
 
 /*.egg
 /*egg-info
+/.coverage
