@@ -16,11 +16,11 @@ setup(
     install_requires=[
         'couchdbkit',
         'pillowtop==0.0.1',
-        'dimagi-utils==0.0.2',
+        'dimagi-utils==1.0.0',
         'pytz',
     ],
     dependency_links=[
-        'http://github.com/dimagi/dimagi-utils/tarball/master#egg=dimagi-utils-0.0.2',
+        'http://github.com/dimagi/dimagi-utils/tarball/master#egg=dimagi-utils-1.0.0',
         'http://github.com/dimagi/pillowtop/tarball/master#egg=pillowtop-0.0.1',
     ],
     tests_require=[
