@@ -643,14 +643,14 @@ a:hover {
 .hq-content:not(.hq-flush-content) > hr {
   margin-right: 40px;
 }
-.hq-content > section {
+.hq-content:not(.hq-flush-content) > section {
   padding-right: 40px;
 }
-.hq-content > .well {
+.hq-content:not(.hq-flush-content) > .well {
   padding-right: 20px;
   margin-right: 40px;
 }
-.hq-content .nav-tabs:first-child {
+.hq-content:not(.hq-flush-content) .nav-tabs:first-child {
   margin-top: 0;
 }
 .hq-flush-content {
