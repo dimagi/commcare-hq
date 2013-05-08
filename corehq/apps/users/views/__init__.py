@@ -309,12 +309,7 @@ def delete_phone_number(request, domain, couch_user_id):
     if 'phone_number' not in request.GET:
         return Http404('Must include phone number in request.')
     phone_number = urllib.unquote(request.GET['phone_number'])
-    for i in range(0,len(user.phone_numbers)):
-        if user.phone_numbers[i] == phone_number:
-            del user.phone_numbers[i]
-            break
-    user.save()
-    user.delete_verified_number(phone_number)
+    user.delete_phone_number(phone_number)
     return HttpResponseRedirect(reverse("user_account", args=(domain, couch_user_id )))
 
 @require_permission_to_edit_user
