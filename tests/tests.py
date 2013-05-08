@@ -1,11 +1,15 @@
+from django.conf import settings
+settings.configure(DEBUG=True)
+
+from unittest2 import TestCase
 import fluff
 from couchdbkit import Document
-from unittest2 import TestCase
 from datetime import date
 from dimagitest import MockCouchDb
 
 
 class Base0(fluff.Calculator):
+
     @fluff.filter_by
     def base_0_filter(self):
         pass
@@ -16,6 +20,7 @@ class Base0(fluff.Calculator):
 
 
 class Base1(Base0):
+
     @fluff.filter_by
     def base_1_filter(self):
         pass
@@ -26,6 +31,7 @@ class Base1(Base0):
 
 
 class Base2(Base0):
+
     @fluff.filter_by
     def base_2_filter(self):
         pass
@@ -36,6 +42,7 @@ class Base2(Base0):
 
 
 class Base3(Base1, Base2):
+
     @fluff.filter_by
     def base_3_filter(self):
         pass

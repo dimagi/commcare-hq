@@ -1,6 +1,3 @@
-from django.conf import settings
-settings.configure(DEBUG=True)
-
 from couchdbkit import ResourceNotFound
 from couchdbkit.ext.django import schema
 import datetime

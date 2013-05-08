@@ -1,1 +1,1 @@
-__author__ = 'Simon'
+from .tests import Test
