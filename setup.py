@@ -12,12 +12,12 @@ setup(
     test_suite = 'dimagi.test_utils',
     test_loader = 'unittest2:TestLoader',
     install_requires = [
-        'python-dateutil',
-    ],
-    tests_require = [
         'django',
         'openpyxl',
+        'python-dateutil',
         'pytz',
+    ],
+    tests_require = [
         'unittest2',
     ],
 )
