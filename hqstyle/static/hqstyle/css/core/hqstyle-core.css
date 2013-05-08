@@ -7470,6 +7470,10 @@ a.badge:hover {
 #formdesigner .fd-toolbar .fd-question-type-group .btn.disabled i {
   color: #555555;
 }
+#formdesigner .fd-toolbar .fd-question-type-group.fd-question-type-group-advanced .btn {
+  padding: 6px 10px;
+  font-size: 13px;
+}
 #formdesigner .fd-tree,
 #formdesigner .fd-question-properties {
   margin-top: 0 !important;
