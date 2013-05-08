@@ -4,10 +4,10 @@ from setuptools import setup, find_packages
 
 setup(
     name='pillowtop',
-    version='0.0.1',
+    version='0.1.0',
     description='A couchdbkit changes listener for doing backend processing',
     author='Dimagi',
-    author_email='information@dimagi.com',
+    author_email='dev@dimagi.com',
     url='http://www.dimagi.com/',
     packages = find_packages(exclude=['*.pyc']),
     include_package_data = True,
@@ -15,7 +15,7 @@ setup(
         "restkit", 
         "couchdbkit",
         "simplejson",
-        "request",
+        "requests",
         "gevent",
         "greenlet",
         "rawes"
