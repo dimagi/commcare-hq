@@ -134,6 +134,7 @@ var CaseXML = (function () {
                 {
                     read: function (o) {
                         var case_properties = [];
+
                         for (var key in o.case_properties) {
                             if (o.case_properties.hasOwnProperty(key)) {
                                 case_properties.push({
@@ -142,6 +143,9 @@ var CaseXML = (function () {
                                 });
                             }
                         }
+                        case_properties = _.sortBy(case_properties, function (property) {
+                            return self.utils.questionScores[property.path];
+                        });
                         o.case_properties = case_properties;
                     },
                     write: function (o, self) {
@@ -339,6 +343,11 @@ var CaseXML = (function () {
                 }
             };
 
+            var questionScores = {};
+            _(this.questions).each(function (question, i) {
+                questionScores[question.value] = i;
+            });
+            this.questionScores = questionScores;
             ko.applyBindings(new SubCasesViewModel(params, this), $('#case-config-ko').get(0));
         };
     CaseXML.prototype = {
@@ -355,8 +364,6 @@ var CaseXML = (function () {
             return action && action.condition && (action.condition.type === "if" || action.condition.type === "always");
         }
     };
-
-
 
     CaseXML.prototype.render = function () {
         var i;
@@ -404,7 +411,13 @@ var CaseXML = (function () {
         }
         this.render();
     };
-
+    CaseXML.prototype.sortByQuestions = function (map, keysOrValues) {
+        var self = this, pairs = _.pairs(map);
+        return _(pairs).sortBy(function (pair) {
+            var path = keysOrValues === 'keys' ? pair[0] : pair[1];
+            return self.questionScores[path];
+        });
+    };
     CaseXML.prototype.renderCondition = function (condition) {
         return this.condition_ejs.render({
             casexml: this,
