@@ -37,6 +37,9 @@ BUG_REPORT_RECIPIENTS = ['commcarehq-support@dimagi.com']
 NEW_DOMAIN_RECIPIENTS = ['commcarehq-dev+newdomain@dimagi.com']
 EXCHANGE_NOTIFICATION_RECIPIENTS = ['commcarehq-dev+exchange@dimagi.com']
 
+HQ_NOTIFICATIONS_EMAIL = 'commcarehq-noreply@dimagi.com'
+SUPPORT_EMAIL = "commcarehq-support@dimagi.com"
+
 ####### Log/debug setup ########
 
 DEBUG = True
