@@ -188,10 +188,12 @@ def process_loc(domain, loc, rows, data_cols):
         set_error_bulk(rows, 'SKIPPED because other rows for this location have errors')
         return
 
+    make_tx = sms.transaction_factory(loc, StockTransaction)
+
     rows.sort(key=lambda row: row['timestamp'])
     for row in rows:
         try:
-            import_row(row, data_cols, domain)
+            import_row(row, data_cols, domain, make_tx)
             set_error(row, 'SUCCESS row imported')
         except Exception, e:
             notify_exception(None, 'error during bulk stock report import')
@@ -199,13 +201,13 @@ def process_loc(domain, loc, rows, data_cols):
             set_error_bulk(rows, 'SKIPPED remaining rows due to unexpected error')
             break
 
-def import_row(row, data_cols, domain):
+def import_row(row, data_cols, domain, make_tx):
     """process (import) a single stock report row"""
     def get_data():
         for header, meta in data_cols.iteritems():
             val = row[header]
             if val is not None and val != '':
-                yield StockTransaction(action_name=meta['action'], product=meta['product'], value=int(val))
+                yield make_tx(domain=domain, action_name=meta['action'], product=meta['product'], value=int(val))
 
     report = {
         'location': row['loc'],
