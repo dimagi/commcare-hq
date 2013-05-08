@@ -1,6 +1,5 @@
 from django.test import TestCase
 from corehq.apps.users.models import CouchUser, WebUser
-import pytz
 
 class PhoneUsersTestCase(TestCase):
 
@@ -58,7 +57,7 @@ class PhoneUsersTestCase(TestCase):
 
     def testWebUserImplementsMobileMixIn(self):
         time_zone = self.couch_user.get_time_zone()
-        self.assertEquals(time_zone, pytz.utc)
+        self.assertEquals(time_zone, 'UTC')
 
         lang_code = self.couch_user.get_language_code()
         self.assertEquals(lang_code, 'en')

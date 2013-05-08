@@ -1531,7 +1531,7 @@ class WebUser(CouchUser, MultiMembershipMixin, OrgMembershipMixin, CommCareMobil
             return None
 
         timezone = report_utils.get_timezone(self.user_id, domain)
-        return timezone
+        return timezone.zone
 
     def get_language_code(self):
         return self.language
