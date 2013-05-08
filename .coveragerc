@@ -1,0 +1,6 @@
+[run]
+branch = True
+source = fluff
+
+[html]
+directory = coverage-report
