@@ -1685,7 +1685,9 @@ class DomainInvitation(Invitation):
         text_content = render_to_string("domain/email/domain_invite.txt", params)
         html_content = render_to_string("domain/email/domain_invite.html", params)
         subject = 'Invitation from %s to join CommCareHQ' % self.get_inviter().formatted_name
-        send_HTML_email(subject, self.email, html_content, text_content=text_content, cc=[self.get_inviter().get_email()])
+        send_HTML_email(subject, self.email, html_content, text_content=text_content,
+                        cc=[self.get_inviter().get_email()],
+                        email_from=settings.HQ_NOTIFICATIONS_EMAIL)
 
     @classmethod
     def by_domain(cls, domain, is_active=True):

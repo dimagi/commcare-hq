@@ -285,6 +285,9 @@ EMAIL_SMTP_PORT = 587
 BUG_REPORT_RECIPIENTS = ()
 EXCHANGE_NOTIFICATION_RECIPIENTS = []
 
+HQ_NOTIFICATIONS_EMAIL = 'commcarehq-noreply@dimagi.com'
+SUPPORT_EMAIL = "commcarehq-support@dimagi.com"
+
 PAGINATOR_OBJECTS_PER_PAGE = 15
 PAGINATOR_MAX_PAGE_LINKS = 5
 
@@ -314,7 +317,6 @@ XFORMS_PLAYER_URL = "http://localhost:4444/"  # touchform's setting
 
 ####### Couchlog config ######
 
-SUPPORT_EMAIL = "commcarehq-support@dimagi.com"
 COUCHLOG_BLUEPRINT_HOME = "%s%s" % (STATIC_URL, "hqwebapp/stylesheets/blueprint/")
 COUCHLOG_DATATABLES_LOC = "%s%s" % (
     STATIC_URL, "hqwebapp/js/lib/datatables-1.9/js/jquery.dataTables.min.js")
