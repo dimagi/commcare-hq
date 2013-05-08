@@ -153,9 +153,6 @@
                     <li class="edit-module-li {% ifequal module.id selected_module.id %}{% if not form %}
 +                       active{% endif %}{% endifequal %}"
                         data-index="{{ module.id }}">
-                        {% if edit %}
-                            <div class="index">{{ module.id }}</div>
-                        {% endif %}
                         <a href="{% url view_module domain app.id module.id %}?edit={{ edit|BOOL }}">
                             {% if edit %}
                                 <i class="drag_handle"></i>
