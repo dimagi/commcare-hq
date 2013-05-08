@@ -346,7 +346,6 @@ class SupplyPointProductCase(CommCareCase):
         return _get_single_index(self, const.PARENT_CASE_REF, const.SUPPLY_POINT_CASE_TYPE,
                                  wrapper=SupplyPointCase)
 
-    @memoized
     def get_supply_point_case_id(self):
         return _get_single_index(self, const.PARENT_CASE_REF, const.SUPPLY_POINT_CASE_TYPE)
 
@@ -402,7 +401,6 @@ class RequisitionCase(CommCareCase):
                                  const.SUPPLY_POINT_PRODUCT_CASE_TYPE,
                                  wrapper=SupplyPointProductCase)
 
-    @memoized
     def get_product_case_id(self):
         return _get_single_index(self, const.PARENT_CASE_REF,
                                  const.SUPPLY_POINT_PRODUCT_CASE_TYPE)
