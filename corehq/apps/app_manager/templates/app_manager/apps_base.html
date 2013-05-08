@@ -1,4 +1,4 @@
-{% extends base_template %}
+{% extends 'hqwebapp/two_column.html' %}
 {% load xforms_extras %}
 {% load url_extras %}
 {% load hq_shared_tags %}
@@ -7,28 +7,19 @@
 
 {% block title %}{% trans "Applications" %}{% endblock %}
 
+{% block page-title %}
+    <ul class="breadcrumb">
+        <li>
+            <a href="{% url view_app domain app.id %}"><strong>{% trans "Applications" %}</strong></a> <span class="divider">&gt;</span>
+        </li>
+        {% block breadcrumbs %}
+        {% endblock %}
+    </ul>
+{% endblock %}
+
 {% block head %}{{ block.super }}
     <link rel="stylesheet" href="{% static 'hqstyle/css/legacy/app_manager.css' %}"/>
     {% include "imports/jqmodal.html" %}
-    <style>
-        .hq-oldstyle .nav-pills .active > a {
-            color: white;
-            background-color: #1557A2;
-        }
-        /* stupid hacks to make bootstrap btns not look bad */
-        .hq-oldstyle a.btn {
-            text-decoration: none;
-            color: black; /* i think this is the wrong color - maybe like #CCC or something is right? */
-        }
-        .hq-oldstyle a.btn-primary,
-        .hq-oldstyle a.btn-danger,
-        .hq-oldstyle a.btn-info {
-            color: white;
-        }
-        #release-manager-nav {
-            float: right;
-        }
-    </style>
 {% endblock %}
 
 {% block js %}{{ block.super }}
@@ -101,11 +92,12 @@
     </script>
 {% endblock %}
 
-{% block content %}
-    <input type="hidden" name="edit_mode" value="{% if edit %}true{% else %}false{% endif %}" />
-    <div id="main_container">
+{% block sidebar %}
+{% endblock %}
 
-        {% if app %}
+{% block main_column %}
+    <input type="hidden" name="edit_mode" value="{% if edit %}true{% else %}false{% endif %}" />
+    {% if app %}
         {% if error %}
         <div id="error">
             {% ifequal error 'app_exists' %}
@@ -113,28 +105,28 @@
             {% endifequal %}
         </div>
         {% endif %}
-        <div id="app-content">
-            {% block app-content %}
-            {% endblock %}
+
+        {% block app-content %}{% endblock %}
+
+    {% else %}
+        <div style="padding: 1em; text-align: center">
+            <p style="font-size: 1.5em">
+                Welcome to the CommCare Application Builder.
+                Before you begin, check out the
+                <a target="_blank" href="https://confluence.dimagi.com/display/commcarepublic/Beginner+Tutorial">Beginner Tutorial</a>.
+            </p>
+            <form action="{% url new_app domain %}">
+                <input type="hidden" name="type" value="Application">
+                <input type="hidden" name="application_version" value="2.0" />
+                {% if request.couch_user.can_edit_apps %}
+                <a href="#" class="submit">Create a blank app</a>
+                {% else %}
+                There are no applications at this time
+                {% endif %}
+                or <a href="{% url appstore %}">copy an existing app from CommCare Exchange</a>.
+            </form>
         </div>
-        {% else %}
-            <div style="padding: 1em; text-align: center">
-                <p style="font-size: 1.5em">
-                    Welcome to the CommCare Application Builder.
-                    Before you begin, check out the
-                    <a target="_blank" href="https://confluence.dimagi.com/display/commcarepublic/Beginner+Tutorial">Beginner Tutorial</a>.
-                </p>
-                <form action="{% url new_app domain %}">
-                    <input type="hidden" name="type" value="Application">
-                    <input type="hidden" name="application_version" value="2.0" />
-                    {% if request.couch_user.can_edit_apps %}
-                    <a href="#" class="submit">Create a blank app</a>
-                    {% else %}
-                    There are no applications at this time
-                    {% endif %}
-                    or <a href="{% url appstore %}">copy an existing app from CommCare Exchange</a>.
-                </form>
-            </div>
-        {% endif %}
-    </div>
+    {% endif %}
 {% endblock %}
+
+{% block column_style %}{% endblock %}
