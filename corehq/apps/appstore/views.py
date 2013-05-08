@@ -170,9 +170,11 @@ def generate_sortables_from_facets(results, params=None, mapping=None, prefix=''
                 'active': str(ft["term"]) in params.get(f_name, "")}
 
     sortable = []
-    for facet in results.get("facets", []):
-        disp_facet = mapping.get(facet, facet) # the user-facing name for this facet
-        sortable.append((disp_facet, [generate_facet_dict(disp_facet, ft) for ft in results["facets"][facet]["terms"]]))
+    res_facets = results.get("facets", [])
+    for facet in res_facets:
+        if res_facets[facet].has_key("terms"):
+            disp_facet = mapping.get(facet, facet) # the user-facing name for this facet
+            sortable.append((disp_facet, [generate_facet_dict(disp_facet, ft) for ft in res_facets[facet]["terms"]]))
 
     return sortable
 
@@ -254,9 +256,12 @@ def es_query(params=None, facets=None, terms=None, q=None, es_url=None, start_at
         return ff if ff["facet_filter"]["and"] else {}
 
     if facets:
-        q["facets"] = {}
+        q["facets"] = q.get("facets", {})
         for facet in facets:
             q["facets"][facet] = {"terms": {"field": facet, "size": 9999}}
+
+    if q.get('facets'):
+        for facet in q["facets"]:
             q["facets"][facet].update(facet_filter(facet))
 
     if not q['filter']['and']:
