@@ -436,10 +436,6 @@ a:hover {
   background-repeat: no-repeat;
   filter: progid:DXImageTransform.Microsoft.gradient(startColorstr='#f4f4f4', endColorstr='#ffffff', GradientType=0);
 }
-.row-fluid .hq-flush-content {
-  margin-left: 0.15%;
-  width: 84.95638296999999%;
-}
 .old-style {
   background-color: #ffffff;
   background-image: -moz-linear-gradient(top, #ffffff, #ffffff);
@@ -463,31 +459,36 @@ a:hover {
 .hq-content {
   padding-top: 8px;
 }
-.hq-content > form,
-.hq-content > div,
-.hq-content > p,
-.hq-content > h2,
-.hq-content > .row-fluid > form,
-.hq-content > .row-fluid > div,
-.hq-content > .row-fluid > p,
-.hq-content > .row-fluid > h2 {
+.hq-content:not(.hq-flush-content) > form,
+.hq-content:not(.hq-flush-content) > div,
+.hq-content:not(.hq-flush-content) > p,
+.hq-content:not(.hq-flush-content) > h2,
+.hq-content:not(.hq-flush-content) > .row-fluid > form,
+.hq-content:not(.hq-flush-content) > .row-fluid > div,
+.hq-content:not(.hq-flush-content) > .row-fluid > p,
+.hq-content:not(.hq-flush-content) > .row-fluid > h2,
+.hq-content:not(.hq-flush-content) > hr {
+  margin-right: 16px;
+}
+.hq-content:not(.hq-flush-content) > section {
   padding-right: 16px;
 }
-.hq-content > section {
-  padding-right: 16px;
-}
-.hq-content > .well {
+.hq-content:not(.hq-flush-content) > .well {
   padding-right: 8px;
   margin-right: 16px;
 }
-.hq-flush-content section > .well {
-  margin: 0 8px 8px 8px;
-}
-.hq-content .nav-tabs:first-child {
+.hq-content:not(.hq-flush-content) .nav-tabs:first-child {
   margin-top: 0;
 }
 .hq-flush-content {
   padding-top: 0;
+}
+.row-fluid .hq-flush-content {
+  margin-left: 0.15%;
+  width: 84.95638296999999%;
+}
+.hq-flush-content section > .well {
+  margin: 0 8px 8px 8px;
 }
 #report-content {
   clear: both;
