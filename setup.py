@@ -10,8 +10,8 @@ setup(
     author='Dimagi',
     author_email='information@dimagi.com',
     url='http://www.dimagi.com/',
-    packages=find_packages(exclude=['*.pyc']),
-    test_suite='fluff.tests',
+    packages=['fluff', 'tests'],
+    test_suite='tests',
     test_loader='unittest2:TestLoader',
     install_requires=[
         'couchdbkit',
