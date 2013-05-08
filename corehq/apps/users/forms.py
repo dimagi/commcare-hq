@@ -108,6 +108,10 @@ class UserForm(RoleForm):
         super(UserForm, self).__init__(*args, **kwargs)
         self.fields['language'].choices = language_choices
 
+class WebUserForm(UserForm):
+    email_opt_in = forms.BooleanField(required=False,
+                                      label="",
+                                      help_text=_("Join the mailing list to receive important announcements."))
 
 class Meta:
         app_label = 'users'
