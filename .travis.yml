@@ -9,7 +9,7 @@ install:
  - "bash -e .travis/misc-setup.sh"
  - "cp .travis/localsettings.py localsettings.py"
  - pip install coveralls
-script: python manage.py test_coverage --noinput
+script: coverage run manage.py test --noinput
 after_success:
  - coveralls
 services:

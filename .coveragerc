@@ -1,0 +1,6 @@
+[run]
+branch = True
+source = corehq
+
+[html]
+directory = coverage-report
