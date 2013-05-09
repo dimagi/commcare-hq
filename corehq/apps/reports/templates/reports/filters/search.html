@@ -21,7 +21,6 @@
 
 {% if search_help_title and search_help_content %}
 {% block filter_js %} {{ block.super }}
-{#<script type="text/javascript" src="{% static 'reports/ko/report_filter.unknown_forms_extension.js' %}"></script>#}
 <script type="text/javascript">
     $(function () {
         $('.hq-help').hqHelp();

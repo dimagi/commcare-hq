@@ -3,7 +3,7 @@
 {% load i18n %}
 {% block filter_content %}
 {% if unknown_available %}
-<div id="{{ css_id }}-unknown_control">
+<div class="{{ css_id }}-unknown_controls" data-bind="visible: show">
     <label class="radio">
         <input type="radio"
                data-bind="checked: is_unknown_shown, hideKnownForms: is_unknown_shown"
@@ -54,23 +54,35 @@
 <div id="{{ css_id }}-known_control">
     {{ block.super }}
 </div>
+
+{% if unknown_available or display_app_type %}
+<div id="{{ css_id }}-advanced-options">
+    <label class="checkbox">
+        <input type="checkbox" data-bind="checked: show" /> {% trans "Show Advanced Options" %}
+    </label>
+</div>
+{% endif %}
+
 {% if hide_fuzzy.show %}
-<div class="alert alert-info">
-    {% include 'reports/filters/partials/fuzzy_checkbox.html' %}
+<div class="alert alert-warning">
+    {% trans "This project looks like it has some submissions we don't recognize.  Don't worry this can usually be fixed." %}  
+    Please contact <a href="mailto:{{ support_email }}">CommCare Support</a>.
 </div>
 {% endif %}
 {% endblock %}
 
 {% block filter_js %} {{ block.super }}
-{% if unknown_available %}
-<script type="text/javascript" src="{% static 'reports/ko/report_filter.unknown_forms_extension.js' %}"></script>
+{% if unknown_available or display_app_type %}
+<script type="text/javascript" src="{% static 'reports/ko/report_filter.advanced_forms_options.js' %}"></script>
 <script type="text/javascript">
     $(function () {
-       $('#{{ css_id }}-unknown_control').unknownFormsExtension({
+       $('#{{ css_id }}-advanced-options').advanceFormsOptions({
            is_unknown_shown: {{ unknown.show|yesno:'true,false' }},
            selected_unknown_form: '{{ unknown.selected }}',
            all_unknown_forms: {{ unknown.options|JSON }},
            caption_text: '{{ unknown.default_text }}',
+           css_id: '{{ css_id }}',
+           css_class: '{{ css_id }}-unknown_controls'
        });
         $('.hq-help').hqHelp();
     });
