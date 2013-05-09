@@ -7,7 +7,7 @@ class CareBiharFluff(fluff.IndicatorDocument):
     document_class = CommCareCase
 
     domains = ('care-bihar',)
-    group_by = ('domain', 'owner_id')
+    group_by = ['domain', 'owner_id']
 
 
     # home visit
