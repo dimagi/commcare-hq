@@ -1,5 +1,7 @@
 {% load hqstyle_tags %}
 {% load field_tags %}
+{% load i18n %}
+
 <form class="form form-horizontal" name="user_details" method="post">
     <input type="hidden" name="form_type" value="basic-info" />
     {% bootstrap_form_errors form %}
@@ -14,7 +16,7 @@
         <script type="text/javascript">
             $(function() {
                 $('#id_language').combobox({
-                    placeholder: 'Select a language...'
+                    placeholder: "{% trans 'Select a language...' %}"
                 });
             });
         </script>
