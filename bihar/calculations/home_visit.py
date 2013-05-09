@@ -1,19 +1,14 @@
 import datetime
-from bihar.reports.indicators.calculations import get_forms
-from bihar.reports.indicators.filters import is_pregnant_mother, get_add, get_edd, A_MONTH
-from bihar.reports.indicators.home_visit import GRACE_PERIOD
-from bihar.reports.indicators.visits import visit_is, has_visit
+from bihar.calculations.types import DoneDueCalculator, TotalCalculator
+from bihar.calculations.utils.calculations import get_forms
+from bihar.calculations.utils.filters import is_pregnant_mother,\
+    get_add, get_edd, A_MONTH
+from bihar.calculations.utils.home_visit import GRACE_PERIOD
+from bihar.calculations.utils.visits import visit_is, has_visit
 import fluff
 
 
-class CaseCalculator(fluff.Calculator):
-
-    @fluff.filter_by
-    def case_open(self, case):
-        return not case.closed
-
-
-class BPCalculator(CaseCalculator):
+class BPCalculator(DoneDueCalculator):
 
     def __init__(self, days, n_visits, window=A_MONTH):
         self.days = days
@@ -29,11 +24,12 @@ class BPCalculator(CaseCalculator):
 
     @fluff.null_emitter
     def denominator(self, case):
-        if len(filter(lambda a: visit_is(a, 'bp'), case.actions)) >= self.n_visits:
+        n_visits = len(filter(lambda a: visit_is(a, 'bp'), case.actions))
+        if n_visits >= self.n_visits:
             yield None
 
 
-class VisitCalculator(CaseCalculator):
+class VisitCalculator(DoneDueCalculator):
 
     def __init__(self, schedule, visit_type, window=A_MONTH):
         self.schedule = schedule
@@ -45,7 +41,9 @@ class VisitCalculator(CaseCalculator):
 
     @fluff.date_emitter
     def numerator(self, case):
-        n_qualifying_visits = len(filter(lambda a: visit_is(a, self.visit_type), case.actions))
+        n_qualifying_visits = len(
+            filter(lambda a: visit_is(a, self.visit_type), case.actions)
+        )
         # I think originally this was
         # self.schedule[:n_qualifying_visits - 1]
         # but that seems wrong
@@ -59,7 +57,7 @@ class VisitCalculator(CaseCalculator):
             yield case.add + datetime.timedelta(days=days) + GRACE_PERIOD
 
 
-class DueNextMonth(CaseCalculator):
+class DueNextMonth(TotalCalculator):
     """Abstract"""
 
     window = 2 * A_MONTH
@@ -79,7 +77,7 @@ class UpcomingDeliveryList(DueNextMonth):
         return is_pregnant_mother(case) and not get_add(case)
 
 
-class RecentDeliveryList(CaseCalculator):
+class RecentDeliveryList(TotalCalculator):
 
     window = A_MONTH
 
@@ -91,7 +89,7 @@ class RecentDeliveryList(CaseCalculator):
         yield get_add(case)
 
 
-class RecentlyOpened(CaseCalculator):
+class RecentlyOpened(TotalCalculator):
     """Abstract"""
 
     window = A_MONTH
@@ -120,7 +118,7 @@ class NoIFAList(RecentlyOpened):
         return is_pregnant_mother(case) and ifa > 0
 
 
-class NoBPPrep(CaseCalculator):
+class NoBPPrep(TotalCalculator):
     """Abstract"""
     no_prep_rules = ()
 

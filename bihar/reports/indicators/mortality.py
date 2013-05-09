@@ -3,7 +3,7 @@ from bihar.reports.indicators.calculations import MemoizingCalculatorMixIn,\
     delivered_in_timeframe, get_forms,\
     SummaryValueMixIn
 from datetime import datetime, timedelta
-from bihar.reports.indicators.visits import visit_is
+from bihar.calculations.utils.visits import visit_is
 
 
 def _still_birth(case):

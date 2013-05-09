@@ -1,14 +1,14 @@
+from bihar.calculations.utils.home_visit import GRACE_PERIOD
 from bihar.reports.indicators.calculations import DoneDueMixIn,\
     IndicatorCalculator, MemoizingCalculatorMixIn, MotherPreDeliverySummaryMixIn,\
     MotherPostDeliveryMixIn, MotherPreDeliveryMixIn, MemoizingFilterCalculator,\
     MotherPostDeliverySummaryMixIn, get_forms
-from bihar.reports.indicators.visits import visit_is, has_visit
+from bihar.calculations.utils.visits import visit_is, has_visit
 import datetime as dt
 from bihar.reports.indicators.filters import get_edd, is_pregnant_mother,\
     get_add, A_MONTH, due_next_month, delivered_last_month,\
     pregnancy_registered_last_month
 
-GRACE_PERIOD = dt.timedelta(days=7)
 
 def _mother_due_in_window(case, days):
     get_visitduedate = lambda case: case.edd - dt.timedelta(days=days) + GRACE_PERIOD

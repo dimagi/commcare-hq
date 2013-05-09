@@ -1,5 +1,4 @@
 from couchdbkit.ext.django.schema import Document
-from bihar.reports.indicators.filters import A_MONTH
 from casexml.apps.case.models import CommCareCase
 from bihar.calculations import home_visit
 import fluff

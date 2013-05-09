@@ -22,12 +22,14 @@ from bihar.reports.indicators.mixins import IndicatorConfigMixIn
 ASHA_ROLE = ugettext_noop('ASHA')
 AWW_ROLE = ugettext_noop('AWW')
 
+
 def shared_bihar_context(report):
     return {
         'home':      MainNavReport.get_url(report.domain, render_as=report.render_next),
         'render_as': report.render_next
     }
-        
+
+
 class ConvenientBaseMixIn(object):
     # this is everything that's shared amongst the Bihar supervision reports
     # this class is an amalgamation of random behavior and is just 
@@ -56,6 +58,7 @@ class ConvenientBaseMixIn(object):
     @classmethod
     def show_in_navigation(cls, *args, **kwargs):
         return False
+
 
 def list_prompt(index, value):
     # e.g. 1. Reports
@@ -129,6 +132,7 @@ class GroupReferenceMixIn(object):
         return u"{title} - {group}".format(title=_(self.name),
                                            group=self.group_display)
 
+
 def team_member_context(report):
     """
     Gets context for adding a team members listing to a report.
@@ -145,7 +149,8 @@ class BiharSummaryReport(ConvenientBaseMixIn, SummaryTablularReport,
     base_template_mobile = "bihar/bihar_summary.html"
     report_template_path = "reports/async/summary_tabular.html"
     extra_context_providers = [shared_bihar_context, summary_context]
-            
+
+
 class BiharNavReport(BiharSummaryReport):
     # this is a bit of a bastardization of the summary report
     # but it is quite DRY
@@ -164,7 +169,8 @@ class BiharNavReport(BiharSummaryReport):
     @property
     def data(self):
         return [default_nav_link(self, i, report_cls) for i, report_cls in enumerate(self.reports)]
-        
+
+
 class MockEmptyReport(BiharSummaryReport):
     """
     A stub empty report
@@ -295,6 +301,7 @@ class DueListReport(MockEmptyReport):
     name = ugettext_noop("Due List")
     slug = "duelist"
 
+
 class ToolsNavReport(BiharSummaryReport):
     name = ugettext_noop("Tools Menu")
     slug = "tools"
@@ -316,6 +323,7 @@ class ToolsNavReport(BiharSummaryReport):
         return [_referral_link(0), 
                 default_nav_link(self, 1, EDDCalcReport),
                 default_nav_link(self, 2, BMICalcReport),]
+
 
 class ReferralListReport(GroupReferenceMixIn, MockEmptyReport):
     name = ugettext_noop("Referrals")
@@ -346,6 +354,7 @@ class ReferralListReport(GroupReferenceMixIn, MockEmptyReport):
             self._headers = [" "]
         return _data
 
+
 class InputReport(MockEmptyReport):
     name = ""
     slug = ""
@@ -365,6 +374,7 @@ class InputReport(MockEmptyReport):
 
     def calc(self, input):
         return [_("This calculation has not yet been implemented.")]
+
 
 class EDDCalcReport(InputReport):
     name = ugettext_noop("EDD Calculator")
@@ -423,6 +433,7 @@ class BMICalcReport(InputReport):
         else:
             return [_("You are underweight")]
 
+
 def default_nav_link(nav_report, i, report_cls):
     url = report_cls.get_url(nav_report.domain, 
                              render_as=nav_report.render_next)
@@ -432,8 +443,10 @@ def default_nav_link(nav_report, i, report_cls):
                         val=list_prompt(i, report_cls.name),
                         details=url)
 
+
 def get_awcc(group):
     return group.metadata.get("awc-code") or _('no awcc')
+
 
 def url_and_params(urlbase, params):
     assert "?" not in urlbase

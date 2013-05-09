@@ -1,12 +1,13 @@
 from couchdbkit import ResourceNotFound
-from bihar.reports.indicators.filters import is_pregnant_mother, is_newborn_child, get_add, get_edd,\
-    mother_pre_delivery_columns, mother_post_delivery_columns
+from bihar.calculations.utils.filters import is_pregnant_mother, is_newborn_child, get_add, get_edd
+from bihar.reports.indicators.filters import mother_pre_delivery_columns, mother_post_delivery_columns
 from dimagi.utils.parsing import string_to_datetime
 import datetime as dt
 from bihar.reports.indicators.visits import get_related_prop
 from dimagi.utils.decorators.memoized import memoized
 from django.utils.translation import ugettext_noop
 from django.utils.translation import ugettext as _
+from bihar.calculations.utils.calculations import get_forms, _get_actions
 
 EMPTY = (0,0)
 
@@ -195,16 +196,6 @@ def _visited_in_timeframe_of_birth(case, days):
     if visit_time and time_birth:
         return time_birth < visit_time < time_birth + dt.timedelta(days=days)
     return False
-
-def _get_actions(case, action_filter=lambda a: True):
-    for action in case.actions:
-        if action_filter(action):
-            yield action
-
-def get_forms(case, action_filter=lambda a: True, form_filter=lambda f: True):
-    for action in _get_actions(case, action_filter=action_filter):
-        if getattr(action, 'xform', None) and form_filter(action.xform):
-            yield action.xform
 
 def _get_action(case, action_filter=lambda a: True):
     """

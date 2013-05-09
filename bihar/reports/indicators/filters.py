@@ -1,18 +1,13 @@
-from datetime import datetime, timedelta, date
+from datetime import datetime, timedelta
+from bihar.calculations.utils.filters import is_pregnant_mother, A_MONTH, \
+    get_edd, get_add
 from bihar.reports.indicators.reports import DEFAULT_EMPTY
 
 # for now we do in-memory filtering, but should consider the implications
 # before diving too far down that road.
 # hopefully these can one day be replaced by elastic search or equivalent.
 
-A_MONTH = timedelta(days=30)
 
-def is_pregnant_mother(case):
-    return case.type == "cc_bihar_pregnancy"
-
-def is_newborn_child(case):
-    return case.type == "cc_bihar_newborn"
- 
 def created_last_month(case):
     return case.opened_on > datetime.today() - A_MONTH
     
@@ -74,15 +69,3 @@ def mother_pre_delivery_columns(case):
 def mother_post_delivery_columns(case):
     return (case.name, getattr(case, "husband_name", DEFAULT_EMPTY),
             format_date(getattr(case, "add", DEFAULT_EMPTY)))
-
-def get_date_attr(case, attr):
-    value = getattr(case, attr, None)
-    if not isinstance(value, datetime) and not isinstance(value, date):
-        value = None
-    return value
-
-def get_edd(case):
-    return get_date_attr(case, 'edd')
-
-def get_add(case):
-    return get_date_attr(case, 'add')
