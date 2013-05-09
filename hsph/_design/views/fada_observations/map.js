@@ -84,7 +84,7 @@ function (doc) {
     data.site_id = form.site_id;
     data.user_id = form.meta.userID;
 
-    emit(["user", form.meta.userID, form.process_date_admission, form.process_sbr_no], data);
-    emit(["site", form.site_id, form.process_date_admission, form.process_sbr_no], data);
+    emit([doc.domain, "user", form.meta.userID, form.process_date_admission, form.process_sbr_no], data);
+    emit([doc.domain, "site", form.site_id, form.process_date_admission, form.process_sbr_no], data);
 
 }

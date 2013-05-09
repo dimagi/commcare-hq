@@ -15,10 +15,10 @@ function(doc) {
             data.followUpTime = followUpTime;
         }
         if (submissionDay) {
-            emit(["submission_day"].concat(key), submissionDay);
+            emit([doc.domain, "submission_day"].concat(key), submissionDay);
         }
 
-        emit(key, data); 
+        emit([doc.domain].concat(key), data); 
         return;
     }
 
@@ -72,5 +72,5 @@ function(doc) {
     data.catiTimedOut = (doc.date_admission && 
         (!(doc.closed_on) || admissionDatePlus21 < lastFollowUpTime));
 
-    emit([doc.user_id, doc.date_admission], data);
+    emit([doc.domain, doc.user_id, doc.date_admission], data);
 }

@@ -98,8 +98,8 @@ class PrimaryOutcomeReport(GenericTabularReport, DataSummaryReport, HSPHSiteData
 
         for key in site_keys:
             data = get_db().view('hsph/data_summary', 
-                startkey=prefix + ['region'] + key + [startdate], 
-                endkey=prefix + ['region'] + key + [enddate],
+                startkey=[self.domain] + prefix + ['region'] + key + [startdate], 
+                endkey=[self.domain] + prefix + ['region'] + key + [enddate],
                 reduce=True,
                 wrapper=lambda r: r['value'])
 
@@ -159,8 +159,8 @@ class SecondaryOutcomeReport(DataSummaryReport, HSPHSiteDataMixin):
         for site_id in site_ids:
             result = db.view('hsph/data_summary',
                 reduce=True,
-                startkey=["site", site_id, startdate],
-                endkey=["site", site_id, enddate],
+                startkey=[self.domain, "site", site_id, startdate],
+                endkey=[self.domain, "site", site_id, enddate],
                 wrapper=lambda r: r['value']
             ).first()
 
@@ -169,7 +169,7 @@ class SecondaryOutcomeReport(DataSummaryReport, HSPHSiteDataMixin):
                     data[field] += value
 
         data.update(FADAObservationsReport.get_values(
-                    (startdate, enddate), site_ids=site_ids))
+                self.domain, (startdate, enddate), site_ids=site_ids))
 
         for k, calc in extra_fields.items():
             data[k] = calc(data)
@@ -189,7 +189,7 @@ class FADAObservationsReport(DataSummaryReport, HSPHSiteDataMixin):
     flush_layout = True
 
     @classmethod
-    def get_values(cls, daterange, site_ids=None, user_ids=None):
+    def get_values(cls, domain, daterange, site_ids=None, user_ids=None):
         """
         Gets reduced results per unique process_sbr_no for each key and sums
         them together, adding percentage occurences out of total_forms for all
@@ -255,9 +255,9 @@ class FADAObservationsReport(DataSummaryReport, HSPHSiteDataMixin):
         for startkey, endkey in keys:
             results = db.view("hsph/fada_observations",
                 reduce=True,
-                group_level=4,
-                startkey=startkey,
-                endkey=endkey,
+                group_level=5,
+                startkey=[domain] + startkey,
+                endkey=[domain] + endkey,
                 wrapper=lambda r: r['value'])
 
             all_results.extend(results)
@@ -297,9 +297,9 @@ class FADAObservationsReport(DataSummaryReport, HSPHSiteDataMixin):
         
         return {
             'ihf': self.get_values(
-                    (startdate, enddate), site_ids=facilities['ihf'],
+                    self.domain, (startdate, enddate), site_ids=facilities['ihf'],
                     user_ids=user_ids),
             'chf': self.get_values(
-                    (startdate, enddate), site_ids=facilities['chf'],
+                    self.domain, (startdate, enddate), site_ids=facilities['chf'],
                     user_ids=user_ids)
         }

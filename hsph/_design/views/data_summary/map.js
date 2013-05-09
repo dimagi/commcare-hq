@@ -1,7 +1,7 @@
 function(doc) {
     //!code util/hsph.js
     
-    if (!((isHSPHBirthCase(doc) && doc.last_status !== "lost_to_follow_up") || 
+    if (!((isNewHSPHBirthCase(doc) && doc.last_status !== "lost_to_follow_up") || 
           (isHSPHBirthRegForm(doc) && doc.form.create_case === "no")))
     {
         return;
@@ -64,11 +64,11 @@ function(doc) {
     var key1 = ["region", doc.region_id, doc.district_id, doc.site_number, doc.date_admission];
     var key2 = ["site", doc.site_id, doc.date_admission];
 
-    emit(key1, data);
-    emit(key2, data);
+    emit([doc.domain].concat(key1), data);
+    emit([doc.domain].concat(key2), data);
 
     if (data.referredInBirths) {
-        emit(["referred_in"].concat(key1), data);
-        emit(["referred_in"].concat(key2), data);
+        emit([doc.domain, "referred_in"].concat(key1), data);
+        emit([doc.domain, "referred_in"].concat(key2), data);
     }
 }

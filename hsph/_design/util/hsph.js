@@ -28,19 +28,30 @@ function isHSPHBirthCase(doc) {
 }
 
 // new apps
+
+function isNewHSPHForm(doc) {
+    return (doc.doc_type === 'XFormInstance' &&
+            (doc.domain === 'hsph-dev' || doc.domain === 'hsph-betterbirth-pilot-2'));
+}
+
+function isNewHSPHBirthCase(doc) {
+    return (doc.doc_type === 'XFormInstance' &&
+            (doc.domain === 'hsph-dev' || doc.domain === 'hsph-betterbirth-pilot-2'));
+}
+
 function isHSPHBirthRegForm(doc) {
-    return (isHSPHForm(doc) &&
+    return (isNewHSPHForm(doc) &&
            doc.xmlns === "http://openrosa.org/formdesigner/FE77C4BD-38EE-499B-AC5E-D7279C83BDB5");
 }
 
 function isFADAProcessDataForm(doc) {
-    return (isHSPHForm(doc) &&  
+    return (isNewHSPHForm(doc) &&  
             doc.xmlns === "http://openrosa.org/formdesigner/CAE82D95-8F39-45AF-9A22-0E5D15EF148B");
 }
 
 function isCATIFollowUpForm(doc) {
     // same as old "DCCFollowUpReport"
-    return (isHSPHForm(doc) &&
+    return (isNewHSPHForm(doc) &&
             doc.xmlns === "http://openrosa.org/formdesigner/A5B08D8F-139D-46C6-9FDF-B1AD176EAE1F");
 }
 
