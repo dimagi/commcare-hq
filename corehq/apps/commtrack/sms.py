@@ -13,7 +13,6 @@ from datetime import datetime
 from helpers import make_supply_point_product
 from corehq.apps.commtrack.util import get_supply_point
 from corehq.apps.commtrack.models import Product, CommtrackConfig
-import settings
 
 logger = logging.getLogger('commtrack.sms')
 
@@ -57,12 +56,6 @@ class StockReportParser(object):
         """take in a text and return the parsed stock transactions"""
         args = text.split()
 
-        def tx_factory(location, baseclass):
-            """build the product->subcase mapping once and return a closure"""
-            product_subcase_mapping = product_subcases(location)
-            product_caseid = lambda product_id: product_subcase_mapping[product_id]
-            return lambda **kwargs: baseclass(get_caseid=product_caseid, **kwargs)
-
         # single action stock report
         if args[0] in self.C.stock_keywords():
             # TODO: support single-action by product, as well as by action?
@@ -74,7 +67,7 @@ class StockReportParser(object):
                 location = self.location_from_code(args[0])
                 args = args[1:]
         
-            _tx = self.single_action_transactions(action, args, tx_factory(location, stockreport.StockTransaction))
+            _tx = self.single_action_transactions(action, args, transaction_factory(location, stockreport.StockTransaction))
 
         # requisition
         elif args[0] in self.C.requisition_keywords():
@@ -91,7 +84,7 @@ class StockReportParser(object):
             if action.action_type in [RequisitionActions.APPROVAL, RequisitionActions.FILL]:
                 _tx = self.requisition_bulk_action(action, location, args)
             else:
-                _tx = self.single_action_transactions(action, args, tx_factory(location, stockreport.Requisition))
+                _tx = self.single_action_transactions(action, args, transaction_factory(location, stockreport.Requisition))
 
         # multiple action stock report
         elif self.C.multiaction_enabled and (self.C.multiaction_keyword is None or args[0] == self.C.multiaction_keyword.lower()):
@@ -102,7 +95,7 @@ class StockReportParser(object):
                 location = self.location_from_code(args[0])
                 args = args[1:]
 
-            _tx = self.multiple_action_transactions(args, tx_factory(location, stockreport.StockTransaction))
+            _tx = self.multiple_action_transactions(args, transaction_factory(location, stockreport.StockTransaction))
 
         else:
             # initial keyword not recognized; delegate to another handler
@@ -125,7 +118,13 @@ class StockReportParser(object):
         if action.action_type == 'stockout':
             if all(looks_like_prod_code(arg) for arg in args):
                 for prod_code in args:
-                    yield make_tx(product=self.product_from_code(prod_code), action_name=action.name, value=0)
+                    yield make_tx(
+                        domain=self.domain,
+                        product=self.product_from_code(prod_code),
+                        action_name=action.name,
+                        value=0,
+                    )
+
                 return
             else:
                 raise RuntimeError("can't include a quantity for stock-out action")
@@ -148,7 +147,7 @@ class StockReportParser(object):
                     raise RuntimeError('could not understand product quantity "%s"' % arg)
 
                 for p in products:
-                    yield make_tx(product=p, action_name=action.name, value=value)
+                    yield make_tx(domain=self.domain, product=p, action_name=action.name, value=value)
                 products = []
         if products:
             raise RuntimeError('missing quantity for product "%s"' % products[-1].code)
@@ -213,10 +212,10 @@ class StockReportParser(object):
             raise RuntimeError('extra arguments at end')
 
         yield stockreport.BulkRequisitionResponse(
-            domain=location.domain,
+            domain=self.domain,
             action_type=action.action_type,
             action_name=action.action_name,
-            location_id=location.location_[-1]
+            location_id=location.location_[-1],
         )
 
     def location_from_code(self, loc_code):
@@ -271,6 +270,14 @@ def product_subcases(supply_point):
             return val
 
     return DefaultDict(create_product_subcase, product_subcase_mapping)
+
+def transaction_factory(location, baseclass):
+    """build the product->subcase mapping once and return a closure"""
+    product_subcase_mapping = product_subcases(location)
+    product_caseid = lambda product_id: product_subcase_mapping[product_id]
+    return lambda **kwargs: baseclass(get_caseid=product_caseid,
+                                      location=location,
+                                      **kwargs)
 
 def to_instance(data):
     """convert the parsed sms stock report into an instance like what would be

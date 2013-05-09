@@ -17,12 +17,14 @@ def activate_new_user(form, is_domain_admin=True, domain=None, ip=None):
     username = form.cleaned_data['email']
     password = form.cleaned_data['password']
     full_name = form.cleaned_data['full_name']
+    email_opt_in = form.cleaned_data['email_opt_in']
     now = datetime.utcnow()
 
     new_user = WebUser.create(domain, username, password, is_admin=is_domain_admin)
     new_user.first_name = full_name[0]
     new_user.last_name = full_name[1]
     new_user.email = username
+    new_user.email_opt_in = email_opt_in
 
     new_user.eula.signed = True
     new_user.eula.date = now
@@ -142,8 +144,8 @@ The CommCareHQ Team
     subject = 'Welcome to CommCare HQ!'.format(**locals())
 
     try:
-        send_HTML_email(subject, recipient, message_html,
-                        text_content=message_plaintext)
+        send_HTML_email(subject, recipient, message_html, text_content=message_plaintext,
+                        email_from=settings.HQ_NOTIFICATIONS_EMAIL)
     except Exception:
         logging.warning("Can't send email, but the message was:\n%s" % message_plaintext)
 
@@ -196,7 +198,7 @@ The CommCareHQ Team
 
     try:
         send_HTML_email(subject, requesting_user.email, message_html,
-                        text_content=message_plaintext)
+                        text_content=message_plaintext, email_from=settings.HQ_NOTIFICATIONS_EMAIL)
     except Exception:
         logging.warning("Can't send email, but the message was:\n%s" % message_plaintext)
 
@@ -221,6 +223,6 @@ You can view the project here: %s""" % (
         get_url_base() + "/a/%s/" % domain_name)
     try:
         recipients = settings.NEW_DOMAIN_RECIPIENTS
-        send_mail("New Project: %s" % domain_name, message, settings.EMAIL_HOST_USER, recipients)
+        send_mail("New Project: %s" % domain_name, message, settings.HQ_NOTIFICATIONS_EMAIL, recipients)
     except Exception:
         logging.warning("Can't send email, but the message was:\n%s" % message)

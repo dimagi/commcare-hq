@@ -23,6 +23,8 @@ except IndexError:
 ADMINS = ()
 MANAGERS = ADMINS
 
+# Default reporting database should be overridden in localsettings.
+SQL_REPORTING_DATABASE_URL = "sqlite:////tmp/commcare_reporting_test.db"
 
 # default to the system's timezone settings
 TIME_ZONE = "UTC"
@@ -205,6 +207,8 @@ HQ_APPS = (
     'corehq.apps.api',
     'corehq.apps.indicators',
     'corehq.couchapps',
+    'fluff',
+    'fluff.fluff_filter',
     'sofabed.forms',
     'soil',
     'corehq.apps.hqsofabed',
@@ -283,6 +287,9 @@ EMAIL_SMTP_PORT = 587
 BUG_REPORT_RECIPIENTS = ()
 EXCHANGE_NOTIFICATION_RECIPIENTS = []
 
+HQ_NOTIFICATIONS_EMAIL = 'commcarehq-noreply@dimagi.com'
+SUPPORT_EMAIL = "commcarehq-support@dimagi.com"
+
 PAGINATOR_OBJECTS_PER_PAGE = 15
 PAGINATOR_MAX_PAGE_LINKS = 5
 
@@ -312,7 +319,6 @@ XFORMS_PLAYER_URL = "http://localhost:4444/"  # touchform's setting
 
 ####### Couchlog config ######
 
-SUPPORT_EMAIL = "commcarehq-support@dimagi.com"
 COUCHLOG_BLUEPRINT_HOME = "%s%s" % (STATIC_URL, "hqwebapp/stylesheets/blueprint/")
 COUCHLOG_DATATABLES_LOC = "%s%s" % (
     STATIC_URL, "hqwebapp/js/lib/datatables-1.9/js/jquery.dataTables.min.js")
@@ -411,10 +417,19 @@ LOGGING = {
             'format': '%(levelname)s %(asctime)s %(module)s %(process)d %(thread)d %(message)s'
         },
         'simple': {
-            'format': '%(levelname)s %(message)s'
+            'format': '%(asctime)s %(levelname)s %(message)s'
+        },
+
+        'pillowtop': {
+            'format': '%(asctime)s %(levelname)s %(module)s %(message)s'
         },
     },
     'handlers': {
+        'pillowtop': {
+            'level': 'INFO',
+            'class': 'logging.StreamHandler',
+            'formatter': 'pillowtop'
+        },
         'console': {
             'level': 'INFO',
             'class': 'logging.StreamHandler',
@@ -455,6 +470,11 @@ LOGGING = {
             'handlers': ['console', 'file', 'couchlog'],
             'level': 'INFO',
             'propagate': True
+        },
+        'pillowtop': {
+            'handlers': ['pillowtop'],
+            'level': 'ERROR',
+            'propagate': False,
         }
     }
 }
@@ -535,6 +555,7 @@ COUCHDB_APPS = [
     'hqadmin',
     'domain',
     'facilities',
+    'fluff_filter',
     'forms',
     'fixtures',
     'groups',
@@ -562,7 +583,6 @@ COUCHDB_APPS = [
     'couchlog',
 
     # custom reports
-    'bihar',
     'dca',
     'hsph',
     'mvp',
@@ -573,6 +593,11 @@ COUCHDB_APPS = [
 ]
 
 COUCHDB_DATABASES = [make_couchdb_tuple(app_label, COUCH_DATABASE) for app_label in COUCHDB_APPS]
+
+COUCHDB_DATABASES += [
+    ('bihar', COUCH_DATABASE + '__fluff-bihar'),
+    ('fluff', COUCH_DATABASE + '__fluff-bihar'),
+]
 
 INSTALLED_APPS += LOCAL_APPS
 
@@ -654,13 +679,16 @@ PILLOWTOPS = [
                  'corehq.pillows.fullxform.FullXFormPillow',
                  'corehq.pillows.domain.DomainPillow',
                  'corehq.pillows.exchange.ExchangePillow',
+
+                 # fluff
+                 'bihar.models.CareBiharFluffPillow',
              ] + LOCAL_PILLOWTOPS
 
 #Custom workflow for indexing xform data beyond the standard properties
 XFORM_PILLOW_HANDLERS = ['pact.pillowhandler.PactHandler', ]
 
 #Custom fully indexed domains for FullCase index/pillowtop
-ES_CASE_FULL_INDEX_DOMAINS = ['pact', 'hsph']
+ES_CASE_FULL_INDEX_DOMAINS = ['pact', 'hsph', 'care-bihar']
 
 REMOTE_APP_NAMESPACE = "%(domain)s.commcarehq.org"
 

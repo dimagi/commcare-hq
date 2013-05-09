@@ -10,14 +10,14 @@ class LocationResource(JsonResource):
     location_type = fields.CharField(attribute='location_type', readonly=True)
     name = fields.CharField(attribute='name', readonly=True, unique=True)
 
-    def obj_get(self, request, **kwargs):
+    def obj_get(self, bundle, **kwargs):
         domain = kwargs['domain']
         location_id = kwargs['pk']
         return get_object_or_not_exist(Location, location_id, domain)
 
-    def obj_get_list(self, request, **kwargs):
+    def obj_get_list(self, bundle, **kwargs):
         domain = kwargs['domain']
-        parent_id = request.GET.get("parent_id", None)
+        parent_id = bundle.request.GET.get("parent_id", None)
         if parent_id:
             parent = get_object_or_not_exist(Location, parent_id, domain)
             return parent.children
@@ -25,5 +25,6 @@ class LocationResource(JsonResource):
         return root_locations(domain)
 
     class Meta(CustomResourceMeta):
+        object_class = Location    
         resource_name = 'location'
         limit = 0

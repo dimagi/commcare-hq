@@ -1,6 +1,6 @@
 from django.conf.urls.defaults import *
-from corehq.apps.domain.decorators import login_and_domain_required as protect
-from corehq.apps.reports.dispatcher import ReportDispatcher, ProjectReportDispatcher, CustomProjectReportDispatcher, BasicReportDispatcher, AdminReportDispatcher
+from corehq.apps.reports.dispatcher import (ProjectReportDispatcher, 
+        CustomProjectReportDispatcher, BasicReportDispatcher)
 
 dodoma_reports = patterns('corehq.apps.reports.dodoma',
     url('^household_verification_json$', 'household_verification_json'),
@@ -34,7 +34,8 @@ phonelog_reports = patterns('',
 
 urlpatterns = patterns('corehq.apps.reports.views',
     url(r'^$', "default", name="reports_home"),
-    url(r'^saved_reports', "saved_reports", name="saved_reports"),
+    url(r'^saved/', "saved_reports", name="saved_reports"),
+    url(r'^saved_reports', 'old_saved_reports'),
 
     url(r'^case_data/(?P<case_id>[\w\-]+)/(?P<xform_id>[\w\-:]+)/$', 'case_form_data', name="case_form_data"),
     url(r'^case_data/(?P<case_id>[\w\-]+)/$', 'case_details', name="case_details"),
@@ -69,6 +70,8 @@ urlpatterns = patterns('corehq.apps.reports.views',
 
     # once off email
     url(r"^email_onceoff/(?P<report_slug>[\w_]+)/$", 'email_report'),
+    url(r"^custom/email_onceoff/(?P<report_slug>[\w_]+)/$", 'email_report',
+        kwargs=dict(report_type=CustomProjectReportDispatcher.prefix)),
 
     # Saved reports
     url(r"^configs$", 'add_config', name='add_report_config'),

@@ -1,5 +1,6 @@
 from couchdbkit.ext.django.schema import *
 from corehq.apps.commtrack import const
+from corehq.apps.users.models import CommCareUser
 from dimagi.utils.couch.loosechange import map_reduce
 from couchforms.models import XFormInstance
 from dimagi.utils import parsing as dateparse
@@ -124,7 +125,20 @@ class CommtrackRequisitionConfig(DocumentSchema):
 
     # requisitions have their own sets of actions
     actions = SchemaListProperty(CommtrackActionConfig)
-    
+
+    def get_sorted_actions(self):
+        def _action_key(a):
+
+            # intentionally fails hard if misconfigured.
+            const.ORDERED_REQUISITION_ACTIONS.index(a.action_type)
+
+        return sorted(self.actions, key=_action_key)
+
+    def get_next_action(self, previous_action_type):
+        sorted_actions = self.get_sorted_actions()
+        sorted_types = [a.action_type for a in sorted_actions]
+        next_index = sorted_types.index(previous_action_type) + 1
+        return sorted_actions[next_index] if next_index < len(sorted_actions) else None
 
 
 class SupplyPointType(DocumentSchema):
@@ -291,14 +305,29 @@ class StockTransaction(DocumentSchema):
 
 
 
-def _get_single_index(case, identifier, type):
+def _get_single_index(case, identifier, type, wrapper=None):
     matching = filter(lambda i: i.identifier == identifier, case.indices)
     if matching:
         assert len(matching) == 1, 'should only be one parent index'
         assert matching[0].referenced_type == type, \
              ' parent had bad case type %s' % matching[0].referenced_type
-        return CommCareCase.get(matching[0].referenced_id)
+        ref_id = matching[0].referenced_id
+        return wrapper.get(ref_id) if wrapper else ref_id
     return None
+
+
+class SupplyPointCase(CommCareCase):
+    """
+    A wrapper around CommCareCases to get more built in functionality
+    specific to supply points.
+    """
+
+    def open_requisitions(self):
+        return RequisitionCase.open_for_location(self.domain, self.location_[-1])
+
+    class Meta:
+        app_label = "commtrack" # This is necessary otherwise syncdb will confuse this app with casexml
+
 
 class SupplyPointProductCase(CommCareCase):
     """
@@ -314,6 +343,10 @@ class SupplyPointProductCase(CommCareCase):
 
     @memoized
     def get_supply_point_case(self):
+        return _get_single_index(self, const.PARENT_CASE_REF, const.SUPPLY_POINT_CASE_TYPE,
+                                 wrapper=SupplyPointCase)
+
+    def get_supply_point_case_id(self):
         return _get_single_index(self, const.PARENT_CASE_REF, const.SUPPLY_POINT_CASE_TYPE)
 
     class Meta:
@@ -359,9 +392,23 @@ class RequisitionCase(CommCareCase):
         return None
 
     @memoized
+    def get_product(self):
+        return Product.get(self.product_id)
+
+    @memoized
     def get_product_case(self):
-        uncasted = _get_single_index(self, const.PARENT_CASE_REF, const.SUPPLY_POINT_PRODUCT_CASE_TYPE)
-        return SupplyPointProductCase.wrap(uncasted._doc) if uncasted else None
+        return _get_single_index(self, const.PARENT_CASE_REF,
+                                 const.SUPPLY_POINT_PRODUCT_CASE_TYPE,
+                                 wrapper=SupplyPointProductCase)
+
+    def get_product_case_id(self):
+        return _get_single_index(self, const.PARENT_CASE_REF,
+                                 const.SUPPLY_POINT_PRODUCT_CASE_TYPE)
+
+    @memoized
+    def get_requester(self):
+        return CommCareUser.get(self.requested_by)
+
 
     def get_default_value(self):
         """get how much the default is. this is dependent on state."""
@@ -369,9 +416,17 @@ class RequisitionCase(CommCareCase):
             RequisitionStatus.REQUESTED: 'amount_requested',
             RequisitionStatus.APPROVED: 'amount_approved',
             RequisitionStatus.FILLED: 'amount_filled',
-
         }
         return getattr(self, property_map.get(self.requisition_status, 'amount_requested'))
+
+    def sms_format(self):
+        return '%s:%s' % (self.get_product().code, self.get_default_value())
+
+    def get_next_action(self):
+        req_config = CommtrackConfig.for_domain(self.domain).requisition_config
+        return req_config.get_next_action(
+            RequisitionStatus.to_action_type(self.requisition_status)
+        )
 
     @classmethod
     def open_for_location(cls, domain, location_id):
@@ -379,12 +434,27 @@ class RequisitionCase(CommCareCase):
         For a given location, return the IDs of all open requisitions at that location.
         """
         results = cls.get_db().view('commtrack/requisitions',
-            startkey=[domain, location_id, 'open'],
-            endkey=[domain, location_id, 'open', {}],
+            endkey=[domain, location_id, 'open'],
+            startkey=[domain, location_id, 'open', {}],
             reduce=False,
+            descending=True,
         )
         return [r['id'] for r in results]
 
+
+    @classmethod
+    def open_for_product_case(cls, domain, location, product_case_id):
+        """
+        For a given product case, return the IDs of all open requisitions at that location.
+        """
+        startkey = [domain, location, 'open', product_case_id]
+        results = cls.get_db().view('commtrack/requisitions',
+            endkey=startkey, # yes this is confusing, but i blame couch's descending=true rules
+            startkey=startkey + [{}],
+            descending=True,
+            reduce=False,
+        )
+        return [r['id'] for r in results]
 
     class Meta:
         app_label = "commtrack" # This is necessary otherwise syncdb will confuse this app with casexml

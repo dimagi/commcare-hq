@@ -27,6 +27,9 @@ from fabric import utils
 import posixpath
 from collections import defaultdict
 
+if env.ssh_config_path and os.path.isfile(os.path.expanduser(env.ssh_config_path)):
+    env.use_ssh_config = True
+
 PROJECT_ROOT = os.path.dirname(__file__)
 RSYNC_EXCLUDE = (
     '.DS_Store',
@@ -37,7 +40,11 @@ RSYNC_EXCLUDE = (
     )
 env.project = 'commcare-hq'
 env.code_repo = 'git://github.com/dimagi/commcare-hq.git'
-env.code_branch = 'master'
+
+if not hasattr(env, 'code_branch'):
+    print "WARNING: code_branch not specified, using 'master'. You can set it with '--set code_branch=<branch>'"
+    env.code_branch = 'master'
+
 env.home = "/home/cchq"
 env.selenium_url = 'http://jenkins.dimagi.com/job/commcare-hq-post-deploy/buildWithParameters?token=%(token)s&TARGET=%(environment)s'
 
@@ -185,11 +192,12 @@ def production():
 
     _setup_path()
 
+
 @task
 def realstaging():
     """ Use production data in a safe staging environment on remote host"""
-    if not hasattr(env, 'code_branch'):
-        print "You must specify a code branch with --set code_branch=<branch>"
+    if not hasattr(env, 'code_branch') or env.code_branch == 'master':
+        print "You must specify a code branch (not 'master') with --set code_branch=<branch>"
         sys.exit()
 
     env.sudo_user = 'cchq'
@@ -324,7 +332,7 @@ def bootstrap():
     require('root', provided_by=('staging', 'production'))
     sudo('mkdir -p %(root)s' % env, shell=False, user=env.sudo_user)
     execute(clone_repo)
-    
+
     # copy localsettings if it doesn't already exist in case any management
     # commands we want to run now would error otherwise
     with cd(env.code_root):
@@ -345,7 +353,7 @@ def unbootstrap():
 
     require('code_root', 'code_root_preindex', 'virtualenv_root',
             'virtualenv_root_preindex')
-    
+
     with settings(warn_only=True):
         sudo(('rm -rf %(virtualenv_root)s %(virtualenv_root_preindex)s'
               '%(code_root)s %(code_root_preindex)s') % env, user=env.sudo_user)
@@ -355,9 +363,9 @@ def unbootstrap():
 @roles('django_celery', 'django_app', 'staticfiles', 'django_monolith') #'django_public','formsplayer'
 def create_virtualenvs():
     """ setup virtualenv on remote host """
-    require('virtualenv_root', 'virtualenv_root_preindex', 
+    require('virtualenv_root', 'virtualenv_root_preindex',
             provided_by=('staging', 'production', 'india'))
-    
+
     args = '--distribute --no-site-packages'
     sudo('cd && virtualenv %s %s' % (args, env.virtualenv_root), user=env.sudo_user, shell=True)
     sudo('cd && virtualenv %s %s' % (args, env.virtualenv_root_preindex), user=env.sudo_user, shell=True)
@@ -372,7 +380,7 @@ def clone_repo():
             exists_results = sudo('ls -d %(code_root)s' % env, user=env.sudo_user)
             if exists_results.strip() != env['code_root']:
                 sudo('git clone %(code_repo)s %(code_root)s' % env, user=env.sudo_user)
-            
+
             if not files.exists(env.code_root_preindex):
                 sudo('git clone %(code_repo)s %(code_root_preindex)s' % env, user=env.sudo_user)
 
@@ -401,7 +409,7 @@ def update_code(preindex=False):
         sudo('git fetch', user=env.sudo_user)
         sudo("git submodule foreach 'git fetch'", user=env.sudo_user)
         sudo('git checkout %(code_branch)s' % env, user=env.sudo_user)
-        sudo('git pull', user=env.sudo_user)
+        sudo('git reset --hard origin/%(code_branch)s' % env, user=env.sudo_user)
         sudo('git submodule sync', user=env.sudo_user)
         sudo('git submodule update --init --recursive', user=env.sudo_user)
         # remove all .pyc files in the project
@@ -490,7 +498,7 @@ def touch_supervisor():
     """
     touch supervisor conf files to trigger reload. Also calls supervisorctl
     update to load latest supervisor.conf
-    
+
     """
     require('code_root', provided_by=('staging', 'production'))
     supervisor_path = posixpath.join(posixpath.join(env.services, 'supervisor'), 'supervisor.conf')

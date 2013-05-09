@@ -1,11 +1,8 @@
 from django.core.urlresolvers import reverse
 from django.http import Http404, HttpResponseRedirect
-from django.template.loader import render_to_string
-from django.utils.safestring import mark_safe
 from django.views.generic.base import View
 from corehq.apps.domain.decorators import login_and_domain_required, cls_to_view
 from dimagi.utils.decorators.datespan import datespan_in_request
-from django.utils.translation import ugettext as _
 
 from corehq.apps.domain.models import Domain
 
@@ -63,8 +60,15 @@ class ReportDispatcher(View):
     def get_reports(self, domain=None):
         attr_name = self.map_name
         import corehq
-        return getattr(corehq, attr_name, ()) + \
-               getattr(Domain.get_module_by_name(domain), attr_name, ())
+        domain_module = Domain.get_module_by_name(domain)
+        corehq_reports = tuple(getattr(corehq, attr_name, ()))
+        custom_reports = getattr(domain_module, attr_name, ())
+
+        if isinstance(custom_reports, dict):
+            custom_reports = custom_reports[domain]
+        custom_reports = tuple(custom_reports)
+
+        return corehq_reports + custom_reports
 
     def get_reports_dict(self, domain=None):
         return dict((report.slug, report)
@@ -210,3 +214,6 @@ class BasicReportDispatcher(ReportDispatcher):
 class AdminReportDispatcher(ReportDispatcher):
     prefix = 'admin_report'
     map_name = 'ADMIN_REPORTS'
+
+    def permissions_check(self, report, request, domain=None):
+        return hasattr(request, 'couch_user') and request.user.has_perm("is_superuser")

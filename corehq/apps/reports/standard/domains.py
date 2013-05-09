@@ -1,5 +1,7 @@
 from django.utils.translation import ugettext_noop
+import math
 from corehq.apps.domain.calculations import dom_calc, _all_domain_stats, ES_CALCED_PROPS
+from corehq.apps.reports import util
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn, DTSortType
 from corehq.apps.reports.dispatcher import BasicReportDispatcher, AdminReportDispatcher
 from corehq.apps.reports.generic import GenericTabularReport, ElasticTabularReport
@@ -43,20 +45,29 @@ class DomainStatsReport(GenericTabularReport):
 
     @property
     def rows(self):
+        def numcell(text, value=None):
+            if value is None:
+                try:
+                    value = int(text)
+                    if math.isnan(value):
+                        text = '---'
+                except ValueError:
+                    value = text
+            return util.format_datatables_data(text=text, sort_key=value)
         all_stats = _all_domain_stats()
         domains = self.get_domains()
         for domain in domains:
             dom = getattr(domain, 'name', domain) # get the domain name if domains is a list of domain objects
             yield [
                 getattr(domain, 'hr_name', dom), # get the hr_name if domain is a domain object
-                int(dom_calc("mobile_users", dom)),
-                int(all_stats["commcare_users"][dom]),
-                int(dom_calc("cases_in_last", dom, 120)),
-                int(all_stats["cases"][dom]),
-                int(all_stats["forms"][dom]),
+                numcell(dom_calc("mobile_users", dom)),
+                numcell(all_stats["commcare_users"][dom]),
+                numcell(dom_calc("cases_in_last", dom, 120)),
+                numcell(all_stats["cases"][dom]),
+                numcell(all_stats["forms"][dom]),
                 dom_calc("first_form_submission", dom),
                 dom_calc("last_form_submission", dom),
-                int(all_stats["web_users"][dom]),
+                numcell(all_stats["web_users"][dom]),
             ]
 
     @property
@@ -118,6 +129,11 @@ def es_domain_query(params, facets=None, terms=None, domains=None, return_q_dict
                         "_all" : {
                             "query" : search_query,
                             "operator" : "and" }}}}}
+
+    q["facets"] = {}
+    stats = ['cp_n_active_cases', 'cp_n_active_cc_users', 'cp_n_cc_users', 'cp_n_web_users', 'cp_n_forms', 'cp_n_cases']
+    for prop in stats:
+        q["facets"].update({"%s-STATS" % prop: {"statistical": {"field": prop}}})
 
     q["sort"] = sort if sort else [{"name" : {"order": "asc"}},]
 
@@ -195,18 +211,48 @@ class AdminDomainStatsReport(DomainStatsReport, ElasticTabularReport):
     @property
     def rows(self):
         domains = [res['_source'] for res in self.es_results.get('hits', {}).get('hits', [])]
+
+        def get_from_stat_facets(prop, what_to_get):
+            return self.es_results.get('facets', {}).get('%s-STATS' % prop, {}).get(what_to_get)
+
+        CALCS_ROW_INDEX = {
+            3: "cp_n_active_cc_users",
+            4: "cp_n_cc_users",
+            5: "cp_n_active_cases",
+            6: "cp_n_cases",
+            7: "cp_n_forms",
+            10: "cp_n_web_users",
+        }
+        NUM_ROWS = 12
+        def stat_row(name, what_to_get, type='float'):
+            row = [name]
+            for index in range(1, NUM_ROWS): #todo: switch to len(self.headers) when that userstatus report PR is merged
+                if index in CALCS_ROW_INDEX:
+                    val = get_from_stat_facets(CALCS_ROW_INDEX[index], what_to_get)
+                    row.append('%.2f' % float(val) if type=='float' else val)
+                else:
+                    row.append('---')
+            return row
+
+        self.total_row = stat_row(_('Total'), 'total', type='int')
+        self.statistics_rows = [
+            stat_row(_('Mean'), 'mean'),
+            stat_row(_('STD'), 'std_deviation'),
+        ]
+
         for dom in domains:
-            yield [
-                dom.get('hr_name') or dom['name'],
-                dom.get("organization") or _('No org'),
-                dom.get('deployment', {}).get('date') or _('No date'),
-                dom.get("cp_n_active_cc_users", _("Not Yet Calculated")),
-                dom.get("cp_n_cc_users", _("Not Yet Calculated")),
-                dom.get("cp_n_active_cases", _("Not Yet Calculated")),
-                dom.get("cp_n_cases", _("Not Yet Calculated")),
-                dom.get("cp_n_forms", _("Not Yet Calculated")),
-                dom.get("cp_first_form", _("No Forms")),
-                dom.get("cp_last_form", _("No Forms")),
-                dom.get("cp_n_web_users", _("Not Yet Calculated")),
-                dom.get('internal', {}).get('notes') or _('No notes'),
-            ]
+            if dom.has_key('name'): # for some reason when using the statistical facet, ES adds an empty dict to hits
+                yield [
+                    dom.get('hr_name') or dom['name'],
+                    dom.get("organization") or _('No org'),
+                    dom.get('deployment', {}).get('date') or _('No date'),
+                    dom.get("cp_n_active_cc_users", _("Not Yet Calculated")),
+                    dom.get("cp_n_cc_users", _("Not Yet Calculated")),
+                    dom.get("cp_n_active_cases", _("Not Yet Calculated")),
+                    dom.get("cp_n_cases", _("Not Yet Calculated")),
+                    dom.get("cp_n_forms", _("Not Yet Calculated")),
+                    dom.get("cp_first_form", _("No Forms")),
+                    dom.get("cp_last_form", _("No Forms")),
+                    dom.get("cp_n_web_users", _("Not Yet Calculated")),
+                    dom.get('internal', {}).get('notes') or _('No notes'),
+                ]

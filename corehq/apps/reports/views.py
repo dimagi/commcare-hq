@@ -1,6 +1,7 @@
 from datetime import datetime, timedelta, date
 import json
 import tempfile
+from django.conf import settings
 from django.core.cache import cache
 from django.core.servers.basehttp import FileWrapper
 import os
@@ -57,6 +58,7 @@ from dimagi.utils.chunked import chunked
 
 from casexml.apps.case.templatetags.case_tags import case_inline_display
 from couchforms.templatetags.xform_tags import render_form
+from corehq.apps.reports.dispatcher import ProjectReportDispatcher
 
 
 DATE_FORMAT = "%Y-%m-%d"
@@ -78,6 +80,10 @@ require_can_view_all_reports = require_permission(Permissions.view_reports)
 @login_and_domain_required
 def default(request, domain):
     return HttpResponseRedirect(reverse(saved_reports, args=[domain]))
+
+@login_and_domain_required
+def old_saved_reports(request, domain):
+    return default(request, domain)
 
 @login_and_domain_required
 def saved_reports(request, domain, template="reports/reports_home.html"):
@@ -475,9 +481,8 @@ def add_config(request, domain=None):
 
 @login_and_domain_required
 @datespan_default
-def email_report(request, domain, report_slug):
+def email_report(request, domain, report_slug, report_type=ProjectReportDispatcher.prefix):
     from dimagi.utils.django.email import send_HTML_email
-    from corehq.apps.reports.dispatcher import ProjectReportDispatcher
     from forms import EmailReportForm
     user_id = request.couch_user._id
 
@@ -489,7 +494,8 @@ def email_report(request, domain, report_slug):
     # see ReportConfig.query_string()
     object.__setattr__(config, '_id', 'dummy')
     config.name = _("Emailed report")
-    config.report_type = ProjectReportDispatcher.prefix
+    config.report_type = report_type
+
     config.report_slug = report_slug
     config.owner_id = user_id
     config.domain = domain
@@ -516,11 +522,12 @@ def email_report(request, domain, report_slug):
     subject = form.cleaned_data['subject'] or _("Email report from CommCare HQ")
 
     if form.cleaned_data['send_to_owner']:
-        send_HTML_email(subject, request.couch_user.get_email(), body)
+        send_HTML_email(subject, request.couch_user.get_email(), body,
+                        email_from=settings.HQ_NOTIFICATIONS_EMAIL)
 
     if form.cleaned_data['recipient_emails']:
         for recipient in form.cleaned_data['recipient_emails']:
-            send_HTML_email(subject, recipient, body)
+            send_HTML_email(subject, recipient, body, email_from=settings.HQ_NOTIFICATIONS_EMAIL)
 
     return HttpResponse()
 

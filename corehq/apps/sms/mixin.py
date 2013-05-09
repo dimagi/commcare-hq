@@ -151,27 +151,26 @@ class MobileBackend(Document):
         # for passing to functions, ensure the keys are all strings
         return dict((str(k), v) for k, v in self.outbound_params.items())
 
-
 class CommCareMobileContactMixin(object):
     """
     Defines a mixin to manage a mobile contact's information. This mixin must be used with
     a class which is a Couch Document.
     """
-    
+
     def get_time_zone(self):
         """
         This method should be implemented by all subclasses of CommCareMobileContactMixin,
         and must return a string representation of the time zone. For example, "America/New_York".
         """
         raise NotImplementedError("Subclasses of CommCareMobileContactMixin must implement method get_time_zone().")
-    
+
     def get_language_code(self):
         """
         This method should be implemented by all subclasses of CommCareMobileContactMixin,
         and must return the preferred language code of the contact. For example, "en".
         """
         raise NotImplementedError("Subclasses of CommCareMobileContactMixin must implement method get_language_code().")
-    
+
     def get_verified_numbers(self, include_pending=False):
         v = VerifiedNumber.view("sms/verified_number_by_doc_type_id",
             startkey=[self.doc_type, self._id],
@@ -184,7 +183,7 @@ class CommCareMobileContactMixin(object):
     def get_verified_number(self, phone=None):
         """
         Retrieves this contact's verified number entry by (self.doc_type, self._id).
-        
+
         return  the VerifiedNumber entry
         """
         verified = self.get_verified_numbers(True)
@@ -196,21 +195,21 @@ class CommCareMobileContactMixin(object):
                 return None
 
         return verified.get(strip_plus(phone))
-    
+
     def validate_number_format(self, phone_number):
         """
         Validates that the given phone number consists of all digits.
-        
+
         return  void
         raises  InvalidFormatException if the phone number format is invalid
         """
         if not phone_number_re.match(phone_number):
             raise InvalidFormatException("Phone number format must consist of only digits.")
-    
+
     def verify_unique_number(self, phone_number):
         """
         Verifies that the given phone number is not already in use by any other contacts.
-        
+
         return  void
         raises  InvalidFormatException if the phone number format is invalid
         raises  PhoneNumberInUseException if the phone number is already in use by another contact
@@ -222,11 +221,11 @@ class CommCareMobileContactMixin(object):
         ).one()
         if v is not None and (v.owner_doc_type != self.doc_type or v.owner_id != self._id):
             raise PhoneNumberInUseException("Phone number is already in use.")
-    
+
     def save_verified_number(self, domain, phone_number, verified, backend_id, ivr_backend_id=None, only_one_number_allowed=False):
         """
         Saves the given phone number as this contact's verified phone number.
-        
+
         return  void
         raises  InvalidFormatException if the phone number format is invalid
         raises  PhoneNumberInUseException if the phone number is already in use by another contact
@@ -253,7 +252,7 @@ class CommCareMobileContactMixin(object):
         """
         Deletes this contact's phone number from the verified phone number list, freeing it up
         for use by other contacts.
-        
+
         return  void
         """
         v = self.get_verified_number(phone_number)
