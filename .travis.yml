@@ -4,7 +4,9 @@ python:
  - "2.7"
 install:
  - "pip install -e ."
- - "pip install coverage django-coverage"
-script: django-admin.py test --settings settings --traceback receiver
+ - "pip install coverage coveralls"
+script: coverage run `which django-admin.py` test --settings settings --traceback receiver
+after_success:
+ - coveralls
 services:
  - couchdb

@@ -4,3 +4,6 @@ localsettings.*
 
 /*.egg
 /*.egg-info
+/.coverage
+/coverage-report
+/dist

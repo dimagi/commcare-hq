@@ -1,0 +1,6 @@
+[run]
+branch = True
+source = receiver
+
+[html]
+directory = coverage-report
