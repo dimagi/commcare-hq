@@ -7489,6 +7489,7 @@ a.badge:hover {
 }
 #formdesigner .jstree a > ins.jstree-icon {
   background: none;
+  font-size: .85em;
 }
 #formdesigner .jstree a > ins {
   color: #2787d0;
@@ -7496,7 +7497,7 @@ a.badge:hover {
 #formdesigner .jstree a {
   color: #37475d;
   line-height: 18px;
-  padding: 4px 6px;
+  padding: 1px 6px 3px;
   -webkit-border-radius: 5px;
   -moz-border-radius: 5px;
   border-radius: 5px;
