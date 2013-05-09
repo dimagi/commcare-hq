@@ -97,7 +97,7 @@ class OrgDomainStatsReport(DomainStatsReport):
 def project_stats_facets():
     from corehq.apps.domain.models import Domain, InternalProperties, Deployment, LicenseAgreement
     facets = Domain.properties().keys()
-    facets = ['internal.' + p for p in InternalProperties.properties().keys()]
+    facets += ['internal.' + p for p in InternalProperties.properties().keys()]
     facets += ['deployment.' + p for p in Deployment.properties().keys()]
     facets += ['cda.' + p for p in LicenseAgreement.properties().keys()]
     for p in ['internal', 'deployment', 'cda', 'migrations', 'eula']:
