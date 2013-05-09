@@ -1,11 +1,6 @@
-from couchdbkit.ext.django.schema import Document
 from casexml.apps.case.models import CommCareCase
 from bihar.calculations import home_visit
 import fluff
-
-
-class _(Document):
-    pass
 
 
 class CareBiharFluff(fluff.IndicatorDocument):
