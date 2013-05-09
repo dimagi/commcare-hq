@@ -3,6 +3,7 @@ from functools import wraps
 import json
 import re
 import urllib
+import langcodes
 from datetime import datetime
 from couchdbkit.exceptions import ResourceNotFound
 
@@ -473,11 +474,25 @@ def _handle_user_form(request, domain, couch_user=None):
     else:
         role_choices = UserRole.role_choices(domain)
 
+    results = get_db().view('languages/list', startkey=[domain], endkey=[domain, {}], group='true').all()
+    language_choices = []
+
+    if results:
+        for result in results:
+            lang_code = result['key'][1]
+            label = result['key'][1]
+            long_form = langcodes.get_name(lang_code)
+            if long_form:
+                label += " (" + langcodes.get_name(lang_code) + ")"
+            language_choices.append((lang_code, label))
+    else:
+        language_choices = langcodes.get_all_langs_for_select()
+
     if request.method == "POST" and request.POST['form_type'] == "basic-info":
         if couch_user.is_commcare_user():
-            form = UserForm(request.POST, role_choices=role_choices)
+            form = UserForm(request.POST, role_choices=role_choices, language_choices=language_choices)
         else:
-            form = WebUserForm(request.POST, role_choices=role_choices)
+            form = WebUserForm(request.POST, role_choices=role_choices, language_choices=language_choices)
         if form.is_valid():
             if create_user:
                 django_user = User()
@@ -502,10 +517,12 @@ def _handle_user_form(request, domain, couch_user=None):
 
             messages.success(request, 'Changes saved for user "%s"' % couch_user.username)
     else:
+        form = UserForm(role_choices=role_choices, language_choices=language_choices)
         if couch_user.is_commcare_user():
-            form = UserForm(role_choices=role_choices)
+            form = UserForm(role_choices=role_choices, language_choices=language_choices)
         else:
-            form = WebUserForm(role_choices=role_choices)
+            form = WebUserForm(role_choices=role_choices, language_choices=language_choices)
+
         if not create_user:
             form.initial['first_name'] = couch_user.first_name
             form.initial['last_name'] = couch_user.last_name
