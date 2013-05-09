@@ -8,3 +8,5 @@ build/*
 couchlog.egg-info/*
 dist/*
 *.egg-info
+/coverage-report
+/.coverage
