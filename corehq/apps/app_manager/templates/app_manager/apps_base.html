@@ -20,6 +20,11 @@
 {% block head %}{{ block.super }}
     <link rel="stylesheet" href="{% static 'hqstyle/css/legacy/app_manager.css' %}"/>
     {% include "imports/jqmodal.html" %}
+    <style>
+    .hide-while-loading {
+        display: none;
+    }
+    </style>
 {% endblock %}
 
 {% block js %}{{ block.super }}
@@ -89,6 +94,9 @@
             }
         });
     });
+    $(function () {
+        $('.hide-while-loading').show();
+    });
     </script>
 {% endblock %}
 
@@ -96,6 +104,7 @@
 {% endblock %}
 
 {% block main_column %}
+<div class="hide-while-loading">
     <input type="hidden" name="edit_mode" value="{% if edit %}true{% else %}false{% endif %}" />
     {% if app %}
         {% if error %}
@@ -127,6 +136,7 @@
             </form>
         </div>
     {% endif %}
+</div>
 {% endblock %}
 
 {% block column_style %}{% endblock %}
