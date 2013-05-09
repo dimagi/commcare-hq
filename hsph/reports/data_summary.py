@@ -208,7 +208,6 @@ class FADAObservationsReport(DataSummaryReport, HSPHSiteDataMixin):
             keys.extend([(["user", user_id, startdate],
                           ["user", user_id, enddate])
                          for user_id in user_ids])
-        print "keys", keys
 
         data_keys = [
             "total_forms",
@@ -263,8 +262,8 @@ class FADAObservationsReport(DataSummaryReport, HSPHSiteDataMixin):
             all_results.extend(results)
 
         for result in all_results:
-            if (site_ids is None or result['site_id'] in site_ids and
-                user_ids is None or result['user_id'] in user_ids):
+            if ((site_ids is None or result['site_id'] in site_ids) and
+                (user_ids is None or result['user_id'] in user_ids)):
                 for k, v in result.items():
                     if k not in ('site_id', 'user_id'):
                         values[k] += v
@@ -294,12 +293,15 @@ class FADAObservationsReport(DataSummaryReport, HSPHSiteDataMixin):
         enddate = self.datespan.enddate_param_utc[:10]
 
         user_ids = self.user_ids or None
-        
+
+       
         return {
             'ihf': self.get_values(
-                    self.domain, (startdate, enddate), site_ids=facilities['ihf'],
+                    self.domain, (startdate, enddate),
+                    site_ids=list(facilities['ihf']) or None,
                     user_ids=user_ids),
             'chf': self.get_values(
-                    self.domain, (startdate, enddate), site_ids=facilities['chf'],
+                    self.domain, (startdate, enddate),
+                    site_ids=list(facilities['chf']) or None,
                     user_ids=user_ids)
         }

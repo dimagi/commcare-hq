@@ -7,7 +7,7 @@ function(doc) {
         return;
     }
 
-    function babyXSum(property, value, n) {
+    function babyXSum(doc, property, value, n) {
         n = n || 3;
         var s = 0;
         for (var i = 1; i <= n; i++) {
@@ -16,29 +16,36 @@ function(doc) {
         return s;
     }
 
-    var data = {};
+    var data = {},
+        case_or_form,
+        date_admission;
     
     data.birthEvents = 1;
     data.referredInBirths = 0;
     data.lostToFollowUp = 0;
 
     if (doc.form) {
-        doc = doc.form;
+        case_or_form = doc.form;
+        date_admission = doc.form.date_admission;
     } else if (doc.last_status === 'lost_to_follow_up') {
+        case_or_form = doc;
         data.lostToFollowUp = 1;
+        date_admission = doc.form.date_admission;
     } else {
+        case_or_form = doc;
+        date_admission = doc.date_admission;
         data.referredInBirths = (doc.referred_in === 'yes') ? 1 : 0;
 
         data.maternalDeaths = (doc.maternal_death === 'yes');
 
-        data.liveBirths = babyXSum('death', 'no');
-        data.stillBirths = babyXSum('death', 'na');
-        data.neonatalMortalityEvents = babyXSum('death', 'yes');
+        data.liveBirths = babyXSum(doc, 'death', 'no');
+        data.stillBirths = babyXSum(doc, 'death', 'na');
+        data.neonatalMortalityEvents = babyXSum(doc, 'death', 'yes');
 
         data.maternalDeaths7Days = (doc.maternal_death_7_days === 'yes');
         data.maternalNearMisses7Days = (doc.maternal_near_miss_7_days === 'yes');
-        data.stillBirths7Days = babyXSum('death_7_days', 'na');
-        data.neonatalMortalityEvents7Days = babyXSum('death_7_days', 'yes');
+        data.stillBirths7Days = babyXSum(doc, 'death_7_days', 'na');
+        data.neonatalMortalityEvents7Days = babyXSum(doc, 'death_7_days', 'yes');
 
         data.totalMaternalDeaths = (data.maternalDeaths || data.maternalDeaths7Days);
         data.totalMaternalNearMisses = data.maternalNearMisses7Days;
@@ -61,8 +68,9 @@ function(doc) {
 
     data.followedUp = !data.lostToFollowUp;
 
-    var key1 = ["region", doc.region_id, doc.district_id, doc.site_number, doc.date_admission];
-    var key2 = ["site", doc.site_id, doc.date_admission];
+    var cof = case_or_form,
+        key1 = ["region", cof.region_id, cof.district_id, cof.site_number, date_admission],
+        key2 = ["site", cof.site_id, date_admission];
 
     emit([doc.domain].concat(key1), data);
     emit([doc.domain].concat(key2), data);

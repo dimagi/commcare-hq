@@ -35,7 +35,8 @@ function isNewHSPHForm(doc) {
 }
 
 function isNewHSPHBirthCase(doc) {
-    return (doc.doc_type === 'XFormInstance' &&
+    return (doc.doc_type === 'CommCareCase' &&
+            doc.type === "birth" &&
             (doc.domain === 'hsph-dev' || doc.domain === 'hsph-betterbirth-pilot-2'));
 }
 
