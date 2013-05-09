@@ -207,6 +207,7 @@ HQ_APPS = (
     'corehq.apps.api',
     'corehq.apps.indicators',
     'corehq.couchapps',
+    'fluff',
     'sofabed.forms',
     'soil',
     'corehq.apps.hqsofabed',
@@ -539,6 +540,7 @@ COUCHDB_APPS = [
     'hqadmin',
     'domain',
     'facilities',
+    'fluff',
     'forms',
     'fixtures',
     'groups',
@@ -566,7 +568,6 @@ COUCHDB_APPS = [
     'couchlog',
 
     # custom reports
-    'bihar',
     'dca',
     'hsph',
     'mvp',
@@ -577,6 +578,11 @@ COUCHDB_APPS = [
 ]
 
 COUCHDB_DATABASES = [make_couchdb_tuple(app_label, COUCH_DATABASE) for app_label in COUCHDB_APPS]
+
+COUCHDB_DATABASES += [
+    ('bihar', COUCH_DATABASE + '__fluff-bihar'),
+    ('fluff', COUCH_DATABASE + '__fluff-bihar'),
+]
 
 INSTALLED_APPS += LOCAL_APPS
 
@@ -657,6 +663,9 @@ PILLOWTOPS = [
                  'corehq.pillows.fullxform.FullXFormPillow',
                  'corehq.pillows.domain.DomainPillow',
                  'corehq.pillows.exchange.ExchangePillow',
+
+                 # fluff
+                 'bihar.models.CareBiharFluffPillow',
              ] + LOCAL_PILLOWTOPS
 
 #Custom workflow for indexing xform data beyond the standard properties
