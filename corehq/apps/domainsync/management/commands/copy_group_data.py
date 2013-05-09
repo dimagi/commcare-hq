@@ -1,3 +1,4 @@
+import logging
 from couchdbkit import Database
 from django.core.management.base import LabelCommand
 from casexml.apps.case.models import CommCareCase
@@ -69,11 +70,20 @@ class Command(LabelCommand):
 
         print 'getting users'
 
+        def wrap_user(row):
+            doc = row['doc']
+            try:
+                return CouchUser.wrap_correctly(doc)
+            except Exception as e:
+                logging.exception('trouble with user %s' % doc['_id'])
+            return None
+
         users = sourcedb.all_docs(
             keys=list(user_ids),
             include_docs=True,
-            wrapper=lambda row: CouchUser.wrap_correctly(row['doc'])
+            wrapper=wrap_user
         ).all()
         for user in users:
             # if we use bulk save, django user doesn't get sync'd
-            user.save()
+            if user:
+                user.save()
