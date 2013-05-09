@@ -481,13 +481,17 @@ def _handle_user_form(request, domain, couch_user=None):
 
     results = get_db().view('languages/list', startkey=[domain], endkey=[domain, {}], group='true').all()
     language_choices = []
-    for result in results:
-        lang_code = result['key'][1]
-        label = result['key'][1]
-        long_form = langcodes.get_name(lang_code)
-        if long_form:
-            label += " (" + langcodes.get_name(lang_code) + ")"
-        language_choices.append((lang_code, label))
+
+    if results:
+        for result in results:
+            lang_code = result['key'][1]
+            label = result['key'][1]
+            long_form = langcodes.get_name(lang_code)
+            if long_form:
+                label += " (" + langcodes.get_name(lang_code) + ")"
+            language_choices.append((lang_code, label))
+    else:
+        language_choices = langcodes.get_all_langs_for_select()
 
     if request.method == "POST" and request.POST['form_type'] == "basic-info":
         if couch_user.is_commcare_user():
