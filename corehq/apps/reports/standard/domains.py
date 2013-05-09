@@ -1,5 +1,7 @@
 from django.utils.translation import ugettext_noop
+import math
 from corehq.apps.domain.calculations import dom_calc, _all_domain_stats, ES_CALCED_PROPS
+from corehq.apps.reports import util
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn, DTSortType
 from corehq.apps.reports.dispatcher import BasicReportDispatcher, AdminReportDispatcher
 from corehq.apps.reports.generic import GenericTabularReport, ElasticTabularReport
@@ -43,20 +45,29 @@ class DomainStatsReport(GenericTabularReport):
 
     @property
     def rows(self):
+        def numcell(text, value=None):
+            if value is None:
+                try:
+                    value = int(text)
+                    if math.isnan(value):
+                        text = '---'
+                except ValueError:
+                    value = text
+            return util.format_datatables_data(text=text, sort_key=value)
         all_stats = _all_domain_stats()
         domains = self.get_domains()
         for domain in domains:
             dom = getattr(domain, 'name', domain) # get the domain name if domains is a list of domain objects
             yield [
                 getattr(domain, 'hr_name', dom), # get the hr_name if domain is a domain object
-                int(dom_calc("mobile_users", dom)),
-                int(all_stats["commcare_users"][dom]),
-                int(dom_calc("cases_in_last", dom, 120)),
-                int(all_stats["cases"][dom]),
-                int(all_stats["forms"][dom]),
+                numcell(dom_calc("mobile_users", dom)),
+                numcell(all_stats["commcare_users"][dom]),
+                numcell(dom_calc("cases_in_last", dom, 120)),
+                numcell(all_stats["cases"][dom]),
+                numcell(all_stats["forms"][dom]),
                 dom_calc("first_form_submission", dom),
                 dom_calc("last_form_submission", dom),
-                int(all_stats["web_users"][dom]),
+                numcell(all_stats["web_users"][dom]),
             ]
 
     @property
@@ -86,7 +97,7 @@ class OrgDomainStatsReport(DomainStatsReport):
 def project_stats_facets():
     from corehq.apps.domain.models import Domain, InternalProperties, Deployment, LicenseAgreement
     facets = Domain.properties().keys()
-    facets += ['internal.' + p for p in InternalProperties.properties().keys()]
+    facets = ['internal.' + p for p in InternalProperties.properties().keys()]
     facets += ['deployment.' + p for p in Deployment.properties().keys()]
     facets += ['cda.' + p for p in LicenseAgreement.properties().keys()]
     for p in ['internal', 'deployment', 'cda', 'migrations', 'eula']:
