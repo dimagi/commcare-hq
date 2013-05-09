@@ -81,6 +81,8 @@ def stock_category(stock, consumption, months_left=None):
     else:
         return 'adequate'
 
+def _enabled_hack(domain):
+    return 'psi' not in (domain or  '')
 
 class CurrentStockStatusReport(GenericTabularReport, CommtrackReportMixin):
     name = ugettext_noop('Current Stock Status by Product')
@@ -94,7 +96,7 @@ class CurrentStockStatusReport(GenericTabularReport, CommtrackReportMixin):
     # temporary
     @classmethod
     def show_in_navigation(cls, domain=None, project=None, user=None):
-        return 'psi' not in (domain or '')
+        return super(CurrentStockStatusReport, cls).show_in_navigation(domain, project, user) and _enabled_hack(domain)
 
     @property
     def headers(self):
@@ -178,7 +180,7 @@ class AggregateStockStatusReport(GenericTabularReport, CommtrackReportMixin):
     # temporary
     @classmethod
     def show_in_navigation(cls, domain=None, project=None, user=None):
-        return 'psi' not in (domain or '')
+        return super(AggregateStockStatusReport, cls).show_in_navigation(domain, project, user) and _enabled_hack(domain)
 
     @property
     def headers(self):
@@ -266,7 +268,7 @@ class ReportingRatesReport(GenericTabularReport, CommtrackReportMixin):
     # temporary
     @classmethod
     def show_in_navigation(cls, domain=None, project=None, user=None):
-        return 'psi' not in (domain or '')
+        return super(ReportingRatesReport, cls).show_in_navigation(domain, project, user) and _enabled_hack(domain)
 
     @property
     def headers(self):
