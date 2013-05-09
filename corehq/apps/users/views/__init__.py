@@ -298,6 +298,17 @@ def account(request, domain, couch_user_id, template="users/account.html"):
     return render(request, template, context)
 
 @require_permission_to_edit_user
+def make_phone_number_default(request, domain, couch_user_id):
+    user = CouchUser.get_by_user_id(couch_user_id, domain)
+    if not user.is_current_web_user(request) and not user.is_commcare_user():
+        raise Http404
+    if 'phone_number' not in request.GET:
+        return Http404('Must include phone number in request.')
+    phone_number = urllib.unquote(request.GET['phone_number'])
+    user.make_phone_number_default(phone_number)
+    return HttpResponseRedirect(reverse("user_account", args=(domain, couch_user_id )))
+
+@require_permission_to_edit_user
 def delete_phone_number(request, domain, couch_user_id):
     """
     phone_number cannot be passed in the url due to special characters
