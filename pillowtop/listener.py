@@ -23,14 +23,8 @@ else:
     USE_NEW_CHANGES = True
 
 
-requests_log = logging.getLogger("requests")
-requests_log.setLevel(logging.ERROR)
-
 pillow_logging = logging.getLogger("pillowtop")
 pillow_logging.setLevel(logging.INFO)
-
-notify_logger = logging.getLogger('notify')
-
 
 CHECKPOINT_FREQUENCY = 100
 WAIT_HEARTBEAT = 10000
@@ -486,8 +480,6 @@ class ElasticPillow(BasicPillow):
         if can_put:
             res = self.send_robust(doc_path, data=doc_dict, update=doc_exists)
             return res
-        # pillow_logging.error("PillowTop [%s]: transporting change data to elasticsearch error: %s" % (self.get_name(), ex))
-        # return None
 
 
 class AliasedElasticPillow(ElasticPillow):
@@ -658,7 +650,6 @@ class AliasedElasticPillow(ElasticPillow):
                         "Mapping set: [%s] %s" % (self.get_type_string(doc_dict), mapping_res))
                     #manually update in memory dict
                     self.seen_types[self.get_type_string(doc_dict)] = {}
-                    #got_type = datetime.utcnow()
 
             if not self.bulk:
                 doc_path = self.get_doc_path_typed(doc_dict)
