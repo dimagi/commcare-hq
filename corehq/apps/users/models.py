@@ -708,9 +708,8 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, UnicodeMixIn):
             phone_number = str(phone_number)
         self.phone_numbers = _add_to_list(self.phone_numbers, phone_number, default)
 
-    def make_phone_number_default(self, phone_number):
-        if str(phone_number) in self.phone_numbers:
-            self.add_phone_number(phone_number, True)
+    def set_default_phone_number(self, phone_number):
+        self.add_phone_number(phone_number, True)
         self.save()
 
     @property

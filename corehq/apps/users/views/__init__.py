@@ -297,31 +297,33 @@ def account(request, domain, couch_user_id, template="users/account.html"):
     context.update(_handle_user_form(request, domain, couch_user))
     return render(request, template, context)
 
+@require_POST
 @require_permission_to_edit_user
 def make_phone_number_default(request, domain, couch_user_id):
     user = CouchUser.get_by_user_id(couch_user_id, domain)
     if not user.is_current_web_user(request) and not user.is_commcare_user():
         raise Http404
-    if 'phone_number' not in request.GET:
-        return Http404('Must include phone number in request.')
-    phone_number = urllib.unquote(request.GET['phone_number'])
-    user.make_phone_number_default(phone_number)
-    return HttpResponseRedirect(reverse("user_account", args=(domain, couch_user_id )))
 
+    phone_number = request.POST['phone_number']
+    if not phone_number:
+        return Http404('Must include phone number in request.')
+
+    user.set_default_phone_number(phone_number)
+    return HttpResponseRedirect(reverse("user_account", args=(domain, couch_user_id)))
+
+@require_POST
 @require_permission_to_edit_user
 def delete_phone_number(request, domain, couch_user_id):
-    """
-    phone_number cannot be passed in the url due to special characters
-    but it can be passed as %-encoded GET parameters
-    """
     user = CouchUser.get_by_user_id(couch_user_id, domain)
     if not user.is_current_web_user(request) and not user.is_commcare_user():
         raise Http404
-    if 'phone_number' not in request.GET:
+
+    phone_number = request.POST['phone_number']
+    if not phone_number:
         return Http404('Must include phone number in request.')
-    phone_number = urllib.unquote(request.GET['phone_number'])
+
     user.delete_phone_number(phone_number)
-    return HttpResponseRedirect(reverse("user_account", args=(domain, couch_user_id )))
+    return HttpResponseRedirect(reverse("user_account", args=(domain, couch_user_id)))
 
 @require_permission_to_edit_user
 def verify_phone_number(request, domain, couch_user_id):
