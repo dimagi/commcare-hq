@@ -2,9 +2,9 @@ Couchforms
 ==========
 
 [![Build Status](https://travis-ci.org/dimagi/couchforms.png)](https://travis-ci.org/dimagi/couchforms)
-[![Test coverage](https://coveralls.io/repos/dimagi/couchforms/badge.png?branch=master)](https://coveralls.io/r/dimagi/dimagi-utils)
-[![PyPi version](https://pypip.in/v/couchforms/badge.png)](https://pypi.python.org/pypi/dimagi-utils)
-[![PyPi downloads](https://pypip.in/d/couchforms/badge.png)](https://pypi.python.org/pypi/dimagi-utils)
+[![Test coverage](https://coveralls.io/repos/dimagi/couchforms/badge.png?branch=master)](https://coveralls.io/r/dimagi/couchforms)
+[![PyPi version](https://pypip.in/v/couchforms/badge.png)](https://pypi.python.org/pypi/couchforms)
+[![PyPi downloads](https://pypip.in/d/couchforms/badge.png)](https://pypi.python.org/pypi/couchforms)
 
 Put XForms in couchdb!
 
