@@ -919,7 +919,7 @@ class CaseReminder(Document, LockableMixIn):
                 if index.identifier == "parent":
                     subcase = CommConnectCase.get(index.referenced_id)
                     if case_matches_criteria(subcase, handler.recipient_case_match_type, handler.recipient_case_match_property, handler.recipient_case_match_value):
-                        recipients.append()
+                        recipients.append(subcase)
             return recipients
         else:
             return None

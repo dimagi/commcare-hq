@@ -257,6 +257,7 @@ def format_choices(choices_list):
     return choices
 
 def validate_answer(event, text):
+    text = text.strip()
     upper_text = text.upper()
     valid = False
     error_msg = ""
@@ -331,7 +332,7 @@ def validate_answer(event, text):
         try:
             assert len(text) == 8
             int(text)
-            text = text[0:4] + "-" + text[4:6] + "-" + text[6:]
+            text = "%s-%s-%s" % (text[0:4], text[4:6], text[6:])
             parse(text)
             valid = True
         except Exception:
@@ -345,7 +346,7 @@ def validate_answer(event, text):
             minute = int(text[2:])
             assert hour >= 0 and hour <= 23
             assert minute >= 0 and minute <= 59
-            text = "%s:%s" % (hour, minute)
+            text = "%s:%s" % (hour, str(minute).zfill(2))
             valid = True
         except Exception:
             error_msg = "Invalid time format: expected HHMM (24-hour)."
@@ -437,6 +438,9 @@ def structured_sms_handler(verified_number, text):
                                             break
                                         
                                         xpath_answer[xpath] = answer_parts[2].strip()
+                                    else:
+                                        # Ignore unexpected named arguments
+                                        pass
                             else:
                                 # No separator is used for naming arguments; for example, "update a100 b34 c5"
                                 matches = 0
@@ -456,9 +460,8 @@ def structured_sms_handler(verified_number, text):
                                         xpath_answer[v] = answer[len(k):].strip()
                                 
                                 if matches == 0:
-                                    error_occurred = True
-                                    error_msg = "ERROR: Name/value pair not expected:" + (" '%s'" % answer)
-                                    break
+                                    # Ignore unexpected named arguments
+                                    pass
                             
                             if error_occurred:
                                 break
@@ -578,7 +581,6 @@ def form_session_handler(v, text):
     elif session is not None:
         resp = current_question(session.session_id)
         event = resp.event
-        text = text.strip()
         valid, text, error_msg = validate_answer(event, text)
         
         if valid:
