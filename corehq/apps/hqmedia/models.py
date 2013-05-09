@@ -15,7 +15,7 @@ from couchforms.models import XFormError
 from dimagi.utils.decorators.memoized import memoized
 from hutch.models import AuxMedia
 from corehq.apps.domain.models import LICENSES
-from dimagi.utils.couch.database import get_db
+from dimagi.utils.couch.database import get_db, SafeSaveDocument, get_safe_read_kwargs
 from django.utils.translation import ugettext as _
 
 MULTIMEDIA_PREFIX = "jr://file/"
@@ -39,7 +39,7 @@ class HQMediaLicense(DocumentSchema):
         return LICENSES.get(self.type, "Improper License")
 
 
-class CommCareMultimedia(Document):
+class CommCareMultimedia(SafeSaveDocument):
     """
         The base object of all CommCare Multimedia
     """
@@ -54,6 +54,17 @@ class CommCareMultimedia(Document):
     licenses = SchemaListProperty(HQMediaLicense, default=[])
     shared_by = StringListProperty(default=[])
     tags = DictProperty(default={})  # dict of string lists
+
+    @classmethod
+    def get(cls, docid, rev=None, db=None, dynamic_properties=True):
+        # copied and tweaked from the superclass's method
+        if not db:
+            db = cls.get_db()
+        cls._allow_dynamic_properties = dynamic_properties
+        # on cloudant don't get the doc back until all nodes agree
+        # on the copy, to avoid race conditions
+        extras = get_safe_read_kwargs()
+        return db.get(docid, rev=rev, wrapper=cls.wrap, **extras)
 
     @property
     def is_shared(self):
@@ -110,6 +121,7 @@ class CommCareMultimedia(Document):
             new_media.checksum = self.file_hash
             if media_meta:
                 new_media.media_meta = media_meta
+            ## copuy = cls.get_db().get(self._id, r=3)
             self.aux_media.append(new_media)
             self.save()
             is_update = True
