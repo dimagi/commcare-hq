@@ -3,6 +3,8 @@ from datetime import datetime
 import hashlib
 import os
 import traceback
+from django.core.mail import send_mail
+import math
 from requests import ConnectionError
 from restkit import RequestFailed
 import simplejson
@@ -11,10 +13,6 @@ import rawes
 import gevent
 from django.conf import settings
 from dimagi.utils.decorators.memoized import memoized
-
-requests_log = logging.getLogger("requests")
-requests_log.setLevel(logging.ERROR)
-
 import couchdbkit
 
 if couchdbkit.version_info < (0, 6, 0):
@@ -24,10 +22,14 @@ else:
 
     USE_NEW_CHANGES = True
 
+
+pillow_logging = logging.getLogger("pillowtop")
+pillow_logging.setLevel(logging.INFO)
+
 CHECKPOINT_FREQUENCY = 100
 WAIT_HEARTBEAT = 10000
-RETRY_INTERVAL = 5
-MAX_RETRIES = 5
+RETRY_INTERVAL = 2 #seconds, exponentially increasing
+MAX_RETRIES = 4 #exponential factor threshold for alerts
 
 INDEX_REINDEX_SETTINGS = {"index": {"refresh_interval": "900s",
                                     "merge.policy.merge_factor": 20,
@@ -41,6 +43,40 @@ INDEX_STANDARD_SETTINGS = {"index": {"refresh_interval": "1s",
                                      "store.throttle.type": "node",
                                      "number_of_replicas": "0"}
 }
+
+
+import functools
+import logging
+
+class autoretry_connection(object):
+    """
+    A simple decorator for autoretrying Request ConnectionError errors infinitely with some
+    indicator back to us that there's an issue if it's gone on too long
+    """
+
+    def __call__(self, fn):
+        @functools.wraps(fn)
+        def decorated(*args, **kwargs):
+            current_tries = 0
+            while True:
+                try:
+                    return fn(*args, **kwargs)
+                except ConnectionError, e:
+                    next_delay = math.pow(RETRY_INTERVAL, current_tries)
+                    pillow_logging.exception('Connection error when calling {fn}: {msg} retrying after a {delay} second delay'.format(
+                        fn=fn.__name__,
+                        msg=str(e),
+                        delay=next_delay
+                    ))
+                    gevent.sleep(next_delay)
+                    current_tries += 1
+                    if current_tries % MAX_RETRIES == 0:
+                        pillow_logging.error("Pillowtop error, connectivity issues for %s. %s tries with %s second interval" % (fn.__name__, current_tries, RETRY_INTERVAL))
+                        send_mail("Pillowtop Connectivity Error", "Connectivity issues for %s. %s tries with %s second interval. Just letting you know so someone can look into it" % (fn.__name__, current_tries, RETRY_INTERVAL),
+                                  settings.HQ_NOTIFICATIONS_EMAIL, [x[1] for x in settings.ADMINS])
+
+        return decorated
+
 
 
 class PillowtopIndexingError(Exception):
@@ -81,7 +117,7 @@ class BasicPillow(object):
                 c.wait(self.parsing_processor, since=self.since, filter=self.couch_filter,
                        heartbeat=WAIT_HEARTBEAT, feed='continuous', timeout=30000, **self.extra_args)
             except Exception, ex:
-                logging.exception("Exception in form listener: %s, sleeping and restarting" % ex)
+                pillow_logging.exception("Exception in form listener: %s, sleeping and restarting" % ex)
                 gevent.sleep(RETRY_INTERVAL)
 
     def new_changes(self):
@@ -98,7 +134,7 @@ class BasicPillow(object):
         """
         Couch changes stream creation
         """
-        logging.info("Starting pillow %s" % self.__class__)
+        pillow_logging.info("Starting pillow %s" % self.__class__)
 
         if USE_NEW_CHANGES:
             self.new_changes()
@@ -130,11 +166,11 @@ class BasicPillow(object):
             legacy_name = '.'.join(doc_name.split('.')[0:-1])
             starting_seq = "0"
             if self.couch_db.doc_exist(legacy_name):
-                logging.info("hostname specific checkpoint not found, searching legacy")
+                pillow_logging.info("hostname specific checkpoint not found, searching legacy")
                 legacy_checkpoint = self.couch_db.open_doc(legacy_name)
                 if not isinstance(legacy_checkpoint['seq'], int):
                     #if it's not an explicit integer, copy it over directly
-                    logging.info("Legacy checkpoint set")
+                    pillow_logging.info("Legacy checkpoint set")
                     starting_seq = legacy_checkpoint['seq']
 
             checkpoint_doc = {
@@ -174,7 +210,7 @@ class BasicPillow(object):
         """
         self.changes_seen += 1
         if self.changes_seen % CHECKPOINT_FREQUENCY == 0 and do_set_checkpoint:
-            logging.info(
+            pillow_logging.info(
                 "(%s) setting checkpoint: %s" % (self.get_checkpoint_doc_name(), change['seq']))
             self.set_checkpoint(change)
 
@@ -185,7 +221,8 @@ class BasicPillow(object):
                 if tr is not None:
                     self.change_transport(tr)
         except Exception, ex:
-            logging.exception("Error on change: %s, %s" % (change['id'], ex))
+            pillow_logging.exception("Error on change: %s, %s" % (change['id'], ex))
+            gevent.sleep(RETRY_INTERVAL)
 
 
     def change_trigger(self, changes_dict):
@@ -229,7 +266,7 @@ class ElasticPillow(BasicPillow):
     es_index = ""
     es_type = ""
     es_meta = {}
-    es_timeout = 30  # in seconds
+    es_timeout = 3  # in seconds
     bulk = False
     online = True  # online=False is for in memory (no ES) connectivity for testing purposes
 
@@ -246,22 +283,15 @@ class ElasticPillow(BasicPillow):
         if create_index and not index_exists:
             self.create_index()
 
-    def index_exists(self, connect_attempt=0):
+    @autoretry_connection()
+    def index_exists(self):
         if not self.online:
             #If offline, just say the index is there and proceed along
             return True
 
         es = self.get_es()
-        while True:
-            try:
-                res = es.head(self.es_index)
-                return res
-            except ConnectionError, ex:
-                logging.error("[%s] Error connecting to ES %s:%s: %s" % (
-                    self.get_name(), es.host, es.port, ex))
-                logging.debug(
-                    "[%s] Retry attempt in %s seconds" % (self.get_name(), RETRY_INTERVAL))
-                gevent.sleep(RETRY_INTERVAL)
+        res = es.head(self.es_index)
+        return res
 
     def get_doc_path(self, doc_id):
         return "%s/%s/%s" % (self.es_index, self.es_type, doc_id)
@@ -281,6 +311,7 @@ class ElasticPillow(BasicPillow):
         """
         return self.update_settings(INDEX_STANDARD_SETTINGS)
 
+    @autoretry_connection()
     def get_index_mapping(self):
         es = self.get_es()
         return es.get('%s/_mapping' % self.es_index).get(self.es_index, {})
@@ -293,8 +324,7 @@ class ElasticPillow(BasicPillow):
 
     @memoized
     def get_es(self):
-        return rawes.Elastic('%s:%s' % (self.es_host, self.es_port),
-                             timeout=self.es_timeout)
+        return rawes.Elastic('%s:%s' % (self.es_host, self.es_port), timeout=self.es_timeout)
 
     def delete_index(self):
         """
@@ -316,11 +346,12 @@ class ElasticPillow(BasicPillow):
             try:
                 self.get_es().delete(path=self.get_doc_path(changes_dict['id']))
             except Exception, ex:
-                logging.error("ElasticPillow: error deleting route %s - ignoring: %s" % \
+                pillow_logging.error("ElasticPillow: error deleting route %s - ignoring: %s" % \
                               (self.get_doc_path(changes_dict['id']), ex))
             return None
         return self.couch_db.open_doc(changes_dict['id'])
 
+    @autoretry_connection()
     def doc_exists(self, doc_id):
         """
         Using the HEAD 404/200 result API for document existence
@@ -354,7 +385,7 @@ class ElasticPillow(BasicPillow):
                                       "_id": tr['_id']}}
                         yield tr
             except Exception, ex:
-                logging.error("Error on change: %s, %s" % (change['id'], ex))
+                pillow_logging.error("Error on change: %s, %s" % (change['id'], ex))
 
     def process_bulk(self, changes):
         self.allow_updates = False
@@ -362,11 +393,11 @@ class ElasticPillow(BasicPillow):
         es = self.get_es()
         bstart = datetime.utcnow()
         bulk_payload = '\n'.join(map(simplejson.dumps, self.bulk_builder(changes))) + "\n"
-        logging.info(
+        pillow_logging.info(
             "prepare_bulk,%s" % str(ms_from_timedelta(datetime.utcnow() - bstart) / 1000.0))
         send_start = datetime.utcnow()
         es.post('_bulk', data=bulk_payload)
-        logging.info(
+        pillow_logging.info(
             "send_bulk,%s" % str(ms_from_timedelta(datetime.utcnow() - send_start) / 1000.0))
 
     def processor(self, change, do_set_checkpoint=True):
@@ -376,7 +407,7 @@ class ElasticPillow(BasicPillow):
         """
         self.changes_seen += 1
         if self.changes_seen % CHECKPOINT_FREQUENCY == 0 and do_set_checkpoint:
-            logging.info(
+            pillow_logging.info(
                 "(%s) setting checkpoint: %s" % (self.get_checkpoint_doc_name(), change['seq']))
             self.set_checkpoint(change)
 
@@ -387,7 +418,7 @@ class ElasticPillow(BasicPillow):
                 if tr is not None:
                     self.change_transport(tr)
         except Exception, ex:
-            logging.error("Error on change: %s, %s" % (change['id'], ex))
+            pillow_logging.error("Error on change: %s, %s" % (change['id'], ex))
 
     def send_robust(self, path, data={}, retries=MAX_RETRIES, except_on_failure=False, update=False):
         """
@@ -403,18 +434,17 @@ class ElasticPillow(BasicPillow):
                 break
             except ConnectionError, ex:
                 current_tries += 1
-                logging.error("[%s] put_robust error %s attempt %d/%d" % (
+                pillow_logging.error("[%s] put_robust error %s attempt %d/%d" % (
                     self.get_name(), ex, current_tries, retries))
-                gevent.sleep(RETRY_INTERVAL)
+                gevent.sleep(math.pow(RETRY_INTERVAL, current_tries))
 
                 if current_tries == retries:
                     message = "[%s] Max retry error on %s" % (self.get_name(), path)
                     if except_on_failure:
                         raise PillowtopIndexingError(message)
                     else:
-                        logging.error(message)
+                        pillow_logging.error(message)
                     res = {}
-                    break
 
         if res.get('status', 0) == 400:
             error_message = "Pillowtop put_robust error [%s]:\n%s\n\tpath: %s\n\t%s" % (
@@ -426,33 +456,30 @@ class ElasticPillow(BasicPillow):
             if except_on_failure:
                 raise PillowtopIndexingError(error_message)
             else:
-                logging.error(error_message)
+                pillow_logging.error(error_message)
         return res
 
+    @autoretry_connection()
     def change_transport(self, doc_dict):
         """
         Default elastic pillow for a given doc to a type.
         """
         if self.bulk:
             return
-        try:
-            es = self.get_es()
-            doc_path = self.get_doc_path(doc_dict['_id'])
 
-            doc_exists = self.doc_exists(doc_dict['_id'])
+        es = self.get_es()
+        doc_path = self.get_doc_path(doc_dict['_id'])
 
-            if self.allow_updates:
-                can_put = True
-            else:
-                can_put = not doc_exists
+        doc_exists = self.doc_exists(doc_dict['_id'])
 
-            if can_put:
-                res = self.send_robust(doc_path, data=doc_dict, update=doc_exists)
-                return res
-        except Exception, ex:
-            logging.error("PillowTop [%s]: transporting change data to elasticsearch error: %s",
-                          (self.get_name(), ex))
-            return None
+        if self.allow_updates:
+            can_put = True
+        else:
+            can_put = not doc_exists
+
+        if can_put:
+            res = self.send_robust(doc_path, data=doc_dict, update=doc_exists)
+            return res
 
 
 class AliasedElasticPillow(ElasticPillow):
@@ -480,9 +507,9 @@ class AliasedElasticPillow(ElasticPillow):
         super(AliasedElasticPillow, self).__init__(**kwargs)
         if self.online:
             self.seen_types = self.get_index_mapping()
-            logging.info("Pillowtop [%s] Retrieved mapping from ES" % self.get_name())
+            pillow_logging.info("Pillowtop [%s] Retrieved mapping from ES" % self.get_name())
         else:
-            logging.info("Pillowtop [%s] Started with no mapping from server in memory testing mode" % self.get_name())
+            pillow_logging.info("Pillowtop [%s] Started with no mapping from server in memory testing mode" % self.get_name())
             self.seen_types = {}
 
 
@@ -546,7 +573,7 @@ class AliasedElasticPillow(ElasticPillow):
                                          "_id": tr['_id']}}
                         yield tr
             except Exception, ex:
-                logging.error("Error on change: %s, %s" % (change['id'], ex))
+                pillow_logging.error("Error on change: %s, %s" % (change['id'], ex))
 
     def type_exists(self, doc_dict, server=False):
         """
@@ -583,6 +610,7 @@ class AliasedElasticPillow(ElasticPillow):
                 'id': doc_dict['_id']
             })
 
+    @autoretry_connection()
     def doc_exists(self, doc_dict):
         """
         Overrided based upon the doc type
@@ -618,11 +646,10 @@ class AliasedElasticPillow(ElasticPillow):
                 mapping_res = self.set_mapping(self.get_type_string(doc_dict), type_mapping)
                 if mapping_res.get('ok', False) and mapping_res.get('acknowledged', False):
                     #API confirms OK, trust it.
-                    logging.info(
+                    pillow_logging.info(
                         "Mapping set: [%s] %s" % (self.get_type_string(doc_dict), mapping_res))
                     #manually update in memory dict
                     self.seen_types[self.get_type_string(doc_dict)] = {}
-                    #got_type = datetime.utcnow()
 
             if not self.bulk:
                 doc_path = self.get_doc_path_typed(doc_dict)
@@ -639,9 +666,13 @@ class AliasedElasticPillow(ElasticPillow):
                     return res
         except Exception, ex:
             tb = traceback.format_exc()
-            logging.error(
-                "PillowTop [%s]: transporting change data doc_id: %s to elasticsearch error: %s\ntraceback: %s\n" % (
-                    self.get_name(), doc_dict['_id'], ex, tb))
+            pillow_logging.error("PillowTop [%(pillow_name)s]: Aliased Elastic Pillow transport change data doc_id: %(doc_id)s to elasticsearch error: %(error)s\ntraceback: %(tb)s\n" %
+                          {
+                              "pillow_name": self.get_name(),
+                              "doc_id": doc_dict['_id'],
+                              "error": ex,
+                              "tb": tb
+                          })
             return None
 
 
@@ -666,7 +697,7 @@ class NetworkPillow(BasicPillow):
             sock.send(simplejson.dumps(doc_dict), timeout=1)
             return 1
         except Exception, ex:
-            logging.error(
+            pillow_logging.error(
                 "PillowTop [%s]: transport to network socket error: %s" % (self.get_name(), ex))
             return None
 
@@ -680,7 +711,7 @@ class LogstashMonitoringPillow(NetworkPillow):
     def __init__(self):
         if settings.DEBUG:
             #In a dev environment don't care about these
-            logging.info(
+            pillow_logging.info(
                 "[%s] Settings are DEBUG, suppressing the processing of these feeds" % self.get_name())
 
     def processor(self, change):
