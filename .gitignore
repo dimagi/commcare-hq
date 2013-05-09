@@ -7,3 +7,5 @@
 
 /*.egg
 /*.egg-info
+/dist
+.coverage
