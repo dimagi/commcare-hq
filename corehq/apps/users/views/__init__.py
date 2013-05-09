@@ -25,7 +25,7 @@ from corehq.apps.prescriptions.models import Prescription
 from corehq.apps.domain.models import Domain
 from corehq.apps.hqwebapp.utils import InvitationView
 from corehq.apps.users.decorators import require_permission
-from corehq.apps.users.forms import UserForm, ProjectSettingsForm
+from corehq.apps.users.forms import WebUserForm, UserForm, ProjectSettingsForm
 from corehq.apps.users.models import CouchUser, CommCareUser, WebUser, \
     DomainRemovalRecord, UserRole, AdminUserRole, DomainInvitation, PublicUser
 from corehq.apps.domain.decorators import login_and_domain_required, require_superuser, domain_admin_required
@@ -245,7 +245,9 @@ def account(request, domain, couch_user_id, template="users/account.html"):
             raise Http404
 
     # phone-numbers tab
-    if request.method == "POST" and request.POST['form_type'] == "phone-numbers":
+    if request.method == "POST" and \
+       request.POST['form_type'] == "phone-numbers" and \
+       (couch_user.is_current_web_user(request) or couch_user.is_commcare_user()):
         phone_number = request.POST['phone_number']
         phone_number = re.sub('\s', '', phone_number)
         if re.match(r'\d+$', phone_number):
@@ -295,18 +297,18 @@ def account(request, domain, couch_user_id, template="users/account.html"):
     context.update(_handle_user_form(request, domain, couch_user))
     return render(request, template, context)
 
-
-
 @require_permission_to_edit_user
 def delete_phone_number(request, domain, couch_user_id):
     """
     phone_number cannot be passed in the url due to special characters
     but it can be passed as %-encoded GET parameters
     """
+    user = CouchUser.get_by_user_id(couch_user_id, domain)
+    if not user.is_current_web_user(request) and not user.is_commcare_user():
+        raise Http404
     if 'phone_number' not in request.GET:
         return Http404('Must include phone number in request.')
     phone_number = urllib.unquote(request.GET['phone_number'])
-    user = CouchUser.get_by_user_id(couch_user_id, domain)
     for i in range(0,len(user.phone_numbers)):
         if user.phone_numbers[i] == phone_number:
             del user.phone_numbers[i]
@@ -477,18 +479,23 @@ def _handle_user_form(request, domain, couch_user=None):
         role_choices = UserRole.role_choices(domain)
 
     if request.method == "POST" and request.POST['form_type'] == "basic-info":
-        form = UserForm(request.POST, role_choices=role_choices)
+        if couch_user.is_commcare_user():
+            form = UserForm(request.POST, role_choices=role_choices)
+        else:
+            form = WebUserForm(request.POST, role_choices=role_choices)
         if form.is_valid():
             if create_user:
                 django_user = User()
                 django_user.username = form.cleaned_data['email']
                 django_user.save()
                 couch_user = CouchUser.from_django_user(django_user)
-            couch_user.first_name = form.cleaned_data['first_name']
-            couch_user.last_name = form.cleaned_data['last_name']
-            couch_user.email = form.cleaned_data['email']
-            couch_user.email_opt_in = form.cleaned_data['email_opt_in']
-            couch_user.language = form.cleaned_data['language']
+            if couch_user.is_current_web_user(request) or couch_user.is_commcare_user():
+                couch_user.first_name = form.cleaned_data['first_name']
+                couch_user.last_name = form.cleaned_data['last_name']
+                couch_user.email = form.cleaned_data['email']
+                if not couch_user.is_commcare_user():
+                    couch_user.email_opt_in = form.cleaned_data['email_opt_in']
+                couch_user.language = form.cleaned_data['language']
             if can_change_admin_status:
                 role = form.cleaned_data['role']
                 if role:
@@ -500,7 +507,10 @@ def _handle_user_form(request, domain, couch_user=None):
 
             messages.success(request, 'Changes saved for user "%s"' % couch_user.username)
     else:
-        form = UserForm(role_choices=role_choices)
+        if couch_user.is_commcare_user():
+            form = UserForm(role_choices=role_choices)
+        else:
+            form = WebUserForm(role_choices=role_choices)
         if not create_user:
             form.initial['first_name'] = couch_user.first_name
             form.initial['last_name'] = couch_user.last_name
@@ -521,7 +531,8 @@ def _handle_user_form(request, domain, couch_user=None):
     if not can_change_admin_status:
         del form.fields['role']
 
-    context.update({"form": form})
+    context.update({"form": form,
+                    "current_users_page": couch_user.is_current_web_user(request)})
     return context
 
 @httpdigest

@@ -178,3 +178,11 @@ def listsort(value):
     else:
         return value
 listsort.is_safe = True
+
+@register.filter(name='getattr')
+def get_attribute(obj, arg):
+    """ Get attribute from obj
+
+    Usage: {{ couch_user|getattr:"full_name" }}
+    """
+    return getattr(obj, arg, None)

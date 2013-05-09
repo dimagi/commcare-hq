@@ -41,6 +41,30 @@ RequisitionActions = enum(
     RECEIPTS='requisition-receipts',
 )
 
+# feels a bit silly to duplicate this
+ORDERED_REQUISITION_ACTIONS = (
+    RequisitionActions.REQUEST,
+    RequisitionActions.APPROVAL,
+    RequisitionActions.FILL,
+    RequisitionActions.RECEIPTS,
+)
+
+class UserRequisitionRoles(object):
+    REQUESTER = 'commtrack_requester'
+    APPROVER = 'commtrack_approver'
+    SUPPLIER = 'commtrack_supplier'
+    RECEIVER = 'commtrack_receiver'
+
+    @classmethod
+    def get_user_role(cls, action_type):
+        return {
+            RequisitionActions.REQUEST: cls.REQUESTER,
+            RequisitionActions.APPROVAL: cls.APPROVER,
+            RequisitionActions.FILL: cls.SUPPLIER,
+            RequisitionActions.RECEIPTS: cls.RECEIVER,
+        }[action_type]
+
+
 class RequisitionStatus(object):
     """a const for our requisition status choices"""
     REQUESTED = "requested"
@@ -60,3 +84,12 @@ class RequisitionStatus(object):
             RequisitionActions.FILL: cls.FILLED,
             RequisitionActions.RECEIPTS: cls.RECEIVED,
         }[type]
+
+    @classmethod
+    def to_action_type(cls, status):
+        return {
+            cls.REQUESTED: RequisitionActions.REQUEST,
+            cls.APPROVED: RequisitionActions.APPROVAL,
+            cls.FILLED: RequisitionActions.FILL,
+            cls.RECEIVED: RequisitionActions.RECEIPTS,
+        }[status]

@@ -1,5 +1,6 @@
 from casexml.apps.case.tests import delete_all_cases, delete_all_xforms
 from corehq.apps.commtrack import const
+from corehq.apps.groups.models import Group
 from corehq.apps.locations.models import Location
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.commtrack.util import bootstrap_default
@@ -19,6 +20,36 @@ TEST_NUMBER = '5551234'
 TEST_PASSWORD = 'secret'
 TEST_BACKEND = 'test-backend'
 
+MAIN_USER = {
+    'username': TEST_USER,
+    'phone_number': TEST_NUMBER,
+    'first_name': 'main',
+    'last_name': 'user',
+    'user_data': {
+        const.UserRequisitionRoles.REQUESTER: True,
+        const.UserRequisitionRoles.RECEIVER: True,
+    },
+}
+APPROVER_USER = {
+    'username': 'test-approver',
+    'phone_number': '5550000',
+    'first_name': 'approver',
+    'last_name': 'user',
+    'user_data': {
+        const.UserRequisitionRoles.APPROVER: True,
+    },
+}
+
+FILLER_USER = {
+    'username': 'test-filler',
+    'phone_number': '5550001',
+    'first_name': 'filler',
+    'last_name': 'user',
+    'user_data': {
+        const.UserRequisitionRoles.SUPPLIER: True,
+    },
+}
+
 def bootstrap_domain(domain_name=TEST_DOMAIN, requisitions_enabled=False):
     # little test utility that makes a commtrack-enabled domain with
     # a default config and a location
@@ -31,9 +62,14 @@ def bootstrap_domain(domain_name=TEST_DOMAIN, requisitions_enabled=False):
 
 def bootstrap_user(username=TEST_USER, domain=TEST_DOMAIN,
                    phone_number=TEST_NUMBER, password=TEST_PASSWORD,
-                   backend=TEST_BACKEND):
-    user = CommCareUser.create(domain, username, password, phone_numbers=[TEST_NUMBER])
-    user.save_verified_number(domain, phone_number, verified=True, backend_id=TEST_BACKEND)
+                   backend=TEST_BACKEND, first_name='', last_name='',
+                   user_data=None,
+                   ):
+    user_data = user_data or {}
+    user = CommCareUser.create(domain, username, password, phone_numbers=[TEST_NUMBER],
+                               user_data=user_data, first_name=first_name,
+                               last_name=last_name)
+    user.save_verified_number(domain, phone_number, verified=True, backend_id=backend)
     return user
 
 def make_loc(code, name=None, domain=TEST_DOMAIN, type=TEST_LOCATION_TYPE):
@@ -52,19 +88,33 @@ class CommTrackTest(TestCase):
 
         self.backend = test.bootstrap(TEST_BACKEND, to_console=True)
         self.domain = bootstrap_domain(requisitions_enabled=self.requisitions_enabled)
-        self.user = bootstrap_user()
+        self.user = bootstrap_user(**MAIN_USER)
         self.verified_number = self.user.get_verified_number()
+
+        # bootstrap additional users for requisitions
+        self.approver = bootstrap_user(**APPROVER_USER)
+        self.filler = bootstrap_user(**FILLER_USER)
+
+        self.users = [self.user, self.approver, self.filler]
+        # everyone should be in a group.
+        self.group = Group(domain=TEST_DOMAIN, name='commtrack-folks',
+                           users=[u._id for u in self.users],
+                           case_sharing=True)
+        self.group.save()
+
         self.loc = make_loc('loc1')
-        self.sp = make_supply_point(self.domain.name, self.loc)
+        self.sp = make_supply_point(self.domain.name, self.loc, owner_id=self.group._id)
         self.products = Product.by_domain(self.domain.name)
         self.assertEqual(3, len(self.products))
         self.spps = {}
         for p in self.products:
             self.spps[p.code] = make_supply_point_product(self.sp, p._id)
+            self.assertEqual(self.spps[p.code].owner_id, self.group._id)
 
     def tearDown(self):
         self.backend.delete()
-        self.user.delete()
+        for u in self.users:
+            u.delete()
         self.domain.delete() # domain delete cascades to everything else
 
     def get_commtrack_forms(self):
