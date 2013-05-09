@@ -66,7 +66,7 @@ def location_custom_properties(domain, loc_type):
                         'Pediatrician',
                         'AYUSH',
                         'Medical Store / Chemist',
-                        'RMP',
+                        'RP',
                         'Asha',
                         'AWW',
                         'NGO',

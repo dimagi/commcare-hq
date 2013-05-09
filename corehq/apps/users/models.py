@@ -692,6 +692,14 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, UnicodeMixIn):
             pass
         super(CouchUser, self).delete() # Call the "real" delete() method.
 
+    def delete_phone_number(self, phone_number):
+        for i in range(0,len(self.phone_numbers)):
+            if self.phone_numbers[i] == phone_number:
+                del self.phone_numbers[i]
+                break
+        self.save()
+        self.delete_verified_number(phone_number)
+
     def get_django_user(self):
         return User.objects.get(username__iexact=self.username)
 
@@ -816,7 +824,11 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, UnicodeMixIn):
             django_user = self.get_django_user()
         for attr in DjangoUserMixin.ATTRS:
             # name might be truncated so don't backwards sync
-            if attr != 'first_name' and attr != 'last_name':
+            one_way_attrs = ['first_name', 'last_name']
+            if attr not in one_way_attrs or not getattr(self, attr):
+                # don't sync one-way attrs back to couch unless we didn't have
+                # something there in the first place. this is hack to allow
+                # unit test workflows that create the django user first to work
                 setattr(self, attr, getattr(django_user, attr))
 
     def sync_to_django_user(self):
@@ -933,8 +945,10 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, UnicodeMixIn):
         return cls.get_by_username(django_user.username)
 
     @classmethod
-    def create(cls, domain, username, password, email=None, uuid='', date='', **kwargs):
-        django_user = create_user(username, password=password, email=email)
+    def create(cls, domain, username, password, email=None, uuid='', date='',
+               first_name='', last_name='', **kwargs):
+        django_user = create_user(username, password=password, email=email,
+                                  first_name=first_name, last_name=last_name)
         if uuid:
             if not re.match(r'[\w-]+', uuid):
                 raise cls.InvalidID('invalid id %r' % uuid)
@@ -1036,7 +1050,7 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, UnicodeMixIn):
         return super(CouchUser, self).__getattr__(item)
 
 
-class CommCareUser(CouchUser, CommCareMobileContactMixin, SingleMembershipMixin):
+class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin):
 
     domain = StringProperty()
     registering_device_id = StringProperty()
@@ -1082,7 +1096,6 @@ class CommCareUser(CouchUser, CommCareMobileContactMixin, SingleMembershipMixin)
 
         device_id = kwargs.get('device_id', '')
         user_data = kwargs.get('user_data', {})
-
         # populate the couch user
         commcare_user.domain = domain
         commcare_user.device_ids = [device_id]
@@ -1465,7 +1478,7 @@ class OrgMembershipMixin(DocumentSchema):
         if om:
             om.team_ids.remove(team_id)
 
-class WebUser(CouchUser, MultiMembershipMixin, OrgMembershipMixin):
+class WebUser(CouchUser, MultiMembershipMixin, OrgMembershipMixin, CommCareMobileContactMixin):
     #do sync and create still work?
 
     def sync_from_old_couch_user(self, old_couch_user):
@@ -1506,6 +1519,22 @@ class WebUser(CouchUser, MultiMembershipMixin, OrgMembershipMixin):
 
     def get_email(self):
         return self.email or self.username
+
+    def get_time_zone(self):
+        from corehq.apps.reports import util as report_utils
+
+        if hasattr(self, 'current_domain'):
+            domain = self.current_domain
+        elif len(self.domains) > 0:
+            domain = self.domains[0]
+        else:
+            return None
+
+        timezone = report_utils.get_timezone(self.user_id, domain)
+        return timezone.zone
+
+    def get_language_code(self):
+        return self.language
 
     @property
     def projects(self):
@@ -1584,8 +1613,6 @@ class WebUser(CouchUser, MultiMembershipMixin, OrgMembershipMixin):
             return self.total_domain_membership(dm_list, domain)
         else:
             raise DomainMembershipError()
-
-
 
     def total_domain_membership(self, domain_memberships, domain):
         #sort out the permissions
@@ -1680,7 +1707,9 @@ class DomainInvitation(Invitation):
         text_content = render_to_string("domain/email/domain_invite.txt", params)
         html_content = render_to_string("domain/email/domain_invite.html", params)
         subject = 'Invitation from %s to join CommCareHQ' % self.get_inviter().formatted_name
-        send_HTML_email(subject, self.email, html_content, text_content=text_content, cc=[self.get_inviter().get_email()])
+        send_HTML_email(subject, self.email, html_content, text_content=text_content,
+                        cc=[self.get_inviter().get_email()],
+                        email_from=settings.HQ_NOTIFICATIONS_EMAIL)
 
     @classmethod
     def by_domain(cls, domain, is_active=True):

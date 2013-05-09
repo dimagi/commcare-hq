@@ -144,5 +144,7 @@ function ReleasesMain(o) {
             });
     };
     // init
-    self.getMoreSavedApps();
+    setTimeout(function () {
+        self.getMoreSavedApps();
+    }, 0);
 }
