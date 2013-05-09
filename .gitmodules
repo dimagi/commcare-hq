@@ -101,5 +101,5 @@
 	path = submodules/freddy
 	url = git://github.com/dimagi/freddy.git
 [submodule "submodules/fluff-src"]
-	path = fluff-src
+	path = submodules/fluff-src
 	url = git://github.com/dimagi/fluff.git
