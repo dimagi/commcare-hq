@@ -121,7 +121,6 @@ class CommCareMultimedia(SafeSaveDocument):
             new_media.checksum = self.file_hash
             if media_meta:
                 new_media.media_meta = media_meta
-            ## copuy = cls.get_db().get(self._id, r=3)
             self.aux_media.append(new_media)
             self.save()
             is_update = True
