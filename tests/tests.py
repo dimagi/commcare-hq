@@ -1,15 +1,15 @@
 from django.conf import settings
-settings.configure(DEBUG=True)
+if not settings.configured:
+    settings.configure(DEBUG=True)
 
 from unittest2 import TestCase
 import fluff
-from couchdbkit import Document
+from couchdbkit import Document, DocumentSchema, DocumentBase
 from datetime import date
-from fakeco import MockCouchDb
+from fakecouch import FakeCouchDb
 
 
 class Base0(fluff.Calculator):
-
     @fluff.filter_by
     def base_0_filter(self):
         pass
@@ -20,7 +20,6 @@ class Base0(fluff.Calculator):
 
 
 class Base1(Base0):
-
     @fluff.filter_by
     def base_1_filter(self):
         pass
@@ -31,7 +30,6 @@ class Base1(Base0):
 
 
 class Base2(Base0):
-
     @fluff.filter_by
     def base_2_filter(self):
         pass
@@ -42,7 +40,6 @@ class Base2(Base0):
 
 
 class Base3(Base1, Base2):
-
     @fluff.filter_by
     def base_3_filter(self):
         pass
@@ -99,7 +96,7 @@ class Test(TestCase):
     def test_indicator_calculation(self):
         pillow = MockIndicators.pillow()()
         pillow.processor({'changes': [], 'id': '123', 'seq': 1})
-        indicator = mock_couch.mock_docs.get("MockIndicators-123", None)
+        indicator = fakedb.mock_docs.get("MockIndicators-123", None)
         self.assertIsNotNone(indicator)
         self.assertIn("visits_week", indicator)
         self.assertIn("all_visits", indicator["visits_week"])
@@ -145,14 +142,16 @@ class Test(TestCase):
         self.assertEqual(expected, diff)
 
 
-mock_couch = MockCouchDb(docs={"123": dict(actions=[dict(date="2012-09-23"), dict(date="2012-09-24")],
-                                           get_id="123",
-                                           domain="mock",
-                                           owner_id="test_owner")})
+fakedb = FakeCouchDb(docs={"123": dict(actions=[dict(date="2012-09-23"), dict(date="2012-09-24")],
+                                       get_id="123",
+                                       domain="mock",
+                                       owner_id="test_owner")})
+
+DocumentSchema._db = fakedb
+DocumentBase._db = fakedb
 
 
 class MockDoc(Document):
-    _db = mock_couch
     _doc_type = "Mock"
 
 
@@ -170,7 +169,6 @@ class VisitCalculator(fluff.Calculator):
 class MockIndicators(fluff.IndicatorDocument):
     from datetime import timedelta
 
-    _db = mock_couch
     document_class = MockDoc
     group_by = ('domain', 'owner_id')
     domains = ('test',)
