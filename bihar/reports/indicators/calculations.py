@@ -1,14 +1,13 @@
 from couchdbkit import ResourceNotFound
-from bihar.reports.indicators.filters import is_pregnant_mother, is_newborn_child, get_add, get_edd,\
-    mother_pre_delivery_columns, mother_post_delivery_columns
-from dimagi.utils.couch.safe_index import safe_index
+from bihar.calculations.utils.filters import is_pregnant_mother, is_newborn_child, get_add, get_edd
+from bihar.reports.indicators.filters import mother_pre_delivery_columns, mother_post_delivery_columns
 from dimagi.utils.parsing import string_to_datetime
 import datetime as dt
 from bihar.reports.indicators.visits import get_related_prop
 from dimagi.utils.decorators.memoized import memoized
 from django.utils.translation import ugettext_noop
 from django.utils.translation import ugettext as _
-from dimagi.utils.logging import notify_exception
+from bihar.calculations.utils.calculations import get_forms, _get_actions
 
 EMPTY = (0,0)
 
@@ -167,25 +166,9 @@ class MotherPostDeliverySummaryMixIn(MotherPostDeliveryMixIn):
     def as_row(self, case):
         return super(MotherPostDeliverySummaryMixIn, self).as_row(case) + (self.summary_value(case),)
 
-def _num_denom(num, denom):
-    return "%s/%s" % (num, denom)
-
 def _in_timeframe(date, days):
     today = dt.datetime.today().date()
     return today - dt.timedelta(days=days) < date < today
-
-def _num_denom_count(cases, num_func, denom_func):
-    num = denom = 0
-    for case in cases:
-        denom_diff = denom_func(case)
-        if denom_diff:
-            denom += denom_diff
-            num_diff = num_func(case)
-            assert num_diff <= denom_diff
-            # this is to prevent the numerator from ever passing the denominator
-            # though is probably not totally accurate
-            num += num_diff
-    return _num_denom(num, denom)
 
 def delivered_in_timeframe(case, days):
     return is_pregnant_mother(case) and get_add(case) and _in_timeframe(case.add, days)
@@ -213,16 +196,6 @@ def _visited_in_timeframe_of_birth(case, days):
     if visit_time and time_birth:
         return time_birth < visit_time < time_birth + dt.timedelta(days=days)
     return False
-
-def _get_actions(case, action_filter=lambda a: True):
-    for action in case.actions:
-        if action_filter(action):
-            yield action
-
-def get_forms(case, action_filter=lambda a: True, form_filter=lambda f: True):
-    for action in _get_actions(case, action_filter=action_filter):
-        if getattr(action, 'xform', None) and form_filter(action.xform):
-            yield action.xform
 
 def _get_action(case, action_filter=lambda a: True):
     """

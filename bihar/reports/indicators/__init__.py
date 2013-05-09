@@ -1,9 +1,7 @@
-from collections import defaultdict
-import functools
-from django.conf import settings
+from bihar.calculations.types import DoneDueCalculator, TotalCalculator
+from bihar.models import CareBiharFluff
 from dimagi.utils.modules import to_function
 from django.utils.translation import ugettext_noop as _
-from dimagi.utils.parsing import string_to_datetime
 from django.utils.datastructures import SortedDict
 
 # change here to debug as if today were some day in the past
@@ -298,13 +296,21 @@ class Indicator(object):
         calculation_class = to_function(spec["calculation_class"], failhard=True)
         kwargs = spec.get("calculation_kwargs", {})
         self._calculator = calculation_class(**kwargs)
+        try:
+            self.fluff_calculator = CareBiharFluff.get_calculator(self.slug)
+        except KeyError:
+            self.fluff_calculator = None
 
     @property
     def show_in_client_list(self):
+        if self.fluff_calculator:
+            return isinstance(self.fluff_calculator, TotalCalculator)
         return self._calculator.show_in_client_list
     
     @property
     def show_in_indicators(self):
+        if self.fluff_calculator:
+            return isinstance(self.fluff_calculator, DoneDueCalculator)
         return self._calculator.show_in_indicators
         
     def get_columns(self):
