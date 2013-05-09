@@ -51,6 +51,14 @@ class Calculator(object):
 
     window = None
 
+    # set by IndicatorDocumentMeta
+    fluff = None
+    slug = None
+
+    # set by CalculatorMeta
+    _fluff_emitters = None
+    _fluff_filters = None
+
     def __init__(self, window=None):
         if window is not None:
             self.window = window
@@ -78,6 +86,8 @@ class Calculator(object):
             )
         return values
 
+    def get_result(self, key, reduce=True):
+        return self.fluff.get_result(self.slug, key, reduce=reduce)
 
 
 class IndicatorDocumentMeta(schema.DocumentMeta):
@@ -92,6 +102,9 @@ class IndicatorDocumentMeta(schema.DocumentMeta):
         if not hasattr(cls, '_calculators'):
             cls._calculators = {}
         cls._calculators.update(calculators)
+        for slug, calculator in cls._calculators.items():
+            calculator.fluff = cls
+            calculator.slug = slug
         return cls
 
 
@@ -127,8 +140,16 @@ class IndicatorDocument(schema.Document):
         })
 
     @classmethod
+    def has_calculator(cls, calc_name):
+        return calc_name in cls._calculators
+
+    @classmethod
+    def get_calculator(cls, calc_name):
+        return cls._calculators[calc_name]
+
+    @classmethod
     def get_result(cls, calc_name, key, reduce=True):
-        calculator = cls._calculators[calc_name]
+        calculator = cls.get_calculator(calc_name)
         result = {}
         for emitter_name in calculator._fluff_emitters:
             shared_key = [cls._doc_type] + key + [calc_name, emitter_name]
