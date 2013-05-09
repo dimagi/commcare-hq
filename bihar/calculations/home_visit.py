@@ -44,9 +44,9 @@ class VisitCalculator(DoneDueCalculator):
         n_qualifying_visits = len(
             filter(lambda a: visit_is(a, self.visit_type), case.actions)
         )
-        # I think originally this was
-        # self.schedule[:n_qualifying_visits - 1]
-        # but that seems wrong
+        # What's below is true to the original, but I think it should be
+        # self.schedule[:n_qualifying_visits]
+        # to be revisited
         if n_qualifying_visits != 0:
             for days in self.schedule[:n_qualifying_visits - 1]:
                 yield case.add + datetime.timedelta(days=days) + GRACE_PERIOD
