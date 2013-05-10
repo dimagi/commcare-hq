@@ -45,19 +45,11 @@ class PhoneUsersTestCase(TestCase):
         self.couch_user.add_phone_number(789)
         self.couch_user.add_phone_number(101, default=True)
         self.couch_user.save()
-
         self.assertEquals(self.couch_user.default_phone_number, '101')
 
-        self.couch_user.make_phone_number_default(789)
-        self.assertEquals(self.couch_user.default_phone_number, '789')
-
-    def testMakeDefaultPhoneNumberWontCreateNewNumbers(self):
-        self.couch_user.add_phone_number(101, default=True)
+        self.couch_user.set_default_phone_number(789)
         self.couch_user.save()
-
-        self.couch_user.make_phone_number_default(500)
-        self.assertEquals(self.couch_user.default_phone_number, '101')
-        self.assertEquals(len(self.couch_user.phone_numbers), 1)
+        self.assertEquals(self.couch_user.default_phone_number, '789')
 
     def testPhoneUsersViewLastCommCareUsername(self):
         self.couch_user.delete()
