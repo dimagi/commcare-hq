@@ -22,7 +22,11 @@ $.fn.advanceFormsOptions = function (options) {
             if (newValue) {
                 $('#' + viewModel.css_id + '_status').closest('.control-group').show();
             } else {
-                $('#' + viewModel.css_id + '_status').closest('.control-group').hide();
+                var $app_type_select = $('#' + viewModel.css_id + '_status');
+                if ($app_type_select.val() == 'active') {
+                    $('#' + viewModel.css_id + '_status').closest('.control-group').hide();
+                }
+
             }
         });
         viewModel.show(false);
