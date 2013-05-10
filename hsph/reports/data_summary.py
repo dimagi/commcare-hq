@@ -97,9 +97,12 @@ class PrimaryOutcomeReport(GenericTabularReport, DataSummaryReport, HSPHSiteData
         ]
 
         for key in site_keys:
+            wtf = key
+            wtf[2] = str(wtf[2])
+
             data = get_db().view('hsph/data_summary', 
-                startkey=[self.domain] + prefix + ['region'] + key + [startdate], 
-                endkey=[self.domain] + prefix + ['region'] + key + [enddate],
+                startkey=[self.domain] + prefix + ['region'] + wtf + [startdate], 
+                endkey=[self.domain] + prefix + ['region'] + wtf + [enddate],
                 reduce=True,
                 wrapper=lambda r: r['value'])
 
@@ -122,7 +125,8 @@ class SecondaryOutcomeReport(DataSummaryReport, HSPHSiteDataMixin):
     @property
     def report_context(self):
         site_map = self.selected_site_map or self.site_map
-        facilities = IHForCHFField.get_selected_facilities(site_map)
+        facilities = IHForCHFField.get_selected_facilities(
+                site_map, domain=self.domain)
 
         return dict(
             ihf_data=self._get_data(facilities['ihf']),
@@ -130,7 +134,6 @@ class SecondaryOutcomeReport(DataSummaryReport, HSPHSiteDataMixin):
         )
 
     def _get_data(self, site_ids):
-        site_ids = list(site_ids)
         startdate = self.datespan.startdate_param_utc[:10]
         enddate = self.datespan.enddate_param_utc[:10]
 
@@ -197,17 +200,16 @@ class FADAObservationsReport(DataSummaryReport, HSPHSiteDataMixin):
 
         """
 
+        site_ids = site_ids or []
+        user_ids = user_ids or []
         startdate, enddate = daterange
-        assert site_ids is not None or user_ids is not None
         keys = []
-        if site_ids is not None:
-            keys.extend([(["site", site_id, startdate],
-                          ["site", site_id, enddate])
-                         for site_id in site_ids])
-        if user_ids is not None:
-            keys.extend([(["user", user_id, startdate],
-                          ["user", user_id, enddate])
-                         for user_id in user_ids])
+        keys.extend([(["site", site_id, startdate],
+                      ["site", site_id, enddate])
+                     for site_id in site_ids])
+        keys.extend([(["user", user_id, startdate],
+                      ["user", user_id, enddate])
+                     for user_id in user_ids])
 
         data_keys = [
             "total_forms",
@@ -262,8 +264,7 @@ class FADAObservationsReport(DataSummaryReport, HSPHSiteDataMixin):
             all_results.extend(results)
 
         for result in all_results:
-            if ((site_ids is None or result['site_id'] in site_ids) and
-                (user_ids is None or result['user_id'] in user_ids)):
+            if result['site_id'] in site_ids and result['user_id'] in user_ids:
                 for k, v in result.items():
                     if k not in ('site_id', 'user_id'):
                         values[k] += v
@@ -287,21 +288,21 @@ class FADAObservationsReport(DataSummaryReport, HSPHSiteDataMixin):
     @property
     def report_context(self):
         site_map = self.selected_site_map or self.site_map
-        facilities = IHForCHFField.get_selected_facilities(site_map)
+        facilities = IHForCHFField.get_selected_facilities(site_map, self.domain)
 
         startdate = self.datespan.startdate_param_utc[:10]
         enddate = self.datespan.enddate_param_utc[:10]
 
-        user_ids = self.user_ids or None
+        user_ids = self.user_ids
 
        
         return {
             'ihf': self.get_values(
                     self.domain, (startdate, enddate),
-                    site_ids=list(facilities['ihf']) or None,
+                    site_ids=facilities['ihf'],
                     user_ids=user_ids),
             'chf': self.get_values(
                     self.domain, (startdate, enddate),
-                    site_ids=list(facilities['chf']) or None,
+                    site_ids=facilities['chf'],
                     user_ids=user_ids)
         }

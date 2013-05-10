@@ -20,7 +20,8 @@ class SiteField(ReportField):
         self.context['slugs'] = self.slugs
 
     @classmethod
-    def getFacilities(cls):
+    def getFacilities(cls, domain=None):
+        cls.domain = domain or cls.domain
         facs = dict()
         data_type = FixtureDataType.by_domain_tag(cls.domain, 'site').first()
         fixtures = FixtureDataItem.by_data_type(cls.domain, data_type.get_id)
@@ -184,10 +185,11 @@ class IHForCHFField(ReportSelectField):
     default_option = "IHF and CHF"
 
     @classmethod
-    def _get_facilities(cls):
+    def _get_facilities(cls, domain=None):
+        domain = domain or cls.domain
         facilities = dict(ihf=[], chf=[])
-        data_type = FixtureDataType.by_domain_tag(cls.domain, 'site').first()
-        data_items = FixtureDataItem.by_data_type(cls.domain, data_type.get_id)
+        data_type = FixtureDataType.by_domain_tag(domain, 'site').first()
+        data_items = FixtureDataItem.by_data_type(domain, data_type.get_id)
         for item in data_items:
             ihf_chf = item.fields.get("ihf_chf", "").lower()
             if ihf_chf == 'ifh':  # typo in some test data
@@ -198,14 +200,18 @@ class IHForCHFField(ReportSelectField):
         return facilities
 
     @classmethod
-    def get_facilities(cls):
+    def get_facilities(cls, domain=None):
+        domain = domain or cls.domain
         return dict([(ihf_chf, map(lambda f: f['site_id'], facilities))
                      for (ihf_chf, facilities)
-                     in cls._get_facilities().items()])
+                     in cls._get_facilities(domain).items()])
 
     @classmethod
-    def get_selected_facilities(cls, site_map):
+    def get_selected_facilities(cls, site_map, domain=None):
+        domain = domain or cls.domain
         def filter_by_sitefield(facilities):
+            ret = []
+
             for f in facilities:
                 region_id = f['region_id']
                 if region_id not in site_map:
@@ -218,11 +224,12 @@ class IHForCHFField(ReportSelectField):
 
                 site_number = f['site_number']
                 if site_number in districts[district_id]['sites']:
-                    yield f['site_id']
+                    ret.append(f['site_id'])
+            return ret
 
-        return dict([(ihf_chf, filter_by_sitefield(facilities))
+        return dict([(ihf_chf.lower(), filter_by_sitefield(facilities))
                      for (ihf_chf, facilities)
-                     in cls._get_facilities().items()])
+                     in cls._get_facilities(domain).items()])
 
 
 class FacilityStatusField(ReportSelectField):
