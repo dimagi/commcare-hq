@@ -126,6 +126,7 @@ function BaseHQMediaUploadController (uploader_name, marker, options) {
     self.removeFileFromUI = function (file) {
         var activeSelectors = self.getActiveUploadSelectors(file);
         $(activeSelectors.selector).remove();
+        self.toggleUploadButton();
     };
 
     self.toggleUploadButton = function () {
