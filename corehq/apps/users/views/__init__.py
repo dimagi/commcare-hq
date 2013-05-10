@@ -187,6 +187,17 @@ class UserInvitationView(InvitationView):
 def accept_invitation(request, domain, invitation_id):
     return UserInvitationView()(request, invitation_id, domain=domain)
 
+@require_POST
+@require_can_edit_web_users
+def reinvite_web_user(request, domain):
+    invitation_id = request.POST['invite']
+    if invitation_id:
+        invitation = DomainInvitation.get(invitation_id)
+        invitation.send_activation_email()
+        return json_response({'response': _("Invitation resent"), 'status': 'ok'})
+    else:
+        raise Http404
+
 @require_can_edit_web_users
 def invite_web_user(request, domain, template="users/invite_web_user.html"):
     role_choices = UserRole.role_choices(domain)
