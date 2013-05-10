@@ -90,6 +90,7 @@ class Calculator(object):
     def get_result(self, key, reduce=True):
         return self.fluff.get_result(self.slug, key, reduce=reduce)
 
+
 class IndicatorDocumentMeta(schema.DocumentMeta):
 
     def __new__(mcs, name, bases, attrs):
@@ -153,7 +154,10 @@ class IndicatorDocument(schema.Document):
                 if calc_diff:
                     diff_keys[calc_name] = calc_diff
             else:
-                diff_keys[calc_name] = self[calc_name].keys()
+                for emitter_name, values in self[calc_name].items():
+                    if values:
+                        emitters = diff_keys.setdefault(calc_name, [])
+                        emitters.append(emitter_name)
 
         if not diff_keys:
             return None
