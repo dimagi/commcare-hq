@@ -1,5 +1,6 @@
 {% load hqstyle_tags %}
 {% load hq_shared_tags %}
+{% load i18n %}
 <div class="form form-horizontal">
     <fieldset>
         {% for phone in phone_numbers_extended %}
@@ -19,7 +20,7 @@
                     <div><span class="label"><small>INVALID FORMAT</small></span></div>
                     {% endifequal %}
                 </label>
-                
+
                 <div class="controls">
                     {% ifnotequal couch_user.doc_type "WebUser" %}
 
@@ -40,7 +41,21 @@
                     {% endifnotequal %}
 
                     {% if current_users_page or couch_user.is_commcare_user %}
-                        <a class="btn btn-danger" data-toggle="modal" href="#delete_phonenumber_{{ forloop.counter }}"><i class="icon icon-remove icon-white"></i> Delete</a>
+                        <a class="btn btn-danger" data-toggle="modal" href="#delete_phonenumber_{{ forloop.counter }}">
+                            <i class="icon icon-remove icon-white"></i> Delete
+                        </a>
+
+                        {% if not forloop.first %}
+                            <form class="input-inline input-append"
+                                  name="make_phone_number_default"
+                                  action="{% url make_phone_number_default domain couch_user.couch_id %}"
+                                  method="POST">
+                                <input type="hidden" name="phone_number" value="{{ phone.number }}"/>
+                                <button type="submit" class="btn">
+                                    {% blocktrans %}Mark as primary{% endblocktrans %}
+                                </button>
+                            </form>
+                        {% endif %}
                     {% endif %}
                 </div>
             </div>
