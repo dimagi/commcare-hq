@@ -8,5 +8,6 @@ install:
 script: coverage run `which django-admin.py` test --settings settings --traceback case phone
 after_success:
  - coveralls
+ - coverage report
 services:
  - couchdb
