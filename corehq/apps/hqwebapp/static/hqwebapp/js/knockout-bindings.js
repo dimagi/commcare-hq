@@ -450,13 +450,11 @@ ko.bindingHandlers.optstr = {
 ko.bindingHandlers.valueDefault = {
     init: ko.bindingHandlers.value.init,
     update: function (element, valueAccessor, allBindingsAccessor) {
-        var value = ko.utils.unwrapObservable(valueAccessor());
-        if (value) {
-            return ko.bindingHandlers.value.update(element, valueAccessor);
-        } else {
-            $(element).val(ko.utils.unwrapObservable(allBindingsAccessor()['default']));
+        var value = valueAccessor();
+        if (!value()) {
+            value(ko.utils.unwrapObservable(allBindingsAccessor()['default']));
         }
-
+        return ko.bindingHandlers.value.update(element, valueAccessor);
     }
 };
 
