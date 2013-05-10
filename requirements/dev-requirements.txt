@@ -1,6 +1,6 @@
 django-debug-toolbar
 django-devserver
-django-coverage
+coverage
 django-redis
 guppy
 werkzeug
