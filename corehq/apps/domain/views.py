@@ -544,7 +544,7 @@ def _notification_email_on_publish(domain, snapshot, published_by):
     try:
         for recipient in recipients:
             send_HTML_email(subject, recipient, html_content, text_content=text_content,
-                            email_from=settings.HQ_NOTIFICATIONS_EMAIL)
+                            email_from=settings.DEFAULT_FROM_EMAIL)
     except Exception:
         logging.warning("Can't send notification email, but the message was:\n%s" % text_content)
 
@@ -696,6 +696,6 @@ def _send_request_notification_email(request, org, dom):
     try:
         for recipient in recipients:
             send_HTML_email(subject, recipient, html_content, text_content=text_content,
-                            email_from=settings.HQ_NOTIFICATIONS_EMAIL)
+                            email_from=settings.DEFAULT_FROM_EMAIL)
     except Exception:
         logging.warning("Can't send notification email, but the message was:\n%s" % text_content)

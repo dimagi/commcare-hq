@@ -57,7 +57,7 @@ urlpatterns =\
 
         url(r'^accounts/password_reset_email/$', exception_safe_password_reset, extend(auth_pages_path('password_reset_form.html'),
                                                                                        { 'password_reset_form': ConfidentialPasswordResetForm,
-                                                                                         'from_email':settings.HQ_NOTIFICATIONS_EMAIL}),
+                                                                                         'from_email':settings.DEFAULT_FROM_EMAIL}),
                                                                                 name='password_reset_email'),
         url(r'^accounts/password_reset_email/done/$', 'password_reset_done', auth_pages_path('password_reset_done.html') ),
 

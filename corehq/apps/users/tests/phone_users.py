@@ -41,6 +41,16 @@ class PhoneUsersTestCase(TestCase):
         self.assertEquals(phone_user.username, self.username)
         self.assertEquals(phone_user.default_phone_number, '101')
 
+    def testPhoneUsersChangeDefaultNumber(self):
+        self.couch_user.add_phone_number(789)
+        self.couch_user.add_phone_number(101, default=True)
+        self.couch_user.save()
+        self.assertEquals(self.couch_user.default_phone_number, '101')
+
+        self.couch_user.set_default_phone_number(789)
+        self.couch_user.save()
+        self.assertEquals(self.couch_user.default_phone_number, '789')
+
     def testPhoneUsersViewLastCommCareUsername(self):
         self.couch_user.delete()
         phone_user_count = CouchUser.phone_users_by_domain(self.domain).count()
