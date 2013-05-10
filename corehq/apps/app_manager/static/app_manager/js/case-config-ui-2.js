@@ -5,7 +5,7 @@ This file was copied from case-config-ui-1.js, and then edited.
 All additions are done using knockout, and can eventually replace all the old code.
  */
 
-var CaseXML = (function () {
+var CaseConfig = (function () {
     "use strict";
     ko.bindingHandlers.questionsOptions = {
         update: function (element, valueAccessor, allBindingsAccessor) {
@@ -204,10 +204,10 @@ var CaseXML = (function () {
         self.utils.actions.subcases = self.toJS();
     }
     SubCasesViewModel.prototype.getLabel = function (question) {
-        return CaseXML.prototype.truncateLabel((question.repeat ? '- ' : '') + question.label, question.tag == 'hidden' ? ' (Hidden)' : '');
+        return CaseConfig.prototype.truncateLabel((question.repeat ? '- ' : '') + question.label, question.tag == 'hidden' ? ' (Hidden)' : '');
     };
     var action_names = ["open_case", "update_case", "close_case", "case_preload"],
-        CaseXML = function (params) {
+        CaseConfig = function (params) {
             var i, $form,
                 ejs_urls = params.ejs_urls;
 
@@ -280,10 +280,10 @@ var CaseXML = (function () {
                 questionScores[question.value] = i;
             });
             this.questionScores = questionScores;
-            
+
             ko.applyBindings(new SubCasesViewModel(params, this), $('#case-config-ko').get(0));
         };
-    CaseXML.prototype = {
+    CaseConfig.prototype = {
         truncateLabel: function (label, suffix) {
             suffix = suffix || "";
             var MAXLEN = 40,
@@ -298,7 +298,7 @@ var CaseXML = (function () {
         }
     };
 
-    CaseXML.prototype.render = function () {
+    CaseConfig.prototype.render = function () {
         var i;
         for (i = 0; i < action_names.length; i += 1) {
             this.actions[action_names[i]] = this.actions[action_names[i]] || {
@@ -316,12 +316,12 @@ var CaseXML = (function () {
             }
         });
     };
-    CaseXML.prototype.change = function () {
+    CaseConfig.prototype.change = function () {
         var casexml = this;
         $("#casexml_json").text(JSON.stringify(casexml.actions));
         casexml.saveButton.fire('change');
     };
-    CaseXML.prototype.init = function () {
+    CaseConfig.prototype.init = function () {
         var casexml = this;
         if (this.questions.length && this.edit) {
             this.home.delegate('input:not(.action-checkbox), select', 'change textchange', function () {
@@ -344,20 +344,20 @@ var CaseXML = (function () {
         }
         this.render();
     };
-    CaseXML.prototype.sortByQuestions = function (map, keysOrValues) {
+    CaseConfig.prototype.sortByQuestions = function (map, keysOrValues) {
         var self = this, pairs = _.pairs(map);
         return _(pairs).sortBy(function (pair) {
             var path = keysOrValues === 'keys' ? pair[0] : pair[1];
             return self.questionScores[path];
         });
     };
-    CaseXML.prototype.renderCondition = function (condition) {
+    CaseConfig.prototype.renderCondition = function (condition) {
         return this.condition_ejs.render({
             casexml: this,
             condition: condition
         });
     };
-    CaseXML.prototype.getQuestions = function (filter, excludeHidden, includeRepeat) {
+    CaseConfig.prototype.getQuestions = function (filter, excludeHidden, includeRepeat) {
         // filter can be "all", or any of "select1", "select", or "input" separated by spaces
         var i, options = [],
             q;
@@ -377,7 +377,7 @@ var CaseXML = (function () {
         }
         return options;
     };
-    CaseXML.prototype.renderOptions = function (options, value, name, allowNull) {
+    CaseConfig.prototype.renderOptions = function (options, value, name, allowNull) {
         if (allowNull === undefined) {
             allowNull = true;
         }
@@ -389,7 +389,7 @@ var CaseXML = (function () {
             allowNull: allowNull
         });
     };
-    CaseXML.prototype.renderQuestions = function (filter) {
+    CaseConfig.prototype.renderQuestions = function (filter) {
         var options = this.getQuestions(filter),
             html = "";
         options.forEach(function (o) {
@@ -397,7 +397,7 @@ var CaseXML = (function () {
         });
         return html;
     };
-    CaseXML.prototype.getAnswers = function (condition) {
+    CaseConfig.prototype.getAnswers = function (condition) {
         var i, q, o, value = condition.question,
             found = false,
             options = [];
@@ -416,7 +416,7 @@ var CaseXML = (function () {
         }
         return options;
     };
-    CaseXML.prototype.renderChecked = function (action) {
+    CaseConfig.prototype.renderChecked = function (action) {
         if (this.action_is_active(action)) {
             return 'checked="true"';
         } else {
@@ -424,7 +424,7 @@ var CaseXML = (function () {
         }
     };
 
-    CaseXML.prototype.refreshActions = function () {
+    CaseConfig.prototype.refreshActions = function () {
         var actions = this.actions,
             requires;
 
@@ -497,7 +497,7 @@ var CaseXML = (function () {
         });
     };
 
-    CaseXML.prototype.renderAction = function (action_type, label) {
+    CaseConfig.prototype.renderAction = function (action_type, label) {
         var html = this.action_ejs.render({
             casexml: this,
             id: action_type.replace("_", "-"),
@@ -507,7 +507,7 @@ var CaseXML = (function () {
         });
         return html;
     };
-    CaseXML.prototype.hasActions = function () {
+    CaseConfig.prototype.hasActions = function () {
         var a;
         for (a in this.actions) {
             if (this.actions.hasOwnProperty(a)) {
@@ -518,7 +518,7 @@ var CaseXML = (function () {
         }
     };
 
-    CaseXML.prototype.renderPropertyList = function (map, keyType, reservedWords, showSuggestion) {
+    CaseConfig.prototype.renderPropertyList = function (map, keyType, reservedWords, showSuggestion) {
         showSuggestion = showSuggestion === undefined ? false : showSuggestion;
         return this.propertyList_ejs.render({
             map: map,
@@ -529,5 +529,5 @@ var CaseXML = (function () {
         });
     };
 
-    return CaseXML;
+    return {CaseConfig: CaseConfig};
 }());

@@ -153,7 +153,7 @@
              its value can be read by another UI (form filtering) */
             var form_requires = ko.observable({{ form.requires|JSON }});
             if (!form_empty) {
-                var casexml = new CaseXML({
+                var caseConfig = new CaseConfig.CaseConfig({
                     home: $('#casexml_home'),
                     actions: {{ form.actions|JSON }},
                     questions: {{ xform_questions|JSON }},
@@ -179,7 +179,7 @@
                     }
                     {% endif %}
                 });
-                casexml.init();
+                caseConfig.init();
 
                 // tag the 'preview in cloudcare' button with the right url
                 // unfortunately, has to be done in javascript
