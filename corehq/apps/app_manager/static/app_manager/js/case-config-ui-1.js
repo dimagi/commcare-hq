@@ -56,6 +56,11 @@ var CaseConfig = (function () {
             }
             $form.appendTo(this.home);
             this.subhome = $('<div/>').appendTo($form);
+            var questionScores = {};
+            _(this.questions).each(function (question, i) {
+                questionScores[question.value] = i;
+            });
+            this.questionScores = questionScores;
         };
     CaseConfig.prototype = {
         truncateLabel: function (label, suffix) {
@@ -117,7 +122,13 @@ var CaseConfig = (function () {
         }
         this.render();
     };
-
+    CaseConfig.prototype.sortByQuestions = function (map, keysOrValues) {
+        var self = this, pairs = _.pairs(map);
+        return _(pairs).sortBy(function (pair) {
+            var path = keysOrValues === 'keys' ? pair[0] : pair[1];
+            return self.questionScores[path];
+        });
+    };
     CaseConfig.prototype.renderCondition = function (condition) {
         return this.condition_ejs.render({
             casexml: this,
