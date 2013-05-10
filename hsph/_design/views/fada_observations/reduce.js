@@ -15,7 +15,9 @@ function (key, values, rereduce) {
         var data = values[i];
 
         for (var key in data) {
-            if (typeof result[key] === "undefined") {
+            if (key === 'site_id' || key === 'user_id') {
+                result[key] = data[key]; 
+            } else if (typeof result[key] === "undefined") {
                 result[key] = data[key];
             } else {
                 result[key] += data[key];

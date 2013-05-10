@@ -1,8 +1,7 @@
 function (doc) {
-    if (!(doc.doc_type === "XFormInstance" &&
-          doc.domain === "hsph" &&
-          doc.xmlns === "http://openrosa.org/formdesigner/CAE82D95-8F39-45AF-9A22-0E5D15EF148B")) 
-    {
+    // !code util/hsph.js
+    
+    if (!isFADAProcessDataForm(doc)) {
         return;
     }
 
@@ -44,7 +43,6 @@ function (doc) {
             "ab_baby",
             "art_mother",
             "art_baby",
-            "antiobiotics_baby"
         ];
 
     var data = {
@@ -79,8 +77,14 @@ function (doc) {
             data["med_" + field] = 0;
         }
     }
+    
+    // used by secondary outcome report
+    data.pp2_soap_and_water = (data.pp2_soap === 'yes' && data.pp2_water === 'yes');
 
-    var key = [form.meta.userID, form.meta.timeEnd, form.process_sbr_no];
-    emit(key, data);
+    data.site_id = form.site_id;
+    data.user_id = form.meta.userID;
+
+    emit([doc.domain, "user", form.meta.userID, form.process_date_admission, form.process_sbr_no], data);
+    emit([doc.domain, "site", form.site_id, form.process_date_admission, form.process_sbr_no], data);
 
 }

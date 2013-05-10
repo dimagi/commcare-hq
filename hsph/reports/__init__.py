@@ -6,7 +6,7 @@ class HSPHSiteDataMixin(object):
     @property
     def site_map(self):
         if self._site_map is None:
-            self._site_map = SiteField.getFacilities()
+            self._site_map = SiteField.getFacilities(domain=self.domain)
         return self._site_map
 
     _selected_site_map = None

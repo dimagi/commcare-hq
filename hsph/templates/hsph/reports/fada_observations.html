@@ -1,21 +1,32 @@
 {% extends "reports/async/default.html" %}
 {% load i18n %}
 
-{% block head %}
-    {{ block.super }}
+{% block reportcontent %}
     <style type="text/css">
         .report-table td:not(:first-child), .report-table th:not(:first-child) {
             text-align: right;
         }
+
+        tr > :nth-child(3), tr > :nth-child(5), tr.report-header > :nth-child(2) {
+            border-right: 1px solid #dddddd;
+        }
+        
+        tr.indent :first-child {
+            padding-left: 30px;
+        }
     </style>
 
-{% endblock %}
-
-{% block reportcontent %}
     <table class="report-table table table-striped">
         <thead>
+            <tr class="report-header">
+                <th></th>
+                <th colspan="2" style="text-align:center">IHF</th>
+                <th colspan="2" style="text-align:center">CHF</th>
+            </tr>
             <tr>
                 <th></th>
+                <th>{% trans "Number" %}</th>
+                <th>{% trans "Percentage" %}</th>
                 <th>{% trans "Number" %}</th>
                 <th>{% trans "Percentage" %}</th>
             </tr>
@@ -23,183 +34,242 @@
         <tbody>
             <tr>
                 <th>{% trans "Total Observations" %}</th>
-                <th>{{ unique_sbrs }}</th>
-                <th>{{ unique_sbrs_pct }}</th>
+                <th>{{ ihf.unique_sbrs }}</th>
+                <th>{{ ihf.unique_sbrs_pct }}</th>
+                <th>{{ chf.unique_sbrs }}</th>
+                <th>{{ chf.unique_sbrs_pct }}</th>
             </tr>
             <tr>
-                <td colspan="3"></td>
+                <td colspan="5"></td>
             </tr>
             <tr>
                 <th>{% trans "1. On Admission (Total Pause points Observed)" %}</th>
-                <td>{{ pp1_observed }}</td>
-                <td>{{ pp1_observed_pct }}</td>
+                <td>{{ ihf.pp1_observed }}</td>
+                <td>{{ ihf.pp1_observed_pct }}</td>
+                <td>{{ chf.pp1_observed }}</td>
+                <td>{{ chf.pp1_observed_pct }}</td>
             </tr>
-            <tr>
+            <tr class="indent">
                 <td>{% trans "Maternal temperature obtained?" %}</th>
-                <td>{{ pp1_maternal_temp }}</td>
-                <td>{{ pp1_maternal_temp_pct }}</td>
+                <td>{{ ihf.pp1_maternal_temp }}</td>
+                <td>{{ ihf.pp1_maternal_temp_pct }}</td>
+                <td>{{ chf.pp1_maternal_temp }}</td>
+                <td>{{ chf.pp1_maternal_temp_pct }}</td>
             </tr>
-            <tr>
+            <tr class="indent">
                 <td>{% trans "Maternal blood pressure obtained?" %}</td>
-                <td>{{ pp1_maternal_bp }}</td>
-                <td>{{ pp1_maternal_bp_pct }}</td>
+                <td>{{ ihf.pp1_maternal_bp }}</td>
+                <td>{{ ihf.pp1_maternal_bp_pct }}</td>
+                <td>{{ chf.pp1_maternal_bp }}</td>
+                <td>{{ chf.pp1_maternal_bp_pct }}</td>
             </tr>
-            <tr>
+            <tr class="indent">
                 <td>{% trans "Partograph started" %}</td>
-                <td>{{ pp1_partograph }}</td>
-                <td>{{ pp1_partograph_pct }}</td>
+                <td>{{ ihf.pp1_partograph }}</td>
+                <td>{{ ihf.pp1_partograph_pct }}</td>
+                <td>{{ chf.pp1_partograph }}</td>
+                <td>{{ chf.pp1_partograph_pct }}</td>
             </tr>
-            <tr>
+            <tr class="indent">
                 <td>{% trans "Was the checklist used? (PP-1)" %}</td>
-                <td>{{ pp1_scc_used_pp1 }}</td>
-                <td>{{ pp1_scc_used_pp1_pct }}</td>
+                <td>{{ ihf.pp1_scc_used_pp1 }}</td>
+                <td>{{ ihf.pp1_scc_used_pp1_pct }}</td>
+                <td>{{ chf.pp1_scc_used_pp1 }}</td>
+                <td>{{ chf.pp1_scc_used_pp1_pct }}</td>
             </tr>
-            <tr>
+            <tr class="indent">
                 <td>{% trans "Was a birth companion present (PP-1)" %}</td>
-                <td>{{ pp1_pp_1_birth_companion_present }}</td>
-                <td>{{ pp1_pp_1_birth_companion_present_pct }}</td>
+                <td>{{ ihf.pp1_pp_1_birth_companion_present }}</td>
+                <td>{{ ihf.pp1_pp_1_birth_companion_present_pct }}</td>
+                <td>{{ chf.pp1_pp_1_birth_companion_present }}</td>
+                <td>{{ chf.pp1_pp_1_birth_companion_present_pct }}</td>
             </tr>
             <tr>
-                <td colspan="3"></td>
+                <td colspan="5"></td>
             </tr>
             <tr>
                 <th>{% trans "2. At the time of delivery (Total Pause points Observed)" %}</th>
-                <td>{{ pp2_observed }}</td>
-                <td>{{ pp2_observed_pct }}</td>
+                <td>{{ ihf.pp2_observed }}</td>
+                <td>{{ ihf.pp2_observed_pct }}</td>
+                <td>{{ chf.pp2_observed }}</td>
+                <td>{{ chf.pp2_observed_pct }}</td>
             </tr>
-            <tr>
+            <tr class="indent">
                 <td>{% trans "Was oxytocin started before delivery of baby?" %}</td>
-                <td>{{ pp2_oxycotin_started }}</td>
-                <td>{{ pp2_oxycotin_started_pct }}</td>
+                <td>{{ ihf.pp2_oxycotin_started }}</td>
+                <td>{{ ihf.pp2_oxycotin_started_pct }}</td>
+                <td>{{ chf.pp2_oxycotin_started }}</td>
+                <td>{{ chf.pp2_oxycotin_started_pct }}</td>
             </tr>
-            <tr>
+            <tr class="indent">
                 <td>{% trans "Soap used to clean hands at the time of delivery?" %}</td>
-                <td>{{ pp2_soap }}</td>
-                <td>{{ pp2_soap_pct }}</td>
+                <td>{{ ihf.pp2_soap }}</td>
+                <td>{{ ihf.pp2_soap_pct }}</td>
+                <td>{{ chf.pp2_soap }}</td>
+                <td>{{ chf.pp2_soap_pct }}</td>
             </tr>
-            <tr>
+            <tr class="indent">
                 <td>{% trans "Water used to clean hands at the time of delivery?" %}</td>
-                <td>{{ pp2_water }}</td>
-                <td>{{ pp2_water_pct }}</td>
+                <td>{{ ihf.pp2_water }}</td>
+                <td>{{ ihf.pp2_water_pct }}</td>
+                <td>{{ chf.pp2_water }}</td>
+                <td>{{ chf.pp2_water_pct }}</td>
             </tr>
-            <tr>
+            <tr class="indent">
                 <td>{% trans "Gloves used at the time of delivery?" %}</td>
-                <td>{{ pp2_gloves_used }}</td>
-                <td>{{ pp2_gloves_used_pct }}</td>
+                <td>{{ ihf.pp2_gloves_used }}</td>
+                <td>{{ ihf.pp2_gloves_used_pct }}</td>
+                <td>{{ chf.pp2_gloves_used }}</td>
+                <td>{{ chf.pp2_gloves_used_pct }}</td>
             </tr>
-            <tr>
+            <tr class="indent">
                 <td>{% trans "Was the checklist used? (PP-2)" %}</td>
-                <td>{{ pp2_scc_used_pp2 }}</td>
-                <td>{{ pp2_scc_used_pp2_pct }}</td>
+                <td>{{ ihf.pp2_scc_used_pp2 }}</td>
+                <td>{{ ihf.pp2_scc_used_pp2_pct }}</td>
+                <td>{{ chf.pp2_scc_used_pp2 }}</td>
+                <td>{{ chf.pp2_scc_used_pp2_pct }}</td>
             </tr>
-            <tr>
+            <tr class="indent">
                 <td>{% trans "Was a birth companion present? (PP-2)" %}</td>
-                <td>{{ pp2_pp3_birth_companion_present }}</td>
-                <td>{{ pp2_pp3_birth_companion_present_pct }}</td>
+                <td>{{ ihf.pp2_pp3_birth_companion_present }}</td>
+                <td>{{ ihf.pp2_pp3_birth_companion_present_pct }}</td>
+                <td>{{ chf.pp2_pp3_birth_companion_present }}</td>
+                <td>{{ chf.pp2_pp3_birth_companion_present_pct }}</td>
             </tr>
             <tr>
-                <td colspan="3"></td>
+                <td colspan="5"></td>
             </tr>
             <tr>
                 <th>{% trans "3. At one minute after delivery (Total Pause points Observed)" %}</th>
-                <td>{{ pp3_observed }}</td>
-                <td>{{ pp3_observed_pct }}</td>
+                <td>{{ ihf.pp3_observed }}</td>
+                <td>{{ ihf.pp3_observed_pct }}</td>
+                <td>{{ chf.pp3_observed }}</td>
+                <td>{{ chf.pp3_observed_pct }}</td>
             </tr>
-            <tr>
+            <tr class="indent">
                 <td>{% trans "Oxytocin administered to mother?" %}</td>
-                <td>{{ pp3_oxycotin }}</td>
-                <td>{{ pp3_oxycotin_pct }}</td>
+                <td>{{ ihf.pp3_oxycotin }}</td>
+                <td>{{ ihf.pp3_oxycotin_pct }}</td>
+                <td>{{ chf.pp3_oxycotin }}</td>
+                <td>{{ chf.pp3_oxycotin_pct }}</td>
             </tr>
-            <tr>
+            <tr class="indent">
                 <td>{% trans "Was the baby apneic?" %}</td>
-                <td>{{ pp3_baby_apneic }}</td>
-                <td>{{ pp3_baby_apneic_pct }}</td>
+                <td>{{ ihf.pp3_baby_apneic }}</td>
+                <td>{{ ihf.pp3_baby_apneic_pct }}</td>
+                <td>{{ chf.pp3_baby_apneic }}</td>
+                <td>{{ chf.pp3_baby_apneic_pct }}</td>
             </tr>
-            <tr>
+            <tr class="indent">
                 <td>{% trans "If 'Yes', was an appropriate intervention given?" %}</td>
-                <td>{{ pp3_baby_intervention }}</td>
-                <td>{{ pp3_baby_intervention_pct }}</td>
+                <td>{{ ihf.pp3_baby_intervention }}</td>
+                <td>{{ ihf.pp3_baby_intervention_pct }}</td>
+                <td>{{ chf.pp3_baby_intervention }}</td>
+                <td>{{ chf.pp3_baby_intervention_pct }}</td>
             </tr>
-            <tr>
+            <tr class="indent">
                 <td>{% trans "Was a birth companion present? (PP-3)" %}</td>
-                <td>{{ pp3_pp_3_birth_companion_present }}</td>
-                <td>{{ pp3_pp_3_birth_companion_present_pct }}</td>
+                <td>{{ ihf.pp3_pp_3_birth_companion_present }}</td>
+                <td>{{ ihf.pp3_pp_3_birth_companion_present_pct }}</td>
+                <td>{{ chf.pp3_pp_3_birth_companion_present }}</td>
+                <td>{{ chf.pp3_pp_3_birth_companion_present_pct }}</td>
             </tr>
             <tr>
-                <td colspan="3"></td>
+                <td colspan="5"></td>
             </tr>
             <tr>
                 <th>{% trans "4. At one hour after delivery (Total Pause points Observed)" %}</th>
-                <td>{{ pp4_observed }}</td>
-                <td>{{ pp4_observed_pct }}</td>
+                <td>{{ ihf.pp4_observed }}</td>
+                <td>{{ ihf.pp4_observed_pct }}</td>
+                <td>{{ chf.pp4_observed }}</td>
+                <td>{{ chf.pp4_observed_pct }}</td>
             </tr>
-            <tr>
+            <tr class="indent">
                 <td>{% trans "Newborn weight taken?" %}</td>
-                <td>{{ pp4_baby_wt }}</td>
-                <td>{{ pp4_baby_wt_pct }}</td>
+                <td>{{ ihf.pp4_baby_wt }}</td>
+                <td>{{ ihf.pp4_baby_wt_pct }}</td>
+                <td>{{ chf.pp4_baby_wt }}</td>
+                <td>{{ chf.pp4_baby_wt_pct }}</td>
             </tr>
-            <tr>
+            <tr class="indent">
                 <td>{% trans "Newborn temperature taken?" %}</td>
-                <td>{{ pp4_baby_temp }}</td>
-                <td>{{ pp4_baby_temp_pct }}</td>
+                <td>{{ ihf.pp4_baby_temp }}</td>
+                <td>{{ ihf.pp4_baby_temp_pct }}</td>
+                <td>{{ chf.pp4_baby_temp }}</td>
+                <td>{{ chf.pp4_baby_temp_pct }}</td>
             </tr>
-            <tr>
+            <tr class="indent">
                 <td>{% trans "Breastfeeding initiated?" %}</td>
-                <td>{{ pp4_breastfeeding }}</td>
-                <td>{{ pp4_breastfeeding_pct }}</td>
+                <td>{{ ihf.pp4_breastfeeding }}</td>
+                <td>{{ ihf.pp4_breastfeeding_pct }}</td>
+                <td>{{ chf.pp4_breastfeeding }}</td>
+                <td>{{ chf.pp4_breastfeeding_pct }}</td>
             </tr>
-            <tr>
+            <tr class="indent">
                 <td>{% trans "Was the checklist used? (PP-4)" %}</td>
-                <td>{{ pp4_scc_used_pp4 }}</td>
-                <td>{{ pp4_scc_used_pp4_pct }}</td>
+                <td>{{ ihf.pp4_scc_used_pp4 }}</td>
+                <td>{{ ihf.pp4_scc_used_pp4_pct }}</td>
+                <td>{{ chf.pp4_scc_used_pp4 }}</td>
+                <td>{{ chf.pp4_scc_used_pp4_pct }}</td>
             </tr>
-            <tr>
+            <tr class="indent">
                 <td>{% trans "Was a birth companion present? (PP-4)" %}</td>
-                <td>{{ pp4_pp_4_birth_companion_present }}</td>
-                <td>{{ pp4_pp_4_birth_companion_present_pct }}</td>
+                <td>{{ ihf.pp4_pp_4_birth_companion_present }}</td>
+                <td>{{ ihf.pp4_pp_4_birth_companion_present_pct }}</td>
+                <td>{{ chf.pp4_pp_4_birth_companion_present }}</td>
+                <td>{{ chf.pp4_pp_4_birth_companion_present_pct }}</td>
             </tr>
             <tr>
-                <td colspan="3"></td>
+                <td colspan="5"></td>
             </tr>
             <tr>
                 <th>{% trans "Medication Administration (Total Pause points Observed)" %}</th>
-                <td>{{ medication_observed }}</td>
-                <td>{{ medication_observed_pct }}</td>
+                <td>{{ ihf.medication_observed }}</td>
+                <td>{{ ihf.medication_observed_pct }}</td>
+                <td>{{ chf.medication_observed }}</td>
+                <td>{{ chf.medication_observed_pct }}</td>
             </tr>
-            <tr>
+            <tr class="indent">
                 <td>{% trans "Oxytocin administered to mother?" %}</td>
-                <td>{{ med_oxycotin_admin }}</td>
-                <td>{{ med_oxycotin_admin_pct }}</td>
+                <td>{{ ihf.med_oxycotin_admin }}</td>
+                <td>{{ ihf.med_oxycotin_admin_pct }}</td>
+                <td>{{ chf.med_oxycotin_admin }}</td>
+                <td>{{ chf.med_oxycotin_admin_pct }}</td>
             </tr>
-            <tr>
+            <tr class="indent">
                 <td>{% trans "Antibiotics administered to mother?" %}</td>
-                <td>{{ med_ab_mother }}</td>
-                <td>{{ med_ab_mother_pct }}</td>
+                <td>{{ ihf.med_ab_mother }}</td>
+                <td>{{ ihf.med_ab_mother_pct }}</td>
+                <td>{{ chf.med_ab_mother }}</td>
+                <td>{{ chf.med_ab_mother_pct }}</td>
             </tr>
-            <tr>
+            <tr class="indent">
                 <td>{% trans "Magnesium Sulphate administered to mother?" %}</td>
-                <td>{{ med_mgsulp }}</td>
-                <td>{{ med_mgsulp_pct }}</td>
+                <td>{{ ihf.med_mgsulp }}</td>
+                <td>{{ ihf.med_mgsulp_pct }}</td>
+                <td>{{ chf.med_mgsulp }}</td>
+                <td>{{ chf.med_mgsulp_pct }}</td>
             </tr>
-            <tr>
+            <tr class="indent">
                 <td>{% trans "Antibiotics administered to baby?" %}</td>
-                <td>{{ med_ab_baby }}</td>
-                <td>{{ med_ab_baby_pct }}</td>
+                <td>{{ ihf.med_ab_baby }}</td>
+                <td>{{ ihf.med_ab_baby_pct }}</td>
+                <td>{{ chf.med_ab_baby }}</td>
+                <td>{{ chf.med_ab_baby_pct }}</td>
             </tr>
-            <tr>
+            <tr class="indent">
                 <td>{% trans "Antiretroviral administered to mother?" %}</td>
-                <td>{{ med_art_mother }}</td>
-                <td>{{ med_art_mother_pct }}</td>
+                <td>{{ ihf.med_art_mother }}</td>
+                <td>{{ ihf.med_art_mother_pct }}</td>
+                <td>{{ chf.med_art_mother }}</td>
+                <td>{{ chf.med_art_mother_pct }}</td>
             </tr>
-            <tr>
+            <tr class="indent">
                 <td>{% trans "Antiretroviral administered to baby?" %}</td>
-                <td>{{ med_art_baby }}</td>
-                <td>{{ med_art_baby_pct }}</td>
-            </tr>
-            <tr>
-                <td>{% trans "Antibiotics given to baby?" %}</td>
-                <td>{{ med_antiobiotics_baby }}</td>
-                <td>{{ med_antiobiotics_baby_pct }}</td>
+                <td>{{ ihf.med_art_baby }}</td>
+                <td>{{ ihf.med_art_baby_pct }}</td>
+                <td>{{ chf.med_art_baby }}</td>
+                <td>{{ chf.med_art_baby_pct }}</td>
             </tr>
         </tbody>
     </table>

@@ -7,11 +7,19 @@ function get_form_filled_duration(xform_doc) {
     return null;
 }
 
+function get_submission_day(xform_doc) {
+    var meta = xform_doc.form.meta;
+    if (meta && meta.timeEnd) {
+        return Math.round((new Date(meta.timeEnd)).getTime() / 1000 * 3600 * 24);
+    }
+    return null;
+}
+
 /* HSPH related */
 
 function isHSPHForm(doc) {
-    return (doc.doc_type === 'XFormInstance'
-            && doc.domain === 'hsph');
+    return (doc.doc_type === 'XFormInstance' && 
+            doc.domain === 'hsph');
 }
 
 function isHSPHBirthCase(doc) {
@@ -19,32 +27,63 @@ function isHSPHBirthCase(doc) {
             doc.type === "birth");
 }
 
+// new apps
+
+function isNewHSPHForm(doc) {
+    return (doc.doc_type === 'XFormInstance' &&
+            (doc.domain === 'hsph-dev' || doc.domain === 'hsph-betterbirth-pilot-2'));
+}
+
+function isNewHSPHBirthCase(doc) {
+    return (doc.doc_type === 'CommCareCase' &&
+            doc.type === "birth" &&
+            (doc.domain === 'hsph-dev' || doc.domain === 'hsph-betterbirth-pilot-2'));
+}
+
+function isHSPHBirthRegForm(doc) {
+    return (isNewHSPHForm(doc) &&
+           doc.xmlns === "http://openrosa.org/formdesigner/FE77C4BD-38EE-499B-AC5E-D7279C83BDB5");
+}
+
+function isFADAProcessDataForm(doc) {
+    return (isNewHSPHForm(doc) &&  
+            doc.xmlns === "http://openrosa.org/formdesigner/CAE82D95-8F39-45AF-9A22-0E5D15EF148B");
+}
+
+function isCATIFollowUpForm(doc) {
+    // same as old "DCCFollowUpReport"
+    return (isNewHSPHForm(doc) &&
+            doc.xmlns === "http://openrosa.org/formdesigner/A5B08D8F-139D-46C6-9FDF-B1AD176EAE1F");
+}
+
+// old apps
 function isDCOFollowUpReport(doc) {
-    return (doc.xmlns === "http://openrosa.org/formdesigner/E5E03D8D-937D-46C6-AF8F-C1FD176E2E1B");
+    return (isHSPHForm(doc) &&
+            doc.xmlns === "http://openrosa.org/formdesigner/E5E03D8D-937D-46C6-AF8F-C1FD176E2E1B");
 }
 
 function isCITLReport(doc) {
-    return (doc.xmlns === "http://openrosa.org/formdesigner/0D9CB681-2C07-46AB-8720-66E4FBD94211");
+    return (isHSPHForm(doc) &&
+            doc.xmlns === "http://openrosa.org/formdesigner/0D9CB681-2C07-46AB-8720-66E4FBD94211");
 }
 
 function isDCOBirthRegReport(doc) {
-    return (doc.xmlns === "http://openrosa.org/formdesigner/FE77C4BD-38EE-499B-AC5E-D7279C83BDB5");
+    return (isHSPHForm(doc) &&
+            doc.xmlns === "http://openrosa.org/formdesigner/FE77C4BD-38EE-499B-AC5E-D7279C83BDB5");
 }
 
 function isDCOSiteLogReport(doc) {
-    return (doc.xmlns === "http://openrosa.org/formdesigner/8412C3D0-F06C-49BF-9067-ED62E991F315");
+    return (isHSPHForm(doc) &&
+            doc.xmlns === "http://openrosa.org/formdesigner/8412C3D0-F06C-49BF-9067-ED62E991F315");
 }
 
 function isDCCFollowUpReport(doc) {
-    return (doc.xmlns === "http://openrosa.org/formdesigner/A5B08D8F-139D-46C6-9FDF-B1AD176EAE1F");
+    return (isHSPHForm(doc) &&
+            doc.xmlns === "http://openrosa.org/formdesigner/A5B08D8F-139D-46C6-9FDF-B1AD176EAE1F");
 }
 
 function getDCO(doc) {
     return doc.form.meta.userID;
-}
-
-function isIHForCHF(doc) {
-    return "IHF";
 }
 
 function calcHSPHBirthDatespan(doc) {
@@ -155,7 +194,6 @@ function HSPHEntry(doc) {
 
     self.getCITLInfo = function () {
         self.data.facilityStatus = (isDCOSiteLogReport(self.doc)) ? -1 : parseInt(self.form.current_implementation_stage);
-        self.data.IHFCHF = isIHForCHF(self.doc);
 
         if (isCITLReport(self.doc)) {
             self.data.isCITLData = true;
@@ -192,4 +230,5 @@ function HSPHEntry(doc) {
         }
 
     }
+
 }
