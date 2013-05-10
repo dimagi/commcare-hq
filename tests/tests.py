@@ -104,6 +104,23 @@ class Test(TestCase):
         self.assertEqual("2012-09-24", indicator["visits_week"]["all_visits"][1])
         self.assertIsNone(indicator["visits_week"]["null_emitter"][0])
 
+    def test_indicator_diff_new(self):
+        doc = MockIndicators(domain="mock",
+                             owner_id="123",
+                             visits_week=dict(all_visits=[date(2012, 02, 23)],
+                                              null_emitter=[]))
+        diff = doc.diff(None)
+        expected = dict(doc_type='MockIndicators',
+                        group_values=['mock', '123'],
+                        group_names=['domain', 'owner_id'],
+                        indicator_changes=[
+                            dict(calculator='visits_week',
+                                 emitter='all_visits',
+                                 emitter_type='date',
+                                 values=[date(2012, 2, 23)])
+                        ])
+        self.assertEqual(expected, diff)
+
     def test_indicator_diff_same(self):
         doc = MockIndicators(domain="mock",
                              owner_id="123",
