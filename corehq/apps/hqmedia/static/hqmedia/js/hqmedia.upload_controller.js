@@ -304,7 +304,7 @@ function BaseHQMediaUploadController (uploader_name, marker, options) {
          */
         var curUpload = self.getActiveUploadSelectors(event.file);
         $(curUpload.progressBarContainer).addClass('progress-danger');
-        self.showErrors(event.file, ['There is an issue communicating with the server at this time. The upload failed.']);
+        self.showErrors(event.file, ['Upload Failed: Issue communicating with server.  This usually means your Internet connection is not strong enough. Try again later.']);
     };
 
     self.showErrors = function (file, errors) {
