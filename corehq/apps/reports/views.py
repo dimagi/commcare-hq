@@ -523,11 +523,11 @@ def email_report(request, domain, report_slug, report_type=ProjectReportDispatch
 
     if form.cleaned_data['send_to_owner']:
         send_HTML_email(subject, request.couch_user.get_email(), body,
-                        email_from=settings.HQ_NOTIFICATIONS_EMAIL)
+                        email_from=settings.DEFAULT_FROM_EMAIL)
 
     if form.cleaned_data['recipient_emails']:
         for recipient in form.cleaned_data['recipient_emails']:
-            send_HTML_email(subject, recipient, body, email_from=settings.HQ_NOTIFICATIONS_EMAIL)
+            send_HTML_email(subject, recipient, body, email_from=settings.DEFAULT_FROM_EMAIL)
 
     return HttpResponse()
 
