@@ -50,7 +50,7 @@
                                   name="make_phone_number_default"
                                   action="{% url make_phone_number_default domain couch_user.couch_id %}"
                                   method="POST">
-                                <input type="hidden" name="phone_number" value="{{ phone.number|urlencode }}"/>
+                                <input type="hidden" name="phone_number" value="{{ phone.number }}"/>
                                 <button type="submit" class="btn">
                                     {% blocktrans %}Mark as primary{% endblocktrans %}
                                 </button>
