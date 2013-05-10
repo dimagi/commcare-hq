@@ -315,9 +315,7 @@ var CaseConfig = (function () {
                 }
             };
         });
-        console.log(self.renderChecked);
         self.template.update(self.subhome.get(0), self);
-        console.log('ohi');
         COMMCAREHQ.initBlock(self.subhome);
         $('.action-checkbox').each(function () {
             var container = $(this).parent().next('.well');
@@ -423,10 +421,8 @@ var CaseConfig = (function () {
     };
     CaseConfig.prototype.renderChecked = function (action) {
         if (this.action_is_active(action)) {
-            console.log('weeee!');
             return 'checked="true"';
         } else {
-            console.log('ugh!', action);
             return "";
         }
     };
