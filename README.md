@@ -38,7 +38,7 @@ class VisitCalculator(fluff.Calculator):
 
 class MyIndicators(fluff.IndicatorDocument):
     document_class = CommCareCase
-    group_by = ('domain', 'owner_id')
+    group_by = ['domain', 'owner_id']
     domains = ('droberts', 'test', 'corpora')
 
     visits_week = VisitCalculator(window=timedelta(days=7))
