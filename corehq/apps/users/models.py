@@ -52,7 +52,6 @@ def _add_to_list(list, obj, default):
         list.append(obj)
     return list
 
-
 def _get_default(list):
     return list[0] if list else None
 
@@ -708,6 +707,10 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, UnicodeMixIn):
         if not isinstance(phone_number, basestring):
             phone_number = str(phone_number)
         self.phone_numbers = _add_to_list(self.phone_numbers, phone_number, default)
+
+    def set_default_phone_number(self, phone_number):
+        self.add_phone_number(phone_number, True)
+        self.save()
 
     @property
     def default_phone_number(self):
@@ -1709,7 +1712,7 @@ class DomainInvitation(Invitation):
         subject = 'Invitation from %s to join CommCareHQ' % self.get_inviter().formatted_name
         send_HTML_email(subject, self.email, html_content, text_content=text_content,
                         cc=[self.get_inviter().get_email()],
-                        email_from=settings.HQ_NOTIFICATIONS_EMAIL)
+                        email_from=settings.DEFAULT_FROM_EMAIL)
 
     @classmethod
     def by_domain(cls, domain, is_active=True):
