@@ -8,7 +8,10 @@ install:
  - "time pip install -r requirements/requirements.txt -r requirements/dev-requirements.txt"
  - "bash -e .travis/misc-setup.sh"
  - "cp .travis/localsettings.py localsettings.py"
-script: python manage.py test --noinput
+ - pip install coveralls
+script: coverage run manage.py test --noinput
+after_success:
+ - coveralls
 services:
  - postgresql
  - couchdb
