@@ -73,7 +73,7 @@ class autoretry_connection(object):
                     if current_tries % MAX_RETRIES == 0:
                         pillow_logging.error("Pillowtop error, connectivity issues for %s. %s tries with %s second interval" % (fn.__name__, current_tries, RETRY_INTERVAL))
                         send_mail("Pillowtop Connectivity Error", "Connectivity issues for %s. %s tries with %s second interval. Just letting you know so someone can look into it" % (fn.__name__, current_tries, RETRY_INTERVAL),
-                                  settings.HQ_NOTIFICATIONS_EMAIL, [x[1] for x in settings.ADMINS])
+                                  settings.SERVER_EMAIL, [x[1] for x in settings.ADMINS])
 
         return decorated
 
