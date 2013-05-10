@@ -32,7 +32,6 @@ class FullXFormPillow(XFormPillow):
     es_alias = "full_xforms"
     es_type = "fullxform"
     es_index = FULL_XFORM_INDEX
-    es_timeout = 600
 
     #for simplicity, the handlers are managed on the domain level
     handler_domain_map = {}

@@ -7,6 +7,7 @@ from lxml.builder import ElementMaker
 from xml import etree as legacy_etree
 from datetime import date, timedelta
 from corehq.apps.commtrack.const import RequisitionActions
+from dimagi.utils.create_unique_filter import create_unique_filter
 from dimagi.utils.decorators.memoized import memoized
 from receiver.util import spoof_submission
 from corehq.apps.receiverwrapper.util import get_submit_url
@@ -92,7 +93,6 @@ class StockTransaction(object):
         self.case_id = kwargs.get('case_id') or kwargs.get('get_caseid', lambda p: None)(self.product_id)
         self.inferred = kwargs.get('inferred', False)
         self.processing_order = kwargs.get('order')
-
 
         self.config = kwargs.get('config')
         if self.config:
@@ -232,7 +232,9 @@ class BulkRequisitionResponse(object):
 
     @memoized
     def get_case_ids(self):
-        for c in RequisitionCase.open_for_location(self.domain, self.location_id):
+        # todo: too many couch requests
+        for c in filter(create_unique_filter(lambda id: RequisitionCase.get(id).get_product_case_id()),
+                        RequisitionCase.open_for_location(self.domain, self.location_id)):
             yield c
 
     def get_transactions(self):

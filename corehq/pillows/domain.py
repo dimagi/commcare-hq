@@ -14,7 +14,7 @@ class DomainPillow(AliasedElasticPillow):
     couch_filter = "domain/not_snapshots"
     es_host = settings.ELASTICSEARCH_HOST
     es_port = settings.ELASTICSEARCH_PORT
-    es_timeout = 600
+    es_timeout = 60
     es_index_prefix = "hqdomains"
     es_alias = "hqdomains"
     es_type = "hqdomain"
