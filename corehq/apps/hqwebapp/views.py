@@ -296,7 +296,7 @@ def bug_report(req):
     # if the person looks like a commcare user, fogbugz can't reply
     # to their email, so just use the default
     if settings.HQ_ACCOUNT_ROOT in reply_to:
-        reply_to = settings.HQ_NOTIFICATIONS_EMAIL
+        reply_to = settings.SERVER_EMAIL
 
     if req.POST.get('five-hundred-report'):
         message = "%s \n\n This messge was reported from a 500 error page! Please fix this ASAP (as if you wouldn't anyway)..." % message

@@ -37,8 +37,10 @@ BUG_REPORT_RECIPIENTS = ['commcarehq-support@dimagi.com']
 NEW_DOMAIN_RECIPIENTS = ['commcarehq-dev+newdomain@dimagi.com']
 EXCHANGE_NOTIFICATION_RECIPIENTS = ['commcarehq-dev+exchange@dimagi.com']
 
-HQ_NOTIFICATIONS_EMAIL = 'commcarehq-noreply@dimagi.com'
+SERVER_EMAIL = 'commcarehq-noreply@dimagi.com' #the physical server emailing - differentiate if needed
+DEFAULT_FROM_EMAIL = 'commcarehq-noreply@dimagi.com'
 SUPPORT_EMAIL = "commcarehq-support@dimagi.com"
+EMAIL_SUBJECT_PREFIX = '[commcarehq] '
 
 ####### Log/debug setup ########
 
