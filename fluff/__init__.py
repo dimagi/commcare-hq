@@ -3,6 +3,7 @@ from couchdbkit.ext.django import schema
 import datetime
 from dimagi.utils.parsing import json_format_date
 from pillowtop.listener import BasicPillow
+from .signals import indicator_document_updated
 
 
 def date_emitter(fn):
@@ -89,7 +90,6 @@ class Calculator(object):
     def get_result(self, key, reduce=True):
         return self.fluff.get_result(self.slug, key, reduce=reduce)
 
-
 class IndicatorDocumentMeta(schema.DocumentMeta):
 
     def __new__(mcs, name, bases, attrs):
@@ -124,6 +124,79 @@ class IndicatorDocument(schema.Document):
             self[attr] = item[attr]
         # overwrite whatever's in group_by with the default
         self['group_by'] = type(self)().group_by
+
+    def diff(self, other_doc):
+        """
+        Get the diff between two IndicatorDocuments. Assumes that the documents are of the same type and that
+        both have the same set of calculators and emitters. Doesn't support changes to group_by values.
+
+        Return value is None for no diff or a dict with all indicator values
+        that are different (added / removed / changed):
+            {
+                doc_type: "MyIndicators",
+                group_names: ['domain', 'owner_id'],
+                group_values: ['test', 'abc']
+                indicator_changes: [
+                    {
+                    calculator: "VistCalculator",
+                    emitter: "all_visits",
+                    emitter_type: "date",
+                    values: ['2012-09-23', '2012-09-24']
+                    },
+                ]
+            }
+        """
+        diff_keys = {}
+        for calc_name in self._calculators.keys():
+            if other_doc:
+                calc_diff = self._shallow_dict_diff(self[calc_name], other_doc[calc_name])
+                if calc_diff:
+                    diff_keys[calc_name] = calc_diff
+            else:
+                diff_keys[calc_name] = self[calc_name].keys()
+
+        if not diff_keys:
+            return None
+
+        diff = dict(doc_type=self._doc_type,
+                    group_names=list(self.group_by),
+                    group_values=[self[calc_name] for calc_name in self.group_by],
+                    indicator_changes=[])
+        indicators = diff["indicator_changes"]
+
+        for calc_name, emitter_names in diff_keys.items():
+            indicators.extend(self._indicator_diff(calc_name, emitter_names, other_doc))
+
+        return diff
+
+    def _indicator_diff(self, calc_name, emitter_names, other_doc):
+        indicators = []
+        for emitter_name in emitter_names:
+                if other_doc:
+                    values_diff = list(set(self[calc_name][emitter_name]) - set(other_doc[calc_name][emitter_name]))
+                else:
+                    values_diff = self[calc_name][emitter_name]
+
+                emitter_type = getattr(self._calculators[calc_name], emitter_name)._fluff_emitter
+                indicators.append(dict(calculator=calc_name,
+                                       emitter=emitter_name,
+                                       emitter_type=emitter_type,
+                                       values=values_diff))
+        return indicators
+
+    def _shallow_dict_diff(self, left, right):
+        if not left and not right:
+            return None
+        elif not left or not right:
+            return left.keys() if left else right.keys()
+
+        left_set, right_set = set(left.keys()), set(right.keys())
+        intersect = right_set.intersection(left_set)
+
+        added = right_set - intersect
+        removed = left_set - intersect
+        changed = set(o for o in intersect if left[o] != right[o])
+        return added | removed | changed
 
     @classmethod
     def pillow(cls):
@@ -195,11 +268,20 @@ class FluffPillow(BasicPillow):
         indicator_id = '%s-%s' % (self.indicator_class.__name__, doc.get_id)
 
         try:
-            indicator = self.indicator_class.get(indicator_id)
+            current_indicator = self.indicator_class.get(indicator_id)
         except ResourceNotFound:
-            indicator = self.indicator_class(_id=indicator_id)
-        indicator.calculate(doc)
-        return indicator
+            current_indicator = None
 
-    def change_transport(self, indicator):
-        indicator.save()
+        if not current_indicator:
+            indicator = self.indicator_class(_id=indicator_id)
+        else:
+            indicator = current_indicator.clone()
+        indicator.calculate(doc)
+        return current_indicator, indicator
+
+    def change_transport(self, indicators):
+        old_indicator, new_indicator = indicators
+        new_indicator.save()
+
+        diff = new_indicator.diff(old_indicator)
+        indicator_document_updated.send(sender=self, diff=diff)
