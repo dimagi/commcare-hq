@@ -2,8 +2,6 @@ Fluff
 =====
 [![Build Status](https://travis-ci.org/dimagi/fluff.png)](https://travis-ci.org/dimagi/fluff)
 [![Test coverage](https://coveralls.io/repos/dimagi/fluff/badge.png?branch=master)](https://coveralls.io/r/dimagi/fluff)
-[![PyPi version](https://pypip.in/v/fluff/badge.png)](https://pypi.python.org/pypi/fluff)
-[![PyPi downloads](https://pypip.in/d/fluff/badge.png)](https://pypi.python.org/pypi/fluff)
 
 Fluff is a library that works with pillowtop and couchdbkit and
 lets you define a set of computations to do
