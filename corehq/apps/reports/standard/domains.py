@@ -180,7 +180,7 @@ class AdminDomainStatsReport(DomainStatsReport, ElasticTabularReport):
     def headers(self):
         headers = DataTablesHeader(
             DataTablesColumn("Project"),
-            DataTablesColumn(_("Organization"), prop_name="organization"),
+            DataTablesColumn(_("Organization"), prop_name="internal.organization_name"),
             DataTablesColumn(_("Deployment Date"), prop_name="deployment.date"),
             DataTablesColumn(_("# Active Mobile Workers"), sort_type=DTSortType.NUMERIC,
                 prop_name="cp_n_active_cc_users",
@@ -233,7 +233,7 @@ class AdminDomainStatsReport(DomainStatsReport, ElasticTabularReport):
             if dom.has_key('name'): # for some reason when using the statistical facet, ES adds an empty dict to hits
                 yield [
                     dom.get('hr_name') or dom['name'],
-                    dom.get("organization") or _('No org'),
+                    dom.get("internal", {}).get('organization_name') or _('No org'),
                     dom.get('deployment', {}).get('date') or _('No date'),
                     dom.get("cp_n_active_cc_users", _("Not Yet Calculated")),
                     dom.get("cp_n_cc_users", _("Not Yet Calculated")),
