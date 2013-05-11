@@ -4,9 +4,10 @@ from tastypie import fields
 from couchforms.models import XFormInstance
 from casexml.apps.case.models import CommCareCase
 
+from corehq.apps.receiverwrapper.models import Repeater
 from corehq.apps.groups.models import Group
 from corehq.apps.cloudcare.api import ElasticCaseQuery
-from corehq.apps.api.resources import v0_3, JsonResource, DomainSpecificResourceMixin, dict_object
+from corehq.apps.api.resources import v0_1, v0_3, JsonResource, DomainSpecificResourceMixin, dict_object
 from corehq.apps.api.es import XFormES, CaseES, ESQuerySet, es_search
 
 # By the time a test case is running, the resource is already instantiated,
@@ -41,6 +42,25 @@ class XFormInstanceResource(v0_3.XFormInstanceResource, DomainSpecificResourceMi
 
     class Meta(v0_3.XFormInstanceResource.Meta):
         list_allowed_methods = ['get']
+
+class RepeaterResource(JsonResource, DomainSpecificResourceMixin):
+
+
+    id = fields.CharField(attribute='get_id')
+    type = fields.CharField(attribute='doc_type')
+    domain = fields.CharField(attribute='domain')
+    url = fields.CharField(attribute='url')
+    version = fields.CharField(attribute='version', null=True)
+
+    def obj_get_list(self, bundle, domain, **kwargs):
+        repeaters = Repeater.by_domain(domain)
+        return list(repeaters)
+    
+    class Meta(v0_1.CustomResourceMeta):
+        object_class = Repeater    
+        resource_name = 'data-forwarding'    
+        detail_allowed_methods = ['get', 'delete']
+        list_allowed_methods = ['get', 'post']
 
 class CommCareCaseResource(v0_3.CommCareCaseResource, DomainSpecificResourceMixin):
     def obj_get_list(self, bundle, domain, **kwargs):
