@@ -10,6 +10,7 @@ from couchforms.models import XFormInstance
 from corehq.pillows.xform import XFormPillow
 from corehq.apps.users.models import CommCareUser, WebUser
 from corehq.apps.domain.models import Domain
+from corehq.apps.receiverwrapper.models import FormRepeater, CaseRepeater
 from corehq.apps.api.resources import v0_1, v0_4
 
 class FakeXFormES(object):
@@ -209,3 +210,66 @@ class TestUserResource(TestCase):
         self.assertEqual(api_users[0]['id'], backend_id)    
 
         commcare_user.delete()
+
+class TestRepeaterResource(TestCase):
+    """
+    Basic sanity checking of v0_4.RepeaterResource
+    """
+        
+    def setUp(self):
+        self.maxDiff = None
+        
+        self.domain = Domain.get_or_create_with_name('qwerty', is_active=True)
+
+        self.list_endpoint = reverse('api_dispatch_list', kwargs=dict(domain=self.domain.name, 
+                                                                      api_name='v0.4', 
+                                                                      resource_name=v0_4.RepeaterResource.Meta.resource_name))
+        
+
+        self.username = 'rudolph'
+        self.password = '***'
+        self.user = WebUser.create(self.domain.name, self.username, self.password)
+        self.user.set_role(self.domain.name, 'admin')
+        self.user.save()
+
+    def tearDown(self):
+        self.user.delete()
+        self.domain.delete()
+
+    def test_get_list(self):
+        self.client.login(username=self.username, password=self.password)
+
+        # Add a form repeater and check that it comes back
+        form_repeater = FormRepeater(domain=self.domain.name, url='http://example.com/forwarding/form')
+        form_repeater.save()
+        backend_id = form_repeater.get_id
+
+        response = self.client.get(self.list_endpoint)
+        self.assertEqual(response.status_code, 200)
+
+        api_repeaters = simplejson.loads(response.content)['objects']
+        self.assertEqual(len(api_repeaters), 1)
+        self.assertEqual(api_repeaters[0]['id'], backend_id)
+        self.assertEqual(api_repeaters[0]['url'], form_repeater.url)
+        self.assertEqual(api_repeaters[0]['domain'], form_repeater.domain)
+        self.assertEqual(api_repeaters[0]['type'], 'FormRepeater')
+
+        # Add a case repeater and check that both come back
+        case_repeater = CaseRepeater(domain=self.domain.name, url='http://example.com/forwarding/case')
+        case_repeater.save()
+        backend_id = case_repeater.get_id
+
+        response = self.client.get(self.list_endpoint)
+        self.assertEqual(response.status_code, 200)
+
+        api_repeaters = simplejson.loads(response.content)['objects']
+        self.assertEqual(len(api_repeaters), 2)
+
+        api_case_repeater = filter(lambda r: r['type'] == 'CaseRepeater', api_repeaters)[0]
+        self.assertEqual(api_case_repeater['id'], case_repeater.get_id)
+        self.assertEqual(api_case_repeater['url'], case_repeater.url)    
+        self.assertEqual(api_case_repeater['domain'], case_repeater.domain)    
+
+        form_repeater.delete()
+        case_repeater.delete()    
+
