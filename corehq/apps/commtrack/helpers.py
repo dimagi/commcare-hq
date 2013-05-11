@@ -37,6 +37,7 @@ def make_supply_point(domain, location, owner_id=None):
         case_id=id,
         create=True,
         version=V2,
+        case_name=location.name,
         user_id=user_id,
         owner_id=owner_id,
         case_type=const.SUPPLY_POINT_CASE_TYPE,
