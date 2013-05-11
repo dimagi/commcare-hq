@@ -39,12 +39,12 @@ REQUISITION_ACTION_TYPES = [
     # request a product
     RequisitionActions.REQUEST,
 
-    # approve a requisition (it is allowed to be filled)
+    # approve a requisition (it is allowed to be packed)
     # using this is configurable and optional
     RequisitionActions.APPROVAL,
 
-    # fill a requisition (the order is ready)
-    RequisitionActions.FILL,
+    # pack a requisition (the order is ready)
+    RequisitionActions.PACK,
 
     # receive the sock (closes the requisition)
     # NOTE: it's not totally clear if this is necessary or
@@ -367,12 +367,12 @@ class RequisitionCase(CommCareCase):
     # the status can change, but once set - this one will not
     requested_on = DateTimeProperty()
     approved_on = DateTimeProperty()
-    filled_on = DateTimeProperty()
+    packed_on = DateTimeProperty()
     received_on = DateTimeProperty()
 
     requested_by = StringProperty()
     approved_by = StringProperty()
-    filled_by = StringProperty()
+    packed_by = StringProperty()
     received_by = StringProperty()
 
     # NOTE: should these be strings or ints or decimals?
@@ -381,7 +381,7 @@ class RequisitionCase(CommCareCase):
     # approve partial resupplies in the current system, but is
     # left in the models for possible use down the road
     amount_approved = StringProperty()
-    amount_filled = StringProperty()
+    amount_packed = StringProperty()
     amount_received = StringProperty()
 
     @memoized
@@ -415,7 +415,7 @@ class RequisitionCase(CommCareCase):
         property_map = {
             RequisitionStatus.REQUESTED: 'amount_requested',
             RequisitionStatus.APPROVED: 'amount_approved',
-            RequisitionStatus.FILLED: 'amount_filled',
+            RequisitionStatus.PACKED: 'amount_packed',
         }
         return getattr(self, property_map.get(self.requisition_status, 'amount_requested'))
 

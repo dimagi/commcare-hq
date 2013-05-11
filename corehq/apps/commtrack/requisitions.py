@@ -76,11 +76,11 @@ class RequisitionState(object):
                     'approved_by': user_id,
                     'approved_on': datetime.utcnow(),
                 })
-            elif transaction.action_config.action_type == RequisitionActions.FILL:
+            elif transaction.action_config.action_type == RequisitionActions.PACK:
                 ret.update({
-                    'amount_filled': transaction.value,
-                    'filled_by': user_id,
-                    'filled_on': datetime.utcnow(),
+                    'amount_packed': transaction.value,
+                    'packed_by': user_id,
+                    'packed_on': datetime.utcnow(),
                 })
             elif transaction.action_config.action_type == RequisitionActions.RECEIPTS:
                 ret.update({
@@ -143,7 +143,7 @@ def get_notification_recipients(next_action, requisition):
 def get_notification_message(next_action, requisitions):
     templates = {
         RequisitionActions.APPROVAL: _('{name} has requested the following supplies: {summary}. please respond "{keyword}" to approve.'),
-        RequisitionActions.FILL: _('{name} should be supplied with the following supplies: {summary}. please respond "{keyword}" to confirm the order.'),
+        RequisitionActions.PACK: _('{name} should be supplied with the following supplies: {summary}. please respond "{keyword}" to confirm the order.'),
         RequisitionActions.RECEIPTS: _('your order of {summary} is ready to be picked up. please respond with a "{keyword}" message to report receipts.'),
     }
 
