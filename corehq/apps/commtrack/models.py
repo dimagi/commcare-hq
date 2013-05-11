@@ -336,6 +336,7 @@ class SupplyPointProductCase(CommCareCase):
     """
     # can flesh this out more as needed
     product = StringProperty() # would be nice if this was product_id but is grandfathered in
+    current_stock = StringProperty()
 
     @memoized
     def get_product(self):
