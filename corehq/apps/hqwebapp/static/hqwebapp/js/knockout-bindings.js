@@ -400,8 +400,8 @@ ko.bindingHandlers.valueOrNoneUI = {
 ko.bindingHandlers.makeHqHelp = {
     init: function (element, valueAccessor) {
         var opts = valueAccessor(),
-            name = ko.utils.unwrapObservable(opts.name),
-            description = ko.utils.unwrapObservable(opts.description),
+            name = ko.utils.unwrapObservable(opts.name || $(element).data('title')),
+            description = ko.utils.unwrapObservable(opts.description || $(element).data('content')),
             format = ko.utils.unwrapObservable(opts.format);
         COMMCAREHQ.makeHqHelp({
             title: name,
