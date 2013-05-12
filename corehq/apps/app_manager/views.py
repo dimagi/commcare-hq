@@ -9,6 +9,7 @@ from django.utils.translation import ugettext as _
 from django.views.decorators.cache import cache_control
 from corehq.apps.app_manager.const import APP_V1
 from corehq.apps.app_manager.success_message import SuccessMessage
+from corehq.apps.app_manager.util import is_valid_case_type
 from corehq.apps.domain.models import Domain
 from corehq.apps.domain.views import DomainViewMixin
 from couchexport.export import FormattedRow
@@ -964,7 +965,7 @@ def edit_module_attr(req, domain, app_id, module_id, attr):
     resp = {'update': {}}
     if should_edit("case_type"):
         case_type = req.POST.get("case_type", None)
-        if re.match(r'^\w+$', case_type):
+        if is_valid_case_type(case_type):
             # todo: something better than nothing when invalid
             module["case_type"] = case_type
         else:
