@@ -279,7 +279,8 @@ class FluffPillow(BasicPillow):
         if not current_indicator:
             indicator = self.indicator_class(_id=indicator_id)
         else:
-            indicator = current_indicator.clone()
+            indicator = current_indicator
+            current_indicator = indicator.to_json()
         indicator.calculate(doc)
         return current_indicator, indicator
 
@@ -288,4 +289,5 @@ class FluffPillow(BasicPillow):
         new_indicator.save()
 
         diff = new_indicator.diff(old_indicator)
-        indicator_document_updated.send(sender=self, diff=diff)
+        if diff:
+            indicator_document_updated.send(sender=self, diff=diff)
