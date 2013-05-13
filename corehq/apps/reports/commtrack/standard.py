@@ -11,6 +11,7 @@ from corehq.apps.locations.models import Location
 from dimagi.utils.decorators.memoized import memoized
 from django.utils.translation import ugettext as _, ugettext_noop
 
+DAYS_PER_MONTH = 365.2425 / 12.
 
 # TODO make settings
 
@@ -20,26 +21,32 @@ OVERSTOCK_THRESHOLD = 2. # months
 REPORTING_PERIOD = 'weekly'
 REPORTING_PERIOD_ARGS = (1,)
 
+DEFAULT_CONSUMPTION = 10. # per month
+
 def current_stock(case):
+    """helper method to get current product stock -- TODO move to wrapper class"""
     current_stock = getattr(case, 'current_stock', None)
     if current_stock is not None:
         current_stock = int(current_stock)
     return current_stock
 
 def monthly_consumption(case):
+    """get monthly consumption rate for a product at a given location"""
     daily_rate = case.computed_.get('commtrack', {}).get('consumption_rate')
     if daily_rate is None:
-        daily_rate = default_consumption(case)
+        daily_rate = default_consumption(case) / DAYS_PER_MONTH
     if daily_rate is None:
         return None
 
-    monthly_rate = daily_rate * 365.2425 / 12.
+    monthly_rate = daily_rate * DAYS_PER_MONTH
     return monthly_rate
 
 def default_consumption(case):
-    # TODO get a fallback consumption rate based on product/facility type
-    # if setting is monthly rate, must normalize to daily
-    return None
+    """get default monthly consumption rate for when real-world computed rate is
+    not available"""
+    # TODO pull this from a configurable setting
+    # TODO allow more granular defaulting based on product/facility type etc
+    return DEFAULT_CONSUMPTION
 
 def is_timely(case, limit=0):
     return num_periods_late(case, REPORTING_PERIOD, *REPORTING_PERIOD_ARGS) <= limit
