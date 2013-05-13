@@ -1,5 +1,6 @@
 from StringIO import StringIO
 from couchdbkit.exceptions import MultipleResultsFound, ResourceNotFound
+from django.core.exceptions import ValidationError
 from corehq.apps.groups.models import Group
 from corehq.apps.users.util import normalize_username, raw_username
 from corehq.apps.users.models import CommCareUser
@@ -153,6 +154,13 @@ def create_or_update_users_and_groups(domain, user_specs, group_specs):
                 username = normalize_username(username, domain)
             except TypeError:
                 username = None
+            except ValidationError:
+                ret['rows'].append({
+                    'username': username,
+                    'row': row,
+                    'flag': 'error: username cannot contain spaces or symbols',
+                })
+                continue
             status_row = {
                 'username': raw_username(username) if username else None,
                 'row': row,
