@@ -759,6 +759,8 @@ class KeywordForm(Form):
             value = value.strip().upper()
         if value is None or value == "":
             raise ValidationError(_("This field is required."))
+        if len(value.split()) > 1:
+            raise ValidationError(_("Keyword should be one word."))
         duplicate = SurveyKeyword.get_keyword(self._cchq_domain, value)
         if duplicate is not None and duplicate._id != self._sk_id:
             raise ValidationError(_("Keyword already exists."))

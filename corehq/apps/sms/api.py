@@ -378,6 +378,8 @@ def structured_sms_handler(verified_number, text):
     from corehq.apps.reminders.models import SurveyKeyword, FORM_TYPE_ALL_AT_ONCE
     
     text = text.strip()
+    if text == "":
+        return False
     for survey_keyword in SurveyKeyword.get_all(verified_number.domain):
         if survey_keyword.form_type == FORM_TYPE_ALL_AT_ONCE:
             if survey_keyword.delimiter is not None:
@@ -529,6 +531,7 @@ def structured_sms_handler(verified_number, text):
                 send_sms_to_verified_number(verified_number, error_msg)
             
             if error_occurred or not form_complete:
+                session = XFormsSession.get(session._id)
                 session.end(False)
                 session.save()
             
