@@ -52,6 +52,10 @@ class CommCareCaseAttachment(LooselyEqualDocumentSchema, UnicodeMixIn):
     server_md5 = StringProperty() #Couch detected hash
 
     @property
+    def is_image(self):
+        return True if self.server_mime.startswith('image/') else False
+
+    @property
     def is_present(self):
         """
         Helper method to see if this is a delete vs. update
