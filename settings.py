@@ -673,6 +673,8 @@ INDICATOR_CONFIG = {
     "mvp-potou": ['mvp_indicators'],
 }
 
+CASE_WRAPPER = 'corehq.apps.hqcase.utils.get_case_wrapper'
+
 PILLOWTOPS = [
                  'corehq.pillows.case.CasePillow',
                  'corehq.pillows.fullcase.FullCasePillow',

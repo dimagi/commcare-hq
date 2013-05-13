@@ -1,4 +1,6 @@
 from couchdbkit.ext.django.schema import *
+from django.utils.translation import ugettext as _
+
 from corehq.apps.commtrack import const
 from corehq.apps.users.models import CommCareUser
 from dimagi.utils.couch.loosechange import map_reduce
@@ -315,23 +317,71 @@ def _get_single_index(case, identifier, type, wrapper=None):
         return wrapper.get(ref_id) if wrapper else ref_id
     return None
 
+def get_case_wrapper(data):
+    return {
+        const.SUPPLY_POINT_CASE_TYPE: SupplyPointCase,
+        const.SUPPLY_POINT_PRODUCT_CASE_TYPE: SupplyPointProductCase,
+        const.REQUISITION_CASE_TYPE: RequisitionCase
+    }.get(data.get('type'), CommCareCase)
 
-class SupplyPointCase(CommCareCase):
+
+class CommtrackCase(CommCareCase):
+    class Meta: 
+        # This is necessary otherwise syncdb will confuse this app with casexml
+        app_label = "commtrack"
+
+
+class SupplyPointCase(CommtrackCase):
     """
-    A wrapper around CommCareCases to get more built in functionality
+    A wrapper around CommtrackCases to get more built in functionality
     specific to supply points.
     """
 
     def open_requisitions(self):
         return RequisitionCase.open_for_location(self.domain, self.location_[-1])
 
-    class Meta:
-        app_label = "commtrack" # This is necessary otherwise syncdb will confuse this app with casexml
+    @classmethod
+    def get_display_config(cls):
+        return [
+            {
+                "layout": [
+                    [
+                        {
+                            "expr": "name",
+                            "name": _("Name"),
+                        },
+                        {
+                            "expr": "type",
+                            "name": _("Type"),
+                        },
+                        {
+                            "expr": "code",
+                            "name": _("Code"),
+                        },
+                        {
+                            "expr": "last_reported",
+                            "name": _("Last Reported"),
+                        },
+                    ],
+                    [
+                        {
+                            "expr": "location",
+                            "name": _("Location"),
+                        },
+                        {
+                            "expr": "owner_id",
+                            "name": _("Group"),
+                            "format": '<span data-field="owner_id">{0}</span>',
+                        },
+                    ],
+                ],
+            }
+        ]
 
 
-class SupplyPointProductCase(CommCareCase):
+class SupplyPointProductCase(CommtrackCase):
     """
-    A wrapper around CommCareCases to get more built in functionality
+    A wrapper around CommtrackCases to get more built in functionality
     specific to supply point products.
     """
     # can flesh this out more as needed
@@ -349,12 +399,60 @@ class SupplyPointProductCase(CommCareCase):
     def get_supply_point_case_id(self):
         return _get_single_index(self, const.PARENT_CASE_REF, const.SUPPLY_POINT_CASE_TYPE)
 
-    class Meta:
-        app_label = "commtrack" # This is necessary otherwise syncdb will confuse this app with casexml
+    @classmethod
+    def get_display_config(cls):
+        return [
+            {
+                "layout": [
+                    [
+                        {
+                            "name": _("Supply Point"),
+                            "expr": "supply_point"
+                        },
+                        {
+                            "name": _("Product"),
+                            "expr": "product"
+                        },
+                        {
+                            "name": _("Months until stockout"),
+                            "expr": "months_until_stockout"
+                        },
+                        {
+                            "name": _("Stockout duration in months"),
+                            "expr": "stockout_duration_in_months"
+                        }
+                    ],
+                    [
+                        {
+                            "name": _("Current stock"),
+                            "expr": "current_stock"
+                        },
+                        {
+                            "name": _("Monthly consumption"),
+                            "expr": "monthly_consumption"
+                        },
+                        {
+                            "name": _("Emergency level"),
+                            "expr": "emergency_level"
+                        },
+                        {
+                            "name": _("Max level"),
+                            "expr": "max_level"
+                        }
+                    ],
+                    [
+                        {
+                            "name": _("Date of last report"),
+                            "expr": "date_of_last_report"
+                        }
+                    ]
+                ],
+            }
+        ]
 
-class RequisitionCase(CommCareCase):
+class RequisitionCase(CommtrackCase):
     """
-    A wrapper around CommCareCases to get more built in functionality
+    A wrapper around CommtrackCases to get more built in functionality
     specific to requisitions.
     """
     # supply_point = StringProperty() # todo, if desired
@@ -456,8 +554,72 @@ class RequisitionCase(CommCareCase):
         )
         return [r['id'] for r in results]
 
-    class Meta:
-        app_label = "commtrack" # This is necessary otherwise syncdb will confuse this app with casexml
+    @classmethod
+    def get_display_config(cls):
+        return [
+            {
+                "layout": [
+                    [
+                        {
+                            "name": _("Supply Point"),
+                            "expr": "supply_point"
+                        }
+                    ],
+                    [
+                        {
+                            "name": _("Product"),
+                            "expr": "product_id"
+                        }
+                    ],
+                    [
+                        {
+                            "name": _("Status"),
+                            "expr": "requisition_status"
+                        }
+                    ],
+                    [
+                        {
+                            "name": _("Balance"),
+                            "expr": "balance"
+                        }
+                    ]
+                ]
+            },
+            {
+                "layout": [
+                    [ 
+                        {
+                            "name": _("Amount Requested"),
+                            "expr": "amount_requested",
+                        },
+                        {
+                            "name": _("Requested On"),
+                            "expr": "requested_on"
+                        }
+                    ],
+                    [
+                        {
+                            "name": _("Amount Approved"),
+                            "expr": "amount_approved",
+                        },
+                        {
+                            "name": _("Approved On"),
+                            "expr": "approved_on"
+                        }
+                    ],
+                    [
+                        {
+                            "name": _("Amount Received"),
+                            "expr": "amount_Received"
+                        },
+                        {
+                            "name": _("Received On"),
+                            "expr": "received_on"
+                        }
+                    ]
+                ]
+            }
+        ]
 
 
 class StockReport(object):
@@ -536,6 +698,3 @@ def post_loc_created(sender, loc=None, **kwargs):
     # exclude administrative-only locs
     if loc.location_type in [loc_type.name for loc_type in config.location_types if not loc_type.administrative]:
         make_supply_point(loc.domain, loc)
-
-# import signals
-from . import signals

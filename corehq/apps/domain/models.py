@@ -794,13 +794,7 @@ class Domain(Document, HQBillingDomainMixin, SnapshotMixin):
 
     def get_case_display(self, case):
         """Get the properties display definition for a given case"""
-        from corehq.apps.commtrack.config import get_case_display
-
-        display = self.case_display.case_details.get(case.type)
-        if not display and self.commtrack_enabled:
-            display = get_case_display(case)
-
-        return display
+        return self.case_display.case_details.get(case.type)
 
     def get_form_display(self, form):
         """Get the properties display definition for a given XFormInstance"""
