@@ -26,8 +26,8 @@
         {% if case.all_indices|length %}
         <li><a href="#case-related" data-toggle="tab">{% trans "Related Cases" %}</a></li>
         {% endif %}
-    {% if case.attachments %}
-        <li><a href="#case-attachments" data-toggle="tab">{% trans "Attachments" %}</a></li>
+    {% if case.case_attachments %}
+        <li><a href="#case-attachments" data-toggle="tab">{% trans "Attachments" %} ({{ case.case_attachments|length }})</a></li>
     {% endif %}
     </ul>
 
@@ -101,13 +101,22 @@
             </table>
         </div> <!-- end case-related tab -->
     {% endif %}
-    {% if case.attachments %}
+    {% if case.case_attachments %}
         <div class="tab-pane" id="case-attachments">
             <ul>
-            {% for form_id, filename in case.attachments %}
+            {% for attach_key, attachment in case.case_attachments.items %}
                 {% if not forloop.first %}<br>{% endif %}
                 <li>
-                <a href="{% url xform_attachment form_id filename %}">{{ filename }}</a>
+{#                <a href="{% url xform_attachment form_id filename %}">{{ filename }}</a>#}
+                {{ attach_key }} :: {{ attachment.attachment_src }} {{ attachment.server_mime }}
+                <br>
+                {% if attachment.is_image %}
+{#                    <img src="{% url  %}"#}
+{#                    <img src="{% url api_case_attachment case_id=case.get_id attachment_id=attach_key %}">#}
+                    {# todo: this breaks an abstractoin barrier the knowledge of this url #}
+                    <img src="/a/{{ case.domain }}/api/case/attachment/{{ case.get_id }}/{{ attach_key }}">
+
+                {% endif %}
                 </li>
             {% empty %}
                 <li>{% trans "No Attachments" %}</li>
