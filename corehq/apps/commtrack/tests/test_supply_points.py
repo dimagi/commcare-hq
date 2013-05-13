@@ -16,6 +16,7 @@ class SupplyPointTest(TestCase):
     def testMakeSupplyPoint(self):
         sp = make_supply_point(TEST_DOMAIN, self.loc)
         self.assertEqual("CommCareCase", sp.doc_type)
+        self.assertEqual(self.loc.name, sp.name)
         self.assertEqual(TEST_DOMAIN, sp.domain)
         self.assertEqual(const.SUPPLY_POINT_CASE_TYPE, sp.type)
         self.assertEqual([self.loc._id], sp.location_)
