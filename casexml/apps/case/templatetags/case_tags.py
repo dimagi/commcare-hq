@@ -33,7 +33,7 @@ def render_case(case, options):
     display = options.get('display', None)
     display = display or case.get_display_config()
 
-    data = copy.deepcopy(case.to_extended_dict())
+    data = copy.deepcopy(case.to_full_dict())
 
     default_properties = _get_tables_as_columns(data, display)
 
