@@ -1,3 +1,4 @@
+from datetime import datetime
 import json
 
 from couchdbkit.exceptions import ResourceNotFound
@@ -18,13 +19,15 @@ from casexml.apps.case.models import CommCareCaseAction
 from corehq.apps.api.es import CaseES
 from corehq.apps.hqsofabed.models import HQFormData
 from corehq.apps.reports.filters.search import SearchFilter
-from corehq.apps.reports.standard import ProjectReport, ProjectReportParametersMixin
+from corehq.apps.reports.standard import ProjectReport, ProjectReportParametersMixin, DatespanMixin
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
 from corehq.apps.reports.display import xmlns_to_name
 from corehq.apps.reports.fields import SelectOpenCloseField, SelectMobileWorkerField
 from corehq.apps.reports.generic import GenericTabularReport, ProjectInspectionReportParamsMixin, ElasticProjectInspectionReport
+from corehq.apps.reports.standard.monitoring import MultiFormDrilldownMixin
 from corehq.apps.users.models import CommCareUser, CouchUser
 from corehq.pillows.mappings.xform_mapping import XFORM_INDEX
+from dimagi.utils.couch import get_cached_property
 from dimagi.utils.couch.database import get_db
 from dimagi.utils.couch.pagination import CouchFilter
 from dimagi.utils.decorators.memoized import memoized
@@ -44,11 +47,13 @@ class ProjectInspectionReport(ProjectInspectionReportParamsMixin, GenericTabular
               'corehq.apps.reports.fields.SelectMobileWorkerField']
 
 
-class SubmitHistoryNew(ElasticProjectInspectionReport, ProjectReport, ProjectReportParametersMixin):
+class SubmitHistory(ElasticProjectInspectionReport, ProjectReport, ProjectReportParametersMixin, MultiFormDrilldownMixin, DatespanMixin):
     name = ugettext_noop('Submit History')
     slug = 'submit_history'
     fields = ['corehq.apps.reports.fields.FilterUsersField',
-              'corehq.apps.reports.fields.SelectMobileWorkerField',]
+              'corehq.apps.reports.fields.SelectMobileWorkerField',
+              'corehq.apps.reports.filters.forms.FormsByApplicationFilter',
+              'corehq.apps.reports.fields.DatespanField']
     ajax_pagination = True
 
 
@@ -70,10 +75,15 @@ class SubmitHistoryNew(ElasticProjectInspectionReport, ProjectReport, ProjectRep
         from corehq.apps.appstore.views import es_query
         if not getattr(self, 'es_response', None):
             q = {
-                "query": {"match_all": {}},
+                "query": {
+                    "range": {
+                        "form.meta.timeEnd": {
+                            "from": self.datespan.startdate_param_utc,
+                            "to": self.datespan.enddate_param_utc}}},
                 "filter":
                     { "and": [
                         {"terms": {"form.meta.userID": filter(None, self.user_ids)}},
+                        {"terms": {"xmlns.exact": filter(None, [f["xmlns"] for f in self.all_relevant_forms.values()])}},
                     ]}}
 
             if self.get_sorting_block():
@@ -97,15 +107,22 @@ class SubmitHistoryNew(ElasticProjectInspectionReport, ProjectReport, ProjectRep
         submissions = [res['_source'] for res in self.es_results.get('hits', {}).get('hits', [])]
 
         for form in submissions:
+            uid = form["form"]["meta"]["userID"]
+            username = form["form"]["meta"].get("username")
+            try:
+                name = ('"%s"' % get_cached_property(CouchUser, uid, 'full_name', expiry=7*24*60*60)) \
+                    if username not in ['demo_user', 'admin'] else ""
+            except ResourceNotFound:
+                name = "<b>[unregistered]</b>"
+
             yield [
                 form_data_link(form["_id"]),
-                form["form"]["meta"].get("username", 'Unknown (%s)' % form["form"]["meta"]["userID"]),
-                form["form"]["meta"]["timeEnd"],
-                form["form"]["@name"],
-                # xmlns_to_name(self.domain, form['xmlns'], app_id=form["app_id"])
+                (username or _('No data for username')) + (" %s" % name if name else ""),
+                datetime.strptime(form["form"]["meta"]["timeEnd"], '%Y-%m-%dT%H:%M:%SZ').strftime("%Y-%m-%d %H:%M:%S"),
+                form["form"].get('@name') or _('No data for form name'),
             ]
 
-class SubmitHistory(ProjectInspectionReport):
+class SubmitHistoryO(ProjectInspectionReport):
     name = ugettext_noop('Submit History')
     slug = 'submit_history'
 

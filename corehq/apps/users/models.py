@@ -674,7 +674,7 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, UnicodeMixIn):
 
     @property
     def full_name(self):
-        return ("%s %s" % (self.first_name, self.last_name)).strip()
+        return ("%s %s" % (self.first_name or '', self.last_name or '')).strip()
 
     formatted_name = full_name
     name = full_name
