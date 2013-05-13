@@ -24,6 +24,7 @@ from corehq.apps.reports.display import xmlns_to_name
 from corehq.apps.reports.fields import SelectOpenCloseField, SelectMobileWorkerField
 from corehq.apps.reports.generic import GenericTabularReport, ProjectInspectionReportParamsMixin, ElasticProjectInspectionReport
 from corehq.apps.users.models import CommCareUser, CouchUser
+from corehq.pillows.mappings.xform_mapping import XFORM_INDEX
 from dimagi.utils.couch.database import get_db
 from dimagi.utils.couch.pagination import CouchFilter
 from dimagi.utils.decorators.memoized import memoized
@@ -42,6 +43,67 @@ class ProjectInspectionReport(ProjectInspectionReportParamsMixin, GenericTabular
     fields = ['corehq.apps.reports.fields.FilterUsersField',
               'corehq.apps.reports.fields.SelectMobileWorkerField']
 
+
+class SubmitHistoryNew(ElasticProjectInspectionReport, ProjectReport, ProjectReportParametersMixin):
+    name = ugettext_noop('Submit History')
+    slug = 'submit_history'
+    fields = ['corehq.apps.reports.fields.FilterUsersField',
+              'corehq.apps.reports.fields.SelectMobileWorkerField',]
+    ajax_pagination = True
+
+
+    @property
+    def headers(self):
+        headers = DataTablesHeader(DataTablesColumn(_("View Form")),
+            DataTablesColumn(_("Username"), prop_name="form.meta.username"),
+            DataTablesColumn(_("Submit Time"), prop_name="form.meta.timeEnd"),
+            DataTablesColumn(_("Form"), prop_name="form.@name"))
+        return headers
+
+    @property
+    def es_results(self):
+        if not getattr(self, 'es_response', None):
+            self.es_query()
+        return self.es_response
+
+    def es_query(self):
+        from corehq.apps.appstore.views import es_query
+        if not getattr(self, 'es_response', None):
+            q = {
+                "query": {"match_all": {}},
+                "filter":
+                    { "and": [
+                        {"terms": {"form.meta.userID": filter(None, self.user_ids)}},
+                    ]}}
+
+            if self.get_sorting_block():
+                q["sort"] = self.get_sorting_block()
+            self.es_response = es_query(params={"domain.exact": self.domain}, q=q, es_url=XFORM_INDEX + '/xform/_search',
+                start_at=self.pagination.start, size=self.pagination.count)
+        return self.es_response
+
+    @property
+    def total_records(self):
+        return int(self.es_results['hits']['total'])
+
+    @property
+    def rows(self):
+        def form_data_link(instance_id):
+            return "<a class='ajax_dialog' href='%(url)s'>%(text)s</a>" % {
+                "url": reverse('render_form_data', args=[self.domain, instance_id]),
+                "text": _("View Form")
+            }
+
+        submissions = [res['_source'] for res in self.es_results.get('hits', {}).get('hits', [])]
+
+        for form in submissions:
+            yield [
+                form_data_link(form["_id"]),
+                form["form"]["meta"].get("username", 'Unknown (%s)' % form["form"]["meta"]["userID"]),
+                form["form"]["meta"]["timeEnd"],
+                form["form"]["@name"],
+                # xmlns_to_name(self.domain, form['xmlns'], app_id=form["app_id"])
+            ]
 
 class SubmitHistory(ProjectInspectionReport):
     name = ugettext_noop('Submit History')
