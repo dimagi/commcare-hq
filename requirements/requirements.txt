@@ -54,3 +54,5 @@ markdown==2.2.1
 amqp==1.0.8
 amqplib==1.0.2
 -e git+git://github.com/dimagi/sql-agg.git@0.1.0#egg=sqlagg
+alembic==0.5.0
+sqlalchemy==0.8.1

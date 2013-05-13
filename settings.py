@@ -207,6 +207,7 @@ HQ_APPS = (
     'corehq.apps.api',
     'corehq.apps.indicators',
     'corehq.couchapps',
+    'ctable',
     'fluff',
     'fluff.fluff_filter',
     'sofabed.forms',
@@ -234,6 +235,9 @@ HQ_APPS = (
 )
 
 TEST_APPS = ()
+TEST_EXCLUDE_APPS = (
+    'ctable'
+)
 
 INSTALLED_APPS = DEFAULT_APPS + HQ_APPS
 
@@ -555,6 +559,7 @@ COUCHDB_APPS = [
     'hqadmin',
     'domain',
     'facilities',
+    'ctable',
     'fluff_filter',
     'forms',
     'fixtures',
@@ -682,6 +687,7 @@ PILLOWTOPS = [
                  # fluff
                  'bihar.models.CareBiharFluffPillow',
              ] + LOCAL_PILLOWTOPS
+PILLOWTOP_IMPORTS = ['ctable.tasks']
 
 #Custom workflow for indexing xform data beyond the standard properties
 XFORM_PILLOW_HANDLERS = ['pact.pillowhandler.PactHandler', ]

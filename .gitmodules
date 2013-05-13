@@ -103,3 +103,6 @@
 [submodule "submodules/fluff-src"]
 	path = submodules/fluff-src
 	url = git://github.com/dimagi/fluff.git
+[submodule "submodules/ctable-src"]
+	path = submodules/ctable-src
+	url = git@github.com:dimagi/ctable.git
