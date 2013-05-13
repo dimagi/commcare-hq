@@ -17,7 +17,8 @@ class HqTestSuiteRunner(CouchDbKitTestSuiteRunner):
         # monkey patch TEST_APPS into INSTALLED_APPS so that tests are run for them
         # without having to explicitly have them in INSTALLED_APPS
         # weird list/tuple type issues, so force everything to tuples
-        settings.INSTALLED_APPS = tuple(settings.INSTALLED_APPS) + tuple(settings.TEST_APPS)
+        test_apps = set(settings.INSTALLED_APPS) | set(settings.TEST_APPS) - set(settings.TEST_EXCLUDE_APPS)
+        settings.INSTALLED_APPS = tuple(test_apps)
         return super(HqTestSuiteRunner, self).setup_test_environment(**kwargs)
         
     def setup_databases(self, **kwargs):
