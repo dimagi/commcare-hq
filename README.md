@@ -218,7 +218,7 @@ Then run the following separately:
     > jython submodules/touchforms-src/touchforms/backend/xformserver.py
 
     # On Mac / Linux use Gunicorn as the multi-threaded server
-    ./manage.py run_gunicorn
+    ./manage.py run_gunicorn -w 3
 
     # on Windows use CherryPy
     > manage.py runcpserver port=8000
