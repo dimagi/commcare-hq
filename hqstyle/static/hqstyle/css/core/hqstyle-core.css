@@ -3398,7 +3398,7 @@ ul.icons li [class*=" icon-"] {
   content: "\F00B";
 }
 .header .icon-white:before {
-  content: "\f1000";
+  content: "\f105";
   color: #a5c0de;
 }
 .headerSortUp .icon-white:before {
