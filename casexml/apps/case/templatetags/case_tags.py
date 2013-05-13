@@ -81,7 +81,7 @@ def render_case(case, options):
         }
     ]
 
-    data = copy.deepcopy(case.to_json())
+    data = copy.deepcopy(case.to_extended_dict())
 
     default_properties = _get_tables_as_columns(data, display)
 

@@ -41,6 +41,14 @@ class CaseBase(SafeSaveDocument):
     class Meta:
         app_label = 'case'
 
+    def to_extended_dict(self):
+        """
+        Include calculated properties that need to be available to the case
+        details display by overriding this method.
+
+        """
+        return self.to_json()
+
 
 class CommCareCaseAction(LooselyEqualDocumentSchema):
     """
