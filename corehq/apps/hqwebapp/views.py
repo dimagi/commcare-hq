@@ -299,7 +299,6 @@ def bug_report(req):
     email = EmailMessage(
         subject=subject,
         body=message,
-        from_email=report['username'],
         to=settings.BUG_REPORT_RECIPIENTS,
         headers={'Reply-To': reply_to}
     )
