@@ -101,6 +101,9 @@ class ReportMultiSelectField(ReportSelectField):
     def update_params(self):
         self.selected = self.request.GET.getlist(self.slug) or self.default_option
 
+class ReportMultiSelectField2(ReportMultiSelectField):
+    template = "reports/fields/multiselect_select2.html"
+
 class MonthField(ReportField):
     slug = "month"
     template = "reports/partials/month-select.html"
@@ -117,16 +120,38 @@ class YearField(ReportField):
         self.context['years'] = range(year, datetime.datetime.utcnow().year + 1)
         self.context['year'] = int(self.request.GET.get('year', datetime.datetime.utcnow().year))
 
-class GroupField(ReportSelectField):
+class GroupFieldMixin():
     slug = "group"
     name = ugettext_noop("Group")
-    default_option = ugettext_noop("Everybody")
     cssId = "group_select"
+
+class GroupField(GroupFieldMixin, ReportSelectField):
+    default_option = ugettext_noop("Everybody")
 
     def update_params(self):
         super(GroupField, self).update_params()
         self.groups = Group.get_reporting_groups(self.domain)
         self.options = [dict(val=group.get_id, text=group.name) for group in self.groups]
+
+class MultiSelectGroupField(GroupFieldMixin, ReportMultiSelectField):
+    default_option = ['_all']
+
+    @property
+    def options(self):
+        self.groups = Group.get_reporting_groups(self.domain)
+        opts = [dict(val=group.get_id, text=group.name) for group in self.groups]
+        opts.insert(0, {'text': 'All Groups', 'val': '_all'})
+        return opts
+
+class MultiSelectGroupField2(GroupFieldMixin, ReportMultiSelectField2):
+    default_option = ['_all']
+
+    @property
+    def options(self):
+        self.groups = Group.get_reporting_groups(self.domain)
+        opts = [dict(val=group.get_id, text=group.name) for group in self.groups]
+        opts.insert(0, {'text': 'All Groups', 'val': '_all'})
+        return opts
 
 class SelectReportingGroupField(GroupField):
     name = ugettext_noop("Reporting Group")
@@ -574,3 +599,18 @@ class DeviceLogDevicesField(DeviceLogFilterField):
     slug = "logdevice"
     view = "phonelog/devicelog_data_devices"
     filter_desc = ugettext_noop("Filter Logs by Device")
+
+
+class UserOrGroupField(ReportSelectField):
+    """
+        To Use: Subclass and specify what the field options should be
+    """
+    slug = "aggregate_by"
+    name = "Aggregate by Users or Groups"
+    cssId = "aggregate_by_select"
+    cssClasses = "span2"
+    default_option = "Users"
+
+    def update_params(self):
+        self.selected = self.request.GET.get(self.slug, '')
+        self.options = [{'val': 'groups', 'text': 'Groups'}]

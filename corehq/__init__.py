@@ -19,6 +19,7 @@ REPORTS = (
         psi_prototype.StockReportExport,
     )),
     (_("Monitor Workers"), (
+        monitoring.UserStatusReport,
         monitoring.DailyFormStatsReport,
         monitoring.SubmissionsByFormReport,
         monitoring.FormCompletionTimeReport,
