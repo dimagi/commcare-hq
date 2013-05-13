@@ -342,6 +342,7 @@ class SupplyPointCase(CommtrackCase):
 
     @classmethod
     def get_display_config(cls):
+        # todo
         return [
             {
                 "layout": [
@@ -399,6 +400,20 @@ class SupplyPointProductCase(CommtrackCase):
     def get_supply_point_case_id(self):
         return _get_single_index(self, const.PARENT_CASE_REF, const.SUPPLY_POINT_CASE_TYPE)
 
+    def to_full_dict(self):
+        data = super(SupplyPointProductCase, self).to_full_dict()
+        data['supply_point_name'] = self.get_supply_point_case()['name']
+        data['product_name'] = self.get_product()['name']
+        # todo
+        data['emergency_level'] = None
+        data['max_level'] = None
+        # using stocked_out_since.  return None to get ---.  Can add these as
+        # properties of the class
+        data['months_until_stockout'] = None
+        data['stockout_duration_in_months'] = None
+
+        return data
+
     @classmethod
     def get_display_config(cls):
         return [
@@ -407,11 +422,11 @@ class SupplyPointProductCase(CommtrackCase):
                     [
                         {
                             "name": _("Supply Point"),
-                            "expr": "supply_point"
+                            "expr": "supply_point_name"
                         },
                         {
                             "name": _("Product"),
-                            "expr": "product"
+                            "expr": "product_name"
                         },
                         {
                             "name": _("Months until stockout"),
@@ -429,7 +444,7 @@ class SupplyPointProductCase(CommtrackCase):
                         },
                         {
                             "name": _("Monthly consumption"),
-                            "expr": "monthly_consumption"
+                            "expr": "consumption_rate"
                         },
                         {
                             "name": _("Emergency level"),
@@ -442,8 +457,9 @@ class SupplyPointProductCase(CommtrackCase):
                     ],
                     [
                         {
-                            "name": _("Date of last report"),
-                            "expr": "date_of_last_report"
+                            "name": _("Last reported"),
+                            "expr": "last_reported",
+                            "parse_date": True
                         }
                     ]
                 ],
@@ -554,6 +570,13 @@ class RequisitionCase(CommtrackCase):
         )
         return [r['id'] for r in results]
 
+    def to_full_dict(self):
+        data = super(RequisitionCase, self).to_full_dict()
+        data['supply_point_name'] = self.get_supply_point_case()['name']
+        data['product_name'] = self.get_product_case()['name']
+        data['balance'] = self.get_default_value()
+        return data
+
     @classmethod
     def get_display_config(cls):
         return [
@@ -562,13 +585,13 @@ class RequisitionCase(CommtrackCase):
                     [
                         {
                             "name": _("Supply Point"),
-                            "expr": "supply_point"
+                            "expr": "supply_point_name"
                         }
                     ],
                     [
                         {
                             "name": _("Product"),
-                            "expr": "product_id"
+                            "expr": "product_name"
                         }
                     ],
                     [
@@ -594,7 +617,8 @@ class RequisitionCase(CommtrackCase):
                         },
                         {
                             "name": _("Requested On"),
-                            "expr": "requested_on"
+                            "expr": "requested_on",
+                            "parse_date": True
                         }
                     ],
                     [
@@ -604,7 +628,8 @@ class RequisitionCase(CommtrackCase):
                         },
                         {
                             "name": _("Approved On"),
-                            "expr": "approved_on"
+                            "expr": "approved_on",
+                            "parse_date": True
                         }
                     ],
                     [
@@ -614,7 +639,8 @@ class RequisitionCase(CommtrackCase):
                         },
                         {
                             "name": _("Received On"),
-                            "expr": "received_on"
+                            "expr": "received_on",
+                            "parse_date": True
                         }
                     ]
                 ]
