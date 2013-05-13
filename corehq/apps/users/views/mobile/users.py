@@ -277,18 +277,24 @@ class UploadCommCareUsers(TemplateView):
 
         if redirect:
             if not async:
-                messages.success(request, 'Your bulk user upload is complete!')
+                messages.success(request,
+                                 _('Your bulk user upload is complete!'))
             problem_rows = []
             for row in response_rows:
                 if row['flag'] not in ('updated', 'created'):
                     problem_rows.append(row)
             if problem_rows:
-                messages.error(request, 'However, we ran into problems with the following users:')
+                messages.error(
+                    request,
+                    _('However, we ran into problems with the following users:')
+                )
                 for row in problem_rows:
                     if row['flag'] == 'missing-data':
-                        messages.error(request, 'A row with no username was skipped')
+                        messages.error(request,
+                                       _('A row with no username was skipped'))
                     else:
-                        messages.error(request, '{username}: {flag}'.format(**row))
+                        messages.error(request,
+                                       '{username}: {flag}'.format(**row))
             return HttpResponseRedirect(redirect)
         else:
             return response

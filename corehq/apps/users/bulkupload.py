@@ -1,6 +1,7 @@
 from StringIO import StringIO
 from couchdbkit.exceptions import MultipleResultsFound, ResourceNotFound
 from django.core.exceptions import ValidationError
+from django.utils.translation import ugettext as _
 from corehq.apps.groups.models import Group
 from corehq.apps.users.util import normalize_username, raw_username
 from corehq.apps.users.models import CommCareUser
@@ -158,7 +159,7 @@ def create_or_update_users_and_groups(domain, user_specs, group_specs):
                 ret['rows'].append({
                     'username': username,
                     'row': row,
-                    'flag': 'error: username cannot contain spaces or symbols',
+                    'flag': _('username cannot contain spaces or symbols'),
                 })
                 continue
             status_row = {
@@ -181,7 +182,7 @@ def create_or_update_users_and_groups(domain, user_specs, group_specs):
                         user = CommCareUser.get_by_username(username)
                     if user:
                         if user.domain != domain:
-                            raise Exception('User with username %r is somehow in domain %r' % (user.username, user.domain))
+                            raise Exception(_('User with username %r is somehow in domain %r') % (user.username, user.domain))
                         if username and user.username != username:
                             user.change_username(username)
                         if password:
@@ -189,7 +190,7 @@ def create_or_update_users_and_groups(domain, user_specs, group_specs):
                         status_row['flag'] = 'updated'
                     else:
                         if not password:
-                            raise Exception("Cannot create a new user with a blank password")
+                            raise Exception(_("Cannot create a new user with a blank password"))
                         user = CommCareUser.create(domain, username, password, uuid=user_id or '')
                         status_row['flag'] = 'created'
                     if phone_number:
@@ -214,11 +215,11 @@ def create_or_update_users_and_groups(domain, user_specs, group_specs):
 
                     for group_name in group_names:
                         if group_name not in allowed_group_names:
-                            raise Exception("Can't add to group '%s' (try adding it to your spreadsheet)" % group_name)
+                            raise Exception(_("Can't add to group '%s' (try adding it to your spreadsheet)") % group_name)
                         group_memoizer.by_name(group_name).add_user(user, save=False)
 
                 except Exception, e:
-                    status_row['flag'] = 'error: %s' % e
+                    status_row['flag'] = '%s' % e
                     
             ret["rows"].append(status_row)
     finally:
