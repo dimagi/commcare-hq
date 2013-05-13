@@ -1,6 +1,9 @@
 from __future__ import absolute_import
 import re
 from django.core.cache import cache
+from django.conf import settings
+from django.utils.translation import ugettext as _
+
 from casexml.apps.phone.xml import get_case_element
 from casexml.apps.case.signals import case_post_save
 from casexml.apps.case.util import get_close_case_xml, get_close_referral_xml,\
@@ -8,6 +11,7 @@ from casexml.apps.case.util import get_close_case_xml, get_close_referral_xml,\
 from datetime import datetime
 from couchdbkit.ext.django.schema import *
 from casexml.apps.case import const
+from dimagi.utils.modules import to_function
 from dimagi.utils import parsing
 import logging
 from dimagi.utils.decorators.memoized import memoized
@@ -27,6 +31,8 @@ Couch models for commcare cases.
 For details on casexml check out:
 http://bitbucket.org/javarosa/javarosa/wiki/casexml
 """
+
+CASE_WRAPPER = to_function(getattr(settings, 'CASE_WRAPPER', None))
 
 class CaseBase(SafeSaveDocument):
     """
@@ -298,10 +304,20 @@ class CommCareCase(CaseBase, IndexHoldingMixIn, ComputedDocumentMixin):
                                           include_docs=False).one()['value'])
 
     @classmethod
+    def wrap(cls, data):
+        wrap_cls = CASE_WRAPPER(data) if CASE_WRAPPER else CommCareCase
+        wrap_cls = wrap_cls or CommCareCase
+
+        if cls.__name__ == CommCareCase.__name__ and wrap_cls != CommCareCase:
+            return wrap_cls.wrap(data)
+        else:
+            return super(CommCareCase, cls).wrap(data)
+
+    @classmethod
     def bulk_get_lite(cls, ids):
         for res in cls.get_db().view("case/get_lite", keys=ids,
                                  include_docs=False):
-            yield CommCareCase.wrap(res['value'])
+            yield cls.wrap(res['value'])
 
     def get_preloader_dict(self):
         """
@@ -379,7 +395,7 @@ class CommCareCase(CaseBase, IndexHoldingMixIn, ComputedDocumentMixin):
         """
         Create a case object from a case update object.
         """
-        case = CommCareCase()
+        case = cls()
         case._id = case_update.id
         case.modified_on = parsing.string_to_datetime(case_update.modified_on_str) \
                             if case_update.modified_on_str else datetime.utcnow()
@@ -623,5 +639,56 @@ class CommCareCase(CaseBase, IndexHoldingMixIn, ComputedDocumentMixin):
         if desired).
         """
         return get_case_xform_ids(self._id)
+
+    @classmethod
+    def get_display_config(cls):
+        return [
+            {
+                "layout": [
+                    [
+                        {
+                            "expr": "name",
+                            "name": _("Name"),
+                        },
+                        {
+                            "expr": "opened_on",
+                            "name": _("Opened On"),
+                            "parse_date": True,
+                        },
+                        {
+                            "expr": "modified_on",
+                            "name": _("Modified On"),
+                            "parse_date": True,
+                        },
+                        {
+                            "expr": "closed_on",
+                            "name": _("Closed On"),
+                            "parse_date": True,
+                        },
+                    ],
+                    [
+                        {
+                            "expr": "type",
+                            "name": _("Case Type"),
+                            "format": '<code>{0}</code>',
+                        },
+                        {
+                            "expr": "user_id",
+                            "name": _("User ID"),
+                            "format": '<span data-field="user_id">{0}</span>',
+                        },
+                        {
+                            "expr": "owner_id",
+                            "name": _("Owner ID"),
+                            "format": '<span data-field="owner_id">{0}</span>',
+                        },
+                        {
+                            "expr": "_id",
+                            "name": _("Case ID"),
+                        },
+                    ],
+                ],
+            }
+        ]
 
 import casexml.apps.case.signals

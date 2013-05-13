@@ -31,55 +31,7 @@ def render_case(case, options):
     timezone = options.get('timezone', pytz.utc)
     _get_tables_as_columns = partial(get_tables_as_columns, timezone=timezone)
     display = options.get('display', None)
-
-    display = display or [
-        {
-            "layout": [
-                [
-                    {
-                        "expr": "name",
-                        "name": _("Name"),
-                    },
-                    {
-                        "expr": "opened_on",
-                        "name": _("Opened On"),
-                        "parse_date": True,
-                    },
-                    {
-                        "expr": "modified_on",
-                        "name": _("Modified On"),
-                        "parse_date": True,
-                    },
-                    {
-                        "expr": "closed_on",
-                        "name": _("Closed On"),
-                        "parse_date": True,
-                    },
-                ],
-                [
-                    {
-                        "expr": "type",
-                        "name": _("Case Type"),
-                        "format": '<code>{0}</code>',
-                    },
-                    {
-                        "expr": "user_id",
-                        "name": _("User ID"),
-                        "format": '<span data-field="user_id">{0}</span>',
-                    },
-                    {
-                        "expr": "owner_id",
-                        "name": _("Owner ID"),
-                        "format": '<span data-field="owner_id">{0}</span>',
-                    },
-                    {
-                        "expr": "_id",
-                        "name": _("Case ID"),
-                    },
-                ],
-            ],
-        }
-    ]
+    display = display or case.get_display_config()
 
     data = copy.deepcopy(case.to_extended_dict())
 
