@@ -1566,7 +1566,7 @@ def rearrange(req, domain, app_id, key):
         to_module_id = int(req.POST['to_module_id'])
         from_module_id = int(req.POST['from_module_id'])
         if app.rearrange_forms(to_module_id, from_module_id, i, j) == 'case type conflict':
-            messages.warning(req, "The module you moved this form to does not share the same case type as it's old module")
+            messages.warning(req, "Warning: The form's new module has a different case type from the old module.")
     elif "modules" == key:
         app.rearrange_modules(i, j)
     elif "detail" == key:
