@@ -701,6 +701,7 @@ def view_scheduled_report(request, domain, scheduled_report_id):
     return get_scheduled_report_response(
         request.couch_user, domain, scheduled_report_id, email=False)
 
+
 @require_case_view_permission
 @login_and_domain_required
 @require_GET
@@ -729,7 +730,7 @@ def case_details(request, domain, case_id):
         username = CommCareUser.get_by_user_id(case.user_id, domain).raw_username
     except Exception:
         username = None
-
+    
     return render(request, "reports/reportdata/case_details.html", {
         "domain": domain,
         "case_id": case_id,
