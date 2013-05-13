@@ -110,7 +110,8 @@ class Test(TestCase):
                              visits_week=dict(all_visits=[date(2012, 02, 23)],
                                               null_emitter=[]))
         diff = doc.diff(None)
-        expected = dict(doc_type='MockIndicators',
+        expected = dict(database=MockIndicators.Meta.app_label,
+                        doc_type='MockIndicators',
                         group_values=['mock', '123'],
                         group_names=['domain', 'owner_id'],
                         indicator_changes=[
@@ -143,7 +144,8 @@ class Test(TestCase):
         diff = new.diff(current)
         self.assertIsNotNone(diff)
         self.maxDiff = None
-        expected = dict(doc_type='MockIndicators',
+        expected = dict(database=MockIndicators.Meta.app_label,
+                        doc_type='MockIndicators',
                         group_values=['mock', '123'],
                         group_names=['domain', 'owner_id'],
                         indicator_changes=[
@@ -191,3 +193,6 @@ class MockIndicators(fluff.IndicatorDocument):
     domains = ('test',)
 
     visits_week = VisitCalculator(window=timedelta(days=7))
+
+    class Meta:
+        app_label = 'Mock'
