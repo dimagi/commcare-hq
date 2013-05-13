@@ -4,16 +4,23 @@ from casexml.apps.case.models import CommCareCase, const
 from casexml.apps.phone.xml import get_case_xml
 from corehq.apps.hqcase.utils import submit_case_blocks
 from corehq.apps.importer import base
+from corehq.apps.importer.const import LookupErrors
 from corehq.apps.importer.util import ExcelFile, get_case_properties
 from couchdbkit.exceptions import MultipleResultsFound, NoResultFound
 from django.views.decorators.http import require_POST
 from datetime import datetime, date
+from dimagi.utils.parsing import json_format_datetime
 from xlrd import xldate_as_tuple
 from corehq.apps.users.decorators import require_permission
 from corehq.apps.users.models import Permissions
 from soil.util import expose_download
 from soil import DownloadBase
 
+from xml.etree import ElementTree
+from casexml.apps.case.tests.util import CaseBlock
+import uuid
+
+from casexml.apps.case.xml import V2
 from django.contrib import messages
 from django.shortcuts import render
 from django.utils.translation import ugettext as _
@@ -59,7 +66,11 @@ def excel_config(request, domain):
                 else:
                     # get case types in this domain
                     case_types = []
-                    for row in CommCareCase.view('hqcase/types_by_domain',reduce=True,group=True,startkey=[domain],endkey=[domain,{}]).all():
+                    for row in CommCareCase.view('hqcase/types_by_domain',
+                                                 reduce=True,
+                                                 group=True,
+                                                 startkey=[domain],
+                                                 endkey=[domain,{}]).all():
                         if not row['key'][1] in case_types:
                             case_types.append(row['key'][1])
 
@@ -157,28 +168,129 @@ def excel_fields(request, domain):
                                  },
                                 'slug': base.ImportCases.slug})
 
-@require_POST
-@require_can_edit_data
-def excel_commit(request, domain):
-    named_columns = request.POST['named_columns']
-    uses_headers = named_columns == 'yes'
-    case_type = request.POST['case_type']
-    search_column = request.POST['search_column']
-    search_field = request.POST['search_field']
-    key_column = request.POST['key_column']
-    value_column = request.POST['value_column']
-
+def convert_custom_fields_to_struct(request):
     # TODO musn't be able to select an excel_field twice (in html)
     excel_fields = request.POST.getlist('excel_field[]')
     case_fields = request.POST.getlist('case_field[]')
     custom_fields = request.POST.getlist('custom_field[]')
     date_yesno = request.POST.getlist('date_yesno[]')
 
-    # turn all the select boxes into a useful struct
     field_map = {}
     for i, field in enumerate(excel_fields):
         if field and (case_fields[i] or custom_fields[i]):
-            field_map[field] = {'case': case_fields[i], 'custom': custom_fields[i], 'date': int(date_yesno[i])}
+            field_map[field] = {'case': case_fields[i],
+                                'custom': custom_fields[i],
+                                'date': int(date_yesno[i])}
+
+    return field_map
+
+def parse_excel_date(date):
+    return date(*xldate_as_tuple(date, 0)[:3])
+
+def parse_search_id(request, columns, row):
+    # Find index of user specified search column
+    search_column = request.POST['search_column']
+    search_column_index = columns.index(search_column)
+
+    search_id = row[search_column_index]
+    try:
+        # if the spreadsheet gives a number, strip any decimals off
+        # float(x) is more lenient in conversion from string so both
+        # are used
+        search_id = int(float(search_id))
+    except ValueError:
+        # if it's not a number that's okay too
+        pass
+
+    # need a string no matter what the type was
+    return str(search_id)
+
+def submit_case_block(caseblock, domain, username, user_id):
+    casexml = ElementTree.tostring(caseblock.as_xml(format_datetime=json_format_datetime))
+    submit_case_blocks(casexml, domain, username, user_id)
+
+def get_key_column_index(request, columns):
+    key_column = request.POST['key_column']
+    try:
+        key_column_index = columns.index(key_column)
+    except ValueError:
+        key_column_index = False
+
+    return key_column_index
+
+def get_value_column_index(request, columns):
+    value_column = request.POST['value_column']
+    try:
+        value_column_index = columns.index(value_column)
+    except ValueError:
+        value_column_index = False
+
+    return value_column_index
+
+def lookup_case(search_field, search_id, domain):
+    found = False
+    if search_field == 'case_id':
+        try:
+            case = CommCareCase.get(search_id)
+            if case.domain == domain:
+                found = True
+        except Exception:
+            pass
+    elif search_field == 'external_id':
+        try:
+            case = CommCareCase.view('hqcase/by_domain_external_id',
+                                     key=[domain, search_id],
+                                     reduce=False,
+                                     include_docs=True).one()
+            found = bool(case)
+        except NoResultFound:
+            pass
+        except MultipleResultsFound:
+            return (None, LookupErrors.MultipleResults)
+
+    if found:
+        return (case, None)
+    else:
+        return (None, LookupErrors.NotFound)
+        # TYLER TODO: check if we are allowed to create new entries
+        # continue
+
+def populate_updated_fields(request, columns, row):
+    field_map = convert_custom_fields_to_struct(request)
+    key_column_index = get_key_column_index(request, columns)
+    value_column_index = get_value_column_index(request, columns)
+    fields_to_update = {}
+
+    for key in field_map:
+        try:
+            if key_column_index and key == row[key_column_index]:
+                update_value = row[value_column_index]
+            else:
+                update_value = row[columns.index(key)]
+        except:
+            continue
+
+        if field_map[key]['custom']:
+            # custom (new) field was entered
+            update_field_name = field_map[key]['custom']
+        else:
+            # existing case field was chosen
+            update_field_name = field_map[key]['case']
+
+        if field_map[key]['date'] == 1:
+            update_value = parse_excel_date(update_value)
+
+        fields_to_update[update_field_name] = update_value
+
+    return fields_to_update
+
+@require_POST
+@require_can_edit_data
+def excel_commit(request, domain):
+    named_columns = request.POST['named_columns']
+    uses_headers = named_columns == 'yes'
+    case_type = request.POST['case_type']
+    search_field = request.POST['search_field']
 
     download_ref = DownloadBase.get(request.session.get(EXCEL_SESSION_ID))
     spreadsheet = _get_spreadsheet(download_ref, uses_headers)
@@ -192,120 +304,53 @@ def excel_commit(request, domain):
         return HttpResponseRedirect(base.ImportCases.get_url(domain=domain) + "?error=cache")
 
     columns = spreadsheet.get_header_columns()
-
-    # find indexes of user selected columns
-    search_column_index = columns.index(search_column)
-
-    try:
-        key_column_index = columns.index(key_column)
-    except ValueError:
-        key_column_index = False
-
-    try:
-        value_column_index = columns.index(value_column)
-    except ValueError:
-        value_column_index = False
-
-    no_match_count = 0
-    match_count = 0
-    too_many_matches = 0
-
+    match_count = no_match_count = too_many_matches = 0
     cases = {}
 
-    # start looping through all the rows
     for i in range(spreadsheet.get_num_rows()):
         # skip first row if it is a header field
         if i == 0 and named_columns:
             continue
 
         row = spreadsheet.get_row(i)
-        found = False
+        search_id = parse_search_id(request, columns, row)
+        case, error = lookup_case(search_field, search_id, domain)
 
-        search_id = row[search_column_index]
-
-        # see what has come out of the spreadsheet
-        try:
-            float(search_id)
-            # no error, so something that looks like a number came out of the cell
-            # in which case we should remove any decimal places
-            search_id = int(search_id)
-        except ValueError:
-            # error, so probably a string
-            pass
-
-        # couchdb wants a string
-        search_id = str(search_id)
-
-        if search_field == 'case_id':
-            try:
-                case = CommCareCase.get(search_id)
-                if case.domain == domain:
-                    found = True
-            except Exception:
-                pass
-        elif search_field == 'external_id':
-            try:
-                case = CommCareCase.view('hqcase/by_domain_external_id',
-                                         key=[domain, search_id],
-                                         reduce=False,
-                                         include_docs=True).one()
-                found = True if case else False
-            except NoResultFound:
-                pass
-            except MultipleResultsFound:
-                too_many_matches += 1
-
-        if found:
+        if case:
             match_count += 1
-        else:
+        elif error == LookupErrors.NotFound:
             no_match_count += 1
-            continue
+        elif error == LookupErrors.MultipleResults:
+            too_many_matches += 1
 
-        # here be monsters
-        fields_to_update = {}
+        fields_to_update = populate_updated_fields(request, columns, row)
 
-        for key in field_map:
-            update_value = False
+        user = request.couch_user
+        username = user.username
+        user_id = user._id
+        if not case:
+            id = uuid.uuid4().hex
+            owner_id = user_id
 
-            if key_column_index and key == row[key_column_index]:
-                update_value = row[value_column_index]
-            else:
-                # nothing was set so maybe it is a regular column
-                try:
-                    update_value = row[columns.index(key)]
-                except Exception:
-                    pass
-
-            if update_value:
-                # case field to update
-                if field_map[key]['custom']:
-                    # custom (new) field was entered
-                    update_field_name = field_map[key]['custom']
-                else:
-                    # existing case field was chosen
-                    update_field_name = field_map[key]['case']
-
-                if field_map[key]['date'] == 1:
-                    update_value = date(*xldate_as_tuple(update_value, 0)[:3])
-
-                fields_to_update[update_field_name] = update_value
-
-        if case.type == case_type:
-            if cases.has_key(search_id):
-                cases[search_id]['fields'].update(fields_to_update)
-            else:
-                cases[search_id] = {'obj': case, 'fields': fields_to_update}
-
-    # run updates
-    for id, case in cases.iteritems():
-        for name, value in case['fields'].iteritems():
-            case['obj'].set_case_property(name, value)
-
-        case['obj'].modified_on = datetime.utcnow()
-
-        # spoof case update xform submission
-        case_block = get_case_xml(case['obj'], (const.CASE_ACTION_UPDATE,), version='2.0')
-        submit_case_blocks(case_block, domain)
+            caseblock = CaseBlock(
+                create = True,
+                case_id = id,
+                version = V2,
+                user_id = user_id,
+                owner_id = owner_id,
+                case_type = case_type,
+                external_id = search_id if search_field == 'external_id' else '',
+                update = fields_to_update
+            )
+            submit_case_block(caseblock, domain, username, user_id)
+        elif case and case.type == case_type:
+            caseblock = CaseBlock(
+                create = False,
+                case_id = case._id,
+                version = V2,
+                update = fields_to_update
+            )
+            submit_case_block(caseblock, domain, username, user_id)
 
     # unset filename session var
     try:
