@@ -34,16 +34,6 @@ def process_cases(sender, xform, config=None, **kwargs):
         for c in cases:
             c.reconcile_actions(rebuild=True)
 
-    # attach domain and export tag if domain is there
-    if hasattr(xform, "domain"):
-        domain = xform.domain
-        def attach_extras(case):
-            case.domain = domain
-            if domain and hasattr(case, 'type'):
-                case['#export_tag'] = ["domain", "type"]
-            return case
-        cases = [attach_extras(case) for case in cases]
-
     # handle updating the sync records for apps that use sync mode
     if hasattr(xform, "last_sync_token") and xform.last_sync_token:
         relevant_log = SyncLog.get(xform.last_sync_token)
