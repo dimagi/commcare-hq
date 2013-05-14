@@ -118,7 +118,11 @@ class CaseActivityReport(WorkerMonitoringReportTableBase):
     display_data = ['percent']
     emailable = True
     description = ugettext_noop("Followup rates on active cases.")
-    special_notice = ugettext_noop("This report currently does not support case sharing. "
+
+    @property
+    def special_notice(self):
+        if self.domain_object.case_sharing_included():
+            return _("This report currently does not support case sharing. "
                        "There might be inconsistencies in case totals if the user is part of a case sharing group. "
                        "We are working to correct this shortly.")
 
@@ -735,7 +739,7 @@ class WorkerActivityTimes(WorkerMonitoringChartBase,
 class UserStatusReport(WorkerMonitoringReportTableBase, DatespanMixin):
     slug = 'user_status'
     name = ugettext_noop("User Status")
-    description = ugettext_noop("Usage information for groups and users")
+    description = ugettext_noop("Summary of form and case activity by user or group.")
     section_name = ugettext_noop("Project Reports")
     num_avg_intervals = 3 # how many duration intervals we go back to calculate averages
 
@@ -746,6 +750,11 @@ class UserStatusReport(WorkerMonitoringReportTableBase, DatespanMixin):
     ]
     fix_left_col = True
     emailable = True
+
+    @property
+    def special_notice(self):
+        if self.domain_object.case_sharing_included():
+            return _('This report currently does not fully case sharing. There might be inconsistencies in the cases modified columns if a user did not create the case.')
 
     @property
     def aggregate_by(self):
@@ -798,20 +807,32 @@ class UserStatusReport(WorkerMonitoringReportTableBase, DatespanMixin):
         by_group = self.aggregate_by == 'groups'
         columns = [DataTablesColumn(_("Group"))] if by_group else [DataTablesColumn(_("User"))]
         columns.append(DataTablesColumnGroup(_("Form Data"),
-            DataTablesColumn(_("# Forms Submitted"), sort_type=DTSortType.NUMERIC),
-            DataTablesColumn(_("Avg # Forms Submitted"), sort_type=DTSortType.NUMERIC),
-            DataTablesColumn(_("Last Form Submission")) if not by_group else DataTablesColumn(_("# Active Users"), sort_type=DTSortType.NUMERIC)
+            DataTablesColumn(_("# Forms Submitted"), sort_type=DTSortType.NUMERIC,
+                help_text=_("Number of forms submitted in chosen date range.")),
+            DataTablesColumn(_("Avg # Forms Submitted"), sort_type=DTSortType.NUMERIC,
+                help_text=_("Average number of forms submitted in the last three date ranges of the same length.")),
+            DataTablesColumn(_("Last Form Submission"),
+                help_text=_("Date of last form submission in time period.  Total row displays proportion of users submitting forms in date range")) \
+            if not by_group else DataTablesColumn(_("# Active Users"), sort_type=DTSortType.NUMERIC,
+                help_text=_("Proportion of users in group who submitted forms in date range."))
         ))
         columns.append(DataTablesColumnGroup(_("Case Data"),
-            DataTablesColumn(_("# Cases Created"), sort_type=DTSortType.NUMERIC),
-            DataTablesColumn(_("# Cases Closed"), sort_type=DTSortType.NUMERIC),
-            DataTablesColumn(_("# Cases Modified"), sort_type=DTSortType.NUMERIC),
-            DataTablesColumn(_("Avg # Cases Modified"), sort_type=DTSortType.NUMERIC),
+            DataTablesColumn(_("# Cases Created"), sort_type=DTSortType.NUMERIC,
+                help_text=_("Number of cases created in the date range.")),
+            DataTablesColumn(_("# Cases Closed"), sort_type=DTSortType.NUMERIC,
+                help_text=_("Number of cases closed in the date range.")),
+            DataTablesColumn(_("# Cases Modified"), sort_type=DTSortType.NUMERIC,
+                help_text=_("Number of cases created, modified or closed in the date range.  If you are using case sharing, this column will only include cases initially created by the user.")),
+            DataTablesColumn(_("Avg # Cases Modified"), sort_type=DTSortType.NUMERIC,
+                help_text=_("Average number of cases created, modified or closed in the last three date ranges of the same length.  If you are using case sharing, this column will only cases initially created by the user.")),
         ))
         columns.append(DataTablesColumnGroup(_("Case Activity"),
-            DataTablesColumn(_("# Inactive Cases"), sort_type=DTSortType.NUMERIC),
-            DataTablesColumn(_("# Total Cases"), sort_type=DTSortType.NUMERIC),
-            DataTablesColumn(_("% Inactive Cases"), sort_type=DTSortType.NUMERIC),
+            DataTablesColumn(_("# Inactive Cases"), sort_type=DTSortType.NUMERIC,
+                help_text=_("Number of cases owned by the user that were not opened, modified or closed in date range.  This includes case sharing cases.")),
+            DataTablesColumn(_("# Total Cases"), sort_type=DTSortType.NUMERIC,
+                help_text=_("Total number of cases owned by the user.  This includes case sharing cases.")),
+            DataTablesColumn(_("% Inactive Cases"), sort_type=DTSortType.NUMERIC,
+                help_text=_("Percentage of cases owned by user that were inactive.  This includes case sharing cases.")),
         ))
         return DataTablesHeader(*columns)
 
@@ -875,10 +896,13 @@ class UserStatusReport(WorkerMonitoringReportTableBase, DatespanMixin):
                 "bool": {
                     "must": [
                         {"match": {"domain.exact": self.domain}},
-                        {"range": {
-                            "actions.date": {
-                                "from": datespan.startdate_param_utc,
-                                "to": datespan.enddate_param_utc}}}
+                        {"nested": {
+                            "path": "actions",
+                            "query": {
+                                "range": {
+                                    "actions.date": {
+                                        "from": datespan.startdate_param_utc,
+                                        "to": datespan.enddate_param_utc}}}}},
                     ]}}}
         facets = ['user_id']
         return es_query(q=q, facets=facets, es_url=CASE_INDEX + '/case/_search', size=1, dict_only=dict_only)
@@ -895,10 +919,13 @@ class UserStatusReport(WorkerMonitoringReportTableBase, DatespanMixin):
                         {"range": {"opened_on": {"lt": datespan.startdate_param_utc}}}],
                     "must_not": [
                         {"range": {"closed_on": {"lt": datespan.startdate_param_utc}}},
-                        {"range": {
-                            "actions.date": {
-                                "from": datespan.startdate_param_utc,
-                                "to": datespan.enddate_param_utc}}},
+                        {"nested": {
+                            "path": "actions",
+                            "query": {
+                                "range": {
+                                    "actions.date": {
+                                        "from": datespan.startdate_param_utc,
+                                        "to": datespan.enddate_param_utc}}}}},
                     ]}}}
         facets = ['owner_id']
         return es_query(q=q, facets=facets, es_url=CASE_INDEX + '/case/_search', size=1, dict_only=dict_only)
