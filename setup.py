@@ -10,7 +10,7 @@ setup(
     author='Dimagi',
     author_email='information@dimagi.com',
     url='http://www.dimagi.com/',
-    packages=['fluff', 'tests'],
+    packages=['fluff'],
     test_suite='tests',
     test_loader='unittest2:TestLoader',
     install_requires=[
