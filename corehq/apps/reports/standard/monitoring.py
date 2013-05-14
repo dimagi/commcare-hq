@@ -853,10 +853,13 @@ class UserStatusReport(WorkerMonitoringReportTableBase, DatespanMixin):
                 "bool": {
                     "must": [
                         {"match": {"domain.exact": self.domain}},
-                        {"range": {
-                            "actions.date": {
-                                "from": datespan.startdate_param_utc,
-                                "to": datespan.enddate_param_utc}}}
+                        {"nested": {
+                            "path": "actions",
+                            "query": {
+                                "range": {
+                                    "actions.date": {
+                                        "from": datespan.startdate_param_utc,
+                                        "to": datespan.enddate_param_utc}}}}},
                     ]}}}
         facets = ['user_id']
         return es_query(q=q, facets=facets, es_url=CASE_INDEX + '/case/_search', size=1, dict_only=dict_only)
@@ -873,10 +876,13 @@ class UserStatusReport(WorkerMonitoringReportTableBase, DatespanMixin):
                         {"range": {"opened_on": {"lt": datespan.startdate_param_utc}}}],
                     "must_not": [
                         {"range": {"closed_on": {"lt": datespan.startdate_param_utc}}},
-                        {"range": {
-                            "actions.date": {
-                                "from": datespan.startdate_param_utc,
-                                "to": datespan.enddate_param_utc}}},
+                        {"nested": {
+                            "path": "actions",
+                            "query": {
+                                "range": {
+                                    "actions.date": {
+                                        "from": datespan.startdate_param_utc,
+                                        "to": datespan.enddate_param_utc}}}}},
                     ]}}}
         facets = ['owner_id']
         return es_query(q=q, facets=facets, es_url=CASE_INDEX + '/case/_search', size=1, dict_only=dict_only)
