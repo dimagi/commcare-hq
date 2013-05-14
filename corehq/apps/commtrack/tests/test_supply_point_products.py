@@ -23,6 +23,7 @@ class SupplyPointProductTest(TestCase):
         self.assertEqual("CommCareCase", spp.doc_type)
         self.assertEqual(TEST_DOMAIN, spp.domain)
         self.assertEqual(const.SUPPLY_POINT_PRODUCT_CASE_TYPE, spp.type)
+        self.assertEqual(self.product.name, spp.name)
         self.assertEqual(self.product._id, spp.product)
         self.assertEqual(self.product._id, spp.get_product()._id)
         self.assertEqual(self.sp.location_, spp.location_)

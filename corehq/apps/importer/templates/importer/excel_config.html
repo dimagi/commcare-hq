@@ -9,19 +9,19 @@
     <script type="text/javascript">
         $(function() {
             $('#key_value_columns').change(function() {
-                if ($(this).val() == "yes") {                    
+                if ($(this).val() == "yes") {
                     $('#key_column').removeAttr('disabled');
                     $('#value_column').removeAttr('disabled');
                 } else {
-                	$('#key_column').attr('disabled', 'disabled');
+                    $('#key_column').attr('disabled', 'disabled');
                     $('#value_column').attr('disabled', 'disabled');
-                } //else
+                }
             });
 
             $('#key_value_columns').change();
 
             $('#back_button').click(function() {
-            	history.back();
+                history.back();
                 return false;
             });
         });
@@ -45,7 +45,7 @@
             </div>
         </div>
     </fieldset>
-    
+
     <fieldset>
         <legend>Which column should be used to identify cases?</legend>
         <div class="control-group">
@@ -56,16 +56,16 @@
                     <option value="{{column|escape}}">{{column|escape}}</option>
                     {% endfor %}
                 </select>
-                
+
                 <label for="search_field">Corresponding case field</label>
-                <select name="search_field" id="search_field">               
+                <select name="search_field" id="search_field">
                     <option value="case_id">case_id</option>
                     <option value="external_id">external_id</option>
-                </select>                
+                </select>
             </div>
         </div>
     </fieldset>
-    
+
     <fieldset>
         <legend>Are there columns in the file that contain key/value fields?</legend>
         <div class="control-group">
@@ -73,11 +73,11 @@
                 <select class="input-small" name="key_value_columns" id="key_value_columns">
                     <option selected>no</option>
                     <option >yes</option>
-                </select> 
-            </div>       
+                </select>
+            </div>
         </div>
-    </fieldset>    
-    
+    </fieldset>
+
     <fieldset>
         <legend>Which Excel columns correspond to the key/value fields?</legend>
         <div class="control-group">
@@ -88,7 +88,7 @@
                     <option value="{{column|escape}}">{{column|escape}}</option>
                     {% endfor %}
                 </select>
-                
+
                 <label for="value_column">Value column</label>
                 <select name="value_column" id="value_column">
                     {% for column in columns %}
@@ -98,7 +98,7 @@
             </div>
         </div>
     </fieldset>
-    
+
     <div class="form-actions">
         <button type="button" class="btn btn-primary btn-large" id="back_button"><i class="icon-backward icon-white"></i> Back</button>
         <button type="submit" class="btn btn-primary btn-large"><i class="icon-forward icon-white"></i> Next step</button>
