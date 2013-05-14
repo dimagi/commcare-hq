@@ -39,13 +39,13 @@
         </span>
     </div>
     <div class="well indent">
-        <table class="table">
+        <table class="table table-condensed">
             <thead>
                 <tr>
                     <th class="span1"></th>
-                    <th class="span5">{% trans "Question" %}</th>
+                    <th class="span3">{% trans "Question" %}</th>
                     <th class="span1"></th>
-                    <th class="span5">{% trans "Case Property" %}</th>
+                    <th class="span3">{% trans "Case Property" %}</th>
                 </tr>
             </thead>
 
@@ -91,21 +91,23 @@
 
 <div id="case-config-ko">
     <div data-bind="saveButton: saveButton, visible: $root.edit"></div>
-    <div class="indent">
-        {% trans "Requires" %}
-        <select data-bind="
-            optstr: [{value: 'none', label: '{% trans "no case" %}'},
-                      {value: 'case', label: '{% trans "a case" %}'}],
-            value: requires
-        "></select>
-    </div>
-    <div class="old-case-config"></div>
-    <div data-bind="if: requires() === 'none'">
-{#        <div data-bind="template: {name: 'case-config-open-case', data: self.open_case}">#}
-{##}
-{#        </div>#}
-    </div>
-    <div data-bind="with: subCasesViewModel">
+    <div data-bind="with: caseConfigViewModel">
+        <div class="indent">
+            {% trans "This form" %}
+            <select data-bind="
+                optstr: [{value: 'none', label: '{% trans "does not use cases" %}'},
+                         {value: 'open', label: '{% trans "opens a case" %}'},
+                         {value: 'update', label: '{% trans "modifies a case" %}'}],
+                value: actionType
+            "></select>
+        </div>
+        <div data-bind="if: actionType() === 'update'">
+            Under construction!
+        </div>
+        <div data-bind="if: actionType() === 'open'">
+            <div data-bind="template: {name: 'case-config-open-case', data: case_transaction}">
+            </div>
+        </div>
         <header class="clearfix">
             <h5 class="pull-left">{% trans "Child Cases" %}</h5>
             <span data-bind="makeHqHelp: {}"

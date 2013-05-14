@@ -8,10 +8,10 @@
     <script src="{% static 'hqwebapp/js/lib/knockout.mapping.js' %}"></script>
     <script src="{% static 'hqwebapp/js/knockout-bindings.js' %}"></script>
 
-    <script src="{% static 'app_manager/js/ejs.min.js' %}"></script>
     {% if app.application_version == '2.0' %}
         <script src="{% static 'app_manager/js/case-config-ui-2.js' %}"></script>
     {% else %}
+        <script src="{% static 'app_manager/js/ejs.min.js' %}"></script>
         <script src="{% static 'app_manager/js/case-config-ui-1.js' %}"></script>
     {% endif %}
     <script src="{% static 'cloudcare/js/util.js' %}"></script>
