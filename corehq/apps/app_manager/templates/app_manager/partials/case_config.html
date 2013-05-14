@@ -38,39 +38,23 @@
             <input type="text" class="code" data-bind="value: condition.answer, edit: $root.edit"/>
         </span>
     </div>
-    <div class="well" style="margin: 10px">
-        <table>
+    <div class="well indent">
+        <table class="table">
             <thead>
                 <tr>
-                    <th></th>
-                    <th>{% trans "Question" %}</th>
-                    <th>{% trans "Case Property" %}</th>
+                    <th class="span1"></th>
+                    <th class="span5">{% trans "Question" %}</th>
+                    <th class="span1"></th>
+                    <th class="span5">{% trans "Case Property" %}</th>
                 </tr>
             </thead>
 
-            <tbody>
-                <tr class="control-group" data-bind="css: {warning: !case_name()}">
-                    <td></td>
-                    <td>
-                        <select data-bind="
-                            optstr: $root.getQuestions('all', false, true),
-                            optstrText: $root.utils.getLabel,
-                            value: case_name,
-                            optionsCaption: ' ',
-                            edit: $root.edit"
-                        ></select>
-                        <p class="help-block" data-bind="visible: !case_name()">{% trans "Required" %}</p>
-                    </td>
-                    <td>
-                        <span class="label label-inverse">{% trans "Name" %}</span> <code>name</code>
-                    </td>
-                </tr>
-            </tbody>
-
             <tbody data-bind="foreach: case_properties">
-                <tr class="control-group" data-bind="css: {error: validate}">
+                <tr class="control-group" data-bind="css: {error: validate, warning: required() && !path()}">
                     <td>
-                        <a href="#" data-bind="click: $parent.removeProperty, visible: $root.edit"><i class="icon-remove"></i></a>
+                        <a href="#" data-bind="click: $parent.removeProperty, visible: $root.edit && !required()">
+                            <i class="icon-remove"></i>
+                        </a>
                     </td>
                     <td>
                         <select data-bind="
@@ -80,15 +64,27 @@
                             optionsCaption: ' ',
                             edit: $root.edit"
                         ></select>
+                        <p class="help-inline" data-bind="visible: required() && !path()">{% trans "Required" %}</p>
                     </td>
                     <td>
-                        <input type="text" class="code" data-bind="valueDefault: key, default: defaultKey, edit: $root.edit"/>
+                        <i class="icon-arrow-right"></i>
+                    </td>
+                    <td>
+                        <span data-bind="visible: !required()">
+                            <input type="text" class="code" data-bind="valueDefault: key, default: defaultKey, edit: $root.edit"/>
+                        </span>
+                        <span data-bind="visible: required()">
+                            <code data-bind="text: key"></code>
+                        </span>
                         <p class="help-inline" data-bind="html: validate"></p>
                     </td>
                 </tr>
             </tbody>
         </table>
-        <a href="#" data-bind="click: addProperty, visible: $root.edit">{% trans "Add property" %}</a>
+        <a href="#" data-bind="click: addProperty, visible: $root.edit">
+            <i class="icon-plus"></i>
+            {% trans "Add property" %}
+        </a>
     </div>
 </script>
 

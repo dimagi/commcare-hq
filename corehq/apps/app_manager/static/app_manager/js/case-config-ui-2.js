@@ -164,23 +164,33 @@ var CaseConfig = (function () {
 
 
     var CaseTransaction = {
-        mapping: {
-            include: ['case_name', 'case_type', 'condition', 'case_properties'],
-            case_properties: {
-                create: function (options) {
-                    return CaseProperty.wrap(options.data);
+        mapping: function (self) {
+            return {
+                include: ['case_type', 'condition', 'case_properties'],
+                    case_properties: {
+                    create: function (options) {
+                        return CaseProperty.wrap(options.data, self);
+                    }
                 }
             }
         },
         wrap: function (data, caseConfig) {
-            var self = ko.mapping.fromJS(data, CaseTransaction.mapping);
+            var self = {};
+            ko.mapping.fromJS(data, CaseTransaction.mapping(self), self);
 
             self.caseConfig = caseConfig;
+
+            // link self.case_name to corresponding path observable
+            // in case_properties for convenience
+            self.case_name = _(self.case_properties()).find(function (p) {
+                return p.key() === 'name' && p.required();
+            }).path;
 
             self.addProperty = function () {
                 var property = CaseProperty.wrap({
                     path: '',
-                    key: ''
+                    key: '',
+                    required: false
                 }, self);
 
                 self.case_properties.push(property);
@@ -206,15 +216,14 @@ var CaseConfig = (function () {
             return self;
         },
         unwrap: function (self) {
-            var o = ko.mapping.toJS(self);
-            return o;
+            return ko.mapping.toJS(self, CaseTransaction.mapping(self));
         }
     };
 
 
     var CaseProperty = {
         mapping: {
-            include: ['key', 'path']
+            include: ['key', 'path', 'required']
         },
         wrap: function (data, case_transaction) {
             var self = ko.mapping.fromJS(data, CaseProperty.mapping);
@@ -246,6 +255,7 @@ var CaseConfig = (function () {
         }
     };
 
+
     var HQOpenSubCaseAction = {
         normalize: function (o) {
             var self = {};
@@ -262,41 +272,50 @@ var CaseConfig = (function () {
         },
         to_case_transaction: function (o, caseConfig) {
             var self = HQOpenSubCaseAction.normalize(o);
-            var case_properties = [];
+            var case_properties = [{
+                path: self.case_name,
+                key: 'name',
+                required: true
+            }];
 
             for (var key in self.case_properties) {
                 if (self.case_properties.hasOwnProperty(key)) {
                     case_properties.push({
                         path: self.case_properties[key],
-                        key: key
+                        key: key,
+                        required: false
                     });
                 }
             }
-
             case_properties = _.sortBy(case_properties, function (property) {
                 return caseConfig.questionScores[property.path];
             });
             return CaseTransaction.wrap({
                 case_type: self.case_type,
-                case_name: self.case_name,
                 case_properties: case_properties,
                 condition: self.condition
             }, caseConfig);
         },
-        from_case_transaction: function (transaction) {
-            var o = CaseTransaction.unwrap(transaction);
-            var case_properties = {};
-            for (var i = 0; i < o.case_properties.length; i++) {
-                if (transaction.case_properties()[i].keyVal() || o.case_properties[i].path) {
-                    case_properties[transaction.case_properties()[i].keyVal()] = o.case_properties[i].path;
+        from_case_transaction: function (case_transaction) {
+            var o = CaseTransaction.unwrap(case_transaction);
+            var case_properties = {}, case_name;
+            _(o.case_properties).each(function (case_property) {
+                var key = case_property.key;
+                var path = case_property.path;
+                if (key || path) {
+                    if (key === 'name' && case_property.required) {
+                        case_name = path;
+                    } else {
+                        case_properties[key] = path;
+                    }
                 }
-            }
+            });
             return {
-                case_name: o.case_name,
+                case_name: case_name,
                 case_type: o.case_type,
                 case_properties: case_properties,
                 condition: o.condition,
-                repeat_context: transaction.repeat_context()
+                repeat_context: case_transaction.repeat_context()
             };
         }
     };
