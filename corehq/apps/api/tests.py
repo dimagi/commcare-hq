@@ -10,7 +10,7 @@ from couchforms.models import XFormInstance
 from corehq.pillows.xform import XFormPillow
 from corehq.apps.users.models import CommCareUser, WebUser
 from corehq.apps.domain.models import Domain
-from corehq.apps.receiverwrapper.models import FormRepeater, CaseRepeater
+from corehq.apps.receiverwrapper.models import FormRepeater, CaseRepeater, ShortFormRepeater
 from corehq.apps.api.resources import v0_1, v0_4
 
 class FakeXFormES(object):
@@ -215,11 +215,12 @@ class TestRepeaterResource(TestCase):
     """
     Basic sanity checking of v0_4.RepeaterResource
     """
-        
+
     def setUp(self):
         self.maxDiff = None
         
         self.domain = Domain.get_or_create_with_name('qwerty', is_active=True)
+        self.repeater_types = [FormRepeater, CaseRepeater, ShortFormRepeater]
 
         self.list_endpoint = reverse('api_dispatch_list', kwargs=dict(domain=self.domain.name, 
                                                                       api_name='v0.4', 
@@ -232,9 +233,31 @@ class TestRepeaterResource(TestCase):
         self.user.set_role(self.domain.name, 'admin')
         self.user.save()
 
+    def single_endpoint(self, id):
+        return reverse('api_dispatch_detail', kwargs=dict(domain=self.domain.name,
+                                                          api_name='v0.4',
+                                                          resource_name=v0_4.RepeaterResource.Meta.resource_name,
+                                                          pk=id))
+
     def tearDown(self):
         self.user.delete()
         self.domain.delete()
+
+    def test_get(self):
+        self.client.login(username=self.username, password=self.password)
+        # Add a repeater of various types and check that it comes back
+        for cls in self.repeater_types:
+            repeater = cls(domain=self.domain.name,
+                           url='http://example.com/forwarding/{cls}'.format(cls=cls.__name__))
+            repeater.save()
+            backend_id = repeater._id
+            response = self.client.get(self.single_endpoint(backend_id))
+            self.assertEqual(response.status_code, 200)
+            result = simplejson.loads(response.content)
+            self.assertEqual(result['id'], backend_id)
+            self.assertEqual(result['url'], repeater.url)
+            self.assertEqual(result['domain'], repeater.domain)
+            self.assertEqual(result['type'], cls.__name__)
 
     def test_get_list(self):
         self.client.login(username=self.username, password=self.password)
@@ -242,7 +265,7 @@ class TestRepeaterResource(TestCase):
         # Add a form repeater and check that it comes back
         form_repeater = FormRepeater(domain=self.domain.name, url='http://example.com/forwarding/form')
         form_repeater.save()
-        backend_id = form_repeater.get_id
+        backend_id = form_repeater._id
 
         response = self.client.get(self.list_endpoint)
         self.assertEqual(response.status_code, 200)
@@ -257,7 +280,7 @@ class TestRepeaterResource(TestCase):
         # Add a case repeater and check that both come back
         case_repeater = CaseRepeater(domain=self.domain.name, url='http://example.com/forwarding/case')
         case_repeater.save()
-        backend_id = case_repeater.get_id
+        backend_id = case_repeater._id
 
         response = self.client.get(self.list_endpoint)
         self.assertEqual(response.status_code, 200)
@@ -266,10 +289,51 @@ class TestRepeaterResource(TestCase):
         self.assertEqual(len(api_repeaters), 2)
 
         api_case_repeater = filter(lambda r: r['type'] == 'CaseRepeater', api_repeaters)[0]
-        self.assertEqual(api_case_repeater['id'], case_repeater.get_id)
+        self.assertEqual(api_case_repeater['id'], case_repeater._id)
         self.assertEqual(api_case_repeater['url'], case_repeater.url)    
         self.assertEqual(api_case_repeater['domain'], case_repeater.domain)    
 
         form_repeater.delete()
-        case_repeater.delete()    
+        case_repeater.delete()
 
+    def test_create(self):
+        self.client.login(username=self.username, password=self.password)
+
+        for cls in self.repeater_types:
+            self.assertEqual(0, len(cls.by_domain(self.domain.name)))
+
+            repeater_json = {
+                "domain": self.domain.name,
+                "type": cls.__name__,
+                "url": "http://example.com/forwarding/{cls}".format(cls=cls.__name__),
+            }
+            response = self.client.post(self.list_endpoint,
+                                        simplejson.dumps(repeater_json),
+                                        content_type='application/json')
+            self.assertEqual(response.status_code, 201, response.content)
+            [repeater_back] = cls.by_domain(self.domain.name)
+            self.assertEqual(repeater_json['domain'], repeater_back.domain)
+            self.assertEqual(repeater_json['type'], repeater_back.doc_type)
+            self.assertEqual(repeater_json['url'], repeater_back.url)
+
+
+    def test_update(self):
+        self.client.login(username=self.username, password=self.password)
+
+        for cls in self.repeater_types:
+            repeater = cls(domain=self.domain.name,
+                           url='http://example.com/forwarding/{cls}'.format(cls=cls.__name__))
+            repeater.save()
+            backend_id = repeater._id
+            repeater_json = {
+                "domain": self.domain.name,
+                "type": cls.__name__,
+                "url": "http://example.com/forwarding/modified/{cls}".format(cls=cls.__name__),
+            }
+            response = self.client.put(self.single_endpoint(backend_id),
+                                       simplejson.dumps(repeater_json),
+                                       content_type='application/json')
+            self.assertEqual(response.status_code, 204, response.content)
+            self.assertEqual(1, len(cls.by_domain(self.domain.name)))
+            modified = cls.get(backend_id)
+            self.assertTrue('modified' in modified.url)
