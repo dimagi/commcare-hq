@@ -743,7 +743,7 @@ class UserStatusReport(WorkerMonitoringReportTableBase, DatespanMixin):
     num_avg_intervals = 3 # how many duration intervals we go back to calculate averages
 
     fields = [
-        'corehq.apps.reports.fields.MultiSelectGroupField2',
+        'corehq.apps.reports.fields.MultiSelectGroupField',
         'corehq.apps.reports.fields.UserOrGroupField',
         'corehq.apps.reports.fields.DatespanField',
     ]
@@ -758,48 +758,6 @@ class UserStatusReport(WorkerMonitoringReportTableBase, DatespanMixin):
     @property
     def aggregate_by(self):
         return self.request.GET.get('aggregate_by', None)
-
-    @property
-    def group_ids(self):
-        return self.request.GET.getlist('group')
-
-    @property
-    @memoized
-    def groups(self):
-        from corehq.apps.groups.models import Group
-        if '_all' in self.group_ids:
-            return Group.get_reporting_groups(self.domain)
-        return [Group.get(g) for g in self.group_ids]
-
-    @property
-    @memoized
-    def users_by_group(self):
-        from corehq.apps.groups.models import Group
-        user_dict = {}
-        for group in self.groups:
-            user_dict["%s|%s" % (group.name, group._id)] = self.get_all_users_by_domain(
-                group=group,
-                individual=self.individual,
-                user_filter=tuple(self.user_filter),
-                simplified=True
-            )
-
-        for users in user_dict.values():
-            for u in users:
-                u["group_ids"] = Group.by_user(u, False)
-
-        return user_dict
-
-    @property
-    @memoized
-    def combined_users(self):
-        all_users = [user for sublist in self.users_by_group.values() for user in sublist]
-        return dict([(user['user_id'], user) for user in all_users]).values()
-
-    @property
-    @memoized
-    def case_sharing_groups(self):
-        return set(reduce(operator.add, [[u['group_ids'] for u in self.combined_users]]))
 
     @property
     def headers(self):
@@ -1032,6 +990,8 @@ class UserStatusReport(WorkerMonitoringReportTableBase, DatespanMixin):
         if self.aggregate_by == 'groups':
             for group, users in self.users_by_group.iteritems():
                 group_name, group_id = tuple(group.split('|'))
+                if group_name == 'no_group':
+                    continue
 
                 case_sharing_groups = set(reduce(operator.add, [u['group_ids'] for u in users], []))
                 inactive_cases = sum([int(inactives_by_owner.get(u["user_id"], 0)) for u in users]) + \

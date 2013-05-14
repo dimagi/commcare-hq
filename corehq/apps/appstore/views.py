@@ -276,10 +276,6 @@ def es_query(params=None, facets=None, terms=None, q=None, es_url=None, start_at
 
     es_url = es_url or "cc_exchange/domain/_search"
 
-    # import json
-    # print json.dumps(q)
-    # print es_url
-
     es = get_es()
     ret_data = es.get(es_url, data=q)
 

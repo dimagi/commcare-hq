@@ -22,7 +22,7 @@ from corehq.apps.reports.filters.search import SearchFilter
 from corehq.apps.reports.standard import ProjectReport, ProjectReportParametersMixin, DatespanMixin
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
 from corehq.apps.reports.display import xmlns_to_name
-from corehq.apps.reports.fields import SelectOpenCloseField, SelectMobileWorkerField
+from corehq.apps.reports.fields import SelectOpenCloseField, SelectMobileWorkerField, StrongFilterUsersField
 from corehq.apps.reports.generic import GenericTabularReport, ProjectInspectionReportParamsMixin, ElasticProjectInspectionReport
 from corehq.apps.reports.standard.monitoring import MultiFormDrilldownMixin
 from corehq.apps.users.models import CommCareUser, CouchUser
@@ -50,11 +50,12 @@ class ProjectInspectionReport(ProjectInspectionReportParamsMixin, GenericTabular
 class SubmitHistory(ElasticProjectInspectionReport, ProjectReport, ProjectReportParametersMixin, MultiFormDrilldownMixin, DatespanMixin):
     name = ugettext_noop('Submit History')
     slug = 'submit_history'
-    fields = ['corehq.apps.reports.fields.FilterUsersField',
-              'corehq.apps.reports.fields.SelectMobileWorkerField',
+    fields = [
+              'corehq.apps.reports.fields.CombinedSelectUsersField',
               'corehq.apps.reports.filters.forms.FormsByApplicationFilter',
               'corehq.apps.reports.fields.DatespanField']
     ajax_pagination = True
+    filter_users_field_class = StrongFilterUsersField
 
 
     @property
@@ -82,7 +83,7 @@ class SubmitHistory(ElasticProjectInspectionReport, ProjectReport, ProjectReport
                             "to": self.datespan.enddate_param_utc}}},
                 "filter":
                     { "and": [
-                        {"terms": {"form.meta.userID": filter(None, self.user_ids)}},
+                        {"terms": {"form.meta.userID": filter(None, self.combined_user_ids)}},
                         {"terms": {"xmlns.exact": filter(None, [f["xmlns"] for f in self.all_relevant_forms.values()])}},
                     ]}}
 
@@ -121,52 +122,6 @@ class SubmitHistory(ElasticProjectInspectionReport, ProjectReport, ProjectReport
                 datetime.strptime(form["form"]["meta"]["timeEnd"], '%Y-%m-%dT%H:%M:%SZ').strftime("%Y-%m-%d %H:%M:%S"),
                 form["form"].get('@name') or _('No data for form name'),
             ]
-
-class SubmitHistoryO(ProjectInspectionReport):
-    name = ugettext_noop('Submit History')
-    slug = 'submit_history'
-
-    @property
-    def headers(self):
-        headers = DataTablesHeader(DataTablesColumn(_("View Form")),
-            DataTablesColumn(_("Username")),
-            DataTablesColumn(_("Submit Time")),
-            DataTablesColumn(_("Form")))
-        headers.no_sort = True
-        return headers
-
-    _all_history = None
-    @property
-    def all_history(self):
-        if self._all_history is None:
-            self._all_history = HQFormData.objects.filter(userID__in=self.user_ids, domain=self.domain)
-        return self._all_history
-
-    @property
-    def total_records(self):
-        return self.all_history.count()
-
-    @property
-    def rows(self):
-        rows = []
-        all_hist = HQFormData.objects.filter(userID__in=self.user_ids, domain=self.domain)
-        history = all_hist.extra(order_by=['-received_on'])[self.pagination.start:self.pagination.start+self.pagination.count]
-        for data in history:
-            if data.userID in self.user_ids:
-                time = tz_utils.adjust_datetime_to_timezone(data.received_on, pytz.utc.zone, self.timezone.zone)
-                time = time.strftime("%Y-%m-%d %H:%M:%S")
-                xmlns = data.xmlns
-                app_id = data.app_id
-                xmlns = xmlns_to_name(self.domain, xmlns, app_id=app_id)
-                rows.append([self._form_data_link(data.instanceID), self.usernames[data.userID], time, xmlns])
-        return rows
-
-    def _form_data_link(self, instance_id):
-        return "<a class='ajax_dialog' href='%(url)s'>%(text)s</a>" % {
-            "url": reverse('render_form_data', args=[self.domain, instance_id]),
-            "text": _("View Form")
-        }
-
 
 class CaseListFilter(CouchFilter):
     view = "case/all_cases"
