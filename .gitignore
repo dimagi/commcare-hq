@@ -29,3 +29,6 @@ tmp.sh
 .DS_Store
 app_builder_live_test/*/
 dump.rdb
+
+/.coverage
+/coverage-report

@@ -68,10 +68,10 @@ class Repeater(Document, UnicodeMixIn):
         key = [domain]
         if repeater_types.has_key(cls.__name__):
             key.append(cls.__name__)
-        elif cls.doc_type == Repeater.__name__:
+        elif cls.__name__ == Repeater.__name__:
             pass
         else:
-            raise Exception("Unknown Repeater type: %s" % cls.doc_type)
+            raise Exception("Unknown Repeater type: %s" % cls.__name__)
 
         return cls.view('receiverwrapper/repeaters',
             startkey=key,

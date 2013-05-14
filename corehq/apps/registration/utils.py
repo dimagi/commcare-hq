@@ -145,7 +145,7 @@ The CommCareHQ Team
 
     try:
         send_HTML_email(subject, recipient, message_html, text_content=message_plaintext,
-                        email_from=settings.HQ_NOTIFICATIONS_EMAIL)
+                        email_from=settings.DEFAULT_FROM_EMAIL)
     except Exception:
         logging.warning("Can't send email, but the message was:\n%s" % message_plaintext)
 
@@ -198,7 +198,7 @@ The CommCareHQ Team
 
     try:
         send_HTML_email(subject, requesting_user.email, message_html,
-                        text_content=message_plaintext, email_from=settings.HQ_NOTIFICATIONS_EMAIL)
+                        text_content=message_plaintext, email_from=settings.DEFAULT_FROM_EMAIL)
     except Exception:
         logging.warning("Can't send email, but the message was:\n%s" % message_plaintext)
 
@@ -223,6 +223,6 @@ You can view the project here: %s""" % (
         get_url_base() + "/a/%s/" % domain_name)
     try:
         recipients = settings.NEW_DOMAIN_RECIPIENTS
-        send_mail("New Project: %s" % domain_name, message, settings.HQ_NOTIFICATIONS_EMAIL, recipients)
+        send_mail("New Project: %s" % domain_name, message, settings.SERVER_EMAIL, recipients)
     except Exception:
         logging.warning("Can't send email, but the message was:\n%s" % message)

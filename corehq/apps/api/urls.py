@@ -36,6 +36,7 @@ API_LIST = (
         v0_4.CommCareCaseResource,
         v0_4.GroupResource,
         v0_4.XFormInstanceResource,
+        v0_4.RepeaterResource,
         FixtureResource
     ))
 )

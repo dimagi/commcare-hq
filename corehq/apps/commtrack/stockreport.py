@@ -7,6 +7,7 @@ from lxml.builder import ElementMaker
 from xml import etree as legacy_etree
 from datetime import date, timedelta
 from corehq.apps.commtrack.const import RequisitionActions
+from dimagi.utils.create_unique_filter import create_unique_filter
 from dimagi.utils.decorators.memoized import memoized
 from receiver.util import spoof_submission
 from corehq.apps.receiverwrapper.util import get_submit_url
@@ -215,7 +216,7 @@ class RequisitionResponse(Requisition):
 
 class BulkRequisitionResponse(object):
     """
-    A bulk response to a set of requisitions, for example "approve" or "fill".
+    A bulk response to a set of requisitions, for example "approve" or "pack".
     """
     # todo: it's possible this class should support explicit transactions/amounts
     # on a per-product basis, but won't until someone demands it
@@ -231,7 +232,9 @@ class BulkRequisitionResponse(object):
 
     @memoized
     def get_case_ids(self):
-        for c in RequisitionCase.open_for_location(self.domain, self.location_id):
+        # todo: too many couch requests
+        for c in filter(create_unique_filter(lambda id: RequisitionCase.get(id).get_product_case_id()),
+                        RequisitionCase.open_for_location(self.domain, self.location_id)):
             yield c
 
     def get_transactions(self):

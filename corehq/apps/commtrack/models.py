@@ -39,12 +39,12 @@ REQUISITION_ACTION_TYPES = [
     # request a product
     RequisitionActions.REQUEST,
 
-    # approve a requisition (it is allowed to be filled)
+    # approve a requisition (it is allowed to be packed)
     # using this is configurable and optional
     RequisitionActions.APPROVAL,
 
-    # fill a requisition (the order is ready)
-    RequisitionActions.FILL,
+    # pack a requisition (the order is ready)
+    RequisitionActions.PACK,
 
     # receive the sock (closes the requisition)
     # NOTE: it's not totally clear if this is necessary or
@@ -305,13 +305,14 @@ class StockTransaction(DocumentSchema):
 
 
 
-def _get_single_index(case, identifier, type, wrapper=CommCareCase):
+def _get_single_index(case, identifier, type, wrapper=None):
     matching = filter(lambda i: i.identifier == identifier, case.indices)
     if matching:
         assert len(matching) == 1, 'should only be one parent index'
         assert matching[0].referenced_type == type, \
              ' parent had bad case type %s' % matching[0].referenced_type
-        return wrapper.get(matching[0].referenced_id)
+        ref_id = matching[0].referenced_id
+        return wrapper.get(ref_id) if wrapper else ref_id
     return None
 
 
@@ -335,6 +336,7 @@ class SupplyPointProductCase(CommCareCase):
     """
     # can flesh this out more as needed
     product = StringProperty() # would be nice if this was product_id but is grandfathered in
+    current_stock = StringProperty()
 
     @memoized
     def get_product(self):
@@ -344,6 +346,9 @@ class SupplyPointProductCase(CommCareCase):
     def get_supply_point_case(self):
         return _get_single_index(self, const.PARENT_CASE_REF, const.SUPPLY_POINT_CASE_TYPE,
                                  wrapper=SupplyPointCase)
+
+    def get_supply_point_case_id(self):
+        return _get_single_index(self, const.PARENT_CASE_REF, const.SUPPLY_POINT_CASE_TYPE)
 
     class Meta:
         app_label = "commtrack" # This is necessary otherwise syncdb will confuse this app with casexml
@@ -363,12 +368,12 @@ class RequisitionCase(CommCareCase):
     # the status can change, but once set - this one will not
     requested_on = DateTimeProperty()
     approved_on = DateTimeProperty()
-    filled_on = DateTimeProperty()
+    packed_on = DateTimeProperty()
     received_on = DateTimeProperty()
 
     requested_by = StringProperty()
     approved_by = StringProperty()
-    filled_by = StringProperty()
+    packed_by = StringProperty()
     received_by = StringProperty()
 
     # NOTE: should these be strings or ints or decimals?
@@ -377,7 +382,7 @@ class RequisitionCase(CommCareCase):
     # approve partial resupplies in the current system, but is
     # left in the models for possible use down the road
     amount_approved = StringProperty()
-    amount_filled = StringProperty()
+    amount_packed = StringProperty()
     amount_received = StringProperty()
 
     @memoized
@@ -394,8 +399,12 @@ class RequisitionCase(CommCareCase):
     @memoized
     def get_product_case(self):
         return _get_single_index(self, const.PARENT_CASE_REF,
-                                     const.SUPPLY_POINT_PRODUCT_CASE_TYPE,
-                                     wrapper=SupplyPointProductCase)
+                                 const.SUPPLY_POINT_PRODUCT_CASE_TYPE,
+                                 wrapper=SupplyPointProductCase)
+
+    def get_product_case_id(self):
+        return _get_single_index(self, const.PARENT_CASE_REF,
+                                 const.SUPPLY_POINT_PRODUCT_CASE_TYPE)
 
     @memoized
     def get_requester(self):
@@ -407,7 +416,7 @@ class RequisitionCase(CommCareCase):
         property_map = {
             RequisitionStatus.REQUESTED: 'amount_requested',
             RequisitionStatus.APPROVED: 'amount_approved',
-            RequisitionStatus.FILLED: 'amount_filled',
+            RequisitionStatus.PACKED: 'amount_packed',
         }
         return getattr(self, property_map.get(self.requisition_status, 'amount_requested'))
 
@@ -426,9 +435,10 @@ class RequisitionCase(CommCareCase):
         For a given location, return the IDs of all open requisitions at that location.
         """
         results = cls.get_db().view('commtrack/requisitions',
-            startkey=[domain, location_id, 'open'],
-            endkey=[domain, location_id, 'open', {}],
+            endkey=[domain, location_id, 'open'],
+            startkey=[domain, location_id, 'open', {}],
             reduce=False,
+            descending=True,
         )
         return [r['id'] for r in results]
 

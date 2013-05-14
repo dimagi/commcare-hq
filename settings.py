@@ -207,6 +207,8 @@ HQ_APPS = (
     'corehq.apps.api',
     'corehq.apps.indicators',
     'corehq.couchapps',
+    'fluff',
+    'fluff.fluff_filter',
     'sofabed.forms',
     'soil',
     'corehq.apps.hqsofabed',
@@ -285,8 +287,10 @@ EMAIL_SMTP_PORT = 587
 BUG_REPORT_RECIPIENTS = ()
 EXCHANGE_NOTIFICATION_RECIPIENTS = []
 
-HQ_NOTIFICATIONS_EMAIL = 'commcarehq-noreply@dimagi.com'
+SERVER_EMAIL = 'commcarehq-noreply@dimagi.com' #the physical server emailing - differentiate if needed
+DEFAULT_FROM_EMAIL = 'commcarehq-noreply@dimagi.com'
 SUPPORT_EMAIL = "commcarehq-support@dimagi.com"
+EMAIL_SUBJECT_PREFIX = '[commcarehq] '
 
 PAGINATOR_OBJECTS_PER_PAGE = 15
 PAGINATOR_MAX_PAGE_LINKS = 5
@@ -415,10 +419,19 @@ LOGGING = {
             'format': '%(levelname)s %(asctime)s %(module)s %(process)d %(thread)d %(message)s'
         },
         'simple': {
-            'format': '%(levelname)s %(message)s'
+            'format': '%(asctime)s %(levelname)s %(message)s'
+        },
+
+        'pillowtop': {
+            'format': '%(asctime)s %(levelname)s %(module)s %(message)s'
         },
     },
     'handlers': {
+        'pillowtop': {
+            'level': 'INFO',
+            'class': 'logging.StreamHandler',
+            'formatter': 'pillowtop'
+        },
         'console': {
             'level': 'INFO',
             'class': 'logging.StreamHandler',
@@ -459,6 +472,11 @@ LOGGING = {
             'handlers': ['console', 'file', 'couchlog'],
             'level': 'INFO',
             'propagate': True
+        },
+        'pillowtop': {
+            'handlers': ['pillowtop'],
+            'level': 'ERROR',
+            'propagate': False,
         }
     }
 }
@@ -539,6 +557,7 @@ COUCHDB_APPS = [
     'hqadmin',
     'domain',
     'facilities',
+    'fluff_filter',
     'forms',
     'fixtures',
     'groups',
@@ -566,7 +585,6 @@ COUCHDB_APPS = [
     'couchlog',
 
     # custom reports
-    'bihar',
     'dca',
     'hsph',
     'mvp',
@@ -577,6 +595,11 @@ COUCHDB_APPS = [
 ]
 
 COUCHDB_DATABASES = [make_couchdb_tuple(app_label, COUCH_DATABASE) for app_label in COUCHDB_APPS]
+
+COUCHDB_DATABASES += [
+    ('bihar', COUCH_DATABASE + '__fluff-bihar'),
+    ('fluff', COUCH_DATABASE + '__fluff-bihar'),
+]
 
 INSTALLED_APPS += LOCAL_APPS
 
@@ -616,6 +639,7 @@ DEFAULT_CURRENCY = "USD"
 SMS_HANDLERS = [
     'corehq.apps.sms.api.forwarding_handler',
     'corehq.apps.commtrack.sms.handle',
+    'corehq.apps.sms.api.structured_sms_handler',
     'corehq.apps.sms.api.form_session_handler',
     'corehq.apps.sms.api.fallback_handler',
 ]
@@ -658,6 +682,9 @@ PILLOWTOPS = [
                  'corehq.pillows.domain.DomainPillow',
                  'corehq.pillows.exchange.ExchangePillow',
                  'corehq.pillows.commtrack.ConsumptionRatePillow',
+
+                 # fluff
+                 'bihar.models.CareBiharFluffPillow',
              ] + LOCAL_PILLOWTOPS
 
 #Custom workflow for indexing xform data beyond the standard properties

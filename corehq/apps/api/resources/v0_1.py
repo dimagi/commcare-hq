@@ -1,12 +1,12 @@
 from tastypie import fields
 from tastypie.authentication import Authentication
-from tastypie.authorization import ReadOnlyAuthorization
+from tastypie.authorization import ReadOnlyAuthorization, Authorization
 from tastypie.exceptions import BadRequest
 from tastypie.serializers import Serializer
 
 from casexml.apps.case.models import CommCareCase
 from couchforms.models import XFormInstance
-from corehq.apps.domain.decorators import login_or_digest
+from corehq.apps.domain.decorators import login_or_digest, domain_admin_required
 from corehq.apps.groups.models import Group
 from corehq.apps.users.models import CommCareUser
 
@@ -45,6 +45,25 @@ class LoginAndDomainAuthentication(Authentication):
 
     def get_identifier(self, request):
         return request.couch_user.username
+
+class DomainAdminAuthorization(Authorization):
+
+    def is_authorized(self, request, object=None, **kwargs):
+        PASSED_AUTHORIZATION = 'is_authorized'
+
+        @domain_admin_required
+        def dummy(request, domain, **kwargs):
+            return PASSED_AUTHORIZATION
+
+        if not kwargs.has_key('domain'):
+            kwargs['domain'] = request.domain
+
+        response = dummy(request, **kwargs)
+
+        if response == PASSED_AUTHORIZATION:
+            return True
+        else:
+            return response
 
 class CustomResourceMeta(object):
     authorization = ReadOnlyAuthorization()
