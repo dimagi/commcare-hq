@@ -69,7 +69,6 @@
             formdesigner.launch({
                 rootElement: $("#formdesigner"),
                 staticPrefix: '/static/formdesigner/',
-                iconUrl: '/static/hqwebapp/js/lib/jquery-ui/images/ui-icons_469bdd_256x240.png',
                 saveUrl: '{% url edit_form_attr domain app.id form.get_unique_id "xform" %}',
                 patchUrl: '{% url patch_xform domain app.id form.get_unique_id %}',
                 saveType: 'patch',
