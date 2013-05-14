@@ -6,7 +6,7 @@
 .combobox-container {
   .input-append();
   select {
-    display: inline-block;
+    display: none;
     width: 0;
     height: 0;
     border: 0;
@@ -93,5 +93,13 @@
     .caret {
       border-top-color: #468847;
     }
+  }
+}
+
+.form-inline .combobox-container {
+  display: inline-block;
+  > input {
+    display: inline-block;
+    vertical-align: middle;
   }
 }
