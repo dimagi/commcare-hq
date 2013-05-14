@@ -32,7 +32,7 @@ class ApiUser(Document):
         return permission in self.permissions
 
     @classmethod
-    def create(cls, username, password, permissions=[]):
+    def create(cls, username, password, permissions=None):
         """
         To create a new ApiUser on the server:
         ./manage.py shell
@@ -44,7 +44,7 @@ class ApiUser(Document):
         self = cls()
         self['_id'] = "ApiUser-%s" % username
         self.set_password(password)
-        self.permissions = permissions
+        self.permissions = permissions or []
         return self
 
     @classmethod
