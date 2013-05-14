@@ -134,14 +134,15 @@ class IndicatorDocument(schema.Document):
         Return value is None for no diff or a dict with all indicator values
         that are different (added / removed / changed):
             {
-                doc_type: "MyIndicators",
+                database: 'db1',
+                doc_type: 'MyIndicators',
                 group_names: ['domain', 'owner_id'],
                 group_values: ['test', 'abc']
                 indicator_changes: [
                     {
-                    calculator: "VistCalculator",
-                    emitter: "all_visits",
-                    emitter_type: "date",
+                    calculator: 'VistCalculator',
+                    emitter: 'all_visits',
+                    emitter_type: 'date',
                     values: ['2012-09-23', '2012-09-24']
                     },
                 ]
@@ -162,7 +163,8 @@ class IndicatorDocument(schema.Document):
         if not diff_keys:
             return None
 
-        diff = dict(doc_type=self._doc_type,
+        diff = dict(database=self.Meta.app_label,
+                    doc_type=self._doc_type,
                     group_names=list(self.group_by),
                     group_values=[self[calc_name] for calc_name in self.group_by],
                     indicator_changes=[])
@@ -279,7 +281,8 @@ class FluffPillow(BasicPillow):
         if not current_indicator:
             indicator = self.indicator_class(_id=indicator_id)
         else:
-            indicator = current_indicator.clone()
+            indicator = current_indicator
+            current_indicator = indicator.to_json()
         indicator.calculate(doc)
         return current_indicator, indicator
 
@@ -288,4 +291,5 @@ class FluffPillow(BasicPillow):
         new_indicator.save()
 
         diff = new_indicator.diff(old_indicator)
-        indicator_document_updated.send(sender=self, diff=diff)
+        if diff:
+            indicator_document_updated.send(sender=self, diff=diff)
