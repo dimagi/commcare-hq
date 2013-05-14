@@ -1,5 +1,6 @@
 {% extends "hqwebapp/two_column.html" %}
 {% load report_tags %}
+{% load i18n %}
 
 {% block head %}
     {{ block.super }}
@@ -67,21 +68,13 @@
         <input type="hidden" name="value_column" value="{{value_column}}" />
 
         <fieldset>
-            <legend>Map columns to case fields</legend>
+            <legend>{% trans "Map columns to case fields" %}</legend>
             <table>
                 <tr>
-                    <th>
-                        Excel data label
-                    </th>
-                    <th>
-                        Case field name
-                    </th>
-                    <th>
-                        or enter a new field name
-                    </th>
-                    <th>
-                        Is this a date field?
-                    </th>
+                    <th>{% trans "Excel data label"%}</th>
+                    <th>{% trans "Case field name"%}</th>
+                    <th>{% trans "or enter a new field name"%}</th>
+                    <th>{% trans "Is this a date field?"%}</th>
                 </tr>
 
                 {% for i in excel_fields_range %}
@@ -124,10 +117,10 @@
 
         <div class="form-actions">
             <button type="button" class="btn btn-primary btn-large" id="back_button">
-                <i class="icon-backward icon-white"></i> Back
+                <i class="icon-backward icon-white"></i> {% trans "Back" %}
             </button>
             <button type="submit" class="btn btn-primary btn-large">
-                <i class="icon-forward icon-white"></i> Confirm import
+                <i class="icon-forward icon-white"></i> {% trans "Confirm Import" %}
             </button>
         </div>
     </form>
