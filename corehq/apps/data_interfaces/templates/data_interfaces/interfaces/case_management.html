@@ -78,7 +78,7 @@
                                         combobox: true"></select>
                 <button type="submit"
                         data-bind="hqbSubmitReady: is_submit_enabled, disabled: is_submit_enabled"
-                        class="btn disabled">Reassign</button>
+                        class="btn disabled">{% trans 'Reassign' %}</button>
                 <div class="help-block" data-bind="visible: is_only_user_reassign">{% trans 'Note: No groups with Case Sharing are available.' %}</div>
             </form>
         </div>
