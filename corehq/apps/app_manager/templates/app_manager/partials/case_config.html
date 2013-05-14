@@ -128,7 +128,10 @@
                     ></select>
                     <span class="help-inline" data-bind="visible: !case_type()">{% trans "Required" %}</span>
                 </span>
-                <a href="#" data-bind="openModal: 'remove-subcase-modal-template', visible: $root.edit" style="float: right"><i class="icon-trash"></i>{% trans "Remove subcase" %}</a>
+                <a href="#" data-bind="openModal: 'remove-subcase-modal-template', visible: $root.edit" class="pull-right">
+                    <i class="icon-trash"></i>
+                    {% trans "Remove subcase" %}
+                </a>
             </div>
             <div data-bind="template: 'case-config-open-case'"></div>
         </div>
