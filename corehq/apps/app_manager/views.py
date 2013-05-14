@@ -623,6 +623,8 @@ def view_generic(req, domain, app_id=None, module_id=None, form_id=None, is_user
         if app_id:
             app = get_app(domain, app_id)
         if is_user_registration:
+            if not app.show_user_registration:
+                raise Http404()
             if not app.user_registration.unique_id:
                 # you have to do it this way because get_user_registration
                 # changes app.user_registration.unique_id
