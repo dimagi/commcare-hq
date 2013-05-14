@@ -62,6 +62,8 @@ default_special_types = {
     #to extend, use this and add special formats here...
 }
 
+default_nested_types = []
+
 case_special_types = {
     "domain": type_exact_match_string("domain", dual=True),
     "name": type_exact_match_string("name", dual=True),
@@ -74,6 +76,8 @@ case_special_types = {
     #to extend, use this and add special date formats here...
 }
 
+case_nested_types = ['actions']
+
 domain_special_types = {
     "name": type_exact_match_string("name", dual=True),
     "author": {"type": "string", "index": "not_analyzed"},
@@ -84,7 +88,7 @@ domain_special_types = {
     "cda.type": {"type": "string", "index": "not_analyzed"},
 }
 
-def set_properties(schema_class, custom_types=default_special_types, init_dict=None):
+def set_properties(schema_class, custom_types=default_special_types, nested_types=default_nested_types, init_dict=None):
     """
     Helper function to walk a schema_class's properties recursively and create a typed out mapping
     that can index well (specifically dict types and date time properties)
@@ -97,7 +101,7 @@ def set_properties(schema_class, custom_types=default_special_types, init_dict=N
             props_dict[prop_name] = simple_type_mapper[prop_type.__class__]
         elif complex_type_mapper.has_key(prop_type.__class__):
             func = complex_type_mapper[prop_type.__class__]
-            props_dict[prop_name] = func(prop_type._schema, nested=False, dynamic=False)
+            props_dict[prop_name] = func(prop_type._schema, nested=prop_name in nested_types, dynamic=False)
     return props_dict
 
 
