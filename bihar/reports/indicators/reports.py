@@ -1,5 +1,3 @@
-from bihar.calculations.types import DoneDueCalculator, TotalCalculator
-from bihar.models import CareBiharFluff
 from bihar.reports.supervisor import BiharNavReport, MockEmptyReport, \
     url_and_params, BiharSummaryReport, \
     ConvenientBaseMixIn, GroupReferenceMixIn, list_prompt, shared_bihar_context,\
@@ -209,8 +207,7 @@ class IndicatorClientList(GroupReferenceMixIn, ConvenientBaseMixIn,
                     [self.domain, owner_id],
                     reduce=False
                 )
-                case_stubs = result[self.indicator.fluff_calculator.primary]
-                case_ids.update(case_stub.id for case_stub in case_stubs)
+                case_ids.update(result[self.indicator.fluff_calculator.primary])
             cases = CommCareCase.view('_all_docs', keys=list(case_ids),
                                       include_docs=True)
             return map(self.indicator.as_row, cases)
