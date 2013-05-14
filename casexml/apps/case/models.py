@@ -209,6 +209,9 @@ class CommCareCase(CaseBase, IndexHoldingMixIn, ComputedDocumentMixin):
     name = StringProperty()
     version = StringProperty()
     indices = SchemaListProperty(CommCareCaseIndex)
+    
+    # this is only used for Commtrack SupplyPointCases and should ideally go in
+    # that class
     location_ = StringListProperty()
 
     server_modified_on = DateTimeProperty()
@@ -387,8 +390,6 @@ class CommCareCase(CaseBase, IndexHoldingMixIn, ComputedDocumentMixin):
     def get_attachment(self, attachment_tuple):
         return XFormInstance.get_db().fetch_attachment(attachment_tuple[0], attachment_tuple[1])
         
-    def bind_to_location(self, loc):
-        self.location_ = loc.path
 
     @classmethod
     def from_case_update(cls, case_update, xformdoc):
