@@ -110,10 +110,10 @@ def bootstrap_default(domain, requisitions_enabled=True):
                     name='approved',
                 ),
                 CommtrackActionConfig(
-                    action_type=RequisitionActions.FILL,
-                    keyword='fill',
-                    caption='Filled',
-                    name='filled',
+                    action_type=RequisitionActions.PACK,
+                    keyword='pack',
+                    caption='Packed',
+                    name='packed',
                 ),
                 CommtrackActionConfig(
                     action_type=RequisitionActions.RECEIPTS,

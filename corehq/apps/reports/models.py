@@ -487,7 +487,7 @@ class ReportNotification(Document):
             self.owner, self.domain, self._id).content
 
         for email in self.all_recipient_emails:
-            send_HTML_email(title, email, body, email_from=settings.HQ_NOTIFICATIONS_EMAIL)
+            send_HTML_email(title, email, body, email_from=settings.DEFAULT_FROM_EMAIL)
 
 
 class AppNotFound(Exception):

@@ -21,6 +21,7 @@ class RequisitionTest(CommTrackTest):
             )
             req = create_requisition(self.user._id, spp, transaction)
             self.assertEqual("CommCareCase", req.doc_type)
+            self.assertEqual(spp.name, req.name)
             self.assertEqual(self.domain.name, req.domain)
             self.assertEqual(const.REQUISITION_CASE_TYPE, req.type)
             self.assertEqual(self.user._id, req.user_id)

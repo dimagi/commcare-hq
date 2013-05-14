@@ -75,13 +75,13 @@ class StockReportParser(object):
             action = self.C.all_actions_by_name[action_name]
             args = args[1:]
 
-            # TODO in future when location can be linked to sending phone #, FILL and APPROVE will still require location code
+            # TODO in future when location can be linked to sending phone #, PACK and APPROVE will still require location code
             # (since they refer to locations different from the sender's loc)
             if not location:
                 location = self.location_from_code(args[0])
                 args = args[1:]
 
-            if action.action_type in [RequisitionActions.APPROVAL, RequisitionActions.FILL]:
+            if action.action_type in [RequisitionActions.APPROVAL, RequisitionActions.PACK]:
                 _tx = self.requisition_bulk_action(action, location, args)
             else:
                 _tx = self.single_action_transactions(action, args, transaction_factory(location, stockreport.Requisition))

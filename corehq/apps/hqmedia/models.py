@@ -174,6 +174,7 @@ class CommCareMultimedia(SafeSaveDocument):
             "updated": is_updated,
             "original_path": original_path,
             "icon_class": self.get_icon_class(),
+            "media_type": self.get_nice_name(),
         }
 
     @property
@@ -228,7 +229,8 @@ class CommCareMultimedia(SafeSaveDocument):
     def get_doc_class(cls, doc_type):
         return {
             'CommCareImage': CommCareImage,
-            'CommCareAudio': CommCareAudio
+            'CommCareAudio': CommCareAudio,
+            'CommCareVideo': CommCareVideo,
         }[doc_type]
 
     @classmethod
@@ -236,6 +238,7 @@ class CommCareMultimedia(SafeSaveDocument):
         return {
             'image': CommCareImage,
             'audio': CommCareAudio,
+            'video': CommCareVideo,
         }.get(cls.get_base_mime_type(data, filename=filename))
 
     @classmethod
@@ -346,6 +349,17 @@ class CommCareAudio(CommCareMultimedia):
         return "icon-volume-up"
 
 
+class CommCareVideo(CommCareMultimedia):
+
+    @classmethod
+    def get_nice_name(cls):
+        return _("Video")
+
+    @classmethod
+    def get_icon_class(cls):
+        return "icon-facetime-video"
+
+
 class HQMediaMapItem(DocumentSchema):
 
     multimedia_id = StringProperty()
@@ -354,6 +368,10 @@ class HQMediaMapItem(DocumentSchema):
 
     @staticmethod
     def format_match_map(path, media_type=None, media_id=None, upload_path=""):
+        """
+            This method is deprecated. Use CommCareMultimedia.get_media_info instead.
+        """
+        # todo cleanup references to this method
         return {
             "path": path,
             "uid": path.replace('jr://','').replace('/', '_').replace('.', '_'),
@@ -375,7 +393,7 @@ class ApplicationMediaReference(object):
     def __init__(self, path,
                  module_id=None, module_name=None,
                  form_id=None, form_name=None, form_order=None,
-                 media_class=None, is_menu_media=False):
+                 media_class=None, is_menu_media=False, app_lang=None):
 
         if not isinstance(path, basestring):
             raise ValueError("path should be a string")
@@ -393,6 +411,8 @@ class ApplicationMediaReference(object):
 
         self.media_class = media_class
         self.is_menu_media = is_menu_media
+
+        self.app_lang = app_lang or "en"
 
     def __str__(self):
         detailed_location = ""
@@ -425,13 +445,13 @@ class ApplicationMediaReference(object):
         }
 
     def _get_name(self, raw_name, lang=None):
-        if raw_name is None:
+        if not raw_name:
             return ""
         if not isinstance(raw_name, dict) or not isinstance(raw_name, LazyDict):
             return raw_name
         if lang is None:
-            lang = 'en'
-        return raw_name.get(lang)
+            lang = self.app_lang
+        return raw_name.get(lang, raw_name.values()[0])
 
     def get_module_name(self, lang=None):
         return self._get_name(self.module_name, lang=lang)
@@ -469,10 +489,12 @@ class HQMediaMixin(Document):
                                                        media_class=CommCareAudio,
                                                        is_menu_media=True, **kwargs))
 
+
         for m, module in enumerate(self.get_modules()):
             media_kwargs = {
                 'module_name': module.name,
                 'module_id': m,
+                'app_lang': self.default_language,
             }
             _add_menu_media(module, **media_kwargs)
             for f_order, f in enumerate(module.get_forms()):
@@ -491,6 +513,9 @@ class HQMediaMixin(Document):
                     for audio in parsed.audio_references:
                         if audio:
                             media.append(ApplicationMediaReference(audio, media_class=CommCareAudio, **media_kwargs))
+                    for video in parsed.video_references:
+                        if video:
+                            media.append(ApplicationMediaReference(video, media_class=CommCareVideo, **media_kwargs))
                 except (XFormValidationError, XFormError):
                     self.media_form_errors = True
         return media
@@ -565,14 +590,16 @@ class HQMediaMixin(Document):
             Returns a list of totals of each type of media in the application and total matches.
         """
         totals = []
-        for mm in [CommCareImage, CommCareAudio]:
+        for mm in [CommCareImage, CommCareAudio, CommCareVideo]:
             paths = self.get_all_paths_of_type(mm.__name__)
+            matched_paths = [p for p in self.multimedia_map.keys() if p in paths]
             if len(paths) > 0:
                 totals.append({
-                        'media_type': mm.get_nice_name(),
-                        'totals': len(paths),
-                        'matched': len([p for p in self.multimedia_map.keys() if p in paths]),
-                        'icon_class': mm.get_icon_class(),
+                    'media_type': mm.get_nice_name(),
+                    'totals': len(paths),
+                    'matched': len(matched_paths),
+                    'icon_class': mm.get_icon_class(),
+                    'paths': matched_paths,
                 })
         return totals
 
