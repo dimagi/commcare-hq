@@ -67,12 +67,24 @@
     </fieldset>
 
     <fieldset>
+        <legend>Do you want to create new cases if there isn't a match found to update?</legend>
+        <div class="control-group">
+            <div class="controls">
+                <select class="input-small" name="create_new_cases" id="create_new_cases">
+                    <option selected>No</option>
+                    <option>Yes</option>
+                </select>
+            </div>
+        </div>
+    </fieldset>
+
+    <fieldset>
         <legend>Are there columns in the file that contain key/value fields?</legend>
         <div class="control-group">
             <div class="controls">
                 <select class="input-small" name="key_value_columns" id="key_value_columns">
-                    <option selected>no</option>
-                    <option >yes</option>
+                    <option selected>No</option>
+                    <option>Yes</option>
                 </select>
             </div>
         </div>

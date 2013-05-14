@@ -106,6 +106,7 @@ def excel_fields(request, domain):
     case_type = request.POST['case_type']
     search_column = request.POST['search_column']
     search_field = request.POST['search_field']
+    create_new_cases = request.POST['create_new_cases']
     key_value_columns = request.POST['key_value_columns']
     key_column = ''
     value_column = ''
@@ -156,6 +157,7 @@ def excel_fields(request, domain):
                                 'case_type': case_type,
                                 'search_column': search_column,
                                 'search_field': search_field,
+                                'create_new_cases': create_new_cases,
                                 'key_column': key_column,
                                 'value_column': value_column,
                                 'columns': columns,
@@ -252,8 +254,6 @@ def lookup_case(search_field, search_id, domain):
         return (case, None)
     else:
         return (None, LookupErrors.NotFound)
-        # TYLER TODO: check if we are allowed to create new entries
-        # continue
 
 def populate_updated_fields(request, columns, row):
     field_map = convert_custom_fields_to_struct(request)
@@ -291,6 +291,7 @@ def excel_commit(request, domain):
     uses_headers = named_columns == 'yes'
     case_type = request.POST['case_type']
     search_field = request.POST['search_field']
+    create_new_cases = True if request.POST['create_new_cases'] == 'Yes' else False
 
     download_ref = DownloadBase.get(request.session.get(EXCEL_SESSION_ID))
     spreadsheet = _get_spreadsheet(download_ref, uses_headers)
@@ -320,8 +321,11 @@ def excel_commit(request, domain):
             match_count += 1
         elif error == LookupErrors.NotFound:
             no_match_count += 1
+            if not create_new_cases:
+                continue
         elif error == LookupErrors.MultipleResults:
             too_many_matches += 1
+            continue
 
         fields_to_update = populate_updated_fields(request, columns, row)
 
