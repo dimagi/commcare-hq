@@ -10,7 +10,7 @@
     <script type="text/javascript">
         $(function() {
             $('#key_value_columns').change(function() {
-                if ($(this).val() == "yes") {
+                if ($(this).val().toLowerCase() == "yes") {
                     $('#key_column').removeAttr('disabled');
                     $('#value_column').removeAttr('disabled');
                 } else {
@@ -74,8 +74,8 @@
         <div class="control-group">
             <div class="controls">
                 <select class="input-small" name="create_new_cases" id="create_new_cases">
-                    <option selected>{% trans "No" %}</option>
-                    <option>{% trans "Yes" %}</option>
+                    <option selected>No</option>
+                    <option>Yes</option>
                 </select>
             </div>
         </div>
@@ -86,8 +86,8 @@
         <div class="control-group">
             <div class="controls">
                 <select class="input-small" name="key_value_columns" id="key_value_columns">
-                    <option selected>{% trans "No" %}</option>
-                    <option>{% trans "Yes" %}</option>
+                    <option selected>No</option>
+                    <option>Yes</option>
                 </select>
             </div>
         </div>

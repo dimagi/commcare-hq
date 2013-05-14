@@ -34,7 +34,7 @@ MAX_ALLOWED_ROWS = 500
 def excel_config(request, domain):
     if request.method == 'POST':
         if request.FILES:
-            named_columns = request.POST['named_columns']
+            named_columns = request.POST['named_columns'].lower()
             uses_headers = named_columns == 'yes'
             uploaded_file_handle = request.FILES['file']
 
@@ -101,13 +101,13 @@ def excel_config(request, domain):
 @require_POST
 @require_can_edit_data
 def excel_fields(request, domain):
-    named_columns = request.POST['named_columns']
+    named_columns = request.POST['named_columns'].lower()
     uses_headers = named_columns == 'yes'
     case_type = request.POST['case_type']
     search_column = request.POST['search_column']
     search_field = request.POST['search_field']
     create_new_cases = request.POST['create_new_cases']
-    key_value_columns = request.POST['key_value_columns']
+    key_value_columns = request.POST['key_value_columns'].lower()
     key_column = ''
     value_column = ''
 
@@ -291,7 +291,7 @@ def excel_commit(request, domain):
     uses_headers = named_columns == 'yes'
     case_type = request.POST['case_type']
     search_field = request.POST['search_field']
-    create_new_cases = True if request.POST['create_new_cases'] == 'Yes' else False
+    create_new_cases = True if request.POST['create_new_cases'].lower() == 'yes' else False
 
     download_ref = DownloadBase.get(request.session.get(EXCEL_SESSION_ID))
     spreadsheet = _get_spreadsheet(download_ref, uses_headers)
