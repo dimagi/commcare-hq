@@ -56,13 +56,30 @@
     <div id="case-management">
         <div class="row-fluid">
             <form class="well form-inline" style="margin: 1em; display: none;" data-bind="submit: updateCaseOwners, caseReassignmentForm: selected_cases">
-                <label for="reassign_owner_type_select">Reassign selected cases to</label>
-                <select name="reassign_owner_type" id="reassign_owner_type_select" class="span2" data-bind="options: owner_types, optionsCaption: 'Select Type...', grabUniqueDefault: selected_owner_types, event: {change: updateSelectedOwnerType}"></select>
-            <span data-bind="visible: should_show_owners">
-                <label for="reassign_owner_select">named</label>
-                <select name="reassign_owner" id="reassign_owner_select" data-bind="grabUniqueDefault: selected_owners, comboboxOptions: available_owners, optionsText: 'name', optionsValue: 'ownerid', comboboxCaption: 'Select New Owner...', event: {change: updateSelectedOwner}, combobox: true"></select>
-            </span>
-                <button type="submit" data-bind="hqbSubmitReady: enableSubmit, disabled: enableSubmit" class="btn disabled">Reassign</button>
+                    <label for="reassign_owner_type_select" class="inline">{% trans 'Reassign selected cases to' %} </label>
+                    <select name="reassign_owner_type"
+                            id="reassign_owner_type_select"
+                            class="span2"
+                            data-bind="options: owner_types,
+                                        optionsCaption: '{% trans 'Select Type...' %}',
+                                        grabUniqueDefault: selected_owner_types,
+                                        event: {change: changeNewOwnerType}"></select>
+                    <label for="reassign_owner_select" class="inline" data-bind="visible: should_show_owners"> {% trans 'named' %} </label>
+                    <select name="reassign_owner"
+                            class="inline"
+                            id="reassign_owner_select"
+                            data-bind="visible: should_show_owners,
+                                        grabUniqueDefault: selected_owners,
+                                        comboboxOptions: available_owners,
+                                        optionsText: 'name',
+                                        optionsValue: 'ownerid',
+                                        comboboxCaption: '{% trans 'Select New Owner...' %}',
+                                        event: {change: changeNewOwner},
+                                        combobox: true"></select>
+                <button type="submit"
+                        data-bind="hqbSubmitReady: is_submit_enabled, disabled: is_submit_enabled"
+                        class="btn disabled">{% trans 'Reassign' %}</button>
+                <div class="help-block" data-bind="visible: is_only_user_reassign">{% trans 'Note: No groups with Case Sharing are available.' %}</div>
             </form>
         </div>
         {{ block.super }}
@@ -73,13 +90,13 @@
     <div class="modal hide fade" id="caseManagementStatusModal">
         <div class="modal-header">
             <a class="close" data-dismiss="modal">&times;</a>
-            <h3>Case Reassignment</h3>
+            <h3>{% trans 'Case Reassignment' %}</h3>
         </div>
         <div class="modal-body">
             --
         </div>
         <div class="modal-footer">
-            <button id="bug-report-cancel" class="btn" data-dismiss="modal">Close</button>
+            <button id="bug-report-cancel" class="btn" data-dismiss="modal">{% trans 'Close' %}</button>
         </div>
     </div>
 {% endblock %}
