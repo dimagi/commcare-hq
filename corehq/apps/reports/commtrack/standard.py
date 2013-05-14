@@ -111,7 +111,7 @@ class CurrentStockStatusReport(GenericTabularReport, CommtrackReportMixin):
                     _('Understocked'),
                     _('Adequate Stock'),
                     _('Overstocked'),
-                    _('Non-reporting'),
+                    #_('Non-reporting'),
                     _('Insufficient Data'),
                 ]))
 
@@ -131,11 +131,11 @@ class CurrentStockStatusReport(GenericTabularReport, CommtrackReportMixin):
         def case_stock_category(case):
             return stock_category(current_stock(case), monthly_consumption(case))
         def status(case):
-            return case_stock_category(case) if is_timely(case) else 'nonreporting'
+            return case_stock_category(case) if is_timely(case, 1000) else 'nonreporting'
 
         status_by_product = dict((p, map_reduce(lambda c: [(status(c),)], len, data=cases)) for p, cases in cases_by_product.iteritems())
 
-        cols = ['stockout', 'understock', 'adequate', 'overstock', 'nonreporting', 'nodata']
+        cols = ['stockout', 'understock', 'adequate', 'overstock', 'nodata'] #'nonreporting', 'nodata']
         for p in sorted(products, key=lambda p: p.name):
             cases = cases_by_product.get(p._id, [])
             results = status_by_product.get(p._id, {})
@@ -154,10 +154,10 @@ class CurrentStockStatusReport(GenericTabularReport, CommtrackReportMixin):
             {"key": "under stock", "color": "#ffb100"},
             {"key": "adequate stock", "color": "#4ac925"},
             {"key": "overstocked", "color": "#b536da"},
-            {"key": "nonreporting", "color": "#363636"},
+#            {"key": "nonreporting", "color": "#363636"},
             {"key": "no data", "color": "#ABABAB"}
         ]
-        statuses = ['stocked out', 'under stock', 'adequate stock', 'overstocked', 'nonreporting', 'no data']
+        statuses = ['stocked out', 'under stock', 'adequate stock', 'overstocked', 'no data'] #'nonreporting', 'no data']
 
         for r in ret:
             r["values"] = []
@@ -214,7 +214,7 @@ class AggregateStockStatusReport(GenericTabularReport, CommtrackReportMixin):
             return sum(vals) if vals else None
 
         def aggregate_product(cases):
-            data = [(current_stock(c), monthly_consumption(c)) for c in cases if is_timely(c)]
+            data = [(current_stock(c), monthly_consumption(c)) for c in cases if is_timely(c, 1000)]
             total_stock = _sum([d[0] for d in data if d[0] is not None])
             total_consumption = _sum([d[1] for d in data if d[1] is not None])
             # exclude stock values w/o corresponding consumption figure from total months left calculation
