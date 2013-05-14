@@ -4,6 +4,7 @@ from django.views.generic.simple import direct_to_template
 from django.contrib.auth.views import password_reset
 from django.shortcuts import render_to_response
 from django.template import RequestContext
+from django.conf import settings
 
 from corehq.apps.domain.forms import ConfidentialPasswordResetForm
 
@@ -54,8 +55,9 @@ urlpatterns =\
         url(r'^accounts/password_change/$', 'password_change', auth_pages_path('password_change_form.html'), name='password_change'),
         url(r'^accounts/password_change_done/$', 'password_change_done', auth_pages_path('password_change_done.html') ),
 
-        url(r'^accounts/password_reset_email/$', exception_safe_password_reset, extend(auth_pages_path('password_reset_form.html'), 
-                                                                                       { 'password_reset_form': ConfidentialPasswordResetForm }),
+        url(r'^accounts/password_reset_email/$', exception_safe_password_reset, extend(auth_pages_path('password_reset_form.html'),
+                                                                                       { 'password_reset_form': ConfidentialPasswordResetForm,
+                                                                                         'from_email':settings.DEFAULT_FROM_EMAIL}),
                                                                                 name='password_reset_email'),
         url(r'^accounts/password_reset_email/done/$', 'password_reset_done', auth_pages_path('password_reset_done.html') ),
 

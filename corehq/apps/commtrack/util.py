@@ -54,7 +54,7 @@ def make_product(domain, name, code):
     p.save()
     return p
 
-def bootstrap_default(domain, requisitions_enabled=False):
+def bootstrap_default(domain, requisitions_enabled=True):
     c = CommtrackConfig(
         domain=domain,
         multiaction_enabled=True,
@@ -86,9 +86,9 @@ def bootstrap_default(domain, requisitions_enabled=False):
             ),
         ],
         location_types=[
-            LocationType(name='province', allowed_parents=['']),
-            LocationType(name='district', allowed_parents=['province']),
-            LocationType(name='village', allowed_parents=['district']),
+            LocationType(name='province', allowed_parents=[''], administrative=True),
+            LocationType(name='district', allowed_parents=['province'], administrative=True),
+            LocationType(name='village', allowed_parents=['district'], administrative=True),
             LocationType(name='dispensary', allowed_parents=['village']),
         ],
         supply_point_types=[],
@@ -110,10 +110,10 @@ def bootstrap_default(domain, requisitions_enabled=False):
                     name='approved',
                 ),
                 CommtrackActionConfig(
-                    action_type=RequisitionActions.FILL,
-                    keyword='fill',
-                    caption='Filled',
-                    name='filled',
+                    action_type=RequisitionActions.PACK,
+                    keyword='pack',
+                    caption='Packed',
+                    name='packed',
                 ),
                 CommtrackActionConfig(
                     action_type=RequisitionActions.RECEIPTS,
