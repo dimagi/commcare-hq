@@ -1,0 +1,72 @@
+{% load i18n %}
+{% block filter_content %}
+
+<div class="control-group">
+{% include fuf.field.template with show_user_filter=fuf.show_user_filter toggle_users=fuf.toggle_users can_be_empty=fuf.can_be_empty %}
+</div>
+
+{% with hide_label=1 %}
+{% if smwf %}
+<div class="additional-user-filter control-group hide">
+    <label class="control-label">{% trans "Include only the following users" %}</label>
+    <div class="controls"><label class="checkbox">
+        <input id="all-mobile-workers" name="all_mws" type="checkbox" {% if not smwf.select.selected %}checked{% endif %}> {% trans "All Users" %}
+    </label></div>
+    <div id="select-mobile-worker-field" class="hide">
+        {% include smwf.field.template with select=smwf.select slug=smwf.field.slug placeholder=smwf.placeholder%}
+    </div>
+</div>
+{% endif %}
+
+{% if sgf %}
+<div class="additional-user-filter control-group hide">
+    <label class="control-label">{% trans "and include users from the following groups" %}</label>
+    <div class="controls"><label class="checkbox">
+        <input id="all-groups" name="all_groups" type="checkbox" {% if not sgf.select.selected %}checked{% endif %}> {% trans "All Groups" %}
+    </label></div>
+    <div id="select-group-field" class="hide">
+        {% include sgf.field.template with select=sgf.select slug=sgf.field.slug placeholder=sgf.placeholder %}
+    </div>
+</div>
+{% endif %}
+{% endwith %}
+{% endblock %}
+
+<script type="text/javascript">
+    $(function () {
+        var checked_list = [
+            ['#user-filter-0', '.additional-user-filter', false],
+            ['#all-mobile-workers', '#select-mobile-worker-field', true],
+            ['#all-groups', '#select-group-field', true]
+        ];
+
+        // logic for whether or not the dependent elements should show based on the state of the checkbox
+        for (var i = 0; i < checked_list.length; i++) {
+            var $checkbox = $(checked_list[i][0]);
+            var $dependent = $(checked_list[i][1]);
+            var inverse = checked_list[i][2];
+
+            var should_show = $checkbox.get(0).checked;
+            if (inverse) {
+                should_show = !should_show;
+            }
+            if (should_show) {
+                $dependent.show();
+            }
+
+            $checkbox.on('change', function($dep, inv) {
+                return function() {
+                    var should_show = this.checked;
+                    if (inv) {
+                        should_show = !should_show;
+                    }
+                    if (should_show) {
+                        $dep.show();
+                    } else {
+                        $dep.hide();
+                    }
+                }
+            }($dependent, inverse));
+        }
+    });
+</script>

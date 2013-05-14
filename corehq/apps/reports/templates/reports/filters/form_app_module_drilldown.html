@@ -34,19 +34,19 @@
                data-trigger="hover"></i>
         </a>
     </label>
-    <div class="well" style="padding-bottom: 0px;" data-bind="visible: is_unknown_shown">
-        <div class="control-group">
-            <label class="control-label" for="{{ css_id }}-{{ unknown.slug }}_xmlns">
-                {% trans 'Choose Unknown Form' %}
-            </label>
-            <div class="controls">
-                <select class="{{ css_class }}"
-                        id="{{ css_id }}-{{ unknown.slug }}_xmlns"
-                        name="{{ slug }}_{{ unknown.slug }}_xmlns"
-                        data-bind="options: all_unknown_forms,
-                        optionsText: 'text', optionsValue: 'val',
-                        optionsCaption: caption_text, value: selected_unknown_form"></select>
-            </div>
+</div>
+<div class="well {{ css_id }}-unknown_controls" style="padding-bottom: 0px;" data-bind="visible: is_unknown_shown">
+    <div class="control-group">
+        <label class="control-label" for="{{ css_id }}-{{ unknown.slug }}_xmlns">
+            {% trans 'Choose Unknown Form' %}
+        </label>
+        <div class="controls">
+            <select class="{{ css_class }}"
+                    id="{{ css_id }}-{{ unknown.slug }}_xmlns"
+                    name="{{ slug }}_{{ unknown.slug }}_xmlns"
+                    data-bind="options: all_unknown_forms,
+                    optionsText: 'text', optionsValue: 'val',
+                    optionsCaption: caption_text, value: selected_unknown_form"></select>
         </div>
     </div>
 </div>
@@ -64,9 +64,8 @@
 {% endif %}
 
 {% if hide_fuzzy.show %}
-<div class="alert alert-warning">
-    {% trans "This project looks like it has some submissions we don't recognize.  Don't worry this can usually be fixed." %}  
-    Please contact <a href="mailto:{{ support_email }}">CommCare Support</a>.
+<div class="alert alert-warning {{ css_id }}-unknown_controls" data-bind="visible: show">
+    {% include 'reports/filters/partials/fuzzy_checkbox.html' %}
 </div>
 {% endif %}
 {% endblock %}
