@@ -83,12 +83,19 @@ class SubmitHistory(ElasticProjectInspectionReport, ProjectReport, ProjectReport
                             "to": self.datespan.enddate_param_utc}}},
                 "filter":
                     { "and": [
-                        {"terms": {"form.meta.userID": filter(None, self.combined_user_ids)}},
+                        # {"terms": {"form.meta.userID": filter(None, self.combined_user_ids)}},
                         {"terms": {"xmlns.exact": filter(None, [f["xmlns"] for f in self.all_relevant_forms.values()])}},
                     ]}}
 
-            if self.get_sorting_block():
-                q["sort"] = self.get_sorting_block()
+            def any_in(a, b):
+                return any(i in b for i in a)
+            if self.request.GET.get('all_mws', '') == 'off' or any_in(['1', '2', '3'], self.request.GET.getlist('ufilter')):
+                q["filter"]["and"].append({"terms": {"form.meta.userID": filter(None, self.combined_user_ids)}})
+            else:
+                ids = filter(None, [user['user_id'] for user in self.get_admins_and_demo_users()])
+                q["filter"]["and"].append({"not": {"terms": {"form.meta.userID": ids}}})
+
+            q["sort"] = self.get_sorting_block() if self.get_sorting_block() else [{"form.meta.timeEnd" : {"order": "desc"}}]
             self.es_response = es_query(params={"domain.exact": self.domain}, q=q, es_url=XFORM_INDEX + '/xform/_search',
                 start_at=self.pagination.start, size=self.pagination.count)
         return self.es_response
