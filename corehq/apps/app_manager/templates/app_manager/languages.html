@@ -12,6 +12,12 @@
             </div>
             <div id="translations-tab" class="tab-pane">
                 {% if app.get_doc_type == "Application" %}
+                    <section>
+                        <div class="alert alert-info">
+                            {% trans "Download your translations: " %}
+                            <a href="{% url download_translations domain app.get_id %}">translations.xls</a>
+                        </div>
+                    </section>
                     <section id="translations_ui">
                         <p class="help-block">
                             For Java Phone (Nokia) refer to
