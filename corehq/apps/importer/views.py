@@ -171,7 +171,7 @@ def excel_fields(request, domain):
 @require_POST
 @require_can_edit_data
 def excel_commit(request, domain):
-    named_columns = request.POST['named_columns']
+    named_columns = request.POST['named_columns'].lower()
     uses_headers = named_columns == 'yes'
     case_type = request.POST['case_type']
     search_field = request.POST['search_field']
