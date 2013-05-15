@@ -307,18 +307,10 @@ class CommCareCase(CaseBase, IndexHoldingMixIn, ComputedDocumentMixin):
                                           include_docs=False).one()['value'])
 
     @classmethod
-    def _get_wrap_class(cls, data):
+    def get_wrap_class(cls, data):
         if CASE_WRAPPER:
             return CASE_WRAPPER(data) or cls
         return cls
-
-    @classmethod
-    def wrap(cls, data):
-        wrap_cls = cls._get_wrap_class(data)
-        if cls.__name__ == CommCareCase.__name__ and wrap_cls != CommCareCase:
-            return wrap_cls.wrap(data)
-        else:
-            return super(CommCareCase, cls).wrap(data)
 
     @classmethod
     def bulk_get_lite(cls, ids):
@@ -393,22 +385,19 @@ class CommCareCase(CaseBase, IndexHoldingMixIn, ComputedDocumentMixin):
     
     def get_attachment(self, attachment_tuple):
         return XFormInstance.get_db().fetch_attachment(attachment_tuple[0], attachment_tuple[1])
-        
+    
+    # this is only used by CommTrack SupplyPointCase cases and should go in
+    # that class
+    def bind_to_location(self, loc):
+        self.location_ = loc.path
+
     @classmethod
     def from_case_update(cls, case_update, xformdoc):
         """
         Create a case object from a case update object.
         """
-        domain = getattr(xformdoc, 'domain', None)
-        cls = cls._get_wrap_class({
-            'domain': domain, 
-            'type': case_update.actions[0].type
-        })
-
         case = cls()
-        case.domain = domain
         case._id = case_update.id
-        case['#export_tag'] = ["domain", "type"]
         case.modified_on = parsing.string_to_datetime(case_update.modified_on_str) \
                             if case_update.modified_on_str else datetime.utcnow()
         

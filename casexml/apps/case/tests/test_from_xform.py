@@ -160,7 +160,7 @@ class CaseFromXFormTest(TestCase):
     
     
     def _check_static_properties(self, case):
-        self.assertIsInstance(CommCareCase, case)
+        self.assertEqual(CommCareCase, type(case))
         self.assertEqual('CommCareCase', case.doc_type)
         self.assertEqual("test_case_type", case.type)
         self.assertEqual("test case name", case.name)
