@@ -70,7 +70,7 @@ class CustomResourceMeta(object):
     authentication = LoginAndDomainAuthentication()
     serializer = CustomXMLSerializer()
 
-class CommCareUserResource(JsonResource, DomainSpecificResourceMixin):
+class UserResource(JsonResource, DomainSpecificResourceMixin):
     type = "user"
     id = fields.CharField(attribute='get_id', readonly=True, unique=True)
     username = fields.CharField(attribute='username', unique=True)
@@ -81,6 +81,17 @@ class CommCareUserResource(JsonResource, DomainSpecificResourceMixin):
     phone_numbers = fields.ListField(attribute='phone_numbers')
     groups = fields.ListField(attribute='get_group_ids')
     user_data = fields.DictField(attribute='user_data')
+
+    class Meta(CustomResourceMeta):
+        list_allowed_methods = ['get']
+        detail_allowed_methods = ['get']
+
+
+class CommCareUserResource(UserResource):
+
+    class Meta(UserResource.Meta):
+        object_class = CommCareUser
+        resource_name = 'user'
 
     def obj_get(self, bundle, **kwargs):
         domain = kwargs['domain']
@@ -102,11 +113,6 @@ class CommCareUserResource(JsonResource, DomainSpecificResourceMixin):
         else:
             return list(CommCareUser.by_domain(domain))
 
-    class Meta(CustomResourceMeta):
-        object_class = CommCareUser    
-        list_allowed_methods = ['get']
-        detail_allowed_methods = ['get']
-        resource_name = 'user'
 
 class CommCareCaseResource(JsonResource, DomainSpecificResourceMixin):
     type = "case"
