@@ -13,6 +13,7 @@ import simplejson
 
 from corehq.apps.hqwebapp.templatetags.proptable_tags import (
     get_tables_as_columns, get_definition)
+from casexml.apps.case.models import CommCareCase
 
 
 register = template.Library()
@@ -31,8 +32,12 @@ def render_case(case, options):
     timezone = options.get('timezone', pytz.utc)
     _get_tables_as_columns = partial(get_tables_as_columns, timezone=timezone)
     display = options.get('display', None)
-    display = display or case.get_display_config()
 
+    json = case.to_json()
+    case_class = CommCareCase.get_wrap_class(json)
+    case = case_class.wrap(case.to_json())
+
+    display = display or case.get_display_config()
     data = copy.deepcopy(case.to_full_dict())
 
     default_properties = _get_tables_as_columns(data, display)
