@@ -223,6 +223,15 @@ class TestWebUserResource(APIResourceTest):
     """
     resource = v0_1.WebUserResource
 
+    def _check_user_data(self, user, json_user):
+        self.assertEqual(user._id, json_user['id'])
+        role = user.get_role(self.domain.name)
+        self.assertEqual(role.name, json_user['role'])
+        for perm in ['edit_web_users', 'edit_commcare_users', 'edit_data',
+                     'edit_apps', 'view_reports']:
+            self.assertEqual(getattr(role.permissions, perm), json_user['permissions'][perm])
+
+
     def test_get_list(self):
         self.client.login(username=self.username, password=self.password)
 
@@ -231,7 +240,8 @@ class TestWebUserResource(APIResourceTest):
 
         api_users = simplejson.loads(response.content)['objects']
         self.assertEqual(len(api_users), 1)
-        self.assertEqual(api_users[0]['id'], self.user._id)
+        self._check_user_data(self.user, api_users[0])
+
 
     def test_get_single(self):
         self.client.login(username=self.username, password=self.password)
@@ -240,7 +250,7 @@ class TestWebUserResource(APIResourceTest):
         self.assertEqual(response.status_code, 200)
 
         api_user = simplejson.loads(response.content)
-        self.assertEqual(api_user['id'], self.user._id)
+        self._check_user_data(self.user, api_user)
 
 class TestRepeaterResource(APIResourceTest):
     """

@@ -115,6 +115,14 @@ class CommCareUserResource(UserResource):
 
 
 class WebUserResource(UserResource):
+    role = fields.CharField()
+    permissions = fields.DictField()
+
+    def dehydrate_role(self, bundle):
+        return bundle.obj.get_role(bundle.request.domain).name
+
+    def dehydrate_permissions(self, bundle):
+        return bundle.obj.get_role(bundle.request.domain).permissions._doc
 
     class Meta(UserResource.Meta):
         object_class = WebUser
