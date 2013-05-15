@@ -219,4 +219,3 @@ def populate_updated_fields(request, columns, row):
         fields_to_update[update_field_name] = update_value
 
     return fields_to_update
-

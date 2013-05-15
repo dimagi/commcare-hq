@@ -5,7 +5,8 @@ from casexml.apps.phone.xml import get_case_xml
 from corehq.apps.hqcase.utils import submit_case_blocks
 from corehq.apps.importer import base
 from corehq.apps.importer.const import LookupErrors
-from corehq.apps.importer.util import *
+import corehq.apps.importer.util as importer_util
+from corehq.apps.importer.util import ExcelFile
 from couchdbkit.exceptions import MultipleResultsFound, NoResultFound
 from django.views.decorators.http import require_POST
 from datetime import datetime, date
@@ -144,7 +145,7 @@ def excel_fields(request, domain):
     else:
         excel_fields = columns
 
-    case_fields = get_case_properties(domain, case_type)
+    case_fields = importer_util.get_case_properties(domain, case_type)
 
     # hide search column and matching case fields from the update list
     try:
@@ -205,8 +206,8 @@ def excel_commit(request, domain):
             continue
 
         row = spreadsheet.get_row(i)
-        search_id = parse_search_id(request, columns, row)
-        case, error = lookup_case(search_field, search_id, domain)
+        search_id = importer_util.parse_search_id(request, columns, row)
+        case, error = importer_util.lookup_case(search_field, search_id, domain)
 
         if case:
             match_count += 1
@@ -218,7 +219,7 @@ def excel_commit(request, domain):
             too_many_matches += 1
             continue
 
-        fields_to_update = populate_updated_fields(request, columns, row)
+        fields_to_update = importer_util.populate_updated_fields(request, columns, row)
 
         user = request.couch_user
         username = user.username
@@ -237,7 +238,7 @@ def excel_commit(request, domain):
                 external_id = search_id if search_field == 'external_id' else '',
                 update = fields_to_update
             )
-            submit_case_block(caseblock, domain, username, user_id)
+            importer_util.submit_case_block(caseblock, domain, username, user_id)
         elif case and case.type == case_type:
             caseblock = CaseBlock(
                 create = False,
@@ -245,7 +246,7 @@ def excel_commit(request, domain):
                 version = V2,
                 update = fields_to_update
             )
-            submit_case_block(caseblock, domain, username, user_id)
+            importer_util.submit_case_block(caseblock, domain, username, user_id)
 
     # unset filename session var
     try:
