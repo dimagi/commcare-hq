@@ -13,6 +13,7 @@ from datetime import datetime, date
 from xlrd import xldate_as_tuple
 from corehq.apps.users.decorators import require_permission
 from corehq.apps.users.models import Permissions
+from corehq.apps.app_manager.models import ApplicationBase
 from soil.util import expose_download
 from soil import DownloadBase
 
@@ -78,9 +79,18 @@ def excel_config(request, domain):
                             'Your spreadsheet is empty. '
                             'Please try again with a different spreadsheet.')
 
-    # get case types in this domain
     case_types = []
+    # load types from all case records
     for row in CommCareCase.view('hqcase/types_by_domain',
+                                 reduce=True,
+                                 group=True,
+                                 startkey=[domain],
+                                 endkey=[domain,{}]).all():
+        if not row['key'][1] in case_types:
+            case_types.append(row['key'][1])
+
+    # load types from all modules
+    for row in ApplicationBase.view('app_manager/types_by_module',
                                  reduce=True,
                                  group=True,
                                  startkey=[domain],
