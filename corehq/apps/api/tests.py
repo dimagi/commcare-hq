@@ -196,6 +196,11 @@ class TestUserResource(TestCase):
         self.user.delete()
         self.domain.delete()
 
+    def single_endpoint(self, id):
+        return reverse('api_dispatch_detail', kwargs=dict(domain=self.domain.name,
+                                                          api_name='v0.4',
+                                                          resource_name=v0_1.CommCareUserResource.Meta.resource_name,
+                                                          pk=id))
     def test_get_list(self):
         self.client.login(username=self.username, password=self.password)
 
@@ -210,6 +215,69 @@ class TestUserResource(TestCase):
         self.assertEqual(api_users[0]['id'], backend_id)    
 
         commcare_user.delete()
+
+    def test_get_single(self):
+        self.client.login(username=self.username, password=self.password)
+
+        commcare_user = CommCareUser.create(domain=self.domain.name, username='fake_user', password='*****')
+        backend_id = commcare_user._id
+
+        response = self.client.get(self.single_endpoint(backend_id))
+        self.assertEqual(response.status_code, 200)
+
+        api_user = simplejson.loads(response.content)
+        self.assertEqual(api_user['id'], backend_id)
+
+
+class TestWebUserResource(TestCase):
+    """
+    Basic sanity checking of v0_1.CommCareUserResource
+    """
+
+    def setUp(self):
+        self.maxDiff = None
+
+        self.domain = Domain.get_or_create_with_name('qwerty', is_active=True)
+
+        self.list_endpoint = reverse('api_dispatch_list', kwargs=dict(domain=self.domain.name,
+                                                                      api_name='v0.4',
+                                                                      resource_name=v0_1.WebUserResource.Meta.resource_name))
+
+
+        self.username = 'rudolph'
+        self.password = '***'
+        self.user = WebUser.create(self.domain.name, self.username, self.password)
+        self.user.set_role(self.domain.name, 'admin')
+        self.user.save()
+
+    def single_endpoint(self, id):
+        return reverse('api_dispatch_detail', kwargs=dict(domain=self.domain.name,
+                                                          api_name='v0.4',
+                                                          resource_name=v0_1.WebUserResource.Meta.resource_name,
+                                                          pk=id))
+
+    def tearDown(self):
+        self.user.delete()
+        self.domain.delete()
+
+    def test_get_list(self):
+        self.client.login(username=self.username, password=self.password)
+
+        response = self.client.get(self.list_endpoint)
+        self.assertEqual(response.status_code, 200)
+
+        api_users = simplejson.loads(response.content)['objects']
+        self.assertEqual(len(api_users), 1)
+        self.assertEqual(api_users[0]['id'], self.user._id)
+
+    def test_get_single(self):
+        self.client.login(username=self.username, password=self.password)
+
+        response = self.client.get(self.single_endpoint(self.user._id))
+        self.assertEqual(response.status_code, 200)
+
+        api_user = simplejson.loads(response.content)
+        self.assertEqual(api_user['id'], self.user._id)
 
 class TestRepeaterResource(TestCase):
     """
