@@ -166,42 +166,52 @@ class ProjectReportParametersMixin(object):
                 user_filter=tuple(self.default_user_filter),
                 simplified=True
             )
-        for users in user_dict.values():
-            for u in users:
-                u["group_ids"] = Group.by_user(u, False)
+        if getattr(self, 'need_group_ids', False):
+            for users in user_dict.values():
+                for u in users:
+                    u["group_ids"] = Group.by_user(u, False)
 
         return user_dict
 
     @property
     @memoized
     def users_by_mobile_workers(self):
+        from corehq.apps.reports.util import _report_user_dict
         user_dict = {}
         for mw in self.mobile_worker_ids:
-            user_dict[mw] = self.get_all_users_by_domain(
-                group=None,
-                individual=mw,
-                user_filter=tuple(self.default_user_filter),
-                simplified=True
-            )
-        for users in user_dict.values():
-            for u in users:
-                u["group_ids"] = Group.by_user(u, False)
+            user_dict[mw] = _report_user_dict(CommCareUser.get_by_user_id(mw))
+
+        if getattr(self, 'need_group_ids', False):
+            for user in user_dict.values():
+                user["group_ids"] = Group.by_user(user, False)
 
         return user_dict
 
-    @property
-    @memoized
-    def admins_and_demo_users(self):
-        ufilters = [uf for uf in ['1', '2', '3'] if uf in self.request.GET.getlist('ufilter')]
+    def get_admins_and_demo_users(self, ufilters=None):
+        ufilters = ufilters if ufilters is not None else ['1', '2', '3']
         users = self.get_all_users_by_domain(
             group=None,
             individual=None,
             user_filter=tuple(HQUserType.use_filter(ufilters)),
             simplified=True
         ) if ufilters else []
-        for u in users:
-            u["group_ids"] = Group.by_user(u, False)
+
+        if getattr(self, 'need_group_ids', False):
+            for u in users:
+                u["group_ids"] = Group.by_user(u, False)
         return users
+
+    @property
+    @memoized
+    def admins_and_demo_users(self):
+        ufilters = [uf for uf in ['1', '2', '3'] if uf in self.request.GET.getlist('ufilter')]
+        users = self.get_admins_and_demo_users(ufilters)
+        return users
+
+    @property
+    @memoized
+    def admins_and_demo_user_ids(self):
+        return [user.get('user_id') for user in self.admins_and_demo_users]
 
 
     @property
@@ -209,7 +219,7 @@ class ProjectReportParametersMixin(object):
     def combined_users(self):
         #todo: replace users with this and make sure it doesn't break existing reports
         all_users = [user for sublist in self.users_by_group.values() for user in sublist]
-        all_users.extend([user for sublist in self.users_by_mobile_workers.values() for user in sublist])
+        all_users.extend([user for user in self.users_by_mobile_workers.values()])
         all_users.extend([user for user in self.admins_and_demo_users])
         return dict([(user['user_id'], user) for user in all_users]).values()
 
