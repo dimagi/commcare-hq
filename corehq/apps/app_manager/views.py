@@ -33,7 +33,9 @@ from corehq.apps.builds.models import CommCareBuildConfig, BuildSpec
 from corehq.apps.users.decorators import require_permission
 from corehq.apps.users.models import Permissions, CommCareUser
 from dimagi.utils.decorators.memoized import memoized
+from dimagi.utils.decorators.view import get_file
 from dimagi.utils.django.cache import make_template_fragment_key
+from dimagi.utils.excel import WorkbookJSONReader
 from dimagi.utils.logging import notify_exception
 from dimagi.utils.subprocess_timeout import ProcessTimedOut
 
@@ -2047,3 +2049,30 @@ def download_translations(request, domain, app_id):
     data = (("translations", tuple(rows)),)
     export_raw(headers, data, temp)
     return export_response(temp, Format.XLS_2007, "translations")
+
+@require_POST
+@require_can_edit_apps
+@get_file("file")
+def upload_translations(request, domain, app_id):
+    success = False
+    try:
+        workbook = WorkbookJSONReader(request.file)
+        translations = workbook.get_worksheet(title='translations')
+
+        app = get_app(domain, app_id)
+        trans_dict = defaultdict(dict)
+        for row in translations:
+            for lang in app.langs:
+               if row[lang]:
+                   trans_dict[lang].update({row["property"]: row[lang]})
+
+        app.translations = dict(trans_dict)
+        app.save()
+        success = True
+    except Exception:
+        messages.error(request, _("Something went wrong! Update failed. We're looking into it"))
+
+    if success:
+        messages.success(request, _("UI Translations Updated!"))
+
+    return HttpResponseRedirect(reverse('app_languages', args=[domain, app_id]))
