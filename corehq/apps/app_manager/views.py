@@ -6,6 +6,7 @@ from django.core.cache import cache
 from django.template.loader import render_to_string
 import hashlib
 from django.utils.translation import ugettext as _
+from django.views.decorators.cache import cache_control
 from corehq.apps.app_manager.const import APP_V1
 from corehq.apps.app_manager.success_message import SuccessMessage
 from corehq.apps.domain.models import Domain
@@ -547,6 +548,7 @@ def get_apps_base_context(request, domain, app):
         'timezone': timezone,
     }
 
+@cache_control(no_cache=True, no_store=True)
 @login_and_domain_required
 def paginate_releases(request, domain, app_id):
     limit = request.GET.get('limit', 10)

@@ -816,7 +816,11 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, UnicodeMixIn):
             django_user = self.get_django_user()
         for attr in DjangoUserMixin.ATTRS:
             # name might be truncated so don't backwards sync
-            if attr != 'first_name' and attr != 'last_name':
+            one_way_attrs = ['first_name', 'last_name']
+            if attr not in one_way_attrs or not getattr(self, attr):
+                # don't sync one-way attrs back to couch unless we didn't have
+                # something there in the first place. this is hack to allow
+                # unit test workflows that create the django user first to work
                 setattr(self, attr, getattr(django_user, attr))
 
     def sync_to_django_user(self):
@@ -933,8 +937,10 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, UnicodeMixIn):
         return cls.get_by_username(django_user.username)
 
     @classmethod
-    def create(cls, domain, username, password, email=None, uuid='', date='', **kwargs):
-        django_user = create_user(username, password=password, email=email)
+    def create(cls, domain, username, password, email=None, uuid='', date='',
+               first_name='', last_name='', **kwargs):
+        django_user = create_user(username, password=password, email=email,
+                                  first_name=first_name, last_name=last_name)
         if uuid:
             if not re.match(r'[\w-]+', uuid):
                 raise cls.InvalidID('invalid id %r' % uuid)
@@ -1082,7 +1088,6 @@ class CommCareUser(CouchUser, CommCareMobileContactMixin, SingleMembershipMixin)
 
         device_id = kwargs.get('device_id', '')
         user_data = kwargs.get('user_data', {})
-
         # populate the couch user
         commcare_user.domain = domain
         commcare_user.device_ids = [device_id]
