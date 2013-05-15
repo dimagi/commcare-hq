@@ -724,3 +724,6 @@ def post_loc_created(sender, loc=None, **kwargs):
     # exclude administrative-only locs
     if loc.location_type in [loc_type.name for loc_type in config.location_types if not loc_type.administrative]:
         make_supply_point(loc.domain, loc)
+
+# import signals
+from . import signals
