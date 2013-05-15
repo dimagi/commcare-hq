@@ -258,16 +258,23 @@ class FADAObservationsReport(DataSummaryReport, HSPHSiteDataMixin):
                 reduce=True,
                 group_level=5,
                 startkey=[domain] + startkey,
-                endkey=[domain] + endkey,
-                wrapper=lambda r: r['value'])
+                endkey=[domain] + endkey)
 
             all_results.extend(results)
 
+        # "The same sbr no forms are definitely not going to come from
+        # different users." -- Sheel
+        seen_process_sbr_nos = set()
         for result in all_results:
-            if result['site_id'] in site_ids and result['user_id'] in user_ids:
-                for k, v in result.items():
-                    if k not in ('site_id', 'user_id'):
-                        values[k] += v
+            value = result['value']
+            process_sbr_no = result['key'][4]
+
+            if process_sbr_no not in seen_process_sbr_nos:
+                if value['site_id'] in site_ids and value['user_id'] in user_ids:
+                    for k, v in value.items():
+                        if k not in ('site_id', 'user_id'):
+                            values[k] += v
+                seen_process_sbr_nos.add(process_sbr_no)
 
         for k, v in values.items():
             pp = ('medication' if k[:3] == 'med' else k[:3]) + "_observed"
