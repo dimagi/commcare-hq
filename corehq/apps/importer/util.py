@@ -163,7 +163,6 @@ def lookup_case(search_field, search_id, domain):
     found = False
     if search_field == 'case_id':
         try:
-            import pdb; pdb.set_trace()
             case = CommCareCase.get(search_id)
             if case.domain == domain:
                 found = True
