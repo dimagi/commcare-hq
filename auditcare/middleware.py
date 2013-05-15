@@ -21,8 +21,6 @@ class AuditMiddleware(object):
         
         if hasattr(settings, "AUDIT_ADMIN_VIEWS"):
             self.log_admin=settings.AUDIT_ADMIN_VIEWS
-        else:
-            logging.info("You do not have AUDIT_ADMIN_VIEWS settings variable setup, by default logging all admin view access")
 
         if not getattr(settings, 'AUDIT_ALL_VIEWS', False):
             if not hasattr(settings, "AUDIT_VIEWS"):
