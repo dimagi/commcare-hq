@@ -4,7 +4,6 @@ from corehq.apps.commtrack.helpers import make_supply_point,\
 from corehq.apps.commtrack.tests.util import (TEST_DOMAIN, make_loc,
     CommTrackTest)
 from corehq.apps.commtrack import const
-from corehq.apps.commtrack.models import SupplyPointProductCase
 
 class SupplyPointProductTest(CommTrackTest):
 
@@ -20,7 +19,6 @@ class SupplyPointProductTest(CommTrackTest):
 
     def testMakeSupplyPointProduct(self):
         spp = make_supply_point_product(self.sp, self.product._id)
-        self.assertIsInstance(spp, SupplyPointProductCase)
         self.assertEqual("CommCareCase", spp.doc_type)
         self.assertEqual(TEST_DOMAIN, spp.domain)
         self.assertEqual(const.SUPPLY_POINT_PRODUCT_CASE_TYPE, spp.type)

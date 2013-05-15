@@ -1,9 +1,10 @@
 from collections import defaultdict
 import itertools
 from casexml.apps.case.signals import cases_received
+from corehq.apps.commtrack import const
 from corehq.apps.commtrack.const import is_commtrack_form, RequisitionStatus
-from corehq.apps.commtrack.models import (RequisitionCase,
-        SupplyPointProductCase, SupplyPointCase, CommtrackConfig)
+from corehq.apps.commtrack.models import (RequisitionCase, SupplyPointProductCase,
+        CommtrackConfig)
 from corehq.apps.locations.models import Location
 from corehq.apps.sms.api import send_sms_to_verified_number
 from dimagi.utils import create_unique_filter
@@ -23,20 +24,22 @@ def attach_locations(xform, cases):
         for case in cases:
             loc = None
             if not case.location_:
-                if isinstance(case, SupplyPointCase):
+                if case.type == const.SUPPLY_POINT_CASE_TYPE:
                     loc_id = getattr(case, 'location_id', None)
                     if loc_id:
                         loc = Location.get(loc_id)
                         case.bind_to_location(loc)
 
-                elif isinstance(case, SupplyPointProductCase):
-                    sp = case.get_supply_point_case()
+                elif case.type == const.SUPPLY_POINT_PRODUCT_CASE_TYPE:
+                    wrapped_case = SupplyPointProductCase.wrap(case._doc)
+                    sp = wrapped_case.get_supply_point_case()
                     if sp and sp.location_:
                         loc = sp.location_
                         case.location_ = loc
 
-                elif isinstance(case, RequisitionCase):
-                    prod = case.get_product_case()
+                elif case.type == const.REQUISITION_CASE_TYPE:
+                    req = RequisitionCase.wrap(case._doc)
+                    prod = req.get_product_case()
                     if prod and prod.location_ and prod.location_ != case.location_:
                         case.location_ = prod.location_
                         case.save()
@@ -63,7 +66,7 @@ def send_notifications(xform, cases):
     # todo: if we wanted to include previously requested items we could do so
     # by either polling for other open requisitions here, or by ensuring that
     # they get touched by the commtrack case processing.
-    requisitions = [case for case in cases if isinstance(case, RequisitionCase)]
+    requisitions = [RequisitionCase.wrap(case._doc) for case in cases if case.type == const.REQUISITION_CASE_TYPE]
 
     if requisitions:
         by_status = defaultdict(list)

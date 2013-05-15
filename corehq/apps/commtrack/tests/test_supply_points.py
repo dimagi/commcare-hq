@@ -3,7 +3,6 @@ from corehq.apps.commtrack.helpers import make_supply_point,\
 from corehq.apps.commtrack import const
 from corehq.apps.commtrack.tests.util import (make_loc, TEST_DOMAIN,
     CommTrackTest)
-from corehq.apps.commtrack.models import SupplyPointCase
 from datetime import datetime
 
 class SupplyPointTest(CommTrackTest):
@@ -18,7 +17,6 @@ class SupplyPointTest(CommTrackTest):
 
     def testMakeSupplyPoint(self):
         sp = make_supply_point(TEST_DOMAIN, self.loc)
-        self.assertIsInstance(sp, SupplyPointCase)
         self.assertEqual("CommCareCase", sp.doc_type)
         self.assertEqual(TEST_DOMAIN, sp.domain)
         self.assertEqual(const.SUPPLY_POINT_CASE_TYPE, sp.type)

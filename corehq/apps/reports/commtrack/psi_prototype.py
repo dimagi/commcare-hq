@@ -11,7 +11,7 @@ from datetime import date, timedelta
 from corehq.apps.commtrack.models import CommtrackConfig, Product, StockReport
 from dimagi.utils.decorators.memoized import memoized
 from casexml.apps.case.models import CommCareCase
-from corehq.apps.commtrack.models import SupplyPointProductCase
+from corehq.apps.commtrack import const
 from corehq.apps.commtrack.util import supply_point_type_categories
 
 class CommtrackReportMixin(ProjectReport, ProjectReportParametersMixin):
@@ -492,7 +492,7 @@ class CumulativeSalesAndConsumptionReport(GenericTabularReport, CommtrackReportM
 
         startkey = [self.domain, self.active_location._id if self.active_location else None, 'CommCareCase']
         product_cases = [c for c in CommCareCase.view('locations/linked_docs', startkey=startkey, endkey=startkey + [{}], include_docs=True)
-                         if isinstance(c, SupplyPointProductCase) and leaf_loc(c) in active_outlet_ids]
+                         if c.type == const.SUPPLY_POINT_PRODUCT_CASE_TYPE and leaf_loc(c) in active_outlet_ids]
         product_cases_by_parent = map_reduce(get_aggregators, data=product_cases, include_docs=True)
 
         def summary_row(site, reports, product_cases, outlets):

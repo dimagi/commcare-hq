@@ -39,6 +39,3 @@ def get_case_wrapper(data):
         pass
 
     return wrapper
-
-
-

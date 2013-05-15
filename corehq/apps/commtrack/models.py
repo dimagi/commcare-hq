@@ -325,17 +325,10 @@ def get_case_wrapper(data):
     }.get(data.get('type'))
 
 
-class CommtrackCase(CommCareCase):
+class SupplyPointCase(CommCareCase):
     class Meta: 
         # This is necessary otherwise syncdb will confuse this app with casexml
         app_label = "commtrack"
-
-
-class SupplyPointCase(CommtrackCase):
-    doc_type = 'CommCareCase'
-
-    def bind_to_location(self, loc):
-        self.location_ = loc.path
 
     def open_requisitions(self):
         return RequisitionCase.open_for_location(self.domain, self.location_[-1])
@@ -380,8 +373,11 @@ class SupplyPointCase(CommtrackCase):
         ]
 
 
-class SupplyPointProductCase(CommtrackCase):
-    doc_type = "CommCareCase"
+class SupplyPointProductCase(CommCareCase):
+    class Meta: 
+        # This is necessary otherwise syncdb will confuse this app with casexml
+        app_label = "commtrack"
+
     # can flesh this out more as needed
     product = StringProperty() # would be nice if this was product_id but is grandfathered in
 
@@ -463,8 +459,10 @@ class SupplyPointProductCase(CommtrackCase):
             }
         ]
 
-class RequisitionCase(CommtrackCase):
-    doc_type = 'CommCareCase'
+class RequisitionCase(CommCareCase):
+    class Meta: 
+        # This is necessary otherwise syncdb will confuse this app with casexml
+        app_label = "commtrack"
 
     # supply_point = StringProperty() # todo, if desired
     requisition_status = StringProperty()

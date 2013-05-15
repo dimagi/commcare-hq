@@ -1,6 +1,5 @@
 from corehq.apps.commtrack import const
-from corehq.apps.commtrack.models import (SupplyPointProductCase,
-    RequisitionCase)
+from corehq.apps.commtrack.models import SupplyPointProductCase
 from corehq.apps.commtrack.tests.util import CommTrackTest
 from datetime import datetime
 from corehq.apps.commtrack.stockreport import Requisition
@@ -21,7 +20,6 @@ class RequisitionTest(CommTrackTest):
                 value=20,
             )
             req = create_requisition(self.user._id, spp, transaction)
-            self.assertIsInstance(req, RequisitionCase)
             self.assertEqual("CommCareCase", req.doc_type)
             self.assertEqual(self.domain.name, req.domain)
             self.assertEqual(const.REQUISITION_CASE_TYPE, req.type)
