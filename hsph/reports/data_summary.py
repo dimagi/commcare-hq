@@ -269,12 +269,13 @@ class FADAObservationsReport(DataSummaryReport, HSPHSiteDataMixin):
                     if k not in ('site_id', 'user_id'):
                         values[k] += v
 
-        unique_sbrs = values['unique_sbrs'] = values['total_forms']
         for k, v in values.items():
-            if unique_sbrs:
-                values[k + '_pct'] = round(float(v) * 100 / unique_sbrs, 1)
-            else:
-                values[k + '_pct'] = '---'
+            pp = ('medication' if k[:3] == 'med' else k[:3]) + "_observed"
+            if pp in values:
+                if values[pp]:
+                    values[k + '_pct'] = round(float(v) * 100 / values[pp], 1)
+                else:
+                    values[k + '_pct'] = '---'
 
         # used by secondary outcome report
         if values['pp3_baby_apneic']:
@@ -282,6 +283,8 @@ class FADAObservationsReport(DataSummaryReport, HSPHSiteDataMixin):
                 100 * float(values['pp3_baby_intervention']) / values['pp3_baby_apneic'], 1)
         else:
             values['pp3_apneic_intervention_pct'] = '---'
+        
+        values['unique_sbrs'] = values['total_forms']
 
         return values
 
