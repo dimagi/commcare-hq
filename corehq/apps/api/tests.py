@@ -33,26 +33,20 @@ class FakeXFormES(object):
             }
         }
 
-
-class TestXFormInstanceResource(TestCase):
+class APIResourceTest(TestCase):
     """
-    Tests the XFormInstanceResource, currently only v0_4
-
-    TODO: Provide tests for each version, especially for those aspects
-    which differ between versions. They should call into reusable tests
-    for the functionality that is not different.
+    Base class for shared API tests. Sets up a domain and user and provides
+    some helper methods and properties for accessing the API
     """
-    
+    resource = None # must be set by subclasses
+    api_name = 'v0.4' # can be overridden by subclasses
+
     def setUp(self):
         self.maxDiff = None
-        
         self.domain = Domain.get_or_create_with_name('qwerty', is_active=True)
-
-        self.list_endpoint = reverse('api_dispatch_list', kwargs=dict(domain=self.domain.name, 
-                                                                      api_name='v0.4', 
-                                                                      resource_name=v0_4.XFormInstanceResource.Meta.resource_name))
-        
-
+        self.list_endpoint = reverse('api_dispatch_list', kwargs=dict(domain=self.domain.name,
+                                                                      api_name=self.api_name,
+                                                                      resource_name=self.resource.Meta.resource_name))
         self.username = 'rudolph'
         self.password = '***'
         self.user = WebUser.create(self.domain.name, self.username, self.password)
@@ -62,6 +56,23 @@ class TestXFormInstanceResource(TestCase):
     def tearDown(self):
         self.user.delete()
         self.domain.delete()
+
+    def single_endpoint(self, id):
+        return reverse('api_dispatch_detail', kwargs=dict(domain=self.domain.name,
+                                                          api_name=self.api_name,
+                                                          resource_name=self.resource.Meta.resource_name,
+                                                          pk=id))
+
+
+class TestXFormInstanceResource(APIResourceTest):
+    """
+    Tests the XFormInstanceResource, currently only v0_4
+
+    TODO: Provide tests for each version, especially for those aspects
+    which differ between versions. They should call into reusable tests
+    for the functionality that is not different.
+    """
+    resource = v0_4.XFormInstanceResource
 
     def test_get_list(self):
         """
@@ -171,36 +182,13 @@ class TestXFormInstanceResource(TestCase):
 
         self.assertEqual(response.status_code, 200)
 
-class TestUserResource(TestCase):
+
+class TestCommCareUserResource(APIResourceTest):
     """
     Basic sanity checking of v0_1.CommCareUserResource
     """
+    resource = v0_1.CommCareUserResource
         
-    def setUp(self):
-        self.maxDiff = None
-        
-        self.domain = Domain.get_or_create_with_name('qwerty', is_active=True)
-
-        self.list_endpoint = reverse('api_dispatch_list', kwargs=dict(domain=self.domain.name, 
-                                                                      api_name='v0.4', 
-                                                                      resource_name=v0_1.CommCareUserResource.Meta.resource_name))
-        
-
-        self.username = 'rudolph'
-        self.password = '***'
-        self.user = WebUser.create(self.domain.name, self.username, self.password)
-        self.user.set_role(self.domain.name, 'admin')
-        self.user.save()
-
-    def tearDown(self):
-        self.user.delete()
-        self.domain.delete()
-
-    def single_endpoint(self, id):
-        return reverse('api_dispatch_detail', kwargs=dict(domain=self.domain.name,
-                                                          api_name='v0.4',
-                                                          resource_name=v0_1.CommCareUserResource.Meta.resource_name,
-                                                          pk=id))
     def test_get_list(self):
         self.client.login(username=self.username, password=self.password)
 
@@ -229,36 +217,11 @@ class TestUserResource(TestCase):
         self.assertEqual(api_user['id'], backend_id)
 
 
-class TestWebUserResource(TestCase):
+class TestWebUserResource(APIResourceTest):
     """
     Basic sanity checking of v0_1.CommCareUserResource
     """
-
-    def setUp(self):
-        self.maxDiff = None
-
-        self.domain = Domain.get_or_create_with_name('qwerty', is_active=True)
-
-        self.list_endpoint = reverse('api_dispatch_list', kwargs=dict(domain=self.domain.name,
-                                                                      api_name='v0.4',
-                                                                      resource_name=v0_1.WebUserResource.Meta.resource_name))
-
-
-        self.username = 'rudolph'
-        self.password = '***'
-        self.user = WebUser.create(self.domain.name, self.username, self.password)
-        self.user.set_role(self.domain.name, 'admin')
-        self.user.save()
-
-    def single_endpoint(self, id):
-        return reverse('api_dispatch_detail', kwargs=dict(domain=self.domain.name,
-                                                          api_name='v0.4',
-                                                          resource_name=v0_1.WebUserResource.Meta.resource_name,
-                                                          pk=id))
-
-    def tearDown(self):
-        self.user.delete()
-        self.domain.delete()
+    resource = v0_1.WebUserResource
 
     def test_get_list(self):
         self.client.login(username=self.username, password=self.password)
@@ -279,37 +242,12 @@ class TestWebUserResource(TestCase):
         api_user = simplejson.loads(response.content)
         self.assertEqual(api_user['id'], self.user._id)
 
-class TestRepeaterResource(TestCase):
+class TestRepeaterResource(APIResourceTest):
     """
     Basic sanity checking of v0_4.RepeaterResource
     """
-
-    def setUp(self):
-        self.maxDiff = None
-        
-        self.domain = Domain.get_or_create_with_name('qwerty', is_active=True)
-        self.repeater_types = [FormRepeater, CaseRepeater, ShortFormRepeater]
-
-        self.list_endpoint = reverse('api_dispatch_list', kwargs=dict(domain=self.domain.name, 
-                                                                      api_name='v0.4', 
-                                                                      resource_name=v0_4.RepeaterResource.Meta.resource_name))
-        
-
-        self.username = 'rudolph'
-        self.password = '***'
-        self.user = WebUser.create(self.domain.name, self.username, self.password)
-        self.user.set_role(self.domain.name, 'admin')
-        self.user.save()
-
-    def single_endpoint(self, id):
-        return reverse('api_dispatch_detail', kwargs=dict(domain=self.domain.name,
-                                                          api_name='v0.4',
-                                                          resource_name=v0_4.RepeaterResource.Meta.resource_name,
-                                                          pk=id))
-
-    def tearDown(self):
-        self.user.delete()
-        self.domain.delete()
+    resource = v0_4.RepeaterResource
+    repeater_types = [FormRepeater, CaseRepeater, ShortFormRepeater]
 
     def test_get(self):
         self.client.login(username=self.username, password=self.password)
