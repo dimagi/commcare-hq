@@ -1566,7 +1566,11 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
                 form = form_stuff["form"]
                 try:
                     previous_form = previous_version.get_form(form.unique_id)
-                    previous_hash = _hash(previous_version.fetch_xform(form=previous_form))
+                    # we don't want to perform any validation on previous_form
+                    # because it could have been built with an eariler version
+                    # of commcarehq in which there was a bug
+                    # that let invalid forms through
+                    previous_hash = _hash(previous_form.source)
 
                     # hack - temporarily set my version to the previous version
                     # so that that's not treated as the diff
