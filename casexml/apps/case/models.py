@@ -308,8 +308,9 @@ class CommCareCase(CaseBase, IndexHoldingMixIn, ComputedDocumentMixin):
 
     @classmethod
     def _get_wrap_class(cls, data):
-        wrap_cls = CASE_WRAPPER(data) if CASE_WRAPPER else CommCareCase
-        return wrap_cls or CommCareCase
+        if CASE_WRAPPER:
+            return CASE_WRAPPER(data) or cls
+        return cls
 
     @classmethod
     def wrap(cls, data):
@@ -401,7 +402,7 @@ class CommCareCase(CaseBase, IndexHoldingMixIn, ComputedDocumentMixin):
         domain = getattr(xformdoc, 'domain', None)
         cls = cls._get_wrap_class({
             'domain': domain, 
-            'type': case_update.get_create_action().type
+            'type': case_update.actions[0].type
         })
 
         case = cls()
