@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from StringIO import StringIO
 import re
 from django.core.cache import cache
 import simplejson
@@ -21,6 +22,7 @@ import itertools
 from dimagi.utils.couch.database import get_db, SafeSaveDocument
 from couchdbkit.exceptions import ResourceNotFound, ResourceConflict
 from dimagi.utils.couch import LooselyEqualDocumentSchema
+from PIL import Image
 
 """
 Couch models for commcare cases.  
@@ -465,7 +467,7 @@ class CommCareCase(CaseBase, IndexHoldingMixIn, ComputedDocumentMixin):
             print "\tattachment action to append: %s" % len(self.actions)
             self.actions.append(attachment_action)
             print "\tattachment action appended: %s" % len(self.actions)
-            print simplejson.dumps(self.to_json(), indent=4)
+            #print simplejson.dumps(self.to_json(), indent=4)
             self._apply_action(attachment_action)
 
         # finally override any explicit properties from the update
@@ -498,9 +500,32 @@ class CommCareCase(CaseBase, IndexHoldingMixIn, ComputedDocumentMixin):
             
     def apply_attachments(self, attachment_action):
         #the actions and _attachment must be added before the first saves canhappen
+        #todo attach cached attachment info
+
+        stream_dict = {}
+
+        for k, v in attachment_action.attachments.items():
+            if v.is_present:
+                #fetch attachment, update metadata, get the stream
+                print "fetch attachment: %s" % v.identifier
+                print "xform doc attachment: %s" % attachment_action.xform_id
+                attach_data = XFormInstance.get_db().fetch_attachment(attachment_action.xform_id, v.identifier)
+                stream_dict[k] = attach_data
+                v.attachment_size = len(attach_data)
+
+                if v.is_image:
+                    img = Image.open(StringIO(attach_data))
+
+                    img_size = img.size
+                    props = {}
+
+                    props['width'] = img_size[0]
+                    props['height'] = img_size[1]
+                    v.attachment_properties = props
+
         self.force_save()
         print "start apply_attachments"
-        print simplejson.dumps(self.to_json(), indent=4)
+        #print simplejson.dumps(self.to_json(), indent=4)
         update_attachments = {}
         for k, v in self.case_attachments.items():
             update_attachments[k] = v
@@ -510,12 +535,13 @@ class CommCareCase(CaseBase, IndexHoldingMixIn, ComputedDocumentMixin):
             #copy over attachments from form onto case
             update_attachments[k] = v
             if v.is_present:
-                print "\tAttachment %s present!" % k
+                print "\tAttachment %s present: %s" % (k, v.attachment_key)
                 #fetch attachment from xform
                 attachment_key = v.attachment_key
-                attach = XFormInstance.get_db().fetch_attachment(attachment_action.xform_id, attachment_key)
+                #attach = XFormInstance.get_db().fetch_attachment(attachment_action.xform_id, attachment_key)
+                attach = stream_dict[attachment_key]
                 self.put_attachment(attach, name=attachment_key, content_type=v.server_mime)
-                print simplejson.dumps(self.to_json(), indent=4)
+                #print simplejson.dumps(self.to_json(), indent=4)
             else:
                 print "not present!"
         self.case_attachments = update_attachments
@@ -612,6 +638,7 @@ class CommCareCase(CaseBase, IndexHoldingMixIn, ComputedDocumentMixin):
         return sorted([(key, value) for key, value in self.dynamic_properties().items() if re.search(r'^[a-zA-Z]', key)])
 
     def save(self, **params):
+        print "saving somewhere"
         self.server_modified_on = datetime.utcnow()
         super(CommCareCase, self).save(**params)
         case_post_save.send(CommCareCase, case=self)

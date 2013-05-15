@@ -3,6 +3,7 @@ import time
 import uuid
 from django.test import TestCase
 import os
+import ipdb
 import simplejson
 from casexml.apps.case.models import CommCareCase
 from couchforms.util import post_xform_to_couch
@@ -82,7 +83,7 @@ class CaseMultimediaTest(TestCase):
         process_cases(sender="testharness", xform=form)
         case = CommCareCase.get(TEST_CASE_ID)
         print "#### Load from DB"
-        print simplejson.dumps(case.to_json(), indent=4)
+        #print simplejson.dumps(case.to_json(), indent=4)
         self.assertEqual(1, len(case.case_attachments))
         self.assertTrue(attach_name in case.case_attachments)
         self.assertEqual(1, len(filter(lambda x: x['action_type'] == 'attachment', case.actions)))
@@ -112,7 +113,7 @@ class CaseMultimediaTest(TestCase):
         time.sleep(2)
         case = CommCareCase.get(TEST_CASE_ID)
         print "#### testAttachInUpdate Load from DB"
-        print simplejson.dumps(case.to_json(), indent=4)
+        #print simplejson.dumps(case.to_json(), indent=4)
         print "_attachments: %s" % case['_attachments'].keys()
 
 

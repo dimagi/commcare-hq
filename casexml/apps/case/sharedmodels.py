@@ -1,7 +1,9 @@
+from StringIO import StringIO
 import os
 from couchdbkit.ext.django.schema import *
 from dimagi.utils.mixins import UnicodeMixIn
 from dimagi.utils.couch import LooselyEqualDocumentSchema
+from PIL import Image
 import mimetypes
 
 """
@@ -48,8 +50,11 @@ class CommCareCaseAttachment(LooselyEqualDocumentSchema, UnicodeMixIn):
     attachment_src = StringProperty()
     attachment_from = StringProperty()
     attachment_name = StringProperty()
-    server_mime = StringProperty() #Server detected MIME
-    server_md5 = StringProperty() #Couch detected hash
+    server_mime = StringProperty()  # Server detected MIME
+    server_md5 = StringProperty()  # Couch detected hash
+
+    attachment_size = IntegerProperty()  # file size
+    attachment_properties = DictProperty()  # width, height, other relevant metadata
 
     @property
     def is_image(self):
@@ -69,11 +74,6 @@ class CommCareCaseAttachment(LooselyEqualDocumentSchema, UnicodeMixIn):
     @property
     def attachment_key(self):
         return self.identifier
-        # if self.attachment_name is not None:
-        #     return self.attachment_name
-        # else:
-        #     p, f = os.path.split(self.attachment_from)
-        #     return f
 
     @classmethod
     def from_case_index_update(cls, attachment):
@@ -84,11 +84,13 @@ class CommCareCaseAttachment(LooselyEqualDocumentSchema, UnicodeMixIn):
         else:
             mime_type = None
 
-        return cls(identifier=attachment.identifier,
+        ret = cls(identifier=attachment.identifier,
                    attachment_src=attachment.attachment_src,
                    attachment_from=attachment.attachment_from,
                    attachment_name=attachment.attachment_name,
                    server_mime=mime_type)
+
+        return ret
 
 
 class IndexHoldingMixIn(object):
