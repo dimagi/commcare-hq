@@ -4,9 +4,9 @@ from setuptools import setup, find_packages
 import sys
 
 setup(
-    name='fluff',
+    name='pillowfluff',
     version='0.0.1',
-    description='Map over CouchDB changes feed',
+    description='Map over CouchDB changes feed built to run on Pillowtop',
     author='Dimagi',
     author_email='information@dimagi.com',
     url='http://www.dimagi.com/',
