@@ -8,15 +8,18 @@ def any_action_property(action, props):
     return False
 
 
-def get_related_prop(case, property, latest=True):
+def get_related_props(case, property):
     """
-    Gets the specified property for latest referenced case in which that property exists
+    Gets the specified property for all child cases in which that property exists
     """
-    actions = case.actions[::-1] if latest else case.actions
-    for action in actions:
-        for index in action.indices:
-            referenced_case = CommCareCase.get(index.referenced_id)
-            if getattr(referenced_case, property, None):
-                return getattr(referenced_case, property)
-    return None
 
+    for index in case.reverse_indices:
+        referenced_case = CommCareCase.get(index.referenced_id)
+        if getattr(referenced_case, property, None):
+            yield getattr(referenced_case, property)
+
+
+def get_related_prop(case, property):
+    for value in get_related_props(case, property):
+        return value
+    return None

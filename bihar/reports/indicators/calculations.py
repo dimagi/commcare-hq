@@ -1,4 +1,5 @@
 from couchdbkit import ResourceNotFound
+import couchdbkit
 from bihar.calculations.utils.filters import is_pregnant_mother, is_newborn_child, get_add, get_edd
 from bihar.reports.indicators.filters import mother_pre_delivery_columns, mother_post_delivery_columns
 from dimagi.utils.parsing import string_to_datetime
@@ -180,10 +181,11 @@ def delivered_at_in_timeframe(case, at, days):
 def delivered_in_timeframe_with_status(case, days, status):
     return getattr(case, 'birth_status', None) == status and delivered_in_timeframe(case, days)
 
-def _get_tob(case): # only guaranteed to be accurate within 24 hours
-    tob = get_related_prop(case, "time_of_birth") or get_add(case) # use add if time_of_birth can't be found
-    if isinstance(tob, dt.date):
-        tob = dt.datetime.combine(tob, dt.datetime.time(dt.datetime.now())) #convert date to dt.datetime
+def _get_tob(case):  # only guaranteed to be accurate within 24 hours
+    tob = get_related_prop(case, "time_of_birth") or '00:00:00'
+
+    tob = couchdbkit.schema.TimeProperty().to_python(tob)
+    tob = dt.datetime.combine(get_add(case), tob)  # convert date to dt.datetime
     return tob
 
 def _get_time_of_visit_after_birth(case):
