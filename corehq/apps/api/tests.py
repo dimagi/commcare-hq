@@ -227,6 +227,7 @@ class TestWebUserResource(APIResourceTest):
         self.assertEqual(user._id, json_user['id'])
         role = user.get_role(self.domain.name)
         self.assertEqual(role.name, json_user['role'])
+        self.assertEqual(user.is_domain_admin(self.domain.name), json_user['is_admin'])
         for perm in ['edit_web_users', 'edit_commcare_users', 'edit_data',
                      'edit_apps', 'view_reports']:
             self.assertEqual(getattr(role.permissions, perm), json_user['permissions'][perm])

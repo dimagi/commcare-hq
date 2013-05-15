@@ -116,6 +116,7 @@ class CommCareUserResource(UserResource):
 
 class WebUserResource(UserResource):
     role = fields.CharField()
+    is_admin = fields.BooleanField()
     permissions = fields.DictField()
 
     def dehydrate_role(self, bundle):
@@ -123,6 +124,9 @@ class WebUserResource(UserResource):
 
     def dehydrate_permissions(self, bundle):
         return bundle.obj.get_role(bundle.request.domain).permissions._doc
+
+    def dehydrate_is_admin(self, bundle):
+        return bundle.obj.is_domain_admin(bundle.request.domain)
 
     class Meta(UserResource.Meta):
         object_class = WebUser
