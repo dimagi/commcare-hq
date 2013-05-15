@@ -1,7 +1,9 @@
+import datetime
 from casexml.apps.case.models import CommCareCase
-from bihar.calculations import homevisit, pregnancy
+from bihar.calculations import homevisit, pregnancy, postpartum
 import fluff
 
+A_DAY = datetime.timedelta(days=1)
 
 class CareBiharFluff(fluff.IndicatorDocument):
     document_class = CommCareCase
@@ -36,7 +38,22 @@ class CareBiharFluff(fluff.IndicatorDocument):
 
     # pregnancy
 
-    hd = pregnancy.HDDayCalculator(at=['home'])
+    hd = pregnancy.VisitedQuicklyBirthPlace(at='home')
+    idv = pregnancy.VisitedQuicklyBirthPlace(at=('private', 'public'))
+    idnb = pregnancy.BreastFedBirthPlace(at=('private', 'public'))
+    born_at_home = pregnancy.LiveBirthPlace(at='home')
+    born_at_public_hospital = pregnancy.LiveBirthPlace(at='public')
+    born_in_transit = pregnancy.LiveBirthPlace(at='transit')
+    born_in_private_hospital = pregnancy.LiveBirthPlace(at='private')
+
+    # postpartum
+
+    comp1 = postpartum.Complications(days=1)
+    comp3 = postpartum.Complications(days=3)
+    comp5 = postpartum.Complications(days=5)
+    comp7 = postpartum.Complications(days=7)
+
+    # newborn
 
     class Meta:
         app_label = 'bihar'

@@ -1,6 +1,7 @@
 import datetime
 
 A_MONTH = datetime.timedelta(days=30)
+A_DAY = datetime.timedelta(days=1)
 
 
 def is_pregnant_mother(case):
