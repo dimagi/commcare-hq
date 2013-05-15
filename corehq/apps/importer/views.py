@@ -79,26 +79,31 @@ def excel_config(request, domain):
                             'Your spreadsheet is empty. '
                             'Please try again with a different spreadsheet.')
 
-    case_types = []
-    # load types from all case records
-    for row in CommCareCase.view('hqcase/types_by_domain',
-                                 reduce=True,
-                                 group=True,
-                                 startkey=[domain],
-                                 endkey=[domain,{}]).all():
-        if not row['key'][1] in case_types:
-            case_types.append(row['key'][1])
-
+    case_types_from_apps = []
     # load types from all modules
     for row in ApplicationBase.view('app_manager/types_by_module',
                                  reduce=True,
                                  group=True,
                                  startkey=[domain],
                                  endkey=[domain,{}]).all():
-        if not row['key'][1] in case_types:
-            case_types.append(row['key'][1])
+        if not row['key'][1] in case_types_from_apps:
+            case_types_from_apps.append(row['key'][1])
 
-    if len(case_types) == 0:
+    case_types_from_cases = []
+    # load types from all case records
+    for row in CommCareCase.view('hqcase/types_by_domain',
+                                 reduce=True,
+                                 group=True,
+                                 startkey=[domain],
+                                 endkey=[domain,{}]).all():
+        if not row['key'][1] in case_types_from_cases:
+            case_types_from_cases.append(row['key'][1])
+
+    # for this we just want cases that have data but aren't being used anymore
+    case_types_from_cases = [case for case in case_types_from_cases
+                             if case not in case_types_from_apps]
+
+    if len(case_types_from_apps) == 0 or len(case_types_from_cases) == 0:
         return render_error(request, domain,
                             'No cases have been submitted to this domain. '
                             'You cannot update case details from an Excel '
@@ -107,7 +112,8 @@ def excel_config(request, domain):
     return render(request, "importer/excel_config.html", {
                                 'named_columns': named_columns,
                                 'columns': columns,
-                                'case_types': case_types,
+                                'case_types_from_cases': case_types_from_cases,
+                                'case_types_from_apps': case_types_from_apps,
                                 'domain': domain,
                                 'report': {
                                     'name': 'Import: Configuration'
