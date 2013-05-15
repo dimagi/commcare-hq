@@ -46,7 +46,7 @@
                         <option value="{{case_type|escape}}">{{case_type|escape}}</option>
                     {% endfor %}
 
-                    <option disabled>{% trans "From old or deleted applications:" %}</option>
+                    <option disabled>{% trans "From unknown or deleted applications:" %}</option>
                     {% for case_type in case_types_from_cases %}
                         <option value="{{case_type|escape}}">{{case_type|escape}}</option>
                     {% endfor %}

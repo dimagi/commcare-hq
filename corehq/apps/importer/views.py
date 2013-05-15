@@ -103,6 +103,8 @@ def excel_config(request, domain):
     case_types_from_cases = [case for case in case_types_from_cases
                              if case not in case_types_from_apps]
 
+    case_types_from_cases = filter(lambda x: x not in case_types_from_apps, case_types_from_cases)
+
     if len(case_types_from_apps) == 0 or len(case_types_from_cases) == 0:
         return render_error(request, domain,
                             'No cases have been submitted to this domain. '
