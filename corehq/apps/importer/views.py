@@ -28,73 +28,80 @@ require_can_edit_data = require_permission(Permissions.edit_data)
 EXCEL_SESSION_ID = "excel_id"
 MAX_ALLOWED_ROWS = 500
 
-@require_can_edit_data
-def excel_config(request, domain):
-    if request.method == 'POST':
-        if request.FILES:
-            named_columns = request.POST['named_columns'].lower()
-            uses_headers = named_columns == 'yes'
-            uploaded_file_handle = request.FILES['file']
-
-            extension = os.path.splitext(uploaded_file_handle.name)[1][1:].strip().lower()
-
-            if extension in ExcelFile.ALLOWED_EXTENSIONS:
-                # NOTE: this is kinda messy and needs to be cleaned up but
-                # just trying to get something functional in place.
-                # We may not always be able to reference files from subsequent
-                # views if your worker changes, so we have to store it elsewhere
-                # using the soil framework.
-
-                # stash content in the default storage for subsequent views
-                file_ref = expose_download(uploaded_file_handle.read(),
-                                           expiry=1*60*60)
-                request.session[EXCEL_SESSION_ID] = file_ref.download_id
-
-                spreadsheet = _get_spreadsheet(file_ref, uses_headers)
-                if not spreadsheet:
-                    return _spreadsheet_expired(request, domain)
-                columns = spreadsheet.get_header_columns()
-                row_count = spreadsheet.get_num_rows()
-                if row_count > MAX_ALLOWED_ROWS:
-                    messages.error(request, _('Sorry, your spreadsheet is too big. '
-                                              'Please reduce the number of '
-                                              'rows to less than %s and try again') % MAX_ALLOWED_ROWS)
-                elif row_count == 0:
-                    messages.error(request, 'Your spreadsheet is empty. Please try again with a different spreadsheet.')
-                else:
-                    # get case types in this domain
-                    case_types = []
-                    for row in CommCareCase.view('hqcase/types_by_domain',
-                                                 reduce=True,
-                                                 group=True,
-                                                 startkey=[domain],
-                                                 endkey=[domain,{}]).all():
-                        if not row['key'][1] in case_types:
-                            case_types.append(row['key'][1])
-
-                    if len(case_types) > 0:
-                        return render(request, "importer/excel_config.html", {
-                                                    'named_columns': named_columns,
-                                                    'columns': columns,
-                                                    'case_types': case_types,
-                                                    'domain': domain,
-                                                    'report': {
-                                                        'name': 'Import: Configuration'
-                                                     },
-                                                    'slug': base.ImportCases.slug})
-                    else:
-                        messages.error(request, _('No cases have been submitted to this domain. '
-                                                  'You cannot update case details from an Excel '
-                                                  'file until you have existing cases.'))
-            else:
-                messages.error(request, _('The Excel file you chose could not be processed. '
-                                          'Please check that it is saved as a Microsoft Excel '
-                                          '97/2000 .xls file.'))
-        else:
-            messages.error(request, _('Please choose an Excel file to import.'))
-    #TODO show bad/invalid file error on this page
+def render_error(request, domain, message):
+    """ Load error message and reload page for excel file load errors """
+    messages.error(request, _(message))
     return HttpResponseRedirect(base.ImportCases.get_url(domain=domain))
 
+@require_can_edit_data
+def excel_config(request, domain):
+    if request.method != 'POST':
+        return HttpResponseRedirect(base.ImportCases.get_url(domain=domain))
+
+    if not request.FILES:
+        return render_error(request, domain, 'Please choose an Excel file to import.')
+
+    named_columns = request.POST['named_columns'].lower()
+    uses_headers = named_columns == 'yes'
+    uploaded_file_handle = request.FILES['file']
+
+    extension = os.path.splitext(uploaded_file_handle.name)[1][1:].strip().lower()
+
+    # NOTE: We may not always be able to reference files from subsequent
+    # views if your worker changes, so we have to store it elsewhere
+    # using the soil framework.
+
+    if extension not in ExcelFile.ALLOWED_EXTENSIONS:
+        return render_error(request, domain,
+                            'The Excel file you chose could not be processed. '
+                            'Please check that it is saved as a Microsoft '
+                            'Excel 97/2000 .xls file.')
+
+    # stash content in the default storage for subsequent views
+    file_ref = expose_download(uploaded_file_handle.read(), expiry=1*60*60)
+    request.session[EXCEL_SESSION_ID] = file_ref.download_id
+    spreadsheet = _get_spreadsheet(file_ref, uses_headers)
+
+    if not spreadsheet:
+        return _spreadsheet_expired(request, domain)
+
+    columns = spreadsheet.get_header_columns()
+    row_count = spreadsheet.get_num_rows()
+
+    if row_count > MAX_ALLOWED_ROWS:
+        return render_error(request, domain,
+                            'Sorry, your spreadsheet is too big. Please reduce the '
+                            'number of rows to less than %s and try again.' % MAX_ALLOWED_ROWS)
+    if row_count == 0:
+        return render_error(request, domain,
+                            'Your spreadsheet is empty. '
+                            'Please try again with a different spreadsheet.')
+
+    # get case types in this domain
+    case_types = []
+    for row in CommCareCase.view('hqcase/types_by_domain',
+                                 reduce=True,
+                                 group=True,
+                                 startkey=[domain],
+                                 endkey=[domain,{}]).all():
+        if not row['key'][1] in case_types:
+            case_types.append(row['key'][1])
+
+    if len(case_types) == 0:
+        return render_error(request, domain,
+                            'No cases have been submitted to this domain. '
+                            'You cannot update case details from an Excel '
+                            'file until you have existing cases.')
+
+    return render(request, "importer/excel_config.html", {
+                                'named_columns': named_columns,
+                                'columns': columns,
+                                'case_types': case_types,
+                                'domain': domain,
+                                'report': {
+                                    'name': 'Import: Configuration'
+                                 },
+                                'slug': base.ImportCases.slug})
 
 @require_POST
 @require_can_edit_data
