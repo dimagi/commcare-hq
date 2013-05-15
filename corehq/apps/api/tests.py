@@ -264,10 +264,6 @@ class TestWebUserResource(APIResourceTest):
         self.assertEqual(len(api_users), 0)
 
 
-    def test_get_list_username_filter(self):
-        self.client.login(username=self.username, password=self.password)
-
-
     def test_get_single(self):
         self.client.login(username=self.username, password=self.password)
 
