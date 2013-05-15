@@ -86,10 +86,11 @@ def bootstrap_default(domain, requisitions_enabled=True):
             ),
         ],
         location_types=[
-            LocationType(name='province', allowed_parents=[''], administrative=True),
-            LocationType(name='district', allowed_parents=['province'], administrative=True),
-            LocationType(name='village', allowed_parents=['district'], administrative=True),
-            LocationType(name='dispensary', allowed_parents=['village']),
+            LocationType(name='state', allowed_parents=[''], administrative=True),
+            LocationType(name='district', allowed_parents=['state'], administrative=True),
+            LocationType(name='block', allowed_parents=['district'], administrative=True),
+            LocationType(name='village', allowed_parents=['block'], administrative=True),
+            LocationType(name='outlet', allowed_parents=['block', 'village']),
         ],
         supply_point_types=[],
     )
