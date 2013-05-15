@@ -287,8 +287,10 @@ EMAIL_SMTP_PORT = 587
 BUG_REPORT_RECIPIENTS = ()
 EXCHANGE_NOTIFICATION_RECIPIENTS = []
 
-HQ_NOTIFICATIONS_EMAIL = 'commcarehq-noreply@dimagi.com'
+SERVER_EMAIL = 'commcarehq-noreply@dimagi.com' #the physical server emailing - differentiate if needed
+DEFAULT_FROM_EMAIL = 'commcarehq-noreply@dimagi.com'
 SUPPORT_EMAIL = "commcarehq-support@dimagi.com"
+EMAIL_SUBJECT_PREFIX = '[commcarehq] '
 
 PAGINATOR_OBJECTS_PER_PAGE = 15
 PAGINATOR_MAX_PAGE_LINKS = 5
@@ -637,6 +639,7 @@ DEFAULT_CURRENCY = "USD"
 SMS_HANDLERS = [
     'corehq.apps.sms.api.forwarding_handler',
     'corehq.apps.commtrack.sms.handle',
+    'corehq.apps.sms.api.structured_sms_handler',
     'corehq.apps.sms.api.form_session_handler',
     'corehq.apps.sms.api.fallback_handler',
 ]
@@ -678,6 +681,7 @@ PILLOWTOPS = [
                  'corehq.pillows.fullxform.FullXFormPillow',
                  'corehq.pillows.domain.DomainPillow',
                  'corehq.pillows.exchange.ExchangePillow',
+                 'corehq.pillows.commtrack.ConsumptionRatePillow',
 
                  # fluff
                  'bihar.models.CareBiharFluffPillow',

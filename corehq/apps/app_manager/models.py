@@ -1545,6 +1545,10 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
     def media_suite_loc(self):
         return "media_suite.xml"
 
+    @property
+    def default_language(self):
+        return self.build_langs[0] if len(self.build_langs) > 0 else "en"
+
     def fetch_xform(self, module_id=None, form_id=None, form=None):
         if not form:
             form = self.get_module(module_id).get_form(form_id)
