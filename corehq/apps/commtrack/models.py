@@ -332,10 +332,10 @@ class CommtrackCase(CommCareCase):
 
 
 class SupplyPointCase(CommtrackCase):
-    """
-    A wrapper around CommtrackCases to get more built in functionality
-    specific to supply points.
-    """
+    doc_type = 'CommCareCase'
+
+    def bind_to_location(self, loc):
+        self.location_ = loc.path
 
     def open_requisitions(self):
         return RequisitionCase.open_for_location(self.domain, self.location_[-1])
@@ -381,10 +381,7 @@ class SupplyPointCase(CommtrackCase):
 
 
 class SupplyPointProductCase(CommtrackCase):
-    """
-    A wrapper around CommtrackCases to get more built in functionality
-    specific to supply point products.
-    """
+    doc_type = "CommCareCase"
     # can flesh this out more as needed
     product = StringProperty() # would be nice if this was product_id but is grandfathered in
 
@@ -467,10 +464,8 @@ class SupplyPointProductCase(CommtrackCase):
         ]
 
 class RequisitionCase(CommtrackCase):
-    """
-    A wrapper around CommtrackCases to get more built in functionality
-    specific to requisitions.
-    """
+    doc_type = 'CommCareCase'
+
     # supply_point = StringProperty() # todo, if desired
     requisition_status = StringProperty()
 

@@ -1,12 +1,12 @@
 from datetime import datetime
-from django.utils.unittest.case import TestCase
 from corehq.apps.commtrack.helpers import make_supply_point,\
     make_supply_point_product, make_product, get_commtrack_user_id
-from corehq.apps.commtrack.tests.util import make_loc
-from corehq.apps.cloudcare.tests.test_api import TEST_DOMAIN
+from corehq.apps.commtrack.tests.util import (TEST_DOMAIN, make_loc,
+    CommTrackTest)
 from corehq.apps.commtrack import const
+from corehq.apps.commtrack.models import SupplyPointProductCase
 
-class SupplyPointProductTest(TestCase):
+class SupplyPointProductTest(CommTrackTest):
 
     def setUp(self):
         self.loc = make_loc('loc1')
@@ -20,6 +20,7 @@ class SupplyPointProductTest(TestCase):
 
     def testMakeSupplyPointProduct(self):
         spp = make_supply_point_product(self.sp, self.product._id)
+        self.assertIsInstance(spp, SupplyPointProductCase)
         self.assertEqual("CommCareCase", spp.doc_type)
         self.assertEqual(TEST_DOMAIN, spp.domain)
         self.assertEqual(const.SUPPLY_POINT_PRODUCT_CASE_TYPE, spp.type)

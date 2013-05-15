@@ -1,14 +1,12 @@
 from collections import defaultdict
 import itertools
 from casexml.apps.case.signals import cases_received
-from corehq.apps.commtrack import const
 from corehq.apps.commtrack.const import is_commtrack_form, RequisitionStatus
 from corehq.apps.commtrack.models import (RequisitionCase,
         SupplyPointProductCase, SupplyPointCase, CommtrackConfig)
 from corehq.apps.locations.models import Location
 from corehq.apps.sms.api import send_sms_to_verified_number
 from dimagi.utils import create_unique_filter
-
 
 def attach_locations(xform, cases):
     """
