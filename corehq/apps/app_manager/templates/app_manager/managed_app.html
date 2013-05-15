@@ -151,7 +151,7 @@
             {% with module as selected_module %}
                 {% for module in app.get_modules %}
                     <li class="edit-module-li {% ifequal module.id selected_module.id %}{% if not form %}
-+                       active{% endif %}{% endifequal %}"
+                        active{% endif %}{% endifequal %}"
                         data-index="{{ module.id }}">
                         <a href="{% url view_module domain app.id module.id %}?edit={{ edit|BOOL }}">
                             {% if edit %}
@@ -167,7 +167,7 @@
                                 <li class="sort-action">
                                     <form method="post"
                                           action="{% url corehq.apps.app_manager.views.rearrange domain app.id 'forms' %}">
-                                        <input type="hidden" name="module_id" value="{{ module.id }}"/>
+{#                                        <input type="hidden" name="module_id" value="{{ module.id }}"/>#}
                                     </form>
                                 </li>
                             {% endif %}
