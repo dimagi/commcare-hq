@@ -288,6 +288,7 @@ class MessageLogOld(models.Model):
 
 
 class CommConnectCase(CommCareCase, CommCareMobileContactMixin):
+    doc_type = "CommCareCase"
     
     def case_changed(self):
         contact_phone_number = self.get_case_property("contact_phone_number")

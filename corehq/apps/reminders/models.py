@@ -3,28 +3,18 @@ from pytz import timezone
 from datetime import timedelta, datetime, date, time
 import re
 from couchdbkit.ext.django.schema import *
-from django.conf import settings
 from casexml.apps.case.models import CommCareCase
-from corehq.apps.sms.api import send_sms, send_sms_to_verified_number
-from corehq.apps.sms.models import CallLog, CommConnectCase
+from corehq.apps.sms.models import CommConnectCase
 from corehq.apps.users.cases import get_owner_id, get_wrapped_owner
 from corehq.apps.users.models import CommCareUser, CouchUser
 from corehq.apps.groups.models import Group
-import logging
 from dimagi.utils.parsing import string_to_datetime, json_format_datetime
 from dateutil.parser import parse
-from corehq.apps.smsforms.models import XFormsSession
-from corehq.apps.smsforms.app import start_session
-from corehq.apps.app_manager.models import get_app, Form
-from corehq.apps.sms.util import format_message_list
 from corehq.apps.reminders.util import get_form_name
-from touchforms.formplayer.api import current_question
-from corehq.apps.sms.mixin import VerifiedNumber
 from couchdbkit.exceptions import ResourceConflict
 from corehq.apps.sms.util import create_task, close_task, update_task
 from corehq.apps.smsforms.app import submit_unfinished_form
 from dimagi.utils.couch import LockableMixIn
-from dimagi.utils.couch.database import get_db
 
 METHOD_SMS = "sms"
 METHOD_SMS_CALLBACK = "callback"

@@ -1,9 +1,10 @@
 from datetime import datetime
 from corehq.apps.commtrack.const import RequisitionStatus
-from corehq.apps.commtrack.models import RequisitionCase
+from corehq.apps.commtrack.models import (RequisitionCase,
+    SupplyPointProductCase)
+from casexml.apps.case.models import CommCareCase
 from corehq.apps.commtrack.tests.util import CommTrackTest
 from corehq.apps.commtrack.sms import handle
-from casexml.apps.case.models import CommCareCase
 
 
 class StockReportTest(CommTrackTest):

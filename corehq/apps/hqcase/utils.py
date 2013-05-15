@@ -28,9 +28,9 @@ def submit_case_blocks(case_blocks, domain, username="system", user_id="",
     )
 
 def get_case_wrapper(data):
-    from casexml.apps.case.models import CommCareCase
     from corehq.apps.commtrack.models import get_case_wrapper
-    wrapper = CommCareCase
+    
+    wrapper = None
 
     try:
         if Domain.get_by_name(data['domain']).commtrack_enabled:
