@@ -149,9 +149,14 @@ class CaseAttachmentAction(CaseActionBase):
         attachments = {}
         print "#### Case AttachmentAction: #%s#" % block
         for id, data in block.items():
-            attachment_from = data.get('@from', None)
-            attachment_src = data.get('@src', None)
-            attachment_name = data.get('@name', None)
+            if isinstance(data, basestring):
+                attachment_from = None
+                attachment_src = None
+                attachment_name = None
+            else:
+                attachment_from = data.get('@from', None)
+                attachment_src = data.get('@src', None)
+                attachment_name = data.get('@name', None)
             print "case attachment action: %s" % id
             print data
 

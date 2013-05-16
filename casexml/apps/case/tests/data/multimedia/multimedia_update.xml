@@ -1,5 +1,5 @@
 <?xml version='1.0' ?>
-<data uiVersion="1" version="1" name="Attachment Updates"
+<data uiVersion="1" version="1" name="Case Attachment Updates"
 	xmlns:jrm="http://dev.commcarehq.org/jr/xforms"
     xmlns:cc="http://commcarehq.org/xforms"
 	xmlns="http://openrosa.org/formdesigner/78A1B843-E564-4AD0-8FFD-BD5DC2F943C9">

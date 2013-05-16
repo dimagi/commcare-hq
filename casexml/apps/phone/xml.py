@@ -3,7 +3,7 @@ import logging
 from xml.sax import saxutils
 from xml.etree import ElementTree
 from casexml.apps.case import const
-from casexml.apps.case.xml import check_version
+from casexml.apps.case.xml import check_version, V1
 from casexml.apps.case.xml.generator import get_generator, date_to_xml_string,\
     safe_element
 
@@ -30,7 +30,7 @@ def get_sync_element(restore_id):
     elem.append(safe_element("restore_id", restore_id))
     return elem
 
-def get_case_element(case, updates, version="1.0"):
+def get_case_element(case, updates, version=V1):
     
     check_version(version)
     
@@ -46,6 +46,7 @@ def get_case_element(case, updates, version="1.0"):
     do_create = const.CASE_ACTION_CREATE in updates
     do_update = const.CASE_ACTION_UPDATE in updates
     do_index = do_update # NOTE: we may want to differentiate this eventually
+    do_attach = do_update
     do_purge = const.CASE_ACTION_PURGE in updates or const.CASE_ACTION_CLOSE in updates
     if do_create:
         # currently the below code relies on the assumption that
@@ -68,6 +69,8 @@ def get_case_element(case, updates, version="1.0"):
         
     if do_index:
         generator.add_indices(root)
+    if do_attach:
+        generator.add_attachments(root)
     
     if do_purge:
         purge_block = generator.get_close_element()
@@ -79,7 +82,7 @@ def get_case_element(case, updates, version="1.0"):
         
     return root
 
-def get_case_xml(case, updates, version="1.0"):
+def get_case_xml(case, updates, version=V1):
     check_version(version)
     return tostring(get_case_element(case, updates, version))
     

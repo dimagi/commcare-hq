@@ -356,6 +356,18 @@ class CommCareCase(CaseBase, IndexHoldingMixIn, ComputedDocumentMixin):
     def get_attachment(self, attachment_key):
         return self.fetch_attachment(attachment_key)
 
+    def get_attachment_server_url(self, attachment_key):
+        """
+        A server specific URL for remote clients to access case attachment resources async.
+        """
+        if attachment_key in self.case_attachments:
+            return "/a/%(domain)s/case/attachment/%(case_id)s/%(attach)s" % {
+                "domain": self.domain,
+                "case_id": self._id,
+                "attach": attachment_key
+            }
+        else:
+            return None
 
 
     def bind_to_location(self, loc):
@@ -503,24 +515,22 @@ class CommCareCase(CaseBase, IndexHoldingMixIn, ComputedDocumentMixin):
         #todo attach cached attachment info
 
         stream_dict = {}
-
+        #cache all attachment streams from xform
         for k, v in attachment_action.attachments.items():
+            print "cache attachments..."
+            print k
             if v.is_present:
+                print "attach src: #%s#" % v.attachment_src
+                print "attach frm: #%s#" % v.attachment_from
                 #fetch attachment, update metadata, get the stream
-                print "fetch attachment: %s" % v.identifier
-                print "xform doc attachment: %s" % attachment_action.xform_id
                 attach_data = XFormInstance.get_db().fetch_attachment(attachment_action.xform_id, v.identifier)
                 stream_dict[k] = attach_data
                 v.attachment_size = len(attach_data)
 
                 if v.is_image:
                     img = Image.open(StringIO(attach_data))
-
                     img_size = img.size
-                    props = {}
-
-                    props['width'] = img_size[0]
-                    props['height'] = img_size[1]
+                    props = dict(width=img_size[0], height=img_size[1])
                     v.attachment_properties = props
 
         self.force_save()
@@ -528,7 +538,8 @@ class CommCareCase(CaseBase, IndexHoldingMixIn, ComputedDocumentMixin):
         #print simplejson.dumps(self.to_json(), indent=4)
         update_attachments = {}
         for k, v in self.case_attachments.items():
-            update_attachments[k] = v
+            if v.is_present:
+                update_attachments[k] = v
 
         for k, v in attachment_action.attachments.items():
             #grab xform_attachments
@@ -543,7 +554,12 @@ class CommCareCase(CaseBase, IndexHoldingMixIn, ComputedDocumentMixin):
                 self.put_attachment(attach, name=attachment_key, content_type=v.server_mime)
                 #print simplejson.dumps(self.to_json(), indent=4)
             else:
-                print "not present!"
+                print "deleting attachment"
+                self.delete_attachment(k)
+                print update_attachments
+                del(update_attachments[k])
+                print update_attachments
+
         self.case_attachments = update_attachments
 
 

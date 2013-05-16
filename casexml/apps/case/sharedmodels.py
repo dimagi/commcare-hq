@@ -65,11 +65,10 @@ class CommCareCaseAttachment(LooselyEqualDocumentSchema, UnicodeMixIn):
         """
         Helper method to see if this is a delete vs. update
         """
-        if self.identifier and (self.attachment_src and self.attachment_from):
-            #todo:make it suck less
-            return True
-        else:
+        if self.identifier and (self.attachment_src == self.attachment_from is None):
             return False
+        else:
+            return True
 
     @property
     def attachment_key(self):
@@ -77,19 +76,21 @@ class CommCareCaseAttachment(LooselyEqualDocumentSchema, UnicodeMixIn):
 
     @classmethod
     def from_case_index_update(cls, attachment):
-        print "guess type: %s" % str(mimetypes.guess_type(attachment.attachment_src))
-        guessed = mimetypes.guess_type(attachment.attachment_src)
-        if len(guessed) > 0 and guessed[0] is not None:
-            mime_type = guessed[0]
+        if attachment.attachment_src:
+            print "guess type: %s" % str(mimetypes.guess_type(attachment.attachment_src))
+            guessed = mimetypes.guess_type(attachment.attachment_src)
+            if len(guessed) > 0 and guessed[0] is not None:
+                mime_type = guessed[0]
+            else:
+                mime_type = None
+
+            ret = cls(identifier=attachment.identifier,
+                       attachment_src=attachment.attachment_src,
+                       attachment_from=attachment.attachment_from,
+                       attachment_name=attachment.attachment_name,
+                       server_mime=mime_type)
         else:
-            mime_type = None
-
-        ret = cls(identifier=attachment.identifier,
-                   attachment_src=attachment.attachment_src,
-                   attachment_from=attachment.attachment_from,
-                   attachment_name=attachment.attachment_name,
-                   server_mime=mime_type)
-
+            ret = cls(identifier=attachment.identifier)
         return ret
 
 
