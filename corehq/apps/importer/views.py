@@ -100,16 +100,13 @@ def excel_config(request, domain):
             case_types_from_cases.append(row['key'][1])
 
     # for this we just want cases that have data but aren't being used anymore
-    case_types_from_cases = [case for case in case_types_from_cases
-                             if case not in case_types_from_apps]
-
     case_types_from_cases = filter(lambda x: x not in case_types_from_apps, case_types_from_cases)
 
     if len(case_types_from_apps) == 0 or len(case_types_from_cases) == 0:
         return render_error(request, domain,
-                            'No cases have been submitted to this domain. '
-                            'You cannot update case details from an Excel '
-                            'file until you have existing cases.')
+                            'No cases have been submitted to this domain and there are no '
+                            'applications yet. You cannot import case details from an Excel '
+                            'file until you have existing cases or applications.')
 
     return render(request, "importer/excel_config.html", {
                                 'named_columns': named_columns,
