@@ -6,6 +6,7 @@ from django.core.cache import cache
 from django.template.loader import render_to_string
 import hashlib
 from django.utils.translation import ugettext as _
+from django.views.decorators.cache import cache_control
 from corehq.apps.app_manager.const import APP_V1
 from corehq.apps.app_manager.success_message import SuccessMessage
 from corehq.apps.domain.models import Domain
@@ -73,6 +74,9 @@ def set_file_download(response, filename):
 
 def _encode_if_unicode(s):
     return s.encode('utf-8') if isinstance(s, unicode) else s
+
+CASE_TYPE_CONFLICT_MSG = "Warning: The form's new module has a different case type from the old module.<br />" + \
+                             "Make sure all case properties you are loading are available in the new case type"
 
 
 class ApplicationViewMixin(DomainViewMixin):
@@ -547,6 +551,7 @@ def get_apps_base_context(request, domain, app):
         'timezone': timezone,
     }
 
+@cache_control(no_cache=True, no_store=True)
 @login_and_domain_required
 def paginate_releases(request, domain, app_id):
     limit = request.GET.get('limit', 10)
@@ -1572,8 +1577,10 @@ def rearrange(req, domain, app_id, key):
 
 
     if   "forms" == key:
-        module_id = int(req.POST['module_id'])
-        app.rearrange_forms(module_id, i, j)
+        to_module_id = int(req.POST['to_module_id'])
+        from_module_id = int(req.POST['from_module_id'])
+        if app.rearrange_forms(to_module_id, from_module_id, i, j) == 'case type conflict':
+            messages.warning(req, CASE_TYPE_CONFLICT_MSG,  extra_tags="html")
     elif "modules" == key:
         app.rearrange_modules(i, j)
     elif "detail" == key:

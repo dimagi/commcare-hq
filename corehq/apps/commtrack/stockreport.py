@@ -55,11 +55,14 @@ def process(domain, instance):
     # TODO: code to auto generate / update requisitions from transactions if
     # project is configured for that.
 
+    # TODO: when we start receiving commcare-submitted reports, we should be using a server time rather
+    # than relying on timeStart (however timeStart is set to server time for reports received via sms)
+    submit_time = root.find('.//%s' % _('timeStart', META_XMLNS)).text
     post_processed_transactions = list(transactions)
     for product_id, product_case in cases.iteritems():
         stock_txs = stock_transactions.get(product_id, [])
         if stock_txs:
-            case_block, reconciliations = process_product_transactions(user_id, product_case, stock_txs)
+            case_block, reconciliations = process_product_transactions(user_id, submit_time, product_case, stock_txs)
             root.append(case_block)
             post_processed_transactions.extend(reconciliations)
 
@@ -73,12 +76,9 @@ def process(domain, instance):
     submission = etree.tostring(root)
     logger.debug('submitting: %s' % submission)
 
-    submit_time = root.find('.//%s' % _('timeStart', META_XMLNS)).text
     spoof_submission(get_submit_url(domain), submission,
                      headers={'HTTP_X_SUBMIT_TIME': submit_time},
                      hqsubmission=False)
-
-
 
 class StockTransaction(object):
     def __init__(self, **kwargs):
@@ -318,13 +318,13 @@ def replace_transactions(root, new_tx):
     for tx in new_tx:
         root.append(tx.to_xml())
 
-def process_product_transactions(user_id, case, txs):
+def process_product_transactions(user_id, timestamp, case, txs):
     """process all the transactions from a stock report for an individual
     product. we have to apply them in bulk because each one may update
     the case state that the next one works off of. therefore we have to
     keep track of the updated case state ourselves
     """
-    current_state = StockState(case)
+    current_state = StockState(case, timestamp)
     reconciliations = []
 
     i = [0] # annoying python 2.x scope issue
@@ -341,8 +341,9 @@ def process_product_transactions(user_id, case, txs):
     return current_state.to_case_block(user_id=user_id), reconciliations
 
 class StockState(object):
-    def __init__(self, case):
+    def __init__(self, case, reported_on):
         self.case = case
+        self.last_reported = reported_on
         props = case.dynamic_properties()
         self.current_stock = int(props.get('current_stock', 0)) # int
         self.stocked_out_since = props.get('stocked_out_since') # date
@@ -395,7 +396,7 @@ class StockState(object):
         def convert_prop(val):
             return str(val) if val is not None else ''
 
-        props = ['current_stock', 'stocked_out_since']
+        props = ['current_stock', 'stocked_out_since', 'last_reported']
 
         case_update = CaseBlock(
             version=V2,
