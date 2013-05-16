@@ -975,6 +975,11 @@ class WorkerActivityReport(WorkerMonitoringReportTableBase, DatespanMixin):
         total_case_data = self.es_total_cases()
         totals_by_owner = dict([(t["term"], t["count"]) for t in total_case_data["facets"]["owner_id"]["terms"]])
 
+        def dates_for_linked_reports():
+            start_date = self.datespan.startdate_param
+            end_date = self.datespan.enddate.strftime(self.datespan.format)
+            return start_date, end_date
+
         def numcell(text, value=None, convert='int'):
             if value is None:
                 try:
@@ -997,7 +1002,7 @@ class WorkerActivityReport(WorkerMonitoringReportTableBase, DatespanMixin):
                 "individual": owner_id,
             }
 
-            start_date, end_date = self.datespan.startdate_param, self.datespan.enddate_param
+            start_date, end_date = dates_for_linked_reports()
             search_strings = {
                 4: "opened_on: [%s TO %s]" % (start_date, end_date), # cases created
                 5: "closed_on: [%s TO %s]" % (start_date, end_date), # cases closed
@@ -1024,10 +1029,11 @@ class WorkerActivityReport(WorkerMonitoringReportTableBase, DatespanMixin):
                 takes group info, and creates a cell that links to the user status report focused on the group
             """
             us_url = reverse('project_report_dispatcher', args=(self.domain, 'user_status'))
+            start_date, end_date = dates_for_linked_reports()
             url_args = {
                 "group": group_id,
-                "startdate": self.datespan.startdate_param,
-                "enddate": self.datespan.enddate_param,
+                "startdate": start_date,
+                "enddate": end_date,
             }
             return util.format_datatables_data(
                 '<a href="%s?%s" target="_blank">%s</a>' % (us_url, urlencode(url_args, True), group_name),
