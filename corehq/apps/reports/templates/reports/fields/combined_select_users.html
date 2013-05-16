@@ -8,9 +8,9 @@
 {% with hide_label=1 %}
 {% if smwf %}
 <div class="additional-user-filter control-group hide">
-    <label class="control-label">{% trans "Include only the following users" %}</label>
+    <label class="control-label">{% trans "Users" %}</label>
     <div class="controls"><label class="checkbox">
-        <input id="all-mobile-workers" name="all_mws" type="checkbox" {% if not smwf.select.selected %}checked{% endif %}> {% trans "All Users" %}
+        <input id="all-mobile-workers" name="all_mws" type="checkbox" {% if not smwf.select.selected and not sgf.select.selected %}checked{% endif %}> {% trans "All Users" %}
     </label></div>
     <div id="select-mobile-worker-field" class="hide">
         {% include smwf.field.template with select=smwf.select slug=smwf.field.slug placeholder=smwf.placeholder%}
@@ -19,8 +19,8 @@
 {% endif %}
 
 {% if sgf %}
-<div class="additional-user-filter control-group hide">
-    <label class="control-label">{% trans "and include users from the following groups" %}</label>
+<div id="sgf-field" class="additional-user-filter control-group hide">
+    <label class="control-label">{% trans "Groups" %}</label>
     <div class="controls"><label class="checkbox">
         <input id="all-groups" name="all_groups" type="checkbox" {% if not sgf.select.selected %}checked{% endif %}> {% trans "All Groups" %}
     </label></div>
@@ -37,6 +37,7 @@
         var checked_list = [
             ['#user-filter-0', '.additional-user-filter', false],
             ['#all-mobile-workers', '#select-mobile-worker-field', true],
+            ['#all-mobile-workers', '#sgf-field', true],
             ['#all-groups', '#select-group-field', true]
         ];
 
@@ -52,6 +53,8 @@
             }
             if (should_show) {
                 $dependent.show();
+            } else {
+                $dependent.hide();
             }
 
             $checkbox.on('change', function($dep, inv) {
