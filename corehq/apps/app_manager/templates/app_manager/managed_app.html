@@ -81,7 +81,7 @@
 {% endblock %}
 
 {% block sidebar %}
-<nav>
+<nav class="hide-while-loading">
     <ul class="nav nav-list">
         <li {% if release_manager %}class="active"{% endif %}>
             <a href="{% url release_manager domain app.id %}?edit={{ edit|BOOL }}">
