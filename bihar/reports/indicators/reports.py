@@ -81,7 +81,10 @@ class IndicatorSummaryReport(GroupReferenceMixIn, BiharSummaryReport,
                 )
                 for owner_id in self.all_owner_ids
             )
-            num, denom = map(sum, zip(*[
+            # (0, 0) to set the dimentions
+            # otherwise if results is ()
+            # it'll be num, denom = () and that'll raise a ValueError
+            num, denom = map(sum, zip((0, 0), *[
                 (r['numerator'], r['denominator'])
                 for r in results
             ]))
