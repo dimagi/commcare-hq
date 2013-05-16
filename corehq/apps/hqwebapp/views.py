@@ -34,6 +34,7 @@ from couchforms.models import XFormInstance
 from soil import heartbeat
 from soil import views as soil_views
 import os
+import re
 
 from django.utils.http import urlencode
 
@@ -302,6 +303,11 @@ def bug_report(req):
         to=settings.BUG_REPORT_RECIPIENTS,
         headers={'Reply-To': reply_to}
     )
+
+    # only fake the from email if it's an @dimagi.com account
+    if re.search('@dimagi\.com$', report['username']):
+        email.from_email = report['username']
+
     email.send(fail_silently=False)
 
     if req.POST.get('five-hundred-report'):
