@@ -681,8 +681,8 @@ class CombinedSelectUsersField(ReportField):
             if self.request.GET.get('all_mws', 'off') == 'on':
                 ctxt["smwf"]["select"]["selected"] = []
             else: # remove the _all selection
-                ctxt["smwf"]["select"]["options"] = ctxt["smwf"]["select"]["options"][1:]
                 ctxt["smwf"]["select"]["selected"] = filter(lambda s: s != '_all', ctxt["smwf"]["select"]["selected"])
+            ctxt["smwf"]["select"]["options"] = ctxt["smwf"]["select"]["options"][1:]
 
         if self.show_group_field:
             self.select_group_field.update_context()
@@ -692,8 +692,8 @@ class CombinedSelectUsersField(ReportField):
             if self.request.GET.get('all_groups', 'off') == 'on':
                 ctxt["sgf"]["select"]["selected"] = []
             else: # remove the _all selection
-                ctxt["sgf"]["select"]["options"] = ctxt["sgf"]["select"]["options"][1:]
                 ctxt["sgf"]["select"]["selected"] = filter(lambda s: s != '_all', ctxt["sgf"]["select"]["selected"])
+            ctxt["sgf"]["select"]["options"] = ctxt["sgf"]["select"]["options"][1:]
 
         self.context.update(ctxt)
 
