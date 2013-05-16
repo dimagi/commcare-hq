@@ -41,8 +41,14 @@
             <div class="controls">
                 <label for="case_type">{% trans "Case type" %}</label>
                 <select name="case_type" id="case_type">
-                    {% for case_type in case_types %}
-                    <option value="{{case_type|escape}}">{{case_type|escape}}</option>
+                    <option disabled>{% trans "Used in applications:" %}</option>
+                    {% for case_type in case_types_from_apps %}
+                        <option value="{{case_type|escape}}">{{case_type|escape}}</option>
+                    {% endfor %}
+
+                    <option disabled>{% trans "From unknown or deleted applications:" %}</option>
+                    {% for case_type in case_types_from_cases %}
+                        <option value="{{case_type|escape}}">{{case_type|escape}}</option>
                     {% endfor %}
                 </select>
             </div>
