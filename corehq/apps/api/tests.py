@@ -227,6 +227,7 @@ class TestWebUserResource(APIResourceTest):
         self.assertEqual(user._id, json_user['id'])
         role = user.get_role(self.domain.name)
         self.assertEqual(role.name, json_user['role'])
+        self.assertEqual(user.is_domain_admin(self.domain.name), json_user['is_admin'])
         for perm in ['edit_web_users', 'edit_commcare_users', 'edit_data',
                      'edit_apps', 'view_reports']:
             self.assertEqual(getattr(role.permissions, perm), json_user['permissions'][perm])
@@ -241,6 +242,27 @@ class TestWebUserResource(APIResourceTest):
         api_users = simplejson.loads(response.content)['objects']
         self.assertEqual(len(api_users), 1)
         self._check_user_data(self.user, api_users[0])
+
+        another_user = WebUser.create(self.domain.name, 'anotherguy', '***')
+        another_user.set_role(self.domain.name, 'field-implementer')
+        another_user.save()
+
+        response = self.client.get(self.list_endpoint)
+        self.assertEqual(response.status_code, 200)
+        api_users = simplejson.loads(response.content)['objects']
+        self.assertEqual(len(api_users), 2)
+
+        # username filter
+        response = self.client.get('%s?username=%s' % (self.list_endpoint, 'anotherguy'))
+        self.assertEqual(response.status_code, 200)
+        api_users = simplejson.loads(response.content)['objects']
+        self.assertEqual(len(api_users), 1)
+        self._check_user_data(another_user, api_users[0])
+
+        response = self.client.get('%s?username=%s' % (self.list_endpoint, 'nomatch'))
+        self.assertEqual(response.status_code, 200)
+        api_users = simplejson.loads(response.content)['objects']
+        self.assertEqual(len(api_users), 0)
 
 
     def test_get_single(self):
