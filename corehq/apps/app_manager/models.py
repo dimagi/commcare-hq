@@ -1886,6 +1886,9 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
         self.put_attachment(self.fetch_attachment(xmlname(form)), xmlname(copy_form))
         self.modules[to_module_id]['forms'].append(copy_form)
 
+        if self.modules[module_id]['case_type'] != self.modules[to_module_id]['case_type']:
+            return 'case type conflict'
+
     @cached_property
     def has_case_management(self):
         for module in self.get_modules():

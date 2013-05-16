@@ -928,7 +928,8 @@ def delete_form(req, domain, app_id, module_id, form_id):
 def copy_form(req, domain, app_id, module_id, form_id):
     app = get_app(domain, app_id)
     to_module_id = int(req.POST['to_module_id'])
-    app.copy_form(int(module_id), int(form_id), to_module_id)
+    if app.copy_form(int(module_id), int(form_id), to_module_id) == 'case type conflict':
+        messages.warning(req, CASE_TYPE_CONFLICT_MSG,  extra_tags="html")
     app.save()
     return back_to_main(**locals())
 
