@@ -80,6 +80,9 @@ def set_file_download(response, filename):
 def _encode_if_unicode(s):
     return s.encode('utf-8') if isinstance(s, unicode) else s
 
+CASE_TYPE_CONFLICT_MSG = "Warning: The form's new module has a different case type from the old module.<br />" + \
+                             "Make sure all case properties you are loading are available in the new case type"
+
 
 class ApplicationViewMixin(DomainViewMixin):
     """
@@ -932,7 +935,8 @@ def delete_form(req, domain, app_id, module_id, form_id):
 def copy_form(req, domain, app_id, module_id, form_id):
     app = get_app(domain, app_id)
     to_module_id = int(req.POST['to_module_id'])
-    app.copy_form(int(module_id), int(form_id), to_module_id)
+    if app.copy_form(int(module_id), int(form_id), to_module_id) == 'case type conflict':
+        messages.warning(req, CASE_TYPE_CONFLICT_MSG,  extra_tags="html")
     app.save()
     return back_to_main(**locals())
 
@@ -1584,7 +1588,7 @@ def rearrange(req, domain, app_id, key):
         to_module_id = int(req.POST['to_module_id'])
         from_module_id = int(req.POST['from_module_id'])
         if app.rearrange_forms(to_module_id, from_module_id, i, j) == 'case type conflict':
-            messages.warning(req, "Warning: The form's new module has a different case type from the old module.")
+            messages.warning(req, CASE_TYPE_CONFLICT_MSG,  extra_tags="html")
     elif "modules" == key:
         app.rearrange_modules(i, j)
     elif "detail" == key:
