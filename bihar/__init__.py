@@ -1,11 +1,13 @@
-from bihar.reports import supervisor
+from bihar.reports import supervisor, due_list
 from bihar.reports.indicators import reports as indicators
 
 CUSTOM_REPORTS = (
     ('Custom Reports', (
         supervisor.MainNavReport,
         supervisor.WorkerRankSelectionReport,
-        supervisor.DueListReport,
+        due_list.DueListSelectionReport,
+        due_list.DueListNav,
+        due_list.VaccinationSummary,
         supervisor.ToolsNavReport,
         supervisor.ReferralListReport,
         supervisor.EDDCalcReport,

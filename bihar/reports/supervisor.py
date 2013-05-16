@@ -71,7 +71,7 @@ class ReportReferenceMixIn(object):
     @property
     def next_report_slug(self):
         return self.request_params.get("next_report")
-    
+
     @property
     def next_report_class(self):
         return CustomProjectReportDispatcher().get_report(self.domain, self.next_report_slug)
@@ -201,13 +201,13 @@ class SubCenterSelectionReport(ConvenientBaseMixIn, GenericTabularReport,
             groups,
             key=lambda group: alphanumeric_sort_key(group.name)
         )
-        
+
     @property
     def rows(self):
         return [self._row(g, i+1) for i, g in enumerate(self._get_groups())]
-        
+
     def _row(self, group, rank):
-        
+
         def _awcc_link(g):
             params = copy(self.request_params)
             params["group"] = g.get_id
@@ -217,7 +217,7 @@ class SubCenterSelectionReport(ConvenientBaseMixIn, GenericTabularReport,
                                                                       render_as=self.render_next),
                                        params))
         return [group.name, _awcc_link(group)]
-            
+
 
 class MainNavReport(BiharSummaryReport, IndicatorConfigMixIn):
     name = ugettext_noop("Main Menu")
@@ -226,15 +226,16 @@ class MainNavReport(BiharSummaryReport, IndicatorConfigMixIn):
 
     @classmethod
     def additional_reports(cls):
-        return [WorkerRankSelectionReport, ToolsNavReport]
-    
+        from bihar.reports.due_list import DueListSelectionReport
+        return [WorkerRankSelectionReport, DueListSelectionReport, ToolsNavReport]
+
     @classmethod
     def show_in_navigation(cls, *args, **kwargs):
         return True
 
     @property
     def _headers(self):
-        return [" "] * (len(self.indicator_config.indicator_sets) + len(self.additional_reports())) 
+        return [" "] * (len(self.indicator_config.indicator_sets) + len(self.additional_reports()))
 
     @property
     def data(self):
@@ -247,7 +248,7 @@ class MainNavReport(BiharSummaryReport, IndicatorConfigMixIn):
             return format_html(u'<a href="{next}">{val}</a>',
                 val=list_prompt(i, indicator_set.name),
                 next=url_and_params(
-                    SubCenterSelectionReport.get_url(self.domain, 
+                    SubCenterSelectionReport.get_url(self.domain,
                                                      render_as=self.render_next),
                     params
             ))
@@ -256,7 +257,7 @@ class MainNavReport(BiharSummaryReport, IndicatorConfigMixIn):
                [default_nav_link(self, len(self.indicator_config.indicator_sets) + i, r) \
                 for i, r in enumerate(self.additional_reports())]
 
-    
+
 class WorkerRankSelectionReport(SubCenterSelectionReport):
     slug = "workerranks"
     name = ugettext_noop("Worker Rank Table")
@@ -284,7 +285,7 @@ class WorkerRankSelectionReport(SubCenterSelectionReport):
         end = datetime.today().date()
         start = end - timedelta(days=30)
         params = {
-            "ufilter": 0, 
+            "ufilter": 0,
             "startdate": start.strftime("%Y-%m-%d"),
             "enddate": end.strftime("%Y-%m-%d")
         }
@@ -295,11 +296,6 @@ class WorkerRankSelectionReport(SubCenterSelectionReport):
                 details=url_and_params(url,
                                        params))
         return [group.name, _awcc_link(group)]
-    
-
-class DueListReport(MockEmptyReport):
-    name = ugettext_noop("Due List")
-    slug = "duelist"
 
 
 class ToolsNavReport(BiharSummaryReport):
