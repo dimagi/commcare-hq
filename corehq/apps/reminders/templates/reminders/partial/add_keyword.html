@@ -2,19 +2,19 @@
 
 {% block head %}{{ block.super }}
 <style type="text/css">
-    .errorlist ul {
-        margin: 0;
-        padding: 0;
-    }
-    .errorlist li {
-        background-color: #F88;
-        border: 1px solid #A44;
-        padding: 2px;
-    }
     #new_keyword_table {
         width: auto;
         margin-left: 0px;
         min-width: 50%;
+    }
+    .parameter_table {
+        width: auto;
+        margin-left: 0px;
+    }
+    .parameter_table tbody tr td {
+        padding-right: 10px;
+        padding-bottom: 5px;
+        vertical-align: top;
     }
 </style>
 {% endblock %}
@@ -36,7 +36,7 @@
 
 {% block keyword_nav %}
 <ul class="nav nav-list">
-    {% if keyword.get_id %}
+    {% if keyword %}
     <li class="active"><a href="{% url edit_keyword domain keyword.get_id %}">{{ keyword.keyword }}</a></li>
     {% else %}
     <li class="active"><a href="{% url add_keyword domain %}">New Keyword</a></li>
@@ -44,33 +44,213 @@
 </ul>
 {% endblock %}
 
-{% block main_column %}
-<ul class="errorlist">
-    {% for e in errors %}
-    <li>{{ e }}</li>
-    {% endfor %}
-</ul>
+{% block js-inline %}{{ block.super }}
+<script>
+    next_named_args_id = {% if form.named_args.value %}{{ form.named_args.value|length }}{% else %}1{% endif %};
+    
+    function toggle_structured_sms_options() {
+        use_structured_sms = $("#id_form_type").val() == "ALL_AT_ONCE";
+        use_custom_delimiter = $("#id_use_custom_delimiter").is(":checked");
+        use_named_args = $("#id_use_named_args").is(":checked");
+        use_named_args_separator = $("#id_use_named_args_separator").is(":checked");
+        if(use_structured_sms) {
+            $(".for_structured_sms").show();
+            if(use_custom_delimiter) {
+                $(".for_custom_delimiter").show();
+            } else {
+                $(".for_custom_delimiter").hide();
+            }
+            if(use_named_args) {
+                $(".for_named_args").show();
+                if(use_named_args_separator) {
+                    $(".for_named_args_separator").show();
+                } else {
+                    $(".for_named_args_separator").hide();
+                }
+            } else {
+                $(".for_named_args").hide();
+            }
+        } else {
+            $(".for_structured_sms").hide();
+        }
+    }
+    
+    function set_example_structured_sms() {
+        use_custom_delimiter = $("#id_use_custom_delimiter").is(":checked");
+        use_named_args = $("#id_use_named_args").is(":checked");
+        use_named_args_separator = $("#id_use_named_args_separator").is(":checked");
+        named_args_separator = "";
+        if(use_named_args_separator) {
+            named_args_separator = $("#id_named_args_separator").val().trim();
+        }
+        delimiter = " ";
+        if(use_custom_delimiter) {
+            delimiter = $("#id_delimiter").val().trim();
+        }
+        keyword = $("#id_keyword").val().trim();
+        example = keyword.toLowerCase();
+        if(use_named_args) {
+            toggle = false;
+            $(".named_arg_name").each(function(){
+                toggle = !toggle;
+                example += delimiter + $(this).val().toLowerCase().trim() + named_args_separator + (toggle ? "123" : "456");
+            });
+        } else {
+            example += delimiter + "123" + delimiter + "456" + delimiter + "...";
+        }
+        $("#id_structured_sms_example").text(example);
+    }
+    
+    $(function(){
+        $("#id_keyword").keyup(function() {
+            set_example_structured_sms();
+        });
+        $("#id_form_type").change(function() {
+            toggle_structured_sms_options();
+        });
+        $("#id_delimiter").keyup(function() {
+            set_example_structured_sms();
+        });
+        $("#id_use_named_args").click(function() {
+            toggle_structured_sms_options();
+            set_example_structured_sms();
+        });
+        $(".named_arg_name").keyup(function() {
+            set_example_structured_sms();
+        });
+        $("#id_use_named_args_separator").click(function() {
+            toggle_structured_sms_options();
+            set_example_structured_sms();
+        });
+        $("#id_use_custom_delimiter").click(function() {
+            toggle_structured_sms_options();
+            set_example_structured_sms();
+        });
+        $("#id_named_args_separator").keyup(function() {
+            set_example_structured_sms();
+        });
+        $(".remove_named_arg").click(function() {
+            if($(this).parent().parent().parent().children("tr").length <= 1) {
+                alert("You must have at least one named answer.");
+            } else {
+                $(this).parent().parent().remove();
+            }
+            set_example_structured_sms();
+        });
+        $(".add_named_arg").click(function() {
+            $("#id_named_arg_table").children("tbody").children("tr").last().clone(true).appendTo($("#id_named_arg_table").children("tbody"));
+            row_added = $("#id_named_arg_table").children("tbody").children("tr").last();
+            row_added.find(".named_arg_name").attr("name","named_args." + next_named_args_id + ".name");
+            row_added.find(".named_arg_name").attr("value","");
+            row_added.find(".named_arg_xpath").attr("name","named_args." + next_named_args_id + ".xpath");
+            row_added.find(".named_arg_xpath").attr("value","");
+            next_named_args_id += 1;
+            set_example_structured_sms();
+        });
+        
+        toggle_structured_sms_options();
+        set_example_structured_sms();
+    });
+</script>
+{% endblock %}
 
+{% block main_column %}
 <form action="" method="post">
-    <table id="new_keyword_table" class="table table-bordered">
-        <tbody>
-            <tr>
-                <th>Keyword:</th>
-                <td><input type="text" name="keyword" value="{{ keyword.keyword|default:'' }}"/></td>
-            </tr>
-            <tr>
-                <th>Survey:</th>
-                <td>
-                    <select name="survey">
-                    {% for f in form_list %}
-                        <option value="{{ f.code }}" {% if f.code == keyword.form_unique_id %}selected="selected"{% endif %}>{{ f.name }}</option>
-                    {% endfor %}
-                    </select>
-                </td>
-            </tr>
-        </tbody>
-    </table>
-    <input type="submit" class="btn btn-primary" value="Submit" />
+    <h4>Keyword</h4>
+    <div class="form-block">
+        <table class="parameter_table">
+            <tbody>
+                <tr>
+                    <td>Keyword</td>
+                    <td>{{ form.keyword }}</td>
+                    <td>{{ form.keyword.errors }}</td>
+                </tr>
+                <tr>
+                    <td>Form</td>
+                    <td>
+                        <select name="form_unique_id">
+                        {% for f in form_list %}
+                            <option value="{{ f.code }}" {% if f.code == form.form_unique_id.value %}selected="selected"{% endif %}>{{ f.name }}</option>
+                        {% endfor %}
+                        </select>
+                    </td>
+                    <td>{{ form.form_unique_id.errors }}</td>
+                </tr>
+                <tr>
+                    <td>Answer Method</td>
+                    <td>{{ form.form_type }}</td>
+                    <td>{{ form.form_type.errors }}</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+    <h4 class="for_structured_sms">Structured SMS Options</h4>
+    <div class="form-block for_structured_sms">
+        <table class="parameter_table">
+            <tbody>
+                <tr>
+                    <td>Use Custom Delimiter</td>
+                    <td>{{ form.use_custom_delimiter }}</td>
+                    <td>{{ form.use_custom_delimiter.errors }}</td>
+                </tr>
+                <tr class="for_custom_delimiter">
+                    <td></td>
+                    <td>{{ form.delimiter }}</td>
+                    <td>{{ form.delimiter.errors }}</td>
+                </tr>
+                <tr>
+                    <td>Use Named Answers</td>
+                    <td>{{ form.use_named_args }}</td>
+                    <td>{{ form.use_named_args.errors }}</td>
+                </tr>
+                <tr class="for_named_args">
+                    <td></td>
+                    <td>
+                        <table id="id_named_arg_table">
+                            <thead>
+                                <tr>
+                                    <th>Name</th>
+                                    <th>XPath</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                            {% for named_arg in form.named_args.value %}
+                                <tr>
+                                    <td><input class="named_arg_name" name="named_args.{{ forloop.counter0 }}.name" type="text" value="{{ named_arg.name }}" /></td>
+                                    <td><input class="named_arg_xpath" name="named_args.{{ forloop.counter0 }}.xpath" type="text" value="{{ named_arg.xpath }}" /></td>
+                                    <td><span class="btn btn-danger remove_named_arg"><i class="icon icon-white icon-remove"></i> Remove</span></td>
+                                </tr>
+                            {% empty %}
+                                <tr>
+                                    <td><input class="named_arg_name" name="named_args.0.name" type="text" /></td>
+                                    <td><input class="named_arg_xpath" name="named_args.0.xpath" type="text" /></td>
+                                    <td><span class="btn btn-danger remove_named_arg"><i class="icon icon-white icon-remove"></i> Remove</span></td>
+                                </tr>
+                            {% endfor %}
+                            </tbody>
+                        </table>
+                        <span class="btn btn-success add_named_arg"><i class="icon icon-white icon-plus"></i> Add Named Answer</span>
+                    </td>
+                    <td>{{ form.named_args.errors }}</td>
+                </tr>
+                <tr class="for_named_args">
+                    <td>Use Joining Character</td>
+                    <td>{{ form.use_named_args_separator }}</td>
+                    <td>{{ form.use_named_args_separator.errors }}</td>
+                </tr>
+                <tr class="for_named_args for_named_args_separator">
+                    <td></td>
+                    <td>{{ form.named_args_separator }}</td>
+                    <td>{{ form.named_args_separator.errors }}</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+    <h4 class="for_structured_sms">Example Structured SMS</h4>
+    <div class="form-block for_structured_sms">
+        <span id="id_structured_sms_example"></span>
+    </div>
+    <input type="submit" class="btn btn-primary" value="Save" />
 </form>
 
 {% endblock %}
