@@ -736,9 +736,9 @@ class WorkerActivityTimes(WorkerMonitoringChartBase,
         return chart.get_url() + '&chds=-1,24,-1,7,0,20'
 
 
-class UserStatusReport(WorkerMonitoringReportTableBase, DatespanMixin):
-    slug = 'user_status'
-    name = ugettext_noop("User Status")
+class WorkerActivityReport(WorkerMonitoringReportTableBase, DatespanMixin):
+    slug = 'worker_activity'
+    name = ugettext_noop("Worker Activty")
     description = ugettext_noop("Summary of form and case activity by user or group.")
     section_name = ugettext_noop("Project Reports")
     num_avg_intervals = 3 # how many duration intervals we go back to calculate averages
@@ -754,7 +754,7 @@ class UserStatusReport(WorkerMonitoringReportTableBase, DatespanMixin):
     @property
     def special_notice(self):
         if self.domain_object.case_sharing_included():
-            return _('This report currently does not fully case sharing. There might be inconsistencies in the cases modified columns if a user did not create the case.')
+            return _('This report currently does not fully support case sharing. There might be inconsistencies in the cases modified columns if a user did not create the case.')
 
     @property
     def aggregate_by(self):
