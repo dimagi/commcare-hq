@@ -97,6 +97,9 @@ class DataTablesColumnGroup(object):
             length += 1
         return length
 
+    def __nonzero__(self):
+        return True
+
 
 class DataTablesHeader(object):
     has_group = False
@@ -196,5 +199,5 @@ class DataTablesHeader(object):
             length += len(col) if isinstance(col, DataTablesColumnGroup) else 1
         return length
 
-
-
+    def __nonzero__(self):
+        return True
