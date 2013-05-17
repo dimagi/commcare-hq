@@ -90,7 +90,6 @@ class PactDOTAdminReport(GenericTabularReport, CustomProjectReport):
 
         if case_id == '':
             mode = 'all'
-            case_id = None
         else:
             mode = ''
 
