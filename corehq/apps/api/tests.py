@@ -12,6 +12,7 @@ from corehq.apps.users.models import CommCareUser, WebUser
 from corehq.apps.domain.models import Domain
 from corehq.apps.receiverwrapper.models import FormRepeater, CaseRepeater, ShortFormRepeater
 from corehq.apps.api.resources import v0_1, v0_4
+from corehq.apps.api.es import ESQuerySet
 
 class FakeXFormES(object):
     """
@@ -21,15 +22,21 @@ class FakeXFormES(object):
     
     def __init__(self):
         self.docs = []
+        self.queries = []
 
     def add_doc(self, id, doc):
         self.docs.append(doc)
     
     def run_query(self, query):
+        self.queries.append(query)
+
+        start = query.get('from', 0)
+        end = (query['size'] + start) if 'size' in query else None
+        
         return {
             'hits': {
                 'total': len(self.docs),
-                'hits': [{'_source': doc} for doc in self.docs]
+                'hits': [{'_source': doc} for doc in self.docs[start:end]]
             }
         }
 
@@ -375,3 +382,35 @@ class TestRepeaterResource(APIResourceTest):
             self.assertEqual(1, len(cls.by_domain(self.domain.name)))
             modified = cls.get(backend_id)
             self.assertTrue('modified' in modified.url)
+
+class TestESQuerySet(TestCase):
+    '''
+    Tests the ESQuerySet for appropriate slicing, etc
+    '''
+
+    def test_slice(self):
+        es = FakeXFormES()
+        for i in xrange(0, 1300):
+            es.add_doc(i, {'i': i})
+        
+        queryset = ESQuerySet(es_client=es, payload={})
+        qs_slice = list(queryset[3:7])
+
+        self.assertEqual(es.queries[0]['from'], 3)
+        self.assertEqual(es.queries[0]['size'], 4)
+        self.assertEqual(len(qs_slice), 4)
+
+        queryset = ESQuerySet(es_client=es, payload={})
+        qs_slice = list(queryset[10:20])
+
+        self.assertEqual(es.queries[1]['from'], 10)
+        self.assertEqual(es.queries[1]['size'], 10)
+        self.assertEqual(len(qs_slice), 10)
+
+        queryset = ESQuerySet(es_client=es, payload={})
+        qs_slice = list(queryset[500:1000])
+        
+        self.assertEqual(es.queries[2]['from'], 500)
+        self.assertEqual(es.queries[2]['size'], 500)
+        self.assertEqual(len(qs_slice), 500)
+

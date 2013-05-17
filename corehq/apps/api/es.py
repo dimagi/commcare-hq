@@ -1,6 +1,7 @@
 import logging
 import simplejson
 import six
+import copy
 from django.http import HttpResponse
 from django.utils.decorators import method_decorator, classonlymethod
 from django.views.decorators.csrf import csrf_protect
@@ -364,7 +365,7 @@ class ESQuerySet(object):
                 # This actually could be supported with varying degrees of efficiency
                 raise NotImplementedError('Negative index in slice not supported.')
 
-            new_payload = dict(self.payload)
+            new_payload = copy.deepcopy(self.payload)
             new_payload['from'] = new_payload.get('from', 0) + (idx.start or 0)
 
             if idx.stop is not None:
