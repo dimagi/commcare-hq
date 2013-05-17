@@ -400,11 +400,17 @@ class TestESQuerySet(TestCase):
         self.assertEqual(es.queries[0]['size'], 4)
         self.assertEqual(len(qs_slice), 4)
 
-        es = FakeXFormES()
+        queryset = ESQuerySet(es_client=es, payload={})
+        qs_slice = list(queryset[10:20])
+
+        self.assertEqual(es.queries[1]['from'], 10)
+        self.assertEqual(es.queries[1]['size'], 10)
+        self.assertEqual(len(qs_slice), 10)
+
         queryset = ESQuerySet(es_client=es, payload={})
         qs_slice = list(queryset[500:1000])
         
-        self.assertEqual(es.queries[0]['from'], 500)
-        self.assertEqual(es.queries[0]['size'], 500)
+        self.assertEqual(es.queries[2]['from'], 500)
+        self.assertEqual(es.queries[2]['size'], 500)
         self.assertEqual(len(qs_slice), 500)
 
