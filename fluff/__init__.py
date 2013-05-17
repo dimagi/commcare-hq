@@ -2,6 +2,7 @@ from couchdbkit import ResourceNotFound
 from couchdbkit.ext.django import schema
 import datetime
 from dimagi.utils.parsing import json_format_date
+from fluff import exceptions
 from pillowtop.listener import BasicPillow
 from .signals import indicator_document_updated
 
@@ -236,7 +237,6 @@ class IndicatorDocument(schema.Document):
             emitter_type = getattr(calculator, emitter_name)._fluff_emitter
             q_args = {
                 'reduce': reduce,
-                'include_docs': not reduce,
             }
             if emitter_type == 'date':
                 now = datetime.datetime.utcnow().date()
@@ -256,13 +256,23 @@ class IndicatorDocument(schema.Document):
                     key=shared_key + [None],
                     **q_args
                 ).all()
+            else:
+                raise exceptions.EmitterTypeError(
+                    'emitter type %s not recognized' % emitter_type
+                )
+
             if reduce:
                 try:
                     result[emitter_name] = q[0]['value']
                 except IndexError:
                     result[emitter_name] = 0
             else:
-                result[emitter_name] = q
+                def strip(id_string):
+                    prefix = '%s-' % cls.__name__
+                    print cls.__name__, id_string
+                    assert id_string.startswith(prefix)
+                    return id_string[len(prefix):]
+                result[emitter_name] = [strip(row['id']) for row in q]
         return result
 
     class Meta:
