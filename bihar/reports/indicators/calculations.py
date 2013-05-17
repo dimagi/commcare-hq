@@ -509,7 +509,7 @@ class FPCalculator(SummaryValueMixIn, MotherPreDeliverySummaryMixIn,
                     MemoizingCalculatorMixIn, IndicatorCalculator):
 
     def _numerator(self, case):
-        return 1 if getattr(case, 'couple_interested', None) == 'Yes' else 0
+        return 1 if getattr(case, 'couple_interested', None) == 'yes' else 0
 
     def _denominator(self, case):
         return 1 if _recent_newborn(case, 300000) else 0
@@ -531,7 +531,7 @@ class EFPCalculator(FPCalculator):
 class NOFPCalculator(FilterOnlyCalculator, FPCalculator):
 
     def _denominator(self, case):
-        return 1 if _recent_newborn(case, 7) and getattr(case, 'family_planning_type', "") != 'no_fp_at_delivery' else 0
+        return 1 if _recent_newborn(case, 7) and getattr(case, 'family_planning_type', "") == 'no_fp_at_delivery' else 0
 
 class PFPCalculator(NOFPCalculator):
 

@@ -75,7 +75,7 @@ class Complications(DoneDueCalculator):
             yield date
 
     @fluff.date_emitter
-    def denominator(self, case):
+    def total(self, case):
         date = self._calculate_both(case)[1]
         if date:
             yield date

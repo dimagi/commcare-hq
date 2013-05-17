@@ -1,12 +1,12 @@
 import datetime
-from bihar.calculations.types import DoneDueCalculator, CaseCalculator
-from bihar.calculations.utils.filters import get_add, is_pregnant_mother, A_MONTH, A_DAY
+from bihar.calculations.types import CaseCalculator, DoneDueCalculator, AddCalculator
+from bihar.calculations.utils.filters import get_add, A_MONTH, A_DAY
 from bihar.reports.indicators.calculations import _get_time_of_visit_after_birth, _get_tob, _get_prop_from_forms
 from bihar.reports.indicators.visits import get_related_prop
 import fluff
 
 
-class BirthPlace(DoneDueCalculator):
+class BirthPlace(AddCalculator):
     """Abstract"""
 
     window = A_MONTH
@@ -15,15 +15,17 @@ class BirthPlace(DoneDueCalculator):
         super(BirthPlace, self).__init__(window=window)
         self.at = at if not isinstance(at, basestring) else (at,)
 
-    def filter(self, case):
-        return is_pregnant_mother(case) and get_add(case)
-
     @fluff.filter_by
     def correct_birthplace(self, case):
         return getattr(case, 'birth_place', None) in self.at
 
+    @fluff.date_emitter
+    def total(self, case):
+        yield get_add(case)
 
-class VisitedQuicklyBirthPlace(BirthPlace):
+
+class VisitedQuickly(DoneDueCalculator, AddCalculator):
+    """Abstract (though usable as is)"""
     visited_window = A_DAY
 
     @fluff.date_emitter
@@ -32,12 +34,16 @@ class VisitedQuicklyBirthPlace(BirthPlace):
         time_birth = _get_tob(case)
         if visit_time and time_birth:
             if time_birth < visit_time < time_birth + self.visited_window:
-                # matches denominator, so you know this will be a subset of those
-                yield case.add
+                # matches total, so you know this will be a subset of those
+                yield get_add(case)
 
     @fluff.date_emitter
-    def denominator(self, case):
-        yield case.add
+    def total(self, case):
+        yield get_add(case)
+
+
+class VisitedQuicklyBirthPlace(VisitedQuickly, BirthPlace):
+    pass
 
 
 class LiveBirthCalculator(CaseCalculator):
@@ -48,7 +54,7 @@ class LiveBirthCalculator(CaseCalculator):
         return get_related_prop(case, 'birth_status') == "live_birth"
 
 
-class BreastFedBirthPlace(BirthPlace, LiveBirthCalculator):
+class BreastFedBirthPlace(DoneDueCalculator, BirthPlace, LiveBirthCalculator):
 
     @fluff.date_emitter
     def numerator(self, case):
@@ -58,16 +64,12 @@ class BreastFedBirthPlace(BirthPlace, LiveBirthCalculator):
             if dtf - tob <= datetime.timedelta(hours=1):
                 yield case.add
 
-    @fluff.date_emitter
-    def denominator(self, case):
-        yield case.add
 
-
-class LiveBirthPlace(BirthPlace, LiveBirthCalculator):
+class LiveBirthPlace(DoneDueCalculator, BirthPlace, LiveBirthCalculator):
 
     def correct_birthplace(self, case):
         """
-        don't filter by this because denominator is ALL live births
+        don't filter by this because total is ALL live births
 
         this is relying on an implementation detail of fluff:
         only the name 'correct_birthplace' is stored in the list of filters
@@ -75,10 +77,6 @@ class LiveBirthPlace(BirthPlace, LiveBirthCalculator):
 
         """
         return True
-
-    @fluff.date_emitter
-    def denominator(self, case):
-        yield case.add
 
     @fluff.date_emitter
     def numerator(self, case):

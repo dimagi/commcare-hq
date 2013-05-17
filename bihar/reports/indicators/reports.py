@@ -72,17 +72,15 @@ class IndicatorSummaryReport(GroupReferenceMixIn, BiharSummaryReport,
                [_nav_link(i) for i in self.summary_indicators]
 
     def get_indicator_value(self, indicator):
-        if indicator.fluff_calculator:
-            results = (
-                indicator.fluff_calculator.get_result(
-                    [self.domain, owner_id]
-                )
-                for owner_id in self.all_owner_ids
-            )
-            num, denom = map(sum, zip(*[
-                (r['numerator'], r['denominator'])
-                for r in results
-            ]))
+        calculator = indicator.fluff_calculator
+        if calculator:
+            def pairs():
+                for owner_id in self.all_owner_ids:
+                    result = calculator.get_result(
+                        [self.domain, owner_id]
+                    )
+                    yield (result['numerator'], result['total'])
+            num, denom = map(sum, zip(*pairs()))
             return "%s/%s" % (num, denom)
         else:
             return indicator.display(self.cases)
@@ -145,12 +143,13 @@ class IndicatorClientSelectNav(GroupReferenceMixIn, BiharSummaryReport,
 
     def count(self, indicator):
         if indicator.fluff_calculator:
-            return sum(
-                indicator.fluff_calculator.get_result(
-                    [self.domain, owner_id]
-                )['total']
-                for owner_id in self.all_owner_ids
-            )
+            def totals():
+                for owner_id in self.all_owner_ids:
+                    calculator = indicator.fluff_calculator
+                    yield calculator.get_result(
+                        [self.domain, owner_id]
+                    )['total']
+            return sum(totals())
         else:
             return len([c for c in self.cases if indicator.filter(c)])
 

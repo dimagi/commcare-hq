@@ -1,6 +1,6 @@
 import datetime
 from casexml.apps.case.models import CommCareCase
-from bihar.calculations import homevisit, pregnancy, postpartum
+from bihar.calculations import homevisit, pregnancy, postpartum, newborn, familyplanning, mortality
 import fluff
 
 A_DAY = datetime.timedelta(days=1)
@@ -10,7 +10,6 @@ class CareBiharFluff(fluff.IndicatorDocument):
 
     domains = ('care-bihar',)
     group_by = ['domain', 'owner_id']
-
 
     # home visit
 
@@ -54,6 +53,28 @@ class CareBiharFluff(fluff.IndicatorDocument):
     comp7 = postpartum.Complications(days=7)
 
     # newborn
+
+    ptlb = newborn.PretermNewborn()
+    lt2kglb = newborn.LessThan2Kilos()
+    visited_weak_ones = newborn.VisitedWeakNewborn()
+    skin_to_skin = newborn.NoSkinToSkin()
+    feed_vigour = newborn.NotBreastfeedingVigorously()
+
+    # family planning
+
+    interested_in_fp = familyplanning.FamilyPlanning()
+    adopted_fp = familyplanning.AdoptedFP()
+    exp_int_fp = familyplanning.InterestInFP()
+    no_fp = familyplanning.NoFP()
+    pregnant_fp = familyplanning.PregnantInterestInFP()
+
+    # mortality
+
+    mother_mortality = mortality.MMCalculator()
+    infant_mortality = mortality.IMCalculator()
+    still_birth_public = mortality.StillBirthPlace(at='public')
+    still_birth_home = mortality.StillBirthPlace(at='home')
+    live_birth = mortality.LiveBirth()
 
     class Meta:
         app_label = 'bihar'
