@@ -1,3 +1,5 @@
+import logging
+from couchdbkit import ResourceNotFound
 from pillowtop.listener import BasicPillow
 from couchforms.models import XFormInstance
 from corehq.apps.commtrack.models import StockTransaction
@@ -7,6 +9,8 @@ from datetime import datetime, timedelta
 from corehq.apps.domain.models import Domain
 from casexml.apps.case.models import CommCareCase
 from corehq.apps.commtrack.models import ACTION_TYPES
+
+pillow_logging = logging.getLogger("pillowtop")
 
 def from_ts(dt): #damn this is ugly
     if isinstance(dt, datetime):
@@ -21,7 +25,7 @@ class ConsumptionRatePillow(BasicPillow):
     couch_filter = 'commtrack/stock_reports'
 
     def change_transform(self, doc_dict):
-        txs = doc_dict['form']['transaction']
+        txs = doc_dict['form'].get('transaction', [])
         if not isinstance(txs, collections.Sequence):
             txs = [txs]
         touched_products = set(tx['product_entry'] for tx in txs)
@@ -41,9 +45,13 @@ class ConsumptionRatePillow(BasicPillow):
         for case_id in touched_products:
             rate = compute_consumption(case_id, from_ts(doc_dict['received_on']), get_base_action)
 
-            case = CommCareCase.get(case_id)
-            set_computed(case, 'consumption_rate', rate)
-            case.save()
+            try:
+                case = CommCareCase.get(case_id)
+                set_computed(case, 'consumption_rate', rate)
+                case.save()
+            except ResourceNotFound:
+                # maybe the case was deleted. for now we don't care about this
+                pillow_logging.info('skipping commtrack update for delted case %s' % case_id)
 
 # TODO: biyeun might have better framework code for doing this
 def set_computed(case, key, val):
