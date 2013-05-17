@@ -18,7 +18,7 @@ setup(
         "requests",
         "gevent",
         "greenlet",
-        "rawes"
+        "rawes==0.5.0",  # stay at 0.5.0 until https://github.com/humangeo/rawes/pull/14 gets merged
     ],
 )
 
