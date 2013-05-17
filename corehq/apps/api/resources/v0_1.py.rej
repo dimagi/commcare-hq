@@ -1,0 +1,25 @@
+***************
+*** 1,11 ****
+  from casexml.apps.case.models import CommCareCase
+- from corehq.apps.domain.decorators import login_or_digest
+  from corehq.apps.groups.models import Group
+  from corehq.apps.users.models import CommCareUser
+  from couchforms.models import XFormInstance
+  from tastypie import fields
+  from tastypie.authentication import Authentication
+- from tastypie.authorization import ReadOnlyAuthorization
+  from tastypie.exceptions import BadRequest
+  from tastypie.serializers import Serializer
+  from corehq.apps.api.util import get_object_or_not_exist
+--- 1,11 ----
+  from casexml.apps.case.models import CommCareCase
++ from corehq.apps.domain.decorators import login_or_digest, domain_admin_required
+  from corehq.apps.groups.models import Group
+  from corehq.apps.users.models import CommCareUser
+  from couchforms.models import XFormInstance
+  from tastypie import fields
+  from tastypie.authentication import Authentication
++ from tastypie.authorization import ReadOnlyAuthorization, Authorization
+  from tastypie.exceptions import BadRequest
+  from tastypie.serializers import Serializer
+  from corehq.apps.api.util import get_object_or_not_exist
