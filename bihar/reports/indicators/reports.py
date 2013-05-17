@@ -80,7 +80,10 @@ class IndicatorSummaryReport(GroupReferenceMixIn, BiharSummaryReport,
                         [self.domain, owner_id]
                     )
                     yield (result['numerator'], result['total'])
-            num, denom = map(sum, zip(*pairs()))
+            # (0, 0) to set the dimentions
+            # otherwise if results is ()
+            # it'll be num, denom = () and that'll raise a ValueError
+            num, denom = map(sum, zip((0, 0), *pairs()))
             return "%s/%s" % (num, denom)
         else:
             return indicator.display(self.cases)
