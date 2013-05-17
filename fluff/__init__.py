@@ -64,10 +64,11 @@ class Calculator(object):
         if window is not None:
             self.window = window
         if not isinstance(self.window, datetime.timedelta):
-            # if window is set to None, for instance
-            # fail here and not whenever that's run into below
-            raise NotImplementedError(
-                'window must be timedelta, not %s' % type(self.window))
+            if any(getattr(self, e)._fluff_emitter == 'date' for e in self._fluff_emitters):
+                # if window is set to None, for instance
+                # fail here and not whenever that's run into below
+                raise NotImplementedError(
+                    'window must be timedelta, not %s' % type(self.window))
 
     def filter(self, item):
         return True
@@ -241,6 +242,8 @@ class IndicatorDocument(schema.Document):
                 now = datetime.datetime.utcnow().date()
                 start = now - calculator.window
                 end = now
+                if start > end:
+                    q_args['descending'] = True
                 q = cls.view(
                     'fluff/generic',
                     startkey=shared_key + [json_format_date(start)],
