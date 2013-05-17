@@ -49,11 +49,14 @@ def render_case(case, options):
             for item in row:
                 dynamic_data.pop(item.get("expr"), None)
 
-    dynamic_keys = sorted(dynamic_data.keys())
-    definition = get_definition(
-            dynamic_keys, num_columns=DYNAMIC_CASE_PROPERTIES_COLUMNS)
+    if dynamic_data:
+        dynamic_keys = sorted(dynamic_data.keys())
+        definition = get_definition(
+                dynamic_keys, num_columns=DYNAMIC_CASE_PROPERTIES_COLUMNS)
 
-    dynamic_properties = _get_tables_as_columns(dynamic_data, definition)
+        dynamic_properties = _get_tables_as_columns(dynamic_data, definition)
+    else:
+        dynamic_properties = None
 
     actions = case.to_json()['actions']
     actions.reverse()
