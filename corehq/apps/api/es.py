@@ -214,6 +214,7 @@ class XFormES(ESView):
         for res in es_results['hits']['hits']:
             if '_source' in res:
                 xmlns = res['_source'].get('xmlns', None)
+                name = None
                 if xmlns:
                     name = form_filter.get_unknown_form_name(xmlns, none_if_not_found=True)
                 if not name:
