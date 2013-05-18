@@ -2,9 +2,9 @@ import datetime
 from django.utils.translation import ugettext_noop as _
 from bihar.calculations.pregnancy import BirthPlace
 from bihar.calculations.types import TotalCalculator, DoneDueCalculator, AddCalculator
-from bihar.calculations.utils.calculations import _get_actions
+from bihar.calculations.utils.calculations import _get_actions, get_forms
 from bihar.calculations.utils.filters import is_pregnant_mother, A_MONTH, is_newborn_child
-from bihar.calculations.utils.xmlns import DELIVERY
+from bihar.calculations.utils.xmlns import DELIVERY, PNC
 import fluff
 
 
@@ -43,14 +43,16 @@ def is_stillborn(case):
                     return False
     return True
 
+
 class MMCalculator(TotalCalculator):
     """
-    [DELIVERY form] filter by mother_alive = 'no' and where date_death - form_case_update_add <= 42
-    OR [PNC form] filter by form_mother_child_alive = 'no' which is 0 for this variable' and date_death - form_form_case_update_add <= 42
+    ([DELIVERY form] OR [PNC form]) filter by mother_alive = 'no'
+    and where date_death - form_case_update_add <= 42
+
     """
     _('Maternal mortality')
 
-    window = A_MONTH
+    window = datetime.timedelta(days=42)
 
     def filter(self, case):
         return is_pregnant_mother(case)
@@ -59,16 +61,15 @@ class MMCalculator(TotalCalculator):
     def total(self, case):
 
         def mother_died(a):
-            # todo: incomplete
             return (
                 a.updated_known_properties.get('mother_alive') == 'no'
-                and a.xform_xmlns == DELIVERY
+                and a.xform_xmlns in (DELIVERY, PNC)
             )
 
-        date = latest_action_date(_get_actions(case, action_filter=mother_died))
-
-        if date:
-            yield date
+        for xform in get_forms(case, action_filter=mother_died, reverse=True):
+            yield xform.form.get('date_death')
+            # yield at most one
+            break
 
 
 class IMCalculator(TotalCalculator):
