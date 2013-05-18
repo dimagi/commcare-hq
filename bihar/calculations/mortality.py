@@ -1,4 +1,5 @@
 import datetime
+import logging
 from django.utils.translation import ugettext_noop as _
 from bihar.calculations.pregnancy import BirthPlace
 from bihar.calculations.types import TotalCalculator, DoneDueCalculator, AddCalculator
@@ -25,20 +26,21 @@ def is_stillborn(case):
     )
     for action in _get_actions(case, action_filter=lambda a: a.xform_xmlns == DELIVERY):
         xform = action.xform
-        print xform.get_id
         if xform.form.get('has_delivered') != 'yes':
             continue
         for p in properties:
             value = xform.xpath('form/child_info/%s' % p)
             if not value:
                 child_infos = xform.xpath('form/child_info')
+                if not child_infos:
+                    continue
                 for child_info in child_infos:
                     child_info.get(p)
-                    print '(nested) %s: %s' % (p, value)
+                    # no idea whether this is a thing that can get called
+                    logging.debug('(nested) %s: %s' % (p, value))
                     if value != 'no':
                         return False
             else:
-                print '%s: %s' % (p, value)
                 if value != 'no':
                     return False
     return True
