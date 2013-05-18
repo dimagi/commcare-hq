@@ -1,5 +1,6 @@
 import datetime
 from couchdbkit import ResourceNotFound
+from bihar.calculations.utils.calculations import get_forms
 from bihar.calculations.utils.xmlns import DELIVERY, PNC, EBF, REGISTRATION
 from dimagi.utils.parsing import string_to_datetime
 from bihar.calculations.types import DoneDueCalculator
@@ -80,18 +81,8 @@ class Complications(DoneDueCalculator):
         if date:
             yield date
 
-    def get_forms(self, case):
-        xform_ids = set()
-        for action in case.actions:
-            if action.xform_id not in xform_ids:
-                xform_ids.add(action.xform_id)
-                try:
-                    yield (action.xform, action.date)
-                except ResourceNotFound:
-                    pass
-
     def get_forms_with_complications(self, case):
-        for form, date in self.get_forms(case):
+        for form, action in get_forms(case, yield_action=True):
             try:
                 complication_paths = self.complications_by_form[form.xmlns]
             except KeyError:
@@ -99,11 +90,9 @@ class Complications(DoneDueCalculator):
             else:
                 for p in complication_paths:
                     if form.xpath('form/' + p) == 'yes':
-                        yield form, date
+                        yield form, action.date
 
     def _calculate_both(self, case):
-        # todo: cache this, so it doesn't get calc'd twice per case
-        # todo: memoized is a bad fit for this, will cause memory leak
         complication_date = None
         complication_shortly_after_birth_date = None
         if case.type == 'cc_bihar_pregnancy':
