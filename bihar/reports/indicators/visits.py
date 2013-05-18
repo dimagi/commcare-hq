@@ -12,11 +12,17 @@ def get_related_props(case, property):
     """
     Gets the specified property for all child cases in which that property exists
     """
+    if not hasattr(case, '_subcase_cache'):
+        case._subcase_cache = {}
 
     for index in case.reverse_indices:
-        referenced_case = CommCareCase.get(index.referenced_id)
-        if getattr(referenced_case, property, None):
-            yield getattr(referenced_case, property)
+        subcase_id = index.referenced_id
+        if subcase_id not in case._subcase_cache:
+            case._subcase_cache[subcase_id] = CommCareCase.get(subcase_id)
+        subcase = case._subcase_cache[subcase_id]
+        subcase_property = getattr(subcase, property, None)
+        if subcase_property:
+            yield subcase_property
 
 
 def get_related_prop(case, property):
