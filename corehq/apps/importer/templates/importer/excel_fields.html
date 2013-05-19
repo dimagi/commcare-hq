@@ -1,5 +1,6 @@
 {% extends "hqwebapp/two_column.html" %}
 {% load report_tags %}
+{% load i18n %}
 
 {% block head %}
     {{ block.super }}
@@ -8,11 +9,21 @@
 {% block js-inline %}{{ block.super }}
     <script type="text/javascript">
         $(function() {
-            $('.custom_field').change(function() {
-                selectField = $(this).prev();
+            $('.case_field').change(function() {
+                customField = $(this).closest('tr').find(".custom_field");
+
+                if ($(this).val() != '') {
+                    customField.val('');
+                    customField.attr('disabled', 'disabled');
+                } else {
+                    customField.removeAttr('disabled');
+                }
+            });
+
+            $('.custom_field').bind('change, keypress, keydown, keyup', function() {
+                selectField = $(this).closest('tr').find("select.case_field");
 
                 // check if field is valid for xml
-
                 // TODO: this method seems pretty sketchy, should cleanup
                 var value = $(this).val();
                 var regx = new RegExp(/^xml/i); 
@@ -31,14 +42,14 @@
                 }
             });
 
-            $('.custom_field').change();
+            $('.custom_field').trigger('change');
 
             $('#field_form').submit(function() {
                 $('[disabled]').each(function() {
                     $(this).removeAttr('disabled');
                 });
 
-                $(this).find('input[type=checkbox]').each(function () {
+                $(this).find('input[type=checkbox]').each(function() {
                     $(this).prev().val($(this).is(':checked') ? '1' : '0');
                 });
 
@@ -62,25 +73,18 @@
         <input type="hidden" name="case_type" value="{{case_type}}" />
         <input type="hidden" name="search_column" value="{{search_column}}" />
         <input type="hidden" name="search_field" value="{{search_field}}" />
+        <input type="hidden" name="create_new_cases" value="{{create_new_cases}}" />
         <input type="hidden" name="key_column" value="{{key_column}}" />
         <input type="hidden" name="value_column" value="{{value_column}}" />
 
         <fieldset>
-            <legend>Map columns to case fields</legend>
+            <legend>{% trans "Map columns to case fields" %}</legend>
             <table>
                 <tr>
-                    <th>
-                        Excel data label
-                    </th>
-                    <th>
-                        Case field name
-                    </th>
-                    <th>
-                        or enter a new field name
-                    </th>
-                    <th>
-                        Is this a date field?
-                    </th>
+                    <th>{% trans "Excel data label"%}</th>
+                    <th>{% trans "Case field name"%}</th>
+                    <th>{% trans "or enter a new field name"%}</th>
+                    <th>{% trans "Is this a date field?"%}</th>
                 </tr>
 
                 {% for i in excel_fields_range %}
@@ -97,7 +101,7 @@
                         </td>
 
                         <td>
-                            <select name="case_field[]">
+                            <select name="case_field[]" class="case_field">
                                 <option value=""></option>
                                 {% for case_field in case_fields %}
                                     <option value="{{case_field|escape}}">
@@ -123,10 +127,10 @@
 
         <div class="form-actions">
             <button type="button" class="btn btn-primary btn-large" id="back_button">
-                <i class="icon-backward icon-white"></i> Back
+                <i class="icon-backward icon-white"></i> {% trans "Back" %}
             </button>
             <button type="submit" class="btn btn-primary btn-large">
-                <i class="icon-forward icon-white"></i> Confirm import
+                <i class="icon-forward icon-white"></i> {% trans "Confirm Import" %}
             </button>
         </div>
     </form>

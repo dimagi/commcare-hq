@@ -112,7 +112,7 @@
                     items: ">*:not(.sort-disabled)",
                     update: function (e, ui) {
                         // because the event is triggered on both sortables when moving between one sortable list to
-                        // do a check to see if this is the sortable list we're moving the item to
+                        // another, do a check to see if this is the sortable list we're moving the item to
                         if ($sortable.find(ui.item).length < 1) {
                             return;
                         }
@@ -177,7 +177,6 @@
                                     $sortable.find('.drag_handle').show(1000);
                                 });
                             } else {
-                                console.log("mod" + from_module_id + ":" + from + " => mod" + to_module_id + ":" + to);
                                 $form.submit();
                             }
                         }

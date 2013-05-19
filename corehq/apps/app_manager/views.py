@@ -12,8 +12,10 @@ from corehq.apps.app_manager.success_message import SuccessMessage
 from corehq.apps.app_manager.util import is_valid_case_type
 from corehq.apps.domain.models import Domain
 from corehq.apps.domain.views import DomainViewMixin
-from couchexport.export import FormattedRow
+from corehq.apps.translations import system_text as st_trans
+from couchexport.export import FormattedRow, export_raw
 from couchexport.models import Format
+from couchexport.shortcuts import export_response
 from couchexport.writers import Excel2007ExportWriter
 from dimagi.utils.couch.database import get_db
 from dimagi.utils.couch.resource_conflict import retry_resource
@@ -31,7 +33,9 @@ from corehq.apps.builds.models import CommCareBuildConfig, BuildSpec
 from corehq.apps.users.decorators import require_permission
 from corehq.apps.users.models import Permissions, CommCareUser
 from dimagi.utils.decorators.memoized import memoized
+from dimagi.utils.decorators.view import get_file
 from dimagi.utils.django.cache import make_template_fragment_key
+from dimagi.utils.excel import WorkbookJSONReader
 from dimagi.utils.logging import notify_exception
 from dimagi.utils.subprocess_timeout import ProcessTimedOut
 
@@ -75,6 +79,9 @@ def set_file_download(response, filename):
 
 def _encode_if_unicode(s):
     return s.encode('utf-8') if isinstance(s, unicode) else s
+
+CASE_TYPE_CONFLICT_MSG = "Warning: The form's new module has a different case type from the old module.<br />" + \
+                             "Make sure all case properties you are loading are available in the new case type"
 
 
 class ApplicationViewMixin(DomainViewMixin):
@@ -928,7 +935,8 @@ def delete_form(req, domain, app_id, module_id, form_id):
 def copy_form(req, domain, app_id, module_id, form_id):
     app = get_app(domain, app_id)
     to_module_id = int(req.POST['to_module_id'])
-    app.copy_form(int(module_id), int(form_id), to_module_id)
+    if app.copy_form(int(module_id), int(form_id), to_module_id) == 'case type conflict':
+        messages.warning(req, CASE_TYPE_CONFLICT_MSG,  extra_tags="html")
     app.save()
     return back_to_main(**locals())
 
@@ -1580,7 +1588,7 @@ def rearrange(req, domain, app_id, key):
         to_module_id = int(req.POST['to_module_id'])
         from_module_id = int(req.POST['from_module_id'])
         if app.rearrange_forms(to_module_id, from_module_id, i, j) == 'case type conflict':
-            messages.warning(req, "The module you moved this form to does not share the same case type as it's old module")
+            messages.warning(req, CASE_TYPE_CONFLICT_MSG,  extra_tags="html")
     elif "modules" == key:
         app.rearrange_modules(i, j)
     elif "detail" == key:
@@ -2025,3 +2033,63 @@ def summary(request, domain, app_id, should_edit=True):
         return render(request, "app_manager/summary.html", context)
     else:
         return render(request, "app_manager/exchange_summary.html", context)
+
+@login_and_domain_required
+def download_translations(request, domain, app_id):
+    app = get_app(domain, app_id)
+    properties = tuple(["property"] + app.langs)
+    temp = StringIO()
+    headers = (("translations", properties),)
+
+    row_dict = {}
+    for i, lang in enumerate(app.langs):
+        index = i + 1
+        trans_dict = app.translations.get(lang, {})
+        for prop, trans in trans_dict.iteritems():
+            if prop not in row_dict:
+                row_dict[prop] = [prop]
+            num_to_fill = index - len(row_dict[prop])
+            row_dict[prop].extend(["" for i in range(num_to_fill)] if num_to_fill > 0 else [])
+            row_dict[prop].append(trans)
+
+    rows = row_dict.values()
+    all_prop_trans = st_trans.DEFAULT + st_trans.CC_DEFAULT + st_trans.CCODK_DEFAULT
+    rows.extend([[t[0]] for t in all_prop_trans if t[0] not in row_dict])
+
+    def fillrow(row):
+        num_to_fill = len(properties) - len(row)
+        row.extend(["" for i in range(num_to_fill)] if num_to_fill > 0 else [])
+        return row
+
+    rows = [fillrow(row) for row in rows]
+
+    data = (("translations", tuple(rows)),)
+    export_raw(headers, data, temp)
+    return export_response(temp, Format.XLS_2007, "translations")
+
+@require_POST
+@require_can_edit_apps
+@get_file("file")
+def upload_translations(request, domain, app_id):
+    success = False
+    try:
+        workbook = WorkbookJSONReader(request.file)
+        translations = workbook.get_worksheet(title='translations')
+
+        app = get_app(domain, app_id)
+        trans_dict = defaultdict(dict)
+        for row in translations:
+            for lang in app.langs:
+               if row[lang]:
+                   trans_dict[lang].update({row["property"]: row[lang]})
+
+        app.translations = dict(trans_dict)
+        app.save()
+        success = True
+    except Exception:
+        messages.error(request, _("Something went wrong! Update failed. We're looking into it"))
+
+    if success:
+        messages.success(request, _("UI Translations Updated!"))
+
+    return HttpResponseRedirect(reverse('app_languages', args=[domain, app_id]))
