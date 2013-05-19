@@ -1,5 +1,3 @@
-from bihar.calculations.types import DoneDueCalculator, TotalCalculator
-from bihar.models import CareBiharFluff
 from bihar.reports.supervisor import BiharNavReport, MockEmptyReport, \
     url_and_params, BiharSummaryReport, \
     ConvenientBaseMixIn, GroupReferenceMixIn, list_prompt, shared_bihar_context,\
@@ -74,20 +72,18 @@ class IndicatorSummaryReport(GroupReferenceMixIn, BiharSummaryReport,
                [_nav_link(i) for i in self.summary_indicators]
 
     def get_indicator_value(self, indicator):
-        if indicator.fluff_calculator:
-            results = (
-                indicator.fluff_calculator.get_result(
-                    [self.domain, owner_id]
-                )
-                for owner_id in self.all_owner_ids
-            )
+        calculator = indicator.fluff_calculator
+        if calculator:
+            def pairs():
+                for owner_id in self.all_owner_ids:
+                    result = calculator.get_result(
+                        [self.domain, owner_id]
+                    )
+                    yield (result['numerator'], result['total'])
             # (0, 0) to set the dimentions
             # otherwise if results is ()
             # it'll be num, denom = () and that'll raise a ValueError
-            num, denom = map(sum, zip((0, 0), *[
-                (r['numerator'], r['denominator'])
-                for r in results
-            ]))
+            num, denom = map(sum, zip((0, 0), *pairs()))
             return "%s/%s" % (num, denom)
         else:
             return indicator.display(self.cases)
@@ -150,12 +146,13 @@ class IndicatorClientSelectNav(GroupReferenceMixIn, BiharSummaryReport,
 
     def count(self, indicator):
         if indicator.fluff_calculator:
-            return sum(
-                indicator.fluff_calculator.get_result(
-                    [self.domain, owner_id]
-                )['total']
-                for owner_id in self.all_owner_ids
-            )
+            def totals():
+                for owner_id in self.all_owner_ids:
+                    calculator = indicator.fluff_calculator
+                    yield calculator.get_result(
+                        [self.domain, owner_id]
+                    )['total']
+            return sum(totals())
         else:
             return len([c for c in self.cases if indicator.filter(c)])
 
@@ -212,8 +209,7 @@ class IndicatorClientList(GroupReferenceMixIn, ConvenientBaseMixIn,
                     [self.domain, owner_id],
                     reduce=False
                 )
-                case_stubs = result[self.indicator.fluff_calculator.primary]
-                case_ids.update(case_stub.id for case_stub in case_stubs)
+                case_ids.update(result[self.indicator.fluff_calculator.primary])
             cases = CommCareCase.view('_all_docs', keys=list(case_ids),
                                       include_docs=True)
             return map(self.indicator.as_row, cases)

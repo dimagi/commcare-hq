@@ -23,7 +23,7 @@ class BPCalculator(DoneDueCalculator):
         yield case.edd - datetime.timedelta(days=self.days) + GRACE_PERIOD
 
     @fluff.null_emitter
-    def denominator(self, case):
+    def total(self, case):
         n_visits = len(filter(lambda a: visit_is(a, 'bp'), case.actions))
         if n_visits >= self.n_visits:
             yield None
@@ -52,7 +52,7 @@ class VisitCalculator(DoneDueCalculator):
                 yield case.add + datetime.timedelta(days=days) + GRACE_PERIOD
 
     @fluff.date_emitter
-    def denominator(self, case):
+    def total(self, case):
         for days in self.schedule:
             yield case.add + datetime.timedelta(days=days) + GRACE_PERIOD
 

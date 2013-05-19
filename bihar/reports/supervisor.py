@@ -1,23 +1,25 @@
+from copy import copy
+import urllib
+from datetime import datetime, timedelta
+
 from django.template.loader import render_to_string
+from django.utils.translation import ugettext_noop
+from django.utils.translation import ugettext as _
+
 from corehq.apps.fixtures.models import FixtureDataItem
 from corehq.apps.reports.standard import CustomProjectReport
 from corehq.apps.reports.generic import GenericTabularReport,\
     SummaryTablularReport, summary_context
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
-from copy import copy
 from corehq.apps.reports.dispatcher import CustomProjectReportDispatcher
-import urllib
 from dimagi.utils.excel import alphanumeric_sort_key
 from dimagi.utils.html import format_html
 from corehq.apps.groups.models import Group
 from dimagi.utils.decorators.memoized import memoized
 from casexml.apps.case.models import CommCareCase
-from datetime import datetime, timedelta
 from corehq.apps.adm.reports.supervisor import SupervisorReportsADMSection
-
-from django.utils.translation import ugettext_noop
-from django.utils.translation import ugettext as _
 from bihar.reports.indicators.mixins import IndicatorConfigMixIn
+
 
 ASHA_ROLE = ugettext_noop('ASHA')
 AWW_ROLE = ugettext_noop('AWW')

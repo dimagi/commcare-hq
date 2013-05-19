@@ -1,10 +1,10 @@
-from bihar.reports.indicators import INDICATOR_SETS, IndicatorConfig
 from dimagi.utils.decorators.memoized import memoized
 
 class IndicatorConfigMixIn(object):
     @property
     @memoized
     def indicator_config(self):
+        from bihar.reports.indicators.indicators import INDICATOR_SETS, IndicatorConfig
         return IndicatorConfig(INDICATOR_SETS)
     
 class IndicatorSetMixIn(object):
@@ -16,6 +16,7 @@ class IndicatorSetMixIn(object):
     @property
     @memoized
     def indicator_set(self):
+        from bihar.reports.indicators.indicators import INDICATOR_SETS, IndicatorConfig
         return IndicatorConfig(INDICATOR_SETS).get_indicator_set(self.indicator_set_slug)
 
 class IndicatorMixIn(IndicatorSetMixIn):
