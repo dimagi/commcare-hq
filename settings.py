@@ -681,6 +681,7 @@ PILLOWTOPS = [
                  'corehq.pillows.fullxform.FullXFormPillow',
                  'corehq.pillows.domain.DomainPillow',
                  'corehq.pillows.exchange.ExchangePillow',
+                 'corehq.pillows.commtrack.ConsumptionRatePillow',
 
                  # fluff
                  'bihar.models.CareBiharFluffPillow',

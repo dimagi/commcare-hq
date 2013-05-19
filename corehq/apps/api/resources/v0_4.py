@@ -104,7 +104,17 @@ class RepeaterResource(JsonResource, DomainSpecificResourceMixin):
 class CommCareCaseResource(v0_3.CommCareCaseResource, DomainSpecificResourceMixin):
     def obj_get_list(self, bundle, domain, **kwargs):
         filters = v0_3.CaseListFilters(bundle.request.GET).filters
-        return ESQuerySet(payload = ElasticCaseQuery(domain, filters).get_query(),
+
+        # Since tastypie handles the "from" and "size" via slicing, we have to wipe them out here
+        # since ElasticCaseQuery adds them. I believe other APIs depend on the behavior of ElasticCaseQuery
+        # hence I am not modifying that
+        query = ElasticCaseQuery(domain, filters).get_query()
+        if 'from' in query:
+            del query['from']
+        if 'size' in query:
+            del query['size']
+        
+        return ESQuerySet(payload = query,
                           model = lambda jvalue: dict_object(CommCareCase.wrap(jvalue).get_json()),
                           es_client = CaseES(domain)) # Not that XFormES is used only as an ES client, for `run_query` against the proper index
 
