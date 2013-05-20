@@ -1585,6 +1585,10 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
                     # of commcarehq in which there was a bug
                     # that let invalid forms through
                     previous_source = previous_version.fetch_attachment(filename)
+                except (ResourceNotFound, KeyError):
+                    # if this is a new form just use my version
+                    form.version = self.version
+                else:
                     previous_hash = _hash(previous_source)
 
                     # hack - temporarily set my version to the previous version
@@ -1593,9 +1597,6 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
                     my_hash = _hash(self.fetch_xform(form=form))
                     if previous_hash != my_hash:
                         form.version = self.version
-                except ResourceNotFound:
-                    # if this is a new form just use my version
-                    form.version = self.version
 
     def _create_custom_app_strings(self, lang):
         def trans(d):
