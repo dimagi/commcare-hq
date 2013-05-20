@@ -13,7 +13,7 @@
         {# this should eventually be moved to the end of the page #}
         <script src="{% static 'hqstyle/js/jquery/jquery-1.7.1.min.js' %}"></script>
         <script type="text/javascript" src="{% static 'hqwebapp/js/lib/knockout-2.1.0.debug.js' %}"></script>
-        <script type="text/javascript" src="{% static 'hqwebapp/js/lib/underscore-1.4.4.js' %}"></script>
+        {% block underscore %}<script type="text/javascript" src="{% static 'hqwebapp/js/lib/underscore-1.4.4.js' %}"></script>{% endblock %}
         <script type="text/javascript" src="{% static 'hqwebapp/ko/global.handlers.js' %}"></script>
 
         {% block oldstyle_imports %}
@@ -190,7 +190,7 @@
             <div class="modal hide fade" id="reportIssueModal">
                 <div class="modal-header">
                     <a class="close" data-dismiss="modal">&times;</a>
-                    <h3>Report an Issue with CommCare HQ</h3>
+                    <h3>{% trans "Report an Issue with CommCare HQ" %}</h3>
                 </div>
                 <form id="hqwebapp-bugReportForm" class="form-horizontal" action="{% url bug_report %}" method="post">
                     <input type="hidden" id="bug-report-url" name="url"/>
@@ -200,39 +200,31 @@
                     <div class="modal-body">
                         <fieldset>
                             <div class="control-group">
-                                <label class="control-label" for="bug-report-subject">Short Description</label>
+                                <label class="control-label" for="bug-report-subject">{% trans "Short Description" %}</label>
                                 <div class="controls">
                                     <input type="text" class="input-xlarge" name="subject" id="bug-report-subject">
-                                    <p class="help-block">Please summarize the issue in one sentence&mdash;the message field below should contain more detail.</p>
+                                    <p class="help-block">{% trans "Please summarize the issue in one sentence&mdash;the message field below should contain more detail." %}</p>
                                 </div>
                             </div>
                             <div class="control-group">
-                                <label class="control-label" for="bug-report-now">Time of Occurrence</label>
-                                <div class="controls">
-                                    <select id="bug-report-now" name="now">
-                                        <option value="true">Just Now</option>
-                                        <option value="false">Earlier</option>
-                                    </select>
-                                </div>
-                            </div>
-                            <div class="control-group">
-                                <label class="control-label" for="bug-report-when">When</label>
-                                <div class="controls">
-                                    <input type="text" class="input-xlarge" name="when" id="bug-report-when">
-                                </div>
-                            </div>
-                            <div class="control-group">
-                                <label class="control-label" for="bug-report-message">Full Description</label>
+                                <label class="control-label" for="bug-report-message">{% trans "Full Description" %}</label>
                                 <div class="controls">
                                     <textarea class="input-xlarge" name="message" id="bug-report-message" rows="3"></textarea>
-                                    <p class="help-block">Please try to include as much information as possible.</p>
+                                    <p class="help-block">{% trans "Please try to include as much information as possible." %}</p>
                                 </div>
                             </div>
                         </fieldset>
                     </div>
                     <div class="modal-footer">
-                        <button type="submit" class="btn btn-primary" data-loading-text="Submitting Report..." data-complete-text="Report Submitted, Close Window">Submit Report</button>
-                        <button id="bug-report-cancel" class="btn" data-dismiss="modal" data-loading-text="Cancel">Cancel</button>
+                        <button type="submit" class="btn btn-primary"
+                                data-loading-text="{% trans "Submitting Report..." %}"
+                                data-complete-text="{% trans "Report Submitted, Close Window" %}">
+                            {% trans "Submit Report" %}
+                        </button>
+                        <button id="bug-report-cancel" class="btn" data-dismiss="modal"
+                                data-loading-text="{% trans "Cancel" %}">
+                            {% trans "Cancel" %}
+                        </button>
                     </div>
                 </form>
             </div>

@@ -1,6 +1,7 @@
 from datetime import datetime, timedelta, date
 import json
 import tempfile
+from django.conf import settings
 from django.core.cache import cache
 from django.core.servers.basehttp import FileWrapper
 import os
@@ -81,6 +82,10 @@ def default(request, domain):
     return HttpResponseRedirect(reverse(saved_reports, args=[domain]))
 
 @login_and_domain_required
+def old_saved_reports(request, domain):
+    return default(request, domain)
+
+@login_and_domain_required
 def saved_reports(request, domain, template="reports/reports_home.html"):
     user = request.couch_user
     if not (request.couch_user.can_view_reports() or request.couch_user.get_viewable_reports()):
@@ -88,7 +93,7 @@ def saved_reports(request, domain, template="reports/reports_home.html"):
 
     configs = ReportConfig.by_domain_and_owner(domain, user._id).all()
     scheduled_reports = [s for s in ReportNotification.by_domain_and_owner(domain, user._id).all()
-                         if not hasattr(s, 'report_slug') or s.report_slug != 'admin_domains']
+                         if (not hasattr(s, 'report_slug') or s.report_slug != 'admin_domains') and s._id]
 
     context = dict(
         couch_user=request.couch_user,
@@ -517,11 +522,12 @@ def email_report(request, domain, report_slug, report_type=ProjectReportDispatch
     subject = form.cleaned_data['subject'] or _("Email report from CommCare HQ")
 
     if form.cleaned_data['send_to_owner']:
-        send_HTML_email(subject, request.couch_user.get_email(), body)
+        send_HTML_email(subject, request.couch_user.get_email(), body,
+                        email_from=settings.DEFAULT_FROM_EMAIL)
 
     if form.cleaned_data['recipient_emails']:
         for recipient in form.cleaned_data['recipient_emails']:
-            send_HTML_email(subject, recipient, body)
+            send_HTML_email(subject, recipient, body, email_from=settings.DEFAULT_FROM_EMAIL)
 
     return HttpResponse()
 

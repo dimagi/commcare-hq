@@ -56,14 +56,6 @@ class StockReportParser(object):
         """take in a text and return the parsed stock transactions"""
         args = text.split()
 
-        def tx_factory(location, baseclass):
-            """build the product->subcase mapping once and return a closure"""
-            product_subcase_mapping = product_subcases(location)
-            product_caseid = lambda product_id: product_subcase_mapping[product_id]
-            return lambda **kwargs: baseclass(get_caseid=product_caseid,
-                                              location=location,
-                                              **kwargs)
-
         # single action stock report
         if args[0] in self.C.stock_keywords():
             # TODO: support single-action by product, as well as by action?
@@ -75,7 +67,7 @@ class StockReportParser(object):
                 location = self.location_from_code(args[0])
                 args = args[1:]
         
-            _tx = self.single_action_transactions(action, args, tx_factory(location, stockreport.StockTransaction))
+            _tx = self.single_action_transactions(action, args, transaction_factory(location, stockreport.StockTransaction))
 
         # requisition
         elif args[0] in self.C.requisition_keywords():
@@ -83,16 +75,16 @@ class StockReportParser(object):
             action = self.C.all_actions_by_name[action_name]
             args = args[1:]
 
-            # TODO in future when location can be linked to sending phone #, FILL and APPROVE will still require location code
+            # TODO in future when location can be linked to sending phone #, PACK and APPROVE will still require location code
             # (since they refer to locations different from the sender's loc)
             if not location:
                 location = self.location_from_code(args[0])
                 args = args[1:]
 
-            if action.action_type in [RequisitionActions.APPROVAL, RequisitionActions.FILL]:
+            if action.action_type in [RequisitionActions.APPROVAL, RequisitionActions.PACK]:
                 _tx = self.requisition_bulk_action(action, location, args)
             else:
-                _tx = self.single_action_transactions(action, args, tx_factory(location, stockreport.Requisition))
+                _tx = self.single_action_transactions(action, args, transaction_factory(location, stockreport.Requisition))
 
         # multiple action stock report
         elif self.C.multiaction_enabled and (self.C.multiaction_keyword is None or args[0] == self.C.multiaction_keyword.lower()):
@@ -103,7 +95,7 @@ class StockReportParser(object):
                 location = self.location_from_code(args[0])
                 args = args[1:]
 
-            _tx = self.multiple_action_transactions(args, tx_factory(location, stockreport.StockTransaction))
+            _tx = self.multiple_action_transactions(args, transaction_factory(location, stockreport.StockTransaction))
 
         else:
             # initial keyword not recognized; delegate to another handler
@@ -278,6 +270,14 @@ def product_subcases(supply_point):
             return val
 
     return DefaultDict(create_product_subcase, product_subcase_mapping)
+
+def transaction_factory(location, baseclass):
+    """build the product->subcase mapping once and return a closure"""
+    product_subcase_mapping = product_subcases(location)
+    product_caseid = lambda product_id: product_subcase_mapping[product_id]
+    return lambda **kwargs: baseclass(get_caseid=product_caseid,
+                                      location=location,
+                                      **kwargs)
 
 def to_instance(data):
     """convert the parsed sms stock report into an instance like what would be

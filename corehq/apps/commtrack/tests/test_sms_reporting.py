@@ -88,11 +88,11 @@ class StockRequisitionTest(CommTrackTest):
             self.assertIsNotNone(req_case.approved_on)
             self.assertTrue(isinstance(req_case.approved_on, datetime))
 
-    def testSimpleFill(self):
+    def testSimplePack(self):
         self.testRequisition()
 
-        # fill loc1
-        handled = handle(self.verified_number, 'fill {loc}'.format(
+        # pack loc1
+        handled = handle(self.verified_number, 'pack {loc}'.format(
             loc='loc1',
         ))
         self.assertTrue(handled)
@@ -101,11 +101,11 @@ class StockRequisitionTest(CommTrackTest):
 
         for req_id in reqs:
             req_case = RequisitionCase.get(req_id)
-            self.assertEqual(RequisitionStatus.FILLED, req_case.requisition_status)
-            self.assertEqual(req_case.amount_requested, req_case.amount_filled)
-            self.assertEqual(self.user._id, req_case.filled_by)
-            self.assertIsNotNone(req_case.filled_on)
-            self.assertTrue(isinstance(req_case.filled_on, datetime))
+            self.assertEqual(RequisitionStatus.PACKED, req_case.requisition_status)
+            self.assertEqual(req_case.amount_requested, req_case.amount_packed)
+            self.assertEqual(self.user._id, req_case.packed_by)
+            self.assertIsNotNone(req_case.packed_on)
+            self.assertTrue(isinstance(req_case.packed_on, datetime))
 
     def testReceipts(self):
         # this tests the requisition specific receipt keyword. not to be confused
