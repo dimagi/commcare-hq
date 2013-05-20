@@ -147,10 +147,9 @@ class SupplyPointType(DocumentSchema):
 
 
 class ConsumptionConfig(DocumentSchema):
-    min_periods = IntegerProperty(default=2)
+    min_transactions = IntegerProperty(default=2)
     min_window = IntegerProperty(default=10)
-    window = IntegerProperty()
-    include_end_stockouts = BooleanProperty(default=False)
+    optimal_window = IntegerProperty()
 
 
 class StockLevelsConfig(DocumentSchema):

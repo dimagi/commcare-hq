@@ -684,7 +684,6 @@ def commtrack_settings_advanced(request, domain):
         if form.is_valid():
             data = form.cleaned_data
             ct_settings.use_auto_consumption = bool(data.get('use_auto_consumption'))
-            ct_settings.use_auto_emergency_levels = bool(data.get('use_auto_emergency_levels'))
 
             fields = ('emergency_level', 'understock_threshold',
                     'overstock_threshold')
@@ -693,8 +692,7 @@ def commtrack_settings_advanced(request, domain):
                     setattr(ct_settings.stock_levels_config, field,
                             data['stock_' + field])
 
-            consumption_fields = ('min_periods', 'min_window', 'window',
-                    'include_end_stockouts')
+            consumption_fields = ('min_periods', 'min_window', 'window')
             for field in consumption_fields:
                 if data.get('consumption_' + field):
                     setattr(ct_settings.consumption_config, field,

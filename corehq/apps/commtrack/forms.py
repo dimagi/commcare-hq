@@ -1,5 +1,5 @@
 from django import forms
-from django.utils.translation import ugettext as _
+from django.utils.translation import ugettext as _, ugettext_noop as __
 from crispy_forms.helper import FormHelper
 from crispy_forms.layout import Layout, Fieldset, ButtonHolder, Submit
 
@@ -64,44 +64,33 @@ class ProductForm(forms.Form):
 
 class AdvancedSettingsForm(forms.Form):
     use_auto_emergency_levels = forms.BooleanField(
-        label=_("Use default emergency levels"), required=False)
+        label=__("Use default emergency levels"), required=False)
     
     stock_emergency_level = forms.DecimalField(
-        label=_("Emergency level (months)"), required=False)
+        label=__("Emergency Level (months)"), required=False)
     stock_understock_threshold = forms.DecimalField(
-        label=_("Understock threshold (months)"), required=False)
+        label=__("Low Stock Level (months)"), required=False)
     stock_overstock_threshold = forms.DecimalField(
-        label=_("Overstock threshold (months)"), required=False)
+        label=__("Overstock Level (months)"), required=False)
 
     use_auto_consumption = forms.BooleanField(
-        label=_("Use automatic consumption calculation"), required=False)
+        label=__("Use automatic consumption calculation"), required=False)
     
-    consumption_min_periods = forms.IntegerField(
-        label=_("Minimum transactions"), required=False)
+    consumption_min_transactions = forms.IntegerField(
+        label=__("Minimum Transactions (Count)"), required=False)
     consumption_min_window = forms.IntegerField(
-        label=_("Minimum window"), required=False)
-    consumption_window = forms.IntegerField(
-        label=_("Consumption window"), required=False)
-    consumption_include_end_stockouts = forms.BooleanField(
-        label=_("Include end stockouts"), required=False)
+        label=__("Minimum Window for Calculation (Days)"), required=False)
+    consumption_optimal_window = forms.IntegerField(
+        label=__("Optimal Window for Calculation (Days)"), required=False)
 
     def clean(self):
         cleaned_data = super(AdvancedSettingsForm, self).clean()
 
-        if (not cleaned_data.get('use_auto_emergency_levels') and 
-            not (all(cleaned_data.get(f) for f in (
-                    'stock_emergency_level',
-                    'stock_understock_threshold', 
-                    'stock_overstock_threshold')))):
-            self._errors['use_auto_emergency_levels'] = self.error_class([_(
-                "You must use default emergency levels or " +
-                " specify a value for all emergency level settings.")])
-        
         if (not cleaned_data.get('use_auto_consumption') and 
             not (all(cleaned_data.get(f) for f in (
-                'consumption_min_periods',
+                'consumption_min_transactions',
                 'consumption_min_window', 
-                'consumption_window')))):
+                'consumption_optimal_window')))):
             self._errors['use_auto_consumption'] = self.error_class([_(
                 "You must use automatic consumption calculation or " +
                 " specify a value for all consumption settings.")])
@@ -115,7 +104,6 @@ class AdvancedSettingsForm(forms.Form):
         self.helper.layout = Layout(
             Fieldset(
                 _('Stock Levels'),
-                'use_auto_emergency_levels',
                 'stock_emergency_level',
                 'stock_understock_threshold',
                 'stock_overstock_threshold'
@@ -123,10 +111,9 @@ class AdvancedSettingsForm(forms.Form):
             Fieldset(
                 _('Consumption Settings'),
                 'use_auto_consumption',
-                'consumption_min_periods',
+                'consumption_min_transactions',
                 'consumption_min_window',
-                'consumption_window',
-                'consumption_include_end_stockouts'
+                'consumption_optimal_window',
             ),
             ButtonHolder(
                 Submit('submit', 'Submit')
