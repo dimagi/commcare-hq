@@ -1,5 +1,5 @@
 from django import forms
-from django.utils.translation import ugettext as _, ugettext_noop as __
+from django.utils.translation import ugettext_noop, ugettext as _
 from crispy_forms.helper import FormHelper
 from crispy_forms.layout import Layout, Fieldset, ButtonHolder, Submit
 
@@ -64,24 +64,24 @@ class ProductForm(forms.Form):
 
 class AdvancedSettingsForm(forms.Form):
     use_auto_emergency_levels = forms.BooleanField(
-        label=__("Use default emergency levels"), required=False)
+        label=ugettext_noop("Use default emergency levels"), required=False)
     
     stock_emergency_level = forms.DecimalField(
-        label=__("Emergency Level (months)"), required=False)
+        label=ugettext_noop("Emergency Level (months)"), required=False)
     stock_understock_threshold = forms.DecimalField(
-        label=__("Low Stock Level (months)"), required=False)
+        label=ugettext_noop("Low Stock Level (months)"), required=False)
     stock_overstock_threshold = forms.DecimalField(
-        label=__("Overstock Level (months)"), required=False)
+        label=ugettext_noop("Overstock Level (months)"), required=False)
 
     use_auto_consumption = forms.BooleanField(
-        label=__("Use automatic consumption calculation"), required=False)
+        label=ugettext_noop("Use automatic consumption calculation"), required=False)
     
     consumption_min_transactions = forms.IntegerField(
-        label=__("Minimum Transactions (Count)"), required=False)
+        label=ugettext_noop("Minimum Transactions (Count)"), required=False)
     consumption_min_window = forms.IntegerField(
-        label=__("Minimum Window for Calculation (Days)"), required=False)
+        label=ugettext_noop("Minimum Window for Calculation (Days)"), required=False)
     consumption_optimal_window = forms.IntegerField(
-        label=__("Optimal Window for Calculation (Days)"), required=False)
+        label=ugettext_noop("Optimal Window for Calculation (Days)"), required=False)
 
     def clean(self):
         cleaned_data = super(AdvancedSettingsForm, self).clean()
