@@ -689,6 +689,7 @@ PILLOWTOPS = [
                  'bihar.models.CareBiharFluffPillow',
              ] + LOCAL_PILLOWTOPS
 
+# list of fluff pillow class names for Ctable to track changes from
 FLUFF_PILLOWS_TO_SQL = []
 
 #Custom workflow for indexing xform data beyond the standard properties
