@@ -32,7 +32,10 @@ For details on casexml check out:
 http://bitbucket.org/javarosa/javarosa/wiki/casexml
 """
 
-CASE_WRAPPER = to_function(getattr(settings, 'CASE_WRAPPER', None))
+if getattr(settings, 'CASE_WRAPPER', None):
+    CASE_WRAPPER = to_function(getattr(settings, 'CASE_WRAPPER'))
+else:
+    CASE_WRAPPER = None
 
 class CaseBase(SafeSaveDocument):
     """
