@@ -99,7 +99,10 @@ var CaseConfig = (function () {
         self.questionScores = questionScores;
         self.caseConfigViewModel = new CaseConfigViewModel(self);
         self.init = function () {
-            ko.applyBindings(self, $('#case-config-ko').get(0));
+            var $home = $('#case-config-ko');
+            ko.applyBindings(self, $home.get(0));
+            $home.on('change textchange', 'input, select', self.change)
+                 .on('click', 'a', self.change);
         }
     };
     CaseConfig.prototype = utils;
@@ -139,7 +142,6 @@ var CaseConfig = (function () {
         };
         self.removeSubCase = function (subcase) {
             self.subcases.remove(subcase);
-            self.caseConfig.change();
         };
 
         self.actionType = ko.observable((function () {
@@ -190,7 +192,6 @@ var CaseConfig = (function () {
             };
             self.removeProperty = function (property) {
                 self.case_properties.remove(property);
-                self.caseConfig.change();
             };
             self.propertyCounts = ko.computed(function () {
                 var count = {};
