@@ -16,7 +16,7 @@ function(doc) {
     var recvd = doc.received_on.substring(0, 19);
 
     var logs = normalizeRepeats(doc.form.log_subreport.log);
-    for (var i in logs) {
+    for (var i = 0; i < logs.length; i++) {
       // need to clone because you can't set the property on the actual doc
       var entry = clone(logs[i]);
       entry.version = doc.form.app_version;

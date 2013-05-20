@@ -15,7 +15,7 @@ function(doc) {
         var user_subreport_usernames = [];
         if (doc.form.user_subreport) {
             var users = normalizeRepeats(doc.form.user_subreport.user);
-            for (var i in users) {
+            for (var i = 0; i < users.length; i++) {
                 var username = users[i].username;
                 user_subreport_usernames.push(username);
             }
@@ -23,7 +23,7 @@ function(doc) {
 
         var logged_in_user = "unknown";
         var logs = normalizeRepeats(doc.form.log_subreport.log);
-        for (var i in logs) {
+        for (var i = 0; i < logs.length; i++) {
             // need to clone because you can't set the property on the actual doc
             var entry = clone(logs[i]);
             entry.device_users = user_subreport_usernames;

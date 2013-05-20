@@ -4,7 +4,7 @@ function(doc) {
     var currentTags = new Array();
     if (doc.xmlns == 'http://code.javarosa.org/devicereport') {
         var logs = normalizeRepeats(doc.form.log_subreport.log);
-        for (var i in logs) {
+        for (var i = 0; i < logs.length; i++) {
             var log_type = logs[i].type;
             if (log_type && currentTags.indexOf(log_type) == -1) {
                 emit(log_type);
