@@ -387,9 +387,11 @@ def mobile_user_reports(request):
                              user=val['user'],
                              device_users=val['device_users'],
                              message=val['msg'],
-                             version=formatted_version))
+                             version=formatted_version,
+                             report_id=report['id']))
 
     headers = DataTablesHeader(
+        DataTablesColumn("View Form"),
         DataTablesColumn("Domain"),
         DataTablesColumn("Time", sort_type=DTSortType.NUMERIC),
         DataTablesColumn("User", sort_type=DTSortType.NUMERIC),

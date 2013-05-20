@@ -12,6 +12,11 @@
     <tbody>
     {% for row in rows %}
         <tr>
+            <td>
+                <a href="{% url render_form_data row.domain row.report_id %}">
+                    View Form
+                </a>
+            </td>
             <td>{{ row.domain }}</td>
             <td>{{ row.time }}</td>
             <td>{{ row.user }}</td>
