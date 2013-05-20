@@ -1,0 +1,99 @@
+#formdesigner .fd-toolbar {
+  border-left: 1px solid #ddd;
+  border-right: 1px solid #ddd;
+
+  #fd-container-question-type-group {
+    display: inline-block;
+    vertical-align: middle;
+  }
+  @toolbarVerticalPadding: 6px;
+  @toolbarButtonPadding: @toolbarVerticalPadding 10px;
+  .btn{
+    padding: @toolbarButtonPadding;
+  }
+
+  .fd-question-type-group {
+    .btn.fd-question-type > span {
+      display: block;
+      width: 40px;
+      text-align: center;
+      padding: @toolbarVerticalPadding 0;
+    }
+    .btn:nth-of-type(2) {
+      padding: @toolbarVerticalPadding @toolbarVerticalPadding @toolbarVerticalPadding 1px;
+      .btn > span {
+        width:auto;
+      }
+    }
+    .btn,
+    .btn:only-of-type {
+      padding: 0;
+    }
+    .btn.disabled i {
+      color: @gray;
+    }
+    &.fd-question-type-group-advanced {
+      .btn {
+        padding: @toolbarButtonPadding;
+        font-size: @baseFontSize;
+      }
+    }
+  }
+}
+
+#formdesigner .fd-tree,
+#formdesigner .fd-question-properties {
+    margin-top: 0 !important; // HACK HACK HACK, this needs to get cleaned up
+}
+
+#formdesigner .fd-question-type .tooltip {
+  display: absolute !important;
+}
+
+#formdesigner .fd-head {
+  background: @blue;
+  font-weight: normal !important;
+  padding: 2px 0 !important;
+  font-size: @baseFontSize*1.1 !important;
+}
+
+#formdesigner .jstree a > ins.jstree-icon {
+  background: none;
+  font-size: .85em;
+}
+
+#formdesigner .jstree a > ins {
+  color: @blueLight;
+}
+
+#formdesigner .jstree a {
+  color: darken(@blueDark, 10);
+  line-height: 18px;
+  padding: 1px 6px 3px;
+  .border-radius(5px);
+  &.jstree-hovered,
+  &.jstree-clicked {
+    border: none;
+    background: lighten(@blue, 58);
+  }
+  &.jstree-clicked {
+    .box-shadow(0px 0px 4px fade(@blue, 60%));
+  }
+}
+
+#formdesigner #fd-form-actions {
+  padding-right: @gridGutterWidth;
+  > div {
+    display: inline-block;
+  }
+}
+
+#formdesigner #fd-save-button {
+  > .pull-right {
+    float: none; // HACK HACK HACK The javascript from main.js is causing issues.
+  }
+}
+
+#fd-props-content {
+  margin: 0 @gridGutterWidth;
+}
