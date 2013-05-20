@@ -5,6 +5,7 @@ import logging
 from collections import defaultdict
 from StringIO import StringIO
 import os
+from pytz import timezone
 
 from django.http import HttpResponseRedirect, HttpResponse
 from django.core.urlresolvers import reverse
@@ -34,6 +35,8 @@ from couchexport.shortcuts import export_response
 from couchexport.models import Format
 from dimagi.utils.excel import WorkbookJSONReader
 from dimagi.utils.decorators.view import get_file
+from django.utils import html
+from dimagi.utils.timezones import utils as tz_utils
 
 
 @require_superuser
@@ -374,12 +377,17 @@ def mobile_user_reports(request):
         ).all()
         for report in data:
             val = report.get('value')
+            version = val.get('version', 'unknown')
+            formatted_date = tz_utils.string_to_prertty_time(val['@date'], timezone(domain.default_timezone), fmt="%b %d, %Y %H:%M:%S")
+            formatted_version = '%s <a href="#" data-datatable-tooltip="left" data-datatable-tooltip-text="%s"> \
+                                <i class="icon icon-info-sign"></i></a>'\
+                                % (version.split(' ')[0], html.escape(version))
             rows.append(dict(domain=domain.name,
-                             time=val['@date'],
+                             time=formatted_date,
                              user=val['user'],
                              device_users=val['device_users'],
                              message=val['msg'],
-                             version=val['version']))
+                             version=formatted_version))
 
     headers = DataTablesHeader(
         DataTablesColumn("Domain"),

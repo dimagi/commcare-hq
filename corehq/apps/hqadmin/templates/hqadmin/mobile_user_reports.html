@@ -21,7 +21,7 @@
                 {% endfor %}
             </td>
             <td>{{ row.message }}</td>
-            <td>{{ row.version }}</td>
+            <td>{{ row.version|safe }}</td>
         </tr>
     {% endfor %}
     </tbody>
