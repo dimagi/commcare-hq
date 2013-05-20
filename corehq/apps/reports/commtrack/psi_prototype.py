@@ -13,6 +13,8 @@ from dimagi.utils.decorators.memoized import memoized
 from casexml.apps.case.models import CommCareCase
 from corehq.apps.commtrack import const
 from corehq.apps.commtrack.util import supply_point_type_categories
+import corehq.apps.locations.util as loc_util
+from collections import deque
 
 class CommtrackReportMixin(ProjectReport, ProjectReportParametersMixin):
 
@@ -109,68 +111,88 @@ def child_loc(form, root):
     ix = path.index(root._id) if root else -1
     return path[ix + 1]
 
-HIERARCHY = [
-    {
-        'key': 'state',
-        'caption': 'State'
-    },
-    {
-        'key': 'district',
-        'caption': 'District'
-    },
-    {
-        'key': 'block',
-        'caption': 'Block'
-    },
-    {
-        'key': 'village',
-        'caption': 'Village'
-    },
-]
+def HIERARCHY(domain, exclude_terminal=True):
+    type_q = deque()
+    type_q.append(None)
+    bfs_ordered = []
 
-LOC_METADATA = [
-    {
-        'key': 'village_class',
-        'caption': 'Village Class',
-        'anc_type': 'village'
-    },
-    {
-        'key': 'village_size',
-        'caption': 'Village Size',
-        'anc_type': 'village'
-    },
-    {
-        'key': 'site_code',
-        'caption': 'Outlet Code',
-    },
-    {
-        'key': 'name',
-        'caption': 'Outlet',
-    },
-    {
-        'key': 'contact_phone',
-        'caption': 'Contact Phone',
-    },
-    {
-        'key': 'outlet_type',
-        'caption': 'Outlet Type',
-    },
-]
+    relationships = loc_util.parent_child(domain)
+
+    while True:
+        try:
+            loc_type = type_q.popleft()
+        except IndexError:
+            break
+
+        child_types = relationships.get(loc_type, [])
+        if loc_type and (not exclude_terminal or child_types):
+            bfs_ordered.append(loc_type)
+        for child_type in child_types:
+            if child_type not in bfs_ordered:
+                type_q.append(child_type)
+            else:
+                del bfs_ordered[bfs_ordered.index(loc_type)]
+                bfs_ordered.insert(bfs_ordered.index(child_type), loc_type)
+
+    return [{'key': k, 'caption': k} for k in bfs_ordered]
+
+def get_terminal(domain):
+    relationships = loc_util.parent_child(domain)
+    loc_types = loc_util.defined_location_types(domain)
+    for loc_type in loc_types:
+        if not relationships.get(loc_type):
+            return loc_type
+
+def LOC_METADATA(terminal):
+    fields = [
+        { # psi only
+            'key': 'village_class',
+            'caption': 'Village Class',
+            'anc_type': 'village'
+        },
+        { # psi only
+            'key': 'village_size',
+            'caption': 'Village Size',
+            'anc_type': 'village'
+        },
+        {
+            'key': 'site_code',
+            'caption': '%s code' % terminal,
+        },
+        {
+            'key': 'name',
+            'caption': terminal,
+        },
+    ]
+    if terminal == 'outlet': # psi only
+        fields.extend([
+                {
+                    'key': 'contact_phone',
+                    'caption': 'Contact Phone',
+                },
+                {
+                    'key': 'outlet_type',
+                    'caption': 'Outlet Type',
+                },
+            ])
+    return fields
 
 ACTION_ORDERING = ['stockonhand', 'sales', 'receipts', 'stockedoutfor']
 PRODUCT_ORDERING = ['PSI kit', 'non-PSI kit', 'ORS', 'Zinc']
 
-def _outlet_headers(terminal='outlet'):
-    loc_types = [f['key'] for f in HIERARCHY] + ['outlet']
+def _outlet_headers(domain, terminal='outlet'):
+    _hierarchy = HIERARCHY(domain)
+    _term = get_terminal(domain)
+    loc_types = [f['key'] for f in _hierarchy] + [_term]
     active_loc_types = loc_types[:loc_types.index(terminal)+1]
 
-    hierarchy = HIERARCHY[:len(active_loc_types)]
-    metadata = [f for f in LOC_METADATA if f.get('anc_type', 'outlet') in active_loc_types]
+    hierarchy = _hierarchy[:len(active_loc_types)]
+    metadata = [f for f in LOC_METADATA(_term) if f.get('anc_type', _term) in active_loc_types]
 
     return (hierarchy, metadata)
 
-def outlet_headers(slug=False, terminal='outlet'):
-    hierarchy, metadata = _outlet_headers(terminal)
+def outlet_headers(domain, slug=False, terminal='outlet'):
+    hierarchy, metadata = _outlet_headers(domain, terminal)
     return [f['key' if slug else 'caption'] for f in hierarchy + metadata]
 
 def outlet_metadata(loc, ancestors):
@@ -195,8 +217,8 @@ def outlet_metadata(loc, ancestors):
         return val
 
     row = []
-    row += [loc_prop(f['key'], 'name') for f in HIERARCHY]
-    row += [loc_prop(f.get('anc_type'), f['key']) for f in LOC_METADATA]
+    row += [loc_prop(f['key'], 'name') for f in HIERARCHY(loc.domain)]
+    row += [loc_prop(f.get('anc_type'), f['key']) for f in LOC_METADATA(get_terminal(loc.domain))]
     return row
 
 def site_metadata(loc, ancestors):
@@ -205,7 +227,7 @@ def site_metadata(loc, ancestors):
         l = lineage.get(anc_type) if anc_type and anc_type != loc.location_type else loc
         return getattr(l, prop_name, default) if l else default
 
-    hierarchy, metadata = _outlet_headers(terminal=loc.location_type)
+    hierarchy, metadata = _outlet_headers(loc.domain, terminal=loc.location_type)
 
     row = []
     for h in hierarchy:
@@ -231,7 +253,7 @@ class VisitReport(GenericTabularReport, CommtrackReportMixin, DatespanMixin):
     emailable = True
 
     def header_text(self, slug=False):
-        cols = outlet_headers(slug)
+        cols = outlet_headers(self.domain, slug)
         cols.extend([
             ('date' if slug else 'Date'),
             ('reporter' if slug else 'Reporter'),
@@ -335,7 +357,7 @@ class SalesAndConsumptionReport(GenericTabularReport, CommtrackReportMixin, Date
         if len(self.outlets) > OUTLETS_LIMIT:
             return DataTablesHeader(DataTablesColumn('Too many outlets'))
 
-        cols = outlet_headers()
+        cols = outlet_headers(self.domain)
         for p in self.active_products:
             cols.append('Stock on Hand (%s)' % p['name'])
             cols.append('Total Sales (%s)' % p['name'])
@@ -449,7 +471,7 @@ class CumulativeSalesAndConsumptionReport(GenericTabularReport, CommtrackReportM
         if not self.aggregation_locs:
             return DataTablesHeader(DataTablesColumn('No locations'))
 
-        cols = outlet_headers(terminal=self.aggregate_by)
+        cols = outlet_headers(self.domain, terminal=self.aggregate_by)
         cols.extend([
             '# reporting outlets',
             'total # outlets',
@@ -561,7 +583,7 @@ class StockOutReport(GenericTabularReport, CommtrackReportMixin, DatespanMixin):
         if len(self.outlets) > OUTLETS_LIMIT:
             return DataTablesHeader(DataTablesColumn('Too many outlets'))
 
-        cols = outlet_headers()
+        cols = outlet_headers(self.domain)
         for p in self.active_products:
             cols.append('%s: Days stocked out' % p['name'])
         cols.append('All Products Combined: Days stocked out')
