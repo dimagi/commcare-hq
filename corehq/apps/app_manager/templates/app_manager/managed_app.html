@@ -76,11 +76,15 @@
 
 {% block breadcrumbs %}
     {% if app %}
-    <li><span class="app-manager-title variable-app_name">{{ app.name|html_name }}</span></li>
+    <li>
+        <span class="divider">&gt;</span>
+        <span class="app-manager-title variable-app_name">{{ app.name|html_name }}</span>
+    </li>
     {% endif %}
 {% endblock %}
 
 {% block sidebar %}
+{% if app %}
 <nav class="app-manager-content hide">
     <ul class="nav nav-list">
         <li {% if release_manager %}class="active"{% endif %}>
@@ -247,6 +251,7 @@
     {% endif %}
     </ul>
 </nav>
+{% endif %}
 {% endblock %}
 
 {% block app-content %}
