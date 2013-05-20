@@ -78,7 +78,10 @@ class CommtrackReportMixin(ProjectReport, ProjectReportParametersMixin):
                 return [sel]
         active_outlet_types = reduce(lambda a, b: a.union(b), (types_for_sel(sel) for sel in selected), set())
 
-        return lambda outlet_type: ('_all' in selected) or (outlet_type in active_outlet_types)
+        def match_filter(loc):
+            outlet_type = loc.dynamic_properties().get('outlet_type')
+            return ('_all' in selected) or (outlet_type in active_outlet_types)
+        return match_filter
 
     @property
     @memoized
@@ -157,15 +160,17 @@ def get_terminal(domain):
 
 def LOC_METADATA(terminal):
     fields = [
-        { # psi only
+        {
             'key': 'village_class',
             'caption': 'Village Class',
-            'anc_type': 'village'
+            'anc_type': 'village',
+            'PSI-ONLY': True,
         },
-        { # psi only
+        {
             'key': 'village_size',
             'caption': 'Village Size',
-            'anc_type': 'village'
+            'anc_type': 'village',
+            'PSI-ONLY': True,
         },
         {
             'key': 'site_code',
@@ -175,26 +180,34 @@ def LOC_METADATA(terminal):
             'key': 'name',
             'caption': terminal,
         },
+        {
+            'key': 'contact_phone',
+            'caption': 'Contact Phone',
+            'PSI-ONLY': True,
+        },
+        {
+            'key': 'outlet_type',
+            'caption': 'Outlet Type',
+            'PSI-ONLY': True,
+        },
     ]
-    if terminal == 'outlet': # psi only
-        fields.extend([
-                {
-                    'key': 'contact_phone',
-                    'caption': 'Contact Phone',
-                },
-                {
-                    'key': 'outlet_type',
-                    'caption': 'Outlet Type',
-                },
-            ])
+    is_psi = (terminal == 'outlet')
+    fields = [f for f in fields if not f.get('PSI-ONLY', False) or is_psi]
+    for f in fields:
+        try:
+            del f['PSI-ONLY']
+        except KeyError:
+            pass
     return fields
 
 ACTION_ORDERING = ['stockonhand', 'sales', 'receipts', 'stockedoutfor']
 PRODUCT_ORDERING = ['PSI kit', 'non-PSI kit', 'ORS', 'Zinc']
 
-def _outlet_headers(domain, terminal='outlet'):
+def _outlet_headers(domain, terminal):
     _hierarchy = HIERARCHY(domain)
     _term = get_terminal(domain)
+    if not terminal:
+        terminal = _term
     loc_types = [f['key'] for f in _hierarchy] + [_term]
     active_loc_types = loc_types[:loc_types.index(terminal)+1]
 
@@ -203,7 +216,7 @@ def _outlet_headers(domain, terminal='outlet'):
 
     return (hierarchy, metadata)
 
-def outlet_headers(domain, slug=False, terminal='outlet'):
+def outlet_headers(domain, slug=False, terminal=None):
     hierarchy, metadata = _outlet_headers(domain, terminal)
     return [f['key' if slug else 'caption'] for f in hierarchy + metadata]
 
@@ -292,7 +305,7 @@ class VisitReport(GenericTabularReport, CommtrackReportMixin, DatespanMixin):
         ancestry = load_all_loc_hierarchy(locs.values())
 
         # filter by outlet type
-        reports = filter(lambda r: self.outlet_type_filter(locs[leaf_loc(r)].outlet_type), reports)
+        reports = filter(lambda r: self.outlet_type_filter(locs[leaf_loc(r)]), reports)
 
         def row(doc):
             transactions = dict(((tx['action'], tx['product']), tx['value']) for tx in get_transactions(doc, False))
@@ -353,7 +366,7 @@ class SalesAndConsumptionReport(GenericTabularReport, CommtrackReportMixin, Date
     @memoized
     def outlets(self):
         locs = Location.filter_by_type(self.domain, get_terminal(self.domain), self.active_location)
-        locs = filter(lambda loc: self.outlet_type_filter(loc.outlet_type), locs)
+        locs = filter(lambda loc: self.outlet_type_filter(loc), locs)
         return locs
 
     @property
@@ -503,7 +516,7 @@ class CumulativeSalesAndConsumptionReport(GenericTabularReport, CommtrackReportM
 
         products = self.active_products
         locs = self.aggregation_locs
-        active_outlets = [loc for loc in self.leaf_locs if self.outlet_type_filter(loc.dynamic_properties().get('outlet_type'))]
+        active_outlets = [loc for loc in self.leaf_locs if self.outlet_type_filter(loc)]
 
         active_outlet_ids = set(loc._id for loc in active_outlets)
         aggregation_sites = set(loc._id for loc in locs)
@@ -574,7 +587,7 @@ class StockOutReport(GenericTabularReport, CommtrackReportMixin, DatespanMixin):
     @memoized
     def outlets(self):
         locs = Location.filter_by_type(self.domain, get_terminal(self.domain), self.active_location)
-        locs = filter(lambda loc: self.outlet_type_filter(loc.outlet_type), locs)
+        locs = filter(lambda loc: self.outlet_type_filter(loc), locs)
         return locs
 
     @property
