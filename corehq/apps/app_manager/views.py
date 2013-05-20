@@ -2068,8 +2068,8 @@ def upload_translations(request, domain, app_id):
         trans_dict = defaultdict(dict)
         for row in translations:
             for lang in app.langs:
-               if row[lang]:
-                   trans_dict[lang].update({row["property"]: row[lang]})
+               if row.get(lang):
+                   trans_dict[lang].update({row["property"]: row[lang].encode('utf8')})
 
         app.translations = dict(trans_dict)
         app.save()
