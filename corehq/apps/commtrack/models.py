@@ -374,6 +374,11 @@ class SupplyPointCase(CommCareCase):
 
 
 class SupplyPointProductCase(CommCareCase):
+    """
+    See
+    https://confluence.dimagi.com/display/ctinternal/Data+Model+Documentation
+    """
+
     class Meta: 
         # This is necessary otherwise syncdb will confuse this app with casexml
         app_label = "commtrack"
