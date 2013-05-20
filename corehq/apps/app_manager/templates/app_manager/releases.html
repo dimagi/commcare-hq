@@ -128,7 +128,7 @@
                 <th>Released</th>
 
             </tr>
-            <tbody data-bind="visible: buildState, css: {hidden: false}" class="hide">
+            <tbody data-bind="visible: buildState, css: {hide: false}" class="hide">
                 <tr data-bind="visible: buildState() == 'pending'">
                     <td colspan="9">
                         <img src="{% static 'hqwebapp/img/ajax-loader.gif' %}"/>
@@ -143,11 +143,11 @@
                     </td>
                 </tr>
             </tbody>
-            <tbody data-bind="css: {hidden: false}, template: {
+            <tbody data-bind="css: {hide: false}, template: {
                 foreach: savedApps,
                 afterAdd: function(elem) { $(elem).hide().fadeIn() },
                 beforeRemove: function(elem) { $(elem).fadeOut() }
-            }" class="hidden">
+            }" class="hide">
                 <tr class="build" data-bind="css: {
                     'build-released': is_released(),
                     'build-unreleased': !is_released(),
