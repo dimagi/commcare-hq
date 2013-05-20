@@ -34,6 +34,7 @@ from couchforms.models import XFormInstance
 from soil import heartbeat
 from soil import views as soil_views
 import os
+import re
 
 from django.utils.http import urlencode
 
@@ -251,8 +252,6 @@ def bug_report(req):
         'username',
         'domain',
         'url',
-        'now',
-        'when',
         'message',
         'app_id',
     )])
@@ -260,7 +259,6 @@ def bug_report(req):
     report['user_agent'] = req.META['HTTP_USER_AGENT']
     report['datetime'] = datetime.utcnow()
 
-    report['time_description'] = u'just now' if report['now'] else u'earlier: {when}'.format(**report)
     if report['app_id']:
         app = import_app(report['app_id'], BUG_REPORTS_DOMAIN)
         report['copy_url'] = "%s%s" % (get_url_base(), reverse('view_app', args=[BUG_REPORTS_DOMAIN, app.id]))
@@ -282,7 +280,6 @@ def bug_report(req):
         u"url: {url}\n"
         u"copy url: {copy_url}\n"
         u"datetime: {datetime}\n"
-        u"error occured: {time_description}\n"
         u"User Agent: {user_agent}\n"
         u"Message:\n\n"
         u"{message}\n"
@@ -301,12 +298,16 @@ def bug_report(req):
     if req.POST.get('five-hundred-report'):
         message = "%s \n\n This messge was reported from a 500 error page! Please fix this ASAP (as if you wouldn't anyway)..." % message
     email = EmailMessage(
-        subject,
-        message,
-        report['username'],
-        settings.BUG_REPORT_RECIPIENTS,
+        subject=subject,
+        body=message,
+        to=settings.BUG_REPORT_RECIPIENTS,
         headers={'Reply-To': reply_to}
     )
+
+    # only fake the from email if it's an @dimagi.com account
+    if re.search('@dimagi\.com$', report['username']):
+        email.from_email = report['username']
+
     email.send(fail_silently=False)
 
     if req.POST.get('five-hundred-report'):

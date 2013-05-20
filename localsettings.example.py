@@ -105,7 +105,7 @@ TOUCHFORMS_API_PASSWORD = 'password'
 
 ####### Misc / HQ-specific Config ########
 
-DEFAULT_PROTOCOL = "https" # or http
+DEFAULT_PROTOCOL = "http" # or https
 OVERRIDE_LOCATION="https://www.commcarehq.org"
 
 #Set your analytics IDs here for GA and pingdom RUM

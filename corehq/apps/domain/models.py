@@ -4,7 +4,6 @@ import logging
 from couchdbkit.exceptions import ResourceConflict
 from django.conf import settings
 from django.contrib.auth.models import AnonymousUser
-from django.db import models
 from couchdbkit.ext.django.schema import (Document, StringProperty, BooleanProperty, DateTimeProperty, IntegerProperty,
                                           DocumentSchema, SchemaProperty, DictProperty, ListProperty,
                                           StringListProperty)
@@ -14,7 +13,6 @@ from corehq.apps.domain.utils import get_domain_module_map
 from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.html import format_html
 from dimagi.utils.logging import notify_exception
-from dimagi.utils.timezones import fields as tz_fields
 from dimagi.utils.couch.database import get_db, get_safe_write_kwargs, apply_update
 from itertools import chain
 from langcodes import langs as all_langs
@@ -802,72 +800,6 @@ class Domain(Document, HQBillingDomainMixin, SnapshotMixin):
         """Get the properties display definition for a given XFormInstance"""
         return self.case_display.form_details.get(form.xmlns)
 
-##############################################################################################################
-#
-# Originally had my own hacky global storage of content type, but it turns out that contenttype.models
-# wisely caches content types! No hit to the db beyond the first call - no need for us to do our own
-# custom caching.
-#
-# See ContentType.get_for_model() code for details.
-
-class OldDomain(models.Model):
-    """Domain is the highest level collection of people/stuff
-       in the system.  Pretty much everything happens at the
-       domain-level, including user membership, permission to
-       see data, reports, charts, etc."""
-
-    name  = models.CharField(max_length = 64, unique=True)
-    is_active = models.BooleanField(default=False)
-    timezone = tz_fields.TimeZoneField()
-    #description = models.CharField(max_length=255, null=True, blank=True)
-    #timezone = models.CharField(max_length=64,null=True)
-
-    class Meta():
-        db_table = "domain_domain"
-
-    # Utility function - gets active domains in which user has an active membership
-    # Note that User.is_active is not checked here - we're only concerned about usable
-    # domains in which the user can theoretically participate, not whether the user
-    # is cleared to login.
-
-    @staticmethod
-    def active_for_user(user):
-        if not hasattr(user,'get_profile'):
-            # this had better be an anonymous user
-            return OldDomain.objects.none()
-        from corehq.apps.users.models import CouchUser
-        couch_user = CouchUser.from_django_user(user)
-        if couch_user:
-            domain_names = couch_user.get_domains()
-            return OldDomain.objects.filter(name__in=domain_names, is_active=True)
-        else:
-            return OldDomain.objects.none()
-
-    @staticmethod
-    def all_for_user(user):
-        if not hasattr(user,'get_profile'):
-            # this had better be an anonymous user
-            return OldDomain.objects.none()
-        from corehq.apps.users.models import CouchUser
-        couch_user = CouchUser.from_django_user(user)
-        if couch_user:
-            domain_names = couch_user.get_domains()
-            return OldDomain.objects.filter(name__in=domain_names)
-        else:
-            return OldDomain.objects.none()
-
-    def add(self, model_instance, is_active=True):
-        """
-        Add something to this domain, through the generic relation.
-        Returns the created membership object
-        """
-        # Add membership info to Couch
-        couch_user = model_instance.get_profile().get_couch_user()
-        couch_user.add_domain_membership(self.name)
-        couch_user.save()
-
-    def __unicode__(self):
-        return self.name
 
 class DomainCounter(Document):
     domain = StringProperty()
