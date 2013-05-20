@@ -42,7 +42,7 @@ var CaseXML = (function () {
             }
             //        $("#casexml-template").remove();
             $form = $('<form method="POST"/>').attr('action', this.save_url).append(
-                $('<textarea id="casexml_json" class="hidden" name="actions"/>')
+                $('<textarea id="casexml_json" class="hide" name="actions"/>')
             );
 
             this.saveButton = COMMCAREHQ.SaveButton.initForm($form, {
@@ -56,6 +56,11 @@ var CaseXML = (function () {
             }
             $form.appendTo(this.home);
             this.subhome = $('<div/>').appendTo($form);
+            var questionScores = {};
+            _(this.questions).each(function (question, i) {
+                questionScores[question.value] = i;
+            });
+            this.questionScores = questionScores;
         };
     CaseXML.prototype = {
         truncateLabel: function (label, suffix) {
@@ -117,7 +122,13 @@ var CaseXML = (function () {
         }
         this.render();
     };
-
+    CaseXML.prototype.sortByQuestions = function (map, keysOrValues) {
+        var self = this, pairs = _.pairs(map);
+        return _(pairs).sortBy(function (pair) {
+            var path = keysOrValues === 'keys' ? pair[0] : pair[1];
+            return self.questionScores[path];
+        });
+    };
     CaseXML.prototype.renderCondition = function (condition) {
         return this.condition_ejs.render({
             casexml: this,

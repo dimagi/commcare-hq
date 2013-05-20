@@ -317,7 +317,7 @@ var CaseXML = (function () {
             }
             //        $("#casexml-template").remove();
             $form = $('<form method="POST"/>').attr('action', this.save_url).append(
-                $('<textarea id="casexml_json" class="hidden" name="actions"/>')
+                $('<textarea id="casexml_json" class="hide" name="actions"/>')
             );
 
             this.saveButton = COMMCAREHQ.SaveButton.initForm($form, {
