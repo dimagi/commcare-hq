@@ -1,0 +1,29 @@
+{% extends "hqadmin/hqadmin_base_report.html" %}
+
+{% block report-title %}
+    Mobile user reports
+{% endblock %}
+
+{% block reportcontent %}
+<table class="datatable table table-striped">
+    <thead>
+        {{ headers.render_html|safe }}
+    </thead>
+    <tbody>
+    {% for row in rows %}
+        <tr>
+            <td>{{ row.domain }}</td>
+            <td>{{ row.time }}</td>
+            <td>{{ row.user }}</td>
+            <td>
+                {% for user in row.device_users %}
+                    {{ user }}
+                {% endfor %}
+            </td>
+            <td>{{ row.message }}</td>
+            <td>{{ row.version }}</td>
+        </tr>
+    {% endfor %}
+    </tbody>
+</table>
+{% endblock %}

@@ -360,6 +360,45 @@ def submissions_errors(request, template="hqadmin/submissions_errors_report.html
     return render(request, template, context)
 
 @require_superuser
+def mobile_user_reports(request):
+    template = "hqadmin/mobile_user_reports.html"
+    domains = Domain.get_all()
+
+    rows = []
+    for domain in domains:
+        data = get_db().view("phonelog/devicelog_data",
+            reduce=False,
+            startkey=[domain.name, "tag", "user-report"],
+            endkey=[domain.name, "tag", "user-report", {}],
+            stale=settings.COUCH_STALE_QUERY,
+        ).all()
+        for report in data:
+            val = report.get('value')
+            rows.append(dict(domain=domain.name,
+                             time=val['@date'],
+                             user=val['user'],
+                             device_users=val['device_users'],
+                             message=val['msg'],
+                             version=val['version']))
+
+    headers = DataTablesHeader(
+        DataTablesColumn("Domain"),
+        DataTablesColumn("Time", sort_type=DTSortType.NUMERIC),
+        DataTablesColumn("User", sort_type=DTSortType.NUMERIC),
+        DataTablesColumn("Device Users", sort_type=DTSortType.NUMERIC),
+        DataTablesColumn("Message", sort_type=DTSortType.NUMERIC),
+        DataTablesColumn("Version", sort_type=DTSortType.NUMERIC)
+
+    )
+
+    context = get_hqadmin_base_context(request)
+    context["headers"] = headers
+    context["aoColumns"] = headers.render_aoColumns
+    context["rows"] = rows
+
+    return render(request, template, context)
+
+@require_superuser
 @get_file("file")
 def update_domains(request):
     if request.method == "POST":
@@ -464,7 +503,6 @@ def domain_list_download(request):
     data = (("domains", (_row(domain) for domain in domains)),)
     export_raw(headers, data, temp)
     return export_response(temp, Format.XLS_2007, "domains")
-
 
 @require_superuser
 def system_ajax(request):
