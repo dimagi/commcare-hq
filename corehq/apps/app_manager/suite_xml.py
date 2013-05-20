@@ -346,7 +346,10 @@ class SuiteGenerator(object):
 
     @property
     def media_resources(self):
-        PREFIX = 'jr://file/commcare/'
+        PREFIX = 'jr://file/'
+        # you have to call remove_unused_mappings
+        # before iterating through multimedia_map
+        self.app.remove_unused_mappings()
         for path, m in self.app.multimedia_map.items():
             if path.startswith(PREFIX):
                 path = path[len(PREFIX):]
@@ -355,9 +358,9 @@ class SuiteGenerator(object):
             path, name = split_path(path)
             # CommCare assumes jr://media/,
             # which is an alias to jr://file/commcare/media/
-            # so we need to replace 'jr://file/commcare/' with '../'
+            # so we need to replace 'jr://file/' with '../../'
             # (this is a hack)
-            path = '../' + path
+            path = '../../' + path
             multimedia_id = m.multimedia_id
             yield MediaResource(
                 id=self.id_strings.media_resource(multimedia_id, name),

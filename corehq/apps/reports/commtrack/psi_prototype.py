@@ -109,7 +109,7 @@ class CommtrackReportMixin(ProjectReport, ProjectReportParametersMixin):
 
 def get_transactions(form_doc, include_inferred=True):
     from collections import Sequence
-    txs = form_doc['form']['transaction']
+    txs = form_doc['form'].get('transaction', [])
     if not isinstance(txs, Sequence):
         txs = [txs]
     return [tx for tx in txs if include_inferred or not tx.get('@inferred')]

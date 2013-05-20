@@ -92,7 +92,7 @@ def _enabled_hack(domain):
     return 'psi' not in (domain or  '')
 
 class CurrentStockStatusReport(GenericTabularReport, CommtrackReportMixin):
-    name = ugettext_noop('Current Stock Status by Product')
+    name = ugettext_noop('Stock Status by Product')
     slug = 'current_stock_status'
     fields = ['corehq.apps.reports.fields.AsyncLocationField']
     exportable = True
@@ -158,7 +158,7 @@ class CurrentStockStatusReport(GenericTabularReport, CommtrackReportMixin):
             {"key": "adequate stock", "color": "#4ac925"},
             {"key": "overstocked", "color": "#b536da"},
 #            {"key": "nonreporting", "color": "#363636"},
-            {"key": "no data", "color": "#ABABAB"}
+            {"key": "unknown", "color": "#ABABAB"}
         ]
         statuses = ['stocked out', 'under stock', 'adequate stock', 'overstocked', 'no data'] #'nonreporting', 'no data']
 
@@ -179,7 +179,7 @@ class CurrentStockStatusReport(GenericTabularReport, CommtrackReportMixin):
         return ctxt
 
 class AggregateStockStatusReport(GenericTabularReport, CommtrackReportMixin):
-    name = ugettext_noop('Aggregate Stock Status by Product')
+    name = ugettext_noop('Consumption and Months Remaining')
     slug = 'agg_stock_status'
     fields = ['corehq.apps.reports.fields.AsyncLocationField']
     exportable = True
