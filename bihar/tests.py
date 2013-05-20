@@ -2,7 +2,7 @@ from datetime import datetime
 from django.http import HttpRequest
 
 from django.test import TestCase
-from bihar.reports.due_list import VaccinationSummary
+from bihar.reports.due_list import VaccinationSummary, get_due_list_by_task_name
 from corehq.apps.users.models import WebUser
 
 
@@ -44,19 +44,6 @@ class TestDueList(TestCase):
     """
     
     def test_due_list_by_task_name(self):
-
-        fake_request = HttpRequest()
-        fake_request.GET = {'group': ''}
-        fake_request.couch_user = WebUser(_id='')
-
-        class FakeVaccinationSummary(VaccinationSummary):
-            def get_date(self):
-                return datetime.utcnow()
-
-        fake_report = FakeVaccinationSummary(request=fake_request)
-
         es = FakeES()
-
-        due_list = fake_report.due_list_by_task_name(case_es=es)
-
+        due_list = list(get_due_list_by_task_name(datetime.utcnow(), case_es=es))
         self.assertEquals(due_list, [('foo', 10)])

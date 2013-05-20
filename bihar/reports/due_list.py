@@ -44,45 +44,49 @@ class VaccinationSummary(GroupReferenceMixIn, BiharSummaryReport):
         return [_("# Due")] + [res[1] for res in self.due_list_by_task_name()]
 
     @memoized
-    def due_list_by_task_name(self, case_es=None, size=0, case_type='task'):
+    def due_list_by_task_name(self):
         """
         Returns the due list in a list of tuples of the form (type, count)
         """
         target_date = self.get_date()
         owner_id = self.group_id
-
-        case_es = case_es or FullCaseES(BIHAR_DOMAIN)
-        es_type = 'fullcase_%(domain)s__%(case_type)s' % { 'domain': BIHAR_DOMAIN, 'case_type': 'task' }
-        facet_name = 'vaccination_names'
-
-        # The type of vaccination is stored in the `name` field in ElasticSearch
-        # so we can get the sums directly as facets on `name.exact` where the `.exact`
-        # is to avoid tokenization so that "OPV 1" does not create two facets.
-
-        base_query = case_es.base_query(start=0, size=size)
-
-        owner_filter = {"match_all":{}} if owner_id is None else {"term": {"owner_id": owner_id}}
-
-        filter = {
-            "and": [
-                owner_filter,
-                {"term": {"closed": False}},
-                {"term": {"type": case_type}},
-                {"range": {"date_eligible": {"to": target_date.isoformat() }}},
-                {"range": {"date_expires": {"from": target_date.isoformat()}}},
-            ]
-        }
-
-        base_query['filter']['and'] += filter['and']
-        base_query['facets'] = {
-            facet_name: {
-                "terms": {"field":"name.exact"},
-                "facet_filter": filter # This controls the records processed for the summation
-            }
-        }
-        es_result = case_es.run_query(base_query, es_type=es_type)
-        return sorted([(facet['term'], facet['count']) for facet in es_result['facets'][facet_name]['terms'] ],
+        return sorted(get_due_list_by_task_name(target_date, owner_id),
                       key=lambda tup: tup[0])
+
+
+
+def get_due_list_by_task_name(target_date, owner_id=None, case_es=None, size=0, case_type='task'):
+    case_es = case_es or FullCaseES(BIHAR_DOMAIN)
+    es_type = 'fullcase_%(domain)s__%(case_type)s' % { 'domain': BIHAR_DOMAIN, 'case_type': 'task' }
+    facet_name = 'vaccination_names'
+
+    # The type of vaccination is stored in the `name` field in ElasticSearch
+    # so we can get the sums directly as facets on `name.exact` where the `.exact`
+    # is to avoid tokenization so that "OPV 1" does not create two facets.
+
+    base_query = case_es.base_query(start=0, size=size)
+
+    owner_filter = {"match_all":{}} if owner_id is None else {"term": {"owner_id": owner_id}}
+
+    filter = {
+        "and": [
+            owner_filter,
+            {"term": {"closed": False}},
+            {"term": {"type": case_type}},
+            {"range": {"date_eligible": {"to": target_date.isoformat() }}},
+            {"range": {"date_expires": {"from": target_date.isoformat()}}},
+        ]
+    }
+
+    base_query['filter']['and'] += filter['and']
+    base_query['facets'] = {
+        facet_name: {
+            "terms": {"field":"name.exact"},
+            "facet_filter": filter # This controls the records processed for the summation
+        }
+    }
+    es_result = case_es.run_query(base_query, es_type=es_type)
+    return ((facet['term'], facet['count']) for facet in es_result['facets'][facet_name]['terms'])
 
 # TODO: this is pretty silly but doing this without classes would be a bit of extra work
 class VaccinationSummaryToday(VaccinationSummary):
