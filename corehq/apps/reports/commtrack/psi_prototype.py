@@ -8,7 +8,7 @@ from dimagi.utils.couch.loosechange import map_reduce
 from dimagi.utils import parsing as dateparse
 import itertools
 from datetime import date, timedelta
-from corehq.apps.commtrack.models import CommtrackConfig, Product, StockReport
+from corehq.apps.commtrack.models import CommtrackConfig, Product, StockReport, CommtrackActionConfig
 from dimagi.utils.decorators.memoized import memoized
 from casexml.apps.case.models import CommCareCase
 from corehq.apps.commtrack import const
@@ -41,6 +41,18 @@ class CommtrackReportMixin(ProjectReport, ProjectReportParametersMixin):
 
     def ordered_actions(self, ordering):
         return sorted(self.actions, key=lambda a: (0, ordering.index(a)) if a in ordering else (1, a))
+
+    @property
+    def incr_actions(self):
+        """action types that increment/decrement stock"""
+        actions = [action_config for action_config in self.config.actions if action_config.action_type in ('receipts', 'consumption')]
+        if not any(a.action_type == 'consumption' for a in actions):
+            # add implicitly calculated consumption -- TODO find a way to refer to this more explicitly once we track different kinds of consumption (losses, etc.)
+            actions.append(CommtrackActionConfig(action_type='consumption', caption='Consumption'))
+        if 'psi' in self.domain:
+            ordering = ['sales', 'receipts', 'consumption']
+            actions.sort(key=lambda a: (0, ordering.index(a.action_name)) if a.action_name in ordering else (1, a.action_name))
+        return actions
 
     @property
     @memoized
@@ -360,10 +372,7 @@ class SalesAndConsumptionReport(GenericTabularReport, CommtrackReportMixin, Date
         cols = outlet_headers(self.domain)
         for p in self.active_products:
             cols.append('Stock on Hand (%s)' % p['name'])
-            #FIXME!! A x3
-            cols.append('Total Sales (%s)' % p['name'])
-            cols.append('Total Receipts (%s)' % p['name'])
-            cols.append('Total Consumption (%s)' % p['name'])
+            cols.extend('Total %s (%s)' % (action.caption, p['name']) for action in self.incr_actions)
         cols.append('Stock-out days (all products combined)')
 
         return DataTablesHeader(*(DataTablesColumn(c) for c in cols))
@@ -421,10 +430,7 @@ class SalesAndConsumptionReport(GenericTabularReport, CommtrackReportMixin, Date
                 stockouts[p['_id']] = stockout_dates
 
                 data.append('%s (%s)' % (stock, as_of) if latest_state else u'\u2014')
-                # FIXME!!! A x3
-                data.append(sum(tx_by_action.get('sales', [])))
-                data.append(sum(tx_by_action.get('receipts', [])))
-                data.append(sum(tx_by_action.get('consumption', [])))
+                data.extend(sum(tx_by_action.get(a.action_name, [])) for a in self.incr_actions)
 
             combined_stockout_days = len(reduce(lambda a, b: a.intersection(b), stockouts.values()))
             data.append(combined_stockout_days)
@@ -483,10 +489,7 @@ class CumulativeSalesAndConsumptionReport(GenericTabularReport, CommtrackReportM
         ])
         for p in self.active_products:
             cols.append('Total Stock on Hand (%s)' % p['name'])
-            # FIXME A
-            cols.append('Total Sales (%s)' % p['name'])
-            cols.append('Total Receipts (%s)' % p['name'])
-            cols.append('Total Consumption (%s)' % p['name'])
+            cols.extend('Total %s (%s)' % (action.caption, p['name']) for action in self.incr_actions)
 
         return DataTablesHeader(*(DataTablesColumn(c) for c in cols))
 
@@ -544,10 +547,7 @@ class CumulativeSalesAndConsumptionReport(GenericTabularReport, CommtrackReportM
                 stocks = [int(k) for k in (c.get_case_property('current_stock') for c in subcases) if k is not None]
 
                 data.append(sum(stocks) if stocks else u'\u2014')
-                # FIXME A
-                data.append(sum(tx_by_action.get('sales', [])))
-                data.append(sum(tx_by_action.get('receipts', [])))
-                data.append(sum(tx_by_action.get('consumption', [])))
+                data.extend(sum(tx_by_action.get(a.action_name, [])) for a in self.incr_actions)
 
             return data
 
