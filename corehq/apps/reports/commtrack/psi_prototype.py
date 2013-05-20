@@ -340,7 +340,7 @@ class SalesAndConsumptionReport(GenericTabularReport, CommtrackReportMixin, Date
     @property
     @memoized
     def outlets(self):
-        locs = Location.filter_by_type(self.domain, 'outlet', self.active_location)
+        locs = Location.filter_by_type(self.domain, get_terminal(self.domain), self.active_location)
         locs = filter(lambda loc: self.outlet_type_filter(loc.outlet_type), locs)
         return locs
 
@@ -355,11 +355,12 @@ class SalesAndConsumptionReport(GenericTabularReport, CommtrackReportMixin, Date
             return DataTablesHeader()
 
         if len(self.outlets) > OUTLETS_LIMIT:
-            return DataTablesHeader(DataTablesColumn('Too many outlets'))
+            return DataTablesHeader(DataTablesColumn('Too many %ss' % get_terminal(self.domain)))
 
         cols = outlet_headers(self.domain)
         for p in self.active_products:
             cols.append('Stock on Hand (%s)' % p['name'])
+            #FIXME!! A x3
             cols.append('Total Sales (%s)' % p['name'])
             cols.append('Total Receipts (%s)' % p['name'])
             cols.append('Total Consumption (%s)' % p['name'])
@@ -370,10 +371,12 @@ class SalesAndConsumptionReport(GenericTabularReport, CommtrackReportMixin, Date
     @property
     def rows(self):
         if len(self.outlets) > OUTLETS_LIMIT:
+            _term = get_terminal(self.domain)
             return [[
-                    'This report is limited to <b>%(max)d</b> outlets. Your location filter includes <b>%(count)d</b> outlets. Please make your location filter more specific.' % {
+                    'This report is limited to <b>%(max)d</b> %(term)ss. Your location filter includes <b>%(count)d</b> %(term)ss. Please make your location filter more specific.' % {
                         'count': len(self.outlets),
                         'max': OUTLETS_LIMIT,
+                        'term': _term,
                 }]]
 
         products = self.active_products
@@ -418,6 +421,7 @@ class SalesAndConsumptionReport(GenericTabularReport, CommtrackReportMixin, Date
                 stockouts[p['_id']] = stockout_dates
 
                 data.append('%s (%s)' % (stock, as_of) if latest_state else u'\u2014')
+                # FIXME!!! A x3
                 data.append(sum(tx_by_action.get('sales', [])))
                 data.append(sum(tx_by_action.get('receipts', [])))
                 data.append(sum(tx_by_action.get('consumption', [])))
@@ -456,7 +460,7 @@ class CumulativeSalesAndConsumptionReport(GenericTabularReport, CommtrackReportM
 
     @property
     def leaf_locs(self):
-        return self._descendants('outlet')
+        return self._descendants(get_terminal(self.domain))
 
     @property
     @memoized
@@ -471,13 +475,15 @@ class CumulativeSalesAndConsumptionReport(GenericTabularReport, CommtrackReportM
         if not self.aggregation_locs:
             return DataTablesHeader(DataTablesColumn('No locations'))
 
+        _term = get_terminal(self.domain)
         cols = outlet_headers(self.domain, terminal=self.aggregate_by)
         cols.extend([
-            '# reporting outlets',
-            'total # outlets',
+            '# reporting %ss' % _term,
+            'total # %ss' % _term,
         ])
         for p in self.active_products:
             cols.append('Total Stock on Hand (%s)' % p['name'])
+            # FIXME A
             cols.append('Total Sales (%s)' % p['name'])
             cols.append('Total Receipts (%s)' % p['name'])
             cols.append('Total Consumption (%s)' % p['name'])
@@ -538,6 +544,7 @@ class CumulativeSalesAndConsumptionReport(GenericTabularReport, CommtrackReportM
                 stocks = [int(k) for k in (c.get_case_property('current_stock') for c in subcases) if k is not None]
 
                 data.append(sum(stocks) if stocks else u'\u2014')
+                # FIXME A
                 data.append(sum(tx_by_action.get('sales', [])))
                 data.append(sum(tx_by_action.get('receipts', [])))
                 data.append(sum(tx_by_action.get('consumption', [])))
@@ -566,7 +573,7 @@ class StockOutReport(GenericTabularReport, CommtrackReportMixin, DatespanMixin):
     @property
     @memoized
     def outlets(self):
-        locs = Location.filter_by_type(self.domain, 'outlet', self.active_location)
+        locs = Location.filter_by_type(self.domain, get_terminal(self.domain), self.active_location)
         locs = filter(lambda loc: self.outlet_type_filter(loc.outlet_type), locs)
         return locs
 
@@ -581,7 +588,7 @@ class StockOutReport(GenericTabularReport, CommtrackReportMixin, DatespanMixin):
             return DataTablesHeader()
 
         if len(self.outlets) > OUTLETS_LIMIT:
-            return DataTablesHeader(DataTablesColumn('Too many outlets'))
+            return DataTablesHeader(DataTablesColumn('Too many %ss' % get_terminal(self.domain)))
 
         cols = outlet_headers(self.domain)
         for p in self.active_products:
@@ -592,10 +599,13 @@ class StockOutReport(GenericTabularReport, CommtrackReportMixin, DatespanMixin):
     @property
     def rows(self):
         if len(self.outlets) > OUTLETS_LIMIT:
-            return [['This report is limited to <b>%(max)d</b> outlets. Your location filter includes <b>%(count)d</b> outlets. Please make your location filter more specific.' % {
+            _term = get_terminal(self.domain)
+            return [[
+                    'This report is limited to <b>%(max)d</b> %(term)ss. Your location filter includes <b>%(count)d</b> %(term)ss. Please make your location filter more specific.' % {
                         'count': len(self.outlets),
                         'max': OUTLETS_LIMIT,
-                    }]]
+                        'term': _term,
+                }]]
 
         products = self.active_products
         def row(site):
