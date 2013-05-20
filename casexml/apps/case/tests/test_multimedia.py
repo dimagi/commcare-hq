@@ -148,7 +148,7 @@ class CaseMultimediaTest(TestCase):
         raw_xform = self._getXFormString('multimedia_update.xml')
         final_xform = self._formatXForm(raw_xform, attachment_block)
 
-        form = self._submit_and_verify(final_xform, {})
+        form = self._submit_and_verify(final_xform, dict_attachments)
         case = CommCareCase.get(TEST_CASE_ID)
         print "#### testAttachInUpdate Load from DB"
         #print simplejson.dumps(case.to_json(), indent=4)
@@ -161,7 +161,7 @@ class CaseMultimediaTest(TestCase):
         attach_actions = filter(lambda x: x['action_type'] == 'attachment', case.actions)
         self.assertEqual(2, len(attach_actions))
         last_action = attach_actions[-1]
-        self.assertEqual(sorted(new_attachments), sorted(last_action['attachments'].keys()))
+        self.assertEqual(sorted(new_attachments), sorted(case._attachments.keys()))
 
     def testOTARestoreSingle(self):
         print "testOTARestoreSingle"
