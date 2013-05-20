@@ -1,7 +1,10 @@
 function(doc) {
+  // !code util.js
+
   if (doc.xmlns == 'http://code.javarosa.org/devicereport') {
-    for (var i in doc.form.log_subreport.log) {
-      var entry = doc.form.log_subreport.log[i];
+    var logs = normalizeRepeats(doc.form.log_subreport.log);
+    for (var i = 0; i < logs.length; i++) {
+      var entry = logs[i];
       if (entry.type == 'login') {
         var user = entry.msg.substring(entry.msg.indexOf('-') + 1);
         if (user != 'admin') {
@@ -10,8 +13,9 @@ function(doc) {
       }
     }
     if (doc.form.user_subreport) {
-      for (var i in doc.form.user_subreport.user) {
-        var username = doc.form.user_subreport.user[i].username;
+      var users = normalizeRepeats(doc.form.user_subreport.user);
+      for (var i = 0; i < users.length; i++) {
+        var username = users[i].username;
         emit([doc.domain, doc.form.device_id, username], null);
       }
     }

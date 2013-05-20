@@ -1,8 +1,11 @@
 function(doc) {
+    // !code util.js
+
     var currentTags = new Array();
     if (doc.xmlns == 'http://code.javarosa.org/devicereport') {
-        for (var i in doc.form.log_subreport.log) {
-            var log_type = doc.form.log_subreport.log[i].type;
+        var logs = normalizeRepeats(doc.form.log_subreport.log);
+        for (var i = 0; i < logs.length; i++) {
+            var log_type = logs[i].type;
             if (log_type && currentTags.indexOf(log_type) == -1) {
                 emit(log_type);
                 currentTags.push(log_type);
