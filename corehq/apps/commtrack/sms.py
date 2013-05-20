@@ -327,10 +327,5 @@ def send_confirmation(v, data):
     def summarize_action(action, txs):
         return '%s %s' % (action_to_code[action].upper(), ' '.join(sorted(tx.fragment() for tx in txs)))
 
-    msg = 'received stock report for %s(%s) %s' % (
-        static_loc.site_code,
-        truncate(location_name, 20),
-        ' '.join(sorted(summarize_action(a, txs) for a, txs in tx_by_action.iteritems()))
-    )
-
+    msg = 'Thank you! We received your stock report for %s' % truncate(location_name, 20)
     send_sms_to_verified_number(v, msg)
