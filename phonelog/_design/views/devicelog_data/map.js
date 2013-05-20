@@ -1,4 +1,6 @@
 function(doc) {
+    // !code util.js
+
     function clone(obj){
         if(obj == null || typeof(obj) != 'object')
             return obj;
@@ -12,15 +14,18 @@ function(doc) {
     if (doc.xmlns == 'http://code.javarosa.org/devicereport') {
         var user_subreport_usernames = [];
         if (doc.form.user_subreport) {
-            for (var i in doc.form.user_subreport.user) {
-                user_subreport_usernames.push(doc.form.user_subreport.user[i].username);
+            var users = normalizeRepeats(doc.form.user_subreport.user);
+            for (var i in users) {
+                var username = users[i].username;
+                user_subreport_usernames.push(username);
             }
         }
 
         var logged_in_user = "unknown";
-        for (var i in doc.form.log_subreport.log) {
+        var logs = normalizeRepeats(doc.form.log_subreport.log);
+        for (var i in logs) {
             // need to clone because you can't set the property on the actual doc
-            var entry = clone(doc.form.log_subreport.log[i]);
+            var entry = clone(logs[i]);
             entry.device_users = user_subreport_usernames;
             entry.version = doc.form.app_version;
             entry.device_id = doc.form.device_id;
