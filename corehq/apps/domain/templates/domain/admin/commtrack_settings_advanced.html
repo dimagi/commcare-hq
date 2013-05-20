@@ -1,0 +1,31 @@
+{% extends "users/users_base.html" %}
+{% load i18n %}
+{% load crispy_forms_tags %}
+
+{% block subsection-title %}
+<li class="active">
+    <a href="#">{% trans "CommTrack Advanced Settings" %}</a>
+</li>
+{% endblock %}
+
+{% block js-inline %}
+<script>
+    $("#id_use_auto_emergency_levels").change(function () {
+        $("#id_stock_emergency_level, " +
+          "#id_stock_understock_threshold, " +
+          "#id_stock_overstock_threshold"
+        ).prop('disabled', $(this).prop('checked'));
+    }).change();
+
+    $("#id_use_auto_consumption").change(function () {
+        $("#id_consumption_min_periods, " +
+          "#id_consumption_min_window, " +
+          "#id_consumption_window"
+        ).prop('disabled', $(this).prop('checked'));
+    }).change();
+</script>
+{% endblock %}
+
+{% block user-view %}
+    {% crispy form %}
+{% endblock %}
