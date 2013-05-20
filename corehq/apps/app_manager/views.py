@@ -2037,7 +2037,7 @@ def summary(request, domain, app_id, should_edit=True):
 @login_and_domain_required
 def download_translations(request, domain, app_id):
     app = get_app(domain, app_id)
-    properties = tuple(["property"] + app.langs)
+    properties = tuple(["property"] + app.langs + ["default"])
     temp = StringIO()
     headers = (("translations", properties),)
 
@@ -2053,15 +2053,20 @@ def download_translations(request, domain, app_id):
             row_dict[prop].append(trans)
 
     rows = row_dict.values()
-    all_prop_trans = st_trans.DEFAULT + st_trans.CC_DEFAULT + st_trans.CCODK_DEFAULT
-    rows.extend([[t[0]] for t in all_prop_trans if t[0] not in row_dict])
+    all_prop_trans = dict(st_trans.DEFAULT + st_trans.CC_DEFAULT + st_trans.CCODK_DEFAULT)
+    rows.extend([[t] for t in sorted(all_prop_trans.keys()) if t not in row_dict])
 
     def fillrow(row):
         num_to_fill = len(properties) - len(row)
         row.extend(["" for i in range(num_to_fill)] if num_to_fill > 0 else [])
         return row
 
-    rows = [fillrow(row) for row in rows]
+    def add_default(row):
+        print row
+        row[-1] = all_prop_trans.get(row[0], "")
+        return row
+
+    rows = [add_default(fillrow(row)) for row in rows]
 
     data = (("translations", tuple(rows)),)
     export_raw(headers, data, temp)
