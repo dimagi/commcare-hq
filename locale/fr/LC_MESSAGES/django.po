@@ -3760,7 +3760,7 @@ msgid "Form was successfully restored."
 msgstr "Objet supprimé avec succès."
 
 #: corehq/apps/reports/commtrack/standard.py:95
-msgid "Current Stock Status by Product"
+msgid "Stock Status by Product"
 msgstr ""
 
 #: corehq/apps/reports/commtrack/standard.py:112
@@ -3785,7 +3785,7 @@ msgid "Insufficient Data"
 msgstr "Inspecter les données"
 
 #: corehq/apps/reports/commtrack/standard.py:181
-msgid "Aggregate Stock Status by Product"
+msgid "Consumption and Months Remaining"
 msgstr ""
 
 #: corehq/apps/reports/commtrack/standard.py:196
@@ -3809,7 +3809,7 @@ msgstr "Statut"
 
 #: corehq/apps/reports/commtrack/standard.py:252
 #, fuzzy
-msgid "no data"
+msgid "unknown"
 msgstr "Aucune donnée"
 
 #: corehq/apps/reports/commtrack/standard.py:253

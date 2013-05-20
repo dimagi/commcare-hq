@@ -3451,7 +3451,7 @@ msgid "Form was successfully restored."
 msgstr ""
 
 #: corehq/apps/reports/commtrack/standard.py:95
-msgid "Current Stock Status by Product"
+msgid "Stock Status by Product"
 msgstr ""
 
 #: corehq/apps/reports/commtrack/standard.py:112
@@ -3475,7 +3475,7 @@ msgid "Insufficient Data"
 msgstr ""
 
 #: corehq/apps/reports/commtrack/standard.py:181
-msgid "Aggregate Stock Status by Product"
+msgid "Consumption and Months Remaining"
 msgstr ""
 
 #: corehq/apps/reports/commtrack/standard.py:196
@@ -3495,7 +3495,7 @@ msgid "Stock Status"
 msgstr ""
 
 #: corehq/apps/reports/commtrack/standard.py:252
-msgid "no data"
+msgid "unknown"
 msgstr ""
 
 #: corehq/apps/reports/commtrack/standard.py:253
