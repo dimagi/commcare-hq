@@ -22,6 +22,9 @@ from dateutil.parser import parse
 REGISTRATION_KEYWORDS = ["JOIN"]
 REGISTRATION_MOBILE_WORKER_KEYWORDS = ["WORKER"]
 
+class BackendAuthorizationException(Exception):
+    pass
+
 def send_sms(domain, id, phone_number, text):
     """
     Sends an outbound SMS. Returns false if it fails.
@@ -99,7 +102,10 @@ def send_message_via_backend(msg, backend=None, onerror=lambda: None):
             # verification, thus the backend is None. it's best to only call
             # send_sms_to_verified_number on truly verified contacts, though
 
-        backend.backend_module.send(msg, **backend.get_cleaned_outbound_params())
+        if backend.domain_is_authorized(msg.domain):
+            backend.backend_module.send(msg, **backend.get_cleaned_outbound_params())
+        else:
+            raise BackendAuthorizationException("Domain '%' is not authorized to use backend '%s'" % (domain, backend._id))
 
         try:
             msg.backend_api = backend.backend_module.API_ID

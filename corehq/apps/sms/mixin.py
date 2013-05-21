@@ -77,10 +77,15 @@ class MobileBackend(Document):
     """
     Defines an instance of a backend api to be used for either sending sms, or sending outbound calls.
     """
-    domain = ListProperty(StringProperty)   # A list of domains for which this backend is applicable
+    domain = StringProperty()               # This is the domain that the backend belongs to, or None for global backends
+    authorized_domains = ListProperty(StringProperty)  # A list of additional domains that are allowed to use this backend
+    is_global = BooleanProperty(default=True)  # If True, this backend can be used for any domain
     description = StringProperty()          # (optional) A description of this backend
     outbound_module = StringProperty()      # The fully-qualified name of the outbound module to be used (sms backends: must implement send(); ivr backends: must implement initiate_outbound_call() )
     outbound_params = DictProperty()        # The parameters which will be the keyword arguments sent to the outbound module's send() method
+
+    def domain_is_authorized(self, domain):
+        return self.is_global or domain == self.domain or domain in self.authorized_domains
 
     @classmethod
     def auto_load(cls, phone_number, domain=None):
