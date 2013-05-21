@@ -294,23 +294,6 @@ class CommCareImage(CommCareMultimedia):
     class Config(object):
         search_view = 'hqmedia/image_search'
 
-    @memoized
-    def get_image_object(self, data):
-        return Image.open(StringIO(data))
-
-    def get_thumbnail_data(self, data, size):
-        try:
-            image = self.get_image_object(data)
-            if image.mode != "RGB":
-                image = image.convert("RGB")
-            o = StringIO()
-            image.thumbnail(size, Image.ANTIALIAS)
-            image.save(o, format="JPEG")
-            return o.getvalue()
-        except ImportError:
-            logging.error("Could not correctly process thumbnail for media %s" % self._id)
-        return data
-
     def attach_data(self, data, original_filename=None, username=None, attachment_id=None, media_meta=None,
                     replace_attachment=False):
         image = self.get_image_object(data)
@@ -325,6 +308,33 @@ class CommCareImage(CommCareMultimedia):
         return super(CommCareImage, self).attach_data(data, original_filename=original_filename, username=username,
                                                       attachment_id=attachment_id, media_meta=media_meta,
                                                       replace_attachment=replace_attachment)
+
+    @classmethod
+    def get_image_object(cls, data):
+        return Image.open(StringIO(data))
+
+    @classmethod
+    def _get_resized_image(cls, image, size):
+        if image.mode != "RGB":
+            image = image.convert("RGB")
+        o = StringIO()
+        image.thumbnail(size, Image.ANTIALIAS)
+        image.save(o, format="JPEG")
+        return o.getvalue()
+
+    @classmethod
+    def get_invalid_image_data(cls):
+        import os
+        invalid_image_path = os.path.join(os.path.dirname(__file__), 'static/hqmedia/img/invalid_image.png')
+        return Image.open(open(invalid_image_path))
+
+    @classmethod
+    def get_thumbnail_data(cls, data, size):
+        try:
+            data = cls._get_resized_image(cls.get_image_object(data), size)
+        except (ImportError, IOError):
+            data = cls._get_resized_image(cls.get_invalid_image_data(), size)
+        return data
 
     @classmethod
     def get_nice_name(cls):
