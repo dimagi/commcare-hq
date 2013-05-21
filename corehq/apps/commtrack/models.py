@@ -459,10 +459,9 @@ class SupplyPointProductCase(CommCareCase):
     @property
     def stockout_duration_in_months(self):
         if self.stocked_out_since:
-            date = datetime.strptime('YYYY-MM-DD', self.stocked_out_since).date()
-            today = datetime.today()
+            today = datetime.today().date()
 
-            return (today - date).months
+            return round((today - self.stocked_out_since).days / 30.0, ndigits=1)
         else:
             return None
 
