@@ -522,6 +522,8 @@ class AdminReportsTab(UITab):
                  'url': reverse('global_submissions_errors')},
                 {'title': _('System Info'),
                  'url': reverse('system_info')},
+                {'title': _('Mobile User Reports'),
+                 'url': reverse('mobile_user_reports')},
             ]),
             (_('Administrative Operations'), [
                 {'title': _('View/Update Domain Information'),
