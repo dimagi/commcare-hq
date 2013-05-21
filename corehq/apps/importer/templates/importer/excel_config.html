@@ -54,20 +54,8 @@
             </div>
         </fieldset>
 
-
         <fieldset>
             <legend>{% trans "Identifying Cases to Update/Create" %}</legend>
-            <div class="control-group">
-                <div class="controls">
-                    <label class="checkbox" for="create_new_cases">
-                        <input type="checkbox"
-                               name="create_new_cases"
-                               id="create_new_cases" />
-                        {% trans "Create new records if there is no matching case" %}
-                    </label>
-                </div>
-            </div>
-
             <div class="control-group">
                 <label class="control-label" for="search_column">
                     {% trans "Excel Column" %}
@@ -96,6 +84,17 @@
                             {% trans "External ID" %}
                         </option>
                     </select>
+                </div>
+            </div>
+
+            <div class="control-group">
+                <div class="controls">
+                    <label class="checkbox" for="create_new_cases">
+                        <input type="checkbox"
+                               name="create_new_cases"
+                               id="create_new_cases" />
+                        {% trans "Create new records if there is no matching case" %}
+                    </label>
                 </div>
             </div>
         </fieldset>
