@@ -1,4 +1,3 @@
-import logging
 from django.dispatch.dispatcher import Signal
 from dimagi.utils.logging import notify_exception
 from receiver.signals import successful_form_received

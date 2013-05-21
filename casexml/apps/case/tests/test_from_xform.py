@@ -2,6 +2,7 @@ import uuid
 from django.test import TestCase
 from django.conf import settings
 from casexml.apps.case import const
+from casexml.apps.case.models import CommCareCase
 from casexml.apps.case.tests.test_const import *
 from casexml.apps.case.tests.util import bootstrap_case_from_xml
 from dimagi.utils.post import post_data
@@ -159,6 +160,8 @@ class CaseFromXFormTest(TestCase):
     
     
     def _check_static_properties(self, case):
+        self.assertEqual(CommCareCase, type(case))
+        self.assertEqual('CommCareCase', case.doc_type)
         self.assertEqual("test_case_type", case.type)
         self.assertEqual("test case name", case.name)
         self.assertEqual("someuser", case.user_id)

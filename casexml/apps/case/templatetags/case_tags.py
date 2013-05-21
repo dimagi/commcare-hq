@@ -13,6 +13,7 @@ import simplejson
 
 from corehq.apps.hqwebapp.templatetags.proptable_tags import (
     get_tables_as_columns, get_definition)
+from casexml.apps.case.models import CommCareCase
 
 
 register = template.Library()
@@ -32,56 +33,12 @@ def render_case(case, options):
     _get_tables_as_columns = partial(get_tables_as_columns, timezone=timezone)
     display = options.get('display', None)
 
-    display = display or [
-        {
-            "layout": [
-                [
-                    {
-                        "expr": "name",
-                        "name": _("Name"),
-                    },
-                    {
-                        "expr": "opened_on",
-                        "name": _("Opened On"),
-                        "parse_date": True,
-                    },
-                    {
-                        "expr": "modified_on",
-                        "name": _("Modified On"),
-                        "parse_date": True,
-                    },
-                    {
-                        "expr": "closed_on",
-                        "name": _("Closed On"),
-                        "parse_date": True,
-                    },
-                ],
-                [
-                    {
-                        "expr": "type",
-                        "name": _("Case Type"),
-                        "format": '<code>{0}</code>',
-                    },
-                    {
-                        "expr": "user_id",
-                        "name": _("User ID"),
-                        "format": '<span data-field="user_id">{0}</span>',
-                    },
-                    {
-                        "expr": "owner_id",
-                        "name": _("Owner ID"),
-                        "format": '<span data-field="owner_id">{0}</span>',
-                    },
-                    {
-                        "expr": "_id",
-                        "name": _("Case ID"),
-                    },
-                ],
-            ],
-        }
-    ]
+    json = case.to_json()
+    case_class = CommCareCase.get_wrap_class(json)
+    case = case_class.wrap(case.to_json())
 
-    data = copy.deepcopy(case.to_json())
+    display = display or case.get_display_config()
+    data = copy.deepcopy(case.to_full_dict())
 
     default_properties = _get_tables_as_columns(data, display)
 
@@ -92,11 +49,14 @@ def render_case(case, options):
             for item in row:
                 dynamic_data.pop(item.get("expr"), None)
 
-    dynamic_keys = sorted(dynamic_data.keys())
-    definition = get_definition(
-            dynamic_keys, num_columns=DYNAMIC_CASE_PROPERTIES_COLUMNS)
+    if dynamic_data:
+        dynamic_keys = sorted(dynamic_data.keys())
+        definition = get_definition(
+                dynamic_keys, num_columns=DYNAMIC_CASE_PROPERTIES_COLUMNS)
 
-    dynamic_properties = _get_tables_as_columns(dynamic_data, definition)
+        dynamic_properties = _get_tables_as_columns(dynamic_data, definition)
+    else:
+        dynamic_properties = None
 
     actions = case.to_json()['actions']
     actions.reverse()
