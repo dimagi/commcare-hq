@@ -11,7 +11,6 @@ from dimagi.utils.couch.database import get_db
 from django.contrib.auth.forms import PasswordChangeForm, SetPasswordForm
 from django.contrib.auth.models import User
 from django.core.urlresolvers import reverse
-from django.db import transaction
 from django.http import Http404, HttpResponseRedirect, HttpResponse, HttpResponseForbidden
 from django.shortcuts import render
 from django.template.loader import render_to_string
@@ -186,7 +185,6 @@ class UserInvitationView(InvitationView):
         user.set_role(self.domain, invitation.role)
         user.save()
 
-@transaction.commit_on_success
 def accept_invitation(request, domain, invitation_id):
     return UserInvitationView()(request, invitation_id, domain=domain)
 
