@@ -836,13 +836,10 @@ def download_cases(request, domain):
 
     return generate_payload(payload_func)
 
+
 def _get_form_context(request, domain, instance_id):
     timezone = util.get_timezone(request.couch_user.user_id, domain)
-
-    try:
-        instance = XFormInstance.get(instance_id)
-    except Exception:
-        raise Http404()
+    instance = _get_form_or_404(instance_id)
     try:
         assert domain == instance.domain
     except AssertionError:
@@ -857,6 +854,14 @@ def _get_form_context(request, domain, instance_id):
     }
     context['form_render_options'] = context
     return context
+
+
+def _get_form_or_404(id):
+    # maybe this should be a more general utility a-la-django's get_object_or_404
+    try:
+        return XFormInstance.get(id)
+    except ResourceNotFound:
+        raise Http404()
 
 
 @require_form_view_permission
@@ -891,12 +896,11 @@ def case_form_data(request, domain, case_id, xform_id):
     return HttpResponse(render_form(
             context['instance'], domain, options=context))
 
-
 @require_form_view_permission
 @login_and_domain_required
 @require_GET
 def download_form(request, domain, instance_id):
-    instance = XFormInstance.get(instance_id)
+    instance = _get_form_or_404(instance_id)
     assert(domain == instance.domain)
     return couchforms_views.download_form(request, instance_id)
 
@@ -904,7 +908,7 @@ def download_form(request, domain, instance_id):
 @login_and_domain_required
 @require_GET
 def download_attachment(request, domain, instance_id, attachment):
-    instance = XFormInstance.get(instance_id)
+    instance = _get_form_or_404(instance_id)
     assert(domain == instance.domain)
     return couchforms_views.download_attachment(request, instance_id, attachment)
 
@@ -912,7 +916,7 @@ def download_attachment(request, domain, instance_id, attachment):
 @require_permission(Permissions.edit_data)
 @require_POST
 def archive_form(request, domain, instance_id):
-    instance = XFormInstance.get(instance_id)
+    instance = _get_form_or_404(instance_id)
     assert instance.domain == domain
     if instance.doc_type == "XFormInstance": 
         instance.archive()
@@ -939,7 +943,7 @@ def archive_form(request, domain, instance_id):
 @require_form_view_permission
 @require_permission(Permissions.edit_data)
 def unarchive_form(request, domain, instance_id):
-    instance = XFormInstance.get(instance_id)
+    instance = _get_form_or_404(instance_id)
     assert instance.domain == domain
     if instance.doc_type == "XFormArchived":
         instance.doc_type = "XFormInstance"
