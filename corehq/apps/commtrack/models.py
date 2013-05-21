@@ -145,7 +145,21 @@ class SupplyPointType(DocumentSchema):
     name = StringProperty()
     categories = StringListProperty()
 
+
+class ConsumptionConfig(DocumentSchema):
+    min_transactions = IntegerProperty(default=2)
+    min_window = IntegerProperty(default=10)
+    optimal_window = IntegerProperty()
+
+
+class StockLevelsConfig(DocumentSchema):
+    emergency_level = DecimalProperty(default=0.5)  # in months
+    understock_threshold = DecimalProperty(default=1.5)  # in months
+    overstock_threshold = DecimalProperty(default=3)  # in months
+
+
 class CommtrackConfig(Document):
+
     domain = StringProperty()
 
     # supported stock actions for this commtrack domain
@@ -162,9 +176,12 @@ class CommtrackConfig(Document):
 
     requisition_config = SchemaProperty(CommtrackRequisitionConfig)
 
-    consumption_rate_window = IntegerProperty() # days
-    consumption_rate_min_timespan = IntegerProperty() # days
-    consumption_rate_min_datapoints = IntegerProperty()
+    # configured on Advanced Settings page
+    use_auto_emergency_levels = BooleanProperty(default=False)
+
+    use_auto_consumption = BooleanProperty(default=False)
+    consumption_config = SchemaProperty(ConsumptionConfig)
+    stock_levels_config = SchemaProperty(StockLevelsConfig)
 
     @classmethod
     def for_domain(cls, domain):
