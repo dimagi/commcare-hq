@@ -1,6 +1,7 @@
 from dimagi.utils.couch.database import get_db
 from corehq.apps.commtrack.models import *
 from corehq.apps.locations.models import Location
+from corehq.apps.domain.models import Domain
 from casexml.apps.case.models import CommCareCase
 import itertools
 from datetime import datetime, date, timedelta
@@ -55,8 +56,11 @@ def make_product(domain, name, code):
     return p
 
 def bootstrap_default(domain, requisitions_enabled=True):
+    if not(domain and domain.commtrack_enabled and not domain.commtrack_settings):
+        return
+
     c = CommtrackConfig(
-        domain=domain,
+        domain=domain.name,
         multiaction_enabled=True,
         multiaction_keyword='report',
         actions=[
@@ -126,9 +130,9 @@ def bootstrap_default(domain, requisitions_enabled=True):
         )
     c.save()
 
-    make_product(domain, 'Sample Product 1', 'pp')
-    make_product(domain, 'Sample Product 2', 'pq')
-    make_product(domain, 'Sample Product 3', 'pr')
+    make_product(domain.name, 'Sample Product 1', 'pp')
+    make_product(domain.name, 'Sample Product 2', 'pq')
+    make_product(domain.name, 'Sample Product 3', 'pr')
 
     return c
 

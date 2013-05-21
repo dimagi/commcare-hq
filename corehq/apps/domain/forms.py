@@ -263,8 +263,7 @@ class DomainMetadataForm(DomainGlobalSettingsForm, SnapshotSettingsMixin):
             domain.sms_case_registration_user_id = self.cleaned_data.get('sms_case_registration_user_id')
             domain.default_sms_backend_id = self.cleaned_data.get('default_sms_backend_id')
             domain.commtrack_enabled = self.cleaned_data.get('commtrack_enabled', False)
-            if domain.commtrack_enabled and not domain.commtrack_settings:
-                commtrack_util.bootstrap_default(domain.name)
+            commtrack_util.bootstrap_default(domain)
             domain.save()
             return True
         except Exception:
