@@ -379,15 +379,13 @@ def mobile_user_reports(request):
             val = report.get('value')
             version = val.get('version', 'unknown')
             formatted_date = tz_utils.string_to_prertty_time(val['@date'], timezone(domain.default_timezone), fmt="%b %d, %Y %H:%M:%S")
-            formatted_version = '%s <a href="#" data-datatable-tooltip="left" data-datatable-tooltip-text="%s"> \
-                                <i class="icon icon-info-sign"></i></a>'\
-                                % (version.split(' ')[0], html.escape(version))
             rows.append(dict(domain=domain.name,
                              time=formatted_date,
                              user=val['user'],
                              device_users=val['device_users'],
                              message=val['msg'],
-                             version=formatted_version,
+                             version=version.split(' ')[0],
+                             detailed_version=html.escape(version),
                              report_id=report['id']))
 
     headers = DataTablesHeader(

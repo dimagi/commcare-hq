@@ -27,7 +27,13 @@
                 {% endfor %}
             </td>
             <td>{{ row.message }}</td>
-            <td>{{ row.version|safe }}</td>
+            <td>
+                {{ row.version }}
+                <a href="#" data-datatable-tooltip="left"
+                            data-datatable-tooltip-text="{{ row.detailed_version }}">
+                    <i class="icon icon-info-sign"></i>
+                </a>
+            </td>
         </tr>
     {% endfor %}
     </tbody>
