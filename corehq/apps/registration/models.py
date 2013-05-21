@@ -1,6 +1,9 @@
 from couchdbkit.ext.django.schema import Document, StringProperty,\
     BooleanProperty, DateTimeProperty, IntegerProperty
 import datetime
+from corehq.apps.domain.models import Domain
+from dimagi.utils.decorators.memoized import memoized
+
 
 class RegistrationRequest(Document):
     tos_confirmed = BooleanProperty(default=False)
@@ -12,6 +15,11 @@ class RegistrationRequest(Document):
     domain = StringProperty()
     new_user_username = StringProperty()
     requesting_user_username = StringProperty()
+
+    @property
+    @memoized
+    def project(self):
+        return Domain.get_by_name(self.domain)
 
     @classmethod
     def get_by_guid(cls, guid):
