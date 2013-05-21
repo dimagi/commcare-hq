@@ -15,6 +15,7 @@ from corehq.apps.commtrack import const
 from corehq.apps.commtrack.util import supply_point_type_categories
 import corehq.apps.locations.util as loc_util
 from collections import deque
+from django.utils.translation import ugettext as _
 
 class CommtrackReportMixin(ProjectReport, ProjectReportParametersMixin):
 
@@ -174,7 +175,7 @@ def LOC_METADATA(terminal):
         },
         {
             'key': 'site_code',
-            'caption': '%s code' % terminal,
+            'caption': _('%s code') % terminal,
         },
         {
             'key': 'name',
