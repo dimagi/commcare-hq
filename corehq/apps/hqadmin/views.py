@@ -37,7 +37,7 @@ from dimagi.utils.excel import WorkbookJSONReader
 from dimagi.utils.decorators.view import get_file
 from django.utils import html
 from dimagi.utils.timezones import utils as tz_utils
-
+from django.utils.translation import ugettext as _
 
 @require_superuser
 def default(request):
@@ -391,13 +391,13 @@ def mobile_user_reports(request):
                              report_id=report['id']))
 
     headers = DataTablesHeader(
-        DataTablesColumn("View Form"),
-        DataTablesColumn("Domain"),
-        DataTablesColumn("Time", sort_type=DTSortType.NUMERIC),
-        DataTablesColumn("User", sort_type=DTSortType.NUMERIC),
-        DataTablesColumn("Device Users", sort_type=DTSortType.NUMERIC),
-        DataTablesColumn("Message", sort_type=DTSortType.NUMERIC),
-        DataTablesColumn("Version", sort_type=DTSortType.NUMERIC)
+        DataTablesColumn(_("View Form")),
+        DataTablesColumn(_("Domain")),
+        DataTablesColumn(_("Time"), sort_type=DTSortType.NUMERIC),
+        DataTablesColumn(_("User"), sort_type=DTSortType.NUMERIC),
+        DataTablesColumn(_("Device Users"), sort_type=DTSortType.NUMERIC),
+        DataTablesColumn(_("Message"), sort_type=DTSortType.NUMERIC),
+        DataTablesColumn(_("Version"), sort_type=DTSortType.NUMERIC)
 
     )
 
