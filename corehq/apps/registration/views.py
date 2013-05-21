@@ -14,7 +14,6 @@ from corehq.apps.registration.forms import NewWebUserRegistrationForm, DomainReg
 from corehq.apps.registration.utils import *
 from dimagi.utils.couch.resource_conflict import retry_resource
 from dimagi.utils.web import get_ip
-from corehq.apps.domain.decorators import require_superuser
 from corehq.apps.orgs.models import Organization
 
 DOMAIN_TYPES = (
@@ -32,7 +31,6 @@ def register_user(request, domain_type=None):
 
     if request.user.is_authenticated():
         # Redirect to a page which lets user choose whether or not to create a new account
-        vals = {}
         domains_for_user = Domain.active_for_user(request.user)
         if len(domains_for_user) == 0:
             return redirect("registration_domain")
