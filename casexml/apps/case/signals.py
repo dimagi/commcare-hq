@@ -1,3 +1,4 @@
+from django.conf import settings
 from django.dispatch.dispatcher import Signal
 from dimagi.utils.logging import notify_exception
 from receiver.signals import successful_form_received
@@ -61,8 +62,11 @@ def process_cases(sender, xform, config=None, **kwargs):
         cases_received.send(sender=None, xform=xform, cases=cases)
     except Exception, e:
         # don't let the exceptions in signals prevent standard case processing
-        notify_exception(None,
-                         'something went wrong sending the cases_received signal for form %s: %s' % (xform._id, e))
+        if settings.DEBUG:
+            raise
+        else:
+            notify_exception(None,
+                             'something went wrong sending the cases_received signal for form %s: %s' % (xform._id, e))
 
     # set flags for indicator pillows and save
     xform.initial_processing_complete = True
