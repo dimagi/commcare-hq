@@ -1542,7 +1542,10 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
 
     @property
     def url_base(self):
-        if self.force_http:
+        # force_http is a deprecated hack
+        # for safety we're just special-casing the only
+        # domain that ever used it, wvmoz
+        if self.force_http and self.domain == 'wvmoz':
             return settings.INSECURE_URL_BASE
         else:
             return get_url_base()
