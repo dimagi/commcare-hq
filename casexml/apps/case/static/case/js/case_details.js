@@ -51,7 +51,6 @@ function XFormDataModel(data) {
     self.domain = ko.observable(data.domain);
     self.app_id = ko.observable(data.app_id);
     self.received_on = ko.observable(format_date(data.received_on));
-    delete data.form.meta;
 
     if (data.form.meta !== undefined) {
         self.timeStart = ko.observable(format_date(data.form.meta.timeStart));
