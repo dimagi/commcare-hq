@@ -167,7 +167,6 @@ HQ_APPS = (
     'corehq.apps.hqmedia',
     'corehq.apps.locations',
     'corehq.apps.commtrack',
-    'ctable',
     'couchforms',
     'couchexport',
     'couchlog',
@@ -556,7 +555,6 @@ COUCHDB_APPS = [
     'couchdbkit_aggregate',
     'couchforms',
     'couchexport',
-    'ctable',
     'hqadmin',
     'domain',
     'facilities',
@@ -690,9 +688,6 @@ PILLOWTOPS = [
                  # fluff
                  'bihar.models.CareBiharFluffPillow',
              ] + LOCAL_PILLOWTOPS
-
-# list of fluff pillow class names for Ctable to track changes from
-FLUFF_PILLOWS_TO_SQL = []
 
 #Custom workflow for indexing xform data beyond the standard properties
 XFORM_PILLOW_HANDLERS = ['pact.pillowhandler.PactHandler', ]
