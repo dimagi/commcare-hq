@@ -34,6 +34,7 @@ from couchforms.models import XFormInstance
 from soil import heartbeat
 from soil import views as soil_views
 import os
+import re
 
 from django.utils.http import urlencode
 
@@ -223,7 +224,7 @@ def logout(req, template_name="hqwebapp/loggedout.html"):
     if referer and domain and is_mobile_url(referer):
         mobile_mainnav_url = reverse('custom_project_report_dispatcher', args=[domain, 'mobile/mainnav'])
         mobile_login_url = reverse('domain_mobile_login', kwargs={'domain': domain})
-        return HttpResponseRedirect('%s?%s' % (mobile_login_url, urlencode({'next': mobile_mainnav_url})))
+        return HttpResponseRedirect('%s?next=%s' % (mobile_login_url, mobile_mainnav_url))
     elif referer and domain:
         domain_login_url = reverse('domain_login', kwargs={'domain': domain})
         return HttpResponseRedirect('%s' % domain_login_url)
@@ -302,6 +303,11 @@ def bug_report(req):
         to=settings.BUG_REPORT_RECIPIENTS,
         headers={'Reply-To': reply_to}
     )
+
+    # only fake the from email if it's an @dimagi.com account
+    if re.search('@dimagi\.com$', report['username']):
+        email.from_email = report['username']
+
     email.send(fail_silently=False)
 
     if req.POST.get('five-hundred-report'):

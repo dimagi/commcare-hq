@@ -12,6 +12,7 @@ from corehq.apps.users.models import CommCareUser, WebUser
 from corehq.apps.domain.models import Domain
 from corehq.apps.receiverwrapper.models import FormRepeater, CaseRepeater, ShortFormRepeater
 from corehq.apps.api.resources import v0_1, v0_4
+from corehq.apps.api.es import ESQuerySet
 
 class FakeXFormES(object):
     """
@@ -21,15 +22,21 @@ class FakeXFormES(object):
     
     def __init__(self):
         self.docs = []
+        self.queries = []
 
     def add_doc(self, id, doc):
         self.docs.append(doc)
     
     def run_query(self, query):
+        self.queries.append(query)
+
+        start = query.get('from', 0)
+        end = (query['size'] + start) if 'size' in query else None
+        
         return {
             'hits': {
                 'total': len(self.docs),
-                'hits': [{'_source': doc} for doc in self.docs]
+                'hits': [{'_source': doc} for doc in self.docs[start:end]]
             }
         }
 
@@ -227,6 +234,7 @@ class TestWebUserResource(APIResourceTest):
         self.assertEqual(user._id, json_user['id'])
         role = user.get_role(self.domain.name)
         self.assertEqual(role.name, json_user['role'])
+        self.assertEqual(user.is_domain_admin(self.domain.name), json_user['is_admin'])
         for perm in ['edit_web_users', 'edit_commcare_users', 'edit_data',
                      'edit_apps', 'view_reports']:
             self.assertEqual(getattr(role.permissions, perm), json_user['permissions'][perm])
@@ -241,6 +249,27 @@ class TestWebUserResource(APIResourceTest):
         api_users = simplejson.loads(response.content)['objects']
         self.assertEqual(len(api_users), 1)
         self._check_user_data(self.user, api_users[0])
+
+        another_user = WebUser.create(self.domain.name, 'anotherguy', '***')
+        another_user.set_role(self.domain.name, 'field-implementer')
+        another_user.save()
+
+        response = self.client.get(self.list_endpoint)
+        self.assertEqual(response.status_code, 200)
+        api_users = simplejson.loads(response.content)['objects']
+        self.assertEqual(len(api_users), 2)
+
+        # username filter
+        response = self.client.get('%s?username=%s' % (self.list_endpoint, 'anotherguy'))
+        self.assertEqual(response.status_code, 200)
+        api_users = simplejson.loads(response.content)['objects']
+        self.assertEqual(len(api_users), 1)
+        self._check_user_data(another_user, api_users[0])
+
+        response = self.client.get('%s?username=%s' % (self.list_endpoint, 'nomatch'))
+        self.assertEqual(response.status_code, 200)
+        api_users = simplejson.loads(response.content)['objects']
+        self.assertEqual(len(api_users), 0)
 
 
     def test_get_single(self):
@@ -353,3 +382,35 @@ class TestRepeaterResource(APIResourceTest):
             self.assertEqual(1, len(cls.by_domain(self.domain.name)))
             modified = cls.get(backend_id)
             self.assertTrue('modified' in modified.url)
+
+class TestESQuerySet(TestCase):
+    '''
+    Tests the ESQuerySet for appropriate slicing, etc
+    '''
+
+    def test_slice(self):
+        es = FakeXFormES()
+        for i in xrange(0, 1300):
+            es.add_doc(i, {'i': i})
+        
+        queryset = ESQuerySet(es_client=es, payload={})
+        qs_slice = list(queryset[3:7])
+
+        self.assertEqual(es.queries[0]['from'], 3)
+        self.assertEqual(es.queries[0]['size'], 4)
+        self.assertEqual(len(qs_slice), 4)
+
+        queryset = ESQuerySet(es_client=es, payload={})
+        qs_slice = list(queryset[10:20])
+
+        self.assertEqual(es.queries[1]['from'], 10)
+        self.assertEqual(es.queries[1]['size'], 10)
+        self.assertEqual(len(qs_slice), 10)
+
+        queryset = ESQuerySet(es_client=es, payload={})
+        qs_slice = list(queryset[500:1000])
+        
+        self.assertEqual(es.queries[2]['from'], 500)
+        self.assertEqual(es.queries[2]['size'], 500)
+        self.assertEqual(len(qs_slice), 500)
+
