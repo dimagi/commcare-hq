@@ -203,8 +203,10 @@ def reinvite_web_user(request, domain):
 def invite_web_user(request, domain, template="users/invite_web_user.html"):
     role_choices = UserRole.role_choices(domain)
     if request.method == "POST":
+        current_users = [user.username for user in WebUser.by_domain(domain)]
+        pending_invites = [di.email for di in DomainInvitation.by_domain(domain)]
         form = AdminInvitesUserForm(request.POST,
-            excluded_emails=[user.username for user in WebUser.by_domain(domain)],
+            excluded_emails= current_users + pending_invites,
             role_choices=role_choices
         )
         if form.is_valid():
