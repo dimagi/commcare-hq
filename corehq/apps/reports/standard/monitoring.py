@@ -737,7 +737,7 @@ class WorkerActivityTimes(WorkerMonitoringChartBase,
 
 class WorkerActivityReport(WorkerMonitoringReportTableBase, DatespanMixin):
     slug = 'worker_activity'
-    name = ugettext_noop("Worker Activty")
+    name = ugettext_noop("Worker Activity")
     description = ugettext_noop("Summary of form and case activity by user or group.")
     section_name = ugettext_noop("Project Reports")
     num_avg_intervals = 3 # how many duration intervals we go back to calculate averages
