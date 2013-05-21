@@ -52,7 +52,7 @@ function XFormDataModel(data) {
     self.app_id = ko.observable(data.app_id);
     self.received_on = ko.observable(format_date(data.received_on));
 
-    if (data.form.meta !== undefined) {
+    if (typeof data.form.meta !== 'undefined') {
         self.timeStart = ko.observable(format_date(data.form.meta.timeStart));
         self.timeEnd = ko.observable(format_date(data.form.meta.timeEnd));
         self.userID = ko.observable(data.form.meta.userID);
