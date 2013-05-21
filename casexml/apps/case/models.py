@@ -65,6 +65,7 @@ class CommCareCaseAction(LooselyEqualDocumentSchema):
     the xml.
     """
     action_type = StringProperty(choices=list(const.CASE_ACTIONS))
+    user_id = StringProperty()
     date = DateTimeProperty()
     server_date = DateTimeProperty()
     xform_id = StringProperty()
@@ -77,11 +78,11 @@ class CommCareCaseAction(LooselyEqualDocumentSchema):
     indices = SchemaListProperty(CommCareCaseIndex)
 
     @classmethod
-    def from_parsed_action(cls, action_type, date, xformdoc, action):
+    def from_parsed_action(cls, action_type, date, user_id, xformdoc, action):
         if not action_type in const.CASE_ACTIONS:
             raise ValueError("%s not a valid case action!")
         
-        ret = CommCareCaseAction(action_type=action_type, date=date)
+        ret = CommCareCaseAction(action_type=action_type, date=date, user_id=user_id)
         
         def _couchify(d):
             return dict((k, couchable_property(v)) for k, v in d.items())
@@ -91,6 +92,7 @@ class CommCareCaseAction(LooselyEqualDocumentSchema):
         ret.xform_xmlns = xformdoc.xmlns
         ret.xform_name = xformdoc.name
         ret.updated_known_properties = _couchify(action.get_known_properties())
+
         ret.updated_unknown_properties = _couchify(action.dynamic_properties)
         ret.indices = [CommCareCaseIndex.from_case_index_update(i) for i in action.indices]
         if hasattr(xformdoc, "last_sync_token"):
@@ -408,7 +410,7 @@ class CommCareCase(CaseBase, IndexHoldingMixIn, ComputedDocumentMixin):
         case.update_from_case_update(case_update, xformdoc)
         return case
     
-    def apply_create_block(self, create_action, xformdoc, modified_on):
+    def apply_create_block(self, create_action, xformdoc, modified_on, user_id):
         # create case from required fields in the case/create block
         # create block
         def _safe_replace_and_force_to_string(me, attr, val):
@@ -424,8 +426,9 @@ class CommCareCase(CaseBase, IndexHoldingMixIn, ComputedDocumentMixin):
         _safe_replace_and_force_to_string(self, "external_id", create_action.external_id)
         _safe_replace_and_force_to_string(self, "user_id", create_action.user_id)
         _safe_replace_and_force_to_string(self, "owner_id", create_action.owner_id)
-        create_action = CommCareCaseAction.from_parsed_action(const.CASE_ACTION_CREATE, 
-                                                              modified_on, 
+        create_action = CommCareCaseAction.from_parsed_action(const.CASE_ACTION_CREATE,
+                                                              modified_on,
+                                                              user_id,
                                                               xformdoc,
                                                               create_action)
         self.actions.append(create_action)
@@ -439,7 +442,7 @@ class CommCareCase(CaseBase, IndexHoldingMixIn, ComputedDocumentMixin):
             self.modified_on = mod_date
     
         if case_update.creates_case():
-            self.apply_create_block(case_update.get_create_action(), xformdoc, mod_date)
+            self.apply_create_block(case_update.get_create_action(), xformdoc, mod_date, case_update.user_id)
             if not self.opened_on:
                 self.opened_on = mod_date
         
@@ -447,6 +450,7 @@ class CommCareCase(CaseBase, IndexHoldingMixIn, ComputedDocumentMixin):
         if case_update.updates_case():
             update_action = CommCareCaseAction.from_parsed_action(const.CASE_ACTION_UPDATE, 
                                                                   mod_date,
+                                                                  case_update.user_id,
                                                                   xformdoc,
                                                                   case_update.get_update_action())
             self._apply_action(update_action)
@@ -454,7 +458,8 @@ class CommCareCase(CaseBase, IndexHoldingMixIn, ComputedDocumentMixin):
         
         if case_update.closes_case():
             close_action = CommCareCaseAction.from_parsed_action(const.CASE_ACTION_CLOSE, 
-                                                                 mod_date, 
+                                                                 mod_date,
+                                                                 case_update.user_id,
                                                                  xformdoc,
                                                                  case_update.get_close_action())
             self._apply_action(close_action)
@@ -484,6 +489,7 @@ class CommCareCase(CaseBase, IndexHoldingMixIn, ComputedDocumentMixin):
         if case_update.has_indices():
             index_action = CommCareCaseAction.from_parsed_action(const.CASE_ACTION_INDEX, 
                                                                  mod_date,
+                                                                 case_update.user_id,
                                                                  xformdoc,
                                                                  case_update.get_index_action())
             self.actions.append(index_action)

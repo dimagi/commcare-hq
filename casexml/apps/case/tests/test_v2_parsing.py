@@ -36,6 +36,7 @@ class Version2CaseParsingTest(TestCase):
         [action] = case.actions
         self.assertEqual("http://openrosa.org/case/test/create", action.xform_xmlns)
         self.assertEqual("v2 create", action.xform_name)
+        self.assertEqual("bar-user-id", case.actions[0].user_id)
     
     def testParseUpdate(self):
         self.testParseCreate()
@@ -54,6 +55,7 @@ class Version2CaseParsingTest(TestCase):
         self.assertEqual("updated case name", case.name)
         self.assertEqual("something dynamic", case.dynamic)
         self.assertEqual(2, len(case.actions))
+        self.assertEqual("bar-user-id", case.actions[1].user_id)
     
     def testParseClose(self):
         self.testParseCreate()
