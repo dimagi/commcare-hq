@@ -68,8 +68,8 @@ class Version2CaseParsingTest(TestCase):
         form = post_xform_to_couch(xml_data)
         process_cases(sender="testharness", xform=form)
         case = CommCareCase.get("foo-case-id")
-        self.assertEqual("bar-user-id", case.closed_by)
         self.assertTrue(case.closed)
+        self.assertEqual("bar-user-id", case.closed_by)
         
     def testParseNamedNamespace(self):
         file_path = os.path.join(os.path.dirname(__file__), "data", "v2", "named_namespace.xml")
