@@ -36,7 +36,7 @@ function format_date(isodatestring) {
 
 function format_user(username) {
     if (username === undefined || username === null) {
-        return "---"
+        return "Unknown";
     }
     else {
         return username.split('@')[0];
@@ -51,12 +51,22 @@ function XFormDataModel(data) {
     self.domain = ko.observable(data.domain);
     self.app_id = ko.observable(data.app_id);
     self.received_on = ko.observable(format_date(data.received_on));
+    delete data.form.meta;
 
-    self.timeStart = ko.observable(format_date(data.form.meta.timeStart));
-    self.timeEnd = ko.observable(format_date(data.form.meta.timeEnd));
-    self.userID = ko.observable(data.form.meta.userID);
-    self.username = ko.observable(format_user(data.form.meta.username));
-    self.deviceID = ko.observable(data.form.meta.deviceID);
+    if (data.form.meta !== undefined) {
+        self.timeStart = ko.observable(format_date(data.form.meta.timeStart));
+        self.timeEnd = ko.observable(format_date(data.form.meta.timeEnd));
+        self.userID = ko.observable(data.form.meta.userID);
+        self.username = ko.observable(format_user(data.form.meta.username));
+        self.deviceID = ko.observable(data.form.meta.deviceID);
+    } else {
+        self.timeStart = ko.observable(null);
+        self.timeEnd = ko.observable(null);
+        self.userID = ko.observable(null);
+        self.username = ko.observable(format_user(null));
+        self.deviceID = ko.observable(null);
+    }
+
     self.form_type = ko.observable(data.form['#type']);
     self.form_data = ko.observable(data.form);
     self.readable_name = ko.observable(data.es_readable_name);
