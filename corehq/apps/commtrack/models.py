@@ -13,11 +13,11 @@ from django.dispatch import receiver
 from corehq.apps.locations.signals import location_created
 from corehq.apps.commtrack.const import RequisitionActions, RequisitionStatus
 
+from dimagi.utils.decorators.memoized import memoized
+
 # these are the allowable stock transaction types, listed in the
 # default ordering in which they are processed. processing order
 # may be customized per domain
-from dimagi.utils.decorators.memoized import memoized
-
 ACTION_TYPES = [
     # indicates the product has been stocked out for N days
     # prior to the reporting date, including today ('0' does
@@ -422,17 +422,45 @@ class SupplyPointProductCase(CommCareCase):
     def get_supply_point_case_id(self):
         return _get_single_index(self, const.PARENT_CASE_REF, const.SUPPLY_POINT_CASE_TYPE)
 
+    @property
+    def months_until_stockout(self):
+        from corehq.apps.reports.commtrack.standard import (current_stock,
+                monthly_consumption)
+
+        current_stock = current_stock(self)
+        monthly_consumption = monthly_consumption(self)
+        
+        if current_stock is None or monthly_consumption is None:
+            return None
+        else:
+            return round(current_stock / monthly_consumption, ndigits=1)
+
+    @property
+    def stockout_duration_in_months(self):
+        if self.stocked_out_since:
+            date = datetime.strptime('YYYY-MM-DD', self.stocked_out_since).date()
+            today = datetime.today()
+
+            return (today - date).months
+        else:
+            return None
+
+
     def to_full_dict(self):
+        from corehq.apps.reports.commtrack.standard import monthly_consumption
+
         data = super(SupplyPointProductCase, self).to_full_dict()
+        del data['stocked_out_since']
+        data['consumption_rate'] = monthly_consumption(self)
+
         data['supply_point_name'] = self.get_supply_point_case()['name']
         data['product_name'] = self.get_product()['name']
-        # todo
-        data['emergency_level'] = None
-        data['max_level'] = None
-        # using stocked_out_since.  return None to get ---.  Can add these as
-        # properties of the class
-        data['months_until_stockout'] = None
-        data['stockout_duration_in_months'] = None
+        
+        #data['emergency_level'] = None
+        #data['max_level'] = None
+
+        data['months_until_stockout'] = self.months_until_stockout
+        data['stockout_duration_in_months'] = self.stockout_duration_in_months
 
         return data
 
@@ -451,12 +479,9 @@ class SupplyPointProductCase(CommCareCase):
                             "expr": "product_name"
                         },
                         {
-                            "name": _("Months until stockout"),
-                            "expr": "months_until_stockout"
-                        },
-                        {
-                            "name": _("Stockout duration in months"),
-                            "expr": "stockout_duration_in_months"
+                            "name": _("Last reported"),
+                            "expr": "last_reported",
+                            "parse_date": True
                         }
                     ],
                     [
@@ -469,21 +494,22 @@ class SupplyPointProductCase(CommCareCase):
                             "expr": "consumption_rate"
                         },
                         {
-                            "name": _("Emergency level"),
-                            "expr": "emergency_level"
+                            "name": _("Months until stockout"),
+                            "expr": "months_until_stockout"
                         },
                         {
-                            "name": _("Max level"),
-                            "expr": "max_level"
+                            "name": _("Stockout duration in months"),
+                            "expr": "stockout_duration_in_months"
                         }
+                        #{
+                            #"name": _("Emergency level"),
+                            #"expr": "emergency_level"
+                        #},
+                        #{
+                            #"name": _("Max level"),
+                            #"expr": "max_level"
+                        #}
                     ],
-                    [
-                        {
-                            "name": _("Last reported"),
-                            "expr": "last_reported",
-                            "parse_date": True
-                        }
-                    ]
                 ],
             }
         ]
