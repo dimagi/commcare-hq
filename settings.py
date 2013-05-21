@@ -223,8 +223,8 @@ HQ_APPS = (
 
     # custom reports
     'a5288',
-    'bihar',
     'benin',
+    'bihar',
     'dca',
     'hsph',
     'mvp',
