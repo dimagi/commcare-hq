@@ -11,6 +11,7 @@ from corehq.apps.locations.models import Location
 from dimagi.utils.decorators.memoized import memoized
 from django.utils.translation import ugettext as _, ugettext_noop
 
+DAYS_PER_MONTH = 365.2425 / 12.
 
 # TODO make settings
 
@@ -20,26 +21,32 @@ OVERSTOCK_THRESHOLD = 2. # months
 REPORTING_PERIOD = 'weekly'
 REPORTING_PERIOD_ARGS = (1,)
 
+DEFAULT_CONSUMPTION = 10. # per month
+
 def current_stock(case):
+    """helper method to get current product stock -- TODO move to wrapper class"""
     current_stock = getattr(case, 'current_stock', None)
     if current_stock is not None:
         current_stock = int(current_stock)
     return current_stock
 
 def monthly_consumption(case):
+    """get monthly consumption rate for a product at a given location"""
     daily_rate = case.computed_.get('commtrack', {}).get('consumption_rate')
     if daily_rate is None:
-        daily_rate = default_consumption(case)
+        daily_rate = default_consumption(case) / DAYS_PER_MONTH
     if daily_rate is None:
         return None
 
-    monthly_rate = daily_rate * 365.2425 / 12.
+    monthly_rate = daily_rate * DAYS_PER_MONTH
     return monthly_rate
 
 def default_consumption(case):
-    # TODO get a fallback consumption rate based on product/facility type
-    # if setting is monthly rate, must normalize to daily
-    return None
+    """get default monthly consumption rate for when real-world computed rate is
+    not available"""
+    # TODO pull this from a configurable setting
+    # TODO allow more granular defaulting based on product/facility type etc
+    return DEFAULT_CONSUMPTION
 
 def is_timely(case, limit=0):
     return num_periods_late(case, REPORTING_PERIOD, *REPORTING_PERIOD_ARGS) <= limit
@@ -85,7 +92,7 @@ def _enabled_hack(domain):
     return 'psi' not in (domain or  '')
 
 class CurrentStockStatusReport(GenericTabularReport, CommtrackReportMixin):
-    name = ugettext_noop('Current Stock Status by Product')
+    name = ugettext_noop('Stock Status by Product')
     slug = 'current_stock_status'
     fields = ['corehq.apps.reports.fields.AsyncLocationField']
     exportable = True
@@ -106,7 +113,7 @@ class CurrentStockStatusReport(GenericTabularReport, CommtrackReportMixin):
                     _('Understocked'),
                     _('Adequate Stock'),
                     _('Overstocked'),
-                    _('Non-reporting'),
+                    #_('Non-reporting'),
                     _('Insufficient Data'),
                 ]))
 
@@ -126,11 +133,11 @@ class CurrentStockStatusReport(GenericTabularReport, CommtrackReportMixin):
         def case_stock_category(case):
             return stock_category(current_stock(case), monthly_consumption(case))
         def status(case):
-            return case_stock_category(case) if is_timely(case) else 'nonreporting'
+            return case_stock_category(case) if is_timely(case, 1000) else 'nonreporting'
 
         status_by_product = dict((p, map_reduce(lambda c: [(status(c),)], len, data=cases)) for p, cases in cases_by_product.iteritems())
 
-        cols = ['stockout', 'understock', 'adequate', 'overstock', 'nonreporting', 'nodata']
+        cols = ['stockout', 'understock', 'adequate', 'overstock', 'nodata'] #'nonreporting', 'nodata']
         for p in sorted(products, key=lambda p: p.name):
             cases = cases_by_product.get(p._id, [])
             results = status_by_product.get(p._id, {})
@@ -149,10 +156,10 @@ class CurrentStockStatusReport(GenericTabularReport, CommtrackReportMixin):
             {"key": "under stock", "color": "#ffb100"},
             {"key": "adequate stock", "color": "#4ac925"},
             {"key": "overstocked", "color": "#b536da"},
-            {"key": "nonreporting", "color": "#363636"},
-            {"key": "no data", "color": "#ABABAB"}
+#            {"key": "nonreporting", "color": "#363636"},
+            {"key": "unknown", "color": "#ABABAB"}
         ]
-        statuses = ['stocked out', 'under stock', 'adequate stock', 'overstocked', 'nonreporting', 'no data']
+        statuses = ['stocked out', 'under stock', 'adequate stock', 'overstocked', 'no data'] #'nonreporting', 'no data']
 
         for r in ret:
             r["values"] = []
@@ -171,7 +178,7 @@ class CurrentStockStatusReport(GenericTabularReport, CommtrackReportMixin):
         return ctxt
 
 class AggregateStockStatusReport(GenericTabularReport, CommtrackReportMixin):
-    name = ugettext_noop('Aggregate Stock Status by Product')
+    name = ugettext_noop('Consumption and Months Remaining')
     slug = 'agg_stock_status'
     fields = ['corehq.apps.reports.fields.AsyncLocationField']
     exportable = True
@@ -209,7 +216,7 @@ class AggregateStockStatusReport(GenericTabularReport, CommtrackReportMixin):
             return sum(vals) if vals else None
 
         def aggregate_product(cases):
-            data = [(current_stock(c), monthly_consumption(c)) for c in cases if is_timely(c)]
+            data = [(current_stock(c), monthly_consumption(c)) for c in cases if is_timely(c, 1000)]
             total_stock = _sum([d[0] for d in data if d[0] is not None])
             total_consumption = _sum([d[1] for d in data if d[1] is not None])
             # exclude stock values w/o corresponding consumption figure from total months left calculation

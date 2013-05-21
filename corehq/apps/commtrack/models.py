@@ -41,12 +41,12 @@ REQUISITION_ACTION_TYPES = [
     # request a product
     RequisitionActions.REQUEST,
 
-    # approve a requisition (it is allowed to be filled)
+    # approve a requisition (it is allowed to be packed)
     # using this is configurable and optional
     RequisitionActions.APPROVAL,
 
-    # fill a requisition (the order is ready)
-    RequisitionActions.FILL,
+    # pack a requisition (the order is ready)
+    RequisitionActions.PACK,
 
     # receive the sock (closes the requisition)
     # NOTE: it's not totally clear if this is necessary or
@@ -147,7 +147,21 @@ class SupplyPointType(DocumentSchema):
     name = StringProperty()
     categories = StringListProperty()
 
+
+class ConsumptionConfig(DocumentSchema):
+    min_transactions = IntegerProperty(default=2)
+    min_window = IntegerProperty(default=10)
+    optimal_window = IntegerProperty()
+
+
+class StockLevelsConfig(DocumentSchema):
+    emergency_level = DecimalProperty(default=0.5)  # in months
+    understock_threshold = DecimalProperty(default=1.5)  # in months
+    overstock_threshold = DecimalProperty(default=3)  # in months
+
+
 class CommtrackConfig(Document):
+
     domain = StringProperty()
 
     # supported stock actions for this commtrack domain
@@ -164,9 +178,12 @@ class CommtrackConfig(Document):
 
     requisition_config = SchemaProperty(CommtrackRequisitionConfig)
 
-    consumption_rate_window = IntegerProperty() # days
-    consumption_rate_min_timespan = IntegerProperty() # days
-    consumption_rate_min_datapoints = IntegerProperty()
+    # configured on Advanced Settings page
+    use_auto_emergency_levels = BooleanProperty(default=False)
+
+    use_auto_consumption = BooleanProperty(default=False)
+    consumption_config = SchemaProperty(ConsumptionConfig)
+    stock_levels_config = SchemaProperty(StockLevelsConfig)
 
     @classmethod
     def for_domain(cls, domain):
@@ -391,6 +408,7 @@ class SupplyPointProductCase(CommCareCase):
 
     # can flesh this out more as needed
     product = StringProperty() # would be nice if this was product_id but is grandfathered in
+    current_stock = StringProperty()
 
     @memoized
     def get_product(self):
@@ -489,12 +507,12 @@ class RequisitionCase(CommCareCase):
     # the status can change, but once set - this one will not
     requested_on = DateTimeProperty()
     approved_on = DateTimeProperty()
-    filled_on = DateTimeProperty()
+    packed_on = DateTimeProperty()
     received_on = DateTimeProperty()
 
     requested_by = StringProperty()
     approved_by = StringProperty()
-    filled_by = StringProperty()
+    packed_by = StringProperty()
     received_by = StringProperty()
 
     # NOTE: should these be strings or ints or decimals?
@@ -503,7 +521,7 @@ class RequisitionCase(CommCareCase):
     # approve partial resupplies in the current system, but is
     # left in the models for possible use down the road
     amount_approved = StringProperty()
-    amount_filled = StringProperty()
+    amount_packed = StringProperty()
     amount_received = StringProperty()
 
     @memoized
@@ -537,7 +555,7 @@ class RequisitionCase(CommCareCase):
         property_map = {
             RequisitionStatus.REQUESTED: 'amount_requested',
             RequisitionStatus.APPROVED: 'amount_approved',
-            RequisitionStatus.FILLED: 'amount_filled',
+            RequisitionStatus.PACKED: 'amount_packed',
         }
         return getattr(self, property_map.get(self.requisition_status, 'amount_requested'))
 

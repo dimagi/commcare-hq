@@ -15,27 +15,32 @@ from dimagi.utils.decorators import inline
 API_LIST = (
     ((0, 1), (
         v0_1.CommCareUserResource,
+        v0_1.WebUserResource,
         v0_1.CommCareCaseResource,
         v0_1.XFormInstanceResource,
         FixtureResource,
     )),
     ((0, 2), (
         v0_1.CommCareUserResource,
+        v0_1.WebUserResource,
         v0_2.CommCareCaseResource,
         v0_1.XFormInstanceResource,
         FixtureResource,
     )),
     ((0, 3), (
         v0_1.CommCareUserResource,
+        v0_1.WebUserResource,
         v0_3.CommCareCaseResource,
         v0_3.XFormInstanceResource,
         FixtureResource,
     )),
     ((0, 4), (
         v0_1.CommCareUserResource,
+        v0_1.WebUserResource,
         v0_4.CommCareCaseResource,
         v0_4.GroupResource,
         v0_4.XFormInstanceResource,
+        v0_4.RepeaterResource,
         FixtureResource
     ))
 )

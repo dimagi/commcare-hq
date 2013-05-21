@@ -6,9 +6,9 @@ urlpatterns = patterns('corehq.apps.hqwebapp.views',
     url(r'^crossdomain.xml$', 'yui_crossdomain', name='yui_crossdomain'),
     (r'^serverup.txt$', 'server_up'),
     (r'^change_password/$', 'password_change'),
-    
+
     url(r'^no_permissions/$', 'no_permissions', name='no_permissions'),
-    
+
     url(r'^accounts/login/$', 'login', name="login"),
     url(r'^accounts/logout/$', 'logout', name="logout"),
     (r'^$', 'redirect_to_default'),

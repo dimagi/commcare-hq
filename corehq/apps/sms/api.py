@@ -130,9 +130,8 @@ def start_session_from_keyword(survey_keyword, verified_number):
             message = format_message_list(responses)
             send_sms_to_verified_number(verified_number, message)
         
-    except Exception as e:
-        print e
-        print "ERROR: Exception raised while starting survey for keyword " + survey_keyword.keyword + ", domain " + verified_number.domain
+    except Exception:
+        logging.exception("Exception while starting survey for keyword %s, domain %s" % (survey_keyword.keyword, verified_number.domain))
 
 def process_sms_registration(msg):
     """
@@ -256,9 +255,292 @@ def format_choices(choices_list):
         choices[choice.strip().upper()] = idx + 1
     return choices
 
+def validate_answer(event, text):
+    text = text.strip()
+    upper_text = text.upper()
+    valid = False
+    error_msg = ""
+    
+    # Validate select
+    if event.datatype == "select":
+        # Try to match on phrase (i.e., "Yes" or "No")
+        choices = format_choices(event._dict["choices"])
+        if upper_text in choices:
+            text = str(choices[upper_text])
+            valid = True
+        else:
+            try:
+                answer = int(text)
+                if answer >= 1 and answer <= len(event._dict["choices"]):
+                    valid = True
+                else:
+                    error_msg = "Choice is out of range."
+            except ValueError:
+                error_msg = "Invalid choice."
+    
+    # Validate multiselect
+    elif event.datatype == "multiselect":
+        choices = format_choices(event._dict["choices"])
+        max_index = len(event._dict["choices"])
+        proposed_answers = text.split()
+        final_answers = {}
+        
+        if event._dict.get("required", True) and len(proposed_answers) == 0:
+            error_msg = "At least one choice must be selected."
+        else:
+            try:
+                for answer in proposed_answers:
+                    upper_answer = answer.upper()
+                    if upper_answer in choices:
+                        final_answers[str(choices[upper_answer])] = ""
+                    else:
+                        int_answer = int(answer)
+                        assert int_answer >= 1 and int_answer <= max_index
+                        final_answers[str(int_answer)] = ""
+                text = " ".join(final_answers.keys())
+                valid = True
+            except Exception:
+                error_msg = "Invalid choice."
+    
+    # Validate int
+    elif event.datatype == "int":
+        try:
+            int(text)
+            valid = True
+        except ValueError:
+            error_msg = "Invalid integer entered."
+    
+    # Validate float
+    elif event.datatype == "float":
+        try:
+            float(text)
+            valid = True
+        except ValueError:
+            error_msg = "Invalid floating point number entered."
+    
+    # Validate longint
+    elif event.datatype == "longint":
+        try:
+            long(text)
+            valid = True
+        except ValueError:
+            error_msg = "Invalid long integer entered."
+    
+    # Validate date (Format: YYYYMMDD)
+    elif event.datatype == "date":
+        try:
+            assert len(text) == 8
+            int(text)
+            text = "%s-%s-%s" % (text[0:4], text[4:6], text[6:])
+            parse(text)
+            valid = True
+        except Exception:
+            error_msg = "Invalid date format: expected YYYYMMDD."
+    
+    # Validate time (Format: HHMM, 24-hour)
+    elif event.datatype == "time":
+        try:
+            assert len(text) == 4
+            hour = int(text[0:2])
+            minute = int(text[2:])
+            assert hour >= 0 and hour <= 23
+            assert minute >= 0 and minute <= 59
+            text = "%s:%s" % (hour, str(minute).zfill(2))
+            valid = True
+        except Exception:
+            error_msg = "Invalid time format: expected HHMM (24-hour)."
+    
+    # Other question types pass
+    else:
+        valid = True
+    
+    return (valid, text, error_msg)
+
+def is_form_complete(current_question):
+    # Force a return value of either True or False (instead of None)
+    if current_question.event and current_question.event.type == "form-complete":
+        return True
+    else:
+        return False
+
+def close_open_sessions(domain, connection_id):
+    sessions = XFormsSession.view("smsforms/open_sms_sessions_by_connection",
+                                 key=[domain, connection_id],
+                                 include_docs=True).all()
+    for session in sessions:
+        session.end(False)
+        session.save()
+
+def structured_sms_handler(verified_number, text):
+    
+    # Circular Import
+    from corehq.apps.reminders.models import SurveyKeyword, FORM_TYPE_ALL_AT_ONCE
+    
+    text = text.strip()
+    if text == "":
+        return False
+    for survey_keyword in SurveyKeyword.get_all(verified_number.domain):
+        if survey_keyword.form_type == FORM_TYPE_ALL_AT_ONCE:
+            if survey_keyword.delimiter is not None:
+                args = text.split(survey_keyword.delimiter)
+            else:
+                args = text.split()
+            
+            keyword = args[0].strip().upper()
+            if keyword != survey_keyword.keyword.upper():
+                continue
+            
+            try:
+                error_occurred = False
+                error_msg = ""
+                form_complete = False
+                
+                # Close any open sessions
+                close_open_sessions(verified_number.domain, verified_number.owner_id)
+                
+                # Start the session
+                form = Form.get_form(survey_keyword.form_unique_id)
+                app = form.get_app()
+                module = form.get_module()
+                
+                if verified_number.owner_doc_type == "CommCareCase":
+                    case_id = verified_number.owner_id
+                else:
+                    #TODO: Need a way to choose the case when it's a user that's playing the form
+                    case_id = None
+                
+                session, responses = start_session(verified_number.domain, verified_number.owner, app, module, form, case_id=case_id, yield_responses=True)
+                assert len(responses) > 0, "There should be at least one response."
+                
+                current_question = responses[-1]
+                form_complete = is_form_complete(current_question)
+                
+                if not form_complete:
+                    if survey_keyword.use_named_args:
+                        # Arguments in the sms are named
+                        xpath_answer = {} # Dictionary of {xpath : answer}
+                        for answer in args[1:]:
+                            answer = answer.strip()
+                            answer_upper = answer.upper()
+                            if survey_keyword.named_args_separator is not None:
+                                # A separator is used for naming arguments; for example, the "=" in "register name=joe age=25"
+                                answer_parts = answer.partition(survey_keyword.named_args_separator)
+                                if answer_parts[1] != survey_keyword.named_args_separator:
+                                    error_occurred = True
+                                    error_msg = "ERROR: Expected name and value to be joined by" + (" '%s'" % survey_keyword.named_args_separator)
+                                    break
+                                else:
+                                    arg_name = answer_parts[0].upper().strip()
+                                    xpath = survey_keyword.named_args.get(arg_name, None)
+                                    if xpath is not None:
+                                        if xpath in xpath_answer:
+                                            error_occurred = True
+                                            error_msg = "ERROR: More than one answer found for" + (" '%s'" % arg_name)
+                                            break
+                                        
+                                        xpath_answer[xpath] = answer_parts[2].strip()
+                                    else:
+                                        # Ignore unexpected named arguments
+                                        pass
+                            else:
+                                # No separator is used for naming arguments; for example, "update a100 b34 c5"
+                                matches = 0
+                                for k, v in survey_keyword.named_args.items():
+                                    if answer_upper.startswith(k):
+                                        matches += 1
+                                        if matches > 1:
+                                            error_occurred = True
+                                            error_msg = "ERROR: More than one question matches" + (" '%s'" % answer)
+                                            break
+                                        
+                                        if v in xpath_answer:
+                                            error_occurred = True
+                                            error_msg = "ERROR: More than one answer found for" + (" '%s'" % k)
+                                            break
+                                        
+                                        xpath_answer[v] = answer[len(k):].strip()
+                                
+                                if matches == 0:
+                                    # Ignore unexpected named arguments
+                                    pass
+                            
+                            if error_occurred:
+                                break
+                        
+                        # Go through each question in the form, answering only the questions that the sms has answers for
+                        while not form_complete and not error_occurred:
+                            if current_question.is_error:
+                                error_occurred = True
+                                error_msg = current_question.text_prompt or "ERROR: Internal server error"
+                                break
+                            
+                            xpath = current_question.event._dict["binding"]
+                            if xpath in xpath_answer:
+                                valid, answer, _error_msg = validate_answer(current_question.event, xpath_answer[xpath])
+                                if not valid:
+                                    error_occurred = True
+                                    error_msg = "ERROR: " + _error_msg
+                                    break
+                                responses = _get_responses(verified_number.domain, verified_number.owner_id, answer, yield_responses=True)
+                            else:
+                                responses = _get_responses(verified_number.domain, verified_number.owner_id, "", yield_responses=True)
+                            
+                            current_question = responses[-1]
+                            if is_form_complete(current_question):
+                                form_complete = True
+                    else:
+                        # Arguments in the sms are not named; pass each argument to each question in order
+                        for answer in args[1:]:
+                            if form_complete:
+                                # Form is complete, ignore remaining answers
+                                break
+                            
+                            if current_question.is_error:
+                                error_occurred = True
+                                error_msg = current_question.text_prompt or "ERROR: Internal server error"
+                                break
+                            
+                            valid, answer, _error_msg = validate_answer(current_question.event, answer.strip())
+                            if not valid:
+                                error_occurred = True
+                                error_msg = "ERROR: " + _error_msg
+                                break
+                            
+                            responses = _get_responses(verified_number.domain, verified_number.owner_id, answer, yield_responses=True)
+                            current_question = responses[-1]
+                            form_complete = is_form_complete(current_question)
+                        
+                        # If the form isn't finished yet but we're out of arguments, try to leave each remaining question blank and continue
+                        while not form_complete and not error_occurred:
+                            responses = _get_responses(verified_number.domain, verified_number.owner_id, "", yield_responses=True)
+                            current_question = responses[-1]
+                            
+                            if current_question.is_error:
+                                error_occurred = True
+                                error_msg = current_question.text_prompt or "ERROR: Internal server error"
+                            
+                            if is_form_complete(current_question):
+                                form_complete = True
+            except Exception:
+                logging.exception("Could not process structured sms for verified number %s, domain %s, keyword %s" % (verified_number._id, verified_number.domain, keyword))
+                error_occurred = True
+                error_msg = "ERROR: Internal server error"
+            
+            if error_occurred:
+                send_sms_to_verified_number(verified_number, error_msg)
+            
+            if error_occurred or not form_complete:
+                session = XFormsSession.get(session._id)
+                session.end(False)
+                session.save()
+            
+            return True
+    
+    return False
+
 def form_session_handler(v, text):
     # Circular Import
-    from corehq.apps.reminders.models import SurveyKeyword
+    from corehq.apps.reminders.models import SurveyKeyword, FORM_TYPE_ONE_BY_ONE
     
     # Handle incoming sms
     session = XFormsSession.view("smsforms/open_sms_sessions_by_connection",
@@ -271,7 +553,7 @@ def form_session_handler(v, text):
     if len(text_words) > 0 and text_words[0] == "#START":
         if len(text_words) > 1:
             sk = SurveyKeyword.get_keyword(v.domain, text_words[1])
-            if sk is not None:
+            if sk is not None and sk.form_type == FORM_TYPE_ONE_BY_ONE:
                 if session is not None:
                     session.end(False)
                     session.save()
@@ -301,99 +583,7 @@ def form_session_handler(v, text):
     elif session is not None:
         resp = current_question(session.session_id)
         event = resp.event
-        valid = False
-        text = text.strip()
-        upper_text = text.upper()
-        
-        # Validate select
-        if event.datatype == "select":
-            # Try to match on phrase (i.e., "Yes" or "No")
-            choices = format_choices(event._dict["choices"])
-            if upper_text in choices:
-                text = str(choices[upper_text])
-                valid = True
-            else:
-                try:
-                    answer = int(text)
-                    if answer >= 1 and answer <= len(event._dict["choices"]):
-                        valid = True
-                except ValueError:
-                    pass
-        
-        # Validate multiselect
-        elif event.datatype == "multiselect":
-            choices = format_choices(event._dict["choices"])
-            max_index = len(event._dict["choices"])
-            proposed_answers = text.split()
-            final_answers = {}
-            
-            try:
-                if event._dict.get("required", True):
-                    assert len(proposed_answers) > 0
-                for answer in proposed_answers:
-                    upper_answer = answer.upper()
-                    if upper_answer in choices:
-                        final_answers[str(choices[upper_answer])] = ""
-                    else:
-                        int_answer = int(answer)
-                        assert int_answer >= 1 and int_answer <= max_index
-                        final_answers[str(int_answer)] = ""
-                text = " ".join(final_answers.keys())
-                valid = True
-            except Exception:
-                pass
-        
-        # Validate int
-        elif event.datatype == "int":
-            try:
-                int(text)
-                valid = True
-            except ValueError:
-                pass
-        
-        # Validate float
-        elif event.datatype == "float":
-            try:
-                float(text)
-                valid = True
-            except ValueError:
-                pass
-        
-        # Validate longint
-        elif event.datatype == "longint":
-            try:
-                long(text)
-                valid = True
-            except ValueError:
-                pass
-        
-        # Validate date (Format: YYYYMMDD)
-        elif event.datatype == "date":
-            try:
-                assert len(text) == 8
-                int(text)
-                text = text[0:4] + "-" + text[4:6] + "-" + text[6:]
-                parse(text)
-                valid = True
-            except Exception:
-                pass
-        
-        # Validate time (Format: HHMM, 24-hour)
-        elif event.datatype == "time":
-            try:
-                assert len(text) == 4
-                hour = int(text[0:2])
-                minute = int(text[2:])
-                assert hour >= 0 and hour <= 23
-                assert minute >= 0 and minute <= 59
-                text = "%s:%s" % (hour, minute)
-                valid = True
-            except Exception:
-                pass
-        
-        # Other question types pass
-        else:
-            valid = True
+        valid, text, error_msg = validate_answer(event, text)
         
         if valid:
             responses = _get_responses(v.domain, v.owner_id, text)
@@ -401,13 +591,12 @@ def form_session_handler(v, text):
                 response_text = format_message_list(responses)
                 send_sms_to_verified_number(v, response_text)
         else:
-            error_msg = "Invalid Response. " + event.text_prompt
-            send_sms_to_verified_number(v, error_msg)
+            send_sms_to_verified_number(v, error_msg + event.text_prompt)
         
     # Try to match the text against a keyword to start a survey
     elif len(text_words) > 0:
         sk = SurveyKeyword.get_keyword(v.domain, text_words[0])
-        if sk is not None:
+        if sk is not None and sk.form_type == FORM_TYPE_ONE_BY_ONE:
             start_session_from_keyword(sk, v)
 
     # TODO should clarify what scenarios this handler actually handles. i.e.,

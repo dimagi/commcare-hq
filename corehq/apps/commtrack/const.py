@@ -37,7 +37,7 @@ def enum(**enums):
 RequisitionActions = enum(
     REQUEST='request',
     APPROVAL='approval',
-    FILL='fill',
+    PACK='pack',
     RECEIPTS='requisition-receipts',
 )
 
@@ -45,7 +45,7 @@ RequisitionActions = enum(
 ORDERED_REQUISITION_ACTIONS = (
     RequisitionActions.REQUEST,
     RequisitionActions.APPROVAL,
-    RequisitionActions.FILL,
+    RequisitionActions.PACK,
     RequisitionActions.RECEIPTS,
 )
 
@@ -60,7 +60,7 @@ class UserRequisitionRoles(object):
         return {
             RequisitionActions.REQUEST: cls.REQUESTER,
             RequisitionActions.APPROVAL: cls.APPROVER,
-            RequisitionActions.FILL: cls.SUPPLIER,
+            RequisitionActions.PACK: cls.SUPPLIER,
             RequisitionActions.RECEIPTS: cls.RECEIVER,
         }[action_type]
 
@@ -69,11 +69,11 @@ class RequisitionStatus(object):
     """a const for our requisition status choices"""
     REQUESTED = "requested"
     APPROVED = "approved"
-    FILLED = "filled"
+    PACKED = "packed"
     RECEIVED = "received"
     CANCELED = "canceled"
-    CHOICES = [REQUESTED, APPROVED, FILLED, RECEIVED, CANCELED]
-    CHOICES_PENDING = [REQUESTED, APPROVED, FILLED]
+    CHOICES = [REQUESTED, APPROVED, PACKED, RECEIVED, CANCELED]
+    CHOICES_PENDING = [REQUESTED, APPROVED, PACKED]
     CHOICES_CLOSED = [RECEIVED, CANCELED]
 
     @classmethod
@@ -81,7 +81,7 @@ class RequisitionStatus(object):
         return {
             RequisitionActions.REQUEST: cls.REQUESTED,
             RequisitionActions.APPROVAL: cls.APPROVED,
-            RequisitionActions.FILL: cls.FILLED,
+            RequisitionActions.PACK: cls.PACKED,
             RequisitionActions.RECEIPTS: cls.RECEIVED,
         }[type]
 
@@ -90,6 +90,6 @@ class RequisitionStatus(object):
         return {
             cls.REQUESTED: RequisitionActions.REQUEST,
             cls.APPROVED: RequisitionActions.APPROVAL,
-            cls.FILLED: RequisitionActions.FILL,
+            cls.PACKED: RequisitionActions.PACK,
             cls.RECEIVED: RequisitionActions.RECEIPTS,
         }[status]
