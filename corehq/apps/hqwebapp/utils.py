@@ -3,6 +3,7 @@ from django.contrib.auth.views import redirect_to_login
 from django.core.urlresolvers import reverse
 from django.http import HttpResponseRedirect
 from django.shortcuts import render
+from django.utils.translation import ugettext as _
 
 from corehq.apps.hqwebapp.views import logout
 from corehq.apps.registration.forms import NewWebUserRegistrationForm
@@ -23,7 +24,7 @@ class InvitationView():
 
     @property
     def success_msg(self):
-        return "You have been successfully invited"
+        return _("You have been successfully invited")
 
     @property
     def redirect_to_on_success(self):
@@ -55,16 +56,36 @@ class InvitationView():
         invitation = self.inv_type.get(invitation_id)
 
         if invitation.is_accepted:
-            messages.error(request, "Sorry, that invitation has already been used up. "
-                                    "If you feel this is a mistake please ask the inviter for "
-                                    "another invitation.")
+            messages.error(request, _("Sorry, that invitation has already been used up. "
+                                      "If you feel this is a mistake please ask the inviter for "
+                                      "another invitation."))
             return HttpResponseRedirect(reverse("login"))
 
         self.validate_invitation(invitation)
 
         if request.user.is_authenticated():
-            if request.couch_user.username != invitation.email:
-                messages.error(request, "The invited user %s and your user %s do not match!" % (invitation.email, request.couch_user.username))
+            is_invited_user = request.couch_user.username == invitation.email
+            if request.couch_user.is_member_of(invitation.domain):
+                if is_invited_user:
+                    # if this invite was actually for this user, just mark it accepted
+                    messages.info(request, _("You are already a member of {domain}.").format(
+                        domain=invitation.domain))
+                    invitation.is_accepted = True
+                    invitation.save()
+                else:
+                    messages.error(request, _("It looks like you are trying to accept an invitation for "
+                                             "{invited} but you are already a member of {domain} with the "
+                                             "account {current}. Please sign out to accept this invitation "
+                                             "as another user.").format(
+                                                 domain=invitation.domain,
+                                                 invited=invitation.email,
+                                                 current=request.couch_user.username,
+                                             ))
+                return HttpResponseRedirect(self.redirect_to_on_success)
+
+            if not is_invited_user:
+                messages.error(request, _("The invited user {invited} and your user {current} do not match!").format(
+                    invited=invitation.email, current=request.couch_user.username))
 
             if request.method == "POST":
                 couch_user = CouchUser.from_django_user(request.user)
@@ -85,7 +106,8 @@ class InvitationView():
                     # create the new user
                     user = activate_new_user(form)
                     user.save()
-                    messages.success(request, "User account for %s created! You may now login." % form.cleaned_data["email"])
+                    messages.success(request, _("User account for %s created! You may now login.")
+                                                % form.cleaned_data["email"])
                     self._invite(invitation, user)
                     return HttpResponseRedirect(reverse("login"))
             else:
