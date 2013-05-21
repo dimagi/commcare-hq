@@ -224,6 +224,7 @@ HQ_APPS = (
     # custom reports
     'a5288',
     'bihar',
+    'benin',
     'dca',
     'hsph',
     'mvp',
@@ -587,6 +588,7 @@ COUCHDB_APPS = [
     'couchlog',
 
     # custom reports
+    'benin',
     'dca',
     'hsph',
     'mvp',
