@@ -37,7 +37,7 @@ from dimagi.utils.excel import WorkbookJSONReader
 from dimagi.utils.decorators.view import get_file
 from django.utils import html
 from dimagi.utils.timezones import utils as tz_utils
-
+from django.utils.translation import ugettext as _
 
 @require_superuser
 def default(request):
@@ -379,25 +379,23 @@ def mobile_user_reports(request):
             val = report.get('value')
             version = val.get('version', 'unknown')
             formatted_date = tz_utils.string_to_prertty_time(val['@date'], timezone(domain.default_timezone), fmt="%b %d, %Y %H:%M:%S")
-            formatted_version = '%s <a href="#" data-datatable-tooltip="left" data-datatable-tooltip-text="%s"> \
-                                <i class="icon icon-info-sign"></i></a>'\
-                                % (version.split(' ')[0], html.escape(version))
             rows.append(dict(domain=domain.name,
                              time=formatted_date,
                              user=val['user'],
                              device_users=val['device_users'],
                              message=val['msg'],
-                             version=formatted_version,
+                             version=version.split(' ')[0],
+                             detailed_version=html.escape(version),
                              report_id=report['id']))
 
     headers = DataTablesHeader(
-        DataTablesColumn("View Form"),
-        DataTablesColumn("Domain"),
-        DataTablesColumn("Time", sort_type=DTSortType.NUMERIC),
-        DataTablesColumn("User", sort_type=DTSortType.NUMERIC),
-        DataTablesColumn("Device Users", sort_type=DTSortType.NUMERIC),
-        DataTablesColumn("Message", sort_type=DTSortType.NUMERIC),
-        DataTablesColumn("Version", sort_type=DTSortType.NUMERIC)
+        DataTablesColumn(_("View Form")),
+        DataTablesColumn(_("Domain")),
+        DataTablesColumn(_("Time"), sort_type=DTSortType.NUMERIC),
+        DataTablesColumn(_("User"), sort_type=DTSortType.NUMERIC),
+        DataTablesColumn(_("Device Users"), sort_type=DTSortType.NUMERIC),
+        DataTablesColumn(_("Message"), sort_type=DTSortType.NUMERIC),
+        DataTablesColumn(_("Version"), sort_type=DTSortType.NUMERIC)
 
     )
 
