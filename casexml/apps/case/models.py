@@ -208,7 +208,7 @@ class CommCareCase(CaseBase, IndexHoldingMixIn, ComputedDocumentMixin):
     external_id = StringProperty()
     user_id = StringProperty()
     owner_id = StringProperty()
-    created_by = StringProperty()
+    opened_by = StringProperty()
     closed_by = StringProperty()
 
     referrals = SchemaListProperty(Referral)
@@ -446,11 +446,11 @@ class CommCareCase(CaseBase, IndexHoldingMixIn, ComputedDocumentMixin):
         if case_update.creates_case():
             self.apply_create_block(case_update.get_create_action(), xformdoc, mod_date, case_update.user_id)
             # case_update.get_create_action() seems to sometimes return an action with all properties set to none,
-            # so set created_by and opened_on here
+            # so set opened_by and opened_on here
             if not self.opened_on:
                 self.opened_on = mod_date
-            if not self.created_by:
-                self.created_by = case_update.user_id
+            if not self.opened_by:
+                self.opened_by = case_update.user_id
 
 
         if case_update.updates_case():
