@@ -11,6 +11,7 @@ from casexml.apps.case.models import CommCareCase
 from copy import copy
 from django.dispatch import receiver
 from corehq.apps.locations.signals import location_created
+from corehq.apps.locations.models import Location
 from corehq.apps.commtrack.const import RequisitionActions, RequisitionStatus
 
 from dimagi.utils.decorators.memoized import memoized
@@ -354,9 +355,29 @@ class SupplyPointCase(CommCareCase):
     def open_requisitions(self):
         return RequisitionCase.open_for_location(self.domain, self.location_[-1])
 
+    @property
+    @memoized
+    def location(self):
+        return Location.get(self.location_id)
+
+
+    def to_full_dict(self):
+        data = super(SupplyPointCase, self).to_full_dict()
+        
+        data['location_type'] = self.location.location_type
+        data['location_site_code'] = self.location.site_code
+        if self.location.parent:
+            data['location_parent_name'] = self.location.parent.name
+        else:
+            data['location_parent_name'] = None
+
+        # todo
+        #data['last_reported'] = None
+
+        return data
+
     @classmethod
     def get_display_config(cls):
-        # todo
         return [
             {
                 "layout": [
@@ -366,21 +387,21 @@ class SupplyPointCase(CommCareCase):
                             "name": _("Name"),
                         },
                         {
-                            "expr": "type",
+                            "expr": "location_type",
                             "name": _("Type"),
                         },
                         {
-                            "expr": "code",
+                            "expr": "location_site_code",
                             "name": _("Code"),
                         },
-                        {
-                            "expr": "last_reported",
-                            "name": _("Last Reported"),
-                        },
+                        #{
+                            #"expr": "last_reported",
+                            #"name": _("Last Reported"),
+                        #},
                     ],
                     [
                         {
-                            "expr": "location",
+                            "expr": "location_parent_name",
                             "name": _("Location"),
                         },
                         {
