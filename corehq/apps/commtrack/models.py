@@ -326,6 +326,10 @@ def get_case_wrapper(data):
 
 
 class SupplyPointCase(CommCareCase):
+    """
+    A wrapper around CommCareCases to get more built in functionality
+    specific to supply points.
+    """
     class Meta: 
         # This is necessary otherwise syncdb will confuse this app with casexml
         app_label = "commtrack"
@@ -375,10 +379,12 @@ class SupplyPointCase(CommCareCase):
 
 class SupplyPointProductCase(CommCareCase):
     """
+    A wrapper around CommCareCases to get more built in functionality
+    specific to supply point products.
+
     See
     https://confluence.dimagi.com/display/ctinternal/Data+Model+Documentation
     """
-
     class Meta: 
         # This is necessary otherwise syncdb will confuse this app with casexml
         app_label = "commtrack"
@@ -465,6 +471,10 @@ class SupplyPointProductCase(CommCareCase):
         ]
 
 class RequisitionCase(CommCareCase):
+    """
+    A wrapper around CommCareCases to get more built in functionality
+    specific to requisitions.
+    """
     class Meta: 
         # This is necessary otherwise syncdb will confuse this app with casexml
         app_label = "commtrack"
