@@ -54,6 +54,7 @@ class Version2CaseParsingTest(TestCase):
         self.assertEqual("updated case name", case.name)
         self.assertEqual("something dynamic", case.dynamic)
         self.assertEqual(2, len(case.actions))
+        self.assertEqual("bar-user-id", case.actions[1].updated_known_properties.get('user_id'))
     
     def testParseClose(self):
         self.testParseCreate()
