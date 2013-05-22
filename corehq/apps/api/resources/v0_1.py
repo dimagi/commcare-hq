@@ -26,20 +26,16 @@ class CustomXMLSerializer(Serializer):
             etree.remove(id)
         return etree
 
-def api_auth_ex():
-    def _outer(view_func):
-        @wraps(view_func)
-        def _inner(req, domain, *args, **kwargs):
-            try:
-                return view_func(req, domain, *args, **kwargs)
-            except Http404:
-                return HttpResponse(json.dumps({"error": "not authorized"}),
-                                    content_type="application/json",
-                                    status=401)
-        return _inner
-    return _outer
-
-api_auth = api_auth_ex()
+def api_auth(view_func):
+    @wraps(view_func)
+    def _inner(req, domain, *args, **kwargs):
+        try:
+            return view_func(req, domain, *args, **kwargs)
+        except Http404:
+            return HttpResponse(json.dumps({"error": "not authorized"}),
+                                content_type="application/json",
+                                status=401)
+    return _inner
 
 class LoginAndDomainAuthentication(Authentication):
     def is_authenticated(self, request, **kwargs):
