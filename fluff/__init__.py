@@ -1,3 +1,4 @@
+from collections import defaultdict
 from couchdbkit import ResourceNotFound
 from couchdbkit.ext.django import schema
 import datetime
@@ -83,14 +84,79 @@ class Calculator(object):
         )
         values = {}
         for slug in self._fluff_emitters:
+            fn = getattr(self, slug)
             values[slug] = (
-                list(getattr(self, slug)(item))
+                list(fn(item))
                 if passes_filter else []
             )
+            if fn._fluff_emitter == 'date':
+                assert all(v for v in values[slug])
+            elif fn._fluff_emitter == 'null':
+                assert all(v is None for v in values[slug])
         return values
 
     def get_result(self, key, reduce=True):
-        return self.fluff.get_result(self.slug, key, reduce=reduce)
+        result = {}
+        for emitter_name in self._fluff_emitters:
+            shared_key = [self.fluff._doc_type] + key + [self.slug, emitter_name]
+            emitter_type = getattr(self, emitter_name)._fluff_emitter
+            q_args = {
+                'reduce': reduce,
+            }
+            if emitter_type == 'date':
+                now = self.fluff.get_now()
+                start = now - self.window
+                end = now
+                if start > end:
+                    q_args['descending'] = True
+                q = self.fluff.view(
+                    'fluff/generic',
+                    startkey=shared_key + [json_format_date(start)],
+                    endkey=shared_key + [json_format_date(end)],
+                    **q_args
+                ).all()
+            elif emitter_type == 'null':
+                q = self.fluff.view(
+                    'fluff/generic',
+                    key=shared_key + [None],
+                    **q_args
+                ).all()
+            else:
+                raise exceptions.EmitterTypeError(
+                    'emitter type %s not recognized' % emitter_type
+                )
+
+            if reduce:
+                try:
+                    result[emitter_name] = q[0]['value']
+                except IndexError:
+                    result[emitter_name] = 0
+            else:
+                def strip(id_string):
+                    prefix = '%s-' % self.fluff.__name__
+                    assert id_string.startswith(prefix)
+                    return id_string[len(prefix):]
+                result[emitter_name] = [strip(row['id']) for row in q]
+        return result
+
+    def aggregate_results(self, keys, reduce=True):
+
+        def iter_results():
+            for key in keys:
+                result = self.get_result(key, reduce=reduce)
+                for slug, value in result.items():
+                    yield slug, value
+
+        if reduce:
+            results = defaultdict(int)
+            for slug, value in iter_results():
+                results[slug] += value
+        else:
+            results = defaultdict(set)
+            for slug, value in iter_results():
+                results[slug].update(value)
+
+        return results
 
 
 class IndicatorDocumentMeta(schema.DocumentMeta):
@@ -118,6 +184,9 @@ class IndicatorDocument(schema.Document):
 
     document_class = None
     group_by = ()
+
+    def get_now(self):
+        return datetime.datetime.utcnow().date()
 
     def calculate(self, item):
         for attr, calculator in self._calculators.items():
@@ -231,49 +300,12 @@ class IndicatorDocument(schema.Document):
     @classmethod
     def get_result(cls, calc_name, key, reduce=True):
         calculator = cls.get_calculator(calc_name)
-        result = {}
-        for emitter_name in calculator._fluff_emitters:
-            shared_key = [cls._doc_type] + key + [calc_name, emitter_name]
-            emitter_type = getattr(calculator, emitter_name)._fluff_emitter
-            q_args = {
-                'reduce': reduce,
-            }
-            if emitter_type == 'date':
-                now = datetime.datetime.utcnow().date()
-                start = now - calculator.window
-                end = now
-                if start > end:
-                    q_args['descending'] = True
-                q = cls.view(
-                    'fluff/generic',
-                    startkey=shared_key + [json_format_date(start)],
-                    endkey=shared_key + [json_format_date(end)],
-                    **q_args
-                ).all()
-            elif emitter_type == 'null':
-                q = cls.view(
-                    'fluff/generic',
-                    key=shared_key + [None],
-                    **q_args
-                ).all()
-            else:
-                raise exceptions.EmitterTypeError(
-                    'emitter type %s not recognized' % emitter_type
-                )
+        return calculator.get_result(key, reduce=reduce)
 
-            if reduce:
-                try:
-                    result[emitter_name] = q[0]['value']
-                except IndexError:
-                    result[emitter_name] = 0
-            else:
-                def strip(id_string):
-                    prefix = '%s-' % cls.__name__
-                    print cls.__name__, id_string
-                    assert id_string.startswith(prefix)
-                    return id_string[len(prefix):]
-                result[emitter_name] = [strip(row['id']) for row in q]
-        return result
+    @classmethod
+    def aggregate_results(cls, calc_name, keys, reduce=True):
+        calculator = cls.get_calculator(calc_name)
+        return calculator.aggregate_results(keys, reduce=reduce)
 
     class Meta:
         app_label = 'fluff'
