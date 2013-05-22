@@ -108,6 +108,7 @@ class CurrentStockStatusReport(GenericTabularReport, CommtrackReportMixin):
     def headers(self):
         return DataTablesHeader(*(DataTablesColumn(text) for text in [
                     _('Product'),
+                    _('# Facilities'),
                     _('Stocked Out'),
                     _('Understocked'),
                     _('Adequate Stock'),
@@ -142,11 +143,11 @@ class CurrentStockStatusReport(GenericTabularReport, CommtrackReportMixin):
             results = status_by_product.get(p._id, {})
             def val(key):
                 return results.get(key, 0) / float(len(cases))
-            yield [p.name] + [100. * val(key) for key in cols]
+            yield [p.name, len(cases)] + [100. * val(key) for key in cols]
 
     @property
     def rows(self):
-        return [[pd[0]] + ['%.1f%%' %d for d in pd[1:]] for pd in self.product_data]
+        return [pd[0:2] + ['%.1f%%' %d for d in pd[2:]] for pd in self.product_data]
 
 
     def get_data_for_graph(self):
@@ -165,7 +166,7 @@ class CurrentStockStatusReport(GenericTabularReport, CommtrackReportMixin):
 
         for pd in self.product_data:
             for i, status in enumerate(statuses):
-                ret[i]['values'].append({"x": pd[0], "y": pd[i+1]})
+                ret[i]['values'].append({"x": pd[0], "y": pd[i+2]})
 
         return ret
 
