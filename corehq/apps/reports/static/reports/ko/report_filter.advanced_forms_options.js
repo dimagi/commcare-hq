@@ -26,9 +26,10 @@ $.fn.advanceFormsOptions = function (options) {
                 if ($app_type_select.val() == 'active') {
                     $('#' + viewModel.css_id + '_status').closest('.control-group').hide();
                 }
-
+                viewModel.is_unknown_shown(false);
             }
         });
+        viewModel.show(options.show);
     });
 };
 
