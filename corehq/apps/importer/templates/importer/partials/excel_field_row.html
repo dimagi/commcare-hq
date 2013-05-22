@@ -1,28 +1,28 @@
 {% load i18n %}
 
 <div class="controls controls-row">
+    <input name="excel_field[]" type="hidden" value="{{ item|escape }}" />
     <select name="excel_field[]" class="span3">
         <option>{% trans "Select field from excel..." %}</option>
         {% for field in excel_fields %}
-            <option value="{{ field|escape }}">
-                {{ field|escape }}
-            </option>
+            {% ifequal field item %}
+                <option value="{{ field|escape }}" selected="selected">
+                    {{ field|escape }}
+                </option>
+            {% else %}
+                <option value="{{ field|escape }}">
+                    {{ field|escape }}
+                </option>
+            {% endifequal %}
         {% endfor %}
     </select>
-
-    <label class="checkbox span2">
-        <input type="checkbox"
-               class="is_date"
-               name="is_date[]" />
-        {% trans "This field is a date" %}
-    </label>
 
     <input type="text" name="custom_field[]"
            class="span3 hide custom_field"
            placeholder="Enter new property name" />
 
     <select name="case_field[]" class="case_field span3">
-        <option>{% trans "Select property name..." %}</option>
+        <option value="">{% trans "Select property name..." %}</option>
 
         {% for field in case_fields %}
         <option value="{{ field|escape }}">

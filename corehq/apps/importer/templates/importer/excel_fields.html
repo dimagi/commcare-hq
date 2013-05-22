@@ -79,7 +79,7 @@
 
         <fieldset>
             <legend>{% trans "Map columns to case fields" %}</legend>
-            {% for i in excel_fields_range %}
+            {% for item in excel_fields %}
             {% include "importer/partials/excel_field_row.html" %}
             {% endfor %}
         </fieldset>
