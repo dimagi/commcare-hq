@@ -571,6 +571,11 @@ class RequisitionCase(CommCareCase):
     amount_received = StringProperty()
 
     @memoized
+    def get_location(self):
+        if self.location_:
+            return Location.get(self.location_[-1])
+
+    @memoized
     def get_supply_point_case(self):
         product_case = self.get_product_case()
         if product_case:
