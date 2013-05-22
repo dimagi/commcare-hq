@@ -10,7 +10,13 @@
 
 {% block reports-js-inline %}
 <script>
+$(function() {
     $("#id_config_ids").width(600).height(200).multiselect();
+    $("input[type='submit']").click(function () {
+        $(this).text("{% trans 'Saving' %}").prepend('<i class="icon-refresh icon-spin"></i> ').addClass('btn disabled').attr('disabled', 'disabled');
+        $(this).parents('form').submit();
+    });
+});
 </script>
 {% endblock %}
 
