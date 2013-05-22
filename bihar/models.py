@@ -13,13 +13,6 @@ class CareBiharFluff(fluff.IndicatorDocument):
     domains = ('care-bihar',)
     group_by = ['domain', 'owner_id']
 
-    @classmethod
-    def get_now(cls):
-        if settings.DEBUG:
-            return datetime.date(2013, 05, 21)
-        else:
-            return super(CareBiharFluff, cls).get_now()
-
     # home visit
 
     bp2 = homevisit.BPCalculator(days=75, n_visits=2)
