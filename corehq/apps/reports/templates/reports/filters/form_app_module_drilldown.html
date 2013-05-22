@@ -76,6 +76,7 @@
 <script type="text/javascript">
     $(function () {
        $('#{{ css_id }}-advanced-options').advanceFormsOptions({
+           show: {{ show_advanced|JSON }},
            is_unknown_shown: {{ unknown.show|yesno:'true,false' }},
            selected_unknown_form: '{{ unknown.selected }}',
            all_unknown_forms: {{ unknown.options|JSON }},
