@@ -101,7 +101,7 @@ def excel_config(request, domain):
     # for this we just want cases that have data but aren't being used anymore
     case_types_from_cases = filter(lambda x: x not in case_types_from_apps, case_types_from_cases)
 
-    if len(case_types_from_apps) == 0 or len(case_types_from_cases) == 0:
+    if len(case_types_from_apps) == 0 and len(case_types_from_cases) == 0:
         return render_error(request, domain,
                             'No cases have been submitted to this domain and there are no '
                             'applications yet. You cannot import case details from an Excel '
