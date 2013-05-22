@@ -622,13 +622,17 @@ def edit_scheduled_report(request, domain, scheduled_report_id=None,
 @require_POST
 def delete_scheduled_report(request, domain, scheduled_report_id):
     user_id = request.couch_user._id
-    rep = ReportNotification.get(scheduled_report_id)
+    try:
+        rep = ReportNotification.get(scheduled_report_id)
+    except ResourceNotFound:
+        # was probably already deleted by a fast-clicker.
+        pass
+    else:
+        if user_id != rep.owner._id:
+            return HttpResponseBadRequest()
 
-    if user_id != rep.owner._id:
-        return HttpResponseBadRequest()
-
-    rep.delete()
-    messages.success(request, "Scheduled report deleted!")
+        rep.delete()
+        messages.success(request, "Scheduled report deleted!")
     return HttpResponseRedirect(reverse("reports_home", args=(domain,)))
 
 @login_and_domain_required
