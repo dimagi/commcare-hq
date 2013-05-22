@@ -185,7 +185,8 @@ class IndicatorDocument(schema.Document):
     document_class = None
     group_by = ()
 
-    def get_now(self):
+    @classmethod
+    def get_now(cls):
         return datetime.datetime.utcnow().date()
 
     def calculate(self, item):
