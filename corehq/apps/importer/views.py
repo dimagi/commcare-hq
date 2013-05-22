@@ -43,8 +43,7 @@ def excel_config(request, domain):
     if not request.FILES:
         return render_error(request, domain, 'Please choose an Excel file to import.')
 
-    named_columns = request.POST['named_columns'].lower()
-    uses_headers = named_columns == 'yes'
+    named_columns = request.POST.get('named_columns') == "on"
     uploaded_file_handle = request.FILES['file']
 
     extension = os.path.splitext(uploaded_file_handle.name)[1][1:].strip().lower()
@@ -62,7 +61,7 @@ def excel_config(request, domain):
     # stash content in the default storage for subsequent views
     file_ref = expose_download(uploaded_file_handle.read(), expiry=1*60*60)
     request.session[EXCEL_SESSION_ID] = file_ref.download_id
-    spreadsheet = _get_spreadsheet(file_ref, uses_headers)
+    spreadsheet = _get_spreadsheet(file_ref, named_columns)
 
     if not spreadsheet:
         return _spreadsheet_expired(request, domain)
@@ -102,7 +101,7 @@ def excel_config(request, domain):
     # for this we just want cases that have data but aren't being used anymore
     case_types_from_cases = filter(lambda x: x not in case_types_from_apps, case_types_from_cases)
 
-    if len(case_types_from_apps) == 0 or len(case_types_from_cases) == 0:
+    if len(case_types_from_apps) == 0 and len(case_types_from_cases) == 0:
         return render_error(request, domain,
                             'No cases have been submitted to this domain and there are no '
                             'applications yet. You cannot import case details from an Excel '
@@ -122,25 +121,24 @@ def excel_config(request, domain):
 @require_POST
 @require_can_edit_data
 def excel_fields(request, domain):
-    named_columns = request.POST['named_columns'].lower()
-    uses_headers = named_columns == 'yes'
+    named_columns = request.POST['named_columns']
     case_type = request.POST['case_type']
     search_column = request.POST['search_column']
     search_field = request.POST['search_field']
-    create_new_cases = request.POST['create_new_cases']
-    key_value_columns = request.POST['key_value_columns'].lower()
+    create_new_cases = request.POST.get('create_new_cases') == 'on'
+    key_value_columns = request.POST.get('key_value_columns') == 'on'
     key_column = ''
     value_column = ''
 
     download_ref = DownloadBase.get(request.session.get(EXCEL_SESSION_ID))
 
-    spreadsheet = _get_spreadsheet(download_ref, uses_headers)
+    spreadsheet = _get_spreadsheet(download_ref, named_columns)
     if not spreadsheet:
         return _spreadsheet_expired(request, domain)
 
     columns = spreadsheet.get_header_columns()
 
-    if key_value_columns == 'yes':
+    if key_value_columns:
         key_column = request.POST['key_column']
         value_column = request.POST['value_column']
 
@@ -194,14 +192,13 @@ def excel_fields(request, domain):
 @require_POST
 @require_can_edit_data
 def excel_commit(request, domain):
-    named_columns = request.POST['named_columns'].lower()
-    uses_headers = named_columns == 'yes'
+    named_columns = request.POST['named_columns']
     case_type = request.POST['case_type']
     search_field = request.POST['search_field']
-    create_new_cases = True if request.POST['create_new_cases'].lower() == 'yes' else False
+    create_new_cases = request.POST['create_new_cases']
 
     download_ref = DownloadBase.get(request.session.get(EXCEL_SESSION_ID))
-    spreadsheet = _get_spreadsheet(download_ref, uses_headers)
+    spreadsheet = _get_spreadsheet(download_ref, named_columns)
     if not spreadsheet:
         return _spreadsheet_expired(request, domain)
 
