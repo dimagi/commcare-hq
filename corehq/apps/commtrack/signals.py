@@ -73,8 +73,8 @@ def send_notifications(xform, cases):
         for r in requisitions:
             by_status[r.requisition_status].append(r)
 
-        # since each state transition might trigger a different person to be notified
         req_config = CommtrackConfig.for_domain(requisitions[0].domain).requisition_config
+        # since each state transition might trigger a different person to be notified
         for s, reqs in by_status.items():
             next_action = req_config.get_next_action(RequisitionStatus.to_action_type(s))
 
