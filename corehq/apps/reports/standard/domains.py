@@ -120,6 +120,11 @@ def es_domain_query(params, facets=None, terms=None, domains=None, return_q_dict
             }
         }
 
+    q["filter"] = {"and": [
+        {"term": {"doc_type": "Domain"}},
+        {"term": {"is_snapshot": False}},
+    ]}
+
     search_query = params.get('search', "")
     if search_query:
         q['query'] = {
@@ -128,7 +133,7 @@ def es_domain_query(params, facets=None, terms=None, domains=None, return_q_dict
                     "match" : {
                         "_all" : {
                             "query" : search_query,
-                            "operator" : "and" }}}}}
+                            "operator" : "or" }}}}}
 
     q["facets"] = {}
     stats = ['cp_n_active_cases', 'cp_n_active_cc_users', 'cp_n_cc_users', 'cp_n_web_users', 'cp_n_forms', 'cp_n_cases']
