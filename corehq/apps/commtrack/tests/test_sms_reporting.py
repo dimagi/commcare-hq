@@ -68,6 +68,7 @@ class StockRequisitionTest(CommTrackTest):
             self.assertEqual(self.user._id, req_case.requested_by)
             self.assertEqual(req_case.location_, self.sp.location_)
             self.assertTrue(req_case._id in reqs)
+            self.assertEqual(spp._id, req_case.get_product_case()._id)
 
     def testApprovalBadLocations(self):
         self.testRequisition()
@@ -102,6 +103,7 @@ class StockRequisitionTest(CommTrackTest):
             self.assertEqual(self.user._id, req_case.approved_by)
             self.assertIsNotNone(req_case.approved_on)
             self.assertTrue(isinstance(req_case.approved_on, datetime))
+            self.assertEqual(req_case.product_id, req_case.get_product_case().product)
 
     def testSimplePack(self):
         self.testRequisition()
@@ -121,6 +123,7 @@ class StockRequisitionTest(CommTrackTest):
             self.assertEqual(self.user._id, req_case.packed_by)
             self.assertIsNotNone(req_case.packed_on)
             self.assertTrue(isinstance(req_case.packed_on, datetime))
+            self.assertEqual(req_case.product_id, req_case.get_product_case().product)
 
     def testReceipts(self):
         # this tests the requisition specific receipt keyword. not to be confused
