@@ -209,11 +209,11 @@ def _get_action(case, action_filter=lambda a: True):
     except StopIteration:
         return None
 
-def _get_form(case, action_filter=lambda a: True, form_filter=lambda f: True):
+def _get_form(case, action_filter=lambda a: True, form_filter=lambda f: True, reverse=False):
     """
     returns the first form that passes through both filter functions
     """
-    gf = get_forms(case, action_filter=action_filter, form_filter=form_filter)
+    gf = get_forms(case, action_filter=action_filter, form_filter=form_filter, reverse=reverse)
     try:
         return gf.next()
     except StopIteration:

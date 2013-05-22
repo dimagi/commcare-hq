@@ -203,13 +203,11 @@ class IndicatorClientList(GroupReferenceMixIn, ConvenientBaseMixIn,
     @property
     def rows(self):
         if self.indicator.fluff_calculator:
-            case_ids = set()
-            for owner_id in self.all_owner_ids:
-                result = self.indicator.fluff_calculator.get_result(
-                    [self.domain, owner_id],
-                    reduce=False
-                )
-                case_ids.update(result[self.indicator.fluff_calculator.primary])
+            result = self.indicator.fluff_calculator.aggregate_results(
+                ([self.domain, owner_id] for owner_id in self.all_owner_ids),
+                reduce=False
+            )
+            case_ids = result[self.indicator.fluff_calculator.primary]
             cases = CommCareCase.view('_all_docs', keys=list(case_ids),
                                       include_docs=True)
             return map(self.indicator.as_row, cases)

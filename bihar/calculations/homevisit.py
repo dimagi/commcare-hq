@@ -1,10 +1,13 @@
 import datetime
+import logging
 from bihar.calculations.types import DoneDueCalculator, TotalCalculator
+from bihar.calculations.utils import xmlns
 from bihar.calculations.utils.calculations import get_forms
 from bihar.calculations.utils.filters import is_pregnant_mother,\
     get_add, get_edd, A_MONTH
 from bihar.calculations.utils.home_visit import GRACE_PERIOD
 from bihar.calculations.utils.visits import visit_is, has_visit
+from bihar.reports.indicators.calculations import _get_form
 import fluff
 
 
@@ -58,27 +61,19 @@ class VisitCalculator(DoneDueCalculator):
 
 
 class DueNextMonth(TotalCalculator):
-    """Abstract"""
 
     window = 2 * A_MONTH
 
     @fluff.filter_by
     def has_edd(self, case):
-        return get_edd(case)
+        return is_pregnant_mother(case) and get_edd(case) and not get_add(case)
 
     @fluff.date_emitter
     def total(self, case):
         yield get_edd(case) - self.window / 2
 
 
-class UpcomingDeliveryList(DueNextMonth):
-
-    def filter(self, case):
-        return is_pregnant_mother(case) and not get_add(case)
-
-
 class RecentDeliveryList(TotalCalculator):
-
     window = A_MONTH
 
     def filter(self, case):
@@ -94,73 +89,84 @@ class RecentlyOpened(TotalCalculator):
 
     window = A_MONTH
 
+    @fluff.filter_by
+    def case_type(self, case):
+        return is_pregnant_mother(case)
+
     @fluff.date_emitter
     def total(self, case):
-        yield case.opened_on
-
-
-class RecentRegistrationList(RecentlyOpened):
-
-    def filter(self, case):
-        return is_pregnant_mother(case)
+        # if not has_visit(case, 'reg'):
+        #     logging.error('Case has no reg action: %s' % case.get_id)
+        for action in case.actions:
+            if visit_is(action, 'reg'):
+                if not action.date:
+                    logging.error('Reg action has no date! Case %s' % case.get_id)
+                else:
+                    yield action.date
 
 
 class NoBPList(RecentlyOpened):
 
     def filter(self, case):
-        return is_pregnant_mother(case) and not has_visit(case, 'bp')
+        return not has_visit(case, 'bp')
+
+    @fluff.filter_by
+    def no_bp_date(self, case):
+        return all(getattr(case, p, '') == '' for p in (
+            'date_bp_1',
+            'date_bp_2',
+            'date_bp_3',
+        ))
 
 
 class NoIFAList(RecentlyOpened):
 
     def filter(self, case):
         ifa = int(getattr(case, "ifa_tablets", None) or 0)
-        return is_pregnant_mother(case) and ifa > 0
+        return ifa == 0
 
 
 class NoBPPrep(TotalCalculator):
     """Abstract"""
-    no_prep_rules = ()
+    no_prep_paths = ()
 
     def action_filter(self, action):
         return visit_is(action, 'bp')
 
     @fluff.filter_by
     def no_prep(self, case):
-        return any((
-            all((
-                form.xpath(xpath) == value
-                for xpath, value in self.no_prep_rules
-            ))
-            for form in get_forms(case, action_filter=self.action_filter)
-        ))
+        forms = list(get_forms(case, action_filter=self.action_filter))
+        return any(
+            all(
+                form.xpath(xpath) != 'yes'
+                for form in forms
+            )
+            for xpath in self.no_prep_paths
+        )
 
 
 class NoEmergencyPrep(NoBPPrep, DueNextMonth):
 
-    no_prep_rules = (
-        ('form/bp2/maternal_danger_signs', 'no'),
-        ('form/bp2/danger_institution', 'no'),
+    no_prep_paths = (
+        'form/bp2/maternal_danger_signs',
+        'form/bp2/danger_institution',
     )
-
-    def filter(self, case):
-        return is_pregnant_mother(case) and not get_add(case)
 
 
 class NoNewbornPrep(NoBPPrep, DueNextMonth):
 
-    no_prep_rules = (
-        ('form/bp2/wrapping', 'no'),
-        ('form/bp2/skin_To_skin', 'no'),
-        ('form/bp2/immediate_breastfeeding', 'no'),
-        ('form/bp2/cord_care', 'no'),
+    no_prep_paths = (
+        'form/bp2/wrapping',
+        'form/bp2/skin_to_skin',
+        'form/bp2/immediate_breastfeeding',
+        'form/bp2/cord_care',
     )
 
 
 class NoPostpartumCounseling(NoBPPrep, DueNextMonth):
 
-    no_prep_rules = (
-        ('form/bp2/counsel_accessible', 'no'),
+    no_prep_paths = (
+        'form/family_planning_group/counsel_accessible',
     )
 
 
