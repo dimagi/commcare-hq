@@ -5,6 +5,7 @@ from datetime import datetime, timedelta
 from django.template.loader import render_to_string
 from django.utils.translation import ugettext_noop
 from django.utils.translation import ugettext as _
+from bihar.utils import get_team_members, get_all_owner_ids
 
 from corehq.apps.fixtures.models import FixtureDataItem
 from corehq.apps.reports.standard import CustomProjectReport
@@ -19,10 +20,6 @@ from dimagi.utils.decorators.memoized import memoized
 from casexml.apps.case.models import CommCareCase
 from corehq.apps.adm.reports.supervisor import SupervisorReportsADMSection
 from bihar.reports.indicators.mixins import IndicatorConfigMixIn
-
-
-ASHA_ROLE = ugettext_noop('ASHA')
-AWW_ROLE = ugettext_noop('AWW')
 
 
 def shared_bihar_context(report):
@@ -98,23 +95,13 @@ class GroupReferenceMixIn(object):
         """
         Get any commcare users that are either "asha" or "aww".
         """
-        users = self.group.get_users(only_commcare=True)
-        def is_team_member(user):
-            role = user.user_data.get('role', '')
-            return role == ASHA_ROLE or role == AWW_ROLE
-
-        return sorted([u for u in users if is_team_member(u)], 
-                      key=lambda u: u.user_data['role'])
-
+        return get_team_members(self.group)
     @property
     @memoized
     def all_owner_ids(self):
         all_user_ids = [u._id for u in self.get_team_members()]
-        all_group_ids = [row['id'] for row in \
-                         Group.get_db().view('groups/by_user',
-                                             keys=all_user_ids,
-                                             include_docs=False)]
-        return set(all_user_ids).union(set(all_group_ids))
+        return get_all_owner_ids(all_user_ids)
+
 
     @property
     @memoized

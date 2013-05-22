@@ -1,9 +1,11 @@
 import datetime
+from django.conf import settings
 from casexml.apps.case.models import CommCareCase
 from bihar.calculations import homevisit, pregnancy, postpartum, newborn, familyplanning, mortality
 import fluff
 
 A_DAY = datetime.timedelta(days=1)
+
 
 class CareBiharFluff(fluff.IndicatorDocument):
     document_class = CommCareCase
@@ -25,10 +27,10 @@ class CareBiharFluff(fluff.IndicatorDocument):
         visit_type='cf',
     )
 
-    upcoming_deliveries = homevisit.UpcomingDeliveryList()
+    upcoming_deliveries = homevisit.DueNextMonth()
     deliveries = homevisit.RecentDeliveryList()
     no_bp_counseling = homevisit.NoBPList()
-    new_pregnancies = homevisit.RecentRegistrationList()
+    new_pregnancies = homevisit.RecentlyOpened()
     no_ifa_tablets = homevisit.NoIFAList()
     no_emergency_prep = homevisit.NoEmergencyPrep()
     no_newborn_prep = homevisit.NoNewbornPrep()
