@@ -9,20 +9,27 @@
 {% block js-inline %}{{ block.super }}
     <script type="text/javascript">
         $(function() {
-            $('.case_field').change(function() {
-                customField = $(this).closest('tr').find(".custom_field");
+            $('.new_property').change(function() {
+                var caseField = $(this).closest('.controls-row').find(".case_field");
+                var customField = $(this).closest('.controls-row').find(".custom_field");
 
-                if ($(this).val() != '') {
-                    customField.val('');
-                    customField.attr('disabled', 'disabled');
+                if (this.checked) {
+                    customField.removeClass('hide');
+                    caseField.val('');
+                    caseField.addClass('hide');
                 } else {
-                    customField.removeAttr('disabled');
+                    customField.val('');
+                    customField.addClass('hide');
+                    caseField.removeClass('hide');
                 }
             });
 
-            $('.custom_field').bind('change, keypress, keydown, keyup', function() {
-                selectField = $(this).closest('tr').find("select.case_field");
+            // Can't rely on id based magic since there are duplicates
+            $('label').click(function() {
+                $(this).find('input').click();
+            });
 
+            $('.custom_field').bind('change, keypress, keydown, keyup', function() {
                 // check if field is valid for xml
                 // TODO: this method seems pretty sketchy, should cleanup
                 var value = $(this).val();
@@ -33,13 +40,6 @@
                 value = value.replace(regx, ""); // remove xml from beginning of string
 
                 $(this).val(value);
-
-                if ($(this).val() != '') {
-                    selectField.val('');
-                    selectField.attr('disabled', 'disabled');
-                } else {
-                    selectField.removeAttr('disabled');
-                }
             });
 
             $('.custom_field').trigger('change');
@@ -51,7 +51,7 @@
 
                 $(this).find('input.is_date').each(function() {
                     var checked_val = this.checked;
-                    $(this).parent().next('input[type=hidden]').val(checked_val);
+                    $(this).closest('.controls-row').find('input.is_date_field').val(checked_val);
                 });
 
                 return true;
@@ -66,8 +66,7 @@
 {% endblock %}
 
 {% block main_column %}
-    <form class="form-horizontal form-report"
-          action="{% url corehq.apps.importer.views.excel_commit domain %}"
+    <form action="{% url corehq.apps.importer.views.excel_commit domain %}"
           method="post"
           id="field_form">
         <input type="hidden" name="named_columns" value="{{named_columns}}" />
@@ -80,18 +79,9 @@
 
         <fieldset>
             <legend>{% trans "Map columns to case fields" %}</legend>
-            <table>
-                <tr>
-                    <th>{% trans "Excel data label"%}</th>
-                    <th>{% trans "Case field name"%}</th>
-                    <th>{% trans "or enter a new field name"%}</th>
-                    <th>{% trans "Is this a date field?"%}</th>
-                </tr>
-
-                {% for i in excel_fields_range %}
-                {% include "importer/partials/excel_field_row.html" %}
-                {% endfor %}
-            </table>
+            {% for i in excel_fields_range %}
+            {% include "importer/partials/excel_field_row.html" %}
+            {% endfor %}
         </fieldset>
 
         <div class="form-actions">
@@ -99,7 +89,8 @@
                 <i class="icon-backward icon-white"></i> {% trans "Back" %}
             </button>
             <button type="submit" class="btn btn-primary">
-                <i class="icon-forward icon-white"></i> {% trans "Confirm Import" %}
+                <i class="icon-forward icon-white"></i>
+                {% trans "Confirm Import" %}
             </button>
         </div>
     </form>
