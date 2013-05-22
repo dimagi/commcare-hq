@@ -49,8 +49,9 @@
                     $(this).removeAttr('disabled');
                 });
 
-                $(this).find('input[type=checkbox]').each(function() {
-                    $(this).prev().val($(this).is(':checked') ? '1' : '0');
+                $(this).find('input.is_date').each(function() {
+                    var checked_val = this.checked;
+                    $(this).parent().next('input[type=hidden]').val(checked_val);
                 });
 
                 return true;

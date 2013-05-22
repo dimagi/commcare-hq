@@ -3,7 +3,7 @@
         <select name="excel_field[]">
             <option value=""></option>
             {% for field in excel_fields %}
-                <option value="{{excel_field|escape}}">
+                <option value="{{ field|escape }}">
                     {{ field|escape }}
                 </option>
             {% endfor %}
@@ -14,7 +14,7 @@
         <select name="case_field[]" class="case_field">
             <option value=""></option>
             {% for field in case_fields %}
-                <option value="{{case_field|escape}}">
+                <option value="{{ field|escape }}">
                     {{ field|escape }}
                 </option>
             {% endfor %}
@@ -26,8 +26,11 @@
     </td>
 
     <td style="text-align:center">
-        <input type="checkbox" />
+        <input class="is_date" type="checkbox" />
     </td>
 
-    <input type="hidden" name="date_yesno[]" value="0" />
+    <input type="hidden"
+           class="is_date_field"
+           name="is_date_field[]"
+           value="false" />
 </tr>
