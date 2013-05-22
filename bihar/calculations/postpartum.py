@@ -8,7 +8,7 @@ from bihar.calculations.utils.filters import get_add, A_MONTH
 import fluff
 
 
-class Complications(DoneDueCalculator, TotalCalculator):
+class Complications(DoneDueCalculator):
     """
         DENOM: [
             any DELIVERY forms with (
@@ -44,25 +44,28 @@ class Complications(DoneDueCalculator, TotalCalculator):
     """
     window = A_MONTH
 
-    _pnc_ebc_complications = [
+    def case_open(self, case):
+        """Include all cases"""
+        return True
+
+    _pnc_ebc_complications = (
         'abdominal_pain',
         'bleeding',
         'discharge',
         'fever',
         'pain_urination',
-    ]
+    )
+    _reg_del_complications = (
+        'abd_pain',
+        'fever',
+        'pain_urine',
+        'vaginal_discharge',
+    )
     complications_by_form = {
-        DELIVERY: [
-            'complications'
-        ],
+        REGISTRATION: _reg_del_complications,
+        DELIVERY: _reg_del_complications,
         PNC: _pnc_ebc_complications,
         EBF: _pnc_ebc_complications,
-        REGISTRATION: [
-            'abd_pain',
-            'fever',
-            'pain_urine',
-            'vaginal_discharge',
-        ],
     }
 
     def __init__(self, days, window=None):
