@@ -16,6 +16,9 @@ from corehq.apps.commtrack.models import Product, CommtrackConfig
 
 logger = logging.getLogger('commtrack.sms')
 
+class SMSError(RuntimeError):
+    pass
+
 def handle(verified_contact, text):
     """top-level handler for incoming stock report messages"""
     domain = Domain.get_by_name(verified_contact.domain)
@@ -26,7 +29,7 @@ def handle(verified_contact, text):
         data = StockReportParser(domain, verified_contact).parse(text.lower())
         if not data:
             return False
-    except Exception, e:
+    except Exception, e: # todo: should we only trap SMSErrors?
         if settings.UNIT_TESTING:
             raise
         send_sms_to_verified_number(verified_contact, 'problem with stock report: %s' % str(e))
@@ -56,30 +59,34 @@ class StockReportParser(object):
         """take in a text and return the parsed stock transactions"""
         args = text.split()
 
-        # single action stock report
-        if args[0] in self.C.stock_keywords():
-            # TODO: support single-action by product, as well as by action?
-            action_name = self.C.all_keywords()[args[0]]
-            action = self.C.all_actions_by_name[action_name]
+        if len(args) == 0:
+            # we'll allow blank messages to propagate further in case some
+            # other handler cares about them.
+            return None
+
+        action_keyword = args[0]
+        args = args[1:]
+        if not location:
+            if len(args) == 0:
+                # todo: this will change when users are tied to locations
+                # though need to make sure that PACK and APPROVE still require location code
+                # (since they refer to locations different from the sender's loc)
+                raise SMSError("must specify a location code")
+            location = self.location_from_code(args[0])
             args = args[1:]
 
-            if not location:
-                location = self.location_from_code(args[0])
-                args = args[1:]
-        
+        # single action stock report
+        if action_keyword in self.C.stock_keywords():
+            # TODO: support single-action by product, as well as by action?
+            action_name = self.C.all_keywords()[action_keyword]
+            action = self.C.all_actions_by_name[action_name]
+
             _tx = self.single_action_transactions(action, args, transaction_factory(location, stockreport.StockTransaction))
 
         # requisition
-        elif args[0] in self.C.requisition_keywords():
-            action_name = self.C.all_keywords()[args[0]]
+        elif action_keyword in self.C.requisition_keywords():
+            action_name = self.C.all_keywords()[action_keyword]
             action = self.C.all_actions_by_name[action_name]
-            args = args[1:]
-
-            # TODO in future when location can be linked to sending phone #, PACK and APPROVE will still require location code
-            # (since they refer to locations different from the sender's loc)
-            if not location:
-                location = self.location_from_code(args[0])
-                args = args[1:]
 
             if action.action_type in [RequisitionActions.APPROVAL, RequisitionActions.PACK]:
                 _tx = self.requisition_bulk_action(action, location, args)
@@ -87,14 +94,7 @@ class StockReportParser(object):
                 _tx = self.single_action_transactions(action, args, transaction_factory(location, stockreport.Requisition))
 
         # multiple action stock report
-        elif self.C.multiaction_enabled and (self.C.multiaction_keyword is None or args[0] == self.C.multiaction_keyword.lower()):
-            if self.C.multiaction_keyword:
-                args = args[1:]
-
-            if not location:
-                location = self.location_from_code(args[0])
-                args = args[1:]
-
+        elif self.C.multiaction_enabled and action_keyword == self.C.multiaction_keyword.lower():
             _tx = self.multiple_action_transactions(args, transaction_factory(location, stockreport.StockTransaction))
 
         else:
@@ -103,7 +103,7 @@ class StockReportParser(object):
 
         tx = list(_tx)
         if not tx:
-            raise RuntimeError("stock report doesn't have any transactions")
+            raise SMSError("stock report doesn't have any transactions")
 
         return {
             'timestamp': datetime.utcnow(),
@@ -127,7 +127,7 @@ class StockReportParser(object):
 
                 return
             else:
-                raise RuntimeError("can't include a quantity for stock-out action")
+                raise SMSError("can't include a quantity for stock-out action")
 
         grouping_allowed = (action.action_type == 'stockedoutfor')
 
@@ -137,20 +137,20 @@ class StockReportParser(object):
                 products.append(self.product_from_code(arg))
             else:
                 if not products:
-                    raise RuntimeError('quantity "%s" doesn\'t have a product' % arg)
+                    raise SMSError('quantity "%s" doesn\'t have a product' % arg)
                 if len(products) > 1 and not grouping_allowed:
-                    raise RuntimeError('missing quantity for product "%s"' % products[-1].code)
+                    raise SMSError('missing quantity for product "%s"' % products[-1].code)
 
                 try:
                     value = int(arg)
                 except:
-                    raise RuntimeError('could not understand product quantity "%s"' % arg)
+                    raise SMSError('could not understand product quantity "%s"' % arg)
 
                 for p in products:
                     yield make_tx(domain=self.domain, product=p, action_name=action.name, value=value)
                 products = []
         if products:
-            raise RuntimeError('missing quantity for product "%s"' % products[-1].code)
+            raise SMSError('missing quantity for product "%s"' % products[-1].code)
 
     def multiple_action_transactions(self, args, make_tx):
         action_name = None
@@ -171,7 +171,7 @@ class StockReportParser(object):
                 keyword = next()
             except StopIteration:
                 if not found_product_for_action:
-                    raise RuntimeError('product expected for action "%s"' % action_code)
+                    raise SMSError('product expected for action "%s"' % action_code)
                 break
 
             try:
@@ -180,7 +180,7 @@ class StockReportParser(object):
                 action = action_defs.get(action_name)
 
                 if not found_product_for_action:
-                    raise RuntimeError('product expected for action "%s"' % old_action_code)
+                    raise SMSError('product expected for action "%s"' % old_action_code)
                 found_product_for_action = False
                 continue
             except KeyError:
@@ -193,23 +193,23 @@ class StockReportParser(object):
                 product = None
             if product:
                 if not action:
-                    raise RuntimeError('need to specify an action before product')
+                    raise SMSError('need to specify an action before product')
                 elif action.action_type == 'stockout':
                     value = 0
                 else:
                     try:
                         value = int(next())
                     except (ValueError, StopIteration):
-                        raise RuntimeError('quantity expected for product "%s"' % product.code)
+                        raise SMSError('quantity expected for product "%s"' % product.code)
 
                 yield make_tx(product=product, action_name=action_name, value=value)
                 continue
 
-            raise RuntimeError('do not recognize keyword "%s"' % keyword)
+            raise SMSError('do not recognize keyword "%s"' % keyword)
 
     def requisition_bulk_action(self, action, location, args):
         if args:
-            raise RuntimeError('extra arguments at end')
+            raise SMSError('extra arguments at end')
 
         yield stockreport.BulkRequisitionResponse(
             domain=self.domain,
@@ -222,7 +222,7 @@ class StockReportParser(object):
         """return the supply point case referenced by loc_code"""
         result = get_supply_point(self.domain.name, loc_code)['case']
         if not result:
-            raise RuntimeError('invalid location code "%s"' % loc_code)
+            raise SMSError('invalid location code "%s"' % loc_code)
         return result
 
     def product_from_code(self, prod_code):
@@ -230,7 +230,7 @@ class StockReportParser(object):
         prod_code = prod_code.lower()
         p = Product.get_by_code(self.domain.name, prod_code)
         if p is None:
-            raise RuntimeError('invalid product code "%s"' % prod_code)
+            raise SMSError('invalid product code "%s"' % prod_code)
         return p
 
 

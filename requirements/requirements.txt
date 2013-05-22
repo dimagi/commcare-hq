@@ -21,7 +21,7 @@ eulxml==0.18.0
 gunicorn==0.15.0
 lxml==2.3
 mock==0.8.0
-mocker==1.1
+mocker==1.1.1
 openpyxl==1.5.6
 PIL==1.1.7
 phonenumbers==5.1b1

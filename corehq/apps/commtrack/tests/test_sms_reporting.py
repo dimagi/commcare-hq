@@ -1,9 +1,9 @@
 from datetime import datetime
 from corehq.apps.commtrack.const import RequisitionStatus
 from corehq.apps.commtrack.models import RequisitionCase
-from corehq.apps.commtrack.tests.util import CommTrackTest
-from corehq.apps.commtrack.sms import handle
 from casexml.apps.case.models import CommCareCase
+from corehq.apps.commtrack.tests.util import CommTrackTest
+from corehq.apps.commtrack.sms import handle, SMSError
 
 
 class StockReportTest(CommTrackTest):
@@ -68,6 +68,21 @@ class StockRequisitionTest(CommTrackTest):
             self.assertEqual(self.user._id, req_case.requested_by)
             self.assertEqual(req_case.location_, self.sp.location_)
             self.assertTrue(req_case._id in reqs)
+
+    def testApprovalBadLocations(self):
+        self.testRequisition()
+
+        try:
+            handle(self.verified_number, 'approve')
+            self.fail("empty locations should fail")
+        except SMSError, e:
+            self.assertEqual('must specify a location code', str(e))
+
+        try:
+            handle(self.verified_number, 'approve notareallocation')
+            self.fail("unknown locations should fail")
+        except SMSError, e:
+            self.assertTrue('invalid location code' in str(e))
 
     def testSimpleApproval(self):
         self.testRequisition()

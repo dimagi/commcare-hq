@@ -1,4 +1,3 @@
-from corehq.apps.reports.standard import ProjectReport, ProjectReportParametersMixin, DatespanMixin
 from corehq.apps.reports.generic import GenericTabularReport
 from corehq.apps.reports.commtrack.psi_prototype import CommtrackReportMixin
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
