@@ -3397,6 +3397,9 @@ ul.icons li [class*=" icon-"] {
 .icon-vellum-audio-capture:before {
   content: "\F00B";
 }
+.icon-vellum-android-intent:before {
+  content: "\F00C";
+}
 .header .icon-white:before {
   content: "\f105";
   color: #a5c0de;
