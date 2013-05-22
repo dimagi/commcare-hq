@@ -92,8 +92,12 @@ def saved_reports(request, domain, template="reports/reports_home.html"):
         raise Http404
 
     configs = ReportConfig.by_domain_and_owner(domain, user._id).all()
-    scheduled_reports = [s for s in ReportNotification.by_domain_and_owner(domain, user._id).all()
-                         if (not hasattr(s, 'report_slug') or s.report_slug != 'admin_domains') and s._id]
+    def _is_valid(rn):
+        # the _id check is for weird bugs we've seen in the wild that look like
+        # oddities in couch.
+        return hasattr(rn, "_id") and rn._id and (not hasattr(rn, 'report_slug') or rn.report_slug != 'admin_domains')
+
+    scheduled_reports = [rn for rn in ReportNotification.by_domain_and_owner(domain, user._id).all() if _is_valid(rn)]
 
     context = dict(
         couch_user=request.couch_user,
