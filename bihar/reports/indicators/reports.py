@@ -144,16 +144,13 @@ class IndicatorClientSelectNav(GroupReferenceMixIn, BiharSummaryReport,
         return [_nav_link(i) for i in self.indicators]
 
     def count(self, indicator):
-        if indicator.fluff_calculator:
-            def totals():
-                for owner_id in self.all_owner_ids:
-                    calculator = indicator.fluff_calculator
-                    yield calculator.get_result(
-                        [self.domain, owner_id]
-                    )['total']
-            return sum(totals())
-        else:
-            return len([c for c in self.cases if indicator.filter(c)])
+        def totals():
+            for owner_id in self.all_owner_ids:
+                calculator = indicator.fluff_calculator
+                yield calculator.get_result(
+                    [self.domain, owner_id]
+                )['total']
+        return sum(totals())
 
 
 def name_context(report):

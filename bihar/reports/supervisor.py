@@ -44,8 +44,6 @@ class ConvenientBaseMixIn(object):
 
     extra_context_providers = [shared_bihar_context]
 
-
-
     # for the lazy
     _headers = []  # override
     @property

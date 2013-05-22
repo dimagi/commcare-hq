@@ -305,7 +305,6 @@ class Indicator(object):
         return isinstance(self.fluff_calculator, DoneDueCalculator)
 
     def get_columns(self):
-        print self._display.get_columns()
         return self._display.get_columns()
 
     def sortkey(self, case, context):
