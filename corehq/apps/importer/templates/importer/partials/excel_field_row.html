@@ -1,0 +1,33 @@
+<tr>
+    <td>
+        <select name="excel_field[]">
+            <option value=""></option>
+            {% for field in excel_fields %}
+                <option value="{{excel_field|escape}}">
+                    {{ field|escape }}
+                </option>
+            {% endfor %}
+        </select>
+    </td>
+
+    <td>
+        <select name="case_field[]" class="case_field">
+            <option value=""></option>
+            {% for field in case_fields %}
+                <option value="{{case_field|escape}}">
+                    {{ field|escape }}
+                </option>
+            {% endfor %}
+        </select>
+    </td>
+
+    <td>
+        <input type="text" name="custom_field[]" class="custom_field" />
+    </td>
+
+    <td style="text-align:center">
+        <input type="checkbox" />
+    </td>
+
+    <input type="hidden" name="date_yesno[]" value="0" />
+</tr>

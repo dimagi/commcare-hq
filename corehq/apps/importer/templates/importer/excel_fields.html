@@ -88,39 +88,7 @@
                 </tr>
 
                 {% for i in excel_fields_range %}
-                    <tr>
-                        <td>
-                            <select name="excel_field[]">
-                                <option value=""></option>
-                                {% for excel_field in excel_fields %}
-                                    <option value="{{excel_field|escape}}">
-                                        {{excel_field|escape}}
-                                    </option>
-                                {% endfor %}
-                            </select>
-                        </td>
-
-                        <td>
-                            <select name="case_field[]" class="case_field">
-                                <option value=""></option>
-                                {% for case_field in case_fields %}
-                                    <option value="{{case_field|escape}}">
-                                        {{case_field|escape}}
-                                    </option>
-                                {% endfor %}
-                            </select>
-                        </td>
-
-                        <td>
-                            <input type="text" name="custom_field[]" class="custom_field" />
-                        </td>
-
-                        <td style="text-align:center">
-                            <input type="checkbox" />
-                        </td>
-
-                        <input type="hidden" name="date_yesno[]" value="0" />
-                    </tr>
+                {% include "importer/partials/excel_field_row.html" %}
                 {% endfor %}
             </table>
         </fieldset>
