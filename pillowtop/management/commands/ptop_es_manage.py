@@ -1,10 +1,7 @@
 from django.core.management.base import LabelCommand, CommandError
 import sys
-from casexml.apps.case.models import CommCareCase
 from optparse import make_option
 from corehq.elastic import get_es
-from couchexport.models import SavedExportSchema
-from dimagi.utils.couch.database import get_db
 from pillowtop.listener import AliasedElasticPillow
 from pillowtop.run_pillowtop import import_pillows
 
