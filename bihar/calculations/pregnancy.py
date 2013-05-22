@@ -1,9 +1,27 @@
 import datetime
 from bihar.calculations.types import CaseCalculator, DoneDueCalculator, AddCalculator
+from bihar.calculations.utils.calculations import get_related_prop, get_form
 from bihar.calculations.utils.filters import get_add, A_MONTH, A_DAY
-from bihar.reports.indicators.calculations import _get_time_of_visit_after_birth, _get_tob, _get_prop_from_forms
-from bihar.reports.indicators.visits import get_related_prop
 import fluff
+
+
+def _get_tob(case):  # only guaranteed to be accurate within 24 hours
+    import couchdbkit
+    tob = get_related_prop(case, "time_of_birth") or '00:00:00'
+
+    tob = couchdbkit.schema.TimeProperty().to_python(tob)
+    tob = datetime.datetime.combine(get_add(case), tob)  # convert date to dt.datetime
+    return tob
+
+
+def _get_time_of_visit_after_birth(case):
+    form = get_form(case, action_filter=lambda a: a.updated_unknown_properties.get("add", None))
+    return form.xpath('form/meta/timeStart')
+
+
+def _get_prop_from_forms(case, property):
+    form = get_form(case, form_filter=lambda f: f.form.get(property, None))
+    return form.form[property] if form else None
 
 
 class BirthPlace(AddCalculator):

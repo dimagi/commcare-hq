@@ -1,21 +1,16 @@
+from inspect import ismethod
 from bihar.calculations.types import DoneDueCalculator, TotalCalculator
 from bihar.models import CareBiharFluff
-from dimagi.utils.modules import to_function
+from bihar.reports.indicators.clientlistdisplay import PreDeliveryDoneDueCLD, PreDeliveryCLD, PreDeliverySummaryCLD, PostDeliverySummaryCLD, ComplicationsCalculator
 from django.utils.translation import ugettext_noop as _
 from django.utils.datastructures import SortedDict
 
-# change here to debug as if today were some day in the past
-#now = string_to_datetime('2012-03-21')
-now = None
-
-
-DEFAULT_ROW_FUNCTION = 'bihar.reports.indicators.filters.mother_pre_delivery_columns'
 
 # static config - should this eventually live in the DB?
 DELIVERIES = {
     "slug": "deliveries",
     "name": _("Pregnant woman who delivered"),
-    "calculation_class": "bihar.reports.indicators.home_visit.RecentDeliveryList",
+    "clientlistdisplay": PreDeliveryCLD,
 }
 INDICATOR_SETS = [
     {
@@ -25,68 +20,68 @@ INDICATOR_SETS = [
             {
                 "slug": "bp2",
                 "name": _("BP (2nd Tri) Visits"),
-                "calculation_class": "bihar.reports.indicators.home_visit.BP2Calculator"
+                "clientlistdisplay": PreDeliveryDoneDueCLD,
             },
             {
                 "slug": "bp3",
                 "name": _("BP (3rd Tri) Visits"),
-                "calculation_class": "bihar.reports.indicators.home_visit.BP3Calculator"
+                "clientlistdisplay": PreDeliveryDoneDueCLD,
             },
             {
                 "slug": "pnc",
                 "name": _("PNC Visits"),
-                "calculation_class": "bihar.reports.indicators.home_visit.PNCCalculator"
+                "clientlistdisplay": PreDeliveryDoneDueCLD,
             },
             {
                 "slug": "ebf",
                 "name": _("EBF Visits"),
-                "calculation_class": "bihar.reports.indicators.home_visit.EBCalculator"
+                "clientlistdisplay": PreDeliveryDoneDueCLD,
             },
             {
                 "slug": "cf",
                 "name": _("CF Visits"),
-                "calculation_class": "bihar.reports.indicators.home_visit.CFCalculator"
+                "clientlistdisplay": PreDeliveryDoneDueCLD,
             },
             {
                 "slug": "upcoming_deliveries",
                 "name": _("All woman due for delivery in next 30 days"),
-                "calculation_class": "bihar.reports.indicators.home_visit.UpcomingDeliveryList",
+                "clientlistdisplay": PreDeliveryCLD,
             },
             DELIVERIES,
             {
                 "slug": "new_pregnancies",
                 "name": _("Pregnant woman registered in last 30 days"),
-                "calculation_class": "bihar.reports.indicators.home_visit.RecentRegistrationList",
+                "clientlistdisplay": PreDeliveryCLD,
             },
             {
                 "slug": "no_bp_counseling",
                 "name": _("Pregnant woman not given BP counselling"),
-                "calculation_class": "bihar.reports.indicators.home_visit.NoBPList",
+                "clientlistdisplay": PreDeliveryCLD,
             },
             {
                 "slug": "no_ifa_tablets",
                 "name": _("Pregnant woman not received IFA tablets"),
-                "calculation_class": "bihar.reports.indicators.home_visit.NoIFAList",
+                "clientlistdisplay": PreDeliveryCLD,
             },
             {
                 "slug": "no_emergency_prep",
                 "name": _("Woman due for delivery within 30 days who have not done preparation for Emergency Maternal Care"),
-                "calculation_class": "bihar.reports.indicators.home_visit.NoEmergencyPrep",
+                "clientlistdisplay": PreDeliveryCLD,
             },
             {
                 "slug": "no_newborn_prep",
                 "name": _("Woman due for delivery within 30 days who have not done preparation for immediate new-born care"),
-                "calculation_class": "bihar.reports.indicators.home_visit.NoNewbornPrep",
+                "clientlistdisplay": PreDeliveryCLD,
             },
             {
                 "slug": "no_postpartum_counseling",
                 "name": _("Woman due for delivery within 30 days who have not been counselled on Immediate Post-Partum Family Planning"),
-                "calculation_class": "bihar.reports.indicators.home_visit.NoPostpartumCounseling",
+                "clientlistdisplay": PreDeliveryCLD,
             },
             {
                 "slug": "no_family_planning",
                 "name": _("Woman due for delivery within 30 days who have not showed interest to adopt Family planning methods"),
-                "calculation_class": "bihar.reports.indicators.home_visit.NoFamilyPlanning",
+                "clientlistdisplay": PreDeliveryCLD,
             },
         ]
     },
@@ -97,38 +92,38 @@ INDICATOR_SETS = [
             {
                 "slug": "hd",
                 "name": _("Home Deliveries visited in 24 hours of Birth"),
-                "calculation_class": "bihar.reports.indicators.calculations.HDDayCalculator"
+                "clientlistdisplay": PostDeliverySummaryCLD,
             },
             {
                 "slug": "idv",
                 "name": _("Institutional Deliveries visited in 24 hours of Birth"),
-                "calculation_class": "bihar.reports.indicators.calculations.IDDayCalculator"
+                "clientlistdisplay": PostDeliverySummaryCLD,
             },
             {
                 "slug": "idnb",
                 "name": _("Institutional deliveries not breastfed within one hour"),
-                "calculation_class": "bihar.reports.indicators.calculations.IDNBCalculator"
+                "clientlistdisplay": PostDeliverySummaryCLD,
             },
             DELIVERIES,
             {
                 "slug": "born_at_home",
                 "name": _("Live Births at Home / Total Live Birth (TLB)"),
-                "calculation_class": "bihar.reports.indicators.pregnancy_outcome.BornAtHomeCalculator",
+                "clientlistdisplay": PostDeliverySummaryCLD,
             },
             {
                 "slug": "born_at_public_hospital",
                 "name": _("Live Births at Government Hospital / Total Live Birth (TLB)"),
-                "calculation_class": "bihar.reports.indicators.pregnancy_outcome.BornAtPublicHospital",
+                "clientlistdisplay": PostDeliverySummaryCLD,
             },
             {
                 "slug": "born_in_transit",
                 "name": _("Live Births in Transit / Total Live Birth (TLB)"),
-                "calculation_class": "bihar.reports.indicators.pregnancy_outcome.BornInTransit",
+                "clientlistdisplay": PostDeliverySummaryCLD,
             },
             {
                 "slug": "born_in_private_hospital",
                 "name": _("Live Births at Private Hospital / Total Live Birth (TLB)"),
-                "calculation_class": "bihar.reports.indicators.pregnancy_outcome.BornInPrivateHospital",
+                "clientlistdisplay": PostDeliverySummaryCLD,
             },
         ],
     },
@@ -139,26 +134,26 @@ INDICATOR_SETS = [
             {
                 "slug": 'comp1',
                 "name": _("complications identified in first 24 hours"),
-                "calculation_class": "bihar.reports.indicators.calculations.ComplicationsCalculator",
-                "calculation_kwargs": {'days': 1, 'now': now},
+                "clientlistdisplay": ComplicationsCalculator,
+                "kwargs": {'days': 1},
             },
             {
                 "slug": 'comp3',
                 "name": _("complications identified within 3 days of birth"),
-                "calculation_class": "bihar.reports.indicators.calculations.ComplicationsCalculator",
-                "calculation_kwargs": {'days': 3, 'now': now},
+                "clientlistdisplay": ComplicationsCalculator,
+                "kwargs": {'days': 3},
             },
             {
                 "slug": 'comp5',
                 "name": _("complications identified within 5 days of birth"),
-                "calculation_class": "bihar.reports.indicators.calculations.ComplicationsCalculator",
-                "calculation_kwargs": {'days': 5, 'now': now},
+                "clientlistdisplay": ComplicationsCalculator,
+                "kwargs": {'days': 5},
             },
             {
                 "slug": 'comp7',
                 "name": _("complications identified within 7 days of birth"),
-                "calculation_class": "bihar.reports.indicators.calculations.ComplicationsCalculator",
-                "calculation_kwargs": {'days': 7, 'now': now},
+                "clientlistdisplay": ComplicationsCalculator,
+                "kwargs": {'days': 7},
             },
         ],
     },
@@ -169,27 +164,27 @@ INDICATOR_SETS = [
             {
                 "slug": "ptlb",
                 "name": _("Preterm births"),
-                "calculation_class": "bihar.reports.indicators.calculations.PTLBCalculator"
+                "clientlistdisplay": PreDeliverySummaryCLD,
             },
             {
                 "slug": "lt2kglb",
                 "name": _("infants < 2kg"),
-                "calculation_class": "bihar.reports.indicators.calculations.LT2KGLBCalculator"
+                "clientlistdisplay": PreDeliverySummaryCLD,
             },
             {
                 "slug": "visited_weak_ones",
                 "name": _("visited Weak Newborn within 24 hours of birth by FLW"),
-                "calculation_class": "bihar.reports.indicators.calculations.VWOCalculator"
+                "clientlistdisplay": PreDeliverySummaryCLD,
             },
             {
                 "slug": "skin_to_skin",
                 "name": _("weak newborn not receiving skin to skin care message by FLW"),
-                "calculation_class": "bihar.reports.indicators.calculations.S2SCalculator"
+                "clientlistdisplay": PreDeliverySummaryCLD,
             },
             {
                 "slug": "feed_vigour",
                 "name": _("weak newborn not breastfeeding vigorously "),
-                "calculation_class": "bihar.reports.indicators.calculations.FVCalculator"
+                "clientlistdisplay": PreDeliverySummaryCLD,
             },
         ]
     },
@@ -200,27 +195,27 @@ INDICATOR_SETS = [
             {
                 "slug": "interested_in_fp",
                 "name": _("# Expressed interest in family planning / # deliveries in last 30 days"),
-                "calculation_class": "bihar.reports.indicators.calculations.FPCalculator"
+                "clientlistdisplay": PreDeliverySummaryCLD,
             },
             {
                 "slug": "adopted_fp",
                 "name": _("# Adopted FP / # expressed interest in family planning & delivered in last 30 days"),
-                "calculation_class": "bihar.reports.indicators.calculations.AFPCalculator"
+                "clientlistdisplay": PreDeliverySummaryCLD,
             },
             {
                 "slug": "exp_int_fp",
                 "name": _("# expressed interest in family planning / total # clients"),
-                "calculation_class": "bihar.reports.indicators.calculations.EFPCalculator"
+                "clientlistdisplay": PreDeliverySummaryCLD,
             },
             {
                 "slug": "no_fp",
                 "name": _("clients who delivered in last 7 days and have not yet adopted FP"),
-                "calculation_class": "bihar.reports.indicators.calculations.NOFPCalculator"
+                "clientlistdisplay": PreDeliverySummaryCLD,
             },
             {
                 "slug": "pregnant_fp",
                 "name": _("# clients who whose EDD is in 30 days and have expressed interest in FP"),
-                "calculation_class": "bihar.reports.indicators.calculations.PFPCalculator"
+                "clientlistdisplay": PreDeliverySummaryCLD,
             }
         ]
     },
@@ -232,27 +227,27 @@ INDICATOR_SETS = [
             {
                 "slug": "mother_mortality",
                 "name": _("Mothers died"),
-                "calculation_class": "bihar.reports.indicators.calculations.MMCalculator"
+                "clientlistdisplay": PostDeliverySummaryCLD,
             },
             {
                 "slug": "infant_mortality",
                 "name": _("Infants died"),
-                "calculation_class": "bihar.reports.indicators.calculations.IMCalculator"
+                "clientlistdisplay": PostDeliverySummaryCLD,
             },
             {
                 "slug": "still_birth_public",
                 "name": _("Still Births at Government Hospital"),
-                "calculation_class": "bihar.reports.indicators.mortality.StillAtPublicHospital",
+                "clientlistdisplay": PostDeliverySummaryCLD,
             },
             {
                 "slug": "still_birth_home",
                 "name": _("Still Births at Home"),
-                "calculation_class": "bihar.reports.indicators.mortality.StillAtHome",
+                "clientlistdisplay": PostDeliverySummaryCLD,
             },
             {
                 "slug": "live_birth",
                 "name": _("Live Births"),
-                "calculation_class": "bihar.reports.indicators.mortality.LiveBirth",
+                "clientlistdisplay": PostDeliverySummaryCLD,
             },
         ]
     }
@@ -264,12 +259,14 @@ def _one(filter_func, list):
     [ret] = filter(filter_func, list)
     return ret
 
+
 class IndicatorConfig(object):
     def __init__(self, spec):
         self.indicator_sets = [IndicatorSet(setspec) for setspec in spec]
 
     def get_indicator_set(self, slug):
         return _one(lambda i: i.slug == slug, self.indicator_sets)
+
 
 class IndicatorSet(object):
 
@@ -286,6 +283,7 @@ class IndicatorSet(object):
     def get_indicator(self, slug):
         return self.indicators[slug]
 
+
 class Indicator(object):
     # this class is currently used both for client list filters and
     # calculations.
@@ -293,38 +291,60 @@ class Indicator(object):
     def __init__(self, spec):
         self.slug = spec["slug"]
         self.name = spec["name"]
-        calculation_class = to_function(spec["calculation_class"], failhard=True)
-        kwargs = spec.get("calculation_kwargs", {})
-        self._calculator = calculation_class(**kwargs)
-        try:
-            self.fluff_calculator = CareBiharFluff.get_calculator(self.slug)
-        except KeyError:
-            self.fluff_calculator = None
+        display = spec["clientlistdisplay"]
+        kwargs = spec.get("kwargs", {})
+        self._display = display(**kwargs)
+        self.fluff_calculator = CareBiharFluff.get_calculator(self.slug)
 
     @property
     def show_in_client_list(self):
-        if self.fluff_calculator:
-            return isinstance(self.fluff_calculator, TotalCalculator)
-        return self._calculator.show_in_client_list
+        return isinstance(self.fluff_calculator, TotalCalculator)
 
     @property
     def show_in_indicators(self):
-        if self.fluff_calculator:
-            return isinstance(self.fluff_calculator, DoneDueCalculator)
-        return self._calculator.show_in_indicators
+        return isinstance(self.fluff_calculator, DoneDueCalculator)
 
     def get_columns(self):
-        return self._calculator.get_columns()
+        print self._display.get_columns()
+        return self._display.get_columns()
+
+    def sortkey(self, case, context):
+        return self._display.sortkey(case, context)
 
     @property
-    def sortkey(self):
-        return self._calculator.sortkey
+    def sort_index(self):
+        return self._display.sort_index
 
-    def filter(self, case):
-        return self._calculator.filter(case)
+    def as_row(self, case, context):
+        return self._display.as_row(case, context)
 
-    def as_row(self, case):
-        return self._calculator.as_row(case)
 
-    def display(self, cases):
-        return self._calculator.display(cases)
+def flatten_config():
+    props = """
+        slug
+        name
+        show_in_client_list
+        show_in_indicators
+        get_columns
+    """.strip().split()
+    config = IndicatorConfig(INDICATOR_SETS)
+    r = []
+    for indicator_set in config.indicator_sets:
+        indicators = []
+        r.append({
+            'name': indicator_set.name,
+            'slug': indicator_set.slug,
+            'indicators': indicators,
+        })
+        for indicator in indicator_set.get_indicators():
+            base, = indicator._calculator.__class__.__bases__
+            indicator_d = {
+                'caselistdisplay': base.__module__ + '.' + base.__name__
+            }
+            for p in props:
+                val = getattr(indicator, p)
+                if ismethod(val):
+                    val = val()
+                indicator_d[p] = val
+            indicators.append(indicator_d)
+    return r

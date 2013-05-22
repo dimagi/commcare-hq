@@ -1,13 +1,11 @@
 import datetime
 import logging
 from bihar.calculations.types import DoneDueCalculator, TotalCalculator
-from bihar.calculations.utils import xmlns
 from bihar.calculations.utils.calculations import get_forms
 from bihar.calculations.utils.filters import is_pregnant_mother,\
     get_add, get_edd, A_MONTH
 from bihar.calculations.utils.home_visit import GRACE_PERIOD
 from bihar.calculations.utils.visits import visit_is, has_visit
-from bihar.reports.indicators.calculations import _get_form
 import fluff
 
 

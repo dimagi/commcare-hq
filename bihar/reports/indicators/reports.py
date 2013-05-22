@@ -73,20 +73,19 @@ class IndicatorSummaryReport(GroupReferenceMixIn, BiharSummaryReport,
 
     def get_indicator_value(self, indicator):
         calculator = indicator.fluff_calculator
-        if calculator:
-            def pairs():
-                for owner_id in self.all_owner_ids:
-                    result = calculator.get_result(
-                        [self.domain, owner_id]
-                    )
-                    yield (result['numerator'], result['total'])
-            # (0, 0) to set the dimentions
-            # otherwise if results is ()
-            # it'll be num, denom = () and that'll raise a ValueError
-            num, denom = map(sum, zip((0, 0), *pairs()))
-            return "%s/%s" % (num, denom)
-        else:
-            return indicator.display(self.cases)
+        assert calculator
+
+        def pairs():
+            for owner_id in self.all_owner_ids:
+                result = calculator.get_result(
+                    [self.domain, owner_id]
+                )
+                yield (result['numerator'], result['total'])
+        # (0, 0) to set the dimentions
+        # otherwise if results is ()
+        # it'll be num, denom = () and that'll raise a ValueError
+        num, denom = map(sum, zip((0, 0), *pairs()))
+        return "%s/%s" % (num, denom)
 
     def get_chart(self, indicator):
         # this is a serious hack for now
@@ -186,30 +185,27 @@ class IndicatorClientList(GroupReferenceMixIn, ConvenientBaseMixIn,
         return [_(c) for c in self.indicator.get_columns()]
 
     @property
-    def sorted_cases(self):
-        return sorted(self.cases, key=self.indicator.sortkey)
-        
-    def _filter(self, case):
-        if self.indicator:
-            return self.indicator.filter(case)
-        else:
-            return True
-    
-    def _get_clients(self):
-        for c in self.sorted_cases:
-            if self._filter(c):
-                yield c
+    def headers(self):
+        headers = super(IndicatorClientList, self).headers
+        headers.custom_sort = [self.indicator.sort_index]
+        return headers
+
+    @property
+    @memoized
+    def fluff_results(self):
+        return self.indicator.fluff_calculator.aggregate_results(
+            ([self.domain, owner_id] for owner_id in self.all_owner_ids),
+            reduce=False
+        )
         
     @property
     def rows(self):
-        if self.indicator.fluff_calculator:
-            result = self.indicator.fluff_calculator.aggregate_results(
-                ([self.domain, owner_id] for owner_id in self.all_owner_ids),
-                reduce=False
-            )
-            case_ids = result[self.indicator.fluff_calculator.primary]
-            cases = CommCareCase.view('_all_docs', keys=list(case_ids),
-                                      include_docs=True)
-            return map(self.indicator.as_row, cases)
-        else:
-            return [self.indicator.as_row(c) for c in self._get_clients()]
+        case_ids = self.fluff_results[self.indicator.fluff_calculator.primary]
+        cases = CommCareCase.view('_all_docs', keys=list(case_ids),
+                                  include_docs=True)
+        # no need to sort here, that's done in datatables
+        # using indicator.sort_index
+        return [
+            self.indicator.as_row(case, self.fluff_results)
+            for case in cases
+        ]
