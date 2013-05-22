@@ -386,7 +386,6 @@ class GenericReportView(CacheableRequestMixIn):
         """
             Intention: Don't override.
         """
-        print "updating initial context"
         report_configs = ReportConfig.by_domain_and_owner(self.domain,
             self.request.couch_user._id, report_slug=self.slug).all()
         current_config_id = self.request.GET.get('config_id', '')
