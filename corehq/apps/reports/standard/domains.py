@@ -1,3 +1,4 @@
+from django.core.urlresolvers import reverse
 from django.utils.translation import ugettext_noop
 import math
 from corehq.apps.domain.calculations import dom_calc, _all_domain_stats, ES_CALCED_PROPS
@@ -283,7 +284,7 @@ class AdminDomainStatsReport(DomainStatsReport, ElasticTabularReport):
         for dom in domains:
             if dom.has_key('name'): # for some reason when using the statistical facet, ES adds an empty dict to hits
                 yield [
-                    dom.get('hr_name') or dom['name'],
+                    '<a href="%s">%s</a>' % (reverse("domain_homepage", args=[dom['name']]), dom.get('hr_name') or dom['name']),
                     dom.get("internal", {}).get('organization_name') or _('No org'),
                     dom.get('deployment', {}).get('date') or _('No date'),
                     dom.get("cp_n_active_cc_users", _("Not Yet Calculated")),
