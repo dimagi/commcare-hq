@@ -11,6 +11,10 @@ $(function() {
         items: {{ configs|JSON }},
         saveUrl: '{% url add_report_config domain %}'
     });
+    $("button.send-stopper").click(function () {
+        $(this).text("{% trans 'Saving' %}").prepend('<i class="icon-refresh icon-spin"></i> ').addClass('btn disabled').attr('disabled', 'disabled');
+        $(this).parents('form').submit();
+    });
 });
 </script>
 {% endblock %}
@@ -140,7 +144,7 @@ $(function() {
                                         </div>
                                         <div class="modal-footer">
                                             <a href="#" data-dismiss="modal" class="btn">Cancel</a>
-                                            <button type="submit" class="btn btn-warning">{% trans 'Stop Sending' %}</button>
+                                            <button type="submit" class="send-stopper btn btn-warning">{% trans 'Stop Sending' %}</button>
                                         </div>
                                     </form>
                                 </div>
