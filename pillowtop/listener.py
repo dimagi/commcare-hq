@@ -344,12 +344,14 @@ class ElasticPillow(BasicPillow):
     def change_trigger(self, changes_dict):
         if changes_dict.get('deleted', False):
             try:
-                self.get_es().delete(path=self.get_doc_path(changes_dict['id']))
+                if self.get_es().head(path=self.get_doc_path(changes_dict['id'])):
+                    self.get_es().delete(path=self.get_doc_path(changes_dict['id']))
             except Exception, ex:
                 pillow_logging.error("ElasticPillow: error deleting route %s - ignoring: %s" % \
                               (self.get_doc_path(changes_dict['id']), ex))
             return None
-        return self.couch_db.open_doc(changes_dict['id'])
+        else:
+            return self.couch_db.open_doc(changes_dict['id'])
 
     @autoretry_connection()
     def doc_exists(self, doc_id):
