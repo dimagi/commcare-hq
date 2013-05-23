@@ -16,7 +16,7 @@ setup(
     install_requires=[
         'couchdbkit',
         'pillowtop>=0.1.0',
-        'dimagi-utils>=1.0.0',
+        'dimagi-utils>=1.0.1',
         'pytz',
     ],
     dependency_links=[
