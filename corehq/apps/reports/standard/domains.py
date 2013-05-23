@@ -94,7 +94,7 @@ class OrgDomainStatsReport(DomainStatsReport):
     def is_custom_param(self, param):
         return param in ['org']
 
-DOMAIN_FACETS = {
+DOMAIN_FACETS = [
     "cp_is_active",
     "cp_has_app",
     "uses reminders",
@@ -138,7 +138,7 @@ DOMAIN_FACETS = {
     "sub_area",
     "survey_management_enabled",
     "tags",
-}
+]
 
 def es_domain_query(params, facets=None, terms=None, domains=None, return_q_dict=False, start_at=None, size=None, sort=None):
     from corehq.apps.appstore.views import es_query
