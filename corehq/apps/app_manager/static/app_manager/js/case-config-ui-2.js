@@ -85,7 +85,7 @@ var CaseConfig = (function () {
             questionMap[question.value] = question;
         });
         self.get_repeat_context = function(path) {
-            if (path) {
+            if (path && questionMap[path]) {
                 return questionMap[path].repeat;
             } else {
                 return undefined;
