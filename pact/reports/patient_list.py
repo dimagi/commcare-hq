@@ -1,7 +1,5 @@
 from django.core.urlresolvers import  NoReverseMatch
 from django.utils import html
-import ipdb
-import simplejson
 
 from corehq.apps.api.es import FullCaseES, FullXFormES
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
