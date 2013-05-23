@@ -55,18 +55,19 @@ var CaseConfig = (function () {
             unsavedMessage: "You have unchanged case settings",
             save: function () {
                 var requires = self.caseConfigViewModel.actionType() === 'update' ? 'case' : 'none';
+                var actions = JSON.stringify(_(self.actions).extend(
+                    HQFormActions.from_case_transaction(self.caseConfigViewModel.case_transaction),
+                    {
+                        subcases: _(self.caseConfigViewModel.subcases()).map(HQOpenSubCaseAction.from_case_transaction)
+                    }
+                ));
 
                 self.saveButton.ajax({
                     type: 'post',
                     url: self.save_url,
                     data: {
                         requires: requires,
-                        actions: JSON.stringify(_(self.actions).extend(
-                            HQFormActions.from_case_transaction(self.caseConfigViewModel.case_transaction),
-                            {
-                                subcases: _(self.caseConfigViewModel.subcases()).map(HQOpenSubCaseAction.from_case_transaction)
-                            }
-                        ))
+                        actions: actions
                     },
                     dataType: 'json',
                     success: function (data) {
@@ -76,6 +77,7 @@ var CaseConfig = (function () {
                 });
             }
         });
+
         self.change = function () {
             self.saveButton.fire('change');
         };
@@ -100,9 +102,11 @@ var CaseConfig = (function () {
         self.caseConfigViewModel = new CaseConfigViewModel(self);
         self.init = function () {
             var $home = $('#case-config-ko');
-            ko.applyBindings(self, $home.get(0));
-            $home.on('change textchange', 'input, select', self.change)
-                 .on('click', 'a', self.change);
+            _.delay(function () {
+                ko.applyBindings(self, $home.get(0));
+                $home.on('change textchange', 'input, select', self.change)
+                     .on('click', 'a', self.change);
+            });
         }
     };
     CaseConfig.prototype = utils;
@@ -161,10 +165,22 @@ var CaseConfig = (function () {
     var CaseTransaction = {
         mapping: function (self) {
             return {
-                include: ['case_type', 'condition', 'case_properties'],
+                include: [
+                    'case_type',
+                    'condition',
+                    'case_properties',
+                    'case_preload',
+                    'close_condition',
+                    'allow'
+                ],
                 case_properties: {
                     create: function (options) {
                         return CaseProperty.wrap(options.data, self);
+                    }
+                },
+                case_preload: {
+                    create: function (options) {
+                        return CasePreload.wrap(options.data, self);
                     }
                 }
             }
@@ -177,9 +193,13 @@ var CaseConfig = (function () {
 
             // link self.case_name to corresponding path observable
             // in case_properties for convenience
-            self.case_name = _(self.case_properties()).find(function (p) {
-                return p.key() === 'name' && p.required();
-            }).path;
+            try {
+                self.case_name = _(self.case_properties()).find(function (p) {
+                    return p.key() === 'name' && p.required();
+                }).path;
+            } catch (e) {
+                self.case_name = null;
+            }
 
             self.addProperty = function () {
                 var property = CaseProperty.wrap({
@@ -190,20 +210,69 @@ var CaseConfig = (function () {
 
                 self.case_properties.push(property);
             };
+
             self.removeProperty = function (property) {
                 self.case_properties.remove(property);
             };
+
             self.propertyCounts = ko.computed(function () {
                 var count = {};
-                ko.utils.arrayForEach(self.case_properties(), function (p) {
+                _(self.case_properties()).each(function (p) {
                     var key = p.keyVal();
-                    return count[key] = count[key] ? count[key] + 1 : 1;
+                    if (!count.hasOwnProperty(key)) {
+                        count[key] = 0;
+                    }
+                    return count[key] += 1;
                 });
                 return count;
             });
+
+            if (self.case_preload) {
+                self.addPreload = function () {
+                    var property = CasePreload.wrap({
+                        path: '',
+                        key: '',
+                        required: false
+                    }, self);
+
+                    self.case_preload.push(property);
+                };
+
+                self.removePreload = function (property) {
+                    self.case_preload.remove(property);
+                };
+
+                self.preloadCounts = ko.computed(function () {
+                    var count = {};
+                    _(self.case_preload()).each(function (p) {
+                        var path = p.path();
+                        if (!count.hasOwnProperty(path)) {
+                            count[path] = 0;
+                        }
+                        return count[path] += 1;
+                    });
+                    return count;
+                });
+            }
+
             self.repeat_context = function () {
                 return self.caseConfig.get_repeat_context(self.case_name());
             };
+
+            self.close_case = ko.computed({
+                read: function () {
+                    if (self.close_condition) {
+                        return self.close_condition.type() !== 'never';
+                    } else {
+                        return false;
+                    }
+
+                },
+                write: function (value) {
+                    self.close_condition.type(value ? 'always' : 'never');
+                }
+            });
+
             self.unwrap = function () {
                 CaseTransaction.unwrap(self);
             };
@@ -215,7 +284,7 @@ var CaseConfig = (function () {
     };
 
 
-    var CaseProperty = {
+    var CasePropertyBase = {
         mapping: {
             include: ['key', 'path', 'required']
         },
@@ -227,9 +296,18 @@ var CaseConfig = (function () {
                 value = value[value.length-1];
                 return value;
             });
+            self.case_transaction = case_transaction;
             self.keyVal = ko.computed(function () {
                 return self.key() || self.defaultKey();
             });
+            return self;
+        }
+    };
+
+    var CaseProperty = {
+        mapping: CasePropertyBase.mapping,
+        wrap: function (data, case_transaction) {
+            var self = CasePropertyBase.wrap(data, case_transaction);
             self.repeat_context = function () {
                 return case_transaction.caseConfig.get_repeat_context(self.path());
             };
@@ -249,17 +327,40 @@ var CaseConfig = (function () {
         }
     };
 
+    var CasePreload = {
+        wrap: function (data, case_transaction) {
+            var self = CasePropertyBase.wrap(data, case_transaction);
+            self.validateProperty = ko.computed(function () {
+                if (self.path() || self.keyVal()) {
+                    if (case_transaction.caseConfig.reserved_words.indexOf(self.keyVal()) !== -1) {
+                        return '<strong>' + self.keyVal() + '</strong> is a reserved word';
+                    }
+                }
+                return null;
+            });
+            self.validateQuestion = ko.computed(function () {
+                if (self.path() || self.keyVal()) {
+                    if (case_transaction.preloadCounts()[self.path()] > 1) {
+                        return "Two properties load to the same question";
+                    }
+                }
+                return null;
+            });
+            return self;
+        }
+    };
+
     var DEFAULT_CONDITION = {
         type: 'always',
         question: null,
         answer: null
     };
 
-    var propertyDictToArray = function (required, property_dict, caseConfig) {
+    var propertyDictToArray = function (required, property_dict, caseConfig, keyIsPath) {
         var property_array = _(property_dict).map(function (value, key) {
             return {
-                path: value,
-                key: key,
+                path: !keyIsPath ? value : key,
+                key: !keyIsPath ? key : value,
                 required: false
             };
         }).concat(required);
@@ -269,12 +370,12 @@ var CaseConfig = (function () {
         return property_array;
     };
 
-    var propertyArrayToDict = function (required, property_array) {
+    var propertyArrayToDict = function (required, property_array, keyIsPath) {
         var property_dict = {},
             extra_dict = {};
         _(property_array).each(function (case_property) {
-            var key = case_property.key;
-            var path = case_property.path;
+            var key = case_property[!keyIsPath ? 'key' : 'path'];
+            var path = case_property[!keyIsPath ? 'path' : 'key'];
             if (key || path) {
                 if (_(required).contains(key) && case_property.required) {
                     extra_dict[key] = path;
@@ -296,34 +397,66 @@ var CaseConfig = (function () {
             self.update_case = {
                 update: (o.update_case || {}).update || {}
             };
-            // Other stuff to go here
+            self.case_preload = {
+                preload: (o.case_preload || {}).preload || {}
+            };
+            self.close_case = {
+                condition: (o.close_case || {}).condition || DEFAULT_CONDITION
+            };
             return self;
         },
         to_case_transaction: function (o, caseConfig) {
             var self = HQFormActions.normalize(o);
-            var required_properties = [{
+            var required_properties = caseConfig.requires() === 'none' ? [{
                 key: 'name',
                 path: self.open_case.name_path,
                 required: true
-            }];
+            }] : [];
             var case_properties = propertyDictToArray(
                 required_properties,
                 self.update_case.update,
                 caseConfig
             );
-            return CaseTransaction.wrap({
+            var case_preload = propertyDictToArray(
+                [],
+                self.case_preload.preload,
+                caseConfig,
+                true
+            );
+            var x = CaseTransaction.wrap({
                 case_type: null, // will get overridden by the default
                 case_properties: case_properties,
-                condition: self.open_case.condition
+                case_preload: case_preload,
+                condition: self.open_case.condition,
+                close_condition: self.close_case.condition
             }, caseConfig);
+            _.delay(function () {
+                x.allow = {
+                    condition: ko.computed(function () {
+                        return caseConfig.caseConfigViewModel.actionType() === 'open';
+                    }),
+                    close_condition: ko.computed(function () {
+                        return caseConfig.caseConfigViewModel.actionType() === 'update';
+                    }),
+                    case_preload: ko.computed(function () {
+                        return caseConfig.caseConfigViewModel.actionType() === 'update';
+                    }),
+                    repeats: function () {
+                        return false;
+                    }
+                };
+            });
+            return x;
         },
         from_case_transaction: function (case_transaction) {
             var o = CaseTransaction.unwrap(case_transaction);
             var x = propertyArrayToDict(['name'], o.case_properties);
             var case_properties = x[0], case_name = x[1].name;
+            var case_preload = propertyArrayToDict([], o.case_preload, true)[0];
             var condition = o.condition;
+            var close_condition = o.close_condition;
             var is_open = case_transaction.caseConfig.caseConfigViewModel.actionType() === 'open';
-            console.log(is_open, condition.type);
+
             if (is_open) {
                 if (condition.type === 'never') {
                     condition.type = 'always';
@@ -338,6 +471,12 @@ var CaseConfig = (function () {
                 },
                 update_case: {
                     update: case_properties
+                },
+                case_preload: {
+                    preload: case_preload
+                },
+                close_case: {
+                    condition: close_condition
                 }
             };
         }
@@ -365,7 +504,21 @@ var CaseConfig = (function () {
             return CaseTransaction.wrap({
                 case_type: self.case_type,
                 case_properties: case_properties,
-                condition: self.condition
+                condition: self.condition,
+                allow: {
+                    condition: function () {
+                        return true;
+                    },
+                    close_condition: function () {
+                        return false;
+                    },
+                    case_preload: function () {
+                        return false;
+                    },
+                    repeats: function () {
+                        return true;
+                    }
+                }
             }, caseConfig);
         },
         from_case_transaction: function (case_transaction) {
