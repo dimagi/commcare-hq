@@ -204,7 +204,6 @@ class AdminDomainStatsReport(DomainStatsReport, ElasticTabularReport):
 
     @property
     def total_records(self):
-        print self.es_results
         return int(self.es_results['hits']['total'])
 
     @property
