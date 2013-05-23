@@ -166,11 +166,15 @@ class PatientListDashboardReport(PactElasticTabularReportMixin):
         full_query['sort'] = self.get_sorting_block(),
 
 
-        def status_filtering(slug, field, prefix, any_field):
+        def status_filtering(slug, field, prefix, any_field, default):
             if self.request.GET.get(slug, None) is not None:
-                field_status_filter_query =  self.request.GET[slug]
+                field_status_filter_query = self.request.GET[slug]
 
                 if field_status_filter_query == "":
+                    #silly double default checker here - set default or the any depending on preference
+                    field_status_filter_query = default
+
+                if field_status_filter_query is None:
                     return
                 else:
                     if field_status_filter_query.startswith(prefix):
@@ -185,8 +189,8 @@ class PatientListDashboardReport(PactElasticTabularReportMixin):
                         field_filter = {"prefix": {field: field_status_prefix.lower()}}
                         full_query['filter']['and'].append(field_filter)
 
-        status_filtering(DOTStatus.slug, "dot_status", "DOT", DOTStatus.ANY_DOT)
-        status_filtering(HPStatusField.slug, "hp_status", "HP", HPStatusField.ANY_HP)
+        status_filtering(DOTStatus.slug, "dot_status", "DOT", DOTStatus.ANY_DOT, None)
+        status_filtering(HPStatusField.slug, "hp_status", "HP", HPStatusField.ANY_HP, HPStatusField.ANY_HP)
 
         #primary_hp filter from the user filter
         if self.request.GET.get(PactPrimaryHPField.slug, "") != "":
