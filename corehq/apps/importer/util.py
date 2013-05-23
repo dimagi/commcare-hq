@@ -3,8 +3,10 @@ from dimagi.utils.couch.database import get_db
 from corehq.apps.importer.const import LookupErrors
 from xml.etree import ElementTree
 from dimagi.utils.parsing import json_format_datetime
+from datetime import date
 from corehq.apps.hqcase.utils import submit_case_blocks
 from casexml.apps.case.models import CommCareCase
+from xlrd import xldate_as_tuple
 
 def get_case_properties(domain, case_type=None):
     """
@@ -95,20 +97,20 @@ def convert_custom_fields_to_struct(request):
     excel_fields = request.POST.getlist('excel_field[]')
     case_fields = request.POST.getlist('case_field[]')
     custom_fields = request.POST.getlist('custom_field[]')
-    date_yesno = request.POST.getlist('date_yesno[]')
+    date_field = request.POST.getlist('is_date_field[]')
 
     field_map = {}
     for i, field in enumerate(excel_fields):
         if field and (case_fields[i] or custom_fields[i]):
             field_map[field] = {'case': case_fields[i],
                                 'custom': custom_fields[i],
-                                'date': int(date_yesno[i])}
+                                'is_date_field': date_field[i] == 'true'}
 
     return field_map
 
-def parse_excel_date(date):
+def parse_excel_date(date_val):
     """ Convert field value from excel to a date value """
-    return date(*xldate_as_tuple(date, 0)[:3])
+    return str(date(*xldate_as_tuple(date_val, 0)[:3]))
 
 def parse_search_id(request, columns, row):
     """ Find and convert the search id in an excel row """
@@ -213,7 +215,7 @@ def populate_updated_fields(request, columns, row):
             # existing case field was chosen
             update_field_name = field_map[key]['case']
 
-        if field_map[key]['date'] == 1:
+        if update_value and field_map[key]['is_date_field']:
             update_value = parse_excel_date(update_value)
 
         fields_to_update[update_field_name] = update_value

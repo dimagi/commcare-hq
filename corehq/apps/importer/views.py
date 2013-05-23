@@ -9,8 +9,6 @@ import corehq.apps.importer.util as importer_util
 from corehq.apps.importer.util import ExcelFile
 from couchdbkit.exceptions import MultipleResultsFound, NoResultFound
 from django.views.decorators.http import require_POST
-from datetime import datetime, date
-from xlrd import xldate_as_tuple
 from corehq.apps.users.decorators import require_permission
 from corehq.apps.users.models import Permissions
 from corehq.apps.app_manager.models import ApplicationBase
@@ -181,7 +179,6 @@ def excel_fields(request, domain):
                                 'value_column': value_column,
                                 'columns': columns,
                                 'excel_fields': excel_fields,
-                                'excel_fields_range': range(len(excel_fields)),
                                 'case_fields': case_fields,
                                 'domain': domain,
                                 'report': {
