@@ -386,7 +386,6 @@ class GenericReportView(CacheableRequestMixIn):
         """
             Intention: Don't override.
         """
-
         report_configs = ReportConfig.by_domain_and_owner(self.domain,
             self.request.couch_user._id, report_slug=self.slug).all()
         current_config_id = self.request.GET.get('config_id', '')
@@ -442,7 +441,6 @@ class GenericReportView(CacheableRequestMixIn):
             Intention: This probably does not need to be overridden in general.
             Please override template_context instead.
         """
-        url_args = [] if not self.domain else [self.domain]
         self.context['report'].update(
             show_filters=self.fields or not self.hide_filters,
             breadcrumbs=self.breadcrumbs,
@@ -734,12 +732,19 @@ class GenericTabularReport(GenericReportView):
         total_filtered_records = self.total_filtered_records
         if not isinstance(total_filtered_records, int):
             raise ValueError("Property 'total_filtered_records' should return an int.")
-        return dict(
+        ret = dict(
             sEcho=self.pagination.echo,
             iTotalRecords=total_records,
             iTotalDisplayRecords=total_filtered_records if total_filtered_records >= 0 else total_records,
-            aaData=rows
+            aaData=rows,
         )
+
+        if self.total_row:
+            ret["total_row"] = list(self.total_row)
+        if self.statistics_rows:
+            ret["statistics_rows"] = list(self.statistics_rows)
+
+        return ret
 
     @property
     def fixed_cols_spec(self):

@@ -1153,10 +1153,23 @@ class ApplicationBase(VersionedDoc, SnapshotMixin):
     def is_remote_app(self):
         return False
 
-    def get_latest_app(self):
-        return get_app(self.domain, self.get_id, latest=True)
+    def get_latest_app(self, released_only=True):
+        if released_only:
+            return get_app(self.domain, self.get_id, latest=True)
+        else:
+            return self.view('app_manager/applications',
+                startkey=[self.domain, self.get_id, {}],
+                endkey=[self.domain, self.get_id],
+                include_docs=True,
+                limit=1,
+                descending=True,
+            ).first()
+
 
     def get_latest_saved(self):
+        """
+        This looks really similar to get_latest_app, not sure why tim added
+        """
         if not hasattr(self, '_latest_saved'):
             released = self.__class__.view('app_manager/applications',
                 startkey=['^ReleasedApplications', self.domain, self._id, {}],
@@ -1529,7 +1542,10 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
 
     @property
     def url_base(self):
-        if self.force_http:
+        # force_http is a deprecated hack
+        # for safety we're just special-casing the only
+        # domain that ever used it, wvmoz
+        if self.force_http and self.domain == 'wvmoz':
             return settings.INSECURE_URL_BASE
         else:
             return get_url_base()
@@ -1550,6 +1566,10 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
     def media_suite_loc(self):
         return "media_suite.xml"
 
+    @property
+    def default_language(self):
+        return self.build_langs[0] if len(self.build_langs) > 0 else "en"
+
     def fetch_xform(self, module_id=None, form_id=None, form=None):
         if not form:
             form = self.get_module(module_id).get_form(form_id)
@@ -1564,10 +1584,20 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
 
         if previous_version:
             for form_stuff in self.get_forms(bare=False):
+                filename = 'files/%s' % self.get_form_filename(**form_stuff)
                 form = form_stuff["form"]
                 try:
                     previous_form = previous_version.get_form(form.unique_id)
-                    previous_hash = _hash(previous_version.fetch_xform(form=previous_form))
+                    # we don't want to perform any validation on previous_form
+                    # because it could have been built with an eariler version
+                    # of commcarehq in which there was a bug
+                    # that let invalid forms through
+                    previous_source = previous_version.fetch_attachment(filename)
+                except (ResourceNotFound, KeyError):
+                    # if this is a new form just use my version
+                    form.version = self.version
+                else:
+                    previous_hash = _hash(previous_source)
 
                     # hack - temporarily set my version to the previous version
                     # so that that's not treated as the diff
@@ -1575,9 +1605,6 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
                     my_hash = _hash(self.fetch_xform(form=form))
                     if previous_hash != my_hash:
                         form.version = self.version
-                except KeyError:
-                    # if this is a new form just use my version
-                    form.version = self.version
 
     def _create_custom_app_strings(self, lang):
         def trans(d):
@@ -1711,6 +1738,13 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
             sections=['media_resources']
         )
 
+    @classmethod
+    def get_form_filename(cls, type=None, form=None, module=None):
+        if type == 'user_registration':
+            return 'user_registration.xml'
+        else:
+            return 'modules-%s/forms-%s.xml' % (module.id, form.id)
+
     def create_all_files(self):
         files = {
             "profile.xml": self.create_profile(),
@@ -1719,14 +1753,14 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
         if self.include_media_resources:
             files['media_suite.xml'] = self.create_media_suite()
 
-        if self.show_user_registration:
-            files["user_registration.xml"] = self.fetch_xform(form=self.get_user_registration())
         for lang in ['default'] + self.build_langs:
             files["%s/app_strings.txt" % lang] = self.create_app_strings(lang)
-        for module in self.get_modules():
-            for form in module.get_forms():
-                files["modules-%s/forms-%s.xml" % (module.id, form.id)] = self.fetch_xform(form=form)
+        for form_stuff in self.get_forms(bare=False):
+            filename = self.get_form_filename(**form_stuff)
+            form = form_stuff['form']
+            files[filename] = self.fetch_xform(form=form)
         return files
+
     get_modules = IndexedSchema.Getter('modules')
 
     @parse_int([1])

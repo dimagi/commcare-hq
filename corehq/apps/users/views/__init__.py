@@ -3,6 +3,7 @@ from functools import wraps
 import json
 import re
 import urllib
+import langcodes
 from datetime import datetime
 from couchdbkit.exceptions import ResourceNotFound
 
@@ -10,7 +11,6 @@ from dimagi.utils.couch.database import get_db
 from django.contrib.auth.forms import PasswordChangeForm, SetPasswordForm
 from django.contrib.auth.models import User
 from django.core.urlresolvers import reverse
-from django.db import transaction
 from django.http import Http404, HttpResponseRedirect, HttpResponse, HttpResponseForbidden
 from django.shortcuts import render
 from django.template.loader import render_to_string
@@ -125,12 +125,15 @@ def web_users(request, domain, template="users/web_users.html"):
 @require_POST
 def remove_web_user(request, domain, couch_user_id):
     user = WebUser.get_by_user_id(couch_user_id, domain)
-    record = user.delete_domain_membership(domain, create_record=True)
-    user.save()
-    messages.success(request, 'You have successfully removed {username} from your domain. <a href="{url}" class="post-link">Undo</a>'.format(
-        username=user.username,
-        url=reverse('undo_remove_web_user', args=[domain, record.get_id])
-    ), extra_tags="html")
+    # if no user, very likely they just pressed delete twice in rapid succession so
+    # don't bother doing anything.
+    if user:
+        record = user.delete_domain_membership(domain, create_record=True)
+        user.save()
+        messages.success(request, 'You have successfully removed {username} from your domain. <a href="{url}" class="post-link">Undo</a>'.format(
+            username=user.username,
+            url=reverse('undo_remove_web_user', args=[domain, record.get_id])
+        ), extra_tags="html")
     return HttpResponseRedirect(reverse('web_users', args=[domain]))
 
 @require_can_edit_web_users
@@ -182,16 +185,28 @@ class UserInvitationView(InvitationView):
         user.set_role(self.domain, invitation.role)
         user.save()
 
-@transaction.commit_on_success
 def accept_invitation(request, domain, invitation_id):
     return UserInvitationView()(request, invitation_id, domain=domain)
+
+@require_POST
+@require_can_edit_web_users
+def reinvite_web_user(request, domain):
+    invitation_id = request.POST['invite']
+    try:
+        invitation = DomainInvitation.get(invitation_id)
+        invitation.send_activation_email()
+        return json_response({'response': _("Invitation resent"), 'status': 'ok'})
+    except ResourceNotFound:
+        return json_response({'response': _("Error while attempting resend"), 'status': 'error'})
 
 @require_can_edit_web_users
 def invite_web_user(request, domain, template="users/invite_web_user.html"):
     role_choices = UserRole.role_choices(domain)
     if request.method == "POST":
+        current_users = [user.username for user in WebUser.by_domain(domain)]
+        pending_invites = [di.email for di in DomainInvitation.by_domain(domain)]
         form = AdminInvitesUserForm(request.POST,
-            excluded_emails=[user.username for user in WebUser.by_domain(domain)],
+            excluded_emails= current_users + pending_invites,
             role_choices=role_choices
         )
         if form.is_valid():
@@ -297,25 +312,33 @@ def account(request, domain, couch_user_id, template="users/account.html"):
     context.update(_handle_user_form(request, domain, couch_user))
     return render(request, template, context)
 
+@require_POST
 @require_permission_to_edit_user
-def delete_phone_number(request, domain, couch_user_id):
-    """
-    phone_number cannot be passed in the url due to special characters
-    but it can be passed as %-encoded GET parameters
-    """
+def make_phone_number_default(request, domain, couch_user_id):
     user = CouchUser.get_by_user_id(couch_user_id, domain)
     if not user.is_current_web_user(request) and not user.is_commcare_user():
         raise Http404
-    if 'phone_number' not in request.GET:
+
+    phone_number = request.POST['phone_number']
+    if not phone_number:
         return Http404('Must include phone number in request.')
-    phone_number = urllib.unquote(request.GET['phone_number'])
-    for i in range(0,len(user.phone_numbers)):
-        if user.phone_numbers[i] == phone_number:
-            del user.phone_numbers[i]
-            break
-    user.save()
-    user.delete_verified_number(phone_number)
-    return HttpResponseRedirect(reverse("user_account", args=(domain, couch_user_id )))
+
+    user.set_default_phone_number(phone_number)
+    return HttpResponseRedirect(reverse("user_account", args=(domain, couch_user_id)))
+
+@require_POST
+@require_permission_to_edit_user
+def delete_phone_number(request, domain, couch_user_id):
+    user = CouchUser.get_by_user_id(couch_user_id, domain)
+    if not user.is_current_web_user(request) and not user.is_commcare_user():
+        raise Http404
+
+    phone_number = request.POST['phone_number']
+    if not phone_number:
+        return Http404('Must include phone number in request.')
+
+    user.delete_phone_number(phone_number)
+    return HttpResponseRedirect(reverse("user_account", args=(domain, couch_user_id)))
 
 @require_permission_to_edit_user
 def verify_phone_number(request, domain, couch_user_id):
@@ -478,11 +501,25 @@ def _handle_user_form(request, domain, couch_user=None):
     else:
         role_choices = UserRole.role_choices(domain)
 
+    results = get_db().view('languages/list', startkey=[domain], endkey=[domain, {}], group='true').all()
+    language_choices = []
+
+    if results:
+        for result in results:
+            lang_code = result['key'][1]
+            label = result['key'][1]
+            long_form = langcodes.get_name(lang_code)
+            if long_form:
+                label += " (" + langcodes.get_name(lang_code) + ")"
+            language_choices.append((lang_code, label))
+    else:
+        language_choices = langcodes.get_all_langs_for_select()
+
     if request.method == "POST" and request.POST['form_type'] == "basic-info":
         if couch_user.is_commcare_user():
-            form = UserForm(request.POST, role_choices=role_choices)
+            form = UserForm(request.POST, role_choices=role_choices, language_choices=language_choices)
         else:
-            form = WebUserForm(request.POST, role_choices=role_choices)
+            form = WebUserForm(request.POST, role_choices=role_choices, language_choices=language_choices)
         if form.is_valid():
             if create_user:
                 django_user = User()
@@ -507,10 +544,12 @@ def _handle_user_form(request, domain, couch_user=None):
 
             messages.success(request, 'Changes saved for user "%s"' % couch_user.username)
     else:
+        form = UserForm(role_choices=role_choices, language_choices=language_choices)
         if couch_user.is_commcare_user():
-            form = UserForm(role_choices=role_choices)
+            form = UserForm(role_choices=role_choices, language_choices=language_choices)
         else:
-            form = WebUserForm(role_choices=role_choices)
+            form = WebUserForm(role_choices=role_choices, language_choices=language_choices)
+
         if not create_user:
             form.initial['first_name'] = couch_user.first_name
             form.initial['last_name'] = couch_user.last_name

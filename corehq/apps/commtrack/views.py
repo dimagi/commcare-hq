@@ -7,6 +7,7 @@ from corehq.apps.domain.models import Domain
 from corehq.apps.commtrack.management.commands import bootstrap_psi
 from corehq.apps.commtrack.models import Product
 from corehq.apps.commtrack.forms import ProductForm
+from corehq.apps.locations.models import Location
 from soil.util import expose_download
 import uuid
 from django.core.urlresolvers import reverse
@@ -15,6 +16,8 @@ from corehq.apps.commtrack.tasks import import_locations_async,\
     import_stock_reports_async
 import json
 from couchdbkit import ResourceNotFound
+import csv
+from dimagi.utils.couch.database import iter_docs
 
 DEFAULT_PRODUCT_LIST_LIMIT = 10
 
@@ -180,7 +183,7 @@ def charts(request, domain, template="commtrack/charts.html"):
         {"key": "under stock", "color": "#ffb100"},
         {"key": "adequate stock", "color": "#4ac925"},
         {"key": "overstocked", "color": "#b536da"},
-        {"key": "no data", "color": "#ABABAB"}
+        {"key": "unknown", "color": "#ABABAB"}
     ]
 
     for s in statuses:
@@ -208,3 +211,18 @@ def charts(request, domain, template="commtrack/charts.html"):
         "response_data": response_data,
     }
     return render(request, template, ctxt)
+
+@require_superuser
+def location_dump(self, domain):
+    loc_ids = [row['id'] for row in Location.view('commtrack/locations_by_code', startkey=[domain], endkey=[domain, {}])]
+    
+    resp = HttpResponse(content_type='text/csv')
+    resp['Content-Disposition'] = 'attachment; filename="locations_%s.csv"' % domain
+
+    w = csv.writer(resp)
+    w.writerow(['UUID', 'Location Type', 'SMS Code'])
+    for raw in iter_docs(Location.get_db(), loc_ids):
+        loc = Location.wrap(raw)
+        w.writerow([loc._id, loc.location_type, loc.site_code])
+    return resp
+

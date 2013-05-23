@@ -1,6 +1,7 @@
 import logging
 import simplejson
 import six
+import copy
 from django.http import HttpResponse
 from django.utils.decorators import method_decorator, classonlymethod
 from django.views.decorators.csrf import csrf_protect
@@ -84,7 +85,7 @@ class ESView(View):
         
         return view
 
-    def run_query(self, es_query):
+    def run_query(self, es_query, es_type=None):
         """
         Run a more advanced POST based ES query
 
@@ -99,7 +100,9 @@ class ESView(View):
             fields.append('domain')
             es_query['fields'] = fields
 
-        es_results = self.es[self.index].get('_search', data=es_query)
+        es_base = self.es[self.index] if es_type is None else self.es[self.index][es_type]
+        es_results = es_base.get('_search', data=es_query)
+
         if 'error' in es_results:
             logging.error("Error in elasticsearch query [%s]: %s\nquery: %s"  % (self.index, es_results['error'], es_query))
             notify_exception(None, message="Error in %s elasticsearch query: %s" % (self.index, es_results['error']))
@@ -212,6 +215,7 @@ class XFormES(ESView):
         for res in es_results['hits']['hits']:
             if '_source' in res:
                 xmlns = res['_source'].get('xmlns', None)
+                name = None
                 if xmlns:
                     name = form_filter.get_unknown_form_name(xmlns, none_if_not_found=True)
                 if not name:
@@ -361,7 +365,7 @@ class ESQuerySet(object):
                 # This actually could be supported with varying degrees of efficiency
                 raise NotImplementedError('Negative index in slice not supported.')
 
-            new_payload = dict(self.payload)
+            new_payload = copy.deepcopy(self.payload)
             new_payload['from'] = new_payload.get('from', 0) + (idx.start or 0)
 
             if idx.stop is not None:

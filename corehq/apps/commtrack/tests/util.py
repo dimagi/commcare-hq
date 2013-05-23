@@ -40,10 +40,10 @@ APPROVER_USER = {
     },
 }
 
-FILLER_USER = {
-    'username': 'test-filler',
+PACKER_USER = {
+    'username': 'test-packer',
     'phone_number': '5550001',
-    'first_name': 'filler',
+    'first_name': 'packer',
     'last_name': 'user',
     'user_data': {
         const.UserRequisitionRoles.SUPPLIER: True,
@@ -56,7 +56,8 @@ def bootstrap_domain(domain_name=TEST_DOMAIN, requisitions_enabled=False):
     domain_obj = create_domain(domain_name)
     domain_obj.commtrack_enabled = True
     domain_obj.save(**get_safe_write_kwargs())
-    bootstrap_default(domain_name, requisitions_enabled)
+    bootstrap_default(domain_obj, requisitions_enabled)
+
     return domain_obj
 
 
@@ -93,9 +94,9 @@ class CommTrackTest(TestCase):
 
         # bootstrap additional users for requisitions
         self.approver = bootstrap_user(**APPROVER_USER)
-        self.filler = bootstrap_user(**FILLER_USER)
+        self.packer = bootstrap_user(**PACKER_USER)
 
-        self.users = [self.user, self.approver, self.filler]
+        self.users = [self.user, self.approver, self.packer]
         # everyone should be in a group.
         self.group = Group(domain=TEST_DOMAIN, name='commtrack-folks',
                            users=[u._id for u in self.users],

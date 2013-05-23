@@ -1,5 +1,7 @@
 {% extends login_template %}
 {% load i18n %}
+{% load field_tags %}
+
 {% block title %}{% trans "Invitation to join the " %}{{ invite_to }} {{ invite_type }}{% endblock title %}
 {% block js-inline  %}{{ block.super }}
     {% url eula_basic as eula_url %}
@@ -9,7 +11,7 @@
     <div class="row">
         {% if request.user.is_authenticated %}
             <div class="page-header">
-                <h1>{{ invite_type|capfirst }} Invitation <small>You've been invited to join <strong>{{ invite_to }}</strong>.</small></h1>
+                <h1>{{ invite_type|capfirst }} {%  trans "Invitation" %} <small>{%  blocktrans %}You've been invited to join <strong>{{ invite_to }}{% endblocktrans %}</strong>.</small></h1>
             </div>
             <div class="span8">
                 {% if not mobile_user %}
@@ -53,14 +55,24 @@
                             <div class="control-group{% if field.errors %} error{% endif %}">
                                 <label class="control-label" for="{{ field.id }}">{{ field.label }}</label>
                                 <div class="controls">
-                                    {% ifnotequal field.name 'eula_confirmed' %}
-                                        {{ field }}
+                                    {% if field|is_checkbox %}
+                                        <label class="checkbox">
+                                            {{ field }} {{ field.help_text }}
+                                        </label>
+                                        {% for error in field.errors %}
+                                            <span class="help-inline">{{ error }}</span>
+                                        {% endfor %}
                                     {% else %}
-                                        <label class="checkbox">{{ field }} I have read and agree to the <a data-toggle="modal" data-target="#eulaModal" href="#eulaModal">CommCare HQ End User License Agreement</a>.</label>
-                                    {% endifnotequal %}
-                                    {% for error in field.errors %}
-                                        <span class="help-inline">{{ error }}</span>
-                                    {% endfor %}
+                                        {{ field }}
+                                        {% for error in field.errors %}
+                                            <span class="help-inline">{{ error }}</span>
+                                        {% endfor %}
+                                        {% if field.help_text %}
+                                            <p class="help-block">
+                                                {{ field.help_text }}
+                                            </p>
+                                        {% endif %}
+                                    {% endif %}
                                 </div>
                             </div>
                         {% endfor %}

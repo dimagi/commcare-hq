@@ -25,7 +25,7 @@ class XFormPillow(AliasedElasticPillow):
     es_alias = "xforms"
     es_type = "xform"
     es_index = XFORM_INDEX
-    es_timeout = 600
+    es_timeout = 60
 
     es_meta = {
     }

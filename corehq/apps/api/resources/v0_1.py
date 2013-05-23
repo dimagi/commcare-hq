@@ -1,14 +1,14 @@
 from tastypie import fields
 from tastypie.authentication import Authentication
-from tastypie.authorization import ReadOnlyAuthorization
+from tastypie.authorization import ReadOnlyAuthorization, Authorization
 from tastypie.exceptions import BadRequest
 from tastypie.serializers import Serializer
 
 from casexml.apps.case.models import CommCareCase
 from couchforms.models import XFormInstance
-from corehq.apps.domain.decorators import login_or_digest
+from corehq.apps.domain.decorators import login_or_digest, domain_admin_required
 from corehq.apps.groups.models import Group
-from corehq.apps.users.models import CommCareUser
+from corehq.apps.users.models import CommCareUser, WebUser
 
 from corehq.apps.api.util import get_object_or_not_exist
 from corehq.apps.api.resources import JsonResource, DomainSpecificResourceMixin
@@ -46,12 +46,31 @@ class LoginAndDomainAuthentication(Authentication):
     def get_identifier(self, request):
         return request.couch_user.username
 
+class DomainAdminAuthorization(Authorization):
+
+    def is_authorized(self, request, object=None, **kwargs):
+        PASSED_AUTHORIZATION = 'is_authorized'
+
+        @domain_admin_required
+        def dummy(request, domain, **kwargs):
+            return PASSED_AUTHORIZATION
+
+        if not kwargs.has_key('domain'):
+            kwargs['domain'] = request.domain
+
+        response = dummy(request, **kwargs)
+
+        if response == PASSED_AUTHORIZATION:
+            return True
+        else:
+            return response
+
 class CustomResourceMeta(object):
     authorization = ReadOnlyAuthorization()
     authentication = LoginAndDomainAuthentication()
     serializer = CustomXMLSerializer()
 
-class CommCareUserResource(JsonResource, DomainSpecificResourceMixin):
+class UserResource(JsonResource, DomainSpecificResourceMixin):
     type = "user"
     id = fields.CharField(attribute='get_id', readonly=True, unique=True)
     username = fields.CharField(attribute='username', unique=True)
@@ -60,17 +79,28 @@ class CommCareUserResource(JsonResource, DomainSpecificResourceMixin):
     default_phone_number = fields.CharField(attribute='default_phone_number', null=True)
     email = fields.CharField(attribute='email')
     phone_numbers = fields.ListField(attribute='phone_numbers')
-    groups = fields.ListField(attribute='get_group_ids')
-    user_data = fields.DictField(attribute='user_data')
 
     def obj_get(self, bundle, **kwargs):
         domain = kwargs['domain']
         pk = kwargs['pk']
         try:
-            user = CommCareUser.get_by_user_id(pk, domain)
+            user = self.Meta.object_class.get_by_user_id(pk, domain)
         except KeyError:
             user = None
         return user
+
+    class Meta(CustomResourceMeta):
+        list_allowed_methods = ['get']
+        detail_allowed_methods = ['get']
+
+
+class CommCareUserResource(UserResource):
+    groups = fields.ListField(attribute='get_group_ids')
+    user_data = fields.DictField(attribute='user_data')
+
+    class Meta(UserResource.Meta):
+        object_class = CommCareUser
+        resource_name = 'user'
 
     def obj_get_list(self, bundle, **kwargs):
         domain = kwargs['domain']
@@ -83,11 +113,33 @@ class CommCareUserResource(JsonResource, DomainSpecificResourceMixin):
         else:
             return list(CommCareUser.by_domain(domain))
 
-    class Meta(CustomResourceMeta):
-        object_class = CommCareUser    
-        list_allowed_methods = ['get']
-        detail_allowed_methods = ['get']
-        resource_name = 'user'
+
+class WebUserResource(UserResource):
+    role = fields.CharField()
+    is_admin = fields.BooleanField()
+    permissions = fields.DictField()
+
+    def dehydrate_role(self, bundle):
+        return bundle.obj.get_role(bundle.request.domain).name
+
+    def dehydrate_permissions(self, bundle):
+        return bundle.obj.get_role(bundle.request.domain).permissions._doc
+
+    def dehydrate_is_admin(self, bundle):
+        return bundle.obj.is_domain_admin(bundle.request.domain)
+
+    class Meta(UserResource.Meta):
+        object_class = WebUser
+        resource_name = 'web-user'
+
+    def obj_get_list(self, bundle, **kwargs):
+        domain = kwargs['domain']
+        username = bundle.request.GET.get('username')
+        if username:
+            user = WebUser.get_by_username(username)
+            return [user] if user else []
+        return list(WebUser.by_domain(domain))
+
 
 class CommCareCaseResource(JsonResource, DomainSpecificResourceMixin):
     type = "case"

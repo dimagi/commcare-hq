@@ -1,6 +1,6 @@
 from django.conf.urls.defaults import *
-from corehq.apps.domain.decorators import login_and_domain_required as protect
-from corehq.apps.reports.dispatcher import ReportDispatcher, ProjectReportDispatcher, CustomProjectReportDispatcher, BasicReportDispatcher, AdminReportDispatcher
+from corehq.apps.reports.dispatcher import (ProjectReportDispatcher, 
+        CustomProjectReportDispatcher, BasicReportDispatcher)
 
 dodoma_reports = patterns('corehq.apps.reports.dodoma',
     url('^household_verification_json$', 'household_verification_json'),
@@ -34,7 +34,8 @@ phonelog_reports = patterns('',
 
 urlpatterns = patterns('corehq.apps.reports.views',
     url(r'^$', "default", name="reports_home"),
-    url(r'^saved_reports', "saved_reports", name="saved_reports"),
+    url(r'^saved/', "saved_reports", name="saved_reports"),
+    url(r'^saved_reports', 'old_saved_reports'),
 
     url(r'^case_data/(?P<case_id>[\w\-]+)/(?P<xform_id>[\w\-:]+)/$', 'case_form_data', name="case_form_data"),
     url(r'^case_data/(?P<case_id>[\w\-]+)/$', 'case_details', name="case_details"),
@@ -42,7 +43,7 @@ urlpatterns = patterns('corehq.apps.reports.views',
     # Download and view form data
     url(r'^form_data/(?P<instance_id>[\w\-:]+)/$', 'form_data', name='render_form_data'),
     url(r'^form_data/(?P<instance_id>[\w\-:]+)/download/$', 'download_form', name='download_form'),
-    url(r'^form_data/(?P<instance_id>[\w\-:]+)/download/(?P<attachment>[\w.-_]+)?$',
+    url(r'^form_data/(?P<instance_id>[\w\-:]+)/download/(?P<attachment>[\w._-]+)?$',
         'download_attachment', name='download_attachment'),
     url(r'^form_data/(?P<instance_id>[\w\-:]+)/archive/$', 'archive_form', name='archive_form'),
     url(r'^form_data/(?P<instance_id>[\w\-:]+)/unarchive/$', 'unarchive_form', name='unarchive_form'),

@@ -22,8 +22,8 @@ from corehq.apps.app_manager.views import require_can_edit_apps, set_file_downlo
 from corehq.apps.app_manager.models import get_app
 from corehq.apps.hqmedia import utils
 from corehq.apps.hqmedia.cache import BulkMultimediaStatusCache
-from corehq.apps.hqmedia.controller import MultimediaBulkUploadController, MultimediaImageUploadController, MultimediaAudioUploadController
-from corehq.apps.hqmedia.models import CommCareImage, CommCareAudio, CommCareMultimedia, MULTIMEDIA_PREFIX
+from corehq.apps.hqmedia.controller import MultimediaBulkUploadController, MultimediaImageUploadController, MultimediaAudioUploadController, MultimediaVideoUploadController
+from corehq.apps.hqmedia.models import CommCareImage, CommCareAudio, CommCareMultimedia, MULTIMEDIA_PREFIX, CommCareVideo
 from corehq.apps.hqmedia.tasks import process_bulk_upload_zip
 from dimagi.utils.decorators.memoized import memoized
 from soil.util import expose_download
@@ -177,6 +177,8 @@ class MultimediaReferencesView(BaseMultimediaUploaderView):
             MultimediaImageUploadController("hqimage", reverse(ProcessImageFileUploadView.name,
                                                                args=[self.domain, self.app_id])),
             MultimediaAudioUploadController("hqaudio", reverse(ProcessAudioFileUploadView.name,
+                                                               args=[self.domain, self.app_id])),
+            MultimediaVideoUploadController("hqvideo", reverse(ProcessVideoFileUploadView.name,
                                                                args=[self.domain, self.app_id])),
         ]
 
@@ -362,6 +364,15 @@ class ProcessAudioFileUploadView(BaseProcessFileUploadView):
         return ['audio']
 
 
+class ProcessVideoFileUploadView(BaseProcessFileUploadView):
+    media_class = CommCareVideo
+    name = "hqmedia_uploader_video"
+
+    @classmethod
+    def valid_base_types(cls):
+        return ['video']
+
+
 class CheckOnProcessingFile(BaseMultimediaView):
     name = "hqmedia_check_processing"
 
@@ -482,13 +493,8 @@ class ViewMultimediaFile(View):
 
     def get(self, request, *args, **kwargs):
         data, content_type = self.multimedia.get_display_file()
-        if self.media_class == CommCareImage:
-            data = self.resize_image(data)
+        if self.thumb:
+            data = CommCareImage.get_thumbnail_data(data, self.thumb)
         response = HttpResponse(mimetype=content_type)
         response.write(data)
         return response
-
-    def resize_image(self, data):
-        if self.thumb:
-            return self.multimedia.get_thumbnail_data(data, self.thumb)
-        return data
