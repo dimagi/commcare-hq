@@ -92,8 +92,12 @@ def saved_reports(request, domain, template="reports/reports_home.html"):
         raise Http404
 
     configs = ReportConfig.by_domain_and_owner(domain, user._id).all()
-    scheduled_reports = [s for s in ReportNotification.by_domain_and_owner(domain, user._id).all()
-                         if (not hasattr(s, 'report_slug') or s.report_slug != 'admin_domains') and s._id]
+    def _is_valid(rn):
+        # the _id check is for weird bugs we've seen in the wild that look like
+        # oddities in couch.
+        return hasattr(rn, "_id") and rn._id and (not hasattr(rn, 'report_slug') or rn.report_slug != 'admin_domains')
+
+    scheduled_reports = [rn for rn in ReportNotification.by_domain_and_owner(domain, user._id).all() if _is_valid(rn)]
 
     context = dict(
         couch_user=request.couch_user,
@@ -622,13 +626,17 @@ def edit_scheduled_report(request, domain, scheduled_report_id=None,
 @require_POST
 def delete_scheduled_report(request, domain, scheduled_report_id):
     user_id = request.couch_user._id
-    rep = ReportNotification.get(scheduled_report_id)
+    try:
+        rep = ReportNotification.get(scheduled_report_id)
+    except ResourceNotFound:
+        # was probably already deleted by a fast-clicker.
+        pass
+    else:
+        if user_id != rep.owner._id:
+            return HttpResponseBadRequest()
 
-    if user_id != rep.owner._id:
-        return HttpResponseBadRequest()
-
-    rep.delete()
-    messages.success(request, "Scheduled report deleted!")
+        rep.delete()
+        messages.success(request, "Scheduled report deleted!")
     return HttpResponseRedirect(reverse("reports_home", args=(domain,)))
 
 @login_and_domain_required
