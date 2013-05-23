@@ -15,10 +15,10 @@
 </script>
 
 <script type="text/html" id="case-config:condition">
-    <div data-bind="visible: type() === 'always' && $root.edit" class="indent">
+    <div data-bind="visible: type() === 'always' && $root.edit">
         <a href="#" data-bind="click: function () {type('if')}"><i class="icon-plus"></i> {% trans "Use condition..." %}</a>
     </div>
-    <div data-bind="visible: type() === 'if'" class="indent">
+    <div data-bind="visible: type() === 'if'">
         <a href="#" data-bind="click: function () {type('always')}, visible: $root.edit"><i class="icon-remove"></i></a>
         {% trans "If the answer to" %}
         <select data-bind="
@@ -60,41 +60,40 @@
     </span>
 </script>
 
-
 <script type="text/html" id="case-config:open-case">
     <div data-bind="template: {name: 'case-config:condition', data: condition}, visible: allow.condition()"></div>
-    <div class="well indent">
-        <div data-bind="if: allow.case_preload()">
+    <div data-bind="css: {'row-fluid': allow.case_preload()}">
+        <div data-bind="if: allow.case_preload(), css: {span6: allow.case_preload(), hide: !allow.case_preload()}" class="well">
             <em>{% trans "Load the following case properties into the form" %}</em>
             <table class="table table-condensed">
                 <thead>
                     <tr>
-                        <th class="span1"></th>
-                        <th class="span3">{% trans "Case Property" %}</th>
-                        <th class="span1"></th>
-                        <th class="span3">{% trans "Question" %}</th>
+                        <th></th>
+                        <th>{% trans "Case Property" %}</th>
+                        <th></th>
+                        <th>{% trans "Question" %}</th>
                     </tr>
                 </thead>
 
                 <tbody data-bind="foreach: case_preload">
                     <tr class="control-group" data-bind="css: {error: validateProperty() || validateQuestion}">
-                        <td class="span1">
+                        <td>
                             <a href="#" data-bind="
                                 click: $parent.removePreload,
                                 visible: $root.edit">
                                 <i class="icon-remove"></i>
                             </a>
                         </td>
-                        <td class="span3">
+                        <td>
                             <div data-bind="template: 'case-config:case-properties:property'"></div>
-                            <p class="help-inline" data-bind="html: validateProperty"></p>
+                            <p class="help-inline" data-bind="html: validateProperty, visible: validateProperty"></p>
                         </td>
-                        <td class="span1">
+                        <td>
                             <i class="icon-arrow-right"></i>
                         </td>
-                        <td class="span3">
+                        <td>
                             <div data-bind="template: 'case-config:case-properties:question'"></div>
-                            <p class="help-inline" data-bind="html: validateQuestion"></p>
+                            <p class="help-inline" data-bind="html: validateQuestion, visible: validateQuestion"></p>
                         </td>
                     </tr>
                 </tbody>
@@ -103,54 +102,51 @@
                 <i class="icon-plus"></i>
                 {% trans "Load another property" %}
             </a>
-            <hr/>
         </div>
-        <div>
+        <div data-bind="css: {span6: allow.case_preload()}" class="well">
             <em>{% trans "Save data to the following case properties" %}</em>
             <table class="table table-condensed">
                 <thead>
                     <tr>
-                        <th class="span1"></th>
-                        <th class="span3">{% trans "Question" %}</th>
-                        <th class="span1"></th>
-                        <th class="span3">{% trans "Case Property" %}</th>
+                        <th></th>
+                        <th>{% trans "Question" %}</th>
+                        <th></th>
+                        <th>{% trans "Case Property" %}</th>
                     </tr>
                 </thead>
 
                 <tbody data-bind="foreach: case_properties">
                     <tr class="control-group" data-bind="css: {error: validate, warning: !validate() && required() && !path()}">
-                        <td class="span1">
+                        <td>
                             <a href="#" data-bind="click: $parent.removeProperty, visible: $root.edit && !required()">
                                 <i class="icon-remove"></i>
                             </a>
                         </td>
-                        <td class="span3">
+                        <td>
                             <div data-bind="template: 'case-config:case-properties:question'"></div>
                         </td>
-                        <td class="span1">
+                        <td>
                             <i class="icon-arrow-right"></i>
                         </td>
-                        <td class="span3">
+                        <td>
                             <div data-bind="template: 'case-config:case-properties:property'"></div>
-                            <p class="help-inline" data-bind="html: validate"></p>
+                            <p class="help-inline" data-bind="html: validate, visible: validate"></p>
                         </td>
                     </tr>
                 </tbody>
             </table>
+            <a href="#" data-bind="click: addProperty, visible: $root.edit">
+                <i class="icon-plus"></i>
+                {% trans "Add property" %}
+            </a>
         </div>
-        <a href="#" data-bind="click: addProperty, visible: $root.edit">
-            <i class="icon-plus"></i>
-            {% trans "Add property" %}
-        </a>
-        <div data-bind="visible: allow.close_condition()">
-            <hr/>
-
-            <label>
-                <input type="checkbox" data-bind="checked: close_case"/>
-                {% trans "Close" %}
-            </label>
-            <div data-bind="template: {name: 'case-config:condition', data: $data.close_condition, if: $data.close_condition}"></div>
-        </div>
+    </div>
+    <div data-bind="visible: allow.close_condition()" class="well">
+        <label>
+            <input type="checkbox" data-bind="checked: close_case"/>
+            {% trans "Close Case" %}
+        </label>
+        <div data-bind="template: {name: 'case-config:condition', data: $data.close_condition, if: $data.close_condition}"></div>
     </div>
 </script>
 
@@ -158,7 +154,7 @@
 <div id="case-config-ko">
     <div data-bind="saveButton: saveButton, visible: $root.edit"></div>
     <div data-bind="with: caseConfigViewModel">
-        <div class="indent">
+        <div>
             {% trans "This form" %}
             <select data-bind="
                 optstr: [{value: 'none', label: '{% trans "does not use cases" %}'},
@@ -183,7 +179,7 @@
             ></span>
         </header>
 
-        <div data-bind="foreach: subcases" class="indent form">
+        <div data-bind="foreach: subcases" class="form">
             <div>
                 <i class="icon-ok"></i>
                 {% trans "Opens a case for a different case list:" %}
@@ -204,7 +200,7 @@
             </div>
             <div data-bind="template: 'case-config:open-case'"></div>
         </div>
-        <div class="indent">
+        <div>
             <a href="#" data-bind="click: addSubCase, visible: $root.edit">
                 <i class="icon-plus"></i>
                 {% trans "Opens a case for a different case list..." %}
