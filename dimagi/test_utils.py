@@ -7,6 +7,8 @@ from dimagi.utils.create_unique_filter import create_unique_filter
 from dimagi.utils.excel import IteratorJSONReader
 from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.chunked import chunked
+from dimagi.utils.read_only import ReadOnlyObject
+
 
 class DimagiUtilsTestCase(TestCase):
     def test_create_unique_filter(self):
@@ -27,7 +29,6 @@ class DimagiUtilsTestCase(TestCase):
     
         assert (normalize([['A', 'data: key', 'user 1', 'user 2', 'is-ok?'], ['1', '2', '3', '4', 'yes']])
                 == [[('A', '1'), ('data', {'key': '2'}), ('is-ok', True), ('user', ['3', '4'])]])
-
     
     def test_memoized_function(self):
         @memoized
@@ -105,3 +106,31 @@ class DimagiUtilsTestCase(TestCase):
             (4, 5, 6, 7),
             (8, 9)
         ]
+
+    def test_ReadOnlyObject(self):
+    
+        from couchdbkit import Document, StringListProperty
+        log = []
+
+        def read_log():
+            x = log[:]
+            del log[:]
+            return x
+
+        class Thing(Document):
+            words = StringListProperty()
+            @property
+            def calc(self):
+                for i, word in enumerate(self.words):
+                    log.append(i)
+                    yield word + '!'
+        thing = Thing(words=['danny', 'is', 'so', 'clever'])
+        thing = ReadOnlyObject(thing)
+        assert thing.words == ['danny', 'is', 'so', 'clever']
+        assert thing.words == ['danny', 'is', 'so', 'clever']
+        assert thing.words is thing.words
+        assert thing.calc == ['danny!', 'is!', 'so!', 'clever!']
+        assert read_log() == [0, 1, 2, 3]
+        assert thing.calc == ['danny!', 'is!', 'so!', 'clever!']
+        assert read_log() == []
+        assert thing.calc is thing.calc
