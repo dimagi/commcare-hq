@@ -32,6 +32,7 @@ def visit_is(action, visit_type):
 
     return actual_visit_type == visit_type
 
+
 def has_visit(case, type):
     """
     returns whether a visit of a type exists in the case
