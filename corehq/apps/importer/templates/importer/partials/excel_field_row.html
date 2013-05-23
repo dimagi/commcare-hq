@@ -1,7 +1,6 @@
 {% load i18n %}
 
 <div class="controls controls-row">
-    <input name="excel_field[]" type="hidden" value="{{ item|escape }}" />
     <select name="excel_field[]" class="span3">
         <option>{% trans "Select field from excel..." %}</option>
         {% for field in excel_fields %}
