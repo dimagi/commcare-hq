@@ -257,8 +257,9 @@ class CommCareCase(CaseBase, IndexHoldingMixIn, ComputedDocumentMixin):
         ).all()
         
     @property
+    @memoized
     def all_indices(self):
-        return itertools.chain(self.indices, self.reverse_indices)
+        return list(itertools.chain(self.indices, self.reverse_indices))
         
     def get_json(self):
         
