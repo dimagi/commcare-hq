@@ -1,7 +1,15 @@
 {% load i18n %}
 
-<div class="controls controls-row">
-    <select name="excel_field[]" class="span3">
+<td>
+    {% if forloop.first %}
+        <a class="hide remove_row" href="#"><i class="icon-remove"></i></a>
+    {% else %}
+        <a class="remove_row" href="#"><i class="icon-remove"></i></a>
+    {% endif %}
+</td>
+
+<td class="span3">
+    <select name="excel_field[]">
         <option>{% trans "Select field from excel..." %}</option>
         {% for field in excel_fields %}
             {% ifequal field item %}
@@ -15,12 +23,29 @@
             {% endifequal %}
         {% endfor %}
     </select>
+</td>
 
+<td class="span3">
+    <label class="checkbox">
+        <input type="checkbox"
+               class="is_date"
+               name="is_date[]" />
+        {% trans "This field is a date" %}
+    </label>
+</td>
+
+<td>
+    <i class="icon-arrow-right"></i>
+</td>
+
+<td class="hide">
     <input type="text" name="custom_field[]"
-           class="span3 hide custom_field"
+           class="hide custom_field"
            placeholder="Enter new property name" />
+</td>
 
-    <select name="case_field[]" class="case_field span3">
+<td class="span3">
+    <select name="case_field[]" class="case_field">
         <option value="">{% trans "Select property name..." %}</option>
 
         {% for field in case_fields %}
@@ -29,14 +54,16 @@
         </option>
         {% endfor %}
     </select>
+</td>
 
-    <label class="checkbox span3">
+<td>
+    <label class="checkbox">
         <input type="checkbox" class="new_property" />
         {% trans "Create a new property instead" %}
     </label>
+</td>
 
-    <input type="hidden"
-           class="is_date_field"
-           name="is_date_field[]"
-           value="false" />
-</div>
+<input type="hidden"
+       class="is_date_field"
+       name="is_date_field[]"
+       value="false" />
