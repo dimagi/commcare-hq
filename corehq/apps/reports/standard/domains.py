@@ -1,3 +1,4 @@
+from django.core.urlresolvers import reverse
 from django.utils.translation import ugettext_noop
 import math
 from corehq.apps.domain.calculations import dom_calc, _all_domain_stats, ES_CALCED_PROPS
@@ -93,17 +94,51 @@ class OrgDomainStatsReport(DomainStatsReport):
     def is_custom_param(self, param):
         return param in ['org']
 
+DOMAIN_FACETS = {
+    "cp_is_active",
+    "cp_has_app",
+    "uses reminders",
+    "project_type",
+    "area",
+    "case_sharing",
+    "commtrack_enabled",
+    "customer_type",
+    "deployment.city",
+    "deployment.country",
+    "deployment.date",
+    "deployment.public",
+    "deployment.region",
+    "hr_name",
+    "internal.area",
+    "internal.can_use_data",
+    "internal.commcare_edition",
+    "internal.custom_eula",
+    "internal.initiative",
+    "internal.project_state",
+    "internal.self_started",
+    "internal.services",
+    "internal.sf_account_id",
+    "internal.sf_contract_id",
+    "internal.sub_area",
+    "internal.using_adm",
+    "internal.using_call_center",
 
-def project_stats_facets():
-    from corehq.apps.domain.models import Domain, InternalProperties, Deployment, LicenseAgreement
-    facets = Domain.properties().keys()
-    facets += ['internal.' + p for p in InternalProperties.properties().keys()]
-    facets += ['deployment.' + p for p in Deployment.properties().keys()]
-    facets += ['cda.' + p for p in LicenseAgreement.properties().keys()]
-    for p in ['internal', 'deployment', 'cda', 'migrations', 'eula']:
-        facets.remove(p)
-    facets += ES_CALCED_PROPS
-    return facets
+    "is_approved",
+    "is_public",
+    "is_shared",
+    "is_sms_billable",
+    "is_snapshot",
+    "is_test",
+    "license",
+    "multimedia_included",
+    "creating_user",
+
+    "phone_model",
+    "published",
+    "sub_area",
+    "survey_management_enabled",
+    "tags",
+}
 
 def es_domain_query(params, facets=None, terms=None, domains=None, return_q_dict=False, start_at=None, size=None, sort=None):
     from corehq.apps.appstore.views import es_query
@@ -120,6 +155,11 @@ def es_domain_query(params, facets=None, terms=None, domains=None, return_q_dict
             }
         }
 
+    q["filter"] = {"and": [
+        {"term": {"doc_type": "Domain"}},
+        {"term": {"is_snapshot": False}},
+    ]}
+
     search_query = params.get('search', "")
     if search_query:
         q['query'] = {
@@ -128,7 +168,7 @@ def es_domain_query(params, facets=None, terms=None, domains=None, return_q_dict
                     "match" : {
                         "_all" : {
                             "query" : search_query,
-                            "operator" : "and" }}}}}
+                            "operator" : "or" }}}}}
 
     q["facets"] = {}
     stats = ['cp_n_active_cases', 'cp_n_active_cc_users', 'cp_n_cc_users', 'cp_n_web_users', 'cp_n_forms', 'cp_n_cases']
@@ -164,6 +204,7 @@ class AdminDomainStatsReport(DomainStatsReport, ElasticTabularReport):
 
     @property
     def total_records(self):
+        print self.es_results
         return int(self.es_results['hits']['total'])
 
     @property
@@ -176,7 +217,7 @@ class AdminDomainStatsReport(DomainStatsReport, ElasticTabularReport):
         from corehq.apps.appstore.views import parse_args_for_es, generate_sortables_from_facets
         if not self.es_queried:
             self.es_params, _ = parse_args_for_es(self.request, prefix=ES_PREFIX)
-            self.es_facets = project_stats_facets()
+            self.es_facets = DOMAIN_FACETS
             results = es_domain_query(self.es_params, self.es_facets, sort=self.get_sorting_block(),
                 start_at=self.pagination.start, size=self.pagination.count)
             self.es_sortables = generate_sortables_from_facets(results, self.es_params, prefix=ES_PREFIX)
@@ -229,7 +270,7 @@ class AdminDomainStatsReport(DomainStatsReport, ElasticTabularReport):
             for index in range(1, NUM_ROWS): #todo: switch to len(self.headers) when that userstatus report PR is merged
                 if index in CALCS_ROW_INDEX:
                     val = get_from_stat_facets(CALCS_ROW_INDEX[index], what_to_get)
-                    row.append('%.2f' % float(val) if type=='float' else val)
+                    row.append('%.2f' % float(val) if val and type=='float' else val or "not yet calced")
                 else:
                     row.append('---')
             return row
@@ -243,7 +284,7 @@ class AdminDomainStatsReport(DomainStatsReport, ElasticTabularReport):
         for dom in domains:
             if dom.has_key('name'): # for some reason when using the statistical facet, ES adds an empty dict to hits
                 yield [
-                    dom.get('hr_name') or dom['name'],
+                    '<a href="%s">%s</a>' % (reverse("domain_homepage", args=[dom['name']]), dom.get('hr_name') or dom['name']),
                     dom.get("internal", {}).get('organization_name') or _('No org'),
                     dom.get('deployment', {}).get('date') or _('No date'),
                     dom.get("cp_n_active_cc_users", _("Not Yet Calculated")),
