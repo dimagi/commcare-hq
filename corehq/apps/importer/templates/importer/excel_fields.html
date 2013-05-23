@@ -9,24 +9,45 @@
 {% block js-inline %}{{ block.super }}
     <script type="text/javascript">
         $(function() {
-            $('.new_property').change(function() {
-                var caseField = $(this).closest('.controls-row').find(".case_field");
-                var customField = $(this).closest('.controls-row').find(".custom_field");
+            function updatePropertyInput() {
+                var caseField = $(this).closest('tr').find(".case_field");
+                var customField = $(this).closest('tr').find(".custom_field");
 
                 if (this.checked) {
-                    customField.removeClass('hide');
+                    customField.closest('td').removeClass('hide');
                     caseField.val('');
-                    caseField.addClass('hide');
+                    caseField.closest('td').addClass('hide');
                 } else {
                     customField.val('');
-                    customField.addClass('hide');
-                    caseField.removeClass('hide');
+                    customField.closest('td').addClass('hide');
+                    caseField.closest('td').removeClass('hide');
                 }
-            });
+            };
 
-            // Can't rely on id based magic since there are duplicates
-            $('label').click(function() {
-                $(this).find('input').click();
+            $('.new_property').change(updatePropertyInput);
+
+            function removeRow() {
+                $(this).closest('tr').remove();
+            };
+
+            $('a.remove_row').click(removeRow);
+
+            $('a.add_mapping').click(function() {
+                var table = $(this).prev('table');
+                var cloned = table.find('tbody tr').first().clone();
+
+                cloned.find('input').val('');
+                cloned.find('select').val('');
+                cloned.find('input[type=checkbox]').attr('checked', false)
+                cloned.find('.remove_row').removeClass('hide');
+
+                cloned.find('.case_field').closest('td').removeClass('hide');
+                cloned.find('.custom_field').closest('td').addClass('hide');
+
+                cloned.find('.new_property').change(updatePropertyInput);
+                cloned.find('.remove_row').click(removeRow);
+
+                table.find('tr').last().after(cloned);
             });
 
             $('.custom_field').bind('change, keypress, keydown, keyup', function() {
@@ -78,10 +99,27 @@
         <input type="hidden" name="value_column" value="{{value_column}}" />
 
         <fieldset>
-            <legend>{% trans "Map columns to case fields" %}</legend>
-            {% for item in excel_fields %}
-            {% include "importer/partials/excel_field_row.html" %}
-            {% endfor %}
+            <legend>{% trans "Match Excel Columns to Case Properties" %}</legend>
+            <table class="table table-condensed">
+                <thead>
+                    <th class="span1"></th>
+                    <th>{% trans "Excel Field" %}</th>
+                    <th></th>
+                    <th></th>
+                    <th>{% trans "Case Property" %}</th>
+                    <th></th>
+                </thead>
+                <tbody>
+                    {% for item in excel_fields %}
+                    <tr>
+                        {% include "importer/partials/excel_field_row.html" %}
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            <a class="add_mapping" href="#">
+                <i class="icon-plus"></i> {% trans "Add another matching" %}
+            </a>
         </fieldset>
 
         <div class="form-actions">
