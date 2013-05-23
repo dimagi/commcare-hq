@@ -29,3 +29,33 @@ def get_all_owner_ids(user_ids):
         )
     ]
     return set(user_ids).union(set(all_group_ids))
+
+
+def get_all_calculations(group_id):
+    from bihar.models import CareBiharFluff
+    from bihar.reports.indicators.indicators import IndicatorConfig, INDICATOR_SETS
+
+    config = IndicatorConfig(INDICATOR_SETS)
+    for indicator_set in config.indicator_sets:
+        print indicator_set.name
+        for indicator in indicator_set.get_indicators():
+            slug = indicator.slug
+            user_ids = [user.get_id for user in get_team_members(Group.get(group_id))]
+            owner_ids = get_all_owner_ids(user_ids)
+            r = CareBiharFluff.aggregate_results(slug, (
+                ['care-bihar', owner_id] for owner_id in owner_ids
+            ))
+            num = r.get('numerator')
+            total = r.get('total')
+            r = CareBiharFluff.aggregate_results(slug, (
+                ['care-bihar', owner_id] for owner_id in owner_ids
+            ), reduce=False)
+            num_cases = ', '.join(r.get('numerator', ()))
+            total_cases = ', '.join(r.get('total', ()))
+            print '%s | %s | %s | %s | %s' % (
+                indicator.name,
+                num or '',
+                total,
+                num_cases,
+                total_cases
+            )
