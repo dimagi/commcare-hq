@@ -493,13 +493,8 @@ class ViewMultimediaFile(View):
 
     def get(self, request, *args, **kwargs):
         data, content_type = self.multimedia.get_display_file()
-        if self.media_class == CommCareImage:
-            data = self.resize_image(data)
+        if self.thumb:
+            data = CommCareImage.get_thumbnail_data(data, self.thumb)
         response = HttpResponse(mimetype=content_type)
         response.write(data)
         return response
-
-    def resize_image(self, data):
-        if self.thumb:
-            return self.multimedia.get_thumbnail_data(data, self.thumb)
-        return data

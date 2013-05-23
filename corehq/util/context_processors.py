@@ -13,10 +13,8 @@ def base_template(request):
         'login_template': settings.LOGIN_TEMPLATE,
     }
 
-def domain(request):
-    """Global per-domain context variables"""
 
-    project = getattr(request, 'project', None)
+def get_per_domain_context(project):
     if project and project.commtrack_enabled:
         logo = 'hqstyle/img/commtrack-logo.png'
         site_name = "CommTrack"
@@ -28,6 +26,13 @@ def domain(request):
         'LOGO': logo,
         'SITE_NAME': site_name
     }
+
+
+def domain(request):
+    """Global per-domain context variables"""
+
+    project = getattr(request, 'project', None)
+    return get_per_domain_context(project)
 
 
 def current_url_name(request):
