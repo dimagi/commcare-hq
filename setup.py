@@ -16,6 +16,7 @@ setup(
         'openpyxl',
         'python-dateutil',
         'pytz',
+        'couchdbkit',
     ],
     tests_require = [
         'unittest2',
