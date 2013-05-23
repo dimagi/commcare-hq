@@ -41,6 +41,10 @@ class RequisitionState(object):
             extras['owner_id'] = self.owner_id
         if self.create:
             extras['case_name'] = self.product_stock_case.name
+            extras['index'] = {
+                const.PARENT_CASE_REF: (const.SUPPLY_POINT_PRODUCT_CASE_TYPE,
+                                        self.product_stock_case._id),
+            }
         caseblock = CaseBlock(
             case_id=self.id,
             create=self.create,
@@ -48,10 +52,6 @@ class RequisitionState(object):
             user_id=self.user_id,
             case_type=const.REQUISITION_CASE_TYPE,
             update = copy(self.custom_fields),
-            index={
-                const.PARENT_CASE_REF: (const.SUPPLY_POINT_PRODUCT_CASE_TYPE,
-                                        self.product_stock_case._id),
-            },
             close=self.close,
             **extras
         )
