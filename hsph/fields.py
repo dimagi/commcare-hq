@@ -195,7 +195,11 @@ class IHForCHFField(ReportSelectField):
             if ihf_chf == 'ifh':  # typo in some test data
                 ihf_chf = 'ihf'
 
-            facilities[ihf_chf].append(item.fields)
+            try:
+                facilities[ihf_chf].append(item.fields)
+            except KeyError:
+                # there's a site fixture item without an IHF/CHF value
+                pass
 
         return facilities
 
