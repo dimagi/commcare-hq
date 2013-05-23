@@ -1,5 +1,4 @@
 import datetime
-from django.conf import settings
 from casexml.apps.case.models import CommCareCase
 from bihar.calculations import homevisit, pregnancy, postpartum, newborn, familyplanning, mortality
 import fluff

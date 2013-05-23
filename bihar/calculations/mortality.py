@@ -3,7 +3,7 @@ import logging
 from django.utils.translation import ugettext_noop as _
 from bihar.calculations.pregnancy import BirthPlace
 from bihar.calculations.types import TotalCalculator, AddCalculator
-from bihar.calculations.utils.calculations import _get_actions, get_forms
+from bihar.calculations.utils.calculations import get_actions, get_forms
 from bihar.calculations.utils.filters import is_pregnant_mother, A_MONTH, is_newborn_child
 from bihar.calculations.utils.xmlns import DELIVERY, PNC
 import fluff
@@ -92,7 +92,7 @@ class IMCalculator(TotalCalculator):
         def child_died(a):
             return a.updated_known_properties.get('child_alive', None) == "no"
 
-        date = latest_action_date(_get_actions(case, action_filter=child_died))
+        date = latest_action_date(get_actions(case, action_filter=child_died))
         if date:
             yield date
 

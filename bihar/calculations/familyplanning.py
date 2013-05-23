@@ -1,11 +1,17 @@
 import datetime
 from django.utils.translation import ugettext_noop as _
 from bihar.calculations.newborn import is_recently_delivered
-from bihar.calculations.types import DoneDueCalculator, TotalCalculator, DoneDueCalculator, AddCalculator
+from bihar.calculations.types import DoneDueCalculator, TotalCalculator, AddCalculator
 from bihar.calculations.utils.filters import get_add, A_MONTH, is_pregnant_mother, get_edd
 from bihar.calculations.utils.xmlns import DELIVERY
-from bihar.reports.indicators.calculations import _adopted_fp, _get_form
+from bihar.calculations.utils.calculations import get_form
 import fluff
+
+
+def adopted_fp(case):
+    def ff(f):
+        return f.form.get('post_partum_fp', "") == 'yes'
+    return get_form(case, form_filter=ff) and getattr(case, 'family_planning_type', "") != 'no_fp_at_delivery'
 
 
 def couple_interested_in_fp(case):
@@ -13,7 +19,7 @@ def couple_interested_in_fp(case):
 
 
 def has_delivered(case):
-    return _get_form(
+    return get_form(
         case,
         action_filter=lambda a: a.xform_xmlns == DELIVERY,
         form_filter=lambda f: f.form.get('has_delivered', '') == 'yes'
@@ -49,7 +55,7 @@ class AdoptedFP(DoneDueCalculator, AddCalculator):
 
     @fluff.date_emitter
     def numerator(self, case):
-        if _adopted_fp(case):
+        if adopted_fp(case):
             yield get_add(case)
 
 

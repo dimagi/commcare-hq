@@ -1,11 +1,16 @@
 from bihar.calculations.pregnancy import VisitedQuickly
 from bihar.calculations.types import DoneDueCalculator, TotalCalculator, CaseCalculator
+from bihar.calculations.utils.calculations import get_related_prop
 from bihar.calculations.utils.filters import is_pregnant_mother, get_add, A_MONTH
 from bihar.calculations.utils.xmlns import REGISTRATION
-from bihar.reports.indicators.calculations import _get_form, _get_xpath_from_forms
-from bihar.reports.indicators.visits import get_related_prop
+from bihar.calculations.utils.calculations import get_form
 from django.utils.translation import ugettext_noop as _
 import fluff
+
+
+def _get_xpath_from_forms(case, path):
+    form = get_form(case, form_filter=lambda f: f.xpath("form/%s" % path))
+    return form.xpath("form/%s" % path) if form else None
 
 
 def is_preterm(case):
@@ -23,7 +28,7 @@ def is_weak_baby(case):
 
 
 def is_recently_delivered(case):
-    return _get_form(
+    return get_form(
         case,
         action_filter=lambda a: a.xform_xmlns == REGISTRATION,
         form_filter=lambda f: f.form.get('recently_delivered', "") == 'yes'
