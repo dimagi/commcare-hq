@@ -2,7 +2,7 @@ import datetime
 import logging
 from django.utils.translation import ugettext_noop as _
 from bihar.calculations.pregnancy import BirthPlace
-from bihar.calculations.types import TotalCalculator, DoneDueCalculator, AddCalculator
+from bihar.calculations.types import TotalCalculator, AddCalculator
 from bihar.calculations.utils.calculations import get_actions, get_forms
 from bihar.calculations.utils.filters import is_pregnant_mother, A_MONTH, is_newborn_child
 from bihar.calculations.utils.xmlns import DELIVERY, PNC
@@ -24,8 +24,7 @@ def is_stillborn(case):
         'child_movement',
         'child_heartbeats'
     )
-    for action in get_actions(case, action_filter=lambda a: a.xform_xmlns == DELIVERY):
-        xform = action.xform
+    for xform in get_forms(case, action_filter=lambda a: a.xform_xmlns == DELIVERY):
         if xform.form.get('has_delivered') != 'yes':
             continue
         for p in properties:
@@ -43,7 +42,7 @@ def is_stillborn(case):
             else:
                 if value != 'no':
                     return False
-    return True
+        return True
 
 
 class MMCalculator(TotalCalculator):
