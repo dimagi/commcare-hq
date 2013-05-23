@@ -50,7 +50,7 @@ class CaseActionBase(object):
         self.attachments = attachments
     
     def get_known_properties(self):
-        prop_list = ["type", "name", "external_id", "user_id", 
+        prop_list = ["type", "name", "external_id", "user_id",
                      "owner_id", "opened_on"]
         return dict((p, getattr(self, p)) for p in prop_list \
                     if getattr(self, p) is not None)

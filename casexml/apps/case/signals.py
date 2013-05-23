@@ -1,4 +1,3 @@
-import logging
 from django.dispatch.dispatcher import Signal
 import simplejson
 from dimagi.utils.logging import notify_exception

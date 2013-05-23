@@ -4,7 +4,6 @@ from casexml.apps.case.models import CommCareCase
 from couchforms.util import post_xform_to_couch
 from casexml.apps.case.signals import process_cases
 from django.core.files.uploadedfile import UploadedFile
-from couchforms.models import XFormInstance
 from casexml.apps.case.tests.util import delete_all_cases, delete_all_xforms
 import hashlib
 
@@ -71,5 +70,3 @@ class CaseAttachmentTest(TestCase):
         self.assertEqual(2, len(case.attachments))
         self.assertEqual(form.get_id, case.attachments[1][0])
         self.assertEqual(attach_name, case.attachments[1][1])
-
-        

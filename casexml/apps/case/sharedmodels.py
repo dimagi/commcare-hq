@@ -110,7 +110,6 @@ class IndexHoldingMixIn(object):
         return None
     
     def update_indices(self, index_update_list):
-        from .models import CommCareCase
         for index_update in index_update_list:
             if index_update.referenced_id:
                 # NOTE: used to check the existence of the referenced

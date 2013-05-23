@@ -105,11 +105,10 @@ class CaseMultimediaTest(TestCase):
         single_attach = 'fruity'
         attachment_block, dict_attachments = self._prepAttachments([single_attach])
         final_xml = self._formatXForm(xml_data, attachment_block, doc_id=CREATE_XFORM_ID)
+        print final_xml
 
         form = self._submit_and_verify(final_xml, dict_attachments)
         case = CommCareCase.get(TEST_CASE_ID)
-        print "#### Load from DB"
-        #print simplejson.dumps(case.to_json(), indent=4)
         self.assertEqual(1, len(case.case_attachments))
         self.assertTrue(single_attach in case.case_attachments)
         self.assertEqual(1, len(filter(lambda x: x['action_type'] == 'attachment', case.actions)))
@@ -123,15 +122,13 @@ class CaseMultimediaTest(TestCase):
 
         raw_xform = self._getXFormString('multimedia_update.xml')
         final_xform = self._formatXForm(raw_xform, attachment_block)
+        print "testAttachRemoveSingle"
+        print final_xform
 
         form = self._submit_and_verify(final_xform, {})
         case = CommCareCase.get(TEST_CASE_ID)
-        print "#### testAttachInUpdate Load from DB"
-        #print simplejson.dumps(case.to_json(), indent=4)
-        print "_attachments: %s" % case['_attachments']
 
         #1 plus the 2 we had
-        print case.case_attachments
         self.assertEqual(0, len(case.case_attachments))
         self.assertIsNone(case._attachments)
         attach_actions = filter(lambda x: x['action_type'] == 'attachment', case.actions)
@@ -147,15 +144,12 @@ class CaseMultimediaTest(TestCase):
 
         raw_xform = self._getXFormString('multimedia_update.xml')
         final_xform = self._formatXForm(raw_xform, attachment_block)
+        print "testAttachRemoveMultiple"
+        print final_xform
 
         form = self._submit_and_verify(final_xform, dict_attachments)
         case = CommCareCase.get(TEST_CASE_ID)
-        print "#### testAttachInUpdate Load from DB"
-        #print simplejson.dumps(case.to_json(), indent=4)
-        print "_attachments: %s" % case['_attachments']
-
         #1 plus the 2 we had
-        print case.case_attachments
         self.assertEqual(2, len(case.case_attachments))
         self.assertEqual(2, len(case._attachments))
         attach_actions = filter(lambda x: x['action_type'] == 'attachment', case.actions)
@@ -164,12 +158,35 @@ class CaseMultimediaTest(TestCase):
         self.assertEqual(sorted(new_attachments), sorted(case._attachments.keys()))
 
     def testOTARestoreSingle(self):
-        print "testOTARestoreSingle"
         self.testAttachInCreate()
+        print "testOTARestoreSingle"
+        restore_attachments = ['fruity']
+        self._validateOTARestore(TEST_CASE_ID, restore_attachments)
+
+    def testOTARestoreMultiple(self):
+        self.testAttachRemoveMultiple()
+        print "testOTARestoreMultiple"
+        restore_attachments = ['commcare_logo', 'dimagi_logo']
+        self._validateOTARestore(TEST_CASE_ID, restore_attachments)
+
+    def _validateOTARestore(self, case_id, restore_attachments):
         case = CommCareCase.get(TEST_CASE_ID)
         case_xml = case.to_xml(V2)
         root_node = lxml.etree.fromstring(case_xml)
         output = lxml.etree.tostring(root_node, pretty_print=True)
+        attaches = root_node.find('{http://commcarehq.org/case/transaction/v2}attachment')
+        self.assertEqual(len(restore_attachments), len(attaches))
+        for attach in attaches:
+            url = attach.values()[1]
+            case_id = url.split('/')[-2]
+            name = url.split('/')[-1]
+            tag = attach.tag
+            clean_tag = tag.replace('{http://commcarehq.org/case/transaction/v2}', '')
+            self.assertEqual(clean_tag, name)
+            self.assertEqual(case_id, TEST_CASE_ID)
+            self.assertIn(name, restore_attachments)
+            restore_attachments.remove(clean_tag)
+        self.assertEqual(0, len(restore_attachments))
         print output
 
 
@@ -180,11 +197,10 @@ class CaseMultimediaTest(TestCase):
 
         xml_data = self._getXFormString('multimedia_update.xml')
         final_xform = self._formatXForm(xml_data, attachment_block)
+        print "testAttachInUpdate"
+        print final_xform
         form = self._submit_and_verify(final_xform, dict_attachments)
         case = CommCareCase.get(TEST_CASE_ID)
-        print "#### testAttachInUpdate Load from DB"
-        #print simplejson.dumps(case.to_json(), indent=4)
-        print "_attachments: %s" % case['_attachments'].keys()
 
 
         #1 plus the 2 we had

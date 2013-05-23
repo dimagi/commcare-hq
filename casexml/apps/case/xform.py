@@ -4,7 +4,6 @@ from casexml.apps.case import const
 Work on cases based on XForms. In our world XForms are special couch documents.
 """
 from casexml.apps.case.models import CommCareCase
-from couchdbkit.schema.properties_proxy import SchemaProperty
 import logging
 from couchdbkit.resource import ResourceNotFound
 from casexml.apps.case.xml.parser import case_update_from_block
