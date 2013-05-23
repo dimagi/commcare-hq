@@ -187,7 +187,10 @@ class XFormInstance(SafeSaveDocument, UnicodeMixIn, ComputedDocumentMixin):
             return self.fetch_attachment(ATTACHMENT_NAME)
         except ResourceNotFound:
             logging.warn("no xml found for %s, trying old attachment scheme." % self.get_id)
-            return self[const.TAG_XML]
+            try:
+                return self[const.TAG_XML]
+            except AttributeError:
+                return None
     
     @property
     def attachments(self):
@@ -206,9 +209,14 @@ class XFormInstance(SafeSaveDocument, UnicodeMixIn, ComputedDocumentMixin):
         order they are found.
         
         """
-        xml_payload = self.get_xml()
-        element = ElementTree.XML(xml_payload)
         to_return = SortedDict()
+
+        xml_payload = self.get_xml()
+        if not xml_payload:
+            return SortedDict(sorted(self.form.items()))
+
+        element = ElementTree.XML(xml_payload)
+
         for child in element:
             # fix {namespace}tag format forced by ElementTree in certain cases (eg, <reg> instead of <n0:reg>)
             key = child.tag.split('}')[1] if child.tag.startswith("{") else child.tag 

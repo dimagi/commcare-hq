@@ -30,7 +30,8 @@ register = template.Library()
 
 @register.simple_tag
 def render_form_xml(form):
-    return '<pre class="fancy-code prettyprint linenums"><code class="language-xml">%s</code></pre>' % escape(form.get_xml().replace("><", ">\n<"))
+    xml = form.get_xml() or ''
+    return '<pre class="fancy-code prettyprint linenums"><code class="language-xml">%s</code></pre>' % escape(xml.replace("><", ">\n<"))
 
 
 @register.simple_tag
