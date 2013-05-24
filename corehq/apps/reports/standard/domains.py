@@ -274,10 +274,9 @@ class AdminDomainStatsReport(DomainStatsReport, ElasticTabularReport):
             7: "cp_n_forms",
             10: "cp_n_web_users",
         }
-        NUM_ROWS = 14
         def stat_row(name, what_to_get, type='float'):
             row = [name]
-            for index in range(1, NUM_ROWS): #todo: switch to len(self.headers) when that userstatus report PR is merged
+            for index in range(1, len(self.headers)):
                 if index in CALCS_ROW_INDEX:
                     val = get_from_stat_facets(CALCS_ROW_INDEX[index], what_to_get)
                     row.append('%.2f' % float(val) if val and type=='float' else val or "Not yet calculated")
