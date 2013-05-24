@@ -80,6 +80,14 @@ class Command(BaseCommand):
         else:
             mvp_sync(get_db(), temp="tmp")
 
+        # same hack above for MVP
+        try:
+            from fluff.sync_couchdb import sync_design_docs as fluff_sync
+        except ImportError:
+            pass
+        else:
+            fluff_sync(temp="tmp")
+
         print "All apps loaded into jobs, waiting..."
         pool.join()
         print "All apps reported complete."
