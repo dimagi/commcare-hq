@@ -168,11 +168,11 @@
     <div data-bind="saveButton: saveButton, visible: $root.edit"></div>
     <div data-bind="with: caseConfigViewModel">
         <div>
-            {% trans "This form" %}
+            {% trans "Choose a type of form: " %}
             <select data-bind="
-                optstr: [{value: 'none', label: '{% trans "does not use cases" %}'},
-                         {value: 'open', label: '{% trans "opens a case" %}'},
-                         {value: 'update', label: '{% trans "modifies a case" %}'}],
+                optstr: [{value: 'none', label: '{% trans "One Time Survey" %}'},
+                         {value: 'open', label: '{% trans "Registration" %}'},
+                         {value: 'update', label: '{% trans "Follow-Up" %}'}],
                 value: actionType
             "></select>
         </div>
