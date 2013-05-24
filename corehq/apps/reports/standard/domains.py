@@ -245,6 +245,8 @@ class AdminDomainStatsReport(DomainStatsReport, ElasticTabularReport):
             DataTablesColumn(_("Last Form Submission"), prop_name="cp_last_form"),
             DataTablesColumn(_("# Web Users"), sort_type=DTSortType.NUMERIC, prop_name="cp_n_web_users"),
             DataTablesColumn(_("Notes"), prop_name="internal.notes"),
+            DataTablesColumn(_("Services"), prop_name="internal.services"),
+            DataTablesColumn(_("Project State"), prop_name="internal.project_state"),
         )
         return headers
 
@@ -263,7 +265,7 @@ class AdminDomainStatsReport(DomainStatsReport, ElasticTabularReport):
             7: "cp_n_forms",
             10: "cp_n_web_users",
         }
-        NUM_ROWS = 12
+        NUM_ROWS = 14
         def stat_row(name, what_to_get, type='float'):
             row = [name]
             for index in range(1, NUM_ROWS): #todo: switch to len(self.headers) when that userstatus report PR is merged
@@ -295,4 +297,6 @@ class AdminDomainStatsReport(DomainStatsReport, ElasticTabularReport):
                     dom.get("cp_last_form", _("No Forms")),
                     dom.get("cp_n_web_users", _("Not Yet Calculated")),
                     dom.get('internal', {}).get('notes') or _('No notes'),
+                    dom.get('internal', {}).get('services') or _('No info'),
+                    dom.get('internal', {}).get('project_state') or _('No info'),
                 ]
