@@ -18,6 +18,14 @@
 
 {% block sidebar %}
     {{ block.super }}
+    {% if report.is_exportable %}
+        <hr />
+        <ul class="nav">
+            <a href="#" class="btn" id="export-report-excel">
+                <i class="icon icon-share"></i> Export to Excel
+            </a>
+        </ul>
+    {% endif %}
     <hr />
     {% url admin_report_dispatcher 'domains' as search_url %}
     <ul class="nav">

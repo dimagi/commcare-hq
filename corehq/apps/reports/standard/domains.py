@@ -1,3 +1,4 @@
+from datetime import datetime
 from django.core.urlresolvers import reverse
 from django.utils.translation import ugettext_noop
 import math
@@ -131,7 +132,6 @@ DOMAIN_FACETS = [
     "is_test",
     "license",
     "multimedia_included",
-    "creating_user",
 
     "phone_model",
     "published",
@@ -188,6 +188,7 @@ class AdminDomainStatsReport(DomainStatsReport, ElasticTabularReport):
     asynchronous = False
     ajax_pagination = True
     es_queried = False
+    exportable = True
 
     @property
     def template_context(self):
@@ -251,6 +252,13 @@ class AdminDomainStatsReport(DomainStatsReport, ElasticTabularReport):
         return headers
 
     @property
+    def export_table(self):
+        self.pagination.count = 1000000 # terrible hack to get the export to return all rows
+        self.show_name = True
+        return super(AdminDomainStatsReport, self).export_table
+
+
+    @property
     def rows(self):
         domains = [res['_source'] for res in self.es_results.get('hits', {}).get('hits', [])]
 
@@ -282,19 +290,29 @@ class AdminDomainStatsReport(DomainStatsReport, ElasticTabularReport):
             stat_row(_('STD'), 'std_deviation'),
         ]
 
+        def format_date(dstr, default):
+            return datetime.strptime(dstr, '%Y-%m-%dT%H:%M:%SZ').strftime('%Y/%m/%d %H:%M:%S') if dstr else default
+
+        def get_name_or_link(d):
+            if not getattr(self, 'show_name', None):
+                return '<a href="%s">%s</a>' % \
+                       (reverse("domain_homepage", args=[d['name']]), d.get('hr_name') or d['name'])
+            else:
+                return d['name']
+
         for dom in domains:
             if dom.has_key('name'): # for some reason when using the statistical facet, ES adds an empty dict to hits
                 yield [
-                    '<a href="%s">%s</a>' % (reverse("domain_homepage", args=[dom['name']]), dom.get('hr_name') or dom['name']),
+                    get_name_or_link(dom),
                     dom.get("internal", {}).get('organization_name') or _('No org'),
-                    dom.get('deployment', {}).get('date') or _('No date'),
+                    format_date(dom.get('deployment', {}).get('date'), _('No date')),
                     dom.get("cp_n_active_cc_users", _("Not Yet Calculated")),
                     dom.get("cp_n_cc_users", _("Not Yet Calculated")),
                     dom.get("cp_n_active_cases", _("Not Yet Calculated")),
                     dom.get("cp_n_cases", _("Not Yet Calculated")),
                     dom.get("cp_n_forms", _("Not Yet Calculated")),
-                    dom.get("cp_first_form", _("No Forms")),
-                    dom.get("cp_last_form", _("No Forms")),
+                    format_date(dom.get("cp_first_form"), _("No Forms")),
+                    format_date(dom.get("cp_last_form"), _("No Forms")),
                     dom.get("cp_n_web_users", _("Not Yet Calculated")),
                     dom.get('internal', {}).get('notes') or _('No notes'),
                     dom.get('internal', {}).get('services') or _('No info'),
