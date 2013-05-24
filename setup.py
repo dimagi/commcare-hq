@@ -3,7 +3,7 @@ from setuptools import setup, find_packages
 
 setup(
     name='dimagi-utils',
-    version='1.0.0',
+    version='1.0.1',
     description='Dimagi Shared Utilities',
     author='Dimagi',
     author_email='dev@dimagi.com',
@@ -16,6 +16,7 @@ setup(
         'openpyxl',
         'python-dateutil',
         'pytz',
+        'couchdbkit',
     ],
     tests_require = [
         'unittest2',
