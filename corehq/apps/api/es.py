@@ -223,7 +223,7 @@ class XFormES(ESView):
                     # fall back
                     try:
                         if res['_source']['form'].get('@name', None):
-                            name = res['_source']['form'].get['@name']
+                            name = res['_source']['form']['@name']
                         else:
                             backup = res['_source']['form'].get('#type', 'data')
                             if backup != 'data':
