@@ -159,6 +159,16 @@ var CaseConfig = (function () {
                     return 'none';
                 }
             }()));
+
+        self.actionType.subscribe(function (value) {
+            var required;
+            if (value == 'open') {
+                required = ['name'];
+            } else {
+                required = [];
+            }
+            self.case_transaction.setRequired(required);
+        });
     };
 
 
@@ -273,6 +283,35 @@ var CaseConfig = (function () {
                 }
             });
 
+            self.setRequired = function (required) {
+                var delete_me = [];
+                _(self.case_properties()).each(function (case_property) {
+                    var key = case_property.key();
+                    if (_(required).contains(key)) {
+                        case_property.required(true);
+                        required.splice(required.indexOf(key), 1);
+                    } else {
+                        if (case_property.required()) {
+                            case_property.required(false);
+                            if (!case_property.path()) {
+                                delete_me.push(case_property);
+                            }
+                        }
+
+                    }
+                });
+                _(delete_me).each(function (case_property) {
+                    self.case_properties.remove(case_property);
+                });
+                _(required).each(function (key) {
+                    self.case_properties.splice(0, 0, CaseProperty.wrap({
+                        path: '',
+                        key: key,
+                        required: true
+                    }, self));
+                });
+            };
+
             self.unwrap = function () {
                 CaseTransaction.unwrap(self);
             };
@@ -363,11 +402,11 @@ var CaseConfig = (function () {
                 key: !keyIsPath ? key : value,
                 required: false
             };
-        }).concat(required);
+        });
         property_array = _(property_array).sortBy(function (property) {
             return caseConfig.questionScores[property.path] * 2 + (property.required ? 0 : 1);
         });
-        return property_array;
+        return required.concat(property_array);
     };
 
     var propertyArrayToDict = function (required, property_array, keyIsPath) {
@@ -463,6 +502,7 @@ var CaseConfig = (function () {
                 }
             } else {
                 condition.type = 'never';
+
             }
             return {
                 open_case: {
