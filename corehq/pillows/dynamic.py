@@ -102,6 +102,10 @@ def set_properties(schema_class, custom_types=default_special_types, nested_type
         elif complex_type_mapper.has_key(prop_type.__class__):
             func = complex_type_mapper[prop_type.__class__]
             props_dict[prop_name] = func(prop_type._schema, nested=prop_name in nested_types, dynamic=False)
+
+    if not props_dict.get('doc_type'):
+        props_dict["doc_type"] = {"type": "string", "index": "not_analyzed"}
+
     return props_dict
 
 

@@ -1,3 +1,6 @@
+from functools import wraps
+import json
+from django.http import Http404, HttpResponse
 from tastypie import fields
 from tastypie.authentication import Authentication
 from tastypie.authorization import ReadOnlyAuthorization, Authorization
@@ -23,11 +26,22 @@ class CustomXMLSerializer(Serializer):
             etree.remove(id)
         return etree
 
+def api_auth(view_func):
+    @wraps(view_func)
+    def _inner(req, domain, *args, **kwargs):
+        try:
+            return view_func(req, domain, *args, **kwargs)
+        except Http404:
+            return HttpResponse(json.dumps({"error": "not authorized"}),
+                                content_type="application/json",
+                                status=401)
+    return _inner
 
 class LoginAndDomainAuthentication(Authentication):
     def is_authenticated(self, request, **kwargs):
         PASSED_AUTH = 'is_authenticated'
 
+        @api_auth
         @login_or_digest
         def dummy(request, domain, **kwargs):
             return PASSED_AUTH
@@ -51,6 +65,7 @@ class DomainAdminAuthorization(Authorization):
     def is_authorized(self, request, object=None, **kwargs):
         PASSED_AUTHORIZATION = 'is_authorized'
 
+        @api_auth
         @domain_admin_required
         def dummy(request, domain, **kwargs):
             return PASSED_AUTHORIZATION

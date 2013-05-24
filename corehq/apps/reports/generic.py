@@ -361,8 +361,14 @@ class GenericReportView(CacheableRequestMixIn):
         Whether a report has any filters set. Based on whether or not there 
         is a query string. This gets carried to additional asynchronous calls
         """
-        return string_to_boolean(self.request.GET.get("filterSet")) \
-            if "filterSet" in self.request.GET else bool(self.request.META.get('QUERY_STRING'))
+        are_filters_set = bool(self.request.META.get('QUERY_STRING'))
+        if "filterSet" in self.request.GET:
+            try:
+                are_filters_set = string_to_boolean(self.request.GET.get("filterSet"))
+            except ValueError:
+                # not a parseable boolean
+                pass
+        return are_filters_set
         
     
     @property
