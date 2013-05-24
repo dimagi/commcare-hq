@@ -1,5 +1,6 @@
 from datetime import datetime
 from django.core.urlresolvers import reverse
+from django.utils.safestring import mark_safe
 from django.utils.translation import ugettext_noop
 import math
 from corehq.apps.domain.calculations import dom_calc, _all_domain_stats, ES_CALCED_PROPS
@@ -168,7 +169,7 @@ def es_domain_query(params, facets=None, terms=None, domains=None, return_q_dict
                     "match" : {
                         "_all" : {
                             "query" : search_query,
-                            "operator" : "or" }}}}}
+                            "operator" : "or", }}}}}
 
     q["facets"] = {}
     stats = ['cp_n_active_cases', 'cp_n_active_cc_users', 'cp_n_cc_users', 'cp_n_web_users', 'cp_n_forms', 'cp_n_cases']
@@ -279,7 +280,7 @@ class AdminDomainStatsReport(DomainStatsReport, ElasticTabularReport):
             for index in range(1, NUM_ROWS): #todo: switch to len(self.headers) when that userstatus report PR is merged
                 if index in CALCS_ROW_INDEX:
                     val = get_from_stat_facets(CALCS_ROW_INDEX[index], what_to_get)
-                    row.append('%.2f' % float(val) if val and type=='float' else val or "not yet calced")
+                    row.append('%.2f' % float(val) if val and type=='float' else val or "Not yet calculated")
                 else:
                     row.append('---')
             return row
@@ -295,8 +296,8 @@ class AdminDomainStatsReport(DomainStatsReport, ElasticTabularReport):
 
         def get_name_or_link(d):
             if not getattr(self, 'show_name', None):
-                return '<a href="%s">%s</a>' % \
-                       (reverse("domain_homepage", args=[d['name']]), d.get('hr_name') or d['name'])
+                return mark_safe('<a href="%s">%s</a>' % \
+                       (reverse("domain_homepage", args=[d['name']]), d.get('hr_name') or d['name']))
             else:
                 return d['name']
 
@@ -306,14 +307,14 @@ class AdminDomainStatsReport(DomainStatsReport, ElasticTabularReport):
                     get_name_or_link(dom),
                     dom.get("internal", {}).get('organization_name') or _('No org'),
                     format_date(dom.get('deployment', {}).get('date'), _('No date')),
-                    dom.get("cp_n_active_cc_users", _("Not Yet Calculated")),
-                    dom.get("cp_n_cc_users", _("Not Yet Calculated")),
-                    dom.get("cp_n_active_cases", _("Not Yet Calculated")),
-                    dom.get("cp_n_cases", _("Not Yet Calculated")),
-                    dom.get("cp_n_forms", _("Not Yet Calculated")),
-                    format_date(dom.get("cp_first_form"), _("No Forms")),
-                    format_date(dom.get("cp_last_form"), _("No Forms")),
-                    dom.get("cp_n_web_users", _("Not Yet Calculated")),
+                    dom.get("cp_n_active_cc_users", _("Not yet calculated")),
+                    dom.get("cp_n_cc_users", _("Not yet calculated")),
+                    dom.get("cp_n_active_cases", _("Not yet calculated")),
+                    dom.get("cp_n_cases", _("Not yet calculated")),
+                    dom.get("cp_n_forms", _("Not yet calculated")),
+                    format_date(dom.get("cp_first_form"), _("No forms")),
+                    format_date(dom.get("cp_last_form"), _("No forms")),
+                    dom.get("cp_n_web_users", _("Not yet calculated")),
                     dom.get('internal', {}).get('notes') or _('No notes'),
                     dom.get('internal', {}).get('services') or _('No info'),
                     dom.get('internal', {}).get('project_state') or _('No info'),
