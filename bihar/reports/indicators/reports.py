@@ -1,3 +1,4 @@
+from functools import partial
 from bihar.reports.supervisor import BiharNavReport, MockEmptyReport, \
     url_and_params, BiharSummaryReport, \
     ConvenientBaseMixIn, GroupReferenceMixIn, list_prompt, shared_bihar_context,\
@@ -200,9 +201,11 @@ class IndicatorClientList(GroupReferenceMixIn, ConvenientBaseMixIn,
         case_ids = self.fluff_results[self.indicator.fluff_calculator.primary]
         cases = CommCareCase.view('_all_docs', keys=list(case_ids),
                                   include_docs=True)
-        # no need to sort here, that's done in datatables
-        # using indicator.sort_index
+
         return [
             self.indicator.as_row(case, self.fluff_results)
-            for case in cases
+            for case in sorted(
+                cases,
+                key=partial(self.indicator.sortkey, context=self.fluff_results)
+            )
         ]
