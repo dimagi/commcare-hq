@@ -19,8 +19,8 @@ from dimagi.utils.read_only import ReadOnlyObject
 class DimagiUtilsTestCase(TestCase):
     def test_create_unique_filter(self):
         l = [{'id': 'a'}, {'id': 'b'}, {'id': 'a'}, {'id': 'c'}, {'id': 'b'}]
-        assert filter(create_unique_filter(lambda x: x['id']), l) == [{'id': 'a'}, {'id': 'b'}, {'id': 'c'}]
-        assert filter(create_unique_filter(lambda x: id(x)), l) == [{'id': 'a'}, {'id': 'b'}, {'id': 'a'}, {'id': 'c'}, {'id': 'b'}]
+        self.assertEquals(filter(create_unique_filter(lambda x: x['id']), l), [{'id': 'a'}, {'id': 'b'}, {'id': 'c'}])
+        self.assertEquals(filter(create_unique_filter(lambda x: id(x)), l), [{'id': 'a'}, {'id': 'b'}, {'id': 'a'}, {'id': 'c'}, {'id': 'b'}])
 
     def test_IteratorJSONReader(self):
         def normalize(it):
@@ -29,24 +29,24 @@ class DimagiUtilsTestCase(TestCase):
                 r.append(sorted(row.items()))
             return r
 
-        assert normalize([]) == []
+        self.assertEquals(normalize([]), [])
 
-        assert normalize([['A', 'B', 'C'], ['1', '2', '3']]) == [[('A', '1'), ('B', '2'), ('C', '3')]]
+        self.assertEquals(normalize([['A', 'B', 'C'], ['1', '2', '3']]), [[('A', '1'), ('B', '2'), ('C', '3')]])
 
-        assert (normalize([['A', 'data: key', 'user 1', 'user 2', 'is-ok?'], ['1', '2', '3', '4', 'yes']])
-                == [[('A', '1'), ('data', {'key': '2'}), ('is-ok', True), ('user', ['3', '4'])]])
+        self.assertEquals((normalize([['A', 'data: key', 'user 1', 'user 2', 'is-ok?'], ['1', '2', '3', '4', 'yes']]))
+               , [[('A', '1'), ('data', {'key': '2'}), ('is-ok', True), ('user', ['3', '4'])]])
 
     def test_memoized_function(self):
         @memoized
         def f(n=0):
             return n**2
 
-        assert f() == 0
-        assert f.get_cache() == {(0,): 0}
-        assert f(0) == 0
-        assert f.get_cache() == {(0,): 0}
-        assert f(2) == 4
-        assert sorted(f.get_cache().items()) == [((0,), 0), ((2,), 4)]
+        self.assertEquals(f(), 0)
+        self.assertEquals(f.get_cache(), {(0,): 0})
+        self.assertEquals(f(0), 0)
+        self.assertEquals(f.get_cache(), {(0,): 0})
+        self.assertEquals(f(2), 4)
+        self.assertEquals(sorted(f.get_cache().items()), [((0,), 0), ((2,), 4)])
 
     def test_memoized_class(self):
         calls = {'get_full_name': 0, 'full_name': 0, 'complicated_method': 0}
@@ -81,37 +81,37 @@ class DimagiUtilsTestCase(TestCase):
                 return a, b, args, kwargs
 
         p = Person("Danny", "Roberts")
-        assert p.get_full_name() == 'Danny Roberts'
-        assert calls['get_full_name'] == 1
-        assert p.get_full_name() == 'Danny Roberts'
-        assert calls['get_full_name'] == 1
+        self.assertEquals(p.get_full_name(), 'Danny Roberts')
+        self.assertEquals(calls['get_full_name'], 1)
+        self.assertEquals(p.get_full_name(), 'Danny Roberts')
+        self.assertEquals(calls['get_full_name'], 1)
 
-        assert p.full_name == 'Danny Roberts'
-        assert calls['full_name'] == 1
-        assert p.full_name == 'Danny Roberts'
-        assert calls['full_name'] == 1
+        self.assertEquals(p.full_name, 'Danny Roberts')
+        self.assertEquals(calls['full_name'], 1)
+        self.assertEquals(p.full_name, 'Danny Roberts')
+        self.assertEquals(calls['full_name'], 1)
 
-        assert Person("Danny", "Roberts")._full_name_cache == {(Person('Danny', 'Roberts'),): 'Danny Roberts'}
-        assert Person.get_full_name.get_cache(p) == {(Person('Danny', 'Roberts'),): 'Danny Roberts'}
+        self.assertEquals(Person("Danny", "Roberts")._full_name_cache, {(Person('Danny', 'Roberts'),): 'Danny Roberts'})
+        self.assertEquals(Person.get_full_name.get_cache(p), {(Person('Danny', 'Roberts'),): 'Danny Roberts'})
 
-        assert p.complicated_method(5) == (5, 10, (), {})
-        assert calls['complicated_method'] == 1
-        assert p.complicated_method(5) == (5, 10, (), {})
-        assert calls['complicated_method'] == 1
+        self.assertEquals(p.complicated_method(5), (5, 10, (), {}))
+        self.assertEquals(calls['complicated_method'], 1)
+        self.assertEquals(p.complicated_method(5), (5, 10, (), {}))
+        self.assertEquals(calls['complicated_method'], 1)
 
-        assert p.complicated_method(1, 2, 3, 4, 5, foo='bar') == (1, 2, (3, 4, 5), {'foo': 'bar'})
-        assert calls['complicated_method'] == 2
+        self.assertEquals(p.complicated_method(1, 2, 3, 4, 5, foo='bar'), (1, 2, (3, 4, 5), {'foo': 'bar'}))
+        self.assertEquals(calls['complicated_method'], 2)
 
         q = Person("Joe", "Schmoe")
-        assert q.get_full_name() == 'Joe Schmoe'
-        assert calls['get_full_name'] == 2
+        self.assertEquals(q.get_full_name(), 'Joe Schmoe')
+        self.assertEquals(calls['get_full_name'], 2)
 
     def test_chunked(self):
-        assert list(chunked(range(10), 4)) == [
+        self.assertEquals(list(chunked(range(10), 4)), [
             (0, 1, 2, 3),
             (4, 5, 6, 7),
             (8, 9)
-        ]
+        ])
 
     def test_ReadOnlyObject(self):
 
@@ -132,14 +132,14 @@ class DimagiUtilsTestCase(TestCase):
                     yield word + '!'
         thing = Thing(words=['danny', 'is', 'so', 'clever'])
         thing = ReadOnlyObject(thing)
-        assert thing.words == ['danny', 'is', 'so', 'clever']
-        assert thing.words == ['danny', 'is', 'so', 'clever']
-        assert thing.words is thing.words
-        assert thing.calc == ['danny!', 'is!', 'so!', 'clever!']
-        assert read_log() == [0, 1, 2, 3]
-        assert thing.calc == ['danny!', 'is!', 'so!', 'clever!']
-        assert read_log() == []
-        assert thing.calc is thing.calc
+        self.assertEquals(thing.words, ['danny', 'is', 'so', 'clever'])
+        self.assertEquals(thing.words, ['danny', 'is', 'so', 'clever'])
+        self.assertIs(thing.words, thing.words)
+        self.assertEquals(thing.calc, ['danny!', 'is!', 'so!', 'clever!'])
+        self.assertEquals(read_log(), [0, 1, 2, 3])
+        self.assertEquals(thing.calc, ['danny!', 'is!', 'so!', 'clever!'])
+        self.assertEquals(read_log(), [])
+        self.assertIs(thing.calc, thing.calc)
 
     def test_assoc_array(self):
         d1 = {'a': 3, 'b': None, '@c': 'ss'}
