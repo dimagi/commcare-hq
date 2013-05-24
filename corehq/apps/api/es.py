@@ -219,15 +219,17 @@ class XFormES(ESView):
                 if xmlns:
                     name = form_filter.get_unknown_form_name(xmlns, none_if_not_found=True)
                 if not name:
-                    #fall back
-                    if res['_source']['form'].get('@name', None):
-                        return res['_source']['form'].get['@name']
-                    else:
-                        backup = res['_source']['form'].get('#type', 'data')
-                        if backup != 'data':
-                            name = backup
+                    name = 'unknown' # try to fix it below but this will be the default
+                    # fall back
+                    try:
+                        if res['_source']['form'].get('@name', None):
+                            name = res['_source']['form'].get['@name']
                         else:
-                            name = "unknown"
+                            backup = res['_source']['form'].get('#type', 'data')
+                            if backup != 'data':
+                                name = backup
+                    except (TypeError, KeyError):
+                        pass
 
                 res['_source']['es_readable_name'] = name
         return es_results
