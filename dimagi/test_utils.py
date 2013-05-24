@@ -5,7 +5,7 @@ if not settings.configured:
     settings.configure(DEBUG=True)
 
 
-import sys
+from mock import patch, MagicMock, call, NonCallableMock
 from unittest2 import TestCase
 
 from dimagi.utils.create_unique_filter import create_unique_filter
@@ -14,6 +14,7 @@ from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.chunked import chunked
 from dimagi.utils.couch.loosechange import AssocArray
 from dimagi.utils.read_only import ReadOnlyObject
+from dimagi.utils.couch.sync_docs import sync_design_docs, copy_designs
 
 
 class DimagiUtilsTestCase(TestCase):
@@ -210,3 +211,25 @@ class DimagiUtilsTestCase(TestCase):
         aa6 = AssocArray({'a.b': AssocArray({'c.d': 3})})
         self.assertEqual(aa6['a.b', 'c.d'], 3)
         self.assertNotEqual(aa6('a.b.c.d'), 3)
+
+    def test_sync_design_docs(self):
+        db = NonCallableMock()
+
+        with patch('dimagi.utils.couch.sync_docs.push', MagicMock()) as mock_push:
+            sync_design_docs(db, 'design_dir', 'design_name')
+            mock_push.assert_called_with('design_dir', db, docid='_design/design_name', force=True)
+
+    def test_sync_design_docs_tmp(self):
+        db = MagicMock()
+
+        with patch('dimagi.utils.couch.sync_docs.push', MagicMock()) as mock_push:
+            sync_design_docs(db, 'design_dir', 'design_name', temp='tmp')
+            mock_push.assert_called_with('design_dir', db, docid='_design/design_name-tmp', force=True)
+            self.assertEquals(len(db.mock_calls), 4)
+
+    def test_copy_designs(self):
+        db = MagicMock()
+        copy_designs(db, 'design_name')
+
+        db.copy_doc.assert_called_once_with('_design/design_name-tmp', '_design/design_name')
+        db.__delitem__.assert_called_with('_design/design_name-tmp')

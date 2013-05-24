@@ -8,17 +8,18 @@ setup(
     author='Dimagi',
     author_email='dev@dimagi.com',
     url='http://www.dimagi.com/',
-    packages = find_packages(exclude=['*.pyc']),
-    test_suite = 'dimagi.test_utils',
-    test_loader = 'unittest2:TestLoader',
-    install_requires = [
+    packages=find_packages(exclude=['*.pyc']),
+    test_suite='dimagi.test_utils',
+    test_loader='unittest2:TestLoader',
+    install_requires=[
         'django',
         'openpyxl',
         'python-dateutil',
         'pytz',
         'couchdbkit',
     ],
-    tests_require = [
+    tests_require=[
         'unittest2',
+        'mock>=0.8.0',
     ],
 )
