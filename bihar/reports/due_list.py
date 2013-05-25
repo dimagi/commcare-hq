@@ -81,7 +81,7 @@ def get_due_list_by_task_name(target_date, owner_id=None, case_es=None, size=0, 
     base_query['filter']['and'] += filter['and']
     base_query['facets'] = {
         facet_name: {
-            "terms": {"field":"name.exact"},
+            "terms": {"field":"name.exact", "size": 1000},
             "facet_filter": filter # This controls the records processed for the summation
         }
     }
