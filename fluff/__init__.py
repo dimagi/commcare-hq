@@ -3,6 +3,7 @@ from couchdbkit import ResourceNotFound
 from couchdbkit.ext.django import schema
 import datetime
 from dimagi.utils.parsing import json_format_date
+from dimagi.utils.read_only import ReadOnlyObject
 from fluff import exceptions
 from pillowtop.listener import BasicPillow
 from .signals import indicator_document_updated
@@ -318,6 +319,7 @@ class FluffPillow(BasicPillow):
 
     def change_transform(self, doc_dict):
         doc = self.document_class.wrap(doc_dict)
+        doc = ReadOnlyObject(doc)
         indicator_id = '%s-%s' % (self.indicator_class.__name__, doc.get_id)
 
         try:
