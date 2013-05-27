@@ -2,10 +2,12 @@ from gevent import monkey; monkey.patch_all()
 from gevent.pool import Pool
 from restkit.session import set_session; set_session("gevent")
 
+
 class PillowtopConfigurationException(Exception):
     pass
 
-def import_pillows():
+
+def import_settings():
     try:
         from django.conf import settings
     except Exception, ex:
@@ -13,6 +15,11 @@ def import_pillows():
         print "django import"
         print ex
         import pillowsettings as settings
+    return settings
+
+
+def import_pillows(instantiate=True):
+    settings = import_settings()
 
     pillowtops = []
     if hasattr(settings, 'PILLOWTOPS'):
@@ -23,7 +30,7 @@ def import_pillows():
             mod = __import__(mod_str, {},{},[pillowtop_class_str])
             if hasattr(mod, pillowtop_class_str):
                 pillowtop_class  = getattr(mod, pillowtop_class_str)
-                pillowtops.append(pillowtop_class())
+                pillowtops.append(pillowtop_class() if instantiate else pillowtop_class)
             else:
                 raise PillowtopConfigurationException("Error, the pillow class %s could not be imported" % full_str)
     return pillowtops
