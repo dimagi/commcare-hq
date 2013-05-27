@@ -1,4 +1,5 @@
 from django.conf import settings
+
 if not settings.configured:
     settings.configure(DEBUG=True)
 
@@ -7,6 +8,9 @@ import fluff
 from couchdbkit import Document, DocumentSchema, DocumentBase
 from datetime import date
 from fakecouch import FakeCouchDb
+from datetime import timedelta
+
+WEEK = timedelta(days=7)
 
 
 class Base0(fluff.Calculator):
@@ -47,6 +51,15 @@ class Base3(Base1, Base2):
     @fluff.date_emitter
     def base_3_emitter(self):
         pass
+
+
+class Indicators1(fluff.IndicatorDocument):
+    base0 = Base0(window=WEEK)
+
+
+class Indicators2(fluff.IndicatorDocument):
+    base1 = Base1(window=WEEK)
+    base2 = Base2(window=WEEK)
 
 
 class Test(TestCase):
@@ -92,6 +105,10 @@ class Test(TestCase):
             'base_2_filter',
             'base_3_filter',
         ]))
+
+    def test_indicator_classes(self):
+        self.assertEquals(Indicators1._calculators.keys(), ['base0'])
+        self.assertEquals(Indicators2._calculators.keys(), ['base1', 'base2'])
 
     def test_indicator_calculation(self):
         pillow = MockIndicators.pillow()()
@@ -186,13 +203,12 @@ class VisitCalculator(fluff.Calculator):
 
 
 class MockIndicators(fluff.IndicatorDocument):
-    from datetime import timedelta
 
     document_class = MockDoc
     group_by = ('domain', 'owner_id')
     domains = ('test',)
 
-    visits_week = VisitCalculator(window=timedelta(days=7))
+    visits_week = VisitCalculator(window=WEEK)
 
     class Meta:
         app_label = 'Mock'

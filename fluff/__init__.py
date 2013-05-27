@@ -169,12 +169,10 @@ class IndicatorDocumentMeta(schema.DocumentMeta):
                 calculators[attr_name] = attr_value
                 attrs[attr_name] = schema.DictProperty()
         cls = super(IndicatorDocumentMeta, mcs).__new__(mcs, name, bases, attrs)
-        if not hasattr(cls, '_calculators'):
-            cls._calculators = {}
-        cls._calculators.update(calculators)
-        for slug, calculator in cls._calculators.items():
+        for slug, calculator in calculators.items():
             calculator.fluff = cls
             calculator.slug = slug
+        cls._calculators = calculators
         return cls
 
 
