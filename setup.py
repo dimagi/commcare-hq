@@ -15,14 +15,9 @@ setup(
     test_loader='unittest2:TestLoader',
     install_requires=[
         'couchdbkit',
-        'pillowtop>=0.1.0',
-        'dimagi-utils>=1.0.1',
+        'pillowtop>=0.1.1',
+        'dimagi-utils>=1.0.2',
         'pytz',
-    ],
-    dependency_links=[
-        'http://github.com/dimagi/dimagi-utils/tarball/master#egg=dimagi-utils-1.0.0',
-        'http://github.com/dimagi/pillowtop/tarball/master#egg=pillowtop-0.0.1',
-        'http://github.com/dimagi/fakecouch/tarball/master#egg=fakecouch-0.0.1',
     ],
     tests_require=[
         'django',

@@ -7,6 +7,7 @@ from dimagi.utils.read_only import ReadOnlyObject
 from fluff import exceptions
 from pillowtop.listener import BasicPillow
 from .signals import indicator_document_updated
+import fluff.sync_couchdb
 
 
 def date_emitter(fn):
