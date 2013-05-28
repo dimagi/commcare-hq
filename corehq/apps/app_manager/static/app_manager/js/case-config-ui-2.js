@@ -5,12 +5,12 @@ var CaseConfig = (function () {
 
 
     var utils = {
-        getLabel: function (question) {
-            return utils.truncateLabel((question.repeat ? '- ' : '') + question.label, question.tag == 'hidden' ? ' (Hidden)' : '');
+        getLabel: function (question, MAXLEN) {
+            return utils.truncateLabel((question.repeat ? '- ' : '') + question.label, question.tag == 'hidden' ? ' (Hidden)' : '', MAXLEN);
         },
-        truncateLabel: function (label, suffix) {
+        truncateLabel: function (label, suffix, MAXLEN) {
             suffix = suffix || "";
-            var MAXLEN = 40,
+            var MAXLEN = MAXLEN || 40,
                 maxlen = MAXLEN - suffix.length;
             return ((label.length <= maxlen) ? (label) : (label.slice(0, maxlen) + "...")) + suffix;
         },
@@ -23,7 +23,8 @@ var CaseConfig = (function () {
     };
 
     ko.bindingHandlers.questionsSelect = {
-        init: function (element) {
+        init: function (element, valueAccessor) {
+            $(element).css('width', '220px');
             $(element).after('<div class="alert alert-error"></div>');
         },
         update: function (element, valueAccessor, allBindingsAccessor) {
@@ -43,12 +44,24 @@ var CaseConfig = (function () {
             } else {
                 $warning.hide();
             }
-            allBindings.optstrText = utils.getLabel;
-            return ko.bindingHandlers.optstr.update(element, function () {
-                return optionObjects;
-            }, function () {
-                return allBindings;
+            _.delay(function () {
+                $(element).select2({
+                    placeholder: 'Select a Question',
+                    data: {
+                        results: _(optionObjects).map(function (o) {
+                            return {id: o.value, text: o.label, question: o};
+                        })
+                    },
+                    formatSelection: function (o) {
+                        return utils.getLabel(o.question);
+                    },
+                    formatResult: function (o) {
+                        return utils.getLabel(o.question, 90);
+                    },
+                    dropdownCssClass: 'bigdrop'
+                });
             });
+            allBindings.optstrText = utils.getLabel;
         }
     };
 
