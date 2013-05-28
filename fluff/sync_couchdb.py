@@ -28,10 +28,10 @@ def catch_signal(app, **kwargs):
 
 def copy_designs(temp='tmp', delete=True):
     for pillow in import_pillows():
-        app_label = pillow.indicator_class._meta.app_label
-        db = get_db(app_label)
-
-        copy_designs(db, FLUFF)
+        if hasattr(pillow, 'indicator_class'):
+            app_label = pillow.indicator_class._meta.app_label
+            db = get_db(app_label)
+            copy_designs(db, FLUFF)
 
 
 signals.post_syncdb.connect(catch_signal)
