@@ -1,12 +1,12 @@
 import os.path
-from django.http import HttpResponseRedirect
+from django.http import HttpResponseRedirect, HttpResponseServerError
 from casexml.apps.case.models import CommCareCase
 from casexml.apps.phone.xml import get_case_xml
 from corehq.apps.hqcase.utils import submit_case_blocks
 from corehq.apps.importer import base
-from corehq.apps.importer.const import LookupErrors
+from corehq.apps.importer.util import ExcelFile, ImporterConfig
 import corehq.apps.importer.util as importer_util
-from corehq.apps.importer.util import ExcelFile
+from corehq.apps.importer.tasks import bulk_import_async
 from couchdbkit.exceptions import MultipleResultsFound, NoResultFound
 from django.views.decorators.http import require_POST
 from corehq.apps.users.decorators import require_permission
@@ -14,13 +14,12 @@ from corehq.apps.users.models import Permissions
 from corehq.apps.app_manager.models import ApplicationBase
 from soil.util import expose_download
 from soil import DownloadBase
+from soil import views as soil_views
+from soil.heartbeat import heartbeat_enabled, is_alive
+from django.template.context import RequestContext
 
-from casexml.apps.case.tests.util import CaseBlock
-import uuid
-
-from casexml.apps.case.xml import V2
 from django.contrib import messages
-from django.shortcuts import render
+from django.shortcuts import render, render_to_response
 from django.utils.translation import ugettext as _
 
 require_can_edit_data = require_permission(Permissions.edit_data)
@@ -59,7 +58,7 @@ def excel_config(request, domain):
     # stash content in the default storage for subsequent views
     file_ref = expose_download(uploaded_file_handle.read(), expiry=1*60*60)
     request.session[EXCEL_SESSION_ID] = file_ref.download_id
-    spreadsheet = _get_spreadsheet(file_ref, named_columns)
+    spreadsheet = importer_util.get_spreadsheet(file_ref, named_columns)
 
     if not spreadsheet:
         return _spreadsheet_expired(request, domain)
@@ -130,7 +129,7 @@ def excel_fields(request, domain):
 
     download_ref = DownloadBase.get(request.session.get(EXCEL_SESSION_ID))
 
-    spreadsheet = _get_spreadsheet(download_ref, named_columns)
+    spreadsheet = importer_util.get_spreadsheet(download_ref, named_columns)
     if not spreadsheet:
         return _spreadsheet_expired(request, domain)
 
@@ -189,13 +188,13 @@ def excel_fields(request, domain):
 @require_POST
 @require_can_edit_data
 def excel_commit(request, domain):
-    named_columns = request.POST['named_columns']
-    case_type = request.POST['case_type']
-    search_field = request.POST['search_field']
-    create_new_cases = request.POST['create_new_cases']
+    config = ImporterConfig(request)
 
-    download_ref = DownloadBase.get(request.session.get(EXCEL_SESSION_ID))
-    spreadsheet = _get_spreadsheet(download_ref, named_columns)
+    excel_id = request.session.get(EXCEL_SESSION_ID)
+
+    excel_ref = DownloadBase.get(excel_id)
+    spreadsheet = importer_util.get_spreadsheet(excel_ref, config.named_columns)
+
     if not spreadsheet:
         return _spreadsheet_expired(request, domain)
 
@@ -205,79 +204,69 @@ def excel_commit(request, domain):
                                   'a new one.'))
         return HttpResponseRedirect(base.ImportCases.get_url(domain=domain) + "?error=cache")
 
-    columns = spreadsheet.get_header_columns()
-    match_count = no_match_count = too_many_matches = 0
-    cases = {}
+    download = DownloadBase()
+    download.set_task(bulk_import_async.delay(
+        download.download_id,
+        config,
+        domain,
+        excel_id,
+    ))
 
-    for i in range(spreadsheet.get_num_rows()):
-        # skip first row if it is a header field
-        if i == 0 and named_columns:
-            continue
-
-        row = spreadsheet.get_row(i)
-        search_id = importer_util.parse_search_id(request, columns, row)
-        case, error = importer_util.lookup_case(search_field, search_id, domain)
-
-        if case:
-            match_count += 1
-        elif error == LookupErrors.NotFound:
-            no_match_count += 1
-            if not create_new_cases:
-                continue
-        elif error == LookupErrors.MultipleResults:
-            too_many_matches += 1
-            continue
-
-        fields_to_update = importer_util.populate_updated_fields(request, columns, row)
-
-        user = request.couch_user
-        username = user.username
-        user_id = user._id
-        if not case:
-            id = uuid.uuid4().hex
-            owner_id = user_id
-
-            caseblock = CaseBlock(
-                create = True,
-                case_id = id,
-                version = V2,
-                user_id = user_id,
-                owner_id = owner_id,
-                case_type = case_type,
-                external_id = search_id if search_field == 'external_id' else '',
-                update = fields_to_update
-            )
-            importer_util.submit_case_block(caseblock, domain, username, user_id)
-        elif case and case.type == case_type:
-            caseblock = CaseBlock(
-                create = False,
-                case_id = case._id,
-                version = V2,
-                update = fields_to_update
-            )
-            importer_util.submit_case_block(caseblock, domain, username, user_id)
-
-    # unset filename session var
     try:
         del request.session[EXCEL_SESSION_ID]
     except KeyError:
         pass
 
     return render(request, "importer/excel_commit.html", {
-                                'match_count': match_count,
-                                'no_match_count': no_match_count,
-                                'too_many_matches': too_many_matches,
+                                'download_id': download.download_id,
+                                'template': 'importer/partials/import_status.html',
                                 'domain': domain,
                                 'report': {
                                     'name': 'Import: Completed'
                                  },
                                 'slug': base.ImportCases.slug})
 
+@require_can_edit_data
+def importer_job_poll(request, domain, download_id, template="importer/partials/import_status.html"):
+    download_data = DownloadBase.get(download_id)
+    is_ready = False
+
+    if download_data is None:
+        download_data = DownloadBase(download_id=download_id)
+        try:
+            if download_data.task.failed():
+                return HttpResponseServerError()
+        except (TypeError, NotImplementedError):
+            # no result backend / improperly configured
+            pass
+
+    alive = True
+    if heartbeat_enabled():
+        alive = is_alive()
+
+    context = RequestContext(request)
+
+    if download_data.task.result and 'error' in download_data.task.result:
+        error = download_data.result['error']
+        if error == 'EXPIRED':
+            return _spreadsheet_expired(request, domain)
+        elif error == 'HAS_ERRORS':
+            messages.error(request, _('The session containing the file you '
+                                      'uploaded has expired - please upload '
+                                      'a new one.'))
+            return HttpResponseRedirect(base.ImportCases.get_url(domain=domain) + "?error=cache")
+
+
+    if download_data.task.state == 'SUCCESS':
+        is_ready = True
+        context['result'] = download_data.task.result
+
+    context['is_ready'] = is_ready
+    context['is_alive'] = alive
+    context['progress'] = download_data.get_progress()
+    context['download_id'] = download_id
+    return render_to_response(template, context_instance=context)
+
 def _spreadsheet_expired(req, domain):
     messages.error(req, _('Sorry, your session has expired. Please start over and try again.'))
     return HttpResponseRedirect(base.ImportCases.get_url(domain))
-
-def _get_spreadsheet(download_ref, column_headers=True):
-    if not download_ref:
-        return None
-    return ExcelFile(download_ref.get_filename(), column_headers)
