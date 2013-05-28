@@ -1,6 +1,6 @@
 from unittest2 import TestCase
 from pillowtop.listener import BasicPillow
-from pillowtop.run_pillowtop import import_pillows
+from pillowtop.utils import import_pillows
 from inspect import isclass
 
 
@@ -15,7 +15,7 @@ class PillowTopTestCase(TestCase):
     @classmethod
     def setUpClass(cls):
         import pillowtop.run_pillowtop
-        pillowtop.run_pillowtop.import_settings = import_settings
+        pillowtop.utils.import_settings = import_settings
 
     def test_import_pillows_class_only(self):
         pillows = import_pillows(instantiate=False)
