@@ -87,6 +87,19 @@ class DataTablesColumnGroup(object):
             aoColumns.append(col.render_aoColumns)
         return aoColumns
 
+    def __iter__(self):
+        for col in self.columns:
+            yield col
+
+    def __len__(self):
+        length = 0
+        for _ in self:
+            length += 1
+        return length
+
+    def __nonzero__(self):
+        return True
+
 
 class DataTablesHeader(object):
     has_group = False
@@ -180,5 +193,11 @@ class DataTablesHeader(object):
         for column in self.header:
             yield column
 
+    def __len__(self):
+        length = 0
+        for col in self:
+            length += len(col) if isinstance(col, DataTablesColumnGroup) else 1
+        return length
 
-
+    def __nonzero__(self):
+        return True
