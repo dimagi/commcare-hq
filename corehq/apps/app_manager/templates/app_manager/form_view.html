@@ -301,10 +301,10 @@
     {% if edit and not is_user_registration %}
         <div class="delete-me">
             <form action="{% url delete_form domain app.id module.id form.id %}" method="post">
-                <a class="submit btn btn-danger" href="#">
+                <button type="submit" class="disable-on-submit btn btn-danger">
                     <i class="icon-trash"></i>
                     {% trans "Delete Form" %}
-                </a>
+                </button>
             </form>
         </div>
     {% endif %}
