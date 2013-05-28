@@ -103,6 +103,126 @@ class CommtrackReportMixin(ProjectReport, ProjectReportParametersMixin):
     def aggregate_by(self):
         return self.request.GET.get('agg_type')
 
+    @memoized
+    def HIERARCHY(self, exclude_terminal=True):
+        type_q = deque()
+        type_q.append(None)
+        bfs_ordered = []
+
+        relationships = loc_util.parent_child(self.domain)
+
+        while True:
+            try:
+                loc_type = type_q.popleft()
+            except IndexError:
+                break
+
+            child_types = relationships.get(loc_type, [])
+            if loc_type and (not exclude_terminal or child_types):
+                bfs_ordered.append(loc_type)
+            for child_type in child_types:
+                if child_type not in bfs_ordered:
+                    type_q.append(child_type)
+                else:
+                    del bfs_ordered[bfs_ordered.index(loc_type)]
+                    bfs_ordered.insert(bfs_ordered.index(child_type), loc_type)
+
+        return [{'key': k, 'caption': k} for k in bfs_ordered]
+
+    @memoized
+    def get_terminal(self):
+        relationships = loc_util.parent_child(self.domain)
+        loc_types = loc_util.defined_location_types(self.domain)
+        for loc_type in loc_types:
+            if not relationships.get(loc_type):
+                return loc_type
+
+    @memoized
+    def LOC_METADATA(self, terminal):
+        fields = [
+            {
+                'key': 'village_class',
+                'caption': 'Village Class',
+                'anc_type': 'village',
+                'PSI-ONLY': True,
+            },
+            {
+                'key': 'village_size',
+                'caption': 'Village Size',
+                'anc_type': 'village',
+                'PSI-ONLY': True,
+            },
+            {
+                'key': 'site_code',
+                'caption': _('%s code') % terminal,
+            },
+            {
+                'key': 'name',
+                'caption': terminal,
+            },
+            {
+                'key': 'contact_phone',
+                'caption': 'Contact Phone',
+                'PSI-ONLY': True,
+            },
+            {
+                'key': 'outlet_type',
+                'caption': 'Outlet Type',
+                'PSI-ONLY': True,
+            },
+        ]
+        is_psi = (terminal == 'outlet')
+        fields = [f for f in fields if not f.get('PSI-ONLY', False) or is_psi]
+        for f in fields:
+            try:
+                del f['PSI-ONLY']
+            except KeyError:
+                pass
+        return fields
+
+    def _outlet_headers(self, terminal):
+        _hierarchy = self.HIERARCHY()
+        _term = self.get_terminal()
+        if not terminal:
+            terminal = _term
+        loc_types = [f['key'] for f in _hierarchy] + [_term]
+        active_loc_types = loc_types[:loc_types.index(terminal)+1]
+
+        hierarchy = _hierarchy[:len(active_loc_types)]
+        metadata = [f for f in self.LOC_METADATA(_term) if f.get('anc_type', _term) in active_loc_types]
+
+        return (hierarchy, metadata)
+
+    def outlet_headers(self, slug=False, terminal=None):
+        hierarchy, metadata = self._outlet_headers(terminal)
+        return [f['key' if slug else 'caption'] for f in hierarchy + metadata]
+
+    def outlet_metadata(self, loc, ancestors):
+        lineage = dict((anc.location_type, anc) for anc in (ancestors[anc_id] for anc_id in loc.lineage))
+        def loc_prop(anc_type, prop_name, default=u'\u2014'):
+            l = lineage.get(anc_type) if anc_type else loc
+            val = getattr(l, prop_name, default) if l else default
+
+            # hack to keep stock report export for old data working
+            if prop_name == 'site_code' and val == default:
+                try:
+                    startkey = [loc.domain, loc._id]
+                    supply_point = CommCareCase.view('commtrack/supply_point_by_loc',
+                                                     startkey=startkey,
+                                                     endkey=startkey + [{}],
+                                                     include_docs=True).one()
+                    val = supply_point.site_code
+                except Exception:
+                    val = '**ERROR**'
+            # end hack
+
+            return val
+
+        row = []
+        row += [loc_prop(f['key'], 'name') for f in self.HIERARCHY()]
+        row += [loc_prop(f.get('anc_type'), f['key']) for f in self.LOC_METADATA(self.get_terminal())]
+        return row
+
     # a setting that hides supply points that have no data. mostly for PSI weirdness
     # of how they're managing their locations. don't think it's a good idea for
     # commtrack in general
@@ -127,133 +247,17 @@ def child_loc(form, root):
     ix = path.index(root._id) if root else -1
     return path[ix + 1]
 
-def HIERARCHY(domain, exclude_terminal=True):
-    type_q = deque()
-    type_q.append(None)
-    bfs_ordered = []
-
-    relationships = loc_util.parent_child(domain)
-
-    while True:
-        try:
-            loc_type = type_q.popleft()
-        except IndexError:
-            break
-
-        child_types = relationships.get(loc_type, [])
-        if loc_type and (not exclude_terminal or child_types):
-            bfs_ordered.append(loc_type)
-        for child_type in child_types:
-            if child_type not in bfs_ordered:
-                type_q.append(child_type)
-            else:
-                del bfs_ordered[bfs_ordered.index(loc_type)]
-                bfs_ordered.insert(bfs_ordered.index(child_type), loc_type)
-
-    return [{'key': k, 'caption': k} for k in bfs_ordered]
-
-def get_terminal(domain):
-    relationships = loc_util.parent_child(domain)
-    loc_types = loc_util.defined_location_types(domain)
-    for loc_type in loc_types:
-        if not relationships.get(loc_type):
-            return loc_type
-
-def LOC_METADATA(terminal):
-    fields = [
-        {
-            'key': 'village_class',
-            'caption': 'Village Class',
-            'anc_type': 'village',
-            'PSI-ONLY': True,
-        },
-        {
-            'key': 'village_size',
-            'caption': 'Village Size',
-            'anc_type': 'village',
-            'PSI-ONLY': True,
-        },
-        {
-            'key': 'site_code',
-            'caption': _('%s code') % terminal,
-        },
-        {
-            'key': 'name',
-            'caption': terminal,
-        },
-        {
-            'key': 'contact_phone',
-            'caption': 'Contact Phone',
-            'PSI-ONLY': True,
-        },
-        {
-            'key': 'outlet_type',
-            'caption': 'Outlet Type',
-            'PSI-ONLY': True,
-        },
-    ]
-    is_psi = (terminal == 'outlet')
-    fields = [f for f in fields if not f.get('PSI-ONLY', False) or is_psi]
-    for f in fields:
-        try:
-            del f['PSI-ONLY']
-        except KeyError:
-            pass
-    return fields
 
 ACTION_ORDERING = ['stockonhand', 'sales', 'receipts', 'stockedoutfor']
 PRODUCT_ORDERING = ['PSI kit', 'non-PSI kit', 'ORS', 'Zinc']
 
-def _outlet_headers(domain, terminal):
-    _hierarchy = HIERARCHY(domain)
-    _term = get_terminal(domain)
-    if not terminal:
-        terminal = _term
-    loc_types = [f['key'] for f in _hierarchy] + [_term]
-    active_loc_types = loc_types[:loc_types.index(terminal)+1]
-
-    hierarchy = _hierarchy[:len(active_loc_types)]
-    metadata = [f for f in LOC_METADATA(_term) if f.get('anc_type', _term) in active_loc_types]
-
-    return (hierarchy, metadata)
-
-def outlet_headers(domain, slug=False, terminal=None):
-    hierarchy, metadata = _outlet_headers(domain, terminal)
-    return [f['key' if slug else 'caption'] for f in hierarchy + metadata]
-
-def outlet_metadata(loc, ancestors):
-    lineage = dict((anc.location_type, anc) for anc in (ancestors[anc_id] for anc_id in loc.lineage))
-    def loc_prop(anc_type, prop_name, default=u'\u2014'):
-        l = lineage.get(anc_type) if anc_type else loc
-        val = getattr(l, prop_name, default) if l else default
-
-        # hack to keep stock report export for old data working
-        if prop_name == 'site_code' and val == default:
-            try:
-                startkey = [loc.domain, loc._id]
-                supply_point = CommCareCase.view('commtrack/supply_point_by_loc',
-                                                 startkey=startkey,
-                                                 endkey=startkey + [{}],
-                                                 include_docs=True).one()
-                val = supply_point.site_code
-            except Exception:
-                val = '**ERROR**'
-        # end hack
-
-        return val
-
-    row = []
-    row += [loc_prop(f['key'], 'name') for f in HIERARCHY(loc.domain)]
-    row += [loc_prop(f.get('anc_type'), f['key']) for f in LOC_METADATA(get_terminal(loc.domain))]
-    return row
-
-def site_metadata(loc, ancestors):
+def site_metadata(report_obj, loc, ancestors):
     lineage = dict((anc.location_type, anc) for anc in (ancestors[anc_id] for anc_id in loc.lineage))
     def loc_prop(anc_type, prop_name, default=u'\u2014'):
         l = lineage.get(anc_type) if anc_type and anc_type != loc.location_type else loc
         return getattr(l, prop_name, default) if l else default
 
-    hierarchy, metadata = _outlet_headers(loc.domain, terminal=loc.location_type)
+    hierarchy, metadata = report_obj._outlet_headers(terminal=loc.location_type)
 
     row = []
     for h in hierarchy:
@@ -279,7 +283,7 @@ class VisitReport(GenericTabularReport, CommtrackReportMixin, DatespanMixin):
     emailable = True
 
     def header_text(self, slug=False):
-        cols = outlet_headers(self.domain, slug)
+        cols = self.outlet_headers(slug)
         cols.extend([
             ('date' if slug else 'Date'),
             ('reporter' if slug else 'Reporter'),
@@ -312,7 +316,7 @@ class VisitReport(GenericTabularReport, CommtrackReportMixin, DatespanMixin):
             transactions = dict(((tx['action'], tx['product']), tx['value']) for tx in get_transactions(doc, False))
             location = locs[leaf_loc(doc)]
 
-            data = outlet_metadata(location, ancestry)
+            data = self.outlet_metadata(location, ancestry)
             data.extend([
                 dateparse.string_to_datetime(doc['received_on']).strftime('%Y-%m-%d'),
                 CommCareUser.get(doc['form']['meta']['userID']).username_in_report,
@@ -366,7 +370,7 @@ class SalesAndConsumptionReport(GenericTabularReport, CommtrackReportMixin, Date
     @property
     @memoized
     def outlets(self):
-        locs = Location.filter_by_type(self.domain, get_terminal(self.domain), self.active_location)
+        locs = Location.filter_by_type(self.domain, self.get_terminal(), self.active_location)
         locs = filter(lambda loc: self.outlet_type_filter(loc), locs)
         return locs
 
@@ -381,9 +385,9 @@ class SalesAndConsumptionReport(GenericTabularReport, CommtrackReportMixin, Date
             return DataTablesHeader()
 
         if len(self.outlets) > OUTLETS_LIMIT:
-            return DataTablesHeader(DataTablesColumn('Too many %ss' % get_terminal(self.domain)))
+            return DataTablesHeader(DataTablesColumn('Too many %ss' % self.get_terminal()))
 
-        cols = outlet_headers(self.domain)
+        cols = self.outlet_headers()
         for p in self.active_products:
             cols.append('Stock on Hand (%s)' % p['name'])
             cols.extend('Total %s (%s)' % (action.caption, p['name']) for action in self.incr_actions)
@@ -394,7 +398,7 @@ class SalesAndConsumptionReport(GenericTabularReport, CommtrackReportMixin, Date
     @property
     def rows(self):
         if len(self.outlets) > OUTLETS_LIMIT:
-            _term = get_terminal(self.domain)
+            _term = self.get_terminal()
             return [[
                     'This report is limited to <b>%(max)d</b> %(term)ss. Your location filter includes <b>%(count)d</b> %(term)ss. Please make your location filter more specific.' % {
                         'count': len(self.outlets),
@@ -417,7 +421,7 @@ class SalesAndConsumptionReport(GenericTabularReport, CommtrackReportMixin, Date
             all_transactions = list(itertools.chain(*(get_transactions(r) for r in reports)))
             tx_by_product = map_reduce(lambda tx: [(tx['product'],)], data=all_transactions, include_docs=True)
 
-            data = outlet_metadata(site, self.ancestry)
+            data = self.outlet_metadata(site, self.ancestry)
             stockouts = {}
             inactive_site = True
             for p in products:
@@ -480,7 +484,7 @@ class CumulativeSalesAndConsumptionReport(GenericTabularReport, CommtrackReportM
 
     @property
     def leaf_locs(self):
-        return self._descendants(get_terminal(self.domain))
+        return self._descendants(self.get_terminal())
 
     @property
     @memoized
@@ -495,8 +499,8 @@ class CumulativeSalesAndConsumptionReport(GenericTabularReport, CommtrackReportM
         if not self.aggregation_locs:
             return DataTablesHeader(DataTablesColumn('No locations'))
 
-        _term = get_terminal(self.domain)
-        cols = outlet_headers(self.domain, terminal=self.aggregate_by)
+        _term = self.get_terminal()
+        cols = self.outlet_headers(terminal=self.aggregate_by)
         cols.extend([
             '# reporting %ss' % _term,
             'total # %ss' % _term,
@@ -550,7 +554,7 @@ class CumulativeSalesAndConsumptionReport(GenericTabularReport, CommtrackReportM
             relevant_reports = [r for r in reports if any(tx['product'] in product_ids for tx in get_transactions(r))]
             num_active_outlets = len(set(leaf_loc(r) for r in relevant_reports))
 
-            data = site_metadata(site, self.ancestry)
+            data = site_metadata(self, site, self.ancestry)
             data.extend([
                 num_active_outlets,
                 num_outlets,
@@ -587,7 +591,7 @@ class StockOutReport(GenericTabularReport, CommtrackReportMixin, DatespanMixin):
     @property
     @memoized
     def outlets(self):
-        locs = Location.filter_by_type(self.domain, get_terminal(self.domain), self.active_location)
+        locs = Location.filter_by_type(self.domain, self.get_terminal(), self.active_location)
         locs = filter(lambda loc: self.outlet_type_filter(loc), locs)
         return locs
 
@@ -602,9 +606,9 @@ class StockOutReport(GenericTabularReport, CommtrackReportMixin, DatespanMixin):
             return DataTablesHeader()
 
         if len(self.outlets) > OUTLETS_LIMIT:
-            return DataTablesHeader(DataTablesColumn('Too many %ss' % get_terminal(self.domain)))
+            return DataTablesHeader(DataTablesColumn('Too many %ss' % self.get_terminal()))
 
-        cols = outlet_headers(self.domain)
+        cols = self.outlet_headers()
         for p in self.active_products:
             cols.append('%s: Days stocked out' % p['name'])
         cols.append('All Products Combined: Days stocked out')
@@ -613,7 +617,7 @@ class StockOutReport(GenericTabularReport, CommtrackReportMixin, DatespanMixin):
     @property
     def rows(self):
         if len(self.outlets) > OUTLETS_LIMIT:
-            _term = get_terminal(self.domain)
+            _term = self.get_terminal()
             return [[
                     'This report is limited to <b>%(max)d</b> %(term)ss. Your location filter includes <b>%(count)d</b> %(term)ss. Please make your location filter more specific.' % {
                         'count': len(self.outlets),
@@ -623,7 +627,7 @@ class StockOutReport(GenericTabularReport, CommtrackReportMixin, DatespanMixin):
 
         products = self.active_products
         def row(site):
-            data = outlet_metadata(site, self.ancestry)
+            data = self.outlet_metadata(site, self.ancestry)
 
             stockout_days = []
             inactive_site = True
