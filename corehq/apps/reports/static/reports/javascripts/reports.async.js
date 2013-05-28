@@ -81,6 +81,10 @@ var HQAsyncReport = function (o) {
         if (setFilters != undefined) {
             process_filters = process_filters + "&filterSet=" + setFilters;
         }
+        if (setFilters) {
+            $('#export-report-excel').removeClass('hide');
+            $('#email-report').removeClass('hide');
+        }
 
         self.reportRequest = $.ajax({
             url: (self.customAsyncUrl || window.location.pathname.replace(self.standardReport.urlRoot,
