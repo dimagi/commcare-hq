@@ -589,7 +589,7 @@ def flip_es_aliases():
     """Flip elasticsearch aliases to the lastest version """
     require('code_root', provided_by=('production', 'demo', 'staging', "india"))
     with cd(env.code_root):
-        sudo('%(virtualenv_root)s/bin/python manage.py ptop_es_manage --flip_aliases' % env, user=env.sudo_user)
+        sudo('%(virtualenv_root)s/bin/python manage.py ptop_es_manage --flip_all_aliases' % env, user=env.sudo_user)
 
 @roles('staticfiles', 'django_monolith')
 def _do_collectstatic():
