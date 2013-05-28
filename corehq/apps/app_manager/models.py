@@ -20,7 +20,7 @@ import commcare_translations
 from corehq.apps.app_manager import fixtures, suite_xml
 from corehq.apps.app_manager.suite_xml import IdStrings
 from corehq.apps.app_manager.templatetags.xforms_extras import clean_trans
-from corehq.apps.app_manager.util import split_path
+from corehq.apps.app_manager.util import split_path, save_xform
 from corehq.apps.app_manager.xform import XForm, parse_xml as _parse_xml, XFormError, XFormValidationError, WrappedNode, CaseXPath
 from corehq.apps.appstore.models import SnapshotMixin
 from corehq.apps.builds.models import BuildSpec, CommCareBuildConfig, BuildRecord
@@ -1884,6 +1884,7 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
         def xmlname(aform):
             return "%s.xml" % aform.get_unique_id()
         self.put_attachment(self.fetch_attachment(xmlname(form)), xmlname(copy_form))
+        save_xform(self, copy_form, copy_form.source)
         self.modules[to_module_id]['forms'].append(copy_form)
 
         if self.modules[module_id]['case_type'] != self.modules[to_module_id]['case_type']:
