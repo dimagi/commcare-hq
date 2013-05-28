@@ -1,7 +1,7 @@
 from django.db.models import signals
 import os
 from couchdbkit.ext.django.loading import get_db
-from pillowtop.run_pillowtop import import_pillows
+from pillowtop.utils import import_pillows
 from dimagi.utils.couch.sync_docs import sync_design_docs as sync_docs
 
 

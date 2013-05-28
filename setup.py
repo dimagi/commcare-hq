@@ -15,7 +15,7 @@ setup(
     test_loader='unittest2:TestLoader',
     install_requires=[
         'couchdbkit',
-        'pillowtop>=0.1.1',
+        'pillowtop>=0.1.2',
         'dimagi-utils>=1.0.2',
         'pytz',
     ],
