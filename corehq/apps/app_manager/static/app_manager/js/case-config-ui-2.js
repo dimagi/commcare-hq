@@ -1,9 +1,4 @@
-/*globals $, EJS, COMMCAREHQ */
-
-/*
-This file was copied from case-config-ui-1.js, and then edited.
-All additions are done using knockout, and can eventually replace all the old code.
- */
+/*globals $, COMMCAREHQ */
 
 var CaseConfig = (function () {
     "use strict";
@@ -24,6 +19,36 @@ var CaseConfig = (function () {
         },
         action_is_active: function (action) {
             return action && action.condition && (action.condition.type === "if" || action.condition.type === "always");
+        }
+    };
+
+    ko.bindingHandlers.questionsSelect = {
+        init: function (element) {
+            $(element).after('<div class="alert alert-error"></div>');
+        },
+        update: function (element, valueAccessor, allBindingsAccessor) {
+            var optionObjects = ko.utils.unwrapObservable(valueAccessor());
+            var allBindings = ko.utils.unwrapObservable(allBindingsAccessor());
+            var value = ko.utils.unwrapObservable(allBindings.value);
+            var $warning = $(element).next();
+            if (value && !_.some(optionObjects, function (option) {
+                        return option.value === value;
+                    })) {
+                var option = {
+                    label: 'Unidentified Question (' + value + ')',
+                    value: value
+                };
+                optionObjects = [option].concat(optionObjects);
+                $warning.show().text('We cannot find this question in the form. It is likely that you deleted or renamed the question. Please choose a valid question from the dropdown.');
+            } else {
+                $warning.hide();
+            }
+            allBindings.optstrText = utils.getLabel;
+            return ko.bindingHandlers.optstr.update(element, function () {
+                return optionObjects;
+            }, function () {
+                return allBindings;
+            });
         }
     };
 
