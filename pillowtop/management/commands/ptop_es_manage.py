@@ -15,11 +15,16 @@ class Command(LabelCommand):
 
     option_list = LabelCommand.option_list + \
                   (
-                      make_option('--flip_aliases',
+                      make_option('--flip_all_aliases',
                                   action='store_true',
-                                  dest='do_flip',
+                                  dest='flip_all',
                                   default=False,
-                                  help="Do the actual alias flip"),
+                                  help="Flip all aliases"),
+                      make_option('--flip_alias',
+                                  action='store',
+                                  dest='pillow_class',
+                                  default=None,
+                                  help="Single Pillow class to flip alias"),
                       make_option('--list',
                                   action='store_true',
                                   dest='list_pillows',
@@ -40,7 +45,8 @@ class Command(LabelCommand):
         print ""
         show_info = options['show_info']
         list_pillows = options['list_pillows']
-        do_flip = options['do_flip']
+        flip_all = options['flip_all']
+        flip_single = options['pillow_class']
         es = get_es()
 
         pillows = import_pillows()
@@ -65,12 +71,23 @@ class Command(LabelCommand):
         if list_pillows:
             print aliased_pillows
 
-        if do_flip:
+        if flip_all:
             aliased_pillows = filter(lambda x: isinstance(x, AliasedElasticPillow), pillows)
             for pillow in aliased_pillows:
                 pillow.assume_alias()
-
             print simplejson.dumps(es.get('_aliases'), indent=4)
+        if flip_single is not None:
+            pillow_class_name = flip_single
+            pillow_to_use = filter(lambda x: x.__class__.__name__ == pillow_class_name, aliased_pillows)
+            if len(pillow_to_use) != 1:
+                print "Unknown pillow (option --pillow <name>) class string, the options are: \n\t%s" % ', '.join(
+                    [x.__class__.__name__ for x in aliased_pillows])
+                sys.exit()
+
+            #ok we got the pillow
+            target_pillow = pillow_to_use[0]
+            target_pillow.assume_alias()
+            print es.get('_aliases')
 
 
 
