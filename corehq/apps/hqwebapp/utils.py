@@ -1,3 +1,4 @@
+from couchdbkit.exceptions import ResourceNotFound
 from django.contrib import messages
 from django.contrib.auth.views import redirect_to_login
 from django.core.urlresolvers import reverse
@@ -53,8 +54,12 @@ class InvitationView():
             logout(request)
             return HttpResponseRedirect(request.path)
 
-        invitation = self.inv_type.get(invitation_id)
-
+        try:
+            invitation = self.inv_type.get(invitation_id)
+        except ResourceNotFound:
+            messages.error(request, _("Sorry, we couldn't find that invitation. Please double check "
+                                      "the invitation link you received and try again."))
+            return HttpResponseRedirect(reverse("login"))
         if invitation.is_accepted:
             messages.error(request, _("Sorry, that invitation has already been used up. "
                                       "If you feel this is a mistake please ask the inviter for "
