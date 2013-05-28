@@ -543,7 +543,8 @@ def _notification_email_on_publish(domain, snapshot, published_by):
     subject = "New App on Exchange: %s" % snapshot.title
     try:
         for recipient in recipients:
-            send_HTML_email(subject, recipient, html_content, text_content=text_content)
+            send_HTML_email(subject, recipient, html_content, text_content=text_content,
+                            email_from=settings.DEFAULT_FROM_EMAIL)
     except Exception:
         logging.warning("Can't send notification email, but the message was:\n%s" % text_content)
 
@@ -664,6 +665,52 @@ def commtrack_settings(request, domain):
             other_sms_codes=dict(other_sms_codes()),
         ))
 
+@domain_admin_required
+def commtrack_settings_advanced(request, domain):
+    from corehq.apps.commtrack.forms import AdvancedSettingsForm
+
+    domain = Domain.get_by_name(domain)
+    ct_settings = domain.commtrack_settings
+
+    # make new CommtrackConfig to get default values
+    initial = ct_settings.to_json()
+    initial.update(dict(('consumption_' + k, v) for k, v in
+        ct_settings.consumption_config.to_json().items()))
+    initial.update(dict(('stock_' + k, v) for k, v in
+        ct_settings.stock_levels_config.to_json().items()))
+
+    if request.method == 'POST':
+        form = AdvancedSettingsForm(request.POST, initial=initial)
+        if form.is_valid():
+            data = form.cleaned_data
+            ct_settings.use_auto_consumption = bool(data.get('use_auto_consumption'))
+
+            fields = ('emergency_level', 'understock_threshold',
+                    'overstock_threshold')
+            for field in fields:
+                if data.get('stock_' + field):
+                    setattr(ct_settings.stock_levels_config, field,
+                            data['stock_' + field])
+
+            consumption_fields = ('min_periods', 'min_window', 'window')
+            for field in consumption_fields:
+                if data.get('consumption_' + field):
+                    setattr(ct_settings.consumption_config, field,
+                            data['consumption_' + field])
+
+            ct_settings.save()
+            messages.success(request, _("Settings updated!"))
+            return HttpResponseRedirect(
+                    reverse('commtrack_settings_advanced', args=[domain]))
+    else:
+        form = AdvancedSettingsForm(initial=initial)
+
+    return render(request, 'domain/admin/commtrack_settings_advanced.html', {
+        'domain': domain.name,
+        'form': form
+    })
+
+
 @require_POST
 @domain_admin_required
 def org_request(request, domain):
@@ -694,6 +741,7 @@ def _send_request_notification_email(request, org, dom):
     subject = "New request to add a project to your organization! -- CommcareHQ"
     try:
         for recipient in recipients:
-            send_HTML_email(subject, recipient, html_content, text_content=text_content)
+            send_HTML_email(subject, recipient, html_content, text_content=text_content,
+                            email_from=settings.DEFAULT_FROM_EMAIL)
     except Exception:
         logging.warning("Can't send notification email, but the message was:\n%s" % text_content)

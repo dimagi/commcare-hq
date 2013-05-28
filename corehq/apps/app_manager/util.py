@@ -1,5 +1,5 @@
 from corehq.apps.app_manager.xform import XForm, XFormError, parse_xml
-
+import re
 
 def get_app_id(form):
     """
@@ -15,7 +15,6 @@ def split_path(path):
     name = path_parts.pop(-1)
     path = '/'.join(path_parts)
     return path, name
-
 
 def save_xform(app, form, xml):
     try:
@@ -36,3 +35,21 @@ def save_xform(app, form, xml):
                 xml = xform.render()
                 break
     form.source = xml
+
+CASE_TYPE_REGEX = r'^[\w-]+$'
+_case_type_regex = re.compile(CASE_TYPE_REGEX)
+
+def is_valid_case_type(case_type):
+    """
+    >>> is_valid_case_type('foo')
+    True
+    >>> is_valid_case_type('foo-bar')
+    True
+    >>> is_valid_case_type('foo bar')
+    False
+    >>> is_valid_case_type('')
+    False
+    >>> is_valid_case_type(None)
+    False
+    """
+    return bool(_case_type_regex.match(case_type or ''))

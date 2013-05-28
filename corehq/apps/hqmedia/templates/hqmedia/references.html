@@ -12,7 +12,7 @@
 
 {% block js-inline %} {{ block.super }}
     <script type="text/javascript">
-        var reference_controller = new MultimediaReferenceController({{ references|JSON }}, {{ object_map|JSON }});
+        var reference_controller = new MultimediaReferenceController({{ references|JSON }}, {{ object_map|JSON }}, {{ totals|JSON }});
         reference_controller.render();
         ko.applyBindings(reference_controller);
 
@@ -48,10 +48,8 @@
         <div class="alert alert-info">
             <h3><i class="icon-cloud-download"></i> {% trans 'Download Multimedia' %}</h3>
             <p><a class="btn btn-primary" style="color: #ffffff;" href="{% url download_multimedia_zip domain app.get_id  %}"><i class="icon-cloud-download"></i> {% trans 'Download ZIP' %}</a></p>
-            <ul style="margin-top:.5em;">
-                {% for m in totals %}
-                <li><i class="{{ m.icon_class }}"></i> {{ m.matched }}/{{ m.totals }} {{ m.media_type }} {% trans 'References' %}</li>
-                {% endfor %}
+            <ul style="margin-top:.5em;" data-bind="foreach: totals">
+                <li class="media-totals" data-bind="event: {refMediaAdded: $parent.incrementTotals}"><i data-bind="attr: {class: icon_class}"></i> <span data-bind="text: matched"></span>/<span data-bind="text: totals"></span> <span data-bind="text: media_type"></span> {% trans 'References' %}</li>
             </ul>
         </div>
         {% endif %}
@@ -87,6 +85,7 @@
                                 {% include "hqmedia/partials/reference_table.html" with ref_type="active_menu_references" show_refs="showMenuRefs" parent_accordion="FormRefs" this_accordion="FormMenuRefs" title="Menu References" %}
                                 {% include "hqmedia/partials/reference_table.html" with ref_type="active_images" show_refs="showImageRefs" parent_accordion="FormRefs" this_accordion="FormImageRefs" title="Image References" %}
                                 {% include "hqmedia/partials/reference_table.html" with ref_type="active_audio" show_refs="showAudioRefs" parent_accordion="FormRefs" this_accordion="FormAudioRefs" title="Audio References" %}
+                                {% include "hqmedia/partials/reference_table.html" with ref_type="active_video" show_refs="showVideoRefs" parent_accordion="FormRefs" this_accordion="FormVideoRefs" title="Video References" %}
                             </div>
                         </div>
                     <!-- /ko -->
@@ -101,18 +100,25 @@
         <a target="_blank"
            class="btn btn-small preview-media"
            data-bind="attr: { href: url }"
-           data-toggle="tooltip" data-title="Opens image in new tab.">View Larger</a>
+           data-toggle="tooltip" data-title="Opens image in new tab.">{% trans 'View Larger' %}</a>
     </script>
 
     <script type="text/html" id="audio-preview-template">
         <a target="_blank"
            class="btn preview-media"
            data-bind="attr: { href: url }"
-           data-toggle="tooltip" data-title="Opens file in new tab.">Hear Audio</a>
+           data-toggle="tooltip" data-title="Opens file in new tab.">{% trans 'Hear Audio' %}</a>
+    </script>
+
+    <script type="text/html" id="video-preview-template">
+        <a target="_blank"
+           class="btn preview-media"
+           data-bind="attr: { href: url }"
+           data-toggle="tooltip" data-title="Opens file in new tab.">{% trans 'View Video' %}</a>
     </script>
 
     {% for uploader in uploaders %}
-        <div class="modal hide fade" id="{{ uploader.name }}">
+        <div class="modal hide fade" id="{{ uploader.slug }}">
             <div class="modal-header">
                 <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
                 <h3>Upload {{ uploader.media_type|capfirst }}</h3>
@@ -144,7 +150,7 @@
             </div>
             <div class="modal-footer">
                 <a href="#" class="btn" data-dismiss="modal">{% trans 'Close' %}</a>
-                <a href="#" class="btn disabled hqm-upload hqm-upload-confirm"><i class="icon-cloud-upload"> {% trans "Begin Upload" %}</i></a>
+                <a href="#" class="btn disabled hqm-upload hqm-upload-confirm"><i class="icon-cloud-upload"></i> {% trans "Begin Upload" %}</a>
             </div>
         </div>
     {% endfor %}

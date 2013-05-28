@@ -472,7 +472,6 @@ class ReportNotification(Document):
         """Tuples for hour number and human-readable hour"""
         return tuple([(val, "%s:00" % val) for val in range(24)])
 
-
     def send(self):
         from dimagi.utils.django.email import send_HTML_email
         from corehq.apps.reports.views import get_scheduled_report_response
@@ -488,7 +487,7 @@ class ReportNotification(Document):
             self.owner, self.domain, self._id).content
 
         for email in self.all_recipient_emails:
-            send_HTML_email(title, email, body)
+            send_HTML_email(title, email, body, email_from=settings.DEFAULT_FROM_EMAIL)
 
 
 class AppNotFound(Exception):

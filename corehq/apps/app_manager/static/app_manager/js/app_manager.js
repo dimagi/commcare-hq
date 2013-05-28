@@ -244,7 +244,7 @@
 
                 if (COMMCAREHQ.app_manager.checkCommcareVersion(version)) {
                     area.find('upgrade-message').remove();
-                    area.find('*:not(".hidden")').show();
+                    area.find('*:not(".hide")').show();
                 } else {
                     area.find('*').hide();
                     upgradeMessage.append(

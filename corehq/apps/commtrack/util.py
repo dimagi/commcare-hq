@@ -1,6 +1,7 @@
 from dimagi.utils.couch.database import get_db
 from corehq.apps.commtrack.models import *
 from corehq.apps.locations.models import Location
+from corehq.apps.domain.models import Domain
 from casexml.apps.case.models import CommCareCase
 import itertools
 from datetime import datetime, date, timedelta
@@ -54,9 +55,12 @@ def make_product(domain, name, code):
     p.save()
     return p
 
-def bootstrap_default(domain, requisitions_enabled=False):
+def bootstrap_default(domain, requisitions_enabled=True):
+    if not(domain and domain.commtrack_enabled and not domain.commtrack_settings):
+        return
+
     c = CommtrackConfig(
-        domain=domain,
+        domain=domain.name,
         multiaction_enabled=True,
         multiaction_keyword='report',
         actions=[
@@ -86,10 +90,11 @@ def bootstrap_default(domain, requisitions_enabled=False):
             ),
         ],
         location_types=[
-            LocationType(name='province', allowed_parents=['']),
-            LocationType(name='district', allowed_parents=['province']),
-            LocationType(name='village', allowed_parents=['district']),
-            LocationType(name='dispensary', allowed_parents=['village']),
+            LocationType(name='state', allowed_parents=[''], administrative=True),
+            LocationType(name='district', allowed_parents=['state'], administrative=True),
+            LocationType(name='block', allowed_parents=['district'], administrative=True),
+            LocationType(name='village', allowed_parents=['block'], administrative=True),
+            LocationType(name='outlet', allowed_parents=['block', 'village']),
         ],
         supply_point_types=[],
     )
@@ -110,10 +115,10 @@ def bootstrap_default(domain, requisitions_enabled=False):
                     name='approved',
                 ),
                 CommtrackActionConfig(
-                    action_type=RequisitionActions.FILL,
-                    keyword='fill',
-                    caption='Filled',
-                    name='filled',
+                    action_type=RequisitionActions.PACK,
+                    keyword='pack',
+                    caption='Packed',
+                    name='packed',
                 ),
                 CommtrackActionConfig(
                     action_type=RequisitionActions.RECEIPTS,
@@ -125,9 +130,9 @@ def bootstrap_default(domain, requisitions_enabled=False):
         )
     c.save()
 
-    make_product(domain, 'Sample Product 1', 'pp')
-    make_product(domain, 'Sample Product 2', 'pq')
-    make_product(domain, 'Sample Product 3', 'pr')
+    make_product(domain.name, 'Sample Product 1', 'pp')
+    make_product(domain.name, 'Sample Product 2', 'pq')
+    make_product(domain.name, 'Sample Product 3', 'pr')
 
     return c
 

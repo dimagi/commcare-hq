@@ -24,6 +24,10 @@ class BaseReportTest(unittest.TestCase):
 
         cls.factory = RequestFactory()
 
+    @classmethod
+    def tearDownClass(cls):
+        cls.couch_user.delete()
+
     def _get_report_data(self, report, startdate, enddate):
         req = self._get_request(startdate, enddate)
         rep = report(req, in_testing=True)

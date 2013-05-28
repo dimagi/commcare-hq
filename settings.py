@@ -207,6 +207,8 @@ HQ_APPS = (
     'corehq.apps.api',
     'corehq.apps.indicators',
     'corehq.couchapps',
+    'fluff',
+    'fluff.fluff_filter',
     'sofabed.forms',
     'soil',
     'corehq.apps.hqsofabed',
@@ -220,6 +222,7 @@ HQ_APPS = (
 
     # custom reports
     'a5288',
+    'benin',
     'bihar',
     'dca',
     'hsph',
@@ -285,6 +288,11 @@ EMAIL_SMTP_PORT = 587
 BUG_REPORT_RECIPIENTS = ()
 EXCHANGE_NOTIFICATION_RECIPIENTS = []
 
+SERVER_EMAIL = 'commcarehq-noreply@dimagi.com' #the physical server emailing - differentiate if needed
+DEFAULT_FROM_EMAIL = 'commcarehq-noreply@dimagi.com'
+SUPPORT_EMAIL = "commcarehq-support@dimagi.com"
+EMAIL_SUBJECT_PREFIX = '[commcarehq] '
+
 PAGINATOR_OBJECTS_PER_PAGE = 15
 PAGINATOR_MAX_PAGE_LINKS = 5
 
@@ -314,7 +322,6 @@ XFORMS_PLAYER_URL = "http://localhost:4444/"  # touchform's setting
 
 ####### Couchlog config ######
 
-SUPPORT_EMAIL = "commcarehq-support@dimagi.com"
 COUCHLOG_BLUEPRINT_HOME = "%s%s" % (STATIC_URL, "hqwebapp/stylesheets/blueprint/")
 COUCHLOG_DATATABLES_LOC = "%s%s" % (
     STATIC_URL, "hqwebapp/js/lib/datatables-1.9/js/jquery.dataTables.min.js")
@@ -413,10 +420,19 @@ LOGGING = {
             'format': '%(levelname)s %(asctime)s %(module)s %(process)d %(thread)d %(message)s'
         },
         'simple': {
-            'format': '%(levelname)s %(message)s'
+            'format': '%(asctime)s %(levelname)s %(message)s'
+        },
+
+        'pillowtop': {
+            'format': '%(asctime)s %(levelname)s %(module)s %(message)s'
         },
     },
     'handlers': {
+        'pillowtop': {
+            'level': 'INFO',
+            'class': 'logging.StreamHandler',
+            'formatter': 'pillowtop'
+        },
         'console': {
             'level': 'INFO',
             'class': 'logging.StreamHandler',
@@ -435,11 +451,15 @@ LOGGING = {
         'mail_admins': {
             'level': 'ERROR',
             'class': 'django.utils.log.AdminEmailHandler',
-        }
+        },
+        'sentry': {
+            'level': 'ERROR',
+            'class': 'raven.contrib.django.raven_compat.handlers.SentryHandler',
+        },
     },
     'loggers': {
         '': {
-            'handlers': ['console', 'file', 'couchlog'],
+            'handlers': ['console', 'file', 'couchlog', 'sentry'],
             'propagate': True,
             'level': 'INFO',
         },
@@ -457,6 +477,11 @@ LOGGING = {
             'handlers': ['console', 'file', 'couchlog'],
             'level': 'INFO',
             'propagate': True
+        },
+        'pillowtop': {
+            'handlers': ['pillowtop'],
+            'level': 'ERROR',
+            'propagate': False,
         }
     }
 }
@@ -537,6 +562,7 @@ COUCHDB_APPS = [
     'hqadmin',
     'domain',
     'facilities',
+    'fluff_filter',
     'forms',
     'fixtures',
     'groups',
@@ -564,7 +590,7 @@ COUCHDB_APPS = [
     'couchlog',
 
     # custom reports
-    'bihar',
+    'benin',
     'dca',
     'hsph',
     'mvp',
@@ -575,6 +601,11 @@ COUCHDB_APPS = [
 ]
 
 COUCHDB_DATABASES = [make_couchdb_tuple(app_label, COUCH_DATABASE) for app_label in COUCHDB_APPS]
+
+COUCHDB_DATABASES += [
+    ('bihar', COUCH_DATABASE + '__fluff-bihar'),
+    ('fluff', COUCH_DATABASE + '__fluff-bihar'),
+]
 
 INSTALLED_APPS += LOCAL_APPS
 
@@ -614,6 +645,7 @@ DEFAULT_CURRENCY = "USD"
 SMS_HANDLERS = [
     'corehq.apps.sms.api.forwarding_handler',
     'corehq.apps.commtrack.sms.handle',
+    'corehq.apps.sms.api.structured_sms_handler',
     'corehq.apps.sms.api.form_session_handler',
     'corehq.apps.sms.api.fallback_handler',
 ]
@@ -648,6 +680,8 @@ INDICATOR_CONFIG = {
     "mvp-potou": ['mvp_indicators'],
 }
 
+CASE_WRAPPER = 'corehq.apps.hqcase.utils.get_case_wrapper'
+
 PILLOWTOPS = [
                  'corehq.pillows.case.CasePillow',
                  'corehq.pillows.fullcase.FullCasePillow',
@@ -655,6 +689,10 @@ PILLOWTOPS = [
                  'corehq.pillows.fullxform.FullXFormPillow',
                  'corehq.pillows.domain.DomainPillow',
                  'corehq.pillows.exchange.ExchangePillow',
+                 'corehq.pillows.commtrack.ConsumptionRatePillow',
+
+                 # fluff
+                 'bihar.models.CareBiharFluffPillow',
              ] + LOCAL_PILLOWTOPS
 
 #Custom workflow for indexing xform data beyond the standard properties

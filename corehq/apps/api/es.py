@@ -1,6 +1,7 @@
 import logging
 import simplejson
 import six
+import copy
 from django.http import HttpResponse
 from django.utils.decorators import method_decorator, classonlymethod
 from django.views.decorators.csrf import csrf_protect
@@ -214,18 +215,21 @@ class XFormES(ESView):
         for res in es_results['hits']['hits']:
             if '_source' in res:
                 xmlns = res['_source'].get('xmlns', None)
+                name = None
                 if xmlns:
                     name = form_filter.get_unknown_form_name(xmlns, none_if_not_found=True)
                 if not name:
-                    #fall back
-                    if res['_source']['form'].get('@name', None):
-                        return res['_source']['form'].get['@name']
-                    else:
-                        backup = res['_source']['form'].get('#type', 'data')
-                        if backup != 'data':
-                            name = backup
+                    name = 'unknown' # try to fix it below but this will be the default
+                    # fall back
+                    try:
+                        if res['_source']['form'].get('@name', None):
+                            name = res['_source']['form']['@name']
                         else:
-                            name = "unknown"
+                            backup = res['_source']['form'].get('#type', 'data')
+                            if backup != 'data':
+                                name = backup
+                    except (TypeError, KeyError):
+                        pass
 
                 res['_source']['es_readable_name'] = name
         return es_results
@@ -363,7 +367,7 @@ class ESQuerySet(object):
                 # This actually could be supported with varying degrees of efficiency
                 raise NotImplementedError('Negative index in slice not supported.')
 
-            new_payload = dict(self.payload)
+            new_payload = copy.deepcopy(self.payload)
             new_payload['from'] = new_payload.get('from', 0) + (idx.start or 0)
 
             if idx.stop is not None:

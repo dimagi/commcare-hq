@@ -181,9 +181,12 @@ var COMMCAREHQ = (function () {
             return el;
         },
         initBlock: function ($elem) {
-            $('.submit_on_click', $elem).click(function (e) {
+            $('.submit_on_click', $elem).on("click", function (e) {
                 e.preventDefault();
-                $(this).prev('form').submit();
+                if (!$(this).data('clicked')) {
+                    $(this).prev('form').submit();
+                    $(this).data('clicked', 'true').children('i').removeClass().addClass("icon-refresh icon-spin");
+                }
             });
 
             $('.submit').click(function (e) {
@@ -214,17 +217,6 @@ var COMMCAREHQ = (function () {
             $('.container', $elem).addClass('ui-widget ui-widget-content');
             $('.config', $elem).wrap('<div />').parent().addClass('container block ui-corner-all');
 
-            $('.help-link', $elem).each(function () {
-                var HELP_KEY_ATTR = "data-help-key",
-                    $help_link = $(this),
-                    help_key = $help_link.attr(HELP_KEY_ATTR),
-                    $help_text = $('.help-text[' + HELP_KEY_ATTR + '="' + help_key + '"]');
-                if (!$help_text.length) {
-                    $help_text = $('<div class="help-text" />').insertAfter($help_link);
-                }
-                $help_text.addClass('shadow');
-                new InlineHelp($help_link, $help_text, help_key).init();
-            });
             $('.confirm-submit', $elem).click(function () {
                 var $form = $(this).closest('form'),
                     message = $form.data('message') || function () {
@@ -318,100 +310,6 @@ $(function () {
     $('.edit_link').iconify('icon-pencil');
 
     $(".message").addClass('ui-state-highlight ui-corner-all').addClass("shadow");
-
-    (function () {
-        var formIsOpen = false,
-            footer = $('footer'),
-            button = $('#bug-report-button'),
-            body = $('#bug-report-body'),
-            form = $('#bug-report-form'),
-            subject = $('#bug-report-subject'),
-            cancel = $('#bug-report-cancel'),
-            now = $('#bug-report-now'),
-            when = $('#bug-report-when'),
-            message = $('#bug-report-message'),
-            url = $('#bug-report-url'),
-            submit = $('#bug-report-submit'),
-            createDialog = function (div) {
-                return div.detach().addClass('shadow ui-corner-all');
-            },
-            sendingMessage = createDialog($('<div/>').text('Sending report...')),
-            errorMessage = createDialog($('<div/>').html(
-                'We\'re sorry but our system is having difficulties. ' +
-                'Please email us at ' +
-                '<a href="mailto:commcarehq-support@dimagi.com">commcarehq-support@dimagi.com</a>.'
-            )),
-            sentMessage = createDialog($('<div/>').text('Thank you for reporting this issue. We are already hard at work addressing it.'));
-        COMMCAREHQ.initBlock(createDialog(body));
-        url.val(location.href);
-        
-        function setFormOpen(value, callback) {
-            formIsOpen = value;
-            if (value) {
-                Shield.open(body, function () {
-                    setFormOpen(false);
-                });
-                subject.focus();
-            } else {
-                Shield.close('hide');
-                if (callback) {
-                    callback.apply(this);
-                }
-            }
-        }
-
-        button.click(function (e) {
-            e.preventDefault();
-            setFormOpen(!formIsOpen);
-        });
-        cancel.click(function(e) {
-            e.preventDefault();
-            setFormOpen(false);
-        });
-        now.change(function () {
-            if ($(this).val() === 'true') {
-                when.attr('disabled', true).closest('tr').hide();
-            } else {
-                when.attr('disabled', false).closest('tr').show();
-            }
-        }).trigger('change').change(function () {
-            if ($(this).val() === 'true') {
-                message.focus();
-            } else {
-                when.focus();
-            }
-        });
-        submit.click(function (e) {
-            e.preventDefault();
-            $.ajax({
-                type: 'POST',
-                url: form.attr('action'),
-                data: form.serialize(),
-                beforeSend: function () {
-                    form.find(':input').not(':hidden').val('');
-                    now.trigger('change');
-                    Shield.close('hide');
-                    Shield.open(sendingMessage);
-                },
-                success: function () {
-                    Shield.close('hide');
-                    Shield.open(sentMessage);
-                    setTimeout(function () {
-                        Shield.close();
-                    }, 4000);
-                },
-                error: function () {
-                    Shield.close('hide');
-                    Shield.open(errorMessage);
-                }
-            });
-        });
-    }());
-
-//    $(".sidebar h2").addClass('ui-corner-all');
-//    $(".sidebar ul li").addClass('ui-corner-all');
-//    $(".sidebar ul li div").addClass('ui-corner-top');
-//    $(".sidebar ul").addClass('ui-corner-bottom');
 
     COMMCAREHQ.initBlock($("body"));
     setUpIeWarning();

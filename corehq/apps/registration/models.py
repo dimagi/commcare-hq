@@ -1,9 +1,9 @@
 from couchdbkit.ext.django.schema import Document, StringProperty,\
     BooleanProperty, DateTimeProperty, IntegerProperty
 import datetime
-from django.db import models
-from django.contrib.auth.models import User
-from corehq.apps.domain.models import OldDomain
+from corehq.apps.domain.models import Domain
+from dimagi.utils.decorators.memoized import memoized
+
 
 class RegistrationRequest(Document):
     tos_confirmed = BooleanProperty(default=False)
@@ -15,6 +15,11 @@ class RegistrationRequest(Document):
     domain = StringProperty()
     new_user_username = StringProperty()
     requesting_user_username = StringProperty()
+
+    @property
+    @memoized
+    def project(self):
+        return Domain.get_by_name(self.domain)
 
     @classmethod
     def get_by_guid(cls, guid):
@@ -43,29 +48,3 @@ class RegistrationRequest(Document):
             reduce=False,
             include_docs=True).first()
         return result
-
-
-
-class OldRegistrationRequest(models.Model):
-    tos_confirmed = models.BooleanField(default=False)
-    # No verbose name on times and IPs - filled in on server
-    request_time = models.DateTimeField()
-    request_ip = models.IPAddressField()
-    activation_guid = models.CharField(max_length=32, unique=True)
-    # confirm info is blank until a confirming click is received
-    confirm_time = models.DateTimeField(null=True, blank=True)
-    confirm_ip = models.IPAddressField(null=True, blank=True)
-    domain = models.OneToOneField(OldDomain)
-    new_user = models.ForeignKey(User, related_name='new_user') # Not clear if we'll always create a new user - might be many reqs to one user, thus FK
-    # requesting_user is only filled in if a logged-in user requests a domain.
-    requesting_user = models.ForeignKey(User, related_name='requesting_user', null=True, blank=True) # blank and null -> FK is optional.
-
-    class Meta:
-        db_table = 'domain_registration_request'
-
-# To be added:
-# language
-# number pref
-# currency pref
-# date pref
-# time pref

@@ -118,25 +118,24 @@
                     </a>
                 {% endif %}
 
-                {% if not report.needs_filters %}
-                    {% if report.is_exportable %}
-                        <a href="#" class="btn" id="export-report-excel">
-                            <i class="icon icon-share"></i> Export to Excel
-                        </a>
-                    {% endif %}
-
-                    {% if report.is_emailable %}
-                        <a href="#" class="btn" id="email-report">
-                            <i class="icon icon-envelope"></i> Email report
-                        </a>
-                    {% endif %}
+                {% if report.is_exportable %}
+                    <a href="#" class="btn{% if report.needs_filters %} hide{% endif %}" id="export-report-excel">
+                        <i class="icon icon-share"></i> Export to Excel
+                    </a>
                 {% endif %}
+
+                {% if report.is_emailable %}
+                    <a href="#" class="btn{% if report.needs_filters %} hide{% endif %}" id="email-report">
+                        <i class="icon icon-envelope"></i> Email report
+                    </a>
+                {% endif %}
+
             </div>
             <div id="extra-filter-info" class="accordion-extra"></div>
         </div>
     </div>
 
-    {% if not report.needs_filters and report.is_emailable%}
+    {% if not report.needs_filters and report.is_emailable %}
     <div id="email-report-modal" class="hide fade" data-bind="modal: modalDisplayState">
         <div>
             <div class="modal-header">
