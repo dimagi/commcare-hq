@@ -21,3 +21,10 @@ class Command(BaseCommand):
             pass
         else:
             mvp_apps.copy_designs()
+
+        try:
+            from fluff import sync_couchdb as fluff_sync
+        except ImportError:
+            pass
+        else:
+            fluff_sync.copy_designs()
