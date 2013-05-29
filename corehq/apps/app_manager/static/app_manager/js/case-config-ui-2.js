@@ -541,30 +541,38 @@ var CaseConfig = (function () {
             var x = propertyArrayToDict(['name'], o.case_properties);
             var case_properties = x[0], case_name = x[1].name;
             var case_preload = propertyArrayToDict([], o.case_preload, true)[0];
-            var condition = o.condition;
+            var open_condition = o.condition;
             var close_condition = o.close_condition;
-            var is_open = case_transaction.caseConfig.caseConfigViewModel.actionType() === 'open';
+            var update_condition = DEFAULT_CONDITION;
+            var actionType = case_transaction.caseConfig.caseConfigViewModel.actionType();
 
-            if (is_open) {
-                if (condition.type === 'never') {
-                    condition.type = 'always';
+            if (actionType === 'open') {
+                if (open_condition.type === 'never') {
+                    open_condition.type = 'always';
                 }
             } else {
-                condition.type = 'never';
+                open_condition.type = 'never';
 
             }
+
+            if (actionType === 'update') {
+                update_condition.type = 'always';
+            } else {
+                update_condition.type = 'never';
+            }
+
             return {
                 open_case: {
-                    condition: condition,
+                    condition: open_condition,
                     name_path: case_name
                 },
                 update_case: {
                     update: case_properties,
-                    condition: DEFAULT_CONDITION
+                    condition: update_condition
                 },
                 case_preload: {
                     preload: case_preload,
-                    condition: DEFAULT_CONDITION
+                    condition: update_condition
                 },
                 close_case: {
                     condition: close_condition
