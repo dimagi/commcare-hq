@@ -193,7 +193,10 @@ class CommCareMultimedia(SafeSaveDocument):
     @classmethod
     def get_base_mime_type(cls, data, filename=None):
         mime_type = cls.get_mime_type(data, filename=filename)
-        return mime_type.split('/')[0] if mime_type else None
+        try:
+            return mime_type.split('/')[0] if mime_type else None
+        except AttributeError:
+            return None
         
     @classmethod
     def generate_hash(cls, data):
