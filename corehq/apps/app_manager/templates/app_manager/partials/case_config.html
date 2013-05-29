@@ -15,6 +15,7 @@
 </script>
 
 <script type="text/html" id="case-config:condition">
+    <!--ko with: condition -->
     <div data-bind="visible: type() === 'always' && $root.edit">
         <a href="#" data-bind="click: function () {type('if')}"><i class="icon-plus"></i> {% trans "Use condition..." %}</a>
     </div>
@@ -22,7 +23,7 @@
         <a href="#" data-bind="click: function () {type('always')}, visible: $root.edit"><i class="icon-remove"></i></a>
         {% trans "If the answer to" %}
         <input type="hidden" data-bind="
-            questionsSelect: $root.getQuestions('select1', false, true),
+            questionsSelect: $root.getQuestions('select1', false, $parent.case_transaction.allow.repeats()),
             value: question,
             optionsCaption: ' ',
             edit: $root.edit"
@@ -38,6 +39,7 @@
             <input type="text" class="code" data-bind="value: answer, edit: $root.edit"/>
         </span>
     </div>
+    <!--/ko-->
 </script>
 
 <script type="text/html" id="case-config:case-properties:question">
@@ -139,7 +141,10 @@
 </script>
 
 <script type="text/html" id="case-config:case-transaction">
-    <div data-bind="template: {name: 'case-config:condition', data: condition}, visible: allow.condition()"></div>
+    <div data-bind="template: {
+        name: 'case-config:condition',
+        data: {condition: condition, case_transaction: $data}
+    }, visible: allow.condition()"></div>
     <div data-bind="if: allow.case_preload()" class="row-fluid">
         <div class="well span6">
             <div data-bind="template: 'case-config:case-transaction:case-preload'"></div>
@@ -154,11 +159,16 @@
         </div>
     </div>
     <div data-bind="visible: allow.close_condition()" class="well">
+        <em>{% trans "Close this case when the form is complete" %}</em>
         <label>
             <input type="checkbox" data-bind="checked: close_case"/>
             {% trans "Close Case" %}
         </label>
-        <div data-bind="template: {name: 'case-config:condition', data: $data.close_condition, if: $data.close_condition}"></div>
+        <div data-bind="template: {
+            name: 'case-config:condition',
+            data: {condition: $data.close_condition, case_transaction: $data},
+            if: $data.close_condition
+        }"></div>
     </div>
 </script>
 
