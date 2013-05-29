@@ -38,11 +38,7 @@ class Command(LabelCommand):
                   )
 
     def handle(self, *args, **options):
-        print args
-        print options
         if len(args) != 0: raise CommandError("This command doesn't expect arguments!")
-
-        print ""
         show_info = options['show_info']
         list_pillows = options['list_pillows']
         flip_all = options['flip_all']

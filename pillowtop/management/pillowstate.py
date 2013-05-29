@@ -28,7 +28,6 @@ def get_pillow_states(pillows):
         is_master = False
         if idx in master_aliases:
             is_master = True
-            #line.append('*HEAD')
 
         if is_master:
             if master_aliases[idx] in alias_dict['aliases']:
