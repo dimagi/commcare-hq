@@ -1070,7 +1070,7 @@ class ApplicationBase(VersionedDoc, SnapshotMixin):
     # this is the supported way of specifying which commcare build to use
     build_spec = SchemaProperty(BuildSpec)
     platform = StringProperty(choices=["nokia/s40", "nokia/s60", "winmo", "generic"], default="nokia/s40")
-    text_input = StringProperty(choices=['roman', 'native', 'custom-keys'], default="roman")
+    text_input = StringProperty(choices=['roman', 'native', 'custom-keys', 'qwerty'], default="roman")
     success_message = DictProperty()
 
     # The following properties should only appear on saved builds
@@ -1302,6 +1302,7 @@ class ApplicationBase(VersionedDoc, SnapshotMixin):
                 ('native',): '-native-input',
                 ('roman',): '-generic',
                 ('custom-keys',):  '-custom-keys',
+                ('qwerty',): '-qwerty'
             }[(self.text_input,)]
 
         return spec
