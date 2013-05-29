@@ -27,7 +27,7 @@ def catch_signal(app, **kwargs):
 
 
 def copy_designs(temp='tmp', delete=True):
-    for pillow in import_pillows():
+    for pillow in import_pillows(instantiate=False):
         if hasattr(pillow, 'indicator_class'):
             app_label = pillow.indicator_class._meta.app_label
             db = get_db(app_label)
