@@ -556,10 +556,12 @@ var CaseConfig = (function () {
                     name_path: case_name
                 },
                 update_case: {
-                    update: case_properties
+                    update: case_properties,
+                    condition: DEFAULT_CONDITION
                 },
                 case_preload: {
-                    preload: case_preload
+                    preload: case_preload,
+                    condition: DEFAULT_CONDITION
                 },
                 close_case: {
                     condition: close_condition
