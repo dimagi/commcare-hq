@@ -192,7 +192,8 @@
             <select data-bind="
                 optstr: [{value: 'none', label: '{% trans "One Time Survey" %}'},
                          {value: 'open', label: '{% trans "Registration" %}'},
-                         {value: 'update', label: '{% trans "Follow-Up" %}'}],
+                         {value: 'update', label: '{% trans "Follow-Up" %}'},
+                         {value: 'open-other', label: '{% trans "Reg. for a different case list" %}'}],
                 value: actionType
             "></select>
         </div>
@@ -204,7 +205,7 @@
             <div data-bind="template: {name: 'case-config:case-transaction', data: case_transaction}">
             </div>
         </div>
-        <header class="clearfix">
+        <header class="clearfix" data-bind="visible: actionType() !== 'open-other'">
             <h5 class="pull-left">{% trans "Child Cases" %}</h5>
             <span data-bind="makeHqHelp: {}"
               data-title="{% trans "Child Cases" %}"

@@ -197,10 +197,13 @@ var CaseConfig = (function () {
         self.actionType = ko.observable((function () {
                 var opens_case = self.case_transaction.condition.type() !== 'never';
                 var requires_case = self.caseConfig.requires() === 'case';
+                var has_subcases = self.subcases().length;
                 if (requires_case) {
                     return 'update';
                 } else if (opens_case) {
                     return 'open';
+                } else if (has_subcases) {
+                    return 'open-other';
                 } else {
                     return 'none';
                 }
