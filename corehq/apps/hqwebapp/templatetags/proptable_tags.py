@@ -12,6 +12,7 @@ See render_case() in casexml for an example of the display definition format.
 """
 
 import collections
+import copy
 import datetime
 import itertools
 import types
@@ -41,30 +42,31 @@ def is_list(val):
     return (isinstance(val, collections.Iterable) and 
             not isinstance(val, basestring))
 
+def parse_date_or_datetime(val):
+    """A word to the wise: datetime is a subclass of date"""
+    if isinstance(val, datetime.date):
+        return val
+    try:
+        dt = dateutil.parser.parse(val)
+        if not any([dt.hour, dt.minute, dt.second, dt.microsecond]):
+            return dt.date()
+        else:
+            return dt
+    except Exception:
+        return val if val else None
 
-def to_html(key, val, dt_format="%b %d, %Y %H:%M %Z", timezone=pytz.utc,
-                key_format=None, level=0, collapse_lists=False):
+
+def to_html(key, val, level=0, datetime_fmt="%b %d, %Y %H:%M %Z",
+            date_fmt="%b %d, %Y", timeago=False, timezone=pytz.utc,
+            key_format=None, collapse_lists=False):
     """
-    Recursively convert an object to its HTML representation using <dl>s for
+    Recursively convert a value to its HTML representation using <dl>s for
     dictionaries and <ul>s for lists.
-
-    key -- optional key for the object, which determines some formatting
-            choices. used when calling recursively.
-    val -- the object
-    dt_format -- strftime format for datetimes
-    key_format -- formatting function to apply to keys
-    collapse_lists -- whether to turn "key": [1, 2] into
-
-            <dt>key</dt><dd>1</dd><dt>key</dt><dd>2</dd>
-
-        instead of
-    
-            <dt>key</dt><dd><ul><li>1</li><li>2</li></ul></dd>
     """
-
-    recurse = lambda k, v: to_html(k, v,
-            dt_format=dt_format, timezone=timezone, key_format=key_format,
-            level=level + 1, collapse_lists=collapse_lists)
+    recurse = lambda k, v: to_html(k, v, level=level + 1,
+            datetime_fmt=datetime_fmt, date_fmt=date_fmt, timeago=timeago,
+            timezone=timezone, key_format=key_format,
+            collapse_lists=collapse_lists)
     
     def _key_format(k, v):
         if not is_list(v):
@@ -92,44 +94,46 @@ def to_html(key, val, dt_format="%b %d, %Y %H:%M %Z", timezone=pytz.utc,
                 ["<li>%s</li>" % recurse(None, v) for v in val] +
                 ["</ul>"])
 
-    else:
+    elif isinstance(val, datetime.date):
         if isinstance(val, datetime.datetime):
-            val = val.strftime(dt_format)
+            fmt = datetime_fmt
+        else:
+            fmt = date_fmt
+
+        iso = val.isoformat()
+        ret = mark_safe("<time %s title='%s' datetime='%s'>%s</time>" % (
+            "class='timeago'" if timeago else "", iso, iso, val.strftime(fmt)))
+    else:
+        if val is None:
+            val = '---'
 
         ret = escape(val)
 
     return mark_safe(ret)
 
 
-def get_display_data(data, prop, processors=None, timezone=pytz.utc):
+def get_display_data(data, prop_def, processors=None, timezone=pytz.utc):
+    prop_def = copy.copy(prop_def)
     default_processors = {
         'yesno': yesno
     }
     processors = processors or {}
     processors.update(default_processors)
-    def get_value(data, expr):
-        # todo: nested attributes, jsonpath, indexing into related documents,
-        # support for both getitem and getattr
-
-        return data.get(expr, None)
 
     def format_key(key):
         key = key.replace('_', ' ')
         return key.replace('-', ' ')
 
-    expr = prop['expr']
-    name = prop.get('name', format_key(expr))
-    format = prop.get('format')
-    process = prop.get('process')
-    parse_date = prop.get('parse_date')
+    expr = prop_def.pop('expr')
+    name = prop_def.pop('name', format_key(expr))
+    format = prop_def.pop('format', None)
+    process = prop_def.pop('process', None)
 
-    val = get_value(data, expr)
+    # todo: nested attributes, jsonpath, indexing into related documents
+    val = data.get(expr, None)
 
-    if parse_date and not isinstance(val, datetime.datetime):
-        try:
-            val = dateutil.parser.parse(val)
-        except Exception:
-            val = val if val else '---'
+    if prop_def.pop('parse_date', None):
+        val = parse_date_or_datetime(val)
 
     if isinstance(val, datetime.datetime):
         if val.tzinfo is None:
@@ -140,12 +144,9 @@ def get_display_data(data, prop, processors=None, timezone=pytz.utc):
     try:
         val = escape(processors[process](val))
     except KeyError:
-        if val is None:
-            val = '---'
-
-        val = mark_safe(to_html(None,
-            val, timezone=timezone, key_format=format_key,
-            collapse_lists=True))
+        val = mark_safe(to_html(None, val, 
+            timezone=timezone, key_format=format_key, collapse_lists=True,
+            **prop_def))
 
     if format:
         val = mark_safe(format.format(val))
@@ -191,6 +192,7 @@ def get_tables_as_columns(*args, **kwargs):
     sections = get_tables_as_rows(*args, **kwargs)
     for section in sections:
         section['columns'] = list(itertools.izip_longest(*section['rows']))
+        del section['rows']
 
     return sections
 
@@ -238,6 +240,3 @@ def get_definition(keys, num_columns=1, name=None):
             "layout": layout
         }
     ]
-
-
-

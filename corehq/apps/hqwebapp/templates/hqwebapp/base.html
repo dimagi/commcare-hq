@@ -291,6 +291,8 @@
         <script src="{% static 'hqwebapp/js-custom/hqhandler.form.bugReport.js' %}"></script>
         <script src="{% static 'hqwebapp/js-custom/hq.helpers.js' %}"></script>
         <script src="{% static 'hqwebapp/js/lib/jquery.cookie.js' %}"></script>
+        <script src="{% static 'hqwebapp/js/lib/jquery.timeago.js' %}"></script>
+
         {% if RAVEN %}
             <script src="{% static 'hqwebapp/js/lib/raven.min.js' %}"></script>
         {% endif %}
@@ -298,8 +300,16 @@
 
         {% if RAVEN %}
             <script>Raven.config('{% sentry_public_dsn "http" %}').install()</script>
-        {% endif %}
+            {% endif %}
+
         {% block js-inline %}
+        <script>
+            $(function () {
+                $.timeago.settings.allowFuture = true;
+                $(".timeago").timeago();
+            });
+        </script>
+
             {% if request.couch_user and not request.couch_user.is_eula_signed %}
                 {% url eula_basic as eula_url %}
                 {% include 'hqstyle/partials/load_into_modal.html' with modal_id="eulaModal" load_from=eula_url %}
