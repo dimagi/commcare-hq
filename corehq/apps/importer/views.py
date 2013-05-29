@@ -25,7 +25,6 @@ from django.utils.translation import ugettext as _
 require_can_edit_data = require_permission(Permissions.edit_data)
 
 EXCEL_SESSION_ID = "excel_id"
-MAX_ALLOWED_ROWS = 500
 
 def render_error(request, domain, message):
     """ Load error message and reload page for excel file load errors """
@@ -66,10 +65,6 @@ def excel_config(request, domain):
     columns = spreadsheet.get_header_columns()
     row_count = spreadsheet.get_num_rows()
 
-    if row_count > MAX_ALLOWED_ROWS:
-        return render_error(request, domain,
-                            'Sorry, your spreadsheet is too big. Please reduce the '
-                            'number of rows to less than %s and try again.' % MAX_ALLOWED_ROWS)
     if row_count == 0:
         return render_error(request, domain,
                             'Your spreadsheet is empty. '

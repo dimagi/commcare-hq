@@ -10,6 +10,9 @@ from casexml.apps.case.tests.util import CaseBlock
 from casexml.apps.case.xml import V2
 import uuid
 
+POOL_SIZE = 10
+PRIME_VIEW_FREQUENCY = 500
+
 @task
 def bulk_import_async(import_id, config, domain, excel_id):
     task = bulk_import_async
@@ -32,6 +35,9 @@ def bulk_import_async(import_id, config, domain, excel_id):
         # skip first row if it is a header field
         if i == 0 and config.named_columns:
             continue
+
+        if i != 0 and i % PRIME_VIEW_FREQUENCY == 0:
+            prime_pools()
 
         row = spreadsheet.get_row(i)
         search_id = importer_util.parse_search_id(config, columns, row)
@@ -82,6 +88,22 @@ def bulk_import_async(import_id, config, domain, excel_id):
     return {'created_count': created_count,
             'match_count': match_count,
             'too_many_matches': too_many_matches}
+
+def prime_pools():
+    """
+    Prime the views so that a very large import doesn't cause the index
+    to get too far behind
+    """
+
+    # These have to be included here or ./manage.py runserver explodes on
+    # all pages of the app with single thread related errors
+    from gevent.pool import Pool
+    from dimagi.utils.management.commands import prime_views
+
+    prime_pool = Pool(POOL_SIZE)
+    prime_all = prime_views.Command()
+    prime_all.prime_everything(prime_pool, verbose=True)
+    prime_pool.join()
 
 def submit_case_block(caseblock, domain, username, user_id):
     """ Convert a CaseBlock object to xml and submit for creation/update """
