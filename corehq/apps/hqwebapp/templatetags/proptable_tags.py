@@ -101,19 +101,12 @@ def to_html(key, val, dt_format="%b %d, %Y %H:%M %Z", timezone=pytz.utc,
     return mark_safe(ret)
 
 
-def get_tables_as_rows(data, definition, processors=None, timezone=pytz.utc):
-    """
-    Return a low-level definition of a group of tables, given a data object and
-    a high-level declarative definition of the table rows and value
-    calculations.
-
-    """
+def get_display_data(data, prop, processors=None, timezone=pytz.utc):
     default_processors = {
         'yesno': yesno
     }
     processors = processors or {}
     processors.update(default_processors)
-
     def get_value(data, expr):
         # todo: nested attributes, jsonpath, indexing into related documents,
         # support for both getitem and getattr
@@ -124,50 +117,59 @@ def get_tables_as_rows(data, definition, processors=None, timezone=pytz.utc):
         key = key.replace('_', ' ')
         return key.replace('-', ' ')
 
-    def get_display_data(prop):
-        expr = prop['expr']
-        name = prop.get('name', format_key(expr))
-        format = prop.get('format')
-        process = prop.get('process')
-        parse_date = prop.get('parse_date')
+    expr = prop['expr']
+    name = prop.get('name', format_key(expr))
+    format = prop.get('format')
+    process = prop.get('process')
+    parse_date = prop.get('parse_date')
 
-        val = get_value(data, expr)
+    val = get_value(data, expr)
 
-        if parse_date and not isinstance(val, datetime.datetime):
-            try:
-                val = dateutil.parser.parse(val)
-            except:
-                val = val if val else '---'
+    if parse_date and not isinstance(val, datetime.datetime):
+        try:
+            val = dateutil.parser.parse(val)
+        except Exception:
+            val = val if val else '---'
 
-        if isinstance(val, datetime.datetime):
-            if val.tzinfo is None:
-                val = val.replace(tzinfo=pytz.utc)
+    if isinstance(val, datetime.datetime):
+        if val.tzinfo is None:
+            val = val.replace(tzinfo=pytz.utc)
 
-            val = adjust_datetime_to_timezone(val, val.tzinfo, timezone.zone)
+        val = adjust_datetime_to_timezone(val, val.tzinfo, timezone.zone)
 
-        if process:
-            val = escape(processors[process](val))
-        else:
-            if val is None:
-                val = '---'
+    try:
+        val = escape(processors[process](val))
+    except KeyError:
+        if val is None:
+            val = '---'
 
-            val = mark_safe(to_html(None,
-                val, timezone=timezone, key_format=format_key,
-                collapse_lists=True))
+        val = mark_safe(to_html(None,
+            val, timezone=timezone, key_format=format_key,
+            collapse_lists=True))
 
-        if format:
-            val = mark_safe(format.format(val))
+    if format:
+        val = mark_safe(format.format(val))
 
-        return {
-            "expr": expr,
-            "name": name,
-            "value": val
-        }
+    return {
+        "expr": expr,
+        "name": name,
+        "value": val
+    }
+
+
+def get_tables_as_rows(data, definition, processors=None, timezone=pytz.utc):
+    """
+    Return a low-level definition of a group of tables, given a data object and
+    a high-level declarative definition of the table rows and value
+    calculations.
+
+    """
 
     sections = []
 
     for section in definition:
-        rows = [[get_display_data(prop) for prop in row] 
+        rows = [[get_display_data(data, prop, timezone=timezone, processors=processors)
+                 for prop in row] 
                 for row in section['layout']]
 
         max_row_len = max(map(len, rows)) if rows else 0
@@ -191,7 +193,7 @@ def get_tables_as_columns(*args, **kwargs):
         section['columns'] = list(itertools.izip_longest(*section['rows']))
 
     return sections
-    
+
 
 @register.simple_tag
 def render_tables(tables, options=None):
