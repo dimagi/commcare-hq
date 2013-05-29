@@ -24,7 +24,7 @@ var CaseConfig = (function () {
 
     ko.bindingHandlers.questionsSelect = {
         init: function (element, valueAccessor) {
-            $(element).css('width', '220px');
+            $(element).addClass('input-large');
             $(element).after('<div class="alert alert-error"></div>');
         },
         update: function (element, valueAccessor, allBindingsAccessor) {

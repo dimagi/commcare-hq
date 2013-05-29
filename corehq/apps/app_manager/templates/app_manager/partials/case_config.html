@@ -17,11 +17,11 @@
 <script type="text/html" id="case-config:condition">
     <!--ko with: condition -->
     <div data-bind="visible: type() === 'always' && $root.edit">
-        <a href="#" data-bind="click: function () {type('if')}"><i class="icon-plus"></i> {% trans "Use condition..." %}</a>
+        <a href="#" data-bind="click: function () {type('if')}"><i class="icon-plus"></i> {% trans "Only if the answer to..." %}</a>
     </div>
     <div data-bind="visible: type() === 'if'">
         <a href="#" data-bind="click: function () {type('always')}, visible: $root.edit"><i class="icon-remove"></i></a>
-        {% trans "If the answer to" %}
+        {% trans "Only if the answer to" %}
         <input type="hidden" data-bind="
             questionsSelect: $root.getQuestions('select1', false, $parent.case_transaction.allow.repeats()),
             value: question,
@@ -54,7 +54,12 @@
 
 <script type="text/html" id="case-config:case-properties:property">
     <span data-bind="visible: !required()">
-        <input type="text" class="code" data-bind="valueDefault: key, default: defaultKey, edit: $root.edit, typeahead: $root.propertiesMap[case_transaction.case_type()]"/>
+        <input type="text" class="code" data-bind="
+            valueDefault: key,
+            default: defaultKey,
+            edit: $root.edit,
+            typeahead: $root.propertiesMap[case_transaction.case_type()]
+        "/>
     </span>
     <span data-bind="visible: required()">
         <code data-bind="text: key"></code>
@@ -63,7 +68,10 @@
 
 <script type="text/html" id="case-config:case-transaction:case-preload">
     <em>{% trans "Load the following case properties into the form" %}</em>
-    <table class="table table-condensed">
+    <div class="alert alert-block alert-info" data-bind="visible: !case_preload().length">
+        {% trans "No case properties will be loaded" %}
+    </div>
+    <table class="table table-condensed" data-bind="visible: case_preload().length">
         <thead>
             <tr>
                 <th></th>
@@ -104,7 +112,10 @@
 
 <script type="text/html" id="case-config:case-transaction:case-properties">
     <em>{% trans "Save data to the following case properties" %}</em>
-    <table class="table table-condensed">
+    <div class="alert alert-block alert-info" data-bind="visible: !case_properties().length">
+        {% trans "No case properties will be saved" %}
+    </div>
+    <table class="table table-condensed" data-bind="visible: case_properties().length">
         <thead>
             <tr>
                 <th></th>
