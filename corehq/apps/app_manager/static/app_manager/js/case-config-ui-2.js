@@ -1,21 +1,16 @@
-/*globals $, EJS, COMMCAREHQ */
-
-/*
-This file was copied from case-config-ui-1.js, and then edited.
-All additions are done using knockout, and can eventually replace all the old code.
- */
+/*globals $, COMMCAREHQ */
 
 var CaseConfig = (function () {
     "use strict";
 
 
     var utils = {
-        getLabel: function (question) {
-            return utils.truncateLabel((question.repeat ? '- ' : '') + question.label, question.tag == 'hidden' ? ' (Hidden)' : '');
+        getLabel: function (question, MAXLEN) {
+            return utils.truncateLabel((question.repeat ? '- ' : '') + question.label, question.tag == 'hidden' ? ' (Hidden)' : '', MAXLEN);
         },
-        truncateLabel: function (label, suffix) {
+        truncateLabel: function (label, suffix, MAXLEN) {
             suffix = suffix || "";
-            var MAXLEN = 40,
+            var MAXLEN = MAXLEN || 40,
                 maxlen = MAXLEN - suffix.length;
             return ((label.length <= maxlen) ? (label) : (label.slice(0, maxlen) + "...")) + suffix;
         },
@@ -24,6 +19,49 @@ var CaseConfig = (function () {
         },
         action_is_active: function (action) {
             return action && action.condition && (action.condition.type === "if" || action.condition.type === "always");
+        }
+    };
+
+    ko.bindingHandlers.questionsSelect = {
+        init: function (element, valueAccessor) {
+            $(element).addClass('input-large');
+            $(element).after('<div class="alert alert-error"></div>');
+        },
+        update: function (element, valueAccessor, allBindingsAccessor) {
+            var optionObjects = ko.utils.unwrapObservable(valueAccessor());
+            var allBindings = ko.utils.unwrapObservable(allBindingsAccessor());
+            var value = ko.utils.unwrapObservable(allBindings.value);
+            var $warning = $(element).next();
+            if (value && !_.some(optionObjects, function (option) {
+                        return option.value === value;
+                    })) {
+                var option = {
+                    label: 'Unidentified Question (' + value + ')',
+                    value: value
+                };
+                optionObjects = [option].concat(optionObjects);
+                $warning.show().text('We cannot find this question in the form. It is likely that you deleted or renamed the question. Please choose a valid question from the dropdown.');
+            } else {
+                $warning.hide();
+            }
+            _.delay(function () {
+                $(element).select2({
+                    placeholder: 'Select a Question',
+                    data: {
+                        results: _(optionObjects).map(function (o) {
+                            return {id: o.value, text: o.label, question: o};
+                        })
+                    },
+                    formatSelection: function (o) {
+                        return utils.getLabel(o.question);
+                    },
+                    formatResult: function (o) {
+                        return utils.getLabel(o.question, 90);
+                    },
+                    dropdownCssClass: 'bigdrop'
+                });
+            });
+            allBindings.optstrText = utils.getLabel;
         }
     };
 
@@ -49,7 +87,15 @@ var CaseConfig = (function () {
         self.caseType = params.caseType;
         self.reserved_words = params.reserved_words;
         self.moduleCaseTypes = params.moduleCaseTypes;
+        self.propertiesMap = params.propertiesMap;
         self.utils = utils;
+
+        _(self.moduleCaseTypes).each(function (case_type) {
+            if (!_(self.propertiesMap).has(case_type)) {
+                self.propertiesMap[case_type] = [];
+            }
+            self.propertiesMap[case_type].sort();
+        });
 
         self.saveButton = COMMCAREHQ.SaveButton.init({
             unsavedMessage: "You have unchanged case settings",
@@ -151,10 +197,13 @@ var CaseConfig = (function () {
         self.actionType = ko.observable((function () {
                 var opens_case = self.case_transaction.condition.type() !== 'never';
                 var requires_case = self.caseConfig.requires() === 'case';
+                var has_subcases = self.subcases().length;
                 if (requires_case) {
                     return 'update';
                 } else if (opens_case) {
                     return 'open';
+                } else if (has_subcases) {
+                    return 'open-other';
                 } else {
                     return 'none';
                 }
@@ -492,28 +541,38 @@ var CaseConfig = (function () {
             var x = propertyArrayToDict(['name'], o.case_properties);
             var case_properties = x[0], case_name = x[1].name;
             var case_preload = propertyArrayToDict([], o.case_preload, true)[0];
-            var condition = o.condition;
+            var open_condition = o.condition;
             var close_condition = o.close_condition;
-            var is_open = case_transaction.caseConfig.caseConfigViewModel.actionType() === 'open';
+            var update_condition = DEFAULT_CONDITION;
+            var actionType = case_transaction.caseConfig.caseConfigViewModel.actionType();
 
-            if (is_open) {
-                if (condition.type === 'never') {
-                    condition.type = 'always';
+            if (actionType === 'open') {
+                if (open_condition.type === 'never') {
+                    open_condition.type = 'always';
                 }
             } else {
-                condition.type = 'never';
+                open_condition.type = 'never';
 
             }
+
+            if (actionType === 'update') {
+                update_condition.type = 'always';
+            } else {
+                update_condition.type = 'never';
+            }
+
             return {
                 open_case: {
-                    condition: condition,
+                    condition: open_condition,
                     name_path: case_name
                 },
                 update_case: {
-                    update: case_properties
+                    update: case_properties,
+                    condition: update_condition
                 },
                 case_preload: {
-                    preload: case_preload
+                    preload: case_preload,
+                    condition: update_condition
                 },
                 close_case: {
                     condition: close_condition
