@@ -87,7 +87,15 @@ var CaseConfig = (function () {
         self.caseType = params.caseType;
         self.reserved_words = params.reserved_words;
         self.moduleCaseTypes = params.moduleCaseTypes;
+        self.propertiesMap = params.propertiesMap;
         self.utils = utils;
+
+        _(self.moduleCaseTypes).each(function (case_type) {
+            if (!_(self.propertiesMap).has(case_type)) {
+                self.propertiesMap[case_type] = [];
+            }
+            self.propertiesMap[case_type].sort();
+        });
 
         self.saveButton = COMMCAREHQ.SaveButton.init({
             unsavedMessage: "You have unchanged case settings",

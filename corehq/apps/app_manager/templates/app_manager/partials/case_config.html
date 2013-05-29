@@ -52,7 +52,7 @@
 
 <script type="text/html" id="case-config:case-properties:property">
     <span data-bind="visible: !required()">
-        <input type="text" class="code" data-bind="valueDefault: key, default: defaultKey, edit: $root.edit"/>
+        <input type="text" class="code" data-bind="valueDefault: key, default: defaultKey, edit: $root.edit, typeahead: $root.propertiesMap[case_transaction.case_type()]"/>
     </span>
     <span data-bind="visible: required()">
         <code data-bind="text: key"></code>
