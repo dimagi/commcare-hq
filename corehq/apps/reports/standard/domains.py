@@ -291,7 +291,8 @@ class AdminDomainStatsReport(DomainStatsReport, ElasticTabularReport):
         ]
 
         def format_date(dstr, default):
-            return datetime.strptime(dstr, '%Y-%m-%dT%H:%M:%SZ').strftime('%Y/%m/%d %H:%M:%S') if dstr else default
+            # use [:19] so that only only the 'YYYY-MM-DDTHH:MM:SS' part of the string is parsed
+            return datetime.strptime(dstr[:19], '%Y-%m-%dT%H:%M:%S').strftime('%Y/%m/%d %H:%M:%S') if dstr else default
 
         def get_name_or_link(d):
             if not getattr(self, 'show_name', None):
