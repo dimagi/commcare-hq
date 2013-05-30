@@ -235,10 +235,13 @@ class AdminDomainStatsReport(DomainStatsReport, ElasticTabularReport):
             DataTablesColumn("Project"),
             DataTablesColumn(_("Organization"), prop_name="internal.organization_name"),
             DataTablesColumn(_("Deployment Date"), prop_name="deployment.date"),
+            DataTablesColumn(_("Deployment Country"), prop_name="deployment.country"),
             DataTablesColumn(_("# Active Mobile Workers"), sort_type=DTSortType.NUMERIC,
                 prop_name="cp_n_active_cc_users",
                 help_text=_("The number of mobile workers who have submitted a form in the last 30 days")),
             DataTablesColumn(_("# Mobile Workers"), sort_type=DTSortType.NUMERIC, prop_name="cp_n_cc_users"),
+            DataTablesColumn(_("# Cases in last 60"), sort_type=DTSortType.NUMERIC, prop_name="cp_n_60_day_cases",
+                help_text=_("The number of cases modified in the last 60 days")),
             DataTablesColumn(_("# Active Cases"), sort_type=DTSortType.NUMERIC, prop_name="cp_n_active_cases",
                 help_text=_("The number of cases modified in the last 120 days")),
             DataTablesColumn(_("# Cases"), sort_type=DTSortType.NUMERIC, prop_name="cp_n_cases"),
@@ -249,6 +252,8 @@ class AdminDomainStatsReport(DomainStatsReport, ElasticTabularReport):
             DataTablesColumn(_("Notes"), prop_name="internal.notes"),
             DataTablesColumn(_("Services"), prop_name="internal.services"),
             DataTablesColumn(_("Project State"), prop_name="internal.project_state"),
+            DataTablesColumn(_("Using ADM?"), prop_name="internal.using_adm"),
+            DataTablesColumn(_("Using Call Center?"), prop_name="internal.using_call_center"),
         )
         return headers
 
@@ -267,12 +272,13 @@ class AdminDomainStatsReport(DomainStatsReport, ElasticTabularReport):
             return self.es_results.get('facets', {}).get('%s-STATS' % prop, {}).get(what_to_get)
 
         CALCS_ROW_INDEX = {
-            3: "cp_n_active_cc_users",
-            4: "cp_n_cc_users",
-            5: "cp_n_active_cases",
-            6: "cp_n_cases",
-            7: "cp_n_forms",
-            10: "cp_n_web_users",
+            4: "cp_n_active_cc_users",
+            5: "cp_n_cc_users",
+            6: "cp_n_60_day_cases",
+            7: "cp_n_active_cases",
+            8: "cp_n_cases",
+            9: "cp_n_forms",
+            12: "cp_n_web_users",
         }
         def stat_row(name, what_to_get, type='float'):
             row = [name]
@@ -307,8 +313,10 @@ class AdminDomainStatsReport(DomainStatsReport, ElasticTabularReport):
                     get_name_or_link(dom),
                     dom.get("internal", {}).get('organization_name') or _('No org'),
                     format_date(dom.get('deployment', {}).get('date'), _('No date')),
+                    dom.get("deployment", {}).get('country') or _('No country'),
                     dom.get("cp_n_active_cc_users", _("Not yet calculated")),
                     dom.get("cp_n_cc_users", _("Not yet calculated")),
+                    dom.get("cp_n_60_day_cases", _("Not yet calculated")),
                     dom.get("cp_n_active_cases", _("Not yet calculated")),
                     dom.get("cp_n_cases", _("Not yet calculated")),
                     dom.get("cp_n_forms", _("Not yet calculated")),
@@ -318,4 +326,6 @@ class AdminDomainStatsReport(DomainStatsReport, ElasticTabularReport):
                     dom.get('internal', {}).get('notes') or _('No notes'),
                     dom.get('internal', {}).get('services') or _('No info'),
                     dom.get('internal', {}).get('project_state') or _('No info'),
+                    dom.get('internal', {}).get('using_adm') or False,
+                    dom.get('internal', {}).get('using_call_center') or False,
                 ]
