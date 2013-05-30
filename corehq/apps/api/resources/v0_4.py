@@ -131,6 +131,9 @@ class GroupResource(JsonResource, DomainSpecificResourceMixin):
 
     metadata = fields.DictField(attribute='metadata')
 
+    def obj_get(self, bundle, **kwargs):
+        return get_object_or_not_exist(Group, kwargs['pk'], kwargs['domain'])
+
     def obj_get_list(self, bundle, domain, **kwargs):
         groups = Group.by_domain(domain)
         return groups

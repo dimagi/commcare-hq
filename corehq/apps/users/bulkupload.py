@@ -22,7 +22,8 @@ def check_headers(user_specs):
     messages = []
     for header_set, label in (missing_headers, 'required'), (illegal_headers, 'illegal'):
         if header_set:
-            messages.append('The following are %s column headers: %s.' % (label, ', '.join(header_set)))
+            messages.append(_('The following are {label} column headers: {headers}.').format(
+                label=label, headers=', '.join(header_set)))
     if messages:
         raise Exception('\n'.join(messages))
 
@@ -182,7 +183,8 @@ def create_or_update_users_and_groups(domain, user_specs, group_specs):
                         user = CommCareUser.get_by_username(username)
                     if user:
                         if user.domain != domain:
-                            raise Exception(_('User with username %r is somehow in domain %r') % (user.username, user.domain))
+                            raise Exception(_('User with username %(username)r is somehow in domain %(domain)r') %
+                                            {'username': user.username, 'domain': user.domain})
                         if username and user.username != username:
                             user.change_username(username)
                         if password:

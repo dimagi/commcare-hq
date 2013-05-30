@@ -58,10 +58,10 @@
     {% if edit %}
     <div class="delete-me">
         <form action="{% url delete_module domain app.id module.id %}" method="post">
-            <a class="submit btn btn-danger" href="#">
+            <button type="submit" class="disable-on-submit btn btn-danger">
                 <i class="icon-trash"></i>
                 {% trans "Delete Module" %}
-            </a>
+            </button>
         </form>
     </div>
     {% endif %}

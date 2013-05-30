@@ -51,7 +51,7 @@ class ConsumptionRatePillow(BasicPillow):
                 case.save()
             except ResourceNotFound:
                 # maybe the case was deleted. for now we don't care about this
-                pillow_logging.info('skipping commtrack update for delted case %s' % case_id)
+                pillow_logging.info('skipping commtrack update for deleted case %s' % case_id)
 
 # TODO: biyeun might have better framework code for doing this
 def set_computed(case, key, val):

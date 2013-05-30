@@ -1,4 +1,3 @@
-from corehq.apps.reports.standard import ProjectReport, ProjectReportParametersMixin, DatespanMixin
 from corehq.apps.reports.generic import GenericTabularReport
 from corehq.apps.reports.commtrack.psi_prototype import CommtrackReportMixin
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
@@ -92,7 +91,7 @@ def _enabled_hack(domain):
     return 'psi' not in (domain or  '')
 
 class CurrentStockStatusReport(GenericTabularReport, CommtrackReportMixin):
-    name = ugettext_noop('Current Stock Status by Product')
+    name = ugettext_noop('Stock Status by Product')
     slug = 'current_stock_status'
     fields = ['corehq.apps.reports.fields.AsyncLocationField']
     exportable = True
@@ -100,15 +99,11 @@ class CurrentStockStatusReport(GenericTabularReport, CommtrackReportMixin):
 
     report_template_path = "reports/async/tabular_graph.html"
 
-    # temporary
-    @classmethod
-    def show_in_navigation(cls, domain=None, project=None, user=None):
-        return super(CurrentStockStatusReport, cls).show_in_navigation(domain, project, user) and _enabled_hack(domain)
-
     @property
     def headers(self):
         return DataTablesHeader(*(DataTablesColumn(text) for text in [
                     _('Product'),
+                    _('# Facilities'),
                     _('Stocked Out'),
                     _('Understocked'),
                     _('Adequate Stock'),
@@ -143,11 +138,11 @@ class CurrentStockStatusReport(GenericTabularReport, CommtrackReportMixin):
             results = status_by_product.get(p._id, {})
             def val(key):
                 return results.get(key, 0) / float(len(cases))
-            yield [p.name] + [100. * val(key) for key in cols]
+            yield [p.name, len(cases)] + [100. * val(key) for key in cols]
 
     @property
     def rows(self):
-        return [[pd[0]] + ['%.1f%%' %d for d in pd[1:]] for pd in self.product_data]
+        return [pd[0:2] + ['%.1f%%' %d for d in pd[2:]] for pd in self.product_data]
 
 
     def get_data_for_graph(self):
@@ -157,7 +152,7 @@ class CurrentStockStatusReport(GenericTabularReport, CommtrackReportMixin):
             {"key": "adequate stock", "color": "#4ac925"},
             {"key": "overstocked", "color": "#b536da"},
 #            {"key": "nonreporting", "color": "#363636"},
-            {"key": "no data", "color": "#ABABAB"}
+            {"key": "unknown", "color": "#ABABAB"}
         ]
         statuses = ['stocked out', 'under stock', 'adequate stock', 'overstocked', 'no data'] #'nonreporting', 'no data']
 
@@ -166,7 +161,7 @@ class CurrentStockStatusReport(GenericTabularReport, CommtrackReportMixin):
 
         for pd in self.product_data:
             for i, status in enumerate(statuses):
-                ret[i]['values'].append({"x": pd[0], "y": pd[i+1]})
+                ret[i]['values'].append({"x": pd[0], "y": pd[i+2]})
 
         return ret
 
@@ -178,7 +173,7 @@ class CurrentStockStatusReport(GenericTabularReport, CommtrackReportMixin):
         return ctxt
 
 class AggregateStockStatusReport(GenericTabularReport, CommtrackReportMixin):
-    name = ugettext_noop('Aggregate Stock Status by Product')
+    name = ugettext_noop('Consumption and Months Remaining')
     slug = 'agg_stock_status'
     fields = ['corehq.apps.reports.fields.AsyncLocationField']
     exportable = True

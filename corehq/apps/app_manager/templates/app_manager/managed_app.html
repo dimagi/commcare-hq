@@ -76,11 +76,15 @@
 
 {% block breadcrumbs %}
     {% if app %}
-    <li><span class="app-manager-title variable-app_name">{{ app.name|html_name }}</span></li>
+    <li>
+        <span class="divider">&gt;</span>
+        <span class="app-manager-title variable-app_name">{{ app.name|html_name }}</span>
+    </li>
     {% endif %}
 {% endblock %}
 
 {% block sidebar %}
+{% if app %}
 <nav class="app-manager-content hide">
     <ul class="nav nav-list">
         <li {% if release_manager %}class="active"{% endif %}>
@@ -150,11 +154,9 @@
                 </li>
             {% with module as selected_module %}
                 {% for module in app.get_modules %}
-                    <li {% ifequal module.id selected_module.id %}{% if not form %}
-                        class="active"{% endif %}{% endifequal %}>
-                        {% if edit %}
-                            <div class="index">{{ module.id }}</div>
-                        {% endif %}
+                    <li class="edit-module-li {% ifequal module.id selected_module.id %}{% if not form %}
+                        active{% endif %}{% endifequal %}"
+                        data-index="{{ module.id }}">
                         <a href="{% url view_module domain app.id module.id %}?edit={{ edit|BOOL }}">
                             {% if edit %}
                                 <i class="drag_handle"></i>
@@ -164,22 +166,19 @@
                                 {{ module.name|html_trans:langs }}
                             </span>
                         </a>
-                        <ul class="nav nav-list {% ifequal module.id selected_module.id %}selected{% endifequal %} {% if edit %}sortable{% endif %}">
+                        <ul class="nav nav-list {% ifequal module.id selected_module.id %}selected{% endifequal %} {% if edit %}sortable-forms sortable{% endif %}">
                             {% if edit %}
                                 <li class="sort-action">
                                     <form method="post"
                                           action="{% url corehq.apps.app_manager.views.rearrange domain app.id 'forms' %}">
-                                        <input type="hidden" name="module_id" value="{{ module.id }}"/>
+{#                                        <input type="hidden" name="module_id" value="{{ module.id }}"/>#}
                                     </form>
                                 </li>
                             {% endif %}
                             {% with nav_form as selected_form %}
                                 {% for form in module.get_forms %}
-                                    <li class="edit-form-li{% ifequal form selected_form %} active{% endifequal %}">
+                                    <li class="edit-form-li{% ifequal form selected_form %} active{% endifequal %}" data-moduleid="{{ module.id }}" data-index="{{ form.id }}">
                                         <!--[F]-->
-                                        {% if edit %}
-                                            <div class="index">{{ form.id }}</div>
-                                        {% endif %}
                                         <a href="{% url view_form domain app.id module.id form.id %}?edit={{ edit|BOOL }}">
                                             {% if edit %}
                                                 <i class="drag_handle"></i>
@@ -247,6 +246,7 @@
     {% endif %}
     </ul>
 </nav>
+{% endif %}
 {% endblock %}
 
 {% block app-content %}

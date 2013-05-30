@@ -1537,7 +1537,10 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
 
     @property
     def url_base(self):
-        if self.force_http:
+        # force_http is a deprecated hack
+        # for safety we're just special-casing the only
+        # domain that ever used it, wvmoz
+        if self.force_http and self.domain == 'wvmoz':
             return settings.INSECURE_URL_BASE
         else:
             return get_url_base()
@@ -1585,6 +1588,10 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
                     # of commcarehq in which there was a bug
                     # that let invalid forms through
                     previous_source = previous_version.fetch_attachment(filename)
+                except (ResourceNotFound, KeyError):
+                    # if this is a new form just use my version
+                    form.version = self.version
+                else:
                     previous_hash = _hash(previous_source)
 
                     # hack - temporarily set my version to the previous version
@@ -1593,9 +1600,6 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
                     my_hash = _hash(self.fetch_xform(form=form))
                     if previous_hash != my_hash:
                         form.version = self.version
-                except ResourceNotFound:
-                    # if this is a new form just use my version
-                    form.version = self.version
 
     def _create_custom_app_strings(self, lang):
         def trans(d):
@@ -1884,10 +1888,12 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
         columns = detail['columns']
         columns.insert(i, columns.pop(j))
         detail['columns'] = columns
-    def rearrange_forms(self, module_id, i, j):
-        forms = self.modules[module_id]['forms']
-        forms.insert(i, forms.pop(j))
-        self.modules[module_id]['forms'] = forms
+    def rearrange_forms(self, to_module_id, from_module_id, i, j):
+        forms = self.modules[to_module_id]['forms']
+        forms.insert(i, forms.pop(j) if to_module_id == from_module_id else self.modules[from_module_id]['forms'].pop(j))
+        self.modules[to_module_id]['forms'] = forms
+        if self.modules[to_module_id]['case_type'] != self.modules[from_module_id]['case_type']:
+            return 'case type conflict'
     def scrub_source(self, source):
         def change_unique_id(form):
             unique_id = form['unique_id']

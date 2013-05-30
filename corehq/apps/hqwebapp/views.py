@@ -224,7 +224,7 @@ def logout(req, template_name="hqwebapp/loggedout.html"):
     if referer and domain and is_mobile_url(referer):
         mobile_mainnav_url = reverse('custom_project_report_dispatcher', args=[domain, 'mobile/mainnav'])
         mobile_login_url = reverse('domain_mobile_login', kwargs={'domain': domain})
-        return HttpResponseRedirect('%s?%s' % (mobile_login_url, urlencode({'next': mobile_mainnav_url})))
+        return HttpResponseRedirect('%s?next=%s' % (mobile_login_url, mobile_mainnav_url))
     elif referer and domain:
         domain_login_url = reverse('domain_login', kwargs={'domain': domain})
         return HttpResponseRedirect('%s' % domain_login_url)
