@@ -24,6 +24,7 @@ class CommtrackReportMixin(ProjectReport, ProjectReportParametersMixin):
         return project.commtrack_enabled
 
     @property
+    @memoized
     def config(self):
         return CommtrackConfig.for_domain(self.domain)
 
