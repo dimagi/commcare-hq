@@ -23,9 +23,6 @@ except IndexError:
 ADMINS = ()
 MANAGERS = ADMINS
 
-# Default reporting database should be overridden in localsettings.
-SQL_REPORTING_DATABASE_URL = "sqlite:////tmp/commcare_reporting_test.db"
-
 # default to the system's timezone settings
 TIME_ZONE = "UTC"
 
@@ -242,6 +239,12 @@ INSTALLED_APPS = DEFAULT_APPS + HQ_APPS
 # after login, django redirects to this URL
 # rather than the default 'accounts/profile'
 LOGIN_REDIRECT_URL = '/'
+
+
+# Default reporting database should be overridden in localsettings.
+SQL_REPORTING_DATABASE_URL = "sqlite:////tmp/commcare_reporting_test.db"
+
+REPORT_CACHE = 'default' # or e.g. 'redis'
 
 ####### Domain settings  #######
 
