@@ -1908,7 +1908,7 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
                 change_unique_id(source['modules'][m]['forms'][f])
 
     def copy_form(self, module_id, form_id, to_module_id):
-        form = self.modules[module_id]['forms'][form_id]
+        form  = self.get_module(module_id).get_form(form_id)
         copy_source = deepcopy(form.to_json())
         if copy_source.has_key('unique_id'):
             del copy_source['unique_id']
@@ -1917,9 +1917,8 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
 
         def xmlname(aform):
             return "%s.xml" % aform.get_unique_id()
-        self.put_attachment(self.fetch_attachment(xmlname(form)), xmlname(copy_form))
-        save_xform(self, copy_form, copy_form.source)
-        self.modules[to_module_id]['forms'].append(copy_form)
+
+        save_xform(self, copy_form, form.source)
 
         if self.modules[module_id]['case_type'] != self.modules[to_module_id]['case_type']:
             return 'case type conflict'
