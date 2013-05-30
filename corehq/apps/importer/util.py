@@ -1,12 +1,11 @@
 import xlrd
 from dimagi.utils.couch.database import get_db
 from corehq.apps.importer.const import LookupErrors
-from xml.etree import ElementTree
-from dimagi.utils.parsing import json_format_datetime
 from datetime import date
-from corehq.apps.hqcase.utils import submit_case_blocks
 from casexml.apps.case.models import CommCareCase
 from xlrd import xldate_as_tuple
+from soil import DownloadBase
+from corehq.apps import importer
 
 def get_case_properties(domain, case_type=None):
     """
@@ -22,12 +21,39 @@ def get_case_properties(domain, case_type=None):
                          reduce=True, group=True, group_level=3).all()
     return sorted(set([r['key'][2] for r in rows]))
 
-# class to deal with Excel files
+class ImporterConfig(object):
+    """
+    Class for storing config values from the POST in a format that can
+    be pickled and passed to celery tasks.
+    """
+
+    def __init__(self, request):
+        self.couch_user_id = request.couch_user._id
+        self.excel_fields = request.POST.getlist('excel_field[]')
+        self.case_fields = request.POST.getlist('case_field[]')
+        self.custom_fields = request.POST.getlist('custom_field[]')
+        self.date_fields = request.POST.getlist('is_date_field[]')
+
+        self.search_column = request.POST['search_column']
+
+        self.key_column = request.POST['key_column']
+        self.value_column = request.POST['value_column']
+
+        self.named_columns = request.POST['named_columns']
+        self.case_type = request.POST['case_type']
+        self.search_field = request.POST['search_field']
+        self.create_new_cases = request.POST['create_new_cases'] == 'True'
+
 class ExcelFile(object):
-    # xlrd support for .xlsx isn't complete
-    # NOTE: other code makes the assumption that this is the only supported
-    # extension so if you fix this you should also fix these assumptions
-    # (see _get_spreadsheet in views.py)
+    """
+    Class to deal with Excel files.
+
+    xlrd support for .xlsx isn't complete
+    NOTE: other code makes the assumption that this is the only supported
+    extension so if you fix this you should also fix these assumptions
+    (see get_spreadsheet)
+    """
+
     ALLOWED_EXTENSIONS = ['xls']
 
     file_path = ''
@@ -93,18 +119,18 @@ class ExcelFile(object):
         if sheet:
             return sheet.row_values(index)
 
-def convert_custom_fields_to_struct(request):
-    excel_fields = request.POST.getlist('excel_field[]')
-    case_fields = request.POST.getlist('case_field[]')
-    custom_fields = request.POST.getlist('custom_field[]')
-    date_field = request.POST.getlist('is_date_field[]')
+def convert_custom_fields_to_struct(config):
+    excel_fields = config.excel_fields
+    case_fields = config.case_fields
+    custom_fields = config.custom_fields
+    date_fields = config.date_fields
 
     field_map = {}
     for i, field in enumerate(excel_fields):
         if field and (case_fields[i] or custom_fields[i]):
             field_map[field] = {'case': case_fields[i],
                                 'custom': custom_fields[i],
-                                'is_date_field': date_field[i] == 'true'}
+                                'is_date_field': date_fields[i] == 'true'}
 
     return field_map
 
@@ -112,11 +138,11 @@ def parse_excel_date(date_val):
     """ Convert field value from excel to a date value """
     return str(date(*xldate_as_tuple(date_val, 0)[:3]))
 
-def parse_search_id(request, columns, row):
+def parse_search_id(config, columns, row):
     """ Find and convert the search id in an excel row """
 
     # Find index of user specified search column
-    search_column = request.POST['search_column']
+    search_column = config.search_column
     search_column_index = columns.index(search_column)
 
     search_id = row[search_column_index]
@@ -132,13 +158,8 @@ def parse_search_id(request, columns, row):
     # need a string no matter what the type was
     return str(search_id)
 
-def submit_case_block(caseblock, domain, username, user_id):
-    """ Convert a CaseBlock object to xml and submit for creation/update """
-    casexml = ElementTree.tostring(caseblock.as_xml(format_datetime=json_format_datetime))
-    submit_case_blocks(casexml, domain, username, user_id)
-
-def get_key_column_index(request, columns):
-    key_column = request.POST['key_column']
+def get_key_column_index(config, columns):
+    key_column = config.key_column
     try:
         key_column_index = columns.index(key_column)
     except ValueError:
@@ -146,8 +167,8 @@ def get_key_column_index(request, columns):
 
     return key_column_index
 
-def get_value_column_index(request, columns):
-    value_column = request.POST['value_column']
+def get_value_column_index(config, columns):
+    value_column = config.value_column
     try:
         value_column_index = columns.index(value_column)
     except ValueError:
@@ -187,16 +208,16 @@ def lookup_case(search_field, search_id, domain):
     else:
         return (None, LookupErrors.NotFound)
 
-def populate_updated_fields(request, columns, row):
+def populate_updated_fields(config, columns, row):
     """
     Returns a dict map of fields that were marked to be updated
     due to the import. This can be then used to pass to the CaseBlock
     to trigger updates.
     """
 
-    field_map = convert_custom_fields_to_struct(request)
-    key_column_index = get_key_column_index(request, columns)
-    value_column_index = get_value_column_index(request, columns)
+    field_map = convert_custom_fields_to_struct(config)
+    key_column_index = get_key_column_index(config, columns)
+    value_column_index = get_value_column_index(config, columns)
     fields_to_update = {}
 
     for key in field_map:
@@ -221,3 +242,8 @@ def populate_updated_fields(request, columns, row):
         fields_to_update[update_field_name] = update_value
 
     return fields_to_update
+
+def get_spreadsheet(download_ref, column_headers=True):
+    if not download_ref:
+        return None
+    return ExcelFile(download_ref.get_filename(), column_headers)
