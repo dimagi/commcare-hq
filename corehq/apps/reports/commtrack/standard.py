@@ -99,11 +99,6 @@ class CurrentStockStatusReport(GenericTabularReport, CommtrackReportMixin):
 
     report_template_path = "reports/async/tabular_graph.html"
 
-    # temporary
-    @classmethod
-    def show_in_navigation(cls, domain=None, project=None, user=None):
-        return super(CurrentStockStatusReport, cls).show_in_navigation(domain, project, user) and _enabled_hack(domain)
-
     @property
     def headers(self):
         return DataTablesHeader(*(DataTablesColumn(text) for text in [
