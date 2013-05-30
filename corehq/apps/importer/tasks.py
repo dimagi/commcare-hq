@@ -8,6 +8,7 @@ from corehq.apps.users.models import CouchUser
 from soil import DownloadBase
 from casexml.apps.case.tests.util import CaseBlock
 from casexml.apps.case.xml import V2
+from dimagi.utils.prime_views import prime_views
 import uuid
 
 POOL_SIZE = 10
@@ -39,7 +40,7 @@ def bulk_import_async(import_id, config, domain, excel_id):
 
         priming_progress = match_count + created_count + prime_offset
         if priming_progress % PRIME_VIEW_FREQUENCY == 0:
-            prime_pools()
+            prime_views(POOL_SIZE)
             # increment so we can't possibly prime on next iteration
             prime_offset += 1
 
@@ -92,22 +93,6 @@ def bulk_import_async(import_id, config, domain, excel_id):
     return {'created_count': created_count,
             'match_count': match_count,
             'too_many_matches': too_many_matches}
-
-def prime_pools():
-    """
-    Prime the views so that a very large import doesn't cause the index
-    to get too far behind
-    """
-
-    # These have to be included here or ./manage.py runserver explodes on
-    # all pages of the app with single thread related errors
-    from gevent.pool import Pool
-    from dimagi.utils.management.commands import prime_views
-
-    prime_pool = Pool(POOL_SIZE)
-    prime_all = prime_views.Command()
-    prime_all.prime_everything(prime_pool, verbose=True)
-    prime_pool.join()
 
 def submit_case_block(caseblock, domain, username, user_id):
     """ Convert a CaseBlock object to xml and submit for creation/update """
