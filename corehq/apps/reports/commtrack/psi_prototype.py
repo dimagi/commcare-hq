@@ -282,6 +282,7 @@ class VisitReport(GenericTabularReport, CommtrackReportMixin, DatespanMixin):
               'corehq.apps.reports.fields.AsyncLocationField']
     exportable = True
     emailable = True
+    is_cacheable = True
 
     def header_text(self, slug=False):
         cols = self.outlet_headers(slug)
