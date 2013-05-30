@@ -29,6 +29,7 @@ class Version2CaseParsingTest(TestCase):
         case = CommCareCase.get("foo-case-id")
         self.assertFalse(case.closed)
         self.assertEqual("bar-user-id", case.user_id)
+        self.assertEqual("bar-user-id", case.opened_by)
         self.assertEqual(datetime(2011, 12, 6, 13, 42, 50), case.modified_on)
         self.assertEqual("v2_case_type", case.type)
         self.assertEqual("test case name", case.name)
@@ -68,6 +69,7 @@ class Version2CaseParsingTest(TestCase):
         process_cases(sender="testharness", xform=form)
         case = CommCareCase.get("foo-case-id")
         self.assertTrue(case.closed)
+        self.assertEqual("bar-user-id", case.closed_by)
         
     def testParseNamedNamespace(self):
         file_path = os.path.join(os.path.dirname(__file__), "data", "v2", "named_namespace.xml")

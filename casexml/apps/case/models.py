@@ -214,6 +214,8 @@ class CommCareCase(CaseBase, IndexHoldingMixIn, ComputedDocumentMixin):
     external_id = StringProperty()
     user_id = StringProperty()
     owner_id = StringProperty()
+    opened_by = StringProperty()
+    closed_by = StringProperty()
 
     referrals = SchemaListProperty(Referral)
     actions = SchemaListProperty(CommCareCaseAction)
@@ -262,8 +264,9 @@ class CommCareCase(CaseBase, IndexHoldingMixIn, ComputedDocumentMixin):
         ).all()
         
     @property
+    @memoized
     def all_indices(self):
-        return itertools.chain(self.indices, self.reverse_indices)
+        return list(itertools.chain(self.indices, self.reverse_indices))
         
     def get_json(self):
         
@@ -428,7 +431,7 @@ class CommCareCase(CaseBase, IndexHoldingMixIn, ComputedDocumentMixin):
                 return
             if val:
                 setattr(me, attr, unicode(val))
-            
+
         _safe_replace_and_force_to_string(self, "type", create_action.type)
         _safe_replace_and_force_to_string(self, "name", create_action.name)
         _safe_replace_and_force_to_string(self, "external_id", create_action.external_id)
@@ -452,9 +455,14 @@ class CommCareCase(CaseBase, IndexHoldingMixIn, ComputedDocumentMixin):
     
         if case_update.creates_case():
             self.apply_create_block(case_update.get_create_action(), xformdoc, mod_date, case_update.user_id)
+            # case_update.get_create_action() seems to sometimes return an action with all properties set to none,
+            # so set opened_by and opened_on here
             if not self.opened_on:
                 self.opened_on = mod_date
-        
+            if not self.opened_by:
+                self.opened_by = case_update.user_id
+
+
         if case_update.updates_case():
             update_action = CommCareCaseAction.from_parsed_action(const.CASE_ACTION_UPDATE, 
                                                                   mod_date,
@@ -470,6 +478,7 @@ class CommCareCase(CaseBase, IndexHoldingMixIn, ComputedDocumentMixin):
                                                                  case_update.user_id,
                                                                  xformdoc,
                                                                  case_update.get_close_action())
+            self.closed_by = case_update.user_id
             self._apply_action(close_action)
             self.actions.append(close_action)
 
