@@ -1,4 +1,5 @@
-from django.core.cache import cache
+from django.conf import settings
+from django.core import cache
 from django.utils.cache import _generate_cache_header_key
 from dimagi.utils.decorators.memoized import memoized
 import functools
@@ -18,6 +19,12 @@ class CacheableRequestMixIn(object):
     is_cacheable = False
     CACHE_PREFIX = 'hq.reports' # a namespace where cache keys go
 
+    def get_cache(self):
+        try:
+            return cache.get_cache(settings.REPORT_CACHE)
+        except ValueError:
+            return cache.cache
+
     @property
     @memoized
     def cache_key(self):
@@ -28,10 +35,10 @@ class CacheableRequestMixIn(object):
         return _generate_cache_header_key(self.CACHE_PREFIX, self.request)
 
     def set_in_cache(self, tag, object, expiry=DEFAULT_EXPIRY):
-        return cache.set(self.get_cache_key(tag), object, expiry)
+        return self.get_cache().set(self.get_cache_key(tag), object, expiry)
 
     def get_from_cache(self, tag):
-        return cache.get(self.get_cache_key(tag))
+        return self.get_cache().get(self.get_cache_key(tag))
 
     def get_cache_key(self, tag):
         return "{key}-{tag}".format(
