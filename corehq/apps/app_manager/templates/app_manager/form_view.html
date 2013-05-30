@@ -4,7 +4,7 @@
 {% load i18n %}
 
 {% block js %}{{ block.super }}
-    <script src="{% static 'formdesigner/js/lib/chosen.jquery.min.js' %}"></script>
+    <script src="{% static 'hqwebapp/js/lib/select2/select2.js' %}"></script>
     <script src="{% static 'hqwebapp/js/lib/knockout.mapping.js' %}"></script>
     <script src="{% static 'hqwebapp/js/knockout-bindings.js' %}"></script>
 
@@ -136,7 +136,7 @@
                         select.attr('id', 'data_paths_select').val(paths).css({
                             width: '600px',
                             height: '10em',
-                        }).appendTo(home).chosen();
+                        }).appendTo(home).select2();
                     }
 
                     select.change(function () {
@@ -162,7 +162,8 @@
                     requires: form_requires,
                     reserved_words: {{ case_reserved_words_json|JSON }},
                     moduleCaseTypes: {{ module_case_types|JSON }},
-                    caseType: {{ form.get_case_type|JSON }}
+                    caseType: {{ form.get_case_type|JSON }},
+                    propertiesMap: {{ case_properties|JSON }}
                     {% if app.application_version != '1.0' %}
                     ,ejs_urls: {
                         template: "{% static 'app_manager/ejs/case-config-ui-2.ejs' %}",
@@ -222,7 +223,7 @@
 {% endblock %}
 {% block head %}
     {{ block.super }}
-    <link rel="stylesheet" href="{% static 'formdesigner/css/chosen.css' %}" />
+    <link href="{% static 'hqwebapp/js/lib/select2/select2.css' %}" rel="stylesheet"/>
     <link rel="stylesheet" href="{{ STATIC_URL }}syntaxhighlighter/styles/shCoreDefault.css"/>
     <script src="{{ STATIC_URL }}syntaxhighlighter/scripts/shCore.js"></script>
     <script src="{{ STATIC_URL }}syntaxhighlighter/scripts/shBrushXml.js"></script>
@@ -272,6 +273,9 @@
             pointer-events: none;
             cursor: default;
             color: #888;
+        }
+        .bigdrop {
+            width: 600px !important;
         }
     </style>
     {% if app.application_version == '2.0' %}

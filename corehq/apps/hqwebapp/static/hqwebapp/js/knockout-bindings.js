@@ -485,3 +485,10 @@ ko.bindingHandlers.edit = {
         }
     }
 };
+
+ko.bindingHandlers.typeahead = {
+    init: function (element, valueAccessor) {
+        var value = ko.utils.unwrapObservable(valueAccessor());
+        $(element).typeahead({source: value});
+    }
+};
