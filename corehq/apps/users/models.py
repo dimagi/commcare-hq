@@ -16,6 +16,7 @@ from django.contrib.sites.models import Site
 from django.core.urlresolvers import reverse
 from django.core.exceptions import ValidationError
 from django.template.loader import render_to_string
+from django.db.models import signals
 from couchdbkit.ext.django.schema import *
 from couchdbkit.resource import ResourceNotFound
 from dimagi.utils.couch.database import get_safe_write_kwargs
@@ -38,6 +39,12 @@ from dimagi.utils.mixins import UnicodeMixIn
 from dimagi.utils.dates import force_to_datetime
 from dimagi.utils.django.database import get_unique_value
 
+from casexml.apps.case.tests.util import CaseBlock
+from casexml.apps.case.xml import V2
+import uuid
+from xml.etree import ElementTree
+from corehq.apps.hqcase.utils import submit_case_blocks
+from couchdbkit.exceptions import MultipleResultsFound, NoResultFound
 
 COUCH_USER_AUTOCREATED_STATUS = 'autocreated'
 
@@ -640,6 +647,9 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, UnicodeMixIn):
     def is_dimagi(self):
         return self.username.endswith('@dimagi.com')
 
+    def call_center_projects(self):
+        return filter(lambda p:(p and p.call_center_enabled), self.projects)
+
     @property
     def raw_username(self):
         if self.doc_type == "CommCareUser":
@@ -771,6 +781,10 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, UnicodeMixIn):
     def couch_id(self):
         return self._id
 
+    @property
+    def projects(self):
+        return map(Domain.get_by_name, self.get_domains())
+
     # Couch view wrappers
     @classmethod
     def all(cls):
@@ -821,6 +835,60 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, UnicodeMixIn):
             return self.is_superuser
         else:
             return self.is_superuser or re.compile(PREVIEWER_RE).match(self.username)
+
+    @classmethod
+    def sync_user_cases(cls, couch_user):
+        if hasattr(couch_user, 'RECENTLY_SYNCED_CASE'):
+            del couch_user.RECENTLY_SYNCED_CASE
+            return
+        if couch_user.is_web_user():
+            return
+
+        call_center_projects = couch_user.call_center_projects()
+        if len(call_center_projects) > 0:
+            for domain in call_center_projects:
+                found = False
+                try:
+                    case = CommCareCase.view('hqcase/by_domain_hq_user_id',
+                                             key=[domain.name, couch_user._id],
+                                             reduce=False,
+                                             include_docs=True).one()
+                    found = bool(case)
+                except NoResultFound:
+                    pass
+                except MultipleResultsFound:
+                    continue
+
+                fields = {'name': couch_user.name,
+                          'email': couch_user.email,
+                          'language': couch_user.language or ''} # prevent None
+
+                if found:
+                    caseblock = CaseBlock(
+                        create = False,
+                        case_id = case._id,
+                        version = V2,
+                        owner_id = domain.call_center.case_owner_id,
+                        case_type = domain.call_center.case_type,
+                        update = fields
+                    )
+                else:
+                    fields['hq_user_id'] = couch_user._id
+                    caseblock = CaseBlock(
+                        create = True,
+                        case_id = uuid.uuid4().hex,
+                        owner_id = domain.call_center.case_owner_id,
+                        user_id = couch_user._id,
+                        version = V2,
+                        case_type = domain.call_center.case_type,
+                        update = fields
+                    )
+
+                casexml = ElementTree.tostring(caseblock.as_xml())
+                submit_case_blocks(casexml, domain, couch_user.username, couch_user._id)
+
+            couch_user.RECENTLY_SYNCED_CASE = True
+
 
     def sync_from_django_user(self, django_user):
         if not django_user:
@@ -980,27 +1048,31 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, UnicodeMixIn):
         self.username = username
         self.save()
 
-
     def save(self, **params):
         # test no username conflict
         by_username = self.get_db().view('users/by_username', key=self.username).first()
         if by_username and by_username['id'] != self._id:
             raise self.Inconsistent("CouchUser with username %s already exists" % self.username)
 
-        super(CouchUser, self).save(**params)
         if not self.base_doc.endswith(DELETED_SUFFIX):
             django_user = self.sync_to_django_user()
             django_user.save()
 
+        super(CouchUser, self).save(**params)
+
+        from corehq.apps.users.signals import couch_user_post_save
+        couch_user_post_save.send(sender='couch_user', couch_user=self)
 
     @classmethod
     def django_user_post_save_signal(cls, sender, django_user, created, max_tries=3):
+        couch_user = cls.from_django_user(django_user)
+
         if hasattr(django_user, 'DO_NOT_SAVE_COUCH_USER'):
             del django_user.DO_NOT_SAVE_COUCH_USER
         else:
-            couch_user = cls.from_django_user(django_user)
             if couch_user:
                 couch_user.sync_from_django_user(django_user)
+
                 try:
                     # avoid triggering cyclical sync
                     super(CouchUser, couch_user).save(**get_safe_write_kwargs())
@@ -1538,10 +1610,6 @@ class WebUser(CouchUser, MultiMembershipMixin, OrgMembershipMixin, CommCareMobil
 
     def get_language_code(self):
         return self.language
-
-    @property
-    def projects(self):
-        return map(Domain.get_by_name, self.get_domains())
 
     def get_teams(self, ids_only=False):
         from corehq.apps.orgs.models import Team

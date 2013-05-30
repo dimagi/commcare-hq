@@ -178,6 +178,9 @@ def project_settings(request, domain, template="domain/admin/project_settings.ht
                 'sms_case_registration_user_id': domain.sms_case_registration_user_id,
                 'default_sms_backend_id': domain.default_sms_backend_id,
                 'commtrack_enabled': domain.commtrack_enabled,
+                'call_center_enabled': domain.call_center_enabled,
+                'call_center_case_owner': domain.call_center.case_owner_id,
+                'call_center_case_type': domain.call_center.case_type
             })
         else:
             form = DomainGlobalSettingsForm(initial={
@@ -231,6 +234,7 @@ def project_settings(request, domain, template="domain/admin/project_settings.ht
             # some other means. otherwise it has to be supplied to every view reachable in that sidebar (every
             # view whose template extends users_base.html); mike says he's refactoring all of this imminently, so
             # i will not worry about it until he is done
+        call_center_enabled=domain.call_center_enabled,
         autocomplete_fields=('project_type', 'phone_model', 'user_type', 'city', 'country', 'region'),
         billing_info_form=billing_info_form,
         billing_info_partial=billing_info_partial,
