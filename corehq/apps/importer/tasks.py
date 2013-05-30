@@ -29,6 +29,7 @@ def bulk_import_async(import_id, config, domain, excel_id):
     row_count = spreadsheet.get_num_rows()
     columns = spreadsheet.get_header_columns()
     match_count = created_count = too_many_matches = 0
+    prime_offset = 1 # used to prevent back-to-back priming
 
     for i in range(row_count):
         DownloadBase.set_progress(task, i, row_count)
@@ -36,8 +37,11 @@ def bulk_import_async(import_id, config, domain, excel_id):
         if i == 0 and config.named_columns:
             continue
 
-        if i != 0 and i % PRIME_VIEW_FREQUENCY == 0:
+        priming_progress = match_count + created_count + prime_offset
+        if priming_progress % PRIME_VIEW_FREQUENCY == 0:
             prime_pools()
+            # increment so we can't possibly prime on next iteration
+            prime_offset += 1
 
         row = spreadsheet.get_row(i)
         search_id = importer_util.parse_search_id(config, columns, row)
