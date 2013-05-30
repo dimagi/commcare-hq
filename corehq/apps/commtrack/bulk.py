@@ -172,7 +172,13 @@ def process_loc(domain, loc, rows, data_cols):
     endkey.append({})
 
     # TODO potential source of slowness
-    most_recent_entry = get_db().view('commtrack/stock_reports', startkey=endkey, endkey=startkey, descending=True).first()
+    most_recent_entry = get_db().view(
+        'commtrack/stock_reports',
+        startkey=endkey,
+        endkey=startkey,
+        descending=True,
+        limit=1,
+    ).first()
     if most_recent_entry:
         most_recent_timestamp = most_recent_entry['key'][-1]
         most_recent_timestamp = datetime.strptime(most_recent_timestamp[:10], '%Y-%m-%d') # truncate to just date for now; also, time zone issues
