@@ -18,10 +18,16 @@ function (doc) {
         var opened_on = form.meta.timeEnd;
 
         emit_array([doc.domain, form.activity_state, form.demo_type], [opened_on], data);
+        emit_array([doc.domain, form.activity_state], [opened_on], data);
         emit_array([doc.domain, form.activity_state, form.activity_district, form.demo_type], [opened_on], data);
+        emit_array([doc.domain, form.activity_state, form.activity_district], [opened_on], data);
         emit_array([doc.domain, form.activity_state, form.activity_district, form.activity_block, form.demo_type],
+            [opened_on], data);
+        emit_array([doc.domain, form.activity_state, form.activity_district, form.activity_block],
             [opened_on], data);
         emit_array([doc.domain, form.activity_state, form.activity_district, form.activity_block, form.activity_village,
                 form.demo_type], [opened_on], data);
+        emit_array([doc.domain, form.activity_state, form.activity_district, form.activity_block, form.activity_village],
+            [opened_on], data);
     }
 }

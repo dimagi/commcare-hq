@@ -184,34 +184,40 @@ class PSIHDReport(PSIReport):
             ColumnCollector metaclass), the demo_type column needs to be initialized here when it has access to request
         """
         super(PSIHDReport, self).__init__(request, **kwargs)
-        calculate_fn = lambda key, _: key[len(self.place_types)+1]
+        calculate_fn = lambda key, _: key[len(self.place_types) + 1]
         self.columns['demo_type'] = Column("Worker Type", calculate_fn=calculate_fn)
         self.columns['demo_type'].view = FunctionView(calculate_fn=calculate_fn)
         self.function_views['demo_type'] = self.columns['demo_type'].view
 
+    @property
+    @memoized
+    def selected_dt(self):
+        return self.request.GET.get('demo_type', "")
 
     @property
     def keys(self):
         combos = get_unique_combinations(self.domain, place_types=self.place_types, place=self.selected_fixture())
         selected_demo_type = self.request.GET.get('demo_type', "")
         for c in combos:
-            if selected_demo_type:
+            if self.selected_dt:
                 yield [self.domain] + [c[pt] for pt in self.place_types] + [selected_demo_type]
             else:
-                for dt in DEMO_TYPES:
-                    yield [self.domain] + [c[pt] for pt in self.place_types] + [dt]
+                yield [self.domain] + [c[pt] for pt in self.place_types]
 
     couch_view = 'psi/household_demonstrations'
 
     @property
     def default_column_order(self):
-        return self.initial_column_order + (
-            "demo_type",
+        to_add = [
             'demonstrations',
             'children',
             'leaflets',
             'kits',
-        )
+        ]
+        if self.selected_dt:
+            to_add.insert(0, "demo_type")
+        return self.initial_column_order + tuple(to_add)
+
 
     demo_type = Column("Worker Type", calculate_fn=lambda key, _: key[5])
 
