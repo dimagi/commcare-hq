@@ -367,6 +367,7 @@ class SalesAndConsumptionReport(GenericTabularReport, CommtrackReportMixin, Date
               'corehq.apps.reports.fields.AsyncLocationField']
     exportable = True
     emailable = True
+    is_cacheable = True
 
     @property
     @memoized
@@ -471,6 +472,8 @@ class CumulativeSalesAndConsumptionReport(GenericTabularReport, CommtrackReportM
               'corehq.apps.reports.commtrack.fields.LocationTypeField']
     exportable = True
     emailable = True
+    is_cacheable = True
+
 
     # TODO support aggregation by 'N-levels down' (the locations at which might have varying loc types) as well as by subloc type?
 
@@ -586,6 +589,7 @@ class StockOutReport(GenericTabularReport, CommtrackReportMixin, DatespanMixin):
               'corehq.apps.reports.fields.AsyncLocationField']
     exportable = True
     emailable = True
+    is_cacheable = True
 
     # TODO shared code with sales/consumption report (any report that reports one line
     # per supply point) could be factored out into mixin
