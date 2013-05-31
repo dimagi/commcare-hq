@@ -240,6 +240,12 @@ def get_stock_reports(domain, location, datespan):
     return [sr.raw_form for sr in \
             StockReport.get_reports(domain, location, datespan)]
 
+def leaf_loc_safe(form):
+    try:
+        return leaf_loc(form)
+    except (IndexError, KeyError):
+        return None
+
 def leaf_loc(form):
     return form['location_'][-1]
 
@@ -282,6 +288,7 @@ class VisitReport(GenericTabularReport, CommtrackReportMixin, DatespanMixin):
               'corehq.apps.reports.fields.AsyncLocationField']
     exportable = True
     emailable = True
+    is_cacheable = True
 
     def header_text(self, slug=False):
         cols = self.outlet_headers(slug)
@@ -307,11 +314,16 @@ class VisitReport(GenericTabularReport, CommtrackReportMixin, DatespanMixin):
     def rows(self):
         products = self.active_products
         reports = get_stock_reports(self.domain, self.active_location, self.datespan)
-        locs = load_locs(leaf_loc(r) for r in reports)
+        leaf_locs = filter(None, (leaf_loc_safe(r) for r in reports))
+        locs = load_locs(leaf_locs)
         ancestry = load_all_loc_hierarchy(locs.values())
 
         # filter by outlet type
-        reports = filter(lambda r: self.outlet_type_filter(locs[leaf_loc(r)]), reports)
+        def _outlet_type_filter(r):
+            leaf = leaf_loc_safe(r)
+            return leaf and self.outlet_type_filter(locs[leaf])
+
+        reports = filter(_outlet_type_filter, reports)
 
         def row(doc):
             transactions = dict(((tx['action'], tx['product']), tx['value']) for tx in get_transactions(doc, False))
