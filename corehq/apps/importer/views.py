@@ -7,7 +7,6 @@ from corehq.apps.importer import base
 from corehq.apps.importer.util import ExcelFile, ImporterConfig
 import corehq.apps.importer.util as importer_util
 from corehq.apps.importer.tasks import bulk_import_async
-from couchdbkit.exceptions import MultipleResultsFound, NoResultFound
 from django.views.decorators.http import require_POST
 from corehq.apps.users.decorators import require_permission
 from corehq.apps.users.models import Permissions
