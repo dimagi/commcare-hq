@@ -3,6 +3,7 @@ from dimagi.utils.couch.database import get_db
 from corehq.apps.importer.const import LookupErrors
 from datetime import date
 from casexml.apps.case.models import CommCareCase
+from couchdbkit.exceptions import MultipleResultsFound, NoResultFound
 from xlrd import xldate_as_tuple
 from soil import DownloadBase
 from corehq.apps import importer
