@@ -2036,7 +2036,7 @@ def download_translations(request, domain, app_id):
             row_dict[prop].append(trans)
 
     rows = row_dict.values()
-    all_prop_trans = dict(st_trans.DEFAULT + st_trans.CC_DEFAULT + st_trans.CCODK_DEFAULT)
+    all_prop_trans = dict(st_trans.DEFAULT + st_trans.CC_DEFAULT + st_trans.CCODK_DEFAULT + st_trans.ODKCOLLECT_DEFAULT)
     rows.extend([[t] for t in sorted(all_prop_trans.keys()) if t not in row_dict])
 
     def fillrow(row):
