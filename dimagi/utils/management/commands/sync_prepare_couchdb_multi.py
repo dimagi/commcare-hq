@@ -8,8 +8,6 @@ from django.core.management.base import BaseCommand
 from django.core.mail import send_mail
 from datetime import datetime
 from gevent.pool import Pool
-import logging
-import time
 from django.conf import settings
 setattr(settings, 'COUCHDB_TIMEOUT', 999999)
 from couchdbkit.ext.django.loading import couchdbkit_handler
@@ -92,7 +90,6 @@ class Command(BaseCommand):
         pool.join()
         print "All apps reported complete."
 
-        #Git info
         message = "Preindex results:\n"
         message += "\tInitiated by: %s\n" % username
 
@@ -100,8 +97,11 @@ class Command(BaseCommand):
         message += "Total time: %d seconds" % delta.seconds
         print message
 
-        #todo: customize this more for other users
-        send_mail('[commcare-hq] Preindex Complete', message, 'hq-noreply@dimagi.com', ['commcarehq-dev@dimagi.com'], fail_silently=True)
+        send_mail('%s Preindex Complete' % settings.EMAIL_SUBJECT_PREFIX,
+                  message,
+                  settings.SERVER_EMAIL,
+                  [x[1] for x in settings.ADMINS],
+                  fail_silently=True)
 
 
 
