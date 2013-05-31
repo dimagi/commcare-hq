@@ -50,8 +50,13 @@ class CaseBase(SafeSaveDocument):
     closed = BooleanProperty(default=False)
     closed_on = DateTimeProperty()
     
-    class Meta:
-        app_label = 'case'
+    def to_full_dict(self):
+        """
+        Include calculated properties that need to be available to the case
+        details display by overriding this method.
+
+        """
+        return self.to_json()
 
     def to_full_dict(self):
         """
@@ -127,10 +132,6 @@ class CommCareCaseAction(LooselyEqualDocumentSchema):
             date=self.date, server_date=self.server_date
         )
 
-    class Meta:
-        app_label = 'case'
-
-    
 class Referral(CaseBase):
     """
     A referral, taken from casexml.  
@@ -144,9 +145,6 @@ class Referral(CaseBase):
     followup_on = DateTimeProperty()
     outcome = StringProperty()
     
-    class Meta:
-        app_label = 'case'
-
     def __unicode__(self):
         return ("%s:%s" % (self.type, self.referral_id))
         
@@ -230,8 +228,12 @@ class CommCareCase(CaseBase, IndexHoldingMixIn, ComputedDocumentMixin):
 
     server_modified_on = DateTimeProperty()
 
-    class Meta:
-        app_label = 'case'
+    def __repr__(self):
+        return u"Case: {id} ({type}: {name})".format(
+            id=self._id,
+            type=self.type,
+            name=self.name,
+        ).encode('utf-8')
 
     def __unicode__(self):
         return "CommCareCase: %s (%s)" % (self.case_id, self.get_id)

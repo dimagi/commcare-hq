@@ -223,7 +223,8 @@ class SyncLog(SafeSaveDocument, UnicodeMixIn):
                                          "phone doesn't have referenced case: %s" % case._id)
                             case_state = self.get_dependent_case_state(case.get_id)
                         # reconcile indices
-                        case_state.update_indices(action.indices)
+                        if case_state:
+                            case_state.update_indices(action.indices)
                     elif action.action_type == const.CASE_ACTION_CLOSE:
                         if self.phone_has_case(case.get_id):
                             self.archive_case(case.get_id)
