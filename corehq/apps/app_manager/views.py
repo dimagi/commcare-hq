@@ -2045,7 +2045,6 @@ def download_translations(request, domain, app_id):
         return row
 
     def add_default(row):
-        print row
         row[-1] = all_prop_trans.get(row[0], "")
         return row
 
