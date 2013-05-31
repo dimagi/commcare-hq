@@ -8,8 +8,6 @@ from django.core.management.base import BaseCommand
 from django.core.mail import send_mail
 from datetime import datetime
 from gevent.pool import Pool
-import logging
-import time
 from django.conf import settings
 setattr(settings, 'COUCHDB_TIMEOUT', 999999)
 from couchdbkit.ext.django.loading import couchdbkit_handler
