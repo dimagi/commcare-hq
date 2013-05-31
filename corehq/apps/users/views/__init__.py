@@ -172,6 +172,13 @@ class UserInvitationView(InvitationView):
     def validate_invitation(self, invitation):
         assert invitation.domain == self.domain
 
+    def is_invited(self, invitation, couch_user):
+        return couch_user.is_member_of(invitation.domain)
+
+    @property
+    def inviting_entity(self):
+        return self.organization
+
     @property
     def success_msg(self):
         return "You have been added to the %s domain" % self.domain
