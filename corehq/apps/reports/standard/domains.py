@@ -172,7 +172,7 @@ def es_domain_query(params, facets=None, terms=None, domains=None, return_q_dict
                             "operator" : "or", }}}}}
 
     q["facets"] = {}
-    stats = ['cp_n_active_cases', 'cp_n_active_cc_users', 'cp_n_cc_users', 'cp_n_web_users', 'cp_n_forms', 'cp_n_cases']
+    stats = ['cp_n_active_cases', 'cp_n_active_cc_users', 'cp_n_cc_users', 'cp_n_60_day_cases', 'cp_n_web_users', 'cp_n_forms', 'cp_n_cases']
     for prop in stats:
         q["facets"].update({"%s-STATS" % prop: {"statistical": {"field": prop}}})
 
