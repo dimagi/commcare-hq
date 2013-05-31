@@ -92,7 +92,6 @@ class Command(BaseCommand):
         pool.join()
         print "All apps reported complete."
 
-        #Git info
         message = "Preindex results:\n"
         message += "\tInitiated by: %s\n" % username
 
@@ -100,8 +99,11 @@ class Command(BaseCommand):
         message += "Total time: %d seconds" % delta.seconds
         print message
 
-        #todo: customize this more for other users
-        send_mail('[commcare-hq] Preindex Complete', message, 'hq-noreply@dimagi.com', ['commcarehq-dev@dimagi.com'], fail_silently=True)
+        send_mail('%s Preindex Complete' % settings.EMAIL_SUBJECT_PREFIX,
+                  message,
+                  settings.SERVER_EMAIL,
+                  [x[1] for x in settings.ADMINS],
+                  fail_silently=True)
 
 
 
