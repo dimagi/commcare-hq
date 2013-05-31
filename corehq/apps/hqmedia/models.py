@@ -573,6 +573,7 @@ class HQMediaMixin(Document):
         """
             Gets all the media objects stored in the multimedia map.
         """
+        found_missing_mm = False
         for path, map_item in self.multimedia_map.items():
             media = CommCareMultimedia.get_doc_class(map_item.media_type)
             try:
@@ -581,7 +582,9 @@ class HQMediaMixin(Document):
             except ResourceNotFound:
                 # delete media reference from multimedia map so this doesn't pop up again!
                 del self.multimedia_map[path]
-                self.save()
+                found_missing_mm = True
+        if found_missing_mm:
+            self.save()
 
     def get_references(self, lang=None):
         """
