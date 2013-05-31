@@ -177,7 +177,7 @@ class UserInvitationView(InvitationView):
 
     @property
     def inviting_entity(self):
-        return self.organization
+        return self.domain
 
     @property
     def success_msg(self):
