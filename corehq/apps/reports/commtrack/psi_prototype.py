@@ -1,3 +1,4 @@
+from corehq.apps.commtrack.psi_hacks import is_psi_domain
 from corehq.apps.reports.standard import ProjectReport, ProjectReportParametersMixin, DatespanMixin
 from corehq.apps.reports.generic import GenericTabularReport
 from corehq.apps.users.models import CommCareUser
@@ -51,7 +52,7 @@ class CommtrackReportMixin(ProjectReport, ProjectReportParametersMixin):
         if not any(a.action_type == 'consumption' for a in actions):
             # add implicitly calculated consumption -- TODO find a way to refer to this more explicitly once we track different kinds of consumption (losses, etc.)
             actions.append(CommtrackActionConfig(action_type='consumption', caption='Consumption'))
-        if 'psi' in self.domain:
+        if is_psi_domain(self.domain):
             ordering = ['sales', 'receipts', 'consumption']
             actions.sort(key=lambda a: (0, ordering.index(a.action_name)) if a.action_name in ordering else (1, a.action_name))
         return actions
