@@ -1,3 +1,4 @@
+from corehq.apps.commtrack.psi_hacks import is_psi_domain
 from corehq.apps.locations.models import Location, root_locations, CustomProperty
 from corehq.apps.domain.models import Domain
 from couchdbkit import ResourceNotFound
@@ -54,7 +55,7 @@ def allowed_child_types(domain, parent):
 def location_custom_properties(domain, loc_type):
     def _village_classes(domain):
         # todo: meh.
-        if 'psi' in domain:
+        if is_psi_domain(domain):
             return [
                 _('Town'),
                 _('A'),
