@@ -395,7 +395,7 @@ class DownloadMultimediaZip(View, ApplicationViewMixin):
 
     def get(self, request, *args, **kwargs):
         errors = []
-        fd, fpath = tempfile.mkstemp(*args, **kwargs)
+        fd, fpath = tempfile.mkstemp()
         os.close(fd)
         with zipfile.ZipFile(fpath, "w") as media_zip:
             self.app.remove_unused_mappings()
