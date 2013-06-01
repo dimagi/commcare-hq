@@ -419,6 +419,7 @@ class DownloadMultimediaZip(View, ApplicationViewMixin):
                                                "retrieving media for this application.<br /> %s" % "<br />".join(errors))
 
             response = HttpResponse(FileWrapper(open(fpath, 'rb')), mimetype="application/zip")
+            response['Content-Length'] = os.path.getsize(fpath)
             set_file_download(response, 'commcare.zip')
             return response
 
