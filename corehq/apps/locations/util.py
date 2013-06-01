@@ -1,6 +1,7 @@
 from corehq.apps.locations.models import Location, root_locations, CustomProperty
 from corehq.apps.domain.models import Domain
 from couchdbkit import ResourceNotFound
+from django.utils.translation import ugettext as _
 from dimagi.utils.couch.loosechange import map_reduce
 
 def load_locs_json(domain, selected_loc_id=None):
@@ -51,6 +52,24 @@ def allowed_child_types(domain, parent):
 
 # hard-coded for now
 def location_custom_properties(domain, loc_type):
+    def _village_classes(domain):
+        # todo: meh.
+        if 'psi' in domain:
+            return [
+                _('Town'),
+                _('A'),
+                _('B'),
+                _('C'),
+                _('D'),
+                _('E'),
+            ]
+        else:
+            return [
+                _('Village'),
+                _('City'),
+                _('Town'),
+                _('Hamlet'),
+            ]
     hardcoded = {
         'outlet': [
             CustomProperty(
@@ -108,12 +127,7 @@ def location_custom_properties(domain, loc_type):
                 name='village_class',
                 datatype='Choice',
                 label='Village Class',
-                choices={'mode': 'static', 'args': [
-                        'Village',
-                        'City',
-                        'Town',
-                        'Hamlet',
-                    ]},
+                choices={'mode': 'static', 'args': _village_classes(domain)},
             ),
         ],
     }
