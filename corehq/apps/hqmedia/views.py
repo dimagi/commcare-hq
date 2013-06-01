@@ -1,7 +1,9 @@
+import tempfile
 import zipfile
 import logging
 import os
 from django.contrib.auth.decorators import login_required
+from django.core.servers.basehttp import FileWrapper
 import magic
 import json
 from django.core.urlresolvers import reverse
@@ -393,35 +395,32 @@ class DownloadMultimediaZip(View, ApplicationViewMixin):
 
     def get(self, request, *args, **kwargs):
         errors = []
-        temp = StringIO()
-        media_zip = zipfile.ZipFile(temp, "a")
-        self.app.remove_unused_mappings()
-        if not self.app.multimedia_map:
-            return HttpResponse("You have no multimedia to download.")
-        for path, media in self.app.get_media_objects():
-            try:
-                data, content_type = media.get_display_file()
-                folder = path.replace(MULTIMEDIA_PREFIX, "")
-                if not isinstance(data, unicode):
-                    media_zip.writestr(os.path.join(folder), data)
-            except NameError as e:
-                errors.append("%(path)s produced an ERROR: %(error)s" % {
-                    'path': path,
-                    'error': e,
-                })
-        media_zip.close()
+        fd, fpath = tempfile.mkstemp(*args, **kwargs)
+        os.close(fd)
+        with zipfile.ZipFile(fpath, "w") as media_zip:
+            self.app.remove_unused_mappings()
+            if not self.app.multimedia_map:
+                return HttpResponse("You have no multimedia to download.")
+            for path, media in self.app.get_media_objects():
+                try:
+                    data, content_type = media.get_display_file()
+                    folder = path.replace(MULTIMEDIA_PREFIX, "")
+                    if not isinstance(data, unicode):
+                        media_zip.writestr(os.path.join(folder), data)
+                except NameError as e:
+                    errors.append("%(path)s produced an ERROR: %(error)s" % {
+                        'path': path,
+                        'error': e,
+                    })
+            if errors:
+                logging.error("Error downloading multimedia ZIP for domain %s and application %s." %
+                              (self.domain, self.app_id))
+                return HttpResponseServerError("Errors were encountered while "
+                                               "retrieving media for this application.<br /> %s" % "<br />".join(errors))
 
-        if errors:
-            logging.error("Error downloading multimedia ZIP for domain %s and application %s." %
-                          (self.domain, self.app_id))
-            return HttpResponseServerError("Errors were encountered while "
-                                           "retrieving media for this application.<br /> %s" % "<br />".join(errors))
-
-        response = HttpResponse(mimetype="application/zip")
-        set_file_download(response, 'commcare.zip')
-        temp.seek(0)
-        response.write(temp.read())
-        return response
+            response = HttpResponse(FileWrapper(open(fpath, 'rb')), mimetype="application/zip")
+            set_file_download(response, 'commcare.zip')
+            return response
 
 
 class MultimediaUploadStatusView(View):
