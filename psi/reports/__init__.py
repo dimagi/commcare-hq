@@ -35,11 +35,11 @@ class DemoTypeField(ReportSelectField):
     name = "Worker Type"
     cssId = "demo_type_select"
     cssClasses = "span6"
-    default_option = "All Worker Types"
+    default_option = "Aggregate"
 
     def update_params(self):
         self.selected = self.request.GET.get(self.slug, '')
-        self.options = [{'val': dt, 'text': dt} for dt in DEMO_TYPES]
+        self.options = [{'val': '_all', 'text': 'All worker types'}] + [{'val': dt, 'text': dt} for dt in DEMO_TYPES]
 
 class AggregateAtField(ReportSelectField):
     """
@@ -200,7 +200,11 @@ class PSIHDReport(PSIReport):
         selected_demo_type = self.request.GET.get('demo_type', "")
         for c in combos:
             if self.selected_dt:
-                yield [self.domain] + [c[pt] for pt in self.place_types] + [selected_demo_type]
+                if self.selected_dt == '_all':
+                    for dt in DEMO_TYPES:
+                        yield [self.domain] + [c[pt] for pt in self.place_types] + [dt]
+                else:
+                    yield [self.domain] + [c[pt] for pt in self.place_types] + [selected_demo_type]
             else:
                 yield [self.domain] + [c[pt] for pt in self.place_types]
 
