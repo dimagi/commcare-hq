@@ -799,10 +799,12 @@ def form_designer(req, domain, app_id, module_id=None, form_id=None,
 
     context = get_apps_base_context(req, domain, app)
     context.update(locals())
+    app.remove_unused_mappings()
     context.update({
         'edit': True,
         'nav_form': form if not is_user_registration else '',
         'formdesigner': True,
+        'multimedia_object_map': app.get_object_map()
     })
     return render(req, 'app_manager/form_designer.html', context)
 

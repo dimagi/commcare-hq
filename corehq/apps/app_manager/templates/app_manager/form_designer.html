@@ -24,6 +24,9 @@
     <script src="{% static 'formdesigner/js/model.js' %}"></script>
     <script src="{% static 'formdesigner/js/controller.js' %}"></script>
     <script src="{% static 'formdesigner/js/widgets.js' %}"></script>
+    <script src="{% static 'formdesigner/js/multimedia.js' %}"></script>
+
+    {% include 'hqmedia/partials/multimedia_js.html' %} {# todo We should have a discussion at some point how we'd like to organize this in the future. #}
 {% endblock %}
 
 {% block js-inline %}{{ block.super }}
@@ -37,13 +40,14 @@
                 staticPrefix: '/static/formdesigner/',
                 saveUrl: '{% url edit_form_attr domain app.id form.get_unique_id "xform" %}',
                 patchUrl: '{% url patch_xform domain app.id form.get_unique_id %}',
-                multimediaUrls: {
-                    upload: {
-                        image: '',
-                        audio: '',
-                        video: ''
+                multimediaConfig: {
+                    uploadUrls: {
+                        image: '{% url hqmedia_uploader_image domain app.id %}',
+                        audio: '{% url hqmedia_uploader_audio domain app.id %}',
+                        video: '{% url hqmedia_uploader_video domain app.id %}'
                     },
-                    swf: ''
+                    swfURL: '{% static 'hqmedia/yui/assets/flashuploader.swf' %}',
+                    objectMap: {{ multimedia_object_map|JSON }}
                 },
                 saveType: 'patch',
                 form: {{ form.source|JSON }},
