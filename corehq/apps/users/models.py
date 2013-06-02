@@ -844,6 +844,8 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, UnicodeMixIn):
         if couch_user.is_web_user():
             return
 
+        close = couch_user.to_be_deleted() or not couch_user.is_active
+
         call_center_projects = couch_user.call_center_projects()
         if len(call_center_projects) > 0:
             for domain in call_center_projects:
@@ -870,6 +872,7 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, UnicodeMixIn):
                         version = V2,
                         owner_id = domain.call_center.case_owner_id,
                         case_type = domain.call_center.case_type,
+                        close = close,
                         update = fields
                     )
                 else:
@@ -1034,6 +1037,9 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, UnicodeMixIn):
         couch_user.sync_from_django_user(django_user)
         return couch_user
 
+    def to_be_deleted(self):
+        return self.base_doc.endswith(DELETED_SUFFIX)
+
     def change_username(self, username):
         if username == self.username:
             return
@@ -1054,14 +1060,14 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, UnicodeMixIn):
         if by_username and by_username['id'] != self._id:
             raise self.Inconsistent("CouchUser with username %s already exists" % self.username)
 
-        if not self.base_doc.endswith(DELETED_SUFFIX):
+        if not self.to_be_deleted():
             django_user = self.sync_to_django_user()
             django_user.save()
 
-        super(CouchUser, self).save(**params)
-
         from corehq.apps.users.signals import couch_user_post_save
         couch_user_post_save.send(sender='couch_user', couch_user=self)
+
+        super(CouchUser, self).save(**params)
 
     @classmethod
     def django_user_post_save_signal(cls, sender, django_user, created, max_tries=3):
