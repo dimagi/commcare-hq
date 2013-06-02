@@ -36,6 +36,7 @@ class Command(MappingOutputCommand):
             "cp_n_web_users": {"type": "long"},
             "cp_n_active_cc_users": {"type": "long"},
             "cp_n_cc_users": {"type": "long"},
+            "cp_n_60_day_cases": {"type": "long"},
             "cp_n_active_cases": {"type": "long"},
             "cp_n_cases": {"type": "long"},
             "cp_n_forms": {"type": "long"},
