@@ -41,10 +41,6 @@ def is_valid_case_type(case_type):
 
 def get_case_properties(app, case_types, defaults=()):
     case_types = sorted(case_types)
-    cache_key = 'get_case_properties-%s-%s' % (app.get_id, ','.join(case_types))
-    value = cache.get(cache_key)
-    if value:
-        return value
 
     # unfortunate, but biggest speed issue is accessing couchdbkit properties
     # so compute them once
@@ -84,10 +80,7 @@ def get_case_properties(app, case_types, defaults=()):
 
         return case_properties
 
-    value = dict(
+    return dict(
         (case_type, sorted(get_properties(case_type)))
         for case_type in case_types
     )
-
-    cache.set(cache_key, value, 5*60)
-    return value
