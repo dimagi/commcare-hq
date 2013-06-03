@@ -645,9 +645,6 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, UnicodeMixIn):
     def is_dimagi(self):
         return self.username.endswith('@dimagi.com')
 
-    def call_center_projects(self):
-        return filter(lambda p:(p and p.call_center_enabled), self.projects)
-
     @property
     def raw_username(self):
         if self.doc_type == "CommCareUser":
@@ -834,68 +831,6 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, UnicodeMixIn):
         else:
             return self.is_superuser or re.compile(PREVIEWER_RE).match(self.username)
 
-    @classmethod
-    def sync_user_cases(cls, couch_user):
-        from casexml.apps.case.tests.util import CaseBlock
-
-        if hasattr(couch_user, 'RECENTLY_SYNCED_CASE'):
-            del couch_user.RECENTLY_SYNCED_CASE
-            return
-        if couch_user.is_web_user():
-            return
-
-        close = couch_user.to_be_deleted() or not couch_user.is_active
-
-        call_center_projects = couch_user.call_center_projects()
-        if len(call_center_projects) > 0:
-            fields = {'name': couch_user.name,
-                      'email': couch_user.email,
-                      'language': couch_user.language or ''} # prevent None
-
-            # fields comes second to prevent custom user data overriding
-            fields = dict(couch_user.user_data, **fields)
-
-            for domain in call_center_projects:
-                found = False
-                try:
-                    case = CommCareCase.view('hqcase/by_domain_hq_user_id',
-                                             key=[domain.name, couch_user._id],
-                                             reduce=False,
-                                             include_docs=True).one()
-                    found = bool(case)
-                except NoResultFound:
-                    pass
-                except MultipleResultsFound:
-                    continue
-
-                if found:
-                    caseblock = CaseBlock(
-                        create = False,
-                        case_id = case._id,
-                        version = V2,
-                        owner_id = domain.call_center.case_owner_id,
-                        case_type = domain.call_center.case_type,
-                        close = close,
-                        update = fields
-                    )
-                else:
-                    fields['hq_user_id'] = couch_user._id
-                    caseblock = CaseBlock(
-                        create = True,
-                        case_id = uuid.uuid4().hex,
-                        owner_id = domain.call_center.case_owner_id,
-                        user_id = couch_user._id,
-                        version = V2,
-                        case_type = domain.call_center.case_type,
-                        update = fields
-                    )
-
-                casexml = ElementTree.tostring(caseblock.as_xml())
-                submit_case_blocks(casexml, domain, couch_user.username, couch_user._id)
-
-            couch_user.RECENTLY_SYNCED_CASE = True
-
-
     def sync_from_django_user(self, django_user):
         if not django_user:
             django_user = self.get_django_user()
@@ -1067,9 +1002,6 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, UnicodeMixIn):
             django_user = self.sync_to_django_user()
             django_user.save()
 
-        from corehq.apps.users.signals import couch_user_post_save
-        couch_user_post_save.send(sender='couch_user', couch_user=self)
-
         super(CouchUser, self).save(**params)
 
     @classmethod
@@ -1159,6 +1091,12 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
 #            self.save() # will uncomment when I figure out what's happening with sheels commcareuser
 
         return self
+
+    def save(self, **params):
+        from corehq.apps.users.signals import couch_user_post_save
+        couch_user_post_save.send(sender='couch_user', couch_user=self)
+
+        super(CommCareUser, self).save(**params)
 
     def is_domain_admin(self, domain=None):
         # cloudcare workaround
@@ -1480,6 +1418,65 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
 
     def __repr__(self):
         return ("CommCareUser(username={self.username!r})".format(self=self))
+
+    @classmethod
+    def sync_user_cases(cls, commcare_user):
+        from casexml.apps.case.tests.util import CaseBlock
+
+        if hasattr(commcare_user, 'RECENTLY_SYNCED_CASE'):
+            del commcare_user.RECENTLY_SYNCED_CASE
+            return
+
+        domain = commcare_user.projects[0]
+        if not domain.callcenter_enabled:
+            return
+
+        fields = {'name': commcare_user.name,
+                  'email': commcare_user.email,
+                  'language': commcare_user.language or ''} # prevent None
+        # fields comes second to prevent custom user data overriding
+        fields = dict(commcare_user.user_data, **fields)
+
+        found = False
+        try:
+            case = CommCareCase.view('hqcase/by_domain_hq_user_id',
+                                     key=[domain.name, commcare_user._id],
+                                     reduce=False,
+                                     include_docs=True).one()
+            found = bool(case)
+        except NoResultFound:
+            pass
+        except MultipleResultsFound:
+            return
+
+        close = commcare_user.to_be_deleted() or not commcare_user.is_active
+
+        if found:
+            caseblock = CaseBlock(
+                create = False,
+                case_id = case._id,
+                version = V2,
+                owner_id = domain.call_center.case_owner_id,
+                case_type = domain.call_center.case_type,
+                close = close,
+                update = fields
+            )
+        else:
+            fields['hq_user_id'] = commcare_user._id
+            caseblock = CaseBlock(
+                create = True,
+                case_id = uuid.uuid4().hex,
+                owner_id = domain.call_center.case_owner_id,
+                user_id = commcare_user._id,
+                version = V2,
+                case_type = domain.call_center.case_type,
+                update = fields
+            )
+
+        casexml = ElementTree.tostring(caseblock.as_xml())
+        submit_case_blocks(casexml, domain, commcare_user.username, commcare_user._id)
+
+        commcare_user.RECENTLY_SYNCED_CASE = True
 
 
 class OrgMembershipMixin(DocumentSchema):
