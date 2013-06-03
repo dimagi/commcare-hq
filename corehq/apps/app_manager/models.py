@@ -593,7 +593,7 @@ class FormBase(DocumentSchema):
             if not subcase_action.case_type:
                 errors.append({'type': 'subcase has no case type'})
 
-        if self.actions.open_case.is_active() \
+        if self.requires == 'none' and self.actions.open_case.is_active() \
                 and not self.actions.open_case.name_path:
             errors.append({
                 'type': 'case_name required',
