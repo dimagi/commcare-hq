@@ -38,7 +38,6 @@ from dimagi.utils.mixins import UnicodeMixIn
 from dimagi.utils.dates import force_to_datetime
 from dimagi.utils.django.database import get_unique_value
 
-from casexml.apps.case.tests.util import CaseBlock
 from casexml.apps.case.xml import V2
 import uuid
 from xml.etree import ElementTree
@@ -837,6 +836,8 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, UnicodeMixIn):
 
     @classmethod
     def sync_user_cases(cls, couch_user):
+        from casexml.apps.case.tests.util import CaseBlock
+
         if hasattr(couch_user, 'RECENTLY_SYNCED_CASE'):
             del couch_user.RECENTLY_SYNCED_CASE
             return
