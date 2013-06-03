@@ -82,8 +82,8 @@ var HQAsyncReport = function (o) {
             process_filters = process_filters + "&filterSet=" + setFilters;
         }
         if (setFilters) {
-            $('#export-report-excel').removeClass('hide');
-            $('#email-report').removeClass('hide');
+            $(self.standardReport.exportReportButton).removeClass('hide');
+            $(self.standardReport.emailReportButton).removeClass('hide');
         }
 
         self.reportRequest = $.ajax({
