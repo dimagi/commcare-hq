@@ -361,8 +361,14 @@ class GenericReportView(CacheableRequestMixIn):
         Whether a report has any filters set. Based on whether or not there 
         is a query string. This gets carried to additional asynchronous calls
         """
-        return string_to_boolean(self.request.GET.get("filterSet")) \
-            if "filterSet" in self.request.GET else bool(self.request.META.get('QUERY_STRING'))
+        are_filters_set = bool(self.request.META.get('QUERY_STRING'))
+        if "filterSet" in self.request.GET:
+            try:
+                are_filters_set = string_to_boolean(self.request.GET.get("filterSet"))
+            except ValueError:
+                # not a parseable boolean
+                pass
+        return are_filters_set
         
     
     @property
@@ -386,7 +392,6 @@ class GenericReportView(CacheableRequestMixIn):
         """
             Intention: Don't override.
         """
-
         report_configs = ReportConfig.by_domain_and_owner(self.domain,
             self.request.couch_user._id, report_slug=self.slug).all()
         current_config_id = self.request.GET.get('config_id', '')
@@ -442,7 +447,6 @@ class GenericReportView(CacheableRequestMixIn):
             Intention: This probably does not need to be overridden in general.
             Please override template_context instead.
         """
-        url_args = [] if not self.domain else [self.domain]
         self.context['report'].update(
             show_filters=self.fields or not self.hide_filters,
             breadcrumbs=self.breadcrumbs,

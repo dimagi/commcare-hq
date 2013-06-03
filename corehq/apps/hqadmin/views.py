@@ -5,6 +5,7 @@ import logging
 from collections import defaultdict
 from StringIO import StringIO
 import os
+from pytz import timezone
 
 from django.http import HttpResponseRedirect, HttpResponse
 from django.core.urlresolvers import reverse
@@ -34,7 +35,9 @@ from couchexport.shortcuts import export_response
 from couchexport.models import Format
 from dimagi.utils.excel import WorkbookJSONReader
 from dimagi.utils.decorators.view import get_file
-
+from django.utils import html
+from dimagi.utils.timezones import utils as tz_utils
+from django.utils.translation import ugettext as _
 
 @require_superuser
 def default(request):
@@ -360,6 +363,50 @@ def submissions_errors(request, template="hqadmin/submissions_errors_report.html
     return render(request, template, context)
 
 @require_superuser
+def mobile_user_reports(request):
+    template = "hqadmin/mobile_user_reports.html"
+    domains = Domain.get_all()
+
+    rows = []
+    for domain in domains:
+        data = get_db().view("phonelog/devicelog_data",
+            reduce=False,
+            startkey=[domain.name, "tag", "user-report"],
+            endkey=[domain.name, "tag", "user-report", {}],
+            stale=settings.COUCH_STALE_QUERY,
+        ).all()
+        for report in data:
+            val = report.get('value')
+            version = val.get('version', 'unknown')
+            formatted_date = tz_utils.string_to_prertty_time(val['@date'], timezone(domain.default_timezone), fmt="%b %d, %Y %H:%M:%S")
+            rows.append(dict(domain=domain.name,
+                             time=formatted_date,
+                             user=val['user'],
+                             device_users=val['device_users'],
+                             message=val['msg'],
+                             version=version.split(' ')[0],
+                             detailed_version=html.escape(version),
+                             report_id=report['id']))
+
+    headers = DataTablesHeader(
+        DataTablesColumn(_("View Form")),
+        DataTablesColumn(_("Domain")),
+        DataTablesColumn(_("Time"), sort_type=DTSortType.NUMERIC),
+        DataTablesColumn(_("User"), sort_type=DTSortType.NUMERIC),
+        DataTablesColumn(_("Device Users"), sort_type=DTSortType.NUMERIC),
+        DataTablesColumn(_("Message"), sort_type=DTSortType.NUMERIC),
+        DataTablesColumn(_("Version"), sort_type=DTSortType.NUMERIC)
+
+    )
+
+    context = get_hqadmin_base_context(request)
+    context["headers"] = headers
+    context["aoColumns"] = headers.render_aoColumns
+    context["rows"] = rows
+
+    return render(request, template, context)
+
+@require_superuser
 @get_file("file")
 def update_domains(request):
     if request.method == "POST":
@@ -464,7 +511,6 @@ def domain_list_download(request):
     data = (("domains", (_row(domain) for domain in domains)),)
     export_raw(headers, data, temp)
     return export_response(temp, Format.XLS_2007, "domains")
-
 
 @require_superuser
 def system_ajax(request):

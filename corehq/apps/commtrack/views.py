@@ -183,7 +183,7 @@ def charts(request, domain, template="commtrack/charts.html"):
         {"key": "under stock", "color": "#ffb100"},
         {"key": "adequate stock", "color": "#4ac925"},
         {"key": "overstocked", "color": "#b536da"},
-        {"key": "no data", "color": "#ABABAB"}
+        {"key": "unknown", "color": "#ABABAB"}
     ]
 
     for s in statuses:

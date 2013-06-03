@@ -148,6 +148,9 @@ def get_tables_as_rows(data, definition, processors=None, timezone=pytz.utc):
         if process:
             val = escape(processors[process](val))
         else:
+            if val is None:
+                val = '---'
+
             val = mark_safe(to_html(None,
                 val, timezone=timezone, key_format=format_key,
                 collapse_lists=True))
