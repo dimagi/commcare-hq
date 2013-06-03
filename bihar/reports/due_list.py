@@ -9,6 +9,7 @@ BIHAR_DOMAIN = 'care-bihar' # TODO: where should this go?
 
 DUE_LIST_CONFIG = [
     {
+        'slug': 'anc',
         'title': ugettext_noop('ANC'),
         'tasks': [
             "anc_1",
@@ -18,6 +19,7 @@ DUE_LIST_CONFIG = [
             ]
     },
     {
+        'slug': 'tt',
         'title': ugettext_noop('TT'),
         'tasks': [
             "tt_1",
@@ -26,10 +28,12 @@ DUE_LIST_CONFIG = [
             ]
     },
     {
+        'slug': 'bcg',
         'title': ugettext_noop('BCG'),
         'tasks': ["bcg",]
     },
     {
+        'slug': 'opv',
         'title': ugettext_noop('OPV'),
         'tasks': [
             "opv_0",
@@ -40,6 +44,7 @@ DUE_LIST_CONFIG = [
             ]
     },
     {
+        'slug': 'dpt',
         'title': ugettext_noop('DPT'),
         'tasks': ["dpt_1",
                   "dpt_2",
@@ -48,6 +53,7 @@ DUE_LIST_CONFIG = [
                   ]
     },
     {
+        'slug': 'hepb',
         'title': ugettext_noop('Hepatitis B'),
         'tasks': ["hep_0",
                   "hep_1",
@@ -56,10 +62,12 @@ DUE_LIST_CONFIG = [
                   ]
     },
     {
+        'slug': 'measles',
         'title': ugettext_noop('Measles'),
         'tasks': ["measles",]
     },
     {
+        'slug': 'vita',
         'title': ugettext_noop('Vitamin A'),
         'tasks': ["vita_1",]
     },
