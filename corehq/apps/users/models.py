@@ -848,6 +848,13 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, UnicodeMixIn):
 
         call_center_projects = couch_user.call_center_projects()
         if len(call_center_projects) > 0:
+            fields = {'name': couch_user.name,
+                      'email': couch_user.email,
+                      'language': couch_user.language or ''} # prevent None
+
+            # fields comes second to prevent custom user data overriding
+            fields = dict(couch_user.user_data, **fields)
+
             for domain in call_center_projects:
                 found = False
                 try:
@@ -860,10 +867,6 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, UnicodeMixIn):
                     pass
                 except MultipleResultsFound:
                     continue
-
-                fields = {'name': couch_user.name,
-                          'email': couch_user.email,
-                          'language': couch_user.language or ''} # prevent None
 
                 if found:
                     caseblock = CaseBlock(

@@ -272,21 +272,31 @@ class DomainMetadataForm(DomainGlobalSettingsForm, SnapshotSettingsMixin):
         if not (user and user.is_previewer):
             # commtrack is pre-release
             self.fields['commtrack_enabled'].widget = forms.HiddenInput()
+            self.fields['call_center_enabled'].widget = forms.HiddenInput()
+            self.fields['call_center_case_owner'].widget = forms.HiddenInput()
+            self.fields['call_center_case_type'].widget = forms.HiddenInput()
 
         if domain is not None:
             groups = Group.get_case_sharing_groups(domain)
             users = CommCareUser.by_domain(domain)
             web_users = WebUser.by_domain(domain)
 
-            domain_owner_choices = [(group._id, group.name) for group in groups]
+            domain_group_choices = [(group._id, group.name) for group in groups]
             domain_user_choices = [(user._id, user.raw_username) for user in users]
-            domain_owner_choices += domain_user_choices
-            web_user_choices = [(user._id, user.raw_username) for user in web_users]
+            domain_owner_choices = domain_group_choices + domain_user_choices
 
             self.fields["sms_case_registration_owner_id"].choices = domain_owner_choices
             self.fields["sms_case_registration_user_id"].choices = domain_user_choices
 
-            self.fields["call_center_case_owner"].choices = [('','')] + web_user_choices
+            call_center_user_choices = [(user._id, user.name + ' (user)')
+                                         for user in users]
+            call_center_group_choices = [(group._id, group.name + ' (group)')
+                                         for group in groups]
+
+            self.fields["call_center_case_owner"].choices = \
+                [('','')] + \
+                call_center_user_choices + \
+                call_center_group_choices
 
     def _validate_sms_registration_field(self, field_name, error_msg):
         value = self.cleaned_data.get(field_name)
