@@ -4,8 +4,10 @@ from corehq.apps.reports.generic import GenericTabularReport
 from dimagi.utils.couch.database import get_db
 from hsph.fields import IHForCHFField, SelectReferredInStatusField
 from hsph.reports import HSPHSiteDataMixin
-
+    
 from collections import defaultdict
+from django.utils.translation import ugettext as _
+from datetime import date, timedelta
 
 class DataSummaryReport(CustomProjectReport, ProjectReportParametersMixin, DatespanMixin):
     """
@@ -316,3 +318,102 @@ class FADAObservationsReport(DataSummaryReport, HSPHSiteDataMixin):
                     site_ids=facilities['chf'],
                     user_ids=user_ids)
         }
+
+class FacilityWiseFollowUpRepoert(GenericTabularReport, DataSummaryReport, 
+                                                        HSPHSiteDataMixin):
+    name = "Facility Wise Follow Up Report"
+    slug = "hsph_facility_wise_follow_up"
+    fields = ['corehq.apps.reports.fields.GroupField',
+              'corehq.apps.reports.fields.DatespanField']
+              
+    show_all_rows_option = True
+    
+    @property
+    def headers(self):
+        return DataTablesHeader(
+            DataTablesColumn(_("Region")),
+            DataTablesColumn(_("District")),
+            DataTablesColumn(_("Site")),
+            DataTablesColumn(_("Fida Name")),
+            DataTablesColumn(_("Births")),
+            DataTablesColumn(_("Open Cases")),
+            DataTablesColumn(_("Not Yet Open for Follow Up")),
+            DataTablesColumn(_("Open for CATI Follow Up")),
+            DataTablesColumn(_("Open for FADA Follow Up")),
+            DataTablesColumn(_("TT Closed Cases")),
+            DataTablesColumn(_("Followed Up By Call Center")),
+            DataTablesColumn(_("Followed Up By Field")),
+            DataTablesColumn(_("Lost to Follow Up")),
+
+        )
+    
+    @property
+    def rows(self):
+        startdate = self.datespan.startdate_param_utc[:10]
+        enddate = self.datespan.enddate_param_utc[:10]
+        
+        site_keys = get_db().view('hsph/facility_wise_follow_up',
+                    reduce=True,
+                    group=True, group_level=4)
+                    
+        key_start = []
+        
+        def get_single_value(case_type, start_dte, end_dte):
+            data = get_db().view('hsph/facility_wise_follow_up',
+                                 reduce=True,
+                                 startkey=key_start + [case_type] + [start_dte],
+                                 endkey=key_start + [case_type] + [end_dte]
+            )
+            
+            return sum([ item['value'] for item in data])
+            
+        
+        
+        rows = []
+        today = date.today()
+        for item in  site_keys:
+            key_start = item['key']
+            region_id, district_id, site_id, site_number = item['key']
+            region_name = self.get_region_name(region_id)
+            district_name = self.get_district_name(region_id, district_id)
+            
+            if site_number.isdigit() and int(site_number) > 9:
+                site_name = self.get_site_name(region_id, district_id, 
+                int(site_number))
+            else:
+                site_name = self.get_site_name(region_id, district_id, 
+                site_number)
+                                             
+            admissions = get_single_value('admissions', startdate, enddate)
+            births = get_single_value('births', startdate, enddate)
+            
+            start = today - timedelta(days = 7)
+            not_yet_open_for_follow_up = get_single_value('needing_follow_up',
+            start.strftime('%Y-%m-%d'), today.strftime('%Y-%m-%d'))
+            
+            start = today - timedelta(days = 21)
+            end = today - timedelta(days = 8)
+            open_for_cati_follow_up = get_single_value('needing_follow_up',
+            start.strftime('%Y-%m-%d'), end.strftime('%Y-%m-%d'))
+                        
+            end = today - timedelta(days = 22)
+            open_for_fada_follow_up = get_single_value('needing_follow_up',
+            "", end.strftime('%Y-%m-%d'))
+            
+            # closed cases - cumulative
+            closed_cases = get_single_value('closed_cases', "", enddate)
+            
+            # cumulative lost_to_follow_up
+            lost_to_follow_up = get_single_value('lost_to_follow_up', "", enddate)
+            
+            followed_up_by_call_center = get_single_value(
+                                        'followed_up_by_call_center', "", enddate)
+            followed_up_by_field = get_single_value('followed_up_by_field', "",
+                                                                        enddate)
+                        
+            rows.append([region_name, district_name, site_name, "-", births, 
+            "-", not_yet_open_for_follow_up, open_for_cati_follow_up,
+            open_for_fada_follow_up, closed_cases, followed_up_by_call_center,
+            followed_up_by_field, lost_to_follow_up])   
+        return rows    
+    

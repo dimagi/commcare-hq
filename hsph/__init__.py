@@ -5,7 +5,8 @@ from hsph.reports.old import (field_management as old_field_management,
 
 new_reports = (
     ('Field Management', (
-        # FIDA Performance
+        # FIDA Performance   
+        data_summary.FacilityWiseFollowUpRepoert,
         # Facility Registrations
         # Facility-Wise Follow Up
         # Case Report
@@ -14,7 +15,7 @@ new_reports = (
         # CATI Performance
         # CATI Team Leaders
     )),
-    ('Data Summary Reports', (
+    ('Data Summary Reports', (    
         data_summary.PrimaryOutcomeReport,
         data_summary.SecondaryOutcomeReport,
         data_summary.FADAObservationsReport
