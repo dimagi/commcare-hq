@@ -47,7 +47,8 @@
                         video: '{% url hqmedia_uploader_video domain app.id %}'
                     },
                     swfURL: '{% static 'hqmedia/yui/assets/flashuploader.swf' %}',
-                    objectMap: {{ multimedia_object_map|JSON }}
+                    objectMap: {{ multimedia_object_map|JSON }},
+                    uploadControllerClass: HQMediaFileUploadController
                 },
                 saveType: 'patch',
                 form: {{ form.source|JSON }},
