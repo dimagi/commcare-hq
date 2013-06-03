@@ -158,13 +158,15 @@ def name_context(report):
     return {'name': report._name}
 
 
-class IndicatorClientList(GroupReferenceMixIn, ConvenientBaseMixIn,
-                          GenericTabularReport, CustomProjectReport,
-                          IndicatorMixIn):
+class ClientListBase(GroupReferenceMixIn, ConvenientBaseMixIn,
+                     GenericTabularReport, CustomProjectReport):
+    # "abstract" class for client list reports
+    report_template_path = "bihar/client_listing.html"
+
+class IndicatorClientList(ClientListBase, IndicatorMixIn):
+    is_cacheable = True
     slug = "indicatorclientlist"
     name = ugettext_noop("Client List") 
-    is_cacheable = True
-    report_template_path = "bihar/client_listing.html"
 
     extra_context_providers = [name_context]
 

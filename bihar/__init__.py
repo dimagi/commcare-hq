@@ -12,6 +12,7 @@ CUSTOM_REPORTS = (
         due_list.VaccinationSummaryTomorrow,
         due_list.VaccinationSummary2Days,
         due_list.VaccinationSummary3Days,
+        due_list.VaccinationClientList,
         supervisor.ToolsNavReport,
         supervisor.ReferralListReport,
         supervisor.EDDCalcReport,
