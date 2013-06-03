@@ -1,0 +1,24 @@
+{% extends "users/users_base.html" %}
+{% load i18n %}
+{% load crispy_forms_tags %}
+
+{% block subsection-title %}
+<li class="active">
+    <a href="#">{% trans "CommTrack Advanced Settings" %}</a>
+</li>
+{% endblock %}
+
+{% block js-inline %}
+<script>
+    $("#id_use_auto_consumption").change(function () {
+        $("#id_consumption_min_transactions, " +
+          "#id_consumption_min_window, " +
+          "#id_consumption_optimal_window"
+        ).prop('disabled', $(this).prop('checked'));
+    }).change();
+</script>
+{% endblock %}
+
+{% block user-view %}
+    {% crispy form %}
+{% endblock %}

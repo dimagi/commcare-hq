@@ -181,9 +181,12 @@ var COMMCAREHQ = (function () {
             return el;
         },
         initBlock: function ($elem) {
-            $('.submit_on_click', $elem).click(function (e) {
+            $('.submit_on_click', $elem).on("click", function (e) {
                 e.preventDefault();
-                $(this).prev('form').submit();
+                if (!$(this).data('clicked')) {
+                    $(this).prev('form').submit();
+                    $(this).data('clicked', 'true').children('i').removeClass().addClass("icon-refresh icon-spin");
+                }
             });
 
             $('.submit').click(function (e) {

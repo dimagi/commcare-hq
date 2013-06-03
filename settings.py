@@ -23,9 +23,6 @@ except IndexError:
 ADMINS = ()
 MANAGERS = ADMINS
 
-# Default reporting database should be overridden in localsettings.
-SQL_REPORTING_DATABASE_URL = "sqlite:////tmp/commcare_reporting_test.db"
-
 # default to the system's timezone settings
 TIME_ZONE = "UTC"
 
@@ -222,6 +219,7 @@ HQ_APPS = (
 
     # custom reports
     'a5288',
+    'benin',
     'bihar',
     'dca',
     'hsph',
@@ -241,6 +239,12 @@ INSTALLED_APPS = DEFAULT_APPS + HQ_APPS
 # after login, django redirects to this URL
 # rather than the default 'accounts/profile'
 LOGIN_REDIRECT_URL = '/'
+
+
+# Default reporting database should be overridden in localsettings.
+SQL_REPORTING_DATABASE_URL = "sqlite:////tmp/commcare_reporting_test.db"
+
+REPORT_CACHE = 'default' # or e.g. 'redis'
 
 ####### Domain settings  #######
 
@@ -450,11 +454,15 @@ LOGGING = {
         'mail_admins': {
             'level': 'ERROR',
             'class': 'django.utils.log.AdminEmailHandler',
-        }
+        },
+        'sentry': {
+            'level': 'ERROR',
+            'class': 'raven.contrib.django.raven_compat.handlers.SentryHandler',
+        },
     },
     'loggers': {
         '': {
-            'handlers': ['console', 'file', 'couchlog'],
+            'handlers': ['console', 'file', 'couchlog', 'sentry'],
             'propagate': True,
             'level': 'INFO',
         },
@@ -585,6 +593,7 @@ COUCHDB_APPS = [
     'couchlog',
 
     # custom reports
+    'benin',
     'dca',
     'hsph',
     'mvp',
@@ -674,6 +683,8 @@ INDICATOR_CONFIG = {
     "mvp-potou": ['mvp_indicators'],
 }
 
+CASE_WRAPPER = 'corehq.apps.hqcase.utils.get_case_wrapper'
+
 PILLOWTOPS = [
                  'corehq.pillows.case.CasePillow',
                  'corehq.pillows.fullcase.FullCasePillow',
@@ -681,6 +692,7 @@ PILLOWTOPS = [
                  'corehq.pillows.fullxform.FullXFormPillow',
                  'corehq.pillows.domain.DomainPillow',
                  'corehq.pillows.exchange.ExchangePillow',
+                 'corehq.pillows.commtrack.ConsumptionRatePillow',
 
                  # fluff
                  'bihar.models.CareBiharFluffPillow',
