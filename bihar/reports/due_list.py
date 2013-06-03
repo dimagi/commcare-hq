@@ -7,6 +7,65 @@ from datetime import datetime, timedelta
 
 BIHAR_DOMAIN = 'care-bihar' # TODO: where should this go?
 
+DUE_LIST_CONFIG = [
+    {
+        'title': ugettext_noop('ANC'),
+        'tasks': [
+            "anc_1",
+            "anc_2",
+            "anc_3",
+            "anc_4",
+            ]
+    },
+    {
+        'title': ugettext_noop('TT'),
+        'tasks': [
+            "tt_1",
+            "tt_2",
+            "tt_booster",
+            ]
+    },
+    {
+        'title': ugettext_noop('BCG'),
+        'tasks': ["bcg",]
+    },
+    {
+        'title': ugettext_noop('OPV'),
+        'tasks': [
+            "opv_0",
+            "opv_1",
+            "opv_2",
+            "opv_3",
+            "opv_booster",
+            ]
+    },
+    {
+        'title': ugettext_noop('DPT'),
+        'tasks': ["dpt_1",
+                  "dpt_2",
+                  "dpt_3",
+                  "dpt_booster",
+                  ]
+    },
+    {
+        'title': ugettext_noop('Hepatitis B'),
+        'tasks': ["hep_0",
+                  "hep_1",
+                  "hep_2",
+                  "hep_3",
+                  ]
+    },
+    {
+        'title': ugettext_noop('Measles'),
+        'tasks': ["measles",]
+    },
+    {
+        'title': ugettext_noop('Vitamin A'),
+        'tasks': ["vita_1",]
+    },
+    # test - to ignore: ["hep_b_0", "je", "vit_a_1"]
+]
+
 class DueListNav(GroupReferenceMixIn, BiharNavReport):
     slug = "duelistnav"
     name = ugettext_noop("Due List")
@@ -37,23 +96,26 @@ class VaccinationSummary(GroupReferenceMixIn, BiharSummaryReport):
 
     @property
     def _headers(self):
-        return [_("Vaccination Name")] + [res[0] for res in self.due_list_by_task_name()]
+        return [_("Vaccination Name")] + [_(res[0]) for res in self.due_list_results()]
 
     @property
     def data(self):
-        return [_("# Due")] + [res[1] for res in self.due_list_by_task_name()]
+        return [_("# Due")] + [res[1] for res in self.due_list_results()]
 
     @memoized
-    def due_list_by_task_name(self):
+    def due_list_results(self):
         """
         Returns the due list in a list of tuples of the form (type, count)
         """
         target_date = self.get_date()
         owner_id = self.group_id
-        return sorted(get_due_list_by_task_name(target_date, owner_id),
-                      key=lambda tup: tup[0])
+        by_task_name = get_due_list_by_task_name(target_date, owner_id)
+        return list(format_results(by_task_name))
 
-
+def format_results(results):
+    results_dict = dict(results)
+    for item in DUE_LIST_CONFIG:
+        yield (item['title'], sum(results_dict.get(t, 0) for t in item['tasks']))
 
 def get_due_list_by_task_name(target_date, owner_id=None, case_es=None, size=0, case_type='task'):
     case_es = case_es or FullCaseES(BIHAR_DOMAIN)
@@ -81,7 +143,7 @@ def get_due_list_by_task_name(target_date, owner_id=None, case_es=None, size=0, 
     base_query['filter']['and'] += filter['and']
     base_query['facets'] = {
         facet_name: {
-            "terms": {"field":"name.exact", "size": 1000},
+            "terms": {"field":"task_id", "size": 1000},
             "facet_filter": filter # This controls the records processed for the summation
         }
     }
@@ -159,5 +221,3 @@ class DueListSelectionReport(SubCenterSelectionReport):
 
     next_report_slug = DueListNav.slug
     next_report_class = DueListNav
-
-
