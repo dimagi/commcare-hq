@@ -1423,12 +1423,8 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
     def sync_user_cases(cls, commcare_user):
         from casexml.apps.case.tests.util import CaseBlock
 
-        if hasattr(commcare_user, 'RECENTLY_SYNCED_CASE'):
-            del commcare_user.RECENTLY_SYNCED_CASE
-            return
-
         domain = commcare_user.projects[0]
-        if not domain.callcenter_enabled:
+        if not (domain and domain.call_center_enabled):
             return
 
         fields = {'name': commcare_user.name,
@@ -1475,9 +1471,6 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
 
         casexml = ElementTree.tostring(caseblock.as_xml())
         submit_case_blocks(casexml, domain, commcare_user.username, commcare_user._id)
-
-        commcare_user.RECENTLY_SYNCED_CASE = True
-
 
 class OrgMembershipMixin(DocumentSchema):
     org_memberships = SchemaListProperty(OrgMembership)
