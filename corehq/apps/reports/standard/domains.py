@@ -172,7 +172,7 @@ def es_domain_query(params, facets=None, terms=None, domains=None, return_q_dict
                             "operator" : "or", }}}}}
 
     q["facets"] = {}
-    stats = ['cp_n_active_cases', 'cp_n_active_cc_users', 'cp_n_cc_users', 'cp_n_60_day_cases', 'cp_n_web_users', 'cp_n_forms', 'cp_n_cases']
+    stats = ['cp_n_active_cases', 'cp_n_inactive_cases', 'cp_n_active_cc_users', 'cp_n_cc_users', 'cp_n_60_day_cases', 'cp_n_web_users', 'cp_n_forms', 'cp_n_cases']
     for prop in stats:
         q["facets"].update({"%s-STATS" % prop: {"statistical": {"field": prop}}})
 
@@ -244,6 +244,8 @@ class AdminDomainStatsReport(DomainStatsReport, ElasticTabularReport):
                 help_text=_("The number of cases modified in the last 60 days")),
             DataTablesColumn(_("# Active Cases"), sort_type=DTSortType.NUMERIC, prop_name="cp_n_active_cases",
                 help_text=_("The number of cases modified in the last 120 days")),
+            DataTablesColumn(_("# Inactive Cases"), sort_type=DTSortType.NUMERIC, prop_name="cp_n_inactive_cases",
+                help_text=_("The number of open cases not modified in the last 120 days")),
             DataTablesColumn(_("# Cases"), sort_type=DTSortType.NUMERIC, prop_name="cp_n_cases"),
             DataTablesColumn(_("# Form Submissions"), sort_type=DTSortType.NUMERIC, prop_name="cp_n_forms"),
             DataTablesColumn(_("First Form Submission"), prop_name="cp_first_form"),
@@ -276,9 +278,10 @@ class AdminDomainStatsReport(DomainStatsReport, ElasticTabularReport):
             5: "cp_n_cc_users",
             6: "cp_n_60_day_cases",
             7: "cp_n_active_cases",
-            8: "cp_n_cases",
-            9: "cp_n_forms",
-            12: "cp_n_web_users",
+            8: "cp_n_inactive_cases",
+            9: "cp_n_cases",
+            10: "cp_n_forms",
+            13: "cp_n_web_users",
         }
         def stat_row(name, what_to_get, type='float'):
             row = [name]
@@ -318,6 +321,7 @@ class AdminDomainStatsReport(DomainStatsReport, ElasticTabularReport):
                     dom.get("cp_n_cc_users", _("Not yet calculated")),
                     dom.get("cp_n_60_day_cases", _("Not yet calculated")),
                     dom.get("cp_n_active_cases", _("Not yet calculated")),
+                    dom.get("cp_n_inactive_cases", _("Not yet calculated")),
                     dom.get("cp_n_cases", _("Not yet calculated")),
                     dom.get("cp_n_forms", _("Not yet calculated")),
                     format_date(dom.get("cp_first_form"), _("No forms")),
