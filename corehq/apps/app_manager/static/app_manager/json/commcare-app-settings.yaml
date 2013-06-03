@@ -85,7 +85,6 @@
 - id: admin_password
   name: "Admin Password"
   widget: password
-  requires: "{$parent.doc_type}='Application'"
   hide_if_not_enabled: true
 
 - id: show_user_registration
