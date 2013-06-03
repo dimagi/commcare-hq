@@ -127,7 +127,8 @@ class Test(TestCase):
                              visits_week=dict(all_visits=[date(2012, 02, 23)],
                                               null_emitter=[]))
         diff = doc.diff(None)
-        expected = dict(database=MockIndicators.Meta.app_label,
+        expected = dict(domains=['test'],
+                        database=MockIndicators.Meta.app_label,
                         doc_type='MockIndicators',
                         group_values=['mock', '123'],
                         group_names=['domain', 'owner_id'],
@@ -161,7 +162,8 @@ class Test(TestCase):
         diff = new.diff(current)
         self.assertIsNotNone(diff)
         self.maxDiff = None
-        expected = dict(database=MockIndicators.Meta.app_label,
+        expected = dict(domains=['test'],
+                        database=MockIndicators.Meta.app_label,
                         doc_type='MockIndicators',
                         group_values=['mock', '123'],
                         group_names=['domain', 'owner_id'],
