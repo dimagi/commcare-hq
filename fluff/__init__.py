@@ -206,6 +206,7 @@ class IndicatorDocument(schema.Document):
         Return value is None for no diff or a dict with all indicator values
         that are different (added / removed / changed):
             {
+                domains: ['domain1', 'domain2']
                 database: 'db1',
                 doc_type: 'MyIndicators',
                 group_names: ['domain', 'owner_id'],
@@ -235,7 +236,8 @@ class IndicatorDocument(schema.Document):
         if not diff_keys:
             return None
 
-        diff = dict(database=self.Meta.app_label,
+        diff = dict(domains=list(self.domains),
+                    database=self.Meta.app_label,
                     doc_type=self._doc_type,
                     group_names=list(self.group_by),
                     group_values=[self[calc_name] for calc_name in self.group_by],
