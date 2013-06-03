@@ -16,7 +16,6 @@ from django.contrib.sites.models import Site
 from django.core.urlresolvers import reverse
 from django.core.exceptions import ValidationError
 from django.template.loader import render_to_string
-from django.db.models import signals
 from couchdbkit.ext.django.schema import *
 from couchdbkit.resource import ResourceNotFound
 from dimagi.utils.couch.database import get_safe_write_kwargs
