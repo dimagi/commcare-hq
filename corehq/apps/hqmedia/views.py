@@ -4,25 +4,20 @@ import logging
 import os
 from django.contrib.auth.decorators import login_required
 from django.core.servers.basehttp import FileWrapper
-import magic
 import json
 from django.core.urlresolvers import reverse
-from django.template.loader import render_to_string
 from django.utils.decorators import method_decorator
 from django.views.generic import View, TemplateView
-from StringIO import StringIO
 
 from couchdbkit.exceptions import ResourceNotFound
 
 from django.http import HttpResponse, Http404, HttpResponseRedirect, HttpResponseServerError, HttpResponseBadRequest
 
-from django.views.decorators.http import require_POST
 from django.shortcuts import render
 
 from corehq.apps.app_manager.decorators import safe_download
 from corehq.apps.app_manager.views import require_can_edit_apps, set_file_download, ApplicationViewMixin
 from corehq.apps.app_manager.models import get_app
-from corehq.apps.hqmedia import utils
 from corehq.apps.hqmedia.cache import BulkMultimediaStatusCache
 from corehq.apps.hqmedia.controller import MultimediaBulkUploadController, MultimediaImageUploadController, MultimediaAudioUploadController, MultimediaVideoUploadController
 from corehq.apps.hqmedia.models import CommCareImage, CommCareAudio, CommCareMultimedia, MULTIMEDIA_PREFIX, CommCareVideo

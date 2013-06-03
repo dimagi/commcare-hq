@@ -15,7 +15,7 @@ from couchforms.models import XFormError
 from dimagi.utils.decorators.memoized import memoized
 from hutch.models import AuxMedia
 from corehq.apps.domain.models import LICENSES
-from dimagi.utils.couch.database import get_db, SafeSaveDocument, get_safe_read_kwargs
+from dimagi.utils.couch.database import get_db, SafeSaveDocument, get_safe_read_kwargs, iter_docs
 from django.utils.translation import ugettext as _
 
 MULTIMEDIA_PREFIX = "jr://file/"
@@ -573,15 +573,22 @@ class HQMediaMixin(Document):
         """
             Gets all the media objects stored in the multimedia map.
         """
+        found_missing_mm = False
+        # preload all the docs to avoid excessive couch queries.
+        # these will all be needed in memory anyway so this is ok.
+        expected_ids = [map_item.multimedia_id for map_item in self.multimedia_map.values()]
+        raw_docs = dict((d["_id"], d) for d in iter_docs(CommCareMultimedia.get_db(), expected_ids))
         for path, map_item in self.multimedia_map.items():
-            media = CommCareMultimedia.get_doc_class(map_item.media_type)
-            try:
-                media = media.get(map_item.multimedia_id)
-                yield path, media
-            except ResourceNotFound:
+            media_item = raw_docs.get(map_item.multimedia_id)
+            if media_item:
+                media_cls = CommCareMultimedia.get_doc_class(map_item.media_type)
+                yield path, media_cls.wrap(media_item)
+            else:
                 # delete media reference from multimedia map so this doesn't pop up again!
                 del self.multimedia_map[path]
-                self.save()
+                found_missing_mm = True
+        if found_missing_mm:
+            self.save()
 
     def get_references(self, lang=None):
         """
