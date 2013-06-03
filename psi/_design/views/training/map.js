@@ -83,7 +83,7 @@ function (doc) {
                 var ay_num = ay_f["num_trained"];
                 data[slug+"_allo_trained"] = al_num;
                 data[slug+"_ayush_trained"] = ay_num;
-                data[slug+"_avg_diff"] = (al_f["avg_diff"] * al_num) + (ay_f["avg_diff"] * ay_num) / (al_num + ay_num || 1);
+                data[slug+"_avg_diff"] = ((al_f["avg_diff"] * al_num) + (ay_f["avg_diff"] * ay_num)) / (al_num + ay_num || 1);
                 data[slug+"_gt80"] = al_f["num_80_percent"] + al_f["num_80_percent"];
             }
             else {
