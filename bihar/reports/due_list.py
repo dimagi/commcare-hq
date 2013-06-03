@@ -88,6 +88,39 @@ def get_due_list_by_task_name(target_date, owner_id=None, case_es=None, size=0, 
     es_result = case_es.run_query(base_query, es_type=es_type)
     return ((facet['term'], facet['count']) for facet in es_result['facets'][facet_name]['terms'])
 
+def get_due_list_records(target_date, owner_id=None, case_es=None, size=None, case_type='task', name=None):
+    '''
+    A drill-down of the get_due_list_by_task_name, this returns the records for a particular name
+    (which is the name of a vaccination)
+    '''
+    
+    case_es = case_es or FullCaseES(BIHAR_DOMAIN)
+    es_type = 'fullcase_%(domain)s__%(case_type)s' % { 'domain': BIHAR_DOMAIN, 'case_type': 'task' }
+
+    # The type of vaccination is stored in the `name` field in ElasticSearch
+    # so we filter on `name.exact` so that "OPV 1" is not tokenized into two words
+
+    base_query = case_es.base_query(start=0, size=size)
+
+    owner_filter = {"match_all":{}} if owner_id is None else {"term": {"owner_id": owner_id}}
+
+    name_filter = {"match_all":{}} if name is None else {"term": {"name.exact": name}}
+
+    filter = {
+        "and": [
+            owner_filter,
+            name_filter,
+            {"term": {"closed": False}},
+            {"term": {"type": case_type}},
+            {"range": {"date_eligible": {"to": target_date.isoformat() }}},
+            {"range": {"date_expires": {"from": target_date.isoformat()}}},
+        ]
+    }
+
+    base_query['filter']['and'] += filter['and']
+    es_result = case_es.run_query(base_query, es_type=es_type)
+    return (result['_source'] for result in es_result['hits']['hits'])
+
 # TODO: this is pretty silly but doing this without classes would be a bit of extra work
 class VaccinationSummaryToday(VaccinationSummary):
     name = ugettext_noop("Care Due Today")
