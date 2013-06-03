@@ -274,6 +274,13 @@ class OrgInvitationView(InvitationView):
     def validate_invitation(self, invitation):
         assert invitation.organization == self.organization
 
+    def is_invited(self, invitation, couch_user):
+        return couch_user.is_member_of_org(invitation.organization)
+
+    @property
+    def inviting_entity(self):
+        return self.organization
+
     @property
     def success_msg(self):
         return "You have been added to the %s organization" % self.organization
