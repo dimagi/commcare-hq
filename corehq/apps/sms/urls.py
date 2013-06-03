@@ -12,4 +12,6 @@ urlpatterns = patterns('corehq.apps.sms.views',
     url(r'^add_forwarding_rule/$', 'add_forwarding_rule', name='add_forwarding_rule'),
     url(r'^edit_forwarding_rule/(?P<forwarding_rule_id>[\w-]+)/$', 'add_forwarding_rule', name='edit_forwarding_rule'),
     url(r'^delete_forwarding_rule/(?P<forwarding_rule_id>[\w-]+)/$', 'delete_forwarding_rule', name='delete_forwarding_rule'),
+    url(r'^add_backend/(?P<backend_class_name>[\w-]+)/$', 'add_domain_backend', name='add_domain_backend'),
+    url(r'^edit_backend/(?P<backend_class_name>[\w-]+)/(?P<backend_id>[\w-]+)/$', 'add_domain_backend', name='edit_domain_backend'),
 )

@@ -103,12 +103,13 @@ def send_message_via_backend(msg, backend=None, onerror=lambda: None):
             # send_sms_to_verified_number on truly verified contacts, though
 
         if backend.domain_is_authorized(msg.domain):
-            backend.backend_module.send(msg, **backend.get_cleaned_outbound_params())
+            backend.send(msg)
         else:
             raise BackendAuthorizationException("Domain '%' is not authorized to use backend '%s'" % (domain, backend._id))
 
         try:
-            msg.backend_api = backend.backend_module.API_ID
+            msg.backend_api = backend.__class__.get_api_id()
+            msg.backend_id = backend._id
         except Exception:
             pass
         msg.save()

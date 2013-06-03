@@ -198,6 +198,7 @@ HQ_APPS = (
     'corehq.apps.tropo',
     'corehq.apps.kookoo',
     'corehq.apps.yo',
+    'corehq.apps.telerivet',
     'corehq.apps.registration',
     'corehq.apps.unicel',
     'corehq.apps.reports',
@@ -642,6 +643,15 @@ SMS_HANDLERS = [
     'corehq.apps.sms.api.structured_sms_handler',
     'corehq.apps.sms.api.form_session_handler',
     'corehq.apps.sms.api.fallback_handler',
+]
+
+SMS_LOADED_BACKENDS = [
+    "corehq.apps.sms.mach_api.MachBackend",
+    "corehq.apps.sms.tropo.api.TropoBackend",
+    "corehq.apps.sms.backend.http_api.HttpBackend",
+    "corehq.apps.telerivet.api.TelerivetBackend",
+    "corehq.apps.sms.test_backend.TestSMSBackend",
+    "corehq.apps.sms.backend.test.TestBackend",
 ]
 
 # mapping of phone number prefix (including country code) to a registered

@@ -3,32 +3,36 @@ from corehq.apps.sms.util import clean_outgoing_sms_text, create_billable_for_sm
 import urllib
 from django.conf import settings
 import urllib2
+from corehq.apps.sms.mixin import SMSBackend
+from couchdbkit.ext.django.schema import *
 
-API_ID = "MACH"
+MACH_URL = "http://gw1.promessaging.com/sms.php"
 
-DEFAULT_SENDER_ID = "DIMAGI"
+class MachBackend(SMSBackend):
+    account_id = StringProperty()
+    password = StringProperty()
+    sender_id = StringProperty()
 
-def send(msg, delay=True, *args, **kwargs):
-    """
-    Sends a message via mach's API
-    """
-    context = {
-        'phone_number': urllib.quote(msg.phone_number),
-        'sender_id': urllib.quote(kwargs.get("sender_id", DEFAULT_SENDER_ID)),
-    }
-    encoding_param = ""
-    try:
-        text = msg.text.encode("iso-8859-1")
-        context["message"] = clean_outgoing_sms_text(text)
-    except UnicodeEncodeError:
-        context["message"] = msg.text.encode("utf-16-be").encode("hex")
-        encoding_param = "&encoding=ucs"
-    url = "%s?%s%s" % (settings.SMS_GATEWAY_URL, settings.SMS_GATEWAY_PARAMS % context, encoding_param)
-    # just opening the url is enough to send the message
-    # TODO, check response
-    resp = urllib2.urlopen(url).read()
-    msg.save()
+    @classmethod
+    def get_api_id(cls):
+        return "MACH"
 
-    create_billable_for_sms(msg, API_ID, delay=delay, response=resp)
+    def send(msg, delay=True, *args, **kwargs):
+        params = {
+            "id" : self.account_id,
+            "pw" : self.password,
+            "snr" : self.sender_id,
+            "dnr" : msg.phone_number,
+        }
+        try:
+            text = msg.text.encode("iso-8859-1")
+            params["msg"] = text
+        except UnicodeEncodeError:
+            params["msg"] = msg.text.encode("utf-16-be").encode("hex")
+            params["encoding"] = "ucs"
+        url = "%s?%s" % (MACH_URL, urllib.urlencode(params))
+        resp = urllib2.urlopen(url).read()
 
-    return resp
+        create_billable_for_sms(msg, MachBackend.get_api_id(), delay=delay, response=resp)
+
+        return resp

@@ -12,7 +12,9 @@ from corehq.apps.sms.api import send_sms, incoming, send_sms_with_backend
 from corehq.apps.users.models import CouchUser
 from corehq.apps.users import models as user_models
 from corehq.apps.sms.models import SMSLog, INCOMING, ForwardingRule
+from corehq.apps.sms.mixin import MobileBackend
 from corehq.apps.sms.forms import ForwardingRuleForm
+from corehq.apps.sms.util import get_available_backends
 from corehq.apps.groups.models import Group
 from corehq.apps.domain.decorators import login_and_domain_required, login_or_digest, domain_admin_required, require_superuser
 from dimagi.utils.couch.database import get_db
@@ -295,4 +297,41 @@ def delete_forwarding_rule(request, domain, forwarding_rule_id):
         raise Http404
     forwarding_rule.retire()
     return HttpResponseRedirect(reverse("list_forwarding_rules", args=[domain]))
+
+@domain_admin_required
+def add_domain_backend(request, domain, backend_class_name, backend_id=None):
+    backend_classes = get_available_backends()
+    backend_class = backend_classes[backend_class_name]
+    
+    backend = None
+    if backend_id is not None:
+        backend = backend_class.get(backend_id)
+        if backend.domain != domain:
+            raise Http404
+    
+    common_fields = ["name","authorized_domains"]
+    if request.method == "POST":
+        form = backend_class.get_form_class()(request.POST)
+        if form.is_valid():
+            if backend is None:
+                backend = backend_class(domain=domain, is_global=False)
+            backend.name = form.cleaned_data.get("name")
+            backend.authorized_domains = form.cleaned_data.get("authorized_domains")
+            for key, value in form.cleaned_data.items():
+                if key not in common_fields:
+                    setattr(backend, key, value)
+            backend.save()
+    else:
+        initial = {}
+        if backend is not None:
+            for field in backend_class.get_form_class()():
+                initial[field.name] = getattr(backend, field.name, None)
+        form = backend_class.get_form_class()(initial=initial)
+    context = {
+        "domain" : domain,
+        "form" : form,
+        "backend_specific_template" : backend_class.get_template(),
+        "backend_class_name" : backend_class_name,
+    }
+    return render(request, "sms/add_backend.html", context)
 

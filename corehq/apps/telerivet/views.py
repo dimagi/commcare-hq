@@ -2,7 +2,7 @@ from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_POST
 from django.http import HttpResponse
 from corehq.apps.sms.api import incoming as incoming_sms
-from corehq.apps.telerivet.api import API_ID
+from corehq.apps.telerivet.api import TelerivetBackend
 
 EVENT_INCOMING = "incoming_message"
 MESSAGE_TYPE_SMS = "sms"
@@ -28,7 +28,7 @@ def incoming_message(request):
     
     if event == EVENT_INCOMING:
         if message_type == MESSAGE_TYPE_SMS:
-            incoming_sms(from_number, content, API_ID)
+            incoming_sms(from_number, content, TelerivetBackend.get_api_id())
     
     return HttpResponse()
 

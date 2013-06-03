@@ -23,3 +23,11 @@ class ForwardingRuleForm(Form):
         else:
             return None
 
+class BackendForm(Form):
+    name = CharField()
+    authorized_domains = CharField(required=False)
+
+    def clean_authorized_domains(self):
+        value = self.cleaned_data.get("authorized_domains")
+        return [domain.strip() for domain in value.split(",")]
+

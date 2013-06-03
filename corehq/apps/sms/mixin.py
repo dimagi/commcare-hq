@@ -4,6 +4,7 @@ from django.conf import settings
 from dimagi.utils.couch.database import get_safe_write_kwargs
 from dimagi.utils.modules import try_import
 from corehq.apps.domain.models import Domain
+from corehq.apps.sms.util import get_available_backends
 
 phone_number_re = re.compile("^\d+$")
 
@@ -77,10 +78,16 @@ class MobileBackend(Document):
     """
     Defines an instance of a backend api to be used for either sending sms, or sending outbound calls.
     """
+    class Meta:
+        app_label = "sms"
+
+    base_doc = "MobileBackend"
     domain = StringProperty()               # This is the domain that the backend belongs to, or None for global backends
+    name = StringProperty()                 # For domain-specific backends, the name to use when setting this backend for a contact
     authorized_domains = ListProperty(StringProperty)  # A list of additional domains that are allowed to use this backend
     is_global = BooleanProperty(default=True)  # If True, this backend can be used for any domain
     description = StringProperty()          # (optional) A description of this backend
+    # TODO: Once the ivr backends get refactored, can remove these two properties:
     outbound_module = StringProperty()      # The fully-qualified name of the outbound module to be used (sms backends: must implement send(); ivr backends: must implement initiate_outbound_call() )
     outbound_params = DictProperty()        # The parameters which will be the keyword arguments sent to the outbound module's send() method
 
@@ -114,36 +121,42 @@ class MobileBackend(Document):
     @classmethod
     def load(cls, backend_id):
         """load a mobile backend
-        for 'old-style' backends, create a virtual backend record
-        wrapping the backend module
         """
-        # new-style backend
-        try:
-            return cls.get(backend_id)
-        except:
-            pass
+        backend_classes = get_available_backends()
+        backend = cls.get(backend_id)
+        if backend.doc_type not in backend_classes:
+            raise Exception("Unexpected backend doc_type found '%s' for backend '%s'" % (backend.doc_type, backend._id))
+        else:
+            return backend_classes[backend.doc_type].wrap(backend.to_json())
 
-        # old-style backend
+    @classmethod
+    def get_api_id(cls):
+        """
+        This method should return the backend's api id.
+        TODO: We can probably remove this method if everything is switched to check what subclass of MobileBackend is being used.
+        """
+        raise NotImplementedError("Please define get_api_id()")
 
-        # hard-coded old-style backends with new-style IDs
-        # once the backend migration is complete, these backends
-        # should exist in couch
-        transitional = {
-            'MOBILE_BACKEND_MACH': 'corehq.apps.sms.mach_api',
-            'MOBILE_BACKEND_UNICEL': 'corehq.apps.unicel.api',
-            'MOBILE_BACKEND_TEST': 'corehq.apps.sms.test_backend',
-            # tropo?
-        }
-        try:
-            module = transitional[backend_id]
-        except KeyError:
-            module = backend_id
+    @classmethod
+    def get_description(cls):
+        """
+        This method should return a descriptive name for this backend, for use in identifying it to an end user.
+        """
+        raise NotImplementedError("Please define get_description()")
 
-        return cls(
-            _id=backend_id,
-            outbound_module=module,
-            description='virtual backend for %s' % backend_id,
-        )
+    @classmethod
+    def get_template(cls):
+        """
+        This method should return the path to the Django template which will be used to capture values for this backend's specific properties.
+        """
+        raise NotImplementedError("Please define get_template()")
+
+    @classmethod
+    def get_form_class(cls):
+        """
+        This method should return a subclass of corehq.apps.sms.forms.BackendForm
+        """
+        raise NotImplementedError("Please define get_form_class()")
 
     @property
     def backend_module(self):
@@ -155,6 +168,12 @@ class MobileBackend(Document):
     def get_cleaned_outbound_params(self):
         # for passing to functions, ensure the keys are all strings
         return dict((str(k), v) for k, v in self.outbound_params.items())
+
+class SMSBackend(MobileBackend):
+    backend_type = "SMS"
+
+    def send(msg, *args, **kwargs):
+        raise NotImplementedError("send() method not implemented")
 
 class CommCareMobileContactMixin(object):
     """

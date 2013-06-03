@@ -1,0 +1,49 @@
+{% extends 'hqwebapp/two_column.html' %}
+{% load i18n %}
+{% load hq_shared_tags %}
+{% load timezone_tags %}
+
+{% block js-inline %}{{ block.super }}
+<script>
+</script>
+{% endblock %}
+
+{% block page-title %}
+    <ul class="breadcrumb">
+        <li>
+            <a href="{% url messaging domain %}"><strong>Messaging</strong></a> <span class="divider">&gt;</span>
+        </li>
+        <li class="active">
+            <div id="report-title">
+            {% block page-subtitle %}
+                {% if backend_id %}
+                    <a href="{% url add_domain_backend domain backend_class_name backend_id %}">Edit Backend</a>
+                {% else %}
+                    <a href="{% url add_domain_backend domain backend_class_name %}">Add Backend</a>
+                {% endif %}
+            {% endblock %}
+            </div>
+        </li>
+    </ul>
+{% endblock %}
+
+{% block main_column %}
+    <form action="" method="post">
+        <table>
+            <tr>
+                <th><label for="id_name">Name</label></th>
+                <td><input type="text" name="name" id="id_name" value="{{ form.name.value|default:'' }}" /></td>
+                <td>{{ form.name.errors }}</td>
+            </tr>
+            <tr>
+                <th><label for="id_authorized_domains">List domains here:</label></th>
+                <td><input type="text" name="authorized_domains" id="id_authorized_domains" value="{{ form.authorized_domains.value|default:'' }}" /></td>
+                <td>{{ form.authorized_domains.errors }}</td>
+            </tr>
+            {% if backend_specific_template %}
+            {% include backend_specific_template %}
+            {% endif %}
+        </table>
+        <input type="submit" class="btn btn-primary" value="Submit" />
+    </form>
+{% endblock %}
