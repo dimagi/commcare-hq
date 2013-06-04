@@ -281,7 +281,6 @@ class DomainMetadataForm(DomainGlobalSettingsForm, SnapshotSettingsMixin):
         if domain is not None:
             groups = Group.get_case_sharing_groups(domain)
             users = CommCareUser.by_domain(domain)
-            web_users = WebUser.by_domain(domain)
 
             domain_group_choices = [(group._id, group.name) for group in groups]
             domain_user_choices = [(user._id, user.raw_username) for user in users]

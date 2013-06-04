@@ -1006,11 +1006,10 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, UnicodeMixIn):
 
     @classmethod
     def django_user_post_save_signal(cls, sender, django_user, created, max_tries=3):
-        couch_user = cls.from_django_user(django_user)
-
         if hasattr(django_user, 'DO_NOT_SAVE_COUCH_USER'):
             del django_user.DO_NOT_SAVE_COUCH_USER
         else:
+            couch_user = cls.from_django_user(django_user)
             if couch_user:
                 couch_user.sync_from_django_user(django_user)
 
