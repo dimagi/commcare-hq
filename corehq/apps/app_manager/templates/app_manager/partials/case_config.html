@@ -205,6 +205,7 @@
             <div data-bind="template: {name: 'case-config:case-transaction', data: case_transaction}">
             </div>
         </div>
+        <!--ko if: actionType() !== 'none'-->
         <header class="clearfix" data-bind="visible: actionType() !== 'open-other'">
             <h5 class="pull-left">{% trans "Child Cases" %}</h5>
             <span data-bind="makeHqHelp: {}"
@@ -229,7 +230,7 @@
                 </span>
                 <a href="#" data-bind="openModal: 'remove-subcase-modal-template', visible: $root.edit" class="pull-right">
                     <i class="icon-trash"></i>
-                    {% trans "Remove subcase" %}
+                    {% trans "Remove case" %}
                 </a>
             </div>
             <div data-bind="template: 'case-config:case-transaction'"></div>
@@ -240,5 +241,6 @@
                 {% trans "Opens a case for a different case list..." %}
             </a>
         </div>
+        <!--/ko-->
     </div>
 </div>

@@ -101,11 +101,15 @@ var CaseConfig = (function () {
             unsavedMessage: "You have unchanged case settings",
             save: function () {
                 var requires = self.caseConfigViewModel.actionType() === 'update' ? 'case' : 'none';
+                var subcases;
+                if (self.caseConfigViewModel.actionType() === 'none') {
+                    subcases = [];
+                } else {
+                    subcases = _(self.caseConfigViewModel.subcases()).map(HQOpenSubCaseAction.from_case_transaction);
+                }
                 var actions = JSON.stringify(_(self.actions).extend(
                     HQFormActions.from_case_transaction(self.caseConfigViewModel.case_transaction),
-                    {
-                        subcases: _(self.caseConfigViewModel.subcases()).map(HQOpenSubCaseAction.from_case_transaction)
-                    }
+                    {subcases: subcases}
                 ));
 
                 self.saveButton.ajax({
