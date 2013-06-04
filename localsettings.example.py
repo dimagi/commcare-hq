@@ -138,6 +138,9 @@ ADM_ENABLED_PROJECTS = []
 SOIL_DEFAULT_CACHE = "redis"
 SOIL_BACKEND = "soil.CachedDownload"
 
+# reports cache
+REPORT_CACHE = 'default' # or e.g. 'redis'
+
 CACHES = {
     'default': {
         'BACKEND': 'django.core.cache.backends.memcached.MemcachedCache',
@@ -147,7 +150,7 @@ CACHES = {
         'BACKEND': 'redis_cache.cache.RedisCache',
         'LOCATION': 'localhost:6379',
         'OPTIONS': {},
-    }
+    },
 }
 
 ELASTICSEARCH_HOST = 'localhost' #on both a local and a distributed environment this should be

@@ -1,15 +1,34 @@
 from StringIO import StringIO
 import functools
 import logging
+import hashlib
+import os
+import re
+import json
+from collections import defaultdict
+from xml.dom.minidom import parseString
+
 from diff_match_patch import diff_match_patch
 from django.core.cache import cache
 from django.template.loader import render_to_string
-import hashlib
 from django.utils.translation import ugettext as _
 from django.views.decorators.cache import cache_control
 from corehq.apps.app_manager import commcare_settings
+from django.utils import html
+from django.utils.http import urlencode as django_urlencode
+from couchdbkit.exceptions import ResourceConflict
+from django.http import HttpResponse, Http404, HttpResponseBadRequest, HttpResponseForbidden
+from unidecode import unidecode
+from django.http import HttpResponseRedirect
+from django.core.urlresolvers import reverse, RegexURLResolver
+from django.shortcuts import render
+from django.utils.http import urlencode
+from django.views.decorators.http import require_POST, require_GET
+from django.conf import settings
+from couchdbkit.resource import ResourceNotFound
 from corehq.apps.app_manager.const import APP_V1
 from corehq.apps.app_manager.success_message import SuccessMessage
+from corehq.apps.app_manager.util import save_xform
 from corehq.apps.app_manager.util import is_valid_case_type
 from corehq.apps.domain.models import Domain
 from corehq.apps.domain.views import DomainViewMixin
@@ -18,16 +37,8 @@ from couchexport.models import Format
 from couchexport.writers import Excel2007ExportWriter
 from dimagi.utils.couch.database import get_db
 from dimagi.utils.couch.resource_conflict import retry_resource
-from django.utils import html
-from django.utils.http import urlencode as django_urlencode
-import os
-import re
-
-from couchdbkit.exceptions import ResourceConflict
-from django.http import HttpResponse, Http404, HttpResponseBadRequest, HttpResponseForbidden
-from unidecode import unidecode
 from corehq.apps.app_manager.xform import XFormError, XFormValidationError, CaseError,\
-    XForm, parse_xml
+    XForm
 from corehq.apps.builds.models import CommCareBuildConfig, BuildSpec
 from corehq.apps.users.decorators import require_permission
 from corehq.apps.users.models import Permissions, CommCareUser
@@ -35,33 +46,16 @@ from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.django.cache import make_template_fragment_key
 from dimagi.utils.logging import notify_exception
 from dimagi.utils.subprocess_timeout import ProcessTimedOut
-
 from dimagi.utils.web import json_response, json_request
-
 from corehq.apps.app_manager.forms import NewXFormForm, NewModuleForm
 from corehq.apps.reports import util as report_utils
-
 from corehq.apps.domain.decorators import login_and_domain_required, login_or_digest
-
-from django.http import HttpResponseRedirect
-from django.core.urlresolvers import reverse, RegexURLResolver
-from django.shortcuts import render
-
 from corehq.apps.app_manager.models import Application, get_app, DetailColumn, Form, FormActions,\
     AppError, load_case_reserved_words, ApplicationBase, DeleteFormRecord, DeleteModuleRecord, DeleteApplicationRecord, EXAMPLE_DOMAIN, str_to_cls, validate_lang, SavedAppBuild
-
 from corehq.apps.app_manager.models import DETAIL_TYPES, import_app as import_app_util
-from django.utils.http import urlencode
-
-from django.views.decorators.http import require_POST, require_GET
-from django.conf import settings
 from dimagi.utils.web import get_url_base
-
-import json
-from collections import defaultdict
-from couchdbkit.resource import ResourceNotFound
 from corehq.apps.app_manager.decorators import safe_download
-from xml.dom.minidom import parseString
+
 
 try:
     from lxml.etree import XMLSyntaxError
@@ -929,6 +923,16 @@ def delete_form(req, domain, app_id, module_id, form_id):
 
 @require_POST
 @require_can_edit_apps
+def copy_form(req, domain, app_id, module_id, form_id):
+    app = get_app(domain, app_id)
+    to_module_id = int(req.POST['to_module_id'])
+    if app.copy_form(int(module_id), int(form_id), to_module_id) == 'case type conflict':
+        messages.warning(req, CASE_TYPE_CONFLICT_MSG,  extra_tags="html")
+    app.save()
+    return back_to_main(**locals())
+
+@require_POST
+@require_can_edit_apps
 def undo_delete_form(request, domain, record_id):
     record = DeleteFormRecord.get(record_id)
     record.undo()
@@ -1108,25 +1112,6 @@ def _handle_media_edits(request, item, should_edit, resp):
                 val = None
             setattr(item, attribute, val)
 
-def _save_xform(app, form, xml):
-    try:
-        xform = XForm(xml)
-    except XFormError:
-        pass
-    else:
-        duplicates = app.get_xmlns_map()[xform.data_node.tag_xmlns]
-        for duplicate in duplicates:
-            if form == duplicate:
-                continue
-            else:
-                data = xform.data_node.render()
-                xmlns = "http://openrosa.org/formdesigner/%s" % form.get_unique_id()
-                data = data.replace(xform.data_node.tag_xmlns, xmlns, 1)
-                xform.instance_node.remove(xform.data_node.xml)
-                xform.instance_node.append(parse_xml(data))
-                xml = xform.render()
-                break
-    form.source = xml
 
 @require_POST
 @login_or_digest
@@ -1144,7 +1129,7 @@ def patch_xform(request, domain, app_id, unique_form_id):
 
     dmp = diff_match_patch()
     xform, _ = dmp.patch_apply(dmp.patch_fromText(patch), current_xml)
-    _save_xform(app, form, xform)
+    save_xform(app, form, xform)
     response_json = {
         'status': 'ok',
         'sha1': hashlib.sha1(form.source.encode('utf-8')).hexdigest()
@@ -1215,7 +1200,7 @@ def edit_form_attr(req, domain, app_id, unique_form_id, attr):
                 except Exception:
                     pass
             if xform:
-                _save_xform(app, form, xform)
+                save_xform(app, form, xform)
             else:
                 raise Exception("You didn't select a form to upload")
         except Exception, e:
@@ -1588,7 +1573,6 @@ def rearrange(req, domain, app_id, key):
         return HttpResponse(json.dumps(resp))
     else:
         return back_to_main(**locals())
-
 
 # The following three functions deal with
 # Saving multiple versions of the same app

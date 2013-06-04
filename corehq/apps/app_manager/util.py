@@ -1,3 +1,4 @@
+from corehq.apps.app_manager.xform import XForm, XFormError, parse_xml
 import re
 
 def get_app_id(form):
@@ -15,6 +16,25 @@ def split_path(path):
     path = '/'.join(path_parts)
     return path, name
 
+def save_xform(app, form, xml):
+    try:
+        xform = XForm(xml)
+    except XFormError:
+        pass
+    else:
+        duplicates = app.get_xmlns_map()[xform.data_node.tag_xmlns]
+        for duplicate in duplicates:
+            if form == duplicate:
+                continue
+            else:
+                data = xform.data_node.render()
+                xmlns = "http://openrosa.org/formdesigner/%s" % form.get_unique_id()
+                data = data.replace(xform.data_node.tag_xmlns, xmlns, 1)
+                xform.instance_node.remove(xform.data_node.xml)
+                xform.instance_node.append(parse_xml(data))
+                xml = xform.render()
+                break
+    form.source = xml
 
 CASE_TYPE_REGEX = r'^[\w-]+$'
 _case_type_regex = re.compile(CASE_TYPE_REGEX)
