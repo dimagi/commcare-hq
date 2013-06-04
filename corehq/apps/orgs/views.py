@@ -217,15 +217,9 @@ def orgs_update_team(request, org):
 @org_admin_required
 @require_POST
 def orgs_add_project(request, org):
-    form = AddProjectForm(org, request.POST)
+    form = AddProjectForm(org, request.couch_user, request.POST)
     if form.is_valid():
         domain_name = form.cleaned_data['domain_name']
-
-        if not request.couch_user.is_domain_admin(domain_name):
-            org_requests = filter(lambda r: r.domain == domain_name, OrgRequest.get_requests(org))
-            if not org_requests:
-                messages.error(request, 'You must be an admin of this project in order to add it to your organization')
-                return orgs_landing(request, org, add_form=form)
 
         dom = Domain.get_by_name(domain_name)
         dom.organization = org
