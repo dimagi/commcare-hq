@@ -30,23 +30,6 @@
 {% endblock %}
 
 {% block js-inline %}{{ block.super }}
-    {# Put here to avoid the .hq-oldstyle styling. (js-inline gets dumped into the end of body) #}
-    {% if app.is_deleted %}
-    <div id="deleted-app-dialog" class="modal hide fade">
-        <div class="modal-header"><h1>{% trans 'Oops! This application was deleted.' %}</h1></div>
-        <div class="modal-body">
-            <p>{% trans 'If you want your application back, click Restore.' %}</p>
-        </div>
-        <div class="modal-footer">
-            <a href="{% url undo_delete_app domain app.id %}" class="post-link btn btn-primary">
-                {% trans "Restore" %}
-            </a>
-            <a href="#" class="btn" data-dismiss="modal">
-                {% trans "No thanks, get me out of here" %}
-            </a>
-        </div>
-    </div>
-    {% endif %}
     <script>
     $(function () {
         $('#deleted-app-dialog').modal({
@@ -137,3 +120,23 @@
 {% endblock %}
 
 {% block column_style %}{% endblock %}
+
+{% block modals %}
+    {{ block.super }}
+    {% if app.is_deleted %}
+    <div id="deleted-app-dialog" class="modal hide fade">
+        <div class="modal-header"><h1>{% trans 'Oops! This application was deleted.' %}</h1></div>
+        <div class="modal-body">
+            <p>{% trans 'If you want your application back, click Restore.' %}</p>
+        </div>
+        <div class="modal-footer">
+            <a href="{% url undo_delete_app domain app.id %}" class="post-link btn btn-primary">
+                {% trans "Restore" %}
+            </a>
+            <a href="#" class="btn" data-dismiss="modal">
+                {% trans "No thanks, get me out of here" %}
+            </a>
+        </div>
+    </div>
+    {% endif %}
+{% endblock modals %}
