@@ -332,11 +332,11 @@ class DomainMetadataForm(DomainGlobalSettingsForm, SnapshotSettingsMixin):
             domain.sms_case_registration_user_id = self.cleaned_data.get('sms_case_registration_user_id')
             domain.default_sms_backend_id = self.cleaned_data.get('default_sms_backend_id')
             domain.commtrack_enabled = self.cleaned_data.get('commtrack_enabled', False)
-            domain.call_center_enabled = self.cleaned_data.get('call_center_enabled', False)
-            if domain.call_center_enabled:
+            domain.call_center_config.enabled = self.cleaned_data.get('call_center_enabled', False)
+            if domain.call_center_config.enabled:
                 domain.internal.using_call_center = True
-                domain.call_center.case_owner_id = self.cleaned_data.get('call_center_case_owner', None)
-                domain.call_center.case_type = self.cleaned_data.get('call_center_case_type', None)
+                domain.call_center_config.case_owner_id = self.cleaned_data.get('call_center_case_owner', None)
+                domain.call_center_config.case_type = self.cleaned_data.get('call_center_case_type', None)
             commtrack_util.bootstrap_default(domain)
             domain.save()
             return True

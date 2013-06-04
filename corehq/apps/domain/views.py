@@ -178,9 +178,9 @@ def project_settings(request, domain, template="domain/admin/project_settings.ht
                 'sms_case_registration_user_id': domain.sms_case_registration_user_id,
                 'default_sms_backend_id': domain.default_sms_backend_id,
                 'commtrack_enabled': domain.commtrack_enabled,
-                'call_center_enabled': domain.call_center_enabled,
-                'call_center_case_owner': domain.call_center.case_owner_id,
-                'call_center_case_type': domain.call_center.case_type
+                'call_center_enabled': domain.call_center_config.enabled,
+                'call_center_case_owner': domain.call_center_config.case_owner_id,
+                'call_center_case_type': domain.call_center_config.case_type
             })
         else:
             form = DomainGlobalSettingsForm(initial={

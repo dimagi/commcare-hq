@@ -136,6 +136,7 @@ class Deployment(DocumentSchema, UpdatableSchema):
     public = BooleanProperty(default=False)
 
 class CallCenterProperties(DocumentSchema):
+    enabled = BooleanProperty(default=False)
     case_owner_id = StringProperty()
     case_type = StringProperty()
 
@@ -203,8 +204,7 @@ class Domain(Document, HQBillingDomainMixin, SnapshotMixin):
     short_description = StringProperty()
     is_shared = BooleanProperty(default=False)
     commtrack_enabled = BooleanProperty(default=False)
-    call_center_enabled = BooleanProperty(default=False)
-    call_center = SchemaProperty(CallCenterProperties)
+    call_center_config = SchemaProperty(CallCenterProperties)
 
     case_display = SchemaProperty(CaseDisplaySettings)
 

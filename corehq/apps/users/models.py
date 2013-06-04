@@ -1423,7 +1423,7 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
         from casexml.apps.case.tests.util import CaseBlock
 
         domain = commcare_user.project
-        if not (domain and domain.call_center_enabled):
+        if not (domain and domain.call_center_config.enabled):
             return
 
         fields = {'name': commcare_user.name,
@@ -1451,8 +1451,8 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
                 create = False,
                 case_id = case._id,
                 version = V2,
-                owner_id = domain.call_center.case_owner_id,
-                case_type = domain.call_center.case_type,
+                owner_id = domain.call_center_config.case_owner_id,
+                case_type = domain.call_center_config.case_type,
                 close = close,
                 update = fields
             )
@@ -1461,10 +1461,10 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
             caseblock = CaseBlock(
                 create = True,
                 case_id = uuid.uuid4().hex,
-                owner_id = domain.call_center.case_owner_id,
+                owner_id = domain.call_center_config.case_owner_id,
                 user_id = commcare_user._id,
                 version = V2,
-                case_type = domain.call_center.case_type,
+                case_type = domain.call_center_config.case_type,
                 update = fields
             )
 
