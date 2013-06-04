@@ -1,3 +1,5 @@
+from __future__ import print_function
+import pprint
 from django.core.urlresolvers import NoReverseMatch, reverse
 from tastypie import fields
 from tastypie.bundle import Bundle
@@ -11,6 +13,7 @@ from corehq.apps.groups.models import Group
 from corehq.apps.cloudcare.api import ElasticCaseQuery
 from corehq.apps.api.resources import v0_1, v0_3, JsonResource, DomainSpecificResourceMixin, dict_object
 from corehq.apps.api.es import XFormES, CaseES, ESQuerySet, es_search
+from corehq.apps.api.fields import ToManyDocumentsField, ToOneDocumentField
 
 # By the time a test case is running, the resource is already instantiated,
 # so as a hack until this can be remedied, there is a global that
@@ -25,6 +28,9 @@ class XFormInstanceResource(v0_3.XFormInstanceResource, DomainSpecificResourceMi
     uiversion = fields.CharField(attribute='uiversion', blank=True, null=True)
     metadata = fields.DictField(attribute='metadata', blank=True, null=True)
 
+    cases = ToManyDocumentsField('corehq.apps.api.resources.v0_4.CommCareCaseResource',
+                                 attribute=lambda xform: None if 'case' not in xform.get_form else [dict_object(CommCareCase.get(xform.get_form['case']['@case_id']).get_json())])
+
     # Prevent hitting Couch to md5 the attachment. However, there is no way to
     # eliminate a tastypie field defined in a parent class.
     md5 = fields.CharField(attribute='uiversion', blank=True, null=True)
@@ -35,7 +41,7 @@ class XFormInstanceResource(v0_3.XFormInstanceResource, DomainSpecificResourceMi
         return MOCK_XFORM_ES or XFormES(domain)
 
     def obj_get_list(self, bundle, domain, **kwargs):
-        es_query = es_search(bundle.request, domain)    
+        es_query = es_search(bundle.request, domain)
         es_query['filter']['and'].append({'term': {'doc_type': 'xforminstance'}})
 
         return ESQuerySet(payload = es_query,
