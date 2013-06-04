@@ -3,8 +3,6 @@ from urllib2 import urlopen
 from corehq.apps.sms.mixin import SMSBackend
 from couchdbkit.ext.django.schema import *
 
-API_ID = "HTTP"
-
 class HttpBackend(SMSBackend):
     url                 = StringProperty() # the url to send to
     message_param       = StringProperty() # the parameter which the gateway expects to represent the sms message

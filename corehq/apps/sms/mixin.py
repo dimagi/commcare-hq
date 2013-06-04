@@ -4,7 +4,6 @@ from django.conf import settings
 from dimagi.utils.couch.database import get_safe_write_kwargs
 from dimagi.utils.modules import try_import
 from corehq.apps.domain.models import Domain
-from corehq.apps.sms.util import get_available_backends
 
 phone_number_re = re.compile("^\d+$")
 
@@ -90,6 +89,7 @@ class MobileBackend(Document):
     # TODO: Once the ivr backends get refactored, can remove these two properties:
     outbound_module = StringProperty()      # The fully-qualified name of the outbound module to be used (sms backends: must implement send(); ivr backends: must implement initiate_outbound_call() )
     outbound_params = DictProperty()        # The parameters which will be the keyword arguments sent to the outbound module's send() method
+    inbound_phone_number = StringProperty() # The phone number which you can text to / call to reply to this backend
 
     def domain_is_authorized(self, domain):
         return self.is_global or domain == self.domain or domain in self.authorized_domains
@@ -122,6 +122,8 @@ class MobileBackend(Document):
     def load(cls, backend_id):
         """load a mobile backend
         """
+        # Circular import
+        from corehq.apps.sms.util import get_available_backends
         backend_classes = get_available_backends()
         backend = cls.get(backend_id)
         if backend.doc_type not in backend_classes:

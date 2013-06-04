@@ -8,7 +8,7 @@ CONFIRM = "Thank you. This phone has been verified for using SMS with CommCareHQ
 
 def send_verification(domain, user, phone_number):
     backend = MobileBackend.auto_load(phone_number, domain)
-    reply_phone = getattr(backend, 'receive_phone_number', lambda: None)()
+    reply_phone = backend.inbound_phone_number
 
     message = OUTGOING % {
         'name': user.username.split('@')[0],

@@ -646,8 +646,9 @@ SMS_HANDLERS = [
 ]
 
 SMS_LOADED_BACKENDS = [
+    "corehq.apps.unicel.api.UnicelBackend",
     "corehq.apps.sms.mach_api.MachBackend",
-    "corehq.apps.sms.tropo.api.TropoBackend",
+    "corehq.apps.tropo.api.TropoBackend",
     "corehq.apps.sms.backend.http_api.HttpBackend",
     "corehq.apps.telerivet.api.TelerivetBackend",
     "corehq.apps.sms.test_backend.TestSMSBackend",
