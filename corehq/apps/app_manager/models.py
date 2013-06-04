@@ -20,7 +20,7 @@ import commcare_translations
 from corehq.apps.app_manager import fixtures, suite_xml, commcare_settings
 from corehq.apps.app_manager.suite_xml import IdStrings
 from corehq.apps.app_manager.templatetags.xforms_extras import clean_trans
-from corehq.apps.app_manager.util import split_path
+from corehq.apps.app_manager.util import split_path, save_xform
 from corehq.apps.app_manager.xform import XForm, parse_xml as _parse_xml, XFormError, XFormValidationError, WrappedNode, CaseXPath
 from corehq.apps.appstore.models import SnapshotMixin
 from corehq.apps.builds.models import BuildSpec, CommCareBuildConfig, BuildRecord
@@ -1877,7 +1877,7 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
                 change_unique_id(source['modules'][m]['forms'][f])
 
     def copy_form(self, module_id, form_id, to_module_id):
-        form = self.modules[module_id]['forms'][form_id]
+        form  = self.get_module(module_id).get_form(form_id)
         copy_source = deepcopy(form.to_json())
         if copy_source.has_key('unique_id'):
             del copy_source['unique_id']
@@ -1886,8 +1886,8 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
 
         def xmlname(aform):
             return "%s.xml" % aform.get_unique_id()
-        self.put_attachment(self.fetch_attachment(xmlname(form)), xmlname(copy_form))
-        self.modules[to_module_id]['forms'].append(copy_form)
+
+        save_xform(self, copy_form, form.source)
 
         if self.modules[module_id]['case_type'] != self.modules[to_module_id]['case_type']:
             return 'case type conflict'
