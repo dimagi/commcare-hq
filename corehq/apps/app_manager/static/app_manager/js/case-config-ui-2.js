@@ -215,8 +215,11 @@ var CaseConfig = (function () {
 
         self.actionType.subscribe(function (value) {
             var required;
-            if (value == 'open') {
+            if (value === 'open') {
                 required = ['name'];
+                if (self.case_transaction.condition.type() === 'never') {
+                    self.case_transaction.condition.type('always');
+                }
             } else {
                 required = [];
             }
@@ -499,7 +502,7 @@ var CaseConfig = (function () {
         },
         to_case_transaction: function (o, caseConfig) {
             var self = HQFormActions.normalize(o);
-            var required_properties = caseConfig.requires() === 'none' ? [{
+            var required_properties = caseConfig.requires() === 'none' && !o.update_case.update.name ? [{
                 key: 'name',
                 path: self.open_case.name_path,
                 required: true
