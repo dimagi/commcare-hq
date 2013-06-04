@@ -1,11 +1,22 @@
+from copy import copy
+import logging
+from dimagi.utils.couch.database import iter_docs
 from dimagi.utils.decorators.memoized import memoized
+from dimagi.utils.html import format_html
 from django.utils.translation import ugettext_noop, ugettext as _
-from bihar.reports.supervisor import SubCenterSelectionReport, BiharNavReport, GroupReferenceMixIn, shared_bihar_context, team_member_context, BiharSummaryReport
+from bihar.reports.indicators.reports import ClientListBase
+from bihar.reports.supervisor import (SubCenterSelectionReport, BiharNavReport, GroupReferenceMixIn,
+                                      shared_bihar_context, team_member_context, BiharSummaryReport,
+                                      url_and_params)
+from casexml.apps.case.models import CommCareCase
 from corehq.apps.reports.generic import summary_context
 from corehq.apps.api.es import FullCaseES
 from datetime import datetime, timedelta
 
 BIHAR_DOMAIN = 'care-bihar' # TODO: where should this go?
+BIHAR_CHILD_CASE_TYPE = 'cc_bihar_newborn'
+MAX_ES_RESULTS = 1000000
+DATE_FORMAT = '%Y-%m-%d'
 
 DUE_LIST_CONFIG = [
     {
@@ -74,6 +85,11 @@ DUE_LIST_CONFIG = [
     # test - to ignore: ["hep_b_0", "je", "vit_a_1"]
 ]
 
+def get_config_item_by_slug(slug):
+    for i in DUE_LIST_CONFIG:
+        if i['slug'] == slug:
+            return i
+
 class DueListNav(GroupReferenceMixIn, BiharNavReport):
     slug = "duelistnav"
     name = ugettext_noop("Due List")
@@ -104,11 +120,22 @@ class VaccinationSummary(GroupReferenceMixIn, BiharSummaryReport):
 
     @property
     def _headers(self):
-        return [_("Vaccination Name")] + [_(res[0]) for res in self.due_list_results()]
+        return [_("Vaccination Name")] + [_(res[0]['title']) for res in self.due_list_results()]
 
     @property
     def data(self):
-        return [_("# Due")] + [res[1] for res in self.due_list_results()]
+        def _fmt_result(item_config, value):
+            params = copy(self.request_params)
+            params['category'] = item_config['slug']
+            params['date'] = self.get_date().strftime(DATE_FORMAT)
+            return format_html(u'<a href="{next}">{val}</a>',
+                val=value,
+                next=url_and_params(
+                    VaccinationClientList.get_url(self.domain,
+                                                  render_as=self.render_next),
+                    params
+            ))
+        return [_("# Due")] + [_fmt_result(*res) for res in self.due_list_results()]
 
     @memoized
     def due_list_results(self):
@@ -120,10 +147,72 @@ class VaccinationSummary(GroupReferenceMixIn, BiharSummaryReport):
         by_task_name = get_due_list_by_task_name(target_date, owner_id)
         return list(format_results(by_task_name))
 
+class VaccinationClientList(ClientListBase):
+    name = ugettext_noop("Vaccination Client List")
+    slug = "vacdetails"
+    description = "Vaccination client list report"
+
+    @property
+    def _headers(self):
+        return [_('Mother'), _('Husband'), _('Child')]
+
+    @property
+    @memoized
+    def config_item(self):
+        return get_config_item_by_slug(self.request_params.get('category'))
+
+    @memoized
+    def get_date(self):
+        return datetime.strptime(self.request_params.get('date'), DATE_FORMAT)
+
+    @property
+    def rendered_report_title(self):
+        return '{title} ({count})'.format(title=_(self.config_item['title']), count=len(self.rows)) \
+            if self.config_item else super(VaccinationClientList, self).rendered_report_title
+
+    @property
+    @memoized
+    def rows(self):
+        target_date = self.get_date()
+        owner_id = self.group_id
+        if not self.config_item:
+            return
+
+        def _related_id(res):
+            try:
+                [index] = res['indices']
+                return index['referenced_id']
+            except Exception:
+                logging.exception('problem loading related case from task %s' % res['_id'])
+                return None
+
+        def _get_related_cases(results):
+            ids = filter(None, [_related_id(res) for res in results])
+            return dict((c['_id'], c) for c in iter_docs(CommCareCase.get_db(), ids))
+
+        results = get_due_list_records(target_date, owner_id=owner_id, task_types=self.config_item['tasks'])
+        # this preloads the cases we'll need into memory to avoid excessive couch
+        # queries to get related cases
+        primary_cases = _get_related_cases(results)
+        secondary_cases = _get_related_cases(filter(lambda x: x['type'] == BIHAR_CHILD_CASE_TYPE, primary_cases.values()))
+
+        def _to_row(case):
+            # this function uses closures so don't move it!
+            if case['type'] == BIHAR_CHILD_CASE_TYPE:
+                mom = secondary_cases.get(_related_id(case))
+                if mom:
+                    return [mom['name'], mom['husband_name'], case['name']]
+                else:
+                    return ['?', '?', case['name']]
+            else:
+                return [case['name'], case['husband_name'], '?']
+
+        return [_to_row(case) for case in primary_cases.values()]
+
 def format_results(results):
     results_dict = dict(results)
     for item in DUE_LIST_CONFIG:
-        yield (item['title'], sum(results_dict.get(t, 0) for t in item['tasks']))
+        yield (item, sum(results_dict.get(t, 0) for t in item['tasks']))
 
 def get_due_list_by_task_name(target_date, owner_id=None, case_es=None, size=0, case_type='task'):
     case_es = case_es or FullCaseES(BIHAR_DOMAIN)
@@ -158,12 +247,11 @@ def get_due_list_by_task_name(target_date, owner_id=None, case_es=None, size=0, 
     es_result = case_es.run_query(base_query, es_type=es_type)
     return ((facet['term'], facet['count']) for facet in es_result['facets'][facet_name]['terms'])
 
-def get_due_list_records(target_date, owner_id=None, case_es=None, size=None, case_type='task', name=None):
+def get_due_list_records(target_date, owner_id=None, task_types=None, case_es=None, size=MAX_ES_RESULTS, case_type='task'):
     '''
-    A drill-down of the get_due_list_by_task_name, this returns the records for a particular name
-    (which is the name of a vaccination)
+    A drill-down of the get_due_list_by_task_name, this returns the records for a particular
+    set of types (which is the type of vaccination)
     '''
-    
     case_es = case_es or FullCaseES(BIHAR_DOMAIN)
     es_type = 'fullcase_%(domain)s__%(case_type)s' % { 'domain': BIHAR_DOMAIN, 'case_type': 'task' }
 
@@ -174,8 +262,7 @@ def get_due_list_records(target_date, owner_id=None, case_es=None, size=None, ca
 
     owner_filter = {"match_all":{}} if owner_id is None else {"term": {"owner_id": owner_id}}
 
-    name_filter = {"match_all":{}} if name is None else {"term": {"name.exact": name}}
-
+    name_filter = {"match_all":{}} if not task_types else {"terms": {"task_id": task_types}}
     filter = {
         "and": [
             owner_filter,
