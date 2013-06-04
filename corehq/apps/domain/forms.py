@@ -202,11 +202,13 @@ class DomainGlobalSettingsForm(forms.Form):
 class DomainMetadataForm(DomainGlobalSettingsForm, SnapshotSettingsMixin):
     customer_type = ChoiceField(
         label=_("Customer Type"),
-        choices=(('basic', 'Basic'), ('plus', 'Plus'), ('full', 'Full'))
+        choices=(('basic', _('Basic')),
+                 ('plus', _('Plus')),
+                 ('full', _('Full')))
     )
     is_test = ChoiceField(
         label=_("Test Project"),
-        choices=tf_choices('Test', 'Real')
+        choices=tf_choices('Test', _('Real'))
     )
     survey_management_enabled = BooleanField(
         label=_("Survey Management Enabled"),
@@ -250,7 +252,7 @@ class DomainMetadataForm(DomainGlobalSettingsForm, SnapshotSettingsMixin):
         help_text=_("Call Center mode is a CommCareHQ module for managing "
                     "call center workflows. It is still under "
                     "active development. Do not enable for your domain unless "
-                    "you\'re actively piloting it.")
+                    "you're actively piloting it.")
     )
     call_center_case_owner = ChoiceField(
         label=_("Call Center Case Owner"),
