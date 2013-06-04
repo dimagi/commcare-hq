@@ -128,10 +128,6 @@ var CaseConfig = (function () {
             }
         });
 
-        self.change = function () {
-            self.saveButton.fire('change');
-        };
-
         var questionMap = {};
         _(self.questions).each(function (question) {
             questionMap[question.value] = question;
@@ -150,12 +146,26 @@ var CaseConfig = (function () {
         });
         self.questionScores = questionScores;
         self.caseConfigViewModel = new CaseConfigViewModel(self);
+
+        self.ensureBlankProperties = function () {
+            self.caseConfigViewModel.case_transaction.ensureBlankProperties();
+            _(self.caseConfigViewModel.subcases()).each(function (case_transaction) {
+                case_transaction.ensureBlankProperties();
+            });
+        };
+
+        self.change = function () {
+            self.saveButton.fire('change');
+            self.ensureBlankProperties();
+        };
+
         self.init = function () {
             var $home = $('#case-config-ko');
             _.delay(function () {
                 ko.applyBindings(self, $home.get(0));
                 $home.on('change textchange', 'input, select', self.change)
                      .on('click', 'a', self.change);
+                self.ensureBlankProperties();
             });
         }
     };
@@ -371,6 +381,27 @@ var CaseConfig = (function () {
             self.unwrap = function () {
                 CaseTransaction.unwrap(self);
             };
+
+            self.ensureBlankProperties = function () {
+                var items = [{
+                    properties: self.case_properties(),
+                    addProperty: self.addProperty
+                }];
+                if (self.case_preload) {
+                    items.push({
+                        properties: self.case_preload(),
+                        addProperty: self.addPreload
+                    });
+                }
+                _(items).each(function (item) {
+                    var properties = item.properties;
+                    var last = properties[properties.length-1];
+                    if (last && !last.isBlank()) {
+                        item.addProperty();
+                    }
+                });
+            };
+
             return self;
         },
         unwrap: function (self) {
@@ -394,6 +425,9 @@ var CaseConfig = (function () {
             self.case_transaction = case_transaction;
             self.keyVal = ko.computed(function () {
                 return self.key() || self.defaultKey();
+            });
+            self.isBlank = ko.computed(function () {
+                return !self.key() && !self.path();
             });
             return self;
         }
@@ -434,7 +468,7 @@ var CaseConfig = (function () {
                 return null;
             });
             self.validateQuestion = ko.computed(function () {
-                if (self.path() || self.keyVal()) {
+                if (self.path()) {
                     if (case_transaction.preloadCounts()[self.path()] > 1) {
                         return "Two properties load to the same question";
                     }
