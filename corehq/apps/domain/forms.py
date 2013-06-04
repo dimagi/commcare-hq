@@ -335,8 +335,8 @@ class DomainMetadataForm(DomainGlobalSettingsForm, SnapshotSettingsMixin):
             domain.call_center_enabled = self.cleaned_data.get('call_center_enabled', False)
             if domain.call_center_enabled:
                 domain.internal.using_call_center = True
-                domain.call_center.case_owner_id = self.cleaned_data.get('call_center_case_owner', False)
-                domain.call_center.case_type = self.cleaned_data.get('call_center_case_type', False)
+                domain.call_center.case_owner_id = self.cleaned_data.get('call_center_case_owner', None)
+                domain.call_center.case_type = self.cleaned_data.get('call_center_case_type', None)
             commtrack_util.bootstrap_default(domain)
             domain.save()
             return True
