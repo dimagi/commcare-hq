@@ -101,11 +101,15 @@ var CaseConfig = (function () {
             unsavedMessage: "You have unchanged case settings",
             save: function () {
                 var requires = self.caseConfigViewModel.actionType() === 'update' ? 'case' : 'none';
+                var subcases;
+                if (self.caseConfigViewModel.actionType() === 'none') {
+                    subcases = [];
+                } else {
+                    subcases = _(self.caseConfigViewModel.subcases()).map(HQOpenSubCaseAction.from_case_transaction);
+                }
                 var actions = JSON.stringify(_(self.actions).extend(
                     HQFormActions.from_case_transaction(self.caseConfigViewModel.case_transaction),
-                    {
-                        subcases: _(self.caseConfigViewModel.subcases()).map(HQOpenSubCaseAction.from_case_transaction)
-                    }
+                    {subcases: subcases}
                 ));
 
                 self.saveButton.ajax({
@@ -211,8 +215,11 @@ var CaseConfig = (function () {
 
         self.actionType.subscribe(function (value) {
             var required;
-            if (value == 'open') {
+            if (value === 'open') {
                 required = ['name'];
+                if (self.case_transaction.condition.type() === 'never') {
+                    self.case_transaction.condition.type('always');
+                }
             } else {
                 required = [];
             }
@@ -495,7 +502,7 @@ var CaseConfig = (function () {
         },
         to_case_transaction: function (o, caseConfig) {
             var self = HQFormActions.normalize(o);
-            var required_properties = caseConfig.requires() === 'none' ? [{
+            var required_properties = caseConfig.requires() === 'none' && !o.update_case.update.name ? [{
                 key: 'name',
                 path: self.open_case.name_path,
                 required: true
