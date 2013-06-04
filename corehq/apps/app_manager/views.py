@@ -2045,7 +2045,8 @@ def download_translations(request, domain, app_id):
 
     rows = row_dict.values()
     all_prop_trans = dict(st_trans.DEFAULT + st_trans.CC_DEFAULT + st_trans.CCODK_DEFAULT + st_trans.ODKCOLLECT_DEFAULT)
-    rows.extend([[t] for t in sorted(all_prop_trans.keys()) if t.lower() not in [k.lower() for k in row_dict]])
+    all_prop_trans = dict((k.lower(), v) for k, v in all_prop_trans.iteritems())
+    rows.extend([[t] for t in sorted(all_prop_trans.keys()) if t not in [k.lower() for k in row_dict]])
 
     def fillrow(row):
         num_to_fill = len(properties) - len(row)
@@ -2053,7 +2054,7 @@ def download_translations(request, domain, app_id):
         return row
 
     def add_default(row):
-        row[-1] = all_prop_trans.get(row[0], "")
+        row[-1] = all_prop_trans.get(row[0].lower(), "")
         return row
 
     rows = [add_default(fillrow(row)) for row in rows]
