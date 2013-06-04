@@ -10,9 +10,21 @@ from .signals import indicator_document_updated
 import fluff.sync_couchdb
 
 
+REDUCE_TYPES = set(['sum', 'count', 'min', 'max', 'sumsqr'])
+
+
 def date_emitter(fn):
     fn._fluff_emitter = 'date'
     return fn
+
+
+def value_emitter(reduce_type):
+    assert reduce_type in REDUCE_TYPES, 'Unknown reduce type'
+
+    def wrap(fn):
+        fn._reduce_type = reduce_type
+        return fn
+    return wrap
 
 
 def null_emitter(fn):
@@ -91,17 +103,27 @@ class Calculator(object):
                 list(fn(item))
                 if passes_filter else []
             )
-            if fn._fluff_emitter == 'date':
-                assert all(v for v in values[slug])
-            elif fn._fluff_emitter == 'null':
-                assert all(v is None for v in values[slug])
+            if hasattr(fn, '_reduce_type'):
+                assert all(isinstance(v, list) for v in values[slug]), "value_emitters must return a list"
+                assert all(len(v) == 2 for v in values[slug]), "value_emitters must return a list of size 2"
+                assert all(v[1] for v in values[slug])
+                if fn._fluff_emitter == 'date':
+                    assert all(v[0] for v in values[slug])
+                elif fn._fluff_emitter == 'null':
+                    assert all(v[0] is None for v in values[slug])
+            else:
+                if fn._fluff_emitter == 'date':
+                    assert all(v for v in values[slug])
+                elif fn._fluff_emitter == 'null':
+                    assert all(v is None for v in values[slug])
         return values
 
     def get_result(self, key, reduce=True):
         result = {}
         for emitter_name in self._fluff_emitters:
             shared_key = [self.fluff._doc_type] + key + [self.slug, emitter_name]
-            emitter_type = getattr(self, emitter_name)._fluff_emitter
+            emitter = getattr(self, emitter_name)
+            emitter_type = emitter._fluff_emitter
             q_args = {
                 'reduce': reduce,
             }
@@ -130,7 +152,10 @@ class Calculator(object):
 
             if reduce:
                 try:
-                    result[emitter_name] = q[0]['value']
+                    if hasattr(emitter, '_reduce_type'):
+                        result[emitter_name] = q[0]['value'][emitter._reduce_type]
+                    else:
+                        result[emitter_name] = q[0]['value']['count']
                 except IndexError:
                     result[emitter_name] = 0
             else:

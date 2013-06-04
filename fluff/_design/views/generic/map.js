@@ -1,4 +1,8 @@
 function (doc) {
+    function isArray(obj) {
+        return typeOf(obj) === "array";
+    }
+
     if (doc.base_doc === 'IndicatorDocument') {
         var key = [doc.doc_type], i;
         for (i = 0; i < doc.group_by.length; i++) {
@@ -12,7 +16,11 @@ function (doc) {
                         if (doc[calcName].hasOwnProperty(emitterName)) {
                             for (i = 0; i < doc[calcName][emitterName].length; i++) {
                                 var value = doc[calcName][emitterName][i];
-                                emit(key.concat([calcName, emitterName, value]), 1);
+                                if (isArray(value)) {
+                                    emit(key.concat([calcName, emitterName, value[0]]), value[1]);
+                                } else {
+                                    emit(key.concat([calcName, emitterName, value]), 1);
+                                }
                             }
                         }
                     }
