@@ -15,7 +15,7 @@ class HttpBackend(SMSBackend):
     def get_api_id(cls):
         return "HTTP"
 
-    def send(msg, *args, **kwargs):
+    def send(self, msg, *args, **kwargs):
         """
         Expected kwargs:
             additional_params   a dictionary of additional parameters that will be sent in the request (optional, defaults to {})

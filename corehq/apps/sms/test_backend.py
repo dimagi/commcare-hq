@@ -7,7 +7,7 @@ class TestSMSBackend(SMSBackend):
     def get_api_id(cls):
         return "TEST"
 
-    def send(msg, *args, **kwargs):
+    def send(self, msg, *args, **kwargs):
         debug = getattr(settings, "DEBUG", False)
         if debug:
             print "***************************************************"

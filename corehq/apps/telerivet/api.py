@@ -31,7 +31,7 @@ class TelerivetBackend(SMSBackend):
     def get_form_class(cls):
         return TelerivetBackendForm
 
-    def send(msg, *args, **kwargs):
+    def send(self, msg, *args, **kwargs):
         try:
             text = msg.text.encode("iso-8859-1")
         except UnicodeEncodeError:

@@ -17,7 +17,7 @@ class MachBackend(SMSBackend):
     def get_api_id(cls):
         return "MACH"
 
-    def send(msg, delay=True, *args, **kwargs):
+    def send(self, msg, delay=True, *args, **kwargs):
         params = {
             "id" : self.account_id,
             "pw" : self.password,

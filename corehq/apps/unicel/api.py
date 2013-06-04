@@ -46,7 +46,7 @@ class UnicelBackend(SMSBackend):
     def get_api_id(cls):
         return "UNICEL"
 
-    def send(message, delay=True, *args, **kwargs):
+    def send(self, message, delay=True, *args, **kwargs):
         """
         Send an outbound message using the Unicel API
         """

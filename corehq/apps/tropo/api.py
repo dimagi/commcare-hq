@@ -12,7 +12,7 @@ class TropoBackend(SMSBackend):
     def get_api_id(cls):
         return "TROPO"
 
-    def send(msg, delay=True, *args, **kwargs):
+    def send(self, msg, delay=True, *args, **kwargs):
         phone_number = msg.phone_number
         if phone_number[0] != "+":
             phone_number = "+%s" % phone_number

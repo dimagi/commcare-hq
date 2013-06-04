@@ -11,7 +11,7 @@ class TestBackend(SMSBackend):
     def get_api_id(cls):
         return "TEST"
 
-    def send(msg, *args, **kwargs):
+    def send(self, msg, *args, **kwargs):
         """
         The test backend does very little.
         """
