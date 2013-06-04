@@ -776,10 +776,6 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, UnicodeMixIn):
     def couch_id(self):
         return self._id
 
-    @property
-    def projects(self):
-        return map(Domain.get_by_name, self.get_domains())
-
     # Couch view wrappers
     @classmethod
     def all(cls):
@@ -1135,6 +1131,10 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
         return HQUserType.REGISTERED
 
     @property
+    def project(self):
+        return Domain.get_by_name(self.domain)
+
+    @property
     def username_in_report(self):
         def parts():
             yield u'%s' % html.escape(self.raw_username)
@@ -1422,7 +1422,7 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
     def sync_user_cases(cls, commcare_user):
         from casexml.apps.case.tests.util import CaseBlock
 
-        domain = commcare_user.projects[0]
+        domain = commcare_user.project
         if not (domain and domain.call_center_enabled):
             return
 
