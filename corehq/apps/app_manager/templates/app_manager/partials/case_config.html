@@ -86,7 +86,7 @@
                 <td>
                     <a href="#" data-bind="
                         click: $parent.removePreload,
-                        visible: $root.edit">
+                        visible: $root.edit && !(isBlank() && $index() === $parent.case_preload().length - 1)">
                         <i class="icon-remove"></i>
                     </a>
                 </td>
@@ -104,9 +104,9 @@
             </tr>
         </tbody>
     </table>
-    <a href="#" data-bind="click: addPreload, visible: $root.edit">
+    <a href="#" data-bind="click: addPreload, visible: $root.edit && !case_preload().length">
         <i class="icon-plus"></i>
-        {% trans "Load another property" %}
+        {% trans "Load properties" %}
     </a>
 </script>
 
@@ -128,7 +128,10 @@
         <tbody data-bind="foreach: case_properties">
             <tr class="control-group" data-bind="css: {error: validate, warning: !validate() && required() && !path()}">
                 <td>
-                    <a href="#" data-bind="click: $parent.removeProperty, visible: $root.edit && !required()">
+                    <a href="#" data-bind="
+                        click: $parent.removeProperty,
+                        visible: $root.edit && !required() && !(isBlank() && $index() === $parent.case_properties().length - 1)
+                    ">
                         <i class="icon-remove"></i>
                     </a>
                 </td>
@@ -145,9 +148,9 @@
             </tr>
         </tbody>
     </table>
-    <a href="#" data-bind="click: addProperty, visible: $root.edit">
+    <a href="#" data-bind="click: addProperty, visible: $root.edit && !case_properties().length">
         <i class="icon-plus"></i>
-        {% trans "Add property" %}
+        {% trans "Save properties" %}
     </a>
 </script>
 
