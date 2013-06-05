@@ -1,4 +1,5 @@
 import simplejson
+import time
 from datetime import datetime
 
 from django.utils.http import urlencode
@@ -204,6 +205,8 @@ class TestCommCareUserResource(APIResourceTest):
 
         commcare_user = CommCareUser.create(domain=self.domain.name, username='fake_user', password='*****')
         backend_id = commcare_user.get_id
+        CommCareUser.by_domain(self.domain.name) # Kick it
+        time.sleep(0.05)
 
         response = self.client.get(self.list_endpoint)
         self.assertEqual(response.status_code, 200)
