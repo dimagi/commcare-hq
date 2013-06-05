@@ -189,7 +189,6 @@ class Test(TestCase):
                                              date_value=[],
                                              null_value=[[None, 3]]))
         diff = doc.diff(None)
-        print diff
         expected = dict(domains=['test'],
                         database=MockIndicators.Meta.app_label,
                         doc_type='MockIndicators',
