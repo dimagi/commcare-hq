@@ -9,11 +9,11 @@ function (doc) {
 
         var data = {
             events: 1,
-            males: form.number_of_males || 0,
-            females: form.number_of_females || 0,
-            attendees: form.number_of_attendees || 0,
-            leaflets: form.number_of_leaflets || 0,
-            gifts: form.number_of_gifts || 0
+            males: parseInt(form.number_of_males, 10) || 0,
+            females: parseInt(form.number_of_females, 10) || 0,
+            attendees: parseInt(form.number_of_attendees, 10) || 0,
+            leaflets: parseInt(form.number_of_leaflets, 10) || 0,
+            gifts: parseInt(form.number_of_gifts, 10) || 0
         };
 
         var opened_on = form.meta.timeEnd;
