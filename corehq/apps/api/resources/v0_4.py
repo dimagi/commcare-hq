@@ -1,5 +1,3 @@
-from __future__ import print_function
-import pprint
 from django.core.urlresolvers import NoReverseMatch, reverse
 from tastypie import fields
 from tastypie.bundle import Bundle
@@ -13,7 +11,7 @@ from corehq.apps.groups.models import Group
 from corehq.apps.cloudcare.api import ElasticCaseQuery
 from corehq.apps.api.resources import v0_1, v0_3, JsonResource, DomainSpecificResourceMixin, dict_object
 from corehq.apps.api.es import XFormES, CaseES, ESQuerySet, es_search
-from corehq.apps.api.fields import ToManyDocumentsField, ToOneDocumentField
+from corehq.apps.api.fields import ToManyDocumentsField
 
 # By the time a test case is running, the resource is already instantiated,
 # so as a hack until this can be remedied, there is a global that
