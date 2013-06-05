@@ -19,6 +19,7 @@ from django.template.loader import render_to_string
 from couchdbkit.ext.django.schema import *
 from couchdbkit.resource import ResourceNotFound
 from dimagi.utils.couch.database import get_safe_write_kwargs
+from dimagi.utils.logging import notify_exception
 
 from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.make_uuid import random_hex
@@ -1088,8 +1089,15 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
         return self
 
     def save(self, **params):
-        from corehq.apps.users.signals import couch_user_post_save
-        couch_user_post_save.send(sender='couch_user', couch_user=self)
+        from corehq.apps.users.signals import commcare_user_post_save
+        result = commcare_user_post_save.send_robust(sender='couch_user',
+                                                     couch_user=self)
+        if len(result) > 0 and result[0][1]:
+            notify_exception(
+                None,
+                message="Error occured while syncing user %s: %s" %
+                        (self.username, str(result[0][1]))
+            )
 
         super(CommCareUser, self).save(**params)
 

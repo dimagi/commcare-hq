@@ -31,8 +31,8 @@ post_save.connect(django_user_post_save_signal, User)
 def sync_user_cases_signal(sender, **kwargs):
     return CommCareUser.sync_user_cases(kwargs["couch_user"])
 
-couch_user_post_save = Signal(providing_args=["couch_user"])
-couch_user_post_save.connect(sync_user_cases_signal)
+commcare_user_post_save = Signal(providing_args=["couch_user"])
+commcare_user_post_save.connect(sync_user_cases_signal)
 
 """
 This section automatically creates Couch users whenever a registration xform is received
