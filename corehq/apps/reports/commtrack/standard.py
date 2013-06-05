@@ -1,3 +1,4 @@
+from corehq.apps.commtrack.psi_hacks import is_psi_domain
 from corehq.apps.reports.generic import GenericTabularReport
 from corehq.apps.reports.commtrack.psi_prototype import CommtrackReportMixin
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
@@ -88,7 +89,7 @@ def stock_category(stock, consumption, months_left=None):
         return 'adequate'
 
 def _enabled_hack(domain):
-    return 'psi' not in (domain or  '')
+    return not is_psi_domain(domain)
 
 class CurrentStockStatusReport(GenericTabularReport, CommtrackReportMixin):
     name = ugettext_noop('Stock Status by Product')
@@ -98,11 +99,6 @@ class CurrentStockStatusReport(GenericTabularReport, CommtrackReportMixin):
     emailable = True
 
     report_template_path = "reports/async/tabular_graph.html"
-
-    # temporary
-    @classmethod
-    def show_in_navigation(cls, domain=None, project=None, user=None):
-        return super(CurrentStockStatusReport, cls).show_in_navigation(domain, project, user) and _enabled_hack(domain)
 
     @property
     def headers(self):

@@ -115,7 +115,11 @@ def data_items(request, domain, data_type_id, data_item_id):
         o.save()
         return json_response(strip_json(o, disallow=['data_type_id']))
     elif request.method == 'GET' and data_item_id is None:
-        return json_response([prepare_item(x) for x in FixtureDataItem.by_data_type(domain, data_type_id)])
+        return json_response([
+            prepare_item(x)
+            for x in sorted(FixtureDataItem.by_data_type(domain, data_type_id),
+                            key=lambda x: x.sort_key)
+        ])
     elif request.method == 'GET' and data_item_id:
         try:
             o = FixtureDataItem.get(data_item_id)
@@ -256,11 +260,12 @@ class UploadItemLists(TemplateView):
                 )
                 transaction.save(data_type)
                 data_items = workbook.get_worksheet(data_type.tag)
-                for di in data_items:
+                for sort_key, di in enumerate(data_items):
                     data_item = FixtureDataItem(
                         domain=self.domain,
                         data_type_id=data_type.get_id,
-                        fields=di['field']
+                        fields=di['field'],
+                        sort_key=sort_key
                     )
                     transaction.save(data_item)
                     for group_name in di.get('group', []):

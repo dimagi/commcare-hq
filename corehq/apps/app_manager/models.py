@@ -20,7 +20,7 @@ import commcare_translations
 from corehq.apps.app_manager import fixtures, suite_xml
 from corehq.apps.app_manager.suite_xml import IdStrings
 from corehq.apps.app_manager.templatetags.xforms_extras import clean_trans
-from corehq.apps.app_manager.util import split_path
+from corehq.apps.app_manager.util import split_path, save_xform
 from corehq.apps.app_manager.xform import XForm, parse_xml as _parse_xml, XFormError, XFormValidationError, WrappedNode, CaseXPath
 from corehq.apps.appstore.models import SnapshotMixin
 from corehq.apps.builds.models import BuildSpec, CommCareBuildConfig, BuildRecord
@@ -588,7 +588,7 @@ class FormBase(DocumentSchema):
             if not subcase_action.case_type:
                 errors.append({'type': 'subcase has no case type'})
 
-        if self.actions.open_case.is_active() \
+        if self.requires == 'none' and self.actions.open_case.is_active() \
                 and not self.actions.open_case.name_path:
             errors.append({
                 'type': 'case_name required',
@@ -1906,6 +1906,22 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
         for m,module in enumerate(source['modules']):
             for f,form in enumerate(module['forms']):
                 change_unique_id(source['modules'][m]['forms'][f])
+
+    def copy_form(self, module_id, form_id, to_module_id):
+        form  = self.get_module(module_id).get_form(form_id)
+        copy_source = deepcopy(form.to_json())
+        if copy_source.has_key('unique_id'):
+            del copy_source['unique_id']
+
+        copy_form = self.new_form_from_source(to_module_id, copy_source)
+
+        def xmlname(aform):
+            return "%s.xml" % aform.get_unique_id()
+
+        save_xform(self, copy_form, form.source)
+
+        if self.modules[module_id]['case_type'] != self.modules[to_module_id]['case_type']:
+            return 'case type conflict'
 
     @cached_property
     def has_case_management(self):

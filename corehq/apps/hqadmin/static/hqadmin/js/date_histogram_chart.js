@@ -5,58 +5,69 @@ function isInt(n) {
     return typeof n === 'number' && parseFloat(n) == parseInt(n, 10) && !isNaN(n);
 }
 
-function format_data(data, starting_time, ending_time) {
-    function format_data_entry(name, entry) {
-        /*
-         * Takes in the entries dictionary returned in a es date histogram facet and converts that data for use in nvd3
-         */
-        var vals = [];
-        for (var i = 0; i < entry.length; i++) {
-            vals.push({x: entry[i].time, y: entry[i].count})
-        }
-        var ret = {
-            key: name,
-            values: vals.slice(0)
-        };
-        if (vals.length > 0) {
-            ret.firsttime = vals[0].x;
-            ret.lasttime = vals[vals.length-1].x;
-        }
-        return ret
+function intervalize(vals, start, end, interval) {
+    var ret = [];
+    for (var t = start; t <= end; t += interval) {
+        ret.push({x: t, y: 0});
     }
-
-    //convert data into proper format
-    var formatted_data = [];
-    for (var key in data) {
-        if (data.hasOwnProperty(key)) {
-            var hd = data[key];
-            formatted_data.push(format_data_entry(key, hd));
+    for (var i = 0; i < vals.length; i++){
+        var index = Math.floor((vals[i].x - start) / interval)
+        if (index >= 0) {
+            ret[index].y += vals[i].y;
         }
     }
+    return ret;
+}
 
-    // fill in each entry with empty data beginning from the startdate to the enddate
-    var first = Math.min.apply(null, _.filter(_.map(formatted_data, function(fd) { return fd.firsttime; }), isInt));
-    var last = Math.max.apply(null, _.filter(_.map(formatted_data, function(fd) { return fd.lasttime; }), isInt));
-    if (first !== -Infinity && last !== -Infinity) {
-        _.each(formatted_data, function(entry, ind, l) {
-            var vals = entry.values.slice(0) || [];
-            if (vals.length <= 0) {
-                for (var day = first; day < last; day += DAY_VALUE) {
-                    entry.values.push({x: day, y: 0});
-                }
-                return;
-            }
+function swap_prop_names(obj, from_to_map) {
+    var ret_obj = {};
+    _.each(from_to_map, function (v, k) { ret_obj[v] = obj[k] });
+    return ret_obj;
+}
 
-            for (var day = first, i = 0; day <= vals[0].x; day += DAY_VALUE, i++) {
-                entry.values.splice(i, 0, {x: day, y: 0});
-            }
-
-            for (var day = vals[vals.length-1].x; day < last; day += DAY_VALUE) {
-                entry.values.push({x: day, y: 0});
-            }
-        });
+function find(collection, filter) {
+    for (var i = 0; i < collection.length; i++) {
+        if (filter(collection[i], i, collection)) {
+            return i;
+        }
     }
-    return formatted_data;
+    return -1;
+}
+
+function trim_data(data) {
+    /**
+     * Removes the empty entries from the ends of the data
+     */
+    function get_first(arr) {
+        return find(arr, function (o) { return o.y > 0 });
+    }
+    function get_last(arr) {
+        var anarr = arr.slice(0);
+        anarr.reverse();
+        var reverse_index = get_first(anarr);
+        return reverse_index > -1 ? arr.length - reverse_index : -1;
+    }
+    var gt_zero = function (n) {return n > 0};
+
+    var firsts = _.filter(_.map(data, function(d) { return get_first(d.values); }), gt_zero);
+    var lasts = _.filter(_.map(data, function(d) { return get_last(d.values); }), gt_zero);
+    var first = firsts.length > 0 ? Math.max.apply(null, firsts) : 0;
+    var last = lasts.length > 0 ? Math.max.apply(null, lasts) : data[0].values.length;
+
+    return _.map(data, function(d){
+        d.values = d.values.splice(first, last);
+        return d;
+    })
+}
+
+function format_data(data, start, end) {
+    var ret = [];
+    _.each(data, function (vals, name) {
+        vals = _.map(vals, function(o) { return swap_prop_names(o, {time: "x", count: "y"})});
+        vals = intervalize(vals, start, end, DAY_VALUE);
+        ret.push({key: name, values: vals});
+    });
+    return trim_data(ret);
 }
 
 function addHistogram(element_id, xname, data, starting_time, ending_time) {
