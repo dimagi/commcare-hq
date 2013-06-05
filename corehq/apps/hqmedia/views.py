@@ -228,7 +228,7 @@ class BaseProcessUploadedView(BaseMultimediaView):
             data = self.uploaded_file.file.read()
             return CommCareMultimedia.get_mime_type(data, filename=self.uploaded_file.name)
         except Exception as e:
-            return BadMediaFileException("There was an error fetching the MIME type of your file. Error: %s" % e)
+            raise BadMediaFileException("There was an error fetching the MIME type of your file. Error: %s" % e)
 
     def get(self, request, *args, **kwargs):
         return HttpResponseBadRequest("You may only post to this URL.")
