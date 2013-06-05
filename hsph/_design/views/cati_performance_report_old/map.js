@@ -51,7 +51,6 @@ function(doc) {
     }
 
     // calculate indicators
-
     var data = {},
         openedOn = datePlusDays(doc.opened_on, 0).getTime(),
         filterDatePlus11 = datePlusDays(doc.filter_date, 11).getTime(),

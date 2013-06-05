@@ -1,11 +1,11 @@
-from hsph.reports import data_summary
+from hsph.reports import data_summary, field_management
 from hsph.reports.old import (field_management as old_field_management,
         data_summary as old_data_summary, call_center as old_call_center,
         project_management as old_project_management) 
 
 new_reports = (
     ('Field Management', (
-        # FIDA Performance
+        field_management.FIDAPerformanceReport,
         # Facility Registrations
         # Facility-Wise Follow Up
         # Case Report
