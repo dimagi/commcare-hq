@@ -323,11 +323,12 @@ class FacilityWiseFollowUpRepoert(GenericTabularReport, DataSummaryReport,
                                                         HSPHSiteDataMixin):
     name = "Facility Wise Follow Up Report"
     slug = "hsph_facility_wise_follow_up"
-    fields = ['corehq.apps.reports.fields.GroupField',
-              'corehq.apps.reports.fields.DatespanField']
+    fields = ['corehq.apps.reports.fields.DatespanField',
+               'corehq.apps.reports.fields.GroupField',
+              'hsph.fields.NameOfFIDAField']
               
     show_all_rows_option = True
-    
+
     @property
     def headers(self):
         return DataTablesHeader(
@@ -346,34 +347,48 @@ class FacilityWiseFollowUpRepoert(GenericTabularReport, DataSummaryReport,
             DataTablesColumn(_("Lost to Follow Up")),
 
         )
-    
+
     @property
     def rows(self):
         startdate = self.datespan.startdate_param_utc[:10]
         enddate = self.datespan.enddate_param_utc[:10]
-        
+
         site_keys = get_db().view('hsph/facility_wise_follow_up',
                     reduce=True,
-                    group=True, group_level=4)
-                    
+                    group=True, group_level=5)
+
+        rpt_keys = []
         key_start = []
-        
+
+        if self.individual:
+            for entry in site_keys:
+                if entry['key'][-1] == self.individual:
+                    rpt_keys.append(entry)
+        elif self.user_ids:
+            for entry in site_keys:
+                if entry['key'][-1] in self.user_ids:
+                    rpt_keys.append(entry)
+        else:
+            rpt_keys = site_keys
+
         def get_single_value(case_type, start_dte, end_dte):
+            my_start_key=key_start + [case_type] + [start_dte]
+            if not start_dte:
+                my_start_key = key_start + [case_type]
             data = get_db().view('hsph/facility_wise_follow_up',
                                  reduce=True,
-                                 startkey=key_start + [case_type] + [start_dte],
+                                 startkey=my_start_key,
                                  endkey=key_start + [case_type] + [end_dte]
             )
             
             return sum([ item['value'] for item in data])
-            
-        
-        
+
+
         rows = []
         today = date.today()
-        for item in  site_keys:
+        for item in  rpt_keys:
             key_start = item['key']
-            region_id, district_id, site_id, site_number = item['key']
+            region_id, district_id, site_id, site_number, user_id = item['key']
             region_name = self.get_region_name(region_id)
             district_name = self.get_district_name(region_id, district_id)
             
@@ -383,9 +398,10 @@ class FacilityWiseFollowUpRepoert(GenericTabularReport, DataSummaryReport,
             else:
                 site_name = self.get_site_name(region_id, district_id, 
                 site_number)
-                                             
-            admissions = get_single_value('admissions', startdate, enddate)
+
+            fida = self.usernames[user_id]
             births = get_single_value('births', startdate, enddate)
+            open_cases = get_single_value('open_cases', "", {})
             
             start = today - timedelta(days = 7)
             not_yet_open_for_follow_up = get_single_value('needing_follow_up',
@@ -411,9 +427,9 @@ class FacilityWiseFollowUpRepoert(GenericTabularReport, DataSummaryReport,
             followed_up_by_field = get_single_value('followed_up_by_field', "",
                                                                         enddate)
                         
-            rows.append([region_name, district_name, site_name, "-", births, 
-            "-", not_yet_open_for_follow_up, open_for_cati_follow_up,
+            rows.append([region_name, district_name, site_name, fida, births,
+            open_cases, not_yet_open_for_follow_up, open_for_cati_follow_up,
             open_for_fada_follow_up, closed_cases, followed_up_by_call_center,
-            followed_up_by_field, lost_to_follow_up])   
-        return rows    
+            followed_up_by_field, lost_to_follow_up])
+        return rows
     
