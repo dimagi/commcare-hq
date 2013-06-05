@@ -15,21 +15,30 @@ REDUCE_TYPES = set(['sum', 'count', 'min', 'max', 'sumsqr'])
 
 def date_emitter(fn):
     fn._fluff_emitter = 'date'
+    if not hasattr(fn, '_reduce_type'):
+        fn._reduce_type = 'count'
+    if not hasattr(fn, '_has_value'):
+        fn._has_value = False
     return fn
-
-
-def value_emitter(reduce_type):
-    assert reduce_type in REDUCE_TYPES, 'Unknown reduce type'
-
-    def wrap(fn):
-        fn._reduce_type = reduce_type
-        return fn
-    return wrap
 
 
 def null_emitter(fn):
     fn._fluff_emitter = 'null'
+    if not hasattr(fn, '_reduce_type'):
+        fn._reduce_type = 'count'
+    if not hasattr(fn, '_has_value'):
+        fn._has_value = False
     return fn
+
+
+def emit_custom_value(reduce_type):
+    assert reduce_type in REDUCE_TYPES, 'Unknown reduce type'
+
+    def wrap(fn):
+        fn._reduce_type = reduce_type
+        fn._has_value = True
+        return fn
+    return wrap
 
 
 def filter_by(fn):
@@ -103,7 +112,7 @@ class Calculator(object):
                 list(fn(item))
                 if passes_filter else []
             )
-            if hasattr(fn, '_reduce_type'):
+            if fn._has_value:
                 assert all(isinstance(v, list) for v in values[slug]), "value_emitters must return a list"
                 assert all(len(v) == 2 for v in values[slug]), "value_emitters must return a list of size 2"
                 assert all(v[1] for v in values[slug])
@@ -152,10 +161,7 @@ class Calculator(object):
 
             if reduce:
                 try:
-                    if hasattr(emitter, '_reduce_type'):
-                        result[emitter_name] = q[0]['value'][emitter._reduce_type]
-                    else:
-                        result[emitter_name] = q[0]['value']['count']
+                    result[emitter_name] = q[0]['value'][emitter._reduce_type]
                 except IndexError:
                     result[emitter_name] = 0
             else:
@@ -238,10 +244,17 @@ class IndicatorDocument(schema.Document):
                 group_values: ['test', 'abc']
                 indicator_changes: [
                     {
-                    calculator: 'VistCalculator',
+                    calculator: 'visit_week',
                     emitter: 'all_visits',
                     emitter_type: 'date',
                     values: ['2012-09-23', '2012-09-24']
+                    },
+                    {
+                    calculator: 'visit_week',
+                    emitter: 'visit_hour',
+                    emitter_type: 'date',
+                    reduce_type: 'sum',
+                    values: [['2012-09-23', 8], ['2012-09-24', 11]]
                     },
                 ]
             }
@@ -277,16 +290,26 @@ class IndicatorDocument(schema.Document):
     def _indicator_diff(self, calc_name, emitter_names, other_doc):
         indicators = []
         for emitter_name in emitter_names:
-                if other_doc:
-                    values_diff = list(set(self[calc_name][emitter_name]) - set(other_doc[calc_name][emitter_name]))
-                else:
-                    values_diff = self[calc_name][emitter_name]
+            emitter = getattr(self._calculators[calc_name], emitter_name)
+            emitter_type = emitter._fluff_emitter
+            reduce_type = emitter._reduce_type
 
-                emitter_type = getattr(self._calculators[calc_name], emitter_name)._fluff_emitter
-                indicators.append(dict(calculator=calc_name,
-                                       emitter=emitter_name,
-                                       emitter_type=emitter_type,
-                                       values=values_diff))
+            if other_doc:
+                if emitter._has_value:
+                    self_values = set([tuple(v) for v in self[calc_name][emitter_name]])
+                    other_values = set([tuple(v) for v in other_doc[calc_name][emitter_name]])
+                    values_diff = [list(v) for v in list(self_values - other_values)]
+                else:
+                    values_diff = list(set(self[calc_name][emitter_name]) - set(other_doc[calc_name][emitter_name]))
+            else:
+                values_diff = self[calc_name][emitter_name]
+
+            indicators.append(dict(calculator=calc_name,
+                                   emitter=emitter_name,
+                                   emitter_type=emitter_type,
+                                   reduce_type=reduce_type,
+                                   has_value=emitter._has_value,
+                                   values=values_diff))
         return indicators
 
     def _shallow_dict_diff(self, left, right):

@@ -184,27 +184,40 @@ class Test(TestCase):
     def test_indicator_diff_new(self):
         doc = MockIndicators(domain="mock",
                              owner_id="123",
-                             visits_week=dict(all_visits=[date(2012, 02, 23)],
-                                              null_emitter=[]))
+                             value_week=dict(date=[date(2012, 02, 23)],
+                                             null=[],
+                                             date_value=[],
+                                             null_value=[[None, 3]]))
         diff = doc.diff(None)
+        print diff
         expected = dict(domains=['test'],
                         database=MockIndicators.Meta.app_label,
                         doc_type='MockIndicators',
                         group_values=['mock', '123'],
                         group_names=['domain', 'owner_id'],
                         indicator_changes=[
-                            dict(calculator='visits_week',
-                                 emitter='all_visits',
+                            dict(calculator='value_week',
+                                 emitter='date',
                                  emitter_type='date',
-                                 values=[date(2012, 2, 23)])
+                                 reduce_type='count',
+                                 has_value=False,
+                                 values=[date(2012, 2, 23)]),
+                            dict(calculator='value_week',
+                                 emitter='null_value',
+                                 emitter_type='null',
+                                 reduce_type='max',
+                                 has_value=True,
+                                 values=[[None, 3]])
                         ])
         self.assertEqual(expected, diff)
 
     def test_indicator_diff_same(self):
         doc = MockIndicators(domain="mock",
                              owner_id="123",
-                             visits_week=dict(all_visits=[date(2012, 02, 23)],
-                                              null_emitter=[]))
+                             value_week=dict(date=[date(2012, 02, 23)],
+                                             null=[],
+                                             date_value=[],
+                                             null_value=[[None, 3]]))
         another = doc.clone()
         diff = doc.diff(another)
         self.assertIsNone(diff)
@@ -212,12 +225,16 @@ class Test(TestCase):
     def test_indicator_diff(self):
         current = MockIndicators(domain="mock",
                                  owner_id="123",
-                                 visits_week=dict(all_visits=[date(2012, 02, 23)],
-                                                  null_emitter=[]))
+                                 value_week=dict(date=[date(2012, 02, 23)],
+                                                 null=[],
+                                                 date_value=[[date(2012, 02, 23), 3]],
+                                                 null_value=[]))
         new = MockIndicators(domain="mock",
                              owner_id="123",
-                             visits_week=dict(all_visits=[date(2012, 02, 24)],
-                                              null_emitter=[None]))
+                             value_week=dict(date=[date(2012, 02, 24)],
+                                             null=[None],
+                                             date_value=[[date(2012, 02, 23), 4]],
+                                             null_value=[[None, 2]]))
 
         diff = new.diff(current)
         self.assertIsNotNone(diff)
@@ -228,14 +245,30 @@ class Test(TestCase):
                         group_values=['mock', '123'],
                         group_names=['domain', 'owner_id'],
                         indicator_changes=[
-                            dict(calculator='visits_week',
-                                 emitter='null_emitter',
-                                 emitter_type='null',
-                                 values=[None]),
-                            dict(calculator='visits_week',
-                                 emitter='all_visits',
+                            dict(calculator='value_week',
+                                 emitter='date_value',
                                  emitter_type='date',
-                                 values=[date(2012, 2, 24)])
+                                 reduce_type='sum',
+                                 has_value=True,
+                                 values=[[date(2012, 2, 23), 4]]),
+                            dict(calculator='value_week',
+                                 emitter='date',
+                                 emitter_type='date',
+                                 reduce_type='count',
+                                 has_value=False,
+                                 values=[date(2012, 2, 24)]),
+                            dict(calculator='value_week',
+                                 emitter='null',
+                                 emitter_type='null',
+                                 reduce_type='count',
+                                 has_value=False,
+                                 values=[None]),
+                            dict(calculator='value_week',
+                                 emitter='null_value',
+                                 emitter_type='null',
+                                 reduce_type='max',
+                                 has_value=True,
+                                 values=[[None, 2]])
                         ])
         self.assertEqual(expected, diff)
 
@@ -257,13 +290,13 @@ class VisitCalculator(fluff.Calculator):
 
 class ValueCalculator(fluff.Calculator):
     @fluff.date_emitter
-    @fluff.value_emitter('sum')
+    @fluff.emit_custom_value('sum')
     def date_value(self, case):
         for action in case.actions:
             yield [action['date'], action['x']]
 
     @fluff.null_emitter
-    @fluff.value_emitter('max')
+    @fluff.emit_custom_value('max')
     def null_value(self, case):
         yield [None, 2]
 
