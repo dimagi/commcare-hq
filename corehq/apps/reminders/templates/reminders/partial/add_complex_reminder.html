@@ -243,6 +243,56 @@
             "Child Case Property": "Enter a case property along with the criteria for matching it. Only the child cases whose given case property matches the given criteria will be recipients."
         };
 
+        function get_language_count(message){
+            var gsm7bitChars = "@£$¥èéùìòÇ\nØø\rÅåΔ_ΦΓΛΩΠΨΣΘΞÆæßÉ !\"#¤%&'()*+,-./0123456789:;<=>?¡ABCDEFGHIJKLMNOPQRSTUVWXYZÄÖÑÜ§¿abcdefghijklmnopqrstuvwxyzäöñüà";
+            var gsm7bitExChar = "^{}\\[~]|€";            
+            var gsm7bitUnits = 0;
+            var utf16codeUnits = 0;            
+            for (var i = 0, len = message.length; i < len; i++) {
+                if (gsm7bitUnits != null) {
+                    if (gsm7bitChars.indexOf(message.charAt(i)) > -1) {
+                        gsm7bitUnits++; 
+                    } 
+                    else if (gsm7bitExChar.indexOf(message.charAt(i)) > -1) {
+                        gsm7bitUnits += 2;
+                    } 
+                    else {
+                        gsm7bitUnits = null;
+                    }
+                }
+                utf16codeUnits += message.charCodeAt(i) < 0x10000 ? 1 : 2;  
+            }            
+            if (gsm7bitUnits==null){
+                return ["foriegn", utf16codeUnits];
+            }
+            else{
+                return ["english", gsm7bitUnits];
+            }        
+        }
+        
+        function alert_sms_counts($message_box){
+            var language_count = get_language_count($message_box.val());
+            var current_count = language_count[1];
+            var max_char = (language_count[0]=="english") ? 160 : 70;
+            var max_sms_multiples = (max_char==160) ? 153 : 67;
+            var cc_message = "";
+            var chars_remaining = max_char - current_count;
+            var $char_count = $message_box.parent().find("#character-count");
+            if(chars_remaining < 0){
+                $char_count.addClass("alert-danger").removeClass('alert-info');
+            } 
+            else {
+                $char_count.removeClass("alert-danger").addClass('alert-info');
+            }
+            cc_message = current_count + " character";
+            if(current_count != 1){
+                cc_message = cc_message + "s";
+            }
+            var split_count = (current_count<=max_char) ? 1 : Math.ceil(current_count/max_sms_multiples);
+            cc_message = cc_message + " (" + max_char + " max). Messages : "+split_count;
+            $char_count.text(cc_message);            
+        }
+
         $('.help_popover').popover({
             placement: 'top',
             trigger: 'hover',
@@ -332,60 +382,11 @@
         
         $("#id_recipient_case_match_type").change(function() {
             recipient_case_match_type_changed();
-        });
+        });                
 
-        var gsm7bitChars = "@£$¥èéùìòÇ\nØø\rÅåΔ_ΦΓΛΩΠΨΣΘΞÆæßÉ !\"#¤%&'()*+,-./0123456789:;<=>?¡ABCDEFGHIJKLMNOPQRSTUVWXYZÄÖÑÜ§¿abcdefghijklmnopqrstuvwxyzäöñüà";
-        var gsm7bitExChar = "^{}\\[~]|€";        
-        function get_language_count(message){
-            var gsm7bitUnits = 0;
-            var utf16codeUnits = 0;
-            
-            for (var i = 0, len = message.length; i < len; i++) {
-                if (gsm7bitUnits != null) {
-                    if (gsm7bitChars.indexOf(message.charAt(i)) > -1) {
-                        gsm7bitUnits++; 
-                    } else if (gsm7bitExChar.indexOf(message.charAt(i)) > -1) {
-                        gsm7bitUnits += 2;
-                    } else {
-                        gsm7bitUnits = null;
-                    }
-                }
-                    utf16codeUnits += message.charCodeAt(i) < 0x10000 ? 1 : 2;  
-            }
-            if (gsm7bitUnits==null){
-                return ["foriegn", utf16codeUnits];
-            }
-            else
-                return ["english", gsm7bitUnits];
-        
-        }
-        
-        function alert_sms_counts($message_box){
-                var language_count = get_language_count($message_box.val());
-                var current_count = language_count[1];
-                var max_char = (language_count[0]=="english") ? 160 : 70;
-                var max_sms_splits = (max_char==160) ? 153 : 67;
-                var cc_message = "";
-                var chars_remaining = max_char - current_count;
-                var $char_count = $message_box.parent().find("#character-count");
-                if(chars_remaining < 0)
-                    $char_count.addClass("alert-danger").removeClass('alert-info');
-                else
-                    $char_count.removeClass("alert-danger").addClass('alert-info');
-                cc_message = current_count + " character";
-                if(current_count != 1)
-                    cc_message = cc_message + "s";
-                var split_count = (current_count<=max_char) ? 1 : Math.ceil(current_count/max_sms_splits);
-                cc_message = cc_message + " (" + max_char + " max). Messages : "+split_count;
-                $char_count.text(cc_message);            
-        }
-        
-        $(".language_message.message").each(function(){
-            alert_sms_counts($(this));
-        });
         $(".language_message.message").bind('keyup', function () {
             alert_sms_counts($(this));
-        });
+        }).keyup();
 
 
         // Run on change methods
