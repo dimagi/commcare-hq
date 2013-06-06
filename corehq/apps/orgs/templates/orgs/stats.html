@@ -13,14 +13,6 @@
 {% block js-inline %} {{ block.super }}
     <script src='{% static 'hqadmin/js/date_histogram_chart.js' %}' type='text/javascript'></script>
     <script type="text/javascript">
-        function setActiveRange(chart_id, range) {
-            var $chart = $('#' + chart_id);
-            var $accordion = $chart.parents('.accordion-group');
-            var $labels = $accordion.find('.label');
-            $labels.removeClass('label-success');
-            $accordion.find('.' + range + '-label').addClass('label-success');
-        }
-
         // given the chart_id of a chart element in the dom, the function fetches the data associated with that chart
         // and renders the chart in the specified element
         function loadChartData(chart_id, startdate, enddate) {
@@ -53,7 +45,6 @@
                         $chart.parent().css('padding-top', 48);
                         $chart.html('').append('<svg style="height:320px"> </svg>');
                         $chart.show();
-                        setActiveRange(chart_id, d.range);
                     }
             )
         }
@@ -69,8 +60,7 @@
                 var $chart = ($($(this).attr('href')).find('.nvd3-chart'));
                 $c = $chart;
                 if ($chart.length > 0 && !$chart.is(':visible')) {
-                    console.log('loading for the first time');
-                    loadChartData($chart.attr('id'), 'month');
+                    loadChartData($chart.attr('id'));
                 }
             });
 
@@ -95,7 +85,6 @@
                 if (!$chart_container.hasClass('in')) { // check to see
                     $chart_container.collapse('show');
                 }
-                console.log([startdate, enddate]);
                 return false;
             });
 
