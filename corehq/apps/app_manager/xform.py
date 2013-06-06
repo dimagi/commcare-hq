@@ -328,7 +328,7 @@ class XForm(WrappedNode):
                     path = self.resolve_path(get_path(prompt), path_context)
                     excluded_paths.add(path)
                     if prompt.tag_name == "group":
-                        build_questions(prompt, path_context=path)
+                        build_questions(prompt, path_context=path, repeat_context=repeat_context)
                     elif prompt.tag_name == "repeat":
                         build_questions(prompt, path_context=path, repeat_context=path)
                     elif prompt.tag_name not in ("trigger", "label"):
