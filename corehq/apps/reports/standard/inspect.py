@@ -83,7 +83,7 @@ class SubmitHistory(ElasticProjectInspectionReport, ProjectReport, ProjectReport
                             "to": self.datespan.enddate_param_utc}}},
                 "filter":
                     { "and": [
-                        # {"terms": {"form.meta.userID": filter(None, self.combined_user_ids)}},
+                        {"terms": {"form.meta.userID": filter(None, self.combined_user_ids)}},
                         {"terms": {"xmlns.exact": filter(None, [f["xmlns"] for f in self.all_relevant_forms.values()])}},
                     ]}}
 
