@@ -1090,14 +1090,16 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
 
     def save(self, **params):
         from corehq.apps.users.signals import commcare_user_post_save
-        result = commcare_user_post_save.send_robust(sender='couch_user',
+        results = commcare_user_post_save.send_robust(sender='couch_user',
                                                      couch_user=self)
-        if len(result) > 0 and result[0][1]:
-            notify_exception(
-                None,
-                message="Error occured while syncing user %s: %s" %
-                        (self.username, str(result[0][1]))
-            )
+        for result in results:
+            # Second argument is None if there was no error
+            if result[1]:
+                notify_exception(
+                    None,
+                    message="Error occured while syncing user %s: %s" %
+                            (self.username, str(result[1]))
+                )
 
         super(CommCareUser, self).save(**params)
 
