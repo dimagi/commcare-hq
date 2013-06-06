@@ -425,8 +425,8 @@ def touch_saved_reports_views(user, domain):
     homepage.
 
     """
-    ReportConfig.by_domain_and_owner(domain, user._id, limit=1).all()
-    ReportNotification.by_domain_and_owner(domain, user._id, limit=1).all()
+    ReportConfig.by_domain_and_owner(domain, user._id, limit=1, stale=False).all()
+    ReportNotification.by_domain_and_owner(domain, user._id, limit=1, stale=False).all()
 
 
 @login_and_domain_required
