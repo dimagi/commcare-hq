@@ -237,8 +237,11 @@ def populate_updated_fields(config, columns, row):
             # existing case field was chosen
             update_field_name = field_map[key]['case']
 
-        if update_value and field_map[key]['is_date_field']:
-            update_value = parse_excel_date(update_value)
+        if update_value:
+            if field_map[key]['is_date_field']:
+                update_value = parse_excel_date(update_value)
+            else:
+                update_value = str(update_value)
 
         fields_to_update[update_field_name] = update_value
 
