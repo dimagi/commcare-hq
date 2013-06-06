@@ -676,7 +676,7 @@ def view_generic(req, domain, app_id=None, module_id=None, form_id=None, is_user
             )[case_type]
         else:
             case_types = set(m.case_type
-                             for m in form.get_app().modules if m.case_type)
+                             for m in form.get_app().modules)
 
             case_properties = get_case_properties(
                 app,
