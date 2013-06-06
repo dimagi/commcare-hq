@@ -492,13 +492,20 @@ ko.bindingHandlers.typeahead = {
         $(element).autocomplete({
             source: value,
             minLength: 0,
-            delay: 0
+            delay: 0,
+            change: function () {
+                $(element).change();
+            }
         }).focus(function () {
             $(element).autocomplete('search', $(element).val())
                 .autocomplete('widget').css({
                 width: '200px',
                 overflow: 'hidden'
             });
+        }).on('textchange', function () {
+            if ($(element).val()) {
+                $(element).change();
+            }
         });
     }
 };
