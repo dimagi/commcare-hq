@@ -17,7 +17,7 @@ class Base0(fluff.Calculator):
     def base_0_filter(self):
         pass
 
-    @fluff.date_emitter
+    @fluff.date_emitter()
     def base_0_emitter(self):
         pass
 
@@ -27,7 +27,7 @@ class Base1(Base0):
     def base_1_filter(self):
         pass
 
-    @fluff.date_emitter
+    @fluff.date_emitter()
     def base_1_emitter(self):
         pass
 
@@ -37,7 +37,7 @@ class Base2(Base0):
     def base_2_filter(self):
         pass
 
-    @fluff.date_emitter
+    @fluff.date_emitter()
     def base_2_emitter(self):
         pass
 
@@ -47,7 +47,7 @@ class Base3(Base1, Base2):
     def base_3_filter(self):
         pass
 
-    @fluff.date_emitter
+    @fluff.date_emitter()
     def base_3_emitter(self):
         pass
 
@@ -129,9 +129,9 @@ class Test(TestCase):
         self.assertIn("null", indicator["value_week"])
         self.assertIn("date_value", indicator["value_week"])
         self.assertIn("null_value", indicator["value_week"])
-        self.assertEqual("2012-09-23", indicator["value_week"]["date"][0])
-        self.assertEqual("2012-09-24", indicator["value_week"]["date"][1])
-        self.assertIsNone(indicator["value_week"]["null"][0])
+        self.assertEqual(["2012-09-23", 1], indicator["value_week"]["date"][0])
+        self.assertEqual(["2012-09-24", 1], indicator["value_week"]["date"][1])
+        self.assertEqual([None, 1], indicator["value_week"]["null"][0])
 
         self.assertEqual(["2012-09-23", 2], indicator["value_week"]["date_value"][0])
         self.assertEqual(["2012-09-24", 3], indicator["value_week"]["date_value"][1])
@@ -145,8 +145,8 @@ class Test(TestCase):
         self.assertEquals(len(values.keys()), 4)
         self.assertEquals(values['null_value'], [[None, 2]])
         self.assertEquals(values['date_value'], [[date(2012, 9, 23), 2], [date(2012, 9, 24), 3]])
-        self.assertEquals(values['date'], [date(2012, 9, 23), date(2012, 9, 24)])
-        self.assertEquals(values['null'], [None])
+        self.assertEquals(values['date'], [[date(2012, 9, 23), 1], [date(2012, 9, 24), 1]])
+        self.assertEquals(values['null'], [[None, 1]])
 
     def test_calculator_get_result(self):
         key = ['a', 'b']
@@ -184,7 +184,7 @@ class Test(TestCase):
     def test_indicator_diff_new(self):
         doc = MockIndicators(domain="mock",
                              owner_id="123",
-                             value_week=dict(date=[date(2012, 02, 23)],
+                             value_week=dict(date=[[date(2012, 02, 23), 1]],
                                              null=[],
                                              date_value=[],
                                              null_value=[[None, 3]]))
@@ -199,13 +199,11 @@ class Test(TestCase):
                                  emitter='date',
                                  emitter_type='date',
                                  reduce_type='count',
-                                 has_value=False,
-                                 values=[date(2012, 2, 23)]),
+                                 values=[[date(2012, 2, 23), 1]]),
                             dict(calculator='value_week',
                                  emitter='null_value',
                                  emitter_type='null',
                                  reduce_type='max',
-                                 has_value=True,
                                  values=[[None, 3]])
                         ])
         self.assertEqual(expected, diff)
@@ -224,14 +222,14 @@ class Test(TestCase):
     def test_indicator_diff(self):
         current = MockIndicators(domain="mock",
                                  owner_id="123",
-                                 value_week=dict(date=[date(2012, 02, 23)],
+                                 value_week=dict(date=[[date(2012, 02, 23), 1]],
                                                  null=[],
                                                  date_value=[[date(2012, 02, 23), 3]],
                                                  null_value=[]))
         new = MockIndicators(domain="mock",
                              owner_id="123",
-                             value_week=dict(date=[date(2012, 02, 24)],
-                                             null=[None],
+                             value_week=dict(date=[[date(2012, 02, 24), 1]],
+                                             null=[[None, 1]],
                                              date_value=[[date(2012, 02, 23), 4]],
                                              null_value=[[None, 2]]))
 
@@ -248,25 +246,21 @@ class Test(TestCase):
                                  emitter='date_value',
                                  emitter_type='date',
                                  reduce_type='sum',
-                                 has_value=True,
                                  values=[[date(2012, 2, 23), 4]]),
                             dict(calculator='value_week',
                                  emitter='date',
                                  emitter_type='date',
                                  reduce_type='count',
-                                 has_value=False,
-                                 values=[date(2012, 2, 24)]),
+                                 values=[[date(2012, 2, 24), 1]]),
                             dict(calculator='value_week',
                                  emitter='null',
                                  emitter_type='null',
                                  reduce_type='count',
-                                 has_value=False,
-                                 values=[None]),
+                                 values=[[None, 1]]),
                             dict(calculator='value_week',
                                  emitter='null_value',
                                  emitter_type='null',
                                  reduce_type='max',
-                                 has_value=True,
                                  values=[[None, 2]])
                         ])
         self.assertEqual(expected, diff)
@@ -277,34 +271,32 @@ class MockDoc(Document):
 
 
 class VisitCalculator(fluff.Calculator):
-    @fluff.date_emitter
+    @fluff.date_emitter()
     def all_visits(self, case):
         for action in case.actions:
             yield action['date']
 
-    @fluff.null_emitter
+    @fluff.null_emitter()
     def null_emitter(self, case):
         yield None
 
 
 class ValueCalculator(fluff.Calculator):
-    @fluff.date_emitter
-    @fluff.emit_custom_value('sum')
+    @fluff.date_emitter('sum')
     def date_value(self, case):
         for action in case.actions:
             yield [action['date'], action['x']]
 
-    @fluff.null_emitter
-    @fluff.emit_custom_value('max')
+    @fluff.null_emitter('max')
     def null_value(self, case):
         yield [None, 2]
 
-    @fluff.date_emitter
+    @fluff.date_emitter()
     def date(self, case):
         for action in case.actions:
             yield action['date']
 
-    @fluff.null_emitter
+    @fluff.null_emitter()
     def null(self, case):
         yield None
 

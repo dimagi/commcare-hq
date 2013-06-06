@@ -22,19 +22,18 @@ import fluff
 
 class VisitCalculator(fluff.Calculator):
 
-    @fluff.date_emitter
+    @fluff.date_emitter()
     def all_visits(self, case):
         for action in case.actions:
             yield action.date
 
-    @fluff.date_emitter
+    @fluff.date_emitter()
     def bp_visits(self, case):
         for action in case.actions:
             if is_bp(case):
                 yield action.date
 
-    @fluff.date_emitter
-    @fluff.emit_custom_value('max')
+    @fluff.date_emitter('max')
     def temp_max(self, case):
         for action in case.actions:
             if is_temp(case):
@@ -71,9 +70,8 @@ data in the following format:
     }
     ```
 
-## emit_custom_value
-Using the @emit_custom_value decorator you can yield a list where the second value in the
-list is the value you want to be emitted.
+## Emitting custom values
+Yield a list where the second value in the list is the value you want to be emitted.
 
 This is useful if you want to do more than just count events. Options for aggregation are:
   * count
