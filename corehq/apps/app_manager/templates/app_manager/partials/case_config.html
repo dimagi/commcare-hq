@@ -192,11 +192,11 @@
     <div data-bind="with: caseConfigViewModel">
         <div>
             {% trans "Choose a type of form: " %}
-            <select data-bind="
-                optstr: [{value: 'none', label: '{% trans "One Time Survey" %}'},
-                         {value: 'open', label: '{% trans "Registration" %}'},
-                         {value: 'update', label: '{% trans "Follow-Up" %}'},
-                         {value: 'open-other', label: '{% trans "Reg. for a different case list" %}'}],
+            <select class="input-xlarge" data-bind="
+                optstr: [{value: 'none', label: '{% trans "Does not use cases" %}'},
+                         {value: 'open', label: '{% trans "Registers a new case" %}'},
+                         {value: 'update', label: '{% trans "Updates or closes a case" %}'},
+                         {value: 'open-other', label: '{% trans "Registers a case (different module)" %}'}],
                 value: actionType
             "></select>
         </div>
