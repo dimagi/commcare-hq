@@ -17,7 +17,7 @@
     <div class="row">
         {% for chart in charts %}
         <div id='chart_{{ forloop.counter }}' class="span{{ chart_span }} hide">
-            <h4 style="text-align: center;">{{ chart.title }}</h4>
+            {% if chart.title %}<h4 style="text-align: center;">{{ chart.title }}</h4>{% endif %}
             <svg style='height: {{ chart.height }}px'> </svg>
         </div>
         {% endfor %}
