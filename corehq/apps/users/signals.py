@@ -2,7 +2,7 @@ from __future__ import absolute_import
 import logging
 from django.contrib.auth.models import User
 from django.db.models.signals import post_save
-from django.dispatch import receiver
+from django.dispatch import receiver, Signal
 from django.contrib.auth.signals import user_logged_in
 from corehq.apps.users.models import CommCareUser, CouchUser
 
@@ -21,8 +21,6 @@ def set_language(sender, **kwargs):
     couch_user = CouchUser.from_django_user(user)
     if couch_user and couch_user.language:
         kwargs['request'].session['django_language'] = couch_user.language
-    
-    
 
 # Signal that syncs django_user => couch_user
 def django_user_post_save_signal(sender, instance, created, **kwargs):
@@ -30,6 +28,11 @@ def django_user_post_save_signal(sender, instance, created, **kwargs):
 
 post_save.connect(django_user_post_save_signal, User)
 
+def sync_user_cases_signal(sender, **kwargs):
+    return CommCareUser.sync_user_cases(kwargs["couch_user"])
+
+commcare_user_post_save = Signal(providing_args=["couch_user"])
+commcare_user_post_save.connect(sync_user_cases_signal)
 
 """
 This section automatically creates Couch users whenever a registration xform is received
